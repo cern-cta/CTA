@@ -51,10 +51,35 @@ class CtaCliHost(RemoteHost):
     def set_all_drives_down(self, *, wait: bool = True) -> None:
         self.set_drive_down(".*", wait=wait)
 
+    def list_tapes(self) -> list[dict]:
+        return json.loads(self.exec_with_output("cta-admin --json tape ls --all"))
+
     def list_all_tape_vids(self) -> list[str]:
-        output = self.exec_with_output("cta-admin --json tape ls --all")
-        tape_list = json.loads(output)
-        return [tape["vid"] for tape in tape_list]
+        return [tape["vid"] for tape in self.list_tapes()]
+
+    def get_tape(self, vid: str) -> dict:
+        output = self.exec_with_output(f"cta-admin --json tape ls --vid '{vid}'")
+        tape = json.loads(output)
+        if len(tape) != 1:
+            raise RuntimeError(f"Failed to find one tape with VID: {vid}")
+        return tape[0]
+
+    def get_tape_state(self, vid: str) -> str:
+        return self.get_tape(vid)["state"]
+
+    def wait_for_tape_state(self, vid: str, desired_state: str, *, timeout: int = 10) -> None:
+        print(f"Waiting for tape {vid} to be {desired_state}")
+        for _ in range(timeout):
+            if self.get_tape_state(vid) == desired_state:
+                print(f"Tape {vid} is {desired_state}")
+                return
+            time.sleep(1)
+        raise RuntimeError(f"Timeout reached while waiting for tape {vid} to be {desired_state}")
+
+    def set_tape_state(self, vid: str, state: str, *, reason: str, wait: bool = True) -> None:
+        self.exec(f"cta-admin tape ch --vid '{vid}' --state '{state}' --reason '{reason}'")
+        if wait:
+            self.wait_for_tape_state(vid, state)
 
     def file_exists_in_cta(self, vid, archive_id) -> bool:
         # Ls by --id is annoying because it will exit with a failure if the id does not exist
