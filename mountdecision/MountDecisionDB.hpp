@@ -45,7 +45,7 @@ struct ReservedMountCandidate {
   MountCandidate candidate;
 };
 
-struct MountSlot {
+struct MountCandidateRecord {
   uint64_t candidateId = 0;
   MountCandidate candidate;
   std::optional<std::string> reservedByHost;
@@ -77,7 +77,7 @@ public:
 
   bool hasAvailableMountCandidate(const std::string& logicalLibrary);
 
-  std::vector<MountSlot> listMountSlots();
+  std::vector<MountCandidateRecord> listMountCandidates();
 
   std::optional<ReservedMountCandidate>
   tryReserveNextMountCandidate(const std::string& logicalLibrary, const std::string& host, const std::string& drive);
