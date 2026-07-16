@@ -1102,61 +1102,86 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
   return ret;
 }
 
-bool RelationalDB::deleteDiskFiles(std::unordered_set<std::string>& jobSrcUrls, log::LogContext& lc) {
-  struct DiskFileRemovers {
-    std::unique_ptr<cta::disk::AsyncDiskFileRemover> asyncRemover;
+bool RelationalDB::deleteDiskFiles(const std::unordered_set<std::string>& jobSrcUrls, log::LogContext& lc) {
+  struct PendingDeletion {
+    std::unique_ptr<cta::disk::AsyncDiskFileRemover> remover;
     std::string jobUrl;
-    using List = std::list<DiskFileRemovers>;
   };
 
-  DiskFileRemovers::List deletersList;
+  std::vector<PendingDeletion> pendingDeletions;
+  pendingDeletions.reserve(jobSrcUrls.size());
+
+  bool success = true;
+
+  cta::disk::AsyncDiskFileRemoverFactory removerFactory;
+
+  // Start all deletions.
   for (const auto& jobUrl : jobSrcUrls) {
-    // async delete the file from the disk
     try {
-      cta::disk::AsyncDiskFileRemoverFactory asyncDiskFileRemoverFactory;
-      std::unique_ptr<cta::disk::AsyncDiskFileRemover> asyncRemover(
-        asyncDiskFileRemoverFactory.createAsyncDiskFileRemover(jobUrl));
-      deletersList.emplace_back(DiskFileRemovers {std::move(asyncRemover), jobUrl});
-      deletersList.back().asyncRemover->asyncDelete();
+      auto remover =
+        std::unique_ptr<cta::disk::AsyncDiskFileRemover>(removerFactory.createAsyncDiskFileRemover(jobUrl));
+
+      // Only store the remover if the operation was successfully started.
+      remover->asyncDelete();
+
+      pendingDeletions.push_back(PendingDeletion {std::move(remover), jobUrl});
+
+      log::ScopedParamContainer(lc)
+        .add("jobUrl", jobUrl)
+        .log(
+          log::DEBUG,
+          "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Started asynchronous deletion of disk file.");
     } catch (const cta::exception::Exception& ex) {
-      if (ex.getMessageValue().find("No such file or directory") != std::string::npos) {
-        log::ScopedParamContainer(lc)
-          .add("jobUrl", jobUrl)
-          .add(semconv::log::exceptionMessage, ex.getMessageValue())
-          .log(log::WARNING,
-               "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deletion of disk file failed, file "
-               "not found.");
+      const bool fileNotFound = ex.getMessageValue().find("No such file or directory") != std::string::npos;
+
+      log::ScopedParamContainer params(lc);
+      params.add("jobUrl", jobUrl).add(semconv::log::exceptionMessage, ex.getMessageValue());
+
+      if (fileNotFound) {
+        // Deletion is idempotent: an absent file is already deleted.
+        params.log(log::WARNING,
+                   "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Disk file was already absent when "
+                   "deletion was started.");
       } else {
-        log::ScopedParamContainer(lc)
-          .add("jobUrl", jobUrl)
-          .add(semconv::log::exceptionMessage, ex.getMessageValue())
-          .log(log::ERR,
-               "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deletion of disk file failed.");
-        return false;
+        params.log(log::ERR,
+                   "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to start asynchronous "
+                   "disk-file deletion.");
+        success = false;
       }
     }
   }
-  for (auto& dfr : deletersList) {
+
+  // Wait for every deletion that was successfully started.
+  for (auto& deletion : pendingDeletions) {
     try {
-      dfr.asyncRemover->wait();
-      lc.log(log::INFO, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deleted file.");
+      deletion.remover->wait();
+
+      log::ScopedParamContainer(lc)
+        .add("jobUrl", deletion.jobUrl)
+        .log(log::INFO,
+             "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Successfully deleted disk file.");
+
     } catch (const cta::exception::Exception& ex) {
-      if (ex.getMessageValue().find("No such file or directory") != std::string::npos) {
-        cta::log::ScopedParamContainer params(lc);
-        params.add(semconv::log::exceptionMessage, ex.getMessageValue());
-        lc.log(log::WARNING,
-               "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async file not found anymore.");
+      const bool fileNotFound = ex.getMessageValue().find("No such file or directory") != std::string::npos;
+
+      log::ScopedParamContainer params(lc);
+      params.add("jobUrl", deletion.jobUrl).add(semconv::log::exceptionMessage, ex.getMessageValue());
+
+      if (fileNotFound) {
+        // Another process may have deleted it after asyncDelete() started.
+        params.log(log::WARNING,
+                   "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Disk file was already absent while "
+                   "waiting for deletion.");
       } else {
-        log::ScopedParamContainer(lc)
-          .add(semconv::log::exceptionMessage, ex.getMessageValue())
-          .log(
-            log::ERR,
-            "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async file not deleted. Exception thrown: ");
-        return false;
+        params.log(
+          log::ERR,
+          "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Asynchronous disk-file deletion failed.");
+        success = false;
       }
     }
   }
-  return true;
+
+  return success;
 }
 
 // Candidate for renaming in the future to e.g. processNextSuccessfulArchiveRepackReportBatch

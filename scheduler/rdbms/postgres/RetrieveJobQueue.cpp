@@ -728,7 +728,7 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
       COUNT(*) AS NOT_RETRIEVED_FILES,
       COALESCE(SUM(SIZE_IN_BYTES), 0) AS NOT_RETRIEVED_BYTES
     FROM MOVED_ROWS
-      WHERE MOUNT_ID IS NULL AND STATUS = :RETRIEVE_SUCCESS_STATUS_NORECALL
+      WHERE MOUNT_ID IS NULL AND STATUS = :NORECALL_STATUS
     GROUP BY REPACK_REQUEST_ID
   ),
   BASE_INSERT AS (
@@ -921,7 +921,7 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
 
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":RETRIEVESTATUS", to_string(RetrieveJobStatus::RJS_ToReportToRepackForSuccess));
-  stmt.bindString(":RETRIEVE_SUCCESS_STATUS_NORECALL", to_string(RetrieveJobStatus::RJS_ToReportToRepackForSuccess));
+  stmt.bindString(":NORECALL_STATUS", to_string(RetrieveJobStatus::RJS_ToReportToRepackForSuccess));
   stmt.bindString(":STATUS_BASE", to_string(ArchiveJobStatus::AJS_ToTransferForRepack));
   stmt.bindString(":STATUS_ALTERNATE", to_string(ArchiveJobStatus::AJS_ToTransferForRepack));
   stmt.bindUint32(":TOTAL_RETRIES_BASE", 0);

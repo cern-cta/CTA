@@ -742,7 +742,7 @@ def test_repack_move_and_add_copies(
     )
     print(f"Creating 1 destination tapepool for repack: {tp_dest2_repack} (will override {tp_dest2_default})")
     cta_cli.exec(
-        f"cta-admin tapepool add --name {tp_dest2_repack} --vo vo --partialtapesnumber 2 --comment 'Temp {tp_dest2_repack} repack tapepool'"
+        f"cta-admin tapepool add --name {tp_dest2_repack} --vo vo_repack --partialtapesnumber 2 --comment 'Temp {tp_dest2_repack} repack tapepool'"
     )
 
     print("Creating archive routes for adding additional file copies")
