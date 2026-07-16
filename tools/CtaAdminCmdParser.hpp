@@ -186,6 +186,8 @@ const cmdLookup_t cmdLookup = {
   {"ll",                  AdminCmd::CMD_LOGICALLIBRARY     },
   {"mediatype",           AdminCmd::CMD_MEDIATYPE          },
   {"mt",                  AdminCmd::CMD_MEDIATYPE          },
+  {"mountslot",           AdminCmd::CMD_MOUNTSLOT          },
+  {"ms",                  AdminCmd::CMD_MOUNTSLOT          },
   {"mountpolicy",         AdminCmd::CMD_MOUNTPOLICY        },
   {"mp",                  AdminCmd::CMD_MOUNTPOLICY        },
   {"repack",              AdminCmd::CMD_REPACK             },
@@ -362,6 +364,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
   {AdminCmd::CMD_GROUPMOUNTRULE,      {"groupmountrule", "gmr", {"add", "ch", "rm", "ls"}}    },
   {AdminCmd::CMD_LOGICALLIBRARY,      {"logicallibrary", "ll", {"add", "ch", "rm", "ls"}}     },
   {AdminCmd::CMD_MEDIATYPE,           {"mediatype", "mt", {"add", "ch", "rm", "ls"}}          },
+  {AdminCmd::CMD_MOUNTSLOT,           {"mountslot", "ms", {"ls"}}                             },
   {AdminCmd::CMD_MOUNTPOLICY,         {"mountpolicy", "mp", {"add", "ch", "rm", "ls"}}        },
   {AdminCmd::CMD_PHYSICALLIBRARY,     {"physicallibrary", "pl", {"add", "ch", "rm", "ls"}}    },
   {AdminCmd::CMD_RECYCLETAPEFILE,     {"recycletf", "rtf", {"ls"}}                            },
@@ -529,6 +532,7 @@ const std::set<cmd_key_t> streamCmds = {
   {AdminCmd::CMD_GROUPMOUNTRULE,      AdminCmd::SUBCMD_LS  },
   {AdminCmd::CMD_LOGICALLIBRARY,      AdminCmd::SUBCMD_LS  },
   {AdminCmd::CMD_MEDIATYPE,           AdminCmd::SUBCMD_LS  },
+  {AdminCmd::CMD_MOUNTSLOT,           AdminCmd::SUBCMD_LS  },
   {AdminCmd::CMD_MOUNTPOLICY,         AdminCmd::SUBCMD_LS  },
   {AdminCmd::CMD_RECYCLETAPEFILE,     AdminCmd::SUBCMD_LS  },
   {AdminCmd::CMD_REPACK,              AdminCmd::SUBCMD_LS  },
@@ -976,6 +980,13 @@ requestermountrule (rmr)
    {opt_instance, opt_username_alias, opt_mountpolicy.optional(), opt_comment.optional()}                                    },
   {{AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_RM},   {opt_instance, opt_username_alias}                             },
   {{AdminCmd::CMD_REQUESTERMOUNTRULE, AdminCmd::SUBCMD_LS},   {}                                                             },
+
+  /**md
+mountslot (ms)
+
+:   List the mount slots calculated by maintd for tape servers to reserve.
+  */
+  {{AdminCmd::CMD_MOUNTSLOT, AdminCmd::SUBCMD_LS},            {}                                                             },
 
   /**md
 showqueues (sq)

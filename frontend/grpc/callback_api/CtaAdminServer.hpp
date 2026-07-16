@@ -24,6 +24,7 @@
 #include "frontend/common/LogicalLibraryLsResponseStream.hpp"
 #include "frontend/common/MediaTypeLsResponseStream.hpp"
 #include "frontend/common/MountPolicyLsResponseStream.hpp"
+#include "frontend/common/MountSlotLsResponseStream.hpp"
 #include "frontend/common/PhysicalLibraryLsResponseStream.hpp"
 #include "frontend/common/RecycleTapeFileLsResponseStream.hpp"
 #include "frontend/common/RepackLsResponseStream.hpp"
@@ -190,6 +191,10 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
       case cmd_pair(cta::admin::AdminCmd::CMD_MOUNTPOLICY, cta::admin::AdminCmd::SUBCMD_LS):
         stream = std::make_unique<MountPolicyLsResponseStream>(m_catalogue, m_scheduler, m_instanceName);
         headerType = HeaderType::MOUNTPOLICY_LS;
+        break;
+      case cmd_pair(cta::admin::AdminCmd::CMD_MOUNTSLOT, cta::admin::AdminCmd::SUBCMD_LS):
+        stream = std::make_unique<MountSlotLsResponseStream>(m_catalogue, m_scheduler, m_schedDb, m_instanceName, m_lc);
+        headerType = HeaderType::MOUNTSLOT_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_DISKSYSTEM, cta::admin::AdminCmd::SUBCMD_LS):
         stream = std::make_unique<DiskSystemLsResponseStream>(m_catalogue, m_scheduler, m_instanceName);

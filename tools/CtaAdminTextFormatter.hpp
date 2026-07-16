@@ -39,6 +39,7 @@ public:
   void printListPendingRetrievesHeader();
   void printListPendingRetrievesSummaryHeader();
   void printLogicalLibraryLsHeader();
+  void printMountSlotLsHeader();
   void printMountPolicyLsHeader();
   void printRepackLsHeader();
   void printRequesterMountRuleLsHeader();
@@ -69,6 +70,7 @@ public:
   void print(const ListPendingRetrievesItem& lpr_item);
   void print(const ListPendingRetrievesSummary& lpr_summary);
   void print(const LogicalLibraryLsItem& llls_item);
+  void print(const MountSlotLsItem& msls_item);
   void print(const MountPolicyLsItem& mpls_item);
   void print(const RepackLsItem& rels_item);
   void print(const RequesterMountRuleLsItem& rmrls_item);

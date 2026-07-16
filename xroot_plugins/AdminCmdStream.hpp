@@ -59,6 +59,7 @@ private:
   void processLogicalLibrary_Ls      (cta::xrd::Response& response);
   void processPhysicalLibrary_Ls     (cta::xrd::Response& response);
   void processMediaType_Ls           (cta::xrd::Response& response);
+  void processMountSlot_Ls           (cta::xrd::Response& response);
   void processMountPolicy_Ls         (cta::xrd::Response& response);
   void processRequesterMountRule_Ls  (cta::xrd::Response& response);
   void processShowQueues             (cta::xrd::Response& response);
