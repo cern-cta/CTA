@@ -10,7 +10,7 @@
 #include "commands/stream/converters/StreamConverters.hpp"
 #include "commands/stream/scheduling/DriveLsResponseStream.hpp"
 #include "commands/stream/scheduling/FailedRequestLsResponseStream.hpp"
-#include "commands/stream/scheduling/MountSlotLsResponseStream.hpp"
+#include "commands/stream/scheduling/MountCandidateLsResponseStream.hpp"
 #include "commands/stream/scheduling/RepackLsResponseStream.hpp"
 #include "commands/stream/scheduling/ShowQueuesResponseStream.hpp"
 #include "commands/stream/tapes/RecycleTapeFileLsResponseStream.hpp"
@@ -166,13 +166,13 @@ const std::map<CmdKey, Creator> STREAM_CMD_TABLE = {
                                                      cmd,
                                                      HeaderType::REPACK_LS);
    }},
-  {{AdminCmd::CMD_MOUNTSLOT, AdminCmd::SUBCMD_LS},
+  {{AdminCmd::CMD_MOUNTCANDIDATE, AdminCmd::SUBCMD_LS},
    [](const StreamContext& ctx, const admin::AdminCmd&) -> std::unique_ptr<CtaAdminResponseStream> {
-     return std::make_unique<MountSlotLsResponseStream>(ctx.scheduler,
-                                                        ctx.schedDb,
-                                                        ctx.instanceName,
-                                                        ctx.lc,
-                                                        HeaderType::MOUNTSLOT_LS);
+     return std::make_unique<MountCandidateLsResponseStream>(ctx.scheduler,
+                                                             ctx.schedDb,
+                                                             ctx.instanceName,
+                                                             ctx.lc,
+                                                             HeaderType::MOUNTCANDIDATE_LS);
    }},
   {{AdminCmd::CMD_SHOWQUEUES, AdminCmd::SUBCMD_NONE},
    [](const StreamContext& ctx, const admin::AdminCmd&) -> std::unique_ptr<CtaAdminResponseStream> {
