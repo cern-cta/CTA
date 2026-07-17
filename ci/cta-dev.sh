@@ -200,6 +200,7 @@ Usage:
 
 Run a system test.
 
+Note that any options passed AFTER the test name are forwarded to pytest.
 If no test is specified, an interactive menu is displayed.
 
 Available tests:
@@ -209,7 +210,7 @@ Examples:
   $(basename "$0") test
   $(basename "$0") test client
   $(basename "$0") test client --cleanup-first
-  $(basename "$0") test client --no-setup
+  $(basename "$0") test repack --no-setup
   $(basename "$0") test client --ff # Run all test, but failed tests first
   $(basename "$0") test client --lf # Run only the failed tests again
   $(basename "$0") test client -k test_simple_archive_retrieve
@@ -657,7 +658,7 @@ install_cta_dev() {
   local -r link_path="$bin_dir/$program_name"
   local -r script_path="$(readlink -f "$0")"
   local -r requirements_path="${project_root}/ci/system_tests/requirements.txt"
-  local -r completion_src="${project_root}/ci/completion/${program_name}.bash"
+  local -r completion_src="${project_root}/ci/${program_name}.bash-completion"
   local -r completion_dir="$HOME/.local/share/bash-completion/completions"
   local -r completion_dst="${completion_dir}/${program_name}"
 
