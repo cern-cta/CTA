@@ -30,5 +30,8 @@ maintd:
       sleepIntervalSecs: 86400
       batchSize: 1000
       ageForDeletionSecs: 1209600
+    mountDecisionLoop:
+      replicas: 1
+      sleepIntervalSecs: 1
 
   # The remainder of the values are inherited from the default values.yaml
