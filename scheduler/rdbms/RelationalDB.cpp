@@ -1233,7 +1233,6 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
       }
       timings.insertAndReset("deletedArchiveRepackJobs", t);
     }
-    //txn.commit();
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(lc)
       .add(semconv::log::exceptionMessage, ex.getMessageValue())
@@ -1246,6 +1245,7 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
     lc.log(cta::log::INFO,
            "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): No Repack progress statistics collected.");
     // return empty report batch since the rest of the OStoreDB machinery is not needed here
+    txn.commit();
     return ret;
   }
 
@@ -1258,7 +1258,6 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
            "will stay present until the operator removes them manually !");
   }
 
-  //schedulerdb::Transaction txn3(m_connPool, lc);
   // report back to the REPACK_REQUEST_TRACKING table
   uint64_t nrepreq = 0;
   std::vector<std::string> repackBufferUrlsToDelete;

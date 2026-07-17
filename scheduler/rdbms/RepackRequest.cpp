@@ -126,7 +126,7 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
           schedReq.archiveFileID = rsr.archiveFile.archiveFileID;
           schedReq.dstURL = rsr.fileBufferURL;
           schedReq.appendFileSizeToDstURL(rsr.archiveFile.fileSize);
-          log::ScopedParamContainer(m_lc)
+          log::ScopedParamContainer(lc)
             .add("diskFileInfo.path", rsr.archiveFile.diskFileInfo.path)
             .add("archiveFile.fileSize", rsr.archiveFile.fileSize)
             .log(log::DEBUG, "In RepackRequest::addSubrequestsAndUpdateStats(): diskFileInfo.path ?");
@@ -135,14 +135,14 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
 
           // Disk system
           try {
-            m_lc.log(log::DEBUG,
-                     "In RepackRequest::addSubrequestsAndUpdateStats(): Extracting diskSystemName from :"
-                       + schedReq.dstURL);
+            lc.log(log::DEBUG,
+                   "In RepackRequest::addSubrequestsAndUpdateStats(): Extracting diskSystemName from :"
+                     + schedReq.dstURL);
             rr.setDiskSystemName(diskSystemList.getDSName(schedReq.dstURL));
           } catch (std::out_of_range&) {
-            m_lc.log(log::DEBUG,
-                     "In RepackRequest::addSubrequestsAndUpdateStats(): Extracting diskSystemName threw fake "
-                     "out_of_range exception no disk system from the list matched.");
+            lc.log(log::DEBUG,
+                   "In RepackRequest::addSubrequestsAndUpdateStats(): Extracting diskSystemName threw fake "
+                   "out_of_range exception no disk system from the list matched.");
           }
 
           // Set repack info
@@ -161,7 +161,7 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
             }
             oss << nb;
           }
-          log::ScopedParamContainer(m_lc)
+          log::ScopedParamContainer(lc)
             .add("copyNbsToRearchive_raw", oss.str())
             .log(log::DEBUG, "Pre-makeJobRow() raw copyNbsToRearchive set.");
 
@@ -187,7 +187,7 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
             failedCreationStats.files++;
             failedCreationStats.bytes += rsr.archiveFile.fileSize;
             failedArchiveReq += rsr.copyNbsToRearchive.size();
-            m_lc.log(log::ERR, "Archive route not found for subrequest");
+            lc.log(log::ERR, "Archive route not found for subrequest");
             ++subReqItor;
             ++nbSubReqProcessed;
             std::stringstream storageClassList;
@@ -197,7 +197,7 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
               storageClass = sc.first;
               storageClassList << (first ? "" : " ") << " sc=" << storageClass << " rc=" << sc.second.size();
             }
-            log::ScopedParamContainer(m_lc)
+            log::ScopedParamContainer(lc)
               .add("fileID", rsr.archiveFile.archiveFileID)
               .add("diskInstance", rsr.archiveFile.diskInstance)
               .add("storageClass", rsr.archiveFile.storageClass)
@@ -231,7 +231,7 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
                   bestVid = repackInfo.vid;
                   activeCopyNumber = tc.copyNb;
                 } catch (Helpers::NoTapeAvailableForRetrieve&) {
-                  log::ScopedParamContainer(m_lc)
+                  log::ScopedParamContainer(lc)
                     .add("VID", repackInfo.vid)
                     .log(log::WARNING,
                          "In RepackRequest::addSubrequestsAndUpdateStats(): Tape VID not available for retrieve at the "
@@ -250,7 +250,7 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
             }
           }
           if (!foundCopyNb) {
-            log::ScopedParamContainer(m_lc)
+            log::ScopedParamContainer(lc)
               .add("fileId", rsr.archiveFile.archiveFileID)
               .add("repackVid", repackInfo.vid)
               .add("chosenVid", bestVid)
@@ -265,18 +265,18 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
             continue;
           }
           rr.setActiveCopyNumber(activeCopyNumber);
-          m_lc.log(log::DEBUG, "In RepackRequest::addSubrequestsAndUpdateStats(): about to emplace the row to vector.");
+          lc.log(log::DEBUG, "In RepackRequest::addSubrequestsAndUpdateStats(): about to emplace the row to vector.");
           if (rsr.hasUserProvidedFile) {
             rr.setJobStatus(activeCopyNumber, RetrieveJobStatus::RJS_ToReportToRepackForSuccess);
             rrRowBatchNoRecall.emplace_back(rr.makeJobRow());
-            log::ScopedParamContainer(m_lc)
+            log::ScopedParamContainer(lc)
               .add("rearchiveCopyNbs", rrRowBatchNoRecall.back()->rearchiveCopyNbs)
               .log(log::DEBUG,
                    "In RepackRequest::addSubrequestsAndUpdateStats(): rrRowBatchNoRecall.back().rearchiveCopyNbs.");
           } else {
             rr.setJobStatus(activeCopyNumber, RetrieveJobStatus::RJS_ToTransfer);
             rrRowBatchToTransfer.emplace_back(rr.makeJobRow());
-            log::ScopedParamContainer(m_lc)
+            log::ScopedParamContainer(lc)
               .add("rearchiveCopyNbs back", rrRowBatchToTransfer.back()->rearchiveCopyNbs)
               .log(log::DEBUG,
                    "In RepackRequest::addSubrequestsAndUpdateStats(): rrRowBatchToTransfer->back().rearchiveCopyNbs.");
@@ -285,30 +285,30 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
           failedCreationStats.files++;
           failedCreationStats.bytes += rsr.archiveFile.fileSize;
           failedArchiveReq += rsr.copyNbsToRearchive.size();
-          cta::log::ScopedParamContainer params(m_lc);
+          cta::log::ScopedParamContainer params(lc);
           params.add(semconv::log::exceptionMessage, ex.getMessageValue());
-          m_lc.log(log::ERR, "Failed to create subrequest.");
+          lc.log(log::ERR, "Failed to create subrequest.");
         }
       }
       ++subReqItor;
       ++nbSubReqProcessed;
     }
-    m_lc.log(log::DEBUG, "In RepackRequest::addSubrequestsAndUpdateStats(): about to insert bunch to the DB.");
+    lc.log(log::DEBUG, "In RepackRequest::addSubrequestsAndUpdateStats(): about to insert bunch to the DB.");
 
     // --- Insert ToTransfer jobs ---
     if (!rrRowBatchToTransfer.empty()) {
-      log::ScopedParamContainer params(m_lc);
+      log::ScopedParamContainer params(lc);
       params.add("nrows", rrRowBatchToTransfer.size());
       auto conn = m_connPool.getConn();
       try {
         cta::schedulerdb::postgres::RetrieveJobQueueRow::insertBatch(conn, rrRowBatchToTransfer, true);
         nbRetrieveSubrequestsCreated += rrRowBatchToTransfer.size();
-        m_lc.log(log::INFO,
-                 "In RepackRequest::addSubrequestsAndUpdateStats(): inserted bunch of 'ToTransfer' retrieve jobs.");
+        lc.log(log::INFO,
+               "In RepackRequest::addSubrequestsAndUpdateStats(): inserted bunch of 'ToTransfer' retrieve jobs.");
       } catch (exception::Exception& ex) {
         params.add(semconv::log::exceptionMessage, ex.getMessageValue());
-        m_lc.log(log::ERR,
-                 "In RepackRequest::addSubrequestsAndUpdateStats(): failed to insert 'ToTransfer' retrieve jobs.");
+        lc.log(log::ERR,
+               "In RepackRequest::addSubrequestsAndUpdateStats(): failed to insert 'ToTransfer' retrieve jobs.");
         conn.rollback();
         // all these failed rows should be counted as not created
         for (auto& row : rrRowBatchToTransfer) {
@@ -321,7 +321,7 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
 
     // --- Insert NoRecall jobs ---
     if (!rrRowBatchNoRecall.empty()) {
-      log::ScopedParamContainer params(m_lc);
+      log::ScopedParamContainer params(lc);
       params.add("nrows", rrRowBatchNoRecall.size());
       auto conn = m_connPool.getConn();
       try {
@@ -329,12 +329,12 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
         // here we inserted into the retrieve table, but directly with a status Success
         // so that these jobs are picked up by reporting and transformed to archive jobs
         nbRetrieveSubrequestsCreated += rrRowBatchNoRecall.size();
-        m_lc.log(log::INFO,
-                 "In RepackRequest::addSubrequestsAndUpdateStats(): inserted bunch of 'NoRecall' retrieve jobs.");
+        lc.log(log::INFO,
+               "In RepackRequest::addSubrequestsAndUpdateStats(): inserted bunch of 'NoRecall' retrieve jobs.");
       } catch (exception::Exception& ex) {
         params.add(semconv::log::exceptionMessage, ex.getMessageValue());
-        m_lc.log(log::ERR,
-                 "In RepackRequest::addSubrequestsAndUpdateStats(): failed to insert 'NoRecall' retrieve jobs.");
+        lc.log(log::ERR,
+               "In RepackRequest::addSubrequestsAndUpdateStats(): failed to insert 'NoRecall' retrieve jobs.");
         conn.rollback();
         for (auto& row : rrRowBatchNoRecall) {
           failedCreationStats.files++;
@@ -351,7 +351,7 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
     }
   }
   setLastExpandedFSeq(fSeq);
-  cta::schedulerdb::Transaction txn(m_connPool, m_lc);
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
   try {
     // The repack request status here could be either Starting or Running.
     uint64_t nrows = postgres::RepackRequestTrackingRow::updateRepackRequestWithExpansionStats(
@@ -361,16 +361,16 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
       nbRetrieveSubrequestsCreated,
       fSeq,
       mapRepackInfoStatusToJobStatus(repackInfo.status));
-    log::ScopedParamContainer(m_lc)
+    log::ScopedParamContainer(lc)
       .add("nrows", nrows)
       .log(log::INFO,
            "In RepackRequest::addSubrequestsAndUpdateStats(): updateRepackRequestWithExpansionStats() called "
            "successfully after expansion.");
     txn.commit();
   } catch (cta::exception::Exception& e) {
-    log::ScopedParamContainer params(m_lc);
-    params.add(semconv::log::exceptionMessage, e.getMessageValue() + e.backtrace());
-    m_lc.log(
+    log::ScopedParamContainer params(lc);
+    params.add(semconv::log::exceptionMessage, e.getMessageValue());
+    lc.log(
       log::ERR,
       "In RepackRequest::addSubrequestsAndUpdateStats(): updateRepackRequestWithExpansionStats() Exception thrown.");
     txn.abort();
@@ -403,7 +403,7 @@ void RepackRequest::fail() {
       .add("newStatus", to_string(RepackJobStatus::RRS_Failed))
       .add("repackInfo.repackReqId", repackInfo.repackReqId)
       .add("repackInfo.repackFinishedTime", repackInfo.repackFinishedTime)
-      .add(semconv::log::exceptionMessage, e.getMessageValue() + e.backtrace())
+      .add(semconv::log::exceptionMessage, e.getMessageValue())
       .log(log::ERR, "Exception updating status.");
     txn.abort();
   }
@@ -442,7 +442,7 @@ void RepackRequest::setExpandStartedAndChangeStatus() {
       .add("repackInfo.repackReqId", repackInfo.repackReqId)
       .add("repackInfo.isExpandFinished", repackInfo.isExpandFinished)
       .add("repackInfo.repackFinishedTime", repackInfo.repackFinishedTime)
-      .add(semconv::log::exceptionMessage, e.getMessageValue() + e.backtrace())
+      .add(semconv::log::exceptionMessage, e.getMessageValue())
       .log(log::ERR, "Exception updating status.");
     txn.abort();
   }
@@ -540,7 +540,7 @@ void RepackRequest::insert() {
     rjr.insert(conn);
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(m_lc)
-      .add(semconv::log::exceptionMessage, ex.getMessageValue() + ex.backtrace())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue()))
       .log(log::ERR, "In RepackRequest::insert(): failed to queue request.");
     throw;
   }
