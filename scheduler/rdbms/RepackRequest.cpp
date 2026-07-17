@@ -59,7 +59,7 @@ void RepackRequest::reportRetrieveCreationFailures(const uint64_t failedToRetrie
     txn.commit();
   } catch (cta::exception::Exception& e) {
     log::ScopedParamContainer(m_lc)
-      .add(semconv::log::exceptionMessage, e.getMessageValue() + e.backtrace())
+      .add(semconv::log::exceptionMessage, e.getMessageValue())
       .log(log::ERR,
            "In RepackRequest::reportRetrieveCreationFailures(): updateRRRetrieveCreationFailures() Exception thrown.");
     txn.abort();
@@ -540,7 +540,7 @@ void RepackRequest::insert() {
     rjr.insert(conn);
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(m_lc)
-      .add(semconv::log::exceptionMessage, ex.getMessageValue()))
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(log::ERR, "In RepackRequest::insert(): failed to queue request.");
     throw;
   }
