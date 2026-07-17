@@ -1,0 +1,23 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "W",
+    "I",
+    "N",
+    "ANN",
+    "B",
+    "UP",
+    "SIM",
+    "RET",
+    "PIE",
+    "C4",
+    "ARG",
+    "RUF",
+]
