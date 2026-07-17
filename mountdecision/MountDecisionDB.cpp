@@ -40,10 +40,12 @@ void bindCommonMountCandidateFields(Stmt& stmt, const MountCandidate& candidate)
   stmt.bindUint64(":YOUNGEST_JOB_START_TIME", candidate.youngestJobStartTime);
   stmt.bindDouble(":RATIO_OF_MOUNT_QUOTA_USED", candidate.ratioOfMountQuotaUsed);
   stmt.bindUint64(":CANDIDATE_RANK", candidate.candidateRank);
-  stmt.bindString(":MEDIA_TYPE", candidate.mediaType);
-  stmt.bindUint64(":LABEL_FORMAT", candidate.labelFormat);
-  stmt.bindString(":VENDOR", candidate.vendor);
-  stmt.bindUint64(":CAPACITY_IN_BYTES", candidate.capacityInBytes);
+  stmt.bindString(":MEDIA_TYPE", nonEmptyOptional(candidate.mediaType));
+  stmt.bindUint64(":LABEL_FORMAT",
+                  candidate.vid.has_value() ? std::optional<uint64_t>(candidate.labelFormat) : std::nullopt);
+  stmt.bindString(":VENDOR", nonEmptyOptional(candidate.vendor));
+  stmt.bindUint64(":CAPACITY_IN_BYTES",
+                  candidate.vid.has_value() ? std::optional<uint64_t>(candidate.capacityInBytes) : std::nullopt);
   stmt.bindUint64(":LAST_FSEQ", candidate.lastFSeq);
   stmt.bindString(":ENCRYPTION_KEY_NAME", nonEmptyOptional(candidate.encryptionKeyName));
   stmt.bindString(":CREATED_BY", nonEmptyOptional(candidate.createdBy));
@@ -88,10 +90,10 @@ MountCandidate mountCandidateFromRset(const rdbms::Rset& rset) {
   candidate.youngestJobStartTime = rset.columnUint64("YOUNGEST_JOB_START_TIME");
   candidate.ratioOfMountQuotaUsed = rset.columnDouble("RATIO_OF_MOUNT_QUOTA_USED");
   candidate.candidateRank = rset.columnUint64("CANDIDATE_RANK");
-  candidate.mediaType = rset.columnString("MEDIA_TYPE");
-  candidate.labelFormat = rset.columnUint64("LABEL_FORMAT");
-  candidate.vendor = rset.columnString("VENDOR");
-  candidate.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
+  candidate.mediaType = rset.columnOptionalString("MEDIA_TYPE").value_or("");
+  candidate.labelFormat = rset.columnOptionalUint64("LABEL_FORMAT").value_or(0);
+  candidate.vendor = rset.columnOptionalString("VENDOR").value_or("");
+  candidate.capacityInBytes = rset.columnOptionalUint64("CAPACITY_IN_BYTES").value_or(0);
   candidate.lastFSeq = rset.columnOptionalUint64("LAST_FSEQ");
   candidate.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
   candidate.state = rset.columnString("STATE");
