@@ -11,6 +11,7 @@
 #include "TapeWriteSingleThread.hpp"
 #include "TapeWriteTask.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/utils/Timer.hpp"
 #include "scheduler/ArchiveMount.hpp"
 
 namespace cta::tape::daemon {
@@ -114,12 +115,6 @@ private:
   }
 
   /**
-   * It will signal to the disk read thread  pool, tape write single thread
-   * and to the mem manager they have to stop their threads(s)
-   */
-  void signalEndDataMovement();
-
-  /**
    * A request of files to migrate. We request EITHER
    * - a maximum of nbMaxFiles files
    * - OR at least byteSizeThreshold bytes.
@@ -147,6 +142,76 @@ private:
      */
     const bool end;
   };
+
+  /**
+   * Calculate a bounded fill ratio.
+   *
+   * @return A value in the range [0.0, 1.0].
+   */
+  static double calculateFillRatio(uint64_t fetched, uint64_t requested);
+
+  /**
+   * Add a file size to a total without allowing uint64_t wraparound.
+   */
+  static void addBytesSaturating(uint64_t fileSize, uint64_t& totalBytes);
+
+  /**
+   * Update the underfill observation state.
+   *
+   * Effective fill is:
+   *
+   *   max(filesFetched / filesRequested,
+   *       bytesFetched / bytesRequested)
+   *
+   * The method uses hysteresis:
+   *
+   * - underfill observation starts below UNDERFILL_START_THRESHOLD;
+   * - observation ends at or above UNDERFILL_RECOVERY_THRESHOLD;
+   * - values between the two thresholds preserve the current state.
+   *
+   * @return True if the tape session should be ended.
+   */
+  bool shouldDismountForUnderfill(uint64_t filesFetched, uint64_t bytesFetched, const Request& request);
+
+  /**
+   * A response below this ratio starts an underfill observation period.
+   */
+  static constexpr double UNDERFILL_START_THRESHOLD = 0.40;
+
+  /**
+   * An active underfill period is cleared only when a response reaches this
+   * ratio.
+   */
+  static constexpr double UNDERFILL_RECOVERY_THRESHOLD = 0.60;
+
+  /**
+   * Continuous underfill duration required before ending the session.
+   */
+  static constexpr double WATCH_UNDERFILL_PERIOD_SECONDS = 15.0 * 60.0;
+
+  /**
+   * Minimum number of underfilled responses required before ending the
+   * session.
+   */
+  static constexpr uint64_t MINIMUM_UNDERFILL_SAMPLES = 3;
+
+  /**
+   * Timer for the active underfill observation period.
+   *
+   * No value means that no underfill period is active.
+   */
+  std::optional<utils::Timer> m_underfillTimer;
+
+  /**
+   * Number of responses observed during the active underfill period that did
+   * not reach the recovery threshold.
+   */
+  uint64_t m_underfillSamples = 0;
+  /**
+   * It will signal to the disk read thread  pool, tape write single thread
+   * and to the mem manager they have to stop their threads(s)
+   */
+  void signalEndDataMovement();
 
   class WorkerThread : public cta::threading::Thread {
   public:
