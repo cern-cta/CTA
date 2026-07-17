@@ -6,18 +6,18 @@ line-length = 120
 
 [tool.ruff.lint]
 select = [
-    "E",
-    "F",
-    "W",
-    "I",
-    "N",
-    "ANN",
-    "B",
-    "UP",
-    "SIM",
-    "RET",
-    "PIE",
-    "C4",
-    "ARG",
-    "RUF",
+    "E",   # pycodestyle errors
+    "F",   # Pyflakes (logic errors, undefined names, unused imports)
+    "W",   # pycodestyle warnings
+    "I",   # Import sorting (isort)
+    "N",   # PEP 8 naming conventions
+    "ANN", # Type annotation completeness
+    "B",   # Common bug patterns (flake8-bugbear)
+    "UP",  # Modernize syntax (pyupgrade)
+    "SIM", # Simplify code constructs
+    "RET", # Return statement consistency
+    "PIE", # Miscellaneous correctness and style improvements
+    "C4",  # Comprehension optimizations
+    "ARG", # Unused function arguments
+    "RUF", # Ruff-specific diagnostics and improvements
 ]
