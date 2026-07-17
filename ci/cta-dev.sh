@@ -200,6 +200,7 @@ Usage:
 
 Run a system test.
 
+Note that any options passed AFTER the test name are forwarded to pytest.
 If no test is specified, an interactive menu is displayed.
 
 Available tests:
@@ -209,7 +210,7 @@ Examples:
   $(basename "$0") test
   $(basename "$0") test client
   $(basename "$0") test client --cleanup-first
-  $(basename "$0") test client --no-setup
+  $(basename "$0") test repack --no-setup
   $(basename "$0") test client --ff # Run all test, but failed tests first
   $(basename "$0") test client --lf # Run only the failed tests again
   $(basename "$0") test client -k test_simple_archive_retrieve
@@ -461,7 +462,7 @@ parse_options() {
 # Commands
 ###############################################################################
 
-build() {
+build_cta() {
   # Constants
   local -r cta_version="5"
   local -r vcs_version="dev"
@@ -551,7 +552,7 @@ build() {
   echo "Build successful"
 }
 
-images() {
+images_cta() {
   # Constants
   local -r rpm_src="build_rpm/RPM/RPMS/x86_64" # note relative to project root
 
@@ -582,7 +583,7 @@ images() {
     ${extra_image_build_options}
 }
 
-deploy() {
+deploy_cta() {
   print_header "DELETING OLD CTA DEPLOYMENTS"
 
   cd "${project_root}/ci/orchestration"
@@ -615,7 +616,7 @@ deploy() {
     ${extra_spawn_options}
 }
 
-test() {
+test_cta() {
   print_header "RUNNING TESTS"
 
   source $venv_dir/bin/activate || (echo "Failed to activate Python virtual environment. Run \"$(basename "$0") install\" to create it." && exit 1)
@@ -638,28 +639,32 @@ test() {
   deactivate
 }
 
-up() {
-  build
-  images
-  deploy
+up_cta() {
+  build_cta
+  images_cta
+  deploy_cta
 }
 
-all() {
-  build
-  images
-  deploy
-  test
+all_cta() {
+  build_cta
+  images_cta
+  deploy_cta
+  test_cta
 }
 
-install() {
+install_cta_dev() {
   local -r program_name="cta-dev"
   local -r bin_dir="$HOME/.local/bin"
   local -r link_path="$bin_dir/$program_name"
   local -r script_path="$(readlink -f "$0")"
   local -r requirements_path="${project_root}/ci/system_tests/requirements.txt"
+  local -r completion_src="${project_root}/ci/${program_name}.bash-completion"
+  local -r completion_dir="$HOME/.local/share/bash-completion/completions"
+  local -r completion_dst="${completion_dir}/${program_name}"
 
   echo "This will:"
   echo "  - Install the $program_name command symlink to $link_path"
+  echo "  - Install Bash completion to $completion_dst"
   echo "  - Create a Python virtual environment in $venv_dir"
   echo "  - Install dependencies from $requirements_path"
   read -r -p "Continue? [y/N] " confirm
@@ -668,15 +673,23 @@ install() {
   mkdir -p "$bin_dir"
   ln -sf "$script_path" "$link_path"
 
+  mkdir -p "$completion_dir"
+  install -m 644 "$completion_src" "$completion_dst"
+
   if command -v uv >/dev/null 2>&1; then
     uv venv "$venv_dir"
-    uv pip install --python "$venv_dir/bin/python" -r $requirements_path
+    uv pip install --python "$venv_dir/bin/python" -r "$requirements_path"
   else
     python3 -m venv "$venv_dir"
-    "$venv_dir/bin/pip" install -r $requirements_path
+    "$venv_dir/bin/pip" install -r "$requirements_path"
   fi
 
   echo "Done! You can now run '$program_name' from any directory."
+
+  if ! shopt -oq posix && [[ -n ${BASH_VERSION:-} ]]; then
+    echo "Restart your shell or run:"
+    echo "  source \"$completion_dst\""
+  fi
 }
 
 ###############################################################################
@@ -702,31 +715,31 @@ main() {
   case "$command" in
     build)
       [[ $show_help == true ]] && usage_build
-      build
+      build_cta
       ;;
     images)
       [[ $show_help == true ]] && usage_images
-      images
+      images_cta
       ;;
     deploy)
       [[ $show_help == true ]] && usage_deploy
-      deploy
+      deploy_cta
       ;;
     test)
       [[ $show_help == true ]] && usage_test
-      test
+      test_cta
       ;;
     up)
       [[ $show_help == true ]] && usage
-      up
+      up_cta
       ;;
     all)
       [[ $show_help == true ]] && usage
-      all
+      all_cta
       ;;
     install)
       [[ $show_help == true ]] && usage
-      install
+      install_cta_dev
       ;;
     *)
       unsupported_argument "Unknown command: $command"
