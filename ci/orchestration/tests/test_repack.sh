@@ -443,7 +443,7 @@ repackMoveAndAddCopies() {
   echo "OK"
 
   echo "Creating 1 destination tapepool for repack : $tapepoolDestination2_repack (will override $tapepoolDestination2_default)"
-  kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tapepool add --name $tapepoolDestination2_repack --vo vo --partialtapesnumber 2 --comment "$tapepoolDestination2_repack tapepool"
+  kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tapepool add --name $tapepoolDestination2_repack --vo vo_repack --partialtapesnumber 2 --comment "$tapepoolDestination2_repack tapepool"
   echo "OK"
 
   echo "Creating archive routes for adding two copies of the file"

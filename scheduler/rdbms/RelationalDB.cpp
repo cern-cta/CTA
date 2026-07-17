@@ -753,6 +753,18 @@ common::dataStructures::RepackInfo RelationalDB::getRepackInfo(const std::string
 void RelationalDB::cancelRepack(const std::string& vid, log::LogContext& lc) {
   schedulerdb::Transaction txn(m_connPool, lc);
   try {
+    // we are deleting all jobs in all REPACK_* tables in a cascade deletion using foreign key, this means that
+    // for running repack the taped will be trying to report jobs which do not exist anymore
+    // in the ACTIVE table and fail to do so ! For the moment we let these failures proceed.
+    // RetrieveMount reporting successful Retrieve will not update the corresponding job IDs in the ACTIVE table
+    // as they will not exist anymore. The RepackReportRoutine will not be able to pick these up
+    // and transform them to archival jobs, which is good.
+    // For RetrieveMount or ArchiveMount which requeueJobBatch due to failures/end of tape,
+    // this is no problem as these deleted jobs will get ignored (prints error in log, error
+    // we print error as it could be also due to disk space problems).
+    // For RetrieveMount or ArchiveMount which report transferFailed and execute
+    // updateFailedJobStatus per non-existing job, this will also get ignored (prints warning in the log)
+    // as there is no such job id.
     uint64_t cancelledRepackRequests = schedulerdb::postgres::RepackRequestTrackingRow::cancelRepack(txn, vid);
     log::ScopedParamContainer(lc).add("VID", vid);
     if (cancelledRepackRequests > 1) {
@@ -1024,10 +1036,15 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
     while (count_rset.next()) {
       schedulerdb::postgres::RepackRequestProgress update;
       update.reqId = count_rset.columnUint64("REPACK_REQUEST_ID");
-      update.retrievedFiles = count_rset.columnUint64("BASE_INSERTED_COUNT");
-      update.retrievedBytes = count_rset.columnUint64("BASE_INSERTED_BYTES");
+      uint64_t notRetrievedFiles = count_rset.columnUint64("NOT_RETRIEVED_FILES");
+      uint64_t notRetrievedBytes = count_rset.columnUint64("NOT_RETRIEVED_BYTES");
+      // (to be improved) we count the retrieve job in active table with mount_id NULL which are there as a consequence
+      // of insertion of user provided files and are not actually being retrieved just transformed to archive jobs
+      update.retrievedFiles = count_rset.columnUint64("BASE_INSERTED_COUNT") - notRetrievedFiles;
+      update.retrievedBytes = count_rset.columnUint64("BASE_INSERTED_BYTES") - notRetrievedBytes;
       update.rearchiveCopyNbs = count_rset.columnUint64("ALTERNATE_INSERTED_COUNT");
       update.rearchiveBytes = count_rset.columnUint64("ALTERNATE_INSERTED_BYTES");
+
       log::ScopedParamContainer params(lc);
       params.add("repackRequestId", update.reqId);
       params.add("retrievedFiles", update.retrievedFiles);
@@ -1085,61 +1102,86 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
   return ret;
 }
 
-bool RelationalDB::deleteDiskFiles(std::unordered_set<std::string>& jobSrcUrls, log::LogContext& lc) {
-  struct DiskFileRemovers {
-    std::unique_ptr<cta::disk::AsyncDiskFileRemover> asyncRemover;
+bool RelationalDB::deleteDiskFiles(const std::unordered_set<std::string>& jobSrcUrls, log::LogContext& lc) {
+  struct PendingDeletion {
+    std::unique_ptr<cta::disk::AsyncDiskFileRemover> remover;
     std::string jobUrl;
-    using List = std::list<DiskFileRemovers>;
   };
 
-  DiskFileRemovers::List deletersList;
+  std::vector<PendingDeletion> pendingDeletions;
+  pendingDeletions.reserve(jobSrcUrls.size());
+
+  bool success = true;
+
+  cta::disk::AsyncDiskFileRemoverFactory removerFactory;
+
+  // Start all deletions.
   for (const auto& jobUrl : jobSrcUrls) {
-    // async delete the file from the disk
     try {
-      cta::disk::AsyncDiskFileRemoverFactory asyncDiskFileRemoverFactory;
-      std::unique_ptr<cta::disk::AsyncDiskFileRemover> asyncRemover(
-        asyncDiskFileRemoverFactory.createAsyncDiskFileRemover(jobUrl));
-      deletersList.emplace_back(DiskFileRemovers {std::move(asyncRemover), jobUrl});
-      deletersList.back().asyncRemover->asyncDelete();
+      auto remover =
+        std::unique_ptr<cta::disk::AsyncDiskFileRemover>(removerFactory.createAsyncDiskFileRemover(jobUrl));
+
+      // Only store the remover if the operation was successfully started.
+      remover->asyncDelete();
+
+      pendingDeletions.push_back(PendingDeletion {std::move(remover), jobUrl});
+
+      log::ScopedParamContainer(lc)
+        .add("jobUrl", jobUrl)
+        .log(
+          log::DEBUG,
+          "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Started asynchronous deletion of disk file.");
     } catch (const cta::exception::Exception& ex) {
-      if (ex.getMessageValue().find("No such file or directory") != std::string::npos) {
-        log::ScopedParamContainer(lc)
-          .add("jobUrl", jobUrl)
-          .add(semconv::log::exceptionMessage, ex.getMessageValue())
-          .log(log::WARNING,
-               "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deletion of disk file failed, file "
-               "not found.");
+      const bool fileNotFound = ex.getMessageValue().find("No such file or directory") != std::string::npos;
+
+      log::ScopedParamContainer params(lc);
+      params.add("jobUrl", jobUrl).add(semconv::log::exceptionMessage, ex.getMessageValue());
+
+      if (fileNotFound) {
+        // Deletion is idempotent: an absent file is already deleted.
+        params.log(log::WARNING,
+                   "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Disk file was already absent when "
+                   "deletion was started.");
       } else {
-        log::ScopedParamContainer(lc)
-          .add("jobUrl", jobUrl)
-          .add(semconv::log::exceptionMessage, ex.getMessageValue())
-          .log(log::ERR,
-               "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deletion of disk file failed.");
-        return false;
+        params.log(log::ERR,
+                   "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to start asynchronous "
+                   "disk-file deletion.");
+        success = false;
       }
     }
   }
-  for (auto& dfr : deletersList) {
+
+  // Wait for every deletion that was successfully started.
+  for (auto& deletion : pendingDeletions) {
     try {
-      dfr.asyncRemover->wait();
-      lc.log(log::INFO, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deleted file.");
+      deletion.remover->wait();
+
+      log::ScopedParamContainer(lc)
+        .add("jobUrl", deletion.jobUrl)
+        .log(log::INFO,
+             "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Successfully deleted disk file.");
+
     } catch (const cta::exception::Exception& ex) {
-      if (ex.getMessageValue().find("No such file or directory") != std::string::npos) {
-        cta::log::ScopedParamContainer params(lc);
-        params.add(semconv::log::exceptionMessage, ex.getMessageValue());
-        lc.log(log::WARNING,
-               "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async file not found anymore.");
+      const bool fileNotFound = ex.getMessageValue().find("No such file or directory") != std::string::npos;
+
+      log::ScopedParamContainer params(lc);
+      params.add("jobUrl", deletion.jobUrl).add(semconv::log::exceptionMessage, ex.getMessageValue());
+
+      if (fileNotFound) {
+        // Another process may have deleted it after asyncDelete() started.
+        params.log(log::WARNING,
+                   "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Disk file was already absent while "
+                   "waiting for deletion.");
       } else {
-        log::ScopedParamContainer(lc)
-          .add(semconv::log::exceptionMessage, ex.getMessageValue())
-          .log(
-            log::ERR,
-            "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async file not deleted. Exception thrown: ");
-        return false;
+        params.log(
+          log::ERR,
+          "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Asynchronous disk-file deletion failed.");
+        success = false;
       }
     }
   }
-  return true;
+
+  return success;
 }
 
 // Candidate for renaming in the future to e.g. processNextSuccessfulArchiveRepackReportBatch
@@ -1170,16 +1212,9 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
     txn.abort();
     return ret;
   }
-  // ------------------------------------------
-  // calling the deletion for the jobSrcUrls
-  // ------------------------------------------
-  if (!deleteDiskFiles(jobSrcUrls, lc)) {
-    txn.abort();
-    return ret;
-  }
   std::vector<schedulerdb::postgres::RepackRequestProgress> statUpdates;
-  if (!jobIDs.empty()) {
-    try {
+  try {
+    if (!jobIDs.empty()) {
       auto count_rset = schedulerdb::postgres::ArchiveJobQueueRow::deleteSuccessfulRepackArchiveJobBatch(txn, jobIDs);
       while (count_rset.next()) {
         schedulerdb::postgres::RepackRequestProgress update;
@@ -1196,30 +1231,38 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
           "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Successfully deleted finished archive jobs.");
         statUpdates.emplace_back(update);
       }
-      txn.commit();
       timings.insertAndReset("deletedArchiveRepackJobs", t);
-    } catch (exception::Exception& ex) {
-      log::ScopedParamContainer(lc)
-        .add(semconv::log::exceptionMessage, ex.getMessageValue())
-        .log(cta::log::ERR, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to delete jobs: ");
-      txn.abort();
-      return ret;
     }
+  } catch (exception::Exception& ex) {
+    log::ScopedParamContainer(lc)
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
+      .log(cta::log::ERR, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to delete jobs: ");
+    txn.abort();
+    return ret;
   }
-  txn.commit();
+
   if (statUpdates.empty()) {
     lc.log(cta::log::INFO,
            "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): No Repack progress statistics collected.");
     // return empty report batch since the rest of the OStoreDB machinery is not needed here
+    txn.commit();
     return ret;
   }
 
-  schedulerdb::Transaction txn3(m_connPool, lc);
+  // ------------------------------------------
+  // calling the deletion for the jobSrcUrls
+  // ------------------------------------------
+  if (!deleteDiskFiles(jobSrcUrls, lc)) {
+    lc.log(cta::log::WARNING,
+           "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to delete files from disk, the files "
+           "will stay present until the operator removes them manually !");
+  }
+
   // report back to the REPACK_REQUEST_TRACKING table
   uint64_t nrepreq = 0;
   std::vector<std::string> repackBufferUrlsToDelete;
   try {
-    auto vidrset = schedulerdb::postgres::RepackRequestTrackingRow::updateRepackRequestsProgress(txn3, statUpdates);
+    auto vidrset = schedulerdb::postgres::RepackRequestTrackingRow::updateRepackRequestsProgress(txn, statUpdates);
     while (vidrset.next()) {
       nrepreq++;
       // Get the repack request VID for which files were deleted !
@@ -1242,14 +1285,15 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
     params.add("updatedRepackRequests", nrepreq);
     lc.log(cta::log::INFO,
            "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Updated Repack progress statistics.");
-    txn3.commit();
+    txn.commit();
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
     params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(
       cta::log::ERR,
       "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): failed to update  Repack progress statistics.");
-    txn3.abort();
+    txn.abort();
+    return ret;
   }
   // check if status is Failed or Complete and delete the disk directory for this repack in such a case
   for (auto& bufferURL : repackBufferUrlsToDelete) {

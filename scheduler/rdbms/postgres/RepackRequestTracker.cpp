@@ -7,6 +7,7 @@
 
 #include "rdbms/wrapper/PostgresColumn.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
+#include "scheduler/rdbms/postgres/CommonQueueUtils.hpp"
 
 namespace cta::schedulerdb::postgres {
 
@@ -21,7 +22,7 @@ uint64_t RepackRequestTrackingRow::cancelRepack(Transaction& txn, const std::str
     DELETE FROM REPACK_REQUEST_TRACKING
     WHERE
       VID = :VID
-      AND STATUS = ANY(ARRAY['RRS_Pending','RRS_ToExpand','RRS_Starting','RRS_Complete','RRS_Failed']::REPACK_REQ_STATUS[])
+      AND STATUS = ANY(ARRAY['RRS_Pending','RRS_ToExpand','RRS_Starting','RRS_Running','RRS_Complete','RRS_Failed']::REPACK_REQ_STATUS[])
     )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":VID", vid);
@@ -51,7 +52,7 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestForExpansion(Transaction& 
   return stmt.getNbAffectedRows();
 }
 
-uint64_t RepackRequestTrackingRow::updateRepackRequest(
+uint64_t RepackRequestTrackingRow::updateRepackRequestWithExpansionStats(
   Transaction& txn,
   const uint64_t& reqId,
   const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles,
@@ -70,14 +71,21 @@ uint64_t RepackRequestTrackingRow::updateRepackRequest(
         TOTAL_BYTES_TO_ARCHIVE        = :TOTAL_BYTES_TO_ARCHIVE,
         USER_PROVIDED_FILES           = :USER_PROVIDED_FILES,
         LAST_EXPANDED_FSEQ            = :LAST_EXPANDED_FSEQ,
-        RETRIEVE_SUBREQUESTS_EXPANDED = :RETRIEVE_SUBREQUESTS_EXPANDED
+        RETRIEVE_SUBREQUESTS_EXPANDED = :RETRIEVE_SUBREQUESTS_EXPANDED,
+        IS_COMPLETE = :IS_COMPLETE
     WHERE REPACK_REQUEST_ID = :REQID
   )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
 
   // Bind job status
-  stmt.bindString(":STATUS", to_string(newStatus));
+  if (nbRetrieveSubrequestsCreated == 0) {
+    stmt.bindString(":STATUS", to_string(cta::schedulerdb::RepackJobStatus::RRS_Complete));
+    stmt.bindBool(":IS_COMPLETE", true);
+  } else {
+    stmt.bindString(":STATUS", to_string(newStatus));
+    stmt.bindBool(":IS_COMPLETE", false);
+  }
 
   // Bind TotalStatsFiles values
   stmt.bindUint64(":TOTAL_FILES_ON_TAPE_AT_START", totalStatsFiles.totalFilesOnTapeAtStart);
@@ -165,37 +173,57 @@ rdbms::Rset RepackRequestTrackingRow::updateRepackRequestsProgress(Transaction& 
                     SUM(REARCHIVE_BYTES) AS REARCHIVE_BYTES_INC
              FROM UPDATE_TABLE
              GROUP BY REPACK_REQUEST_ID
+           ),
+    )SQL";
+  RepackRequestStatusSqlInputs statusInputs {"trk.IS_EXPAND_FINISHED",
+                                             "trk.RETRIEVED_FILES + agg.RETRIEVED_FILES_INC",
+                                             "trk.FAILED_TO_RETRIEVE_FILES",
+                                             "trk.TOTAL_FILES_TO_RETRIEVE",
+                                             "trk.ARCHIVED_FILES + agg.ARCHIVED_FILES_INC",
+                                             "trk.FAILED_TO_ARCHIVE_FILES",
+                                             "trk.FAILED_TO_CREATE_ARCHIVE_REQ",
+                                             "trk.TOTAL_FILES_TO_ARCHIVE"};
+  sql += R"SQL(
+           CALC AS (
+             SELECT trk.REPACK_REQUEST_ID,
+                    trk.VID,
+                    trk.BUFFER_URL,
+                    trk.RETRIEVED_FILES + agg.RETRIEVED_FILES_INC AS NEW_RETRIEVED_FILES,
+                    trk.RETRIEVED_BYTES + agg.RETRIEVED_BYTES_INC AS NEW_RETRIEVED_BYTES,
+                    trk.ARCHIVED_FILES + agg.ARCHIVED_FILES_INC AS NEW_ARCHIVED_FILES,
+                    trk.ARCHIVED_BYTES + agg.ARCHIVED_BYTES_INC AS NEW_ARCHIVED_BYTES,
+                    trk.REARCHIVE_COPYNBS + agg.REARCHIVE_COPYNBS_INC AS NEW_REARCHIVE_COPYNBS,
+                    trk.REARCHIVE_BYTES + agg.REARCHIVE_BYTES_INC AS NEW_REARCHIVE_BYTES,
+                    trk.IS_COMPLETE AS OLD_IS_COMPLETE,
+             )SQL";
+  sql += repackRequestIsCompleteSql(statusInputs) + " AS NEW_IS_COMPLETE, ";
+  sql += repackRequestStatusSql(statusInputs) + " AS NEW_STATUS ";
+  sql += R"SQL(
+             FROM REPACK_REQUEST_TRACKING trk
+             JOIN AGG agg ON trk.REPACK_REQUEST_ID = agg.REPACK_REQUEST_ID
+             WHERE trk.IS_COMPLETE = FALSE
+             FOR UPDATE of trk
            )
-           UPDATE REPACK_REQUEST_TRACKING trk
-           SET
-           STATUS = CASE
-             WHEN (trk.ARCHIVED_FILES + agg.ARCHIVED_FILES_INC) = trk.TOTAL_FILES_TO_ARCHIVE
-               THEN :STATUS_COMPLETE_1::REPACK_REQ_STATUS
-             ELSE :STATUS_RUNNING::REPACK_REQ_STATUS
-           END,
-           IS_COMPLETE = CASE
-             WHEN (trk.ARCHIVED_FILES + agg.ARCHIVED_FILES_INC) = trk.TOTAL_FILES_TO_ARCHIVE
-               THEN TRUE
-             ELSE FALSE
-           END,
-           RETRIEVED_FILES = trk.RETRIEVED_FILES + agg.RETRIEVED_FILES_INC,
-           RETRIEVED_BYTES = trk.RETRIEVED_BYTES + agg.RETRIEVED_BYTES_INC,
-           ARCHIVED_FILES = trk.ARCHIVED_FILES + agg.ARCHIVED_FILES_INC,
-           ARCHIVED_BYTES = trk.ARCHIVED_BYTES + agg.ARCHIVED_BYTES_INC,
-           REARCHIVE_COPYNBS = trk.REARCHIVE_COPYNBS + agg.REARCHIVE_COPYNBS_INC,
-           REARCHIVE_BYTES = trk.REARCHIVE_BYTES + agg.REARCHIVE_BYTES_INC
-           FROM AGG agg
-           WHERE trk.REPACK_REQUEST_ID = agg.REPACK_REQUEST_ID AND STATUS != :STATUS_COMPLETE_2
-           RETURNING trk.VID,
-           CASE
-             WHEN IS_COMPLETE = CASE
-                    WHEN (trk.ARCHIVED_FILES + agg.ARCHIVED_FILES_INC) = trk.TOTAL_FILES_TO_ARCHIVE
-                      THEN TRUE
-                    ELSE FALSE
-                  END
-               THEN FALSE
-             ELSE TRUE
-           END AS IS_COMPLETE_CHANGED, BUFFER_URL
+
+    )SQL";
+  sql += R"SQL(
+    UPDATE REPACK_REQUEST_TRACKING trkfn
+    SET
+      STATUS = calc.NEW_STATUS,
+      IS_COMPLETE = calc.NEW_IS_COMPLETE,
+      RETRIEVED_FILES = calc.NEW_RETRIEVED_FILES,
+      RETRIEVED_BYTES = calc.NEW_RETRIEVED_BYTES,
+      ARCHIVED_FILES = calc.NEW_ARCHIVED_FILES,
+      ARCHIVED_BYTES = calc.NEW_ARCHIVED_BYTES,
+      REARCHIVE_COPYNBS = calc.NEW_REARCHIVE_COPYNBS,
+      REARCHIVE_BYTES = calc.NEW_REARCHIVE_BYTES,
+      LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
+    FROM CALC calc
+    WHERE trkfn.REPACK_REQUEST_ID = calc.REPACK_REQUEST_ID
+    RETURNING
+      calc.VID,
+      (calc.OLD_IS_COMPLETE = FALSE AND calc.NEW_IS_COMPLETE = TRUE) AS IS_COMPLETE_CHANGED,
+      calc.BUFFER_URL
     )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
@@ -218,25 +246,24 @@ rdbms::Rset RepackRequestTrackingRow::updateRepackRequestsProgress(Transaction& 
     stmt.bindUint64(":REARCH_COPY" + idx, u.rearchiveCopyNbs);
     stmt.bindUint64(":REARCH_BYTES" + idx, u.rearchiveBytes);
   }
-  stmt.bindString(":STATUS_COMPLETE_1", to_string(cta::schedulerdb::RepackJobStatus::RRS_Complete));
   stmt.bindString(":STATUS_RUNNING", to_string(cta::schedulerdb::RepackJobStatus::RRS_Running));
-  stmt.bindString(":STATUS_COMPLETE_2", to_string(cta::schedulerdb::RepackJobStatus::RRS_Complete));
+  stmt.bindString(":STATUS_STARTING", to_string(cta::schedulerdb::RepackJobStatus::RRS_Starting));
+  stmt.bindString(":STATUS_COMPLETE", to_string(cta::schedulerdb::RepackJobStatus::RRS_Complete));
+  stmt.bindString(":STATUS_FAILED", to_string(cta::schedulerdb::RepackJobStatus::RRS_Failed));
 
   return stmt.executeQuery();
 }
 
-uint64_t RepackRequestTrackingRow::updateRepackRequestFailures(Transaction& txn,
-                                                               uint64_t reqId,
-                                                               uint64_t failedFilesToRetrieve,
-                                                               uint64_t failedBytesToRetrieve,
-                                                               uint64_t failedToCreateArchiveReq,
-                                                               RepackJobStatus newStatus) {
+uint64_t RepackRequestTrackingRow::updateRRRetrieveCreationFailures(Transaction& txn,
+                                                                    uint64_t reqId,
+                                                                    uint64_t failedFilesToRetrieve,
+                                                                    uint64_t failedBytesToRetrieve,
+                                                                    uint64_t failedToCreateArchiveReq) {
   std::string sql = R"SQL(
         UPDATE REPACK_REQUEST_TRACKING
         SET FAILED_TO_RETRIEVE_FILES     = COALESCE(FAILED_TO_RETRIEVE_FILES, 0) + :FAILED_FILES,
             FAILED_TO_RETRIEVE_BYTES     = COALESCE(FAILED_TO_RETRIEVE_BYTES, 0) + :FAILED_BYTES,
-            FAILED_TO_CREATE_ARCHIVE_REQ = COALESCE(FAILED_TO_CREATE_ARCHIVE_REQ, 0) + :FAILED_ARCH_REQS,
-            STATUS                     = :STATUS::REPACK_REQ_STATUS
+            FAILED_TO_CREATE_ARCHIVE_REQ = COALESCE(FAILED_TO_CREATE_ARCHIVE_REQ, 0) + :FAILED_ARCH_REQS
         WHERE REPACK_REQUEST_ID = :REQID
     )SQL";
 
@@ -244,7 +271,6 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailures(Transaction& txn,
   stmt.bindUint64(":FAILED_FILES", failedFilesToRetrieve);
   stmt.bindUint64(":FAILED_BYTES", failedBytesToRetrieve);
   stmt.bindUint64(":FAILED_ARCH_REQS", failedToCreateArchiveReq);
-  stmt.bindString(":STATUS", to_string(newStatus));
   stmt.bindUint64(":REQID", reqId);
 
   stmt.executeNonQuery();
@@ -281,26 +307,85 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction&
            + "::BIGINT"
              ")";
   }
-  sql += R"SQL()
-            UPDATE REPACK_REQUEST_TRACKING trk
-            SET
-           )SQL";
+  sql += R"SQL(
+    ),
+    AGG AS (
+      SELECT
+        REPACK_REQUEST_ID,
+        SUM(FAILED_FILES) AS FAILED_FILES_INC,
+        SUM(FAILED_BYTES) AS FAILED_BYTES_INC
+      FROM FAILURE_TABLE
+      GROUP BY REPACK_REQUEST_ID
+    ),
+  )SQL";
+  RepackRequestStatusSqlInputs statusInputs {
+    "trk.IS_EXPAND_FINISHED",
+
+    // Successful retrieval count is unchanged by this method.
+    "trk.RETRIEVED_FILES",
+
+    isRetrieve ? "trk.FAILED_TO_RETRIEVE_FILES + agg.FAILED_FILES_INC" : "trk.FAILED_TO_RETRIEVE_FILES",
+
+    "trk.TOTAL_FILES_TO_RETRIEVE",
+
+    // Successful archive count is unchanged by this method.
+    "trk.ARCHIVED_FILES",
+
+    isRetrieve ? "trk.FAILED_TO_ARCHIVE_FILES" : "trk.FAILED_TO_ARCHIVE_FILES + agg.FAILED_FILES_INC",
+
+    "trk.FAILED_TO_CREATE_ARCHIVE_REQ",
+    "trk.TOTAL_FILES_TO_ARCHIVE"};
+  sql += R"SQL(
+    CALC AS (
+      SELECT
+        trk.REPACK_REQUEST_ID,
+        trk.IS_COMPLETE AS OLD_IS_COMPLETE,
+        trk.REPACK_FINISHED_TIME AS OLD_REPACK_FINISHED_TIME,
+  )SQL";
   if (isRetrieve) {
     sql += R"SQL(
-              FAILED_TO_RETRIEVE_FILES     = trk.FAILED_TO_RETRIEVE_FILES + ft.FAILED_FILES,
-              FAILED_TO_RETRIEVE_BYTES     = trk.FAILED_TO_RETRIEVE_BYTES + ft.FAILED_BYTES,
-          )SQL";
+        trk.FAILED_TO_RETRIEVE_FILES + agg.FAILED_FILES_INC AS NEW_FAILED_TO_RETRIEVE_FILES,
+        trk.FAILED_TO_RETRIEVE_BYTES + agg.FAILED_BYTES_INC AS NEW_FAILED_TO_RETRIEVE_BYTES,
+        trk.FAILED_TO_ARCHIVE_FILES AS NEW_FAILED_TO_ARCHIVE_FILES,
+        trk.FAILED_TO_ARCHIVE_BYTES AS NEW_FAILED_TO_ARCHIVE_BYTES,
+    )SQL";
   } else {
     sql += R"SQL(
-              FAILED_TO_ARCHIVE_FILES     = trk.FAILED_TO_ARCHIVE_FILES + ft.FAILED_FILES,
-              FAILED_TO_ARCHIVE_BYTES     = trk.FAILED_TO_ARCHIVE_BYTES + ft.FAILED_BYTES,
-          )SQL";
+        trk.FAILED_TO_RETRIEVE_FILES AS NEW_FAILED_TO_RETRIEVE_FILES,
+        trk.FAILED_TO_RETRIEVE_BYTES AS NEW_FAILED_TO_RETRIEVE_BYTES,
+        trk.FAILED_TO_ARCHIVE_FILES + agg.FAILED_FILES_INC AS NEW_FAILED_TO_ARCHIVE_FILES,
+        trk.FAILED_TO_ARCHIVE_BYTES + agg.FAILED_BYTES_INC AS NEW_FAILED_TO_ARCHIVE_BYTES,
+    )SQL";
   }
+  sql += repackRequestIsCompleteSql(statusInputs) + " AS NEW_IS_COMPLETE,";
+
+  sql += repackRequestStatusSql(statusInputs) + " AS NEW_STATUS";
   sql += R"SQL(
-            STATUS = 'RRS_Failed'
-            FROM FAILURE_TABLE ft
-            WHERE trk.REPACK_REQUEST_ID = ft.REPACK_REQUEST_ID
-          )SQL";
+      FROM REPACK_REQUEST_TRACKING trk
+      JOIN AGG agg
+        ON trk.REPACK_REQUEST_ID = agg.REPACK_REQUEST_ID
+      WHERE trk.IS_COMPLETE = FALSE
+      FOR UPDATE OF trk
+    )
+     UPDATE REPACK_REQUEST_TRACKING trk
+     SET
+       LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT,
+       FAILED_TO_RETRIEVE_FILES = calc.NEW_FAILED_TO_RETRIEVE_FILES,
+       FAILED_TO_RETRIEVE_BYTES = calc.NEW_FAILED_TO_RETRIEVE_BYTES,
+       FAILED_TO_ARCHIVE_FILES = calc.NEW_FAILED_TO_ARCHIVE_FILES,
+       FAILED_TO_ARCHIVE_BYTES = calc.NEW_FAILED_TO_ARCHIVE_BYTES,
+       STATUS = calc.NEW_STATUS,
+       IS_COMPLETE = calc.NEW_IS_COMPLETE,
+       REPACK_FINISHED_TIME =
+         CASE
+             WHEN calc.OLD_IS_COMPLETE = FALSE
+               AND calc.NEW_IS_COMPLETE = TRUE
+             THEN EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
+             ELSE calc.OLD_REPACK_FINISHED_TIME
+         END
+       FROM CALC calc
+       WHERE trk.REPACK_REQUEST_ID = calc.REPACK_REQUEST_ID
+       )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
 
@@ -315,6 +400,10 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction&
     stmt.bindUint64(":FAILED_FILES" + idx, ffl);
     stmt.bindUint64(":FAILED_BYTES" + idx, fb);
   }
+  stmt.bindString(":STATUS_RUNNING", to_string(cta::schedulerdb::RepackJobStatus::RRS_Running));
+  stmt.bindString(":STATUS_STARTING", to_string(cta::schedulerdb::RepackJobStatus::RRS_Starting));
+  stmt.bindString(":STATUS_COMPLETE", to_string(cta::schedulerdb::RepackJobStatus::RRS_Complete));
+  stmt.bindString(":STATUS_FAILED", to_string(cta::schedulerdb::RepackJobStatus::RRS_Failed));
 
   stmt.executeQuery();
 
@@ -333,7 +422,8 @@ rdbms::Rset RepackRequestTrackingRow::markStartOfExpansion(Transaction& txn) {
       FOR UPDATE
     )
     UPDATE REPACK_REQUEST_TRACKING
-    SET IS_EXPAND_STARTED = '1'
+    SET IS_EXPAND_STARTED = '1',
+    LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
     WHERE REPACK_REQUEST_ID IN (SELECT REPACK_REQUEST_ID FROM NEXT_JOB)
     RETURNING *
     )SQL";
@@ -343,14 +433,20 @@ rdbms::Rset RepackRequestTrackingRow::markStartOfExpansion(Transaction& txn) {
   return result;
 }
 
-uint64_t RepackRequestTrackingRow::updateRepackRequestStatusAndFinishTime(Transaction& txn,
-                                                                          const uint64_t& reqId,
-                                                                          const bool isExpandFinished,
-                                                                          const RepackJobStatus& newStatus,
-                                                                          const uint64_t& finishTime) {
+uint64_t RepackRequestTrackingRow::updateRepackRequestExpansionFailure(Transaction& txn,
+                                                                       const uint64_t& reqId,
+                                                                       const bool isExpandFinished,
+                                                                       const uint64_t& finishTime) {
+  // This method is called only in case the expansion fails.
+  // We need to notify the operator that the request is failed
+  // so we change the status to Failed. We prevent further statistics update by
+  // setting IS_COMPLETE to TRUE and we delete retrieve pending job
+  // to limit the workload on the tape drive.
   std::string sql = R"SQL(
     UPDATE REPACK_REQUEST_TRACKING
     SET STATUS = :STATUS,
+        IS_COMPLETE = TRUE,
+        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT,
         REPACK_FINISHED_TIME = :REPACK_FINISHED_TIME
   )SQL";
   if (isExpandFinished) {
@@ -359,18 +455,29 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestStatusAndFinishTime(Transa
   sql += " WHERE REPACK_REQUEST_ID = :REQID";
 
   auto stmt = txn.getConn().createStmt(sql);
-  stmt.bindString(":STATUS", to_string(newStatus));
+  stmt.bindString(":STATUS", to_string(cta::schedulerdb::RepackJobStatus::RRS_Failed));
   stmt.bindUint64(":REPACK_FINISHED_TIME", finishTime);
   stmt.bindUint64(":REQID", reqId);
 
   stmt.executeNonQuery();
-  return stmt.getNbAffectedRows();
+  auto nrows = stmt.getNbAffectedRows();
+  // At the same time we need to prevent this request to be picked up by the taped,
+  // so we delete the jobs from the pending table.
+  std::string sql2 = R"SQL(
+    DELETE FROM REPACK_RETRIEVE_PENDING_QUEUE
+    WHERE
+      REPACK_REQUEST_ID = :REQID
+    )SQL";
+  auto stmt2 = txn.getConn().createStmt(sql2);
+  stmt2.bindUint64(":REQID", reqId);
+  stmt2.executeNonQuery();
+
+  return nrows;
 }
 
-uint64_t RepackRequestTrackingRow::updateRepackRequestStatus(Transaction& txn,
-                                                             const uint64_t& reqId,
-                                                             const bool isExpandFinished,
-                                                             const RepackJobStatus& newStatus) {
+uint64_t RepackRequestTrackingRow::updateRepackRequestExpansionStatus(Transaction& txn,
+                                                                      const uint64_t& reqId,
+                                                                      const bool isExpandFinished) {
   std::string sql = R"SQL(
     UPDATE REPACK_REQUEST_TRACKING
     SET STATUS = :STATUS::REPACK_REQ_STATUS
@@ -378,10 +485,13 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestStatus(Transaction& txn,
   if (isExpandFinished) {
     sql += ", IS_EXPAND_FINISHED = '1' ";
   }
-  sql += " WHERE REPACK_REQUEST_ID = :REQID";
+  sql += R"SQL(
+    WHERE REPACK_REQUEST_ID = :REQID
+      AND IS_COMPLETE = FALSE
+  )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
-  stmt.bindString(":STATUS", to_string(newStatus));
+  stmt.bindString(":STATUS", to_string(cta::schedulerdb::RepackJobStatus::RRS_Starting));
   stmt.bindUint64(":REQID", reqId);
 
   stmt.executeNonQuery();

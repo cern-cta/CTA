@@ -170,7 +170,8 @@ void RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase:
     }
     lc.log(cta::log::ERR,
            std::string("In RetrieveMount::requeueJobBatch(): Did not requeue all task jobs of "
-                       "the queue, there was no space on disk, job IDs attempting to update were: ")
+                       "the queue, there was no space on disk or jobs got cancelled/deleted from the DB, "
+                       "job IDs attempting to update were: ")
              + jobIDsString);
   }
 }
@@ -236,8 +237,11 @@ void RetrieveMount::updateRetrieveJobStatusWrapper(const std::vector<std::string
           .add("targetStatus", to_string(newStatus))
           .log(log::ERR,
                "In RetrieveMount::updateRetrieveJobStatusWrapper(): Failed to update all jobs to target status. "
-               "Aborting transaction.");
-        txn.abort();
+               "Could be due to previous job cancellation.");
+        // For some cancelled/deleted jobs (e.g. repack) which were cancelled and
+        // do not exist anymore in the DB we need to ignore these errors.
+        // This is why we are not aborting the txn here and letting it silently
+        // ignore these cases.
         return;
       }
 
@@ -262,7 +266,6 @@ void RetrieveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDa
                                            log::LogContext& lc) {
   std::vector<std::string> jobIDs_success, jobIDs_repackSuccess, jobIDs_reportToUser;
   // This method will remove the rows of the jobs from the DB or update jobs to get reported to the disk buffer
-  // REPACK USE CASE TO-BE-DONE
   // we update/release the space reservation of the drive in the catalogue
   cta::DiskSpaceReservationRequest diskSpaceReservationRequest;
   jobIDs_success.reserve(jobsBatch.size());

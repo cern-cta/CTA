@@ -53,7 +53,6 @@ public:
   void expandDone() override;
   void fail() override;
   void requeueInToExpandQueue(log::LogContext& lc) override;
-  common::dataStructures::RepackInfo::Status getCurrentStatus() const;
   void setExpandStartedAndChangeStatus() override;
   void fillLastExpandedFSeqAndTotalStatsFile(uint64_t& fSeq, TotalStatsFiles& totalStatsFiles) override;
 
@@ -88,7 +87,6 @@ public:
   bool m_isComplete = false;
   uint64_t m_maxFilesToSelect = 0;
   std::string m_storageClass;
-  uint64_t m_failedToCreateArchiveReq = 0;
 
   struct StatsValues {
     uint64_t files = 0;

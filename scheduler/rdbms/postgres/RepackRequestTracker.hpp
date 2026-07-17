@@ -450,32 +450,27 @@ struct RepackRequestTrackingRow {
    * @param txn Active transaction to run the update within.
    * @param reqId The REPACK_REQUEST_ID of the request to update.
    * @param isExpandFinished boolean expressing if expansion finished
-   * @param newStatus The new job status to set.
    * @return The number of affected rows (should be 1 if successful).
    */
-  static uint64_t updateRepackRequestStatus(Transaction& txn,
-                                            const uint64_t& reqId,
-                                            const bool isExpandFinished,
-                                            const RepackJobStatus& newStatus);
+  static uint64_t
+  updateRepackRequestExpansionStatus(Transaction& txn, const uint64_t& reqId, const bool isExpandFinished);
 
   /**
-     * @brief Updates the status and finish time of a repack request.
+     * @brief Updates the status and finish time of a repack request after expansion failure.
      *
      * @param txn Active transaction to run the update within.
      * @param reqId The REPACK_REQUEST_ID of the request to update.
      * @param isExpandFinished boolean expressing if expansion finished
-     * @param newStatus The new job status to set.
      * @param finishTime The finish time (epoch or timestamp value) to set.
      * @return The number of affected rows (should be 1 if successful).
      */
-  static uint64_t updateRepackRequestStatusAndFinishTime(Transaction& txn,
-                                                         const uint64_t& reqId,
-                                                         const bool isExpandFinished,
-                                                         const RepackJobStatus& newStatus,
-                                                         const uint64_t& finishTime);
+  static uint64_t updateRepackRequestExpansionFailure(Transaction& txn,
+                                                      const uint64_t& reqId,
+                                                      const bool isExpandFinished,
+                                                      const uint64_t& finishTime);
 
   /**
-     * @brief Update an existing repack request in the REPACK_REQUEST_TRACKING table.
+     * @brief Update an existing repack request expansion statistics in the REPACK_REQUEST_TRACKING table.
      *
      * This method updates the status and key statistics of a repack request row,
      * including file/byte counts, expansion progress, and completion time.
@@ -489,20 +484,20 @@ struct RepackRequestTrackingRow {
      *
      * @return The number of rows affected (should be 1 if the update succeeded).
      */
-  static uint64_t updateRepackRequest(Transaction& txn,
-                                      const uint64_t& reqId,
-                                      const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles,
-                                      const uint64_t nbRetrieveSubrequestsCreated,
-                                      const uint64_t lastExpandedFseq,
-                                      const RepackJobStatus& newStatus);
+  static uint64_t
+  updateRepackRequestWithExpansionStats(Transaction& txn,
+                                        const uint64_t& reqId,
+                                        const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles,
+                                        const uint64_t nbRetrieveSubrequestsCreated,
+                                        const uint64_t lastExpandedFseq,
+                                        const RepackJobStatus& newStatus);
 
   // Update failure counters and status (overwrite values)
-  static uint64_t updateRepackRequestFailures(Transaction& txn,
-                                              const uint64_t reqId,
-                                              const uint64_t failedFilesToRetrieve,
-                                              const uint64_t failedBytesToRetrieve,
-                                              const uint64_t failedToCreateArchiveReq,
-                                              const RepackJobStatus newStatus);
+  static uint64_t updateRRRetrieveCreationFailures(Transaction& txn,
+                                                   const uint64_t reqId,
+                                                   const uint64_t failedFilesToRetrieve,
+                                                   const uint64_t failedBytesToRetrieve,
+                                                   const uint64_t failedToCreateArchiveReq);
 
   static uint64_t updateRepackRequestFailuresBatch(Transaction& txn,
                                                    const std::vector<uint64_t>& reqIds,

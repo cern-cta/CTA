@@ -453,7 +453,7 @@ private:
   void fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
                       [[maybe_unused]] SchedulerDatabase::PurposeGetMountInfo purpose,
                       log::LogContext& lc);
-  bool deleteDiskFiles(std::unordered_set<std::string>& jobSrcUrls, log::LogContext& lc);
+  bool deleteDiskFiles(const std::unordered_set<std::string>& jobSrcUrls, log::LogContext& lc);
   std::list<common::dataStructures::RepackInfo> fetchRepackInfo(const std::string& vid);
   std::string m_ownerId;
   mutable rdbms::ConnPool m_connPool;

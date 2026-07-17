@@ -606,7 +606,8 @@ void Scheduler::expandRepackRequest(const RepackRequest& repackRequest,
           //The buffer directory should be created if the --no-recall flag has been passed
           //So we throw an exception
           throw ExpandRepackRequestException("In Scheduler::expandRepackRequest(): the flag --no-recall is set but no "
-                                             "buffer directory has been created.");
+                                             "buffer directory has been created under path: "
+                                             + dirBufferURL.str());
         }
         dir->mkdir();
       }
@@ -674,6 +675,10 @@ void Scheduler::expandRepackRequest(const RepackRequest& repackRequest,
   }
 
   if (repackInfo.noRecall) {
+    // Here if we find the file in filesInDirectory also in the archiveFilesFromCatalogue we keep it,
+    // we remove all other files. By doing this we make sure, only the archive files we injected to disk are
+    // in the archiveFilesFromCatalogue. The code assumes the operator will use and filenames for the injected files
+    // the fseq of the tape file he wants to replace.
     archiveFilesFromCatalogue.remove_if(
       [&repackInfo, &filesInDirectory](const common::dataStructures::ArchiveFile& archiveFile) {
         //We remove all the elements that are not in the repack buffer so that we don't recall them

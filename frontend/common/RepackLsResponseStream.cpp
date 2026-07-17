@@ -60,8 +60,11 @@ void RepackLsResponseStream::collectRepacks(const std::optional<std::string>& vi
   for (const auto& repackRequest : repackList) {
     cta::xrd::Data data;
     auto repackRequestItem = data.mutable_rels_item();
-
-    uint64_t filesLeftToRetrieve = repackRequest.totalFilesToRetrieve - repackRequest.retrievedFiles;
+    // for no-recall repack filesLeftToRetrieve becomes negative and we need to set zero explicitly
+    uint64_t filesLeftToRetrieve = 0;
+    if (repackRequest.totalFilesToRetrieve != 0) {
+      filesLeftToRetrieve = repackRequest.totalFilesToRetrieve - repackRequest.retrievedFiles;
+    }
     uint64_t filesLeftToArchive = repackRequest.totalFilesToArchive - repackRequest.archivedFiles;
     uint64_t totalFilesToRetrieve = repackRequest.totalFilesToRetrieve;
     uint64_t totalFilesToArchive = repackRequest.totalFilesToArchive;

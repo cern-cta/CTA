@@ -390,6 +390,20 @@ build_deploy() {
   build_iteration_file=/tmp/.build_iteration
   if [[ "$skip_image_reload" == "false" ]]; then
     print_header "BUILDING CONTAINER IMAGE"
+    # Cleanup
+    if [[ ${image_cleanup} = true ]]; then
+      echo "Cleaning up unused images..."
+      ${container_runtime} image prune -f
+      if command -v minikube >/dev/null 2>&1; then
+        minikube ssh -- "${container_runtime} image prune -f" || true
+        # throws Error: command required for rootless mode with multiple IDs:
+        # exec: "newuidmap": executable file not found in $PATH
+      fi
+      if command -v k3s >/dev/null 2>&1; then
+        sudo /usr/local/bin/k3s crictl rmi --prune || true
+      fi
+    fi
+    # Determine tag
     if [[ "$upgrade_cta" == "false" ]]; then
       # Start with the tag dev-0
       local current_build_id=0
