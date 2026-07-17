@@ -1,0 +1,11 @@
+{
+  "typeCheckingMode": "strict",
+  "reportImplicitOverride": "error",
+  "reportUnusedCallResult": "error",
+  "reportMissingTypeArgument": "error",
+  "reportUnknownVariableType": "error",
+  "reportUnknownMemberType": "error",
+  "reportUnknownParameterType": "error",
+  "reportUnknownArgumentType": "error",
+  "reportUnknownReturnType": "error"
+}
