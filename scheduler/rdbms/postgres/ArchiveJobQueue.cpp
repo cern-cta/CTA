@@ -206,7 +206,7 @@ uint64_t ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const s
             THEN :STATUS_READY_FOR_REPORTING::ARCHIVE_JOB_STATUS
           ELSE :STATUS_WAIT_FOR_ALL_BEFORE_REPORT::ARCHIVE_JOB_STATUS
       END,
-      LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
+      LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
       FROM target_success_multicopy tsm
           LEFT JOIN ready_for_reporting_to_disk rfr
               ON rfr.ARCHIVE_REQUEST_ID = tsm.ARCHIVE_REQUEST_ID
@@ -247,7 +247,7 @@ uint64_t ArchiveJobQueueRow::updateJobStatus(Transaction& txn,
     return stmt1.getNbAffectedRows();
   }
   std::string sql = "UPDATE ARCHIVE_ACTIVE_QUEUE SET STATUS = :NEWSTATUS1::ARCHIVE_JOB_STATUS, ";
-  sql += "        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER WHERE JOB_ID IN (" + sqlpart + ")";
+  sql += "        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT WHERE JOB_ID IN (" + sqlpart + ")";
   auto stmt2 = txn.getConn().createStmt(sql);
   stmt2.bindString(":NEWSTATUS1", to_string(newStatus));
   stmt2.executeNonQuery();
@@ -393,7 +393,7 @@ uint64_t ArchiveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRepa
         RETRIES_WITHIN_MOUNT = :RETRIES_WITHIN_MOUNT,
         LAST_MOUNT_WITH_FAILURE = :LAST_MOUNT_WITH_FAILURE,
         FAILURE_LOG = FAILURE_LOG || :FAILURE_LOG,
-        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
+        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
   )SQL";
   // For multi copy requests what we do is that we update all copies irrespectively of their state
   // if the second job is still in processing on the drive (in ToTransfer state in the DB),
@@ -489,7 +489,7 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
        INSERT INTO MOUNT_QUEUE_LAST_FETCH (MOUNT_ID, LAST_UPDATE_TIME, QUEUE_TYPE)
          SELECT DISTINCT
            M.MOUNT_ID,
-           EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER,
+           EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT,
            :QUEUE_TYPE
          FROM MOVED_ROWS M
        ON CONFLICT (MOUNT_ID, QUEUE_TYPE)
@@ -830,7 +830,7 @@ uint64_t ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, Ar
         TOTAL_REPORT_RETRIES = :TOTAL_REPORT_RETRIES,
         IS_REPORTING =:IS_REPORTING,
         REPORT_FAILURE_LOG = :REPORT_FAILURE_LOG,
-        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
+        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
       WHERE JOB_ID = :JOB_ID
     )SQL";
   auto stmt = txn.getConn().createStmt(sql);
@@ -877,7 +877,7 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
         LIMIT :LIMIT FOR UPDATE SKIP LOCKED)
       UPDATE ARCHIVE_ACTIVE_QUEUE SET
         IS_REPORTING = TRUE,
-        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
+        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
       FROM SET_SELECTION
       WHERE ARCHIVE_ACTIVE_QUEUE.JOB_ID = SET_SELECTION.JOB_ID
       RETURNING ARCHIVE_ACTIVE_QUEUE.*

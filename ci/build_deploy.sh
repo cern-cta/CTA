@@ -320,7 +320,6 @@ build_deploy() {
     echo "Build successful"
   fi
 
-
   # =========================================================================
   # Build image
   # =========================================================================
@@ -333,6 +332,8 @@ build_deploy() {
       ${container_runtime} image prune -f
       if command -v minikube >/dev/null 2>&1; then
         minikube ssh -- "${container_runtime} image prune -f" || true
+        # throws Error: command required for rootless mode with multiple IDs:
+        # exec: "newuidmap": executable file not found in $PATH
       fi
       if command -v k3s >/dev/null 2>&1; then
         sudo /usr/local/bin/k3s crictl rmi --prune || true

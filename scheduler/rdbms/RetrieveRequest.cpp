@@ -35,11 +35,19 @@ std::unique_ptr<postgres::RetrieveJobQueueRow> RetrieveRequest::makeJobRow() con
   rjr->activity = m_activity;
 
   rjr->copyNb = m_actCopyNb;
-  rjr->status = RetrieveJobStatus::RJS_ToTransfer;
+  // The status is RetrieveJobStatus::RJS_ToTransfer, except for NO RECALL repack jobs
+  // for which the status will be directly reporting the job to get transformed to archival job.
+  rjr->status = m_status;
   rjr->vid = m_vid;
   rjr->fSeq = m_fSeq;
   rjr->blockId = m_blockId;
   rjr->mountPolicy = m_mountPolicyName;
+  // Tape Pool is used only for repack retrieve to ease the transition
+  // to the archival stage as we have this information at the start of repack already !
+  auto it = m_repackInfo.archiveRouteMap.find(m_actCopyNb);
+  if (it != m_repackInfo.archiveRouteMap.end()) {
+    rjr->tapePool = it->second;
+  }
   rjr->priority = m_priority;
   rjr->minRetrieveRequestAge = m_retrieveMinReqAge;
 
