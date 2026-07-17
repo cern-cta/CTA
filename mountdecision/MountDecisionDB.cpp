@@ -591,6 +591,34 @@ std::optional<ReservedMountCandidate> MountDecisionDB::tryReserveNextMountCandid
   return ret;
 }
 
+void MountDecisionDB::blockReservedMountCandidate(const uint64_t candidateId,
+                                                  const std::string& host,
+                                                  const std::string& drive,
+                                                  const std::string& reason) {
+  auto conn = m_connectionProvider.getConn();
+  const char* const sql = R"SQL(
+    UPDATE SCHEDULER_MOUNT_CANDIDATES SET
+      STATE = 'Blocked',
+      STATE_REASON = :STATE_REASON,
+      RESERVED_BY_HOST = NULL,
+      RESERVED_BY_DRIVE = NULL,
+      RESERVED_TIME = NULL,
+      RESERVATION_HEARTBEAT_TIME = NULL,
+      LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
+    WHERE
+      CANDIDATE_ID = :CANDIDATE_ID
+      AND STATE = 'Reserved'
+      AND RESERVED_BY_HOST = :RESERVED_BY_HOST
+      AND RESERVED_BY_DRIVE = :RESERVED_BY_DRIVE
+  )SQL";
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":STATE_REASON", reason);
+  stmt.bindUint64(":CANDIDATE_ID", candidateId);
+  stmt.bindString(":RESERVED_BY_HOST", host);
+  stmt.bindString(":RESERVED_BY_DRIVE", drive);
+  stmt.executeNonQuery();
+}
+
 void MountDecisionDB::releaseMountCandidate(const uint64_t candidateId,
                                             const std::string& host,
                                             const std::string& drive) {

@@ -82,6 +82,11 @@ public:
   std::optional<ReservedMountCandidate>
   tryReserveNextMountCandidate(const std::string& logicalLibrary, const std::string& host, const std::string& drive);
 
+  void blockReservedMountCandidate(uint64_t candidateId,
+                                   const std::string& host,
+                                   const std::string& drive,
+                                   const std::string& reason);
+
   void releaseMountCandidate(uint64_t candidateId, const std::string& host, const std::string& drive);
 
   void heartbeatMountCandidate(uint64_t candidateId, const std::string& host, const std::string& drive);

@@ -269,6 +269,49 @@ catalogue::TapeForWriting toTapeForWriting(const MountCandidate& candidate) {
   return ret;
 }
 
+std::optional<std::string> validateArchiveCandidate(const MountCandidate& candidate,
+                                                    const std::string& logicalLibraryName,
+                                                    catalogue::Catalogue& catalogue) {
+  const auto candidateVid = requireValue(candidate.vid, "VID");
+  const auto tapesForWriting = catalogue.Tape()->getTapesForWriting(logicalLibraryName);
+  const auto tapeIt = std::find_if(tapesForWriting.begin(), tapesForWriting.end(), [&candidateVid](const auto& tape) {
+    return tape.vid == candidateVid;
+  });
+  if (tapeIt == tapesForWriting.end()) {
+    return "Tape is no longer available for writing";
+  }
+  if (tapeIt->tapePool != candidate.tapePool) {
+    return "Tape no longer belongs to the candidate tapepool";
+  }
+  return std::nullopt;
+}
+
+std::optional<std::string> validateRetrieveCandidate(const MountCandidate& candidate,
+                                                     const std::string& logicalLibraryName,
+                                                     catalogue::Catalogue& catalogue) {
+  using Tape = common::dataStructures::Tape;
+
+  const auto candidateVid = requireValue(candidate.vid, "VID");
+  try {
+    const auto tapes = catalogue.Tape()->getTapesByVid(candidateVid);
+    const auto tapeIt = tapes.find(candidateVid);
+    if (tapeIt == tapes.end()) {
+      return "Tape no longer exists";
+    }
+
+    const auto& tape = tapeIt->second;
+    if (tape.logicalLibraryName != logicalLibraryName) {
+      return "Tape no longer belongs to the requested logical library";
+    }
+    if (tape.state != Tape::ACTIVE && tape.state != Tape::REPACKING) {
+      return "Tape state is " + Tape::stateToString(tape.state);
+    }
+  } catch (const catalogue::TapeNotFound&) {
+    return "Tape no longer exists";
+  }
+  return std::nullopt;
+}
+
 std::vector<common::dataStructures::LogicalLibrary> getEnabledLogicalLibraries(catalogue::Catalogue& catalogue) {
   std::set<std::string, std::less<>> disabledPhysicalLibraries;
   for (const auto& physicalLibrary : catalogue.PhysicalLibrary()->getPhysicalLibraries()) {
@@ -841,48 +884,72 @@ std::optional<ReservedTapeMount> MountDecision::getNextMount(const std::string& 
 
   auto mountInfo = m_schedulerDb.getMountInfo(std::optional<std::string_view>(logicalLibraryName), lc, timeout_us);
 
-  auto reservedCandidate = m_db->tryReserveNextMountCandidate(logicalLibraryName, host, driveName);
-  if (!reservedCandidate.has_value()) {
-    lc.log(log::DEBUG, "In MountDecision::getNextMount(): No available mount candidate found.");
-    return std::nullopt;
-  }
-
-  try {
-    auto potentialMount = toPotentialMount(reservedCandidate->candidate);
-
-    ReservedTapeMount ret;
-    ret.candidateId = reservedCandidate->candidateId;
-
-    if (common::dataStructures::getMountBasicType(potentialMount.type)
-        == common::dataStructures::MountType::ArchiveAllTypes) {
-      auto tape = toTapeForWriting(reservedCandidate->candidate);
-      std::unique_ptr<ArchiveMount> archiveMount(
-        new ArchiveMount(scheduler.getCatalogue(),
-                         mountInfo->createArchiveMount(potentialMount, tape, driveName, logicalLibraryName, host)));
-      archiveMount->m_sessionRunning = true;
-      ret.mount = std::move(archiveMount);
-    } else if (potentialMount.type == common::dataStructures::MountType::Retrieve) {
-      std::unique_ptr<RetrieveMount> retrieveMount(
-        new RetrieveMount(scheduler.getCatalogue(),
-                          mountInfo->createRetrieveMount(potentialMount, driveName, logicalLibraryName, host)));
-      retrieveMount->m_sessionRunning = true;
-      retrieveMount->m_diskRunning = true;
-      retrieveMount->m_tapeRunning = true;
-      ret.mount = std::move(retrieveMount);
-    } else {
-      throw exception::Exception("In MountDecision::getNextMount(): unexpected mount type.");
+  while (true) {
+    auto reservedCandidate = m_db->tryReserveNextMountCandidate(logicalLibraryName, host, driveName);
+    if (!reservedCandidate.has_value()) {
+      lc.log(log::DEBUG, "In MountDecision::getNextMount(): No available mount candidate found.");
+      return std::nullopt;
     }
 
-    log::ScopedParamContainer params(lc);
-    params.add("mountDecisionCandidateId", reservedCandidate->candidateId)
-      .add("tapeVid", ret.mount->getVid())
-      .add("mountType", common::dataStructures::toCamelCaseString(ret.mount->getMountType()))
-      .add("mountDecisionCandidateRank", reservedCandidate->candidate.candidateRank);
-    lc.log(log::INFO, "In MountDecision::getNextMount(): Reserved mount candidate.");
-    return ret;
-  } catch (...) {
-    m_db->releaseMountCandidate(reservedCandidate->candidateId, host, driveName);
-    throw;
+    try {
+      auto potentialMount = toPotentialMount(reservedCandidate->candidate);
+
+      const auto basicMountType = common::dataStructures::getMountBasicType(potentialMount.type);
+      std::optional<std::string> blockedReason;
+      if (basicMountType == common::dataStructures::MountType::ArchiveAllTypes) {
+        blockedReason =
+          validateArchiveCandidate(reservedCandidate->candidate, logicalLibraryName, scheduler.getCatalogue());
+      } else if (potentialMount.type == common::dataStructures::MountType::Retrieve) {
+        blockedReason =
+          validateRetrieveCandidate(reservedCandidate->candidate, logicalLibraryName, scheduler.getCatalogue());
+      } else {
+        throw exception::Exception("In MountDecision::getNextMount(): unexpected mount type.");
+      }
+
+      if (blockedReason.has_value()) {
+        m_db->blockReservedMountCandidate(reservedCandidate->candidateId, host, driveName, blockedReason.value());
+
+        log::ScopedParamContainer params(lc);
+        params.add("mountDecisionCandidateId", reservedCandidate->candidateId)
+          .add("tapeVid", reservedCandidate->candidate.vid.value_or(""))
+          .add("mountType", common::dataStructures::toCamelCaseString(reservedCandidate->candidate.mountType))
+          .add("mountDecisionCandidateRank", reservedCandidate->candidate.candidateRank)
+          .add("mountDecisionBlockedReason", blockedReason.value());
+        lc.log(log::INFO, "In MountDecision::getNextMount(): Blocked stale reserved mount candidate.");
+        continue;
+      }
+
+      ReservedTapeMount ret;
+      ret.candidateId = reservedCandidate->candidateId;
+
+      if (basicMountType == common::dataStructures::MountType::ArchiveAllTypes) {
+        auto tape = toTapeForWriting(reservedCandidate->candidate);
+        std::unique_ptr<ArchiveMount> archiveMount(
+          new ArchiveMount(scheduler.getCatalogue(),
+                           mountInfo->createArchiveMount(potentialMount, tape, driveName, logicalLibraryName, host)));
+        archiveMount->m_sessionRunning = true;
+        ret.mount = std::move(archiveMount);
+      } else if (potentialMount.type == common::dataStructures::MountType::Retrieve) {
+        std::unique_ptr<RetrieveMount> retrieveMount(
+          new RetrieveMount(scheduler.getCatalogue(),
+                            mountInfo->createRetrieveMount(potentialMount, driveName, logicalLibraryName, host)));
+        retrieveMount->m_sessionRunning = true;
+        retrieveMount->m_diskRunning = true;
+        retrieveMount->m_tapeRunning = true;
+        ret.mount = std::move(retrieveMount);
+      }
+
+      log::ScopedParamContainer params(lc);
+      params.add("mountDecisionCandidateId", reservedCandidate->candidateId)
+        .add("tapeVid", ret.mount->getVid())
+        .add("mountType", common::dataStructures::toCamelCaseString(ret.mount->getMountType()))
+        .add("mountDecisionCandidateRank", reservedCandidate->candidate.candidateRank);
+      lc.log(log::INFO, "In MountDecision::getNextMount(): Reserved mount candidate.");
+      return ret;
+    } catch (...) {
+      m_db->releaseMountCandidate(reservedCandidate->candidateId, host, driveName);
+      throw;
+    }
   }
 }
 
