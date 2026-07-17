@@ -5,10 +5,18 @@ import json
 import time
 from typing import Callable
 
+import pytest
+
 CANDIDATE_TIMEOUT_SECS = 60
 TEST_STATE_CHANGE_REASON = "system test mount candidate listing"
 ARCHIVE_MOUNT = "ARCHIVE"
 RETRIEVE_MOUNT = "RETRIEVE"
+
+
+@pytest.fixture
+def stage_request_credentials(eos_client, krb5_realm) -> None:
+    eos_client.exec("mkdir -p /tmp/poweruser1")
+    eos_client.exec(f"KRB5CCNAME=/tmp/poweruser1/krb5cc_0 kinit -kt /root/poweruser1.keytab poweruser1@{krb5_realm}")
 
 
 def candidate_int(candidate: dict, key: str) -> int:
@@ -168,7 +176,9 @@ def test_archive_mount_candidate_blocked_when_tapes_are_disabled(eos_client, cta
         cta_cli.set_all_drives_up()
 
 
-def test_retrieve_mount_candidate_available(eos_client, cta_cli, test_dir, disk_instance_name):
+def test_retrieve_mount_candidate_available(
+    eos_client, cta_cli, test_dir, disk_instance_name, stage_request_credentials
+):
     file_path = None
     try:
         restore_initial_mount_candidate_state(cta_cli)
