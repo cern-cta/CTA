@@ -90,7 +90,7 @@ def write_tape_file(cta_rmcd, drive_device: str, input_path: str, block_size: in
             wait_for_device_ready(cta_rmcd, drive_device)
             return
 
-        print(f"Failed to write {description} to {drive_device} " f"(attempt {attempt}/5), waiting for mhvtl to settle")
+        print(f"Failed to write {description} to {drive_device} (attempt {attempt}/5), waiting for mhvtl to settle")
         if last_result.stderr:
             print(last_result.stderr.rstrip())
         time.sleep(2)
@@ -112,9 +112,7 @@ def read_tape_file(cta_rmcd, drive_device: str, output_path: str, block_size: in
         if last_result.success:
             return
 
-        print(
-            f"Failed to read {description} from {drive_device} " f"(attempt {attempt}/5), waiting for mhvtl to settle"
-        )
+        print(f"Failed to read {description} from {drive_device} (attempt {attempt}/5), waiting for mhvtl to settle")
         if last_result.stderr:
             print(last_result.stderr.rstrip())
         time.sleep(2)
@@ -140,8 +138,7 @@ def space_filemarks_forward(cta_rmcd, drive_device: str, count: int, description
             return
 
         print(
-            f"Failed to position to {description} on {drive_device} "
-            f"(attempt {attempt}/5), waiting for mhvtl to settle"
+            f"Failed to position to {description} on {drive_device} (attempt {attempt}/5), waiting for mhvtl to settle"
         )
         if last_result.stderr:
             print(last_result.stderr.rstrip())

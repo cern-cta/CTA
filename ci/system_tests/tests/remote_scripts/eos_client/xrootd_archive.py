@@ -145,8 +145,7 @@ def main():
     # os.environ.setdefault("XRD_LOGLEVEL", "Error")
 
     print(
-        f"xrootd_archive: {args.num_files} files, {args.num_dirs} dirs, "
-        f"{args.num_procs} procs, {args.file_size}B each",
+        f"xrootd_archive: {args.num_files} files, {args.num_dirs} dirs, {args.num_procs} procs, {args.file_size}B each",
         flush=True,
     )
     print(f"  dest: {args.dest_dir}", flush=True)

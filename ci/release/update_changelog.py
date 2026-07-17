@@ -156,7 +156,6 @@ def add_mr_review_comment(
 # ------------------------------------------------------------------------------
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description="Tool that checks which commits will end up in the changelog")
     # The reason for not including the "from" commit in the changelog is consistency with the gitlab api:
     # https://docs.gitlab.com/ee/api/repositories.html

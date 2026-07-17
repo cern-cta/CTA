@@ -23,7 +23,6 @@ class DiskInstanceImplementation(Enum):
 
 
 class DiskInstanceHost(RemoteHost):
-
     @cached_property
     def implementation(self) -> DiskInstanceImplementation: ...
 
