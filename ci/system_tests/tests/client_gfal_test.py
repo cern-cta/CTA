@@ -168,9 +168,9 @@ def test_gfal_activity_ends_up_in_eos_report(eos_client, eos_mgm, disk_instance_
 
     assert valid_line, f"Missing log line for {valid_instance_file}"
 
-    assert (
-        "&activity=CTA-Test-HTTP-CI-TEST-activity-passing&" in valid_line
-    ), f"Activity not set correctly for valid instance: {valid_line}"
+    assert "&activity=CTA-Test-HTTP-CI-TEST-activity-passing&" in valid_line, (
+        f"Activity not set correctly for valid instance: {valid_line}"
+    )
 
     # Check that activity is NOT set for staging of file with invalid instance name
     invalid_line = find_line(content, "event=stage", invalid_instance_file)

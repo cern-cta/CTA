@@ -51,16 +51,16 @@ def catalogue_updater(namespace):
 
 
 def test_multiple_versions_supported(project_json):
-    assert (
-        len(project_json["supportedCatalogueVersions"]) > 1
-    ), "In order to test a catalogue schema update, CTA must be compatible with at least 2 catalogue schema versions"
+    assert len(project_json["supportedCatalogueVersions"]) > 1, (
+        "In order to test a catalogue schema update, CTA must be compatible with at least 2 catalogue schema versions"
+    )
 
 
 def test_catalogue_version_is_from_version(cta_admin_api, catalogue_from_version):
     # First check the current version is equal to the "from" version
-    assert (
-        cta_admin_api.get_schema_version() == catalogue_from_version
-    ), 'Catalogue version should be equal to the "from" version before any updates'
+    assert cta_admin_api.get_schema_version() == catalogue_from_version, (
+        'Catalogue version should be equal to the "from" version before any updates'
+    )
 
 
 def test_init_catalogue_updater(
@@ -121,18 +121,18 @@ def test_liquibase_update(cta_admin_api, catalogue_updater, catalogue_to_version
     catalogue_updater.exec("/launch_liquibase.sh update")
 
     # Now the current version should be equal to the "to" version
-    assert (
-        cta_admin_api.get_schema_version() == catalogue_to_version
-    ), 'Catalogue version should be equal to the "to" version after rollback'
+    assert cta_admin_api.get_schema_version() == catalogue_to_version, (
+        'Catalogue version should be equal to the "to" version after rollback'
+    )
     cta_admin_api.verify_schema()
 
 
 def test_liquibase_rollback(cta_admin_api, catalogue_updater, catalogue_from_version):
     catalogue_updater.exec('/launch_liquibase.sh "rollback --tag=test_update"')
     # Check the current version is equal to the "from" version again
-    assert (
-        cta_admin_api.get_schema_version() == catalogue_from_version
-    ), 'Catalogue version should be equal to the "from" version after rollback'
+    assert cta_admin_api.get_schema_version() == catalogue_from_version, (
+        'Catalogue version should be equal to the "from" version after rollback'
+    )
     cta_admin_api.verify_schema()
 
 

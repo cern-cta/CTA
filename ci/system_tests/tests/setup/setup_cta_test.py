@@ -69,11 +69,9 @@ def test_register_logical_libraries_in_catalogue(env, cta_cli):
     for lib in library_devices_in_use:
         print(f"  - {lib}")
     for logical_library_name in logical_library_names_in_use:
-        add_ll_cmd: str = (
-            f'cta-admin logicallibrary add \
+        add_ll_cmd: str = f'cta-admin logicallibrary add \
                                 --name {logical_library_name} \
                                 --comment "ctasystest logical library {logical_library_name} was registered in the catalogue"'
-        )
         cta_cli.exec(add_ll_cmd)
 
 
@@ -90,8 +88,7 @@ def test_register_tapes_per_logical_library_in_catalogue(env, cta_cli):
 
     for idx, tape in enumerate(tapes):
         logical_library: str = logical_library_names_in_use[idx % len(logical_library_names_in_use)]
-        add_tape_cmd: str = (
-            f"cta-admin tape add \
+        add_tape_cmd: str = f"cta-admin tape add \
                                 --mediatype LTO8 \
                                 --purchaseorder order \
                                 --vendor vendor \
@@ -100,7 +97,6 @@ def test_register_tapes_per_logical_library_in_catalogue(env, cta_cli):
                                 --vid {tape} \
                                 --full false \
                                 --comment ctasystest"
-        )
         cta_cli.exec(add_tape_cmd)
 
 

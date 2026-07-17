@@ -15,7 +15,6 @@ from ..utils.timeout import Timeout
 
 
 class K8sConnection(RemoteConnection):
-
     def __init__(self, namespace: str, label_selector: str, container: str, ordinal: int):
         assert len(container) > 1
         super().__init__()
@@ -195,7 +194,7 @@ class K8sConnection(RemoteConnection):
 
         if self.ordinal >= len(pods):
             raise RuntimeError(
-                f"Expected at least {self.ordinal + 1} pod(s) matching " f'"{self.label_selector}", found {len(pods)}'
+                f'Expected at least {self.ordinal + 1} pod(s) matching "{self.label_selector}", found {len(pods)}'
             )
 
         return pods[self.ordinal]

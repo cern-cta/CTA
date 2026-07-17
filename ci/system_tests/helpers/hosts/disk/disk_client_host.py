@@ -9,7 +9,6 @@ from ..remote_host import RemoteHost
 
 
 class DiskClientHost(RemoteHost):
-
     def is_file_on_tape_only(self, disk_instance_name: str, path: str) -> bool: ...
 
     def is_file_on_tape(self, disk_instance_name: str, path: str) -> bool: ...

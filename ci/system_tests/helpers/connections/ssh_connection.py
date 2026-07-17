@@ -10,7 +10,6 @@ from .remote_connection import ExecResult, RemoteConnection
 
 
 class SSHConnection(RemoteConnection):
-
     def __init__(self, host: str, user: str):
         super().__init__()
         self.host = host
@@ -57,7 +56,7 @@ class SSHConnection(RemoteConnection):
         self.exec("reboot now", throw_on_failure=throw_on_failure)
 
     def is_up(self) -> bool:
-        cmd = f"ssh -o BatchMode=yes " f"-o ConnectTimeout=2 " f"{self.user}@{self.host} true"
+        cmd = f"ssh -o BatchMode=yes -o ConnectTimeout=2 {self.user}@{self.host} true"
         result = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return result.returncode == 0
 

@@ -397,10 +397,10 @@ def test_cta_admin_drive(cta_cli, cta_taped):
     cta_taped.restart(wait_for_restart=True)
     # Until taped gets a correct readiness probe, we need this to ensure the drive registers itself in the catalogue. Ideally this is more deterministic...
     wait_for_condition(
-        lambda: cta_cli.exec_with_output(
-            f"cta-admin --json dr ls {dr_name} | jq -r '.[].reason'", throw_on_failure=False
+        lambda: (
+            cta_cli.exec_with_output(f"cta-admin --json dr ls {dr_name} | jq -r '.[].reason'", throw_on_failure=False)
+            == "[cta-taped] INFO Startup"
         )
-        == "[cta-taped] INFO Startup"
     )
     cta_cli.set_all_drives_up(wait=True)
     # Since dr ls has things like "time since" in its output, we need to filter certain keys
@@ -709,9 +709,12 @@ def test_cta_admin_archive_route(cta_cli, disk_instance_name):
 
     ls_before = cta_cli.exec_with_output("cta-admin --json ar ls")
 
-    with TempVirtualOrganization(cta_cli, vo_name, disk_instance_name), TempStorageClass(
-        cta_cli, sc_name, vo_name
-    ), TempTapePool(cta_cli, tp1_name, vo_name), TempTapePool(cta_cli, tp2_name, vo_name):
+    with (
+        TempVirtualOrganization(cta_cli, vo_name, disk_instance_name),
+        TempStorageClass(cta_cli, sc_name, vo_name),
+        TempTapePool(cta_cli, tp1_name, vo_name),
+        TempTapePool(cta_cli, tp2_name, vo_name),
+    ):
         # Create
         cta_cli.exec(f"cta-admin ar add -s {sc_name} -c 2 --art DEFAULT -t {tp1_name} -m 'Create {sc_name}'")
         try:
@@ -914,12 +917,13 @@ def test_cta_admin_repack(cta_cli, disk_instance_name):
 
     # Note that the goal is not to do an actual repack workflow (that is what the repack tests are for)
     # This is why the repack expand and repack reporting routines should be disabled for this to (reliably) pass
-    with TempVirtualOrganization(cta_cli, vo_name, disk_instance_name, "--isrepackvo true"), TempMountPolicy(
-        cta_cli, "repack_ctasystest"
-    ), TempPhysicalLibrary(cta_cli, pl_name), TempLogicalLibrary(cta_cli, ll_name, pl_name), TempTapePool(
-        cta_cli, tp_name, vo_name
-    ), TempTape(
-        cta_cli, vid, ll_name, tp_name
+    with (
+        TempVirtualOrganization(cta_cli, vo_name, disk_instance_name, "--isrepackvo true"),
+        TempMountPolicy(cta_cli, "repack_ctasystest"),
+        TempPhysicalLibrary(cta_cli, pl_name),
+        TempLogicalLibrary(cta_cli, ll_name, pl_name),
+        TempTapePool(cta_cli, tp_name, vo_name),
+        TempTape(cta_cli, vid, ll_name, tp_name),
     ):
         cta_cli.exec(f"cta-admin ta ch -v {vid} -f true")
         ta_full = cta_cli.get_single_ls_item("ta ls --all", lambda x: x["vid"] == vid)

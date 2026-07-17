@@ -106,7 +106,7 @@ def generate_report(commits: list[Commit], verbose: bool) -> dict[str, list[str]
 
 # ------------------------------------------------------------------------------
 def divider() -> str:
-    return f"\n{'-'*42}\n"
+    return f"\n{'-' * 42}\n"
 
 
 def header(title: str, markdown: bool) -> str:
@@ -197,7 +197,6 @@ def commit_list_summary(commits: list[Commit]) -> str:
 # ------------------------------------------------------------------------------
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description="Tool that checks which commits will end up in the changelog")
     # The reason for not including this commit in the changelog is consistency with the gitlab api:
     # https://docs.gitlab.com/ee/api/repositories.html

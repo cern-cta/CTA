@@ -13,7 +13,6 @@ class ExecResult:
 
 
 class RemoteConnection(Protocol):
-
     @property
     def name(self) -> str: ...
 

@@ -133,9 +133,9 @@ def test_eos_xrootd_api_fts_compliance(eos_mgm):
         pytest.fail(f"Failed to parse compliant JSON out of xrdfs output. Error: {e}. Output: {query_output}")
 
     # Both the order and elements must match exactly
-    assert (
-        input_paths == output_paths
-    ), "FTS Compliance Failed! The xrdfs query prepare did not maintain the original request sequence."
+    assert input_paths == output_paths, (
+        "FTS Compliance Failed! The xrdfs query prepare did not maintain the original request sequence."
+    )
 
     print("xrootd_API capabilities: SUCCESS")
 
@@ -358,9 +358,9 @@ def test_retrieve_queue_cleanup(eos_mgm, eos_client, cta_cli, test_dir, cta_stor
         cta_cli.exec(f"cta-admin sc add -n {sc_name} -c {copynb} --vo {vo_name} -m 'Add temp storage class'")
 
         for j in range(copynb):
-            print(f"Creating AR {sc_name}, {tp_names[j]}, {j+1}")
+            print(f"Creating AR {sc_name}, {tp_names[j]}, {j + 1}")
             cta_cli.exec(
-                f"cta-admin archiveroute add --storageclass '{sc_name}' --tapepool {tp_names[j]} --copynb {j+1} -m 'Add temp archive route'"
+                f"cta-admin archiveroute add --storageclass '{sc_name}' --tapepool {tp_names[j]} --copynb {j + 1} -m 'Add temp archive route'"
             )
 
     # The actual test

@@ -9,7 +9,6 @@ Commit = dict[str, Any]
 
 
 class GitLabAPI:
-
     gitlab_url: str
     project_id: str
     api_token: str
