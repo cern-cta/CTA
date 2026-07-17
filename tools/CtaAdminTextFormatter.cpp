@@ -711,7 +711,7 @@ void TextFormatter::printShowQueuesHeader() {
 
 void TextFormatter::printMountCandidateLsHeader() {
   push_back("HEADER");
-  push_back("rank",
+  push_back("score",
             "state",
             "type",
             "instance",
@@ -733,7 +733,7 @@ void TextFormatter::print(const MountCandidateLsItem& mcls_item) {
     reservedBy = mcls_item.reserved_by_host() + ":" + mcls_item.reserved_by_drive();
   }
 
-  push_back(mcls_item.candidate_rank(),
+  push_back(mcls_item.candidate_score(),
             mcls_item.state(),
             toCamelCaseString(ProtobufToMountType(mcls_item.mount_type())),
             mcls_item.instance_name(),
