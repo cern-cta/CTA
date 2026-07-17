@@ -76,7 +76,7 @@ cta::xrd::Data MountCandidateLsResponseStream::next() {
   mclsItem->set_oldest_job_start_time(candidate.oldestJobStartTime);
   mclsItem->set_youngest_job_start_time(candidate.youngestJobStartTime);
   mclsItem->set_ratio_of_mount_quota_used(candidate.ratioOfMountQuotaUsed);
-  mclsItem->set_candidate_rank(candidate.candidateRank);
+  mclsItem->set_candidate_score(candidate.candidateScore);
   mclsItem->set_media_type(candidate.mediaType);
   mclsItem->set_label_format(candidate.labelFormat);
   mclsItem->set_vendor(candidate.vendor);

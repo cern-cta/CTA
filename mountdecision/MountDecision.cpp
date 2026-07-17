@@ -73,7 +73,7 @@ struct MountInfoForDecision {
 };
 
 struct CandidateRow {
-  // Intermediate row before the final global ranking. Archive potentials can
+  // Intermediate row before the final global ordering. Archive potentials can
   // expand into several rows, one per writable tape that still fits the
   // simulated mount limits.
   CandidatePotential potential;
@@ -174,26 +174,33 @@ std::optional<catalogue::TapeForWriting> takeNextTapeForWriting(std::vector<cata
   return ret;
 }
 
-bool candidateLess(const CandidatePotential& lhs, const CandidatePotential& rhs) {
-  return lhs.mount < rhs.mount;
+uint64_t calculateCandidateScore(const SchedulerDatabase::PotentialMount& mount) {
+  constexpr uint64_t c_priorityFactor = 10;
+  constexpr uint64_t c_archiveForUserBonus = 1;
+
+  uint64_t score = mount.priority * c_priorityFactor;
+  if (mount.type == common::dataStructures::MountType::ArchiveForUser) {
+    score += c_archiveForUserBonus;
+  }
+  return score;
 }
 
-bool candidateRowLess(const CandidateRow& lhs, const CandidateRow& rhs) {
-  if (lhs.potential.mount < rhs.potential.mount) {
-    return true;
+bool candidateRefreshOrderLess(const CandidatePotential& lhs, const CandidatePotential& rhs) {
+  const uint64_t lhsScore = calculateCandidateScore(lhs.mount);
+  const uint64_t rhsScore = calculateCandidateScore(rhs.mount);
+  if (lhsScore != rhsScore) {
+    return lhsScore > rhsScore;
   }
-  if (rhs.potential.mount < lhs.potential.mount) {
-    return false;
+  if (lhs.mount.oldestJobStartTime != rhs.mount.oldestJobStartTime) {
+    return lhs.mount.oldestJobStartTime < rhs.mount.oldestJobStartTime;
   }
-  if (lhs.logicalLibrary < rhs.logicalLibrary) {
-    return false;
+  if (lhs.mount.filesQueued != rhs.mount.filesQueued) {
+    return lhs.mount.filesQueued > rhs.mount.filesQueued;
   }
-  if (lhs.logicalLibrary > rhs.logicalLibrary) {
-    return true;
+  if (lhs.mount.bytesQueued != rhs.mount.bytesQueued) {
+    return lhs.mount.bytesQueued > rhs.mount.bytesQueued;
   }
-  const auto lhsVid = lhs.tape.has_value() ? lhs.tape->vid : lhs.potential.mount.vid;
-  const auto rhsVid = rhs.tape.has_value() ? rhs.tape->vid : rhs.potential.mount.vid;
-  return lhsVid > rhsVid;
+  return false;
 }
 
 std::optional<std::string> optionalNonEmpty(const std::string& value) {
@@ -336,12 +343,13 @@ std::vector<common::dataStructures::LogicalLibrary> getEnabledLogicalLibraries(c
 
 // Intentionally adapted from Scheduler::sortAndGetTapesForMountInfo() while
 // the current taped getNextMount() path remains in place.
-MountInfoForDecision sortAndGetTapesForMountInfo(const std::vector<SchedulerDatabase::PotentialMount>& potentialMounts,
-                                                 const std::vector<SchedulerDatabase::ExistingMount>& existingMounts,
-                                                 const std::string& logicalLibraryName,
-                                                 Scheduler& scheduler,
-                                                 catalogue::Catalogue& catalogue,
-                                                 log::LogContext& lc) {
+MountInfoForDecision
+prepareMountCandidatesForLogicalLibrary(const std::vector<SchedulerDatabase::PotentialMount>& potentialMounts,
+                                        const std::vector<SchedulerDatabase::ExistingMount>& existingMounts,
+                                        const std::string& logicalLibraryName,
+                                        Scheduler& scheduler,
+                                        catalogue::Catalogue& catalogue,
+                                        log::LogContext& lc) {
   utils::Timer timer;
   MountInfoForDecision ret;
   auto workingPotentialMounts = potentialMounts;
@@ -423,7 +431,8 @@ MountInfoForDecision sortAndGetTapesForMountInfo(const std::vector<SchedulerData
       log::ScopedParamContainer params(lc);
       params.add("tapeVid", vid);
       lc.log(log::ERR,
-             "In MountDecision::sortAndGetTapesForMountInfo(): empty tape pool string found on potential mounts.");
+             "In MountDecision::prepareMountCandidatesForLogicalLibrary(): empty tape pool string found on potential "
+             "mounts.");
     }
   }
 
@@ -444,7 +453,8 @@ MountInfoForDecision sortAndGetTapesForMountInfo(const std::vector<SchedulerData
       log::ScopedParamContainer params(lc);
       params.add("drive", drive);
       lc.log(log::ERR,
-             "In MountDecision::sortAndGetTapesForMountInfo(): empty tape pool string found on existing mount.");
+             "In MountDecision::prepareMountCandidatesForLogicalLibrary(): empty tape pool string found on existing "
+             "mount.");
     }
   }
 
@@ -464,7 +474,7 @@ MountInfoForDecision sortAndGetTapesForMountInfo(const std::vector<SchedulerData
       log::ScopedParamContainer params(lc);
       params.add("ignoredDrive", ignoredDriveName);
       lc.log(log::ERR,
-             "In MountDecision::sortAndGetTapesForMountInfo(): found a drive without SchedulerBackendName "
+             "In MountDecision::prepareMountCandidatesForLogicalLibrary(): found a drive without SchedulerBackendName "
              "configuration. Ignoring drive.");
     }
   }
@@ -511,7 +521,8 @@ MountInfoForDecision sortAndGetTapesForMountInfo(const std::vector<SchedulerData
         .add("mountType", common::dataStructures::toCamelCaseString(em.type))
         .add("drive", em.driveName);
       lc.log(log::ERR,
-             "In MountDecision::sortAndGetTapesForMountInfo(): existing repack mount found while there is no "
+             "In MountDecision::prepareMountCandidatesForLogicalLibrary(): existing repack mount found while there is "
+             "no "
              "default repack VO defined.");
       continue;
     }
@@ -575,9 +586,6 @@ MountInfoForDecision sortAndGetTapesForMountInfo(const std::vector<SchedulerData
 
   ret.voNameVoMap = std::move(voNameVoMap);
 
-  std::sort(ret.potentialMounts.begin(), ret.potentialMounts.end(), candidateLess);
-  std::reverse(ret.potentialMounts.begin(), ret.potentialMounts.end());
-
   const bool anyArchive = std::any_of(ret.potentialMounts.cbegin(), ret.potentialMounts.cend(), [](const auto& m) {
     return common::dataStructures::getMountBasicType(m.mount.type)
            == common::dataStructures::MountType::ArchiveAllTypes;
@@ -599,7 +607,6 @@ MountInfoForDecision sortAndGetTapesForMountInfo(const std::vector<SchedulerData
 }
 
 MountCandidate makeRetrieveCandidate(const CandidatePotential& potential,
-                                     uint64_t rank,
                                      const std::optional<std::string>& blockedReason,
                                      const std::string& owner) {
   const auto& m = potential.mount;
@@ -617,7 +624,7 @@ MountCandidate makeRetrieveCandidate(const CandidatePotential& potential,
   candidate.oldestJobStartTime = static_cast<uint64_t>(m.oldestJobStartTime);
   candidate.youngestJobStartTime = static_cast<uint64_t>(m.youngestJobStartTime);
   candidate.ratioOfMountQuotaUsed = m.ratioOfMountQuotaUsed;
-  candidate.candidateRank = rank;
+  candidate.candidateScore = calculateCandidateScore(m);
   candidate.mediaType = m.mediaType;
   candidate.labelFormat = labelFormatValue(m.labelFormat);
   candidate.vendor = m.vendor;
@@ -633,7 +640,6 @@ MountCandidate makeRetrieveCandidate(const CandidatePotential& potential,
 MountCandidate makeArchiveCandidate(const CandidatePotential& potential,
                                     const catalogue::TapeForWriting* tape,
                                     const std::string& logicalLibrary,
-                                    uint64_t rank,
                                     const std::optional<std::string>& blockedReason,
                                     const std::string& owner) {
   const auto& m = potential.mount;
@@ -651,7 +657,7 @@ MountCandidate makeArchiveCandidate(const CandidatePotential& potential,
   candidate.oldestJobStartTime = static_cast<uint64_t>(m.oldestJobStartTime);
   candidate.youngestJobStartTime = static_cast<uint64_t>(m.youngestJobStartTime);
   candidate.ratioOfMountQuotaUsed = m.ratioOfMountQuotaUsed;
-  candidate.candidateRank = rank;
+  candidate.candidateScore = calculateCandidateScore(m);
   candidate.mediaType = tape != nullptr ? tape->mediaType : m.mediaType;
   candidate.labelFormat = tape != nullptr ? labelFormatValue(tape->labelFormat) : labelFormatValue(m.labelFormat);
   candidate.vendor = tape != nullptr ? tape->vendor : m.vendor;
@@ -739,19 +745,20 @@ bool MountDecision::refreshMountCandidates(const std::string& owner, Scheduler& 
     auto& catalogue = scheduler.getCatalogue();
     for (const auto& logicalLibrary : getEnabledLogicalLibraries(catalogue)) {
       // The old getNextMount() logic evaluates one logical library at a time.
-      // Keep that separation here, then merge all rows into a single ranked list for
+      // Keep that separation here, then merge all rows into a single ordered list for
       // taped processes to reserve from.
       // TODO: Physical resources are not shared between logical libraries.
       //       Therefore, an easy way to parallelize this algorithm is by splitting it by logical library.
-      auto prepared = sortAndGetTapesForMountInfo(mountInfo->potentialMounts,
-                                                  mountInfo->existingOrNextMounts,
-                                                  logicalLibrary.name,
-                                                  scheduler,
-                                                  catalogue,
-                                                  lc);
+      auto prepared = prepareMountCandidatesForLogicalLibrary(mountInfo->potentialMounts,
+                                                              mountInfo->existingOrNextMounts,
+                                                              logicalLibrary.name,
+                                                              scheduler,
+                                                              catalogue,
+                                                              lc);
       auto simulatedExistingMountsPerTapepool = prepared.existingMountsDistinctTypeSummaryPerTapepool;
       auto simulatedExistingMountsPerVo = prepared.existingMountsBasicTypeSummaryPerVo;
       auto tapesForWriting = prepared.tapesForWriting;
+      std::stable_sort(prepared.potentialMounts.begin(), prepared.potentialMounts.end(), candidateRefreshOrderLess);
       for (const auto& potential : prepared.potentialMounts) {
         std::optional<std::string> blockedReason = potential.blockedReason;
         const auto basicType = common::dataStructures::getMountBasicType(potential.mount.type);
@@ -801,47 +808,21 @@ bool MountDecision::refreshMountCandidates(const std::string& owner, Scheduler& 
       }
     }
 
-    std::sort(candidateRows.begin(), candidateRows.end(), candidateRowLess);
-    std::reverse(candidateRows.begin(), candidateRows.end());
-
     std::vector<MountCandidate> candidates;
     candidates.reserve(candidateRows.size());
-    std::set<std::string, std::less<>> selectedVids;
-    uint64_t candidateRank = 1;
     for (const auto& row : candidateRows) {
       auto blockedReason = row.blockedReason;
       const auto basicType = common::dataStructures::getMountBasicType(row.potential.mount.type);
-      std::optional<std::string> candidateVid;
-      if (basicType == common::dataStructures::MountType::Retrieve) {
-        candidateVid = optionalNonEmpty(row.potential.mount.vid);
-      } else if (row.tape.has_value()) {
-        candidateVid = optionalNonEmpty(row.tape->vid);
-      }
-
-      if (!blockedReason.has_value() && candidateVid.has_value() && selectedVids.contains(candidateVid.value())) {
-        // A single VID can appear through multiple potential rows, especially
-        // when retrieve and archive opportunities compete. Keep the lower
-        // ranked row visible for diagnostics, but prevent taped from reserving
-        // the same tape twice.
-        blockedReason = "Tape already selected by higher-ranked candidate";
-      }
 
       if (basicType == common::dataStructures::MountType::Retrieve) {
-        auto candidate = makeRetrieveCandidate(row.potential, candidateRank++, blockedReason, owner);
-        if (!blockedReason.has_value() && candidate.vid.has_value()) {
-          selectedVids.insert(candidate.vid.value());
-        }
+        auto candidate = makeRetrieveCandidate(row.potential, blockedReason, owner);
         candidates.push_back(std::move(candidate));
       } else if (basicType == common::dataStructures::MountType::ArchiveAllTypes) {
         auto candidate = makeArchiveCandidate(row.potential,
                                               row.tape.has_value() ? &row.tape.value() : nullptr,
                                               row.logicalLibrary,
-                                              candidateRank++,
                                               blockedReason,
                                               owner);
-        if (!blockedReason.has_value() && candidate.vid.has_value()) {
-          selectedVids.insert(candidate.vid.value());
-        }
         candidates.push_back(std::move(candidate));
       }
     }
@@ -913,7 +894,7 @@ std::optional<ReservedTapeMount> MountDecision::getNextMount(const std::string& 
         params.add("mountDecisionCandidateId", reservedCandidate->candidateId)
           .add("tapeVid", reservedCandidate->candidate.vid.value_or(""))
           .add("mountType", common::dataStructures::toCamelCaseString(reservedCandidate->candidate.mountType))
-          .add("mountDecisionCandidateRank", reservedCandidate->candidate.candidateRank)
+          .add("mountDecisionCandidateScore", reservedCandidate->candidate.candidateScore)
           .add("mountDecisionBlockedReason", blockedReason.value());
         lc.log(log::INFO, "In MountDecision::getNextMount(): Blocked stale reserved mount candidate.");
         continue;
@@ -943,7 +924,7 @@ std::optional<ReservedTapeMount> MountDecision::getNextMount(const std::string& 
       params.add("mountDecisionCandidateId", reservedCandidate->candidateId)
         .add("tapeVid", ret.mount->getVid())
         .add("mountType", common::dataStructures::toCamelCaseString(ret.mount->getMountType()))
-        .add("mountDecisionCandidateRank", reservedCandidate->candidate.candidateRank);
+        .add("mountDecisionCandidateScore", reservedCandidate->candidate.candidateScore);
       lc.log(log::INFO, "In MountDecision::getNextMount(): Reserved mount candidate.");
       return ret;
     } catch (...) {

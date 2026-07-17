@@ -39,7 +39,7 @@ void bindCommonMountCandidateFields(Stmt& stmt, const MountCandidate& candidate)
   stmt.bindUint64(":OLDEST_JOB_START_TIME", candidate.oldestJobStartTime);
   stmt.bindUint64(":YOUNGEST_JOB_START_TIME", candidate.youngestJobStartTime);
   stmt.bindDouble(":RATIO_OF_MOUNT_QUOTA_USED", candidate.ratioOfMountQuotaUsed);
-  stmt.bindUint64(":CANDIDATE_RANK", candidate.candidateRank);
+  stmt.bindUint64(":CANDIDATE_SCORE", candidate.candidateScore);
   stmt.bindString(":MEDIA_TYPE", nonEmptyOptional(candidate.mediaType));
   stmt.bindUint64(":LABEL_FORMAT",
                   candidate.vid.has_value() ? std::optional<uint64_t>(candidate.labelFormat) : std::nullopt);
@@ -89,7 +89,7 @@ MountCandidate mountCandidateFromRset(const rdbms::Rset& rset) {
   candidate.oldestJobStartTime = rset.columnUint64("OLDEST_JOB_START_TIME");
   candidate.youngestJobStartTime = rset.columnUint64("YOUNGEST_JOB_START_TIME");
   candidate.ratioOfMountQuotaUsed = rset.columnDouble("RATIO_OF_MOUNT_QUOTA_USED");
-  candidate.candidateRank = rset.columnUint64("CANDIDATE_RANK");
+  candidate.candidateScore = rset.columnUint64("CANDIDATE_SCORE");
   candidate.mediaType = rset.columnOptionalString("MEDIA_TYPE").value_or("");
   candidate.labelFormat = rset.columnOptionalUint64("LABEL_FORMAT").value_or(0);
   candidate.vendor = rset.columnOptionalString("VENDOR").value_or("");
@@ -263,8 +263,7 @@ bool MountDecisionDB::tryAcquireRefreshLock(const std::string& workKey,
   // or when the same host already owns the lock and is renewing it.
   // TODO: Allow maintd to analyse each mount and give it a score, row-by-row.
   //       This will allow rows to be processed in parallel and remove the need for this lock.
-  //       At the moment, the lock is needed because we are assigning the score based on the position of the mount in
-  //       the ordered list.
+  //       At the moment, the lock is still used because refresh rebuilds the candidate table as a single operation.
   const char* const sql = R"SQL(
     INSERT INTO SCHEDULER_MOUNT_WORK_LOCK(
       WORK_KEY,
@@ -328,7 +327,7 @@ void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& 
         OLDEST_JOB_START_TIME = :OLDEST_JOB_START_TIME,
         YOUNGEST_JOB_START_TIME = :YOUNGEST_JOB_START_TIME,
         RATIO_OF_MOUNT_QUOTA_USED = :RATIO_OF_MOUNT_QUOTA_USED,
-        CANDIDATE_RANK = :CANDIDATE_RANK,
+        CANDIDATE_SCORE = :CANDIDATE_SCORE,
         MEDIA_TYPE = :MEDIA_TYPE,
         LABEL_FORMAT = :LABEL_FORMAT,
         VENDOR = :VENDOR,
@@ -363,7 +362,7 @@ void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& 
         OLDEST_JOB_START_TIME,
         YOUNGEST_JOB_START_TIME,
         RATIO_OF_MOUNT_QUOTA_USED,
-        CANDIDATE_RANK,
+        CANDIDATE_SCORE,
         MEDIA_TYPE,
         LABEL_FORMAT,
         VENDOR,
@@ -387,7 +386,7 @@ void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& 
         :OLDEST_JOB_START_TIME,
         :YOUNGEST_JOB_START_TIME,
         :RATIO_OF_MOUNT_QUOTA_USED,
-        :CANDIDATE_RANK,
+        :CANDIDATE_SCORE,
         :MEDIA_TYPE,
         :LABEL_FORMAT,
         :VENDOR,
@@ -406,7 +405,7 @@ void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& 
     for (const auto& candidate : candidates) {
       if (candidate.vid.has_value() && !updatedReservedVids.contains(candidate.vid.value())) {
         // Preserve taped ownership for a live Reserved row. The scheduling
-        // fields and rank are refreshed, while STATE and reservation metadata
+        // fields and score are refreshed, while STATE and reservation metadata
         // remain untouched.
         auto updateStmt = conn.createStmt(updateReservedSql);
         bindCommonMountCandidateFields(updateStmt, candidate);
@@ -425,15 +424,8 @@ void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& 
 
       const MountCandidate* candidateToInsert = &candidate;
       std::optional<MountCandidate> blockedCandidate;
-      if (candidate.vid.has_value() && updatedReservedVids.contains(candidate.vid.value())
-          && candidate.state != "Blocked") {
-        // A refreshed reserved row already owns this VID. Any lower-ranked row
-        // for the same tape is kept as Blocked so the table still explains why
-        // it was not pickable.
-        blockedCandidate = makeBlockedCandidate(candidate, "Tape already reserved by higher-ranked candidate");
-        candidateToInsert = &blockedCandidate.value();
-      } else if (candidate.state == "Available" && tryMatchReservedSlot(unmatchedReservationSlotCounts, candidate)) {
-        // Live reservations consume scheduling slots. If the refreshed ranking
+      if (candidate.state == "Available" && tryMatchReservedSlot(unmatchedReservationSlotCounts, candidate)) {
+        // Live reservations consume scheduling slots. If the refreshed ordering
         // still contains more rows for this slot, only the surplus remains
         // Available.
         blockedCandidate = makeBlockedCandidate(candidate, "Reservation slot already reserved");
@@ -494,7 +486,7 @@ std::vector<MountCandidateRecord> MountDecisionDB::listMountCandidates() {
       OLDEST_JOB_START_TIME,
       YOUNGEST_JOB_START_TIME,
       RATIO_OF_MOUNT_QUOTA_USED,
-      CANDIDATE_RANK,
+      CANDIDATE_SCORE,
       MEDIA_TYPE,
       LABEL_FORMAT,
       VENDOR,
@@ -513,7 +505,8 @@ std::vector<MountCandidateRecord> MountDecisionDB::listMountCandidates() {
     FROM
       SCHEDULER_MOUNT_CANDIDATES
     ORDER BY
-      CANDIDATE_RANK,
+      CANDIDATE_SCORE DESC,
+      OLDEST_JOB_START_TIME,
       CANDIDATE_ID
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -530,67 +523,134 @@ std::optional<ReservedMountCandidate> MountDecisionDB::tryReserveNextMountCandid
                                                                                     const std::string& host,
                                                                                     const std::string& drive) {
   auto conn = m_connectionProvider.getConn();
-  // Tape servers race on this single UPDATE. FOR UPDATE SKIP LOCKED lets
-  // concurrent callers ignore rows another transaction is already reserving,
-  // so each successful caller receives a distinct candidate.
-  const char* const sql = R"SQL(
-    UPDATE SCHEDULER_MOUNT_CANDIDATES SET
-      STATE = 'Reserved',
-      STATE_REASON = NULL,
-      RESERVED_BY_HOST = :RESERVED_BY_HOST,
-      RESERVED_BY_DRIVE = :RESERVED_BY_DRIVE,
-      RESERVED_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER,
-      RESERVATION_HEARTBEAT_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER,
-      LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
-    WHERE CANDIDATE_ID = (
-      SELECT CANDIDATE_ID
-      FROM SCHEDULER_MOUNT_CANDIDATES
+  try {
+    conn.executeNonQuery("BEGIN");
+
+    // Tape servers race on this SELECT. FOR UPDATE SKIP LOCKED lets concurrent
+    // callers ignore rows another transaction is already reserving. The
+    // same-VID subquery prevents a worse sibling from being selected while the
+    // best sibling is locked by another caller.
+    const char* const selectSql = R"SQL(
+      SELECT candidate.CANDIDATE_ID AS CANDIDATE_ID
+      FROM SCHEDULER_MOUNT_CANDIDATES candidate
       WHERE
-        STATE = 'Available'
-        AND LOGICAL_LIBRARY = :LOGICAL_LIBRARY
-      ORDER BY CANDIDATE_RANK, CANDIDATE_ID
+        candidate.STATE = 'Available'
+        AND candidate.LOGICAL_LIBRARY = :LOGICAL_LIBRARY
+        AND (
+          candidate.VID IS NULL
+          OR NOT EXISTS (
+            SELECT 1
+            FROM SCHEDULER_MOUNT_CANDIDATES reserved
+            WHERE
+              reserved.STATE = 'Reserved'
+              AND reserved.VID = candidate.VID
+          )
+        )
+        AND NOT EXISTS (
+          SELECT 1
+          FROM SCHEDULER_MOUNT_CANDIDATES better
+          WHERE
+            better.STATE = 'Available'
+            AND better.LOGICAL_LIBRARY = candidate.LOGICAL_LIBRARY
+            AND better.VID = candidate.VID
+            AND (
+              better.CANDIDATE_SCORE > candidate.CANDIDATE_SCORE
+              OR (
+                better.CANDIDATE_SCORE = candidate.CANDIDATE_SCORE
+                AND better.OLDEST_JOB_START_TIME < candidate.OLDEST_JOB_START_TIME
+              )
+              OR (
+                better.CANDIDATE_SCORE = candidate.CANDIDATE_SCORE
+                AND better.OLDEST_JOB_START_TIME = candidate.OLDEST_JOB_START_TIME
+                AND better.CANDIDATE_ID < candidate.CANDIDATE_ID
+              )
+            )
+        )
+      ORDER BY candidate.CANDIDATE_SCORE DESC, candidate.OLDEST_JOB_START_TIME, candidate.CANDIDATE_ID
       FOR UPDATE SKIP LOCKED
       LIMIT 1
-    )
-    RETURNING
-      CANDIDATE_ID,
-      MOUNT_TYPE,
-      LOGICAL_LIBRARY,
-      TAPE_POOL,
-      VO,
-      VID,
-      ACTIVITY,
-      PRIORITY,
-      MIN_REQUEST_AGE,
-      FILES_QUEUED,
-      BYTES_QUEUED,
-      OLDEST_JOB_START_TIME,
-      YOUNGEST_JOB_START_TIME,
-      RATIO_OF_MOUNT_QUOTA_USED,
-      CANDIDATE_RANK,
-      MEDIA_TYPE,
-      LABEL_FORMAT,
-      VENDOR,
-      CAPACITY_IN_BYTES,
-      LAST_FSEQ,
-      ENCRYPTION_KEY_NAME,
-      STATE,
-      STATE_REASON,
-      CREATED_BY
-  )SQL";
-  auto stmt = conn.createStmt(sql);
-  stmt.bindString(":RESERVED_BY_HOST", host);
-  stmt.bindString(":RESERVED_BY_DRIVE", drive);
-  stmt.bindString(":LOGICAL_LIBRARY", logicalLibrary);
-  auto rset = stmt.executeQuery();
-  if (!rset.next()) {
-    return std::nullopt;
-  }
+    )SQL";
+    auto selectStmt = conn.createStmt(selectSql);
+    selectStmt.bindString(":LOGICAL_LIBRARY", logicalLibrary);
+    auto selected = selectStmt.executeQuery();
+    if (!selected.next()) {
+      conn.commit();
+      return std::nullopt;
+    }
+    const uint64_t candidateId = selected.columnUint64("CANDIDATE_ID");
 
-  ReservedMountCandidate ret;
-  ret.candidateId = rset.columnUint64("CANDIDATE_ID");
-  ret.candidate = mountCandidateFromRset(rset);
-  return ret;
+    const char* const reserveSql = R"SQL(
+      UPDATE SCHEDULER_MOUNT_CANDIDATES SET
+        STATE = 'Reserved',
+        STATE_REASON = NULL,
+        RESERVED_BY_HOST = :RESERVED_BY_HOST,
+        RESERVED_BY_DRIVE = :RESERVED_BY_DRIVE,
+        RESERVED_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER,
+        RESERVATION_HEARTBEAT_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER,
+        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
+      WHERE CANDIDATE_ID = :CANDIDATE_ID
+      RETURNING
+        CANDIDATE_ID,
+        MOUNT_TYPE,
+        LOGICAL_LIBRARY,
+        TAPE_POOL,
+        VO,
+        VID,
+        ACTIVITY,
+        PRIORITY,
+        MIN_REQUEST_AGE,
+        FILES_QUEUED,
+        BYTES_QUEUED,
+        OLDEST_JOB_START_TIME,
+        YOUNGEST_JOB_START_TIME,
+        RATIO_OF_MOUNT_QUOTA_USED,
+        CANDIDATE_SCORE,
+        MEDIA_TYPE,
+        LABEL_FORMAT,
+        VENDOR,
+        CAPACITY_IN_BYTES,
+        LAST_FSEQ,
+        ENCRYPTION_KEY_NAME,
+        STATE,
+        STATE_REASON,
+        CREATED_BY
+    )SQL";
+    auto reserveStmt = conn.createStmt(reserveSql);
+    reserveStmt.bindString(":RESERVED_BY_HOST", host);
+    reserveStmt.bindString(":RESERVED_BY_DRIVE", drive);
+    reserveStmt.bindUint64(":CANDIDATE_ID", candidateId);
+    auto reserved = reserveStmt.executeQuery();
+    if (!reserved.next()) {
+      throw exception::Exception("In MountDecisionDB::tryReserveNextMountCandidate(): failed to reserve candidate.");
+    }
+
+    ReservedMountCandidate ret;
+    ret.candidateId = reserved.columnUint64("CANDIDATE_ID");
+    ret.candidate = mountCandidateFromRset(reserved);
+
+    if (ret.candidate.vid.has_value()) {
+      const char* const blockSiblingsSql = R"SQL(
+        UPDATE SCHEDULER_MOUNT_CANDIDATES SET
+          STATE = 'Blocked',
+          STATE_REASON = 'Tape already reserved by another candidate',
+          LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
+        WHERE
+          CANDIDATE_ID <> :CANDIDATE_ID
+          AND STATE = 'Available'
+          AND VID = :VID
+      )SQL";
+      auto blockSiblingsStmt = conn.createStmt(blockSiblingsSql);
+      blockSiblingsStmt.bindUint64(":CANDIDATE_ID", ret.candidateId);
+      blockSiblingsStmt.bindString(":VID", ret.candidate.vid);
+      blockSiblingsStmt.executeNonQuery();
+    }
+
+    conn.commit();
+    return ret;
+  } catch (...) {
+    conn.rollback();
+    throw;
+  }
 }
 
 void MountDecisionDB::blockReservedMountCandidate(const uint64_t candidateId,
