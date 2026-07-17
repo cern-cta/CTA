@@ -28,7 +28,7 @@ struct MountCandidate {
   uint64_t oldestJobStartTime = 0;
   uint64_t youngestJobStartTime = 0;
   double ratioOfMountQuotaUsed = 0.0;
-  uint64_t candidateRank;
+  uint64_t candidateScore;
   std::string mediaType;
   uint64_t labelFormat = 0;
   std::string vendor;
