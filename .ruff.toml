@@ -1,10 +1,9 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-[tool.ruff]
 line-length = 120
 
-[tool.ruff.lint]
+[lint]
 select = [
     "E",   # pycodestyle errors
     "F",   # Pyflakes (logic errors, undefined names, unused imports)
