@@ -18,7 +18,7 @@ public:
   MountCandidateLsStream(const frontend::AdminCmdStream& requestMsg,
                          cta::catalogue::Catalogue& catalogue,
                          cta::Scheduler& scheduler,
-                         cta::SchedulerDatabase& schedulerDb,
+                         cta::mountdecision::MountDecisionDB& mountDecisionDb,
                          log::LogContext& lc);
 
 private:
@@ -28,13 +28,13 @@ private:
 inline MountCandidateLsStream::MountCandidateLsStream(const frontend::AdminCmdStream& requestMsg,
                                                       cta::catalogue::Catalogue& catalogue,
                                                       cta::Scheduler& scheduler,
-                                                      cta::SchedulerDatabase& schedulerDb,
+                                                      cta::mountdecision::MountDecisionDB& mountDecisionDb,
                                                       log::LogContext& lc)
     : XrdCtaStream(catalogue,
                    scheduler,
                    std::make_unique<cta::frontend::MountCandidateLsResponseStream>(catalogue,
                                                                                    scheduler,
-                                                                                   schedulerDb,
+                                                                                   mountDecisionDb,
                                                                                    requestMsg.getInstanceName(),
                                                                                    lc)) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");

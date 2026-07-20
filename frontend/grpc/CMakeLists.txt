@@ -62,7 +62,7 @@ add_executable(cta-admin-grpc
 
 if (CTA_USE_PGSCHED)
   target_link_libraries(cta-admin-grpc
-    ctacommon stdc++fs ctatapedaemoncommon ctascheduler ctacatalogue ctagrpc gssapi_krb5)
+    ctacommon stdc++fs ctatapedaemoncommon ctascheduler ctacatalogue ctamountdecision ctagrpc gssapi_krb5)
 else()
   target_link_libraries(cta-admin-grpc
     ctacommon stdc++fs ctatapedaemoncommon ctascheduler ctaobjectstore ctacatalogue ctagrpc gssapi_krb5)

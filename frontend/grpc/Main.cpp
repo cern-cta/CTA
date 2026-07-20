@@ -275,6 +275,9 @@ int main(const int argc, char* const* const argv) {
   frontend::grpc::CtaRpcStreamImpl streamSvc(frontendService->getCatalogue(),
                                              frontendService->getScheduler(),
                                              frontendService->getSchedDb(),
+#ifdef CTA_PGSCHED
+                                             frontendService->getMountDecisionDB(),
+#endif
                                              frontendService->getInstanceName(),
                                              frontendService->getCatalogueConnString(),
                                              frontendService->getMissingFileCopiesMinAgeSecs(),

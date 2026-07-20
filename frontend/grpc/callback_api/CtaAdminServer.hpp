@@ -9,6 +9,7 @@
 #include "ServerVersion.hpp"
 #include "common/auth/JwkCache.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 #include "common/semconv/Attributes.hpp"
@@ -68,6 +69,9 @@ public:
   CtaRpcStreamImpl(cta::catalogue::Catalogue& catalogue,
                    cta::Scheduler& scheduler,
                    cta::SchedulerDB_t& schedDB,
+#ifdef CTA_PGSCHED
+                   cta::mountdecision::MountDecisionDB& mountDecisionDb,
+#endif
                    const std::string& instanceName,
                    const std::string& connstr,
                    uint64_t missingFileCopiesMinAgeSecs,
@@ -80,11 +84,15 @@ public:
         m_scheduler(scheduler),
         m_instanceName(instanceName),
         m_schedDb(schedDB),
+#ifdef CTA_PGSCHED
+        m_mountDecisionDb(mountDecisionDb),
+#endif
         m_catalogueConnString(connstr),
         m_missingFileCopiesMinAgeSecs(missingFileCopiesMinAgeSecs),
         m_authMethods(authMethods),
         m_pubkeyCache(pubkeyCache),
-        m_tokenStorage(tokenStorage) {}
+        m_tokenStorage(tokenStorage) {
+  }
 
   /* gRPC expects the return type of an RPC implemented using the callback API to be
    * a pointer to ::grpc::ServerWriteReactor
@@ -93,11 +101,14 @@ public:
                                                                            const cta::xrd::Request* request) final;
 
 private:
-  cta::log::LogContext m_lc;                           // <! Provided by the frontendService
-  cta::catalogue::Catalogue& m_catalogue;              //!< Reference to CTA Catalogue
-  cta::Scheduler& m_scheduler;                         //!< Reference to CTA Scheduler
-  std::string m_instanceName;                          //!< Instance name
-  cta::SchedulerDB_t& m_schedDb;                       //!< Reference to CTA SchedulerDB
+  cta::log::LogContext m_lc;               // <! Provided by the frontendService
+  cta::catalogue::Catalogue& m_catalogue;  //!< Reference to CTA Catalogue
+  cta::Scheduler& m_scheduler;             //!< Reference to CTA Scheduler
+  std::string m_instanceName;              //!< Instance name
+  cta::SchedulerDB_t& m_schedDb;           //!< Reference to CTA SchedulerDB
+#ifdef CTA_PGSCHED
+  cta::mountdecision::MountDecisionDB& m_mountDecisionDb;  //!< Mount Decision DB wrapper
+#endif
   std::string m_catalogueConnString;                   //!< Provided by frontendService
   uint64_t m_missingFileCopiesMinAgeSecs;              //!< Provided by the frontendService
   std::set<AuthMethod, std::less<>> m_authMethods;     //!< The authentication methods used
@@ -193,8 +204,16 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
         headerType = HeaderType::MOUNTPOLICY_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_MOUNTCANDIDATE, cta::admin::AdminCmd::SUBCMD_LS):
-        stream =
-          std::make_unique<MountCandidateLsResponseStream>(m_catalogue, m_scheduler, m_schedDb, m_instanceName, m_lc);
+#ifdef CTA_PGSCHED
+        stream = std::make_unique<MountCandidateLsResponseStream>(m_catalogue,
+                                                                  m_scheduler,
+                                                                  m_mountDecisionDb,
+                                                                  m_instanceName,
+                                                                  m_lc);
+#else
+        throw cta::exception::UserError(
+          "The mountcandidate command requires a PostgreSQL scheduler database exposing a connection provider.");
+#endif
         headerType = HeaderType::MOUNTCANDIDATE_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_DISKSYSTEM, cta::admin::AdminCmd::SUBCMD_LS):

@@ -9,10 +9,6 @@
 #include "catalogue/Catalogue.hpp"
 #include "frontend/common/FrontendService.hpp"
 
-#ifdef CTA_PGSCHED
-#include "mountdecision/MountDecisionDB.hpp"
-#endif
-
 #include <optional>
 
 #include "cta_frontend.pb.h"
@@ -79,9 +75,8 @@ protected:
   const admin::AdminCmd m_adminCmd;   //!< Administrator Command protocol buffer
   catalogue::Catalogue& m_catalogue;  //!< Reference to CTA Catalogue
   cta::Scheduler& m_scheduler;        //!< Reference to CTA Scheduler
-  cta::SchedulerDB_t& m_schedulerDb;  //!< Reference to CTA Scheduler DB
 #ifdef CTA_PGSCHED
-  std::optional<cta::mountdecision::MountDecisionDB> m_mountDecisionDb;  //!< Mount Decision DB wrapper
+  cta::mountdecision::MountDecisionDB& m_mountDecisionDb;  //!< Mount Decision DB wrapper
 #endif
   log::LogContext m_lc;  //!< CTA Log Context
 

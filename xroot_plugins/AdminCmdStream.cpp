@@ -31,6 +31,7 @@
 #include "XrdCtaVersion.hpp"
 #include "XrdCtaVirtualOrganizationLs.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
+#include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "frontend/common/AdminCmd.hpp"
 #include "frontend/common/PbException.hpp"
@@ -260,10 +261,16 @@ void AdminCmdStream::processActivityMountRule_Ls(xrd::Response& response) {
 }
 
 void AdminCmdStream::processMountCandidate_Ls(xrd::Response& response) {
-  m_stream = new xrd::MountCandidateLsStream(*this, m_catalogue, m_scheduler, m_schedDb, m_lc);
+#ifdef CTA_PGSCHED
+  m_stream = new xrd::MountCandidateLsStream(*this, m_catalogue, m_scheduler, m_mountDecisionDb, m_lc);
 
   response.set_show_header(admin::HeaderType::MOUNTCANDIDATE_LS);
   response.set_type(xrd::Response::RSP_SUCCESS);
+#else
+  static_cast<void>(response);
+  throw exception::UserError(
+    "The mountcandidate command requires a PostgreSQL scheduler database exposing a connection provider.");
+#endif
 }
 
 void AdminCmdStream::processShowQueues(xrd::Response& response) {

@@ -21,22 +21,16 @@ T valueOrDefault(const std::optional<T>& value) {
 
 MountCandidateLsResponseStream::MountCandidateLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                                cta::Scheduler& scheduler,
-                                                               cta::SchedulerDatabase& schedulerDb,
+                                                               cta::mountdecision::MountDecisionDB& mountDecisionDb,
                                                                const std::string& instanceName,
                                                                cta::log::LogContext& lc)
     : CtaAdminResponseStream(catalogue, scheduler, instanceName),
       m_schedulerBackendName(scheduler.getSchedulerBackendName()) {
   static_cast<void>(lc);
 #ifdef CTA_PGSCHED
-  auto mountDecisionDb = cta::mountdecision::makeMountDecisionDB(schedulerDb);
-  if (!mountDecisionDb.has_value()) {
-    throw cta::exception::UserError(
-      "The mountcandidate command requires a PostgreSQL scheduler database exposing a connection provider.");
-  }
-
-  m_mountCandidateRecords = mountDecisionDb->listMountCandidates();
+  m_mountCandidateRecords = mountDecisionDb.listMountCandidates();
 #else
-  static_cast<void>(schedulerDb);
+  static_cast<void>(mountDecisionDb);
   throw cta::exception::UserError(
     "The mountcandidate command requires a PostgreSQL scheduler database exposing a connection provider.");
 #endif

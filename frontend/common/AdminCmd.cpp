@@ -27,9 +27,8 @@ AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
       m_adminCmd(adminCmd),
       m_catalogue(frontendService.getCatalogue()),
       m_scheduler(frontendService.getScheduler()),
-      m_schedulerDb(frontendService.getSchedDb()),
 #ifdef CTA_PGSCHED
-      m_mountDecisionDb(cta::mountdecision::makeMountDecisionDB(m_schedulerDb)),
+      m_mountDecisionDb(frontendService.getMountDecisionDB()),
 #endif
       m_lc(frontendService.getLogContext()),
       m_cliIdentity(clientIdentity),
@@ -862,13 +861,8 @@ void AdminCmd::processMountCandidate_Ch(xrd::Response& response) const {
   const auto& candidateKey = getRequired(OptionString::CANDIDATE_KEY);
   const auto& score = getRequired(OptionUInt64::SCORE);
 
-  if (!m_mountDecisionDb.has_value()) {
-    throw exception::UserError(
-      "The mountcandidate command requires a PostgreSQL scheduler database exposing a connection provider.");
-  }
-
-  m_mountDecisionDb->setMountCandidateScoreOverride(candidateKey,
-                                                    score == 0 ? std::nullopt : std::optional<uint64_t>(score));
+  m_mountDecisionDb.setMountCandidateScoreOverride(candidateKey,
+                                                   score == 0 ? std::nullopt : std::optional<uint64_t>(score));
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 #else

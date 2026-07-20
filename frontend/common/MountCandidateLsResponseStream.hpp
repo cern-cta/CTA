@@ -7,7 +7,6 @@
 
 #include "CtaAdminResponseStream.hpp"
 #include "mountdecision/MountDecisionDB.hpp"
-#include "scheduler/SchedulerDatabase.hpp"
 
 #include "cta_admin.pb.h"
 
@@ -17,7 +16,7 @@ class MountCandidateLsResponseStream final : public CtaAdminResponseStream {
 public:
   MountCandidateLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                  cta::Scheduler& scheduler,
-                                 cta::SchedulerDatabase& schedulerDb,
+                                 cta::mountdecision::MountDecisionDB& mountDecisionDb,
                                  const std::string& instanceName,
                                  cta::log::LogContext& lc);
 
