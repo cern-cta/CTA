@@ -58,6 +58,9 @@ target_link_libraries(cta-admin
   ctagrpc
   ctaprotobufconversions
   gssapi_krb5)
+if(CTA_USE_PGSCHED)
+  target_link_libraries(cta-admin ctamountdecision)
+endif()
 
 # Only add a runtime search path for a non-system Protobuf installation.
 if(NOT PROTOBUF3_RPATH IN_LIST CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES)

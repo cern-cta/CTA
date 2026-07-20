@@ -14,6 +14,7 @@
 #include <memory>
 #include <stdexcept>
 #ifdef CTA_PGSCHED
+#include "mountdecision/MountDecisionDB.hpp"
 #include "scheduler/batching/FrontendBatchingLayer.hpp"
 #include "scheduler/rdbms/RelationalDBInit.hpp"
 #else
@@ -101,6 +102,13 @@ public:
    * Get a reference to the Scheduler DB
    */
   cta::SchedulerDB_t& getSchedDb() const { return *m_scheddb; }
+
+#ifdef CTA_PGSCHED
+  /*!
+   * Get a reference to the Mount Decision DB
+   */
+  cta::mountdecision::MountDecisionDB& getMountDecisionDB() const { return *m_mountDecisionDb; }
+#endif
 
   /*!
    * Get a reference to the Scheduler
@@ -210,6 +218,9 @@ private:
   std::unique_ptr<cta::catalogue::Catalogue>    m_catalogue;                    //!< Catalogue of tapes and tape files
   std::unique_ptr<SchedulerDBInit_t>            m_scheddbInit;                  //!< Persistent initialiser object for Scheduler DB
   std::unique_ptr<cta::SchedulerDB_t>           m_scheddb;                      //!< Scheduler DB for persistent objects (queues and requests)
+#ifdef CTA_PGSCHED
+  std::unique_ptr<cta::mountdecision::MountDecisionDB> m_mountDecisionDb;        //!< Mount Decision DB wrapper
+#endif
   std::unique_ptr<cta::Scheduler>               m_scheduler;                    //!< The scheduler
 #ifdef CTA_PGSCHED
   std::unique_ptr<cta::FrontendBatchingLayer>   m_batchingLayer;                //!< Opportunistic-batching front-end for archive/retrieve queueing (pgsched only)

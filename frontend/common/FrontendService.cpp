@@ -301,6 +301,10 @@ FrontendService::FrontendService(const std::string& configFilename,
 
   m_scheddb = m_scheddbInit->getSchedDB(*m_catalogue, *m_log);
 
+#ifdef CTA_PGSCHED
+  m_mountDecisionDb = std::make_unique<cta::mountdecision::MountDecisionDB>(*m_scheddb);
+#endif
+
   // Set Scheduler DB cache timeouts
   if (auto tapeCacheMaxAgeSecsConf = config.getOptionValueUInt("cta.schedulerdb.tape_cache_max_age_secs");
       tapeCacheMaxAgeSecsConf.has_value()) {
@@ -504,4 +508,5 @@ FrontendService::FrontendService(const std::string& configFilename,
   // All done
   log(log::INFO, std::string("cta-frontend started"), {log::Param("version", CTA_VERSION)});
 }
+
 }  // namespace cta::frontend

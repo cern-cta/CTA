@@ -214,14 +214,6 @@ bool shouldSkipBlockedMountCandidate(const ReservationSlotCounts& liveReservatio
 
 MountDecisionDB::MountDecisionDB(ConnProvider& connectionProvider) : m_connectionProvider(connectionProvider) {}
 
-std::optional<MountDecisionDB> makeMountDecisionDB(SchedulerDatabase& schedulerDb) {
-  auto* connProvider = dynamic_cast<cta::ConnProvider*>(&schedulerDb);
-  if (connProvider == nullptr) {
-    return std::nullopt;
-  }
-  return MountDecisionDB(*connProvider);
-}
-
 void MountDecisionDB::ping() {
   auto conn = m_connectionProvider.getConn();
   const auto tableNames = conn.getTableNames();

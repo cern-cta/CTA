@@ -9,6 +9,7 @@
 #include "ServerVersion.hpp"
 #include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 #include "common/semconv/Attributes.hpp"
@@ -184,8 +185,16 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
         headerType = HeaderType::MOUNTPOLICY_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_MOUNTCANDIDATE, cta::admin::AdminCmd::SUBCMD_LS):
-        stream =
-          std::make_unique<MountCandidateLsResponseStream>(m_catalogue, m_scheduler, m_schedDb, m_instanceName, m_lc);
+#ifdef CTA_PGSCHED
+        stream = std::make_unique<MountCandidateLsResponseStream>(m_catalogue,
+                                                                  m_scheduler,
+                                                                  m_mountDecisionDb,
+                                                                  m_instanceName,
+                                                                  m_lc);
+#else
+        throw cta::exception::UserError(
+          "The mountcandidate command requires a PostgreSQL scheduler database exposing a connection provider.");
+#endif
         headerType = HeaderType::MOUNTCANDIDATE_LS;
         break;
       case cmd_pair(cta::admin::AdminCmd::CMD_DISKSYSTEM, cta::admin::AdminCmd::SUBCMD_LS):
