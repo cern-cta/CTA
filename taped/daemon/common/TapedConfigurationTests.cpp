@@ -44,7 +44,7 @@ TEST(cta_Daemon, TapedConfigurationFull) {
                               "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
                               "taped CatalogueConfigFile /etc/cta/catalog.conf\n"
                               "taped ArchiveFetchBytesFiles 1,2\n"
-                              "taped ArchiveFetchUnderfillLimits 300, 5, 35, 75"
+                              "taped ArchiveFetchUnderfillLimits 300, 5, 35, 75\n"
                               "taped ArchiveFlushBytesFiles              3 , 4 \n"
                               "taped RetrieveFetchBytesFiles  5,   6\n"
                               "taped BufferCount 1  \n"
