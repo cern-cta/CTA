@@ -48,6 +48,10 @@ private:
   log::LogContext m_lc;
   /// Client identity: username, host, authentication
   common::dataStructures::SecurityIdentity m_cliIdentity;
+#ifdef CTA_PGSCHED
+  /// Mount Decision table in the scheduler database
+  mountdecision::MountDecisionDB m_mountDecisionDb;
+#endif
   /// What the handlers need, refers to the members above
   const SyncCmdContext m_context;
 };

@@ -11,14 +11,16 @@
 #include "common/log/LogContext.hpp"
 #include "scheduler/Scheduler.hpp"
 
+#ifdef CTA_PGSCHED
+#include "mountdecision/MountDecisionDB.hpp"
+#endif
+
 namespace cta::admin_api::commands::sync {
 
 /// @brief What the admin command handlers need from the server and the configuration, for one command
 struct SyncCmdContext {
   catalogue::Catalogue& catalogue;
   cta::Scheduler& scheduler;
-  /// Scheduler database backing the scheduler
-  cta::SchedulerDatabase& schedDb;
   /// Already carries the user issuing the command
   log::LogContext& lc;
   /// Identity of the admin issuing the command
@@ -28,6 +30,10 @@ struct SyncCmdContext {
   const PoliciesConfig& policies;
   /// Values from the [defaults] configuration, used when a command option is not given
   const DefaultsConfig& defaults;
+#ifdef CTA_PGSCHED
+  /// Mount Decision table in the scheduler database
+  mountdecision::MountDecisionDB& mountDecisionDb;
+#endif
 };
 
 }  // namespace cta::admin_api::commands::sync

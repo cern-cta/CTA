@@ -6,23 +6,19 @@
 #pragma once
 
 #include "commands/stream/CtaAdminResponseStream.hpp"
-#include "scheduler/SchedulerDatabase.hpp"
+#include "mountdecision/MountDecisionDB.hpp"
 
 #include <scheduler/Scheduler.hpp>
-
-#ifdef CTA_PGSCHED
-#include "mountdecision/MountDecisionDB.hpp"
-#endif
 
 #include "cta_admin.pb.h"
 
 namespace cta::admin_api::commands::stream {
 
-/// Stream the mount candidates calculated by maintd for tape servers to reserve; requires the PostgreSQL scheduler.
+/// Stream the mount candidates calculated by maintd for tape servers to reserve (PostgreSQL scheduler only).
 class MountCandidateLsResponseStream final : public CtaAdminResponseStream {
 public:
   MountCandidateLsResponseStream(cta::Scheduler& scheduler,
-                                 cta::SchedulerDatabase& schedulerDb,
+                                 cta::mountdecision::MountDecisionDB& mountDecisionDb,
                                  const std::string& instanceName,
                                  cta::log::LogContext& lc,
                                  cta::admin::HeaderType headerType);
@@ -32,9 +28,7 @@ public:
 
 private:
   std::string m_schedulerBackendName;
-#ifdef CTA_PGSCHED
   std::vector<cta::mountdecision::MountCandidateRecord> m_mountCandidateRecords;
-#endif
   std::size_t m_mountCandidateRecordsIdx = 0;
 };
 

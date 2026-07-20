@@ -15,6 +15,10 @@
 #include <memory>
 #include <string>
 
+#ifdef CTA_PGSCHED
+#include "mountdecision/MountDecisionDB.hpp"
+#endif
+
 #include "cta_frontend.grpc.pb.h"
 #include "cta_frontend.pb.h"
 
@@ -50,6 +54,10 @@ private:
   std::string m_instanceName;
   /// Reference to CTA SchedulerDB
   cta::SchedulerDB_t& m_schedDb;
+#ifdef CTA_PGSCHED
+  /// Mount Decision table in the scheduler database
+  cta::mountdecision::MountDecisionDB m_mountDecisionDb;
+#endif
   /// Provided by the server context
   std::string m_catalogueConnString;
   /// From the [policies.tapes] configuration

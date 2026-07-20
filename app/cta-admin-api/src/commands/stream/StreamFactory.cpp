@@ -10,7 +10,9 @@
 #include "commands/stream/converters/StreamConverters.hpp"
 #include "commands/stream/scheduling/DriveLsResponseStream.hpp"
 #include "commands/stream/scheduling/FailedRequestLsResponseStream.hpp"
+#ifdef CTA_PGSCHED
 #include "commands/stream/scheduling/MountCandidateLsResponseStream.hpp"
+#endif
 #include "commands/stream/scheduling/RepackLsResponseStream.hpp"
 #include "commands/stream/scheduling/ShowQueuesResponseStream.hpp"
 #include "commands/stream/tapes/RecycleTapeFileLsResponseStream.hpp"
@@ -168,11 +170,15 @@ const std::map<CmdKey, Creator> STREAM_CMD_TABLE = {
    }},
   {{AdminCmd::CMD_MOUNTCANDIDATE, AdminCmd::SUBCMD_LS},
    [](const StreamContext& ctx, const admin::AdminCmd&) -> std::unique_ptr<CtaAdminResponseStream> {
+#ifdef CTA_PGSCHED
      return std::make_unique<MountCandidateLsResponseStream>(ctx.scheduler,
-                                                             ctx.schedDb,
+                                                             ctx.mountDecisionDb,
                                                              ctx.instanceName,
                                                              ctx.lc,
                                                              HeaderType::MOUNTCANDIDATE_LS);
+#else
+     throw cta::exception::UserError("The mountcandidate command requires the PostgreSQL scheduler.");
+#endif
    }},
   {{AdminCmd::CMD_SHOWQUEUES, AdminCmd::SUBCMD_NONE},
    [](const StreamContext& ctx, const admin::AdminCmd&) -> std::unique_ptr<CtaAdminResponseStream> {

@@ -6,9 +6,9 @@
 #pragma once
 
 #include "common/dataStructures/MountType.hpp"
-#include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/rdbms/ConnProvider.hpp"
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
@@ -101,7 +101,5 @@ public:
 private:
   ConnProvider& m_connectionProvider;
 };
-
-std::optional<MountDecisionDB> makeMountDecisionDB(SchedulerDatabase& schedulerDb);
 
 }  // namespace cta::mountdecision

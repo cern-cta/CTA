@@ -5,7 +5,6 @@
 
 #include "commands/stream/scheduling/MountCandidateLsResponseStream.hpp"
 
-#include "common/exception/UserError.hpp"
 #include "protobuf/admin/MountTypeSerDeser.hpp"
 
 #include <optional>
@@ -23,34 +22,18 @@ T valueOrDefault(const std::optional<T>& value) {
 }  // namespace
 
 MountCandidateLsResponseStream::MountCandidateLsResponseStream(cta::Scheduler& scheduler,
-                                                               cta::SchedulerDatabase& schedulerDb,
+                                                               cta::mountdecision::MountDecisionDB& mountDecisionDb,
                                                                const std::string& instanceName,
                                                                cta::log::LogContext& lc,
                                                                cta::admin::HeaderType headerType)
     : CtaAdminResponseStream(headerType, instanceName),
-      m_schedulerBackendName(scheduler.getSchedulerBackendName()) {
+      m_schedulerBackendName(scheduler.getSchedulerBackendName()),
+      m_mountCandidateRecords(mountDecisionDb.listMountCandidates()) {
   static_cast<void>(lc);
-#ifdef CTA_PGSCHED
-  auto mountDecisionDb = cta::mountdecision::makeMountDecisionDB(schedulerDb);
-  if (!mountDecisionDb.has_value()) {
-    throw cta::exception::UserError(
-      "The mountcandidate command requires a PostgreSQL scheduler database exposing a connection provider.");
-  }
-
-  m_mountCandidateRecords = mountDecisionDb->listMountCandidates();
-#else
-  static_cast<void>(schedulerDb);
-  throw cta::exception::UserError(
-    "The mountcandidate command requires a PostgreSQL scheduler database exposing a connection provider.");
-#endif
 }
 
 bool MountCandidateLsResponseStream::isDone() {
-#ifdef CTA_PGSCHED
   return m_mountCandidateRecordsIdx >= m_mountCandidateRecords.size();
-#else
-  return true;
-#endif
 }
 
 cta::xrd::Data MountCandidateLsResponseStream::next() {
@@ -59,7 +42,6 @@ cta::xrd::Data MountCandidateLsResponseStream::next() {
   }
 
   cta::xrd::Data data;
-#ifdef CTA_PGSCHED
   const auto& record = m_mountCandidateRecords[m_mountCandidateRecordsIdx++];
   const auto& candidate = record.candidate;
 
@@ -98,7 +80,6 @@ cta::xrd::Data MountCandidateLsResponseStream::next() {
   mclsItem->set_instance_name(m_instanceName);
   mclsItem->set_scheduler_backend_name(m_schedulerBackendName);
   mclsItem->set_override_candidate_score(valueOrDefault(candidate.overrideCandidateScore));
-#endif
 
   return data;
 }

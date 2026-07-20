@@ -39,10 +39,14 @@ CtaRpcStreamImpl::CtaRpcStreamImpl(const cta::service_resources::ServiceResource
       m_scheduler(serviceResources.getScheduler()),
       m_instanceName(config.instance_name),
       m_schedDb(serviceResources.getSchedDb()),
+#ifdef CTA_PGSCHED
+      m_mountDecisionDb(m_schedDb),
+#endif
       m_catalogueConnString(serviceResources.getCatalogueConnString()),
       m_missingFileCopiesMinAgeSecs(config.policies.tapes.missing_file_copies_min_age_secs),
       m_adminCommandMode(config.policies.admin_mode),
-      m_authenticator(std::move(authenticator)) {}
+      m_authenticator(std::move(authenticator)) {
+}
 
 ::grpc::ServerWriteReactor<cta::xrd::StreamResponse>*
 CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, const cta::xrd::Request* request) {
@@ -75,7 +79,12 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
                                                          m_instanceName,
                                                          m_catalogueConnString,
                                                          m_missingFileCopiesMinAgeSecs,
-                                                         m_adminCommandMode};
+                                                         m_adminCommandMode
+#ifdef CTA_PGSCHED
+                                                         ,
+                                                         m_mountDecisionDb
+#endif
+    };
     stream = commands::stream::createStream(streamContext, adminCmd);
   } catch (const DisabledAdminCmd& ex) {
     requestLogger.rejected(ex.getMessageValue());

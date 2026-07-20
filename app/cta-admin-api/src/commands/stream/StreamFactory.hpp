@@ -14,6 +14,10 @@
 #include <scheduler/Scheduler.hpp>
 #include <string>
 
+#ifdef CTA_PGSCHED
+#include "mountdecision/MountDecisionDB.hpp"
+#endif
+
 #include "cta_admin.pb.h"
 
 namespace cta::log {
@@ -42,6 +46,10 @@ struct StreamContext {
   uint64_t missingFileCopiesMinAgeSecs;
   /// Which commands this admin API serves, see `AdminCmdMode::isCommandDisabled()`
   AdminCmdMode adminCommandMode;
+#ifdef CTA_PGSCHED
+  /// Mount Decision table in the scheduler database
+  cta::mountdecision::MountDecisionDB& mountDecisionDb;
+#endif
 };
 
 /// @brief Builds the stream serving a streamed admin command

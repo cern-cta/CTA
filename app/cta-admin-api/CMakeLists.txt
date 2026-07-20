@@ -16,7 +16,6 @@ add_library(cta-admin-api-lib STATIC
   src/commands/stream/converters/Version.cpp
   src/commands/stream/scheduling/DriveLsResponseStream.cpp
   src/commands/stream/scheduling/FailedRequestLsResponseStream.cpp
-  src/commands/stream/scheduling/MountCandidateLsResponseStream.cpp
   src/commands/stream/scheduling/RepackLsResponseStream.cpp
   src/commands/stream/scheduling/ShowQueuesResponseStream.cpp
   src/commands/stream/tapes/RecycleTapeFileLsResponseStream.cpp
@@ -56,6 +55,7 @@ target_link_libraries(cta-admin-api-lib PUBLIC
   gssapi_krb5
 )
 if(CTA_USE_PGSCHED)
+  target_sources(cta-admin-api-lib PRIVATE src/commands/stream/scheduling/MountCandidateLsResponseStream.cpp)
   target_link_libraries(cta-admin-api-lib PUBLIC ctamountdecision)
 endif()
 

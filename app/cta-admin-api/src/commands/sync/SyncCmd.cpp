@@ -22,13 +22,20 @@ SyncCmd::SyncCmd(const service_resources::ServiceResources& serviceResources,
       m_options(adminCmd),
       m_lc(lc),
       m_cliIdentity(clientIdentity),
+#ifdef CTA_PGSCHED
+      m_mountDecisionDb(serviceResources.getSchedDb()),
+#endif
       m_context {serviceResources.getCatalogue(),
                  serviceResources.getScheduler(),
-                 serviceResources.getSchedDb(),
                  m_lc,
                  m_cliIdentity,
                  config.policies,
-                 config.defaults} {
+                 config.defaults
+#ifdef CTA_PGSCHED
+                 ,
+                 m_mountDecisionDb
+#endif
+      } {
   m_context.scheduler.authorizeAdmin(m_cliIdentity, m_lc);
 }
 
