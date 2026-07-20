@@ -92,8 +92,8 @@ void SourcedParameter<tape::daemon::UnderfillFetchLimits>::set(const std::string
 
   watchPeriodSecsStr = utils::trimString(watchPeriodSecsStr);
   minSamplesStr = utils::trimString(minSamplesStr);
-  recoveryThresholdStr = utils::trimString(recoveryThresholdStr);
   startThresholdStr = utils::trimString(startThresholdStr);
+  recoveryThresholdStr = utils::trimString(recoveryThresholdStr);
 
   if (!(utils::isValidUInt(watchPeriodSecsStr) && utils::isValidUInt(minSamplesStr)
         && utils::isValidUInt(startThresholdStr) && utils::isValidUInt(recoveryThresholdStr))) {
@@ -108,7 +108,7 @@ void SourcedParameter<tape::daemon::UnderfillFetchLimits>::set(const std::string
   m_value.underfillStartThreshold = std::stoull(startThresholdStr);
   m_value.underfillRecoveryThreshold = std::stoull(recoveryThresholdStr);
 
-  if (m_value.underfillStartThreshold <= m_value.underfillRecoveryThreshold) {
+  if (m_value.underfillStartThreshold >= m_value.underfillRecoveryThreshold) {
     BadlyFormattedInteger ex;
     ex.getMessage() << "In SourcedParameter<UnderfillFetchLimits>::set(): "
                        "start threshold must be lower than recovery threshold"
