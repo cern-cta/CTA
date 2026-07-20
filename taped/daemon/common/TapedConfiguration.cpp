@@ -22,6 +22,14 @@ void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::addLogParamForVal
   lc.push({"maxFiles", m_value.maxFiles});
 }  // namespace cta
 
+template<>
+void SourcedParameter<tape::daemon::UnderfillFetchLimits>::addLogParamForValue(log::LogContext& lc) {
+  lc.push({"underfillWatchPeriodSecs", m_value.underfillWatchPeriodSecs});
+  lc.push({"underfillMinSamples", m_value.underfillMinSamples});
+  lc.push({"underfillStartThreshold", m_value.underfillStartThreshold});
+  lc.push({"underfillRecoveryThreshold", m_value.underfillRecoveryThreshold});
+}  // namespace cta
+
 //------------------------------------------------------------------------------
 // set
 //------------------------------------------------------------------------------
@@ -56,7 +64,62 @@ void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::set(const std::st
   std::istringstream(files) >> m_value.maxFiles;
   m_source = source;
   m_set = true;
-}  // namespace cta
+}
+
+template<>
+void SourcedParameter<tape::daemon::UnderfillFetchLimits>::set(const std::string& value, const std::string& source) {
+  // We expect an entry in the form "<watch period>, <min samples>, <start threshold>, <recovery threshold>"
+  // There should be 3 and only 3 commas in the parameter.
+  if (3 != std::count(value.begin(), value.end(), ',')) {
+    BadlyFormattedUnderfillFetchLimits ex;
+    ex.getMessage() << "In SourcedParameter<UnderfillFetchLimits>::set() : badly formatted entry: three (and only "
+                       "three) commas expected"
+                    << " for category=" << m_category << " key=" << m_key << " value=\'" << value << "' at:" << source;
+    throw ex;
+  }
+  // We can now split the entry
+  std::string watchPeriodSecsStr;
+  std::string minSamplesStr;
+  std::string startThresholdStr;
+  std::string recoveryThresholdStr;
+
+  std::istringstream input(value);
+
+  std::getline(input, watchPeriodSecsStr, ',');
+  std::getline(input, minSamplesStr, ',');
+  std::getline(input, startThresholdStr, ',');
+  std::getline(input, recoveryThresholdStr);
+
+  watchPeriodSecsStr = utils::trimString(watchPeriodSecsStr);
+  minSamplesStr = utils::trimString(minSamplesStr);
+  recoveryThresholdStr = utils::trimString(recoveryThresholdStr);
+  startThresholdStr = utils::trimString(startThresholdStr);
+
+  if (!(utils::isValidUInt(watchPeriodSecsStr) && utils::isValidUInt(minSamplesStr)
+        && utils::isValidUInt(startThresholdStr) && utils::isValidUInt(recoveryThresholdStr))) {
+    BadlyFormattedInteger ex;
+    ex.getMessage() << "In SourcedParameter<UnderfillFetchLimits>::set() : badly formatted integer"
+                    << " for category=" << m_category << " key=" << m_key << " value=\'" << value << "' at:" << source;
+    throw ex;
+  }
+
+  m_value.underfillWatchPeriodSecs = std::stoull(watchPeriodSecsStr);
+  m_value.underfillMinSamples = std::stoull(minSamplesStr);
+  m_value.underfillStartThreshold = std::stoull(startThresholdStr);
+  m_value.underfillRecoveryThreshold = std::stoull(recoveryThresholdStr);
+
+  if (m_value.underfillStartThreshold <= m_value.underfillRecoveryThreshold) {
+    BadlyFormattedInteger ex;
+    ex.getMessage() << "In SourcedParameter<UnderfillFetchLimits>::set(): "
+                       "start threshold must be lower than recovery threshold"
+                    << " for category=" << m_category << " key=" << m_key << " value='" << value << "'"
+                    << " at:" << source;
+    throw ex;
+  }
+
+  m_source = source;
+  m_set = true;
+}
 }  // namespace cta
 
 namespace cta::tape::daemon {

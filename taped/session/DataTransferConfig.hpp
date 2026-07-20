@@ -50,12 +50,12 @@ struct DataTransferConfig {
    * Fill ratio at or above which an active underfill observation period is
    * cleared.
    */
-  double underfillRecoveryThreshold = 0.60;
+  uint64_t underfillRecoveryThreshold = 60;
 
   /**
    * Fill ratio below which an underfill observation period is started.
    */
-  double underfillStartThreshold = 0.40;
+  uint64_t underfillStartThreshold = 40;
 
   /**
    * Maximum number of bytes in a set of files to be recalled from tape

@@ -163,10 +163,10 @@ taped ArchiveFetchBytesFiles *80000000000*,*4000*
     80 GB and 4000 files.
 
 
-taped ArchiveFetchUnderfillLimits *300*,*3*,*0.40*,*0.60*
+taped ArchiveFetchUnderfillLimits *300*,*3*,*40*,*60*
 
 :   Underfill detection limits for archive request batches, specified as
-    a tuple (watch period in seconds, minimum number of underfilled
+    a tuple (minimum watch period in seconds, minimum number of underfilled
     batches, recovery threshold, start threshold). When **cta-taped**
     repeatedly receives archive request batches, the requested number of 
     files and bytes is defined in ArchiveFetchBytesFiles. When the 
@@ -179,8 +179,8 @@ taped ArchiveFetchUnderfillLimits *300*,*3*,*0.40*,*0.60*
     the recovery threshold. If the measured period is longer than the
     configured watch period and the minimum number of underfilled fetched
     batches is reached, the end of the tape session is triggered. 
-    Defaults to 300 seconds, 3 batches, a  start threshold of 0.40, 
-    and a recovery threshold of 0.60,
+    Defaults to 300 seconds, 3 batches, a  start threshold of 40 %, 
+    and a recovery threshold of 60 %.
 
 taped ArchiveFlushBytesFiles *32000000000*,*200*
 

@@ -5,16 +5,26 @@
 
 #include "common/config/SourcedParameter.hpp"
 #include "taped/daemon/common/FetchReportOrFlushLimits.hpp"
+#include "taped/daemon/common/UnderfillFetchLimits.hpp"
 
 #include <gtest/gtest.h>
 
 namespace unitTests {
 
-TEST(cta_Daemon, SourcedParameter) {
+TEST(cta_DaemonFetchFlushLimits, SourcedParameter) {
   cta::SourcedParameter<cta::tape::daemon::FetchReportOrFlushLimits> mountCriteria("unitTest", "mountCriteria");
   mountCriteria.set("12, 34", "Unit test");
   ASSERT_EQ(12, mountCriteria.value().maxBytes);
   ASSERT_EQ(34, mountCriteria.value().maxFiles);
+}
+
+TEST(cta_DaemonUnderfillLimits, SourcedParameter) {
+  cta::SourcedParameter<cta::tape::daemon::UnderfillFetchLimits> dismountCriteria("unitTest", "dismountCriteria");
+  dismountCriteria.set("900, 5, 40, 60", "Unit test");
+  ASSERT_EQ(900, dismountCriteria.value().underfillWatchPeriodSecs);
+  ASSERT_EQ(5, dismountCriteria.value().underfillMinSamples);
+  ASSERT_EQ(40, dismountCriteria.value().underfillStartThreshold);
+  ASSERT_EQ(60, dismountCriteria.value().underfillRecoveryThreshold);
 }
 
 class SourcedParameterBoolTest : public ::testing::TestWithParam<std::pair<const char*, bool>> {};

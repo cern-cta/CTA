@@ -8,6 +8,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "common/config/SourcedParameter.hpp"
 #include "taped/daemon/common/FetchReportOrFlushLimits.hpp"
+#include "taped/daemon/common/UnderfillFetchLimits.hpp"
 
 #include <algorithm>
 #include <string>
@@ -90,6 +91,40 @@ void DriveConfig::setConfigToDB(const SourcedParameter<std::string>& sourcedPara
                                                   sourcedParameter.category(),
                                                   sourcedParameter.key(),
                                                   sourcedParameter.value(),
+                                                  sourcedParameter.source());
+}
+
+void DriveConfig::setConfigToDB(const SourcedParameter<tape::daemon::UnderfillFetchLimits>& sourcedParameter,
+                                catalogue::Catalogue* catalogue,
+                                const std::string& tapeDriveName) {
+  std::string key = sourcedParameter.key();
+  utils::searchAndReplace(key, "Limits", "");
+  checkConfigInDB(catalogue, tapeDriveName, key.append("WatchPeriodSecs"));
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName,
+                                                  sourcedParameter.category(),
+                                                  key,
+                                                  std::to_string(sourcedParameter.value().underfillWatchPeriodSecs),
+                                                  sourcedParameter.source());
+  utils::searchAndReplace(key, "WatchPeriodSecs", "");
+  checkConfigInDB(catalogue, tapeDriveName, key.append("MinSamples"));
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName,
+                                                  sourcedParameter.category(),
+                                                  key,
+                                                  std::to_string(sourcedParameter.value().underfillMinSamples),
+                                                  sourcedParameter.source());
+  utils::searchAndReplace(key, "MinSamples", "");
+  checkConfigInDB(catalogue, tapeDriveName, key.append("RecoveryThreshold"));
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName,
+                                                  sourcedParameter.category(),
+                                                  key,
+                                                  std::to_string(sourcedParameter.value().underfillRecoveryThreshold),
+                                                  sourcedParameter.source());
+  utils::searchAndReplace(key, "RecoveryThreshold", "");
+  checkConfigInDB(catalogue, tapeDriveName, key.append("StartThreshold"));
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName,
+                                                  sourcedParameter.category(),
+                                                  key,
+                                                  std::to_string(sourcedParameter.value().underfillStartThreshold),
                                                   sourcedParameter.source());
 }
 
