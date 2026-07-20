@@ -362,29 +362,10 @@ void MigrationTaskInjector::WorkerThread::run() {
         m_parent.m_lc.log(cta::log::DEBUG, "MigrationTaskInjector::WorkerThread::run(): injectBulkMigrations");
         // Inject the tasks
         m_parent.injectBulkMigrations(jobs);
-        // Decide on continuation
-        //if (files < req.filesRequested / 2 && bytes < req.bytesRequested) {
-        //  // The client starts to dribble files at a low rate. Better finish
-        //  // the session now, so we get a clean batch on a later mount.
-        //  cta::log::ScopedParamContainer params(m_parent.m_lc);
-        //  params.add("filesRequested", req.filesRequested)
-        //    .add("bytesRequested", req.bytesRequested)
-        //    .add("filesReceived", files)
-        //    .add("bytesReceived", bytes);
-        //  m_parent.m_lc.log(cta::log::INFO,
-        //                    "Got less than half the requested work to do: triggering the end of session.");
-        //  m_parent.signalEndDataMovement();
-        //  break;
       }
       /*
-     * Evaluate all non-final backend responses, including empty responses.
-     *
-     * An empty non-final response contributes:
-     *
-     *   filesFetched = 0
-     *   bytesFetched = 0
-     *   effective fill = 0%
-     */
+      * Evaluate all non-final backend responses.
+      */
       if (m_parent.shouldDismountForUnderfill(filesFetched, bytesFetched, req)) {
         m_parent.signalEndDataMovement();
         break;
