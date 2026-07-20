@@ -9,6 +9,12 @@
 #include "catalogue/Catalogue.hpp"
 #include "frontend/common/FrontendService.hpp"
 
+#ifdef CTA_PGSCHED
+#include "mountdecision/MountDecisionDB.hpp"
+#endif
+
+#include <optional>
+
 #include "cta_frontend.pb.h"
 
 namespace cta::frontend {
@@ -73,7 +79,11 @@ protected:
   const admin::AdminCmd m_adminCmd;   //!< Administrator Command protocol buffer
   catalogue::Catalogue& m_catalogue;  //!< Reference to CTA Catalogue
   cta::Scheduler& m_scheduler;        //!< Reference to CTA Scheduler
-  log::LogContext m_lc;               //!< CTA Log Context
+  cta::SchedulerDB_t& m_schedulerDb;  //!< Reference to CTA Scheduler DB
+#ifdef CTA_PGSCHED
+  std::optional<cta::mountdecision::MountDecisionDB> m_mountDecisionDb;  //!< Mount Decision DB wrapper
+#endif
+  log::LogContext m_lc;  //!< CTA Log Context
 
 private:
   /*!
@@ -104,6 +114,7 @@ private:
   void processMountPolicy_Add(xrd::Response& response) const;
   void processMountPolicy_Ch(xrd::Response& response) const;
   void processMountPolicy_Rm(xrd::Response& response) const;
+  void processMountCandidate_Ch(xrd::Response& response) const;
   void processRepack_Add(xrd::Response& response);
   void processRepack_Rm(xrd::Response& response);
   void processRepack_Err(xrd::Response& response) const;

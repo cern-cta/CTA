@@ -12,6 +12,7 @@
 #include "catalogue/MediaType.hpp"
 #include "catalogue/TapeFileSearchCriteria.hpp"
 #include "common/dataStructures/PhysicalLibrary.hpp"
+#include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "frontend/common/RequestTracker.hpp"
 #include "telemetry/metrics/FrontendMetrics.hpp"
@@ -28,6 +29,10 @@ AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
       m_adminCmd(adminCmd),
       m_catalogue(frontendService.getCatalogue()),
       m_scheduler(frontendService.getScheduler()),
+      m_schedulerDb(frontendService.getSchedDb()),
+#ifdef CTA_PGSCHED
+      m_mountDecisionDb(cta::mountdecision::makeMountDecisionDB(m_schedulerDb)),
+#endif
       m_lc(frontendService.getLogContext()),
       m_cliIdentity(clientIdentity),
       m_archiveFileMaxSize(frontendService.getArchiveFileMaxSize()),
@@ -123,6 +128,9 @@ xrd::Response AdminCmd::process() {
         break;
       case cmd_pair(admin::AdminCmd::CMD_MOUNTPOLICY, admin::AdminCmd::SUBCMD_RM):
         processMountPolicy_Rm(response);
+        break;
+      case cmd_pair(admin::AdminCmd::CMD_MOUNTCANDIDATE, admin::AdminCmd::SUBCMD_CH):
+        processMountCandidate_Ch(response);
         break;
       case cmd_pair(admin::AdminCmd::CMD_REPACK, admin::AdminCmd::SUBCMD_ADD):
         processRepack_Add(response);
@@ -851,6 +859,29 @@ void AdminCmd::processMountPolicy_Rm(xrd::Response& response) const {
   m_catalogue.MountPolicy()->deleteMountPolicy(group);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
+}
+
+void AdminCmd::processMountCandidate_Ch(xrd::Response& response) const {
+  using namespace cta::admin;
+
+#ifdef CTA_PGSCHED
+  const auto& candidateKey = getRequired(OptionString::CANDIDATE_KEY);
+  const auto& score = getRequired(OptionUInt64::SCORE);
+
+  if (!m_mountDecisionDb.has_value()) {
+    throw exception::UserError(
+      "The mountcandidate command requires a PostgreSQL scheduler database exposing a connection provider.");
+  }
+
+  m_mountDecisionDb->setMountCandidateScoreOverride(candidateKey,
+                                                    score == 0 ? std::nullopt : std::optional<uint64_t>(score));
+
+  response.set_type(xrd::Response::RSP_SUCCESS);
+#else
+  static_cast<void>(response);
+  throw exception::UserError(
+    "The mountcandidate command requires a PostgreSQL scheduler database exposing a connection provider.");
+#endif
 }
 
 void AdminCmd::processRepack_Add(xrd::Response& response) {
