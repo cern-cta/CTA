@@ -168,7 +168,7 @@ private:
    * - observation ends at or above m_underfillRecoveryThreshold;
    * - values between the two thresholds preserve the current state.
    *
-   * @return True if the tape session should be ended.
+   * @return True if the tape should get unmounted.
    */
   bool shouldDismountForUnderfill(uint64_t filesFetched, uint64_t bytesFetched, const Request& request);
 
