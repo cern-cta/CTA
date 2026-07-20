@@ -389,18 +389,21 @@ MountDecisionDB::blockExpiredReservedMountCandidates(const uint64_t reservationT
 void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& candidates,
                                              const uint64_t reservationTimeoutSeconds) {
   auto conn = m_connectionProvider.getConn();
-  try {
-    conn.executeNonQuery("BEGIN");
-
-    const char* const refreshIdSql = R"SQL(
-      SELECT NEXTVAL('SCHEDULER_MOUNT_CANDIDATES_REFRESH_ID_SEQ') AS REFRESH_ID
-    )SQL";
+  const char* const refreshIdSql = R"SQL(
+    SELECT NEXTVAL('SCHEDULER_MOUNT_CANDIDATES_REFRESH_ID_SEQ') AS REFRESH_ID
+  )SQL";
+  uint64_t refreshId = 0;
+  {
     auto refreshIdStmt = conn.createStmt(refreshIdSql);
     auto refreshIdRset = refreshIdStmt.executeQuery();
     if (!refreshIdRset.next()) {
       throw exception::Exception("In MountDecisionDB::replaceMountCandidates(): failed to allocate refresh id.");
     }
-    const uint64_t refreshId = refreshIdRset.columnUint64("REFRESH_ID");
+    refreshId = refreshIdRset.columnUint64("REFRESH_ID");
+  }
+
+  try {
+    conn.executeNonQuery("BEGIN");
 
     const char* const upsertSql = R"SQL(
       INSERT INTO SCHEDULER_MOUNT_CANDIDATES(
@@ -658,14 +661,17 @@ std::optional<ReservedMountCandidate> MountDecisionDB::tryReserveNextMountCandid
       FOR UPDATE SKIP LOCKED
       LIMIT 1
     )SQL";
-    auto selectStmt = conn.createStmt(selectSql);
-    selectStmt.bindString(":LOGICAL_LIBRARY", logicalLibrary);
-    auto selected = selectStmt.executeQuery();
-    if (!selected.next()) {
-      conn.commit();
-      return std::nullopt;
+    uint64_t candidateId = 0;
+    {
+      auto selectStmt = conn.createStmt(selectSql);
+      selectStmt.bindString(":LOGICAL_LIBRARY", logicalLibrary);
+      auto selected = selectStmt.executeQuery();
+      if (!selected.next()) {
+        conn.commit();
+        return std::nullopt;
+      }
+      candidateId = selected.columnUint64("CANDIDATE_ID");
     }
-    const uint64_t candidateId = selected.columnUint64("CANDIDATE_ID");
 
     const char* const reserveSql = R"SQL(
       UPDATE SCHEDULER_MOUNT_CANDIDATES SET
@@ -708,14 +714,16 @@ std::optional<ReservedMountCandidate> MountDecisionDB::tryReserveNextMountCandid
     reserveStmt.bindString(":RESERVED_BY_HOST", host);
     reserveStmt.bindString(":RESERVED_BY_DRIVE", drive);
     reserveStmt.bindUint64(":CANDIDATE_ID", candidateId);
-    auto reserved = reserveStmt.executeQuery();
-    if (!reserved.next()) {
-      throw exception::Exception("In MountDecisionDB::tryReserveNextMountCandidate(): failed to reserve candidate.");
-    }
-
     ReservedMountCandidate ret;
-    ret.candidateId = reserved.columnUint64("CANDIDATE_ID");
-    ret.candidate = mountCandidateFromRset(reserved);
+    {
+      auto reserved = reserveStmt.executeQuery();
+      if (!reserved.next()) {
+        throw exception::Exception("In MountDecisionDB::tryReserveNextMountCandidate(): failed to reserve candidate.");
+      }
+
+      ret.candidateId = reserved.columnUint64("CANDIDATE_ID");
+      ret.candidate = mountCandidateFromRset(reserved);
+    }
 
     if (ret.candidate.vid.has_value()) {
       const char* const blockSiblingsSql = R"SQL(
