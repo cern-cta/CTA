@@ -38,7 +38,7 @@ struct DataTransferConfig {
    * Minimum duration, in seconds, for which archive requests must remain
    * underfilled before the tape session may be ended.
    */
-  uint64_t underfillWatchPeriodSecs = 5*60;
+  uint64_t underfillWatchPeriodSecs = 5 * 60;
 
   /**
    * Minimum number of consecutive underfilled archive requests required before
