@@ -45,8 +45,7 @@ struct UnderfillFetchLimits {
         underfillWatchPeriodSecs(watchPeriodSecs),
         underfillMinSamples(minSamples),
         underfillStartThreshold(startThreshold),
-        underfillRecoveryThreshold(recoveryThreshold)
-  {}
+        underfillRecoveryThreshold(recoveryThreshold) {}
 };
 
 }  // namespace cta::tape::daemon
