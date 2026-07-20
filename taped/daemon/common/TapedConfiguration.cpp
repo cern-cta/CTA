@@ -173,6 +173,7 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(const std::string& d
   ret.bufferCount.setFromConfigurationFile(cf, driveTapedConfigPath);
   // Batched metadata access and tape write flush parameters
   ret.archiveFetchBytesFiles.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.archiveFetchUnderfillLimits.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.archiveFlushBytesFiles.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.retrieveFetchBytesFiles.setFromConfigurationFile(cf, driveTapedConfigPath);
   // Mount criteria
@@ -243,6 +244,7 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(const std::string& d
   ret.bufferCount.log(log);
 
   ret.archiveFetchBytesFiles.log(log);
+  ret.archiveFetchUnderfillLimits.log(log);
   ret.archiveFlushBytesFiles.log(log);
   ret.retrieveFetchBytesFiles.log(log);
 
