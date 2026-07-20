@@ -89,6 +89,15 @@ struct TapedConfiguration {
     {80L * 1000 * 1000 * 1000, 4000},
     "Compile time default"
   };
+  /// The fetch underfill criteria to unmount archive session
+  // { underfillWatchPeriodSecs, underfillMinSamples,
+  //   underfillStartThreshold, underfillRecoveryThreshold }
+  cta::SourcedParameter<FetchReportOrFlushLimits> archiveFetchUnderfillLimits {
+    "taped",
+    "ArchiveFetchUnderfillLimits",
+    {5 * 60, 3, 0.40, 0.60},
+    "Compile time default"
+  };
   /// The flush to tape criteria for archiving
   cta::SourcedParameter<FetchReportOrFlushLimits> archiveFlushBytesFiles {
     "taped",

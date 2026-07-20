@@ -42,6 +42,10 @@ public:
                         cta::ArchiveMount& archiveMount,
                         uint64_t maxFiles,
                         uint64_t byteSizeThreshold,
+                        double underfillWatchPeriodSecs,
+                        uint64_t underfillMinSamples,
+                        double underfillRecoveryThreshold,
+                        double underfillStartThreshold,
                         const cta::log::LogContext& lc);
 
   /**
@@ -151,11 +155,6 @@ private:
   static double calculateFillRatio(uint64_t fetched, uint64_t requested);
 
   /**
-   * Add a file size to a total without allowing uint64_t wraparound.
-   */
-  static void addBytesSaturating(uint64_t fileSize, uint64_t& totalBytes);
-
-  /**
    * Update the underfill observation state.
    *
    * Effective fill is:
@@ -165,8 +164,8 @@ private:
    *
    * The method uses hysteresis:
    *
-   * - underfill observation starts below UNDERFILL_START_THRESHOLD;
-   * - observation ends at or above UNDERFILL_RECOVERY_THRESHOLD;
+   * - underfill observation starts below m_underfillStartThreshold;
+   * - observation ends at or above m_underfillRecoveryThreshold;
    * - values between the two thresholds preserve the current state.
    *
    * @return True if the tape session should be ended.
@@ -176,24 +175,24 @@ private:
   /**
    * A response below this ratio starts an underfill observation period.
    */
-  static constexpr double UNDERFILL_START_THRESHOLD = 0.40;
+  static constexpr double m_underfillStartThreshold;
 
   /**
    * An active underfill period is cleared only when a response reaches this
    * ratio.
    */
-  static constexpr double UNDERFILL_RECOVERY_THRESHOLD = 0.60;
+  static constexpr double m_underfillRecoveryThreshold;
 
   /**
    * Continuous underfill duration required before ending the session.
    */
-  static constexpr double WATCH_UNDERFILL_PERIOD_SECONDS = 15.0 * 60.0;
+  static constexpr double m_underfillWatchPeriodSecs;
 
   /**
    * Minimum number of underfilled responses required before ending the
    * session.
    */
-  static constexpr uint64_t MINIMUM_UNDERFILL_SAMPLES = 3;
+  static constexpr uint64_t minUnderfillSamples = 3;
 
   /**
    * Timer for the active underfill observation period.

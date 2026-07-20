@@ -35,6 +35,29 @@ struct DataTransferConfig {
   uint64_t bulkRequestMigrationMaxFiles = 0;
 
   /**
+   * Minimum duration, in seconds, for which archive requests must remain
+   * underfilled before the tape session may be ended.
+   */
+  uint64_t underfillWatchPeriodSecs = 5*60;
+
+  /**
+   * Minimum number of consecutive underfilled archive requests required before
+   * the tape session may be ended.
+   */
+  uint64_t underfillMinSamples = 3;
+
+  /**
+   * Fill ratio at or above which an active underfill observation period is
+   * cleared.
+   */
+  double underfillRecoveryThreshold = 0.60;
+
+  /**
+   * Fill ratio below which an underfill observation period is started.
+   */
+  double underfillStartThreshold = 0.40;
+
+  /**
    * Maximum number of bytes in a set of files to be recalled from tape
    */
   uint64_t bulkRequestRecallMaxBytes = 0;

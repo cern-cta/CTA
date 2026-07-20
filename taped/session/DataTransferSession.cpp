@@ -491,6 +491,10 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
                                        *archiveMount,
                                        m_dataTransferConfig.bulkRequestMigrationMaxFiles,
                                        m_dataTransferConfig.bulkRequestMigrationMaxBytes,
+                                       m_dataTransferConfig.underfillWatchPeriodSecs,
+                                       m_dataTransferConfig.underfillMinSamples,
+                                       m_dataTransferConfig.underfillRecoveryThreshold,
+                                       m_dataTransferConfig.underfillStartThreshold,
                                        logContext);
     threadPool.setTaskInjector(&taskInjector);
     writeSingleThread.setTaskInjector(&taskInjector);

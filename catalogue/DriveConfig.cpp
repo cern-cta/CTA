@@ -28,6 +28,7 @@ void DriveConfig::setTapedConfiguration(const tape::daemon::TapedConfiguration& 
   setConfigToDB(tapedConfiguration.bufferSizeBytes, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.bufferCount, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.archiveFetchBytesFiles, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.archiveFetchUnderfillLimits, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.archiveFlushBytesFiles, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.retrieveFetchBytesFiles, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.mountCriteria, catalogue, tapeDriveName);

@@ -162,6 +162,26 @@ taped ArchiveFetchBytesFiles *80000000000*,*4000*
     bytes and number of files specified by this parameter. Defaults to
     80 GB and 4000 files.
 
+
+taped ArchiveFetchUnderfillLimits *300*,*3*,*0.40*,*0.60*
+
+:   Underfill detection limits for archive request batches, specified as
+    a tuple (watch period in seconds, minimum number of underfilled
+    batches, recovery threshold, start threshold). When **cta-taped**
+    repeatedly receives archive request batches, the requested number of 
+    files and bytes is defined in ArchiveFetchBytesFiles. When the 
+    effective fill ratio (max(filesFetched/filesRequested, 
+    bytesFetched/bytesRequested) remains below the configured thresholds, 
+    the daemon concludes that the backend cannot supply enough work 
+    to efficiently keep the tape drive busy and ends the tape session. 
+    An underfill observation period starts when the effective fill ratio 
+    falls below the start threshold, ends when it reaches or exceeds 
+    the recovery threshold. If the measured period is longer than the
+    configured watch period and the minimum number of underfilled fetched
+    batches is reached, the end of the tape session is triggered. 
+    Defaults to 300 seconds, 3 batches, a  start threshold of 0.40, 
+    and a recovery threshold of 0.60,
+
 taped ArchiveFlushBytesFiles *32000000000*,*200*
 
 :   Flush to tape criteria, specified as a tuple (number of bytes,
