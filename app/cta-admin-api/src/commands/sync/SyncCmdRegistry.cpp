@@ -40,6 +40,7 @@ const std::map<CmdKey, SyncCmdHandler> SYNC_CMD_TABLE = {
   {{AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_ADD},           handlers::addMediaType             },
   {{AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_CH},            handlers::changeMediaType          },
   {{AdminCmd::CMD_MEDIATYPE, AdminCmd::SUBCMD_RM},            handlers::removeMediaType          },
+  {{AdminCmd::CMD_MOUNTCANDIDATE, AdminCmd::SUBCMD_CH},       handlers::changeMountCandidate     },
   {{AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_ADD},         handlers::addMountPolicy           },
   {{AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_CH},          handlers::changeMountPolicy        },
   {{AdminCmd::CMD_MOUNTPOLICY, AdminCmd::SUBCMD_RM},          handlers::removeMountPolicy        },

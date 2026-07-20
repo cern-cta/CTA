@@ -221,6 +221,12 @@ std::optional<std::string> removeDrive(const SyncCmdContext& ctx, const AdminCmd
 /// @brief cta-admin failedrequest rm
 std::optional<std::string> removeFailedRequest(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 
+/// @brief cta-admin mountcandidate ch
+///
+/// Sets the operator score override of a mount candidate; a score of 0 removes the override.
+/// Requires the PostgreSQL scheduler.
+std::optional<std::string> changeMountCandidate(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
+
 /// @brief cta-admin repack add
 std::optional<std::string> addRepack(const SyncCmdContext& ctx, const AdminCmdOptions& opts);
 

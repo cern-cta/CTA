@@ -17,6 +17,8 @@ namespace cta::admin_api::commands::sync {
 struct SyncCmdContext {
   catalogue::Catalogue& catalogue;
   cta::Scheduler& scheduler;
+  /// Scheduler database backing the scheduler
+  cta::SchedulerDatabase& schedDb;
   /// Already carries the user issuing the command
   log::LogContext& lc;
   /// Identity of the admin issuing the command

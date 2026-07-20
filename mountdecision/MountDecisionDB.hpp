@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common/dataStructures/MountType.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/rdbms/ConnProvider.hpp"
 
 #include <optional>
@@ -30,6 +31,7 @@ struct MountCandidate {
   uint64_t youngestJobStartTime = 0;
   double ratioOfMountQuotaUsed = 0.0;
   uint64_t candidateScore;
+  std::optional<uint64_t> overrideCandidateScore;
   std::string mediaType;
   uint64_t labelFormat = 0;
   std::string vendor;
@@ -82,6 +84,8 @@ public:
 
   std::vector<MountCandidateRecord> listMountCandidates();
 
+  void setMountCandidateScoreOverride(const std::string& candidateKey, std::optional<uint64_t> overrideCandidateScore);
+
   std::optional<ReservedMountCandidate>
   tryReserveNextMountCandidate(const std::string& logicalLibrary, const std::string& host, const std::string& drive);
 
@@ -97,5 +101,7 @@ public:
 private:
   ConnProvider& m_connectionProvider;
 };
+
+std::optional<MountDecisionDB> makeMountDecisionDB(SchedulerDatabase& schedulerDb);
 
 }  // namespace cta::mountdecision

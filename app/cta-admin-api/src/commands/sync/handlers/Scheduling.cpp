@@ -9,6 +9,10 @@
 #include "common/utils/Regex.hpp"
 #include "common/utils/utils.hpp"
 
+#ifdef CTA_PGSCHED
+#include "mountdecision/MountDecisionDB.hpp"
+#endif
+
 #include <algorithm>
 #include <functional>
 #include <sstream>
@@ -131,6 +135,28 @@ std::optional<std::string> removeFailedRequest(const SyncCmdContext& ctx, const 
 
   ctx.scheduler.deleteFailed(objectId, ctx.lc);
   return std::nullopt;
+}
+
+std::optional<std::string> changeMountCandidate(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
+#ifdef CTA_PGSCHED
+  const auto& candidateKey = opts.getRequired(OptionString::CANDIDATE_KEY);
+  const auto score = opts.getRequired(OptionUInt64::SCORE);
+
+  auto mountDecisionDb = mountdecision::makeMountDecisionDB(ctx.schedDb);
+  if (!mountDecisionDb.has_value()) {
+    throw exception::UserError(
+      "The mountcandidate command requires a PostgreSQL scheduler database exposing a connection provider.");
+  }
+
+  mountDecisionDb->setMountCandidateScoreOverride(candidateKey,
+                                                  score == 0 ? std::nullopt : std::optional<uint64_t>(score));
+  return std::nullopt;
+#else
+  static_cast<void>(ctx);
+  static_cast<void>(opts);
+  throw exception::UserError(
+    "The mountcandidate command requires a PostgreSQL scheduler database exposing a connection provider.");
+#endif
 }
 
 std::optional<std::string> addRepack(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {

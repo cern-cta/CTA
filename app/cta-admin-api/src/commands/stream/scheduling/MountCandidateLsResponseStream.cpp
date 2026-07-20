@@ -8,10 +8,6 @@
 #include "common/exception/UserError.hpp"
 #include "protobuf/admin/MountTypeSerDeser.hpp"
 
-#ifdef CTA_PGSCHED
-#include "scheduler/rdbms/ConnProvider.hpp"
-#endif
-
 #include <optional>
 #include <stdexcept>
 
@@ -35,14 +31,13 @@ MountCandidateLsResponseStream::MountCandidateLsResponseStream(cta::Scheduler& s
       m_schedulerBackendName(scheduler.getSchedulerBackendName()) {
   static_cast<void>(lc);
 #ifdef CTA_PGSCHED
-  auto* connProvider = dynamic_cast<cta::ConnProvider*>(&schedulerDb);
-  if (connProvider == nullptr) {
+  auto mountDecisionDb = cta::mountdecision::makeMountDecisionDB(schedulerDb);
+  if (!mountDecisionDb.has_value()) {
     throw cta::exception::UserError(
       "The mountcandidate command requires a PostgreSQL scheduler database exposing a connection provider.");
   }
 
-  cta::mountdecision::MountDecisionDB mountDecisionDb(*connProvider);
-  m_mountCandidateRecords = mountDecisionDb.listMountCandidates();
+  m_mountCandidateRecords = mountDecisionDb->listMountCandidates();
 #else
   static_cast<void>(schedulerDb);
   throw cta::exception::UserError(
@@ -102,6 +97,7 @@ cta::xrd::Data MountCandidateLsResponseStream::next() {
   mclsItem->set_last_update_time(record.lastUpdateTime);
   mclsItem->set_instance_name(m_instanceName);
   mclsItem->set_scheduler_backend_name(m_schedulerBackendName);
+  mclsItem->set_override_candidate_score(valueOrDefault(candidate.overrideCandidateScore));
 #endif
 
   return data;
