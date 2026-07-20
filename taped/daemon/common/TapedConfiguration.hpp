@@ -5,6 +5,7 @@
 
 #pragma once
 #include "FetchReportOrFlushLimits.hpp"
+#include "UnderfillFetchLimits.hpp"
 #include "common/Constants.hpp"
 #include "common/config/SourcedParameter.hpp"
 #include "common/exception/Exception.hpp"
@@ -92,10 +93,10 @@ struct TapedConfiguration {
   /// The fetch underfill criteria to unmount archive session
   // { underfillWatchPeriodSecs, underfillMinSamples,
   //   underfillStartThreshold, underfillRecoveryThreshold }
-  cta::SourcedParameter<FetchReportOrFlushLimits> archiveFetchUnderfillLimits {
+  cta::SourcedParameter<UnderfillFetchLimits> archiveFetchUnderfillLimits {
     "taped",
     "ArchiveFetchUnderfillLimits",
-    {5 * 60, 3, 0.40, 0.60},
+    {5 * 60, 3, 40, 60},
     "Compile time default"
   };
   /// The flush to tape criteria for archiving

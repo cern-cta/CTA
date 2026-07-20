@@ -42,10 +42,10 @@ public:
                         cta::ArchiveMount& archiveMount,
                         uint64_t maxFiles,
                         uint64_t byteSizeThreshold,
-                        double underfillWatchPeriodSecs,
+                        uint64_t underfillWatchPeriodSecs,
                         uint64_t underfillMinSamples,
-                        double underfillRecoveryThreshold,
-                        double underfillStartThreshold,
+                        uint64_t underfillStartThreshold,
+                        uint64_t underfillRecoveryThreshold,
                         const cta::log::LogContext& lc);
 
   /**
@@ -173,28 +173,6 @@ private:
   bool shouldDismountForUnderfill(uint64_t filesFetched, uint64_t bytesFetched, const Request& request);
 
   /**
-   * A response below this ratio starts an underfill observation period.
-   */
-  static constexpr double m_underfillStartThreshold;
-
-  /**
-   * An active underfill period is cleared only when a response reaches this
-   * ratio.
-   */
-  static constexpr double m_underfillRecoveryThreshold;
-
-  /**
-   * Continuous underfill duration required before ending the session.
-   */
-  static constexpr double m_underfillWatchPeriodSecs;
-
-  /**
-   * Minimum number of underfilled responses required before ending the
-   * session.
-   */
-  static constexpr uint64_t minUnderfillSamples = 3;
-
-  /**
    * Timer for the active underfill observation period.
    *
    * No value means that no underfill period is active.
@@ -257,6 +235,26 @@ private:
 
   /// Same as m_maxFilesReq for size per request. (in bytes))
   const uint64_t m_maxBytes;
+  /**
+   * Continuous underfill duration required before ending the session.
+   */
+  uint64_t m_underfillWatchPeriodSecs;
+
+  /**
+   * Minimum number of underfilled responses required before ending the
+   * session.
+   */
+  uint64_t m_underfillMinSamples;
+  /**
+   * A response below this ratio starts an underfill observation period.
+   */
+  uint64_t m_underfillStartThreshold;
+
+  /**
+   * An active underfill period is cleared only when a response reaches this
+   * ratio.
+   */
+  uint64_t m_underfillRecoveryThreshold;
 
   /**The last fseq used on the tape. We should not see this but
    * IT is computed by subtracting 1 to fSeg  of the first file to migrate we

@@ -23,10 +23,10 @@ MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager& mm,
                                              cta::ArchiveMount& archiveMount,
                                              uint64_t maxFiles,
                                              uint64_t byteSizeThreshold,
-                                             double underfillWatchPeriodSecs,
+                                             uint64_t underfillWatchPeriodSecs,
                                              uint64_t underfillMinSamples,
-                                             double underfillRecoveryThreshold,
-                                             double underfillStartThreshold,
+                                             uint64_t underfillStartThreshold,
+                                             uint64_t underfillRecoveryThreshold,
                                              const cta::log::LogContext& lc)
     : m_thread(*this),
       m_memManager(mm),
@@ -38,8 +38,8 @@ MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager& mm,
       m_maxBytes(byteSizeThreshold),
       m_underfillWatchPeriodSecs(underfillWatchPeriodSecs),
       m_underfillMinSamples(underfillMinSamples),
-      m_underfillRecoveryThreshold(underfillRecoveryThreshold),
-      m_underfillStartThreshold(underfillStartThreshold) {}
+      m_underfillStartThreshold(underfillStartThreshold),
+      m_underfillRecoveryThreshold(underfillRecoveryThreshold) {}
 
 //------------------------------------------------------------------------------
 //injectBulkMigrations
@@ -207,7 +207,7 @@ bool MigrationTaskInjector::shouldDismountForUnderfill(const uint64_t filesFetch
    * No underfill period is active.
    */
   if (!m_underfillTimer.has_value()) {
-    if (effectiveFillRatio >= m_underfillStartThreshold) {
+    if (effectiveFillRatio >= m_underfillStartThreshold / 100.) {
       cta::log::ScopedParamContainer params(m_lc);
 
       params.add("filesRequested", request.filesRequested)
@@ -217,7 +217,7 @@ bool MigrationTaskInjector::shouldDismountForUnderfill(const uint64_t filesFetch
         .add("fileFillPercentage", fileFillRatio * 100.0)
         .add("byteFillPercentage", byteFillRatio * 100.0)
         .add("effectiveFillPercentage", effectiveFillRatio * 100.0)
-        .add("underfillStartPercentage", m_underfillStartThreshold * 100.0);
+        .add("underfillStartPercentage", m_underfillStartThreshold);
 
       params.log(cta::log::DEBUG, "Migration response did not start an underfill observation period.");
 
@@ -240,7 +240,7 @@ bool MigrationTaskInjector::shouldDismountForUnderfill(const uint64_t filesFetch
       .add("fileFillPercentage", fileFillRatio * 100.0)
       .add("byteFillPercentage", byteFillRatio * 100.0)
       .add("effectiveFillPercentage", effectiveFillRatio * 100.0)
-      .add("underfillStartPercentage", m_underfillStartThreshold * 100.0)
+      .add("underfillStartPercentage", m_underfillStartThreshold)
       .add("underfillSamples", m_underfillSamples);
 
     params.log(cta::log::INFO, "Started migration-response underfill observation period.");
@@ -252,7 +252,7 @@ bool MigrationTaskInjector::shouldDismountForUnderfill(const uint64_t filesFetch
    * An underfill period is active. A response at or above the recovery
    * threshold ends the observation period.
    */
-  if (effectiveFillRatio >= m_underfillRecoveryThreshold) {
+  if (effectiveFillRatio >= m_underfillRecoveryThreshold / 100.) {
     const double underfillDurationSeconds = m_underfillTimer->secs();
 
     cta::log::ScopedParamContainer params(m_lc);
@@ -264,7 +264,7 @@ bool MigrationTaskInjector::shouldDismountForUnderfill(const uint64_t filesFetch
       .add("fileFillPercentage", fileFillRatio * 100.0)
       .add("byteFillPercentage", byteFillRatio * 100.0)
       .add("effectiveFillPercentage", effectiveFillRatio * 100.0)
-      .add("underfillRecoveryPercentage", m_underfillRecoveryThreshold * 100.0)
+      .add("underfillRecoveryPercentage", m_underfillRecoveryThreshold)
       .add("underfillSamples", m_underfillSamples)
       .add("underfillDurationSeconds", underfillDurationSeconds);
 
@@ -292,15 +292,11 @@ bool MigrationTaskInjector::shouldDismountForUnderfill(const uint64_t filesFetch
     ++m_underfillSamples;
   }
 
-  /*
-   * secs() defaults to keepRunning, so reading the elapsed duration does not
-   * reset the timer.
-   */
   const double underfillDurationSeconds = m_underfillTimer->secs();
 
   const bool durationExpired = underfillDurationSeconds >= m_underfillWatchPeriodSecs;
 
-  const bool enoughSamples = m_underfillSamples >= minUnderfillSamples;
+  const bool enoughSamples = m_underfillSamples >= m_underfillMinSamples;
 
   cta::log::ScopedParamContainer params(m_lc);
 
@@ -311,9 +307,9 @@ bool MigrationTaskInjector::shouldDismountForUnderfill(const uint64_t filesFetch
     .add("fileFillPercentage", fileFillRatio * 100.0)
     .add("byteFillPercentage", byteFillRatio * 100.0)
     .add("effectiveFillPercentage", effectiveFillRatio * 100.0)
-    .add("underfillRecoveryPercentage", m_underfillRecoveryThreshold * 100.0)
+    .add("underfillRecoveryPercentage", m_underfillRecoveryThreshold)
     .add("underfillSamples", m_underfillSamples)
-    .add("minimumUnderfillSamples", minUnderfillSamples)
+    .add("minimumUnderfillSamples", m_underfillMinSamples)
     .add("underfillDurationSeconds", underfillDurationSeconds)
     .add("underfillWatchPeriodSeconds", m_underfillWatchPeriodSecs);
 

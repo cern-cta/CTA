@@ -27,6 +27,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(BadlyFormattedInteger);
   CTA_GENERATE_EXCEPTION_CLASS(BadlyFormattedBoolean);
   CTA_GENERATE_EXCEPTION_CLASS(BadlyFormattedSizeFileLimit);
+  CTA_GENERATE_EXCEPTION_CLASS(BadlyFormattedUnderfillFetchLimits);
 
   /// Constructor for mandatory options (they do not have default values)
   SourcedParameter(const std::string& categoryName, const std::string& keyName)

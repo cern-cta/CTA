@@ -33,6 +33,9 @@ private:
   static void setConfigToDB(const cta::SourcedParameter<std::string>& sourcedParameter,
                             catalogue::Catalogue* catalogue,
                             const std::string& tapeDriveName);
+  static void setConfigToDB(const cta::SourcedParameter<cta::tape::daemon::UnderfillFetchLimits>& sourcedParameter,
+                            catalogue::Catalogue* catalogue,
+                            const std::string& tapeDriveName);
   static void setConfigToDB(const cta::SourcedParameter<cta::tape::daemon::FetchReportOrFlushLimits>& sourcedParameter,
                             catalogue::Catalogue* catalogue,
                             const std::string& tapeDriveName);
