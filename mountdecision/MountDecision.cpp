@@ -185,6 +185,15 @@ uint64_t calculateCandidateScore(const SchedulerDatabase::PotentialMount& mount)
   return score;
 }
 
+std::string calculateRetrieveCandidateKey(const SchedulerDatabase::PotentialMount& mount) {
+  return common::dataStructures::toString(mount.type) + "-" + mount.vid;
+}
+
+std::string calculateArchiveCandidateKey(const SchedulerDatabase::PotentialMount& mount,
+                                         const std::optional<std::string>& vid) {
+  return common::dataStructures::toString(mount.type) + "-" + mount.tapePool + "-" + vid.value_or("no-vid");
+}
+
 bool candidateRefreshOrderLess(const CandidatePotential& lhs, const CandidatePotential& rhs) {
   const uint64_t lhsScore = calculateCandidateScore(lhs.mount);
   const uint64_t rhsScore = calculateCandidateScore(rhs.mount);
@@ -611,6 +620,7 @@ MountCandidate makeRetrieveCandidate(const CandidatePotential& potential,
                                      const std::string& owner) {
   const auto& m = potential.mount;
   MountCandidate candidate;
+  candidate.candidateKey = calculateRetrieveCandidateKey(m);
   candidate.mountType = m.type;
   candidate.logicalLibrary = m.logicalLibrary;
   candidate.tapePool = m.tapePool;
@@ -644,6 +654,8 @@ MountCandidate makeArchiveCandidate(const CandidatePotential& potential,
                                     const std::string& owner) {
   const auto& m = potential.mount;
   MountCandidate candidate;
+  candidate.candidateKey =
+    calculateArchiveCandidateKey(m, tape != nullptr ? optionalNonEmpty(tape->vid) : std::nullopt);
   candidate.mountType = m.type;
   candidate.logicalLibrary = logicalLibrary;
   candidate.tapePool = m.tapePool;
@@ -805,6 +817,23 @@ bool MountDecision::refreshMountCandidates(const std::string& owner, Scheduler& 
                                           simulatedExistingMountsPerVo);
           }
         }
+      }
+    }
+
+    auto expiredReservations = m_db->blockExpiredReservedMountCandidates(c_reservationTimeoutSeconds);
+    if (!expiredReservations.empty()) {
+      for (const auto& expiredReservation : expiredReservations) {
+        log::ScopedParamContainer detailParams(lc);
+        detailParams.add("mountDecisionCandidateId", expiredReservation.candidateId)
+          .add("mountDecisionCandidateKey", expiredReservation.candidate.candidateKey)
+          .add("tapeVid", expiredReservation.candidate.vid.value_or(""))
+          .add("reservedByHost", expiredReservation.reservedByHost.value_or(""))
+          .add("reservedByDrive", expiredReservation.reservedByDrive.value_or(""))
+          .add("reservedTime", expiredReservation.reservedTime.value_or(0))
+          .add("reservationHeartbeatTime", expiredReservation.reservationHeartbeatTime.value_or(0));
+        lc.log(log::ERR,
+               "In MountDecision::refreshMountCandidates(): Found expired mount candidate reservation. Mount candidate "
+               "switched to blocked.");
       }
     }
 
