@@ -196,7 +196,6 @@ bool MigrationTaskInjector::shouldDismountForUnderfill(const uint64_t filesFetch
 
   /*
    * Either the file limit or the byte limit can constrain the batch.
-   *
    * Using the maximum correctly considers:
    * - a small number of large files; and
    * - a large number of small files.
@@ -224,10 +223,6 @@ bool MigrationTaskInjector::shouldDismountForUnderfill(const uint64_t filesFetch
       return false;
     }
 
-    /*
-     * Constructing the timer sets its reference point to the current
-     * monotonic time.
-     */
     m_underfillTimer.emplace();
     m_underfillSamples = 1;
 
