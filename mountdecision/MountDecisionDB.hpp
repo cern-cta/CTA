@@ -15,6 +15,7 @@
 namespace cta::mountdecision {
 
 struct MountCandidate {
+  std::string candidateKey;
   cta::common::dataStructures::MountType mountType;
   std::string logicalLibrary;
   std::string tapePool;
@@ -72,6 +73,8 @@ public:
   void incrementCounter(const std::string& key);
 
   bool tryAcquireRefreshLock(const std::string& workKey, const std::string& host, uint64_t leaseSeconds);
+
+  std::vector<MountCandidateRecord> blockExpiredReservedMountCandidates(uint64_t reservationTimeoutSeconds);
 
   void replaceMountCandidates(const std::vector<MountCandidate>& candidates, uint64_t reservationTimeoutSeconds);
 
