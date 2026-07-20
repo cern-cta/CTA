@@ -293,6 +293,7 @@ const std::map<std::string, OptionUInt64::Key> uint64Options = {
   {"--maxfilestoselect",          OptionUInt64::MAX_FILES_TO_EXPAND         },
   {"--logunixtimemin",            OptionUInt64::LOG_UNIXTIME_MIN            },
   {"--logunixtimemax",            OptionUInt64::LOG_UNIXTIME_MAX            },
+  {"--score",                     OptionUInt64::SCORE                       },
 };
 
 /*!
@@ -336,7 +337,8 @@ const std::map<std::string, OptionString::Key> strOptions = {
   {"--webcamurl",           OptionString::WEBCAM_URL                 },
   {"--location",            OptionString::LIBRARY_LOCATION           },
   {"--archiveroutetype",    OptionString::ARCHIVE_ROUTE_TYPE         },
-  {"--diskfileid",          OptionString::DISK_FILE_ID               }
+  {"--diskfileid",          OptionString::DISK_FILE_ID               },
+  {"--candidatekey",        OptionString::CANDIDATE_KEY              }
 };
 
 /*!
@@ -364,7 +366,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
   {AdminCmd::CMD_GROUPMOUNTRULE,      {"groupmountrule", "gmr", {"add", "ch", "rm", "ls"}}    },
   {AdminCmd::CMD_LOGICALLIBRARY,      {"logicallibrary", "ll", {"add", "ch", "rm", "ls"}}     },
   {AdminCmd::CMD_MEDIATYPE,           {"mediatype", "mt", {"add", "ch", "rm", "ls"}}          },
-  {AdminCmd::CMD_MOUNTCANDIDATE,      {"mountcandidate", "mc", {"ls"}}                        },
+  {AdminCmd::CMD_MOUNTCANDIDATE,      {"mountcandidate", "mc", {"ch", "ls"}}                  },
   {AdminCmd::CMD_MOUNTPOLICY,         {"mountpolicy", "mp", {"add", "ch", "rm", "ls"}}        },
   {AdminCmd::CMD_PHYSICALLIBRARY,     {"physicallibrary", "pl", {"add", "ch", "rm", "ls"}}    },
   {AdminCmd::CMD_RECYCLETAPEFILE,     {"recycletf", "rtf", {"ls"}}                            },
@@ -386,6 +388,7 @@ const Option opt_all {Option::OPT_FLAG, "--all", "-a", ""};
 const Option opt_archivefileid {Option::OPT_UINT, "--id", "-I", " <archive_file_id>"};
 const Option opt_archivepriority {Option::OPT_UINT, "--archivepriority", "--ap", " <priority_value>"};
 const Option opt_bufferurl {Option::OPT_STR, "--bufferurl", "-b", " <buffer URL>"};
+const Option opt_candidatekey {Option::OPT_STR, "--candidatekey", "--ck", " <candidate_key>"};
 const Option opt_capacity {Option::OPT_UINT, "--capacity", "-c", " <capacity_in_bytes>"};
 const Option opt_cartridge {Option::OPT_STR, "--cartridge", "-t", " <cartridge>"};
 const Option opt_comment {Option::OPT_STR, "--comment", "-m", " <\"comment\">"};
@@ -427,6 +430,7 @@ const Option opt_partialtapes {Option::OPT_UINT, "--partialtapesnumber", "-p", "
 const Option opt_primarydensitycode {Option::OPT_UINT, "--primarydensitycode", "-p", " <primary_density_code>"};
 const Option opt_retrievepriority {Option::OPT_UINT, "--retrievepriority", "--rp", " <priority_value>"};
 const Option opt_secondarydensitycode {Option::OPT_UINT, "--secondarydensitycode", "-s", " <secondary_density_code>"};
+const Option opt_score {Option::OPT_UINT, "--score", "-s", " <score>"};
 const Option opt_storageclass {Option::OPT_STR, "--storageclass", "-s", " <storage_class_name>"};
 const Option opt_storageclass_alias {Option::OPT_STR, "--name", "-n", " <storage_class_name>", "--storageclass"};
 const Option opt_summary {Option::OPT_FLAG, "--summary", "-S", ""};
@@ -984,8 +988,9 @@ requestermountrule (rmr)
   /**md
 mountcandidate (mc)
 
-:   List the mount candidates calculated by maintd for tape servers to reserve.
+:   Change or list the mount candidates calculated by maintd for tape servers to reserve.
   */
+  {{AdminCmd::CMD_MOUNTCANDIDATE, AdminCmd::SUBCMD_CH},       {opt_candidatekey, opt_score}                                  },
   {{AdminCmd::CMD_MOUNTCANDIDATE, AdminCmd::SUBCMD_LS},       {}                                                             },
 
   /**md

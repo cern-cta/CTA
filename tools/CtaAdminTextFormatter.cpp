@@ -733,7 +733,12 @@ void TextFormatter::print(const MountCandidateLsItem& mcls_item) {
     reservedBy = mcls_item.reserved_by_host() + ":" + mcls_item.reserved_by_drive();
   }
 
-  push_back(mcls_item.candidate_score(),
+  auto score = std::to_string(mcls_item.candidate_score());
+  if (mcls_item.override_candidate_score() != 0) {
+    score += " (" + std::to_string(mcls_item.override_candidate_score()) + ")";
+  }
+
+  push_back(score,
             mcls_item.state(),
             toCamelCaseString(ProtobufToMountType(mcls_item.mount_type())),
             mcls_item.instance_name(),

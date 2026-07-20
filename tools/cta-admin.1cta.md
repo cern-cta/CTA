@@ -249,7 +249,8 @@ requestermountrule (rmr)
 
 mountcandidate (mc)
 
-:   List the read-only mount candidates calculated by maintd for tape servers to reserve.
+:   Change or list the mount candidates calculated by maintd for tape servers to reserve. Set
+    **\-\-score 0** to clear an operator score override.
 
 showqueues (sq)
 

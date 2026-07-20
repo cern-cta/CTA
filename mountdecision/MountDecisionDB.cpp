@@ -6,6 +6,7 @@
 #include "mountdecision/MountDecisionDB.hpp"
 
 #include "common/exception/Exception.hpp"
+#include "common/exception/UserError.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/Rset.hpp"
 
@@ -41,6 +42,7 @@ void bindCommonMountCandidateFields(Stmt& stmt, const MountCandidate& candidate)
   stmt.bindUint64(":YOUNGEST_JOB_START_TIME", candidate.youngestJobStartTime);
   stmt.bindDouble(":RATIO_OF_MOUNT_QUOTA_USED", candidate.ratioOfMountQuotaUsed);
   stmt.bindUint64(":CANDIDATE_SCORE", candidate.candidateScore);
+  stmt.bindUint64(":OVERRIDE_CANDIDATE_SCORE", candidate.overrideCandidateScore);
   stmt.bindString(":MEDIA_TYPE", nonEmptyOptional(candidate.mediaType));
   stmt.bindUint64(":LABEL_FORMAT",
                   candidate.vid.has_value() ? std::optional<uint64_t>(candidate.labelFormat) : std::nullopt);
@@ -92,6 +94,7 @@ MountCandidate mountCandidateFromRset(const rdbms::Rset& rset) {
   candidate.youngestJobStartTime = rset.columnUint64("YOUNGEST_JOB_START_TIME");
   candidate.ratioOfMountQuotaUsed = rset.columnDouble("RATIO_OF_MOUNT_QUOTA_USED");
   candidate.candidateScore = rset.columnUint64("CANDIDATE_SCORE");
+  candidate.overrideCandidateScore = rset.columnOptionalUint64("OVERRIDE_CANDIDATE_SCORE");
   candidate.mediaType = rset.columnOptionalString("MEDIA_TYPE").value_or("");
   candidate.labelFormat = rset.columnOptionalUint64("LABEL_FORMAT").value_or(0);
   candidate.vendor = rset.columnOptionalString("VENDOR").value_or("");
@@ -210,6 +213,14 @@ bool shouldSkipBlockedMountCandidate(const ReservationSlotCounts& liveReservatio
 }  // namespace
 
 MountDecisionDB::MountDecisionDB(ConnProvider& connectionProvider) : m_connectionProvider(connectionProvider) {}
+
+std::optional<MountDecisionDB> makeMountDecisionDB(SchedulerDatabase& schedulerDb) {
+  auto* connProvider = dynamic_cast<cta::ConnProvider*>(&schedulerDb);
+  if (connProvider == nullptr) {
+    return std::nullopt;
+  }
+  return MountDecisionDB(*connProvider);
+}
 
 void MountDecisionDB::ping() {
   auto conn = m_connectionProvider.getConn();
@@ -359,6 +370,7 @@ MountDecisionDB::blockExpiredReservedMountCandidates(const uint64_t reservationT
       candidate.YOUNGEST_JOB_START_TIME,
       candidate.RATIO_OF_MOUNT_QUOTA_USED,
       candidate.CANDIDATE_SCORE,
+      candidate.OVERRIDE_CANDIDATE_SCORE,
       candidate.MEDIA_TYPE,
       candidate.LABEL_FORMAT,
       candidate.VENDOR,
@@ -422,6 +434,7 @@ void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& 
         YOUNGEST_JOB_START_TIME,
         RATIO_OF_MOUNT_QUOTA_USED,
         CANDIDATE_SCORE,
+        OVERRIDE_CANDIDATE_SCORE,
         MEDIA_TYPE,
         LABEL_FORMAT,
         VENDOR,
@@ -448,6 +461,7 @@ void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& 
         :YOUNGEST_JOB_START_TIME,
         :RATIO_OF_MOUNT_QUOTA_USED,
         :CANDIDATE_SCORE,
+        :OVERRIDE_CANDIDATE_SCORE,
         :MEDIA_TYPE,
         :LABEL_FORMAT,
         :VENDOR,
@@ -578,6 +592,7 @@ std::vector<MountCandidateRecord> MountDecisionDB::listMountCandidates() {
       YOUNGEST_JOB_START_TIME,
       RATIO_OF_MOUNT_QUOTA_USED,
       CANDIDATE_SCORE,
+      OVERRIDE_CANDIDATE_SCORE,
       MEDIA_TYPE,
       LABEL_FORMAT,
       VENDOR,
@@ -596,7 +611,7 @@ std::vector<MountCandidateRecord> MountDecisionDB::listMountCandidates() {
     FROM
       SCHEDULER_MOUNT_CANDIDATES
     ORDER BY
-      CANDIDATE_SCORE DESC,
+      COALESCE(OVERRIDE_CANDIDATE_SCORE, CANDIDATE_SCORE) DESC,
       OLDEST_JOB_START_TIME,
       CANDIDATE_ID
   )SQL";
@@ -608,6 +623,56 @@ std::vector<MountCandidateRecord> MountDecisionDB::listMountCandidates() {
     ret.push_back(mountCandidateRecordFromRset(rset));
   }
   return ret;
+}
+
+void MountDecisionDB::setMountCandidateScoreOverride(const std::string& candidateKey,
+                                                     std::optional<uint64_t> overrideCandidateScore) {
+  auto conn = m_connectionProvider.getConn();
+  try {
+    conn.executeNonQuery("BEGIN");
+
+    bool hasVid = false;
+    {
+      const char* const selectSql = R"SQL(
+        SELECT
+          VID AS VID
+        FROM
+          SCHEDULER_MOUNT_CANDIDATES
+        WHERE
+          CANDIDATE_KEY = :CANDIDATE_KEY
+        FOR UPDATE
+      )SQL";
+      auto selectStmt = conn.createStmt(selectSql);
+      selectStmt.bindString(":CANDIDATE_KEY", candidateKey);
+      auto rset = selectStmt.executeQuery();
+      if (!rset.next()) {
+        throw exception::UserError("No mount candidate found with candidate key " + candidateKey);
+      }
+      hasVid = rset.columnOptionalString("VID").has_value();
+    }
+
+    if (!hasVid) {
+      throw exception::UserError("Cannot override the score of mount candidate " + candidateKey
+                                 + " because it does not identify a tape VID");
+    }
+
+    const char* const updateSql = R"SQL(
+      UPDATE SCHEDULER_MOUNT_CANDIDATES SET
+        OVERRIDE_CANDIDATE_SCORE = :OVERRIDE_CANDIDATE_SCORE,
+        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
+      WHERE
+        CANDIDATE_KEY = :CANDIDATE_KEY
+    )SQL";
+    auto updateStmt = conn.createStmt(updateSql);
+    updateStmt.bindUint64(":OVERRIDE_CANDIDATE_SCORE", overrideCandidateScore);
+    updateStmt.bindString(":CANDIDATE_KEY", candidateKey);
+    updateStmt.executeNonQuery();
+
+    conn.commit();
+  } catch (...) {
+    conn.rollback();
+    throw;
+  }
 }
 
 std::optional<ReservedMountCandidate> MountDecisionDB::tryReserveNextMountCandidate(const std::string& logicalLibrary,
@@ -645,19 +710,25 @@ std::optional<ReservedMountCandidate> MountDecisionDB::tryReserveNextMountCandid
             AND better.LOGICAL_LIBRARY = candidate.LOGICAL_LIBRARY
             AND better.VID = candidate.VID
             AND (
-              better.CANDIDATE_SCORE > candidate.CANDIDATE_SCORE
+              COALESCE(better.OVERRIDE_CANDIDATE_SCORE, better.CANDIDATE_SCORE)
+                > COALESCE(candidate.OVERRIDE_CANDIDATE_SCORE, candidate.CANDIDATE_SCORE)
               OR (
-                better.CANDIDATE_SCORE = candidate.CANDIDATE_SCORE
+                COALESCE(better.OVERRIDE_CANDIDATE_SCORE, better.CANDIDATE_SCORE)
+                  = COALESCE(candidate.OVERRIDE_CANDIDATE_SCORE, candidate.CANDIDATE_SCORE)
                 AND better.OLDEST_JOB_START_TIME < candidate.OLDEST_JOB_START_TIME
               )
               OR (
-                better.CANDIDATE_SCORE = candidate.CANDIDATE_SCORE
+                COALESCE(better.OVERRIDE_CANDIDATE_SCORE, better.CANDIDATE_SCORE)
+                  = COALESCE(candidate.OVERRIDE_CANDIDATE_SCORE, candidate.CANDIDATE_SCORE)
                 AND better.OLDEST_JOB_START_TIME = candidate.OLDEST_JOB_START_TIME
                 AND better.CANDIDATE_ID < candidate.CANDIDATE_ID
               )
             )
         )
-      ORDER BY candidate.CANDIDATE_SCORE DESC, candidate.OLDEST_JOB_START_TIME, candidate.CANDIDATE_ID
+      ORDER BY
+        COALESCE(candidate.OVERRIDE_CANDIDATE_SCORE, candidate.CANDIDATE_SCORE) DESC,
+        candidate.OLDEST_JOB_START_TIME,
+        candidate.CANDIDATE_ID
       FOR UPDATE SKIP LOCKED
       LIMIT 1
     )SQL";
@@ -700,6 +771,7 @@ std::optional<ReservedMountCandidate> MountDecisionDB::tryReserveNextMountCandid
         YOUNGEST_JOB_START_TIME,
         RATIO_OF_MOUNT_QUOTA_USED,
         CANDIDATE_SCORE,
+        OVERRIDE_CANDIDATE_SCORE,
         MEDIA_TYPE,
         LABEL_FORMAT,
         VENDOR,

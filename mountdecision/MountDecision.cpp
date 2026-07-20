@@ -185,6 +185,10 @@ uint64_t calculateCandidateScore(const SchedulerDatabase::PotentialMount& mount)
   return score;
 }
 
+uint64_t effectiveCandidateScore(const MountCandidate& candidate) {
+  return candidate.overrideCandidateScore.value_or(candidate.candidateScore);
+}
+
 std::string calculateRetrieveCandidateKey(const SchedulerDatabase::PotentialMount& mount) {
   return common::dataStructures::toString(mount.type) + "-" + mount.vid;
 }
@@ -923,7 +927,7 @@ std::optional<ReservedTapeMount> MountDecision::getNextMount(const std::string& 
         params.add("mountDecisionCandidateId", reservedCandidate->candidateId)
           .add("tapeVid", reservedCandidate->candidate.vid.value_or(""))
           .add("mountType", common::dataStructures::toCamelCaseString(reservedCandidate->candidate.mountType))
-          .add("mountDecisionCandidateScore", reservedCandidate->candidate.candidateScore)
+          .add("mountDecisionCandidateScore", effectiveCandidateScore(reservedCandidate->candidate))
           .add("mountDecisionBlockedReason", blockedReason.value());
         lc.log(log::INFO, "In MountDecision::getNextMount(): Blocked stale reserved mount candidate.");
         continue;
@@ -953,7 +957,7 @@ std::optional<ReservedTapeMount> MountDecision::getNextMount(const std::string& 
       params.add("mountDecisionCandidateId", reservedCandidate->candidateId)
         .add("tapeVid", ret.mount->getVid())
         .add("mountType", common::dataStructures::toCamelCaseString(ret.mount->getMountType()))
-        .add("mountDecisionCandidateScore", reservedCandidate->candidate.candidateScore);
+        .add("mountDecisionCandidateScore", effectiveCandidateScore(reservedCandidate->candidate));
       lc.log(log::INFO, "In MountDecision::getNextMount(): Reserved mount candidate.");
       return ret;
     } catch (...) {
