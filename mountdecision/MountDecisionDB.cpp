@@ -26,6 +26,7 @@ std::optional<std::string> nonEmptyOptional(std::optional<std::string> value) {
 
 template<typename Stmt>
 void bindCommonMountCandidateFields(Stmt& stmt, const MountCandidate& candidate) {
+  stmt.bindString(":CANDIDATE_KEY", candidate.candidateKey);
   stmt.bindString(":MOUNT_TYPE", cta::common::dataStructures::toString(candidate.mountType));
   stmt.bindString(":LOGICAL_LIBRARY", candidate.logicalLibrary);
   stmt.bindString(":TAPE_POOL", candidate.tapePool);
@@ -76,6 +77,7 @@ MountCandidate makeBlockedCandidate(const MountCandidate& candidate, const std::
 
 MountCandidate mountCandidateFromRset(const rdbms::Rset& rset) {
   MountCandidate candidate;
+  candidate.candidateKey = rset.columnString("CANDIDATE_KEY");
   candidate.mountType = common::dataStructures::strToMountType(rset.columnString("MOUNT_TYPE"));
   candidate.logicalLibrary = rset.columnString("LOGICAL_LIBRARY");
   candidate.tapePool = rset.columnString("TAPE_POOL");
@@ -150,6 +152,29 @@ ReservationSlotCounts getLiveReservationSlotCounts(rdbms::Conn& conn, const uint
     reservedCandidate.vo = rset.columnString("VO");
     reservedCandidate.vid = rset.columnOptionalString("VID");
     ret[getReservationSlotKey(reservedCandidate)] += rset.columnUint64("RESERVED_COUNT");
+  }
+  return ret;
+}
+
+std::set<std::string, std::less<>> getLiveReservedCandidateKeys(rdbms::Conn& conn,
+                                                                const uint64_t reservationTimeoutSeconds) {
+  const char* const sql = R"SQL(
+    SELECT
+      CANDIDATE_KEY AS CANDIDATE_KEY
+    FROM
+      SCHEDULER_MOUNT_CANDIDATES
+    WHERE
+      STATE = 'Reserved'
+      AND COALESCE(RESERVATION_HEARTBEAT_TIME, RESERVED_TIME, 0)
+          >= EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER - :RESERVATION_TIMEOUT_SECONDS
+  )SQL";
+  auto stmt = conn.createStmt(sql);
+  stmt.bindUint64(":RESERVATION_TIMEOUT_SECONDS", reservationTimeoutSeconds);
+  auto rset = stmt.executeQuery();
+
+  std::set<std::string, std::less<>> ret;
+  while (rset.next()) {
+    ret.insert(rset.columnString("CANDIDATE_KEY"));
   }
   return ret;
 }
@@ -292,63 +317,94 @@ bool MountDecisionDB::tryAcquireRefreshLock(const std::string& workKey,
   return rset.next();
 }
 
+std::vector<MountCandidateRecord>
+MountDecisionDB::blockExpiredReservedMountCandidates(const uint64_t reservationTimeoutSeconds) {
+  auto conn = m_connectionProvider.getConn();
+  const char* const sql = R"SQL(
+    WITH expired AS (
+      SELECT
+        *
+      FROM
+        SCHEDULER_MOUNT_CANDIDATES
+      WHERE
+        STATE = 'Reserved'
+        AND COALESCE(RESERVATION_HEARTBEAT_TIME, RESERVED_TIME, 0)
+            < EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER - :RESERVATION_TIMEOUT_SECONDS
+      FOR UPDATE
+    )
+    UPDATE SCHEDULER_MOUNT_CANDIDATES candidate SET
+      STATE = 'Blocked',
+      STATE_REASON = 'Reservation timed out',
+      RESERVED_BY_HOST = NULL,
+      RESERVED_BY_DRIVE = NULL,
+      RESERVED_TIME = NULL,
+      RESERVATION_HEARTBEAT_TIME = NULL,
+      LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
+    FROM expired
+    WHERE candidate.CANDIDATE_ID = expired.CANDIDATE_ID
+    RETURNING
+      candidate.CANDIDATE_ID,
+      candidate.CANDIDATE_KEY,
+      candidate.MOUNT_TYPE,
+      candidate.LOGICAL_LIBRARY,
+      candidate.TAPE_POOL,
+      candidate.VO,
+      candidate.VID,
+      candidate.ACTIVITY,
+      candidate.PRIORITY,
+      candidate.MIN_REQUEST_AGE,
+      candidate.FILES_QUEUED,
+      candidate.BYTES_QUEUED,
+      candidate.OLDEST_JOB_START_TIME,
+      candidate.YOUNGEST_JOB_START_TIME,
+      candidate.RATIO_OF_MOUNT_QUOTA_USED,
+      candidate.CANDIDATE_SCORE,
+      candidate.MEDIA_TYPE,
+      candidate.LABEL_FORMAT,
+      candidate.VENDOR,
+      candidate.CAPACITY_IN_BYTES,
+      candidate.LAST_FSEQ,
+      candidate.ENCRYPTION_KEY_NAME,
+      candidate.STATE,
+      candidate.STATE_REASON,
+      expired.RESERVED_BY_HOST AS RESERVED_BY_HOST,
+      expired.RESERVED_BY_DRIVE AS RESERVED_BY_DRIVE,
+      expired.RESERVED_TIME AS RESERVED_TIME,
+      expired.RESERVATION_HEARTBEAT_TIME AS RESERVATION_HEARTBEAT_TIME,
+      candidate.CREATED_BY,
+      candidate.CREATION_TIME,
+      candidate.LAST_UPDATE_TIME
+  )SQL";
+  auto stmt = conn.createStmt(sql);
+  stmt.bindUint64(":RESERVATION_TIMEOUT_SECONDS", reservationTimeoutSeconds);
+  auto rset = stmt.executeQuery();
+
+  std::vector<MountCandidateRecord> ret;
+  while (rset.next()) {
+    ret.push_back(mountCandidateRecordFromRset(rset));
+  }
+  return ret;
+}
+
 void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& candidates,
                                              const uint64_t reservationTimeoutSeconds) {
   auto conn = m_connectionProvider.getConn();
   try {
     conn.executeNonQuery("BEGIN");
-    {
-      // Rebuild the table each refresh, but leave live Reserved rows in place.
-      // Expired reservations are treated like normal stale rows and can be
-      // replaced by the new candidate list.
-      const char* const sql = R"SQL(
-        DELETE FROM SCHEDULER_MOUNT_CANDIDATES
-        WHERE
-          STATE <> 'Reserved'
-          OR COALESCE(RESERVATION_HEARTBEAT_TIME, RESERVED_TIME, 0)
-             < EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER - :RESERVATION_TIMEOUT_SECONDS
-      )SQL";
-      auto stmt = conn.createStmt(sql);
-      stmt.bindUint64(":RESERVATION_TIMEOUT_SECONDS", reservationTimeoutSeconds);
-      stmt.executeNonQuery();
-    }
 
-    const char* const updateReservedSql = R"SQL(
-      UPDATE SCHEDULER_MOUNT_CANDIDATES SET
-        MOUNT_TYPE = :MOUNT_TYPE,
-        LOGICAL_LIBRARY = :LOGICAL_LIBRARY,
-        TAPE_POOL = :TAPE_POOL,
-        VO = :VO,
-        ACTIVITY = :ACTIVITY,
-        PRIORITY = :PRIORITY,
-        MIN_REQUEST_AGE = :MIN_REQUEST_AGE,
-        FILES_QUEUED = :FILES_QUEUED,
-        BYTES_QUEUED = :BYTES_QUEUED,
-        OLDEST_JOB_START_TIME = :OLDEST_JOB_START_TIME,
-        YOUNGEST_JOB_START_TIME = :YOUNGEST_JOB_START_TIME,
-        RATIO_OF_MOUNT_QUOTA_USED = :RATIO_OF_MOUNT_QUOTA_USED,
-        CANDIDATE_SCORE = :CANDIDATE_SCORE,
-        MEDIA_TYPE = :MEDIA_TYPE,
-        LABEL_FORMAT = :LABEL_FORMAT,
-        VENDOR = :VENDOR,
-        CAPACITY_IN_BYTES = :CAPACITY_IN_BYTES,
-        LAST_FSEQ = :LAST_FSEQ,
-        ENCRYPTION_KEY_NAME = :ENCRYPTION_KEY_NAME,
-        CREATED_BY = :CREATED_BY,
-        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
-      WHERE
-        STATE = 'Reserved'
-        AND MOUNT_TYPE = :RESERVED_MOUNT_TYPE
-        AND LOGICAL_LIBRARY = :RESERVED_LOGICAL_LIBRARY
-        AND TAPE_POOL = :RESERVED_TAPE_POOL
-        AND VO = :RESERVED_VO
-        AND VID = :VID
-        AND COALESCE(RESERVATION_HEARTBEAT_TIME, RESERVED_TIME, 0)
-            >= EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER - :RESERVATION_TIMEOUT_SECONDS
+    const char* const refreshIdSql = R"SQL(
+      SELECT NEXTVAL('SCHEDULER_MOUNT_CANDIDATES_REFRESH_ID_SEQ') AS REFRESH_ID
     )SQL";
+    auto refreshIdStmt = conn.createStmt(refreshIdSql);
+    auto refreshIdRset = refreshIdStmt.executeQuery();
+    if (!refreshIdRset.next()) {
+      throw exception::Exception("In MountDecisionDB::replaceMountCandidates(): failed to allocate refresh id.");
+    }
+    const uint64_t refreshId = refreshIdRset.columnUint64("REFRESH_ID");
 
-    const char* const insertSql = R"SQL(
+    const char* const upsertSql = R"SQL(
       INSERT INTO SCHEDULER_MOUNT_CANDIDATES(
+        CANDIDATE_KEY,
         MOUNT_TYPE,
         LOGICAL_LIBRARY,
         TAPE_POOL,
@@ -371,8 +427,10 @@ void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& 
         ENCRYPTION_KEY_NAME,
         STATE,
         STATE_REASON,
-        CREATED_BY
+        CREATED_BY,
+        LAST_SEEN_REFRESH_ID
       ) VALUES (
+        :CANDIDATE_KEY,
         :MOUNT_TYPE,
         :LOGICAL_LIBRARY,
         :TAPE_POOL,
@@ -395,36 +453,52 @@ void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& 
         :ENCRYPTION_KEY_NAME,
         :STATE,
         :STATE_REASON,
-        :CREATED_BY
+        :CREATED_BY,
+        :LAST_SEEN_REFRESH_ID
       )
+      ON CONFLICT (CANDIDATE_KEY) DO UPDATE SET
+        MOUNT_TYPE = EXCLUDED.MOUNT_TYPE,
+        LOGICAL_LIBRARY = EXCLUDED.LOGICAL_LIBRARY,
+        TAPE_POOL = EXCLUDED.TAPE_POOL,
+        VO = EXCLUDED.VO,
+        VID = EXCLUDED.VID,
+        ACTIVITY = EXCLUDED.ACTIVITY,
+        PRIORITY = EXCLUDED.PRIORITY,
+        MIN_REQUEST_AGE = EXCLUDED.MIN_REQUEST_AGE,
+        FILES_QUEUED = EXCLUDED.FILES_QUEUED,
+        BYTES_QUEUED = EXCLUDED.BYTES_QUEUED,
+        OLDEST_JOB_START_TIME = EXCLUDED.OLDEST_JOB_START_TIME,
+        YOUNGEST_JOB_START_TIME = EXCLUDED.YOUNGEST_JOB_START_TIME,
+        RATIO_OF_MOUNT_QUOTA_USED = EXCLUDED.RATIO_OF_MOUNT_QUOTA_USED,
+        CANDIDATE_SCORE = EXCLUDED.CANDIDATE_SCORE,
+        MEDIA_TYPE = EXCLUDED.MEDIA_TYPE,
+        LABEL_FORMAT = EXCLUDED.LABEL_FORMAT,
+        VENDOR = EXCLUDED.VENDOR,
+        CAPACITY_IN_BYTES = EXCLUDED.CAPACITY_IN_BYTES,
+        LAST_FSEQ = EXCLUDED.LAST_FSEQ,
+        ENCRYPTION_KEY_NAME = EXCLUDED.ENCRYPTION_KEY_NAME,
+        STATE = CASE
+          WHEN SCHEDULER_MOUNT_CANDIDATES.STATE = 'Reserved' THEN SCHEDULER_MOUNT_CANDIDATES.STATE
+          ELSE EXCLUDED.STATE
+        END,
+        STATE_REASON = CASE
+          WHEN SCHEDULER_MOUNT_CANDIDATES.STATE = 'Reserved' THEN SCHEDULER_MOUNT_CANDIDATES.STATE_REASON
+          ELSE EXCLUDED.STATE_REASON
+        END,
+        CREATED_BY = EXCLUDED.CREATED_BY,
+        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER,
+        LAST_SEEN_REFRESH_ID = EXCLUDED.LAST_SEEN_REFRESH_ID
     )SQL";
 
-    std::set<std::string, std::less<>> updatedReservedVids;
     const auto liveReservationSlotCounts = getLiveReservationSlotCounts(conn, reservationTimeoutSeconds);
+    const auto liveReservedCandidateKeys = getLiveReservedCandidateKeys(conn, reservationTimeoutSeconds);
     auto unmatchedReservationSlotCounts = liveReservationSlotCounts;
     for (const auto& candidate : candidates) {
-      if (candidate.vid.has_value() && !updatedReservedVids.contains(candidate.vid.value())) {
-        // Preserve taped ownership for a live Reserved row. The scheduling
-        // fields and score are refreshed, while STATE and reservation metadata
-        // remain untouched.
-        auto updateStmt = conn.createStmt(updateReservedSql);
-        bindCommonMountCandidateFields(updateStmt, candidate);
-        updateStmt.bindString(":RESERVED_MOUNT_TYPE", cta::common::dataStructures::toString(candidate.mountType));
-        updateStmt.bindString(":RESERVED_LOGICAL_LIBRARY", candidate.logicalLibrary);
-        updateStmt.bindString(":RESERVED_TAPE_POOL", candidate.tapePool);
-        updateStmt.bindString(":RESERVED_VO", candidate.vo);
-        updateStmt.bindUint64(":RESERVATION_TIMEOUT_SECONDS", reservationTimeoutSeconds);
-        updateStmt.executeNonQuery();
-        if (updateStmt.getNbAffectedRows() > 0) {
-          updatedReservedVids.insert(candidate.vid.value());
-          tryMatchReservedSlot(unmatchedReservationSlotCounts, candidate);
-          continue;
-        }
-      }
-
       const MountCandidate* candidateToInsert = &candidate;
       std::optional<MountCandidate> blockedCandidate;
-      if (candidate.state == "Available" && tryMatchReservedSlot(unmatchedReservationSlotCounts, candidate)) {
+      if (liveReservedCandidateKeys.contains(candidate.candidateKey)) {
+        tryMatchReservedSlot(unmatchedReservationSlotCounts, candidate);
+      } else if (candidate.state == "Available" && tryMatchReservedSlot(unmatchedReservationSlotCounts, candidate)) {
         // Live reservations consume scheduling slots. If the refreshed ordering
         // still contains more rows for this slot, only the surplus remains
         // Available.
@@ -436,11 +510,24 @@ void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& 
         continue;
       }
 
-      auto stmt = conn.createStmt(insertSql);
+      auto stmt = conn.createStmt(upsertSql);
       bindCommonMountCandidateFields(stmt, *candidateToInsert);
       stmt.bindString(":STATE", candidateToInsert->state);
       stmt.bindString(":STATE_REASON", nonEmptyOptional(candidateToInsert->stateReason));
+      stmt.bindUint64(":LAST_SEEN_REFRESH_ID", refreshId);
       stmt.executeNonQuery();
+    }
+
+    {
+      const char* const deleteStaleSql = R"SQL(
+        DELETE FROM SCHEDULER_MOUNT_CANDIDATES
+        WHERE
+          STATE <> 'Reserved'
+          AND LAST_SEEN_REFRESH_ID <> :LAST_SEEN_REFRESH_ID
+      )SQL";
+      auto deleteStaleStmt = conn.createStmt(deleteStaleSql);
+      deleteStaleStmt.bindUint64(":LAST_SEEN_REFRESH_ID", refreshId);
+      deleteStaleStmt.executeNonQuery();
     }
 
     conn.commit();
@@ -473,6 +560,7 @@ std::vector<MountCandidateRecord> MountDecisionDB::listMountCandidates() {
   const char* const sql = R"SQL(
     SELECT
       CANDIDATE_ID,
+      CANDIDATE_KEY,
       MOUNT_TYPE,
       LOGICAL_LIBRARY,
       TAPE_POOL,
@@ -591,6 +679,7 @@ std::optional<ReservedMountCandidate> MountDecisionDB::tryReserveNextMountCandid
       WHERE CANDIDATE_ID = :CANDIDATE_ID
       RETURNING
         CANDIDATE_ID,
+        CANDIDATE_KEY,
         MOUNT_TYPE,
         LOGICAL_LIBRARY,
         TAPE_POOL,
