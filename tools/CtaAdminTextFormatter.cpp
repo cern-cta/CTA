@@ -713,6 +713,7 @@ void TextFormatter::printMountCandidateLsHeader() {
   push_back("HEADER");
   push_back("score",
             "state",
+            "candidate key",
             "type",
             "instance",
             "scheduler",
@@ -739,6 +740,7 @@ void TextFormatter::print(const MountCandidateLsItem& mcls_item) {
 
   push_back(score,
             mcls_item.state(),
+            mcls_item.candidate_key(),
             toCamelCaseString(ProtobufToMountType(mcls_item.mount_type())),
             mcls_item.instance_name(),
             mcls_item.scheduler_backend_name(),
