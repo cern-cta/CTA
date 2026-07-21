@@ -33,24 +33,13 @@ void bindCommonMountCandidateFields(Stmt& stmt, const MountCandidate& candidate)
   stmt.bindString(":TAPE_POOL", candidate.tapePool);
   stmt.bindString(":VO", candidate.vo);
   stmt.bindString(":VID", nonEmptyOptional(candidate.vid));
-  stmt.bindString(":ACTIVITY", nonEmptyOptional(candidate.activity));
   stmt.bindUint64(":PRIORITY", candidate.priority);
   stmt.bindUint64(":MIN_REQUEST_AGE", candidate.minRequestAge);
   stmt.bindUint64(":FILES_QUEUED", candidate.filesQueued);
   stmt.bindUint64(":BYTES_QUEUED", candidate.bytesQueued);
   stmt.bindUint64(":OLDEST_JOB_START_TIME", candidate.oldestJobStartTime);
-  stmt.bindUint64(":YOUNGEST_JOB_START_TIME", candidate.youngestJobStartTime);
-  stmt.bindDouble(":RATIO_OF_MOUNT_QUOTA_USED", candidate.ratioOfMountQuotaUsed);
   stmt.bindUint64(":CANDIDATE_SCORE", candidate.candidateScore);
   stmt.bindUint64(":OVERRIDE_CANDIDATE_SCORE", candidate.overrideCandidateScore);
-  stmt.bindString(":MEDIA_TYPE", nonEmptyOptional(candidate.mediaType));
-  stmt.bindUint64(":LABEL_FORMAT",
-                  candidate.vid.has_value() ? std::optional<uint64_t>(candidate.labelFormat) : std::nullopt);
-  stmt.bindString(":VENDOR", nonEmptyOptional(candidate.vendor));
-  stmt.bindUint64(":CAPACITY_IN_BYTES",
-                  candidate.vid.has_value() ? std::optional<uint64_t>(candidate.capacityInBytes) : std::nullopt);
-  stmt.bindUint64(":LAST_FSEQ", candidate.lastFSeq);
-  stmt.bindString(":ENCRYPTION_KEY_NAME", nonEmptyOptional(candidate.encryptionKeyName));
   stmt.bindString(":CREATED_BY", nonEmptyOptional(candidate.createdBy));
 }
 
@@ -85,22 +74,13 @@ MountCandidate mountCandidateFromRset(const rdbms::Rset& rset) {
   candidate.tapePool = rset.columnString("TAPE_POOL");
   candidate.vo = rset.columnString("VO");
   candidate.vid = rset.columnOptionalString("VID");
-  candidate.activity = rset.columnOptionalString("ACTIVITY");
   candidate.priority = rset.columnUint64("PRIORITY");
   candidate.minRequestAge = rset.columnUint64("MIN_REQUEST_AGE");
   candidate.filesQueued = rset.columnUint64("FILES_QUEUED");
   candidate.bytesQueued = rset.columnUint64("BYTES_QUEUED");
   candidate.oldestJobStartTime = rset.columnUint64("OLDEST_JOB_START_TIME");
-  candidate.youngestJobStartTime = rset.columnUint64("YOUNGEST_JOB_START_TIME");
-  candidate.ratioOfMountQuotaUsed = rset.columnDouble("RATIO_OF_MOUNT_QUOTA_USED");
   candidate.candidateScore = rset.columnUint64("CANDIDATE_SCORE");
   candidate.overrideCandidateScore = rset.columnOptionalUint64("OVERRIDE_CANDIDATE_SCORE");
-  candidate.mediaType = rset.columnOptionalString("MEDIA_TYPE").value_or("");
-  candidate.labelFormat = rset.columnOptionalUint64("LABEL_FORMAT").value_or(0);
-  candidate.vendor = rset.columnOptionalString("VENDOR").value_or("");
-  candidate.capacityInBytes = rset.columnOptionalUint64("CAPACITY_IN_BYTES").value_or(0);
-  candidate.lastFSeq = rset.columnOptionalUint64("LAST_FSEQ");
-  candidate.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
   candidate.state = rset.columnString("STATE");
   candidate.stateReason = rset.columnOptionalString("STATE_REASON");
   candidate.createdBy = rset.columnOptionalString("CREATED_BY");
@@ -353,22 +333,13 @@ MountDecisionDB::blockExpiredReservedMountCandidates(const uint64_t reservationT
       candidate.TAPE_POOL,
       candidate.VO,
       candidate.VID,
-      candidate.ACTIVITY,
       candidate.PRIORITY,
       candidate.MIN_REQUEST_AGE,
       candidate.FILES_QUEUED,
       candidate.BYTES_QUEUED,
       candidate.OLDEST_JOB_START_TIME,
-      candidate.YOUNGEST_JOB_START_TIME,
-      candidate.RATIO_OF_MOUNT_QUOTA_USED,
       candidate.CANDIDATE_SCORE,
       candidate.OVERRIDE_CANDIDATE_SCORE,
-      candidate.MEDIA_TYPE,
-      candidate.LABEL_FORMAT,
-      candidate.VENDOR,
-      candidate.CAPACITY_IN_BYTES,
-      candidate.LAST_FSEQ,
-      candidate.ENCRYPTION_KEY_NAME,
       candidate.STATE,
       candidate.STATE_REASON,
       expired.RESERVED_BY_HOST AS RESERVED_BY_HOST,
@@ -417,22 +388,13 @@ void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& 
         TAPE_POOL,
         VO,
         VID,
-        ACTIVITY,
         PRIORITY,
         MIN_REQUEST_AGE,
         FILES_QUEUED,
         BYTES_QUEUED,
         OLDEST_JOB_START_TIME,
-        YOUNGEST_JOB_START_TIME,
-        RATIO_OF_MOUNT_QUOTA_USED,
         CANDIDATE_SCORE,
         OVERRIDE_CANDIDATE_SCORE,
-        MEDIA_TYPE,
-        LABEL_FORMAT,
-        VENDOR,
-        CAPACITY_IN_BYTES,
-        LAST_FSEQ,
-        ENCRYPTION_KEY_NAME,
         STATE,
         STATE_REASON,
         CREATED_BY,
@@ -444,22 +406,13 @@ void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& 
         :TAPE_POOL,
         :VO,
         :VID,
-        :ACTIVITY,
         :PRIORITY,
         :MIN_REQUEST_AGE,
         :FILES_QUEUED,
         :BYTES_QUEUED,
         :OLDEST_JOB_START_TIME,
-        :YOUNGEST_JOB_START_TIME,
-        :RATIO_OF_MOUNT_QUOTA_USED,
         :CANDIDATE_SCORE,
         :OVERRIDE_CANDIDATE_SCORE,
-        :MEDIA_TYPE,
-        :LABEL_FORMAT,
-        :VENDOR,
-        :CAPACITY_IN_BYTES,
-        :LAST_FSEQ,
-        :ENCRYPTION_KEY_NAME,
         :STATE,
         :STATE_REASON,
         :CREATED_BY,
@@ -471,21 +424,12 @@ void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& 
         TAPE_POOL = EXCLUDED.TAPE_POOL,
         VO = EXCLUDED.VO,
         VID = EXCLUDED.VID,
-        ACTIVITY = EXCLUDED.ACTIVITY,
         PRIORITY = EXCLUDED.PRIORITY,
         MIN_REQUEST_AGE = EXCLUDED.MIN_REQUEST_AGE,
         FILES_QUEUED = EXCLUDED.FILES_QUEUED,
         BYTES_QUEUED = EXCLUDED.BYTES_QUEUED,
         OLDEST_JOB_START_TIME = EXCLUDED.OLDEST_JOB_START_TIME,
-        YOUNGEST_JOB_START_TIME = EXCLUDED.YOUNGEST_JOB_START_TIME,
-        RATIO_OF_MOUNT_QUOTA_USED = EXCLUDED.RATIO_OF_MOUNT_QUOTA_USED,
         CANDIDATE_SCORE = EXCLUDED.CANDIDATE_SCORE,
-        MEDIA_TYPE = EXCLUDED.MEDIA_TYPE,
-        LABEL_FORMAT = EXCLUDED.LABEL_FORMAT,
-        VENDOR = EXCLUDED.VENDOR,
-        CAPACITY_IN_BYTES = EXCLUDED.CAPACITY_IN_BYTES,
-        LAST_FSEQ = EXCLUDED.LAST_FSEQ,
-        ENCRYPTION_KEY_NAME = EXCLUDED.ENCRYPTION_KEY_NAME,
         STATE = CASE
           WHEN SCHEDULER_MOUNT_CANDIDATES.STATE = 'Reserved' THEN SCHEDULER_MOUNT_CANDIDATES.STATE
           ELSE EXCLUDED.STATE
@@ -575,22 +519,13 @@ std::vector<MountCandidateRecord> MountDecisionDB::listMountCandidates() {
       TAPE_POOL,
       VO,
       VID,
-      ACTIVITY,
       PRIORITY,
       MIN_REQUEST_AGE,
       FILES_QUEUED,
       BYTES_QUEUED,
       OLDEST_JOB_START_TIME,
-      YOUNGEST_JOB_START_TIME,
-      RATIO_OF_MOUNT_QUOTA_USED,
       CANDIDATE_SCORE,
       OVERRIDE_CANDIDATE_SCORE,
-      MEDIA_TYPE,
-      LABEL_FORMAT,
-      VENDOR,
-      CAPACITY_IN_BYTES,
-      LAST_FSEQ,
-      ENCRYPTION_KEY_NAME,
       STATE,
       STATE_REASON,
       RESERVED_BY_HOST,
@@ -754,22 +689,13 @@ std::optional<ReservedMountCandidate> MountDecisionDB::tryReserveNextMountCandid
         TAPE_POOL,
         VO,
         VID,
-        ACTIVITY,
         PRIORITY,
         MIN_REQUEST_AGE,
         FILES_QUEUED,
         BYTES_QUEUED,
         OLDEST_JOB_START_TIME,
-        YOUNGEST_JOB_START_TIME,
-        RATIO_OF_MOUNT_QUOTA_USED,
         CANDIDATE_SCORE,
         OVERRIDE_CANDIDATE_SCORE,
-        MEDIA_TYPE,
-        LABEL_FORMAT,
-        VENDOR,
-        CAPACITY_IN_BYTES,
-        LAST_FSEQ,
-        ENCRYPTION_KEY_NAME,
         STATE,
         STATE_REASON,
         CREATED_BY
