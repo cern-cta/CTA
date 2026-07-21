@@ -52,6 +52,7 @@ cta::xrd::Data MountCandidateLsResponseStream::next() {
   auto mclsItem = data.mutable_mcls_item();
 
   mclsItem->set_candidate_id(record.candidateId);
+  mclsItem->set_candidate_key(candidate.candidateKey);
   mclsItem->set_mount_type(cta::admin::MountTypeToProtobuf(candidate.mountType));
   mclsItem->set_logical_library(candidate.logicalLibrary);
   mclsItem->set_tapepool(candidate.tapePool);
