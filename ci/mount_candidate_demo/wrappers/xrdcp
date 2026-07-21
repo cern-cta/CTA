@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+set -euo pipefail
+
+env_args=()
+[[ -n "${KRB5CCNAME:-}" ]] && env_args+=("KRB5CCNAME=${KRB5CCNAME}")
+[[ -n "${XrdSecPROTOCOL:-}" ]] && env_args+=("XrdSecPROTOCOL=${XrdSecPROTOCOL}")
+[[ -n "${XRD_LOGLEVEL:-}" ]] && env_args+=("XRD_LOGLEVEL=${XRD_LOGLEVEL}")
+
+exec kubectl -n "${CTA_DEMO_NAMESPACE:-dev}" exec cta-client-0 -c client -- env "${env_args[@]}" xrdcp "$@"
