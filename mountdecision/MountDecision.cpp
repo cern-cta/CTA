@@ -198,22 +198,85 @@ std::string calculateArchiveCandidateKey(const SchedulerDatabase::PotentialMount
   return common::dataStructures::toString(mount.type) + "-" + mount.tapePool + "-" + vid.value_or("no-vid");
 }
 
+bool potentialMountOrderLess(const SchedulerDatabase::PotentialMount& lhs,
+                             const SchedulerDatabase::PotentialMount& rhs);
+
 bool candidateRefreshOrderLess(const CandidatePotential& lhs, const CandidatePotential& rhs) {
-  const uint64_t lhsScore = calculateCandidateScore(lhs.mount);
-  const uint64_t rhsScore = calculateCandidateScore(rhs.mount);
-  if (lhsScore != rhsScore) {
-    return lhsScore > rhsScore;
+  return potentialMountOrderLess(lhs.mount, rhs.mount);
+}
+
+using PotentialMountAggregationKey = std::pair<common::dataStructures::MountType, std::string>;
+
+PotentialMountAggregationKey getPotentialMountAggregationKey(const SchedulerDatabase::PotentialMount& mount) {
+  const auto basicType = common::dataStructures::getMountBasicType(mount.type);
+  if (basicType == common::dataStructures::MountType::Retrieve) {
+    return {mount.type, mount.vid};
   }
-  if (lhs.mount.oldestJobStartTime != rhs.mount.oldestJobStartTime) {
-    return lhs.mount.oldestJobStartTime < rhs.mount.oldestJobStartTime;
+  if (basicType == common::dataStructures::MountType::ArchiveAllTypes) {
+    return {mount.type, mount.tapePool};
   }
-  if (lhs.mount.filesQueued != rhs.mount.filesQueued) {
-    return lhs.mount.filesQueued > rhs.mount.filesQueued;
+  return {mount.type, ""};
+}
+
+void mergePotentialMount(SchedulerDatabase::PotentialMount& aggregate, const SchedulerDatabase::PotentialMount& mount) {
+  aggregate.filesQueued += mount.filesQueued;
+  aggregate.bytesQueued += mount.bytesQueued;
+  aggregate.priority = std::max(aggregate.priority, mount.priority);
+  aggregate.minRequestAge = std::min(aggregate.minRequestAge, mount.minRequestAge);
+  aggregate.oldestJobStartTime = std::min(aggregate.oldestJobStartTime, mount.oldestJobStartTime);
+  aggregate.youngestJobStartTime = std::max(aggregate.youngestJobStartTime, mount.youngestJobStartTime);
+  for (const auto& [mountPolicy, count] : mount.mountPolicyCountMap) {
+    aggregate.mountPolicyCountMap[mountPolicy] += count;
   }
-  if (lhs.mount.bytesQueued != rhs.mount.bytesQueued) {
-    return lhs.mount.bytesQueued > rhs.mount.bytesQueued;
+  if (mount.sleepingMount) {
+    if (!aggregate.sleepingMount) {
+      aggregate.diskSystemName = mount.diskSystemName;
+      aggregate.sleepStartTime = mount.sleepStartTime;
+      aggregate.sleepTime = mount.sleepTime;
+    }
+    aggregate.sleepingMount = true;
   }
-  return false;
+  // Aggregation changes the row granularity. Activity may no longer identify a
+  // single queue, and policy name fields are recomputed later from the merged
+  // mountPolicyCountMap.
+  aggregate.activity.reset();
+  aggregate.highestPriorityMountPolicyName.reset();
+  aggregate.lowestRequestAgeMountPolicyName.reset();
+  aggregate.mountPolicyNames.reset();
+}
+
+// TODO: Temporary fix until the PostgreSQL scheduler schema exposes mount
+// candidates at the same granularity expected by MountDecision.
+std::vector<SchedulerDatabase::PotentialMount>
+aggregatePotentialMountsForMountCandidates(const std::vector<SchedulerDatabase::PotentialMount>& potentialMounts) {
+  std::map<PotentialMountAggregationKey, SchedulerDatabase::PotentialMount> aggregates;
+  std::vector<PotentialMountAggregationKey> keyOrder;
+  for (const auto& mount : potentialMounts) {
+    const auto key = getPotentialMountAggregationKey(mount);
+    if (key.second.empty()) {
+      continue;
+    }
+    auto [it, inserted] = aggregates.emplace(key, mount);
+    if (inserted) {
+      keyOrder.push_back(key);
+      // Aggregation changes the row granularity. Activity may no longer identify a
+      // single queue, and policy name fields are recomputed later from the merged
+      // mountPolicyCountMap.
+      it->second.activity.reset();
+      it->second.highestPriorityMountPolicyName.reset();
+      it->second.lowestRequestAgeMountPolicyName.reset();
+      it->second.mountPolicyNames.reset();
+    } else {
+      mergePotentialMount(it->second, mount);
+    }
+  }
+
+  std::vector<SchedulerDatabase::PotentialMount> ret;
+  ret.reserve(keyOrder.size());
+  for (const auto& key : keyOrder) {
+    ret.push_back(std::move(aggregates.at(key)));
+  }
+  return ret;
 }
 
 std::optional<std::string> optionalNonEmpty(const std::string& value) {
@@ -221,23 +284,6 @@ std::optional<std::string> optionalNonEmpty(const std::string& value) {
     return std::nullopt;
   }
   return value;
-}
-
-std::optional<uint64_t>
-optionalLabelFormat(const std::optional<cta::common::dataStructures::Label::Format>& labelFormat) {
-  if (!labelFormat.has_value()) {
-    return std::nullopt;
-  }
-  return static_cast<uint64_t>(static_cast<uint8_t>(labelFormat.value()));
-}
-
-uint64_t labelFormatValue(const std::optional<cta::common::dataStructures::Label::Format>& labelFormat) {
-  return optionalLabelFormat(labelFormat)
-    .value_or(static_cast<uint64_t>(static_cast<uint8_t>(cta::common::dataStructures::Label::Format::CTA)));
-}
-
-uint64_t labelFormatValue(cta::common::dataStructures::Label::Format labelFormat) {
-  return static_cast<uint64_t>(static_cast<uint8_t>(labelFormat));
 }
 
 template<typename T>
@@ -248,67 +294,49 @@ T requireValue(const std::optional<T>& value, const std::string& fieldName) {
   return value.value();
 }
 
-common::dataStructures::Label::Format labelFormatFromDbValue(const uint64_t value) {
-  return static_cast<common::dataStructures::Label::Format>(static_cast<uint8_t>(value));
+bool potentialMountOrderLess(const SchedulerDatabase::PotentialMount& lhs,
+                             const SchedulerDatabase::PotentialMount& rhs) {
+  const uint64_t lhsScore = calculateCandidateScore(lhs);
+  const uint64_t rhsScore = calculateCandidateScore(rhs);
+  if (lhsScore != rhsScore) {
+    return lhsScore > rhsScore;
+  }
+  if (lhs.oldestJobStartTime != rhs.oldestJobStartTime) {
+    return lhs.oldestJobStartTime < rhs.oldestJobStartTime;
+  }
+  if (lhs.filesQueued != rhs.filesQueued) {
+    return lhs.filesQueued > rhs.filesQueued;
+  }
+  if (lhs.bytesQueued != rhs.bytesQueued) {
+    return lhs.bytesQueued > rhs.bytesQueued;
+  }
+  return false;
 }
 
-SchedulerDatabase::PotentialMount toPotentialMount(const MountCandidate& candidate) {
-  SchedulerDatabase::PotentialMount ret;
-  ret.type = candidate.mountType;
-  ret.vid = requireValue(candidate.vid, "VID");
-  ret.tapePool = candidate.tapePool;
-  ret.vo = candidate.vo;
-  ret.mediaType = candidate.mediaType;
-  ret.vendor = candidate.vendor;
-  ret.capacityInBytes = candidate.capacityInBytes;
-  ret.labelFormat = labelFormatFromDbValue(candidate.labelFormat);
-  ret.priority = candidate.priority;
-  ret.minRequestAge = static_cast<time_t>(candidate.minRequestAge);
-  ret.filesQueued = candidate.filesQueued;
-  ret.bytesQueued = candidate.bytesQueued;
-  ret.oldestJobStartTime = static_cast<time_t>(candidate.oldestJobStartTime);
-  ret.youngestJobStartTime = static_cast<time_t>(candidate.youngestJobStartTime);
-  ret.logicalLibrary = candidate.logicalLibrary;
-  ret.ratioOfMountQuotaUsed = candidate.ratioOfMountQuotaUsed;
-  ret.activity = candidate.activity;
-  ret.encryptionKeyName = candidate.encryptionKeyName;
-  return ret;
-}
-
-catalogue::TapeForWriting toTapeForWriting(const MountCandidate& candidate) {
-  catalogue::TapeForWriting ret;
-  ret.vid = requireValue(candidate.vid, "VID");
-  ret.mediaType = candidate.mediaType;
-  ret.vendor = candidate.vendor;
-  ret.tapePool = candidate.tapePool;
-  ret.vo = candidate.vo;
-  ret.lastFSeq = requireValue(candidate.lastFSeq, "LAST_FSEQ");
-  ret.capacityInBytes = candidate.capacityInBytes;
-  ret.labelFormat = labelFormatFromDbValue(candidate.labelFormat);
-  ret.encryptionKeyName = candidate.encryptionKeyName;
-  return ret;
-}
-
-std::optional<std::string> validateArchiveCandidate(const MountCandidate& candidate,
-                                                    const std::string& logicalLibraryName,
-                                                    catalogue::Catalogue& catalogue) {
+std::optional<catalogue::TapeForWriting> getTapeForWritingForCandidate(const MountCandidate& candidate,
+                                                                       const std::string& logicalLibraryName,
+                                                                       catalogue::Catalogue& catalogue,
+                                                                       std::optional<std::string>& blockedReason) {
   const auto candidateVid = requireValue(candidate.vid, "VID");
   const auto tapesForWriting = catalogue.Tape()->getTapesForWriting(logicalLibraryName);
   const auto tapeIt = std::find_if(tapesForWriting.begin(), tapesForWriting.end(), [&candidateVid](const auto& tape) {
     return tape.vid == candidateVid;
   });
   if (tapeIt == tapesForWriting.end()) {
-    return "Tape is no longer available for writing";
+    blockedReason = "Tape is no longer available for writing";
+    return std::nullopt;
   }
   if (tapeIt->tapePool != candidate.tapePool) {
-    return "Tape no longer belongs to the candidate tapepool";
+    blockedReason = "Tape no longer belongs to the candidate tapepool";
+    return std::nullopt;
   }
-  return std::nullopt;
+  return *tapeIt;
 }
 
-std::optional<std::string> validateRetrieveCandidate(const MountCandidate& candidate,
-                                                     const std::string& logicalLibraryName,
-                                                     catalogue::Catalogue& catalogue) {
+std::optional<common::dataStructures::Tape> getTapeForRetrieveCandidate(const MountCandidate& candidate,
+                                                                        const std::string& logicalLibraryName,
+                                                                        catalogue::Catalogue& catalogue,
+                                                                        std::optional<std::string>& blockedReason) {
   using Tape = common::dataStructures::Tape;
 
   const auto candidateVid = requireValue(candidate.vid, "VID");
@@ -316,20 +344,70 @@ std::optional<std::string> validateRetrieveCandidate(const MountCandidate& candi
     const auto tapes = catalogue.Tape()->getTapesByVid(candidateVid);
     const auto tapeIt = tapes.find(candidateVid);
     if (tapeIt == tapes.end()) {
-      return "Tape no longer exists";
+      blockedReason = "Tape no longer exists";
+      return std::nullopt;
     }
 
     const auto& tape = tapeIt->second;
     if (tape.logicalLibraryName != logicalLibraryName) {
-      return "Tape no longer belongs to the requested logical library";
+      blockedReason = "Tape no longer belongs to the requested logical library";
+      return std::nullopt;
+    }
+    if (tape.tapePoolName != candidate.tapePool) {
+      blockedReason = "Tape no longer belongs to the candidate tapepool";
+      return std::nullopt;
     }
     if (tape.state != Tape::ACTIVE && tape.state != Tape::REPACKING) {
-      return "Tape state is " + Tape::stateToString(tape.state);
+      blockedReason = "Tape state is " + Tape::stateToString(tape.state);
+      return std::nullopt;
     }
+    return tape;
   } catch (const catalogue::TapeNotFound&) {
-    return "Tape no longer exists";
+    blockedReason = "Tape no longer exists";
+    return std::nullopt;
   }
-  return std::nullopt;
+}
+
+SchedulerDatabase::PotentialMount makePotentialMountForCandidate(const MountCandidate& candidate) {
+  SchedulerDatabase::PotentialMount mount;
+  mount.type = candidate.mountType;
+  mount.vid = candidate.vid.value_or("");
+  mount.tapePool = candidate.tapePool;
+  mount.vo = candidate.vo;
+  mount.priority = candidate.priority;
+  mount.minRequestAge = static_cast<time_t>(candidate.minRequestAge);
+  mount.filesQueued = candidate.filesQueued;
+  mount.bytesQueued = candidate.bytesQueued;
+  mount.oldestJobStartTime = static_cast<time_t>(candidate.oldestJobStartTime);
+  mount.youngestJobStartTime = static_cast<time_t>(candidate.oldestJobStartTime);
+  mount.logicalLibrary = candidate.logicalLibrary;
+  mount.ratioOfMountQuotaUsed = 0.0;
+  mount.mountCount = 0;
+  return mount;
+}
+
+SchedulerDatabase::PotentialMount makePotentialMountForRetrieveCandidate(const MountCandidate& candidate,
+                                                                         const common::dataStructures::Tape& tape) {
+  auto mount = makePotentialMountForCandidate(candidate);
+  mount.vid = requireValue(candidate.vid, "VID");
+  mount.mediaType = tape.mediaType;
+  mount.vendor = tape.vendor;
+  mount.capacityInBytes = tape.capacityInBytes;
+  mount.labelFormat = tape.labelFormat;
+  mount.encryptionKeyName = tape.encryptionKeyName;
+  return mount;
+}
+
+SchedulerDatabase::PotentialMount makePotentialMountForArchiveCandidate(const MountCandidate& candidate,
+                                                                        const catalogue::TapeForWriting& tape) {
+  auto mount = makePotentialMountForCandidate(candidate);
+  mount.vid = tape.vid;
+  mount.mediaType = tape.mediaType;
+  mount.vendor = tape.vendor;
+  mount.capacityInBytes = tape.capacityInBytes;
+  mount.labelFormat = tape.labelFormat;
+  mount.encryptionKeyName = tape.encryptionKeyName;
+  return mount;
 }
 
 std::vector<common::dataStructures::LogicalLibrary> getEnabledLogicalLibraries(catalogue::Catalogue& catalogue) {
@@ -630,21 +708,12 @@ MountCandidate makeRetrieveCandidate(const CandidatePotential& potential,
   candidate.tapePool = m.tapePool;
   candidate.vo = m.vo;
   candidate.vid = optionalNonEmpty(m.vid);
-  candidate.activity = m.activity;
   candidate.priority = m.priority;
   candidate.minRequestAge = static_cast<uint64_t>(m.minRequestAge);
   candidate.filesQueued = m.filesQueued;
   candidate.bytesQueued = m.bytesQueued;
   candidate.oldestJobStartTime = static_cast<uint64_t>(m.oldestJobStartTime);
-  candidate.youngestJobStartTime = static_cast<uint64_t>(m.youngestJobStartTime);
-  candidate.ratioOfMountQuotaUsed = m.ratioOfMountQuotaUsed;
   candidate.candidateScore = calculateCandidateScore(m);
-  candidate.mediaType = m.mediaType;
-  candidate.labelFormat = labelFormatValue(m.labelFormat);
-  candidate.vendor = m.vendor;
-  candidate.capacityInBytes = m.capacityInBytes;
-  candidate.lastFSeq = std::nullopt;
-  candidate.encryptionKeyName = m.encryptionKeyName;
   candidate.state = blockedReason.has_value() ? "Blocked" : "Available";
   candidate.stateReason = blockedReason;
   candidate.createdBy = owner;
@@ -665,21 +734,12 @@ MountCandidate makeArchiveCandidate(const CandidatePotential& potential,
   candidate.tapePool = m.tapePool;
   candidate.vo = tape != nullptr ? tape->vo : m.vo;
   candidate.vid = tape != nullptr ? optionalNonEmpty(tape->vid) : std::nullopt;
-  candidate.activity = m.activity;
   candidate.priority = m.priority;
   candidate.minRequestAge = static_cast<uint64_t>(m.minRequestAge);
   candidate.filesQueued = m.filesQueued;
   candidate.bytesQueued = m.bytesQueued;
   candidate.oldestJobStartTime = static_cast<uint64_t>(m.oldestJobStartTime);
-  candidate.youngestJobStartTime = static_cast<uint64_t>(m.youngestJobStartTime);
-  candidate.ratioOfMountQuotaUsed = m.ratioOfMountQuotaUsed;
   candidate.candidateScore = calculateCandidateScore(m);
-  candidate.mediaType = tape != nullptr ? tape->mediaType : m.mediaType;
-  candidate.labelFormat = tape != nullptr ? labelFormatValue(tape->labelFormat) : labelFormatValue(m.labelFormat);
-  candidate.vendor = tape != nullptr ? tape->vendor : m.vendor;
-  candidate.capacityInBytes = tape != nullptr ? tape->capacityInBytes : m.capacityInBytes;
-  candidate.lastFSeq = tape != nullptr ? std::optional<uint64_t>(tape->lastFSeq) : std::nullopt;
-  candidate.encryptionKeyName = tape != nullptr ? tape->encryptionKeyName : m.encryptionKeyName;
   candidate.state = blockedReason.has_value() ? "Blocked" : "Available";
   candidate.stateReason = blockedReason;
   candidate.createdBy = owner;
@@ -753,6 +813,7 @@ bool MountDecision::refreshMountCandidates(const std::string& owner, Scheduler& 
 
     utils::Timer timer;
     auto mountInfo = m_schedulerDb.getMountInfoNoLock(SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT, lc);
+    mountInfo->potentialMounts = aggregatePotentialMountsForMountCandidates(mountInfo->potentialMounts);
     scheduler.fillMountPolicyNamesForPotentialMounts(*mountInfo, lc);
     scheduler.getExistingAndNextMounts(*mountInfo, lc);
 
@@ -774,7 +835,7 @@ bool MountDecision::refreshMountCandidates(const std::string& owner, Scheduler& 
       auto simulatedExistingMountsPerTapepool = prepared.existingMountsDistinctTypeSummaryPerTapepool;
       auto simulatedExistingMountsPerVo = prepared.existingMountsBasicTypeSummaryPerVo;
       auto tapesForWriting = prepared.tapesForWriting;
-      std::stable_sort(prepared.potentialMounts.begin(), prepared.potentialMounts.end(), candidateRefreshOrderLess);
+      std::ranges::stable_sort(prepared.potentialMounts, candidateRefreshOrderLess);
       for (const auto& potential : prepared.potentialMounts) {
         std::optional<std::string> blockedReason = potential.blockedReason;
         const auto basicType = common::dataStructures::getMountBasicType(potential.mount.type);
@@ -890,13 +951,13 @@ std::optional<ReservedTapeMount> MountDecision::getNextMount(const std::string& 
 
   const auto host = utils::getShortHostname();
 
-  // Check in advance that there is an available mount, before fetching the mount info data.
+  // Check in advance that there is an available mount, before taking the scheduler lock.
   if (!m_db->hasAvailableMountCandidate(logicalLibraryName)) {
     lc.log(log::DEBUG, "In MountDecision::getNextMount(): No available mount candidate found.");
     return std::nullopt;
   }
 
-  auto mountInfo = m_schedulerDb.getMountInfo(std::optional<std::string_view>(logicalLibraryName), lc, timeout_us);
+  auto mountInfo = m_schedulerDb.getMountInfoLockOnly(logicalLibraryName, lc, timeout_us);
 
   while (true) {
     auto reservedCandidate = m_db->tryReserveNextMountCandidate(logicalLibraryName, host, driveName);
@@ -906,16 +967,40 @@ std::optional<ReservedTapeMount> MountDecision::getNextMount(const std::string& 
     }
 
     try {
-      auto potentialMount = toPotentialMount(reservedCandidate->candidate);
-
-      const auto basicMountType = common::dataStructures::getMountBasicType(potentialMount.type);
+      const auto basicMountType = common::dataStructures::getMountBasicType(reservedCandidate->candidate.mountType);
       std::optional<std::string> blockedReason;
+      std::optional<catalogue::TapeForWriting> tapeForWriting;
+      std::optional<common::dataStructures::Tape> tape;
+      std::optional<SchedulerDatabase::PotentialMount> potentialMount;
       if (basicMountType == common::dataStructures::MountType::ArchiveAllTypes) {
-        blockedReason =
-          validateArchiveCandidate(reservedCandidate->candidate, logicalLibraryName, scheduler.getCatalogue());
-      } else if (potentialMount.type == common::dataStructures::MountType::Retrieve) {
-        blockedReason =
-          validateRetrieveCandidate(reservedCandidate->candidate, logicalLibraryName, scheduler.getCatalogue());
+        if (!mountInfo->hasPendingArchiveJobsForMountDecision(reservedCandidate->candidate.tapePool,
+                                                              reservedCandidate->candidate.mountType)) {
+          blockedReason = "No pending archive jobs found for reserved candidate";
+        }
+        if (!blockedReason.has_value()) {
+          tapeForWriting = getTapeForWritingForCandidate(reservedCandidate->candidate,
+                                                         logicalLibraryName,
+                                                         scheduler.getCatalogue(),
+                                                         blockedReason);
+          if (tapeForWriting.has_value()) {
+            potentialMount =
+              makePotentialMountForArchiveCandidate(reservedCandidate->candidate, tapeForWriting.value());
+          }
+        }
+      } else if (reservedCandidate->candidate.mountType == common::dataStructures::MountType::Retrieve) {
+        if (!mountInfo->hasPendingRetrieveJobsForMountDecision(requireValue(reservedCandidate->candidate.vid, "VID"),
+                                                               reservedCandidate->candidate.vo)) {
+          blockedReason = "No pending retrieve jobs found for reserved candidate";
+        }
+        if (!blockedReason.has_value()) {
+          tape = getTapeForRetrieveCandidate(reservedCandidate->candidate,
+                                             logicalLibraryName,
+                                             scheduler.getCatalogue(),
+                                             blockedReason);
+          if (tape.has_value()) {
+            potentialMount = makePotentialMountForRetrieveCandidate(reservedCandidate->candidate, tape.value());
+          }
+        }
       } else {
         throw exception::Exception("In MountDecision::getNextMount(): unexpected mount type.");
       }
@@ -932,21 +1017,25 @@ std::optional<ReservedTapeMount> MountDecision::getNextMount(const std::string& 
         lc.log(log::INFO, "In MountDecision::getNextMount(): Blocked stale reserved mount candidate.");
         continue;
       }
+      if (!potentialMount.has_value()) {
+        throw exception::Exception("In MountDecision::getNextMount(): failed to build potential mount from reserved "
+                                   "candidate.");
+      }
 
       ReservedTapeMount ret;
       ret.candidateId = reservedCandidate->candidateId;
 
       if (basicMountType == common::dataStructures::MountType::ArchiveAllTypes) {
-        auto tape = toTapeForWriting(reservedCandidate->candidate);
-        std::unique_ptr<ArchiveMount> archiveMount(
-          new ArchiveMount(scheduler.getCatalogue(),
-                           mountInfo->createArchiveMount(potentialMount, tape, driveName, logicalLibraryName, host)));
+        std::unique_ptr<ArchiveMount> archiveMount(new ArchiveMount(
+          scheduler.getCatalogue(),
+          mountInfo
+            ->createArchiveMount(potentialMount.value(), tapeForWriting.value(), driveName, logicalLibraryName, host)));
         archiveMount->m_sessionRunning = true;
         ret.mount = std::move(archiveMount);
-      } else if (potentialMount.type == common::dataStructures::MountType::Retrieve) {
-        std::unique_ptr<RetrieveMount> retrieveMount(
-          new RetrieveMount(scheduler.getCatalogue(),
-                            mountInfo->createRetrieveMount(potentialMount, driveName, logicalLibraryName, host)));
+      } else if (reservedCandidate->candidate.mountType == common::dataStructures::MountType::Retrieve) {
+        std::unique_ptr<RetrieveMount> retrieveMount(new RetrieveMount(
+          scheduler.getCatalogue(),
+          mountInfo->createRetrieveMount(potentialMount.value(), driveName, logicalLibraryName, host)));
         retrieveMount->m_sessionRunning = true;
         retrieveMount->m_diskRunning = true;
         retrieveMount->m_tapeRunning = true;

@@ -9,6 +9,7 @@
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
+#include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
 #include "common/log/Logger.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
@@ -137,6 +138,15 @@ public:
                         const std::string& driveName,
                         const std::string& logicalLibrary,
                         const std::string& hostName) override;
+
+    bool hasPendingArchiveJobsForMountDecision(const std::string&, common::dataStructures::MountType) override {
+      throw cta::exception::Exception("Not supported for OStoreDB implementation.");
+    }
+
+    bool hasPendingRetrieveJobsForMountDecision(const std::string&, const std::string&) override {
+      throw cta::exception::Exception("Not supported for OStoreDB implementation.");
+    }
+
     ~TapeMountDecisionInfo() override;
 
   private:
@@ -161,6 +171,15 @@ public:
                         const std::string& driveName,
                         const std::string& logicalLibrary,
                         const std::string& hostName) override;
+
+    bool hasPendingArchiveJobsForMountDecision(const std::string&, common::dataStructures::MountType) override {
+      throw cta::exception::Exception("Not supported for OStoreDB implementation.");
+    }
+
+    bool hasPendingRetrieveJobsForMountDecision(const std::string&, const std::string&) override {
+      throw cta::exception::Exception("Not supported for OStoreDB implementation.");
+    }
+
     ~TapeMountDecisionInfoNoLock() override = default;
   };
 
@@ -185,6 +204,11 @@ public:
   getMountInfo(std::optional<std::string_view> logicalLibraryName,
                log::LogContext& logContext,
                uint64_t timeout_us) override {
+    throw cta::exception::Exception("Not supported for OStoreDB implementation.");
+  }
+
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
+  getMountInfoLockOnly(std::string_view, log::LogContext&, uint64_t) override {
     throw cta::exception::Exception("Not supported for OStoreDB implementation.");
   }
 
