@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+set -euo pipefail
+
+exec kubectl -n "${CTA_DEMO_NAMESPACE:-dev}" exec cta-cli-0 -c cta-cli -- cta-admin "$@"
