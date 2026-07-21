@@ -904,6 +904,9 @@ public:
                                                                const std::string& driveName,
                                                                const std::string& logicalLibrary,
                                                                const std::string& hostName) = 0;
+    virtual bool hasPendingArchiveJobsForMountDecision(const std::string& tapePool,
+                                                       common::dataStructures::MountType mountType) = 0;
+    virtual bool hasPendingRetrieveJobsForMountDecision(const std::string& vid, const std::string& vo) = 0;
     /** Destructor: releases the global lock if not already done */
     virtual ~TapeMountDecisionInfo() = default;
   };
@@ -914,15 +917,22 @@ public:
   enum PurposeGetMountInfo { GET_NEXT_MOUNT, SHOW_QUEUES };
 
   /**
-- * A function dumping the relevant mount information for deciding which
-- * tape to mount next. This also starts the mount decision process.
-- */
+   * A function dumping the relevant mount information for deciding which
+   * tape to mount next. This also starts the mount decision process.
+   */
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) = 0;
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext, uint64_t timeout_us) = 0;
   // following method is used by RDBMS Scheduler DB type only
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo(std::optional<std::string_view> logicalLibraryName,
                                                               log::LogContext& logContext,
                                                               uint64_t timeout_us) = 0;
+  /**
+   * Return a TapeMountDecisionInfo with the scheduler lock held, without
+   * fetching queue summaries. This is used by the mount-candidate path after a
+   * candidate has already been selected from SCHEDULER_MOUNT_CANDIDATES.
+   */
+  virtual std::unique_ptr<TapeMountDecisionInfo>
+  getMountInfoLockOnly(std::string_view logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us) = 0;
 
   /**
    * A function running a queue trim. This should be called if the corresponding

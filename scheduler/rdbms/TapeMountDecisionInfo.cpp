@@ -7,6 +7,7 @@
 
 #include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/exception/Exception.hpp"
+#include "rdbms/Rset.hpp"
 #include "scheduler/rdbms/ArchiveMount.hpp"
 #include "scheduler/rdbms/RetrieveMount.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
@@ -154,6 +155,75 @@ TapeMountDecisionInfo::createRetrieveMount(const cta::SchedulerDatabase::Potenti
   // Return the mount session object to the user
   std::unique_ptr<SchedulerDatabase::RetrieveMount> ret(privateRet.release());
   return ret;
+}
+
+bool TapeMountDecisionInfo::hasPendingArchiveJobsForMountDecision(const std::string& tapePool,
+                                                                  const common::dataStructures::MountType mountType) {
+  if (!m_lockTaken) {
+    throw SchedulerDatabase::SchedulingLockNotHeld(
+      "In TapeMountDecisionInfo::hasPendingArchiveJobsForMountDecision(): cannot check pending jobs without holding "
+      "scheduling lock");
+  }
+
+  std::string tableName;
+  std::string status;
+  switch (mountType) {
+    case common::dataStructures::MountType::ArchiveForUser:
+      tableName = "ARCHIVE_PENDING_QUEUE";
+      status = to_string(ArchiveJobStatus::AJS_ToTransferForUser);
+      break;
+    case common::dataStructures::MountType::ArchiveForRepack:
+      tableName = "REPACK_ARCHIVE_PENDING_QUEUE";
+      status = to_string(ArchiveJobStatus::AJS_ToTransferForRepack);
+      break;
+    default:
+      throw exception::Exception("In TapeMountDecisionInfo::hasPendingArchiveJobsForMountDecision(): "
+                                 "unexpected mount type.");
+  }
+
+  std::string sql = R"SQL(
+    SELECT 1 AS HAS_PENDING_JOBS
+    FROM )SQL";
+  sql += tableName;
+  sql += R"SQL(
+    WHERE
+      TAPE_POOL = :TAPE_POOL
+      AND STATUS = :STATUS::ARCHIVE_JOB_STATUS
+      AND MOUNT_ID IS NULL
+    LIMIT 1
+  )SQL";
+  auto stmt = m_txn->getConn().createStmt(sql);
+  stmt.bindString(":TAPE_POOL", tapePool);
+  stmt.bindString(":STATUS", status);
+  auto rset = stmt.executeQuery();
+  return rset.next();
+}
+
+bool TapeMountDecisionInfo::hasPendingRetrieveJobsForMountDecision(const std::string& vid, const std::string& vo) {
+  if (!m_lockTaken) {
+    throw SchedulerDatabase::SchedulingLockNotHeld(
+      "In TapeMountDecisionInfo::hasPendingRetrieveJobsForMountDecision(): cannot check pending jobs without holding "
+      "scheduling lock");
+  }
+
+  const auto defaultRepackVo = m_RelationalDB.getDefaultRepackVo();
+  const bool isRepack = defaultRepackVo.has_value() && vo == defaultRepackVo->name;
+  std::string sql = R"SQL(
+    SELECT 1 AS HAS_PENDING_JOBS
+    FROM )SQL";
+  sql += isRepack ? "REPACK_RETRIEVE_PENDING_QUEUE" : "RETRIEVE_PENDING_QUEUE";
+  sql += R"SQL(
+    WHERE
+      VID = :VID
+      AND STATUS = :STATUS::RETRIEVE_JOB_STATUS
+      AND MOUNT_ID IS NULL
+    LIMIT 1
+  )SQL";
+  auto stmt = m_txn->getConn().createStmt(sql);
+  stmt.bindString(":VID", vid);
+  stmt.bindString(":STATUS", to_string(RetrieveJobStatus::RJS_ToTransfer));
+  auto rset = stmt.executeQuery();
+  return rset.next();
 }
 
 void TapeMountDecisionInfo::lock(std::string_view logicalLibraryName) {

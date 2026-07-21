@@ -47,6 +47,10 @@ public:
                       const std::string& logicalLibrary,
                       const std::string& hostName) override;
 
+  bool hasPendingArchiveJobsForMountDecision(const std::string& tapePool,
+                                             common::dataStructures::MountType mountType) override;
+  bool hasPendingRetrieveJobsForMountDecision(const std::string& vid, const std::string& vo) override;
+
 private:
   /** Acquire Scheduler DB advisory lock per tape pool */
   void lock(std::string_view tapePool);

@@ -1527,6 +1527,22 @@ RelationalDB::getMountInfo(std::optional<std::string_view> logicalLibraryName,
   return ret;
 }
 
+std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
+RelationalDB::getMountInfoLockOnly(std::string_view logicalLibraryName, log::LogContext& lc, uint64_t timeout_us) {
+  static_cast<void>(timeout_us);
+  utils::Timer t;
+  auto privateRet = std::make_unique<schedulerdb::TapeMountDecisionInfo>(*this, m_ownerId, m_tapeDrivesState.get(), lc);
+  privateRet->lock(logicalLibraryName);
+
+  const auto lockSchedGlobalTime = t.secs(utils::Timer::resetCounter);
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
+  log::ScopedParamContainer params(lc);
+  params.add("lockSchedGlobalTime", lockSchedGlobalTime);
+  lc.log(log::INFO, "In RelationalDB::getMountInfoLockOnly(): success.");
+
+  return ret;
+}
+
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMountInfoNoLock(PurposeGetMountInfo purpose,
                                                                                            log::LogContext& lc) {
   utils::Timer t;

@@ -253,6 +253,8 @@ public:
   getMountInfo(std::optional<std::string_view> logicalLibraryName,
                log::LogContext& logContext,
                uint64_t timeout_us) override;
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
+  getMountInfoLockOnly(std::string_view logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us) override;
   std::optional<common::dataStructures::VirtualOrganization> getDefaultRepackVo();
 
   void trimEmptyQueues(log::LogContext& lc) override;
