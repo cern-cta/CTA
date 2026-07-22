@@ -174,6 +174,15 @@ std::optional<catalogue::TapeForWriting> takeNextTapeForWriting(std::vector<cata
   return ret;
 }
 
+std::optional<std::string> getRetrieveTapeStateBlockReason(const common::dataStructures::Tape& tape) {
+  using Tape = common::dataStructures::Tape;
+
+  if (tape.state == Tape::ACTIVE || tape.state == Tape::REPACKING) {
+    return std::nullopt;
+  }
+  return "Tape state is " + Tape::stateToString(tape.state);
+}
+
 uint64_t calculateCandidateScore(const SchedulerDatabase::PotentialMount& mount) {
   constexpr uint64_t c_priorityFactor = 10;
   constexpr uint64_t c_archiveForUserBonus = 1;
@@ -450,18 +459,16 @@ prepareMountCandidatesForLogicalLibrary(const std::vector<SchedulerDatabase::Pot
     return pm.type == common::dataStructures::MountType::Retrieve;
   });
 
+  std::map<std::string, common::dataStructures::Tape, std::less<>> retrieveTapeMap;
   std::set<std::string> repackingTapeVids;
   if (anyRetrieve) {
-    std::map<std::string, common::dataStructures::Tape, std::less<>> eligibleTapeMap;
-
     {
       {
         catalogue::TapeSearchCriteria searchCriteria;
         searchCriteria.logicalLibrary = logicalLibraryName;
-        searchCriteria.state = common::dataStructures::Tape::ACTIVE;
-        auto eligibleTapesList = catalogue.Tape()->getTapes(searchCriteria);
-        for (auto& t : eligibleTapesList) {
-          eligibleTapeMap[t.vid] = t;
+        auto tapesList = catalogue.Tape()->getTapes(searchCriteria);
+        for (auto& t : tapesList) {
+          retrieveTapeMap[t.vid] = t;
         }
       }
       {
@@ -471,7 +478,7 @@ prepareMountCandidatesForLogicalLibrary(const std::vector<SchedulerDatabase::Pot
         auto repackingTapesList = catalogue.Tape()->getTapes(searchCriteria);
         for (auto& t : repackingTapesList) {
           if (t.logicalLibraryName == logicalLibraryName) {
-            eligibleTapeMap[t.vid] = t;
+            retrieveTapeMap[t.vid] = t;
           }
 
           repackingTapeVids.insert(t.vid);
@@ -481,9 +488,10 @@ prepareMountCandidatesForLogicalLibrary(const std::vector<SchedulerDatabase::Pot
 
     auto& v = workingPotentialMounts;
 
-    // Remove mounts from unavailable tapes (not in same logical library, disabled, etc.)
-    std::erase_if(v, [&eligibleTapeMap](const SchedulerDatabase::PotentialMount& pm) {
-      return (pm.type == common::dataStructures::MountType::Retrieve && !eligibleTapeMap.contains(pm.vid));
+    // Remove retrieve mounts whose tape is not in this logical library. Tapes
+    // that are in the library but not mountable are kept as blocked candidates.
+    std::erase_if(v, [&retrieveTapeMap](const SchedulerDatabase::PotentialMount& pm) {
+      return (pm.type == common::dataStructures::MountType::Retrieve && !retrieveTapeMap.contains(pm.vid));
     });
 
     static_cast<void>(timer.secs(utils::Timer::resetCounter));
@@ -491,7 +499,7 @@ prepareMountCandidatesForLogicalLibrary(const std::vector<SchedulerDatabase::Pot
     // Enrich potential mount entry
     for (auto& m : workingPotentialMounts) {
       if (m.type == common::dataStructures::MountType::Retrieve) {
-        const auto& tp = eligibleTapeMap.at(m.vid);
+        const auto& tp = retrieveTapeMap.at(m.vid);
 
         m.logicalLibrary = tp.logicalLibraryName;
         m.tapePool = tp.tapePoolName;
@@ -643,6 +651,10 @@ prepareMountCandidatesForLogicalLibrary(const std::vector<SchedulerDatabase::Pot
       isRepackingMount = true;
     } else if (candidate.mount.type == common::dataStructures::MountType::Retrieve) {
       isRepackingMount = repackingTapeVids.contains(candidate.mount.vid);
+    }
+
+    if (candidate.mount.type == common::dataStructures::MountType::Retrieve) {
+      candidate.blockedReason = getRetrieveTapeStateBlockReason(retrieveTapeMap.at(candidate.mount.vid));
     }
 
     if (isRepackingMount) {
