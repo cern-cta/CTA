@@ -67,6 +67,7 @@ require_command cta-admin
 require_command eos
 require_command xrdcp
 require_command xrdfs
+require_command xrdfs-retrieve
 
 run_id="$(date +%Y%m%d_%H%M%S)_$$"
 reason="mount candidate demo"
@@ -199,8 +200,7 @@ archive_new_file() {
 
 submit_retrieve() {
   local path="$1"
-  KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 \
-    xrdfs "$eos_instance" prepare -s "$path"
+  xrdfs-retrieve "$eos_instance" prepare -s "$path"
 }
 
 cleanup() {
@@ -285,10 +285,6 @@ eos_instance=$(eos --json version 2>/dev/null | jq -r '.version[0].EOS_INSTANCE 
 [[ -n "$eos_instance" ]] || eos_instance="ctaeos"
 demo_dir="/eos/${eos_instance}/cta/mount_candidate_demo_${run_id}"
 eos "root://${eos_instance}" mkdir -p "$demo_dir"
-
-client_exec mkdir -p /tmp/poweruser1
-krb5_realm=$(awk -F'"' '/krb5_realm/ {print $2; exit}' "${script_dir}/../system_tests/config/test_params.toml")
-client_exec env KRB5CCNAME=/tmp/poweruser1/krb5cc_0 kinit -kt /root/poweruser1.keytab "poweruser1@${krb5_realm}"
 
 for index in "${!selected_tapes[@]}"; do
   vid="${selected_tapes[$index]}"

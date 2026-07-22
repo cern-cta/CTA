@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+set -euo pipefail
+
+namespace="${CTA_DEMO_NAMESPACE:-dev}"
+realm="${CTA_DEMO_KRB5_REALM:-TEST.CTA}"
+cache="/tmp/poweruser1/krb5cc_0"
+
+exec kubectl -n "$namespace" exec cta-client-0 -c client -- bash -c '
+  set -euo pipefail
+  cache="$1"
+  realm="$2"
+  shift 2
+
+  mkdir -p "$(dirname "$cache")"
+  if ! KRB5CCNAME="$cache" klist -s; then
+    KRB5CCNAME="$cache" kinit -kt /root/poweruser1.keytab "poweruser1@${realm}"
+  fi
+
+  exec env KRB5CCNAME="$cache" XrdSecPROTOCOL=krb5 xrdfs "$@"
+' -- "$cache" "$realm" "$@"
