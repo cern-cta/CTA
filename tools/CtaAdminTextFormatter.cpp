@@ -735,7 +735,7 @@ void TextFormatter::print(const MountCandidateLsItem& mcls_item) {
 
   auto score = std::to_string(mcls_item.candidate_score());
   if (mcls_item.override_candidate_score() != 0) {
-    score += " (" + std::to_string(mcls_item.override_candidate_score()) + ")";
+    score = std::to_string(mcls_item.override_candidate_score()) + " (" + score + ")";
   }
 
   push_back(score,
