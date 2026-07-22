@@ -37,7 +37,11 @@ cta-admin --json mountcandidate ls
 eos root://ctaeos ls /eos/ctaeos/cta
 xrdcp /etc/group root://ctaeos//eos/ctaeos/cta/example
 xrdfs ctaeos prepare -s /eos/ctaeos/cta/example
+xrdfs-retrieve ctaeos prepare -s /eos/ctaeos/cta/example
 ```
+
+Use `xrdfs-retrieve` for retrieve/stage requests. It runs as `poweruser1`
+inside `cta-client-0` with `XrdSecPROTOCOL=krb5`.
 
 ## Demo
 

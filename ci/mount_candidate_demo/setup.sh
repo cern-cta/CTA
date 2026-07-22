@@ -63,7 +63,7 @@ setup_main() {
 
   export CTA_DEMO_NAMESPACE="$namespace"
   export PATH="${wrappers_dir}:$PATH"
-  chmod +x "${wrappers_dir}/cta-admin" "${wrappers_dir}/eos" "${wrappers_dir}/xrdcp" "${wrappers_dir}/xrdfs"
+  chmod +x "${wrappers_dir}/cta-admin" "${wrappers_dir}/eos" "${wrappers_dir}/xrdcp" "${wrappers_dir}/xrdfs" "${wrappers_dir}/xrdfs-retrieve"
 
   kubectl -n "$namespace" get pod cta-cli-0 >/dev/null
   kubectl -n "$namespace" get pod cta-client-0 >/dev/null
