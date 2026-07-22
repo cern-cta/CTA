@@ -79,8 +79,7 @@ setup_main() {
         tests/setup/setup_eos_test.py \
         tests/setup/setup_dcache_test.py \
         --namespace "$namespace" \
-        --no-modify \
-        --no-cleanup
+        --cleanup-first
     ) || return 1
   fi
 
