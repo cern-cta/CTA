@@ -38,7 +38,7 @@ namespace {
 
 constexpr uint64_t c_minFilesToWarrantAMount = 5;
 constexpr uint64_t c_minBytesToWarrantAMount = 2000000;
-constexpr uint64_t c_refreshLockLeaseSeconds = 300;
+constexpr uint64_t c_refreshLockLeaseSeconds = 60;
 constexpr uint64_t c_reservationTimeoutSeconds = 300;
 const std::string c_refreshWorkKey = "mount-candidate-refresh";
 
