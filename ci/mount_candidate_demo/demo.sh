@@ -393,3 +393,32 @@ done
 cta-admin --json dr ls "$selected_drive" | jq .
 cta-admin --json mountcandidate ls | jq .
 die "Did not observe $selected_drive selecting boosted retrieve candidate $selected_candidate_key"
+
+
+# Archive 4 files in different tapes
+xrdcp /etc/group root://ctaeos//eos/ctaeos/cta/example0
+until vids=$(cta-admin --json ta ls --all | jq -er '[.[] | select(.state == "ACTIVE" and (.lastFseq | tonumber) > 0) | .vid] | select(length > 0) | .[]'); do sleep 0.2; done; printf '%s\n' "$vids" | xargs -r -I {} cta-admin ta ch --state DISABLED --reason "Test" --vid {}
+xrdcp /etc/group root://ctaeos//eos/ctaeos/cta/example1
+until vids=$(cta-admin --json ta ls --all | jq -er '[.[] | select(.state == "ACTIVE" and (.lastFseq | tonumber) > 0) | .vid] | select(length > 0) | .[]'); do sleep 0.2; done; printf '%s\n' "$vids" | xargs -r -I {} cta-admin ta ch --state DISABLED --reason "Test" --vid {}
+xrdcp /etc/group root://ctaeos//eos/ctaeos/cta/example2
+until vids=$(cta-admin --json ta ls --all | jq -er '[.[] | select(.state == "ACTIVE" and (.lastFseq | tonumber) > 0) | .vid] | select(length > 0) | .[]'); do sleep 0.2; done; printf '%s\n' "$vids" | xargs -r -I {} cta-admin ta ch --state DISABLED --reason "Test" --vid {}
+xrdcp /etc/group root://ctaeos//eos/ctaeos/cta/example3
+until vids=$(cta-admin --json ta ls --all | jq -er '[.[] | select(.state == "ACTIVE" and (.lastFseq | tonumber) > 0) | .vid] | select(length > 0) | .[]'); do sleep 0.2; done; printf '%s\n' "$vids" | xargs -r -I {} cta-admin ta ch --state DISABLED --reason "Test" --vid {}
+
+# Put all drives down
+cta-admin --json dr ls | jq -r '.[].driveName' | xargs -I {} cta-admin dr down {} --reason "Test"
+
+# Try to archive two extra files
+xrdcp /etc/group root://ctaeos//eos/ctaeos/cta/example4
+xrdcp /etc/group root://ctaeos//eos/ctaeos/cta/example5
+
+# Show some stuff
+cta-admin tape ls --all
+cta-admin sq
+cta-admin mc ls
+
+# Bump up the score of a mount and show again
+cta-admin mc --ck RETRIEVE-ULT102 --score 999
+cta-admin mc ls
+
+
