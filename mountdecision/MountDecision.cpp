@@ -203,8 +203,9 @@ std::string calculateRetrieveCandidateKey(const SchedulerDatabase::PotentialMoun
 }
 
 std::string calculateArchiveCandidateKey(const SchedulerDatabase::PotentialMount& mount,
-                                         const std::optional<std::string>& vid) {
-  return common::dataStructures::toString(mount.type) + "-" + mount.tapePool + "-" + vid.value_or("no-vid");
+                                         const uint64_t archiveCandidateIndex) {
+  return common::dataStructures::toString(mount.type) + "-" + mount.tapePool + "-"
+         + std::to_string(archiveCandidateIndex);
 }
 
 bool potentialMountOrderLess(const SchedulerDatabase::PotentialMount& lhs,
@@ -734,13 +735,13 @@ MountCandidate makeRetrieveCandidate(const CandidatePotential& potential,
 
 MountCandidate makeArchiveCandidate(const CandidatePotential& potential,
                                     const catalogue::TapeForWriting* tape,
+                                    const uint64_t archiveCandidateIndex,
                                     const std::string& logicalLibrary,
                                     const std::optional<std::string>& blockedReason,
                                     const std::string& owner) {
   const auto& m = potential.mount;
   MountCandidate candidate;
-  candidate.candidateKey =
-    calculateArchiveCandidateKey(m, tape != nullptr ? optionalNonEmpty(tape->vid) : std::nullopt);
+  candidate.candidateKey = calculateArchiveCandidateKey(m, archiveCandidateIndex);
   candidate.mountType = m.type;
   candidate.logicalLibrary = logicalLibrary;
   candidate.tapePool = m.tapePool;
@@ -916,6 +917,7 @@ bool MountDecision::refreshMountCandidates(const std::string& owner, Scheduler& 
 
     std::vector<MountCandidate> candidates;
     candidates.reserve(candidateRows.size());
+    std::map<TapePoolMountPair, uint64_t> archiveCandidateIndexes;
     for (const auto& row : candidateRows) {
       auto blockedReason = row.blockedReason;
       const auto basicType = common::dataStructures::getMountBasicType(row.potential.mount.type);
@@ -924,8 +926,11 @@ bool MountDecision::refreshMountCandidates(const std::string& owner, Scheduler& 
         auto candidate = makeRetrieveCandidate(row.potential, blockedReason, owner);
         candidates.push_back(std::move(candidate));
       } else if (basicType == common::dataStructures::MountType::ArchiveAllTypes) {
+        const TapePoolMountPair archiveKey(row.potential.mount.tapePool, row.potential.mount.type);
+        const auto archiveCandidateIndex = archiveCandidateIndexes[archiveKey]++;
         auto candidate = makeArchiveCandidate(row.potential,
                                               row.tape.has_value() ? &row.tape.value() : nullptr,
+                                              archiveCandidateIndex,
                                               row.logicalLibrary,
                                               blockedReason,
                                               owner);
