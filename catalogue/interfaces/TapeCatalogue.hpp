@@ -136,6 +136,7 @@ public:
    */
   virtual void reclaimTape(const common::dataStructures::SecurityIdentity& admin,
                            const std::string& vid,
+                           uint64_t deletionReclaimDelayDays,
                            cta::log::LogContext& lc) = 0;
 
   /**

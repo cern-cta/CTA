@@ -156,6 +156,9 @@ FrontendService::FrontendService(const std::string& configFilename) {
   auto missingFileCopiesMinAgeSecs = config.getOptionValueUInt("cta.catalogue.missing_file_copies_min_age_secs");
   m_missingFileCopiesMinAgeSecs = missingFileCopiesMinAgeSecs.value_or(0);
 
+  auto deletionReclaimDelayDays = config.getOptionValueUInt("cta.catalogue.deletion_reclaim_delay_days");
+  m_deletionReclaimDelayDays = deletionReclaimDelayDays.value_or(31);
+
   {
     // Log cta.catalogue.missing_file_copies_min_age_secs
     std::vector<log::Param> params;

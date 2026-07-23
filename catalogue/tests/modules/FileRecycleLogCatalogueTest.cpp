@@ -146,7 +146,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, reclaimTapeRemovesFilesFromRecycleLog) 
   ASSERT_TRUE(m_catalogue->FileRecycleLog()->getFileRecycleLogItor().hasMore());
   //Reclaim the tape
   m_catalogue->Tape()->setTapeFull(m_admin, tape1.vid, true);
-  m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, dummyLc);
+  m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, 0, dummyLc);
   {
     auto itor = m_catalogue->FileRecycleLog()->getFileRecycleLogItor();
     ASSERT_FALSE(itor.hasMore());

@@ -49,6 +49,7 @@ public:
 
   void reclaimTape(const common::dataStructures::SecurityIdentity& admin,
                    const std::string& vid,
+                   uint64_t deletionReclaimDelayDays,
                    cta::log::LogContext& lc) override;
 
   void checkTapeForLabel(const std::string& vid) override;
@@ -172,6 +173,17 @@ private:
    * @param admin the administrator
    * @param vid the vid to reset the counters
    */
+
+  /**
+   * Throws a UserError if the tape contains recycle-log entries that are
+   * younger than the configured reclaim delay.
+   *
+   * @param conn The database connection
+   * @param vid The vid of the tape whose recycle-log entries will be checked
+   * @param deletionReclaimDelayDays The minimum age of recycle-log entries
+   */
+  void checkDeletionReclaimDelay(rdbms::Conn& conn, const std::string& vid, uint64_t deletionReclaimDelayDays) const;
+
   void resetTapeCounters(rdbms::Conn& conn,
                          const common::dataStructures::SecurityIdentity& admin,
                          const std::string& vid) const;

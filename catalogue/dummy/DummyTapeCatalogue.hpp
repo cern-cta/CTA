@@ -39,6 +39,7 @@ public:
 
   void reclaimTape(const common::dataStructures::SecurityIdentity& admin,
                    const std::string& vid,
+                   uint64_t deletionReclaimDelayDays,
                    cta::log::LogContext& lc) override;
 
   void checkTapeForLabel(const std::string& vid) override;

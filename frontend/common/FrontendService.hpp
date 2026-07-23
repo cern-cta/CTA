@@ -61,6 +61,11 @@ public:
   uint64_t getMissingFileCopiesMinAgeSecs() const { return m_missingFileCopiesMinAgeSecs; }
 
   /*!
+ * Get the minimum quarantine period, in days, before a tape can be reclaimed.
+ */
+  uint64_t getDeletionReclaimDelayDays() const { return m_deletionReclaimDelayDays; }
+
+  /*!
    * Get the mode of operation of the CTA admin interface
    */
   cta::common::AdminCmdMode getAdminCommandMode() const { return m_adminCommandMode; }
@@ -224,6 +229,7 @@ private:
   std::optional<std::string>                    m_tlsCert;                      //!< The TLS service certificate file
   std::optional<std::string>                    m_tlsChain;                     //!< The TLS CA chain file
   uint64_t                                      m_missingFileCopiesMinAgeSecs;  //!< Missing tape file copies minimum age.
+  uint64_t                                      m_deletionReclaimDelayDays;     //!< Minimum quarantine period before tape reclaim
   std::string                                   m_instanceName;                 //!< value of cta.instance_name in the CTA frontend configuration file
   std::optional<std::string>                    m_jwksUri;                      //!< The endpoint to obtain public keys from, for validating tokens
   std::optional<int>                            m_cacheRefreshInterval;         //!< The number of seconds after which to update the cache of public keys used to sign JWT tokens
