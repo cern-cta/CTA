@@ -476,8 +476,40 @@ RdbmsTapeCatalogue::getVidToLogicalLibrary(const std::set<std::string, std::less
   return vidToLogicalLibrary;
 }
 
+void RdbmsTapeCatalogue::checkDeletionReclaimDelay(rdbms::Conn& conn,
+                                                   const std::string& vid,
+                                                   const uint64_t deletionReclaimDelayDays) const {
+  auto* const recycleLogCatalogue =
+    static_cast<RdbmsFileRecycleLogCatalogue*>(m_rdbmsCatalogue->FileRecycleLog().get());
+
+  const auto latestRecycleLogTime = recycleLogCatalogue->getLatestRecycleLogTime(conn, vid);
+
+  // No deleted files exist for this tape.
+  if (!latestRecycleLogTime.has_value()) {
+    return;
+  }
+
+  constexpr uint64_t secondsPerDay = 24 * 60 * 60;
+
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
+  const uint64_t ageInSeconds =
+    now >= latestRecycleLogTime.value() ? static_cast<uint64_t>(now - latestRecycleLogTime.value()) : 0;
+
+  const uint64_t requiredAgeInSeconds = deletionReclaimDelayDays * secondsPerDay;
+
+  if (ageInSeconds < requiredAgeInSeconds) {
+    const uint64_t ageInDays = ageInSeconds / secondsPerDay;
+
+    throw exception::UserError("This tape contains files deleted " + std::to_string(ageInDays)
+                               + " days ago while deletion_reclaim_delay_days is configured at "
+                               + std::to_string(deletionReclaimDelayDays) + ". Please reclaim this tape later.");
+  }
+}
+
 void RdbmsTapeCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity& admin,
                                      const std::string& vid,
+                                     uint64_t deletionReclaimDelayDays,
                                      cta::log::LogContext& lc) {
   using namespace common::dataStructures;
 
@@ -503,9 +535,14 @@ void RdbmsTapeCatalogue::reclaimTape(const common::dataStructures::SecurityIdent
   // The tape exists and is full, we can try to reclaim it
   if (this->getNbFilesOnTape(conn, vid) == 0) {
     tl.insertAndReset("getNbFilesOnTape", t);
-    // There is no files on the tape, we can reclaim it : delete the files and reset the counters
-    static_cast<RdbmsFileRecycleLogCatalogue*>(m_rdbmsCatalogue->FileRecycleLog().get())
-      ->deleteFilesFromRecycleLog(conn, vid, lc);
+    checkDeletionReclaimDelay(conn, vid, deletionReclaimDelayDays);
+    tl.insertAndReset("checkDeletionReclaimDelayTime", t);
+
+    auto* const recycleLogCatalogue =
+      static_cast<RdbmsFileRecycleLogCatalogue*>(m_rdbmsCatalogue->FileRecycleLog().get());
+
+    // There are no active files on the tape, we can reclaim it : delete the recycle-log entries and reset the counters
+    recycleLogCatalogue->deleteFilesFromRecycleLog(conn, vid, lc);
     tl.insertAndReset("deleteFileFromRecycleLogTime", t);
     resetTapeCounters(conn, admin, vid);
     tl.insertAndReset("resetTapeCountersTime", t);

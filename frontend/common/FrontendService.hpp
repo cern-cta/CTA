@@ -132,15 +132,20 @@ public:
    */
   const std::string& getSchedulerBackendName() const { return m_schedulerBackendName; }
 
-  /*!
-   * Get missing tape file copies minimum age
-   */
-  uint64_t getMissingFileCopiesMinAgeSecs() const { return m_missingFileCopiesMinAgeSecs; }
+    /*!
+    * Get missing tape file copies minimum age
+    */
+    uint64_t getMissingFileCopiesMinAgeSecs() const { return m_missingFileCopiesMinAgeSecs; }
 
-  /*!
-   * Get the frontend's operation mode (wfe / admin_*)
-   */
-  OperationMode getOperationMode() const { return m_operationMode; }
+    /*!
+  * Get the minimum quarantine period, in days, before a tape can be reclaimed.
+  */
+    uint64_t getDeletionReclaimDelayDays() const { return m_deletionReclaimDelayDays; }
+
+    /*!
+    * Get the frontend's operation mode (wfe / admin_*)
+    */
+    OperationMode getOperationMode() const { return m_operationMode; }
 
   /*!
    * Get a reference to the Scheduler
@@ -280,6 +285,7 @@ private:
   std::optional<JWTConfig>                      m_jwtConfig;                     //!< The JWT configuration parameters
 
   uint64_t                                      m_missingFileCopiesMinAgeSecs;  //!< Missing tape file copies minimum age.
+  uint64_t                                      m_deletionReclaimDelayDays;     //!< Minimum quarantine period before tape reclaim
   std::string                                   m_instanceName;                 //!< value of cta.instance_name in the CTA frontend configuration file
   AuthMethod                                    m_wfeAuthMethod;                //!< The authentication method which is currently set for the WFE
   std::set<AuthMethod, std::less<>>             m_adminAuthMethods;             //!< The authentication methods which are currently set for the Admin API

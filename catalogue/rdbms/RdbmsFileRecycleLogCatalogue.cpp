@@ -139,6 +139,31 @@ void RdbmsFileRecycleLogCatalogue::deleteFilesFromRecycleLog(const std::string& 
   deleteFilesFromRecycleLog(conn, vid, lc);
 }
 
+std::optional<time_t> RdbmsFileRecycleLogCatalogue::getLatestRecycleLogTime(rdbms::Conn& conn,
+                                                                            const std::string& vid) const {
+  const char* const sql = R"SQL(
+    SELECT
+      COUNT(*) AS NB_FILES,
+      MAX(RECYCLE_LOG_TIME) AS LATEST_RECYCLE_LOG_TIME
+    FROM
+      FILE_RECYCLE_LOG
+    WHERE
+      VID = :VID
+  )SQL";
+
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":VID", vid);
+
+  auto rset = stmt.executeQuery();
+  rset.next();
+
+  if (rset.columnUint64("NB_FILES") == 0) {
+    return std::nullopt;
+  }
+
+  return static_cast<time_t>(rset.columnUint64("LATEST_RECYCLE_LOG_TIME"));
+}
+
 void RdbmsFileRecycleLogCatalogue::deleteFilesFromRecycleLog(rdbms::Conn& conn,
                                                              const std::string& vid,
                                                              log::LogContext& lc) const {

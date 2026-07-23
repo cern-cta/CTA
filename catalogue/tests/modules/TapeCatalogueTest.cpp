@@ -575,7 +575,7 @@ TEST_P(cta_catalogue_TapeTest, deleteNonEmptyTape) {
   ASSERT_FALSE(m_catalogue->Tape()->getTapes().empty());
   m_catalogue->Tape()->setTapeFull(m_admin, m_tape1.vid, true);
   //Reclaim it to delete the files from the recycle log
-  m_catalogue->Tape()->reclaimTape(m_admin, m_tape1.vid, dummyLc);
+  m_catalogue->Tape()->reclaimTape(m_admin, m_tape1.vid, 0, dummyLc);
   //Deletion should be successful
   ASSERT_NO_THROW(m_catalogue->Tape()->deleteTape(m_tape1.vid));
   ASSERT_TRUE(m_catalogue->Tape()->getTapes().empty());
@@ -2916,7 +2916,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTapeActiveState) {
                                        cta::common::dataStructures::Tape::ACTIVE,
                                        std::nullopt,
                                        "Testing");
-  ASSERT_NO_THROW(m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, dummyLc));
+  ASSERT_NO_THROW(m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, 0, dummyLc));
 }
 
 TEST_P(cta_catalogue_TapeTest, reclaimTapeDisabledState) {
@@ -2954,7 +2954,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTapeDisabledState) {
                                        cta::common::dataStructures::Tape::DISABLED,
                                        std::nullopt,
                                        "Testing");
-  ASSERT_NO_THROW(m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, dummyLc));
+  ASSERT_NO_THROW(m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, 0, dummyLc));
 }
 
 TEST_P(cta_catalogue_TapeTest, reclaimTapeBrokenState) {
@@ -2992,7 +2992,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTapeBrokenState) {
                                        cta::common::dataStructures::Tape::BROKEN,
                                        std::nullopt,
                                        "Testing");
-  ASSERT_NO_THROW(m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, dummyLc));
+  ASSERT_NO_THROW(m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, 0, dummyLc));
 }
 
 TEST_P(cta_catalogue_TapeTest, reclaimTapeNotAllowedStates) {
@@ -3030,7 +3030,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTapeNotAllowedStates) {
                                        cta::common::dataStructures::Tape::REPACKING,
                                        std::nullopt,
                                        "Testing");
-  ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, dummyLc), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, 0, dummyLc), cta::exception::UserError);
 
   // REPACKING_DISABLED - Reclaim not allowed
   m_catalogue->Tape()->modifyTapeState(m_admin,
@@ -3038,7 +3038,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTapeNotAllowedStates) {
                                        cta::common::dataStructures::Tape::REPACKING_DISABLED,
                                        std::nullopt,
                                        "Testing");
-  ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, dummyLc), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, 0, dummyLc), cta::exception::UserError);
 
   // REPACKING_PENDING - Reclaim not allowed
   m_catalogue->Tape()->modifyTapeState(m_admin,
@@ -3046,7 +3046,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTapeNotAllowedStates) {
                                        cta::common::dataStructures::Tape::REPACKING_PENDING,
                                        std::nullopt,
                                        "Testing");
-  ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, dummyLc), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, 0, dummyLc), cta::exception::UserError);
 
   // BROKEN_PENDING - Reclaim not allowed
   m_catalogue->Tape()->modifyTapeState(m_admin,
@@ -3054,7 +3054,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTapeNotAllowedStates) {
                                        cta::common::dataStructures::Tape::BROKEN_PENDING,
                                        std::nullopt,
                                        "Testing");
-  ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, dummyLc), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, 0, dummyLc), cta::exception::UserError);
 
   // EXPORTED - Reclaim not allowed
   m_catalogue->Tape()->modifyTapeState(m_admin,
@@ -3062,7 +3062,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTapeNotAllowedStates) {
                                        cta::common::dataStructures::Tape::EXPORTED,
                                        std::nullopt,
                                        "Testing");
-  ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, dummyLc), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, 0, dummyLc), cta::exception::UserError);
 
   // EXPORTED_PENDING - Reclaim not allowed
   m_catalogue->Tape()->modifyTapeState(m_admin,
@@ -3070,7 +3070,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTapeNotAllowedStates) {
                                        cta::common::dataStructures::Tape::EXPORTED_PENDING,
                                        std::nullopt,
                                        "Testing");
-  ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, dummyLc), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, 0, dummyLc), cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_TapeTest, getTapes_non_existent_tape_pool) {
@@ -5012,7 +5012,7 @@ TEST_P(cta_catalogue_TapeTest, checkTapeForLabel_one_tape_file_reclaimed_tape) {
   m_catalogue->ArchiveFile()->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(diskInstanceName1, archiveFileId, dummyLc);
 
   m_catalogue->Tape()->setTapeFull(m_admin, m_tape1.vid, true);
-  m_catalogue->Tape()->reclaimTape(m_admin, m_tape1.vid, dummyLc);
+  m_catalogue->Tape()->reclaimTape(m_admin, m_tape1.vid, 0, dummyLc);
 
   ASSERT_NO_THROW(m_catalogue->Tape()->checkTapeForLabel(m_tape1.vid));
 }
@@ -5084,7 +5084,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
   }
 
   m_catalogue->Tape()->setTapeFull(m_admin, m_tape1.vid, true);
-  m_catalogue->Tape()->reclaimTape(m_admin, m_tape1.vid, dummyLc);
+  m_catalogue->Tape()->reclaimTape(m_admin, m_tape1.vid, 0, dummyLc);
 
   {
     const auto tapes = m_catalogue->Tape()->getTapes();
@@ -5173,7 +5173,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_not_full_lastFSeq_0_no_tape_files) {
     const cta::common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
     ASSERT_EQ(creationLog, lastModificationLog);
   }
-  ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, m_tape1.vid, dummyLc), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, m_tape1.vid, 0, dummyLc), cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_TapeTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
@@ -5361,7 +5361,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   }
 
   m_catalogue->Tape()->setTapeFull(m_admin, m_tape1.vid, true);
-  m_catalogue->Tape()->reclaimTape(m_admin, m_tape1.vid, dummyLc);
+  m_catalogue->Tape()->reclaimTape(m_admin, m_tape1.vid, 0, dummyLc);
 
   {
     const auto tapes = m_catalogue->Tape()->getTapes();
@@ -5543,7 +5543,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   }
 
   m_catalogue->Tape()->setTapeFull(m_admin, m_tape1.vid, true);
-  ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, m_tape1.vid, dummyLc), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, m_tape1.vid, 0, dummyLc), cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_TapeTest, get_tape_with_related_physical_library) {

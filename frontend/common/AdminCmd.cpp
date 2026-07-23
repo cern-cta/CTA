@@ -32,6 +32,7 @@ AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
       m_repackBufferURL(frontendService.getRepackBufferURL()),
       m_repackMaxFilesToSelect(frontendService.getRepackMaxFilesToSelect()),
       m_missingFileCopiesMinAgeSecs(frontendService.getMissingFileCopiesMinAgeSecs()),
+      m_deletionReclaimDelayDays(frontendService.getDeletionReclaimDelayDays()),
       m_schedulerBackendName(m_scheduler.getSchedulerBackendName()),
       m_adminCommandMode(toAdminCmdMode(frontendService.getOperationMode())) {
   m_lc.push({"user", m_cliIdentity.username});
@@ -1223,7 +1224,7 @@ void AdminCmd::processTape_Reclaim(xrd::Response& response) {
 
   auto& vid = getRequired(OptionString::VID);
 
-  m_catalogue.Tape()->reclaimTape(m_cliIdentity, vid, m_lc);
+  m_catalogue.Tape()->reclaimTape(m_cliIdentity, vid, m_deletionReclaimDelayDays, m_lc);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }

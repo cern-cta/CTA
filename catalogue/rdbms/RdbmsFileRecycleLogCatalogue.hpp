@@ -133,6 +133,9 @@ private:
                                         const common::dataStructures::FileRecycleLog& fileRecycleLog) const;
 
   friend class RdbmsTapeCatalogue;
+
+  std::optional<time_t> getLatestRecycleLogTime(rdbms::Conn& conn, const std::string& vid) const;
+
   void deleteFilesFromRecycleLog(rdbms::Conn& conn, const std::string& vid, log::LogContext& lc) const;
 
   /**
