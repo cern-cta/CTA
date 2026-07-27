@@ -11,8 +11,8 @@ set -euo pipefail
 
 readonly GITLAB_URL="https://gitlab.cern.ch"
 readonly PROJECT_ID="139306"
-readonly REGISTRY="gitlab-registry.cern.ch/cta/ctageneric"
-readonly IMAGE_REPOSITORY="${REGISTRY}/cta-debug"
+readonly REGISTRY="gitlab-registry.cern.ch"
+readonly IMAGE_REPOSITORY="${REGISTRY}/cta/ctageneric/cta-debug"
 
 readonly CONFIG_DIR="${HOME}/.config/cta-ci-debug"
 readonly TOKEN_FILE="${CONFIG_DIR}/token"
@@ -221,7 +221,7 @@ check_registry_login() {
 
   echo
   echo "Podman is not logged into ${REGISTRY}."
-  echo "Username can be any non-empty string. Password should be a registry pull token."
+  echo "See https://docs.gitlab.com/user/packages/container_registry/authenticate_with_container_registry/"
   echo
 
   podman login "${REGISTRY}"
@@ -299,6 +299,8 @@ wait_for_job() {
 
   local status
 
+  echo "Waiting for debug image build..."
+
   while true; do
 
     sleep 5
@@ -308,7 +310,7 @@ wait_for_job() {
       | jq -r '.status'
     )"
 
-    printf "\rWaiting for debug image build... %-10s" "${status}"
+    echo "    Current job status: ${status}"
 
     case "${status}" in
       success)
@@ -317,7 +319,6 @@ wait_for_job() {
         ;;
 
       failed|canceled)
-        echo
         echo
         echo "Debug image build failed."
         echo
