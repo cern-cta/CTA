@@ -11,12 +11,12 @@ set -euo pipefail
 
 readonly GITLAB_URL="https://gitlab.cern.ch"
 readonly PROJECT_ID="139306"
-readonly REGISTRY="gitlab-registry.cern.ch"
-readonly IMAGE_REPOSITORY="${REGISTRY}/cta/ctageneric/cta-debug"
+readonly REGISTRY="gitlab-registry.cern.ch/cta/ctageneric"
+readonly IMAGE_REPOSITORY="${REGISTRY}/cta-debug"
 
-readonly CONFIG_DIR="${HOME}/.config/ci-debug"
+readonly CONFIG_DIR="${HOME}/.config/cta-ci-debug"
 readonly TOKEN_FILE="${CONFIG_DIR}/token"
-readonly CACHE_DIR="${HOME}/.cache/ci-debug"
+readonly CACHE_DIR="${HOME}/.cache/cta-ci-debug"
 
 ################################################################################
 # Globals
@@ -221,6 +221,7 @@ check_registry_login() {
 
   echo
   echo "Podman is not logged into ${REGISTRY}."
+  echo "Username can be any non-empty string. Password should be a registry pull token."
   echo
 
   podman login "${REGISTRY}"
