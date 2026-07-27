@@ -13,7 +13,8 @@ This directory contains all the files necessary for development and automation w
 * `system_tests/`: Pytest based system test for CTA
 * `utils/`: Collection of utility scripts
 * `build_deploy.sh`: The main script used for development: builds the project, the corresponding Docker image and deploys a local CTA test instance. See [the docs on Build & Deploy](https://cta.docs.cern.ch/latest/dev/setup/build-deploy/) for more details
-* `cta-dev.bash-completion`: Script for auto-completion of `cta-dev`. Used during `cta-dev install`
+* `ci-debug.sh`: Opens an interactive debug container for investigating core dumps from a CI pipeline.
+* `cta-dev.bash-completion`: Script for auto-completion of `cta-dev`. Used during `cta-dev install`.
 * `cta-dev.sh`: Future replacement of `build_deploy.sh`. See `./cta-dev.sh --help` for more details.
 
 ## Common `cta-dev` workflows
