@@ -44,7 +44,8 @@ static int exceptionThrowingMain(const cta::common::CmdLineParams& commandLine, 
   using namespace cta::tape::daemon;
 
   {
-    std::vector<cta::log::Param> params = {cta::log::Param("version", CTA_VERSION)};
+    std::vector<cta::log::Param> params = {
+      cta::log::Param(cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStarting)};
     auto cmdLineParams = commandLine.toLogParams();
     params.insert(params.end(),
                   std::make_move_iterator(cmdLineParams.begin()),
@@ -230,6 +231,11 @@ int main(const int argc, char** const argv) {
     log(log::ERR, "Caught an unexpected and unknown exception, cta-taped cannot start");
     sleep(1);
   }
+  log(log::INFO,
+      "Exiting cta-taped",
+      {
+        {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramExiting}
+  });
 
   google::protobuf::ShutdownProtobufLibrary();
   return programRc;

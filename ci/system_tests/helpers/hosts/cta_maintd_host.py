@@ -12,7 +12,7 @@ class CtaMaintdHost(RemoteHost):
         super().__init__(conn)
 
     @cached_property
-    def log_file_location(self) -> Path:
+    def log_file_path(self) -> Path:
         return Path("/var") / "log" / "cta" / "cta-maintd.log"
 
     @cached_property

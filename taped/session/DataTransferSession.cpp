@@ -394,6 +394,11 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
       cta::log::Param mountTypeParam("mountType", mountType);
       cta::log::Param statusParam("status", status);
       cta::log::Param mountAttemptedParam("mountAttempted", 0);
+      cta::log::Param logicalLibraryParam("logicalLibrary", std::nullopt);
+      cta::log::Param tapePoolParam("tapePool", std::nullopt);
+      cta::log::Param tapeVidParam("tapeVid", std::nullopt);
+      cta::log::Param voParam("vo", std::nullopt);
+      cta::log::Param volReqIdParam("volReqId", std::nullopt);
 
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
       try {
@@ -412,12 +417,14 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
                                                 mountIdParam,
                                                 mountTypeParam,
                                                 statusParam,
-                                                mountAttemptedParam};
+                                                mountAttemptedParam,
+                                                logicalLibraryParam,
+                                                tapePoolParam,
+                                                tapeVidParam,
+                                                voParam,
+                                                volReqIdParam};
         m_initialProcess.addLogParams(paramList);
         cta::log::LogContext::ScopedParam sp08(logContext, cta::log::Param("MountTransactionId", mountId));
-        cta::log::LogContext::ScopedParam sp11(
-          logContext,
-          cta::log::Param(cta::semconv::log::errorMessage, "Aborted: empty recall mount"));
         logContext.log(priority, "Notified client of end session with error");
       } catch (cta::exception::Exception& ex) {
         cta::log::LogContext::ScopedParam sp12(
@@ -540,6 +547,11 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
       cta::log::Param mountTypeParam("mountType", mountType);
       cta::log::Param statusParam("status", status);
       cta::log::Param mountAttemptedParam("mountAttempted", 0);
+      cta::log::Param logicalLibraryParam("logicalLibrary", std::nullopt);
+      cta::log::Param tapePoolParam("tapePool", std::nullopt);
+      cta::log::Param tapeVidParam("tapeVid", std::nullopt);
+      cta::log::Param voParam("vo", std::nullopt);
+      cta::log::Param volReqIdParam("volReqId", std::nullopt);
 
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
       try {
@@ -555,7 +567,12 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
                                                 mountIdParam,
                                                 mountTypeParam,
                                                 statusParam,
-                                                mountAttemptedParam};
+                                                mountAttemptedParam,
+                                                logicalLibraryParam,
+                                                tapePoolParam,
+                                                tapeVidParam,
+                                                voParam,
+                                                volReqIdParam};
         m_initialProcess.addLogParams(paramList);
         cta::log::LogContext::ScopedParam sp11(logContext, cta::log::Param("MountTransactionId", mountId));
         logContext.log(priority, "Notified client of end session with error");
@@ -661,12 +678,11 @@ void cta::tape::daemon::DataTransferSession::putDriveDown(const std::string& hea
                                 cta::common::dataStructures::MountType::NoMount,
                                 cta::common::dataStructures::DriveStatus::Down,
                                 logContext);
-  cta::common::dataStructures::SecurityIdentity cliId;
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = false;
   driveState.forceDown = false;
   driveState.setReasonFromLogMsg(cta::log::ERR, headerErrMsg);
-  m_scheduler.setDesiredDriveState(cliId, m_driveConfig.unitName, driveState, logContext);
+  m_scheduler.setDesiredDriveState(m_driveConfig.unitName, driveState, logContext);
 
   logContext.log(cta::log::ERR, "Notified client of end session with error");
 }

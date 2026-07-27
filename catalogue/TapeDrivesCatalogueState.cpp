@@ -75,6 +75,16 @@ void TapeDrivesCatalogueState::removeDrive(const std::string& drive, log::LogCon
 void TapeDrivesCatalogueState::setDesiredDriveState(const std::string& drive,
                                                     const common::dataStructures::DesiredDriveState& desiredState,
                                                     [[maybe_unused]] log::LogContext& lc) const {
+  log::ScopedParamContainer spc(lc);
+  spc.add("drive_name", drive)
+    .add("up", desiredState.up ? "up" : "down")
+    .add("force", desiredState.forceDown ? "yes" : "no")
+    .add("reason", desiredState.reason.value_or(""))
+    .add("comment", desiredState.comment.value_or(""));
+  lc.logEvent(log::INFO,
+              "Updating desired drive state",
+              desiredState.up ? semconv::log::EventNameValues::kPuttingTapeDriveUp :
+                                semconv::log::EventNameValues::kPuttingTapeDriveDown);
   if (!desiredState.comment) {
     m_catalogue.DriveState()->setDesiredTapeDriveState(drive, desiredState);
   } else {

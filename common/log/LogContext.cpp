@@ -47,6 +47,16 @@ void LogContext::log(int priority, std::string_view msg, const std::source_locat
   m_log.logInternal(priority, msg, m_paramsMap, location);
 }
 
+void LogContext::logEvent(int priority,
+                          std::string_view msg,
+                          std::string_view eventName,
+                          const std::source_location location) noexcept {
+  Param eventParam(semconv::log::eventName, eventName);
+  push(eventParam);
+  m_log.logInternal(priority, msg, m_paramsMap, location);
+  pop(eventParam.getName());
+}
+
 void LogContext::logBacktrace(const int priority, std::string_view backtrace) noexcept {
   // Sanity check to prevent substr from throwing exceptions
   if (!backtrace.size()) {

@@ -210,7 +210,11 @@ public:
   ~Application() {
     if (m_logPtr) {
       cta::log::Logger& log = *m_logPtr;
-      log(log::INFO, "Exiting application: " + m_appName);
+      log(log::INFO,
+          "Exiting " + m_appName,
+          {
+            {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramExiting}
+      });
     }
   }
 
@@ -325,7 +329,11 @@ public:
 
     return safeRunWithLog(*m_logPtr, [this, &cliOptions, &config, &healthServer]() {
       cta::log::Logger& log = *m_logPtr;
-      log(log::INFO, "Initialising application: " + m_appName);
+      log(log::INFO,
+          "Starting " + m_appName,
+          {
+            {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStarting}
+      });
 
       // We dynamically add/init the relevant parts depending on what is in the config type.
       if constexpr (HasHealthServerConfig<TConfig>) {
@@ -342,11 +350,6 @@ public:
         initXRootD(config);
       }
 
-      log(log::INFO,
-          "Starting application: " + m_appName,
-          {
-            {"version", std::string(CTA_VERSION)}
-      });
       // Not all apps need to consume the CliOptions.
       // So here we allow either the full run() signature, or one that omits the CliOptions
       if constexpr (HasRunFunctionWithOpts<TApp, TConfig, TOpts, log::Logger>) {

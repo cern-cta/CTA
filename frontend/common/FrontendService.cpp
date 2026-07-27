@@ -283,6 +283,7 @@ FrontendService::FrontendService(const std::string& configFilename,
     params.emplace_back("logToStdout", std::to_string(logToStdout));
     params.emplace_back("logtoFile", std::to_string(logtoFile));
     params.emplace_back("logFilePath", logFilePath);
+    params.emplace_back(semconv::log::eventName, semconv::log::EventNameValues::kProgramStarting);
     log(log::INFO, std::string("Starting cta-frontend"), params);
   }
 
