@@ -762,14 +762,14 @@ def test_cta_admin_archive_file_ch(
                     append_uid=True,
                 )
 
-            # Figure out the fxid and archive file ID
-            file_info_out = disk_instance.exec_with_output(f"eos -j file info {test_file_path}")
-            fxid = json.loads(file_info_out)["fxid"]
+                # Figure out the fxid and archive file ID
+                file_info_out = disk_instance.exec_with_output(f"eos -j file info {test_file_path}")
+                fxid = json.loads(file_info_out)["fxid"]
 
-            af_created = cta_cli.get_single_ls_item(
-                f"tf ls --fxid {fxid} -i {disk_instance_name}",
-                lambda x: True,
-            )
+                af_created = cta_cli.get_single_ls_item(
+                    f"tf ls --fxid {fxid} -i {disk_instance_name}",
+                    lambda x: True,
+                )
 
             assert af_created["af"]["storageClass"] == source_sc
 
