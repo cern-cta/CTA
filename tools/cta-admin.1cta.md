@@ -1,5 +1,5 @@
 ---
-date: 2025-05-21
+date: 2026-07-27
 section: 1cta
 title: CTA-ADMIN
 header: The CERN Tape Archive (CTA)
@@ -60,6 +60,15 @@ archiveroute (ar)
 
 :   Add, change, remove or list the archive routes. Archive routes are the policies linking namespace
     entries to tape pools.
+
+archivefile (af)
+
+:   Change the storage class of archive files.
+
+    **\-\-idfile** specifies the filename of a text file containing a list of
+    archive file IDs.
+
+    **\-\-storageclass** specifies the target storage class.
 
 diskinstance (di)
 
