@@ -143,7 +143,6 @@ std::optional<time_t> RdbmsFileRecycleLogCatalogue::getLatestRecycleLogTime(rdbm
                                                                             const std::string& vid) const {
   const char* const sql = R"SQL(
     SELECT
-      COUNT(*) AS NB_FILES,
       MAX(RECYCLE_LOG_TIME) AS LATEST_RECYCLE_LOG_TIME
     FROM
       FILE_RECYCLE_LOG
@@ -157,11 +156,13 @@ std::optional<time_t> RdbmsFileRecycleLogCatalogue::getLatestRecycleLogTime(rdbm
   auto rset = stmt.executeQuery();
   rset.next();
 
-  if (rset.columnUint64("NB_FILES") == 0) {
+  const auto latestRecycleLogTime = rset.columnOptionalUint64("LATEST_RECYCLE_LOG_TIME");
+
+  if (!latestRecycleLogTime.has_value()) {
     return std::nullopt;
   }
 
-  return static_cast<time_t>(rset.columnUint64("LATEST_RECYCLE_LOG_TIME"));
+  return static_cast<time_t>(latestRecycleLogTime.value());
 }
 
 void RdbmsFileRecycleLogCatalogue::deleteFilesFromRecycleLog(rdbms::Conn& conn,
