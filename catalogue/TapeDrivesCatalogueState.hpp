@@ -30,10 +30,6 @@ struct TapeDrive;
 struct SecurityIdentity;
 }  // namespace common::dataStructures
 
-namespace tape::daemon {
-class DriveConfigEntry;
-}
-
 struct ReportDriveStatusInputs {
   common::dataStructures::DriveStatus status;
   cta::common::dataStructures::MountType mountType;
@@ -62,7 +58,6 @@ public:
                              const common::dataStructures::DesiredDriveState& desiredState,
                              const common::dataStructures::MountType& type,
                              const common::dataStructures::DriveStatus& status,
-                             const tape::daemon::DriveConfigEntry& driveConfigEntry,
                              const common::dataStructures::SecurityIdentity& identity,
                              log::LogContext& lc) const;
   CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistsException);
@@ -96,7 +91,6 @@ private:
                                                        const common::dataStructures::DesiredDriveState& desiredState,
                                                        const common::dataStructures::MountType& type,
                                                        const common::dataStructures::DriveStatus& status,
-                                                       const tape::daemon::DriveConfigEntry& driveConfigEntry,
                                                        const common::dataStructures::SecurityIdentity& identity) const;
   void setDriveDown(common::dataStructures::TapeDrive& driveState, const ReportDriveStatusInputs& inputs) const;
   void setDriveUpOrMaybeDown(common::dataStructures::TapeDrive& driveState, const ReportDriveStatusInputs& input) const;

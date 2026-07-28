@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include "mediachanger/TapeLibraryType.hpp"
-
 #include <string>
 
 namespace cta::mediachanger {
@@ -16,26 +14,14 @@ namespace cta::mediachanger {
  * /etc/cta/cta-taped-unitName.conf.
  */
 class LibrarySlot {
-protected:
+public:
   /**
    * Constructor
    *
-   * @param libraryType The library type of the slot
+   * @param drvOrd The drive ordinal.
+   * @param dummy Whether this is a dummy slot or not
    */
-  explicit LibrarySlot(TapeLibraryType libraryType);
-
-public:
-  /**
-   * Destructor
-   */
-  virtual ~LibrarySlot() = 0;
-
-  /**
-   * Creates a clone of this object.
-   *
-   * @return The clone.
-   */
-  virtual LibrarySlot* clone() = 0;
+  explicit LibrarySlot(uint16_t drvOrd, bool dummy = false);
 
   /**
    * Gets the string representation of this tape library slot.
@@ -45,33 +31,42 @@ public:
   const std::string& str() const;
 
   /**
-   * Returns the type of the tape library to which this library slot refers.
+   * Gets the drive ordinal.
+   *
+   * @return The drive ordinal.
    */
-  TapeLibraryType getLibraryType() const;
+  uint16_t getDrvOrd() const;
 
-protected:
+  /**
+   * Whether the library slot is a dummy or not.
+   *
+   * @return True if the slot is a dummy slot.
+   */
+  bool isDummy() const;
+
+private:
+  /**
+   * Returns the string representation of the specified SCSI library slot.
+   *
+   * @param drvOrd The drive ordinal.
+   * @return The string representation.
+   */
+  std::string librarySlotToString(const uint16_t drvOrd) const;
+
+  /**
+   * The drive ordinal.
+   */
+  uint16_t m_drvOrd = 0;
+
+  /**
+   * Whether the slot is a dummy or not.
+   */
+  bool m_dummy = false;
+
   /**
    * The string representation of this tape library slot.
    */
   std::string m_str;
-
-private:
-  /**
-   * The library type of the slot.
-   */
-  TapeLibraryType m_libraryType;
-
-  /**
-   * Thread safe method that returns the type of the tape-library to which the
-   * specified library slot refers.
-   *
-   * This function throws a cta::exception::Exception if the type of the
-   * tape-library cannot be determined.
-   *
-   * @param slot The tape-library slot.
-   * @return The type of the tape library.
-   */
-  static TapeLibraryType getLibraryTypeOfSlot(const std::string& slot);
 
 };  // class LibrarySlot
 

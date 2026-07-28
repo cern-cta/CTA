@@ -15,7 +15,6 @@ set (MEDIACHANGER_LIB_SRC_FILES
   IpAndPort.cpp
   LibrarySlot.cpp
   LibrarySlotParser.cpp
-  DummyLibrarySlot.cpp
   MediaChangerFacade.cpp
   MediaChangerProxy.cpp
   MessageHeader.cpp
@@ -24,9 +23,7 @@ set (MEDIACHANGER_LIB_SRC_FILES
   RmcMarshal.hpp
   RmcMountMsgBody.cpp
   RmcProxy.cpp
-  RmcUnmountMsgBody.cpp
-  ScsiLibrarySlot.cpp
-  TapeLibraryType.cpp)
+  RmcUnmountMsgBody.cpp)
 
 add_library (ctamediachanger SHARED
   ${MEDIACHANGER_LIB_SRC_FILES})
@@ -42,7 +39,7 @@ install (TARGETS ctamediachanger DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 set (MEDIACHANGER_UNIT_TESTS_LIB_SRC_FILES
   IoTest.cpp
   LibrarySlotParserTest.cpp
-  ScsiLibrarySlotTest.cpp)
+  LibrarySlotTest.cpp)
 
 add_library (ctamediachangerunittests SHARED
   ${MEDIACHANGER_UNIT_TESTS_LIB_SRC_FILES})

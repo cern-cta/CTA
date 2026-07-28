@@ -22,26 +22,23 @@ protected:
 TEST_F(cta_mediachanger_LibrarySlotParserTest, dummy) {
   using namespace cta::mediachanger;
 
-  std::unique_ptr<LibrarySlot> slot;
-  ASSERT_NO_THROW(slot.reset(LibrarySlotParser::parse("dummy")));
-  ASSERT_NE((LibrarySlot*) 0, slot.get());
-  ASSERT_EQ(TAPE_LIBRARY_TYPE_DUMMY, slot->getLibraryType());
+  LibrarySlot slot = LibrarySlotParser::parse("dummy");
+  ASSERT_TRUE(slot.isDummy());
 }
 
 TEST_F(cta_mediachanger_LibrarySlotParserTest, scsi) {
   using namespace cta::mediachanger;
 
-  std::unique_ptr<LibrarySlot> slot;
-  ASSERT_NO_THROW(slot.reset(LibrarySlotParser::parse("smc1")));
-  ASSERT_NE((LibrarySlot*) 0, slot.get());
-  ASSERT_EQ(TAPE_LIBRARY_TYPE_SCSI, slot->getLibraryType());
+  LibrarySlot slot = LibrarySlotParser::parse("smc1");
+  ASSERT_EQ(slot.getDrvOrd(), 1);
+  ASSERT_EQ(slot.str(), "smc1");
+  ASSERT_FALSE(slot.isDummy());
 }
 
 TEST_F(cta_mediachanger_LibrarySlotParserTest, nonsense) {
   using namespace cta::mediachanger;
 
-  std::unique_ptr<LibrarySlot> slot;
-  ASSERT_THROW(slot.reset(LibrarySlotParser::parse("nonsense")), cta::exception::Exception);
+  ASSERT_THROW(LibrarySlotParser::parse("nonsense"), cta::exception::Exception);
 }
 
 }  // namespace unitTests

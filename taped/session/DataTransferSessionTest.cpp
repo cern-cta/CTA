@@ -616,11 +616,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = driveConfig.unitName;
-  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
-  driveInfo.host = "host";
+  cta::common::dataStructures::DriveInfo driveInfo("T10D6116",
+                                                   "host",
+                                                   "TestLogicalLibrary",
+                                                   "/dev/tape_T10D6116",
+                                                   "dummy");
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo,
                               cta::common::dataStructures::MountType::NoMount,
@@ -629,7 +629,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 7) Create the data transfer session
   DataTransferConfig dataTransferConf;
@@ -646,7 +646,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
   cta::tape::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
+    sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
   // 8) Run the data transfer session
   sess.execute();
 
@@ -857,11 +857,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = driveConfig.unitName;
-  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
-  driveInfo.host = "host";
+  cta::common::dataStructures::DriveInfo driveInfo("T10D6116",
+                                                   "host",
+                                                   "TestLogicalLibrary",
+                                                   "/dev/tape_T10D6116",
+                                                   "dummy");
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo,
                               cta::common::dataStructures::MountType::NoMount,
@@ -870,7 +870,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 7) Create the data transfer session
   DataTransferConfig dataTransferConf;
@@ -887,7 +887,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
   cta::tape::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
+    sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1132,11 +1132,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = driveConfig.unitName;
-  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
-  driveInfo.host = "host";
+  cta::common::dataStructures::DriveInfo driveInfo("T10D6116",
+                                                   "host",
+                                                   "TestLogicalLibrary",
+                                                   "/dev/tape_T10D6116",
+                                                   "dummy");
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo,
                               cta::common::dataStructures::MountType::NoMount,
@@ -1145,7 +1145,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 7) Create the data transfer session
   DataTransferConfig dataTransferConf;
@@ -1161,7 +1161,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
+  DataTransferSession sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1352,11 +1352,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = driveConfig.unitName;
-  driveInfo.logicalLibrary = driveConfig.rawLibrarySlot;
-  driveInfo.host = "host";
+  cta::common::dataStructures::DriveInfo driveInfo("T10D6116",
+                                                   "host",
+                                                   "TestLogicalLibrary",
+                                                   "/dev/tape_T10D6116",
+                                                   "dummy");
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo,
                               cta::common::dataStructures::MountType::NoMount,
@@ -1365,7 +1365,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 7) Create the data transfer session
   DataTransferConfig dataTransferConf;
@@ -1383,7 +1383,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
   cta::tape::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
+    sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1578,11 +1578,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = driveConfig.unitName;
-  driveInfo.logicalLibrary = driveConfig.rawLibrarySlot;
-  driveInfo.host = "host";
+  cta::common::dataStructures::DriveInfo driveInfo("T10D6116",
+                                                   "host",
+                                                   "TestLogicalLibrary",
+                                                   "/dev/tape_T10D6116",
+                                                   "dummy");
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo,
                               cta::common::dataStructures::MountType::NoMount,
@@ -1591,7 +1591,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 7) Create the data transfer session
   DataTransferConfig dataTransferConf;
@@ -1610,7 +1610,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
   cta::tape::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
+    sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1805,11 +1805,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = driveConfig.unitName;
-  driveInfo.logicalLibrary = driveConfig.rawLibrarySlot;
-  driveInfo.host = "host";
+  cta::common::dataStructures::DriveInfo driveInfo("T10D6116",
+                                                   "host",
+                                                   "TestLogicalLibrary",
+                                                   "/dev/tape_T10D6116",
+                                                   "dummy");
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo,
                               cta::common::dataStructures::MountType::NoMount,
@@ -1818,7 +1818,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 7) Create the data transfer session
   DataTransferConfig dataTransferConf;
@@ -1838,7 +1838,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
   cta::tape::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
+    sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -2037,11 +2037,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 6) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = driveConfig.unitName;
-  driveInfo.logicalLibrary = driveConfig.rawLibrarySlot;
-  driveInfo.host = "host";
+  cta::common::dataStructures::DriveInfo driveInfo("T10D6116",
+                                                   "host",
+                                                   "TestLogicalLibrary",
+                                                   "/dev/tape_T10D6116",
+                                                   "dummy");
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo,
                               cta::common::dataStructures::MountType::NoMount,
@@ -2050,7 +2050,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 7) Create the data transfer session
   DataTransferConfig dataTransferConf;
@@ -2070,7 +2070,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
   cta::tape::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
+    sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -2261,11 +2261,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 7) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/noSuchDrive", "dummy");
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = driveConfig.unitName;
-  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
-  driveInfo.host = "host";
+  cta::common::dataStructures::DriveInfo driveInfo("T10D6116",
+                                                   "host",
+                                                   "TestLogicalLibrary",
+                                                   "/dev/noSuchDrive",
+                                                   "dummy");
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo,
                               cta::common::dataStructures::MountType::NoMount,
@@ -2274,7 +2274,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 8) Create the data transfer session
   DataTransferConfig dataTransferConf;
@@ -2287,7 +2287,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
+  DataTransferSession sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
   ASSERT_NE(std::string::npos, logger.getLog().find("Error looking for path to tape drive"));
@@ -2427,11 +2427,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   // 7) Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = driveConfig.unitName;
-  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
-  driveInfo.host = "host";
+  cta::common::dataStructures::DriveInfo driveInfo("T10D6116",
+                                                   "host",
+                                                   "TestLogicalLibrary",
+                                                   "/dev/tape_T10D6116",
+                                                   "dummy");
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo,
                               cta::common::dataStructures::MountType::NoMount,
@@ -2440,7 +2440,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 8) Create the data transfer session
   DataTransferConfig dataTransferConf;
@@ -2456,7 +2456,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
+  DataTransferSession sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
   ASSERT_NE(std::string::npos, logger.getLog().find("Failed to mount the tape"));
@@ -2600,11 +2600,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = driveConfig.unitName;
-  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
-  driveInfo.host = "host";
+  cta::common::dataStructures::DriveInfo driveInfo("T10D6116",
+                                                   "host",
+                                                   "TestLogicalLibrary",
+                                                   "/dev/tape_T10D6116",
+                                                   "dummy");
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo,
                               cta::common::dataStructures::MountType::NoMount,
@@ -2613,7 +2613,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create the data transfer session
   DataTransferConfig dataTransferConf;
@@ -2631,7 +2631,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
+  DataTransferSession sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
@@ -2789,11 +2789,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = driveConfig.unitName;
-  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
-  driveInfo.host = "host";
+  cta::common::dataStructures::DriveInfo driveInfo("T10D6116",
+                                                   "host",
+                                                   "TestLogicalLibrary",
+                                                   "/dev/tape_T10D6116",
+                                                   "dummy");
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo,
                               cta::common::dataStructures::MountType::NoMount,
@@ -2802,7 +2802,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create the data transfer session
   DataTransferConfig dataTransferConf;
@@ -2820,7 +2820,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
+  DataTransferSession sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
@@ -2990,11 +2990,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = driveConfig.unitName;
-  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
-  driveInfo.host = "host";
+  cta::common::dataStructures::DriveInfo driveInfo("T10D6116",
+                                                   "host",
+                                                   "TestLogicalLibrary",
+                                                   "/dev/tape_T10D6116",
+                                                   "dummy");
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo,
                               cta::common::dataStructures::MountType::NoMount,
@@ -3003,7 +3003,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create the data transfer session
   DataTransferConfig dataTransferConf;
@@ -3021,7 +3021,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
+  DataTransferSession sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
@@ -3193,11 +3193,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = driveConfig.unitName;
-  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
-  driveInfo.host = "host";
+  cta::common::dataStructures::DriveInfo driveInfo("T10D6116",
+                                                   "host",
+                                                   "TestLogicalLibrary",
+                                                   "/dev/tape_T10D6116",
+                                                   "dummy");
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo,
                               cta::common::dataStructures::MountType::NoMount,
@@ -3206,7 +3206,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create the data transfer session
   DataTransferConfig dataTransferConf;
@@ -3224,7 +3224,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
+  DataTransferSession sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
@@ -3393,11 +3393,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = driveConfig.unitName;
-  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
-  driveInfo.host = "host";
+  cta::common::dataStructures::DriveInfo driveInfo("T10D6116",
+                                                   "host",
+                                                   "TestLogicalLibrary",
+                                                   "/dev/tape_T10D6116",
+                                                   "dummy");
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo,
                               cta::common::dataStructures::MountType::NoMount,
@@ -3406,7 +3406,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create the data transfer session
   DataTransferConfig dataTransferConf;
@@ -3426,7 +3426,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
+  DataTransferSession sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";
@@ -3594,11 +3594,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = driveConfig.unitName;
-  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
-  driveInfo.host = "host";
+  cta::common::dataStructures::DriveInfo driveInfo("T10D6116",
+                                                   "host",
+                                                   "TestLogicalLibrary",
+                                                   "/dev/tape_T10D6116",
+                                                   "dummy");
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo,
                               cta::common::dataStructures::MountType::NoMount,
@@ -3607,7 +3607,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create the data transfer session
   DataTransferConfig dataTransferConf;
@@ -3625,7 +3625,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
+  DataTransferSession sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";
@@ -3815,11 +3815,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   }
   scheduler.waitSchedulerDbSubthreadsComplete();
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = driveConfig.unitName;
-  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
-  driveInfo.host = "host";
+  cta::common::dataStructures::DriveInfo driveInfo("T10D6116",
+                                                   "host",
+                                                   "TestLogicalLibrary",
+                                                   "/dev/tape_T10D6116",
+                                                   "dummy");
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo,
                               cta::common::dataStructures::MountType::NoMount,
@@ -3828,7 +3828,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create the data transfer session
   DataTransferConfig dataTransferConf;
@@ -3846,7 +3846,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
+  DataTransferSession sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";
@@ -3980,11 +3980,11 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
     new cta::tape::drive::FakeDrive(tapeSize, cta::tape::drive::FakeDrive::OnFlush);
 
   // Report the drive's existence and put it up in the drive register.
-  cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = driveConfig.unitName;
-  driveInfo.logicalLibrary = driveConfig.logicalLibrary;
-  driveInfo.host = "host";
+  cta::common::dataStructures::DriveInfo driveInfo("T10D6116",
+                                                   "host",
+                                                   "TestLogicalLibrary",
+                                                   "/dev/tape_T10D6116",
+                                                   "dummy");
   // We need to create the drive in the registry before being able to put it up.
   scheduler.reportDriveStatus(driveInfo,
                               cta::common::dataStructures::MountType::NoMount,
@@ -3993,7 +3993,7 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create cleaner session
   DataTransferConfig dataTransferConf;
@@ -4011,11 +4011,11 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  CleanerSession cleanerSession(mc, logger, driveConfig, mockSys, s_vid, false, 0, "", catalogue, scheduler);
+  CleanerSession cleanerSession(mc, logger, driveInfo, mockSys, s_vid, false, 0, "", catalogue, scheduler);
   auto endOfSessionAction = cleanerSession.execute();
   //the tape has not been labeled so the cleanerSession should have failed and put the drive down.
   cta::common::dataStructures::DesiredDriveState newDriveState =
-    scheduler.getDesiredDriveState(driveConfig.unitName, logContext);
+    scheduler.getDesiredDriveState(driveInfo.driveName, logContext);
   ASSERT_FALSE(newDriveState.up);
   ASSERT_EQ(cta::tape::daemon::Session::MARK_DRIVE_AS_DOWN, endOfSessionAction);
 }

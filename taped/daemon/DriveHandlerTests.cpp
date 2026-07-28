@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "DriveConfigEntry.hpp"
 #include "DriveHandler.hpp"
 #include "DriveHandlerProxy.hpp"
 #include "ProcessManager.hpp"
@@ -110,13 +109,9 @@ public:
                const common::dataStructures::DesiredDriveState& desiredState,
                const common::dataStructures::MountType& type,
                const common::dataStructures::DriveStatus& status,
-               const tape::daemon::DriveConfigEntry& driveConfigEntry,
                const common::dataStructures::SecurityIdentity& identity,
                log::LogContext& lc));
-  MOCK_METHOD3(reportDriveConfig,
-               void(const cta::tape::daemon::DriveConfigEntry& driveConfigEntry,
-                    const cta::tape::daemon::TapedConfiguration& tapedConfig,
-                    log::LogContext& lc));
+  MOCK_METHOD2(reportDriveConfig, void(const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc));
 };
 
 }  // namespace cta
@@ -134,7 +129,7 @@ public:
 
     m_catalogue = std::make_unique<cta::catalogue::DummyCatalogue>();
     m_driveHandler =
-      std::make_unique<NiceMock<cta::tape::daemon::DriveHandlerMock>>(m_tapedConfig, m_driveConfig, m_processManager);
+      std::make_unique<NiceMock<cta::tape::daemon::DriveHandlerMock>>(m_tapedConfig, m_driveInfo, m_processManager);
     ON_CALL(*m_driveHandler, createDriveHandlerProxy()).WillByDefault(Return(m_tapedProxy));
     ON_CALL(*m_driveHandler, createCatalogue(_)).WillByDefault(Return(m_catalogue));
     ON_CALL(*m_driveHandler, createScheduler(_, _, _)).WillByDefault(Return(m_scheduler));
@@ -173,8 +168,8 @@ public:
     ON_CALL(*m_scheduler, checkDriveCanBeCreated(_, _)).WillByDefault(Return(true));
     ON_CALL(*m_scheduler, getDesiredDriveState(_, _))
       .WillByDefault(Return(cta::common::dataStructures::DesiredDriveState()));
-    ON_CALL(*m_scheduler, createTapeDriveStatus(_, _, _, _, _, _, _)).WillByDefault(Return());
-    ON_CALL(*m_scheduler, reportDriveConfig(_, _, _)).WillByDefault(Return());
+    ON_CALL(*m_scheduler, createTapeDriveStatus(_, _, _, _, _, _)).WillByDefault(Return());
+    ON_CALL(*m_scheduler, reportDriveConfig(_, _)).WillByDefault(Return());
   }
 
 protected:
@@ -187,7 +182,7 @@ protected:
   cta::log::LogContext m_lc;
   NiceMock<cta::tape::daemon::ProcessManagerMock> m_processManager;
   cta::tape::daemon::TapedConfiguration m_tapedConfig;
-  cta::tape::daemon::DriveConfigEntry m_driveConfig {"drive0", "lib0", "/dev/tape0", "smc0"};
+  cta::common::dataStructures::DriveInfo m_driveInfo {"drive0", "0.0.0.0", "lib0", "/dev/tape0", "smc0"};
 };
 
 TEST_F(DriveHandlerTests, getInitialStatus) {
@@ -463,7 +458,7 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
   // It cannot create the tape drive in the catalogue, so it should mark the drive as down, and the session
   // cannot continue.
   m_logger.clearLog();
-  EXPECT_CALL(*m_scheduler, createTapeDriveStatus(_, _, _, _, _, _, _))
+  EXPECT_CALL(*m_scheduler, createTapeDriveStatus(_, _, _, _, _, _))
     .WillOnce(Throw(cta::exception::Exception("Failed to create tape drive status")))
     .WillRepeatedly(Return());
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
@@ -495,7 +490,7 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
   // It cannot report the drive configuration to the catalogue, so it should mark the drive as down, and the session
   // cannot continue.
   m_logger.clearLog();
-  EXPECT_CALL(*m_scheduler, reportDriveConfig(_, _, _))
+  EXPECT_CALL(*m_scheduler, reportDriveConfig(_, _))
     .WillOnce(Throw(cta::exception::Exception("Failed to report drive config")))
     .WillRepeatedly(Return());
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);

@@ -44,6 +44,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/DiskFileInfo.cpp
   dataStructures/DiskInstance.cpp
   dataStructures/DiskInstanceSpace.cpp
+  dataStructures/DriveInfo.cpp
   dataStructures/DriveState.cpp
   dataStructures/DriveStatus.cpp
   dataStructures/EntryLog.cpp

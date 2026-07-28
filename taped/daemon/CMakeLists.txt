@@ -23,7 +23,6 @@ add_library(ctatapedaemon
   ProcessManager.cpp
   SignalHandler.cpp
   TapeDaemon.cpp
-  DriveConfigEntry.cpp
 )
 
 target_link_libraries(ctatapedaemon

@@ -127,7 +127,8 @@ cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
                                             m_this.m_logContext);
     m_this.m_reporter.reportState(cta::tape::session::SessionState::Unmounting,
                                   cta::tape::session::SessionType::Archive);
-    m_this.m_mediaChanger.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.config.librarySlot());
+    const auto librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_this.m_drive.info.rawLibrarySlot);
+    m_this.m_mediaChanger.dismountTape(m_this.m_volInfo.vid, librarySlot);
     m_this.m_drive.disableLogicalBlockProtection();
     m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
     m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread : tape unmounted");
@@ -289,12 +290,12 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
     m_watchdog.addParameter(Param("mountType", toCamelCaseString(m_volInfo.mountType)));
     m_watchdog.addParameter(Param("mountId", m_volInfo.mountId));
     m_watchdog.addParameter(Param("volReqId", m_volInfo.mountId));
-    m_watchdog.addParameter(Param("tapeDrive", m_drive.config.unitName));
+    m_watchdog.addParameter(Param("tapeDrive", m_drive.info.driveName));
     m_watchdog.addParameter(Param("vendor", m_archiveMount.getVendor()));
     m_watchdog.addParameter(Param("vo", m_archiveMount.getVo()));
     m_watchdog.addParameter(Param("mediaType", m_archiveMount.getMediaType()));
     m_watchdog.addParameter(Param("tapePool", m_archiveMount.getPoolName()));
-    m_watchdog.addParameter(Param("logicalLibrary", m_drive.config.logicalLibrary));
+    m_watchdog.addParameter(Param("logicalLibrary", m_drive.info.logicalLibrary));
     m_watchdog.addParameter(Param("capacityInBytes", m_archiveMount.getCapacityInBytes()));
     m_watchdog.addParameter(Param("mountAttempted", 1));
 
@@ -316,7 +317,7 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
       m_reporter.reportState(cta::tape::session::SessionState::Mounting, cta::tape::session::SessionType::Archive);
       cta::log::ScopedParamContainer params(m_logContext);
       params.add("mediaType", m_archiveMount.getMediaType());
-      params.add("logicalLibrary", m_drive.config.logicalLibrary);
+      params.add("logicalLibrary", m_drive.info.logicalLibrary);
       params.add("mountType", toCamelCaseString(m_volInfo.mountType));
       params.add("vendor", m_archiveMount.getVendor());
       params.add("capacityInBytes", m_archiveMount.getCapacityInBytes());

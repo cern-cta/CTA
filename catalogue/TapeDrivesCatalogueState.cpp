@@ -13,7 +13,6 @@
 #include "common/dataStructures/TapeDriveStatistics.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
-#include "taped/daemon/DriveConfigEntry.hpp"
 #include "version.hpp"
 
 #include <algorithm>
@@ -27,10 +26,9 @@ void TapeDrivesCatalogueState::createTapeDriveStatus(const common::dataStructure
                                                      const common::dataStructures::DesiredDriveState& desiredState,
                                                      const common::dataStructures::MountType& type,
                                                      const common::dataStructures::DriveStatus& status,
-                                                     const tape::daemon::DriveConfigEntry& driveConfigEntry,
                                                      const common::dataStructures::SecurityIdentity& identity,
                                                      log::LogContext& lc) const {
-  auto tapeDriveStatus = setTapeDriveStatus(driveInfo, desiredState, type, status, driveConfigEntry, identity);
+  auto tapeDriveStatus = setTapeDriveStatus(driveInfo, desiredState, type, status, identity);
   auto driveNames = m_catalogue.DriveState()->getTapeDriveNames();
   if (auto it = std::find(driveNames.begin(), driveNames.end(), tapeDriveStatus.driveName); it != driveNames.end()) {
     m_catalogue.DriveState()->deleteTapeDrive(tapeDriveStatus.driveName);
@@ -488,7 +486,6 @@ TapeDrivesCatalogueState::setTapeDriveStatus(const common::dataStructures::Drive
                                              const common::dataStructures::DesiredDriveState& desiredState,
                                              const common::dataStructures::MountType& type,
                                              const common::dataStructures::DriveStatus& status,
-                                             const tape::daemon::DriveConfigEntry& driveConfigEntry,
                                              const common::dataStructures::SecurityIdentity& identity) const {
   const time_t reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   common::dataStructures::TapeDrive tapeDriveStatus;
@@ -509,8 +506,8 @@ TapeDrivesCatalogueState::setTapeDriveStatus(const common::dataStructures::Drive
   tapeDriveStatus.diskSystemName = std::nullopt;
   tapeDriveStatus.reservedBytes = std::nullopt;
   tapeDriveStatus.reservationSessionId = std::nullopt;
-  tapeDriveStatus.devFileName = driveConfigEntry.devFilename;
-  tapeDriveStatus.rawLibrarySlot = driveConfigEntry.rawLibrarySlot;
+  tapeDriveStatus.devFileName = driveInfo.devFilename;
+  tapeDriveStatus.rawLibrarySlot = driveInfo.rawLibrarySlot;
   if (identity.username.empty()) {
     tapeDriveStatus.creationLog = common::dataStructures::EntryLog("NO_USER", driveInfo.host, reportTime);
     tapeDriveStatus.lastModificationLog = common::dataStructures::EntryLog("NO_USER", driveInfo.host, reportTime);

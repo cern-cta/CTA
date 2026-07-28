@@ -189,7 +189,7 @@ TEST_F(cta_tape_daemonTest, RecallTaskInjectorNominal) {
   cta::tape::daemon::VolumeInfo volume;
   volume.vid = "V12345";
   volume.mountType = cta::common::dataStructures::MountType::Retrieve;
-  cta::tape::daemon::TapeSessionReporter gsr(initialProcess, cta::tape::daemon::DriveConfigEntry(), "0.0.0.0", lc);
+  cta::tape::daemon::TapeSessionReporter gsr(initialProcess, lc);
   FakeSingleTapeReadThread tapeRead(drive, mc, gsr, volume, 60, lc);
   daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, maxNbJobsInjectedAtOnce, blockSize, rwd, lc);
 
@@ -252,7 +252,7 @@ TEST_F(cta_tape_daemonTest, RecallTaskInjectorNoFiles) {
   cta::tape::daemon::VolumeInfo volume;
   volume.vid = "V12345";
   volume.mountType = cta::common::dataStructures::MountType::Retrieve;
-  cta::tape::daemon::TapeSessionReporter tsr(initialProcess, cta::tape::daemon::DriveConfigEntry(), "0.0.0.0", lc);
+  cta::tape::daemon::TapeSessionReporter tsr(initialProcess, lc);
   FakeSingleTapeReadThread tapeRead(drive, mc, tsr, volume, 60, lc);
   daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, 6, blockSize, rwd, lc);
 

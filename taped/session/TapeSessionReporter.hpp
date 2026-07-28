@@ -9,7 +9,6 @@
 #include "common/log/LogContext.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
 #include "common/process/threading/Thread.hpp"
-#include "taped/daemon/DriveConfigEntry.hpp"
 #include "taped/daemon/TapedProxy.hpp"
 #include "taped/session/SessionState.hpp"
 #include "taped/session/SessionType.hpp"
@@ -25,14 +24,9 @@ public:
   /**
    * Constructor
    * @param tapedProxy
-   * @param driveConfig The configuration of the tape drive we are using.
-   * @param hostname The host name of the computer
    * @param lc
    */
-  TapeSessionReporter(cta::tape::daemon::TapedProxy& tapedProxy,
-                      const cta::tape::daemon::DriveConfigEntry& driveConfig,
-                      std::string_view hostname,
-                      const cta::log::LogContext& lc);
+  TapeSessionReporter(cta::tape::daemon::TapedProxy& tapedProxy, const cta::log::LogContext& lc);
 
   /**
    * Put into the waiting list a guard value to signal the thread we want

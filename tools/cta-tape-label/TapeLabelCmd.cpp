@@ -240,9 +240,7 @@ void TapeLabelCmd::checkTapeLabel(cta::tape::drive::DriveInterface& drive, const
 // dismountTape
 //------------------------------------------------------------------------------
 void TapeLabelCmd::dismountTape(const std::string& vid) {
-  std::unique_ptr<cta::mediachanger::LibrarySlot> librarySlotPtr;
-  librarySlotPtr.reset(cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
-  const cta::mediachanger::LibrarySlot& librarySlot = *librarySlotPtr.get();
+  const auto librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot);
 
   std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
@@ -314,9 +312,7 @@ void TapeLabelCmd::writeLabelToTape(cta::tape::drive::DriveInterface& drive) {
 // unloadTape
 //------------------------------------------------------------------------------
 void TapeLabelCmd::unloadTape([[maybe_unused]] const std::string& vid, cta::tape::drive::DriveInterface& drive) {
-  std::unique_ptr<cta::mediachanger::LibrarySlot> librarySlotPtr;
-  librarySlotPtr.reset(cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
-  const cta::mediachanger::LibrarySlot& librarySlot = *librarySlotPtr;
+  const auto librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot);
 
   std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
@@ -419,9 +415,7 @@ void TapeLabelCmd::readAndSetConfiguration(const std::string& userName,
 // mountTape
 //------------------------------------------------------------------------------
 void TapeLabelCmd::mountTape(const std::string& vid) {
-  std::unique_ptr<cta::mediachanger::LibrarySlot> librarySlotPtr;
-  librarySlotPtr.reset(cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
-  const cta::mediachanger::LibrarySlot& librarySlot = *librarySlotPtr.get();
+  const auto librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot);
 
   std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);

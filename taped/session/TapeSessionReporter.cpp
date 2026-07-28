@@ -16,15 +16,9 @@ namespace cta::tape::daemon {
 //-----------------------------------------------------------------------------
 //constructor
 //------------------------------------------------------------------------------
-TapeSessionReporter::TapeSessionReporter(cta::tape::daemon::TapedProxy& tapedProxy,
-                                         const cta::tape::daemon::DriveConfigEntry& driveConfig,
-                                         std::string_view hostname,
-                                         const cta::log::LogContext& lc)
+TapeSessionReporter::TapeSessionReporter(cta::tape::daemon::TapedProxy& tapedProxy, const cta::log::LogContext& lc)
     : m_tapedProxy(tapedProxy),
-      m_lc(lc),
-      m_server(hostname),
-      m_unitName(driveConfig.unitName),
-      m_logicalLibrary(driveConfig.logicalLibrary) {
+      m_lc(lc) {
   //change the thread's name in the log
   m_lc.push(cta::log::Param("thread", "TapeSessionReporter"));
 }

@@ -91,7 +91,7 @@ auto EncryptionControl::enable(cta::tape::drive::DriveInterface& m_drive,
     const std::string hostname = cta::utils::getShortHostname();
 
     cta::common::dataStructures::SecurityIdentity admin;
-    admin.username = c_defaultUserNameUpdate + " " + m_drive.config.unitName;
+    admin.username = c_defaultUserNameUpdate + " " + m_drive.info.driveName;
     admin.host = hostname;
 
     try {

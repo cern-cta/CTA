@@ -5,11 +5,11 @@
 
 #pragma once
 
+#include "common/dataStructures/DriveInfo.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/TimeOut.hpp"
 #include "mtio_add.hpp"
-#include "taped/daemon/DriveConfigEntry.hpp"
 #include "taped/scsi/Device.hpp"
 #include "taped/scsi/Exception.hpp"
 #include "taped/scsi/Structures.hpp"
@@ -249,10 +249,11 @@ public:
 
   virtual SCSI::Structures::RAO::udsLimits getLimitUDS() = 0;
   virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int maxSupported) = 0;
+
   /**
-   * The configuration of the tape drive as parsed from /etc/cta/cta-taped-unitName.conf file.
+   * The information of the tape drive.
    */
-  cta::tape::daemon::DriveConfigEntry config;
+  cta::common::dataStructures::DriveInfo info;
 };
 
 /**
