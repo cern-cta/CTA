@@ -19,7 +19,11 @@ cta::mediachanger::LibrarySlot::LibrarySlot(const uint16_t drvOrd, bool dummy) :
 //------------------------------------------------------------------------------
 std::string cta::mediachanger::LibrarySlot::librarySlotToString(const uint16_t drvOrd) const {
   std::ostringstream oss;
-  oss << "smc" << drvOrd;
+  if (m_dummy) {
+    oss << "dummy" << drvOrd;
+  } else {
+    oss << "smc" << drvOrd;
+  }
   return oss.str();
 }
 

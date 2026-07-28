@@ -45,7 +45,7 @@ bool cta::mediachanger::LibrarySlotParser::isScsi(const std::string& str) {
 // parseDummyLibrarySlot
 //------------------------------------------------------------------------------
 cta::mediachanger::LibrarySlot cta::mediachanger::LibrarySlotParser::parseDummyLibrarySlot(const std::string& str) {
-  return LibrarySlot(0, true);
+  return LibrarySlot(0, true);  // For dummy slots we don't care about the ordinal
 }
 
 //------------------------------------------------------------------------------

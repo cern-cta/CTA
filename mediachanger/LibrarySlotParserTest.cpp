@@ -24,6 +24,8 @@ TEST_F(cta_mediachanger_LibrarySlotParserTest, dummy) {
 
   LibrarySlot slot = LibrarySlotParser::parse("dummy");
   ASSERT_TRUE(slot.isDummy());
+  ASSERT_EQ(slot.str(), "dummy0");
+  ASSERT_EQ(slot.getDrvOrd(), 0);
 }
 
 TEST_F(cta_mediachanger_LibrarySlotParserTest, scsi) {
