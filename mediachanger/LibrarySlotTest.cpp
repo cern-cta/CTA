@@ -31,7 +31,7 @@ TEST_F(cta_mediachanger_LibrarySlotTest, goodDay) {
 TEST_F(cta_mediachanger_LibrarySlotTest, dummySlot) {
   using namespace cta::mediachanger;
 
-  LibrarySlot slot(0, true);
+  LibrarySlot slot(2, true);
   ASSERT_EQ(std::string("smc2"), slot.str());
   ASSERT_EQ((uint16_t) 2, slot.getDrvOrd());
   ASSERT_TRUE(slot.isDummy());
