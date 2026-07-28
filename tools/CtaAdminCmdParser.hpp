@@ -472,7 +472,7 @@ const Option opt_diskinstancespace_alias {Option::OPT_STR,
                                           "--diskinstancespace"};
 const Option opt_verificationstatus {Option::OPT_STR, "--verificationstatus", "--vs", " <verification_status>"};
 const Option opt_disabledreason {Option::OPT_STR, "--disabledreason", "--dr", " <disabled_reason>"};
-const Option opt_archive_file_ids {Option::OPT_STR_LIST, "--idfile", "-I", " <filename>"};
+const Option opt_archive_file_ids {Option::OPT_STR_LIST, "--idfile", "-F", " <filename>"};
 const Option opt_physical_library_alias {Option::OPT_STR,
                                          "--name",
                                          "-n",
@@ -605,6 +605,11 @@ archiveroute (ar)
 archivefile (af)
 
 :   Change the storage class of archive files.
+
+    **\-\-idfile** specifies the filename of a text file containing a list of
+    archive file IDs.
+
+    **\-\-storageclass** specifies the target storage class.
   */
   {{AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_CH},
    {opt_storageclass.optional(),
