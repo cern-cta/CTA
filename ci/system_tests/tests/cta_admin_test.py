@@ -322,6 +322,19 @@ def test_cta_admin_tape_file(
     vid = tf_ls_json["tf"]["vid"]
     archive_id = tf_ls_json["af"]["archiveId"]
 
+    # Without --getstorageclassstatistics, statistics should not be returned
+    tape_without_statistics_out = cta_cli.exec_with_output(f"cta-admin --json tape ls --vid {vid}")
+    tape_without_statistics = json.loads(tape_without_statistics_out)[0]
+    assert "storageClassStatistics" not in tape_without_statistics
+
+    # With --getstorageclassstatistics, statistics should be returned
+    tape_with_statistics_out = cta_cli.exec_with_output(
+        f"cta-admin --json tape ls --vid {vid} --getstorageclassstatistics"
+    )
+    tape_with_statistics = json.loads(tape_with_statistics_out)[0]
+    assert "storageClassStatistics" in tape_with_statistics
+    assert tape_with_statistics["storageClassStatistics"]
+
     # Removing should fail (single copy)
     with pytest.raises(RuntimeError):
         print("Expected failure after attempt to remove single copy:")
