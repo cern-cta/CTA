@@ -73,11 +73,11 @@ if other_labels.empty?
 end
 
 if !labels.include?("changelog: required")
-  warn("**Changelog Label Missing**\n\nIf this MR requires a changelog entry, please add the `changelog: required` label.")
+  message("**Changelog Label Missing**\n\nIf this MR requires a changelog entry, please add the `changelog: required` label.")
 end
 
 
-# --- MR size warnings ---
+# --- MR size check ---
 
 if git.lines_of_code > 500
   warn("**Large Merge Request**\n\nThis merge request includes over 500 changed lines (#{git.lines_of_code}). Consider splitting it into smaller MRs to improve reviewability.")
@@ -94,7 +94,7 @@ end
 reviewers = gitlab.mr_json["reviewers"] || []
 
 if reviewers.empty?
-    warn("**No Reviewers Assigned**\n\nConsider assigning one or more reviewers to ensure this MR gets timely feedback.")
+    message("**No Reviewers Assigned**\n\nConsider assigning one or more reviewers to ensure this MR gets timely feedback.")
 end
 
 # --- Messages to the devs ---
