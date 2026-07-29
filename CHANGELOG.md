@@ -1,3 +1,21 @@
+## 5.11.19.1-0.releasetest2 (2026-07-29)
+
+### New Features
+
+- [Misc] Add event_name to important CTA log messages (cta/CTA!1381)
+
+
+### Changes
+
+- [taped] cta-eosdf no longer sources sysconfig (cta/CTA!1455)
+
+- [Tools] Change short option for cta-admin af ch --idfile from -I to -F (cta/CTA!1453)
+
+
+### Bug Fixes
+
+- [scheduler] Fix pg scheduler backend repack status machine and norecall...
+
 ## 5.11.19.0-1
 
 ### Changes
