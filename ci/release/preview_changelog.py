@@ -169,7 +169,6 @@ def report_summary(report: dict[str, list[str]], markdown: bool = False) -> str:
 
 
 def commit_range_summary(api: GitLabAPI, from_commit_sha: str, to_commit_sha: str) -> str:
-
     from_commit: Commit | None = get_commit(api, from_commit_sha)
     to_commit: Commit | None = get_commit(api, to_commit_sha)
     if from_commit is None:

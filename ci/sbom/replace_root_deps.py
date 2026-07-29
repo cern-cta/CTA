@@ -43,7 +43,7 @@ def replace_root_dependencies(sbom, prefix) -> None:
     sbom["dependencies"] = dependencies
 
 
-def main():
+def main() -> None:
     ap = argparse.ArgumentParser(
         description="Update the dependencies of the root component to contain all dependencies of the OS component starting with a given prefix"
     )

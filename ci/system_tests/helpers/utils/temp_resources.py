@@ -5,7 +5,7 @@
 
 
 class TempDiskInstanceSpace:
-    def __init__(self, cta_cli, dis_name, di_name):
+    def __init__(self, cta_cli, dis_name, di_name) -> None:
         self.cta_cli = cta_cli
         self.dis_name = dis_name
         self.di_name = di_name
@@ -24,7 +24,7 @@ class TempDiskInstanceSpace:
 
 
 class TempLogicalLibrary:
-    def __init__(self, cta_cli, ll_name, pl_name):
+    def __init__(self, cta_cli, ll_name, pl_name) -> None:
         self.cta_cli = cta_cli
         self.ll_name = ll_name
         self.pl_name = pl_name
@@ -43,7 +43,7 @@ class TempLogicalLibrary:
 
 
 class TempPhysicalLibrary:
-    def __init__(self, cta_cli, pl_name):
+    def __init__(self, cta_cli, pl_name) -> None:
         self.cta_cli = cta_cli
         self.pl_name = pl_name
 
@@ -59,7 +59,7 @@ class TempPhysicalLibrary:
 
 
 class TempMountPolicy:
-    def __init__(self, cta_cli, mp_name):
+    def __init__(self, cta_cli, mp_name) -> None:
         self.cta_cli = cta_cli
         self.mp_name = mp_name
 
@@ -75,7 +75,7 @@ class TempMountPolicy:
 
 
 class TempVirtualOrganization:
-    def __init__(self, cta_cli, vo_name, di_name, extra_flags=""):
+    def __init__(self, cta_cli, vo_name, di_name, extra_flags="") -> None:
         self.cta_cli = cta_cli
         self.vo_name = vo_name
         self.di_name = di_name
@@ -95,7 +95,7 @@ class TempVirtualOrganization:
 
 
 class TempStorageClass:
-    def __init__(self, cta_cli, sc_name, vo_name, copies=1):
+    def __init__(self, cta_cli, sc_name, vo_name, copies=1) -> None:
         self.cta_cli = cta_cli
         self.sc_name = sc_name
         self.vo_name = vo_name
@@ -115,7 +115,7 @@ class TempStorageClass:
 
 
 class TempTapePool:
-    def __init__(self, cta_cli, tp_name, vo_name):
+    def __init__(self, cta_cli, tp_name, vo_name) -> None:
         self.cta_cli = cta_cli
         self.tp_name = tp_name
         self.vo_name = vo_name
@@ -132,7 +132,7 @@ class TempTapePool:
 
 
 class TempArchiveRoute:
-    def __init__(self, cta_cli, sc_name, tp_name, copynb):
+    def __init__(self, cta_cli, sc_name, tp_name, copynb) -> None:
         self.cta_cli = cta_cli
         self.tp_name = tp_name
         self.sc_name = sc_name
@@ -154,7 +154,7 @@ class TempArchiveRoute:
 
 
 class TempTape:
-    def __init__(self, cta_cli, vid, ll_name, tp_name):
+    def __init__(self, cta_cli, vid, ll_name, tp_name) -> None:
         self.cta_cli = cta_cli
         self.vid = vid
         self.ll_name = ll_name

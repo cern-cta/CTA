@@ -10,11 +10,11 @@ from .timeout import Timeout
 
 
 # We could let this return a boolean, but we get better error messages with individual asserts
-def assert_dict_equals(actual: dict, expected: dict, ignore_keys: list[str]):
+def assert_dict_equals(actual: dict, expected: dict, ignore_keys: list[str]) -> None:
     ignored = set(ignore_keys)
     for k1, v1 in actual.items():
         assert k1 in ignored or (k1 in expected and expected[k1] == v1)
-    for k2, v2 in expected.items():
+    for k2, _v2 in expected.items():
         assert k2 in ignored or k2 in actual
 
 

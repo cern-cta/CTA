@@ -5,7 +5,7 @@ import json
 from collections import Counter
 
 
-def test_no_coredumps(env):
+def test_no_coredumps(env) -> None:
     hosts = env.disk_client + env.cta_cli + env.cta_admin_api + env.cta_workflow_api + env.cta_taped + env.cta_rmcd
     total_core_dumps_found = 0
     for host in hosts:
@@ -17,7 +17,7 @@ def test_no_coredumps(env):
     assert total_core_dumps_found == 0, "core dumps were found"
 
 
-def test_no_uncaught_exceptions_and_errors(env, error_whitelist):
+def test_no_uncaught_exceptions_and_errors(env, error_whitelist) -> None:
     hosts = env.cta_admin_api + env.cta_workflow_api + env.cta_taped + env.cta_rmcd
     error_messages = []  # for summaries
     for host in hosts:

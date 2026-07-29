@@ -14,7 +14,7 @@ class DiskInstanceImplementation(Enum):
     EOS = ("eos",)
     DCACHE = ("dcache",)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.value[0]
 
     @property

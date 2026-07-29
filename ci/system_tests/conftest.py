@@ -21,7 +21,7 @@ pytest_plugins = [
 #####################################################################################################################
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser) -> None:
     """Pytest hook that allows for adding custom commandline arguments"""
     parser.addoption("--namespace", action="store", help="Namespace for tests")
     parser.addoption(
@@ -57,7 +57,7 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_configure(config):
+def pytest_configure(config) -> None:
     """Pytest hook that allows us to augment the config object with additional info after commandline parsing"""
     config_path: str = config.getoption("--test-config")
     try:
@@ -79,7 +79,9 @@ def is_test_in_items(test_path: str, items):
     return any(str(resolved_test_path) == str(item.path) for item in items)
 
 
-def add_test_into_existing_collection(test_path: str, items, prepend: bool = False, allow_duplicate: bool = False):
+def add_test_into_existing_collection(
+    test_path: str, items, prepend: bool = False, allow_duplicate: bool = False
+) -> None:
     resolved_test_path = Path(test_path).resolve()
     if not resolved_test_path.exists():
         raise FileNotFoundError(f"Required test suite '{resolved_test_path}' not found!")
@@ -92,7 +94,7 @@ def add_test_into_existing_collection(test_path: str, items, prepend: bool = Fal
         items[index:index] = tests
 
 
-def add_tests_from_directory(test_directory: Path, items, prepend: bool = False):
+def add_tests_from_directory(test_directory: Path, items, prepend: bool = False) -> None:
     test_paths = sorted(test_directory.rglob("*_test.py"))
     if not test_paths:
         raise FileNotFoundError(f"No test suites found in '{test_directory.resolve()}'!")
@@ -121,7 +123,7 @@ def add_lifecycle_tests(config, items):
 # Let pytest first apply ordinary selectors such as -k to the requested suite,
 # then construct and remember the complete CTA lifecycle.
 @pytest.hookimpl(trylast=True)
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config, items) -> None:
     # cta_canonical_items is used to remember the original order of items for --lf and --ff
     if not items:
         config.cta_canonical_items = []

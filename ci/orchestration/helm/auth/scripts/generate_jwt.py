@@ -61,7 +61,7 @@ def generate_jwk_from_cert(cert_path):
     thumbprint = hashlib.sha256(thumbprint_input).digest()
     kid = base64.urlsafe_b64encode(thumbprint).rstrip(b"=").decode()
 
-    jwk = {
+    return {
         "kty": "RSA",
         "alg": "RS256",
         "use": "sig",
@@ -70,8 +70,6 @@ def generate_jwk_from_cert(cert_path):
         "e": e_b64,
         "x5c": [load_cert_x5c(cert_path)],
     }
-
-    return jwk
 
 
 def generate_jwt(private_key, kid: str, sub: str, lifetime_sec: int):
@@ -85,17 +83,15 @@ def generate_jwt(private_key, kid: str, sub: str, lifetime_sec: int):
         "typ": "Bearer",
     }
 
-    token = jwt.encode(
+    return jwt.encode(
         payload,
         private_key,
         algorithm="RS256",
         headers={"kid": kid, "typ": "JWT"},
     )
 
-    return token
 
-
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Generate CI files containing a JWKS and one JWT for each --sub passed. Files are put in the --output-dir directory."
     )

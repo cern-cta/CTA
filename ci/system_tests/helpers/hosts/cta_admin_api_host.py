@@ -8,7 +8,7 @@ from .remote_host import RemoteHost
 
 
 class CtaAdminApiHost(RemoteHost):
-    def __init__(self, conn):
+    def __init__(self, conn) -> None:
         super().__init__(conn)
 
     @cached_property

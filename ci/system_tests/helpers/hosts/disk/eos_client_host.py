@@ -9,10 +9,10 @@ from .disk_client_host import DiskClientHost
 
 
 class EosClientHost(DiskClientHost):
-    def __init__(self, conn):
+    def __init__(self, conn) -> None:
         super().__init__(conn)
 
-    def install_xrootd_python(self):
+    def install_xrootd_python(self) -> None:
         """Ensure python3 and XRootD Python bindings are installed."""
         self.exec("rpm -q python3-xrootd || microdnf install -y python3 xrootd-client python3-xrootd")
 

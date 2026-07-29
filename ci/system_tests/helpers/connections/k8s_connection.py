@@ -15,7 +15,7 @@ from .remote_connection import ExecResult, RemoteConnection
 
 
 class K8sConnection(RemoteConnection):
-    def __init__(self, namespace: str, label_selector: str, container: str, ordinal: int):
+    def __init__(self, namespace: str, label_selector: str, container: str, ordinal: int) -> None:
         assert len(container) > 1
         super().__init__()
         self.namespace = namespace

@@ -34,7 +34,7 @@ class TestEnv:
         cta_maintd_conns: Sequence[RemoteConnection] = [],
         eos_client_conns: Sequence[RemoteConnection] = [],
         eos_mgm_conns: Sequence[RemoteConnection] = [],
-    ):
+    ) -> None:
         self.cta_cli: Sequence[CtaCliHost] = [CtaCliHost(conn) for conn in cta_cli_conns]
         self.cta_admin_api: Sequence[CtaAdminApiHost] = [CtaAdminApiHost(conn) for conn in cta_admin_api_conns]
         self.cta_workflow_api: Sequence[CtaWorkflowApiHost] = [

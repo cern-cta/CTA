@@ -89,7 +89,7 @@ def _submit_repack_request(
     no_recall: bool = False,
     max_files_to_select: int | None = None,
     submit_only: bool = False,
-):
+) -> None:
     repack_timeout_secs = 120
 
     config_str = ", ".join(f"{k}={v}" for k, v in locals().items() if k != "cta_cli")
@@ -293,19 +293,19 @@ def _submit_repack_request(
 #####################################################################################################################
 
 
-def test_setup_client(eos_client, remote_scripts_dir):
+def test_setup_client(eos_client, remote_scripts_dir) -> None:
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "client_setup.sh"), "/tmp/", permissions="+x")
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "client_helper.sh"), "/tmp/", permissions="+x")
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "cli_calls.sh"), "/tmp/", permissions="+x")
 
 
-def test_create_repack_vo(cta_cli, repack_vo_name, disk_instance_name):
+def test_create_repack_vo(cta_cli, repack_vo_name, disk_instance_name) -> None:
     cta_cli.exec(
         f'cta-admin virtualorganization add --vo {repack_vo_name} --readmaxdrives 1 --writemaxdrives 1 --diskinstance {disk_instance_name} --isrepackvo true --comment "vo for repack"'
     )
 
 
-def test_create_repack_mount_policy(cta_cli, repack_mp_name):
+def test_create_repack_mount_policy(cta_cli, repack_mp_name) -> None:
     # This mount policy is for repack: IT MUST CONTAIN THE `repack` STRING IN IT TO ALLOW MOUNTING DISABLED TAPES
     cta_cli.exec(
         f'cta-admin mountpolicy add --name {repack_mp_name} --archivepriority 2 --minarchiverequestage 1 --retrievepriority 2 --minretrieverequestage 1 --comment "repack mountpolicy for ctasystest"'
@@ -314,7 +314,7 @@ def test_create_repack_mount_policy(cta_cli, repack_mp_name):
 
 # Apparently the tests flip out if you have multiple drives doing work, so for now we keep a single drive doing the work
 # In a similar vein, be careful changing the order of the tests, because thing may break unexpectedly
-def test_set_single_drive_up(cta_cli, cta_taped):
+def test_set_single_drive_up(cta_cli, cta_taped) -> None:
     cta_cli.set_all_drives_down()
     cta_cli.set_drive_up(cta_taped.drive_name)
 
@@ -333,7 +333,7 @@ def test_archive_1_file(
     eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
 
 
-def test_repack_move_only_with_backpressure(cta_cli, repack_buffer_dir, repack_mp_name, disk_instance_name):
+def test_repack_move_only_with_backpressure(cta_cli, repack_buffer_dir, repack_mp_name, disk_instance_name) -> None:
     vid_to_repack = cta_cli.get_first_vid_containing_files()
     cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
 
@@ -353,7 +353,7 @@ def test_repack_move_only_with_backpressure(cta_cli, repack_buffer_dir, repack_m
     cta_cli.reclaim_tape(vid_to_repack)
 
 
-def test_repack_non_repacking_tape(cta_cli, repack_buffer_dir, repack_mp_name, disk_instance_name):
+def test_repack_non_repacking_tape(cta_cli, repack_buffer_dir, repack_mp_name, disk_instance_name) -> None:
     vid_to_repack = cta_cli.get_first_vid_containing_files()
 
     # We may want to parameterize this test in the future to remove some of this duplication and improve test granularity
@@ -421,7 +421,7 @@ def test_repack_non_repacking_tape(cta_cli, repack_buffer_dir, repack_mp_name, d
     cta_cli.reclaim_tape(vid_to_repack)
 
 
-def test_archive_1000_files(eos_client, repack_params, test_dir):
+def test_archive_1000_files(eos_client, repack_params, test_dir) -> None:
     file_count = 1000
     eos_client.exec(
         f"/tmp/client_setup.sh -n {file_count} -s {repack_params.file_size_kb} -p {repack_params.process_count} -d {test_dir} -A"
@@ -429,7 +429,7 @@ def test_archive_1000_files(eos_client, repack_params, test_dir):
     eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
 
 
-def test_repack_move_only_subset_of_files(cta_cli, repack_buffer_dir, repack_mp_name, disk_instance_name):
+def test_repack_move_only_subset_of_files(cta_cli, repack_buffer_dir, repack_mp_name, disk_instance_name) -> None:
     vid_to_repack = cta_cli.get_first_vid_containing_files()
     total_files_on_tape = cta_cli.get_number_of_files_on_tape(vid_to_repack)
     assert total_files_on_tape > 2
@@ -480,7 +480,7 @@ def test_archive_1152_files(
     eos_client,
     repack_params,
     test_dir,
-):
+) -> None:
     file_count = 1152
     eos_client.exec(
         f"/tmp/client_setup.sh -n {file_count} -s {repack_params.file_size_kb} -p {repack_params.process_count} -d {test_dir} -A"
@@ -488,7 +488,7 @@ def test_archive_1152_files(
     eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
 
 
-def test_repack_move_only(cta_cli, disk_instance_name, repack_buffer_dir, repack_mp_name):
+def test_repack_move_only(cta_cli, disk_instance_name, repack_buffer_dir, repack_mp_name) -> None:
     vid_to_repack = cta_cli.get_first_vid_containing_files()
     cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
     print(f'Launching the repack test "just move" on VID {vid_to_repack}')
@@ -508,7 +508,7 @@ def test_repack_move_only(cta_cli, disk_instance_name, repack_buffer_dir, repack
 
 def test_repack_with_user_provided_files(
     cta_cli, eos_client, eos_mgm, repack_buffer_dir, repack_mp_name, disk_instance_name
-):
+) -> None:
     vid_to_repack = cta_cli.get_first_vid_containing_files()
     number_of_user_provided_files = 10
     # For CTA to find user provided files, it needs two things:
@@ -571,7 +571,7 @@ def test_repack_with_user_provided_files(
 
 def test_repack_just_add_copies_when_all_copies_already_present(
     cta_cli, disk_instance_name, repack_buffer_dir, repack_mp_name
-):
+) -> None:
     vid_to_repack = cta_cli.get_first_vid_containing_files()
     cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
     print(f'Launching the repack test "just add copies" on VID {vid_to_repack} with all copies already on CTA')
@@ -602,7 +602,7 @@ def test_repack_just_add_copies_when_all_copies_already_present(
 
 def test_repack_cancellation(
     cta_cli, disk_instance_name, repack_buffer_dir, repack_mp_name, postgres_scheduler_enabled
-):
+) -> None:
     cta_cli.set_all_drives_down()
 
     vid_to_repack = cta_cli.get_first_vid_containing_files()
@@ -652,7 +652,7 @@ def test_repack_cancellation(
 
 def test_repack_with_user_provided_files_no_recall(
     cta_cli, eos_client, eos_mgm, repack_buffer_dir, repack_mp_name, disk_instance_name
-):
+) -> None:
     # See the comments in test_repack_with_user_provided_files
     vid_to_repack = cta_cli.get_first_vid_containing_files()
     number_of_user_provided_files = 10
@@ -718,7 +718,7 @@ def test_repack_move_and_add_copies(
     postgres_scheduler_enabled,
     cta_storage_class,
     cta_default_tape_pool,
-):
+) -> None:
     if not postgres_scheduler_enabled:
         #   - The `repackMoveAndAddCopies` test has been problematic (frequent CI failures) due to a difficult-to-debug bug in the object store scheduler:
         #     - Despite the repack completing successfully (original tape is empty and all files have been moved to the new tapes),
@@ -825,7 +825,7 @@ def test_repack_move_and_add_copies(
     cta_cli.reclaim_tape(vid_to_repack)
 
 
-def test_add_errors_to_whitelist(error_whitelist):
+def test_add_errors_to_whitelist(error_whitelist) -> None:
     error_whitelist.add("Aborting recall mount startup: empty mount")
     error_whitelist.add("Notified client of end session with error")
     error_whitelist.add("In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.")

@@ -39,7 +39,7 @@ def gfal_params(request) -> GfalParams:
 # For now only the "glue" has been migrated to Python. All the scripts invoked in the tests below still need to be migrated at a later point in time
 
 
-def test_setup_client_gfal_xrootd(eos_client, test_dir, gfal_params, remote_scripts_dir):
+def test_setup_client_gfal_xrootd(eos_client, test_dir, gfal_params, remote_scripts_dir) -> None:
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "client_setup.sh"), "/tmp/", permissions="+x")
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "client_helper.sh"), "/tmp/", permissions="+x")
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "cli_calls.sh"), "/tmp/", permissions="+x")
@@ -49,7 +49,7 @@ def test_setup_client_gfal_xrootd(eos_client, test_dir, gfal_params, remote_scri
     )
 
 
-def test_archive_gfal_xrootd(eos_client, remote_scripts_dir):
+def test_archive_gfal_xrootd(eos_client, remote_scripts_dir) -> None:
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_archive.sh"), "/tmp/", permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
     # TODO: replace by something more deterministic. Is this even necessary?
@@ -57,22 +57,22 @@ def test_archive_gfal_xrootd(eos_client, remote_scripts_dir):
     time.sleep(10)
 
 
-def test_retrieve_gfal_xrootd(eos_client, remote_scripts_dir):
+def test_retrieve_gfal_xrootd(eos_client, remote_scripts_dir) -> None:
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_retrieve.sh"), "/tmp/", permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_retrieve.sh")
 
 
-def test_evict_gfal_xrootd(eos_client, remote_scripts_dir):
+def test_evict_gfal_xrootd(eos_client, remote_scripts_dir) -> None:
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_evict.sh"), "/tmp/", permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_evict.sh")
 
 
-def test_delete_gfal_xrootd(eos_client, remote_scripts_dir):
+def test_delete_gfal_xrootd(eos_client, remote_scripts_dir) -> None:
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_delete.sh"), "/tmp/", permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_delete.sh")
 
 
-def test_setup_client_gfal_https(eos_client, test_dir, gfal_params):
+def test_setup_client_gfal_https(eos_client, test_dir, gfal_params) -> None:
     eos_client.exec("microdnf install -y  gfal2-plugin-http")
     eos_client.exec(
         f"/tmp/client_setup.sh -n {gfal_params.file_count} -s {gfal_params.file_size_kb} -p {gfal_params.process_count} -d {test_dir} -r -c gfal2 -Z https"
@@ -81,7 +81,7 @@ def test_setup_client_gfal_https(eos_client, test_dir, gfal_params):
     eos_client.exec("sed -i 's/INSECURE=false/INSECURE=true/g' /etc/gfal2.d/http_plugin.conf")
 
 
-def test_archive_gfal_https(eos_client, remote_scripts_dir):
+def test_archive_gfal_https(eos_client, remote_scripts_dir) -> None:
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_archive.sh"), "/tmp/", permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
     # TODO: replace by something more deterministic. Is this even necessary?
@@ -89,22 +89,22 @@ def test_archive_gfal_https(eos_client, remote_scripts_dir):
     time.sleep(10)
 
 
-def test_retrieve_gfal_https(eos_client, remote_scripts_dir):
+def test_retrieve_gfal_https(eos_client, remote_scripts_dir) -> None:
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_retrieve.sh"), "/tmp/", permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_retrieve.sh")
 
 
-def test_evict_gfal_https(eos_client, remote_scripts_dir):
+def test_evict_gfal_https(eos_client, remote_scripts_dir) -> None:
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_evict.sh"), "/tmp/", permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_evict.sh")
 
 
-def test_delete_gfal_https(eos_client, remote_scripts_dir):
+def test_delete_gfal_https(eos_client, remote_scripts_dir) -> None:
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_delete.sh"), "/tmp/", permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_delete.sh")
 
 
-def test_gfal_activity_ends_up_in_eos_report(eos_client, eos_mgm, disk_instance_name, test_dir):
+def test_gfal_activity_ends_up_in_eos_report(eos_client, eos_mgm, disk_instance_name, test_dir) -> None:
     valid_instance_file = test_dir / "test_gfal_activity_valid_instance"
     invalid_instance_file = test_dir / "test_gfal_activity_invalid_instance"
     valid_instance_file = eos_client.generate_and_archive_file(
@@ -123,9 +123,9 @@ def test_gfal_activity_ends_up_in_eos_report(eos_client, eos_mgm, disk_instance_
     print(f"Site name: {site_name}")
 
     # Get token
-    TOKEN_TIMEOUT = 604800
+    token_timeout = 604800
     now = int(time.time())
-    later = now + TOKEN_TIMEOUT
+    later = now + token_timeout
     token_eospower1 = eos_client.exec_with_output(
         f". /tmp/client_env && eosadmin_eos root://{disk_instance_name} token --tree --path '/eos/ctaeos/://:/api/' --expires \"{later}\" --owner poweruser1 --group powerusers --permission prwx"
     )
@@ -180,22 +180,22 @@ def test_gfal_activity_ends_up_in_eos_report(eos_client, eos_mgm, disk_instance_
     assert "&activity=&" in invalid_line, f"Activity unexpectedly set for invalid instance: {invalid_line}"
 
 
-def test_xrootd_activity_ends_up_in_eos_report(eos_client, eos_mgm, test_dir):
+def test_xrootd_activity_ends_up_in_eos_report(eos_client, eos_mgm, test_dir) -> None:
     disk_instance_name = eos_mgm.instance_name
     test_file = test_dir / "test_xrootd_activity"
     test_file = eos_client.generate_and_archive_file(disk_instance_name, test_file, wait=True)
 
     # TODO: eventually move definitions like this to a central place
-    EOSPOWER_USER = "poweruser1"
+    eospower_user = "poweruser1"
 
     # Retrieve with activity
     eos_client.exec(
-        f"KRB5CCNAME=/tmp/{EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs {disk_instance_name} prepare -s {test_file}?activity=XRootD_Act"
+        f"KRB5CCNAME=/tmp/{eospower_user}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs {disk_instance_name} prepare -s {test_file}?activity=XRootD_Act"
     )
 
     # Evict
     eos_client.exec(
-        f"XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/{EOSPOWER_USER}/krb5cc_0 xrdfs {disk_instance_name} prepare -e {test_file}"
+        f"XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/{eospower_user}/krb5cc_0 xrdfs {disk_instance_name} prepare -e {test_file}"
     )
 
     # Check activity is set for XRootD staging request through xrdfs
@@ -210,5 +210,5 @@ def test_xrootd_activity_ends_up_in_eos_report(eos_client, eos_mgm, test_dir):
     assert "&activity=XRootD_Act&" in xrd_line, f"Activity not set correctly for XRootD: {xrd_line}"
 
 
-def test_add_errors_to_whitelist(error_whitelist):
+def test_add_errors_to_whitelist(error_whitelist) -> None:
     error_whitelist.add("In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.")

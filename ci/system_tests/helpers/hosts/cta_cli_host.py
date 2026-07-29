@@ -9,7 +9,7 @@ from .remote_host import RemoteHost
 
 
 class CtaCliHost(RemoteHost):
-    def __init__(self, conn):
+    def __init__(self, conn) -> None:
         super().__init__(conn)
 
     def get_drive_status(self, drive_name: str) -> str:
@@ -142,22 +142,22 @@ class CtaCliHost(RemoteHost):
     def wait_for_repack_request_expansion(self, vid, wait_timeout_secs=30) -> None:
         print(f"Waiting for repack request expansion on VID {vid}...")
         tape_json = json.loads(self.exec_with_output(f"cta-admin --json tape ls --vid {vid}"))
-        lastFSeq = tape_json[0]["lastFseq"]
+        last_fseq = tape_json[0]["lastFseq"]
         wait_timeout_secs = 20
         with Timeout(wait_timeout_secs) as t:
-            lastExpandedFSeq = 0
-            while lastExpandedFSeq != lastFSeq and not t.expired:
+            last_expanded_fseq = 0
+            while last_expanded_fseq != last_fseq and not t.expired:
                 try:
                     repack_json = json.loads(self.exec_with_output(f"cta-admin --json re ls --vid {vid}"))
                     if not repack_json:
                         continue
-                    lastExpandedFSeq = repack_json[0]["lastExpandedFseq"]
+                    last_expanded_fseq = repack_json[0]["lastExpandedFseq"]
                 except json.JSONDecodeError:
                     ...  # In this case re ls just didn't found anything
                 time.sleep(1)
             if t.expired:
                 raise TimeoutError(
-                    f"Repack request for VID {vid} failed to expand within timeout of {wait_timeout_secs} seconds. Last fSeq on tape: {lastFSeq}, last expanded fSeq: {lastExpandedFSeq}"
+                    f"Repack request for VID {vid} failed to expand within timeout of {wait_timeout_secs} seconds. Last fSeq on tape: {last_fseq}, last expanded fSeq: {last_expanded_fseq}"
                 )
         print("Repack request expanded")
 

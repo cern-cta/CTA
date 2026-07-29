@@ -5,7 +5,7 @@ import time
 
 
 class Timeout:
-    def __init__(self, seconds):
+    def __init__(self, seconds) -> None:
         self.seconds = seconds
 
     def __enter__(self):

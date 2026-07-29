@@ -20,7 +20,7 @@ def get_root_component(sbom) -> str:
 
 
 def find_reachable_components(root_component: str, ref2deps: dict[str, list[str]]) -> set[str]:
-    reachable_refs: set[str] = set([root_component])
+    reachable_refs: set[str] = {root_component}
     q = deque([root_component])
     while q:
         ref = q.popleft()
@@ -31,7 +31,7 @@ def find_reachable_components(root_component: str, ref2deps: dict[str, list[str]
     return reachable_refs
 
 
-def prune_unreachable(sbom: dict[str, Any]):
+def prune_unreachable(sbom: dict[str, Any]) -> None:
     components = sbom.get("components") or []
     dependencies = sbom.get("dependencies") or []
 
@@ -57,7 +57,7 @@ def prune_unreachable(sbom: dict[str, Any]):
     sbom["dependencies"] = pruned_deps
 
 
-def main():
+def main() -> None:
     ap = argparse.ArgumentParser(
         description="Prune any components and dependencies unreachable from the main component"
     )

@@ -11,7 +11,7 @@ from pathlib import Path
 import jsonschema
 
 
-def validate_schema(project_json, schema_json):
+def validate_schema(project_json, schema_json) -> None:
     print("Validating project.json using schema.json schema...")
 
     try:
@@ -28,7 +28,7 @@ def validate_schema(project_json, schema_json):
         sys.exit(1)
 
 
-def validate_versions(project_json):
+def validate_versions(project_json) -> None:
     print("Validating version format correctness...")
     errors = 0
     for platform_data in project_json.get("platforms", {}).values():

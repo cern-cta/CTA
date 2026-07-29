@@ -9,7 +9,7 @@ from ..utils.timeout import Timeout
 
 
 class RemoteHost:
-    def __init__(self, conn: RemoteConnection):
+    def __init__(self, conn: RemoteConnection) -> None:
         self.conn = conn
 
     @property
@@ -49,9 +49,7 @@ class RemoteHost:
             print_command,
         )
 
-    def copy_to(
-        self, src_path: str, dst_path: str, *, throw_on_failure=True, permissions: str | None = None
-    ) -> None:
+    def copy_to(self, src_path: str, dst_path: str, *, throw_on_failure=True, permissions: str | None = None) -> None:
         return self.conn.copy_to(src_path, dst_path, throw_on_failure=throw_on_failure, permissions=permissions)
 
     def copy_from(self, src_path: str, dst_path: str, *, throw_on_failure=True) -> None:

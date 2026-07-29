@@ -51,7 +51,7 @@ def list_tape_only_files(eos_host, dest_dir, num_dirs):
     return tape_files
 
 
-def retrieve_worker(work_q, wid, eos_host, krb5_cache):
+def retrieve_worker(work_q, wid, eos_host, krb5_cache) -> None:
     """Worker process that issues prepare (stage-in) requests via XRootD."""
     # Switch from SSS to Kerberos (poweruser1) for prepare permissions
     for k in ("XrdSecsssKT", "XRDSSSKT"):
@@ -80,7 +80,7 @@ def retrieve_worker(work_q, wid, eos_host, krb5_cache):
         work_q.task_done()
 
 
-def main():
+def main() -> None:
     args = parse_args()
 
     print(

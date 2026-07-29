@@ -74,7 +74,7 @@ def stress_params(request):
 #####################################################################################################################
 
 
-def test_setup_xrootd_client(eos_client):
+def test_setup_xrootd_client(eos_client) -> None:
     """Install XRootD Python bindings and deploy scripts to the client pod."""
     eos_client.install_xrootd_python()
 
@@ -84,7 +84,7 @@ def test_setup_xrootd_client(eos_client):
     eos_client.copy_to(str(script_dir / "xrootd_retrieve.py"), "/tmp/xrootd_retrieve.py")
 
 
-def test_update_setup_for_max_powerrrr(env, cta_cli, eos_mgm):
+def test_update_setup_for_max_powerrrr(env, cta_cli, eos_mgm) -> None:
     num_drives: int = len(env.cta_taped)
     cta_cli.exec(f"cta-admin vo ch --vo vo --writemaxdrives {num_drives} --readmaxdrives {num_drives}")
     cta_cli.exec(
@@ -103,7 +103,7 @@ def test_update_setup_for_max_powerrrr(env, cta_cli, eos_mgm):
 
 
 @pytest.mark.asyncio
-async def test_generate_and_copy_files(cta_cli, eos_client, eos_mgm, stress_params, test_dir):
+async def test_generate_and_copy_files(cta_cli, eos_client, eos_mgm, stress_params, test_dir) -> None:
     # Get the IP of EOS MGM pod and use instead of disk instance name to save DNS lookups
     mgm_ip = eos_mgm.get_ip()
     total_file_count = stress_params.num_files_per_dir * stress_params.num_dirs
@@ -150,7 +150,7 @@ async def test_generate_and_copy_files(cta_cli, eos_client, eos_mgm, stress_para
     # Will be used to notify the monitoring task that archive is finished
     stop_monitoring = asyncio.Event()
 
-    async def monitor_copy_and_put_drives_up():
+    async def monitor_copy_and_put_drives_up() -> None:
         """Monitor file count and put drives up when threshold reached (for prequeue mode)."""
         nonlocal drives_up
         while not stop_monitoring.is_set():
@@ -188,7 +188,7 @@ async def test_generate_and_copy_files(cta_cli, eos_client, eos_mgm, stress_para
 
     # Run archive and monitoring concurrently — no PID polling needed
     monitor_task = asyncio.create_task(monitor_copy_and_put_drives_up())
-    execResult = await archive_future
+    exec_result = await archive_future
     stop_monitoring.set()
     await monitor_task
 
@@ -200,11 +200,11 @@ async def test_generate_and_copy_files(cta_cli, eos_client, eos_mgm, stress_para
     timer_end = time.time()
 
     # Print archive script output
-    if execResult.stdout:
-        print(f"Archive script output:\n{execResult.stdout}")
-    if not execResult.success:
+    if exec_result.stdout:
+        print(f"Archive script output:\n{exec_result.stdout}")
+    if not exec_result.success:
         print("Archive process failed")
-        print(execResult.stderr)
+        print(exec_result.stderr)
 
     num_files_copied = eos_client.count_files_in_namespace(
         eos_host=mgm_ip,
@@ -233,7 +233,7 @@ async def test_generate_and_copy_files(cta_cli, eos_client, eos_mgm, stress_para
 # We execute this directly on the mgm to bypass some networking between pods (should be negligible though)
 
 
-def test_wait_for_archival(eos_mgm, stress_params, test_dir):
+def test_wait_for_archival(eos_mgm, stress_params, test_dir) -> None:
     num_missing_files, loss_percent = eos_mgm.wait_for_archival_in_directory(
         archive_dir_path=test_dir,
         check_archive_interval_sec=stress_params.check_archive_interval_sec,
@@ -246,14 +246,14 @@ def test_wait_for_archival(eos_mgm, stress_params, test_dir):
     assert loss_acceptable, f"Too many files lost during archival: {num_missing_files} files missing"
 
 
-def test_kinit_poweruser(eos_client, krb5_realm):
+def test_kinit_poweruser(eos_client, krb5_realm) -> None:
     """Initialize Kerberos credentials for poweruser1 (needed for retrieve)."""
     eos_client.exec("mkdir -p /tmp/poweruser1")
     eos_client.exec(f"KRB5CCNAME=/tmp/poweruser1/krb5cc_0 kinit -kt /root/poweruser1.keytab poweruser1@{krb5_realm}")
 
 
 @pytest.mark.asyncio
-async def test_request_files_for_retrieve(cta_cli, eos_client, eos_mgm, stress_params):
+async def test_request_files_for_retrieve(cta_cli, eos_client, eos_mgm, stress_params) -> None:
     archive_directory = eos_mgm.base_dir_path / "cta" / "stress"
     mgm_ip = eos_mgm.get_ip()
 
@@ -282,7 +282,7 @@ async def test_request_files_for_retrieve(cta_cli, eos_client, eos_mgm, stress_p
         dir_path = f"{archive_directory}/{i}"
         total_file_count += eos_mgm.num_files_on_tape_only(str(dir_path))
 
-    async def monitor_retrieve_and_put_drives_up():
+    async def monitor_retrieve_and_put_drives_up() -> None:
         """Monitor tape-only file count and put drives up when threshold reached (for prequeue mode)."""
         nonlocal drives_up
         while not stop_monitoring.is_set():
@@ -334,7 +334,7 @@ async def test_request_files_for_retrieve(cta_cli, eos_client, eos_mgm, stress_p
     print(f"Retrieve request queueing completed in {duration_seconds:.1f}s, files/s: {avg_fps:.2f}")
 
 
-def test_wait_for_retrieval(eos_mgm, stress_params):
+def test_wait_for_retrieval(eos_mgm, stress_params) -> None:
     archive_directory = eos_mgm.base_dir_path / "cta" / "stress"
 
     num_missing, loss_percent = eos_mgm.wait_for_retrieval_in_directory(

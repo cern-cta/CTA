@@ -9,7 +9,7 @@ from .remote_host import RemoteHost
 
 
 class CtaRmcdHost(RemoteHost):
-    def __init__(self, conn):
+    def __init__(self, conn) -> None:
         super().__init__(conn)
 
     @cached_property
@@ -48,7 +48,7 @@ class CtaRmcdHost(RemoteHost):
 
         return loaded_drives
 
-    def unload_tapes(self):
+    def unload_tapes(self) -> None:
         """Unloads all loaded tapes from their drives for the library device associated with this rmcd host."""
         library_device = self.library_device
         loaded_drives = self.list_loaded_drives()

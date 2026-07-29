@@ -6,11 +6,11 @@
 #####################################################################################################################
 
 
-def test_eos_version(eos_mgm):
+def test_eos_version(eos_mgm) -> None:
     eos_mgm.exec("eos version")
 
 
-def test_general_settings(eos_mgm):
+def test_general_settings(eos_mgm) -> None:
     eos_mgm.exec("eos vid enable unix")
     eos_mgm.exec("eos vid enable https")
     eos_mgm.exec("eos space set default on")
@@ -24,12 +24,12 @@ def test_general_settings(eos_mgm):
     eos_mgm.exec("eos space config default space.token.generation=1")
     eos_mgm.exec("eos attr -r set default=replica /eos")
     eos_mgm.exec("eos attr -r set sys.forced.nstripes=1 /eos")
-    TAPE_FS_ID = 65535
+    tape_fs_id = 65535
     eos_mgm.exec("eos space define tape", throw_on_failure=False)
-    eos_mgm.exec(f"eos fs add -m {TAPE_FS_ID} tape localhost:1234 /does_not_exist tape", throw_on_failure=False)
+    eos_mgm.exec(f"eos fs add -m {tape_fs_id} tape localhost:1234 /does_not_exist tape", throw_on_failure=False)
 
 
-def test_add_users(eos_mgm):
+def test_add_users(eos_mgm) -> None:
     # We don't really care if these already exist
     eos_mgm.exec("groupadd --gid 1100 eosusers", throw_on_failure=False)
     eos_mgm.exec("groupadd --gid 1200 powerusers", throw_on_failure=False)
@@ -49,7 +49,7 @@ def test_add_users(eos_mgm):
     eos_mgm.exec(f"eos vid set membership {eosadmin2_id} +sudo")
 
 
-def test_create_wf_directory(eos_mgm, eos_workflow_dir):
+def test_create_wf_directory(eos_mgm, eos_workflow_dir) -> None:
     eos_mgm.exec(f"eos mkdir -p {eos_workflow_dir}")
     eos_mgm.exec(f'eos attr set sys.workflow.sync::create.default="proto" {eos_workflow_dir}')
     eos_mgm.exec(f'eos attr set sys.workflow.sync::closew.default="proto" {eos_workflow_dir}')

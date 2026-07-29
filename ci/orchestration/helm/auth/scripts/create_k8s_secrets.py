@@ -11,7 +11,7 @@ import sys
 import urllib.request
 
 
-def k8s_create_secret(namespace, secret_name, filename, filepath, host):
+def k8s_create_secret(namespace, secret_name, filename, filepath, host) -> None:
     token_path = "/var/run/secrets/kubernetes.io/serviceaccount/token"
     ca_cert_path = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
 
@@ -51,7 +51,7 @@ def is_valid_name(name):
     return len(name) <= 63 and re.fullmatch(r"[a-z0-9]([-a-z0-9]*[a-z0-9])?", name)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Create a K8s secret for every file in the provided directory.")
     parser.add_argument("--namespace", "-n", required=True, help="Kubernetes namespace to create the secrets in")
     parser.add_argument("--dir", "-d", required=True, help="Directory containing secret files")

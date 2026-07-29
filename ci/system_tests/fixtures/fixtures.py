@@ -77,8 +77,7 @@ def make_tests_look_pretty(request):
 @pytest.fixture(scope="session")
 def error_whitelist() -> set[str]:
     """Mutable whitelist that individual test cases can add errors to"""
-    whitelist = set()  # mutable whitelist shared between all tests
-    return whitelist
+    return set()  # mutable whitelist shared between all tests
 
 
 @pytest.fixture(scope="session")
@@ -105,12 +104,12 @@ def postgres_scheduler_enabled(cta_cli) -> bool:
 
 
 @pytest.fixture(scope="session")
-def cta_storage_class():
+def cta_storage_class() -> str:
     return "cta_storage_class"
 
 
 @pytest.fixture(scope="session")
-def cta_default_tape_pool():
+def cta_default_tape_pool() -> str:
     # For now; don't change, because the populate_catalogue.sh script does not use this value (yet)
     return "ctasystest"
 

@@ -34,7 +34,7 @@ def parse_args():
     return p.parse_args()
 
 
-def mkdir_dirs(eos_host, dest_dir, num_dirs):
+def mkdir_dirs(eos_host, dest_dir, num_dirs) -> None:
     """Create subdirectories under dest_dir."""
     for i in range(num_dirs):
         path = f"{dest_dir}/{i}"
@@ -58,7 +58,7 @@ def worker(
     num_dirs: int,
     file_size: int,
     write_in_chunks: bool,
-):
+) -> None:
     # Import here so XrdSecsssKT is already set in the environment
     from XRootD import client  # type: ignore
     from XRootD.client.flags import OpenFlags  # type: ignore
@@ -131,7 +131,7 @@ def worker(
         work_q.task_done()
 
 
-def main():
+def main() -> None:
     args = parse_args()
 
     # NB: For now, we are still using Kerberos authentication for copying/archival of the files.

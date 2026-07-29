@@ -9,7 +9,7 @@ from .disk_instance_host import DiskInstanceHost, DiskInstanceImplementation
 
 
 class EosMgmHost(DiskInstanceHost):
-    def __init__(self, conn):
+    def __init__(self, conn) -> None:
         super().__init__(conn)
 
     @cached_property
@@ -39,17 +39,13 @@ class EosMgmHost(DiskInstanceHost):
         output = self.exec_with_output(f"eos ls -l {directory}")
         lines = output.splitlines()
 
-        files = [line.split()[-1] for line in lines if line.startswith("d")]
-
-        return files
+        return [line.split()[-1] for line in lines if line.startswith("d")]
 
     def list_files_in_directory(self, directory: str) -> list[str]:
         output = self.exec_with_output(f"eos ls -l {directory}")
         lines = output.splitlines()
 
-        files = [line.split()[-1] for line in lines if line.startswith("-")]
-
-        return files
+        return [line.split()[-1] for line in lines if line.startswith("-")]
 
     def num_files_in_directory(self, directory: str) -> int:
         # Note that for now this also counts subdirectories

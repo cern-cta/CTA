@@ -47,7 +47,7 @@ def count_dir_files(args) -> int:
     return int(m.group(1)) if m else 0
 
 
-def main():
+def main() -> None:
     args = parse_args()
 
     paths = [(args.eos_host, f"{args.dest_dir}/{i}") for i in range(args.num_dirs)]

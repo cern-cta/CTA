@@ -9,7 +9,7 @@ from .remote_connection import ExecResult, RemoteConnection
 
 
 class SSHConnection(RemoteConnection):
-    def __init__(self, host: str, user: str):
+    def __init__(self, host: str, user: str) -> None:
         super().__init__()
         self.host = host
         self.user = user
@@ -39,7 +39,7 @@ class SSHConnection(RemoteConnection):
 
     def copy_to(self, src_path: str, dst_path: str, throw_on_failure=True, permissions: str | None = None) -> None:
         full_command = f"scp {src_path} {self.user}@{self.host}:{dst_path}"
-        result = subprocess.run(full_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = subprocess.run(full_command, shell=True, capture_output=True)
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(f'"{full_command}" failed with exit code {result.returncode}: {result.stderr}')
         if permissions:
@@ -47,7 +47,7 @@ class SSHConnection(RemoteConnection):
 
     def copy_from(self, src_path: str, dst_path: str, throw_on_failure=True) -> None:
         full_command = f"scp {self.user}@{self.host}:{src_path} {dst_path}"
-        result = subprocess.run(full_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        result = subprocess.run(full_command, shell=True, capture_output=True)
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(f'"{full_command}" failed with exit code {result.returncode}: {result.stderr}')
 

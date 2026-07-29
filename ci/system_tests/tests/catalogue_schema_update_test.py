@@ -51,13 +51,13 @@ def catalogue_updater(namespace):
 #####################################################################################################################
 
 
-def test_multiple_versions_supported(project_json):
+def test_multiple_versions_supported(project_json) -> None:
     assert len(project_json["supportedCatalogueVersions"]) > 1, (
         "In order to test a catalogue schema update, CTA must be compatible with at least 2 catalogue schema versions"
     )
 
 
-def test_catalogue_version_is_from_version(cta_admin_api, catalogue_from_version):
+def test_catalogue_version_is_from_version(cta_admin_api, catalogue_from_version) -> None:
     # First check the current version is equal to the "from" version
     assert cta_admin_api.get_schema_version() == catalogue_from_version, (
         'Catalogue version should be equal to the "from" version before any updates'
@@ -66,7 +66,7 @@ def test_catalogue_version_is_from_version(cta_admin_api, catalogue_from_version
 
 def test_init_catalogue_updater(
     env, project_json, catalogue_from_version, catalogue_to_version, catalogue_schema_update_params, namespace
-):
+) -> None:
     # Just to note, this entire method is hacky and should be rewritten at some point. Suggestions welcome...
     # A few of the problems with it:
     # - It makes plain kubectl calls and therefore assumes things are running on a Kubernetes cluster
@@ -84,8 +84,8 @@ def test_init_catalogue_updater(
     project_root = Path(env.exec_local("git rev-parse --show-toplevel", capture_output=True).stdout.decode().strip())
 
     # If the configmap generation would need to be done through Helm the file in question needs to be within the chart
-    defaultPlatform = project_json["dev"]["defaultPlatform"]
-    yum_repos_file = project_root / "ci" / "docker" / defaultPlatform / "etc" / "yum.repos.d-internal"
+    default_platform = project_json["dev"]["defaultPlatform"]
+    yum_repos_file = project_root / "ci" / "docker" / default_platform / "etc" / "yum.repos.d-internal"
     env.exec_local(f"kubectl -n {namespace} create configmap yum.repos.d-config --from-file={yum_repos_file}")
 
     print(f"Catalogue source version: {catalogue_from_version}")
@@ -103,22 +103,22 @@ def test_init_catalogue_updater(
         )
         print(f"Using catalogue schema ref from submodule: {catalogue_schema_ref}")
 
-    extraFlags = f"--set extraFlags='--schema-checkout-ref {catalogue_schema_ref}'"
+    extra_flags = f"--set extraFlags='--schema-checkout-ref {catalogue_schema_ref}'"
 
     print("Install catalogue-updater chart...")
     env.exec_local(
         f"helm install catalogue-updater ../orchestration/helm/catalogue-updater --namespace {namespace} \
                                                         --set catalogueSourceVersion={catalogue_from_version} \
                                                         --set catalogueDestinationVersion={catalogue_to_version} \
-                                                        {extraFlags} --wait --timeout 2m"
+                                                        {extra_flags} --wait --timeout 2m"
     )
 
 
-def test_tag_liquibase(catalogue_updater):
+def test_tag_liquibase(catalogue_updater) -> None:
     catalogue_updater.exec('/launch_liquibase.sh "tag --tag=test_update"')
 
 
-def test_liquibase_update(cta_admin_api, catalogue_updater, catalogue_to_version):
+def test_liquibase_update(cta_admin_api, catalogue_updater, catalogue_to_version) -> None:
     catalogue_updater.exec("/launch_liquibase.sh update")
 
     # Now the current version should be equal to the "to" version
@@ -128,7 +128,7 @@ def test_liquibase_update(cta_admin_api, catalogue_updater, catalogue_to_version
     cta_admin_api.verify_schema()
 
 
-def test_liquibase_rollback(cta_admin_api, catalogue_updater, catalogue_from_version):
+def test_liquibase_rollback(cta_admin_api, catalogue_updater, catalogue_from_version) -> None:
     catalogue_updater.exec('/launch_liquibase.sh "rollback --tag=test_update"')
     # Check the current version is equal to the "from" version again
     assert cta_admin_api.get_schema_version() == catalogue_from_version, (
@@ -137,6 +137,6 @@ def test_liquibase_rollback(cta_admin_api, catalogue_updater, catalogue_from_ver
     cta_admin_api.verify_schema()
 
 
-def test_cleanup_catalogue_updater(env, namespace):
+def test_cleanup_catalogue_updater(env, namespace) -> None:
     env.exec_local(f"helm uninstall catalogue-updater --namespace {namespace}")
     env.exec_local(f"kubectl -n {namespace} delete configmap yum.repos.d-config")

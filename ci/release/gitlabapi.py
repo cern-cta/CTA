@@ -13,7 +13,7 @@ class GitLabAPI:
     project_id: str
     api_token: str
 
-    def __init__(self, gitlab_url: str, project_id: str, api_token: str):
+    def __init__(self, gitlab_url: str, project_id: str, api_token: str) -> None:
         self.gitlab_url = gitlab_url
         self.project_id = project_id
         self.api_token = api_token
