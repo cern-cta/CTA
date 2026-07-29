@@ -54,7 +54,7 @@ private:
   std::string librarySlotToString(const uint16_t drvOrd) const;
 
   /**
-   * The drive ordinal.
+   * The drive ordinal. This is the logical sequence number of SCSI library slot identifying the tape drive.
    */
   uint16_t m_drvOrd = 0;
 

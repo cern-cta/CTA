@@ -59,6 +59,10 @@ public:
   std::string rawLibrarySlot;
 
 private:
+  /**
+   * Length check for the various string fields.
+   * For now this limit is rather arbitrary.
+   */
   static const size_t maxNameLen = 100;
 };
 
