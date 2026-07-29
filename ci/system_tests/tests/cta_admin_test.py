@@ -15,8 +15,8 @@ from ..helpers.utils import (
     TempTapePool,
     TempVirtualOrganization,
     assert_dict_equals,
-    wait_for_condition,
     canonicalize,
+    wait_for_condition,
 )
 
 # NOTE: these tests are only meant for cta-admin tests. Other tools should get their own test suite

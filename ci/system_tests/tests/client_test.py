@@ -2,18 +2,18 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
-import pytest
-
-import json
-import uuid
 import base64
-from datetime import datetime, timedelta
-import time
-from dataclasses import dataclass
-from ..helpers.utils import find_line
+import json
 import sys
+import time
+import uuid
+from dataclasses import dataclass
+from datetime import datetime, timedelta
 
+import pytest
 from jsonschema import Draft202012Validator
+
+from ..helpers.utils import find_line
 
 #####################################################################################################################
 # Helpers
@@ -430,7 +430,7 @@ def test_log_schema_correctness(env, tmp_path, cta_maintd):
     fail_fast = True
 
     def load_schema(path):
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
 
     def iter_lines(path):
@@ -438,7 +438,7 @@ def test_log_schema_correctness(env, tmp_path, cta_maintd):
             for line in sys.stdin:
                 yield line
         else:
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, encoding="utf-8") as f:
                 for line in f:
                     yield line
 

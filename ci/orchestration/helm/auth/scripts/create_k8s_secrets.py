@@ -1,13 +1,13 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import os
+import argparse
 import base64
 import json
-import ssl
+import os
 import re
+import ssl
 import sys
-import argparse
 import urllib.request
 
 
@@ -27,7 +27,7 @@ def k8s_create_secret(namespace, secret_name, filename, filepath, host):
     }
 
     try:
-        with open(token_path, "r") as f:
+        with open(token_path) as f:
             token = f.read().strip()
 
         context = ssl.create_default_context()

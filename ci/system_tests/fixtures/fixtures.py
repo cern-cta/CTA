@@ -1,27 +1,27 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import pytest
-
 import json
 import shutil
+import uuid
 from datetime import datetime
 from pathlib import Path
-import uuid
 
-from ..helpers.test_env import TestEnv
+import pytest
+
 from ..helpers.hosts import (
-    CtaCliHost,
     CtaAdminApiHost,
-    CtaWorkflowApiHost,
+    CtaCliHost,
     CtaMaintdHost,
     CtaRmcdHost,
     CtaTapedHost,
+    CtaWorkflowApiHost,
+    DiskClientHost,
+    DiskInstanceHost,
     EosClientHost,
     EosMgmHost,
-    DiskInstanceHost,
-    DiskClientHost,
 )
+from ..helpers.test_env import TestEnv
 
 # This file could be split into multiple files eventually when necessary
 
@@ -170,8 +170,7 @@ def env(connection_config, namespace) -> TestEnv:
     if namespace is not None:
         # No connection configuration provided, so assume everything is running in a cluster
         return TestEnv.from_namespace(namespace)
-    else:
-        return TestEnv.from_config(connection_config)
+    return TestEnv.from_config(connection_config)
 
 
 #####################################################################################################################

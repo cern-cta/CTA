@@ -1,17 +1,17 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import os
 import subprocess
 import time
-import os
-from typing import Optional, cast
+from typing import cast
 
 from kubernetes import client, config
 from kubernetes.client import ApiException, V1Pod
 from kubernetes.stream import stream
 
-from .remote_connection import ExecResult, RemoteConnection
 from ..utils.timeout import Timeout
+from .remote_connection import ExecResult, RemoteConnection
 
 
 class K8sConnection(RemoteConnection):
@@ -95,7 +95,7 @@ class K8sConnection(RemoteConnection):
 
         return ExecResult(stdout=stdout, stderr=stderr, success=success)
 
-    def copy_to(self, src_path: str, dst_path: str, throw_on_failure=True, permissions: Optional[str] = None) -> None:
+    def copy_to(self, src_path: str, dst_path: str, throw_on_failure=True, permissions: str | None = None) -> None:
         # TODO: replace these kubectl calls so that we rely only on the SDK
         cmd = f"kubectl cp {src_path} {self.namespace}/{self._pod.metadata.name}:{dst_path} -c {self.container}"
         result = subprocess.run(cmd, shell=True)

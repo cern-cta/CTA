@@ -1,12 +1,13 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from pathlib import Path
-import pytest
 from dataclasses import dataclass
+from pathlib import Path
+
+import pytest
+
 from ..helpers.connections.k8s_connection import K8sConnection
 from ..helpers.hosts import RemoteHost
-
 
 #####################################################################################################################
 # Helpers

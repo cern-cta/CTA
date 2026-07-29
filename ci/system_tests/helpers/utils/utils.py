@@ -3,7 +3,8 @@
 
 import json
 import time
-from typing import Callable, Any
+from collections.abc import Callable
+from typing import Any
 
 from .timeout import Timeout
 
@@ -28,11 +29,10 @@ def wait_for_condition(cond_func: Callable[[], bool], *, timeout_secs: float = 1
 def canonicalize(obj: Any) -> Any:
     if isinstance(obj, dict):
         return {k: canonicalize(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
+    if isinstance(obj, list):
         canon_items = [canonicalize(v) for v in obj]
         return tuple(sorted(canon_items, key=_sort_key))
-    else:
-        return obj
+    return obj
 
 
 def _sort_key(x: Any):

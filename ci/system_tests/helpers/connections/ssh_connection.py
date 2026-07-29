@@ -4,7 +4,6 @@
 import shlex
 import socket
 import subprocess
-from typing import Optional
 
 from .remote_connection import ExecResult, RemoteConnection
 
@@ -38,7 +37,7 @@ class SSHConnection(RemoteConnection):
         stderr = result.stderr if capture_output else b""
         return ExecResult(stdout=stdout.decode(), stderr=stderr.decode(), success=success)
 
-    def copy_to(self, src_path: str, dst_path: str, throw_on_failure=True, permissions: Optional[str] = None) -> None:
+    def copy_to(self, src_path: str, dst_path: str, throw_on_failure=True, permissions: str | None = None) -> None:
         full_command = f"scp {src_path} {self.user}@{self.host}:{dst_path}"
         result = subprocess.run(full_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         if throw_on_failure and result.returncode != 0:

@@ -7,7 +7,7 @@ import argparse
 import sys
 import textwrap
 import time
-from typing import Any, Optional
+from typing import Any
 
 from gitlabapi import GitLabAPI
 
@@ -26,9 +26,8 @@ def create_new_branch(api: GitLabAPI, branch: str, source_branch: str) -> bool:
         print("Branch created successfully")
         print(f"\t To view the created branch, visit: {result['web_url']}")
         return True
-    else:
-        print(f"Failed to create branch {branch} from source {args.source_branch}")
-        return False
+    print(f"Failed to create branch {branch} from source {args.source_branch}")
+    return False
 
 
 # https://docs.gitlab.com/ee/api/repositories.html#add-changelog-data-to-a-changelog-file
@@ -47,9 +46,8 @@ def update_changelog(api: GitLabAPI, release_version: str, from_commit: str, to_
     if result is not None:
         print("Changelog update pushed successfully")
         return True
-    else:
-        print("Failed to update changelog")
-        return False
+    print("Failed to update changelog")
+    return False
 
 
 # https://docs.gitlab.com/ee/api/repository_files.html#get-file-from-repository
@@ -71,7 +69,7 @@ def create_merge_request(
     assignee: str,
     reviewers: list[str],
     labels: list[str],
-) -> Optional[int]:
+) -> int | None:
     print(f"Creating Merge Request from branch {source_branch} into branch: {target_branch}")
     print(f"\tTitle: {title}")
     data: dict = {
@@ -94,9 +92,8 @@ def create_merge_request(
         if iid is not None and isinstance(iid, int):
             return iid
         return None
-    else:
-        print("Failed to create merge request")
-        return None
+    print("Failed to create merge request")
+    return None
 
 
 # https://docs.gitlab.com/ee/api/discussions.html#create-a-new-thread-in-the-merge-request-diff
@@ -148,9 +145,8 @@ def add_mr_review_comment(
     if result is not None:
         print("Comment added successfully")
         return True
-    else:
-        print("Failed to add review comments")
-        return False
+    print("Failed to add review comments")
+    return False
 
 
 # ------------------------------------------------------------------------------
@@ -228,7 +224,7 @@ if __name__ == "__main__":
         release_version = release_version[1:]
 
     branch_name: str = args.release_version + "-changelog-update"
-    with open(args.description_file, "r") as file:
+    with open(args.description_file) as file:
         description_body = file.read()
     if description_body is None:
         print(f"Failed to read description file: {args.description_file}")
@@ -262,7 +258,7 @@ if __name__ == "__main__":
     # Create Merge Request
     mr_title: str = f"[Misc] Update changelog for release {release_version}"
     labels: list[str] = ["workflow::in review", "type::release", "priority::low"]
-    mr_id: Optional[int] = create_merge_request(
+    mr_id: int | None = create_merge_request(
         api,
         source_branch=branch_name,
         target_branch=args.source_branch,

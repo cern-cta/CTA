@@ -54,7 +54,7 @@ def main():
     )
     args = ap.parse_args()
 
-    with open(args.sbom_in, "r", encoding="utf-8") as f:
+    with open(args.sbom_in, encoding="utf-8") as f:
         sbom = json.load(f)
 
     replace_root_dependencies(sbom, args.prefix.lower())

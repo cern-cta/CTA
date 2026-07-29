@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from functools import cached_property
+from pathlib import Path
 
 from .remote_host import RemoteHost
-from pathlib import Path
 
 
 class CtaTapedHost(RemoteHost):

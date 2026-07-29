@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import subprocess
-from typing import Any, List, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from kubernetes import client, config
 from kubernetes.client import ApiException
@@ -10,12 +11,12 @@ from kubernetes.client import ApiException
 from .connections.k8s_connection import K8sConnection
 from .connections.remote_connection import RemoteConnection
 from .connections.ssh_connection import SSHConnection
-from .hosts.cta_cli_host import CtaCliHost
-from .hosts.cta_workflow_api_host import CtaWorkflowApiHost
 from .hosts.cta_admin_api_host import CtaAdminApiHost
+from .hosts.cta_cli_host import CtaCliHost
 from .hosts.cta_maintd_host import CtaMaintdHost
 from .hosts.cta_rmcd_host import CtaRmcdHost
 from .hosts.cta_taped_host import CtaTapedHost
+from .hosts.cta_workflow_api_host import CtaWorkflowApiHost
 from .hosts.disk.disk_client_host import DiskClientHost
 from .hosts.disk.disk_instance_host import DiskInstanceHost
 from .hosts.disk.eos_client_host import EosClientHost
@@ -72,7 +73,7 @@ class TestEnv:
         )
         pods.items.sort(key=lambda p: p.metadata.name)
 
-        connections: List[K8sConnection] = []
+        connections: list[K8sConnection] = []
         for ordinal, pod in enumerate(pods.items):
             for c in pod.spec.containers or []:
                 cname = c.name or ""
@@ -137,7 +138,7 @@ class TestEnv:
             import yaml
         except ImportError:
             raise RuntimeError("Install pyyaml to use TestEnv.from_config()")
-        with open(path, "r") as f:
+        with open(path) as f:
             config = yaml.safe_load(f)
 
         def create_connections(config: Any, host: str) -> list:

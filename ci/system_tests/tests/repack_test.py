@@ -7,11 +7,12 @@ import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from ..helpers.utils import Timeout
-from typing import Optional, Annotated
-from ..helpers.hosts import CtaCliHost
+from typing import Annotated
 
 import pytest
+
+from ..helpers.hosts import CtaCliHost
+from ..helpers.utils import Timeout
 
 Fixture = Annotated
 
@@ -86,7 +87,7 @@ def _submit_repack_request(
     move_only: bool = False,
     with_back_pressure: bool = False,
     no_recall: bool = False,
-    max_files_to_select: Optional[int] = None,
+    max_files_to_select: int | None = None,
     submit_only: bool = False,
 ):
     repack_timeout_secs = 120

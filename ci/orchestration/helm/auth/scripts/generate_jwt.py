@@ -1,18 +1,18 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import json
-import time
+import argparse
 import base64
 import hashlib
-import argparse
+import json
 import re
+import time
 from pathlib import Path
 
 import jwt
 from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 
 
 def sanitize_filename(s: str) -> str:

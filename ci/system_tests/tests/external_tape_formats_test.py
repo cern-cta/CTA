@@ -1,10 +1,11 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from pathlib import Path
-import pytest
-import uuid
 import time
+import uuid
+from pathlib import Path
+
+import pytest
 
 ENSTORE_LABEL_BLOCK_SIZE = 80
 OSM_HEADER_BLOCK_SIZE = 32768

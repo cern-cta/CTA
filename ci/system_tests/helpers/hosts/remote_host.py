@@ -3,7 +3,6 @@
 
 import asyncio
 import time
-from typing import Optional
 
 from ..connections.remote_connection import ExecResult, RemoteConnection
 from ..utils.timeout import Timeout
@@ -51,7 +50,7 @@ class RemoteHost:
         )
 
     def copy_to(
-        self, src_path: str, dst_path: str, *, throw_on_failure=True, permissions: Optional[str] = None
+        self, src_path: str, dst_path: str, *, throw_on_failure=True, permissions: str | None = None
     ) -> None:
         return self.conn.copy_to(src_path, dst_path, throw_on_failure=throw_on_failure, permissions=permissions)
 

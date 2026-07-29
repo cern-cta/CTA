@@ -65,7 +65,7 @@ def main():
     ap.add_argument("--out", dest="sbom_out", required=True, help="Output CycloneDX JSON")
     args = ap.parse_args()
 
-    with open(args.sbom_in, "r", encoding="utf-8") as f:
+    with open(args.sbom_in, encoding="utf-8") as f:
         sbom = json.load(f)
 
     prune_unreachable(sbom)

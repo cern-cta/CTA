@@ -2,13 +2,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
-import pytest
-
 import json
 import time
 from dataclasses import dataclass
-from ..helpers.utils import find_line
 
+import pytest
+
+from ..helpers.utils import find_line
 
 #####################################################################################################################
 # Helpers
