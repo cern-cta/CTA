@@ -96,7 +96,10 @@ def main() -> None:
         # Check that at this point the project.json contains the same version
         if xrootd_version != project_xrootd_version:
             sys.exit(
-                f"ERROR: CUSTOM_XROOTD_VERSION must be equal to value in project.json ({xrootd_version} != {project_xrootd_version}). Please verify the logic in the modify-project-json job."
+
+                    f"ERROR: CUSTOM_XROOTD_VERSION must be equal to value in project.json ({xrootd_version} "
+                    f"!= {project_xrootd_version}). Please verify the logic in the modify-project-json job."
+
             )
 
     project_eos_image_tag = project_json["dev"]["eosImageTag"]
@@ -105,7 +108,10 @@ def main() -> None:
         # Check that at this point the project.json contains the same version
         if eos_image_tag != project_eos_image_tag:
             sys.exit(
-                f"ERROR: CUSTOM_EOS_IMAGE_TAG must be equal to value in project.json ({eos_image_tag} != {project_eos_image_tag}). Please verify the logic in the modify-project-json job."
+
+                    f"ERROR: CUSTOM_EOS_IMAGE_TAG must be equal to value in project.json ({eos_image_tag} != "
+                    f"{project_eos_image_tag}). Please verify the logic in the modify-project-json job."
+
             )
     print("Validation was successful")
 

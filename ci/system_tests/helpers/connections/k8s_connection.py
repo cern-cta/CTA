@@ -123,7 +123,8 @@ class K8sConnection(RemoteConnection):
                 namespace=self.namespace,
             )
             # Wait until the pod no longer exists to ensure a restart has been triggered
-            # Otherwise if we immediately start waiting for it, said wait might succeed because the process hasn't terminated yet
+            # Otherwise if we immediately start waiting for it, said wait might succeed because the process hasn't
+            # terminated yet
             max_pod_disappear_secs = 60  # 1 minute should be more than enough for the pod to be deleted
             with Timeout(max_pod_disappear_secs) as t:
                 while True:

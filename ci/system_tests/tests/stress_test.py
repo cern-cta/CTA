@@ -9,6 +9,9 @@ from pathlib import Path
 
 import pytest
 
+from system_tests.helpers.hosts import CtaCliHost, EosClientHost, EosMgmHost
+from system_tests.helpers.test_env import TestEnv
+
 
 @dataclass
 class PrequeueParams:
@@ -46,7 +49,7 @@ class StressParams:
 
 
 @pytest.fixture(scope="module")
-def stress_params(request):
+def stress_params(request: pytest.FixtureRequest):
     stress_config = request.config.test_config["tests"]["stress"]
     prequeue_config = stress_config["prequeue"]
     return StressParams(
@@ -74,7 +77,7 @@ def stress_params(request):
 #####################################################################################################################
 
 
-def test_setup_xrootd_client(eos_client) -> None:
+def test_setup_xrootd_client(eos_client: EosClientHost) -> None:
     """Install XRootD Python bindings and deploy scripts to the client pod."""
     eos_client.install_xrootd_python()
 
@@ -84,11 +87,14 @@ def test_setup_xrootd_client(eos_client) -> None:
     eos_client.copy_to(str(script_dir / "xrootd_retrieve.py"), "/tmp/xrootd_retrieve.py")
 
 
-def test_update_setup_for_max_powerrrr(env, cta_cli, eos_mgm) -> None:
+def test_update_setup_for_max_powerrrr(env: TestEnv, cta_cli: CtaCliHost, eos_mgm: EosMgmHost) -> None:
     num_drives: int = len(env.cta_taped)
     cta_cli.exec(f"cta-admin vo ch --vo vo --writemaxdrives {num_drives} --readmaxdrives {num_drives}")
     cta_cli.exec(
-        'cta-admin mp ch --name ctasystest --minarchiverequestage 100 --minretrieverequestage 100 --comment "Longer min ages"'
+
+            "cta-admin mp ch --name ctasystest --minarchiverequestage 100 --minretrieverequestage "
+            '100 --comment "Longer min ages"'
+
     )
     # Decrease the logging level
     eos_mgm.exec('eos debug warning "*"')
@@ -103,7 +109,9 @@ def test_update_setup_for_max_powerrrr(env, cta_cli, eos_mgm) -> None:
 
 
 @pytest.mark.asyncio
-async def test_generate_and_copy_files(cta_cli, eos_client, eos_mgm, stress_params, test_dir) -> None:
+async def test_generate_and_copy_files(
+    cta_cli: CtaCliHost, eos_client: EosClientHost, eos_mgm: EosMgmHost, stress_params: StressParams, test_dir: Path
+) -> None:
     # Get the IP of EOS MGM pod and use instead of disk instance name to save DNS lookups
     mgm_ip = eos_mgm.get_ip()
     total_file_count = stress_params.num_files_per_dir * stress_params.num_dirs
@@ -168,7 +176,10 @@ async def test_generate_and_copy_files(cta_cli, eos_client, eos_mgm, stress_para
             if not drives_up:
                 if num_files_so_far >= stress_params.prequeue.num_files_to_put_drives_up:
                     print(
-                        f"\tThreshold ({stress_params.prequeue.num_files_to_put_drives_up}) reached — putting drives UP",
+                        (
+                            f"\tThreshold ({stress_params.prequeue.num_files_to_put_drives_up}) reached — putting "
+                            f"drives UP"
+                        ),
                         flush=True,
                     )
                     # do not wait for status to be UP as drives will immediately start TRANSFERING
@@ -233,7 +244,7 @@ async def test_generate_and_copy_files(cta_cli, eos_client, eos_mgm, stress_para
 # We execute this directly on the mgm to bypass some networking between pods (should be negligible though)
 
 
-def test_wait_for_archival(eos_mgm, stress_params, test_dir) -> None:
+def test_wait_for_archival(eos_mgm: EosMgmHost, stress_params: StressParams, test_dir: Path) -> None:
     num_missing_files, loss_percent = eos_mgm.wait_for_archival_in_directory(
         archive_dir_path=test_dir,
         check_archive_interval_sec=stress_params.check_archive_interval_sec,
@@ -246,14 +257,16 @@ def test_wait_for_archival(eos_mgm, stress_params, test_dir) -> None:
     assert loss_acceptable, f"Too many files lost during archival: {num_missing_files} files missing"
 
 
-def test_kinit_poweruser(eos_client, krb5_realm) -> None:
+def test_kinit_poweruser(eos_client: EosClientHost, krb5_realm: str) -> None:
     """Initialize Kerberos credentials for poweruser1 (needed for retrieve)."""
     eos_client.exec("mkdir -p /tmp/poweruser1")
     eos_client.exec(f"KRB5CCNAME=/tmp/poweruser1/krb5cc_0 kinit -kt /root/poweruser1.keytab poweruser1@{krb5_realm}")
 
 
 @pytest.mark.asyncio
-async def test_request_files_for_retrieve(cta_cli, eos_client, eos_mgm, stress_params) -> None:
+async def test_request_files_for_retrieve(
+    cta_cli: CtaCliHost, eos_client: EosClientHost, eos_mgm: EosMgmHost, stress_params: StressParams
+) -> None:
     archive_directory = eos_mgm.base_dir_path / "cta" / "stress"
     mgm_ip = eos_mgm.get_ip()
 
@@ -296,7 +309,10 @@ async def test_request_files_for_retrieve(cta_cli, eos_client, eos_mgm, stress_p
             if not drives_up:
                 if total_tape_only >= stress_params.prequeue.num_files_to_put_drives_up:
                     print(
-                        f"\tThreshold ({stress_params.prequeue.num_files_to_put_drives_up}) reached — putting drives UP",
+                        (
+                            f"\tThreshold ({stress_params.prequeue.num_files_to_put_drives_up}) reached — putting "
+                            f"drives UP"
+                        ),
                         flush=True,
                     )
                     cta_cli.set_all_drives_up(wait=False)
@@ -334,7 +350,7 @@ async def test_request_files_for_retrieve(cta_cli, eos_client, eos_mgm, stress_p
     print(f"Retrieve request queueing completed in {duration_seconds:.1f}s, files/s: {avg_fps:.2f}")
 
 
-def test_wait_for_retrieval(eos_mgm, stress_params) -> None:
+def test_wait_for_retrieval(eos_mgm: EosMgmHost, stress_params: StressParams) -> None:
     archive_directory = eos_mgm.base_dir_path / "cta" / "stress"
 
     num_missing, loss_percent = eos_mgm.wait_for_retrieval_in_directory(

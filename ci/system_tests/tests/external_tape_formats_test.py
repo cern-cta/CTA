@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 
+from system_tests.helpers.hosts import CtaRmcdHost, CtaTapedHost
+
 ENSTORE_LABEL_BLOCK_SIZE = 80
 OSM_HEADER_BLOCK_SIZE = 32768
 TAPE_PAYLOAD_BLOCK_SIZE = 262144
@@ -23,10 +25,11 @@ ENSTORE_LARGE_TAPE_SLOT = 3
 
 
 @pytest.fixture(scope="module")
-def external_tape_formats_path(cta_rmcd) -> Path:
+def external_tape_formats_path(cta_rmcd: CtaRmcdHost) -> Path:
     external_tape_formats_path = Path("/tmp") / "external-tape-formats"
 
-    # Note that the cleanup of the system tests will restart all pods and therefore wipe this directory again between runs
+    # Note that the cleanup of the system tests will restart all pods and therefore wipe this directory again between
+    # runs
     # So we don't bother cleaning it up manually
     cta_rmcd.exec("sudo microdnf install -y git git-lfs")
     cta_rmcd.exec("git lfs install --skip-repo")
@@ -51,7 +54,7 @@ def wait_for_device_ready(host, drive_device: str, timeout_seconds: int = 60) ->
     raise TimeoutError(f"Tape device {drive_device} still busy after {timeout_seconds}s. {stderr}")
 
 
-def wait_for_drive_readable(cta_taped, drive_device: str, timeout_seconds: int = 30) -> None:
+def wait_for_drive_readable(cta_taped: CtaTapedHost, drive_device: str, timeout_seconds: int = 30) -> None:
     deadline = time.monotonic() + timeout_seconds
     last_result = None
 
@@ -77,7 +80,9 @@ def wait_for_drive_readable(cta_taped, drive_device: str, timeout_seconds: int =
     raise TimeoutError(f"Tape device {drive_device} still not readable after {timeout_seconds}s. {stderr}")
 
 
-def write_tape_file(cta_rmcd, drive_device: str, input_path: str, block_size: int, description: str) -> None:
+def write_tape_file(
+    cta_rmcd: CtaRmcdHost, drive_device: str, input_path: str, block_size: int, description: str
+) -> None:
     wait_for_device_ready(cta_rmcd, drive_device)
 
     last_result = None
@@ -102,7 +107,7 @@ def write_tape_file(cta_rmcd, drive_device: str, input_path: str, block_size: in
 
 
 def read_tape_file(
-    cta_rmcd, drive_device: str, output_path: str, block_size: int, count: int, description: str
+    cta_rmcd: CtaRmcdHost, drive_device: str, output_path: str, block_size: int, count: int, description: str
 ) -> None:
     wait_for_device_ready(cta_rmcd, drive_device)
 
@@ -125,7 +130,7 @@ def read_tape_file(
     raise RuntimeError(f"Failed to read {description} from {drive_device}. {stderr}")
 
 
-def space_filemarks_forward(cta_rmcd, drive_device: str, count: int, description: str) -> None:
+def space_filemarks_forward(cta_rmcd: CtaRmcdHost, drive_device: str, count: int, description: str) -> None:
     wait_for_device_ready(cta_rmcd, drive_device)
 
     last_result = None
@@ -165,19 +170,19 @@ def assert_remote_files_match(host, expected_path: str, actual_path: str) -> Non
     assert remote_sha256(host, actual_path) == remote_sha256(host, expected_path)
 
 
-def load_tape(cta_rmcd, slot: int, drive: int) -> None:
+def load_tape(cta_rmcd: CtaRmcdHost, slot: int, drive: int) -> None:
     cta_rmcd.exec("mtx -f /dev/smc status")
     cta_rmcd.exec(f"mtx -f /dev/smc load {slot} {drive}")
     cta_rmcd.exec("mtx -f /dev/smc status")
 
 
-def unload_tape(cta_rmcd, slot: int, drive: int) -> None:
+def unload_tape(cta_rmcd: CtaRmcdHost, slot: int, drive: int) -> None:
     cta_rmcd.exec("mtx -f /dev/smc status")
     cta_rmcd.exec(f"mtx -f /dev/smc unload {slot} {drive}")
     cta_rmcd.exec("mtx -f /dev/smc status")
 
 
-def reload_tape(cta_rmcd, slot: int, drive: int) -> None:
+def reload_tape(cta_rmcd: CtaRmcdHost, slot: int, drive: int) -> None:
     unload_tape(cta_rmcd, slot, drive)
     load_tape(cta_rmcd, slot, drive)
     time.sleep(2)
@@ -188,14 +193,14 @@ def reload_tape(cta_rmcd, slot: int, drive: int) -> None:
 #####################################################################################################################
 
 
-def test_load_tape(cta_rmcd) -> None:
+def test_load_tape(cta_rmcd: CtaRmcdHost) -> None:
     # Load tape in a drive
     cta_rmcd.exec("mtx -f /dev/smc status")
     cta_rmcd.exec("mtx -f /dev/smc load 1 0")
     cta_rmcd.exec("mtx -f /dev/smc status")
 
 
-def test_read_osm_tape(cta_rmcd, cta_taped, external_tape_formats_path) -> None:
+def test_read_osm_tape(cta_rmcd: CtaRmcdHost, cta_taped: CtaTapedHost, external_tape_formats_path: Path) -> None:
     drive_device = cta_taped.drive_device
     osm_dir = external_tape_formats_path / "osm"
 
@@ -220,23 +225,25 @@ def test_read_osm_tape(cta_rmcd, cta_taped, external_tape_formats_path) -> None:
     cta_rmcd.exec(f"mt -f {drive_device} rewind")
 
 
-def test_osm_reader(cta_taped) -> None:
+def test_osm_reader(cta_taped: CtaTapedHost) -> None:
     print(f"Using drive: {cta_taped.drive_name}, device: {cta_taped.drive_device}")
     cta_taped.exec(f"cta-osmReaderTest {cta_taped.drive_name} {cta_taped.drive_device}")
 
 
-def test_unload_tape(cta_rmcd) -> None:
+def test_unload_tape(cta_rmcd: CtaRmcdHost) -> None:
     # Unload the tape again
     cta_rmcd.exec("mtx -f /dev/smc status")
     cta_rmcd.exec("mtx -f /dev/smc unload 1 0")
     cta_rmcd.exec("mtx -f /dev/smc status")
 
 
-def test_load_enstore_tape(cta_rmcd, cta_taped) -> None:
+def test_load_enstore_tape(cta_rmcd: CtaRmcdHost, cta_taped: CtaTapedHost) -> None:
     load_tape(cta_rmcd, ENSTORE_TAPE_SLOT, cta_taped.drive_index)
 
 
-def test_read_write_enstore_tape(cta_rmcd, cta_taped, external_tape_formats_path) -> None:
+def test_read_write_enstore_tape(
+    cta_rmcd: CtaRmcdHost, cta_taped: CtaTapedHost, external_tape_formats_path: Path
+) -> None:
     drive_device = cta_taped.drive_device
     layout_dir = f"{external_tape_formats_path}/enstore/FL1212_f1"
     readback_dir = f"/tmp/enstore_readback_{str(uuid.uuid4())[:8]}"
@@ -300,15 +307,17 @@ def test_read_write_enstore_tape(cta_rmcd, cta_taped, external_tape_formats_path
         cta_rmcd.exec(f"rm -rf {readback_dir}")
 
 
-def test_unload_enstore_tape(cta_rmcd, cta_taped) -> None:
+def test_unload_enstore_tape(cta_rmcd: CtaRmcdHost, cta_taped: CtaTapedHost) -> None:
     unload_tape(cta_rmcd, ENSTORE_TAPE_SLOT, cta_taped.drive_index)
 
 
-def test_load_enstore_large_tape(cta_rmcd, cta_taped) -> None:
+def test_load_enstore_large_tape(cta_rmcd: CtaRmcdHost, cta_taped: CtaTapedHost) -> None:
     load_tape(cta_rmcd, ENSTORE_LARGE_TAPE_SLOT, cta_taped.drive_index)
 
 
-def test_write_enstore_large_tape(cta_rmcd, cta_taped, external_tape_formats_path) -> None:
+def test_write_enstore_large_tape(
+    cta_rmcd: CtaRmcdHost, cta_taped: CtaTapedHost, external_tape_formats_path: Path
+) -> None:
     drive_device = cta_taped.drive_device
     layout_dir = f"{external_tape_formats_path}/enstorelarge/FL1587_f1"
     for segment in ["vol1_FL1587.bin", "fseq1_header.bin", "fseq1_payload.bin", "fseq1_trailer.bin"]:
@@ -353,7 +362,7 @@ def test_write_enstore_large_tape(cta_rmcd, cta_taped, external_tape_formats_pat
     wait_for_device_ready(cta_rmcd, drive_device)
 
 
-def test_enstore_large_reader(cta_rmcd, cta_taped) -> None:
+def test_enstore_large_reader(cta_rmcd: CtaRmcdHost, cta_taped: CtaTapedHost) -> None:
     reload_tape(cta_rmcd, ENSTORE_LARGE_TAPE_SLOT, cta_taped.drive_index)
     wait_for_drive_readable(cta_taped, cta_taped.drive_device)
 
@@ -361,5 +370,5 @@ def test_enstore_large_reader(cta_rmcd, cta_taped) -> None:
     cta_taped.exec(f"cta-enstoreLargeReaderTest {cta_taped.drive_name} {cta_taped.drive_device}")
 
 
-def test_unload_enstore_large_tape(cta_rmcd, cta_taped) -> None:
+def test_unload_enstore_large_tape(cta_rmcd: CtaRmcdHost, cta_taped: CtaTapedHost) -> None:
     unload_tape(cta_rmcd, ENSTORE_LARGE_TAPE_SLOT, cta_taped.drive_index)

@@ -9,9 +9,13 @@ import time
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import pytest
 from jsonschema import Draft202012Validator
+
+from system_tests.helpers.hosts import CtaCliHost, CtaMaintdHost, CtaTapedHost, EosClientHost, EosMgmHost
+from system_tests.helpers.test_env import TestEnv
 
 from ..helpers.utils import find_line
 
@@ -28,7 +32,7 @@ class ClientParams:
 
 
 @pytest.fixture(scope="module")
-def client_params(request) -> ClientParams:
+def client_params(request: pytest.FixtureRequest) -> ClientParams:
     client_config = request.config.test_config["tests"]["client"]
     return ClientParams(
         file_count=client_config["file_count"],
@@ -41,16 +45,22 @@ def client_params(request) -> ClientParams:
 # Tests
 #####################################################################################################################
 
-# For now only the "glue" has been migrated to Python. Most of the scripts invoked in the tests below still need to be migrated at a later point in time
+# For now only the "glue" has been migrated to Python. Most of the scripts invoked in the tests below still need to be
+# migrated at a later point in time
 # Some scripts probably deserve to be their own test module instead of cramming everything in this file
 
 
-def test_setup_client(eos_client, client_params, test_dir, remote_scripts_dir) -> None:
+def test_setup_client(
+    eos_client: EosClientHost, client_params: ClientParams, test_dir: Path, remote_scripts_dir: Path
+) -> None:
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "client_setup.sh"), "/tmp/", permissions="+x")
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "client_helper.sh"), "/tmp/", permissions="+x")
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "cli_calls.sh"), "/tmp/", permissions="+x")
     eos_client.exec(
-        f"/tmp/client_setup.sh -n {client_params.file_count} -s {client_params.file_size_kb} -p {client_params.process_count} -d {test_dir} -r -c xrd"
+
+            f"/tmp/client_setup.sh -n {client_params.file_count} -s {client_params.file_size_kb} -p "
+            f"{client_params.process_count} -d {test_dir} -r -c xrd"
+
     )
 
 
@@ -70,7 +80,7 @@ def test_setup_client(eos_client, client_params, test_dir, remote_scripts_dir) -
 # tpc
 
 
-def test_eos_xrootd_third_party_copy_capabilities(eos_mgm, disk_instance_name) -> None:
+def test_eos_xrootd_third_party_copy_capabilities(eos_mgm: EosMgmHost, disk_instance_name: str) -> None:
     """Verifies that all online EOS FST nodes have xrootd TPC capabilities enabled."""
 
     # Fetch nodes
@@ -103,7 +113,7 @@ def test_eos_xrootd_third_party_copy_capabilities(eos_mgm, disk_instance_name) -
     assert not failed_nodes, f"TPC capabilities validation FAILED for the following nodes: {failed_nodes}"
 
 
-def test_eos_xrootd_api_fts_compliance(eos_mgm) -> None:
+def test_eos_xrootd_api_fts_compliance(eos_mgm: EosMgmHost) -> None:
     """Verifies that xrdfs query prepare preserves the exact requested sequence order and duplicates.
     Write 3 files and xrdfs query them in reverse order with duplicates.
     `xrdfs query prepare 3 2 1 3` must answer 3 2 1 3
@@ -145,7 +155,7 @@ def test_eos_xrootd_api_fts_compliance(eos_mgm) -> None:
     eos_mgm.force_remove_directory(tmp_dir)
 
 
-def test_simple_archive_retrieve(eos_client, test_dir, disk_instance_name) -> None:
+def test_simple_archive_retrieve(eos_client: EosClientHost, test_dir: Path, disk_instance_name: str) -> None:
     file_path = test_dir / "test_simple_archive_retrieve"
     file_path = eos_client.generate_and_archive_file(
         disk_instance_name, destination_path=file_path, wait=True, append_uid=True
@@ -165,7 +175,7 @@ def test_simple_archive_retrieve(eos_client, test_dir, disk_instance_name) -> No
     eos_client.delete_file(disk_instance_name, file_path)
 
 
-def test_archive(eos_client, remote_scripts_dir) -> None:
+def test_archive(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_archive.sh"), "/tmp/", permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
     # TODO: replace by something more deterministic. Is this even necessary?
@@ -173,27 +183,29 @@ def test_archive(eos_client, remote_scripts_dir) -> None:
     time.sleep(5)
 
 
-def test_retrieve(eos_client, remote_scripts_dir) -> None:
+def test_retrieve(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_retrieve.sh"), "/tmp/", permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_retrieve.sh")
 
 
-def test_evict(eos_client, remote_scripts_dir) -> None:
+def test_evict(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_evict.sh"), "/tmp/", permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_evict.sh")
 
 
-def test_abort_prepare(eos_client, remote_scripts_dir) -> None:
+def test_abort_prepare(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_abort_prepare.sh"), "/tmp/", permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_abort_prepare.sh")
 
 
-def test_multiple_retrieve(eos_client, test_dir, remote_scripts_dir) -> None:
+def test_multiple_retrieve(eos_client: EosClientHost, test_dir: Path, remote_scripts_dir: Path) -> None:
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_multiple_retrieve.sh"), "/tmp/", permissions="+x")
     eos_client.exec(f". /tmp/client_env && /tmp/test_multiple_retrieve.sh {test_dir}")
 
 
-def test_idempotent_prepare(eos_client, eos_mgm, cta_dir, remote_scripts_dir) -> None:
+def test_idempotent_prepare(
+    eos_client: EosClientHost, eos_mgm: EosMgmHost, cta_dir: Path, remote_scripts_dir: Path
+) -> None:
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_idempotent_prepare.sh"), "/tmp/", permissions="+x")
 
     no_prepare_dir = cta_dir / "no_prepare"
@@ -208,21 +220,21 @@ def test_idempotent_prepare(eos_client, eos_mgm, cta_dir, remote_scripts_dir) ->
     eos_mgm.force_remove_directory(no_prepare_dir)
 
 
-def test_delete_on_closew_error(eos_client, remote_scripts_dir) -> None:
+def test_delete_on_closew_error(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
     eos_client.copy_to(
         str(remote_scripts_dir / "eos_client" / "test_delete_on_closew_error.sh"), "/tmp/", permissions="+x"
     )
     eos_client.exec(". /tmp/client_env && /tmp/test_delete_on_closew_error.sh")
 
 
-def test_archive_zero_length_file(eos_client, remote_scripts_dir) -> None:
+def test_archive_zero_length_file(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
     eos_client.copy_to(
         str(remote_scripts_dir / "eos_client" / "test_archive_zero_length_file.sh"), "/tmp/", permissions="+x"
     )
     eos_client.exec(". /tmp/client_env && /tmp/test_archive_zero_length_file.sh")
 
 
-def test_eos_evict(eos_client, remote_scripts_dir) -> None:
+def test_eos_evict(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_eos_evict.sh"), "/tmp/", permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_eos_evict.sh")
 
@@ -230,7 +242,9 @@ def test_eos_evict(eos_client, remote_scripts_dir) -> None:
 # tmp_path is a fixture provided by pytest itself. See: https://docs.pytest.org/en/6.2.x/tmpdir.html
 
 
-def test_eos_http_rest_api(eos_client, eos_mgm, tmp_path, remote_scripts_dir, test_dir) -> None:
+def test_eos_http_rest_api(
+    eos_client: EosClientHost, eos_mgm: EosMgmHost, tmp_path: Path, remote_scripts_dir: Path, test_dir: Path
+) -> None:
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_rest_api.sh"), "/tmp/", permissions="+x")
     # Copy over CA certificates
     eos_mgm.copy_from("etc/grid-security/certificates/", tmp_path)
@@ -238,13 +252,13 @@ def test_eos_http_rest_api(eos_client, eos_mgm, tmp_path, remote_scripts_dir, te
     eos_client.exec(f". /tmp/client_env && /tmp/test_rest_api.sh {test_dir}")
 
 
-def test_eos_immutable_file(eos_client, eos_mgm, test_dir) -> None:
+def test_eos_immutable_file(eos_client: EosClientHost, eos_mgm: EosMgmHost, test_dir: Path) -> None:
     eos_client.exec(
         f". /tmp/client_env && echo yes | cta-immutable-file-test root://{eos_mgm.instance_name}/{test_dir}/immutable_file"
     )
 
 
-def test_eos_timestamps_correctness(eos_client, test_dir, remote_scripts_dir) -> None:
+def test_eos_timestamps_correctness(eos_client: EosClientHost, test_dir: Path, remote_scripts_dir: Path) -> None:
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_eos_timestamps.sh"), "/tmp/", permissions="+x")
     eos_client.exec(f". /tmp/client_env && /tmp/test_eos_timestamps.sh {test_dir}")
 
@@ -252,7 +266,9 @@ def test_eos_timestamps_correctness(eos_client, test_dir, remote_scripts_dir) ->
 # Note that this test simply tests whether the base64 encoded string ends up in the eos report logs verbatim
 
 
-def test_eos_archive_metadata_ends_up_in_eos_report(eos_client, eos_mgm, test_dir) -> None:
+def test_eos_archive_metadata_ends_up_in_eos_report(
+    eos_client: EosClientHost, eos_mgm: EosMgmHost, test_dir: Path
+) -> None:
     disk_instance_name = eos_mgm.instance_name
     file_loc = test_dir / "archive_metadata_file"
 
@@ -264,7 +280,11 @@ def test_eos_archive_metadata_ends_up_in_eos_report(eos_client, eos_mgm, test_di
 
     eosadmin_user = "eosadmin1"
     token_eosuser1 = eos_client.exec_with_output(
-        f"XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/{eosadmin_user}/krb5cc_0 eos -r 0 0 root://{disk_instance_name} token --tree --path '/eos/ctaeos/://:/api/' --expires {later_timestamp} --owner user1 --group eosusers --permission rwx"
+
+            f"XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/{eosadmin_user}/krb5cc_0 eos -r 0 0 "
+            f"root://{disk_instance_name} token --tree --path '/eos/ctaeos/://:/api/' --expires "
+            f"{later_timestamp} --owner user1 --group eosusers --permission rwx"
+
     )
 
     print("Printing eosuser token dump")
@@ -272,7 +292,11 @@ def test_eos_archive_metadata_ends_up_in_eos_report(eos_client, eos_mgm, test_di
 
     print("Archiving file with archive metadata")
     eos_client.exec(
-        f'curl -X PUT -L --insecure -H "Accept: application/json" -H "ArchiveMetadata: {archive_metadata_b64}" -H "Authorization: Bearer {token_eosuser1}" "https://{disk_instance_name}:8443/{file_loc}" --upload-file "/etc/group"'
+
+            f'curl -X PUT -L --insecure -H "Accept: application/json" -H "ArchiveMetadata: '
+            f'{archive_metadata_b64}" -H "Authorization: Bearer {token_eosuser1}" '
+            f'"https://{disk_instance_name}:8443/{file_loc}" --upload-file "/etc/group"'
+
     )
 
     # Check the archive metadata appears in the mgm log file
@@ -288,7 +312,9 @@ def test_eos_archive_metadata_ends_up_in_eos_report(eos_client, eos_mgm, test_di
 # Tests for eosdf
 
 
-def test_eosdf(eos_client, cta_cli, test_dir, remote_scripts_dir, cta_taped) -> None:
+def test_eosdf(
+    eos_client: EosClientHost, cta_cli: CtaCliHost, test_dir: Path, remote_scripts_dir: Path, cta_taped: CtaTapedHost
+) -> None:
     # Ensure that whatever drive we are checking is the one doing the archiving
     cta_cli.set_all_drives_down()
     cta_cli.set_drive_up(cta_taped.drive_name)
@@ -300,7 +326,7 @@ def test_eosdf(eos_client, cta_cli, test_dir, remote_scripts_dir, cta_taped) -> 
 ## Both times we should get a success, because when the script is the problem, we allow staging to continue
 
 
-def test_eosdf_with_nonexistent_script(cta_taped, eos_client, test_dir) -> None:
+def test_eosdf_with_nonexistent_script(cta_taped: CtaTapedHost, eos_client: EosClientHost, test_dir: Path) -> None:
     cta_taped.exec("mv /usr/bin/cta-eosdf.sh /usr/bin/eosdf_newname.sh")
     try:
         eos_client.exec(f". /tmp/client_env && /tmp/test_eosdf.sh {test_dir}")
@@ -309,7 +335,9 @@ def test_eosdf_with_nonexistent_script(cta_taped, eos_client, test_dir) -> None:
         cta_taped.exec("mv /usr/bin/eosdf_newname.sh /usr/bin/cta-eosdf.sh")
 
 
-def test_eosdf_without_executable_permissions(cta_taped, eos_client, test_dir) -> None:
+def test_eosdf_without_executable_permissions(
+    cta_taped: CtaTapedHost, eos_client: EosClientHost, test_dir: Path
+) -> None:
     cta_taped.exec("chmod -x /usr/bin/cta-eosdf.sh")
     try:
         eos_client.exec(f". /tmp/client_env && /tmp/test_eosdf.sh {test_dir}")
@@ -318,11 +346,14 @@ def test_eosdf_without_executable_permissions(cta_taped, eos_client, test_dir) -
         cta_taped.exec("chmod +x /usr/bin/cta-eosdf.sh")
 
 
-# Test what happens when we get an error from the eos client (fake instance not reachable by specifying a nonexistent instance name in the script)
+# Test what happens when we get an error from the eos client (fake instance not reachable by specifying a nonexistent
+# instance name in the script)
 # grep for 'could not be used to get the FreeSpace'
 
 
-def test_eosdf_with_script_that_throws_exception(cta_taped, eos_client, cta_cli, test_dir) -> None:
+def test_eosdf_with_script_that_throws_exception(
+    cta_taped: CtaTapedHost, eos_client: EosClientHost, cta_cli: CtaCliHost, test_dir: Path
+) -> None:
     cta_taped.exec("sed -i 's|root://$diskInstance|root://nonexistentinstance|g' /usr/bin/cta-eosdf.sh")
     try:
         eos_client.exec(f". /tmp/client_env && /tmp/test_eosdf.sh {test_dir}")
@@ -333,11 +364,20 @@ def test_eosdf_with_script_that_throws_exception(cta_taped, eos_client, cta_cli,
     cta_cli.set_all_drives_up()
 
 
-# This test screws with the tape pools and archive routes, so it should be the last one in the suite that tests anything to do with the tape workflow
-# We can't use the Temp* resources directly, because they clean themselves up. However, after archiving we have some files archived, which prevent the cleanup
+# This test screws with the tape pools and archive routes, so it should be the last one in the suite that tests anything
+# to do with the tape workflow
+# We can't use the Temp* resources directly, because they clean themselves up. However, after archiving we have some
+# files archived, which prevent the cleanup
 
 
-def test_retrieve_queue_cleanup(eos_mgm, eos_client, cta_cli, test_dir, cta_storage_class, remote_scripts_dir) -> None:
+def test_retrieve_queue_cleanup(
+    eos_mgm: EosMgmHost,
+    eos_client: EosClientHost,
+    cta_cli: CtaCliHost,
+    test_dir: Path,
+    cta_storage_class: str,
+    remote_scripts_dir: Path,
+) -> None:
     eos_client.copy_to(
         str(remote_scripts_dir / "eos_client" / "test_retrieve_queue_cleanup.sh"), "/tmp/", permissions="+x"
     )
@@ -363,7 +403,10 @@ def test_retrieve_queue_cleanup(eos_mgm, eos_client, cta_cli, test_dir, cta_stor
         for j in range(copynb):
             print(f"Creating AR {sc_name}, {tp_names[j]}, {j + 1}")
             cta_cli.exec(
-                f"cta-admin archiveroute add --storageclass '{sc_name}' --tapepool {tp_names[j]} --copynb {j + 1} -m 'Add temp archive route'"
+
+                    f"cta-admin archiveroute add --storageclass '{sc_name}' --tapepool {tp_names[j]} --copynb "
+                    f"{j + 1} -m 'Add temp archive route'"
+
             )
 
     # The actual test
@@ -373,7 +416,7 @@ def test_retrieve_queue_cleanup(eos_mgm, eos_client, cta_cli, test_dir, cta_stor
 # Tests for correct runtime behaviour w.r.t. logs, config files, etc
 
 
-def test_taped_config_dr_ls_consistency(cta_cli, cta_taped) -> None:
+def test_taped_config_dr_ls_consistency(cta_cli: CtaCliHost, cta_taped: CtaTapedHost) -> None:
     taped_config = cta_taped.exec_with_output("cat /etc/cta/cta-taped.conf")
     drive_json = cta_cli.exec_with_output("cta-admin --json dr ls")
     entries = [e for e in json.loads(drive_json) if e.get("driveName") == cta_taped.drive_name]
@@ -399,28 +442,28 @@ def test_taped_config_dr_ls_consistency(cta_cli, cta_taped) -> None:
         assert (cat, key, val) in indexed
 
 
-def test_example_config_file_correctness_maintd(cta_maintd) -> None:
+def test_example_config_file_correctness_maintd(cta_maintd: CtaMaintdHost) -> None:
     cta_maintd.exec("cta-maintd --config-strict --config /etc/cta/cta-maintd.example.toml --config-check")
 
 
-def test_runtime_directory_correctness_maintd(cta_maintd) -> None:
+def test_runtime_directory_correctness_maintd(cta_maintd: CtaMaintdHost) -> None:
     cta_maintd.exec("comm /etc/cta/cta-maintd.toml /run/cta/config.toml -3")
     cta_maintd.exec("comm /etc/cta/cta-catalogue.conf /run/cta/catalogue.config_file -3")
     cta_maintd.exec("comm /etc/cta/cta-otel.yaml /run/cta/telemetry.config_file -3")
     cta_maintd.exec("jq -e -r '.service == \"cta-maintd\"' /run/cta/version.json >/dev/null")
 
 
-def test_log_rotation_maintd(cta_maintd, remote_scripts_dir) -> None:
+def test_log_rotation_maintd(cta_maintd: CtaMaintdHost, remote_scripts_dir: Path) -> None:
     cta_maintd.copy_to(str(remote_scripts_dir / "cta_maintd" / "test_refresh_log_fd.sh"), "/tmp/", permissions="+x")
     cta_maintd.exec("bash /tmp/test_refresh_log_fd.sh")
 
 
-def test_log_rotation_taped(cta_taped, remote_scripts_dir) -> None:
+def test_log_rotation_taped(cta_taped: CtaTapedHost, remote_scripts_dir: Path) -> None:
     cta_taped.copy_to(str(remote_scripts_dir / "cta_taped" / "test_refresh_log_fd.sh"), "/tmp/", permissions="+x")
     cta_taped.exec("bash /tmp/test_refresh_log_fd.sh")
 
 
-def test_log_schema_correctness(env, tmp_path, cta_maintd) -> None:
+def test_log_schema_correctness(env: TestEnv, tmp_path: Path, cta_maintd: CtaMaintdHost) -> None:
     hosts = env.cta_admin_api + env.cta_workflow_api + env.cta_taped
     logging_schema_path = tmp_path / "cta-logging.schema.json"
     # Maintd already populates the logging schema in the runtime directory
@@ -522,7 +565,7 @@ def test_log_schema_correctness(env, tmp_path, cta_maintd) -> None:
     print(f"Coverage complete: All {len(expected_events)} defined event types were tested.")
 
 
-def test_add_errors_to_whitelist(error_whitelist) -> None:
+def test_add_errors_to_whitelist(error_whitelist: set[str]) -> None:
     error_whitelist.add("Task failed: counting another error for this session")
     error_whitelist.add("In RecallReportPacker::ReportError::execute(): failing retrieve job after exception.")
     error_whitelist.add("File writing to disk failed")
@@ -532,11 +575,17 @@ def test_add_errors_to_whitelist(error_whitelist) -> None:
     error_whitelist.add("In Scheduler::reportRetrieveJobsBatch(): failed to report.")
     error_whitelist.add("In Scheduler::reportArchiveJobsBatch(): failed to report.")
     error_whitelist.add(
-        "In RetrieveRequest::garbageCollect() [queue cleanup]: No VID available to requeue the request. Failing all jobs."
+
+            "In RetrieveRequest::garbageCollect() [queue cleanup]: No VID available to requeue the "
+            "request. Failing all jobs."
+
     )
     error_whitelist.add("End of recall session with error(s)")
     error_whitelist.add(
-        "In RetrieveMount::releaseDiskSpace(): reservation release request failed, driveName, diskSystem and mountId do not match."
+
+            "In RetrieveMount::releaseDiskSpace(): reservation release request failed, driveName, "
+            "diskSystem and mountId do not match."
+
     )
     error_whitelist.add("In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.")
     error_whitelist.add("In Agent::deleteAndUnregisterSelf: agent still owns objects. Here is a part of the list.")

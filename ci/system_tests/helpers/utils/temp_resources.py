@@ -13,7 +13,10 @@ class TempDiskInstanceSpace:
     def __enter__(self):
         self.ls_before = self.cta_cli.exec_with_output("cta-admin --json ds ls")
         self.cta_cli.exec(
-            f"cta-admin dis add -n {self.dis_name} --di {self.di_name} -i 10 -u eosSpace:default -m 'Add temp disk instance system'"
+
+                f"cta-admin dis add -n {self.dis_name} --di {self.di_name} -i 10 -u eosSpace:default -m "
+                f"'Add temp disk instance system'"
+
         )
         return self
 
@@ -84,7 +87,10 @@ class TempVirtualOrganization:
     def __enter__(self):
         self.ls_before = self.cta_cli.exec_with_output("cta-admin --json vo ls")
         self.cta_cli.exec(
-            f"cta-admin vo add --vo '{self.vo_name}' --rmd 1 --wmd 1 --di '{self.di_name}' -m 'Add temp virtual organization' {self.extra_flags}"
+
+                f"cta-admin vo add --vo '{self.vo_name}' --rmd 1 --wmd 1 --di '{self.di_name}' -m 'Add "
+                f"temp virtual organization' {self.extra_flags}"
+
         )
         return self
 
@@ -141,13 +147,19 @@ class TempArchiveRoute:
     def __enter__(self):
         self.ls_before = self.cta_cli.exec_with_output("cta-admin --json archiveroute ls")
         self.cta_cli.exec(
-            f"cta-admin archiveroute add --storageclass '{self.sc_name}' --tapepool {self.tp_name} --copynb {self.copynb} -m 'Add temp archive route'"
+
+                f"cta-admin archiveroute add --storageclass '{self.sc_name}' --tapepool {self.tp_name} "
+                f"--copynb {self.copynb} -m 'Add temp archive route'"
+
         )
         return self
 
     def __exit__(self, exc_type, exc, tb):
         self.cta_cli.exec(
-            f"cta-admin archiveroute rm --storageclass '{self.sc_name}' --copynb {self.copynb} --archiveroutetype DEFAULT"
+
+                f"cta-admin archiveroute rm --storageclass '{self.sc_name}' --copynb {self.copynb} "
+                f"--archiveroutetype DEFAULT"
+
         )
         assert self.ls_before == self.cta_cli.exec_with_output("cta-admin --json archiveroute ls")
         return False
@@ -163,7 +175,10 @@ class TempTape:
     def __enter__(self):
         self.ls_before = self.cta_cli.exec_with_output("cta-admin --json ta ls --all")
         self.cta_cli.exec(
-            f"cta-admin ta add -v {self.vid} --mt LTO9 --ve tempvendor -l {self.ll_name} -t {self.tp_name} -f false --purchaseorder temporder -m 'Add temp tape'"
+
+                f"cta-admin ta add -v {self.vid} --mt LTO9 --ve tempvendor -l {self.ll_name} -t "
+                f"{self.tp_name} -f false --purchaseorder temporder -m 'Add temp tape'"
+
         )
         return self
 

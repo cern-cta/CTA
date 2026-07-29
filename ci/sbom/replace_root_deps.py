@@ -45,7 +45,10 @@ def replace_root_dependencies(sbom, prefix) -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser(
-        description="Update the dependencies of the root component to contain all dependencies of the OS component starting with a given prefix"
+        description=(
+            "Update the dependencies of the root component to contain all dependencies of the OS "
+            "component starting with a given prefix"
+        )
     )
     ap.add_argument("--in", dest="sbom_in", required=True, help="Input CycloneDX JSON")
     ap.add_argument("--out", dest="sbom_out", required=True, help="Output CycloneDX JSON")

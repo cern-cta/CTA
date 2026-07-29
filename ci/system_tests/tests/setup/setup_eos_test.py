@@ -6,11 +6,16 @@
 #####################################################################################################################
 
 
-def test_eos_version(eos_mgm) -> None:
+from pathlib import Path
+
+from system_tests.helpers.hosts import EosMgmHost
+
+
+def test_eos_version(eos_mgm: EosMgmHost) -> None:
     eos_mgm.exec("eos version")
 
 
-def test_general_settings(eos_mgm) -> None:
+def test_general_settings(eos_mgm: EosMgmHost) -> None:
     eos_mgm.exec("eos vid enable unix")
     eos_mgm.exec("eos vid enable https")
     eos_mgm.exec("eos space set default on")
@@ -29,7 +34,7 @@ def test_general_settings(eos_mgm) -> None:
     eos_mgm.exec(f"eos fs add -m {tape_fs_id} tape localhost:1234 /does_not_exist tape", throw_on_failure=False)
 
 
-def test_add_users(eos_mgm) -> None:
+def test_add_users(eos_mgm: EosMgmHost) -> None:
     # We don't really care if these already exist
     eos_mgm.exec("groupadd --gid 1100 eosusers", throw_on_failure=False)
     eos_mgm.exec("groupadd --gid 1200 powerusers", throw_on_failure=False)
@@ -49,7 +54,7 @@ def test_add_users(eos_mgm) -> None:
     eos_mgm.exec(f"eos vid set membership {eosadmin2_id} +sudo")
 
 
-def test_create_wf_directory(eos_mgm, eos_workflow_dir) -> None:
+def test_create_wf_directory(eos_mgm: EosMgmHost, eos_workflow_dir: Path) -> None:
     eos_mgm.exec(f"eos mkdir -p {eos_workflow_dir}")
     eos_mgm.exec(f'eos attr set sys.workflow.sync::create.default="proto" {eos_workflow_dir}')
     eos_mgm.exec(f'eos attr set sys.workflow.sync::closew.default="proto" {eos_workflow_dir}')
@@ -63,12 +68,14 @@ def test_create_wf_directory(eos_mgm, eos_workflow_dir) -> None:
     eos_mgm.exec(f'eos attr set sys.workflow.sync::delete.default="proto" {eos_workflow_dir}')
 
 
-def test_delete_cta_directory(eos_mgm, cta_dir) -> None:
+def test_delete_cta_directory(eos_mgm: EosMgmHost, cta_dir: Path) -> None:
     # Cleanup a possibly existing directory
     eos_mgm.force_remove_directory(cta_dir)
 
 
-def test_create_cta_directory(eos_mgm, cta_dir, eos_workflow_dir, cta_storage_class) -> None:
+def test_create_cta_directory(
+    eos_mgm: EosMgmHost, cta_dir: Path, eos_workflow_dir: Path, cta_storage_class: str
+) -> None:
     eos_mgm.exec(f"eos mkdir -p {cta_dir}")
     # Must be writable by eosusers and powerusers
     # but as there is no sticky bit in eos, we need to remove deletion for non owner to eosusers members

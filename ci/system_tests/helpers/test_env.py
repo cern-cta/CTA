@@ -93,7 +93,8 @@ class TestEnv:
         except ApiException as e:
             raise RuntimeError(f"Failed to query namespace {namespace}: {e}")
         return TestEnv(
-            # Our "cta-client" should actually be an eos-client. However, the current bash test suite mixes these concepts
+            # Our "cta-client" should actually be an eos-client. However, the current bash test suite mixes these
+            # concepts
             # Something to be changed once we move them over....
             cta_cli_conns=TestEnv.get_k8s_connections_by_selector(
                 namespace, "app.kubernetes.io/component=cli", "cta-cli"

@@ -157,7 +157,10 @@ class CtaCliHost(RemoteHost):
                 time.sleep(1)
             if t.expired:
                 raise TimeoutError(
-                    f"Repack request for VID {vid} failed to expand within timeout of {wait_timeout_secs} seconds. Last fSeq on tape: {last_fseq}, last expanded fSeq: {last_expanded_fseq}"
+
+                        f"Repack request for VID {vid} failed to expand within timeout of {wait_timeout_secs} "
+                        f"seconds. Last fSeq on tape: {last_fseq}, last expanded fSeq: {last_expanded_fseq}"
+
                 )
         print("Repack request expanded")
 

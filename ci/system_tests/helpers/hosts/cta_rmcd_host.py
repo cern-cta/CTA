@@ -35,7 +35,7 @@ class CtaRmcdHost(RemoteHost):
         return volume_tags
 
     def list_loaded_drives(self) -> list[tuple[int, int]]:
-        """Retrieves a list of loaded drives and their corresponding slots for the library device associated with this ctarmcd host."""
+        """Retrieve loaded drives and their slots for this host's library device."""
         status_output = self.exec_with_output(f"mtx -f {self.library_device} status").splitlines()
         loaded_drives = []
 

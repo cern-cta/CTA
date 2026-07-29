@@ -107,7 +107,10 @@ class EosClientHost(DiskClientHost):
     ) -> None:
         print(f"Evicting {path} on disk instance {disk_instance_name}")
         self.exec(
-            f'KRB5CCNAME=/tmp/{user}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://{disk_instance_name} file drop "{path}" 1'
+
+                f"KRB5CCNAME=/tmp/{user}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 "
+                f'root://{disk_instance_name} file drop "{path}" 1'
+
         )
         if wait:
             self.wait_for_file_eviction(disk_instance_name, path, wait_timeout_secs=wait_timeout_secs)

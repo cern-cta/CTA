@@ -59,7 +59,8 @@ class DiskInstanceHost(RemoteHost):
         # Few problems to solve here:
         # Not all files might be archived for whatever reason (it's a stress test; errors are bound to happen)
         # Additionally, we have no guarantee on the order in which CTA archives the directories
-        # So we can't wait for directories to complete one by one and instead, we continuously loop through all of them as they progress.
+        # So we can't wait for directories to complete one by one and instead, we continuously loop through all of them
+        # as they progress.
         # We don't want to check directories that have completed, so we use a queue
 
         directories = self.list_subdirectories_in_directory(archive_dir_path)
@@ -103,7 +104,10 @@ class DiskInstanceHost(RemoteHost):
             current_remaining_files = sum(num_files_left.values())
 
             print(
-                f"{current_remaining_files} files remaining to be archived to tape ({len(dirs_left_queue)} directories left)"
+
+                    f"{current_remaining_files} files remaining to be archived to tape "
+                    f"({len(dirs_left_queue)} directories left)"
+
             )
 
             # Check if progress was made

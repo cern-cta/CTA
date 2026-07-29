@@ -4,8 +4,10 @@
 import json
 from collections import Counter
 
+from system_tests.helpers.test_env import TestEnv
 
-def test_no_coredumps(env) -> None:
+
+def test_no_coredumps(env: TestEnv) -> None:
     hosts = env.disk_client + env.cta_cli + env.cta_admin_api + env.cta_workflow_api + env.cta_taped + env.cta_rmcd
     total_core_dumps_found = 0
     for host in hosts:
@@ -17,7 +19,7 @@ def test_no_coredumps(env) -> None:
     assert total_core_dumps_found == 0, "core dumps were found"
 
 
-def test_no_uncaught_exceptions_and_errors(env, error_whitelist) -> None:
+def test_no_uncaught_exceptions_and_errors(env: TestEnv, error_whitelist: set[str]) -> None:
     hosts = env.cta_admin_api + env.cta_workflow_api + env.cta_taped + env.cta_rmcd
     error_messages = []  # for summaries
     for host in hosts:

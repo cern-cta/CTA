@@ -93,7 +93,10 @@ def generate_jwt(private_key, kid: str, sub: str, lifetime_sec: int):
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Generate CI files containing a JWKS and one JWT for each --sub passed. Files are put in the --output-dir directory."
+        description=(
+            "Generate CI files containing a JWKS and one JWT for each --sub passed. Files are put in "
+            "the --output-dir directory."
+        )
     )
     parser.add_argument(
         "--sub",
