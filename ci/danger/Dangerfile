@@ -1,6 +1,17 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+labels = gitlab.mr_json["labels"] || []
+release_mr = labels.include?("type::release")
+
+if release_mr
+  markdown <<~MSG
+    ## 🤖 Danger checks skipped for release MR
+
+    This merge request has the `type::release` label, so Danger intentionally skipped the normal contribution checks for this release-only change.
+  MSG
+else
+
 # --- Title checks ---
 
 ALLOWED_PREFIXES = %w[
@@ -53,8 +64,6 @@ end
 
 
 # --- Label checks ---
-
-labels = gitlab.mr_json["labels"] || []
 
 type_labels = labels.select { |l| l.start_with?("type::") }
 priority_labels = labels.select { |l| l.start_with?("priority::") }
@@ -123,3 +132,5 @@ markdown <<~MSG
 
   ---
 MSG
+
+end

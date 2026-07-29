@@ -1,0 +1,9 @@
+#!/usr/bin/env python3
+
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+from release_cli import main
+
+if __name__ == "__main__":
+    raise SystemExit(main())

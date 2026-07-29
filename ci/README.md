@@ -62,8 +62,6 @@ By default, the provided Docker images are very minimal and don't provide variou
 cta-dev images --enable-debug-image
 ```
 
-
-
 ### Deploy
 
 Deploy a fresh development instance:
@@ -174,6 +172,66 @@ failed teardown test -> remaining teardown tests
 ```
 
 If there is no previous failure for the selected flow, `--lf` and `--ff` run nothing.
+
+## Release CLI
+
+The release workflow is exposed as a Python command in `ci/release`. Add it to your `PATH` for the current shell:
+
+```bash
+export PATH="$PWD/ci/release:$PATH"
+release --help
+```
+
+Prepare a release from a clean, synchronized `main` checkout:
+
+```bash
+release prepare v5.12.0.0-1
+```
+
+The changelog opens in the editor selected by Git (`GIT_EDITOR`, `core.editor`, `VISUAL`, or `EDITOR`).
+
+Review and merge the printed changelog merge request, then tag the release:
+
+```bash
+release tag
+```
+
+By default, `tag` resolves and tags the latest fetched `origin/main`. Pass any
+Git revision—such as a commit SHA, local branch, remote-tracking branch, or
+existing tag—with `--ref`:
+
+```bash
+release tag v5.12.0.0-1 --ref origin/maintenance
+release tag v5.12.0.0-1 --ref 0123456789abcdef
+```
+
+When a version is explicit, missing release issues, merge requests, or
+changelog entries produce warnings and require confirmation. Without a
+version, the command requires an unambiguous merged release MR.
+
+Before creating a new annotated tag, the command opens Git's configured editor
+for a short tag description. For the default `origin/main` target, only a
+successful push pipeline for the selected commit satisfies the pipeline gate.
+On completion, the command prints links to the GitLab tag page and tag
+pipeline.
+
+Use `release --dry-run prepare VERSION` or `release --dry-run tag VERSION`
+to validate and print planned mutations.
+
+For testing the release command from a dirty feature-branch checkout, add
+`--allow-unclean`. This skips the worktree and current-branch checks, but still
+resolves the requested tag target explicitly; `prepare` still requires local
+`main` to match `origin/main`:
+
+```bash
+release --dry-run --allow-unclean prepare VERSION
+```
+
+Run the release-tool tests with:
+
+```bash
+python3 -m unittest discover -s ci/release/tests -v
+```
 
 ## Typical helper functions and their meaning
 
