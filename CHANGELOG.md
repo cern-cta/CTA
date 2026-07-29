@@ -1,3 +1,226 @@
+## 5.11.19.1-0.releasetest4 (2026-07-29)
+
+### New Features
+
+- [Misc] Add event_name to important CTA log messages (cta/CTA!1381)
+
+- [Misc] Add source location and CTA version to log lines (cta/CTA!1348)
+
+- [Misc] Package basic JSON logging schema (cta/CTA!1304)
+
+- [maintd] Add catalogue and telemetry conf files to runtime directory (cta/CTA!1303)
+
+- [maintd] Add CLI option to use runtime directory for app metadata (cta/CTA!1266)
+
+- [CI] Add health endpoints to maintd (cta/CTA!1243)
+
+- [frontend] Implement user/repack domain separation on tape ch command (cta/CTA!1241)
+
+- [scheduler] Enable unit tests for the pgsched (cta/CTA!1077)
+
+- [rmcd] Allow rmcd to accept connections outside of localhost (cta/CTA!1229)
+
+- [Tools] Add Scheduler backend name to repack ls output (cta/CTA!1168)
+
+- [frontend] Implement JWT authentication for scripts in cta-admin-grpc (cta/CTA!1065)
+
+- [taped] Add additional OTEL resource attributes for taped (cta/CTA!1105)
+
+- [scheduler] Implement repack workflows for Relational DB based scheduler (cta/CTA!974)
+
+- [taped] Add metrics to track drive status and mount type (cta/CTA!1082)
+
+- [Tools] Allow cta-admin to print a separate JSON object per record (cta/CTA!1072)
+
+- [taped] Add additional metrics for monitoring cta-taped data transfers (cta/CTA!1068)
+
+- [frontend] Add OpenTelemetry metric for in-flight frontend requests (cta/CTA!1067)
+
+- [Tools] Add Kerberos support for cta-admin commands (cta/CTA!1047)
+
+- [Tools] Implement all the cta-admin commands with gRPC (cta/CTA!890)
+
+- [Misc] Add OpenTelemetry metrics to CTA (cta/CTA!879)
+
+
+### Changes
+
+- [taped] cta-eosdf no longer sources sysconfig (cta/CTA!1455)
+
+- [Tools] Change short option for cta-admin af ch --idfile from -I to -F (cta/CTA!1453)
+
+- [CI] Replace ctageneric with immutable service-specific Docker images (cta/CTA!1225)
+
+- [frontend] Split Admin/WFE frontends, add mTLS (cta/CTA!1367)
+
+- [Misc] Rename cta-objectstore-tools RPM to cta-scheduler-utils (cta/CTA!1383)
+
+- [Misc] Rename cta-catalogueutils RPM to cta-catalogue-utils (cta/CTA!1384)
+
+- [Misc] Change build mode from Debug to RelWithDebInfo (cta/CTA!1377)
+
+- [taped] Change catalogue drive config boolean entries from 0/1 to true/false (cta/CTA!1389)
+
+- [Misc] Update semantic conventions for exception and error log attributes (cta/CTA!1350)
+
+- [Tools] Advertise Kerbreros Service Principal Name to client (cta/CTA!1323)
+
+- [frontend] Allow admin commands or physics workflows to be disabled on CTA frontend (cta/CTA!1336)
+
+- [frontend] Allow commands or physics workflows to be disabled on CTA frontend (cta/CTA!1313)
+
+- [Misc] Replace reflect-cpp library with custom implementation (cta/CTA!1291)
+
+- [Misc] Change Catalogue backend install behaviour (cta/CTA!1295)
+
+- [maintd] Add use_unix_domain_socket configuration entry for health server (cta/CTA!1282)
+
+- [maintd] Update maintd to use TOML configuration (cta/CTA!1246)
+
+- [maintd] Remove daemon_user and daemon_group settings (cta/CTA!1252)
+
+- [maintd] Use declarative config to initialise OpenTelemetry SDK (cta/CTA!1248)
+
+- [Misc] Simplify only user name reporting in logs (cta/CTA!1239)
+
+- [Tools] Enable cta-admin colors only for terminal output (cta/CTA!1203)
+
+- [maintd] Move Maintenance process from taped into a new component: cta-maintd (cta/CTA!764)
+
+- [Misc] Reduce logging cardinality of OTLP logger output (cta/CTA!1104)
+
+- [Misc] Update various OpenTelemetry config options (cta/CTA!1106)
+
+- [Misc] Failing to instantiate telemetry should not stop process from starting (cta/CTA!1107)
+
+- [Misc] Bump OTLP Error log levels down to warnings (cta/CTA!1074)
+
+- [Misc] Update xrootd-ssi-protobuf-interface to v1.27 (cta/CTA!1037)
+
+- [taped] Update taped process names to always include drive name (cta/CTA!994)
+
+
+### Bug Fixes
+
+- [scheduler] Fix pg scheduler backend repack status machine and norecall...
+
+- [scheduler] Fix huge/wrong value on youngest age of retrieve queue (cta-admin sq) (cta/CTA!1382)
+
+- [scheduler] Allow garbage collection to requeue retrieve requests on a...
+
+- [Misc] Fix valgrind failures in CTA CI (cta/CTA!1356)
+
+- [Misc] Update minimum version of opentelemetry-cpp runRequires (cta/CTA!1370)
+
+- [taped] Enabling reading of tapes with misformed OSM tape format (cta/CTA!1343)
+
+- [frontend] Fix broken cta-admin fr ls command (cta/CTA!1340)
+
+- [catalogue] Improve CTA resilience to catalogue DB outages during data fetching (cta/CTA!1334)
+
+- [Misc] Fix compile issues when building CTA in Release mode (cta/CTA!1207)
+
+- [frontend] Remove race conditions in NegotiationRequestHandler (cta/CTA!1310)
+
+- [taped] Improve readExactBlock error message contents (cta/CTA!1311)
+
+- [frontend] Prevent 'cta-admin dr rm' command from crashing the cta-frontend (cta/CTA!1305)
+
+- [frontend] Fix crash in 'cta-admin dr ls' command when using multiple...
+
+- [frontend] Add error message when trying to change media type of non-empty tape (cta/CTA!1253)
+
+- [Tools] Prevent cta-objectstore-dump-object from crashing when using wrong arguments (cta/CTA!1238)
+
+- [Misc] Improve CTA Logger performance and scoping of parameters (cta/CTA!1222)
+
+- [CI] Fix grpc pipeline failure for test-repack (cta/CTA!1232)
+
+- [frontend] Fix curl call to jwks endpoint hanging (cta/CTA!1224)
+
+- [frontend] Enable streaming behaviour on the 'cta-admin tape ls' command (cta/CTA!1202)
+
+- [frontend] Enable streaming behaviour on the 'cta-admin fr ls' command (cta/CTA!1187)
+
+- [scheduler] Do not increment RETRIES_WITHIN_MOUNT when moving archive jobs to...
+
+- [Misc] Fix unintentional truncation of milliseconds in metric recordings (cta/CTA!1167)
+
+- Fix deadlock PG backend for repack (cta/CTA!1165)
+
+- [taped] Add missing drive config items to catalogue (cta/CTA!1102)
+
+- [Misc] Respect CTA gRPC frontend configuration options to block user and/or...
+
+- [frontend] Enable streaming behaviour on cta-admin rtf command (cta/CTA!1095)
+
+- [Misc] Handle log exception in SharedQueueLock destructor (cta/CTA!1084)
+
+- [scheduler] Remove explicit core dumping in the scheduler code (cta/CTA!1081)
+
+- [taped] Fix segmentation fault on archive job report URL function (cta/CTA!1080)
+
+- [Tools] Do not link cta-admin-grpc with objectstore when using pgsched (cta/CTA!1076)
+
+- [taped] Preserve session ID value during CleaningUp drive status update (cta/CTA!1071)
+
+- [scheduler] Move generic parts of fetchMountInfo logic to the Scheduler (cta/CTA!1053)
+
+- [Tools] Fix cta-admin sc and tape ls exit code inconsistencies (cta/CTA!1035)
+
+- [rmcd] Fix bugs in rmc lookup for sgpath (cta/CTA!1010)
+
+
+### Deprecations
+
+- [frontend] Deprecate storage class field in EOS-CTA xattrs (cta/CTA!1424)
+
+- [frontend] Finalize deprecation of --encrypted in cta-admin tapepool add (cta/CTA!1240)
+
+
+### Removals
+
+- [CI] Remove XRootD frontend from Helm charts (cta/CTA!1432)
+
+- [frontend] Stop using TAPE_POOL.SUPPLY column (cta/CTA!1245)
+
+- [Misc] Remove `experimental.bypassAdminAuthCheck` option (cta/CTA!1171)
+
+
+### Security Fixes
+
+- [Misc] Use higher TLS version in JwkCache.cpp (cta/CTA!1003)
+
+
+### Performance Improvements
+
+- [CI] Use python xrootd persistent clients for archive instead of xrdcp --parallel (cta/CTA!1274)
+
+- [taped] Optimise DriveState queries (cta/CTA!1198)
+
+- [catalogue] Improve choice of std containers in the CTA Catalogue (cta/CTA!1210)
+
+
+### Other
+
+- [CI] Add Enstore and EnstoreLarge tape tests (cta/CTA!1412)
+
+- [Misc] Upgrade eos to 5.3.36 (cta/CTA!1396)
+
+- [Misc] Update opentelemetry-cpp to v1.26.0 (cta/CTA!1321)
+
+- [Misc] Rename *.conf.example files to *.example.conf (cta/CTA!1279)
+
+- [taped] Remove eos client dependency in `cta-eosdf` (cta/CTA!1227)
+
+- [Misc] Upgrade EOS to 5.3.23 and fix token permissions in CI (cta/CTA!1044)
+
+- [Tools] Add cta-objectstore-tools.conf.example to repo and RPMs (cta/CTA!1023)
+
+- [rmcd] Convert mediachanger code from C to C++ (cta/CTA!1019)
+
+- [Misc] Upgrade from c++17 to c++20 (cta/CTA!1001)
+
 ## 5.11.19.0-1
 
 ### Changes
