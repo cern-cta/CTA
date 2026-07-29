@@ -15,9 +15,9 @@ readonly REGISTRY="gitlab-registry.cern.ch"
 readonly IMAGE_REPOSITORY="${REGISTRY}/cta/ctageneric/cta-debug"
 readonly DEBUG_IMAGE_JOB_NAME="build-cta-images: [cta-debug]"
 
-readonly CONFIG_DIR="${HOME}/.config/cta-ci-debug"
-readonly TOKEN_FILE="${CONFIG_DIR}/token"
-readonly CACHE_DIR="${HOME}/.cache/cta-ci-debug"
+readonly CONFIG_DIR="${HOME}/.config/cta/"
+readonly TOKEN_FILE="${CONFIG_DIR}/gitlab-api-token"
+readonly CACHE_DIR="${HOME}/.cache/cta/ci-debug"
 script_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 readonly script_dir
 
