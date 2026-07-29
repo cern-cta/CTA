@@ -10,29 +10,21 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::mediachanger::LibrarySlot::LibrarySlot(const TapeLibraryType libraryType) : m_libraryType(libraryType) {}
+cta::mediachanger::LibrarySlot::LibrarySlot(const uint16_t drvOrd, bool dummy) : m_drvOrd(drvOrd), m_dummy(dummy) {
+  m_str = librarySlotToString(m_drvOrd);
+}
 
 //------------------------------------------------------------------------------
-// destructor
+// librarySlotToString
 //------------------------------------------------------------------------------
-cta::mediachanger::LibrarySlot::~LibrarySlot() = default;
-
-//------------------------------------------------------------------------------
-// getLibrarySlotType
-//------------------------------------------------------------------------------
-cta::mediachanger::TapeLibraryType cta::mediachanger::LibrarySlot::getLibraryTypeOfSlot(const std::string& slot) {
-  if (0 == slot.find("dummy")) {
-    return TAPE_LIBRARY_TYPE_DUMMY;
+std::string cta::mediachanger::LibrarySlot::librarySlotToString(const uint16_t drvOrd) const {
+  std::ostringstream oss;
+  if (m_dummy) {
+    oss << "dummy" << drvOrd;
+  } else {
+    oss << "smc" << drvOrd;
   }
-  if (0 == slot.find("smc")) {
-    return TAPE_LIBRARY_TYPE_SCSI;
-  }
-
-  cta::exception::Exception ex;
-  ex.getMessage() << "Cannot determine tape-library type of library slot"
-                     ": slot="
-                  << slot;
-  throw ex;
+  return oss.str();
 }
 
 //------------------------------------------------------------------------------
@@ -43,8 +35,15 @@ const std::string& cta::mediachanger::LibrarySlot::str() const {
 }
 
 //------------------------------------------------------------------------------
-// getLibraryType
+// getDrvOrd
 //------------------------------------------------------------------------------
-cta::mediachanger::TapeLibraryType cta::mediachanger::LibrarySlot::getLibraryType() const {
-  return m_libraryType;
+uint16_t cta::mediachanger::LibrarySlot::getDrvOrd() const {
+  return m_drvOrd;
+}
+
+//------------------------------------------------------------------------------
+// isDummy
+//------------------------------------------------------------------------------
+bool cta::mediachanger::LibrarySlot::isDummy() const {
+  return m_dummy;
 }

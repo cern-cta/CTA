@@ -1027,14 +1027,12 @@ void Scheduler::removeDrive(const std::string& driveName, log::LogContext& lc) c
 //------------------------------------------------------------------------------
 // reportDriveConfig
 //------------------------------------------------------------------------------
-void Scheduler::reportDriveConfig(const cta::tape::daemon::DriveConfigEntry& driveConfigEntry,
-                                  const cta::tape::daemon::TapedConfiguration& tapedConfig,
-                                  log::LogContext& lc) {
+void Scheduler::reportDriveConfig(const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc) {
   utils::Timer t;
-  DriveConfig::setTapedConfiguration(tapedConfig, &m_catalogue, driveConfigEntry.unitName);
+  DriveConfig::setTapedConfiguration(tapedConfig, &m_catalogue, tapedConfig.driveName.value());
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
-  spc.add("drive", driveConfigEntry.unitName).add("schedulerDbTime", schedulerDbTime);
+  spc.add("drive", tapedConfig.driveName.value()).add("schedulerDbTime", schedulerDbTime);
   lc.log(log::INFO, "In Scheduler::reportDriveConfig(): success.");
 }
 
@@ -1066,10 +1064,9 @@ void Scheduler::createTapeDriveStatus(const common::dataStructures::DriveInfo& d
                                       const common::dataStructures::DesiredDriveState& desiredState,
                                       const common::dataStructures::MountType& type,
                                       const common::dataStructures::DriveStatus& status,
-                                      const tape::daemon::DriveConfigEntry& driveConfigEntry,
                                       const common::dataStructures::SecurityIdentity& identity,
                                       log::LogContext& lc) {
-  m_tapeDrivesState->createTapeDriveStatus(driveInfo, desiredState, type, status, driveConfigEntry, identity, lc);
+  m_tapeDrivesState->createTapeDriveStatus(driveInfo, desiredState, type, status, identity, lc);
   log::ScopedParamContainer spc(lc);
   spc.add("drive", driveInfo.driveName);
   lc.log(log::DEBUG, "In Scheduler::createTapeDriveStatus(): success.");

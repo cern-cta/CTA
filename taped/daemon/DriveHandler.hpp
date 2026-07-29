@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "common/dataStructures/DriveInfo.hpp"
 #include "common/process/threading/SocketPair.hpp"
 
 #include <memory>
@@ -54,7 +55,9 @@ public:
     Crashed      ///< The previous process was killed or crashed. The next session will be a cleanup.
   };
 
-  DriveHandler(const TapedConfiguration& tapedConfig, const DriveConfigEntry& driveConfig, ProcessManager& pm);
+  DriveHandler(const TapedConfiguration& tapedConfig,
+               const common::dataStructures::DriveInfo& driveInfo,
+               ProcessManager& pm);
   ~DriveHandler() override = default;
 
   ProcessingStatus getInitialStatus() override;
@@ -75,7 +78,7 @@ private:
   // The parameters
   const TapedConfiguration& m_tapedConfig;
   // This drive's parameters
-  const DriveConfigEntry& m_driveConfig;
+  const common::dataStructures::DriveInfo& m_driveInfo;
   // The log context
   cta::log::LogContext& m_lc;
   // Log parameter reported using the watchdog

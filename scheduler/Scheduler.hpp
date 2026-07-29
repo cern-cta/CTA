@@ -248,24 +248,20 @@ public:
    * @param desiredState the structure that contains the desired state informations
    * @param type the type of the session, if any
    * @param status the state of the drive. Reporting the state to down will also
-   * @param status The identity of the user requesting the drive to put up or down.
+   * @param identity The identity of the user requesting the drive to put up or down.
    */
   void createTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
                              const common::dataStructures::DesiredDriveState& desiredState,
                              const common::dataStructures::MountType& type,
                              const common::dataStructures::DriveStatus& status,
-                             const tape::daemon::DriveConfigEntry& driveConfigEntry,
                              const common::dataStructures::SecurityIdentity& identity,
                              log::LogContext& lc) override;
 
   /**
    * Reports the configuration of the drive to the objectstore.
-   * @param driveName the name of the drive to report the config to the objectstore
    * @param tapedConfig the config of the drive to report to the objectstore.
    */
-  void reportDriveConfig(const cta::tape::daemon::DriveConfigEntry& driveConfigEntry,
-                         const cta::tape::daemon::TapedConfiguration& tapedConfig,
-                         log::LogContext& lc) override;
+  void reportDriveConfig(const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc) override;
 
   /**
    * Returns the status of a specific drive

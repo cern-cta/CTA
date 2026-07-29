@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "common/dataStructures/DriveInfo.hpp"
 #include "common/log/Logger.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "taped/drive/DriveInterface.hpp"
@@ -27,11 +28,11 @@ public:
      * Constructor
      *
      * @param log Object representing the API to the CTA logging system.
-     * @param driveConfig Configuration of the tape drive to be probed.
+     * @param driveInfo Information of the tape drive to be probed.
      * @param sysWrapper Object representing the operating system.
      */
   EmptyDriveProbe(cta::log::Logger& log,
-                  const cta::tape::daemon::DriveConfigEntry& driveConfig,
+                  const cta::common::dataStructures::DriveInfo& driveInfo,
                   System::virtualWrapper& sysWrapper);
 
   /**
@@ -53,9 +54,9 @@ private:
   cta::log::Logger& m_log;
 
   /**
-     * The configuration of the tape drive to be probed.
+     * The information of the tape drive to be probed.
      */
-  const cta::tape::daemon::DriveConfigEntry m_driveConfig;
+  const cta::common::dataStructures::DriveInfo m_driveInfo;
 
   /**
      * The system wrapper used to find the device and instantiate the drive object

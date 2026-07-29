@@ -5,8 +5,6 @@
 
 #include "mediachanger/DmcProxy.hpp"
 
-#include "mediachanger/DummyLibrarySlot.hpp"
-
 #include <vector>
 
 namespace cta::mediachanger {

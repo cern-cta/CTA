@@ -5,7 +5,6 @@
 
 #include "DriveHandler.hpp"
 
-#include "DriveConfigEntry.hpp"
 #include "DriveHandlerProxy.hpp"
 #include "DriveHandlerStateReporter.hpp"
 #include "TapedProxy.hpp"
@@ -44,12 +43,12 @@ CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistException);
 // constructor
 //------------------------------------------------------------------------------
 DriveHandler::DriveHandler(const TapedConfiguration& tapedConfig,
-                           const cta::tape::daemon::DriveConfigEntry& driveConfig,
+                           const cta::common::dataStructures::DriveInfo& driveInfo,
                            ProcessManager& pm)
-    : SubprocessHandler(std::string("drive:") + driveConfig.unitName),
+    : SubprocessHandler(std::string("drive:") + driveInfo.driveName),
       m_processManager(pm),
       m_tapedConfig(tapedConfig),
-      m_driveConfig(driveConfig),
+      m_driveInfo(driveInfo),
       m_lc(m_processManager.logContext()) {
   // As the handler is started, its first duty is to create a new subprocess. This
   // will be managed by the process manager (initial request in getInitialStatus)
@@ -167,7 +166,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
       // Create a catalogue handler in the parent process,
       // to be able to properly handle a drive shutdown without having to reload the plugin catalogue libraries
       if (!m_catalogue) {
-        const std::string catalogueHandlerName = "DriveHandlerParent-" + m_driveConfig.unitName;
+        const std::string catalogueHandlerName = "DriveHandlerParent-" + m_driveInfo.driveName;
         m_catalogue = createCatalogue(catalogueHandlerName);
       }
       // We are now ready to react to timeouts and messages from the child process.
@@ -175,7 +174,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
     }
   } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer params(m_lc);
-    params.add("tapeDrive", m_driveConfig.unitName).add(semconv::log::exceptionMessage, ex.getMessageValue());
+    params.add("tapeDrive", m_driveInfo.driveName).add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(log::ERR, "Failed to fork drive process. Initiating shutdown with SIGTERM.");
     // Wipe all previous states as we are shutting down
     m_processingStatus = SubprocessHandler::ProcessingStatus();
@@ -246,7 +245,7 @@ void DriveHandler::kill() {
   // If we have a subprocess, kill it and wait for completion (if needed). We do not need to keep
   // track of the exit state as kill() means we will not be called anymore.
   log::ScopedParamContainer params(m_lc);
-  params.add("tapeDrive", m_driveConfig.unitName);
+  params.add("tapeDrive", m_driveInfo.driveName);
   if (m_pid != -1) {
     params.add("SubProcessId", m_pid);
     // The socket pair will be reopened on the next fork. Clean it up.
@@ -272,7 +271,7 @@ void DriveHandler::kill() {
       scoped.add("Error_sessionKilled", 1);
       scoped.add("killSignal", WTERMSIG(status));
       scoped.add("status", "failure");
-      scoped.add("tapeDrive", m_driveConfig.unitName);
+      scoped.add("tapeDrive", m_driveInfo.driveName);
       m_lc.logEvent(cta::log::INFO, "Tape session finished", cta::semconv::log::EventNameValues::kTapeSessionFinished);
       m_pid = -1;
     } catch (exception::Exception& ex) {
@@ -289,7 +288,7 @@ void DriveHandler::kill() {
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
   log::ScopedParamContainer scoped(m_lc);
-  scoped.add("tapeDrive", m_driveConfig.unitName);
+  scoped.add("tapeDrive", m_driveInfo.driveName);
   m_lastHeartBeatTime = std::chrono::steady_clock::now();
 
   // Read from the socket pair
@@ -309,7 +308,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
     }
     // If we report a state change, process it (last as this can change the return value)
     if (message.reportingstate()) {
-      DriveHandlerStateReporter stateReporter(m_driveConfig.unitName,
+      DriveHandlerStateReporter stateReporter(m_driveInfo.driveName,
                                               &m_processingStatus,
                                               &m_sessionVid,
                                               &m_lastDataMovementTime,
@@ -430,7 +429,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
   // be picked up) and -1 if the process is entirely gone.
   // Of course we might not have a child process to begin with.
   log::ScopedParamContainer params(m_lc);
-  params.add("tapeDrive", m_driveConfig.unitName);
+  params.add("tapeDrive", m_driveInfo.driveName);
   if (-1 == m_pid) {
     return m_processingStatus;
   }
@@ -445,7 +444,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer scoped(m_lc);
     scoped.add("subprocessPid", m_pid)
-      .add("tapeDrive", m_driveConfig.unitName)
+      .add("tapeDrive", m_driveInfo.driveName)
       .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .add("SessionState", session::toString(m_sessionState))
       .add("SessionType", toString(m_sessionType));
@@ -502,7 +501,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
     }
     // In all cases we log the end of the session.
     log::ScopedParamContainer scoped(m_lc);
-    scoped.add("tapeDrive", m_driveConfig.unitName);
+    scoped.add("tapeDrive", m_driveInfo.driveName);
     scoped.add("killSignal", WTERMSIG(processStatus));
     m_lc.logEvent(cta::log::INFO, "Tape session finished", cta::semconv::log::EventNameValues::kTapeSessionFinished);
     // And record we do not have a process anymore.
@@ -535,7 +534,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processTimeout() {
   // Process manager found that we timed out. Let's log why and kill the child process,
   // if any (there should be one).
   log::ScopedParamContainer params(m_lc);
-  params.add("tapeDrive", m_driveConfig.unitName);
+  params.add("tapeDrive", m_driveInfo.driveName);
   if (-1 == m_pid) {
     m_lc.log(log::ERR, "In DriveHandler::processTimeout(): Received timeout without child process present.");
     m_lc.log(log::INFO, "Re-launching child process.");
@@ -623,8 +622,8 @@ int DriveHandler::runChild() {
   const auto driveHandlerProxy = createDriveHandlerProxy();
 
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = m_driveConfig.unitName;
-  driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;
+  driveInfo.driveName = m_driveInfo.driveName;
+  driveInfo.logicalLibrary = m_driveInfo.logicalLibrary;
   driveInfo.host = cta::utils::getShortHostname();
 
   {
@@ -687,7 +686,7 @@ int DriveHandler::runChild() {
                                    m_lc);
       log::ScopedParamContainer params(m_lc);
       params.add("tapeVid", m_previousVid)
-        .add("tapeDrive", m_driveConfig.unitName)
+        .add("tapeDrive", m_driveInfo.driveName)
         .add("PreviousState", session::toString(m_sessionState))
         .add("PreviousType", session::toString(m_sessionType));
       m_lc.log(log::INFO, "In DriveHandler::runChild(): starting cleaner after crash with tape potentially loaded.");
@@ -720,7 +719,7 @@ int DriveHandler::runChild() {
   if (m_previousSession == PreviousSession::Initiating) {
     // Log that we put the drive's desired state to down and do it.
     log::ScopedParamContainer params(m_lc);
-    params.add("tapeDrive", m_driveConfig.unitName);
+    params.add("tapeDrive", m_driveInfo.driveName);
     int logLevel = log::INFO;
     std::string msg = "Startup";
     m_lc.log(logLevel, msg);
@@ -737,7 +736,7 @@ int DriveHandler::runChild() {
 
       cta::common::dataStructures::DesiredDriveState currentDesiredDriveState;
       try {
-        currentDesiredDriveState = scheduler->getDesiredDriveState(m_driveConfig.unitName, m_lc);
+        currentDesiredDriveState = scheduler->getDesiredDriveState(m_driveInfo.driveName, m_lc);
       } catch (Scheduler::NoSuchDrive&) {
         m_lc.log(log::INFO, "In DriveHandler::runChild(): the desired drive state doesn't exist in the Catalogue DB");
       }
@@ -750,7 +749,6 @@ int DriveHandler::runChild() {
                                        driveState,
                                        cta::common::dataStructures::MountType::NoMount,
                                        cta::common::dataStructures::DriveStatus::Down,
-                                       m_driveConfig,
                                        securityIdentity,
                                        m_lc);
 
@@ -765,8 +763,8 @@ int DriveHandler::runChild() {
         driveState.reason = currentDesiredDriveState.reason.value();
       }
 
-      scheduler->setDesiredDriveState(m_driveConfig.unitName, driveState, m_lc);
-      scheduler->reportDriveConfig(m_driveConfig, m_tapedConfig, m_lc);
+      scheduler->setDesiredDriveState(m_driveInfo.driveName, driveState, m_lc);
+      scheduler->reportDriveConfig(m_tapedConfig, m_lc);
     } catch (cta::exception::Exception& ex) {
       params.add(semconv::log::exceptionMessage, ex.getMessageValue()).add("Backtrace", ex.backtrace());
       m_lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set drive down");
@@ -812,7 +810,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
   };
   // TODO: improve in the future (preempt the child process)
   log::ScopedParamContainer params(m_lc);
-  params.add("tapeDrive", m_driveConfig.unitName);
+  params.add("tapeDrive", m_driveInfo.driveName);
   m_lc.log(log::INFO, "In DriveHandler::shutdown(): simply killing the process.");
   kill();
 
@@ -834,7 +832,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
       setDriveDownForShutdown("Failed to instantiate scheduler");
     } catch (const cta::exception::Exception& ex) {
       params.add("tapeVid", m_sessionVid)
-        .add("tapeDrive", m_driveConfig.unitName)
+        .add("tapeDrive", m_driveInfo.driveName)
         .add(semconv::log::exceptionMessage, ex.getMessageValue());
       m_lc.log(cta::log::ERR, "In DriveHandler::shutdown(). Failed to put the drive down.");
     }
@@ -849,8 +847,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
       m_lc.log(log::ERR, "In DriveHandler::shutdown(): Should run cleaner but VID is missing. Do nothing.");
     } else {
       cta::common::dataStructures::DriveInfo driveInfo;
-      driveInfo.driveName = m_driveConfig.unitName;
-      driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;
+      driveInfo.driveName = m_driveInfo.driveName;
+      driveInfo.logicalLibrary = m_driveInfo.logicalLibrary;
       driveInfo.host = cta::utils::getShortHostname();
       // Set session type to cleanup
       m_sessionType = SessionType::Cleanup;
@@ -860,7 +858,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
                                    m_lc);
       log::ScopedParamContainer scoped(m_lc);
       scoped.add("tapeVid", m_sessionVid)
-        .add("tapeDrive", m_driveConfig.unitName)
+        .add("tapeDrive", m_driveInfo.driveName)
         .add("sessionState", session::toString(m_sessionState))
         .add("sessionType", session::toString(m_sessionType));
       m_lc.log(log::INFO, "In DriveHandler::shutdown(): starting cleaner.");
@@ -879,8 +877,8 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
 void DriveHandler::setDriveDownForShutdown(const std::string& reason) {
   m_lc.log(cta::log::INFO, "In DriveHandler::setDriveDownForShutdown(): setting down tape drive.");
   cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = m_driveConfig.unitName;
-  driveInfo.logicalLibrary = m_driveConfig.logicalLibrary;
+  driveInfo.driveName = m_driveInfo.driveName;
+  driveInfo.logicalLibrary = m_driveInfo.logicalLibrary;
   driveInfo.host = cta::utils::getShortHostname();
 
   auto driveState = m_catalogue->DriveState()->getTapeDrive(driveInfo.driveName);
@@ -910,7 +908,7 @@ void DriveHandler::setDriveDownForShutdown(const std::string& reason) {
                                    cta::common::dataStructures::DriveStatus::Down,
                                    std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()),
                                    m_lc);
-  driveCatalogue.setDesiredDriveState(m_driveConfig.unitName, desiredDriveState, m_lc);
+  driveCatalogue.setDesiredDriveState(m_driveInfo.driveName, desiredDriveState, m_lc);
 }
 
 bool DriveHandler::schedulerPing(IScheduler* scheduler, cta::tape::daemon::TapedProxy* driveHandlerProxy) {
@@ -939,7 +937,7 @@ void DriveHandler::puttingDriveDown(IScheduler* scheduler,
                                     const cta::common::dataStructures::DriveInfo& driveInfo) {
   log::ScopedParamContainer params(m_lc);
   int logLevel = log::ERR;
-  params.add("tapeDrive", m_driveConfig.unitName);
+  params.add("tapeDrive", m_driveInfo.driveName);
   m_lc.logEvent(logLevel, errorMsg, cta::semconv::log::EventNameValues::kPuttingTapeDriveDown);
   try {
     scheduler->reportDriveStatus(driveInfo,
@@ -950,7 +948,7 @@ void DriveHandler::puttingDriveDown(IScheduler* scheduler,
     driveState.up = false;
     driveState.forceDown = false;
     driveState.setReasonFromLogMsg(logLevel, errorMsg);
-    scheduler->setDesiredDriveState(m_driveConfig.unitName, driveState, m_lc);
+    scheduler->setDesiredDriveState(m_driveInfo.driveName, driveState, m_lc);
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(m_lc);
     param.add(semconv::log::exceptionMessage, ex.getMessageValue());
@@ -971,7 +969,7 @@ cta::tape::daemon::Session::EndOfSessionAction DriveHandler::executeCleanerSessi
   const auto cleanerSession =
     std::make_unique<cta::tape::daemon::CleanerSession>(mediaChangerFacade,
                                                         m_lc.logger(),
-                                                        m_driveConfig,
+                                                        m_driveInfo,
                                                         sWrapper,
                                                         m_sessionVid,
                                                         true,
@@ -1002,7 +1000,7 @@ std::shared_ptr<cta::IScheduler> DriveHandler::createScheduler(const std::string
                                                                const uint64_t minBytesToWarrantAMount) {
   std::string processName;
   try {
-    processName = prefixProcessName + m_driveConfig.unitName;
+    processName = prefixProcessName + m_driveInfo.driveName;
     log::ScopedParamContainer params(m_lc);
     params.add("processName", processName);
 #ifdef CTA_PGSCHED
@@ -1093,7 +1091,7 @@ DriveHandler::executeDataTransferSession(IScheduler* scheduler, tape::daemon::Ta
     std::make_unique<cta::tape::daemon::DataTransferSession>(cta::utils::getShortHostname(),
                                                              m_lc.logger(),
                                                              sWrapper,
-                                                             m_driveConfig,
+                                                             m_driveInfo,
                                                              mediaChangerFacade,
                                                              *driveHandlerProxy,
                                                              dataTransferConfig,

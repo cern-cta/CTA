@@ -39,17 +39,15 @@
 cta::tape::daemon::DataTransferSession::DataTransferSession([[maybe_unused]] const std::string& hostname,
                                                             cta::log::Logger& log,
                                                             System::virtualWrapper& sysWrapper,
-                                                            const cta::tape::daemon::DriveConfigEntry& driveConfig,
+                                                            const cta::common::dataStructures::DriveInfo& driveInfo,
                                                             cta::mediachanger::MediaChangerFacade& mc,
                                                             cta::tape::daemon::TapedProxy& initialProcess,
-
                                                             const DataTransferConfig& dataTransferConfig,
                                                             cta::Scheduler& scheduler)
     : m_log(log),
       m_sysWrapper(sysWrapper),
-      m_driveConfig(driveConfig),
       m_dataTransferConfig(dataTransferConfig),
-      m_driveInfo({driveConfig.unitName, cta::utils::getShortHostname(), driveConfig.logicalLibrary}),
+      m_driveInfo(driveInfo),
       m_mediaChanger(mc),
       m_initialProcess(initialProcess),
       m_scheduler(scheduler) {}
@@ -70,7 +68,7 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
   cta::log::LogContext lc(m_log);
   // Create a sticky thread name, which will be overridden by the other threads
   lc.push(cta::log::Param("thread", "MainThread"));
-  lc.push(cta::log::Param("tapeDrive", m_driveConfig.unitName));
+  lc.push(cta::log::Param("tapeDrive", m_driveInfo.driveName));
 
   // Make effective the raw I/O process capability.
   try {
@@ -81,7 +79,7 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
     lc.log(cta::log::ERR, "DataTransferSession failed to make effective raw I/O capabilty to use tape");
   }
 
-  TapeSessionReporter tapeSessionReporter(m_initialProcess, m_driveConfig, m_hostname, lc);
+  TapeSessionReporter tapeSessionReporter(m_initialProcess, lc);
 
   std::unique_ptr<cta::TapeMount> tapeMount;
   cta::utils::Timer t;
@@ -99,7 +97,7 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
     while (true) {
       try {
         lc.log(cta::log::DEBUG, "Transition from down to up starting.");
-        auto desiredState = m_scheduler.getDesiredDriveState(m_driveConfig.unitName, lc);
+        auto desiredState = m_scheduler.getDesiredDriveState(m_driveInfo.driveName, lc);
         if (!desiredState.up) {
           lc.log(cta::log::DEBUG, "Desired drive state is NOT UP, setting it DOWN");
           downUpTransition = true;
@@ -132,7 +130,7 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
                                     cta::common::dataStructures::MountType::NoMount,
                                     cta::common::dataStructures::DriveStatus::Probing,
                                     lc);
-      cta::tape::daemon::EmptyDriveProbe emptyDriveProbe(m_log, m_driveConfig, m_sysWrapper);
+      cta::tape::daemon::EmptyDriveProbe emptyDriveProbe(m_log, m_driveInfo, m_sysWrapper);
       lc.log(cta::log::INFO, "Transition from down to up detected. Will check if a tape is in the drive.");
       if (!emptyDriveProbe.driveIsEmpty()) {
         std::string errorMsg = "A tape was detected in the drive. Putting the drive down.";
@@ -158,9 +156,9 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
 
     nextMountTimeout = false;
     try {
-      if (m_scheduler.getNextMountDryRun(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc)) {
-        tapeMount = m_scheduler.getNextMount(m_driveConfig.logicalLibrary,
-                                             m_driveConfig.unitName,
+      if (m_scheduler.getNextMountDryRun(m_driveInfo.logicalLibrary, m_driveInfo.driveName, lc)) {
+        tapeMount = m_scheduler.getNextMount(m_driveInfo.logicalLibrary,
+                                             m_driveInfo.driveName,
                                              lc,
                                              m_dataTransferConfig.wdGetNextMountMaxSecs * 1000000);
       }
@@ -271,7 +269,7 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
                             m_dataTransferConfig.wdNoBlockMoveMaxSecs,
                             m_initialProcess,
                             *retrieveMount,
-                            m_driveConfig.unitName,
+                            m_driveInfo.driveName,
                             logContext);
 
     RecallMemoryManager memoryManager(m_dataTransferConfig.nbBufs, m_dataTransferConfig.bufsz, logContext);
@@ -468,7 +466,7 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
                                m_dataTransferConfig.wdNoBlockMoveMaxSecs,
                                m_initialProcess,
                                *archiveMount,
-                               m_driveConfig.unitName,
+                               m_driveInfo.driveName,
                                logContext);
     TapeWriteSingleThread writeSingleThread(*drive,
                                             m_mediaChanger,
@@ -624,7 +622,7 @@ cta::tape::drive::DriveInterface* cta::tape::daemon::DataTransferSession::findDr
   cta::tape::SCSI::DeviceVector dv(m_sysWrapper);
   cta::tape::SCSI::DeviceInfo driveInfo;
   try {
-    driveInfo = dv.findBySymlink(m_driveConfig.devFilename);
+    driveInfo = dv.findBySymlink(m_driveInfo.devFilename);
   } catch (cta::tape::SCSI::DeviceVector::NotFound&) {
     // We could not find this drive in the system's SCSI devices
     putDriveDown("Drive not found on this path", mount, logContext);
@@ -641,7 +639,7 @@ cta::tape::drive::DriveInterface* cta::tape::daemon::DataTransferSession::findDr
   try {
     auto drive = cta::tape::drive::createDrive(driveInfo, m_sysWrapper);
     if (drive) {
-      drive->config = m_driveConfig;
+      drive->info = m_driveInfo;
     }
     return drive.release();
   } catch (cta::exception::Exception&) {
@@ -662,7 +660,7 @@ void cta::tape::daemon::DataTransferSession::putDriveDown(const std::string& hea
                                                           cta::TapeMount* mount,
                                                           cta::log::LogContext& logContext) {
   cta::log::ScopedParamContainer params(logContext);
-  params.add("devFilename", m_driveConfig.devFilename).add(cta::semconv::log::errorMessage, headerErrMsg);
+  params.add("devFilename", m_driveInfo.devFilename).add(cta::semconv::log::errorMessage, headerErrMsg);
 
   if (mount) {
     mount->complete();
@@ -682,7 +680,7 @@ void cta::tape::daemon::DataTransferSession::putDriveDown(const std::string& hea
   driveState.up = false;
   driveState.forceDown = false;
   driveState.setReasonFromLogMsg(cta::log::ERR, headerErrMsg);
-  m_scheduler.setDesiredDriveState(m_driveConfig.unitName, driveState, logContext);
+  m_scheduler.setDesiredDriveState(m_driveInfo.driveName, driveState, logContext);
 
   logContext.log(cta::log::ERR, "Notified client of end session with error");
 }

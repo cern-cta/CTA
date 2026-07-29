@@ -7,8 +7,8 @@
 
 #include "common/utils/utils.hpp"
 #include "mediachanger/CommonMarshal.hpp"
+#include "mediachanger/LibrarySlot.hpp"
 #include "mediachanger/RmcMarshal.hpp"
-#include "mediachanger/ScsiLibrarySlot.hpp"
 #include "mediachanger/SmartFd.hpp"
 #include "mediachanger/io.hpp"
 
@@ -43,8 +43,7 @@ void RmcProxy::mountTapeReadWrite(const std::string& vid, const LibrarySlot& lib
     rqstBody.uid = geteuid();
     rqstBody.gid = getegid();
     utils::copyString(rqstBody.vid, vid);
-    const ScsiLibrarySlot& scsiLibrarySlot = dynamic_cast<const ScsiLibrarySlot&>(librarySlot);
-    rqstBody.drvOrd = scsiLibrarySlot.getDrvOrd();
+    rqstBody.drvOrd = librarySlot.getDrvOrd();
 
     rmcSendRecvNbAttempts(m_maxRqstAttempts, rqstBody);
   } catch (cta::exception::Exception& ne) {
@@ -65,8 +64,7 @@ void RmcProxy::dismountTape(const std::string& vid, const LibrarySlot& librarySl
     rqstBody.uid = geteuid();
     rqstBody.gid = getegid();
     utils::copyString(rqstBody.vid, vid);
-    const ScsiLibrarySlot& scsiLibrarySlot = dynamic_cast<const ScsiLibrarySlot&>(librarySlot);
-    rqstBody.drvOrd = scsiLibrarySlot.getDrvOrd();
+    rqstBody.drvOrd = librarySlot.getDrvOrd();
     rqstBody.force = 0;
 
     rmcSendRecvNbAttempts(m_maxRqstAttempts, rqstBody);

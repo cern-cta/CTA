@@ -16,7 +16,6 @@
 #include "scheduler/RetrieveMount.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/TapeMount.hpp"
-#include "taped/daemon/DriveConfigEntry.hpp"
 #include "taped/daemon/TapedProxy.hpp"
 #include "taped/system/Wrapper.hpp"
 
@@ -37,7 +36,7 @@ public:
   DataTransferSession(const std::string& hostname,
                       cta::log::Logger& log,
                       System::virtualWrapper& sysWrapper,
-                      const cta::tape::daemon::DriveConfigEntry& driveConfig,
+                      const cta::common::dataStructures::DriveInfo& driveInfo,
                       cta::mediachanger::MediaChangerFacade& mc,
                       cta::tape::daemon::TapedProxy& initialProcess,
                       const DataTransferConfig& dataTransferConfig,
@@ -80,10 +79,6 @@ private:
   cta::log::Logger& m_log;
   VolumeInfo m_volInfo {};
   System::virtualWrapper& m_sysWrapper;
-  /**
-   * The configuration of the tape drive to be used by this session.
-   */
-  const cta::tape::daemon::DriveConfigEntry m_driveConfig;
   const DataTransferConfig m_dataTransferConfig;
   /**
    * The drive information bundle allowing drive register update.

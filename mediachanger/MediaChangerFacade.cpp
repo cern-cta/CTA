@@ -21,7 +21,7 @@ MediaChangerFacade::MediaChangerFacade(const RmcProxy& rmcProxy, log::Logger& lo
 //------------------------------------------------------------------------------
 void MediaChangerFacade::mountTapeReadOnly(const std::string& vid, const LibrarySlot& slot) {
   try {
-    return getProxy(slot.getLibraryType()).mountTapeReadOnly(vid, slot);
+    return getProxy(slot).mountTapeReadOnly(vid, slot);
   } catch (cta::exception::Exception& ne) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to mount tape for read-only access: vid=" << vid << " slot=" << slot.str() << ": "
@@ -35,7 +35,7 @@ void MediaChangerFacade::mountTapeReadOnly(const std::string& vid, const Library
 //------------------------------------------------------------------------------
 void MediaChangerFacade::mountTapeReadWrite(const std::string& vid, const LibrarySlot& slot) {
   try {
-    return getProxy(slot.getLibraryType()).mountTapeReadWrite(vid, slot);
+    return getProxy(slot).mountTapeReadWrite(vid, slot);
   } catch (cta::exception::Exception& ne) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to mount tape for read/write access: vid=" << vid << " slot=" << slot.str() << ": "
@@ -49,7 +49,7 @@ void MediaChangerFacade::mountTapeReadWrite(const std::string& vid, const Librar
 //------------------------------------------------------------------------------
 void MediaChangerFacade::dismountTape(const std::string& vid, const LibrarySlot& slot) {
   try {
-    return getProxy(slot.getLibraryType()).dismountTape(vid, slot);
+    return getProxy(slot).dismountTape(vid, slot);
   } catch (cta::exception::Exception& ne) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to dismount tape: vid=" << vid << " slot=" << slot.str() << ": "
@@ -61,16 +61,11 @@ void MediaChangerFacade::dismountTape(const std::string& vid, const LibrarySlot&
 //------------------------------------------------------------------------------
 // getProxy
 //------------------------------------------------------------------------------
-MediaChangerProxy& MediaChangerFacade::getProxy(const TapeLibraryType libraryType) {
-  switch (libraryType) {
-    case TAPE_LIBRARY_TYPE_DUMMY:
-      return m_dmcProxy;
-    case TAPE_LIBRARY_TYPE_SCSI:
-      return m_rmcProxy;
-    default:
-      // Should never get here
-      throw exception::Exception("Library slot has an unexpected library type");
+MediaChangerProxy& MediaChangerFacade::getProxy(const LibrarySlot& slot) {
+  if (slot.isDummy()) {
+    return m_dmcProxy;
   }
+  return m_rmcProxy;
 }
 
 }  // namespace cta::mediachanger

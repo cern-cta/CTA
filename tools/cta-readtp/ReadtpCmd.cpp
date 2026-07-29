@@ -244,9 +244,7 @@ void ReadtpCmd::setLbpMode(cta::tape::drive::DriveInterface& drive) {
 // mountTape
 //------------------------------------------------------------------------------
 void ReadtpCmd::mountTape(const std::string& vid) {
-  std::unique_ptr<cta::mediachanger::LibrarySlot> librarySlotPtr;
-  librarySlotPtr.reset(cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
-  const cta::mediachanger::LibrarySlot& librarySlot = *librarySlotPtr.get();
+  const auto librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot);
 
   std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
@@ -476,9 +474,7 @@ void ReadtpCmd::readTapeFile(cta::tape::drive::DriveInterface& drive,
 // unloadTape
 //------------------------------------------------------------------------------
 void ReadtpCmd::unloadTape([[maybe_unused]] const std::string& vid, cta::tape::drive::DriveInterface& drive) {
-  std::unique_ptr<cta::mediachanger::LibrarySlot> librarySlotPtr;
-  librarySlotPtr.reset(cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
-  const cta::mediachanger::LibrarySlot& librarySlot = *librarySlotPtr.get();
+  const auto librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot);
 
   std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
@@ -504,9 +500,7 @@ void ReadtpCmd::unloadTape([[maybe_unused]] const std::string& vid, cta::tape::d
 // dismountTape
 //------------------------------------------------------------------------------
 void ReadtpCmd::dismountTape(const std::string& vid) {
-  std::unique_ptr<cta::mediachanger::LibrarySlot> librarySlotPtr;
-  librarySlotPtr.reset(cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
-  const cta::mediachanger::LibrarySlot& librarySlot = *librarySlotPtr.get();
+  const auto librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot);
 
   std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);

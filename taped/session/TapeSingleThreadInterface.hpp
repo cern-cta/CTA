@@ -20,6 +20,7 @@
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 #include "common/utils/Timer.hpp"
+#include "mediachanger/LibrarySlotParser.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "taped/drive/DriveInterface.hpp"
 
@@ -81,10 +82,11 @@ protected:
    */
   void mountTapeReadOnly() {
     cta::log::ScopedParamContainer scoped(m_logContext);
-    scoped.add("drive_Slot", m_drive.config.librarySlot().str());
+    const auto librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_drive.info.rawLibrarySlot);
+    scoped.add("drive_Slot", librarySlot.str());
     try {
       cta::utils::Timer timer;
-      m_mediaChanger.mountTapeReadOnly(m_volInfo.vid, m_drive.config.librarySlot());
+      m_mediaChanger.mountTapeReadOnly(m_volInfo.vid, librarySlot);
       const std::string modeAsString = "R";
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
       cta::telemetry::metrics::ctaTapedMountDuration->Record(
@@ -106,10 +108,11 @@ protected:
    */
   void mountTapeReadWrite() {
     cta::log::ScopedParamContainer scoped(m_logContext);
-    scoped.add("drive_Slot", m_drive.config.librarySlot().str());
+    const auto librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_drive.info.rawLibrarySlot);
+    scoped.add("drive_Slot", librarySlot.str());
     try {
       cta::utils::Timer timer;
-      m_mediaChanger.mountTapeReadWrite(m_volInfo.vid, m_drive.config.librarySlot());
+      m_mediaChanger.mountTapeReadWrite(m_volInfo.vid, librarySlot);
       const std::string modeAsString = "RW";
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
       cta::telemetry::metrics::ctaTapedMountDuration->Record(

@@ -7,10 +7,10 @@
 
 #include "EncryptionControl.hpp"
 #include "Session.hpp"
+#include "common/dataStructures/DriveInfo.hpp"
 #include "common/log/Logger.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "scheduler/Scheduler.hpp"
-#include "taped/daemon/DriveConfigEntry.hpp"
 #include "taped/drive/DriveInterface.hpp"
 #include "taped/file/Structures.hpp"
 #include "taped/scsi/Device.hpp"
@@ -34,7 +34,7 @@ public:
     *
     * @param mc Object representing the media changer.
     * @param log Object representing the API to the CTA logging system.
-    * @param driveConfig Configuration of the tape drive to be cleaned.
+    * @param driveInfo Info of the tape drive to be cleaned.
     * @param sysWrapper Object representing the operating system.
     * @param vid The volume identifier of the mounted tape if known,
     * else the empty string.
@@ -48,7 +48,7 @@ public:
     */
   CleanerSession(cta::mediachanger::MediaChangerFacade& mc,
                  cta::log::Logger& log,
-                 const cta::tape::daemon::DriveConfigEntry& driveConfig,
+                 const cta::common::dataStructures::DriveInfo& driveInfo,
                  System::virtualWrapper& sysWrapper,
                  const std::string& vid,
                  const bool waitMediaInDrive,
@@ -78,9 +78,9 @@ private:
   cta::log::Logger& m_log;
 
   /**
-    * The configuration of the tape drive to be cleaned.
+    * The information of the tape drive to be cleaned.
     */
-  const cta::tape::daemon::DriveConfigEntry m_driveConfig;
+  const cta::common::dataStructures::DriveInfo m_driveInfo;
 
   /**
     * The system wrapper used to find the device and instantiate the drive object

@@ -129,7 +129,8 @@ cta::tape::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
                                             m_this.m_logContext);
     m_this.m_reporter.reportState(cta::tape::session::SessionState::Unmounting,
                                   cta::tape::session::SessionType::Retrieve);
-    m_this.m_mediaChanger.dismountTape(m_this.m_volInfo.vid, m_this.m_drive.config.librarySlot());
+    const auto librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_this.m_drive.info.rawLibrarySlot);
+    m_this.m_mediaChanger.dismountTape(m_this.m_volInfo.vid, librarySlot);
     m_this.m_drive.disableLogicalBlockProtection();
     m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread : tape unmounted");
     m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
@@ -264,12 +265,12 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
     m_watchdog.addParameter(Param("mountType", toCamelCaseString(m_volInfo.mountType)));
     m_watchdog.addParameter(Param("mountId", m_volInfo.mountId));
     m_watchdog.addParameter(Param("volReqId", m_volInfo.mountId));
-    m_watchdog.addParameter(Param("tapeDrive", m_drive.config.unitName));
+    m_watchdog.addParameter(Param("tapeDrive", m_drive.info.driveName));
     m_watchdog.addParameter(Param("vendor", m_retrieveMount.getVendor()));
     m_watchdog.addParameter(Param("vo", m_retrieveMount.getVo()));
     m_watchdog.addParameter(Param("mediaType", m_retrieveMount.getMediaType()));
     m_watchdog.addParameter(Param("tapePool", m_retrieveMount.getPoolName()));
-    m_watchdog.addParameter(Param("logicalLibrary", m_drive.config.logicalLibrary));
+    m_watchdog.addParameter(Param("logicalLibrary", m_drive.info.logicalLibrary));
     m_watchdog.addParameter(Param("capacityInBytes", m_retrieveMount.getCapacityInBytes()));
     m_watchdog.addParameter(Param("mountAttempted", 1));
 
@@ -297,7 +298,7 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
 
       cta::log::ScopedParamContainer params(m_logContext);
       params.add("mediaType", m_retrieveMount.getMediaType());
-      params.add("logicalLibrary", m_drive.config.logicalLibrary);
+      params.add("logicalLibrary", m_drive.info.logicalLibrary);
       params.add("mountType", toCamelCaseString(m_volInfo.mountType));
       params.add("labelFormat", ossLabelFormat.str());
       params.add("vendor", m_retrieveMount.getVendor());

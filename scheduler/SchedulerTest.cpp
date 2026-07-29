@@ -634,7 +634,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_no_report) {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
-    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName};
+    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
     scheduler.reportDriveStatus(driveInfo,
                                 cta::common::dataStructures::MountType::NoMount,
                                 cta::common::dataStructures::DriveStatus::Down,
@@ -868,7 +868,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_report) {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
-    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName};
+    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
     scheduler.reportDriveStatus(driveInfo,
                                 cta::common::dataStructures::MountType::NoMount,
                                 cta::common::dataStructures::DriveStatus::Down,
@@ -1102,7 +1102,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
-    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName};
+    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
     scheduler.reportDriveStatus(driveInfo,
                                 cta::common::dataStructures::MountType::NoMount,
                                 cta::common::dataStructures::DriveStatus::Down,
@@ -1527,7 +1527,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
-    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName};
+    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
     scheduler.reportDriveStatus(driveInfo,
                                 cta::common::dataStructures::MountType::NoMount,
                                 cta::common::dataStructures::DriveStatus::Down,
@@ -1609,7 +1609,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
-    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName};
+    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
     scheduler.reportDriveStatus(driveInfo,
                                 cta::common::dataStructures::MountType::NoMount,
                                 cta::common::dataStructures::DriveStatus::Down,
@@ -1861,7 +1861,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
-    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName};
+    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
     scheduler.reportDriveStatus(driveInfo,
                                 cta::common::dataStructures::MountType::NoMount,
                                 cta::common::dataStructures::DriveStatus::Down,
@@ -2127,7 +2127,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
-    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName};
+    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
     scheduler.reportDriveStatus(driveInfo,
                                 cta::common::dataStructures::MountType::NoMount,
                                 cta::common::dataStructures::DriveStatus::Down,
@@ -5057,7 +5057,7 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
     // Emulate a tape server by asking for a mount and then a file (and succeed the transfer)
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
-    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName};
+    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
     scheduler.reportDriveStatus(driveInfo,
                                 cta::common::dataStructures::MountType::NoMount,
                                 cta::common::dataStructures::DriveStatus::Down,
@@ -6383,7 +6383,7 @@ TEST_P(SchedulerTest, getNextMountTapeStatesThatShouldNotReturnAMount) {
 
   {
     // This first initialization is normally done by the dataSession function.
-    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName};
+    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
     scheduler.reportDriveStatus(driveInfo,
                                 cta::common::dataStructures::MountType::NoMount,
                                 cta::common::dataStructures::DriveStatus::Down,
@@ -7056,7 +7056,7 @@ TEST_P(SchedulerTest, archiveUserQueueMaxDrivesVoInFlightChangeScheduleMount) {
     // Emulate a tape server
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
-    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName};
+    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
     scheduler.reportDriveStatus(driveInfo,
                                 cta::common::dataStructures::MountType::NoMount,
                                 cta::common::dataStructures::DriveStatus::Down,
@@ -8194,7 +8194,7 @@ TEST_P(SchedulerTest, testCleaningUpKeepingTapePoolName) {
     catalogue.DriveState()->updateTapeDriveStatus(tapeDrive.value());
     // And simulate the drive had a uncaught exception in CleaningUp state, and it didn't go to Down state
     TapeDrivesCatalogueState tapeDriveState(catalogue);
-    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName};
+    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
     tapeDriveState.reportDriveStatus(driveInfo,
                                      cta::common::dataStructures::MountType::NoMount,
                                      cta::common::dataStructures::DriveStatus::CleaningUp,
@@ -8243,7 +8243,7 @@ TEST_P(SchedulerTest, testCleaningUpWithoutTapePoolName) {
     // Simulate the drive had a uncaught exception in CleaningUp state,
     // and it didn't go to Down state with empty tape pool name
     TapeDrivesCatalogueState tapeDriveState(catalogue);
-    cta::common::dataStructures::DriveInfo driveInfo = {"drive0", "myHost", s_libraryName};
+    cta::common::dataStructures::DriveInfo driveInfo("drive0", "myHost", s_libraryName, "/dev/dummy", "dummySlot");
     tapeDriveState.reportDriveStatus(driveInfo,
                                      cta::common::dataStructures::MountType::NoMount,
                                      cta::common::dataStructures::DriveStatus::CleaningUp,
@@ -8298,7 +8298,7 @@ TEST_P(SchedulerTest, testShutdownKeepingTapePoolName) {
     catalogue.DriveState()->updateTapeDriveStatus(tapeDrive.value());
     // And simulate the drive had a uncaught exception in Shutdown state, and it didn't go to Down state
     TapeDrivesCatalogueState tapeDriveState(catalogue);
-    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName};
+    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
     tapeDriveState.reportDriveStatus(driveInfo,
                                      cta::common::dataStructures::MountType::NoMount,
                                      cta::common::dataStructures::DriveStatus::Shutdown,

@@ -72,9 +72,9 @@ private:
   DmcProxy m_dmcProxy;
 
   /**
-   * Returns the media changer proxy for the specified library type.
+   * Returns the media changer proxy based on the provided library slot.
    */
-  MediaChangerProxy& getProxy(const TapeLibraryType libraryType);
+  MediaChangerProxy& getProxy(const LibrarySlot& slot);
 
 };  // class MediaChangerFacade
 
