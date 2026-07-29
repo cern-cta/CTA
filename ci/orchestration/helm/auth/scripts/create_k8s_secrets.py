@@ -9,9 +9,10 @@ import re
 import ssl
 import sys
 import urllib.request
+from typing import Optional, Union
 
 
-def k8s_create_secret(namespace, secret_name, filename, filepath, host) -> None:
+def k8s_create_secret(namespace: str, secret_name: str, filename: str, filepath: str, host: str) -> None:
     token_path = "/var/run/secrets/kubernetes.io/serviceaccount/token"
     ca_cert_path = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
 
@@ -47,7 +48,7 @@ def k8s_create_secret(namespace, secret_name, filename, filepath, host) -> None:
         print(f"Error creating {secret_name}: {e}")
 
 
-def is_valid_name(name):
+def is_valid_name(name: str) -> Optional[Union[bool, re.Match[str]]]:
     return len(name) <= 63 and re.fullmatch(r"[a-z0-9]([-a-z0-9]*[a-z0-9])?", name)
 
 

@@ -8,11 +8,12 @@ import json
 import re
 import time
 from pathlib import Path
+from typing import Union
 
 import jwt
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 
 
 def sanitize_filename(s: str) -> str:
@@ -30,7 +31,7 @@ def load_cert_x5c(cert_path: str) -> str:
     return base64.b64encode(cert).decode("ascii")
 
 
-def generate_jwk_from_cert(cert_path):
+def generate_jwk_from_cert(cert_path: str) -> dict[str, Union[str, list[str]]]:
     with open(cert_path, "rb") as f:
         cert_data = f.read()
 
@@ -72,7 +73,7 @@ def generate_jwk_from_cert(cert_path):
     }
 
 
-def generate_jwt(private_key, kid: str, sub: str, lifetime_sec: int):
+def generate_jwt(private_key: RSAPrivateKey, kid: str, sub: str, lifetime_sec: int) -> str:
     """Generates a JWT with all required claims the CTA frontend needs to verify it"""
     now = int(time.time())
 

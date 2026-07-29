@@ -5,11 +5,12 @@ import datetime
 from functools import cached_property
 from pathlib import Path
 
+from ...connections.remote_connection import RemoteConnection
 from .disk_instance_host import DiskInstanceHost, DiskInstanceImplementation
 
 
 class EosMgmHost(DiskInstanceHost):
-    def __init__(self, conn) -> None:
+    def __init__(self, conn: RemoteConnection) -> None:
         super().__init__(conn)
 
     @cached_property

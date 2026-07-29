@@ -3,13 +3,15 @@
 
 import json
 import time
+from collections.abc import Callable
 
+from ..connections.remote_connection import RemoteConnection
 from ..utils.timeout import Timeout
 from .remote_host import RemoteHost
 
 
 class CtaCliHost(RemoteHost):
-    def __init__(self, conn) -> None:
+    def __init__(self, conn: RemoteConnection) -> None:
         super().__init__(conn)
 
     def get_drive_status(self, drive_name: str) -> str:
@@ -56,11 +58,15 @@ class CtaCliHost(RemoteHost):
         tape_list = json.loads(output)
         return [tape["vid"] for tape in tape_list]
 
-    def file_exists_in_cta(self, vid, archive_id) -> bool:
+    def file_exists_in_cta(self, vid: str, archive_id: str) -> bool:
         # Ls by --id is annoying because it will exit with a failure if the id does not exist
         return int(self.exec_with_output(f"cta-admin --json tf ls -v {vid} | grep {archive_id} | wc -l")) == 1
 
-    def get_single_ls_item(self, ls_command, filter_func) -> dict:
+    def get_single_ls_item(
+        self,
+        ls_command: str,
+        filter_func: Callable[[dict[str, object]], bool],
+    ) -> dict:
         ls_out = self.exec_with_output("cta-admin --json " + ls_command)
         ls_json = json.loads(ls_out)
         # If only cta-admin was a well designed API we wouldn't have to do this...
@@ -96,7 +102,7 @@ class CtaCliHost(RemoteHost):
             time.sleep(1)
         raise TimeoutError(f"Tape {vid} did not reach state {expected_state} within {timeout_secs} seconds")
 
-    def modify_tape_state(self, vid: str, state: str, reason: str = "Testing", wait=True) -> None:
+    def modify_tape_state(self, vid: str, state: str, reason: str = "Testing", wait: bool = True) -> None:
         print(f"Marking tape {vid} as {state}")
         self.exec(f"cta-admin tape ch --state {state} --reason '{reason}' --vid {vid}")
         if wait:
@@ -110,25 +116,25 @@ class CtaCliHost(RemoteHost):
         print(f"Reclaiming tape {vid}")
         self.exec(f"cta-admin tape reclaim --vid {vid}")
 
-    def has_repack_request(self, vid) -> bool:
+    def has_repack_request(self, vid: str) -> bool:
         try:
             re_ls_json = json.loads(self.exec_with_output(f"cta-admin --json re ls --vid {vid}"))
             return len(re_ls_json) > 0
         except json.JSONDecodeError:
             return False
 
-    def retrieve_queue_empty(self, vid) -> bool:
+    def retrieve_queue_empty(self, vid: str) -> bool:
         queues = json.loads(self.exec_with_output("cta-admin --json showqueues"))
         return not any(q["vid"] == vid for q in queues)
 
-    def count_files_in_queue(self, vid) -> int:
+    def count_files_in_queue(self, vid: str) -> int:
         queues = json.loads(self.exec_with_output("cta-admin --json showqueues"))
         for queue in queues:
             if queue["vid"] == vid:
                 return int(queue["queuedFiles"])
         return 0
 
-    def wait_for_repack_request_launch(self, vid, wait_timeout_secs=30) -> None:
+    def wait_for_repack_request_launch(self, vid: str, wait_timeout_secs: int = 30) -> None:
         print(f"Waiting for the launch of the repack request on VID {vid}...")
         with Timeout(wait_timeout_secs) as t:
             while not self.has_repack_request(vid) and not t.expired:
@@ -139,7 +145,7 @@ class CtaCliHost(RemoteHost):
                 )
         print("Repack request launched")
 
-    def wait_for_repack_request_expansion(self, vid, wait_timeout_secs=30) -> None:
+    def wait_for_repack_request_expansion(self, vid: str, wait_timeout_secs: int = 30) -> None:
         print(f"Waiting for repack request expansion on VID {vid}...")
         tape_json = json.loads(self.exec_with_output(f"cta-admin --json tape ls --vid {vid}"))
         last_fseq = tape_json[0]["lastFseq"]
@@ -157,14 +163,12 @@ class CtaCliHost(RemoteHost):
                 time.sleep(1)
             if t.expired:
                 raise TimeoutError(
-
-                        f"Repack request for VID {vid} failed to expand within timeout of {wait_timeout_secs} "
-                        f"seconds. Last fSeq on tape: {last_fseq}, last expanded fSeq: {last_expanded_fseq}"
-
+                    f"Repack request for VID {vid} failed to expand within timeout of {wait_timeout_secs} "
+                    f"seconds. Last fSeq on tape: {last_fseq}, last expanded fSeq: {last_expanded_fseq}"
                 )
         print("Repack request expanded")
 
-    def wait_for_queue_to_empty(self, vid, wait_timeout_secs=30) -> None:
+    def wait_for_queue_to_empty(self, vid: str, wait_timeout_secs: int = 30) -> None:
         print(f"Waiting for retrieve queue of {vid} to be empty...")
         wait_timeout_secs = 20
         with Timeout(wait_timeout_secs) as t:

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 line-length = 120
+target-version = "py39"
 
 [lint]
 select = [

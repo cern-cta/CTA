@@ -7,7 +7,7 @@ import argparse
 import sys
 import textwrap
 import time
-from typing import Any
+from typing import Optional, cast
 
 from gitlabapi import GitLabAPI
 
@@ -51,11 +51,11 @@ def update_changelog(api: GitLabAPI, release_version: str, from_commit: str, to_
 
 
 # https://docs.gitlab.com/ee/api/repository_files.html#get-file-from-repository
-def get_file(api: GitLabAPI, path: str, ref: str) -> Any:
+def get_file(api: GitLabAPI, path: str, ref: str) -> dict[str, object]:
     params: dict = {
         "ref": ref,
     }
-    return api.get(f"repository/files/{path}", params)
+    return cast(dict[str, object], api.get(f"repository/files/{path}", params))
 
 
 # https://docs.gitlab.com/ee/api/merge_requests.html#create-mr
@@ -69,7 +69,7 @@ def create_merge_request(
     assignee: str,
     reviewers: list[str],
     labels: list[str],
-) -> int | None:
+) -> Optional[int]:
     print(f"Creating Merge Request from branch {source_branch} into branch: {target_branch}")
     print(f"\tTitle: {title}")
     data: dict = {
@@ -258,7 +258,7 @@ if __name__ == "__main__":
     # Create Merge Request
     mr_title: str = f"[Misc] Update changelog for release {release_version}"
     labels: list[str] = ["workflow::in review", "type::release", "priority::low"]
-    mr_id: int | None = create_merge_request(
+    mr_id: Optional[int] = create_merge_request(
         api,
         source_branch=branch_name,
         target_branch=args.source_branch,

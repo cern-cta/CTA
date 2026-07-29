@@ -17,7 +17,7 @@ import subprocess
 _FILES_RE = re.compile(r"\bFiles:\s*(\d+)\b")
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Count files in EOS directories")
     p.add_argument("--eos-host", required=True, help="EOS MGM hostname (e.g. ctaeos)")
     p.add_argument("--dest-dir", required=True, help="EOS directory (e.g. /eos/ctaeos/cta/stress)")
@@ -26,7 +26,7 @@ def parse_args():
     return p.parse_args()
 
 
-def count_dir_files(args) -> int:
+def count_dir_files(args: tuple[str, str]) -> int:
     """Count files in a single directory via eos file info command."""
     eos_host, path = args
     try:

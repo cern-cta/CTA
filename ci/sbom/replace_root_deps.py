@@ -6,9 +6,10 @@
 import argparse
 import json
 import sys
+from typing import Any
 
 
-def get_root_component(sbom):
+def get_root_component(sbom: dict[str, Any]) -> str:
     meta_comp = (sbom.get("metadata") or {}).get("component") or {}
     project_ref = meta_comp.get("bom-ref")
     if not project_ref:
@@ -17,7 +18,7 @@ def get_root_component(sbom):
     return project_ref
 
 
-def replace_root_dependencies(sbom, prefix) -> None:
+def replace_root_dependencies(sbom: dict[str, Any], prefix: str) -> None:
     components = sbom.get("components") or []
     dependencies = sbom.get("dependencies") or []
 

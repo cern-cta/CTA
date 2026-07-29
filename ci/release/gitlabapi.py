@@ -1,11 +1,11 @@
 # SPDX-FileCopyrightText: 2024 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Any
+from typing import Optional
 
 import requests
 
-Commit = dict[str, Any]
+Commit = dict[str, object]
 
 
 class GitLabAPI:
@@ -22,10 +22,10 @@ class GitLabAPI:
         self,
         endpoint: str,
         method: str,
-        params: dict[str, str] | None = None,
-        data: Any | None = None,
-        json: Any | None = None,
-    ) -> Any | None:
+        params: Optional[dict[str, str]] = None,
+        data: Optional[object] = None,
+        json: Optional[object] = None,
+    ) -> Optional[object]:
         api_url = f"{self.gitlab_url}/api/v4/projects/{self.project_id}/{endpoint}"
         headers = {
             "Private-Token": self.api_token,
@@ -47,26 +47,26 @@ class GitLabAPI:
             print(f"ERROR: GitLab API request failed:\n{e}")
             return None
 
-    def get(self, endpoint: str, params: dict[str, str] | None = None) -> Any | None:
+    def get(self, endpoint: str, params: Optional[dict[str, str]] = None) -> Optional[object]:
         return self.__api_request(endpoint, "GET", params)
 
     def post(
         self,
         endpoint: str,
-        params: dict[str, str] | None = None,
-        data: Any | None = None,
-        json: Any | None = None,
-    ) -> Any | None:
+        params: Optional[dict[str, str]] = None,
+        data: Optional[object] = None,
+        json: Optional[object] = None,
+    ) -> Optional[object]:
         return self.__api_request(endpoint, "POST", params, data=data, json=json)
 
     def put(
         self,
         endpoint: str,
-        params: dict[str, str] | None = None,
-        data: Any | None = None,
-        json: Any | None = None,
-    ) -> Any | None:
+        params: Optional[dict[str, str]] = None,
+        data: Optional[object] = None,
+        json: Optional[object] = None,
+    ) -> Optional[object]:
         return self.__api_request(endpoint, "PUT", params, data=data, json=json)
 
-    def delete(self, endpoint: str, params: dict[str, str] | None = None) -> Any | None:
+    def delete(self, endpoint: str, params: Optional[dict[str, str]] = None) -> Optional[object]:
         return self.__api_request(endpoint, "DELETE", params)

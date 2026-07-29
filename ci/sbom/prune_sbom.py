@@ -10,7 +10,7 @@ from collections import deque
 from typing import Any
 
 
-def get_root_component(sbom) -> str:
+def get_root_component(sbom: dict[str, Any]) -> str:
     meta_comp = (sbom.get("metadata") or {}).get("component") or {}
     project_ref = meta_comp.get("bom-ref")
     if not project_ref:

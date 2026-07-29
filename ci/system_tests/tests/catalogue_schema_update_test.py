@@ -3,6 +3,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 import pytest
 
@@ -23,13 +24,13 @@ class CatalogueSchemaUpdateParams:
 
 
 @pytest.fixture(scope="module")
-def catalogue_schema_update_params(request: pytest.FixtureRequest):
+def catalogue_schema_update_params(request: pytest.FixtureRequest) -> CatalogueSchemaUpdateParams:
     catalogue_schema_update_config = request.config.test_config["tests"]["catalogue_schema_update"]
     return CatalogueSchemaUpdateParams(schema_checkout_ref=catalogue_schema_update_config["schema_checkout_ref"])
 
 
 @pytest.fixture(scope="module")
-def catalogue_from_version(project_json: dict[str, object]):
+def catalogue_from_version(project_json: dict[str, object]) -> str:
     supported_major_versions = project_json["supportedCatalogueVersions"]
     supported_major_versions.sort()
     # Sorted from low to high, the "from" version is the lowest major version + ".0"
@@ -37,7 +38,7 @@ def catalogue_from_version(project_json: dict[str, object]):
 
 
 @pytest.fixture(scope="module")
-def catalogue_to_version(project_json: dict[str, object]):
+def catalogue_to_version(project_json: dict[str, object]) -> str:
     supported_major_versions = project_json["supportedCatalogueVersions"]
     supported_major_versions.sort()
     # Sorted from low to high, the "to" version is the highest major version + ".0"
@@ -45,7 +46,7 @@ def catalogue_to_version(project_json: dict[str, object]):
 
 
 @pytest.fixture(scope="module")
-def catalogue_updater(namespace: str | None):
+def catalogue_updater(namespace: Optional[str]) -> RemoteHost:
     return RemoteHost(K8sConnection(namespace, "app.kubernetes.io/name=liquibase-update", "liquibase-update", 0))
 
 
@@ -73,7 +74,7 @@ def test_init_catalogue_updater(
     catalogue_from_version: str,
     catalogue_to_version: str,
     catalogue_schema_update_params: CatalogueSchemaUpdateParams,
-    namespace: str | None,
+    namespace: Optional[str],
 ) -> None:
     # Just to note, this entire method is hacky and should be rewritten at some point. Suggestions welcome...
     # A few of the problems with it:
@@ -149,6 +150,6 @@ def test_liquibase_rollback(
     cta_admin_api.verify_schema()
 
 
-def test_cleanup_catalogue_updater(env: TestEnv, namespace: str | None) -> None:
+def test_cleanup_catalogue_updater(env: TestEnv, namespace: Optional[str]) -> None:
     env.exec_local(f"helm uninstall catalogue-updater --namespace {namespace}")
     env.exec_local(f"kubectl -n {namespace} delete configmap yum.repos.d-config")

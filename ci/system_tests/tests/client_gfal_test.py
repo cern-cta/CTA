@@ -51,10 +51,8 @@ def test_setup_client_gfal_xrootd(
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "cli_calls.sh"), "/tmp/", permissions="+x")
     eos_client.exec("microdnf install -y python3-gfal2-util gfal2-plugin-xrootd")
     eos_client.exec(
-
-            f"/tmp/client_setup.sh -n {gfal_params.file_count} -s {gfal_params.file_size_kb} -p "
-            f"{gfal_params.process_count} -d {test_dir} -r -c gfal2 -Z root"
-
+        f"/tmp/client_setup.sh -n {gfal_params.file_count} -s {gfal_params.file_size_kb} -p "
+        f"{gfal_params.process_count} -d {test_dir} -r -c gfal2 -Z root"
     )
 
 
@@ -84,10 +82,8 @@ def test_delete_gfal_xrootd(eos_client: EosClientHost, remote_scripts_dir: Path)
 def test_setup_client_gfal_https(eos_client: EosClientHost, test_dir: Path, gfal_params: GfalParams) -> None:
     eos_client.exec("microdnf install -y  gfal2-plugin-http")
     eos_client.exec(
-
-            f"/tmp/client_setup.sh -n {gfal_params.file_count} -s {gfal_params.file_size_kb} -p "
-            f"{gfal_params.process_count} -d {test_dir} -r -c gfal2 -Z https"
-
+        f"/tmp/client_setup.sh -n {gfal_params.file_count} -s {gfal_params.file_size_kb} -p "
+        f"{gfal_params.process_count} -d {test_dir} -r -c gfal2 -Z https"
     )
     # Enable insecure certs for gfal2
     eos_client.exec("sed -i 's/INSECURE=false/INSECURE=true/g' /etc/gfal2.d/http_plugin.conf")
@@ -132,10 +128,8 @@ def test_gfal_activity_ends_up_in_eos_report(
 
     # Query .well-known tape rest api endpoint to get the sitename
     site_name = eos_client.exec_with_output(
-
-            f"curl --insecure https://{disk_instance_name}:8443/.well-known/wlcg-tape-rest-api "
-            f"2>/dev/null | jq -r .sitename"
-
+        f"curl --insecure https://{disk_instance_name}:8443/.well-known/wlcg-tape-rest-api "
+        f"2>/dev/null | jq -r .sitename"
     )
     print(f"Site name: {site_name}")
 
@@ -144,11 +138,9 @@ def test_gfal_activity_ends_up_in_eos_report(
     now = int(time.time())
     later = now + token_timeout
     token_eospower1 = eos_client.exec_with_output(
-
-            f". /tmp/client_env && eosadmin_eos root://{disk_instance_name} token --tree --path "
-            f"'/eos/ctaeos/://:/api/' --expires \"{later}\" --owner poweruser1 --group powerusers "
-            f"--permission prwx"
-
+        f". /tmp/client_env && eosadmin_eos root://{disk_instance_name} token --tree --path "
+        f"'/eos/ctaeos/://:/api/' --expires \"{later}\" --owner poweruser1 --group powerusers "
+        f"--permission prwx"
     )
 
     # Generate metadata string with correct site name
@@ -211,18 +203,14 @@ def test_xrootd_activity_ends_up_in_eos_report(eos_client: EosClientHost, eos_mg
 
     # Retrieve with activity
     eos_client.exec(
-
-            f"KRB5CCNAME=/tmp/{eospower_user}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs {disk_instance_name} "
-            f"prepare -s {test_file}?activity=XRootD_Act"
-
+        f"KRB5CCNAME=/tmp/{eospower_user}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs {disk_instance_name} "
+        f"prepare -s {test_file}?activity=XRootD_Act"
     )
 
     # Evict
     eos_client.exec(
-
-            f"XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/{eospower_user}/krb5cc_0 xrdfs {disk_instance_name} "
-            f"prepare -e {test_file}"
-
+        f"XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/{eospower_user}/krb5cc_0 xrdfs {disk_instance_name} "
+        f"prepare -e {test_file}"
     )
 
     # Check activity is set for XRootD staging request through xrdfs

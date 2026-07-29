@@ -32,8 +32,8 @@ def test_no_uncaught_exceptions_and_errors(env: TestEnv, error_whitelist: set[st
         for line in output:
             try:
                 entry = json.loads(line)
-            except Exception:
-                raise RuntimeError(f"Found non-json log line in {host.name}")
+            except Exception as error:
+                raise RuntimeError(f"Found non-json log line in {host.name}") from error
 
             msg = entry.get("message", "")
             if not msg:

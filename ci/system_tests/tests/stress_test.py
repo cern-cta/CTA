@@ -37,7 +37,7 @@ class StressParams:
     max_acceptable_loss_percent: float
     prequeue: PrequeueParams
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         # 50k directories and 100k files are the limits eos find applies
         # when truncating the results
         # we do not use EOS find so we do not hit this restriction, but we constrain
@@ -49,7 +49,7 @@ class StressParams:
 
 
 @pytest.fixture(scope="module")
-def stress_params(request: pytest.FixtureRequest):
+def stress_params(request: pytest.FixtureRequest) -> StressParams:
     stress_config = request.config.test_config["tests"]["stress"]
     prequeue_config = stress_config["prequeue"]
     return StressParams(
@@ -91,10 +91,8 @@ def test_update_setup_for_max_powerrrr(env: TestEnv, cta_cli: CtaCliHost, eos_mg
     num_drives: int = len(env.cta_taped)
     cta_cli.exec(f"cta-admin vo ch --vo vo --writemaxdrives {num_drives} --readmaxdrives {num_drives}")
     cta_cli.exec(
-
-            "cta-admin mp ch --name ctasystest --minarchiverequestage 100 --minretrieverequestage "
-            '100 --comment "Longer min ages"'
-
+        "cta-admin mp ch --name ctasystest --minarchiverequestage 100 --minretrieverequestage "
+        '100 --comment "Longer min ages"'
     )
     # Decrease the logging level
     eos_mgm.exec('eos debug warning "*"')

@@ -4,7 +4,7 @@
 import os
 import subprocess
 import time
-from typing import cast
+from typing import Optional, cast
 
 from kubernetes import client, config
 from kubernetes.client import ApiException, V1Pod
@@ -35,7 +35,7 @@ class K8sConnection(RemoteConnection):
         return f"Kubernetes pod {self._pod.metadata.name}, container {self.container} in namespace {self.namespace}"
 
     @property
-    def _pod(self):
+    def _pod(self) -> V1Pod:
         if self._cached_pod is None:
             self._cached_pod = self._resolve_pod()
         return self._cached_pod
@@ -95,7 +95,13 @@ class K8sConnection(RemoteConnection):
 
         return ExecResult(stdout=stdout, stderr=stderr, success=success)
 
-    def copy_to(self, src_path: str, dst_path: str, throw_on_failure=True, permissions: str | None = None) -> None:
+    def copy_to(
+        self,
+        src_path: str,
+        dst_path: str,
+        throw_on_failure: bool = True,
+        permissions: Optional[str] = None,
+    ) -> None:
         # TODO: replace these kubectl calls so that we rely only on the SDK
         cmd = f"kubectl cp {src_path} {self.namespace}/{self._pod.metadata.name}:{dst_path} -c {self.container}"
         result = subprocess.run(cmd, shell=True)
@@ -107,13 +113,13 @@ class K8sConnection(RemoteConnection):
                 target = os.path.join(dst_path, os.path.basename(src_path))
             self.exec(f"chmod {permissions} {target}")
 
-    def copy_from(self, src_path: str, dst_path: str, throw_on_failure=True) -> None:
+    def copy_from(self, src_path: str, dst_path: str, throw_on_failure: bool = True) -> None:
         cmd = f"kubectl cp {self.namespace}/{self._pod.metadata.name}:{src_path} {dst_path} -c {self.container}"
         result = subprocess.run(cmd, shell=True)
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(f'"{cmd}" failed with exit code {result.returncode}: {result.stderr}\n')
 
-    def restart(self, throw_on_failure=True) -> None:
+    def restart(self, throw_on_failure: bool = True) -> None:
         self._cached_pod = None  # Force resolve the pod before we restart
         uid = self._pod.metadata.uid
         name = self._pod.metadata.name
@@ -144,7 +150,7 @@ class K8sConnection(RemoteConnection):
             )
         except ApiException as e:
             if throw_on_failure:
-                raise RuntimeError(f"Pod deletion failed: {e}")
+                raise RuntimeError(f"Pod deletion failed: {e}") from e
 
     def is_up(self) -> bool:
         try:
@@ -172,7 +178,7 @@ class K8sConnection(RemoteConnection):
                 ),
             )
         except ApiException as e:
-            raise RuntimeError(f"Failed to get pod IP: {e}")
+            raise RuntimeError(f"Failed to get pod IP: {e}") from e
 
         if pod is None or pod.status is None:
             raise RuntimeError("Pod IP not available")
@@ -183,7 +189,7 @@ class K8sConnection(RemoteConnection):
 
         return ip
 
-    def _resolve_pod(self):
+    def _resolve_pod(self) -> V1Pod:
         pods = self.core.list_namespaced_pod(
             namespace=self.namespace,
             label_selector=self.label_selector,

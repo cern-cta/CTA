@@ -4,7 +4,6 @@
 import json
 import time
 from collections.abc import Callable
-from typing import Any
 
 from .timeout import Timeout
 
@@ -26,7 +25,7 @@ def wait_for_condition(cond_func: Callable[[], bool], *, timeout_secs: float = 1
             raise TimeoutError(f"Condition failed to change to True within in {timeout_secs} seconds")
 
 
-def canonicalize(obj: Any) -> Any:
+def canonicalize(obj: object) -> object:
     if isinstance(obj, dict):
         return {k: canonicalize(v) for k, v in obj.items()}
     if isinstance(obj, list):
@@ -35,9 +34,9 @@ def canonicalize(obj: Any) -> Any:
     return obj
 
 
-def _sort_key(x: Any):
+def _sort_key(x: object) -> str:
     return json.dumps(x, sort_keys=True, separators=(",", ":"))
 
 
-def find_line(content, *filters) -> str:
+def find_line(content: str, *filters: str) -> str:
     return next((line for line in content.splitlines() if all(f in line for f in filters)), "")

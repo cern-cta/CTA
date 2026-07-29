@@ -3,6 +3,7 @@
 
 import asyncio
 import time
+from typing import Optional
 
 from ..connections.remote_connection import ExecResult, RemoteConnection
 from ..utils.timeout import Timeout
@@ -49,13 +50,20 @@ class RemoteHost:
             print_command,
         )
 
-    def copy_to(self, src_path: str, dst_path: str, *, throw_on_failure=True, permissions: str | None = None) -> None:
+    def copy_to(
+        self,
+        src_path: str,
+        dst_path: str,
+        *,
+        throw_on_failure: bool = True,
+        permissions: Optional[str] = None,
+    ) -> None:
         return self.conn.copy_to(src_path, dst_path, throw_on_failure=throw_on_failure, permissions=permissions)
 
-    def copy_from(self, src_path: str, dst_path: str, *, throw_on_failure=True) -> None:
+    def copy_from(self, src_path: str, dst_path: str, *, throw_on_failure: bool = True) -> None:
         return self.conn.copy_from(src_path, dst_path, throw_on_failure=throw_on_failure)
 
-    def restart(self, *, wait_for_restart=True, throw_on_failure=True) -> None:
+    def restart(self, *, wait_for_restart: bool = True, throw_on_failure: bool = True) -> None:
         print(f"Restarting {self.name}...")
         self.conn.restart(throw_on_failure)
         if wait_for_restart:

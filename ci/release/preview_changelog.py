@@ -6,6 +6,7 @@
 import argparse
 import sys
 from datetime import datetime
+from typing import Optional
 
 from gitlabapi import Commit, GitLabAPI
 
@@ -27,7 +28,11 @@ changelog_cats: list[str] = ["addition", "fix", "change", "deprecation", "remova
 
 
 def changelog_preview(
-    api: GitLabAPI, from_commit_sha: str, to_commit_sha: str | None, release_version: str, markdown: bool = False
+    api: GitLabAPI,
+    from_commit_sha: str,
+    to_commit_sha: Optional[str],
+    release_version: str,
+    markdown: bool = False,
 ) -> str:
     if to_commit_sha is None:
         to_commit_sha = "HEAD"
@@ -47,7 +52,7 @@ def changelog_preview(
     return res
 
 
-def get_commits_in_range(api: GitLabAPI, since_sha: str, until_sha: str | None) -> list[Commit]:
+def get_commits_in_range(api: GitLabAPI, since_sha: str, until_sha: Optional[str]) -> list[Commit]:
     commit_range: str = since_sha
     if until_sha is not None:
         commit_range += ".." + until_sha
@@ -64,7 +69,7 @@ def get_commits_in_range(api: GitLabAPI, since_sha: str, until_sha: str | None) 
     return res if res is not None else []
 
 
-def get_commit(api: GitLabAPI, commit_sha: str) -> Commit | None:
+def get_commit(api: GitLabAPI, commit_sha: str) -> Optional[Commit]:
     return api.get(f"repository/commits/{commit_sha}")
 
 
@@ -169,8 +174,8 @@ def report_summary(report: dict[str, list[str]], markdown: bool = False) -> str:
 
 
 def commit_range_summary(api: GitLabAPI, from_commit_sha: str, to_commit_sha: str) -> str:
-    from_commit: Commit | None = get_commit(api, from_commit_sha)
-    to_commit: Commit | None = get_commit(api, to_commit_sha)
+    from_commit: Optional[Commit] = get_commit(api, from_commit_sha)
+    to_commit: Optional[Commit] = get_commit(api, to_commit_sha)
     if from_commit is None:
         print(f"Failure: {from_commit_sha} is not a valid commit")
         sys.exit(1)

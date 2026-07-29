@@ -4,6 +4,7 @@
 import shlex
 import socket
 import subprocess
+from typing import Optional
 
 from .remote_connection import ExecResult, RemoteConnection
 
@@ -37,7 +38,13 @@ class SSHConnection(RemoteConnection):
         stderr = result.stderr if capture_output else b""
         return ExecResult(stdout=stdout.decode(), stderr=stderr.decode(), success=success)
 
-    def copy_to(self, src_path: str, dst_path: str, throw_on_failure=True, permissions: str | None = None) -> None:
+    def copy_to(
+        self,
+        src_path: str,
+        dst_path: str,
+        throw_on_failure: bool = True,
+        permissions: Optional[str] = None,
+    ) -> None:
         full_command = f"scp {src_path} {self.user}@{self.host}:{dst_path}"
         result = subprocess.run(full_command, shell=True, capture_output=True)
         if throw_on_failure and result.returncode != 0:
@@ -45,13 +52,13 @@ class SSHConnection(RemoteConnection):
         if permissions:
             self.exec(f"chmod -R {permissions} {dst_path}")
 
-    def copy_from(self, src_path: str, dst_path: str, throw_on_failure=True) -> None:
+    def copy_from(self, src_path: str, dst_path: str, throw_on_failure: bool = True) -> None:
         full_command = f"scp {self.user}@{self.host}:{src_path} {dst_path}"
         result = subprocess.run(full_command, shell=True, capture_output=True)
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(f'"{full_command}" failed with exit code {result.returncode}: {result.stderr}')
 
-    def restart(self, throw_on_failure=True) -> None:
+    def restart(self, throw_on_failure: bool = True) -> None:
         self.exec("reboot now", throw_on_failure=throw_on_failure)
 
     def is_up(self) -> bool:

@@ -4,12 +4,12 @@
 
 import asyncio
 
-from ...connections.remote_connection import ExecResult
+from ...connections.remote_connection import ExecResult, RemoteConnection
 from .disk_client_host import DiskClientHost
 
 
 class EosClientHost(DiskClientHost):
-    def __init__(self, conn) -> None:
+    def __init__(self, conn: RemoteConnection) -> None:
         super().__init__(conn)
 
     def install_xrootd_python(self) -> None:
@@ -107,10 +107,8 @@ class EosClientHost(DiskClientHost):
     ) -> None:
         print(f"Evicting {path} on disk instance {disk_instance_name}")
         self.exec(
-
-                f"KRB5CCNAME=/tmp/{user}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 "
-                f'root://{disk_instance_name} file drop "{path}" 1'
-
+            f"KRB5CCNAME=/tmp/{user}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 "
+            f'root://{disk_instance_name} file drop "{path}" 1'
         )
         if wait:
             self.wait_for_file_eviction(disk_instance_name, path, wait_timeout_secs=wait_timeout_secs)

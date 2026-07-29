@@ -4,8 +4,10 @@
 import json
 import shutil
 import uuid
+from collections.abc import Iterator
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 import pytest
 from _pytest.fixtures import SubRequest
@@ -55,7 +57,7 @@ def get_test_heading(test_path: Path, test_name: str) -> tuple[str, str]:
 
 
 @pytest.fixture(autouse=True)
-def make_tests_look_pretty(request: SubRequest):
+def make_tests_look_pretty(request: SubRequest) -> Iterator[None]:
     """The only purpose of this fixture is to make the test output easier to read
     in particular by more clearly visually separating different test cases
     """
@@ -147,17 +149,17 @@ def remote_scripts_dir() -> Path:
 
 
 @pytest.fixture(scope="session")
-def namespace(request: SubRequest) -> str | None:
+def namespace(request: SubRequest) -> Optional[str]:
     return request.config.getoption("--namespace", default=None)
 
 
 @pytest.fixture(scope="session")
-def connection_config(request: SubRequest) -> str | None:
+def connection_config(request: SubRequest) -> Optional[str]:
     return request.config.getoption("--connection-config", default=None)
 
 
 @pytest.fixture(scope="session")
-def env(connection_config: str | None, namespace: str | None) -> TestEnv:
+def env(connection_config: Optional[str], namespace: Optional[str]) -> TestEnv:
     """Gives all the tests access to the different hosts (cli, frontend, taped, etc)"""
     if namespace and connection_config:
         raise pytest.UsageError("Only one of --namespace or --connection-config can be provided, not both")

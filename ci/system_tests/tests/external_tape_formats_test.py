@@ -40,7 +40,7 @@ def external_tape_formats_path(cta_rmcd: CtaRmcdHost) -> Path:
     return external_tape_formats_path
 
 
-def wait_for_device_ready(host, drive_device: str, timeout_seconds: int = 60) -> None:
+def wait_for_device_ready(host: CtaRmcdHost, drive_device: str, timeout_seconds: int = 60) -> None:
     deadline = time.monotonic() + timeout_seconds
     last_result = None
 
@@ -157,15 +157,15 @@ def space_filemarks_forward(cta_rmcd: CtaRmcdHost, drive_device: str, count: int
     raise RuntimeError(f"Failed to position to {description} on {drive_device}. {stderr}")
 
 
-def remote_file_size(host, path: str) -> int:
+def remote_file_size(host: CtaRmcdHost, path: str) -> int:
     return int(host.exec_with_output(f"stat -c%s {path}"))
 
 
-def remote_sha256(host, path: str) -> str:
+def remote_sha256(host: CtaRmcdHost, path: str) -> str:
     return host.exec_with_output(f"sha256sum {path}").split()[0]
 
 
-def assert_remote_files_match(host, expected_path: str, actual_path: str) -> None:
+def assert_remote_files_match(host: CtaRmcdHost, expected_path: str, actual_path: str) -> None:
     assert remote_file_size(host, actual_path) == remote_file_size(host, expected_path)
     assert remote_sha256(host, actual_path) == remote_sha256(host, expected_path)
 

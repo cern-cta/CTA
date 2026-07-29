@@ -7,9 +7,11 @@ import json
 import sys
 import time
 import uuid
+from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Union
 
 import pytest
 from jsonschema import Draft202012Validator
@@ -57,10 +59,8 @@ def test_setup_client(
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "client_helper.sh"), "/tmp/", permissions="+x")
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "cli_calls.sh"), "/tmp/", permissions="+x")
     eos_client.exec(
-
-            f"/tmp/client_setup.sh -n {client_params.file_count} -s {client_params.file_size_kb} -p "
-            f"{client_params.process_count} -d {test_dir} -r -c xrd"
-
+        f"/tmp/client_setup.sh -n {client_params.file_count} -s {client_params.file_size_kb} -p "
+        f"{client_params.process_count} -d {test_dir} -r -c xrd"
     )
 
 
@@ -82,6 +82,7 @@ def test_setup_client(
 
 def test_eos_xrootd_third_party_copy_capabilities(eos_mgm: EosMgmHost, disk_instance_name: str) -> None:
     """Verifies that all online EOS FST nodes have xrootd TPC capabilities enabled."""
+    del disk_instance_name  # This fixture ensures that a disk instance is available.
 
     # Fetch nodes
     node_ls_raw = eos_mgm.exec_with_output("eos -j root://localhost node ls")
@@ -280,11 +281,9 @@ def test_eos_archive_metadata_ends_up_in_eos_report(
 
     eosadmin_user = "eosadmin1"
     token_eosuser1 = eos_client.exec_with_output(
-
-            f"XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/{eosadmin_user}/krb5cc_0 eos -r 0 0 "
-            f"root://{disk_instance_name} token --tree --path '/eos/ctaeos/://:/api/' --expires "
-            f"{later_timestamp} --owner user1 --group eosusers --permission rwx"
-
+        f"XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/{eosadmin_user}/krb5cc_0 eos -r 0 0 "
+        f"root://{disk_instance_name} token --tree --path '/eos/ctaeos/://:/api/' --expires "
+        f"{later_timestamp} --owner user1 --group eosusers --permission rwx"
     )
 
     print("Printing eosuser token dump")
@@ -292,11 +291,9 @@ def test_eos_archive_metadata_ends_up_in_eos_report(
 
     print("Archiving file with archive metadata")
     eos_client.exec(
-
-            f'curl -X PUT -L --insecure -H "Accept: application/json" -H "ArchiveMetadata: '
-            f'{archive_metadata_b64}" -H "Authorization: Bearer {token_eosuser1}" '
-            f'"https://{disk_instance_name}:8443/{file_loc}" --upload-file "/etc/group"'
-
+        f'curl -X PUT -L --insecure -H "Accept: application/json" -H "ArchiveMetadata: '
+        f'{archive_metadata_b64}" -H "Authorization: Bearer {token_eosuser1}" '
+        f'"https://{disk_instance_name}:8443/{file_loc}" --upload-file "/etc/group"'
     )
 
     # Check the archive metadata appears in the mgm log file
@@ -403,10 +400,8 @@ def test_retrieve_queue_cleanup(
         for j in range(copynb):
             print(f"Creating AR {sc_name}, {tp_names[j]}, {j + 1}")
             cta_cli.exec(
-
-                    f"cta-admin archiveroute add --storageclass '{sc_name}' --tapepool {tp_names[j]} --copynb "
-                    f"{j + 1} -m 'Add temp archive route'"
-
+                f"cta-admin archiveroute add --storageclass '{sc_name}' --tapepool {tp_names[j]} --copynb "
+                f"{j + 1} -m 'Add temp archive route'"
             )
 
     # The actual test
@@ -471,11 +466,11 @@ def test_log_schema_correctness(env: TestEnv, tmp_path: Path, cta_maintd: CtaMai
 
     fail_fast = True
 
-    def load_schema(path):
+    def load_schema(path: Path) -> dict[str, object]:
         with open(path, encoding="utf-8") as f:
             return json.load(f)
 
-    def iter_lines(path):
+    def iter_lines(path: Union[Path, str]) -> Iterator[str]:
         if path == "-":
             for line in sys.stdin:
                 yield line
@@ -484,7 +479,7 @@ def test_log_schema_correctness(env: TestEnv, tmp_path: Path, cta_maintd: CtaMai
                 for line in f:
                     yield line
 
-    def extract_expected_events(schema):
+    def extract_expected_events(schema: dict[str, object]) -> set[str]:
         expected_events = set()
         try:
             enum_events = schema["properties"]["event_name"]["enum"]
@@ -575,17 +570,13 @@ def test_add_errors_to_whitelist(error_whitelist: set[str]) -> None:
     error_whitelist.add("In Scheduler::reportRetrieveJobsBatch(): failed to report.")
     error_whitelist.add("In Scheduler::reportArchiveJobsBatch(): failed to report.")
     error_whitelist.add(
-
-            "In RetrieveRequest::garbageCollect() [queue cleanup]: No VID available to requeue the "
-            "request. Failing all jobs."
-
+        "In RetrieveRequest::garbageCollect() [queue cleanup]: No VID available to requeue the "
+        "request. Failing all jobs."
     )
     error_whitelist.add("End of recall session with error(s)")
     error_whitelist.add(
-
-            "In RetrieveMount::releaseDiskSpace(): reservation release request failed, driveName, "
-            "diskSystem and mountId do not match."
-
+        "In RetrieveMount::releaseDiskSpace(): reservation release request failed, driveName, "
+        "diskSystem and mountId do not match."
     )
     error_whitelist.add("In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.")
     error_whitelist.add("In Agent::deleteAndUnregisterSelf: agent still owns objects. Here is a part of the list.")

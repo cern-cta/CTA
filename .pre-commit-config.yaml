@@ -27,7 +27,3 @@ repos:
     rev: v5.1.0
     hooks:
       - id: reuse
-  - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.411
-    hooks:
-      - id: pyright

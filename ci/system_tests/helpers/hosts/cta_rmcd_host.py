@@ -5,11 +5,12 @@ import re
 from functools import cached_property
 from pathlib import Path
 
+from ..connections.remote_connection import RemoteConnection
 from .remote_host import RemoteHost
 
 
 class CtaRmcdHost(RemoteHost):
-    def __init__(self, conn) -> None:
+    def __init__(self, conn: RemoteConnection) -> None:
         super().__init__(conn)
 
     @cached_property
@@ -56,7 +57,7 @@ class CtaRmcdHost(RemoteHost):
             self.exec(f"mtx -f {library_device} unload {slot} {drive}")
 
     @staticmethod
-    def list_all_tapes_in_libraries(cta_rmcd_hosts) -> list[str]:
+    def list_all_tapes_in_libraries(cta_rmcd_hosts: list["CtaRmcdHost"]) -> list[str]:
         """Lists unique volume tags from multiple tape libraries."""
         volume_tags = set()
         for rmcd in cta_rmcd_hosts:

@@ -13,7 +13,7 @@ from datetime import datetime
 
 
 # Parse source code, extracting all lines between comment delimiters /**md and */
-def include_md(filename) -> None:
+def include_md(filename: str) -> None:
     with open(filename) as f:
         output = False
         for line in f:

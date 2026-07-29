@@ -15,7 +15,7 @@ import subprocess
 import time
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Archive files via persistent XRootD client")
     p.add_argument("--eos-host", required=True, help="EOS MGM hostname (e.g. ctaeos)")
     p.add_argument("--dest-dir", required=True, help="EOS destination directory (e.g. /eos/ctaeos/cta/stress)")
@@ -34,7 +34,7 @@ def parse_args():
     return p.parse_args()
 
 
-def mkdir_dirs(eos_host, dest_dir, num_dirs) -> None:
+def mkdir_dirs(eos_host: str, dest_dir: str, num_dirs: int) -> None:
     """Create subdirectories under dest_dir."""
     for i in range(num_dirs):
         path = f"{dest_dir}/{i}"

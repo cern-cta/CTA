@@ -21,7 +21,7 @@ pytest_plugins = [
 #####################################################################################################################
 
 
-def pytest_addoption(parser) -> None:
+def pytest_addoption(parser: pytest.Parser) -> None:
     """Pytest hook that allows for adding custom commandline arguments"""
     parser.addoption("--namespace", action="store", help="Namespace for tests")
     parser.addoption(
@@ -57,14 +57,14 @@ def pytest_addoption(parser) -> None:
     )
 
 
-def pytest_configure(config) -> None:
+def pytest_configure(config: pytest.Config) -> None:
     """Pytest hook that allows us to augment the config object with additional info after commandline parsing"""
     config_path: str = config.getoption("--test-config")
     try:
         with open(config_path, "rb") as f:
             config.test_config = tomllib.load(f)
-    except FileNotFoundError:
-        raise pytest.UsageError(f"--test-config file not found: {config_path}")
+    except FileNotFoundError as error:
+        raise pytest.UsageError(f"--test-config file not found: {config_path}") from error
 
 
 #####################################################################################################################
@@ -72,7 +72,7 @@ def pytest_configure(config) -> None:
 #####################################################################################################################
 
 
-def is_test_in_items(test_path: str, items):
+def is_test_in_items(test_path: str, items: list[pytest.Item]) -> bool:
     resolved_test_path = Path(test_path).resolve()
     if not resolved_test_path.exists():
         raise FileNotFoundError(f"Test suite '{resolved_test_path}' not found!")
@@ -80,7 +80,10 @@ def is_test_in_items(test_path: str, items):
 
 
 def add_test_into_existing_collection(
-    test_path: str, items, prepend: bool = False, allow_duplicate: bool = False
+    test_path: str,
+    items: list[pytest.Item],
+    prepend: bool = False,
+    allow_duplicate: bool = False,
 ) -> None:
     resolved_test_path = Path(test_path).resolve()
     if not resolved_test_path.exists():
@@ -94,7 +97,7 @@ def add_test_into_existing_collection(
         items[index:index] = tests
 
 
-def add_tests_from_directory(test_directory: Path, items, prepend: bool = False) -> None:
+def add_tests_from_directory(test_directory: Path, items: pytest.Config, prepend: bool = False) -> None:
     test_paths = sorted(test_directory.rglob("*_test.py"))
     if not test_paths:
         raise FileNotFoundError(f"No test suites found in '{test_directory.resolve()}'!")
@@ -106,7 +109,7 @@ def add_tests_from_directory(test_directory: Path, items, prepend: bool = False)
         add_test_into_existing_collection(str(test_path), items, prepend=prepend)
 
 
-def add_lifecycle_tests(config, items):
+def add_lifecycle_tests(config: pytest.Config, items: list[pytest.Item]):
     rerun = config.getoption("--lf") or config.getoption("--ff")
 
     if config.getoption("--setup"):

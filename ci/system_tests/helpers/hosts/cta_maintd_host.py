@@ -4,11 +4,12 @@
 from functools import cached_property
 from pathlib import Path
 
+from ..connections.remote_connection import RemoteConnection
 from .remote_host import RemoteHost
 
 
 class CtaMaintdHost(RemoteHost):
-    def __init__(self, conn) -> None:
+    def __init__(self, conn: RemoteConnection) -> None:
         super().__init__(conn)
 
     @cached_property

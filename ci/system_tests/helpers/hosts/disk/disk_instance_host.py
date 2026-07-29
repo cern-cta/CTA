@@ -104,10 +104,8 @@ class DiskInstanceHost(RemoteHost):
             current_remaining_files = sum(num_files_left.values())
 
             print(
-
-                    f"{current_remaining_files} files remaining to be archived to tape "
-                    f"({len(dirs_left_queue)} directories left)"
-
+                f"{current_remaining_files} files remaining to be archived to tape "
+                f"({len(dirs_left_queue)} directories left)"
             )
 
             # Check if progress was made
@@ -129,10 +127,7 @@ class DiskInstanceHost(RemoteHost):
             print(f"No progress for {max_no_progress_intervals} consecutive intervals, waiting for archival stopped")
 
         # Check if the loss is acceptable
-        if total_files_to_archive > 0:
-            loss_percent = (missing_archives / total_files_to_archive) * 100
-        else:
-            loss_percent = 0.0
+        loss_percent = (missing_archives / total_files_to_archive) * 100 if total_files_to_archive > 0 else 0.0
 
         print(f"{total_files_to_archive - missing_archives}/{total_files_to_archive} files archived to tape")
 
@@ -193,10 +188,7 @@ class DiskInstanceHost(RemoteHost):
         if consecutive_no_progress_intervals >= max_no_progress_intervals:
             print(f"No progress for {max_no_progress_intervals} consecutive intervals, waiting for retrieval stopped")
 
-        if total_files_to_retrieve > 0:
-            loss_percent = (missing_retrievals / total_files_to_retrieve) * 100
-        else:
-            loss_percent = 0.0
+        loss_percent = (missing_retrievals / total_files_to_retrieve) * 100 if total_files_to_retrieve > 0 else 0.0
 
         print(f"{total_files_to_retrieve - missing_retrievals}/{total_files_to_retrieve} files retrieved from tape")
 

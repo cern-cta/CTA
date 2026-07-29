@@ -25,24 +25,26 @@ SUPPORTED_ENV_VARS = [
     "PLATFORM",
 ]
 
+CiInputVars = dict[str, str]
 
-def env_var_defined(name: str, ci_input_vars):
+
+def env_var_defined(name: str, ci_input_vars: CiInputVars) -> bool:
     return name in ci_input_vars and len(ci_input_vars[name]) > 0
 
 
-def exit_if_defined(env_var_name, ci_input_vars) -> None:
+def exit_if_defined(env_var_name: str, ci_input_vars: CiInputVars) -> None:
     if env_var_defined(env_var_name, ci_input_vars):
         sys.exit(
             f"ERROR: using {env_var_name} is not allowed when running a {ci_input_vars['PIPELINE_TYPE']} pipeline."
         )
 
 
-def exit_if_not_defined(env_var_name, ci_input_vars) -> None:
+def exit_if_not_defined(env_var_name: str, ci_input_vars: CiInputVars) -> None:
     if not env_var_defined(env_var_name, ci_input_vars):
         sys.exit(f"ERROR: {env_var_name} must be provided when running a {ci_input_vars['PIPELINE_TYPE']} pipeline.")
 
 
-def validate_default(ci_input_vars) -> None:
+def validate_default(ci_input_vars: CiInputVars) -> None:
     """
     Validation for the DEFAULT pipeline type.
     """
@@ -51,14 +53,14 @@ def validate_default(ci_input_vars) -> None:
     exit_if_defined("CUSTOM_XROOTD_VERSION", ci_input_vars)
 
 
-def validate_regr_against_cta_branch(ci_input_vars) -> None:
+def validate_regr_against_cta_branch(ci_input_vars: CiInputVars) -> None:
     """
     Validation for the pipeline type `REGR_AGAINST_CTA_BRANCH`.
     """
     exit_if_defined("CUSTOM_CTA_IMAGE_TAG", ci_input_vars)
 
 
-def validate_regr_against_cta_version(ci_input_vars) -> None:
+def validate_regr_against_cta_version(ci_input_vars: CiInputVars) -> None:
     """
     Validation for the pipeline type `EOS_REGR_AGAINST_CTA_VERSION`.
     """
@@ -96,10 +98,8 @@ def main() -> None:
         # Check that at this point the project.json contains the same version
         if xrootd_version != project_xrootd_version:
             sys.exit(
-
-                    f"ERROR: CUSTOM_XROOTD_VERSION must be equal to value in project.json ({xrootd_version} "
-                    f"!= {project_xrootd_version}). Please verify the logic in the modify-project-json job."
-
+                f"ERROR: CUSTOM_XROOTD_VERSION must be equal to value in project.json ({xrootd_version} "
+                f"!= {project_xrootd_version}). Please verify the logic in the modify-project-json job."
             )
 
     project_eos_image_tag = project_json["dev"]["eosImageTag"]
@@ -108,10 +108,8 @@ def main() -> None:
         # Check that at this point the project.json contains the same version
         if eos_image_tag != project_eos_image_tag:
             sys.exit(
-
-                    f"ERROR: CUSTOM_EOS_IMAGE_TAG must be equal to value in project.json ({eos_image_tag} != "
-                    f"{project_eos_image_tag}). Please verify the logic in the modify-project-json job."
-
+                f"ERROR: CUSTOM_EOS_IMAGE_TAG must be equal to value in project.json ({eos_image_tag} != "
+                f"{project_eos_image_tag}). Please verify the logic in the modify-project-json job."
             )
     print("Validation was successful")
 

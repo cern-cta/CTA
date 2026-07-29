@@ -47,7 +47,7 @@ from ..helpers.utils import (
 #####################################################################################################################
 
 
-def is_in_repacking_state(cta_cli: CtaCliHost, vid_to_check):
+def is_in_repacking_state(cta_cli: CtaCliHost, vid_to_check: str) -> bool:
     ta_ls_out = cta_cli.exec_with_output(f"cta-admin --json ta ls -v {vid_to_check}")
     ta_ls_json = json.loads(ta_ls_out)
     if len(ta_ls_json) != 1:
@@ -597,7 +597,7 @@ def test_cta_admin_recycle_tape_file_ls(
     file_info_json = json.loads(file_info_out)
     fxid = file_info_json["fxid"]
 
-    tf_created = cta_cli.get_single_ls_item(f"tf ls --fxid {fxid} -i {disk_instance_name}", lambda x: True)
+    tf_created = cta_cli.get_single_ls_item(f"tf ls --fxid {fxid} -i {disk_instance_name}", lambda _x: True)
     vid = tf_created["tf"]["vid"]
     archive_id = tf_created["af"]["archiveId"]
 
@@ -802,7 +802,7 @@ def test_cta_admin_archive_file_ch(
 
                 af_created = cta_cli.get_single_ls_item(
                     f"tf ls --fxid {fxid} -i {disk_instance_name}",
-                    lambda x: True,
+                    lambda _x: True,
                 )
 
                 assert af_created["af"]["storageClass"] == source_sc
@@ -827,7 +827,7 @@ def test_cta_admin_archive_file_ch(
             for archive_file in archive_files:
                 af_updated = cta_cli.get_single_ls_item(
                     f"tf ls --fxid {archive_file['fxid']} -i {disk_instance_name}",
-                    lambda x: True,
+                    lambda _x: True,
                 )
 
                 assert_dict_equals(
