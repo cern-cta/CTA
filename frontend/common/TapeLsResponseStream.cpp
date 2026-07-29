@@ -92,6 +92,13 @@ cta::xrd::Data TapeLsResponseStream::next() {
   tapeItem->set_nb_master_files(tape.nbMasterFiles);
   tapeItem->set_master_data_in_bytes(tape.masterDataInBytes);
 
+  for (const auto& statistics : tape.storageClassStatistics) {
+    auto* statisticsItem = tapeItem->add_storage_class_statistics();
+    statisticsItem->set_storage_class_name(statistics.storageClassName);
+    statisticsItem->set_nb_master_files(statistics.nbMasterFiles);
+    statisticsItem->set_master_data_in_bytes(statistics.masterDataInBytes);
+  }
+
   if (tape.labelLog) {
     ::cta::common::TapeLog* labelLog = tapeItem->mutable_label_log();
     labelLog->set_drive(tape.labelLog.value().drive);
