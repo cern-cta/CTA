@@ -17,7 +17,7 @@ import pytest
 from jsonschema import Draft202012Validator
 
 from system_tests.helpers.hosts import CtaCliHost, CtaMaintdHost, CtaTapedHost, EosClientHost, EosMgmHost
-from system_tests.helpers.test_config import TEST_CONFIG_KEY
+from system_tests.helpers.test_config import TestConfig
 from system_tests.helpers.test_env import TestEnv
 
 from ..helpers.utils import find_line
@@ -35,8 +35,8 @@ class ClientParams:
 
 
 @pytest.fixture(scope="module")
-def client_params(request: pytest.FixtureRequest) -> ClientParams:
-    client_config = request.config.stash[TEST_CONFIG_KEY]["tests"]["client"]
+def client_params(test_config: TestConfig) -> ClientParams:
+    client_config = test_config["tests"]["client"]
     return ClientParams(
         file_count=client_config["file_count"],
         file_size_kb=client_config["file_size_kb"],
@@ -249,7 +249,7 @@ def test_eos_http_rest_api(
 ) -> None:
     eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_rest_api.sh", Path("/tmp"), permissions="+x")
     # Copy over CA certificates
-    eos_mgm.copy_from(Path("etc/grid-security/certificates"), tmp_path)
+    eos_mgm.copy_from(Path("/etc/grid-security/certificates"), tmp_path)
     eos_client.copy_to(tmp_path, Path("/etc/grid-security"))
     eos_client.exec(f". /tmp/client_env && /tmp/test_rest_api.sh {test_dir}")
 

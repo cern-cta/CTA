@@ -29,8 +29,7 @@ def external_tape_formats_path(cta_rmcd: CtaRmcdHost) -> Path:
     external_tape_formats_path = Path("/tmp") / "external-tape-formats"
 
     # Note that the cleanup of the system tests will restart all pods and therefore wipe this directory again between
-    # runs
-    # So we don't bother cleaning it up manually
+    # runs so we don't bother cleaning it up manually
     cta_rmcd.exec("sudo microdnf install -y git git-lfs")
     cta_rmcd.exec("git lfs install --skip-repo")
     cta_rmcd.exec(f"git clone https://gitlab.cern.ch/cta/ci/external-tape-formats {external_tape_formats_path}")

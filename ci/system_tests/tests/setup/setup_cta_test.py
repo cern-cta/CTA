@@ -75,11 +75,8 @@ def test_register_logical_libraries_in_catalogue(env: TestEnv, cta_cli: CtaCliHo
     for lib in library_devices_in_use:
         print(f"  - {lib}")
     for logical_library_name in logical_library_names_in_use:
-        add_ll_cmd: str = (
-            f"cta-admin logicallibrary add                                 --name {logical_library_name} "
-            '                                --comment "ctasystest logical library '
-            f'{logical_library_name} was registered in the catalogue"'
-        )
+        comment = f"ctasystest logical library {logical_library_name} was registered in the catalogue"
+        add_ll_cmd = f"cta-admin logicallibrary add   --name {logical_library_name}   --comment '{comment}'"
         cta_cli.exec(add_ll_cmd)
 
 

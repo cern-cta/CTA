@@ -12,7 +12,7 @@ from typing import Annotated, Optional
 import pytest
 
 from system_tests.helpers.hosts import CtaCliHost, CtaTapedHost, EosClientHost, EosMgmHost
-from system_tests.helpers.test_config import TEST_CONFIG_KEY
+from system_tests.helpers.test_config import TestConfig
 
 from ..helpers.utils import Timeout
 
@@ -30,8 +30,8 @@ class RepackParams:
 
 
 @pytest.fixture(scope="module")
-def repack_params(request: pytest.FixtureRequest) -> RepackParams:
-    client_config = request.config.stash[TEST_CONFIG_KEY]["tests"]["repack"]
+def repack_params(test_config: TestConfig) -> RepackParams:
+    client_config = test_config["tests"]["repack"]
     return RepackParams(
         file_size_kb=client_config["file_size_kb"],
         process_count=client_config["process_count"],
@@ -113,15 +113,27 @@ def _submit_repack_request(
         ds_ls_json = json.loads(cta_cli.exec_with_output("cta-admin --json ds ls"))
         if not any(item.get("name") == "repackBuffer" for item in ds_ls_json):
             dis_name = "repackDiskInstanceSpace"
-            cta_cli.exec(
-                f"cta-admin dis add -n {dis_name} --di {disk_instance_name} -u 'eosSpace:default' -i 5 -m "
-                f"'Repack test dis'"
+            add_disk_instance_space_cmd = (
+                f"cta-admin dis add "
+                f"  -n {dis_name} "
+                f"  --di {disk_instance_name} "
+                f"  -u 'eosSpace:default' "
+                f"  -i 5 "
+                f"  -m 'Repack test dis'"
             )
-            cta_cli.exec(
-                f"cta-admin ds add -n repackBuffer --di {disk_instance_name} --dis {dis_name} -r "
-                f"'root://{disk_instance_name}/{repack_buffer_dir}' -f 111222333444555 -s 20 -m 'Repack "
-                f"test buffer ds'"
+            cta_cli.exec(add_disk_instance_space_cmd)
+
+            add_disk_system_cmd = (
+                f"cta-admin ds add "
+                f"  -n repackBuffer "
+                f"  --di {disk_instance_name} "
+                f"  --dis {dis_name} "
+                f"  -r 'root://{disk_instance_name}/{repack_buffer_dir}' "
+                f"  -f 111222333444555 "
+                f"  -s 20 "
+                f"  -m 'Repack test buffer ds'"
             )
+            cta_cli.exec(add_disk_system_cmd)
         else:
             print("Disk system repackBuffer already defined. Ensuring too high free space requirements.")
             cta_cli.exec("cta-admin ds ch -n repackBuffer -f 111222333444555")

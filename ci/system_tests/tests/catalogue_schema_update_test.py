@@ -8,7 +8,7 @@ from typing import Any, Optional
 import pytest
 
 from system_tests.helpers.hosts import CtaAdminApiHost
-from system_tests.helpers.test_config import TEST_CONFIG_KEY
+from system_tests.helpers.test_config import TestConfig
 from system_tests.helpers.test_env import TestEnv
 
 from ..helpers.connections.k8s_connection import K8sConnection
@@ -25,8 +25,8 @@ class CatalogueSchemaUpdateParams:
 
 
 @pytest.fixture(scope="module")
-def catalogue_schema_update_params(request: pytest.FixtureRequest) -> CatalogueSchemaUpdateParams:
-    catalogue_schema_update_config = request.config.stash[TEST_CONFIG_KEY]["tests"]["catalogue_schema_update"]
+def catalogue_schema_update_params(test_config: TestConfig) -> CatalogueSchemaUpdateParams:
+    catalogue_schema_update_config = test_config["tests"]["catalogue_schema_update"]
     return CatalogueSchemaUpdateParams(schema_checkout_ref=catalogue_schema_update_config["schema_checkout_ref"])
 
 

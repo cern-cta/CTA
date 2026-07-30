@@ -3,6 +3,7 @@
 
 import json
 import shutil
+import sys
 import uuid
 from collections.abc import Iterator
 from datetime import datetime
@@ -24,8 +25,13 @@ from ..helpers.hosts import (
     EosClientHost,
     EosMgmHost,
 )
-from ..helpers.test_config import TEST_CONFIG_KEY
+from ..helpers.test_config import TestConfig
 from ..helpers.test_env import TestEnv
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 # This file could be split into multiple files eventually when necessary
 
@@ -96,9 +102,21 @@ def project_json() -> dict[str, Any]:
 
 
 @pytest.fixture(scope="session")
-def krb5_realm(request: SubRequest) -> str:
+def test_config(request: SubRequest) -> TestConfig:
+    config_path = request.config.getoption("--test-config")
+    if not isinstance(config_path, Path):
+        raise pytest.UsageError("--test-config must be a filesystem path")
+    try:
+        with config_path.open("rb") as config_file:
+            return tomllib.load(config_file)
+    except FileNotFoundError as error:
+        raise pytest.UsageError(f"--test-config file not found: {config_path}") from error
+
+
+@pytest.fixture(scope="session")
+def krb5_realm(test_config: TestConfig) -> str:
     """Kerberos realm used in the tests"""
-    return request.config.stash[TEST_CONFIG_KEY]["tests"]["krb5_realm"]
+    return test_config["tests"]["krb5_realm"]
 
 
 @pytest.fixture(scope="session")

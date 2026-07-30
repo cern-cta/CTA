@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from system_tests.helpers.hosts import EosClientHost, EosMgmHost
-from system_tests.helpers.test_config import TEST_CONFIG_KEY
+from system_tests.helpers.test_config import TestConfig
 
 from ..helpers.utils import find_line
 
@@ -27,8 +27,8 @@ class GfalParams:
 
 
 @pytest.fixture(scope="module")
-def gfal_params(request: pytest.FixtureRequest) -> GfalParams:
-    gfal_config = request.config.stash[TEST_CONFIG_KEY]["tests"]["gfal"]
+def gfal_params(test_config: TestConfig) -> GfalParams:
+    gfal_config = test_config["tests"]["gfal"]
     return GfalParams(
         file_count=gfal_config["file_count"],
         file_size_kb=gfal_config["file_size_kb"],

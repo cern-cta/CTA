@@ -3,6 +3,4 @@
 
 from typing import Any
 
-import pytest
-
-TEST_CONFIG_KEY = pytest.StashKey[dict[str, Any]]()
+TestConfig = dict[str, Any]

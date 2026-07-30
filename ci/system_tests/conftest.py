@@ -1,17 +1,9 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import sys
 from pathlib import Path
 
 import pytest
-
-from system_tests.helpers.test_config import TEST_CONFIG_KEY
-
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib
 
 # Ensure pytest knows about the fixtures
 pytest_plugins = [
@@ -61,16 +53,6 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         default=Path("config/test_params.toml"),
         help="Path to the config file containing all test parameters",
     )
-
-
-def pytest_configure(config: pytest.Config) -> None:
-    """Pytest hook that allows us to augment the config object with additional info after commandline parsing"""
-    config_path: Path = config.getoption("--test-config")
-    try:
-        with open(config_path, "rb") as f:
-            config.stash[TEST_CONFIG_KEY] = tomllib.load(f)
-    except FileNotFoundError as error:
-        raise pytest.UsageError(f"--test-config file not found: {config_path}") from error
 
 
 #####################################################################################################################

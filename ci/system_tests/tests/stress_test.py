@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from system_tests.helpers.hosts import CtaCliHost, EosClientHost, EosMgmHost
-from system_tests.helpers.test_config import TEST_CONFIG_KEY
+from system_tests.helpers.test_config import TestConfig
 from system_tests.helpers.test_env import TestEnv
 
 
@@ -50,8 +50,8 @@ class StressParams:
 
 
 @pytest.fixture(scope="module")
-def stress_params(request: pytest.FixtureRequest) -> StressParams:
-    stress_config = request.config.stash[TEST_CONFIG_KEY]["tests"]["stress"]
+def stress_params(test_config: TestConfig) -> StressParams:
+    stress_config = test_config["tests"]["stress"]
     prequeue_config = stress_config["prequeue"]
     return StressParams(
         num_dirs=stress_config["num_dirs"],

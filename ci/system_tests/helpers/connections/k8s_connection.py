@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Optional
 
 from kubernetes import client, config
-from kubernetes.client import ApiException, V1ObjectMeta, V1Pod
+from kubernetes.client import ApiException, V1Pod
 from kubernetes.stream import stream
 from typing_extensions import override
 
@@ -44,23 +44,12 @@ class K8sConnection(RemoteConnection):
             self._cached_pod = self._resolve_pod()
         return self._cached_pod
 
-    @staticmethod
-    def _pod_metadata(pod: V1Pod) -> V1ObjectMeta:
-        if pod.metadata is None:
-            raise RuntimeError("Kubernetes pod metadata is unavailable")
-        return pod.metadata
-
-    @staticmethod
-    def _name_for_pod(pod: V1Pod) -> str:
-        metadata = K8sConnection._pod_metadata(pod)
-        name: Optional[str] = metadata.name
-        if not name:
-            raise RuntimeError("Kubernetes pod name is unavailable")
-        return name
-
     @property
     def _pod_name(self) -> str:
-        return self._name_for_pod(self._pod)
+        metadata = self._pod.metadata
+        if metadata is None or not metadata.name:
+            raise RuntimeError("Kubernetes pod name is unavailable")
+        return metadata.name
 
     @override
     def exec(
@@ -134,7 +123,7 @@ class K8sConnection(RemoteConnection):
             raise RuntimeError(f'"{cmd}" failed with exit code {result.returncode}: {result.stderr}')
         if permissions:
             target = dst_path
-            if os.fspath(dst_path).endswith("/"):
+            if str(dst_path).endswith("/"):
                 target = os.path.join(dst_path, os.path.basename(src_path))
             self.exec(f"chmod {permissions} {target}")
 
@@ -149,7 +138,9 @@ class K8sConnection(RemoteConnection):
     @override
     def restart(self, throw_on_failure: bool = True) -> None:
         self._cached_pod = None  # Force resolve the pod before we restart
-        metadata = self._pod_metadata(self._pod)
+        metadata = self._pod.metadata
+        if metadata is None:
+            raise RuntimeError("Kubernetes pod metadata is unavailable")
         uid = metadata.uid
         name = metadata.name
         try:
@@ -226,7 +217,10 @@ class K8sConnection(RemoteConnection):
             label_selector=self.label_selector,
         ).items
 
-        pods.sort(key=self._name_for_pod)
+        def pod_sort_key(pod: V1Pod) -> str:
+            return str(pod.metadata.name) if pod.metadata else ""
+
+        pods.sort(key=pod_sort_key)
 
         pods = [
             pod
