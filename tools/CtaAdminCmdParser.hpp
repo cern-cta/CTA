@@ -240,27 +240,27 @@ const subcmdLookup_t subcmdLookup = {
  */
 const std::map<std::string, OptionBoolean::Key> boolOptions = {
   // Boolean options
-  {"--all",                       OptionBoolean::ALL                         },
-  {"--disabled",                  OptionBoolean::DISABLED                    },
-  {"--encrypted",                 OptionBoolean::ENCRYPTED                   },
-  {"--force",                     OptionBoolean::FORCE                       },
-  {"--full",                      OptionBoolean::FULL                        },
-  {"--fromcastor",                OptionBoolean::FROM_CASTOR                 },
+  {"--all",                         OptionBoolean::ALL                             },
+  {"--disabled",                    OptionBoolean::DISABLED                        },
+  {"--encrypted",                   OptionBoolean::ENCRYPTED                       },
+  {"--force",                       OptionBoolean::FORCE                           },
+  {"--full",                        OptionBoolean::FULL                            },
+  {"--fromcastor",                  OptionBoolean::FROM_CASTOR                     },
 
   // hasOption options
-  {"--disabledtape",              OptionBoolean::DISABLED                    },
-  {"--justarchive",               OptionBoolean::JUSTARCHIVE                 },
-  {"--justmove",                  OptionBoolean::JUSTMOVE                    },
-  {"--justaddcopies",             OptionBoolean::JUSTADDCOPIES               },
-  {"--justretrieve",              OptionBoolean::JUSTRETRIEVE                },
-  {"--log",                       OptionBoolean::SHOW_LOG_ENTRIES            },
-  {"--lookupnamespace",           OptionBoolean::LOOKUP_NAMESPACE            },
-  {"--summary",                   OptionBoolean::SUMMARY                     },
-  {"--no-recall",                 OptionBoolean::NO_RECALL                   },
-  {"--dirtybit",                  OptionBoolean::DIRTY_BIT                   },
-  {"--isrepackvo",                OptionBoolean::IS_REPACK_VO                },
-  {"--missingfilecopies",         OptionBoolean::MISSING_FILE_COPIES         },
-  {"--getstorageclassstatistics", OptionBoolean::GET_STORAGE_CLASS_STATISTICS},
+  {"--disabledtape",                OptionBoolean::DISABLED                        },
+  {"--justarchive",                 OptionBoolean::JUSTARCHIVE                     },
+  {"--justmove",                    OptionBoolean::JUSTMOVE                        },
+  {"--justaddcopies",               OptionBoolean::JUSTADDCOPIES                   },
+  {"--justretrieve",                OptionBoolean::JUSTRETRIEVE                    },
+  {"--log",                         OptionBoolean::SHOW_LOG_ENTRIES                },
+  {"--lookupnamespace",             OptionBoolean::LOOKUP_NAMESPACE                },
+  {"--summary",                     OptionBoolean::SUMMARY                         },
+  {"--no-recall",                   OptionBoolean::NO_RECALL                       },
+  {"--dirtybit",                    OptionBoolean::DIRTY_BIT                       },
+  {"--isrepackvo",                  OptionBoolean::IS_REPACK_VO                    },
+  {"--missingfilecopies",           OptionBoolean::MISSING_FILE_COPIES             },
+  {"--include-storage-class-stats", OptionBoolean::INCLUDE_STORAGE_CLASS_STATISTICS},
 };
 
 /*!
@@ -514,7 +514,7 @@ const Option opt_archive_route_type {
     + R"(" or ")" + cta::common::dataStructures::toString(cta::common::dataStructures::ArchiveRouteType::REPACK)
     + R"(">)"};
 const Option opt_missingfilecopies {Option::OPT_FLAG, "--missingfilecopies", "--mfc", ""};
-const Option opt_getstorageclassstatistics {Option::OPT_FLAG, "--getstorageclassstatistics", "", ""};
+const Option opt_includestorageclassstatistics {Option::OPT_FLAG, "--get-storage-class-stats", "", ""};
 
 /*!
  * Subset of commands that return streaming output
@@ -1014,7 +1014,7 @@ tape (ta)
 :   Add, change, remove, reclaim, list or label tapes. This command is used to manage the physical
     tape cartridges in each library.
 
-    **\-\-getstorageclassstatistics** includes file counts and total data size per storage class for
+    **\-\-get-storage-class-stats** includes file counts and total data size per storage class for
     each tape. This is an expensive operation and delays output until all statistics are loaded.
   */
   {{AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_ADD},
@@ -1060,7 +1060,7 @@ tape (ta)
     opt_purchase_order.optional(),
     opt_physical_library.optional(),
     opt_missingfilecopies.optional(),
-    opt_getstorageclassstatistics.optional()}                                                                                },
+    opt_includestorageclassstatistics.optional()}                                                                            },
 
   /**md
 tapefile (tf)

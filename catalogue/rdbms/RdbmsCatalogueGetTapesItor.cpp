@@ -162,7 +162,7 @@ RdbmsCatalogueGetTapesItor::RdbmsCatalogueGetTapesItor(log::Logger& log,
       m_searchCriteria(searchCriteria),
       m_conn(std::move(conn)),
       m_splitByDiskFileId(searchCriteria.diskFileIds.has_value()) {
-  if (m_searchCriteria.getStorageClassStatistics.value_or(false)) {
+  if (m_searchCriteria.includeStorageClassStatistics.value_or(false)) {
     loadStorageClassStatistics();
   }
   std::vector<common::dataStructures::Tape> tapes;
@@ -523,8 +523,8 @@ common::dataStructures::Tape RdbmsCatalogueGetTapesItor::next() {
   auto tape = populateTape(m_rset);
 
   const auto statisticsIt = m_storageClassStatisticsByVid.find(tape.vid);
-  if (statisticsIt != m_storageClassStatisticsByVid.end()) {
-    tape.storageClassStatistics = std::move(statisticsIt->second);
+  if (auto it = m_storageClassStatisticsByVid.find(tape.vid); it != m_storageClassStatisticsByVid.end()) {
+    tape.storageClassStatistics = std::move(it->second);
   }
 
   m_rsetIsEmpty = !nextValidRset();

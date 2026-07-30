@@ -103,7 +103,7 @@ private:
   /**
    * Storage class statistics grouped by tape VID.
    *
-   * This map is populated only when --getstorageclassstatistics is requested.
+   * This map is populated only when --get-storage-class-stats is requested.
    */
   std::map<std::string, std::vector<common::dataStructures::TapeStorageClassStatistics>> m_storageClassStatisticsByVid;
 

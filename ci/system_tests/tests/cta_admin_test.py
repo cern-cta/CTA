@@ -322,14 +322,14 @@ def test_cta_admin_tape_file(
     vid = tf_ls_json["tf"]["vid"]
     archive_id = tf_ls_json["af"]["archiveId"]
 
-    # Without --getstorageclassstatistics, statistics should be empty
+    # Without --includestorageclassstatistics, statistics should be empty
     tape_without_statistics_out = cta_cli.exec_with_output(f"cta-admin --json tape ls --vid {vid}")
     tape_without_statistics = json.loads(tape_without_statistics_out)[0]
-    assert tape_without_statistics["storageClassStatistics"] == []
+    assert not tape_without_statistics["storageClassStatistics"]
 
-    # With --getstorageclassstatistics, statistics should be returned
+    # With --includestorageclassstatistics, statistics should be returned
     tape_with_statistics_out = cta_cli.exec_with_output(
-        f"cta-admin --json tape ls --vid {vid} --getstorageclassstatistics"
+        f"cta-admin --json tape ls --vid {vid} --includestorageclassstatistics"
     )
     tape_with_statistics = json.loads(tape_with_statistics_out)[0]
     assert tape_with_statistics["storageClassStatistics"]
