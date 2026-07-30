@@ -106,7 +106,7 @@ def add_tests_from_directory(test_directory: Path, items, prepend: bool = False)
 
 
 def add_lifecycle_tests(config, items):
-    rerun = config.getoption("lf") or config.getoption("failedfirst")
+    rerun = config.getoption("--lf") or config.getoption("--ff")
 
     if config.getoption("--setup"):
         add_tests_from_directory(Path("tests/setup"), items, prepend=True)
