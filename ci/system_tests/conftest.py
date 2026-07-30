@@ -30,8 +30,16 @@ def pytest_addoption(parser):
         action="store",
         help="A yaml connection file specifying how to connect to each host",
     )
-    parser.addoption("--setup", action="store_true", help="Execute setup tests first")
-    parser.addoption("--teardown", action="store_true", help="Execute teardown tests last")
+    parser.addoption(
+        "--setup",
+        action="store_true",
+        help="Execute setup tests first. Setup includes things such as populating the CTA Catalogue, labeling tapes and configuring the disk instance.",
+    )
+    parser.addoption(
+        "--teardown",
+        action="store_true",
+        help="Execute teardown tests last. Teardown cleans up any leftover from the tests to ensure a clean state for the next run.",
+    )
     parser.addoption(
         "--teardown-first",
         action="store_true",
@@ -52,24 +60,6 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     """Pytest hook that allows us to augment the config object with additional info after commandline parsing"""
-    last_failed = config.getoption("lf")
-    failed_first = config.getoption("failedfirst")
-    if last_failed and failed_first:
-        raise pytest.UsageError("--lf and --ff cannot be used together")
-
-    config.cta_rerun_mode = "lf" if last_failed else "ff" if failed_first else None
-    if config.cta_rerun_mode:
-        # CTA applies last-failed behavior after constructing the complete
-        # setup -> suite -> verification -> teardown flow. Keep pytest's
-        # plugin registered so it continues updating the last-failed cache,
-        # but disable its collection filtering and ordering.
-        last_failed_plugin = config.pluginmanager.get_plugin("lfplugin")
-        if last_failed_plugin is not None:
-            last_failed_plugin.active = False
-        last_failed_collection_wrapper = config.pluginmanager.get_plugin("lfplugin-collwrapper")
-        if last_failed_collection_wrapper is not None:
-            config.pluginmanager.unregister(last_failed_collection_wrapper)
-
     config_path: str = config.getoption("--test-config")
     try:
         with open(config_path, "rb") as f:
@@ -116,7 +106,7 @@ def add_tests_from_directory(test_directory: Path, items, prepend: bool = False)
 
 
 def add_lifecycle_tests(config, items):
-    rerun = config.cta_rerun_mode is not None
+    rerun = config.getoption("lf") or config.getoption("failedfirst")
 
     if config.getoption("--setup"):
         add_tests_from_directory(Path("tests/setup"), items, prepend=True)
@@ -129,33 +119,46 @@ def add_lifecycle_tests(config, items):
         add_tests_from_directory(Path("tests/teardown"), items, prepend=prepend)
 
 
-def apply_rerun_mode(config, items):
-    if config.cta_rerun_mode is None:
-        return
-
-    last_failed = config.cache.get("cache/lastfailed", {})
-    failed_indexes = [index for index, item in enumerate(items) if item.nodeid in last_failed]
-
-    if config.cta_rerun_mode == "lf":
-        selected_items = [items[index] for index in failed_indexes]
-    elif failed_indexes:
-        selected_items = items[failed_indexes[0] :]
-    else:
-        selected_items = []
-
-    selected_nodeids = {item.nodeid for item in selected_items}
-    deselected_items = [item for item in items if item.nodeid not in selected_nodeids]
-    if deselected_items:
-        config.hook.pytest_deselected(items=deselected_items)
-    items[:] = selected_items
-
-
 # Let pytest first apply ordinary selectors such as -k to the requested suite,
-# then construct and filter the complete CTA lifecycle.
+# then construct and remember the complete CTA lifecycle.
 @pytest.hookimpl(trylast=True)
 def pytest_collection_modifyitems(config, items):
+    # cta_canonical_items is used to remember the original order of items for --lf and --ff
     if not items:
+        config.cta_canonical_items = []
         return
 
     add_lifecycle_tests(config, items)
-    apply_rerun_mode(config, items)
+    config.cta_canonical_items = items[:]
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_collection_finish(session):
+    config = session.config
+    last_failed_only = config.getoption("lf")
+    failed_first = config.getoption("failedfirst")
+    # Nothing to do
+    if not last_failed_only and not failed_first:
+        return
+
+    canonical_items = config.cta_canonical_items
+    # Find the failed tests
+    last_failed = config.cache.get("cache/lastfailed", {})
+    failed_indexes = [index for index, item in enumerate(canonical_items) if item.nodeid in last_failed]
+
+    # Run either only failed tests or the failed tests first
+    if last_failed_only:
+        selected_items = [canonical_items[index] for index in failed_indexes]
+    elif failed_indexes:
+        selected_items = canonical_items[failed_indexes[0] :]
+    else:
+        selected_items = []
+
+    # Update pytest session to only include the selected items
+    selected_nodeids = {item.nodeid for item in selected_items}
+    deselected_items = [item for item in session.items if item.nodeid not in selected_nodeids]
+    if deselected_items:
+        config.hook.pytest_deselected(items=deselected_items)
+
+    session.items[:] = selected_items
+    session.testscollected = len(selected_items)
