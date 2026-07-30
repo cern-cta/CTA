@@ -3,6 +3,7 @@
 
 import time
 import uuid
+from pathlib import Path
 
 from ...utils.timeout import Timeout
 from ..remote_host import RemoteHost
@@ -50,7 +51,7 @@ class DiskClientHost(RemoteHost):
     def generate_and_archive_file(
         self,
         disk_instance_name: str,
-        destination_path: str,
+        destination_path: Path,
         *,
         wait: bool = True,
         wait_for_evict: bool = True,
@@ -58,8 +59,8 @@ class DiskClientHost(RemoteHost):
         append_uid: bool = False,
     ) -> str:
         if append_uid:
-            destination_path = f"{destination_path}_{str(uuid.uuid4())[:8]}"
-        tmp_file_path = f"/tmp/generated_archive_file_{str(uuid.uuid4())[:8]}"
+            destination_path = Path(f"{destination_path}_{str(uuid.uuid4())[:8]}")
+        tmp_file_path = Path(f"/tmp/generated_archive_file_{str(uuid.uuid4())[:8]}")
         self.exec(f"dd if=/dev/urandom of={tmp_file_path}  bs=1M  count=1")
         self.archive_file(
             disk_instance_name,
@@ -71,13 +72,13 @@ class DiskClientHost(RemoteHost):
         )
         # Even if we don't wait, the file will already have been copied, so we can safely remove it
         self.exec(f"rm -rf {tmp_file_path}")
-        return destination_path
+        return str(destination_path)
 
     def archive_file(
         self,
         disk_instance_name: str,
-        destination_path: str,
-        source_path: str,
+        destination_path: Path,
+        source_path: Path,
         *,
         wait: bool = True,
         wait_for_evict: bool = True,

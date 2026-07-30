@@ -21,7 +21,7 @@ def test_restart_cta(env: TestEnv) -> None:
     assert len(env.cta_maintd) > 0
     # CTA can't really survive a catalogue wipe, so restart all the pods. This also wipes all the test scripts and temp
     # files so it ensures a clean slate
-    hosts = env.cta_taped + env.cta_admin_api + env.cta_workflow_api + env.cta_maintd + env.cta_rmcd
+    hosts = [*env.cta_taped, *env.cta_admin_api, *env.cta_workflow_api, *env.cta_maintd, *env.cta_rmcd]
     # Trigger concurrently as the initial restart commands takes a while (even without waiting for the pod to come up
     # again). This way we ensure all pods are restarted simultaneously
     with ThreadPoolExecutor() as executor:

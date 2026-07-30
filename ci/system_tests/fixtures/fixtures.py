@@ -7,7 +7,7 @@ import uuid
 from collections.abc import Iterator
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional, cast
 
 import pytest
 from _pytest.fixtures import SubRequest
@@ -84,7 +84,7 @@ def error_whitelist() -> set[str]:
 
 
 @pytest.fixture(scope="session")
-def project_json() -> dict[str, object]:
+def project_json() -> dict[str, Any]:
     project_json_path = (Path(__file__).resolve().parent / ".." / ".." / "project.json").resolve()
     return json.loads(project_json_path.read_text(encoding="utf-8"))
 
@@ -97,7 +97,7 @@ def project_json() -> dict[str, object]:
 @pytest.fixture(scope="session")
 def krb5_realm(request: SubRequest) -> str:
     """Kerberos realm used in the tests"""
-    return request.config.test_config["tests"]["krb5_realm"]
+    return cast(Any, request.config).test_config["tests"]["krb5_realm"]
 
 
 @pytest.fixture(scope="session")
@@ -172,6 +172,7 @@ def env(connection_config: Optional[str], namespace: Optional[str]) -> TestEnv:
     if namespace is not None:
         # No connection configuration provided, so assume everything is running in a cluster
         return TestEnv.from_namespace(namespace)
+    assert connection_config is not None
     return TestEnv.from_config(connection_config)
 
 

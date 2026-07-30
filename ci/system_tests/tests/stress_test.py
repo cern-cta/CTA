@@ -6,6 +6,7 @@ import contextlib
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 
@@ -50,7 +51,7 @@ class StressParams:
 
 @pytest.fixture(scope="module")
 def stress_params(request: pytest.FixtureRequest) -> StressParams:
-    stress_config = request.config.test_config["tests"]["stress"]
+    stress_config = cast(Any, request.config).test_config["tests"]["stress"]
     prequeue_config = stress_config["prequeue"]
     return StressParams(
         num_dirs=stress_config["num_dirs"],

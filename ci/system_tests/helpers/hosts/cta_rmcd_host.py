@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import re
+from collections.abc import Sequence
 from functools import cached_property
 from pathlib import Path
 
@@ -57,7 +58,7 @@ class CtaRmcdHost(RemoteHost):
             self.exec(f"mtx -f {library_device} unload {slot} {drive}")
 
     @staticmethod
-    def list_all_tapes_in_libraries(cta_rmcd_hosts: list["CtaRmcdHost"]) -> list[str]:
+    def list_all_tapes_in_libraries(cta_rmcd_hosts: Sequence["CtaRmcdHost"]) -> list[str]:
         """Lists unique volume tags from multiple tape libraries."""
         volume_tags = set()
         for rmcd in cta_rmcd_hosts:

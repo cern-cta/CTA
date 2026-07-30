@@ -7,7 +7,7 @@ import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated, Any, Optional, cast
 
 import pytest
 
@@ -30,7 +30,7 @@ class RepackParams:
 
 @pytest.fixture(scope="module")
 def repack_params(request: pytest.FixtureRequest) -> RepackParams:
-    client_config = request.config.test_config["tests"]["repack"]
+    client_config = cast(Any, request.config).test_config["tests"]["repack"]
     return RepackParams(
         file_size_kb=client_config["file_size_kb"],
         process_count=client_config["process_count"],

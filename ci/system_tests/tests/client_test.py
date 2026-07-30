@@ -11,7 +11,7 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Union
+from typing import Any, Union, cast
 
 import pytest
 from jsonschema import Draft202012Validator
@@ -35,7 +35,7 @@ class ClientParams:
 
 @pytest.fixture(scope="module")
 def client_params(request: pytest.FixtureRequest) -> ClientParams:
-    client_config = request.config.test_config["tests"]["client"]
+    client_config = cast(Any, request.config).test_config["tests"]["client"]
     return ClientParams(
         file_count=client_config["file_count"],
         file_size_kb=client_config["file_size_kb"],
@@ -459,14 +459,14 @@ def test_log_rotation_taped(cta_taped: CtaTapedHost, remote_scripts_dir: Path) -
 
 
 def test_log_schema_correctness(env: TestEnv, tmp_path: Path, cta_maintd: CtaMaintdHost) -> None:
-    hosts = env.cta_admin_api + env.cta_workflow_api + env.cta_taped
+    hosts = [*env.cta_admin_api, *env.cta_workflow_api, *env.cta_taped]
     logging_schema_path = tmp_path / "cta-logging.schema.json"
     # Maintd already populates the logging schema in the runtime directory
     cta_maintd.copy_from("/run/cta/cta-logging.schema.json", logging_schema_path)
 
     fail_fast = True
 
-    def load_schema(path: Path) -> dict[str, object]:
+    def load_schema(path: Path) -> dict[str, Any]:
         with open(path, encoding="utf-8") as f:
             return json.load(f)
 
@@ -479,7 +479,7 @@ def test_log_schema_correctness(env: TestEnv, tmp_path: Path, cta_maintd: CtaMai
                 for line in f:
                     yield line
 
-    def extract_expected_events(schema: dict[str, object]) -> set[str]:
+    def extract_expected_events(schema: dict[str, Any]) -> set[str]:
         expected_events = set()
         try:
             enum_events = schema["properties"]["event_name"]["enum"]

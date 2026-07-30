@@ -6,6 +6,7 @@ import json
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 
@@ -27,7 +28,7 @@ class GfalParams:
 
 @pytest.fixture(scope="module")
 def gfal_params(request: pytest.FixtureRequest) -> GfalParams:
-    gfal_config = request.config.test_config["tests"]["gfal"]
+    gfal_config = cast(Any, request.config).test_config["tests"]["gfal"]
     return GfalParams(
         file_count=gfal_config["file_count"],
         file_size_kb=gfal_config["file_size_kb"],

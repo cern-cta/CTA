@@ -13,6 +13,7 @@ import argparse
 import multiprocessing as mp
 import subprocess
 import time
+from typing import Any
 
 
 def parse_args() -> argparse.Namespace:
@@ -51,7 +52,7 @@ CHUNK_1MB = 1024 * 1024  # 1MB pre-allocated once per worker
 
 
 def worker(
-    work_q: mp.JoinableQueue,
+    work_q: mp.JoinableQueue[Any],
     wid: int,
     eos_host: str,
     dest_dir: str,

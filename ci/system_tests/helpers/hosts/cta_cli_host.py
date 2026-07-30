@@ -4,6 +4,7 @@
 import json
 import time
 from collections.abc import Callable
+from typing import Any
 
 from ..connections.remote_connection import RemoteConnection
 from ..utils.timeout import Timeout
@@ -65,8 +66,8 @@ class CtaCliHost(RemoteHost):
     def get_single_ls_item(
         self,
         ls_command: str,
-        filter_func: Callable[[dict[str, object]], bool],
-    ) -> dict:
+        filter_func: Callable[[dict[str, Any]], bool],
+    ) -> dict[str, Any]:
         ls_out = self.exec_with_output("cta-admin --json " + ls_command)
         ls_json = json.loads(ls_out)
         # If only cta-admin was a well designed API we wouldn't have to do this...
@@ -74,7 +75,7 @@ class CtaCliHost(RemoteHost):
         assert len(filtered_list) == 1
         return filtered_list[0]
 
-    def list_writable_tapes(self) -> list[dict]:
+    def list_writable_tapes(self) -> list[dict[str, Any]]:
         tape_ls_json = json.loads(self.exec_with_output("cta-admin --json tape ls --all"))
         return [tape for tape in tape_ls_json if not tape.get("full", False)]
 

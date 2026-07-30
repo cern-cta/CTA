@@ -125,6 +125,8 @@ def main() -> None:
 
     with open(args.key, "rb") as f:
         key = serialization.load_pem_private_key(f.read(), password=None)
+    if not isinstance(key, RSAPrivateKey):
+        raise ValueError("Private key must be RSA")
     jwk = generate_jwk_from_cert(args.cert)
 
     if args.jwks is not None:
@@ -145,7 +147,10 @@ def main() -> None:
 
     # Generate one file per sub
     for sub in args.sub:
-        token = generate_jwt(key, jwk["kid"], sub, args.lifetime)
+        kid = jwk["kid"]
+        if not isinstance(kid, str):
+            raise TypeError("JWK kid must be a string")
+        token = generate_jwt(key, kid, sub, args.lifetime)
 
         safe_sub = sanitize_filename(sub)
         jwt_path = Path(args.output_dir) / f"{safe_sub}.jwt"

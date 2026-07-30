@@ -3,7 +3,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional, cast
 
 import pytest
 
@@ -25,12 +25,12 @@ class CatalogueSchemaUpdateParams:
 
 @pytest.fixture(scope="module")
 def catalogue_schema_update_params(request: pytest.FixtureRequest) -> CatalogueSchemaUpdateParams:
-    catalogue_schema_update_config = request.config.test_config["tests"]["catalogue_schema_update"]
+    catalogue_schema_update_config = cast(Any, request.config).test_config["tests"]["catalogue_schema_update"]
     return CatalogueSchemaUpdateParams(schema_checkout_ref=catalogue_schema_update_config["schema_checkout_ref"])
 
 
 @pytest.fixture(scope="module")
-def catalogue_from_version(project_json: dict[str, object]) -> str:
+def catalogue_from_version(project_json: dict[str, Any]) -> str:
     supported_major_versions = project_json["supportedCatalogueVersions"]
     supported_major_versions.sort()
     # Sorted from low to high, the "from" version is the lowest major version + ".0"
@@ -38,7 +38,7 @@ def catalogue_from_version(project_json: dict[str, object]) -> str:
 
 
 @pytest.fixture(scope="module")
-def catalogue_to_version(project_json: dict[str, object]) -> str:
+def catalogue_to_version(project_json: dict[str, Any]) -> str:
     supported_major_versions = project_json["supportedCatalogueVersions"]
     supported_major_versions.sort()
     # Sorted from low to high, the "to" version is the highest major version + ".0"
@@ -47,6 +47,7 @@ def catalogue_to_version(project_json: dict[str, object]) -> str:
 
 @pytest.fixture(scope="module")
 def catalogue_updater(namespace: Optional[str]) -> RemoteHost:
+    assert namespace is not None
     return RemoteHost(K8sConnection(namespace, "app.kubernetes.io/name=liquibase-update", "liquibase-update", 0))
 
 
@@ -55,7 +56,7 @@ def catalogue_updater(namespace: Optional[str]) -> RemoteHost:
 #####################################################################################################################
 
 
-def test_multiple_versions_supported(project_json: dict[str, object]) -> None:
+def test_multiple_versions_supported(project_json: dict[str, Any]) -> None:
     assert len(project_json["supportedCatalogueVersions"]) > 1, (
         "In order to test a catalogue schema update, CTA must be compatible with at least 2 catalogue schema versions"
     )
@@ -70,7 +71,7 @@ def test_catalogue_version_is_from_version(cta_admin_api: CtaAdminApiHost, catal
 
 def test_init_catalogue_updater(
     env: TestEnv,
-    project_json: dict[str, object],
+    project_json: dict[str, Any],
     catalogue_from_version: str,
     catalogue_to_version: str,
     catalogue_schema_update_params: CatalogueSchemaUpdateParams,

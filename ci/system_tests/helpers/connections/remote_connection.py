@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from dataclasses import dataclass
-from typing import Optional, Protocol
+from pathlib import Path
+from typing import Optional, Protocol, Union
 
 
 @dataclass
@@ -25,13 +26,15 @@ class RemoteConnection(Protocol):
 
     def copy_to(
         self,
-        src_path: str,
-        dst_path: str,
+        src_path: Union[str, Path],
+        dst_path: Union[str, Path],
         throw_on_failure: bool = True,
         permissions: Optional[str] = None,
     ) -> None: ...
 
-    def copy_from(self, src_path: str, dst_path: str, throw_on_failure: bool = True) -> None: ...
+    def copy_from(
+        self, src_path: Union[str, Path], dst_path: Union[str, Path], throw_on_failure: bool = True
+    ) -> None: ...
 
     def restart(self, throw_on_failure: bool = True) -> None: ...
 

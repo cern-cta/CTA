@@ -7,6 +7,8 @@ from enum import Enum
 from functools import cached_property
 from pathlib import Path
 
+from typing_extensions import override
+
 from ..remote_host import RemoteHost
 
 
@@ -14,6 +16,7 @@ class DiskInstanceImplementation(Enum):
     EOS = ("eos",)
     DCACHE = ("dcache",)
 
+    @override
     def __str__(self) -> str:
         return self.value[0]
 
@@ -32,9 +35,9 @@ class DiskInstanceHost(RemoteHost):
     @cached_property
     def base_dir_path(self) -> Path: ...
 
-    def mkdir(self, directory: str, parent: bool = True) -> None: ...
+    def mkdir(self, directory: Path, parent: bool = True) -> None: ...
 
-    def force_remove_directory(self, directory: str) -> None: ...
+    def force_remove_directory(self, directory: Path) -> None: ...
 
     def num_files_in_directory(self, directory: str) -> int: ...
 
@@ -46,12 +49,12 @@ class DiskInstanceHost(RemoteHost):
 
     def list_files_in_directory(self, directory: str) -> list[str]: ...
 
-    def list_subdirectories_in_directory(self, directory: str) -> list[str]: ...
+    def list_subdirectories_in_directory(self, directory: Path) -> list[str]: ...
 
     # Eventually we should move this method to a more central place
     def wait_for_archival_in_directory(
         self,
-        archive_dir_path: str,
+        archive_dir_path: Path,
         check_archive_interval_sec: int,
         *,
         max_no_progress_intervals: int = 3,
@@ -135,7 +138,7 @@ class DiskInstanceHost(RemoteHost):
 
     def wait_for_retrieval_in_directory(
         self,
-        archive_dir_path: str,
+        archive_dir_path: Path,
         check_retrieve_interval_sec: int,
         *,
         max_no_progress_intervals: int = 3,

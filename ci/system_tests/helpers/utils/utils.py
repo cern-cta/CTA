@@ -4,12 +4,13 @@
 import json
 import time
 from collections.abc import Callable
+from typing import Any
 
 from .timeout import Timeout
 
 
 # We could let this return a boolean, but we get better error messages with individual asserts
-def assert_dict_equals(actual: dict, expected: dict, ignore_keys: list[str]) -> None:
+def assert_dict_equals(actual: dict[Any, Any], expected: dict[Any, Any], ignore_keys: list[str]) -> None:
     ignored = set(ignore_keys)
     for k1, v1 in actual.items():
         assert k1 in ignored or (k1 in expected and expected[k1] == v1)

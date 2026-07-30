@@ -7,7 +7,7 @@ import argparse
 import sys
 import textwrap
 import time
-from typing import Optional, cast
+from typing import Any, Optional, cast
 
 from gitlabapi import GitLabAPI
 
@@ -17,7 +17,7 @@ from gitlabapi import GitLabAPI
 # https://docs.gitlab.com/ee/api/branches.html#create-repository-branch
 def create_new_branch(api: GitLabAPI, branch: str, source_branch: str) -> bool:
     print(f"Creating new branch: {branch} from source {args.source_branch}...")
-    params: dict = {
+    params: dict[str, Any] = {
         "branch": branch,
         "ref": source_branch,
     }
@@ -36,7 +36,7 @@ def update_changelog(api: GitLabAPI, release_version: str, from_commit: str, to_
     print(f"\tRelease version: {release_version}")
     print(f"\tStart commit (exclusive): {from_commit}")
     print(f"\tEnd commit   (inclusive): {to_commit}")
-    params: dict = {
+    params: dict[str, Any] = {
         "branch": branch,
         "version": release_version,
         "from": from_commit,
@@ -52,7 +52,7 @@ def update_changelog(api: GitLabAPI, release_version: str, from_commit: str, to_
 
 # https://docs.gitlab.com/ee/api/repository_files.html#get-file-from-repository
 def get_file(api: GitLabAPI, path: str, ref: str) -> dict[str, object]:
-    params: dict = {
+    params: dict[str, Any] = {
         "ref": ref,
     }
     return cast(dict[str, object], api.get(f"repository/files/{path}", params))
@@ -72,7 +72,7 @@ def create_merge_request(
 ) -> Optional[int]:
     print(f"Creating Merge Request from branch {source_branch} into branch: {target_branch}")
     print(f"\tTitle: {title}")
-    data: dict = {
+    data: dict[str, Any] = {
         "source_branch": source_branch,
         "target_branch": target_branch,
         "title": title,
@@ -131,7 +131,7 @@ def add_mr_review_comment(
         print("Failed to retrieve versions")
         return False
     first_version = versions_result[0]
-    data: dict = {
+    data: dict[str, Any] = {
         "position[position_type]": "text",
         "position[base_sha]": first_version["base_commit_sha"],
         "position[head_sha]": first_version["head_commit_sha"],
@@ -226,9 +226,6 @@ if __name__ == "__main__":
     branch_name: str = args.release_version + "-changelog-update"
     with open(args.description_file) as file:
         description_body = file.read()
-    if description_body is None:
-        print(f"Failed to read description file: {args.description_file}")
-        sys.exit(1)
 
     mr_description = "\n".join(
         [

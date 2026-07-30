@@ -6,7 +6,7 @@
 import argparse
 import sys
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from gitlabapi import Commit, GitLabAPI
 
@@ -36,7 +36,7 @@ def changelog_preview(
 ) -> str:
     if to_commit_sha is None:
         to_commit_sha = "HEAD"
-    params: dict = {
+    params: dict[str, Any] = {
         "from": from_commit_sha,
         "to": to_commit_sha,
         "version": release_version,
@@ -58,7 +58,7 @@ def get_commits_in_range(api: GitLabAPI, since_sha: str, until_sha: Optional[str
         commit_range += ".." + until_sha
     # The GitLab API only allows for the retrieval of max 100 entries per page
     per_page: int = 100
-    params: dict = {
+    params: dict[str, Any] = {
         "ref_name": commit_range,
         "trailers": True,
         "per_page": per_page,

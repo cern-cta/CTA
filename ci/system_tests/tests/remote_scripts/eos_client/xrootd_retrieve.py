@@ -16,6 +16,7 @@ import multiprocessing as mp
 import os
 import subprocess
 import time
+from typing import Any
 
 
 def parse_args() -> argparse.Namespace:
@@ -51,7 +52,7 @@ def list_tape_only_files(eos_host: str, dest_dir: str, num_dirs: int) -> list[st
     return tape_files
 
 
-def retrieve_worker(work_q: mp.JoinableQueue, wid: int, eos_host: str, krb5_cache: str) -> None:
+def retrieve_worker(work_q: mp.JoinableQueue[Any], wid: int, eos_host: str, krb5_cache: str) -> None:
     """Worker process that issues prepare (stage-in) requests via XRootD."""
     # Switch from SSS to Kerberos (poweruser1) for prepare permissions
     for k in ("XrdSecsssKT", "XRDSSSKT"):

@@ -3,6 +3,7 @@
 
 import sys
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 
@@ -62,7 +63,7 @@ def pytest_configure(config: pytest.Config) -> None:
     config_path: str = config.getoption("--test-config")
     try:
         with open(config_path, "rb") as f:
-            config.test_config = tomllib.load(f)
+            cast(Any, config).test_config = tomllib.load(f)
     except FileNotFoundError as error:
         raise pytest.UsageError(f"--test-config file not found: {config_path}") from error
 
@@ -92,7 +93,7 @@ def add_test_into_existing_collection(
     if not is_test_in_items(test_path, items) or allow_duplicate:
         # Import the test to ensure pytest collects its tests
         test_module = pytest.Module.from_parent(items[0].session, path=resolved_test_path)
-        tests = test_module.collect()
+        tests = [node for node in test_module.collect() if isinstance(node, pytest.Item)]
         index = 0 if prepend else len(items)
         items[index:index] = tests
 

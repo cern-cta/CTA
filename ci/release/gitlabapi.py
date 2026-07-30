@@ -1,11 +1,12 @@
 # SPDX-FileCopyrightText: 2024 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
+# ruff: noqa: ANN401
 
-from typing import Optional
+from typing import Any, Optional
 
 import requests
 
-Commit = dict[str, object]
+Commit = dict[str, Any]
 
 
 class GitLabAPI:
@@ -23,9 +24,9 @@ class GitLabAPI:
         endpoint: str,
         method: str,
         params: Optional[dict[str, str]] = None,
-        data: Optional[object] = None,
-        json: Optional[object] = None,
-    ) -> Optional[object]:
+        data: Any = None,
+        json: Any = None,
+    ) -> Any:
         api_url = f"{self.gitlab_url}/api/v4/projects/{self.project_id}/{endpoint}"
         headers = {
             "Private-Token": self.api_token,
@@ -47,26 +48,26 @@ class GitLabAPI:
             print(f"ERROR: GitLab API request failed:\n{e}")
             return None
 
-    def get(self, endpoint: str, params: Optional[dict[str, str]] = None) -> Optional[object]:
+    def get(self, endpoint: str, params: Optional[dict[str, str]] = None) -> Any:
         return self.__api_request(endpoint, "GET", params)
 
     def post(
         self,
         endpoint: str,
         params: Optional[dict[str, str]] = None,
-        data: Optional[object] = None,
-        json: Optional[object] = None,
-    ) -> Optional[object]:
+        data: Any = None,
+        json: Any = None,
+    ) -> Any:
         return self.__api_request(endpoint, "POST", params, data=data, json=json)
 
     def put(
         self,
         endpoint: str,
         params: Optional[dict[str, str]] = None,
-        data: Optional[object] = None,
-        json: Optional[object] = None,
-    ) -> Optional[object]:
+        data: Any = None,
+        json: Any = None,
+    ) -> Any:
         return self.__api_request(endpoint, "PUT", params, data=data, json=json)
 
-    def delete(self, endpoint: str, params: Optional[dict[str, str]] = None) -> Optional[object]:
+    def delete(self, endpoint: str, params: Optional[dict[str, str]] = None) -> Any:
         return self.__api_request(endpoint, "DELETE", params)

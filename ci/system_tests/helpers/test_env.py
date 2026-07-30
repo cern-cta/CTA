@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from typing import cast
 
 from kubernetes import client, config
-from kubernetes.client import ApiException
+from kubernetes.client import ApiException, V1Pod
 
 from .connections.k8s_connection import K8sConnection
 from .connections.remote_connection import RemoteConnection
@@ -55,7 +55,7 @@ class TestEnv:
         command: str,
         capture_output: bool = False,
         throw_on_failure: bool = True,
-    ) -> subprocess.CompletedProcess:
+    ) -> subprocess.CompletedProcess[bytes]:
         full_command = f'bash -c "{command}"'
         result = subprocess.run(full_command, shell=True, capture_output=capture_output)
         if throw_on_failure and result.returncode != 0:
@@ -79,10 +79,19 @@ class TestEnv:
             namespace=namespace,
             label_selector=selector,
         )
-        pods.items.sort(key=lambda p: p.metadata.name)
+        pod_items = cast(list[V1Pod], pods.items)
+
+        def pod_name(pod: V1Pod) -> str:
+            if pod.metadata is None:
+                return ""
+            return cast(str, pod.metadata.name or "")
+
+        pod_items.sort(key=pod_name)
 
         connections: list[K8sConnection] = []
-        for ordinal, pod in enumerate(pods.items):
+        for ordinal, pod in enumerate(pod_items):
+            if pod.spec is None:
+                continue
             for c in pod.spec.containers or []:
                 cname = c.name or ""
                 if container_value in cname or not container_value:
@@ -162,7 +171,7 @@ class TestEnv:
             for connection in config_data[host]:  # Iterate over the list of connection configurations
                 if "k8s" in connection:
                     k8s = connection["k8s"]
-                    connections.append(
+                    connections.extend(
                         TestEnv.get_k8s_connections_by_selector(k8s["namespace"], k8s["selector"], k8s["container"]),
                     )
                 elif "ssh" in connection:

@@ -4,11 +4,13 @@
 import os
 import subprocess
 import time
-from typing import Optional, cast
+from pathlib import Path
+from typing import Optional, Union, cast
 
 from kubernetes import client, config
-from kubernetes.client import ApiException, V1Pod
+from kubernetes.client import ApiException, V1ObjectMeta, V1Pod
 from kubernetes.stream import stream
+from typing_extensions import override
 
 from ..utils.timeout import Timeout
 from .remote_connection import ExecResult, RemoteConnection
@@ -27,12 +29,17 @@ class K8sConnection(RemoteConnection):
         self.core = client.CoreV1Api()
 
     @property
+    @override
     def name(self) -> str:
-        return f"{self._pod.metadata.name}-{self.container}"
+        return f"{self._pod_metadata(self._pod).name}-{self.container}"
 
     @property
+    @override
     def description(self) -> str:
-        return f"Kubernetes pod {self._pod.metadata.name}, container {self.container} in namespace {self.namespace}"
+        return (
+            f"Kubernetes pod {self._pod_metadata(self._pod).name}, "
+            f"container {self.container} in namespace {self.namespace}"
+        )
 
     @property
     def _pod(self) -> V1Pod:
@@ -40,6 +47,20 @@ class K8sConnection(RemoteConnection):
             self._cached_pod = self._resolve_pod()
         return self._cached_pod
 
+    @staticmethod
+    def _pod_metadata(pod: V1Pod) -> V1ObjectMeta:
+        if pod.metadata is None:
+            raise RuntimeError("Kubernetes pod metadata is unavailable")
+        return pod.metadata
+
+    @classmethod
+    def _pod_name(cls, pod: V1Pod) -> str:
+        name = cast(Optional[str], cls._pod_metadata(pod).name)
+        if not name:
+            raise RuntimeError("Kubernetes pod name is unavailable")
+        return name
+
+    @override
     def exec(
         self, command: str, capture_output: bool = False, throw_on_failure: bool = True, print_command: bool = False
     ) -> ExecResult:
@@ -49,7 +70,7 @@ class K8sConnection(RemoteConnection):
 
         resp = stream(
             self.core.connect_get_namespaced_pod_exec,
-            self._pod.metadata.name,
+            self._pod_metadata(self._pod).name,
             self.namespace,
             container=self.container,
             command=full_command,
@@ -95,34 +116,40 @@ class K8sConnection(RemoteConnection):
 
         return ExecResult(stdout=stdout, stderr=stderr, success=success)
 
+    @override
     def copy_to(
         self,
-        src_path: str,
-        dst_path: str,
+        src_path: Union[str, Path],
+        dst_path: Union[str, Path],
         throw_on_failure: bool = True,
         permissions: Optional[str] = None,
     ) -> None:
         # TODO: replace these kubectl calls so that we rely only on the SDK
-        cmd = f"kubectl cp {src_path} {self.namespace}/{self._pod.metadata.name}:{dst_path} -c {self.container}"
+        pod_target = f"{self.namespace}/{self._pod_metadata(self._pod).name}:{dst_path}"
+        cmd = f"kubectl cp {src_path} {pod_target} -c {self.container}"
         result = subprocess.run(cmd, shell=True)
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(f'"{cmd}" failed with exit code {result.returncode}: {result.stderr}')
         if permissions:
             target = dst_path
-            if dst_path.endswith("/"):
+            if os.fspath(dst_path).endswith("/"):
                 target = os.path.join(dst_path, os.path.basename(src_path))
             self.exec(f"chmod {permissions} {target}")
 
-    def copy_from(self, src_path: str, dst_path: str, throw_on_failure: bool = True) -> None:
-        cmd = f"kubectl cp {self.namespace}/{self._pod.metadata.name}:{src_path} {dst_path} -c {self.container}"
+    @override
+    def copy_from(self, src_path: Union[str, Path], dst_path: Union[str, Path], throw_on_failure: bool = True) -> None:
+        pod_source = f"{self.namespace}/{self._pod_metadata(self._pod).name}:{src_path}"
+        cmd = f"kubectl cp {pod_source} {dst_path} -c {self.container}"
         result = subprocess.run(cmd, shell=True)
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(f'"{cmd}" failed with exit code {result.returncode}: {result.stderr}\n')
 
+    @override
     def restart(self, throw_on_failure: bool = True) -> None:
         self._cached_pod = None  # Force resolve the pod before we restart
-        uid = self._pod.metadata.uid
-        name = self._pod.metadata.name
+        metadata = self._pod_metadata(self._pod)
+        uid = metadata.uid
+        name = metadata.name
         try:
             self.core.delete_namespaced_pod(
                 name=name,
@@ -152,13 +179,14 @@ class K8sConnection(RemoteConnection):
             if throw_on_failure:
                 raise RuntimeError(f"Pod deletion failed: {e}") from e
 
+    @override
     def is_up(self) -> bool:
         try:
             pod = self._resolve_pod()
         except (ApiException, RuntimeError):
             return False
 
-        if pod is None or pod.status is None:
+        if pod.status is None:
             return False
 
         conditions = pod.status.conditions or []
@@ -168,19 +196,20 @@ class K8sConnection(RemoteConnection):
 
         return False
 
+    @override
     def get_ip(self) -> str:
         try:
             pod = cast(
                 V1Pod,
                 self.core.read_namespaced_pod(
-                    name=self._pod.metadata.name,
+                    name=self._pod_metadata(self._pod).name,
                     namespace=self.namespace,
                 ),
             )
         except ApiException as e:
             raise RuntimeError(f"Failed to get pod IP: {e}") from e
 
-        if pod is None or pod.status is None:
+        if pod.status is None:
             raise RuntimeError("Pod IP not available")
 
         ip = pod.status.pod_ip
@@ -190,14 +219,21 @@ class K8sConnection(RemoteConnection):
         return ip
 
     def _resolve_pod(self) -> V1Pod:
-        pods = self.core.list_namespaced_pod(
-            namespace=self.namespace,
-            label_selector=self.label_selector,
-        ).items
+        pods = cast(
+            list[V1Pod],
+            self.core.list_namespaced_pod(
+                namespace=self.namespace,
+                label_selector=self.label_selector,
+            ).items,
+        )
 
-        pods.sort(key=lambda p: p.metadata.name)
+        pods.sort(key=self._pod_name)
 
-        pods = [pod for pod in pods if any(c.name == self.container for c in pod.spec.containers or [])]
+        pods = [
+            pod
+            for pod in pods
+            if pod.spec is not None and any(c.name == self.container for c in pod.spec.containers or [])
+        ]
 
         if self.ordinal >= len(pods):
             raise RuntimeError(
