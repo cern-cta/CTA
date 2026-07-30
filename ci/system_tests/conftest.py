@@ -135,8 +135,8 @@ def pytest_collection_modifyitems(config, items):
 @pytest.hookimpl(tryfirst=True)
 def pytest_collection_finish(session):
     config = session.config
-    last_failed_only = config.getoption("lf")
-    failed_first = config.getoption("failedfirst")
+    last_failed_only = config.getoption("--lf")
+    failed_first = config.getoption("--ff")
     # Nothing to do
     if not last_failed_only and not failed_first:
         return
