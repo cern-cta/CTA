@@ -25,7 +25,7 @@ _ctadev() {
         --disable-ccache
         --skip-cmake
         --skip-debug-packages
-        --enable-unit-tests
+        --unit-tests
         --force-install
         --enable-address-sanitizer
         --build-generator

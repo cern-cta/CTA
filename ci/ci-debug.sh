@@ -17,6 +17,10 @@ readonly IMAGE_REPOSITORY="${REGISTRY}/cta/ctageneric/cta-debug"
 readonly CONFIG_DIR="${HOME}/.config/cta-ci-debug"
 readonly TOKEN_FILE="${CONFIG_DIR}/token"
 readonly CACHE_DIR="${HOME}/.cache/cta-ci-debug"
+script_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
+readonly script_dir
+
+source "${script_dir}/utils/log_utils.sh"
 
 ################################################################################
 # Globals
@@ -74,15 +78,6 @@ EOF
 ################################################################################
 # Helpers
 ################################################################################
-
-die() {
-  echo "ERROR: $*" >&2
-  exit 1
-}
-
-info() {
-  echo "==> $*"
-}
 
 require_command() {
   command -v "$1" >/dev/null \

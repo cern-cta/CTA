@@ -4,10 +4,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 set -eo pipefail
-source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
 
 log_run() {
-  echo "Running: $*"
+  log_task "Running: $*"
   "$@"
 }
 
@@ -99,4 +99,4 @@ deploy() {
 
 check_helm_installed
 deploy "$@"
-echo "dCache deployment in namespace ${namespace} successful"
+log_success "Deployed dCache in namespace ${namespace}."

@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 set -e
-source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
 
 usage() {
   echo
@@ -57,7 +57,7 @@ build_srpm() {
     --build-generator)
       if [[ $# -gt 1 ]]; then
         if [[ "$2" != "Ninja" ]] && [[ "$2" != "Unix Makefiles" ]]; then
-          echo "Warning: build generator $2 is not officially supported. Compilation might not be successful."
+          log_warn "Build generator $2 is not officially supported. Compilation might not succeed."
         fi
         build_generator="$2"
         shift
@@ -122,7 +122,7 @@ build_srpm() {
       fi
       ;;
     *)
-      echo "Invalid argument: $1"
+      log_error "Invalid argument: $1"
       ;;
     esac
     shift
@@ -148,23 +148,21 @@ build_srpm() {
     die_usage "Missing mandatory argument --cmake-build-type"
   fi
 
+  SECONDS=0
+
   cd "${project_root}"
   local cmake_options=""
 
   if [[ ${clean_build_dir} = true ]]; then
-    echo "Removing old build directory: ${build_dir}"
+    log_task "Removing old build directory ${build_dir}..."
     rm -rf "${build_dir}"
   fi
 
   if [[ ${create_build_dir} = true ]]; then
     mkdir -p "${build_dir}"
   elif [[ ! -d "${build_dir}" ]]; then
-    echo "Build directory ${build_dir} does not exist. Please create it and execute the script again, or run the script with the --create-build-dir option.."
+    log_error "Build directory ${build_dir} does not exist. Create it and run the script again, or use --create-build-dir."
     exit 1
-  fi
-
-  if [[ -d "${build_dir}" ]] && [[ "$(ls -A "${build_dir}")" ]]; then
-    echo "WARNING: build directory ${build_dir} is not empty"
   fi
 
   # Cmake
@@ -178,7 +176,7 @@ build_srpm() {
   fi
 
   if [[ ${oracle_support} = false ]]; then
-    echo "Disabling Oracle Support"
+    log_task "Disabling Oracle support..."
     cmake_options+=" -D DISABLE_ORACLE_SUPPORT:BOOL=ON"
   else
     # the else clause is necessary to prevent cmake from caching this variable
@@ -187,7 +185,7 @@ build_srpm() {
 
   # Scheduler type
   if [[ ${scheduler_type} == "pgsched" ]]; then
-    echo "Using specified scheduler database type $scheduler_type"
+    log_task "Configuring scheduler database type ${scheduler_type}..."
     cmake_options+=" -D CTA_USE_PGSCHED:BOOL=TRUE"
   else
     # unset it
@@ -195,15 +193,17 @@ build_srpm() {
   fi
 
   cd "${build_dir}"
-  echo "Executing cmake..."
+  log_task "Running CMake..."
   (
     set -x
     cmake3 ${cmake_options} -D JOBS_COUNT:INT=${num_jobs} -G "${build_generator}" "${project_root}"
   )
 
   # Build step
-  echo "Executing build step using: ${build_generator}"
+  log_task "Building SRPMs with ${build_generator}..."
   cmake --build . --target cta_srpm -- -j "${num_jobs}"
+  echo
+  log_success "Built CTA SRPMs in ${SECONDS} seconds."
 }
 
 build_srpm "$@"

@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 set -eo pipefail
-source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
 
 die() {
   echo "$@" 1>&2

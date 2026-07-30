@@ -9,7 +9,7 @@ set +e
 # http://stackoverflow.com/questions/6871859/piping-command-output-to-tee-but-also-save-exit-code-of-command
 set -o pipefail
 
-source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
 
 usage() {
   echo

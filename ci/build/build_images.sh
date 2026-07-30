@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 set -eo pipefail
-source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
 
 usage() {
   echo
@@ -97,13 +97,16 @@ fi
 
 cd "$(dirname ${dockerfile_path})"
 dockerfile="$(basename ${dockerfile_path})"
+
 colors=(
-  $'\e[31m' # red
-  $'\e[32m' # green
-  $'\e[33m' # yellow
-  $'\e[34m' # blue
-  $'\e[35m' # magenta
-  $'\e[36m' # cyan
+  $_log_blue
+  $_log_yellow
+  $_log_magenta
+  $_log_cyan
+  $_log_orange
+  $_log_purple
+  $_log_teal
+  $_log_sky
 )
 targets=(
   "cta-taped"
@@ -142,13 +145,13 @@ for target in "${targets[@]}"; do
       if [[ "$load_into_k8s" == "true" ]]; then
         # Load into minikube (use stdin to avoid a temp file)
         if command -v minikube >/dev/null 2>&1; then
-          echo "Minikube detected -> loading $image_ref into minikube"
+          log_task "Loading ${image_ref} into minikube..."
           ${container_runtime} save "${image_ref}" | minikube image load --overwrite -
         fi
 
         # Load into k3s (stream into containerd)
         if command -v k3s >/dev/null 2>&1; then
-          echo "k3s detected -> loading $image_ref into k3s/containerd"
+          log_task "Loading ${image_ref} into k3s/containerd..."
           ${container_runtime} save "${image_ref}" | sudo /usr/local/bin/k3s ctr images import -
         fi
       fi
@@ -170,10 +173,12 @@ for pid in "${pids[@]}"; do
 done
 
 if [[ $status == 1 ]]; then
-  echo "Image building/loading failed"
+  log_error "Failed to build or load one or more container images."
   exit "$status"
 fi
 
-echo "Built the following images in ${SECONDS}s:"
+echo
+echo "Built images:"
 podman images --filter "label=build.id=$BUILD_ID"
-exit "$status"
+echo
+log_success "Built and loaded container images in ${SECONDS} seconds."

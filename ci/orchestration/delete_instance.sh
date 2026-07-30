@@ -5,10 +5,10 @@
 
 set -eo pipefail
 
-source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
 
 local_die() {
-  echo "$@" 1>&2
+  log_error "$@"
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] Finished $0 "
   echo "================================================================================"
   exit 1
@@ -39,7 +39,7 @@ save_logs() {
   # Ensure tmp dir is always cleaned up
   add_trap 'rm -rf -- "$tmpdir"' EXIT
   mkdir -p "${tmpdir}/varlogs"
-  echo "Collecting logs to ${tmpdir}"
+  log_task "Collecting logs in ${tmpdir}..."
 
   # We get all the pod details in one go so that we don't have to do too many kubectl calls
   pods=$(kubectl --namespace "${namespace}" get pods -o json)
@@ -57,7 +57,7 @@ save_logs() {
     # Pod-level probe: cheap and avoids SIGPIPE/pipefail issues
     if ! kubectl -n "${namespace}" logs "${pod}" --limit-bytes=1 >/dev/null 2>&1; then
       echo "[pod=${pod}]"
-      echo "    Pod failed to start. Logging describe output"
+      log_warn "Pod ${pod} failed to start. Collecting describe output."
       kubectl -n "${namespace}" describe pod "${pod}" > "${tmpdir}/${pod}-describe.log"
       continue
     fi
@@ -71,7 +71,7 @@ save_logs() {
       [ "${num_containers}" -gt 1 ] && output_dir="${pod}-${container}"
       echo "[pod=${pod}] [container=${container}]"
 
-      echo "    Collecting stdout logs"
+      log_task "Collecting stdout logs for ${pod}/${container}..."
       # Collect stdout logs
       kubectl -n "${namespace}" logs "${pod}" -c "${container}" > "${tmpdir}/${output_dir}.log"
 
@@ -89,12 +89,12 @@ save_logs() {
         )
 
         if (( var_log_size > max_allowed_size )); then
-          echo "    Contents of /var/log are too big: ${var_log_size} bytes" >&2
+          log_warn "Skipping /var/log for ${pod}/${container}: ${var_log_size} bytes is too large."
           kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- du -h /var/log >&2
-          echo "    Failed to collect /var/log contents" >&2
+          log_error "Failed to collect /var/log contents for ${pod}/${container}."
           continue
         fi
-        echo "    Collecting /var/log contents"
+        log_task "Collecting /var/log contents for ${pod}/${container}..."
         mkdir -p "${tmpdir}/varlogs/${output_dir}"
         # Only tar part of the logs
         subdirs_to_tar=("cta" "eos" "tmp" "xrootd" "*/xrd_errors")
@@ -114,14 +114,14 @@ save_logs() {
   done
 
   # Compress /var/log contents
-  echo "Compressing all /var/log contents into single archive"
+  log_task "Compressing collected /var/log contents..."
   XZ_OPT='-0 -T0' tar --warning=no-file-removed --ignore-failed-read -C "${tmpdir}/varlogs" -Jcf "${tmpdir}/varlog.tar.xz" .
   # Clean up uncompressed files
   rm -rf "${tmpdir}/varlogs"
 
   # Save artifacts if running in CI
   if [[ -n "${CI_PIPELINE_ID}" ]]; then
-    echo "Saving logs as artifacts"
+    log_task "Saving logs as artifacts..."
     # Note that this directory must be in the repository so that they can be properly saved as artifacts
     mkdir -p "../../pod_logs/${namespace}"
     cp -r "${tmpdir}"/* "../../pod_logs/${namespace}"
@@ -135,17 +135,17 @@ reclaim_released_pvs() {
     '.items[] | select(.status.phase == "Released" and .spec.claimRef.namespace == $ns) | .metadata.name')
 
   for pv in $released_pvs; do
-    echo "Processing PV: $pv"
+    log_task "Processing persistent volume ${pv}..."
 
     path=$(kubectl get pv "$pv" -o jsonpath='{.spec.local.path}')
     if [[ -z "$path" ]]; then
-      echo "  Skipping: no local path found (not a local volume?)"
+      log_warn "Skipping ${pv}: no local path was found."
       continue
     fi
     echo "  Found path: $path"
 
     if [[ -d "$path" ]]; then
-      echo "  Wiping contents of $path"
+      log_task "Wiping contents of ${path}..."
       # We need sudo here as files in the mount path can be owned by root
       # Note that this requires explicit permission in the sudoers file to ensure the user executing this
       # Can remove the contents of these mount paths
@@ -154,14 +154,14 @@ reclaim_released_pvs() {
         sudo rm -rf "${path:?}/"*
       )
     else
-      echo "  Warning: $path does not exist on this node"
+      log_warn "${path} does not exist on this node."
       continue
     fi
 
     # Remove claimRef to mark PV as Available again
-    echo "  Removing claimRef from PV $pv"
+    log_task "Removing claimRef from persistent volume ${pv}..."
     kubectl patch pv "$pv" --type=json -p='[{"op": "remove", "path": "/spec/claimRef"}]'
-    echo "  PV $pv wiped and reclaimed successfully"
+    log_success "Wiped and reclaimed persistent volume ${pv}."
   done
 }
 
@@ -198,9 +198,13 @@ delete_instance() {
   fi
 
   if ! kubectl get namespace "$namespace" >/dev/null 2>&1; then
-    echo "Namespace $namespace does not exist. Nothing to delete"
+    log_warn "Namespace ${namespace} does not exist; nothing to delete."
     exit 0
   fi
+
+  SECONDS=0
+
+  log_task "Deleting namespace $namespace"
   echo "Namespace to be deleted:"
   kubectl get pods --namespace ${namespace}
 
@@ -208,25 +212,24 @@ delete_instance() {
   if [[ "$collect_logs" = true ]]; then
     save_logs $namespace $log_dir
   else
-    echo "Discarding logs for the current run"
+    log_warn "Skipping log collection for the current deployment."
   fi
 
   # Cleanup of old library values files:
-  echo "Removing auto-generated values.yaml files"
+  log_task "Removing auto-generated values files..."
   rm -f /tmp/${namespace}-rmcd-*-values.yaml
   rm -f /tmp/${namespace}-taped-*-values.yaml
 
   # Delete the actual namespace
-  echo "Deleting ${namespace} instance"
+  log_task "Deleting CTA instance ${namespace}..."
   kubectl delete pods,jobs,deployments,statefulsets,pvc --all -n ${namespace} --grace-period=0 --force --wait=false > /dev/null
   kubectl delete namespace ${namespace} --now
-  echo "Deletion finished"
 
   # Reclaim any PVs
   if [[ "$wipe_pvs" = true ]]; then
     reclaim_released_pvs $namespace
   else
-    echo "Skipping reclaiming of released Persistent Volumes"
+    log_warn "Skipping reclamation of released persistent volumes."
   fi
   # Clean up remaining cluster-level resources
   # These are only created when telemetry is enabled
@@ -236,6 +239,8 @@ delete_instance() {
   kubectl delete clusterrolebinding prometheus-server --ignore-not-found
   kubectl delete clusterrole prometheus-kube-state-metrics --ignore-not-found
   kubectl delete clusterrolebinding prometheus-kube-state-metrics --ignore-not-found
+  echo
+  log_success "Deleted CTA instance ${namespace} in ${SECONDS} seconds."
 }
 
 delete_instance "$@"

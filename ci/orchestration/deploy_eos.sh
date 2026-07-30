@@ -4,15 +4,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 set -eo pipefail
-source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
 
 die() {
-  echo "$@" 1>&2
+  log_error "$@"
   exit 1
 }
 
 log_run() {
-  echo "Running: $*"
+  log_task "Running: $*"
   "$@"
 }
 
@@ -107,4 +107,4 @@ deploy() {
 
 check_helm_installed
 deploy "$@"
-echo "EOS deployment in namespace ${namespace} successful"
+log_success "Deployed EOS in namespace ${namespace}."

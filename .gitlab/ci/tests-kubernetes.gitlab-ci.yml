@@ -41,7 +41,6 @@
       when: never
     - when: on_success
   variables:
-    BASH_LOGGING_ENABLED: 1
     TEST_SCRIPT:
     # Passed to the run_systemtest.sh script verbatim
     EXTRA_RUN_ARGS: ""
@@ -295,7 +294,6 @@ stress-test:
     - when: manual
       allow_failure: true  # Otherwise this blocks the pipeline
   variables:
-    BASH_LOGGING_ENABLED: 1
     NAMESPACE: stress-${CI_JOB_ID}
     # Passed to the create_instance.sh script verbatim
     EXTRA_ARGS: ""

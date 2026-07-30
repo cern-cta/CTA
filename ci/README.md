@@ -38,7 +38,7 @@ cta-dev build --reset
 Run the unit tests after building:
 
 ```bash
-cta-dev build --enable-unit-tests
+cta-dev build --unit-tests
 ```
 
 Use a different scheduler implementation during the build and deployment:

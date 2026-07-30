@@ -4,12 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 set -eo pipefail
-source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
-
-log_run() {
-  echo "Running: $*"
-  "$@"
-}
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
 
 usage() {
   echo "Spawns a CTA system using Helm and Kubernetes. Requires access to a kubernetes cluster setup with one or more nodes that have mhvtl installed."
@@ -27,7 +22,6 @@ usage() {
   echo "  -O, --reset-scheduler:              Reset scheduler datastore content during initialization phase. Defaults to false."
   echo "  -D, --reset-catalogue:              Reset catalogue content during initialization phase. Defaults to false."
   echo "      --max-drives <n>:               If no tapeservers-config is provided, this will specifiy how many drives to use in the deployment."
-  echo "      --dry-run:                      Render the Helm-generated yaml files without touching any existing deployments."
   echo "      --no-setup:                     Skip the setup scripts for EOS and tape resets."
   echo "      --eos-image-tag <tag>:          Docker image tag for the EOS chart."
   echo "      --eos-image-repository <repo>:  Docker image for EOS chart. Should be the full image name, e.g. \"gitlab-registry.cern.ch/dss/eos/eos-ci\"."
@@ -45,7 +39,7 @@ usage() {
 
 # This should all go once we have auto-discovery and auto-scaling of hardware resources
 generate_tape_values_files() {
-  echo "Auto-generating rmcd config..."
+  log_task "Generating rmcd configuration..."
   rmcd_config=$(mktemp "/tmp/${namespace}-rmcd-XXXXXX-values.yaml")
   set -o pipefail
   library_device=$(
@@ -58,11 +52,12 @@ rmcd:
   libraryDevice: $library_device
 EOF
 
-  echo "---"
+  echo "Content of rmcd values file $rmcd_config:"
+  echo
   cat "$rmcd_config"
-  echo "---"
+  echo
 
-  echo "Auto-generating taped config..."
+  log_task "Generating taped configuration..."
   # This file is cleaned up again by delete_instance.sh
   taped_config=$(mktemp "/tmp/${namespace}-taped-XXXXXX-values.yaml")
 
@@ -79,16 +74,10 @@ EOF
   echo "taped:" > $taped_config
   echo "  drives:" >> $taped_config
   echo $drives_json | jq -r '.[] | "    - name: \(.name)\n      device: \(.device)\n      logicalLibraryName: \(.logicalLibraryName)\n      controlPath: \(.controlPath)"' >> $taped_config
-  echo "---"
+  echo "Content of taped values file $taped_config:"
+  echo
   cat "$taped_config"
-  echo "---"
-}
-
-check_helm_installed() {
-  # First thing we do is check whether helm is installed
-  if ! command -v helm >/dev/null 2>&1; then
-    die "Helm does not seem to be installed. To install Helm, see: https://helm.sh/docs/intro/install/"
-  fi
+  echo
 }
 
 update_local_cta_chart_dependencies() {
@@ -98,7 +87,7 @@ update_local_cta_chart_dependencies() {
   add_trap 'rm -rf "$TEMP_HELM_HOME"' EXIT
   export HELM_CONFIG_HOME="$TEMP_HELM_HOME"
 
-  echo "Updating chart dependencies"
+  log_task "Updating Helm chart dependencies..."
   charts=(
     "common"
     "auth"
@@ -136,7 +125,6 @@ create_instance() {
   reset_scheduler=false
   setup_enabled=true
   cta_image_registry=$(jq -r .dev.ctaImageRegistry ${project_json_path})
-  dry_run=0 # Will not do anything with the namespace and just render the generated yaml files
   max_drives=2
   # EOS related
   eos_image_tag=$(jq -r .dev.eosImageTag ${project_json_path})
@@ -185,7 +173,6 @@ create_instance() {
       -D|--reset-catalogue) reset_catalogue=true ;;
       --no-setup) setup_enabled=false ;;
       --local-telemetry) local_telemetry=true ;;
-      --dry-run) dry_run=1 ;;
       --eos-config)
         eos_config="$2"
         test -f "${eos_config}" || die "EOS config file ${eos_config} does not exist"
@@ -235,31 +222,27 @@ create_instance() {
     die_usage "Missing mandatory argument: -i | --cta-image-tag"
   fi
   if [[ -z "${catalogue_schema_version}" ]]; then
-    echo "No catalogue schema version provided: using latest"
     catalogue_schema_version="latest"
   fi
+  echo "Catalogue schema version: ${catalogue_schema_version}"
 
   if [[ "$local_telemetry" == "true" ]] && [[ "$publish_telemetry" == "true" ]]; then
     die "--local-telemetry and --publish-telemetry cannot be active at the same time"
   fi
 
-  if [[ $dry_run == 1 ]]; then
-    helm_command="template --debug"
-  else
-    helm_command="install"
-  fi
-
   if [ "$reset_catalogue" == "true" ] ; then
-    echo "Catalogue content will be reset"
+    log_warn "Catalogue content will be reset."
   else
-    echo "Catalogue content will be kept"
+    echo "Catalogue content will be kept."
   fi
 
   if [[ "$reset_scheduler" == "true" ]]; then
-    echo "scheduler data store content will be reset"
+    log_warn "Scheduler datastore content will be reset."
   else
-    echo "scheduler data store content will be kept"
+    echo "Scheduler datastore content will be kept."
   fi
+
+  SECONDS=0
 
   # This is where the actual scripting starts. All of the above is just initializing some variables, error checking and producing debug output
 
@@ -275,14 +258,11 @@ create_instance() {
 
   if [[ "$scheduler_config" == "presets/dev-scheduler-vfs-values.yaml" ]]; then
     if kubectl get sc local-path >/dev/null 2>&1; then
-      echo "Local path provisioning is enabled. Using VFS scheduler is okay."
+      echo "Local path provisioning is enabled; using the VFS scheduler."
     else
       echo "==============================================================================="
-      echo "!!!!!!!!DEPRECATION WARNING!!!!!!!!"
+      log_warn "Local path provisioning is not enabled. Support for this configuration will be removed soon."
       echo "==============================================================================="
-      echo
-      echo "It seems that your machine does not have local path provisioning enabled"
-      echo "Support for running without local path provisioning will be removed soon."
       echo
       echo "Please follow these instructions to enable local path provisioning."
       echo " 1. ssh into your machine as root"
@@ -297,7 +277,7 @@ create_instance() {
       echo " 1. Run: minikube addons enable storage-provisioner-rancher"
       echo " 2. Add this same line to /usr/local/bin/start_minikube.sh to ensure it persists over restarts"
       echo
-      echo "Changing scheduler config to \"presets/dev-scheduler-vfs-deprecated-values.yaml\"...."
+      log_warn "Falling back to presets/dev-scheduler-vfs-deprecated-values.yaml."
       echo "==============================================================================="
       echo
       echo
@@ -306,30 +286,30 @@ create_instance() {
   fi
 
 
-  # Create the namespace if necessary
-  if [ $dry_run == 0 ] ; then
-    echo "Creating ${namespace} namespace"
-    kubectl create namespace "${namespace}"
-    echo "Copying secrets into ${namespace} namespace"
-    for secret_name in ${secrets}; do
-      # If the secret exists...
-      if kubectl get secret "${secret_name}" &> /dev/null; then
-        kubectl get secret "${secret_name}" -o yaml | grep -v '^ *namespace:' | kubectl --namespace "${namespace}" create -f -
-      fi
-    done
-  fi
+  # Create the namespace
+  log_task "Creating namespace ${namespace}..."
+  kubectl create namespace "${namespace}"
+  log_task "Copying secrets into namespace ${namespace}..."
+  for secret_name in ${secrets}; do
+    # If the secret exists...
+    if kubectl get secret "${secret_name}" &> /dev/null; then
+      kubectl get secret "${secret_name}" -o yaml | grep -v '^ *namespace:' | kubectl --namespace "${namespace}" create -f -
+    fi
+  done
 
   update_local_cta_chart_dependencies
 
+  log_task "Starting deployment..."
+
   if [ "$local_telemetry" == "true" ] ; then
-    echo "Cleaning up clusterroles..."
+    log_task "Cleaning up telemetry cluster roles..."
     kubectl delete clusterrole otel-opentelemetry-collector --ignore-not-found
     kubectl delete clusterrolebinding otel-opentelemetry-collector --ignore-not-found
     kubectl delete clusterrole prometheus-server --ignore-not-found
     kubectl delete clusterrolebinding prometheus-server --ignore-not-found
     kubectl delete clusterrole prometheus-kube-state-metrics --ignore-not-found
     kubectl delete clusterrolebinding prometheus-kube-state-metrics --ignore-not-found
-    echo "Installing Telemetry and Prometheus charts..."
+    log_task "Installing telemetry and Prometheus charts..."
     helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
     helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
     helm install otel open-telemetry/opentelemetry-collector \
@@ -344,14 +324,12 @@ create_instance() {
 
   # Note that some of these charts are installed in parallel
   # See README.md for details on the order
-  echo "Installing Authentication, Catalogue and Scheduler charts..."
-  log_run helm ${helm_command} auth helm/auth \
+  log_run helm upgrade --install auth helm/auth \
                                 --namespace "${namespace}" \
                                 --wait --wait-for-jobs --timeout 2m &
   auth_pid=$!
 
-  echo "Deploying with catalogue schema version: ${catalogue_schema_version}"
-  log_run helm ${helm_command} cta-catalogue helm/catalogue \
+  log_run helm upgrade --install cta-catalogue helm/catalogue \
                                 --namespace "${namespace}" \
                                 --set resetImage.registry="${cta_image_registry}" \
                                 --set resetImage.tag="${cta_image_tag}" \
@@ -361,7 +339,7 @@ create_instance() {
                                 --wait --wait-for-jobs --timeout 4m &
   catalogue_pid=$!
 
-  log_run helm ${helm_command} cta-scheduler helm/scheduler \
+  log_run helm upgrade --install cta-scheduler helm/scheduler \
                                 --namespace "${namespace}" \
                                 --set resetImage.registry="${cta_image_registry}" \
                                 --set resetImage.tag="${cta_image_tag}" \
@@ -411,8 +389,7 @@ create_instance() {
   fi
 
 
-  echo "Installing CTA chart..."
-  log_run helm ${helm_command} cta helm/cta \
+  log_run helm upgrade --install cta helm/cta \
                                 --namespace "${namespace}" \
                                 ${cta_config} \
                                 --set global.image.registry="${cta_image_registry}" \
@@ -421,6 +398,7 @@ create_instance() {
                                 -f "${taped_config}" \
                                 -f "${rmcd_config}" \
                                 --wait --timeout "${chart_install_timeout}"m ${extra_cta_chart_flags}
+  log_success "Deployed CTA in namespace ${namespace}."
 
   # At this point the disk buffer(s) should also be ready
   if [ $eos_enabled == "true" ] ; then
@@ -429,17 +407,17 @@ create_instance() {
   if [ $dcache_enabled == "true" ] ; then
     wait $dcache_pid || exit 1
   fi
-  if [[ $dry_run == 1 ]]; then
-    exit 0
-  fi
 
   if [[ "$setup_enabled" == "true" ]]; then
     ./setup/reset_tapes.sh -n "${namespace}"
     ./setup/kinit_clients.sh -n "${namespace}"
   fi
+
+  echo
+  echo "Deployed pods:"
+  kubectl --namespace "${namespace}" get pods
+  echo
+  log_success "Deployed CTA instance ${namespace} in ${SECONDS} seconds."
 }
 
-check_helm_installed
 create_instance "$@"
-echo "Instance ${namespace} successfully created:"
-kubectl --namespace "${namespace}" get pods
