@@ -6,6 +6,17 @@
 # This script can be sourced in any other script and will prepend ALL output of stdout and stderror with the corresponding log prefix
 # This will only happen if the BASH_LOGGING_ENABLED environment variable is explicitly set to true
 
+readonly _log_bold=$'\e[1m'
+readonly _log_reset=$'\e[0m'
+
+readonly _log_red=$'\e[1m\e[31m'
+readonly _log_green=$'\e[1m\e[32m'
+readonly _log_yellow=$'\e[1m\e[33m'
+readonly _log_blue=$'\e[1m\e[34m'
+readonly _log_magenta=$'\e[1m\e[35m'
+readonly _log_cyan=$'\e[1m\e[36m'
+
+
 # By default trap overwrites whatever existing traps there are
 # This means this breaks traps in other scripts
 add_trap() {
@@ -107,6 +118,8 @@ if [[ $BASH_LOGGING_ENABLED -eq 1 ]]; then
   __log_start "$*"
 fi
 
+# The following are meant to be used directly
+
 print_header() {
   local term_width=${COLUMNS:-$(tput cols)}  # Get terminal width (default to tput)
   local msg="$(basename "$0"): $1"
@@ -117,8 +130,24 @@ print_header() {
   local padding=$(( (term_width - msg_length) / 2 ))
   [[ $padding -lt 0 ]] && padding=0  # Avoid negative padding for small terminals
   echo
-  echo "${separator}"
-  printf "%*s%s\n" $padding "" "$msg"  # Print message centered
-  echo "${separator}"
+  echo "${_log_bold}${separator}${_log_reset}"
+  echo "${_log_bold}$(printf "%*s%s" "$padding" "" "$msg")${_log_reset}"
+  echo "${_log_bold}${separator}${_log_reset}"
   echo
+}
+
+log_task() {
+  echo "==> $*"
+}
+
+log_success() {
+  printf "%s%s%s\n" "${_log_bold}${$_log_green}" "$*" "$_log_reset"
+}
+
+log_warn() {
+  printf "%s%s%s\n" "${_log_bold}${$_log_yellow}" "$*" "$_log_reset"
+}
+
+log_error() {
+  printf "%s%s%s\n" "${_log_bold}${$_log_red}" "$*" "$_log_reset"
 }

@@ -97,13 +97,14 @@ fi
 
 cd "$(dirname ${dockerfile_path})"
 dockerfile="$(basename ${dockerfile_path})"
+
 colors=(
-  $'\e[31m' # red
-  $'\e[32m' # green
-  $'\e[33m' # yellow
-  $'\e[34m' # blue
-  $'\e[35m' # magenta
-  $'\e[36m' # cyan
+  $_log_blue
+  $_log_yellow
+  $_log_magenta
+  $_log_green
+  $_log_cyan
+  $_log_red
 )
 targets=(
   "cta-taped"

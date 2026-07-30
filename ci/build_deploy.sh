@@ -432,3 +432,4 @@ build_deploy() {
 }
 
 build_deploy "$@"
+print_header "build_deploy.sh is deprecated. Use ci/cta-dev.sh instead. See ./cta-dev.sh --help"
