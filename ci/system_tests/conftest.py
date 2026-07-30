@@ -26,18 +26,21 @@ def pytest_addoption(parser):
     """Pytest hook that allows for adding custom commandline arguments"""
     parser.addoption("--namespace", action="store", help="Namespace for tests")
     parser.addoption(
-        "--connection-config", action="store", help="A yaml connection file specifying how to connect to each host"
+        "--connection-config",
+        action="store",
+        help="A yaml connection file specifying how to connect to each host",
     )
-    parser.addoption("--no-setup", action="store_true", help="Skip the execution of the setup tests")
-    parser.addoption("--no-cleanup", action="store_true", help="Skip the execution of the cleanup tests")
+    parser.addoption("--setup", action="store_true", help="Execute setup tests first")
+    parser.addoption("--teardown", action="store_true", help="Execute teardown tests last")
     parser.addoption(
-        "--cleanup-first", action="store_true", help="Run the cleanup before starting the tests to ensure a clean start"
-    )
-    # Should probably get a better name
-    parser.addoption(
-        "--no-modify",
+        "--teardown-first",
         action="store_true",
-        help="Skip all modifications of the pytest Test collections and run only the tests specified",
+        help="Run the teardown before starting the tests to ensure a clean start",
+    )
+    parser.addoption(
+        "--verification",
+        action="store_true",
+        help="Execute verification tests last (e.g. checks for unexpected errors or core dumps)",
     )
     parser.addoption(
         "--test-config",
@@ -49,6 +52,24 @@ def pytest_addoption(parser):
 
 def pytest_configure(config):
     """Pytest hook that allows us to augment the config object with additional info after commandline parsing"""
+    last_failed = config.getoption("lf")
+    failed_first = config.getoption("failedfirst")
+    if last_failed and failed_first:
+        raise pytest.UsageError("--lf and --ff cannot be used together")
+
+    config.cta_rerun_mode = "lf" if last_failed else "ff" if failed_first else None
+    if config.cta_rerun_mode:
+        # CTA applies last-failed behavior after constructing the complete
+        # setup -> suite -> verification -> teardown flow. Keep pytest's
+        # plugin registered so it continues updating the last-failed cache,
+        # but disable its collection filtering and ordering.
+        last_failed_plugin = config.pluginmanager.get_plugin("lfplugin")
+        if last_failed_plugin is not None:
+            last_failed_plugin.active = False
+        last_failed_collection_wrapper = config.pluginmanager.get_plugin("lfplugin-collwrapper")
+        if last_failed_collection_wrapper is not None:
+            config.pluginmanager.unregister(last_failed_collection_wrapper)
+
     config_path: str = config.getoption("--test-config")
     try:
         with open(config_path, "rb") as f:
@@ -82,25 +103,59 @@ def add_test_into_existing_collection(test_path: str, items, prepend: bool = Fal
         items[index:index] = tests
 
 
-# Pytest hook that allows us to dynamically modify the set of tests being run
+def add_tests_from_directory(test_directory: Path, items, prepend: bool = False):
+    test_paths = sorted(test_directory.rglob("*_test.py"))
+    if not test_paths:
+        raise FileNotFoundError(f"No test suites found in '{test_directory.resolve()}'!")
+
+    # Reverse prepended paths so their sorted order is retained in the collection.
+    if prepend:
+        test_paths.reverse()
+    for test_path in test_paths:
+        add_test_into_existing_collection(str(test_path), items, prepend=prepend)
+
+
+def add_lifecycle_tests(config, items):
+    rerun = config.cta_rerun_mode is not None
+
+    if config.getoption("--setup"):
+        add_tests_from_directory(Path("tests/setup"), items, prepend=True)
+
+    if config.getoption("--verification"):
+        add_tests_from_directory(Path("tests/verification"), items)
+
+    if config.getoption("--teardown") or config.getoption("--teardown-first"):
+        prepend = bool(config.getoption("--teardown-first")) and not rerun
+        add_tests_from_directory(Path("tests/teardown"), items, prepend=prepend)
+
+
+def apply_rerun_mode(config, items):
+    if config.cta_rerun_mode is None:
+        return
+
+    last_failed = config.cache.get("cache/lastfailed", {})
+    failed_indexes = [index for index, item in enumerate(items) if item.nodeid in last_failed]
+
+    if config.cta_rerun_mode == "lf":
+        selected_items = [items[index] for index in failed_indexes]
+    elif failed_indexes:
+        selected_items = items[failed_indexes[0] :]
+    else:
+        selected_items = []
+
+    selected_nodeids = {item.nodeid for item in selected_items}
+    deselected_items = [item for item in items if item.nodeid not in selected_nodeids]
+    if deselected_items:
+        config.hook.pytest_deselected(items=deselected_items)
+    items[:] = selected_items
+
+
+# Let pytest first apply ordinary selectors such as -k to the requested suite,
+# then construct and filter the complete CTA lifecycle.
+@pytest.hookimpl(trylast=True)
 def pytest_collection_modifyitems(config, items):
     if not items:
         return
-    if config.getoption("--no-modify"):
-        return
-    # Always check for errors after the run
-    add_test_into_existing_collection("tests/cleanup/error_test.py", items, prepend=False)
 
-    # For now a solution not to run the setup when we do things like --ff, but this should be cleaner in the future
-    if not config.getoption("--no-setup") and not config.getoption("--ff") and not config.getoption("--lf"):
-        add_test_into_existing_collection("tests/setup/setup_cta_test.py", items, prepend=True)
-        add_test_into_existing_collection("tests/setup/setup_eos_test.py", items, prepend=True)
-        add_test_into_existing_collection("tests/setup/setup_dcache_test.py", items, prepend=True)
-
-    if not config.getoption("--no-cleanup"):
-        # Do the reset before the tests start.
-        # Useful when rerunning the tests multiple times on the same instance and it wasn't properly cleaned up
-        prepend = bool(config.getoption("--cleanup-first"))
-        add_test_into_existing_collection("tests/cleanup/cleanup_cta_test.py", items, prepend=prepend)
-        add_test_into_existing_collection("tests/cleanup/cleanup_eos_test.py", items, prepend=prepend)
-        add_test_into_existing_collection("tests/cleanup/cleanup_dcache_test.py", items, prepend=prepend)
+    add_lifecycle_tests(config, items)
+    apply_rerun_mode(config, items)

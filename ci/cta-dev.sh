@@ -212,12 +212,12 @@ $(printf "  %s\n" "${available_tests[@]}")
 Examples:
   $(basename "$0") test
   $(basename "$0") test client
-  $(basename "$0") test client --cleanup-first
-  $(basename "$0") test repack --no-setup
-  $(basename "$0") test client --ff # Run all test, but failed tests first
+  $(basename "$0") test client --teardown-first
+  $(basename "$0") test client --ff # Resume from the previous failure
   $(basename "$0") test client --lf # Run only the failed tests again
   $(basename "$0") test client -k test_simple_archive_retrieve
 
+Setup, verification, and teardown tests are included by default.
 Any additional arguments are passed directly to pytest.
 For additional pytest help, navigate to ci/system_tests and run pytest --help
 
@@ -639,6 +639,9 @@ test_cta() {
   pytest \
     "tests/${selected_test}_test.py" \
     --namespace "${deploy_namespace}" \
+    --setup \
+    --teardown \
+    --verification \
     "${pytest_args[@]}"
 
   deactivate
