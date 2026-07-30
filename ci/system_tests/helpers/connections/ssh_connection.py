@@ -57,7 +57,10 @@ class SSHConnection(RemoteConnection):
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(f'"{full_command}" failed with exit code {result.returncode}: {result.stderr}')
         if permissions:
-            self.exec(f"chmod -R {permissions} {dst_path}")
+            target = dst_path
+            if self.exec(f"test -d {dst_path}", capture_output=True, throw_on_failure=False).success:
+                target /= src_path.name
+            self.exec(f"chmod {permissions} {target}")
 
     @override
     def copy_from(self, src_path: Path, dst_path: Path, throw_on_failure: bool = True) -> None:

@@ -58,8 +58,13 @@ def test_version_info(cta_cli: CtaCliHost) -> None:
     cta_cli.exec("cta-admin --json version | jq")
 
 
-def test_populate_catalogue(cta_cli: CtaCliHost, disk_instance_name: str, cta_storage_class: str) -> None:
-    cta_cli.copy_to(Path("tests/remote_scripts/cta_cli/populate_catalogue.sh"), Path("/tmp"), permissions="+x")
+def test_populate_catalogue(
+    cta_cli: CtaCliHost,
+    disk_instance_name: str,
+    cta_storage_class: str,
+    remote_scripts_dir: Path,
+) -> None:
+    cta_cli.copy_to(remote_scripts_dir / "cta_cli" / "populate_catalogue.sh", Path("/tmp"), permissions="+x")
     print("Populating catalogue")
     cta_cli.exec(f"./tmp/populate_catalogue.sh {disk_instance_name} {cta_storage_class}")
 

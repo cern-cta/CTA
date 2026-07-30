@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import os
 import subprocess
 import time
 from pathlib import Path
@@ -123,8 +122,8 @@ class K8sConnection(RemoteConnection):
             raise RuntimeError(f'"{cmd}" failed with exit code {result.returncode}: {result.stderr}')
         if permissions:
             target = dst_path
-            if str(dst_path).endswith("/"):
-                target = os.path.join(dst_path, os.path.basename(src_path))
+            if self.exec(f"test -d {dst_path}", capture_output=True, throw_on_failure=False).success:
+                target /= src_path.name
             self.exec(f"chmod {permissions} {target}")
 
     @override
