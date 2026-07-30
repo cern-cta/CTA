@@ -47,7 +47,7 @@ echo
   echo "      --skip-build                      Skips the build step completely."
   echo "      --skip-cmake                      Skips the cmake step of the build_rpm stage."
   echo "      --skip-debug-packages             Skips the building of the debug RPM packages."
-  echo "      --enable-unit-tests               Runs the unit tests after the RPMs have been built."
+  echo "      --unit-tests                      Runs the unit tests after the RPMs have been built."
   echo
   echo "Image Building & Packaging:"
   echo "      --skip-image-build                Skips building of the Docker images and loading them into the Kubernetes cluster."
@@ -158,7 +158,7 @@ build_deploy() {
       --skip-debug-packages)        skip_debug_packages=true ;;
       --skip-image-build)           skip_image_build=true ;;
       --skip-image-cleanup)         image_cleanup=false ;;
-      --enable-unit-tests)          skip_unit_tests=false ;;
+      --unit-tests)                 skip_unit_tests=false ;;
       --force-install)              force_install=true ;;
       --enable-dcache)              dcache_enabled=true ;;
       --disable-eos)                eos_enabled=false ;;

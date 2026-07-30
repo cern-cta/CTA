@@ -133,7 +133,7 @@ Options:
       --cmake-build-type <type>     Release, Debug, RelWithDebInfo,
                                     or MinSizeRel.
       --disable-ccache              Disable ccache.
-      --enable-unit-tests           Run unit tests after building.
+      --unit-tests                  Run unit tests after building.
       --enable-address-sanitizer    Enable AddressSanitizer.
       --skip-cmake                  Skip the CMake configure step.
       --skip-debug-packages         Do not build debuginfo RPMs.
@@ -341,7 +341,7 @@ parse_options() {
         require_command "$1" "$command" build up all
         skip_debug_packages=true
         ;;
-      --enable-unit-tests)
+      --unit-tests)
         require_command "$1" "$command" build up all
         skip_unit_tests=false
         ;;
