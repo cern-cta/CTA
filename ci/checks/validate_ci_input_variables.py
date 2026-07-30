@@ -72,7 +72,7 @@ def main() -> None:
     Validate the variables received by the GitLab CI pipeline
     """
     project_json_path = Path(__file__).resolve().parents[2] / "project.json"
-    with open(project_json_path) as f:
+    with project_json_path.open() as f:
         project_json = json.load(f)
 
     # Get project defined CI variables from environment

@@ -468,7 +468,7 @@ def test_log_schema_correctness(env: TestEnv, tmp_path: Path, cta_maintd: CtaMai
     fail_fast = True
 
     def load_schema(path: Path) -> dict[str, Any]:
-        with open(path, encoding="utf-8") as f:
+        with path.open(encoding="utf-8") as f:
             return json.load(f)
 
     def iter_lines(path: Union[Path, str]) -> Iterator[str]:

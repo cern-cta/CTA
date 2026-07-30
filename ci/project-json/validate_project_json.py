@@ -51,11 +51,11 @@ def validate_versions(project_json: dict[str, Any]) -> None:
 
 if __name__ == "__main__":
     project_json_path = Path(__file__).resolve().parents[2] / "project.json"
-    with open(project_json_path) as f:
+    with project_json_path.open() as f:
         project_json = json.load(f)
 
     schema_json_path = Path(__file__).resolve().parent / "schema.json"
-    with open(schema_json_path) as f:
+    with schema_json_path.open() as f:
         schema_json = json.load(f)
 
     validate_schema(project_json, schema_json)

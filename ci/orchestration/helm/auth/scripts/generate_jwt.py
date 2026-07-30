@@ -21,7 +21,7 @@ def sanitize_filename(s: str) -> str:
 
 
 def load_cert_x5c(cert_path: Path) -> str:
-    with open(cert_path, "rb") as f:
+    with cert_path.open("rb") as f:
         cert = f.read()
 
     if b"BEGIN CERTIFICATE" in cert:
@@ -32,7 +32,7 @@ def load_cert_x5c(cert_path: Path) -> str:
 
 
 def generate_jwk_from_cert(cert_path: Path) -> dict[str, Union[str, list[str]]]:
-    with open(cert_path, "rb") as f:
+    with cert_path.open("rb") as f:
         cert_data = f.read()
 
     if b"BEGIN CERTIFICATE" in cert_data:
@@ -123,7 +123,7 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    with open(args.key, "rb") as f:
+    with args.key.open("rb") as f:
         key = serialization.load_pem_private_key(f.read(), password=None)
     if not isinstance(key, RSAPrivateKey):
         raise ValueError("Private key must be RSA")
@@ -134,13 +134,13 @@ def main() -> None:
         jwks_path = Path(args.output_dir) / args.jwks
         if jwks_path.exists():
             print("JWKS file already exists, appending key")
-            with open(jwks_path) as f:
+            with jwks_path.open() as f:
                 jwks = json.load(f)
             jwks["keys"].append(jwk)
         else:
             jwks = {"keys": [jwk]}
 
-        with open(jwks_path, "w") as f:
+        with jwks_path.open("w") as f:
             json.dump(jwks, f, indent=2)
 
         print(f"Generated {jwks_path}")
@@ -155,7 +155,7 @@ def main() -> None:
         safe_sub = sanitize_filename(sub)
         jwt_path = Path(args.output_dir) / f"{safe_sub}.jwt"
 
-        with open(jwt_path, "w") as f:
+        with jwt_path.open("w") as f:
             f.write(token)
 
         print(f"Generated {jwt_path}")

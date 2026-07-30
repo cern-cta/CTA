@@ -16,7 +16,7 @@ def k8s_create_secret(namespace: str, secret_name: str, filepath: Path, host: st
     token_path = Path("/var/run/secrets/kubernetes.io/serviceaccount/token")
     ca_cert_path = Path("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt")
 
-    with open(filepath, "rb") as f:
+    with filepath.open("rb") as f:
         filedata = base64.b64encode(f.read()).decode()
 
     payload = {
@@ -28,7 +28,7 @@ def k8s_create_secret(namespace: str, secret_name: str, filepath: Path, host: st
     }
 
     try:
-        with open(token_path) as f:
+        with token_path.open() as f:
             token = f.read().strip()
 
         context = ssl.create_default_context()

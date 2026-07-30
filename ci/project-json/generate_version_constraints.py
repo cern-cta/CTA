@@ -16,7 +16,7 @@ def cmake_var_name(package_name: str) -> str:
 
 
 project_json_path = Path(__file__).resolve().parents[2] / "project.json"
-with open(project_json_path) as f:
+with project_json_path.open() as f:
     project_json = json.load(f)
 
 parser = argparse.ArgumentParser()

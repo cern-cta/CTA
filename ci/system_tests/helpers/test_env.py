@@ -157,7 +157,7 @@ class TestEnv:
             import yaml
         except ImportError as error:
             raise RuntimeError("Install pyyaml to use TestEnv.from_config()") from error
-        with open(path) as f:
+        with path.open() as f:
             connection_config: dict[str, list[dict[str, dict[str, str]]]] = yaml.safe_load(f)
 
         def create_connections(
