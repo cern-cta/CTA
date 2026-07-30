@@ -5,7 +5,6 @@
 
 set -eo pipefail
 
-
 ###############################################################################
 # Configuration
 ###############################################################################
@@ -60,7 +59,7 @@ cta_config=""
 eos_config=""
 extra_spawn_options="--no-setup"
 
-source "${script_dir}/utils/log_wrapper.sh"
+source "${script_dir}/utils/log_utils.sh"
 
 ###############################################################################
 # Help
@@ -228,7 +227,7 @@ exit 1
 
 unsupported_argument() {
     local message="$1"
-    echo "Invalid option(s) provided:"
+    log_error "Invalid option(s) provided:"
     echo
     echo "    ${message}"
     echo
@@ -267,7 +266,7 @@ parse_options() {
         done
 
         if [[ $test_found == false ]]; then
-          echo "Unknown test: ${selected_test}"
+          log_error "Unknown test: ${selected_test}"
           echo
           print_available_tests
           echo
@@ -475,7 +474,7 @@ build_cta() {
   # Stop and remove existing container if reset is requested
   echo "Total CTA build containers found: $(${container_runtime} ps | grep -c cta-build)"
   if [[ "${reset}" = true ]]; then
-    echo "Shutting down existing build container..."
+    log_task "Removing the existing build container..."
     ${container_runtime} rm -f "${build_container_name}" >/dev/null 2>&1 || true
     ${container_runtime} rmi "${build_image_name}" > /dev/null 2>&1 || true
   fi
@@ -486,9 +485,9 @@ build_cta() {
   else
     print_header "SETTING UP BUILD CONTAINER"
     build_container_restarted=true
-    echo "Rebuilding build container image"
+    log_task "Building the build container image..."
     ${container_runtime} build --no-cache -t "${build_image_name}" -f ci/docker/cta/"${platform}"/build.Dockerfile .
-    echo "Starting new build container: ${build_container_name}"
+    log_task "Starting build container ${build_container_name}..."
     ${container_runtime} run -dit --rm --name "${build_container_name}" \
       -v "${project_root}:${mount_basedir}:z" \
       "${build_image_name}" \
@@ -513,7 +512,7 @@ build_cta() {
       ${build_srpm_flags}
   fi
 
-  echo "Compiling the CTA project from source directory"
+  log_task "Compiling CTA from the source directory..."
 
   local build_rpm_flags=""
 
@@ -549,7 +548,6 @@ build_cta() {
     --platform "${platform}" \
     ${build_rpm_flags}
 
-  echo "Build successful"
 }
 
 images_cta() {
@@ -559,7 +557,7 @@ images_cta() {
   print_header "BUILDING CONTAINER IMAGES"
   # Cleanup
   if [[ ${image_cleanup} = true ]]; then
-    echo "Cleaning up unused images..."
+    log_task "Cleaning up unused container images..."
     ${container_runtime} image prune -f
     if command -v minikube >/dev/null 2>&1; then
       minikube ssh -- "${container_runtime} image prune -f" || true
@@ -567,10 +565,12 @@ images_cta() {
     if command -v k3s >/dev/null 2>&1; then
       sudo /usr/local/bin/k3s crictl rmi --prune || true
     fi
+  else
+    log_warn "Skipping cleanup of unused container images."
   fi
 
   # Build
-  echo "Building image from ${rpm_src}"
+  log_task "Building container images from ${rpm_src}..."
   local extra_image_build_options=""
   [[ $enable_internal_repos == true ]] && extra_image_build_options+=" --enable-internal-repos"
   [[ $enable_debug_image == true ]] && extra_image_build_options+=" --enable-debug-image"
@@ -619,24 +619,26 @@ deploy_cta() {
 test_cta() {
   print_header "RUNNING TESTS"
 
-  source $venv_dir/bin/activate || (echo "Failed to activate Python virtual environment. Run \"$(basename "$0") install\" to create it." && exit 1)
+  source "$venv_dir/bin/activate" || (log_error "Failed to activate the Python virtual environment. Run \"$(basename "$0") install\" to create it." && exit 1)
 
   if [[ -z "${selected_test}" ]]; then
     PS3="Select test: "
     select selected_test in "${available_tests[@]}"; do
       [[ -n "${selected_test}" ]] && break
-      echo "Invalid selection."
+      log_error "Invalid selection."
     done
   fi
 
   cd "${project_root}/ci/system_tests"
 
+  log_task "Running system test ${selected_test}..."
   pytest \
     "tests/${selected_test}_test.py" \
     --namespace "${deploy_namespace}" \
     "${pytest_args[@]}"
 
   deactivate
+  log_success "System test completed."
 }
 
 up_cta() {
@@ -670,6 +672,7 @@ install_cta_dev() {
   read -r -p "Continue? [y/N] " confirm
   [[ "$confirm" =~ ^[Yy]$ ]] || return 1
 
+  log_task "Installing the ${program_name} command..."
   mkdir -p "$bin_dir"
   ln -sf "$script_path" "$link_path"
 
@@ -684,10 +687,10 @@ install_cta_dev() {
     "$venv_dir/bin/pip" install -r "$requirements_path"
   fi
 
-  echo "Done! You can now run '$program_name' from any directory."
+  log_success "Installed ${program_name}. You can now run it from any directory."
 
   if ! shopt -oq posix && [[ -n ${BASH_VERSION:-} ]]; then
-    echo "Restart your shell or run:"
+    log_warn "Restart your shell or run the following command to enable completion now:"
     echo "  source \"$completion_dst\""
   fi
 }

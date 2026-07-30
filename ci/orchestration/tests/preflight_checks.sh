@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: 2022 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-source "$(dirname "${BASH_SOURCE[0]}")/../../utils/log_wrapper.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../../utils/log_utils.sh"
 
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace>

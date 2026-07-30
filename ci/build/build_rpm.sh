@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 set -e
-source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
 
 usage() {
   echo
@@ -77,7 +77,7 @@ build_rpm() {
     --platform)
       if [[ $# -gt 1 ]]; then
         if [[ "$(jq --arg platform "$2" '.platforms | has($platform)' "$project_root/project.json")" != "true" ]]; then
-            echo "Error: platform $2 not supported. Please check the project.json for supported platforms."
+            log_error "Platform $2 is not supported. Check project.json for supported platforms."
         fi
         platform="$2"
         shift
@@ -88,7 +88,7 @@ build_rpm() {
     --build-generator)
       if [[ $# -gt 1 ]]; then
         if [[ "$2" != "Ninja" ]] && [[ "$2" != "Unix Makefiles" ]]; then
-          echo "Warning: build generator $2 is not officially supported. Compilation might not be successful."
+          log_warn "Build generator $2 is not officially supported. Compilation might not succeed."
         fi
         build_generator="$2"
         shift
@@ -111,7 +111,7 @@ build_rpm() {
     --scheduler-type)
       if [[ $# -gt 1 ]]; then
         if [[ "$2" != "objectstore" ]] && [[ "$2" != "pgsched" ]]; then
-          echo "Error: scheduler type $2 is not one of [objectstore, pgsched]."
+          log_error "Scheduler type $2 is not one of [objectstore, pgsched]."
           exit 1
         fi
         scheduler_type="$2"
@@ -171,7 +171,7 @@ build_rpm() {
     --cmake-build-type)
       if [[ $# -gt 1 ]]; then
         if [[ "$2" != "Release" ]] && [[ "$2" != "Debug" ]] && [[ "$2" != "RelWithDebInfo" ]] && [[ "$2" != "MinSizeRel" ]]; then
-          echo "--cmake-build-type is \"$2\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+          log_error "--cmake-build-type is \"$2\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
           exit 1
         fi
         cmake_build_type="$2"
@@ -223,7 +223,7 @@ build_rpm() {
   local cmake_options=""
 
   if [[ ${clean_build_dir} = true ]]; then
-    echo "Removing old build directory: ${build_dir}"
+    log_task "Removing old build directory ${build_dir}..."
     rm -rf "${build_dir}"
   fi
 
@@ -231,10 +231,6 @@ build_rpm() {
     mkdir -p "${build_dir}"
   elif [[ ! -d "${build_dir}" ]]; then
     die "Build directory ${build_dir} does not exist. Please create it and execute the script again, or run the script with the --create-build-dir option.."
-  fi
-
-  if [[ -d "${build_dir}" ]] && [[ "$(ls -A "${build_dir}")" ]]; then
-    echo "WARNING: build directory ${build_dir} is not empty"
   fi
 
   # Setup
@@ -275,13 +271,13 @@ build_rpm() {
 
     # Build type
     if [[ ! ${cmake_build_type} = "" ]]; then
-      echo "Using build type: ${cmake_build_type}"
+      log_task "Configuring build type ${cmake_build_type}..."
       cmake_options+=" -D CMAKE_BUILD_TYPE=${cmake_build_type}"
     fi
 
     # Debug packages
     if [[ ${skip_debug_packages} = true ]]; then
-      echo "Skipping debug packages"
+      log_warn "Skipping debug packages."
       cmake_options+=" -D SKIP_DEBUG_PACKAGES:STRING=1"
     else
       # the else clause is necessary to prevent cmake from caching this variable
@@ -290,7 +286,7 @@ build_rpm() {
 
     # Oracle support
     if [[ ${oracle_support} = false ]]; then
-      echo "Disabling Oracle Support"
+      log_task "Disabling Oracle support..."
       cmake_options+=" -D DISABLE_ORACLE_SUPPORT:BOOL=ON"
     else
       # the else clause is necessary to prevent cmake from caching this variable
@@ -299,7 +295,7 @@ build_rpm() {
 
     # Unit tests
     if [[ ${skip_unit_tests} = true ]]; then
-      echo "Skipping unit tests"
+      log_warn "Skipping unit tests."
       cmake_options+=" -D SKIP_UNIT_TESTS:STRING=1"
     else
       # the else clause is necessary to prevent cmake from caching this variable
@@ -308,7 +304,7 @@ build_rpm() {
 
     # CCache
     if [[ ${enable_ccache} = true ]]; then
-      echo "Enabling ccache"
+      log_task "Enabling ccache..."
       cmake_options+=" -D ENABLE_CCACHE:STRING=1"
     else
       # the else clause is necessary to prevent cmake from caching this variable
@@ -317,7 +313,7 @@ build_rpm() {
 
     # Address Sanitizer
     if [[ ${enable_address_sanitizer} = true ]]; then
-      echo "Enabling Address Sanitizer"
+      log_task "Enabling AddressSanitizer..."
       cmake_options+=" -D ENABLE_ADDRESS_SANITIZER:BOOL=TRUE"
     else
       # the else clause is necessary to prevent cmake from caching this variable
@@ -326,7 +322,7 @@ build_rpm() {
 
     # Scheduler type
     if [[ ${scheduler_type} == "pgsched" ]]; then
-      echo "Using specified scheduler database type $scheduler_type"
+      log_task "Configuring scheduler database type ${scheduler_type}..."
       cmake_options+=" -D CTA_USE_PGSCHED:BOOL=TRUE"
     else
       # unset it
@@ -334,22 +330,23 @@ build_rpm() {
     fi
 
     cd "${build_dir}"
-    echo "Executing cmake..."
+    log_task "Running CMake..."
     (
       set -x
       cmake3 ${cmake_options} -D JOBS_COUNT:INT=${num_jobs} -G "${build_generator}" "${project_root}"
     )
   else
-    echo "Skipping cmake..."
+    log_warn "Skipping CMake configuration."
     if [[ ! -d "${build_dir}" ]]; then
-      echo "${build_dir}/ directory does not exist. Ensure to run this script without skipping cmake first."
+      log_error "${build_dir}/ does not exist. Run this script without skipping CMake first."
     fi
     cd "${build_dir}"
   fi
 
   # Build step
-  echo "Executing build step using: ${build_generator}"
+  log_task "Building RPMs with ${build_generator}..."
   cmake --build . --target cta_rpm -- -j "${num_jobs}"
+  log_success "Built CTA RPMs successfully."
 }
 
 build_rpm "$@"

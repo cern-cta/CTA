@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 set -eo pipefail
-source "$(dirname "${BASH_SOURCE[0]}")/utils/log_wrapper.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/utils/log_utils.sh"
 
 # Help message
 usage() {
@@ -432,4 +432,4 @@ build_deploy() {
 }
 
 build_deploy "$@"
-print_header "build_deploy.sh is deprecated. Use ci/cta-dev.sh instead. See ./cta-dev.sh --help"
+print_header "build_deploy.sh is deprecated. Use ci/cta-dev.sh instead. See ci/README.md for examples."
