@@ -606,7 +606,7 @@ def test_cta_admin_recycle_tape_file_ls(
 
     rtf_created = cta_cli.get_single_ls_item(f"rtf ls -v {vid}", lambda x: x["archiveFileId"] == archive_id)
     assert rtf_created["vid"] == vid
-    assert rtf_created["diskFilePath"] == test_file_path
+    assert rtf_created["diskFilePath"] == str(test_file_path)
     assert rtf_created["diskInstance"] == disk_instance_name
     assert int(rtf_created["diskFileUid"]) == int(file_info_json["uid"])
     assert int(rtf_created["diskFileGid"]) == int(file_info_json["gid"])
