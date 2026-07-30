@@ -104,6 +104,14 @@ cta-dev all
 
 ### Run system tests
 
+`cta-dev test` treats the system tests as one ordered flow:
+
+```text
+setup -> selected test suite -> verification -> teardown
+```
+
+Setup, verification, and teardown tests are included by default.
+
 Launch the interactive test selector:
 
 ```bash
@@ -116,15 +124,56 @@ Run a specific test:
 cta-dev test client
 ```
 
-Forward additional arguments directly to `pytest`:
+Run one lifecycle phase on its own:
 
 ```bash
-cta-dev test client --lf # Run only the failed test
-cta-dev test client -k test_simple_archive_retrieve # Run a specific test
-cta-dev test client --no-setup # Skip the setup of CTA
-cta-dev test client --no-cleanup # Skip the cleanup of the deployment after the tests
-cta-dev test client --cleanup-first # Run the cleanup first to wipe any test leftovers
+cta-dev test setup # Useful for when you want to run some manual commands
+cta-dev test verification
+cta-dev test teardown
 ```
+
+Additional arguments after the test suite are forwarded directly to `pytest`:
+
+```bash
+cta-dev test client -k test_simple_archive_retrieve # Run a specific test
+cta-dev test client --teardown-first # Run the teardown first to wipe any test leftovers
+```
+
+Use `--lf` to rerun only the previously failed test:
+
+```bash
+cta-dev test client --lf
+```
+
+For example, if `test_verify_catalogue` failed during setup, only that test is rerun:
+
+```text
+test_verify_catalogue
+```
+
+Use `--ff` to resume the flow from the previously failed test:
+
+```bash
+cta-dev test client --ff
+```
+
+If a test failed in the selected suite, the completed setup and earlier suite tests are skipped:
+
+```text
+failed suite test -> remaining suite tests -> verification -> teardown
+```
+
+If a verification or teardown test failed, the run resumes within that phase:
+
+```text
+failed verification test -> remaining verification tests -> teardown
+```
+
+```text
+failed teardown test -> remaining teardown tests
+```
+
+If there is no previous failure for the selected flow, `--lf` and `--ff` run nothing.
 
 ## Typical helper functions and their meaning
 

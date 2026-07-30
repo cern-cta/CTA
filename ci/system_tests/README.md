@@ -24,22 +24,28 @@ Run a particular test suite:
 pytest tests/stress_test.py --namespace dev
 ```
 
-To skip the setup (e.g. initialization of the catalogue), add the `--no-setup` flag:
+To include the setup tests (e.g. initialization of the catalogue), add the `--setup` flag:
 
 ```sh
-pytest tests/stress_test.py --namespace dev --no-setup
+pytest tests/stress_test.py --namespace dev --setup
 ```
 
-To skip the teardown (e.g. cleaning of EOS, wiping catalogue -> not necessary if the namespace is deleted anyway), add the `--no-cleanup` flag:
+To include the teardown tests (e.g. cleaning EOS and wiping the catalogue), add the `--teardown` flag:
 
 ```sh
-pytest tests/stress_test.py --namespace dev --no-cleanup
+pytest tests/stress_test.py --namespace dev --teardown
 ```
 
-To do the teardown at the start (to ensure you can rerun tests without redeploying everything), add the `--ccleanup-first` flag:
+To do the teardown at the start (to ensure you can rerun tests without redeploying everything), add the `--teardown-first` flag:
 
 ```sh
-pytest tests/stress_test.py --namespace dev --cleanup-first
+pytest tests/stress_test.py --namespace dev --teardown-first
+```
+
+To include verification tests at the end, add the `--verification` flag:
+
+```sh
+pytest tests/stress_test.py --namespace dev --verification
 ```
 
 Rerun only the failed tests (`--lf, --last-failed`):
@@ -48,11 +54,14 @@ Rerun only the failed tests (`--lf, --last-failed`):
 pytest tests/stress_test.py --namespace dev --lf
 ```
 
-Rerun the failed tests first and then run the rest of the tests (`--ff, --failed-first`):
+Resume the test flow from the earliest failed test (`--ff, --failed-first`):
 
 ```sh
 pytest tests/stress_test.py --namespace dev --ff
 ```
+
+When setup, verification, and teardown are enabled, rerun options apply to the complete ordered flow.
+`--lf` selects only failed tests, while `--ff` selects the earliest failed test and everything after it.
 
 See additional available options (in particular `Custom options`):
 
@@ -72,20 +81,20 @@ Below you can find an overview of the file structure of the system test and wher
 
 ```
 system_tests/
+├── config/                     # Test parameter files.
+├── fixtures/                   # Shared pytest fixtures.
 ├── helpers/
-│ ├── connections/              # Specifies how to interact with a host. Each host has an underlying connection. These can be e.g. via Kubernetes or via ssh.
-│ ├── hosts/                    # Contains the definitions for the different hosts in cta (frontend, taped, etc) and the functions that these hosts can do.
-│ └──test_env.py                # Contains the definition of the test environment. A test environment is just a collection of remote hosts.
+│   ├── connections/            # Connections to Kubernetes or remote hosts.
+│   ├── hosts/                  # Interfaces for CTA and disk-system hosts.
+│   └── test_env.py             # Test environment and its collection of hosts.
 ├── tests/
-│ ├── cleanup/                  # Tests that clean up the instance after tests have been run.
-│ ├── remote_scripts/           # Scripts meant to be executed on the hosts themselves (taped, frontend, etc)
-│ ├── setup/                    # Tests that set up the instance before the tests run.
-│ ├── <test_suite1>_test.py
-│ ├── <test_suite2>_test.py
-│ ├── ...
-│ └── <test_suiteN>_test.py
-├── conftest.py                 # Test fixtures for the test environment and logic for adding custom commandline options to pytest
-├── pytest.ini                  # Generic pytest configuration options
+│   ├── remote_scripts/         # Scripts executed on remote hosts.
+│   ├── setup/                  # Tests run before the selected test suite.
+│   ├── teardown/               # Tests that clean up the test environment.
+│   ├── verification/           # Tests run after the selected test suite.
+│   └── <test_suite>_test.py    # Selectable system-test suites.
+├── conftest.py                 # CLI options and lifecycle collection logic.
+└── pytest.ini                  # Common pytest configuration.
 ```
 
 ## Writing system tests

@@ -26,18 +26,29 @@ def pytest_addoption(parser):
     """Pytest hook that allows for adding custom commandline arguments"""
     parser.addoption("--namespace", action="store", help="Namespace for tests")
     parser.addoption(
-        "--connection-config", action="store", help="A yaml connection file specifying how to connect to each host"
+        "--connection-config",
+        action="store",
+        help="A yaml connection file specifying how to connect to each host",
     )
-    parser.addoption("--no-setup", action="store_true", help="Skip the execution of the setup tests")
-    parser.addoption("--no-cleanup", action="store_true", help="Skip the execution of the cleanup tests")
     parser.addoption(
-        "--cleanup-first", action="store_true", help="Run the cleanup before starting the tests to ensure a clean start"
-    )
-    # Should probably get a better name
-    parser.addoption(
-        "--no-modify",
+        "--setup",
         action="store_true",
-        help="Skip all modifications of the pytest Test collections and run only the tests specified",
+        help="Execute setup tests first. Setup includes things such as populating the CTA Catalogue, labeling tapes and configuring the disk instance.",
+    )
+    parser.addoption(
+        "--teardown",
+        action="store_true",
+        help="Execute teardown tests last. Teardown cleans up any leftover from the tests to ensure a clean state for the next run.",
+    )
+    parser.addoption(
+        "--teardown-first",
+        action="store_true",
+        help="Run the teardown before starting the tests to ensure a clean start",
+    )
+    parser.addoption(
+        "--verification",
+        action="store_true",
+        help="Execute verification tests last (e.g. checks for unexpected errors or core dumps)",
     )
     parser.addoption(
         "--test-config",
@@ -82,25 +93,72 @@ def add_test_into_existing_collection(test_path: str, items, prepend: bool = Fal
         items[index:index] = tests
 
 
-# Pytest hook that allows us to dynamically modify the set of tests being run
+def add_tests_from_directory(test_directory: Path, items, prepend: bool = False):
+    test_paths = sorted(test_directory.rglob("*_test.py"))
+    if not test_paths:
+        raise FileNotFoundError(f"No test suites found in '{test_directory.resolve()}'!")
+
+    # Reverse prepended paths so their sorted order is retained in the collection.
+    if prepend:
+        test_paths.reverse()
+    for test_path in test_paths:
+        add_test_into_existing_collection(str(test_path), items, prepend=prepend)
+
+
+def add_lifecycle_tests(config, items):
+    rerun = config.getoption("--lf") or config.getoption("--ff")
+
+    if config.getoption("--setup"):
+        add_tests_from_directory(Path("tests/setup"), items, prepend=True)
+
+    if config.getoption("--verification"):
+        add_tests_from_directory(Path("tests/verification"), items)
+
+    if config.getoption("--teardown") or config.getoption("--teardown-first"):
+        prepend = bool(config.getoption("--teardown-first")) and not rerun
+        add_tests_from_directory(Path("tests/teardown"), items, prepend=prepend)
+
+
+# Let pytest first apply ordinary selectors such as -k to the requested suite,
+# then construct and remember the complete CTA lifecycle.
+@pytest.hookimpl(trylast=True)
 def pytest_collection_modifyitems(config, items):
+    # cta_canonical_items is used to remember the original order of items for --lf and --ff
     if not items:
+        config.cta_canonical_items = []
         return
-    if config.getoption("--no-modify"):
+
+    add_lifecycle_tests(config, items)
+    config.cta_canonical_items = items[:]
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_collection_finish(session):
+    config = session.config
+    last_failed_only = config.getoption("--lf")
+    failed_first = config.getoption("--ff")
+    # Nothing to do
+    if not last_failed_only and not failed_first:
         return
-    # Always check for errors after the run
-    add_test_into_existing_collection("tests/cleanup/error_test.py", items, prepend=False)
 
-    # For now a solution not to run the setup when we do things like --ff, but this should be cleaner in the future
-    if not config.getoption("--no-setup") and not config.getoption("--ff") and not config.getoption("--lf"):
-        add_test_into_existing_collection("tests/setup/setup_cta_test.py", items, prepend=True)
-        add_test_into_existing_collection("tests/setup/setup_eos_test.py", items, prepend=True)
-        add_test_into_existing_collection("tests/setup/setup_dcache_test.py", items, prepend=True)
+    canonical_items = config.cta_canonical_items
+    # Find the failed tests
+    last_failed = config.cache.get("cache/lastfailed", {})
+    failed_indexes = [index for index, item in enumerate(canonical_items) if item.nodeid in last_failed]
 
-    if not config.getoption("--no-cleanup"):
-        # Do the reset before the tests start.
-        # Useful when rerunning the tests multiple times on the same instance and it wasn't properly cleaned up
-        prepend = bool(config.getoption("--cleanup-first"))
-        add_test_into_existing_collection("tests/cleanup/cleanup_cta_test.py", items, prepend=prepend)
-        add_test_into_existing_collection("tests/cleanup/cleanup_eos_test.py", items, prepend=prepend)
-        add_test_into_existing_collection("tests/cleanup/cleanup_dcache_test.py", items, prepend=prepend)
+    # Run either only failed tests or the failed tests first
+    if last_failed_only:
+        selected_items = [canonical_items[index] for index in failed_indexes]
+    elif failed_indexes:
+        selected_items = canonical_items[failed_indexes[0] :]
+    else:
+        selected_items = []
+
+    # Update pytest session to only include the selected items
+    selected_nodeids = {item.nodeid for item in selected_items}
+    deselected_items = [item for item in session.items if item.nodeid not in selected_nodeids]
+    if deselected_items:
+        config.hook.pytest_deselected(items=deselected_items)
+
+    session.items[:] = selected_items
+    session.testscollected = len(selected_items)
