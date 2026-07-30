@@ -25,9 +25,32 @@ from ..helpers.hosts import (
 
 # This file could be split into multiple files eventually when necessary
 
+_TESTS_DIRECTORY = Path(__file__).resolve().parent.parent / "tests"
+_LIFECYCLE_STYLES = {
+    "setup": ("SETUP", "yellow"),
+    "verification": ("VERIFICATION", "purple"),
+    "teardown": ("TEARDOWN", "blue"),
+}
+
 #####################################################################################################################
 # General
 #####################################################################################################################
+
+
+def get_test_heading(test_path: Path, test_name: str) -> tuple[str, str]:
+    """Return the displayed test name and color for a test path."""
+    try:
+        relative_path = test_path.resolve().relative_to(_TESTS_DIRECTORY)
+    except ValueError:
+        return test_name, "cyan"
+
+    phase = relative_path.parts[0]
+    phase_style = _LIFECYCLE_STYLES.get(phase)
+    if phase_style is None:
+        return test_name, "cyan"
+
+    phase_name, color = phase_style
+    return f"[{phase_name}] {test_name}", color
 
 
 @pytest.fixture(autouse=True)
@@ -39,15 +62,16 @@ def make_tests_look_pretty(request):
     terminal_width = shutil.get_terminal_size().columns
 
     # construct the magic separators
-    test_name = request.node.name
+    test_name, color = get_test_heading(request.node.path, request.node.name)
     test_title = f" {test_name} "  # leave 2 spaces around the name
     side = (terminal_width - len(test_title)) // 2
     line = "=" * side + test_title + "=" * (terminal_width - side - len(test_title))
     separator: str = "—" * terminal_width
+    color_option = {color: True}
 
-    terminal_writer.write("\n" + line + "\n\n", cyan=True, bold=True)
+    terminal_writer.write("\n" + line + "\n\n", bold=True, **color_option)
     yield
-    terminal_writer.write(f"\n\n{separator}", cyan=True)
+    terminal_writer.write(f"\n\n{separator}", **color_option)
 
 
 @pytest.fixture(scope="session")
