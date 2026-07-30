@@ -17,6 +17,7 @@ readonly project_root
 # shellcheck disable=SC2207
 readonly available_tests=( $(for f in ${project_root}/ci/system_tests/tests/*_test.py; do basename "$f" _test.py; done) )
 readonly venv_dir="${project_root}/ci/system_tests/.venv"
+readonly program_name="cta-dev"
 
 # Global
 platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
@@ -59,6 +60,9 @@ cta_config=""
 eos_config=""
 extra_spawn_options="--no-setup"
 
+stage_names=()
+stage_durations=()
+
 source "${script_dir}/utils/log_utils.sh"
 
 ###############################################################################
@@ -83,7 +87,7 @@ Commands:
   up         Equivalent to: build > images > deploy.
   all        Equivalent to: build > images > deploy > test.
 
-  install    Creates a symlink to invoke this script using 'cta-dev'.
+  install    Creates a symlink to invoke this script using '$program_name'.
   help       Show this help.
 
 Global options:
@@ -641,21 +645,43 @@ test_cta() {
   log_success "System test completed."
 }
 
+run_timed_stage() {
+  local -r stage_name="$1"
+  local -r stage_function="$2"
+  local -r start_time=$SECONDS
+
+  "$stage_function"
+
+  stage_names+=("$stage_name")
+  stage_durations+=("$((SECONDS - start_time))")
+}
+
+print_stage_summary() {
+  echo
+  echo "$program_name stage durations:"
+
+  local i
+  for i in "${!stage_names[@]}"; do
+    printf "  %-7s %d seconds\n" "${stage_names[$i]}:" "${stage_durations[$i]}"
+  done
+}
+
 up_cta() {
-  build_cta
-  images_cta
-  deploy_cta
+  run_timed_stage "Build" build_cta
+  run_timed_stage "Images" images_cta
+  run_timed_stage "Deploy" deploy_cta
+  print_stage_summary
 }
 
 all_cta() {
-  build_cta
-  images_cta
-  deploy_cta
+  run_timed_stage "Build" build_cta
+  run_timed_stage "Images" images_cta
+  run_timed_stage "Deploy" deploy_cta
   test_cta
+  print_stage_summary
 }
 
 install_cta_dev() {
-  local -r program_name="cta-dev"
   local -r bin_dir="$HOME/.local/bin"
   local -r link_path="$bin_dir/$program_name"
   local -r script_path="$(readlink -f "$0")"

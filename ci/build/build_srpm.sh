@@ -148,6 +148,8 @@ build_srpm() {
     die_usage "Missing mandatory argument --cmake-build-type"
   fi
 
+  SECONDS=0
+
   cd "${project_root}"
   local cmake_options=""
 
@@ -200,7 +202,8 @@ build_srpm() {
   # Build step
   log_task "Building SRPMs with ${build_generator}..."
   cmake --build . --target cta_srpm -- -j "${num_jobs}"
-  log_success "Built CTA SRPMs successfully."
+  echo
+  log_success "Built CTA SRPMs in ${SECONDS} seconds."
 }
 
 build_srpm "$@"

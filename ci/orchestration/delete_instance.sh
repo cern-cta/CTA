@@ -201,6 +201,9 @@ delete_instance() {
     log_warn "Namespace ${namespace} does not exist; nothing to delete."
     exit 0
   fi
+
+  SECONDS=0
+
   log_task "Deleting namespace $namespace"
   echo "Namespace to be deleted:"
   kubectl get pods --namespace ${namespace}
@@ -221,7 +224,6 @@ delete_instance() {
   log_task "Deleting CTA instance ${namespace}..."
   kubectl delete pods,jobs,deployments,statefulsets,pvc --all -n ${namespace} --grace-period=0 --force --wait=false > /dev/null
   kubectl delete namespace ${namespace} --now
-  log_success "Deleted CTA instance ${namespace}."
 
   # Reclaim any PVs
   if [[ "$wipe_pvs" = true ]]; then
@@ -237,6 +239,8 @@ delete_instance() {
   kubectl delete clusterrolebinding prometheus-server --ignore-not-found
   kubectl delete clusterrole prometheus-kube-state-metrics --ignore-not-found
   kubectl delete clusterrolebinding prometheus-kube-state-metrics --ignore-not-found
+  echo
+  log_success "Deleted CTA instance ${namespace} in ${SECONDS} seconds."
 }
 
 delete_instance "$@"

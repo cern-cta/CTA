@@ -242,6 +242,8 @@ create_instance() {
     echo "Scheduler datastore content will be kept."
   fi
 
+  SECONDS=0
+
   # This is where the actual scripting starts. All of the above is just initializing some variables, error checking and producing debug output
 
   # As we have no nice way of locking resources, just fail if another CTA release already exists
@@ -410,9 +412,12 @@ create_instance() {
     ./setup/reset_tapes.sh -n "${namespace}"
     ./setup/kinit_clients.sh -n "${namespace}"
   fi
+
+  echo
+  echo "Deployed pods:"
+  kubectl --namespace "${namespace}" get pods
+  echo
+  log_success "Deployed CTA instance ${namespace} in ${SECONDS} seconds."
 }
 
 create_instance "$@"
-echo "Deployed namespaced:"
-kubectl --namespace "${namespace}" get pods
-log_success "Deployment finished successfully."

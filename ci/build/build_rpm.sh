@@ -219,6 +219,8 @@ build_rpm() {
     die_usage "Missing mandatory argument --platform"
   fi
 
+  SECONDS=0
+
   cd "${project_root}"
   local cmake_options=""
 
@@ -346,7 +348,8 @@ build_rpm() {
   # Build step
   log_task "Building RPMs with ${build_generator}..."
   cmake --build . --target cta_rpm -- -j "${num_jobs}"
-  log_success "Built CTA RPMs successfully."
+  echo
+  log_success "Built CTA RPMs in ${SECONDS} seconds."
 }
 
 build_rpm "$@"
