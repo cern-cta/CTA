@@ -660,10 +660,12 @@ print_stage_summary() {
   echo
   echo "$program_name stage durations:"
 
-  local i
+  local i total_duration=0
   for i in "${!stage_names[@]}"; do
     printf "  %-7s %d seconds\n" "${stage_names[$i]}:" "${stage_durations[$i]}"
+    total_duration=$((total_duration + stage_durations[i]))
   done
+  printf "  %-7s %d seconds\n" "Total:" "$total_duration"
 }
 
 up_cta() {

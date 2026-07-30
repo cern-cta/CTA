@@ -102,9 +102,11 @@ colors=(
   $_log_blue
   $_log_yellow
   $_log_magenta
-  $_log_green
   $_log_cyan
-  $_log_red
+  $_log_orange
+  $_log_purple
+  $_log_teal
+  $_log_sky
 )
 targets=(
   "cta-taped"

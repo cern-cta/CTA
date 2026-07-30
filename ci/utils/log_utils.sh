@@ -15,6 +15,13 @@ readonly _log_yellow=$'\e[1m\e[33m'
 readonly _log_blue=$'\e[1m\e[34m'
 readonly _log_magenta=$'\e[1m\e[35m'
 readonly _log_cyan=$'\e[1m\e[36m'
+# Some non standard colors using the 256 color palette
+readonly _log_orange=$'\e[1m\e[38;5;208m'
+readonly _log_purple=$'\e[1m\e[38;5;141m'
+readonly _log_teal=$'\e[1m\e[38;5;44m'
+readonly _log_pink=$'\e[1m\e[38;5;213m'
+readonly _log_lime=$'\e[1m\e[38;5;154m'
+readonly _log_sky=$'\e[1m\e[38;5;117m'
 
 
 # By default trap overwrites whatever existing traps there are
