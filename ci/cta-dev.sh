@@ -663,7 +663,6 @@ test_cta() {
     "${pytest_args[@]}"
 
   deactivate
-  log_success "System test completed."
 }
 
 run_timed_stage() {
