@@ -15,7 +15,12 @@ readonly script_dir
 project_root=$(git rev-parse --show-toplevel)
 readonly project_root
 # shellcheck disable=SC2207
-readonly available_tests=( $(for f in ${project_root}/ci/system_tests/tests/*_test.py; do basename "$f" _test.py; done) )
+readonly available_tests=(
+  setup
+  verification
+  teardown
+  $(for f in ${project_root}/ci/system_tests/tests/*_test.py; do basename "$f" _test.py; done)
+)
 readonly venv_dir="${project_root}/ci/system_tests/.venv"
 readonly program_name="cta-dev"
 
@@ -212,6 +217,9 @@ $(printf "  %s\n" "${available_tests[@]}")
 Examples:
   $(basename "$0") test
   $(basename "$0") test client
+  $(basename "$0") test setup
+  $(basename "$0") test verification
+  $(basename "$0") test teardown
   $(basename "$0") test client --teardown-first
   $(basename "$0") test client --ff # Resume from the previous failure
   $(basename "$0") test client --lf # Run only the failed tests again
@@ -636,12 +644,22 @@ test_cta() {
   cd "${project_root}/ci/system_tests"
 
   log_task "Running system test ${selected_test}..."
+  local test_path
+  local lifecycle_options=()
+  case "${selected_test}" in
+    setup|verification|teardown)
+      test_path="tests/${selected_test}/"
+      ;;
+    *)
+      test_path="tests/${selected_test}_test.py"
+      lifecycle_options=(--setup --verification --teardown)
+      ;;
+  esac
+
   pytest \
-    "tests/${selected_test}_test.py" \
+    "${test_path}" \
     --namespace "${deploy_namespace}" \
-    --setup \
-    --teardown \
-    --verification \
+    "${lifecycle_options[@]}" \
     "${pytest_args[@]}"
 
   deactivate

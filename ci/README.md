@@ -124,6 +124,14 @@ Run a specific test:
 cta-dev test client
 ```
 
+Run one lifecycle phase on its own:
+
+```bash
+cta-dev test setup # Useful for when you want to run some manual commands
+cta-dev test verification
+cta-dev test teardown
+```
+
 Additional arguments after the test suite are forwarded directly to `pytest`:
 
 ```bash
