@@ -5,7 +5,7 @@ import shlex
 import socket
 import subprocess
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 from typing_extensions import override
 
@@ -47,8 +47,8 @@ class SSHConnection(RemoteConnection):
     @override
     def copy_to(
         self,
-        src_path: Union[str, Path],
-        dst_path: Union[str, Path],
+        src_path: Path,
+        dst_path: Path,
         throw_on_failure: bool = True,
         permissions: Optional[str] = None,
     ) -> None:
@@ -60,7 +60,7 @@ class SSHConnection(RemoteConnection):
             self.exec(f"chmod -R {permissions} {dst_path}")
 
     @override
-    def copy_from(self, src_path: Union[str, Path], dst_path: Union[str, Path], throw_on_failure: bool = True) -> None:
+    def copy_from(self, src_path: Path, dst_path: Path, throw_on_failure: bool = True) -> None:
         full_command = f"scp {self.user}@{self.host}:{src_path} {dst_path}"
         result = subprocess.run(full_command, shell=True, capture_output=True)
         if throw_on_failure and result.returncode != 0:

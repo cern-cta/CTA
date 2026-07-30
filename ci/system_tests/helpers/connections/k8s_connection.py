@@ -5,7 +5,7 @@ import os
 import subprocess
 import time
 from pathlib import Path
-from typing import Optional, Union, cast
+from typing import Optional
 
 from kubernetes import client, config
 from kubernetes.client import ApiException, V1ObjectMeta, V1Pod
@@ -31,15 +31,12 @@ class K8sConnection(RemoteConnection):
     @property
     @override
     def name(self) -> str:
-        return f"{self._pod_metadata(self._pod).name}-{self.container}"
+        return f"{self._pod_name}-{self.container}"
 
     @property
     @override
     def description(self) -> str:
-        return (
-            f"Kubernetes pod {self._pod_metadata(self._pod).name}, "
-            f"container {self.container} in namespace {self.namespace}"
-        )
+        return f"Kubernetes pod {self._pod_name}, container {self.container} in namespace {self.namespace}"
 
     @property
     def _pod(self) -> V1Pod:
@@ -53,12 +50,17 @@ class K8sConnection(RemoteConnection):
             raise RuntimeError("Kubernetes pod metadata is unavailable")
         return pod.metadata
 
-    @classmethod
-    def _pod_name(cls, pod: V1Pod) -> str:
-        name = cast(Optional[str], cls._pod_metadata(pod).name)
+    @staticmethod
+    def _name_for_pod(pod: V1Pod) -> str:
+        metadata = K8sConnection._pod_metadata(pod)
+        name: Optional[str] = metadata.name
         if not name:
             raise RuntimeError("Kubernetes pod name is unavailable")
         return name
+
+    @property
+    def _pod_name(self) -> str:
+        return self._name_for_pod(self._pod)
 
     @override
     def exec(
@@ -70,7 +72,7 @@ class K8sConnection(RemoteConnection):
 
         resp = stream(
             self.core.connect_get_namespaced_pod_exec,
-            self._pod_metadata(self._pod).name,
+            self._pod_name,
             self.namespace,
             container=self.container,
             command=full_command,
@@ -119,13 +121,13 @@ class K8sConnection(RemoteConnection):
     @override
     def copy_to(
         self,
-        src_path: Union[str, Path],
-        dst_path: Union[str, Path],
+        src_path: Path,
+        dst_path: Path,
         throw_on_failure: bool = True,
         permissions: Optional[str] = None,
     ) -> None:
         # TODO: replace these kubectl calls so that we rely only on the SDK
-        pod_target = f"{self.namespace}/{self._pod_metadata(self._pod).name}:{dst_path}"
+        pod_target = f"{self.namespace}/{self._pod_name}:{dst_path}"
         cmd = f"kubectl cp {src_path} {pod_target} -c {self.container}"
         result = subprocess.run(cmd, shell=True)
         if throw_on_failure and result.returncode != 0:
@@ -137,8 +139,8 @@ class K8sConnection(RemoteConnection):
             self.exec(f"chmod {permissions} {target}")
 
     @override
-    def copy_from(self, src_path: Union[str, Path], dst_path: Union[str, Path], throw_on_failure: bool = True) -> None:
-        pod_source = f"{self.namespace}/{self._pod_metadata(self._pod).name}:{src_path}"
+    def copy_from(self, src_path: Path, dst_path: Path, throw_on_failure: bool = True) -> None:
+        pod_source = f"{self.namespace}/{self._pod_name}:{src_path}"
         cmd = f"kubectl cp {pod_source} {dst_path} -c {self.container}"
         result = subprocess.run(cmd, shell=True)
         if throw_on_failure and result.returncode != 0:
@@ -199,13 +201,13 @@ class K8sConnection(RemoteConnection):
     @override
     def get_ip(self) -> str:
         try:
-            pod = cast(
-                V1Pod,
-                self.core.read_namespaced_pod(
-                    name=self._pod_metadata(self._pod).name,
-                    namespace=self.namespace,
-                ),
+            pod_response = self.core.read_namespaced_pod(
+                name=self._pod_name,
+                namespace=self.namespace,
             )
+            if not isinstance(pod_response, V1Pod):
+                raise RuntimeError("Kubernetes API returned an invalid pod")
+            pod = pod_response
         except ApiException as e:
             raise RuntimeError(f"Failed to get pod IP: {e}") from e
 
@@ -219,15 +221,12 @@ class K8sConnection(RemoteConnection):
         return ip
 
     def _resolve_pod(self) -> V1Pod:
-        pods = cast(
-            list[V1Pod],
-            self.core.list_namespaced_pod(
-                namespace=self.namespace,
-                label_selector=self.label_selector,
-            ).items,
-        )
+        pods: list[V1Pod] = self.core.list_namespaced_pod(
+            namespace=self.namespace,
+            label_selector=self.label_selector,
+        ).items
 
-        pods.sort(key=self._pod_name)
+        pods.sort(key=self._name_for_pod)
 
         pods = [
             pod

@@ -7,7 +7,7 @@ import argparse
 import sys
 import textwrap
 import time
-from typing import Any, Optional, cast
+from typing import Any, Optional
 
 from gitlabapi import GitLabAPI
 
@@ -55,7 +55,10 @@ def get_file(api: GitLabAPI, path: str, ref: str) -> dict[str, object]:
     params: dict[str, Any] = {
         "ref": ref,
     }
-    return cast(dict[str, object], api.get(f"repository/files/{path}", params))
+    result = api.get(f"repository/files/{path}", params)
+    if not isinstance(result, dict):
+        raise TypeError(f"Expected repository file metadata for {path}")
+    return result
 
 
 # https://docs.gitlab.com/ee/api/merge_requests.html#create-mr

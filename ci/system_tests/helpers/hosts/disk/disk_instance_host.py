@@ -39,15 +39,15 @@ class DiskInstanceHost(RemoteHost):
 
     def force_remove_directory(self, directory: Path) -> None: ...
 
-    def num_files_in_directory(self, directory: str) -> int: ...
+    def num_files_in_directory(self, directory: Path) -> int: ...
 
-    def num_files_on_tape_only(self, directory: str) -> int: ...
+    def num_files_on_tape_only(self, directory: Path) -> int: ...
 
-    def num_files_on_disk_only(self, directory: str) -> int: ...
+    def num_files_on_disk_only(self, directory: Path) -> int: ...
 
-    def list_entries_in_directory(self, directory: str) -> list[str]: ...
+    def list_entries_in_directory(self, directory: Path) -> list[str]: ...
 
-    def list_files_in_directory(self, directory: str) -> list[str]: ...
+    def list_files_in_directory(self, directory: Path) -> list[str]: ...
 
     def list_subdirectories_in_directory(self, directory: Path) -> list[str]: ...
 
@@ -69,14 +69,14 @@ class DiskInstanceHost(RemoteHost):
         directories = self.list_subdirectories_in_directory(archive_dir_path)
 
         # For tracking progress; how many files are left for each directory
-        num_files_left: dict[str, int] = {}
+        num_files_left: dict[Path, int] = {}
         # While we could compute this on the fly, we only need to do it once
-        num_files_total: dict[str, int] = {}
+        num_files_total: dict[Path, int] = {}
 
         # Construct our queue of all directories we need to check
         dirs_left_queue = deque()
         for directory in directories:
-            full_path: str = f"{archive_dir_path}/{directory}"
+            full_path = archive_dir_path / directory
             num_files_total[full_path] = self.num_files_in_directory(full_path)
             num_files_left[full_path] = self.num_files_on_disk_only(full_path)
             dirs_left_queue.append(full_path)
@@ -145,12 +145,12 @@ class DiskInstanceHost(RemoteHost):
     ) -> tuple[int, float]:
         directories = self.list_subdirectories_in_directory(archive_dir_path)
 
-        num_tape_only: dict[str, int] = {}
-        num_files_total: dict[str, int] = {}
+        num_tape_only: dict[Path, int] = {}
+        num_files_total: dict[Path, int] = {}
 
         dirs_left_queue = deque()
         for directory in directories:
-            full_path: str = f"{archive_dir_path}/{directory}"
+            full_path = archive_dir_path / directory
             num_files_total[full_path] = self.num_files_in_directory(full_path)
             num_tape_only[full_path] = self.num_files_on_tape_only(full_path)
             if num_tape_only[full_path] > 0:

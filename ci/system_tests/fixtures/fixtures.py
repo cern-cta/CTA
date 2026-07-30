@@ -7,7 +7,7 @@ import uuid
 from collections.abc import Iterator
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional, cast
+from typing import Any, Optional
 
 import pytest
 from _pytest.fixtures import SubRequest
@@ -24,6 +24,7 @@ from ..helpers.hosts import (
     EosClientHost,
     EosMgmHost,
 )
+from ..helpers.test_config import TEST_CONFIG_KEY
 from ..helpers.test_env import TestEnv
 
 # This file could be split into multiple files eventually when necessary
@@ -97,7 +98,7 @@ def project_json() -> dict[str, Any]:
 @pytest.fixture(scope="session")
 def krb5_realm(request: SubRequest) -> str:
     """Kerberos realm used in the tests"""
-    return cast(Any, request.config).test_config["tests"]["krb5_realm"]
+    return request.config.stash[TEST_CONFIG_KEY]["tests"]["krb5_realm"]
 
 
 @pytest.fixture(scope="session")
@@ -154,12 +155,12 @@ def namespace(request: SubRequest) -> Optional[str]:
 
 
 @pytest.fixture(scope="session")
-def connection_config(request: SubRequest) -> Optional[str]:
+def connection_config(request: SubRequest) -> Optional[Path]:
     return request.config.getoption("--connection-config", default=None)
 
 
 @pytest.fixture(scope="session")
-def env(connection_config: Optional[str], namespace: Optional[str]) -> TestEnv:
+def env(connection_config: Optional[Path], namespace: Optional[str]) -> TestEnv:
     """Gives all the tests access to the different hosts (cli, frontend, taped, etc)"""
     if namespace and connection_config:
         raise pytest.UsageError("Only one of --namespace or --connection-config can be provided, not both")

@@ -3,7 +3,7 @@
 
 import subprocess
 from collections.abc import Sequence
-from typing import cast
+from pathlib import Path
 
 from kubernetes import client, config
 from kubernetes.client import ApiException, V1Pod
@@ -79,12 +79,13 @@ class TestEnv:
             namespace=namespace,
             label_selector=selector,
         )
-        pod_items = cast(list[V1Pod], pods.items)
+        pod_items: list[V1Pod] = pods.items
 
         def pod_name(pod: V1Pod) -> str:
             if pod.metadata is None:
                 return ""
-            return cast(str, pod.metadata.name or "")
+            name: str = pod.metadata.name
+            return name or ""
 
         pod_items.sort(key=pod_name)
 
@@ -138,7 +139,7 @@ class TestEnv:
         )
 
     @staticmethod
-    def from_config(path: str) -> "TestEnv":
+    def from_config(path: Path) -> "TestEnv":
         """
         Expects a path to a yaml file containing for each host how to connect. For example:
 
@@ -157,7 +158,7 @@ class TestEnv:
         except ImportError as error:
             raise RuntimeError("Install pyyaml to use TestEnv.from_config()") from error
         with open(path) as f:
-            connection_config = cast(dict[str, list[dict[str, dict[str, str]]]], yaml.safe_load(f))
+            connection_config: dict[str, list[dict[str, dict[str, str]]]] = yaml.safe_load(f)
 
         def create_connections(
             config_data: dict[str, list[dict[str, dict[str, str]]]],

@@ -6,11 +6,11 @@ import json
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, cast
 
 import pytest
 
 from system_tests.helpers.hosts import EosClientHost, EosMgmHost
+from system_tests.helpers.test_config import TEST_CONFIG_KEY
 
 from ..helpers.utils import find_line
 
@@ -28,7 +28,7 @@ class GfalParams:
 
 @pytest.fixture(scope="module")
 def gfal_params(request: pytest.FixtureRequest) -> GfalParams:
-    gfal_config = cast(Any, request.config).test_config["tests"]["gfal"]
+    gfal_config = request.config.stash[TEST_CONFIG_KEY]["tests"]["gfal"]
     return GfalParams(
         file_count=gfal_config["file_count"],
         file_size_kb=gfal_config["file_size_kb"],
@@ -47,9 +47,9 @@ def gfal_params(request: pytest.FixtureRequest) -> GfalParams:
 def test_setup_client_gfal_xrootd(
     eos_client: EosClientHost, test_dir: Path, gfal_params: GfalParams, remote_scripts_dir: Path
 ) -> None:
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "client_setup.sh"), "/tmp/", permissions="+x")
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "client_helper.sh"), "/tmp/", permissions="+x")
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "cli_calls.sh"), "/tmp/", permissions="+x")
+    eos_client.copy_to(remote_scripts_dir / "eos_client" / "client_setup.sh", Path("/tmp"), permissions="+x")
+    eos_client.copy_to(remote_scripts_dir / "eos_client" / "client_helper.sh", Path("/tmp"), permissions="+x")
+    eos_client.copy_to(remote_scripts_dir / "eos_client" / "cli_calls.sh", Path("/tmp"), permissions="+x")
     eos_client.exec("microdnf install -y python3-gfal2-util gfal2-plugin-xrootd")
     eos_client.exec(
         f"/tmp/client_setup.sh -n {gfal_params.file_count} -s {gfal_params.file_size_kb} -p "
@@ -58,7 +58,7 @@ def test_setup_client_gfal_xrootd(
 
 
 def test_archive_gfal_xrootd(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_archive.sh"), "/tmp/", permissions="+x")
+    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_archive.sh", Path("/tmp"), permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
     # TODO: replace by something more deterministic. Is this even necessary?
     print("Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion.")
@@ -66,17 +66,17 @@ def test_archive_gfal_xrootd(eos_client: EosClientHost, remote_scripts_dir: Path
 
 
 def test_retrieve_gfal_xrootd(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_retrieve.sh"), "/tmp/", permissions="+x")
+    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_retrieve.sh", Path("/tmp"), permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_retrieve.sh")
 
 
 def test_evict_gfal_xrootd(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_evict.sh"), "/tmp/", permissions="+x")
+    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_evict.sh", Path("/tmp"), permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_evict.sh")
 
 
 def test_delete_gfal_xrootd(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_delete.sh"), "/tmp/", permissions="+x")
+    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_delete.sh", Path("/tmp"), permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_delete.sh")
 
 
@@ -91,7 +91,7 @@ def test_setup_client_gfal_https(eos_client: EosClientHost, test_dir: Path, gfal
 
 
 def test_archive_gfal_https(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_archive.sh"), "/tmp/", permissions="+x")
+    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_archive.sh", Path("/tmp"), permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
     # TODO: replace by something more deterministic. Is this even necessary?
     print("Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion.")
@@ -99,17 +99,17 @@ def test_archive_gfal_https(eos_client: EosClientHost, remote_scripts_dir: Path)
 
 
 def test_retrieve_gfal_https(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_retrieve.sh"), "/tmp/", permissions="+x")
+    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_retrieve.sh", Path("/tmp"), permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_retrieve.sh")
 
 
 def test_evict_gfal_https(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_evict.sh"), "/tmp/", permissions="+x")
+    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_evict.sh", Path("/tmp"), permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_evict.sh")
 
 
 def test_delete_gfal_https(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_delete.sh"), "/tmp/", permissions="+x")
+    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_delete.sh", Path("/tmp"), permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_delete.sh")
 
 
@@ -178,7 +178,7 @@ def test_gfal_activity_ends_up_in_eos_report(
     content = eos_mgm.exec_with_output(f"cat {report_file}")
 
     # Check that activity is set for staging of file with valid instance name
-    valid_line = find_line(content, "event=stage", valid_instance_file)
+    valid_line = find_line(content, "event=stage", str(valid_instance_file))
 
     assert valid_line, f"Missing log line for {valid_instance_file}"
 
@@ -187,7 +187,7 @@ def test_gfal_activity_ends_up_in_eos_report(
     )
 
     # Check that activity is NOT set for staging of file with invalid instance name
-    invalid_line = find_line(content, "event=stage", invalid_instance_file)
+    invalid_line = find_line(content, "event=stage", str(invalid_instance_file))
 
     assert invalid_line, f"Missing log line for {invalid_instance_file}"
 

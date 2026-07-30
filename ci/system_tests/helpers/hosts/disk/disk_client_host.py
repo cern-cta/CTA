@@ -10,15 +10,15 @@ from ..remote_host import RemoteHost
 
 
 class DiskClientHost(RemoteHost):
-    def is_file_on_tape_only(self, disk_instance_name: str, path: str) -> bool: ...
+    def is_file_on_tape_only(self, disk_instance_name: str, path: Path) -> bool: ...
 
-    def is_file_on_tape(self, disk_instance_name: str, path: str) -> bool: ...
+    def is_file_on_tape(self, disk_instance_name: str, path: Path) -> bool: ...
 
-    def is_file_on_disk(self, disk_instance_name: str, path: str) -> bool: ...
+    def is_file_on_disk(self, disk_instance_name: str, path: Path) -> bool: ...
 
-    def is_file_on_disk_only(self, disk_instance_name: str, path: str) -> bool: ...
+    def is_file_on_disk_only(self, disk_instance_name: str, path: Path) -> bool: ...
 
-    def wait_for_file_archival(self, disk_instance_name: str, path: str, *, wait_timeout_secs: int = 20) -> None:
+    def wait_for_file_archival(self, disk_instance_name: str, path: Path, *, wait_timeout_secs: int = 20) -> None:
         print(f"Waiting for archival of {path}...")
         with Timeout(wait_timeout_secs) as t:
             while not self.is_file_on_tape(disk_instance_name, path) and not t.expired:
@@ -28,7 +28,7 @@ class DiskClientHost(RemoteHost):
                 raise TimeoutError(f"Failed to archive file within timeout of {wait_timeout_secs} seconds")
         print("File archived!")
 
-    def wait_for_file_retrieval(self, disk_instance_name: str, path: str, wait_timeout_secs: int = 20) -> None:
+    def wait_for_file_retrieval(self, disk_instance_name: str, path: Path, wait_timeout_secs: int = 20) -> None:
         print(f"Waiting for retrieval of {path}...")
         with Timeout(wait_timeout_secs) as t:
             while not self.is_file_on_disk(disk_instance_name, path) and not t.expired:
@@ -38,7 +38,7 @@ class DiskClientHost(RemoteHost):
                 raise TimeoutError(f"Failed to retrieve file within timeout of {wait_timeout_secs} seconds")
         print("File retrieved")
 
-    def wait_for_file_eviction(self, disk_instance_name: str, path: str, wait_timeout_secs: int = 20) -> None:
+    def wait_for_file_eviction(self, disk_instance_name: str, path: Path, wait_timeout_secs: int = 20) -> None:
         print(f"Waiting for eviction of {path}...")
         with Timeout(wait_timeout_secs) as t:
             while not self.is_file_on_tape_only(disk_instance_name, path) and not t.expired:
@@ -57,7 +57,7 @@ class DiskClientHost(RemoteHost):
         wait_for_evict: bool = True,
         wait_timeout_secs: int = 20,
         append_uid: bool = False,
-    ) -> str:
+    ) -> Path:
         if append_uid:
             destination_path = Path(f"{destination_path}_{str(uuid.uuid4())[:8]}")
         tmp_file_path = Path(f"/tmp/generated_archive_file_{str(uuid.uuid4())[:8]}")
@@ -72,7 +72,7 @@ class DiskClientHost(RemoteHost):
         )
         # Even if we don't wait, the file will already have been copied, so we can safely remove it
         self.exec(f"rm -rf {tmp_file_path}")
-        return str(destination_path)
+        return destination_path
 
     def archive_file(
         self,
@@ -88,7 +88,7 @@ class DiskClientHost(RemoteHost):
     def retrieve_file(
         self,
         disk_instance_name: str,
-        path: str,
+        path: Path,
         *,
         user: str = "poweruser1",
         wait: bool = True,
@@ -98,13 +98,13 @@ class DiskClientHost(RemoteHost):
     def evict_file(
         self,
         disk_instance_name: str,
-        path: str,
+        path: Path,
         *,
         user: str = "eosadmin1",
         wait: bool = True,
         wait_timeout_secs: int = 20,
     ) -> None: ...
 
-    def delete_file(self, disk_instance_name: str, path: str) -> None: ...
+    def delete_file(self, disk_instance_name: str, path: Path) -> None: ...
 
-    def file_info(self, disk_instance_name: str, path: str) -> str: ...
+    def file_info(self, disk_instance_name: str, path: Path) -> str: ...

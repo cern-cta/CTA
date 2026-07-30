@@ -3,9 +3,10 @@
 
 import sys
 from pathlib import Path
-from typing import Any, cast
 
 import pytest
+
+from system_tests.helpers.test_config import TEST_CONFIG_KEY
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -28,6 +29,10 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption(
         "--connection-config",
         action="store",
+<<<<<<< HEAD
+=======
+        type=Path,
+>>>>>>> cdb96f7042 (Clean up path usage)
         help="A yaml connection file specifying how to connect to each host",
     )
     parser.addoption(
@@ -52,18 +57,18 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     )
     parser.addoption(
         "--test-config",
-        type=str,
-        default="config/test_params.toml",
+        type=Path,
+        default=Path("config/test_params.toml"),
         help="Path to the config file containing all test parameters",
     )
 
 
 def pytest_configure(config: pytest.Config) -> None:
     """Pytest hook that allows us to augment the config object with additional info after commandline parsing"""
-    config_path: str = config.getoption("--test-config")
+    config_path: Path = config.getoption("--test-config")
     try:
         with open(config_path, "rb") as f:
-            cast(Any, config).test_config = tomllib.load(f)
+            config.stash[TEST_CONFIG_KEY] = tomllib.load(f)
     except FileNotFoundError as error:
         raise pytest.UsageError(f"--test-config file not found: {config_path}") from error
 
@@ -73,20 +78,20 @@ def pytest_configure(config: pytest.Config) -> None:
 #####################################################################################################################
 
 
-def is_test_in_items(test_path: str, items: list[pytest.Item]) -> bool:
-    resolved_test_path = Path(test_path).resolve()
+def is_test_in_items(test_path: Path, items: list[pytest.Item]) -> bool:
+    resolved_test_path = test_path.resolve()
     if not resolved_test_path.exists():
         raise FileNotFoundError(f"Test suite '{resolved_test_path}' not found!")
     return any(str(resolved_test_path) == str(item.path) for item in items)
 
 
 def add_test_into_existing_collection(
-    test_path: str,
+    test_path: Path,
     items: list[pytest.Item],
     prepend: bool = False,
     allow_duplicate: bool = False,
 ) -> None:
-    resolved_test_path = Path(test_path).resolve()
+    resolved_test_path = test_path.resolve()
     if not resolved_test_path.exists():
         raise FileNotFoundError(f"Required test suite '{resolved_test_path}' not found!")
     # Prevent duplicate registration unless explicitly allowed

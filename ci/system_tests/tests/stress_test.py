@@ -6,11 +6,11 @@ import contextlib
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, cast
 
 import pytest
 
 from system_tests.helpers.hosts import CtaCliHost, EosClientHost, EosMgmHost
+from system_tests.helpers.test_config import TEST_CONFIG_KEY
 from system_tests.helpers.test_env import TestEnv
 
 
@@ -51,7 +51,7 @@ class StressParams:
 
 @pytest.fixture(scope="module")
 def stress_params(request: pytest.FixtureRequest) -> StressParams:
-    stress_config = cast(Any, request.config).test_config["tests"]["stress"]
+    stress_config = request.config.stash[TEST_CONFIG_KEY]["tests"]["stress"]
     prequeue_config = stress_config["prequeue"]
     return StressParams(
         num_dirs=stress_config["num_dirs"],
@@ -83,9 +83,9 @@ def test_setup_xrootd_client(eos_client: EosClientHost) -> None:
     eos_client.install_xrootd_python()
 
     script_dir = Path(__file__).parent / "remote_scripts" / "eos_client"
-    eos_client.copy_to(str(script_dir / "xrootd_archive.py"), "/tmp/xrootd_archive.py")
-    eos_client.copy_to(str(script_dir / "count_files.py"), "/tmp/count_files.py")
-    eos_client.copy_to(str(script_dir / "xrootd_retrieve.py"), "/tmp/xrootd_retrieve.py")
+    eos_client.copy_to(script_dir / "xrootd_archive.py", Path("/tmp/xrootd_archive.py"))
+    eos_client.copy_to(script_dir / "count_files.py", Path("/tmp/count_files.py"))
+    eos_client.copy_to(script_dir / "xrootd_retrieve.py", Path("/tmp/xrootd_retrieve.py"))
 
 
 def test_update_setup_for_max_powerrrr(env: TestEnv, cta_cli: CtaCliHost, eos_mgm: EosMgmHost) -> None:
@@ -291,8 +291,8 @@ async def test_request_files_for_retrieve(
 
     total_file_count = 0
     for i in range(stress_params.num_dirs):
-        dir_path = f"{archive_directory}/{i}"
-        total_file_count += eos_mgm.num_files_on_tape_only(str(dir_path))
+        dir_path = archive_directory / str(i)
+        total_file_count += eos_mgm.num_files_on_tape_only(dir_path)
 
     async def monitor_retrieve_and_put_drives_up() -> None:
         """Monitor tape-only file count and put drives up when threshold reached (for prequeue mode)."""
@@ -300,8 +300,8 @@ async def test_request_files_for_retrieve(
         while not stop_monitoring.is_set():
             total_tape_only = 0
             for i in range(stress_params.num_dirs):
-                dir_path = f"{archive_directory}/{i}"
-                total_tape_only += eos_mgm.num_files_on_tape_only(str(dir_path))
+                dir_path = archive_directory / str(i)
+                total_tape_only += eos_mgm.num_files_on_tape_only(dir_path)
 
             print(f"\t[retrieve monitor] {total_tape_only} files still on tape only", flush=True)
 

@@ -7,11 +7,12 @@ import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Annotated, Any, Optional, cast
+from typing import Annotated, Optional
 
 import pytest
 
 from system_tests.helpers.hosts import CtaCliHost, CtaTapedHost, EosClientHost, EosMgmHost
+from system_tests.helpers.test_config import TEST_CONFIG_KEY
 
 from ..helpers.utils import Timeout
 
@@ -30,7 +31,7 @@ class RepackParams:
 
 @pytest.fixture(scope="module")
 def repack_params(request: pytest.FixtureRequest) -> RepackParams:
-    client_config = cast(Any, request.config).test_config["tests"]["repack"]
+    client_config = request.config.stash[TEST_CONFIG_KEY]["tests"]["repack"]
     return RepackParams(
         file_size_kb=client_config["file_size_kb"],
         process_count=client_config["process_count"],
@@ -303,9 +304,9 @@ def _submit_repack_request(
 
 
 def test_setup_client(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "client_setup.sh"), "/tmp/", permissions="+x")
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "client_helper.sh"), "/tmp/", permissions="+x")
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "cli_calls.sh"), "/tmp/", permissions="+x")
+    eos_client.copy_to(remote_scripts_dir / "eos_client" / "client_setup.sh", Path("/tmp"), permissions="+x")
+    eos_client.copy_to(remote_scripts_dir / "eos_client" / "client_helper.sh", Path("/tmp"), permissions="+x")
+    eos_client.copy_to(remote_scripts_dir / "eos_client" / "cli_calls.sh", Path("/tmp"), permissions="+x")
 
 
 def test_create_repack_vo(cta_cli: CtaCliHost, repack_vo_name: str, disk_instance_name: str) -> None:
@@ -338,7 +339,7 @@ def test_archive_1_file(
     repack_params: RepackParams,
     test_dir: Path,
 ) -> None:
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_archive.sh"), "/tmp/", permissions="+x")
+    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_archive.sh", Path("/tmp"), permissions="+x")
     file_count = 1
     eos_client.exec(
         f"/tmp/client_setup.sh -n {file_count} -s {repack_params.file_size_kb} -p "
@@ -563,8 +564,8 @@ def test_repack_with_user_provided_files(
     for tape_file in tape_file_ls_json[:number_of_user_provided_files]:
         disk_id = tape_file["df"]["diskId"]
         # Figure out the path on EOS from where we should copy
-        eos_file_path_to_copy_from = eos_mgm.exec_with_output(
-            f"eos fileinfo fid:{disk_id} --path | cut -d':' -f2 | tr -d ' '"
+        eos_file_path_to_copy_from = Path(
+            eos_mgm.exec_with_output(f"eos fileinfo fid:{disk_id} --path | cut -d':' -f2 | tr -d ' '")
         )
         # Retrieve the file so that it's on disk
         eos_client.retrieve_file(disk_instance_name, eos_file_path_to_copy_from)
@@ -711,8 +712,8 @@ def test_repack_with_user_provided_files_no_recall(
     for i in range(number_of_user_provided_files):
         tape_file = tape_file_ls_json[i + 1]
         disk_id = tape_file["df"]["diskId"]
-        eos_file_path_to_copy_from = eos_mgm.exec_with_output(
-            f"eos fileinfo fid:{disk_id} --path | cut -d':' -f2 | tr -d ' '"
+        eos_file_path_to_copy_from = Path(
+            eos_mgm.exec_with_output(f"eos fileinfo fid:{disk_id} --path | cut -d':' -f2 | tr -d ' '")
         )
         eos_client.retrieve_file(disk_instance_name, eos_file_path_to_copy_from)
         print(f"Copying the retrieved file {eos_file_path_to_copy_from} into the repack buffer {repack_sub_dir}")

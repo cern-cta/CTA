@@ -3,7 +3,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Protocol, Union
+from typing import Optional, Protocol
 
 
 @dataclass
@@ -26,15 +26,13 @@ class RemoteConnection(Protocol):
 
     def copy_to(
         self,
-        src_path: Union[str, Path],
-        dst_path: Union[str, Path],
+        src_path: Path,
+        dst_path: Path,
         throw_on_failure: bool = True,
         permissions: Optional[str] = None,
     ) -> None: ...
 
-    def copy_from(
-        self, src_path: Union[str, Path], dst_path: Union[str, Path], throw_on_failure: bool = True
-    ) -> None: ...
+    def copy_from(self, src_path: Path, dst_path: Path, throw_on_failure: bool = True) -> None: ...
 
     def restart(self, throw_on_failure: bool = True) -> None: ...
 

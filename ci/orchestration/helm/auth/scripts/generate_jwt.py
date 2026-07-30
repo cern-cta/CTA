@@ -20,7 +20,7 @@ def sanitize_filename(s: str) -> str:
     return re.sub(r"[^a-zA-Z0-9._-]", "_", s)
 
 
-def load_cert_x5c(cert_path: str) -> str:
+def load_cert_x5c(cert_path: Path) -> str:
     with open(cert_path, "rb") as f:
         cert = f.read()
 
@@ -31,7 +31,7 @@ def load_cert_x5c(cert_path: str) -> str:
     return base64.b64encode(cert).decode("ascii")
 
 
-def generate_jwk_from_cert(cert_path: str) -> dict[str, Union[str, list[str]]]:
+def generate_jwk_from_cert(cert_path: Path) -> dict[str, Union[str, list[str]]]:
     with open(cert_path, "rb") as f:
         cert_data = f.read()
 
@@ -113,12 +113,12 @@ def main() -> None:
     )
     parser.add_argument(
         "--output-dir",
-        type=str,
-        default="/tmp",
+        type=Path,
+        default=Path("/tmp"),
         help="Directory to put the generated files in",
     )
-    parser.add_argument("--cert", required=True, help="Path to server certificate")
-    parser.add_argument("--key", required=True, help="Path to private key")
+    parser.add_argument("--cert", required=True, type=Path, help="Path to server certificate")
+    parser.add_argument("--key", required=True, type=Path, help="Path to private key")
     parser.add_argument("--jwks", help="Filename for the generated JWKS file")
 
     args = parser.parse_args()

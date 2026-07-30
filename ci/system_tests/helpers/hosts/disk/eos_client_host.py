@@ -81,17 +81,15 @@ class EosClientHost(DiskClientHost):
         print(f"Copying {source_path} to {destination_path} on disk instance {disk_instance_name}")
         self.exec(f"xrdcp {source_path} root://{disk_instance_name}/{destination_path}")
         if wait:
-            self.wait_for_file_archival(disk_instance_name, str(destination_path), wait_timeout_secs=wait_timeout_secs)
+            self.wait_for_file_archival(disk_instance_name, destination_path, wait_timeout_secs=wait_timeout_secs)
             if wait_for_evict:
-                self.wait_for_file_eviction(
-                    disk_instance_name, str(destination_path), wait_timeout_secs=wait_timeout_secs
-                )
+                self.wait_for_file_eviction(disk_instance_name, destination_path, wait_timeout_secs=wait_timeout_secs)
 
     @override
     def retrieve_file(
         self,
         disk_instance_name: str,
-        path: str,
+        path: Path,
         *,
         user: str = "poweruser1",
         wait: bool = True,
@@ -107,7 +105,7 @@ class EosClientHost(DiskClientHost):
     def evict_file(
         self,
         disk_instance_name: str,
-        path: str,
+        path: Path,
         *,
         user: str = "eosadmin1",
         wait: bool = True,
@@ -122,7 +120,7 @@ class EosClientHost(DiskClientHost):
             self.wait_for_file_eviction(disk_instance_name, path, wait_timeout_secs=wait_timeout_secs)
 
     @override
-    def delete_file(self, disk_instance_name: str, path: str) -> None:
+    def delete_file(self, disk_instance_name: str, path: Path) -> None:
         print(f"Deleting {path} on disk instance {disk_instance_name}")
         self.exec(f"eos root://{disk_instance_name} rm --no-confirmation {path}")
 
@@ -149,21 +147,21 @@ class EosClientHost(DiskClientHost):
         return self.exec_async(cmd)
 
     @override
-    def is_file_on_tape_only(self, disk_instance_name: str, path: str) -> bool:
+    def is_file_on_tape_only(self, disk_instance_name: str, path: Path) -> bool:
         return int(self.exec_with_output(f'eos root://{disk_instance_name} ls {path} -y | grep "d0::t1" | wc -l')) == 1
 
     @override
-    def is_file_on_tape(self, disk_instance_name: str, path: str) -> bool:
+    def is_file_on_tape(self, disk_instance_name: str, path: Path) -> bool:
         return int(self.exec_with_output(f'eos root://{disk_instance_name} ls {path} -y | grep "::t1" | wc -l')) == 1
 
     @override
-    def is_file_on_disk(self, disk_instance_name: str, path: str) -> bool:
+    def is_file_on_disk(self, disk_instance_name: str, path: Path) -> bool:
         return int(self.exec_with_output(f'eos root://{disk_instance_name} ls {path} -y | grep "d1::" | wc -l')) == 1
 
     @override
-    def is_file_on_disk_only(self, disk_instance_name: str, path: str) -> bool:
+    def is_file_on_disk_only(self, disk_instance_name: str, path: Path) -> bool:
         return int(self.exec_with_output(f'eos root://{disk_instance_name} ls {path} -y | grep "d1::t0" | wc -l')) == 1
 
     @override
-    def file_info(self, disk_instance_name: str, path: str) -> str:
+    def file_info(self, disk_instance_name: str, path: Path) -> str:
         return self.exec_with_output(f"eos root://{disk_instance_name} file info {path}")

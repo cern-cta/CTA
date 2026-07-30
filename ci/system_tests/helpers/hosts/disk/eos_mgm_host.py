@@ -36,7 +36,7 @@ class EosMgmHost(DiskInstanceHost):
         self.exec(f"eos rm -rF --no-confirmation {directory} 2>/dev/null || true")
 
     @override
-    def list_entries_in_directory(self, directory: str) -> list[str]:
+    def list_entries_in_directory(self, directory: Path) -> list[str]:
         # This function counts both files and subdirectories
         return self.exec_with_output(f"eos ls {directory}").splitlines()
 
@@ -48,23 +48,23 @@ class EosMgmHost(DiskInstanceHost):
         return [line.split()[-1] for line in lines if line.startswith("d")]
 
     @override
-    def list_files_in_directory(self, directory: str) -> list[str]:
+    def list_files_in_directory(self, directory: Path) -> list[str]:
         output = self.exec_with_output(f"eos ls -l {directory}")
         lines = output.splitlines()
 
         return [line.split()[-1] for line in lines if line.startswith("-")]
 
     @override
-    def num_files_in_directory(self, directory: str) -> int:
+    def num_files_in_directory(self, directory: Path) -> int:
         # Note that for now this also counts subdirectories
         return int(self.exec_with_output(f"eos ls {directory} | wc -l"))
 
     @override
-    def num_files_on_tape_only(self, directory: str) -> int:
+    def num_files_on_tape_only(self, directory: Path) -> int:
         return int(self.exec_with_output(f'eos ls {directory} -y | grep "d0::t1" | wc -l'))
 
     @override
-    def num_files_on_disk_only(self, directory: str) -> int:
+    def num_files_on_disk_only(self, directory: Path) -> int:
         return int(self.exec_with_output(f'eos ls {directory} -y | grep "d1::t0" | wc -l'))
 
     def get_report_file_path(self) -> Path:

@@ -4,7 +4,7 @@
 import asyncio
 import time
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional
 
 from ..connections.remote_connection import ExecResult, RemoteConnection
 from ..utils.timeout import Timeout
@@ -53,17 +53,15 @@ class RemoteHost:
 
     def copy_to(
         self,
-        src_path: Union[str, Path],
-        dst_path: Union[str, Path],
+        src_path: Path,
+        dst_path: Path,
         *,
         throw_on_failure: bool = True,
         permissions: Optional[str] = None,
     ) -> None:
         return self.conn.copy_to(src_path, dst_path, throw_on_failure=throw_on_failure, permissions=permissions)
 
-    def copy_from(
-        self, src_path: Union[str, Path], dst_path: Union[str, Path], *, throw_on_failure: bool = True
-    ) -> None:
+    def copy_from(self, src_path: Path, dst_path: Path, *, throw_on_failure: bool = True) -> None:
         return self.conn.copy_from(src_path, dst_path, throw_on_failure=throw_on_failure)
 
     def restart(self, *, wait_for_restart: bool = True, throw_on_failure: bool = True) -> None:
