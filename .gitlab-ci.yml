@@ -267,14 +267,3 @@ workflow:
 
 include:
   - local: .gitlab/ci/*.gitlab-ci.yml
-    rules:
-      - if: $PIPELINE_TYPE != "UPDATE_PIPELINE_IMAGES"
-  - local: .gitlab/ci/.pre.gitlab-ci.yml
-    rules:
-      - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
-  - local: .gitlab/ci/build-image.gitlab-ci.yml
-    rules:
-      - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
-  - local: .gitlab/ci/.post.gitlab-ci.yml
-    rules:
-      - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
