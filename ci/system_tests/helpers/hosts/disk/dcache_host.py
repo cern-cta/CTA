@@ -3,15 +3,16 @@
 
 from functools import cached_property
 from pathlib import Path
-import shlex
 
+from typing_extensions import override
+
+from system_tests.helpers.connections.remote_connection import RemoteConnection
 from .disk_instance_host import DiskInstanceHost, DiskInstanceImplementation
 
 
 class DCacheHost(DiskInstanceHost):
-    def __init__(self, conn, endpoint: str = "store-door-svc"):
+    def __init__(self, conn: RemoteConnection) -> None:
         super().__init__(conn)
-        self.endpoint = endpoint
 
     @cached_property
     def implementation(self) -> DiskInstanceImplementation:
@@ -25,19 +26,10 @@ class DCacheHost(DiskInstanceHost):
     def base_dir_path(self) -> Path:
         return Path("/data")
 
-    def mkdir(self, directory: str, parent: bool = True) -> None:
-        path = Path(directory)
-        directories = list(reversed([path, *path.parents])) if parent else [path]
-        for item in directories:
-            if item == Path("/"):
-                continue
-            url = shlex.quote(f"https://{self.endpoint}:8083/{str(item).lstrip('/')}")
-            # Existing collections return 405, which is harmless for mkdir -p semantics.
-            self.exec(
-                f"status=$(curl -ksS -o /dev/null -w '%{{http_code}}' -u admin:dickerelch -X MKCOL {url}); "
-                f'test "$status" = 201 -o "$status" = 405'
-            )
+    @override
+    def mkdir(self, directory: Path, parent: bool = True) -> None:
+        raise NotImplementedError
 
-    def force_remove_directory(self, directory: str) -> None:
-        url = shlex.quote(f"https://{self.endpoint}:8083/{str(directory).lstrip('/')}")
-        self.exec(f"curl -ksS -u admin:dickerelch -X DELETE {url}", throw_on_failure=False)
+    @override
+    def force_remove_directory(self, directory: Path) -> None:
+        raise NotImplementedError
