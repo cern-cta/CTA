@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -13,9 +12,10 @@ import argparse
 import multiprocessing as mp
 import subprocess
 import time
+from typing import Any
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Archive files via persistent XRootD client")
     p.add_argument("--eos-host", required=True, help="EOS MGM hostname (e.g. ctaeos)")
     p.add_argument("--dest-dir", required=True, help="EOS destination directory (e.g. /eos/ctaeos/cta/stress)")
@@ -34,7 +34,7 @@ def parse_args():
     return p.parse_args()
 
 
-def mkdir_dirs(eos_host, dest_dir, num_dirs):
+def mkdir_dirs(eos_host: str, dest_dir: str, num_dirs: int) -> None:
     """Create subdirectories under dest_dir."""
     for i in range(num_dirs):
         path = f"{dest_dir}/{i}"
@@ -51,17 +51,17 @@ CHUNK_1MB = 1024 * 1024  # 1MB pre-allocated once per worker
 
 
 def worker(
-    work_q: mp.JoinableQueue,
+    work_q: mp.JoinableQueue[Any],
     wid: int,
     eos_host: str,
     dest_dir: str,
     num_dirs: int,
     file_size: int,
     write_in_chunks: bool,
-):
+) -> None:
     # Import here so XrdSecsssKT is already set in the environment
-    from XRootD import client  # type: ignore
-    from XRootD.client.flags import OpenFlags  # type: ignore
+    from XRootD import client  # type: ignore[reportMissingImports]
+    from XRootD.client.flags import OpenFlags  # type: ignore[reportMissingImports]
 
     _ = client.FileSystem(f"root://{eos_host}")
     err_budget = 3
@@ -131,7 +131,7 @@ def worker(
         work_q.task_done()
 
 
-def main():
+def main() -> None:
     args = parse_args()
 
     # NB: For now, we are still using Kerberos authentication for copying/archival of the files.
@@ -145,8 +145,7 @@ def main():
     # os.environ.setdefault("XRD_LOGLEVEL", "Error")
 
     print(
-        f"xrootd_archive: {args.num_files} files, {args.num_dirs} dirs, "
-        f"{args.num_procs} procs, {args.file_size}B each",
+        f"xrootd_archive: {args.num_files} files, {args.num_dirs} dirs, {args.num_procs} procs, {args.file_size}B each",
         flush=True,
     )
     print(f"  dest: {args.dest_dir}", flush=True)

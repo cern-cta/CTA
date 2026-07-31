@@ -2,15 +2,16 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import re
+from collections.abc import Sequence
 from functools import cached_property
-from typing import List, Tuple
 from pathlib import Path
 
+from system_tests.helpers.connections.remote_connection import RemoteConnection
 from .remote_host import RemoteHost
 
 
 class CtaRmcdHost(RemoteHost):
-    def __init__(self, conn):
+    def __init__(self, conn: RemoteConnection) -> None:
         super().__init__(conn)
 
     @cached_property
@@ -35,8 +36,8 @@ class CtaRmcdHost(RemoteHost):
                     volume_tags.add(match.group(1))
         return volume_tags
 
-    def list_loaded_drives(self) -> List[Tuple[int, int]]:
-        """Retrieves a list of loaded drives and their corresponding slots for the library device associated with this ctarmcd host."""
+    def list_loaded_drives(self) -> list[tuple[int, int]]:
+        """Retrieve loaded drives and their slots for this host's library device."""
         status_output = self.exec_with_output(f"mtx -f {self.library_device} status").splitlines()
         loaded_drives = []
 
@@ -49,7 +50,7 @@ class CtaRmcdHost(RemoteHost):
 
         return loaded_drives
 
-    def unload_tapes(self):
+    def unload_tapes(self) -> None:
         """Unloads all loaded tapes from their drives for the library device associated with this rmcd host."""
         library_device = self.library_device
         loaded_drives = self.list_loaded_drives()
@@ -57,8 +58,8 @@ class CtaRmcdHost(RemoteHost):
             self.exec(f"mtx -f {library_device} unload {slot} {drive}")
 
     @staticmethod
-    def list_all_tapes_in_libraries(cta_rmcd_hosts) -> list[str]:
-        """Lists unique volume tags from multiple tape libraries."""
+    def list_all_tapes_in_libraries(cta_rmcd_hosts: Sequence["CtaRmcdHost"]) -> list[str]:
+        """List unique volume tags from multiple tape libraries."""
         volume_tags = set()
         for rmcd in cta_rmcd_hosts:
             for tape in rmcd.list_tapes_in_library():

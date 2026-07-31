@@ -1,26 +1,28 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import json
-import time
+import argparse
 import base64
 import hashlib
-import argparse
+import json
 import re
+import tempfile
+import time
 from pathlib import Path
+from typing import Union
 
 import jwt
 from cryptography import x509
-from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 
 
 def sanitize_filename(s: str) -> str:
     return re.sub(r"[^a-zA-Z0-9._-]", "_", s)
 
 
-def load_cert_x5c(cert_path: str) -> str:
-    with open(cert_path, "rb") as f:
+def load_cert_x5c(cert_path: Path) -> str:
+    with cert_path.open("rb") as f:
         cert = f.read()
 
     if b"BEGIN CERTIFICATE" in cert:
@@ -30,8 +32,8 @@ def load_cert_x5c(cert_path: str) -> str:
     return base64.b64encode(cert).decode("ascii")
 
 
-def generate_jwk_from_cert(cert_path):
-    with open(cert_path, "rb") as f:
+def generate_jwk_from_cert(cert_path: Path) -> dict[str, Union[str, list[str]]]:
+    with cert_path.open("rb") as f:
         cert_data = f.read()
 
     if b"BEGIN CERTIFICATE" in cert_data:
@@ -41,7 +43,7 @@ def generate_jwk_from_cert(cert_path):
 
     public_key = cert_obj.public_key()
     if not isinstance(public_key, RSAPublicKey):
-        raise ValueError("Certificate public key must be RSA")
+        raise TypeError("Certificate public key must be RSA")
 
     pub_numbers = public_key.public_numbers()
 
@@ -61,7 +63,7 @@ def generate_jwk_from_cert(cert_path):
     thumbprint = hashlib.sha256(thumbprint_input).digest()
     kid = base64.urlsafe_b64encode(thumbprint).rstrip(b"=").decode()
 
-    jwk = {
+    return {
         "kty": "RSA",
         "alg": "RS256",
         "use": "sig",
@@ -71,11 +73,9 @@ def generate_jwk_from_cert(cert_path):
         "x5c": [load_cert_x5c(cert_path)],
     }
 
-    return jwk
 
-
-def generate_jwt(private_key, kid: str, sub: str, lifetime_sec: int):
-    """Generates a JWT with all required claims the CTA frontend needs to verify it"""
+def generate_jwt(private_key: RSAPrivateKey, kid: str, sub: str, lifetime_sec: int) -> str:
+    """Generate a JWT with all claims required by the CTA frontend."""
     now = int(time.time())
 
     payload = {
@@ -85,19 +85,20 @@ def generate_jwt(private_key, kid: str, sub: str, lifetime_sec: int):
         "typ": "Bearer",
     }
 
-    token = jwt.encode(
+    return jwt.encode(
         payload,
         private_key,
         algorithm="RS256",
         headers={"kid": kid, "typ": "JWT"},
     )
 
-    return token
 
-
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Generate CI files containing a JWKS and one JWT for each --sub passed. Files are put in the --output-dir directory."
+        description=(
+            "Generate CI files containing a JWKS and one JWT for each --sub passed. Files are put in "
+            "the --output-dir directory."
+        )
     )
     parser.add_argument(
         "--sub",
@@ -113,18 +114,20 @@ def main():
     )
     parser.add_argument(
         "--output-dir",
-        type=str,
-        default="/tmp",
+        type=Path,
+        default=Path(tempfile.gettempdir()),
         help="Directory to put the generated files in",
     )
-    parser.add_argument("--cert", required=True, help="Path to server certificate")
-    parser.add_argument("--key", required=True, help="Path to private key")
+    parser.add_argument("--cert", required=True, type=Path, help="Path to server certificate")
+    parser.add_argument("--key", required=True, type=Path, help="Path to private key")
     parser.add_argument("--jwks", help="Filename for the generated JWKS file")
 
     args = parser.parse_args()
 
-    with open(args.key, "rb") as f:
+    with args.key.open("rb") as f:
         key = serialization.load_pem_private_key(f.read(), password=None)
+    if not isinstance(key, RSAPrivateKey):
+        raise TypeError("Private key must be RSA")
     jwk = generate_jwk_from_cert(args.cert)
 
     if args.jwks is not None:
@@ -132,25 +135,28 @@ def main():
         jwks_path = Path(args.output_dir) / args.jwks
         if jwks_path.exists():
             print("JWKS file already exists, appending key")
-            with open(jwks_path) as f:
+            with jwks_path.open() as f:
                 jwks = json.load(f)
             jwks["keys"].append(jwk)
         else:
             jwks = {"keys": [jwk]}
 
-        with open(jwks_path, "w") as f:
+        with jwks_path.open("w") as f:
             json.dump(jwks, f, indent=2)
 
         print(f"Generated {jwks_path}")
 
     # Generate one file per sub
     for sub in args.sub:
-        token = generate_jwt(key, jwk["kid"], sub, args.lifetime)
+        kid = jwk["kid"]
+        if not isinstance(kid, str):
+            raise TypeError("JWK kid must be a string")
+        token = generate_jwt(key, kid, sub, args.lifetime)
 
         safe_sub = sanitize_filename(sub)
         jwt_path = Path(args.output_dir) / f"{safe_sub}.jwt"
 
-        with open(jwt_path, "w") as f:
+        with jwt_path.open("w") as f:
             f.write(token)
 
         print(f"Generated {jwt_path}")

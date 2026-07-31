@@ -1,27 +1,37 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import pytest
-
 import json
 import shutil
+import sys
+import uuid
+from collections.abc import Iterator
 from datetime import datetime
 from pathlib import Path
-import uuid
+from typing import Any, Optional
 
-from ..helpers.test_env import TestEnv
-from ..helpers.hosts import (
-    CtaCliHost,
+import pytest
+from _pytest.fixtures import SubRequest
+
+from system_tests.helpers.hosts import (
     CtaAdminApiHost,
-    CtaWorkflowApiHost,
+    CtaCliHost,
     CtaMaintdHost,
     CtaRmcdHost,
     CtaTapedHost,
+    CtaWorkflowApiHost,
+    DiskClientHost,
+    DiskInstanceHost,
     EosClientHost,
     EosMgmHost,
-    DiskInstanceHost,
-    DiskClientHost,
 )
+from system_tests.helpers.test_config import TestConfig
+from system_tests.helpers.test_env import TestEnv
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 # This file could be split into multiple files eventually when necessary
 
@@ -54,9 +64,10 @@ def get_test_heading(test_path: Path, test_name: str) -> tuple[str, str]:
 
 
 @pytest.fixture(autouse=True)
-def make_tests_look_pretty(request):
-    """The only purpose of this fixture is to make the test output easier to read
-    in particular by more clearly visually separating different test cases
+def make_tests_look_pretty(request: SubRequest) -> Iterator[None]:
+    """Make the test output easier to read.
+
+    In particular, visually separate the different test cases more clearly.
     """
     terminal_writer = request.config.get_terminal_writer()
     terminal_width = shutil.get_terminal_size().columns
@@ -76,13 +87,12 @@ def make_tests_look_pretty(request):
 
 @pytest.fixture(scope="session")
 def error_whitelist() -> set[str]:
-    """Mutable whitelist that individual test cases can add errors to"""
-    whitelist = set()  # mutable whitelist shared between all tests
-    return whitelist
+    """Mutable whitelist that individual test cases can add errors to."""
+    return set()  # mutable whitelist shared between all tests
 
 
 @pytest.fixture(scope="session")
-def project_json():
+def project_json() -> dict[str, Any]:
     project_json_path = (Path(__file__).resolve().parent / ".." / ".." / "project.json").resolve()
     return json.loads(project_json_path.read_text(encoding="utf-8"))
 
@@ -93,41 +103,53 @@ def project_json():
 
 
 @pytest.fixture(scope="session")
-def krb5_realm(request) -> str:
-    """Kerberos realm used in the tests"""
-    return request.config.test_config["tests"]["krb5_realm"]
+def test_config(request: SubRequest) -> TestConfig:
+    config_path = request.config.getoption("--test-config")
+    if not isinstance(config_path, Path):
+        raise pytest.UsageError("--test-config must be a filesystem path")
+    try:
+        with config_path.open("rb") as config_file:
+            return tomllib.load(config_file)
+    except FileNotFoundError as error:
+        raise pytest.UsageError(f"--test-config file not found: {config_path}") from error
 
 
 @pytest.fixture(scope="session")
-def postgres_scheduler_enabled(cta_cli) -> bool:
+def krb5_realm(test_config: TestConfig) -> str:
+    """Kerberos realm used in the tests."""
+    return test_config["tests"]["krb5_realm"]
+
+
+@pytest.fixture(scope="session")
+def postgres_scheduler_enabled(cta_cli: CtaCliHost) -> bool:
     # Not very robust; something to improve in the future. Maybe with a label on the entire cluster
     return json.loads(cta_cli.exec_with_output("cta-admin --json version"))[0]["schedulerBackendName"] == "postgres"
 
 
 @pytest.fixture(scope="session")
-def cta_storage_class():
+def cta_storage_class() -> str:
     return "cta_storage_class"
 
 
 @pytest.fixture(scope="session")
-def cta_default_tape_pool():
+def cta_default_tape_pool() -> str:
     # For now; don't change, because the populate_catalogue.sh script does not use this value (yet)
     return "ctasystest"
 
 
 @pytest.fixture(scope="session")
-def eos_workflow_dir(eos_mgm):
+def eos_workflow_dir(eos_mgm: EosMgmHost) -> Path:
     return eos_mgm.base_dir_path / "proc" / "cta" / "workflow"
 
 
 @pytest.fixture(scope="session")
-def cta_dir(disk_instance):
+def cta_dir(disk_instance: DiskInstanceHost) -> Path:
     return disk_instance.base_dir_path / "cta"
 
 
 # Very important that this is module scoped to ensure each test module gets it's own unique test directory
 @pytest.fixture(scope="module")
-def test_dir(cta_dir, disk_instance, request):
+def test_dir(cta_dir: Path, disk_instance: DiskInstanceHost, request: SubRequest) -> Path:
     module_name = Path(request.module.__file__).stem
     # Put the time in there so that it's easy from multiple runs to identify which one was last
     path = cta_dir / "tests" / f"{module_name}_{datetime.now():%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:6]}"
@@ -136,7 +158,7 @@ def test_dir(cta_dir, disk_instance, request):
 
 
 @pytest.fixture(scope="session")
-def remote_scripts_dir():
+def remote_scripts_dir() -> Path:
     # Note that this resolves relative to the current file
     return Path(__file__).parents[1] / "tests" / "remote_scripts"
 
@@ -147,18 +169,18 @@ def remote_scripts_dir():
 
 
 @pytest.fixture(scope="session")
-def namespace(request):
+def namespace(request: SubRequest) -> Optional[str]:
     return request.config.getoption("--namespace", default=None)
 
 
 @pytest.fixture(scope="session")
-def connection_config(request):
+def connection_config(request: SubRequest) -> Optional[Path]:
     return request.config.getoption("--connection-config", default=None)
 
 
 @pytest.fixture(scope="session")
-def env(connection_config, namespace) -> TestEnv:
-    """Gives all the tests access to the different hosts (cli, frontend, taped, etc)"""
+def env(connection_config: Optional[Path], namespace: Optional[str]) -> TestEnv:
+    """Give tests access to the different hosts (CLI, frontend, taped, and others)."""
     if namespace and connection_config:
         raise pytest.UsageError("Only one of --namespace or --connection-config can be provided, not both")
 
@@ -170,8 +192,8 @@ def env(connection_config, namespace) -> TestEnv:
     if namespace is not None:
         # No connection configuration provided, so assume everything is running in a cluster
         return TestEnv.from_namespace(namespace)
-    else:
-        return TestEnv.from_config(connection_config)
+    assert connection_config is not None
+    return TestEnv.from_config(connection_config)
 
 
 #####################################################################################################################
@@ -182,59 +204,59 @@ def env(connection_config, namespace) -> TestEnv:
 
 
 @pytest.fixture(scope="session")
-def eos_client(env) -> EosClientHost:
+def eos_client(env: TestEnv) -> EosClientHost:
     if not env.eos_client:
         pytest.skip("This test requires at least one EOS client")
     return env.eos_client[0]
 
 
 @pytest.fixture(scope="session")
-def disk_client(env) -> DiskClientHost:
+def disk_client(env: TestEnv) -> DiskClientHost:
     return env.disk_client[0]
 
 
 @pytest.fixture(scope="session")
-def eos_mgm(env) -> EosMgmHost:
+def eos_mgm(env: TestEnv) -> EosMgmHost:
     if not env.eos_mgm:
         pytest.skip("This test requires an EOS deployment")
     return env.eos_mgm[0]
 
 
 @pytest.fixture(scope="session")
-def disk_instance(env) -> DiskInstanceHost:
+def disk_instance(env: TestEnv) -> DiskInstanceHost:
     return env.disk_instance[0]
 
 
 @pytest.fixture(scope="session")
-def cta_taped(env) -> CtaTapedHost:
+def cta_taped(env: TestEnv) -> CtaTapedHost:
     return env.cta_taped[0]
 
 
 @pytest.fixture(scope="session")
-def cta_rmcd(env) -> CtaRmcdHost:
+def cta_rmcd(env: TestEnv) -> CtaRmcdHost:
     return env.cta_rmcd[0]
 
 
 @pytest.fixture(scope="session")
-def cta_maintd(env) -> CtaMaintdHost:
+def cta_maintd(env: TestEnv) -> CtaMaintdHost:
     return env.cta_maintd[0]
 
 
 @pytest.fixture(scope="session")
-def cta_admin_api(env) -> CtaAdminApiHost:
+def cta_admin_api(env: TestEnv) -> CtaAdminApiHost:
     return env.cta_admin_api[0]
 
 
 @pytest.fixture(scope="session")
-def cta_workflow_api(env) -> CtaWorkflowApiHost:
+def cta_workflow_api(env: TestEnv) -> CtaWorkflowApiHost:
     return env.cta_workflow_api[0]
 
 
 @pytest.fixture(scope="session")
-def cta_cli(env) -> CtaCliHost:
+def cta_cli(env: TestEnv) -> CtaCliHost:
     return env.cta_cli[0]
 
 
 @pytest.fixture(scope="session")
-def disk_instance_name(disk_instance) -> str:
+def disk_instance_name(disk_instance: DiskInstanceHost) -> str:
     return disk_instance.instance_name

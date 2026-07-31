@@ -1,15 +1,18 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import datetime
 from functools import cached_property
 from pathlib import Path
-import datetime
 
+from typing_extensions import override
+
+from system_tests.helpers.connections.remote_connection import RemoteConnection
 from .disk_instance_host import DiskInstanceHost, DiskInstanceImplementation
 
 
 class EosMgmHost(DiskInstanceHost):
-    def __init__(self, conn):
+    def __init__(self, conn: RemoteConnection) -> None:
         super().__init__(conn)
 
     @cached_property
@@ -28,37 +31,40 @@ class EosMgmHost(DiskInstanceHost):
     def workflow_dir(self) -> Path:
         return Path(self.base_dir_path) / "proc" / "cta" / "workflow"
 
-    def force_remove_directory(self, directory: str) -> None:
+    @override
+    def force_remove_directory(self, directory: Path) -> None:
         self.exec(f"eos rm -rF --no-confirmation {directory} 2>/dev/null || true")
 
-    def list_entries_in_directory(self, directory: str) -> list[str]:
+    @override
+    def list_entries_in_directory(self, directory: Path) -> list[str]:
         # This function counts both files and subdirectories
         return self.exec_with_output(f"eos ls {directory}").splitlines()
 
-    def list_subdirectories_in_directory(self, directory: str) -> list[str]:
+    @override
+    def list_subdirectories_in_directory(self, directory: Path) -> list[str]:
         output = self.exec_with_output(f"eos ls -l {directory}")
         lines = output.splitlines()
 
-        files = [line.split()[-1] for line in lines if line.startswith("d")]
+        return [line.split()[-1] for line in lines if line.startswith("d")]
 
-        return files
-
-    def list_files_in_directory(self, directory: str) -> list[str]:
+    @override
+    def list_files_in_directory(self, directory: Path) -> list[str]:
         output = self.exec_with_output(f"eos ls -l {directory}")
         lines = output.splitlines()
 
-        files = [line.split()[-1] for line in lines if line.startswith("-")]
+        return [line.split()[-1] for line in lines if line.startswith("-")]
 
-        return files
-
-    def num_files_in_directory(self, directory: str) -> int:
+    @override
+    def num_files_in_directory(self, directory: Path) -> int:
         # Note that for now this also counts subdirectories
         return int(self.exec_with_output(f"eos ls {directory} | wc -l"))
 
-    def num_files_on_tape_only(self, directory: str) -> int:
+    @override
+    def num_files_on_tape_only(self, directory: Path) -> int:
         return int(self.exec_with_output(f'eos ls {directory} -y | grep "d0::t1" | wc -l'))
 
-    def num_files_on_disk_only(self, directory: str) -> int:
+    @override
+    def num_files_on_disk_only(self, directory: Path) -> int:
         return int(self.exec_with_output(f'eos ls {directory} -y | grep "d1::t0" | wc -l'))
 
     def get_report_file_path(self) -> Path:
@@ -67,7 +73,8 @@ class EosMgmHost(DiskInstanceHost):
         file_name = f"{now:%Y}{now:%m}{now:%d}.eosreport"
         return base_path / file_name
 
-    def mkdir(self, directory: str, parent: bool = True) -> None:
+    @override
+    def mkdir(self, directory: Path, parent: bool = True) -> None:
         flags = ""
         if parent:
             flags += "-p"

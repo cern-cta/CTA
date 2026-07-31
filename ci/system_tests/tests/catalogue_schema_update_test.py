@@ -1,12 +1,18 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from pathlib import Path
-import pytest
 from dataclasses import dataclass
-from ..helpers.connections.k8s_connection import K8sConnection
-from ..helpers.hosts import RemoteHost
+from pathlib import Path
+from typing import Any, Optional
 
+import pytest
+
+from system_tests.helpers.hosts import CtaAdminApiHost
+from system_tests.helpers.test_config import TestConfig
+from system_tests.helpers.test_env import TestEnv
+
+from system_tests.helpers.connections.k8s_connection import K8sConnection
+from system_tests.helpers.hosts import RemoteHost
 
 #####################################################################################################################
 # Helpers
@@ -19,13 +25,13 @@ class CatalogueSchemaUpdateParams:
 
 
 @pytest.fixture(scope="module")
-def catalogue_schema_update_params(request):
-    catalogue_schema_update_config = request.config.test_config["tests"]["catalogue_schema_update"]
+def catalogue_schema_update_params(test_config: TestConfig) -> CatalogueSchemaUpdateParams:
+    catalogue_schema_update_config = test_config["tests"]["catalogue_schema_update"]
     return CatalogueSchemaUpdateParams(schema_checkout_ref=catalogue_schema_update_config["schema_checkout_ref"])
 
 
 @pytest.fixture(scope="module")
-def catalogue_from_version(project_json):
+def catalogue_from_version(project_json: dict[str, Any]) -> str:
     supported_major_versions = project_json["supportedCatalogueVersions"]
     supported_major_versions.sort()
     # Sorted from low to high, the "from" version is the lowest major version + ".0"
@@ -33,7 +39,7 @@ def catalogue_from_version(project_json):
 
 
 @pytest.fixture(scope="module")
-def catalogue_to_version(project_json):
+def catalogue_to_version(project_json: dict[str, Any]) -> str:
     supported_major_versions = project_json["supportedCatalogueVersions"]
     supported_major_versions.sort()
     # Sorted from low to high, the "to" version is the highest major version + ".0"
@@ -41,7 +47,8 @@ def catalogue_to_version(project_json):
 
 
 @pytest.fixture(scope="module")
-def catalogue_updater(namespace):
+def catalogue_updater(namespace: Optional[str]) -> RemoteHost:
+    assert namespace is not None
     return RemoteHost(K8sConnection(namespace, "app.kubernetes.io/name=liquibase-update", "liquibase-update", 0))
 
 
@@ -50,22 +57,27 @@ def catalogue_updater(namespace):
 #####################################################################################################################
 
 
-def test_multiple_versions_supported(project_json):
-    assert (
-        len(project_json["supportedCatalogueVersions"]) > 1
-    ), "In order to test a catalogue schema update, CTA must be compatible with at least 2 catalogue schema versions"
+def test_multiple_versions_supported(project_json: dict[str, Any]) -> None:
+    assert len(project_json["supportedCatalogueVersions"]) > 1, (
+        "In order to test a catalogue schema update, CTA must be compatible with at least 2 catalogue schema versions"
+    )
 
 
-def test_catalogue_version_is_from_version(cta_admin_api, catalogue_from_version):
+def test_catalogue_version_is_from_version(cta_admin_api: CtaAdminApiHost, catalogue_from_version: str) -> None:
     # First check the current version is equal to the "from" version
-    assert (
-        cta_admin_api.get_schema_version() == catalogue_from_version
-    ), 'Catalogue version should be equal to the "from" version before any updates'
+    assert cta_admin_api.get_schema_version() == catalogue_from_version, (
+        'Catalogue version should be equal to the "from" version before any updates'
+    )
 
 
 def test_init_catalogue_updater(
-    env, project_json, catalogue_from_version, catalogue_to_version, catalogue_schema_update_params, namespace
-):
+    env: TestEnv,
+    project_json: dict[str, Any],
+    catalogue_from_version: str,
+    catalogue_to_version: str,
+    catalogue_schema_update_params: CatalogueSchemaUpdateParams,
+    namespace: Optional[str],
+) -> None:
     # Just to note, this entire method is hacky and should be rewritten at some point. Suggestions welcome...
     # A few of the problems with it:
     # - It makes plain kubectl calls and therefore assumes things are running on a Kubernetes cluster
@@ -83,8 +95,8 @@ def test_init_catalogue_updater(
     project_root = Path(env.exec_local("git rev-parse --show-toplevel", capture_output=True).stdout.decode().strip())
 
     # If the configmap generation would need to be done through Helm the file in question needs to be within the chart
-    defaultPlatform = project_json["dev"]["defaultPlatform"]
-    yum_repos_file = project_root / "ci" / "docker" / defaultPlatform / "etc" / "yum.repos.d-internal"
+    default_platform = project_json["dev"]["defaultPlatform"]
+    yum_repos_file = project_root / "ci" / "docker" / default_platform / "etc" / "yum.repos.d-internal"
     env.exec_local(f"kubectl -n {namespace} create configmap yum.repos.d-config --from-file={yum_repos_file}")
 
     print(f"Catalogue source version: {catalogue_from_version}")
@@ -102,40 +114,44 @@ def test_init_catalogue_updater(
         )
         print(f"Using catalogue schema ref from submodule: {catalogue_schema_ref}")
 
-    extraFlags = f"--set extraFlags='--schema-checkout-ref {catalogue_schema_ref}'"
+    extra_flags = f"--set extraFlags='--schema-checkout-ref {catalogue_schema_ref}'"
 
     print("Install catalogue-updater chart...")
     env.exec_local(
         f"helm install catalogue-updater ../orchestration/helm/catalogue-updater --namespace {namespace} \
                                                         --set catalogueSourceVersion={catalogue_from_version} \
                                                         --set catalogueDestinationVersion={catalogue_to_version} \
-                                                        {extraFlags} --wait --timeout 2m"
+                                                        {extra_flags} --wait --timeout 2m"
     )
 
 
-def test_tag_liquibase(catalogue_updater):
+def test_tag_liquibase(catalogue_updater: RemoteHost) -> None:
     catalogue_updater.exec('/launch_liquibase.sh "tag --tag=test_update"')
 
 
-def test_liquibase_update(cta_admin_api, catalogue_updater, catalogue_to_version):
+def test_liquibase_update(
+    cta_admin_api: CtaAdminApiHost, catalogue_updater: RemoteHost, catalogue_to_version: str
+) -> None:
     catalogue_updater.exec("/launch_liquibase.sh update")
 
     # Now the current version should be equal to the "to" version
-    assert (
-        cta_admin_api.get_schema_version() == catalogue_to_version
-    ), 'Catalogue version should be equal to the "to" version after rollback'
+    assert cta_admin_api.get_schema_version() == catalogue_to_version, (
+        'Catalogue version should be equal to the "to" version after rollback'
+    )
     cta_admin_api.verify_schema()
 
 
-def test_liquibase_rollback(cta_admin_api, catalogue_updater, catalogue_from_version):
+def test_liquibase_rollback(
+    cta_admin_api: CtaAdminApiHost, catalogue_updater: RemoteHost, catalogue_from_version: str
+) -> None:
     catalogue_updater.exec('/launch_liquibase.sh "rollback --tag=test_update"')
     # Check the current version is equal to the "from" version again
-    assert (
-        cta_admin_api.get_schema_version() == catalogue_from_version
-    ), 'Catalogue version should be equal to the "from" version after rollback'
+    assert cta_admin_api.get_schema_version() == catalogue_from_version, (
+        'Catalogue version should be equal to the "from" version after rollback'
+    )
     cta_admin_api.verify_schema()
 
 
-def test_cleanup_catalogue_updater(env, namespace):
+def test_cleanup_catalogue_updater(env: TestEnv, namespace: Optional[str]) -> None:
     env.exec_local(f"helm uninstall catalogue-updater --namespace {namespace}")
     env.exec_local(f"kubectl -n {namespace} delete configmap yum.repos.d-config")

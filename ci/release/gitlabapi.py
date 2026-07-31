@@ -5,16 +5,17 @@ from typing import Any, Optional
 
 import requests
 
+REQUEST_TIMEOUT_SECONDS = 30
+
 Commit = dict[str, Any]
 
 
 class GitLabAPI:
-
     gitlab_url: str
     project_id: str
     api_token: str
 
-    def __init__(self, gitlab_url: str, project_id: str, api_token: str):
+    def __init__(self, gitlab_url: str, project_id: str, api_token: str) -> None:
         self.gitlab_url = gitlab_url
         self.project_id = project_id
         self.api_token = api_token
@@ -24,22 +25,36 @@ class GitLabAPI:
         endpoint: str,
         method: str,
         params: Optional[dict[str, str]] = None,
-        data: Optional[Any] = None,
-        json: Optional[Any] = None,
-    ) -> Optional[Any]:
+        data: Any = None,
+        json: Any = None,
+    ) -> Any:
         api_url = f"{self.gitlab_url}/api/v4/projects/{self.project_id}/{endpoint}"
         headers = {
             "Private-Token": self.api_token,
         }
         try:
             if method == "GET":
-                response = requests.get(api_url, params=params, headers=headers)
+                response = requests.get(api_url, params=params, headers=headers, timeout=REQUEST_TIMEOUT_SECONDS)
             elif method == "POST":
-                response = requests.post(api_url, params=params, headers=headers, data=data, json=json)
+                response = requests.post(
+                    api_url,
+                    params=params,
+                    headers=headers,
+                    data=data,
+                    json=json,
+                    timeout=REQUEST_TIMEOUT_SECONDS,
+                )
             elif method == "PUT":
-                response = requests.put(api_url, params=params, headers=headers, data=data, json=json)
+                response = requests.put(
+                    api_url,
+                    params=params,
+                    headers=headers,
+                    data=data,
+                    json=json,
+                    timeout=REQUEST_TIMEOUT_SECONDS,
+                )
             elif method == "DELETE":
-                response = requests.delete(api_url, params=params, headers=headers)
+                response = requests.delete(api_url, params=params, headers=headers, timeout=REQUEST_TIMEOUT_SECONDS)
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
             response.raise_for_status()  # Raise an exception for non-success status codes
@@ -48,26 +63,26 @@ class GitLabAPI:
             print(f"ERROR: GitLab API request failed:\n{e}")
             return None
 
-    def get(self, endpoint: str, params: Optional[dict[str, str]] = None) -> Optional[Any]:
+    def get(self, endpoint: str, params: Optional[dict[str, str]] = None) -> Any:
         return self.__api_request(endpoint, "GET", params)
 
     def post(
         self,
         endpoint: str,
         params: Optional[dict[str, str]] = None,
-        data: Optional[Any] = None,
-        json: Optional[Any] = None,
-    ) -> Optional[Any]:
+        data: Any = None,
+        json: Any = None,
+    ) -> Any:
         return self.__api_request(endpoint, "POST", params, data=data, json=json)
 
     def put(
         self,
         endpoint: str,
         params: Optional[dict[str, str]] = None,
-        data: Optional[Any] = None,
-        json: Optional[Any] = None,
-    ) -> Optional[Any]:
+        data: Any = None,
+        json: Any = None,
+    ) -> Any:
         return self.__api_request(endpoint, "PUT", params, data=data, json=json)
 
-    def delete(self, endpoint: str, params: Optional[dict[str, str]] = None) -> Optional[Any]:
+    def delete(self, endpoint: str, params: Optional[dict[str, str]] = None) -> Any:
         return self.__api_request(endpoint, "DELETE", params)

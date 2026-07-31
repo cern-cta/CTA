@@ -4,9 +4,11 @@
 import json
 from collections import Counter
 
+from system_tests.helpers.test_env import TestEnv
 
-def test_no_coredumps(env):
-    hosts = env.disk_client + env.cta_cli + env.cta_admin_api + env.cta_workflow_api + env.cta_taped + env.cta_rmcd
+
+def test_no_coredumps(env: TestEnv) -> None:
+    hosts = [*env.disk_client, *env.cta_cli, *env.cta_admin_api, *env.cta_workflow_api, *env.cta_taped, *env.cta_rmcd]
     total_core_dumps_found = 0
     for host in hosts:
         core_dump_files = host.exec_with_output("find /var/log/tmp/ -type f -name '*.core' 2>/dev/null").splitlines()
@@ -17,8 +19,8 @@ def test_no_coredumps(env):
     assert total_core_dumps_found == 0, "core dumps were found"
 
 
-def test_no_uncaught_exceptions_and_errors(env, error_whitelist):
-    hosts = env.cta_admin_api + env.cta_workflow_api + env.cta_taped + env.cta_rmcd
+def test_no_uncaught_exceptions_and_errors(env: TestEnv, error_whitelist: set[str]) -> None:
+    hosts = [*env.cta_admin_api, *env.cta_workflow_api, *env.cta_taped, *env.cta_rmcd]
     error_messages = []  # for summaries
     for host in hosts:
         # collect logs
@@ -30,8 +32,8 @@ def test_no_uncaught_exceptions_and_errors(env, error_whitelist):
         for line in output:
             try:
                 entry = json.loads(line)
-            except Exception:
-                raise RuntimeError(f"Found non-json log line in {host.name}")
+            except Exception as error:
+                raise RuntimeError(f"Found non-json log line in {host.name}") from error
 
             msg = entry.get("message", "")
             if not msg:

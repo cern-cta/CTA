@@ -7,11 +7,12 @@ import json
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 import jsonschema
 
 
-def validate_schema(project_json, schema_json):
+def validate_schema(project_json: dict[str, Any], schema_json: dict[str, Any]) -> None:
     print("Validating project.json using schema.json schema...")
 
     try:
@@ -28,7 +29,7 @@ def validate_schema(project_json, schema_json):
         sys.exit(1)
 
 
-def validate_versions(project_json):
+def validate_versions(project_json: dict[str, Any]) -> None:
     print("Validating version format correctness...")
     errors = 0
     for platform_data in project_json.get("platforms", {}).values():
@@ -50,11 +51,11 @@ def validate_versions(project_json):
 
 if __name__ == "__main__":
     project_json_path = Path(__file__).resolve().parents[2] / "project.json"
-    with open(project_json_path, "r") as f:
+    with project_json_path.open() as f:
         project_json = json.load(f)
 
     schema_json_path = Path(__file__).resolve().parent / "schema.json"
-    with open(schema_json_path, "r") as f:
+    with schema_json_path.open() as f:
         schema_json = json.load(f)
 
     validate_schema(project_json, schema_json)

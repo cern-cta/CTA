@@ -2,19 +2,26 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import time
+from types import TracebackType
+from typing import Optional
 
 
 class Timeout:
-    def __init__(self, seconds):
+    def __init__(self, seconds: float) -> None:
         self.seconds = seconds
 
-    def __enter__(self):
+    def __enter__(self) -> "Timeout":
         self.start = time.time()
         return self
 
-    def __exit__(self, exc_type, exc, tb):
+    def __exit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc: Optional[BaseException],
+        tb: Optional[TracebackType],
+    ) -> None:
         pass
 
     @property
-    def expired(self):
+    def expired(self) -> bool:
         return time.time() - self.start > self.seconds

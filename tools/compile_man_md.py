@@ -13,8 +13,8 @@ from datetime import datetime
 
 
 # Parse source code, extracting all lines between comment delimiters /**md and */
-def include_md(filename):
-    with open(filename, "r") as f:
+def include_md(filename: str) -> None:
+    with open(filename) as f:
         output = False
         for line in f:
             if re.match(r"^ *\*\/$", line):
@@ -41,11 +41,11 @@ if infile == outfile:
 
 
 # Read the input file, processing @include_md directives by including content from other files as needed
-with open(infile, "r") as fin, open(outfile, "w") as fout:
+with open(infile) as fin, open(outfile, "w") as fout:
     for line in fin:
         if re.match(r"^@include_md", line):
             filename = line.split()[1]
-            with open(filename, "r") as f:
+            with open(filename) as f:
                 output = False
                 for subline in f:
                     if re.match(r"^ *\*\/$", subline):

@@ -1,14 +1,13 @@
-#!/usr/bin/env python3
-
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import argparse
 import json
 import sys
+from typing import Any
 
 
-def get_root_component(sbom):
+def get_root_component(sbom: dict[str, Any]) -> str:
     meta_comp = (sbom.get("metadata") or {}).get("component") or {}
     project_ref = meta_comp.get("bom-ref")
     if not project_ref:
@@ -17,7 +16,7 @@ def get_root_component(sbom):
     return project_ref
 
 
-def replace_root_dependencies(sbom, prefix) -> None:
+def replace_root_dependencies(sbom: dict[str, Any], prefix: str) -> None:
     components = sbom.get("components") or []
     dependencies = sbom.get("dependencies") or []
 
@@ -43,9 +42,12 @@ def replace_root_dependencies(sbom, prefix) -> None:
     sbom["dependencies"] = dependencies
 
 
-def main():
+def main() -> None:
     ap = argparse.ArgumentParser(
-        description="Update the dependencies of the root component to contain all dependencies of the OS component starting with a given prefix"
+        description=(
+            "Update the dependencies of the root component to contain all dependencies of the OS "
+            "component starting with a given prefix"
+        )
     )
     ap.add_argument("--in", dest="sbom_in", required=True, help="Input CycloneDX JSON")
     ap.add_argument("--out", dest="sbom_out", required=True, help="Output CycloneDX JSON")
@@ -54,7 +56,7 @@ def main():
     )
     args = ap.parse_args()
 
-    with open(args.sbom_in, "r", encoding="utf-8") as f:
+    with open(args.sbom_in, encoding="utf-8") as f:
         sbom = json.load(f)
 
     replace_root_dependencies(sbom, args.prefix.lower())

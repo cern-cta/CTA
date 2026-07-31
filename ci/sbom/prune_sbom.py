@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -10,7 +8,7 @@ from collections import deque
 from typing import Any
 
 
-def get_root_component(sbom) -> str:
+def get_root_component(sbom: dict[str, Any]) -> str:
     meta_comp = (sbom.get("metadata") or {}).get("component") or {}
     project_ref = meta_comp.get("bom-ref")
     if not project_ref:
@@ -20,7 +18,7 @@ def get_root_component(sbom) -> str:
 
 
 def find_reachable_components(root_component: str, ref2deps: dict[str, list[str]]) -> set[str]:
-    reachable_refs: set[str] = set([root_component])
+    reachable_refs: set[str] = {root_component}
     q = deque([root_component])
     while q:
         ref = q.popleft()
@@ -31,7 +29,7 @@ def find_reachable_components(root_component: str, ref2deps: dict[str, list[str]
     return reachable_refs
 
 
-def prune_unreachable(sbom: dict[str, Any]):
+def prune_unreachable(sbom: dict[str, Any]) -> None:
     components = sbom.get("components") or []
     dependencies = sbom.get("dependencies") or []
 
@@ -57,7 +55,7 @@ def prune_unreachable(sbom: dict[str, Any]):
     sbom["dependencies"] = pruned_deps
 
 
-def main():
+def main() -> None:
     ap = argparse.ArgumentParser(
         description="Prune any components and dependencies unreachable from the main component"
     )
@@ -65,7 +63,7 @@ def main():
     ap.add_argument("--out", dest="sbom_out", required=True, help="Output CycloneDX JSON")
     args = ap.parse_args()
 
-    with open(args.sbom_in, "r", encoding="utf-8") as f:
+    with open(args.sbom_in, encoding="utf-8") as f:
         sbom = json.load(f)
 
     prune_unreachable(sbom)

@@ -3,17 +3,18 @@
 
 import json
 import time
-from typing import Callable, Any
+from collections.abc import Callable
+from typing import Any
 
 from .timeout import Timeout
 
 
 # We could let this return a boolean, but we get better error messages with individual asserts
-def assert_dict_equals(actual: dict, expected: dict, ignore_keys: list[str]):
+def assert_dict_equals(actual: dict[Any, Any], expected: dict[Any, Any], ignore_keys: list[str]) -> None:
     ignored = set(ignore_keys)
     for k1, v1 in actual.items():
         assert k1 in ignored or (k1 in expected and expected[k1] == v1)
-    for k2, v2 in expected.items():
+    for k2 in expected:
         assert k2 in ignored or k2 in actual
 
 
@@ -25,19 +26,18 @@ def wait_for_condition(cond_func: Callable[[], bool], *, timeout_secs: float = 1
             raise TimeoutError(f"Condition failed to change to True within in {timeout_secs} seconds")
 
 
-def canonicalize(obj: Any) -> Any:
+def canonicalize(obj: object) -> object:
     if isinstance(obj, dict):
         return {k: canonicalize(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
+    if isinstance(obj, list):
         canon_items = [canonicalize(v) for v in obj]
         return tuple(sorted(canon_items, key=_sort_key))
-    else:
-        return obj
+    return obj
 
 
-def _sort_key(x: Any):
+def _sort_key(x: object) -> str:
     return json.dumps(x, sort_keys=True, separators=(",", ":"))
 
 
-def find_line(content, *filters) -> str:
+def find_line(content: str, *filters: str) -> str:
     return next((line for line in content.splitlines() if all(f in line for f in filters)), "")

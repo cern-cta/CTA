@@ -6,7 +6,7 @@
 import argparse
 import sys
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional
 
 from gitlabapi import Commit, GitLabAPI
 
@@ -28,11 +28,15 @@ changelog_cats: list[str] = ["addition", "fix", "change", "deprecation", "remova
 
 
 def changelog_preview(
-    api: GitLabAPI, from_commit_sha: str, to_commit_sha: Optional[str], release_version: str, markdown: bool = False
+    api: GitLabAPI,
+    from_commit_sha: str,
+    to_commit_sha: Optional[str],
+    release_version: str,
+    markdown: bool = False,
 ) -> str:
     if to_commit_sha is None:
         to_commit_sha = "HEAD"
-    params: dict = {
+    params: dict[str, Any] = {
         "from": from_commit_sha,
         "to": to_commit_sha,
         "version": release_version,
@@ -54,7 +58,7 @@ def get_commits_in_range(api: GitLabAPI, since_sha: str, until_sha: Optional[str
         commit_range += ".." + until_sha
     # The GitLab API only allows for the retrieval of max 100 entries per page
     per_page: int = 100
-    params: dict = {
+    params: dict[str, Any] = {
         "ref_name": commit_range,
         "trailers": True,
         "per_page": per_page,
@@ -106,7 +110,7 @@ def generate_report(commits: list[Commit], verbose: bool) -> dict[str, list[str]
 
 # ------------------------------------------------------------------------------
 def divider() -> str:
-    return f"\n{'-'*42}\n"
+    return f"\n{'-' * 42}\n"
 
 
 def header(title: str, markdown: bool) -> str:
@@ -170,7 +174,6 @@ def report_summary(report: dict[str, list[str]], markdown: bool = False) -> str:
 
 
 def commit_range_summary(api: GitLabAPI, from_commit_sha: str, to_commit_sha: str) -> str:
-
     from_commit: Optional[Commit] = get_commit(api, from_commit_sha)
     to_commit: Optional[Commit] = get_commit(api, to_commit_sha)
     if from_commit is None:
@@ -197,7 +200,6 @@ def commit_list_summary(commits: list[Commit]) -> str:
 # ------------------------------------------------------------------------------
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description="Tool that checks which commits will end up in the changelog")
     # The reason for not including this commit in the changelog is consistency with the gitlab api:
     # https://docs.gitlab.com/ee/api/repositories.html

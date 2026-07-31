@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -17,7 +16,7 @@ import subprocess
 _FILES_RE = re.compile(r"\bFiles:\s*(\d+)\b")
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Count files in EOS directories")
     p.add_argument("--eos-host", required=True, help="EOS MGM hostname (e.g. ctaeos)")
     p.add_argument("--dest-dir", required=True, help="EOS directory (e.g. /eos/ctaeos/cta/stress)")
@@ -26,7 +25,7 @@ def parse_args():
     return p.parse_args()
 
 
-def count_dir_files(args) -> int:
+def count_dir_files(args: tuple[str, str]) -> int:
     """Count files in a single directory via eos file info command."""
     eos_host, path = args
     try:
@@ -36,6 +35,7 @@ def count_dir_files(args) -> int:
             stderr=subprocess.DEVNULL,
             text=True,
             timeout=10,
+            check=False,
         )
     except subprocess.TimeoutExpired:
         return 0
@@ -47,7 +47,7 @@ def count_dir_files(args) -> int:
     return int(m.group(1)) if m else 0
 
 
-def main():
+def main() -> None:
     args = parse_args()
 
     paths = [(args.eos_host, f"{args.dest_dir}/{i}") for i in range(args.num_dirs)]

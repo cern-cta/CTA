@@ -1,44 +1,46 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import sys
 from pathlib import Path
 
 import pytest
-
-
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib
 
 # Ensure pytest knows about the fixtures
 pytest_plugins = [
     "system_tests.fixtures.fixtures",
 ]
 
+_canonical_items_key = pytest.StashKey[list[pytest.Item]]()
+
 #####################################################################################################################
 # Commandline options
 #####################################################################################################################
 
 
-def pytest_addoption(parser):
-    """Pytest hook that allows for adding custom commandline arguments"""
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """Pytest hook that allows for adding custom commandline arguments."""
     parser.addoption("--namespace", action="store", help="Namespace for tests")
     parser.addoption(
         "--connection-config",
         action="store",
+        type=Path,
         help="A yaml connection file specifying how to connect to each host",
     )
     parser.addoption(
         "--setup",
         action="store_true",
-        help="Execute setup tests first. Setup includes things such as populating the CTA Catalogue, labeling tapes and configuring the disk instance.",
+        help=(
+            "Execute setup tests first. Setup includes things such as populating the CTA Catalogue, labeling tapes "
+            "and configuring the disk instance."
+        ),
     )
     parser.addoption(
         "--teardown",
         action="store_true",
-        help="Execute teardown tests last. Teardown cleans up any leftover from the tests to ensure a clean state for the next run.",
+        help=(
+            "Execute teardown tests last. Teardown cleans up any leftover from the tests to ensure a clean state "
+            "for the next run."
+        ),
     )
     parser.addoption(
         "--teardown-first",
@@ -52,20 +54,10 @@ def pytest_addoption(parser):
     )
     parser.addoption(
         "--test-config",
-        type=str,
-        default="config/test_params.toml",
+        type=Path,
+        default=Path("config/test_params.toml"),
         help="Path to the config file containing all test parameters",
     )
-
-
-def pytest_configure(config):
-    """Pytest hook that allows us to augment the config object with additional info after commandline parsing"""
-    config_path: str = config.getoption("--test-config")
-    try:
-        with open(config_path, "rb") as f:
-            config.test_config = tomllib.load(f)
-    except FileNotFoundError:
-        raise pytest.UsageError(f"--test-config file not found: {config_path}")
 
 
 #####################################################################################################################
@@ -73,27 +65,32 @@ def pytest_configure(config):
 #####################################################################################################################
 
 
-def is_test_in_items(test_path: str, items):
-    resolved_test_path = Path(test_path).resolve()
+def is_test_in_items(test_path: Path, items: list[pytest.Item]) -> bool:
+    resolved_test_path = test_path.resolve()
     if not resolved_test_path.exists():
         raise FileNotFoundError(f"Test suite '{resolved_test_path}' not found!")
     return any(str(resolved_test_path) == str(item.path) for item in items)
 
 
-def add_test_into_existing_collection(test_path: str, items, prepend: bool = False, allow_duplicate: bool = False):
-    resolved_test_path = Path(test_path).resolve()
+def add_test_into_existing_collection(
+    test_path: Path,
+    items: list[pytest.Item],
+    prepend: bool = False,
+    allow_duplicate: bool = False,
+) -> None:
+    resolved_test_path = test_path.resolve()
     if not resolved_test_path.exists():
         raise FileNotFoundError(f"Required test suite '{resolved_test_path}' not found!")
     # Prevent duplicate registration unless explicitly allowed
     if not is_test_in_items(test_path, items) or allow_duplicate:
         # Import the test to ensure pytest collects its tests
         test_module = pytest.Module.from_parent(items[0].session, path=resolved_test_path)
-        tests = test_module.collect()
+        tests = [node for node in test_module.collect() if isinstance(node, pytest.Item)]
         index = 0 if prepend else len(items)
         items[index:index] = tests
 
 
-def add_tests_from_directory(test_directory: Path, items, prepend: bool = False):
+def add_tests_from_directory(test_directory: Path, items: list[pytest.Item], prepend: bool = False) -> None:
     test_paths = sorted(test_directory.rglob("*_test.py"))
     if not test_paths:
         raise FileNotFoundError(f"No test suites found in '{test_directory.resolve()}'!")
@@ -102,10 +99,10 @@ def add_tests_from_directory(test_directory: Path, items, prepend: bool = False)
     if prepend:
         test_paths.reverse()
     for test_path in test_paths:
-        add_test_into_existing_collection(str(test_path), items, prepend=prepend)
+        add_test_into_existing_collection(test_path, items, prepend=prepend)
 
 
-def add_lifecycle_tests(config, items):
+def add_lifecycle_tests(config: pytest.Config, items: list[pytest.Item]) -> None:
     rerun = config.getoption("--lf") or config.getoption("--ff")
 
     if config.getoption("--setup"):
@@ -122,18 +119,18 @@ def add_lifecycle_tests(config, items):
 # Let pytest first apply ordinary selectors such as -k to the requested suite,
 # then construct and remember the complete CTA lifecycle.
 @pytest.hookimpl(trylast=True)
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
     # cta_canonical_items is used to remember the original order of items for --lf and --ff
     if not items:
-        config.cta_canonical_items = []
+        config.stash[_canonical_items_key] = []
         return
 
     add_lifecycle_tests(config, items)
-    config.cta_canonical_items = items[:]
+    config.stash[_canonical_items_key] = items[:]
 
 
 @pytest.hookimpl(tryfirst=True)
-def pytest_collection_finish(session):
+def pytest_collection_finish(session: pytest.Session) -> None:
     config = session.config
     last_failed_only = config.getoption("--lf")
     failed_first = config.getoption("--ff")
@@ -141,7 +138,7 @@ def pytest_collection_finish(session):
     if not last_failed_only and not failed_first:
         return
 
-    canonical_items = config.cta_canonical_items
+    canonical_items = config.stash[_canonical_items_key]
     # Find the failed tests
     last_failed = config.cache.get("cache/lastfailed", {})
     failed_indexes = [index for index, item in enumerate(canonical_items) if item.nodeid in last_failed]

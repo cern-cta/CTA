@@ -7,4 +7,7 @@
 #####################################################################################################################
 
 
-def test_cleanup_dcache_directories(env): ...
+from system_tests.helpers.test_env import TestEnv
+
+
+def test_cleanup_dcache_directories(env: TestEnv) -> None: ...

@@ -1,0 +1,19 @@
+{
+  "typeCheckingMode": "strict",
+  "venvPath": ".",
+  "venv": ".venv",
+  "exclude": [
+    "**/__pycache__",
+    "**/.venv",
+    "**/venv",
+    "build_rpm",
+    "build_srpm"
+  ],
+  "reportImplicitOverride": "error",
+  "reportMissingTypeArgument": "error",
+  "reportUnknownVariableType": "none",
+  "reportUnknownMemberType": "none",
+  "reportUnknownParameterType": "none",
+  "reportUnknownArgumentType": "none",
+  "reportMissingTypeStubs": "none"
+}

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -16,9 +15,10 @@ import multiprocessing as mp
 import os
 import subprocess
 import time
+from typing import Any
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Retrieve files from tape via XRootD prepare")
     p.add_argument("--eos-host", required=True, help="EOS MGM hostname or IP")
     p.add_argument("--dest-dir", required=True, help="EOS directory containing archived files")
@@ -29,7 +29,7 @@ def parse_args():
     return p.parse_args()
 
 
-def list_tape_only_files(eos_host, dest_dir, num_dirs):
+def list_tape_only_files(eos_host: str, dest_dir: str, num_dirs: int) -> list[str]:
     """Discover all tape-only files (d0::t1) across subdirectories."""
     tape_files = []
     for i in range(num_dirs):
@@ -39,6 +39,7 @@ def list_tape_only_files(eos_host, dest_dir, num_dirs):
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             text=True,
+            check=False,
         )
         if p.returncode != 0 or not p.stdout:
             continue
@@ -51,16 +52,16 @@ def list_tape_only_files(eos_host, dest_dir, num_dirs):
     return tape_files
 
 
-def retrieve_worker(work_q, wid, eos_host, krb5_cache):
+def retrieve_worker(work_q: mp.JoinableQueue[Any], wid: int, eos_host: str, krb5_cache: str) -> None:
     """Worker process that issues prepare (stage-in) requests via XRootD."""
     # Switch from SSS to Kerberos (poweruser1) for prepare permissions
     for k in ("XrdSecsssKT", "XRDSSSKT"):
         os.environ.pop(k, None)
-    os.environ["XrdSecPROTOCOL"] = "krb5"
+    os.environ["XrdSecPROTOCOL"] = "krb5"  # noqa: SIM112 - XRootD requires this exact mixed-case name
     os.environ["KRB5CCNAME"] = krb5_cache
 
-    from XRootD import client  # type: ignore
-    from XRootD.client.flags import PrepareFlags  # type: ignore
+    from XRootD import client  # type: ignore[reportMissingImports]
+    from XRootD.client.flags import PrepareFlags  # type: ignore[reportMissingImports]
 
     fs = client.FileSystem(f"root://{eos_host}")
     err_budget = 10
@@ -80,7 +81,7 @@ def retrieve_worker(work_q, wid, eos_host, krb5_cache):
         work_q.task_done()
 
 
-def main():
+def main() -> None:
     args = parse_args()
 
     print(

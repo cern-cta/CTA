@@ -5,6 +5,7 @@
 
 import sys
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -49,12 +50,18 @@ class GitLabLoader(yaml.SafeLoader):
     pass
 
 
-def unknown_tag_handler(loader, tag_suffix, node):
+def unknown_tag_handler(
+    loader: GitLabLoader,
+    tag_suffix: str,
+    node: yaml.Node,
+) -> object:
     if isinstance(node, yaml.SequenceNode):
         return loader.construct_sequence(node)
     if isinstance(node, yaml.MappingNode):
         return loader.construct_mapping(node)
-    return loader.construct_scalar(node)
+    if isinstance(node, yaml.ScalarNode):
+        return loader.construct_scalar(node)
+    raise TypeError(f"Unsupported YAML node type: {type(node).__name__}")
 
 
 GitLabLoader.add_multi_constructor("!", unknown_tag_handler)
@@ -69,7 +76,7 @@ def order_index(key: str) -> int:
         return len(EXPECTED_ORDER)
 
 
-def check_job(file_path: Path, job_name: str, job_def: dict) -> list[str]:
+def check_job(file_path: Path, job_name: str, job_def: dict[str, Any]) -> list[str]:
     keys = list(job_def.keys())
     sorted_keys = sorted(keys, key=order_index)
 

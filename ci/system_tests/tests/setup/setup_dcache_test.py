@@ -6,4 +6,7 @@
 #####################################################################################################################
 
 
-def test_dcache_version(env): ...
+from system_tests.helpers.test_env import TestEnv
+
+
+def test_dcache_version(env: TestEnv) -> None: ...

@@ -1,21 +1,22 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import os
+import argparse
 import base64
 import json
-import ssl
+import os
 import re
+import ssl
 import sys
-import argparse
 import urllib.request
+from pathlib import Path
 
 
-def k8s_create_secret(namespace, secret_name, filename, filepath, host):
-    token_path = "/var/run/secrets/kubernetes.io/serviceaccount/token"
-    ca_cert_path = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+def k8s_create_secret(namespace: str, secret_name: str, filepath: Path, host: str) -> None:
+    token_path = Path("/var/run/secrets/kubernetes.io/serviceaccount/token")
+    ca_cert_path = Path("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt")
 
-    with open(filepath, "rb") as f:
+    with filepath.open("rb") as f:
         filedata = base64.b64encode(f.read()).decode()
 
     payload = {
@@ -23,15 +24,15 @@ def k8s_create_secret(namespace, secret_name, filename, filepath, host):
         "kind": "Secret",
         "metadata": {"name": secret_name, "namespace": namespace},
         "type": "Opaque",
-        "data": {filename: filedata},
+        "data": {filepath.name: filedata},
     }
 
     try:
-        with open(token_path, "r") as f:
+        with token_path.open() as f:
             token = f.read().strip()
 
         context = ssl.create_default_context()
-        context.load_verify_locations(cafile=ca_cert_path)
+        context.load_verify_locations(cafile=str(ca_cert_path))
         url = f"{host}/api/v1/namespaces/{namespace}/secrets"
 
         req = urllib.request.Request(url, data=json.dumps(payload).encode(), method="POST")
@@ -47,14 +48,14 @@ def k8s_create_secret(namespace, secret_name, filename, filepath, host):
         print(f"Error creating {secret_name}: {e}")
 
 
-def is_valid_name(name):
-    return len(name) <= 63 and re.fullmatch(r"[a-z0-9]([-a-z0-9]*[a-z0-9])?", name)
+def is_valid_name(name: str) -> bool:
+    return bool(len(name) <= 63 and re.fullmatch(r"[a-z0-9]([-a-z0-9]*[a-z0-9])?", name))
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Create a K8s secret for every file in the provided directory.")
     parser.add_argument("--namespace", "-n", required=True, help="Kubernetes namespace to create the secrets in")
-    parser.add_argument("--dir", "-d", required=True, help="Directory containing secret files")
+    parser.add_argument("--dir", "-d", required=True, type=Path, help="Directory containing secret files")
 
     args = parser.parse_args()
 
@@ -68,22 +69,21 @@ def main():
 
     full_host = f"https://{k_host}:{k_port}"
 
-    if not os.path.exists(args.dir):
+    if not args.dir.exists():
         print(f"Error: Directory not found: {args.dir}")
         sys.exit(1)
 
-    for fname in os.listdir(args.dir):
-        fpath = os.path.join(args.dir, fname)
-        if not os.path.isfile(fpath):
+    for fpath in args.dir.iterdir():
+        if not fpath.is_file():
             continue
 
-        s_name = fname.replace(".", "-").lower()
+        s_name = fpath.name.replace(".", "-").lower()
 
         if is_valid_name(s_name):
-            k8s_create_secret(args.namespace, s_name, fname, fpath, full_host)
+            k8s_create_secret(args.namespace, s_name, fpath, full_host)
         else:
-            print(f"Error: Failed to create secret for '{fname}'. Invalid name: '{s_name}'")
-            exit(1)
+            print(f"Error: Failed to create secret for '{fpath.name}'. Invalid name: '{s_name}'")
+            sys.exit(1)
 
 
 if __name__ == "__main__":

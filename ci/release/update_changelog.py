@@ -17,7 +17,7 @@ from gitlabapi import GitLabAPI
 # https://docs.gitlab.com/ee/api/branches.html#create-repository-branch
 def create_new_branch(api: GitLabAPI, branch: str, source_branch: str) -> bool:
     print(f"Creating new branch: {branch} from source {args.source_branch}...")
-    params: dict = {
+    params: dict[str, Any] = {
         "branch": branch,
         "ref": source_branch,
     }
@@ -26,9 +26,8 @@ def create_new_branch(api: GitLabAPI, branch: str, source_branch: str) -> bool:
         print("Branch created successfully")
         print(f"\t To view the created branch, visit: {result['web_url']}")
         return True
-    else:
-        print(f"Failed to create branch {branch} from source {args.source_branch}")
-        return False
+    print(f"Failed to create branch {branch} from source {args.source_branch}")
+    return False
 
 
 # https://docs.gitlab.com/ee/api/repositories.html#add-changelog-data-to-a-changelog-file
@@ -37,7 +36,7 @@ def update_changelog(api: GitLabAPI, release_version: str, from_commit: str, to_
     print(f"\tRelease version: {release_version}")
     print(f"\tStart commit (exclusive): {from_commit}")
     print(f"\tEnd commit   (inclusive): {to_commit}")
-    params: dict = {
+    params: dict[str, Any] = {
         "branch": branch,
         "version": release_version,
         "from": from_commit,
@@ -47,17 +46,19 @@ def update_changelog(api: GitLabAPI, release_version: str, from_commit: str, to_
     if result is not None:
         print("Changelog update pushed successfully")
         return True
-    else:
-        print("Failed to update changelog")
-        return False
+    print("Failed to update changelog")
+    return False
 
 
 # https://docs.gitlab.com/ee/api/repository_files.html#get-file-from-repository
-def get_file(api: GitLabAPI, path: str, ref: str) -> Any:
-    params: dict = {
+def get_file(api: GitLabAPI, path: str, ref: str) -> dict[str, object]:
+    params: dict[str, Any] = {
         "ref": ref,
     }
-    return api.get(f"repository/files/{path}", params)
+    result = api.get(f"repository/files/{path}", params)
+    if not isinstance(result, dict):
+        raise TypeError(f"Expected repository file metadata for {path}")
+    return result
 
 
 # https://docs.gitlab.com/ee/api/merge_requests.html#create-mr
@@ -74,7 +75,7 @@ def create_merge_request(
 ) -> Optional[int]:
     print(f"Creating Merge Request from branch {source_branch} into branch: {target_branch}")
     print(f"\tTitle: {title}")
-    data: dict = {
+    data: dict[str, Any] = {
         "source_branch": source_branch,
         "target_branch": target_branch,
         "title": title,
@@ -94,9 +95,8 @@ def create_merge_request(
         if iid is not None and isinstance(iid, int):
             return iid
         return None
-    else:
-        print("Failed to create merge request")
-        return None
+    print("Failed to create merge request")
+    return None
 
 
 # https://docs.gitlab.com/ee/api/discussions.html#create-a-new-thread-in-the-merge-request-diff
@@ -134,7 +134,7 @@ def add_mr_review_comment(
         print("Failed to retrieve versions")
         return False
     first_version = versions_result[0]
-    data: dict = {
+    data: dict[str, Any] = {
         "position[position_type]": "text",
         "position[base_sha]": first_version["base_commit_sha"],
         "position[head_sha]": first_version["head_commit_sha"],
@@ -148,15 +148,13 @@ def add_mr_review_comment(
     if result is not None:
         print("Comment added successfully")
         return True
-    else:
-        print("Failed to add review comments")
-        return False
+    print("Failed to add review comments")
+    return False
 
 
 # ------------------------------------------------------------------------------
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description="Tool that checks which commits will end up in the changelog")
     # The reason for not including the "from" commit in the changelog is consistency with the gitlab api:
     # https://docs.gitlab.com/ee/api/repositories.html
@@ -229,11 +227,8 @@ if __name__ == "__main__":
         release_version = release_version[1:]
 
     branch_name: str = args.release_version + "-changelog-update"
-    with open(args.description_file, "r") as file:
+    with open(args.description_file) as file:
         description_body = file.read()
-    if description_body is None:
-        print(f"Failed to read description file: {args.description_file}")
-        sys.exit(1)
 
     mr_description = "\n".join(
         [

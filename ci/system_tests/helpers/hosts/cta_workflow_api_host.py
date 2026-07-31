@@ -2,13 +2,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from functools import cached_property
-
 from pathlib import Path
+
+from system_tests.helpers.connections.remote_connection import RemoteConnection
 from .remote_host import RemoteHost
 
 
 class CtaWorkflowApiHost(RemoteHost):
-    def __init__(self, conn):
+    def __init__(self, conn: RemoteConnection) -> None:
         super().__init__(conn)
 
     @cached_property

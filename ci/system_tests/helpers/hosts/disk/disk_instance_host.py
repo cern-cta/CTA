@@ -7,14 +7,17 @@ from enum import Enum
 from functools import cached_property
 from pathlib import Path
 
-from ..remote_host import RemoteHost
+from typing_extensions import override
+
+from system_tests.helpers.hosts.remote_host import RemoteHost
 
 
 class DiskInstanceImplementation(Enum):
     EOS = ("eos",)
     DCACHE = ("dcache",)
 
-    def __str__(self):
+    @override
+    def __str__(self) -> str:
         return self.value[0]
 
     @property
@@ -23,7 +26,6 @@ class DiskInstanceImplementation(Enum):
 
 
 class DiskInstanceHost(RemoteHost):
-
     @cached_property
     def implementation(self) -> DiskInstanceImplementation: ...
 
@@ -33,26 +35,26 @@ class DiskInstanceHost(RemoteHost):
     @cached_property
     def base_dir_path(self) -> Path: ...
 
-    def mkdir(self, directory: str, parent: bool = True) -> None: ...
+    def mkdir(self, directory: Path, parent: bool = True) -> None: ...
 
-    def force_remove_directory(self, directory: str) -> None: ...
+    def force_remove_directory(self, directory: Path) -> None: ...
 
-    def num_files_in_directory(self, directory: str) -> int: ...
+    def num_files_in_directory(self, directory: Path) -> int: ...
 
-    def num_files_on_tape_only(self, directory: str) -> int: ...
+    def num_files_on_tape_only(self, directory: Path) -> int: ...
 
-    def num_files_on_disk_only(self, directory: str) -> int: ...
+    def num_files_on_disk_only(self, directory: Path) -> int: ...
 
-    def list_entries_in_directory(self, directory: str) -> list[str]: ...
+    def list_entries_in_directory(self, directory: Path) -> list[str]: ...
 
-    def list_files_in_directory(self, directory: str) -> list[str]: ...
+    def list_files_in_directory(self, directory: Path) -> list[str]: ...
 
-    def list_subdirectories_in_directory(self, directory: str) -> list[str]: ...
+    def list_subdirectories_in_directory(self, directory: Path) -> list[str]: ...
 
     # Eventually we should move this method to a more central place
     def wait_for_archival_in_directory(
         self,
-        archive_dir_path: str,
+        archive_dir_path: Path,
         check_archive_interval_sec: int,
         *,
         max_no_progress_intervals: int = 3,
@@ -60,20 +62,21 @@ class DiskInstanceHost(RemoteHost):
         # Few problems to solve here:
         # Not all files might be archived for whatever reason (it's a stress test; errors are bound to happen)
         # Additionally, we have no guarantee on the order in which CTA archives the directories
-        # So we can't wait for directories to complete one by one and instead, we continuously loop through all of them as they progress.
+        # So we can't wait for directories to complete one by one and instead, we continuously loop through all of them
+        # as they progress.
         # We don't want to check directories that have completed, so we use a queue
 
         directories = self.list_subdirectories_in_directory(archive_dir_path)
 
         # For tracking progress; how many files are left for each directory
-        num_files_left: dict[str, int] = {}
+        num_files_left: dict[Path, int] = {}
         # While we could compute this on the fly, we only need to do it once
-        num_files_total: dict[str, int] = {}
+        num_files_total: dict[Path, int] = {}
 
         # Construct our queue of all directories we need to check
         dirs_left_queue = deque()
         for directory in directories:
-            full_path: str = f"{archive_dir_path}/{directory}"
+            full_path = archive_dir_path / directory
             num_files_total[full_path] = self.num_files_in_directory(full_path)
             num_files_left[full_path] = self.num_files_on_disk_only(full_path)
             dirs_left_queue.append(full_path)
@@ -104,7 +107,8 @@ class DiskInstanceHost(RemoteHost):
             current_remaining_files = sum(num_files_left.values())
 
             print(
-                f"{current_remaining_files} files remaining to be archived to tape ({len(dirs_left_queue)} directories left)"
+                f"{current_remaining_files} files remaining to be archived to tape "
+                f"({len(dirs_left_queue)} directories left)"
             )
 
             # Check if progress was made
@@ -126,10 +130,7 @@ class DiskInstanceHost(RemoteHost):
             print(f"No progress for {max_no_progress_intervals} consecutive intervals, waiting for archival stopped")
 
         # Check if the loss is acceptable
-        if total_files_to_archive > 0:
-            loss_percent = (missing_archives / total_files_to_archive) * 100
-        else:
-            loss_percent = 0.0
+        loss_percent = (missing_archives / total_files_to_archive) * 100 if total_files_to_archive > 0 else 0.0
 
         print(f"{total_files_to_archive - missing_archives}/{total_files_to_archive} files archived to tape")
 
@@ -137,19 +138,19 @@ class DiskInstanceHost(RemoteHost):
 
     def wait_for_retrieval_in_directory(
         self,
-        archive_dir_path: str,
+        archive_dir_path: Path,
         check_retrieve_interval_sec: int,
         *,
         max_no_progress_intervals: int = 3,
     ) -> tuple[int, float]:
         directories = self.list_subdirectories_in_directory(archive_dir_path)
 
-        num_tape_only: dict[str, int] = {}
-        num_files_total: dict[str, int] = {}
+        num_tape_only: dict[Path, int] = {}
+        num_files_total: dict[Path, int] = {}
 
         dirs_left_queue = deque()
         for directory in directories:
-            full_path: str = f"{archive_dir_path}/{directory}"
+            full_path = archive_dir_path / directory
             num_files_total[full_path] = self.num_files_in_directory(full_path)
             num_tape_only[full_path] = self.num_files_on_tape_only(full_path)
             if num_tape_only[full_path] > 0:
@@ -190,10 +191,7 @@ class DiskInstanceHost(RemoteHost):
         if consecutive_no_progress_intervals >= max_no_progress_intervals:
             print(f"No progress for {max_no_progress_intervals} consecutive intervals, waiting for retrieval stopped")
 
-        if total_files_to_retrieve > 0:
-            loss_percent = (missing_retrievals / total_files_to_retrieve) * 100
-        else:
-            loss_percent = 0.0
+        loss_percent = (missing_retrievals / total_files_to_retrieve) * 100 if total_files_to_retrieve > 0 else 0.0
 
         print(f"{total_files_to_retrieve - missing_retrievals}/{total_files_to_retrieve} files retrieved from tape")
 
