@@ -22,6 +22,8 @@ from .hosts.disk.disk_instance_host import DiskInstanceHost
 from .hosts.disk.eos_client_host import EosClientHost
 from .hosts.disk.eos_mgm_host import EosMgmHost
 from .hosts.scheduler_postgres_host import SchedulerPostgresHost
+from .hosts.disk.dcache_client_host import DCacheClientHost
+from .hosts.disk.dcache_host import DCacheHost
 
 
 class TestEnv:
@@ -38,6 +40,8 @@ class TestEnv:
         cta_maintd_conns: Sequence[RemoteConnection] = [],
         eos_client_conns: Sequence[RemoteConnection] = [],
         eos_mgm_conns: Sequence[RemoteConnection] = [],
+        dcache_client_conns: Sequence[RemoteConnection] = [],
+        dcache_conns: Sequence[RemoteConnection] = [],
         scheduler_postgres_conns: Sequence[RemoteConnection] = [],
     ) -> None:
         self.cta_cli: Sequence[CtaCliHost] = [CtaCliHost(conn) for conn in cta_cli_conns]
@@ -53,9 +57,11 @@ class TestEnv:
         self.scheduler_postgres: Sequence[SchedulerPostgresHost] = [
             SchedulerPostgresHost(conn) for conn in scheduler_postgres_conns
         ]
+        self.dcache: Sequence[DCacheHost] = [DCacheHost(conn) for conn in dcache_conns]
+        self.dcache_client: Sequence[DCacheClientHost] = [DCacheClientHost(conn) for conn in dcache_client_conns]
         # These should all fall under DiskInstanceHost and DiskClientHost
-        self.disk_instance: Sequence[DiskInstanceHost] = self.eos_mgm  # + self.dcache
-        self.disk_client: Sequence[DiskClientHost] = self.eos_client  # + self.dcache_client
+        self.disk_instance: Sequence[DiskInstanceHost] = [*self.eos_mgm, *self.dcache]
+        self.disk_client: Sequence[DiskClientHost] = [*self.eos_client, *self.dcache_client]
 
     # Mostly a convenience function that is arguably not very clean, but that is for later
     @staticmethod
@@ -142,9 +148,14 @@ class TestEnv:
                 namespace, "app.kubernetes.io/component=client", "client"
             ),
             eos_mgm_conns=TestEnv.get_k8s_connections_by_selector(namespace, "app.kubernetes.io/name=mgm", "mgm"),
-            scheduler_postgres_conns=TestEnv.get_k8s_connections_by_selector(
-                namespace, "app.kubernetes.io/name=cta-scheduler-postgres-db", "cta-scheduler-postgres"
+            dcache_client_conns=TestEnv.get_k8s_connections_by_selector(
+                namespace, "app.kubernetes.io/name=client", "client"
             ),
+            dcache_conns=TestEnv.get_k8s_connections_by_selector(
+                namespace, "app.kubernetes.io/name=dcache", "dcache-door"
+            ),
+            scheduler_postgres_conns=TestEnv.get_k8s_connections_by_selector(
+                namespace, "app.kubernetes.io/name=cta-scheduler-postgres-db", "cta-scheduler-postgres"),
         )
 
     @staticmethod
@@ -201,6 +212,8 @@ class TestEnv:
             cta_taped_conns=create_connections(connection_config, "cta_taped"),
             eos_client_conns=create_connections(connection_config, "eos_client"),
             eos_mgm_conns=create_connections(connection_config, "eos_mgm"),
+            dcache_client_conns=create_connections(connection_config, "dcache_client"),
+            dcache_conns=create_connections(connection_config, "dcache"),
             scheduler_postgres_conns=(
                 create_connections(connection_config, "scheduler_postgres")
                 if "scheduler_postgres" in connection_config
