@@ -5,28 +5,36 @@
 # - Alma9-minimal vs alma. The minimal image is significantly smaller. The main difference is that it comes with microdnf instead of dnf
 # - We install and remove cta-release in the same layer to minimise image size. Putting it in the base image would increase the image size substantially
 # - note sharing=locked and id for concurrency (dnf caching is not thread safe)
+# - AlmaLinux 9 and repository package versions intentionally float to receive upstream fixes on rebuild
+# - dnf clean is unnecessary because the package caches are BuildKit cache mounts and are not committed to the image
+# - rpm_context is an external BuildKit build context supplied by the build command
 
 # =========================================================================
 # 1. REPO BUILDER
 # Used to feed the RPMs to the other stages
 # =========================================================================
+# hadolint ignore=DL3007
 FROM registry.cern.ch/docker.io/almalinux/9-minimal:latest AS repo-builder
 
+# hadolint ignore=DL3040,DL3041
 RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
     --mount=type=cache,target=/var/cache/yum,sharing=locked \
     # Add some basic flags to all (micro)dnf commands to improve speed
-    echo -e "[main]\ntsflags=nodocs\ninstall_weak_deps=False" > /etc/dnf/dnf.conf && \
+    printf '%s\n' '[main]' 'tsflags=nodocs' 'install_weak_deps=False' > /etc/dnf/dnf.conf && \
     microdnf install -y createrepo_c
 
+# hadolint ignore=DL3022
 COPY --from=rpm_context . /rpms
 
 # Ensure this is recreated correctly
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN find /rpms -type f -name '*.rpm' -print0 | sort -z | xargs -0 sha256sum > /rpms/.rpm-hash && \
     createrepo_c /rpms
 
 # =========================================================================
 # 2. BASE IMAGE
 # =========================================================================
+# hadolint ignore=DL3007
 FROM registry.cern.ch/docker.io/almalinux/9-minimal:latest AS base
 
 COPY build-service.sh /usr/local/bin/build-service.sh
@@ -34,6 +42,7 @@ COPY build-service.sh /usr/local/bin/build-service.sh
 COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
 
 # Core dependencies
+# hadolint ignore=DL3041
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,sharing=locked \
     --mount=type=cache,target=/var/cache/yum,sharing=locked \
@@ -47,9 +56,9 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     # Ensure we can execute the script that installs packages
     chmod +x /usr/local/bin/build-service.sh && \
     # Create a .repo file pointing to the RPM repo we created in rep-builder
-    echo -e "[cta]\nname=Repo containing CTA RPMS\nbaseurl=file:///mnt/rpms\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta.repo && \
+    printf '%s\n' '[cta]' 'name=Repo containing CTA RPMS' 'baseurl=file:///mnt/rpms' 'gpgcheck=0' 'enabled=1' 'priority=2' > /etc/yum.repos.d/cta.repo && \
     # Add some basic flags to all (micro)dnf commands to improve speed and reduce image size
-    echo -e "[main]\ntsflags=nodocs\ninstall_weak_deps=False" > /etc/dnf/dnf.conf && \
+    printf '%s\n' '[main]' 'tsflags=nodocs' 'install_weak_deps=False' > /etc/dnf/dnf.conf && \
     # Some basic utils (tar for kubectl cp, jq for many of the tests and convenience)
     # Requiring sudo is not ideal, but we need an update of the tests to be able to do without it.
     # Anyway, by setting allowPrivilegeEscalation: false in Kubernetes, sudo is unusable anyway
@@ -141,7 +150,7 @@ ARG ENABLE_ORACLE_SUPPORT
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools \
-    /usr/local/bin/build-service.sh "cta-admin-grpc cta-catalogue-utils cta-scheduler-utils krb5-workstation ceph-common cta-immutable-file-test eos-client xrootd-client bc" && \
+    /usr/local/bin/build-service.sh "cta-admin-grpc cta-catalogue-utils cta-scheduler-utils krb5-workstation ceph-common cta-immutable-file-test eos-client xrootd-client python3-xrootd bc" && \
     ln -sf /usr/bin/cta-admin-grpc /usr/bin/cta-admin
 
 ENTRYPOINT ["/bin/bash"]
