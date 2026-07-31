@@ -74,24 +74,17 @@ deploy() {
     helm_flags+=" --values ${dcache_config}"
   fi
 
-  helm repo add bitnami https://charts.bitnami.com/bitnami
   helm repo add dcache https://gitlab.desy.de/api/v4/projects/7648/packages/helm/test
   helm repo update
-  log_run helm install -n ${namespace} chimera bitnami/postgresql \
-                                       --replace --wait --timeout 10m0s \
-                                       --set auth.username=dcache \
-                                       --set auth.password=let-me-in \
-                                       --set auth.database=chimera \
-                                       --version 12.12.10
-  log_run helm install -n ${namespace} cells bitnami/zookeeper \
-                                       --replace --wait --timeout 10m0s
-  log_run helm install -n ${namespace} billing bitnami/kafka \
-                                       --replace --wait --timeout 10m0s \
-                                       --set externalZookeeper.servers=cells-zookeeper \
-                                       --set kraft.enabled=false \
-                                       --version 23.0.7
+  log_run kubectl -n ${namespace} apply -f manifests/dcache-pg-deployment.yaml
+  log_run kubectl -n ${namespace} apply -f manifests/dcache-zookeeper-deployment.yaml
+  log_run kubectl -n ${namespace} apply -f manifests/dcache-kafka-deployment.yaml
+  kubectl -n ${namespace} wait --for=condition=Ready pod/postgres-0
+  kubectl -n ${namespace} wait --for=condition=Ready pod/zookeeper-0
+  kubectl -n ${namespace} wait --for=condition=Ready pod/kafka-0
+  kubectl -n ${namespace} exec kafka-0 -- /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic billing
   log_run helm install -n ${namespace} store dcache/dcache --version ${dcache_chart_version} \
-                                       --replace --wait --timeout 10m0s \
+                                       --replace --wait --timeout 5m0s \
                                        --set dcache.hsm.enabled=true \
                                        --values presets/dev-dcache-values.yaml \
                                        ${helm_flags}
