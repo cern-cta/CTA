@@ -7,16 +7,12 @@ from pathlib import Path
 from typing_extensions import override
 
 from system_tests.helpers.connections.remote_connection import RemoteConnection
-from .disk_instance_host import DiskInstanceHost, DiskInstanceImplementation
+from .disk_instance_host import DiskInstanceHost
 
 
 class DCacheHost(DiskInstanceHost):
     def __init__(self, conn: RemoteConnection) -> None:
         super().__init__(conn)
-
-    @cached_property
-    def implementation(self) -> DiskInstanceImplementation:
-        return DiskInstanceImplementation.DCACHE
 
     @cached_property
     def instance_name(self) -> str:
