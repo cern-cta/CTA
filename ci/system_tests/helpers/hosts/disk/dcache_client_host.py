@@ -16,6 +16,7 @@ from system_tests.helpers.utils.timeout import Timeout
 class DCacheClientHost(DiskClientHost):
     """A client which accesses dCache through its WebDAV and REST doors."""
 
+    # TODO: dcache should be addressable by its disk instance name
     def __init__(self, conn: RemoteConnection, endpoint: str = "store-door-svc") -> None:
         super().__init__(conn)
         self.endpoint: str = endpoint
