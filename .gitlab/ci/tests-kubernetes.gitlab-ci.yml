@@ -28,64 +28,6 @@
   # Export all variables here so that it is clear which ones are available
   - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG EXTRA_SPAWN_ARGS
 
-
-.kubernetes-test:
-  needs:
-    - job: modify-project-json
-      optional: true
-    # Image jobs are optional because we may want run with existing docker images
-    - job: build-cta-images
-      optional: true
-  rules:
-    - if: $CI_COMMIT_TAG
-      when: never
-    - when: on_success
-  variables:
-    TEST_SCRIPT:
-    # Passed to the run_systemtest.sh script verbatim
-    EXTRA_RUN_ARGS: ""
-    # Passed to the create_instance.sh script verbatim
-    EXTRA_SPAWN_ARGS: ""
-    # Passed to the test script verbatim
-    EXTRA_TEST_ARGS: ""
-  before_script:
-    - bash ./ci/checks/check_runner_healthy.sh
-    - *setup-k8s-test-variables
-  script:
-    - EXTRA_SPAWN_ARGS="--cta-config ${DEFAULT_CTA_VALUES_CHAIN} --eos-config ${DEFAULT_EOS_VALUES_FILE} ${EXTRA_SPAWN_ARGS}"
-    # Keep the namespace name under 64 characters;
-    # Otherwise the eos mgm fqdn becomes too long and things start failing
-    - NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_JOB_ID}"
-    # Set up the additional arguments array to pass to the run_systemtest.sh script
-    - extra_args=($EXTRA_ARGS)
-    - if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
-    - if [[ -n "${EXTRA_TEST_ARGS}" ]];  then extra_args+=(--test-options "${EXTRA_TEST_ARGS}"); fi
-    # Run test
-    - cd ci/orchestration/
-    - ./run_systemtest.sh --namespace ${NAMESPACE}
-                          --cta-image-tag ${IMAGE_TAG}
-                          --cleanup-namespaces
-                          --keep-namespace
-                          --catalogue-config ${CATALOGUE_CONFIG}
-                          --scheduler-config ${SCHEDULER_CONFIG}
-                          --test-script ${TEST_SCRIPT}
-                          "${extra_args[@]}"
-                          ${EXTRA_RUN_ARGS}
-  after_script:
-    # Repeat the namespace declaration here as the after_script does not have access to previously exported variables
-    - NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_JOB_ID}"
-    # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
-    - cd ci/orchestration/
-    - ./delete_instance.sh --namespace ${NAMESPACE}
-  tags:  # Used to indicate that these jobs should run on our own runners
-    - kubernetes
-    - mhvtl
-  artifacts:
-    when: always
-    expire_in: 30 days
-    paths:
-      - pod_logs
-
 # Once we have migrated everything to python, the above .kubernetes-test can be removed
 .kubernetes-test-python:
   needs:
@@ -265,9 +207,9 @@ test-external-tape-formats:
   variables:
     PYTESTS: "tests/external_tape_formats_test.py"
 
-test-regression-dCache:
+test-dCache:
   extends:
-    - .kubernetes-test
+    - .kubernetes-test-python
   stage: system-test
   rules:
     - when: manual
@@ -275,9 +217,8 @@ test-regression-dCache:
     - if: $ENABLE_DCACHE_TESTS == "TRUE"
       when: on_success
   variables:
-    TEST_SCRIPT: "tests/test_regression_dCache.sh"
-    EXTRA_RUN_ARGS: "--test-timeout 2400 --skip-preflight"
-    EXTRA_SPAWN_ARGS: "--cta-config presets/dev-cta-grpc-values.yaml --dcache-enabled true --eos-enabled false"
+    PYTESTS: "tests/dcache_test.py"
+    EXTRA_SPAWN_ARGS: "--dcache-enabled true --eos-enabled false"
 
 stress-test:
   allow_failure: true
