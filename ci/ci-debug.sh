@@ -157,7 +157,7 @@ parse_arguments() {
 
 check_prerequisites() {
 
-  info "Checking prerequisites..."
+  log_task "Checking prerequisites..."
 
   require_command curl
   require_command jq
@@ -195,7 +195,7 @@ load_gitlab_token() {
 
 verify_gitlab_auth() {
 
-  info "Checking GitLab authentication..."
+  log_task "Checking GitLab authentication..."
 
   load_gitlab_token
 
@@ -208,7 +208,7 @@ verify_gitlab_auth() {
 
 check_registry_login() {
 
-  info "Checking registry login..."
+  log_task "Checking registry login..."
 
   if podman login --get-login "${REGISTRY}" >/dev/null 2>&1; then
     return
@@ -225,7 +225,7 @@ check_registry_login() {
 
 query_pipeline() {
 
-  info "Querying pipeline ${pipeline}..."
+  log_task "Querying pipeline ${pipeline}..."
 
   local response
   local pipeline_sha
@@ -252,8 +252,8 @@ query_pipeline() {
 
   pipeline_web_url="$(jq -r '.web_url' <<< "${response}")"
 
-  info "Pipeline SHA : ${pipeline_sha}"
-  info "Debug image  : ${debug_image_name}"
+  echo "Pipeline SHA : ${pipeline_sha}"
+  echo "Debug image  : ${debug_image_name}"
 
 }
 
@@ -294,7 +294,7 @@ wait_for_job() {
 
   local status
 
-  echo "Waiting for debug image build..."
+  log_task "Waiting for debug image build..."
 
   while true; do
 
@@ -332,19 +332,19 @@ wait_for_job() {
 
 ensure_debug_image() {
 
-  info "Checking debug image..."
+  log_task "Checking debug image..."
 
   find_debug_image_job
 
   case "${debug_image_job_status}" in
 
     success)
-      info "Debug image already exists."
+      echo "Debug image already exists."
       ;;
 
     manual)
 
-      info "Triggering debug image build..."
+      echo "Triggering debug image build..."
 
       gitlab_api \
         POST \
@@ -356,7 +356,7 @@ ensure_debug_image() {
 
     pending|running)
 
-      info "Debug image is already building."
+      echo "Debug image is already building."
 
       wait_for_job
       ;;
@@ -369,7 +369,7 @@ ensure_debug_image() {
 
   esac
 
-  info "Pulling debug image..."
+  log_task "Pulling debug image..."
 
   podman pull "${debug_image_name}"
 
@@ -381,7 +381,7 @@ ensure_debug_image() {
 
 download_artifacts() {
 
-  info "Finding failed system-test jobs..."
+  log_task "Finding failed system-test jobs..."
 
   local jobs
   local ids
@@ -434,7 +434,7 @@ download_artifacts() {
         ' <<< "${jobs}"
     )"
 
-    info "Downloading artifacts for ${name}..."
+    log_task "Downloading artifacts for ${name}..."
 
     zip="${artifact_dir}/${name}.zip"
 
@@ -454,7 +454,7 @@ download_artifacts() {
 
     while IFS= read -r -d '' archive; do
 
-      info "Extracting $(basename "${archive}")..."
+      log_task "Extracting $(basename "${archive}")..."
 
       tar \
         -xJf "${archive}" \
@@ -479,7 +479,7 @@ download_artifacts() {
 
 launch_debug_container() {
 
-  info "Starting debug container..."
+  log_task "Starting debug container..."
 
   echo
   echo "Artifacts are mounted at:"
