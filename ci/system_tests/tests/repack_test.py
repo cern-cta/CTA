@@ -14,7 +14,7 @@ import pytest
 from system_tests.helpers.hosts import CtaCliHost, CtaTapedHost, EosClientHost, EosMgmHost
 from system_tests.helpers.test_config import TestConfig
 
-from ..helpers.utils import Timeout
+from system_tests.helpers.utils import Timeout
 
 Fixture = Annotated
 
@@ -53,7 +53,7 @@ def repack_base_dir() -> Path:
     return Path("/var") / "log"
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def repack_buffer_dir(
     eos_mgm: EosMgmHost, eos_client: EosClientHost, disk_instance_name: str, request: pytest.FixtureRequest
 ) -> Path:
@@ -242,8 +242,9 @@ def _submit_repack_request(
                     print(f"{'DestinationVID':<15}\t{'NbFiles':<10}\t{'totalSize'}")
                     for dest in destination_infos:
                         print(f"{dest['vid']:<15}\t{dest['files']:<10}\t{dest['bytes']}")
-            except Exception:
-                pass  # Prevent parsing crash from hiding the main failure logs above
+            except Exception as e:
+                # Prevent parsing crash from hiding the main failure logs above
+                print(f"Parsing failed: {e}")
 
             raise TimeoutError(
                 f"Retrieve queue for tape {vid_to_repack} failed to sleep within {repack_timeout_secs} seconds"
@@ -276,9 +277,11 @@ def _submit_repack_request(
         all_files_selected = bool(repack_request.get("allFilesSelectedAtStart"))
 
         if total_files_on_tape > max_files_to_select:
-            assert not all_files_selected and total_files_on_tape != 0
+            assert not all_files_selected
+            assert total_files_on_tape != 0
         else:
-            assert all_files_selected and total_files_on_tape == 0
+            assert all_files_selected
+            assert total_files_on_tape == 0
 
     if len(destination_infos) != 0:
         print(f"{'DestinationVID':<15}\t{'NbFiles':<10}\t{'totalSize'}")

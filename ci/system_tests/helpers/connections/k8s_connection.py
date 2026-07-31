@@ -11,7 +11,7 @@ from kubernetes.client import ApiException, V1Pod
 from kubernetes.stream import stream
 from typing_extensions import override
 
-from ..utils.timeout import Timeout
+from system_tests.helpers.utils.timeout import Timeout
 from .remote_connection import ExecResult, RemoteConnection
 
 
@@ -117,7 +117,7 @@ class K8sConnection(RemoteConnection):
         # TODO: replace these kubectl calls so that we rely only on the SDK
         pod_target = f"{self.namespace}/{self._pod_name}:{dst_path}"
         cmd = f"kubectl cp {src_path} {pod_target} -c {self.container}"
-        result = subprocess.run(cmd, shell=True)
+        result = subprocess.run(cmd, shell=True, check=False)
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(f'"{cmd}" failed with exit code {result.returncode}: {result.stderr}')
         if permissions:
@@ -130,7 +130,7 @@ class K8sConnection(RemoteConnection):
     def copy_from(self, src_path: Path, dst_path: Path, throw_on_failure: bool = True) -> None:
         pod_source = f"{self.namespace}/{self._pod_name}:{src_path}"
         cmd = f"kubectl cp {pod_source} {dst_path} -c {self.container}"
-        result = subprocess.run(cmd, shell=True)
+        result = subprocess.run(cmd, shell=True, check=False)
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(f'"{cmd}" failed with exit code {result.returncode}: {result.stderr}\n')
 
@@ -196,7 +196,7 @@ class K8sConnection(RemoteConnection):
                 namespace=self.namespace,
             )
             if not isinstance(pod_response, V1Pod):
-                raise RuntimeError("Kubernetes API returned an invalid pod")
+                raise TypeError("Kubernetes API returned an invalid pod")
             pod = pod_response
         except ApiException as e:
             raise RuntimeError(f"Failed to get pod IP: {e}") from e

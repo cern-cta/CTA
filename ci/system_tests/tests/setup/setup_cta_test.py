@@ -8,7 +8,7 @@ from pathlib import Path
 from system_tests.helpers.hosts import CtaAdminApiHost, CtaCliHost
 from system_tests.helpers.test_env import TestEnv
 
-from ...helpers.hosts.cta_rmcd_host import CtaRmcdHost
+from system_tests.helpers.hosts.cta_rmcd_host import CtaRmcdHost
 
 #####################################################################################################################
 # Authentication

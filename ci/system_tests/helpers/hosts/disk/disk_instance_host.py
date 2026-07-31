@@ -9,7 +9,7 @@ from pathlib import Path
 
 from typing_extensions import override
 
-from ..remote_host import RemoteHost
+from system_tests.helpers.hosts.remote_host import RemoteHost
 
 
 class DiskInstanceImplementation(Enum):

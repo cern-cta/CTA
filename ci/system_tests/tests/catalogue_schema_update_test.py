@@ -11,8 +11,8 @@ from system_tests.helpers.hosts import CtaAdminApiHost
 from system_tests.helpers.test_config import TestConfig
 from system_tests.helpers.test_env import TestEnv
 
-from ..helpers.connections.k8s_connection import K8sConnection
-from ..helpers.hosts import RemoteHost
+from system_tests.helpers.connections.k8s_connection import K8sConnection
+from system_tests.helpers.hosts import RemoteHost
 
 #####################################################################################################################
 # Helpers

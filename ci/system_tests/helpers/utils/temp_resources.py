@@ -5,7 +5,7 @@ from types import TracebackType
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
-    from ..hosts import CtaCliHost
+    from system_tests.helpers.hosts import CtaCliHost
 
 # RAII structures that create a temporary entry in the catalogue and clean up after themselves
 

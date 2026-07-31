@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -36,6 +35,7 @@ def count_dir_files(args: tuple[str, str]) -> int:
             stderr=subprocess.DEVNULL,
             text=True,
             timeout=10,
+            check=False,
         )
     except subprocess.TimeoutExpired:
         return 0

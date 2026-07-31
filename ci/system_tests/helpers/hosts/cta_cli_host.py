@@ -6,8 +6,8 @@ import time
 from collections.abc import Callable
 from typing import Any
 
-from ..connections.remote_connection import RemoteConnection
-from ..utils.timeout import Timeout
+from system_tests.helpers.connections.remote_connection import RemoteConnection
+from system_tests.helpers.utils.timeout import Timeout
 from .remote_host import RemoteHost
 
 

@@ -8,7 +8,7 @@ import pytest
 
 from system_tests.helpers.hosts import CtaCliHost, CtaTapedHost, DiskClientHost, DiskInstanceHost
 
-from ..helpers.utils import (
+from system_tests.helpers.utils import (
     TempDiskInstanceSpace,
     TempLogicalLibrary,
     TempMountPolicy,

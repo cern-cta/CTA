@@ -45,32 +45,24 @@ def exit_if_not_defined(env_var_name: str, ci_input_vars: CiInputVars) -> None:
 
 
 def validate_default(ci_input_vars: CiInputVars) -> None:
-    """
-    Validation for the DEFAULT pipeline type.
-    """
+    """Validate inputs for the DEFAULT pipeline type."""
     exit_if_defined("CUSTOM_CTA_IMAGE_TAG", ci_input_vars)
     exit_if_defined("CUSTOM_EOS_IMAGE_TAG", ci_input_vars)
     exit_if_defined("CUSTOM_XROOTD_VERSION", ci_input_vars)
 
 
 def validate_regr_against_cta_branch(ci_input_vars: CiInputVars) -> None:
-    """
-    Validation for the pipeline type `REGR_AGAINST_CTA_BRANCH`.
-    """
+    """Validate inputs for the `REGR_AGAINST_CTA_BRANCH` pipeline type."""
     exit_if_defined("CUSTOM_CTA_IMAGE_TAG", ci_input_vars)
 
 
 def validate_regr_against_cta_version(ci_input_vars: CiInputVars) -> None:
-    """
-    Validation for the pipeline type `EOS_REGR_AGAINST_CTA_VERSION`.
-    """
+    """Validate inputs for the `EOS_REGR_AGAINST_CTA_VERSION` pipeline type."""
     del ci_input_vars  # We don't need to check anything here
 
 
 def main() -> None:
-    """
-    Validate the variables received by the GitLab CI pipeline
-    """
+    """Validate the variables received by the GitLab CI pipeline."""
     project_json_path = Path(__file__).resolve().parents[2] / "project.json"
     with project_json_path.open() as f:
         project_json = json.load(f)

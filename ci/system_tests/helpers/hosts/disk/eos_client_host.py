@@ -7,7 +7,7 @@ from pathlib import Path
 
 from typing_extensions import override
 
-from ...connections.remote_connection import ExecResult, RemoteConnection
+from system_tests.helpers.connections.remote_connection import ExecResult, RemoteConnection
 from .disk_client_host import DiskClientHost
 
 

@@ -18,7 +18,7 @@ _canonical_items_key = pytest.StashKey[list[pytest.Item]]()
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
-    """Pytest hook that allows for adding custom commandline arguments"""
+    """Pytest hook that allows for adding custom commandline arguments."""
     parser.addoption("--namespace", action="store", help="Namespace for tests")
     parser.addoption(
         "--connection-config",

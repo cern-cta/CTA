@@ -6,8 +6,8 @@ import time
 from pathlib import Path
 from typing import Optional
 
-from ..connections.remote_connection import ExecResult, RemoteConnection
-from ..utils.timeout import Timeout
+from system_tests.helpers.connections.remote_connection import ExecResult, RemoteConnection
+from system_tests.helpers.utils.timeout import Timeout
 
 
 class RemoteHost:

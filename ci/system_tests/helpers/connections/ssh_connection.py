@@ -36,7 +36,7 @@ class SSHConnection(RemoteConnection):
             print(command)
         remote = f"{self.user}@{self.host}"
         full_command = f"ssh {shlex.quote(remote)} {shlex.quote(command)}"
-        result = subprocess.run(full_command, shell=True, capture_output=capture_output)
+        result = subprocess.run(full_command, shell=True, capture_output=capture_output, check=False)
         success = result.returncode == 0
         if throw_on_failure and not success:
             raise RuntimeError(f'"{full_command}" failed with exit code {result.returncode}: {result.stderr}')
@@ -53,7 +53,7 @@ class SSHConnection(RemoteConnection):
         permissions: Optional[str] = None,
     ) -> None:
         full_command = f"scp {src_path} {self.user}@{self.host}:{dst_path}"
-        result = subprocess.run(full_command, shell=True, capture_output=True)
+        result = subprocess.run(full_command, shell=True, capture_output=True, check=False)
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(f'"{full_command}" failed with exit code {result.returncode}: {result.stderr}')
         if permissions:
@@ -65,7 +65,7 @@ class SSHConnection(RemoteConnection):
     @override
     def copy_from(self, src_path: Path, dst_path: Path, throw_on_failure: bool = True) -> None:
         full_command = f"scp {self.user}@{self.host}:{src_path} {dst_path}"
-        result = subprocess.run(full_command, shell=True, capture_output=True)
+        result = subprocess.run(full_command, shell=True, capture_output=True, check=False)
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(f'"{full_command}" failed with exit code {result.returncode}: {result.stderr}')
 
@@ -76,7 +76,7 @@ class SSHConnection(RemoteConnection):
     @override
     def is_up(self) -> bool:
         cmd = f"ssh -o BatchMode=yes -o ConnectTimeout=2 {self.user}@{self.host} true"
-        result = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        result = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
         return result.returncode == 0
 
     @override

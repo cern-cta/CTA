@@ -20,7 +20,7 @@ from system_tests.helpers.hosts import CtaCliHost, CtaMaintdHost, CtaTapedHost, 
 from system_tests.helpers.test_config import TestConfig
 from system_tests.helpers.test_env import TestEnv
 
-from ..helpers.utils import find_line
+from system_tests.helpers.utils import find_line
 
 #####################################################################################################################
 # Helpers
@@ -91,10 +91,7 @@ def test_eos_xrootd_third_party_copy_capabilities(eos_mgm: EosMgmHost, disk_inst
     node_data = node_envelope.get("result", [])
 
     # Filter for online nodes and extract their hostport addresses
-    online_hostports = []
-    for node in node_data:
-        if node.get("status") == "online" and "hostport" in node:
-            online_hostports.append(node["hostport"])
+    online_hostports = [node["hostport"] for node in node_data if node.get("status") == "online" and "hostport" in node]
 
     assert online_hostports, "No online FST nodes were found to test!"
 
@@ -117,8 +114,9 @@ def test_eos_xrootd_third_party_copy_capabilities(eos_mgm: EosMgmHost, disk_inst
 
 def test_eos_xrootd_api_fts_compliance(eos_mgm: EosMgmHost) -> None:
     """Verifies that xrdfs query prepare preserves the exact requested sequence order and duplicates.
+
     Write 3 files and xrdfs query them in reverse order with duplicates.
-    `xrdfs query prepare 3 2 1 3` must answer 3 2 1 3
+    `xrdfs query prepare 3 2 1 3` must answer 3 2 1 3.
     """
     tmp_dir = eos_mgm.base_dir_path / f"tmp_xrd_fts_compliance_{str(uuid.uuid4())[:8]}"
 
@@ -388,10 +386,10 @@ def test_retrieve_queue_cleanup(
     tp_names = [f"tp_{i + 1}_copy" for i in range(nb_copies)]
     for i, tp_name in enumerate(tp_names):
         copynb = i + 1
-        dir = test_dir / f"dir_{copynb}_copy"
+        copy_dir = test_dir / f"dir_{copynb}_copy"
         sc_name = f"{cta_storage_class}_{copynb}_copy"
-        eos_mgm.exec(f"eos mkdir -p {dir}")
-        eos_mgm.exec(f"eos attr set sys.archive.storage_class={sc_name} {dir}")
+        eos_mgm.exec(f"eos mkdir -p {copy_dir}")
+        eos_mgm.exec(f"eos attr set sys.archive.storage_class={sc_name} {copy_dir}")
         print(f"Creating TP {tp_name}")
         cta_cli.exec(f"cta-admin tp add -n '{tp_name}' --vo {vo_name} -p 0 -m 'Add temp tape pool'")
         cta_cli.exec(f"cta-admin tape ch --vid {non_full_tapes[i]['vid']} --tapepool {tp_name}")
@@ -426,10 +424,10 @@ def test_taped_config_dr_ls_consistency(cta_cli: CtaCliHost, cta_taped: CtaTaped
     key_skip_list = ["MountCriteria"]
 
     for line in taped_config.splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
+        stripped_line = line.strip()
+        if not stripped_line or stripped_line.startswith("#"):
             continue
-        parts = line.split(None, 3)
+        parts = stripped_line.split(None, 3)
         if len(parts) < 3:
             continue
         cat, key, val = parts[0], parts[1], parts[2]
@@ -508,15 +506,15 @@ def test_log_schema_correctness(env: TestEnv, tmp_path: Path, cta_maintd: CtaMai
         current_logging_path = tmp_path / f"{host.name}.log"
         host.copy_from(host.log_file_path, current_logging_path)
         for i, line in enumerate(iter_lines(current_logging_path), start=1):
-            line = line.strip()
-            if not line:
+            stripped_line = line.strip()
+            if not stripped_line:
                 continue
 
             try:
-                obj = json.loads(line)
+                obj = json.loads(stripped_line)
             except json.JSONDecodeError:
                 print(f"ERROR: Invalid JSON found on line {i}")
-                print(f"  * Contents: {line}")
+                print(f"  * Contents: {stripped_line}")
                 errors += 1
                 if fail_fast:
                     sys.exit(1)

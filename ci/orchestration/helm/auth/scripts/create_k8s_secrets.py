@@ -83,7 +83,7 @@ def main() -> None:
             k8s_create_secret(args.namespace, s_name, fpath, full_host)
         else:
             print(f"Error: Failed to create secret for '{fpath.name}'. Invalid name: '{s_name}'")
-            exit(1)
+            sys.exit(1)
 
 
 if __name__ == "__main__":

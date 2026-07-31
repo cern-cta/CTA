@@ -12,7 +12,7 @@ import pytest
 from system_tests.helpers.hosts import EosClientHost, EosMgmHost
 from system_tests.helpers.test_config import TestConfig
 
-from ..helpers.utils import find_line
+from system_tests.helpers.utils import find_line
 
 #####################################################################################################################
 # Helpers

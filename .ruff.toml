@@ -6,18 +6,51 @@ target-version = "py39"
 
 [lint]
 select = [
-    "E",   # pycodestyle errors
-    "F",   # Pyflakes (logic errors, undefined names, unused imports)
-    "W",   # pycodestyle warnings
-    "I",   # Import sorting (isort)
-    "N",   # PEP 8 naming conventions
-    "ANN", # Type annotation completeness
-    "B",   # Common bug patterns (flake8-bugbear)
-    "UP",  # Modernize syntax (pyupgrade)
-    "SIM", # Simplify code constructs
-    "RET", # Return statement consistency
-    "PIE", # Miscellaneous correctness and style improvements
-    "C4",  # Comprehension optimizations
-    "ARG", # Unused function arguments
-    "RUF", # Ruff-specific diagnostics and improvements
+    'E',      # pycodestyle (errors)
+    'W',      # pycodestyle (warnings)
+    'F',      # pyflakes
+    'N',      # pep8-naming
+    'Q',      # flake8-quotes
+    'RUF',    # ruff
+    'UP',     # pyupgrade
+    'D',      # pydocstyle
+    'S',      # flake8-bandit
+    'C4',     # flake8-comprehensions
+    'INT',    # flake8-gettext
+    'LOG',    # flake8-logging
+    'G',      # flake8-logging-format
+    'B',      # flake8-bugbear
+    'A001',   # flake8-builtins
+    'COM',    # flake8-commas
+    'T10',    # flake8-debugger
+    'EXE',    # flake8-executable
+    'ISC',    # flake8-implicit-str-concat
+    'PIE',    # flake8-pie
+    'PT',     # flake8-pytest-style
+    'RSE',    # flake8-raise
+    'RET504', # flake8-return
+    'SIM',    # flake8-simplify
+    'TID',    # flake8-tidy-imports
+    'PGH',    # pygrep-hooks
+    'PL',     # pylint
+    'TRY',    # tryceratops
+    'PERF',   # perflint
+    'FURB',   # refurb
 ]
+ignore = [
+  'TRY002', # Noisy: not every long exception message needs it's own exception.
+  'TRY003', # Noisy: not every long exception message needs it's own exception.
+  'PLR2004', # Noisy and not always nice
+  'D1', # Too many missing docstrings for now
+  'S101', # Asserts used in pytest
+  'COM812', # trailing commas in argument lists are cursed
+  'PLR0913', # noisy
+  'PLC0415', # local imports are useful in places
+]
+
+[lint.pydocstyle]
+convention = 'pep257'
+
+[lint.per-file-ignores]
+'ci/system_tests/tests/**/*_test.py' = ['PLR0915', 'PT012', 'PLR0912']
+'ci/system_tests/**/*.py' = ['S108']

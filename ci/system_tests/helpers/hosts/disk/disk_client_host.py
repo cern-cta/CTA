@@ -5,8 +5,8 @@ import time
 import uuid
 from pathlib import Path
 
-from ...utils.timeout import Timeout
-from ..remote_host import RemoteHost
+from system_tests.helpers.utils.timeout import Timeout
+from system_tests.helpers.hosts.remote_host import RemoteHost
 
 
 class DiskClientHost(RemoteHost):

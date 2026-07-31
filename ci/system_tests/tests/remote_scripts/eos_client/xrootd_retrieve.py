@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -40,6 +39,7 @@ def list_tape_only_files(eos_host: str, dest_dir: str, num_dirs: int) -> list[st
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             text=True,
+            check=False,
         )
         if p.returncode != 0 or not p.stdout:
             continue
@@ -60,8 +60,8 @@ def retrieve_worker(work_q: mp.JoinableQueue[Any], wid: int, eos_host: str, krb5
     os.environ["XrdSecPROTOCOL"] = "krb5"  # noqa: SIM112 - XRootD requires this exact mixed-case name
     os.environ["KRB5CCNAME"] = krb5_cache
 
-    from XRootD import client  # type: ignore
-    from XRootD.client.flags import PrepareFlags  # type: ignore
+    from XRootD import client  # type: ignore[reportMissingImports]
+    from XRootD.client.flags import PrepareFlags  # type: ignore[reportMissingImports]
 
     fs = client.FileSystem(f"root://{eos_host}")
     err_budget = 10

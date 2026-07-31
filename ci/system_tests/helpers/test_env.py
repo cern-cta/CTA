@@ -57,7 +57,7 @@ class TestEnv:
         throw_on_failure: bool = True,
     ) -> subprocess.CompletedProcess[bytes]:
         full_command = f'bash -c "{command}"'
-        result = subprocess.run(full_command, shell=True, capture_output=capture_output)
+        result = subprocess.run(full_command, shell=True, capture_output=capture_output, check=False)
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(
                 f"local exec of {full_command} failed with exit code {result.returncode}: {result.stderr}"
@@ -70,9 +70,7 @@ class TestEnv:
         selector: str,
         container_value: str,
     ) -> list[K8sConnection]:
-        """
-        Returns a list of K8sConnection objects.
-        """
+        """Return a list of K8sConnection objects."""
         core = client.CoreV1Api()
 
         pods = core.list_namespaced_pod(
@@ -140,8 +138,9 @@ class TestEnv:
 
     @staticmethod
     def from_config(path: Path) -> "TestEnv":
-        """
-        Expects a path to a yaml file containing for each host how to connect. For example:
+        """Create a test environment from a YAML connection configuration.
+
+        The file contains connection details for each host. For example:
 
         eos_client:
           - k8s:
@@ -164,7 +163,7 @@ class TestEnv:
             config_data: dict[str, list[dict[str, dict[str, str]]]],
             host: str,
         ) -> list[RemoteConnection]:
-            """Creates a list of RemoteConnection objects for a given host."""
+            """Create a list of RemoteConnection objects for a given host."""
             if host not in config_data:
                 raise ValueError(f"Invalid connection configuration: missing host {host}")
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -61,8 +60,8 @@ def worker(
     write_in_chunks: bool,
 ) -> None:
     # Import here so XrdSecsssKT is already set in the environment
-    from XRootD import client  # type: ignore
-    from XRootD.client.flags import OpenFlags  # type: ignore
+    from XRootD import client  # type: ignore[reportMissingImports]
+    from XRootD.client.flags import OpenFlags  # type: ignore[reportMissingImports]
 
     _ = client.FileSystem(f"root://{eos_host}")
     err_budget = 3

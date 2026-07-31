@@ -1,10 +1,11 @@
 # SPDX-FileCopyrightText: 2024 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
-# ruff: noqa: ANN401
 
 from typing import Any, Optional
 
 import requests
+
+REQUEST_TIMEOUT_SECONDS = 30
 
 Commit = dict[str, Any]
 
@@ -33,13 +34,27 @@ class GitLabAPI:
         }
         try:
             if method == "GET":
-                response = requests.get(api_url, params=params, headers=headers)
+                response = requests.get(api_url, params=params, headers=headers, timeout=REQUEST_TIMEOUT_SECONDS)
             elif method == "POST":
-                response = requests.post(api_url, params=params, headers=headers, data=data, json=json)
+                response = requests.post(
+                    api_url,
+                    params=params,
+                    headers=headers,
+                    data=data,
+                    json=json,
+                    timeout=REQUEST_TIMEOUT_SECONDS,
+                )
             elif method == "PUT":
-                response = requests.put(api_url, params=params, headers=headers, data=data, json=json)
+                response = requests.put(
+                    api_url,
+                    params=params,
+                    headers=headers,
+                    data=data,
+                    json=json,
+                    timeout=REQUEST_TIMEOUT_SECONDS,
+                )
             elif method == "DELETE":
-                response = requests.delete(api_url, params=params, headers=headers)
+                response = requests.delete(api_url, params=params, headers=headers, timeout=REQUEST_TIMEOUT_SECONDS)
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
             response.raise_for_status()  # Raise an exception for non-success status codes

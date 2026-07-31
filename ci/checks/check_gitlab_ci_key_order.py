@@ -52,7 +52,7 @@ class GitLabLoader(yaml.SafeLoader):
 
 def unknown_tag_handler(
     loader: GitLabLoader,
-    tag_suffix: str,  # noqa: ARG001 - signature required by PyYAML's multi-constructor API
+    tag_suffix: str,
     node: yaml.Node,
 ) -> object:
     if isinstance(node, yaml.SequenceNode):

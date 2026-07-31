@@ -14,7 +14,7 @@ def assert_dict_equals(actual: dict[Any, Any], expected: dict[Any, Any], ignore_
     ignored = set(ignore_keys)
     for k1, v1 in actual.items():
         assert k1 in ignored or (k1 in expected and expected[k1] == v1)
-    for k2, _v2 in expected.items():
+    for k2 in expected:
         assert k2 in ignored or k2 in actual
 
 

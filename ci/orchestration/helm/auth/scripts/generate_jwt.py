@@ -6,6 +6,7 @@ import base64
 import hashlib
 import json
 import re
+import tempfile
 import time
 from pathlib import Path
 from typing import Union
@@ -42,7 +43,7 @@ def generate_jwk_from_cert(cert_path: Path) -> dict[str, Union[str, list[str]]]:
 
     public_key = cert_obj.public_key()
     if not isinstance(public_key, RSAPublicKey):
-        raise ValueError("Certificate public key must be RSA")
+        raise TypeError("Certificate public key must be RSA")
 
     pub_numbers = public_key.public_numbers()
 
@@ -74,7 +75,7 @@ def generate_jwk_from_cert(cert_path: Path) -> dict[str, Union[str, list[str]]]:
 
 
 def generate_jwt(private_key: RSAPrivateKey, kid: str, sub: str, lifetime_sec: int) -> str:
-    """Generates a JWT with all required claims the CTA frontend needs to verify it"""
+    """Generate a JWT with all claims required by the CTA frontend."""
     now = int(time.time())
 
     payload = {
@@ -114,7 +115,7 @@ def main() -> None:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("/tmp"),
+        default=Path(tempfile.gettempdir()),
         help="Directory to put the generated files in",
     )
     parser.add_argument("--cert", required=True, type=Path, help="Path to server certificate")
@@ -126,7 +127,7 @@ def main() -> None:
     with args.key.open("rb") as f:
         key = serialization.load_pem_private_key(f.read(), password=None)
     if not isinstance(key, RSAPrivateKey):
-        raise ValueError("Private key must be RSA")
+        raise TypeError("Private key must be RSA")
     jwk = generate_jwk_from_cert(args.cert)
 
     if args.jwks is not None:

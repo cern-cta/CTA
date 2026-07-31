@@ -6,7 +6,7 @@ from collections.abc import Sequence
 from functools import cached_property
 from pathlib import Path
 
-from ..connections.remote_connection import RemoteConnection
+from system_tests.helpers.connections.remote_connection import RemoteConnection
 from .remote_host import RemoteHost
 
 
@@ -59,7 +59,7 @@ class CtaRmcdHost(RemoteHost):
 
     @staticmethod
     def list_all_tapes_in_libraries(cta_rmcd_hosts: Sequence["CtaRmcdHost"]) -> list[str]:
-        """Lists unique volume tags from multiple tape libraries."""
+        """List unique volume tags from multiple tape libraries."""
         volume_tags = set()
         for rmcd in cta_rmcd_hosts:
             for tape in rmcd.list_tapes_in_library():

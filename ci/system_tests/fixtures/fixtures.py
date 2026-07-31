@@ -13,7 +13,7 @@ from typing import Any, Optional
 import pytest
 from _pytest.fixtures import SubRequest
 
-from ..helpers.hosts import (
+from system_tests.helpers.hosts import (
     CtaAdminApiHost,
     CtaCliHost,
     CtaMaintdHost,
@@ -25,8 +25,8 @@ from ..helpers.hosts import (
     EosClientHost,
     EosMgmHost,
 )
-from ..helpers.test_config import TestConfig
-from ..helpers.test_env import TestEnv
+from system_tests.helpers.test_config import TestConfig
+from system_tests.helpers.test_env import TestEnv
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -65,8 +65,9 @@ def get_test_heading(test_path: Path, test_name: str) -> tuple[str, str]:
 
 @pytest.fixture(autouse=True)
 def make_tests_look_pretty(request: SubRequest) -> Iterator[None]:
-    """The only purpose of this fixture is to make the test output easier to read
-    in particular by more clearly visually separating different test cases
+    """Make the test output easier to read.
+
+    In particular, visually separate the different test cases more clearly.
     """
     terminal_writer = request.config.get_terminal_writer()
     terminal_width = shutil.get_terminal_size().columns
@@ -86,7 +87,7 @@ def make_tests_look_pretty(request: SubRequest) -> Iterator[None]:
 
 @pytest.fixture(scope="session")
 def error_whitelist() -> set[str]:
-    """Mutable whitelist that individual test cases can add errors to"""
+    """Mutable whitelist that individual test cases can add errors to."""
     return set()  # mutable whitelist shared between all tests
 
 
@@ -115,7 +116,7 @@ def test_config(request: SubRequest) -> TestConfig:
 
 @pytest.fixture(scope="session")
 def krb5_realm(test_config: TestConfig) -> str:
-    """Kerberos realm used in the tests"""
+    """Kerberos realm used in the tests."""
     return test_config["tests"]["krb5_realm"]
 
 
@@ -179,7 +180,7 @@ def connection_config(request: SubRequest) -> Optional[Path]:
 
 @pytest.fixture(scope="session")
 def env(connection_config: Optional[Path], namespace: Optional[str]) -> TestEnv:
-    """Gives all the tests access to the different hosts (cli, frontend, taped, etc)"""
+    """Give tests access to the different hosts (CLI, frontend, taped, and others)."""
     if namespace and connection_config:
         raise pytest.UsageError("Only one of --namespace or --connection-config can be provided, not both")
 
