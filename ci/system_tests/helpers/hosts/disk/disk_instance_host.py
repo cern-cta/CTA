@@ -3,32 +3,14 @@
 
 import time
 from collections import deque
-from enum import Enum
 from functools import cached_property
 from pathlib import Path
 
-from typing_extensions import override
 
 from system_tests.helpers.hosts.remote_host import RemoteHost
 
 
-class DiskInstanceImplementation(Enum):
-    EOS = ("eos",)
-    DCACHE = ("dcache",)
-
-    @override
-    def __str__(self) -> str:
-        return self.value[0]
-
-    @property
-    def label(self) -> str:
-        return self.value[0]
-
-
 class DiskInstanceHost(RemoteHost):
-    @cached_property
-    def implementation(self) -> DiskInstanceImplementation: ...
-
     @cached_property
     def instance_name(self) -> str: ...
 
