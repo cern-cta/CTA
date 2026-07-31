@@ -38,19 +38,40 @@ select = [
     'FURB',   # refurb
 ]
 ignore = [
-  'TRY002', # Noisy: not every long exception message needs it's own exception.
-  'TRY003', # Noisy: not every long exception message needs it's own exception.
-  'PLR2004', # Noisy and not always nice
-  'D1', # Too many missing docstrings for now
-  'S101', # Asserts used in pytest
-  'COM812', # trailing commas in argument lists are cursed
-  'PLR0913', # noisy
-  'PLC0415', # local imports are useful in places
+    'TRY002',  # Built-in exceptions are sufficient here.
+    'TRY003',  # Inline exception messages are easier to follow.
+    'PLR2004', # Numeric literals are often clearer than named constants.
+    'D1',      # The existing scripts do not consistently use docstrings.
+    'S101',    # Pytest tests rely on assertions.
+    'COM812',  # This rule conflicts with the formatter.
+    'PLR0913', # Test fixtures and CLI helpers naturally have many arguments.
+    'PLC0415', # Some dependencies require delayed or optional imports.
 ]
 
 [lint.pydocstyle]
 convention = 'pep257'
 
 [lint.per-file-ignores]
+# This custom loader inherits from yaml.SafeLoader.
+'ci/checks/check_gitlab_ci_key_order.py' = ['S506']
+
+# The Kubernetes API URL always uses HTTPS.
+'ci/orchestration/helm/auth/scripts/create_k8s_secrets.py' = ['S310']
+
+# These wrappers invoke fixed, trusted executables.
+'ci/system_tests/helpers/connections/k8s_connection.py' = ['S603']
+'ci/system_tests/helpers/connections/ssh_connection.py' = ['S603']
+'ci/system_tests/helpers/test_env.py' = ['S603']
+
+# Integration tests favor readable scenarios over complexity limits.
 'ci/system_tests/tests/**/*_test.py' = ['PLR0915', 'PT012', 'PLR0912']
+
+# System tests intentionally use temporary paths.
 'ci/system_tests/**/*.py' = ['S108']
+
+# These remote scripts invoke a trusted executable from PATH.
+'ci/system_tests/tests/remote_scripts/eos_client/count_files.py' = ['S603', 'S607']
+'ci/system_tests/tests/remote_scripts/eos_client/xrootd_retrieve.py' = ['S603', 'S607']
+
+# This worker is intentionally complex and invokes a trusted executable.
+'ci/system_tests/tests/remote_scripts/eos_client/xrootd_archive.py' = ['PLR0915', 'PLR0912', 'S603', 'S607']

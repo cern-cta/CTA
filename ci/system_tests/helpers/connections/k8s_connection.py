@@ -116,8 +116,8 @@ class K8sConnection(RemoteConnection):
     ) -> None:
         # TODO: replace these kubectl calls so that we rely only on the SDK
         pod_target = f"{self.namespace}/{self._pod_name}:{dst_path}"
-        cmd = f"kubectl cp {src_path} {pod_target} -c {self.container}"
-        result = subprocess.run(cmd, shell=True, check=False)
+        cmd = ["kubectl", "cp", str(src_path), pod_target, "-c", self.container]
+        result = subprocess.run(cmd, check=False)
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(f'"{cmd}" failed with exit code {result.returncode}: {result.stderr}')
         if permissions:
@@ -129,8 +129,8 @@ class K8sConnection(RemoteConnection):
     @override
     def copy_from(self, src_path: Path, dst_path: Path, throw_on_failure: bool = True) -> None:
         pod_source = f"{self.namespace}/{self._pod_name}:{src_path}"
-        cmd = f"kubectl cp {pod_source} {dst_path} -c {self.container}"
-        result = subprocess.run(cmd, shell=True, check=False)
+        cmd = ["kubectl", "cp", pod_source, str(dst_path), "-c", self.container]
+        result = subprocess.run(cmd, check=False)
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(f'"{cmd}" failed with exit code {result.returncode}: {result.stderr}\n')
 

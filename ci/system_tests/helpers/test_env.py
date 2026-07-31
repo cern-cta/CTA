@@ -56,11 +56,11 @@ class TestEnv:
         capture_output: bool = False,
         throw_on_failure: bool = True,
     ) -> subprocess.CompletedProcess[bytes]:
-        full_command = f'bash -c "{command}"'
-        result = subprocess.run(full_command, shell=True, capture_output=capture_output, check=False)
+        command_args = ["bash", "-c", command]
+        result = subprocess.run(command_args, capture_output=capture_output, check=False)
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(
-                f"local exec of {full_command} failed with exit code {result.returncode}: {result.stderr}"
+                f"local exec of {command_args} failed with exit code {result.returncode}: {result.stderr}"
             )
         return result
 

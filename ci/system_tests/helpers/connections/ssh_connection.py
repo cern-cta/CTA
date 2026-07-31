@@ -35,8 +35,9 @@ class SSHConnection(RemoteConnection):
         if print_command:
             print(command)
         remote = f"{self.user}@{self.host}"
-        full_command = f"ssh {shlex.quote(remote)} {shlex.quote(command)}"
-        result = subprocess.run(full_command, shell=True, capture_output=capture_output, check=False)
+        command_args = ["ssh", remote, command]
+        full_command = shlex.join(command_args)
+        result = subprocess.run(command_args, capture_output=capture_output, check=False)
         success = result.returncode == 0
         if throw_on_failure and not success:
             raise RuntimeError(f'"{full_command}" failed with exit code {result.returncode}: {result.stderr}')
@@ -52,8 +53,9 @@ class SSHConnection(RemoteConnection):
         throw_on_failure: bool = True,
         permissions: Optional[str] = None,
     ) -> None:
-        full_command = f"scp {src_path} {self.user}@{self.host}:{dst_path}"
-        result = subprocess.run(full_command, shell=True, capture_output=True, check=False)
+        command_args = ["scp", str(src_path), f"{self.user}@{self.host}:{dst_path}"]
+        full_command = shlex.join(command_args)
+        result = subprocess.run(command_args, capture_output=True, check=False)
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(f'"{full_command}" failed with exit code {result.returncode}: {result.stderr}')
         if permissions:
@@ -64,8 +66,9 @@ class SSHConnection(RemoteConnection):
 
     @override
     def copy_from(self, src_path: Path, dst_path: Path, throw_on_failure: bool = True) -> None:
-        full_command = f"scp {self.user}@{self.host}:{src_path} {dst_path}"
-        result = subprocess.run(full_command, shell=True, capture_output=True, check=False)
+        command_args = ["scp", f"{self.user}@{self.host}:{src_path}", str(dst_path)]
+        full_command = shlex.join(command_args)
+        result = subprocess.run(command_args, capture_output=True, check=False)
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(f'"{full_command}" failed with exit code {result.returncode}: {result.stderr}')
 
@@ -75,8 +78,8 @@ class SSHConnection(RemoteConnection):
 
     @override
     def is_up(self) -> bool:
-        cmd = f"ssh -o BatchMode=yes -o ConnectTimeout=2 {self.user}@{self.host} true"
-        result = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
+        cmd = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=2", f"{self.user}@{self.host}", "true"]
+        result = subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False)
         return result.returncode == 0
 
     @override
