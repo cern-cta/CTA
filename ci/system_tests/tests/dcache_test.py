@@ -5,6 +5,8 @@
 # Tests
 #####################################################################################################################
 
+# TODO: populate catalogue correctly
+
 
 def test_archive_and_delete(dcache_client, dcache, test_dir):
     path = test_dir / "group"
