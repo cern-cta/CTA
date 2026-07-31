@@ -6,6 +6,7 @@ cancel-on-failure:
   needs:
     - job: $[[ matrix.JOB_NAME ]]
       artifacts: false
+      optional: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: on_failure
@@ -18,3 +19,25 @@ cancel-on-failure:
   parallel:
     matrix:
       - JOB_NAME: [validate-pipeline-variables, validate-project-json, unit-test-cta, build-cta-rpms-no-cache]
+
+update-pipeline-image-version:
+  stage: .post
+  needs:
+    - job: prepare-pipeline-images
+      artifacts: true
+    - job: build-pipeline-images
+      artifacts: false
+  rules:
+    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+  image: $IMAGE_RELEASE
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"
+    PIPELINE_IMAGE_UPDATE_BRANCH: "ci/update-pipeline-images"
+  script:
+    - python3 ci/release/update_pipeline_image_version.py
+        --api-url "$CI_SERVER_URL"
+        --project-id "$CI_PROJECT_ID"
+        --api-token "$CI_API_TOKEN"
+        --target-branch "$CI_DEFAULT_BRANCH"
+        --source-branch "$PIPELINE_IMAGE_UPDATE_BRANCH"
+        --version "$NEW_PIPELINE_IMAGE_VERSION"

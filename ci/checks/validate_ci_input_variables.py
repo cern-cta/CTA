@@ -14,6 +14,7 @@ SUPPORTED = {
         "DEFAULT",
         "REGR_AGAINST_CTA_BRANCH",
         "REGR_AGAINST_CTA_VERSION",
+        "UPDATE_PIPELINE_IMAGES",
     ]
 }
 
@@ -59,6 +60,13 @@ def validate_regr_against_cta_branch(ci_input_vars: CiInputVars) -> None:
 def validate_regr_against_cta_version(ci_input_vars: CiInputVars) -> None:
     """Validate inputs for the `EOS_REGR_AGAINST_CTA_VERSION` pipeline type."""
     del ci_input_vars  # We don't need to check anything here
+
+
+def validate_update_pipeline_images(ci_input_vars: CiInputVars) -> None:
+    """Validate inputs for the scheduled pipeline-image refresh."""
+    exit_if_defined("CUSTOM_CTA_IMAGE_TAG", ci_input_vars)
+    exit_if_defined("CUSTOM_EOS_IMAGE_TAG", ci_input_vars)
+    exit_if_defined("CUSTOM_XROOTD_VERSION", ci_input_vars)
 
 
 def main() -> None:
