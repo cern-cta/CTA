@@ -15,10 +15,6 @@ class EosClientHost(DiskClientHost):
     def __init__(self, conn: RemoteConnection) -> None:
         super().__init__(conn)
 
-    def install_xrootd_python(self) -> None:
-        """Ensure python3 and XRootD Python bindings are installed."""
-        self.exec("rpm -q python3-xrootd || microdnf install -y python3 xrootd-client python3-xrootd")
-
     def count_files_in_namespace(self, eos_host: str, dest_dir: Path, num_dirs: int, count_procs: int) -> int:
         """Count files in namespace using parallel queries on the remote host.
 

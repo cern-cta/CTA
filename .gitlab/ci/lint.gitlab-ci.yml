@@ -163,6 +163,30 @@ lint-secrets:
   script:
     - detect-secrets scan --baseline .secrets.baseline
 
+lint-dockerfile:
+  stage: lint
+  needs: []  # Ensure no artifacts are downloaded
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $PIPELINE_TYPE != "DEFAULT"
+      when: never
+    - changes:
+        - "ci/docker/cta/el9/prod.Dockerfile"
+        - ".gitlab/ci/lint.gitlab-ci.yml"
+      when: always
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - when: manual
+      allow_failure: true
+  image:
+    name: $IMAGE_DOCKER_LINT
+    entrypoint: [""]
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
+  script:
+    - hadolint --failure-threshold warning ci/docker/cta/${PLATFORM}/prod.Dockerfile
+
 # Generic format check job template
 # The idea is to extend this, fill in the FORMAT_DIFF variable
 # And then add a before_script: section that populates this FORMAT_DIFF file

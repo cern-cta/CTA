@@ -78,10 +78,8 @@ def stress_params(test_config: TestConfig) -> StressParams:
 #####################################################################################################################
 
 
-def test_setup_xrootd_client(eos_client: EosClientHost) -> None:
-    """Install XRootD Python bindings and deploy scripts to the client pod."""
-    eos_client.install_xrootd_python()
-
+def test_setup_client(eos_client: EosClientHost) -> None:
+    """Copy deploy scripts to the client pod."""
     script_dir = Path(__file__).parent / "remote_scripts" / "eos_client"
     eos_client.copy_to(script_dir / "xrootd_archive.py", Path("/tmp/xrootd_archive.py"))
     eos_client.copy_to(script_dir / "count_files.py", Path("/tmp/count_files.py"))
