@@ -185,6 +185,11 @@ variables:
   DOCKER_IMAGE_REGISTRY: "gitlab-registry.cern.ch"
   DOCKER_PRIVATE_REGISTRY_PREFIX: "cta/ctageneric"
   DOCKER_PUBLIC_REGISTRY_PREFIX: "cta/public_registry"
+  # Configure these as protected, masked project/group variables in GitLab. Never commit their values here.
+  DOCKER_PRIVATE_LOGIN_USERNAME: $DOCKER_LOGIN_USERNAME
+  DOCKER_PRIVATE_LOGIN_PASSWORD: $DOCKER_LOGIN_PASSWORD
+  DOCKER_PUBLIC_LOGIN_USERNAME: "nonempty" # Tokens don't require a username, but GitLab requires a non-empty value for this variable to be set
+  DOCKER_PUBLIC_LOGIN_PASSWORD: $REGISTRYTOKEN_publicpush
 
   # =========================================================================
   # 7. CI Base Target Images
