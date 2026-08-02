@@ -65,7 +65,7 @@ EOF
     --library-device "$library_device"
     --max-drives "$max_drives"
   )
-  if [ "$one_logical_library" = true ]; then
+  if [[ "$one_logical_library" = true ]]; then
     DRIVES_JSON_ARGS+=(-l)
   fi
 
@@ -148,11 +148,11 @@ create_instance() {
       -h | --help) usage ;;
       -o|--scheduler-config)
         scheduler_config="$2"
-        test -f "${scheduler_config}" || die "Scheduler config file ${scheduler_config} does not exist"
+        [[ -f "${scheduler_config}" ]] || die "Scheduler config file ${scheduler_config} does not exist"
         shift ;;
       -d|--catalogue-config)
         catalogue_config="$2"
-        test -f "${catalogue_config}" || die "catalogue config file ${catalogue_config} does not exist"
+        [[ -f "${catalogue_config}" ]] || die "catalogue config file ${catalogue_config} does not exist"
         shift ;;
       -n|--namespace)
         namespace="$2"
@@ -175,7 +175,7 @@ create_instance() {
       --local-telemetry) local_telemetry=true ;;
       --eos-config)
         eos_config="$2"
-        test -f "${eos_config}" || die "EOS config file ${eos_config} does not exist"
+        [[ -f "${eos_config}" ]] || die "EOS config file ${eos_config} does not exist"
         shift ;;
       --eos-image-repository)
         eos_image_repository="$2"
@@ -230,7 +230,7 @@ create_instance() {
     die "--local-telemetry and --publish-telemetry cannot be active at the same time"
   fi
 
-  if [ "$reset_catalogue" == "true" ] ; then
+  if [[ "$reset_catalogue" == "true" ]]; then
     log_warn "Catalogue content will be reset."
   else
     echo "Catalogue content will be kept."
@@ -301,7 +301,7 @@ create_instance() {
 
   log_task "Starting deployment..."
 
-  if [ "$local_telemetry" == "true" ] ; then
+  if [[ "$local_telemetry" == "true" ]]; then
     log_task "Cleaning up telemetry cluster roles..."
     kubectl delete clusterrole otel-opentelemetry-collector --ignore-not-found
     kubectl delete clusterrolebinding otel-opentelemetry-collector --ignore-not-found
@@ -350,7 +350,7 @@ create_instance() {
 
   wait $auth_pid || exit 1
 
-  if [ $eos_enabled == "true" ] ; then
+  if [[ $eos_enabled == "true" ]]; then
     ./deploy_eos.sh --namespace "${namespace}" \
                     --eos-config "${eos_config}" \
                     --eos-image-repository "${eos_image_repository}" \
@@ -359,7 +359,7 @@ create_instance() {
     eos_pid=$!
   fi
 
-  if [ $dcache_enabled == "true" ] ; then
+  if [[ $dcache_enabled == "true" ]]; then
     ./deploy_dcache.sh --namespace "${namespace}" \
                        --dcache-config "${dcache_config}" \
                        --dcache-image-tag "${dcache_image_tag}" &
@@ -384,7 +384,7 @@ create_instance() {
   else
     extra_cta_chart_flags+=" --values presets/dev-cta-maintd-objectstore-values.yaml"
   fi
-  if [ "$extra_cta_values" ]; then
+  if [[ "$extra_cta_values" ]]; then
     extra_cta_chart_flags+=" ${extra_cta_values} "
   fi
 
@@ -401,10 +401,10 @@ create_instance() {
   log_success "Deployed CTA in namespace ${namespace}."
 
   # At this point the disk buffer(s) should also be ready
-  if [ $eos_enabled == "true" ] ; then
+  if [[ $eos_enabled == "true" ]]; then
     wait $eos_pid || exit 1
   fi
-  if [ $dcache_enabled == "true" ] ; then
+  if [[ $dcache_enabled == "true" ]]; then
     wait $dcache_pid || exit 1
   fi
 

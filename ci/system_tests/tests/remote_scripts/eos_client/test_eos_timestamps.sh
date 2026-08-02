@@ -26,7 +26,7 @@ compare_timestamps() {
   fi
 }
 
-if [ "$#" -ne 1 ]; then
+if [[ "$#" -ne 1 ]]; then
     echo "Please provide an EOS base directory"
     exit 1
 fi

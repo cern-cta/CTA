@@ -87,7 +87,7 @@ if [[ "$check_catalogue_submodule_tags" -eq "1" ]]; then
     git tag
   )
   echo -n "- CTA catalogue schema version is tagged in the 'cta-catalogue-schema' submodule commit: "
-  if test 0 == $(echo $CTA_SUB_REPO__TAGS | grep $CTA_PROJECT_CATALOGUE_VERSION | wc -l); then
+  if [[ 0 == $(echo $CTA_SUB_REPO__TAGS | grep $CTA_PROJECT_CATALOGUE_VERSION | wc -l) ]]; then
     error="${error}The 'cta-catalogue-schema' submodule commit does not contain a tag for CTA catalogue schema version ${CTA_PROJECT_CATALOGUE_VERSION}.\n"
     echo "FAIL"
   else

@@ -57,7 +57,7 @@ eosadmin_eos root://${EOS_MGM_HOST} attr set sys.archive.storage_class=fail_on_c
 
 echo "xrdcp /etc/group root://${EOS_MGM_HOST}/${CTA_TEST_DIR}/fail_on_closew_test/${TEST_FILE_NAME}"
 xrdcp /etc/group root://${EOS_MGM_HOST}/${CTA_TEST_DIR}/fail_on_closew_test/${TEST_FILE_NAME}
-if [ $? -eq 0 ]
+if [[ $? -eq 0 ]]
 then
   error "xrdcp command succeeded where it should have failed"
 else
@@ -70,7 +70,7 @@ fi
 # This means all replicas are deleted from tape and disks
 
 eos root://${EOS_MGM_HOST} fileinfo ${CTA_TEST_DIR}/fail_on_closew_test/${TEST_FILE_NAME}
-if [ $? -eq 2 ]
+if [[ $? -eq 2 ]]
 then
   echo "Success: EOS namespace entry was removed"
 else

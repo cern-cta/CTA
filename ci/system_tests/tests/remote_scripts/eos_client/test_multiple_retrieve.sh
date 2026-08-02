@@ -29,7 +29,7 @@
 #
 # =========================================================================
 
-if [ "$#" -ne 1 ]; then
+if [[ "$#" -ne 1 ]]; then
     echo "Please provide an EOS base directory"
     exit 1
 fi
@@ -75,12 +75,12 @@ cat ${TEST_FILES_LIST} | xargs -iFILE_PATH xrdcp /etc/group root://${EOS_MGM_HOS
 
 SECONDS_PASSED=0
 WAIT_FOR_ARCHIVED_FILE_TIMEOUT=90
-while test ${NB_FILES} != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH eos root://${EOS_MGM_HOST} info FILE_PATH | awk '{print $4;}' | grep tape | wc -l); do
+while [[ ${NB_FILES} != "$(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH eos root://${EOS_MGM_HOST} info FILE_PATH | awk '{print $4;}' | grep tape | wc -l)" ]]; do
   echo "Waiting for files to be archived to tape: seconds passed = ${SECONDS_PASSED}"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
 
-  if test ${SECONDS_PASSED} == ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT}; then
+  if [[ ${SECONDS_PASSED} == "${WAIT_FOR_ARCHIVED_FILE_TIMEOUT}" ]]; then
     echo "ERROR: Timed out after ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} seconds waiting for files to be archived to tape" >&2
     exit 1
   fi
@@ -107,12 +107,12 @@ done
 
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=90
-while test ${NB_FILES} != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH eos root://${EOS_MGM_HOST} info FILE_PATH | awk '{print $4;}' | grep -F "default.0" | wc -l); do
+while [[ ${NB_FILES} != "$(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH eos root://${EOS_MGM_HOST} info FILE_PATH | awk '{print $4;}' | grep -F "default.0" | wc -l)" ]]; do
   echo "Waiting for files to be retrieved from tape: seconds passed = ${SECONDS_PASSED}"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
 
-  if test ${SECONDS_PASSED} == ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT}; then
+  if [[ ${SECONDS_PASSED} == "${WAIT_FOR_RETRIEVED_FILE_TIMEOUT}" ]]; then
     echo "ERROR: Timed out after ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} seconds waiting for files to be retrieved from tape" >&2
     exit 1
   fi
@@ -136,7 +136,7 @@ echo "Value should be ${EXPECTED_COUNTER_VAL} for each file"
 
 rm -f ${FAILED_LIST}
 touch ${FAILED_LIST}
-if test 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH bash -c "KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} xattr FILE_PATH get ${EVICT_COUNTER_ATTR} | grep -v ^# | sed -e 's/[[:punct:]]\([[:digit:]]\+\)[[:punct:]]/\1/' | grep -v ${EVICT_COUNTER_ATTR}\=${EXPECTED_COUNTER_VAL} | sed -e 's%\(.*\)%FILE_PATH: \1%g'" | tee ${FAILED_LIST} | wc -l); then
+if [[ 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH bash -c "KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} xattr FILE_PATH get ${EVICT_COUNTER_ATTR} | grep -v ^# | sed -e 's/[[:punct:]]\([[:digit:]]\+\)[[:punct:]]/\1/' | grep -v ${EVICT_COUNTER_ATTR}\=${EXPECTED_COUNTER_VAL} | sed -e 's%\(.*\)%FILE_PATH: \1%g'" | tee ${FAILED_LIST} | wc -l) ]]; then
   echo "ERROR: Attr ${EVICT_COUNTER_ATTR} does not have expected value ${EXPECTED_COUNTER_VAL} for some files:" >&2
   cat ${FAILED_LIST}
   exit 1
@@ -174,7 +174,7 @@ echo "Value should be ${EXPECTED_COUNTER_VAL} for each file"
 
 rm -f ${FAILED_LIST}
 touch ${FAILED_LIST}
-if test 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH bash -c "KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} xattr FILE_PATH get ${EVICT_COUNTER_ATTR} | grep -v ^# | sed -e 's/[[:punct:]]\([[:digit:]]\+\)[[:punct:]]/\1/' | grep -v ${EVICT_COUNTER_ATTR}\=${EXPECTED_COUNTER_VAL} | sed -e 's%\(.*\)%FILE_PATH: \1%g'" | tee ${FAILED_LIST} | wc -l); then
+if [[ 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH bash -c "KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} xattr FILE_PATH get ${EVICT_COUNTER_ATTR} | grep -v ^# | sed -e 's/[[:punct:]]\([[:digit:]]\+\)[[:punct:]]/\1/' | grep -v ${EVICT_COUNTER_ATTR}\=${EXPECTED_COUNTER_VAL} | sed -e 's%\(.*\)%FILE_PATH: \1%g'" | tee ${FAILED_LIST} | wc -l) ]]; then
   echo "ERROR: Attr ${EVICT_COUNTER_ATTR} does not have expected value ${EXPECTED_COUNTER_VAL} for some files:" >&2
   cat ${FAILED_LIST}
   exit 1
@@ -197,7 +197,7 @@ for ((expected_counter_val=${STARTING_COUNTER_VAL}; expected_counter_val > 0; ex
 
   rm -f ${FAILED_LIST}
   touch ${FAILED_LIST}
-  if test 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH bash -c "KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} xattr FILE_PATH get ${EVICT_COUNTER_ATTR} | grep -v ^# | sed -e 's/[[:punct:]]\([[:digit:]]\+\)[[:punct:]]/\1/' | grep -v ${EVICT_COUNTER_ATTR}\=${expected_counter_val} | sed -e 's%\(.*\)%FILE_PATH: \1%g'" | tee ${FAILED_LIST} | wc -l); then
+  if [[ 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH bash -c "KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} xattr FILE_PATH get ${EVICT_COUNTER_ATTR} | grep -v ^# | sed -e 's/[[:punct:]]\([[:digit:]]\+\)[[:punct:]]/\1/' | grep -v ${EVICT_COUNTER_ATTR}\=${expected_counter_val} | sed -e 's%\(.*\)%FILE_PATH: \1%g'" | tee ${FAILED_LIST} | wc -l) ]]; then
   echo "ERROR: Attr ${EVICT_COUNTER_ATTR} does not have expected value ${expected_counter_val} for some files:" >&2
     cat ${FAILED_LIST}
     exit 1
@@ -205,7 +205,7 @@ for ((expected_counter_val=${STARTING_COUNTER_VAL}; expected_counter_val > 0; ex
 
   rm -f ${FAILED_LIST}
   touch ${FAILED_LIST}
-  if test 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH eos root://${EOS_MGM_HOST} ls -y FILE_PATH | grep -E -v '^d[1-9][0-9]*::t1' | tee ${FAILED_LIST} | wc -l); then
+  if [[ 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH eos root://${EOS_MGM_HOST} ls -y FILE_PATH | grep -E -v '^d[1-9][0-9]*::t1' | tee ${FAILED_LIST} | wc -l) ]]; then
     echo "ERROR: Attr ${EVICT_COUNTER_ATTR} is higher than 0. Files should have not been evicted." >&2
     cat ${FAILED_LIST}
     exit 1
@@ -225,7 +225,7 @@ done
 
 rm -f ${FAILED_LIST}
 touch ${FAILED_LIST}
-if test 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH eos root://${EOS_MGM_HOST} ls -y FILE_PATH | grep -E '^d[1-9][0-9]*::t1' | tee ${FAILED_LIST} | wc -l); then
+if [[ 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH eos root://${EOS_MGM_HOST} ls -y FILE_PATH | grep -E '^d[1-9][0-9]*::t1' | tee ${FAILED_LIST} | wc -l) ]]; then
   echo "ERROR: Files should have been evicted when attr ${EVICT_COUNTER_ATTR} is zero." >&2
   cat ${FAILED_LIST}
   exit 1

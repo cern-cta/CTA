@@ -36,7 +36,7 @@ SSH_OPTIONS='-o BatchMode=yes -o ConnectTimeout=10'
 
 die() {
   echo "$@" 1>&2
-  test -z $TAILPID || kill ${TAILPID} &> /dev/null
+  [[ -z $TAILPID ]] || kill ${TAILPID} &> /dev/null
   exit 1
 }
 
