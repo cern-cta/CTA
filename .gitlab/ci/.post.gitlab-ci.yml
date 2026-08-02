@@ -45,3 +45,4 @@ update-pipeline-image-version:
         --target-branch "$CI_COMMIT_BRANCH"
         --source-branch "$PIPELINE_IMAGE_UPDATE_BRANCH"
         --version "$NEW_PIPELINE_IMAGE_VERSION"
+        --triggering-user-id "$GITLAB_USER_ID"

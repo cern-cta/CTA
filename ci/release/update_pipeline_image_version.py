@@ -7,6 +7,7 @@ import argparse
 import base64
 import re
 import sys
+import time
 from typing import Any
 from urllib.parse import quote
 
@@ -15,6 +16,9 @@ from gitlabapi import GitLabAPI
 PIPELINE_CONFIG_PATH = ".gitlab-ci.yml"
 VERSION_PATTERN = re.compile(r'^(  PIPELINE_IMAGE_VERSION: ")[^"]+("\s*)$', re.MULTILINE)
 MERGE_REQUEST_LABELS = ("priority::medium", "type::maintenance", "ci pipeline")
+MERGE_REQUEST_POLL_INTERVAL_SECONDS = 5
+MERGE_REQUEST_READY_TIMEOUT_SECONDS = 300
+TRANSIENT_MERGE_STATUSES = {"unchecked", "preparing", "checking", "approvals_syncing"}
 
 
 class PipelineImageUpdateError(Exception):
@@ -52,8 +56,9 @@ def merge_request_title(version: str) -> str:
 def merge_request_description(version: str) -> str:
     return (
         "### Description\n\n"
-        f"This MR updates the CTA CI pipeline image tags to the latest version: {version}.\n\n"
-        "This MR was auto-generated.\n\n"
+        "Automated weekly refresh of the complete pipeline-image set.\n"
+        f"Shared images were published as {version} and platform-specific images as "
+        f"{version}.<platform> before this merge request was created.\n\n"
         "### Checklist\n\n"
         "- [x] Documentation reflects the changes made.\n"
         "- [x] Merge Request title is clear, concise, and suitable as a changelog entry. "
@@ -126,9 +131,14 @@ def create_or_refresh_merge_request(
     target_branch: str,
     title: str,
     version: str,
+    triggering_user_id: int,
 ) -> dict[str, Any]:
     description = merge_request_description(version)
     labels = ",".join(MERGE_REQUEST_LABELS)
+    participants = {
+        "assignee_ids": [triggering_user_id],
+        "reviewer_ids": [triggering_user_id],
+    }
     merge_requests = api.get(
         "merge_requests",
         params={"state": "opened", "source_branch": source_branch, "target_branch": target_branch},
@@ -143,7 +153,7 @@ def create_or_refresh_merge_request(
             raise PipelineImageUpdateError("Existing merge request has no valid IID")
         refreshed = api.put(
             f"merge_requests/{iid}",
-            json={"title": title, "description": description, "labels": labels},
+            json={"title": title, "description": description, "labels": labels, **participants},
         )
         if not isinstance(refreshed, dict):
             raise PipelineImageUpdateError(f"Failed to refresh merge request !{iid}")
@@ -159,6 +169,7 @@ def create_or_refresh_merge_request(
             "title": title,
             "description": description,
             "labels": labels,
+            **participants,
             "remove_source_branch": True,
             "squash": True,
         },
@@ -168,15 +179,56 @@ def create_or_refresh_merge_request(
     return created
 
 
+def wait_for_merge_request_readiness(
+    api: GitLabAPI,
+    iid: int,
+    expected_sha: str,
+    *,
+    timeout_seconds: int = MERGE_REQUEST_READY_TIMEOUT_SECONDS,
+    poll_interval_seconds: int = MERGE_REQUEST_POLL_INTERVAL_SECONDS,
+) -> dict[str, Any]:
+    attempts = max(1, timeout_seconds // max(1, poll_interval_seconds))
+    last_status = "unknown"
+
+    for attempt in range(attempts):
+        merge_request = api.get(
+            f"merge_requests/{iid}",
+            params={"with_merge_status_recheck": "true"},
+        )
+        if not isinstance(merge_request, dict):
+            raise PipelineImageUpdateError(f"Failed to query readiness of merge request !{iid}")
+        if merge_request.get("state") != "opened":
+            raise PipelineImageUpdateError(
+                f"Merge request !{iid} is no longer open (state: {merge_request.get('state', 'unknown')})"
+            )
+        if merge_request.get("sha") != expected_sha:
+            raise PipelineImageUpdateError(f"Merge request !{iid} source SHA changed while waiting")
+
+        last_status = str(merge_request.get("detailed_merge_status", "unknown"))
+        if merge_request.get("prepared_at") and last_status not in TRANSIENT_MERGE_STATUSES:
+            return merge_request
+
+        if attempt + 1 < attempts:
+            print(f"Waiting for merge request !{iid} readiness (status: {last_status})")
+            time.sleep(poll_interval_seconds)
+
+    raise PipelineImageUpdateError(f"Timed out waiting for merge request !{iid} readiness (last status: {last_status})")
+
+
 def approve_and_enable_auto_merge(api: GitLabAPI, merge_request: dict[str, Any]) -> None:
     iid = merge_request.get("iid")
     sha = merge_request.get("sha")
     if not isinstance(iid, int) or not isinstance(sha, str):
         raise PipelineImageUpdateError("Pipeline-image update merge request has no valid IID or SHA")
 
+    merge_request = wait_for_merge_request_readiness(api, iid, sha)
     approved = api.post(f"merge_requests/{iid}/approve", json={"sha": sha})
     if not isinstance(approved, dict):
         raise PipelineImageUpdateError(f"Failed to approve merge request !{iid}")
+
+    merge_request = wait_for_merge_request_readiness(api, iid, sha)
+    if merge_request.get("detailed_merge_status") == "not_approved":
+        raise PipelineImageUpdateError(f"Merge request !{iid} is still missing required approvals")
 
     if merge_request.get("merge_when_pipeline_succeeds") is True:
         return
@@ -199,10 +251,13 @@ def update_pipeline_image_release(
     source_branch: str,
     target_branch: str,
     version: str,
+    triggering_user_id: int,
 ) -> str:
     title = merge_request_title(version)
     update_version_file(api, source_branch, target_branch, version, title)
-    merge_request = create_or_refresh_merge_request(api, source_branch, target_branch, title, version)
+    merge_request = create_or_refresh_merge_request(
+        api, source_branch, target_branch, title, version, triggering_user_id
+    )
     approve_and_enable_auto_merge(api, merge_request)
     return str(merge_request.get("web_url", f"!{merge_request['iid']}"))
 
@@ -217,6 +272,7 @@ def main() -> int:
     parser.add_argument("--source-branch", required=True)
     parser.add_argument("--target-branch", required=True)
     parser.add_argument("--version", required=True)
+    parser.add_argument("--triggering-user-id", required=True, type=int)
     args = parser.parse_args()
 
     try:
@@ -225,6 +281,7 @@ def main() -> int:
             args.source_branch,
             args.target_branch,
             args.version,
+            args.triggering_user_id,
         )
     except (PipelineImageUpdateError, ValueError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
