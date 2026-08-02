@@ -29,15 +29,15 @@ def include_md(filename: str) -> None:
 
 # Parse command line arguments
 if len(sys.argv) < 2 or len(sys.argv) > 3:
-    raise Exception(f"Usage: {sys.argv[0]} filename.md.in [outfile.md]")
+    raise ValueError(f"Usage: {sys.argv[0]} filename.md.in [outfile.md]")
 
 infile = sys.argv[1]
 outfile = sys.argv[2] if len(sys.argv) == 3 else re.sub(r"\.md\.in$", ".md", infile)
 
 if not os.path.isfile(infile) or not os.access(infile, os.R_OK):
-    raise Exception(f"Cannot read {infile}")
+    raise OSError(f"Cannot read {infile}")
 if infile == outfile:
-    raise Exception(f"Input file {infile} is the same file as output file {outfile}")
+    raise ValueError(f"Input file {infile} is the same file as output file {outfile}")
 
 
 # Read the input file, processing @include_md directives by including content from other files as needed

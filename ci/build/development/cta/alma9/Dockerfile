@@ -20,7 +20,7 @@ RUN set -ex; \
 RUN set -ex; \
     git clone https://gitlab.cern.ch/cta/CTA.git cta; \
     cd cta; \
-    git checkout ${CTA_VERSION}; \
+    git checkout "${CTA_VERSION}"; \
     git submodule sync --recursive && git submodule update --init --recursive;
 
 RUN set -ex; \

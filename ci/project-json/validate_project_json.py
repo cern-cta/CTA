@@ -38,7 +38,7 @@ def validate_versions(project_json: dict[str, Any]) -> None:
             continue
         for package_name, package_version in versionlock.items():
             # Verify the correctness of the versions under versionlock
-            regex = r"^((?P<epoch>[0-9]+):)?(?P<version>[^-]+)-(?P<release>[^-]+(?:\.[^-.]+)*)\.(?P<arch>[^-.]+)$"
+            regex = r"^((?P<epoch>\d+):)?(?P<version>[^-]+)-(?P<release>[^-.]+(?:\.[^-.]+)*)\.(?P<arch>[^-.]+)$"
             match = re.match(regex, package_version)
             if not match:
                 print(f"Version for {package_name} is invalid: {package_version}")
