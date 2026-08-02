@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: 2022 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-################################################################################
+# =========================================================================
 # DESCRIPTION
 #
 #   - This script tests the new behaviour of the PREPARE request, which treats
@@ -35,7 +35,7 @@
 #   (different behaviour from 'prepare -s'). This is necessary because, for
 #   these commands, this is the only way to directly know that they failed.
 #
-################################################################################
+# =========================================================================
 
 if [ "$#" -ne 1 ]; then
     echo "Please provide an EOS base directory"
@@ -195,9 +195,9 @@ assert_number_of_files_in_queue() {
 }
 
 
-################################################################################
-# Test queueing priority between different tape states
-################################################################################
+# =========================================================================
+#  Test queueing priority between different tape states
+# =========================================================================
 
 test_tape_state_queueing_priority() {
 
@@ -253,9 +253,9 @@ test_tape_state_queueing_priority() {
 }
 
 
-################################################################################
-# Test tape state change that removes queue : 1 copy only
-################################################################################
+# =========================================================================
+#  Test tape state change that removes queue : 1 copy only
+# =========================================================================
 
 test_tape_state_change_queue_removed() {
 
@@ -334,9 +334,9 @@ test_tape_state_change_queue_removed() {
 }
 
 
-################################################################################
-# Test tape state change that preserves queue : 1 copy only
-################################################################################
+# =========================================================================
+#  Test tape state change that preserves queue : 1 copy only
+# =========================================================================
 
 test_tape_state_change_queue_preserved() {
 
@@ -412,9 +412,9 @@ test_tape_state_change_queue_preserved() {
 }
 
 
-################################################################################
-# Test tape state change that moves queue : 2 copies
-################################################################################
+# =========================================================================
+#  Test tape state change that moves queue : 2 copies
+# =========================================================================
 
 test_tape_state_change_queue_moved() {
 
@@ -549,9 +549,9 @@ test_tape_state_change_queue_moved() {
 }
 
 
-################################################################
-# Finalize
-################################################################
+# =========================================================================
+#  Finalize
+# =========================================================================
 
 test_tape_state_queueing_priority 1 DISABLED DISABLED ACTIVE 2                  # ACTIVE queue has priority over DISABLED queue (1)
 test_tape_state_queueing_priority 2 DISABLED ACTIVE DISABLED 1                  # ACTIVE queue has priority over DISABLED queue (2)

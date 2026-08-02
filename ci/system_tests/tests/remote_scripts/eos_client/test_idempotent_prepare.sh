@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: 2022 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-################################################################################
+# =========================================================================
 # DESCRIPTION
 #
 #   - This script tests the new behaviour of the PREPARE request, which treats
@@ -35,7 +35,7 @@
 #   (different behaviour from 'prepare -s'). This is necessary because, for
 #   these commands, this is the only way to directly know that they failed.
 #
-################################################################################
+# =========================================================================
 
 EOS_MGM_HOST="ctaeos"
 
@@ -56,9 +56,9 @@ eospower_kinit &>/dev/null
 admin_kdestroy &>/dev/null
 admin_kinit &>/dev/null
 
-################################################################
-# Test preparing single file (exists on tape)
-################################################################
+# =========================================================================
+#  Test preparing single file (exists on tape)
+# =========================================================================
 
 # File is valid and exists on tape
 #   - Prepare command should succeed
@@ -97,9 +97,9 @@ fi
 echo "Test completed successfully"
 
 
-################################################################
-# Test preparing single file - file does not exist - should fail
-################################################################
+# =========================================================================
+#  Test preparing single file - file does not exist - should fail
+# =========================================================================
 
 # File does not exist on tape or disk
 # All files (just 1 in this case) fail to prepare
@@ -123,9 +123,9 @@ fi
 echo "Test completed successfully"
 
 
-################################################################
-# Test when user has no prepare permissions - 1/2 files fail
-################################################################
+# =========================================================================
+#  Test when user has no prepare permissions - 1/2 files fail
+# =========================================================================
 
 # One file does not have proper permissions to prepare, the other exists on tape
 #   - Only 1 file should fail to prepare (not all)
@@ -178,9 +178,9 @@ eos root://${EOS_MGM_HOST} rm ${TEMP_FILE}
 echo "Test completed successfully"
 
 
-################################################################
-# Test when user has no prepare permissions - 2/2 files fail
-################################################################
+# =========================================================================
+#  Test when user has no prepare permissions - 2/2 files fail
+# =========================================================================
 
 # Both files do not have proper permissions to prepare
 #   - All files should fail to prepare
@@ -211,9 +211,9 @@ eos root://${EOS_MGM_HOST} rm ${TEMP_FILE_2}
 echo "Test completed successfully"
 
 
-################################################################
-# Test when file does not exist - 1/2 files fail
-################################################################
+# =========================================================================
+#  Test when file does not exist - 1/2 files fail
+# =========================================================================
 
 # One file does not exist, the other exists  on tape
 #   - Only 1 file should fail to prepare (not all)
@@ -261,9 +261,9 @@ fi
 echo "Test completed successfully"
 
 
-################################################################
-# Test when file does not exist - 2/2 files fail
-################################################################
+# =========================================================================
+#  Test when file does not exist - 2/2 files fail
+# =========================================================================
 
 # Both files do not exist
 #   - All files should fail to prepare
@@ -288,9 +288,9 @@ fi
 echo "Test completed successfully"
 
 
-################################################################
-# List of test files for prepare
-################################################################
+# =========================================================================
+#  List of test files for prepare
+# =========================================================================
 
 # Test prepare command with multiple files
 # Some do exist, others do not exist, others have not the needed permissions
@@ -405,9 +405,9 @@ echo "Test completed successfully"
 rm ${tmpjsonfile}
 
 
-################################################################
-# Testing prepare abort - Success
-################################################################
+# =========================================================================
+#  Testing prepare abort - Success
+# =========================================================================
 
 # 'prepare -a' should return no error if all files succeed
 
@@ -455,9 +455,9 @@ fi
 echo "Test completed successfully"
 
 
-################################################################
-# Testing prepare abort - 1/2 files fail
-################################################################
+# =========================================================================
+#  Testing prepare abort - 1/2 files fail
+# =========================================================================
 
 # 'prepare -a' should return an error if any of the files failed,
 #   but it should still abort all valid files
@@ -510,9 +510,9 @@ fi
 echo "Test completed successfully"
 
 
-################################################################
-# Testing prepare evict - Success
-################################################################
+# =========================================================================
+#  Testing prepare evict - Success
+# =========================================================================
 
 # 'prepare -e' should return no error if all files succeed
 
@@ -544,9 +544,9 @@ wait_for_evict ${EOS_MGM_HOST} ${TEMP_FILE}
 echo "Test completed successfully"
 
 
-################################################################
-# Testing prepare evict - 1/2 files fail
-################################################################
+# =========================================================================
+#  Testing prepare evict - 1/2 files fail
+# =========================================================================
 
 # 'prepare -e' should return an error if any of the files failed
 #   but it should still evict all valid files
@@ -582,9 +582,9 @@ wait_for_evict ${EOS_MGM_HOST} ${TEMP_FILE_TAPE}
 echo "Test completed successfully"
 
 
-################################################################
-# Finalize
-################################################################
+# =========================================================================
+#  Finalize
+# =========================================================================
 
 echo
 echo "OK: all tests passed"

@@ -6,9 +6,9 @@ from concurrent.futures import ThreadPoolExecutor
 from system_tests.helpers.hosts import CtaAdminApiHost
 from system_tests.helpers.test_env import TestEnv
 
-#####################################################################################################################
-# CTA Teardown
-#####################################################################################################################
+# =========================================================================
+#  CTA Teardown
+# =========================================================================
 
 
 def test_cleanup_catalogue(cta_admin_api: CtaAdminApiHost) -> None:

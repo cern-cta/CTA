@@ -93,9 +93,9 @@ changelog-update:
                                              --description-file changelog_report.md
                                              --verbose
 
-###############################################
-# Publish RPMs
-###############################################
+# =========================================================================
+#  Publish RPMs
+# =========================================================================
 
 internal-release-cta:
   stage: release
@@ -181,9 +181,9 @@ public-release-cta-stable:
     - ./ci/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "$CTA_VERSION"
 
 
-###############################################
-# Publish Images
-###############################################
+# =========================================================================
+#  Publish Images
+# =========================================================================
 
 .cta-image-targets: &cta-image-targets
   - cta-taped

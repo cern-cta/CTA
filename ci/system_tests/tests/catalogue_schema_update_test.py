@@ -14,9 +14,9 @@ from system_tests.helpers.test_env import TestEnv
 from system_tests.helpers.connections.k8s_connection import K8sConnection
 from system_tests.helpers.hosts import RemoteHost
 
-#####################################################################################################################
-# Helpers
-#####################################################################################################################
+# =========================================================================
+#  Helpers
+# =========================================================================
 
 
 @dataclass
@@ -52,9 +52,9 @@ def catalogue_updater(namespace: Optional[str]) -> RemoteHost:
     return RemoteHost(K8sConnection(namespace, "app.kubernetes.io/name=liquibase-update", "liquibase-update", 0))
 
 
-#####################################################################################################################
-# Tests
-#####################################################################################################################
+# =========================================================================
+#  Tests
+# =========================================================================
 
 
 def test_multiple_versions_supported(project_json: dict[str, Any]) -> None:

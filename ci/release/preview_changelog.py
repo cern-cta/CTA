@@ -24,7 +24,7 @@ class ColorCodes:
 
 changelog_cats: list[str] = ["addition", "fix", "change", "deprecation", "removal", "security", "performance", "other"]
 
-# ------------------------------------------------------------------------------
+# =========================================================================
 
 
 def changelog_preview(
@@ -73,7 +73,7 @@ def get_commit(api: GitLabAPI, commit_sha: str) -> Optional[Commit]:
     return api.get(f"repository/commits/{commit_sha}")
 
 
-# ------------------------------------------------------------------------------
+# =========================================================================
 
 
 def generate_report(commits: list[Commit], verbose: bool) -> dict[str, list[str]]:
@@ -108,7 +108,7 @@ def generate_report(commits: list[Commit], verbose: bool) -> dict[str, list[str]
     return report
 
 
-# ------------------------------------------------------------------------------
+# =========================================================================
 def divider() -> str:
     return f"\n{'-' * 42}\n"
 
@@ -197,7 +197,7 @@ def commit_list_summary(commits: list[Commit]) -> str:
     return res
 
 
-# ------------------------------------------------------------------------------
+# =========================================================================
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Tool that checks which commits will end up in the changelog")

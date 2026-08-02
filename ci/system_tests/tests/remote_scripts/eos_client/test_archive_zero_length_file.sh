@@ -4,14 +4,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
-################################################################################
+# =========================================================================
 # DESCRIPTION
 #
 #   - This script checks that the archival of a 0-length file fails.
 #   - For it to work, the configuration 'cta.archivefile.zero_length_files_forbidden'
 #   must be set to 'on'.
 #
-################################################################################
+# =========================================================================
 
 EOS_MGM_HOST="ctaeos"
 CTA_TEST_DIR=/eos/ctaeos/cta

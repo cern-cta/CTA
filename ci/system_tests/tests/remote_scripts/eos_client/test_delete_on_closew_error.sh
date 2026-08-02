@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
-################################################################################
+# =========================================================================
 # DESCRIPTION
 #
 #   - This script checks the delete-on-close event, triggered if archiving fails
@@ -14,7 +14,7 @@
 #   - Since this happens before the CLOSEW event, the file should be deleted
 #   without any archive request being queued.
 #
-################################################################################
+# =========================================================================
 
 
 EOS_MGM_HOST="ctaeos"
@@ -39,9 +39,9 @@ eosadmin_kdestroy
 eosadmin_kinit
 
 
-################################################################################
-# Testing failing CLOSEW - fail_on_closew_test
-################################################################################
+# =========================================================================
+#  Testing failing CLOSEW - fail_on_closew_test
+# =========================================================================
 
 # The storage class 'fail_on_closew_test' attribute causes the 'delete-on-close'
 #   event to be automatically triggered when a file is written to that directory.
@@ -78,9 +78,9 @@ else
 fi
 
 
-################################################################################
-# Cleanup and finalize
-################################################################################
+# =========================================================================
+#  Cleanup and finalize
+# =========================================================================
 
 echo
 cleanup

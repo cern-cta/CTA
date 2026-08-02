@@ -217,7 +217,7 @@ build_deploy() {
   fi
 
   # =========================================================================
-  # Build binaries/RPMs
+  #  Build binaries/RPMs
   # =========================================================================
   if [[ "${skip_build}" = false ]]; then
     build_image_name="cta-build-image-${platform}"
@@ -321,7 +321,7 @@ build_deploy() {
   fi
 
   # =========================================================================
-  # Build image
+  #  Build image
   # =========================================================================
   build_iteration_file=/tmp/.build_iteration
   if [[ "$skip_image_build" == "false" ]]; then
@@ -378,7 +378,7 @@ build_deploy() {
   fi
 
   # =========================================================================
-  # Deploy CTA instance
+  #  Deploy CTA instance
   # =========================================================================
   if [[ ${skip_deploy} = false ]]; then
     if [[ "$upgrade_cta" = true ]]; then

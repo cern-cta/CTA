@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
-################################################################################
+# =========================================================================
 # DESCRIPTION
 #
 #   - This script tests the usage of the evict counter (xattr
@@ -27,7 +27,7 @@
 #   From an end user point-of-view, the evict count should not
 #   change the observed behaviour.
 #
-################################################################################
+# =========================================================================
 
 if [ "$#" -ne 1 ]; then
     echo "Please provide an EOS base directory"
@@ -51,9 +51,9 @@ eospower_kinit
 FAILED_LIST=$(mktemp)
 touch ${FAILED_LIST}
 
-################################################################################
-# Define list of test files
-################################################################################
+# =========================================================================
+#  Define list of test files
+# =========================================================================
 
 TEST_FILES_LIST=$(mktemp)
 
@@ -64,9 +64,9 @@ for ((file_idx=0; file_idx < ${NB_FILES}; file_idx++)); do
 done
 
 
-################################################################################
-# Copy files and wait for them to be archived
-################################################################################
+# =========================================================================
+#  Copy files and wait for them to be archived
+# =========================================================================
 
 echo
 echo "Archiving test files..."
@@ -88,9 +88,9 @@ done
 echo "Files archived successfully."
 
 
-################################################################################
-# Trigger EOS retrieve workflow
-################################################################################
+# =========================================================================
+#  Trigger EOS retrieve workflow
+# =========================================================================
 
 # NB_RETRIEVE times for each file
 
@@ -120,9 +120,9 @@ done
 echo "Files retrieved successfully"
 
 
-################################################################################
-# Check evict counter
-################################################################################
+# =========================================================================
+#  Check evict counter
+# =========================================================================
 
 # The evict counter is stored in the xattr sys.retrieve.evict_counter.
 # This step checks that its value is equal to the number of PREPARE requests
@@ -143,9 +143,9 @@ if test 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH bash -c "KRB5CCNAME=/t
 fi
 echo "Evict counter value is correct"
 
-################################################################################
-# Re-trigger EOS retrieve workflow
-################################################################################
+# =========================================================================
+#  Re-trigger EOS retrieve workflow
+# =========================================================================
 
 # Repeat a PREPARE request for the same files. NB_RETRIEVE_EXTRA times for each file.
 # Files are already on disk, so the eviction counter value should be incremented by
@@ -160,9 +160,9 @@ for ((retrieve_req=0; retrieve_req < ${NB_RETRIEVES_EXTRA}; retrieve_req++)); do
 done
 
 
-################################################################################
-# Re-check evict counter
-################################################################################
+# =========================================================================
+#  Re-check evict counter
+# =========================================================================
 
 # Check that the new evict counter value is equal to NB_RETRIEVES + NB_RETRIEVES_EXTRA
 
@@ -181,9 +181,9 @@ if test 0 != $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH bash -c "KRB5CCNAME=/t
 fi
 echo "Evict counter value is correct"
 
-################################################################################
-# Trigger EOS evict workflow
-################################################################################
+# =========================================================================
+#  Trigger EOS evict workflow
+# =========================================================================
 
 # Request each file to be evicted (NB_RETRIEVES + NB_RETRIEVES_EXTRA) times.
 # Each EVICT_PREPARE request should reduce eviction counter by 1.
@@ -217,9 +217,9 @@ for ((expected_counter_val=${STARTING_COUNTER_VAL}; expected_counter_val > 0; ex
 done
 
 
-################################################################################
-# Validate file eviction
-################################################################################
+# =========================================================================
+#  Validate file eviction
+# =========================================================================
 
 # All files should have been evicted by now.
 
@@ -234,9 +234,9 @@ fi
 echo "Files replicas evicted from disk successfully"
 
 
-################################################################################
-# Cleanup
-################################################################################
+# =========================================================================
+#  Cleanup
+# =========================================================================
 
 echo
 echo "Cleaning up test files..."

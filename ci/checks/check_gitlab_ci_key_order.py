@@ -67,7 +67,7 @@ def unknown_tag_handler(
 
 GitLabLoader.add_multi_constructor("!", unknown_tag_handler)
 
-# -----------------------------------------------------------------------------
+# =========================================================================
 
 
 def order_index(key: str) -> int:

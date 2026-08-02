@@ -4,9 +4,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
-################################################################
-# Helper functions - KRB5
-################################################################
+# =========================================================================
+#  Helper functions - KRB5
+# =========================================================================
 
 ###
 # Helper functions for tests running on client pod.
@@ -91,9 +91,9 @@ eosadmin_kdestroy() {
   eosadmin_klist
 }
 
-################################################################
-# Helper functions - Requests
-################################################################
+# =========================================================================
+#  Helper functions - Requests
+# =========================================================================
 
 # Pass list of files waiting for archival
 # This sciprt fails if there are files stored in the target directory as it just counts the lines.
