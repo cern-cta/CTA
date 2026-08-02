@@ -24,7 +24,7 @@ from cta_version import (  # noqa: E402
 )
 from ci.release.git_repo import Git  # noqa: E402
 from gitlab_api import GitLabAPI, GitLabAPIError  # noqa: E402
-from release_cli import ReleaseService  # noqa: E402
+from release_cli import MERGE_REQUEST_LABELS, ReleaseService, merge_request_description  # noqa: E402
 from release_cli import ReleaseWorkflowError  # noqa: E402
 from release_config import ReleaseConfig  # noqa: E402
 
@@ -319,6 +319,14 @@ class DiscoveryTest(unittest.TestCase):
         assert "[merge request !42](https://gitlab.example/mr/42)" in note
         assert "will be tagged as **v5.12.0.0-1**" in note
         assert note.endswith("Awaiting MR approval and merge.")
+
+    def test_release_merge_request_metadata(self) -> None:
+        description = merge_request_description("v5.12.0.0-1", 42)
+        assert description.startswith("### Description\n\n")
+        assert "Updates the changelog in preparation for release v5.12.0.0-1." in description
+        assert "Closes #42" in description
+        assert "\n\n### Checklist\n\n" in description
+        assert MERGE_REQUEST_LABELS == ("type::release", "priority::high")
 
 
 if __name__ == "__main__":
