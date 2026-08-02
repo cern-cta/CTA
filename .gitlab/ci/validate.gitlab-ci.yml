@@ -35,6 +35,8 @@ validate-pipeline-variables:
     - job: modify-project-json
       optional: true
   rules:
+    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+      when: never
     - when: on_success
   variables:
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
@@ -51,6 +53,8 @@ validate-project-json:
     - job: modify-project-json
       optional: true
   rules:
+    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+      when: never
     - when: on_success
   script:
     - python3 ./ci/project-json/validate_project_json.py

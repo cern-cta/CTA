@@ -200,23 +200,43 @@ public-release-cta-stable:
     entrypoint: [""]
   variables:
     CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
+    DEST_REGISTRY_AUTH_FILE: "${CI_PROJECT_DIR}/.buildah-destination-auth.json"
+    DEST_REGISTRY_PASSWORD: ""
+    DEST_REGISTRY_USERNAME: ""
     SRC_IMAGE: ${DOCKER_IMAGE_REGISTRY}/${DOCKER_PRIVATE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_BUILD_ID}
+    SOURCE_REGISTRY_AUTH_FILE: "${CI_PROJECT_DIR}/.buildah-source-auth.json"
+    SOURCE_REGISTRY_PASSWORD: ""
+    SOURCE_REGISTRY_USERNAME: ""
     GIT_SUBMODULE_STRATEGY: none
   before_script:
+    - |
+      if [[ -z "$SOURCE_REGISTRY_USERNAME" || -z "$SOURCE_REGISTRY_PASSWORD" ]]; then
+        echo "Source registry credentials are not configured"
+        exit 1
+      fi
+      if [[ -z "$DEST_REGISTRY_USERNAME" || -z "$DEST_REGISTRY_PASSWORD" ]]; then
+        echo "Destination registry credentials are not configured"
+        exit 1
+      fi
+    - rm -f "$SOURCE_REGISTRY_AUTH_FILE" "$DEST_REGISTRY_AUTH_FILE"
     - echo "$SOURCE_REGISTRY_PASSWORD" | buildah login
+        --authfile "$SOURCE_REGISTRY_AUTH_FILE"
         -u "$SOURCE_REGISTRY_USERNAME"
         --password-stdin
-        "$CI_REGISTRY"
+        "$DOCKER_IMAGE_REGISTRY"
     - echo "$DEST_REGISTRY_PASSWORD" | buildah login
+        --authfile "$DEST_REGISTRY_AUTH_FILE"
         -u "$DEST_REGISTRY_USERNAME"
         --password-stdin
         "$DEST_REGISTRY"
   script:
     - DST_IMAGE="${DEST_REGISTRY}/${DEST_IMAGE_PREFIX}/${TARGET_NAME}:${CI_COMMIT_TAG}.${PLATFORM}"
     - echo "Publishing ${SRC_IMAGE} -> ${DST_IMAGE}"
-    - buildah pull "$SRC_IMAGE"
+    - buildah pull --authfile "$SOURCE_REGISTRY_AUTH_FILE" "$SRC_IMAGE"
     - buildah tag "$SRC_IMAGE" "$DST_IMAGE"
-    - buildah push "$DST_IMAGE"
+    - buildah push --authfile "$DEST_REGISTRY_AUTH_FILE" "$DST_IMAGE"
+  after_script:
+    - rm -f "$SOURCE_REGISTRY_AUTH_FILE" "$DEST_REGISTRY_AUTH_FILE"
 
 publish-images-private:
   extends: .publish-image
@@ -224,11 +244,11 @@ publish-images-private:
     DEST_REGISTRY: $DOCKER_IMAGE_REGISTRY
     DEST_IMAGE_PREFIX: $DOCKER_PRIVATE_REGISTRY_PREFIX
 
-    SOURCE_REGISTRY_USERNAME: $DOCKER_LOGIN_USERNAME
-    SOURCE_REGISTRY_PASSWORD: $DOCKER_LOGIN_PASSWORD
+    SOURCE_REGISTRY_USERNAME: $DOCKER_PRIVATE_LOGIN_USERNAME
+    SOURCE_REGISTRY_PASSWORD: $DOCKER_PRIVATE_LOGIN_PASSWORD
 
-    DEST_REGISTRY_USERNAME: $DOCKER_LOGIN_USERNAME
-    DEST_REGISTRY_PASSWORD: $DOCKER_LOGIN_PASSWORD
+    DEST_REGISTRY_USERNAME: $DOCKER_PRIVATE_LOGIN_USERNAME
+    DEST_REGISTRY_PASSWORD: $DOCKER_PRIVATE_LOGIN_PASSWORD
   parallel:
     matrix:
       - TARGET_NAME: *image-targets
@@ -245,12 +265,11 @@ publish-images-public:
     DEST_REGISTRY: $DOCKER_IMAGE_REGISTRY
     DEST_IMAGE_PREFIX: $DOCKER_PUBLIC_REGISTRY_PREFIX
 
-    SOURCE_REGISTRY_USERNAME: $DOCKER_LOGIN_USERNAME
-    SOURCE_REGISTRY_PASSWORD: $DOCKER_LOGIN_PASSWORD
+    SOURCE_REGISTRY_USERNAME: $DOCKER_PRIVATE_LOGIN_USERNAME
+    SOURCE_REGISTRY_PASSWORD: $DOCKER_PRIVATE_LOGIN_PASSWORD
 
-    # If this does not work, we may need different credentials for the public registry
-    DEST_REGISTRY_USERNAME: $DOCKER_LOGIN_USERNAME
-    DEST_REGISTRY_PASSWORD: $DOCKER_LOGIN_PASSWORD
+    DEST_REGISTRY_USERNAME: $DOCKER_PUBLIC_LOGIN_USERNAME
+    DEST_REGISTRY_PASSWORD: $DOCKER_PUBLIC_LOGIN_PASSWORD
   before_script:
     - |
       if [[ "$ENABLE_ORACLE_SUPPORT" == "TRUE" ]]; then

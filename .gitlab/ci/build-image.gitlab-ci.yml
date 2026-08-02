@@ -12,45 +12,20 @@
   - cta-frontend
   - cta-tools
 
-###############################################
-# Build Images
-###############################################
-
-.build-cta-image:
-  stage: build:image
-  needs:
-    - job: build-cta-rpms
-    - job: modify-project-json
-      optional: true
-  rules:
-    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
-      when: never
-    - when: on_success
+.build-image:
   image:
     name: $IMAGE_DOCKER_IMAGE_BUILDER
     entrypoint: [""]
   variables:
     CONTAINER_STORAGE: "/builds/container-storage"
-    CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
-    GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for these jobs
-    DOCKERFILE: ci/docker/cta/${PLATFORM}/prod.Dockerfile
-    IMAGE_REF: ${DOCKER_IMAGE_REGISTRY}/${DOCKER_PRIVATE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_BUILD_ID}
-    RPM_CONTEXT: ${CI_PROJECT_DIR}/build_rpm/RPM/RPMS/x86_64  # Important that this matches the artifact path from the build job
-    EXTRA_BUILD_ARGS: ""
+    DEST_REGISTRY_PASSWORD: ""
+    DEST_REGISTRY_USERNAME: ""
+    GIT_SUBMODULE_STRATEGY: "none"
+    # If necessary, add additional whitelisted (private!) registries for images containing Oracle RPMs here, separated by spaces
+    ORACLE_RPM_REGISTRY_WHITELIST: ""
   before_script:
-    # We have an explicit whitelist of registries here as a safety-net
-    # That is to ensure we don't accidentally push an image containing Oracle RPMs to a public registry
-    - |
-      case "$IMAGE_REF" in
-          gitlab-registry.cern.ch/cta/ctageneric/*) ;;
-          *)
-              echo "Refusing to push image to non-whitelisted registry: $IMAGE_REF"
-              exit 1
-              ;;
-      esac
     # Configure storage. See https://gitlab.cern.ch/gitlabci-examples/build_docker_image/-/blob/fce98393aab8f3ffca3b8449036ccb02275c8a46/.gitlab-ci.yml#L19
-    - mkdir -p ${CONTAINER_STORAGE}
-    - mkdir -p ~/.config/containers/
+    - mkdir -p "${CONTAINER_STORAGE}" ~/.config/containers
     - |
       cat > ~/.config/containers/storage.conf << EOF
       [storage]
@@ -65,10 +40,63 @@
        [storage.options.overlay]
       EOF
     - cp ~/.config/containers/storage.conf /etc/containers/storage.conf || true
-    - echo "$DOCKER_LOGIN_PASSWORD" | buildah login
-        -u "$DOCKER_LOGIN_USERNAME"
+    - |
+      if [[ -z "$DEST_REGISTRY_USERNAME" || -z "$DEST_REGISTRY_PASSWORD" ]]; then
+        echo "Destination registry credentials are not configured"
+        exit 1
+      fi
+    - echo "$DEST_REGISTRY_PASSWORD" | buildah login
+        -u "$DEST_REGISTRY_USERNAME"
         --password-stdin
-        "$CI_REGISTRY"
+        "$DOCKER_IMAGE_REGISTRY"
+    # Oracle RPMs are not allowed in public images. This function checks for Oracle RPMs in the image and refuses to publish it if any are found
+    - |
+      check_oracle_rpms_for_public_image() {
+        local image_ref="$1"
+        local private_prefix="${DOCKER_IMAGE_REGISTRY}/${DOCKER_PRIVATE_REGISTRY_PREFIX}/"
+        local allowed_prefix
+        for allowed_prefix in "$private_prefix" $ORACLE_RPM_REGISTRY_WHITELIST; do
+          if [[ "$image_ref" == "$allowed_prefix"* ]]; then
+            echo "Skipping Oracle RPM check for whitelisted image destination: ${image_ref}"
+            return
+          fi
+        done
+
+        local check_container installed_rpms oracle_rpms
+        check_container="$(buildah from "$image_ref")"
+        installed_rpms="$(buildah run "$check_container" -- rpm -qa)"
+        buildah rm "$check_container"
+        if oracle_rpms="$(grep -Ei '(oracle|occi)' <<< "$installed_rpms")"; then
+          echo "Refusing to publish an image containing Oracle-related RPMs:"
+          echo "$oracle_rpms"
+          return 1
+        fi
+      }
+
+###############################################
+# Build CTA Images
+###############################################
+
+.build-cta-image:
+  extends: .build-image
+  stage: build:image
+  needs:
+    - job: build-cta-rpms
+      optional: true  # The job is not included in UPDATE_PIPELINE_IMAGES pipelines.
+    - job: modify-project-json
+      optional: true
+  rules:
+    - if: $PIPELINE_TYPE == "DEFAULT" || $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
+      when: on_success
+    - when: never
+  variables:
+    CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
+    DOCKERFILE: ci/docker/cta/${PLATFORM}/prod.Dockerfile
+    IMAGE_REF: ${DOCKER_IMAGE_REGISTRY}/${DOCKER_PRIVATE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_BUILD_ID}
+    RPM_CONTEXT: ${CI_PROJECT_DIR}/build_rpm/RPM/RPMS/x86_64
+    EXTRA_BUILD_ARGS: ""
+    DEST_REGISTRY_PASSWORD: $DOCKER_PRIVATE_LOGIN_PASSWORD
+    DEST_REGISTRY_USERNAME: $DOCKER_PRIVATE_LOGIN_USERNAME
   script:
     - echo "Building ${TARGET_NAME}"
     - cd "$(dirname "${DOCKERFILE}")"
@@ -83,28 +111,81 @@
         --build-arg ENABLE_ORACLE_SUPPORT="${ENABLE_ORACLE_SUPPORT}"
       )
     - |
-      if [ -n "$EXTRA_BUILD_ARGS" ]; then
+      if [[ -n "$EXTRA_BUILD_ARGS" ]]; then
         BUILDAH_ARGS+=($EXTRA_BUILD_ARGS)
       fi
     - buildah bud "${BUILDAH_ARGS[@]}" .
+    - check_oracle_rpms_for_public_image "$IMAGE_REF"
     - buildah push "${IMAGE_REF}"
 
 build-cta-images:
   extends: .build-cta-image
   parallel:
     matrix:
-      - TARGET_NAME: cta-taped
-      - TARGET_NAME: cta-rmcd
-      - TARGET_NAME: cta-maintd
-      - TARGET_NAME: cta-frontend
-      - TARGET_NAME: cta-tools
+      - TARGET_NAME: *image-targets
 
 build-cta-debug-image:
   extends: .build-cta-image
   rules:
+    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+      when: never
     - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
       when: never
     - when: manual
       allow_failure: true
   variables:
     TARGET_NAME: cta-debug
+
+###############################################
+# Build Pipeline Images
+###############################################
+
+build-pipeline-images:
+  extends: .build-image
+  stage: build:image
+  needs:
+    - job: generate-pipeline-images-tag
+      artifacts: true
+  rules:
+    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+  variables:
+    DEST_REGISTRY_PASSWORD: $DOCKER_PUBLIC_LOGIN_PASSWORD
+    DEST_REGISTRY_USERNAME: $DOCKER_PUBLIC_LOGIN_USERNAME
+  script:
+    - |
+      case "$IMAGE_SCOPE" in
+        shared)
+          DOCKERFILE="ci/docker/pipeline/${IMAGE_KIND}.Dockerfile"
+          IMAGE_TAG="${NEW_PIPELINE_IMAGE_VERSION}"
+          ;;
+        platform)
+          DOCKERFILE="ci/docker/cta/${PLATFORM}/${IMAGE_KIND}.Dockerfile"
+          IMAGE_TAG="${NEW_PIPELINE_IMAGE_VERSION}.${PLATFORM}"
+          ;;
+        *)
+          echo "Unsupported pipeline image scope: ${IMAGE_SCOPE}"
+          exit 1
+          ;;
+      esac
+    - IMAGE_NAME="cta-ci-${IMAGE_KIND}"
+    - IMAGE_REF="${DOCKER_IMAGE_REGISTRY}/${DOCKER_PUBLIC_REGISTRY_PREFIX}/container_registry/${IMAGE_NAME}:${IMAGE_TAG}"
+    - |
+      case "$IMAGE_REF" in
+        gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-*:* ) ;;
+        *)
+          echo "Refusing to push pipeline image to non-whitelisted registry: ${IMAGE_REF}"
+          exit 1
+          ;;
+      esac
+    - echo "Building ${IMAGE_REF} from ${DOCKERFILE}"
+    - buildah bud --file "${DOCKERFILE}" --tag "${IMAGE_REF}" "$CI_PROJECT_DIR"
+    - if [[ "$IMAGE_SCOPE" == "platform" ]]; then check_oracle_rpms_for_public_image "$IMAGE_REF"; fi
+    - buildah push "$IMAGE_REF"
+  parallel:
+    matrix:
+      - IMAGE_SCOPE: "shared"
+        IMAGE_KIND: ["default", "lint", "release", "danger"]
+      # Add one platform entry and its ci/docker/cta/<platform>/{build,test}.Dockerfiles per supported platform.
+      - IMAGE_SCOPE: "platform"
+        PLATFORM: ["el9"]
+        IMAGE_KIND: ["build", "test"]

@@ -7,7 +7,7 @@ build-cta-rpms:
     - job: modify-project-json
       optional: true
   rules:
-    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
+    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION" || $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
       when: never
     # These rules serve to prevent the rest of the pipeline from triggering when only trivial files such as the CHANGELOG have been modified
     # GitLab only allows a whitelist and not a blacklist, so we have to list all file changes that should trigger the build job
@@ -196,6 +196,8 @@ export-docs:
   stage: build
   needs: []
   rules:
+    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+      when: never
     - if: $CI_PIPELINE_SOURCE == "schedule"
   script:
     - echo "Exporting man pages (Markdown)"

@@ -23,6 +23,7 @@ variables:
   #   - DEFAULT: runs static analysis, compiles the software and tests it.
   #   - REGR_AGAINST_CTA_BRANCH: test custom dependency versions (EOS/XRootD) against CTA main.
   #   - REGR_AGAINST_CTA_VERSION: test custom dependency versions (EOS/XRootD) against the latest tagged CTA version.
+  #   - UPDATE_PIPELINE_IMAGES: builds images used in the CI pipeline and creates a new MR to update the tag.
   PIPELINE_TYPE:
     description: "What kind of pipeline to run"
     value: "DEFAULT"
@@ -30,6 +31,7 @@ variables:
       - "DEFAULT"
       - "REGR_AGAINST_CTA_BRANCH"
       - "REGR_AGAINST_CTA_VERSION"
+      - "UPDATE_PIPELINE_IMAGES"
 
   CUSTOM_CTA_IMAGE_TAG:
     description: "Custom CTA version to build a docker image from and test with. Should only be used when PIPELINE_TYPE != DEFAULT."
@@ -183,16 +185,25 @@ variables:
   DOCKER_IMAGE_REGISTRY: "gitlab-registry.cern.ch"
   DOCKER_PRIVATE_REGISTRY_PREFIX: "cta/ctageneric"
   DOCKER_PUBLIC_REGISTRY_PREFIX: "cta/public_registry"
+  # Configure these as protected, masked project/group variables in GitLab. Never commit their values here.
+  DOCKER_PRIVATE_LOGIN_USERNAME: $DOCKER_LOGIN_USERNAME
+  DOCKER_PRIVATE_LOGIN_PASSWORD: $DOCKER_LOGIN_PASSWORD
+  DOCKER_PUBLIC_LOGIN_USERNAME: "nonempty" # Tokens don't require a username, but GitLab requires a non-empty value for this variable to be set
+  DOCKER_PUBLIC_LOGIN_PASSWORD: $REGISTRYTOKEN_publicpush
 
   # =========================================================================
   # 7. CI Base Target Images
   # =========================================================================
-  IMAGE_DEFAULT: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-default:2026-07-07-15213892.el9"
-  IMAGE_LINT: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-lint:2026-07-07-15213892.el9"
-  IMAGE_BUILD: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:2026-07-07-15213892.el9"
-  IMAGE_TEST: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:2026-07-07-15213892.el9"
-  IMAGE_RELEASE: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-release:2026-07-07-15213892.el9"
-  IMAGE_DANGER: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-danger:2026-07-07-15213892.el9"
+  # Updated by the weekly UPDATE_PIPELINE_IMAGES pipeline after every image has been built successfully
+  PIPELINE_IMAGE_VERSION: "2026-08-02-15438002"
+  # Platform-specific images are tagged with the platform name to allow for multiple platforms to be built and tested in parallel
+  IMAGE_BUILD: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:${PIPELINE_IMAGE_VERSION}.${PLATFORM}"
+  IMAGE_TEST: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:${PIPELINE_IMAGE_VERSION}.${PLATFORM}"
+  # Remaining images are shared across all platforms and do not have a platform suffix
+  IMAGE_DEFAULT: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-default:${PIPELINE_IMAGE_VERSION}"
+  IMAGE_LINT: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-lint:${PIPELINE_IMAGE_VERSION}"
+  IMAGE_RELEASE: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-release:${PIPELINE_IMAGE_VERSION}"
+  IMAGE_DANGER: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-danger:${PIPELINE_IMAGE_VERSION}"
   IMAGE_DOCKER_IMAGE_BUILDER: "registry.cern.ch/quay.io/buildah/stable:v1.43-immutable"
   IMAGE_DOCKER_LINT: "registry.cern.ch/docker.io/hadolint/hadolint:v2.12.0-alpine"
   IMAGE_LICENSE_CHECK: "registry.cern.ch/docker.io/fsfe/reuse:6.2"
@@ -228,6 +239,10 @@ workflow:
   auto_cancel:
     on_new_commit: interruptible
   rules:
+    # Allow scheduled, manual, and API-triggered pipeline-image refreshes on the selected ref.
+    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+      auto_cancel:
+        on_new_commit: none
     # If we are in a merge request and there are no changes, don't run the pipeline
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
