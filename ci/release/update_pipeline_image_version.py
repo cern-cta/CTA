@@ -14,7 +14,7 @@ from urllib.parse import quote
 from gitlabapi import GitLabAPI
 
 PIPELINE_CONFIG_PATH = ".gitlab-ci.yml"
-VERSION_PATTERN = re.compile(r'^(  PIPELINE_IMAGE_VERSION: ")[^"]+("\s*)$', re.MULTILINE)
+VERSION_PATTERN = re.compile(r'^( {2}PIPELINE_IMAGE_VERSION: ")[^"]+("\s*)$', re.MULTILINE)
 MERGE_REQUEST_LABELS = ("priority::medium", "type::maintenance", "ci pipeline")
 MERGE_REQUEST_POLL_INTERVAL_SECONDS = 5
 MERGE_REQUEST_READY_TIMEOUT_SECONDS = 300
@@ -263,7 +263,7 @@ def approve_and_enable_auto_merge(api: GitLabAPI, merge_request: dict[str, Any])
         raise PipelineImageUpdateError("Pipeline-image update merge request has no valid IID or SHA")
 
     log_task(f"Waiting for merge request !{iid} preparation")
-    merge_request = wait_for_merge_request_readiness(api, iid, sha)
+    wait_for_merge_request_readiness(api, iid, sha)
     log_task(f"Approving merge request !{iid}")
     approved = api.post(f"merge_requests/{iid}/approve", json={"sha": sha})
     if not isinstance(approved, dict):

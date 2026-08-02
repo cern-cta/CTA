@@ -62,6 +62,5 @@ class CtaRmcdHost(RemoteHost):
         """List unique volume tags from multiple tape libraries."""
         volume_tags = set()
         for rmcd in cta_rmcd_hosts:
-            for tape in rmcd.list_tapes_in_library():
-                volume_tags.add(tape)
+            volume_tags.update(rmcd.list_tapes_in_library())
         return sorted(volume_tags)

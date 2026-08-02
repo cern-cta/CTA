@@ -150,7 +150,6 @@ class CtaCliHost(RemoteHost):
         print(f"Waiting for repack request expansion on VID {vid}...")
         tape_json = json.loads(self.exec_with_output(f"cta-admin --json tape ls --vid {vid}"))
         last_fseq = tape_json[0]["lastFseq"]
-        wait_timeout_secs = 20
         with Timeout(wait_timeout_secs) as t:
             last_expanded_fseq = 0
             while last_expanded_fseq != last_fseq and not t.expired:
@@ -171,7 +170,6 @@ class CtaCliHost(RemoteHost):
 
     def wait_for_queue_to_empty(self, vid: str, wait_timeout_secs: int = 30) -> None:
         print(f"Waiting for retrieve queue of {vid} to be empty...")
-        wait_timeout_secs = 20
         with Timeout(wait_timeout_secs) as t:
             while not self.retrieve_queue_empty(vid) and not t.expired:
                 time.sleep(1)

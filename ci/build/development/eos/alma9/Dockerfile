@@ -20,7 +20,7 @@ RUN set -ex; \
 RUN set -ex; \
     git clone https://gitlab.cern.ch/dss/eos.git eos; \
     cd eos; \
-    git checkout ${EOS_VERSION}; \
+    git checkout "${EOS_VERSION}"; \
     git submodule sync --recursive && git submodule update --init --recursive;
 
 RUN set -ex; \

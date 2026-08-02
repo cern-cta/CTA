@@ -20,6 +20,7 @@ class Timeout:
         exc: Optional[BaseException],
         tb: Optional[TracebackType],
     ) -> None:
+        # Exceptions must propagate normally; this context manager only tracks elapsed time.
         pass
 
     @property
