@@ -18,8 +18,10 @@
     entrypoint: [""]
   variables:
     CONTAINER_STORAGE: "/builds/container-storage"
+    DEST_REGISTRY_PASSWORD: ""
+    DEST_REGISTRY_USERNAME: ""
     GIT_SUBMODULE_STRATEGY: "none"
-     # If necessary, add additional whitelisted (private!) registries for images containing Oracle RPMs here, separated by spaces
+    # If necessary, add additional whitelisted (private!) registries for images containing Oracle RPMs here, separated by spaces
     ORACLE_RPM_REGISTRY_WHITELIST: ""
   before_script:
     # Configure storage. See https://gitlab.cern.ch/gitlabci-examples/build_docker_image/-/blob/fce98393aab8f3ffca3b8449036ccb02275c8a46/.gitlab-ci.yml#L19
@@ -38,8 +40,13 @@
        [storage.options.overlay]
       EOF
     - cp ~/.config/containers/storage.conf /etc/containers/storage.conf || true
-    - echo "$DOCKER_LOGIN_PASSWORD" | buildah login
-        -u "$DOCKER_LOGIN_USERNAME"
+    - |
+      if [[ -z "$DEST_REGISTRY_USERNAME" || -z "$DEST_REGISTRY_PASSWORD" ]]; then
+        echo "Destination registry credentials are not configured"
+        exit 1
+      fi
+    - echo "$DEST_REGISTRY_PASSWORD" | buildah login
+        -u "$DEST_REGISTRY_USERNAME"
         --password-stdin
         "$DOCKER_IMAGE_REGISTRY"
     # Oracle RPMs are not allowed in public images. This function checks for Oracle RPMs in the image and refuses to publish it if any are found
@@ -88,6 +95,8 @@
     IMAGE_REF: ${DOCKER_IMAGE_REGISTRY}/${DOCKER_PRIVATE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_BUILD_ID}
     RPM_CONTEXT: ${CI_PROJECT_DIR}/build_rpm/RPM/RPMS/x86_64
     EXTRA_BUILD_ARGS: ""
+    DEST_REGISTRY_PASSWORD: $DOCKER_PRIVATE_LOGIN_PASSWORD
+    DEST_REGISTRY_USERNAME: $DOCKER_PRIVATE_LOGIN_USERNAME
   script:
     - echo "Building ${TARGET_NAME}"
     - cd "$(dirname "${DOCKERFILE}")"
@@ -139,6 +148,9 @@ build-pipeline-images:
       artifacts: true
   rules:
     - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+  variables:
+    DEST_REGISTRY_PASSWORD: $DOCKER_PUBLIC_LOGIN_PASSWORD
+    DEST_REGISTRY_USERNAME: $DOCKER_PUBLIC_LOGIN_USERNAME
   script:
     - |
       case "$IMAGE_SCOPE" in
