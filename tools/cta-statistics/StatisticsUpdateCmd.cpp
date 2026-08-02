@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "statistics/StatisticsUpdateCmd.hpp"
+#include "StatisticsUpdateCmd.hpp"
 
 #include "StatisticsService.hpp"
 #include "StatisticsServiceFactory.hpp"
+#include "StatisticsUpdateCmdLineArgs.hpp"
 #include "catalogue/SchemaChecker.hpp"
 #include "common/utils/Timer.hpp"
 #include "rdbms/ConnPool.hpp"
-#include "statistics/StatisticsUpdateCmdLineArgs.hpp"
 
 #include <cstdlib>
 #include <memory>
