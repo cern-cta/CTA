@@ -1,13 +1,19 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+spec:
+  inputs:
+    platform:
+      type: string
+---
+
 lint-cpp:
   stage: lint
   needs: []  # Ensure no artifacts are downloaded
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - changes:
         - "**/*.c"
@@ -52,7 +58,7 @@ lint-bash:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - changes:
         - "**/*.sh"
@@ -82,7 +88,7 @@ lint-python:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - changes:
         - "**/*.py"
@@ -110,7 +116,7 @@ lint-yaml:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - changes:
         - "**/*.yaml"
@@ -135,7 +141,7 @@ lint-licenses:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - when: always
   image:
@@ -152,7 +158,7 @@ lint-secrets:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - when: always
   image:
@@ -169,7 +175,7 @@ lint-dockerfile:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - changes:
         - "ci/docker/cta/el9/prod.Dockerfile"
@@ -185,7 +191,7 @@ lint-dockerfile:
   variables:
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
   script:
-    - hadolint --failure-threshold warning ci/docker/cta/${PLATFORM}/prod.Dockerfile
+    - hadolint --failure-threshold warning ci/docker/cta/$[[ inputs.platform ]]/prod.Dockerfile
 
 # Generic format check job template
 # The idea is to extend this, fill in the FORMAT_DIFF variable
@@ -196,7 +202,7 @@ lint-dockerfile:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - when: always
   image: $IMAGE_LINT
@@ -236,7 +242,7 @@ format-cpp:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - changes:
         - "**/*.c"
@@ -265,7 +271,7 @@ format-python:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - changes:
         - "**/*.py"
@@ -288,7 +294,7 @@ type-check-python:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - changes:
         - "**/*.py"

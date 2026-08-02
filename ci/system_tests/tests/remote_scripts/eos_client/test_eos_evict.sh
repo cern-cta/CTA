@@ -3,12 +3,12 @@
 # SPDX-FileCopyrightText: 2022 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-################################################################################
+# =========================================================================
 # DESCRIPTION
 #
 #   - These tests exists to make sure that the evict command works as expected
 #
-################################################################################
+# =========================================================================
 
 EOS_MGM_HOST="ctaeos"
 
@@ -40,9 +40,9 @@ eospower_kinit &>/dev/null
 admin_kdestroy &>/dev/null
 admin_kinit &>/dev/null
 
-################################################################
-# Test deleting file before tape copy has been generated
-################################################################
+# =========================================================================
+#  Test deleting file before tape copy has been generated
+# =========================================================================
 
 # 1. Put the destination tape drives down
 TEMP_FILE=${EOS_TAPE_BASEDIR}/$(uuidgen)
@@ -279,9 +279,9 @@ KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://
 KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://${EOS_MGM_HOST} fs rm ${FSID_DUMMY_2_VALUE}
 KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://${EOS_MGM_HOST} fs rm ${FSID_DUMMY_3_VALUE}
 
-################################################################
-# Finalize
-################################################################
+# =========================================================================
+#  Finalize
+# =========================================================================
 
 echo
 echo "OK: all tests passed"

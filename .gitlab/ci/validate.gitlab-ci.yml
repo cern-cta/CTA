@@ -5,47 +5,19 @@ validate-catalogue-schema-version:
   stage: validate
   needs: []  # Ensure no artifacts are downloaded
   rules:
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
-    # For pivot CTA releases: vX.Y.0
-    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^.*\.0\.[0-9]+-[^-]*$/
-      when: on_success
-      variables:
-        CATALOGUE_SCHEMA_CHECK_PARAMS: "-p -t"
-    # For non-pivot CTA releases
-    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG !~ /^.*\.0\.[0-9]+-[^-]*$/
-      when: on_success
-      variables:
-        CATALOGUE_SCHEMA_CHECK_PARAMS: "-n -t"
-    # Any run on main
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    # Tags and the default branch require the catalogue schema submodule commit to be tagged.
+    - if: $CI_COMMIT_TAG || $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: on_success
       variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: "-t"
-    # For all other scenarios, manual run only
+    # Other pipelines validate the schema versions without requiring a submodule tag.
     - when: on_success
       variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: ""
   script:
-    - ./ci/checks/check_catalogue_schema_version.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .
-
-validate-pipeline-variables:
-  stage: validate
-  needs:
-    - job: modify-project-json
-      optional: true
-  rules:
-    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
-      when: never
-    - when: on_success
-  variables:
-    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
-  script:
-    - |
-      if [[ -n $CUSTOM_CTA_IMAGE_TAG_ENV ]]; then
-        CUSTOM_CTA_IMAGE_TAG=$CUSTOM_CTA_IMAGE_TAG_ENV
-      fi
-    - python3 ./ci/checks/validate_ci_input_variables.py
+    - ./ci/checks/check_catalogue_schema_version.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS}
 
 validate-project-json:
   stage: validate
@@ -53,7 +25,7 @@ validate-project-json:
     - job: modify-project-json
       optional: true
   rules:
-    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
     - when: on_success
   script:

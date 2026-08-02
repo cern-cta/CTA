@@ -11,7 +11,7 @@ from typing import Any, Optional
 
 from gitlabapi import GitLabAPI
 
-# ------------------------------------------------------------------------------
+# =========================================================================
 
 
 # https://docs.gitlab.com/ee/api/branches.html#create-repository-branch
@@ -152,7 +152,7 @@ def add_mr_review_comment(
     return False
 
 
-# ------------------------------------------------------------------------------
+# =========================================================================
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Tool that checks which commits will end up in the changelog")

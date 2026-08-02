@@ -1,16 +1,27 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-###############################################
-# Image build / publish configuration
-###############################################
+spec:
+  inputs:
+    platform:
+      type: string
+    enable-internal-repos:
+      type: boolean
+    enable-oracle-support:
+      type: boolean
+---
 
-.image-targets: &image-targets
+# =========================================================================
+#  Image build / publish configuration
+# =========================================================================
+
+.cta-image-targets: &cta-image-targets
   - cta-taped
   - cta-rmcd
   - cta-maintd
   - cta-frontend
   - cta-tools
+  - cta-debug
 
 .build-image:
   image:
@@ -73,9 +84,9 @@
         fi
       }
 
-###############################################
-# Build CTA Images
-###############################################
+# =========================================================================
+#  Build CTA Images
+# =========================================================================
 
 .build-cta-image:
   extends: .build-image
@@ -86,12 +97,16 @@
     - job: modify-project-json
       optional: true
   rules:
-    - if: $PIPELINE_TYPE == "DEFAULT" || $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
-      when: on_success
-    - when: never
+    - if: '$PIPELINE_TYPE != "DEFAULT" && $PIPELINE_TYPE != "REGR_AGAINST_CTA_BRANCH"'
+      when: never
+      # Debug is manual by default as it's quite large. However, build automatically for tags
+    - if: '$TARGET_NAME == "cta-debug" && $CI_COMMIT_TAG == null'
+      when: manual
+      allow_failure: true
+    - when: on_success
   variables:
     CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
-    DOCKERFILE: ci/docker/cta/${PLATFORM}/prod.Dockerfile
+    DOCKERFILE: ci/docker/cta/$[[ inputs.platform ]]/prod.Dockerfile
     IMAGE_REF: ${DOCKER_IMAGE_REGISTRY}/${DOCKER_PRIVATE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_BUILD_ID}
     RPM_CONTEXT: ${CI_PROJECT_DIR}/build_rpm/RPM/RPMS/x86_64
     EXTRA_BUILD_ARGS: ""
@@ -107,8 +122,8 @@
         --file "${DOCKERFILE_NAME}"
         --tag "${IMAGE_REF}"
         --build-context rpm_context="${RPM_CONTEXT}"
-        --build-arg ENABLE_INTERNAL_REPOS="${ENABLE_INTERNAL_REPOS}"
-        --build-arg ENABLE_ORACLE_SUPPORT="${ENABLE_ORACLE_SUPPORT}"
+        --build-arg ENABLE_INTERNAL_REPOS="$[[ inputs.enable-internal-repos ]]"
+        --build-arg ENABLE_ORACLE_SUPPORT="$[[ inputs.enable-oracle-support ]]"
       )
     - |
       if [[ -n "$EXTRA_BUILD_ARGS" ]]; then
@@ -122,23 +137,11 @@ build-cta-images:
   extends: .build-cta-image
   parallel:
     matrix:
-      - TARGET_NAME: *image-targets
+      - TARGET_NAME: *cta-image-targets
 
-build-cta-debug-image:
-  extends: .build-cta-image
-  rules:
-    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
-      when: never
-    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
-      when: never
-    - when: manual
-      allow_failure: true
-  variables:
-    TARGET_NAME: cta-debug
-
-###############################################
-# Build Pipeline Images
-###############################################
+# =========================================================================
+#  Build Pipeline Images
+# =========================================================================
 
 build-pipeline-images:
   extends: .build-image
@@ -147,7 +150,7 @@ build-pipeline-images:
     - job: generate-pipeline-images-tag
       artifacts: true
   rules:
-    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
   variables:
     DEST_REGISTRY_PASSWORD: $DOCKER_PUBLIC_LOGIN_PASSWORD
     DEST_REGISTRY_USERNAME: $DOCKER_PUBLIC_LOGIN_USERNAME

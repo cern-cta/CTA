@@ -1,6 +1,128 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+spec:
+  inputs:
+    # =========================================================================
+    # Pipeline execution and regression overrides
+    # =========================================================================
+    pipeline-type:
+      description: "What kind of pipeline to run"
+      type: string
+      options:
+        - "DEFAULT"
+        - "REGR_AGAINST_CTA_BRANCH"
+        - "REGR_AGAINST_CTA_VERSION"
+        - "UPDATE_PIPELINE_IMAGES"
+      default: "DEFAULT"
+
+    custom-cta-image-tag:
+      description: "Custom CTA image tag."
+      type: string
+      rules:
+        - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_VERSION"'
+          default: ""
+
+    custom-eos-image-tag:
+      description: "Custom EOS image tag for regression pipelines."
+      type: string
+      rules:
+        - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_VERSION"'
+          default: ""
+
+    custom-xrootd-version:
+      description: "Custom XRootD version for regression pipelines."
+      type: string
+      rules:
+        - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_VERSION"'
+          default: ""
+
+    # =========================================================================
+    # Build and architecture
+    # =========================================================================
+    platform:
+      description: "Platform to build, test, and release on."
+      type: string
+      rules:
+        - if: '$[[ inputs.pipeline-type ]] != "UPDATE_PIPELINE_IMAGES"'
+          options: ["el9"]
+          default: "el9"
+
+    scheduler-type:
+      description: "Scheduler implementation to build and test."
+      type: string
+      rules:
+        - if: '$[[ inputs.pipeline-type ]] != "UPDATE_PIPELINE_IMAGES"'
+          options: ["pgsched", "objectstore"]
+          default: "objectstore"
+
+    enable-oracle-support:
+      description: "Enable Oracle support."
+    # Boolean values cannot be conditionally hidden yet. See https://gitlab.com/gitlab-org/gitlab/-/issues/587643
+      type: boolean
+      default: true
+
+    enable-address-sanitizer:
+      description: "Compile with Address Sanitizer."
+      type: boolean
+      default: false
+
+    cmake-build-type:
+      description: "CMake build type for pipelines that compile CTA RPMs."
+      type: string
+      rules:
+        - if: '$[[ inputs.pipeline-type ]] == "DEFAULT" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH"'
+          options: ["Release", "Debug", "RelWithDebInfo", "MinSizeRel"]
+          default: "RelWithDebInfo"
+
+    enable-internal-repos:
+      description: "Use internal yum repositories."
+      type: boolean
+      default: true
+
+    build-generator:
+      description: "Build generator for pipelines that compile CTA RPMs."
+      type: string
+      rules:
+        - if: '$[[ inputs.pipeline-type ]] == "DEFAULT" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH"'
+          options: ["Unix Makefiles", "Ninja"]
+          default: "Unix Makefiles"
+
+    enable-sbom-generation:
+      description: "Generate an SBOM."
+      type: boolean
+      default: false
+
+    # =========================================================================
+    # Deployment
+    # =========================================================================
+    workflow-api-authentication:
+      description: "Workflow API authentication used by CTA and EOS."
+      type: string
+      rules:
+        - if: '$[[ inputs.pipeline-type ]] != "UPDATE_PIPELINE_IMAGES"'
+          options: ["jwt", "mtls"]
+          default: "jwt"
+
+    # =========================================================================
+    # Testing
+    # =========================================================================
+    enable-valgrind:
+      description: "Run unit tests with Valgrind."
+      type: boolean
+      default: false
+
+    enable-dcache-tests:
+      description: "Run dCache regression tests automatically."
+      type: boolean
+      default: false
+
+    keep-stress-test-namespace:
+      description: "Keep stress-test namespace for debugging."
+      type: boolean
+      default: false
+---
+
 stages:
   - .pre
   - trigger
@@ -15,190 +137,15 @@ stages:
   - report
   - .post
 
+# Variables should only be used for constants or internal variables that are not expected to be overridden by the user.
+# All user-facing variables should be defined as inputs and passed to the included templates.
 variables:
-  # =========================================================================
-  # 1. Pipeline Execution Control
-  # =========================================================================
-  # Supported types:
-  #   - DEFAULT: runs static analysis, compiles the software and tests it.
-  #   - REGR_AGAINST_CTA_BRANCH: test custom dependency versions (EOS/XRootD) against CTA main.
-  #   - REGR_AGAINST_CTA_VERSION: test custom dependency versions (EOS/XRootD) against the latest tagged CTA version.
-  #   - UPDATE_PIPELINE_IMAGES: builds images used in the CI pipeline and creates a new MR to update the tag.
-  PIPELINE_TYPE:
-    description: "What kind of pipeline to run"
-    value: "DEFAULT"
-    options:
-      - "DEFAULT"
-      - "REGR_AGAINST_CTA_BRANCH"
-      - "REGR_AGAINST_CTA_VERSION"
-      - "UPDATE_PIPELINE_IMAGES"
-
-  CUSTOM_CTA_IMAGE_TAG:
-    description: "Custom CTA version to build a docker image from and test with. Should only be used when PIPELINE_TYPE != DEFAULT."
-    value: ""
-
-  CUSTOM_EOS_IMAGE_TAG:
-    description: "Custom EOS image tag to use running. Note that this does not affect the EOS client version"
-    value: ""
-
-  CUSTOM_XROOTD_VERSION:
-    description: "Custom XRootD version to use for building and running."
-    value: ""
-
-  # =========================================================================
-  # 2. Base Build & Compilation Configuration
-  # =========================================================================
-  PLATFORM:
-    description: "Specifies the platform to build, test and (possibly) release on"
-    value: "el9"
-    options:
-      - "el9"
-
-  ENABLE_INTERNAL_REPOS:
-    description: "Whether to use the internal yum repos instead of the public yum repos."
-    value: "TRUE"
-    options:
-      - "TRUE"
-      - "FALSE"
-
-  BUILD_CTA_VERSION: "5"
-
-  BUILD_GENERATOR:
-    description: "Specifies the build generator used for building the CTA RPMs"
-    value: "Unix Makefiles"
-    options:
-      - "Unix Makefiles"
-      - "Ninja"
-
-  CMAKE_BUILD_TYPE:
-    description: "Specifies the build type used to compile the CTA RPMs"
-    value: "RelWithDebInfo"
-    options:
-      - "Release"
-      - "Debug"
-      - "RelWithDebInfo"
-      - "MinSizeRel"
-
-  ENABLE_ADDRESS_SANITIZER:
-    description: "Whether to compile with Address Sanitizer enabled"
-    value: "FALSE"
-    options:
-      - "TRUE"
-      - "FALSE"
-
-  ENABLE_CCACHE:
-    description: "Whether to enable ccache during the RPM building"
-    value: "FALSE"
-    options:
-      - "TRUE"
-      - "FALSE"
-
-  BUILD_CACHE_POLICY:
-    description: "Policy for populating/consuming the cache in the build-cta-rpms job"
-    value: "pull"
-    options:
-      - "pull"
-      - "push"
-      - "pull-push"
-
-  ENABLE_SBOM_GENERATION:
-    description: "Whether to generate a Software Bill of Materials in the pipeline"
-    value: "FALSE"
-    options:
-      - "TRUE"
-      - "FALSE"
-
-  # =========================================================================
-  # 3. Component & Subsystem Architecture
-  # =========================================================================
-  SCHEDULER_TYPE:
-    description: "Specifies what scheduler should be used to build CTA and run the tests"
-    value: "objectstore"
-    options:
-      - "pgsched"
-      - "objectstore"
-
-  ENABLE_ORACLE_SUPPORT:
-    description: "Whether to build the CTA RPMs with Oracle support or not"
-    value: "TRUE"
-    options:
-      - "TRUE"
-      - "FALSE"
-
-  # =========================================================================
-  # 4. Deployment Orchestration & Helm Profiles
-  # =========================================================================
-  DEFAULT_CTA_VALUES_CHAIN:
-    description: "Path to a values.yaml file to be passed to the CTA Helm chart."
-    value: "presets/dev-cta-common.yaml,presets/frontend-wfe/auth-jwt.yaml,presets/frontend-admin/auth-jwt.yaml"
-    options:
-      - "presets/dev-cta-common.yaml,presets/frontend-wfe/auth-jwt.yaml,presets/frontend-admin/auth-jwt.yaml"
-      - "presets/dev-cta-common.yaml,presets/frontend-wfe/auth-mtls.yaml,presets/frontend-admin/auth-jwt.yaml"
-
-  DEFAULT_EOS_VALUES_FILE:
-    description: "Path to a values.yaml file to be passed to the EOS Helm chart."
-    value: "presets/eos/auth-jwt.yaml"
-    options:
-      - "presets/eos/auth-jwt.yaml"
-      - "presets/eos/auth-mtls.yaml"
-
-  STRESS_EOS_VALUES_FILE:
-    description: "Path to a values.yaml file to be passed to the EOS Helm chart for the stress test."
-    value: "presets/stress-eos-values.yaml"
-    options:
-      - "presets/stress-eos-values.yaml"
-
-  # =========================================================================
-  # 5. Testing
-  # =========================================================================
-  ENABLE_VALGRIND:
-    description: "Whether to run the unit tests with valgrind."
-    value: "FALSE"
-    options:
-      - "TRUE"
-      - "FALSE"
-
-  ENABLE_DCACHE_TESTS:
-    description: "Whether to run the dCache regression tests."
-    value: "FALSE"
-    options:
-      - "TRUE"
-      - "FALSE"
-
-  KEEP_STRESS_TEST_NAMESPACE:
-    description: "Keep the stress-test namespace alive after it has been created to allow for manual debugging. In this case, the namespace must be manually deleted at some point."
-    value: "FALSE"
-    options:
-      - "TRUE"
-      - "FALSE"
-
-  PUBLISH_TELEMETRY_METRICS:
-    description: "Whether to publish telemetry metrics for the stress test"
-    value: "TRUE"
-    options:
-      - "TRUE"
-      - "FALSE"
-
-  # =========================================================================
-  # 6. Docker Registry
-  # =========================================================================
-  DOCKER_IMAGE_REGISTRY: "gitlab-registry.cern.ch"
-  DOCKER_PRIVATE_REGISTRY_PREFIX: "cta/ctageneric"
-  DOCKER_PUBLIC_REGISTRY_PREFIX: "cta/public_registry"
-  # Configure these as protected, masked project/group variables in GitLab. Never commit their values here.
-  DOCKER_PRIVATE_LOGIN_USERNAME: $DOCKER_LOGIN_USERNAME
-  DOCKER_PRIVATE_LOGIN_PASSWORD: $DOCKER_LOGIN_PASSWORD
-  DOCKER_PUBLIC_LOGIN_USERNAME: "nonempty" # Tokens don't require a username, but GitLab requires a non-empty value for this variable to be set
-  DOCKER_PUBLIC_LOGIN_PASSWORD: $REGISTRYTOKEN_publicpush
-
-  # =========================================================================
-  # 7. CI Base Target Images
-  # =========================================================================
+  # Pipeline images
   # Updated by the weekly UPDATE_PIPELINE_IMAGES pipeline after every image has been built successfully
   PIPELINE_IMAGE_VERSION: "2026-08-02-15438002"
   # Platform-specific images are tagged with the platform name to allow for multiple platforms to be built and tested in parallel
-  IMAGE_BUILD: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:${PIPELINE_IMAGE_VERSION}.${PLATFORM}"
-  IMAGE_TEST: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:${PIPELINE_IMAGE_VERSION}.${PLATFORM}"
+  IMAGE_BUILD: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:${PIPELINE_IMAGE_VERSION}.$[[ inputs.platform ]]"
+  IMAGE_TEST: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:${PIPELINE_IMAGE_VERSION}.$[[ inputs.platform ]]"
   # Remaining images are shared across all platforms and do not have a platform suffix
   IMAGE_DEFAULT: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-default:${PIPELINE_IMAGE_VERSION}"
   IMAGE_LINT: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-lint:${PIPELINE_IMAGE_VERSION}"
@@ -208,22 +155,36 @@ variables:
   IMAGE_DOCKER_LINT: "registry.cern.ch/docker.io/hadolint/hadolint:v2.12.0-alpine"
   IMAGE_LICENSE_CHECK: "registry.cern.ch/docker.io/fsfe/reuse:6.2"
 
-  # =========================================================================
-  # 8. Git CI Strategy & Performance Tuning
-  # =========================================================================
+  # Should be removed as soon as EOS triggers the CTA pipeline with the new inputs instead of legacy variables.
+  PIPELINE_TYPE: "$[[ inputs.pipeline-type ]]"
+  CUSTOM_EOS_IMAGE_TAG: "$[[ inputs.custom-eos-image-tag ]]"
+
+  # Build and runtime defaults
+  BUILD_CTA_VERSION: "5"
+  ENABLE_CCACHE: "false"
+  BUILD_CACHE_POLICY: "pull"
+
+  # Registry publishing configuration and credentials
+  DOCKER_IMAGE_REGISTRY: "gitlab-registry.cern.ch"
+  DOCKER_PRIVATE_REGISTRY_PREFIX: "cta/ctageneric"
+  DOCKER_PUBLIC_REGISTRY_PREFIX: "cta/public_registry"
+  DOCKER_PRIVATE_LOGIN_USERNAME: $DOCKER_LOGIN_USERNAME
+  DOCKER_PRIVATE_LOGIN_PASSWORD: $DOCKER_LOGIN_PASSWORD
+  DOCKER_PUBLIC_LOGIN_USERNAME: "nonempty" # Tokens don't require a username, but GitLab requires a non-empty value for this variable to be set
+  DOCKER_PUBLIC_LOGIN_PASSWORD: $REGISTRYTOKEN_publicpush
+
+  # Git checkout
   GIT_STRATEGY: "fetch"
   GIT_SUBMODULE_STRATEGY: "recursive"
-  GIT_DEPTH: "1"
+  GIT_DEPTH: "10"
   GIT_SUBMODULE_DEPTH: "1"
-  SAST_EXCLUDED_PATHS: "ci,tests,*Test.cpp"
 
+  # Artifact and cache performance
   FF_USE_FASTZIP: "true"
   ARTIFACT_COMPRESSION_LEVEL: "fastest"
   CACHE_COMPRESSION_LEVEL: "fastest"
 
-  # =========================================================================
-  # 9. Runner Engine & Test Report Terminal Hook Output
-  # =========================================================================
+  # Runner and test reports
   FF_TIMESTAMPS: "true"
   TERM: "xterm-color"
   GTEST_COLOR: "yes"
@@ -235,30 +196,30 @@ default:
   interruptible: true
 
 workflow:
-  name: "$CI_COMMIT_TITLE -- Pipeline: $PIPELINE_TYPE, Scheduler: $SCHEDULER_TYPE, Oracle support: $ENABLE_ORACLE_SUPPORT"
+  name: '$CI_PIPELINE_SOURCE - $CI_COMMIT_SHORT_SHA - $[[ inputs.platform ]] - $PIPELINE_TYPE - $[[ inputs.scheduler-type ]] - Oracle:$[[ inputs.enable-oracle-support ]]'
   auto_cancel:
     on_new_commit: interruptible
   rules:
     # Allow scheduled, manual, and API-triggered pipeline-image refreshes on the selected ref.
-    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       auto_cancel:
         on_new_commit: none
     # If we are in a merge request and there are no changes, don't run the pipeline
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || ($CI_PIPELINE_SOURCE == "parent_pipeline" && $CI_MERGE_REQUEST_ID)
       changes:
         compare_to: "refs/heads/$CI_DEFAULT_BRANCH"
         paths:
           - '**/*'
       variables:
-        ENABLE_CCACHE: "TRUE"
-        BUILD_CACHE_POLICY: pull-push
+        ENABLE_CCACHE: "true"
+        BUILD_CACHE_POLICY: "pull-push"
         CACHE_BRANCH: '$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME'
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && ($CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "parent_pipeline")
       auto_cancel:
         on_new_commit: none
       variables:
-        ENABLE_CCACHE: "TRUE"
-        BUILD_CACHE_POLICY: push  # Ensure clean build and we only rebuild the cache for push events to prevent other pipeline types from screwing with it
+        ENABLE_CCACHE: "true"
+        BUILD_CACHE_POLICY: "push"  # Ensure clean build and we only rebuild the cache for push events to prevent other pipeline types from screwing with it
         CACHE_BRANCH: '$CI_COMMIT_BRANCH'
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG || $CI_PIPELINE_SOURCE == "trigger"
       auto_cancel:
@@ -272,4 +233,63 @@ workflow:
     - if: $CI_PIPELINE_SOURCE != "push"
 
 include:
-  - local: .gitlab/ci/*.gitlab-ci.yml
+  - local: .gitlab/ci/.pre.gitlab-ci.yml
+    inputs:
+      custom-cta-image-tag: $[[ inputs.custom-cta-image-tag ]]
+      custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]
+      platform: $[[ inputs.platform ]]
+  - local: .gitlab/ci/trigger.gitlab-ci.yml
+    inputs:
+      platform: $[[ inputs.platform ]]
+      enable-internal-repos: $[[ inputs.enable-internal-repos ]]
+      build-generator: $[[ inputs.build-generator ]]
+      cmake-build-type: $[[ inputs.cmake-build-type ]]
+      enable-address-sanitizer: $[[ inputs.enable-address-sanitizer ]]
+      enable-sbom-generation: $[[ inputs.enable-sbom-generation ]]
+      scheduler-type: $[[ inputs.scheduler-type ]]
+      enable-oracle-support: $[[ inputs.enable-oracle-support ]]
+      workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
+      enable-valgrind: $[[ inputs.enable-valgrind ]]
+      enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
+      keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
+  - local: .gitlab/ci/validate.gitlab-ci.yml
+  - local: .gitlab/ci/lint.gitlab-ci.yml
+    inputs:
+      platform: $[[ inputs.platform ]]
+  - local: .gitlab/ci/build.gitlab-ci.yml
+    inputs:
+      platform: $[[ inputs.platform ]]
+      enable-internal-repos: $[[ inputs.enable-internal-repos ]]
+      build-generator: $[[ inputs.build-generator ]]
+      cmake-build-type: $[[ inputs.cmake-build-type ]]
+      enable-address-sanitizer: $[[ inputs.enable-address-sanitizer ]]
+      scheduler-type: $[[ inputs.scheduler-type ]]
+      enable-oracle-support: $[[ inputs.enable-oracle-support ]]
+  - local: .gitlab/ci/build-image.gitlab-ci.yml
+    inputs:
+      platform: $[[ inputs.platform ]]
+      enable-internal-repos: $[[ inputs.enable-internal-repos ]]
+      enable-oracle-support: $[[ inputs.enable-oracle-support ]]
+  - local: .gitlab/ci/tests.gitlab-ci.yml
+    inputs:
+      platform: $[[ inputs.platform ]]
+      enable-internal-repos: $[[ inputs.enable-internal-repos ]]
+      enable-oracle-support: $[[ inputs.enable-oracle-support ]]
+      enable-valgrind: $[[ inputs.enable-valgrind ]]
+  - local: .gitlab/ci/tests-kubernetes.gitlab-ci.yml
+    inputs:
+      custom-cta-image-tag: $[[ inputs.custom-cta-image-tag ]]
+      scheduler-type: $[[ inputs.scheduler-type ]]
+      enable-oracle-support: $[[ inputs.enable-oracle-support ]]
+      workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
+      enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
+      keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
+  - local: .gitlab/ci/sbom.gitlab-ci.yml
+    inputs:
+      enable-sbom-generation: $[[ inputs.enable-sbom-generation ]]
+  - local: .gitlab/ci/release.gitlab-ci.yml
+    inputs:
+      platform: $[[ inputs.platform ]]
+      enable-oracle-support: $[[ inputs.enable-oracle-support ]]
+  - local: .gitlab/ci/report.gitlab-ci.yml
+  - local: .gitlab/ci/.post.gitlab-ci.yml

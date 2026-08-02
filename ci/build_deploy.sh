@@ -112,7 +112,7 @@ build_deploy() {
   local cmake_build_type
   cmake_build_type=$(jq -r .dev.defaultBuildType "${project_root}/project.json")
   local scheduler_type="objectstore"
-  local oracle_support="TRUE"
+  local oracle_support="true"
   local enable_ccache=true
   local upgrade_cta=false
   local upgrade_eos=false
@@ -150,7 +150,7 @@ build_deploy() {
       -r | --reset)                 reset=true; clean_build_dirs=true ;;
       --clean-build-dir)            clean_build_dir=true ;;
       --clean-build-dirs)           clean_build_dirs=true ;;
-      --disable-oracle-support)     oracle_support="FALSE" ;;
+      --disable-oracle-support)     oracle_support="false" ;;
       --disable-ccache)             enable_ccache=false ;;
       --skip-build)                 skip_build=true ;;
       --skip-deploy)                skip_deploy=true ;;
@@ -217,7 +217,7 @@ build_deploy() {
   fi
 
   # =========================================================================
-  # Build binaries/RPMs
+  #  Build binaries/RPMs
   # =========================================================================
   if [[ "${skip_build}" = false ]]; then
     build_image_name="cta-build-image-${platform}"
@@ -321,7 +321,7 @@ build_deploy() {
   fi
 
   # =========================================================================
-  # Build image
+  #  Build image
   # =========================================================================
   build_iteration_file=/tmp/.build_iteration
   if [[ "$skip_image_build" == "false" ]]; then
@@ -378,7 +378,7 @@ build_deploy() {
   fi
 
   # =========================================================================
-  # Deploy CTA instance
+  #  Deploy CTA instance
   # =========================================================================
   if [[ ${skip_deploy} = false ]]; then
     if [[ "$upgrade_cta" = true ]]; then

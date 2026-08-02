@@ -1,32 +1,58 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# All of the below tests use only the docker image generated in the build:image stage
-# These are also the only tests executed on our personal runners instead of the GitLab runners
+spec:
+  inputs:
+    custom-cta-image-tag:
+      type: string
+    scheduler-type:
+      type: string
+    enable-oracle-support:
+      type: boolean
+    workflow-api-authentication:
+      type: string
+    enable-dcache-tests:
+      type: boolean
+    keep-stress-test-namespace:
+      type: boolean
+---
+
+# All of the below tests use only the docker image generated in the build:image stage.
+# They should not rely on any other generated artifacts.
+# These are also the only tests executed on our personal runners instead of the GitLab runners.
+
+.cta-system-test-image-targets: &cta-system-test-image-targets
+  - cta-taped
+  - cta-rmcd
+  - cta-maintd
+  - cta-frontend
+  - cta-tools
 
 .setup-k8s-test-variables: &setup-k8s-test-variables
+  - | # Construct the deployment profiles used by Kubernetes tests
+    CTA_VALUES_CHAIN="presets/dev-cta-common.yaml,presets/frontend-wfe/auth-$[[ inputs.workflow-api-authentication ]].yaml,presets/frontend-admin/auth-jwt.yaml"
   - | # Which scheduler config to use
-    if [[ $SCHEDULER_TYPE == "objectstore" ]]; then
+    if [[ "$[[ inputs.scheduler-type ]]" == "objectstore" ]]; then
       SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml
     else
       SCHEDULER_CONFIG=presets/dev-scheduler-postgres-values.yaml
     fi
   - | # Which catalogue config to use
-    if [[ $ENABLE_ORACLE_SUPPORT == "TRUE" ]]; then
+    if $[[ inputs.enable-oracle-support ]]; then
       CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
     else
       CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml
     fi
   - | # Which image tag to use
-    if [[ -n "$CUSTOM_CTA_IMAGE_TAG" ]]; then
-      IMAGE_TAG=$CUSTOM_CTA_IMAGE_TAG
+    if [[ -n "$[[ inputs.custom-cta-image-tag ]]" ]]; then
+      IMAGE_TAG="$[[ inputs.custom-cta-image-tag ]]"
     elif [[ -n "$CUSTOM_CTA_IMAGE_TAG_ENV" ]]; then
       IMAGE_TAG=$CUSTOM_CTA_IMAGE_TAG_ENV
     else
       IMAGE_TAG=${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     fi
   # Export all variables here so that it is clear which ones are available
-  - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG EXTRA_SPAWN_ARGS
+  - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG CTA_VALUES_CHAIN EXTRA_SPAWN_ARGS
 
 
 .kubernetes-test:
@@ -36,8 +62,11 @@
     # Image jobs are optional because we may want run with existing docker images
     - job: build-cta-images
       optional: true
+      parallel:
+        matrix:
+          - TARGET_NAME: *cta-system-test-image-targets
   rules:
-    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
     - if: $CI_COMMIT_TAG
       when: never
@@ -54,7 +83,7 @@
     - bash ./ci/checks/check_runner_healthy.sh
     - *setup-k8s-test-variables
   script:
-    - EXTRA_SPAWN_ARGS="--cta-config ${DEFAULT_CTA_VALUES_CHAIN} --eos-config ${DEFAULT_EOS_VALUES_FILE} ${EXTRA_SPAWN_ARGS}"
+    - EXTRA_SPAWN_ARGS="--cta-config ${CTA_VALUES_CHAIN} --eos-config presets/eos/auth-$[[ inputs.workflow-api-authentication ]].yaml ${EXTRA_SPAWN_ARGS}"
     # Keep the namespace name under 64 characters;
     # Otherwise the eos mgm fqdn becomes too long and things start failing
     - NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_JOB_ID}"
@@ -96,8 +125,11 @@
     # Image jobs are optional because we may want run with existing docker images
     - job: build-cta-images
       optional: true
+      parallel:
+        matrix:
+          - TARGET_NAME: *cta-system-test-image-targets
   rules:
-    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
     - if: $CI_COMMIT_TAG
       when: never
@@ -133,8 +165,8 @@
                            --reset-scheduler
                            --no-setup
                            --cta-image-tag ${IMAGE_TAG}
-                           --cta-config ${DEFAULT_CTA_VALUES_CHAIN}
-                           --eos-config ${DEFAULT_EOS_VALUES_FILE}
+                           --cta-config ${CTA_VALUES_CHAIN}
+                           --eos-config presets/eos/auth-$[[ inputs.workflow-api-authentication ]].yaml
                            --catalogue-config ${CATALOGUE_CONFIG}
                            --scheduler-config ${SCHEDULER_CONFIG}
                            --extra-cta-values "${EXTRA_CTA_HELM_FLAGS}"
@@ -172,7 +204,9 @@
       metrics: $METRICS_FILE
       junit: $TEST_REPORT_FILE
 
-# Tests
+# =========================================================================
+#  Tests
+# =========================================================================
 
 test-client:
   extends:
@@ -204,7 +238,7 @@ test-cta-tools:
   rules:
     # Skip this test for regressions as it does not test anything new
     # with respect to the other tests we run.
-    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
+    - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
       when: never
     - !reference [.kubernetes-test, rules]
   variables:
@@ -214,18 +248,16 @@ test-cta-tools:
     EXTRA_CTA_HELM_FLAGS: "--set=maintd.routines.repackExpand.replicas=0 --set=maintd.routines.repackReport.replicas=0"
 
 
-# Manually triggered
+# =========================================================================
+#  Manual tests
+# =========================================================================
 
 .manual-rules:
   rules:
-    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
-    # For pivot CTA releases: vX.Y.0
-    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^.*\.0\.[0-9]+-[^-]*$/
+    - if: $CI_COMMIT_TAG
       when: on_success
-    # For non-pivot CTA releases
-    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG !~ /^.*\.0\.[0-9]+-[^-]*$/
-      when: manual
       allow_failure: true
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: on_success
@@ -276,16 +308,20 @@ test-regression-dCache:
     - .kubernetes-test
   stage: system-test
   rules:
-    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
     - when: manual
       allow_failure: true
-    - if: $ENABLE_DCACHE_TESTS == "TRUE"
+    - if: '"$[[ inputs.enable-dcache-tests ]]" == "true"'
       when: on_success
   variables:
     TEST_SCRIPT: "tests/test_regression_dCache.sh"
     EXTRA_RUN_ARGS: "--test-timeout 2400 --skip-preflight"
     EXTRA_SPAWN_ARGS: "--cta-config presets/dev-cta-grpc-values.yaml --dcache-enabled true --eos-enabled false"
+
+# =========================================================================
+#  Stress Test
+# =========================================================================
 
 stress-test:
   allow_failure: true
@@ -298,8 +334,11 @@ stress-test:
     # Image jobs are optional because we may want run with existing docker images
     - job: build-cta-images
       optional: true
+      parallel:
+        matrix:
+          - TARGET_NAME: *cta-system-test-image-targets
   rules:
-    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
     - if: $CI_COMMIT_TAG
       when: never
@@ -316,19 +355,15 @@ stress-test:
   script:
     - EXTRA_STRESS_TEST_OPTIONS=""
     - |
-      if [[ $PUBLISH_TELEMETRY_METRICS == "TRUE" ]]; then
-        EXTRA_SPAWN_ARGS+=" --publish-telemetry"
-      fi
-    - |
-      if [[ "${SCHEDULER_TYPE}" == "pgsched" ]]; then
+      if [[ "$[[ inputs.scheduler-type ]]" == "pgsched" ]]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
         EXTRA_SPAWN_ARGS+=" --one-logical-library"
         EXTRA_STRESS_TEST_OPTIONS+=" -Q"
-        STRESS_CTA_VALUES_CHAIN="${DEFAULT_CTA_VALUES_CHAIN},presets/stress-cta-pgsched-values.yaml"
+        STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-pgsched-values.yaml"
       else
-        STRESS_CTA_VALUES_CHAIN="${DEFAULT_CTA_VALUES_CHAIN},presets/stress-cta-values.yaml"
+        STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-values.yaml"
       fi
-    - EXTRA_SPAWN_ARGS="--cta-config ${STRESS_CTA_VALUES_CHAIN} --eos-config ${STRESS_EOS_VALUES_FILE} ${EXTRA_SPAWN_ARGS}"
+    - EXTRA_SPAWN_ARGS="--cta-config ${STRESS_CTA_VALUES_CHAIN} --eos-config presets/stress-eos-values.yaml ${EXTRA_SPAWN_ARGS}"
     - extra_args=($EXTRA_ARGS)
     - if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
     # Set up stress test
@@ -337,6 +372,7 @@ stress-test:
     # This is because we check for the libraries in use before we start
     - ./run_systemtest.sh --namespace ${NAMESPACE}
                           --keep-namespace
+                          --publish-telemetry
                           --cta-image-tag ${IMAGE_TAG}
                           --catalogue-config ${CATALOGUE_CONFIG}
                           --scheduler-config ${SCHEDULER_CONFIG}
@@ -348,7 +384,7 @@ stress-test:
     - ./stress_test.sh -n ${NAMESPACE} ${EXTRA_STRESS_TEST_OPTIONS}
   after_script:
     - |
-      if [ "${KEEP_STRESS_TEST_NAMESPACE}" == "TRUE" ]; then
+      if $[[ inputs.keep-stress-test-namespace ]]; then
         echo "Skipping deletion of stress test namespace ${NAMESPACE}"
         exit 0
       fi
@@ -376,8 +412,11 @@ stress-test-python:
     # Image jobs are optional because we may want run with existing docker images
     - job: build-cta-images
       optional: true
+      parallel:
+        matrix:
+          - TARGET_NAME: *cta-system-test-image-targets
   rules:
-    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
     - when: manual
       allow_failure: true  # Otherwise this blocks the pipeline
@@ -397,17 +436,13 @@ stress-test-python:
     - *setup-k8s-test-variables
   script:
     - |
-      if [[ $PUBLISH_TELEMETRY_METRICS == "TRUE" ]]; then
-        EXTRA_SPAWN_ARGS+=" --publish-telemetry"
-      fi
-    - |
-      if [[ "${SCHEDULER_TYPE}" == "pgsched" ]]; then
+      if [[ "$[[ inputs.scheduler-type ]]" == "pgsched" ]]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
         EXTRA_PYTEST_ARGS+=" --test-config config/test_pgsched_params.toml"
         EXTRA_SPAWN_ARGS+=" --one-logical-library"
-        STRESS_CTA_VALUES_CHAIN="${DEFAULT_CTA_VALUES_CHAIN},presets/stress-cta-pgsched-values.yaml"
+        STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-pgsched-values.yaml"
       else
-        STRESS_CTA_VALUES_CHAIN="${DEFAULT_CTA_VALUES_CHAIN},presets/stress-cta-values.yaml"
+        STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-values.yaml"
       fi
     - if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
     # Set up stress test
@@ -418,9 +453,10 @@ stress-test-python:
                            --reset-catalogue
                            --reset-scheduler
                            --no-setup
+                           --publish-telemetry
                            --cta-image-tag ${IMAGE_TAG}
                            --cta-config ${STRESS_CTA_VALUES_CHAIN}
-                           --eos-config ${STRESS_EOS_VALUES_FILE}
+                           --eos-config presets/stress-eos-values.yaml
                            --catalogue-config ${CATALOGUE_CONFIG}
                            --scheduler-config ${SCHEDULER_CONFIG}
                            --chart-install-timeout 15
@@ -434,7 +470,7 @@ stress-test-python:
                                   2>&1  # Gitlab screws the ordering of stdout and stderr. See https://gitlab.com/gitlab-org/gitlab/-/issues/440824
   after_script:
     - |
-      if [[ "${KEEP_STRESS_TEST_NAMESPACE}" == "TRUE" ]]; then
+      if $[[ inputs.keep-stress-test-namespace ]]; then
         echo "Skipping deletion of stress test namespace ${NAMESPACE}"
         exit 0
       fi

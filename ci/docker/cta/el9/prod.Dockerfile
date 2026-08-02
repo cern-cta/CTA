@@ -32,7 +32,7 @@ RUN find /rpms -type f -name '*.rpm' -print0 | sort -z | xargs -0 sha256sum > /r
     createrepo_c /rpms
 
 # =========================================================================
-# 2. BASE IMAGE
+#  2. BASE IMAGE
 # =========================================================================
 # hadolint ignore=DL3007
 FROM registry.cern.ch/docker.io/almalinux/9-minimal:latest AS base
@@ -69,7 +69,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     rm -rf /var/lib/dnf/history.*
 
 # =========================================================================
-# SERVICE cta-taped
+#  SERVICE cta-taped
 # =========================================================================
 FROM base AS cta-taped
 
@@ -86,7 +86,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
 CMD ["/usr/bin/cta-taped", "-c", "/etc/cta/cta-taped.conf", "--foreground", "--log-format=json", "--log-to-file=/var/log/cta/cta-taped.log"]
 
 # =========================================================================
-# SERVICE cta-rmcd
+#  SERVICE cta-rmcd
 # =========================================================================
 FROM base AS cta-rmcd
 
@@ -102,7 +102,7 @@ USER cta
 CMD ["/usr/bin/cta-rmcd", "-f", "/dev/smc"]
 
 # =========================================================================
-# SERVICE cta-maintd
+#  SERVICE cta-maintd
 # =========================================================================
 FROM base AS cta-maintd
 
@@ -118,7 +118,7 @@ USER cta
 CMD ["/usr/bin/cta-maintd", "--log-file=/var/log/cta/cta-maintd.log", "--config-strict", "--config /etc/cta/cta-maintd.toml", "--runtime-dir /run/cta"]
 
 # =========================================================================
-# SERVICE cta-frontend
+#  SERVICE cta-frontend
 # =========================================================================
 # TODO: once we split the RPMs, we should explicitly build the workflow-api and admin-api images here
 FROM base AS cta-frontend
@@ -136,7 +136,7 @@ USER cta
 CMD ["/bin/bash", "-c", "/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend.log"]
 
 # =========================================================================
-# TOOLS cta-tools
+#  TOOLS cta-tools
 # =========================================================================
 FROM base AS cta-tools
 
@@ -156,7 +156,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
 ENTRYPOINT ["/bin/bash"]
 
 # =========================================================================
-# TOOLS cta-debug
+#  TOOLS cta-debug
 # =========================================================================
 FROM base AS cta-debug
 

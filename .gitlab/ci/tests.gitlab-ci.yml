@@ -1,6 +1,18 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+spec:
+  inputs:
+    platform:
+      type: string
+    enable-internal-repos:
+      type: boolean
+    enable-oracle-support:
+      type: boolean
+    enable-valgrind:
+      type: boolean
+---
+
 .setup-cta-install: &setup-cta-install
   - mkdir -p ${CTAREPODIR}
   - cp -r build_rpm/RPM ${CTAREPODIR}
@@ -9,8 +21,8 @@
   - dnf -y --nogpgcheck install cta-release
   - cta-versionlock apply
   - |
-    if [[ "$ENABLE_INTERNAL_REPOS" == "TRUE" ]]; then
-      cp -f ci/docker/cta/${PLATFORM}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
+    if $[[ inputs.enable-internal-repos ]]; then
+      cp -f ci/docker/cta/$[[ inputs.platform ]]/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
     fi
   - dnf -y --nogpgcheck install cta-integrationtests cta-integrationtests-debuginfo
 
@@ -19,11 +31,11 @@ test-cta-valgrind:
   needs:
     - job: build-cta-rpms
   rules:
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $ENABLE_VALGRIND == "TRUE"
+    - if: '"$[[ inputs.enable-valgrind ]]" == "true"'
       when: on_success
     - when: manual
       allow_failure: true
@@ -45,7 +57,7 @@ integration-test-cta:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - when: on_success
   image: $IMAGE_TEST
@@ -68,7 +80,7 @@ unit-test-cta:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - when: on_success
   image: $IMAGE_TEST
@@ -91,7 +103,7 @@ unit-test-postgresql:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - when: on_success
   image: $IMAGE_TEST
@@ -121,7 +133,7 @@ unit-test-postgresql:
     - echo 'postgresql:postgresql://cta@localhost/cta' > ${CTA_CATALOGUE_CONF}
     - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
     - |
-      if [[ "$ENABLE_VALGRIND" = "TRUE" ]]; then
+      if $[[ inputs.enable-valgrind ]]; then
         valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
       else
         /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
@@ -138,9 +150,9 @@ unit-test-oracle:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $ENABLE_ORACLE_SUPPORT == "FALSE"
+    - if: '"$[[ inputs.enable-oracle-support ]]" == "false"'
       when: never
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - when: on_success
   image: $IMAGE_TEST
@@ -161,7 +173,7 @@ unit-test-oracle:
     - echo yes | cta-catalogue-schema-drop ${CTA_CATALOGUE_CONF}
     - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
     - |
-      if [[ "$ENABLE_VALGRIND" = "TRUE" ]]; then
+      if $[[ inputs.enable-valgrind ]]; then
         valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
       else
         /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
@@ -180,7 +192,7 @@ test-cta-release:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - when: on_success
   image: $IMAGE_TEST
@@ -210,7 +222,7 @@ test-cta-release:
                                   eos-server
                                   eos-client
     - |
-      if [[ $ENABLE_ORACLE_SUPPORT == "TRUE" ]]; then
+      if $[[ inputs.enable-oracle-support ]]; then
         dnf install --nogpgcheck -y cta-lib-catalogue-occi
       fi
     # Check that everything was installed properly

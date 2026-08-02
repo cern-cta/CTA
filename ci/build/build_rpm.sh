@@ -160,7 +160,7 @@ build_rpm() {
     --skip-unit-tests) skip_unit_tests=true ;;
     --oracle-support)
       if [[ $# -gt 1 ]]; then
-        if [[ "$2" = "FALSE" ]]; then
+        if [[ "${2,,}" = "false" ]]; then
           oracle_support=false
         fi
         shift

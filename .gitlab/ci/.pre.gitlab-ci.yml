@@ -1,22 +1,35 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+spec:
+  inputs:
+    custom-cta-image-tag:
+      type: string
+    custom-xrootd-version:
+      type: string
+    platform:
+      type: string
+---
+
 modify-project-json:
   stage: .pre
   rules:
-    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH"
-    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
+    - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH"'
+    - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
+  variables:
+    CUSTOM_CTA_IMAGE_TAG_INPUT: "$[[ inputs.custom-cta-image-tag ]]"
+    CUSTOM_XROOTD_VERSION_INPUT: "$[[ inputs.custom-xrootd-version ]]"
   script:
     - project_json_file="project.json"
     - touch pipeline.env
     # Replace XRootD
-    - trimmed_xrootd_version=$(echo "$CUSTOM_XROOTD_VERSION" | xargs)
+    - trimmed_xrootd_version=$(echo "$CUSTOM_XROOTD_VERSION_INPUT" | xargs)
     - |
       if [[ -n "$trimmed_xrootd_version" ]]; then
         echo "Updating XRootD version to: $trimmed_xrootd_version."
         tmp_file=$(mktemp)
         jq --arg new_xrd_version "$trimmed_xrootd_version" \
-          --arg platform "$PLATFORM" \
+          --arg platform "$[[ inputs.platform ]]" \
           '.platforms[$platform].versionlock["group-xrootd"] = $new_xrd_version' \
           "$project_json_file" > "$tmp_file" && mv "$tmp_file" "$project_json_file"
       else
@@ -42,8 +55,9 @@ modify-project-json:
     # The image tag should be identical to the version, so we simply grab the latest stable relase and assume that is our image tag
     # Note that dotenv reports have lower precedence than pipeline variables (even empty ones), so any variables MUST have a different name
     - |
-      if [[ "$PIPELINE_TYPE" == "REGR_AGAINST_CTA_VERSION" ]] && [[ -z "$CUSTOM_CTA_IMAGE_TAG" ]]; then
-        CTA_REPO_URL="https://cta-public-repo.web.cern.ch/stable/cta-5/${PLATFORM}/cta/x86_64/"
+      CUSTOM_CTA_IMAGE_TAG="$CUSTOM_CTA_IMAGE_TAG_INPUT"
+      if [[ $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION" ]] && [[ -z "$CUSTOM_CTA_IMAGE_TAG" ]]; then
+        CTA_REPO_URL="https://cta-public-repo.web.cern.ch/stable/cta-5/$[[ inputs.platform ]]/cta/x86_64/"
         echo "No CUSTOM_CTA_IMAGE_TAG provided. Getting latest release from: $CTA_REPO_URL"
         CUSTOM_CTA_IMAGE_TAG="v$(dnf -q --repofrompath=temprepo,$CTA_REPO_URL --repo=temprepo repoquery --latest-limit=1 --qf "%{version}-%{release}" cta-taped)"
         # This stable version did not yet have Docker images available, so this is for backward compatibility. Can be removed as soon as we have a later stable release
@@ -51,7 +65,7 @@ modify-project-json:
           CUSTOM_CTA_IMAGE_TAG="v5.11.19.0-2.el9"
         fi
         echo "Using latest stable release: $CUSTOM_CTA_IMAGE_TAG"
-        # Note the slightly different name. This is due to CI variable precedence
+        # Keep the generated runtime value distinct from the input-backed job variable.
         echo "CUSTOM_CTA_IMAGE_TAG_ENV=$CUSTOM_CTA_IMAGE_TAG" >> pipeline.env
       fi
     # Done
@@ -67,7 +81,7 @@ modify-project-json:
 generate-pipeline-images-tag:
   stage: .pre
   rules:
-    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
   image: $IMAGE_DEFAULT
   variables:
     GIT_SUBMODULE_STRATEGY: "none"
