@@ -24,7 +24,12 @@ from cta_version import (  # noqa: E402
 )
 from ci.release.git_repo import Git  # noqa: E402
 from gitlab_api import GitLabAPI, GitLabAPIError  # noqa: E402
-from release_cli import MERGE_REQUEST_LABELS, ReleaseService, merge_request_description  # noqa: E402
+from release_cli import (  # noqa: E402
+    MERGE_REQUEST_LABELS,
+    ReleaseService,
+    authenticated_user_id,
+    merge_request_description,
+)
 from release_cli import ReleaseWorkflowError  # noqa: E402
 from release_config import ReleaseConfig  # noqa: E402
 
@@ -324,9 +329,20 @@ class DiscoveryTest(unittest.TestCase):
         description = merge_request_description("v5.12.0.0-1", 42)
         assert description.startswith("### Description\n\n")
         assert "Updates the changelog in preparation for release v5.12.0.0-1." in description
-        assert "Closes #42" in description
+        assert "See #42" in description
         assert "\n\n### Checklist\n\n" in description
         assert MERGE_REQUEST_LABELS == ("type::release", "priority::high")
+
+    def test_release_merge_request_assigns_authenticated_user(self) -> None:
+        assert authenticated_user_id({"id": 42, "username": "release-manager"}) == 42
+
+    def test_prepare_rejects_authenticated_user_without_numeric_id(self) -> None:
+        self.api.authenticate.return_value = {"username": "release-manager"}
+        with (
+            patch.object(self.service.git, "validate_repository", return_value="abc123"),
+            pytest.raises(ReleaseWorkflowError, match="no valid numeric ID"),
+        ):
+            self.service.prepare_release("v5.12.0.0-1")
 
 
 if __name__ == "__main__":
