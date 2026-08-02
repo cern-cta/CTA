@@ -233,10 +233,10 @@ workflow:
   auto_cancel:
     on_new_commit: interruptible
   rules:
-    # Pipeline image refreshes are only allowed on the default branch, either from the weekly schedule or manually.
-    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && ($CI_PIPELINE_SOURCE == "schedule" || $CI_PIPELINE_SOURCE == "web")'
+    # Allow scheduled, manual, and API-triggered pipeline-image refreshes on the selected ref.
     - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
-      when: never
+      auto_cancel:
+        on_new_commit: none
     # If we are in a merge request and there are no changes, don't run the pipeline
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       changes:
