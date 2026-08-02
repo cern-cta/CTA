@@ -193,7 +193,6 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory(maintd)
   add_subdirectory(statistics)
   add_subdirectory(tools)
-  add_subdirectory(cta-release)
 
 ENDIF(DEFINED PackageOnly)
 
