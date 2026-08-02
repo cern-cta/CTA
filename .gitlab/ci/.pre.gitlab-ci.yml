@@ -38,7 +38,7 @@ modify-project-json:
     # Replace EOS image tag
     - trimmed_eos_image_tag=$(echo "$CUSTOM_EOS_IMAGE_TAG" | xargs)
     # Grab the latest stable EOS release if not provided
-    # EOS uses "el-9" instead of the input's "el9" spelling, so the repository path is intentionally fixed.
+    # Note that EOS uses "el-9" instead of "el9" for the repository >:(, so we just hardcode the platform instead of relying on $PLATFORM
     - |
       if [[ -z "$trimmed_eos_image_tag" ]]; then
         EOS_REPO_URL="https://storage-ci.web.cern.ch/storage-ci/eos/diopside/tag/testing/el-9/x86_64/"
@@ -53,7 +53,7 @@ modify-project-json:
           "$project_json_file" > "$tmp_file" && mv "$tmp_file" "$project_json_file"
     # Populate the latest CTA image tag if necessary in a dotenv file so that we can use this later on
     # The image tag should be identical to the version, so we simply grab the latest stable relase and assume that is our image tag
-    # Publish an automatically resolved tag separately from the immutable input.
+    # Note that dotenv reports have lower precedence than pipeline variables (even empty ones), so any variables MUST have a different name
     - |
       CUSTOM_CTA_IMAGE_TAG="$CUSTOM_CTA_IMAGE_TAG_INPUT"
       if [[ $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION" ]] && [[ -z "$CUSTOM_CTA_IMAGE_TAG" ]]; then

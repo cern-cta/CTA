@@ -50,11 +50,11 @@ build-cta-rpms:
   image: $IMAGE_BUILD
   variables:
     CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
+    # These inputs are available as variables as certain jobs below override them
     CMAKE_BUILD_TYPE: "$[[ inputs.cmake-build-type ]]"
     SCHEDULER_TYPE: "$[[ inputs.scheduler-type ]]"
     BUILD_PATH: "build_rpm/RPM/RPMS"
     XRD_SSI_PATH: "xrootd-ssi-protobuf-interface"
-    RPM_SIZE_METRICS_ID: "relwithdebinfo" # Default build is a relwithdebinfo build
     DNF_CACHE_DIR: "$CI_PROJECT_DIR/.dnf_cache"
     # Will only be used if ccache is enabled
     CCACHE_BASEDIR: "/builds/cta"
@@ -150,7 +150,6 @@ build-cta-rpms-no-cache:
   variables:
     ENABLE_CCACHE: "false"
     ENABLE_DEBUG_INFO: "FALSE"
-    RPM_SIZE_METRICS_ID: "relwithdebinfo_no_cache"
   cache: [] # Explicitly disable the cache
 
 
@@ -162,7 +161,6 @@ build-cta-rpms-pgsched:
     # so this will always run, even if the pipeline type was already postgres
     SCHEDULER_TYPE: "pgsched"
     ENABLE_CCACHE: "false"
-    RPM_SIZE_METRICS_ID: "relwithdebinfo_pgsched_no_cache"
   # Disable artifacts
   artifacts:
     paths: []
@@ -181,7 +179,6 @@ build-cta-rpms-debug:
     - !reference [build-cta-rpms, rules]
   variables:
     CMAKE_BUILD_TYPE: "Debug"
-    RPM_SIZE_METRICS_ID: "debug_no_cache"
     ENABLE_CCACHE: "false"
   # Disable artifacts
   artifacts:

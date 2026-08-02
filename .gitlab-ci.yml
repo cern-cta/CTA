@@ -155,11 +155,7 @@ variables:
   IMAGE_DOCKER_LINT: "registry.cern.ch/docker.io/hadolint/hadolint:v2.12.0-alpine"
   IMAGE_LICENSE_CHECK: "registry.cern.ch/docker.io/fsfe/reuse:6.2"
 
-  # Transitional aliases for downstream pipelines that still pass legacy variables.
-  # Remove these after all callers have migrated to trigger:inputs. Pipeline variables
-  # have higher precedence than these defaults, so legacy values win when both are set.
-  # Until then, the project must continue to allow the upstream trigger identity to use
-  # pipeline variables instead of setting the minimum role to "No one allowed".
+  # Should be removed as soon as EOS triggers the CTA pipeline with the new inputs instead of legacy variables.
   PIPELINE_TYPE: "$[[ inputs.pipeline-type ]]"
   CUSTOM_EOS_IMAGE_TAG: "$[[ inputs.custom-eos-image-tag ]]"
 
@@ -180,7 +176,7 @@ variables:
   # Git checkout
   GIT_STRATEGY: "fetch"
   GIT_SUBMODULE_STRATEGY: "recursive"
-  GIT_DEPTH: "1"
+  GIT_DEPTH: "10"
   GIT_SUBMODULE_DEPTH: "1"
 
   # Artifact and cache performance
