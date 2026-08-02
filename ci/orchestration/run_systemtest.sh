@@ -39,9 +39,10 @@ usage() {
 }
 
 execute_cmd_with_log() {
-  mycmd=$1
+  local mycmd="$1"
+  local logfile
   logfile=$(realpath "$2")
-  timeout=$3
+  local timeout="$3"
   start_time=$(date +%s)
   echo "================================================================================"
   echo "Launching ${mycmd}"

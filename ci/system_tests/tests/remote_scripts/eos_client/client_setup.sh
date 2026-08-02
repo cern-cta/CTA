@@ -87,13 +87,10 @@ done
 shift $((OPTIND-1))
 
 
-if [[ -n ${GFAL2_PROTOCOL} ]]; then
-    # Test gfal protocol is supported.
-    if [[ ! "${GFAL2_PROTOCOL}" =~ ^(https|root)$ ]]; then
-      echo "Invalid gfal2 protocol: ${GFAL2_PROTOCOL}"
-      echo "Current supported protocols: https, root"
-      exit 1
-    fi
+if [[ -n ${GFAL2_PROTOCOL} && ! ${GFAL2_PROTOCOL} =~ ^(https|root)$ ]]; then
+    echo "Invalid gfal2 protocol: ${GFAL2_PROTOCOL}"
+    echo "Current supported protocols: https, root"
+    exit 1
 fi
 
 if [[ ! -z "${error}" ]]; then

@@ -16,9 +16,10 @@ TEST_FAILED=0
 
 
 log_header() {
+    local message="$1"
     echo "" | tee -a "${LOG_FILE}"
     echo "========================================" | tee -a "${LOG_FILE}"
-    echo "$1" | tee -a "${LOG_FILE}"
+    echo "$message" | tee -a "${LOG_FILE}"
     echo "========================================" | tee -a "${LOG_FILE}"
 }
 
