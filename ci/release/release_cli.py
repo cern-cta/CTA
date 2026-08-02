@@ -56,6 +56,14 @@ def merge_request_description(version: str, issue_iid: int) -> str:
     )
 
 
+def authenticated_user_id(authenticated_user: dict[str, Any]) -> int:
+    """Return the validated numeric ID of the authenticated GitLab user."""
+    user_id = authenticated_user.get("id")
+    if type(user_id) is not int:
+        raise ReleaseWorkflowError("Authenticated GitLab user has no valid numeric ID")
+    return user_id
+
+
 def info(message: str) -> None:
     """Print one high-level release workflow step."""
     print(f"==> {message}")
@@ -322,7 +330,7 @@ class ReleaseService:
         info("Validating the local repository")
         commit = self.git.validate_repository(self.config.default_branch, self.config.remote, fetch=not self.dry_run)
         info("Checking GitLab authentication")
-        self.api.authenticate()
+        user_id = authenticated_user_id(self.api.authenticate())
         info(f"Checking release state for {version.text}")
         existing_mr = self.find_release_merge_request(version.text)
         if existing_mr and existing_mr.get("state") == "merged":
@@ -391,6 +399,8 @@ class ReleaseService:
                     "title": self.config.merge_request_title(version.text),
                     "description": merge_request_description(version.text, issue["iid"]),
                     "labels": ",".join(MERGE_REQUEST_LABELS),
+                    "assignee_ids": [user_id],
+                    "reviewer_ids": [user_id],
                     "remove_source_branch": True,
                     "squash": True,
                 },
