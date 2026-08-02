@@ -30,9 +30,13 @@ update-pipeline-image-version:
   rules:
     - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: on_success
+      variables:
+        PIPELINE_IMAGE_AUTO_MERGE: "true"
     - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES" && $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
       when: manual
       allow_failure: true
+      variables:
+        PIPELINE_IMAGE_AUTO_MERGE: "false"
   image: $IMAGE_RELEASE
   variables:
     GIT_SUBMODULE_STRATEGY: "none"
@@ -46,3 +50,4 @@ update-pipeline-image-version:
         --source-branch "$PIPELINE_IMAGE_UPDATE_BRANCH"
         --version "$NEW_PIPELINE_IMAGE_VERSION"
         --triggering-user-id "$GITLAB_USER_ID"
+        --auto-merge "$PIPELINE_IMAGE_AUTO_MERGE"

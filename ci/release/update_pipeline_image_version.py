@@ -56,7 +56,7 @@ def merge_request_title(version: str) -> str:
 def merge_request_description(version: str) -> str:
     return (
         "### Description\n\n"
-        "Automated weekly refresh of the complete pipeline-image set.\n"
+        "Automated weekly refresh of the complete pipeline-image set.\n\n"
         f"Shared images were published as {version} and platform-specific images as "
         f"{version}.<platform> before this merge request was created.\n\n"
         "### Checklist\n\n"
@@ -186,6 +186,7 @@ def wait_for_merge_request_readiness(
     *,
     timeout_seconds: int = MERGE_REQUEST_READY_TIMEOUT_SECONDS,
     poll_interval_seconds: int = MERGE_REQUEST_POLL_INTERVAL_SECONDS,
+    additional_transient_statuses: frozenset[str] = frozenset(),
 ) -> dict[str, Any]:
     attempts = max(1, timeout_seconds // max(1, poll_interval_seconds))
     last_status = "unknown"
@@ -205,7 +206,8 @@ def wait_for_merge_request_readiness(
             raise PipelineImageUpdateError(f"Merge request !{iid} source SHA changed while waiting")
 
         last_status = str(merge_request.get("detailed_merge_status", "unknown"))
-        if merge_request.get("prepared_at") and last_status not in TRANSIENT_MERGE_STATUSES:
+        transient_statuses = TRANSIENT_MERGE_STATUSES | additional_transient_statuses
+        if merge_request.get("prepared_at") and last_status not in transient_statuses:
             return merge_request
 
         if attempt + 1 < attempts:
@@ -213,6 +215,29 @@ def wait_for_merge_request_readiness(
             time.sleep(poll_interval_seconds)
 
     raise PipelineImageUpdateError(f"Timed out waiting for merge request !{iid} readiness (last status: {last_status})")
+
+
+def wait_for_merge_request_approval(
+    api: GitLabAPI,
+    iid: int,
+    *,
+    timeout_seconds: int = MERGE_REQUEST_READY_TIMEOUT_SECONDS,
+    poll_interval_seconds: int = MERGE_REQUEST_POLL_INTERVAL_SECONDS,
+) -> None:
+    attempts = max(1, timeout_seconds // max(1, poll_interval_seconds))
+
+    for attempt in range(attempts):
+        approval_state = api.get(f"merge_requests/{iid}/approval_state")
+        if not isinstance(approval_state, dict):
+            raise PipelineImageUpdateError(f"Failed to query approval state of merge request !{iid}")
+        if approval_state.get("approved") is True:
+            return
+
+        if attempt + 1 < attempts:
+            print(f"Waiting for merge request !{iid} approval to become effective")
+            time.sleep(poll_interval_seconds)
+
+    raise PipelineImageUpdateError(f"Merge request !{iid} did not satisfy its approval rules before the timeout")
 
 
 def approve_and_enable_auto_merge(api: GitLabAPI, merge_request: dict[str, Any]) -> None:
@@ -226,9 +251,13 @@ def approve_and_enable_auto_merge(api: GitLabAPI, merge_request: dict[str, Any])
     if not isinstance(approved, dict):
         raise PipelineImageUpdateError(f"Failed to approve merge request !{iid}")
 
-    merge_request = wait_for_merge_request_readiness(api, iid, sha)
-    if merge_request.get("detailed_merge_status") == "not_approved":
-        raise PipelineImageUpdateError(f"Merge request !{iid} is still missing required approvals")
+    wait_for_merge_request_approval(api, iid)
+    merge_request = wait_for_merge_request_readiness(
+        api,
+        iid,
+        sha,
+        additional_transient_statuses=frozenset({"not_approved"}),
+    )
 
     if merge_request.get("merge_when_pipeline_succeeds") is True:
         return
@@ -252,13 +281,17 @@ def update_pipeline_image_release(
     target_branch: str,
     version: str,
     triggering_user_id: int,
+    auto_merge: bool,
 ) -> str:
     title = merge_request_title(version)
     update_version_file(api, source_branch, target_branch, version, title)
     merge_request = create_or_refresh_merge_request(
         api, source_branch, target_branch, title, version, triggering_user_id
     )
-    approve_and_enable_auto_merge(api, merge_request)
+    if auto_merge:
+        approve_and_enable_auto_merge(api, merge_request)
+    else:
+        print("Automatic approval and merge are disabled for this pipeline ref")
     return str(merge_request.get("web_url", f"!{merge_request['iid']}"))
 
 
@@ -273,6 +306,7 @@ def main() -> int:
     parser.add_argument("--target-branch", required=True)
     parser.add_argument("--version", required=True)
     parser.add_argument("--triggering-user-id", required=True, type=int)
+    parser.add_argument("--auto-merge", required=True, choices=("true", "false"))
     args = parser.parse_args()
 
     try:
@@ -282,6 +316,7 @@ def main() -> int:
             args.target_branch,
             args.version,
             args.triggering_user_id,
+            args.auto_merge == "true",
         )
     except (PipelineImageUpdateError, ValueError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
