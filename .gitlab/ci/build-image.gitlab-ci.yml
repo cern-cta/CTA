@@ -19,6 +19,8 @@
   variables:
     CONTAINER_STORAGE: "/builds/container-storage"
     GIT_SUBMODULE_STRATEGY: "none"
+     # If necessary, add additional whitelisted (private!) registries for images containing Oracle RPMs here, separated by spaces
+    ORACLE_RPM_REGISTRY_WHITELIST: ""
   before_script:
     # Configure storage. See https://gitlab.cern.ch/gitlabci-examples/build_docker_image/-/blob/fce98393aab8f3ffca3b8449036ccb02275c8a46/.gitlab-ci.yml#L19
     - mkdir -p "${CONTAINER_STORAGE}" ~/.config/containers
@@ -40,6 +42,29 @@
         -u "$DOCKER_LOGIN_USERNAME"
         --password-stdin
         "$DOCKER_IMAGE_REGISTRY"
+    # Oracle RPMs are not allowed in public images. This function checks for Oracle RPMs in the image and refuses to publish it if any are found
+    - |
+      check_oracle_rpms_for_public_image() {
+        local image_ref="$1"
+        local private_prefix="${DOCKER_IMAGE_REGISTRY}/${DOCKER_PRIVATE_REGISTRY_PREFIX}/"
+        local allowed_prefix
+        for allowed_prefix in "$private_prefix" $ORACLE_RPM_REGISTRY_WHITELIST; do
+          if [[ "$image_ref" == "$allowed_prefix"* ]]; then
+            echo "Skipping Oracle RPM check for whitelisted image destination: ${image_ref}"
+            return
+          fi
+        done
+
+        local check_container installed_rpms oracle_rpms
+        check_container="$(buildah from "$image_ref")"
+        installed_rpms="$(buildah run "$check_container" -- rpm -qa)"
+        buildah rm "$check_container"
+        if oracle_rpms="$(grep -Ei '(oracle|occi)' <<< "$installed_rpms")"; then
+          echo "Refusing to publish an image containing Oracle-related RPMs:"
+          echo "$oracle_rpms"
+          return 1
+        fi
+      }
 
 ###############################################
 # Build CTA Images
@@ -54,11 +79,9 @@
     - job: modify-project-json
       optional: true
   rules:
-    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
-      when: never
-    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
-      when: never
-    - when: on_success
+    - if: $PIPELINE_TYPE == "DEFAULT" || $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
+      when: on_success
+    - when: never
   variables:
     CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     DOCKERFILE: ci/docker/cta/${PLATFORM}/prod.Dockerfile
@@ -66,15 +89,6 @@
     RPM_CONTEXT: ${CI_PROJECT_DIR}/build_rpm/RPM/RPMS/x86_64
     EXTRA_BUILD_ARGS: ""
   script:
-    # Keep an explicit registry whitelist so images containing Oracle RPMs cannot be published publicly.
-    - |
-      case "$IMAGE_REF" in
-        gitlab-registry.cern.ch/cta/ctageneric/*) ;;
-        *)
-          echo "Refusing to push image to non-whitelisted registry: $IMAGE_REF"
-          exit 1
-          ;;
-      esac
     - echo "Building ${TARGET_NAME}"
     - cd "$(dirname "${DOCKERFILE}")"
     - DOCKERFILE_NAME="$(basename "${DOCKERFILE}")"
@@ -92,6 +106,7 @@
         BUILDAH_ARGS+=($EXTRA_BUILD_ARGS)
       fi
     - buildah bud "${BUILDAH_ARGS[@]}" .
+    - check_oracle_rpms_for_public_image "$IMAGE_REF"
     - buildah push "${IMAGE_REF}"
 
 build-cta-images:
@@ -120,7 +135,7 @@ build-pipeline-images:
   extends: .build-image
   stage: build:image
   needs:
-    - job: prepare-pipeline-images
+    - job: generate-pipeline-images-tag
       artifacts: true
   rules:
     - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
@@ -152,6 +167,7 @@ build-pipeline-images:
       esac
     - echo "Building ${IMAGE_REF} from ${DOCKERFILE}"
     - buildah bud --file "${DOCKERFILE}" --tag "${IMAGE_REF}" "$CI_PROJECT_DIR"
+    - if [[ "$IMAGE_SCOPE" == "platform" ]]; then check_oracle_rpms_for_public_image "$IMAGE_REF"; fi
     - buildah push "$IMAGE_REF"
   parallel:
     matrix:

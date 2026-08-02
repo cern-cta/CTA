@@ -6,6 +6,8 @@ prepare-rootfs:
   needs:
     - job: build-cta-rpms
   rules:
+    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+      when: never
     - if: $ENABLE_SBOM_GENERATION == "TRUE"
       when: on_success
     - when: never
@@ -52,6 +54,8 @@ generate-sbom-trivy:
   needs:
     - job: prepare-rootfs
   rules:
+    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+      when: never
     - if: $ENABLE_SBOM_GENERATION == "TRUE"
       when: on_success
     - when: never
@@ -80,6 +84,8 @@ enrich-sbom-cern-info:
   needs:
     - job: generate-sbom-trivy
   rules:
+    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+      when: never
     - if: $ENABLE_SBOM_GENERATION == "TRUE"
       when: on_success
     - when: never
@@ -112,6 +118,8 @@ score-sbom:
   needs:
     - job: enrich-sbom-cern-info
   rules:
+    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+      when: never
     - if: $ENABLE_SBOM_GENERATION == "TRUE"
       when: on_success
     - when: never

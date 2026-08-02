@@ -37,6 +37,8 @@
     - job: build-cta-images
       optional: true
   rules:
+    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+      when: never
     - if: $CI_COMMIT_TAG
       when: never
     - when: on_success
@@ -95,6 +97,8 @@
     - job: build-cta-images
       optional: true
   rules:
+    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+      when: never
     - if: $CI_COMMIT_TAG
       when: never
     - when: on_success
@@ -214,6 +218,8 @@ test-cta-tools:
 
 .manual-rules:
   rules:
+    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+      when: never
     # For pivot CTA releases: vX.Y.0
     - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^.*\.0\.[0-9]+-[^-]*$/
       when: on_success
@@ -270,6 +276,8 @@ test-regression-dCache:
     - .kubernetes-test
   stage: system-test
   rules:
+    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+      when: never
     - when: manual
       allow_failure: true
     - if: $ENABLE_DCACHE_TESTS == "TRUE"
@@ -291,6 +299,8 @@ stress-test:
     - job: build-cta-images
       optional: true
   rules:
+    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+      when: never
     - if: $CI_COMMIT_TAG
       when: never
     - when: manual
@@ -367,6 +377,8 @@ stress-test-python:
     - job: build-cta-images
       optional: true
   rules:
+    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+      when: never
     - when: manual
       allow_failure: true  # Otherwise this blocks the pipeline
   variables:

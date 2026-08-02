@@ -64,7 +64,7 @@ modify-project-json:
       dotenv: pipeline.env
 
 
-prepare-pipeline-images:
+generate-pipeline-images-tag:
   stage: .pre
   rules:
     - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
@@ -72,7 +72,6 @@ prepare-pipeline-images:
   variables:
     GIT_SUBMODULE_STRATEGY: "none"
   script:
-    - python3 ./ci/checks/validate_ci_input_variables.py
     # A distinct name is required because dotenv values cannot override root pipeline variables.
     - NEW_PIPELINE_IMAGE_VERSION="$(date -u +%Y-%m-%d)-${CI_PIPELINE_ID}"
     - echo "Preparing pipeline image release ${NEW_PIPELINE_IMAGE_VERSION}"

@@ -23,7 +23,7 @@ cancel-on-failure:
 update-pipeline-image-version:
   stage: .post
   needs:
-    - job: prepare-pipeline-images
+    - job: generate-pipeline-images-tag
       artifacts: true
     - job: build-pipeline-images
       artifacts: false
