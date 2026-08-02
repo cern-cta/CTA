@@ -14,7 +14,6 @@ from gitlabapi import GitLabAPI
 
 PIPELINE_CONFIG_PATH = ".gitlab-ci.yml"
 VERSION_PATTERN = re.compile(r'^(  PIPELINE_IMAGE_VERSION: ")[^"]+("\s*)$', re.MULTILINE)
-SHARED_IMAGE_VARIABLES = ("IMAGE_DEFAULT", "IMAGE_LINT", "IMAGE_RELEASE", "IMAGE_DANGER")
 
 
 class PipelineImageUpdateError(Exception):
@@ -31,20 +30,22 @@ def replace_pipeline_image_version(content: str, version: str) -> str:
     return updated
 
 
-def use_platform_agnostic_shared_image_tags(content: str) -> str:
-    """Remove the legacy platform suffix from each shared pipeline-image reference."""
-    updated = content
-    for variable in SHARED_IMAGE_VARIABLES:
-        pattern = re.compile(
-            rf'^(  {variable}: "[^"]*:\$\{{PIPELINE_IMAGE_VERSION\}})(?:\.\$\{{PLATFORM\}})?("\s*)$',
-            re.MULTILINE,
+def require_single_line_change(original: str, updated: str) -> None:
+    """Ensure the resulting commit replaces exactly one line."""
+    original_lines = original.splitlines(keepends=True)
+    updated_lines = updated.splitlines(keepends=True)
+    if len(original_lines) != len(updated_lines):
+        raise ValueError(f"Expected the update to replace exactly one line in {PIPELINE_CONFIG_PATH}")
+
+    changed_lines = sum(before != after for before, after in zip(original_lines, updated_lines))
+    if changed_lines != 1:
+        raise ValueError(
+            f"Expected the update to replace exactly one line in {PIPELINE_CONFIG_PATH}, found {changed_lines}"
         )
-        updated, replacements = pattern.subn(r"\g<1>\g<2>", updated)
-        if replacements != 1:
-            raise ValueError(
-                f"Expected exactly one {variable} assignment in {PIPELINE_CONFIG_PATH}, found {replacements}"
-            )
-    return updated
+
+
+def merge_request_title(version: str) -> str:
+    return f'[CI] Update pipeline images to "{version}"'
 
 
 def decode_repository_file(file_metadata: dict[str, Any]) -> str:
@@ -77,22 +78,26 @@ def update_version_file(
     source_branch: str,
     target_branch: str,
     version: str,
+    commit_title: str,
 ) -> bool:
     target_file = get_repository_file(api, target_branch)
-    updated_content = replace_pipeline_image_version(decode_repository_file(target_file), version)
-    updated_content = use_platform_agnostic_shared_image_tags(updated_content)
+    target_content = decode_repository_file(target_file)
+    updated_content = replace_pipeline_image_version(target_content, version)
+    require_single_line_change(target_content, updated_content)
 
     ensure_source_branch(api, source_branch, target_branch)
     source_file = get_repository_file(api, source_branch)
-    if decode_repository_file(source_file) == updated_content:
+    source_content = decode_repository_file(source_file)
+    if source_content == updated_content:
         print(f"{PIPELINE_CONFIG_PATH} already selects pipeline image release {version}")
         return False
+    require_single_line_change(source_content, updated_content)
 
     result = api.put(
         f"repository/files/{quote(PIPELINE_CONFIG_PATH, safe='')}",
         json={
             "branch": source_branch,
-            "commit_message": f'[CI] Update pipeline image version to "{version}"',
+            "commit_message": commit_title,
             "content": updated_content,
             "last_commit_id": source_file.get("last_commit_id"),
         },
@@ -106,9 +111,9 @@ def create_or_refresh_merge_request(
     api: GitLabAPI,
     source_branch: str,
     target_branch: str,
+    title: str,
     version: str,
-) -> str:
-    title = f'[CI] Update pipeline images to "{version}"'
+) -> dict[str, Any]:
     merge_requests = api.get(
         "merge_requests",
         params={"state": "opened", "source_branch": source_branch, "target_branch": target_branch},
@@ -124,7 +129,9 @@ def create_or_refresh_merge_request(
         refreshed = api.put(f"merge_requests/{iid}", json={"title": title})
         if not isinstance(refreshed, dict):
             raise PipelineImageUpdateError(f"Failed to refresh merge request !{iid}")
-        return str(refreshed.get("web_url", merge_request.get("web_url", f"!{iid}")))
+        if "web_url" not in refreshed and "web_url" in merge_request:
+            refreshed["web_url"] = merge_request["web_url"]
+        return refreshed
 
     created = api.post(
         "merge_requests",
@@ -143,7 +150,28 @@ def create_or_refresh_merge_request(
     )
     if not isinstance(created, dict):
         raise PipelineImageUpdateError("Failed to create the pipeline-image update merge request")
-    return str(created.get("web_url", "created merge request"))
+    return created
+
+
+def approve_and_enable_auto_merge(api: GitLabAPI, merge_request: dict[str, Any]) -> None:
+    iid = merge_request.get("iid")
+    sha = merge_request.get("sha")
+    if not isinstance(iid, int) or not isinstance(sha, str):
+        raise PipelineImageUpdateError("Pipeline-image update merge request has no valid IID or SHA")
+
+    approved = api.post(f"merge_requests/{iid}/approve", json={"sha": sha})
+    if not isinstance(approved, dict):
+        raise PipelineImageUpdateError(f"Failed to approve merge request !{iid}")
+
+    if merge_request.get("merge_when_pipeline_succeeds") is True:
+        return
+
+    auto_merge = api.post(
+        f"merge_trains/merge_requests/{iid}",
+        json={"auto_merge": True, "sha": sha},
+    )
+    if not isinstance(auto_merge, dict):
+        raise PipelineImageUpdateError(f"Failed to enable auto-merge for merge request !{iid}")
 
 
 def update_pipeline_image_release(
@@ -152,8 +180,11 @@ def update_pipeline_image_release(
     target_branch: str,
     version: str,
 ) -> str:
-    update_version_file(api, source_branch, target_branch, version)
-    return create_or_refresh_merge_request(api, source_branch, target_branch, version)
+    title = merge_request_title(version)
+    update_version_file(api, source_branch, target_branch, version, title)
+    merge_request = create_or_refresh_merge_request(api, source_branch, target_branch, title, version)
+    approve_and_enable_auto_merge(api, merge_request)
+    return str(merge_request.get("web_url", f"!{merge_request['iid']}"))
 
 
 def main() -> int:
