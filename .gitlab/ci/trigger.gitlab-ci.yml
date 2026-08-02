@@ -3,14 +3,6 @@
 
 spec:
   inputs:
-    pipeline-type:
-      type: string
-    custom-cta-image-tag:
-      type: string
-    custom-eos-image-tag:
-      type: string
-    custom-xrootd-version:
-      type: string
     platform:
       type: string
     enable-internal-repos:
@@ -54,10 +46,7 @@ spec:
     include:
       - local: .gitlab-ci.yml
         inputs: &child-pipeline-inputs
-          pipeline-type: $PIPELINE_TYPE
-          custom-cta-image-tag: $[[ inputs.custom-cta-image-tag ]]
-          custom-eos-image-tag: $CUSTOM_EOS_IMAGE_TAG
-          custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]
+          # Child variants use the default pipeline
           platform: $[[ inputs.platform ]]
           enable-internal-repos: $[[ inputs.enable-internal-repos ]]
           build-generator: $[[ inputs.build-generator ]]

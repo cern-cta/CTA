@@ -48,7 +48,33 @@ spec:
           options: ["el9"]
           default: "el9"
 
+    scheduler-type:
+      description: "Scheduler implementation to build and test."
+      type: string
+      rules:
+        - if: '$[[ inputs.pipeline-type ]] != "UPDATE_PIPELINE_IMAGES"'
+          options: ["pgsched", "objectstore"]
+          default: "objectstore"
+
+    enable-oracle-support:
+      description: "Enable Oracle support."
     # Boolean values cannot be conditionally hidden yet. See https://gitlab.com/gitlab-org/gitlab/-/issues/587643
+      type: boolean
+      default: true
+
+    enable-address-sanitizer:
+      description: "Compile with Address Sanitizer."
+      type: boolean
+      default: false
+
+    cmake-build-type:
+      description: "CMake build type for pipelines that compile CTA RPMs."
+      type: string
+      rules:
+        - if: '$[[ inputs.pipeline-type ]] == "DEFAULT" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH"'
+          options: ["Release", "Debug", "RelWithDebInfo", "MinSizeRel"]
+          default: "RelWithDebInfo"
+
     enable-internal-repos:
       description: "Use internal yum repositories."
       type: boolean
@@ -62,36 +88,10 @@ spec:
           options: ["Unix Makefiles", "Ninja"]
           default: "Unix Makefiles"
 
-    cmake-build-type:
-      description: "CMake build type for pipelines that compile CTA RPMs."
-      type: string
-      rules:
-        - if: '$[[ inputs.pipeline-type ]] == "DEFAULT" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH"'
-          options: ["Release", "Debug", "RelWithDebInfo", "MinSizeRel"]
-          default: "RelWithDebInfo"
-
-    enable-address-sanitizer:
-      description: "Compile with Address Sanitizer."
-      type: boolean
-      default: false
-
     enable-sbom-generation:
       description: "Generate an SBOM."
       type: boolean
       default: false
-
-    scheduler-type:
-      description: "Scheduler implementation to build and test."
-      type: string
-      rules:
-        - if: '$[[ inputs.pipeline-type ]] != "UPDATE_PIPELINE_IMAGES"'
-          options: ["pgsched", "objectstore"]
-          default: "objectstore"
-
-    enable-oracle-support:
-      description: "Enable Oracle support."
-      type: boolean
-      default: true
 
     # =========================================================================
     # Deployment
@@ -118,7 +118,7 @@ spec:
       default: false
 
     keep-stress-test-namespace:
-      description: "Keep stress-test namespaces for debugging."
+      description: "Keep stress-test namespace for debugging."
       type: boolean
       default: false
 ---
@@ -168,23 +168,22 @@ variables:
   ENABLE_CCACHE: "false"
   BUILD_CACHE_POLICY: "pull"
 
-  # Registry publishing
+  # Registry publishing configuration and credentials
   DOCKER_IMAGE_REGISTRY: "gitlab-registry.cern.ch"
   DOCKER_PRIVATE_REGISTRY_PREFIX: "cta/ctageneric"
   DOCKER_PUBLIC_REGISTRY_PREFIX: "cta/public_registry"
-  # Configure these as protected, masked project/group variables in GitLab. Never commit their values here.
   DOCKER_PRIVATE_LOGIN_USERNAME: $DOCKER_LOGIN_USERNAME
   DOCKER_PRIVATE_LOGIN_PASSWORD: $DOCKER_LOGIN_PASSWORD
   DOCKER_PUBLIC_LOGIN_USERNAME: "nonempty" # Tokens don't require a username, but GitLab requires a non-empty value for this variable to be set
   DOCKER_PUBLIC_LOGIN_PASSWORD: $REGISTRYTOKEN_publicpush
 
-  # Git checkout and performance
+  # Git checkout
   GIT_STRATEGY: "fetch"
   GIT_SUBMODULE_STRATEGY: "recursive"
   GIT_DEPTH: "1"
   GIT_SUBMODULE_DEPTH: "1"
-  SAST_EXCLUDED_PATHS: "ci,tests,*Test.cpp"
 
+  # Artifact and cache performance
   FF_USE_FASTZIP: "true"
   ARTIFACT_COMPRESSION_LEVEL: "fastest"
   CACHE_COMPRESSION_LEVEL: "fastest"
@@ -217,14 +216,14 @@ workflow:
           - '**/*'
       variables:
         ENABLE_CCACHE: "true"
-        BUILD_CACHE_POLICY: pull-push
+        BUILD_CACHE_POLICY: "pull-push"
         CACHE_BRANCH: '$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME'
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && ($CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "parent_pipeline")
       auto_cancel:
         on_new_commit: none
       variables:
         ENABLE_CCACHE: "true"
-        BUILD_CACHE_POLICY: push  # Ensure clean build and we only rebuild the cache for push events to prevent other pipeline types from screwing with it
+        BUILD_CACHE_POLICY: "push"  # Ensure clean build and we only rebuild the cache for push events to prevent other pipeline types from screwing with it
         CACHE_BRANCH: '$CI_COMMIT_BRANCH'
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG || $CI_PIPELINE_SOURCE == "trigger"
       auto_cancel:
@@ -243,7 +242,24 @@ include:
       custom-cta-image-tag: $[[ inputs.custom-cta-image-tag ]]
       custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]
       platform: $[[ inputs.platform ]]
-  - local: .gitlab/ci/.post.gitlab-ci.yml
+  - local: .gitlab/ci/trigger.gitlab-ci.yml
+    inputs:
+      platform: $[[ inputs.platform ]]
+      enable-internal-repos: $[[ inputs.enable-internal-repos ]]
+      build-generator: $[[ inputs.build-generator ]]
+      cmake-build-type: $[[ inputs.cmake-build-type ]]
+      enable-address-sanitizer: $[[ inputs.enable-address-sanitizer ]]
+      enable-sbom-generation: $[[ inputs.enable-sbom-generation ]]
+      scheduler-type: $[[ inputs.scheduler-type ]]
+      enable-oracle-support: $[[ inputs.enable-oracle-support ]]
+      workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
+      enable-valgrind: $[[ inputs.enable-valgrind ]]
+      enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
+      keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
+  - local: .gitlab/ci/validate.gitlab-ci.yml
+  - local: .gitlab/ci/lint.gitlab-ci.yml
+    inputs:
+      platform: $[[ inputs.platform ]]
   - local: .gitlab/ci/build.gitlab-ci.yml
     inputs:
       platform: $[[ inputs.platform ]]
@@ -258,17 +274,6 @@ include:
       platform: $[[ inputs.platform ]]
       enable-internal-repos: $[[ inputs.enable-internal-repos ]]
       enable-oracle-support: $[[ inputs.enable-oracle-support ]]
-  - local: .gitlab/ci/lint.gitlab-ci.yml
-    inputs:
-      platform: $[[ inputs.platform ]]
-  - local: .gitlab/ci/release.gitlab-ci.yml
-    inputs:
-      platform: $[[ inputs.platform ]]
-      enable-oracle-support: $[[ inputs.enable-oracle-support ]]
-  - local: .gitlab/ci/report.gitlab-ci.yml
-  - local: .gitlab/ci/sbom.gitlab-ci.yml
-    inputs:
-      enable-sbom-generation: $[[ inputs.enable-sbom-generation ]]
   - local: .gitlab/ci/tests.gitlab-ci.yml
     inputs:
       platform: $[[ inputs.platform ]]
@@ -283,22 +288,12 @@ include:
       workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
-  - local: .gitlab/ci/trigger.gitlab-ci.yml
+  - local: .gitlab/ci/sbom.gitlab-ci.yml
     inputs:
-      pipeline-type: $[[ inputs.pipeline-type ]]
-      custom-cta-image-tag: $[[ inputs.custom-cta-image-tag ]]
-      custom-eos-image-tag: $[[ inputs.custom-eos-image-tag ]]
-      custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]
-      platform: $[[ inputs.platform ]]
-      enable-internal-repos: $[[ inputs.enable-internal-repos ]]
-      build-generator: $[[ inputs.build-generator ]]
-      cmake-build-type: $[[ inputs.cmake-build-type ]]
-      enable-address-sanitizer: $[[ inputs.enable-address-sanitizer ]]
       enable-sbom-generation: $[[ inputs.enable-sbom-generation ]]
-      scheduler-type: $[[ inputs.scheduler-type ]]
+  - local: .gitlab/ci/release.gitlab-ci.yml
+    inputs:
+      platform: $[[ inputs.platform ]]
       enable-oracle-support: $[[ inputs.enable-oracle-support ]]
-      workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
-      enable-valgrind: $[[ inputs.enable-valgrind ]]
-      enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
-      keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
-  - local: .gitlab/ci/validate.gitlab-ci.yml
+  - local: .gitlab/ci/report.gitlab-ci.yml
+  - local: .gitlab/ci/.post.gitlab-ci.yml
