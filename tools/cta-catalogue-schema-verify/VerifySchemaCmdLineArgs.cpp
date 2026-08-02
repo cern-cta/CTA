@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "catalogue/VerifySchemaCmdLineArgs.hpp"
+#include "VerifySchemaCmdLineArgs.hpp"
 
 #include "common/exception/CommandLineNotParsed.hpp"
 

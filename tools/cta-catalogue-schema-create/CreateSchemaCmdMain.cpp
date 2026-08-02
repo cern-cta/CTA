@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "catalogue/CreateSchemaCmd.hpp"
+#include "CreateSchemaCmd.hpp"
 
 #include <iostream>
 

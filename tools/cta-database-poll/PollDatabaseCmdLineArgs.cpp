@@ -3,9 +3,11 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "catalogue/CreateSchemaCmdLineArgs.hpp"
+#include "PollDatabaseCmdLineArgs.hpp"
 
 #include "common/exception/CommandLineNotParsed.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/utils/utils.hpp"
 
 #include <getopt.h>
 #include <ostream>
@@ -15,24 +17,20 @@ namespace cta::catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-CreateSchemaCmdLineArgs::CreateSchemaCmdLineArgs(const int argc, char* const* const argv) {
+PollDatabaseCmdLineArgs::PollDatabaseCmdLineArgs(const int argc, char* const* const argv) {
   static struct option longopts[] = {
-    {"help",    no_argument,       nullptr, 'h'},
-    {"version", required_argument, nullptr, 'v'},
-    {nullptr,   0,                 nullptr, 0  }
+    {"help",  no_argument, nullptr, 'h'},
+    {nullptr, 0,           nullptr, 0  }
   };
 
   // Prevent getopt() from printing an error message if it does not recognize
   // an option character
   opterr = 0;
 
-  for (int opt = 0; (opt = getopt_long(argc, argv, ":hv:", longopts, nullptr)) != -1;) {
+  for (int opt = 0; (opt = getopt_long(argc, argv, ":h", longopts, nullptr)) != -1;) {
     switch (opt) {
       case 'h':
         help = true;
-        break;
-      case 'v':
-        catalogueVersion = optarg;
         break;
       case ':':  // Missing parameter
       {
@@ -65,30 +63,36 @@ CreateSchemaCmdLineArgs::CreateSchemaCmdLineArgs(const int argc, char* const* co
 
   // Calculate the number of non-option ARGV-elements
   // Check the number of arguments
-  if (const int nbArgs = argc - optind; nbArgs != 1) {
+  if (const int nbArgs = argc - optind; nbArgs != 2) {
     exception::CommandLineNotParsed ex;
-    ex.getMessage() << "Wrong number of command-line arguments: expected=1 actual=" << nbArgs;
+    ex.getMessage() << "Wrong number of command-line arguments: expected=2 actual=" << nbArgs;
     throw ex;
   }
 
   dbConfigPath = argv[optind];
+
+  // Move on to the next command-line argument
+  optind++;
+
+  numberOfSecondsToKeepPolling = utils::toUint64(argv[optind]);
 }
 
 //------------------------------------------------------------------------------
 // printUsage
 //------------------------------------------------------------------------------
-void CreateSchemaCmdLineArgs::printUsage(std::ostream& os) {
+void PollDatabaseCmdLineArgs::printUsage(std::ostream& os) {
   os << "Usage:" << std::endl
-     << "    cta-catalogue-schema-create databaseConnectionFile [options]" << std::endl
+     << "    cta-database-poll databaseConnectionFile numberOfSecondsToKeepPolling [options]" << std::endl
      << "Where:" << std::endl
      << "    databaseConnectionFile" << std::endl
      << "        The path to the file containing the connection details of the CTA" << std::endl
-     << "        catalogue database" << std::endl
+     << "        catalogue database." << std::endl
+     << "    numberOfSecondsToKeepPolling" << std::endl
+     << "        The total number of seconds cta-database-poll should run before" << std::endl
+     << "        exiting." << std::endl
      << "Options:" << std::endl
      << "    -h,--help" << std::endl
-     << "        Prints this usage message" << std::endl
-     << "    -v,--version" << std::endl
-     << "        Version of the catalogue to be created" << std::endl;
+     << "        Prints this usage message" << std::endl;
 }
 
 }  // namespace cta::catalogue

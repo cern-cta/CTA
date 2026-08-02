@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "catalogue/DropSchemaCmd.hpp"
+#include "DropSchemaCmd.hpp"
 
-#include "catalogue/DropSchemaCmdLineArgs.hpp"
+#include "DropSchemaCmdLineArgs.hpp"
 #include "catalogue/SchemaChecker.hpp"
 #include "common/exception/Exception.hpp"
 #include "rdbms/ConnPool.hpp"

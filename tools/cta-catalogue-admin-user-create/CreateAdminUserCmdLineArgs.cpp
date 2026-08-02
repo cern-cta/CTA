@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "catalogue/DropSchemaCmdLineArgs.hpp"
+#include "CreateAdminUserCmdLineArgs.hpp"
 
 #include "common/exception/CommandLineNotParsed.hpp"
 
@@ -15,20 +15,27 @@ namespace cta::catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-DropSchemaCmdLineArgs::DropSchemaCmdLineArgs(const int argc, char* const* const argv) {
+CreateAdminUserCmdLineArgs::CreateAdminUserCmdLineArgs(const int argc, char* const* const argv) {
   static struct option longopts[] = {
-    {"help",  no_argument, nullptr, 'h'},
-    {nullptr, 0,           nullptr, 0  }
+    {"comment",  required_argument, nullptr, 'm'},
+    {"help",     no_argument,       nullptr, 'h'},
+    {"username", required_argument, nullptr, 'u'},
+    {nullptr,    0,                 nullptr, 0  }
   };
 
-  // Prevent getopt() from printing an error message if it does not recognize
-  // an option character
+  // Prevent getopt() from printing an error message if it does not recognize an option character
   opterr = 0;
 
-  for (int opt = 0; (opt = getopt_long(argc, argv, ":h", longopts, nullptr)) != -1;) {
+  for (int opt = 0; (opt = getopt_long(argc, argv, ":m:hu:", longopts, nullptr)) != -1;) {
     switch (opt) {
+      case 'm':
+        comment = optarg ? optarg : "";
+        break;
       case 'h':
         help = true;
+        break;
+      case 'u':
+        adminUsername = optarg ? optarg : "";
         break;
       case ':':  // Missing parameter
       {
@@ -59,6 +66,14 @@ DropSchemaCmdLineArgs::DropSchemaCmdLineArgs(const int argc, char* const* const 
     return;
   }
 
+  if (adminUsername.empty()) {
+    throw exception::CommandLineNotParsed("The username option must be specified with a non-empty string");
+  }
+
+  if (comment.empty()) {
+    throw exception::CommandLineNotParsed("The comment option must be specified with a non-empty string");
+  }
+
   // Calculate the number of non-option ARGV-elements
   // Check the number of arguments
   if (const int nbArgs = argc - optind; nbArgs != 1) {
@@ -73,16 +88,21 @@ DropSchemaCmdLineArgs::DropSchemaCmdLineArgs(const int argc, char* const* const 
 //------------------------------------------------------------------------------
 // printUsage
 //------------------------------------------------------------------------------
-void DropSchemaCmdLineArgs::printUsage(std::ostream& os) {
+void CreateAdminUserCmdLineArgs::printUsage(std::ostream& os) {
   os << "Usage:" << std::endl
-     << "    cta-catalogue-schema-drop databaseConnectionFile [options]" << std::endl
+     << "    cta-catalogue-admin-user-create databaseConnectionFile -u <username> -m <comment> [-h]" << std::endl
      << "Where:" << std::endl
      << "    databaseConnectionFile" << std::endl
      << "        The path to the file containing the connection details of the CTA" << std::endl
      << "        catalogue database" << std::endl
      << "Options:" << std::endl
+     << "    -u,--username <username>" << std::endl
+     << "        The name of the admin user to be created" << std::endl
+     << "    -m,--comment <comment>" << std::endl
+     << "        Comment to describe the creation of the admin user" << std::endl
      << "    -h,--help" << std::endl
-     << "        Prints this usage message" << std::endl;
+     << "        Prints this usage message" << std::endl
+     << "" << std::endl;
 }
 
 }  // namespace cta::catalogue

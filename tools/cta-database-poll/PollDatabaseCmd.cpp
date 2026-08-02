@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "catalogue/PollDatabaseCmd.hpp"
+#include "PollDatabaseCmd.hpp"
 
+#include "PollDatabaseCmdLineArgs.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
-#include "catalogue/PollDatabaseCmdLineArgs.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
 

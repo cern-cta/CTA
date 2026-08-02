@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "catalogue/CreateAdminUserCmd.hpp"
+#include "CreateAdminUserCmd.hpp"
 
+#include "CreateAdminUserCmdLineArgs.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
-#include "catalogue/CreateAdminUserCmdLineArgs.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "rdbms/wrapper/ConnFactoryFactory.hpp"

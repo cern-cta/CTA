@@ -10,7 +10,7 @@ if ! rpm -q --quiet rh-postgresql12-postgresql-server; then
   exit 1
 fi
 
-if [[ !  ( -x ./catalogue/cta-catalogue-schema-create && -x ./tests/cta-rdbmsUnitTests ) ]]; then
+if [[ !  ( -x ./tools/cta-catalogue-schema-create/cta-catalogue-schema-create && -x ./tests/cta-rdbmsUnitTests ) ]]; then
   echo "Please run this script from a build tree of CTA."
   exit 1
 fi
@@ -40,7 +40,7 @@ runuser -u postgres -- ${POSTGRES_BIN}/createuser -E cta
 CTA_CATALOGUE_CONF=$(mktemp)
 echo CTA_CATALOGUE_CONF="${CTA_CATALOGUE_CONF}"
 echo 'postgresql:postgresql://cta@localhost/cta' > "${CTA_CATALOGUE_CONF}"
-./catalogue/cta-catalogue-schema-create "${CTA_CATALOGUE_CONF}"
+./tools/cta-catalogue-schema-create/cta-catalogue-schema-create "${CTA_CATALOGUE_CONF}"
 ./tests/cta-rdbmsUnitTests "${CTA_CATALOGUE_CONF}"
 (cd / ; runuser -u postgres -- ${POSTGRES_BIN}/pg_ctl stop -D ${POSTGRESQL_DATA_DIR})
 rm -rf ${POSTGRESQL_DATA_DIR}
