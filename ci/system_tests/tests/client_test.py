@@ -320,13 +320,8 @@ def test_eosdf(
 ## Both times we should get a success, because when the script is the problem, we allow staging to continue
 
 
-<<<<<<< HEAD
 def test_eosdf_with_nonexistent_script(cta_taped: CtaTapedHost, eos_client: EosClientHost, test_dir: Path) -> None:
-    cta_taped.exec("mv /usr/bin/cta-eosdf.sh /usr/bin/eosdf_newname.sh")
-=======
-def test_eosdf_with_nonexistent_script(cta_taped, eos_client, test_dir):
     cta_taped.exec("sudo mv /usr/bin/cta-eosdf.sh /usr/bin/eosdf_newname.sh")
->>>>>>> 6b2c3014a3 (Remove rawio and user/group)
     try:
         eos_client.exec(f". /tmp/client_env && /tmp/test_eosdf.sh {test_dir}")
         cta_taped.exec(f"grep -q 'No such file or directory' {cta_taped.log_file_path}")
@@ -350,15 +345,10 @@ def test_eosdf_without_executable_permissions(
 # grep for 'could not be used to get the FreeSpace'
 
 
-<<<<<<< HEAD
 def test_eosdf_with_script_that_throws_exception(
     cta_taped: CtaTapedHost, eos_client: EosClientHost, cta_cli: CtaCliHost, test_dir: Path
 ) -> None:
-    cta_taped.exec("sed -i 's|root://$diskInstance|root://nonexistentinstance|g' /usr/bin/cta-eosdf.sh")
-=======
-def test_eosdf_with_script_that_throws_exception(cta_taped, eos_client, cta_cli, test_dir):
     cta_taped.exec("sudo sed -i 's|root://$diskInstance|root://nonexistentinstance|g' /usr/bin/cta-eosdf.sh")
->>>>>>> 6b2c3014a3 (Remove rawio and user/group)
     try:
         eos_client.exec(f". /tmp/client_env && /tmp/test_eosdf.sh {test_dir}")
         cta_taped.exec(f"grep -q 'could not be used to get the FreeSpace' {cta_taped.log_file_path}")
@@ -447,6 +437,7 @@ def test_taped_config_dr_ls_consistency(cta_cli: CtaCliHost, cta_taped: CtaTaped
 # The following are standard for all services using the CTA runtime library
 # For now only cta_maintd is supported, but eventually the frontend and taped should be added here
 
+
 @pytest.mark.parametrize(
     "daemon_fixture",
     [
@@ -455,9 +446,8 @@ def test_taped_config_dr_ls_consistency(cta_cli: CtaCliHost, cta_taped: CtaTaped
 )
 def test_example_config_file_correctness(request: SubRequest, daemon_fixture: str):
     daemon = request.getfixturevalue(daemon_fixture)
-    daemon.exec(
-        f"cta-{daemon.process_name} --config-strict --config /etc/cta/cta-{daemon.process_name}.example.toml --config-check"
-    )
+    config_path = f"/etc/cta/cta-{daemon.process_name}.example.toml"
+    daemon.exec(f"cta-{daemon.process_name} --config-strict --config {config_path} --config-check")
 
 
 @pytest.mark.parametrize(
@@ -480,7 +470,7 @@ def test_runtime_directory_correctness(request: SubRequest, daemon_fixture: str)
         "cta_maintd",
     ],
 )
-def test_reopens_logfile_on_usr1(request: SubRequest, daemon_fixture: str):
+def test_reopens_logfile_on_sighup(request: SubRequest, daemon_fixture: str):
     daemon = request.getfixturevalue(daemon_fixture)
 
     log_file = daemon.log_file_path
@@ -491,14 +481,15 @@ def test_reopens_logfile_on_usr1(request: SubRequest, daemon_fixture: str):
 
     rotated = f"{log_file}.pytest"
 
-    # Move the log file; the CTA daemon should keep writing to this moved location as the file descriptor has not been refreshed
+    # Move the log file; the CTA daemon should keep writing to this moved location
+    # as the file descriptor has not been refreshed yet
     daemon.exec(f"sudo mv {log_file} {rotated}")
     # Create a new log file in the original location
     daemon.exec(f"sudo install -o cta -g tape -m 0644 /dev/null {log_file}")
     new_inode = daemon.exec_with_output(f"stat -Lc '%d:%i' {log_file}")
 
     # Send signal to refresh file descriptor
-    daemon.exec(f"pkill -USR1 -u cta {daemon.process_name}")
+    daemon.exec(f"pkill -SIGHUP -u cta {daemon.process_name}")
     # Wait until it starts writing to the new file
     current_inode = None
 
