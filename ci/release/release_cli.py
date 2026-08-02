@@ -36,10 +36,24 @@ CHANGELOG_CATEGORIES = {
     "performance",
     "other",
 }
+MERGE_REQUEST_LABELS = ("type::release", "priority::high")
 
 
 class ReleaseWorkflowError(RuntimeError):
     """A failure while coordinating an otherwise valid release workflow."""
+
+
+def merge_request_description(version: str, issue_iid: int) -> str:
+    """Build the release changelog merge request description."""
+    return (
+        "### Description\n\n"
+        f"Updates the changelog in preparation for release {version}.\n\n"
+        f"See #{issue_iid}\n\n"
+        "### Checklist\n\n"
+        "- [x] Documentation reflects the changes made.\n"
+        "- [x] Merge Request title is clear, concise, and suitable as a changelog entry. "
+        "See [this link](https://cta.docs.cern.ch/latest/dev/contributing/workflow/#changelog)"
+    )
 
 
 def info(message: str) -> None:
@@ -375,8 +389,8 @@ class ReleaseService:
                     "source_branch": branch,
                     "target_branch": self.config.default_branch,
                     "title": self.config.merge_request_title(version.text),
-                    "description": f"Updates the changelog for {version.text}.\n\nCloses #{issue['iid']}",
-                    "labels": self.config.release_label,
+                    "description": merge_request_description(version.text, issue["iid"]),
+                    "labels": ",".join(MERGE_REQUEST_LABELS),
                     "remove_source_branch": True,
                     "squash": True,
                 },
