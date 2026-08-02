@@ -11,11 +11,10 @@ RUN dnf install -y epel-release && \
     python3 -m pip install -U uv && \
     uv pip install --exclude-newer "14 days" --no-cache-dir -U --system --only-binary :all: \
         cppcheck_codequality jsonschema black ruff detect-secrets pyright[nodejs] && \
-    dnf clean all --enablerepo=\*
-
-# TODO: split this lint image into dedicated images not relying on alma9
-# We don't need it and it will just be painful during the next migration
-RUN git clone --depth=1 --branch "${CPPCHECK_VERSION}" https://github.com/danmar/cppcheck && \
+    dnf clean all --enablerepo=\* && \
+    # Eventually we should split this lint image into dedicated images not relying on alma9
+    # We don't need it and it will just be painful during the next migration
+    git clone --depth=1 --branch "${CPPCHECK_VERSION}" https://github.com/danmar/cppcheck && \
     cd cppcheck && \
     make install MATCHCOMPILER=yes FILESDIR=/usr/share/cppcheck HAVE_RULES=yes \
         CXXFLAGS="-O2 -DNDEBUG -Wall -Wno-sign-compare -Wno-unused-function" -j $(nproc) && \

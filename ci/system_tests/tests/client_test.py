@@ -138,12 +138,9 @@ def test_eos_xrootd_api_fts_compliance(eos_mgm: EosMgmHost) -> None:
     # xrdfs query prepare 0 <paths...> returns JSON detailing the responses arrays
     query_output = eos_mgm.exec_with_output(f"xrdfs root://localhost query prepare 0 {paths_payload}")
 
-    try:
-        response_data = json.loads(query_output)
-        # Safely extract paths from the JSON response items mapping
-        output_paths = [item["path"] for item in response_data.get("responses", [])]
-    except (json.JSONDecodeError, KeyError) as e:
-        pytest.fail(f"Failed to parse compliant JSON out of xrdfs output. Error: {e}. Output: {query_output}")
+    response_data = json.loads(query_output)
+    # Safely extract paths from the JSON response items mapping
+    output_paths = [item["path"] for item in response_data.get("responses", [])]
 
     # Both the order and elements must match exactly
     assert input_paths == output_paths, (
