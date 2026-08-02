@@ -13,6 +13,7 @@ readonly GITLAB_URL="https://gitlab.cern.ch"
 readonly PROJECT_ID="139306"
 readonly REGISTRY="gitlab-registry.cern.ch"
 readonly IMAGE_REPOSITORY="${REGISTRY}/cta/ctageneric/cta-debug"
+readonly DEBUG_IMAGE_JOB_NAME="build-cta-images: [cta-debug]"
 
 readonly CONFIG_DIR="${HOME}/.config/cta-ci-debug"
 readonly TOKEN_FILE="${CONFIG_DIR}/token"
@@ -270,23 +271,23 @@ find_debug_image_job() {
   )"
 
   debug_image_job_id="$(
-    jq -r '
+    jq -r --arg job_name "${DEBUG_IMAGE_JOB_NAME}" '
       .[]
-      | select(.name=="build-cta-debug-image")
+      | select(.name == $job_name)
       | .id
     ' <<< "${jobs}"
   )"
 
   debug_image_job_status="$(
-    jq -r '
+    jq -r --arg job_name "${DEBUG_IMAGE_JOB_NAME}" '
       .[]
-      | select(.name=="build-cta-debug-image")
+      | select(.name == $job_name)
       | .status
     ' <<< "${jobs}"
   )"
 
   [[ -n "${debug_image_job_id}" && "${debug_image_job_id}" != "null" ]] \
-    || die "Could not find build-cta-debug-image job."
+    || die "Could not find ${DEBUG_IMAGE_JOB_NAME} job."
 
 }
 

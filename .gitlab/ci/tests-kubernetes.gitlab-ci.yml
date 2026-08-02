@@ -191,7 +191,9 @@ spec:
       metrics: $METRICS_FILE
       junit: $TEST_REPORT_FILE
 
+# =========================================================================
 # Tests
+# =========================================================================
 
 test-client:
   extends:
@@ -233,18 +235,16 @@ test-cta-tools:
     EXTRA_CTA_HELM_FLAGS: "--set=maintd.routines.repackExpand.replicas=0 --set=maintd.routines.repackReport.replicas=0"
 
 
-# Manually triggered
+# =========================================================================
+# Manual tests
+# =========================================================================
 
 .manual-rules:
   rules:
     - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
-    # For pivot CTA releases: vX.Y.0
-    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^.*\.0\.[0-9]+-[^-]*$/
+    - if: $CI_COMMIT_TAG
       when: on_success
-    # For non-pivot CTA releases
-    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG !~ /^.*\.0\.[0-9]+-[^-]*$/
-      when: manual
       allow_failure: true
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: on_success
@@ -305,6 +305,10 @@ test-regression-dCache:
     TEST_SCRIPT: "tests/test_regression_dCache.sh"
     EXTRA_RUN_ARGS: "--test-timeout 2400 --skip-preflight"
     EXTRA_SPAWN_ARGS: "--cta-config presets/dev-cta-grpc-values.yaml --dcache-enabled true --eos-enabled false"
+
+# =========================================================================
+# Stress Test
+# =========================================================================
 
 stress-test:
   allow_failure: true

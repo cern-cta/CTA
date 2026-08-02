@@ -185,12 +185,13 @@ public-release-cta-stable:
 # Publish Images
 ###############################################
 
-.image-targets: &image-targets
+.cta-image-targets: &cta-image-targets
   - cta-taped
   - cta-rmcd
   - cta-maintd
   - cta-frontend
   - cta-tools
+  - cta-debug
 
 .publish-image:
   stage: release
@@ -259,7 +260,7 @@ publish-images-private:
     DEST_REGISTRY_PASSWORD: $DOCKER_PRIVATE_LOGIN_PASSWORD
   parallel:
     matrix:
-      - TARGET_NAME: *image-targets
+      - TARGET_NAME: *cta-image-targets
 
 publish-images-public:
   extends: .publish-image
@@ -287,4 +288,4 @@ publish-images-public:
     - !reference [.publish-image, before_script]
   parallel:
     matrix:
-      - TARGET_NAME: *image-targets
+      - TARGET_NAME: *cta-image-targets

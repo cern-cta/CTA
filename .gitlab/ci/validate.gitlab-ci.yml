@@ -7,27 +7,17 @@ validate-catalogue-schema-version:
   rules:
     - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
-    # For pivot CTA releases: vX.Y.0
-    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^.*\.0\.[0-9]+-[^-]*$/
-      when: on_success
-      variables:
-        CATALOGUE_SCHEMA_CHECK_PARAMS: "-p -t"
-    # For non-pivot CTA releases
-    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG !~ /^.*\.0\.[0-9]+-[^-]*$/
-      when: on_success
-      variables:
-        CATALOGUE_SCHEMA_CHECK_PARAMS: "-n -t"
-    # Any run on main
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    # Tags and the default branch require the catalogue schema submodule commit to be tagged.
+    - if: $CI_COMMIT_TAG || $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: on_success
       variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: "-t"
-    # For all other scenarios, manual run only
+    # Other pipelines validate the schema versions without requiring a submodule tag.
     - when: on_success
       variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: ""
   script:
-    - ./ci/checks/check_catalogue_schema_version.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .
+    - ./ci/checks/check_catalogue_schema_version.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS}
 
 validate-project-json:
   stage: validate

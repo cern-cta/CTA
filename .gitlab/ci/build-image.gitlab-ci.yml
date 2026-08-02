@@ -15,12 +15,13 @@ spec:
 # Image build / publish configuration
 ###############################################
 
-.image-targets: &image-targets
+.cta-image-targets: &cta-image-targets
   - cta-taped
   - cta-rmcd
   - cta-maintd
   - cta-frontend
   - cta-tools
+  - cta-debug
 
 .build-image:
   image:
@@ -96,9 +97,13 @@ spec:
     - job: modify-project-json
       optional: true
   rules:
-    - if: '$PIPELINE_TYPE == "DEFAULT" || $PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH"'
-      when: on_success
-    - when: never
+    - if: '$PIPELINE_TYPE != "DEFAULT" && $PIPELINE_TYPE != "REGR_AGAINST_CTA_BRANCH"'
+      when: never
+      # Debug is manual by default as it's quite large. However, build automatically for tags
+    - if: '$TARGET_NAME == "cta-debug" && $CI_COMMIT_TAG == null'
+      when: manual
+      allow_failure: true
+    - when: on_success
   variables:
     CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     DOCKERFILE: ci/docker/cta/$[[ inputs.platform ]]/prod.Dockerfile
@@ -132,19 +137,7 @@ build-cta-images:
   extends: .build-cta-image
   parallel:
     matrix:
-      - TARGET_NAME: *image-targets
-
-build-cta-debug-image:
-  extends: .build-cta-image
-  rules:
-    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
-      when: never
-    - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
-      when: never
-    - when: manual
-      allow_failure: true
-  variables:
-    TARGET_NAME: cta-debug
+      - TARGET_NAME: *cta-image-targets
 
 ###############################################
 # Build Pipeline Images
