@@ -1,13 +1,21 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+spec:
+  inputs:
+    platform:
+      type: string
+    enable-oracle-support:
+      type: boolean
+---
+
 changelog-preview:
   stage: release
   needs: []  # Ensure this job can be triggered at the beginning if necessary
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - if: $CI_COMMIT_TAG
       when: never
@@ -56,7 +64,7 @@ changelog-update:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - if: $CI_COMMIT_TAG
       when: never
@@ -121,7 +129,7 @@ public-release-cta-unstable:
     - ./ci/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                     --eos-password ${DOCKER_LOGIN_PASSWORD}
                                     --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
-                                    --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/unstable/cta-5/${PLATFORM}/cta
+                                    --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/unstable/cta-5/$[[ inputs.platform ]]/cta
                                     --hook /eos/user/c/ctareg/www/public/update_repos.sh
                                     --cta-version ${CTA_VERSION}
     - REPO_URL="https://cta-public-repo.web.cern.ch/unstable/cta-5/el9/cta/x86_64"
@@ -142,7 +150,7 @@ public-release-cta-testing:
     - ./ci/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                     --eos-password ${DOCKER_LOGIN_PASSWORD}
                                     --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
-                                    --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/testing/cta-5/${PLATFORM}/cta
+                                    --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/testing/cta-5/$[[ inputs.platform ]]/cta
                                     --hook /eos/user/c/ctareg/www/public/update_repos.sh
                                     --cta-version ${CTA_VERSION}
     - REPO_URL="https://cta-public-repo.web.cern.ch/testing/cta-5/el9/cta/x86_64"
@@ -166,7 +174,7 @@ public-release-cta-stable:
     - ./ci/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                     --eos-password ${DOCKER_LOGIN_PASSWORD}
                                     --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
-                                    --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/stable/cta-5/${PLATFORM}/cta
+                                    --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/stable/cta-5/$[[ inputs.platform ]]/cta
                                     --hook /eos/user/c/ctareg/www/public/update_repos.sh
                                     --cta-version ${CTA_VERSION}
     - REPO_URL="https://cta-public-repo.web.cern.ch/stable/cta-5/el9/cta/x86_64"
@@ -230,7 +238,7 @@ public-release-cta-stable:
         --password-stdin
         "$DEST_REGISTRY"
   script:
-    - DST_IMAGE="${DEST_REGISTRY}/${DEST_IMAGE_PREFIX}/${TARGET_NAME}:${CI_COMMIT_TAG}.${PLATFORM}"
+    - DST_IMAGE="${DEST_REGISTRY}/${DEST_IMAGE_PREFIX}/${TARGET_NAME}:${CI_COMMIT_TAG}.$[[ inputs.platform ]]"
     - echo "Publishing ${SRC_IMAGE} -> ${DST_IMAGE}"
     - buildah pull --authfile "$SOURCE_REGISTRY_AUTH_FILE" "$SRC_IMAGE"
     - buildah tag "$SRC_IMAGE" "$DST_IMAGE"
@@ -256,7 +264,7 @@ publish-images-private:
 publish-images-public:
   extends: .publish-image
   rules:
-    - if: $ENABLE_ORACLE_SUPPORT == "TRUE"
+    - if: '"$[[ inputs.enable-oracle-support ]]" == "true"'
       when: never
     - if: $CI_COMMIT_TAG
       when: manual
@@ -272,7 +280,7 @@ publish-images-public:
     DEST_REGISTRY_PASSWORD: $DOCKER_PUBLIC_LOGIN_PASSWORD
   before_script:
     - |
-      if [[ "$ENABLE_ORACLE_SUPPORT" == "TRUE" ]]; then
+      if $[[ inputs.enable-oracle-support ]]; then
         echo "Oracle-enabled images cannot be published publicly."
         exit 1
       fi

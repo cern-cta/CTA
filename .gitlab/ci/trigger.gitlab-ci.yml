@@ -1,6 +1,46 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+spec:
+  inputs:
+    pipeline-type:
+      type: string
+    custom-cta-image-tag:
+      type: string
+    custom-eos-image-tag:
+      type: string
+    custom-xrootd-version:
+      type: string
+    platform:
+      type: string
+    enable-internal-repos:
+      type: boolean
+    build-generator:
+      type: string
+    cmake-build-type:
+      type: string
+    enable-address-sanitizer:
+      type: boolean
+    enable-sbom-generation:
+      type: boolean
+    scheduler-type:
+      type: string
+    enable-oracle-support:
+      type: boolean
+    default-cta-values-chain:
+      type: string
+    default-eos-values-file:
+      type: string
+    stress-eos-values-file:
+      type: string
+    enable-valgrind:
+      type: boolean
+    enable-dcache-tests:
+      type: boolean
+    keep-stress-test-namespace:
+      type: boolean
+---
+
 .trigger-child-pipeline:
   allow_failure: true
   stage: trigger
@@ -8,25 +48,57 @@
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $PIPELINE_TYPE != "DEFAULT"
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "push"
       when: manual
   trigger:
-    include: .gitlab-ci.yml
+    forward:
+      yaml_variables: false
+    include:
+      - local: .gitlab-ci.yml
+        inputs: &child-pipeline-inputs
+          pipeline-type: $PIPELINE_TYPE
+          custom-cta-image-tag: $[[ inputs.custom-cta-image-tag ]]
+          custom-eos-image-tag: $CUSTOM_EOS_IMAGE_TAG
+          custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]
+          platform: $[[ inputs.platform ]]
+          enable-internal-repos: $[[ inputs.enable-internal-repos ]]
+          build-generator: $[[ inputs.build-generator ]]
+          cmake-build-type: $[[ inputs.cmake-build-type ]]
+          enable-address-sanitizer: $[[ inputs.enable-address-sanitizer ]]
+          enable-sbom-generation: $[[ inputs.enable-sbom-generation ]]
+          scheduler-type: $[[ inputs.scheduler-type ]]
+          enable-oracle-support: $[[ inputs.enable-oracle-support ]]
+          default-cta-values-chain: $[[ inputs.default-cta-values-chain ]]
+          default-eos-values-file: $[[ inputs.default-eos-values-file ]]
+          stress-eos-values-file: $[[ inputs.stress-eos-values-file ]]
+          enable-valgrind: $[[ inputs.enable-valgrind ]]
+          enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
+          keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
     strategy: mirror
 
 trigger-postgres-scheduler-pipeline:
   extends:
     - .trigger-child-pipeline
-  variables:
-    SCHEDULER_TYPE: "pgsched"
+  trigger:
+    include:
+      - local: .gitlab-ci.yml
+        inputs:
+          <<: *child-pipeline-inputs
+          scheduler-type: "pgsched"
+    strategy: mirror
 
 trigger-oracle-disabled-pipeline:
   extends:
     - .trigger-child-pipeline
-  variables:
-    ENABLE_ORACLE_SUPPORT: "FALSE"
+  trigger:
+    include:
+      - local: .gitlab-ci.yml
+        inputs:
+          <<: *child-pipeline-inputs
+          enable-oracle-support: false
+    strategy: mirror
 
 trigger-sonarcloud-pipeline:
   allow_failure: true

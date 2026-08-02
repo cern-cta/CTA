@@ -33,6 +33,7 @@ EXPECTED_ORDER = [
 ]
 
 IGNORED_TOP_LEVEL_KEYS = {
+    "spec",
     "stages",
     "include",
     "workflow",
@@ -92,23 +93,24 @@ def check_job(file_path: Path, job_name: str, job_def: dict[str, Any]) -> list[s
 
 def check_gitlab_ci_file(path: Path) -> list[str]:
     try:
-        data = yaml.load(path.read_text(), Loader=GitLabLoader)
+        documents = list(yaml.load_all(path.read_text(), Loader=GitLabLoader))
     except Exception as exc:
         return [f"{path}: failed to parse YAML ({exc})"]
 
-    if not isinstance(data, dict):
-        return []
-
     errors: list[str] = []
 
-    for key, value in data.items():
-        if key in IGNORED_TOP_LEVEL_KEYS:
+    for data in documents:
+        if not isinstance(data, dict):
             continue
 
-        if not isinstance(value, dict):
-            continue  # anchors, references, or extends-only jobs
+        for key, value in data.items():
+            if key in IGNORED_TOP_LEVEL_KEYS:
+                continue
 
-        errors.extend(check_job(path, key, value))
+            if not isinstance(value, dict):
+                continue  # anchors, references, or extends-only jobs
+
+            errors.extend(check_job(path, key, value))
 
     return errors
 

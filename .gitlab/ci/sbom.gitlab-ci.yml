@@ -1,14 +1,20 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+spec:
+  inputs:
+    enable-sbom-generation:
+      type: boolean
+---
+
 prepare-rootfs:
   stage: sbom
   needs:
     - job: build-cta-rpms
   rules:
-    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
-    - if: $ENABLE_SBOM_GENERATION == "TRUE"
+    - if: '"$[[ inputs.enable-sbom-generation ]]" == "true"'
       when: on_success
     - when: never
   image: gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
@@ -54,9 +60,9 @@ generate-sbom-trivy:
   needs:
     - job: prepare-rootfs
   rules:
-    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
-    - if: $ENABLE_SBOM_GENERATION == "TRUE"
+    - if: '"$[[ inputs.enable-sbom-generation ]]" == "true"'
       when: on_success
     - when: never
   image: registry.cern.ch/docker.io/aquasec/trivy@sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c # 0.69.3
@@ -84,9 +90,9 @@ enrich-sbom-cern-info:
   needs:
     - job: generate-sbom-trivy
   rules:
-    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
-    - if: $ENABLE_SBOM_GENERATION == "TRUE"
+    - if: '"$[[ inputs.enable-sbom-generation ]]" == "true"'
       when: on_success
     - when: never
   image: registry.cern.ch/code-scanners/sbom-helper:latest
@@ -118,9 +124,9 @@ score-sbom:
   needs:
     - job: enrich-sbom-cern-info
   rules:
-    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
-    - if: $ENABLE_SBOM_GENERATION == "TRUE"
+    - if: '"$[[ inputs.enable-sbom-generation ]]" == "true"'
       when: on_success
     - when: never
   image: registry.cern.ch/ghcr.io/interlynk-io/sbomqs@sha256:b424b19d0ad2c900229302f4b2db8d80093f7ba82a1114b4f16bf073ace6f6e6 # v2.0.5

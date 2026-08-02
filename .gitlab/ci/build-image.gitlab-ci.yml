@@ -1,6 +1,16 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+spec:
+  inputs:
+    platform:
+      type: string
+    enable-internal-repos:
+      type: boolean
+    enable-oracle-support:
+      type: boolean
+---
+
 ###############################################
 # Image build / publish configuration
 ###############################################
@@ -86,12 +96,12 @@
     - job: modify-project-json
       optional: true
   rules:
-    - if: $PIPELINE_TYPE == "DEFAULT" || $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
+    - if: '$PIPELINE_TYPE == "DEFAULT" || $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
       when: on_success
     - when: never
   variables:
     CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
-    DOCKERFILE: ci/docker/cta/${PLATFORM}/prod.Dockerfile
+    DOCKERFILE: ci/docker/cta/$[[ inputs.platform ]]/prod.Dockerfile
     IMAGE_REF: ${DOCKER_IMAGE_REGISTRY}/${DOCKER_PRIVATE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_BUILD_ID}
     RPM_CONTEXT: ${CI_PROJECT_DIR}/build_rpm/RPM/RPMS/x86_64
     EXTRA_BUILD_ARGS: ""
@@ -107,8 +117,8 @@
         --file "${DOCKERFILE_NAME}"
         --tag "${IMAGE_REF}"
         --build-context rpm_context="${RPM_CONTEXT}"
-        --build-arg ENABLE_INTERNAL_REPOS="${ENABLE_INTERNAL_REPOS}"
-        --build-arg ENABLE_ORACLE_SUPPORT="${ENABLE_ORACLE_SUPPORT}"
+        --build-arg ENABLE_INTERNAL_REPOS="$[[ inputs.enable-internal-repos ]]"
+        --build-arg ENABLE_ORACLE_SUPPORT="$[[ inputs.enable-oracle-support ]]"
       )
     - |
       if [[ -n "$EXTRA_BUILD_ARGS" ]]; then
@@ -127,9 +137,9 @@ build-cta-images:
 build-cta-debug-image:
   extends: .build-cta-image
   rules:
-    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
-    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
+    - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
       when: never
     - when: manual
       allow_failure: true
@@ -147,7 +157,7 @@ build-pipeline-images:
     - job: generate-pipeline-images-tag
       artifacts: true
   rules:
-    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
   variables:
     DEST_REGISTRY_PASSWORD: $DOCKER_PUBLIC_LOGIN_PASSWORD
     DEST_REGISTRY_USERNAME: $DOCKER_PUBLIC_LOGIN_USERNAME

@@ -104,7 +104,7 @@ build_srpm() {
       ;;
     --oracle-support)
       if [[ $# -gt 1 ]]; then
-        if [[ "$2" = "FALSE" ]]; then
+        if [[ "${2,,}" = "false" ]]; then
           oracle_support=false
         fi
         shift
