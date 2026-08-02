@@ -14,6 +14,7 @@ from gitlabapi import GitLabAPI
 
 PIPELINE_CONFIG_PATH = ".gitlab-ci.yml"
 VERSION_PATTERN = re.compile(r'^(  PIPELINE_IMAGE_VERSION: ")[^"]+("\s*)$', re.MULTILINE)
+MERGE_REQUEST_LABELS = ("priority::medium", "type::maintenance", "ci pipeline")
 
 
 class PipelineImageUpdateError(Exception):
@@ -46,6 +47,18 @@ def require_single_line_change(original: str, updated: str) -> None:
 
 def merge_request_title(version: str) -> str:
     return f'[CI] Update pipeline images to "{version}"'
+
+
+def merge_request_description(version: str) -> str:
+    return (
+        "### Description\n\n"
+        f"This MR updates the CTA CI pipeline image tags to the latest version: {version}.\n\n"
+        "This MR was auto-generated.\n\n"
+        "### Checklist\n\n"
+        "- [x] Documentation reflects the changes made.\n"
+        "- [x] Merge Request title is clear, concise, and suitable as a changelog entry. "
+        "See [this link](https://cta.docs.cern.ch/latest/dev/contributing/workflow/#changelog)"
+    )
 
 
 def decode_repository_file(file_metadata: dict[str, Any]) -> str:
@@ -114,6 +127,8 @@ def create_or_refresh_merge_request(
     title: str,
     version: str,
 ) -> dict[str, Any]:
+    description = merge_request_description(version)
+    labels = ",".join(MERGE_REQUEST_LABELS)
     merge_requests = api.get(
         "merge_requests",
         params={"state": "opened", "source_branch": source_branch, "target_branch": target_branch},
@@ -126,7 +141,10 @@ def create_or_refresh_merge_request(
         iid = merge_request.get("iid")
         if not isinstance(iid, int):
             raise PipelineImageUpdateError("Existing merge request has no valid IID")
-        refreshed = api.put(f"merge_requests/{iid}", json={"title": title})
+        refreshed = api.put(
+            f"merge_requests/{iid}",
+            json={"title": title, "description": description, "labels": labels},
+        )
         if not isinstance(refreshed, dict):
             raise PipelineImageUpdateError(f"Failed to refresh merge request !{iid}")
         if "web_url" not in refreshed and "web_url" in merge_request:
@@ -139,11 +157,8 @@ def create_or_refresh_merge_request(
             "source_branch": source_branch,
             "target_branch": target_branch,
             "title": title,
-            "description": (
-                "Automated weekly refresh of the complete pipeline-image set.\n\n"
-                f"Shared images were published as `{version}` and platform-specific images as "
-                f"`{version}.<platform>` before this merge request was created."
-            ),
+            "description": description,
+            "labels": labels,
             "remove_source_branch": True,
             "squash": True,
         },
@@ -166,9 +181,14 @@ def approve_and_enable_auto_merge(api: GitLabAPI, merge_request: dict[str, Any])
     if merge_request.get("merge_when_pipeline_succeeds") is True:
         return
 
-    auto_merge = api.post(
-        f"merge_trains/merge_requests/{iid}",
-        json={"auto_merge": True, "sha": sha},
+    auto_merge = api.put(
+        f"merge_requests/{iid}/merge",
+        json={
+            "auto_merge": True,
+            "sha": sha,
+            "should_remove_source_branch": True,
+            "squash": True,
+        },
     )
     if not isinstance(auto_merge, dict):
         raise PipelineImageUpdateError(f"Failed to enable auto-merge for merge request !{iid}")
