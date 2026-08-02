@@ -91,7 +91,7 @@ if [[
   "true" != "${HAS_REQID}" ||
   "\"\"" != "${ERROR_TEXT}" ]]
 then
-  echo "ERROR: File ${TEMP_FILE_OK} not requested properly: ${QUERY_RSP}"
+  echo "ERROR: File ${TEMP_FILE_OK} not requested properly: ${QUERY_RSP}" >&2
   exit 1
 fi
 echo "Test completed successfully"
@@ -107,16 +107,16 @@ echo "Test completed successfully"
 
 TEMP_FILE_FAIL=${EOS_NONE_BASEDIR}/$(uuidgen)
 echo
-echo "Testing 'prepare -s' request that returns error (1 non-existing file)..."
+echo "Testing 'prepare -s' request that returns error (1 non-existing file)..." >&2
 
 echo "NOT uploading test filei ${TEMP_FILE_FAIL}."
 
-echo "Trigering EOS retrieve workflow as poweruser1:powerusers (expects error)..."
+echo "Trigering EOS retrieve workflow as poweruser1:powerusers (expects error)..." >&2
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
 REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_FAIL})
 
 if [[ $? -eq 0 ]]; then
-  echo "ERROR: Preparing a single file that does not exist (all files failec) should return an error."
+  echo "ERROR: Preparing a single file that does not exist (all files failec) should return an error." >&2
   exit 1
 fi
 
@@ -144,7 +144,7 @@ echo "Trigering EOS retrieve workflow as poweruser1:powerusers..."
 REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_OK} ${TEMP_FILE})
 
 if [[ $? -ne 0 ]]; then
-  echo "ERROR: Unexpected error returned by prepare command."
+  echo "ERROR: Unexpected error returned by prepare command." >&2
   exit 1
 fi
 
@@ -168,7 +168,7 @@ if [[
   "\"\"" == "${ERROR_TEXT}" ||
   "\"\"" != "${OK_FILE_ERROR_TEXT}" ]]
 then
-  echo "ERROR: 'query prepare' did not return as expected: ${QUERY_RSP}"
+  echo "ERROR: 'query prepare' did not return as expected: ${QUERY_RSP}" >&2
   exit 1
 fi
 
@@ -195,12 +195,12 @@ xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE_1}
 xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE_2}
 echo "Files ${TEMP_FILE_1} ${TEMP_FILE_2} written to directory with no prepare permission."
 
-echo "Trigering EOS retrieve workflow as poweruser1:powerusers (expects error)..."
+echo "Trigering EOS retrieve workflow as poweruser1:powerusers (expects error)..." >&2
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
 REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_1} ${TEMP_FILE_2})
 
 if [[ $? -eq 0 ]]; then
-  echo "ERROR: Preparing command where no single file has prepare permissions (all files failed) should return an error."
+  echo "ERROR: Preparing command where no single file has prepare permissions (all files failed) should return an error." >&2
   exit 1
 fi
 
@@ -231,7 +231,7 @@ echo "Trigering EOS retrieve workflow as poweruser1:powerusers..."
 REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_OK} ${TEMP_FILE})
 
 if [[ $? -ne 0 ]]; then
-  echo "ERROR: Unexpected error returned by prepare command."
+  echo "ERROR: Unexpected error returned by prepare command." >&2
   exit 1
 fi
 
@@ -255,7 +255,7 @@ if [[
   "\"\"" == "${ERROR_TEXT}" ||
   "\"\"" != "${OK_FILE_ERROR_TEXT}" ]]
 then
-  echo "ERROR: 'query prepare' did not return as expected: ${QUERY_RSP}"
+  echo "ERROR: 'query prepare' did not return as expected: ${QUERY_RSP}" >&2
   exit 1
 fi
 echo "Test completed successfully"
@@ -276,12 +276,12 @@ echo "Testing 'prepare -s' request for 2 non-existing files (${TEMP_FILE_1}, ${T
 
 echo "NOT uploading test files ${TEMP_FILE_1} ${TEMP_FILE_2}."
 
-echo "Trigering EOS retrieve workflow as poweruser1:powerusers (expects error)..."
+echo "Trigering EOS retrieve workflow as poweruser1:powerusers (expects error)..." >&2
 # We need the -s as we are staging the files from tape (see xrootd prepare definition)
 REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_1} ${TEMP_FILE_2})
 
 if [[ $? -eq 0 ]]; then
-  echo "ERROR: Preparing command where no single file exists (all files failed) should return an error."
+  echo "ERROR: Preparing command where no single file exists (all files failed) should return an error." >&2
   exit 1
 fi
 
@@ -329,7 +329,7 @@ echo "Trigering EOS retrieve workflow as poweruser1:powerusers..."
 REQUEST_ID=$(cat ${TEST_FILES_TAPE_LIST} ${TEST_FILES_NO_P_LIST} ${TEST_FILES_NONE_LIST} | KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xargs xrdfs ${EOS_MGM_HOST} prepare -s)
 
 if [[ $? -ne 0 ]]; then
-  echo "ERROR: Unexpected error returned by prepare command."
+  echo "ERROR: Unexpected error returned by prepare command." >&2
   exit 1
 fi
 
@@ -339,7 +339,7 @@ QUERY_RSP=$(cat ${TEST_FILES_TAPE_LIST} ${TEST_FILES_NO_P_LIST} ${TEST_FILES_NON
 # Check that a request ID was produced
 
 if ! [[ "${REQUEST_ID}" =~ ^[^\s]+$ ]]; then
-  echo "ERROR: Prepare did not return an ID"
+  echo "ERROR: Prepare did not return an ID" >&2
   echo $REQUEST_ID
   exit 1
 fi
@@ -348,8 +348,8 @@ fi
 
 NB_FILES_IN_QUERY_RSP=$(echo ${QUERY_RSP} | jq ".responses | length")
 NB_EXPECTED_FILES=$((${NB_FILES_TAPE}+${NB_FILES_NO_P}+${NB_FILES_MISS}))
-if test ${NB_EXPECTED_FILES} != ${NB_FILES_IN_QUERY_RSP}; then
-  echo "ERROR: Query prepare does not refer all ${NV_EXPECTED_FILES} files"
+if [[ ${NB_EXPECTED_FILES} != "${NB_FILES_IN_QUERY_RSP}" ]]; then
+  echo "ERROR: Query prepare does not refer all ${NV_EXPECTED_FILES} files" >&2
   echo $QUERY_RSP
   exit 1
 fi
@@ -365,7 +365,7 @@ if [[
   ${NB_FILES_TAPE} != $(cat ${TEST_FILES_TAPE_LIST} | xargs -iFILE_PATH jq '.responses[] | select(.path == "FILE_PATH").path_exists' ${tmpjsonfile} | grep ^true$ | wc -l) ||
   ${NB_FILES_TAPE} != $(cat ${TEST_FILES_TAPE_LIST} | xargs -iFILE_PATH jq '.responses[] | select(.path == "FILE_PATH").error_text' ${tmpjsonfile} | grep ^\"\"$ | wc -l) ]]
 then
-  echo "ERROR: Files from tape were not requested properly."
+  echo "ERROR: Files from tape were not requested properly." >&2
   echo $QUERY_RSP
   rm ${tmpjsonfile}
   exit 1
@@ -377,7 +377,7 @@ if [[
   ${NB_FILES_NO_P} != $(cat ${TEST_FILES_NO_P_LIST} | xargs -iFILE_PATH jq '.responses[] | select(.path == "FILE_PATH").path_exists' ${tmpjsonfile} | grep ^true$ | wc -l) ||
   ${NB_FILES_NO_P} != $(cat ${TEST_FILES_NO_P_LIST} | xargs -iFILE_PATH jq '.responses[] | select(.path == "FILE_PATH").error_text' ${tmpjsonfile} | grep -E ^\".+\"$ | wc -l) ]] # 'error_text should not be empty'
 then
-  echo "ERROR: File without prepare permission not reported properly (error_text)."
+  echo "ERROR: File without prepare permission not reported properly (error_text)." >&2
   echo $QUERY_RSP
   rm ${tmpjsonfile}
   exit 1
@@ -389,7 +389,7 @@ if [[
   ${NB_FILES_MISS} != $(cat ${TEST_FILES_NONE_LIST} | xargs -iFILE_PATH jq '.responses[] | select(.path == "FILE_PATH").path_exists' ${tmpjsonfile} | grep ^false$ | wc -l) ||
   ${NB_FILES_MISS} != $(cat ${TEST_FILES_NONE_LIST} | xargs -iFILE_PATH jq '.responses[] | select(.path == "FILE_PATH").error_text' ${tmpjsonfile} | grep -E ^\".+\"$ | wc -l) ]] # 'error_text should not be empty'
 then
-  echo "ERROR: Non-existing file not reported properly (error_text)."
+  echo "ERROR: Non-existing file not reported properly (error_text)." >&2
   echo $QUERY_RSP
   rm ${tmpjsonfile}
   exit 1
@@ -430,7 +430,7 @@ echo "Trigering EOS abort workflow as poweruser1:powerusers..."
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -a ${REQUEST_ID} ${TEMP_FILE}
 
 if [[ $? -ne 0 ]]; then
-  echo "ERROR: Prepare abort command should not have failed."
+  echo "ERROR: Prepare abort command should not have failed." >&2
   exit 1
 fi
 
@@ -448,7 +448,7 @@ if [[
   "false" != "${HAS_REQID}" ||
   "\"\"" != "${ERROR_TEXT}" ]]
 then
-  echo "ERROR: File ${TEMP_FILE} retrieve was not aborted properly: ${QUERY_RSP}"
+  echo "ERROR: File ${TEMP_FILE} retrieve was not aborted properly: ${QUERY_RSP}" >&2
   exit 1
 fi
 
@@ -481,11 +481,11 @@ echo "Trigering EOS retrieve workflow as poweruser1:powerusers, for ${TEMP_FILE_
 REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${TEMP_FILE_TAPE})
 
 echo "Trigering EOS abort workflow as poweruser1:powerusers, for ${TEMP_FILE_TAPE} (should succeed) and ${TEMP_FILE_NONE} (should fail)..."
-echo "Error expected"
+echo "Error expected" >&2
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -a ${REQUEST_ID} ${TEMP_FILE_TAPE} ${TEMP_FILE_NONE}
 
 if [[ $? -eq 0 ]]; then
-  echo "ERROR: Prepare abort command should have returned an error."
+  echo "ERROR: Prepare abort command should have returned an error." >&2
   exit 1
 fi
 
@@ -503,7 +503,7 @@ if [[
   "false" != "${HAS_REQID}" ||
   "\"\"" != "${ERROR_TEXT}" ]]
 then
-  echo "ERROR: File ${TEMP_FILE_TAPE} retrieve was not aborted properly: ${QUERY_RSP}"
+  echo "ERROR: File ${TEMP_FILE_TAPE} retrieve was not aborted properly: ${QUERY_RSP}" >&2
   exit 1
 fi
 
@@ -535,7 +535,7 @@ echo "Trigering EOS evict workflow as poweruser1:powerusers..."
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -e ${TEMP_FILE}
 
 if [[ $? -ne 0 ]]; then
-  echo "ERROR: Prepare evict command should not have failed."
+  echo "ERROR: Prepare evict command should not have failed." >&2
   exit 1
 fi
 
@@ -569,11 +569,11 @@ REQUEST_ID=$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs
 wait_for_retrieve ${EOS_MGM_HOST} ${TEMP_FILE_TAPE}
 
 echo "Trigering EOS abort workflow as poweruser1:powerusers..."
-echo "Error expected"
+echo "Error expected" >&2
 KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -e ${TEMP_FILE_TAPE} ${TEMP_FILE_NONE}
 
 if [[ $? -eq 0 ]]; then
-  echo "ERROR: Prepare evict command should have returned an error."
+  echo "ERROR: Prepare evict command should have returned an error." >&2
   exit 1
 fi
 

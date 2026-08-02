@@ -43,7 +43,7 @@ if [[ -z "${NAMESPACE}" ]]; then
 fi
 
 if [[ ! -z "${error}" ]]; then
-    echo -e "ERROR:\n${error}"
+    echo -e "ERROR:\n${error}" >&2
     exit 1
 fi
 

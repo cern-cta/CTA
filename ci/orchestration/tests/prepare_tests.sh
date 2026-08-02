@@ -3,6 +3,8 @@
 # SPDX-FileCopyrightText: 2022 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+source "$(dirname "${BASH_SOURCE[0]}")/../../utils/log_utils.sh"
+
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace>
 EOF
@@ -72,7 +74,7 @@ NB_LIBRARY_NAMES_IN_USE=${#LIBRARY_NAMES_IN_USE[@]}
 echo "Preparing CTA configuration for tests"
 # verify the catalogue DB schema
 if ! kubectl --namespace ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf; then
-  echo "ERROR: failed to verify the catalogue DB schema"
+  log_error "ERROR: failed to verify the catalogue DB schema"
   exit 1
 fi
 kubectl --namespace ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 -m "docker cli"
@@ -322,7 +324,7 @@ for VID in "${TAPES[@]}"; do
   # tests. That's why we need to force cta-tape-label, but only for CI testing.
   kubectl --namespace ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped  -- cta-tape-label --vid ${VID} --force
   if [[ $? -ne 0 ]]; then
-    echo "ERROR: failed to label the tape ${VID}"
+    log_error "ERROR: failed to label the tape ${VID}"
     exit 1
   fi
 done

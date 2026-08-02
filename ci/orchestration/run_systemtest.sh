@@ -39,9 +39,10 @@ usage() {
 }
 
 execute_cmd_with_log() {
-  mycmd=$1
+  local mycmd="$1"
+  local logfile
   logfile=$(realpath "$2")
-  timeout=$3
+  local timeout="$3"
   start_time=$(date +%s)
   echo "================================================================================"
   echo "Launching ${mycmd}"
@@ -65,7 +66,7 @@ execute_cmd_with_log() {
 
   if [[ "${execute_log_rc}" != "0" ]]; then
     echo "Process exited with exit code: ${execute_log_rc}." 1>&2
-    if [ $keepnamespace == 0 ] ; then
+    if [[ $keepnamespace == 0 ]]; then
       echo "Cleaning up environment"
       cd ${orchestration_dir}
       ./delete_instance.sh -n ${namespace}
@@ -100,7 +101,7 @@ run_systemtest() {
       -h | --help) usage ;;
       -s|--test-script)
         systemtest_script="$2"
-        test -f ${systemtest_script} || die "ERROR: systemtest script file ${systemtest_script} does not exist\n"
+        [[ -f ${systemtest_script} ]] || die "ERROR: systemtest script file ${systemtest_script} does not exist\n"
         shift ;;
       --skip-preflight)
         preflight_checks_script="" ;;
@@ -125,12 +126,12 @@ run_systemtest() {
         shift ;;
       -o|--scheduler-config)
         scheduler_config="$2"
-        test -f "${scheduler_config}" || die "ERROR: Scheduler config file ${scheduler_config} does not exist"
+        [[ -f "${scheduler_config}" ]] || die "ERROR: Scheduler config file ${scheduler_config} does not exist"
         spawn_options+=" --scheduler-config ${scheduler_config}"
         shift ;;
       -d|--catalogue-config)
         catalogue_config="$2"
-        test -f "${catalogue_config}" || die "ERROR: catalogue config file ${catalogue_config} does not exist"
+        [[ -f "${catalogue_config}" ]] || die "ERROR: catalogue config file ${catalogue_config} does not exist"
         spawn_options+=" --catalogue-config ${catalogue_config}"
         shift ;;
       --spawn-options)
@@ -223,7 +224,7 @@ run_systemtest() {
   cd "${orchestration_dir}"
 
   # delete instance?
-  if [ $keepnamespace == 1 ] ; then
+  if [[ $keepnamespace == 1 ]]; then
     exit 0
   fi
   ./delete_instance.sh -n ${namespace}

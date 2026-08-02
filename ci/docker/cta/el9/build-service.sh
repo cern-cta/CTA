@@ -49,7 +49,7 @@ microdnf remove -y python* > /dev/null || true
 
 if [[ "$ENABLE_INTERNAL_REPOS" == "1" ]] || [[ "${ENABLE_INTERNAL_REPOS,,}" == "true" ]]; then
     while IFS= read -r filename; do
-        if [ -n "$filename" ]; then
+        if [[ -n "$filename" ]]; then
             rm -f "/etc/yum.repos.d/$filename"
         fi
     done < /tmp/internal-repo-list.txt

@@ -3,6 +3,8 @@
 # SPDX-FileCopyrightText: 2024 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+source "$(dirname "${BASH_SOURCE[0]}")/../log_utils.sh"
+
 # Function to show usage information
 usage() {
   echo
@@ -43,7 +45,7 @@ done
 
 # Ensure required arguments are provided
 if [[ -z "$library_device" ]]; then
-  echo "Error: --library-device is required."
+  log_error "Error: --library-device is required."
   usage
 fi
 
@@ -82,7 +84,7 @@ for drive_device in $drive_devices; do
   serial=$(sg_inq "$sg_device" 2>/dev/null | awk '/Unit serial number/ {print $4; exit}')
 
   drive_name="${vendor}-${serial}"
-  if [ "$enable_one_logical_library_only" = true ]; then
+  if [[ "$enable_one_logical_library_only" = true ]]; then
     if [[ -z "$logical_lib_name" ]]; then
       logical_lib_name="${drive_name}_LOGICAL_LIBRARY_NAME"
     fi

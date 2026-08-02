@@ -8,7 +8,7 @@ set -e
 
 # Usage ./populate_catalogue.sh <disk instance name> <cta_storage_class>
 
-if [ "$#" -ne 2 ]; then
+if [[ "$#" -ne 2 ]]; then
     echo "Please provide a disk instance name and storage class"
     exit 1
 fi

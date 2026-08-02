@@ -59,11 +59,11 @@ echo "$(date +%s): Waiting for files to be back on disk:"
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=$((40+${NB_FILES}/5))
 
-while test 0 -lt ${RETRIEVING}; do
+while [[ 0 -lt ${RETRIEVING} ]]; do
   echo "$(date +%s): Waiting for files to be retrieved from tape: Seconds passed = ${SECONDS_PASSED}"
   let SECONDS_PASSED=SECONDS_PASSED+1
 
-  if test ${SECONDS_PASSED} == ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT}; then
+  if [[ ${SECONDS_PASSED} == "${WAIT_FOR_RETRIEVED_FILE_TIMEOUT}" ]]; then
     echo "$(date +%s): Timed out after ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} seconds waiting for file to be retrieved tape"
     break
   fi
@@ -82,6 +82,6 @@ echo "${RETRIEVED}/${TO_BE_RETRIEVED} retrieved files"
 echo "###"
 
 if [[ ${RETRIEVED} -ne ${TO_BE_RETRIEVED} ]]; then
-  echo "ERROR: Some files were not retrieved."
+  echo "ERROR: Some files were not retrieved." >&2
   exit 1
 fi

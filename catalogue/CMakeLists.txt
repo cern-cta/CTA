@@ -137,7 +137,7 @@ install(TARGETS ctacataloguepostgres DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 add_custom_command(
   OUTPUT AllCatalogueSchema.hpp
-  COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" sh ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh ${CMAKE_CURRENT_SOURCE_DIR}
+  COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" bash ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh
     ${CMAKE_CURRENT_SOURCE_DIR}/AllCatalogueSchema.hpp.in

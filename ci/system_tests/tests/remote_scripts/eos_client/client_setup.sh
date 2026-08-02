@@ -36,7 +36,7 @@ SSH_OPTIONS='-o BatchMode=yes -o ConnectTimeout=10'
 
 die() {
   echo "$@" 1>&2
-  test -z $TAILPID || kill ${TAILPID} &> /dev/null
+  [[ -z $TAILPID ]] || kill ${TAILPID} &> /dev/null
   exit 1
 }
 
@@ -87,17 +87,14 @@ done
 shift $((OPTIND-1))
 
 
-if [[ -n ${GFAL2_PROTOCOL} ]]; then
-    # Test gfal protocol is supported.
-    if [[ ! "${GFAL2_PROTOCOL}" =~ ^(https|root)$ ]]; then
-      echo "Invalid gfal2 protocol: ${GFAL2_PROTOCOL}"
-      echo "Current supported protocols: https, root"
-      exit 1
-    fi
+if [[ -n ${GFAL2_PROTOCOL} && ! ${GFAL2_PROTOCOL} =~ ^(https|root)$ ]]; then
+    echo "Invalid gfal2 protocol: ${GFAL2_PROTOCOL}"
+    echo "Current supported protocols: https, root"
+    exit 1
 fi
 
 if [[ ! -z "${error}" ]]; then
-    echo -e "ERROR:\n${error}"
+    echo -e "ERROR:\n${error}" >&2
     exit 1
 fi
 
@@ -110,7 +107,7 @@ case "${CLI_TARGET}" in
     . /tmp/cli_calls.sh
     ;;
   *)
-    echo "ERROR: CLI target ${CLI_TARGET} not supported. Valid options: xrd, gfal2"
+    echo "ERROR: CLI target ${CLI_TARGET} not supported. Valid options: xrd, gfal2" >&2
     exit 1
 esac
 

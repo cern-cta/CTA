@@ -16,9 +16,10 @@ TEST_FAILED=0
 
 
 log_header() {
+    local message="$1"
     echo "" | tee -a "${LOG_FILE}"
     echo "========================================" | tee -a "${LOG_FILE}"
-    echo "$1" | tee -a "${LOG_FILE}"
+    echo "$message" | tee -a "${LOG_FILE}"
     echo "========================================" | tee -a "${LOG_FILE}"
 }
 
@@ -31,7 +32,7 @@ test_version_command() {
         result="failure"
     fi
 
-    if [ $result == $expected_result ]; then
+    if [[ $result == "$expected_result" ]]; then
         echo "Test $test_name succeeded!"
         return 0
     else

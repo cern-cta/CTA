@@ -1,7 +1,9 @@
+#!/bin/bash
+
 # SPDX-FileCopyrightText: 2022 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-if [ "$#" -ne 1 ]; then
+if [[ "$#" -ne 1 ]]; then
     echo "Please provide an EOS base directory"
     exit 1
 fi
