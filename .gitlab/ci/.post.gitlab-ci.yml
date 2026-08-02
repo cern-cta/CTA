@@ -28,16 +28,20 @@ update-pipeline-image-version:
     - job: build-pipeline-images
       artifacts: false
   rules:
-    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"
+    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: on_success
+    - if: $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES" && $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      when: manual
+      allow_failure: true
   image: $IMAGE_RELEASE
   variables:
     GIT_SUBMODULE_STRATEGY: "none"
-    PIPELINE_IMAGE_UPDATE_BRANCH: "ci/update-pipeline-images"
+    PIPELINE_IMAGE_UPDATE_BRANCH: "ci/update-pipeline-images-${CI_PIPELINE_ID}"
   script:
     - python3 ci/release/update_pipeline_image_version.py
         --api-url "$CI_SERVER_URL"
         --project-id "$CI_PROJECT_ID"
         --api-token "$CI_API_TOKEN"
-        --target-branch "$CI_DEFAULT_BRANCH"
+        --target-branch "$CI_COMMIT_BRANCH"
         --source-branch "$PIPELINE_IMAGE_UPDATE_BRANCH"
         --version "$NEW_PIPELINE_IMAGE_VERSION"
