@@ -30,6 +30,7 @@ add_dependencies(cta-catalogue-schema-create
   create_pre_sqlit_and_postgres_catalogue_schema_cpp)
 
 if (OCCI_SUPPORT)
+  target_compile_definitions(cta-catalogue-schema-create PRIVATE SUPPORT_OCCI)
   add_dependencies(cta-catalogue-schema-create create_pre_oracle_catalogue_schema_cpp)
 endif()
 
