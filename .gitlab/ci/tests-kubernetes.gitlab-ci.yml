@@ -9,11 +9,7 @@ spec:
       type: string
     enable-oracle-support:
       type: boolean
-    default-cta-values-chain:
-      type: string
-    default-eos-values-file:
-      type: string
-    stress-eos-values-file:
+    workflow-api-authentication:
       type: string
     enable-dcache-tests:
       type: boolean
@@ -23,6 +19,11 @@ spec:
 
 variables:
   CUSTOM_CTA_IMAGE_TAG_INPUT: "$[[ inputs.custom-cta-image-tag ]]"
+  CTA_COMMON_VALUES_FILE: "presets/dev-cta-common.yaml"
+  CTA_ADMIN_API_AUTH_VALUES_FILE: "presets/frontend-admin/auth-jwt.yaml"
+  CTA_WORKFLOW_API_AUTH_VALUES_FILE: "presets/frontend-wfe/auth-$[[ inputs.workflow-api-authentication ]].yaml"
+  EOS_VALUES_FILE: "presets/eos/auth-$[[ inputs.workflow-api-authentication ]].yaml"
+  STRESS_EOS_VALUES_FILE: "presets/stress-eos-values.yaml"
 
 # All of the below tests use only the docker image generated in the build:image stage
 # These are also the only tests executed on our personal runners instead of the GitLab runners
@@ -48,8 +49,9 @@ variables:
     else
       IMAGE_TAG=${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     fi
+  - CTA_VALUES_CHAIN="${CTA_COMMON_VALUES_FILE},${CTA_WORKFLOW_API_AUTH_VALUES_FILE},${CTA_ADMIN_API_AUTH_VALUES_FILE}"
   # Export all variables here so that it is clear which ones are available
-  - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG EXTRA_SPAWN_ARGS
+  - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG CTA_VALUES_CHAIN EXTRA_SPAWN_ARGS
 
 
 .kubernetes-test:
@@ -77,7 +79,7 @@ variables:
     - bash ./ci/checks/check_runner_healthy.sh
     - *setup-k8s-test-variables
   script:
-    - EXTRA_SPAWN_ARGS="--cta-config $[[ inputs.default-cta-values-chain ]] --eos-config $[[ inputs.default-eos-values-file ]] ${EXTRA_SPAWN_ARGS}"
+    - EXTRA_SPAWN_ARGS="--cta-config ${CTA_VALUES_CHAIN} --eos-config ${EOS_VALUES_FILE} ${EXTRA_SPAWN_ARGS}"
     # Keep the namespace name under 64 characters;
     # Otherwise the eos mgm fqdn becomes too long and things start failing
     - NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_JOB_ID}"
@@ -156,8 +158,8 @@ variables:
                            --reset-scheduler
                            --no-setup
                            --cta-image-tag ${IMAGE_TAG}
-                           --cta-config $[[ inputs.default-cta-values-chain ]]
-                           --eos-config $[[ inputs.default-eos-values-file ]]
+                           --cta-config ${CTA_VALUES_CHAIN}
+                           --eos-config ${EOS_VALUES_FILE}
                            --catalogue-config ${CATALOGUE_CONFIG}
                            --scheduler-config ${SCHEDULER_CONFIG}
                            --extra-cta-values "${EXTRA_CTA_HELM_FLAGS}"
@@ -344,11 +346,11 @@ stress-test:
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
         EXTRA_SPAWN_ARGS+=" --one-logical-library"
         EXTRA_STRESS_TEST_OPTIONS+=" -Q"
-        STRESS_CTA_VALUES_CHAIN="$[[ inputs.default-cta-values-chain ]],presets/stress-cta-pgsched-values.yaml"
+        STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-pgsched-values.yaml"
       else
-        STRESS_CTA_VALUES_CHAIN="$[[ inputs.default-cta-values-chain ]],presets/stress-cta-values.yaml"
+        STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-values.yaml"
       fi
-    - EXTRA_SPAWN_ARGS="--cta-config ${STRESS_CTA_VALUES_CHAIN} --eos-config $[[ inputs.stress-eos-values-file ]] ${EXTRA_SPAWN_ARGS}"
+    - EXTRA_SPAWN_ARGS="--cta-config ${STRESS_CTA_VALUES_CHAIN} --eos-config ${STRESS_EOS_VALUES_FILE} ${EXTRA_SPAWN_ARGS}"
     - extra_args=($EXTRA_ARGS)
     - if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
     # Set up stress test
@@ -416,15 +418,14 @@ stress-test-python:
     - uv pip install -r ci/system_tests/requirements.txt
     - *setup-k8s-test-variables
   script:
-    - EXTRA_SPAWN_ARGS+=" --publish-telemetry"
     - |
       if [[ "$[[ inputs.scheduler-type ]]" == "pgsched" ]]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
         EXTRA_PYTEST_ARGS+=" --test-config config/test_pgsched_params.toml"
         EXTRA_SPAWN_ARGS+=" --one-logical-library"
-        STRESS_CTA_VALUES_CHAIN="$[[ inputs.default-cta-values-chain ]],presets/stress-cta-pgsched-values.yaml"
+        STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-pgsched-values.yaml"
       else
-        STRESS_CTA_VALUES_CHAIN="$[[ inputs.default-cta-values-chain ]],presets/stress-cta-values.yaml"
+        STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-values.yaml"
       fi
     - if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
     # Set up stress test
@@ -435,9 +436,10 @@ stress-test-python:
                            --reset-catalogue
                            --reset-scheduler
                            --no-setup
+                           --publish-telemetry
                            --cta-image-tag ${IMAGE_TAG}
                            --cta-config ${STRESS_CTA_VALUES_CHAIN}
-                           --eos-config $[[ inputs.stress-eos-values-file ]]
+                           --eos-config ${STRESS_EOS_VALUES_FILE}
                            --catalogue-config ${CATALOGUE_CONFIG}
                            --scheduler-config ${SCHEDULER_CONFIG}
                            --chart-install-timeout 15

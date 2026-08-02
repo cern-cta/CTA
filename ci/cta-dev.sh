@@ -27,7 +27,7 @@ readonly program_name="cta-dev"
 # Global
 platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
 scheduler_type="objectstore"
-oracle_support="TRUE"
+oracle_support="true"
 enable_internal_repos=true
 container_runtime="podman"
 cta_image_tag=dev-0
@@ -302,7 +302,7 @@ parse_options() {
       # ----------------------------------------------------------------------
 
       --disable-oracle-support)
-        oracle_support="FALSE"
+        oracle_support="false"
         ;;
       --use-public-repos)
         enable_internal_repos=false

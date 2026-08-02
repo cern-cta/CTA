@@ -27,11 +27,7 @@ spec:
       type: string
     enable-oracle-support:
       type: boolean
-    default-cta-values-chain:
-      type: string
-    default-eos-values-file:
-      type: string
-    stress-eos-values-file:
+    workflow-api-authentication:
       type: string
     enable-valgrind:
       type: boolean
@@ -70,9 +66,7 @@ spec:
           enable-sbom-generation: $[[ inputs.enable-sbom-generation ]]
           scheduler-type: $[[ inputs.scheduler-type ]]
           enable-oracle-support: $[[ inputs.enable-oracle-support ]]
-          default-cta-values-chain: $[[ inputs.default-cta-values-chain ]]
-          default-eos-values-file: $[[ inputs.default-eos-values-file ]]
-          stress-eos-values-file: $[[ inputs.stress-eos-values-file ]]
+          workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
           enable-valgrind: $[[ inputs.enable-valgrind ]]
           enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
           keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]

@@ -3,7 +3,9 @@
 
 spec:
   inputs:
+    # =========================================================================
     # Pipeline execution and regression overrides
+    # =========================================================================
     pipeline-type:
       description: "What kind of pipeline to run"
       type: string
@@ -13,99 +15,110 @@ spec:
         - "REGR_AGAINST_CTA_VERSION"
         - "UPDATE_PIPELINE_IMAGES"
       default: "DEFAULT"
+
     custom-cta-image-tag:
-      description: "Custom CTA image tag. Only valid for REGR_AGAINST_CTA_VERSION pipelines."
+      description: "Custom CTA image tag."
       type: string
       rules:
         - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_VERSION"'
           default: ""
-        - options: [""]
-          default: ""
+
     custom-eos-image-tag:
       description: "Custom EOS image tag for regression pipelines."
       type: string
       rules:
         - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_VERSION"'
           default: ""
-        - options: [""]
-          default: ""
+
     custom-xrootd-version:
       description: "Custom XRootD version for regression pipelines."
       type: string
       rules:
         - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_VERSION"'
           default: ""
-        - options: [""]
-          default: ""
 
+    # =========================================================================
     # Build and architecture
+    # =========================================================================
     platform:
       description: "Platform to build, test, and release on."
       type: string
-      options: ["el9"]
-      default: "el9"
+      rules:
+        - if: '$[[ inputs.pipeline-type ]] != "UPDATE_PIPELINE_IMAGES"'
+          options: ["el9"]
+          default: "el9"
+
+    # Boolean values cannot be conditionally hidden yet. See https://gitlab.com/gitlab-org/gitlab/-/issues/587643
     enable-internal-repos:
-      description: "Use the internal yum repositories instead of the public repositories."
+      description: "Use internal yum repositories."
       type: boolean
       default: true
+
     build-generator:
-      description: "Build generator used to build the CTA RPMs."
+      description: "Build generator for pipelines that compile CTA RPMs."
       type: string
-      options: ["Unix Makefiles", "Ninja"]
-      default: "Unix Makefiles"
+      rules:
+        - if: '$[[ inputs.pipeline-type ]] == "DEFAULT" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH"'
+          options: ["Unix Makefiles", "Ninja"]
+          default: "Unix Makefiles"
+
     cmake-build-type:
-      description: "CMake build type used to compile the CTA RPMs."
+      description: "CMake build type for pipelines that compile CTA RPMs."
       type: string
-      options: ["Release", "Debug", "RelWithDebInfo", "MinSizeRel"]
-      default: "RelWithDebInfo"
+      rules:
+        - if: '$[[ inputs.pipeline-type ]] == "DEFAULT" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH"'
+          options: ["Release", "Debug", "RelWithDebInfo", "MinSizeRel"]
+          default: "RelWithDebInfo"
+
     enable-address-sanitizer:
-      description: "Compile with Address Sanitizer enabled."
+      description: "Compile with Address Sanitizer."
       type: boolean
       default: false
+
     enable-sbom-generation:
-      description: "Generate a Software Bill of Materials."
+      description: "Generate an SBOM."
       type: boolean
       default: false
+
     scheduler-type:
       description: "Scheduler implementation to build and test."
       type: string
-      options: ["pgsched", "objectstore"]
-      default: "objectstore"
+      rules:
+        - if: '$[[ inputs.pipeline-type ]] != "UPDATE_PIPELINE_IMAGES"'
+          options: ["pgsched", "objectstore"]
+          default: "objectstore"
+
     enable-oracle-support:
-      description: "Build the CTA RPMs with Oracle support."
+      description: "Enable Oracle support."
       type: boolean
       default: true
 
-    # Deployment profiles
-    default-cta-values-chain:
-      description: "Comma-separated CTA Helm values files."
+    # =========================================================================
+    # Deployment
+    # =========================================================================
+    workflow-api-authentication:
+      description: "Workflow API authentication used by CTA and EOS."
       type: string
-      options:
-        - "presets/dev-cta-common.yaml,presets/frontend-wfe/auth-jwt.yaml,presets/frontend-admin/auth-jwt.yaml"
-        - "presets/dev-cta-common.yaml,presets/frontend-wfe/auth-mtls.yaml,presets/frontend-admin/auth-jwt.yaml"
-      default: "presets/dev-cta-common.yaml,presets/frontend-wfe/auth-jwt.yaml,presets/frontend-admin/auth-jwt.yaml"
-    default-eos-values-file:
-      description: "EOS Helm values file."
-      type: string
-      options: ["presets/eos/auth-jwt.yaml", "presets/eos/auth-mtls.yaml"]
-      default: "presets/eos/auth-jwt.yaml"
-    stress-eos-values-file:
-      description: "EOS Helm values file for stress tests."
-      type: string
-      options: ["presets/stress-eos-values.yaml"]
-      default: "presets/stress-eos-values.yaml"
+      rules:
+        - if: '$[[ inputs.pipeline-type ]] != "UPDATE_PIPELINE_IMAGES"'
+          options: ["jwt", "mtls"]
+          default: "jwt"
 
+    # =========================================================================
     # Testing
+    # =========================================================================
     enable-valgrind:
       description: "Run unit tests with Valgrind."
       type: boolean
       default: false
+
     enable-dcache-tests:
       description: "Run dCache regression tests automatically."
       type: boolean
       default: false
+
     keep-stress-test-namespace:
-      description: "Keep stress-test namespaces for manual debugging."
+      description: "Keep stress-test namespaces for debugging."
       type: boolean
       default: false
 ---
@@ -265,9 +278,7 @@ include:
       custom-cta-image-tag: $[[ inputs.custom-cta-image-tag ]]
       scheduler-type: $[[ inputs.scheduler-type ]]
       enable-oracle-support: $[[ inputs.enable-oracle-support ]]
-      default-cta-values-chain: $[[ inputs.default-cta-values-chain ]]
-      default-eos-values-file: $[[ inputs.default-eos-values-file ]]
-      stress-eos-values-file: $[[ inputs.stress-eos-values-file ]]
+      workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
   - local: .gitlab/ci/trigger.gitlab-ci.yml
@@ -284,13 +295,8 @@ include:
       enable-sbom-generation: $[[ inputs.enable-sbom-generation ]]
       scheduler-type: $[[ inputs.scheduler-type ]]
       enable-oracle-support: $[[ inputs.enable-oracle-support ]]
-      default-cta-values-chain: $[[ inputs.default-cta-values-chain ]]
-      default-eos-values-file: $[[ inputs.default-eos-values-file ]]
-      stress-eos-values-file: $[[ inputs.stress-eos-values-file ]]
+      workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
       enable-valgrind: $[[ inputs.enable-valgrind ]]
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
   - local: .gitlab/ci/validate.gitlab-ci.yml
-    inputs:
-      custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]
-      platform: $[[ inputs.platform ]]

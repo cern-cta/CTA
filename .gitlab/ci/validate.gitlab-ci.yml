@@ -1,14 +1,6 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-spec:
-  inputs:
-    custom-xrootd-version:
-      type: string
-    platform:
-      type: string
----
-
 validate-catalogue-schema-version:
   stage: validate
   needs: []  # Ensure no artifacts are downloaded
@@ -36,24 +28,6 @@ validate-catalogue-schema-version:
         CATALOGUE_SCHEMA_CHECK_PARAMS: ""
   script:
     - ./ci/checks/check_catalogue_schema_version.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .
-
-validate-custom-dependency-inputs:
-  stage: validate
-  needs:
-    - job: modify-project-json
-      optional: true
-  rules:
-    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
-      when: never
-    - when: on_success
-  variables:
-    CUSTOM_XROOTD_VERSION_INPUT: "$[[ inputs.custom-xrootd-version ]]"
-    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
-  script:
-    - python3 ./ci/checks/validate_custom_dependency_inputs.py
-      --custom-eos-image-tag "$CUSTOM_EOS_IMAGE_TAG"
-      --custom-xrootd-version "$CUSTOM_XROOTD_VERSION_INPUT"
-      --platform "$[[ inputs.platform ]]"
 
 validate-project-json:
   stage: validate
