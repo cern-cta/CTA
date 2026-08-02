@@ -137,6 +137,8 @@ stages:
   - report
   - .post
 
+# Variables should only be used for constants or internal variables that are not expected to be overridden by the user.
+# All user-facing variables should be defined as inputs and passed to the included templates.
 variables:
   # Pipeline images
   # Updated by the weekly UPDATE_PIPELINE_IMAGES pipeline after every image has been built successfully

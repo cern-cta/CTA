@@ -17,18 +17,13 @@ spec:
       type: boolean
 ---
 
-variables:
-  CUSTOM_CTA_IMAGE_TAG_INPUT: "$[[ inputs.custom-cta-image-tag ]]"
-  CTA_COMMON_VALUES_FILE: "presets/dev-cta-common.yaml"
-  CTA_ADMIN_API_AUTH_VALUES_FILE: "presets/frontend-admin/auth-jwt.yaml"
-  CTA_WORKFLOW_API_AUTH_VALUES_FILE: "presets/frontend-wfe/auth-$[[ inputs.workflow-api-authentication ]].yaml"
-  EOS_VALUES_FILE: "presets/eos/auth-$[[ inputs.workflow-api-authentication ]].yaml"
-  STRESS_EOS_VALUES_FILE: "presets/stress-eos-values.yaml"
-
-# All of the below tests use only the docker image generated in the build:image stage
-# These are also the only tests executed on our personal runners instead of the GitLab runners
+# All of the below tests use only the docker image generated in the build:image stage.
+# They should not rely on any other generated artifacts.
+# These are also the only tests executed on our personal runners instead of the GitLab runners.
 
 .setup-k8s-test-variables: &setup-k8s-test-variables
+  - | # Construct the deployment profiles used by Kubernetes tests
+    CTA_VALUES_CHAIN="presets/dev-cta-common.yaml,presets/frontend-wfe/auth-$[[ inputs.workflow-api-authentication ]].yaml,presets/frontend-admin/auth-jwt.yaml"
   - | # Which scheduler config to use
     if [[ "$[[ inputs.scheduler-type ]]" == "objectstore" ]]; then
       SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml
@@ -42,14 +37,13 @@ variables:
       CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml
     fi
   - | # Which image tag to use
-    if [[ -n "$CUSTOM_CTA_IMAGE_TAG_INPUT" ]]; then
-      IMAGE_TAG="$CUSTOM_CTA_IMAGE_TAG_INPUT"
+    if [[ -n "$[[ inputs.custom-cta-image-tag ]]" ]]; then
+      IMAGE_TAG="$[[ inputs.custom-cta-image-tag ]]"
     elif [[ -n "$CUSTOM_CTA_IMAGE_TAG_ENV" ]]; then
       IMAGE_TAG=$CUSTOM_CTA_IMAGE_TAG_ENV
     else
       IMAGE_TAG=${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     fi
-  - CTA_VALUES_CHAIN="${CTA_COMMON_VALUES_FILE},${CTA_WORKFLOW_API_AUTH_VALUES_FILE},${CTA_ADMIN_API_AUTH_VALUES_FILE}"
   # Export all variables here so that it is clear which ones are available
   - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG CTA_VALUES_CHAIN EXTRA_SPAWN_ARGS
 
@@ -79,7 +73,7 @@ variables:
     - bash ./ci/checks/check_runner_healthy.sh
     - *setup-k8s-test-variables
   script:
-    - EXTRA_SPAWN_ARGS="--cta-config ${CTA_VALUES_CHAIN} --eos-config ${EOS_VALUES_FILE} ${EXTRA_SPAWN_ARGS}"
+    - EXTRA_SPAWN_ARGS="--cta-config ${CTA_VALUES_CHAIN} --eos-config presets/eos/auth-$[[ inputs.workflow-api-authentication ]].yaml ${EXTRA_SPAWN_ARGS}"
     # Keep the namespace name under 64 characters;
     # Otherwise the eos mgm fqdn becomes too long and things start failing
     - NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_JOB_ID}"
@@ -159,7 +153,7 @@ variables:
                            --no-setup
                            --cta-image-tag ${IMAGE_TAG}
                            --cta-config ${CTA_VALUES_CHAIN}
-                           --eos-config ${EOS_VALUES_FILE}
+                           --eos-config presets/eos/auth-$[[ inputs.workflow-api-authentication ]].yaml
                            --catalogue-config ${CATALOGUE_CONFIG}
                            --scheduler-config ${SCHEDULER_CONFIG}
                            --extra-cta-values "${EXTRA_CTA_HELM_FLAGS}"
@@ -350,7 +344,7 @@ stress-test:
       else
         STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-values.yaml"
       fi
-    - EXTRA_SPAWN_ARGS="--cta-config ${STRESS_CTA_VALUES_CHAIN} --eos-config ${STRESS_EOS_VALUES_FILE} ${EXTRA_SPAWN_ARGS}"
+    - EXTRA_SPAWN_ARGS="--cta-config ${STRESS_CTA_VALUES_CHAIN} --eos-config presets/stress-eos-values.yaml ${EXTRA_SPAWN_ARGS}"
     - extra_args=($EXTRA_ARGS)
     - if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
     # Set up stress test
@@ -439,7 +433,7 @@ stress-test-python:
                            --publish-telemetry
                            --cta-image-tag ${IMAGE_TAG}
                            --cta-config ${STRESS_CTA_VALUES_CHAIN}
-                           --eos-config ${STRESS_EOS_VALUES_FILE}
+                           --eos-config presets/stress-eos-values.yaml
                            --catalogue-config ${CATALOGUE_CONFIG}
                            --scheduler-config ${SCHEDULER_CONFIG}
                            --chart-install-timeout 15
