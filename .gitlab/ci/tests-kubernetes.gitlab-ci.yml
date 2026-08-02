@@ -21,6 +21,13 @@ spec:
 # They should not rely on any other generated artifacts.
 # These are also the only tests executed on our personal runners instead of the GitLab runners.
 
+.cta-system-test-image-targets: &cta-system-test-image-targets
+  - cta-taped
+  - cta-rmcd
+  - cta-maintd
+  - cta-frontend
+  - cta-tools
+
 .setup-k8s-test-variables: &setup-k8s-test-variables
   - | # Construct the deployment profiles used by Kubernetes tests
     CTA_VALUES_CHAIN="presets/dev-cta-common.yaml,presets/frontend-wfe/auth-$[[ inputs.workflow-api-authentication ]].yaml,presets/frontend-admin/auth-jwt.yaml"
@@ -55,6 +62,9 @@ spec:
     # Image jobs are optional because we may want run with existing docker images
     - job: build-cta-images
       optional: true
+      parallel:
+        matrix:
+          - TARGET_NAME: *cta-system-test-image-targets
   rules:
     - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
@@ -115,6 +125,9 @@ spec:
     # Image jobs are optional because we may want run with existing docker images
     - job: build-cta-images
       optional: true
+      parallel:
+        matrix:
+          - TARGET_NAME: *cta-system-test-image-targets
   rules:
     - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
@@ -321,6 +334,9 @@ stress-test:
     # Image jobs are optional because we may want run with existing docker images
     - job: build-cta-images
       optional: true
+      parallel:
+        matrix:
+          - TARGET_NAME: *cta-system-test-image-targets
   rules:
     - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
@@ -396,6 +412,9 @@ stress-test-python:
     # Image jobs are optional because we may want run with existing docker images
     - job: build-cta-images
       optional: true
+      parallel:
+        matrix:
+          - TARGET_NAME: *cta-system-test-image-targets
   rules:
     - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
