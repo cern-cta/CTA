@@ -97,7 +97,7 @@ if [[ -n ${GFAL2_PROTOCOL} ]]; then
 fi
 
 if [[ ! -z "${error}" ]]; then
-    echo -e "ERROR:\n${error}"
+    echo -e "ERROR:\n${error}" >&2
     exit 1
 fi
 
@@ -110,7 +110,7 @@ case "${CLI_TARGET}" in
     . /tmp/cli_calls.sh
     ;;
   *)
-    echo "ERROR: CLI target ${CLI_TARGET} not supported. Valid options: xrd, gfal2"
+    echo "ERROR: CLI target ${CLI_TARGET} not supported. Valid options: xrd, gfal2" >&2
     exit 1
 esac
 

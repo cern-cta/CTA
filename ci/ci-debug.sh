@@ -316,7 +316,7 @@ wait_for_job() {
 
       failed|canceled)
         echo
-        echo "Debug image build failed."
+        log_error "Debug image build failed."
         echo
         echo "Investigate:"
         echo "${pipeline_web_url}"

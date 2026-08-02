@@ -12,6 +12,8 @@
 
 set -e
 
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
+
 usage() {
   echo
   echo "Usage: $0 [arguments]"
@@ -50,7 +52,7 @@ upload_to_eos() {
           eos_account_username="$2"
           shift
         else
-          echo "Error: --eos-username requires an argument"
+          log_error "Error: --eos-username requires an argument"
           usage
         fi
         ;;
@@ -59,7 +61,7 @@ upload_to_eos() {
           eos_account_password="$2"
           shift
         else
-          echo "Error: --eos-password requires an argument"
+          log_error "Error: --eos-password requires an argument"
           usage
         fi
         ;;
@@ -68,7 +70,7 @@ upload_to_eos() {
           eos_target_dir="$2"
           shift
         else
-          echo "Error: --eos-target-dir requires an argument"
+          log_error "Error: --eos-target-dir requires an argument"
           usage
         fi
         ;;
@@ -77,7 +79,7 @@ upload_to_eos() {
           hook="$2"
           shift
         else
-          echo "Error: --hook requires an argument"
+          log_error "Error: --hook requires an argument"
           usage
         fi
         ;;
@@ -86,7 +88,7 @@ upload_to_eos() {
           local_source_dir="$2"
           shift
         else
-          echo "Error: --local-source-dir requires an argument"
+          log_error "Error: --local-source-dir requires an argument"
           usage
         fi
         ;;
@@ -95,7 +97,7 @@ upload_to_eos() {
           eos_source_dir="$2"
           shift
         else
-          echo "Error: --eos-source-dir requires an argument"
+          log_error "Error: --eos-source-dir requires an argument"
           usage
         fi
         ;;
@@ -104,7 +106,7 @@ upload_to_eos() {
           cta_version="$2"
           shift
         else
-          echo "Error: --cta-version requires an argument"
+          log_error "Error: --cta-version requires an argument"
           usage
         fi
         ;;
@@ -143,20 +145,20 @@ upload_to_eos() {
 
   # Check the source directory exists
   if [[ -n "${local_source_dir}" ]] && [[ ! -d "${local_source_dir}" ]]; then
-    echo "ERROR: Source directory ${local_source_dir} doesn't exist"
+    log_error "ERROR: Source directory ${local_source_dir} doesn't exist"
     exit 1
   fi
 
   # Check the cta_version argument was received
   if [[ -n "${eos_source_dir}" ]] && [[ -z "${cta_version}" ]]; then
-    echo "ERROR: Argument --eos-source-dir should be used with --cta-version"
+    log_error "ERROR: Argument --eos-source-dir should be used with --cta-version"
     exit 1
   fi
 
   # Get credentials
   echo "$eos_account_password" | kinit $eos_account_username@CERN.CH 2>&1 >/dev/null
   if [[ $? -ne 0 ]]; then
-    echo "ERROR: Failed to get Krb5 credentials for $eos_account_username"
+    log_error "ERROR: Failed to get Krb5 credentials for $eos_account_username"
     exit 1
   fi
 
@@ -164,7 +166,7 @@ upload_to_eos() {
     # Rely on xrootd to do the copy of files to EOS
     xrdcp --force --recursive "${local_source_dir}"/ root://eoshome.cern.ch/"${eos_target_dir}"/ 2>&1 >/dev/null
     if [[ $? -ne 0 ]]; then
-      echo "ERROR: Failed to copy files to ${eos_target_dir} via xrdcp"
+      log_error "ERROR: Failed to copy files to ${eos_target_dir} via xrdcp"
       exit 1
     fi
   fi
@@ -176,7 +178,7 @@ upload_to_eos() {
       | sed "s|^${eos_source_dir}||" \
       | xargs -I {} xrdcp --force --recursive root://eoshome.cern.ch/"${eos_source_dir}"/{} root://eoshome.cern.ch/"${eos_target_dir}"/{} 2>&1 >/dev/null
     if [[ $? -ne 0 ]]; then
-      echo "ERROR: Failed to copy release ${cta_version} files from ${eos_source_dir} to ${eos_target_dir} via xrdcp"
+      log_error "ERROR: Failed to copy release ${cta_version} files from ${eos_source_dir} to ${eos_target_dir} via xrdcp"
       exit 1
     fi
   fi
@@ -189,7 +191,7 @@ upload_to_eos() {
         -o GSSAPIDelegateCredentials=yes \
         $eos_account_username@lxplus.cern.ch $hook 2>&1
     if [[ $? -ne 0 ]]; then
-      echo "ERROR: Something went wrong while running hook $hook on lxplus"
+      log_error "ERROR: Something went wrong while running hook $hook on lxplus"
       exit 1
     fi
     echo "Hook executed successfully"
@@ -198,7 +200,7 @@ upload_to_eos() {
   # Destroy credentials
   kdestroy
   if [[ $? -ne 0 ]]; then
-    echo "WARNING: Krb5 credentials for $eos_account_username have not been cleared up"
+    log_warn "WARNING: Krb5 credentials for $eos_account_username have not been cleared up"
   fi
 }
 

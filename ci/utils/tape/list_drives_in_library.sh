@@ -3,6 +3,8 @@
 # SPDX-FileCopyrightText: 2024 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+source "$(dirname "${BASH_SOURCE[0]}")/../log_utils.sh"
+
 # Function to show usage information
 usage() {
   echo
@@ -43,7 +45,7 @@ done
 
 # Ensure required arguments are provided
 if [[ -z "$library_device" ]]; then
-  echo "Error: --library-device is required."
+  log_error "Error: --library-device is required."
   usage
 fi
 

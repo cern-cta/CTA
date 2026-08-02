@@ -5,6 +5,8 @@
 
 set -e
 
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
+
 usage() {
   echo
   echo "Usage: $0 [options]"
@@ -135,7 +137,7 @@ done
 
 # Fail if there were error...
 if [[ -n "${error}" ]]; then
-  echo -e "Errors:\n${error}"
+  log_error "$(printf 'Errors:\n%s' "${error}")"
   exit 1
 fi
 

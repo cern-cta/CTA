@@ -34,10 +34,10 @@ then
   exit 1
 elif test 0 == "$(grep -c -i "0-length" < "${err_msg_file}")"
 then
-  echo "xrdcp command failed, but with unexpected error: $(cat "${err_msg_file}")"
+  echo "xrdcp command failed, but with unexpected error: $(cat "${err_msg_file}")" >&2
   exit 1
 else
-  echo "xrdcp command failed as expected with error: $(cat "${err_msg_file}")"
+  echo "xrdcp command failed as expected with error: $(cat "${err_msg_file}")" >&2
 fi
 rm -f "${err_msg_file}"
 

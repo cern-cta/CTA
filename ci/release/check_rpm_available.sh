@@ -5,6 +5,8 @@
 
 set -e
 
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
+
 usage() {
   echo
   echo "Usage: $0 --repository-url <repo> --package <package> --version <version>"
@@ -28,7 +30,7 @@ check_package_available() {
           repository="$2"
           shift
         else
-          echo "Error: --repository-url requires an argument"
+          log_error "Error: --repository-url requires an argument"
           usage
         fi
         ;;
@@ -37,7 +39,7 @@ check_package_available() {
           package="$2"
           shift
         else
-          echo "Error: --package requires an argument"
+          log_error "Error: --package requires an argument"
           usage
         fi
         ;;
@@ -46,7 +48,7 @@ check_package_available() {
           version="$2"
           shift
         else
-          echo "Error: --version requires an argument"
+          log_error "Error: --version requires an argument"
           usage
         fi
         ;;
@@ -95,7 +97,7 @@ EOF
     echo "Package '$package' with version '$version' is available in the provided repository."
     exit 0
   else
-    echo "Failed: Package '$package' with version '$version' is NOT available in the provided repository."
+    log_error "Failed: Package '$package' with version '$version' is NOT available in the provided repository."
     exit 1
   fi
 

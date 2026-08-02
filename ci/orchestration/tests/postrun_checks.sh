@@ -5,6 +5,8 @@
 
 set -euo pipefail
 
+source "$(dirname "${BASH_SOURCE[0]}")/../../utils/log_utils.sh"
+
 usage() { cat <<EOF 1>&2
 Usage: $0 -n <namespace> [-w <whitelist-file-path>]
 EOF
@@ -49,12 +51,12 @@ for pod in $(echo "${pods}" | jq -r '.metadata.name'); do
 
   restart_count=$(echo "${pods}" | jq -r "select(.metadata.name==\"${pod}\") | .status.containerStatuses[].restartCount" | awk '{s+=$1} END {print s}')
   if [[ "$restart_count" -gt 0 ]]; then
-    echo "WARNING: Pod ${pod} has restarted ${restart_count} times."
+    log_warn "WARNING: Pod ${pod} has restarted ${restart_count} times."
   fi
 
   pod_status=$(echo "${pods}" | jq -r "select(.metadata.name==\"${pod}\") | .status.phase")
   if [[ "${pod_status}" != "Succeeded" ]] && [[ "${pod_status}" != "Running" ]]; then
-    echo "Error: ${pod} is in state ${pod_status}"
+    log_error "Error: ${pod} is in state ${pod_status}"
     general_errors=$((general_errors + 1))
     continue
   fi
@@ -91,7 +93,7 @@ for pod in $(echo "${pods}" | jq -r '.metadata.name'); do
 done
 
 echo ""
-echo "Summary of logged error messages:"
+echo "Summary of logged error messages:" >&2
 non_whitelisted_errors=0
 if [[ -n "${all_logged_error_messages}" ]]; then
   while read -r count message; do
@@ -121,4 +123,3 @@ if [[ "${core_dump_counter}" -gt 0 ]] || [[ "${non_whitelisted_errors}" -gt 0 ]]
   exit 1
 fi
 echo "Success"
-

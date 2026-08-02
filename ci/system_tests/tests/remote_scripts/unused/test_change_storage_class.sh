@@ -26,7 +26,7 @@ if [[ -z "${NAMESPACE}" ]]; then
 fi
 
 if [[ -n "${error}" ]]; then
-    echo -e "ERROR:\n${error}"
+    echo -e "ERROR:\n${error}" >&2
     exit 1
 fi
 
@@ -104,12 +104,12 @@ CATALOGUE_STORAGE_CLASS_2=$(jq . ${CATALOGUE_METADATA_PATH_AFTER_CHANGE_2} | jq 
 rm -r ${CATALOGUE_METADATA_PATH_AFTER_CHANGE_2}
 
 if test ${CATALOGUE_STORAGE_CLASS_1} != ${NEW_STORAGE_CLASS_NAME}; then
-  echo "ERROR: File ${FILE_1} did not change the storage class in the Catalogue"
+  echo "ERROR: File ${FILE_1} did not change the storage class in the Catalogue" >&2
   exit 1
 fi
 
 if test ${CATALOGUE_STORAGE_CLASS_2} != ${NEW_STORAGE_CLASS_NAME}; then
-  echo "ERROR: File ${FILE_2} did not change the storage class in the Catalogue"
+  echo "ERROR: File ${FILE_2} did not change the storage class in the Catalogue" >&2
   exit 1
 fi
 

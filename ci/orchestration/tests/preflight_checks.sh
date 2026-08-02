@@ -28,7 +28,7 @@ if [[ -z "${NAMESPACE}" ]]; then
 fi
 
 if [[ ! -z "${error}" ]]; then
-    echo -e "ERROR:\n${error}"
+    log_error "$(printf 'ERROR:\n%s' "${error}")"
     exit 1
 fi
 

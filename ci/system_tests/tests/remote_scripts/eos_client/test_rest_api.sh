@@ -52,10 +52,10 @@ echo "$(date +%s): Testing compliance of .well-known/wlcg-tape-rest-api endpoint
 WELL_KNOWN=$(curl --insecure "https://${EOS_MGM_HOST}:8443/.well-known/wlcg-tape-rest-api")
 echo "Full well known: ${WELL_KNOWN}"
 
-test $(echo ${WELL_KNOWN} | jq -r .sitename | wc -l) -eq 1 && echo "Site name:  $(echo ${WELL_KNOWN} | jq -r .sitename)"  || { echo "ERROR: Sitename not in the response from .well-known"; exit 1; }
+test $(echo ${WELL_KNOWN} | jq -r .sitename | wc -l) -eq 1 && echo "Site name:  $(echo ${WELL_KNOWN} | jq -r .sitename)"  || { echo "ERROR: Sitename not in the response from .well-known" >&2; exit 1; }
 echo "Description: $(echo ${WELL_KNOWN} | jq -r .description)"
-test   $(echo ${WELL_KNOWN} | jq -r .endpoints[0].uri | wc -l) -eq 1 && echo "URI:       $(echo ${WELL_KNOWN} | jq -r .endpoints[0].uri)" || { echo "ERROR: URI not found in the response from .well-known."; exit 1; }
-test $(echo ${WELL_KNOWN} | jq -r .endpoints[0].version | wc -l) -eq 1 && echo "Version:   $(echo ${WELL_KNOWN} | jq -r .endpoints[0].version)" || { echo "ERROR: Metadata not found in the response from .well-known"; exit 1;}
+test   $(echo ${WELL_KNOWN} | jq -r .endpoints[0].uri | wc -l) -eq 1 && echo "URI:       $(echo ${WELL_KNOWN} | jq -r .endpoints[0].uri)" || { echo "ERROR: URI not found in the response from .well-known." >&2; exit 1; }
+test $(echo ${WELL_KNOWN} | jq -r .endpoints[0].version | wc -l) -eq 1 && echo "Version:   $(echo ${WELL_KNOWN} | jq -r .endpoints[0].version)" || { echo "ERROR: Metadata not found in the response from .well-known" >&2; exit 1;}
 echo "Metadata: $(echo ${WELL_KNOWN} | jq -r .endpoints[0].metadata)"
 
 # Archive the file.
