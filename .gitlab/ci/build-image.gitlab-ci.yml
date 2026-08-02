@@ -96,7 +96,7 @@ spec:
     - job: modify-project-json
       optional: true
   rules:
-    - if: '$PIPELINE_TYPE == "DEFAULT" || $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
+    - if: '$PIPELINE_TYPE == "DEFAULT" || $PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH"'
       when: on_success
     - when: never
   variables:
