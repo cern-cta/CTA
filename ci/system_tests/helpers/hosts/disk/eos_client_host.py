@@ -73,7 +73,7 @@ class EosClientHost(DiskClientHost):
         wait_for_evict: bool = True,
         wait_timeout_secs: int = 20,
     ) -> None:
-        # TODO: specify protocol?
+        # Should we specify a protocol/user here?
         print(f"Copying {source_path} to {destination_path} on disk instance {disk_instance_name}")
         self.exec(f"xrdcp {source_path} root://{disk_instance_name}/{destination_path}")
         if wait:

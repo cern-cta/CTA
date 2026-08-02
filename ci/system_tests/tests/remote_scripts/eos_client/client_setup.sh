@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
-# TODO: this whole file should eventually be deleted and done natively in Python
+# This whole file should eventually be deleted and done natively in Python
 # While we are migrating, we'll keep it around
 
 set -a

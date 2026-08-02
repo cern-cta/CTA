@@ -120,7 +120,8 @@ CMD ["/usr/bin/cta-maintd", "--log-file=/var/log/cta/cta-maintd.log", "--config-
 # =========================================================================
 #  SERVICE cta-frontend
 # =========================================================================
-# TODO: once we split the RPMs, we should explicitly build the workflow-api and admin-api images here
+
+# Once we split the RPMs, we should explicitly build the workflow-api and admin-api images here
 FROM base AS cta-frontend
 
 ARG ENABLE_INTERNAL_REPOS
