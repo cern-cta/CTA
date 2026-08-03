@@ -142,7 +142,7 @@ stages:
 variables:
   # Pipeline images
   # Updated by the weekly UPDATE_PIPELINE_IMAGES pipeline after every image has been built successfully
-  PIPELINE_IMAGE_VERSION: "2026-08-02-15438002"
+  PIPELINE_IMAGE_VERSION: "2026-08-03-15444198"
   # Platform-specific images are tagged with the platform name to allow for multiple platforms to be built and tested in parallel
   IMAGE_BUILD: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:${PIPELINE_IMAGE_VERSION}.$[[ inputs.platform ]]"
   IMAGE_TEST: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:${PIPELINE_IMAGE_VERSION}.$[[ inputs.platform ]]"
