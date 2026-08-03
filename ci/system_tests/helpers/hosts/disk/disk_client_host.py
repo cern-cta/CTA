@@ -1,15 +1,133 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import json
 import time
 import uuid
 from pathlib import Path
+from typing import Any, Optional
 
 from system_tests.helpers.utils.timeout import Timeout
 from system_tests.helpers.hosts.remote_host import RemoteHost
 
 
 class DiskClientHost(RemoteHost):
+    def http_request(
+        self,
+        url: str,
+        *,
+        token: Optional[str] = None,
+        certificate_options: str = "--insecure",
+        data: Optional[dict[str, Any]] = None,
+        method: Optional[str] = None,
+        upload_file: Optional[Path] = None,
+    ) -> str:
+        command = f'curl --fail-with-body --silent --show-error -L {certificate_options} -H "Accept: application/json"'
+        if token is not None:
+            command += f' -H "Authorization: Bearer {token}"'
+        if data is not None:
+            command += f" -H \"Content-Type: application/json\" --data '{json.dumps(data)}'"
+        if method is not None:
+            command += f" -X {method}"
+        if upload_file is not None:
+            command += f' --upload-file "{upload_file}"'
+        return self.exec_with_output(f'{command} "{url}"')
+
+    def wait_for_archive_locality(
+        self,
+        rest_api_endpoint: str,
+        path: Path,
+        expected_locality: str,
+        *,
+        token: str,
+        certificate_options: str,
+        wait_timeout_secs: int = 90,
+    ) -> dict[str, Any]:
+        last_file_info: dict[str, Any] = {}
+        last_reported_locality: Optional[str] = None
+        print(f"Waiting for {path} to reach archive locality {expected_locality}...")
+        with Timeout(wait_timeout_secs) as timeout:
+            while not timeout.expired:
+                response = self.http_request(
+                    f"{rest_api_endpoint}/archiveinfo",
+                    token=token,
+                    certificate_options=certificate_options,
+                    data={"paths": [str(path)]},
+                )
+                file_infos = json.loads(response)
+                if isinstance(file_infos, list):
+                    file_info = next(
+                        (item for item in file_infos if isinstance(item, dict) and item.get("path") == str(path)),
+                        None,
+                    )
+                    if file_info is not None:
+                        last_file_info = file_info
+                        locality = file_info.get("locality")
+                        if locality != last_reported_locality:
+                            print(f"Archive locality for {path}: {locality}")
+                            last_reported_locality = locality if isinstance(locality, str) else None
+                        if locality == expected_locality:
+                            print(f"File {path} reached archive locality {expected_locality}")
+                            return file_info
+                time.sleep(1)
+        raise TimeoutError(
+            f"File {path} did not reach archive locality {expected_locality} within {wait_timeout_secs} seconds. "
+            f"Last response: {last_file_info}"
+        )
+
+    def wait_for_stage_file_status(
+        self,
+        rest_api_endpoint: str,
+        request_id: str,
+        path: Path,
+        *,
+        token: str,
+        certificate_options: str,
+        expected_state: Optional[str] = None,
+        expected_on_disk: Optional[bool] = None,
+        wait_timeout_secs: int = 90,
+    ) -> dict[str, Any]:
+        if expected_state is None and expected_on_disk is None:
+            raise ValueError("An expected stage state or onDisk value must be provided")
+
+        last_file_status: dict[str, Any] = {}
+        last_reported_status: tuple[object, object] = (None, None)
+        expected_description = expected_state if expected_state is not None else f"onDisk={expected_on_disk}"
+        print(f"Waiting for {path} in stage request {request_id} to reach {expected_description}...")
+        with Timeout(wait_timeout_secs) as timeout:
+            while not timeout.expired:
+                response = self.http_request(
+                    f"{rest_api_endpoint}/stage/{request_id}",
+                    token=token,
+                    certificate_options=certificate_options,
+                )
+                request_status = json.loads(response)
+                if isinstance(request_status, dict) and isinstance(request_status.get("files"), list):
+                    file_status = next(
+                        (
+                            item
+                            for item in request_status["files"]
+                            if isinstance(item, dict) and item.get("path") == str(path)
+                        ),
+                        None,
+                    )
+                    if file_status is not None:
+                        last_file_status = file_status
+                        reported_status = (file_status.get("state"), file_status.get("onDisk"))
+                        if reported_status != last_reported_status:
+                            print(f"Stage status for {path}: {file_status}")
+                            last_reported_status = reported_status
+                        state_matches = expected_state is not None and file_status.get("state") == expected_state
+                        on_disk_matches = expected_on_disk is not None and file_status.get("onDisk") is expected_on_disk
+                        if state_matches or on_disk_matches:
+                            print(f"File {path} reached the expected stage status")
+                            return file_status
+                time.sleep(1)
+        raise TimeoutError(
+            f"File {path} did not reach the expected stage status within {wait_timeout_secs} seconds. "
+            f"Last response: {last_file_status}"
+        )
+
     def is_file_on_tape_only(self, disk_instance_name: str, path: Path) -> bool: ...
 
     def is_file_on_tape(self, disk_instance_name: str, path: Path) -> bool: ...

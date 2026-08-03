@@ -236,19 +236,6 @@ def test_eos_evict(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
     eos_client.exec(". /tmp/client_env && /tmp/test_eos_evict.sh")
 
 
-# tmp_path is a fixture provided by pytest itself. See: https://docs.pytest.org/en/6.2.x/tmpdir.html
-
-
-def test_eos_http_rest_api(
-    eos_client: EosClientHost, eos_mgm: EosMgmHost, tmp_path: Path, remote_scripts_dir: Path, test_dir: Path
-) -> None:
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_rest_api.sh", Path("/tmp"), permissions="+x")
-    # Copy over CA certificates
-    eos_mgm.copy_from(Path("/etc/grid-security/certificates"), tmp_path)
-    eos_client.copy_to(tmp_path, Path("/etc/grid-security"))
-    eos_client.exec(f". /tmp/client_env && /tmp/test_rest_api.sh {test_dir}")
-
-
 def test_eos_immutable_file(eos_client: EosClientHost, eos_mgm: EosMgmHost, test_dir: Path) -> None:
     eos_client.exec(
         f". /tmp/client_env && echo yes | cta-immutable-file-test root://{eos_mgm.instance_name}/{test_dir}/immutable_file"
