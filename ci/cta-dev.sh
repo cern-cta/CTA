@@ -12,8 +12,19 @@ set -eo pipefail
 # Constants
 script_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 readonly script_dir
-project_root=$(git rev-parse --show-toplevel)
+
+for required_command in jq git python3; do
+  if ! command -v "$required_command" >/dev/null 2>&1 || ! "$required_command" --version >/dev/null 2>&1; then
+    echo "ERROR: Required command '$required_command' is missing or unusable." >&2
+    exit 1
+  fi
+done
+if ! project_root=$(git -C "$script_dir" rev-parse --show-toplevel 2>/dev/null); then
+  echo "ERROR: Could not locate the CTA Git worktree containing '$script_dir'." >&2
+  exit 1
+fi
 readonly project_root
+
 # shellcheck disable=SC2207
 readonly available_tests=(
   setup
@@ -29,7 +40,8 @@ platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
 scheduler_type="objectstore"
 oracle_support="true"
 enable_internal_repos=true
-container_runtime="podman"
+container_runtime=""
+container_runtime_explicit=false
 cta_image_tag=dev-0
 deploy_namespace="dev"
 
@@ -45,7 +57,6 @@ skip_unit_tests=true
 force_install=false
 enable_address_sanitizer=false
 build_generator="Ninja"
-cmake_build_type=""
 cmake_build_type=$(jq -r .dev.defaultBuildType "${project_root}/project.json")
 
 # Images
@@ -63,7 +74,7 @@ catalogue_config="presets/dev-catalogue-postgres-values.yaml"
 scheduler_config=""
 cta_config=""
 eos_config=""
-extra_spawn_options="--no-setup"
+extra_spawn_options=(--no-setup)
 
 stage_names=()
 stage_durations=()
@@ -98,7 +109,8 @@ Commands:
 Global options:
   -h, --help                         Show this help.
       --container-runtime <runtime>  Container runtime [docker, podman].
-                                     Defaults to podman.
+                                     Auto-detected (working Podman preferred).
+                                     Docker requires the Buildx plugin.
       --platform <platform>          Platform to build for.
                                      Defaults to project.json.
       --scheduler-type <type>        Scheduler backend
@@ -153,6 +165,9 @@ usage_images() {
 
 Build CTA container images from the locally generated RPMs.
 
+Images are loaded into a running local minikube or k3s cluster when one is
+detected. Otherwise they remain in the selected container runtime.
+
 Will build a single Docker image per CTA service.
 All images are built in parallel.
 
@@ -162,8 +177,8 @@ Usage:
 Options:
       --enable-debug-image      Build an additional debug image containing
                                 debuginfo packages and gdb.
-      --skip-image-cleanup      Skip cleanup of unused container images
-                                before building.
+      --skip-image-cleanup      Keep existing CTA images with the selected
+                                development tag.
 
 EOF
 exit 1
@@ -174,7 +189,7 @@ usage_deploy() {
 
 Deploy a local CTA development instance.
 
-The existing deployment is removed before creating a new one.
+An existing deployment is replaced only when it was created by CTA tooling.
 
 Usage:
   $(basename "$0") deploy [options]
@@ -190,8 +205,7 @@ Options:
       --eos-image-repository <r>   EOS image repository.
       --eos-image-tag <tag>        EOS image tag.
       --cta-image-tag <tag>        CTA image tag.
-      --spawn-options <options>    Additional options forwarded to
-                                   create_instance.sh.
+      --spawn-options <options>    Additional deployment options.
       --with-dcache                Deploy dCache instead of EOS.
       --local-telemetry            Deploy a local telemetry stack.
       --publish-telemetry          Publish telemetry to the configured backend.
@@ -263,6 +277,7 @@ require_command() {
 
 parse_options() {
   local command="$1"
+  local -a spawn_options
   shift
 
   while [[ $# -gt 0 ]]; do
@@ -317,6 +332,7 @@ parse_options() {
         ;;
       --container-runtime)
         container_runtime="$2"
+        container_runtime_explicit=true
         shift
         ;;
 
@@ -439,7 +455,9 @@ parse_options() {
         ;;
       --spawn-options)
         require_command "$1" "$command" deploy up all
-        extra_spawn_options+=" $2"
+        spawn_options=()
+        read -ra spawn_options <<< "$2"
+        extra_spawn_options+=("${spawn_options[@]}")
         shift
         ;;
       --deploy-namespace)
@@ -459,7 +477,7 @@ parse_options() {
     unsupported_argument "--cmake-build-type is \"$cmake_build_type\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
   fi
 
-  if [[ "$container_runtime" != "docker" && "$container_runtime" != "podman" ]]; then
+  if [[ -n "$container_runtime" && "$container_runtime" != "docker" && "$container_runtime" != "podman" ]]; then
     unsupported_argument "--container-runtime is \"$container_runtime\" but must be one of [docker, podman]."
   fi
 
@@ -469,26 +487,83 @@ parse_options() {
 
 }
 
+validate_container_runtime() {
+  command -v "$container_runtime" >/dev/null 2>&1 || return 1
+  "$container_runtime" info >/dev/null 2>&1 || return 1
+  if [[ $container_runtime == docker ]]; then
+    if ! docker buildx version >/dev/null 2>&1; then
+      die "Docker Buildx is required to build CTA images. Install the Docker Buildx plugin or use Podman."
+    fi
+  fi
+}
+
+select_container_runtime() {
+  local candidate
+  if [[ $container_runtime_explicit == true ]]; then
+    validate_container_runtime || die "Requested container runtime '$container_runtime' is not installed or usable."
+    return
+  fi
+  for candidate in podman docker; do
+    container_runtime="$candidate"
+    if validate_container_runtime; then
+      log_task "Using container runtime: $container_runtime"
+      return
+    fi
+  done
+  die "No usable container runtime found. Install and start Podman or Docker."
+}
+
+local_kubernetes_available() {
+  local found=false unusable=false
+  if command -v minikube >/dev/null 2>&1; then
+    if minikube status >/dev/null 2>&1; then
+      found=true
+    else
+      unusable=true
+    fi
+  fi
+  if command -v k3s >/dev/null 2>&1; then
+    if k3s ctr version >/dev/null 2>&1; then
+      found=true
+    else
+      unusable=true
+    fi
+  fi
+  [[ $found == true && $unusable == false ]]
+}
+
+ensure_namespace_owned() {
+  local owner
+  if kubectl get namespace "$deploy_namespace" >/dev/null 2>&1; then
+    owner=$(kubectl get namespace "$deploy_namespace" -o 'jsonpath={.metadata.labels.app\.kubernetes\.io/managed-by}')
+    [[ $owner == cta-create-instance ]] || \
+      die "Refusing to replace namespace '$deploy_namespace': it is not managed by CTA tooling. Delete it manually with: kubectl delete namespace '$deploy_namespace'"
+  fi
+}
+
 # =========================================================================
 #  Commands
 # =========================================================================
 
 build_cta() {
+  cd "$project_root"
+
   # Constants
   local -r cta_version="5"
   local -r vcs_version="dev"
-  local -r xrootd_ssi_version=$(cd "$project_root/xrootd-ssi-protobuf-interface" && git describe --tags --exact-match)
+  local -r xrootd_ssi_version=$(git -C "$project_root/xrootd-ssi-protobuf-interface" describe --tags --exact-match)
   local -r build_image_name="cta-build-image-${platform}"
   local -r build_container_name="cta-build${project_root//\//-}-${platform}"
   local -r mount_basedir="/shared/CTA"
   local -r num_jobs=$(nproc --ignore=2)
+  local build_command=("$container_runtime" build)
+  [[ $container_runtime == docker ]] && build_command=(docker buildx build --load)
 
   # Stop and remove existing container if reset is requested
   echo "Total CTA build containers found: $(${container_runtime} ps | grep -c cta-build)"
   if [[ "${reset}" = true ]]; then
     log_task "Removing the existing build container..."
     ${container_runtime} rm -f "${build_container_name}" >/dev/null 2>&1 || true
-    ${container_runtime} rmi "${build_image_name}" > /dev/null 2>&1 || true
   fi
 
   # Start container if not already running
@@ -498,7 +573,7 @@ build_cta() {
     print_header "SETTING UP BUILD CONTAINER"
     build_container_restarted=true
     log_task "Building the build container image..."
-    ${container_runtime} build --no-cache -t "${build_image_name}" -f ci/docker/cta/"${platform}"/build.Dockerfile .
+    "${build_command[@]}" --no-cache -t "${build_image_name}" -f ci/docker/cta/"${platform}"/build.Dockerfile .
     log_task "Starting build container ${build_container_name}..."
     ${container_runtime} run -dit --rm --name "${build_container_name}" \
       -v "${project_root}:${mount_basedir}:z" \
@@ -506,11 +581,10 @@ build_cta() {
       /bin/bash
 
     print_header "BUILDING SRPMS"
-    build_srpm_flags=""
-    [[ $clean_build_dirs == true ]] && build_srpm_flags+=" --clean-build-dir"
+    build_srpm_flags=()
+    [[ $clean_build_dirs == true ]] && build_srpm_flags+=(--clean-build-dir)
 
-    # shellcheck disable=SC2086
-    ${container_runtime} exec -it "${build_container_name}" \
+    ${container_runtime} exec "${build_container_name}" \
       .${mount_basedir}/ci/build/build_srpm.sh \
       --build-dir ${mount_basedir}/build_srpm \
       --build-generator "${build_generator}" \
@@ -521,30 +595,29 @@ build_cta() {
       --oracle-support "${oracle_support}" \
       --cmake-build-type "${cmake_build_type}" \
       --jobs "${num_jobs}" \
-      ${build_srpm_flags}
+      "${build_srpm_flags[@]}"
   fi
 
   log_task "Compiling CTA from the source directory..."
 
-  local build_rpm_flags=""
+  local build_rpm_flags=()
 
   # It should only be possible to skip cmake if the pod was not restarted or the install was forced
   if [[ $build_container_restarted == true || $force_install == true ]]; then
-    build_rpm_flags+=" --install-srpms"
+    build_rpm_flags+=(--install-srpms)
   elif [[ $skip_cmake == true ]]; then
-    build_rpm_flags+=" --skip-cmake"
+    build_rpm_flags+=(--skip-cmake)
   fi
 
-  [[ $skip_unit_tests == true ]] && build_rpm_flags+=" --skip-unit-tests"
-  [[ $clean_build_dir == true || $clean_build_dirs == true ]] && build_rpm_flags+=" --clean-build-dir"
-  [[ $skip_debug_packages == true ]] && build_rpm_flags+=" --skip-debug-packages"
-  [[ $enable_ccache == true ]] && build_rpm_flags+=" --enable-ccache"
-  [[ $enable_internal_repos == true ]] && build_rpm_flags+=" --enable-internal-repos"
-  [[ $enable_address_sanitizer == true ]] && build_rpm_flags+=" --enable-address-sanitizer"
+  [[ $skip_unit_tests == true ]] && build_rpm_flags+=(--skip-unit-tests)
+  [[ $clean_build_dir == true || $clean_build_dirs == true ]] && build_rpm_flags+=(--clean-build-dir)
+  [[ $skip_debug_packages == true ]] && build_rpm_flags+=(--skip-debug-packages)
+  [[ $enable_ccache == true ]] && build_rpm_flags+=(--enable-ccache)
+  [[ $enable_internal_repos == true ]] && build_rpm_flags+=(--enable-internal-repos)
+  [[ $enable_address_sanitizer == true ]] && build_rpm_flags+=(--enable-address-sanitizer)
 
   print_header "BUILDING RPMS"
-  # shellcheck disable=SC2086
-  ${container_runtime} exec -it "${build_container_name}" \
+  ${container_runtime} exec "${build_container_name}" \
     .${mount_basedir}/ci/build/build_rpm.sh \
     --build-dir ${mount_basedir}/build_rpm \
     --build-generator "${build_generator}" \
@@ -558,7 +631,7 @@ build_cta() {
     --cmake-build-type "${cmake_build_type}" \
     --jobs "${num_jobs}" \
     --platform "${platform}" \
-    ${build_rpm_flags}
+    "${build_rpm_flags[@]}"
 
 }
 
@@ -569,45 +642,50 @@ images_cta() {
   print_header "BUILDING CONTAINER IMAGES"
   # Cleanup
   if [[ ${image_cleanup} = true ]]; then
-    log_task "Cleaning up unused container images..."
-    ${container_runtime} image prune -f
-    if command -v minikube >/dev/null 2>&1; then
-      minikube ssh -- "${container_runtime} image prune -f" || true
-    fi
-    if command -v k3s >/dev/null 2>&1; then
-      sudo /usr/local/bin/k3s crictl rmi --prune || true
-    fi
+    log_task "Cleaning up CTA images tagged ${cta_image_tag}..."
+    local target
+    for target in cta-taped cta-maintd cta-rmcd cta-frontend cta-tools cta-debug; do
+      ${container_runtime} image rm "cta/ctageneric/${target}:${cta_image_tag}" >/dev/null 2>&1 || true
+    done
   else
     log_warn "Skipping cleanup of unused container images."
   fi
 
   # Build
   log_task "Building container images from ${rpm_src}..."
-  local extra_image_build_options=""
-  [[ $enable_internal_repos == true ]] && extra_image_build_options+=" --enable-internal-repos"
-  [[ $enable_debug_image == true ]] && extra_image_build_options+=" --enable-debug-image"
+  local extra_image_build_options=()
+  local load_into_k8s=false
+  [[ $enable_internal_repos == true ]] && extra_image_build_options+=(--enable-internal-repos)
+  [[ $enable_debug_image == true ]] && extra_image_build_options+=(--enable-debug-image)
+  if local_kubernetes_available; then
+    extra_image_build_options+=(--load-into-k8s)
+    load_into_k8s=true
+  fi
   cd "${project_root}"
   ./ci/build/build_images.sh \
     --tag "${cta_image_tag}" \
     --rpm-src "${rpm_src}" \
     --container-runtime "${container_runtime}" \
-    --load-into-k8s \
-    ${extra_image_build_options}
+    "${extra_image_build_options[@]}"
+  if [[ $load_into_k8s == false ]]; then
+    log_warn "Kubernetes image loading skipped: every installed minikube/k3s command must refer to a usable local cluster."
+  fi
 }
 
 deploy_cta() {
+  ensure_namespace_owned
   print_header "DELETING OLD CTA DEPLOYMENTS"
 
   cd "${project_root}/ci/orchestration"
   # By default we discard the logs from deletion as this is not very useful during development and pollutes the dev machine
-  ./delete_instance.sh -n "${deploy_namespace}" --discard-logs
+  ./delete_instance.sh -n "${deploy_namespace}" --discard-logs --keep-pvs
   print_header "DEPLOYING CTA"
-  [[ -n $eos_image_repository ]] && extra_spawn_options+=" --eos-image-repository $eos_image_repository"
-  [[ -n $eos_image_tag ]] && extra_spawn_options+=" --eos-image-tag $eos_image_tag"
-  [[ -n $eos_config ]] && extra_spawn_options+=" --eos-config $eos_config"
-  [[ -n $cta_config ]] && extra_spawn_options+=" --cta-config $cta_config"
-  [[ $local_telemetry == true ]] && extra_spawn_options+=" --local-telemetry"
-  [[ $publish_telemetry == true ]] && extra_spawn_options+=" --publish-telemetry"
+  [[ -n $eos_image_repository ]] && extra_spawn_options+=(--eos-image-repository "$eos_image_repository")
+  [[ -n $eos_image_tag ]] && extra_spawn_options+=(--eos-image-tag "$eos_image_tag")
+  [[ -n $eos_config ]] && extra_spawn_options+=(--eos-config "$eos_config")
+  [[ -n $cta_config ]] && extra_spawn_options+=(--cta-config "$cta_config")
+  [[ $local_telemetry == true ]] && extra_spawn_options+=(--local-telemetry)
+  [[ $publish_telemetry == true ]] && extra_spawn_options+=(--publish-telemetry)
 
   # Assign default config based on scheduler type if not already set
   if [[ -z $scheduler_config ]]; then
@@ -615,7 +693,6 @@ deploy_cta() {
       scheduler_config="presets/dev-scheduler-postgres-values.yaml" || \
       scheduler_config="presets/dev-scheduler-vfs-values.yaml"
   fi
-  # shellcheck disable=SC2086
   ./create_instance.sh --namespace "${deploy_namespace}" \
     --cta-image-registry localhost \
     --cta-image-tag "${cta_image_tag}" \
@@ -625,10 +702,12 @@ deploy_cta() {
     --dcache-enabled ${dcache_enabled} \
     --reset-catalogue \
     --reset-scheduler \
-    ${extra_spawn_options}
+    "${extra_spawn_options[@]}"
 }
 
 test_cta() {
+  [[ -x "$venv_dir/bin/python" && -x "$venv_dir/bin/pytest" ]] || \
+    die "CTA system-test environment is missing. Run '$(basename "$0") install' first."
   print_header "RUNNING TESTS"
 
   source "$venv_dir/bin/activate" || (log_error "Failed to activate the Python virtual environment. Run \"$(basename "$0") install\" to create it." && exit 1)
@@ -706,7 +785,7 @@ all_cta() {
 install_cta_dev() {
   local -r bin_dir="$HOME/.local/bin"
   local -r link_path="$bin_dir/$program_name"
-  local -r script_path="$(readlink -f "$0")"
+  local -r script_path="$(realpath "$0")"
   local -r requirements_path="${project_root}/ci/system_tests/requirements.txt"
   local -r completion_src="${project_root}/ci/${program_name}.bash-completion"
   local -r completion_dir="$HOME/.local/share/bash-completion/completions"
@@ -735,12 +814,8 @@ install_cta_dev() {
     "$venv_dir/bin/pip" install -r "$requirements_path"
   fi
 
-  log_success "Installed ${program_name}. You can now run it from any directory."
-
-  if ! shopt -oq posix && [[ -n ${BASH_VERSION:-} ]]; then
-    log_warn "Restart your shell or run the following command to enable completion now:"
-    echo "  source \"$completion_dst\""
-  fi
+  log_success "Installed ${program_name}."
+  log_warn "Restart your shell to use ${program_name} and its Bash completion."
 }
 
 # =========================================================================
@@ -762,6 +837,7 @@ main() {
   fi
 
   parse_options "$command" "$@"
+  select_container_runtime
 
   case "$command" in
     build)
