@@ -186,7 +186,6 @@ delete_cluster_resource_if_owned() {
     kubectl delete "$resource_type" "$resource_name"
   else
     log_warn "Skipping shared ${resource_type}/${resource_name}: it is not owned by namespace ${namespace}"
-    log_warn "If you are sure you want to delete it, run: kubectl delete ${resource_type} ${resource_name}"
   fi
 }
 

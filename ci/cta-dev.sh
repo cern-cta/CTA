@@ -536,7 +536,8 @@ ensure_namespace_owned() {
   local owner
   if kubectl get namespace "$deploy_namespace" >/dev/null 2>&1; then
     owner=$(kubectl get namespace "$deploy_namespace" -o 'jsonpath={.metadata.labels.app\.kubernetes\.io/managed-by}')
-    [[ $owner == cta-create-instance ]] || die "Refusing to replace namespace '$deploy_namespace': it is not managed by CTA tooling."
+    [[ $owner == cta-create-instance ]] || \
+      die "Refusing to replace namespace '$deploy_namespace': it is not managed by CTA tooling. Delete it manually with: kubectl delete namespace '$deploy_namespace'"
   fi
 }
 
