@@ -110,6 +110,7 @@ Global options:
   -h, --help                         Show this help.
       --container-runtime <runtime>  Container runtime [docker, podman].
                                      Auto-detected (working Podman preferred).
+                                     Docker requires the Buildx plugin.
       --platform <platform>          Platform to build for.
                                      Defaults to project.json.
       --scheduler-type <type>        Scheduler backend
@@ -488,11 +489,17 @@ select_container_runtime() {
   if [[ $container_runtime_explicit == true ]]; then
     command -v "$container_runtime" >/dev/null 2>&1 || die "Requested container runtime '$container_runtime' is not installed."
     "$container_runtime" info >/dev/null 2>&1 || die "Requested container runtime '$container_runtime' is installed but not usable."
+    if [[ $container_runtime == docker ]] && ! docker buildx version >/dev/null 2>&1; then
+      die "Docker Buildx is required to build CTA images. Install the Docker Buildx plugin or use Podman."
+    fi
     return
   fi
   for candidate in podman docker; do
     if command -v "$candidate" >/dev/null 2>&1 && "$candidate" info >/dev/null 2>&1; then
       container_runtime="$candidate"
+      if [[ $container_runtime == docker ]] && ! docker buildx version >/dev/null 2>&1; then
+        die "Docker Buildx is required to build CTA images. Install the Docker Buildx plugin or use Podman."
+      fi
       log_task "Using container runtime: $container_runtime"
       return
     fi
@@ -520,10 +527,10 @@ local_kubernetes_available() {
 }
 
 preflight_deploy() {
-  local errors=0 context library_json library_device drives_json
-  for command in kubectl helm lsscsi sg_inq; do
-    if ! command -v "$command" >/dev/null 2>&1; then
-      log_error "Deploy requirement missing: $command"
+  local errors=0 context library_json library_device drives_json required_command
+  for required_command in kubectl helm lsscsi sg_inq; do
+    if ! command -v "$required_command" >/dev/null 2>&1; then
+      log_error "Deploy requirement missing: $required_command"
       errors=$((errors + 1))
     fi
   done
@@ -559,6 +566,8 @@ ensure_namespace_owned() {
 # =========================================================================
 
 build_cta() {
+  cd "$project_root"
+
   # Constants
   local -r cta_version="5"
   local -r vcs_version="dev"
@@ -567,6 +576,8 @@ build_cta() {
   local -r build_container_name="cta-build${project_root//\//-}-${platform}"
   local -r mount_basedir="/shared/CTA"
   local -r num_jobs=$(nproc --ignore=2)
+  local build_command=("$container_runtime" build)
+  [[ $container_runtime == docker ]] && build_command=(docker buildx build --load)
 
   # Stop and remove existing container if reset is requested
   echo "Total CTA build containers found: $(${container_runtime} ps | grep -c cta-build)"
@@ -582,7 +593,7 @@ build_cta() {
     print_header "SETTING UP BUILD CONTAINER"
     build_container_restarted=true
     log_task "Building the build container image..."
-    ${container_runtime} build --no-cache -t "${build_image_name}" -f ci/docker/cta/"${platform}"/build.Dockerfile .
+    "${build_command[@]}" --no-cache -t "${build_image_name}" -f ci/docker/cta/"${platform}"/build.Dockerfile .
     log_task "Starting build container ${build_container_name}..."
     ${container_runtime} run -dit --rm --name "${build_container_name}" \
       -v "${project_root}:${mount_basedir}:z" \
@@ -823,12 +834,8 @@ install_cta_dev() {
     "$venv_dir/bin/pip" install -r "$requirements_path"
   fi
 
-  log_success "Installed ${program_name}. You can now run it from any directory."
-
-  if ! shopt -oq posix && [[ -n ${BASH_VERSION:-} ]]; then
-    log_warn "Restart your shell or run the following command to enable completion now:"
-    echo "  source \"$completion_dst\""
-  fi
+  log_success "Installed ${program_name}."
+  log_warn "Restart your shell to use ${program_name} and its Bash completion."
 }
 
 # =========================================================================

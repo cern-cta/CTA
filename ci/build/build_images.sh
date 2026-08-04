@@ -17,7 +17,7 @@ usage() {
   echo "options:"
   echo "  -h, --help:                         Shows help output."
   echo "  -l, --load-into-k8s:                Load images from the selected container runtime into the detected local Kubernetes setup."
-  echo "  -c, --container-runtime <runtime>:  The container runtime to use for the build container. Defaults to podman."
+  echo "  -c, --container-runtime <runtime>:  Container runtime to use. Docker requires the Buildx plugin. Defaults to podman."
   echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'ci/docker/cta/{defaultplatform}/prod.Dockerfile')."
   echo "      --enable-internal-repos:        Use the internal yum repos instead of the public repos."
   echo "      --enable-oracle-support:        Build the images for use with the Oracle catalogue."
@@ -95,6 +95,14 @@ if [[ -z "${rpm_src}" ]]; then
   die_usage "Missing mandatory argument -s | --rpm-src"
 fi
 
+build_command=("$container_runtime" build)
+if [[ $container_runtime == docker ]]; then
+  if ! docker buildx version >/dev/null 2>&1; then
+    die "Docker Buildx is required to build CTA images. Install the Docker Buildx plugin or use Podman."
+  fi
+  build_command=(docker buildx build --load)
+fi
+
 cd "$(dirname ${dockerfile_path})"
 dockerfile="$(basename ${dockerfile_path})"
 
@@ -133,14 +141,14 @@ for target in "${targets[@]}"; do
   (
     set -eo pipefail
     build() {
-      ${container_runtime} build . -f ${dockerfile} \
-        -t ${image_ref} \
+      "${build_command[@]}" . -f "${dockerfile}" \
+        -t "${image_ref}" \
         --build-context rpm_context="${rpm_src}" \
         --build-arg ENABLE_INTERNAL_REPOS=${enable_internal_repos} \
         --build-arg ENABLE_ORACLE_SUPPORT=${enable_oracle_support} \
         --network host \
         --label build.id="$BUILD_ID" \
-        --target $target
+        --target "$target"
       # Note that the below checks are rather crude (for speed)
       if [[ "$load_into_k8s" == "true" ]]; then
         # Load into minikube (use stdin to avoid a temp file)
