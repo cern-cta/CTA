@@ -15,8 +15,6 @@ spec:
       type: boolean
     enable-sbom-generation:
       type: boolean
-    scheduler-type:
-      type: string
     enable-oracle-support:
       type: boolean
     workflow-api-authentication:
@@ -53,7 +51,7 @@ spec:
           cmake-build-type: $[[ inputs.cmake-build-type ]]
           enable-address-sanitizer: $[[ inputs.enable-address-sanitizer ]]
           enable-sbom-generation: $[[ inputs.enable-sbom-generation ]]
-          scheduler-type: $[[ inputs.scheduler-type ]]
+          scheduler-type: $SCHEDULER_TYPE
           enable-oracle-support: $[[ inputs.enable-oracle-support ]]
           workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
           enable-valgrind: $[[ inputs.enable-valgrind ]]

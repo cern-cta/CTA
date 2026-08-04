@@ -160,6 +160,7 @@ variables:
   CUSTOM_EOS_IMAGE_TAG: "$[[ inputs.custom-eos-image-tag ]]"
 
   # Build and runtime defaults
+  SCHEDULER_TYPE: "$[[ inputs.scheduler-type ]]"
   BUILD_CTA_VERSION: "5"
   ENABLE_CCACHE: "false"
   BUILD_CACHE_POLICY: "pull"
@@ -196,10 +197,15 @@ default:
   interruptible: true
 
 workflow:
-  name: '$CI_PIPELINE_SOURCE - $CI_COMMIT_SHORT_SHA - $[[ inputs.platform ]] - $PIPELINE_TYPE - $[[ inputs.scheduler-type ]] - Oracle:$[[ inputs.enable-oracle-support ]]'
+  name: '$CI_PIPELINE_SOURCE - $CI_COMMIT_SHORT_SHA - $[[ inputs.platform ]] - $PIPELINE_TYPE - $SCHEDULER_TYPE - Oracle:$[[ inputs.enable-oracle-support ]]'
   auto_cancel:
     on_new_commit: interruptible
   rules:
+    - if: '$CI_COMMIT_TAG =~ /\.pg[0-9]+$/'
+      auto_cancel:
+        on_new_commit: none
+      variables:
+        SCHEDULER_TYPE: "pgsched"
     # Allow scheduled, manual, and API-triggered pipeline-image refreshes on the selected ref.
     - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       auto_cancel:
@@ -246,7 +252,6 @@ include:
       cmake-build-type: $[[ inputs.cmake-build-type ]]
       enable-address-sanitizer: $[[ inputs.enable-address-sanitizer ]]
       enable-sbom-generation: $[[ inputs.enable-sbom-generation ]]
-      scheduler-type: $[[ inputs.scheduler-type ]]
       enable-oracle-support: $[[ inputs.enable-oracle-support ]]
       workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
       enable-valgrind: $[[ inputs.enable-valgrind ]]
@@ -263,7 +268,6 @@ include:
       build-generator: $[[ inputs.build-generator ]]
       cmake-build-type: $[[ inputs.cmake-build-type ]]
       enable-address-sanitizer: $[[ inputs.enable-address-sanitizer ]]
-      scheduler-type: $[[ inputs.scheduler-type ]]
       enable-oracle-support: $[[ inputs.enable-oracle-support ]]
   - local: .gitlab/ci/build-image.gitlab-ci.yml
     inputs:
@@ -279,7 +283,6 @@ include:
   - local: .gitlab/ci/tests-kubernetes.gitlab-ci.yml
     inputs:
       custom-cta-image-tag: $[[ inputs.custom-cta-image-tag ]]
-      scheduler-type: $[[ inputs.scheduler-type ]]
       enable-oracle-support: $[[ inputs.enable-oracle-support ]]
       workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]

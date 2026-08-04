@@ -13,8 +13,6 @@ spec:
       type: string
     enable-address-sanitizer:
       type: boolean
-    scheduler-type:
-      type: string
     enable-oracle-support:
       type: boolean
 ---
@@ -52,7 +50,6 @@ build-cta-rpms:
     CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     # These inputs are available as variables as certain jobs below override them
     CMAKE_BUILD_TYPE: "$[[ inputs.cmake-build-type ]]"
-    SCHEDULER_TYPE: "$[[ inputs.scheduler-type ]]"
     BUILD_PATH: "build_rpm/RPM/RPMS"
     XRD_SSI_PATH: "xrootd-ssi-protobuf-interface"
     DNF_CACHE_DIR: "$CI_PROJECT_DIR/.dnf_cache"
