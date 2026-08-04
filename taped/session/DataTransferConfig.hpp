@@ -47,13 +47,13 @@ struct DataTransferConfig {
   uint64_t underfillMinSamples = 3;
 
   /**
-   * Fill ratio at or above which an active underfill observation period is
+   * Fill percentage at or above which an active underfill observation period is
    * cleared.
    */
   uint64_t underfillRecoveryThreshold = 60;
 
   /**
-   * Fill ratio below which an underfill observation period is started.
+   * Fill percentage below which an underfill observation period is started.
    */
   uint64_t underfillStartThreshold = 40;
 

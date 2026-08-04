@@ -175,9 +175,12 @@ private:
   /**
    * Timer for the active underfill observation period.
    *
-   * No value means that no underfill period is active.
    */
-  std::optional<utils::Timer> m_underfillTimer;
+  utils::Timer m_underfillTimer;
+  /**
+   * Informative flag telling is the underfill observation timer is active.
+   */
+  bool m_underfillActive;
 
   /**
    * Number of responses observed during the active underfill period that did

@@ -205,7 +205,7 @@ bool MigrationTaskInjector::shouldDismountForUnderfill(const uint64_t filesFetch
   /*
    * No underfill period is active.
    */
-  if (!m_underfillTimer.has_value()) {
+  if (!m_underfillActive) {
     if (effectiveFillRatio >= m_underfillStartThreshold / 100.) {
       cta::log::ScopedParamContainer params(m_lc);
 
@@ -223,7 +223,8 @@ bool MigrationTaskInjector::shouldDismountForUnderfill(const uint64_t filesFetch
       return false;
     }
 
-    m_underfillTimer.emplace();
+    m_underfillTimer.reset();
+    m_underfillActive = true;
     m_underfillSamples = 1;
 
     cta::log::ScopedParamContainer params(m_lc);
@@ -248,7 +249,7 @@ bool MigrationTaskInjector::shouldDismountForUnderfill(const uint64_t filesFetch
    * threshold ends the observation period.
    */
   if (effectiveFillRatio >= m_underfillRecoveryThreshold / 100.) {
-    const double underfillDurationSeconds = m_underfillTimer->secs();
+    const double underfillDurationSeconds = m_underfillTimer.secs();
 
     cta::log::ScopedParamContainer params(m_lc);
 
@@ -266,11 +267,10 @@ bool MigrationTaskInjector::shouldDismountForUnderfill(const uint64_t filesFetch
     params.log(cta::log::INFO, "Migration responses recovered from the active underfill period.");
 
     /*
-     * optional::reset() destroys the Timer and marks underfill as inactive.
-     * This is intentionally not m_underfillTimer->reset(), which would merely
-     * restart an active timer.
+     * Marking underfill as inactive and reseting the timer.
      */
     m_underfillTimer.reset();
+    m_underfillActive = false;
     m_underfillSamples = 0;
 
     return false;
@@ -287,7 +287,7 @@ bool MigrationTaskInjector::shouldDismountForUnderfill(const uint64_t filesFetch
     ++m_underfillSamples;
   }
 
-  const double underfillDurationSeconds = m_underfillTimer->secs();
+  const double underfillDurationSeconds = m_underfillTimer.secs();
 
   const bool durationExpired = underfillDurationSeconds >= m_underfillWatchPeriodSecs;
 
@@ -312,7 +312,9 @@ bool MigrationTaskInjector::shouldDismountForUnderfill(const uint64_t filesFetch
     params.log(cta::log::INFO,
                "Migration responses remained underfilled for the configured duration "
                "and minimum sample count. Triggering the end of the tape session.");
-
+    m_underfillTimer.reset();
+    m_underfillActive = false;
+    m_underfillSamples = 0;
     return true;
   }
 
