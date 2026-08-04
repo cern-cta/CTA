@@ -1,7 +1,9 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import base64
 import json
+import uuid
 from contextlib import suppress
 from pathlib import Path
 from typing import Any
@@ -9,6 +11,7 @@ from typing import Any
 import pytest
 
 from system_tests.helpers.hosts import CtaCliHost, DiskClientHost, DiskInstanceHost, EosClientHost, EosMgmHost
+from system_tests.helpers.utils import find_line
 
 
 # =========================================================================
@@ -293,6 +296,41 @@ def test_archive_file_and_track_archiveinfo(
         print(f"File archived successfully: {archived_file_info}")
     finally:
         disk_client.exec(f'rm -f "{temporary_file}"')
+
+
+def test_archive_metadata_ends_up_in_eos_report(
+    disk_client: DiskClientHost,
+    disk_instance: DiskInstanceHost,
+    disk_instance_name: str,
+    eos_mgm: EosMgmHost,
+    test_dir: Path,
+    rest_api_user_token: str,
+    rest_api_certificate_options: str,
+) -> None:
+    file_path = test_dir / "archive_metadata_file"
+    archive_metadata = {"scheduling_hints": f"test_{str(uuid.uuid4())[:8]}"}
+    archive_metadata_b64 = base64.b64encode(json.dumps(archive_metadata, separators=(",", ":")).encode()).decode()
+
+    print(f"Uploading {file_path} with archive metadata: {archive_metadata}")
+    with suppress(RuntimeError):
+        disk_client.delete_file(disk_instance_name, file_path)
+    upload_response = disk_client.http_request(
+        f"{disk_instance.webdav_url}{file_path}",
+        token=rest_api_user_token,
+        certificate_options=rest_api_certificate_options,
+        headers={"ArchiveMetadata": archive_metadata_b64},
+        method="PUT",
+        upload_file=Path("/etc/group"),
+    )
+    _assert_empty_response(upload_response, "Archive metadata upload")
+
+    # EOS records the opaque base64 value verbatim, allowing CTA scheduling metadata to be audited
+    report_file = eos_mgm.get_report_file_path()
+    print(f"Checking EOS report file {report_file} for the archive metadata")
+    report = eos_mgm.exec_with_output(f"cat {report_file}")
+    report_line = find_line(report, f"archivemetadata={archive_metadata_b64}")
+    assert report_line, f'Missing EOS report entry for Archive Metadata string: "{archive_metadata_b64}"'
+    print(f"Found archive metadata in EOS report: {report_line}")
 
 
 def test_stage_poll_and_release(

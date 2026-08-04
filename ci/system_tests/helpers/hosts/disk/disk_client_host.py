@@ -28,6 +28,7 @@ class DiskClientHost(RemoteHost):
         token: Optional[str] = None,
         certificate_options: str = "--insecure",
         data: Optional[dict[str, Any]] = None,
+        headers: Optional[dict[str, str]] = None,
         method: Optional[str] = None,
         upload_file: Optional[Path] = None,
     ) -> str:
@@ -36,6 +37,9 @@ class DiskClientHost(RemoteHost):
             command += f' -H "Authorization: Bearer {token}"'
         if data is not None:
             command += f" -H \"Content-Type: application/json\" --data '{json.dumps(data)}'"
+        if headers is not None:
+            for name, value in headers.items():
+                command += f' -H "{name}: {value}"'
         if method is not None:
             command += f" -X {method}"
         if upload_file is not None:

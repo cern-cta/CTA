@@ -2,14 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
-import base64
 import json
 import sys
 import time
 import uuid
 from collections.abc import Iterator
 from dataclasses import dataclass
-from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Union
 
@@ -19,8 +17,6 @@ from jsonschema import Draft202012Validator
 from system_tests.helpers.hosts import CtaCliHost, CtaMaintdHost, CtaTapedHost, EosClientHost, EosMgmHost
 from system_tests.helpers.test_config import TestConfig
 from system_tests.helpers.test_env import TestEnv
-
-from system_tests.helpers.utils import find_line
 
 # =========================================================================
 #  Helpers
@@ -245,48 +241,6 @@ def test_eos_immutable_file(eos_client: EosClientHost, eos_mgm: EosMgmHost, test
 def test_eos_timestamps_correctness(eos_client: EosClientHost, test_dir: Path, remote_scripts_dir: Path) -> None:
     eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_eos_timestamps.sh", Path("/tmp"), permissions="+x")
     eos_client.exec(f". /tmp/client_env && /tmp/test_eos_timestamps.sh {test_dir}")
-
-
-# Note that this test simply tests whether the base64 encoded string ends up in the eos report logs verbatim
-
-
-def test_eos_archive_metadata_ends_up_in_eos_report(
-    eos_client: EosClientHost, eos_mgm: EosMgmHost, test_dir: Path
-) -> None:
-    disk_instance_name = eos_mgm.instance_name
-    file_loc = test_dir / "archive_metadata_file"
-
-    archive_metadata = {"scheduling_hints": f"test_{str(uuid.uuid4())[:8]}"}
-    archive_metadata_b64 = base64.b64encode(json.dumps(archive_metadata, separators=(",", ":")).encode()).decode()
-
-    now = datetime.now()
-    later_timestamp = int((now + timedelta(days=1)).timestamp())
-
-    eosadmin_user = "eosadmin1"
-    token_eosuser1 = eos_client.exec_with_output(
-        f"XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/{eosadmin_user}/krb5cc_0 eos -r 0 0 "
-        f"root://{disk_instance_name} token --tree --path '/eos/ctaeos/://:/api/' --expires "
-        f"{later_timestamp} --owner user1 --group eosusers --permission rwx"
-    )
-
-    print("Printing eosuser token dump")
-    eos_client.exec(f'eos root://"{disk_instance_name}" token --token "{token_eosuser1}" | jq .')
-
-    print("Archiving file with archive metadata")
-    eos_client.exec(
-        f'curl -X PUT -L --insecure -H "Accept: application/json" -H "ArchiveMetadata: '
-        f'{archive_metadata_b64}" -H "Authorization: Bearer {token_eosuser1}" '
-        f'"https://{disk_instance_name}:8443/{file_loc}" --upload-file "/etc/group"'
-    )
-
-    # Check the archive metadata appears in the mgm log file
-    report_file = eos_mgm.get_report_file_path()
-    print(f"Report file: {report_file}")
-    content = eos_mgm.exec_with_output(f"cat {report_file}")
-
-    xrd_line = find_line(content, f"archivemetadata={archive_metadata_b64}")
-
-    assert xrd_line, f'Missing EOS report entry for Archive Metadata string: "{archive_metadata_b64}"'
 
 
 # Tests for eosdf

@@ -26,7 +26,7 @@ def test_kinit_clients(env: TestEnv, krb5_realm: str) -> None:
     for cta_cli in env.cta_cli:
         cta_cli.exec(f"kinit -kt /root/ctaadmin1.keytab ctaadmin1@{krb5_realm}")
 
-    client_users = ["eosadmin1", "ctaadmin2", "poweruser1"]
+    client_users = ["eosadmin1", "ctaadmin2", "poweruser1", "user1"]
     for eos_client in env.eos_client:
         for user in client_users:
             eos_client.exec(f"mkdir -p /tmp/{user}")
