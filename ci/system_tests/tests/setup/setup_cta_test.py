@@ -15,14 +15,15 @@ from system_tests.helpers.hosts.cta_rmcd_host import CtaRmcdHost
 # =========================================================================
 
 
+# Identities and numeric IDs are defined in setup_eos_test.py
+# The corresponding CTA mount rules are in remote_scripts/cta_cli/populate_catalogue.sh
+# - ctaadmin1 is the primary CTA catalogue/CLI administrator used from the CTA CLI hosts
+# - ctaadmin2 is the CTA administrator used by client-side CTA commands (see client_helper.sh and test_add_admins)
+#   This admin should eventually be removed as the client pod will no longer be able to run CTA admin commands directly
+# - eosadmin1 is an EOS sudo user used for namespace administration, token generation, and privileged eviction
+# - poweruser1 has explicit read/write/prepare/delete rights and is used for staging, releasing, and cleanup
+# - user1 is the regular eosusers archive writer; it can create files but is explicitly denied deletion
 def test_kinit_clients(env: TestEnv, krb5_realm: str) -> None:
-    # This whole kerberos thing needs to be revised in the future
-    # We are relying too much on the default principal in many cases
-    # We also need a clean way to manage the different users in a more flexible way instead of hardcoding this
-    # everywhere
-    # Finally, various tests assume that they have a kerberos ticket for the relevant principal. This may not be the
-    # case
-    # Instead of doing this before all tests, the relevant tests should kinit (or rather, a fixture should)
     for cta_cli in env.cta_cli:
         cta_cli.exec(f"kinit -kt /root/ctaadmin1.keytab ctaadmin1@{krb5_realm}")
 
