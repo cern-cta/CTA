@@ -2,9 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
-from collections.abc import Iterator
 from contextlib import suppress
-from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -18,26 +16,8 @@ from system_tests.helpers.hosts import CtaCliHost, DiskClientHost, DiskInstanceH
 # =========================================================================
 
 
-def _generate_token(
-    eos_client: EosClientHost,
-    disk_instance_name: str,
-    *,
-    owner: str,
-    group: str,
-    permission: str,
-) -> str:
-    expires = int((datetime.now() + timedelta(days=1)).timestamp())
-    print(f"Generating a Tape REST API bearer token for {owner}")
-    token = eos_client.exec_with_output(
-        "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/eosadmin1/krb5cc_0 eos -r 0 0 "
-        f"root://{disk_instance_name} token --tree --path '/eos/ctaeos/://:/api/' --expires {expires} "
-        f"--owner {owner} --group {group} --permission {permission}"
-    )
-    assert token, f"Token generation returned an empty token for {owner}"
-    return token
-
-
 def _get_rest_api_endpoint(disk_client: DiskClientHost, disk_instance: DiskInstanceHost) -> str:
+    # Rediscover the endpoint for each workflow instead of sharing state between ordered tests
     print(f"Discovering the Tape REST API endpoint through {disk_instance.webdav_url}")
     response = disk_client.http_request(f"{disk_instance.webdav_url}/.well-known/wlcg-tape-rest-api")
     discovery = json.loads(response)
@@ -155,6 +135,8 @@ def _assert_stage_status(response: str, request_id: str, file_path: Path) -> dic
         assert isinstance(file_status["startedAt"], int)
     if "error" in file_status:
         assert isinstance(file_status["error"], str)
+    # Servers may report either disk residency or lifecycle state, but never both for one file
+    # In practice, EOS should always report onDisk
     if "onDisk" in file_status:
         assert isinstance(file_status["onDisk"], bool)
         assert "state" not in file_status
@@ -190,9 +172,8 @@ def rest_api_certificate_options(
 
 
 @pytest.fixture(scope="module")
-def rest_api_user_token(eos_client: EosClientHost, disk_instance_name: str) -> str:
-    return _generate_token(
-        eos_client,
+def rest_api_user_token(disk_client: DiskClientHost, disk_instance_name: str) -> str:
+    return disk_client.generate_token(
         disk_instance_name,
         owner="user1",
         group="eosusers",
@@ -201,9 +182,8 @@ def rest_api_user_token(eos_client: EosClientHost, disk_instance_name: str) -> s
 
 
 @pytest.fixture(scope="module")
-def rest_api_poweruser_token(eos_client: EosClientHost, disk_instance_name: str) -> str:
-    return _generate_token(
-        eos_client,
+def rest_api_poweruser_token(disk_client: DiskClientHost, disk_instance_name: str) -> str:
+    return disk_client.generate_token(
         disk_instance_name,
         owner="poweruser1",
         group="powerusers",
@@ -211,16 +191,12 @@ def rest_api_poweruser_token(eos_client: EosClientHost, disk_instance_name: str)
     )
 
 
-@pytest.fixture(scope="module", autouse=True)
-def cleanup_test_file(disk_client: DiskClientHost, disk_instance_name: str, test_dir: Path) -> Iterator[None]:
-    yield
-    with suppress(RuntimeError):
-        disk_client.delete_file(disk_instance_name, test_dir / "test_http-rest-api")
-
-
 # =========================================================================
 #  Tests
 # =========================================================================
+
+# These tests intentionally form one linear file lifecycle. Keep asynchronous submission and polling in the same test
+# so rerunning a failed operation does not depend on an unfinished request from a previous run
 
 
 def test_well_known_endpoint(disk_client: DiskClientHost, disk_instance: DiskInstanceHost) -> None:
@@ -230,6 +206,7 @@ def test_well_known_endpoint(disk_client: DiskClientHost, disk_instance: DiskIns
     assert isinstance(discovery, dict), f"Expected a discovery object, got: {discovery!r}"
     print(f"Well-known response: {json.dumps(discovery, indent=2)}")
 
+    # The discovery document is deliberately strict: extension data belongs inside endpoint metadata
     allowed_fields = {"sitename", "description", "endpoints"}
     required_fields = {"sitename", "endpoints"}
     assert not (set(discovery) - allowed_fields), f"Unrecognised well-known fields: {set(discovery) - allowed_fields}"
@@ -282,6 +259,7 @@ def test_archive_file_and_track_archiveinfo(
             disk_client.delete_file(disk_instance_name, file_path)
         disk_client.exec(f'printf Dummy > "{temporary_file}"')
 
+        # Prevent CTA from flushing the upload before archiveinfo can observe its initial DISK locality
         cta_cli.set_all_drives_down()
         print(f"Uploading {temporary_file} to {disk_instance.webdav_url}{file_path} while drives are down")
         upload_response = disk_client.http_request(
@@ -354,6 +332,7 @@ def test_stage_poll_and_release(
     assert "error" not in initial_file_status
     assert initial_file_status.get("state") != "FAILED"
 
+    # Poll the same request here so this test owns the complete asynchronous stage operation
     disk_client.wait_for_stage_file_status(
         rest_api_endpoint,
         request_id,
@@ -381,6 +360,7 @@ def test_stage_poll_and_release(
         data={"paths": [str(file_path)]},
     )
     _assert_empty_response(release_response, "Release request")
+    # RELEASE is asynchronous in practice; archiveinfo is the storage-independent source of locality
     released_file_info = disk_client.wait_for_archive_locality(
         rest_api_endpoint,
         file_path,
@@ -405,6 +385,7 @@ def test_cancel_stage_request(
     file_path = test_dir / "test_http-rest-api"
     print(f"Submitting and cancelling a stage request for {file_path}")
     rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
+    # Keep the request pending long enough to exercise cancellation deterministically
     cta_cli.set_all_drives_down()
     request_id = _stage_request(
         disk_client,
@@ -446,7 +427,7 @@ def test_cancel_stage_request(
         certificate_options=rest_api_certificate_options,
     )
     cancelled_file_status = _assert_stage_status(cancelled_status_response, request_id, file_path)
-    # The specification permits either the state model or the mutually exclusive onDisk model.
+    # The specification permits either the state model or the mutually exclusive onDisk model
     assert cancelled_file_status.get("state") == "CANCELLED" or cancelled_file_status.get("onDisk") is False
     print(f"Deleting cancelled stage request {request_id}")
     delete_response = disk_client.http_request(
@@ -473,7 +454,6 @@ def test_cancel_stage_request(
 def test_delete_stage_request(
     disk_client: DiskClientHost,
     disk_instance: DiskInstanceHost,
-    disk_instance_name: str,
     cta_cli: CtaCliHost,
     test_dir: Path,
     rest_api_poweruser_token: str,
@@ -482,6 +462,7 @@ def test_delete_stage_request(
     file_path = test_dir / "test_http-rest-api"
     print(f"Submitting and deleting a stage request for {file_path}")
     rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
+    # Keep the request active so DELETE exercises its best-effort cancellation
     cta_cli.set_all_drives_down()
     request_id = _stage_request(
         disk_client,
@@ -510,5 +491,3 @@ def test_delete_stage_request(
         )["locality"]
         == "TAPE"
     )
-    print(f"Removing completed Tape REST API test file {file_path}")
-    disk_client.delete_file(disk_instance_name, file_path)

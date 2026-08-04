@@ -3,6 +3,7 @@
 
 
 import asyncio
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from typing_extensions import override
@@ -14,6 +15,26 @@ from .disk_client_host import DiskClientHost
 class EosClientHost(DiskClientHost):
     def __init__(self, conn: RemoteConnection) -> None:
         super().__init__(conn)
+
+    @override
+    def generate_token(
+        self,
+        disk_instance_name: str,
+        *,
+        owner: str,
+        group: str,
+        permission: str,
+    ) -> str:
+        expires = int((datetime.now() + timedelta(days=1)).timestamp())
+        print(f"Generating a Tape REST API bearer token for {owner}")
+        token = self.exec_with_output(
+            "XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/eosadmin1/krb5cc_0 eos -r 0 0 "
+            f"root://{disk_instance_name} token --tree --path '/eos/ctaeos/://:/api/' --expires {expires} "
+            f"--owner {owner} --group {group} --permission {permission}"
+        )
+        if not token:
+            raise RuntimeError(f"Token generation returned an empty token for {owner}")
+        return token
 
     def count_files_in_namespace(self, eos_host: str, dest_dir: Path, num_dirs: int, count_procs: int) -> int:
         """Count files in namespace using parallel queries on the remote host.
@@ -118,7 +139,7 @@ class EosClientHost(DiskClientHost):
     @override
     def delete_file(self, disk_instance_name: str, path: Path) -> None:
         print(f"Deleting {path} on disk instance {disk_instance_name}")
-        self.exec(f"eos root://{disk_instance_name} rm --no-confirmation {path}")
+        self.exec(f"eos root://{disk_instance_name} rm -rf --no-confirmation {path}")
 
     def retrieve_async(
         self,

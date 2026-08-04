@@ -12,6 +12,15 @@ from system_tests.helpers.hosts.remote_host import RemoteHost
 
 
 class DiskClientHost(RemoteHost):
+    def generate_token(
+        self,
+        disk_instance_name: str,
+        *,
+        owner: str,
+        group: str,
+        permission: str,
+    ) -> str: ...
+
     def http_request(
         self,
         url: str,
