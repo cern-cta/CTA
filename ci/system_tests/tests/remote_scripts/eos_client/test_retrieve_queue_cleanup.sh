@@ -91,9 +91,9 @@ FILE_2_COPY=${MULTICOPY_DIR_2}/copy2_$(uuidgen)
 FILE_3_COPY=${MULTICOPY_DIR_3}/copy3_$(uuidgen)
 
 put_all_drives_up
-xrdcp /etc/group root://${EOS_MGM_HOST}/${FILE_1_COPY}
-xrdcp /etc/group root://${EOS_MGM_HOST}/${FILE_2_COPY}
-xrdcp /etc/group root://${EOS_MGM_HOST}/${FILE_3_COPY}
+KRB5CCNAME=/tmp/${USER}/krb5cc_0 xrdcp /etc/group root://${EOS_MGM_HOST}/${FILE_1_COPY}
+KRB5CCNAME=/tmp/${USER}/krb5cc_0 xrdcp /etc/group root://${EOS_MGM_HOST}/${FILE_2_COPY}
+KRB5CCNAME=/tmp/${USER}/krb5cc_0 xrdcp /etc/group root://${EOS_MGM_HOST}/${FILE_3_COPY}
 
 wait_for_archive ${EOS_MGM_HOST} ${FILE_1_COPY} ${FILE_2_COPY} ${FILE_3_COPY}
 put_all_drives_down

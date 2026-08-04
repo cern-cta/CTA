@@ -67,7 +67,9 @@ def repack_buffer_dir(
     print("\tTesting the insertion of a test file in the buffer URL")
     tmp_file_path = eos_client.exec_with_output("mktemp /tmp/repack_buffer_test_file.XXXX")
     tmp_file_name = Path(tmp_file_path).name
-    eos_client.exec(f"xrdcp {tmp_file_path} root://{disk_instance_name}/{path}/{tmp_file_name}")
+    eos_client.exec(
+        f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp {tmp_file_path} root://{disk_instance_name}/{path}/{tmp_file_name}"
+    )
     print(f"\tFile {tmp_file_path} written in root://{disk_instance_name}/{path}/{tmp_file_name}")
     print("\tDeleting test file from the test directory")
     eos_client.exec(f"eos root://{disk_instance_name} rm {path}/{tmp_file_name}")

@@ -69,7 +69,7 @@ echo "Testing normal 'prepare -s' request..."
 
 put_all_drives_up
 echo "Archiving ${TEMP_FILE_OK}..."
-xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE_OK}
+KRB5CCNAME=/tmp/${USER}/krb5cc_0 xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE_OK}
 wait_for_archive ${EOS_MGM_HOST} ${TEMP_FILE_OK}
 put_all_drives_down
 
@@ -136,7 +136,7 @@ TEMP_FILE=${EOS_NO_P_BASEDIR}/$(uuidgen)
 echo
 echo "Testing 'prepare -s' request for 1 file with prepare permissions (reusing ${TEMP_FILE_OK}) and 1 files without prepare permissions (${TEMP_FILE})..."
 
-xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE}
+KRB5CCNAME=/tmp/${USER}/krb5cc_0 xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE}
 echo "File ${TEMP_FILE} written to directory with no prepare permission."
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers..."
@@ -191,8 +191,8 @@ TEMP_FILE_2=${EOS_NO_P_BASEDIR}/$(uuidgen)
 echo
 echo "Testing 'prepare -s' request for 2 file without prepare permissions (${TEMP_FILE_1}, ${TEMP_FILE_2})..."
 
-xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE_1}
-xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE_2}
+KRB5CCNAME=/tmp/${USER}/krb5cc_0 xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE_1}
+KRB5CCNAME=/tmp/${USER}/krb5cc_0 xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE_2}
 echo "Files ${TEMP_FILE_1} ${TEMP_FILE_2} written to directory with no prepare permission."
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers (expects error)..." >&2
@@ -310,14 +310,14 @@ for ((file_idx=0; file_idx < ${NB_FILES_TAPE}; file_idx++)); do
 done
 
 put_all_drives_up
-cat ${TEST_FILES_TAPE_LIST} | xargs -iFILE_PATH xrdcp /etc/group root://${EOS_MGM_HOST}/FILE_PATH
+cat ${TEST_FILES_TAPE_LIST} | xargs -iFILE_PATH env KRB5CCNAME=/tmp/${USER}/krb5cc_0 xrdcp /etc/group root://${EOS_MGM_HOST}/FILE_PATH
 wait_for_archive ${EOS_MGM_HOST} $(cat ${TEST_FILES_TAPE_LIST} | tr "\n" " ")
 
 echo "Files to be written to directory with no prepare/evict permission:"
 for ((file_idx=0; file_idx < ${NB_FILES_NO_P}; file_idx++)); do
   echo "${EOS_NO_P_BASEDIR}/$(uuidgen)" | tee -a ${TEST_FILES_NO_P_LIST}
 done
-cat ${TEST_FILES_NO_P_LIST} | xargs -iFILE_PATH xrdcp /etc/group root://${EOS_MGM_HOST}/FILE_PATH
+cat ${TEST_FILES_NO_P_LIST} | xargs -iFILE_PATH env KRB5CCNAME=/tmp/${USER}/krb5cc_0 xrdcp /etc/group root://${EOS_MGM_HOST}/FILE_PATH
 
 echo "Files without copy on disk/tape (missing files):"
 for ((file_idx=0; file_idx < ${NB_FILES_MISS}; file_idx++)); do
@@ -417,7 +417,7 @@ echo "Testing 'prepare -a' request for file ${TEMP_FILE}..."
 
 put_all_drives_up
 echo "Archiving ${TEMP_FILE}..."
-xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE}
+KRB5CCNAME=/tmp/${USER}/krb5cc_0 xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE}
 wait_for_archive ${EOS_MGM_HOST} ${TEMP_FILE}
 echo "Disabling tape drives..."
 put_all_drives_down
@@ -471,7 +471,7 @@ echo "Uploading & archiving test file ${TEMP_FILE_TAPE}."
 
 put_all_drives_up
 echo "Archiving ${TEMP_FILE_TAPE}..."
-xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE_TAPE}
+KRB5CCNAME=/tmp/${USER}/krb5cc_0 xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE_TAPE}
 wait_for_archive ${EOS_MGM_HOST} ${TEMP_FILE_TAPE}
 echo "Disabling tape drives..."
 put_all_drives_down
@@ -522,7 +522,7 @@ echo "Testing 'prepare -e' request for existing file ${TEMP_FILE}..."
 
 put_all_drives_up
 echo "Archiving ${TEMP_FILE}..."
-xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE}
+KRB5CCNAME=/tmp/${USER}/krb5cc_0 xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE}
 echo "Disabling tape drives..."
 wait_for_archive ${EOS_MGM_HOST} ${TEMP_FILE}
 
@@ -560,7 +560,7 @@ echo "Uploading & archiving test file ${TEMP_FILE_TAPE}."
 
 put_all_drives_up
 echo "Archiving ${TEMP_FILE_TAPE}..."
-xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE_TAPE}
+KRB5CCNAME=/tmp/${USER}/krb5cc_0 xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE_TAPE}
 wait_for_archive ${EOS_MGM_HOST} ${TEMP_FILE_TAPE}
 
 echo "Trigering EOS retrieve workflow as poweruser1:powerusers, for ${TEMP_FILE_TAPE}..."

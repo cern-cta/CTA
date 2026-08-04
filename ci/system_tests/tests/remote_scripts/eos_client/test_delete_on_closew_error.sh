@@ -56,7 +56,7 @@ eosadmin_eos root://${EOS_MGM_HOST} mkdir ${CTA_TEST_DIR}/fail_on_closew_test ||
 eosadmin_eos root://${EOS_MGM_HOST} attr set sys.archive.storage_class=fail_on_closew_test ${CTA_TEST_DIR}/fail_on_closew_test || error "Failed to set sys.archive.storage_class=fail_on_closew_test on ${CTA_TEST_DIR}/fail_on_closew_test"
 
 echo "xrdcp /etc/group root://${EOS_MGM_HOST}/${CTA_TEST_DIR}/fail_on_closew_test/${TEST_FILE_NAME}"
-xrdcp /etc/group root://${EOS_MGM_HOST}/${CTA_TEST_DIR}/fail_on_closew_test/${TEST_FILE_NAME}
+KRB5CCNAME=/tmp/${USER}/krb5cc_0 xrdcp /etc/group root://${EOS_MGM_HOST}/${CTA_TEST_DIR}/fail_on_closew_test/${TEST_FILE_NAME}
 if [[ $? -eq 0 ]]
 then
   error "xrdcp command succeeded where it should have failed"

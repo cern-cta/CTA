@@ -184,6 +184,7 @@ class DiskClientHost(RemoteHost):
         disk_instance_name: str,
         destination_path: Path,
         *,
+        user: str = "user1",
         wait: bool = True,
         wait_for_evict: bool = True,
         wait_timeout_secs: int = 20,
@@ -197,6 +198,7 @@ class DiskClientHost(RemoteHost):
             disk_instance_name,
             destination_path,
             tmp_file_path,
+            user=user,
             wait=wait,
             wait_for_evict=wait_for_evict,
             wait_timeout_secs=wait_timeout_secs,
@@ -211,6 +213,7 @@ class DiskClientHost(RemoteHost):
         destination_path: Path,
         source_path: Path,
         *,
+        user: str = "user1",
         wait: bool = True,
         wait_for_evict: bool = True,
         wait_timeout_secs: int = 20,
@@ -236,6 +239,6 @@ class DiskClientHost(RemoteHost):
         wait_timeout_secs: int = 20,
     ) -> None: ...
 
-    def delete_file(self, disk_instance_name: str, path: Path) -> None: ...
+    def delete_file(self, disk_instance_name: str, path: Path, *, user: str = "poweruser1") -> None: ...
 
     def file_info(self, disk_instance_name: str, path: Path) -> str: ...

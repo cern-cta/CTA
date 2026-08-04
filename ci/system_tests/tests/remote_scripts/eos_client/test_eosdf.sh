@@ -51,7 +51,7 @@ if [[ $? -ne 0 ]]; then
     echo "foo" > /tmp/${TEST_FILE_NAME}
     echo
     echo "Doing xrdcp of ${TEST_FILE_NAME} in the path root://${EOS_INSTANCE_NAME}/${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}"
-    xrdcp /tmp/${TEST_FILE_NAME} root://${EOS_INSTANCE_NAME}/${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}
+    KRB5CCNAME=/tmp/${USER}/krb5cc_0 xrdcp /tmp/${TEST_FILE_NAME} root://${EOS_INSTANCE_NAME}/${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}
     wait_for_archive ${EOS_INSTANCE_NAME} "${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}"
 
     echo "File ${TEST_FILE_NAME} archived to tape"
