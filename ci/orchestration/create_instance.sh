@@ -289,6 +289,7 @@ create_instance() {
   # Create the namespace
   log_task "Creating namespace ${namespace}..."
   kubectl create namespace "${namespace}"
+  kubectl label namespace "$namespace" "app.kubernetes.io/managed-by=cta-create-instance"
   log_task "Copying secrets into namespace ${namespace}..."
   for secret_name in ${secrets}; do
     # If the secret exists...
@@ -302,13 +303,6 @@ create_instance() {
   log_task "Starting deployment..."
 
   if [[ "$local_telemetry" == "true" ]]; then
-    log_task "Cleaning up telemetry cluster roles..."
-    kubectl delete clusterrole otel-opentelemetry-collector --ignore-not-found
-    kubectl delete clusterrolebinding otel-opentelemetry-collector --ignore-not-found
-    kubectl delete clusterrole prometheus-server --ignore-not-found
-    kubectl delete clusterrolebinding prometheus-server --ignore-not-found
-    kubectl delete clusterrole prometheus-kube-state-metrics --ignore-not-found
-    kubectl delete clusterrolebinding prometheus-kube-state-metrics --ignore-not-found
     log_task "Installing telemetry and Prometheus charts..."
     helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
     helm repo add prometheus-community https://prometheus-community.github.io/helm-charts

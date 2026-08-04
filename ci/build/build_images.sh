@@ -16,7 +16,7 @@ usage() {
   echo
   echo "options:"
   echo "  -h, --help:                         Shows help output."
-  echo "  -l, --load-into-k8s:                Takes the image from the podman registry and ensures that it is present in the image registry used by the local K8s setup."
+  echo "  -l, --load-into-k8s:                Load images from the selected container runtime into the detected local Kubernetes setup."
   echo "  -c, --container-runtime <runtime>:  The container runtime to use for the build container. Defaults to podman."
   echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'ci/docker/cta/{defaultplatform}/prod.Dockerfile')."
   echo "      --enable-internal-repos:        Use the internal yum repos instead of the public repos."
@@ -179,6 +179,6 @@ fi
 
 echo
 echo "Built images:"
-podman images --filter "label=build.id=$BUILD_ID"
+${container_runtime} images --filter "label=build.id=$BUILD_ID"
 echo
 log_success "Built and loaded container images in ${SECONDS} seconds."

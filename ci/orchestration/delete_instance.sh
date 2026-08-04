@@ -26,6 +26,7 @@ usage() {
   echo "  -l, --log-dir <dir>:                Base directory to output the logs to. Defaults to /tmp."
   echo "  -D, --discard-logs:                 Do not collect the logs when deleting an instance."
   echo "      --keep-pvs:                     Skip the wiping and reclaiming of released Persistent Volumes after namespace cleanup."
+  echo "      --keep-cluster-resources:       Keep cluster roles and bindings owned by this namespace."
   echo
   exit 1
 }
@@ -165,10 +166,28 @@ reclaim_released_pvs() {
   done
 }
 
+delete_cluster_resource_if_owned() {
+  local namespace="$1" resource_type="$2" resource_name="$3" release_namespace
+  if ! kubectl get "$resource_type" "$resource_name" >/dev/null 2>&1; then
+    return
+  fi
+  if ! release_namespace=$(kubectl get "$resource_type" "$resource_name" \
+    -o 'jsonpath={.metadata.annotations.meta\.helm\.sh/release-namespace}'); then
+    log_warn "Could not verify ownership of ${resource_type}/${resource_name}; skipping it."
+    return
+  fi
+  if [[ $release_namespace == "$namespace" ]]; then
+    kubectl delete "$resource_type" "$resource_name"
+  else
+    log_warn "Skipping shared ${resource_type}/${resource_name}: it is not owned by namespace ${namespace}."
+  fi
+}
+
 delete_instance() {
   local log_dir=/tmp
   local collect_logs=true
   local wipe_pvs=true
+  local delete_cluster_resources=true
   local namespace=""
 
   # Parse command line arguments
@@ -180,6 +199,7 @@ delete_instance() {
         shift ;;
       -D|--discard-logs) collect_logs=false ;;
       --keep-pvs) wipe_pvs=false ;;
+      --keep-cluster-resources) delete_cluster_resources=false ;;
       -l|--log-dir)
         log_dir="$2"
         [[ -d "${log_dir}" ]] || local_die "ERROR: Log directory ${log_dir} does not exist"
@@ -231,14 +251,16 @@ delete_instance() {
   else
     log_warn "Skipping reclamation of released persistent volumes."
   fi
-  # Clean up remaining cluster-level resources
-  # These are only created when telemetry is enabled
-  kubectl delete clusterrole otel-opentelemetry-collector --ignore-not-found
-  kubectl delete clusterrolebinding otel-opentelemetry-collector --ignore-not-found
-  kubectl delete clusterrole prometheus-server --ignore-not-found
-  kubectl delete clusterrolebinding prometheus-server --ignore-not-found
-  kubectl delete clusterrole prometheus-kube-state-metrics --ignore-not-found
-  kubectl delete clusterrolebinding prometheus-kube-state-metrics --ignore-not-found
+  if [[ $delete_cluster_resources == true ]]; then
+    delete_cluster_resource_if_owned "$namespace" clusterrole otel-opentelemetry-collector
+    delete_cluster_resource_if_owned "$namespace" clusterrolebinding otel-opentelemetry-collector
+    delete_cluster_resource_if_owned "$namespace" clusterrole prometheus-server
+    delete_cluster_resource_if_owned "$namespace" clusterrolebinding prometheus-server
+    delete_cluster_resource_if_owned "$namespace" clusterrole prometheus-kube-state-metrics
+    delete_cluster_resource_if_owned "$namespace" clusterrolebinding prometheus-kube-state-metrics
+  else
+    log_warn "Skipping cleanup of shared cluster-level resources."
+  fi
   echo
   log_success "Deleted CTA instance ${namespace} in ${SECONDS} seconds."
 }
