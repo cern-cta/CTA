@@ -261,13 +261,6 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
                             + cta::eos::Workflow_EventType_Name(event));
   }
 
-  const std::string storageClass = request->notification().file().storage_class();
-  if (storageClass.empty()) {
-    response->set_type(cta::xrd::Response::RSP_ERR_USER);
-    response->set_message_txt("Storage class is not set");
-    return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Storage class is not set.");
-  }
-
   // check validate request args
   if (request->notification().file().archive_file_id() == 0) {
     lc.log(cta::log::WARNING, "Invalid archive file id");
@@ -281,7 +274,6 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
   sp.add("instance", instance);
   sp.add("username", request->notification().cli().user().username());
   sp.add("groupname", request->notification().cli().user().groupname());
-  sp.add("storageClass", storageClass);
   sp.add("archiveID", request->notification().file().archive_file_id());
   sp.add("fileID", request->notification().file().disk_file_id());
 
