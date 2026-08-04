@@ -97,7 +97,7 @@ fi
 
 build_command=("$container_runtime" build)
 if [[ $container_runtime == docker ]]; then
-  if [[ ${CTA_DOCKER_BUILDX_VALIDATED:-false} != true ]] && ! docker buildx version >/dev/null 2>&1; then
+  if ! docker buildx version >/dev/null 2>&1; then
     die "Docker Buildx is required to build CTA images. Install the Docker Buildx plugin or use Podman."
   fi
   build_command=(docker buildx build --load)

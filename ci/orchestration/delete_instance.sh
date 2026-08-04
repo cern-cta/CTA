@@ -21,12 +21,13 @@ usage() {
   echo "Usage: $0 -n <namespace> [options]"
   echo
   echo "options:"
-  echo "  -h, --help:                         Shows help output."
-  echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
-  echo "  -l, --log-dir <dir>:                Base directory to output the logs to. Defaults to /tmp."
-  echo "  -D, --discard-logs:                 Do not collect the logs when deleting an instance."
-  echo "      --keep-pvs:                     Skip the wiping and reclaiming of released Persistent Volumes after namespace cleanup."
-  echo "      --keep-cluster-resources:       Keep cluster roles and bindings owned by this namespace."
+  echo "  -h, --help:                             Shows help output."
+  echo "  -n, --namespace <namespace>:            Specify the Kubernetes namespace."
+  echo "  -l, --log-dir <dir>:                    Base directory to output the logs to. Defaults to /tmp."
+  echo "  -D, --discard-logs:                     Do not collect the logs when deleting an instance."
+  echo "      --keep-pvs:                         Skip the wiping and reclaiming of released Persistent Volumes after namespace cleanup."
+  echo "      --keep-cluster-resources:           Keep cluster roles and bindings owned by this namespace."
+  echo "      --force-delete-cluster-resources:   Delete named cluster roles and bindings even when ownership cannot be verified."
   echo
   exit 1
 }
@@ -167,8 +168,13 @@ reclaim_released_pvs() {
 }
 
 delete_cluster_resource_if_owned() {
-  local namespace="$1" resource_type="$2" resource_name="$3" release_namespace
+  local namespace="$1" resource_type="$2" resource_name="$3" force_delete="$4" release_namespace
   if ! kubectl get "$resource_type" "$resource_name" >/dev/null 2>&1; then
+    return
+  fi
+  if [[ $force_delete == true ]]; then
+    log_warn "Force deleting ${resource_type}/${resource_name} without checking ownership."
+    kubectl delete "$resource_type" "$resource_name"
     return
   fi
   if ! release_namespace=$(kubectl get "$resource_type" "$resource_name" \
@@ -189,6 +195,7 @@ delete_instance() {
   local collect_logs=true
   local wipe_pvs=true
   local delete_cluster_resources=true
+  local force_delete_cluster_resources=false
   local namespace=""
 
   # Parse command line arguments
@@ -201,6 +208,7 @@ delete_instance() {
       -D|--discard-logs) collect_logs=false ;;
       --keep-pvs) wipe_pvs=false ;;
       --keep-cluster-resources) delete_cluster_resources=false ;;
+      --force-delete-cluster-resources) force_delete_cluster_resources=true ;;
       -l|--log-dir)
         log_dir="$2"
         [[ -d "${log_dir}" ]] || local_die "ERROR: Log directory ${log_dir} does not exist"
@@ -216,6 +224,9 @@ delete_instance() {
   # Argument checks
   if [[ -z "${namespace}" ]]; then
     die_usage "Missing mandatory argument: -n | --namespace"
+  fi
+  if [[ $delete_cluster_resources == false && $force_delete_cluster_resources == true ]]; then
+    die_usage "--keep-cluster-resources and --force-delete-cluster-resources cannot be used together"
   fi
 
   if ! kubectl get namespace "$namespace" >/dev/null 2>&1; then
@@ -253,12 +264,12 @@ delete_instance() {
     log_warn "Skipping reclamation of released persistent volumes."
   fi
   if [[ $delete_cluster_resources == true ]]; then
-    delete_cluster_resource_if_owned "$namespace" clusterrole otel-opentelemetry-collector
-    delete_cluster_resource_if_owned "$namespace" clusterrolebinding otel-opentelemetry-collector
-    delete_cluster_resource_if_owned "$namespace" clusterrole prometheus-server
-    delete_cluster_resource_if_owned "$namespace" clusterrolebinding prometheus-server
-    delete_cluster_resource_if_owned "$namespace" clusterrole prometheus-kube-state-metrics
-    delete_cluster_resource_if_owned "$namespace" clusterrolebinding prometheus-kube-state-metrics
+    delete_cluster_resource_if_owned "$namespace" clusterrole otel-opentelemetry-collector "$force_delete_cluster_resources"
+    delete_cluster_resource_if_owned "$namespace" clusterrolebinding otel-opentelemetry-collector "$force_delete_cluster_resources"
+    delete_cluster_resource_if_owned "$namespace" clusterrole prometheus-server "$force_delete_cluster_resources"
+    delete_cluster_resource_if_owned "$namespace" clusterrolebinding prometheus-server "$force_delete_cluster_resources"
+    delete_cluster_resource_if_owned "$namespace" clusterrole prometheus-kube-state-metrics "$force_delete_cluster_resources"
+    delete_cluster_resource_if_owned "$namespace" clusterrolebinding prometheus-kube-state-metrics "$force_delete_cluster_resources"
   else
     log_warn "Skipping cleanup of shared cluster-level resources."
   fi
