@@ -14,6 +14,7 @@
 #include "TapeReadSingleThread.hpp"
 #include "TapeSessionReporter.hpp"
 #include "TapeWriteSingleThread.hpp"
+#include "common/dataStructures/ArchiveUnmountPolicy.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
@@ -485,16 +486,14 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
                                   watchDog,
                                   logContext,
                                   m_dataTransferConfig.xrootTimeout);
+
     MigrationTaskInjector taskInjector(memoryManager,
                                        threadPool,
                                        writeSingleThread,
                                        *archiveMount,
                                        m_dataTransferConfig.bulkRequestMigrationMaxFiles,
                                        m_dataTransferConfig.bulkRequestMigrationMaxBytes,
-                                       m_dataTransferConfig.underfillWatchPeriodSecs,
-                                       m_dataTransferConfig.underfillMinSamples,
-                                       m_dataTransferConfig.underfillRecoveryThreshold,
-                                       m_dataTransferConfig.underfillStartThreshold,
+                                       m_dataTransferConfig.archiveUnmountPolicy,
                                        logContext);
     threadPool.setTaskInjector(&taskInjector);
     writeSingleThread.setTaskInjector(&taskInjector);

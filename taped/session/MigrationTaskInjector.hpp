@@ -10,6 +10,7 @@
 #include "MigrationMemoryManager.hpp"
 #include "TapeWriteSingleThread.hpp"
 #include "TapeWriteTask.hpp"
+#include "common/dataStructures/ArchiveUnmountPolicy.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/utils/Timer.hpp"
 #include "scheduler/ArchiveMount.hpp"
@@ -42,10 +43,7 @@ public:
                         cta::ArchiveMount& archiveMount,
                         uint64_t maxFiles,
                         uint64_t byteSizeThreshold,
-                        uint64_t underfillWatchPeriodSecs,
-                        uint64_t underfillMinSamples,
-                        uint64_t underfillStartThreshold,
-                        uint64_t underfillRecoveryThreshold,
+                        const cta::common::dataStructures::ArchiveUnmountPolicy& unmountPolicy,
                         const cta::log::LogContext& lc);
 
   /**
@@ -217,11 +215,6 @@ private:
   /// the client who is sending us jobs
   cta::ArchiveMount& m_archiveMount;
 
-  /**
-   * utility member to log some pieces of information
-   */
-  cta::log::LogContext m_lc;
-
   cta::threading::Mutex m_producerProtection;
 
   ///all the requests for work we will forward to the client.
@@ -238,26 +231,16 @@ private:
 
   /// Same as m_maxFilesReq for size per request. (in bytes))
   const uint64_t m_maxBytes;
-  /**
-   * Continuous underfill duration required before ending the session.
-   */
-  uint64_t m_underfillWatchPeriodSecs;
 
   /**
-   * Minimum number of underfilled responses required before ending the
-   * session.
+   * Unmount policy controlling dismounts caused by low backlog to efficiently use the drive
    */
-  uint64_t m_underfillMinSamples;
-  /**
-   * A response below this ratio starts an underfill observation period.
-   */
-  uint64_t m_underfillStartThreshold;
+  const cta::common::dataStructures::ArchiveUnmountPolicy& m_unmountPolicy;
 
   /**
-   * An active underfill period is cleared only when a response reaches this
-   * ratio.
+   * utility member to log some pieces of information
    */
-  uint64_t m_underfillRecoveryThreshold;
+  cta::log::LogContext m_lc;
 
   /**The last fseq used on the tape. We should not see this but
    * IT is computed by subtracting 1 to fSeg  of the first file to migrate we

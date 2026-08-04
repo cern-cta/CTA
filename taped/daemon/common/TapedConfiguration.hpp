@@ -5,9 +5,9 @@
 
 #pragma once
 #include "FetchReportOrFlushLimits.hpp"
-#include "UnderfillFetchLimits.hpp"
 #include "common/Constants.hpp"
 #include "common/config/SourcedParameter.hpp"
+#include "common/dataStructures/ArchiveUnmountPolicy.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
 
@@ -114,7 +114,7 @@ struct TapedConfiguration {
   // the recovery threshold. If the measured period is longer than the
   // configured watch period and the minimum number of underfilled fetched
   // batches is reached, the end of the tape session is triggered.
-  cta::SourcedParameter<UnderfillFetchLimits> archiveFetchUnderfillLimits {
+  cta::SourcedParameter<cta::common::dataStructures::ArchiveUnmountPolicy> archiveFetchUnderfillLimits {
     "taped",
     "ArchiveFetchUnderfillLimits",
     {5 * 60, 3, 40, 60},

@@ -5,10 +5,10 @@
 
 #include "catalogue/DriveConfig.hpp"
 
+#include "common/dataStructures/ArchiveUnmountPolicy.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/config/SourcedParameter.hpp"
 #include "taped/daemon/common/FetchReportOrFlushLimits.hpp"
-#include "taped/daemon/common/UnderfillFetchLimits.hpp"
 
 #include <algorithm>
 #include <string>
@@ -94,7 +94,7 @@ void DriveConfig::setConfigToDB(const SourcedParameter<std::string>& sourcedPara
                                                   sourcedParameter.source());
 }
 
-void DriveConfig::setConfigToDB(const SourcedParameter<tape::daemon::UnderfillFetchLimits>& sourcedParameter,
+void DriveConfig::setConfigToDB(const SourcedParameter<cta::common::dataStructures::ArchiveUnmountPolicy>& sourcedParameter,
                                 catalogue::Catalogue* catalogue,
                                 const std::string& tapeDriveName) {
   std::string key = sourcedParameter.key();

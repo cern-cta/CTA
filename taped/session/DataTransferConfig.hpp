@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include "common/dataStructures/ArchiveUnmountPolicy.hpp"
+
 #include <stdint.h>
 #include <string>
 
@@ -35,27 +37,9 @@ struct DataTransferConfig {
   uint64_t bulkRequestMigrationMaxFiles = 0;
 
   /**
-   * Minimum duration, in seconds, for which archive requests must remain
-   * underfilled before the tape session may be ended.
+   * Unmount policy controlling dismounts caused by low backlog to efficiently use the drive
    */
-  uint64_t underfillWatchPeriodSecs = 5 * 60;
-
-  /**
-   * Minimum number of consecutive underfilled archive requests required before
-   * the tape session may be ended.
-   */
-  uint64_t underfillMinSamples = 3;
-
-  /**
-   * Fill percentage at or above which an active underfill observation period is
-   * cleared.
-   */
-  uint64_t underfillRecoveryThreshold = 60;
-
-  /**
-   * Fill percentage below which an underfill observation period is started.
-   */
-  uint64_t underfillStartThreshold = 40;
+  cta::common::dataStructures::ArchiveUnmountPolicy archiveUnmountPolicy;
 
   /**
    * Maximum number of bytes in a set of files to be recalled from tape
