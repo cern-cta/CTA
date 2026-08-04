@@ -37,17 +37,29 @@ usage() {
   exit 1
 }
 
+check_deploy_commands() {
+  local errors=0 required_command
+  for required_command in jq kubectl helm lsscsi sg_inq; do
+    if ! command -v "$required_command" >/dev/null 2>&1; then
+      log_error "Deploy requirement missing: $required_command"
+      errors=$((errors + 1))
+    fi
+  done
+  (( errors == 0 )) || die "Deployment requirements are not satisfied."
+}
+
 # This should all go once we have auto-discovery and auto-scaling of hardware resources
 generate_tape_values_files() {
+  local library_device drives_json
   log_task "Generating rmcd configuration..."
   rmcd_config=$(mktemp "/tmp/${namespace}-rmcd-XXXXXX-values.yaml")
-  set -o pipefail
   library_device=$(
     ./../utils/tape/list_libraries_on_host.sh | jq -r .[0].device || \
     die "Couldn't find any tape libraries on this host. Make sure mhvtl is installed and running, using \`systemctl status mhvtl.target\` as root."
   )
-  set +o pipefail
-  cat <<EOF > $rmcd_config
+  [[ -n $library_device && $library_device != null ]] || \
+    die "Couldn't find any tape libraries on this host. Make sure mhvtl is installed and running."
+  cat <<EOF > "$rmcd_config"
 rmcd:
   libraryDevice: $library_device
 EOF
@@ -61,19 +73,23 @@ EOF
   # This file is cleaned up again by delete_instance.sh
   taped_config=$(mktemp "/tmp/${namespace}-taped-XXXXXX-values.yaml")
 
-  DRIVES_JSON_ARGS=(
+  local drives_json_args=(
     --library-device "$library_device"
     --max-drives "$max_drives"
   )
   if [[ "$one_logical_library" = true ]]; then
-    DRIVES_JSON_ARGS+=(-l)
+    drives_json_args+=(-l)
   fi
 
-  drives_json=$(./../utils/tape/list_drives_in_library.sh "${DRIVES_JSON_ARGS[@]}")
+  drives_json=$(./../utils/tape/list_drives_in_library.sh "${drives_json_args[@]}") || \
+    die "Could not inspect drives for tape library '$library_device'."
+  [[ $drives_json == *'"device"'* ]] || \
+    die "No tape drives were detected for tape library '$library_device'."
 
-  echo "taped:" > $taped_config
-  echo "  drives:" >> $taped_config
-  echo $drives_json | jq -r '.[] | "    - name: \(.name)\n      device: \(.device)\n      logicalLibraryName: \(.logicalLibraryName)\n      controlPath: \(.controlPath)"' >> $taped_config
+  echo "taped:" > "$taped_config"
+  echo "  drives:" >> "$taped_config"
+  jq -r '.[] | "    - name: \(.name)\n      device: \(.device)\n      logicalLibraryName: \(.logicalLibraryName)\n      controlPath: \(.controlPath)"' \
+    <<< "$drives_json" >> "$taped_config"
   echo "Content of taped values file $taped_config:"
   echo
   cat "$taped_config"
@@ -109,6 +125,8 @@ update_local_cta_chart_dependencies() {
 }
 
 create_instance() {
+  check_deploy_commands
+
   project_json_path="../../project.json"
   # Argument defaults
   # Not that some arguments below intentionally use false and not 0/1 as they are directly passed as a helm option
@@ -253,7 +271,7 @@ create_instance() {
 
   # Determine the library config to use
   if [[ -z "${tapeservers_config}" ]]; then
-    generate_tape_values_files "$one_logical_library"
+    generate_tape_values_files
   fi
 
   if [[ "$scheduler_config" == "presets/dev-scheduler-vfs-values.yaml" ]]; then

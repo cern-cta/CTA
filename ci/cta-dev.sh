@@ -74,7 +74,7 @@ catalogue_config="presets/dev-catalogue-postgres-values.yaml"
 scheduler_config=""
 cta_config=""
 eos_config=""
-extra_spawn_options="--no-setup"
+extra_spawn_options=(--no-setup)
 
 stage_names=()
 stage_durations=()
@@ -277,6 +277,7 @@ require_command() {
 
 parse_options() {
   local command="$1"
+  local -a spawn_options
   shift
 
   while [[ $# -gt 0 ]]; do
@@ -454,7 +455,9 @@ parse_options() {
         ;;
       --spawn-options)
         require_command "$1" "$command" deploy up all
-        extra_spawn_options+=" $2"
+        spawn_options=()
+        read -ra spawn_options <<< "$2"
+        extra_spawn_options+=("${spawn_options[@]}")
         shift
         ;;
       --deploy-namespace)
@@ -484,22 +487,26 @@ parse_options() {
 
 }
 
+validate_container_runtime() {
+  command -v "$container_runtime" >/dev/null 2>&1 || return 1
+  "$container_runtime" info >/dev/null 2>&1 || return 1
+  if [[ $container_runtime == docker && ${CTA_DOCKER_BUILDX_VALIDATED:-false} != true ]]; then
+    if ! docker buildx version >/dev/null 2>&1; then
+      die "Docker Buildx is required to build CTA images. Install the Docker Buildx plugin or use Podman."
+    fi
+    export CTA_DOCKER_BUILDX_VALIDATED=true
+  fi
+}
+
 select_container_runtime() {
   local candidate
   if [[ $container_runtime_explicit == true ]]; then
-    command -v "$container_runtime" >/dev/null 2>&1 || die "Requested container runtime '$container_runtime' is not installed."
-    "$container_runtime" info >/dev/null 2>&1 || die "Requested container runtime '$container_runtime' is installed but not usable."
-    if [[ $container_runtime == docker ]] && ! docker buildx version >/dev/null 2>&1; then
-      die "Docker Buildx is required to build CTA images. Install the Docker Buildx plugin or use Podman."
-    fi
+    validate_container_runtime || die "Requested container runtime '$container_runtime' is not installed or usable."
     return
   fi
   for candidate in podman docker; do
-    if command -v "$candidate" >/dev/null 2>&1 && "$candidate" info >/dev/null 2>&1; then
-      container_runtime="$candidate"
-      if [[ $container_runtime == docker ]] && ! docker buildx version >/dev/null 2>&1; then
-        die "Docker Buildx is required to build CTA images. Install the Docker Buildx plugin or use Podman."
-      fi
+    container_runtime="$candidate"
+    if validate_container_runtime; then
       log_task "Using container runtime: $container_runtime"
       return
     fi
@@ -524,33 +531,6 @@ local_kubernetes_available() {
     fi
   fi
   [[ $found == true && $unusable == false ]]
-}
-
-preflight_deploy() {
-  local errors=0 context library_json library_device drives_json required_command
-  for required_command in kubectl helm lsscsi sg_inq; do
-    if ! command -v "$required_command" >/dev/null 2>&1; then
-      log_error "Deploy requirement missing: $required_command"
-      errors=$((errors + 1))
-    fi
-  done
-  (( errors == 0 )) || die "Deploy preflight failed before making any cluster changes."
-  context=$(kubectl config current-context 2>/dev/null) || die "kubectl has no current context (target namespace: $deploy_namespace)."
-  kubectl cluster-info >/dev/null 2>&1 || die "Kubernetes context '$context' is not reachable (target namespace: $deploy_namespace)."
-  helm version --short >/dev/null 2>&1 || die "Helm is installed but not usable with Kubernetes context '$context'."
-  library_json=$("${project_root}/ci/utils/tape/list_libraries_on_host.sh" 2>/dev/null) || die "Could not inspect tape hardware. Ensure lsscsi and sg_inq can access the host devices."
-  [[ $library_json == *'"device"'* ]] || die "No tape library was detected on this host; deploy cannot continue."
-  library_device=$(printf '%s\n' "$library_json" | jq -r '.[0].device')
-  drives_json=$("${project_root}/ci/utils/tape/list_drives_in_library.sh" --library-device "$library_device" --max-drives 1 2>/dev/null) || die "Could not inspect drives for tape library '$library_device'."
-  [[ $drives_json == *'"device"'* ]] || die "No tape drive was detected for tape library '$library_device'."
-  if [[ $scheduler_type == objectstore && ( -z $scheduler_config || $scheduler_config == *dev-scheduler-vfs-values.yaml ) ]]; then
-    kubectl get storageclass local-path >/dev/null 2>&1 || die "StorageClass 'local-path' is required by the VFS scheduler on context '$context'."
-  fi
-  log_task "Deploy target: context '$context', namespace '$deploy_namespace'"
-}
-
-preflight_test() {
-  [[ -x "$venv_dir/bin/python" && -x "$venv_dir/bin/pytest" ]] || die "CTA system-test environment is missing. Run '$(basename "$0") install' first."
 }
 
 ensure_namespace_owned() {
@@ -601,10 +581,9 @@ build_cta() {
       /bin/bash
 
     print_header "BUILDING SRPMS"
-    build_srpm_flags=""
-    [[ $clean_build_dirs == true ]] && build_srpm_flags+=" --clean-build-dir"
+    build_srpm_flags=()
+    [[ $clean_build_dirs == true ]] && build_srpm_flags+=(--clean-build-dir)
 
-    # shellcheck disable=SC2086
     ${container_runtime} exec "${build_container_name}" \
       .${mount_basedir}/ci/build/build_srpm.sh \
       --build-dir ${mount_basedir}/build_srpm \
@@ -616,29 +595,28 @@ build_cta() {
       --oracle-support "${oracle_support}" \
       --cmake-build-type "${cmake_build_type}" \
       --jobs "${num_jobs}" \
-      ${build_srpm_flags}
+      "${build_srpm_flags[@]}"
   fi
 
   log_task "Compiling CTA from the source directory..."
 
-  local build_rpm_flags=""
+  local build_rpm_flags=()
 
   # It should only be possible to skip cmake if the pod was not restarted or the install was forced
   if [[ $build_container_restarted == true || $force_install == true ]]; then
-    build_rpm_flags+=" --install-srpms"
+    build_rpm_flags+=(--install-srpms)
   elif [[ $skip_cmake == true ]]; then
-    build_rpm_flags+=" --skip-cmake"
+    build_rpm_flags+=(--skip-cmake)
   fi
 
-  [[ $skip_unit_tests == true ]] && build_rpm_flags+=" --skip-unit-tests"
-  [[ $clean_build_dir == true || $clean_build_dirs == true ]] && build_rpm_flags+=" --clean-build-dir"
-  [[ $skip_debug_packages == true ]] && build_rpm_flags+=" --skip-debug-packages"
-  [[ $enable_ccache == true ]] && build_rpm_flags+=" --enable-ccache"
-  [[ $enable_internal_repos == true ]] && build_rpm_flags+=" --enable-internal-repos"
-  [[ $enable_address_sanitizer == true ]] && build_rpm_flags+=" --enable-address-sanitizer"
+  [[ $skip_unit_tests == true ]] && build_rpm_flags+=(--skip-unit-tests)
+  [[ $clean_build_dir == true || $clean_build_dirs == true ]] && build_rpm_flags+=(--clean-build-dir)
+  [[ $skip_debug_packages == true ]] && build_rpm_flags+=(--skip-debug-packages)
+  [[ $enable_ccache == true ]] && build_rpm_flags+=(--enable-ccache)
+  [[ $enable_internal_repos == true ]] && build_rpm_flags+=(--enable-internal-repos)
+  [[ $enable_address_sanitizer == true ]] && build_rpm_flags+=(--enable-address-sanitizer)
 
   print_header "BUILDING RPMS"
-  # shellcheck disable=SC2086
   ${container_runtime} exec "${build_container_name}" \
     .${mount_basedir}/ci/build/build_rpm.sh \
     --build-dir ${mount_basedir}/build_rpm \
@@ -653,7 +631,7 @@ build_cta() {
     --cmake-build-type "${cmake_build_type}" \
     --jobs "${num_jobs}" \
     --platform "${platform}" \
-    ${build_rpm_flags}
+    "${build_rpm_flags[@]}"
 
 }
 
@@ -675,24 +653,26 @@ images_cta() {
 
   # Build
   log_task "Building container images from ${rpm_src}..."
-  local extra_image_build_options=""
-  [[ $enable_internal_repos == true ]] && extra_image_build_options+=" --enable-internal-repos"
-  [[ $enable_debug_image == true ]] && extra_image_build_options+=" --enable-debug-image"
+  local extra_image_build_options=()
+  local load_into_k8s=false
+  [[ $enable_internal_repos == true ]] && extra_image_build_options+=(--enable-internal-repos)
+  [[ $enable_debug_image == true ]] && extra_image_build_options+=(--enable-debug-image)
   if local_kubernetes_available; then
-    extra_image_build_options+=" --load-into-k8s"
-  else
-    log_warn "Kubernetes image loading skipped: every installed minikube/k3s command must refer to a usable local cluster."
+    extra_image_build_options+=(--load-into-k8s)
+    load_into_k8s=true
   fi
   cd "${project_root}"
   ./ci/build/build_images.sh \
     --tag "${cta_image_tag}" \
     --rpm-src "${rpm_src}" \
     --container-runtime "${container_runtime}" \
-    ${extra_image_build_options}
+    "${extra_image_build_options[@]}"
+  if [[ $load_into_k8s == false ]]; then
+    log_warn "Kubernetes image loading skipped: every installed minikube/k3s command must refer to a usable local cluster."
+  fi
 }
 
 deploy_cta() {
-  preflight_deploy
   ensure_namespace_owned
   print_header "DELETING OLD CTA DEPLOYMENTS"
 
@@ -700,12 +680,12 @@ deploy_cta() {
   # By default we discard the logs from deletion as this is not very useful during development and pollutes the dev machine
   ./delete_instance.sh -n "${deploy_namespace}" --discard-logs --keep-pvs
   print_header "DEPLOYING CTA"
-  [[ -n $eos_image_repository ]] && extra_spawn_options+=" --eos-image-repository $eos_image_repository"
-  [[ -n $eos_image_tag ]] && extra_spawn_options+=" --eos-image-tag $eos_image_tag"
-  [[ -n $eos_config ]] && extra_spawn_options+=" --eos-config $eos_config"
-  [[ -n $cta_config ]] && extra_spawn_options+=" --cta-config $cta_config"
-  [[ $local_telemetry == true ]] && extra_spawn_options+=" --local-telemetry"
-  [[ $publish_telemetry == true ]] && extra_spawn_options+=" --publish-telemetry"
+  [[ -n $eos_image_repository ]] && extra_spawn_options+=(--eos-image-repository "$eos_image_repository")
+  [[ -n $eos_image_tag ]] && extra_spawn_options+=(--eos-image-tag "$eos_image_tag")
+  [[ -n $eos_config ]] && extra_spawn_options+=(--eos-config "$eos_config")
+  [[ -n $cta_config ]] && extra_spawn_options+=(--cta-config "$cta_config")
+  [[ $local_telemetry == true ]] && extra_spawn_options+=(--local-telemetry)
+  [[ $publish_telemetry == true ]] && extra_spawn_options+=(--publish-telemetry)
 
   # Assign default config based on scheduler type if not already set
   if [[ -z $scheduler_config ]]; then
@@ -713,7 +693,6 @@ deploy_cta() {
       scheduler_config="presets/dev-scheduler-postgres-values.yaml" || \
       scheduler_config="presets/dev-scheduler-vfs-values.yaml"
   fi
-  # shellcheck disable=SC2086
   ./create_instance.sh --namespace "${deploy_namespace}" \
     --cta-image-registry localhost \
     --cta-image-tag "${cta_image_tag}" \
@@ -723,11 +702,12 @@ deploy_cta() {
     --dcache-enabled ${dcache_enabled} \
     --reset-catalogue \
     --reset-scheduler \
-    ${extra_spawn_options}
+    "${extra_spawn_options[@]}"
 }
 
 test_cta() {
-  preflight_test
+  [[ -x "$venv_dir/bin/python" && -x "$venv_dir/bin/pytest" ]] || \
+    die "CTA system-test environment is missing. Run '$(basename "$0") install' first."
   print_header "RUNNING TESTS"
 
   source "$venv_dir/bin/activate" || (log_error "Failed to activate the Python virtual environment. Run \"$(basename "$0") install\" to create it." && exit 1)
