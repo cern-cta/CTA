@@ -122,7 +122,7 @@ def test_reset_tapes(env: TestEnv) -> None:
 
 def test_reset_drive_devices(env: TestEnv) -> None:
     for ctataped in env.cta_taped:
-        ctataped.exec(f"sg_turs {ctataped.drive_device} 2>&1 > /dev/null || true")
+        ctataped.exec(f"sudo sg_turs {ctataped.drive_device} 2>&1 > /dev/null || true")
 
 
 def test_label_tapes(env: TestEnv) -> None:

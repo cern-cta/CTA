@@ -71,10 +71,8 @@ postRun:
 #     controlPath smc1
 drives: {}
 
-# We need to be privileged to handle the tape drives
 securityContext:
-  privileged: true
-  allowPrivilegeEscalation: true
+  privileged: true # To get access to /dev/
 
 pod:
   extraSpec:

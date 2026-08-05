@@ -31,6 +31,11 @@ spec:
       {{- if .Values.pod.extraSpec }}
       {{ .Values.pod.extraSpec | toYaml | nindent 6 }}
       {{- end }}
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 1000 # cta
+        runAsGroup: 33 # tape
+        fsGroup: 33 # tape
       initContainers:
       - name: init1-download-grpc-health-probe
         image: {{ include "common.images.busybox" . }}
@@ -69,8 +74,6 @@ spec:
           successThreshold: 1
           failureThreshold: 60
         securityContext:
-          runAsUser: 1000 # cta
-          runAsGroup: 33 # tape
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
           privileged: {{ include "common.securityContext.privileged" . }}
         env:

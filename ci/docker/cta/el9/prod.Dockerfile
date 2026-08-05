@@ -59,10 +59,10 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     printf '%s\n' '[cta]' 'name=Repo containing CTA RPMS' 'baseurl=file:///mnt/rpms' 'gpgcheck=0' 'enabled=1' 'priority=2' > /etc/yum.repos.d/cta.repo && \
     # Add some basic flags to all (micro)dnf commands to improve speed and reduce image size
     printf '%s\n' '[main]' 'tsflags=nodocs' 'install_weak_deps=False' > /etc/dnf/dnf.conf && \
-    # Some basic utils (tar for kubectl cp, jq for many of the tests and convenience)
+    # Some basic utils (tar for kubectl cp, jq for many of the tests and convenience, procps-ng for some other utilities used in tests)
     # Requiring sudo is not ideal, but we need an update of the tests to be able to do without it.
     # Anyway, by setting allowPrivilegeEscalation: false in Kubernetes, sudo is unusable anyway
-    microdnf install -y tar jq sudo && \
+    microdnf install -y tar jq sudo procps-ng && \
     echo 'cta ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/cta && \
     chmod 0440 /etc/sudoers.d/cta && \
     # Cleanup
@@ -81,8 +81,12 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-taped \
     /usr/local/bin/build-service.sh "cta-taped cta-tape-label cta-external-tape-formats-test cta-eosdf mt-st lsscsi sg3_utils"
 
-# Can be uncommented once we remove cta-taped setting its own process capabilities
-# USER cta
+# See https://github.com/kubernetes/enhancements/blob/master/keps/sig-security/2763-ambient-capabilities/README.md
+RUN setcap \
+    cap_sys_rawio=+ep /usr/bin/cta-taped \
+    cap_sys_rawio=+ep /usr/bin/cta-tape-label
+
+USER cta
 CMD ["/usr/bin/cta-taped", "-c", "/etc/cta/cta-taped.conf", "--foreground", "--log-format=json", "--log-to-file=/var/log/cta/cta-taped.log"]
 
 # =========================================================================

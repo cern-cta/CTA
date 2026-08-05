@@ -17,6 +17,7 @@ spec:
   {{- if .Values.pod.extraSpec }}
   {{ .Values.pod.extraSpec | toYaml | nindent 2 }}
   {{- end }}
+  automountServiceAccountToken: false
   containers:
   - name: cta-scheduler-postgres
     image: docker.io/postgres:14.10

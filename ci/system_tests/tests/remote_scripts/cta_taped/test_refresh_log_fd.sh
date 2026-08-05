@@ -7,8 +7,8 @@ STRACE_SLEEP_SECS=2
 
 log_file="/var/log/cta/cta-taped.log"
 
-# Install dependencies required for testing log rotation inside the tape server"
-sudo microdnf -y install strace lsof procps-ng
+# Install dependencies required for testing log rotation
+sudo microdnf -y install strace procps-ng
 
 # Get PID of all taped processes
 tpd_parent_pid=$(pgrep "parent" -u cta)
@@ -27,13 +27,17 @@ echo "Found '$DRIVE_NAME-parent' process PID: ${tpd_parent_pid}"
 echo "Found '$DRIVE_NAME-drive' process PID: ${tpd_drv_pid}"
 
 # Get number of file descriptor used to open the log file
-log_file_fd=$(lsof -p "${tpd_parent_pid}" | grep "${log_file}" | awk '{print $4}' | awk -F'[^0-9]' '{print $1}')
+log_file_fd=$(
+    find /proc/"$tpd_parent_pid"/fd -maxdepth 1 -lname "$log_file" -printf '%f\n'
+)
+
 if [[ -z "${log_file_fd}" ]]; then
-  echo "ERROR: No file descriptor found for log file ${log_file}." >&2
-  exit 1
-else
-  echo "Found file descriptor #${log_file_fd} being used to access ${log_file}."
+    echo "ERROR: No file descriptor found for log file ${log_file}"
+    exit 1
 fi
+
+echo "Found file descriptor #${log_file_fd} being used to access ${log_file}"
+
 
 # Temporary files to store strace output
 tpd_parent_tmp_file=$(mktemp)

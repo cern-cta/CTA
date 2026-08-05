@@ -11,7 +11,9 @@ def test_no_coredumps(env: TestEnv) -> None:
     hosts = [*env.disk_client, *env.cta_cli, *env.cta_admin_api, *env.cta_workflow_api, *env.cta_taped, *env.cta_rmcd]
     total_core_dumps_found = 0
     for host in hosts:
-        core_dump_files = host.exec_with_output("find /var/log/tmp/ -type f -name '*.core' 2>/dev/null").splitlines()
+        core_dump_files = host.exec_with_output(
+            "sudo find /var/log/tmp/ -type f -name '*.core' 2>/dev/null"
+        ).splitlines()
         num_core_dumps = len(core_dump_files)
         if num_core_dumps > 0:
             total_core_dumps_found += num_core_dumps

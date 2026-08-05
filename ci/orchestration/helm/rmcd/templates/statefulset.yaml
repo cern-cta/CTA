@@ -33,13 +33,16 @@ spec:
       {{- if .Values.pod.extraSpec }}
       {{ .Values.pod.extraSpec | toYaml | nindent 6 }}
       {{- end }}
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 1000 # cta
+        runAsGroup: 33 # tape
+        fsGroup: 33
       containers:
       - name: cta-rmcd
         image: {{ include "rmcd.image" . }}
         imagePullPolicy: {{ include "rmcd.imagePullPolicy" . }}
         securityContext:
-          runAsUser: 1000 # cta
-          runAsGroup: 33 # tape
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
           privileged: {{ include "common.securityContext.privileged" . }}
           capabilities:
