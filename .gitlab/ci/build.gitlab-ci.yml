@@ -13,8 +13,6 @@ spec:
       type: string
     enable-address-sanitizer:
       type: boolean
-    enable-oracle-support:
-      type: boolean
 ---
 
 build-cta-rpms:
@@ -87,7 +85,7 @@ build-cta-rpms:
                                --cta-version ${BUILD_CTA_VERSION}
                                --vcs-version ${VCS_VERSION}
                                --scheduler-type ${SCHEDULER_TYPE}
-                               --oracle-support $[[ inputs.enable-oracle-support ]]
+                               --oracle-support ${ENABLE_ORACLE_SUPPORT}
                                --cmake-build-type "${CMAKE_BUILD_TYPE}"
                                --jobs $(nproc --ignore=1)
     # RPMS
@@ -110,7 +108,7 @@ build-cta-rpms:
                               --vcs-version ${VCS_VERSION}
                               --xrootd-ssi-version ${XRD_SSI_VERSION}
                               --scheduler-type ${SCHEDULER_TYPE}
-                              --oracle-support $[[ inputs.enable-oracle-support ]]
+                              --oracle-support ${ENABLE_ORACLE_SUPPORT}
                               --cmake-build-type "${CMAKE_BUILD_TYPE}"
                               --jobs $(nproc --ignore=1)
                               --install-srpms

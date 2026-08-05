@@ -137,8 +137,8 @@ stages:
   - report
   - .post
 
-# Variables should only be used for constants or internal variables that are not expected to be overridden by the user.
-# All user-facing variables should be defined as inputs and passed to the included templates.
+# User-facing settings are defined as inputs. Internal variables expose their effective values to included templates
+# when workflow rules may override the selected input.
 variables:
   # Pipeline images
   # Updated by the weekly UPDATE_PIPELINE_IMAGES pipeline after every image has been built successfully
@@ -161,6 +161,7 @@ variables:
 
   # Build and runtime defaults
   SCHEDULER_TYPE: "$[[ inputs.scheduler-type ]]"
+  ENABLE_ORACLE_SUPPORT: "$[[ inputs.enable-oracle-support ]]"
   BUILD_CTA_VERSION: "5"
   ENABLE_CCACHE: "false"
   BUILD_CACHE_POLICY: "pull"
@@ -197,15 +198,27 @@ default:
   interruptible: true
 
 workflow:
-  name: '$CI_PIPELINE_SOURCE - $CI_COMMIT_SHORT_SHA - $[[ inputs.platform ]] - $PIPELINE_TYPE - $SCHEDULER_TYPE - Oracle:$[[ inputs.enable-oracle-support ]]'
+  name: '$CI_PIPELINE_SOURCE - $CI_COMMIT_SHORT_SHA - $[[ inputs.platform ]] - $PIPELINE_TYPE - $SCHEDULER_TYPE - Oracle:$ENABLE_ORACLE_SUPPORT'
   auto_cancel:
     on_new_commit: interruptible
   rules:
-    - if: '$CI_COMMIT_TAG =~ /\.pg[0-9]+$/'
+    # Commit parsing options
+    - if: '$CI_COMMIT_TAG =~ /(^|\.)pg($|\.)/ && $CI_COMMIT_TAG =~ /(^|\.)nooracle($|\.)/'
       auto_cancel:
         on_new_commit: none
       variables:
         SCHEDULER_TYPE: "pgsched"
+        ENABLE_ORACLE_SUPPORT: "false"
+    - if: '$CI_COMMIT_TAG =~ /(^|\.)pg($|\.)/'
+      auto_cancel:
+        on_new_commit: none
+      variables:
+        SCHEDULER_TYPE: "pgsched"
+    - if: '$CI_COMMIT_TAG =~ /(^|\.)nooracle($|\.)/'
+      auto_cancel:
+        on_new_commit: none
+      variables:
+        ENABLE_ORACLE_SUPPORT: "false"
     # Allow scheduled, manual, and API-triggered pipeline-image refreshes on the selected ref.
     - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       auto_cancel:
@@ -227,12 +240,14 @@ workflow:
         ENABLE_CCACHE: "true"
         BUILD_CACHE_POLICY: "push"  # Ensure clean build and we only rebuild the cache for push events to prevent other pipeline types from screwing with it
         CACHE_BRANCH: '$CI_COMMIT_BRANCH'
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG || $CI_PIPELINE_SOURCE == "trigger"
+    - if: $CI_COMMIT_TAG
+      auto_cancel:
+        on_new_commit: none
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_PIPELINE_SOURCE == "trigger"
       auto_cancel:
         on_new_commit: none
       variables:
-        # We want to prevent gitlab from picking a wrong baseline (e.g. valgrind tests take much longer and would give misleading comparisons)
-        # So we disable reports in anything not a MR pipeline or push pipeline to main
+        # Prevent triggered and non-push default-branch pipelines from selecting a misleading test-report baseline.
         GTEST_OUTPUT: ""
     # Push events to main will still trigger the pipeline as per the previous rule
     # But we want to prevent dual pipelines on MRs
@@ -252,7 +267,6 @@ include:
       cmake-build-type: $[[ inputs.cmake-build-type ]]
       enable-address-sanitizer: $[[ inputs.enable-address-sanitizer ]]
       enable-sbom-generation: $[[ inputs.enable-sbom-generation ]]
-      enable-oracle-support: $[[ inputs.enable-oracle-support ]]
       workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
       enable-valgrind: $[[ inputs.enable-valgrind ]]
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
@@ -268,22 +282,18 @@ include:
       build-generator: $[[ inputs.build-generator ]]
       cmake-build-type: $[[ inputs.cmake-build-type ]]
       enable-address-sanitizer: $[[ inputs.enable-address-sanitizer ]]
-      enable-oracle-support: $[[ inputs.enable-oracle-support ]]
   - local: .gitlab/ci/build-image.gitlab-ci.yml
     inputs:
       platform: $[[ inputs.platform ]]
       enable-internal-repos: $[[ inputs.enable-internal-repos ]]
-      enable-oracle-support: $[[ inputs.enable-oracle-support ]]
   - local: .gitlab/ci/tests.gitlab-ci.yml
     inputs:
       platform: $[[ inputs.platform ]]
       enable-internal-repos: $[[ inputs.enable-internal-repos ]]
-      enable-oracle-support: $[[ inputs.enable-oracle-support ]]
       enable-valgrind: $[[ inputs.enable-valgrind ]]
   - local: .gitlab/ci/tests-kubernetes.gitlab-ci.yml
     inputs:
       custom-cta-image-tag: $[[ inputs.custom-cta-image-tag ]]
-      enable-oracle-support: $[[ inputs.enable-oracle-support ]]
       workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
@@ -293,6 +303,5 @@ include:
   - local: .gitlab/ci/release.gitlab-ci.yml
     inputs:
       platform: $[[ inputs.platform ]]
-      enable-oracle-support: $[[ inputs.enable-oracle-support ]]
   - local: .gitlab/ci/report.gitlab-ci.yml
   - local: .gitlab/ci/.post.gitlab-ci.yml

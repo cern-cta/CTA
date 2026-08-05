@@ -15,8 +15,6 @@ spec:
       type: boolean
     enable-sbom-generation:
       type: boolean
-    enable-oracle-support:
-      type: boolean
     workflow-api-authentication:
       type: string
     enable-valgrind:
@@ -52,7 +50,7 @@ spec:
           enable-address-sanitizer: $[[ inputs.enable-address-sanitizer ]]
           enable-sbom-generation: $[[ inputs.enable-sbom-generation ]]
           scheduler-type: $SCHEDULER_TYPE
-          enable-oracle-support: $[[ inputs.enable-oracle-support ]]
+          enable-oracle-support: $ENABLE_ORACLE_SUPPORT
           workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
           enable-valgrind: $[[ inputs.enable-valgrind ]]
           enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]

@@ -5,8 +5,6 @@ spec:
   inputs:
     custom-cta-image-tag:
       type: string
-    enable-oracle-support:
-      type: boolean
     workflow-api-authentication:
       type: string
     enable-dcache-tests:
@@ -36,7 +34,7 @@ spec:
       SCHEDULER_CONFIG=presets/dev-scheduler-postgres-values.yaml
     fi
   - | # Which catalogue config to use
-    if $[[ inputs.enable-oracle-support ]]; then
+    if $ENABLE_ORACLE_SUPPORT; then
       CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
     else
       CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml
