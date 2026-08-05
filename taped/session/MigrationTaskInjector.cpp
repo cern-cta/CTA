@@ -384,46 +384,45 @@ void MigrationTaskInjector::WorkerThread::run() {
       }
 #endif
     }  //end of while(1)
-    catch (const cta::tape::daemon::ErrorFlag&) {
-      //we end up there because a task screw up somewhere
-      m_parent.m_lc.log(cta::log::INFO,
-                        "In MigrationTaskInjector::WorkerThread::run(): a task failed, "
-                        "indicating finish of run");
+  } catch (const cta::tape::daemon::ErrorFlag&) {
+    //we end up there because a task screw up somewhere
+    m_parent.m_lc.log(cta::log::INFO,
+                      "In MigrationTaskInjector::WorkerThread::run(): a task failed, "
+                      "indicating finish of run");
 
-      m_parent.signalEndDataMovement();
-    }
-    catch (const cta::exception::Exception& ex) {
-      //we end up there because we could not talk to the client
+    m_parent.signalEndDataMovement();
+  } catch (const cta::exception::Exception& ex) {
+    //we end up there because we could not talk to the client
 
-      cta::log::ScopedParamContainer container(m_parent.m_lc);
-      container.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
-      m_parent.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
-      m_parent.m_lc.log(cta::log::ERR,
-                        "In MigrationTaskInjector::WorkerThread::run(): "
-                        "could not retrieve a list of file to migrate, indicating finish of run");
+    cta::log::ScopedParamContainer container(m_parent.m_lc);
+    container.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
+    m_parent.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
+    m_parent.m_lc.log(cta::log::ERR,
+                      "In MigrationTaskInjector::WorkerThread::run(): "
+                      "could not retrieve a list of file to migrate, indicating finish of run");
 
-      m_parent.signalEndDataMovement();
-    }
-    //-------------
-    m_parent.m_lc.log(cta::log::INFO, "Finishing MigrationTaskInjector thread");
-    /* We want to finish at the first lastCall we encounter.
+    m_parent.signalEndDataMovement();
+  }
+  //-------------
+  m_parent.m_lc.log(cta::log::INFO, "Finishing MigrationTaskInjector thread");
+  /* We want to finish at the first lastCall we encounter.
      * But even after sending finish() to m_diskWriter and to m_tapeReader,
      * m_diskWriter might still want some more task (the threshold could be crossed),
      * so we discard everything that might still be in the queue
      */
-    bool stillReading = true;
-    while (stillReading) {
-      Request req = m_parent.m_queue.pop();
-      if (req.end) {
-        stillReading = false;
-      }
-      LogContext::ScopedParam sp(m_parent.m_lc, Param("lastCall", req.lastCall));
-      m_parent.m_lc.log(cta::log::INFO, "In MigrationTaskInjector::WorkerThread::run(): popping extra request");
+  bool stillReading = true;
+  while (stillReading) {
+    Request req = m_parent.m_queue.pop();
+    if (req.end) {
+      stillReading = false;
     }
+    LogContext::ScopedParam sp(m_parent.m_lc, Param("lastCall", req.lastCall));
+    m_parent.m_lc.log(cta::log::INFO, "In MigrationTaskInjector::WorkerThread::run(): popping extra request");
   }
+}
 
-  uint64_t MigrationTaskInjector::firstFseqToWrite() const {
-    return m_firstFseqToWrite;
-  }
+uint64_t MigrationTaskInjector::firstFseqToWrite() const {
+  return m_firstFseqToWrite;
+}
 
 }  // namespace cta::tape::daemon
