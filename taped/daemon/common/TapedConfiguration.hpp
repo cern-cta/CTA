@@ -90,7 +90,7 @@ struct TapedConfiguration {
     {80L * 1000 * 1000 * 1000, 4000},
     "Compile time default"
   };
-  /// The fetch underfill criteria to unmount archive session "ArchiveFetchUnderfillLimits"
+  /// The fetch underfill criteria to unmount archive session "ArchiveDismountPolicy"
   //  This mechanism and configuration is only effective for Postgres Scheduler Backend Implementation and
   // has no effect on the objectstore implementation !
   // { underfillWatchPeriodSecs, underfillMinSamples,
@@ -116,9 +116,9 @@ struct TapedConfiguration {
   // the recovery threshold. If the measured period is longer than the
   // configured watch period and the minimum number of underfilled fetched
   // batches is reached, the end of the tape session is triggered.
-  cta::SourcedParameter<cta::common::dataStructures::ArchiveDismountPolicy> archiveFetchUnderfillLimits {
+  cta::SourcedParameter<cta::common::dataStructures::ArchiveDismountPolicy> archiveDismountPolicy {
     "taped",
-    "ArchiveFetchUnderfillLimits",
+    "ArchiveDismountPolicy",
     {5 * 60, 3, 40, 60},
     "Compile time default"
   };

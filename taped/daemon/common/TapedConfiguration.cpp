@@ -67,7 +67,8 @@ void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::set(const std::st
 }
 
 template<>
-void SourcedParameter<cta::common::dataStructures::ArchiveDismountPolicy>::set(const std::string& value, const std::string& source) {
+void SourcedParameter<cta::common::dataStructures::ArchiveDismountPolicy>::set(const std::string& value,
+                                                                               const std::string& source) {
   // We expect an entry in the form "<watch period>, <min samples>, <start threshold>, <recovery threshold>"
   // There should be 3 and only 3 commas in the parameter.
   if (3 != std::count(value.begin(), value.end(), ',')) {
@@ -236,7 +237,7 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(const std::string& d
   ret.bufferCount.setFromConfigurationFile(cf, driveTapedConfigPath);
   // Batched metadata access and tape write flush parameters
   ret.archiveFetchBytesFiles.setFromConfigurationFile(cf, driveTapedConfigPath);
-  ret.archiveFetchUnderfillLimits.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.archiveDismountPolicy.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.archiveFlushBytesFiles.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.retrieveFetchBytesFiles.setFromConfigurationFile(cf, driveTapedConfigPath);
   // Mount criteria
@@ -307,7 +308,7 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(const std::string& d
   ret.bufferCount.log(log);
 
   ret.archiveFetchBytesFiles.log(log);
-  ret.archiveFetchUnderfillLimits.log(log);
+  ret.archiveDismountPolicy.log(log);
   ret.archiveFlushBytesFiles.log(log);
   ret.retrieveFetchBytesFiles.log(log);
 

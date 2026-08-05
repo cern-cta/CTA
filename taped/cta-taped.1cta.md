@@ -163,7 +163,7 @@ taped ArchiveFetchBytesFiles *80000000000*,*4000*
     80 GB and 4000 files.
 
 
-taped ArchiveFetchUnderfillLimits *300*,*3*,*40*,*60*
+taped ArchiveDismountPolicy *300*,*3*,*40*,*60*
 
 :   Underfill detection limits for archive request batches, specified as
     a tuple (minimum watch period in seconds, minimum number of underfilled

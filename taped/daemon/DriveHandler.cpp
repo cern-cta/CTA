@@ -1060,11 +1060,10 @@ DriveHandler::executeDataTransferSession(IScheduler* scheduler, tape::daemon::Ta
   dataTransferConfig.bufsz = m_tapedConfig.bufferSizeBytes.value();
   dataTransferConfig.bulkRequestMigrationMaxBytes = m_tapedConfig.archiveFetchBytesFiles.value().maxBytes;
   dataTransferConfig.bulkRequestMigrationMaxFiles = m_tapedConfig.archiveFetchBytesFiles.value().maxFiles;
-  dataTransferConfig.archiveDismountPolicy.set(
-    m_tapedConfig.archiveFetchUnderfillLimits.value().underfillWatchPeriodSecs,
-    m_tapedConfig.archiveFetchUnderfillLimits.value().underfillMinSamples,
-    m_tapedConfig.archiveFetchUnderfillLimits.value().underfillStartThreshold,
-    m_tapedConfig.archiveFetchUnderfillLimits.value().underfillRecoveryThreshold);
+  dataTransferConfig.archiveDismountPolicy.set(m_tapedConfig.archiveDismountPolicy.value().underfillWatchPeriodSecs,
+                                               m_tapedConfig.archiveDismountPolicy.value().underfillMinSamples,
+                                               m_tapedConfig.archiveDismountPolicy.value().underfillStartThreshold,
+                                               m_tapedConfig.archiveDismountPolicy.value().underfillRecoveryThreshold);
   dataTransferConfig.bulkRequestRecallMaxBytes = m_tapedConfig.retrieveFetchBytesFiles.value().maxBytes;
   dataTransferConfig.bulkRequestRecallMaxFiles = m_tapedConfig.retrieveFetchBytesFiles.value().maxFiles;
   dataTransferConfig.maxBytesBeforeFlush = m_tapedConfig.archiveFlushBytesFiles.value().maxBytes;

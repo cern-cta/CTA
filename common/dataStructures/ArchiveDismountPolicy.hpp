@@ -9,7 +9,7 @@
 
 namespace cta::common::dataStructures {
 
-/** The fetch underfill criteria to unmount archive session "ArchiveFetchUnderfillLimits"
+/** The fetch underfill criteria to unmount archive session "ArchiveDismountPolicy"
   * { underfillWatchPeriodSecs, underfillMinSamples,
   *   underfillStartThreshold, underfillRecoveryThreshold }.
   *  When archive mount fetches batches of jobs, it tries to fetch configured maximum number of files and bytes.
@@ -47,9 +47,9 @@ struct ArchiveDismountPolicy {
         underfillRecoveryThreshold(0) {}
 
   ArchiveDismountPolicy(uint64_t watchPeriodSecs,
-                       uint64_t minSamples,
-                       uint64_t startThreshold,
-                       uint64_t recoveryThreshold)
+                        uint64_t minSamples,
+                        uint64_t startThreshold,
+                        uint64_t recoveryThreshold)
       :
 
         underfillWatchPeriodSecs(watchPeriodSecs),
