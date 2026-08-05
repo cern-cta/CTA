@@ -46,7 +46,7 @@ def test_scitokens_addon_on_eos(eos_mgm: EosMgmHost, remote_scripts_dir: Path) -
     # Setup a local jwk file and start the jwk daemon (in the background)
     # Kill any previous daemon if it exists
     eos_mgm.exec("eos scitoken create-keys --keyid ctaeos > /etc/xrootd/ctaeos.jwk")
-    eos_mgm.exec("pkill -f '/sbin/eos-jwk-https|eos daemon jwk' || true")
+    eos_mgm.exec("pkill -f '/sbin/[e]os-jwk-https' || true")
     eos_mgm.exec("nohup eos daemon jwk /etc/xrootd/ctaeos.jwk >/tmp/eos-jwk.log 2>&1 </dev/null &")
 
     # EOS should be able to generate SciTokens now.
