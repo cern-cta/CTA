@@ -51,7 +51,8 @@ def test_scitokens_addon_on_eos(eos_mgm: EosMgmHost, remote_scripts_dir: Path) -
     # EOS should be able to generate SciTokens now.
     scitoken_base64 = eos_mgm.exec(
         "eos scitoken create --expires $(($(date +%s) + 60)) "
-        "--issuer https://localhost:4443 --keyid ctaeos --profile wlcg",
+        "--issuer https://localhost:4443 --keyid ctaeos --profile wlcg "
+        "--claim scope=storage.read:/eos/ --claim sub=test",
         capture_output=True,
     ).stdout.strip()
     assert scitoken_base64, "SciToken generation returned an empty token"
