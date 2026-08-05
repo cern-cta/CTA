@@ -253,6 +253,7 @@ def test_well_known_endpoint(disk_client: DiskClientHost, disk_instance: DiskIns
 
 
 def test_generate_scitoken(eos_mgm: EosMgmHost) -> None:
+    print("Generating and validating a SciToken with multiple scopes")
     scope = "storage.read:/eos/ storage.stage:/eos/"
     scitoken = eos_mgm.generate_scitoken(
         [("scope", scope), ("sub", "test")],
