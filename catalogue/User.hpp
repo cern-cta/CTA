@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <compare>
 #include <string>
 
 namespace cta::catalogue {
@@ -35,13 +36,14 @@ struct User {
   User(const std::string& d, const std::string& u) : diskInstanceName(d), username(u) {}
 
   /**
-   * Less than operator.
+   * Comparison operators.
    *
-   * @param rhs The argument on the right hand side of the operator.
-   * @return True if this object is less than the argument on the right hand
-   * side of the operator.
+   * These are defaulted so that they compare the members lexicographically, in
+   * declaration order. Do not hand-write them: this type is used as the key of
+   * the std::map behind the requester mount policy cache, so an ordering that is
+   * not a strict weak ordering is undefined behaviour.
    */
-  bool operator<(const User& rhs) const { return diskInstanceName < rhs.diskInstanceName || username < rhs.username; }
+  auto operator<=>(const User& rhs) const = default;
 };  // struct User
 
 }  // namespace cta::catalogue

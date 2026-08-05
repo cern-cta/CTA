@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <compare>
 #include <string>
 
 namespace cta::catalogue {
@@ -35,15 +36,14 @@ struct Group {
   Group(const std::string& d, const std::string& g) : diskInstanceName(d), groupName(g) {}
 
   /**
-   * Less than operator.
+   * Comparison operators.
    *
-   * @param rhs The argument on the right hand side of the operator.
-   * @return True if this object is less than the argument on the right hand
-   * side of the operator.
+   * These are defaulted so that they compare the members lexicographically, in
+   * declaration order. Do not hand-write them: this type is used as the key of
+   * the std::map behind the requester group mount policy cache, so an ordering
+   * that is not a strict weak ordering is undefined behaviour.
    */
-  bool operator<(const Group& rhs) const {
-    return diskInstanceName < rhs.diskInstanceName || groupName < rhs.groupName;
-  }
+  auto operator<=>(const Group& rhs) const = default;
 };  // struct Group
 
 }  // namespace cta::catalogue
