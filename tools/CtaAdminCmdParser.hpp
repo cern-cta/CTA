@@ -240,27 +240,27 @@ const subcmdLookup_t subcmdLookup = {
  */
 const std::map<std::string, OptionBoolean::Key> boolOptions = {
   // Boolean options
-  {"--all",                         OptionBoolean::ALL                             },
-  {"--disabled",                    OptionBoolean::DISABLED                        },
-  {"--encrypted",                   OptionBoolean::ENCRYPTED                       },
-  {"--force",                       OptionBoolean::FORCE                           },
-  {"--full",                        OptionBoolean::FULL                            },
-  {"--fromcastor",                  OptionBoolean::FROM_CASTOR                     },
+  {"--all",                     OptionBoolean::ALL                         },
+  {"--disabled",                OptionBoolean::DISABLED                    },
+  {"--encrypted",               OptionBoolean::ENCRYPTED                   },
+  {"--force",                   OptionBoolean::FORCE                       },
+  {"--full",                    OptionBoolean::FULL                        },
+  {"--fromcastor",              OptionBoolean::FROM_CASTOR                 },
 
   // hasOption options
-  {"--disabledtape",                OptionBoolean::DISABLED                        },
-  {"--justarchive",                 OptionBoolean::JUSTARCHIVE                     },
-  {"--justmove",                    OptionBoolean::JUSTMOVE                        },
-  {"--justaddcopies",               OptionBoolean::JUSTADDCOPIES                   },
-  {"--justretrieve",                OptionBoolean::JUSTRETRIEVE                    },
-  {"--log",                         OptionBoolean::SHOW_LOG_ENTRIES                },
-  {"--lookupnamespace",             OptionBoolean::LOOKUP_NAMESPACE                },
-  {"--summary",                     OptionBoolean::SUMMARY                         },
-  {"--no-recall",                   OptionBoolean::NO_RECALL                       },
-  {"--dirtybit",                    OptionBoolean::DIRTY_BIT                       },
-  {"--isrepackvo",                  OptionBoolean::IS_REPACK_VO                    },
-  {"--missingfilecopies",           OptionBoolean::MISSING_FILE_COPIES             },
-  {"--include-storage-class-stats", OptionBoolean::INCLUDE_STORAGE_CLASS_STATISTICS},
+  {"--disabledtape",            OptionBoolean::DISABLED                    },
+  {"--justarchive",             OptionBoolean::JUSTARCHIVE                 },
+  {"--justmove",                OptionBoolean::JUSTMOVE                    },
+  {"--justaddcopies",           OptionBoolean::JUSTADDCOPIES               },
+  {"--justretrieve",            OptionBoolean::JUSTRETRIEVE                },
+  {"--log",                     OptionBoolean::SHOW_LOG_ENTRIES            },
+  {"--lookupnamespace",         OptionBoolean::LOOKUP_NAMESPACE            },
+  {"--summary",                 OptionBoolean::SUMMARY                     },
+  {"--no-recall",               OptionBoolean::NO_RECALL                   },
+  {"--dirtybit",                OptionBoolean::DIRTY_BIT                   },
+  {"--isrepackvo",              OptionBoolean::IS_REPACK_VO                },
+  {"--missingfilecopies",       OptionBoolean::MISSING_FILE_COPIES         },
+  {"--get-storage-class-stats", OptionBoolean::GET_STORAGE_CLASS_STATISTICS},
 };
 
 /*!

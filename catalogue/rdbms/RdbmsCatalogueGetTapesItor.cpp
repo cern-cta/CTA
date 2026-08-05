@@ -522,7 +522,6 @@ common::dataStructures::Tape RdbmsCatalogueGetTapesItor::next() {
 
   auto tape = populateTape(m_rset);
 
-  const auto statisticsIt = m_storageClassStatisticsByVid.find(tape.vid);
   if (auto it = m_storageClassStatisticsByVid.find(tape.vid); it != m_storageClassStatisticsByVid.end()) {
     tape.storageClassStatistics = std::move(it->second);
   }

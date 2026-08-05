@@ -89,7 +89,7 @@ struct TapeSearchCriteria {
   std::optional<bool> checkMissingFileCopies;
 
   /**
-   * Get file statistics per storage class for each tape.
+   * Include file statistics per storage class for each tape.
    */
   std::optional<bool> includeStorageClassStatistics;
 
