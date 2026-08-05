@@ -10,7 +10,7 @@
 #include "MigrationMemoryManager.hpp"
 #include "TapeWriteSingleThread.hpp"
 #include "TapeWriteTask.hpp"
-#include "common/dataStructures/ArchiveUnmountPolicy.hpp"
+#include "common/dataStructures/ArchiveDismountPolicy.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/utils/Timer.hpp"
 #include "scheduler/ArchiveMount.hpp"
@@ -43,7 +43,7 @@ public:
                         cta::ArchiveMount& archiveMount,
                         uint64_t maxFiles,
                         uint64_t byteSizeThreshold,
-                        const cta::common::dataStructures::ArchiveUnmountPolicy& unmountPolicy,
+                        const cta::common::dataStructures::ArchiveDismountPolicy& unmountPolicy,
                         const cta::log::LogContext& lc);
 
   /**
@@ -235,7 +235,7 @@ private:
   /**
    * Unmount policy controlling dismounts caused by low backlog to efficiently use the drive
    */
-  const cta::common::dataStructures::ArchiveUnmountPolicy& m_unmountPolicy;
+  const cta::common::dataStructures::ArchiveDismountPolicy& m_unmountPolicy;
 
   /**
    * utility member to log some pieces of information

@@ -34,19 +34,19 @@ namespace cta::common::dataStructures {
   * configured watch period and the minimum number of underfilled fetched
   * batches is reached, the end of the tape session is triggered.
   */
-struct ArchiveUnmountPolicy {
+struct ArchiveDismountPolicy {
   uint64_t underfillWatchPeriodSecs;
   uint64_t underfillMinSamples;
   uint64_t underfillStartThreshold;
   uint64_t underfillRecoveryThreshold;
 
-  ArchiveUnmountPolicy()
+  ArchiveDismountPolicy()
       : underfillWatchPeriodSecs(0),
         underfillMinSamples(0),
         underfillStartThreshold(0),
         underfillRecoveryThreshold(0) {}
 
-  ArchiveUnmountPolicy(uint64_t watchPeriodSecs,
+  ArchiveDismountPolicy(uint64_t watchPeriodSecs,
                        uint64_t minSamples,
                        uint64_t startThreshold,
                        uint64_t recoveryThreshold)

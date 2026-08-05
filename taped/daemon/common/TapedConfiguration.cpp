@@ -23,7 +23,7 @@ void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::addLogParamForVal
 }  // namespace cta
 
 template<>
-void SourcedParameter<cta::common::dataStructures::ArchiveUnmountPolicy>::addLogParamForValue(log::LogContext& lc) {
+void SourcedParameter<cta::common::dataStructures::ArchiveDismountPolicy>::addLogParamForValue(log::LogContext& lc) {
   lc.push({"underfillWatchPeriodSecs", m_value.underfillWatchPeriodSecs});
   lc.push({"underfillMinSamples", m_value.underfillMinSamples});
   lc.push({"underfillStartThreshold", m_value.underfillStartThreshold});
@@ -67,12 +67,12 @@ void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::set(const std::st
 }
 
 template<>
-void SourcedParameter<cta::common::dataStructures::ArchiveUnmountPolicy>::set(const std::string& value, const std::string& source) {
+void SourcedParameter<cta::common::dataStructures::ArchiveDismountPolicy>::set(const std::string& value, const std::string& source) {
   // We expect an entry in the form "<watch period>, <min samples>, <start threshold>, <recovery threshold>"
   // There should be 3 and only 3 commas in the parameter.
   if (3 != std::count(value.begin(), value.end(), ',')) {
-    BadlyFormattedArchiveUnmountPolicy ex;
-    ex.getMessage() << "In SourcedParameter<ArchiveUnmountPolicy>::set() : badly formatted entry: three (and only "
+    BadlyFormattedArchiveDismountPolicy ex;
+    ex.getMessage() << "In SourcedParameter<ArchiveDismountPolicy>::set() : badly formatted entry: three (and only "
                        "three) commas expected"
                     << " for category=" << m_category << " key=" << m_key << " value=\'" << value << "' at:" << source;
     throw ex;
@@ -98,7 +98,7 @@ void SourcedParameter<cta::common::dataStructures::ArchiveUnmountPolicy>::set(co
   if (!(utils::isValidUInt(watchPeriodSecsStr) && utils::isValidUInt(minSamplesStr)
         && utils::isValidUInt(startThresholdStr) && utils::isValidUInt(recoveryThresholdStr))) {
     BadlyFormattedInteger ex;
-    ex.getMessage() << "In SourcedParameter<ArchiveUnmountPolicy>::set() : badly formatted integer"
+    ex.getMessage() << "In SourcedParameter<ArchiveDismountPolicy>::set() : badly formatted integer"
                     << " for category=" << m_category << " key=" << m_key << " value=\'" << value << "' at:" << source;
     throw ex;
   }
@@ -110,7 +110,7 @@ void SourcedParameter<cta::common::dataStructures::ArchiveUnmountPolicy>::set(co
 
   if (m_value.underfillStartThreshold >= m_value.underfillRecoveryThreshold) {
     BadlyFormattedInteger ex;
-    ex.getMessage() << "In SourcedParameter<ArchiveUnmountPolicy>::set(): "
+    ex.getMessage() << "In SourcedParameter<ArchiveDismountPolicy>::set(): "
                        "start threshold must be lower than recovery threshold"
                     << " for category=" << m_category << " key=" << m_key << " value='" << value << "'"
                     << " at:" << source;

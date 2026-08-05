@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "common/dataStructures/ArchiveUnmountPolicy.hpp"
+#include "common/dataStructures/ArchiveDismountPolicy.hpp"
 
 #include <stdint.h>
 #include <string>
@@ -39,7 +39,7 @@ struct DataTransferConfig {
   /**
    * Unmount policy controlling dismounts caused by low backlog to efficiently use the drive
    */
-  cta::common::dataStructures::ArchiveUnmountPolicy archiveUnmountPolicy;
+  cta::common::dataStructures::ArchiveDismountPolicy archiveDismountPolicy;
 
   /**
    * Maximum number of bytes in a set of files to be recalled from tape

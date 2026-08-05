@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "common/dataStructures/ArchiveUnmountPolicy.hpp"
+#include "common/dataStructures/ArchiveDismountPolicy.hpp"
 #include "common/config/SourcedParameter.hpp"
 #include "taped/daemon/common/FetchReportOrFlushLimits.hpp"
 
@@ -19,7 +19,7 @@ TEST(cta_DaemonFetchFlushLimits, SourcedParameter) {
 }
 
 TEST(cta_DaemonUnderfillLimits, SourcedParameter) {
-  cta::SourcedParameter<cta::common::dataStructures::ArchiveUnmountPolicy> dismountCriteria("unitTest", "dismountCriteria");
+  cta::SourcedParameter<cta::common::dataStructures::ArchiveDismountPolicy> dismountCriteria("unitTest", "dismountCriteria");
   dismountCriteria.set("900, 5, 40, 60", "Unit test");
   ASSERT_EQ(900, dismountCriteria.value().underfillWatchPeriodSecs);
   ASSERT_EQ(5, dismountCriteria.value().underfillMinSamples);

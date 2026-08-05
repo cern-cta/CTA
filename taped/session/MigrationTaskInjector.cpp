@@ -23,7 +23,7 @@ MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager& mm,
                                              cta::ArchiveMount& archiveMount,
                                              uint64_t maxFiles,
                                              uint64_t byteSizeThreshold,
-                                             const cta::common::dataStructures::ArchiveUnmountPolicy& unmountPolicy,
+                                             const cta::common::dataStructures::ArchiveDismountPolicy& unmountPolicy,
                                              const cta::log::LogContext& lc)
     : m_thread(*this),
       m_memManager(mm),
