@@ -49,7 +49,7 @@ public:
 
   void reclaimTape(const common::dataStructures::SecurityIdentity& admin,
                    const std::string& vid,
-                   uint64_t deletionReclaimDelayDays,
+                   uint64_t recycleLogQuarantineSecs,
                    cta::log::LogContext& lc) override;
 
   void checkTapeForLabel(const std::string& vid) override;
@@ -183,9 +183,9 @@ private:
    *
    * @param conn The database connection
    * @param vid The vid of the tape whose recycle-log entries will be checked
-   * @param deletionReclaimDelayDays The minimum age of recycle-log entries
+   * @param recycleLogQuarantineSecs The minimum age of recycle-log entries
    */
-  void checkDeletionReclaimDelay(rdbms::Conn& conn, const std::string& vid, uint64_t deletionReclaimDelayDays) const;
+  void checkRecycleLogQuarantine(rdbms::Conn& conn, const std::string& vid, uint64_t recycleLogQuarantineSecs) const;
 
   void resetTapeCounters(rdbms::Conn& conn,
                          const common::dataStructures::SecurityIdentity& admin,

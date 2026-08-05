@@ -336,8 +336,8 @@ FrontendService::FrontendService(const std::string& configFilename,
   auto missingFileCopiesMinAgeSecs = config.getOptionValueUInt("cta.catalogue.missing_file_copies_min_age_secs");
   m_missingFileCopiesMinAgeSecs = missingFileCopiesMinAgeSecs.value_or(0);
 
-  auto deletionReclaimDelayDays = config.getOptionValueUInt("cta.catalogue.deletion_reclaim_delay_days");
-  m_deletionReclaimDelayDays = deletionReclaimDelayDays.value_or(31);
+  auto recycleLogQuarantineSecs = config.getOptionValueUInt("cta.catalogue.recycle_log_quarantine_secs");
+  m_recycleLogQuarantineSecs = recycleLogQuarantineSecs.value_or(30 * 24 * 60 * 60);
 
   {
     // Log cta.catalogue.missing_file_copies_min_age_secs
