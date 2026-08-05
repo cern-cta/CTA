@@ -253,14 +253,16 @@ def test_well_known_endpoint(disk_client: DiskClientHost, disk_instance: DiskIns
 
 
 def test_generate_scitoken(eos_client: EosClientHost, disk_instance_name: str) -> None:
+    scope = "storage.read:/eos/ storage.stage:/eos/"
     scitoken = eos_client.generate_scitoken(
-        [("scope", "storage.read:/eos/"), ("sub", "test")],
-        keyid=disk_instance_name,
+        disk_instance_name,
+        [("scope", scope), ("sub", "test")],
+        keyid="ctaeos",
     )
     payload_json = _decode_jwt_payload(scitoken)
 
     assert payload_json["sub"] == "test", f"SciToken with wrong sub: {payload_json['sub']}"
-    assert payload_json["scope"] == "storage.read:/eos/", f"SciToken with wrong scope: {payload_json['scope']}"
+    assert payload_json["scope"] == scope, f"SciToken with wrong scope: {payload_json['scope']}"
     assert payload_json["wlcg.ver"] == "1.0", f"SciToken with wrong wlcg version: {payload_json['wlcg.ver']}"
 
 
