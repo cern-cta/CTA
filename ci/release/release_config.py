@@ -21,13 +21,14 @@ class ReleaseConfig:
     issue_template: str = ".gitlab/issue_templates/Release.md"
     release_label: str = "type::release"
     branch_suffix: str = "-changelog-update"
-    require_pipeline: bool = True
+    # Prevent tag creation unless its target commit has a successful pipeline.
+    require_successful_target_pipeline: bool = True
 
     def issue_title(self, version: str) -> str:
         """Return the deterministic release issue title."""
         return f"Release {version}"
 
-    def merge_request_title(self, version: str) -> str:
+    def changelog_merge_request_title(self, version: str) -> str:
         """Return the deterministic changelog merge request title."""
         return f"[Misc] Update changelog for release {version.removeprefix('v')}"
 

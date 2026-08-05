@@ -23,14 +23,14 @@ class Git:
         self.dry_run = dry_run
         self.allow_unclean = allow_unclean
 
-    def run(self, args: Sequence[str], mutate: bool = False) -> str:
+    def run(self, arguments: Sequence[str], mutate: bool = False) -> str:
         """Run Git with an argument list, printing mutations during dry runs."""
-        command = ["git", *args]
+        command = ["git", *arguments]
         if mutate and self.dry_run:
             print("DRY-RUN:", " ".join(command))
             return ""
         try:
-            result = subprocess.run(
+            completed_process = subprocess.run(
                 command,
                 cwd=self.root,
                 check=True,
@@ -42,7 +42,7 @@ class Git:
         except subprocess.CalledProcessError as error:
             detail = error.stderr.strip() or error.stdout.strip()
             raise GitError(f"{' '.join(command)} failed: {detail}") from error
-        return result.stdout.strip()
+        return completed_process.stdout.strip()
 
     def validate_repository(self, branch: str, remote: str, fetch: bool = True) -> str:
         """Validate a clean checkout synchronized with its remote branch."""
@@ -73,12 +73,13 @@ class Git:
         self,
         remote: str,
         default_branch: str,
-        ref: str | None = None,
+        target_ref: str,
         fetch: bool = True,
-    ) -> tuple[str, str]:
-        """Validate the worktree and resolve a requested tag target to a commit."""
+    ) -> str:
+        """Validate the worktree and resolve an explicit tag target to a commit."""
         if self.run(["rev-parse", "--show-toplevel"]) != str(self.root.resolve()):
             raise GitError(f"Run release from repository root {self.root}")
+
         if self.allow_unclean:
             print(
                 "WARNING: --allow-unclean skips the clean-worktree check; "
@@ -86,17 +87,17 @@ class Git:
             )
         elif self.run(["status", "--porcelain"]):
             raise GitError("Working tree is not clean; commit or stash changes before tagging")
+
         if fetch:
             self.run(["fetch", "--tags", remote, default_branch], mutate=True)
-        resolved_ref = ref or f"{remote}/{default_branch}"
+
         try:
-            commit = self.run(["rev-parse", "--verify", f"{resolved_ref}^{{commit}}"])
+            return self.run(["rev-parse", "--verify", f"{target_ref}^{{commit}}"])
         except GitError as error:
             raise GitError(
-                f"Tag target {resolved_ref!r} does not resolve to a commit; "
+                f"Tag target {target_ref!r} does not resolve to a commit; "
                 "use a commit SHA, local branch, remote-tracking branch, or tag"
             ) from error
-        return resolved_ref, commit
 
     def tags(self) -> list[str]:
         """List local tag names."""
@@ -110,30 +111,42 @@ class Git:
             raise GitError("Git did not resolve an editor; configure core.editor")
         return editor
 
-    def local_tag_commit(self, tag: str) -> str | None:
+    def local_tag_commit(self, tag_name: str) -> str | None:
         """Resolve a local tag to its commit, or return None when absent."""
         try:
-            return self.run(["rev-list", "-n", "1", tag])
+            return self.run(["rev-list", "-n", "1", tag_name])
         except GitError:
             return None
 
-    def remote_tag_commit(self, remote: str, tag: str) -> str | None:
+    def remote_tag_commit(self, remote: str, tag_name: str) -> str | None:
         """Resolve a remote tag to its commit, including annotated tags."""
-        output = self.run(["ls-remote", "--tags", remote, f"refs/tags/{tag}^{{}}"])
+        output = self.run(["ls-remote", "--tags", remote, f"refs/tags/{tag_name}^{{}}"])
         if not output:
-            output = self.run(["ls-remote", "--tags", remote, f"refs/tags/{tag}"])
+            output = self.run(["ls-remote", "--tags", remote, f"refs/tags/{tag_name}"])
         return output.split()[0] if output else None
 
-    def create_tag(self, remote: str, tag: str, commit: str, description: str) -> None:
-        """Create an annotated tag and push it with an explicit refspec."""
-        self.run(["tag", "-a", tag, commit, "-m", description], mutate=True)
-        self.run(["push", remote, f"refs/tags/{tag}:refs/tags/{tag}"], mutate=True)
+    def create_tag(self, target_commit: str, tag_name: str, description: str) -> None:
+        """Create one annotated local tag using the multi-tag implementation."""
+        self.create_tags(target_commit, {tag_name: description})
+
+    def create_tags(self, target_commit: str, tag_descriptions: dict[str, str]) -> None:
+        """Create multiple annotated local tags at one commit."""
+        for tag_name, description in tag_descriptions.items():
+            self.run(["tag", "-a", tag_name, target_commit, "-m", description], mutate=True)
+
+    def push_tags(self, remote: str, tag_names: Sequence[str]) -> None:
+        """Push explicit tag refspecs atomically to prevent partial publication."""
+        if not tag_names:
+            return
+
+        refspecs = [f"refs/tags/{tag_name}:refs/tags/{tag_name}" for tag_name in tag_names]
+        self.run(["push", "--atomic", remote, *refspecs], mutate=True)
 
 
 def discover_repository_root() -> Path:
     """Return the current Git repository root with an actionable failure."""
     try:
-        result = subprocess.run(
+        completed_process = subprocess.run(
             ["git", "rev-parse", "--show-toplevel"],
             check=True,
             text=True,
@@ -144,4 +157,4 @@ def discover_repository_root() -> Path:
     except subprocess.CalledProcessError as error:
         detail = error.stderr.strip() or "current directory is not a Git repository"
         raise GitError(f"Could not locate repository root: {detail}") from error
-    return Path(result.stdout.strip())
+    return Path(completed_process.stdout.strip())

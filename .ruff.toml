@@ -57,11 +57,8 @@ convention = 'pep257'
 'ci/release/git_repo.py' = ['S603', 'S607']
 'ci/release/gitlab_api.py' = ['S310']
 
-# Release orchestration is intentionally linear and invokes the configured editor.
-'ci/release/release_cli.py' = ['PLR0912', 'PLR0915', 'S603']
-
 # Release tests use fixed temporary paths and nested mock contexts.
-'ci/release/tests/test_release.py' = ['S108', 'SIM117']
+'ci/release/tests/test_*.py' = ['S108', 'SIM117']
 
 # This custom loader inherits from yaml.SafeLoader.
 'ci/checks/check_gitlab_ci_key_order.py' = ['S506']

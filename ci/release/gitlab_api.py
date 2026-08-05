@@ -45,8 +45,8 @@ class GitLabAPI:
         project_scoped: bool = True,
     ) -> tuple[Any, dict[str, str]]:
         """Execute one API request and return its decoded body and headers."""
-        base = self.project_url if project_scoped else f"{self.gitlab_url}/api/v4"
-        url = f"{base}/{endpoint.lstrip('/')}"
+        api_base_url = self.project_url if project_scoped else f"{self.gitlab_url}/api/v4"
+        url = f"{api_base_url}/{endpoint.lstrip('/')}"
         if params:
             url += "?" + urlencode(params, doseq=True)
         body: bytes | None = None
