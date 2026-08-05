@@ -371,9 +371,10 @@ void MigrationTaskInjector::WorkerThread::run() {
           m_parent.signalEndDataMovement();
           break;
         }
+
+#endif
       }
-#else
-      }
+#ifdef CTA_PGSCHED
       /*
       * Evaluate all non-final backend responses.
       */
