@@ -117,6 +117,12 @@ private:
   }
 
   /**
+   * It will signal to the disk read thread  pool, tape write single thread
+   * and to the mem manager they have to stop their threads(s)
+   */
+  void signalEndDataMovement();
+
+  /**
    * A request of files to migrate. We request EITHER
    * - a maximum of nbMaxFiles files
    * - OR at least byteSizeThreshold bytes.
@@ -185,11 +191,6 @@ private:
    * not reach the recovery threshold.
    */
   uint64_t m_underfillSamples = 0;
-  /**
-   * It will signal to the disk read thread  pool, tape write single thread
-   * and to the mem manager they have to stop their threads(s)
-   */
-  void signalEndDataMovement();
 
   class WorkerThread : public cta::threading::Thread {
   public:

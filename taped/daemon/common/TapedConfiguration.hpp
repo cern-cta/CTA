@@ -91,6 +91,8 @@ struct TapedConfiguration {
     "Compile time default"
   };
   /// The fetch underfill criteria to unmount archive session "ArchiveFetchUnderfillLimits"
+  //  This mechanism and configuration is only effective for Postgres Scheduler Backend Implementation and
+  // has no effect on the objectstore implementation !
   // { underfillWatchPeriodSecs, underfillMinSamples,
   //   underfillStartThreshold, underfillRecoveryThreshold }.
   //  When archive mount fetches batches of jobs, it tries to fetch configured maximum number of files and bytes.
