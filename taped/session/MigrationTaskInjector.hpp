@@ -178,7 +178,7 @@ private:
   /**
    * Informative flag telling is the underfill observation timer is active.
    */
-  bool m_underfillActive;
+  bool m_underfillActive = false;
 
   /**
    * Number of responses observed during the active underfill period that did

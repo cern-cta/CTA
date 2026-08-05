@@ -5,9 +5,9 @@
 
 #include "catalogue/DriveConfig.hpp"
 
-#include "common/dataStructures/ArchiveDismountPolicy.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/config/SourcedParameter.hpp"
+#include "common/dataStructures/ArchiveDismountPolicy.hpp"
 #include "taped/daemon/common/FetchReportOrFlushLimits.hpp"
 
 #include <algorithm>
@@ -94,9 +94,10 @@ void DriveConfig::setConfigToDB(const SourcedParameter<std::string>& sourcedPara
                                                   sourcedParameter.source());
 }
 
-void DriveConfig::setConfigToDB(const SourcedParameter<cta::common::dataStructures::ArchiveDismountPolicy>& sourcedParameter,
-                                catalogue::Catalogue* catalogue,
-                                const std::string& tapeDriveName) {
+void DriveConfig::setConfigToDB(
+  const SourcedParameter<cta::common::dataStructures::ArchiveDismountPolicy>& sourcedParameter,
+  catalogue::Catalogue* catalogue,
+  const std::string& tapeDriveName) {
   std::string key = sourcedParameter.key();
   utils::searchAndReplace(key, "Limits", "");
   checkConfigInDB(catalogue, tapeDriveName, key.append("WatchPeriodSecs"));
