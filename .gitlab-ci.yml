@@ -233,6 +233,10 @@ workflow:
         on_new_commit: none
     # Merge-request pipelines use a branch cache and publish test reports for comparison.
     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || ($CI_PIPELINE_SOURCE == "parent_pipeline" && $CI_MERGE_REQUEST_ID)
+      changes:
+        compare_to: "refs/heads/$CI_DEFAULT_BRANCH"
+        paths:
+          - '**/*'
       variables:
         ENABLE_CCACHE: "true"
         BUILD_CACHE_POLICY: "pull-push"
