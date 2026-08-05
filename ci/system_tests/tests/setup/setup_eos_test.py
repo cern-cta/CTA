@@ -6,6 +6,8 @@
 # =========================================================================
 
 
+import base64
+import json
 from pathlib import Path
 
 from system_tests.helpers.hosts import EosMgmHost
@@ -33,6 +35,34 @@ def test_general_settings(eos_mgm: EosMgmHost) -> None:
     tape_fs_id = 65535
     eos_mgm.exec("eos space define tape", throw_on_failure=False)
     eos_mgm.exec(f"eos fs add -m {tape_fs_id} tape localhost:1234 /does_not_exist tape", throw_on_failure=False)
+
+
+# This function sets the SciToken add-on convenience in EOS, allowing our test scripts to acquire test SciTokens
+# from EOS and use them to test the staging token capabilities (and others).
+def test_scitokens_addon_on_eos(eos_mgm: EosMgmHost) -> None:
+    # TODO: Remove `eos-jwk-http` once it's included in the EOS RPMs
+    eos_jwk_https = Path("ci/system_tests/helpers/eos-jwk-https")
+    eos_mgm.copy_to(eos_jwk_https, Path("/sbin"), permissions="755")
+
+    # Setup a local jwk file and start the jwk daemon (in the background)
+    eos_mgm.exec("eos scitoken create-keys --keyid ctaeos > /etc/xrootd/ctaeos.jwk")
+    eos_mgm.exec("eos daemon jwk /etc/xrootd/ctaeos.jwk &")
+
+    # EOS should be able to generate SciTokens now.
+    scitoken_base64 = eos_mgm.exec(
+        "eos scitoken create --expires $(($(date +%s) + 60)) "
+        "--issuer https://localhost:4443 --keyid ctaeos --profile wlcg "
+        "--claim scope=storage.read:/eos/ --claim sub=test",
+        capture_output=True,
+    ).stdout
+    payload_base64 = scitoken_base64.strip().split(".")[1]
+    payload_base64 += "=" * (-len(payload_base64) % 4)
+    payload = base64.urlsafe_b64decode(payload_base64)
+    payload_json = json.loads(payload)
+
+    assert payload_json["sub"] == "test", f"SciToken with wrong sub: {payload_json['sub']}"
+    assert payload_json["scope"] == "storage.read:/eos/", f"SciToken with wrong scope: {payload_json['scope']}"
+    assert payload_json["wlcg.ver"] == "1.0", f"SciToken with wrong wlcg version: {payload_json['wlcg.ver']}"
 
 
 def test_add_users(eos_mgm: EosMgmHost) -> None:

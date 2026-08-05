@@ -1,0 +1,45 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# ----------------------------------------------------------------------
+# File: eos-jwk-https
+# Author: Andreas-Joachim Peters - CERN
+# ----------------------------------------------------------------------
+
+#!/usr/bin/env python3
+
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import ssl
+import socket
+import os
+
+
+class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        wellknown = '{"jwks_uri":"https://'
+        wellknown += socket.getfqdn()
+        wellknown += ":4443"
+        wellknown += '/jwk"}'
+        if self.path == "/.well-known/openid-configuration":
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(bytes(wellknown, "UTF-8"))
+        elif self.path == "/jwk":
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(bytes(os.environ["EOS_JWK"], "UTF-8"))
+        else:
+            self.send_error(404, "File not found")
+            return
+
+
+httpd = HTTPServer(("", 4443), SimpleHTTPRequestHandler)
+
+ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+ssl_context.load_cert_chain(
+    certfile="/etc/grid-security/daemon/hostcert.pem",
+    keyfile="/etc/grid-security/daemon/hostkey.pem",
+)
+httpd.socket = ssl_context.wrap_socket(httpd.socket, server_side=True)
+
+httpd.serve_forever()
