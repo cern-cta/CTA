@@ -13,10 +13,6 @@ spec:
       type: string
     enable-address-sanitizer:
       type: boolean
-    scheduler-type:
-      type: string
-    enable-oracle-support:
-      type: boolean
 ---
 
 build-cta-rpms:
@@ -52,7 +48,6 @@ build-cta-rpms:
     CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     # These inputs are available as variables as certain jobs below override them
     CMAKE_BUILD_TYPE: "$[[ inputs.cmake-build-type ]]"
-    SCHEDULER_TYPE: "$[[ inputs.scheduler-type ]]"
     BUILD_PATH: "build_rpm/RPM/RPMS"
     XRD_SSI_PATH: "xrootd-ssi-protobuf-interface"
     DNF_CACHE_DIR: "$CI_PROJECT_DIR/.dnf_cache"
@@ -90,7 +85,7 @@ build-cta-rpms:
                                --cta-version ${BUILD_CTA_VERSION}
                                --vcs-version ${VCS_VERSION}
                                --scheduler-type ${SCHEDULER_TYPE}
-                               --oracle-support $[[ inputs.enable-oracle-support ]]
+                               --oracle-support ${ENABLE_ORACLE_SUPPORT}
                                --cmake-build-type "${CMAKE_BUILD_TYPE}"
                                --jobs $(nproc --ignore=1)
     # RPMS
@@ -113,7 +108,7 @@ build-cta-rpms:
                               --vcs-version ${VCS_VERSION}
                               --xrootd-ssi-version ${XRD_SSI_VERSION}
                               --scheduler-type ${SCHEDULER_TYPE}
-                              --oracle-support $[[ inputs.enable-oracle-support ]]
+                              --oracle-support ${ENABLE_ORACLE_SUPPORT}
                               --cmake-build-type "${CMAKE_BUILD_TYPE}"
                               --jobs $(nproc --ignore=1)
                               --install-srpms
@@ -144,6 +139,8 @@ build-cta-rpms-no-cache:
   extends:
     - build-cta-rpms
   rules:
+    - if: $CI_COMMIT_TAG
+      when: never
     - if: $CI_PIPELINE_SOURCE != "merge_request_event"
       when: never
     - !reference [build-cta-rpms, rules]
@@ -156,6 +153,10 @@ build-cta-rpms-no-cache:
 build-cta-rpms-pgsched:
   extends:
     - build-cta-rpms
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - !reference [build-cta-rpms, rules]
   variables:
     # We don't have a way of separating what the user entered and what the actual value is,
     # so this will always run, even if the pipeline type was already postgres
@@ -172,6 +173,8 @@ build-cta-rpms-debug:
   extends:
     - build-cta-rpms
   rules:
+    - if: $CI_COMMIT_TAG
+      when: never
     # Debug builds are not really expected to break when the RelWithDebInfo build passes, so only run this in main
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual

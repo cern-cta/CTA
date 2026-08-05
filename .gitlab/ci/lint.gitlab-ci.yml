@@ -12,7 +12,7 @@ lint-cpp:
   needs: []  # Ensure no artifacts are downloaded
   rules:
     - if: $CI_COMMIT_TAG
-      when: never
+      when: always
     - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - changes:
@@ -57,7 +57,7 @@ lint-bash:
   needs: []  # Ensure no artifacts are downloaded
   rules:
     - if: $CI_COMMIT_TAG
-      when: never
+      when: always
     - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - changes:
@@ -87,7 +87,7 @@ lint-python:
   needs: []  # Ensure no artifacts are downloaded
   rules:
     - if: $CI_COMMIT_TAG
-      when: never
+      when: always
     - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - changes:
@@ -115,7 +115,7 @@ lint-yaml:
   needs: []  # Ensure no artifacts are downloaded
   rules:
     - if: $CI_COMMIT_TAG
-      when: never
+      when: always
     - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - changes:
@@ -140,7 +140,7 @@ lint-licenses:
   needs: []  # Ensure no artifacts are downloaded
   rules:
     - if: $CI_COMMIT_TAG
-      when: never
+      when: always
     - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - when: always
@@ -157,7 +157,7 @@ lint-secrets:
   needs: []
   rules:
     - if: $CI_COMMIT_TAG
-      when: never
+      when: always
     - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - when: always
@@ -174,7 +174,7 @@ lint-dockerfile:
   needs: []  # Ensure no artifacts are downloaded
   rules:
     - if: $CI_COMMIT_TAG
-      when: never
+      when: always
     - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - changes:
@@ -201,7 +201,7 @@ lint-dockerfile:
   needs: []  # Ensure no artifacts are downloaded
   rules:
     - if: $CI_COMMIT_TAG
-      when: never
+      when: always
     - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - when: always
@@ -241,7 +241,7 @@ format-cpp:
     - .format-report
   rules:
     - if: $CI_COMMIT_TAG
-      when: never
+      when: always
     - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - changes:
@@ -270,7 +270,7 @@ format-python:
     - .format-report
   rules:
     - if: $CI_COMMIT_TAG
-      when: never
+      when: always
     - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - changes:
@@ -293,7 +293,7 @@ type-check-python:
   needs: []  # Ensure no artifacts are downloaded
   rules:
     - if: $CI_COMMIT_TAG
-      when: never
+      when: always
     - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
     - changes:

@@ -7,8 +7,6 @@ spec:
       type: string
     enable-internal-repos:
       type: boolean
-    enable-oracle-support:
-      type: boolean
 ---
 
 # =========================================================================
@@ -123,7 +121,7 @@ spec:
         --tag "${IMAGE_REF}"
         --build-context rpm_context="${RPM_CONTEXT}"
         --build-arg ENABLE_INTERNAL_REPOS="$[[ inputs.enable-internal-repos ]]"
-        --build-arg ENABLE_ORACLE_SUPPORT="$[[ inputs.enable-oracle-support ]]"
+        --build-arg ENABLE_ORACLE_SUPPORT="${ENABLE_ORACLE_SUPPORT}"
       )
     - |
       if [[ -n "$EXTRA_BUILD_ARGS" ]]; then

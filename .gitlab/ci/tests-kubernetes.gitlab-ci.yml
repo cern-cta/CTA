@@ -5,10 +5,6 @@ spec:
   inputs:
     custom-cta-image-tag:
       type: string
-    scheduler-type:
-      type: string
-    enable-oracle-support:
-      type: boolean
     workflow-api-authentication:
       type: string
     enable-dcache-tests:
@@ -32,13 +28,13 @@ spec:
   - | # Construct the deployment profiles used by Kubernetes tests
     CTA_VALUES_CHAIN="presets/dev-cta-common.yaml,presets/frontend-wfe/auth-$[[ inputs.workflow-api-authentication ]].yaml,presets/frontend-admin/auth-jwt.yaml"
   - | # Which scheduler config to use
-    if [[ "$[[ inputs.scheduler-type ]]" == "objectstore" ]]; then
+    if [[ "$SCHEDULER_TYPE" == "objectstore" ]]; then
       SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml
     else
       SCHEDULER_CONFIG=presets/dev-scheduler-postgres-values.yaml
     fi
   - | # Which catalogue config to use
-    if $[[ inputs.enable-oracle-support ]]; then
+    if $ENABLE_ORACLE_SUPPORT; then
       CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
     else
       CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml
@@ -67,8 +63,6 @@ spec:
           - TARGET_NAME: *cta-system-test-image-targets
   rules:
     - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
-      when: never
-    - if: $CI_COMMIT_TAG
       when: never
     - when: on_success
   variables:
@@ -130,8 +124,6 @@ spec:
           - TARGET_NAME: *cta-system-test-image-targets
   rules:
     - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
-      when: never
-    - if: $CI_COMMIT_TAG
       when: never
     - when: on_success
   variables:
@@ -258,7 +250,6 @@ test-cta-tools:
       when: never
     - if: $CI_COMMIT_TAG
       when: on_success
-      allow_failure: true
     - if: $CI_PIPELINE_SOURCE == "schedule"
       when: on_success
     - when: manual
@@ -340,8 +331,6 @@ stress-test:
   rules:
     - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
-    - if: $CI_COMMIT_TAG
-      when: never
     - when: manual
       allow_failure: true  # Otherwise this blocks the pipeline
   variables:
@@ -355,7 +344,7 @@ stress-test:
   script:
     - EXTRA_STRESS_TEST_OPTIONS=""
     - |
-      if [[ "$[[ inputs.scheduler-type ]]" == "pgsched" ]]; then
+      if [[ "$SCHEDULER_TYPE" == "pgsched" ]]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
         EXTRA_SPAWN_ARGS+=" --one-logical-library"
         EXTRA_STRESS_TEST_OPTIONS+=" -Q"
@@ -436,7 +425,7 @@ stress-test-python:
     - *setup-k8s-test-variables
   script:
     - |
-      if [[ "$[[ inputs.scheduler-type ]]" == "pgsched" ]]; then
+      if [[ "$SCHEDULER_TYPE" == "pgsched" ]]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
         EXTRA_PYTEST_ARGS+=" --test-config config/test_pgsched_params.toml"
         EXTRA_SPAWN_ARGS+=" --one-logical-library"
