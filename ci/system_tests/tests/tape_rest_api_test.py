@@ -55,6 +55,15 @@ def _assert_empty_response(response: str, operation: str) -> None:
     print(f"{operation} completed successfully")
 
 
+def _decode_jwt_payload(token: str) -> dict[str, Any]:
+    payload_base64 = token.strip().split(".")[1]
+    payload_base64 += "=" * (-len(payload_base64) % 4)
+    payload = base64.urlsafe_b64decode(payload_base64)
+    payload_json = json.loads(payload)
+    assert isinstance(payload_json, dict), f"Expected a JWT payload object, got: {payload_json!r}"
+    return payload_json
+
+
 def _archive_info(
     disk_client: DiskClientHost,
     rest_api_endpoint: str,
@@ -241,6 +250,18 @@ def test_well_known_endpoint(disk_client: DiskClientHost, disk_instance: DiskIns
     assert len(versions) == len(set(versions)), "The discovery response contains duplicate endpoint versions"
     assert versions.count("v1") == 1, "The discovery response must advertise exactly one v1 endpoint"
     print(f"Well-known discovery document is valid; advertised versions: {versions}")
+
+
+def test_generate_scitoken(eos_client: EosClientHost, disk_instance_name: str) -> None:
+    scitoken = eos_client.generate_scitoken(
+        [("scope", "storage.read:/eos/"), ("sub", "test")],
+        keyid=disk_instance_name,
+    )
+    payload_json = _decode_jwt_payload(scitoken)
+
+    assert payload_json["sub"] == "test", f"SciToken with wrong sub: {payload_json['sub']}"
+    assert payload_json["scope"] == "storage.read:/eos/", f"SciToken with wrong scope: {payload_json['scope']}"
+    assert payload_json["wlcg.ver"] == "1.0", f"SciToken with wrong wlcg version: {payload_json['wlcg.ver']}"
 
 
 def test_archive_file_and_track_archiveinfo(

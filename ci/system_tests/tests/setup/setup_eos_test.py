@@ -6,8 +6,6 @@
 # =========================================================================
 
 
-import base64
-import json
 from pathlib import Path
 
 from system_tests.helpers.hosts import EosMgmHost
@@ -49,21 +47,14 @@ def test_scitokens_addon_on_eos(eos_mgm: EosMgmHost, remote_scripts_dir: Path) -
     eos_mgm.exec("pkill -f '/sbin/[e]os-jwk-https' || true")
     eos_mgm.exec("nohup eos daemon jwk /etc/xrootd/ctaeos.jwk >/tmp/eos-jwk.log 2>&1 </dev/null &")
 
+    print("Checking SciTokens add-on is fully running")
     # EOS should be able to generate SciTokens now.
     scitoken_base64 = eos_mgm.exec(
         "eos scitoken create --expires $(($(date +%s) + 60)) "
-        "--issuer https://localhost:4443 --keyid ctaeos --profile wlcg "
-        "--claim scope=storage.read:/eos/ --claim sub=test",
+        "--issuer https://localhost:4443 --keyid ctaeos --profile wlcg",
         capture_output=True,
-    ).stdout
-    payload_base64 = scitoken_base64.strip().split(".")[1]
-    payload_base64 += "=" * (-len(payload_base64) % 4)
-    payload = base64.urlsafe_b64decode(payload_base64)
-    payload_json = json.loads(payload)
-
-    assert payload_json["sub"] == "test", f"SciToken with wrong sub: {payload_json['sub']}"
-    assert payload_json["scope"] == "storage.read:/eos/", f"SciToken with wrong scope: {payload_json['scope']}"
-    assert payload_json["wlcg.ver"] == "1.0", f"SciToken with wrong wlcg version: {payload_json['wlcg.ver']}"
+    ).stdout.strip()
+    assert scitoken_base64, "SciToken generation returned an empty token"
 
 
 def test_add_users(eos_mgm: EosMgmHost) -> None:

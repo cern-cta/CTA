@@ -36,6 +36,24 @@ class EosClientHost(DiskClientHost):
             raise RuntimeError(f"Token generation returned an empty token for {owner}")
         return token
 
+    def generate_scitoken(
+        self, disk_instance_name: str, claims: list[tuple[str, str]], keyid: str, timeout: int = 60
+    ) -> str:
+        claim_args = []
+        for name, value in claims:
+            claim_args.append(f"--claim '{name}={value}'")
+
+        print(f"Generating a SciToken with key id {keyid}")
+        issuer = f"https://{disk_instance_name}:4443"
+        token = self.exec_with_output(
+            f"eos scitoken create --expires $(($(date +%s) + {timeout})) "
+            f"--issuer '{issuer}' --keyid '{keyid}' --profile wlcg "
+            f"{' '.join(claim_args)}"
+        )
+        if not token:
+            raise RuntimeError(f"SciToken generation returned an empty token for key id {keyid}")
+        return token
+
     def count_files_in_namespace(self, eos_host: str, dest_dir: Path, num_dirs: int, count_procs: int) -> int:
         """Count files in namespace using parallel queries on the remote host.
 
