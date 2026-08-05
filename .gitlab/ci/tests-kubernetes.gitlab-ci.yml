@@ -213,7 +213,7 @@ test-client:
     - .kubernetes-test-python
   stage: system-test
   variables:
-    PYTESTS: "tests/client_test.py"
+    PYTESTS: "tests/tape_rest_api_test.py tests/client_test.py"
 
 test-client-gfal2:
   extends:

@@ -28,6 +28,10 @@ class EosMgmHost(DiskInstanceHost):
         return Path("/eos") / self.instance_name
 
     @cached_property
+    def webdav_url(self) -> str:
+        return f"https://{self.instance_name}:8443"
+
+    @cached_property
     def workflow_dir(self) -> Path:
         return Path(self.base_dir_path) / "proc" / "cta" / "workflow"
 

@@ -27,7 +27,7 @@ echo "Trying to archive a 0-length"
 err_msg_file=$(mktemp)
 touch /etc/${TEST_FILE_NAME}
 echo "xrdcp /etc/${TEST_FILE_NAME} root://${EOS_MGM_HOST}/${CTA_TEST_DIR}/${TEST_FILE_NAME}"
-xrdcp /etc/${TEST_FILE_NAME} root://${EOS_MGM_HOST}/${CTA_TEST_DIR}/${TEST_FILE_NAME} 2>&1 | sed 's/[^[:print:]\t]//g' | tee "${err_msg_file}"
+KRB5CCNAME=/tmp/${USER}/krb5cc_0 xrdcp /etc/${TEST_FILE_NAME} root://${EOS_MGM_HOST}/${CTA_TEST_DIR}/${TEST_FILE_NAME} 2>&1 | sed 's/[^[:print:]\t]//g' | tee "${err_msg_file}"
 if [[ "${PIPESTATUS[0]}" -eq 0 ]]
 then
   echo "xrdcp command succeeded where it should have failed"

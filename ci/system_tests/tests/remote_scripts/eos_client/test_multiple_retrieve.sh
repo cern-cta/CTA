@@ -71,7 +71,7 @@ done
 echo
 echo "Archiving test files..."
 
-cat ${TEST_FILES_LIST} | xargs -iFILE_PATH xrdcp /etc/group root://${EOS_MGM_HOST}/FILE_PATH
+cat ${TEST_FILES_LIST} | xargs -iFILE_PATH env KRB5CCNAME=/tmp/${USER}/krb5cc_0 xrdcp /etc/group root://${EOS_MGM_HOST}/FILE_PATH
 
 SECONDS_PASSED=0
 WAIT_FOR_ARCHIVED_FILE_TIMEOUT=90

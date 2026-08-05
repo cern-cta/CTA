@@ -53,7 +53,7 @@ put_all_drives_down
 
 # 2.1. Write a file to EOSCTA for archiving
 echo "Write file ${TEMP_FILE} for archival..."
-xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE}
+KRB5CCNAME=/tmp/${USER}/krb5cc_0 xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE}
 
 # 2.2. Get FSID from disk replica
 DISK_FSID=$(eospower_eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | select(.schedgroup | startswith("default")) | .fsid')

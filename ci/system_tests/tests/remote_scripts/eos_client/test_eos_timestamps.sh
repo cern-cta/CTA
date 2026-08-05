@@ -41,7 +41,7 @@ eospower_kinit
 
 # Archive a file
 echo "xrdcp /etc/group root://${EOS_MGM_HOST}/${TEST_DIR}/${TEST_FILE_NAME}"
-xrdcp /etc/group root://${EOS_MGM_HOST}/${TEST_DIR}/${TEST_FILE_NAME}
+KRB5CCNAME=/tmp/${USER}/krb5cc_0 xrdcp /etc/group root://${EOS_MGM_HOST}/${TEST_DIR}/${TEST_FILE_NAME}
 
 fileInfoBeforeArchive=$(eos root://${EOS_MGM_HOST} fileinfo ${TEST_DIR}/${TEST_FILE_NAME})
 
