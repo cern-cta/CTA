@@ -252,10 +252,9 @@ def test_well_known_endpoint(disk_client: DiskClientHost, disk_instance: DiskIns
     print(f"Well-known discovery document is valid; advertised versions: {versions}")
 
 
-def test_generate_scitoken(eos_client: EosClientHost, disk_instance_name: str) -> None:
+def test_generate_scitoken(eos_mgm: EosMgmHost) -> None:
     scope = "storage.read:/eos/ storage.stage:/eos/"
-    scitoken = eos_client.generate_scitoken(
-        disk_instance_name,
+    scitoken = eos_mgm.generate_scitoken(
         [("scope", scope), ("sub", "test")],
         keyid="ctaeos",
     )

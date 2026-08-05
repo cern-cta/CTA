@@ -31,6 +31,22 @@ class EosMgmHost(DiskInstanceHost):
     def webdav_url(self) -> str:
         return f"https://{self.instance_name}:8443"
 
+    @override
+    def generate_scitoken(self, claims: list[tuple[str, str]], keyid: str, timeout: int = 60) -> str:
+        claim_args = []
+        for name, value in claims:
+            claim_args.append(f"--claim '{name}={value}'")
+
+        print(f"Generating a SciToken with key id {keyid}")
+        token = self.exec_with_output(
+            f"eos scitoken create --expires $(($(date +%s) + {timeout})) "
+            f"--issuer https://localhost:4443 --keyid '{keyid}' --profile wlcg "
+            f"{' '.join(claim_args)}"
+        )
+        if not token:
+            raise RuntimeError(f"SciToken generation returned an empty token for key id {keyid}")
+        return token
+
     @cached_property
     def workflow_dir(self) -> Path:
         return Path(self.base_dir_path) / "proc" / "cta" / "workflow"
