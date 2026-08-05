@@ -159,6 +159,11 @@ variables:
   PIPELINE_TYPE: "$[[ inputs.pipeline-type ]]"
   CUSTOM_EOS_IMAGE_TAG: "$[[ inputs.custom-eos-image-tag ]]"
 
+  # Release tag selectors
+  TAG_PGSCHED_REGEX: '/(^|\.)pgsched($|\.)/' # Postgres scheduler
+  TAG_PGCAT_REGEX: '/(^|\.)pgcat($|\.)/' # Postgres catalogue (no Oracle)
+  TAG_PGALL_REGEX: '/(^|\.)pgall($|\.)/' # Postgres scheduler + Postgres catalogue
+
   # Build and runtime defaults
   SCHEDULER_TYPE: "$[[ inputs.scheduler-type ]]"
   ENABLE_ORACLE_SUPPORT: "$[[ inputs.enable-oracle-support ]]"
@@ -202,19 +207,19 @@ workflow:
   auto_cancel:
     on_new_commit: interruptible
   rules:
-    # Tag selectors. Rules are ordered from the most specific combination because workflow rules are first-match.
-    - if: '$CI_COMMIT_TAG =~ /(^|\.)pg($|\.)/ && $CI_COMMIT_TAG =~ /(^|\.)nooracle($|\.)/'
+    # PostgreSQL release variants
+    - if: '$CI_COMMIT_TAG =~ $TAG_PGALL_REGEX'
       auto_cancel:
         on_new_commit: none
       variables:
         SCHEDULER_TYPE: "pgsched"
         ENABLE_ORACLE_SUPPORT: "false"
-    - if: '$CI_COMMIT_TAG =~ /(^|\.)pg($|\.)/'
+    - if: '$CI_COMMIT_TAG =~ $TAG_PGSCHED_REGEX'
       auto_cancel:
         on_new_commit: none
       variables:
         SCHEDULER_TYPE: "pgsched"
-    - if: '$CI_COMMIT_TAG =~ /(^|\.)nooracle($|\.)/'
+    - if: '$CI_COMMIT_TAG =~ $TAG_PGCAT_REGEX'
       auto_cancel:
         on_new_commit: none
       variables:
