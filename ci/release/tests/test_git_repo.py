@@ -1,0 +1,73 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+from __future__ import annotations
+
+import sys
+import unittest
+from pathlib import Path
+from unittest.mock import call, patch
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from git_repo import Git
+
+
+class GitTest(unittest.TestCase):
+    """Test release-specific Git validation and mutation commands."""
+
+    def test_dry_run_does_not_execute_mutation(self) -> None:
+        git = Git(Path("/tmp"), dry_run=True)
+        with patch("subprocess.run") as run:
+            assert git.run(["tag", "v5.1.0.0-1"], mutate=True) == ""
+        run.assert_not_called()
+
+    def test_create_tag_delegates_to_multi_tag_creation(self) -> None:
+        git = Git(Path("/tmp"))
+        with patch.object(git, "create_tags") as create_tags:
+            git.create_tag("abc", "v5.1.0.0-1", "Maintenance bug fixes")
+        create_tags.assert_called_once_with("abc", {"v5.1.0.0-1": "Maintenance bug fixes"})
+
+    def test_editor_command_uses_git_editor_resolution(self) -> None:
+        git = Git(Path("/tmp"))
+        with patch.object(git, "run", return_value="vim") as run:
+            assert git.editor_command() == "vim"
+        run.assert_called_once_with(["var", "GIT_EDITOR"])
+
+    def test_allow_unclean_skips_worktree_and_current_branch_checks(self) -> None:
+        git = Git(Path("/tmp"), allow_unclean=True)
+        with patch.object(git, "run", side_effect=["/tmp", "abc", "abc"]) as run:
+            assert git.validate_repository("main", "origin", fetch=False) == "abc"
+        assert run.call_args_list == [
+            call(["rev-parse", "--show-toplevel"]),
+            call(["rev-parse", "main"]),
+            call(["rev-parse", "origin/main"]),
+        ]
+
+    def test_default_tag_target_is_latest_remote_main(self) -> None:
+        git = Git(Path("/tmp"))
+        with patch.object(git, "run", side_effect=["/tmp", "", "abc123"]) as run:
+            assert git.resolve_tag_target("origin", "main", "origin/main", fetch=False) == "abc123"
+        assert run.call_args_list[-1] == call(["rev-parse", "--verify", "origin/main^{commit}"])
+
+    def test_explicit_tag_target_accepts_any_git_revision(self) -> None:
+        git = Git(Path("/tmp"), allow_unclean=True)
+        with patch.object(git, "run", side_effect=["/tmp", "def456"]) as run:
+            assert git.resolve_tag_target("origin", "main", "maintenance", fetch=False) == "def456"
+        run.assert_called_with(["rev-parse", "--verify", "maintenance^{commit}"])
+
+    def test_creates_multiple_tags_and_pushes_explicit_refs_atomically(self) -> None:
+        git = Git(Path("/tmp"))
+        with patch.object(git, "run") as run:
+            git.create_tags("abc", {"v1": "base", "v1.pgall": "variant"})
+            git.push_tags("origin", ["v1", "v1.pgall"])
+        assert run.call_args_list[-1] == call(
+            [
+                "push",
+                "--atomic",
+                "origin",
+                "refs/tags/v1:refs/tags/v1",
+                "refs/tags/v1.pgall:refs/tags/v1.pgall",
+            ],
+            mutate=True,
+        )
