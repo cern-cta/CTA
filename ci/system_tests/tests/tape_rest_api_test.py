@@ -276,8 +276,8 @@ def test_archive_and_retrieve_file_with_wlcg_scitoken(
 ) -> None:
     file_path = test_dir / "test_http-rest-api-scitoken"
     file_contents = "SciToken archive and retrieve test"
-    upload_scope = "storage.create:/eos/ storage.modify:/eos/"
-    rest_api_scope = "storage.read:/eos/ storage.stage:/eos/"
+    upload_scope = "storage.create:/ storage.read:/ storage.modify:/"
+    rest_api_scope = "storage.read:/ storage.stage:/"
     print(f"Archiving and retrieving {file_path} with WLCG SciTokens")
     scitoken_user1 = eos_mgm.generate_scitoken(
         [
