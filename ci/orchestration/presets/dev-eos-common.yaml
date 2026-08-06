@@ -27,6 +27,17 @@ global:
       spec:
         type: ExternalName
         externalName: {{ include "utils.mgm_address" . }}
+    - |
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: eos-scitokens-map
+      data:
+        scitokens.map: |
+          [
+            {"sub": "sub_user1", "result": "user1"},
+            {"sub": "sub_poweruser1", "result": "poweruser1"}
+          ]
 
 mgm:
   # Must match the authentication chart
@@ -47,6 +58,19 @@ mgm:
   http:
     # Generated using: openssl rand -base64 64 | base64 -w 0
     macaroonsSecretKey: ZjZsMWxPT1lEc1poNFBKRTJiK05aaEhMdC9iUzdsSmxxNGZXT1Z4dE9PWElsR2I0MHhqZ3RnRDNzWnhVTW5iZAp1YWFSYmR6d0hSL3FMem1ncDNCWHFRPT0K
+    sciTokens:
+      enabled: true
+      config: |
+        [Global]
+        audience = ctaeos
+
+        [Issuer Local]
+        issuer = https://localhost:4443
+        base_path = /
+        map_subject = false
+        name_mapfile = /etc/xrootd/scitokens.map
+        default_user = nobody
+        authorization_strategy = capability
 
   xrd:
     # Additional tape-specific config
@@ -69,6 +93,17 @@ mgm:
     # For some reason EOS is on another time zone, so set this to CET
     - name: TZ
       value: "CET"
+
+  extraVolumes:
+    volumeMounts:
+      - name: eos-scitokens-map
+        mountPath: /etc/xrootd/scitokens.map
+        subPath: scitokens.map
+        readOnly: true
+    volumes:
+      - name: eos-scitokens-map
+        configMap:
+          name: eos-scitokens-map
 
 fst:
   replicaCount: 1
