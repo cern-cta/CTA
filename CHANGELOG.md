@@ -1,3 +1,31 @@
+## 5.11.18.1-1
+
+### Changes
+
+- [Tools] Change short option for cta-admin af ch --idfile from -I to -F (cta/CTA!1453)
+- [catalogue] Forbid adding or changing encryption key of non-empty tapes (cta/CTA!1414)
+- [scheduler] Allow repack to select files by storage class (cta/CTA!1409)
+- [scheduler] Allow garbage collection to requeue retrieve requests on a different tape (cta/CTA!1375)
+- [Tools] Add optional storage class statistics, per tape, to cta-admin tool (cta/CTA!1410)
+- [Tools] Update on modifyArchiveFileStorageClassId & modifyArchiveFileFxIdAndDiskInstance (cta/CTA!1393)
+- [Tools] Enable cta-admin command to modify archive file storage class (cta/!1363)
+- [maintd] Allow SIGHUP to also trigger log file descriptor refresh (cta/!1368)
+
+### Bug Fixes
+
+- [scheduler] Fix pg scheduler backend repack status machine and norecall statistics reporting (cta/!1429)
+- [Tools] Fix usage of cta-admin options of type OptionStrList (cta/!1369)
+- [Tools] Advertise Kerbreros Service Principal Name to client (cta/CTA!1323)
+
+### Deprecations
+
+- [frontend] Deprecate storage class field in EOS-CTA xattrs (cta/CTA!1424)
+
+### Other
+
+- [CI] Add Enstore and EnstoreLarge tape tests (cta/CTA!1412)
+
+
 ## 5.11.18.0-2
 
 ### Bug Fixes
