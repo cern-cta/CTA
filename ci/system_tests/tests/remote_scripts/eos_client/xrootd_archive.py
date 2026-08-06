@@ -27,7 +27,6 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--num-dirs", type=int, default=10, help="Number of subdirectories")
     p.add_argument("--num-procs", type=int, default=8, help="Number of parallel worker processes")
     p.add_argument("--file-size", type=int, default=512, help="File size in bytes")
-    p.add_argument("--sss-keytab", default="/etc/eos.keytab", help="SSS keytab path")
     p.add_argument("--batch-size", type=int, default=1000, help="Files per batch (to reduce queue contention)")
     p.add_argument(
         "--write-files-in-chunks",
@@ -47,6 +46,7 @@ def mkdir_dirs(eos_host: str, dest_dir: str, num_dirs: int) -> None:
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
             check=True,
+            # Specifically let the eos admin create the directories
             env={**os.environ, "XrdSecPROTOCOL": "krb5", "KRB5CCNAME": "/tmp/eosadmin1/krb5cc_0"},
         )
 
@@ -64,7 +64,7 @@ def worker(
     file_size: int,
     write_in_chunks: bool,
 ) -> None:
-    # Import here so XrdSecsssKT is already set in the environment
+    # Import here so the Kerberos environment is set before XRootD is loaded.
     from XRootD import client  # type: ignore[reportMissingImports]
     from XRootD.client.flags import OpenFlags  # type: ignore[reportMissingImports]
 
@@ -139,16 +139,6 @@ def worker(
 def main() -> None:
     args = parse_args()
 
-    # NB: For now, we are still using Kerberos authentication for copying/archival of the files.
-    # Testing showed that there is no significant performance difference in using krb5 vs sss.
-    # In order to use SSS instead we also need to specify the env variable XrdSecPROTOCOL.
-    # If in the future we decide to switch to SSS, this is the place to set the env variables,
-    # as is shown below:
-    # Set SSS keytab before any XRootD client usage
-    # os.environ["XrdSecsssKT"] = args.sss_keytab
-    # os.environ["XrdSecPROTOCOL"] = "sss"
-    # os.environ.setdefault("XRD_LOGLEVEL", "Error")
-
     print(
         f"xrootd_archive: {args.num_files} files, {args.num_dirs} dirs, {args.num_procs} procs, {args.file_size}B each",
         flush=True,
@@ -160,13 +150,32 @@ def main() -> None:
     if args.file_size < HEADER_SIZE:
         raise ValueError(f"File size must be >= {HEADER_SIZE} bytes")
 
+    # For now, use Kerberos authentication for copying/archival. Testing showed no
+    # significant performance difference between Kerberos and SSS. To switch to
+    # SSS in the future, configure the keytab and protocol before starting workers:
+    # os.environ["XrdSecsssKT"] = "/etc/eos.keytab"
+    # os.environ["XrdSecPROTOCOL"] = "sss"
+    # os.environ.setdefault("XRD_LOGLEVEL", "Error")
+    #
+    # Match the established xrdcp archival path: write files as user1 via Kerberos.
+    os.environ["KRB5CCNAME"] = "/tmp/user1/krb5cc_0"
+    os.environ["XrdSecPROTOCOL"] = "krb5"  # noqa: SIM112 - XRootD requires this exact mixed-case name
+
     # Launch workers
     work_q = mp.JoinableQueue()
     procs = []
     for wid in range(args.num_procs):
         p = mp.Process(
             target=worker,
-            args=(work_q, wid, args.eos_host, args.dest_dir, args.num_dirs, args.file_size, args.write_files_in_chunks),
+            args=(
+                work_q,
+                wid,
+                args.eos_host,
+                args.dest_dir,
+                args.num_dirs,
+                args.file_size,
+                args.write_files_in_chunks,
+            ),
             daemon=True,
         )
         p.start()

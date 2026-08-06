@@ -64,7 +64,6 @@ class EosClientHost(DiskClientHost):
         *,
         file_size: int = 512,
         batch_size: int = 1000,
-        sss_keytab: str = "/etc/eos.keytab",
         write_files_in_chunks: bool = False,
     ) -> asyncio.Future[ExecResult]:
         """Start archival asynchronously. Returns a future that can be awaited."""
@@ -76,8 +75,7 @@ class EosClientHost(DiskClientHost):
             f"--num-dirs {num_dirs} "
             f"--num-procs {num_procs} "
             f"--file-size {file_size} "
-            f"--batch-size {batch_size} "
-            f"--sss-keytab {sss_keytab}"
+            f"--batch-size {batch_size}"
         )
         if write_files_in_chunks:
             cmd += " --write-files-in-chunks"

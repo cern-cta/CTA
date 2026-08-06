@@ -144,7 +144,6 @@ async def test_generate_and_copy_files(
         num_procs=stress_params.io_threads,
         file_size=stress_params.file_size,
         batch_size=stress_params.batch_size,
-        sss_keytab="/etc/eos.keytab",
         write_files_in_chunks=stress_params.write_files_in_chunks,
     )
     print("Archive process started")
