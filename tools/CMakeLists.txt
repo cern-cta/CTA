@@ -5,6 +5,7 @@ cmake_minimum_required (VERSION 3.17)
 
 add_subdirectory (cta-readtp)
 add_subdirectory (cta-tape-label)
+add_subdirectory (cta-release)
 add_subdirectory (standalone_cli_tools)
 
 find_package(xrootdclient REQUIRED)

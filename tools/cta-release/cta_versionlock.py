@@ -7,21 +7,40 @@ import argparse
 import json
 import os
 import re
-import rpm
-from typing import List, Tuple, Any, Callable
+import sys
+from typing import Callable, TypedDict
+
+import rpm  # pyright: ignore[reportMissingImports]
+
+
+class Options(TypedDict):
+    cta_versionlock: str
+    yum_versionlock: str
+    json: bool
+    force: bool
+
+
+class Result(TypedDict):
+    error: list[str]
+    warning: list[str]
+    success: list[str]
+
+
+Version = list[str]
 
 
 class Action:
-    def __init__(self, name: str, help_text: str, description: str, func: Callable[[dict], dict]):
-        self.name = name                 # Name of the action
-        self.help_text = help_text       # Short help text for argparse
-        self.description = description   # Detailed description for the action
-        self.func = func                 # Function to execute the action
+    def __init__(self, name: str, help_text: str, description: str, func: Callable[[Options], Result]):
+        self.name = name  # Name of the action
+        self.help_text = help_text  # Short help text for argparse
+        self.description = description  # Detailed description for the action
+        self.func = func  # Function to execute the action
 
-    def execute(self, args: dict) -> dict:
+    def execute(self, args: Options) -> Result:
         return self.func(args)
 
-def printer(msg: dict[str, list[str]], options: dict[str, str]) -> None:
+
+def printer(msg: Result, options: Options) -> None:
     if options["json"]:
         print(json.dumps(msg))
     else:
@@ -41,21 +60,19 @@ def printer(msg: dict[str, list[str]], options: dict[str, str]) -> None:
                 print(f"- {line}")
             print("\n")
 
-def get_package_str(package: str, version: list[str]) -> str:
-    epoch, version, release, arch = version
-    return f"{package}-{epoch}:{version}-{release}.{arch}"
 
-def empty_result_message() -> dict[str, list[str]]:
-    return {
-        "error":[],
-        "warning": [],
-        "success": []
-    }
+def get_package_str(package: str, version: Version) -> str:
+    epoch, version_number, release, arch = version
+    return f"{package}-{epoch}:{version_number}-{release}.{arch}"
 
 
-def split_filename(filename: str) -> Tuple[str, str, str, str, str]:
+def empty_result_message() -> Result:
+    return {"error": [], "warning": [], "success": []}
+
+
+def split_filename(filename: str) -> tuple[str, str, str, str, str]:
     """
-    Splits RPM filename into name, version, release, epoch, and architecture.
+    Split RPM filename into name, version, release, epoch, and architecture.
 
     Args:
         filename (str): RPM filename.
@@ -81,12 +98,12 @@ def split_filename(filename: str) -> Tuple[str, str, str, str, str]:
         raise ValueError(f"Filename {filename} does not match expected RPM format")
 
 
-def read_version_lock_file(versionlock_file: str) -> dict[str, List[str]]:
-    versions = {}
+def read_version_lock_file(versionlock_file: str) -> dict[str, Version]:
+    versions: dict[str, Version] = {}
     if not os.path.isfile(versionlock_file):
         raise FileNotFoundError(f"file {versionlock_file} not found")
 
-    with open(versionlock_file, "r") as f:
+    with open(versionlock_file) as f:
         packages = f.read().splitlines()
         for package in packages:
             if package == "" or package.startswith("#"):
@@ -95,52 +112,62 @@ def read_version_lock_file(versionlock_file: str) -> dict[str, List[str]]:
             versions[name] = [epoch, version, release, arch]
     return versions
 
-def write_versionlock(versions: dict[str, List[str]], versionlock_file: str) -> None:
+
+def write_versionlock(versions: dict[str, Version], versionlock_file: str) -> None:
     if not os.path.isfile(versionlock_file):
         raise FileNotFoundError(f"file {versionlock_file} not found")
 
     with open(versionlock_file, "w") as f:
-        for package, version in versions.items():
-            f.write(f"{get_package_str(package, version)}\n")
+        f.writelines(f"{get_package_str(package, version)}\n" for package, version in versions.items())
+
 
 ###### Actions ######
 
-def list_cta_versionlock(options: dict) -> dict[str, list[str]]:
-    cta_versionlock_file: str = options["cta-versionlock"]
+
+def list_cta_versionlock(options: Options) -> Result:
+    cta_versionlock_file = options["cta_versionlock"]
     cta_versions = read_version_lock_file(cta_versionlock_file)
     result = empty_result_message()
     for package, version in cta_versions.items():
         result["success"].append(f"{get_package_str(package, version)}")
     return result
 
-def list_yum_versionlock(options: dict) -> dict[str, list[str]]:
-    yum_versionlock_file: str = options["yum-versionlock"]
+
+def list_yum_versionlock(options: Options) -> Result:
+    yum_versionlock_file = options["yum_versionlock"]
     yum_versions = read_version_lock_file(yum_versionlock_file)
     result = empty_result_message()
     for package, version in yum_versions.items():
         result["success"].append(f"{get_package_str(package, version)}")
     return result
 
-def compare_versionlock(options: dict) -> dict[str, list[str]]:
-    yum_versionlock_file: str = options["yum-versionlock"]
-    cta_versionlock_file: str = options["cta-versionlock"]
+
+def compare_versionlock(options: Options) -> Result:
+    yum_versionlock_file = options["yum_versionlock"]
+    cta_versionlock_file = options["cta_versionlock"]
     yum_versions = read_version_lock_file(yum_versionlock_file)
     cta_versions = read_version_lock_file(cta_versionlock_file)
     result = empty_result_message()
     for package, version in cta_versions.items():
-        if not package in yum_versions:
-            result["error"].append(f"CTA package {get_package_str(package, version)} not present in yum versionlock.list")
+        if package not in yum_versions:
+            result["error"].append(
+                f"CTA package {get_package_str(package, version)} not present in yum versionlock.list"
+            )
             continue
         expected_version = yum_versions[package]
         if expected_version == version:
             result["success"].append(f"CTA package {get_package_str(package, version)} found in yum versionlock.list")
         else:
-            result["error"].append(f"CTA package {get_package_str(package, version)} was found, but has an incorrect version. Expected: {get_package_str(package, expected_version)}")
+            result["error"].append(
+                f"CTA package {get_package_str(package, version)} was found, but has an incorrect version. "
+                f"Expected: {get_package_str(package, expected_version)}"
+            )
     return result
 
-def apply_versionlock(options: dict) -> dict[str, Any]:
-    yum_versionlock_file: str = options["yum-versionlock"]
-    cta_versionlock_file: str = options["cta-versionlock"]
+
+def apply_versionlock(options: Options) -> Result:
+    yum_versionlock_file = options["yum_versionlock"]
+    cta_versionlock_file = options["cta_versionlock"]
     yum_versions = read_version_lock_file(yum_versionlock_file)
     cta_versions = read_version_lock_file(cta_versionlock_file)
     result = empty_result_message()
@@ -148,9 +175,14 @@ def apply_versionlock(options: dict) -> dict[str, Any]:
         if package in yum_versions:
             if yum_versions[package] != version:
                 if options["force"]:
-                    result["warning"].append(f"Package {package} is already defined with a different version. This version will be overridden")
+                    result["warning"].append(
+                        f"Package {package} is already defined with a different version. "
+                        "This version will be overridden"
+                    )
                 else:
-                    result["error"].append(f"Package {package} is already defined with a different version. Skipping...")
+                    result["error"].append(
+                        f"Package {package} is already defined with a different version. Skipping..."
+                    )
                     continue
             else:
                 result["warning"].append(f"Package {package} is already defined. Skipping...")
@@ -161,46 +193,58 @@ def apply_versionlock(options: dict) -> dict[str, Any]:
     write_versionlock(yum_versions, yum_versionlock_file)
     return result
 
-def remove_versionlock(options: dict) -> dict[str, Any]:
-    yum_versionlock_file: str = options["yum-versionlock"]
-    cta_versionlock_file: str = options["cta-versionlock"]
+
+def remove_versionlock(options: Options) -> Result:
+    yum_versionlock_file = options["yum_versionlock"]
+    cta_versionlock_file = options["cta_versionlock"]
     yum_versions = read_version_lock_file(yum_versionlock_file)
     cta_versions = read_version_lock_file(cta_versionlock_file)
     result = empty_result_message()
     for package, version in cta_versions.items():
-        if not package in yum_versions:
-            result["warning"].append(f"Package {get_package_str(package, version)} is not present in yum versionlock. Skipping...")
+        if package not in yum_versions:
+            result["warning"].append(
+                f"Package {get_package_str(package, version)} is not present in yum versionlock. Skipping..."
+            )
             continue
         if yum_versions[package] == version:
             del yum_versions[package]
             result["success"].append(f"Removed package {get_package_str(package, version)}")
+        elif options["force"]:
+            result["warning"].append(
+                f"Package {package} is defined but does not have a matching version. Package will still be removed."
+            )
+            del yum_versions[package]
+            result["success"].append(f"Removed package {get_package_str(package, version)}")
         else:
-            if options["force"]:
-                result["warning"].append(f"Package {package} is defined but does not have a matching version. Package will still be removed.")
-                del yum_versions[package]
-                result["success"].append(f"Removed package {get_package_str(package, version)}")
-            else:
-                result["error"].append(f"Package {package} is already defined with a different version. Skipping...")
+            result["error"].append(f"Package {package} is already defined with a different version. Skipping...")
     write_versionlock(yum_versions, yum_versionlock_file)
     return result
 
 
-def check_installed(options: dict) -> dict[str, list[str]]:
+def check_installed(options: Options) -> Result:
     result = empty_result_message()
     installed_packages = rpm.TransactionSet()
-    yum_versionlock_file: str = options["yum-versionlock"]
+    yum_versionlock_file = options["yum_versionlock"]
     required_versions = read_version_lock_file(yum_versionlock_file)
     for package, required_version in required_versions.items():
         mi = installed_packages.dbMatch("name", package)
         epoch, version, release, _ = required_version
         if len(mi) == 0:
-            result["warning"].append(f"Package {get_package_str(package, required_version)} is in versionlock file, but not installed")
+            result["warning"].append(
+                f"Package {get_package_str(package, required_version)} is in versionlock file, but not installed"
+            )
         for item in mi:
             installed_epoch = "0" if item["epoch"] is None else str(item["epoch"])
             if (epoch, version, release) == (installed_epoch, item["version"], item["release"]):
-                result["success"].append(f"Package {get_package_str(package, required_version)} is installed with the correct version")
+                result["success"].append(
+                    f"Package {get_package_str(package, required_version)} is installed with the correct version"
+                )
             else:
-                result["error"].append(f"Package {get_package_str(package, required_version)} does not have the correct version installed. Installed: {installed_epoch}:{item['version']}-{item['release']}")
+                result["error"].append(
+                    f"Package {get_package_str(package, required_version)} does not have the correct version "
+                    "installed. "
+                    f"Installed: {installed_epoch}:{item['version']}-{item['release']}"
+                )
     return result
 
 
@@ -210,72 +254,85 @@ def get_actions() -> dict[str, Action]:
             name="list-cta",
             help_text="Lists the provided versionlock.cta content",
             description="Produces a list of the contents of the provided cta versionlock file",
-            func=list_cta_versionlock
+            func=list_cta_versionlock,
         ),
         Action(
             name="list-yum",
             help_text="Lists the provided versionlock.list content",
             description="Produces a list of the contents of the provided yum versionlock file",
-            func=list_yum_versionlock
+            func=list_yum_versionlock,
         ),
         Action(
             name="compare",
             help_text="Compares the yum and cta versionlock packages",
-            description="Checks the consistency of packages and versions listed in the provided versionlock.list and versionlock.cta files.",
-            func=compare_versionlock
+            description=(
+                "Checks the consistency of packages and versions listed in the provided versionlock.list and "
+                "versionlock.cta files."
+            ),
+            func=compare_versionlock,
         ),
         Action(
             name="apply",
             help_text="Apply versionlock.cta to versionlock.list",
             description="Adds the packages in the provided versionlock.cta to the provided versionlock.list.",
-            func=apply_versionlock
+            func=apply_versionlock,
         ),
         Action(
             name="remove",
             help_text="Remove versionlock.cta from versionlock.list",
-            description="Removes the packages in the provided versionlock.cta from the provided versionlock.list. Warning: this will not restore the yum versionlock to its original state. It simply removes the packages in the cta versionlock from the yum versionlock",
-            func=remove_versionlock
+            description=(
+                "Removes the packages in the provided versionlock.cta from the provided versionlock.list. Warning: "
+                "this will not restore the yum versionlock to its original state. It simply removes the packages in "
+                "the cta versionlock from the yum versionlock"
+            ),
+            func=remove_versionlock,
         ),
         Action(
             name="check-installed",
             help_text="Check installed versions against versionlock.list",
             description="Checks if the installed package versions match the requirements in versionlock.list.",
-            func=check_installed
-        )
+            func=check_installed,
+        ),
     ]
-    return { action.name: action for action in actions}
+    return {action.name: action for action in actions}
 
 
 def main() -> None:
-    options: dict[str, str] = {}
-    options["cta-versionlock"] = "/etc/yum/pluginconf.d/versionlock.cta"
-    options["yum-versionlock"] = "/etc/yum/pluginconf.d/versionlock.list"
-    options["json"] = False
-    options["force"] = False
+    options = Options(
+        cta_versionlock="/etc/yum/pluginconf.d/versionlock.cta",
+        yum_versionlock="/etc/yum/pluginconf.d/versionlock.list",
+        json=False,
+        force=False,
+    )
 
     actions = get_actions()
 
     parser = argparse.ArgumentParser(
         description="Tool that can check and update the yum versionlock file using the CTA versionlock file."
     )
-    parser.add_argument("--cta-versionlock", help="Use the provided versionlock file instead of the default versionlock.cta")
-    parser.add_argument("--yum-versionlock", help="Use the provided versionlock file instead of the default versionlock.list")
+    parser.add_argument(
+        "--cta-versionlock",
+        help="Use the provided versionlock file instead of the default versionlock.cta",
+    )
+    parser.add_argument(
+        "--yum-versionlock",
+        help="Use the provided versionlock file instead of the default versionlock.list",
+    )
     parser.add_argument("--json", action="store_true", help="Format output in json")
-    parser.add_argument("--force", action="store_true",
-                        help="Allows overwriting the versionlock.list even if this potentially results in an inconsistent state")
-    subparsers = parser.add_subparsers(dest='command')
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Allows overwriting the versionlock.list even if this potentially results in an inconsistent state",
+    )
+    subparsers = parser.add_subparsers(dest="command")
     for action in actions.values():
-        subparsers.add_parser(
-            action.name,
-            help=action.help_text,
-            description=action.description
-        )
+        subparsers.add_parser(action.name, help=action.help_text, description=action.description)
 
     args = parser.parse_args()
 
     if args.command is None:
         parser.print_help()
-        exit(1)
+        sys.exit(1)
 
     if args.json:
         options["json"] = True
@@ -283,15 +340,16 @@ def main() -> None:
         options["force"] = True
 
     if args.cta_versionlock:
-        options["cta-versionlock"] = args.cta_versionlock
+        options["cta_versionlock"] = args.cta_versionlock
 
     if args.yum_versionlock:
-        options["yum-versionlock"] = args.yum_versionlock
+        options["yum_versionlock"] = args.yum_versionlock
 
     # execute the function corresponding to the command provided
     result = actions[args.command].execute(options)
     printer(result, options)
     if len(result["error"]) > 0:
-        exit(1)
+        sys.exit(1)
+
 
 main()
