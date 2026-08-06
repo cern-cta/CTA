@@ -55,7 +55,7 @@ spec:
           enable-sbom-generation: $[[ inputs.enable-sbom-generation ]]
           # Forward the typed pipeline inputs, not the runtime CI/CD variables. Values
           # overridden by workflow rules in commit pipelines are intentionally not
-          # forwarded to these child pipelines.
+          # forwarded to these child pipelines as they break the input type validation
           scheduler-type: $[[ inputs.scheduler-type ]]
           enable-oracle-support: $[[ inputs.enable-oracle-support ]]
           workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]

@@ -343,6 +343,7 @@ stress-test:
     - *setup-k8s-test-variables
   script:
     - EXTRA_STRESS_TEST_OPTIONS=""
+    - EXTRA_SPAWN_ARGS+=" --publish-telemetry"
     - |
       if [[ "$SCHEDULER_TYPE" == "pgsched" ]]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
@@ -361,7 +362,6 @@ stress-test:
     # This is because we check for the libraries in use before we start
     - ./run_systemtest.sh --namespace ${NAMESPACE}
                           --keep-namespace
-                          --publish-telemetry
                           --cta-image-tag ${IMAGE_TAG}
                           --catalogue-config ${CATALOGUE_CONFIG}
                           --scheduler-config ${SCHEDULER_CONFIG}
@@ -433,7 +433,6 @@ stress-test-python:
       else
         STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-values.yaml"
       fi
-    - if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
     # Set up stress test
     - cd ci/orchestration/
     # We don't clean up old namespace so this will fail (deliberately) when another namespace still exist

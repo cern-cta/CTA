@@ -8,8 +8,12 @@ Runs inside the client pod. Uses multiprocessing with persistent XRootD
 File objects for high throughput on many small files.
 """
 
+from __future__ import annotations
+
 import argparse
 import multiprocessing as mp
+from multiprocessing.queues import JoinableQueue
+import os
 import subprocess
 import time
 from typing import Any
@@ -39,10 +43,11 @@ def mkdir_dirs(eos_host: str, dest_dir: str, num_dirs: int) -> None:
     for i in range(num_dirs):
         path = f"{dest_dir}/{i}"
         subprocess.run(
-            ["eos", f"root://{eos_host}", "mkdir", "-p", path],
+            ["eos", "-r", "0", "0", f"root://{eos_host}", "mkdir", "-p", path],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
             check=True,
+            env={**os.environ, "XrdSecPROTOCOL": "krb5", "KRB5CCNAME": "/tmp/eosadmin1/krb5cc_0"},
         )
 
 
@@ -51,7 +56,7 @@ CHUNK_1MB = 1024 * 1024  # 1MB pre-allocated once per worker
 
 
 def worker(
-    work_q: mp.JoinableQueue[Any],
+    work_q: JoinableQueue[Any],
     wid: int,
     eos_host: str,
     dest_dir: str,
