@@ -275,6 +275,9 @@ tape (ta)
 :   Add, change, remove, reclaim, list or label tapes. This command is used to manage the physical
     tape cartridges in each library.
 
+    **\-\-get-storage-class-stats** includes file counts and total data size per storage class for
+    each tape. This is an expensive operation and delays output until all statistics are loaded.
+
 tapefile (tf)
 
 :   List files on a specified tape or delete a tape file.
