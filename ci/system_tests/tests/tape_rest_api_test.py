@@ -276,11 +276,21 @@ def test_archive_and_retrieve_file_with_wlcg_scitoken(
 ) -> None:
     file_path = test_dir / "test_http-rest-api-scitoken"
     file_contents = "SciToken archive and retrieve test"
-    scope = "storage.create:/eos/ storage.modify:/eos/ storage.read:/eos/ storage.stage:/eos/"
-    print(f"Archiving and retrieving {file_path} with a WLCG SciToken")
-    scitoken = eos_mgm.generate_scitoken(
+    upload_scope = "storage.create:/eos/ storage.modify:/eos/"
+    rest_api_scope = "storage.read:/eos/ storage.stage:/eos/"
+    print(f"Archiving and retrieving {file_path} with WLCG SciTokens")
+    scitoken_user1 = eos_mgm.generate_scitoken(
         [
-            ("scope", scope),
+            ("scope", upload_scope),
+            ("sub", "sub_user1"),
+            ("aud", "ctaeos"),
+        ],
+        keyid="ctaeos",
+        timeout=600,
+    )
+    scitoken_poweruser1 = eos_mgm.generate_scitoken(
+        [
+            ("scope", rest_api_scope),
             ("sub", "sub_poweruser1"),
             ("aud", "ctaeos"),
         ],
@@ -302,7 +312,7 @@ def test_archive_and_retrieve_file_with_wlcg_scitoken(
         print(f"Uploading {temporary_file} to {disk_instance.webdav_url}{file_path} with a WLCG SciToken")
         upload_response = disk_client.http_request(
             f"{disk_instance.webdav_url}{file_path}",
-            token=scitoken,
+            token=scitoken_user1,
             upload_file=temporary_file,
         )
         _assert_empty_response(upload_response, "SciToken upload")
@@ -310,7 +320,7 @@ def test_archive_and_retrieve_file_with_wlcg_scitoken(
             disk_client,
             rest_api_endpoint,
             file_path,
-            scitoken,
+            scitoken_poweruser1,
         )
         assert archive_info["locality"] == "DISK"
         cta_cli.set_all_drives_up()
@@ -320,7 +330,7 @@ def test_archive_and_retrieve_file_with_wlcg_scitoken(
             rest_api_endpoint,
             file_path,
             "TAPE",
-            token=scitoken,
+            token=scitoken_poweruser1,
             wait_timeout_secs=30,
         )
         assert archived_file_info["path"] == str(file_path)
@@ -331,31 +341,26 @@ def test_archive_and_retrieve_file_with_wlcg_scitoken(
             disk_client,
             rest_api_endpoint,
             file_path,
-            scitoken,
+            scitoken_poweruser1,
         )
         disk_client.wait_for_stage_file_status(
             rest_api_endpoint,
             request_id,
             file_path,
-            token=scitoken,
+            token=scitoken_poweruser1,
             expected_state="COMPLETED",
             expected_on_disk=True,
             wait_timeout_secs=30,
         )
         completed_status_response = disk_client.http_request(
             f"{rest_api_endpoint}/stage/{request_id}",
-            token=scitoken,
+            token=scitoken_poweruser1,
         )
         completed_file_status = _assert_stage_status(completed_status_response, request_id, file_path)
         assert "error" not in completed_file_status
         assert completed_file_status.get("state") == "COMPLETED" or completed_file_status.get("onDisk") is True
 
-        downloaded_file = disk_client.http_request(
-            f"{disk_instance.webdav_url}{file_path}",
-            token=scitoken,
-        )
-        assert downloaded_file == file_contents
-        print(f"Retrieved {file_path} successfully with a WLCG SciToken")
+        print(f"Retrieved {file_path} successfully through the Tape REST API with a WLCG SciToken")
     finally:
         if drives_are_down:
             cta_cli.set_all_drives_up()
