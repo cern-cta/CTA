@@ -262,9 +262,9 @@ def test_kinit_poweruser(eos_client: EosClientHost, krb5_realm: str) -> None:
 
 @pytest.mark.asyncio
 async def test_request_files_for_retrieve(
-    cta_cli: CtaCliHost, eos_client: EosClientHost, eos_mgm: EosMgmHost, stress_params: StressParams
+    cta_cli: CtaCliHost, eos_client: EosClientHost, eos_mgm: EosMgmHost, stress_params: StressParams, test_dir: Path
 ) -> None:
-    archive_directory = eos_mgm.base_dir_path / "cta" / "stress"
+    archive_directory = test_dir
     mgm_ip = eos_mgm.get_ip()
 
     print("Sleeping 60 seconds to allow MGM-FST communication to settle after disk copy deletion", flush=True)
@@ -347,11 +347,9 @@ async def test_request_files_for_retrieve(
     print(f"Retrieve request queueing completed in {duration_seconds:.1f}s, files/s: {avg_fps:.2f}")
 
 
-def test_wait_for_retrieval(eos_mgm: EosMgmHost, stress_params: StressParams) -> None:
-    archive_directory = eos_mgm.base_dir_path / "cta" / "stress"
-
+def test_wait_for_retrieval(eos_mgm: EosMgmHost, stress_params: StressParams, test_dir: Path) -> None:
     num_missing, loss_percent = eos_mgm.wait_for_retrieval_in_directory(
-        archive_dir_path=archive_directory,
+        archive_dir_path=test_dir,
         check_retrieve_interval_sec=stress_params.check_archive_interval_sec,
         max_no_progress_intervals=stress_params.max_no_progress_intervals,
     )
