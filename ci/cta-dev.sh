@@ -514,22 +514,7 @@ select_container_runtime() {
 }
 
 local_kubernetes_available() {
-  local found=false unusable=false
-  if command -v minikube >/dev/null 2>&1; then
-    if minikube status >/dev/null 2>&1; then
-      found=true
-    else
-      unusable=true
-    fi
-  fi
-  if command -v k3s >/dev/null 2>&1; then
-    if k3s ctr version >/dev/null 2>&1; then
-      found=true
-    else
-      unusable=true
-    fi
-  fi
-  [[ $found == true && $unusable == false ]]
+  command -v minikube >/dev/null 2>&1 || command -v k3s >/dev/null 2>&1
 }
 
 ensure_namespace_owned() {
@@ -668,7 +653,7 @@ images_cta() {
     --container-runtime "${container_runtime}" \
     "${extra_image_build_options[@]}"
   if [[ $load_into_k8s == false ]]; then
-    log_warn "Kubernetes image loading skipped: every installed minikube/k3s command must refer to a usable local cluster."
+    log_warn "Kubernetes image loading skipped: neither minikube nor k3s is installed."
   fi
 }
 

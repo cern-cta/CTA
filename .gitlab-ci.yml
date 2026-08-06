@@ -272,6 +272,8 @@ include:
       cmake-build-type: $[[ inputs.cmake-build-type ]]
       enable-address-sanitizer: $[[ inputs.enable-address-sanitizer ]]
       enable-sbom-generation: $[[ inputs.enable-sbom-generation ]]
+      scheduler-type: $[[ inputs.scheduler-type ]]
+      enable-oracle-support: $[[ inputs.enable-oracle-support ]]
       workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
       enable-valgrind: $[[ inputs.enable-valgrind ]]
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]

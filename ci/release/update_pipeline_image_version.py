@@ -15,7 +15,7 @@ from gitlabapi import GitLabAPI
 
 PIPELINE_CONFIG_PATH = ".gitlab-ci.yml"
 VERSION_PATTERN = re.compile(r'^( {2}PIPELINE_IMAGE_VERSION: ")[^"]+("\s*)$', re.MULTILINE)
-MERGE_REQUEST_LABELS = ("priority::medium", "type::maintenance", "ci pipeline")
+MERGE_REQUEST_LABELS = ("priority::medium", "type::maintenance", "ci: pipeline")
 MERGE_REQUEST_POLL_INTERVAL_SECONDS = 5
 MERGE_REQUEST_READY_TIMEOUT_SECONDS = 300
 TRANSIENT_MERGE_STATUSES = {"unchecked", "preparing", "checking", "approvals_syncing"}

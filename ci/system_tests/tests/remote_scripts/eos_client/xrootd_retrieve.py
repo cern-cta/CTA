@@ -10,8 +10,11 @@ retrieve (prepare/stage-in) requests in parallel via multiprocessing.
 Output: prints progress lines, then a summary on the last line.
 """
 
+from __future__ import annotations
+
 import argparse
 import multiprocessing as mp
+from multiprocessing.queues import JoinableQueue
 import os
 import subprocess
 import time
@@ -52,7 +55,7 @@ def list_tape_only_files(eos_host: str, dest_dir: str, num_dirs: int) -> list[st
     return tape_files
 
 
-def retrieve_worker(work_q: mp.JoinableQueue[Any], wid: int, eos_host: str, krb5_cache: str) -> None:
+def retrieve_worker(work_q: JoinableQueue[Any], wid: int, eos_host: str, krb5_cache: str) -> None:
     """Worker process that issues prepare (stage-in) requests via XRootD."""
     # Switch from SSS to Kerberos (poweruser1) for prepare permissions
     for k in ("XrdSecsssKT", "XRDSSSKT"):

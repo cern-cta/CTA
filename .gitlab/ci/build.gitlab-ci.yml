@@ -156,6 +156,10 @@ build-cta-rpms-pgsched:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
+    # Prevent too many duplicate pipelines. Only in merge requests do we want to double check that what we do doesn't break
+    # For the main branch, we'll rely on the nightly pipelines
+    - if: $CI_PIPELINE_SOURCE != "merge_request_event"
+      when: never
     - !reference [build-cta-rpms, rules]
   variables:
     # We don't have a way of separating what the user entered and what the actual value is,
@@ -179,6 +183,9 @@ build-cta-rpms-debug:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual
       allow_failure: true
+    # Only run in default pipelines
+    - if: $PIPELINE_TYPE != "DEFAULT"
+      when: never
     - !reference [build-cta-rpms, rules]
   variables:
     CMAKE_BUILD_TYPE: "Debug"
