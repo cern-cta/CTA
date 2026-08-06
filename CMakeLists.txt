@@ -191,7 +191,6 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory(scheduler)
   add_subdirectory(taped)
   add_subdirectory(maintd)
-  add_subdirectory(statistics)
   add_subdirectory(tools)
 
 ENDIF(DEFINED PackageOnly)
