@@ -42,6 +42,9 @@ TapeLsResponseStream::TapeLsResponseStream(cta::catalogue::Catalogue& catalogue,
     m_searchCriteria.missingFileCopiesMinAgeSecs = missingFileCopiesMinAgeSecs;
   }
 
+  // Handle storage class statistics request
+  m_searchCriteria.includeStorageClassStatistics = request.getOptional(OptionBoolean::GET_STORAGE_CLASS_STATISTICS);
+
   // Handle state option
   if (auto stateOpt = request.getOptional(OptionString::STATE, &has_any); stateOpt) {
     m_searchCriteria.state = common::dataStructures::Tape::stringToState(stateOpt.value(), true);
@@ -88,6 +91,13 @@ cta::xrd::Data TapeLsResponseStream::next() {
   tapeItem->set_write_mount_count(tape.writeMountCount);
   tapeItem->set_nb_master_files(tape.nbMasterFiles);
   tapeItem->set_master_data_in_bytes(tape.masterDataInBytes);
+
+  for (const auto& statistics : tape.storageClassStatistics) {
+    auto* statisticsItem = tapeItem->add_storage_class_statistics();
+    statisticsItem->set_storage_class_name(statistics.storageClassName);
+    statisticsItem->set_nb_master_files(statistics.nbMasterFiles);
+    statisticsItem->set_master_data_in_bytes(statistics.masterDataInBytes);
+  }
 
   if (tape.labelLog) {
     ::cta::common::TapeLog* labelLog = tapeItem->mutable_label_log();

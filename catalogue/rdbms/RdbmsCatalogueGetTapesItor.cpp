@@ -102,6 +102,57 @@ common::dataStructures::Tape populateTape(const rdbms::Rset& rset) {
 }  // anonymous namespace
 
 //------------------------------------------------------------------------------
+// loadStorageClassStatistics
+//------------------------------------------------------------------------------
+void RdbmsCatalogueGetTapesItor::loadStorageClassStatistics() {
+  std::string sql = R"SQL(
+    SELECT
+      TF.VID AS VID,
+      SC.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,
+      COUNT(*) AS NB_MASTER_FILES,
+      SUM(TF.LOGICAL_SIZE_IN_BYTES) AS MASTER_DATA_IN_BYTES
+    FROM
+      TAPE_FILE TF
+    INNER JOIN ARCHIVE_FILE AF ON
+      AF.ARCHIVE_FILE_ID = TF.ARCHIVE_FILE_ID
+    INNER JOIN STORAGE_CLASS SC ON
+      SC.STORAGE_CLASS_ID = AF.STORAGE_CLASS_ID
+  )SQL";
+
+  if (m_searchCriteria.vid.has_value()) {
+    sql += R"SQL(
+      WHERE TF.VID = :VID
+    )SQL";
+  }
+
+  sql += R"SQL(
+    GROUP BY
+      TF.VID,
+      SC.STORAGE_CLASS_ID,
+      SC.STORAGE_CLASS_NAME
+  )SQL";
+
+  auto stmt = m_conn.createStmt(sql);
+
+  if (m_searchCriteria.vid.has_value()) {
+    stmt.bindString(":VID", m_searchCriteria.vid.value());
+  }
+
+  auto rset = stmt.executeQuery();
+
+  while (rset.next()) {
+    const auto vid = rset.columnString("VID");
+
+    common::dataStructures::TapeStorageClassStatistics statistics;
+    statistics.storageClassName = rset.columnString("STORAGE_CLASS_NAME");
+    statistics.nbMasterFiles = rset.columnUint64("NB_MASTER_FILES");
+    statistics.masterDataInBytes = rset.columnUint64("MASTER_DATA_IN_BYTES");
+
+    m_storageClassStatisticsByVid[vid].push_back(std::move(statistics));
+  }
+}
+
+//------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 RdbmsCatalogueGetTapesItor::RdbmsCatalogueGetTapesItor(log::Logger& log,
@@ -111,6 +162,9 @@ RdbmsCatalogueGetTapesItor::RdbmsCatalogueGetTapesItor(log::Logger& log,
       m_searchCriteria(searchCriteria),
       m_conn(std::move(conn)),
       m_splitByDiskFileId(searchCriteria.diskFileIds.has_value()) {
+  if (m_searchCriteria.includeStorageClassStatistics.value_or(false)) {
+    loadStorageClassStatistics();
+  }
   std::vector<common::dataStructures::Tape> tapes;
   std::string sql = R"SQL(
     SELECT
@@ -467,6 +521,11 @@ common::dataStructures::Tape RdbmsCatalogueGetTapesItor::next() {
   m_hasMoreHasBeenCalled = false;
 
   auto tape = populateTape(m_rset);
+
+  if (auto it = m_storageClassStatisticsByVid.find(tape.vid); it != m_storageClassStatisticsByVid.end()) {
+    tape.storageClassStatistics = std::move(it->second);
+  }
+
   m_rsetIsEmpty = !nextValidRset();
 
   if (m_splitByDiskFileId) {
