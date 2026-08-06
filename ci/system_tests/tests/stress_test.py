@@ -131,21 +131,27 @@ async def test_generate_and_copy_files(
     else:
         cta_cli.set_all_drives_up()
 
+    for subdir in range(stress_params.num_dirs):
+        eos_mgm.mkdir(test_dir / str(subdir))
+
     # Use persistent XRootD Python client for high throughput on many small files
     # The remote script (xrootd_archive.py) runs inside the client pod and uses
     # multiprocessing with persistent XRootD File objects
     # Start archive as async subprocess — allows us to await completion instead of polling PID
     timer_start = time.time()
-    archive_future = eos_client.archive_async(
-        eos_host=mgm_ip,
-        dest_dir=test_dir,
-        num_files=total_file_count,
-        num_dirs=stress_params.num_dirs,
-        num_procs=stress_params.io_threads,
-        file_size=stress_params.file_size,
-        batch_size=stress_params.batch_size,
-        write_files_in_chunks=stress_params.write_files_in_chunks,
+    archive_command = (
+        f"python3 -u /tmp/xrootd_archive.py "
+        f"--eos-host {mgm_ip} "
+        f"--dest-dir {test_dir} "
+        f"--num-files {total_file_count} "
+        f"--num-dirs {stress_params.num_dirs} "
+        f"--num-procs {stress_params.io_threads} "
+        f"--file-size {stress_params.file_size} "
+        f"--batch-size {stress_params.batch_size}"
     )
+    if stress_params.write_files_in_chunks:
+        archive_command += " --write-files-in-chunks"
+    archive_future = eos_client.exec_async(archive_command)
     print("Archive process started")
 
     # Track drives_up outside nested function so we can check it after task cancellation

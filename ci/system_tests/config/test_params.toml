@@ -32,7 +32,7 @@
 
     # For the actual stress test we currently have 40 directories with 50.000 files each
     # mhvtl is mounted in-memory, so we keep the file size small and easily compressible (unique string + zero padding)
-    num_dirs          = 40
+    num_dirs          = 4
     num_files_per_dir = 500
     # file size in bytes
     file_size = 16

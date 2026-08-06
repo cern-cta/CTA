@@ -54,33 +54,6 @@ class EosClientHost(DiskClientHost):
         except ValueError:
             return 0
 
-    def archive_async(
-        self,
-        eos_host: str,
-        dest_dir: Path,
-        num_files: int,
-        num_dirs: int,
-        num_procs: int,
-        *,
-        file_size: int = 512,
-        batch_size: int = 1000,
-        write_files_in_chunks: bool = False,
-    ) -> asyncio.Future[ExecResult]:
-        """Start archival asynchronously. Returns a future that can be awaited."""
-        cmd = (
-            f"python3 -u /tmp/xrootd_archive.py "
-            f"--eos-host {eos_host} "
-            f"--dest-dir {dest_dir} "
-            f"--num-files {num_files} "
-            f"--num-dirs {num_dirs} "
-            f"--num-procs {num_procs} "
-            f"--file-size {file_size} "
-            f"--batch-size {batch_size}"
-        )
-        if write_files_in_chunks:
-            cmd += " --write-files-in-chunks"
-        return self.exec_async(cmd)
-
     @override
     def archive_file(
         self,

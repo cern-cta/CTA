@@ -14,7 +14,6 @@ import argparse
 import multiprocessing as mp
 from multiprocessing.queues import JoinableQueue
 import os
-import subprocess
 import time
 from typing import Any
 
@@ -35,20 +34,6 @@ def parse_args() -> argparse.Namespace:
         help="Write large files in 1MB chunks (useful for large files, several MBs)",
     )
     return p.parse_args()
-
-
-def mkdir_dirs(eos_host: str, dest_dir: str, num_dirs: int) -> None:
-    """Create subdirectories under dest_dir."""
-    for i in range(num_dirs):
-        path = f"{dest_dir}/{i}"
-        subprocess.run(
-            ["eos", "-r", "0", "0", f"root://{eos_host}", "mkdir", "-p", path],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-            check=True,
-            # Specifically let the eos admin create the directories
-            env={**os.environ, "XrdSecPROTOCOL": "krb5", "KRB5CCNAME": "/tmp/eosadmin1/krb5cc_0"},
-        )
 
 
 HEADER_SIZE = 16  # 4 hex subdir + 8 hex file_num + 4 zeros
@@ -87,7 +72,7 @@ def worker(
             dest_url = f"root://{eos_host}/{dest_dir}/{subdir}/test{file_num:07d}"
 
             f = client.File()
-            st, _ = f.open(dest_url, OpenFlags.NEW | OpenFlags.WRITE, 0o644)
+            st, _ = f.open(dest_url, OpenFlags.DELETE | OpenFlags.WRITE, 0o644)
             if not st.ok:
                 if err_budget > 0:
                     print(f"[worker {wid}] open failed: {dest_url} :: {st}", flush=True)
@@ -145,8 +130,6 @@ def main() -> None:
     )
     print(f"  dest: {args.dest_dir}", flush=True)
 
-    # Create subdirectories
-    mkdir_dirs(args.eos_host, args.dest_dir, args.num_dirs)
     if args.file_size < HEADER_SIZE:
         raise ValueError(f"File size must be >= {HEADER_SIZE} bytes")
 
