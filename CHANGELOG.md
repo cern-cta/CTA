@@ -19,6 +19,49 @@
 
 - [Misc] Update required runtime version of opentelemetry-cpp to v1.26.0 (cta/CTA!1370)
 
+## 5.11.18.1-1 (2026-08-06)
+
+### New Features
+
+- [Misc] Add event_name to important CTA log messages (cta/CTA!1381)
+
+
+### Changes
+
+- [taped] Taped no longer sets its own user, group and SYS_RAWIO capability (cta/CTA!1426)
+
+- [taped] cta-eosdf no longer sources sysconfig (cta/CTA!1455)
+
+- [Tools] Change short option for cta-admin af ch --idfile from -I to -F (cta/CTA!1453)
+
+- [CI] Replace ctageneric with immutable service-specific Docker images (cta/CTA!1225)
+
+- [frontend] Split Admin/WFE frontends, add mTLS (cta/CTA!1367)
+
+
+### Bug Fixes
+
+- [frontend] Fix frontend catalogue cache for mount rules (cta/CTA!1490)
+
+- [frontend] PREPARE gRPC request shouldn't fail without a storage class (cta/CTA!1471)
+
+- [scheduler] Fix pg scheduler backend repack status machine and norecall...
+
+
+### Deprecations
+
+- [frontend] Deprecate storage class field in EOS-CTA xattrs (cta/CTA!1424)
+
+
+### Removals
+
+- [CI] Remove XRootD frontend from Helm charts (cta/CTA!1432)
+
+
+### Other
+
+- [CI] Add Enstore and EnstoreLarge tape tests (cta/CTA!1412)
+
 ## 5.11.18.0-1
 
 ### New Features
