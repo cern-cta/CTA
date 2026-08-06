@@ -22,7 +22,7 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Archive files via persistent XRootD client")
     p.add_argument("--eos-host", required=True, help="EOS MGM hostname (e.g. ctaeos)")
     p.add_argument("--dest-dir", required=True, help="EOS destination directory (e.g. /eos/ctaeos/cta/stress)")
-    p.add_argument("--num-files", type=int, required=True, help="Total number of files to create")
+    p.add_argument("--num-files-per-dir", type=int, required=True, help="Number of files per directory")
     p.add_argument("--num-dirs", type=int, default=10, help="Number of subdirectories")
     p.add_argument("--num-procs", type=int, default=8, help="Number of parallel worker processes")
     p.add_argument("--file-size", type=int, default=512, help="File size in bytes")
@@ -72,7 +72,7 @@ def worker(
             dest_url = f"root://{eos_host}/{dest_dir}/{subdir}/test{file_num:07d}"
 
             f = client.File()
-            st, _ = f.open(dest_url, OpenFlags.DELETE | OpenFlags.WRITE, 0o644)
+            st, _ = f.open(dest_url, OpenFlags.NEW | OpenFlags.WRITE, 0o644)
             if not st.ok:
                 if err_budget > 0:
                     print(f"[worker {wid}] open failed: {dest_url} :: {st}", flush=True)
@@ -124,8 +124,10 @@ def worker(
 def main() -> None:
     args = parse_args()
 
+    total_file_count: int = args.num_files_per_dir * args.num_dirs
     print(
-        f"xrootd_archive: {args.num_files} files, {args.num_dirs} dirs, {args.num_procs} procs, {args.file_size}B each",
+        f"xrootd_archive: {args.num_files_per_dir} files per dir, {args.num_dirs} dirs, "
+        f"{total_file_count} total files, {args.num_procs} procs, {args.file_size}B each",
         flush=True,
     )
     print(f"  dest: {args.dest_dir}", flush=True)
@@ -142,7 +144,6 @@ def main() -> None:
     #
     # Match the established xrdcp archival path: write files as user1 via Kerberos.
     os.environ["KRB5CCNAME"] = "/tmp/user1/krb5cc_0"
-    os.environ["XrdSecPROTOCOL"] = "krb5"  # noqa: SIM112 - XRootD requires this exact mixed-case name
 
     # Launch workers
     work_q = mp.JoinableQueue()
@@ -164,13 +165,13 @@ def main() -> None:
         p.start()
         procs.append(p)
 
-    t0 = time.time()
+    before = time.time()
 
     # Enqueue work in batches to reduce queue contention
     # Instead of 50M individual items, enqueue 50K batches of 1000
     batch_size = args.batch_size
-    for start in range(0, args.num_files, batch_size):
-        end = min(start + batch_size, args.num_files)
+    for start in range(0, total_file_count, batch_size):
+        end = min(start + batch_size, total_file_count)
         work_q.put((start, end))
 
     # Send stop sentinels
@@ -179,10 +180,10 @@ def main() -> None:
 
     # Wait for completion
     work_q.join()
-    elapsed = time.time() - t0
-    rate = args.num_files / max(elapsed, 0.001)
+    elapsed = time.time() - before
+    rate = total_file_count / max(elapsed, 0.001)
 
-    print(f"Archive done: {args.num_files} files in {elapsed:.1f}s ({rate:.1f} files/s)", flush=True)
+    print(f"Archive done: {total_file_count} files in {elapsed:.1f}s ({rate:.1f} files/s)", flush=True)
 
 
 if __name__ == "__main__":

@@ -78,14 +78,6 @@ def stress_params(test_config: TestConfig) -> StressParams:
 # =========================================================================
 
 
-def test_setup_client(eos_client: EosClientHost) -> None:
-    """Copy deploy scripts to the client pod."""
-    script_dir = Path(__file__).parent / "remote_scripts" / "eos_client"
-    eos_client.copy_to(script_dir / "xrootd_archive.py", Path("/tmp/xrootd_archive.py"))
-    eos_client.copy_to(script_dir / "count_files.py", Path("/tmp/count_files.py"))
-    eos_client.copy_to(script_dir / "xrootd_retrieve.py", Path("/tmp/xrootd_retrieve.py"))
-
-
 def test_update_setup_for_max_powerrrr(env: TestEnv, cta_cli: CtaCliHost, eos_mgm: EosMgmHost) -> None:
     num_drives: int = len(env.cta_taped)
     cta_cli.exec(f"cta-admin vo ch --vo vo --writemaxdrives {num_drives} --readmaxdrives {num_drives}")
@@ -107,8 +99,15 @@ def test_update_setup_for_max_powerrrr(env: TestEnv, cta_cli: CtaCliHost, eos_mg
 
 @pytest.mark.asyncio
 async def test_generate_and_copy_files(
-    cta_cli: CtaCliHost, eos_client: EosClientHost, eos_mgm: EosMgmHost, stress_params: StressParams, test_dir: Path
+    cta_cli: CtaCliHost,
+    eos_client: EosClientHost,
+    eos_mgm: EosMgmHost,
+    stress_params: StressParams,
+    test_dir: Path,
+    remote_scripts_dir: Path,
 ) -> None:
+    eos_client.copy_to(remote_scripts_dir / "eos_client" / "xrootd_archive.py", Path("/tmp/xrootd_archive.py"))
+    eos_client.copy_to(remote_scripts_dir / "eos_client" / "count_files.py", Path("/tmp/count_files.py"))
     # Get the IP of EOS MGM pod and use instead of disk instance name to save DNS lookups
     mgm_ip = eos_mgm.get_ip()
     total_file_count = stress_params.num_files_per_dir * stress_params.num_dirs
@@ -119,6 +118,7 @@ async def test_generate_and_copy_files(
     print(f"\tTotal files: {total_file_count}")
     print(f"\tFile size: {stress_params.file_size}")
     print(f"\tIO threads: {stress_params.io_threads}")
+    print(f"\tBatch size: {stress_params.batch_size}")
     print(f"\tWrite files in chunks: {stress_params.write_files_in_chunks}")
     print(f"\tPrequeueing: {stress_params.prequeue.enabled}")
     print(f"\tNumber of files to put drives up: {stress_params.prequeue.num_files_to_put_drives_up}")
@@ -143,7 +143,7 @@ async def test_generate_and_copy_files(
         f"python3 -u /tmp/xrootd_archive.py "
         f"--eos-host {mgm_ip} "
         f"--dest-dir {test_dir} "
-        f"--num-files {total_file_count} "
+        f"--num-files-per-dir {stress_params.num_files_per_dir} "
         f"--num-dirs {stress_params.num_dirs} "
         f"--num-procs {stress_params.io_threads} "
         f"--file-size {stress_params.file_size} "
@@ -267,8 +267,14 @@ def test_kinit_poweruser(eos_client: EosClientHost, krb5_realm: str) -> None:
 
 @pytest.mark.asyncio
 async def test_request_files_for_retrieve(
-    cta_cli: CtaCliHost, eos_client: EosClientHost, eos_mgm: EosMgmHost, stress_params: StressParams, test_dir: Path
+    cta_cli: CtaCliHost,
+    eos_client: EosClientHost,
+    eos_mgm: EosMgmHost,
+    stress_params: StressParams,
+    test_dir: Path,
+    remote_scripts_dir: Path,
 ) -> None:
+    eos_client.copy_to(remote_scripts_dir / "eos_client" / "xrootd_retrieve.py", Path("/tmp/xrootd_retrieve.py"))
     archive_directory = test_dir
     mgm_ip = eos_mgm.get_ip()
 
