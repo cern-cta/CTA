@@ -7,7 +7,6 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueItor.hpp"
-#include "catalogue/DriveConfig.hpp"
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "catalogue/TapePool.hpp"
 #include "common/Constants.hpp"
@@ -1049,15 +1048,31 @@ void Scheduler::removeDrive(const std::string& driveName, log::LogContext& lc) c
 }
 
 //------------------------------------------------------------------------------
-// reportDriveConfig
+// reportSchedulerBackendName
 //------------------------------------------------------------------------------
-void Scheduler::reportDriveConfig(const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc) {
+void Scheduler::reportSchedulerBackendName(const std::string& driveName, log::LogContext& lc) {
   utils::Timer t;
-  DriveConfig::setTapedConfiguration(tapedConfig, &m_catalogue, tapedConfig.driveName.value());
+  // Temporary for backward compatibility. Should be removed in the next catalogue upgrade as it should be a dedicated column
+  // in the drive state table
+  constexpr const char* schedulerBackendNameKey = "SchedulerBackendName";
+  auto driveConfig = m_catalogue.DriveConfig()->getTapeDriveConfig(driveName, schedulerBackendNameKey);
+  if (driveConfig) {
+    m_catalogue.DriveConfig()->modifyTapeDriveConfig(driveName,
+                                                     "general",
+                                                     schedulerBackendNameKey,
+                                                     m_schedulerBackendName,
+                                                     "TOML config file");
+  } else {
+    m_catalogue.DriveConfig()->createTapeDriveConfig(driveName,
+                                                     "general",
+                                                     schedulerBackendNameKey,
+                                                     m_schedulerBackendName,
+                                                     "TOML config file");
+  }
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
-  spc.add("drive", tapedConfig.driveName.value()).add("schedulerDbTime", schedulerDbTime);
-  lc.log(log::INFO, "In Scheduler::reportDriveConfig(): success.");
+  spc.add("drive", driveName).add("schedulerDbTime", schedulerDbTime);
+  lc.log(log::INFO, "In Scheduler::reportSchedulerBackendName(): success.");
 }
 
 //------------------------------------------------------------------------------

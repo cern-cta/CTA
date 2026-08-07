@@ -105,8 +105,7 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
                                         lc);
 
           // We wait a bit before polling the scheduler again.
-          // TODO: parametrize the duration?
-          sleep(5);
+          sleep(m_dataTransferConfig.driveStatePollIntervalSecs);
         } else {
           lc.log(cta::log::DEBUG, "Desired drive state is UP.");
           break;

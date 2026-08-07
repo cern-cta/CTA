@@ -30,14 +30,15 @@ frontend-wfe:
       logLevel: "WARNING"
 
 taped:
-  conf:
-    taped:
-      # Keep enough files in flight to support the larger scheduler/reporting batches below.
-      bufferCount: 10000
-      # Avoid verbose tape-operation logs dominating the small-file workload.
-      logMask: "WARNING"
-      # Bound per-tape-daemon database concurrency; total connections scale with the drive count.
-      schedulerNumberOfConnections: 3
+  transfers:
+    # Keep enough files in flight to support the larger scheduler/reporting batches below.
+    bufferCount: 10000
+  logging:
+  # Avoid verbose tape-operation logs dominating the small-file workload.
+    level: "WARNING"
+  scheduler:
+    # Bound per-tape-daemon database concurrency; total connections scale with the drive count.
+    numberOfConnections: 3
 
 maintd:
   logging:

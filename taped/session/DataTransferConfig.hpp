@@ -125,6 +125,11 @@ struct DataTransferConfig {
   time_t wdIdleSessionTimer = 10;
 
   /**
+   * Time to wait before polling the desired drive state again while the drive is down
+   */
+  uint32_t driveStatePollIntervalSecs = 5;
+
+  /**
    * Timeout after which the tape server stops trying to get the next mount
    */
   time_t wdGetNextMountMaxSecs = 900;

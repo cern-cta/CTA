@@ -25,7 +25,7 @@
       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+-]\\d{4}$"
     },
     "log_schema_version": {
-      "const": "0.2.0",
+      "const": "0.3.0",
       "description": "Version identifier of the log schema."
     },
     "cta_version": {
@@ -80,6 +80,11 @@
       "type": "string",
       "description": "Human-readable log message describing the event."
     },
+    "drive_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "CTA name of the tape drive associated with the service instance."
+    },
     "event_name": {
       "type": "string",
       "enum": [
@@ -94,6 +99,23 @@
   },
   "additionalProperties": true,
   "allOf": [
+    {
+      "if": {
+        "properties": {
+          "program": {
+            "const": "cta-taped"
+          }
+        },
+        "required": [
+          "program"
+        ]
+      },
+      "then": {
+        "required": [
+          "drive_name"
+        ]
+      }
+    },
     {
       "if": {
         "properties": {
