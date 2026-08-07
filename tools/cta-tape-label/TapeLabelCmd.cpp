@@ -15,6 +15,7 @@
 #include "mediachanger/LibrarySlotParser.hpp"
 #include "rdbms/Login.hpp"
 #include "taped/TapedConfig.hpp"
+#include "taped/TapedUtils.hpp"
 #include "taped/file/Exceptions.hpp"
 #include "taped/file/HeaderChecker.hpp"
 #include "taped/file/LabelSession.hpp"

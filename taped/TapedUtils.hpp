@@ -19,7 +19,7 @@
 
 namespace cta::taped::utils {
 
-std::vector<std::string> getTapedConfigPaths() {
+inline std::vector<std::string> getTapedConfigPaths() {
   const std::regex configPattern("cta-taped.*\\.toml");
   std::vector<std::string> configPaths;
 
@@ -34,7 +34,8 @@ std::vector<std::string> getTapedConfigPaths() {
   return configPaths;
 }
 
-std::string constructProcessName(const std::string& driveName, const std::string& postfix, cta::log::LogContext& lc) {
+inline std::string
+constructProcessName(const std::string& driveName, const std::string& postfix, cta::log::LogContext& lc) {
   // Max len is 16 for a process name, but we remove 1 for the null terminator and 1 for the hyphen
   // Postfix can be maximum 6 characters (enough for "parent")
   // That leaves 16 - 1 - 1 - 6 = 8 characters for the drive name
@@ -72,7 +73,7 @@ std::string constructProcessName(const std::string& driveName, const std::string
   return shortName + "-" + px;
 }
 
-std::string getFirstTapedConfigPath(const std::optional<std::string>& driveName) {
+inline std::string getFirstTapedConfigPath(const std::optional<std::string>& driveName) {
   if (driveName) {
     // Try exact match.
     std::string tapedConfigFile = "/etc/cta/cta-taped-" + driveName.value() + ".toml";

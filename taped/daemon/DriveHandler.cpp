@@ -17,6 +17,7 @@
 #include "common/telemetry/TelemetryInit.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/Login.hpp"
+#include "taped/TapedUtils.hpp"
 #include "taped/session/CleanerSession.hpp"
 #include "taped/session/DataTransferSession.hpp"
 #include "taped/session/DriveSessionTracker.hpp"
@@ -615,7 +616,7 @@ int DriveHandler::runChild() {
   // schedule itself info an empty drive probe, archive, retrieve or label session.
 
   // Set the process name for process ID:
-  const auto processName = taped::utils::constructProcessName(m_tapedConfig.drive.name, "drive", m_lc);
+  const auto processName = cta::taped::utils::constructProcessName(m_tapedConfig.drive.name, "drive", m_lc);
   prctl(PR_SET_NAME, processName.c_str());
 
   // Initialise telemetry only after the process name is available

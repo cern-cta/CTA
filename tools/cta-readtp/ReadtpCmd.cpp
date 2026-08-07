@@ -22,6 +22,7 @@
 #include "rdbms/Login.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "taped/TapedConfig.hpp"
+#include "taped/TapedUtils.hpp"
 #include "taped/file/FileReaderFactory.hpp"
 #include "taped/file/ReadSession.hpp"
 #include "taped/file/ReadSessionFactory.hpp"
