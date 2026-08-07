@@ -36,7 +36,6 @@
 #include "scheduler/RepackRequest.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
-#include "taped/daemon/common/TapedConfiguration.hpp"
 
 #include <chrono>
 #include <future>
@@ -96,12 +95,9 @@ public:
   void ping(log::LogContext& lc) override;
 
   /**
-   * Get scheduler backend instance name
-   * passed to m_schedulerBackendName via init method from
-   * "cta.scheduler_backend_name" frontend
-   * or "general SchedulerBackendName" taped configuration file
+   * Get the configured scheduler backend instance name.
    *
-   * @return name of the scheduler backend instance name specified by the operator in the cfg file
+   * @return Scheduler backend instance name.
    */
   const std::string& getSchedulerBackendName() const { return m_schedulerBackendName; }
 
@@ -261,10 +257,10 @@ public:
                              log::LogContext& lc) override;
 
   /**
-   * Reports the configuration of the drive to the objectstore.
-   * @param tapedConfig the config of the drive to report to the objectstore.
+   * Reports the scheduler backend name for the drive to the catalogue.
+   * @param tapeDriveName The name of the drive to update.
    */
-  void reportDriveConfig(const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc) override;
+  void reportSchedulerBackendName(const std::string& driveName, log::LogContext& lc) override;
 
   /**
    * Returns the status of a specific drive

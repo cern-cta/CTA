@@ -38,17 +38,39 @@ spec:
         runAsGroup: 33 # tape
         fsGroup: 33
       containers:
-      - name: "cta-taped"
+      - name: cta-taped
         image: {{ include "taped.image" $ }}
         imagePullPolicy: {{ include "taped.imagePullPolicy" $ }}
+        stdin: true
+        command: ["/scripts/taped.sh"]
+        # Can be enabled once forking process is removed
+        # startupProbe:
+        #   httpGet:
+        #     path: /health/ready
+        #     port: 8080
+        #   initialDelaySeconds: 0
+        #   periodSeconds: 1
+        #   failureThreshold: 60
+        # readinessProbe:
+        #   httpGet:
+        #     path: /health/ready
+        #     port: 8080
+        #   initialDelaySeconds: 0
+        #   periodSeconds: 5
+        #   failureThreshold: 2
+        # livenessProbe:
+        #   httpGet:
+        #     path: /health/live
+        #     port: 8080
+        #   initialDelaySeconds: 5
+        #   periodSeconds: 60
+        #   failureThreshold: 100 # For now we don't want the pod to restart in CI
         securityContext:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" $ }}
           privileged: {{ include "common.securityContext.privileged" $ }}
           capabilities:
             add:
               - SYS_RAWIO
-        command: ["/scripts/taped.sh"]
-        stdin: true
         env:
         - name: MY_NAME
           value: {{ $tapedName }}
@@ -70,10 +92,6 @@ spec:
           value: {{ .controlPath }}
         - name: SCHEDULER_BACKEND
           value: {{ $schedulerConfig.backend | quote }}
-        - name: XrdSecPROTOCOL
-          value: sss
-        - name: XrdSecSSSKT
-          value: /etc/cta/cta-taped.sss.keytab.grp
         {{- with $.Values.extraEnv }}
         {{- include "common.extraEnv" . | nindent 8 }}
         {{- end }}
@@ -81,8 +99,8 @@ spec:
         - name: scripts-volume
           mountPath: /scripts
         - name: cta-taped-config
-          mountPath: /etc/cta/cta-taped.conf
-          subPath: cta-taped.conf
+          mountPath: /etc/cta/cta-taped.toml
+          subPath: cta-taped.toml
         - name: catalogue-config
           mountPath: /etc/cta/cta-catalogue.conf
           subPath: cta-catalogue.conf
@@ -104,11 +122,9 @@ spec:
         - name: vfs-storage-volume
           mountPath: /objectstore
         {{- end }}
-        {{- if $.Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
-        - name: otlp-basic-auth-pwd
-          mountPath: /etc/cta/otlp-basic-auth-pwd.conf
-          subPath: otlp-basic-auth-pwd.conf
-        {{- end }}
+        - name: opentelemetry-config
+          mountPath: /etc/cta/cta-otel.yaml
+          subPath: cta-otel.yaml
         - name: log-dir
           mountPath: /var/log/cta
         {{ include "common.extraVolumeMounts" $ | nindent 8 }}
@@ -140,11 +156,9 @@ spec:
         secret:
           secretName: {{ $.Values.keytab.secretName }}
           defaultMode: 0400
-      {{- if $.Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
-      - name: otlp-basic-auth-pwd
-        secret:
-          secretName: {{ $.Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
-      {{- end }}
+      - name: opentelemetry-config
+        configMap:
+          name: cta-taped-otel-conf
       - name: log-dir
         emptyDir: {}
       {{ include "common.extraVolumes" $ | nindent 6 }}

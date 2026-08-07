@@ -5,5 +5,4 @@ usr/bin/cta-taped
 usr/lib/systemd/system/cta-taped.service
 usr/share/man/man1/cta-taped.1
 etc/logrotate.d/cta-taped
-etc/default/cta-taped
-usr/share/doc/cta-taped/examples/cta-taped.example.conf
+usr/share/doc/cta/cta-taped.example.toml

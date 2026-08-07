@@ -22,7 +22,8 @@ class TestRuntimeDeployment:
     @pytest.mark.parametrize(
         ("daemon_fixture", "expected_config_files"),
         [
-            pytest.param("cta_maintd", ("catalogue", "telemetry"), id="maintd"),
+            pytest.param("cta_maintd", ("catalogue", "scheduler", "telemetry"), id="maintd"),
+            pytest.param("cta_taped", ("catalogue", "scheduler", "telemetry"), id="taped"),
             pytest.param("cta_rmcd", (), id="rmcd"),
         ],
     )
@@ -31,7 +32,6 @@ class TestRuntimeDeployment:
         request: SubRequest,
         daemon_fixture: str,
         expected_config_files: tuple[str, ...],
-        postgres_scheduler_enabled: bool,
     ) -> None:
         # Compare deployed inputs with their runtime copies and verify the generated service metadata
         daemon = request.getfixturevalue(daemon_fixture)
@@ -54,8 +54,6 @@ class TestRuntimeDeployment:
             "telemetry": ("/etc/cta/cta-otel.yaml", "/run/cta/telemetry.config_file"),
         }
         files_to_check = list(expected_config_files)
-        if daemon_fixture == "cta_maintd" and postgres_scheduler_enabled:
-            files_to_check.append("scheduler")
 
         # Now compare
         for config_name in files_to_check:

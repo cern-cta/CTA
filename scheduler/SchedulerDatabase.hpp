@@ -34,7 +34,6 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/Rset.hpp"
 #include "scheduler/TapeMount.hpp"
-#include "taped/daemon/common/TapedConfiguration.hpp"
 
 #include <limits>
 #include <list>
