@@ -44,6 +44,7 @@ TEST(cta_Daemon, TapedConfigurationFull) {
                               "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
                               "taped CatalogueConfigFile /etc/cta/catalog.conf\n"
                               "taped ArchiveFetchBytesFiles 1,2\n"
+                              "taped ArchiveDismountPolicy 300, 5, 35, 75\n"
                               "taped ArchiveFlushBytesFiles              3 , 4 \n"
                               "taped RetrieveFetchBytesFiles  5,   6\n"
                               "taped BufferCount 1  \n"
@@ -67,6 +68,10 @@ TEST(cta_Daemon, TapedConfigurationFull) {
   ASSERT_EQ("/etc/cta/catalog.conf", completeConfig.fileCatalogConfigFile.value());
   ASSERT_EQ(1, completeConfig.archiveFetchBytesFiles.value().maxBytes);
   ASSERT_EQ(2, completeConfig.archiveFetchBytesFiles.value().maxFiles);
+  ASSERT_EQ(300, completeConfig.archiveDismountPolicy.value().underfillWatchPeriodSecs);
+  ASSERT_EQ(5, completeConfig.archiveDismountPolicy.value().underfillMinSamples);
+  ASSERT_EQ(35, completeConfig.archiveDismountPolicy.value().underfillStartThreshold);
+  ASSERT_EQ(75, completeConfig.archiveDismountPolicy.value().underfillRecoveryThreshold);
   ASSERT_EQ(3, completeConfig.archiveFlushBytesFiles.value().maxBytes);
   ASSERT_EQ(4, completeConfig.archiveFlushBytesFiles.value().maxFiles);
   ASSERT_EQ(5, completeConfig.retrieveFetchBytesFiles.value().maxBytes);

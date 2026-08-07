@@ -10,7 +10,9 @@
 #include "MigrationMemoryManager.hpp"
 #include "TapeWriteSingleThread.hpp"
 #include "TapeWriteTask.hpp"
+#include "common/dataStructures/ArchiveDismountPolicy.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/utils/Timer.hpp"
 #include "scheduler/ArchiveMount.hpp"
 
 namespace cta::tape::daemon {
@@ -41,6 +43,7 @@ public:
                         cta::ArchiveMount& archiveMount,
                         uint64_t maxFiles,
                         uint64_t byteSizeThreshold,
+                        const cta::common::dataStructures::ArchiveDismountPolicy& unmountPolicy,
                         const cta::log::LogContext& lc);
 
   /**
@@ -148,6 +151,47 @@ private:
     const bool end;
   };
 
+  /**
+   * Calculate a bounded fill ratio.
+   *
+   * @return A value in the range [0.0, 1.0].
+   */
+  static double calculateFillRatio(uint64_t fetched, uint64_t requested);
+
+  /**
+   * Update the underfill observation state.
+   *
+   * Effective fill is:
+   *
+   *   max(filesFetched / filesRequested,
+   *       bytesFetched / bytesRequested)
+   *
+   * The method uses hysteresis:
+   *
+   * - underfill observation starts below m_underfillStartThreshold;
+   * - observation ends at or above m_underfillRecoveryThreshold;
+   * - values between the two thresholds preserve the current state.
+   *
+   * @return True if the tape should get unmounted.
+   */
+  bool shouldDismountForUnderfill(uint64_t filesFetched, uint64_t bytesFetched, const Request& request);
+
+  /**
+   * Timer for the active underfill observation period.
+   *
+   */
+  utils::Timer m_underfillTimer;
+  /**
+   * Informative flag telling is the underfill observation timer is active.
+   */
+  bool m_underfillActive = false;
+
+  /**
+   * Number of responses observed during the active underfill period that did
+   * not reach the recovery threshold.
+   */
+  uint64_t m_underfillSamples = 0;
+
   class WorkerThread : public cta::threading::Thread {
   public:
     explicit WorkerThread(MigrationTaskInjector& rji) : m_parent(rji) {}
@@ -172,11 +216,6 @@ private:
   /// the client who is sending us jobs
   cta::ArchiveMount& m_archiveMount;
 
-  /**
-   * utility member to log some pieces of information
-   */
-  cta::log::LogContext m_lc;
-
   cta::threading::Mutex m_producerProtection;
 
   ///all the requests for work we will forward to the client.
@@ -193,6 +232,16 @@ private:
 
   /// Same as m_maxFilesReq for size per request. (in bytes))
   const uint64_t m_maxBytes;
+
+  /**
+   * Unmount policy controlling dismounts caused by low backlog to efficiently use the drive
+   */
+  const cta::common::dataStructures::ArchiveDismountPolicy& m_unmountPolicy;
+
+  /**
+   * utility member to log some pieces of information
+   */
+  cta::log::LogContext m_lc;
 
   /**The last fseq used on the tape. We should not see this but
    * IT is computed by subtracting 1 to fSeg  of the first file to migrate we

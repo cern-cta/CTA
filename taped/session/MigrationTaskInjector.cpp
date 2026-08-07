@@ -23,15 +23,17 @@ MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager& mm,
                                              cta::ArchiveMount& archiveMount,
                                              uint64_t maxFiles,
                                              uint64_t byteSizeThreshold,
+                                             const cta::common::dataStructures::ArchiveDismountPolicy& unmountPolicy,
                                              const cta::log::LogContext& lc)
     : m_thread(*this),
       m_memManager(mm),
       m_tapeWriter(tapeWriter),
       m_diskReader(diskReader),
       m_archiveMount(archiveMount),
-      m_lc(lc),
       m_maxFiles(maxFiles),
-      m_maxBytes(byteSizeThreshold) {}
+      m_maxBytes(byteSizeThreshold),
+      m_unmountPolicy(unmountPolicy),
+      m_lc(lc) {}
 
 //------------------------------------------------------------------------------
 //injectBulkMigrations
@@ -145,6 +147,178 @@ void MigrationTaskInjector::signalEndDataMovement() {
   m_memManager.finish();
 }
 
+double MigrationTaskInjector::calculateFillRatio(const uint64_t fetched, const uint64_t requested) {
+  if (requested == 0) {
+    return 0.0;
+  }
+
+  const double ratio = static_cast<double>(fetched) / static_cast<double>(requested);
+
+  return std::min(1.0, ratio);
+}
+
+bool MigrationTaskInjector::shouldDismountForUnderfill(const uint64_t filesFetched,
+                                                       const uint64_t bytesFetched,
+                                                       const Request& request) {
+  /*
+   * The queue-end sentinel is not a backend response and must not affect
+   * underfill statistics.
+   */
+  if (request.end) {
+    return false;
+  }
+
+  /*
+   * A request without either limit cannot produce a meaningful fill ratio.
+   * Do not turn such a malformed request into a dismount decision.
+   */
+  if (request.filesRequested == 0 && request.bytesRequested == 0) {
+    cta::log::ScopedParamContainer params(m_lc);
+
+    params.add("filesFetched", filesFetched).add("bytesFetched", bytesFetched);
+
+    params.log(cta::log::WARNING,
+               "Migration request has both file and byte limits set to zero. "
+               "Skipping underfill evaluation.");
+
+    return false;
+  }
+
+  const double fileFillRatio = calculateFillRatio(filesFetched, request.filesRequested);
+
+  const double byteFillRatio = calculateFillRatio(bytesFetched, request.bytesRequested);
+
+  /*
+   * Either the file limit or the byte limit can constrain the batch.
+   * Using the maximum correctly considers:
+   * - a small number of large files; and
+   * - a large number of small files.
+   */
+  const double effectiveFillRatio = std::max(fileFillRatio, byteFillRatio);
+
+  /*
+   * No underfill period is active.
+   */
+  if (!m_underfillActive) {
+    if (effectiveFillRatio >= m_unmountPolicy.underfillStartThreshold / 100.) {
+      cta::log::ScopedParamContainer params(m_lc);
+
+      params.add("filesRequested", request.filesRequested)
+        .add("bytesRequested", request.bytesRequested)
+        .add("filesFetched", filesFetched)
+        .add("bytesFetched", bytesFetched)
+        .add("fileFillPercentage", fileFillRatio * 100.0)
+        .add("byteFillPercentage", byteFillRatio * 100.0)
+        .add("effectiveFillPercentage", effectiveFillRatio * 100.0)
+        .add("underfillStartPercentage", m_unmountPolicy.underfillStartThreshold);
+
+      params.log(cta::log::DEBUG, "Migration response did not start an underfill observation period.");
+
+      return false;
+    }
+
+    m_underfillTimer.reset();
+    m_underfillActive = true;
+    m_underfillSamples = 1;
+
+    cta::log::ScopedParamContainer params(m_lc);
+
+    params.add("filesRequested", request.filesRequested)
+      .add("bytesRequested", request.bytesRequested)
+      .add("filesFetched", filesFetched)
+      .add("bytesFetched", bytesFetched)
+      .add("fileFillPercentage", fileFillRatio * 100.0)
+      .add("byteFillPercentage", byteFillRatio * 100.0)
+      .add("effectiveFillPercentage", effectiveFillRatio * 100.0)
+      .add("underfillStartPercentage", m_unmountPolicy.underfillStartThreshold)
+      .add("underfillSamples", m_underfillSamples);
+
+    params.log(cta::log::INFO, "Started migration-response underfill observation period.");
+
+    return false;
+  }
+
+  /*
+   * An underfill period is active. A response at or above the recovery
+   * threshold ends the observation period.
+   */
+  if (effectiveFillRatio >= m_unmountPolicy.underfillRecoveryThreshold / 100.) {
+    const double underfillDurationSeconds = m_underfillTimer.secs();
+
+    cta::log::ScopedParamContainer params(m_lc);
+
+    params.add("filesRequested", request.filesRequested)
+      .add("bytesRequested", request.bytesRequested)
+      .add("filesFetched", filesFetched)
+      .add("bytesFetched", bytesFetched)
+      .add("fileFillPercentage", fileFillRatio * 100.0)
+      .add("byteFillPercentage", byteFillRatio * 100.0)
+      .add("effectiveFillPercentage", effectiveFillRatio * 100.0)
+      .add("underfillRecoveryPercentage", m_unmountPolicy.underfillRecoveryThreshold)
+      .add("underfillSamples", m_underfillSamples)
+      .add("underfillDurationSeconds", underfillDurationSeconds);
+
+    params.log(cta::log::INFO, "Migration responses recovered from the active underfill period.");
+
+    /*
+     * Marking underfill as inactive and reseting the timer.
+     */
+    m_underfillTimer.reset();
+    m_underfillActive = false;
+    m_underfillSamples = 0;
+
+    return false;
+  }
+
+  /*
+   * The response did not reach the recovery threshold.
+   *
+   * This includes responses:
+   * - below the start threshold; and
+   * - in the hysteresis range between the start and recovery thresholds.
+   */
+  if (m_underfillSamples < std::numeric_limits<uint64_t>::max()) {
+    ++m_underfillSamples;
+  }
+
+  const double underfillDurationSeconds = m_underfillTimer.secs();
+
+  const bool durationExpired = underfillDurationSeconds >= m_unmountPolicy.underfillWatchPeriodSecs;
+
+  const bool enoughSamples = m_underfillSamples >= m_unmountPolicy.underfillMinSamples;
+
+  cta::log::ScopedParamContainer params(m_lc);
+
+  params.add("filesRequested", request.filesRequested)
+    .add("bytesRequested", request.bytesRequested)
+    .add("filesFetched", filesFetched)
+    .add("bytesFetched", bytesFetched)
+    .add("fileFillPercentage", fileFillRatio * 100.0)
+    .add("byteFillPercentage", byteFillRatio * 100.0)
+    .add("effectiveFillPercentage", effectiveFillRatio * 100.0)
+    .add("underfillRecoveryPercentage", m_unmountPolicy.underfillRecoveryThreshold)
+    .add("underfillSamples", m_underfillSamples)
+    .add("minimumUnderfillSamples", m_unmountPolicy.underfillMinSamples)
+    .add("underfillDurationSeconds", underfillDurationSeconds)
+    .add("underfillWatchPeriodSeconds", m_unmountPolicy.underfillWatchPeriodSecs);
+
+  if (durationExpired && enoughSamples) {
+    params.log(cta::log::INFO,
+               "Migration responses remained underfilled for the configured duration "
+               "and minimum sample count. Triggering the end of the tape session.");
+    m_underfillTimer.reset();
+    m_underfillActive = false;
+    m_underfillSamples = 0;
+    return true;
+  }
+
+  params.log(cta::log::DEBUG,
+             "Migration response remains underfilled, but the dismount conditions "
+             "have not both been reached.");
+
+  return false;
+}
+
 //------------------------------------------------------------------------------
 //WorkerThread::run
 //------------------------------------------------------------------------------
@@ -160,10 +334,10 @@ void MigrationTaskInjector::WorkerThread::run() {
       m_parent.m_lc.log(cta::log::DEBUG,
                         "MigrationTaskInjector::WorkerThread::run(): Trying to get jobs from archive mount");
       auto jobs = m_parent.m_archiveMount.getNextJobBatch(req.filesRequested, req.bytesRequested, m_parent.m_lc);
-      uint64_t files = jobs.size();
-      uint64_t bytes = 0;
+      uint64_t filesFetched = jobs.size();
+      uint64_t bytesFetched = 0;
       for (auto& j : jobs) {
-        bytes += j->archiveFile.fileSize;
+        bytesFetched += j->archiveFile.fileSize;
       }
       if (jobs.empty()) {
         m_parent.m_lc.log(cta::log::DEBUG, "MigrationTaskInjector::WorkerThread::run(): No jobs were found");
@@ -179,21 +353,36 @@ void MigrationTaskInjector::WorkerThread::run() {
         m_parent.m_lc.log(cta::log::DEBUG, "MigrationTaskInjector::WorkerThread::run(): injectBulkMigrations");
         // Inject the tasks
         m_parent.injectBulkMigrations(jobs);
+#ifndef CTA_PGSCHED
+        // This part of the code contains a bug which we deliberately keep in
+        // for the objectstore implementation in order to protect
+        // operations in production from unforeseen consequences in case of a fix.
         // Decide on continuation
-        if (files < req.filesRequested / 2 && bytes < req.bytesRequested) {
+        if (filesFetched < req.filesRequested / 2 && bytesFetched < req.bytesRequested) {
           // The client starts to dribble files at a low rate. Better finish
           // the session now, so we get a clean batch on a later mount.
           cta::log::ScopedParamContainer params(m_parent.m_lc);
           params.add("filesRequested", req.filesRequested)
             .add("bytesRequested", req.bytesRequested)
-            .add("filesReceived", files)
-            .add("bytesReceived", bytes);
+            .add("filesReceived", filesFetched)
+            .add("bytesReceived", bytesFetched);
           m_parent.m_lc.log(cta::log::INFO,
                             "Got less than half the requested work to do: triggering the end of session.");
           m_parent.signalEndDataMovement();
           break;
         }
+
+#endif
       }
+#ifdef CTA_PGSCHED
+      /*
+      * Evaluate all non-final backend responses.
+      */
+      if (m_parent.shouldDismountForUnderfill(filesFetched, bytesFetched, req)) {
+        m_parent.signalEndDataMovement();
+        break;
+      }
+#endif
     }  //end of while(1)
   } catch (const cta::tape::daemon::ErrorFlag&) {
     //we end up there because a task screw up somewhere

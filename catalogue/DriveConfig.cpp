@@ -7,6 +7,7 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "common/config/SourcedParameter.hpp"
+#include "common/dataStructures/ArchiveDismountPolicy.hpp"
 #include "taped/daemon/common/FetchReportOrFlushLimits.hpp"
 
 #include <algorithm>
@@ -28,6 +29,7 @@ void DriveConfig::setTapedConfiguration(const tape::daemon::TapedConfiguration& 
   setConfigToDB(tapedConfiguration.bufferSizeBytes, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.bufferCount, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.archiveFetchBytesFiles, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.archiveDismountPolicy, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.archiveFlushBytesFiles, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.retrieveFetchBytesFiles, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.mountCriteria, catalogue, tapeDriveName);
@@ -89,6 +91,41 @@ void DriveConfig::setConfigToDB(const SourcedParameter<std::string>& sourcedPara
                                                   sourcedParameter.category(),
                                                   sourcedParameter.key(),
                                                   sourcedParameter.value(),
+                                                  sourcedParameter.source());
+}
+
+void DriveConfig::setConfigToDB(
+  const SourcedParameter<cta::common::dataStructures::ArchiveDismountPolicy>& sourcedParameter,
+  catalogue::Catalogue* catalogue,
+  const std::string& tapeDriveName) {
+  std::string key = sourcedParameter.key();
+  utils::searchAndReplace(key, "Limits", "");
+  checkConfigInDB(catalogue, tapeDriveName, key.append("WatchPeriodSecs"));
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName,
+                                                  sourcedParameter.category(),
+                                                  key,
+                                                  std::to_string(sourcedParameter.value().underfillWatchPeriodSecs),
+                                                  sourcedParameter.source());
+  utils::searchAndReplace(key, "WatchPeriodSecs", "");
+  checkConfigInDB(catalogue, tapeDriveName, key.append("MinSamples"));
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName,
+                                                  sourcedParameter.category(),
+                                                  key,
+                                                  std::to_string(sourcedParameter.value().underfillMinSamples),
+                                                  sourcedParameter.source());
+  utils::searchAndReplace(key, "MinSamples", "");
+  checkConfigInDB(catalogue, tapeDriveName, key.append("RecoveryThreshold"));
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName,
+                                                  sourcedParameter.category(),
+                                                  key,
+                                                  std::to_string(sourcedParameter.value().underfillRecoveryThreshold),
+                                                  sourcedParameter.source());
+  utils::searchAndReplace(key, "RecoveryThreshold", "");
+  checkConfigInDB(catalogue, tapeDriveName, key.append("StartThreshold"));
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName,
+                                                  sourcedParameter.category(),
+                                                  key,
+                                                  std::to_string(sourcedParameter.value().underfillStartThreshold),
                                                   sourcedParameter.source());
 }
 

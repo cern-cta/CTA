@@ -7,6 +7,7 @@
 #include "FetchReportOrFlushLimits.hpp"
 #include "common/Constants.hpp"
 #include "common/config/SourcedParameter.hpp"
+#include "common/dataStructures/ArchiveDismountPolicy.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
 
@@ -87,6 +88,16 @@ struct TapedConfiguration {
     "taped",
     "ArchiveFetchBytesFiles",
     {80L * 1000 * 1000 * 1000, 4000},
+    "Compile time default"
+  };
+  //--------------------------------------------------------------------------------------
+  // The "ArchiveDismountPolicy" i.e. fetch underfill criteria to unmount archive session
+  //--------------------------------------------------------------------------------------
+  /// Please find the full description in common/dataStructures/ArchiveDismountPolicy.hpp
+  cta::SourcedParameter<cta::common::dataStructures::ArchiveDismountPolicy> archiveDismountPolicy {
+    "taped",
+    "ArchiveDismountPolicy",
+    {5 * 60, 3, 40, 60},
     "Compile time default"
   };
   /// The flush to tape criteria for archiving

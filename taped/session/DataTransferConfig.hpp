@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include "common/dataStructures/ArchiveDismountPolicy.hpp"
+
 #include <stdint.h>
 #include <string>
 
@@ -33,6 +35,11 @@ struct DataTransferConfig {
    * Maximum number of files in a set of files to be archived to tape
    */
   uint64_t bulkRequestMigrationMaxFiles = 0;
+
+  /**
+   * Unmount policy controlling dismounts caused by low backlog to efficiently use the drive
+   */
+  cta::common::dataStructures::ArchiveDismountPolicy archiveDismountPolicy;
 
   /**
    * Maximum number of bytes in a set of files to be recalled from tape
