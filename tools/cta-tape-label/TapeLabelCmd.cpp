@@ -11,8 +11,11 @@
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/Constants.hpp"
 #include "common/process/ProcessCap.hpp"
+#include "common/runtime/config/ConfigLoader.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
 #include "rdbms/Login.hpp"
+#include "taped/TapedConfig.hpp"
+#include "taped/TapedUtils.hpp"
 #include "taped/file/Exceptions.hpp"
 #include "taped/file/HeaderChecker.hpp"
 #include "taped/file/LabelSession.hpp"
@@ -377,20 +380,20 @@ void TapeLabelCmd::readAndSetConfiguration(const std::string& userName,
   m_userName = userName;
 
   // Read taped config file
-  const cta::tape::daemon::TapedConfiguration driveConfig =
-    cta::tape::daemon::TapedConfiguration::createFromOptionalDriveName(unitName, m_log);
+  auto configFilePath = cta::taped::utils::getFirstTapedConfigPath(unitName);
+  auto tapedConfig = runtime::loadFromToml<cta::tape::daemon::TapedConfig>(configFilePath, false);
 
   // Configure drive
-  m_devFilename = driveConfig.driveDevice.value();
-  m_rawLibrarySlot = driveConfig.driveControlPath.value();
-  m_logicalLibrary = driveConfig.driveLogicalLibrary.value();
-  m_unitName = driveConfig.driveName.value();
+  m_devFilename = tapedConfig.drive.device;
+  m_rawLibrarySlot = tapedConfig.drive.control_path;
+  m_logicalLibrary = tapedConfig.drive.logical_library_name;
+  m_unitName = tapedConfig.drive.name;
 
   // Configure rmcd
-  m_rmcProxy = std::make_unique<cta::mediachanger::RmcProxy>(driveConfig.rmcHost.value(),
-                                                             driveConfig.rmcPort.value(),
-                                                             driveConfig.rmcNetTimeout.value(),
-                                                             driveConfig.rmcRequestAttempts.value());
+  m_rmcProxy = std::make_unique<cta::mediachanger::RmcProxy>(tapedConfig.rmcd.host,
+                                                             tapedConfig.rmcd.port,
+                                                             tapedConfig.rmcd.request_timeout_secs,
+                                                             tapedConfig.rmcd.request_attempts);
   m_mc = std::make_unique<cta::mediachanger::MediaChangerFacade>(*(m_rmcProxy.get()), m_log);
 
   // Configure catalogue

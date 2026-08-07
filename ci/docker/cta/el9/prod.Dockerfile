@@ -100,7 +100,7 @@ RUN setcap \
     cap_sys_rawio=+ep /usr/bin/cta-tape-label
 
 USER cta
-CMD ["/usr/bin/cta-taped", "-c", "/etc/cta/cta-taped.conf", "--foreground", "--log-format=json", "--stdout"]
+CMD ["/usr/bin/cta-taped", "--config=/etc/cta/cta-taped.toml", "--config-strict"]
 
 # =========================================================================
 #  SERVICE cta-rmcd

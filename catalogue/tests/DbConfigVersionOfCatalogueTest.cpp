@@ -9,7 +9,6 @@
 #include "catalogue/tests/modules/DiskInstanceCatalogueTest.hpp"
 #include "catalogue/tests/modules/DiskInstanceSpaceCatalogueTest.hpp"
 #include "catalogue/tests/modules/DiskSystemCatalogueTest.hpp"
-#include "catalogue/tests/modules/DriveConfigCatalogueTest.hpp"
 #include "catalogue/tests/modules/DriveStateCatalogueTest.hpp"
 #include "catalogue/tests/modules/FileRecycleLogCatalogueTest.hpp"
 #include "catalogue/tests/modules/LogicalLibraryCatalogueTest.hpp"
@@ -71,9 +70,6 @@ INSTANTIATE_TEST_CASE_P(DbConfigFile,
 INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_TapeFileTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
 INSTANTIATE_TEST_CASE_P(DbConfigFile,
                         cta_catalogue_FileRecycleLogTest,
-                        ::testing::Values(&g_catalogueFactoryForUnitTests));
-INSTANTIATE_TEST_CASE_P(DbConfigFile,
-                        cta_catalogue_DriveConfigTest,
                         ::testing::Values(&g_catalogueFactoryForUnitTests));
 INSTANTIATE_TEST_CASE_P(DbConfigFile, cta_catalogue_DriveStateTest, ::testing::Values(&g_catalogueFactoryForUnitTests));
 INSTANTIATE_TEST_CASE_P(DbConfigFile,

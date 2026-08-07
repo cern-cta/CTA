@@ -137,9 +137,8 @@ The tape server daemon
 %{_libdir}/libctatapedrao.so*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/logrotate.d/cta-taped
 %attr(0755,root,root) %{_bindir}/cta-taped
-%attr(0644,root,root) %{_sysconfdir}/cta/cta-taped.example.conf
+%attr(0644,root,root) %{_sysconfdir}/cta/cta-taped.example.toml
 %attr(0644,root,root) %doc %{_mandir}/man1/cta-taped.1cta*
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/cta-taped
 %attr(0644,root,root) %{_unitdir}/cta-taped.service
 
 %post -n cta-taped
@@ -289,7 +288,6 @@ The shared libraries base
 %files -n cta-lib-common
 %license COPYING
 %{_libdir}/libctacommon.so*
-%{_libdir}/libctatapedaemoncommon.so*
 
 %if "%{occiSupport}" == "1"
 %package -n cta-lib-catalogue-occi
@@ -400,7 +398,6 @@ CERN Tape Archive:
 Unit tests and integration tests with virtual tape drives
 %files -n cta-integrationtests
 %license COPYING
-%{_libdir}/libcta-tapedIntegrationTests.so*
 %{_bindir}/cta-rdbmsUnitTests
 %if "%{occiSupport}" == "1"
 %{_bindir}/cta-rdbmsUnitTests-oracle.sh
@@ -408,10 +405,8 @@ Unit tests and integration tests with virtual tape drives
 %{_bindir}/cta-unitTests
 %{_bindir}/cta-unitTests-multiProcess
 %{_bindir}/cta-valgrindUnitTests.sh
-%{_bindir}/cta-unitPlusIntegrationTests.sh
 %{_libdir}/libctacataloguecmdlineunittests.so*
 %{_libdir}/libctacommonunittests.so*
-%{_libdir}/libctatapedaemoncommonunittests.so*
 %{_libdir}/libctafrontendcommonconfigunittests.so*
 %{_libdir}/libctadbconfigcatalogueunittests.so*
 %{_libdir}/libctadbconfigconnunittests.so*
@@ -436,7 +431,6 @@ Unit tests and integration tests with virtual tape drives
 %{_libdir}/libctadiskunittests.so*
 %{_libdir}/libctatapelabelunittests.so*
 %{_libdir}/libctatapedraounittests.so*
-%{_bindir}/cta-integrationTests
 %{_libdir}/libctadaemonunittests-multiprocess.so*
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/parallelTestsMakefile

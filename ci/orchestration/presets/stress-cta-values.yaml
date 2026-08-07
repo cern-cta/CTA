@@ -27,9 +27,8 @@ frontend-wfe:
       logLevel: "WARNING"
 
 taped:
-  conf:
-    taped:
-      logMask: "WARNING"
+  logging:
+    level: "WARNING"
 
 maintd:
   logging:

@@ -37,13 +37,13 @@ if(CTA_USE_PGSCHED)
           ${PROTOBUF3_LIBRARIES}
           ${GRPC_GRPC++_LIBRARY}
           ${GRPC_LIBRARY}
-          ctascheduler ctacommon ctatapedaemoncommon ctacatalogue cryptopp)
+          ctascheduler ctacommon ctacatalogue cryptopp)
 else()
   target_link_libraries(cta-admin-grpc-stream
           ${PROTOBUF3_LIBRARIES}
           ${GRPC_GRPC++_LIBRARY}
           ${GRPC_LIBRARY}
-          ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue cryptopp)
+          ctascheduler ctacommon ctaobjectstore ctacatalogue cryptopp)
 endif()
 
 install(TARGETS cta-admin-grpc-stream DESTINATION usr/bin)
