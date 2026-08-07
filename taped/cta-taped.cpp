@@ -19,3 +19,4 @@ int main(const int argc, char** const argv) {
     App app(appName, description);
     return app.run(argc, argv);
   });
+}

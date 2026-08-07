@@ -16,10 +16,12 @@
 #include "common/Constants.hpp"
 #include "common/exception/EncryptionException.hpp"
 #include "common/log/DummyLogger.hpp"
+#include "common/runtime/config/ConfigLoader.hpp"
 #include "disk/DiskFile.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
 #include "rdbms/Login.hpp"
 #include "scheduler/RetrieveJob.hpp"
+#include "taped/TapedConfig.hpp"
 #include "taped/file/FileReaderFactory.hpp"
 #include "taped/file/ReadSession.hpp"
 #include "taped/file/ReadSessionFactory.hpp"
@@ -93,26 +95,26 @@ void ReadtpCmd::readAndSetConfiguration(const std::string& userName, const Readt
   m_destinationFiles = readListFromFile(cmdLineArgs.m_destinationFileListURL);
 
   // Read taped config file
-  // TODO: use toml file instead
-  const cta::tape::daemon::TapedConfiguration driveConfig =
-    cta::tape::daemon::TapedConfiguration::createFromOptionalDriveName(cmdLineArgs.m_unitName, m_log);
+  m_log(cta::log::INFO, "Drive name not specified, choosing first config file found.");
+  auto configFilePath = cta::taped::utils::getFirstTapedConfigPath(cmdLineArgs.m_unitName);
+  auto tapedConfig = runtime::loadFromToml<cta::tape::daemon::TapedConfig>(configFilePath, false);
 
   // Configure drive
-  m_devFilename = driveConfig.driveDevice.value();
-  m_rawLibrarySlot = driveConfig.driveControlPath.value();
-  m_logicalLibrary = driveConfig.driveLogicalLibrary.value();
-  m_unitName = driveConfig.driveName.value();
+  m_devFilename = tapedConfig.drive.device;
+  m_rawLibrarySlot = tapedConfig.drive.control_path;
+  m_logicalLibrary = tapedConfig.drive.logical_library_name;
+  m_unitName = tapedConfig.drive.name;
 
   // Configure rmc
-  m_rmcProxy = std::make_unique<cta::mediachanger::RmcProxy>(driveConfig.rmcHost.value(),
-                                                             driveConfig.rmcPort.value(),
-                                                             driveConfig.rmcNetTimeout.value(),
-                                                             driveConfig.rmcRequestAttempts.value());
+  m_rmcProxy = std::make_unique<cta::mediachanger::RmcProxy>(tapedConfig.rmc.host,
+                                                             tapedConfig.rmc.port,
+                                                             tapedConfig.rmc.timeout_secs,
+                                                             tapedConfig.rmc.request_attempts);
   m_mc = std::make_unique<cta::mediachanger::MediaChangerFacade>(*(m_rmcProxy.get()), m_log);
 
   // Configure encryption
-  const std::string externalEncryptionKeyScript = driveConfig.externalEncryptionKeyScript.value();
-  const bool useEncryption = driveConfig.useEncryption.value() == "yes";
+  const std::string externalEncryptionKeyScript = tapedConfig.encryption.external_encryption_key_script;
+  const bool useEncryption = tapedConfig.encryption.enabled;
   m_encryptionControl =
     std::make_unique<cta::tape::daemon::EncryptionControl>(useEncryption, externalEncryptionKeyScript);
 

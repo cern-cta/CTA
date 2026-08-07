@@ -23,8 +23,6 @@
 #include "taped/session/SessionState.hpp"
 #include "taped/session/SessionType.hpp"
 
-#include "WatchdogMessage.pb.h"
-
 namespace cta {
 
 class IScheduler;
@@ -38,6 +36,10 @@ class MediaChangerFacade;
 }
 
 namespace tape::daemon {
+
+namespace serializers {
+class WatchdogMessage;
+}
 
 class DriveHandlerProxy;
 

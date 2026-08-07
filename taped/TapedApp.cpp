@@ -5,6 +5,7 @@
 
 #include "TapedApp.hpp"
 
+#include "TapedUtils.hpp"
 #include "daemon/DriveHandler.hpp"
 #include "daemon/ProcessManager.hpp"
 
@@ -14,9 +15,9 @@ void TapedApp::stop() {}
 
 int TapedApp::run(const TapedConfig& config, cta::log::Logger& log) {
   // Create the log context
-  log::LogContext lc(m_log);
+  log::LogContext lc(log);
   // Set process name
-  const auto processName = m_globalConfiguration.constructProcessName(lc, "parent");
+  const auto processName = taped::utils::constructProcessName(config.drive.name, "parent", lc);
   prctl(PR_SET_NAME, processName.c_str());
 
   // TODO: telemetry

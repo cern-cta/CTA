@@ -41,17 +41,17 @@ struct ArchiveDismountPolicyConfig final {
 
 struct SchedulingConfig final {
   // TODO: add min/max?
-  int mount_criteria_bytes = 500000000000;
-  int mount_criteria_files = 10000;
+  long mount_criteria_bytes = 500000000000;
+  long mount_criteria_files = 10000;
 
-  int archive_fetch_bytes = 80000000000;
-  int archive_fetch_files = 4000;
+  long archive_fetch_bytes = 80000000000;
+  long archive_fetch_files = 4000;
 
-  int archive_flush_bytes = 32000000000;
-  int archive_flush_files = 200;
+  long archive_flush_bytes = 32000000000;
+  long archive_flush_files = 200;
 
-  int retrieve_fetch_bytes = 80000000000;
-  int retrieve_fetch_files = 4000;
+  long retrieve_fetch_bytes = 80000000000;
+  long retrieve_fetch_files = 4000;
 
   ArchiveDismountPolicyConfig archive_dismount_policy;
 

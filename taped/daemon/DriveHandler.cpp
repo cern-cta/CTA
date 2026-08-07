@@ -29,6 +29,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include "WatchdogMessage.pb.h"
+
 #ifdef CTA_PGSCHED
 #include "scheduler/rdbms/RelationalDBInit.hpp"
 #else
@@ -613,7 +615,7 @@ int DriveHandler::runChild() {
   // schedule itself info an empty drive probe, archive, retrieve or label session.
 
   // Set the process name for process ID:
-  const auto processName = m_tapedConfig.drive.name + "-drive";
+  const auto processName = taped::utils::constructProcessName(m_tapedConfig.drive.name, "drive", m_lc);
   prctl(PR_SET_NAME, processName.c_str());
 
   // Initialise telemetry only after the process name is available
