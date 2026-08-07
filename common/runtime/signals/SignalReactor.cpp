@@ -22,11 +22,9 @@ namespace cta::runtime {
 // constructor
 //------------------------------------------------------------------------------
 SignalReactor::SignalReactor(cta::log::Logger& log,
-                             const sigset_t& sigset,
                              const std::unordered_map<int, std::function<void()>>& signalFunctions,
                              uint32_t waitTimeoutMsecs)
     : m_log(log),
-      m_sigset(sigset),
       m_signalFunctions(signalFunctions),
       m_waitTimeoutMsecs(waitTimeoutMsecs) {}
 
@@ -42,6 +40,11 @@ SignalReactor::~SignalReactor() {
 // SignalReactor::start
 //------------------------------------------------------------------------------
 void SignalReactor::start() {
+  m_log(log::DEBUG, "In SignalReactor::start(): Blocking and registering signals");
+  sigemptyset(&m_sigset);
+  for (const auto& [signal, func] : m_signalFunctions) {
+    sigaddset(&m_sigset, signal);
+  }
   cta::exception::Errnum::throwOnNonZero(::pthread_sigmask(SIG_BLOCK, &m_sigset, nullptr),
                                          "In SignalReactor::start(): pthread_sigmask() failed");
   m_thread =
@@ -52,7 +55,7 @@ void SignalReactor::start() {
 // SignalReactor::stop
 //------------------------------------------------------------------------------
 void SignalReactor::stop() noexcept {
-  m_log(log::INFO, "In SignalReactor::stop(): stopping SignalReactor");
+  m_log(log::DEBUG, "In SignalReactor::stop(): stopping SignalReactor");
   m_thread.request_stop();
   if (m_thread.joinable()) {
     try {

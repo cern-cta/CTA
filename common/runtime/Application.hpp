@@ -147,7 +147,7 @@ int safeRunWithLog(log::Logger& log, F&& func) {
     return EXIT_FAILURE;
   } catch (const exception::Exception& ex) {
     log(log::CRIT,
-        "FATAL: Caught an unexpected CTA exception",
+        "FATAL: Caught an unexpected CTA exception. Stack trace follows.",
         {
           {semconv::log::exceptionMessage, ex.getMessage().str()}
     });
@@ -304,24 +304,24 @@ public:
 
     m_logPtr = initLogger(config, cliOptions);
 
+    // We need to start the reactor builder here as we may want to register custom signals.
+    // It is also for that reason that we don't build the actual SignalReactor just yet.
+    m_signalReactorBuilder.addSignalFunction(SIGTERM, [this]() { m_app.stop(); });
+    // Both SIGHUP and SIGUSR1 trigger a refresh of the log file descriptor
+    // Eventually SIGUSR1 will be deprecated
+    m_signalReactorBuilder.addSignalFunction(SIGHUP, [this]() {
+      if (m_logPtr) {
+        m_logPtr->refresh();
+      }
+    });
+    m_signalReactorBuilder.addSignalFunction(SIGUSR1, [this]() {
+      if (m_logPtr) {
+        m_logPtr->refresh();
+      }
+    });
+    auto signalReactor = m_signalReactorBuilder.build(*m_logPtr);
     // Temporarily disable the signal reactor for cta-taped until forking and its own signal handler is removed
     if (m_appName != "cta-taped") {
-      // We need to start the reactor builder here as we may want to register custom signals.
-      // It is also for that reason that we don't build the actual SignalReactor just yet.
-      m_signalReactorBuilder.addSignalFunction(SIGTERM, [this]() { m_app.stop(); });
-      // Both SIGHUP and SIGUSR1 trigger a refresh of the log file descriptor
-      // Eventually SIGUSR1 will be deprecated
-      m_signalReactorBuilder.addSignalFunction(SIGHUP, [this]() {
-        if (m_logPtr) {
-          m_logPtr->refresh();
-        }
-      });
-      m_signalReactorBuilder.addSignalFunction(SIGUSR1, [this]() {
-        if (m_logPtr) {
-          m_logPtr->refresh();
-        }
-      });
-      auto signalReactor = m_signalReactorBuilder.build(*m_logPtr);
       signalReactor.start();
     }
 

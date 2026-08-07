@@ -27,7 +27,6 @@ namespace cta::runtime {
 class SignalReactor final {
 public:
   SignalReactor(cta::log::Logger& log,
-                const sigset_t& sigset,
                 const std::unordered_map<int, std::function<void()>>& signalFunctions,
                 uint32_t waitTimeoutMsecs);
 
@@ -55,7 +54,7 @@ public:
 
 private:
   cta::log::Logger& m_log;
-  const sigset_t m_sigset;
+  sigset_t m_sigset;
   std::unordered_map<int, std::function<void()>> m_signalFunctions;
 
   // The thread the signalReactor will run on when start() is called

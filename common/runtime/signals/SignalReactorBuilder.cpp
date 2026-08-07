@@ -9,16 +9,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/semconv/Attributes.hpp"
 
-#include <signal.h>
-
 namespace cta::runtime {
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-SignalReactorBuilder::SignalReactorBuilder() {
-  sigemptyset(&m_sigset);
-}
 
 //------------------------------------------------------------------------------
 // SignalReactorBuilder::addSignalFunction
@@ -29,7 +20,6 @@ SignalReactorBuilder::addSignalFunction(int signal, const std::function<void()>&
     throw exception::Exception("Function already registered for " + utils::signalToString(signal)
                                + ", while overwrite was disabled");
   }
-  sigaddset(&m_sigset, signal);
   m_signalFunctions[signal] = func;
   return *this;
 }
@@ -45,8 +35,8 @@ SignalReactorBuilder& SignalReactorBuilder::withTimeoutMsecs(uint32_t msecs) {
 //------------------------------------------------------------------------------
 // SignalReactorBuilder::build
 //------------------------------------------------------------------------------
-SignalReactor SignalReactorBuilder::build(cta::log::Logger& log) const {
-  return SignalReactor(log, m_sigset, std::move(m_signalFunctions), m_waitTimeoutMsecs);
+SignalReactor SignalReactorBuilder::build(cta::log::Logger& log) {
+  return SignalReactor(log, std::move(m_signalFunctions), m_waitTimeoutMsecs);
 }
 
 }  // namespace cta::runtime

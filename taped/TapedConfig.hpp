@@ -73,6 +73,7 @@ struct DiskConfig final {
 };
 
 struct RaoConfig final {
+  // TODO: hardware RAO?
   bool enabled = true;
   std::string lto_algorithm = "sltf";
   std::string lto_algorithm_options = "cost_heuristic_name:cta";
@@ -80,6 +81,7 @@ struct RaoConfig final {
   static constexpr std::size_t memberCount() { return 3; }
 };
 
+// Don't like this layout
 struct TimeoutConfig final {
   int tape_load_timeout_secs = 300;
   int drive_ready_timeout_secs = 120;
