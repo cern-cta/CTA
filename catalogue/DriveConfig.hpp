@@ -5,56 +5,22 @@
 
 #pragma once
 
-#include "common/config/SourcedParameter.hpp"
-#include "taped/daemon/common/TapedConfiguration.hpp"
-
-#include <ctime>
-#include <memory>
 #include <string>
 
-namespace cta {
+namespace cta::catalogue {
 
-namespace catalogue {
 class Catalogue;
-}
 
 /**
- * Static class to set TapedConfiguration in Database
+ * Static class to set the scheduler backend name in Database.
+ * This is a temporary solution for backward compatibility and should be removed in the next catalogue upgrade.
  */
 class DriveConfig {
 public:
-  static void setTapedConfiguration(const cta::tape::daemon::TapedConfiguration& tapedConfiguration,
-                                    catalogue::Catalogue* catalogue,
-                                    const std::string& tapeDriveName);
+  static void setSchedulerBackendName(Catalogue* catalogue,
+                                      const std::string& schedulerBackendName,
+                                      const std::string& tapeDriveName);
 
-private:
-  static void
-  checkConfigInDB(catalogue::Catalogue* catalogue, const std::string& tapeDriveName, const std::string& key);
-  static void setConfigToDB(const cta::SourcedParameter<std::string>& sourcedParameter,
-                            catalogue::Catalogue* catalogue,
-                            const std::string& tapeDriveName);
-  static void
-  setConfigToDB(const cta::SourcedParameter<cta::common::dataStructures::ArchiveDismountPolicy>& sourcedParameter,
-                catalogue::Catalogue* catalogue,
-                const std::string& tapeDriveName);
-  static void setConfigToDB(const cta::SourcedParameter<cta::tape::daemon::FetchReportOrFlushLimits>& sourcedParameter,
-                            catalogue::Catalogue* catalogue,
-                            const std::string& tapeDriveName);
-  static void setConfigToDB(const cta::SourcedParameter<std::uint16_t>& sourcedParameter,
-                            catalogue::Catalogue* catalogue,
-                            const std::string& tapeDriveName);
-  static void setConfigToDB(const cta::SourcedParameter<std::uint32_t>& sourcedParameter,
-                            catalogue::Catalogue* catalogue,
-                            const std::string& tapeDriveName);
-  static void setConfigToDB(const cta::SourcedParameter<std::uint64_t>& sourcedParameter,
-                            catalogue::Catalogue* catalogue,
-                            const std::string& tapeDriveName);
-  static void setConfigToDB(const cta::SourcedParameter<std::time_t>& sourcedParameter,
-                            catalogue::Catalogue* catalogue,
-                            const std::string& tapeDriveName);
-  static void setConfigToDB(const cta::SourcedParameter<bool>& sourcedParameter,
-                            catalogue::Catalogue* catalogue,
-                            const std::string& tapeDriveName);
 };  // class DriveConfig
 
-}  // namespace cta
+}  // namespace cta::catalogue

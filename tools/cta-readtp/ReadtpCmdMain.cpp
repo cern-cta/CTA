@@ -4,7 +4,6 @@
  */
 
 #include "ReadtpCmd.hpp"
-#include "taped/daemon/common/TapedConfiguration.hpp"
 
 #include <iostream>
 
@@ -12,15 +11,7 @@
 // main
 //------------------------------------------------------------------------------
 int main(const int argc, char* const* const argv) {
-  char buf[256];
-  std::string hostName;
-  if (gethostname(buf, sizeof(buf))) {
-    hostName = "UNKNOWN";
-  } else {
-    buf[sizeof(buf) - 1] = '\0';
-    hostName = buf;
-  }
-  cta::log::StdoutLogger log(hostName, "cta-readtp");
+  cta::log::StdoutLogger log(utils::getShortHostName(), "cta-readtp");
   cta::log::DummyLogger dummyLog("dummy", "dummy");
 
   cta::tape::readtp::ReadtpCmd cmd(std::cin, std::cout, std::cerr, log, dummyLog);

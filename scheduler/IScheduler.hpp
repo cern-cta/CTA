@@ -18,10 +18,6 @@ namespace log {
 class LogContext;
 }
 
-namespace tape::daemon {
-struct TapedConfiguration;
-}
-
 class IScheduler {
 public:
   virtual ~IScheduler() = default;
@@ -48,8 +44,6 @@ public:
                                      const common::dataStructures::DriveStatus& status,
                                      const common::dataStructures::SecurityIdentity& identity,
                                      log::LogContext& lc) = 0;
-
-  virtual void reportDriveConfig(const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc) = 0;
 };
 
 }  // namespace cta

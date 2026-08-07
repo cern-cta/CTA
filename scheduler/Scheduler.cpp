@@ -1049,18 +1049,6 @@ void Scheduler::removeDrive(const std::string& driveName, log::LogContext& lc) c
 }
 
 //------------------------------------------------------------------------------
-// reportDriveConfig
-//------------------------------------------------------------------------------
-void Scheduler::reportDriveConfig(const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc) {
-  utils::Timer t;
-  DriveConfig::setTapedConfiguration(tapedConfig, &m_catalogue, tapedConfig.driveName.value());
-  auto schedulerDbTime = t.secs();
-  log::ScopedParamContainer spc(lc);
-  spc.add("drive", tapedConfig.driveName.value()).add("schedulerDbTime", schedulerDbTime);
-  lc.log(log::INFO, "In Scheduler::reportDriveConfig(): success.");
-}
-
-//------------------------------------------------------------------------------
 // reportDriveStatus
 //------------------------------------------------------------------------------
 void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,

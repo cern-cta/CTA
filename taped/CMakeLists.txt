@@ -10,10 +10,19 @@ add_subdirectory (session)
 add_subdirectory (rao)
 add_subdirectory (daemon)
 
-add_executable (cta-taped cta-taped.cpp)
-target_link_libraries(cta-taped ctatapedaemon ctacommon)
+add_library(ctataped
+  TapedApp.cpp
+)
 
-add_manpage(cta-taped)
+target_link_libraries(ctataped
+	ctacommon
+	ctatapedaemon
+)
+
+add_executable (cta-taped cta-taped.cpp)
+target_link_libraries(cta-taped ctataped)
+
+add_manpage (cta-taped)
 
 install (TARGETS cta-taped DESTINATION usr/bin)
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-taped.1cta DESTINATION /usr/share/man/man1)

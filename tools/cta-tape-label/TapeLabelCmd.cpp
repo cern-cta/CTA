@@ -377,6 +377,7 @@ void TapeLabelCmd::readAndSetConfiguration(const std::string& userName,
   m_userName = userName;
 
   // Read taped config file
+  // TODO update to use toml file instead
   const cta::tape::daemon::TapedConfiguration driveConfig =
     cta::tape::daemon::TapedConfiguration::createFromOptionalDriveName(unitName, m_log);
 

@@ -289,7 +289,6 @@ The shared libraries base
 %files -n cta-lib-common
 %license COPYING
 %{_libdir}/libctacommon.so*
-%{_libdir}/libctatapedaemoncommon.so*
 
 %if "%{occiSupport}" == "1"
 %package -n cta-lib-catalogue-occi
@@ -411,7 +410,6 @@ Unit tests and integration tests with virtual tape drives
 %{_bindir}/cta-unitPlusIntegrationTests.sh
 %{_libdir}/libctacataloguecmdlineunittests.so*
 %{_libdir}/libctacommonunittests.so*
-%{_libdir}/libctatapedaemoncommonunittests.so*
 %{_libdir}/libctafrontendcommonconfigunittests.so*
 %{_libdir}/libctadbconfigcatalogueunittests.so*
 %{_libdir}/libctadbconfigconnunittests.so*
