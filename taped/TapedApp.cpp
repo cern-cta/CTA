@@ -8,6 +8,7 @@
 #include "TapedUtils.hpp"
 #include "daemon/DriveHandler.hpp"
 #include "daemon/ProcessManager.hpp"
+#include "daemon/SignalHandler.hpp"
 
 #include <sys/prctl.h>
 
@@ -23,9 +24,12 @@ int TapedApp::run(const TapedConfig& config, cta::log::Logger& log) {
   prctl(PR_SET_NAME, processName.c_str());
 
   // TODO: telemetry
-  // TODO: signal handling
-  // Create the process manager and signal handler
+  // Create the process manager
   ProcessManager processManager(lc);
+  // Signal handler
+  auto signalHandler = std::make_unique<SignalHandler>(processManager);
+  signalHandler->setTimeout(std::chrono::seconds(config.timeout.shutdown_timeout_secs));
+  processManager.addHandler(std::move(signalHandler));
   // Create the drive handler
   const common::dataStructures::DriveInfo driveInfo(config.drive.name,
                                                     utils::getShortHostname(),
@@ -42,7 +46,7 @@ int TapedApp::run(const TapedConfig& config, cta::log::Logger& log) {
 }
 
 bool TapedApp::isReady() const {
-  return true;  // TODO
+  return true;  // For now taped is always ready. Eventually we should integrate this with the existing watch dog
 }
 
 bool TapedApp::isLive() const {

@@ -13,7 +13,7 @@ add_subdirectory (daemon)
 add_library(ctatapedutils
   TapedUtils.cpp
 )
-target_link_libraries(ctatapedutils ctacommon)
+target_link_libraries(ctatapedutils PUBLIC ctacommon)
 target_link_libraries(ctatapedaemon ctatapedutils)
 
 add_library(ctataped
