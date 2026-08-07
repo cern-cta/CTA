@@ -174,7 +174,7 @@ Configure histogram boundaries in each metric's unit, as listed in [Supported Me
 
 To enable OTLP metrics publishing in `cta-taped`, set the following options in its configuration file:
 
-???+ "cta-taped.example.conf"
+???+ "cta-taped.example.toml"
 
     ```ini
     # Telemetry is an experimental feature and must be explicitly enabled before it can be used.

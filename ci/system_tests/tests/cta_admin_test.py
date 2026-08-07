@@ -400,14 +400,19 @@ def test_cta_admin_drive(cta_cli: CtaCliHost, cta_taped: CtaTapedHost) -> None:
 
         # Update
         cta_cli.exec(f"cta-admin dr up {dr_name} -r 'cta-admin systest up'")
+        # Taped applies the desired state asynchronously; compare snapshots after each transition completes.
+        cta_cli.wait_for_drive_status(dr_name, "UP")
         dr_updated1 = cta_cli.get_single_ls_item("dr ls", lambda x: x["driveName"] == dr_name)
         assert dr_updated1["reason"] == "cta-admin systest up"
         assert dr_updated1["desiredDriveState"] == "UP"
 
         cta_cli.exec(f"cta-admin dr down {dr_name} -r 'cta-admin systest down'")
+        cta_cli.wait_for_drive_status(dr_name, "DOWN")
         dr_updated2 = cta_cli.get_single_ls_item("dr ls", lambda x: x["driveName"] == dr_name)
         assert_dict_equals(
-            dr_updated2, dr_updated1, ["driveStatusSince", "timeSinceLastUpdate", "reason", "desiredDriveState"]
+            dr_updated2,
+            dr_updated1,
+            ["driveStatus", "driveStatusSince", "timeSinceLastUpdate", "reason", "desiredDriveState"],
         )
         assert dr_updated2["reason"] == "cta-admin systest down"
         assert dr_updated2["desiredDriveState"] == "DOWN"

@@ -7,6 +7,9 @@
 #include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
 
+#include <map>
+#include <string>
+
 namespace cta::telemetry {
 
 CTA_GENERATE_USER_EXCEPTION_CLASS(InvalidResourceAttribute);

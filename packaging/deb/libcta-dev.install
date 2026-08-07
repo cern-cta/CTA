@@ -20,7 +20,6 @@ usr/lib/*/libctaruntime.so
 usr/lib/*/libctascheduler.so
 usr/lib/*/libctaschemachecker.so
 usr/lib/*/libctastatistics.so
-usr/lib/*/libctatapedaemoncommon.so
 usr/lib/*/libctatapedrao.so
 usr/lib/*/libctatelemetry.so
 usr/lib/*/libctatelemetryfrontend.so

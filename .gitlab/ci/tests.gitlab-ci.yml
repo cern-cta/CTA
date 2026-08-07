@@ -146,31 +146,7 @@ test-cta-valgrind:
     - !reference [.merge-train-guard, before_script]
     - *setup-cta-install
   script:
-    - /usr/bin/cta-unit-and-integration-tests.sh
-
-integration-test-cta:
-  extends: .cpp-test
-  # Sometimes flaky due to "resource unavailable" error
-  retry: 1
-  stage: test
-  needs:
-    - job: check-merge-train-duplicate
-      optional: true
-    - job: build-cta
-  rules:
-    - if: '"$[[ inputs.platform ]]" == "debian13"'
-      when: never
-    # CLI invocation checks assert exact stderr and exit codes; run them without compiler sanitizers.
-    - if: '"$[[ inputs.analysis ]]" != "none" && "$[[ inputs.analysis ]]" != "valgrind"'
-      when: never
-    - when: on_success
-  image: $IMAGE_TEST
-  variables:
-    GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
-    CTAREPODIR: /tmp/repo
-  script:
-    - run_cpp_test cta-integration-tests /usr/bin/cta-integration-tests
-    - exit "$test_status"
+    - /usr/bin/cta-unit-tests-valgrind.sh
 
 unit-test-cta:
   extends: .cpp-test

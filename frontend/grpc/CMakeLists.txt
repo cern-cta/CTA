@@ -54,9 +54,9 @@ add_executable(cta-admin
 target_link_libraries(cta-admin
   ctacommon
   stdc++fs
-  ctatapedaemoncommon
   ctagrpc
   ctaprotobufconversions
+  ctatapedutils
   gssapi_krb5)
 
 # Only add a runtime search path for a non-system Protobuf installation.
