@@ -68,6 +68,9 @@ spec:
         securityContext:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" $ }}
           privileged: {{ include "common.securityContext.privileged" $ }}
+          capabilities:
+            add:
+              - SYS_RAWIO
         env:
         - name: MY_NAME
           value: {{ $tapedName }}

@@ -486,9 +486,12 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
                             "failed to set drive down"));
   ASSERT_NE(std::string::npos, logToCheck.find("exception_message=\"Failed to set desired drive state\""));
 
-  // It cannot report the drive configuration to the catalogue, so it should mark the drive as down, and the session
-  // cannot continue.
+  // It cannot report the scheduler backend name to the catalogue, so it should mark the drive as down, and the
+  // session cannot continue.
   m_logger.clearLog();
+  EXPECT_CALL(*m_scheduler, reportSchedulerBackendName(_, _))
+    .WillOnce(Throw(cta::exception::Exception("Failed to report scheduler backend name")))
+    .WillRepeatedly(Return());
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
   checkReport();
   logToCheck = m_logger.getLog();
@@ -497,7 +500,7 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
   ASSERT_NE(std::string::npos,
             logToCheck.find("MSG=\"In DriveHandler::runChild(): "
                             "failed to set drive down"));
-  ASSERT_NE(std::string::npos, logToCheck.find("exception_message=\"Failed to report drive config\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("exception_message=\"Failed to report scheduler backend name\""));
 
   // After all the problems with scheduler, we should be able to run a good session
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_UP);
