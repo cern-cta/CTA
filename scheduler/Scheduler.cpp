@@ -7,7 +7,6 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueItor.hpp"
-#include "catalogue/DriveConfig.hpp"
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "catalogue/TapePool.hpp"
 #include "common/Constants.hpp"

@@ -151,19 +151,19 @@
   # the batch cannot exceed the number of files specified by this parameter. Defaults to 4000 files.
   retrieve_fetch_files = 4000
 
-[scheduling.archive_dismount_policy]
-  # An underfill observation period starts when the fetched batch falls below the start threshold.
-  # If it lasts this many seconds and the minimum sample count is reached, the archive session ends.
-  underfill_watch_period_secs = 300
+  [scheduling.archive_dismount_policy]
+    # An underfill observation period starts when the fetched batch falls below the start threshold.
+    # If it lasts this many seconds and the minimum sample count is reached, the archive session ends.
+    underfill_watch_period_secs = 300
 
-  # Minimum number of underfilled batches required before ending the archive session.
-  underfill_min_samples = 3
+    # Minimum number of underfilled batches required before ending the archive session.
+    underfill_min_samples = 3
 
-  # Percentage below which an underfill observation period starts.
-  underfill_start_threshold = 40
+    # Percentage below which an underfill observation period starts.
+    underfill_start_threshold = 40
 
-  # Percentage at or above which an underfill observation period ends.
-  underfill_recovery_threshold = 60
+    # Percentage at or above which an underfill observation period ends.
+    underfill_recovery_threshold = 60
 
 [encryption]
 
