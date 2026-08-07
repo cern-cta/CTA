@@ -41,7 +41,7 @@ CHUNK_1MB = 1024 * 1024  # 1MB pre-allocated once per worker
 
 
 def worker(
-    work_q: JoinableQueue,
+    work_q: JoinableQueue[Any],
     wid: int,
     eos_host: str,
     dest_dir: str,
