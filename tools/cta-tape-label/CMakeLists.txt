@@ -8,6 +8,7 @@ add_executable(cta-tape-label
 
 target_link_libraries (cta-tape-label
   ctacommon
+  ctatapedutils
   ctatapeddrive
   ctamediachanger
   ctacatalogue

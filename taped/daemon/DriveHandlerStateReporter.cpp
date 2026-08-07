@@ -5,6 +5,8 @@
 
 #include "DriveHandlerStateReporter.hpp"
 
+#include "WatchdogMessage.pb.h"
+
 namespace cta::tape::daemon {
 
 DriveHandlerStateReporter::DriveHandlerStateReporter(const std::string& driveName,

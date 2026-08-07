@@ -16,8 +16,17 @@ RuntimeDirectoryMode=0750
 LogsDirectory=cta cta/old
 LogsDirectoryMode=0755
 
-EnvironmentFile=-/etc/sysconfig/cta-taped
-ExecStart=/usr/bin/cta-taped --foreground --config=/etc/cta/cta-taped.conf --log-to-file=/var/log/cta/cta-taped.log
+# To run multiple instances (one per drive), create a local
+# cta-taped@.service template based on this unit and qualify every
+# per-process path with %i, for example:
+#
+#   RuntimeDirectory=cta/taped-%i
+#   --runtime-dir=/run/cta/taped-%i
+#   --config=/etc/cta/cta-taped-%i.toml
+#   --log-file=/var/log/cta/cta-taped-%i.log
+#
+# Configuration changes require a service restart. SIGUSR1 only refreshes the log file descriptor.
+ExecStart=/usr/bin/cta-taped --config=/etc/cta/cta-taped.toml --config-strict --runtime-dir=/run/cta/taped --log-file=/var/log/cta/cta-taped.log
 
 LimitCORE=infinity
 OOMScoreAdjust=-10

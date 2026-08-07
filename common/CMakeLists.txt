@@ -18,8 +18,6 @@ set (COMMON_LIB_SRC_FILES
   checksum/ChecksumBlob.cpp
   checksum/CRC.cpp
   config/Config.cpp
-  config/ConfigurationFile.cpp
-  config/SourcedParameter.cpp
   dataStructures/CreationLog.cpp
   dataStructures/AdminUser.cpp
   dataStructures/ArchiveFile.cpp
@@ -136,8 +134,6 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   auth/jwt/JwtValidationTest.cpp
   checksum/ChecksumBlobTest.cpp
   checksum/CRCTest.cpp
-  config/ConfigurationFileTests.cpp
-  config/SourcedParameterTests.cpp
   dataStructures/ArchiveFileTest.cpp
   dataStructures/LogicalLibraryTest.cpp
   dataStructures/StorageClassTest.cpp
