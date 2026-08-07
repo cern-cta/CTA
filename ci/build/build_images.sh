@@ -22,6 +22,10 @@ usage() {
   echo "      --enable-internal-repos:        Use the internal yum repos instead of the public repos."
   echo "      --enable-oracle-support:        Build the images for use with the Oracle catalogue."
   echo
+  echo "When fzf is available in an interactive terminal, image status and selectable"
+  echo "live logs are shown in an fzf dashboard. Otherwise logs are streamed with"
+  echo "a different color for each image."
+  echo
   exit 1
 }
 
@@ -132,53 +136,202 @@ SECONDS=0
 
 pids=()
 
+declare -A pid_by_target log_by_target exit_by_target end_by_target start_by_target color_by_target
+
+log_dir="${project_root}/build_rpm/logs/image-build"
+status_file="${log_dir}/status.tsv"
+mkdir -p "$log_dir"
+
+# The directory always contains only the most recent image build.
+previous_files=("${log_dir}"/*)
+for previous_file in "${previous_files[@]}"; do
+  [[ -e "$previous_file" ]] && rm -f -- "$previous_file"
+done
+
+build_target() {
+  local target="$1"
+  local image_ref="$2"
+
+  "${build_command[@]}" . -f "${dockerfile}" \
+    -t "${image_ref}" \
+    --build-context rpm_context="${rpm_src}" \
+    --build-arg ENABLE_INTERNAL_REPOS=${enable_internal_repos} \
+    --build-arg ENABLE_ORACLE_SUPPORT=${enable_oracle_support} \
+    --network host \
+    --label build.id="$BUILD_ID" \
+    --target "$target" || return $?
+
+  # Note that the below checks are rather crude (for speed)
+  if [[ "$load_into_k8s" == "true" ]]; then
+    # Load into minikube (use stdin to avoid a temp file)
+    if command -v minikube >/dev/null 2>&1; then
+      log_task "Loading ${image_ref} into minikube..."
+      ${container_runtime} save "${image_ref}" | minikube image load --overwrite - || return $?
+    fi
+
+    # Load into k3s (stream into containerd)
+    if command -v k3s >/dev/null 2>&1; then
+      log_task "Loading ${image_ref} into k3s/containerd..."
+      ${container_runtime} save "${image_ref}" | sudo /usr/local/bin/k3s ctr images import - || return $?
+    fi
+  fi
+}
+
+color_for_status() {
+  case "$1" in
+    RUNNING) printf '\033[1;33m🏃 %s\033[0m' "$1" ;;
+    DONE) printf '\033[1;32m✅ %s\033[0m' "$1" ;;
+    FAILED*) printf '\033[1;31m❌ %s\033[0m' "$1" ;;
+    *) printf '\033[1;90m❓ %s\033[0m' "$1" ;;
+  esac
+}
+
+write_status() {
+  local now target exit_code elapsed build_status target_display status_display
+  now=$(date +%s)
+  {
+    for target in "${targets[@]}"; do
+      if [[ -f ${exit_by_target[$target]} ]]; then
+        elapsed=$(( $(<"${end_by_target[$target]}") - start_by_target[$target] ))
+        exit_code=$(<"${exit_by_target[$target]}")
+        if [[ $exit_code == 0 ]]; then
+          build_status="DONE"
+        else
+          build_status="FAILED(${exit_code})"
+        fi
+      elif kill -0 "${pid_by_target[$target]}" 2>/dev/null; then
+        elapsed=$((now - start_by_target[$target]))
+        build_status="RUNNING"
+      else
+        elapsed=$((now - start_by_target[$target]))
+        build_status="UNKNOWN"
+      fi
+      target_display=$(printf '%s%s\033[0m' "${color_by_target[$target]}" "$target")
+      status_display=$(color_for_status "$build_status")
+      printf '%s\t%s\t%ss\t%s\n' \
+        "$target_display" "$status_display" "$elapsed" "${log_by_target[$target]}"
+    done
+  } > "${status_file}.tmp"
+  mv -f "${status_file}.tmp" "$status_file"
+}
+
+use_fzf=false
+if command -v fzf >/dev/null 2>&1 && [[ -t 0 && -t 1 && "${TERM:-dumb}" != dumb ]]; then
+  use_fzf=true
+fi
+
 # Build and load all targets
 i=0
 for target in "${targets[@]}"; do
   color="${colors[$((i % ${#colors[@]}))]}"
   (( ++i ))
   image_ref="cta/ctageneric/${target}:${image_tag}"
-  (
-    set -eo pipefail
-    build() {
-      "${build_command[@]}" . -f "${dockerfile}" \
-        -t "${image_ref}" \
-        --build-context rpm_context="${rpm_src}" \
-        --build-arg ENABLE_INTERNAL_REPOS=${enable_internal_repos} \
-        --build-arg ENABLE_ORACLE_SUPPORT=${enable_oracle_support} \
-        --network host \
-        --label build.id="$BUILD_ID" \
-        --target "$target"
-      # Note that the below checks are rather crude (for speed)
-      if [[ "$load_into_k8s" == "true" ]]; then
-        # Load into minikube (use stdin to avoid a temp file)
-        if command -v minikube >/dev/null 2>&1; then
-          log_task "Loading ${image_ref} into minikube..."
-          ${container_runtime} save "${image_ref}" | minikube image load --overwrite -
-        fi
+  log_by_target[$target]="${log_dir}/${target}.log"
+  exit_by_target[$target]="${log_dir}/${target}.exit"
+  end_by_target[$target]="${log_dir}/${target}.end"
+  start_by_target[$target]=$(date +%s)
+  color_by_target[$target]="$color"
 
-        # Load into k3s (stream into containerd)
-        if command -v k3s >/dev/null 2>&1; then
-          log_task "Loading ${image_ref} into k3s/containerd..."
-          ${container_runtime} save "${image_ref}" | sudo /usr/local/bin/k3s ctr images import -
-        fi
-      fi
-    }
-    build
-  ) 2>&1 | # some magic to get color output
-    awk -v prefix="[$target]:" -v color="$color" '
-      {
-        printf "%s%s\033[0m %s\n", color, prefix, $0
-        fflush()
-      }
-    ' & # execute as background process so that we can build in parallel
+  if [[ $use_fzf == true ]]; then
+    (
+      set +e
+      build_target "$target" "$image_ref" >"${log_by_target[$target]}" 2>&1
+      build_status=$?
+      date +%s > "${end_by_target[$target]}"
+      printf '%s\n' "$build_status" > "${exit_by_target[$target]}"
+      exit "$build_status"
+    ) &
+  else
+    (
+      set +e
+      set -o pipefail
+      build_target "$target" "$image_ref" 2>&1 |
+        tee "${log_by_target[$target]}" |
+        awk -v prefix="[$target]:" -v color="$color" '
+          {
+            printf "%s%s\033[0m %s\n", color, prefix, $0
+            fflush()
+          }
+        '
+      build_status=$?
+      date +%s > "${end_by_target[$target]}"
+      printf '%s\n' "$build_status" > "${exit_by_target[$target]}"
+      exit "$build_status"
+    ) &
+  fi
+  pid_by_target[$target]=$!
   pids+=($!)
 done
 
+monitor_pid=""
+push_pid=""
+cleanup_status_jobs() {
+  [[ -n $monitor_pid ]] && kill "$monitor_pid" 2>/dev/null || true
+  [[ -n $push_pid ]] && kill "$push_pid" 2>/dev/null || true
+}
+trap cleanup_status_jobs EXIT
+
+if [[ $use_fzf == true ]]; then
+  write_status
+  (
+    while true; do
+      write_status
+      sleep 1
+    done
+  ) &
+  monitor_pid=$!
+
+  listen_args=()
+  if command -v curl >/dev/null 2>&1 && fzf --help 2>&1 | grep -q -- '--listen'; then
+    fzf_port=$((10000 + RANDOM % 20000))
+    listen_args=(--listen "$fzf_port")
+    (
+      while kill -0 "$monitor_pid" 2>/dev/null; do
+        curl --noproxy '*' --silent --request POST "localhost:${fzf_port}" \
+          --data "reload(cat ${status_file})" >/dev/null 2>&1 || true
+        sleep 1
+      done
+    ) &
+    push_pid=$!
+  fi
+
+  FZF_DEFAULT_OPTS= fzf \
+    --ansi \
+    --delimiter=$'\t' \
+    --with-nth=1,2,3 \
+    --no-sort \
+    --header='ctrl-r: refresh   ctrl-o: open full log   enter/esc: close viewer' \
+    --preview='tail -n 300 -f {4}' \
+    --preview-window='right,70%,follow' \
+    --bind="ctrl-r:reload(cat ${status_file})" \
+    --bind="ctrl-o:execute(${PAGER:-less} -R {4})" \
+    "${listen_args[@]}" \
+    < "$status_file" >/dev/null || true
+
+  cleanup_status_jobs
+  echo
+  log_task "Waiting for any image builds that are still running..."
+fi
+
 status=0
-for pid in "${pids[@]}"; do
-  wait "$pid" || status=1
+for target in "${targets[@]}"; do
+  wait "${pid_by_target[$target]}" || status=1
 done
+
+echo
+printf '%-20s %-12s %s\n' "IMAGE" "STATUS" "LOG"
+for target in "${targets[@]}"; do
+  exit_code=$(<"${exit_by_target[$target]}")
+  if [[ $exit_code == 0 ]]; then
+    build_status="DONE"
+  else
+    build_status="FAILED(${exit_code})"
+  fi
+  printf '%s%-20s\033[0m %-12s %s\n' \
+    "${color_by_target[$target]}" "$target" "$build_status" "${log_by_target[$target]}"
+done
+echo
+echo "Image build logs: ${log_dir}"
 
 if [[ $status == 1 ]]; then
   log_error "Failed to build or load one or more container images."
