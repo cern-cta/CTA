@@ -8,6 +8,7 @@
 #include "catalogue/TapePool.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/process/threading/SubProcess.hpp"
+#include "common/utils/utils.hpp"
 
 #include <algorithm>
 #include <memory>

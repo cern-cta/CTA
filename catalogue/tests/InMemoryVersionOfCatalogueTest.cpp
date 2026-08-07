@@ -10,7 +10,6 @@
 #include "catalogue/tests/modules/DiskInstanceCatalogueTest.hpp"
 #include "catalogue/tests/modules/DiskInstanceSpaceCatalogueTest.hpp"
 #include "catalogue/tests/modules/DiskSystemCatalogueTest.hpp"
-#include "catalogue/tests/modules/DriveConfigCatalogueTest.hpp"
 #include "catalogue/tests/modules/DriveStateCatalogueTest.hpp"
 #include "catalogue/tests/modules/FileRecycleLogCatalogueTest.hpp"
 #include "catalogue/tests/modules/LogicalLibraryCatalogueTest.hpp"
@@ -83,7 +82,6 @@ INSTANTIATE_TEST_CASE_P(InMemory, cta_catalogue_LogicalLibraryTest, ::testing::V
 INSTANTIATE_TEST_CASE_P(InMemory, cta_catalogue_PhysicalLibraryTest, ::testing::Values(&g_inMemoryCatalogueFactoryPtr));
 INSTANTIATE_TEST_CASE_P(InMemory, cta_catalogue_TapeFileTest, ::testing::Values(&g_inMemoryCatalogueFactoryPtr));
 INSTANTIATE_TEST_CASE_P(InMemory, cta_catalogue_FileRecycleLogTest, ::testing::Values(&g_inMemoryCatalogueFactoryPtr));
-INSTANTIATE_TEST_CASE_P(InMemory, cta_catalogue_DriveConfigTest, ::testing::Values(&g_inMemoryCatalogueFactoryPtr));
 INSTANTIATE_TEST_CASE_P(InMemory, cta_catalogue_DriveStateTest, ::testing::Values(&g_inMemoryCatalogueFactoryPtr));
 INSTANTIATE_TEST_CASE_P(InMemory, cta_catalogue_ArchiveFileTest, ::testing::Values(&g_inMemoryCatalogueFactoryPtr));
 

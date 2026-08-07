@@ -265,7 +265,10 @@ public:
       }
     });
     auto signalReactor = m_signalReactorBuilder.build(*m_logPtr);
-    signalReactor.start();
+    // Temporarily disable the signal reactor for cta-taped until forking and its own signal handler is removed
+    if (m_appName != "cta-taped") {
+      signalReactor.start();
+    }
 
     // The health server must exist at this level as it needs to be in-scope for as long as the main app runs.
     // If not, it would immediately be destroyed after initHealthServer finished.
@@ -287,7 +290,12 @@ public:
       if constexpr (HasHealthServerConfig<TConfig>) {
         static_assert(HasReadinessFunction<TApp> && HasLivenessFunction<TApp>,
                       "Config has health_server, but app type lacks isReady()/isLive() methods");
-        healthServer = initHealthServer(config, cliOptions);
+        // The SignalHandler from Taped starts after this is initialised, which means that the health server
+        // thread does not correctly block the signals. We just disabled the health server until the forking
+        // mechanism is removed
+        if (m_appName != "cta-taped") {
+          healthServer = initHealthServer(config, cliOptions);
+        }
       }
 
       if constexpr (HasTelemetryConfig<TConfig>) {

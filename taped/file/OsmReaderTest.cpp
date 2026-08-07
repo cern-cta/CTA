@@ -10,6 +10,7 @@
 #include "ReadSessionFactory.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "catalogue/dummy/DummyTapeCatalogue.hpp"
+#include "common/log/DummyLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/StringLogger.hpp"
 #include "scheduler/RetrieveJob.hpp"

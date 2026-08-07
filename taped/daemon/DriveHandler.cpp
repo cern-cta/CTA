@@ -14,8 +14,10 @@
 #include "common/exception/Errnum.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/process/ProcessCap.hpp"
-#include "common/telemetry/TelemetryInit.hpp"
+#include "common/telemetry/OtelInit.hpp"
+#include "common/utils/utils.hpp"
 #include "rdbms/Login.hpp"
+#include "taped/TapedUtils.hpp"
 #include "taped/session/CleanerSession.hpp"
 #include "taped/session/DataTransferSession.hpp"
 #include "taped/session/DriveSessionTracker.hpp"
@@ -27,6 +29,8 @@
 #include <sys/prctl.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include "WatchdogMessage.pb.h"
 
 #ifdef CTA_PGSCHED
 #include "scheduler/rdbms/RelationalDBInit.hpp"
@@ -42,7 +46,7 @@ CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistException);
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-DriveHandler::DriveHandler(const TapedConfiguration& tapedConfig,
+DriveHandler::DriveHandler(const TapedConfig& tapedConfig,
                            const cta::common::dataStructures::DriveInfo& driveInfo,
                            ProcessManager& pm)
     : SubprocessHandler(std::string("drive:") + driveInfo.driveName),
@@ -72,7 +76,7 @@ std::map<SessionState, DriveHandler::Timeout> DriveHandler::m_stateChangeTimeout
   {SessionState::Scheduling,     std::chrono::duration_cast<Timeout>(std::chrono::minutes(5)) },
   // We expect mounting (mount+load, in fact) the take no more than 10 minutes.
   {SessionState::Mounting,       std::chrono::duration_cast<Timeout>(std::chrono::minutes(10))},
-  // Like mounting, unmounting is expected to take less than 10 minutes.
+  // Returning an unloaded tape to its library slot is expected to take less than 10 minutes.
   {SessionState::Unmounting,     std::chrono::duration_cast<Timeout>(std::chrono::minutes(10))},
   // Draining to disk is given a grace period of 30 minutes for changing state.
   {SessionState::DrainingToDisk, std::chrono::duration_cast<Timeout>(std::chrono::minutes(30))},
@@ -143,7 +147,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
     // First prepare a socket pair for this new subprocess
     m_socketPair = std::make_unique<cta::server::SocketPair>();
     // We don't want to fork telemetry state
-    cta::telemetry::shutdownTelemetry(m_lc);
+    cta::telemetry::cleanupOpenTelemetry(m_lc);
     // and fork
     m_pid = ::fork();
     exception::Errnum::throwOnMinusOne(m_pid, "In DriveHandler::fork(): failed to fork()");
@@ -162,7 +166,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
       // Register our socket pair side for epoll
       m_processManager.addFile(m_socketPair->getFdForAccess(server::SocketPair::Side::child), this);
       // Ensure the parent has telemetry available
-      cta::telemetry::reinitTelemetry(m_lc);
+      // cta::telemetry::reinitOpenTelemetry(m_lc);
       // Create a catalogue handler in the parent process,
       // to be able to properly handle a drive shutdown without having to reload the plugin catalogue libraries
       if (!m_catalogue) {
@@ -612,11 +616,11 @@ int DriveHandler::runChild() {
   // schedule itself info an empty drive probe, archive, retrieve or label session.
 
   // Set the process name for process ID:
-  const auto processName = m_tapedConfig.constructProcessName(m_lc, "drive");
+  const auto processName = cta::taped::utils::constructProcessName(m_tapedConfig.drive.name, "drive", m_lc);
   prctl(PR_SET_NAME, processName.c_str());
 
   // Initialise telemetry only after the process name is available
-  cta::telemetry::reinitTelemetry(m_lc);
+  // cta::telemetry::reinitOpenTelemetry(m_lc);
 
   // Create the channel to talk back to the parent process.
   const auto driveHandlerProxy = createDriveHandlerProxy();
@@ -626,18 +630,12 @@ int DriveHandler::runChild() {
   driveInfo.logicalLibrary = m_driveInfo.logicalLibrary;
   driveInfo.host = cta::utils::getShortHostname();
 
-  {
-    log::ScopedParamContainer params(m_lc);
-    params.add("backendPath", m_tapedConfig.backendPath.value());
-    m_lc.log(log::DEBUG, "In DriveHandler::runChild(): will connect to object store backend.");
-  }
-
   m_lc.log(log::DEBUG, "In DriveHandler::runChild(): will create scheduler.");
   std::shared_ptr<cta::IScheduler> scheduler;
   try {
     scheduler = createScheduler("DriveProcess-",
-                                m_tapedConfig.mountCriteria.value().maxFiles,
-                                m_tapedConfig.mountCriteria.value().maxBytes);
+                                m_tapedConfig.mounts.minimum_queued_files,
+                                m_tapedConfig.mounts.minimum_queued_bytes);
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(m_lc);
     param.add(semconv::log::exceptionMessage, ex.getMessageValue());
@@ -702,17 +700,17 @@ int DriveHandler::runChild() {
 
   // The next session will be a normal session (no crash with a mounted tape before).
   m_stateChangeTimeouts[session::SessionState::Checking] =
-    std::chrono::duration_cast<Timeout>(std::chrono::minutes(m_tapedConfig.wdCheckMaxSecs.value()));
+    std::chrono::duration_cast<Timeout>(std::chrono::seconds(m_tapedConfig.drive.ready_timeout_secs));
   m_stateChangeTimeouts[session::SessionState::Scheduling] =
-    std::chrono::duration_cast<Timeout>(std::chrono::minutes(m_tapedConfig.wdScheduleMaxSecs.value()));
+    std::chrono::duration_cast<Timeout>(std::chrono::seconds(m_tapedConfig.mounts.scheduling_timeout_secs));
   m_stateChangeTimeouts[session::SessionState::Mounting] =
-    std::chrono::duration_cast<Timeout>(std::chrono::minutes(m_tapedConfig.wdMountMaxSecs.value()));
+    std::chrono::duration_cast<Timeout>(std::chrono::seconds(m_tapedConfig.mounts.mount_timeout_secs));
   m_stateChangeTimeouts[session::SessionState::Unmounting] =
-    std::chrono::duration_cast<Timeout>(std::chrono::minutes(m_tapedConfig.wdUnmountMaxSecs.value()));
-  m_stateChangeTimeouts[session::SessionState::DrainingToDisk] =
-    std::chrono::duration_cast<Timeout>(std::chrono::minutes(m_tapedConfig.wdDrainMaxSecs.value()));
+    std::chrono::duration_cast<Timeout>(std::chrono::seconds(m_tapedConfig.mounts.unmount_timeout_secs));
+  m_stateChangeTimeouts[session::SessionState::DrainingToDisk] = std::chrono::duration_cast<Timeout>(
+    std::chrono::seconds(m_tapedConfig.transfers.retrieve.drain_to_disk_timeout_secs));
   m_stateChangeTimeouts[session::SessionState::ShuttingDown] =
-    std::chrono::duration_cast<Timeout>(std::chrono::minutes(m_tapedConfig.wdShutdownMaxSecs.value()));
+    std::chrono::duration_cast<Timeout>(std::chrono::seconds(m_tapedConfig.mounts.unmount_timeout_secs + 5));
 
   // Before launching, and if this is the first session since daemon start, we will
   // put the drive down.
@@ -764,7 +762,7 @@ int DriveHandler::runChild() {
       }
 
       scheduler->setDesiredDriveState(m_driveInfo.driveName, driveState, m_lc);
-      scheduler->reportDriveConfig(m_tapedConfig, m_lc);
+      scheduler->reportSchedulerBackendName(m_driveInfo.driveName, m_lc);
     } catch (cta::exception::Exception& ex) {
       params.add(semconv::log::exceptionMessage, ex.getMessageValue()).add("Backtrace", ex.backtrace());
       m_lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set drive down");
@@ -964,10 +962,10 @@ void DriveHandler::puttingDriveDown(IScheduler* scheduler,
 
 cta::tape::daemon::Session::EndOfSessionAction DriveHandler::executeCleanerSession(cta::IScheduler* scheduler) const {
   // Mounting management.
-  cta::mediachanger::RmcProxy rmcProxy(m_tapedConfig.rmcHost.value(),
-                                       m_tapedConfig.rmcPort.value(),
-                                       m_tapedConfig.rmcNetTimeout.value(),
-                                       m_tapedConfig.rmcRequestAttempts.value());
+  cta::mediachanger::RmcProxy rmcProxy(m_tapedConfig.rmcd.host,
+                                       m_tapedConfig.rmcd.port,
+                                       m_tapedConfig.rmcd.request_timeout_secs,
+                                       m_tapedConfig.rmcd.request_attempts);
   cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, m_lc.logger());
   cta::tape::System::realWrapper sWrapper;
   const auto cleanerSession =
@@ -977,7 +975,7 @@ cta::tape::daemon::Session::EndOfSessionAction DriveHandler::executeCleanerSessi
                                                         sWrapper,
                                                         m_sessionVid,
                                                         true,
-                                                        m_tapedConfig.tapeLoadTimeout.value(),
+                                                        m_tapedConfig.mounts.tape_load_timeout_secs,
                                                         "",
                                                         *m_catalogue,
                                                         *(dynamic_cast<cta::Scheduler*>(scheduler)));
@@ -987,10 +985,10 @@ cta::tape::daemon::Session::EndOfSessionAction DriveHandler::executeCleanerSessi
 
 std::shared_ptr<cta::catalogue::Catalogue> DriveHandler::createCatalogue(const std::string& processName) const {
   log::ScopedParamContainer params(m_lc);
-  params.add("fileCatalogConfigFile", m_tapedConfig.fileCatalogConfigFile.value());
+  params.add("fileCatalogConfigFile", m_tapedConfig.catalogue.config_file);
   params.add("processName", processName);
   m_lc.log(log::DEBUG, "In DriveHandler::createCatalogue(): will get catalogue login information.");
-  const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig.fileCatalogConfigFile.value());
+  const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile(m_tapedConfig.catalogue.config_file);
   const uint64_t nbConns = 1;
   const uint64_t nbArchiveFileListingConns = 0;
   m_lc.log(log::DEBUG, "In DriveHandler::createCatalogue(): will connect to catalogue.");
@@ -1008,17 +1006,21 @@ std::shared_ptr<cta::IScheduler> DriveHandler::createScheduler(const std::string
     log::ScopedParamContainer params(m_lc);
     params.add("processName", processName);
 #ifdef CTA_PGSCHED
-    m_sched_db_init = std::make_unique<SchedulerDBInit_t>(processName,
-                                                          m_tapedConfig.backendPath.value(),
-                                                          m_tapedConfig.schedulerNumberOfConnections.value(),
-                                                          m_lc.logger(),
-                                                          true);
+    m_sched_db_init =
+      std::make_unique<SchedulerDBInit_t>(processName,
+                                          cta::utils::readSingleLineConfigFile(m_tapedConfig.scheduler.config_file),
+                                          m_tapedConfig.scheduler.number_of_connections,
+                                          m_lc.logger(),
+                                          true);
 #else
     m_lc.log(log::DEBUG,
              "In DriveHandler::createScheduler(): will create agent entry. "
              "Enabling leaving non-empty agent behind.");
     m_sched_db_init =
-      std::make_unique<SchedulerDBInit_t>(processName, m_tapedConfig.backendPath.value(), m_lc.logger(), true);
+      std::make_unique<SchedulerDBInit_t>(processName,
+                                          cta::utils::readSingleLineConfigFile(m_tapedConfig.scheduler.config_file),
+                                          m_lc.logger(),
+                                          true);
 #endif
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(m_lc);
@@ -1044,14 +1046,14 @@ std::shared_ptr<cta::IScheduler> DriveHandler::createScheduler(const std::string
 
   // Set Scheduler DB cache timeouts
   SchedulerDatabase::StatisticsCacheConfig statisticsCacheConfig;
-  statisticsCacheConfig.tapeCacheMaxAgeSecs = m_tapedConfig.tapeCacheMaxAgeSecs.value();
-  statisticsCacheConfig.retrieveQueueCacheMaxAgeSecs = m_tapedConfig.retrieveQueueCacheMaxAgeSecs.value();
+  statisticsCacheConfig.tapeCacheMaxAgeSecs = m_tapedConfig.scheduler.tape_cache_max_age_secs;
+  statisticsCacheConfig.retrieveQueueCacheMaxAgeSecs = m_tapedConfig.scheduler.retrieve_queue_cache_max_age_secs;
   m_sched_db->setStatisticsCacheConfig(statisticsCacheConfig);
 
   m_lc.log(log::DEBUG, "In DriveHandler::createScheduler(): will create scheduler.");
   return std::make_shared<Scheduler>(*m_catalogue,
                                      *m_sched_db,
-                                     m_tapedConfig.schedulerBackendName.value(),
+                                     m_tapedConfig.scheduler.backend_name,
                                      minFilesToWarrantAMount,
                                      minBytesToWarrantAMount);
 }
@@ -1061,37 +1063,38 @@ DriveHandler::executeDataTransferSession(IScheduler* scheduler, tape::daemon::Ta
   // Passing values from taped config to data transfer session config
   // When adding new config variables, be careful not to forget to pass them here
   cta::tape::daemon::DataTransferConfig dataTransferConfig;
-  dataTransferConfig.bufsz = m_tapedConfig.bufferSizeBytes.value();
-  dataTransferConfig.bulkRequestMigrationMaxBytes = m_tapedConfig.archiveFetchBytesFiles.value().maxBytes;
-  dataTransferConfig.bulkRequestMigrationMaxFiles = m_tapedConfig.archiveFetchBytesFiles.value().maxFiles;
-  dataTransferConfig.archiveDismountPolicy.set(m_tapedConfig.archiveDismountPolicy.value().underfillWatchPeriodSecs,
-                                               m_tapedConfig.archiveDismountPolicy.value().underfillMinSamples,
-                                               m_tapedConfig.archiveDismountPolicy.value().underfillStartThreshold,
-                                               m_tapedConfig.archiveDismountPolicy.value().underfillRecoveryThreshold);
-  dataTransferConfig.bulkRequestRecallMaxBytes = m_tapedConfig.retrieveFetchBytesFiles.value().maxBytes;
-  dataTransferConfig.bulkRequestRecallMaxFiles = m_tapedConfig.retrieveFetchBytesFiles.value().maxFiles;
-  dataTransferConfig.maxBytesBeforeFlush = m_tapedConfig.archiveFlushBytesFiles.value().maxBytes;
-  dataTransferConfig.maxFilesBeforeFlush = m_tapedConfig.archiveFlushBytesFiles.value().maxFiles;
-  dataTransferConfig.nbBufs = m_tapedConfig.bufferCount.value();
-  dataTransferConfig.nbDiskThreads = m_tapedConfig.nbDiskThreads.value();
+  dataTransferConfig.bufsz = m_tapedConfig.transfers.buffer_size_bytes;
+  dataTransferConfig.bulkRequestMigrationMaxBytes = m_tapedConfig.transfers.archive.fetch_max_bytes;
+  dataTransferConfig.bulkRequestMigrationMaxFiles = m_tapedConfig.transfers.archive.fetch_max_files;
+  dataTransferConfig.archiveDismountPolicy.set(m_tapedConfig.transfers.archive.underfill.watch_period_secs,
+                                               m_tapedConfig.transfers.archive.underfill.minimum_samples,
+                                               m_tapedConfig.transfers.archive.underfill.start_threshold_percent,
+                                               m_tapedConfig.transfers.archive.underfill.recovery_threshold_percent);
+  dataTransferConfig.bulkRequestRecallMaxBytes = m_tapedConfig.transfers.retrieve.fetch_max_bytes;
+  dataTransferConfig.bulkRequestRecallMaxFiles = m_tapedConfig.transfers.retrieve.fetch_max_files;
+  dataTransferConfig.maxBytesBeforeFlush = m_tapedConfig.transfers.archive.flush_max_bytes;
+  dataTransferConfig.maxFilesBeforeFlush = m_tapedConfig.transfers.archive.flush_max_files;
+  dataTransferConfig.nbBufs = m_tapedConfig.transfers.buffer_count;
+  dataTransferConfig.nbDiskThreads = m_tapedConfig.transfers.disk_io_threads;
   dataTransferConfig.useLbp = true;
-  dataTransferConfig.useRAO = (m_tapedConfig.useRAO.value() == "yes");
-  dataTransferConfig.raoLtoAlgorithm = m_tapedConfig.raoLtoAlgorithm.value();
-  dataTransferConfig.raoLtoAlgorithmOptions = m_tapedConfig.raoLtoOptions.value();
-  dataTransferConfig.externalFreeDiskSpaceScript = m_tapedConfig.externalFreeDiskSpaceScript.value();
-  dataTransferConfig.tapeLoadTimeout = m_tapedConfig.tapeLoadTimeout.value();
+  dataTransferConfig.useRAO = m_tapedConfig.transfers.retrieve.rao.enabled;
+  dataTransferConfig.raoLtoAlgorithm = m_tapedConfig.transfers.retrieve.rao.lto_algorithm;
+  dataTransferConfig.raoLtoAlgorithmOptions = "cost_heuristic_name:cta";  // Only option available
+  dataTransferConfig.externalFreeDiskSpaceScript = m_tapedConfig.transfers.retrieve.external_free_disk_space_script;
+  dataTransferConfig.tapeLoadTimeout = m_tapedConfig.mounts.tape_load_timeout_secs;
   dataTransferConfig.xrootTimeout = 0;
-  dataTransferConfig.useEncryption = (m_tapedConfig.useEncryption.value() == "yes");
-  dataTransferConfig.externalEncryptionKeyScript = m_tapedConfig.externalEncryptionKeyScript.value();
-  dataTransferConfig.wdIdleSessionTimer = m_tapedConfig.wdIdleSessionTimer.value();
-  dataTransferConfig.wdGetNextMountMaxSecs = m_tapedConfig.wdGetNextMountMaxSecs.value();
-  dataTransferConfig.wdNoBlockMoveMaxSecs = m_tapedConfig.wdNoBlockMoveMaxSecs.value();
+  dataTransferConfig.useEncryption = m_tapedConfig.transfers.encryption.enabled;
+  dataTransferConfig.externalEncryptionKeyScript = m_tapedConfig.transfers.encryption.external_key_script;
+  dataTransferConfig.wdIdleSessionTimer = m_tapedConfig.mounts.idle_scheduling_interval_secs;
+  dataTransferConfig.driveStatePollIntervalSecs = m_tapedConfig.mounts.drive_state_poll_interval_secs;
+  dataTransferConfig.wdGetNextMountMaxSecs = m_tapedConfig.mounts.get_next_mount_timeout_secs;
+  dataTransferConfig.wdNoBlockMoveMaxSecs = m_tapedConfig.transfers.no_block_move_timeout_secs;
 
   // Mounting management.
-  cta::mediachanger::RmcProxy rmcProxy(m_tapedConfig.rmcHost.value(),
-                                       m_tapedConfig.rmcPort.value(),
-                                       m_tapedConfig.rmcNetTimeout.value(),
-                                       m_tapedConfig.rmcRequestAttempts.value());
+  cta::mediachanger::RmcProxy rmcProxy(m_tapedConfig.rmcd.host,
+                                       m_tapedConfig.rmcd.port,
+                                       m_tapedConfig.rmcd.request_timeout_secs,
+                                       m_tapedConfig.rmcd.request_attempts);
   cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, m_lc.logger());
   cta::tape::System::realWrapper sWrapper;
 

@@ -1,349 +1,412 @@
 ---
-date: 2025-08-12
+date: 2026-08-21
 section: 1cta
 title: CTA-TAPED
 header: The CERN Tape Archive (CTA)
 ---
-<!---
-@project      The CERN Tape Archive (CTA)
-@copyright    Copyright © 2020-2025 CERN
-@license      This program is free software, distributed under the terms of the GNU General Public
-              Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
-              redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
-              option) any later version.
-
-              This program is distributed in the hope that it will be useful, but WITHOUT ANY
-              WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-              PARTICULAR PURPOSE. See the GNU General Public License for more details.
-
-              In applying this licence, CERN does not waive the privileges and immunities
-              granted to it by virtue of its status as an Intergovernmental Organization or
-              submit itself to any jurisdiction.
---->
 
 # NAME
 
-cta-taped --- CTA Tape Server daemon
+cta-taped --- CTA tape drive daemon
 
 # SYNOPSIS
 
-**cta-taped** \[\--config *config_file*] \[\--foreground \[\--stdout]] \[\--log-to-file *log_file*] \[\--log-format *format*]\
-**cta-taped** \--help
+**cta-taped** [OPTIONS]
+
+**cta-taped** --help
+**cta-taped** --version
 
 # DESCRIPTION
 
-**cta-taped** is the daemon responsible for controlling one or more tape drives.
+**cta-taped** controls one tape drive and executes archive and retrieve mounts scheduled by CTA.
+It manages tape loading and unloading through **cta-rmcd**, transfers data between disk and tape, reports drive and session state, and performs recovery when a session fails.
 
-When **cta-taped** is executed, it immediately forks, with the parent terminating and the child
-running in the background. The **\--foreground** option can be used to keep the parent process
-running in the foreground.
+Run one **cta-taped** process for each tape drive.
+The drive and its CTA logical library are selected in the process configuration.
 
-## Tape Library Support
-
-CTA supports SCSI-compatible tape libraries. The **cta-taped** daemon requires the tape library
-daemon (**cta-rmcd**) to be installed and running on the same server as itself.
+CTA supports SCSI-compatible tape libraries.
+The **cta-rmcd** daemon must be reachable by **cta-taped** for physical mount and unmount operations.
 
 # OPTIONS
 
--c, \--config *config_file*
+-l, --log-file *PATH*
 
-:   Read **cta-taped** configuration from *config_file* instead of the default,
-    */etc/cta/cta-taped.conf*.
+:   Write logs to *PATH*.
+If not specified, logs are written to stdout/stderr.
 
--f, \--foreground
+-c, --config *PATH*
 
-:   Do not terminate the **cta-taped** parent process, keep it in the foreground.
+:   Path to the main configuration file.
+Defaults to */etc/cta/cta-taped.toml* if not provided.
 
--h, \--help
+--config-strict
 
-:   Display command options and exit.
+:   Treat unknown keys, missing keys, and type mismatches in the configuration file as errors.
 
--l, \--log-to-file *log_file*
+--config-check
 
-:   Log to a file instead of stdout.
+:   Validate the configuration, then exit.
+Respects **--config-strict**.
 
--o, \--log-format *format*
+--runtime-dir *PATH*
 
-:   Output format for log messages. \[default\|json\]
+:   Store runtime state metadata, such as the consumed configuration and version information, in the specified directory.
 
--s, \--stdout
+-v, --version
 
-:   Log to standard output. Requires \--foreground. Logging to stdout is the default, but this option is kept for compatibility reasons
+:   Print version information and exit.
+
+-h, --help
+
+:   Display command usage information and exit.
 
 # CONFIGURATION
 
-The **cta-taped** daemon reads its configuration parameters from the CTA configuration file (by
-default, */etc/cta/cta-taped.conf*). Each option is listed with its *default* value.
+The **cta-taped** daemon reads its configuration from a TOML file
+(default: */etc/cta/cta-taped.toml*).
 
-## Tape Server Configuration Options
+Each section is described below.
 
-taped DaemonUserName *cta*
+## [drive]
 
-:   The user of the **cta-taped** daemon process.
+name
 
-taped DaemonGroupName *tape*
+:   Unique CTA name of the tape drive.
+The name is included in log records and exposed to CTA tooling.
 
-:   The group of the **cta-taped** daemon process.
+device
 
-taped LogMask *INFO*
+:   Path to the non-rewinding character device used to access the drive.
+Use a persistent device symlink, such as one under */dev/tape/by-id*.
+Site-specific udev rules may provide other persistent paths, such as */dev/tape/by-name/<drive-name>*.
 
-:   Logs with a level lower than this value will be masked. Possible
-    values are EMERG, ALERT, CRIT, ERR, WARNING, NOTICE (USERERR), INFO,
-    DEBUG. USERERR log level is equivalent to NOTICE, because by
-    convention, CTA uses log level NOTICE for user errors.
+control_path
 
-taped LogFormat *default*
+:   SCSI media-changer address associated with the drive.
+It is normally `smc` followed by the drive ordinal reported by **cta-smc -q D**, for example `smc0`.
 
-:   The default format for log lines is plain-text key-value pairs. If
-    this option is set to *json*, log lines will be output in JSON format.
+logical_library_name
 
-taped CatalogueConfigFile */etc/cta/cta-catalogue.conf*
+:   Name of the existing CTA logical library to which the drive belongs.
 
-:   Path to the CTA Catalogue configuration file. See **FILES**, below.
+ready_timeout_secs *(default: 120)*
 
-ObjectStore BackendPath (no default)
+:   Maximum time that the drive process may remain in the readiness-checking state without making progress.
+On expiry, the drive process is killed and restarted, but the drive remains Up.
 
-:   URL of the objectstore (CTA Scheduler Database). Usually this will
-    be the URL of a Ceph RADOS objectstore. For testing or small
-    installations, a file-based objectstore can be used instead. See
-    **cta-objectstore-initialize**.
+## [catalogue]
 
-## Drive Configuration Options
+config_file
 
-taped DriveName (no default)
+:   Path to the CTA catalogue configuration file
+(commonly */etc/cta/cta-catalogue.conf*).
 
-:   The name of the drive. Will be included for every line in the logs.
+## [scheduler]
 
-taped DriveLogicalLibrary (no default)
+backend_name
 
-:   CTA\'s logical library the tape drive will be linked to.
+:   Unique identifier for the backend scheduler resources.
+Example structure: `[ceph|postgres|vfs][User|Repack]`.
 
-taped DriveDevice (no default)
+config_file
 
-:   Path to the character special device used to access the drive.
+:   Path to the CTA scheduler configuration file
+(commonly */etc/cta/cta-scheduler.conf*).
 
-taped DriveControlPath (no default)
+tape_cache_max_age_secs *(default: 600)*
 
-:   The SCSI media changer address of the drive. This is \"smc\" + the
-    drive ordinal number of the device, which can be obtained with
-    **cta-smc -q D**.
+:   Maximum age of cached tape statistics used when deciding whether work warrants a mount.
 
-## General Configuration Options
+retrieve_queue_cache_max_age_secs *(default: 10)*
 
-This options will be included in every log line of the tape daemon to
-enhance log identification when swapping drives between different backends.
+:   Maximum age of cached retrieve-queue statistics.
 
-general InstanceName (no default)
+## [mounts]
 
-:   Unique string to identify CTA\'s catalogue instance the tape daemon is serving.
+minimum_queued_bytes *(default: 500000000000)*
 
-general SchedulerBackendName (no default)
+:   Minimum queued bytes required before the scheduler considers an archive or retrieve queue large enough to mount.
+This is combined with **minimum_queued_files** using OR semantics.
+A mount can still start when the applicable catalogue mount-rule timeout expires.
 
-:   The unique string to identify the backend scheduler resources. It
-    can be structured as: \[ceph\|postgres\|vfs]\[User\|Repack].
+minimum_queued_files *(default: 10000)*
 
-## Memory management options
+:   Minimum queued files required before the scheduler considers an archive or retrieve queue large enough to mount.
+This is combined with **minimum_queued_bytes** using OR semantics.
 
-taped BufferCount *5000*
+scheduling_timeout_secs *(default: 300)*
 
-:   Number of memory buffers per drive in the data transfer cache.
+:   Maximum time that the drive process may remain in the scheduling state without reporting progress.
+On expiry, the drive process is killed and restarted, but the drive remains Up.
 
-taped BufferSizeBytes *5000000*
+get_next_mount_timeout_secs *(default: 900)*
 
-:   Size of a memory buffer in the data transfer cache, in bytes.
+:   Maximum time allowed for selecting the next mount.
+On expiry, a warning is logged and the request is retried.
 
-## Batched metadata access and tape write flush options
+idle_scheduling_interval_secs *(default: 10)*
 
-taped ArchiveFetchBytesFiles *80000000000*,*4000*
+:   Delay before retrying after the scheduler reports that no mount is available.
 
-:   Maximum batch size for processing archive requests, specified as a
-    tuple (number of bytes, number of files). When **cta-taped** fetches
-    a batch of archive requests, the batch cannot exceed the number of
-    bytes and number of files specified by this parameter. Defaults to
-    80 GB and 4000 files.
+drive_state_poll_interval_secs *(default: 5)*
 
+:   Delay before polling the desired drive state again while the drive is Down.
+Lower values make **cta-taped** react faster when an operator sets the drive Up but increase scheduler polling.
 
-taped ArchiveDismountPolicy *300*,*3*,*40*,*60*
+mount_timeout_secs *(default: 600)*
 
-:   Underfill detection limits for archive request batches, specified as
-    a tuple (minimum watch period in seconds, minimum number of underfilled
-    batches, recovery threshold, start threshold). When **cta-taped**
-    repeatedly receives archive request batches, the requested number of 
-    files and bytes is defined in ArchiveFetchBytesFiles. When the 
-    effective fill ratio (max(filesFetched/filesRequested, 
-    bytesFetched/bytesRequested) remains below the configured thresholds, 
-    the daemon concludes that the backend cannot supply enough work 
-    to efficiently keep the tape drive busy and ends the tape session. 
-    An underfill observation period starts when the effective fill ratio 
-    falls below the start threshold, ends when it reaches or exceeds 
-    the recovery threshold. If the measured period is longer than the
-    configured watch period and the minimum number of underfilled fetched
-    batches is reached, the end of the tape session is triggered. 
-    Defaults to 300 seconds, 3 batches, a  start threshold of 40 %, 
-    and a recovery threshold of 60 %.
+:   Maximum time that the drive process may remain in the overall mounting state, including the RMCD request and physical tape-load readiness check.
+On expiry, the drive process is killed and a cleaner session attempts recovery.
 
-taped ArchiveFlushBytesFiles *32000000000*,*200*
+tape_load_timeout_secs *(default: 300)*
 
-:   Flush to tape criteria, specified as a tuple (number of bytes,
-    number of files). During archiving operations, this parameter
-    defines the maximum number of bytes and number of files that will be
-    written to tape before a flush to tape (synchronised tape mark).
-    Defaults to 32 GB and 200 files.
+:   Maximum time allowed for the physical drive to load the tape and become ready after the RMCD mount request returns.
 
-taped RetrieveFetchBytesFiles *80000000000*,*4000*
+unmount_timeout_secs *(default: 900)*
 
-:   Maximum batch size for processing retrieve requests, specified as a
-    tuple (number of bytes, number of files). When cta-taped fetches a
-    batch of retrieve requests, the batch cannot exceed the number of
-    bytes and number of files specified by this parameter. Defaults to
-    80 GB and 4000 files.
+:   Maximum time allowed for RMCD to return an unloaded tape to its library slot.
+This limit starts after the drive has finished rewinding and ejecting the tape.
 
-## Scheduling options
+## [transfers]
 
-taped MountCriteria *500000000000*,*10000*
+buffer_count *(default: 5000)*
 
-:   Criteria to mount a tape, specified as a tuple (number of bytes,
-    number of files). An archival or retrieval queue must contain at
-    least this number of bytes or this number of files before a tape
-    mount will be triggered. This does not apply when the timeout
-    specified in the applicable mount rule is exceeded. Defaults to 500
-    GB and 10000 files.
+:   Number of in-memory buffers allocated to the data-transfer pipeline.
 
-## Disk file access options
+buffer_size_bytes *(default: 5000000)*
 
-taped NbDiskThreads *10*
+:   Size of each in-memory transfer buffer.
+Approximate transfer-cache memory consumption is **buffer_count** multiplied by **buffer_size_bytes**.
 
-:   The number of disk I/O threads. This determines the maximum number
-    of parallel file transfers.
+disk_io_threads *(default: 10)*
 
-## Tape encryption support
+:   Number of disk I/O workers and therefore the maximum number of transfers that can perform disk I/O concurrently.
 
-taped UseEncryption *yes*
+no_block_move_timeout_secs *(default: 1800)*
 
-:   Enable tape hardware encryption. Encryption will be enabled only for
-    tapes where a valid encryption key has been configured for the tape
-    or tape pool.
+:   Interval after which a file with no tape-block movement is logged as stuck.
+This setting controls reporting and does not terminate the transfer.
 
-taped externalEncryptionKeyScript (no default)
+## [transfers.archive]
 
-:   Path to the external script used to obtain encryption keys.
+fetch_max_bytes *(default: 100000000000)*
 
-## Disk space management options
+:   Maximum total bytes requested from the scheduler in one archive batch.
+The batch is limited when either this value or **fetch_max_files** is reached.
 
-taped externalFreeDiskSpaceScript (no default)
+fetch_max_files *(default: 5000)*
 
-:   Path to the external script used to determine free disk space in the
-    retrieve buffer.
+:   Maximum number of files requested from the scheduler in one archive batch.
 
-## Recommended Access Order (RAO) options
+flush_max_bytes *(default: 32000000000)*
 
-taped UseRAO *yes*
+:   Maximum bytes written between flushes to tape using a synchronized tape mark.
+A flush occurs on a file boundary, so the actual byte count can exceed this value.
 
-:   Enable Recommended Access Order (RAO) if available. This setting is
-    used to enable both hardware and software RAO for all drives that
-    support it. Hardware RAO in IBM Enterprise and LTO drives generation
-    9 or later needs no further configuration. The additional RAO
-    options below are for software RAO on LTO-8 drives.
+flush_max_files *(default: 200)*
 
-taped RAOLTOAlgorithm *sltf*
+:   Maximum files written between flushes to tape.
+A flush is triggered when either this value or **flush_max_bytes** is reached.
 
-:   On LTO-8 tape drives, specify which software RAO algorithm to use.
-    Valid options are **linear**, **random**, **sltf**. **linear** means
-    retrieve files ordered by logical file ID. **random** means retrieve
-    files in a random order. **sltf** is the Shortest Locate Time First
-    algorithm, which traverses the tape by always picking the nearest
-    (lowest cost) neighbour to the last file selected. The cost function
-    is specified in **RAOLTOAlgorithmOptions**, below.
+## [transfers.archive.underfill]
 
-    Linear and random ordering are useful only to establish a baseline
-    for RAO tests. This option should be set to **sltf** in production
-    environments.
+watch_period_secs *(default: 300)*
 
-> Note: the **sltf** option requires that the following parameters have
-> been specified in the CTA Catalogue for the LTO-8 media type:
-> *nbwraps*, *minlpos*, *maxlpos*. See **cta-admin mediatype**.
+:   Minimum duration for which archive batches must remain underfilled before an unmount can be requested.
 
-taped RAOLTOAlgorithmOptions *cost_heuristic_name:cta*
+minimum_samples *(default: 3)*
 
-:   Options for the software RAO algorithm specified by
-    **RAOLTOAlgorithm**, above.
+:   Minimum number of underfilled archive batches required during the observation period before an unmount can be requested.
 
-## Timeout options
+start_threshold_percent *(default: 40)*
 
-taped TapeLoadTimeout *300*
+:   Fill percentage below which an underfill observation begins.
+Valid values are 0 through 100.
 
-:   Maximum time to wait for a tape to load, in seconds.
+recovery_threshold_percent *(default: 60)*
 
-taped WatchdogCheckMaxSecs *120*
+:   Fill percentage at or above which an underfill observation is cancelled.
+Valid values are 0 through 100 and this value must be greater than **start_threshold_percent**.
 
-:   Maximum time allowed to determine a drive is ready, in seconds.
+The effective fill percentage is the greater of the fetched-file and fetched-byte percentages.
+An archive session ends for underfill only after both **watch_period_secs** and **minimum_samples** are satisfied.
 
-taped WatchdogScheduleMaxSecs *300*
+## [transfers.retrieve]
 
-:   Maximum time allowed to schedule a single mount, in seconds.
+fetch_max_bytes *(default: 100000000000)*
 
-taped WatchdogMountMaxSecs *600*
+:   Maximum total bytes requested from the scheduler in one retrieve batch.
+The batch is limited when either this value or **fetch_max_files** is reached.
 
-:   Maximum time allowed to mount a tape, in seconds.
+fetch_max_files *(default: 5000)*
 
-taped WatchdogUnmountMaxSecs *600*
+:   Maximum number of files requested from the scheduler in one retrieve batch.
 
-:   Maximum time allowed to unmount a tape, in seconds.
+drain_to_disk_timeout_secs *(default: 1800)*
 
-taped WatchdogDrainMaxSecs *1800*
+:   Maximum total time allowed to finish writing retrieved data to disk after the tape is unmounted.
 
-:   Maximum time allowed to drain a file to disk during retrieve, in seconds.
+external_free_disk_space_script *(default: /usr/bin/cta-eosdf.sh)*
 
-taped WatchdogShutdownMaxSecs *900*
+:   Path to an operator-provided executable that reports free space in the retrieve destination.
 
-:   Maximum time allowed to shutdown of a tape session, in seconds.
+## [transfers.retrieve.rao]
 
-taped WatchdogNoBlockMoveMaxSecs *1800*
+enabled *(default: true)*
 
-:   Maximum time allowed after mounting without any tape blocks being
-    read/written, in seconds. If this timeout is exceeded, the session
-    will be terminated.
+:   Enable Recommended Access Order on supported drives.
+Hardware RAO is preferred when available; otherwise software RAO may be used.
 
-taped WatchdogIdleSessionTimer *10*
+lto_algorithm *(default: sltf)*
 
-:   Maximum time to wait after scheduling came up idle, in seconds.
+:   Software RAO algorithm for LTO-8 drives.
+Possible values are `linear`, `random`, and `sltf` (Shortest Locate Time First).
+The `sltf` algorithm requires the corresponding media type's `NB_WRAPS`, `MIN_LPOS`, and `MAX_LPOS` catalogue columns to be populated.
+
+## [transfers.encryption]
+
+enabled *(default: true)*
+
+:   Enable tape-drive hardware encryption when a key is configured for the tape or tape pool.
+
+external_key_script *(default: /usr/local/bin/cta-get-encryption-key.sh)*
+
+:   Path to the operator-provided executable used to obtain encryption keys.
+
+## [rmcd]
+
+host *(default: localhost)*
+
+:   Hostname or IP address of the Remote Media Changer Daemon.
+RMCD traffic is neither encrypted nor authenticated, so remote connections are not recommended.
+
+port *(default: 5014)*
+
+:   TCP port on which RMCD accepts requests.
+
+request_timeout_secs *(default: 600)*
+
+:   Timeout applied to network read and write operations with RMCD.
+
+request_attempts *(default: 10)*
+
+:   Maximum number of attempts for a retriable RMC request.
+Network and protocol errors, including expiration of **request_timeout_secs**, are not retried by this setting.
+
+## [logging]
+
+level *(default: INFO)*
+
+:   Log mask.
+Messages below this level are suppressed.
+Possible values: EMERG, ALERT, CRIT, ERR, WARNING, NOTICE, INFO, DEBUG.
+
+format *(default: json)*
+
+:   Log output format.
+Possible values: json, kv.
+
+[logging.attributes]
+
+:   Optional key-value pairs added to all log lines, typically used for monitoring and instance identification.
+
+## [telemetry]
+
+config_file
+
+:   Path to the OpenTelemetry SDK declarative configuration file.
+If omitted or empty, telemetry is disabled.
+
+on_init_failure *(default: warn)*
+
+:   Behaviour if telemetry initialisation fails.
+Possible values: `warn`, `fatal`.
+
+Telemetry is experimental and disabled by default unless explicitly enabled under **[experimental]**.
+
+## [health_server]
+
+enabled *(default: false)*
+
+:   Enable or disable the health server.
+
+host *(default: 127.0.0.1)*
+
+:   Interface to bind to when using TCP.
+
+port *(default: 8080)*
+
+:   TCP port to bind to when using TCP.
+
+use_unix_domain_socket *(default: false)*
+
+:   Expose the health server over a Unix domain socket instead of TCP.
+When enabled, **--runtime-dir** must be provided.
+The socket file is created at *<runtime-dir>/health.sock*.
+
+The health server exposes:
+
+* /health/ready
+* /health/live
+
+## [xrootd]
+
+security_protocol *(default: sss)*
+
+:   Override `XrdSecPROTOCOL` for connections to the disk system.
+
+sss_keytab_path
+
+:   Override `XrdSecSSSKT` with the path to the XRootD Simple Shared Secrets keytab.
+The file must be readable by **cta-taped** when the `sss` protocol is selected.
+
+## [experimental]
+
+telemetry_enabled *(default: false)*
+
+:   Enable experimental telemetry support configured under **[telemetry]**.
 
 # ENVIRONMENT
 
 XrdSecPROTOCOL
 
-:   The XRootD security protocol to use for client/server authentication.
+:   The XRootD security protocol used for connections to the disk system.
+Overridden by **xrootd.security_protocol**.
 
 XrdSecSSSKT
 
-:   Path to the XRootD Simple Shared Secrets (SSS) keytab to use for
-    client/server authentication.
+:   Path to the XRootD Simple Shared Secrets keytab.
+Overridden by **xrootd.sss_keytab_path**.
 
 # FILES
 
-*/etc/cta/cta-taped.conf*
+*/etc/cta/cta-taped.toml*
 
-:   The CTA Tape Server configuration file, containing the options
-    described above under **CONFIGURATION**. See */etc/cta/cta-taped.example.conf*.
+:   Default configuration file.
 
 */etc/cta/cta-catalogue.conf*
 
-:   Usual location for the CTA Catalogue configuration file. See **taped CatalogueConfigFile**
-    option under **CONFIGURATION**, and */etc/cta/cta-catalogue.example.conf*.
+:   CTA catalogue configuration file.
 
-*/var/log/cta/cta-taped.log*
+*/etc/cta/cta-scheduler.conf*
 
-:   Usual location for the tape server log file.
+:   CTA scheduler configuration file.
+
+*/etc/cta/cta-otel.yaml*
+
+:   OpenTelemetry declarative configuration file used when telemetry is enabled.
 
 # SEE ALSO
 
-**cta-rmcd**(1cta)
+**cta-rmcd**(1cta), **cta-smc**(1cta)
 
-CERN Tape Archive documentation [https://cta.docs.cern.ch/](https://cta.docs.cern.ch/)
+CERN Tape Archive documentation
+[https://cta.docs.cern.ch/](https://cta.docs.cern.ch/)
 
 # COPYRIGHT
 
-Copyright © 2024 CERN. License GPLv3+: GNU GPL version 3 or later [http://gnu.org/licenses/gpl.html](http://gnu.org/licenses/gpl.html).
-This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the extent permitted by law.
-In applying this licence, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
-Intergovernmental Organization or submit itself to any jurisdiction.
+Copyright © 2026 CERN.
+License GPLv3+: GNU GPL version 3 or later [http://gnu.org/licenses/gpl.html](http://gnu.org/licenses/gpl.html).
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+In applying this licence, CERN does not waive the privileges and immunities granted to it by virtue of its status as an Intergovernmental Organization or submit itself to any jurisdiction.

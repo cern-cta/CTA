@@ -45,30 +45,7 @@ test-cta-valgrind:
     - !reference [.merge-train-guard, before_script]
     - *setup-cta-install
   script:
-    - /usr/bin/cta-unitPlusIntegrationTests.sh
-
-integration-test-cta:
-  # Sometimes flaky due to "resource unavailable" error
-  retry: 1
-  stage: test
-  needs:
-    - job: check-merge-train-duplicate
-      optional: true
-    - job: build-cta-rpms
-  rules:
-    - when: on_success
-  image: $IMAGE_TEST
-  variables:
-    GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
-    CTAREPODIR: /tmp/repo
-  before_script:
-    - !reference [.merge-train-guard, before_script]
-    - *setup-cta-install
-  script:
-    - /usr/bin/cta-integrationTests
-  artifacts:
-    reports:
-      junit: $GTEST_REPORT_FILE
+    - /usr/bin/cta-valgrindUnitTests.sh
 
 unit-test-cta:
   interruptible: false

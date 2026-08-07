@@ -22,23 +22,8 @@ frontend-wfe: &frontend
 
 frontend-admin: *frontend
 
-taped:
-  conf:
-    telemetry:
-      enabled: true
-      retainInstanceIdOnRestart: true
-      metrics:
-        backend: "OTLP_HTTP"
-        exportInterval: 1000
-        exportTimeout: 500
-        otlp:
-          endpoint: "https://monit-otlp.cern.ch:4319"
-          auth:
-            basic:
-              username: it_sd_tab_ci
-              passwordSecret: monit-it-sd-tab-ci-pwd
-
-maintd:
+# All services using the declarative OpenTelemetry config format can use the same configuration
+taped: &telemetryConf
   extraEnv:
     - name: OTEL_EXPORTER_CREDENTIALS
       valueFrom:
@@ -46,8 +31,6 @@ maintd:
           name: monit-it-sd-tab-ci-credentials
           key: credentials
 
-  # Once all the services support declarative config
-  # this will be moved to a global config for all services
   # The structure below follows the OpenTelemetry Declarative config format
   telemetryConfig: |
     file_format: "1.0-rc.1"
@@ -74,3 +57,5 @@ maintd:
                 encoding: protobuf
                 temporality_preference: cumulative
                 default_histogram_aggregation: explicit_bucket_histogram
+
+maintd: *telemetryConf

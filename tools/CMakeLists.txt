@@ -51,7 +51,7 @@ install (TARGETS ctacataloguecmdlineunittests DESTINATION usr/${CMAKE_INSTALL_LI
 # cta-admin <admin_command> is the SSI version of "cta <admin_command>"
 #
 add_executable(cta-admin CtaAdminXrdCmd.cpp CtaAdminParsedCmd.cpp CtaAdminCmdParser.cpp CtaAdminTextFormatter.cpp)
-target_link_libraries(cta-admin XrdSsiLib XrdUtils ctacommon stdc++fs ctatapedaemoncommon)
+target_link_libraries(cta-admin XrdSsiLib XrdUtils ctacommon ctatapedutils stdc++fs)
 set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 
 #
