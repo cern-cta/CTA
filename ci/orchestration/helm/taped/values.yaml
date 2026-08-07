@@ -6,38 +6,68 @@ image:
   repository: cta/ctageneric/cta-taped
   tag: latest
 
-conf:
-  taped:
-    bufferSizeBytes: 262144
-    bufferCount: 200
-    mountCriteria: "2000000, 100"
-    watchdogIdleSessionTimer: 1  # Make tape servers more responsive, thus improving CI test speed
-    logMask: "INFO"
-    useEncryption: "no"
-    # Reduce number of threads to reduce contention
-    nbDiskThreads: 4
-    # Decrease schedulerDB cache timeout for tests
-    tapeCacheMaxAgeSecs: 1
-    retrieveQueueCacheMaxAgeSecs: 1
-    externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
-    rmcHost: "cta-rmcd" # override with localhost if using hostnetwork
-    schedulerNumberOfConnections: 3
-  telemetry:
-    enabled: false
-    retainInstanceIdOnRestart: false
-    metrics:
-      backend: "NOOP"
-      exportInterval: 1000
-      exportTimeout: 500
-      otlp:
-        endpoint: ""
-        auth:
-          basic:
-            username: ""
-            passwordSecret: ""
-      file:
-        endpoint: ""
+logging:
+  level: "INFO"
 
+scheduler:
+  tapeCacheMaxAgeSecs: 1
+  retrieveQueueCacheMaxAgeSecs: 1
+  numberOfConnections: 3
+
+drive:
+  readyTimeoutSecs: 120
+
+mounts:
+  minimumQueuedBytes: 2000000
+  minimumQueuedFiles: 100
+  schedulingTimeoutSecs: 300
+  getNextMountTimeoutSecs: 900
+  idleSchedulingIntervalSecs: 1 # Make tape servers more responsive, thus improving CI test speed
+  driveStatePollIntervalSecs: 1 # Make tape servers react faster to drive state changes in CI
+  mountTimeoutSecs: 600
+  tapeLoadTimeoutSecs: 300
+  unmountTimeoutSecs: 900
+
+rmcd:
+  host: "cta-rmcd" # Override with localhost if using host networking
+  port: 5014
+  requestTimeoutSecs: 600
+  requestAttempts: 10
+
+transfers:
+  bufferSizeBytes: 262144
+  bufferCount: 200
+  diskIoThreads: 4
+  noBlockMoveTimeoutSecs: 1800
+  archive:
+    fetchMaxBytes: 100000000000
+    fetchMaxFiles: 5000
+    flushMaxBytes: 32000000000
+    flushMaxFiles: 200
+    underfill:
+      watchPeriodSecs: 300
+      minimumSamples: 3
+      startThresholdPercent: 40
+      recoveryThresholdPercent: 60
+  retrieve:
+    fetchMaxBytes: 100000000000
+    fetchMaxFiles: 5000
+    drainToDiskTimeoutSecs: 1800
+    externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
+    rao:
+      enabled: true
+      ltoAlgorithm: "sltf"
+  encryption:
+    enabled: false
+    externalKeyScript: "/usr/local/bin/cta-get-encryption-key.sh"
+
+telemetry:
+  enabled: true
+
+# OpenTelemetry is entirely configured through declarative configuration.
+telemetryConfig: |
+  file_format: "1.0-rc.1"
+  disabled: true
 
 # SSS keytab to communicate to the disk buffer
 keytab:
@@ -64,11 +94,11 @@ postRun:
 #   - name: "VDSTK01"
 #     device: "/dev/nst2"
 #     logicalLibraryName: lib1
-#     controlPath smc0
+#     controlPath: smc0
 #   - name: "VDSTK02"
 #     device: "/dev/nst0"
 #     logicalLibraryName: lib2
-#     controlPath smc1
+#     controlPath: smc1
 drives: {}
 
 securityContext:

@@ -19,7 +19,6 @@ set(CATALOGUE_LIB_SRC_FILES
   CatalogueFactoryFactory.cpp
   CatalogueSchema.cpp
   CmdLineTool.cpp
-  DriveConfig.cpp
   dummy/DummyAdminUserCatalogue.cpp
   dummy/DummyArchiveFileCatalogue.cpp
   dummy/DummyArchiveRouteCatalogue.cpp
@@ -296,7 +295,6 @@ set(CATALOGUE_MODULES_TESTS_SRC_FILES
   tests/modules/DiskInstanceCatalogueTest.cpp
   tests/modules/DiskInstanceSpaceCatalogueTest.cpp
   tests/modules/DiskSystemCatalogueTest.cpp
-  tests/modules/DriveConfigCatalogueTest.cpp
   tests/modules/DriveStateCatalogueTest.cpp
   tests/modules/FileRecycleLogCatalogueTest.cpp
   tests/modules/LogicalLibraryCatalogueTest.cpp

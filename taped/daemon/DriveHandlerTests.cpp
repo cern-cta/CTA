@@ -8,7 +8,6 @@
 #include "ProcessManager.hpp"
 #include "TapedProxy.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
-#include "common/TapedConfiguration.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
 #include "common/dataStructures/DriveStatus.hpp"
 #include "common/dataStructures/MountType.hpp"
@@ -111,7 +110,7 @@ public:
                const common::dataStructures::DriveStatus& status,
                const common::dataStructures::SecurityIdentity& identity,
                log::LogContext& lc));
-  MOCK_METHOD2(reportDriveConfig, void(const cta::tape::daemon::TapedConfiguration& tapedConfig, log::LogContext& lc));
+  MOCK_METHOD2(reportSchedulerBackendName, void(const std::string& tapeDriveName, log::LogContext& lc));
 };
 
 }  // namespace cta
@@ -169,7 +168,7 @@ public:
     ON_CALL(*m_scheduler, getDesiredDriveState(_, _))
       .WillByDefault(Return(cta::common::dataStructures::DesiredDriveState()));
     ON_CALL(*m_scheduler, createTapeDriveStatus(_, _, _, _, _, _)).WillByDefault(Return());
-    ON_CALL(*m_scheduler, reportDriveConfig(_, _)).WillByDefault(Return());
+    ON_CALL(*m_scheduler, reportSchedulerBackendName(_, _)).WillByDefault(Return());
   }
 
 protected:
@@ -181,7 +180,7 @@ protected:
   cta::log::StringLogger m_logger {"dummy", "driveHandlerTests", cta::log::DEBUG};
   cta::log::LogContext m_lc;
   NiceMock<cta::tape::daemon::ProcessManagerMock> m_processManager;
-  cta::tape::daemon::TapedConfiguration m_tapedConfig;
+  cta::tape::daemon::TapedConfig m_tapedConfig;
   cta::common::dataStructures::DriveInfo m_driveInfo {"drive0", "0.0.0.0", "lib0", "/dev/tape0", "smc0"};
 };
 
@@ -487,11 +486,11 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
                             "failed to set drive down"));
   ASSERT_NE(std::string::npos, logToCheck.find("exception_message=\"Failed to set desired drive state\""));
 
-  // It cannot report the drive configuration to the catalogue, so it should mark the drive as down, and the session
-  // cannot continue.
+  // It cannot report the scheduler backend name to the catalogue, so it should mark the drive as down, and the
+  // session cannot continue.
   m_logger.clearLog();
-  EXPECT_CALL(*m_scheduler, reportDriveConfig(_, _))
-    .WillOnce(Throw(cta::exception::Exception("Failed to report drive config")))
+  EXPECT_CALL(*m_scheduler, reportSchedulerBackendName(_, _))
+    .WillOnce(Throw(cta::exception::Exception("Failed to report scheduler backend name")))
     .WillRepeatedly(Return());
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
   checkReport();
@@ -501,7 +500,7 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
   ASSERT_NE(std::string::npos,
             logToCheck.find("MSG=\"In DriveHandler::runChild(): "
                             "failed to set drive down"));
-  ASSERT_NE(std::string::npos, logToCheck.find("exception_message=\"Failed to report drive config\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("exception_message=\"Failed to report scheduler backend name\""));
 
   // After all the problems with scheduler, we should be able to run a good session
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_UP);

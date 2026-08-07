@@ -75,14 +75,6 @@ target_link_libraries(cta-unit-tests-multiprocess
 add_library(cta-unit-test-helper
   TempFile.cpp TempDirectory.cpp)
 
-add_executable(cta-integration-tests
-  integration_tests.cpp)
-
-target_link_libraries(cta-integration-tests
-  cta-taped-integration-tests
-  gtest
-  pthread)
-
 add_executable(cta-test-immutable-file
   ImmutableFileTest.cpp
   ImmutableFileTestMain.cpp
@@ -98,7 +90,6 @@ install(
     cta-unit-tests-rdbms
     cta-unit-tests
     cta-unit-tests-multiprocess
-    cta-integration-tests
     cta-test-immutable-file
   DESTINATION
     usr/bin)
@@ -111,7 +102,7 @@ if (OCCI_SUPPORT)
   configure_file(cta-unit-tests-rdbms-oracle.sh.in ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-rdbms-oracle.sh @ONLY)
 endif ()
 
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-valgrind.sh cta-unit-and-integration-tests.sh DESTINATION usr/bin)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-valgrind.sh DESTINATION usr/bin)
 install(FILES valgrind.suppr helgrind.suppr ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile DESTINATION usr/share/cta-${CTA_VERSION}/unittest/)
 
 if (OCCI_SUPPORT)

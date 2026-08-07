@@ -1,8 +1,6 @@
 # SPDX-FileCopyrightText: 2022 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-add_subdirectory(common)
-
 # So that we can see WatchdogMessage.pb.h
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
@@ -20,12 +18,10 @@ add_library(ctatapedaemon
   DriveHandlerStateReporter.cpp
   ProcessManager.cpp
   SignalHandler.cpp
-  TapeDaemon.cpp
 )
 
 target_link_libraries(ctatapedaemon
   ctatapedsession
-  ctatapedaemoncommon
   ctascsi
   ctatapeddrive
   ctatapedfile)
@@ -46,8 +42,8 @@ set_property(TARGET ctadaemonunittests-multiprocess PROPERTY   VERSION "${CTA_LI
 
 target_link_libraries(ctadaemonunittests
   ctatapedaemon
-  ctatapedaemoncommonunittests
   cta-unit-test-helper)
+target_compile_definitions(ctadaemonunittests PRIVATE CTA_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 
 target_link_libraries(ctadaemonunittests-multiprocess
   ctatapedaemon
@@ -55,7 +51,3 @@ target_link_libraries(ctadaemonunittests-multiprocess
 
 install(TARGETS ctadaemonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 install(TARGETS ctadaemonunittests-multiprocess DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-
-install (FILES cta-taped.example.conf
-  DESTINATION usr/${CMAKE_INSTALL_DOCDIR}
-  PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)

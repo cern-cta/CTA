@@ -52,9 +52,9 @@ add_executable(cta-admin
 target_link_libraries(cta-admin
   ctacommon
   stdc++fs
-  ctatapedaemoncommon
   ctagrpc
   ctaprotobufconversions
+  ctatapedutils
   gssapi_krb5)
 
 set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
