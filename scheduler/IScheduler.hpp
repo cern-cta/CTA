@@ -44,6 +44,8 @@ public:
                                      const common::dataStructures::DriveStatus& status,
                                      const common::dataStructures::SecurityIdentity& identity,
                                      log::LogContext& lc) = 0;
+
+  virtual void reportSchedulerBackendName(const std::string& driveName, log::LogContext& lc) = 0;
 };
 
 }  // namespace cta

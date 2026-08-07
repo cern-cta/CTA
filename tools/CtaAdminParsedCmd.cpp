@@ -6,6 +6,7 @@
 #include "CtaAdminParsedCmd.hpp"
 
 #include "CtaAdminTextFormatter.hpp"
+#include "taped/TapedUtils.hpp"
 
 #include <filesystem>
 #include <fstream>
@@ -180,7 +181,7 @@ void CtaAdminParsedCmd::addOption(const Option& option, const std::string& value
       new_opt->set_key(key);
       if (option == opt_drivename_cmd && value == "first") {
         try {
-          // TODO
+          new_opt->set_value(cta::taped::utils::getFirstDriveName());
         } catch (cta::exception::Exception&) {
           throw std::runtime_error(
             "Could not find a taped configuration file. This option should only be run from a tapeserver.");

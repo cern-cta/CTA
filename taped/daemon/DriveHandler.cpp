@@ -762,6 +762,7 @@ int DriveHandler::runChild() {
       }
 
       scheduler->setDesiredDriveState(m_driveInfo.driveName, driveState, m_lc);
+      scheduler->reportSchedulerBackendName(m_driveInfo.driveName, m_lc);
     } catch (cta::exception::Exception& ex) {
       params.add(semconv::log::exceptionMessage, ex.getMessageValue()).add("Backtrace", ex.backtrace());
       m_lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set drive down");

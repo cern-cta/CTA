@@ -10,6 +10,12 @@ add_subdirectory (session)
 add_subdirectory (rao)
 add_subdirectory (daemon)
 
+add_library(ctatapedutils
+  TapedUtils.cpp
+)
+target_link_libraries(ctatapedutils ctacommon)
+target_link_libraries(ctatapedaemon ctatapedutils)
+
 add_library(ctataped
   TapedApp.cpp
 )
@@ -17,6 +23,7 @@ add_library(ctataped
 target_link_libraries(ctataped
 	ctacommon
 	ctatapedaemon
+	ctatapedutils
 )
 
 add_executable (cta-taped cta-taped.cpp)

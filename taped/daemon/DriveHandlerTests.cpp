@@ -110,6 +110,7 @@ public:
                const common::dataStructures::DriveStatus& status,
                const common::dataStructures::SecurityIdentity& identity,
                log::LogContext& lc));
+  MOCK_METHOD2(reportSchedulerBackendName, void(const std::string& tapeDriveName, log::LogContext& lc));
 };
 
 }  // namespace cta
@@ -167,6 +168,7 @@ public:
     ON_CALL(*m_scheduler, getDesiredDriveState(_, _))
       .WillByDefault(Return(cta::common::dataStructures::DesiredDriveState()));
     ON_CALL(*m_scheduler, createTapeDriveStatus(_, _, _, _, _, _)).WillByDefault(Return());
+    ON_CALL(*m_scheduler, reportSchedulerBackendName(_, _)).WillByDefault(Return());
   }
 
 protected:

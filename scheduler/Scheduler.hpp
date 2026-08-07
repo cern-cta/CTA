@@ -257,6 +257,12 @@ public:
                              log::LogContext& lc) override;
 
   /**
+   * Reports the scheduler backend name for the drive to the catalogue.
+   * @param tapeDriveName The name of the drive to update.
+   */
+  void reportSchedulerBackendName(const std::string& driveName, log::LogContext& lc) override;
+
+  /**
    * Returns the status of a specific drive
    * @param tapeDriveName
    * @return An optional drive status structures.
