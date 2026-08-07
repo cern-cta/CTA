@@ -122,6 +122,7 @@
   # Size of one memory buffer in the data transfer cache, in bytes. Default is 5 MB.
   buffer_size_bytes = 5000000
 
+# TODO: better name for this as well? In general, better organisation of this file
 [scheduling]
   # Criteria to mount a tape. An archival or retrieval queue must contain at least this number of bytes or this number of files before a tape mount
   # will be triggered. This does not apply when the timeout specified in the applicable mount rule is

@@ -22,6 +22,7 @@ frontend-wfe: &frontend
 
 frontend-admin: *frontend
 
+# All services using the declarative OpenTelemetry config format can use the same configuration
 taped: &telemetryConf
   extraEnv:
     - name: OTEL_EXPORTER_CREDENTIALS
@@ -30,8 +31,6 @@ taped: &telemetryConf
           name: monit-it-sd-tab-ci-credentials
           key: credentials
 
-  # Shared by the services which support declarative telemetry configuration.
-  # The frontends will use this too once they support the same format.
   # The structure below follows the OpenTelemetry Declarative config format
   telemetryConfig: |
     file_format: "1.0-rc.1"

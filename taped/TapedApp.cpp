@@ -10,6 +10,7 @@
 #include "daemon/ProcessManager.hpp"
 #include "daemon/SignalHandler.hpp"
 
+#include <google/protobuf/stubs/common.h>
 #include <sys/prctl.h>
 
 namespace cta::tape::daemon {
