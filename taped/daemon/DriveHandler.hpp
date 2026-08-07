@@ -17,13 +17,11 @@
 #include "ProcessManager.hpp"
 #include "SubprocessHandler.hpp"
 #include "TapedProxy.hpp"
-#include "common/TapedConfiguration.hpp"
 #include "scheduler/Scheduler.hpp"
+#include "taped/TapedConfig.hpp"
 #include "taped/session/Session.hpp"
 #include "taped/session/SessionState.hpp"
 #include "taped/session/SessionType.hpp"
-
-#include "WatchdogMessage.pb.h"
 
 namespace cta {
 
@@ -38,6 +36,10 @@ class MediaChangerFacade;
 }
 
 namespace tape::daemon {
+
+namespace serializers {
+class WatchdogMessage;
+}
 
 class DriveHandlerProxy;
 
@@ -55,9 +57,7 @@ public:
     Crashed      ///< The previous process was killed or crashed. The next session will be a cleanup.
   };
 
-  DriveHandler(const TapedConfiguration& tapedConfig,
-               const common::dataStructures::DriveInfo& driveInfo,
-               ProcessManager& pm);
+  DriveHandler(const TapedConfig& tapedConfig, const common::dataStructures::DriveInfo& driveInfo, ProcessManager& pm);
   ~DriveHandler() override = default;
 
   ProcessingStatus getInitialStatus() override;
@@ -76,7 +76,7 @@ private:
   // Reference to the process manager
   ProcessManager& m_processManager;
   // The parameters
-  const TapedConfiguration& m_tapedConfig;
+  const TapedConfig& m_tapedConfig;
   // This drive's parameters
   const common::dataStructures::DriveInfo& m_driveInfo;
   // The log context

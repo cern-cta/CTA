@@ -27,14 +27,14 @@ frontend-wfe:
       logLevel: "WARNING"
 
 taped:
-  conf:
-    taped:
-      # number of parallel files to be buffered (bufferCount) conincides with
-      # the increased batchSizes for pgsched deployment
-      bufferCount: 10000
-      logMask: "WARNING"
-      # Number of connection to the backend PG DB
-      schedulerNumberOfConnections: 3
+  transfers:
+    # Number of parallel files to be buffered coincides with the increased batch sizes for pgsched deployment.
+    bufferCount: 10000
+  logging:
+    level: "WARNING"
+  scheduler:
+    # Number of connections to the backend PG DB.
+    numberOfConnections: 3
 
 maintd:
   logging:

@@ -146,9 +146,8 @@ Provides the daemon that manages tape drives and tape I/O for CTA.
 %{_libdir}/libctatapedrao.so.*
 %config(noreplace) %{_sysconfdir}/logrotate.d/cta-taped
 %{_bindir}/cta-taped
-%doc %{_docdir}/cta/cta-taped.example.conf
+%doc %{_docdir}/cta/cta-taped.example.toml
 %{_mandir}/man1/cta-taped.1*
-%config(noreplace) %{_sysconfdir}/sysconfig/cta-taped
 %{_unitdir}/cta-taped.service
 
 %post -n cta-taped
@@ -264,7 +263,6 @@ Provides common shared libraries used by CTA components.
 %files -n cta-lib-common
 %license COPYING
 %{_libdir}/libctacommon.so.*
-%{_libdir}/libctatapedaemoncommon.so.*
 
 %package -n cta-lib-telemetry
 Summary: CERN Tape Archive telemetry libraries
@@ -540,7 +538,6 @@ Requires: postgresql-server
 Provides CTA unit and integration tests.
 %files -n cta-tests
 %license COPYING
-%{_libdir}/libcta-taped-integration-tests.so*
 %{_bindir}/cta-unit-tests-rdbms
 %if "%{occiSupport}" == "1"
 %{_bindir}/cta-unit-tests-rdbms-oracle.sh
@@ -548,12 +545,10 @@ Provides CTA unit and integration tests.
 %{_bindir}/cta-unit-tests
 %{_bindir}/cta-unit-tests-multiprocess
 %{_bindir}/cta-unit-tests-valgrind.sh
-%{_bindir}/cta-unit-and-integration-tests.sh
 %{_libdir}/libctacataloguecmdlineunittests.so*
 %{_libdir}/libctacommonunittests.so*
 %{_libdir}/libctaruntimeunittests.so*
 %{_libdir}/libctaprotobufunittests.so*
-%{_libdir}/libctatapedaemoncommonunittests.so*
 %{_libdir}/libctafrontendcommonconfigunittests.so*
 %{_libdir}/libctadbconfigcatalogueunittests.so*
 %{_libdir}/libctadbconfigconnunittests.so*
@@ -579,7 +574,6 @@ Provides CTA unit and integration tests.
 %{_libdir}/libctadiskunittests.so*
 %{_libdir}/libctatapelabelunittests.so*
 %{_libdir}/libctatapedraounittests.so*
-%{_bindir}/cta-integration-tests
 %{_libdir}/libctadaemonunittests-multiprocess.so*
 %{_datadir}/cta/tests/*.suppr
 %{_datadir}/cta/tests/parallelTestsMakefile
@@ -627,7 +621,6 @@ Provides unversioned linker names for developing applications with CTA shared li
 %files -n cta-devel
 %license COPYING
 %{_libdir}/libctacommon.so
-%{_libdir}/libctatapedaemoncommon.so
 %{_libdir}/libctatelemetry.so
 %{_libdir}/libctatelemetryfrontend.so
 %{_libdir}/libctatelemetrymaintd.so

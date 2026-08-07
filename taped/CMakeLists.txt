@@ -9,23 +9,53 @@ add_subdirectory (session)
 add_subdirectory (rao)
 add_subdirectory (daemon)
 
-add_executable (cta-taped cta-taped.cpp)
-target_link_libraries(cta-taped ctatapedaemon ctacommon ctatelemetry)
+add_library(ctatapedutils
+  TapedUtils.cpp
+)
+target_link_libraries(ctatapedutils PUBLIC ctaruntime)
+target_link_libraries(ctatapedaemon ctatapedutils)
 
-add_manpage(cta-taped)
+add_library(ctataped
+  TapedApp.cpp
+)
+
+target_link_libraries(ctataped
+	ctacommon
+  ctaruntime
+	ctatelemetrytaped
+	ctatapedaemon
+	ctatapedutils
+)
+
+add_executable (cta-taped cta-taped.cpp)
+target_link_libraries(cta-taped ctataped ctaruntime)
+
+if(NOT CTA_USE_PGSCHED)
+  set(CTA_TAPED_EXAMPLE_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/cta-taped.example.toml)
+else()
+  set(CTA_TAPED_EXAMPLE_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/cta-taped.pg.example.toml)
+endif()
+
+add_custom_target(cta-taped-config-check
+  COMMAND $<TARGET_FILE:cta-taped>
+    --config-strict
+    --config ${CTA_TAPED_EXAMPLE_CONFIG}
+    --config-check
+  DEPENDS cta-taped
+  COMMENT "Validating the cta-taped example configuration" VERBATIM)
+add_dependencies(cta-example-config-checks cta-taped-config-check)
+
+add_manpage (cta-taped)
 
 install (TARGETS cta-taped DESTINATION ${CMAKE_INSTALL_BINDIR})
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-taped.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
-install (FILES cta-taped.sysconfig DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/sysconfig RENAME cta-taped)
-
-# CTA's cta-taped integration tests.
-add_library(cta-taped-integration-tests SHARED
-  cta-tapedIntegrationTests.cpp)
-set_property(TARGET cta-taped-integration-tests PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET cta-taped-integration-tests PROPERTY VERSION "${CTA_LIBVERSION}")
-
-target_link_libraries(cta-taped-integration-tests
-  cta-unit-test-helper
-  ctacommon)
-
-install(TARGETS cta-taped-integration-tests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(NOT CTA_USE_PGSCHED)
+  install (FILES cta-taped.example.toml
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}
+    PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+else()
+  install (FILES cta-taped.pg.example.toml
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}
+    RENAME cta-taped.example.toml
+    PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+endif()

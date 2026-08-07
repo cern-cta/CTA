@@ -12,60 +12,102 @@ kind: ConfigMap
 metadata:
   name: cta-taped-{{ $driveNameSlug }}-conf
   labels:
-    {{-  include "common.labels.standard" $ | nindent 4 }}
+    {{- include "common.labels.standard" $ | nindent 4 }}
 data:
-  cta-taped.conf: |-
-    # cta-taped setup
-    taped BufferSizeBytes {{ $.Values.conf.taped.bufferSizeBytes }}
-    taped BufferCount {{ $.Values.conf.taped.bufferCount }}
-    taped MountCriteria {{ $.Values.conf.taped.mountCriteria }}
-    taped WatchdogIdleSessionTimer {{ $.Values.conf.taped.watchdogIdleSessionTimer }}
-    taped UseEncryption {{ $.Values.conf.taped.useEncryption }}
-    taped DriveName {{ .name }}
-    taped DriveLogicalLibrary {{ .logicalLibraryName }}
-    taped DriveDevice {{ .device }}
-    taped DriveControlPath {{ .controlPath }}
-    taped LogMask {{ $.Values.conf.taped.logMask }}
-    taped NbDiskThreads {{ $.Values.conf.taped.nbDiskThreads }}
-    taped TapeCacheMaxAgeSecs {{ $.Values.conf.taped.tapeCacheMaxAgeSecs }}
-    taped RetrieveQueueCacheMaxAgeSecs {{ $.Values.conf.taped.retrieveQueueCacheMaxAgeSecs }}
-    # Objectstore
-    ObjectStore BackendPath {{ include "global.schedulerUrl" $ }}
-    # General
-    general InstanceName {{ $.Release.Namespace }}
-    general SchedulerBackendName {{ $schedulerConfig.backend }}
-    {{- if eq $schedulerConfig.backend "postgres" }}
-    taped SchedulerNumberOfConnections {{ $.Values.conf.taped.schedulerNumberOfConnections }}
-    {{- end }}
-    taped externalFreeDiskSpaceScript {{ $.Values.conf.taped.externalFreeDiskSpaceScript }}
+  cta-taped.toml: |-
 
-    # Rmcd
-    taped RmcHost {{ $.Values.conf.taped.rmcHost }}
+    [catalogue]
+      config_file = "/etc/cta/cta-catalogue.conf"
 
-    # Telemetry
-    experimental telemetryEnabled {{ $.Values.conf.telemetry.enabled }}
+    [scheduler]
+      backend_name = {{ $schedulerConfig.backend | quote }}
 
-    telemetry retainInstanceIdOnRestart {{ $.Values.conf.telemetry.retainInstanceIdOnRestart }}
-    telemetry metricsBackend {{ $.Values.conf.telemetry.metrics.backend }}
-    {{- if $.Values.conf.telemetry.metrics.exportInterval }}
-    telemetry metricsExportInterval {{ $.Values.conf.telemetry.metrics.exportInterval }}
-    {{- end }}
-    {{- if $.Values.conf.telemetry.metrics.exportTimeout }}
-    telemetry metricsExportTimeout {{ $.Values.conf.telemetry.metrics.exportTimeout }}
-    {{- end }}
-    {{- if $.Values.conf.telemetry.metrics.otlp.endpoint }}
-    telemetry metricsOtlpEndpoint {{ $.Values.conf.telemetry.metrics.otlp.endpoint }}
-    {{- end }}
-    {{- if $.Values.conf.telemetry.metrics.otlp.auth.basic.username }}
-    telemetry metricsOtlpAuthBasicUsername {{ $.Values.conf.telemetry.metrics.otlp.auth.basic.username }}
-    {{- end }}
-    {{- if $.Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
-    telemetry metricsOtlpAuthBasicPasswordFile /etc/cta/otlp-basic-auth-pwd.conf
-    {{- end }}
-    {{- if $.Values.conf.telemetry.metrics.file.endpoint }}
-    telemetry metricsFileEndpoint {{ $.Values.conf.telemetry.metrics.file.endpoint }}
-    {{- end }}
+      config_file = "/etc/cta/cta-scheduler.conf"
+      {{- if eq $schedulerConfig.backend "postgres" }}
+      number_of_connections = {{ $.Values.scheduler.numberOfConnections }}
+      {{- end }}
+      tape_cache_max_age_secs = {{ $.Values.scheduler.tapeCacheMaxAgeSecs }}
+      retrieve_queue_cache_max_age_secs = {{ $.Values.scheduler.retrieveQueueCacheMaxAgeSecs }}
 
+    [logging]
+      level = {{ $.Values.logging.level | quote }}
+      format = "json"
+      [logging.attributes]
+        instance = {{ $.Release.Namespace | quote }}
+        sched_backend = {{ $schedulerConfig.backend | quote }}
+
+    [telemetry]
+      config_file = "/etc/cta/cta-otel.yaml"
+      on_init_failure = "fatal"
+
+    [health_server]
+      enabled = true
+      host = "0.0.0.0"
+      port = 8080
+      use_unix_domain_socket = false
+
+    [xrootd]
+      security_protocol = "sss"
+      sss_keytab_path = "/etc/cta/cta-taped.sss.keytab.grp"
+
+    [experimental]
+      telemetry_enabled = {{ $.Values.telemetry.enabled }}
+
+    [drive]
+      name = {{ .name | quote }}
+      device = {{ .device | quote }}
+      control_path = {{ .controlPath | quote }}
+      logical_library_name = {{ .logicalLibraryName | quote }}
+      ready_timeout_secs = {{ $.Values.drive.readyTimeoutSecs }}
+
+    [mounts]
+      minimum_queued_bytes = {{ int64 $.Values.mounts.minimumQueuedBytes }}
+      minimum_queued_files = {{ $.Values.mounts.minimumQueuedFiles }}
+      scheduling_timeout_secs = {{ $.Values.mounts.schedulingTimeoutSecs }}
+      get_next_mount_timeout_secs = {{ $.Values.mounts.getNextMountTimeoutSecs }}
+      idle_scheduling_interval_secs = {{ $.Values.mounts.idleSchedulingIntervalSecs }}
+      drive_state_poll_interval_secs = {{ $.Values.mounts.driveStatePollIntervalSecs }}
+      mount_timeout_secs = {{ $.Values.mounts.mountTimeoutSecs }}
+      tape_load_timeout_secs = {{ $.Values.mounts.tapeLoadTimeoutSecs }}
+      unmount_timeout_secs = {{ $.Values.mounts.unmountTimeoutSecs }}
+
+    [rmcd]
+      host = {{ $.Values.rmcd.host | quote }}
+      port = {{ $.Values.rmcd.port }}
+      request_timeout_secs = {{ $.Values.rmcd.requestTimeoutSecs }}
+      request_attempts = {{ $.Values.rmcd.requestAttempts }}
+
+    [transfers]
+      buffer_count = {{ $.Values.transfers.bufferCount }}
+      buffer_size_bytes = {{ $.Values.transfers.bufferSizeBytes }}
+      disk_io_threads = {{ $.Values.transfers.diskIoThreads }}
+      no_block_move_timeout_secs = {{ $.Values.transfers.noBlockMoveTimeoutSecs }}
+
+    [transfers.archive]
+      fetch_max_bytes = {{ int64 $.Values.transfers.archive.fetchMaxBytes }}
+      fetch_max_files = {{ $.Values.transfers.archive.fetchMaxFiles }}
+      flush_max_bytes = {{ int64 $.Values.transfers.archive.flushMaxBytes }}
+      flush_max_files = {{ $.Values.transfers.archive.flushMaxFiles }}
+
+    [transfers.archive.underfill]
+      watch_period_secs = {{ $.Values.transfers.archive.underfill.watchPeriodSecs }}
+      minimum_samples = {{ $.Values.transfers.archive.underfill.minimumSamples }}
+      start_threshold_percent = {{ $.Values.transfers.archive.underfill.startThresholdPercent }}
+      recovery_threshold_percent = {{ $.Values.transfers.archive.underfill.recoveryThresholdPercent }}
+
+    [transfers.retrieve]
+      fetch_max_bytes = {{ int64 $.Values.transfers.retrieve.fetchMaxBytes }}
+      fetch_max_files = {{ $.Values.transfers.retrieve.fetchMaxFiles }}
+      drain_to_disk_timeout_secs = {{ $.Values.transfers.retrieve.drainToDiskTimeoutSecs }}
+      external_free_disk_space_script = {{ $.Values.transfers.retrieve.externalFreeDiskSpaceScript | quote }}
+
+    [transfers.retrieve.rao]
+      enabled = {{ $.Values.transfers.retrieve.rao.enabled }}
+      lto_algorithm = {{ $.Values.transfers.retrieve.rao.ltoAlgorithm | quote }}
+
+    [transfers.encryption]
+      enabled = {{ $.Values.transfers.encryption.enabled }}
+      external_key_script = {{ $.Values.transfers.encryption.externalKeyScript | quote }}
 
 ---
 {{- end }}
