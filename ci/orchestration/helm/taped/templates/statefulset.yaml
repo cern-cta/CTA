@@ -38,18 +38,36 @@ spec:
         runAsGroup: 33 # tape
         fsGroup: 33
       containers:
-      - name: "cta-taped"
+      - name: cta-taped
         image: {{ include "taped.image" $ }}
         imagePullPolicy: {{ include "taped.imagePullPolicy" $ }}
+        stdin: true
+        command: ["/bin/bash", "-c"]
+        args: ["{{- if $.Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/taped.sh; {{- if $.Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
+        startupProbe:
+          httpGet:
+            path: /health/ready
+            port: 8080
+          initialDelaySeconds: 0
+          periodSeconds: 1
+          failureThreshold: 60
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8080
+          initialDelaySeconds: 0
+          periodSeconds: 5
+          failureThreshold: 2
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 60
+          failureThreshold: 2
         securityContext:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" $ }}
           privileged: {{ include "common.securityContext.privileged" $ }}
-          capabilities:
-            add:
-              - SYS_RAWIO
-        command: ["/bin/bash", "-c"]
-        args: ["{{- if $.Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/taped.sh; {{- if $.Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
-        stdin: true
         env:
         - name: MY_NAME
           value: {{ $tapedName }}
@@ -82,8 +100,8 @@ spec:
         - name: scripts-volume
           mountPath: /scripts
         - name: cta-taped-config
-          mountPath: /etc/cta/cta-taped.conf
-          subPath: cta-taped.conf
+          mountPath: /etc/cta/cta-taped.toml
+          subPath: cta-taped.toml
         - name: catalogue-config
           mountPath: /etc/cta/cta-catalogue.conf
           subPath: cta-catalogue.conf
@@ -105,6 +123,7 @@ spec:
         - name: vfs-storage-volume
           mountPath: /objectstore
         {{- end }}
+<<<<<<< HEAD
         {{- if $.Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
         - name: otlp-basic-auth-pwd
           mountPath: /etc/cta/otlp-basic-auth-pwd.conf
@@ -112,6 +131,13 @@ spec:
         {{- end }}
         - name: log-dir
           mountPath: /var/log/cta
+=======
+        - name: opentelemetry-config
+          mountPath: /etc/cta/cta-otel.yaml
+          subPath: cta-otel.yaml
+        - name: runtime-dir
+          mountPath: /run/cta
+>>>>>>> 96a833b274 (Basic deployment fixes)
         {{ include "common.extraVolumeMounts" $ | nindent 8 }}
       volumes:
       - name: scripts-volume
@@ -141,11 +167,9 @@ spec:
         secret:
           secretName: {{ $.Values.keytab.secretName }}
           defaultMode: 0400
-      {{- if $.Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
-      - name: otlp-basic-auth-pwd
-        secret:
-          secretName: {{ $.Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
-      {{- end }}
+      - name: opentelemetry-config
+        configMap:
+          name: cta-taped-otel-conf
       - name: log-dir
         emptyDir: {}
       {{ include "common.extraVolumes" $ | nindent 6 }}

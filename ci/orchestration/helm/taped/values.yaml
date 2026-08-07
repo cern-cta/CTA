@@ -6,38 +6,71 @@ image:
   repository: cta/ctageneric/cta-taped
   tag: latest
 
-conf:
-  taped:
-    bufferSizeBytes: 262144
-    bufferCount: 200
-    mountCriteria: "2000000, 100"
-    watchdogIdleSessionTimer: 1  # Make tape servers more responsive, thus improving CI test speed
-    logMask: "INFO"
-    useEncryption: "no"
-    # Reduce number of threads to reduce contention
-    nbDiskThreads: 4
-    # Decrease schedulerDB cache timeout for tests
-    tapeCacheMaxAgeSecs: 1
-    retrieveQueueCacheMaxAgeSecs: 1
-    externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
-    rmcHost: "cta-rmcd" # override with localhost if using hostnetwork
-    schedulerNumberOfConnections: 3
-  telemetry:
-    enabled: false
-    retainInstanceIdOnRestart: false
-    metrics:
-      backend: "NOOP"
-      exportInterval: 1000
-      exportTimeout: 500
-      otlp:
-        endpoint: ""
-        auth:
-          basic:
-            username: ""
-            passwordSecret: ""
-      file:
-        endpoint: ""
+logging:
+  level: "INFO"
 
+scheduler:
+  tapeCacheMaxAgeSecs: 1
+  retrieveQueueCacheMaxAgeSecs: 1
+  numberOfConnections: 3
+
+memory:
+  bufferSizeBytes: 262144
+  bufferCount: 200
+
+scheduling:
+  mountCriteriaBytes: 2000000
+  mountCriteriaFiles: 100
+  archiveFetchBytes: 80000000000
+  archiveFetchFiles: 4000
+  archiveFlushBytes: 32000000000
+  archiveFlushFiles: 200
+  retrieveFetchBytes: 80000000000
+  retrieveFetchFiles: 4000
+  archiveDismountPolicy:
+    underfillWatchPeriodSecs: 300
+    underfillMinSamples: 3
+    underfillStartThreshold: 40
+    underfillRecoveryThreshold: 60
+
+encryption:
+  enabled: false
+  externalEncryptionKeyScript: "/usr/local/bin/cta-get-encryption-key.sh"
+
+disk:
+  ioThreads: 4
+  externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
+
+rao:
+  enabled: true
+  ltoAlgorithm: "sltf"
+  ltoAlgorithmOptions: "cost_heuristic_name:cta"
+
+timeout:
+  tapeLoadTimeoutSecs: 300
+  driveReadyTimeoutSecs: 120
+  scheduleTimeoutSecs: 300
+  mountTimeoutSecs: 600
+  unmountTimeoutSecs: 600
+  drainToDiskTimeoutSecs: 1800
+  shutdownTimeoutSecs: 900
+  noBlockMoveTimeoutSecs: 1800
+  idleSchedulingIntervalSecs: 1 # Make tape servers more responsive, thus improving CI test speed
+  getNextMountTimeoutSecs: 900
+
+rmc:
+  host: "cta-rmcd" # Override with localhost if using host networking
+  port: 5014
+  timeoutSecs: 600
+  requestAttempts: 10
+
+telemetry:
+  enabled: false
+
+# OpenTelemetry is entirely configured through declarative configuration.
+telemetryConfig: |
+  file_format: "1.0-rc.1"
+  disabled: true
 
 # SSS keytab to communicate to the disk buffer
 keytab:
@@ -64,11 +97,11 @@ postRun:
 #   - name: "VDSTK01"
 #     device: "/dev/nst2"
 #     logicalLibraryName: lib1
-#     controlPath smc0
+#     controlPath: smc0
 #   - name: "VDSTK02"
 #     device: "/dev/nst0"
 #     logicalLibraryName: lib2
-#     controlPath smc1
+#     controlPath: smc1
 drives: {}
 
 securityContext:
