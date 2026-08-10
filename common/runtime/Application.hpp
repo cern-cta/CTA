@@ -342,7 +342,12 @@ public:
       if constexpr (HasHealthServerConfig<TConfig>) {
         static_assert(HasReadinessFunction<TApp> && HasLivenessFunction<TApp>,
                       "Config has health_server, but app type lacks isReady()/isLive() methods");
-        healthServer = initHealthServer(config, cliOptions);
+        // The SignalHandler from Taped starts after this is initialised, which means that the health server
+        // thread does not correctly block the signals. We just disabled the health server until the forking
+        // mechanism is removed
+        if (m_appName != "cta-taped") {
+          healthServer = initHealthServer(config, cliOptions);
+        }
       }
 
       if constexpr (HasTelemetryConfig<TConfig>) {

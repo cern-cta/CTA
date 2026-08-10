@@ -44,27 +44,28 @@ spec:
         stdin: true
         command: ["/bin/bash", "-c"]
         args: ["{{- if $.Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/taped.sh; {{- if $.Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
-        startupProbe:
-          httpGet:
-            path: /health/ready
-            port: 8080
-          initialDelaySeconds: 0
-          periodSeconds: 1
-          failureThreshold: 60
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: 8080
-          initialDelaySeconds: 0
-          periodSeconds: 5
-          failureThreshold: 2
-        livenessProbe:
-          httpGet:
-            path: /health/live
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 60
-          failureThreshold: 100 # For now we don't want the pod to restart in CI
+        # Can be enabled once forking process is removed
+        # startupProbe:
+        #   httpGet:
+        #     path: /health/ready
+        #     port: 8080
+        #   initialDelaySeconds: 0
+        #   periodSeconds: 1
+        #   failureThreshold: 60
+        # readinessProbe:
+        #   httpGet:
+        #     path: /health/ready
+        #     port: 8080
+        #   initialDelaySeconds: 0
+        #   periodSeconds: 5
+        #   failureThreshold: 2
+        # livenessProbe:
+        #   httpGet:
+        #     path: /health/live
+        #     port: 8080
+        #   initialDelaySeconds: 5
+        #   periodSeconds: 60
+        #   failureThreshold: 100 # For now we don't want the pod to restart in CI
         securityContext:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" $ }}
           privileged: {{ include "common.securityContext.privileged" $ }}
