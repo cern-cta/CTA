@@ -27,7 +27,6 @@
 #include <chrono>
 #include <gtest/gtest.h>
 #include <list>
-#include <thread>
 
 namespace unitTests {
 
@@ -168,7 +167,6 @@ TEST_P(cta_catalogue_FileRecycleLogTest, reclaimTapeRespectsRecycleLogQuarantine
   const std::string tapeDrive = "tape_drive";
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
   const uint64_t nbFilesPerTape = 2;
-  constexpr uint64_t recycleLogQuarantineSecs = 2;
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
@@ -255,13 +253,8 @@ TEST_P(cta_catalogue_FileRecycleLogTest, reclaimTapeRespectsRecycleLogQuarantine
     }
   };
 
-  // Put the old files into the recycle log first
+  // Move the files from both tapes to the recycle log.
   moveFilesToRecycleLog(oldTapeFiles);
-
-  // Make sure these entries are older than the quarantine period
-  std::this_thread::sleep_for(std::chrono::seconds(recycleLogQuarantineSecs + 1));
-
-  // These entries are recent and should still be quarantined
   moveFilesToRecycleLog(recentTapeFiles);
 
   ASSERT_FALSE(m_catalogue->ArchiveFile()->getArchiveFilesItor().hasMore());
@@ -287,15 +280,16 @@ TEST_P(cta_catalogue_FileRecycleLogTest, reclaimTapeRespectsRecycleLogQuarantine
   m_catalogue->Tape()->setTapeFull(m_admin, oldTape.vid, true);
   m_catalogue->Tape()->setTapeFull(m_admin, recentTape.vid, true);
 
-  // The recently deleted files should prevent reclaim
-  ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, recentTape.vid, recycleLogQuarantineSecs, dummyLc),
-               cta::exception::UserError);
+  // A newly created recycle log entry is younger than a 1 second quarantine
+  // so reclaiming the tape must fail
+  ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, recentTape.vid, 1, dummyLc), cta::exception::UserError);
 
-  // Failed reclaim should not remove the recycle log entries.
+  // A failed reclaim should not remove the recycle log entries
   ASSERT_EQ(nbFilesPerTape, countRecycleLogEntries(recentTape.vid));
 
-  // The older deleted files are outside the quarantine period
-  ASSERT_NO_THROW(m_catalogue->Tape()->reclaimTape(m_admin, oldTape.vid, recycleLogQuarantineSecs, dummyLc));
+  // A negative quarantine should allow the reclaim
+  // immediately without waiting for the recycle log entry to age
+  ASSERT_NO_THROW(m_catalogue->Tape()->reclaimTape(m_admin, oldTape.vid, -1, dummyLc));
 
   ASSERT_EQ(0, countRecycleLogEntries(oldTape.vid));
   ASSERT_EQ(nbFilesPerTape, countRecycleLogEntries(recentTape.vid));

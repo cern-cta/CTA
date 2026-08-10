@@ -478,7 +478,7 @@ RdbmsTapeCatalogue::getVidToLogicalLibrary(const std::set<std::string, std::less
 
 void RdbmsTapeCatalogue::checkRecycleLogQuarantine(rdbms::Conn& conn,
                                                    const std::string& vid,
-                                                   const uint64_t recycleLogQuarantineSecs) const {
+                                                   const int64_t recycleLogQuarantineSecs) const {
   auto* const recycleLogCatalogue =
     static_cast<RdbmsFileRecycleLogCatalogue*>(m_rdbmsCatalogue->FileRecycleLog().get());
 
@@ -491,8 +491,8 @@ void RdbmsTapeCatalogue::checkRecycleLogQuarantine(rdbms::Conn& conn,
 
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
-  const uint64_t ageInSeconds =
-    now >= latestRecycleLogTime.value() ? static_cast<uint64_t>(now - latestRecycleLogTime.value()) : 0;
+  const int64_t ageInSeconds =
+    now >= latestRecycleLogTime.value() ? static_cast<int64_t>(now - latestRecycleLogTime.value()) : 0;
 
   if (ageInSeconds < recycleLogQuarantineSecs) {
     throw exception::UserError("This tape contains files deleted " + std::to_string(ageInSeconds)
@@ -503,7 +503,7 @@ void RdbmsTapeCatalogue::checkRecycleLogQuarantine(rdbms::Conn& conn,
 
 void RdbmsTapeCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity& admin,
                                      const std::string& vid,
-                                     uint64_t recycleLogQuarantineSecs,
+                                     int64_t recycleLogQuarantineSecs,
                                      cta::log::LogContext& lc) {
   using namespace common::dataStructures;
 

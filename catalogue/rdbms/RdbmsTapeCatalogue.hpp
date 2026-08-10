@@ -49,7 +49,7 @@ public:
 
   void reclaimTape(const common::dataStructures::SecurityIdentity& admin,
                    const std::string& vid,
-                   uint64_t recycleLogQuarantineSecs,
+                   int64_t recycleLogQuarantineSecs,
                    cta::log::LogContext& lc) override;
 
   void checkTapeForLabel(const std::string& vid) override;
@@ -185,7 +185,7 @@ private:
    * @param vid The vid of the tape whose recycle-log entries will be checked
    * @param recycleLogQuarantineSecs The minimum age of recycle-log entries
    */
-  void checkRecycleLogQuarantine(rdbms::Conn& conn, const std::string& vid, uint64_t recycleLogQuarantineSecs) const;
+  void checkRecycleLogQuarantine(rdbms::Conn& conn, const std::string& vid, int64_t recycleLogQuarantineSecs) const;
 
   void resetTapeCounters(rdbms::Conn& conn,
                          const common::dataStructures::SecurityIdentity& admin,
