@@ -9,6 +9,7 @@
 from pathlib import Path
 
 from system_tests.helpers.hosts import EosMgmHost
+from system_tests.helpers.test_env import TestEnv
 
 
 def test_eos_version(eos_mgm: EosMgmHost) -> None:
@@ -85,3 +86,21 @@ def test_create_cta_directory(
     eos_mgm.exec(f"eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp,z:'!'u'!'d {cta_dir}")
     eos_mgm.exec(f"eos attr set sys.archive.storage_class={cta_storage_class} {cta_dir}")
     eos_mgm.exec(f"eos attr link {eos_workflow_dir} {cta_dir}")
+
+
+# Identities and numeric IDs are defined in setup_eos_test.py
+# - ctaadmin2 is the CTA administrator used by client-side CTA commands (see client_helper.sh and test_add_admins)
+#   This admin should eventually be removed as the client pod will no longer be able to run CTA admin commands directly
+# - eosadmin1 is an EOS sudo user used for namespace administration, token generation, and privileged eviction
+# - poweruser1 has explicit read/write/prepare/delete rights and is used for staging, releasing, and cleanup
+# - user1 is the regular eosusers archive writer; it can create files but is explicitly denied deletion
+def test_kinit_eos_clients(env: TestEnv, krb5_realm: str) -> None:
+    client_users = ["eosadmin1", "ctaadmin2", "poweruser1", "user1"]
+    for eos_client in env.eos_client:
+        for user in client_users:
+            eos_client.exec(f"mkdir -p /tmp/{user}")
+            eos_client.exec(f"KRB5CCNAME=/tmp/{user}/krb5cc_0  kinit -kt /root/{user}.keytab {user}@{krb5_realm}")
+
+        # Set the default to be user1
+        # This is so that we can play around with xrdcp manually without always having to specify the user
+        eos_client.exec("kinit -kt /root/user1.keytab user1@TEST.CTA")

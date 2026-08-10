@@ -46,6 +46,7 @@ ignore = [
     'COM812',  # This rule conflicts with the formatter.
     'PLR0913', # Test fixtures and CLI helpers naturally have many arguments.
     'PLC0415', # Some dependencies require delayed or optional imports.
+    'PLR0917', # Very noisy
 ]
 
 [lint.pydocstyle]
