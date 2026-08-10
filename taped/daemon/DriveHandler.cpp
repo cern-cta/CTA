@@ -487,10 +487,10 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
       resetToDefault(PreviousSession::Crashed);
       // If we are shutting down, we should not request a new session.
       if (m_sessionState != SessionState::Shutdown) {
-        m_lc.log(log::INFO, "Drive subprocess crashed. Will spawn a new one.");
+        m_lc.log(log::CRIT, "Drive subprocess crashed. Will spawn a new one.");
         m_processingStatus.forkRequested = true;
       } else {
-        m_lc.log(log::INFO, "Drive subprocess crashed. Will not spawn new one as we are shutting down.");
+        m_lc.log(log::CRIT, "Drive subprocess crashed. Will not spawn new one as we are shutting down.");
         m_processingStatus.forkRequested = false;
       }
       log::ScopedParamContainer scoped(m_lc);
