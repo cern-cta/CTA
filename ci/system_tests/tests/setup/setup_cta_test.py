@@ -15,23 +15,10 @@ from system_tests.helpers.hosts.cta_rmcd_host import CtaRmcdHost
 # =========================================================================
 
 
-# Identities and numeric IDs are defined in setup_eos_test.py
-# The corresponding CTA mount rules are in remote_scripts/cta_cli/populate_catalogue.sh
-# - ctaadmin1 is the primary CTA catalogue/CLI administrator used from the CTA CLI hosts
-# - ctaadmin2 is the CTA administrator used by client-side CTA commands (see client_helper.sh and test_add_admins)
-#   This admin should eventually be removed as the client pod will no longer be able to run CTA admin commands directly
-# - eosadmin1 is an EOS sudo user used for namespace administration, token generation, and privileged eviction
-# - poweruser1 has explicit read/write/prepare/delete rights and is used for staging, releasing, and cleanup
-# - user1 is the regular eosusers archive writer; it can create files but is explicitly denied deletion
-def test_kinit_clients(env: TestEnv, krb5_realm: str) -> None:
+# Should not be necessary once we rely only on JWT
+def test_kinit_cta_admin(env: TestEnv, krb5_realm: str) -> None:
     for cta_cli in env.cta_cli:
         cta_cli.exec(f"kinit -kt /root/ctaadmin1.keytab ctaadmin1@{krb5_realm}")
-
-    client_users = ["eosadmin1", "ctaadmin2", "poweruser1", "user1"]
-    for eos_client in env.eos_client:
-        for user in client_users:
-            eos_client.exec(f"mkdir -p /tmp/{user}")
-            eos_client.exec(f"KRB5CCNAME=/tmp/{user}/krb5cc_0  kinit -kt /root/{user}.keytab {user}@{krb5_realm}")
 
 
 # =========================================================================
@@ -143,4 +130,5 @@ def test_label_tapes(env: TestEnv) -> None:
 
 
 def test_set_all_drives_up(cta_cli: CtaCliHost) -> None:
+    assert cta_cli.exec_with_output("cta-admin --json drive ls") != "[]", "No drives found in CTA"
     cta_cli.set_all_drives_up()
