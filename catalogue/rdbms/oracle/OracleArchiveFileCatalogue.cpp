@@ -284,7 +284,8 @@ OracleArchiveFileCatalogue::selectArchiveFileSizesAndChecksums(rdbms::Conn& conn
 
     if (fileSizesAndChecksums.contains(archiveFileId)) {
       throw exception::Exception(
-        "Found duplicate archive file identifier in batch of files written to tape: archiveFileId=" + archiveFileId);
+        "Found duplicate archive file identifier in batch of files written to tape: archiveFileId="
+        + std::to_string(archiveFileId));
     }
     FileSizeAndChecksum fileSizeAndChecksum;
     fileSizeAndChecksum.fileSize = rset.columnUint64("SIZE_IN_BYTES");
