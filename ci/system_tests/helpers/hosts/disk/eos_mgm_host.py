@@ -35,7 +35,8 @@ class EosMgmHost(DiskInstanceHost):
     def generate_scitoken(self, claims: list[tuple[str, str]], keyid: str, timeout: int = 60) -> str:
         claim_args = []
         for name, value in claims:
-            claim_args.append(f"--claim '{name}={value}'")
+            claim = f"{name}={value}".replace('"', '\\"')
+            claim_args.append(f"--claim '\"{claim}\"'")
 
         print(f"Generating a SciToken with key id {keyid}")
         token = self.exec_with_output(
