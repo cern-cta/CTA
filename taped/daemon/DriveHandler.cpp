@@ -782,6 +782,10 @@ int DriveHandler::runChild() {
   resetLogParams(driveHandlerProxy.get());
   auto ret = executeDataTransferSession(scheduler.get(), driveHandlerProxy.get());
 
+  // Shutdown the scheduler to prevent a race condition with shutting down telemetry
+  m_sched_db.reset();
+  m_sched_db_init.reset();
+
   return ret;
 }
 
