@@ -390,10 +390,10 @@ void TapeLabelCmd::readAndSetConfiguration(const std::string& userName,
   m_unitName = tapedConfig.drive.name;
 
   // Configure rmcd
-  m_rmcProxy = std::make_unique<cta::mediachanger::RmcProxy>(tapedConfig.rmc.host,
-                                                             tapedConfig.rmc.port,
-                                                             tapedConfig.rmc.timeout_secs,
-                                                             tapedConfig.rmc.request_attempts);
+  m_rmcProxy = std::make_unique<cta::mediachanger::RmcProxy>(tapedConfig.mounts.rmcd.host,
+                                                             tapedConfig.mounts.rmcd.port,
+                                                             tapedConfig.mounts.rmcd.request_timeout_secs,
+                                                             tapedConfig.mounts.rmcd.request_attempts);
   m_mc = std::make_unique<cta::mediachanger::MediaChangerFacade>(*(m_rmcProxy.get()), m_log);
 
   // Configure catalogue

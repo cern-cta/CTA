@@ -27,7 +27,7 @@ frontend-wfe:
       logLevel: "WARNING"
 
 taped:
-  memory:
+  transfers:
     # Number of parallel files to be buffered coincides with the increased batch sizes for pgsched deployment.
     bufferCount: 10000
   logging:

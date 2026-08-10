@@ -14,55 +14,56 @@ scheduler:
   retrieveQueueCacheMaxAgeSecs: 1
   numberOfConnections: 3
 
-memory:
+drive:
+  readyTimeoutSecs: 120
+
+mounts:
+  minimumQueuedBytes: 2000000
+  minimumQueuedFiles: 100
+  schedulingTimeoutSecs: 300
+  getNextMountTimeoutSecs: 900
+  idleSchedulingIntervalSecs: 1 # Make tape servers more responsive, thus improving CI test speed
+  mountTimeoutSecs: 600
+  tapeLoadTimeoutSecs: 300
+  rmcd:
+    host: "cta-rmcd" # Override with localhost if using host networking
+    port: 5014
+    requestTimeoutSecs: 600
+    requestAttempts: 10
+
+transfers:
   bufferSizeBytes: 262144
   bufferCount: 200
-
-scheduling:
-  mountCriteriaBytes: 2000000
-  mountCriteriaFiles: 100
-  archiveFetchBytes: 80000000000
-  archiveFetchFiles: 4000
-  archiveFlushBytes: 32000000000
-  archiveFlushFiles: 200
-  retrieveFetchBytes: 80000000000
-  retrieveFetchFiles: 4000
-  archiveDismountPolicy:
-    underfillWatchPeriodSecs: 300
-    underfillMinSamples: 3
-    underfillStartThreshold: 40
-    underfillRecoveryThreshold: 60
-
-encryption:
-  enabled: false
-  externalEncryptionKeyScript: "/usr/local/bin/cta-get-encryption-key.sh"
-
-disk:
-  ioThreads: 4
-  externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
-
-rao:
-  enabled: true
-  ltoAlgorithm: "sltf"
-  ltoAlgorithmOptions: "cost_heuristic_name:cta"
-
-timeout:
-  tapeLoadTimeoutSecs: 300
-  driveReadyTimeoutSecs: 120
-  scheduleTimeoutSecs: 300
-  mountTimeoutSecs: 600
-  unmountTimeoutSecs: 600
-  drainToDiskTimeoutSecs: 1800
-  shutdownTimeoutSecs: 900
+  diskIoThreads: 4
   noBlockMoveTimeoutSecs: 1800
-  idleSchedulingIntervalSecs: 1 # Make tape servers more responsive, thus improving CI test speed
-  getNextMountTimeoutSecs: 900
+  archive:
+    fetchMaxBytes: 80000000000
+    fetchMaxFiles: 4000
+    flushMaxBytes: 32000000000
+    flushMaxFiles: 200
+  retrieve:
+    fetchMaxBytes: 80000000000
+    fetchMaxFiles: 4000
+    drainToDiskTimeoutSecs: 1800
+    externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
+    rao:
+      enabled: true
+      ltoAlgorithm: "sltf"
+      ltoAlgorithmOptions: "cost_heuristic_name:cta"
+  encryption:
+    enabled: false
+    externalKeyScript: "/usr/local/bin/cta-get-encryption-key.sh"
 
-rmc:
-  host: "cta-rmcd" # Override with localhost if using host networking
-  port: 5014
-  timeoutSecs: 600
-  requestAttempts: 10
+unmounts:
+  unmountTimeoutSecs: 600
+  archiveUnderfill:
+    watchPeriodSecs: 300
+    minimumSamples: 3
+    startThresholdPercent: 40
+    recoveryThresholdPercent: 60
+
+shutdown:
+  timeoutSecs: 900
 
 telemetry:
   enabled: false

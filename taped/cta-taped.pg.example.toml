@@ -99,15 +99,14 @@
   # be readable by cta-taped when the "sss" protocol is selected. This setting is required for SSS.
   sss_keytab_path = "/etc/cta/cta.sss.keytab"
 
-# Identifies the tape drive controlled by this cta-taped process and configures its initial readiness check.
-# The four identity values are installation-specific and must match the drive and logical-library definitions
-# registered in the CTA catalogue.
+# Identifies the tape drive controlled by this cta-taped process.
 [drive]
-  # CTA name of the drive. It is included in log records and must uniquely identify the drive in CTA.
+  # CTA name of the drive. It is included in log records, tooling and must uniquely identify the drive in CTA.
   # This value is required and has no useful default.
   name = ""
 
   # Path to the non-rewinding character device used to access the tape drive, for example /dev/nst0.
+  # It is recommended to rely on /dev/tape/by-name/<drive-name> to avoid device-name changes across reboots.
   # This value is required and has no useful default.
   device = ""
 
@@ -167,7 +166,7 @@
   # mount_timeout_secs. If omitted, 300 is used.
   tape_load_timeout_secs = 300
 
-  # Connection to the Remote Media Changer Daemon used for physical mount and unmount operations.
+  # Connection to the Remote Media Changer Daemon (RMCD) used for physical mount and unmount operations.
   [mounts.rmcd]
     # Hostname or IP address of RMCD. Use "localhost" when RMCD runs on this tape server.
     # If omitted, "localhost" is used.

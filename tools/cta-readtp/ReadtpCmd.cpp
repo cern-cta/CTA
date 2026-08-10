@@ -107,15 +107,15 @@ void ReadtpCmd::readAndSetConfiguration(const std::string& userName, const Readt
   m_unitName = tapedConfig.drive.name;
 
   // Configure rmc
-  m_rmcProxy = std::make_unique<cta::mediachanger::RmcProxy>(tapedConfig.rmc.host,
-                                                             tapedConfig.rmc.port,
-                                                             tapedConfig.rmc.timeout_secs,
-                                                             tapedConfig.rmc.request_attempts);
+  m_rmcProxy = std::make_unique<cta::mediachanger::RmcProxy>(tapedConfig.mounts.rmcd.host,
+                                                             tapedConfig.mounts.rmcd.port,
+                                                             tapedConfig.mounts.rmcd.request_timeout_secs,
+                                                             tapedConfig.mounts.rmcd.request_attempts);
   m_mc = std::make_unique<cta::mediachanger::MediaChangerFacade>(*(m_rmcProxy.get()), m_log);
 
   // Configure encryption
-  const std::string externalEncryptionKeyScript = tapedConfig.encryption.external_encryption_key_script;
-  const bool useEncryption = tapedConfig.encryption.enabled;
+  const std::string externalEncryptionKeyScript = tapedConfig.transfers.encryption.external_key_script;
+  const bool useEncryption = tapedConfig.transfers.encryption.enabled;
   m_encryptionControl =
     std::make_unique<cta::tape::daemon::EncryptionControl>(useEncryption, externalEncryptionKeyScript);
 

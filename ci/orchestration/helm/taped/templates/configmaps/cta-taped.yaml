@@ -59,57 +59,61 @@ data:
       device = {{ .device | quote }}
       control_path = {{ .controlPath | quote }}
       logical_library_name = {{ .logicalLibraryName | quote }}
+      ready_timeout_secs = {{ $.Values.drive.readyTimeoutSecs }}
 
-    [memory]
-      buffer_count = {{ $.Values.memory.bufferCount }}
-      buffer_size_bytes = {{ $.Values.memory.bufferSizeBytes }}
+    [mounts]
+      minimum_queued_bytes = {{ int64 $.Values.mounts.minimumQueuedBytes }}
+      minimum_queued_files = {{ $.Values.mounts.minimumQueuedFiles }}
+      scheduling_timeout_secs = {{ $.Values.mounts.schedulingTimeoutSecs }}
+      get_next_mount_timeout_secs = {{ $.Values.mounts.getNextMountTimeoutSecs }}
+      idle_scheduling_interval_secs = {{ $.Values.mounts.idleSchedulingIntervalSecs }}
+      mount_timeout_secs = {{ $.Values.mounts.mountTimeoutSecs }}
+      tape_load_timeout_secs = {{ $.Values.mounts.tapeLoadTimeoutSecs }}
 
-    [scheduling]
-      mount_criteria_bytes = {{ int64 $.Values.scheduling.mountCriteriaBytes }}
-      mount_criteria_files = {{ $.Values.scheduling.mountCriteriaFiles }}
-      archive_fetch_bytes = {{ int64 $.Values.scheduling.archiveFetchBytes }}
-      archive_fetch_files = {{ $.Values.scheduling.archiveFetchFiles }}
-      archive_flush_bytes = {{ int64 $.Values.scheduling.archiveFlushBytes }}
-      archive_flush_files = {{ $.Values.scheduling.archiveFlushFiles }}
-      retrieve_fetch_bytes = {{ int64 $.Values.scheduling.retrieveFetchBytes }}
-      retrieve_fetch_files = {{ $.Values.scheduling.retrieveFetchFiles }}
+    [mounts.rmcd]
+      host = {{ $.Values.mounts.rmcd.host | quote }}
+      port = {{ $.Values.mounts.rmcd.port }}
+      request_timeout_secs = {{ $.Values.mounts.rmcd.requestTimeoutSecs }}
+      request_attempts = {{ $.Values.mounts.rmcd.requestAttempts }}
 
-    [scheduling.archive_dismount_policy]
-      underfill_watch_period_secs = {{ $.Values.scheduling.archiveDismountPolicy.underfillWatchPeriodSecs }}
-      underfill_min_samples = {{ $.Values.scheduling.archiveDismountPolicy.underfillMinSamples }}
-      underfill_start_threshold = {{ $.Values.scheduling.archiveDismountPolicy.underfillStartThreshold }}
-      underfill_recovery_threshold = {{ $.Values.scheduling.archiveDismountPolicy.underfillRecoveryThreshold }}
+    [transfers]
+      buffer_count = {{ $.Values.transfers.bufferCount }}
+      buffer_size_bytes = {{ $.Values.transfers.bufferSizeBytes }}
+      disk_io_threads = {{ $.Values.transfers.diskIoThreads }}
+      no_block_move_timeout_secs = {{ $.Values.transfers.noBlockMoveTimeoutSecs }}
 
-    [encryption]
-      enabled = {{ $.Values.encryption.enabled }}
-      external_encryption_key_script = {{ $.Values.encryption.externalEncryptionKeyScript | quote }}
+    [transfers.archive]
+      fetch_max_bytes = {{ int64 $.Values.transfers.archive.fetchMaxBytes }}
+      fetch_max_files = {{ $.Values.transfers.archive.fetchMaxFiles }}
+      flush_max_bytes = {{ int64 $.Values.transfers.archive.flushMaxBytes }}
+      flush_max_files = {{ $.Values.transfers.archive.flushMaxFiles }}
 
-    [disk]
-      io_threads = {{ $.Values.disk.ioThreads }}
-      external_free_disk_space_script = {{ $.Values.disk.externalFreeDiskSpaceScript | quote }}
+    [transfers.retrieve]
+      fetch_max_bytes = {{ int64 $.Values.transfers.retrieve.fetchMaxBytes }}
+      fetch_max_files = {{ $.Values.transfers.retrieve.fetchMaxFiles }}
+      drain_to_disk_timeout_secs = {{ $.Values.transfers.retrieve.drainToDiskTimeoutSecs }}
+      external_free_disk_space_script = {{ $.Values.transfers.retrieve.externalFreeDiskSpaceScript | quote }}
 
-    [rao]
-      enabled = {{ $.Values.rao.enabled }}
-      lto_algorithm = {{ $.Values.rao.ltoAlgorithm | quote }}
-      lto_algorithm_options = {{ $.Values.rao.ltoAlgorithmOptions | quote }}
+    [transfers.retrieve.rao]
+      enabled = {{ $.Values.transfers.retrieve.rao.enabled }}
+      lto_algorithm = {{ $.Values.transfers.retrieve.rao.ltoAlgorithm | quote }}
+      lto_algorithm_options = {{ $.Values.transfers.retrieve.rao.ltoAlgorithmOptions | quote }}
 
-    [timeout]
-      tape_load_timeout_secs = {{ $.Values.timeout.tapeLoadTimeoutSecs }}
-      drive_ready_timeout_secs = {{ $.Values.timeout.driveReadyTimeoutSecs }}
-      schedule_timeout_secs = {{ $.Values.timeout.scheduleTimeoutSecs }}
-      mount_timeout_secs = {{ $.Values.timeout.mountTimeoutSecs }}
-      unmount_timeout_secs = {{ $.Values.timeout.unmountTimeoutSecs }}
-      drain_to_disk_timeout_secs = {{ $.Values.timeout.drainToDiskTimeoutSecs }}
-      shutdown_timeout_secs = {{ $.Values.timeout.shutdownTimeoutSecs }}
-      no_block_move_timeout_secs = {{ $.Values.timeout.noBlockMoveTimeoutSecs }}
-      idle_scheduling_interval_secs = {{ $.Values.timeout.idleSchedulingIntervalSecs }}
-      get_next_mount_timeout_secs = {{ $.Values.timeout.getNextMountTimeoutSecs }}
+    [transfers.encryption]
+      enabled = {{ $.Values.transfers.encryption.enabled }}
+      external_key_script = {{ $.Values.transfers.encryption.externalKeyScript | quote }}
 
-    [rmc]
-      host = {{ $.Values.rmc.host | quote }}
-      port = {{ $.Values.rmc.port }}
-      timeout_secs = {{ $.Values.rmc.timeoutSecs }}
-      request_attempts = {{ $.Values.rmc.requestAttempts }}
+    [unmounts]
+      unmount_timeout_secs = {{ $.Values.unmounts.unmountTimeoutSecs }}
+
+    [unmounts.archive_underfill]
+      watch_period_secs = {{ $.Values.unmounts.archiveUnderfill.watchPeriodSecs }}
+      minimum_samples = {{ $.Values.unmounts.archiveUnderfill.minimumSamples }}
+      start_threshold_percent = {{ $.Values.unmounts.archiveUnderfill.startThresholdPercent }}
+      recovery_threshold_percent = {{ $.Values.unmounts.archiveUnderfill.recoveryThresholdPercent }}
+
+    [shutdown]
+      timeout_secs = {{ $.Values.shutdown.timeoutSecs }}
 
 ---
 {{- end }}
