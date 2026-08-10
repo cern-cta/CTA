@@ -30,6 +30,7 @@ target_link_libraries(ctatapedaemon
 
 add_library(ctadaemonunittests SHARED
   DriveHandlerTests.cpp
+  ../TapedConfigTests.cpp
 )
 set_property(TARGET ctadaemonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctadaemonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
@@ -45,6 +46,7 @@ set_property(TARGET ctadaemonunittests-multiprocess PROPERTY   VERSION "${CTA_LI
 target_link_libraries(ctadaemonunittests
   ctatapedaemon
   unitTestHelper)
+target_compile_definitions(ctadaemonunittests PRIVATE CTA_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 
 target_link_libraries(ctadaemonunittests-multiprocess
   ctatapedaemon
@@ -52,4 +54,3 @@ target_link_libraries(ctadaemonunittests-multiprocess
 
 install(TARGETS ctadaemonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 install(TARGETS ctadaemonunittests-multiprocess DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-

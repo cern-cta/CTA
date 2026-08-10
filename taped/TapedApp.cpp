@@ -18,6 +18,8 @@ namespace cta::tape::daemon {
 void TapedApp::stop() {}
 
 int TapedApp::run(const TapedConfig& config, cta::log::Logger& log) {
+  // TODO: add some non-empty checks on the config
+
   // Create the log context
   log::LogContext lc(log);
   // Set process name
@@ -29,7 +31,7 @@ int TapedApp::run(const TapedConfig& config, cta::log::Logger& log) {
   ProcessManager processManager(lc);
   // Signal handler
   auto signalHandler = std::make_unique<SignalHandler>(processManager);
-  signalHandler->setTimeout(std::chrono::seconds(config.timeout.shutdown_timeout_secs));
+  signalHandler->setTimeout(std::chrono::seconds(config.shutdown.timeout_secs));
   processManager.addHandler(std::move(signalHandler));
   // Create the drive handler
   const common::dataStructures::DriveInfo driveInfo(config.drive.name,
