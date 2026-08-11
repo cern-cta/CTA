@@ -9,9 +9,6 @@ set (CTAProtoFiles
 
 set(PROTOBUF3_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 PROTOBUF3_GENERATE_CPP(CTAProtoSources CTAProtoHeaders ${CTAProtoFiles})
-set_source_files_properties(${CTAProtoHeaders} PROPERTIES GENERATED TRUE)
-add_custom_target(ctaobjectstore-protobuf-generation
-  DEPENDS ${CTAProtoSources} ${CTAProtoHeaders})
 
 include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_library (ctaobjectstore SHARED
