@@ -23,34 +23,22 @@ set(CTA_SOPATCH 0)
 # Get version number from environment if set.
 if(NOT $ENV{CTA_VERSION} STREQUAL "")
   set(CTA_VERSION $ENV{CTA_VERSION})
-  message(STATUS "Got CTA_VERSION from environment: ${CTA_VERSION}")
-else(NOT $ENV{CTA_VERSION} STREQUAL "")
-  message(STATUS "Using default CTA_VERSION: ${CTA_VERSION}")
-endif(NOT $ENV{CTA_VERSION} STREQUAL "")
+endif()
 
 # Get xrootd-ssi-protobuf-version-number from environment if set.
 if(NOT $ENV{XROOTD_SSI_PROTOBUF_INTERFACE_VERSION} STREQUAL "")
   set(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION $ENV{XROOTD_SSI_PROTOBUF_INTERFACE_VERSION})
-  message(STATUS "Got XROOTD_SSI_PROTOBUF_INTERFACE_VERSION from environment: ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}")
-else(NOT $ENV{XROOTD_SSI_PROTOBUF_INTERFACE_VERSION} STREQUAL "")
-  message(STATUS "Using default XROOTD_SSI_PROTOBUF_INTERFACE_VERSION: ${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}")
-endif(NOT $ENV{XROOTD_SSI_PROTOBUF_INTERFACE_VERSION} STREQUAL "")
+endif()
 
 # Get release number from environment if set
 if(NOT $ENV{CTA_RELEASE} STREQUAL "")
   set(CTA_RELEASE $ENV{CTA_RELEASE})
-  message(STATUS "Got CTA_RELEASE from environment: ${CTA_RELEASE}")
-else(NOT $ENV{CTA_RELEASE} STREQUAL "")
-  message(STATUS "Using default CTA_RELEASE: ${CTA_RELEASE}")
-endif(NOT $ENV{CTA_RELEASE} STREQUAL "")
+endif()
 
 # Change the release number if VCS version is provided
 if(DEFINED VCS_VERSION)
   set(CTA_RELEASE ${VCS_VERSION})
-  message(STATUS "Replaced CTA_RELEASE with VCS_VERSION: ${CTA_RELEASE}")
-endif(DEFINED VCS_VERSION)
-
-message(STATUS "CTA version is ${CTA_VERSION}-${CTA_RELEASE}")
+endif()
 
 configure_file(
   ${PROJECT_SOURCE_DIR}/version.cpp.in
@@ -68,4 +56,3 @@ target_include_directories(ctaversioninfo PUBLIC ${PROJECT_SOURCE_DIR})
 
 # Shared library versioning
 set(CTA_LIBVERSION ${CTA_SOMAJOR}.${CTA_SOMINOR}.${CTA_SOPATCH})
-message(STATUS "CTA shared object version is ${CTA_LIBVERSION} (${CTA_SOVERSION})")

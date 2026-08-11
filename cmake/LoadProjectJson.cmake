@@ -1,9 +1,6 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Needed for JSON functionality
-cmake_minimum_required (VERSION 3.19)
-
 include(${CMAKE_SOURCE_DIR}/cmake/UseRPMToolsEnvironment.cmake)
 
 # General info
@@ -27,7 +24,6 @@ set("PROJECT_DEFAULT_BUILD_TYPE" "${PROJECT_DEFAULT_BUILD_TYPE}")
 string(JSON SUPPORTED_CTA_CATALOGUE_SCHEMA_VERSIONS_JSON GET "${PROJECT_JSON_STRING}" supportedCatalogueVersions)
 string(JSON SUPPORTED_CTA_CATALOGUE_SCHEMA_VERSIONS_COUNT LENGTH "${SUPPORTED_CTA_CATALOGUE_SCHEMA_VERSIONS_JSON}")
 
-message(STATUS "Supported CTA catalogue schema versions JSON: {${SUPPORTED_CTA_CATALOGUE_SCHEMA_VERSIONS_JSON}}")
 # Convert JSON array to CMake list
 set(SUPPORTED_CTA_CATALOGUE_SCHEMA_VERSIONS "")
 math(EXPR LAST_INDEX "${SUPPORTED_CTA_CATALOGUE_SCHEMA_VERSIONS_COUNT} - 1")
@@ -36,8 +32,6 @@ foreach(INDEX RANGE 0 ${LAST_INDEX})
   list(APPEND SUPPORTED_CTA_CATALOGUE_SCHEMA_VERSIONS "${VERSION}")
 endforeach()
 list(JOIN SUPPORTED_CTA_CATALOGUE_SCHEMA_VERSIONS ", " SUPPORTED_CTA_CATALOGUE_SCHEMA_VERSIONS_JOINED)
-
-message(STATUS "Supported CTA catalogue schema versions: {${SUPPORTED_CTA_CATALOGUE_SCHEMA_VERSIONS_JOINED}}")
 
 # Version constraint variables for packages based on project.json
 execute_process(

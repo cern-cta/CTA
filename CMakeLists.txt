@@ -1,157 +1,119 @@
 # SPDX-FileCopyrightText: 2015 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
-cmake_minimum_required (VERSION 3.17)
+cmake_minimum_required(VERSION 3.19)
 
 project(cta)
 
-# Populate various cmake variables from the project.json
+# -----------------------------------------------------------------------------
+# Project metadata
+# -----------------------------------------------------------------------------
 include(cmake/LoadProjectJson.cmake)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS on)
+# -----------------------------------------------------------------------------
+# User-configurable options
+# -----------------------------------------------------------------------------
+set(CTA_USE_PGSCHED FALSE CACHE BOOL "Build with the postgres scheduler")
+option(DISABLE_ORACLE_SUPPORT "Build without Oracle catalogue support" OFF)
+option(ENABLE_ADDRESS_SANITIZER "Build with AddressSanitizer" OFF)
+option(ENABLE_STDOUT_LOGGING "Enable stdout logging for tests" OFF)
 
-set(CMAKE_C_FLAGS "-fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
-
-# Please note that the -fms-extensions option should be dropped when this
-# project gets to be compiled on a fully C++ 11 compliant compiler.  The option
-# is being used to support anonymous structs and avoid errors similar to the
-# following:
-#
-#   ClientSimulator.hpp:65: error: ISO C++ prohibits anonymous structs
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all")
-#
-# A maximalist error checking parameter combo has been suggested by S. Ponce and D. Come:
-# to be tested (note that a lot of these are already covered by Wall and Wextra; additionally not all of them are useful or valid)
-#-Wno-unused-parameter -Wlogical-op -Wfloat-equal -Wdeclaration-after- statement -Wundef -Wno-endif-labels -Wshadow -Wunsafe-loop- optimizations -Wpointer-arith -Wbad-function-cast -Wcast-align -Wwrite- strings -Wconversion -Wmissing-field-initializers -Wredundant-decls -Wnested-externs -Wunreachable-code -Winline -Wvariadic-macros -Wtraditional -Wmissing-prototypes -Wmissing-declarations -Wold-style- definition -Wc++-compat -Wstrict-prototypes -Wpadded -Wcast-qual -Wnon-virtual-dtor -Wlogical-op -Wmissing-declarations -Wsign-conversion -Wredundant-decls -Wold-style-cast -Wshadow
-
-set (BUILD_CMDLINE_ONLY FALSE)
-
-# By default the objectstore based scheduler is used.
-# A postgres scheduler may be enabled and the objectstore one disabled by
-# giving -DCTA_USE_PGSCHED:Bool=true on the cmake command line.
-set (CTA_USE_PGSCHED FALSE CACHE BOOL "Build with the postgres scheduler")
-
-execute_process(
-  COMMAND ${CMAKE_C_COMPILER} -dumpversion
-  OUTPUT_VARIABLE GCC_VERSION)
-
-execute_process(COMMAND cat /etc/os-release
-  RESULT_VARIABLE result
-  OUTPUT_VARIABLE output)
-
-message(STATUS "Setting support for ${PROJECT_CPP_VERSION}")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=${PROJECT_CPP_VERSION}")
-
-if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "${PROJECT_DEFAULT_BUILD_TYPE}" CACHE STRING "" FORCE)
+if(NOT DEFINED SKIP_UNIT_TESTS)
+  set(SKIP_UNIT_TESTS 0)
+endif()
+if(NOT DEFINED SKIP_DEBUG_PACKAGES)
+  set(SKIP_DEBUG_PACKAGES 0)
+endif()
+if(NOT DEFINED ENABLE_CCACHE)
+  set(ENABLE_CCACHE 0)
 endif()
 
-if (ENABLE_ADDRESS_SANITIZER)
-  message(STATUS "Enabling Address Sanitizer")
-  add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
-  add_link_options(-fsanitize=address -fno-omit-frame-pointer)
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "${PROJECT_DEFAULT_BUILD_TYPE}" CACHE STRING "Choose the type of build." FORCE)
+else()
+  set(CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING "Choose the type of build.")
+endif()
+set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release MinSizeRel RelWithDebInfo)
+
+# PackageOnly intentionally retains its historical DEFINED semantics.
+if(DEFINED PackageOnly)
+  set(CTA_CONFIGURATION_MODE "package-only")
+  set(COMPILE_PACKAGING 1)
+else()
+  set(CTA_CONFIGURATION_MODE "full")
+  if(NOT DEFINED COMPILE_PACKAGING)
+    set(COMPILE_PACKAGING 1)
+  endif()
+endif()
+
+if(NOT DEFINED JOBS_COUNT)
+  include(ProcessorCount)
+  ProcessorCount(PROCESSOR_COUNT)
+  set(JOBS_COUNT ${PROCESSOR_COUNT})
+endif()
+
+# -----------------------------------------------------------------------------
+# Derived configuration
+# -----------------------------------------------------------------------------
+set(OCCI_SUPPORT ON)
+if(DISABLE_ORACLE_SUPPORT)
+  set(OCCI_SUPPORT OFF)
+  set(RPM_ORACLE "-DDISABLE_ORACLE_SUPPORT:BOOL=ON" CACHE STRING "" FORCE)
+  set(RPM_USING_ORACLE "0" CACHE STRING "" FORCE)
+else()
+  set(RPM_ORACLE "%{nil}" CACHE STRING "" FORCE)
+  set(RPM_USING_ORACLE "1" CACHE STRING "" FORCE)
+endif()
+
+if(CTA_USE_PGSCHED)
+  set(CTA_SCHEDULER_BACKEND "PostgreSQL")
+  set(RPM_USINGOBJECTSTORE "0" CACHE STRING "" FORCE)
+  set(RPM_SCHEDOPT "-DCTA_USE_PGSCHED:Bool=TRUE" CACHE STRING "" FORCE)
+else()
+  set(CTA_SCHEDULER_BACKEND "object store")
+  set(RPM_USINGOBJECTSTORE "1" CACHE STRING "" FORCE)
+  set(RPM_SCHEDOPT "-DCTA_USE_PGSCHED:Bool=FALSE" CACHE STRING "" FORCE)
+endif()
+
+if(ENABLE_ADDRESS_SANITIZER)
   set(RPM_ADDRESS_SANITIZER_OPT "-DENABLE_ADDRESS_SANITIZER:Bool=TRUE" CACHE STRING "" FORCE)
-else ()
+else()
   set(RPM_ADDRESS_SANITIZER_OPT "-DENABLE_ADDRESS_SANITIZER:Bool=FALSE" CACHE STRING "" FORCE)
 endif()
 
-# To enable logging for testing purposes set -DENABLE_STDOUT_LOGGING=1
-if (ENABLE_STDOUT_LOGGING)
-  add_definitions (-DSTDOUT_LOGGING)
-endif ()
+# -----------------------------------------------------------------------------
+# Compiler policy
+# -----------------------------------------------------------------------------
 
-set (OCCI_SUPPORT ON)
-if (DISABLE_ORACLE_SUPPORT)
-  message(STATUS "NO ORACLE")
-  unset (OCCI_SUPPORT)
-  set(RPM_ORACLE "-DDISABLE_ORACLE_SUPPORT:BOOL=ON" CACHE STRING "" FORCE)
-  set(RPM_USING_ORACLE "0" CACHE STRING "" FORCE)
-else ()
-  set(RPM_ORACLE "%{nil}" CACHE STRING "" FORCE)
-  set(RPM_USING_ORACLE "1" CACHE STRING "" FORCE)
-endif ()
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-if (CTA_USE_PGSCHED)
-  message(STATUS "Using Postgres scheduler")
-  add_definitions (-DCTA_PGSCHED)
-  set(RPM_USINGOBJECTSTORE "0" CACHE STRING "" FORCE)
-  set(RPM_SCHEDOPT "-DCTA_USE_PGSCHED:Bool=TRUE" CACHE STRING "" FORCE)
-else ()
-  message(STATUS "Using objectstore scheduler")
-  set(RPM_USINGOBJECTSTORE "1" CACHE STRING "" FORCE)
-  set(RPM_SCHEDOPT "-DCTA_USE_PGSCHED:Bool=FALSE" CACHE STRING "" FORCE)
-endif ()
+add_compile_options(
+  "$<$<COMPILE_LANGUAGE:C>:-fPIC;-Wall;-Wextra;-Werror;-Wno-unused-parameter>"
+  "$<$<COMPILE_LANGUAGE:CXX>:-fPIC;-pedantic;-Wall;-Wextra;-Werror;-Wno-unused-parameter;-fstack-protector-all;-std=${PROJECT_CPP_VERSION}>"
+)
 
-# Generate the compilation variables, if needed
-if (NOT DEFINED SKIP_UNIT_TESTS)
-  message (STATUS "Setting SKIP_UNIT_TESTS to the value of 0")
-  message (STATUS "Override with -DSKIP_UNIT_TESTS:STRING=1")
-  set(SKIP_UNIT_TESTS 0)
-else (NOT DEFINED SKIP_UNIT_TESTS)
-  message (STATUS "Already set: SKIP_UNIT_TESTS=${SKIP_UNIT_TESTS}")
-endif (NOT DEFINED SKIP_UNIT_TESTS)
-
-if (NOT DEFINED SKIP_DEBUG_PACKAGES)
-  message (STATUS "Setting SKIP_DEBUG_PACKAGES to the value of 0")
-  message (STATUS "Override with -DSKIP_DEBUG_PACKAGES:STRING=1")
-  set(SKIP_DEBUG_PACKAGES 0)
-else (NOT DEFINED SKIP_DEBUG_PACKAGES)
-  message (STATUS "Already set: SKIP_DEBUG_PACKAGES=${SKIP_DEBUG_PACKAGES}")
-endif (NOT DEFINED SKIP_DEBUG_PACKAGES)
-
-if (NOT DEFINED ENABLE_CCACHE)
-  message (STATUS "Setting ENABLE_CCACHE to the value of 0")
-  message (STATUS "Override with -DENABLE_CCACHE:STRING=1")
-  set(ENABLE_CCACHE 0)
-else (NOT DEFINED ENABLE_CCACHE)
-  message (STATUS "Already set: ENABLE_CCACHE=${ENABLE_CCACHE}")
-endif (NOT DEFINED ENABLE_CCACHE)
-
-# Initialize JOBS_COUNT for use in cta.spec.in
-if(DEFINED JOBS_COUNT)
-    MESSAGE(STATUS "Using provided ${JOBS_COUNT} concurrent build jobs")
-else()
-    include(ProcessorCount)
-    ProcessorCount(PROCESSOR_COUNT)
-    set(JOBS_COUNT ${PROCESSOR_COUNT})
-    MESSAGE(STATUS "Using default ${JOBS_COUNT} concurrent build jobs")
+if(ENABLE_ADDRESS_SANITIZER)
+  add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+  add_link_options(-fsanitize=address -fno-omit-frame-pointer)
 endif()
 
-# Load additional CMake modules:
-# Version information
+# To enable logging for testing purposes set -DENABLE_STDOUT_LOGGING=1
+if(ENABLE_STDOUT_LOGGING)
+  add_compile_definitions(STDOUT_LOGGING)
+endif()
+
+if(CTA_USE_PGSCHED)
+  add_compile_definitions(CTA_PGSCHED)
+endif()
+
+# Create the version target after applying the project compiler policy.
 include(cmake/CTAVersions.cmake)
 
-IF(DEFINED PackageOnly)
-  message (STATUS "Running CMake in package-only mode")
-   set(COMPILE_PACKAGING "1")
-ELSE(DEFINED PackageOnly)
-  message (STATUS "Running in full configuration mode.")
-  message (STATUS "Override with -DPackageOnly:Bool=true")
-  # Generate the compilation variables, if needed
-  if (NOT DEFINED COMPILE_PACKAGING)
-    message (STATUS "Setting COMPILE_PACKAGING to the value of 1")
-    message (STATUS "Override with -DCOMPILE_PACKAGING:STRING=0")
-    set(COMPILE_PACKAGING 1)
-  else (NOT DEFINED COMPILE_PACKAGING)
-    message (STATUS "Already set: COMPILE_PACKAGING=${COMPILE_PACKAGING}")
-  endif (NOT DEFINED COMPILE_PACKAGING)
-
-  IF(NOT CMAKE_BUILD_TYPE STREQUAL "")
-    # If the user specifies -DCMAKE_BUILD_TYPE on the command line, take their definition and dump it in the cache
-    message(STATUS "Setting build type to ${CMAKE_BUILD_TYPE} as requested.")
-    SET(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "Choose the type of build.")
-  ELSE()
-    # log choosen default (RelWithDebInfo) and set it
-    message(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
-    message (STATUS "Override with -DCMAKE_BUILD_TYPE:STRING=Debug")
-    set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build." FORCE)
-    # Set the possible values of build type for cmake-gui
-    # this command is not yet available in SLC6's cmake 2.6
-    # set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
-  ENDIF(NOT CMAKE_BUILD_TYPE STREQUAL "")
-
+# -----------------------------------------------------------------------------
+# Full build
+# -----------------------------------------------------------------------------
+if(NOT DEFINED PackageOnly)
   set(CMAKE_DISABLE_SOURCE_CHANGES ON)
-  set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
-  list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+  list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
   include(GNUInstallDirs)
   set(CMAKE_INSTALL_PREFIX "/")
   set(CTA_SYSTEMD_UNIT_DIR "usr/lib/systemd/system" CACHE PATH
@@ -160,10 +122,26 @@ ELSE(DEFINED PackageOnly)
   include_directories(${PROJECT_SOURCE_DIR})
   include_directories(${CMAKE_BINARY_DIR})
 
-  # OCCI support is on by default
-  if (OCCI_SUPPORT)
-    find_package (oracle-instantclient REQUIRED)
-  endif (OCCI_SUPPORT)
+  # ---------------------------------------------------------------------------
+  # Dependencies
+  # ---------------------------------------------------------------------------
+  message(STATUS "---------------------------------------------")
+  message(STATUS "CTA dependency discovery")
+  message(STATUS "---------------------------------------------")
+  find_package(Protobuf3 REQUIRED)
+  find_package(opentelemetry-cpp CONFIG REQUIRED)
+  find_package(GRPC REQUIRED)
+  find_package(xrootd REQUIRED)
+  find_package(xrootdclient REQUIRED)
+  find_package(postgres REQUIRED)
+
+  if(OCCI_SUPPORT)
+    find_package(oracle-instantclient REQUIRED)
+  endif()
+
+  if(NOT CTA_USE_PGSCHED)
+    find_package(librados2 REQUIRED)
+  endif()
 
   install (CODE "message (STATUS \"Installing directory \$ENV{DESTDIR}/var/log/cta\")")
   install (CODE "file (MAKE_DIRECTORY \$ENV{DESTDIR}/var/log/cta)")
@@ -173,6 +151,9 @@ ELSE(DEFINED PackageOnly)
   #
   set(XRD_SSI_PB_DIR ${PROJECT_SOURCE_DIR}/xrootd-ssi-protobuf-interface)
 
+  # ---------------------------------------------------------------------------
+  # Components
+  # ---------------------------------------------------------------------------
   # Pandocology (to create man pages from Markdown)
   include(cmake/Pandocology.cmake)
   add_subdirectory(eos_cta)
@@ -185,7 +166,7 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory(disk)
   add_subdirectory(mediachanger)
 
-  if (NOT CTA_USE_PGSCHED)
+  if(NOT CTA_USE_PGSCHED)
     add_subdirectory(objectstore)
   endif()
 
@@ -194,19 +175,17 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory(taped)
   add_subdirectory(maintd)
   add_subdirectory(tools)
+  add_subdirectory(tests)
 
-ENDIF(DEFINED PackageOnly)
+endif()
 
-################################################################################
-# Packaging step (replacing the maketar)
-# See http://www.vtk.org/Wiki/CMakeUserUseRPMTools
-################################################################################
-if (${COMPILE_PACKAGING} STREQUAL "1")
+# -----------------------------------------------------------------------------
+# Packaging
+# -----------------------------------------------------------------------------
+if(COMPILE_PACKAGING STREQUAL "1")
   include(cmake/UseRPMToolsEnvironment.cmake)
   set(CPACK_SOURCE_PACKAGE_FILE_NAME
    "${PROJECT_NAME}-${CTA_VERSION}-${CTA_RELEASE}")
-  message (STATUS
-    "Setting package file name to: ${CPACK_SOURCE_PACKAGE_FILE_NAME}")
   # Note that not ignoring build folders within the repository here will cause cpack to take longer and longer
   # as it is trying to pack the build directory as well
   set(CPACK_SOURCE_IGNORE_FILES
@@ -224,99 +203,30 @@ if (${COMPILE_PACKAGING} STREQUAL "1")
   if (RPMTools_FOUND)
     RPMTools_ADD_RPM_TARGETS(
       ${PROJECT_NAME} ${PROJECT_NAME}.spec.in)
-  endif (RPMTools_FOUND)
-endif (${COMPILE_PACKAGING} STREQUAL "1")
+  endif()
+endif()
 
-configure_file(tests/valgrind.suppr tests/valgrind.suppr COPYONLY)
-configure_file(tests/helgrind.suppr tests/helgrind.suppr COPYONLY)
-set(VALGRIND valgrind)
-set(VALGRIND_OPTS --leak-check=full --demangle=yes --gen-suppressions=all --error-exitcode=1 --max-threads=1000)
-set(VALGRIND_OPTS_W_SUPPR ${VALGRIND_OPTS} --suppressions=tests/valgrind.suppr)
-string (REPLACE ";" " " VALGRIND_OPTS_STR "${VALGRIND_OPTS}")
-
-set(HELGRIND_OPTS -v --demangle=yes --gen-suppressions=all --num-callers=25 --conflict-cache-size=10000000 --error-exitcode=1  --sim-hints=no-nptl-pthread-stackcache --max-threads=1000)
-set(HELGRIND_OPTS_W_SUPPR ${HELGRIND_OPTS} --suppressions=tests/helgrind.suppr)
-string (REPLACE ";" " " HELGRIND_OPTS_STR "${HELGRIND_OPTS}")
-
-IF(NOT DEFINED PackageOnly)
-  add_subdirectory(tests)
-ENDIF(NOT DEFINED PackageOnly)
-
-add_custom_target(fullunittests
-  tests/cta-unitTests
-  COMMAND tests/cta-unitTests-multiProcess
-  COMMAND ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} tests/cta-unitTests
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests
-  COMMAND tests/cta-unitTests-multiProcess
-  COMMAND ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} --child-silent-after-fork=yes tests/cta-unitTests-multiProcess
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests-multiProcess
-
-  DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/valgrind.suppr tests/helgrind.suppr
-  COMMENT "Running unit tests with memory leak and race conditions detection" VERBATIM)
-
-add_custom_target(valgrind
-  echo ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} tests/cta-unitTests
-  COMMAND ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} tests/cta-unitTests
-  COMMAND echo ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} --child-silent-after-fork=yes tests/cta-unitTests-multiProcess
-  COMMAND ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} --child-silent-after-fork=yes tests/cta-unitTests-multiProcess
-
-  DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/valgrind.suppr
-  COMMENT "Running unit tests with memory leak detection" VERBATIM)
-
-add_custom_target(helgrind
-  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests
-  COMMAND echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests-multiProcess
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests-multiProcess
-
-  DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/helgrind.suppr
-  COMMENT "Running unit tests with race conditions detection" VERBATIM)
-
-add_custom_target(shortunittests
-  tests/cta-unitTests
-  COMMAND tests/cta-unitTests-multiProcess
-
-  DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess
-  COMMENT "Running unit tests" VERBATIM)
-
-add_custom_target(helgrindBase
-  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=-OStoreDBPlusMockSchedulerTestVFS*:OStoreTestVFS*:OStoreDBPlusMockSchedulerTestVFS*:InMemory*
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=-OStoreDBPlusMockSchedulerTestVFS*:OStoreTestVFS*:OStoreDBPlusMockSchedulerTestVFS*:InMemory*
-  COMMAND echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests-multiProcess
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests-multiProcess
-
-  DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/helgrind.suppr
-  COMMENT "Running unit tests with race conditions detection (except slow sections)" VERBATIM)
-
-add_custom_target(helgrindScheduler
-  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/Scheduler*
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/Scheduler*
-
-  DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/helgrind.suppr
-  COMMENT "Running unit tests with race conditions detection (Mock scheduler section)" VERBATIM)
-
-add_custom_target(helgrindOStoreDB
-  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=OStoreTestVFS*
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=OStoreTestVFS*
-
-  DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/helgrind.suppr
-  COMMENT "Running unit tests with race conditions detection (Object store DB section)" VERBATIM)
-
-add_custom_target(helgrindDataTransfer
-  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/DataTransferSessionTest*
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/DataTransferSessionTest*
-
-  DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/helgrind.suppr
-  COMMENT "Running unit tests with race conditions detection (Data transfer section)" VERBATIM)
-
-add_custom_target(helgrindInMemoryCatalogue
-  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=InMemory/*
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=InMemory/*
-
-  DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/helgrind.suppr
-  COMMENT "Running unit tests with race conditions detection (In memory catalogue section)" VERBATIM)
-
-add_custom_target(parallelHelgrind
-  echo
-
-  DEPENDS helgrindBase helgrindMockSechduler helgrindOStoreDB helgrindDataTransfer helgrindInMemoryCatalogue)
+# -----------------------------------------------------------------------------
+# Configuration summary
+# -----------------------------------------------------------------------------
+message(STATUS "---------------------------------------------")
+message(STATUS "CTA configuration summary")
+message(STATUS "---------------------------------------------")
+message(STATUS "CTA_VERSION: ${CTA_VERSION}-${CTA_RELEASE}")
+message(STATUS "CTA_LIBVERSION: ${CTA_LIBVERSION} (SOVERSION ${CTA_SOVERSION})")
+message(STATUS "SUPPORTED_CATALOGUE_VERSIONS: ${SUPPORTED_CTA_CATALOGUE_SCHEMA_VERSIONS_JOINED}")
+message(STATUS "CONFIGURATION_MODE: ${CTA_CONFIGURATION_MODE}")
+message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+message(STATUS "CXX_STANDARD: ${PROJECT_CPP_VERSION}")
+message(STATUS "SCHEDULER_BACKEND: ${CTA_SCHEDULER_BACKEND}")
+message(STATUS "ORACLE_SUPPORT: ${OCCI_SUPPORT}")
+message(STATUS "ENABLE_ADDRESS_SANITIZER: ${ENABLE_ADDRESS_SANITIZER}")
+message(STATUS "ENABLE_STDOUT_LOGGING: ${ENABLE_STDOUT_LOGGING}")
+message(STATUS "COMPILE_PACKAGING: ${COMPILE_PACKAGING}")
+message(STATUS "SKIP_UNIT_TESTS: ${SKIP_UNIT_TESTS}")
+message(STATUS "SKIP_DEBUG_PACKAGES: ${SKIP_DEBUG_PACKAGES}")
+message(STATUS "ENABLE_CCACHE: ${ENABLE_CCACHE}")
+message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
+message(STATUS "CTA_SYSTEMD_UNIT_DIR: ${CTA_SYSTEMD_UNIT_DIR}")
+message(STATUS "CMAKE_GENERATOR: ${CMAKE_GENERATOR}")
+message(STATUS "JOBS_COUNT: ${JOBS_COUNT}")

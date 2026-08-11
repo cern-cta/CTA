@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2015 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-cmake_minimum_required (VERSION 3.17)
 
 add_subdirectory(cta-catalogue-schema)
 
@@ -14,28 +13,96 @@ add_manpage(
   cta-database-poll
 )
 
-find_package(postgres REQUIRED)
-
 include_directories (${POSTGRES_INCLUDE_DIRS})
 
 if (OCCI_SUPPORT)
-  find_package (oracle-instantclient REQUIRED)
   include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
-  add_definitions( -DSUPPORT_OCCI )
+  add_compile_definitions(SUPPORT_OCCI)
 endif ()
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
+add_compile_options(-Wshadow)
 
-file (GLOB CATALOGUE_LIB_SRC_FILES
+set(CATALOGUE_LIB_SRC_FILES
   ArchiveFileRow.cpp
   ArchiveFileRowWithoutTimestamps.cpp
   CatalogueFactoryFactory.cpp
   CatalogueSchema.cpp
   CmdLineTool.cpp
   DriveConfig.cpp
-  dummy/*.cpp
-  rdbms/*.cpp
-  retrywrappers/*.cpp
+  dummy/DummyAdminUserCatalogue.cpp
+  dummy/DummyArchiveFileCatalogue.cpp
+  dummy/DummyArchiveRouteCatalogue.cpp
+  dummy/DummyCatalogue.cpp
+  dummy/DummyDiskInstanceCatalogue.cpp
+  dummy/DummyDiskInstanceSpaceCatalogue.cpp
+  dummy/DummyDiskSystemCatalogue.cpp
+  dummy/DummyDriveConfigCatalogue.cpp
+  dummy/DummyDriveStateCatalogue.cpp
+  dummy/DummyFileRecycleLogCatalogue.cpp
+  dummy/DummyLogicalLibraryCatalogue.cpp
+  dummy/DummyMediaTypeCatalogue.cpp
+  dummy/DummyMountPolicyCatalogue.cpp
+  dummy/DummyRequesterActivityMountRuleCatalogue.cpp
+  dummy/DummyRequesterGroupMountRuleCatalogue.cpp
+  dummy/DummyRequesterMountRuleCatalogue.cpp
+  dummy/DummySchemaCatalogue.cpp
+  dummy/DummyStorageClassCatalogue.cpp
+  dummy/DummyTapeCatalogue.cpp
+  dummy/DummyTapeFileCatalogue.cpp
+  dummy/DummyTapePoolCatalogue.cpp
+  dummy/DummyVirtualOrganizationCatalogue.cpp
+  rdbms/RdbmsAdminUserCatalogue.cpp
+  rdbms/RdbmsArchiveFileCatalogue.cpp
+  rdbms/RdbmsArchiveRouteCatalogue.cpp
+  rdbms/RdbmsCatalogue.cpp
+  rdbms/RdbmsCatalogueGetArchiveFilesForRepackItor.cpp
+  rdbms/RdbmsCatalogueGetArchiveFilesItor.cpp
+  rdbms/RdbmsCatalogueGetFileRecycleLogItor.cpp
+  rdbms/RdbmsCatalogueGetTapesItor.cpp
+  rdbms/RdbmsCatalogueTapeContentsItor.cpp
+  rdbms/RdbmsCatalogueUtils.cpp
+  rdbms/RdbmsDiskInstanceCatalogue.cpp
+  rdbms/RdbmsDiskInstanceSpaceCatalogue.cpp
+  rdbms/RdbmsDiskSystemCatalogue.cpp
+  rdbms/RdbmsDriveConfigCatalogue.cpp
+  rdbms/RdbmsDriveStateCatalogue.cpp
+  rdbms/RdbmsFileRecycleLogCatalogue.cpp
+  rdbms/RdbmsLogicalLibraryCatalogue.cpp
+  rdbms/RdbmsMediaTypeCatalogue.cpp
+  rdbms/RdbmsMountPolicyCatalogue.cpp
+  rdbms/RdbmsPhysicalLibraryCatalogue.cpp
+  rdbms/RdbmsRequesterActivityMountRuleCatalogue.cpp
+  rdbms/RdbmsRequesterGroupMountRuleCatalogue.cpp
+  rdbms/RdbmsRequesterMountRuleCatalogue.cpp
+  rdbms/RdbmsSchemaCatalogue.cpp
+  rdbms/RdbmsStorageClassCatalogue.cpp
+  rdbms/RdbmsTapeCatalogue.cpp
+  rdbms/RdbmsTapeFileCatalogue.cpp
+  rdbms/RdbmsTapePoolCatalogue.cpp
+  rdbms/RdbmsVirtualOrganizationCatalogue.cpp
+  retrywrappers/AdminUserCatalogueRetryWrapper.cpp
+  retrywrappers/ArchiveFileCatalogueRetryWrapper.cpp
+  retrywrappers/ArchiveRouteCatalogueRetryWrapper.cpp
+  retrywrappers/CatalogueRetryWrapper.cpp
+  retrywrappers/DiskInstanceCatalogueRetryWrapper.cpp
+  retrywrappers/DiskInstanceSpaceCatalogueRetryWrapper.cpp
+  retrywrappers/DiskSystemCatalogueRetryWrapper.cpp
+  retrywrappers/DriveConfigCatalogueRetryWrapper.cpp
+  retrywrappers/DriveStateCatalogueRetryWrapper.cpp
+  retrywrappers/FileRecycleLogCatalogueRetryWrapper.cpp
+  retrywrappers/LogicalLibraryCatalogueRetryWrapper.cpp
+  retrywrappers/MediaTypeCatalogueRetryWrapper.cpp
+  retrywrappers/MountPolicyCatalogueRetryWrapper.cpp
+  retrywrappers/PhysicalLibraryCatalogueRetryWrapper.cpp
+  retrywrappers/RequesterActivityMountRuleCatalogueRetryWrapper.cpp
+  retrywrappers/RequesterGroupMountRuleCatalogueRetryWrapper.cpp
+  retrywrappers/RequesterMountRuleCatalogueRetryWrapper.cpp
+  retrywrappers/SchemaCatalogueRetryWrapper.cpp
+  retrywrappers/StorageClassCatalogueRetryWrapper.cpp
+  retrywrappers/TapeCatalogueRetryWrapper.cpp
+  retrywrappers/TapeFileCatalogueRetryWrapper.cpp
+  retrywrappers/TapePoolRetryCatalogueWrapper.cpp
+  retrywrappers/VirtualOrganizationCatalogueRetryWrapper.cpp
   TapeDrivesCatalogueState.cpp
   TapeFileWritten.cpp
   TapeForWriting.cpp
@@ -63,9 +130,19 @@ target_link_libraries (ctacatalogue
 
 # OCCI
 if (OCCI_SUPPORT)
-  file (GLOB CATALOGUE_OCCI_LIB_SRC_FILES
+  set(CATALOGUE_OCCI_LIB_SRC_FILES
     OracleCatalogueFactory.cpp
-    rdbms/oracle/*.cpp
+    rdbms/oracle/OracleArchiveFileCatalogue.cpp
+    rdbms/oracle/OracleCatalogue.cpp
+    rdbms/oracle/OracleFileRecycleLogCatalogue.cpp
+    rdbms/oracle/OracleLogicalLibraryCatalogue.cpp
+    rdbms/oracle/OracleMediaTypeCatalogue.cpp
+    rdbms/oracle/OraclePhysicalLibraryCatalogue.cpp
+    rdbms/oracle/OracleStorageClassCatalogue.cpp
+    rdbms/oracle/OracleTapeCatalogue.cpp
+    rdbms/oracle/OracleTapeFileCatalogue.cpp
+    rdbms/oracle/OracleTapePoolCatalogue.cpp
+    rdbms/oracle/OracleVirtualOrganizationCatalogue.cpp
   )
 
   add_library (ctacatalogueocci SHARED
@@ -83,8 +160,18 @@ if (OCCI_SUPPORT)
 endif()
 
 # SQLITE - Sqlite file based databases are not supported
-file (GLOB CATALOGUE_SQLITE_LIB_SRC_FILES
-  rdbms/sqlite/*.cpp
+set(CATALOGUE_SQLITE_LIB_SRC_FILES
+  rdbms/sqlite/SqliteArchiveFileCatalogue.cpp
+  rdbms/sqlite/SqliteCatalogue.cpp
+  rdbms/sqlite/SqliteFileRecycleLogCatalogue.cpp
+  rdbms/sqlite/SqliteLogicalLibraryCatalogue.cpp
+  rdbms/sqlite/SqliteMediaTypeCatalogue.cpp
+  rdbms/sqlite/SqlitePhysicalLibraryCatalogue.cpp
+  rdbms/sqlite/SqliteStorageClassCatalogue.cpp
+  rdbms/sqlite/SqliteTapeCatalogue.cpp
+  rdbms/sqlite/SqliteTapeFileCatalogue.cpp
+  rdbms/sqlite/SqliteTapePoolCatalogue.cpp
+  rdbms/sqlite/SqliteVirtualOrganizationCatalogue.cpp
   SchemaCreatingSqliteCatalogue.cpp
 )
 
@@ -100,7 +187,7 @@ target_link_libraries (ctacataloguesqlite ctardbmssqlite ctacatalogue)
 install(TARGETS ctacataloguesqlite DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 # IN_MEMORY
-file (GLOB CATALOGUE_IN_MEMORY_LIB_SRC_FILES
+set(CATALOGUE_IN_MEMORY_LIB_SRC_FILES
   InMemoryCatalogue.cpp
   InMemoryCatalogueFactory.cpp
 )
@@ -116,9 +203,19 @@ target_link_libraries (ctacatalogueinmemory ctacataloguesqlite)
 install(TARGETS ctacatalogueinmemory DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 # POSTGRES
-file (GLOB CATALOGUE_POSTGRES_LIB_SRC_FILES
+set(CATALOGUE_POSTGRES_LIB_SRC_FILES
   PostgresqlCatalogueFactory.cpp
-  rdbms/postgres/*.cpp
+  rdbms/postgres/PostgresArchiveFileCatalogue.cpp
+  rdbms/postgres/PostgresCatalogue.cpp
+  rdbms/postgres/PostgresFileRecycleLogCatalogue.cpp
+  rdbms/postgres/PostgresLogicalLibraryCatalogue.cpp
+  rdbms/postgres/PostgresMediaTypeCatalogue.cpp
+  rdbms/postgres/PostgresPhysicalLibraryCatalogue.cpp
+  rdbms/postgres/PostgresStorageClassCatalogue.cpp
+  rdbms/postgres/PostgresTapeCatalogue.cpp
+  rdbms/postgres/PostgresTapeFileCatalogue.cpp
+  rdbms/postgres/PostgresTapePoolCatalogue.cpp
+  rdbms/postgres/PostgresVirtualOrganizationCatalogue.cpp
 )
 
 add_library (ctacataloguepostgres SHARED
@@ -196,8 +293,29 @@ if (OCCI_SUPPORT)
   )
 endif ()
 
-file (GLOB CATALOGUE_MODULES_TESTS_SRC_FILES
-  tests/modules/*.cpp
+set(CATALOGUE_MODULES_TESTS_SRC_FILES
+  tests/modules/AdminUserCatalogueTest.cpp
+  tests/modules/ArchiveFileCatalogueTest.cpp
+  tests/modules/ArchiveRouteCatalogueTest.cpp
+  tests/modules/DiskInstanceCatalogueTest.cpp
+  tests/modules/DiskInstanceSpaceCatalogueTest.cpp
+  tests/modules/DiskSystemCatalogueTest.cpp
+  tests/modules/DriveConfigCatalogueTest.cpp
+  tests/modules/DriveStateCatalogueTest.cpp
+  tests/modules/FileRecycleLogCatalogueTest.cpp
+  tests/modules/LogicalLibraryCatalogueTest.cpp
+  tests/modules/MediaTypeCatalogueTest.cpp
+  tests/modules/MountPolicyCatalogueTest.cpp
+  tests/modules/PhysicalLibraryCatalogueTest.cpp
+  tests/modules/RequesterActivityMountRuleTest.cpp
+  tests/modules/RequesterGroupMountRuleCatalogueTest.cpp
+  tests/modules/RequesterMountRuleTest.cpp
+  tests/modules/SchemaCatalogueTest.cpp
+  tests/modules/StorageClassCatalogueTest.cpp
+  tests/modules/TapeCatalogueTest.cpp
+  tests/modules/TapeFileCatalogueTest.cpp
+  tests/modules/TapePoolCatalogueTest.cpp
+  tests/modules/VirtualOrganizationCatalogueTest.cpp
 )
 
 set(IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
@@ -215,7 +333,7 @@ set_property(TARGET ctainmemorycatalogueunittests PROPERTY SOVERSION "${CTA_SOVE
 set_property(TARGET ctainmemorycatalogueunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 # The test "filesWrittenToTape_many_archive_files" is over 1000 lines long and exceeds the variable tracking size limit.
 # We switch off this compiler option for this file to avoid compiling it twice.
-set_property(TARGET ctainmemorycatalogueunittests PROPERTY COMPILE_FLAGS "-fno-var-tracking-assignments")
+target_compile_options(ctainmemorycatalogueunittests PRIVATE -fno-var-tracking-assignments)
 
 target_link_libraries (ctainmemorycatalogueunittests
   ctacatalogue ctadisk ctacatalogueinmemory)
@@ -234,7 +352,7 @@ set_property(TARGET ctadbconfigcatalogueunittests PROPERTY SOVERSION "${CTA_SOVE
 set_property(TARGET ctadbconfigcatalogueunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 # The test "filesWrittenToTape_many_archive_files" is over 1000 lines long and exceeds the variable tracking size limit.
 # We switch off this compiler option for this file to avoid compiling it twice.
-set_property(TARGET ctadbconfigcatalogueunittests PROPERTY COMPILE_FLAGS "-fno-var-tracking-assignments")
+target_compile_options(ctadbconfigcatalogueunittests PRIVATE -fno-var-tracking-assignments)
 
 target_link_libraries (ctadbconfigcatalogueunittests
   ctacatalogue)
