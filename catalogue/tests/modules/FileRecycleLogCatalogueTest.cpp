@@ -280,15 +280,15 @@ TEST_P(cta_catalogue_FileRecycleLogTest, reclaimTapeRespectsRecycleLogQuarantine
   m_catalogue->Tape()->setTapeFull(m_admin, oldTape.vid, true);
   m_catalogue->Tape()->setTapeFull(m_admin, recentTape.vid, true);
 
-  // A newly created recycle log entry is younger than a 1 second quarantine
+  // A newly created recycle log is younger than 10 second quarantine
   // so reclaiming the tape must fail
-  ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, recentTape.vid, 1, dummyLc), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, recentTape.vid, 10, dummyLc), cta::exception::UserError);
 
-  // A failed reclaim should not remove the recycle log entries
+  // A failed reclaim should not remove the files from recycle log
   ASSERT_EQ(nbFilesPerTape, countRecycleLogEntries(recentTape.vid));
 
-  // A negative quarantine should allow the reclaim
-  // immediately without waiting for the recycle log entry to age
+  // A negative quarantine should allow the reclaim immediately
+  // without waiting for the files in the recycle log to age
   ASSERT_NO_THROW(m_catalogue->Tape()->reclaimTape(m_admin, oldTape.vid, -1, dummyLc));
 
   ASSERT_EQ(0, countRecycleLogEntries(oldTape.vid));
