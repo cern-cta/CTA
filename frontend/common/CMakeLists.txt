@@ -1,9 +1,6 @@
 # SPDX-FileCopyrightText: 2015 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-cmake_minimum_required (VERSION 3.17)
-
-find_package(Protobuf3 REQUIRED)
 
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 

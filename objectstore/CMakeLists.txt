@@ -1,13 +1,8 @@
 # SPDX-FileCopyrightText: 2015 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-cmake_minimum_required (VERSION 3.17)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../middletier)
-
-find_package(librados2 REQUIRED)
-find_package(Protobuf3 REQUIRED)
 
 set (CTAProtoFiles
   cta.proto)
@@ -88,7 +83,7 @@ set_property(TARGET ctaobjectstore PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaobjectstore PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries(ctaobjectstore rados cryptopp ctacommon)
-set_source_files_properties(BackendRados.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
+set_source_files_properties(BackendRados.cpp PROPERTIES COMPILE_OPTIONS -Wno-deprecated-declarations)
 if(NOT CTA_USE_PGSCHED)
   install (TARGETS ctaobjectstore DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 endif()

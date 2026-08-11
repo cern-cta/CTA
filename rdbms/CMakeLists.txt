@@ -1,10 +1,9 @@
 # SPDX-FileCopyrightText: 2015 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
-cmake_minimum_required (VERSION 3.17)
 
 add_subdirectory (wrapper)
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
+add_compile_options(-Wshadow)
 
 set (RDBMS_LIB_SRC_FILES
   AutoRollback.cpp

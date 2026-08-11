@@ -34,14 +34,6 @@ find_library (XROOTD_XRDSERVER_LIB XrdServer)
 find_library (XROOTD_XRDSSI_LIB NAMES XrdSsi-4 XrdSsi-5 XrdSsi-6)
 find_library (XROOTD_XRDUTILS_LIB XrdUtils)
 
-message (STATUS "XROOTD_INCLUDE_DIR         = ${XROOTD_INCLUDE_DIR}")
-message (STATUS "XROOTD_PRIVATE_INCLUDE_DIR = ${XROOTD_PRIVATE_INCLUDE_DIR}")
-message (STATUS "XROOTD_XRDCL_LIB           = ${XROOTD_XRDCL_LIB}")
-message (STATUS "XROOTD_XRDPOSIX_LIB        = ${XROOTD_XRDPOSIX_LIB}")
-message (STATUS "XROOTD_XRDSERVER_LIB       = ${XROOTD_XRDSERVER_LIB}")
-message (STATUS "XROOTD_XRDSSI_LIB          = ${XROOTD_XRDSSI_LIB}")
-message (STATUS "XROOTD_XRDUTILS_LIB        = ${XROOTD_XRDUTILS_LIB}")
-
 include (FindPackageHandleStandardArgs)
 find_package_handle_standard_args (xrootd DEFAULT_MSG
   XROOTD_INCLUDE_DIR

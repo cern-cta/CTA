@@ -362,6 +362,7 @@ build_rpm() {
   fi
 
   # Build step
+  echo
   log_task "Building RPMs with ${build_generator}..."
   cmake --build . --target cta_rpm -- -j "${num_jobs}"
   echo

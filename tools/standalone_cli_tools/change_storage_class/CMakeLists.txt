@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2015 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-cmake_minimum_required (VERSION 3.17)
 
 add_executable(cta-change-storage-class ChangeStorageClass.cpp ChangeStorageClassMain.cpp ../../CtaAdminCmdParser.cpp JsonFileData.cpp)
 target_link_libraries(cta-change-storage-class ctacommon stdc++fs ctaCmdlineToolsCommon)

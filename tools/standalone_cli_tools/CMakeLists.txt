@@ -1,10 +1,6 @@
 # SPDX-FileCopyrightText: 2015 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-cmake_minimum_required (VERSION 3.17)
-
-find_package(xrootdclient REQUIRED)
-find_package(Protobuf3 REQUIRED)
 
 # XRootD SSI
 include_directories(${XROOTD_INCLUDE_DIR} ${XROOTD_INCLUDE_DIR}/private)
