@@ -1,32 +1,108 @@
 # SPDX-FileCopyrightText: 2015 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-cmake_minimum_required (VERSION 3.17)
 
 add_subdirectory(cta-catalogue-schema)
 
-find_package(postgres REQUIRED)
+add_manpage(
+  cta-catalogue-admin-user-create
+  cta-catalogue-schema-create
+  cta-catalogue-schema-drop
+  cta-catalogue-schema-set-production
+  cta-catalogue-schema-verify
+  cta-database-poll
+)
 
 include_directories (${POSTGRES_INCLUDE_DIRS})
 
 if (OCCI_SUPPORT)
-  find_package (oracle-instantclient REQUIRED)
   include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
-  add_definitions( -DSUPPORT_OCCI )
+  add_compile_definitions(SUPPORT_OCCI)
 endif ()
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
+add_compile_options(-Wshadow)
 
-file (GLOB CATALOGUE_LIB_SRC_FILES
+set(CATALOGUE_LIB_SRC_FILES
   ArchiveFileRow.cpp
   ArchiveFileRowWithoutTimestamps.cpp
   CatalogueFactoryFactory.cpp
   CatalogueSchema.cpp
   CmdLineTool.cpp
   DriveConfig.cpp
-  dummy/*.cpp
-  rdbms/*.cpp
-  retrywrappers/*.cpp
+  dummy/DummyAdminUserCatalogue.cpp
+  dummy/DummyArchiveFileCatalogue.cpp
+  dummy/DummyArchiveRouteCatalogue.cpp
+  dummy/DummyCatalogue.cpp
+  dummy/DummyDiskInstanceCatalogue.cpp
+  dummy/DummyDiskInstanceSpaceCatalogue.cpp
+  dummy/DummyDiskSystemCatalogue.cpp
+  dummy/DummyDriveConfigCatalogue.cpp
+  dummy/DummyDriveStateCatalogue.cpp
+  dummy/DummyFileRecycleLogCatalogue.cpp
+  dummy/DummyLogicalLibraryCatalogue.cpp
+  dummy/DummyMediaTypeCatalogue.cpp
+  dummy/DummyMountPolicyCatalogue.cpp
+  dummy/DummyRequesterActivityMountRuleCatalogue.cpp
+  dummy/DummyRequesterGroupMountRuleCatalogue.cpp
+  dummy/DummyRequesterMountRuleCatalogue.cpp
+  dummy/DummySchemaCatalogue.cpp
+  dummy/DummyStorageClassCatalogue.cpp
+  dummy/DummyTapeCatalogue.cpp
+  dummy/DummyTapeFileCatalogue.cpp
+  dummy/DummyTapePoolCatalogue.cpp
+  dummy/DummyVirtualOrganizationCatalogue.cpp
+  rdbms/RdbmsAdminUserCatalogue.cpp
+  rdbms/RdbmsArchiveFileCatalogue.cpp
+  rdbms/RdbmsArchiveRouteCatalogue.cpp
+  rdbms/RdbmsCatalogue.cpp
+  rdbms/RdbmsCatalogueGetArchiveFilesForRepackItor.cpp
+  rdbms/RdbmsCatalogueGetArchiveFilesItor.cpp
+  rdbms/RdbmsCatalogueGetFileRecycleLogItor.cpp
+  rdbms/RdbmsCatalogueGetTapesItor.cpp
+  rdbms/RdbmsCatalogueTapeContentsItor.cpp
+  rdbms/RdbmsCatalogueUtils.cpp
+  rdbms/RdbmsDiskInstanceCatalogue.cpp
+  rdbms/RdbmsDiskInstanceSpaceCatalogue.cpp
+  rdbms/RdbmsDiskSystemCatalogue.cpp
+  rdbms/RdbmsDriveConfigCatalogue.cpp
+  rdbms/RdbmsDriveStateCatalogue.cpp
+  rdbms/RdbmsFileRecycleLogCatalogue.cpp
+  rdbms/RdbmsLogicalLibraryCatalogue.cpp
+  rdbms/RdbmsMediaTypeCatalogue.cpp
+  rdbms/RdbmsMountPolicyCatalogue.cpp
+  rdbms/RdbmsPhysicalLibraryCatalogue.cpp
+  rdbms/RdbmsRequesterActivityMountRuleCatalogue.cpp
+  rdbms/RdbmsRequesterGroupMountRuleCatalogue.cpp
+  rdbms/RdbmsRequesterMountRuleCatalogue.cpp
+  rdbms/RdbmsSchemaCatalogue.cpp
+  rdbms/RdbmsStorageClassCatalogue.cpp
+  rdbms/RdbmsTapeCatalogue.cpp
+  rdbms/RdbmsTapeFileCatalogue.cpp
+  rdbms/RdbmsTapePoolCatalogue.cpp
+  rdbms/RdbmsVirtualOrganizationCatalogue.cpp
+  retrywrappers/AdminUserCatalogueRetryWrapper.cpp
+  retrywrappers/ArchiveFileCatalogueRetryWrapper.cpp
+  retrywrappers/ArchiveRouteCatalogueRetryWrapper.cpp
+  retrywrappers/CatalogueRetryWrapper.cpp
+  retrywrappers/DiskInstanceCatalogueRetryWrapper.cpp
+  retrywrappers/DiskInstanceSpaceCatalogueRetryWrapper.cpp
+  retrywrappers/DiskSystemCatalogueRetryWrapper.cpp
+  retrywrappers/DriveConfigCatalogueRetryWrapper.cpp
+  retrywrappers/DriveStateCatalogueRetryWrapper.cpp
+  retrywrappers/FileRecycleLogCatalogueRetryWrapper.cpp
+  retrywrappers/LogicalLibraryCatalogueRetryWrapper.cpp
+  retrywrappers/MediaTypeCatalogueRetryWrapper.cpp
+  retrywrappers/MountPolicyCatalogueRetryWrapper.cpp
+  retrywrappers/PhysicalLibraryCatalogueRetryWrapper.cpp
+  retrywrappers/RequesterActivityMountRuleCatalogueRetryWrapper.cpp
+  retrywrappers/RequesterGroupMountRuleCatalogueRetryWrapper.cpp
+  retrywrappers/RequesterMountRuleCatalogueRetryWrapper.cpp
+  retrywrappers/SchemaCatalogueRetryWrapper.cpp
+  retrywrappers/StorageClassCatalogueRetryWrapper.cpp
+  retrywrappers/TapeCatalogueRetryWrapper.cpp
+  retrywrappers/TapeFileCatalogueRetryWrapper.cpp
+  retrywrappers/TapePoolRetryCatalogueWrapper.cpp
+  retrywrappers/VirtualOrganizationCatalogueRetryWrapper.cpp
   TapeDrivesCatalogueState.cpp
   TapeFileWritten.cpp
   TapeForWriting.cpp
@@ -54,9 +130,19 @@ target_link_libraries (ctacatalogue
 
 # OCCI
 if (OCCI_SUPPORT)
-  file (GLOB CATALOGUE_OCCI_LIB_SRC_FILES
+  set(CATALOGUE_OCCI_LIB_SRC_FILES
     OracleCatalogueFactory.cpp
-    rdbms/oracle/*.cpp
+    rdbms/oracle/OracleArchiveFileCatalogue.cpp
+    rdbms/oracle/OracleCatalogue.cpp
+    rdbms/oracle/OracleFileRecycleLogCatalogue.cpp
+    rdbms/oracle/OracleLogicalLibraryCatalogue.cpp
+    rdbms/oracle/OracleMediaTypeCatalogue.cpp
+    rdbms/oracle/OraclePhysicalLibraryCatalogue.cpp
+    rdbms/oracle/OracleStorageClassCatalogue.cpp
+    rdbms/oracle/OracleTapeCatalogue.cpp
+    rdbms/oracle/OracleTapeFileCatalogue.cpp
+    rdbms/oracle/OracleTapePoolCatalogue.cpp
+    rdbms/oracle/OracleVirtualOrganizationCatalogue.cpp
   )
 
   add_library (ctacatalogueocci SHARED
@@ -74,8 +160,18 @@ if (OCCI_SUPPORT)
 endif()
 
 # SQLITE - Sqlite file based databases are not supported
-file (GLOB CATALOGUE_SQLITE_LIB_SRC_FILES
-  rdbms/sqlite/*.cpp
+set(CATALOGUE_SQLITE_LIB_SRC_FILES
+  rdbms/sqlite/SqliteArchiveFileCatalogue.cpp
+  rdbms/sqlite/SqliteCatalogue.cpp
+  rdbms/sqlite/SqliteFileRecycleLogCatalogue.cpp
+  rdbms/sqlite/SqliteLogicalLibraryCatalogue.cpp
+  rdbms/sqlite/SqliteMediaTypeCatalogue.cpp
+  rdbms/sqlite/SqlitePhysicalLibraryCatalogue.cpp
+  rdbms/sqlite/SqliteStorageClassCatalogue.cpp
+  rdbms/sqlite/SqliteTapeCatalogue.cpp
+  rdbms/sqlite/SqliteTapeFileCatalogue.cpp
+  rdbms/sqlite/SqliteTapePoolCatalogue.cpp
+  rdbms/sqlite/SqliteVirtualOrganizationCatalogue.cpp
   SchemaCreatingSqliteCatalogue.cpp
 )
 
@@ -91,7 +187,7 @@ target_link_libraries (ctacataloguesqlite ctardbmssqlite ctacatalogue)
 install(TARGETS ctacataloguesqlite DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 # IN_MEMORY
-file (GLOB CATALOGUE_IN_MEMORY_LIB_SRC_FILES
+set(CATALOGUE_IN_MEMORY_LIB_SRC_FILES
   InMemoryCatalogue.cpp
   InMemoryCatalogueFactory.cpp
 )
@@ -107,9 +203,19 @@ target_link_libraries (ctacatalogueinmemory ctacataloguesqlite)
 install(TARGETS ctacatalogueinmemory DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 # POSTGRES
-file (GLOB CATALOGUE_POSTGRES_LIB_SRC_FILES
+set(CATALOGUE_POSTGRES_LIB_SRC_FILES
   PostgresqlCatalogueFactory.cpp
-  rdbms/postgres/*.cpp
+  rdbms/postgres/PostgresArchiveFileCatalogue.cpp
+  rdbms/postgres/PostgresCatalogue.cpp
+  rdbms/postgres/PostgresFileRecycleLogCatalogue.cpp
+  rdbms/postgres/PostgresLogicalLibraryCatalogue.cpp
+  rdbms/postgres/PostgresMediaTypeCatalogue.cpp
+  rdbms/postgres/PostgresPhysicalLibraryCatalogue.cpp
+  rdbms/postgres/PostgresStorageClassCatalogue.cpp
+  rdbms/postgres/PostgresTapeCatalogue.cpp
+  rdbms/postgres/PostgresTapeFileCatalogue.cpp
+  rdbms/postgres/PostgresTapePoolCatalogue.cpp
+  rdbms/postgres/PostgresVirtualOrganizationCatalogue.cpp
 )
 
 add_library (ctacataloguepostgres SHARED
@@ -127,16 +233,12 @@ install(TARGETS ctacataloguepostgres DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 
 add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/AllCatalogueSchema.hpp
+  OUTPUT AllCatalogueSchema.hpp
   COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" bash ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS
-    create_all_schemas_SQL
     ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh
     ${CMAKE_CURRENT_SOURCE_DIR}/AllCatalogueSchema.hpp.in
 )
-
-add_custom_target(create_all_catalogue_schema_header
-  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/AllCatalogueSchema.hpp)
 
 add_custom_command(
   OUTPUT sqlite_catalogue_schema.cpp postgres_catalogue_schema.cpp
@@ -191,8 +293,29 @@ if (OCCI_SUPPORT)
   )
 endif ()
 
-file (GLOB CATALOGUE_MODULES_TESTS_SRC_FILES
-  tests/modules/*.cpp
+set(CATALOGUE_MODULES_TESTS_SRC_FILES
+  tests/modules/AdminUserCatalogueTest.cpp
+  tests/modules/ArchiveFileCatalogueTest.cpp
+  tests/modules/ArchiveRouteCatalogueTest.cpp
+  tests/modules/DiskInstanceCatalogueTest.cpp
+  tests/modules/DiskInstanceSpaceCatalogueTest.cpp
+  tests/modules/DiskSystemCatalogueTest.cpp
+  tests/modules/DriveConfigCatalogueTest.cpp
+  tests/modules/DriveStateCatalogueTest.cpp
+  tests/modules/FileRecycleLogCatalogueTest.cpp
+  tests/modules/LogicalLibraryCatalogueTest.cpp
+  tests/modules/MediaTypeCatalogueTest.cpp
+  tests/modules/MountPolicyCatalogueTest.cpp
+  tests/modules/PhysicalLibraryCatalogueTest.cpp
+  tests/modules/RequesterActivityMountRuleTest.cpp
+  tests/modules/RequesterGroupMountRuleCatalogueTest.cpp
+  tests/modules/RequesterMountRuleTest.cpp
+  tests/modules/SchemaCatalogueTest.cpp
+  tests/modules/StorageClassCatalogueTest.cpp
+  tests/modules/TapeCatalogueTest.cpp
+  tests/modules/TapeFileCatalogueTest.cpp
+  tests/modules/TapePoolCatalogueTest.cpp
+  tests/modules/VirtualOrganizationCatalogueTest.cpp
 )
 
 set(IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
@@ -210,7 +333,7 @@ set_property(TARGET ctainmemorycatalogueunittests PROPERTY SOVERSION "${CTA_SOVE
 set_property(TARGET ctainmemorycatalogueunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 # The test "filesWrittenToTape_many_archive_files" is over 1000 lines long and exceeds the variable tracking size limit.
 # We switch off this compiler option for this file to avoid compiling it twice.
-set_property(TARGET ctainmemorycatalogueunittests PROPERTY COMPILE_FLAGS "-fno-var-tracking-assignments")
+target_compile_options(ctainmemorycatalogueunittests PRIVATE -fno-var-tracking-assignments)
 
 target_link_libraries (ctainmemorycatalogueunittests
   ctacatalogue ctadisk ctacatalogueinmemory)
@@ -229,7 +352,7 @@ set_property(TARGET ctadbconfigcatalogueunittests PROPERTY SOVERSION "${CTA_SOVE
 set_property(TARGET ctadbconfigcatalogueunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 # The test "filesWrittenToTape_many_archive_files" is over 1000 lines long and exceeds the variable tracking size limit.
 # We switch off this compiler option for this file to avoid compiling it twice.
-set_property(TARGET ctadbconfigcatalogueunittests PROPERTY COMPILE_FLAGS "-fno-var-tracking-assignments")
+target_compile_options(ctadbconfigcatalogueunittests PRIVATE -fno-var-tracking-assignments)
 
 target_link_libraries (ctadbconfigcatalogueunittests
   ctacatalogue)
@@ -240,7 +363,26 @@ install (FILES cta-catalogue.example.conf
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
+set (SCHEMA_CREATE_SRC_FILES
+  AllCatalogueSchema.hpp
+  CreateSchemaCmd.cpp
+  CreateSchemaCmdLineArgs.cpp
+  CreateSchemaCmdMain.cpp
+  VersionedCatalogueSchemas.cpp
+  SqliteCatalogueSchema.cpp
+  PostgresCatalogueSchema.cpp
+)
+
+if (OCCI_SUPPORT)
+  set (SCHEMA_CREATE_SRC_FILES
+    ${SCHEMA_CREATE_SRC_FILES}
+    OracleCatalogueSchema.cpp)
+endif()
+
+add_executable(cta-catalogue-schema-create ${SCHEMA_CREATE_SRC_FILES})
+
 set (SCHEMA_CHECKER_LIB_SRC_FILES
+  AllCatalogueSchema.hpp
   SQLiteSchemaInserter.cpp
   SchemaSqlStatementsReader.cpp
   SchemaComparer.cpp
@@ -263,7 +405,87 @@ endif()
 add_library (ctaschemachecker SHARED
    ${SCHEMA_CHECKER_LIB_SRC_FILES})
 
-add_dependencies(ctaschemachecker
-  create_all_catalogue_schema_header)
-
 install (TARGETS ctaschemachecker DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
+target_link_libraries (cta-catalogue-schema-create ctacatalogue)
+
+install (TARGETS cta-catalogue-schema-create DESTINATION /usr/bin)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-schema-create.1cta DESTINATION /usr/share/man/man1)
+
+set (DROP_SCHEMA_CMD
+  DropSchemaCmd.cpp
+  DropSchemaCmdLineArgs.cpp
+)
+add_library (ctadropschemacmd SHARED ${DROP_SCHEMA_CMD})
+set_property(TARGET ctadropschemacmd PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctadropschemacmd PROPERTY   VERSION "${CTA_LIBVERSION}")
+install (TARGETS ctadropschemacmd DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+target_link_libraries (ctadropschemacmd ctaschemachecker)
+
+add_executable(cta-catalogue-schema-drop DropSchemaCmdMain.cpp)
+
+target_link_libraries (cta-catalogue-schema-drop ctacatalogue ctadropschemacmd)
+
+install (TARGETS cta-catalogue-schema-drop DESTINATION /usr/bin)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-schema-drop.1cta DESTINATION /usr/share/man/man1)
+
+add_executable(cta-catalogue-schema-set-production
+  SetProductionCmd.cpp
+  SetProductionCmdMain.cpp
+  SetProductionCmdLineArgs.cpp
+)
+
+target_link_libraries (cta-catalogue-schema-set-production ctacatalogue ctaschemachecker)
+
+install (TARGETS cta-catalogue-schema-set-production DESTINATION /usr/bin)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-schema-set-production.1cta DESTINATION /usr/share/man/man1)
+
+add_executable(cta-database-poll
+  PollDatabaseCmd.cpp
+  PollDatabaseCmdLineArgs.cpp
+  PollDatabaseCmdMain.cpp)
+
+target_link_libraries (cta-database-poll ctacatalogue)
+
+install (TARGETS cta-database-poll DESTINATION /usr/bin)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-database-poll.1cta DESTINATION /usr/share/man/man1)
+
+add_executable(cta-catalogue-admin-user-create
+  CreateAdminUserCmd.cpp
+  CreateAdminUserCmdLineArgs.cpp
+  CreateAdminUserCmdMain.cpp)
+
+target_link_libraries(cta-catalogue-admin-user-create ctacatalogue)
+
+install(TARGETS cta-catalogue-admin-user-create DESTINATION /usr/bin)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-admin-user-create.1cta DESTINATION /usr/share/man/man1)
+
+add_executable(cta-catalogue-schema-verify
+  VerifySchemaCmd.cpp
+  VerifySchemaCmdLineArgs.cpp
+  VerifySchemaCmdMain.cpp)
+
+target_link_libraries(cta-catalogue-schema-verify ctacatalogue ctaschemachecker)
+
+install (TARGETS cta-catalogue-schema-verify DESTINATION /usr/bin)
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-schema-verify.1cta DESTINATION /usr/share/man/man1)
+
+
+set (CATALOGUE_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES
+  CreateAdminUserCmdLineArgs.cpp
+  CreateAdminUserCmdLineArgsTest.cpp
+  CreateSchemaCmdLineArgs.cpp
+  CreateSchemaCmdLineArgsTest.cpp
+  VerifySchemaCmdLineArgs.cpp
+  VerifySchemaCmdLineArgsTest.cpp
+  DropSchemaCmdLineArgs.cpp
+  DropSchemaCmdLineArgsTest.cpp
+  PollDatabaseCmdLineArgs.cpp
+  PollDatabaseCmdLineArgsTest.cpp)
+
+add_library (ctacataloguecmdlineunittests SHARED
+  ${CATALOGUE_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES})
+set_property(TARGET ctacataloguecmdlineunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctacataloguecmdlineunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+install (TARGETS ctacataloguecmdlineunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

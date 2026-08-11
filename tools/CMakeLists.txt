@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2015 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-cmake_minimum_required (VERSION 3.17)
 
 add_subdirectory (cta-readtp)
 add_subdirectory (cta-tape-label)
@@ -14,9 +13,6 @@ add_subdirectory (cta-catalogue-schema-set-production)
 add_subdirectory (cta-catalogue-schema-verify)
 add_subdirectory (cta-database-poll)
 add_subdirectory (standalone_cli_tools)
-
-find_package(xrootdclient REQUIRED)
-find_package(Protobuf3 REQUIRED)
 
 # XRootD SSI
 include_directories(${XROOTD_INCLUDE_DIR} ${XROOTD_INCLUDE_DIR}/private)

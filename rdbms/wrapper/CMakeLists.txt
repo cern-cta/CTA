@@ -1,17 +1,14 @@
 # SPDX-FileCopyrightText: 2015 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
-cmake_minimum_required (VERSION 3.17)
 
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wshadow")
+add_compile_options(-Wshadow)
 
 find_package (sqlite REQUIRED)
-find_package (postgres REQUIRED)
 include_directories (${POSTGRES_INCLUDE_DIRS})
 
 if (OCCI_SUPPORT)
-  find_package (oracle-instantclient REQUIRED)
   include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
-  add_definitions( -DSUPPORT_OCCI )
+  add_compile_definitions(SUPPORT_OCCI)
 endif()
 
 set (RDBMS_WRAPPER_LIB_SRC_FILES

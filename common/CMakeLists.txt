@@ -1,13 +1,11 @@
 # SPDX-FileCopyrightText: 2015 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-cmake_minimum_required (VERSION 3.17)
 
 find_package (binutils REQUIRED)
 find_package (libcap REQUIRED)
 find_package (libuuid REQUIRED)
 find_package (json-c REQUIRED)
-find_package (opentelemetry-cpp CONFIG REQUIRED)
 
 add_subdirectory (exception)
 
@@ -18,7 +16,7 @@ include_directories (${XROOTD_INCLUDE_DIR})
 #
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
-set_source_files_properties(checksum/CRC.cpp PROPERTIES COMPILE_FLAGS -O2)
+set_source_files_properties(checksum/CRC.cpp PROPERTIES COMPILE_OPTIONS -O2)
 
 set (COMMON_LIB_SRC_FILES
   CmdLineTool.cpp
@@ -225,8 +223,8 @@ set (AUTH_LIB_SRC_FILES
 )
 
 find_package(OpenSSL REQUIRED)
-include_directories(${CMAKE_SOURCE_DIR}/common/jwt-cpp/include/)
 add_library(ctaauth STATIC ${AUTH_LIB_SRC_FILES})
+target_include_directories(ctaauth PUBLIC ${CMAKE_SOURCE_DIR}/common/jwt-cpp/include/)
 target_link_libraries(ctaauth PRIVATE curl OpenSSL::Crypto)
 target_link_libraries(ctacommonunittests ctaauth)
 
