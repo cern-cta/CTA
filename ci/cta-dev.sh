@@ -562,7 +562,9 @@ build_cta() {
   local -r mount_basedir="/shared/CTA"
   local -r num_jobs=$(nproc --ignore=2)
   local build_command=("$container_runtime" build)
+  local container_exec=("$container_runtime" exec)
   [[ $container_runtime == docker ]] && build_command=(docker buildx build --load)
+  [[ -t 1 ]] && container_exec+=(--tty)
 
   # Remove the project-specific container if reset is requested.
   if [[ "${reset}" = true ]]; then
@@ -605,7 +607,7 @@ build_cta() {
     build_srpm_flags=()
     [[ $clean_build_dirs == true ]] && build_srpm_flags+=(--clean-build-dir)
 
-    ${container_runtime} exec "${build_container_name}" \
+    "${container_exec[@]}" "${build_container_name}" \
       .${mount_basedir}/ci/build/build_srpm.sh \
       --build-dir ${mount_basedir}/build_srpm \
       --build-generator "${build_generator}" \
@@ -638,7 +640,7 @@ build_cta() {
   [[ $enable_address_sanitizer == true ]] && build_rpm_flags+=(--enable-address-sanitizer)
 
   print_header "BUILDING RPMS"
-  ${container_runtime} exec "${build_container_name}" \
+  "${container_exec[@]}" "${build_container_name}" \
     .${mount_basedir}/ci/build/build_rpm.sh \
     --build-dir ${mount_basedir}/build_rpm \
     --build-generator "${build_generator}" \
