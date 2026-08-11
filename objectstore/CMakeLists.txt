@@ -7,30 +7,11 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 set (CTAProtoFiles
   cta.proto)
 
+set(PROTOBUF3_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 PROTOBUF3_GENERATE_CPP(CTAProtoSources CTAProtoHeaders ${CTAProtoFiles})
-
-set (CTAProtoDependants
-  objectstore/Agent.hpp
-  objectstore/ArchiveRequest.hpp
-  objectstore/CreationLog.hpp
-  objectstore/DriveRegister.hpp
-  objectstore/GenericObject.hpp
-  objectstore/ObjectOps.hpp
-  objectstore/RepackIndex.hpp
-  objectstore/RepackRequest.hpp
-  objectstore/RepackQueue.hpp
-  objectstore/RetrieveActivityCountMap.hpp
-  objectstore/RetrieveRequest.hpp
-  objectstore/RootEntry.hpp
-  objectstore/SchedulerGlobalLock.hpp
-  objectstore/TapeQueue.hpp
-  objectstore/ArchiveQueue.hpp
-  objectstore/UserIdentity.hpp
-  objectstore/ValueCountMap.hpp)
-
-SET_SOURCE_FILES_PROPERTIES(${CTAProtoHeaders} PROPERTIES HEADER_FILE_ONLY TRUE)
-SET_SOURCE_FILES_PROPERTIES(${CTAProtoDependants}
-  PROPERTIES OBJECT_DEPENDS ${CTAProtoHeaders})
+set_source_files_properties(${CTAProtoHeaders} PROPERTIES GENERATED TRUE)
+add_custom_target(ctaobjectstore-protobuf-generation
+  DEPENDS ${CTAProtoSources} ${CTAProtoHeaders})
 
 include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_library (ctaobjectstore SHARED

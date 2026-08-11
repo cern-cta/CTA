@@ -191,6 +191,24 @@ if(NOT DEFINED PackageOnly)
   add_subdirectory(tools)
   add_subdirectory(tests)
 
+  if(TARGET ctaobjectstore-protobuf-generation)
+    function(cta_add_objectstore_protobuf_dependency directory)
+      get_property(directory_targets DIRECTORY "${directory}" PROPERTY BUILDSYSTEM_TARGETS)
+      foreach(target IN LISTS directory_targets)
+        get_target_property(target_type "${target}" TYPE)
+        if(target_type MATCHES "^(EXECUTABLE|STATIC_LIBRARY|SHARED_LIBRARY|MODULE_LIBRARY|OBJECT_LIBRARY)$")
+          add_dependencies("${target}" ctaobjectstore-protobuf-generation)
+        endif()
+      endforeach()
+
+      get_property(subdirectories DIRECTORY "${directory}" PROPERTY SUBDIRECTORIES)
+      foreach(subdirectory IN LISTS subdirectories)
+        cta_add_objectstore_protobuf_dependency("${subdirectory}")
+      endforeach()
+    endfunction()
+    cta_add_objectstore_protobuf_dependency("${CMAKE_CURRENT_SOURCE_DIR}")
+  endif()
+
 endif()
 
 # -----------------------------------------------------------------------------
