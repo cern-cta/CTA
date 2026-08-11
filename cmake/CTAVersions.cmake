@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2022 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
+
 # Default CTA Version
+
 set(CTA_VERSION 0)
 set(CTA_RELEASE 1)
 set(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION "v0.0")

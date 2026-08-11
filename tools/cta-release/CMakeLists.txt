@@ -19,9 +19,6 @@ function(safedl SOURCEURL DESTFILE)
   endif()
 endfunction()
 
-# We need the el version to set the proper cta versionlock version
-include(${CMAKE_SOURCE_DIR}/cmake/UseRPMToolsEnvironment.cmake)
-
 # Download package signing keys
 safedl("https://storage-ci.web.cern.ch/storage-ci/storageci.key"
   "${CMAKE_CURRENT_BINARY_DIR}/RPM-GPG-KEY-storageci"
@@ -31,7 +28,7 @@ safedl("https://download.ceph.com/keys/release.asc"
   "${CMAKE_CURRENT_BINARY_DIR}/RPM-GPG-KEY-ceph"
 )
 
-safedl("https://yum.oracle.com/RPM-GPG-KEY-oracle-ol${OSV}"
+safedl("https://yum.oracle.com/RPM-GPG-KEY-oracle-ol${CTA_OS_VERSION}"
   "${CMAKE_CURRENT_BINARY_DIR}/RPM-GPG-KEY-oracle"
 )
 
@@ -47,11 +44,11 @@ execute_process(
 string(REPLACE "\n" ";" RESULTS ${RESULT})
 
 foreach(PNAME ${RESULTS})
-    string(APPEND CTAVERSIONLOCK "${PNAME}-${CTA_VERSION}-${CTA_RELEASE}.${RPMTools_RPMBUILD_DIST}.*\n")
+    string(APPEND CTAVERSIONLOCK "${PNAME}-${CTA_VERSION}-${CTA_RELEASE}.${PLATFORM}.*\n")
 endforeach()
 
 execute_process(
-  COMMAND ${CMAKE_COMMAND} -E env PYTHONUNBUFFERED=1 python3 ${CMAKE_SOURCE_DIR}/ci/project-json/generate_versionlock.py --platform ${RPMTools_RPMBUILD_DIST}
+  COMMAND ${CMAKE_COMMAND} -E env PYTHONUNBUFFERED=1 python3 ${CMAKE_SOURCE_DIR}/ci/project-json/generate_versionlock.py --platform ${PLATFORM}
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   OUTPUT_VARIABLE VERSIONLOCK
   OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -60,7 +57,7 @@ execute_process(
 # Repos files
 # Arguably not very clean that this is grabbing files from the ci/docker/cta directory, but it is the only place where we have a copy of the repo files for all supported platforms (for now)
 file (GLOB REPO_FILES
-  "${CMAKE_SOURCE_DIR}/ci/docker/cta/${RPMTools_RPMBUILD_DIST}/etc/yum.repos.d-public/*.repo"
+  "${CMAKE_SOURCE_DIR}/ci/docker/cta/${PLATFORM}/etc/yum.repos.d-public/*.repo"
 )
 
 string(APPEND CTAVERSIONLOCK "${VERSIONLOCK}")

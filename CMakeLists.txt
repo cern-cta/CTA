@@ -7,27 +7,21 @@ project(cta)
 # -----------------------------------------------------------------------------
 # Project metadata
 # -----------------------------------------------------------------------------
+include(cmake/DetectPlatform.cmake)
 include(cmake/LoadProjectJson.cmake)
 
 # -----------------------------------------------------------------------------
 # User-configurable options
 # -----------------------------------------------------------------------------
 set(CTA_USE_PGSCHED FALSE CACHE BOOL "Build with the postgres scheduler")
-option(DISABLE_ORACLE_SUPPORT "Build without Oracle catalogue support" OFF)
+option(CTA_WITH_ORACLE "Build with Oracle catalogue support" ON)
 option(ENABLE_ADDRESS_SANITIZER "Build with AddressSanitizer" OFF)
-option(ENABLE_STDOUT_LOGGING "Enable stdout logging for tests" OFF)
-option(CTA_SOURCE_PACKAGE_ONLY "Configure only the source-package targets" OFF)
-option(CTA_ENABLE_RPM_TARGETS "Create RPM and SRPM build targets" ON)
-
-if(NOT DEFINED SKIP_UNIT_TESTS)
-  set(SKIP_UNIT_TESTS 0)
-endif()
-if(NOT DEFINED SKIP_DEBUG_PACKAGES)
-  set(SKIP_DEBUG_PACKAGES 0)
-endif()
-if(NOT DEFINED ENABLE_CCACHE)
-  set(ENABLE_CCACHE 0)
-endif()
+option(ENABLE_CCACHE "Use ccache for compilation" OFF)
+option(CTA_ENABLE_TEST_STDOUT_LOGGING "Enable stdout logging in tests" OFF)
+option(CTA_RPM_SOURCE_PACKAGE_ONLY "Configure only the source-package targets" OFF)
+option(CTA_RPM_ENABLE_TARGETS "Create RPM and SRPM build targets" ON)
+option(CTA_RPM_RUN_UNIT_TESTS "Run unit tests while building RPMs" ON)
+option(CTA_RPM_BUILD_DEBUG_PACKAGES "Build RPM debug packages" ON)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "${PROJECT_DEFAULT_BUILD_TYPE}" CACHE STRING "Choose the type of build." FORCE)
@@ -36,9 +30,9 @@ else()
 endif()
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release MinSizeRel RelWithDebInfo)
 
-if(CTA_SOURCE_PACKAGE_ONLY)
+if(CTA_RPM_SOURCE_PACKAGE_ONLY)
   set(CTA_CONFIGURATION_MODE "package-only")
-  set(CTA_ENABLE_RPM_TARGETS ON)
+  set(CTA_RPM_ENABLE_TARGETS ON)
 else()
   set(CTA_CONFIGURATION_MODE "full")
 endif()
@@ -52,10 +46,22 @@ endif()
 # -----------------------------------------------------------------------------
 # Derived configuration
 # -----------------------------------------------------------------------------
-set(OCCI_SUPPORT ON)
-if(DISABLE_ORACLE_SUPPORT)
+if(CTA_RPM_RUN_UNIT_TESTS)
+  set(RPM_SKIP_UNIT_TESTS 0)
+else()
+  set(RPM_SKIP_UNIT_TESTS 1)
+endif()
+
+if(CTA_RPM_BUILD_DEBUG_PACKAGES)
+  set(RPM_SKIP_DEBUG_PACKAGES 0)
+else()
+  set(RPM_SKIP_DEBUG_PACKAGES 1)
+endif()
+
+set(OCCI_SUPPORT "${CTA_WITH_ORACLE}")
+if(NOT CTA_WITH_ORACLE)
   set(OCCI_SUPPORT OFF)
-  set(RPM_ORACLE "-DDISABLE_ORACLE_SUPPORT:BOOL=ON" CACHE STRING "" FORCE)
+  set(RPM_ORACLE "-DCTA_WITH_ORACLE:BOOL=OFF" CACHE STRING "" FORCE)
   set(RPM_USING_ORACLE "0" CACHE STRING "" FORCE)
 else()
   set(RPM_ORACLE "%{nil}" CACHE STRING "" FORCE)
@@ -73,9 +79,9 @@ else()
 endif()
 
 if(ENABLE_ADDRESS_SANITIZER)
-  set(RPM_ADDRESS_SANITIZER_OPT "-DENABLE_ADDRESS_SANITIZER:Bool=TRUE" CACHE STRING "" FORCE)
+  set(RPM_ADDRESS_SANITIZER_OPT "-DENABLE_ADDRESS_SANITIZER:BOOL=ON" CACHE STRING "" FORCE)
 else()
-  set(RPM_ADDRESS_SANITIZER_OPT "-DENABLE_ADDRESS_SANITIZER:Bool=FALSE" CACHE STRING "" FORCE)
+  set(RPM_ADDRESS_SANITIZER_OPT "-DENABLE_ADDRESS_SANITIZER:BOOL=OFF" CACHE STRING "" FORCE)
 endif()
 
 # -----------------------------------------------------------------------------
@@ -83,6 +89,12 @@ endif()
 # -----------------------------------------------------------------------------
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+if(ENABLE_CCACHE)
+  find_program(CTA_CCACHE_EXECUTABLE NAMES ccache REQUIRED)
+  set(CMAKE_C_COMPILER_LAUNCHER "${CTA_CCACHE_EXECUTABLE}")
+  set(CMAKE_CXX_COMPILER_LAUNCHER "${CTA_CCACHE_EXECUTABLE}")
+endif()
 
 add_compile_options(
   "$<$<COMPILE_LANGUAGE:C>:-fPIC;-Wall;-Wextra;-Werror;-Wno-unused-parameter>"
@@ -94,8 +106,8 @@ if(ENABLE_ADDRESS_SANITIZER)
   add_link_options(-fsanitize=address -fno-omit-frame-pointer)
 endif()
 
-# To enable logging for testing purposes set -DENABLE_STDOUT_LOGGING=1
-if(ENABLE_STDOUT_LOGGING)
+# This definition is only used by test logging implementations.
+if(CTA_ENABLE_TEST_STDOUT_LOGGING)
   add_compile_definitions(STDOUT_LOGGING)
 endif()
 
@@ -109,7 +121,7 @@ include(cmake/CTAVersions.cmake)
 # -----------------------------------------------------------------------------
 # Full build
 # -----------------------------------------------------------------------------
-if(NOT CTA_SOURCE_PACKAGE_ONLY)
+if(NOT CTA_RPM_SOURCE_PACKAGE_ONLY)
   set(CMAKE_DISABLE_SOURCE_CHANGES ON)
   list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
   include(GNUInstallDirs)
@@ -180,8 +192,7 @@ endif()
 # -----------------------------------------------------------------------------
 # Packaging
 # -----------------------------------------------------------------------------
-if(CTA_ENABLE_RPM_TARGETS)
-  include(cmake/UseRPMToolsEnvironment.cmake)
+if(CTA_RPM_ENABLE_TARGETS)
   set(CPACK_SOURCE_PACKAGE_FILE_NAME
    "${PROJECT_NAME}-${CTA_VERSION}-${CTA_RELEASE}")
   # Note that not ignoring build folders within the repository here will cause cpack to take longer and longer
@@ -197,10 +208,7 @@ if(CTA_ENABLE_RPM_TARGETS)
     "/image_rpms/"
     "/assets/")
   include(CPack)
-  include(cmake/UseRPMTools.cmake)
-  if(NOT RPMTools_FOUND)
-    message(FATAL_ERROR "RPM packaging was requested, but rpmbuild was not found")
-  endif()
+  include(cmake/RPMTools.cmake)
   rpmtools_add_rpm_targets(
     "${PROJECT_NAME}"
     "${PROJECT_NAME}.spec.in")
@@ -218,24 +226,27 @@ message(STATUS "CTA_LIBVERSION: ${CTA_LIBVERSION} (SOVERSION ${CTA_SOVERSION})")
 message(STATUS "SUPPORTED_CATALOGUE_VERSIONS: ${SUPPORTED_CTA_CATALOGUE_SCHEMA_VERSIONS_JOINED}")
 message(STATUS "")
 message(STATUS "Build")
-message(STATUS "CONFIGURATION_MODE: ${CTA_CONFIGURATION_MODE}")
-message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+message(STATUS "PLATFORM: ${PLATFORM} (${CTA_OS_ID} ${CTA_OS_VERSION})")
 message(STATUS "CXX_STANDARD: ${PROJECT_CPP_VERSION}")
+message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 message(STATUS "CMAKE_GENERATOR: ${CMAKE_GENERATOR}")
 message(STATUS "JOBS_COUNT: ${JOBS_COUNT}")
+message(STATUS "CONFIGURATION_MODE: ${CTA_CONFIGURATION_MODE}")
+message(STATUS "ENABLE_ADDRESS_SANITIZER: ${ENABLE_ADDRESS_SANITIZER}")
+message(STATUS "ENABLE_CCACHE: ${ENABLE_CCACHE}")
 message(STATUS "")
 message(STATUS "Features")
-message(STATUS "SCHEDULER_BACKEND: ${CTA_SCHEDULER_BACKEND}")
-message(STATUS "ORACLE_SUPPORT: ${OCCI_SUPPORT}")
-message(STATUS "ENABLE_ADDRESS_SANITIZER: ${ENABLE_ADDRESS_SANITIZER}")
-message(STATUS "ENABLE_STDOUT_LOGGING: ${ENABLE_STDOUT_LOGGING}")
+message(STATUS "CTA_SCHEDULER_BACKEND: ${CTA_SCHEDULER_BACKEND}")
+message(STATUS "CTA_WITH_ORACLE: ${CTA_WITH_ORACLE}")
+message(STATUS "")
+message(STATUS "Testing")
+message(STATUS "CTA_ENABLE_TEST_STDOUT_LOGGING: ${CTA_ENABLE_TEST_STDOUT_LOGGING}")
 message(STATUS "")
 message(STATUS "Packaging")
-message(STATUS "CTA_SOURCE_PACKAGE_ONLY: ${CTA_SOURCE_PACKAGE_ONLY}")
-message(STATUS "CTA_ENABLE_RPM_TARGETS: ${CTA_ENABLE_RPM_TARGETS}")
-message(STATUS "SKIP_UNIT_TESTS: ${SKIP_UNIT_TESTS}")
-message(STATUS "SKIP_DEBUG_PACKAGES: ${SKIP_DEBUG_PACKAGES}")
-message(STATUS "ENABLE_CCACHE: ${ENABLE_CCACHE}")
+message(STATUS "CTA_RPM_SOURCE_PACKAGE_ONLY: ${CTA_RPM_SOURCE_PACKAGE_ONLY}")
+message(STATUS "CTA_RPM_ENABLE_TARGETS: ${CTA_RPM_ENABLE_TARGETS}")
+message(STATUS "CTA_RPM_RUN_UNIT_TESTS: ${CTA_RPM_RUN_UNIT_TESTS}")
+message(STATUS "CTA_RPM_BUILD_DEBUG_PACKAGES: ${CTA_RPM_BUILD_DEBUG_PACKAGES}")
 message(STATUS "")
 message(STATUS "Installation")
 message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")

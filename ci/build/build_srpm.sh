@@ -168,7 +168,7 @@ build_srpm() {
   # Cmake
   export CTA_VERSION=${cta_version}
 
-  cmake_options+=" -D CTA_SOURCE_PACKAGE_ONLY:BOOL=ON"
+  cmake_options+=" -D CTA_RPM_SOURCE_PACKAGE_ONLY:BOOL=ON"
   cmake_options+=" -D VCS_VERSION=${vcs_version}"
 
   if [[ ! ${cmake_build_type} = "" ]]; then
@@ -177,10 +177,10 @@ build_srpm() {
 
   if [[ ${oracle_support} = false ]]; then
     log_task "Disabling Oracle support..."
-    cmake_options+=" -D DISABLE_ORACLE_SUPPORT:BOOL=ON"
+    cmake_options+=" -D CTA_WITH_ORACLE:BOOL=OFF"
   else
     # the else clause is necessary to prevent cmake from caching this variable
-    cmake_options+=" -D DISABLE_ORACLE_SUPPORT:BOOL=OFF"
+    cmake_options+=" -D CTA_WITH_ORACLE:BOOL=ON"
   fi
 
   # Scheduler type

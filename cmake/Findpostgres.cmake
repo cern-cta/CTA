@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2015 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
+
 # This module will set the following variables:
 #     POSTGRES_FOUND
 #     POSTGRES_INCLUDE_DIRS

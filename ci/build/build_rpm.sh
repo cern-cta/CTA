@@ -280,46 +280,46 @@ build_rpm() {
     # Debug packages
     if [[ ${skip_debug_packages} = true ]]; then
       log_warn "Skipping debug packages."
-      cmake_options+=" -D SKIP_DEBUG_PACKAGES:STRING=1"
+      cmake_options+=" -D CTA_RPM_BUILD_DEBUG_PACKAGES:BOOL=OFF"
     else
       # the else clause is necessary to prevent cmake from caching this variable
-      cmake_options+=" -D SKIP_DEBUG_PACKAGES:STRING=0"
+      cmake_options+=" -D CTA_RPM_BUILD_DEBUG_PACKAGES:BOOL=ON"
     fi
 
     # Oracle support
     if [[ ${oracle_support} = false ]]; then
       log_task "Disabling Oracle support..."
-      cmake_options+=" -D DISABLE_ORACLE_SUPPORT:BOOL=ON"
+      cmake_options+=" -D CTA_WITH_ORACLE:BOOL=OFF"
     else
       # the else clause is necessary to prevent cmake from caching this variable
-      cmake_options+=" -D DISABLE_ORACLE_SUPPORT:BOOL=OFF"
+      cmake_options+=" -D CTA_WITH_ORACLE:BOOL=ON"
     fi
 
     # Unit tests
     if [[ ${skip_unit_tests} = true ]]; then
       log_warn "Skipping unit tests."
-      cmake_options+=" -D SKIP_UNIT_TESTS:STRING=1"
+      cmake_options+=" -D CTA_RPM_RUN_UNIT_TESTS:BOOL=OFF"
     else
       # the else clause is necessary to prevent cmake from caching this variable
-      cmake_options+=" -D SKIP_UNIT_TESTS:STRING=0"
+      cmake_options+=" -D CTA_RPM_RUN_UNIT_TESTS:BOOL=ON"
     fi
 
     # CCache
     if [[ ${enable_ccache} = true ]]; then
       log_task "Enabling ccache..."
-      cmake_options+=" -D ENABLE_CCACHE:STRING=1"
+      cmake_options+=" -D ENABLE_CCACHE:BOOL=ON"
     else
       # the else clause is necessary to prevent cmake from caching this variable
-      cmake_options+=" -D ENABLE_CCACHE:STRING=0"
+      cmake_options+=" -D ENABLE_CCACHE:BOOL=OFF"
     fi
 
     # Address Sanitizer
     if [[ ${enable_address_sanitizer} = true ]]; then
       log_task "Enabling AddressSanitizer..."
-      cmake_options+=" -D ENABLE_ADDRESS_SANITIZER:BOOL=TRUE"
+      cmake_options+=" -D ENABLE_ADDRESS_SANITIZER:BOOL=ON"
     else
       # the else clause is necessary to prevent cmake from caching this variable
-      cmake_options+=" -D ENABLE_ADDRESS_SANITIZER:BOOL=FALSE"
+      cmake_options+=" -D ENABLE_ADDRESS_SANITIZER:BOOL=OFF"
     fi
 
     # Scheduler type

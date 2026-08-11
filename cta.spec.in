@@ -35,26 +35,17 @@
 
 # Skipping unit tests (for developers)
 #-------------------------------------
-%define skip_unit_tests @SKIP_UNIT_TESTS@
+%define skip_unit_tests @RPM_SKIP_UNIT_TESTS@
 
 # Skipping debug packages (for developers)
 #-------------------------------------
-%define skipDebugPackages @SKIP_DEBUG_PACKAGES@
+%define skipDebugPackages @RPM_SKIP_DEBUG_PACKAGES@
 %if %{skipDebugPackages}
 %define debug_package %{nil}
 %endif
 
 # Disable compression of debuginfo, because this takes a huge amount of time
 %define _find_debuginfo_dwz_opts %{nil}
-
-# Setting ccache (for developers)
-#-------------------------------------
-%define enableCCache @ENABLE_CCACHE@
-%if %{enableCCache}
-%define ccacheFlags -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache
-%else
-%define ccacheFlags -UCMAKE_CXX_COMPILER_LAUNCHER -UCMAKE_C_COMPILER_LAUNCHER
-%endif
 
 # Use zstd for compression instead of gzip (which is incredibly slow)
 #--------------------------------------------
@@ -98,8 +89,7 @@ The CTA project is the CERN Tape Archive system.
 
 mkdir -p build
 cd build
-# ccacheFlags will be empty if ccache is not enabled
-CTA_VERSION=%{ctaVersion} cmake3 -G "%{buildGenerator}" .. %{ccacheFlags} -DCTA_ENABLE_RPM_TARGETS:BOOL=OFF -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{oracleOpt} %{asanOptions}
+CTA_VERSION=%{ctaVersion} cmake3 -G "%{buildGenerator}" .. -DENABLE_CCACHE:BOOL=@ENABLE_CCACHE@ -DCTA_RPM_ENABLE_TARGETS:BOOL=OFF -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{oracleOpt} %{asanOptions}
 cmake --build . --parallel @JOBS_COUNT@
 
 %install
