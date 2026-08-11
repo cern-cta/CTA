@@ -337,7 +337,7 @@ FrontendService::FrontendService(const std::string& configFilename,
   m_missingFileCopiesMinAgeSecs = missingFileCopiesMinAgeSecs.value_or(0);
 
   auto recycleLogQuarantineSecs = config.getOptionValueUInt("cta.catalogue.recycle_log_quarantine_secs");
-  m_recycleLogQuarantineSecs = recycleLogQuarantineSecs.value_or(30 * 24 * 60 * 60);
+  m_recycleLogQuarantineSecs = recycleLogQuarantineSecs.value_or(31 * 24 * 60 * 60);
 
   {
     // Log cta.catalogue.missing_file_copies_min_age_secs
