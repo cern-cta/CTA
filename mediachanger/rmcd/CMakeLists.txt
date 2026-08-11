@@ -24,7 +24,7 @@ target_link_libraries(cta-rmcd ctarmc)
 install(TARGETS cta-rmcd DESTINATION /usr/bin)
 install(FILES cta-rmcd.logrotate DESTINATION /etc/logrotate.d RENAME cta-rmcd)
 install(FILES cta-rmcd.sysconfig DESTINATION /etc/sysconfig RENAME cta-rmcd)
-install(FILES cta-rmcd.service DESTINATION /etc/systemd/system)
+install(FILES cta-rmcd.service DESTINATION ${CTA_SYSTEMD_UNIT_DIR})
 
 #
 # documentation and example config
