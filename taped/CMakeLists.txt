@@ -19,7 +19,7 @@ install (TARGETS cta-taped DESTINATION usr/bin)
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-taped.1cta DESTINATION /usr/share/man/man1)
 install (FILES cta-taped.logrotate DESTINATION /etc/logrotate.d RENAME cta-taped)
 install (FILES cta-taped.sysconfig DESTINATION /etc/sysconfig RENAME cta-taped)
-install (FILES cta-taped.service DESTINATION /etc/systemd/system)
+install (FILES cta-taped.service DESTINATION ${CTA_SYSTEMD_UNIT_DIR})
 
 # CTA's cta-taped integration tests.
 add_library(cta-tapedIntegrationTests SHARED

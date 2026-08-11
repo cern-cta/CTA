@@ -154,6 +154,8 @@ ELSE(DEFINED PackageOnly)
   list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
   include(GNUInstallDirs)
   set(CMAKE_INSTALL_PREFIX "/")
+  set(CTA_SYSTEMD_UNIT_DIR "usr/lib/systemd/system" CACHE PATH
+    "Installation directory for systemd system units")
 
   include_directories(${PROJECT_SOURCE_DIR})
   include_directories(${CMAKE_BINARY_DIR})

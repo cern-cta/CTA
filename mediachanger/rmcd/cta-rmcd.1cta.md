@@ -76,7 +76,10 @@ RMC_PORT
 
 # EXAMPLE
 
-Example configuration of */etc/systemd/system/cta-rmcd.service*:
+The packaged unit is installed as
+*/usr/lib/systemd/system/cta-rmcd.service*. Local customizations should be
+placed in */etc/systemd/system/cta-rmcd.service.d/*.conf* instead of editing
+the packaged unit directly. The packaged unit contains:
 
     [Unit]
     Description=CERN Tape Archive (CTA) rmcd daemon
