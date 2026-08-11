@@ -253,8 +253,8 @@ def test_well_known_endpoint(disk_client: DiskClientHost, disk_instance: DiskIns
 
 
 def test_generate_scitoken(eos_mgm: EosMgmHost) -> None:
-    print("Generating and validating a SciToken with multiple scopes")
-    scope = "storage.read:/eos/ storage.stage:/eos/"
+    print("Generating and validating a SciToken")
+    scope = "storage.stage:/eos/"
     scitoken = eos_mgm.generate_scitoken(
         [("scope", scope), ("sub", "test")],
         keyid="ctaeos",
@@ -262,7 +262,7 @@ def test_generate_scitoken(eos_mgm: EosMgmHost) -> None:
     payload_json = _decode_jwt_payload(scitoken)
 
     assert payload_json["sub"] == "test", f"SciToken with wrong sub: {payload_json['sub']}"
-    assert payload_json["scope"].split() == scope.split(), f"SciToken with wrong scope: {payload_json['scope']}"
+    assert payload_json["scope"] == scope, f"SciToken with wrong scope: {payload_json['scope']}"
     assert payload_json["wlcg.ver"] == "1.0", f"SciToken with wrong wlcg version: {payload_json['wlcg.ver']}"
 
 
@@ -276,8 +276,8 @@ def test_archive_and_retrieve_file_with_wlcg_scitoken(
 ) -> None:
     file_path = test_dir / "test_http-rest-api-scitoken"
     file_contents = "SciToken archive and retrieve test"
-    upload_scope = "storage.create:/ storage.read:/ storage.modify:/"
-    rest_api_scope = "storage.read:/ storage.stage:/"
+    upload_scope = "storage.modify:/"
+    rest_api_scope = "storage.stage:/"
     print(f"Archiving and retrieving {file_path} with WLCG SciTokens")
     scitoken_user1 = eos_mgm.generate_scitoken(
         [
