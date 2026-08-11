@@ -63,7 +63,7 @@ unmounts:
     recoveryThresholdPercent: 60
 
 shutdown:
-  timeoutSecs: 900
+  gracePeriodSecs: 900
 
 telemetry:
   enabled: false

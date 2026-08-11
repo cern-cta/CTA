@@ -109,7 +109,7 @@ struct UnmountsConfig final {
 };
 
 struct ShutdownConfig final {
-  int timeout_secs = 900;
+  int grace_period_secs = 900;
 
   static constexpr std::size_t memberCount() { return 1; }
 };

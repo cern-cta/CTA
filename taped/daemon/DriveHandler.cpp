@@ -710,7 +710,7 @@ int DriveHandler::runChild() {
   m_stateChangeTimeouts[session::SessionState::DrainingToDisk] = std::chrono::duration_cast<Timeout>(
     std::chrono::seconds(m_tapedConfig.transfers.retrieve.drain_to_disk_timeout_secs));
   m_stateChangeTimeouts[session::SessionState::ShuttingDown] =
-    std::chrono::duration_cast<Timeout>(std::chrono::seconds(m_tapedConfig.shutdown.timeout_secs));
+    std::chrono::duration_cast<Timeout>(std::chrono::seconds(m_tapedConfig.shutdown.grace_period_secs));
 
   // Before launching, and if this is the first session since daemon start, we will
   // put the drive down.

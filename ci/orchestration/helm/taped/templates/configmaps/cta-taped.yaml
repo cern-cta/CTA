@@ -113,7 +113,7 @@ data:
       recovery_threshold_percent = {{ $.Values.unmounts.archiveUnderfill.recoveryThresholdPercent }}
 
     [shutdown]
-      timeout_secs = {{ $.Values.shutdown.timeoutSecs }}
+      grace_period_secs = {{ $.Values.shutdown.gracePeriodSecs }}
 
 ---
 {{- end }}

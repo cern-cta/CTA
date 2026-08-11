@@ -8,15 +8,14 @@
 ####################################################################################################
 
 
-# Identifies the tape drive controlled by this cta-taped process and configures its initial readiness check.
-# The four identity values are installation-specific and must match the drive and logical-library definitions
-# registered in the CTA catalogue.
+# Identifies the tape drive controlled by this cta-taped process.
 [drive]
-  # CTA name of the drive. It is included in log records and must uniquely identify the drive in CTA.
+  # CTA name of the drive. It is included in log records, tooling and must uniquely identify the drive in CTA.
   # This value is required and has no useful default.
   name = ""
 
   # Path to the non-rewinding character device used to access the tape drive, for example /dev/nst0.
+  # It is recommended to rely on /dev/tape/by-name/<drive-name> to avoid device-name changes across reboots.
   # This value is required and has no useful default.
   device = ""
 
@@ -26,11 +25,13 @@
   control_path = ""
 
   # CTA logical-library name to which this drive belongs. It must match an existing logical library in
-  # the catalogue. This value is required and has no useful default.
+  # the catalogue. 
+  # This value is required and has no useful default.
   logical_library_name = ""
 
-  # Maximum time, in seconds, that the drive process may remain in the readiness-checking state.
-  # If the drive is not ready within this time, the session fails instead of waiting indefinitely.
+  # Maximum time, in seconds, that the drive process may remain in the readiness-checking state without
+  # making progress. On expiry, cta-taped kills and restarts the drive process. Because no tape mount has started,
+  # cleanup is not required and the drive is not automatically put Down. 
   # If omitted, 120 is used.
   ready_timeout_secs = 120
 
@@ -42,17 +43,20 @@
 
 [scheduler]
   # Unique name used to identify this scheduler backend in logs and scheduler resources. A conventional
-  # format is "[ceph|postgres|vfs][User|Repack]", for example "cephUser". This setting is required.
+  # format is "[ceph|postgres|vfs][User|Repack]", for example "cephUser". 
+  # This setting is required.
   backend_name = "cephUser"
   # URL of the objectstore used as the CTA Scheduler Database. Production installations normally use a
-  # Ceph RADOS URL; file-backed objectstores are intended for testing or small installations. This setting
-  # is required.
+  # Ceph RADOS URL; file-backed objectstores are intended for testing or small installations. 
+  # This setting is required.
   objectstore_backend_path = "rados://cta@tapecta:cta"
   # Maximum age, in seconds, of cached tape statistics used when deciding whether work warrants a mount.
-  # Lower values reflect scheduler changes sooner but increase backend queries. If omitted, 600 is used.
+  # Lower values reflect scheduler changes sooner but increase backend queries. 
+  # If omitted, 600 is used.
   tape_cache_max_age_secs = 600
   # Maximum age, in seconds, of cached retrieve-queue statistics. Lower values reflect newly queued
-  # retrieves sooner but increase backend queries. If omitted, 10 is used.
+  # retrieves sooner but increase backend queries. 
+  # If omitted, 10 is used.
   retrieve_queue_cache_max_age_secs = 10
 
 
@@ -71,49 +75,59 @@
   # If omitted, 10000 is used.
   minimum_queued_files = 10000
 
-  # Maximum time, in seconds, that the drive process may remain in the scheduling state while obtaining a
-  # single mount. If scheduling does not finish within this time, the scheduling attempt fails.
+  # Maximum time, in seconds, that the drive process may remain in the scheduling state without reporting
+  # progress. On expiry, the drive process is killed and restarted. Because no tape has been selected for
+  # mounting, cleanup is not required and the drive is not automatically put Down.
   # If omitted, 300 is used.
   scheduling_timeout_secs = 300
 
-  # Total time, in seconds, for which the tape server keeps trying to obtain its next mount before ending
-  # the session. This is distinct from scheduling_timeout_secs, which watches one scheduling state.
-  # Increasing it keeps an idle drive process looking for work longer before it restarts its session loop.
+  # Maximum time, in seconds, allowed for selecting the next mount. On expiry, the request logs a warning 
+  # and is retried. 
   # If omitted, 900 is used.
   get_next_mount_timeout_secs = 900
 
   # Delay, in seconds, before retrying after the scheduler reports that no mount is currently available.
   # Lower values react faster to new work but increase scheduler polling; higher values reduce polling but
-  # may add mount-start latency. If omitted, 10 is used.
+  # may add mount-start latency. 
+  # If omitted, 10 is used.
   idle_scheduling_interval_secs = 10
 
   # Maximum time, in seconds, that the drive process may remain in the overall mounting state. This includes
-  # more than the physical tape-load operation controlled by tape_load_timeout_secs. If mounting does not
-  # finish within this time, the mount session fails. If omitted, 600 is used.
+  # the RMCD request and the physical tape-load readiness check. On expiry, the drive process is killed and
+  # a cleaner session starts to recover and unmount the potentially loaded tape. The drive is put Down if
+  # recovery cannot be completed. 
+  # If omitted, 600 is used.
   mount_timeout_secs = 600
 
-  # Maximum time, in seconds, allowed for the physical tape drive to load and become ready after a mount
-  # request. It is used by normal transfer and recovery/cleaner sessions and should not exceed
-  # mount_timeout_secs. If omitted, 300 is used.
+  # Maximum time, in seconds, allowed for the physical tape drive to load and become ready after the RMCD
+  # mount request returns. Expiry reports an error and starts cleanup. The drive is put Down only if the tape 
+  # cannot then be unloaded and unmounted successfully. 
+  # If omitted, 300 is used.
   tape_load_timeout_secs = 300
 
-  # Connection to the Remote Media Changer Daemon used for physical mount and unmount operations.
+  # Connection to the Remote Media Changer Daemon (cta-rmcd) used for physical mount and unmount operations.
   [mounts.rmcd]
-    # Hostname or IP address of RMCD. Use "localhost" when RMCD runs on this tape server.
+    # Hostname or IP address of the RMCD. Use "localhost" when the RMCD runs on the same host as cta-taped.
+    # Note that cta-rmcd traffic is not encrypted and/or authenticated, so it is not recommended to change 
+    # this setting.
     # If omitted, "localhost" is used.
     host = "localhost"
 
-    # TCP port on which RMCD accepts requests. It must match the RMCD service configuration.
+    # TCP port on which the RMCD accepts requests.
     # If omitted, 5014 is used.
     port = 5014
 
-    # Network timeout, in seconds, for one RMCD request. Physical mount and unmount operations can take
-    # several minutes, so this should not be configured like a short interactive RPC timeout.
+    # Network timeout, in seconds, applied independently while connecting to the RMCD, writing the request, 
+    # and reading each reply. It is not an end-to-end limit for the complete mount or unmount lifecycle. Expiry
+    # makes the current RMCD operation fail: a mount error enters normal cleanup, while an unmount error puts
+    # the drive Down because the tape could not be returned to the library. 
     # If omitted, 600 is used.
     request_timeout_secs = 600
 
-    # Maximum number of attempts for an RMCD request that fails with a retriable error. Increasing this can
-    # tolerate longer transient failures but delays final failure reporting. If omitted, 10 is used.
+    # Maximum number of attempts when the RMCD explicitly returns its fast-retry status. Network and protocol
+    # errors, including expiry of request_timeout_secs, are not retried by this setting. Increasing it can
+    # tolerate a longer RMCD-side transient condition but delays final failure reporting. 
+    # If omitted, 10 is used.
     request_attempts = 10
 
 
@@ -121,11 +135,13 @@
 [transfers]
   # Number of in-memory buffers allocated to the drive's data-transfer pipeline. Total buffer memory is
   # approximately buffer_count multiplied by buffer_size_bytes. Increasing it can smooth I/O but consumes
-  # more RAM. If omitted, 5000 is used.
+  # more RAM. 
+  # If omitted, 5000 is used.
   buffer_count = 5000
 
   # Size, in bytes, of each in-memory transfer buffer. Together with buffer_count this determines the
-  # approximate transfer-cache memory consumption. If omitted, 5000000 bytes (5 MB) is used.
+  # approximate transfer-cache memory consumption. 
+  # If omitted, 5000000 bytes (5 MB) is used.
   buffer_size_bytes = 5000000
 
   # Number of disk I/O worker threads and therefore the maximum number of file transfers that can perform
@@ -133,67 +149,82 @@
   # If omitted, 10 is used.
   disk_io_threads = 10
 
-  # Maximum time, in seconds, allowed after mounting without any tape block being read or written. If no tape
-  # data moves within this time, the stalled transfer session ends. If omitted, 1800 is used.
+  # Interval, in seconds, after which a file with no tape-block movement is logged as stuck. This setting 
+  # only controls reporting and does not end the transfer. Independently, cta-taped currently enforces a 
+  # non-configurable 15-minute limit with no data movement in the Running and DrainingToDisk states. Reaching 
+  # that limit kills and restarts the drive process; cleanup is attempted when a tape may be loaded.
+  # If omitted, 1800 is used.
   no_block_move_timeout_secs = 1800
 
   # Batch fetching and tape-flush behavior for disk-to-tape archive sessions.
   [transfers.archive]
     # Maximum total bytes requested from the scheduler in one archive batch. The batch is limited when
     # either this value or fetch_max_files is reached. Larger batches can keep the drive busier but consume
-    # more scheduler and transfer resources. If omitted, 80000000000 bytes (80 GB) is used.
+    # more scheduler and transfer resources. 
+    # If omitted, 80000000000 bytes (80 GB) is used.
     fetch_max_bytes = 80000000000
 
     # Maximum number of files requested in one archive batch. The batch is limited when either this value
-    # or fetch_max_bytes is reached. If omitted, 4000 is used.
+    # or fetch_max_bytes is reached. 
+    # If omitted, 4000 is used.
     fetch_max_files = 4000
 
     # Maximum bytes written between flushes to tape using a synchronized tape mark. A flush occurs only on
     # a file boundary, so the actual byte count can exceed this value. More frequent flushes improve recovery
-    # granularity but may reduce throughput. If omitted, 32000000000 bytes (32 GB) is used.
+    # granularity but may reduce throughput. 
+    # If omitted, 32000000000 bytes (32 GB) is used.
     flush_max_bytes = 32000000000
 
     # Maximum files written between flushes to tape. A flush is triggered when either this value or
-    # flush_max_bytes is reached. If omitted, 200 is used.
+    # flush_max_bytes is reached. 
+    # If omitted, 200 is used.
     flush_max_files = 200
 
   # Batch fetching, disk-space checks, and disk draining for tape-to-disk retrieve sessions.
   [transfers.retrieve]
     # Maximum total bytes requested from the scheduler in one retrieve batch. The batch is limited when
-    # either this value or fetch_max_files is reached. If omitted, 80000000000 bytes (80 GB) is used.
+    # either this value or fetch_max_files is reached. 
+    # If omitted, 80000000000 bytes (80 GB) is used.
     fetch_max_bytes = 80000000000
 
     # Maximum number of files requested in one retrieve batch. The batch is limited when either this value
-    # or fetch_max_bytes is reached. If omitted, 4000 is used.
+    # or fetch_max_bytes is reached. 
+    # If omitted, 4000 is used.
     fetch_max_files = 4000
 
-    # Maximum time, in seconds, allowed to finish writing retrieved data to disk after tape reading has ended.
-    # If disk draining does not finish within this time, the session fails. If omitted, 1800 is used.
+    # Maximum total time, in seconds, allowed to finish writing retrieved data to disk after the tape has been
+    # unmounted. On expiry, the drive process is killed and restarted, interrupting any remaining disk writes.
+    # Cleanup is not required and the drive is not automatically put Down.
+    # If omitted, 1800 is used.
     drain_to_disk_timeout_secs = 1800
 
     # Path to the operator-provided executable that reports free space in the retrieve destination. The
-    # process must be able to execute this script. If omitted, /usr/bin/cta-eosdf.sh is used.
+    # process must be able to execute this script. 
+    # If omitted, /usr/bin/cta-eosdf.sh is used.
     external_free_disk_space_script = "/usr/bin/cta-eosdf.sh"
 
-    # Recommended Access Order reduces tape positioning during retrieve. Defaults normally provide the best
-    # performance; these settings should be changed only by operators testing a specific supported drive.
+    # Recommended Access Order reduces tape positioning during retrieve.
     [transfers.retrieve.rao]
       # Enables hardware or software RAO on supported drives. Unsupported drives continue without RAO.
-      # When hardware RAO is available, it is preferred over software RAO. If omitted, true is used.
+      # When hardware RAO is available, it is preferred over software RAO. 
+      # If omitted, true is used.
       enabled = true
 
       # Software RAO algorithm for LTO-8 drives. Valid values are "linear", "random", and "sltf"; "sltf"
-      # is recommended for production. Hardware RAO drives ignore this setting. If omitted, "sltf" is used.
+      # is recommended for production. Hardware RAO drives ignore this setting. 
+      # If omitted, "sltf" is used.
       lto_algorithm = "sltf"
 
       # Colon-delimited options passed to the selected software RAO algorithm. The accepted options depend on
-      # that algorithm; invalid options cause RAO initialization to fail. If omitted, "cost_heuristic_name:cta" is used.
+      # that algorithm; invalid options cause RAO initialization to fail. 
+      # If omitted, "cost_heuristic_name:cta" is used.
       lto_algorithm_options = "cost_heuristic_name:cta"
 
   # Hardware-encryption behavior shared by archive and retrieve sessions.
   [transfers.encryption]
     # Enables use of tape-drive hardware encryption when a key is configured for the tape or tape pool.
-    # This does not encrypt tapes lacking valid key configuration. If omitted, true is used.
+    # This does not encrypt tapes lacking valid key configuration. 
+    # If omitted, true is used.
     enabled = true
 
     # Path to the operator-provided executable used to obtain encryption keys. It must be executable by
@@ -204,8 +235,9 @@
 
 # Controls completion of mounted sessions and the physical unmount state.
 [unmounts]
-  # Maximum time, in seconds, allowed for unmounting. If unmounting does not finish within this time, the
-  # session fails and may require cleanup. If omitted, 600 is used.
+  # Maximum time, in seconds, that the drive process may remain in the unmounting state. On expiry, the drive process
+  # is killed and a cleaner session is started to recover and unmount the tape.
+  # If omitted, 600 is used.
   unmount_timeout_secs = 600
 
   # Ends archive sessions whose scheduler batches remain too small to use the drive efficiently. The effective
@@ -214,27 +246,32 @@
   # only after both watch_period_secs and minimum_samples are satisfied.
   [unmounts.archive_underfill]
     # Minimum duration, in seconds, for which archive batches must remain underfilled before an unmount can be
-    # requested. Increasing it tolerates slow producers longer. If omitted, 300 is used.
+    # requested. Increasing it tolerates slow producers longer. 
+    # If omitted, 300 is used.
     watch_period_secs = 300
 
     # Minimum number of underfilled archive batches required during the observation period before an unmount
-    # can be requested. This prevents a single small batch from ending a session. If omitted, 3 is used.
+    # can be requested. This prevents a single small batch from ending a session. 
+    # If omitted, 3 is used.
     minimum_samples = 3
 
     # Fill percentage below which an underfill observation begins. Valid values are 0 through 100 and this
-    # should be lower than recovery_threshold_percent. If omitted, 40 is used.
+    # should be lower than recovery_threshold_percent. 
+    # If omitted, 40 is used.
     start_threshold_percent = 40
 
     # Fill percentage at or above which an underfill observation is cancelled. Valid values are 0 through 100
-    # and this should be higher than start_threshold_percent to provide hysteresis. If omitted, 60 is used.
+    # and this should be higher than start_threshold_percent to provide hysteresis. 
+    # If omitted, 60 is used.
     recovery_threshold_percent = 60
 
 
 # Controls orderly termination of cta-taped.
 [shutdown]
-  # Maximum time, in seconds, allowed for the cta-taped process to shut down cleanly.
-  # If shutdown does not finish within this time, it is treated as failed. If omitted, 900 is used.
-  timeout_secs = 900
+  # Grace period, in seconds, allowed for cta-taped and its drive worker to finish shutting down after a
+  # termination request. On expiry, cta-taped forcibly terminates any remaining worker instead of waiting
+  # for further cleanup. The drive is normally reported Down as shutdown begins. If omitted, 900 is used.
+  grace_period_secs = 900
 
 
 [logging]
@@ -301,10 +338,12 @@
 # XRootD is what is used to connect to the disk instance.
 [xrootd]
   # Overrides the XrdSecPROTOCOL environment variable used for connections to the disk system.
-  # Valid values depend on the installed XRootD security plugins. If omitted, "sss" is used.
+  # Valid values depend on the installed XRootD security plugins. 
+  # If omitted, "sss" is used.
   security_protocol = "sss"
   # Overrides the XrdSecSSSKT environment variable with the path to the XRootD SSS keytab. The file must
-  # be readable by cta-taped when the "sss" protocol is selected. This setting is required for SSS.
+  # be readable by cta-taped when the "sss" protocol is selected.
+  # This setting is required for SSS.
   sss_keytab_path = "/etc/cta/cta.sss.keytab"
 
 

@@ -31,7 +31,7 @@ int TapedApp::run(const TapedConfig& config, cta::log::Logger& log) {
   ProcessManager processManager(lc);
   // Signal handler
   auto signalHandler = std::make_unique<SignalHandler>(processManager);
-  signalHandler->setTimeout(std::chrono::seconds(config.shutdown.timeout_secs));
+  signalHandler->setTimeout(std::chrono::seconds(config.shutdown.grace_period_secs));
   processManager.addHandler(std::move(signalHandler));
   // Create the drive handler
   const common::dataStructures::DriveInfo driveInfo(config.drive.name,
