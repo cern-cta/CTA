@@ -1,3 +1,35 @@
+## 5.11.19.1-3 (2026-08-11)
+
+### New Features
+
+- [Tools] Add optional storage class statistics, per tape, to cta-admin tool (cta/CTA!1410)
+
+- [Misc] Add event_name to important CTA log messages (cta/CTA!1381)
+
+
+### Changes
+
+- [taped] Drive process crashing produces CRIT message instead of INFO (cta/CTA!1499)
+
+- [taped] Taped no longer sets its own user, group and SYS_RAWIO capability (cta/CTA!1426)
+
+- [taped] cta-eosdf no longer sources sysconfig (cta/CTA!1455)
+
+- [Tools] Change short option for cta-admin af ch --idfile from -I to -F (cta/CTA!1453)
+
+
+### Bug Fixes
+
+- [taped] Fix crash due to accidental pointer arithmetic in exception msg (cta/CTA!1502)
+
+- [taped] Fix opentelemetry shutdown race condition with objectstore (cta/CTA!1500)
+
+- [scheduler]: Fix archive unmount decision logic for postgres scheduler only (cta/CTA!1450)
+
+- [frontend] Fix frontend catalogue cache for mount rules (cta/CTA!1490)
+
+- [frontend] PREPARE gRPC request shouldn't fail without a storage class (cta/CTA!1471)
+
 ## 5.11.19.0-1
 
 ### Changes
