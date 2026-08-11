@@ -13,7 +13,7 @@ include(cmake/LoadProjectJson.cmake)
 # -----------------------------------------------------------------------------
 # User-configurable options
 # -----------------------------------------------------------------------------
-set(CTA_USE_PGSCHED FALSE CACHE BOOL "Build with the postgres scheduler")
+option(CTA_USE_PGSCHED "Build with the PostgreSQL scheduler" OFF)
 set(CTA_USE_EXTRA_TELEMETRY FALSE CACHE BOOL
   "Build with telemetry instrumentation for postgres performance measurements")
 option(CTA_WITH_ORACLE "Build with Oracle catalogue support" ON)
