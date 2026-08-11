@@ -7,6 +7,7 @@ add_subdirectory(common)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # See https://gitlab.cern.ch/cta/CTA/-/issues/791#note_8251696
+set(PROTOBUF3_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 PROTOBUF3_GENERATE_CPP(WDMsgSources WDMsgHeaders WatchdogMessage.proto)
 
 SET_SOURCE_FILES_PROPERTIES(${WDMsgHeaders} PROPERTIES HEADER_FILE_ONLY TRUE)
