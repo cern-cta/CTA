@@ -1,3 +1,11 @@
+## 5.11.18.2-1
+
+### Bug Fixes
+
+- [taped] Fix crash due to accidental pointer arithmetic in exception msg (cta/CTA!1502)
+- [taped] Fix opentelemetry shutdown race condition with objectstore (cta/CTA!1500)
+- [taped] Drive process crashing produces CRIT message instead of INFO (cta/CTA!1499)
+
 ## 5.11.18.1-1
 
 ### Changes
