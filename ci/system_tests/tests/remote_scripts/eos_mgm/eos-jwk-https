@@ -37,8 +37,8 @@ httpd = HTTPServer(("", 4443), SimpleHTTPRequestHandler)
 
 ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 ssl_context.load_cert_chain(
-    certfile="/etc/grid-security/daemon/hostcert.pem",
-    keyfile="/etc/grid-security/daemon/hostkey.pem",
+    certfile="/etc/grid-security/certificates/ctaeos-self-signed.crt.pem",
+    keyfile="/etc/grid-security/certificates/ctaeos-self-signed.key.pem",
 )
 httpd.socket = ssl_context.wrap_socket(httpd.socket, server_side=True)
 

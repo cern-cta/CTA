@@ -34,16 +34,22 @@ openssl req -passin pass:1234 -new -x509 -days 365 -key $SECRETS_DIR/ca.key.pem 
 generate_signed_cert() {
   local file_prefix="$1"
   local host="$2"
+  local subject_alt_names="DNS:$host"
   local key="$SECRETS_DIR/${file_prefix}.key.pem"
   local csr="$SECRETS_DIR/${file_prefix}.csr.pem"
   local crt="$SECRETS_DIR/${file_prefix}.crt.pem"
+
+  shift 2
+  for alt_name in "$@"; do
+    subject_alt_names+=",DNS:$alt_name"
+  done
 
   echo "Generating cert/key pair '$file_prefix' for '$host'"
 
   openssl genrsa -passout pass:1234 -des3 -out $key 4096
   openssl req -passin pass:1234 -new -key $key -out $csr \
     -subj "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Server/CN=$host" \
-    -addext "subjectAltName=DNS:$host"
+    -addext "subjectAltName=$subject_alt_names"
   openssl x509 -req -passin pass:1234 -days 365 -in $csr -CA $SECRETS_DIR/ca.crt.pem -CAkey $SECRETS_DIR/ca.key.pem \
     -set_serial 01 -copy_extensions copy -out $crt
   openssl rsa -passin pass:1234 -in $key -out $key
@@ -73,7 +79,7 @@ python3 /scripts/generate_jwt.py \
   --sub ctaeos
 
 # generate cert for ctaeos (to be used with mTLS)
-generate_signed_cert ctaeos-self-signed eos-mgm.biglab
+generate_signed_cert ctaeos-self-signed eos-mgm.biglab eos-mgm.biglab.ch localhost ctaeos
 # --- Generate K8s secrets for all of these --- #
 
 python3 /scripts/create_k8s_secrets.py \
