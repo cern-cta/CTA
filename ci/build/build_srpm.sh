@@ -176,7 +176,7 @@ build_srpm() {
   # Cmake
   export CTA_VERSION=${cta_version}
 
-  cmake_options+=" -D PackageOnly:Bool=true"
+  cmake_options+=" -D CTA_SOURCE_PACKAGE_ONLY:BOOL=ON"
   cmake_options+=" -D VCS_VERSION=${cta_version_suffix}"
 
   if [[ ! ${cmake_build_type} = "" ]]; then
