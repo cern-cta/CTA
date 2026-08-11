@@ -24,6 +24,9 @@ from .hosts.disk.eos_mgm_host import EosMgmHost
 
 
 class TestEnv:
+    # Prevent pytest from collecting this class as a test case
+    __test__ = False
+
     def __init__(
         self,
         cta_cli_conns: Sequence[RemoteConnection] = [],

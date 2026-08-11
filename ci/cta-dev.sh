@@ -526,6 +526,26 @@ ensure_namespace_owned() {
   fi
 }
 
+container_exists() {
+  local -r container_name="$1"
+  if [[ $container_runtime == podman ]]; then
+    podman container exists "$container_name"
+  else
+    docker container inspect "$container_name" >/dev/null 2>&1
+  fi
+}
+
+container_is_running() {
+  local -r container_name="$1"
+  local running
+  if [[ $container_runtime == podman ]]; then
+    running=$(podman container inspect --format '{{.State.Running}}' "$container_name" 2>/dev/null) || return 1
+  else
+    running=$(docker container inspect --format '{{.State.Running}}' "$container_name" 2>/dev/null) || return 1
+  fi
+  [[ $running == true ]]
+}
+
 # =========================================================================
 #  Commands
 # =========================================================================
@@ -544,26 +564,42 @@ build_cta() {
   local build_command=("$container_runtime" build)
   [[ $container_runtime == docker ]] && build_command=(docker buildx build --load)
 
-  # Stop and remove existing container if reset is requested
-  echo "Total CTA build containers found: $(${container_runtime} ps | grep -c cta-build)"
+  # Remove the project-specific container if reset is requested.
   if [[ "${reset}" = true ]]; then
-    log_task "Removing the existing build container..."
-    ${container_runtime} rm -f "${build_container_name}" >/dev/null 2>&1 || true
+    if container_exists "$build_container_name"; then
+      log_task "Removing build container ${build_container_name}..."
+      ${container_runtime} rm -f "${build_container_name}" >/dev/null
+    fi
+    if container_exists "$build_container_name"; then
+      die "Failed to remove build container '${build_container_name}'. Refusing to rebuild while the name is still in use."
+    fi
   fi
 
-  # Start container if not already running
-  if ${container_runtime} ps -a --format '{{.Names}}' | grep -wq "${build_container_name}"; then
-    echo "Found existing build container: ${build_container_name}"
+  # Reuse the exact project-specific container, including a stopped one.
+  if container_exists "$build_container_name"; then
+    if container_is_running "$build_container_name"; then
+      log_task "Reusing running build container: ${build_container_name}"
+    else
+      log_task "Starting existing stopped build container ${build_container_name}..."
+      ${container_runtime} start "$build_container_name" >/dev/null \
+        || die "Failed to start existing build container '${build_container_name}'."
+    fi
   else
     print_header "SETTING UP BUILD CONTAINER"
     build_container_restarted=true
     log_task "Building the build container image..."
     "${build_command[@]}" --no-cache -t "${build_image_name}" -f ci/docker/cta/"${platform}"/build.Dockerfile .
     log_task "Starting build container ${build_container_name}..."
-    ${container_runtime} run -dit --rm --name "${build_container_name}" \
+    local run_output
+    if ! run_output=$(${container_runtime} run -dit --rm --name "${build_container_name}" \
       -v "${project_root}:${mount_basedir}:z" \
       "${build_image_name}" \
-      /bin/bash
+      /bin/bash 2>&1); then
+      if [[ $run_output =~ [Nn]ame.*already.*in.*use || $run_output =~ name.*is.*in.*use ]]; then
+        die "Container runtime reported that '${build_container_name}' does not exist, but its name is still reserved. Inspect it with '${container_runtime} container inspect ${build_container_name}' and remove the stale container or storage record before retrying. Runtime error: ${run_output}"
+      fi
+      die "Failed to create build container '${build_container_name}': ${run_output}"
+    fi
 
     print_header "BUILDING SRPMS"
     build_srpm_flags=()
@@ -859,4 +895,6 @@ main() {
   esac
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi
