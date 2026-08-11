@@ -96,17 +96,6 @@ mgm:
     - name: TZ
       value: "CET"
 
-  extraVolumes:
-    volumeMounts:
-      - name: eos-scitokens-map
-        mountPath: /etc/xrootd/scitokens.map
-        subPath: scitokens.map
-        readOnly: true
-    volumes:
-      - name: eos-scitokens-map
-        configMap:
-          name: eos-scitokens-map
-
 fst:
   replicaCount: 1
 
