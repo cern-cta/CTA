@@ -1,8 +1,6 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-include(${CMAKE_SOURCE_DIR}/cmake/UseRPMToolsEnvironment.cmake)
-
 # General info
 
 file(READ "${CMAKE_SOURCE_DIR}/project.json" PROJECT_JSON_STRING)
@@ -37,7 +35,7 @@ list(JOIN SUPPORTED_CTA_CATALOGUE_SCHEMA_VERSIONS ", " SUPPORTED_CTA_CATALOGUE_S
 execute_process(
   COMMAND ${CMAKE_COMMAND} -E env PYTHONUNBUFFERED=1 python3
           ${CMAKE_SOURCE_DIR}/ci/project-json/generate_version_constraints.py
-          --platform ${RPMTools_RPMBUILD_DIST}
+          --platform ${PLATFORM}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   OUTPUT_VARIABLE BUILD_VERSION_RAW
   OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -54,7 +52,7 @@ endforeach()
 execute_process(
   COMMAND ${CMAKE_COMMAND} -E env PYTHONUNBUFFERED=1 python3
           ${CMAKE_SOURCE_DIR}/ci/project-json/generate_build_requires.py
-          --platform ${RPMTools_RPMBUILD_DIST}
+          --platform ${PLATFORM}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   OUTPUT_VARIABLE BUILD_REQUIREMENTS
   OUTPUT_STRIP_TRAILING_WHITESPACE
