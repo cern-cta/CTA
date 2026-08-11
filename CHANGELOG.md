@@ -18,6 +18,7 @@
 - [Tools] Update on modifyArchiveFileStorageClassId & modifyArchiveFileFxIdAndDiskInstance (cta/CTA!1393)
 - [Tools] Enable cta-admin command to modify archive file storage class (cta/!1363)
 - [maintd] Allow SIGHUP to also trigger log file descriptor refresh (cta/!1368)
+- [taped] Change catalogue drive config boolean entries from 0/1 to true/false 
 
 ### Bug Fixes
 
