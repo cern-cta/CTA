@@ -216,7 +216,7 @@ build_srpm() {
 
   # Build step
   log_task "Building SRPMs with ${build_generator}..."
-  cmake --build . --target cta_srpm -- -j "${num_jobs}"
+  cmake --build . --target cta_srpm --parallel "${num_jobs}"
   echo
   log_success "Built CTA SRPMs in ${SECONDS} seconds."
 }

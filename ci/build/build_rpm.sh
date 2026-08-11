@@ -364,7 +364,7 @@ build_rpm() {
   # Build step
   echo
   log_task "Building RPMs with ${build_generator}..."
-  cmake --build . --target cta_rpm -- -j "${num_jobs}"
+  cmake --build . --target cta_rpm --parallel "${num_jobs}"
   echo
   log_success "Built CTA RPMs in ${SECONDS} seconds."
 }
