@@ -65,7 +65,7 @@ mgm:
         audience = ctaeos
 
         [Issuer Local]
-        issuer = https://eos-mgm-0.eos-mgm.{{ .Release.Namespace }}.svc.cluster.local:4443
+        issuer = https://localhost:4443
         base_path = /
         map_subject = false
         name_mapfile = /etc/xrootd/scitokens.map

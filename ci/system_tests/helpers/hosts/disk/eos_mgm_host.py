@@ -31,11 +31,6 @@ class EosMgmHost(DiskInstanceHost):
     def webdav_url(self) -> str:
         return f"https://{self.instance_name}:8443"
 
-    @cached_property
-    def scitokens_issuer(self) -> str:
-        fqdn = self.exec_with_output("python3 -c 'import socket; print(socket.getfqdn())'")
-        return f"https://{fqdn}:4443"
-
     @override
     def generate_scitoken(self, claims: list[tuple[str, str]], keyid: str, timeout: int = 60) -> str:
         claim_args = []
@@ -45,7 +40,7 @@ class EosMgmHost(DiskInstanceHost):
         print(f"Generating a SciToken with key id {keyid}")
         token = self.exec_with_output(
             f"eos scitoken create --expires $(($(date +%s) + {timeout})) "
-            f"--issuer {self.scitokens_issuer} --keyid '{keyid}' --profile wlcg "
+            f"--issuer https://localhost:4443 --keyid '{keyid}' --profile wlcg "
             f"{' '.join(claim_args)}"
         )
         if not token:

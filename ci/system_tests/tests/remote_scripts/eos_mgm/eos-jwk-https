@@ -10,16 +10,12 @@
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import ssl
-import socket
 import os
 
 
 class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        wellknown = '{"jwks_uri":"https://'
-        wellknown += socket.getfqdn()
-        wellknown += ":4443"
-        wellknown += '/jwk"}'
+        wellknown = '{"jwks_uri":"https://localhost:4443/jwk"}'
         if self.path == "/.well-known/openid-configuration":
             self.send_response(200)
             self.end_headers()

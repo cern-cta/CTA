@@ -79,7 +79,7 @@ python3 /scripts/generate_jwt.py \
   --sub ctaeos
 
 # generate cert for ctaeos (to be used with mTLS)
-generate_signed_cert ctaeos-self-signed eos-mgm.biglab eos-mgm.biglab.ch ctaeos eos-mgm-0.eos-mgm.${NAMESPACE}.svc.cluster.local
+generate_signed_cert ctaeos-self-signed eos-mgm.biglab eos-mgm.biglab.ch localhost ctaeos
 # --- Generate K8s secrets for all of these --- #
 
 python3 /scripts/create_k8s_secrets.py \
