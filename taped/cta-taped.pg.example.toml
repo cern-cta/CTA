@@ -8,97 +8,6 @@
 ####################################################################################################
 
 
-[catalogue]
-  # Path to the CTA Catalogue configuration file.
-  config_file = "/etc/cta/cta-catalogue.conf"
-
-
-[scheduler]
-  # Unique name used to identify this scheduler backend in logs and scheduler resources. A conventional
-  # format is "postgres[User|Repack]", for example "postgresUser". This setting is required.
-  backend_name = "postgresUser"
-  # Path to the CTA Scheduler configuration file.
-  config_file = "/etc/cta/cta-scheduler.conf"
-  # Number of connections to the scheduler database. If omitted, 3 is used.
-  number_of_connections = 3
-  # Maximum age, in seconds, of cached tape statistics used when deciding whether work warrants a mount.
-  # Lower values reflect scheduler changes sooner but increase backend queries. If omitted, 600 is used.
-  tape_cache_max_age_secs = 600
-  # Maximum age, in seconds, of cached retrieve-queue statistics. Lower values reflect newly queued
-  # retrieves sooner but increase backend queries. If omitted, 10 is used.
-  retrieve_queue_cache_max_age_secs = 10
-
-
-[logging]
-  # Minimum severity written to the log. Messages below this level are masked. Valid values are EMERG,
-  # ALERT, CRIT, ERR, WARNING, NOTICE (USERERR), INFO, and DEBUG. More verbose levels increase log volume.
-  # If omitted, INFO is used.
-  level = "INFO"
-
-  # Log format. Possible values are "json" and "kv" (key-value).
-  # If omitted json is used.
-  format = "json"
-
-  # The following key-value pairs are added to all log lines.
-  # All keys are optional as this is purely for monitoring purposes.
-  [logging.attributes]
-    # Monitoring-only label identifying the CTA instance served by this process, such as "production" or
-    # "preproduction". It should identify the catalogue instance consistently across CTA services.
-    # This attribute is optional and has no behavioral effect.
-    instance = "production"
-    # Monitoring-only label identifying the scheduler backend. It should normally match scheduler.backend_name.
-    # This attribute is optional and has no behavioral effect.
-    sched_backend = "cephUser"
-
-
-# Note that telemetry is experimental and disabled by default.
-# To make use of this experimental feature, ensure telemetry is enabled under [experimental].
-[telemetry]
-  # Path to the declarative config file to initialise the OpenTelemetry SDK.
-  # If omitted or an empty string, telemetry will be disabled.
-  config_file = "/etc/cta/cta-otel.yaml"
-  # Controls how the application reacts if telemetry initialization fails.
-  # Possible values:
-  #   "warn": log a warning and continue startup without telemetry.
-  #   "fatal": treat the failure as an error and abort startup.
-  # If omitted, "warn" is used
-  on_init_failure = "warn"
-
-
-# Configuration for a health server. The health server, if enabled, will expose the following endpoints:
-# - host:port/health/ready
-# - host:port/health/live
-# This allows for configuring readiness and liveness probes if so desired.
-[health_server]
-  # Whether to enable the health server or not.
-  # If omitted, false is used.
-  enabled = false
-  # Where to accept connections from. Setting this to 127.0.0.1 will make it only accept connections from localhost.
-  # Set to 0.0.0.0 to accept connections from anywhere.
-  # When use_unix_domain_socket is enabled, this host value will be unused.
-  # If omitted, 127.0.0.1 is used.
-  host = "127.0.0.1"
-  # What port to expose the health server on. Note that multiple processes running on the same host cannot share the same port.
-  # When use_unix_domain_socket is enabled, this port value will be unused.
-  # If omitted, 8080 is used.
-  port = 8080
-  # If enabled, expose the health server over a unix domain socket instead. In this case, the values for host and port are ignored.
-  # Enabling this will put the corresponding socket file in <runtime-dir>/health.sock.
-  # Note that if use_unix_domain_socket is enabled, the service  MUST be started --runtime-dir <runtime-dir> flag.
-  # If omitted, false is used.
-  use_unix_domain_socket = false
-
-
-# Makes XRootD environment variables explicit.
-# XRootD is what is used to connect to the disk instance.
-[xrootd]
-  # Overrides the XrdSecPROTOCOL environment variable used for connections to the disk system.
-  # Valid values depend on the installed XRootD security plugins. If omitted, "sss" is used.
-  security_protocol = "sss"
-  # Overrides the XrdSecSSSKT environment variable with the path to the XRootD SSS keytab. The file must
-  # be readable by cta-taped when the "sss" protocol is selected. This setting is required for SSS.
-  sss_keytab_path = "/etc/cta/cta.sss.keytab"
-
 # Identifies the tape drive controlled by this cta-taped process.
 [drive]
   # CTA name of the drive. It is included in log records, tooling and must uniquely identify the drive in CTA.
@@ -123,6 +32,27 @@
   # If the drive is not ready within this time, the session fails instead of waiting indefinitely.
   # If omitted, 120 is used.
   ready_timeout_secs = 120
+
+
+[catalogue]
+  # Path to the CTA Catalogue configuration file.
+  config_file = "/etc/cta/cta-catalogue.conf"
+
+
+[scheduler]
+  # Unique name used to identify this scheduler backend in logs and scheduler resources. A conventional
+  # format is "postgres[User|Repack]", for example "postgresUser". This setting is required.
+  backend_name = "postgresUser"
+  # Path to the CTA Scheduler configuration file.
+  config_file = "/etc/cta/cta-scheduler.conf"
+  # Number of connections to the scheduler database. If omitted, 3 is used.
+  number_of_connections = 3
+  # Maximum age, in seconds, of cached tape statistics used when deciding whether work warrants a mount.
+  # Lower values reflect scheduler changes sooner but increase backend queries. If omitted, 600 is used.
+  tape_cache_max_age_secs = 600
+  # Maximum age, in seconds, of cached retrieve-queue statistics. Lower values reflect newly queued
+  # retrieves sooner but increase backend queries. If omitted, 10 is used.
+  retrieve_queue_cache_max_age_secs = 10
 
 
 # Controls when cta-taped requests work from the scheduler and how long the physical mount may take.
@@ -304,6 +234,77 @@
   # Maximum time, in seconds, allowed for the cta-taped process to shut down cleanly.
   # If shutdown does not finish within this time, it is treated as failed. If omitted, 900 is used.
   timeout_secs = 900
+
+
+[logging]
+  # Minimum severity written to the log. Messages below this level are masked. Valid values are EMERG,
+  # ALERT, CRIT, ERR, WARNING, NOTICE (USERERR), INFO, and DEBUG. More verbose levels increase log volume.
+  # If omitted, INFO is used.
+  level = "INFO"
+
+  # Log format. Possible values are "json" and "kv" (key-value).
+  # If omitted json is used.
+  format = "json"
+
+  # The following key-value pairs are added to all log lines.
+  # All keys are optional as this is purely for monitoring purposes.
+  [logging.attributes]
+    # Monitoring-only label identifying the CTA instance served by this process, such as "production" or
+    # "preproduction". It should identify the catalogue instance consistently across CTA services.
+    # This attribute is optional and has no behavioral effect.
+    instance = "production"
+    # Monitoring-only label identifying the scheduler backend. It should normally match scheduler.backend_name.
+    # This attribute is optional and has no behavioral effect.
+    sched_backend = "cephUser"
+
+
+# Note that telemetry is experimental and disabled by default.
+# To make use of this experimental feature, ensure telemetry is enabled under [experimental].
+[telemetry]
+  # Path to the declarative config file to initialise the OpenTelemetry SDK.
+  # If omitted or an empty string, telemetry will be disabled.
+  config_file = "/etc/cta/cta-otel.yaml"
+  # Controls how the application reacts if telemetry initialization fails.
+  # Possible values:
+  #   "warn": log a warning and continue startup without telemetry.
+  #   "fatal": treat the failure as an error and abort startup.
+  # If omitted, "warn" is used
+  on_init_failure = "warn"
+
+
+# Configuration for a health server. The health server, if enabled, will expose the following endpoints:
+# - host:port/health/ready
+# - host:port/health/live
+# This allows for configuring readiness and liveness probes if so desired.
+[health_server]
+  # Whether to enable the health server or not.
+  # If omitted, false is used.
+  enabled = false
+  # Where to accept connections from. Setting this to 127.0.0.1 will make it only accept connections from localhost.
+  # Set to 0.0.0.0 to accept connections from anywhere.
+  # When use_unix_domain_socket is enabled, this host value will be unused.
+  # If omitted, 127.0.0.1 is used.
+  host = "127.0.0.1"
+  # What port to expose the health server on. Note that multiple processes running on the same host cannot share the same port.
+  # When use_unix_domain_socket is enabled, this port value will be unused.
+  # If omitted, 8080 is used.
+  port = 8080
+  # If enabled, expose the health server over a unix domain socket instead. In this case, the values for host and port are ignored.
+  # Enabling this will put the corresponding socket file in <runtime-dir>/health.sock.
+  # Note that if use_unix_domain_socket is enabled, the service  MUST be started --runtime-dir <runtime-dir> flag.
+  # If omitted, false is used.
+  use_unix_domain_socket = false
+
+
+# Makes XRootD environment variables explicit.
+# XRootD is what is used to connect to the disk instance.
+[xrootd]
+  # Overrides the XrdSecPROTOCOL environment variable used for connections to the disk system.
+  # Valid values depend on the installed XRootD security plugins. If omitted, "sss" is used.
+  security_protocol = "sss"
+  # Overrides the XrdSecSSSKT environment variable with the path to the XRootD SSS keytab. The file must
+  # be readable by cta-taped when the "sss" protocol is selected. This setting is required for SSS.
+  sss_keytab_path = "/etc/cta/cta.sss.keytab"
 
 
 [experimental]
