@@ -9,6 +9,7 @@
 # ----------------------------------------------------------------------
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
+import json
 import ssl
 import os
 
@@ -21,9 +22,11 @@ class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(bytes(wellknown, "UTF-8"))
         elif self.path == "/jwk":
+            jwk = os.environ["EOS_JWK"].removeprefix("JWK:").strip()
+            jwks = json.dumps({"keys": [json.loads(jwk)]})
             self.send_response(200)
             self.end_headers()
-            self.wfile.write(bytes(os.environ["EOS_JWK"], "UTF-8"))
+            self.wfile.write(bytes(jwks, "UTF-8"))
         else:
             self.send_error(404, "File not found")
             return
