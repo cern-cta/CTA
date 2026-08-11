@@ -90,6 +90,8 @@ mgm:
       value: "1"
     - name: LD_PRELOAD
       value: "/usr/lib64/libjemalloc.so.2"
+    - name: SCITOKEN_CONFIG_TLS_CA_FILE
+      value: "/etc/grid-security/certificates/ca.crt.pem"
     # For some reason EOS is on another time zone, so set this to CET
     - name: TZ
       value: "CET"
