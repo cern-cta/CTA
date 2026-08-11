@@ -56,9 +56,6 @@ if [[ "$ENABLE_INTERNAL_REPOS" == "1" ]] || [[ "${ENABLE_INTERNAL_REPOS,,}" == "
     rm -f /tmp/internal-repo-list.txt
 fi
 
-# Remove systemd stuff because we don't rely on systemd in containers
-# Ideally the base image doesn't contain systemd in the first place, but the layer in which we install the majority of the packages still pull in quite some systemd specific stuff
-rpm -q systemd > /dev/null && rpm -e systemd systemd-* --nodeps || true
 # Clean up history and internal repos
 rm -rf /var/lib/dnf/history.* /tmp/internal-repos /etc/yum.repos.d/cta.repo
 # Do not "microdnf clean all", because /var/yum is mounted as a cache, so that would not affect final image size
