@@ -34,7 +34,7 @@ readonly available_tests=(
 )
 readonly venv_dir="${project_root}/ci/system_tests/.venv"
 readonly program_name="cta-dev"
-readonly build_state_schema_version=1
+readonly build_state_schema_version=2
 readonly build_state_file="${project_root}/build_rpm/.cta-dev-build-state.json"
 
 # Global
@@ -565,21 +565,38 @@ build_cta() {
   local automatic_clean_build_dirs=false
   local recreate_build_container=false
   local state_is_valid=false
+  local state_matches_configuration=false
   local build_output_exists=false
   local build_state_json
 
   # By default we don't rebuild the SRPMs. However, this causes issues when certain flags are switched
   # As such, we create a JSON file in the build directory to track these options
   # If they changed, we rebuild the SRPMs automatically instead of requiring the user to do so manually
+  # Keep every option and environment value passed to CMake in this state. This allows unchanged builds
+  # to use --skip-cmake safely; any new CMake option must also be added here and to the checks below.
   build_state_json=$(jq -cn \
     --argjson schemaVersion "$build_state_schema_version" \
     --arg platform "$platform" \
     --arg schedulerType "$scheduler_type" \
     --argjson oracleSupport "$oracle_support" \
     --arg buildGenerator "$build_generator" \
+    --arg cmakeBuildType "$cmake_build_type" \
+    --argjson enableCcache "$enable_ccache" \
+    --argjson skipDebugPackages "$skip_debug_packages" \
+    --argjson skipUnitTests "$skip_unit_tests" \
+    --argjson enableAddressSanitizer "$enable_address_sanitizer" \
+    --arg ctaVersion "$cta_version" \
+    --arg vcsVersion "$vcs_version" \
+    --arg xrootdSsiVersion "$xrootd_ssi_version" \
+    --argjson jobs "$num_jobs" \
     --argjson internalRepos "$enable_internal_repos" \
     '{schemaVersion: $schemaVersion, platform: $platform, schedulerType: $schedulerType,
-      oracleSupport: $oracleSupport, buildGenerator: $buildGenerator, internalRepos: $internalRepos}')
+      oracleSupport: $oracleSupport, buildGenerator: $buildGenerator,
+      cmakeBuildType: $cmakeBuildType, enableCcache: $enableCcache,
+      buildDebugPackages: ($skipDebugPackages | not), runUnitTests: ($skipUnitTests | not),
+      enableAddressSanitizer: $enableAddressSanitizer, ctaVersion: $ctaVersion,
+      vcsVersion: $vcsVersion, xrootdSsiVersion: $xrootdSsiVersion, jobs: $jobs,
+      internalRepos: $internalRepos}')
 
   [[ -d "${project_root}/build_srpm" || -d "${project_root}/build_rpm" ]] && build_output_exists=true
 
@@ -590,27 +607,61 @@ build_cta() {
          and (.schedulerType | type == "string")
          and (.oracleSupport | type == "boolean")
          and (.buildGenerator | type == "string")
+         and (.cmakeBuildType | type == "string")
+         and (.enableCcache | type == "boolean")
+         and (.buildDebugPackages | type == "boolean")
+         and (.runUnitTests | type == "boolean")
+         and (.enableAddressSanitizer | type == "boolean")
+         and (.ctaVersion | type == "string")
+         and (.vcsVersion | type == "string")
+         and (.xrootdSsiVersion | type == "string")
+         and (.jobs | type == "number")
          and (.internalRepos | type == "boolean")' \
         "$build_state_file" >/dev/null 2>&1; then
     state_is_valid=true
+    if jq -e --argjson desired "$build_state_json" '. == $desired' "$build_state_file" >/dev/null; then
+      state_matches_configuration=true
+    fi
   fi
 
   if [[ $state_is_valid == true ]]; then
     local field old_value new_value
     while IFS=$'\t' read -r field old_value new_value; do
       case "$field" in
-        schedulerType) log_warn "Scheduler changed: ${old_value} -> ${new_value}" ;;
-        oracleSupport) log_warn "Oracle support changed: ${old_value} -> ${new_value}" ;;
-        buildGenerator) log_warn "Build generator changed: ${old_value} -> ${new_value}" ;;
-        platform) log_warn "Build platform changed: ${old_value} -> ${new_value}" ;;
+        schedulerType)
+          log_warn "Scheduler changed: ${old_value} -> ${new_value}"
+          automatic_clean_build_dirs=true
+          ;;
+        oracleSupport)
+          log_warn "Oracle support changed: ${old_value} -> ${new_value}"
+          automatic_clean_build_dirs=true
+          ;;
+        buildGenerator)
+          log_warn "Build generator changed: ${old_value} -> ${new_value}"
+          automatic_clean_build_dirs=true
+          ;;
+        platform)
+          log_warn "Build platform changed: ${old_value} -> ${new_value}"
+          automatic_clean_build_dirs=true
+          ;;
+        cmakeBuildType) log_warn "CMake build type changed: ${old_value} -> ${new_value}" ;;
+        enableCcache) log_warn "Ccache setting changed: ${old_value} -> ${new_value}" ;;
+        buildDebugPackages) log_warn "Debug package setting changed: ${old_value} -> ${new_value}" ;;
+        runUnitTests) log_warn "Unit test setting changed: ${old_value} -> ${new_value}" ;;
+        enableAddressSanitizer) log_warn "AddressSanitizer setting changed: ${old_value} -> ${new_value}" ;;
+        ctaVersion) log_warn "CTA version changed: ${old_value} -> ${new_value}" ;;
+        vcsVersion) log_warn "VCS version changed: ${old_value} -> ${new_value}" ;;
+        xrootdSsiVersion) log_warn "XRootD SSI interface version changed: ${old_value} -> ${new_value}" ;;
+        jobs) log_warn "CMake job count changed: ${old_value} -> ${new_value}" ;;
         internalRepos)
           log_warn "Repository mode changed: internal repositories ${old_value} -> ${new_value}"
           recreate_build_container=true
           ;;
       esac
-      [[ "$field" != "internalRepos" ]] && automatic_clean_build_dirs=true
     done < <(jq -r --argjson desired "$build_state_json" '
-      ["schedulerType", "oracleSupport", "buildGenerator", "platform", "internalRepos"][] as $field
+      ["schedulerType", "oracleSupport", "buildGenerator", "platform", "cmakeBuildType",
+       "enableCcache", "buildDebugPackages", "runUnitTests", "enableAddressSanitizer",
+       "ctaVersion", "vcsVersion", "xrootdSsiVersion", "jobs", "internalRepos"][] as $field
       | select(.[$field] != $desired[$field])
       | [$field, (.[$field] | tostring), ($desired[$field] | tostring)]
       | @tsv' "$build_state_file")
@@ -725,6 +776,12 @@ build_cta() {
   [[ $enable_ccache == true ]] && build_rpm_flags+=(--enable-ccache)
   [[ $enable_internal_repos == true ]] && build_rpm_flags+=(--enable-internal-repos)
   [[ $enable_address_sanitizer == true ]] && build_rpm_flags+=(--enable-address-sanitizer)
+  if [[ $state_matches_configuration == true \
+      && -f "${project_root}/build_rpm/CMakeCache.txt" \
+      && $clean_build_dir == false \
+      && $clean_build_dirs == false ]]; then
+    build_rpm_flags+=(--skip-cmake)
+  fi
 
   print_header "BUILDING RPMS"
   ${container_runtime} exec "${build_container_name}" \
