@@ -47,8 +47,8 @@ struct MountsConfig final {
 };
 
 struct ArchiveTransferConfig final {
-  long fetch_max_bytes = 80000000000;
-  long fetch_max_files = 4000;
+  long fetch_max_bytes = 100000000000;
+  long fetch_max_files = 5000;
   long flush_max_bytes = 32000000000;
   long flush_max_files = 200;
 
@@ -65,14 +65,13 @@ struct EncryptionConfig final {
 struct RaoConfig final {
   bool enabled = true;
   std::string lto_algorithm = "sltf";
-  std::string lto_algorithm_options = "cost_heuristic_name:cta";
 
-  static constexpr std::size_t memberCount() { return 3; }
+  static constexpr std::size_t memberCount() { return 2; }
 };
 
 struct RetrieveTransferConfig final {
-  long fetch_max_bytes = 80000000000;
-  long fetch_max_files = 4000;
+  long fetch_max_bytes = 100000000000;
+  long fetch_max_files = 5000;
   int drain_to_disk_timeout_secs = 1800;
   std::string external_free_disk_space_script = "/usr/bin/cta-eosdf.sh";
   RaoConfig rao;
@@ -102,16 +101,10 @@ struct ArchiveUnderfillConfig final {
 };
 
 struct UnmountsConfig final {
-  int unmount_timeout_secs = 600;
+  int unmount_timeout_secs = 900;
   ArchiveUnderfillConfig archive_underfill;
 
   static constexpr std::size_t memberCount() { return 2; }
-};
-
-struct ShutdownConfig final {
-  int grace_period_secs = 900;
-
-  static constexpr std::size_t memberCount() { return 1; }
 };
 
 struct TapedConfig final {
@@ -127,9 +120,8 @@ struct TapedConfig final {
   MountsConfig mounts;
   TransfersConfig transfers;
   UnmountsConfig unmounts;
-  ShutdownConfig shutdown;
 
-  static constexpr std::size_t memberCount() { return 12; }
+  static constexpr std::size_t memberCount() { return 11; }
 };
 
 }  // namespace cta::tape::daemon

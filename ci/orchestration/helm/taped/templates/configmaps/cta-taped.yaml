@@ -97,7 +97,6 @@ data:
     [transfers.retrieve.rao]
       enabled = {{ $.Values.transfers.retrieve.rao.enabled }}
       lto_algorithm = {{ $.Values.transfers.retrieve.rao.ltoAlgorithm | quote }}
-      lto_algorithm_options = {{ $.Values.transfers.retrieve.rao.ltoAlgorithmOptions | quote }}
 
     [transfers.encryption]
       enabled = {{ $.Values.transfers.encryption.enabled }}
@@ -111,9 +110,6 @@ data:
       minimum_samples = {{ $.Values.unmounts.archiveUnderfill.minimumSamples }}
       start_threshold_percent = {{ $.Values.unmounts.archiveUnderfill.startThresholdPercent }}
       recovery_threshold_percent = {{ $.Values.unmounts.archiveUnderfill.recoveryThresholdPercent }}
-
-    [shutdown]
-      grace_period_secs = {{ $.Values.shutdown.gracePeriodSecs }}
 
 ---
 {{- end }}

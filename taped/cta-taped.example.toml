@@ -30,7 +30,7 @@
   logical_library_name = ""
 
   # Maximum time, in seconds, that the drive process may remain in the readiness-checking state without
-  # making progress. On expiry, the drive process is killed and restarted, but the drive will remain UP.
+  # making progress. On expiry, the drive process is killed and restarted, but the drive will remain Up.
   # If omitted, 120 is used.
   ready_timeout_secs = 120
 
@@ -75,7 +75,7 @@
   minimum_queued_files = 10000
 
   # Maximum time, in seconds, that the drive process may remain in the scheduling state without reporting
-  # progress. On expiry, the drive process is killed and restarted, but the drive will remain UP.
+  # progress. On expiry, the drive process is killed and restarted, but the drive will remain Up.
   # If omitted, 300 is used.
   scheduling_timeout_secs = 300
 
@@ -134,13 +134,13 @@
     # Maximum total bytes requested from the scheduler in one archive batch. The batch is limited when
     # either this value or fetch_max_files is reached. Larger batches can keep the drive busier but consume
     # more scheduler and transfer resources. 
-    # If omitted, 80000000000 bytes (80 GB) is used.
-    fetch_max_bytes = 80000000000
+    # If omitted, 100000000000 bytes (100 GB) is used.
+    fetch_max_bytes = 100000000000
 
     # Maximum number of files requested in one archive batch. The batch is limited when either this value
     # or fetch_max_bytes is reached. 
-    # If omitted, 4000 is used.
-    fetch_max_files = 4000
+    # If omitted, 5000 is used.
+    fetch_max_files = 5000
 
     # Maximum bytes written between flushes to tape using a synchronized tape mark. A flush occurs only on
     # a file boundary, so the actual byte count can exceed this value. More frequent flushes improve recovery
@@ -166,7 +166,7 @@
     fetch_max_files = 5000
 
     # Maximum total time, in seconds, allowed to finish writing retrieved data to disk after the tape has been
-    # unmounted. On expiry, the drive process is killed and restarted, but the drive will remain UP.
+    # unmounted. On expiry, the drive process is killed and restarted, but the drive will remain Up.
     # If omitted, 1800 is used.
     drain_to_disk_timeout_secs = 1800
 
@@ -236,14 +236,6 @@
     # and this should be higher than start_threshold_percent to provide hysteresis. 
     # If omitted, 60 is used.
     recovery_threshold_percent = 60
-
-
-# Controls orderly termination of cta-taped.
-[shutdown]
-  # Grace period, in seconds, allowed for cta-taped and its drive worker to finish shutting down after a
-  # termination request. On expiry, cta-taped forcibly terminates any remaining worker instead of waiting
-  # for further cleanup. The drive is normally reported Down as shutdown begins. If omitted, 900 is used.
-  grace_period_secs = 900
 
 
 # Connection to the Remote Media Changer Daemon (cta-rmcd) used for physical mount and unmount operations.

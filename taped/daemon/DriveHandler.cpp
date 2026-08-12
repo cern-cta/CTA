@@ -710,7 +710,7 @@ int DriveHandler::runChild() {
   m_stateChangeTimeouts[session::SessionState::DrainingToDisk] = std::chrono::duration_cast<Timeout>(
     std::chrono::seconds(m_tapedConfig.transfers.retrieve.drain_to_disk_timeout_secs));
   m_stateChangeTimeouts[session::SessionState::ShuttingDown] =
-    std::chrono::duration_cast<Timeout>(std::chrono::seconds(m_tapedConfig.shutdown.grace_period_secs));
+    std::chrono::duration_cast<Timeout>(std::chrono::seconds(m_tapedConfig.unmounts.unmount_timeout_secs + 5));
 
   // Before launching, and if this is the first session since daemon start, we will
   // put the drive down.
@@ -1077,7 +1077,7 @@ DriveHandler::executeDataTransferSession(IScheduler* scheduler, tape::daemon::Ta
   dataTransferConfig.useLbp = true;
   dataTransferConfig.useRAO = m_tapedConfig.transfers.retrieve.rao.enabled;
   dataTransferConfig.raoLtoAlgorithm = m_tapedConfig.transfers.retrieve.rao.lto_algorithm;
-  dataTransferConfig.raoLtoAlgorithmOptions = m_tapedConfig.transfers.retrieve.rao.lto_algorithm_options;
+  dataTransferConfig.raoLtoAlgorithmOptions = "cost_heuristic_name:cta";  // Only option available
   dataTransferConfig.externalFreeDiskSpaceScript = m_tapedConfig.transfers.retrieve.external_free_disk_space_script;
   dataTransferConfig.tapeLoadTimeout = m_tapedConfig.mounts.tape_load_timeout_secs;
   dataTransferConfig.xrootTimeout = 0;
