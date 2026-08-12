@@ -78,7 +78,7 @@ print_header() {
 }
 
 log_task() {
-  echo "==> $*"
+  printf "%s%s%s%s\n" "$_log_cyan" "==>" "$_log_reset" " $*"
 }
 
 log_success() {
