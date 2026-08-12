@@ -23,7 +23,6 @@ _ctadev() {
         --clean-build-dir
         --clean-build-dirs
         --disable-ccache
-        --skip-debug-packages
         --unit-tests
         --force-install
         --enable-address-sanitizer
@@ -33,7 +32,6 @@ _ctadev() {
 
     local image_opts="
         --skip-image-cleanup
-        --enable-debug-image
     "
 
     local deploy_opts="
@@ -96,7 +94,7 @@ _ctadev() {
     #
     if [[ $COMP_CWORD -eq 1 ]]; then
         COMPREPLY=( $(compgen -W \
-            "build images deploy test up all install help" \
+            "build images deploy test up debug all install help" \
             -- "$cur") )
         return
     fi
@@ -153,6 +151,11 @@ _ctadev() {
                 -- "$cur") )
             ;;
         up)
+            COMPREPLY=( $(compgen -W \
+                "$global_opts $build_opts $image_opts $deploy_opts" \
+                -- "$cur") )
+            ;;
+        debug)
             COMPREPLY=( $(compgen -W \
                 "$global_opts $build_opts $image_opts $deploy_opts" \
                 -- "$cur") )

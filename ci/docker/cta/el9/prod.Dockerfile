@@ -168,7 +168,8 @@ FROM base AS cta-debug
 ARG ENABLE_INTERNAL_REPOS
 ARG ENABLE_ORACLE_SUPPORT
 
-# This image is also gigantic, so we don't build it by default. Build this using the --enable-debug-image in build_deploy.sh
+# This image is also gigantic, so we don't build it by default.
+# In CI this is a manual job; for local development, use `cta-dev debug`
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-debug \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-debug \
