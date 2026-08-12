@@ -77,8 +77,7 @@ Vendor: CERN
 # This is populated by the project.json from the buildRequires items
 @BUILD_REQUIREMENTS@
 
-%{?systemd_requires}
-BuildRequires: systemd
+BuildRequires: systemd-rpm-macros
 
 # PostgreSQL server binaries needed for unit tests when using pgsched
 # Note that this should eventually move to project.json once the objectstore is removed
@@ -122,6 +121,8 @@ cmake --build . --target shortunittests -j@JOBS_COUNT@
 %package -n cta-taped
 Summary: CERN Tape Archive: tape daemon
 Recommends: logrotate
+Recommends: systemd
+%{?systemd_ordering}
 Requires: cta-common = %{version}-%{release}
 Requires: cta-lib = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
@@ -151,6 +152,8 @@ The tape server daemon
 %package -n cta-maintd
 Summary: CERN Tape Archive: maintenance daemon
 Recommends: logrotate
+Recommends: systemd
+%{?systemd_ordering}
 Requires: cta-common = %{version}-%{release}
 Requires: cta-lib = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
@@ -181,6 +184,8 @@ CERN Tape Archive maintenance daemon.
 %package -n cta-frontend
 Summary: CERN Tape Archive: XRootD plugin
 Recommends: logrotate
+Recommends: systemd
+%{?systemd_ordering}
 Requires: cta-common = %{version}-%{release}
 Requires: cta-lib = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
@@ -209,6 +214,8 @@ The XRootD frontend plugin.
 %package -n cta-frontend-grpc
 Summary: CERN Tape Archive: gRPC based frontend
 Recommends: logrotate
+Recommends: systemd
+%{?systemd_ordering}
 Requires: cta-common = %{version}-%{release}
 Requires: cta-lib = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
@@ -519,6 +526,8 @@ Scripts and utilities for working with the CTA scheduler database
 %package -n cta-rmcd
 Summary: The Remote Media Changer daemon (rmcd)
 Recommends: logrotate
+Recommends: systemd
+%{?systemd_ordering}
 Requires: cta-common = %{version}-%{release}
 %description -n cta-rmcd
 CERN Tape Archive:
