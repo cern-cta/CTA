@@ -62,7 +62,6 @@ build_generator="Ninja"
 cmake_build_type=$(jq -r .dev.defaultBuildType "${project_root}/project.json")
 
 # Images
-image_cleanup=true
 enable_debug_image=false
 
 # Deploy
@@ -252,9 +251,6 @@ All images are built in parallel.
 
 Usage:
   $(basename "$0") images [options]
-
-Options:
-      --skip-image-cleanup      Keep superseded CTA images in the container runtime.
 
 EOF
 exit 1
@@ -477,11 +473,6 @@ parse_options() {
       # =========================================================================
       #  Image options
       # =========================================================================
-
-      --skip-image-cleanup)
-        require_command "$1" "$command" images up debug all
-        image_cleanup=false
-        ;;
 
       # =========================================================================
       #  Deploy options
@@ -902,7 +893,6 @@ images_cta() {
   local load_into_k8s=false
   [[ $enable_internal_repos == true ]] && extra_image_build_options+=(--enable-internal-repos)
   [[ $enable_debug_image == true ]] && extra_image_build_options+=(--enable-debug-image)
-  [[ $image_cleanup == false ]] && extra_image_build_options+=(--skip-image-cleanup)
   if local_kubernetes_available; then
     extra_image_build_options+=(--load-into-k8s)
     load_into_k8s=true

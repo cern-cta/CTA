@@ -21,7 +21,6 @@ usage() {
   echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'ci/docker/cta/{defaultplatform}/prod.Dockerfile')."
   echo "      --enable-internal-repos:        Use the internal yum repos instead of the public repos."
   echo "      --enable-oracle-support:        Build the images for use with the Oracle catalogue."
-  echo "      --skip-image-cleanup:           Keep superseded images in the container runtime."
   echo
   exit 1
 }
@@ -38,7 +37,6 @@ load_into_k8s=false
 enable_debug_image=false
 enable_internal_repos="0"
 enable_oracle_support="0"
-image_cleanup=true
 
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
@@ -74,7 +72,6 @@ while [[ "$#" -gt 0 ]]; do
   --enable-debug-image) enable_debug_image=true ;;
   --enable-internal-repos) enable_internal_repos="1" ;;
   --enable-oracle-support) enable_oracle_support="1" ;;
-  --skip-image-cleanup) image_cleanup=false ;;
   --dockerfile)
     if [[ $# -gt 1 ]]; then
       dockerfile_path="$2"
@@ -131,12 +128,10 @@ if [[ "$enable_debug_image" == "true" ]]; then
 fi
 
 declare -A previous_image_ids=()
-if [[ "$image_cleanup" == "true" ]]; then
-  for target in "${targets[@]}"; do
-    previous_image_ids["$target"]="$(${container_runtime} image inspect \
-      --format '{{.Id}}' "cta/ctageneric/${target}:${image_tag}" 2>/dev/null || true)"
-  done
-fi
+for target in "${targets[@]}"; do
+  previous_image_ids["$target"]="$(${container_runtime} image inspect \
+    --format '{{.Id}}' "cta/ctageneric/${target}:${image_tag}" 2>/dev/null || true)"
+done
 
 BUILD_ID=$(date +%Y%m%d-%H%M%S)
 SECONDS=0
@@ -198,8 +193,7 @@ echo
 
 pids=()
 
-# The common stages are now cached, so build and load the remaining targets in
-# parallel.
+# The common stages are now cached, so build and load the remaining targets in parallel.
 i=0
 for target in "${targets[@]}"; do
   color="${colors[$((i % ${#colors[@]}))]}"
@@ -218,18 +212,16 @@ if [[ $status == 1 ]]; then
   exit "$status"
 fi
 
-if [[ "$image_cleanup" == "true" ]]; then
-  log_task "Cleaning up superseded CTA images..."
-  for target in "${targets[@]}"; do
-    previous_image_id="${previous_image_ids[$target]}"
-    [[ -z "$previous_image_id" ]] && continue
-    new_image_id="$(${container_runtime} image inspect \
-      --format '{{.Id}}' "cta/ctageneric/${target}:${image_tag}" 2>/dev/null || true)"
-    if [[ -n "$new_image_id" && "$previous_image_id" != "$new_image_id" ]]; then
-      ${container_runtime} image rm "$previous_image_id" >/dev/null 2>&1 || true
-    fi
-  done
-fi
+log_task "Cleaning up superseded CTA images..."
+for target in "${targets[@]}"; do
+  previous_image_id="${previous_image_ids[$target]}"
+  [[ -z "$previous_image_id" ]] && continue
+  new_image_id="$(${container_runtime} image inspect \
+    --format '{{.Id}}' "cta/ctageneric/${target}:${image_tag}" 2>/dev/null || true)"
+  if [[ -n "$new_image_id" && "$previous_image_id" != "$new_image_id" ]]; then
+    ${container_runtime} image rm "$previous_image_id" >/dev/null 2>&1 || true
+  fi
+done
 
 echo
 echo "Built images:"
