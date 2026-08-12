@@ -57,15 +57,10 @@ end
 labels = gitlab.mr_json["labels"] || []
 
 type_labels = labels.select { |l| l.start_with?("type::") }
-priority_labels = labels.select { |l| l.start_with?("priority::") }
-other_labels = labels - (type_labels + priority_labels)
+other_labels = labels - (type_labels)
 
 if type_labels.size != 1
   fail("**Missing `type::` Label**\n\nThis merge request must have a `type::` label (e.g. `type::bug`, `type::addition`).")
-end
-
-if priority_labels.size != 1
-  fail("**Missing `priority::` Label**\n\Please add a `priority::` label to reflect the task priority.")
 end
 
 if other_labels.empty?
