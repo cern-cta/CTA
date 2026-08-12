@@ -34,6 +34,8 @@ readonly available_tests=(
 )
 readonly venv_dir="${project_root}/ci/system_tests/.venv"
 readonly program_name="cta-dev"
+readonly build_state_schema_version=1
+readonly build_state_file="${project_root}/build_rpm/.cta-dev-build-state.json"
 
 # Global
 platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
@@ -51,7 +53,6 @@ reset=false
 clean_build_dir=false
 clean_build_dirs=false
 enable_ccache=true
-skip_cmake=false
 skip_debug_packages=false
 skip_unit_tests=true
 force_install=false
@@ -152,7 +153,6 @@ Options:
       --disable-ccache              Disable ccache.
       --unit-tests                  Run unit tests after building.
       --enable-address-sanitizer    Enable AddressSanitizer.
-      --skip-cmake                  Skip the CMake configure step.
       --skip-debug-packages         Do not build debuginfo RPMs.
       --force-install               Force SRPM installation.
 
@@ -357,10 +357,6 @@ parse_options() {
         require_command "$1" "$command" build up all
         enable_ccache=false
         ;;
-      --skip-cmake)
-        require_command "$1" "$command" build up all
-        skip_cmake=true
-        ;;
       --skip-debug-packages)
         require_command "$1" "$command" build up all
         skip_debug_packages=true
@@ -564,6 +560,98 @@ build_cta() {
   local build_command=("$container_runtime" build)
   [[ $container_runtime == docker ]] && build_command=(docker buildx build --load)
 
+  local rebuild_srpms=false
+  local reinstall_srpms=false
+  local automatic_clean_build_dirs=false
+  local recreate_build_container=false
+  local state_is_valid=false
+  local build_output_exists=false
+  local build_state_json
+
+  # By default we don't rebuild the SRPMs. However, this causes issues when certain flags are switched
+  # As such, we create a JSON file in the build directory to track these options
+  # If they changed, we rebuild the SRPMs automatically instead of requiring the user to do so manually
+  build_state_json=$(jq -cn \
+    --argjson schemaVersion "$build_state_schema_version" \
+    --arg platform "$platform" \
+    --arg schedulerType "$scheduler_type" \
+    --argjson oracleSupport "$oracle_support" \
+    --arg buildGenerator "$build_generator" \
+    --argjson internalRepos "$enable_internal_repos" \
+    '{schemaVersion: $schemaVersion, platform: $platform, schedulerType: $schedulerType,
+      oracleSupport: $oracleSupport, buildGenerator: $buildGenerator, internalRepos: $internalRepos}')
+
+  [[ -d "${project_root}/build_srpm" || -d "${project_root}/build_rpm" ]] && build_output_exists=true
+
+  if [[ -f "$build_state_file" ]] \
+      && jq -e --argjson desired "$build_state_json" \
+        '.schemaVersion == $desired.schemaVersion
+         and (.platform | type == "string")
+         and (.schedulerType | type == "string")
+         and (.oracleSupport | type == "boolean")
+         and (.buildGenerator | type == "string")
+         and (.internalRepos | type == "boolean")' \
+        "$build_state_file" >/dev/null 2>&1; then
+    state_is_valid=true
+  fi
+
+  if [[ $state_is_valid == true ]]; then
+    local field old_value new_value
+    while IFS=$'\t' read -r field old_value new_value; do
+      case "$field" in
+        schedulerType) log_warn "Scheduler changed: ${old_value} -> ${new_value}" ;;
+        oracleSupport) log_warn "Oracle support changed: ${old_value} -> ${new_value}" ;;
+        buildGenerator) log_warn "Build generator changed: ${old_value} -> ${new_value}" ;;
+        platform) log_warn "Build platform changed: ${old_value} -> ${new_value}" ;;
+        internalRepos)
+          log_warn "Repository mode changed: internal repositories ${old_value} -> ${new_value}"
+          recreate_build_container=true
+          ;;
+      esac
+      [[ "$field" != "internalRepos" ]] && automatic_clean_build_dirs=true
+    done < <(jq -r --argjson desired "$build_state_json" '
+      ["schedulerType", "oracleSupport", "buildGenerator", "platform", "internalRepos"][] as $field
+      | select(.[$field] != $desired[$field])
+      | [$field, (.[$field] | tostring), ($desired[$field] | tostring)]
+      | @tsv' "$build_state_file")
+
+    if [[ ! -d "${project_root}/build_srpm" ]]; then
+      log_warn "The recorded SRPM build directory is missing."
+      automatic_clean_build_dirs=true
+    fi
+  else
+    rebuild_srpms=true
+    reinstall_srpms=true
+    if [[ $build_output_exists == true ]]; then
+      if [[ -f "$build_state_file" ]]; then
+        log_warn "Build state is invalid or from an unsupported version."
+      else
+        log_warn "Existing build output has no recorded build state."
+      fi
+      automatic_clean_build_dirs=true
+    fi
+  fi
+
+  if [[ $automatic_clean_build_dirs == true ]]; then
+    log_warn "Automatically cleaning build_srpm/ and build_rpm/."
+    clean_build_dirs=true
+    rebuild_srpms=true
+    reinstall_srpms=true
+  fi
+
+  if [[ $recreate_build_container == true ]]; then
+    log_warn "Automatically recreating the build container to refresh repository configuration."
+    reset=true
+    clean_build_dirs=true
+    rebuild_srpms=true
+    reinstall_srpms=true
+  fi
+
+  if [[ $clean_build_dirs == true ]]; then
+    rebuild_srpms=true
+    reinstall_srpms=true
+  fi
+
   # Remove the project-specific container if reset is requested.
   if [[ "${reset}" = true ]]; then
     if container_exists "$build_container_name"; then
@@ -601,8 +689,11 @@ build_cta() {
       die "Failed to create build container '${build_container_name}': ${run_output}"
     fi
 
+  fi
+
+  if [[ $build_container_restarted == true || $rebuild_srpms == true ]]; then
     print_header "BUILDING SRPMS"
-    build_srpm_flags=()
+    local build_srpm_flags=()
     [[ $clean_build_dirs == true ]] && build_srpm_flags+=(--clean-build-dir)
 
     ${container_runtime} exec "${build_container_name}" \
@@ -623,11 +714,9 @@ build_cta() {
 
   local build_rpm_flags=()
 
-  # It should only be possible to skip cmake if the pod was not restarted or the install was forced
-  if [[ $build_container_restarted == true || $force_install == true ]]; then
+  if [[ $build_container_restarted == true || $reinstall_srpms == true || $force_install == true ]]; then
+    [[ $reinstall_srpms == true ]] && log_task "Refreshing build dependencies from the regenerated SRPMs..."
     build_rpm_flags+=(--install-srpms)
-  elif [[ $skip_cmake == true ]]; then
-    build_rpm_flags+=(--skip-cmake)
   fi
 
   [[ $skip_unit_tests == true ]] && build_rpm_flags+=(--skip-unit-tests)
@@ -653,6 +742,8 @@ build_cta() {
     --jobs "${num_jobs}" \
     --platform "${platform}" \
     "${build_rpm_flags[@]}"
+
+  printf '%s\n' "$build_state_json" >"$build_state_file"
 
 }
 
