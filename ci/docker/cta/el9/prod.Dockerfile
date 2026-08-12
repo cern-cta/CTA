@@ -26,10 +26,9 @@ RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
 # hadolint ignore=DL3022
 COPY --from=rpm_context . /rpms
 
-# Ensure this is recreated correctly
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN find /rpms -type f -name '*.rpm' -print0 | sort -z | xargs -0 sha256sum > /rpms/.rpm-hash && \
-    createrepo_c /rpms
+# Ensure this is recreated correctly.
+RUN /bin/bash -o pipefail -c \
+    'find /rpms -type f -name "*.rpm" -print0 | sort -z | xargs -0 sha256sum > /rpms/.rpm-hash && createrepo_c /rpms'
 
 # =========================================================================
 #  2. BASE IMAGE
