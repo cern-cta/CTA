@@ -254,8 +254,7 @@ Usage:
   $(basename "$0") images [options]
 
 Options:
-      --skip-image-cleanup      Keep existing CTA images with the selected
-                                development tag.
+      --skip-image-cleanup      Keep superseded CTA images in the container runtime.
 
 EOF
 exit 1
@@ -894,29 +893,8 @@ build_cta() {
 images_cta() {
   # Constants
   local -r rpm_src="build_rpm/RPM/RPMS/x86_64" # note relative to project root
-  local -a image_targets=(cta-taped cta-maintd cta-rmcd cta-frontend cta-tools cta-debug)
-  local -A previous_image_ids=()
-  local -A backup_image_refs=()
 
   print_header "BUILDING CONTAINER IMAGES"
-  # Keep the current images available as build-cache sources. If cleanup is
-  # enabled, remove superseded image IDs only after every new image has built
-  # successfully.
-  if [[ ${image_cleanup} = true ]]; then
-    log_task "Recording existing CTA images tagged ${cta_image_tag} for deferred cleanup..."
-    local target
-    for target in "${image_targets[@]}"; do
-      previous_image_ids["$target"]="$(${container_runtime} image inspect \
-        --format '{{.Id}}' "cta/ctageneric/${target}:${cta_image_tag}" 2>/dev/null || true)"
-      if [[ -n "${previous_image_ids[$target]}" ]]; then
-        backup_image_refs["$target"]="cta/ctageneric/${target}:build-backup-${cta_image_tag}-$$"
-        ${container_runtime} image tag \
-          "${previous_image_ids[$target]}" "${backup_image_refs[$target]}"
-      fi
-    done
-  else
-    log_warn "Skipping cleanup of unused container images."
-  fi
 
   # Build
   log_task "Building container images from ${rpm_src}..."
@@ -924,42 +902,17 @@ images_cta() {
   local load_into_k8s=false
   [[ $enable_internal_repos == true ]] && extra_image_build_options+=(--enable-internal-repos)
   [[ $enable_debug_image == true ]] && extra_image_build_options+=(--enable-debug-image)
+  [[ $image_cleanup == false ]] && extra_image_build_options+=(--skip-image-cleanup)
   if local_kubernetes_available; then
     extra_image_build_options+=(--load-into-k8s)
     load_into_k8s=true
   fi
   cd "${project_root}"
-  if ! ./ci/build/build_images.sh \
-      --tag "${cta_image_tag}" \
-      --rpm-src "${rpm_src}" \
-      --container-runtime "${container_runtime}" \
-      "${extra_image_build_options[@]}"; then
-    if [[ ${image_cleanup} = true ]]; then
-      log_task "Restoring CTA image tags after failed build..."
-      for target in "${image_targets[@]}"; do
-        [[ -z "${previous_image_ids[$target]}" ]] && continue
-        ${container_runtime} image tag \
-          "${previous_image_ids[$target]}" "cta/ctageneric/${target}:${cta_image_tag}"
-        ${container_runtime} image rm "${backup_image_refs[$target]}" >/dev/null 2>&1 || true
-      done
-    fi
-    return 1
-  fi
-
-  if [[ ${image_cleanup} = true ]]; then
-    log_task "Cleaning up superseded CTA images..."
-    local previous_image_id new_image_id
-    for target in "${image_targets[@]}"; do
-      previous_image_id="${previous_image_ids[$target]}"
-      [[ -z "$previous_image_id" ]] && continue
-      ${container_runtime} image rm "${backup_image_refs[$target]}" >/dev/null 2>&1 || true
-      new_image_id="$(${container_runtime} image inspect \
-        --format '{{.Id}}' "cta/ctageneric/${target}:${cta_image_tag}" 2>/dev/null || true)"
-      if [[ -n "$new_image_id" && "$previous_image_id" != "$new_image_id" ]]; then
-        ${container_runtime} image rm "$previous_image_id" >/dev/null 2>&1 || true
-      fi
-    done
-  fi
+  ./ci/build/build_images.sh \
+    --tag "${cta_image_tag}" \
+    --rpm-src "${rpm_src}" \
+    --container-runtime "${container_runtime}" \
+    "${extra_image_build_options[@]}"
 
   if [[ $load_into_k8s == false ]]; then
     log_warn "Kubernetes image loading skipped: neither minikube nor k3s is installed."
