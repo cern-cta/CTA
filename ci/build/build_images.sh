@@ -127,51 +127,79 @@ if [[ "$enable_debug_image" == "true" ]]; then
   targets+=( "cta-debug" )
 fi
 
+declare -A previous_image_ids=()
+for target in "${targets[@]}"; do
+  previous_image_ids["$target"]="$(${container_runtime} image inspect \
+    --format '{{.Id}}' "cta/ctageneric/${target}:${image_tag}" 2>/dev/null || true)"
+done
+
 BUILD_ID=$(date +%Y%m%d-%H%M%S)
 SECONDS=0
 
-pids=()
+build_target() {
+  local target="$1"
+  local color="$2"
+  local image_ref="cta/ctageneric/${target}:${image_tag}"
 
-# Build and load all targets
-i=0
-for target in "${targets[@]}"; do
-  color="${colors[$((i % ${#colors[@]}))]}"
-  (( ++i ))
-  image_ref="cta/ctageneric/${target}:${image_tag}"
   (
     set -eo pipefail
-    build() {
-      "${build_command[@]}" . -f "${dockerfile}" \
-        -t "${image_ref}" \
-        --build-context rpm_context="${rpm_src}" \
-        --build-arg ENABLE_INTERNAL_REPOS=${enable_internal_repos} \
-        --build-arg ENABLE_ORACLE_SUPPORT=${enable_oracle_support} \
-        --network host \
-        --label build.id="$BUILD_ID" \
-        --target "$target"
-      # Note that the below checks are rather crude (for speed)
-      if [[ "$load_into_k8s" == "true" ]]; then
-        # Load into minikube (use stdin to avoid a temp file)
-        if command -v minikube >/dev/null 2>&1; then
-          log_task "Loading ${image_ref} into minikube..."
-          ${container_runtime} save "${image_ref}" | minikube image load --overwrite -
-        fi
-
-        # Load into k3s (stream into containerd)
-        if command -v k3s >/dev/null 2>&1; then
-          log_task "Loading ${image_ref} into k3s/containerd..."
-          ${container_runtime} save "${image_ref}" | sudo /usr/local/bin/k3s ctr images import -
-        fi
+    "${build_command[@]}" . -f "${dockerfile}" \
+      -t "${image_ref}" \
+      --build-context rpm_context="${rpm_src}" \
+      --build-arg ENABLE_INTERNAL_REPOS=${enable_internal_repos} \
+      --build-arg ENABLE_ORACLE_SUPPORT=${enable_oracle_support} \
+      --build-arg INSTALL_CEPH_COMMON=false \
+      --network host \
+      --label build.id="$BUILD_ID" \
+      --target "$target"
+    # Note that the below checks are rather crude (for speed)
+    if [[ "$load_into_k8s" == "true" ]]; then
+      # Load into minikube (use stdin to avoid a temp file)
+      if command -v minikube >/dev/null 2>&1; then
+        log_task "Loading ${image_ref} into minikube..."
+        ${container_runtime} save "${image_ref}" | minikube image load --overwrite -
       fi
-    }
-    build
+
+      # Load into k3s (stream into containerd)
+      if command -v k3s >/dev/null 2>&1; then
+        log_task "Loading ${image_ref} into k3s/containerd..."
+        ${container_runtime} save "${image_ref}" | sudo /usr/local/bin/k3s ctr images import -
+      fi
+    fi
   ) 2>&1 | # some magic to get color output
     awk -v prefix="[$target]:" -v color="$color" '
       {
         printf "%s%s\033[0m %s\n", color, prefix, $0
         fflush()
       }
-    ' & # execute as background process so that we can build in parallel
+    '
+}
+
+# Build only the common stages first. Starting every service target at once on a
+# clean cache makes the independent builder processes duplicate repo-builder and
+# base before any of them can reuse the resulting layers.
+base_cache_ref="cta/ctageneric/cta-build-base-cache:${image_tag}"
+
+log_task "Building base to populate the shared stage cache..."
+if ! "${build_command[@]}" . -f "${dockerfile}" \
+  -t "${base_cache_ref}" \
+  --build-context rpm_context="${rpm_src}" \
+  --network host \
+  --target base; then
+  log_error "Failed to build the shared base stage."
+  exit 1
+fi
+
+echo
+
+pids=()
+
+# The common stages are now cached, so build and load the remaining targets in parallel.
+i=0
+for target in "${targets[@]}"; do
+  color="${colors[$((i % ${#colors[@]}))]}"
+  (( ++i ))
+  build_target "$target" "$color" &
   pids+=($!)
 done
 
@@ -184,6 +212,17 @@ if [[ $status == 1 ]]; then
   log_error "Failed to build or load one or more container images."
   exit "$status"
 fi
+
+log_task "Cleaning up superseded CTA images..."
+for target in "${targets[@]}"; do
+  previous_image_id="${previous_image_ids[$target]}"
+  [[ -z "$previous_image_id" ]] && continue
+  new_image_id="$(${container_runtime} image inspect \
+    --format '{{.Id}}' "cta/ctageneric/${target}:${image_tag}" 2>/dev/null || true)"
+  if [[ -n "$new_image_id" && "$previous_image_id" != "$new_image_id" ]]; then
+    ${container_runtime} image rm "$previous_image_id" >/dev/null 2>&1 || true
+  fi
+done
 
 echo
 echo "Built images:"

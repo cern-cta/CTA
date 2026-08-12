@@ -26,10 +26,9 @@ RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
 # hadolint ignore=DL3022
 COPY --from=rpm_context . /rpms
 
-# Ensure this is recreated correctly
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN find /rpms -type f -name '*.rpm' -print0 | sort -z | xargs -0 sha256sum > /rpms/.rpm-hash && \
-    createrepo_c /rpms
+# Ensure this is recreated correctly.
+RUN /bin/bash -o pipefail -c \
+    'find /rpms -type f -name "*.rpm" -print0 | sort -z | xargs -0 sha256sum > /rpms/.rpm-hash && createrepo_c /rpms'
 
 # =========================================================================
 #  2. BASE IMAGE
@@ -147,15 +146,25 @@ FROM base AS cta-tools
 
 ARG ENABLE_INTERNAL_REPOS
 ARG ENABLE_ORACLE_SUPPORT
+# CEPH is not required locally, so this allows us to disable it and reduce the image size for local dev workflows
+ARG INSTALL_CEPH_COMMON=true
 
-# This image is gigantic... Find a way to reduce it..
-# Sadly we need eos-client here for the CI, which bloat the image by quite a bit.
-# Ideally the client chart uses the EOS image so that we don't need eos-client here. However, that requires
-# the completion of the system test migration to ensure we remove the assumption that the eos-client and cta-admin RPMs exist in the same container.
+# There are two reasons why this image is huge:
+# - eos-client: for now necessary as the system tests still assume the CTA and EOS rpms in one pod. 
+#   Once this assumption is removed from the system tests, we can migrate the client pod to use the
+#   official EOS image and we don't need it here anymore
+# - ceph-common: disabled for local development workflows, but required for the objectstore scheduler reset in CI
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools \
-    /usr/local/bin/build-service.sh "cta-admin-grpc cta-catalogue-utils cta-scheduler-utils krb5-workstation ceph-common cta-immutable-file-test eos-client xrootd-client python3-xrootd bc" && \
+    packages="cta-admin-grpc cta-catalogue-utils cta-scheduler-utils \
+      krb5-workstation cta-immutable-file-test eos-client xrootd-client \
+      python3-xrootd bc" && \
+    if [ "$INSTALL_CEPH_COMMON" = "true" ] || \
+      [ "$INSTALL_CEPH_COMMON" = "1" ]; then \
+      packages="$packages ceph-common"; \
+    fi && \
+    /usr/local/bin/build-service.sh "$packages" && \
     ln -sf /usr/bin/cta-admin-grpc /usr/bin/cta-admin
 
 ENTRYPOINT ["/bin/bash"]

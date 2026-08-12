@@ -51,7 +51,6 @@ echo
   echo
   echo "Image Building & Packaging:"
   echo "      --skip-image-build                Skips building of the Docker images and loading them into the Kubernetes cluster."
-  echo "      --skip-image-cleanup              Skips cleanup of ctageneric images in runtime and cluster before deploy."
   echo "      --enable-debug-image             Builds an additional image containing all CTA RPMs, their debuginfo RPMs and gdb."
   echo "      --image-build-options <options>   Additional options passed verbatim to the build_images.sh script."
   echo
@@ -116,7 +115,6 @@ build_deploy() {
   local enable_ccache=true
   local upgrade_cta=false
   local upgrade_eos=false
-  local image_cleanup=true
   local extra_spawn_options=""
   local extra_image_build_options=""
   local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
@@ -157,7 +155,6 @@ build_deploy() {
       --skip-cmake)                 skip_cmake=true ;;
       --skip-debug-packages)        skip_debug_packages=true ;;
       --skip-image-build)           skip_image_build=true ;;
-      --skip-image-cleanup)         image_cleanup=false ;;
       --unit-tests)                 skip_unit_tests=false ;;
       --force-install)              force_install=true ;;
       --enable-dcache)              dcache_enabled=true ;;
@@ -327,17 +324,15 @@ build_deploy() {
   if [[ "$skip_image_build" == "false" ]]; then
     print_header "BUILDING CONTAINER IMAGE"
     # Cleanup
-    if [[ ${image_cleanup} = true ]]; then
-      echo "Cleaning up unused images..."
-      ${container_runtime} image prune -f
-      if command -v minikube >/dev/null 2>&1; then
-        minikube ssh -- "${container_runtime} image prune -f" || true
-        # throws Error: command required for rootless mode with multiple IDs:
-        # exec: "newuidmap": executable file not found in $PATH
-      fi
-      if command -v k3s >/dev/null 2>&1; then
-        sudo /usr/local/bin/k3s crictl rmi --prune || true
-      fi
+    echo "Cleaning up unused images..."
+    ${container_runtime} image prune -f
+    if command -v minikube >/dev/null 2>&1; then
+      minikube ssh -- "${container_runtime} image prune -f" || true
+      # throws Error: command required for rootless mode with multiple IDs:
+      # exec: "newuidmap": executable file not found in $PATH
+    fi
+    if command -v k3s >/dev/null 2>&1; then
+      sudo /usr/local/bin/k3s crictl rmi --prune || true
     fi
     # Determine tag
     if [[ "$upgrade_cta" == "false" ]]; then

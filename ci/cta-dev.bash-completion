@@ -30,9 +30,7 @@ _ctadev() {
         --cmake-build-type
     "
 
-    local image_opts="
-        --skip-image-cleanup
-    "
+    local image_opts=""
 
     local deploy_opts="
         --with-dcache

@@ -62,7 +62,6 @@ build_generator="Ninja"
 cmake_build_type=$(jq -r .dev.defaultBuildType "${project_root}/project.json")
 
 # Images
-image_cleanup=true
 enable_debug_image=false
 
 # Deploy
@@ -252,10 +251,6 @@ All images are built in parallel.
 
 Usage:
   $(basename "$0") images [options]
-
-Options:
-      --skip-image-cleanup      Keep existing CTA images with the selected
-                                development tag.
 
 EOF
 exit 1
@@ -478,11 +473,6 @@ parse_options() {
       # =========================================================================
       #  Image options
       # =========================================================================
-
-      --skip-image-cleanup)
-        require_command "$1" "$command" images up debug all
-        image_cleanup=false
-        ;;
 
       # =========================================================================
       #  Deploy options
@@ -896,16 +886,6 @@ images_cta() {
   local -r rpm_src="build_rpm/RPM/RPMS/x86_64" # note relative to project root
 
   print_header "BUILDING CONTAINER IMAGES"
-  # Cleanup
-  if [[ ${image_cleanup} = true ]]; then
-    log_task "Cleaning up CTA images tagged ${cta_image_tag}..."
-    local target
-    for target in cta-taped cta-maintd cta-rmcd cta-frontend cta-tools cta-debug; do
-      ${container_runtime} image rm "cta/ctageneric/${target}:${cta_image_tag}" >/dev/null 2>&1 || true
-    done
-  else
-    log_warn "Skipping cleanup of unused container images."
-  fi
 
   # Build
   log_task "Building container images from ${rpm_src}..."
@@ -923,6 +903,7 @@ images_cta() {
     --rpm-src "${rpm_src}" \
     --container-runtime "${container_runtime}" \
     "${extra_image_build_options[@]}"
+
   if [[ $load_into_k8s == false ]]; then
     log_warn "Kubernetes image loading skipped: neither minikube nor k3s is installed."
   fi
