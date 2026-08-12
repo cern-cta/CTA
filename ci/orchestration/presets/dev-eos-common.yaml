@@ -69,8 +69,8 @@ mgm:
         base_path = /
         map_subject = false
         name_mapfile = /etc/xrootd/scitokens.map
-        default_user = nobody
-        authorization_strategy = capability mapping
+        default_user = poweruser1
+        authorization_strategy = capability
 
   xrd:
     # Additional tape-specific config

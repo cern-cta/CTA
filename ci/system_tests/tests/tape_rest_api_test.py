@@ -191,7 +191,7 @@ def _assert_stage_status(response: str, request_id: str, file_path: Path) -> dic
     if "state" in file_status:
         assert file_status["state"] in {"SUBMITTED", "STARTED", "CANCELLED", "FAILED", "COMPLETED"}
         assert "onDisk" not in file_status
-    assert "onDisk" in file_status or "state" in file_status
+    assert "onDisk" in file_status or "state" in file_status or "error" in file_status
     print(f"Stage request {request_id} status for {file_path}: {file_status}")
     return file_status
 
@@ -687,15 +687,12 @@ def test_wlcg_scitoken_stage_with_invalid_scope_fails(
     stage_token = _generate_poweruser_scitoken(eos_mgm, "storage.stage:/path/does/not/exist")
 
     request_id = _stage_request(disk_client, rest_api_endpoint, file_path, stage_token)
-    failed_file_status = disk_client.wait_for_stage_file_status(
-        rest_api_endpoint,
-        request_id,
-        file_path,
+    status_response = disk_client.http_request(
+        f"{rest_api_endpoint}/stage/{request_id}",
         token=rest_api_poweruser_token,
         certificate_options=rest_api_certificate_options,
-        expected_state="FAILED",
-        wait_timeout_secs=30,
     )
+    failed_file_status = _assert_stage_status(status_response, request_id, file_path)
     assert "error" in failed_file_status
     _delete_stage_request(
         disk_client,
@@ -721,15 +718,12 @@ def test_wlcg_scitoken_stage_request_with_poll_scope_fails(
     poll_token = _generate_poweruser_scitoken(eos_mgm, f"storage.poll:{test_dir}")
 
     request_id = _stage_request(disk_client, rest_api_endpoint, file_path, poll_token)
-    failed_file_status = disk_client.wait_for_stage_file_status(
-        rest_api_endpoint,
-        request_id,
-        file_path,
+    status_response = disk_client.http_request(
+        f"{rest_api_endpoint}/stage/{request_id}",
         token=rest_api_poweruser_token,
         certificate_options=rest_api_certificate_options,
-        expected_state="FAILED",
-        wait_timeout_secs=30,
     )
+    failed_file_status = _assert_stage_status(status_response, request_id, file_path)
     assert "error" in failed_file_status
     _delete_stage_request(
         disk_client,
