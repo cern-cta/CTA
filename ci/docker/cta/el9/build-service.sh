@@ -8,7 +8,7 @@ set -eo pipefail
 # it is important that everything runs in a single layer to ensure we don't bloat the image sizes
 
 # Since we are building in parallel, suppress stdout to reduce noise and make errors easier to spot
-exec 1> /dev/null
+# exec 1> /dev/null
 
 TARGET_PACKAGES=$1
 
