@@ -276,8 +276,9 @@ def test_archive_and_retrieve_file_with_wlcg_scitoken(
 ) -> None:
     file_path = test_dir / "test_http-rest-api-scitoken"
     file_contents = "SciToken archive and retrieve test"
-    upload_scope = "storage.modify:/"
-    rest_api_scope = "storage.stage:/"
+    upload_scope = "storage.create:/"
+    rest_api_scope_ok = f"storage.stage:{test_dir}"
+    rest_api_scope_error = "storage.stage:/path/does/not/exist"
     print(f"Archiving and retrieving {file_path} with WLCG SciTokens")
     scitoken_user1 = eos_mgm.generate_scitoken(
         [
@@ -290,7 +291,16 @@ def test_archive_and_retrieve_file_with_wlcg_scitoken(
     )
     scitoken_poweruser1 = eos_mgm.generate_scitoken(
         [
-            ("scope", rest_api_scope),
+            ("scope", rest_api_scope_ok),
+            ("sub", "sub_poweruser1"),
+            ("aud", "ctaeos"),
+        ],
+        keyid="ctaeos",
+        timeout=600,
+    )
+    scitoken_poweruser1_wrong_scope = eos_mgm.generate_scitoken(
+        [
+            ("scope", rest_api_scope_error),
             ("sub", "sub_poweruser1"),
             ("aud", "ctaeos"),
         ],
@@ -336,6 +346,14 @@ def test_archive_and_retrieve_file_with_wlcg_scitoken(
         assert archived_file_info["path"] == str(file_path)
         assert archived_file_info.get("error") is None
         print(f"File archived successfully with a WLCG SciToken: {archived_file_info}")
+
+        with pytest.raises(RuntimeError):
+            _stage_request(
+                disk_client,
+                rest_api_endpoint,
+                file_path,
+                scitoken_poweruser1_wrong_scope,
+            )
 
         request_id = _stage_request(
             disk_client,
