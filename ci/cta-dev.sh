@@ -82,6 +82,74 @@ stage_durations=()
 
 source "${script_dir}/utils/log_utils.sh"
 
+load_cta_dev_env() {
+  local -r env_file="${script_dir}/.cta-dev.env"
+  [[ -f "$env_file" ]] || return 0
+
+  local line key value quote
+  local line_number=0
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line_number=$((line_number + 1))
+    line=${line%$'\r'}
+    [[ "$line" =~ ^[[:space:]]*(#.*)?$ ]] && continue
+
+    if [[ ! "$line" =~ ^[[:space:]]*([A-Z][A-Z0-9_]*)[[:space:]]*=(.*)$ ]]; then
+      die "Invalid configuration in ${env_file}:${line_number}: expected KEY=VALUE."
+    fi
+
+    key=${BASH_REMATCH[1]}
+    value=${BASH_REMATCH[2]}
+    value=${value#"${value%%[![:space:]]*}"}
+    value=${value%"${value##*[![:space:]]}"}
+
+    quote=${value:0:1}
+    if [[ "$quote" == '"' || "$quote" == "'" ]]; then
+      if [[ ${#value} -lt 2 || "${value: -1}" != "$quote" ]]; then
+        die "Invalid configuration in ${env_file}:${line_number}: unmatched quote."
+      fi
+      value=${value:1:${#value}-2}
+    elif [[ "$value" == *'"'* || "$value" == *"'"* ]]; then
+      die "Invalid configuration in ${env_file}:${line_number}: unmatched quote."
+    fi
+
+    case "$key" in
+      CTA_DEV_SCHEDULER_TYPE)
+        [[ "$value" == objectstore || "$value" == pgsched ]] || \
+          die "Invalid value for ${key} in ${env_file}:${line_number}: expected objectstore or pgsched."
+        scheduler_type=$value
+        ;;
+      CTA_DEV_ORACLE_SUPPORT)
+        [[ "$value" == true || "$value" == false ]] || \
+          die "Invalid value for ${key} in ${env_file}:${line_number}: expected true or false."
+        oracle_support=$value
+        ;;
+      CTA_DEV_INTERNAL_REPOS)
+        [[ "$value" == true || "$value" == false ]] || \
+          die "Invalid value for ${key} in ${env_file}:${line_number}: expected true or false."
+        enable_internal_repos=$value
+        ;;
+      CTA_DEV_PLATFORM)
+        jq -e --arg platform "$value" '.platforms | has($platform)' "${project_root}/project.json" >/dev/null || \
+          die "Invalid value for ${key} in ${env_file}:${line_number}: unsupported platform '${value}'."
+        platform=$value
+        ;;
+      CTA_DEV_BUILD_GENERATOR)
+        [[ "$value" == Ninja || "$value" == "Unix Makefiles" ]] || \
+          die "Invalid value for ${key} in ${env_file}:${line_number}: expected Ninja or Unix Makefiles."
+        build_generator=$value
+        ;;
+      CTA_DEV_CMAKE_BUILD_TYPE)
+        [[ "$value" == Release || "$value" == Debug || "$value" == RelWithDebInfo || "$value" == MinSizeRel ]] || \
+          die "Invalid value for ${key} in ${env_file}:${line_number}: expected Release, Debug, RelWithDebInfo, or MinSizeRel."
+        cmake_build_type=$value
+        ;;
+      *)
+        die "Unknown configuration key '${key}' in ${env_file}:${line_number}."
+        ;;
+    esac
+  done < "$env_file"
+}
+
 # =========================================================================
 #  Help
 # =========================================================================
@@ -92,6 +160,9 @@ usage() {
 Developer workflow utility for CTA. This script orchestrates the local
 development workflow for CTA. Commands can be executed independently or
 combined into a complete development pipeline.
+
+Per-worktree defaults can be configured in ${script_dir}/.cta-dev.env.
+Command-line options override configured defaults.
 
 Usage:
   $(basename "$0") <command> [global-options] [command-options]
@@ -948,6 +1019,7 @@ main() {
     exit 0
   fi
 
+  load_cta_dev_env
   parse_options "$command" "$@"
   select_container_runtime
 
