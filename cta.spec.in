@@ -89,7 +89,7 @@ The CTA project is the CERN Tape Archive system.
 
 mkdir -p build
 cd build
-CTA_VERSION=%{ctaVersion} cmake3 -G "%{buildGenerator}" .. -DENABLE_CCACHE:BOOL=@ENABLE_CCACHE@ -DCTA_RPM_ENABLE_TARGETS:BOOL=OFF -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{perfTelemetryOpt} %{oracleOpt} %{asanOptions}
+CTA_VERSION=%{ctaVersion} cmake3 -G "%{buildGenerator}" .. -DENABLE_CCACHE:BOOL=@ENABLE_CCACHE@ -DCTA_RPM_ENABLE_TARGETS:BOOL=OFF -DJOBS_COUNT:STRING=@JOBS_COUNT@ -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{perfTelemetryOpt} %{oracleOpt} %{asanOptions}
 cmake --build . --parallel @JOBS_COUNT@
 
 %install
