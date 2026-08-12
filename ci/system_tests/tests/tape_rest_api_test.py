@@ -667,14 +667,32 @@ def test_wlcg_scitoken_stage_with_invalid_scope_fails(
     disk_instance: DiskInstanceHost,
     eos_mgm: EosMgmHost,
     test_dir: Path,
+    rest_api_poweruser_token: str,
+    rest_api_certificate_options: str,
 ) -> None:
     file_path = test_dir / "test_http-rest-api"
     print(f"Checking that staging {file_path} fails with a wrong WLCG scope")
     rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
     stage_token = _generate_poweruser_scitoken(eos_mgm, "storage.stage:/path/does/not/exist")
 
-    with pytest.raises(RuntimeError):
-        _stage_request(disk_client, rest_api_endpoint, file_path, stage_token)
+    request_id = _stage_request(disk_client, rest_api_endpoint, file_path, stage_token)
+    failed_file_status = disk_client.wait_for_stage_file_status(
+        rest_api_endpoint,
+        request_id,
+        file_path,
+        token=rest_api_poweruser_token,
+        certificate_options=rest_api_certificate_options,
+        expected_state="FAILED",
+        wait_timeout_secs=30,
+    )
+    assert "error" in failed_file_status
+    _delete_stage_request(
+        disk_client,
+        rest_api_endpoint,
+        request_id,
+        rest_api_poweruser_token,
+        rest_api_certificate_options,
+    )
 
 
 def test_wlcg_scitoken_stage_request_with_poll_scope_fails(
@@ -682,14 +700,32 @@ def test_wlcg_scitoken_stage_request_with_poll_scope_fails(
     disk_instance: DiskInstanceHost,
     eos_mgm: EosMgmHost,
     test_dir: Path,
+    rest_api_poweruser_token: str,
+    rest_api_certificate_options: str,
 ) -> None:
     file_path = test_dir / "test_http-rest-api"
     print(f"Checking that a storage.poll WLCG SciToken cannot stage {file_path}")
     rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
     poll_token = _generate_poweruser_scitoken(eos_mgm, f"storage.poll:{test_dir}")
 
-    with pytest.raises(RuntimeError):
-        _stage_request(disk_client, rest_api_endpoint, file_path, poll_token)
+    request_id = _stage_request(disk_client, rest_api_endpoint, file_path, poll_token)
+    failed_file_status = disk_client.wait_for_stage_file_status(
+        rest_api_endpoint,
+        request_id,
+        file_path,
+        token=rest_api_poweruser_token,
+        certificate_options=rest_api_certificate_options,
+        expected_state="FAILED",
+        wait_timeout_secs=30,
+    )
+    assert "error" in failed_file_status
+    _delete_stage_request(
+        disk_client,
+        rest_api_endpoint,
+        request_id,
+        rest_api_poweruser_token,
+        rest_api_certificate_options,
+    )
 
 
 def test_wlcg_scitoken_archiveinfo_with_poll_scope(
