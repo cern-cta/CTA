@@ -127,10 +127,10 @@ backend_name
 :   Unique identifier for the backend scheduler resources.
 Example structure: [ceph|postgres|vfs][User|Repack].
 
-objectstore_backend_path
+config_file
 
-:   URL of the objectstore (CTA Scheduler Database).
-Typically a Ceph RADOS URL. A file-based backend may be used for testing.
+:   Path to the CTA scheduler configuration file
+(commonly */etc/cta/cta-scheduler.conf*).
 
 tape_cache_max_age_secs *(default: 600)*
 

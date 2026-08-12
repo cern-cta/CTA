@@ -13,28 +13,62 @@
 # before enabling or starting the service.
 
 
+# Maintd runs all routines sequentially: A -> B -> C -> sleep -> A -> B -> C -> sleep ...
+# Here [A -> B -> C] is a single cycle of routine execution.
+# A full cycle of routine execution refers to executing all enabled routines once and excludes the sleep interval.
+# Due to this operating model, it is not possible to define different sleep intervals per routine.
+# If this behaviour is desired, it is recommended to run several maintd processes, each with only one routine enabled.
+# At that point, a cycle consists of a single routine and cycle_sleep_interval_secs effectively becomes a per-routine sleep interval.
+[routines]
+  # The sleep duration in between cycles of routine executions.
+  # If omitted, 10 is used.
+  cycle_sleep_interval_secs = 10
+
+  # The maximum duration in seconds a single cycle of routine execution is allowed to take.
+  # If a cycle takes longer than this value, it will not be interrupted.
+  # Instead, the process will no longer be considered alive by the health server.
+  # If omitted, 900 is used (15 minutes).
+  max_cycle_duration_secs = 900
+
+  # Routine that reports archive transfer success/failures to the disk system.
+  disk_report_archive  = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
+  # Routine that reports retrieve transfer success/failures to the disk system.
+  disk_report_retrieve = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
+  # Routine that expands repack requests.
+  repack_expand        = { enabled = true, max_to_expand = 2 }
+  # Routine that handles the reporting of the requests created by repack requests.
+  repack_report        = { enabled = true, soft_timeout_secs = 30 }
+  # Objectstore routine that finds queues marked for cleanup, takes ownership of these queues and moves the requests to other queues.
+  queue_cleanup        = { enabled = true, batch_size = 500 }
+  # Objectstore routine that garbage collects stale agents and objects.
+  garbage_collect      = { enabled = true }
+
+
 [catalogue]
   # Path to the CTA Catalogue configuration file.
+  # This setting is required.
   config_file = "/etc/cta/cta-catalogue.conf"
 
 
 [scheduler]
-  # The unique string to identify the backend scheduler resources. As an example, it can be structured as:
-  # "[ceph|postgres|vfs][User|Repack]".
+  # Unique name used to identify this scheduler backend in logs and scheduler resources. A conventional
+  # format is "[ceph|postgres|vfs][User|Repack]", for example "cephUser". This setting is required.
   backend_name = "cephUser"
-  # URL of the objectstore (CTA Scheduler Database). Usually this will be the URL of a Ceph RADOS.
-  # objectstore. For testing or small installations, a file-based objectstore can be used instead.
-  objectstore_backend_path = "rados://cta@tapecta:cta"
-  # If omitted, 600 is used.
+  # Path to the CTA Scheduler configuration file.
+  # This setting is required.
+  config_file = "/etc/cta/cta-scheduler.conf"
+  # Maximum age, in seconds, of cached tape statistics used when deciding whether work warrants a mount.
+  # Lower values reflect scheduler changes sooner but increase backend queries. If omitted, 600 is used.
   tape_cache_max_age_secs = 600
-  # If omitted, 10 is used.
+  # Maximum age, in seconds, of cached retrieve-queue statistics. Lower values reflect newly queued
+  # retrieves sooner but increase backend queries. If omitted, 10 is used.
   retrieve_queue_cache_max_age_secs = 10
 
 
 [logging]
-  # Logs with a level lower than the LogMask value will be masked. Possible values are EMERG, ALERT,
-  # CRIT, ERR, WARNING, NOTICE (USERERR), INFO, DEBUG.
-  # If omitted INFO is used.
+  # Minimum severity written to the log. Messages below this level are masked. Valid values are EMERG,
+  # ALERT, CRIT, ERR, WARNING, NOTICE (USERERR), INFO, and DEBUG. More verbose levels increase log volume.
+  # If omitted, INFO is used.
   level = "INFO"
 
   # Log format. Possible values are "json" and "kv" (key-value).
@@ -44,11 +78,12 @@
   # The following key-value pairs are added to all log lines.
   # All keys are optional as this is purely for monitoring purposes.
   [logging.attributes]
-    # Unique string to identify CTA's instance the maintd process is serving (i.e: production, preproduction).
-    # Each of these instances should be associated with a specific CTA catalogue instance.
+    # Monitoring-only label identifying the CTA instance served by this process, such as "production" or
+    # "preproduction". It should identify the catalogue instance consistently across CTA services.
+    # This attribute is optional and has no behavioral effect.
     instance = "production"
-    # The unique string to identify the backend scheduler resources. As an example, it can be structured as:
-    # "[ceph|postgres|vfs][User|Repack]".
+    # Monitoring-only label identifying the scheduler backend. It should normally match scheduler.backend_name.
+    # This attribute is optional and has no behavioral effect.
     sched_backend = "cephUser"
 
 
@@ -93,42 +128,16 @@
 # Makes XRootD environment variables explicit.
 # XRootD is what is used to connect to the disk instance.
 [xrootd]
-  # Overrides XrdSecPROTOCOL.
-  # If omitted, sss is used.
+  # Overrides the XrdSecPROTOCOL environment variable used for connections to the disk system.
+  # Valid values depend on the installed XRootD security plugins. If omitted, "sss" is used.
   security_protocol = "sss"
-  # Overrides XrdSecSSSKT.
+  # Overrides the XrdSecSSSKT environment variable with the path to the XRootD SSS keytab. The file must
+  # be readable by cta-maintd when the "sss" protocol is selected. This setting is required for SSS.
   sss_keytab_path = "/etc/cta/cta.sss.keytab"
 
 
-# Maintd runs all routines sequentially: A -> B -> C -> sleep -> A -> B -> C -> sleep ...
-# Here [A -> B -> C] is a single cycle of routine execution.
-# A full cycle of routine execution refers to executing all enabled routines once and excludes the sleep interval.
-# Due to this operating model, it is not possible to define different sleep intervals per routine.
-# If this behaviour is desired, it is recommended to run several maintd processes, each with only one routine enabled.
-# At that point, a cycle consists of a single routine and cycle_sleep_interval_secs effectively becomes a per-routine sleep interval.
-[routines]
-  # The sleep duration in between cycles of routine executions.
-  # If omitted, 10 is used.
-  cycle_sleep_interval_secs = 10
-
-  # The maximum duration in seconds a single cycle of routine execution is allowed to take.
-  # If a cycle takes longer than this value, it will not be interrupted.
-  # Instead, the process will no longer be considered alive by the health server.
-  # If omitted, 900 is used (15 minutes).
-  max_cycle_duration_secs = 900
-
-  # Routine that reports archive transfer success/failures to the disk system.
-  disk_report_archive  = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
-  # Routine that reports retrieve transfer success/failures to the disk system.
-  disk_report_retrieve = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
-  # Routine that expands repack requests.
-  repack_expand        = { enabled = true, max_to_expand = 2 }
-  # Routine that handles the reporting of the requests created by repack requests.
-  repack_report        = { enabled = true, soft_timeout_secs = 30 }
-  # Objectstore routine that finds queues marked for cleanup, takes ownership of these queues and moves the requests to other queues.
-  queue_cleanup        = { enabled = true, batch_size = 500 }
-  # Objectstore routine that garbage collects stale agents and objects.
-  garbage_collect      = { enabled = true }
-
 [experimental]
+  # Enables experimental OpenTelemetry support configured by [telemetry]. Experimental features may
+  # change incompatibly and should be evaluated before production use.
+  # If omitted, false is used.
   telemetry_enabled = false

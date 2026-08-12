@@ -126,15 +126,9 @@ spec:
       - name: catalogue-config
         configMap:
           name: cta-catalogue-conf
-      {{- if eq $schedulerConfig.backend "postgres" }}
       - name: scheduler-config
         configMap:
           name: cta-scheduler-conf
-      {{- else }}
-      - name: scheduler-config
-        configMap:
-          name: cta-objectstore-conf
-      {{- end }}
       {{- if eq $schedulerConfig.backend "ceph" }}
       - name: cta-ceph-volume
         configMap:
