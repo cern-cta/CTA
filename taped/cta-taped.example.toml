@@ -30,14 +30,14 @@
   logical_library_name = ""
 
   # Maximum time, in seconds, that the drive process may remain in the readiness-checking state without
-  # making progress. On expiry, cta-taped kills and restarts the drive process. Because no tape mount has started,
-  # cleanup is not required and the drive is not automatically put Down. 
+  # making progress. On expiry, the drive process is killed and restarted, but the drive will remain UP.
   # If omitted, 120 is used.
   ready_timeout_secs = 120
 
 
 [catalogue]
   # Path to the CTA Catalogue configuration file.
+  # This setting is required.
   config_file = "/etc/cta/cta-catalogue.conf"
 
 
@@ -46,10 +46,9 @@
   # format is "[ceph|postgres|vfs][User|Repack]", for example "cephUser". 
   # This setting is required.
   backend_name = "cephUser"
-  # URL of the objectstore used as the CTA Scheduler Database. Production installations normally use a
-  # Ceph RADOS URL; file-backed objectstores are intended for testing or small installations. 
+  # Path to the CTA Scheduler configuration file.
   # This setting is required.
-  objectstore_backend_path = "rados://cta@tapecta:cta"
+  config_file = "/etc/cta/cta-scheduler.conf"
   # Maximum age, in seconds, of cached tape statistics used when deciding whether work warrants a mount.
   # Lower values reflect scheduler changes sooner but increase backend queries. 
   # If omitted, 600 is used.
@@ -76,8 +75,7 @@
   minimum_queued_files = 10000
 
   # Maximum time, in seconds, that the drive process may remain in the scheduling state without reporting
-  # progress. On expiry, the drive process is killed and restarted. Because no tape has been selected for
-  # mounting, cleanup is not required and the drive is not automatically put Down.
+  # progress. On expiry, the drive process is killed and restarted, but the drive will remain UP.
   # If omitted, 300 is used.
   scheduling_timeout_secs = 300
 
@@ -168,8 +166,7 @@
     fetch_max_files = 5000
 
     # Maximum total time, in seconds, allowed to finish writing retrieved data to disk after the tape has been
-    # unmounted. On expiry, the drive process is killed and restarted, interrupting any remaining disk writes.
-    # Cleanup is not required and the drive is not automatically put Down.
+    # unmounted. On expiry, the drive process is killed and restarted, but the drive will remain UP.
     # If omitted, 1800 is used.
     drain_to_disk_timeout_secs = 1800
 
@@ -186,20 +183,14 @@
       enabled = true
 
       # Software RAO algorithm for LTO-8 drives. Valid values are 
-      # - "linear":
-      # - "random":
-      # - "sltf": shorted locate time first
-      # For production, "slft" is recommended. For this to work, the columns NB_WRAPS, MIN_LPOS, and MAX_LPOS 
+      # - "random": Retrieve files in random order (ie. FIFO)
+      # - "linear": Order files by fseq
+      # - "sltf": Shortest Locate Time First. Order by always picking the nearest (lowest cost) neighbour
+      # For production, "sltf" is recommended. For "sltf" to work, the columns NB_WRAPS, MIN_LPOS, and MAX_LPOS 
       # columns of the corresponding media type must be populated in the catalogue. 
       # This option is ignored when hardware RAO is available on the drive.
       # If omitted, "sltf" is used.
       lto_algorithm = "sltf"
-
-      # Colon-delimited options passed to the selected software RAO algorithm. The accepted options depend on
-      # that algorithm; invalid options cause RAO initialization to fail.  This option is ignored when hardware 
-      # RAO is available on the drive.
-      # If omitted, "cost_heuristic_name:cta" is used.
-      lto_algorithm_options = "cost_heuristic_name:cta"
 
   # Hardware-encryption behavior shared by archive and retrieve sessions.
   [transfers.encryption]
@@ -267,14 +258,13 @@
   # If omitted, 5014 is used.
   port = 5014
 
-  # Network timeout, in seconds, applied independently while connecting to the RMCD, writing the request, 
-  # and reading each reply. It is not an end-to-end limit for the complete mount or unmount lifecycle. Expiry
-  # makes the current RMCD operation fail: a mount error enters normal cleanup, while an unmount error puts
-  # the drive Down because the tape could not be returned to the library. 
+  # The timeout in seconds to be applied when performing network read and write operations to RMCD.
+  # Expiry makes the current RMCD operation fail: a mount error enters normal cleanup, while an unmount 
+  # error puts the drive Down. 
   # If omitted, 600 is used.
   request_timeout_secs = 600
 
-  # Maximum number of attempts when the RMCD explicitly returns its fast-retry status. Network and protocol
+  # The maximum number of attempts a retriable RMC request should be issued. Network and protocol
   # errors, including expiry of request_timeout_secs, are not retried by this setting. Increasing it can
   # tolerate a longer RMCD-side transient condition but delays final failure reporting. 
   # If omitted, 10 is used.
