@@ -36,6 +36,7 @@ readonly venv_dir="${project_root}/ci/system_tests/.venv"
 readonly program_name="cta-dev"
 readonly build_state_schema_version=2
 readonly build_state_file="${project_root}/build_rpm/.cta-dev-build-state.json"
+readonly debug_profile_file="${project_root}/ci/orchestration/debug/cta-debug-profile.yaml"
 
 # Global
 platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
@@ -53,7 +54,7 @@ reset=false
 clean_build_dir=false
 clean_build_dirs=false
 enable_ccache=true
-skip_debug_packages=false
+skip_debug_packages=true
 skip_unit_tests=true
 force_install=false
 enable_address_sanitizer=false
@@ -173,6 +174,7 @@ Commands:
   deploy     Deploy a local CTA development instance.
   test       Run a system test.
   up         Equivalent to: build > images > deploy.
+  debug      Equivalent to up, with debuginfo RPMs and the cta-debug image.
   all        Equivalent to: build > images > deploy > test.
 
   install    Creates a symlink to invoke this script using '$program_name'.
@@ -224,7 +226,6 @@ Options:
       --disable-ccache              Disable ccache.
       --unit-tests                  Run unit tests after building.
       --enable-address-sanitizer    Enable AddressSanitizer.
-      --skip-debug-packages         Do not build debuginfo RPMs.
       --force-install               Force SRPM installation.
 
 EOF
@@ -246,10 +247,26 @@ Usage:
   $(basename "$0") images [options]
 
 Options:
-      --enable-debug-image      Build an additional debug image containing
-                                debuginfo packages and gdb.
       --skip-image-cleanup      Keep existing CTA images with the selected
                                 development tag.
+
+EOF
+exit 1
+}
+
+usage_debug() {
+  cat <<EOF
+
+Build and deploy CTA with matching debuginfo packages and a cta-debug image.
+
+This replaces the current deployment, including pods and core dumps stored in
+their ephemeral /var/log/tmp volumes. Run it before reproducing a crash.
+
+Usage:
+  $(basename "$0") debug [options]
+
+The debug command accepts the same build, image, and deployment options as up.
+It keeps the configured CMake build type (RelWithDebInfo by default).
 
 EOF
 exit 1
@@ -412,45 +429,41 @@ parse_options() {
       # =========================================================================
 
       -r|--reset)
-        require_command "$1" "$command" build up all
+        require_command "$1" "$command" build up debug all
         reset=true
         clean_build_dirs=true
         ;;
       --clean-build-dir)
-        require_command "$1" "$command" build up all
+        require_command "$1" "$command" build up debug all
         clean_build_dir=true
         ;;
       --clean-build-dirs)
-        require_command "$1" "$command" build up all
+        require_command "$1" "$command" build up debug all
         clean_build_dirs=true
         ;;
       --disable-ccache)
-        require_command "$1" "$command" build up all
+        require_command "$1" "$command" build up debug all
         enable_ccache=false
         ;;
-      --skip-debug-packages)
-        require_command "$1" "$command" build up all
-        skip_debug_packages=true
-        ;;
       --unit-tests)
-        require_command "$1" "$command" build up all
+        require_command "$1" "$command" build up debug all
         skip_unit_tests=false
         ;;
       --force-install)
-        require_command "$1" "$command" build up all
+        require_command "$1" "$command" build up debug all
         force_install=true
         ;;
       --enable-address-sanitizer)
-        require_command "$1" "$command" build up all
+        require_command "$1" "$command" build up debug all
         enable_address_sanitizer=true
         ;;
       --build-generator)
-        require_command "$1" "$command" build up all
+        require_command "$1" "$command" build up debug all
         build_generator="$2"
         shift
         ;;
       --cmake-build-type)
-        require_command "$1" "$command" build up all
+        require_command "$1" "$command" build up debug all
         cmake_build_type="$2"
         shift
         ;;
@@ -460,12 +473,8 @@ parse_options() {
       # =========================================================================
 
       --skip-image-cleanup)
-        require_command "$1" "$command" images up all
+        require_command "$1" "$command" images up debug all
         image_cleanup=false
-        ;;
-      --enable-debug-image)
-        require_command "$1" "$command" images up all
-        enable_debug_image=true
         ;;
 
       # =========================================================================
@@ -473,25 +482,25 @@ parse_options() {
       # =========================================================================
 
       --with-dcache)
-        require_command "$1" "$command" deploy up all
+        require_command "$1" "$command" deploy up debug all
         dcache_enabled=true
         eos_enabled=false
         ;;
       --local-telemetry)
-        require_command "$1" "$command" deploy up all
+        require_command "$1" "$command" deploy up debug all
         local_telemetry=true
         ;;
       --publish-telemetry)
-        require_command "$1" "$command" deploy up all
+        require_command "$1" "$command" deploy up debug all
         publish_telemetry=true
         ;;
       --eos-image-repository)
-        require_command "$1" "$command" deploy up all
+        require_command "$1" "$command" deploy up debug all
         eos_image_repository="$2"
         shift
         ;;
       --eos-image-tag)
-        require_command "$1" "$command" deploy up all
+        require_command "$1" "$command" deploy up debug all
         eos_image_tag="$2"
         shift
         ;;
@@ -501,34 +510,34 @@ parse_options() {
         shift
         ;;
       --catalogue-config)
-        require_command "$1" "$command" deploy up all
+        require_command "$1" "$command" deploy up debug all
         catalogue_config="$2"
         shift
         ;;
       --scheduler-config)
-        require_command "$1" "$command" deploy up all
+        require_command "$1" "$command" deploy up debug all
         scheduler_config="$2"
         shift
         ;;
       --cta-config)
-        require_command "$1" "$command" deploy up all
+        require_command "$1" "$command" deploy up debug all
         cta_config="$2"
         shift
         ;;
       --eos-config)
-        require_command "$1" "$command" deploy up all
+        require_command "$1" "$command" deploy up debug all
         eos_config="$2"
         shift
         ;;
       --spawn-options)
-        require_command "$1" "$command" deploy up all
+        require_command "$1" "$command" deploy up debug all
         spawn_options=()
         read -ra spawn_options <<< "$2"
         extra_spawn_options+=("${spawn_options[@]}")
         shift
         ;;
       --deploy-namespace)
-        require_command "$1" "$command" deploy up all test all
+        require_command "$1" "$command" deploy up debug all test all
         deploy_namespace="$2"
         shift
         ;;
@@ -1014,6 +1023,44 @@ up_cta() {
   print_stage_summary
 }
 
+print_debug_instructions() {
+  local -r debug_image="localhost/cta/ctageneric/cta-debug:${cta_image_tag}"
+
+  # In the future we may want to improve this by suggesting specific containers
+  cat <<EOF
+
+CTA debug environment is ready.
+
+List the deployed pods:
+  kubectl -n ${deploy_namespace} get pods
+
+Choose a pod and one of its application containers, then attach the debugger:
+  export POD=<pod>
+  export CONTAINER=<container>
+  kubectl -n ${deploy_namespace} debug pod/\${POD} -it \\
+    --target=\${CONTAINER} \\
+    --container=cta-debugger \\
+    --image=${debug_image} \\
+    --profile=general \\
+    --custom=${debug_profile_file} \\
+    -- bash
+
+Core dumps are available inside the debug container under /var/log/tmp.
+Example: gdb /usr/bin/<executable> /var/log/tmp/<core-file>
+EOF
+}
+
+debug_cta() {
+  skip_debug_packages=false
+  enable_debug_image=true
+
+  run_timed_stage "Build" build_cta
+  run_timed_stage "Images" images_cta
+  run_timed_stage "Deploy" deploy_cta
+  print_stage_summary
+  print_debug_instructions
+}
+
 all_cta() {
   run_timed_stage "Build" build_cta
   run_timed_stage "Images" images_cta
@@ -1100,6 +1147,10 @@ main() {
     up)
       [[ $show_help == true ]] && usage
       up_cta
+      ;;
+    debug)
+      [[ $show_help == true ]] && usage_debug
+      debug_cta
       ;;
     all)
       [[ $show_help == true ]] && usage

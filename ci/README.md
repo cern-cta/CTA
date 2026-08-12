@@ -19,7 +19,7 @@ This directory contains all the files necessary for development and automation w
 
 ## Common `cta-dev` workflows
 
-Unlike the old `build_deploy.sh` script, `cta-dev` separates the development workflow into independent commands. You can run individual stages as needed, or use the convenience commands `up` (build -> images -> deploy) and `all` (build -> images -> deploy -> test).
+Unlike the old `build_deploy.sh` script, `cta-dev` separates the development workflow into independent commands. You can run individual stages as needed, or use the convenience commands `up` (build -> images -> deploy), `debug` (a debug-enabled `up`), and `all` (build -> images -> deploy -> test).
 
 ### Per-worktree defaults
 
@@ -66,15 +66,6 @@ Rebuild the CTA container images from the generated RPMs:
 cta-dev images
 ```
 
-By default, the provided Docker images are very minimal and don't provide various utilities and debuginfo packages. For this, you can build the debug image:
-
-```bash
-# This image can be used in the Kubernetes setup using [kubectl debug](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_debug/).
-cta-dev images --enable-debug-image
-```
-
-
-
 ### Deploy
 
 Deploy a fresh development instance:
@@ -106,6 +97,17 @@ Build, create images, and deploy:
 ```bash
 cta-dev up
 ```
+
+Build matching debuginfo packages and the `cta-debug` image, then deploy a
+fresh instance prepared for debugging:
+
+```bash
+cta-dev debug
+```
+
+The command prints a [`kubectl debug`](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_debug/)
+template after deployment. The attached debug container can access core dumps
+under `/var/log/tmp`.
 
 Build, deploy, and immediately run the system tests:
 

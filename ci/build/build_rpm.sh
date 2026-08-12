@@ -265,6 +265,14 @@ build_rpm() {
   export CTA_VERSION=${cta_version}
   export GTEST_COLOR="yes"
 
+  if [[ ${skip_debug_packages} = true && -d "${build_dir}/RPM/RPMS" ]]; then
+    # rpmbuild does not remove packages created by an earlier debug build.
+    # Keep the output repository consistent with the requested build mode.
+    find "${build_dir}/RPM/RPMS" -type f \
+      \( -name '*-debuginfo-*.rpm' -o -name '*-debugsource-*.rpm' \) \
+      -delete
+  fi
+
   if [[ "${skip_cmake}" = false ]]; then
     # Needs to be exported as cmake gets it from the environment
     export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=${xrootd_ssi_version}
