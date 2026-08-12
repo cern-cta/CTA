@@ -23,7 +23,6 @@ _ctadev() {
         --clean-build-dir
         --clean-build-dirs
         --disable-ccache
-        --skip-cmake
         --skip-debug-packages
         --unit-tests
         --force-install
