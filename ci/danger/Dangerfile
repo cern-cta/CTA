@@ -57,7 +57,7 @@ end
 labels = gitlab.mr_json["labels"] || []
 
 type_labels = labels.select { |l| l.start_with?("type::") }
-other_labels = labels - (type_labels + priority_labels)
+other_labels = labels - (type_labels)
 
 if type_labels.size != 1
   fail("**Missing `type::` Label**\n\nThis merge request must have a `type::` label (e.g. `type::bug`, `type::addition`).")
