@@ -113,6 +113,35 @@ def _stage_request(
     return _request_id(response)
 
 
+def _generate_poweruser_scitoken(eos_mgm: EosMgmHost, scope: str) -> str:
+    return eos_mgm.generate_scitoken(
+        [
+            ("scope", scope),
+            ("sub", "sub_poweruser1"),
+            ("aud", "ctaeos"),
+        ],
+        keyid="ctaeos",
+        timeout=600,
+    )
+
+
+def _delete_stage_request(
+    disk_client: DiskClientHost,
+    rest_api_endpoint: str,
+    request_id: str,
+    token: str,
+    certificate_options: str = "--insecure",
+) -> None:
+    print(f"Deleting stage request {request_id}")
+    delete_response = disk_client.http_request(
+        f"{rest_api_endpoint}/stage/{request_id}",
+        token=token,
+        certificate_options=certificate_options,
+        method="DELETE",
+    )
+    _assert_empty_response(delete_response, "Stage request deletion")
+
+
 def _assert_stage_status(response: str, request_id: str, file_path: Path) -> dict[str, Any]:
     request_status = json.loads(response)
     assert isinstance(request_status, dict), f"Expected a stage status object, got: {request_status!r}"
@@ -264,125 +293,6 @@ def test_generate_scitoken(eos_mgm: EosMgmHost) -> None:
     assert payload_json["sub"] == "test", f"SciToken with wrong sub: {payload_json['sub']}"
     assert payload_json["scope"] == scope, f"SciToken with wrong scope: {payload_json['scope']}"
     assert payload_json["wlcg.ver"] == "1.0", f"SciToken with wrong wlcg version: {payload_json['wlcg.ver']}"
-
-
-def test_archive_and_retrieve_file_with_wlcg_scitoken(
-    disk_client: DiskClientHost,
-    disk_instance: DiskInstanceHost,
-    disk_instance_name: str,
-    eos_mgm: EosMgmHost,
-    cta_cli: CtaCliHost,
-    test_dir: Path,
-) -> None:
-    file_path = test_dir / "test_http-rest-api-scitoken"
-    file_contents = "SciToken archive and retrieve test"
-    upload_scope = "storage.create:/"
-    rest_api_scope_ok = f"storage.stage:{test_dir}"
-    rest_api_scope_error = "storage.stage:/path/does/not/exist"
-    print(f"Archiving and retrieving {file_path} with WLCG SciTokens")
-    scitoken_user1 = eos_mgm.generate_scitoken(
-        [
-            ("scope", upload_scope),
-            ("sub", "sub_user1"),
-            ("aud", "ctaeos"),
-        ],
-        keyid="ctaeos",
-        timeout=600,
-    )
-    scitoken_poweruser1 = eos_mgm.generate_scitoken(
-        [
-            ("scope", rest_api_scope_ok),
-            ("sub", "sub_poweruser1"),
-            ("aud", "ctaeos"),
-        ],
-        keyid="ctaeos",
-        timeout=600,
-    )
-    scitoken_poweruser1_wrong_scope = eos_mgm.generate_scitoken(
-        [
-            ("scope", rest_api_scope_error),
-            ("sub", "sub_poweruser1"),
-            ("aud", "ctaeos"),
-        ],
-        keyid="ctaeos",
-        timeout=600,
-    )
-
-    temporary_file = Path(disk_client.exec_with_output("mktemp /tmp/tape_rest_api_scitoken.XXXXXX"))
-    rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
-    drives_are_down = False
-    try:
-        with suppress(RuntimeError):
-            disk_client.delete_file(disk_instance_name, file_path)
-        disk_client.exec(f'printf "{file_contents}" > "{temporary_file}"')
-
-        # Prevent CTA from flushing the upload before archiveinfo can observe its initial DISK locality
-        cta_cli.set_all_drives_down()
-        drives_are_down = True
-        print(f"Uploading {temporary_file} to {disk_instance.webdav_url}{file_path} with a WLCG SciToken")
-        upload_response = disk_client.http_request(
-            f"{disk_instance.webdav_url}{file_path}",
-            token=scitoken_user1,
-            upload_file=temporary_file,
-        )
-        _assert_empty_response(upload_response, "SciToken upload")
-        archive_info = _archive_info(
-            disk_client,
-            rest_api_endpoint,
-            file_path,
-            scitoken_poweruser1,
-        )
-        assert archive_info["locality"] == "DISK"
-        cta_cli.set_all_drives_up()
-        drives_are_down = False
-
-        archived_file_info = disk_client.wait_for_archive_locality(
-            rest_api_endpoint,
-            file_path,
-            "TAPE",
-            token=scitoken_poweruser1,
-            wait_timeout_secs=30,
-        )
-        assert archived_file_info["path"] == str(file_path)
-        assert archived_file_info.get("error") is None
-        print(f"File archived successfully with a WLCG SciToken: {archived_file_info}")
-
-        with pytest.raises(RuntimeError):
-            _stage_request(
-                disk_client,
-                rest_api_endpoint,
-                file_path,
-                scitoken_poweruser1_wrong_scope,
-            )
-
-        request_id = _stage_request(
-            disk_client,
-            rest_api_endpoint,
-            file_path,
-            scitoken_poweruser1,
-        )
-        disk_client.wait_for_stage_file_status(
-            rest_api_endpoint,
-            request_id,
-            file_path,
-            token=scitoken_poweruser1,
-            expected_state="COMPLETED",
-            expected_on_disk=True,
-            wait_timeout_secs=30,
-        )
-        completed_status_response = disk_client.http_request(
-            f"{rest_api_endpoint}/stage/{request_id}",
-            token=scitoken_poweruser1,
-        )
-        completed_file_status = _assert_stage_status(completed_status_response, request_id, file_path)
-        assert "error" not in completed_file_status
-        assert completed_file_status.get("state") == "COMPLETED" or completed_file_status.get("onDisk") is True
-
-        print(f"Retrieved {file_path} successfully through the Tape REST API with a WLCG SciToken")
-    finally:
-        if drives_are_down:
-            cta_cli.set_all_drives_up()
-        disk_client.exec(f'rm -f "{temporary_file}"')
 
 
 def test_archive_file_and_track_archiveinfo(
@@ -671,3 +581,141 @@ def test_delete_stage_request(
         )["locality"]
         == "TAPE"
     )
+
+
+def test_wlcg_scitoken_stage_with_root_scope_and_poll_token(
+    disk_client: DiskClientHost,
+    disk_instance: DiskInstanceHost,
+    disk_instance_name: str,
+    eos_mgm: EosMgmHost,
+    test_dir: Path,
+    rest_api_poweruser_token: str,
+    rest_api_certificate_options: str,
+) -> None:
+    file_path = test_dir / "test_http-rest-api"
+    print(f"Staging {file_path} with a root-scoped WLCG SciToken")
+    rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
+    stage_token = _generate_poweruser_scitoken(eos_mgm, "storage.stage:/")
+    poll_token = _generate_poweruser_scitoken(eos_mgm, "storage.poll:/")
+
+    request_id = _stage_request(disk_client, rest_api_endpoint, file_path, stage_token)
+    disk_client.wait_for_stage_file_status(
+        rest_api_endpoint,
+        request_id,
+        file_path,
+        token=poll_token,
+        expected_state="COMPLETED",
+        expected_on_disk=True,
+        wait_timeout_secs=30,
+    )
+    status_response = disk_client.http_request(
+        f"{rest_api_endpoint}/stage/{request_id}",
+        token=poll_token,
+    )
+    completed_file_status = _assert_stage_status(status_response, request_id, file_path)
+    assert "error" not in completed_file_status
+    assert completed_file_status.get("state") == "COMPLETED" or completed_file_status.get("onDisk") is True
+
+    disk_client.evict_file(disk_instance_name, file_path, wait_timeout_secs=30)
+    _delete_stage_request(
+        disk_client,
+        rest_api_endpoint,
+        request_id,
+        rest_api_poweruser_token,
+        rest_api_certificate_options,
+    )
+
+
+def test_wlcg_scitoken_stage_with_test_dir_scope(
+    disk_client: DiskClientHost,
+    disk_instance: DiskInstanceHost,
+    disk_instance_name: str,
+    eos_mgm: EosMgmHost,
+    test_dir: Path,
+    rest_api_poweruser_token: str,
+    rest_api_certificate_options: str,
+) -> None:
+    file_path = test_dir / "test_http-rest-api"
+    print(f"Staging {file_path} with a test-dir-scoped WLCG SciToken")
+    rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
+    stage_token = _generate_poweruser_scitoken(eos_mgm, f"storage.stage:{test_dir}")
+    poll_token = _generate_poweruser_scitoken(eos_mgm, f"storage.poll:{test_dir}")
+
+    request_id = _stage_request(disk_client, rest_api_endpoint, file_path, stage_token)
+    disk_client.wait_for_stage_file_status(
+        rest_api_endpoint,
+        request_id,
+        file_path,
+        token=poll_token,
+        expected_state="COMPLETED",
+        expected_on_disk=True,
+        wait_timeout_secs=30,
+    )
+
+    disk_client.evict_file(disk_instance_name, file_path, wait_timeout_secs=30)
+    _delete_stage_request(
+        disk_client,
+        rest_api_endpoint,
+        request_id,
+        rest_api_poweruser_token,
+        rest_api_certificate_options,
+    )
+
+
+def test_wlcg_scitoken_stage_with_invalid_scope_fails(
+    disk_client: DiskClientHost,
+    disk_instance: DiskInstanceHost,
+    eos_mgm: EosMgmHost,
+    test_dir: Path,
+) -> None:
+    file_path = test_dir / "test_http-rest-api"
+    print(f"Checking that staging {file_path} fails with a wrong WLCG scope")
+    rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
+    stage_token = _generate_poweruser_scitoken(eos_mgm, "storage.stage:/path/does/not/exist")
+
+    with pytest.raises(RuntimeError):
+        _stage_request(disk_client, rest_api_endpoint, file_path, stage_token)
+
+
+def test_wlcg_scitoken_stage_request_with_poll_scope_fails(
+    disk_client: DiskClientHost,
+    disk_instance: DiskInstanceHost,
+    eos_mgm: EosMgmHost,
+    test_dir: Path,
+) -> None:
+    file_path = test_dir / "test_http-rest-api"
+    print(f"Checking that a storage.poll WLCG SciToken cannot stage {file_path}")
+    rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
+    poll_token = _generate_poweruser_scitoken(eos_mgm, f"storage.poll:{test_dir}")
+
+    with pytest.raises(RuntimeError):
+        _stage_request(disk_client, rest_api_endpoint, file_path, poll_token)
+
+
+def test_wlcg_scitoken_archiveinfo_with_poll_scope(
+    disk_client: DiskClientHost,
+    disk_instance: DiskInstanceHost,
+    eos_mgm: EosMgmHost,
+    test_dir: Path,
+) -> None:
+    file_path = test_dir / "test_http-rest-api"
+    print(f"Checking archiveinfo access for {file_path} with WLCG storage.poll SciTokens")
+    rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
+    valid_poll_token = _generate_poweruser_scitoken(eos_mgm, f"storage.poll:{test_dir}")
+    invalid_poll_token = _generate_poweruser_scitoken(eos_mgm, "storage.poll:/path/does/not/exist")
+
+    archive_info = _archive_info(
+        disk_client,
+        rest_api_endpoint,
+        file_path,
+        valid_poll_token,
+    )
+    assert archive_info["path"] == str(file_path)
+
+    with pytest.raises(RuntimeError):
+        _archive_info(
+            disk_client,
+            rest_api_endpoint,
+            file_path,
+            invalid_poll_token,
+        )
