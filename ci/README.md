@@ -21,6 +21,17 @@ This directory contains all the files necessary for development and automation w
 
 Unlike the old `build_deploy.sh` script, `cta-dev` separates the development workflow into independent commands. You can run individual stages as needed, or use the convenience commands `up` (build -> images -> deploy) and `all` (build -> images -> deploy -> test).
 
+### Per-worktree defaults
+
+Copy `ci/.cta-dev.env.example` to `ci/.cta-dev.env` to keep frequently used build settings:
+
+```bash
+cp ci/.cta-dev.env.example ci/.cta-dev.env
+```
+
+The file supports scheduler type, Oracle support, repository mode, platform, build generator, and CMake build type. Command-line options override values from the file.
+Any manually supplied CLI flags will overwrite the .env behaviour.
+
 ### Build only
 
 Compile the CTA RPMs inside the persistent build container:
