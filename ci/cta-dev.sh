@@ -162,6 +162,19 @@ Developer workflow utility for CTA. This script orchestrates the local
 development workflow for CTA. Commands can be executed independently or
 combined into a complete development pipeline.
 
+  [1. BUILD RPMS]             [2. BUILD IMAGES]              [3. DEPLOY SETUP]
+  +--------------------+      +-----------------------+      +-------------------+
+  | Compile source in  |      | Take the built RPMS   |      | Deploy a CTA test |
+  | a persistent build | ---> | and use them to build | ---> | instance on the   |
+  | container          |      | container images      |      | local K8s cluster |
+  +--------------------+      +-----------------------+      +-------------------+
+           build                       images                       deploy
+             \___________________________  ___________________________/
+                                         \/
+                                up: build + images + deploy
+                             debug: up + symbols + debug image
+                                all: up + system tests
+
 Per-worktree defaults can be configured in ${script_dir}/.cta-dev.env.
 Command-line options override configured defaults.
 
@@ -173,6 +186,7 @@ Commands:
   images     Build container images from the generated RPMs.
   deploy     Deploy a local CTA development instance.
   test       Run a system test.
+
   up         Equivalent to: build > images > deploy.
   debug      Equivalent to up, with debuginfo RPMs and the cta-debug image.
   all        Equivalent to: build > images > deploy > test.
@@ -182,22 +196,15 @@ Commands:
 
 Global options:
   -h, --help                         Show this help.
-      --container-runtime <runtime>  Container runtime [docker, podman].
-                                     Auto-detected (working Podman preferred).
-                                     Docker requires the Buildx plugin.
-      --platform <platform>          Platform to build for.
-                                     Defaults to project.json.
-      --scheduler-type <type>        Scheduler backend
-                                     [objectstore, pgsched].
+      --container-runtime <runtime>  Container runtime [docker, podman]. Auto-detected.
+      --platform <platform>          Platform to build for. Defaults to project.json.
+      --scheduler-type <type>        Scheduler backend [objectstore, pgsched].
       --disable-oracle-support       Build without Oracle support.
-      --use-public-repos             Use public YUM repositories instead of
-                                     CERN internal repositories.
+      --use-public-repos             Use public YUM repos instead of CERN internal repos.
 
-Run:
+Run the following for command-specific options:
 
   $(basename "$0") <command> --help
-
-for command-specific options.
 
 EOF
 exit 1
@@ -1023,7 +1030,15 @@ up_cta() {
   print_stage_summary
 }
 
-print_debug_instructions() {
+debug_cta() {
+  skip_debug_packages=false
+  enable_debug_image=true
+
+  run_timed_stage "Build" build_cta
+  run_timed_stage "Images" images_cta
+  run_timed_stage "Deploy" deploy_cta
+  print_stage_summary
+
   local -r debug_image="localhost/cta/ctageneric/cta-debug:${cta_image_tag}"
 
   # In the future we may want to improve this by suggesting specific containers
@@ -1048,17 +1063,6 @@ Choose a pod and one of its application containers, then attach the debugger:
 Core dumps are available inside the debug container under /var/log/tmp.
 Example: gdb /usr/bin/<executable> /var/log/tmp/<core-file>
 EOF
-}
-
-debug_cta() {
-  skip_debug_packages=false
-  enable_debug_image=true
-
-  run_timed_stage "Build" build_cta
-  run_timed_stage "Images" images_cta
-  run_timed_stage "Deploy" deploy_cta
-  print_stage_summary
-  print_debug_instructions
 }
 
 all_cta() {
