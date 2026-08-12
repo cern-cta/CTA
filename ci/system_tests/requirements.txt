@@ -3,4 +3,5 @@ pytest>=8.0.0
 pytest-asyncio>=1.2.0
 oauthlib>=3.2.2
 jsonschema>=4.25.1
+packaging>=24.0
 typing-extensions>=4.4.0

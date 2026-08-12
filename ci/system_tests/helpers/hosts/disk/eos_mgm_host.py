@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import datetime
+import json
 from functools import cached_property
 from pathlib import Path
 
+from packaging.version import Version
 from typing_extensions import override
 
 from system_tests.helpers.connections.remote_connection import RemoteConnection
@@ -30,6 +32,12 @@ class EosMgmHost(DiskInstanceHost):
     @cached_property
     def webdav_url(self) -> str:
         return f"https://{self.instance_name}:8443"
+
+    @cached_property
+    def eos_version(self) -> Version:
+        version_entries = json.loads(self.exec_with_output("eos --json version"))["version"]
+        version_info = next(entry for entry in version_entries if "EOS_SERVER_VERSION" in entry)
+        return Version(version_info["EOS_SERVER_VERSION"])
 
     @override
     def generate_scitoken(self, claims: list[tuple[str, str]], keyid: str, timeout: int = 60) -> str:

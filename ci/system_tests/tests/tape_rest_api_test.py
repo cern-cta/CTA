@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from packaging.version import Version
 
 from system_tests.helpers.hosts import CtaCliHost, DiskClientHost, DiskInstanceHost, EosClientHost, EosMgmHost
 from system_tests.helpers.utils import find_line
@@ -62,6 +63,12 @@ def _decode_jwt_payload(token: str) -> dict[str, Any]:
     payload_json = json.loads(payload)
     assert isinstance(payload_json, dict), f"Expected a JWT payload object, got: {payload_json!r}"
     return payload_json
+
+
+def _skip_if_scitoken_unsupported(eos_mgm: EosMgmHost) -> None:
+    minimum_version = Version("5.5.0")
+    if eos_mgm.eos_version < minimum_version:
+        pytest.skip(f"This test requires EOS >= {minimum_version}, got {eos_mgm.eos_version}")
 
 
 def _archive_info(
@@ -282,6 +289,7 @@ def test_well_known_endpoint(disk_client: DiskClientHost, disk_instance: DiskIns
 
 
 def test_generate_scitoken(eos_mgm: EosMgmHost) -> None:
+    _skip_if_scitoken_unsupported(eos_mgm)
     print("Generating and validating a SciToken")
     scope = "storage.stage:/eos/"
     scitoken = eos_mgm.generate_scitoken(
@@ -592,6 +600,7 @@ def test_wlcg_scitoken_stage_with_root_scope_and_poll_token(
     rest_api_poweruser_token: str,
     rest_api_certificate_options: str,
 ) -> None:
+    _skip_if_scitoken_unsupported(eos_mgm)
     file_path = test_dir / "test_http-rest-api"
     print(f"Staging {file_path} with a root-scoped WLCG SciToken")
     rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
@@ -635,6 +644,7 @@ def test_wlcg_scitoken_stage_with_test_dir_scope(
     rest_api_poweruser_token: str,
     rest_api_certificate_options: str,
 ) -> None:
+    _skip_if_scitoken_unsupported(eos_mgm)
     file_path = test_dir / "test_http-rest-api"
     print(f"Staging {file_path} with a test-dir-scoped WLCG SciToken")
     rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
@@ -670,6 +680,7 @@ def test_wlcg_scitoken_stage_with_invalid_scope_fails(
     rest_api_poweruser_token: str,
     rest_api_certificate_options: str,
 ) -> None:
+    _skip_if_scitoken_unsupported(eos_mgm)
     file_path = test_dir / "test_http-rest-api"
     print(f"Checking that staging {file_path} fails with a wrong WLCG scope")
     rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
@@ -703,6 +714,7 @@ def test_wlcg_scitoken_stage_request_with_poll_scope_fails(
     rest_api_poweruser_token: str,
     rest_api_certificate_options: str,
 ) -> None:
+    _skip_if_scitoken_unsupported(eos_mgm)
     file_path = test_dir / "test_http-rest-api"
     print(f"Checking that a storage.poll WLCG SciToken cannot stage {file_path}")
     rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
@@ -734,6 +746,7 @@ def test_wlcg_scitoken_archiveinfo_with_poll_scope(
     eos_mgm: EosMgmHost,
     test_dir: Path,
 ) -> None:
+    _skip_if_scitoken_unsupported(eos_mgm)
     file_path = test_dir / "test_http-rest-api"
     print(f"Checking archiveinfo access for {file_path} with WLCG storage.poll SciTokens")
     rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
