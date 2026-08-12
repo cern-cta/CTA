@@ -689,11 +689,10 @@ def test_wlcg_scitoken_stage_with_invalid_scope_fails(
     request_id = _stage_request(disk_client, rest_api_endpoint, file_path, stage_token)
     status_response = disk_client.http_request(
         f"{rest_api_endpoint}/stage/{request_id}",
-        token=rest_api_poweruser_token,
-        certificate_options=rest_api_certificate_options,
+        token=stage_token,
     )
-    failed_file_status = _assert_stage_status(status_response, request_id, file_path)
-    assert "error" in failed_file_status
+    file_status = _assert_stage_status(status_response, request_id, file_path)
+    assert "error" in file_status, f"Invalid SciToken request did not report an error: {file_status}"
     _delete_stage_request(
         disk_client,
         rest_api_endpoint,
@@ -720,11 +719,10 @@ def test_wlcg_scitoken_stage_request_with_poll_scope_fails(
     request_id = _stage_request(disk_client, rest_api_endpoint, file_path, poll_token)
     status_response = disk_client.http_request(
         f"{rest_api_endpoint}/stage/{request_id}",
-        token=rest_api_poweruser_token,
-        certificate_options=rest_api_certificate_options,
+        token=poll_token,
     )
-    failed_file_status = _assert_stage_status(status_response, request_id, file_path)
-    assert "error" in failed_file_status
+    file_status = _assert_stage_status(status_response, request_id, file_path)
+    assert "error" in file_status, f"storage.poll SciToken request did not report an error: {file_status}"
     _delete_stage_request(
         disk_client,
         rest_api_endpoint,
