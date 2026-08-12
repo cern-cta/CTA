@@ -39,9 +39,9 @@ endif()
 
 if(NOT DEFINED JOBS_COUNT)
   include(ProcessorCount)
-  ProcessorCount(PROCESSOR_COUNT)
-  set(JOBS_COUNT ${PROCESSOR_COUNT})
+  ProcessorCount(JOBS_COUNT)
 endif()
+set(JOBS_COUNT "${JOBS_COUNT}" CACHE STRING "Maximum number of parallel build jobs")
 
 # -----------------------------------------------------------------------------
 # Derived configuration
