@@ -77,6 +77,7 @@ def _archive_info(
     file_path: Path,
     token: str,
     certificate_options: str = "--insecure",
+    expect_error: bool = False,
 ) -> dict[str, Any]:
     print(f"Querying archive locality for {file_path}")
     response = disk_client.http_request(
@@ -94,6 +95,11 @@ def _archive_info(
         f"Unexpected archiveinfo response fields: {archive_info}"
     )
     assert archive_info.get("path") == str(file_path), f"Archiveinfo returned the wrong path: {archive_info}"
+    if expect_error:
+        assert "error" in archive_info, f"Archiveinfo did not return an error: {archive_info}"
+        assert "locality" not in archive_info, f"Archiveinfo returned locality with an error: {archive_info}"
+        print(f"Archiveinfo response for {file_path}: {archive_info}")
+        return archive_info
     assert "error" not in archive_info, f"Archiveinfo returned an error: {archive_info}"
     locality = archive_info.get("locality")
     assert locality in {"DISK", "TAPE", "DISK_AND_TAPE", "LOST", "NONE", "UNAVAILABLE"}, (
@@ -753,10 +759,11 @@ def test_wlcg_scitoken_archiveinfo_with_poll_scope(
     )
     assert archive_info["path"] == str(file_path)
 
-    with pytest.raises(RuntimeError):
-        _archive_info(
-            disk_client,
-            rest_api_endpoint,
-            file_path,
-            invalid_poll_token,
-        )
+    invalid_archive_info = _archive_info(
+        disk_client,
+        rest_api_endpoint,
+        file_path,
+        invalid_poll_token,
+        expect_error=True,
+    )
+    assert "prepare permission" in invalid_archive_info["error"]
