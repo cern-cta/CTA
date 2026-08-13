@@ -52,7 +52,7 @@ build_local() {
   local num_jobs=8
   local cta_version="5"
   # These versions don't affect anything functionality wise
-  local vcs_version="dev"
+  local cta_version_suffix="dev"
   local xrootd_ssi_version="dev"
 
   # Parse command line arguments
@@ -132,7 +132,7 @@ build_local() {
       --build-generator "${build_generator}" \
       --create-build-dir \
       --cta-version ${cta_version} \
-      --vcs-version ${vcs_version} \
+      --cta-version-suffix ${cta_version_suffix} \
       --scheduler-type ${scheduler_type} \
       --oracle-support ${oracle_support} \
       --jobs ${num_jobs} \
@@ -172,7 +172,7 @@ build_local() {
     --create-build-dir \
     --srpm-dir build_srpm/RPM/SRPMS \
     --cta-version ${cta_version} \
-    --vcs-version ${vcs_version} \
+    --cta-version-suffix ${cta_version_suffix} \
     --xrootd-ssi-version ${xrootd_ssi_version} \
     --scheduler-type ${scheduler_type} \
     --oracle-support ${oracle_support} \

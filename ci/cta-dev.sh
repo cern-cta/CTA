@@ -45,13 +45,14 @@ oracle_support="true"
 enable_internal_repos=true
 container_runtime=""
 container_runtime_explicit=false
-cta_image_tag=dev-0
-deploy_namespace="dev"
+namespace="dev"
+cta_version="5"
+cta_version_suffix="dev"
+cta_image_tag=""
 
 # Build
 build_container_restarted=false
 reset=false
-clean_build_dir=false
 clean_build_dirs=false
 enable_ccache=true
 skip_debug_packages=true
@@ -143,6 +144,20 @@ load_cta_dev_env() {
           die "Invalid value for ${key} in ${env_file}:${line_number}: expected Release, Debug, RelWithDebInfo, or MinSizeRel."
         cmake_build_type=$value
         ;;
+      CTA_DEV_CTA_VERSION)
+        [[ "$value" =~ ^[0-9.]+$ ]] || \
+          die "Invalid value for ${key} in ${env_file}:${line_number}: only numbers and dots are allowed."
+        cta_version=$value
+        ;;
+      CTA_DEV_CTA_VERSION_SUFFIX)
+        [[ "$value" =~ ^[a-z0-9.-]+$ ]] || \
+          die "Invalid value for ${key} in ${env_file}:${line_number}: only lowercase letters, numbers, dots, and hyphens are allowed."
+        cta_version_suffix=$value
+        ;;
+      CTA_DEV_NAMESPACE)
+        [[ -n "$value" ]] || die "Invalid value for ${key} in ${env_file}:${line_number}: must not be empty."
+        namespace=$value
+        ;;
       *)
         die "Unknown configuration key '${key}' in ${env_file}:${line_number}."
         ;;
@@ -200,6 +215,9 @@ Global options:
       --scheduler-type <type>        Scheduler backend [objectstore, pgsched].
       --disable-oracle-support       Build without Oracle support.
       --use-public-repos             Use public YUM repos instead of CERN internal repos.
+      --cta-version <version>        Numeric CTA base version (numbers and dots).
+      --cta-version-suffix <suffix>  CTA release/build suffix. The package version and
+                                     image tag are <version>-<suffix>.
 
 Run the following for command-specific options:
 
@@ -223,16 +241,17 @@ Usage:
 Options:
   -r, --reset                       Recreate the persistent build container
                                     and rebuild the SRPMs.
-      --clean-build-dir             Remove build_rpm/.
       --clean-build-dirs            Remove build_rpm/ and build_srpm/.
       --build-generator <generator> CMake generator
                                     ["Unix Makefiles", "Ninja"].
       --cmake-build-type <type>     Release, Debug, RelWithDebInfo,
                                     or MinSizeRel.
       --disable-ccache              Disable ccache.
-      --unit-tests                  Run unit tests after building.
+      --enable-unit-tests           Run unit tests after building.
       --enable-address-sanitizer    Enable AddressSanitizer.
       --force-install               Force SRPM installation.
+      --cta-version <version>       Numeric CTA base version.
+      --cta-version-suffix <suffix> CTA release/build suffix.
 
 EOF
 exit 1
@@ -251,6 +270,10 @@ All images are built in parallel.
 
 Usage:
   $(basename "$0") images [options]
+
+Options:
+      --cta-version <version>       Numeric CTA base version.
+      --cta-version-suffix <suffix> CTA release/build suffix.
 
 EOF
 exit 1
@@ -285,7 +308,7 @@ Usage:
   $(basename "$0") deploy [options]
 
 Options:
-      --deploy-namespace <ns>      Kubernetes namespace.
+      --namespace <ns>             Kubernetes namespace.
                                    Defaults to dev.
       --catalogue-config <path>    Catalogue values file.
       --scheduler-config <path>    Scheduler values file.
@@ -294,7 +317,10 @@ Options:
       --eos-config <path>          EOS Helm values.
       --eos-image-repository <r>   EOS image repository.
       --eos-image-tag <tag>        EOS image tag.
-      --cta-image-tag <tag>        CTA image tag.
+      --cta-version <version>      Numeric CTA base version.
+      --cta-version-suffix <suffix>
+                                   CTA release/build suffix. The CTA image tag is
+                                   constructed as <version>-<suffix>.
       --spawn-options <options>    Additional deployment options.
       --with-dcache                Deploy dCache instead of EOS.
       --local-telemetry            Deploy a local telemetry stack.
@@ -425,6 +451,16 @@ parse_options() {
         container_runtime_explicit=true
         shift
         ;;
+      --cta-version)
+        require_command "$1" "$command" build images deploy up debug all
+        cta_version="$2"
+        shift
+        ;;
+      --cta-version-suffix)
+        require_command "$1" "$command" build images deploy up debug all
+        cta_version_suffix="$2"
+        shift
+        ;;
 
       # =========================================================================
       #  Build options
@@ -435,10 +471,6 @@ parse_options() {
         reset=true
         clean_build_dirs=true
         ;;
-      --clean-build-dir)
-        require_command "$1" "$command" build up debug all
-        clean_build_dir=true
-        ;;
       --clean-build-dirs)
         require_command "$1" "$command" build up debug all
         clean_build_dirs=true
@@ -447,7 +479,7 @@ parse_options() {
         require_command "$1" "$command" build up debug all
         enable_ccache=false
         ;;
-      --unit-tests)
+      --enable-unit-tests)
         require_command "$1" "$command" build up debug all
         skip_unit_tests=false
         ;;
@@ -501,11 +533,6 @@ parse_options() {
         eos_image_tag="$2"
         shift
         ;;
-      --cta-image-tag)
-        require_command "$1" "$command" deploy
-        cta_image_tag="$2"
-        shift
-        ;;
       --catalogue-config)
         require_command "$1" "$command" deploy up debug all
         catalogue_config="$2"
@@ -533,9 +560,9 @@ parse_options() {
         extra_spawn_options+=("${spawn_options[@]}")
         shift
         ;;
-      --deploy-namespace)
+      --namespace)
         require_command "$1" "$command" deploy up debug all test all
-        deploy_namespace="$2"
+        namespace="$2"
         shift
         ;;
 
@@ -557,6 +584,13 @@ parse_options() {
   if [[ "$scheduler_type" != "objectstore" ]] && [[ "$scheduler_type" != "pgsched" ]]; then
     unsupported_argument "--scheduler-type is \"$scheduler_type\" but must be one of [objectstore, pgsched]."
   fi
+
+  [[ "$cta_version" =~ ^[0-9.]+$ ]] || \
+    unsupported_argument "--cta-version is \"$cta_version\" but may contain only numbers and dots."
+  [[ "$cta_version_suffix" =~ ^[a-z0-9.-]+$ ]] || \
+    unsupported_argument "--cta-version-suffix is \"$cta_version_suffix\" but may contain only lowercase letters, numbers, dots, and hyphens."
+
+  cta_image_tag="${cta_version}-${cta_version_suffix}"
 
 }
 
@@ -592,10 +626,10 @@ local_kubernetes_available() {
 
 ensure_namespace_owned() {
   local owner
-  if kubectl get namespace "$deploy_namespace" >/dev/null 2>&1; then
-    owner=$(kubectl get namespace "$deploy_namespace" -o 'jsonpath={.metadata.labels.app\.kubernetes\.io/managed-by}')
+  if kubectl get namespace "$namespace" >/dev/null 2>&1; then
+    owner=$(kubectl get namespace "$namespace" -o 'jsonpath={.metadata.labels.app\.kubernetes\.io/managed-by}')
     [[ $owner == cta-create-instance ]] || \
-      die "Refusing to replace namespace '$deploy_namespace': it is not managed by CTA tooling. Delete it manually with: kubectl delete namespace '$deploy_namespace'"
+      die "Refusing to replace namespace '$namespace': it is not managed by CTA tooling. Delete it manually with: kubectl delete namespace '$namespace'"
   fi
 }
 
@@ -627,8 +661,6 @@ build_cta() {
   cd "$project_root"
 
   # Constants
-  local -r cta_version="5"
-  local -r vcs_version="dev"
   local -r xrootd_ssi_version=$(git -C "$project_root/xrootd-ssi-protobuf-interface" describe --tags --exact-match)
   local -r build_image_name="cta-build-image-${platform}"
   local -r build_container_name="cta-build${project_root//\//-}-${platform}"
@@ -663,7 +695,7 @@ build_cta() {
     --argjson skipUnitTests "$skip_unit_tests" \
     --argjson enableAddressSanitizer "$enable_address_sanitizer" \
     --arg ctaVersion "$cta_version" \
-    --arg vcsVersion "$vcs_version" \
+    --arg ctaVersionSuffix "$cta_version_suffix" \
     --arg xrootdSsiVersion "$xrootd_ssi_version" \
     --argjson jobs "$num_jobs" \
     --argjson internalRepos "$enable_internal_repos" \
@@ -672,7 +704,7 @@ build_cta() {
       cmakeBuildType: $cmakeBuildType, enableCcache: $enableCcache,
       buildDebugPackages: ($skipDebugPackages | not), runUnitTests: ($skipUnitTests | not),
       enableAddressSanitizer: $enableAddressSanitizer, ctaVersion: $ctaVersion,
-      vcsVersion: $vcsVersion, xrootdSsiVersion: $xrootdSsiVersion, jobs: $jobs,
+      ctaVersionSuffix: $ctaVersionSuffix, xrootdSsiVersion: $xrootdSsiVersion, jobs: $jobs,
       internalRepos: $internalRepos}')
 
   [[ -d "${project_root}/build_srpm" || -d "${project_root}/build_rpm" ]] && build_output_exists=true
@@ -690,7 +722,7 @@ build_cta() {
          and (.runUnitTests | type == "boolean")
          and (.enableAddressSanitizer | type == "boolean")
          and (.ctaVersion | type == "string")
-         and (.vcsVersion | type == "string")
+         and (.ctaVersionSuffix | type == "string")
          and (.xrootdSsiVersion | type == "string")
          and (.jobs | type == "number")
          and (.internalRepos | type == "boolean")' \
@@ -727,7 +759,7 @@ build_cta() {
         runUnitTests) log_warn "Unit test setting changed: ${old_value} -> ${new_value}" ;;
         enableAddressSanitizer) log_warn "AddressSanitizer setting changed: ${old_value} -> ${new_value}" ;;
         ctaVersion) log_warn "CTA version changed: ${old_value} -> ${new_value}" ;;
-        vcsVersion) log_warn "VCS version changed: ${old_value} -> ${new_value}" ;;
+        ctaVersionSuffix) log_warn "CTA version suffix changed: ${old_value} -> ${new_value}" ;;
         xrootdSsiVersion) log_warn "XRootD SSI interface version changed: ${old_value} -> ${new_value}" ;;
         jobs) log_warn "CMake job count changed: ${old_value} -> ${new_value}" ;;
         internalRepos)
@@ -738,7 +770,7 @@ build_cta() {
     done < <(jq -r --argjson desired "$build_state_json" '
       ["schedulerType", "oracleSupport", "buildGenerator", "platform", "cmakeBuildType",
        "enableCcache", "buildDebugPackages", "runUnitTests", "enableAddressSanitizer",
-       "ctaVersion", "vcsVersion", "xrootdSsiVersion", "jobs", "internalRepos"][] as $field
+       "ctaVersion", "ctaVersionSuffix", "xrootdSsiVersion", "jobs", "internalRepos"][] as $field
       | select(.[$field] != $desired[$field])
       | [$field, (.[$field] | tostring), ($desired[$field] | tostring)]
       | @tsv' "$build_state_file")
@@ -830,7 +862,7 @@ build_cta() {
       --build-generator "${build_generator}" \
       --create-build-dir \
       --cta-version "${cta_version}" \
-      --vcs-version "${vcs_version}" \
+      --cta-version-suffix "${cta_version_suffix}" \
       --scheduler-type "${scheduler_type}" \
       --oracle-support "${oracle_support}" \
       --cmake-build-type "${cmake_build_type}" \
@@ -848,14 +880,13 @@ build_cta() {
   fi
 
   [[ $skip_unit_tests == true ]] && build_rpm_flags+=(--skip-unit-tests)
-  [[ $clean_build_dir == true || $clean_build_dirs == true ]] && build_rpm_flags+=(--clean-build-dir)
+  [[ $clean_build_dirs == true ]] && build_rpm_flags+=(--clean-build-dir)
   [[ $skip_debug_packages == true ]] && build_rpm_flags+=(--skip-debug-packages)
   [[ $enable_ccache == true ]] && build_rpm_flags+=(--enable-ccache)
   [[ $enable_internal_repos == true ]] && build_rpm_flags+=(--enable-internal-repos)
   [[ $enable_address_sanitizer == true ]] && build_rpm_flags+=(--enable-address-sanitizer)
   if [[ $state_matches_configuration == true \
       && -f "${project_root}/build_rpm/CMakeCache.txt" \
-      && $clean_build_dir == false \
       && $clean_build_dirs == false ]]; then
     build_rpm_flags+=(--skip-cmake)
   fi
@@ -868,7 +899,7 @@ build_cta() {
     --create-build-dir \
     --srpm-dir ${mount_basedir}/build_srpm/RPM/SRPMS \
     --cta-version ${cta_version} \
-    --vcs-version ${vcs_version} \
+    --cta-version-suffix "${cta_version_suffix}" \
     --xrootd-ssi-version "${xrootd_ssi_version}" \
     --scheduler-type "${scheduler_type}" \
     --oracle-support ${oracle_support} \
@@ -915,7 +946,7 @@ deploy_cta() {
 
   cd "${project_root}/ci/orchestration"
   # By default we discard the logs from deletion as this is not very useful during development and pollutes the dev machine
-  ./delete_instance.sh -n "${deploy_namespace}" --discard-logs --keep-pvs
+  ./delete_instance.sh -n "${namespace}" --discard-logs --keep-pvs
   print_header "DEPLOYING CTA"
   [[ -n $eos_image_repository ]] && extra_spawn_options+=(--eos-image-repository "$eos_image_repository")
   [[ -n $eos_image_tag ]] && extra_spawn_options+=(--eos-image-tag "$eos_image_tag")
@@ -930,7 +961,7 @@ deploy_cta() {
       scheduler_config="presets/dev-scheduler-postgres-values.yaml" || \
       scheduler_config="presets/dev-scheduler-vfs-values.yaml"
   fi
-  ./create_instance.sh --namespace "${deploy_namespace}" \
+  ./create_instance.sh --namespace "${namespace}" \
     --cta-image-registry localhost \
     --cta-image-tag "${cta_image_tag}" \
     --catalogue-config "${catalogue_config}" \
@@ -974,7 +1005,7 @@ test_cta() {
 
   pytest \
     "${test_path}" \
-    --namespace "${deploy_namespace}" \
+    --namespace "${namespace}" \
     "${lifecycle_options[@]}" \
     "${pytest_args[@]}"
 
@@ -1028,12 +1059,12 @@ debug_cta() {
 CTA debug environment is ready.
 
 List the deployed pods:
-  kubectl -n ${deploy_namespace} get pods
+  kubectl -n ${namespace} get pods
 
 Choose a pod and one of its application containers, then attach the debugger:
   export POD=<pod>
   export CONTAINER=<container>
-  kubectl -n ${deploy_namespace} debug pod/\${POD} -it \\
+  kubectl -n ${namespace} debug pod/\${POD} -it \\
     --target=\${CONTAINER} \\
     --container=cta-debugger \\
     --image=${debug_image} \\

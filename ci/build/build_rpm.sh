@@ -8,7 +8,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
 
 usage() {
   echo
-  echo "Usage: $0 [options] --build-dir <build-dir> --srpm-dir <srpm-directory> --scheduler-type <scheduler-type> --cta-version <cta-version> --vcs-version <vcs-version> --xrootd-ssi-version <xrootd-ssi-version>"
+  echo "Usage: $0 [options] --build-dir <build-dir> --srpm-dir <srpm-directory> --scheduler-type <scheduler-type> --cta-version <cta-version> --cta-version-suffix <suffix> --xrootd-ssi-version <xrootd-ssi-version>"
   echo
   echo "Builds the rpms."
   echo "  --build-dir <build-directory>:                Sets the build directory for the RPMs. Can be absolute or relative to where the script is being executed from. Ex: build_rpm"
@@ -16,7 +16,7 @@ usage() {
   echo "  --srpm-dir <srpm-directory>:                  The directory where the source rpms are located. Can be absolute or relative to where the script is being executed from."
   echo "  --scheduler-type <type>:                      The scheduler type. Must be one of [objectstore, pgsched]."
   echo "  --cta-version <cta-version>:                  Sets the CTA_VERSION."
-  echo "  --vcs-version <vcs-version>:                  Sets the VCS_VERSION variable in cmake."
+  echo "  --cta-version-suffix <suffix>:                Sets the CTA version suffix (passed to CMake as VCS_VERSION)."
   echo "  --xrootd-ssi-version <xrootd-ssi-version>:    Sets the XROOTD_SSI_PROTOBUF_INTERFACE_VERSION variable in cmake."
   echo "  --cmake-build-type <type>:                    Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
   echo "  --platform <platform>:                        Which platform the build is running for."
@@ -45,7 +45,7 @@ build_rpm() {
   local cta_version=""
   local scheduler_type=""
   local srpm_dir=""
-  local vcs_version=""
+  local cta_version_suffix=""
   local xrootd_ssi_version=""
   local platform=""
 
@@ -129,12 +129,12 @@ build_rpm() {
         error_usage "--srpm-dir requires an argument"
       fi
       ;;
-    --vcs-version)
+    --cta-version-suffix)
       if [[ $# -gt 1 ]]; then
-        vcs_version="$2"
+        cta_version_suffix="$2"
         shift
       else
-        error_usage "--vcs-version requires an argument"
+        error_usage "--cta-version-suffix requires an argument"
       fi
       ;;
     --xrootd-ssi-version)
@@ -199,9 +199,14 @@ build_rpm() {
     die_usage "Missing mandatory argument --srpm-dir"
   fi
 
-  if [[ -z "${vcs_version}" ]]; then
-    die_usage "Missing mandatory argument --vcs-version"
+  [[ "$cta_version" =~ ^[0-9.]+$ ]] || \
+    die_usage "--cta-version is \"$cta_version\" but may contain only numbers and dots"
+
+  if [[ -z "${cta_version_suffix}" ]]; then
+    die_usage "Missing mandatory argument --cta-version-suffix"
   fi
+  [[ "$cta_version_suffix" =~ ^[a-z0-9.-]+$ ]] || \
+    die_usage "--cta-version-suffix is \"$cta_version_suffix\" but may contain only lowercase letters, numbers, dots, and hyphens"
 
   if [[ -z "${build_generator}" ]]; then
     die_usage "Missing mandatory argument --build-generator"
@@ -269,7 +274,7 @@ build_rpm() {
     # Needs to be exported as cmake gets it from the environment
     export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=${xrootd_ssi_version}
 
-    cmake_options+=" -D VCS_VERSION=${vcs_version}"
+    cmake_options+=" -D VCS_VERSION=${cta_version_suffix}"
 
     # Build type
     if [[ ! ${cmake_build_type} = "" ]]; then

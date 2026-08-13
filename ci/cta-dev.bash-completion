@@ -11,6 +11,7 @@ _ctadev() {
     command="${COMP_WORDS[1]}"
 
     local global_opts="
+        --help
         --container-runtime
         --platform
         --scheduler-type
@@ -18,12 +19,16 @@ _ctadev() {
         --use-public-repos
     "
 
+    local version_opts="
+        --cta-version
+        --cta-version-suffix
+    "
+
     local build_opts="
         --reset
-        --clean-build-dir
         --clean-build-dirs
         --disable-ccache
-        --unit-tests
+        --enable-unit-tests
         --force-install
         --enable-address-sanitizer
         --build-generator
@@ -38,13 +43,12 @@ _ctadev() {
         --publish-telemetry
         --eos-image-repository
         --eos-image-tag
-        --cta-image-tag
         --catalogue-config
         --scheduler-config
         --cta-config
         --eos-config
         --spawn-options
-        --deploy-namespace
+        --namespace
     "
 
     #
@@ -75,10 +79,10 @@ _ctadev() {
             COMPREPLY=( $(compgen -W "el9" -- "$cur") )
             return
             ;;
-        --deploy-namespace)
+        --namespace)
             return
             ;;
-        --cta-image-tag|--eos-image-tag|--eos-image-repository|--spawn-options)
+        --cta-version|--cta-version-suffix|--eos-image-tag|--eos-image-repository|--spawn-options)
             return
             ;;
         --catalogue-config|--scheduler-config|--cta-config|--eos-config)
@@ -130,37 +134,37 @@ _ctadev() {
     case "$command" in
         build)
             COMPREPLY=( $(compgen -W \
-                "$global_opts $build_opts" \
+                "$global_opts $version_opts $build_opts" \
                 -- "$cur") )
             ;;
         images)
             COMPREPLY=( $(compgen -W \
-                "$global_opts $image_opts" \
+                "$global_opts $version_opts $image_opts" \
                 -- "$cur") )
             ;;
         deploy)
             COMPREPLY=( $(compgen -W \
-                "$global_opts $deploy_opts" \
+                "$global_opts $version_opts $deploy_opts" \
                 -- "$cur") )
             ;;
         test)
             COMPREPLY=( $(compgen -W \
-                "$global_opts --deploy-namespace" \
+                "$global_opts --namespace" \
                 -- "$cur") )
             ;;
         up)
             COMPREPLY=( $(compgen -W \
-                "$global_opts $build_opts $image_opts $deploy_opts" \
+                "$global_opts $version_opts $build_opts $image_opts $deploy_opts" \
                 -- "$cur") )
             ;;
         debug)
             COMPREPLY=( $(compgen -W \
-                "$global_opts $build_opts $image_opts $deploy_opts" \
+                "$global_opts $version_opts $build_opts $image_opts $deploy_opts" \
                 -- "$cur") )
             ;;
         all)
             COMPREPLY=( $(compgen -W \
-                "$global_opts $build_opts $image_opts $deploy_opts" \
+                "$global_opts $version_opts $build_opts $image_opts $deploy_opts" \
                 -- "$cur") )
             ;;
         install|help)
