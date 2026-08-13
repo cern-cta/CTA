@@ -14,6 +14,9 @@ local_die() {
   exit 1
 }
 
+# While this script looks like it does a lot, it essentially just does fancy namespace deletion.
+# `kubectl delete namespace <ns>` will accomplish mostly the same, except you lose log collection
+# and a few central resources may stick around. These are typically not harmful though.
 usage() {
   echo
   echo "Deletes a given Kubernetes namespace and optionally collects the logs in said namespace."
@@ -247,7 +250,9 @@ delete_instance() {
 
   # Optional log collection
   if [[ "$collect_logs" = true ]]; then
-    save_logs $namespace $log_dir
+    if ! save_logs "$namespace" "$log_dir"; then
+      log_error "Log collection failed for namespace ${namespace}; continuing with namespace deletion."
+    fi
   else
     log_warn "Skipping log collection for the current deployment."
   fi
