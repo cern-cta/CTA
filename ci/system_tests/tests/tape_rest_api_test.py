@@ -656,7 +656,7 @@ def test_wlcg_scitoken_stage_with_root_scope_and_poll_token(
 
 
 @skip_if_staging_tokens_unsupported
-def test_wlcg_scitoken_stage_with_test_dir_scope(
+def test_wlcg_scitoken_stage_with_stricter_dir_scope(
     disk_client: DiskClientHost,
     disk_instance: DiskInstanceHost,
     disk_instance_name: str,
