@@ -68,6 +68,7 @@ DummyTapeCatalogue::getVidToLogicalLibrary(const std::set<std::string, std::less
 
 void DummyTapeCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity& admin,
                                      const std::string& vid,
+                                     int64_t recycleLogQuarantineSecs,
                                      cta::log::LogContext& lc) {
   throw exception::NotImplementedException();
 }

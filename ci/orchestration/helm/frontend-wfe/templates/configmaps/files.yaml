@@ -49,6 +49,10 @@ data:
     # Default 24 hours
     cta.catalogue.missing_file_copies_min_age_secs {{ .Values.conf.catalogue.missingFileCopiesMinAgeSecs }}
 
+    # Recycle-log quarantine period before a tape can be reclaimed.
+    # Default 31 days
+    cta.catalogue.recycle_log_quarantine_secs {{ .Values.conf.catalogue.recycleLogQuarantineSecs }}
+
     # Maximum file size (in GB) that the CTA Frontend will accept for archiving
     cta.archivefile.max_size_gb {{ .Values.conf.frontend.archiveFileMaxSizeGb }}
 

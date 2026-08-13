@@ -476,8 +476,34 @@ RdbmsTapeCatalogue::getVidToLogicalLibrary(const std::set<std::string, std::less
   return vidToLogicalLibrary;
 }
 
+void RdbmsTapeCatalogue::checkRecycleLogQuarantine(rdbms::Conn& conn,
+                                                   const std::string& vid,
+                                                   const int64_t recycleLogQuarantineSecs) const {
+  auto* const recycleLogCatalogue =
+    static_cast<RdbmsFileRecycleLogCatalogue*>(m_rdbmsCatalogue->FileRecycleLog().get());
+
+  const auto latestRecycleLogTime = recycleLogCatalogue->getLatestRecycleLogTime(conn, vid);
+
+  // No deleted files exist for this tape.
+  if (!latestRecycleLogTime.has_value()) {
+    return;
+  }
+
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
+  const int64_t ageInSeconds =
+    now >= latestRecycleLogTime.value() ? static_cast<int64_t>(now - latestRecycleLogTime.value()) : 0;
+
+  if (ageInSeconds < recycleLogQuarantineSecs) {
+    throw exception::UserError("This tape contains files deleted " + std::to_string(ageInSeconds)
+                               + " seconds ago while recycle_log_quarantine_secs is configured at "
+                               + std::to_string(recycleLogQuarantineSecs) + ". Please reclaim this tape later.");
+  }
+}
+
 void RdbmsTapeCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity& admin,
                                      const std::string& vid,
+                                     int64_t recycleLogQuarantineSecs,
                                      cta::log::LogContext& lc) {
   using namespace common::dataStructures;
 
@@ -503,7 +529,10 @@ void RdbmsTapeCatalogue::reclaimTape(const common::dataStructures::SecurityIdent
   // The tape exists and is full, we can try to reclaim it
   if (this->getNbFilesOnTape(conn, vid) == 0) {
     tl.insertAndReset("getNbFilesOnTape", t);
-    // There is no files on the tape, we can reclaim it : delete the files and reset the counters
+    checkRecycleLogQuarantine(conn, vid, recycleLogQuarantineSecs);
+    tl.insertAndReset("checkRecycleLogQuarantineTime", t);
+
+    // There are no active files on the tape, we can reclaim it : delete the recycle-log entries and reset the counters
     static_cast<RdbmsFileRecycleLogCatalogue*>(m_rdbmsCatalogue->FileRecycleLog().get())
       ->deleteFilesFromRecycleLog(conn, vid, lc);
     tl.insertAndReset("deleteFileFromRecycleLogTime", t);

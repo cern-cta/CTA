@@ -3397,7 +3397,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_file_recycle_log_dele
   {
     //reclaim the tape to delete the files from the recycle log and delete the storage class
     m_catalogue->Tape()->setTapeFull(m_admin, m_tape1.vid, true);
-    m_catalogue->Tape()->reclaimTape(m_admin, m_tape1.vid, dummyLc);
+    m_catalogue->Tape()->reclaimTape(m_admin, m_tape1.vid, 0, dummyLc);
   }
 
   ASSERT_NO_THROW(m_catalogue->StorageClass()->deleteStorageClass(m_storageClassSingleCopy.name));

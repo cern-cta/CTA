@@ -24,6 +24,7 @@
 #include "common/log/DummyLogger.hpp"
 #include "common/log/LogContext.hpp"
 
+#include <chrono>
 #include <gtest/gtest.h>
 #include <list>
 
@@ -146,11 +147,152 @@ TEST_P(cta_catalogue_FileRecycleLogTest, reclaimTapeRemovesFilesFromRecycleLog) 
   ASSERT_TRUE(m_catalogue->FileRecycleLog()->getFileRecycleLogItor().hasMore());
   //Reclaim the tape
   m_catalogue->Tape()->setTapeFull(m_admin, tape1.vid, true);
-  m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, dummyLc);
+  m_catalogue->Tape()->reclaimTape(m_admin, tape1.vid, 0, dummyLc);
   {
     auto itor = m_catalogue->FileRecycleLog()->getFileRecycleLogItor();
     ASSERT_FALSE(itor.hasMore());
   }
+}
+
+TEST_P(cta_catalogue_FileRecycleLogTest, reclaimTapeRespectsRecycleLogQuarantine) {
+  using namespace cta;
+
+  const bool logicalLibraryIsDisabled = false;
+  const std::string tapePoolName1 = "tape_pool_name_1";
+  const std::string tapePoolName2 = "tape_pool_name_2";
+  const uint64_t nbPartialTapes = 1;
+  const std::string encryptionKeyName = "encryption_key_name";
+  const std::vector<std::string> supply;
+  const std::string diskInstance = m_diskInstance.name;
+  const std::string tapeDrive = "tape_drive";
+  const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
+  const uint64_t nbFilesPerTape = 2;
+  std::optional<std::string> physicalLibraryName;
+
+  m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
+  m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
+
+  m_catalogue->TapePool()
+    ->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+
+  m_catalogue->TapePool()
+    ->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+
+  m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
+
+  auto oldTape = m_tape1;
+  oldTape.tapePoolName = tapePoolName1;
+
+  auto recentTape = m_tape2;
+  recentTape.tapePoolName = tapePoolName2;
+
+  m_catalogue->Tape()->createTape(m_admin, oldTape);
+  m_catalogue->Tape()->createTape(m_admin, recentTape);
+
+  ASSERT_FALSE(m_catalogue->ArchiveFile()->getArchiveFilesItor().hasMore());
+
+  std::set<catalogue::TapeItemWrittenPointer> oldTapeFiles;
+  std::set<catalogue::TapeItemWrittenPointer> recentTapeFiles;
+
+  const auto addTapeFile = [&](std::set<catalogue::TapeItemWrittenPointer>& tapeFiles,
+                               const std::string& vid,
+                               const uint64_t archiveFileId,
+                               const uint64_t fSeq) {
+    auto fileWrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+    auto& fileWritten = *fileWrittenUP;
+
+    fileWritten.archiveFileId = archiveFileId;
+    fileWritten.diskInstance = diskInstance;
+    fileWritten.diskFileId = std::to_string(12345677 + archiveFileId);
+    fileWritten.diskFilePath = "/test/file" + std::to_string(archiveFileId);
+    fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+    fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
+    fileWritten.size = archiveFileSize;
+    fileWritten.checksumBlob.insert(checksum::ADLER32, "1357");
+    fileWritten.storageClassName = m_storageClassSingleCopy.name;
+    fileWritten.vid = vid;
+    fileWritten.fSeq = fSeq;
+    fileWritten.blockId = archiveFileId * 100;
+    fileWritten.copyNb = 1;
+    fileWritten.tapeDrive = tapeDrive;
+
+    tapeFiles.emplace(fileWrittenUP.release());
+  };
+
+  for (uint64_t i = 1; i <= nbFilesPerTape; ++i) {
+    addTapeFile(oldTapeFiles, oldTape.vid, i, i);
+
+    addTapeFile(recentTapeFiles, recentTape.vid, nbFilesPerTape + i, i);
+  }
+
+  m_catalogue->TapeFile()->filesWrittenToTape(oldTapeFiles);
+  m_catalogue->TapeFile()->filesWrittenToTape(recentTapeFiles);
+
+  ASSERT_TRUE(m_catalogue->ArchiveFile()->getArchiveFilesItor().hasMore());
+
+  log::LogContext dummyLc(m_dummyLog);
+
+  const auto moveFilesToRecycleLog = [&](std::set<catalogue::TapeItemWrittenPointer>& tapeFiles) {
+    for (auto& tapeItemWritten : tapeFiles) {
+      auto* const tapeItem = static_cast<cta::catalogue::TapeFileWritten*>(tapeItemWritten.get());
+
+      cta::common::dataStructures::DeleteArchiveRequest req;
+      req.archiveFileID = tapeItem->archiveFileId;
+      req.diskFileId = tapeItem->diskFileId;
+      req.diskFilePath = tapeItem->diskFilePath;
+      req.diskInstance = tapeItem->diskInstance;
+      req.archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(tapeItem->archiveFileId);
+
+      ASSERT_NO_THROW(m_catalogue->ArchiveFile()->moveArchiveFileToRecycleLog(req, dummyLc));
+    }
+  };
+
+  // Move the files from both tapes to the recycle log.
+  moveFilesToRecycleLog(oldTapeFiles);
+  moveFilesToRecycleLog(recentTapeFiles);
+
+  ASSERT_FALSE(m_catalogue->ArchiveFile()->getArchiveFilesItor().hasMore());
+
+  const auto countRecycleLogEntries = [&](const std::string& vid) {
+    catalogue::RecycleTapeFileSearchCriteria criteria;
+    criteria.vid = vid;
+
+    auto itor = m_catalogue->FileRecycleLog()->getFileRecycleLogItor(criteria);
+
+    uint64_t count = 0;
+    while (itor.hasMore()) {
+      itor.next();
+      ++count;
+    }
+
+    return count;
+  };
+
+  ASSERT_EQ(nbFilesPerTape, countRecycleLogEntries(oldTape.vid));
+  ASSERT_EQ(nbFilesPerTape, countRecycleLogEntries(recentTape.vid));
+
+  m_catalogue->Tape()->setTapeFull(m_admin, oldTape.vid, true);
+  m_catalogue->Tape()->setTapeFull(m_admin, recentTape.vid, true);
+
+  // A newly created recycle log is younger than 10 second quarantine
+  // so reclaiming the tape must fail
+  ASSERT_THROW(m_catalogue->Tape()->reclaimTape(m_admin, recentTape.vid, 10, dummyLc), cta::exception::UserError);
+
+  // A failed reclaim should not remove the files from recycle log
+  ASSERT_EQ(nbFilesPerTape, countRecycleLogEntries(recentTape.vid));
+
+  // A negative quarantine should allow the reclaim immediately
+  // without waiting for the files in the recycle log to age
+  ASSERT_NO_THROW(m_catalogue->Tape()->reclaimTape(m_admin, oldTape.vid, -1, dummyLc));
+
+  ASSERT_EQ(0, countRecycleLogEntries(oldTape.vid));
+  ASSERT_EQ(nbFilesPerTape, countRecycleLogEntries(recentTape.vid));
 }
 
 TEST_P(cta_catalogue_FileRecycleLogTest, emptyFileRecycleLogItorTest) {

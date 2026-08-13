@@ -19,6 +19,7 @@ conf:
     numberOfConnections: 10
     # Reduced value for test environment
     missingFileCopiesMinAgeSecs: 5
+    recycleLogQuarantineSecs: 2678400
 
   frontend:
     archiveFileMaxSizeGb: 1000

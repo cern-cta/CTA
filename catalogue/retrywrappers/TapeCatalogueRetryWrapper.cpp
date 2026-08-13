@@ -85,10 +85,13 @@ TapeCatalogueRetryWrapper::getVidToLogicalLibrary(const std::set<std::string, st
 
 void TapeCatalogueRetryWrapper::reclaimTape(const common::dataStructures::SecurityIdentity& admin,
                                             const std::string& vid,
+                                            int64_t recycleLogQuarantineSecs,
                                             cta::log::LogContext& lc) {
   return retryOnLostConnection(
     m_log,
-    [this, &admin, &vid, &lc] { return m_catalogue.Tape()->reclaimTape(admin, vid, lc); },
+    [this, &admin, &vid, recycleLogQuarantineSecs, &lc] {
+      return m_catalogue.Tape()->reclaimTape(admin, vid, recycleLogQuarantineSecs, lc);
+    },
     m_maxTriesToConnect);
 }
 
