@@ -101,6 +101,9 @@ if [[ $container_runtime == docker ]]; then
     die "Docker Buildx is required to build CTA images. Install the Docker Buildx plugin or use Podman."
   fi
   build_command=(docker buildx build --load)
+else
+  # Use registries.conf to configure proxy for image pulling
+  build_command=(env REGISTRIES_CONFIG_PATH="${project_root}/ci/docker/registries.conf" podman build)
 fi
 
 cd "$(dirname ${dockerfile_path})"

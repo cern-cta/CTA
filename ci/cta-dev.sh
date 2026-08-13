@@ -691,6 +691,7 @@ container_is_running() {
 # =========================================================================
 
 build_cta() {
+  detect_internal_repos
   cd "$project_root"
 
   # Constants
@@ -946,6 +947,7 @@ build_cta() {
 }
 
 images_cta() {
+  detect_internal_repos
   # Constants
   local -r rpm_src="build_rpm/RPM/RPMS/x86_64" # note relative to project root
 
@@ -1175,9 +1177,6 @@ main() {
 
   load_cta_dev_env
   parse_options "$command" "$@"
-  case "$command" in
-    build|images|up|debug|all) detect_internal_repos ;;
-  esac
   select_container_runtime
 
   case "$command" in
