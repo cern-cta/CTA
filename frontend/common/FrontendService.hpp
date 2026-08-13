@@ -132,20 +132,20 @@ public:
    */
   const std::string& getSchedulerBackendName() const { return m_schedulerBackendName; }
 
-    /*!
+  /*!
     * Get missing tape file copies minimum age
     */
-    uint64_t getMissingFileCopiesMinAgeSecs() const { return m_missingFileCopiesMinAgeSecs; }
+  uint64_t getMissingFileCopiesMinAgeSecs() const { return m_missingFileCopiesMinAgeSecs; }
 
   /*!
  * Get the minimum quarantine period, in seconds, before a tape can be reclaimed.
  */
   uint64_t getRecycleLogQuarantineSecs() const { return m_recycleLogQuarantineSecs; }
 
-    /*!
+  /*!
     * Get the frontend's operation mode (wfe / admin_*)
     */
-    OperationMode getOperationMode() const { return m_operationMode; }
+  OperationMode getOperationMode() const { return m_operationMode; }
 
   /*!
    * Get a reference to the Scheduler
