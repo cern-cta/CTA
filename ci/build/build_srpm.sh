@@ -8,14 +8,14 @@ source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
 
 usage() {
   echo
-  echo "Usage: $0 [options] --build-dir <build-dir> --scheduler-type <scheduler-type> --cta-version <cta-version> --vcs-version <vcs-version>"
+  echo "Usage: $0 [options] --build-dir <build-dir> --scheduler-type <scheduler-type> --cta-version <cta-version> --cta-version-suffix <suffix>"
   echo
   echo "Builds the srpms."
   echo "  --build-dir <build-dir>:              Sets the build directory for the SRPMs. Can be absolute or relative to where the script is being executed from."
   echo "  --build-generator <generator>:        Specifies the build generator for cmake. Ex: [\"Unix Makefiles\", \"Ninja\"]."
   echo "  --scheduler-type <type>:              The scheduler type. Must be one of [objectstore, pgsched]."
   echo "  --cta-version <cta-version>:          Sets the CTA_VERSION."
-  echo "  --vcs-version <vcs-version>:          Sets the VCS_VERSION variable in cmake."
+  echo "  --cta-version-suffix <suffix>:        Sets the CTA version suffix (passed to CMake as VCS_VERSION)."
   echo "  --cmake-build-type <type>:            Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
   echo
   echo "options:"
@@ -34,7 +34,7 @@ build_srpm() {
   local build_generator=""
   local cta_version=""
   local scheduler_type=""
-  local vcs_version=""
+  local cta_version_suffix=""
 
   local create_build_dir=false
   local clean_build_dir=false
@@ -86,12 +86,12 @@ build_srpm() {
         error_usage "--scheduler-type requires an argument"
       fi
       ;;
-    --vcs-version)
+    --cta-version-suffix)
       if [[ $# -gt 1 ]]; then
-        vcs_version="$2"
+        cta_version_suffix="$2"
         shift
       else
-        error_usage "--vcs-version requires an argument"
+        error_usage "--cta-version-suffix requires an argument"
       fi
       ;;
     -j | --jobs)
@@ -136,9 +136,14 @@ build_srpm() {
     die_usage "Missing mandatory argument --scheduler-type"
   fi
 
-  if [[ -z "${vcs_version}" ]]; then
-    die_usage "Missing mandatory argument --vcs-version"
+  [[ "$cta_version" =~ ^[0-9.]+$ ]] || \
+    die_usage "--cta-version is \"$cta_version\" but may contain only numbers and dots"
+
+  if [[ -z "${cta_version_suffix}" ]]; then
+    die_usage "Missing mandatory argument --cta-version-suffix"
   fi
+  [[ "$cta_version_suffix" =~ ^[a-z0-9.-]+$ ]] || \
+    die_usage "--cta-version-suffix is \"$cta_version_suffix\" but may contain only lowercase letters, numbers, dots, and hyphens"
 
   if [[ -z "${build_generator}" ]]; then
     die_usage "Missing mandatory argument --build-generator"
@@ -169,7 +174,7 @@ build_srpm() {
   export CTA_VERSION=${cta_version}
 
   cmake_options+=" -D PackageOnly:Bool=true"
-  cmake_options+=" -D VCS_VERSION=${vcs_version}"
+  cmake_options+=" -D VCS_VERSION=${cta_version_suffix}"
 
   if [[ ! ${cmake_build_type} = "" ]]; then
     cmake_options+=" -D CMAKE_BUILD_TYPE=${cmake_build_type}"

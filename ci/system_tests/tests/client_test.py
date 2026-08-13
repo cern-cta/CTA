@@ -69,12 +69,12 @@ def test_setup_client(
 # Third Party Copy can be broken
 #
 # Valid check:
-# [root@eosctafst0017 ~]# xrdfs
+# [ ~]# xrdfs
 # root://pps-ngtztag6p5ht-minion-2.cern.ch:1101 query config tpc
 # 1
 #
 # invalid check:
-# [root@ctaeos /]# xrdfs root://ctaeos.toto.svc.cluster.local:1095 query config tpc
+# [ ~]# xrdfs root://ctaeos.toto.svc.cluster.local:1095 query config tpc
 # tpc
 
 

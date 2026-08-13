@@ -51,7 +51,7 @@ echo
 echo "Putting all drives down. No file will be written to tape..."
 put_all_drives_down
 
-# 2.1. Write a file to EOSCTA for archiving
+# 2.1. Write a file to EOS for archiving
 echo "Write file ${TEMP_FILE} for archival..."
 KRB5CCNAME=/tmp/${USER}/krb5cc_0 xrdcp /etc/group root://${EOS_MGM_HOST}/${TEMP_FILE}
 

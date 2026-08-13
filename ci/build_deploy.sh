@@ -38,6 +38,8 @@ echo
   echo "Build Configuration:"
   echo "      --build-generator <generator>     Specifies the build generator for cmake [\"Unix Makefiles\", \"Ninja\"]."
   echo "      --cmake-build-type <type>         Specifies cmake build type [Release, Debug, RelWithDebInfo, MinSizeRel]."
+  echo "      --cta-version <version>           Numeric CTA base version (numbers and dots)."
+  echo "      --cta-version-suffix <suffix>     CTA version suffix (lowercase letters, numbers, dots, and hyphens)."
   echo "      --clean-build-dir                 Empties the RPM build directory (build_rpm/)."
   echo "      --clean-build-dirs                Empties both the SRPM (build_srpm/) and RPM (build_rpm/) directories."
   echo "      --disable-oracle-support          Disables support for Oracle."
@@ -56,7 +58,7 @@ echo
   echo
   echo "Deployment & Orchestration Configuration:"
   echo "      --skip-deploy                     Skips the deployment step completely."
-  echo "      --deploy-namespace <namespace>    Deploy the CTA instance in a given namespace. Defaults to dev."
+  echo "      --namespace <namespace>           Deploy the CTA instance in a given namespace. Defaults to dev."
   echo "      --upgrade-cta                     Upgrades the existing CTA instance instead of spawning from scratch."
   echo "      --upgrade-eos                     Upgrades the existing EOS instance instead of spawning from scratch."
   echo "      --spawn-options <options>         Additional options passed verbatim to create/upgrade instance scripts."
@@ -67,7 +69,7 @@ echo
   echo "      --eos-config <path>               Custom Values yaml file to pass to the EOS Helm chart."
   echo "      --eos-image-repository <repo>     Image repository URL/namespace path to use for spawning EOS."
   echo "      --eos-image-tag <tag>             Image tag to use for spawning EOS."
-  echo "      --cta-image-tag <tag>             Image tag to use for spawning CTA. Will skip both build stages."
+  echo "                                          CTA image tags are constructed as <version>-<suffix>."
   echo "      --disable-eos                     Skips spawning EOS in the system tests."
   echo "      --enable-dcache                   Spawns dCache in the system tests."
   echo
@@ -87,9 +89,9 @@ build_deploy() {
   local num_jobs
   num_jobs=$(nproc --ignore=2)
   local restarted=false
-  local deploy_namespace="dev"
+  local namespace="dev"
   local cta_version="5"
-  local vcs_version="dev"
+  local cta_version_suffix="dev"
   local xrootd_ssi_version
   xrootd_ssi_version=$(cd "$project_root/xrootd-ssi-protobuf-interface" && git describe --tags --exact-match)
 
@@ -137,7 +139,7 @@ build_deploy() {
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     # Helper to validate options requiring an argument
-    if [[ "$1" =~ ^--(eos-image-repository|eos-image-tag|cta-image-tag|platform|build-generator|cmake-build-type|container-runtime|scheduler-type|catalogue-config|scheduler-config|tapeservers-config|cta-config|eos-config|spawn-options|image-build-options|deploy-namespace)$ || "$1" == "-c" ]]; then
+    if [[ "$1" =~ ^--(eos-image-repository|eos-image-tag|cta-version|cta-version-suffix|platform|build-generator|cmake-build-type|container-runtime|scheduler-type|catalogue-config|scheduler-config|tapeservers-config|cta-config|eos-config|spawn-options|image-build-options|namespace)$ || "$1" == "-c" ]]; then
       if [[ -z "$2" || "$2" =~ ^- ]]; then
         error_usage "$1 requires an argument"
       fi
@@ -169,7 +171,8 @@ build_deploy() {
       --enable-address-sanitizer)   enable_address_sanitizer=true ;;
       --eos-image-repository)       eos_image_repository="$2"; shift ;;
       --eos-image-tag)              eos_image_tag="$2"; shift ;;
-      --cta-image-tag)              cta_image_tag="$2"; shift ;;
+      --cta-version)                cta_version="$2"; shift ;;
+      --cta-version-suffix)         cta_version_suffix="$2"; shift ;;
       --build-generator)            build_generator="$2"; shift ;;
       --scheduler-type)             scheduler_type="$2"; shift ;;
       --catalogue-config)           catalogue_config="$2"; shift ;;
@@ -178,7 +181,7 @@ build_deploy() {
       --eos-config)                 eos_config="$2"; shift ;;
       --spawn-options)              extra_spawn_options+=" $2"; shift ;;
       --image-build-options)        extra_image_build_options+=" $2"; shift ;;
-      --deploy-namespace)           deploy_namespace="$2"; shift ;;
+      --namespace)                  namespace="$2"; shift ;;
       --platform)
         if [[ "$(jq --arg platform "$2" '.platforms | has($platform)' "$project_root/project.json")" != "true" ]]; then
             error_usage "platform $2 not supported. Please check the project.json for supported platforms."
@@ -204,14 +207,15 @@ build_deploy() {
     shift
   done
 
+  [[ "$cta_version" =~ ^[0-9.]+$ ]] || die "--cta-version is \"$cta_version\" but may contain only numbers and dots."
+  [[ "$cta_version_suffix" =~ ^[a-z0-9.-]+$ ]] || \
+    die "--cta-version-suffix is \"$cta_version_suffix\" but may contain only lowercase letters, numbers, dots, and hyphens."
+  cta_image_tag="${cta_version}-${cta_version_suffix}"
+
   # navigate to root project directory
   cd "${project_root}"
 
-  if [[ -n "$cta_image_tag" ]]; then
-    skip_build=true
-    skip_image_build=true
-    image_tag=$cta_image_tag
-  fi
+  image_tag=$cta_image_tag
 
   # =========================================================================
   #  Build binaries/RPMs
@@ -254,7 +258,7 @@ build_deploy() {
         --build-generator "${build_generator}" \
         --create-build-dir \
         --cta-version "${cta_version}" \
-        --vcs-version "${vcs_version}" \
+        --cta-version-suffix "${cta_version_suffix}" \
         --scheduler-type "${scheduler_type}" \
         --oracle-support "${oracle_support}" \
         --cmake-build-type "${cmake_build_type}" \
@@ -305,7 +309,7 @@ build_deploy() {
       --create-build-dir \
       --srpm-dir /shared/CTA/build_srpm/RPM/SRPMS \
       --cta-version ${cta_version} \
-      --vcs-version ${vcs_version} \
+      --cta-version-suffix "${cta_version_suffix}" \
       --xrootd-ssi-version "${xrootd_ssi_version}" \
       --scheduler-type "${scheduler_type}" \
       --oracle-support ${oracle_support} \
@@ -320,7 +324,6 @@ build_deploy() {
   # =========================================================================
   #  Build image
   # =========================================================================
-  build_iteration_file=/tmp/.build_iteration
   if [[ "$skip_image_build" == "false" ]]; then
     print_header "BUILDING CONTAINER IMAGE"
     # Cleanup
@@ -334,24 +337,6 @@ build_deploy() {
     if command -v k3s >/dev/null 2>&1; then
       sudo /usr/local/bin/k3s crictl rmi --prune || true
     fi
-    # Determine tag
-    if [[ "$upgrade_cta" == "false" ]]; then
-      # Start with the tag dev-0
-      local current_build_id=0
-      image_tag="dev-$current_build_id"
-      touch $build_iteration_file
-      echo $current_build_id >$build_iteration_file
-    else
-      # This continuously increments the image tag from previous upgrades
-      if [[ ! -f "$build_iteration_file" ]]; then
-        die "Failed to find $build_iteration_file to retrieve build iteration."
-      fi
-      local current_build_id
-      current_build_id=$(cat "$build_iteration_file")
-      new_build_id=$((current_build_id + 1))
-      image_tag="dev-$new_build_id"
-      echo $new_build_id >$build_iteration_file
-    fi
     # Build
     local rpm_src="build_rpm/RPM/RPMS/x86_64"
     echo "Building image from ${rpm_src}"
@@ -364,12 +349,6 @@ build_deploy() {
       --container-runtime "${container_runtime}" \
       --load-into-k8s \
       ${extra_image_build_options}
-  else
-    if [[ ! -f "$build_iteration_file" ]]; then
-      die "Failed to find $build_iteration_file to retrieve build iteration. Unable to identify which image to spawn/upgrade the instance with."
-    fi
-    # If we are not building a new image, use the latest one
-    image_tag=dev-$(cat "$build_iteration_file")
   fi
 
   # =========================================================================
@@ -383,14 +362,14 @@ build_deploy() {
         upgrade_options+=" --cta-image-registry localhost --cta-image-tag ${image_tag}"
       fi
        # shellcheck disable=SC2086
-      (cd ci/orchestration && ./upgrade_cta_instance.sh --namespace "${deploy_namespace}" ${upgrade_options} ${extra_spawn_options})
+      (cd ci/orchestration && ./upgrade_cta_instance.sh --namespace "${namespace}" ${upgrade_options} ${extra_spawn_options})
     elif [[ "$upgrade_eos" = true ]]; then
       print_header "UPGRADING EOS INSTANCE"
-      (cd ci/orchestration && ./deploy_eos.sh --namespace "${deploy_namespace}" --eos-image-repository "${eos_image_repository}" --eos-image-tag "${eos_image_tag}")
+      (cd ci/orchestration && ./deploy_eos.sh --namespace "${namespace}" --eos-image-repository "${eos_image_repository}" --eos-image-tag "${eos_image_tag}")
     else
       print_header "DELETING OLD CTA INSTANCES"
       # By default we discard the logs from deletion as this is not very useful during development and pollutes the dev machine
-      ./ci/orchestration/delete_instance.sh -n "${deploy_namespace}" --discard-logs
+      ./ci/orchestration/delete_instance.sh -n "${namespace}" --discard-logs
       print_header "DEPLOYING CTA INSTANCE"
       if [[ -n "${eos_image_repository}" ]]; then extra_spawn_options+=" --eos-image-repository ${eos_image_repository}"; fi
       if [[ -n "${eos_image_tag}" ]]; then extra_spawn_options+=" --eos-image-tag ${eos_image_tag}"; fi
@@ -411,7 +390,7 @@ build_deploy() {
       echo "Deploying CTA instance"
       cd ci/orchestration
        # shellcheck disable=SC2086
-      ./create_instance.sh --namespace "${deploy_namespace}" \
+      ./create_instance.sh --namespace "${namespace}" \
         --cta-image-registry localhost \
         --cta-image-tag "${image_tag}" \
         --catalogue-config "${catalogue_config}" \
