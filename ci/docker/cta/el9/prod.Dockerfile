@@ -14,7 +14,7 @@
 # Used to feed the RPMs to the other stages
 # =========================================================================
 # hadolint ignore=DL3007
-FROM registry.cern.ch/docker.io/almalinux/9-minimal:latest AS repo-builder
+FROM docker.io/almalinux/9-minimal:latest AS repo-builder
 
 # hadolint ignore=DL3040,DL3041
 RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
@@ -34,7 +34,7 @@ RUN /bin/bash -o pipefail -c \
 #  2. BASE IMAGE
 # =========================================================================
 # hadolint ignore=DL3007
-FROM registry.cern.ch/docker.io/almalinux/9-minimal:latest AS base
+FROM docker.io/almalinux/9-minimal:latest AS base
 
 COPY build-service.sh /usr/local/bin/build-service.sh
 
@@ -150,7 +150,7 @@ ARG ENABLE_ORACLE_SUPPORT
 ARG INSTALL_CEPH_COMMON=true
 
 # There are two reasons why this image is huge:
-# - eos-client: for now necessary as the system tests still assume the CTA and EOS rpms in one pod. 
+# - eos-client: for now necessary as the system tests still assume the CTA and EOS rpms in one pod.
 #   Once this assumption is removed from the system tests, we can migrate the client pod to use the
 #   official EOS image and we don't need it here anymore
 # - ceph-common: disabled for local development workflows, but required for the objectstore scheduler reset in CI

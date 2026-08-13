@@ -30,6 +30,7 @@ spec:
     DEST_REGISTRY_PASSWORD: ""
     DEST_REGISTRY_USERNAME: ""
     GIT_SUBMODULE_STRATEGY: "none"
+    REGISTRIES_CONFIG_PATH: "${CI_PROJECT_DIR}/ci/docker/registries.conf"
     # If necessary, add additional whitelisted (private!) registries for images containing Oracle RPMs here, separated by spaces
     ORACLE_RPM_REGISTRY_WHITELIST: ""
   before_script:

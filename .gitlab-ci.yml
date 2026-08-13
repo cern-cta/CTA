@@ -143,6 +143,7 @@ variables:
   # Pipeline images
   # Updated by the weekly UPDATE_PIPELINE_IMAGES pipeline after every image has been built successfully
   PIPELINE_IMAGE_VERSION: "2026-08-10-15497958"
+  DOCKER_IMAGE_PROXY: "registry.cern.ch"
   # Platform-specific images are tagged with the platform name to allow for multiple platforms to be built and tested in parallel
   IMAGE_BUILD: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:${PIPELINE_IMAGE_VERSION}.$[[ inputs.platform ]]"
   IMAGE_TEST: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:${PIPELINE_IMAGE_VERSION}.$[[ inputs.platform ]]"
@@ -151,9 +152,12 @@ variables:
   IMAGE_LINT: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-lint:${PIPELINE_IMAGE_VERSION}"
   IMAGE_RELEASE: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-release:${PIPELINE_IMAGE_VERSION}"
   IMAGE_DANGER: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-danger:${PIPELINE_IMAGE_VERSION}"
-  IMAGE_DOCKER_IMAGE_BUILDER: "registry.cern.ch/quay.io/buildah/stable:v1.43-immutable"
-  IMAGE_DOCKER_LINT: "registry.cern.ch/docker.io/hadolint/hadolint:v2.12.0-alpine"
-  IMAGE_LICENSE_CHECK: "registry.cern.ch/docker.io/fsfe/reuse:6.2"
+  # External images
+  IMAGE_DOCKER_IMAGE_BUILDER: "${DOCKER_IMAGE_PROXY}/quay.io/buildah/stable:v1.43-immutable"
+  IMAGE_DOCKER_LINT: "${DOCKER_IMAGE_PROXY}/docker.io/hadolint/hadolint:v2.12.0-alpine"
+  IMAGE_LICENSE_CHECK: "${DOCKER_IMAGE_PROXY}/docker.io/fsfe/reuse:6.2"
+  IMAGE_TRIVY: "${DOCKER_IMAGE_PROXY}/docker.io/aquasec/trivy@sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c" # 0.69.3
+  IMAGE_SBOMQS: "${DOCKER_IMAGE_PROXY}/ghcr.io/interlynk-io/sbomqs@sha256:b424b19d0ad2c900229302f4b2db8d80093f7ba82a1114b4f16bf073ace6f6e6" # v2.0.5
 
   # Should be removed as soon as EOS triggers the CTA pipeline with the new inputs instead of legacy variables.
   PIPELINE_TYPE: "$[[ inputs.pipeline-type ]]"
