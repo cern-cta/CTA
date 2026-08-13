@@ -59,10 +59,6 @@ mgm:
       - name: ctaeos-jwt
         mountPath: /etc/cta
         readOnly: true
-      - name: eos-scitokens-map
-        mountPath: /etc/xrootd/scitokens.map
-        subPath: scitokens.map
-        readOnly: true
     volumes:
       - name: varlog-tmp
         emptyDir: {}
@@ -80,9 +76,6 @@ mgm:
       - name: ctaeos-self-signed-key
         secret:
           secretName: ctaeos-self-signed-key-pem
-      - name: eos-scitokens-map
-        configMap:
-          name: eos-scitokens-map
 
 fst:
   xrd:

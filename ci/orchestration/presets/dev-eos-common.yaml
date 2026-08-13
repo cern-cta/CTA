@@ -27,17 +27,6 @@ global:
       spec:
         type: ExternalName
         externalName: {{ include "utils.mgm_address" . }}
-    - |
-      apiVersion: v1
-      kind: ConfigMap
-      metadata:
-        name: eos-scitokens-map
-      data:
-        scitokens.map: |
-          [
-            {"sub": "sub_user1", "result": "user1"},
-            {"sub": "sub_poweruser1", "result": "poweruser1"}
-          ]
 
 mgm:
   # Must match the authentication chart
@@ -68,7 +57,6 @@ mgm:
         issuer = https://localhost:4443
         base_path = /
         map_subject = false
-        name_mapfile = /etc/xrootd/scitokens.map
         default_user = poweruser1
         authorization_strategy = capability
 
