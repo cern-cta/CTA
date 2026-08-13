@@ -6,6 +6,9 @@
 # Note:
 # This code is an adaptation from the following file on the EOS project:
 # https://gitlab.cern.ch/dss/eos/-/blob/5.5.0/misc/sbin/eos-jwk-https
+#
+# It introduces some modifications so that it can work with the CTA CI,
+# including using the same test certificates and other minor adaptations.
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json

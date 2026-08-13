@@ -138,7 +138,6 @@ def _generate_poweruser_scitoken(eos_mgm: EosMgmHost, scope: str) -> str:
         [
             ("scope", scope),
             ("sub", "sub_poweruser1"),
-            ("aud", "ctaeos"),
         ],
         keyid="ctaeos",
         timeout=600,
@@ -646,7 +645,7 @@ def test_wlcg_scitoken_stage_with_root_scope_and_poll_token(
     assert "error" not in completed_file_status
     assert completed_file_status.get("state") == "COMPLETED" or completed_file_status.get("onDisk") is True
 
-    disk_client.evict_file(disk_instance_name, file_path, wait_timeout_secs=30)
+    disk_client.evict_file(disk_instance_name, file_path)
     _delete_stage_request(
         disk_client,
         rest_api_endpoint,
@@ -690,7 +689,7 @@ def test_wlcg_scitoken_stage_with_test_dir_scope(
         wait_timeout_secs=30,
     )
 
-    disk_client.evict_file(disk_instance_name, file_path, wait_timeout_secs=30)
+    disk_client.evict_file(disk_instance_name, file_path)
     _delete_stage_request(
         disk_client,
         rest_api_endpoint,

@@ -40,6 +40,7 @@ generate_signed_cert() {
   local crt="$SECRETS_DIR/${file_prefix}.crt.pem"
 
   shift 2
+  # Add optional DNS Subject Alternative Name entries so the certificate is valid for aliases of the primary host.
   for alt_name in "$@"; do
     subject_alt_names+=",DNS:$alt_name"
   done
