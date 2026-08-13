@@ -53,7 +53,7 @@ class DiskClientHost(RemoteHost):
         expected_locality: str,
         *,
         token: str,
-        certificate_options: str = "--insecure",
+        certificate_options: str,
         wait_timeout_secs: int = 90,
     ) -> dict[str, Any]:
         last_file_info: dict[str, Any] = {}
@@ -95,7 +95,7 @@ class DiskClientHost(RemoteHost):
         path: Path,
         *,
         token: str,
-        certificate_options: str = "--insecure",
+        certificate_options: str,
         expected_state: Optional[str] = None,
         expected_on_disk: Optional[bool] = None,
         wait_timeout_secs: int = 90,

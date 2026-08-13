@@ -38,7 +38,6 @@ def test_general_settings(eos_mgm: EosMgmHost) -> None:
 # This function sets the SciToken add-on convenience in EOS, allowing our test scripts to acquire test SciTokens
 # from EOS and use them to test the staging token capabilities (and others).
 def test_scitokens_addon_on_eos(eos_mgm: EosMgmHost, remote_scripts_dir: Path) -> None:
-    # TODO: Remove `eos-jwk-http` once it's included in the EOS RPMs
     eos_mgm.copy_to(remote_scripts_dir / "eos_mgm" / "eos-jwk-https", Path("/sbin"), permissions="755")
 
     # Setup a local jwk file and start the jwk daemon (in the background)

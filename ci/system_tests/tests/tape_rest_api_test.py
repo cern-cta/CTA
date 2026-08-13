@@ -121,7 +121,7 @@ def _stage_request(
     rest_api_endpoint: str,
     file_path: Path,
     token: str,
-    certificate_options: str = "--insecure",
+    certificate_options: str,
 ) -> str:
     print(f"Submitting a stage request for {file_path}")
     response = disk_client.http_request(
@@ -620,12 +620,19 @@ def test_wlcg_scitoken_stage_with_root_scope_and_poll_token(
     stage_token = _generate_poweruser_scitoken(eos_mgm, "storage.stage:/")
     poll_token = _generate_poweruser_scitoken(eos_mgm, "storage.poll:/")
 
-    request_id = _stage_request(disk_client, rest_api_endpoint, file_path, stage_token)
+    request_id = _stage_request(
+        disk_client,
+        rest_api_endpoint,
+        file_path,
+        stage_token,
+        rest_api_certificate_options,
+    )
     disk_client.wait_for_stage_file_status(
         rest_api_endpoint,
         request_id,
         file_path,
         token=poll_token,
+        certificate_options=rest_api_certificate_options,
         expected_state="COMPLETED",
         expected_on_disk=True,
         wait_timeout_secs=30,
@@ -633,6 +640,7 @@ def test_wlcg_scitoken_stage_with_root_scope_and_poll_token(
     status_response = disk_client.http_request(
         f"{rest_api_endpoint}/stage/{request_id}",
         token=poll_token,
+        certificate_options=rest_api_certificate_options,
     )
     completed_file_status = _assert_stage_status(status_response, request_id, file_path)
     assert "error" not in completed_file_status
@@ -664,12 +672,19 @@ def test_wlcg_scitoken_stage_with_test_dir_scope(
     stage_token = _generate_poweruser_scitoken(eos_mgm, f"storage.stage:{test_dir}")
     poll_token = _generate_poweruser_scitoken(eos_mgm, f"storage.poll:{test_dir}")
 
-    request_id = _stage_request(disk_client, rest_api_endpoint, file_path, stage_token)
+    request_id = _stage_request(
+        disk_client,
+        rest_api_endpoint,
+        file_path,
+        stage_token,
+        rest_api_certificate_options,
+    )
     disk_client.wait_for_stage_file_status(
         rest_api_endpoint,
         request_id,
         file_path,
         token=poll_token,
+        certificate_options=rest_api_certificate_options,
         expected_state="COMPLETED",
         expected_on_disk=True,
         wait_timeout_secs=30,
@@ -699,10 +714,17 @@ def test_wlcg_scitoken_stage_with_invalid_scope_fails(
     rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
     stage_token = _generate_poweruser_scitoken(eos_mgm, "storage.stage:/path/does/not/exist")
 
-    request_id = _stage_request(disk_client, rest_api_endpoint, file_path, stage_token)
+    request_id = _stage_request(
+        disk_client,
+        rest_api_endpoint,
+        file_path,
+        stage_token,
+        rest_api_certificate_options,
+    )
     status_response = disk_client.http_request(
         f"{rest_api_endpoint}/stage/{request_id}",
         token=stage_token,
+        certificate_options=rest_api_certificate_options,
     )
     file_status = _assert_stage_status(status_response, request_id, file_path)
     assert "error" in file_status, f"Invalid SciToken request did not report an error: {file_status}"
@@ -729,10 +751,17 @@ def test_wlcg_scitoken_stage_request_with_poll_scope_fails(
     rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
     poll_token = _generate_poweruser_scitoken(eos_mgm, f"storage.poll:{test_dir}")
 
-    request_id = _stage_request(disk_client, rest_api_endpoint, file_path, poll_token)
+    request_id = _stage_request(
+        disk_client,
+        rest_api_endpoint,
+        file_path,
+        poll_token,
+        rest_api_certificate_options,
+    )
     status_response = disk_client.http_request(
         f"{rest_api_endpoint}/stage/{request_id}",
         token=poll_token,
+        certificate_options=rest_api_certificate_options,
     )
     file_status = _assert_stage_status(status_response, request_id, file_path)
     assert "error" in file_status, f"storage.poll SciToken request did not report an error: {file_status}"
@@ -751,6 +780,7 @@ def test_wlcg_scitoken_archiveinfo_with_poll_scope(
     disk_instance: DiskInstanceHost,
     eos_mgm: EosMgmHost,
     test_dir: Path,
+    rest_api_certificate_options: str,
 ) -> None:
     file_path = test_dir / "test_http-rest-api"
     print(f"Checking archiveinfo access for {file_path} with WLCG storage.poll SciTokens")
@@ -763,6 +793,7 @@ def test_wlcg_scitoken_archiveinfo_with_poll_scope(
         rest_api_endpoint,
         file_path,
         valid_poll_token,
+        rest_api_certificate_options,
     )
     assert archive_info["path"] == str(file_path)
 
@@ -771,6 +802,7 @@ def test_wlcg_scitoken_archiveinfo_with_poll_scope(
         rest_api_endpoint,
         file_path,
         invalid_poll_token,
+        rest_api_certificate_options,
         expect_error=True,
     )
 
