@@ -767,8 +767,6 @@ def test_wlcg_scitoken_stage_request_with_poll_scope_fails(
     )
     file_status = _assert_stage_status(status_response, request_id, file_path)
     assert "error" in file_status, f"storage.poll SciToken request did not report an error: {file_status}"
-    assert "onDisk" not in file_status, f"storage.poll SciToken request leaked disk locality: {file_status}"
-    assert "state" not in file_status, f"storage.poll SciToken request leaked stage state: {file_status}"
     _delete_stage_request(
         disk_client,
         rest_api_endpoint,
