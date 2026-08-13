@@ -615,11 +615,11 @@ detect_internal_repos() {
   fi
 
   local -r probe_url="${baseurl%/}/repodata/repomd.xml"
-  if curl --fail --silent --show-error \
+  if curl --fail --silent \
       --connect-timeout 3 \
       --max-time 5 \
       --output /dev/null \
-      "$probe_url"; then
+      "$probe_url" 2>/dev/null; then
     log_task "CERN internal YUM repositories are reachable."
   else
     enable_internal_repos=false
@@ -819,7 +819,7 @@ build_cta() {
       if [[ -f "$build_state_file" ]]; then
         log_warn "Build state change detected."
       else
-        log_warn "Existing build output has no recorded build state."
+        log_warn "Existing build output has no recorded build state at ${build_state_file}."
       fi
       automatic_clean_build_dirs=true
     fi
