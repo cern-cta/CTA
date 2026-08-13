@@ -11,10 +11,11 @@ _ctadev() {
     command="${COMP_WORDS[1]}"
 
     local global_opts="
+        --help
         --container-runtime
         --platform
         --scheduler-type
-        --disable-oracle-support
+        --enable-oracle-support
         --use-public-repos
     "
 
