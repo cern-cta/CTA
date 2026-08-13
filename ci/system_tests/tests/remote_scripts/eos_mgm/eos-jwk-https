@@ -3,10 +3,9 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# ----------------------------------------------------------------------
-# File: eos-jwk-https
-# Author: Andreas-Joachim Peters - CERN
-# ----------------------------------------------------------------------
+# Note:
+# This code is an adaptation from the following file on the EOS project:
+# https://gitlab.cern.ch/dss/eos/-/blob/5.5.0/misc/sbin/eos-jwk-https
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import json
