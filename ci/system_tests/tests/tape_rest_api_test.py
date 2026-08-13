@@ -83,7 +83,7 @@ def _archive_info(
     rest_api_endpoint: str,
     file_path: Path,
     token: str,
-    certificate_options: str = "--insecure",
+    certificate_options: str,
     expect_error: bool = False,
 ) -> dict[str, Any]:
     print(f"Querying archive locality for {file_path}")
@@ -150,7 +150,7 @@ def _delete_stage_request(
     rest_api_endpoint: str,
     request_id: str,
     token: str,
-    certificate_options: str = "--insecure",
+    certificate_options: str,
 ) -> None:
     print(f"Deleting stage request {request_id}")
     delete_response = disk_client.http_request(
