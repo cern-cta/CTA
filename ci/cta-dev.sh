@@ -41,7 +41,7 @@ readonly debug_profile_file="${project_root}/ci/orchestration/debug/cta-debug-pr
 # Global
 platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
 scheduler_type="objectstore"
-oracle_support="true"
+oracle_support="false"
 enable_internal_repos=true
 container_runtime=""
 container_runtime_explicit=false
@@ -213,7 +213,7 @@ Global options:
       --container-runtime <runtime>  Container runtime [docker, podman]. Auto-detected.
       --platform <platform>          Platform to build for. Defaults to project.json.
       --scheduler-type <type>        Scheduler backend [objectstore, pgsched].
-      --disable-oracle-support       Build without Oracle support.
+      --enable-oracle-support        Build RPMs and images with Oracle support.
       --use-public-repos             Use public YUM repos instead of CERN internal repos.
       --cta-version <version>        Numeric CTA base version (numbers and dots).
       --cta-version-suffix <suffix>  CTA release/build suffix. The package version and
@@ -432,8 +432,8 @@ parse_options() {
       #  Global options
       # =========================================================================
 
-      --disable-oracle-support)
-        oracle_support="false"
+      --enable-oracle-support)
+        oracle_support="true"
         ;;
       --use-public-repos)
         enable_internal_repos=false
@@ -784,7 +784,7 @@ build_cta() {
     reinstall_srpms=true
     if [[ $build_output_exists == true ]]; then
       if [[ -f "$build_state_file" ]]; then
-        log_warn "Build state is invalid or from an unsupported version."
+        log_warn "Build state change detected."
       else
         log_warn "Existing build output has no recorded build state."
       fi
@@ -923,6 +923,7 @@ images_cta() {
   local extra_image_build_options=()
   local load_into_k8s=false
   [[ $enable_internal_repos == true ]] && extra_image_build_options+=(--enable-internal-repos)
+  [[ $oracle_support == true ]] && extra_image_build_options+=(--enable-oracle-support)
   [[ $enable_debug_image == true ]] && extra_image_build_options+=(--enable-debug-image)
   if local_kubernetes_available; then
     extra_image_build_options+=(--load-into-k8s)
