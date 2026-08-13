@@ -13,7 +13,7 @@ set -eo pipefail
 script_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 readonly script_dir
 
-for required_command in jq git python3; do
+for required_command in curl jq git python3; do
   if ! command -v "$required_command" >/dev/null 2>&1 || ! "$required_command" --version >/dev/null 2>&1; then
     echo "ERROR: Required command '$required_command' is missing or unusable." >&2
     exit 1
@@ -214,10 +214,11 @@ Global options:
       --platform <platform>          Platform to build for. Defaults to project.json.
       --scheduler-type <type>        Scheduler backend [objectstore, pgsched].
       --enable-oracle-support        Build RPMs and images with Oracle support.
-      --use-public-repos             Use public YUM repos instead of CERN internal repos.
       --cta-version <version>        Numeric CTA base version (numbers and dots).
       --cta-version-suffix <suffix>  CTA release/build suffix. The package version and
                                      image tag are <version>-<suffix>.
+      --use-public-repos             Force public YUM repos. By default, CERN internal
+                                     repos are used when they are reachable.
 
 Run the following for command-specific options:
 
@@ -592,6 +593,38 @@ parse_options() {
 
   cta_image_tag="${cta_version}-${cta_version_suffix}"
 
+}
+
+detect_internal_repos() {
+  # A false value is an explicit request from --use-public-repos or .cta-dev.env.
+  [[ $enable_internal_repos == true ]] || return 0
+
+  local -r repo_file="${project_root}/ci/docker/cta/${platform}/etc/yum.repos.d-internal/cta-ci.repo"
+  if [[ ! -r $repo_file ]]; then
+    log_warn "No CERN internal YUM repository definition exists for platform '${platform}'; using public repositories."
+    enable_internal_repos=false
+    return 0
+  fi
+
+  local baseurl
+  baseurl=$(sed -n 's/^[[:space:]]*baseurl[[:space:]]*=[[:space:]]*//p' "$repo_file" | head -n 1)
+  if [[ -z $baseurl ]]; then
+    log_warn "Could not determine the CERN internal YUM repository URL; using public repositories."
+    enable_internal_repos=false
+    return 0
+  fi
+
+  local -r probe_url="${baseurl%/}/repodata/repomd.xml"
+  if curl --fail --silent --show-error \
+      --connect-timeout 3 \
+      --max-time 5 \
+      --output /dev/null \
+      "$probe_url"; then
+    log_task "CERN internal YUM repositories are reachable."
+  else
+    enable_internal_repos=false
+    log_warn "CERN internal YUM repositories are unreachable; using public repositories."
+  fi
 }
 
 validate_container_runtime() {
@@ -1142,6 +1175,9 @@ main() {
 
   load_cta_dev_env
   parse_options "$command" "$@"
+  case "$command" in
+    build|images|up|debug|all) detect_internal_repos ;;
+  esac
   select_container_runtime
 
   case "$command" in
