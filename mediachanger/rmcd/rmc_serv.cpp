@@ -67,7 +67,7 @@ void handle_connection(int s, struct pollfd* pfd) {
   rmc_doit(rpfd);  // Handle accepted connection
 }
 
-int rmc_main(const char* const robot) {
+int rmc_main(std::string robot, int port, std::string listen_scope) {
   int c;
   char domainname[CA_MAXHOSTNAMELEN + 1];
   const char* msgaddr;
@@ -102,12 +102,13 @@ int rmc_main(const char* const robot) {
     }
     rmc_logit(func, "found the following localhost.domainname: %s", g_localhost);
   }
-  if (*robot == '\0') {
+  if (robot.empty()) {
     rmc_logit(func, RMC06, "robot");
     exit(USERR);
   }
 
   g_extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] = '\0';
+  // TODO: use the std string instead of the raw string it used to be
   if (*robot == '/') {
     snprintf(g_extended_robot_info.smc_ldr, sizeof(g_extended_robot_info.smc_ldr), "%s", robot);
   } else {
@@ -157,33 +158,16 @@ int rmc_main(const char* const robot) {
   }
   memset(&sin, 0, sizeof(struct sockaddr_in));
   sin.sin_family = AF_INET;
-  {
-    const char* p;
-    p = std::getenv("RMC_PORT");
-    if (!p) {
-      p = getconfent_fromfile("RMC", "PORT", 0);
-    }
-
-    if (p) {
-      sin.sin_port = htons((unsigned short) atoi(p));
-    } else {
-      sin.sin_port = htons((unsigned short) RMC_PORT);
-    }
-  }
+  sin.sin_port = port;
   // rmcd should only accept connections from the loopback interface by default
-  auto listen_scope = std::getenv("RMC_LISTEN_SCOPE");
-  if (!listen_scope) {
-    listen_scope = getconfent_fromfile("RMC", "LISTEN_SCOPE", 0);
-  }
-  const auto listen_scope_str = listen_scope ? std::string(listen_scope) : "loopback";
-  if (listen_scope_str == "any") {
+  if (listen_scope == "any") {
     rmc_logit(func,
               "Listen scope set to \"any\" (0.0.0.0); this exposes rmcd to unauthenticated remote connections.\n");
     sin.sin_addr.s_addr = htonl(INADDR_ANY);
-  } else if (listen_scope_str == "loopback") {
+  } else if (listen_scope == "loopback") {
     sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   } else {
-    rmc_logit(func, "Received unsupported listen scope: \"%s\". Defaulting to loopback.\n", listen_scope_str.c_str());
+    rmc_logit(func, "Received unsupported listen scope: \"%s\". Defaulting to loopback.\n", listen_scope);
     sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   }
   if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, static_cast<const void*>(&on), sizeof(on)) < 0) {
@@ -225,63 +209,6 @@ static int run_rmcd_in_background(const int argc, char** argv) {
   }
 
   return 1;
-}
-
-/**
- * Returns the number of command-line arguments that start with '-'.
- */
-static int get_nb_cmdline_options(const int argc, char** argv) {
-  int nbOptions = 0;
-  for (int i = 1; i < argc; i++) {
-    if (*argv[i] == '-') {
-      nbOptions++;
-    }
-  }
-  return nbOptions;
-}
-
-int main(const int argc, char** argv) {
-  const char* robot = "";
-  const int nb_cmdline_options = get_nb_cmdline_options(argc, argv);
-
-  switch (argc) {
-    case 1:
-      fprintf(stderr, "RMC01 - wrong arguments given ,specify the device file of the tape library\n");
-      exit(USERR);
-    case 2:
-      if (0 == nb_cmdline_options) {
-        robot = argv[1];
-      } else {
-        fprintf(stderr, "RMC01 - robot parameter is mandatory\n");
-        exit(USERR);
-      }
-      break;
-    case 3:
-      if (0 == nb_cmdline_options) {
-        fprintf(stderr, "Too many robot parameters\n");
-        exit(USERR);
-      } else if (2 == nb_cmdline_options) {
-        fprintf(stderr, "RMC01 - robot parameter is mandatory\n");
-        exit(USERR);
-        /* At this point there is one argument starting with '-' */
-      } else if (0 == strcmp(argv[1], "-f")) {
-        robot = argv[2];
-      } else if (0 == strcmp(argv[2], "-f")) {
-        robot = argv[1];
-      } else {
-        fprintf(stderr, "Unknown option\n");
-        exit(USERR);
-      }
-      break;
-    default:
-      fprintf(stderr, "Too many command-line arguments\n");
-      exit(USERR);
-  }
-
-  if (run_rmcd_in_background(argc, argv) && (Cinitdaemon("rmcd", nullptr) < 0)) {
-    exit(SYERR);
-  }
-  exit(rmc_main(robot));
 }
 
 static void rmc_doit(const int rpfd) {
