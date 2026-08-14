@@ -9,8 +9,6 @@
 #include "RoutineRunner.hpp"
 #include "common/log/LogContext.hpp"
 
-#include <vector>
-
 namespace cta::maintd {
 
 class MaintdApp final {
