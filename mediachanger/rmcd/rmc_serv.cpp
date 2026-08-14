@@ -86,7 +86,7 @@ int rmc_main(const std::string& robot, int port, const std::string& listen_scope
     strncpy(g_localhost, localhost, CA_MAXHOSTNAMELEN + 1);
   } else {
     if (Cdomainname(domainname, sizeof(domainname)) < 0) {
-      lc.log(cta::log::WARN, "Unable to get domainname");
+      lc.log(cta::log::WARNING, "Unable to get domainname");
     } else {
       lc.log(cta::log::INFO, "Using first word from the list as domain name: " + std::string(domainname));
       // Truncate at first space to avoid multiple domains
@@ -97,7 +97,7 @@ int rmc_main(const std::string& robot, int port, const std::string& listen_scope
     }
     if (int ret = snprintf(g_localhost, CA_MAXHOSTNAMELEN, "%s.%s", localhost, domainname);
         ret < 0 || ret >= CA_MAXHOSTNAMELEN) {
-      lc.log(cta::log::WARN, "localhost.domainname exceeds maximum length");
+      lc.log(cta::log::WARNING, "localhost.domainname exceeds maximum length");
     }
     lc.log(cta::log::INFO, "found the following localhost.domainname: " + std::string(g_localhost));
   }
@@ -160,13 +160,13 @@ int rmc_main(const std::string& robot, int port, const std::string& listen_scope
   sin.sin_port = port;
   // rmcd should only accept connections from the loopback interface by default
   if (listen_scope == "any") {
-    lc.log(cta::log::WARN,
+    lc.log(cta::log::WARNING,
            "Listen scope set to 'any' (0.0.0.0); this exposes rmcd to unauthenticated remote connections.");
     sin.sin_addr.s_addr = htonl(INADDR_ANY);
   } else if (listen_scope == "loopback") {
     sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   } else {
-    lc.log(cta::log::WARN, "Received unsupported listen scope: \"" + listen_scope + "\". Defaulting to loopback.");
+    lc.log(cta::log::WARNING, "Received unsupported listen scope: \"" + listen_scope + "\". Defaulting to loopback.");
     sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   }
   if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, static_cast<const void*>(&on), sizeof(on)) < 0) {
