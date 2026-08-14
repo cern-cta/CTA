@@ -55,6 +55,7 @@ CtaReadSession::CtaReadSession(drive::DriveInterface& drive, const daemon::Volum
     HeaderChecker::checkVOL1(vol1, volInfo.vid);
     // after which we are at the end of VOL1 header
     // (i.e. beginning of HDR1 of the first file) on success, or at BOT in case of exception
+    setCurrentBlockId(1);
   }
 }
 

@@ -25,6 +25,7 @@
 
 #include <gtest/gtest.h>
 #include <memory>
+#include <vector>
 
 namespace unitTests {
 
@@ -231,6 +232,79 @@ TEST_F(ctaTapeFileTest, tapeSessionThrowsOnWrongSequence) {
   EXPECT_NO_THROW(writeSession.reportWrittenFSeq(1));
   EXPECT_NO_THROW(writeSession.validateNextFSeq(2));
   EXPECT_THROW(writeSession.validateNextFSeq(1), cta::exception::Exception);
+}
+
+TEST_F(ctaTapeFileTest, skipsLocateWhenReadingSequentialFilesByBlockId) {
+  m_volInfo.labelFormat = cta::common::dataStructures::Label::Format::CTA;
+  uint32_t secondFileBlockId = 0;
+  const std::string firstString("First file");
+  const std::string secondString("Second file");
+
+  {
+    const auto writeSession = std::make_unique<cta::tape::tapeFile::WriteSession>(m_drive, m_volInfo, 0, true, false);
+    {
+      auto writer = std::make_unique<cta::tape::tapeFile::FileWriter>(*writeSession, m_fileToMigrate, m_block_size);
+      writer->write(firstString.c_str(), firstString.size());
+      writer->close();
+    }
+    m_fileToMigrate.archiveFile.archiveFileID = 2;
+    m_fileToMigrate.tapeFile.fSeq = 2;
+    {
+      auto writer = std::make_unique<cta::tape::tapeFile::FileWriter>(*writeSession, m_fileToMigrate, m_block_size);
+      secondFileBlockId = writer->getBlockId();
+      writer->write(secondString.c_str(), secondString.size());
+      writer->close();
+    }
+  }
+
+  const auto readSession = cta::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, false);
+  auto readFile = [this, &readSession](TestingRetrieveJob& job) {
+    const auto reader = cta::tape::tapeFile::FileReaderFactory::create(*readSession, job);
+    std::vector<char> data(reader->getBlockSize());
+    ASSERT_THROW(while (true) { reader->readNextDataBlock(data.data(), data.size()); }, cta::tape::tapeFile::EndOfFile);
+  };
+
+  readFile(m_fileToRecall);
+
+  m_fileToRecall.retrieveRequest.archiveFileID = 2;
+  m_fileToRecall.archiveFile.tapeFiles.front().fSeq = 2;
+  m_fileToRecall.archiveFile.tapeFiles.front().blockId = secondFileBlockId;
+  readFile(m_fileToRecall);
+
+  ASSERT_EQ(m_drive.getPositionToLogicalObjectCount(), 0);
+}
+
+TEST_F(ctaTapeFileTest, locatesWhenBlockIdDoesNotMatchTrackedPosition) {
+  m_volInfo.labelFormat = cta::common::dataStructures::Label::Format::CTA;
+  uint32_t secondFileBlockId = 0;
+  const std::string firstString("First file");
+  const std::string secondString("Second file");
+
+  {
+    const auto writeSession = std::make_unique<cta::tape::tapeFile::WriteSession>(m_drive, m_volInfo, 0, true, false);
+    {
+      auto writer = std::make_unique<cta::tape::tapeFile::FileWriter>(*writeSession, m_fileToMigrate, m_block_size);
+      writer->write(firstString.c_str(), firstString.size());
+      writer->close();
+    }
+    m_fileToMigrate.archiveFile.archiveFileID = 2;
+    m_fileToMigrate.tapeFile.fSeq = 2;
+    {
+      auto writer = std::make_unique<cta::tape::tapeFile::FileWriter>(*writeSession, m_fileToMigrate, m_block_size);
+      secondFileBlockId = writer->getBlockId();
+      writer->write(secondString.c_str(), secondString.size());
+      writer->close();
+    }
+  }
+
+  const auto readSession = cta::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, false);
+  m_fileToRecall.retrieveRequest.archiveFileID = 2;
+  m_fileToRecall.archiveFile.tapeFiles.front().fSeq = 2;
+  m_fileToRecall.archiveFile.tapeFiles.front().blockId = secondFileBlockId;
+
+  const auto reader = cta::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall);
+  ASSERT_NE(reader, nullptr);
+  ASSERT_EQ(m_drive.getPositionToLogicalObjectCount(), 1);
 }
 
 INSTANTIATE_TEST_CASE_P(FormatLabelsParam,

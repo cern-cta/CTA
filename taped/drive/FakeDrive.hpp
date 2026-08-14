@@ -103,6 +103,10 @@ public:
   bool hasTapeInPlace() final;
   cta::tape::SCSI::Structures::RAO::udsLimits getLimitUDS() override;
   void queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int maxSupported) final;
+  uint32_t getPositionToLogicalObjectCount() const;
+
+private:
+  uint32_t m_positionToLogicalObjectCount = 0;
 };
 
 class FakeNonRAODrive : public FakeDrive {

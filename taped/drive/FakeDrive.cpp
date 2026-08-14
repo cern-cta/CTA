@@ -64,10 +64,15 @@ std::string cta::tape::drive::FakeDrive::getSerialNumber() {
 }
 
 void cta::tape::drive::FakeDrive::positionToLogicalObject(uint32_t blockId) {
+  ++m_positionToLogicalObjectCount;
   if (blockId > m_tape.size() - 1) {
     throw cta::exception::Exception("FakeDrive::trying to position beyond the end of data");
   }
   m_currentPosition = blockId;
+}
+
+uint32_t cta::tape::drive::FakeDrive::getPositionToLogicalObjectCount() const {
+  return m_positionToLogicalObjectCount;
 }
 
 cta::tape::drive::positionInfo cta::tape::drive::FakeDrive::getPositionInfo() {

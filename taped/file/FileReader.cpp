@@ -30,6 +30,9 @@ FileReader::FileReader(ReadSession& rs, const cta::RetrieveJob& fileToRecall)
 FileReader::~FileReader() noexcept {
   if (cta::PositioningMethod::ByFSeq == m_positionCommandCode && m_session.getCurrentFilePart() != PartOfFile::Header) {
     m_session.setCorrupted();
+  } else if (cta::PositioningMethod::ByBlock == m_positionCommandCode
+             && m_session.getCurrentFilePart() != PartOfFile::Header) {
+    m_session.invalidateCurrentBlockId();
   }
   m_session.release();
 }
