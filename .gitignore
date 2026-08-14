@@ -12,6 +12,7 @@ scheduler/rdbms/schema/postgres_scheduler_schema.cpp.in
 
 # Build/Runtime files
 ci/.cta-dev.env
+.cta-dev-build-state.json
 build_srpm/
 build_rpm/
 image_rpms/

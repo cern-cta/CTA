@@ -264,8 +264,8 @@ delete_instance() {
 
   # Delete the actual namespace
   log_task "Deleting CTA instance ${namespace}..."
-  kubectl delete pods,jobs,deployments,statefulsets,pvc --all -n ${namespace} --grace-period=0 --force --wait=false > /dev/null
-  kubectl delete namespace ${namespace} --now
+  kubectl delete pods,jobs,deployments,statefulsets,pvc --all -n "${namespace}" --now --wait=false >/dev/null
+  kubectl delete namespace "${namespace}" --wait=true >/dev/null
 
   # Reclaim any PVs
   if [[ "$wipe_pvs" = true ]]; then
