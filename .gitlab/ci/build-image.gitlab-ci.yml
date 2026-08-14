@@ -7,8 +7,6 @@ spec:
       type: string
     enable-internal-repos:
       type: boolean
-    enable-sbom-generation:
-      type: boolean
 ---
 
 # =========================================================================
@@ -132,7 +130,7 @@ spec:
         BUILDAH_ARGS+=($EXTRA_BUILD_ARGS)
       fi
     - |
-      if [[ "$[[ inputs.enable-sbom-generation ]]" == "true" && "$TARGET_NAME" != "cta-debug" ]]; then
+      if [[ "$ENABLE_SBOM_GENERATION" == "true" && "$TARGET_NAME" != "cta-debug" ]]; then
         mkdir -p "$(dirname "$SBOM_RAW_PATH")"
         BUILDAH_ARGS+=(
           --sbom-scanner-image "$IMAGE_TRIVY"

@@ -1,17 +1,11 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-spec:
-  inputs:
-    enable-sbom-generation:
-      type: boolean
----
-
 .sbom-rules:
   rules:
     - if: '$PIPELINE_TYPE != "DEFAULT" && $PIPELINE_TYPE != "REGR_AGAINST_CTA_BRANCH"'
       when: never
-    - if: '"$[[ inputs.enable-sbom-generation ]]" == "true"'
+    - if: '$ENABLE_SBOM_GENERATION == "true"'
       when: on_success
     - when: never
 
