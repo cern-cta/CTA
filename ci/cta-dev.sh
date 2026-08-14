@@ -43,8 +43,6 @@ scheduler_type="objectstore"
 oracle_support="false"
 enable_internal_repos=true
 internal_repos_forced_public=false
-container_runtime=""
-container_runtime_explicit=false
 namespace="dev"
 cta_version="5"
 cta_version_suffix="dev"
@@ -213,7 +211,6 @@ Commands:
 
 Global options:
   -h, --help                         Show this help.
-      --container-runtime <runtime>  Container runtime [docker, podman]. Auto-detected.
       --platform <platform>          Platform to build for. Defaults to project.json.
       --scheduler-type <type>        Scheduler backend [objectstore, pgsched].
       --enable-oracle-support        Build RPMs and images with Oracle support.
@@ -451,11 +448,6 @@ parse_options() {
         scheduler_type="$2"
         shift
         ;;
-      --container-runtime)
-        container_runtime="$2"
-        container_runtime_explicit=true
-        shift
-        ;;
       --cta-version)
         require_command "$1" "$command" build images deploy up debug all
         cta_version="$2"
@@ -582,10 +574,6 @@ parse_options() {
     unsupported_argument "--cmake-build-type is \"$cmake_build_type\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
   fi
 
-  if [[ -n "$container_runtime" && "$container_runtime" != "docker" && "$container_runtime" != "podman" ]]; then
-    unsupported_argument "--container-runtime is \"$container_runtime\" but must be one of [docker, podman]."
-  fi
-
   if [[ "$scheduler_type" != "objectstore" ]] && [[ "$scheduler_type" != "pgsched" ]]; then
     unsupported_argument "--scheduler-type is \"$scheduler_type\" but must be one of [objectstore, pgsched]."
   fi
@@ -631,30 +619,11 @@ detect_internal_repos() {
   fi
 }
 
-validate_container_runtime() {
-  command -v "$container_runtime" >/dev/null 2>&1 || return 1
-  "$container_runtime" info >/dev/null 2>&1 || return 1
-  if [[ $container_runtime == docker ]]; then
-    if ! docker buildx version >/dev/null 2>&1; then
-      die "Docker Buildx is required to build CTA images. Install the Docker Buildx plugin or use Podman."
-    fi
-  fi
-}
-
-select_container_runtime() {
-  local candidate
-  if [[ $container_runtime_explicit == true ]]; then
-    validate_container_runtime || die "Requested container runtime '$container_runtime' is not installed or usable."
-    return
-  fi
-  for candidate in podman docker; do
-    container_runtime="$candidate"
-    if validate_container_runtime; then
-      log_task "Using container runtime: $container_runtime"
-      return
-    fi
-  done
-  die "No usable container runtime found. Install and start Podman or Docker."
+validate_podman() {
+  command -v podman >/dev/null 2>&1 \
+    || die "Podman is required to use cta-dev."
+  podman info >/dev/null 2>&1 \
+    || die "Podman is installed but unusable. Check your Podman configuration."
 }
 
 local_kubernetes_available() {
@@ -672,20 +641,12 @@ ensure_namespace_owned() {
 
 container_exists() {
   local -r container_name="$1"
-  if [[ $container_runtime == podman ]]; then
-    podman container exists "$container_name"
-  else
-    docker container inspect "$container_name" >/dev/null 2>&1
-  fi
+  podman container exists "$container_name"
 }
 
 container_status() {
   local -r container_name="$1"
-  if [[ $container_runtime == podman ]]; then
-    podman container inspect --format '{{.State.Status}}' "$container_name" 2>/dev/null
-  else
-    docker container inspect --format '{{.State.Status}}' "$container_name" 2>/dev/null
-  fi
+  podman container inspect --format '{{.State.Status}}' "$container_name" 2>/dev/null
 }
 
 remove_container() {
@@ -694,7 +655,7 @@ remove_container() {
 
   for ((attempt = 0; attempt < 5; attempt++)); do
     container_exists "$container_name" || return 0
-    "$container_runtime" rm -f "$container_name" >/dev/null 2>&1 || true
+    podman rm -f "$container_name" >/dev/null 2>&1 || true
     sleep 0.2
   done
 
@@ -756,8 +717,7 @@ build_cta() {
   local -r build_container_name="cta-build${project_root//\//-}-${platform}"
   local -r mount_basedir="/shared/CTA"
   local -r num_jobs=$(nproc --ignore=2)
-  local build_command=("$container_runtime" build)
-  [[ $container_runtime == docker ]] && build_command=(docker buildx build --load)
+  local -r build_command=(podman build)
 
   local rebuild_srpms=false
   local reinstall_srpms=false
@@ -902,7 +862,7 @@ build_cta() {
         ;;
       created|exited|stopped)
         log_task "Starting existing stopped build container ${build_container_name}..."
-        ${container_runtime} start "$build_container_name" >/dev/null \
+        podman start "$build_container_name" >/dev/null \
           || die "Failed to start existing build container '${build_container_name}'."
         ;;
       *)
@@ -920,12 +880,12 @@ build_cta() {
     "${build_command[@]}" --no-cache -t "${build_image_name}" -f ci/docker/cta/"${platform}"/build.Dockerfile .
     log_task "Starting build container ${build_container_name}..."
     local run_output
-    if ! run_output=$(${container_runtime} run -dit --rm --name "${build_container_name}" \
+    if ! run_output=$(podman run -dit --rm --name "${build_container_name}" \
       -v "${project_root}:${mount_basedir}:z" \
       "${build_image_name}" \
       /bin/bash 2>&1); then
       if [[ $run_output =~ [Nn]ame.*already.*in.*use || $run_output =~ name.*is.*in.*use ]]; then
-        die "Container runtime reported that '${build_container_name}' does not exist, but its name is still reserved. Inspect it with '${container_runtime} container inspect ${build_container_name}' and remove the stale container or storage record before retrying. Runtime error: ${run_output}"
+        die "Podman reported that '${build_container_name}' does not exist, but its name is still reserved. Inspect it with 'podman container inspect ${build_container_name}' and remove the stale container or storage record before retrying. Runtime error: ${run_output}"
       fi
       die "Failed to create build container '${build_container_name}': ${run_output}"
     fi
@@ -935,7 +895,7 @@ build_cta() {
   if [[ $rebuild_srpms == true ]]; then
     print_header "BUILDING SRPMS"
 
-    ${container_runtime} exec "${build_container_name}" \
+    podman exec "${build_container_name}" \
       .${mount_basedir}/ci/build/build_srpm.sh \
       --build-dir ${mount_basedir}/build_srpm \
       --build-generator "${build_generator}" \
@@ -976,7 +936,7 @@ build_cta() {
   write_build_state "$build_configuration_json" false
 
   print_header "BUILDING RPMS"
-  ${container_runtime} exec "${build_container_name}" \
+  podman exec "${build_container_name}" \
     .${mount_basedir}/ci/build/build_rpm.sh \
     --build-dir ${mount_basedir}/build_rpm \
     --build-generator "${build_generator}" \
@@ -1018,7 +978,6 @@ images_cta() {
   ./ci/build/build_images.sh \
     --tag "${cta_image_tag}" \
     --rpm-src "${rpm_src}" \
-    --container-runtime "${container_runtime}" \
     "${extra_image_build_options[@]}"
 
   if [[ $load_into_k8s == false ]]; then
@@ -1277,7 +1236,7 @@ main() {
 
   load_cta_dev_env
   parse_options "$command" "$@"
-  select_container_runtime
+  validate_podman
 
   case "$command" in
     build)
