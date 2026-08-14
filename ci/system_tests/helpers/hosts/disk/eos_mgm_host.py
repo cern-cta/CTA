@@ -40,15 +40,27 @@ class EosMgmHost(DiskInstanceHost):
         return Version(version_info["EOS_SERVER_VERSION"])
 
     @override
-    def generate_scitoken(self, claims: list[tuple[str, str]], keyid: str, timeout: int = 60) -> str:
-        claim_args = []
-        for name, value in claims:
-            claim_args.append(f"--claim '{name}={value}'")
+    def generate_scitoken(
+        self,
+        sub: str,
+        scope: str,
+        *,
+        issuer: str = "https://localhost:4443",
+        keyid: str = "ctaeos",
+        timeout: int = 60,
+        audience: str = "ctaeos",
+    ) -> str:
+        claims = [
+            ("sub", sub),
+            ("scope", scope),
+            ("aud", audience),
+        ]
+        claim_args = [f"--claim '{name}={value}'" for name, value in claims]
 
         print(f"Generating a SciToken with key id {keyid}")
         token = self.exec_with_output(
             f"eos scitoken create --expires $(($(date +%s) + {timeout})) "
-            f"--issuer https://localhost:4443 --keyid '{keyid}' --profile wlcg "
+            f"--issuer {issuer} --keyid '{keyid}' --profile wlcg "
             f"{' '.join(claim_args)}"
         )
         if not token:

@@ -134,14 +134,7 @@ def _stage_request(
 
 
 def _generate_poweruser_scitoken(eos_mgm: EosMgmHost, scope: str) -> str:
-    return eos_mgm.generate_scitoken(
-        [
-            ("scope", scope),
-            ("sub", "poweruser1"),
-            ("aud", "ctaeos"),
-        ],
-        keyid="ctaeos",
-    )
+    return eos_mgm.generate_scitoken("poweruser1", scope)
 
 
 def _delete_stage_request(
@@ -304,14 +297,7 @@ def test_well_known_endpoint(disk_client: DiskClientHost, disk_instance: DiskIns
 def test_generate_scitoken(eos_mgm: EosMgmHost) -> None:
     print("Generating and validating a SciToken")
     scope = "storage.stage:/eos/"
-    scitoken = eos_mgm.generate_scitoken(
-        [
-            ("scope", scope),
-            ("sub", "test_sub"),
-            ("aud", "test_aud"),
-        ],
-        keyid="ctaeos",
-    )
+    scitoken = eos_mgm.generate_scitoken("test_sub", scope, audience="test_aud")
     payload_json = _decode_jwt_payload(scitoken)
 
     assert payload_json["sub"] == "test_sub", f"SciToken with wrong sub: {payload_json['sub']}"

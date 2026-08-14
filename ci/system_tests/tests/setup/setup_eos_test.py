@@ -48,12 +48,7 @@ def test_scitokens_addon_on_eos(eos_mgm: EosMgmHost, remote_scripts_dir: Path) -
 
     print("Checking SciTokens add-on is fully running")
     # EOS should be able to generate SciTokens now.
-    scitoken_base64 = eos_mgm.generate_scitoken(
-        [
-            ("scope", "storage.read:/"),
-        ],
-        keyid="ctaeos",
-    )
+    scitoken_base64 = eos_mgm.generate_scitoken("poweruser1", "storage.read:/")
     assert scitoken_base64, "SciToken generation returned an empty token"
 
 
