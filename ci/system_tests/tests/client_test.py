@@ -111,14 +111,14 @@ def client_params(test_config: _TestConfig) -> ClientParams:
     )
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="class")
 def prepare_test_paths(
     eos_client: EosClientHost,
     eos_mgm: EosMgmHost,
     cta_cli: CtaCliHost,
     disk_instance_name: str,
     test_dir: Path,
-) -> Iterator[PrepareTestPaths]:
+) -> PrepareTestPaths:
     no_prepare_dir = test_dir / "no_prepare"
     missing_dir = test_dir / "none"
     eos_mgm.exec(f"eos mkdir -p '{no_prepare_dir}'")
@@ -129,13 +129,7 @@ def prepare_test_paths(
     tape_file = eos_client.generate_and_archive_file(
         disk_instance_name, test_dir / "idempotent_prepare", append_uid=True, wait_timeout_secs=90
     )
-    cta_cli.set_all_drives_down()
-    try:
-        yield PrepareTestPaths(tape_file, no_prepare_dir, missing_dir)
-    finally:
-        cta_cli.set_all_drives_up()
-        eos_client.delete_file(disk_instance_name, tape_file)
-        eos_mgm.force_remove_directory(no_prepare_dir)
+    return PrepareTestPaths(tape_file, no_prepare_dir, missing_dir)
 
 
 # =========================================================================
@@ -356,44 +350,53 @@ def test_multiple_retrieve(eos_client: EosClientHost, test_dir: Path, remote_scr
     eos_client.exec(f". /tmp/client_env && /tmp/test_multiple_retrieve.sh {test_dir}")
 
 
-def test_prepare_existing_file(
-    eos_client: EosClientHost, disk_instance_name: str, prepare_test_paths: PrepareTestPaths
-) -> None:
-    result = _prepare_command(eos_client, disk_instance_name, f"prepare -s '{prepare_test_paths.tape_file}'")
-    assert result.success, result.stderr
-    response = _prepare_response(
-        _query_prepare(eos_client, disk_instance_name, result.stdout.strip(), [prepare_test_paths.tape_file]),
-        prepare_test_paths.tape_file,
-    )
-    assert response == {
-        **response,
-        "path_exists": True,
-        "requested": True,
-        "has_reqid": True,
-        "error_text": "",
-    }
+class TestPrepare:
+    def test_prepare_existing_file(
+        self,
+        eos_client: EosClientHost,
+        cta_cli: CtaCliHost,
+        disk_instance_name: str,
+        prepare_test_paths: PrepareTestPaths,
+    ) -> None:
+        cta_cli.set_all_drives_down()
+        result = _prepare_command(eos_client, disk_instance_name, f"prepare -s '{prepare_test_paths.tape_file}'")
+        assert result.success, result.stderr
+        response = _prepare_response(
+            _query_prepare(eos_client, disk_instance_name, result.stdout.strip(), [prepare_test_paths.tape_file]),
+            prepare_test_paths.tape_file,
+        )
+        assert response == {
+            **response,
+            "path_exists": True,
+            "requested": True,
+            "has_reqid": True,
+            "error_text": "",
+        }
 
+    def test_prepare_missing_file_fails(
+        self, eos_client: EosClientHost, disk_instance_name: str, prepare_test_paths: PrepareTestPaths
+    ) -> None:
+        missing_file = prepare_test_paths.missing_dir / str(uuid.uuid4())
+        result = _prepare_command(eos_client, disk_instance_name, f"prepare -s '{missing_file}'")
+        assert not result.success
 
-def test_prepare_missing_file_fails(
-    eos_client: EosClientHost, disk_instance_name: str, prepare_test_paths: PrepareTestPaths
-) -> None:
-    missing_file = prepare_test_paths.missing_dir / str(uuid.uuid4())
-    result = _prepare_command(eos_client, disk_instance_name, f"prepare -s '{missing_file}'")
-    assert not result.success
-
-
-@pytest.mark.parametrize("all_forbidden", [False, True], ids=["one-of-two", "all"])
-def test_prepare_without_permission(
-    eos_client: EosClientHost,
-    disk_instance_name: str,
-    prepare_test_paths: PrepareTestPaths,
-    all_forbidden: bool,
-) -> None:
-    forbidden_files = [prepare_test_paths.no_prepare_dir / str(uuid.uuid4()) for _ in range(2 if all_forbidden else 1)]
-    for path in forbidden_files:
-        eos_client.exec(f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp /etc/group root://{disk_instance_name}/{path}")
-    paths = forbidden_files if all_forbidden else [prepare_test_paths.tape_file, forbidden_files[0]]
-    try:
+    @pytest.mark.parametrize("all_forbidden", [False, True], ids=["one-of-two", "all"])
+    def test_prepare_without_permission(
+        self,
+        eos_client: EosClientHost,
+        cta_cli: CtaCliHost,
+        disk_instance_name: str,
+        prepare_test_paths: PrepareTestPaths,
+        all_forbidden: bool,
+    ) -> None:
+        if not all_forbidden:
+            cta_cli.set_all_drives_down()
+        forbidden_files = [
+            prepare_test_paths.no_prepare_dir / str(uuid.uuid4()) for _ in range(2 if all_forbidden else 1)
+        ]
+        for path in forbidden_files:
+            eos_client.exec(f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp /etc/group root://{disk_instance_name}/{path}")
+        paths = forbidden_files if all_forbidden else [prepare_test_paths.tape_file, forbidden_files[0]]
         result = _prepare_command(
             eos_client, disk_instance_name, "prepare -s " + " ".join(f"'{path}'" for path in paths)
         )
@@ -407,59 +410,60 @@ def test_prepare_without_permission(
             assert failed["has_reqid"] is False
             assert failed["error_text"]
             assert valid["error_text"] == ""
-    finally:
+
+    @pytest.mark.parametrize("all_missing", [False, True], ids=["one-of-two", "all"])
+    def test_prepare_with_missing_files(
+        self,
+        eos_client: EosClientHost,
+        cta_cli: CtaCliHost,
+        disk_instance_name: str,
+        prepare_test_paths: PrepareTestPaths,
+        all_missing: bool,
+    ) -> None:
+        if not all_missing:
+            cta_cli.set_all_drives_down()
+        missing_files = [prepare_test_paths.missing_dir / str(uuid.uuid4()) for _ in range(2 if all_missing else 1)]
+        paths = missing_files if all_missing else [prepare_test_paths.tape_file, missing_files[0]]
+        result = _prepare_command(
+            eos_client, disk_instance_name, "prepare -s " + " ".join(f"'{path}'" for path in paths)
+        )
+        assert result.success is not all_missing
+        if not all_missing:
+            response = _query_prepare(eos_client, disk_instance_name, result.stdout.strip(), paths)
+            failed = _prepare_response(response, missing_files[0])
+            valid = _prepare_response(response, prepare_test_paths.tape_file)
+            assert failed["path_exists"] is False
+            assert failed["requested"] is False
+            assert failed["has_reqid"] is False
+            assert failed["error_text"]
+            assert valid["error_text"] == ""
+
+    def test_prepare_multiple_file_response(
+        self,
+        eos_client: EosClientHost,
+        cta_cli: CtaCliHost,
+        disk_instance_name: str,
+        prepare_test_paths: PrepareTestPaths,
+    ) -> None:
+        tape_files = [prepare_test_paths.tape_file]
+        cta_cli.set_all_drives_up()
+        tape_files.extend(
+            [
+                eos_client.generate_and_archive_file(
+                    disk_instance_name,
+                    prepare_test_paths.tape_file.parent / "prepare_multi",
+                    append_uid=True,
+                    wait_timeout_secs=90,
+                )
+                for _ in range(3)
+            ]
+        )
+        cta_cli.set_all_drives_down()
+        forbidden_files = [prepare_test_paths.no_prepare_dir / str(uuid.uuid4()) for _ in range(4)]
+        missing_files = [prepare_test_paths.missing_dir / str(uuid.uuid4()) for _ in range(4)]
         for path in forbidden_files:
-            eos_client.delete_file(disk_instance_name, path)
-
-
-@pytest.mark.parametrize("all_missing", [False, True], ids=["one-of-two", "all"])
-def test_prepare_with_missing_files(
-    eos_client: EosClientHost,
-    disk_instance_name: str,
-    prepare_test_paths: PrepareTestPaths,
-    all_missing: bool,
-) -> None:
-    missing_files = [prepare_test_paths.missing_dir / str(uuid.uuid4()) for _ in range(2 if all_missing else 1)]
-    paths = missing_files if all_missing else [prepare_test_paths.tape_file, missing_files[0]]
-    result = _prepare_command(eos_client, disk_instance_name, "prepare -s " + " ".join(f"'{path}'" for path in paths))
-    assert result.success is not all_missing
-    if not all_missing:
-        response = _query_prepare(eos_client, disk_instance_name, result.stdout.strip(), paths)
-        failed = _prepare_response(response, missing_files[0])
-        valid = _prepare_response(response, prepare_test_paths.tape_file)
-        assert failed["path_exists"] is False
-        assert failed["requested"] is False
-        assert failed["has_reqid"] is False
-        assert failed["error_text"]
-        assert valid["error_text"] == ""
-
-
-def test_prepare_multiple_file_response(
-    eos_client: EosClientHost,
-    cta_cli: CtaCliHost,
-    disk_instance_name: str,
-    prepare_test_paths: PrepareTestPaths,
-) -> None:
-    tape_files = [prepare_test_paths.tape_file]
-    cta_cli.set_all_drives_up()
-    tape_files.extend(
-        [
-            eos_client.generate_and_archive_file(
-                disk_instance_name,
-                prepare_test_paths.tape_file.parent / "prepare_multi",
-                append_uid=True,
-                wait_timeout_secs=90,
-            )
-            for _ in range(3)
-        ]
-    )
-    cta_cli.set_all_drives_down()
-    forbidden_files = [prepare_test_paths.no_prepare_dir / str(uuid.uuid4()) for _ in range(4)]
-    missing_files = [prepare_test_paths.missing_dir / str(uuid.uuid4()) for _ in range(4)]
-    for path in forbidden_files:
-        eos_client.exec(f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp /etc/group root://{disk_instance_name}/{path}")
-    paths = tape_files + forbidden_files + missing_files
-    try:
+            eos_client.exec(f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp /etc/group root://{disk_instance_name}/{path}")
+        paths = tape_files + forbidden_files + missing_files
         result = _prepare_command(eos_client, disk_instance_name, "prepare -s " + " ".join(map(str, paths)))
         assert result.success
         assert result.stdout.strip()
@@ -470,63 +474,59 @@ def test_prepare_multiple_file_response(
         assert all(_prepare_response(response, path)["error_text"] == "" for path in tape_files)
         assert all(_prepare_response(response, path)["error_text"] for path in forbidden_files + missing_files)
         assert all(not _prepare_response(response, path)["path_exists"] for path in missing_files)
-    finally:
-        for path in tape_files[1:] + forbidden_files:
-            eos_client.delete_file(disk_instance_name, path)
 
+    @pytest.mark.parametrize("include_missing", [False, True], ids=["success", "partial-failure"])
+    def test_prepare_abort(
+        self,
+        eos_client: EosClientHost,
+        cta_cli: CtaCliHost,
+        disk_instance_name: str,
+        prepare_test_paths: PrepareTestPaths,
+        include_missing: bool,
+    ) -> None:
+        cta_cli.set_all_drives_down()
+        stage = _prepare_command(eos_client, disk_instance_name, f"prepare -s '{prepare_test_paths.tape_file}'")
+        assert stage.success
+        paths = [prepare_test_paths.tape_file]
+        if include_missing:
+            paths.append(prepare_test_paths.missing_dir / str(uuid.uuid4()))
+        abort = _prepare_command(
+            eos_client,
+            disk_instance_name,
+            f"prepare -a '{stage.stdout.strip()}' " + " ".join(f"'{path}'" for path in paths),
+        )
+        assert abort.success is not include_missing
+        response = _prepare_response(
+            _query_prepare(eos_client, disk_instance_name, stage.stdout.strip(), [prepare_test_paths.tape_file]),
+            prepare_test_paths.tape_file,
+        )
+        assert response["path_exists"] is True
+        assert response["requested"] is False
+        assert response["has_reqid"] is False
+        assert response["error_text"] == ""
 
-@pytest.mark.parametrize("include_missing", [False, True], ids=["success", "partial-failure"])
-def test_prepare_abort(
-    eos_client: EosClientHost,
-    disk_instance_name: str,
-    prepare_test_paths: PrepareTestPaths,
-    include_missing: bool,
-) -> None:
-    stage = _prepare_command(eos_client, disk_instance_name, f"prepare -s '{prepare_test_paths.tape_file}'")
-    assert stage.success
-    paths = [prepare_test_paths.tape_file]
-    if include_missing:
-        paths.append(prepare_test_paths.missing_dir / str(uuid.uuid4()))
-    abort = _prepare_command(
-        eos_client,
-        disk_instance_name,
-        f"prepare -a '{stage.stdout.strip()}' " + " ".join(f"'{path}'" for path in paths),
-    )
-    assert abort.success is not include_missing
-    response = _prepare_response(
-        _query_prepare(eos_client, disk_instance_name, stage.stdout.strip(), [prepare_test_paths.tape_file]),
-        prepare_test_paths.tape_file,
-    )
-    assert response["path_exists"] is True
-    assert response["requested"] is False
-    assert response["has_reqid"] is False
-    assert response["error_text"] == ""
-
-
-@pytest.mark.parametrize("include_missing", [False, True], ids=["success", "partial-failure"])
-def test_prepare_evict(
-    eos_client: EosClientHost,
-    cta_cli: CtaCliHost,
-    disk_instance_name: str,
-    test_dir: Path,
-    include_missing: bool,
-) -> None:
-    cta_cli.set_all_drives_up(wait=False)
-    file_path = eos_client.generate_and_archive_file(
-        disk_instance_name, test_dir / "prepare_evict", append_uid=True, wait_timeout_secs=90
-    )
-    eos_client.retrieve_file(disk_instance_name, file_path, wait_timeout_secs=90)
-    paths = [file_path]
-    if include_missing:
-        paths.append(test_dir / "none" / str(uuid.uuid4()))
-    try:
+    @pytest.mark.parametrize("include_missing", [False, True], ids=["success", "partial-failure"])
+    def test_prepare_evict(
+        self,
+        eos_client: EosClientHost,
+        cta_cli: CtaCliHost,
+        disk_instance_name: str,
+        test_dir: Path,
+        include_missing: bool,
+    ) -> None:
+        cta_cli.set_all_drives_up()
+        file_path = eos_client.generate_and_archive_file(
+            disk_instance_name, test_dir / "prepare_evict", append_uid=True, wait_timeout_secs=90
+        )
+        eos_client.retrieve_file(disk_instance_name, file_path, wait_timeout_secs=90)
+        paths = [file_path]
+        if include_missing:
+            paths.append(test_dir / "none" / str(uuid.uuid4()))
         result = _prepare_command(
             eos_client, disk_instance_name, "prepare -e " + " ".join(f"'{path}'" for path in paths)
         )
         assert result.success is not include_missing
         eos_client.wait_for_file_eviction(disk_instance_name, file_path)
-    finally:
-        eos_client.delete_file(disk_instance_name, file_path)
 
 
 def test_delete_on_closew_error(eos_client: EosClientHost, disk_instance_name: str, test_dir: Path) -> None:
@@ -535,147 +535,139 @@ def test_delete_on_closew_error(eos_client: EosClientHost, disk_instance_name: s
     eos_admin = f"KRB5CCNAME=/tmp/eosadmin1/krb5cc_0 eos -r 0 0 root://{disk_instance_name}"
 
     eos_client.exec(f"{eos_admin} mkdir '{test_directory}'")
-    try:
-        eos_client.exec(f"{eos_admin} attr set sys.archive.storage_class=fail_on_closew_test '{test_directory}'")
-        copy_result = eos_client.exec(
-            f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp /etc/group root://{disk_instance_name}/{test_file}",
-            capture_output=True,
-            throw_on_failure=False,
-        )
-        assert not copy_result.success, "xrdcp succeeded despite the CLOSEW workflow error"
+    eos_client.exec(f"{eos_admin} attr set sys.archive.storage_class=fail_on_closew_test '{test_directory}'")
+    copy_result = eos_client.exec(
+        f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp /etc/group root://{disk_instance_name}/{test_file}",
+        capture_output=True,
+        throw_on_failure=False,
+    )
+    assert not copy_result.success, "xrdcp succeeded despite the CLOSEW workflow error"
 
-        file_info = eos_client.exec(
-            f"eos root://{disk_instance_name} fileinfo '{test_file}'",
-            capture_output=True,
-            throw_on_failure=False,
-        )
-        assert not file_info.success, "EOS namespace entry is still present after the CLOSEW workflow error"
-    finally:
-        eos_client.exec(f"{eos_admin} rm -rf '{test_directory}'", throw_on_failure=False)
+    file_info = eos_client.exec(
+        f"eos root://{disk_instance_name} fileinfo '{test_file}'",
+        capture_output=True,
+        throw_on_failure=False,
+    )
+    assert not file_info.success, "EOS namespace entry is still present after the CLOSEW workflow error"
 
 
 def test_archive_zero_length_file(eos_client: EosClientHost, disk_instance_name: str, test_dir: Path) -> None:
     source_path = Path(f"/tmp/empty_file_{uuid.uuid4().hex}")
     destination_path = test_dir / source_path.name
     eos_client.exec(f"truncate -s 0 '{source_path}'")
-    try:
-        result = eos_client.exec(
-            f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp '{source_path}' root://{disk_instance_name}/{destination_path}",
-            capture_output=True,
-            throw_on_failure=False,
-        )
-        assert not result.success, "Archiving a zero-length file unexpectedly succeeded"
-        error_output = result.stdout + result.stderr
-        assert "0-length" in error_output.lower(), f"Unexpected xrdcp error: {error_output}"
-    finally:
-        eos_client.exec(f"rm -f '{source_path}'")
+    result = eos_client.exec(
+        f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp '{source_path}' root://{disk_instance_name}/{destination_path}",
+        capture_output=True,
+        throw_on_failure=False,
+    )
+    assert not result.success, "Archiving a zero-length file unexpectedly succeeded"
+    error_output = result.stdout + result.stderr
+    assert "0-length" in error_output.lower(), f"Unexpected xrdcp error: {error_output}"
 
 
-def test_eos_evict_counter_and_missing_tape_copy(
-    eos_client: EosClientHost, cta_cli: CtaCliHost, disk_instance_name: str, test_dir: Path
-) -> None:
-    file_path = test_dir / f"eos_evict_{uuid.uuid4().hex}"
-    cta_cli.set_all_drives_down()
-    try:
-        eos_client.archive_file(disk_instance_name, file_path, Path("/etc/group"), wait=False)
-        file_info = json.loads(
-            eos_client.exec_with_output(
-                "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
-                f"eos --json root://{disk_instance_name} info '{file_path}'"
-            )
-        )
-        disk_fsid = next(
-            location["fsid"] for location in file_info["locations"] if location["schedgroup"].startswith("default")
-        )
-        for options in ("", f"--ignore-evict-counter --fsid {disk_fsid}"):
-            result = eos_client.exec(
-                "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
-                f"eos root://{disk_instance_name} evict {options} '{file_path}'",
-                throw_on_failure=False,
-            )
-            assert not result.success
-        assert eos_client.is_file_on_disk(disk_instance_name, file_path)
-
-        cta_cli.set_all_drives_up(wait=False)
-        eos_client.wait_for_file_archival(disk_instance_name, file_path, wait_timeout_secs=90)
-        eos_client.wait_for_file_eviction(disk_instance_name, file_path, wait_timeout_secs=90)
-        for _ in range(3):
-            result = _prepare_command(eos_client, disk_instance_name, f"prepare -s '{file_path}'")
-            assert result.success
-        eos_client.wait_for_file_retrieval(disk_instance_name, file_path, wait_timeout_secs=90)
-
-        for expected_counter in range(3, 0, -1):
-            attributes = json.loads(
+class TestEosEvict:
+    def test_eos_evict_counter_and_missing_tape_copy(
+        self, eos_client: EosClientHost, cta_cli: CtaCliHost, disk_instance_name: str, test_dir: Path
+    ) -> None:
+        file_path = test_dir / f"eos_evict_{uuid.uuid4().hex}"
+        cta_cli.set_all_drives_down()
+        try:
+            eos_client.archive_file(disk_instance_name, file_path, Path("/etc/group"), wait=False)
+            file_info = json.loads(
                 eos_client.exec_with_output(
                     "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
-                    f"eos --json root://{disk_instance_name} attr get sys.retrieve.evict_counter '{file_path}'"
+                    f"eos --json root://{disk_instance_name} info '{file_path}'"
                 )
             )
-            assert int(attributes["attr"]["get"][0]["sys"]["retrieve"]["evict_counter"]) == expected_counter
+            disk_fsid = next(
+                location["fsid"] for location in file_info["locations"] if location["schedgroup"].startswith("default")
+            )
+            for options in ("", f"--ignore-evict-counter --fsid {disk_fsid}"):
+                result = eos_client.exec(
+                    "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
+                    f"eos root://{disk_instance_name} evict {options} '{file_path}'",
+                    throw_on_failure=False,
+                )
+                assert not result.success
+            assert eos_client.is_file_on_disk(disk_instance_name, file_path)
+
+            cta_cli.set_all_drives_up(wait=False)
+            eos_client.wait_for_file_archival(disk_instance_name, file_path, wait_timeout_secs=90)
+            eos_client.wait_for_file_eviction(disk_instance_name, file_path, wait_timeout_secs=90)
+            for _ in range(3):
+                result = _prepare_command(eos_client, disk_instance_name, f"prepare -s '{file_path}'")
+                assert result.success
+            eos_client.wait_for_file_retrieval(disk_instance_name, file_path, wait_timeout_secs=90)
+
+            for expected_counter in range(3, 0, -1):
+                attributes = json.loads(
+                    eos_client.exec_with_output(
+                        "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
+                        f"eos --json root://{disk_instance_name} attr get sys.retrieve.evict_counter '{file_path}'"
+                    )
+                )
+                assert int(attributes["attr"]["get"][0]["sys"]["retrieve"]["evict_counter"]) == expected_counter
+                eos_client.exec(
+                    "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
+                    f"eos root://{disk_instance_name} evict '{file_path}'"
+                )
+            eos_client.wait_for_file_eviction(disk_instance_name, file_path)
+        finally:
+            cta_cli.set_all_drives_up(wait=False)
+
+    def test_eos_evict_explicit_fsid(self, eos_client: EosClientHost, disk_instance_name: str, test_dir: Path) -> None:
+        dummy_file_systems = [(101, "dummy_1"), (102, "dummy_2"), (103, "dummy_3")]
+        tape_fsid = 65535
+        missing_fsid = 200
+        file_path = eos_client.generate_and_archive_file(
+            disk_instance_name, test_dir / "eos_evict_fsid", append_uid=True, wait_timeout_secs=90
+        )
+        eos_admin = f"KRB5CCNAME=/tmp/eosadmin1/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://{disk_instance_name}"
+        eos_power = "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 eos"
+
+        try:
+            for fsid, name in dummy_file_systems:
+                eos_client.exec(f"{eos_admin} space define '{name}'")
+                eos_client.exec(f"{eos_admin} fs add -m {fsid} '{name}' localhost:1234 /does_not_exist_{fsid} '{name}'")
+                eos_client.exec(f"{eos_admin} file tag '{file_path}' +{fsid}")
+
+            def replica_count() -> int:
+                info = json.loads(
+                    eos_client.exec_with_output(f"{eos_power} --json root://{disk_instance_name} info '{file_path}'")
+                )
+                return len(info["locations"])
+
+            assert replica_count() == 4
+            failing_options = [
+                f"--ignore-evict-counter --fsid {tape_fsid}",
+                f"--ignore-evict-counter --fsid {missing_fsid}",
+                "--fsid 101",
+                "--ignore-removal-on-fst",
+                "--ignore-removal-on-fst --fsid 101",
+            ]
+            for options in failing_options:
+                result = eos_client.exec(
+                    f"{eos_power} root://{disk_instance_name} evict {options} '{file_path}'", throw_on_failure=False
+                )
+                assert not result.success
+            assert replica_count() == 4
+
             eos_client.exec(
-                "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
-                f"eos root://{disk_instance_name} evict '{file_path}'"
+                f"{eos_power} root://{disk_instance_name} evict --ignore-evict-counter --fsid 101 '{file_path}'"
             )
-        eos_client.wait_for_file_eviction(disk_instance_name, file_path)
-    finally:
-        cta_cli.set_all_drives_up(wait=False)
-        eos_client.delete_file(disk_instance_name, file_path)
-
-
-def test_eos_evict_explicit_fsid(eos_client: EosClientHost, disk_instance_name: str, test_dir: Path) -> None:
-    dummy_file_systems = [(101, "dummy_1"), (102, "dummy_2"), (103, "dummy_3")]
-    tape_fsid = 65535
-    missing_fsid = 200
-    file_path = eos_client.generate_and_archive_file(
-        disk_instance_name, test_dir / "eos_evict_fsid", append_uid=True, wait_timeout_secs=90
-    )
-    eos_admin = f"KRB5CCNAME=/tmp/eosadmin1/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://{disk_instance_name}"
-    eos_power = "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 eos"
-
-    try:
-        for fsid, name in dummy_file_systems:
-            eos_client.exec(f"{eos_admin} space define '{name}'")
-            eos_client.exec(f"{eos_admin} fs add -m {fsid} '{name}' localhost:1234 /does_not_exist_{fsid} '{name}'")
-            eos_client.exec(f"{eos_admin} file tag '{file_path}' +{fsid}")
-
-        def replica_count() -> int:
-            info = json.loads(
-                eos_client.exec_with_output(f"{eos_power} --json root://{disk_instance_name} info '{file_path}'")
+            assert replica_count() == 3
+            eos_client.exec(
+                f"{eos_power} root://{disk_instance_name} evict "
+                f"--ignore-removal-on-fst --ignore-evict-counter --fsid 102 '{file_path}'"
             )
-            return len(info["locations"])
-
-        assert replica_count() == 4
-        failing_options = [
-            f"--ignore-evict-counter --fsid {tape_fsid}",
-            f"--ignore-evict-counter --fsid {missing_fsid}",
-            "--fsid 101",
-            "--ignore-removal-on-fst",
-            "--ignore-removal-on-fst --fsid 101",
-        ]
-        for options in failing_options:
-            result = eos_client.exec(
-                f"{eos_power} root://{disk_instance_name} evict {options} '{file_path}'", throw_on_failure=False
-            )
-            assert not result.success
-        assert replica_count() == 4
-
-        eos_client.exec(
-            f"{eos_power} root://{disk_instance_name} evict --ignore-evict-counter --fsid 101 '{file_path}'"
-        )
-        assert replica_count() == 3
-        eos_client.exec(
-            f"{eos_power} root://{disk_instance_name} evict "
-            f"--ignore-removal-on-fst --ignore-evict-counter --fsid 102 '{file_path}'"
-        )
-        assert replica_count() == 2
-        eos_client.exec(f"{eos_power} root://{disk_instance_name} evict --ignore-evict-counter '{file_path}'")
-        assert replica_count() == 1
-        assert eos_client.is_file_on_tape_only(disk_instance_name, file_path)
-    finally:
-        for fsid, _ in dummy_file_systems:
-            eos_client.exec(f"{eos_admin} fs config {fsid} configstatus=empty", throw_on_failure=False)
-            eos_client.exec(f"{eos_admin} fs rm {fsid}", throw_on_failure=False)
-        eos_client.delete_file(disk_instance_name, file_path)
+            assert replica_count() == 2
+            eos_client.exec(f"{eos_power} root://{disk_instance_name} evict --ignore-evict-counter '{file_path}'")
+            assert replica_count() == 1
+            assert eos_client.is_file_on_tape_only(disk_instance_name, file_path)
+        finally:
+            for fsid, _ in dummy_file_systems:
+                eos_client.exec(f"{eos_admin} fs config {fsid} configstatus=empty", throw_on_failure=False)
+                eos_client.exec(f"{eos_admin} fs rm {fsid}", throw_on_failure=False)
 
 
 def test_eos_immutable_file(eos_client: EosClientHost, eos_mgm: EosMgmHost, test_dir: Path) -> None:
@@ -697,89 +689,86 @@ def test_eos_timestamps_correctness(eos_client: EosClientHost, disk_instance_nam
     eos_client.archive_file(disk_instance_name, file_path, Path("/etc/group"), wait=False)
     timestamps_before_archive = persistent_timestamps(eos_client.file_info(disk_instance_name, file_path))
 
-    try:
-        eos_client.wait_for_file_archival(disk_instance_name, file_path)
-        assert persistent_timestamps(eos_client.file_info(disk_instance_name, file_path)) == timestamps_before_archive
+    eos_client.wait_for_file_archival(disk_instance_name, file_path)
+    assert persistent_timestamps(eos_client.file_info(disk_instance_name, file_path)) == timestamps_before_archive
 
-        eos_client.retrieve_file(disk_instance_name, file_path)
-        assert persistent_timestamps(eos_client.file_info(disk_instance_name, file_path)) == timestamps_before_archive
+    eos_client.retrieve_file(disk_instance_name, file_path)
+    assert persistent_timestamps(eos_client.file_info(disk_instance_name, file_path)) == timestamps_before_archive
 
-        eos_client.evict_file(disk_instance_name, file_path)
-        assert persistent_timestamps(eos_client.file_info(disk_instance_name, file_path)) == timestamps_before_archive
-    finally:
-        eos_client.delete_file(disk_instance_name, file_path)
+    eos_client.evict_file(disk_instance_name, file_path)
+    assert persistent_timestamps(eos_client.file_info(disk_instance_name, file_path)) == timestamps_before_archive
 
 
 # Tests for eosdf
 
 
-def test_eosdf(
-    eos_client: EosClientHost,
-    cta_cli: CtaCliHost,
-    disk_instance_name: str,
-    test_dir: Path,
-    cta_taped: CtaTapedHost,
-) -> None:
-    # Ensure that whatever drive we are checking is the one doing the archiving
-    cta_cli.set_all_drives_down()
-    cta_cli.set_drive_up(cta_taped.drive_name)
-    _run_eosdf_test(eos_client, cta_cli, disk_instance_name, test_dir)
-
-
-## The idea is that we run it once without script, and once without executable permission on the script
-## Both times we should get a success, because when the script is the problem, we allow staging to continue
-
-
-def test_eosdf_with_nonexistent_script(
-    cta_taped: CtaTapedHost,
-    eos_client: EosClientHost,
-    cta_cli: CtaCliHost,
-    disk_instance_name: str,
-    test_dir: Path,
-) -> None:
-    cta_taped.exec("sudo mv /usr/bin/cta-eosdf.sh /usr/bin/eosdf_newname.sh")
-    try:
+class TestEosdf:
+    def test_eosdf(
+        self,
+        eos_client: EosClientHost,
+        cta_cli: CtaCliHost,
+        disk_instance_name: str,
+        test_dir: Path,
+        cta_taped: CtaTapedHost,
+    ) -> None:
+        # Ensure that whatever drive we are checking is the one doing the archiving
+        cta_cli.set_all_drives_down()
+        cta_cli.set_drive_up(cta_taped.drive_name)
         _run_eosdf_test(eos_client, cta_cli, disk_instance_name, test_dir)
-        cta_taped.exec(f"grep -q 'No such file or directory' {cta_taped.log_file_path}")
-    finally:
-        cta_taped.exec("sudo mv /usr/bin/eosdf_newname.sh /usr/bin/cta-eosdf.sh")
 
+    ## The idea is that we run it once without script, and once without executable permission on the script
+    ## Both times we should get a success, because when the script is the problem, we allow staging to continue
 
-def test_eosdf_without_executable_permissions(
-    cta_taped: CtaTapedHost,
-    eos_client: EosClientHost,
-    cta_cli: CtaCliHost,
-    disk_instance_name: str,
-    test_dir: Path,
-) -> None:
-    cta_taped.exec("chmod -x /usr/bin/cta-eosdf.sh")
-    try:
-        _run_eosdf_test(eos_client, cta_cli, disk_instance_name, test_dir)
-        cta_taped.exec(f"grep -q 'Permission denied' {cta_taped.log_file_path}")
-    finally:
-        cta_taped.exec("chmod +x /usr/bin/cta-eosdf.sh")
+    def test_eosdf_with_nonexistent_script(
+        self,
+        cta_taped: CtaTapedHost,
+        eos_client: EosClientHost,
+        cta_cli: CtaCliHost,
+        disk_instance_name: str,
+        test_dir: Path,
+    ) -> None:
+        cta_taped.exec("sudo mv /usr/bin/cta-eosdf.sh /usr/bin/eosdf_newname.sh")
+        try:
+            _run_eosdf_test(eos_client, cta_cli, disk_instance_name, test_dir)
+            cta_taped.exec(f"grep -q 'No such file or directory' {cta_taped.log_file_path}")
+        finally:
+            cta_taped.exec("sudo mv /usr/bin/eosdf_newname.sh /usr/bin/cta-eosdf.sh")
 
+    def test_eosdf_without_executable_permissions(
+        self,
+        cta_taped: CtaTapedHost,
+        eos_client: EosClientHost,
+        cta_cli: CtaCliHost,
+        disk_instance_name: str,
+        test_dir: Path,
+    ) -> None:
+        cta_taped.exec("chmod -x /usr/bin/cta-eosdf.sh")
+        try:
+            _run_eosdf_test(eos_client, cta_cli, disk_instance_name, test_dir)
+            cta_taped.exec(f"grep -q 'Permission denied' {cta_taped.log_file_path}")
+        finally:
+            cta_taped.exec("chmod +x /usr/bin/cta-eosdf.sh")
 
-# Test what happens when we get an error from the eos client (fake instance not reachable by specifying a nonexistent
-# instance name in the script)
-# grep for 'could not be used to get the FreeSpace'
+    # Test what happens when the EOS client returns an error.
+    # The script uses a nonexistent instance name to make it unreachable.
+    # grep for 'could not be used to get the FreeSpace'
 
-
-def test_eosdf_with_script_that_throws_exception(
-    cta_taped: CtaTapedHost,
-    eos_client: EosClientHost,
-    cta_cli: CtaCliHost,
-    disk_instance_name: str,
-    test_dir: Path,
-) -> None:
-    cta_taped.exec("sudo sed -i 's|root://$diskInstance|root://nonexistentinstance|g' /usr/bin/cta-eosdf.sh")
-    try:
-        _run_eosdf_test(eos_client, cta_cli, disk_instance_name, test_dir)
-        cta_taped.exec(f"grep -q 'could not be used to get the FreeSpace' {cta_taped.log_file_path}")
-    finally:
-        cta_taped.exec("sudo sed -i 's|root://nonexistentinstance|root://$diskInstance|g' /usr/bin/cta-eosdf.sh")
-    # Done with the eosdf tests; set all drives up again
-    cta_cli.set_all_drives_up()
+    def test_eosdf_with_script_that_throws_exception(
+        self,
+        cta_taped: CtaTapedHost,
+        eos_client: EosClientHost,
+        cta_cli: CtaCliHost,
+        disk_instance_name: str,
+        test_dir: Path,
+    ) -> None:
+        cta_taped.exec("sudo sed -i 's|root://$diskInstance|root://nonexistentinstance|g' /usr/bin/cta-eosdf.sh")
+        try:
+            _run_eosdf_test(eos_client, cta_cli, disk_instance_name, test_dir)
+            cta_taped.exec(f"grep -q 'could not be used to get the FreeSpace' {cta_taped.log_file_path}")
+        finally:
+            cta_taped.exec("sudo sed -i 's|root://nonexistentinstance|root://$diskInstance|g' /usr/bin/cta-eosdf.sh")
+        # Done with the eosdf tests; set all drives up again
+        cta_cli.set_all_drives_up()
 
 
 # This test screws with the tape pools and archive routes, so it should be the last one in the suite that tests anything
@@ -831,208 +820,203 @@ def test_retrieve_queue_cleanup(
 # Tests for correct runtime behaviour w.r.t. logs, config files, etc
 
 
-def test_taped_config_dr_ls_consistency(cta_cli: CtaCliHost, cta_taped: CtaTapedHost) -> None:
-    taped_config = cta_taped.exec_with_output("cat /etc/cta/cta-taped.conf")
-    drive_json = cta_cli.exec_with_output("cta-admin --json dr ls")
-    entries = [e for e in json.loads(drive_json) if e.get("driveName") == cta_taped.drive_name]
-    assert entries, "Drive not found"
-    config_json = entries[0].get("driveConfig")
-    assert config_json, "driveconfig missing"
-    indexed = {(e["category"], e["key"], e["value"]) for e in config_json}
+class TestRuntimeDeployment:
+    def test_taped_config_dr_ls_consistency(self, cta_cli: CtaCliHost, cta_taped: CtaTapedHost) -> None:
+        taped_config = cta_taped.exec_with_output("cat /etc/cta/cta-taped.conf")
+        drive_json = cta_cli.exec_with_output("cta-admin --json dr ls")
+        entries = [e for e in json.loads(drive_json) if e.get("driveName") == cta_taped.drive_name]
+        assert entries, "Drive not found"
+        config_json = entries[0].get("driveConfig")
+        assert config_json, "driveconfig missing"
+        indexed = {(e["category"], e["key"], e["value"]) for e in config_json}
 
-    # Because our config files are badly structured, some options end up differently in the catalogue
-    # For now just skip them
-    key_skip_list = ["MountCriteria"]
+        # Because our config files are badly structured, some options end up differently in the catalogue
+        # For now just skip them
+        key_skip_list = ["MountCriteria"]
 
-    for line in taped_config.splitlines():
-        stripped_line = line.strip()
-        if not stripped_line or stripped_line.startswith("#"):
-            continue
-        parts = stripped_line.split(None, 3)
-        if len(parts) < 3:
-            continue
-        cat, key, val = parts[0], parts[1], parts[2]
-        if key in key_skip_list:
-            continue
-        assert (cat, key, val) in indexed
-
-
-# The following are standard for all services using the CTA runtime library
-# For now only cta_maintd is supported, but eventually the frontend and taped should be added here
-
-
-@pytest.mark.parametrize(
-    "daemon_fixture",
-    [
-        "cta_maintd",
-    ],
-)
-def test_example_config_file_correctness(request: SubRequest, daemon_fixture: str):
-    daemon = request.getfixturevalue(daemon_fixture)
-    config_path = f"/etc/cta/cta-{daemon.process_name}.example.toml"
-    daemon.exec(f"cta-{daemon.process_name} --config-strict --config {config_path} --config-check")
-
-
-@pytest.mark.parametrize(
-    "daemon_fixture",
-    [
-        "cta_maintd",
-    ],
-)
-def test_runtime_directory_correctness(request: SubRequest, daemon_fixture: str):
-    daemon = request.getfixturevalue(daemon_fixture)
-    daemon.exec(f"comm /etc/cta/cta-{daemon.process_name}.toml /run/cta/config.toml -3")
-    daemon.exec("comm /etc/cta/cta-catalogue.conf /run/cta/catalogue.config_file -3")
-    daemon.exec("comm /etc/cta/cta-otel.yaml /run/cta/telemetry.config_file -3")
-    daemon.exec(f"jq -e -r '.service == \"cta-{daemon.process_name}\"' /run/cta/version.json >/dev/null")
-
-
-@pytest.mark.parametrize(
-    "daemon_fixture",
-    [
-        "cta_maintd",
-    ],
-)
-def test_reopens_logfile_on_sighup(request: SubRequest, daemon_fixture: str):
-    daemon = request.getfixturevalue(daemon_fixture)
-
-    log_file = daemon.log_file_path
-    pid = daemon.exec_with_output(f"pgrep -u cta {daemon.process_name}")
-
-    fd = daemon.exec_with_output(f"find /proc/{pid}/fd -maxdepth 1 -lname '{log_file}' -printf '%f\n'")
-    assert fd
-
-    rotated = f"{log_file}.pytest"
-
-    # Move the log file; the CTA daemon should keep writing to this moved location
-    # as the file descriptor has not been refreshed yet
-    daemon.exec(f"sudo mv {log_file} {rotated}")
-    # Create a new log file in the original location
-    daemon.exec(f"sudo install -o cta -g tape -m 0644 /dev/null {log_file}")
-    new_inode = daemon.exec_with_output(f"stat -Lc '%d:%i' {log_file}")
-
-    # Send signal to refresh file descriptor
-    daemon.exec(f"pkill -SIGHUP -u cta {daemon.process_name}")
-    # Wait until it starts writing to the new file
-    current_inode = None
-
-    max_iter = 50
-    sleep_time_sec = 0.1
-    for _ in range(max_iter):
-        current_inode = daemon.exec_with_output(f"stat -Lc '%d:%i' /proc/{pid}/fd/{fd}")
-        if current_inode == new_inode:
-            break
-        time.sleep(sleep_time_sec)
-
-    assert current_inode == new_inode
-
-
-# Should be deleted once taped uses the new runtime library
-def test_log_rotation_taped(cta_taped: CtaTapedHost, remote_scripts_dir: Path) -> None:
-    cta_taped.copy_to(remote_scripts_dir / "cta_taped" / "test_refresh_log_fd.sh", Path("/tmp"), permissions="+x")
-    cta_taped.exec("sudo bash /tmp/test_refresh_log_fd.sh")
-
-
-def test_log_schema_correctness(env: TestEnv, tmp_path: Path, cta_maintd: CtaMaintdHost) -> None:
-    hosts = [*env.cta_admin_api, *env.cta_workflow_api, *env.cta_taped]
-    logging_schema_path = tmp_path / "cta-logging.schema.json"
-    # Maintd already populates the logging schema in the runtime directory so we just grab it from there
-    cta_maintd.copy_from(Path("/run/cta/cta-logging.schema.json"), logging_schema_path)
-
-    fail_fast = True
-
-    def load_schema(path: Path) -> dict[str, Any]:
-        with path.open(encoding="utf-8") as f:
-            return json.load(f)
-
-    def iter_lines(path: Union[Path, str]) -> Iterator[str]:
-        if path == "-":
-            for line in sys.stdin:
-                yield line
-        else:
-            with open(path, encoding="utf-8") as f:
-                for line in f:
-                    yield line
-
-    def extract_expected_events(schema: dict[str, Any]) -> set[str]:
-        expected_events = set()
-        try:
-            enum_events = schema["properties"]["event_name"]["enum"]
-            expected_events.update(enum_events)
-        except KeyError:
-            pass
-
-        # Not all events may occur in the output logs of test
-        ignore_events = ["program_exiting"]
-        return expected_events - set(ignore_events)
-
-    print("Verifying log schema")
-
-    schema = load_schema(logging_schema_path)
-    validator = Draft202012Validator(schema)
-
-    expected_events = extract_expected_events(schema)
-    observed_events = set()
-
-    errors = 0
-    i = 0
-
-    for host in hosts:
-        print(f"Checking logs for {host.name}")
-        current_logging_path = tmp_path / f"{host.name}.log"
-        host.copy_from(host.log_file_path, current_logging_path)
-        for i, line in enumerate(iter_lines(current_logging_path), start=1):
+        for line in taped_config.splitlines():
             stripped_line = line.strip()
-            if not stripped_line:
+            if not stripped_line or stripped_line.startswith("#"):
                 continue
+            parts = stripped_line.split(None, 3)
+            if len(parts) < 3:
+                continue
+            cat, key, val = parts[0], parts[1], parts[2]
+            if key in key_skip_list:
+                continue
+            assert (cat, key, val) in indexed
 
+    # The following are standard for all services using the CTA runtime library
+    # For now only cta_maintd is supported, but eventually the frontend and taped should be added here
+
+    @pytest.mark.parametrize(
+        "daemon_fixture",
+        [
+            "cta_maintd",
+        ],
+    )
+    def test_example_config_file_correctness(self, request: SubRequest, daemon_fixture: str):
+        daemon = request.getfixturevalue(daemon_fixture)
+        config_path = f"/etc/cta/cta-{daemon.process_name}.example.toml"
+        daemon.exec(f"cta-{daemon.process_name} --config-strict --config {config_path} --config-check")
+
+    @pytest.mark.parametrize(
+        "daemon_fixture",
+        [
+            "cta_maintd",
+        ],
+    )
+    def test_runtime_directory_correctness(self, request: SubRequest, daemon_fixture: str):
+        daemon = request.getfixturevalue(daemon_fixture)
+        daemon.exec(f"comm /etc/cta/cta-{daemon.process_name}.toml /run/cta/config.toml -3")
+        daemon.exec("comm /etc/cta/cta-catalogue.conf /run/cta/catalogue.config_file -3")
+        daemon.exec("comm /etc/cta/cta-otel.yaml /run/cta/telemetry.config_file -3")
+        daemon.exec(f"jq -e -r '.service == \"cta-{daemon.process_name}\"' /run/cta/version.json >/dev/null")
+
+    @pytest.mark.parametrize(
+        "daemon_fixture",
+        [
+            "cta_maintd",
+        ],
+    )
+    def test_reopens_logfile_on_sighup(self, request: SubRequest, daemon_fixture: str):
+        daemon = request.getfixturevalue(daemon_fixture)
+
+        log_file = daemon.log_file_path
+        pid = daemon.exec_with_output(f"pgrep -u cta {daemon.process_name}")
+
+        fd = daemon.exec_with_output(f"find /proc/{pid}/fd -maxdepth 1 -lname '{log_file}' -printf '%f\n'")
+        assert fd
+
+        rotated = f"{log_file}.pytest"
+
+        # Move the log file; the CTA daemon should keep writing to this moved location
+        # as the file descriptor has not been refreshed yet
+        daemon.exec(f"sudo mv {log_file} {rotated}")
+        # Create a new log file in the original location
+        daemon.exec(f"sudo install -o cta -g tape -m 0644 /dev/null {log_file}")
+        new_inode = daemon.exec_with_output(f"stat -Lc '%d:%i' {log_file}")
+
+        # Send signal to refresh file descriptor
+        daemon.exec(f"pkill -SIGHUP -u cta {daemon.process_name}")
+        # Wait until it starts writing to the new file
+        current_inode = None
+
+        max_iter = 50
+        sleep_time_sec = 0.1
+        for _ in range(max_iter):
+            current_inode = daemon.exec_with_output(f"stat -Lc '%d:%i' /proc/{pid}/fd/{fd}")
+            if current_inode == new_inode:
+                break
+            time.sleep(sleep_time_sec)
+
+        assert current_inode == new_inode
+
+    # Should be deleted once taped uses the new runtime library
+    def test_log_rotation_taped(self, cta_taped: CtaTapedHost, remote_scripts_dir: Path) -> None:
+        cta_taped.copy_to(remote_scripts_dir / "cta_taped" / "test_refresh_log_fd.sh", Path("/tmp"), permissions="+x")
+        cta_taped.exec("sudo bash /tmp/test_refresh_log_fd.sh")
+
+    def test_log_schema_correctness(self, env: TestEnv, tmp_path: Path, cta_maintd: CtaMaintdHost) -> None:
+        hosts = [*env.cta_admin_api, *env.cta_workflow_api, *env.cta_taped]
+        logging_schema_path = tmp_path / "cta-logging.schema.json"
+        # Maintd already populates the logging schema in the runtime directory so we just grab it from there
+        cta_maintd.copy_from(Path("/run/cta/cta-logging.schema.json"), logging_schema_path)
+
+        fail_fast = True
+
+        def load_schema(path: Path) -> dict[str, Any]:
+            with path.open(encoding="utf-8") as f:
+                return json.load(f)
+
+        def iter_lines(path: Union[Path, str]) -> Iterator[str]:
+            if path == "-":
+                for line in sys.stdin:
+                    yield line
+            else:
+                with open(path, encoding="utf-8") as f:
+                    for line in f:
+                        yield line
+
+        def extract_expected_events(schema: dict[str, Any]) -> set[str]:
+            expected_events = set()
             try:
-                obj = json.loads(stripped_line)
-            except json.JSONDecodeError:
-                print(f"ERROR: Invalid JSON found on line {i}")
-                print(f"  * Contents: {stripped_line}")
-                errors += 1
-                if fail_fast:
-                    sys.exit(1)
-                continue
+                enum_events = schema["properties"]["event_name"]["enum"]
+                expected_events.update(enum_events)
+            except KeyError:
+                pass
 
-            if "event_name" in obj:
-                observed_events.add(obj["event_name"])
+            # Not all events may occur in the output logs of test
+            ignore_events = ["program_exiting"]
+            return expected_events - set(ignore_events)
 
-            violations = sorted(validator.iter_errors(obj), key=lambda e: e.path)
+        print("Verifying log schema")
 
-            if violations:
-                errors += 1
-                print(f"ERROR: Schema violation found on line {i}")
-                print(f"  * Contents: {line}")
-                print("  * Violations:")
-                for v in violations:
-                    path = ".".join(map(str, v.path))
-                    if path:
-                        print(f"      {path}: {v.message}")
-                    else:
-                        print(f"      {v.message}")
+        schema = load_schema(logging_schema_path)
+        validator = Draft202012Validator(schema)
+
+        expected_events = extract_expected_events(schema)
+        observed_events = set()
+
+        errors = 0
+        i = 0
+
+        for host in hosts:
+            print(f"Checking logs for {host.name}")
+            current_logging_path = tmp_path / f"{host.name}.log"
+            host.copy_from(host.log_file_path, current_logging_path)
+            for i, line in enumerate(iter_lines(current_logging_path), start=1):
+                stripped_line = line.strip()
+                if not stripped_line:
+                    continue
+
+                try:
+                    obj = json.loads(stripped_line)
+                except json.JSONDecodeError:
+                    print(f"ERROR: Invalid JSON found on line {i}")
+                    print(f"  * Contents: {stripped_line}")
+                    errors += 1
                     if fail_fast:
                         sys.exit(1)
+                    continue
 
-    missing_events = expected_events - observed_events
-    if missing_events:
-        print("\nERROR: Test coverage incomplete!")
-        print("The schema expects coverage for these events, but they were missing from the input logs:")
-        for missing in sorted(missing_events):
-            print(f"  - {missing}")
-        errors += 1
+                if "event_name" in obj:
+                    observed_events.add(obj["event_name"])
 
-    if errors:
-        print(f"Total errors found: {errors}")
-        sys.exit(1)
+                violations = sorted(validator.iter_errors(obj), key=lambda e: e.path)
 
-    if i == 0:
-        print("ERROR: No JSON objects found")
-        sys.exit(1)
+                if violations:
+                    errors += 1
+                    print(f"ERROR: Schema violation found on line {i}")
+                    print(f"  * Contents: {line}")
+                    print("  * Violations:")
+                    for v in violations:
+                        path = ".".join(map(str, v.path))
+                        if path:
+                            print(f"      {path}: {v.message}")
+                        else:
+                            print(f"      {v.message}")
+                        if fail_fast:
+                            sys.exit(1)
 
-    print(f"SUCCESS: Verification passed. {i} lines checked.")
-    print(f"Coverage complete: All {len(expected_events)} defined event types were tested.")
+        missing_events = expected_events - observed_events
+        if missing_events:
+            print("\nERROR: Test coverage incomplete!")
+            print("The schema expects coverage for these events, but they were missing from the input logs:")
+            for missing in sorted(missing_events):
+                print(f"  - {missing}")
+            errors += 1
+
+        if errors:
+            print(f"Total errors found: {errors}")
+            sys.exit(1)
+
+        if i == 0:
+            print("ERROR: No JSON objects found")
+            sys.exit(1)
+
+        print(f"SUCCESS: Verification passed. {i} lines checked.")
+        print(f"Coverage complete: All {len(expected_events)} defined event types were tested.")
 
 
 def test_add_errors_to_whitelist(error_whitelist: set[str]) -> None:
