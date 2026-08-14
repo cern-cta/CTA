@@ -80,6 +80,8 @@ extra_spawn_options=(--no-setup)
 
 stage_names=()
 stage_durations=()
+namespace_deletion_pid=""
+namespace_deletion_log=""
 
 source "${script_dir}/utils/log_utils.sh"
 
@@ -1024,19 +1026,62 @@ images_cta() {
   fi
 }
 
-deploy_cta() {
+validate_deployment_environment() {
   local_kubernetes_available \
     || die "Cannot deploy CTA: neither minikube nor k3s is installed, so local images are unavailable."
   command -v kubectl >/dev/null 2>&1 || die "kubectl is required to deploy CTA."
-
-  print_header "DELETING OLD CTA DEPLOYMENTS"
   ensure_namespace_owned
+}
 
+delete_cta_namespace() {
   cd "${project_root}/ci/orchestration"
   # By default we discard the logs from deletion as this is not very useful during development and pollutes the dev machine
   ./delete_instance.sh -n "${namespace}" --discard-logs --keep-pvs
+}
+
+cleanup_background_namespace_deletion() {
+  if [[ -n $namespace_deletion_pid ]]; then
+    wait "$namespace_deletion_pid" >/dev/null 2>&1 || true
+  fi
+  [[ -n $namespace_deletion_log ]] && rm -f -- "$namespace_deletion_log"
+}
+
+start_namespace_deletion() {
+  validate_deployment_environment
+
+  namespace_deletion_log=$(mktemp --tmpdir "cta-dev-namespace-deletion-XXXXXX.log")
+  delete_cta_namespace >"$namespace_deletion_log" 2>&1 &
+  namespace_deletion_pid=$!
+  add_trap cleanup_background_namespace_deletion EXIT
+
+  log_task "Deleting the previous CTA deployment in the background while building..."
+}
+
+finish_namespace_deletion() {
+  print_header "DELETING OLD CTA DEPLOYMENTS"
+
+  if [[ -z $namespace_deletion_pid ]]; then
+    delete_cta_namespace
+    return
+  fi
+
+  local deletion_status=0
+  wait "$namespace_deletion_pid" || deletion_status=$?
+  namespace_deletion_pid=""
+  cat "$namespace_deletion_log"
+  rm -f -- "$namespace_deletion_log"
+  namespace_deletion_log=""
+
+  [[ $deletion_status -eq 0 ]] || die "Failed to delete the previous CTA deployment."
+}
+
+deploy_cta() {
+  validate_deployment_environment
+
+  finish_namespace_deletion
 
   print_header "DEPLOYING CTA"
+  cd "${project_root}/ci/orchestration"
   [[ -n $eos_image_repository ]] && extra_spawn_options+=(--eos-image-repository "$eos_image_repository")
   [[ -n $eos_image_tag ]] && extra_spawn_options+=(--eos-image-tag "$eos_image_tag")
   [[ -n $eos_config ]] && extra_spawn_options+=(--eos-config "$eos_config")
@@ -1125,6 +1170,7 @@ print_stage_summary() {
 }
 
 up_cta() {
+  start_namespace_deletion
   run_timed_stage "Build" build_cta
   run_timed_stage "Images" images_cta
   run_timed_stage "Deploy" deploy_cta
@@ -1167,6 +1213,7 @@ EOF
 }
 
 all_cta() {
+  start_namespace_deletion
   run_timed_stage "Build" build_cta
   run_timed_stage "Images" images_cta
   run_timed_stage "Deploy" deploy_cta

@@ -238,7 +238,7 @@ delete_instance() {
   fi
 
   if ! kubectl get namespace "$namespace" >/dev/null 2>&1; then
-    log_warn "Namespace ${namespace} does not exist; nothing to delete."
+    log_task "Namespace ${namespace} does not exist; nothing to delete..."
     exit 0
   fi
 
