@@ -40,7 +40,7 @@ class EosMgmHost(DiskInstanceHost):
         return Version(version_info["EOS_SERVER_VERSION"])
 
     @override
-    def generate_scitoken(
+    def generate_wlcg_token(
         self,
         sub: str,
         scope: str,
