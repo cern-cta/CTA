@@ -10,8 +10,10 @@ After=network-online.target
 Type=exec
 User=cta
 Group=cta
+
 EnvironmentFile=/etc/sysconfig/cta-frontend-grpc
 ExecStart=/usr/bin/cta-frontend-grpc
+
 LimitCORE=infinity
 LimitNOFILE=65535
 OOMScoreAdjust=-10

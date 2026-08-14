@@ -1,40 +1,44 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-/var/log/cta/cta-maintd.log {
-    # Compress archives, but wait one rotation before compression. This avoids
-    # racing with writes made before maintd processes the postrotate SIGHUP.
-    compress
-    delaycompress
-
-    # The replacement file must remain writable by the service account.
-    create 0644 cta tape
+/var/log/cta/cta-maintd*.log {
+    # Rotate logs 24 times before removing them.
+    rotate 24
+    # Move rotated logs into the shared archive directory.
+    # With rename-based rotation, this directory must be on the same physical device as the active logs.
+    olddir /var/log/cta/old
+    # Rotate files as the service account instead of root.
     su cta tape
 
-    # Use unique, sortable archive names even when multiple rotations occur
-    # during the same day.
+    # Rotate logs hourly when the other rotation conditions are satisfied.
+    hourly
+
+    # Continue without an error when a matching log file is missing.
+    missingok
+    # Remove rotated logs older than two days. Age is checked only when the logfile is to be rotated.
+    maxage 2
+    # Rotate only when both the time interval and minimum size conditions are satisfied.
+    minsize 1G
+
+    # Create a new active log immediately after rotation.
+    create 0644 cta tape
+
+    # Compress old versions of log files.
+    compress
+    # Postpone compression of the previous log file until the next rotation cycle.
+    delaycompress
+
+    # Archive old versions using a date extension instead of a number.
     dateext
+    # Use the date and epoch time for unique, lexically sortable extensions.
     dateformat -%Y%m%d-%s
 
-    # Check hourly, but rotate only after the active log reaches 1 GiB. Keep at
-    # most 24 archives and discard archives older than two days on rotation.
-    hourly
-    minsize 1G
-    rotate 24
-    maxage 2
-
-    missingok
-
-    # olddir must be on the same filesystem for rename-based rotation.
-    olddir /var/log/cta/old
-
+    sharedscripts
     postrotate
-        # Ask systemd to send SIGHUP only to the service's main process. SIGHUP
-        # reopens the log; it does not reload cta-maintd.toml. Rotation must
-        # still succeed when maintd is inactive.
-        /usr/bin/systemctl kill --kill-whom=main --signal=HUP cta-maintd.service > /dev/null 2>&1 || true
+        # SIGHUP reopens the log descriptor but does not reload the configuration.
+        # Signal every loaded maintd unit; rotation must still succeed when none are active.
+        /usr/bin/systemctl kill --kill-whom=main --signal=HUP 'cta-maintd*.service' > /dev/null 2>&1 || true
     endscript
 }
 
-# "hourly" controls when this log is eligible for rotation; the system-wide
-# logrotate job must also run hourly.
+# The system-wide logrotate job must run hourly for the hourly directive to take effect.

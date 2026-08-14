@@ -10,11 +10,14 @@ After=network-online.target
 Type=exec
 User=cta
 Group=tape
+
+LogsDirectory=cta cta/old
+LogsDirectoryMode=0755
+
 EnvironmentFile=-/etc/sysconfig/cta-rmcd
 # The device argument is deployment-specific and must be set in the environment file.
 ExecStart=/usr/bin/cta-rmcd -f ${CTA_RMCD_OPTIONS}
-LogsDirectory=cta cta/old
-LogsDirectoryMode=0755
+
 LimitCORE=infinity
 OOMScoreAdjust=-10
 Restart=on-failure

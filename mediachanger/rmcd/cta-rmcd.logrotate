@@ -2,18 +2,37 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 /var/log/cta/cta-rmcd*.log {
-    # rmcd opens and closes the log for every message, so rename-based rotation
-    # needs neither copytruncate nor a postrotate signal.
-    compress
-    create 0640 cta tape
-    dateext
-    dateformat -%Y%m%d-%s
-    delaycompress
-    hourly
-    maxage 2
-    minsize 1G
-    missingok
-    olddir /var/log/cta/old
+    # Rotate logs 24 times before removing them.
     rotate 24
+    # Move rotated logs into the shared archive directory.
+    # With rename-based rotation, this directory must be on the same physical device as the active logs.
+    olddir /var/log/cta/old
+    # Rotate files as the service account instead of root.
     su cta tape
+
+    # Rotate logs hourly when the other rotation conditions are satisfied.
+    hourly
+
+    # Continue without an error when a matching log file is missing.
+    missingok
+    # Remove rotated logs older than two days. Age is checked only when the logfile is to be rotated.
+    maxage 2
+    # Rotate only when both the time interval and minimum size conditions are satisfied.
+    minsize 1G
+
+    # Create a new active log immediately after rotation.
+    create 0640 cta tape
+
+    # Compress old versions of log files.
+    compress
+    # Postpone compression of the previous log file until the next rotation cycle.
+    delaycompress
+
+    # Archive old versions using a date extension instead of a number.
+    dateext
+    # Use the date and epoch time for unique, lexically sortable extensions.
+    dateformat -%Y%m%d-%s
 }
+
+# rmcd opens and closes the log for every message, so rotation needs no descriptor-refresh signal.
+# The system-wide logrotate job must run hourly for the hourly directive to take effect.

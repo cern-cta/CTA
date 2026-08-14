@@ -16,16 +16,18 @@ RuntimeDirectoryMode=0750
 LogsDirectory=cta cta/old
 LogsDirectoryMode=0755
 
-# To run multiple instances (e.g. one per routine), create a local 
-# cta-maintd@.service template based on this unit and qualify every 
+# To run multiple instances (e.g. one per routine), create a local
+# cta-maintd@.service template based on this unit and qualify every
 # per-process path with %i, for example:
 #
-#   RuntimeDirectory=cta/maintd-%i and --runtime-dir=/run/cta/maintd-%i
+#   RuntimeDirectory=cta/maintd-%i
+#   --runtime-dir=/run/cta/maintd-%i
 #   --config=/etc/cta/cta-maintd-%i.toml
 #   --log-file=/var/log/cta/cta-maintd-%i.log
 #
 # Configuration changes require a service restart. SIGHUP only refreshes the log file descriptor.
 ExecStart=/usr/bin/cta-maintd --config=/etc/cta/cta-maintd.toml --config-strict --runtime-dir=/run/cta/maintd --log-file=/var/log/cta/cta-maintd.log
+
 LimitCORE=infinity
 OOMScoreAdjust=-10
 Restart=on-failure
