@@ -133,10 +133,6 @@ def _stage_request(
     return _request_id(response)
 
 
-def _generate_poweruser_scitoken(eos_mgm: EosMgmHost, scope: str) -> str:
-    return eos_mgm.generate_wlcg_token("poweruser1", scope)
-
-
 def _delete_stage_request(
     disk_client: DiskClientHost,
     rest_api_endpoint: str,
@@ -596,7 +592,7 @@ def test_delete_stage_request(
 
 
 @skip_if_staging_tokens_unsupported
-def test_wlcg_scitoken_stage_with_root_scope_and_poll_token(
+def test_wlcg_token_stage_with_root_scope_and_poll_token(
     disk_client: DiskClientHost,
     disk_instance: DiskInstanceHost,
     disk_instance_name: str,
@@ -608,8 +604,8 @@ def test_wlcg_scitoken_stage_with_root_scope_and_poll_token(
     file_path = test_dir / "test_http-rest-api"
     print(f"Staging {file_path} with a root-scoped WLCG SciToken")
     rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
-    stage_token = _generate_poweruser_scitoken(eos_mgm, "storage.stage:/")
-    poll_token = _generate_poweruser_scitoken(eos_mgm, "storage.poll:/")
+    stage_token = eos_mgm.generate_wlcg_token("poweruser1", "storage.stage:/")
+    poll_token = eos_mgm.generate_wlcg_token("poweruser1", "storage.poll:/")
 
     request_id = _stage_request(
         disk_client,
@@ -648,7 +644,7 @@ def test_wlcg_scitoken_stage_with_root_scope_and_poll_token(
 
 
 @skip_if_staging_tokens_unsupported
-def test_wlcg_scitoken_stage_with_stricter_dir_scope(
+def test_wlcg_token_stage_with_stricter_dir_scope(
     disk_client: DiskClientHost,
     disk_instance: DiskInstanceHost,
     disk_instance_name: str,
@@ -660,8 +656,8 @@ def test_wlcg_scitoken_stage_with_stricter_dir_scope(
     file_path = test_dir / "test_http-rest-api"
     print(f"Staging {file_path} with a test-dir-scoped WLCG SciToken")
     rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
-    stage_token = _generate_poweruser_scitoken(eos_mgm, f"storage.stage:{test_dir}")
-    poll_token = _generate_poweruser_scitoken(eos_mgm, f"storage.poll:{test_dir}")
+    stage_token = eos_mgm.generate_wlcg_token("poweruser1", f"storage.stage:{test_dir}")
+    poll_token = eos_mgm.generate_wlcg_token("poweruser1", f"storage.poll:{test_dir}")
 
     request_id = _stage_request(
         disk_client,
@@ -692,7 +688,7 @@ def test_wlcg_scitoken_stage_with_stricter_dir_scope(
 
 
 @skip_if_staging_tokens_unsupported
-def test_wlcg_scitoken_stage_with_invalid_scope_fails(
+def test_wlcg_token_stage_with_invalid_scope_fails(
     disk_client: DiskClientHost,
     disk_instance: DiskInstanceHost,
     eos_mgm: EosMgmHost,
@@ -703,7 +699,7 @@ def test_wlcg_scitoken_stage_with_invalid_scope_fails(
     file_path = test_dir / "test_http-rest-api"
     print(f"Checking that staging {file_path} fails with a wrong WLCG scope")
     rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
-    stage_token = _generate_poweruser_scitoken(eos_mgm, "storage.stage:/path/does/not/exist")
+    stage_token = eos_mgm.generate_wlcg_token("poweruser1", "storage.stage:/path/does/not/exist")
 
     request_id = _stage_request(
         disk_client,
@@ -731,7 +727,7 @@ def test_wlcg_scitoken_stage_with_invalid_scope_fails(
 
 
 @skip_if_staging_tokens_unsupported
-def test_wlcg_scitoken_stage_request_with_poll_scope_fails(
+def test_wlcg_token_stage_request_with_poll_scope_fails(
     disk_client: DiskClientHost,
     disk_instance: DiskInstanceHost,
     eos_mgm: EosMgmHost,
@@ -742,7 +738,7 @@ def test_wlcg_scitoken_stage_request_with_poll_scope_fails(
     file_path = test_dir / "test_http-rest-api"
     print(f"Checking that a storage.poll WLCG token cannot stage {file_path}")
     rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
-    poll_token = _generate_poweruser_scitoken(eos_mgm, f"storage.poll:{test_dir}")
+    poll_token = eos_mgm.generate_wlcg_token("poweruser1", f"storage.poll:{test_dir}")
 
     request_id = _stage_request(
         disk_client,
@@ -768,7 +764,7 @@ def test_wlcg_scitoken_stage_request_with_poll_scope_fails(
 
 
 @skip_if_staging_tokens_unsupported
-def test_wlcg_scitoken_archiveinfo_with_poll_scope(
+def test_wlcg_token_archiveinfo_with_poll_scope(
     disk_client: DiskClientHost,
     disk_instance: DiskInstanceHost,
     eos_mgm: EosMgmHost,
@@ -778,8 +774,8 @@ def test_wlcg_scitoken_archiveinfo_with_poll_scope(
     file_path = test_dir / "test_http-rest-api"
     print(f"Checking archiveinfo access for {file_path} with WLCG storage.poll SciTokens")
     rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
-    valid_poll_token = _generate_poweruser_scitoken(eos_mgm, f"storage.poll:{test_dir}")
-    invalid_poll_token = _generate_poweruser_scitoken(eos_mgm, "storage.poll:/path/does/not/exist")
+    valid_poll_token = eos_mgm.generate_wlcg_token("poweruser1", f"storage.poll:{test_dir}")
+    invalid_poll_token = eos_mgm.generate_wlcg_token("poweruser1", "storage.poll:/path/does/not/exist")
 
     archive_info = _archive_info(
         disk_client,
@@ -801,4 +797,43 @@ def test_wlcg_scitoken_archiveinfo_with_poll_scope(
 
     assert "error" in invalid_archive_info, (
         f"storage.poll request with invalid path did not report an error: {invalid_archive_info}"
+    )
+
+
+@skip_if_staging_tokens_unsupported
+def test_wlcg_scitoken_stage_with_unmapped_subject_fails(
+    disk_client: DiskClientHost,
+    disk_instance: DiskInstanceHost,
+    eos_mgm: EosMgmHost,
+    test_dir: Path,
+    rest_api_poweruser_token: str,
+    rest_api_certificate_options: str,
+) -> None:
+    file_path = test_dir / "test_http-rest-api"
+    print(f"Checking that staging {file_path} fails with an unmapped WLCG token subject")
+    rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
+    stage_token = eos_mgm.generate_wlcg_token("fakeuser1", f"storage.stage:{test_dir}")
+
+    request_id = _stage_request(
+        disk_client,
+        rest_api_endpoint,
+        file_path,
+        stage_token,
+        rest_api_certificate_options,
+    )
+    status_response = disk_client.http_request(
+        f"{rest_api_endpoint}/stage/{request_id}",
+        token=stage_token,
+        certificate_options=rest_api_certificate_options,
+    )
+    file_status = _assert_stage_status(status_response, request_id, file_path)
+    assert "error" in file_status, f"Unmapped WLCG token subject did not report an error: {file_status}"
+    assert "onDisk" not in file_status, f"Unmapped WLCG token subject leaked disk locality: {file_status}"
+    assert "state" not in file_status, f"Unmapped WLCG token subject leaked stage state: {file_status}"
+    _delete_stage_request(
+        disk_client,
+        rest_api_endpoint,
+        request_id,
+        rest_api_poweruser_token,
+        rest_api_certificate_options,
     )
