@@ -16,7 +16,7 @@ echo
   echo "  +--------------------+      +----------------------+      +------------------------+"
   echo "  | Compiles source    |      | Takes the built RPMs |      | Tears down old env and |"
   echo "  | inside a persistent| ---> | and uses them to     | ---> | spawns a k8s instance  |"
-  echo "  | build container    |      | build docker images  |      | with the built images  |"
+  echo "  | build container    |      | build service images |      | with the built images  |"
   echo "  +--------------------+      +----------------------+      +------------------------+"
   echo
   echo "The build container persists between runs (unless --reset is specified) to ensure"
@@ -30,7 +30,6 @@ echo
   echo "General Options:"
   echo "  -h, --help                            Shows help output."
   echo "  -r, --reset                           Shut down the build container, clear directories, and start fresh."
-  echo "  -c, --container-runtime <runtime>     Container runtime to use [docker, podman]. Defaults to podman."
   echo "      --platform <platform>             Which platform to build for. Defaults to project.json."
   echo "      --scheduler-type <type>           The scheduler backend type [objectstore, pgsched]."
   echo "      --use-public-repos                Use public yum repos instead of CERN internal network repos."
@@ -124,7 +123,6 @@ build_deploy() {
   local eos_image_repository=""
   local eos_image_tag=""
   local cta_image_tag=""
-  local container_runtime="podman"
   local platform
   platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
   local enable_internal_repos=true
@@ -139,7 +137,7 @@ build_deploy() {
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     # Helper to validate options requiring an argument
-    if [[ "$1" =~ ^--(eos-image-repository|eos-image-tag|cta-version|cta-version-suffix|platform|build-generator|cmake-build-type|container-runtime|scheduler-type|catalogue-config|scheduler-config|tapeservers-config|cta-config|eos-config|spawn-options|image-build-options|namespace)$ || "$1" == "-c" ]]; then
+    if [[ "$1" =~ ^--(eos-image-repository|eos-image-tag|cta-version|cta-version-suffix|platform|build-generator|cmake-build-type|scheduler-type|catalogue-config|scheduler-config|tapeservers-config|cta-config|eos-config|spawn-options|image-build-options|namespace)$ ]]; then
       if [[ -z "$2" || "$2" =~ ^- ]]; then
         error_usage "$1 requires an argument"
       fi
@@ -194,12 +192,6 @@ build_deploy() {
         fi
         cmake_build_type="$2"; shift
         ;;
-      -c | --container-runtime)
-        if [[ "$2" != "docker" && "$2" != "podman" ]]; then
-          die "-c | --container-runtime is \"$2\" but must be one of [docker, podman]."
-        fi
-        container_runtime="$2"; shift
-        ;;
       *)
         die_usage "Unsupported argument: $1"
         ;;
@@ -224,23 +216,23 @@ build_deploy() {
     build_image_name="cta-build-image-${platform}"
     build_container_name="cta-build${project_root//\//-}-${platform}"
     # Stop and remove existing container if reset is requested
-    echo "Total CTA build containers found: $(${container_runtime} ps | grep -c cta-build)"
+    echo "Total CTA build containers found: $(podman ps | grep -c cta-build)"
     if [[ "${reset}" = true ]]; then
       echo "Shutting down existing build container..."
-      ${container_runtime} rm -f "${build_container_name}" >/dev/null 2>&1 || true
-      ${container_runtime} rmi "${build_image_name}" > /dev/null 2>&1 || true
+      podman rm -f "${build_container_name}" >/dev/null 2>&1 || true
+      podman rmi "${build_image_name}" > /dev/null 2>&1 || true
     fi
 
     # Start container if not already running
-    if ${container_runtime} ps -a --format '{{.Names}}' | grep -wq "${build_container_name}"; then
+    if podman ps -a --format '{{.Names}}' | grep -wq "${build_container_name}"; then
       echo "Found existing build container: ${build_container_name}"
     else
       print_header "SETTING UP BUILD CONTAINER"
       restarted=true
       echo "Rebuilding build container image"
-      ${container_runtime} build --no-cache -t "${build_image_name}" -f ci/docker/cta/"${platform}"/build.Dockerfile .
+      podman build --no-cache -t "${build_image_name}" -f ci/docker/cta/"${platform}"/build.Dockerfile .
       echo "Starting new build container: ${build_container_name}"
-      ${container_runtime} run -dit --rm --name "${build_container_name}" \
+      podman run -dit --rm --name "${build_container_name}" \
         -v "${project_root}:/shared/CTA:z" \
         "${build_image_name}" \
         /bin/bash
@@ -252,7 +244,7 @@ build_deploy() {
       fi
 
       # shellcheck disable=SC2086
-      ${container_runtime} exec -it "${build_container_name}" \
+      podman exec -it "${build_container_name}" \
         ./shared/CTA/ci/build/build_srpm.sh \
         --build-dir /shared/CTA/build_srpm \
         --build-generator "${build_generator}" \
@@ -302,7 +294,7 @@ build_deploy() {
 
     print_header "BUILDING RPMS"
     # shellcheck disable=SC2086
-    ${container_runtime} exec -it "${build_container_name}" \
+    podman exec -it "${build_container_name}" \
       ./shared/CTA/ci/build/build_rpm.sh \
       --build-dir /shared/CTA/build_rpm \
       --build-generator "${build_generator}" \
@@ -328,11 +320,11 @@ build_deploy() {
     print_header "BUILDING CONTAINER IMAGE"
     # Cleanup
     echo "Cleaning up unused images..."
-    ${container_runtime} image prune -f
+    podman image prune -f
     if command -v minikube >/dev/null 2>&1; then
-      minikube ssh -- "${container_runtime} image prune -f" || true
       # throws Error: command required for rootless mode with multiple IDs:
       # exec: "newuidmap": executable file not found in $PATH
+      minikube ssh -- "podman image prune -f" || true
     fi
     if command -v k3s >/dev/null 2>&1; then
       sudo /usr/local/bin/k3s crictl rmi --prune || true
@@ -346,7 +338,6 @@ build_deploy() {
     ./ci/build/build_images.sh \
       --tag ${image_tag} \
       --rpm-src "${rpm_src}" \
-      --container-runtime "${container_runtime}" \
       --load-into-k8s \
       ${extra_image_build_options}
   fi

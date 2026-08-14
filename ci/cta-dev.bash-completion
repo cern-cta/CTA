@@ -12,7 +12,6 @@ _ctadev() {
 
     local global_opts="
         --help
-        --container-runtime
         --platform
         --scheduler-type
         --enable-oracle-support
@@ -55,10 +54,6 @@ _ctadev() {
     # Complete values for options that expect one.
     #
     case "$prev" in
-        --container-runtime)
-            COMPREPLY=( $(compgen -W "docker podman" -- "$cur") )
-            return
-            ;;
         --scheduler-type)
             COMPREPLY=( $(compgen -W "objectstore pgsched" -- "$cur") )
             return

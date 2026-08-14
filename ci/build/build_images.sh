@@ -11,13 +11,12 @@ usage() {
   echo "Usage: $0 [options] -t|--tag <image_tag> -s|--rpm-src <rpm source>"
   echo
   echo "Builds an image based on the CTA rpms"
-  echo "  -t, --tag <image_tag>:          Docker image tag. For example \"-t dev\""
+  echo "  -t, --tag <image_tag>:          Container image tag. For example \"-t dev\""
   echo "  -s, --rpm-src <rpm source>:     Path to the RPMs to be installed. Can be absolute or relative to where the script is executed from. For example \"-s build_rpm/RPM/RPMS/x86_64\""
   echo
   echo "options:"
   echo "  -h, --help:                         Shows help output."
-  echo "  -l, --load-into-k8s:                Load images from the selected container runtime into the detected local Kubernetes setup."
-  echo "  -c, --container-runtime <runtime>:  Container runtime to use. Docker requires the Buildx plugin. Defaults to podman."
+  echo "  -l, --load-into-k8s:                Load Podman images into the detected local Kubernetes setup."
   echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'ci/docker/cta/{defaultplatform}/prod.Dockerfile')."
   echo "      --enable-internal-repos:        Use the internal yum repos instead of the public repos."
   echo "      --enable-oracle-support:        Build the images for use with the Oracle catalogue."
@@ -30,7 +29,6 @@ project_root=$(git rev-parse --show-toplevel)
 # Default values
 rpm_src=""
 image_tag=""
-container_runtime="podman"
 default_platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
 dockerfile_path="ci/docker/cta/${default_platform}/prod.Dockerfile"
 load_into_k8s=false
@@ -41,17 +39,6 @@ enable_oracle_support="0"
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
   -h | --help) usage ;;
-  -c | --container-runtime)
-    if [[ $# -gt 1 ]]; then
-      if [[ "$2" != "docker" ]] && [[ "$2" != "podman" ]]; then
-        error_usage "-c | --container-runtime is \"$2\" but must be one of [docker, podman]."
-      fi
-      container_runtime="$2"
-      shift
-    else
-      error_usage "-c | --container-runtime requires an argument"
-    fi
-    ;;
   -s | --rpm-src)
     if [[ $# -gt 1 ]]; then
       rpm_src=$(realpath "$2")
@@ -95,16 +82,8 @@ if [[ -z "${rpm_src}" ]]; then
   die_usage "Missing mandatory argument -s | --rpm-src"
 fi
 
-build_command=("$container_runtime" build)
-if [[ $container_runtime == docker ]]; then
-  if ! docker buildx version >/dev/null 2>&1; then
-    die "Docker Buildx is required to build CTA images. Install the Docker Buildx plugin or use Podman."
-  fi
-  build_command=(docker buildx build --load)
-else
-  # Use registries.conf to configure proxy for image pulling
-  build_command=(env REGISTRIES_CONFIG_PATH="${project_root}/ci/docker/registries.conf" podman build)
-fi
+# Use registries.conf to configure proxy for image pulling.
+build_command=(env REGISTRIES_CONFIG_PATH="${project_root}/ci/docker/registries.conf" podman build)
 
 cd "$(dirname ${dockerfile_path})"
 dockerfile="$(basename ${dockerfile_path})"
@@ -132,7 +111,7 @@ fi
 
 declare -A previous_image_ids=()
 for target in "${targets[@]}"; do
-  previous_image_ids["$target"]="$(${container_runtime} image inspect \
+  previous_image_ids["$target"]="$(podman image inspect \
     --format '{{.Id}}' "cta/ctageneric/${target}:${image_tag}" 2>/dev/null || true)"
 done
 
@@ -160,13 +139,13 @@ build_target() {
       # Load into minikube (use stdin to avoid a temp file)
       if command -v minikube >/dev/null 2>&1; then
         log_task "Loading ${image_ref} into minikube..."
-        ${container_runtime} save "${image_ref}" | minikube image load --overwrite -
+        podman save "${image_ref}" | minikube image load --overwrite -
       fi
 
       # Load into k3s (stream into containerd)
       if command -v k3s >/dev/null 2>&1; then
         log_task "Loading ${image_ref} into k3s/containerd..."
-        ${container_runtime} save "${image_ref}" | sudo /usr/local/bin/k3s ctr images import -
+        podman save "${image_ref}" | sudo /usr/local/bin/k3s ctr images import -
       fi
     fi
   ) 2>&1 | # some magic to get color output
@@ -220,15 +199,15 @@ log_task "Cleaning up superseded CTA images..."
 for target in "${targets[@]}"; do
   previous_image_id="${previous_image_ids[$target]}"
   [[ -z "$previous_image_id" ]] && continue
-  new_image_id="$(${container_runtime} image inspect \
+  new_image_id="$(podman image inspect \
     --format '{{.Id}}' "cta/ctageneric/${target}:${image_tag}" 2>/dev/null || true)"
   if [[ -n "$new_image_id" && "$previous_image_id" != "$new_image_id" ]]; then
-    ${container_runtime} image rm "$previous_image_id" >/dev/null 2>&1 || true
+    podman image rm "$previous_image_id" >/dev/null 2>&1 || true
   fi
 done
 
 echo
 echo "Built images:"
-${container_runtime} images --filter "label=build.id=$BUILD_ID"
+podman images --filter "label=build.id=$BUILD_ID"
 echo
 log_success "Built and loaded container images in ${SECONDS} seconds."

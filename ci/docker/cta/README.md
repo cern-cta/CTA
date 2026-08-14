@@ -25,12 +25,12 @@ The build requires a directory containing the CTA RPMs.
 
 ## Using the build script (recommended)
 
-The helper script builds all image targets in parallel.
+The helper script requires Podman and builds all image targets in parallel.
 
 Example:
 
 ```bash
-./ci/build/build_image.sh \
+./ci/build/build_images.sh \
   --tag dev \
   --rpm-src build_rpm/RPM/RPMS/x86_64
 ```
@@ -45,21 +45,12 @@ cta/ctageneric/cta-frontend:dev
 cta/ctageneric/cta-tools:dev
 ```
 
-### Using Docker instead of Podman
-
-```bash
-./ci/build/build_image.sh \
-  --container-runtime docker \
-  --tag dev \
-  --rpm-src build_rpm/RPM/RPMS/x86_64
-```
-
 ### Loading images into the local Kubernetes runtime
 
 For local Kubernetes setups:
 
 ```bash
-./ci/build/build_image.sh \
+./ci/build/build_images.sh \
   --tag dev \
   --rpm-src build_rpm/RPM/RPMS/x86_64 \
   --load-into-k8s
@@ -77,7 +68,7 @@ and imports the generated images into the corresponding image store.
 To enable internal CERN repositories:
 
 ```bash
-./ci/build/build_image.sh \
+./ci/build/build_images.sh \
   --tag dev \
   --rpm-src build_rpm/RPM/RPMS/x86_64 \
   --enable-internal-repos
@@ -101,17 +92,6 @@ Example:
 cd ci/docker/cta/el9
 
 podman build \
-  -f prod.Dockerfile \
-  --build-context rpm_context=/path/to/RPMS/x86_64 \
-  --target cta-taped \
-  -t cta/ctageneric/cta-taped:dev \
-  .
-```
-
-The same command works with Docker:
-
-```bash
-docker build \
   -f prod.Dockerfile \
   --build-context rpm_context=/path/to/RPMS/x86_64 \
   --target cta-taped \
@@ -146,4 +126,4 @@ podman build \
 * The RPM directory is not copied directly into the final images. A temporary repository is created during the build using `createrepo_c`.
 * Each service image is built from the shared `base` stage.
 * The `cta-tools` image is intentionally larger because it contains additional client utilities required by CI tests.
-* BuildKit features are required (`--mount`, `--build-context`), so use recent Docker or Podman versions.
+* The Dockerfiles use features such as `--mount` and `--build-context`, so use a recent Podman version.
