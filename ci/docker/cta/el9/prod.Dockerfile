@@ -117,12 +117,14 @@ ARG ENABLE_ORACLE_SUPPORT
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-maintd \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-maintd \
-    /usr/local/bin/build-service.sh "cta-maintd"
-
-RUN install -d -o cta -g tape -m 0750 /run/cta/maintd
+    /usr/local/bin/build-service.sh "cta-maintd" && \
+    # Each container runs one CTA process, so no service-specific subdirectory is needed
+    install -d -o cta -g tape -m 0750 /run/cta
 
 USER cta
-CMD ["/usr/bin/cta-maintd", "--log-file=/var/log/cta/cta-maintd.log", "--config-strict", "--config", "/etc/cta/cta-maintd.toml", "--runtime-dir", "/run/cta/maintd"]
+# Containers log to stdout by default. The CI Helm deployment overrides this
+# command to exercise file logging and mirrors that file to stdout.
+CMD ["/usr/bin/cta-maintd", "--config-strict", "--config", "/etc/cta/cta-maintd.toml", "--runtime-dir", "/run/cta"]
 
 # =========================================================================
 #  SERVICE cta-frontend

@@ -28,7 +28,7 @@ ExecStart=/usr/bin/cta-<service> --runtime-dir=/run/cta/<service> --log-file=/va
 
 For file logging, rotate by renaming the active file and then use `systemctl kill --kill-whom=main --signal=HUP <unit>` to make the service reopen it. Do not expose this as `ExecReload` unless the application genuinely reloads its configuration: operators reasonably expect `systemctl reload` to apply configuration changes. Do not use `copytruncate`: runtime-based applications refresh their log file descriptor on `SIGHUP`. Use `delaycompress` so compression cannot race with writes made before the signal is processed. If rotated files use an `olddir`, it must be on the same filesystem as the active log.
 
-`cta-maintd` currently implements this convention. Other daemons should adopt it when they migrate to the runtime library; container deployments must create or mount the same directories explicitly because systemd directory directives do not apply there.
+`cta-maintd` currently implements this convention. Other daemons should adopt it when they migrate to the runtime library. A container that runs exactly one CTA process may use `/run/cta` directly because there is no risk of another process overwriting the deterministic runtime filenames. The image must create that directory with the service account as owner; no runtime volume is required unless the metadata must survive container replacement. Container logging should normally use stdout rather than a systemd-managed log directory.
 
 ## Deploying Configuration
 

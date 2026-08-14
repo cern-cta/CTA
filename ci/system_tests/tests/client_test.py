@@ -399,11 +399,10 @@ def test_example_config_file_correctness(request: SubRequest, daemon_fixture: st
 )
 def test_runtime_directory_correctness(request: SubRequest, daemon_fixture: str):
     daemon = request.getfixturevalue(daemon_fixture)
-    runtime_dir = f"/run/cta/{daemon.process_name}"
-    daemon.exec(f"comm /etc/cta/cta-{daemon.process_name}.toml {runtime_dir}/config.toml -3")
-    daemon.exec(f"comm /etc/cta/cta-catalogue.conf {runtime_dir}/catalogue.config_file -3")
-    daemon.exec(f"comm /etc/cta/cta-otel.yaml {runtime_dir}/telemetry.config_file -3")
-    daemon.exec(f"jq -e -r '.service == \"cta-{daemon.process_name}\"' {runtime_dir}/version.json >/dev/null")
+    daemon.exec(f"comm /etc/cta/cta-{daemon.process_name}.toml /run/cta/config.toml -3")
+    daemon.exec("comm /etc/cta/cta-catalogue.conf /run/cta/catalogue.config_file -3")
+    daemon.exec("comm /etc/cta/cta-otel.yaml /run/cta/telemetry.config_file -3")
+    daemon.exec(f"jq -e -r '.service == \"cta-{daemon.process_name}\"' /run/cta/version.json >/dev/null")
 
 
 @pytest.mark.parametrize(
@@ -456,7 +455,7 @@ def test_log_schema_correctness(env: TestEnv, tmp_path: Path, cta_maintd: CtaMai
     hosts = [*env.cta_admin_api, *env.cta_workflow_api, *env.cta_taped]
     logging_schema_path = tmp_path / "cta-logging.schema.json"
     # Maintd already populates the logging schema in the runtime directory so we just grab it from there
-    cta_maintd.copy_from(Path("/run/cta/maintd/cta-logging.schema.json"), logging_schema_path)
+    cta_maintd.copy_from(Path("/run/cta/cta-logging.schema.json"), logging_schema_path)
 
     fail_fast = True
 
