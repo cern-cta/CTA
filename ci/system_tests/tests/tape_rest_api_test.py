@@ -137,7 +137,7 @@ def _generate_poweruser_scitoken(eos_mgm: EosMgmHost, scope: str) -> str:
     return eos_mgm.generate_scitoken(
         [
             ("scope", scope),
-            ("sub", "sub_poweruser1"),
+            ("sub", "poweruser1"),
             ("aud", "ctaeos"),
         ],
         keyid="ctaeos",
@@ -305,12 +305,17 @@ def test_generate_scitoken(eos_mgm: EosMgmHost) -> None:
     print("Generating and validating a SciToken")
     scope = "storage.stage:/eos/"
     scitoken = eos_mgm.generate_scitoken(
-        [("scope", scope), ("sub", "test")],
+        [
+            ("scope", scope),
+            ("sub", "test_sub"),
+            ("aud", "test_aud"),
+        ],
         keyid="ctaeos",
     )
     payload_json = _decode_jwt_payload(scitoken)
 
-    assert payload_json["sub"] == "test", f"SciToken with wrong sub: {payload_json['sub']}"
+    assert payload_json["sub"] == "test_sub", f"SciToken with wrong sub: {payload_json['sub']}"
+    assert payload_json["aud"] == "test_aud", f"SciToken with wrong sub: {payload_json['aud']}"
     assert payload_json["iss"] == "https://localhost:4443", f"SciToken with wrong iss: {payload_json['iss']}"
     assert payload_json["scope"] == scope, f"SciToken with wrong scope: {payload_json['scope']}"
     assert payload_json["wlcg.ver"] == "1.0", f"SciToken with wrong wlcg version: {payload_json['wlcg.ver']}"

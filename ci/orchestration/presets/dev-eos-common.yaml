@@ -56,8 +56,7 @@ mgm:
         [Issuer Local]
         issuer = https://localhost:4443
         base_path = /
-        map_subject = false
-        default_user = poweruser1
+        map_subject = true
         authorization_strategy = capability
 
   xrd:
