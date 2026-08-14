@@ -42,6 +42,6 @@ add_manpage(cta-admin)
 
 install(TARGETS cta-admin DESTINATION usr/bin)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-admin.1cta DESTINATION /usr/share/man/man1)
-install(FILES cta-send-closew.sh DESTINATION usr/bin)
+install(PROGRAMS cta-send-closew.sh DESTINATION usr/bin)
 install(FILES cta-cli.example.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 install(FILES cta-cli-grpc.example.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
