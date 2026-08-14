@@ -2,12 +2,39 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 /var/log/cta/cta-maintd.log {
+    # Compress archives, but wait one rotation before compression. This avoids
+    # racing with writes made before maintd processes the postrotate SIGHUP.
     compress
-    daily
-    missingok
-    rotate 500
     delaycompress
+
+    # The replacement file must remain writable by the service account.
+    create 0644 cta tape
+    su cta tape
+
+    # Use unique, sortable archive names even when multiple rotations occur
+    # during the same day.
+    dateext
+    dateformat -%Y%m%d-%s
+
+    # Check hourly, but rotate only after the active log reaches 1 GiB. Keep at
+    # most 24 archives and discard archives older than two days on rotation.
+    hourly
+    minsize 1G
+    rotate 24
+    maxage 2
+
+    missingok
+
+    # olddir must be on the same filesystem for rename-based rotation.
+    olddir /var/log/cta/old
+
     postrotate
-        /bin/pkill -SIGUSR1 cta-maintd 2> /dev/null || true
+        # Ask systemd to send SIGHUP only to the service's main process. SIGHUP
+        # reopens the log; it does not reload cta-maintd.toml. Rotation must
+        # still succeed when maintd is inactive.
+        /usr/bin/systemctl kill --kill-whom=main --signal=HUP cta-maintd.service > /dev/null 2>&1 || true
     endscript
 }
+
+# "hourly" controls when this log is eligible for rotation; the system-wide
+# logrotate job must also run hourly.

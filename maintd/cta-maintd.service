@@ -3,18 +3,34 @@
 
 [Unit]
 Description=CERN Tape Archive (CTA) maintd service
+Wants=network-online.target
 After=network-online.target
 
 [Service]
-EnvironmentFile=-/etc/sysconfig/cta-maintd
-# In case --runtime-dir is used, use RuntimeDirectory= to manage the ephemeral runtime directory
-ExecStart=/usr/bin/cta-maintd ${CTA_MAINTD_OPTIONS}
-LimitCORE=infinity
-OOMScoreAdjust=-1000
-Restart=yes
-TimeoutSec=60
+Type=exec
 User=cta
 Group=tape
 
+RuntimeDirectory=cta/maintd
+RuntimeDirectoryMode=0750
+LogsDirectory=cta cta/old
+LogsDirectoryMode=0755
+
+# To run multiple instances (e.g. one per routine), create a local 
+# cta-maintd@.service template based on this unit and qualify every 
+# per-process path with %i, for example:
+#
+#   RuntimeDirectory=cta/maintd-%i and --runtime-dir=/run/cta/maintd-%i
+#   --config=/etc/cta/cta-maintd-%i.toml
+#   --log-file=/var/log/cta/cta-maintd-%i.log
+#
+# Configuration changes require a service restart. SIGHUP only refreshes the log file descriptor.
+ExecStart=/usr/bin/cta-maintd --config=/etc/cta/cta-maintd.toml --config-strict --runtime-dir=/run/cta/maintd --log-file=/var/log/cta/cta-maintd.log
+LimitCORE=infinity
+OOMScoreAdjust=-10
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=60
+
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target

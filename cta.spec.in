@@ -623,4 +623,3 @@ cta-eosdf reports free disk space in the default EOS namespace.
 %files -n cta-eosdf
 %license COPYING
 %attr(0755,cta,tape) %{_bindir}/cta-eosdf.sh
-

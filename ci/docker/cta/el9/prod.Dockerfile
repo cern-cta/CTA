@@ -64,6 +64,8 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     microdnf install -y tar jq sudo procps-ng && \
     echo 'cta ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/cta && \
     chmod 0440 /etc/sudoers.d/cta && \
+    # Containers do not process systemd LogsDirectory directives
+    install -d -o cta -g tape -m 0755 /var/log/cta && \
     # Cleanup
     rm -rf /var/lib/dnf/history.*
 
@@ -117,8 +119,10 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-maintd \
     /usr/local/bin/build-service.sh "cta-maintd"
 
+RUN install -d -o cta -g tape -m 0750 /run/cta/maintd
+
 USER cta
-CMD ["/usr/bin/cta-maintd", "--log-file=/var/log/cta/cta-maintd.log", "--config-strict", "--config /etc/cta/cta-maintd.toml", "--runtime-dir /run/cta"]
+CMD ["/usr/bin/cta-maintd", "--log-file=/var/log/cta/cta-maintd.log", "--config-strict", "--config", "/etc/cta/cta-maintd.toml", "--runtime-dir", "/run/cta/maintd"]
 
 # =========================================================================
 #  SERVICE cta-frontend

@@ -116,7 +116,7 @@ spec:
           mountPath: /objectstore
         {{- end }}
         - name: runtime-dir
-          mountPath: /run/cta
+          mountPath: /run/cta/maintd
         {{ include "common.extraVolumeMounts" $ | nindent 8 }}
       volumes:
       - name: scripts-volume

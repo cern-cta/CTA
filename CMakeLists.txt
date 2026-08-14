@@ -165,9 +165,6 @@ ELSE(DEFINED PackageOnly)
     find_package (oracle-instantclient REQUIRED)
   endif (OCCI_SUPPORT)
 
-  install (CODE "message (STATUS \"Installing directory \$ENV{DESTDIR}/var/log/cta\")")
-  install (CODE "file (MAKE_DIRECTORY \$ENV{DESTDIR}/var/log/cta)")
-
   #
   # Location of git submodule containing the XRootD SSI Protocol Buffer bindings
   #
