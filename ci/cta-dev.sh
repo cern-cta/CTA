@@ -692,7 +692,7 @@ remove_container() {
   local -r container_name="$1"
   local attempt
 
-  for attempt in {1..5}; do
+  for ((attempt = 0; attempt < 5; attempt++)); do
     container_exists "$container_name" || return 0
     "$container_runtime" rm -f "$container_name" >/dev/null 2>&1 || true
     sleep 0.2
