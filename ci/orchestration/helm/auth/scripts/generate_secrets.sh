@@ -31,6 +31,7 @@ echo "0 u:ctaeos g:ctaeos n:ctaeos+ N:7570028795780923393 c:1762534677 e:0 f:0 k
 openssl genrsa -passout pass:1234 -des3 -out $SECRETS_DIR/ca.key.pem 4096
 openssl req -passin pass:1234 -new -x509 -days 365 -key $SECRETS_DIR/ca.key.pem -out $SECRETS_DIR/ca.crt.pem -subj "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Test/CN=Root CA"
 
+# Usage: generate_signed_cert <file_prefix> <primary_dns_name> [additional_dns_name...]
 generate_signed_cert() {
   local file_prefix="$1"
   local host="$2"
