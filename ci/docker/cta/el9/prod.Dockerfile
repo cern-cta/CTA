@@ -118,7 +118,7 @@ ARG ENABLE_ORACLE_SUPPORT
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-maintd \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-maintd \
-    /usr/local/bin/build-service.sh "cta-maintd" && \
+    /usr/local/bin/build-service.sh "cta-maintd"
 
 USER cta
 CMD ["/usr/bin/cta-maintd", "--config-strict", "--config", "/etc/cta/cta-maintd.toml", "--runtime-dir", "/run/cta"]
