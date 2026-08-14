@@ -3,6 +3,7 @@
 
 
 import json
+import re
 import sys
 import time
 import uuid
@@ -187,9 +188,57 @@ def test_evict(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
     eos_client.exec(". /tmp/client_env && /tmp/test_evict.sh")
 
 
-def test_abort_prepare(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_abort_prepare.sh", Path("/tmp"), permissions="+x")
-    eos_client.exec(". /tmp/client_env && /tmp/test_abort_prepare.sh")
+def test_abort_prepare(
+    eos_client: EosClientHost,
+    cta_cli: CtaCliHost,
+    client_params: ClientParams,
+    disk_instance_name: str,
+    test_dir: Path,
+) -> None:
+    def retrieve_request_count() -> int:
+        queues = json.loads(cta_cli.exec_with_output("cta-admin --json showqueues"))
+        return sum(int(queue["queuedFiles"]) for queue in queues if queue["mountType"] == "RETRIEVE")
+
+    file_number_width = len(str(client_params.file_count - 1))
+    file_paths = [
+        test_dir / "0" / f"0{file_number:0{file_number_width}d}" for file_number in range(client_params.file_count)
+    ]
+
+    # Let any preceding tape sessions finish before changing the drive state.
+    time.sleep(3)
+    cta_cli.set_all_drives_down()
+
+    try:
+        requests = []
+        for file_path in file_paths:
+            request_id = eos_client.exec_with_output(
+                "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
+                f"xrdfs {disk_instance_name} prepare -s '{file_path}?activity=T0Reprocess'"
+            )
+            requests.append((request_id, file_path))
+
+        deadline = time.monotonic() + 10
+        while retrieve_request_count() != len(file_paths) and time.monotonic() < deadline:
+            time.sleep(1)
+        assert retrieve_request_count() == len(file_paths), "Not all retrieve requests were queued"
+
+        for request_id, file_path in requests:
+            eos_client.exec(
+                "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
+                f"xrdfs {disk_instance_name} prepare -a '{request_id}' '{file_path}'"
+            )
+
+        assert retrieve_request_count() in (0, len(file_paths)), "Only some retrieve requests were cancelled"
+    finally:
+        cta_cli.set_all_drives_up()
+
+    deadline = time.monotonic() + 60
+    while retrieve_request_count() > 0 and time.monotonic() < deadline:
+        time.sleep(1)
+    assert retrieve_request_count() == 0, "Retrieve queue did not clear"
+    assert not any(eos_client.is_file_on_disk(disk_instance_name, path) for path in file_paths), (
+        "Some files were retrieved despite cancellation"
+    )
 
 
 def test_multiple_retrieve(eos_client: EosClientHost, test_dir: Path, remote_scripts_dir: Path) -> None:
@@ -214,18 +263,46 @@ def test_idempotent_prepare(
     eos_mgm.force_remove_directory(no_prepare_dir)
 
 
-def test_delete_on_closew_error(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
-    eos_client.copy_to(
-        remote_scripts_dir / "eos_client" / "test_delete_on_closew_error.sh", Path("/tmp"), permissions="+x"
-    )
-    eos_client.exec(". /tmp/client_env && /tmp/test_delete_on_closew_error.sh")
+def test_delete_on_closew_error(eos_client: EosClientHost, disk_instance_name: str, test_dir: Path) -> None:
+    test_directory = test_dir / "fail_on_closew_test"
+    test_file = test_directory / str(uuid.uuid4())
+    eos_admin = f"KRB5CCNAME=/tmp/eosadmin1/krb5cc_0 eos root://{disk_instance_name}"
+
+    eos_client.exec(f"{eos_admin} mkdir '{test_directory}'")
+    try:
+        eos_client.exec(f"{eos_admin} attr set sys.archive.storage_class=fail_on_closew_test '{test_directory}'")
+        copy_result = eos_client.exec(
+            f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp /etc/group root://{disk_instance_name}/{test_file}",
+            capture_output=True,
+            throw_on_failure=False,
+        )
+        assert not copy_result.success, "xrdcp succeeded despite the CLOSEW workflow error"
+
+        file_info = eos_client.exec(
+            f"eos root://{disk_instance_name} fileinfo '{test_file}'",
+            capture_output=True,
+            throw_on_failure=False,
+        )
+        assert not file_info.success, "EOS namespace entry is still present after the CLOSEW workflow error"
+    finally:
+        eos_client.exec(f"{eos_admin} rm -rf '{test_directory}'", throw_on_failure=False)
 
 
-def test_archive_zero_length_file(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
-    eos_client.copy_to(
-        remote_scripts_dir / "eos_client" / "test_archive_zero_length_file.sh", Path("/tmp"), permissions="+x"
-    )
-    eos_client.exec(". /tmp/client_env && /tmp/test_archive_zero_length_file.sh")
+def test_archive_zero_length_file(eos_client: EosClientHost, disk_instance_name: str, test_dir: Path) -> None:
+    source_path = Path(f"/tmp/empty_file_{uuid.uuid4().hex}")
+    destination_path = test_dir / source_path.name
+    eos_client.exec(f"truncate -s 0 '{source_path}'")
+    try:
+        result = eos_client.exec(
+            f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp '{source_path}' root://{disk_instance_name}/{destination_path}",
+            capture_output=True,
+            throw_on_failure=False,
+        )
+        assert not result.success, "Archiving a zero-length file unexpectedly succeeded"
+        error_output = result.stdout + result.stderr
+        assert "0-length" in error_output.lower(), f"Unexpected xrdcp error: {error_output}"
+    finally:
+        eos_client.exec(f"rm -f '{source_path}'")
 
 
 def test_eos_evict(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
@@ -239,9 +316,30 @@ def test_eos_immutable_file(eos_client: EosClientHost, eos_mgm: EosMgmHost, test
     )
 
 
-def test_eos_timestamps_correctness(eos_client: EosClientHost, test_dir: Path, remote_scripts_dir: Path) -> None:
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_eos_timestamps.sh", Path("/tmp"), permissions="+x")
-    eos_client.exec(f". /tmp/client_env && /tmp/test_eos_timestamps.sh {test_dir}")
+def test_eos_timestamps_correctness(eos_client: EosClientHost, disk_instance_name: str, test_dir: Path) -> None:
+    def persistent_timestamps(file_info: str) -> tuple[str, str]:
+        timestamps = {}
+        for name in ("Modify", "Birth"):
+            match = re.search(rf"^{name}:.*?Timestamp:\s*(.+)$", file_info, re.MULTILINE)
+            assert match is not None, f"Could not find {name} timestamp in EOS file info:\n{file_info}"
+            timestamps[name] = match.group(1).strip()
+        return timestamps["Modify"], timestamps["Birth"]
+
+    file_path = test_dir / f"test_eos_timestamps_{uuid.uuid4().hex}"
+    eos_client.archive_file(disk_instance_name, file_path, Path("/etc/group"), wait=False)
+    timestamps_before_archive = persistent_timestamps(eos_client.file_info(disk_instance_name, file_path))
+
+    try:
+        eos_client.wait_for_file_archival(disk_instance_name, file_path)
+        assert persistent_timestamps(eos_client.file_info(disk_instance_name, file_path)) == timestamps_before_archive
+
+        eos_client.retrieve_file(disk_instance_name, file_path)
+        assert persistent_timestamps(eos_client.file_info(disk_instance_name, file_path)) == timestamps_before_archive
+
+        eos_client.evict_file(disk_instance_name, file_path)
+        assert persistent_timestamps(eos_client.file_info(disk_instance_name, file_path)) == timestamps_before_archive
+    finally:
+        eos_client.delete_file(disk_instance_name, file_path)
 
 
 # Tests for eosdf
