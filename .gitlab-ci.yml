@@ -89,7 +89,7 @@ spec:
           default: "Unix Makefiles"
 
     enable-sbom-generation:
-      description: "Generate an SBOM."
+      description: "Generate an SBOM per image."
       type: boolean
       default: false
 
@@ -157,7 +157,8 @@ variables:
   IMAGE_DOCKER_LINT: "${DOCKER_IMAGE_PROXY}/docker.io/hadolint/hadolint:v2.12.0-alpine"
   IMAGE_LICENSE_CHECK: "${DOCKER_IMAGE_PROXY}/docker.io/fsfe/reuse:6.2"
   IMAGE_TRIVY: "${DOCKER_IMAGE_PROXY}/docker.io/aquasec/trivy@sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c" # 0.69.3
-  IMAGE_SBOMQS: "${DOCKER_IMAGE_PROXY}/ghcr.io/interlynk-io/sbomqs@sha256:b424b19d0ad2c900229302f4b2db8d80093f7ba82a1114b4f16bf073ace6f6e6" # v2.0.5
+  IMAGE_SBOM_HELPER: "registry.cern.ch/code-scanners/sbom-helper:latest"
+  IMAGE_SBOMQS: "${DOCKER_IMAGE_PROXY}/ghcr.io/interlynk-io/sbomqs@sha256:500d5eca9fe4ce3616fdfaed67d877d638b3d52d31ad30bcba6b6cfd4c435767" # v2.0.11
 
   # Should be removed as soon as EOS triggers the CTA pipeline with the new inputs instead of legacy variables.
   PIPELINE_TYPE: "$[[ inputs.pipeline-type ]]"
@@ -169,6 +170,7 @@ variables:
   TAG_PGALL_REGEX: '/(^|\.)pgall($|\.)/' # Postgres scheduler + Postgres catalogue
 
   # Build and runtime defaults
+  ENABLE_SBOM_GENERATION: "$[[ inputs.enable-sbom-generation ]]"
   SCHEDULER_TYPE: "$[[ inputs.scheduler-type ]]"
   ENABLE_ORACLE_SUPPORT: "$[[ inputs.enable-oracle-support ]]"
   BUILD_CTA_VERSION: "5"
@@ -218,19 +220,24 @@ workflow:
       variables:
         SCHEDULER_TYPE: "pgsched"
         ENABLE_ORACLE_SUPPORT: "false"
+        ENABLE_SBOM_GENERATION: "true"
     - if: '$CI_COMMIT_TAG =~ $TAG_PGSCHED_REGEX'
       auto_cancel:
         on_new_commit: none
       variables:
         SCHEDULER_TYPE: "pgsched"
+        ENABLE_SBOM_GENERATION: "true"
     - if: '$CI_COMMIT_TAG =~ $TAG_PGCAT_REGEX'
       auto_cancel:
         on_new_commit: none
       variables:
         ENABLE_ORACLE_SUPPORT: "false"
+        ENABLE_SBOM_GENERATION: "true"
     - if: $CI_COMMIT_TAG
       auto_cancel:
         on_new_commit: none
+      variables:
+        ENABLE_SBOM_GENERATION: "true"
     # Allow scheduled, manual, and API-triggered pipeline-image refreshes on the selected ref.
     - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       auto_cancel:
@@ -254,6 +261,7 @@ workflow:
         ENABLE_CCACHE: "true"
         BUILD_CACHE_POLICY: "push"  # Ensure clean build and we only rebuild the cache for push events to prevent other pipeline types from screwing with it
         CACHE_BRANCH: '$CI_COMMIT_BRANCH'
+        ENABLE_SBOM_GENERATION: "true"
         GTEST_OUTPUT: "xml:$GTEST_REPORT_FILE"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_PIPELINE_SOURCE == "trigger"
       auto_cancel:
@@ -309,8 +317,6 @@ include:
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
   - local: .gitlab/ci/sbom.gitlab-ci.yml
-    inputs:
-      enable-sbom-generation: $[[ inputs.enable-sbom-generation ]]
   - local: .gitlab/ci/release.gitlab-ci.yml
     inputs:
       platform: $[[ inputs.platform ]]

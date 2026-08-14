@@ -1,141 +1,108 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-spec:
-  inputs:
-    enable-sbom-generation:
-      type: boolean
----
-
-prepare-rootfs:
-  stage: sbom
-  needs:
-    - job: build-cta-rpms
+.sbom-rules:
   rules:
-    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
+    - if: '$PIPELINE_TYPE != "DEFAULT" && $PIPELINE_TYPE != "REGR_AGAINST_CTA_BRANCH"'
       when: never
-    - if: '"$[[ inputs.enable-sbom-generation ]]" == "true"'
+    - if: '$ENABLE_SBOM_GENERATION == "true"'
       when: on_success
     - when: never
-  image: gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
+
+enrich-sboms-cern-info:
+  extends: .sbom-rules
+  stage: sbom
+  needs:
+    - job: build-cta-images
+      artifacts: true
+      parallel:
+        matrix:
+          - TARGET_NAME: ['$[[ matrix.TARGET_NAME ]]']
+  image: $IMAGE_SBOM_HELPER
   variables:
-    ROOTFS: '/tmp/installroot'
-    CTA_RPMS_PATH: "build_rpm/RPM/RPMS"
-    CTA_REPO_DIR: /opt/repo
+    CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
   script:
-    - dnf -y install dnf-plugins-core createrepo
-    - rm -rf "$ROOTFS" && mkdir -p "$ROOTFS"
-    - mkdir -p "${CTA_REPO_DIR}/RPMS/x86_64"
-    - cp -r ${CTA_RPMS_PATH} ${CTA_REPO_DIR}/RPMS/x86_64
-    - createrepo "${CTA_REPO_DIR}"
-    - |
-      cat >/etc/yum.repos.d/cta.repo <<EOF
-      [cta]
-      name=CTA RPM repo
-      baseurl=file://${CTA_REPO_DIR}
-      enabled=1
-      gpgcheck=0
-      EOF
-    - dnf install -y
-          --releasever=9
-          --setopt=install_weak_deps=False
-          --setopt=tsflags=nodocs
-          cta-release
-    - cta-versionlock apply
-    - dnf install -y --installroot="${ROOTFS}"
-          --releasever=9
-          --setopt=install_weak_deps=False
-          --setopt=tsflags=nodocs
-          "cta-*"
-    - rm -rf "${ROOTFS}"/var/cache/dnf/* || true
-    - tar -C "${ROOTFS}" -czf installroot.tar.gz .
-  artifacts:
-    # Don't keep this artifact too long as it is quite large
-    expire_in: 3 hours
-    paths:
-      - installroot.tar.gz
-
-generate-sbom-trivy:
-  stage: sbom
-  needs:
-    - job: prepare-rootfs
-  rules:
-    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
-      when: never
-    - if: '"$[[ inputs.enable-sbom-generation ]]" == "true"'
-      when: on_success
-    - when: never
-  image: $IMAGE_TRIVY
-  variables:
-    SBOM_OUT_PATH: sboms/sbom-trivy.json
-    ROOTFS: '/tmp/installroot'
-  before_script:
     - mkdir -p sboms
-    - mkdir -p "$ROOTFS"
-    - tar -C "$ROOTFS" -xzf installroot.tar.gz
-  script:
-    - trivy rootfs --pkg-types os
-                   --format cyclonedx
-                   --disable-telemetry
-                   --scanners vuln
-                   --output "${SBOM_OUT_PATH}"
-                   "${ROOTFS}"
-  artifacts:
-    expire_in: 30 days
-    paths:
-      - ${SBOM_OUT_PATH}
-
-enrich-sbom-cern-info:
-  stage: sbom
-  needs:
-    - job: generate-sbom-trivy
-  rules:
-    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
-      when: never
-    - if: '"$[[ inputs.enable-sbom-generation ]]" == "true"'
-      when: on_success
-    - when: never
-  image: registry.cern.ch/code-scanners/sbom-helper:latest
-  variables:
-    SBOM_IN_FILE: sboms/sbom-trivy.json
-    SBOM_OUT_FILE: sboms/cta.cdx.json
-    APP_RPM_PREFIX: "cta-"
-  script:
     - |
-      export APP_NAME="$CI_PROJECT_NAME"
       export SERVICE_ELEMENT="CTA for Physics"
       export UNIT="IT-SD-TAB"
       export CONTACT="$GITLAB_USER_EMAIL"
       export ANNOTATOR="$GITLAB_USER_NAME"
       export URL="$CI_PROJECT_URL"
-    - python /app/src/sbom-helper/main.py --env -i $SBOM_IN_FILE
-    - python ci/sbom/replace_root_deps.py --in sboms-output/$SBOM_IN_FILE
-                                          --out sboms-output/tmp.json
-                                          --prefix "$APP_RPM_PREFIX"
-    - python ci/sbom/prune_sbom.py --in sboms-output/tmp.json
-                                                      --out $SBOM_OUT_FILE
+      export APP_NAME="$TARGET_NAME"
+
+      input="sboms/raw/${TARGET_NAME}.cdx.json"
+      output="sboms/${TARGET_NAME}.cdx.json"
+
+      if [[ ! -f "$input" ]]; then
+        echo "Missing raw SBOM for ${TARGET_NAME}: ${input}" >&2
+        exit 1
+      fi
+
+      python /app/src/sbom-helper/main.py --env -i "$input"
+      python ci/sbom/augment_sbom_metadata.py \
+        --in "sboms-output/${input}" \
+        --out "$output" \
+        --component-name "$TARGET_NAME" \
+        --component-version "$CTA_BUILD_ID" \
+        --author-name "$GITLAB_USER_NAME" \
+        --author-email "$GITLAB_USER_EMAIL" \
+        --project-url "$CI_PROJECT_URL"
   artifacts:
     expire_in: 30 days
     paths:
-      - $SBOM_OUT_FILE
+      - sboms/${TARGET_NAME}.cdx.json
+  parallel:
+    matrix:
+      - TARGET_NAME: [cta-taped, cta-rmcd, cta-maintd, cta-frontend, cta-tools]
 
-score-sbom:
+score-sboms:
+  extends: .sbom-rules
   stage: sbom
   needs:
-    - job: enrich-sbom-cern-info
-  rules:
-    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
-      when: never
-    - if: '"$[[ inputs.enable-sbom-generation ]]" == "true"'
-      when: on_success
-    - when: never
+    - job: enrich-sboms-cern-info
+      artifacts: true
+      parallel:
+        matrix:
+          - TARGET_NAME: ['$[[ matrix.TARGET_NAME ]]']
   image: $IMAGE_SBOMQS
   variables:
-    # Can be used for e.g. --detailed
-    EXTRA_FLAGS: ""
+    # Gate on the NTIA minimum elements instead of fields such as signatures and
+    # package artifact hashes that are not produced by a rootfs inventory.
+    SBOM_MINIMUM_SCORE: "9.0"
+    SBOM_QUALITY_PROFILE: "ntia"
   script:
-    - /app/sbomqs score sboms/cta.cdx.json $EXTRA_FLAGS
+    - |
+      sbom="sboms/${TARGET_NAME}.cdx.json"
+      if report="$(/app/sbomqs score --profile "$SBOM_QUALITY_PROFILE" "$sbom" 2>&1)"; then
+        status=0
+      else
+        status=$?
+      fi
+      echo "$report"
+
+      if [[ $status -ne 0 ]]; then
+        echo "Failed to score ${sbom}" >&2
+        exit 1
+      fi
+
+      score="$(printf '%s\n' "$report" | sed -nE 's/.*[Ss]core:[[:space:]]*([0-9]+([.][0-9]+)?).*/\1/p' | head -n 1)"
+      if [[ -z "$score" ]]; then
+        echo "Could not extract the overall score for ${sbom}" >&2
+        exit 1
+      fi
+
+      if ! awk -v score="$score" -v minimum="$SBOM_MINIMUM_SCORE" 'BEGIN { exit !(score >= minimum) }'; then
+        echo "${sbom} scored ${score}, below the required ${SBOM_MINIMUM_SCORE}" >&2
+        exit 1
+      fi
   artifacts:
+    expire_in: 30 days
+    paths:
+      - sboms/${TARGET_NAME}.cdx.json
     reports:
       cyclonedx:
-        - sboms/cta.cdx.json
+        - sboms/${TARGET_NAME}.cdx.json
+  parallel:
+    matrix:
+      - TARGET_NAME: [cta-taped, cta-rmcd, cta-maintd, cta-frontend, cta-tools]
