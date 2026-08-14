@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import base64
+import functools
 import json
 import uuid
 from contextlib import suppress
@@ -9,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from packaging.version import Version
 
 from system_tests.helpers.hosts import CtaCliHost, DiskClientHost, DiskInstanceHost, EosClientHost, EosMgmHost
 from system_tests.helpers.utils import find_line
@@ -55,12 +57,34 @@ def _assert_empty_response(response: str, operation: str) -> None:
     print(f"{operation} completed successfully")
 
 
+def _decode_jwt_payload(token: str) -> dict[str, Any]:
+    payload_base64 = token.strip().split(".")[1]
+    payload_base64 += "=" * (-len(payload_base64) % 4)
+    payload = base64.urlsafe_b64decode(payload_base64)
+    payload_json = json.loads(payload)
+    assert isinstance(payload_json, dict), f"Expected a JWT payload object, got: {payload_json!r}"
+    return payload_json
+
+
+def skip_if_staging_tokens_unsupported(test_function: Any) -> Any:
+    @functools.wraps(test_function)
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        eos_mgm = kwargs["eos_mgm"]
+        minimum_version = Version("5.5.0")
+        if eos_mgm.eos_version < minimum_version:
+            pytest.skip(f"This test requires EOS >= {minimum_version}, got {eos_mgm.eos_version}")
+        return test_function(*args, **kwargs)
+
+    return wrapper
+
+
 def _archive_info(
     disk_client: DiskClientHost,
     rest_api_endpoint: str,
     file_path: Path,
     token: str,
     certificate_options: str,
+    expect_error: bool = False,
 ) -> dict[str, Any]:
     print(f"Querying archive locality for {file_path}")
     response = disk_client.http_request(
@@ -78,6 +102,11 @@ def _archive_info(
         f"Unexpected archiveinfo response fields: {archive_info}"
     )
     assert archive_info.get("path") == str(file_path), f"Archiveinfo returned the wrong path: {archive_info}"
+    if expect_error:
+        assert "error" in archive_info, f"Archiveinfo did not return an error: {archive_info}"
+        assert "locality" not in archive_info, f"Archiveinfo returned locality with an error: {archive_info}"
+        print(f"Archiveinfo response for {file_path}: {archive_info}")
+        return archive_info
     assert "error" not in archive_info, f"Archiveinfo returned an error: {archive_info}"
     locality = archive_info.get("locality")
     assert locality in {"DISK", "TAPE", "DISK_AND_TAPE", "LOST", "NONE", "UNAVAILABLE"}, (
@@ -102,6 +131,23 @@ def _stage_request(
         data={"files": [{"path": str(file_path)}]},
     )
     return _request_id(response)
+
+
+def _delete_stage_request(
+    disk_client: DiskClientHost,
+    rest_api_endpoint: str,
+    request_id: str,
+    token: str,
+    certificate_options: str,
+) -> None:
+    print(f"Deleting stage request {request_id}")
+    delete_response = disk_client.http_request(
+        f"{rest_api_endpoint}/stage/{request_id}",
+        token=token,
+        certificate_options=certificate_options,
+        method="DELETE",
+    )
+    _assert_empty_response(delete_response, "Stage request deletion")
 
 
 def _assert_stage_status(response: str, request_id: str, file_path: Path) -> dict[str, Any]:
@@ -146,7 +192,7 @@ def _assert_stage_status(response: str, request_id: str, file_path: Path) -> dic
     if "state" in file_status:
         assert file_status["state"] in {"SUBMITTED", "STARTED", "CANCELLED", "FAILED", "COMPLETED"}
         assert "onDisk" not in file_status
-    assert "onDisk" in file_status or "state" in file_status
+    assert "onDisk" in file_status or "state" in file_status or "error" in file_status
     print(f"Stage request {request_id} status for {file_path}: {file_status}")
     return file_status
 
@@ -241,6 +287,20 @@ def test_well_known_endpoint(disk_client: DiskClientHost, disk_instance: DiskIns
     assert len(versions) == len(set(versions)), "The discovery response contains duplicate endpoint versions"
     assert versions.count("v1") == 1, "The discovery response must advertise exactly one v1 endpoint"
     print(f"Well-known discovery document is valid; advertised versions: {versions}")
+
+
+@skip_if_staging_tokens_unsupported
+def test_generate_wlcg_token(eos_mgm: EosMgmHost) -> None:
+    print("Generating and validating a SciToken")
+    scope = "storage.stage:/eos/"
+    wlcg_token = eos_mgm.generate_wlcg_token("test_sub", scope, audience="test_aud")
+    payload_json = _decode_jwt_payload(wlcg_token)
+
+    assert payload_json["sub"] == "test_sub", f"WLCG token with wrong sub: {payload_json['sub']}"
+    assert payload_json["aud"] == "test_aud", f"WLCG token with wrong sub: {payload_json['aud']}"
+    assert payload_json["iss"] == "https://localhost:4443", f"WLCG token with wrong iss: {payload_json['iss']}"
+    assert payload_json["scope"] == scope, f"WLCG token with wrong scope: {payload_json['scope']}"
+    assert payload_json["wlcg.ver"] == "1.0", f"WLCG token with wrong wlcg version: {payload_json['wlcg.ver']}"
 
 
 def test_archive_file_and_track_archiveinfo(
@@ -528,4 +588,244 @@ def test_delete_stage_request(
             rest_api_certificate_options,
         )["locality"]
         == "TAPE"
+    )
+
+
+@skip_if_staging_tokens_unsupported
+def test_wlcg_token_stage_with_root_scope_and_poll_token(
+    disk_client: DiskClientHost,
+    eos_mgm: EosMgmHost,
+    test_dir: Path,
+    rest_api_poweruser_token: str,
+    rest_api_certificate_options: str,
+) -> None:
+    file_path = test_dir / "test_http-rest-api"
+    print(f"Staging {file_path} with a root-scoped WLCG SciToken")
+    rest_api_endpoint = _get_rest_api_endpoint(disk_client, eos_mgm)
+    stage_token = eos_mgm.generate_wlcg_token("poweruser1", "storage.stage:/")
+    poll_token = eos_mgm.generate_wlcg_token("poweruser1", "storage.poll:/")
+
+    request_id = _stage_request(
+        disk_client,
+        rest_api_endpoint,
+        file_path,
+        stage_token,
+        rest_api_certificate_options,
+    )
+    disk_client.wait_for_stage_file_status(
+        rest_api_endpoint,
+        request_id,
+        file_path,
+        token=poll_token,
+        certificate_options=rest_api_certificate_options,
+        expected_state="COMPLETED",
+        expected_on_disk=True,
+        wait_timeout_secs=30,
+    )
+    status_response = disk_client.http_request(
+        f"{rest_api_endpoint}/stage/{request_id}",
+        token=poll_token,
+        certificate_options=rest_api_certificate_options,
+    )
+    completed_file_status = _assert_stage_status(status_response, request_id, file_path)
+    assert "error" not in completed_file_status
+    assert completed_file_status.get("state") == "COMPLETED" or completed_file_status.get("onDisk") is True
+
+    disk_client.evict_file(eos_mgm.instance_name, file_path)
+    _delete_stage_request(
+        disk_client,
+        rest_api_endpoint,
+        request_id,
+        rest_api_poweruser_token,
+        rest_api_certificate_options,
+    )
+
+
+@skip_if_staging_tokens_unsupported
+def test_wlcg_token_stage_with_stricter_dir_scope(
+    disk_client: DiskClientHost,
+    eos_mgm: EosMgmHost,
+    test_dir: Path,
+    rest_api_poweruser_token: str,
+    rest_api_certificate_options: str,
+) -> None:
+    file_path = test_dir / "test_http-rest-api"
+    print(f"Staging {file_path} with a test-dir-scoped WLCG SciToken")
+    rest_api_endpoint = _get_rest_api_endpoint(disk_client, eos_mgm)
+    stage_token = eos_mgm.generate_wlcg_token("poweruser1", f"storage.stage:{test_dir}")
+    poll_token = eos_mgm.generate_wlcg_token("poweruser1", f"storage.poll:{test_dir}")
+
+    request_id = _stage_request(
+        disk_client,
+        rest_api_endpoint,
+        file_path,
+        stage_token,
+        rest_api_certificate_options,
+    )
+    disk_client.wait_for_stage_file_status(
+        rest_api_endpoint,
+        request_id,
+        file_path,
+        token=poll_token,
+        certificate_options=rest_api_certificate_options,
+        expected_state="COMPLETED",
+        expected_on_disk=True,
+        wait_timeout_secs=30,
+    )
+
+    disk_client.evict_file(eos_mgm.instance_name, file_path)
+    _delete_stage_request(
+        disk_client,
+        rest_api_endpoint,
+        request_id,
+        rest_api_poweruser_token,
+        rest_api_certificate_options,
+    )
+
+
+@skip_if_staging_tokens_unsupported
+def test_wlcg_token_stage_with_invalid_scope_fails(
+    disk_client: DiskClientHost,
+    eos_mgm: EosMgmHost,
+    test_dir: Path,
+    rest_api_poweruser_token: str,
+    rest_api_certificate_options: str,
+) -> None:
+    file_path = test_dir / "test_http-rest-api"
+    print(f"Checking that staging {file_path} fails with a wrong WLCG scope")
+    rest_api_endpoint = _get_rest_api_endpoint(disk_client, eos_mgm)
+    stage_token = eos_mgm.generate_wlcg_token("poweruser1", "storage.stage:/path/does/not/exist")
+
+    request_id = _stage_request(
+        disk_client,
+        rest_api_endpoint,
+        file_path,
+        stage_token,
+        rest_api_certificate_options,
+    )
+    status_response = disk_client.http_request(
+        f"{rest_api_endpoint}/stage/{request_id}",
+        token=stage_token,
+        certificate_options=rest_api_certificate_options,
+    )
+    file_status = _assert_stage_status(status_response, request_id, file_path)
+    assert "error" in file_status, f"Invalid WLCG token request did not report an error: {file_status}"
+    assert "onDisk" not in file_status, f"Invalid WLCG token request leaked disk locality: {file_status}"
+    assert "state" not in file_status, f"Invalid WLCG token request leaked stage state: {file_status}"
+    _delete_stage_request(
+        disk_client,
+        rest_api_endpoint,
+        request_id,
+        rest_api_poweruser_token,
+        rest_api_certificate_options,
+    )
+
+
+@skip_if_staging_tokens_unsupported
+def test_wlcg_token_stage_request_with_poll_scope_fails(
+    disk_client: DiskClientHost,
+    eos_mgm: EosMgmHost,
+    test_dir: Path,
+    rest_api_poweruser_token: str,
+    rest_api_certificate_options: str,
+) -> None:
+    file_path = test_dir / "test_http-rest-api"
+    print(f"Checking that a storage.poll WLCG token cannot stage {file_path}")
+    rest_api_endpoint = _get_rest_api_endpoint(disk_client, eos_mgm)
+    poll_token = eos_mgm.generate_wlcg_token("poweruser1", f"storage.poll:{test_dir}")
+
+    request_id = _stage_request(
+        disk_client,
+        rest_api_endpoint,
+        file_path,
+        poll_token,
+        rest_api_certificate_options,
+    )
+    status_response = disk_client.http_request(
+        f"{rest_api_endpoint}/stage/{request_id}",
+        token=poll_token,
+        certificate_options=rest_api_certificate_options,
+    )
+    file_status = _assert_stage_status(status_response, request_id, file_path)
+    assert "error" in file_status, f"Request with WLCG token and storage.poll did not report an error: {file_status}"
+    _delete_stage_request(
+        disk_client,
+        rest_api_endpoint,
+        request_id,
+        rest_api_poweruser_token,
+        rest_api_certificate_options,
+    )
+
+
+@skip_if_staging_tokens_unsupported
+def test_wlcg_token_archiveinfo_with_poll_scope(
+    disk_client: DiskClientHost,
+    eos_mgm: EosMgmHost,
+    test_dir: Path,
+    rest_api_certificate_options: str,
+) -> None:
+    file_path = test_dir / "test_http-rest-api"
+    print(f"Checking archiveinfo access for {file_path} with WLCG storage.poll SciTokens")
+    rest_api_endpoint = _get_rest_api_endpoint(disk_client, eos_mgm)
+    valid_poll_token = eos_mgm.generate_wlcg_token("poweruser1", f"storage.poll:{test_dir}")
+    invalid_poll_token = eos_mgm.generate_wlcg_token("poweruser1", "storage.poll:/path/does/not/exist")
+
+    archive_info = _archive_info(
+        disk_client,
+        rest_api_endpoint,
+        file_path,
+        valid_poll_token,
+        rest_api_certificate_options,
+    )
+    assert archive_info["path"] == str(file_path)
+
+    invalid_archive_info = _archive_info(
+        disk_client,
+        rest_api_endpoint,
+        file_path,
+        invalid_poll_token,
+        rest_api_certificate_options,
+        expect_error=True,
+    )
+
+    assert "error" in invalid_archive_info, (
+        f"storage.poll request with invalid path did not report an error: {invalid_archive_info}"
+    )
+
+
+@skip_if_staging_tokens_unsupported
+def test_wlcg_scitoken_stage_with_unmapped_subject_fails(
+    disk_client: DiskClientHost,
+    eos_mgm: EosMgmHost,
+    test_dir: Path,
+    rest_api_poweruser_token: str,
+    rest_api_certificate_options: str,
+) -> None:
+    file_path = test_dir / "test_http-rest-api"
+    print(f"Checking that staging {file_path} fails with an unmapped WLCG token subject")
+    rest_api_endpoint = _get_rest_api_endpoint(disk_client, eos_mgm)
+    stage_token = eos_mgm.generate_wlcg_token("fakeuser1", f"storage.stage:{test_dir}")
+
+    request_id = _stage_request(
+        disk_client,
+        rest_api_endpoint,
+        file_path,
+        stage_token,
+        rest_api_certificate_options,
+    )
+    status_response = disk_client.http_request(
+        f"{rest_api_endpoint}/stage/{request_id}",
+        token=stage_token,
+        certificate_options=rest_api_certificate_options,
+    )
+    file_status = _assert_stage_status(status_response, request_id, file_path)
+    assert "error" in file_status, f"Unmapped WLCG token subject did not report an error: {file_status}"
+    assert "onDisk" not in file_status, f"Unmapped WLCG token subject leaked disk locality: {file_status}"
+    assert "state" not in file_status, f"Unmapped WLCG token subject leaked stage state: {file_status}"
+    _delete_stage_request(
+        disk_client,
+        rest_api_endpoint,
+        request_id,
+        rest_api_poweruser_token,
+        rest_api_certificate_options,
     )

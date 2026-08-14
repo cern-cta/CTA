@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Note:
+# This code is an adaptation from the following file on the EOS project:
+# https://gitlab.cern.ch/dss/eos/-/blob/5.5.0/misc/sbin/eos-jwk-https
+#
+# It introduces some modifications so that it can work with the CTA CI,
+# including using the same test certificates and other minor adaptations.
+
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import json
+import ssl
+import os
+
+
+class SimpleHTTPRequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        wellknown = '{"jwks_uri":"https://localhost:4443/jwk"}'
+        if self.path == "/.well-known/openid-configuration":
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(bytes(wellknown, "UTF-8"))
+        elif self.path == "/jwk":
+            jwk = os.environ["EOS_JWK"].removeprefix("JWK:").strip()
+            jwks = json.dumps({"keys": [json.loads(jwk)]})
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(bytes(jwks, "UTF-8"))
+        else:
+            self.send_error(404, "File not found")
+            return
+
+
+httpd = HTTPServer(("", 4443), SimpleHTTPRequestHandler)
+
+ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+ssl_context.load_cert_chain(
+    certfile="/etc/grid-security/certificates/ctaeos-self-signed.crt.pem",
+    keyfile="/etc/grid-security/certificates/ctaeos-self-signed.key.pem",
+)
+httpd.socket = ssl_context.wrap_socket(httpd.socket, server_side=True)
+
+httpd.serve_forever()

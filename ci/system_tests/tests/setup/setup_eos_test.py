@@ -35,6 +35,23 @@ def test_general_settings(eos_mgm: EosMgmHost) -> None:
     eos_mgm.exec(f"eos fs add -m {tape_fs_id} tape localhost:1234 /does_not_exist tape", throw_on_failure=False)
 
 
+# This function sets the SciToken add-on convenience in EOS, allowing our test scripts to acquire test WLCG tokens
+# from EOS and use them to test the staging token capabilities (and others).
+def test_scitokens_addon_on_eos(eos_mgm: EosMgmHost, remote_scripts_dir: Path) -> None:
+    eos_mgm.copy_to(remote_scripts_dir / "eos_mgm" / "eos-jwk-https", Path("/sbin"), permissions="755")
+
+    # Setup a local jwk file and start the jwk daemon (in the background)
+    # Kill any previous daemon if it exists
+    eos_mgm.exec("eos scitoken create-keys --keyid ctaeos > /etc/xrootd/ctaeos.jwk")
+    eos_mgm.exec("pkill -f '/sbin/[e]os-jwk-https' || true")
+    eos_mgm.exec("nohup eos daemon jwk /etc/xrootd/ctaeos.jwk >/tmp/eos-jwk.log 2>&1 </dev/null &")
+
+    print("Checking SciTokens add-on is fully running")
+    # EOS should be able to generate SciTokens now.
+    scitoken_base64 = eos_mgm.generate_wlcg_token("poweruser1", "storage.read:/")
+    assert scitoken_base64, "SciToken generation returned an empty token"
+
+
 def test_add_users(eos_mgm: EosMgmHost) -> None:
     # We don't really care if these already exist
     eos_mgm.exec("groupadd --gid 1100 eosusers", throw_on_failure=False)

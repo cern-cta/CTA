@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import datetime
+import json
 from functools import cached_property
 from pathlib import Path
 
+from packaging.version import Version
 from typing_extensions import override
 
 from system_tests.helpers.connections.remote_connection import RemoteConnection
@@ -30,6 +32,39 @@ class EosMgmHost(DiskInstanceHost):
     @cached_property
     def webdav_url(self) -> str:
         return f"https://{self.instance_name}:8443"
+
+    @cached_property
+    def eos_version(self) -> Version:
+        version_entries = json.loads(self.exec_with_output("eos --json version"))["version"]
+        version_info = next(entry for entry in version_entries if "EOS_SERVER_VERSION" in entry)
+        return Version(version_info["EOS_SERVER_VERSION"])
+
+    def generate_wlcg_token(
+        self,
+        sub: str,
+        scope: str,
+        *,
+        issuer: str = "https://localhost:4443",
+        keyid: str = "ctaeos",
+        timeout: int = 60,
+        audience: str = "ctaeos",
+    ) -> str:
+        claims = [
+            ("sub", sub),
+            ("scope", scope),
+            ("aud", audience),
+        ]
+        claim_args = [f"--claim '{name}={value}'" for name, value in claims]
+
+        print(f"Generating a WLCG token with key id {keyid}")
+        token = self.exec_with_output(
+            f"eos scitoken create --expires $(($(date +%s) + {timeout})) "
+            f"--issuer {issuer} --keyid '{keyid}' --profile wlcg "
+            f"{' '.join(claim_args)}"
+        )
+        if not token:
+            raise RuntimeError(f"WLCG token generation returned an empty token for key id {keyid}")
+        return token
 
     @cached_property
     def workflow_dir(self) -> Path:

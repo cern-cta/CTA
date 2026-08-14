@@ -47,6 +47,17 @@ mgm:
   http:
     # Generated using: openssl rand -base64 64 | base64 -w 0
     macaroonsSecretKey: ZjZsMWxPT1lEc1poNFBKRTJiK05aaEhMdC9iUzdsSmxxNGZXT1Z4dE9PWElsR2I0MHhqZ3RnRDNzWnhVTW5iZAp1YWFSYmR6d0hSL3FMem1ncDNCWHFRPT0K
+    sciTokens:
+      enabled: true
+      config: |
+        [Global]
+        audience = ctaeos
+
+        [Issuer Local]
+        issuer = https://localhost:4443
+        base_path = /
+        map_subject = true
+        authorization_strategy = capability
 
   xrd:
     # Additional tape-specific config
@@ -66,6 +77,8 @@ mgm:
       value: "1"
     - name: LD_PRELOAD
       value: "/usr/lib64/libjemalloc.so.2"
+    - name: SCITOKEN_CONFIG_TLS_CA_FILE
+      value: "/etc/grid-security/certificates/ca.crt.pem"
     # For some reason EOS is on another time zone, so set this to CET
     - name: TZ
       value: "CET"
