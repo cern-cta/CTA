@@ -311,6 +311,7 @@ def test_generate_scitoken(eos_mgm: EosMgmHost) -> None:
     payload_json = _decode_jwt_payload(scitoken)
 
     assert payload_json["sub"] == "test", f"SciToken with wrong sub: {payload_json['sub']}"
+    assert payload_json["iss"] == "https://localhost:4443", f"SciToken with wrong iss: {payload_json['iss']}"
     assert payload_json["scope"] == scope, f"SciToken with wrong scope: {payload_json['scope']}"
     assert payload_json["wlcg.ver"] == "1.0", f"SciToken with wrong wlcg version: {payload_json['wlcg.ver']}"
 
