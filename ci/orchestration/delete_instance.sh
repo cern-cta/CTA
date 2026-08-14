@@ -238,7 +238,7 @@ delete_instance() {
   fi
 
   if ! kubectl get namespace "$namespace" >/dev/null 2>&1; then
-    log_warn "Namespace ${namespace} does not exist; nothing to delete."
+    log_task "Namespace ${namespace} does not exist; nothing to delete..."
     exit 0
   fi
 
@@ -264,8 +264,8 @@ delete_instance() {
 
   # Delete the actual namespace
   log_task "Deleting CTA instance ${namespace}..."
-  kubectl delete pods,jobs,deployments,statefulsets,pvc --all -n ${namespace} --grace-period=0 --force --wait=false > /dev/null
-  kubectl delete namespace ${namespace} --now
+  kubectl delete pods,jobs,deployments,statefulsets,pvc --all -n "${namespace}" --now --wait=false >/dev/null
+  kubectl delete namespace "${namespace}" --wait=true >/dev/null
 
   # Reclaim any PVs
   if [[ "$wipe_pvs" = true ]]; then

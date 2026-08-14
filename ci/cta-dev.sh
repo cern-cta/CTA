@@ -34,8 +34,7 @@ readonly available_tests=(
 )
 readonly venv_dir="${project_root}/ci/system_tests/.venv"
 readonly program_name="cta-dev"
-readonly build_state_schema_version=2
-readonly build_state_file="${project_root}/build_rpm/.cta-dev-build-state.json"
+readonly build_state_file="${project_root}/.cta-dev-build-state.json"
 readonly debug_profile_file="${project_root}/ci/orchestration/debug/cta-debug-profile.yaml"
 
 # Global
@@ -43,6 +42,7 @@ platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
 scheduler_type="objectstore"
 oracle_support="false"
 enable_internal_repos=true
+internal_repos_forced_public=false
 container_runtime=""
 container_runtime_explicit=false
 namespace="dev"
@@ -80,6 +80,8 @@ extra_spawn_options=(--no-setup)
 
 stage_names=()
 stage_durations=()
+namespace_deletion_pid=""
+namespace_deletion_log=""
 
 source "${script_dir}/utils/log_utils.sh"
 
@@ -128,6 +130,7 @@ load_cta_dev_env() {
         [[ "$value" == true || "$value" == false ]] || \
           die "Invalid value for ${key} in ${env_file}:${line_number}: expected true or false."
         enable_internal_repos=$value
+        [[ $value == false ]] && internal_repos_forced_public=true
         ;;
       CTA_DEV_PLATFORM)
         jq -e --arg platform "$value" '.platforms | has($platform)' "${project_root}/project.json" >/dev/null || \
@@ -438,6 +441,7 @@ parse_options() {
         ;;
       --use-public-repos)
         enable_internal_repos=false
+        internal_repos_forced_public=true
         ;;
       --platform)
         platform="$2"
@@ -675,50 +679,34 @@ container_exists() {
   fi
 }
 
-container_is_running() {
+container_status() {
   local -r container_name="$1"
-  local running
   if [[ $container_runtime == podman ]]; then
-    running=$(podman container inspect --format '{{.State.Running}}' "$container_name" 2>/dev/null) || return 1
+    podman container inspect --format '{{.State.Status}}' "$container_name" 2>/dev/null
   else
-    running=$(docker container inspect --format '{{.State.Running}}' "$container_name" 2>/dev/null) || return 1
+    docker container inspect --format '{{.State.Status}}' "$container_name" 2>/dev/null
   fi
-  [[ $running == true ]]
 }
 
-# =========================================================================
-#  Commands
-# =========================================================================
+remove_container() {
+  local -r container_name="$1"
+  local attempt
 
-build_cta() {
-  detect_internal_repos
-  cd "$project_root"
+  for ((attempt = 0; attempt < 5; attempt++)); do
+    container_exists "$container_name" || return 0
+    "$container_runtime" rm -f "$container_name" >/dev/null 2>&1 || true
+    sleep 0.2
+  done
 
-  # Constants
-  local -r xrootd_ssi_version=$(git -C "$project_root/xrootd-ssi-protobuf-interface" describe --tags --exact-match)
-  local -r build_image_name="cta-build-image-${platform}"
-  local -r build_container_name="cta-build${project_root//\//-}-${platform}"
-  local -r mount_basedir="/shared/CTA"
-  local -r num_jobs=$(nproc --ignore=2)
-  local build_command=("$container_runtime" build)
-  [[ $container_runtime == docker ]] && build_command=(docker buildx build --load)
+  container_exists "$container_name" && return 1
+  return 0
+}
 
-  local rebuild_srpms=false
-  local reinstall_srpms=false
-  local automatic_clean_build_dirs=false
-  local recreate_build_container=false
-  local state_is_valid=false
-  local state_matches_configuration=false
-  local build_output_exists=false
-  local build_state_json
+create_build_configuration() {
+  local -r xrootd_ssi_version="$1"
+  local -r num_jobs="$2"
 
-  # By default we don't rebuild the SRPMs. However, this causes issues when certain flags are switched
-  # As such, we create a JSON file in the build directory to track these options
-  # If they changed, we rebuild the SRPMs automatically instead of requiring the user to do so manually
-  # Keep every option and environment value passed to CMake in this state. This allows unchanged builds
-  # to use --skip-cmake safely; any new CMake option must also be added here and to the checks below.
-  build_state_json=$(jq -cn \
-    --argjson schemaVersion "$build_state_schema_version" \
+  jq -cn \
     --arg platform "$platform" \
     --arg schedulerType "$scheduler_type" \
     --argjson oracleSupport "$oracle_support" \
@@ -733,38 +721,89 @@ build_cta() {
     --arg xrootdSsiVersion "$xrootd_ssi_version" \
     --argjson jobs "$num_jobs" \
     --argjson internalRepos "$enable_internal_repos" \
-    '{schemaVersion: $schemaVersion, platform: $platform, schedulerType: $schedulerType,
-      oracleSupport: $oracleSupport, buildGenerator: $buildGenerator,
-      cmakeBuildType: $cmakeBuildType, enableCcache: $enableCcache,
-      buildDebugPackages: ($skipDebugPackages | not), runUnitTests: ($skipUnitTests | not),
-      enableAddressSanitizer: $enableAddressSanitizer, ctaVersion: $ctaVersion,
-      ctaVersionSuffix: $ctaVersionSuffix, xrootdSsiVersion: $xrootdSsiVersion, jobs: $jobs,
-      internalRepos: $internalRepos}')
+    '{platform: $platform, schedulerType: $schedulerType, oracleSupport: $oracleSupport,
+      buildGenerator: $buildGenerator, cmakeBuildType: $cmakeBuildType,
+      enableCcache: $enableCcache, buildDebugPackages: ($skipDebugPackages | not),
+      runUnitTests: ($skipUnitTests | not), enableAddressSanitizer: $enableAddressSanitizer,
+      ctaVersion: $ctaVersion, ctaVersionSuffix: $ctaVersionSuffix,
+      xrootdSsiVersion: $xrootdSsiVersion, jobs: $jobs, internalRepos: $internalRepos}'
+}
+
+write_build_state() {
+  local -r configuration_json="$1"
+  local -r build_successful="$2"
+  local temporary_state_file
+
+  temporary_state_file=$(mktemp "${project_root}/.cta-dev-build-state.json.XXXXXX")
+  jq -cn \
+    --argjson configuration "$configuration_json" \
+    --argjson buildSuccessful "$build_successful" \
+    '{configuration: $configuration, buildSuccessful: $buildSuccessful}' \
+    >"$temporary_state_file"
+  mv -f "$temporary_state_file" "$build_state_file"
+}
+
+# =========================================================================
+#  Commands
+# =========================================================================
+
+build_cta() {
+  cd "$project_root"
+
+  # Constants
+  local -r xrootd_ssi_version=$(git -C "$project_root/xrootd-ssi-protobuf-interface" describe --tags --exact-match)
+  local -r build_image_name="cta-build-image-${platform}"
+  local -r build_container_name="cta-build${project_root//\//-}-${platform}"
+  local -r mount_basedir="/shared/CTA"
+  local -r num_jobs=$(nproc --ignore=2)
+  local build_command=("$container_runtime" build)
+  [[ $container_runtime == docker ]] && build_command=(docker buildx build --load)
+
+  local rebuild_srpms=false
+  local reinstall_srpms=false
+  local automatic_clean_build_dirs=false
+  local state_is_valid=false
+  local state_matches_configuration=false
+  local previous_build_successful=false
+  local build_output_exists=false
+  local previous_build_state_json=""
+  local previous_configuration_json=""
+  local build_configuration_json
+
+  # Track every option and environment value passed to CMake. Configuration changes can then rebuild
+  # the SRPMs when needed, while a successful unchanged build can safely use --skip-cmake.
+  build_configuration_json=$(create_build_configuration "$xrootd_ssi_version" "$num_jobs")
 
   [[ -d "${project_root}/build_srpm" || -d "${project_root}/build_rpm" ]] && build_output_exists=true
 
-  if [[ -f "$build_state_file" ]] \
-      && jq -e --argjson desired "$build_state_json" \
-        '.schemaVersion == $desired.schemaVersion
-         and (.platform | type == "string")
-         and (.schedulerType | type == "string")
-         and (.oracleSupport | type == "boolean")
-         and (.buildGenerator | type == "string")
-         and (.cmakeBuildType | type == "string")
-         and (.enableCcache | type == "boolean")
-         and (.buildDebugPackages | type == "boolean")
-         and (.runUnitTests | type == "boolean")
-         and (.enableAddressSanitizer | type == "boolean")
-         and (.ctaVersion | type == "string")
-         and (.ctaVersionSuffix | type == "string")
-         and (.xrootdSsiVersion | type == "string")
-         and (.jobs | type == "number")
-         and (.internalRepos | type == "boolean")' \
-        "$build_state_file" >/dev/null 2>&1; then
+  if [[ -f "$build_state_file" ]]; then
+    previous_build_state_json=$(jq -ce '
+      select((.configuration | type == "object")
+        and (.buildSuccessful | type == "boolean"))' "$build_state_file" 2>/dev/null) \
+      || previous_build_state_json=""
+  fi
+
+  if [[ -n $previous_build_state_json ]]; then
     state_is_valid=true
-    if jq -e --argjson desired "$build_state_json" '. == $desired' "$build_state_file" >/dev/null; then
-      state_matches_configuration=true
-    fi
+    previous_configuration_json=$(jq -c '.configuration' <<<"$previous_build_state_json")
+    previous_build_successful=$(jq -r '.buildSuccessful' <<<"$previous_build_state_json")
+  fi
+
+  # Reuse the last effective repository mode for an otherwise unchanged build. Repository reachability
+  # is checked later, and only when dependencies actually need to be installed.
+  if [[ $state_is_valid == true && $enable_internal_repos == true ]] \
+      && jq -e --argjson previous "$previous_configuration_json" \
+        'del(.internalRepos) == ($previous | del(.internalRepos))' \
+        <<<"$build_configuration_json" >/dev/null; then
+    enable_internal_repos=$(jq -r '.internalRepos' <<<"$previous_configuration_json")
+    build_configuration_json=$(jq -c --argjson internalRepos "$enable_internal_repos" \
+      '.internalRepos = $internalRepos' <<<"$build_configuration_json")
+  fi
+
+  if [[ $state_is_valid == true ]] \
+      && jq -e --argjson previous "$previous_configuration_json" '. == $previous' \
+        <<<"$build_configuration_json" >/dev/null; then
+    state_matches_configuration=true
   fi
 
   if [[ $state_is_valid == true ]]; then
@@ -798,16 +837,16 @@ build_cta() {
         jobs) log_warn "CMake job count changed: ${old_value} -> ${new_value}" ;;
         internalRepos)
           log_warn "Repository mode changed: internal repositories ${old_value} -> ${new_value}"
-          recreate_build_container=true
+          reinstall_srpms=true
           ;;
       esac
-    done < <(jq -r --argjson desired "$build_state_json" '
+    done < <(jq -r --argjson desired "$build_configuration_json" '
       ["schedulerType", "oracleSupport", "buildGenerator", "platform", "cmakeBuildType",
        "enableCcache", "buildDebugPackages", "runUnitTests", "enableAddressSanitizer",
        "ctaVersion", "ctaVersionSuffix", "xrootdSsiVersion", "jobs", "internalRepos"][] as $field
       | select(.[$field] != $desired[$field])
       | [$field, (.[$field] | tostring), ($desired[$field] | tostring)]
-      | @tsv' "$build_state_file")
+      | @tsv' <<<"$previous_configuration_json")
 
     if [[ ! -d "${project_root}/build_srpm" ]]; then
       log_warn "The recorded SRPM build directory is missing."
@@ -833,24 +872,19 @@ build_cta() {
     reinstall_srpms=true
   fi
 
-  if [[ $recreate_build_container == true ]]; then
-    log_warn "Automatically recreating the build container to refresh repository configuration."
-    reset=true
-    clean_build_dirs=true
-    rebuild_srpms=true
-    reinstall_srpms=true
-  fi
-
   if [[ $clean_build_dirs == true ]]; then
     rebuild_srpms=true
     reinstall_srpms=true
+    log_task "Removing build directories..."
+    rm -rf -- "${project_root}/build_srpm" "${project_root}/build_rpm"
   fi
 
   # Remove the project-specific container if reset is requested.
   if [[ "${reset}" = true ]]; then
     if container_exists "$build_container_name"; then
       log_task "Removing build container ${build_container_name}..."
-      ${container_runtime} rm -f "${build_container_name}" >/dev/null
+      remove_container "$build_container_name" \
+        || die "Failed to remove build container '${build_container_name}'."
     fi
     if container_exists "$build_container_name"; then
       die "Failed to remove build container '${build_container_name}'. Refusing to rebuild while the name is still in use."
@@ -859,14 +893,27 @@ build_cta() {
 
   # Reuse the exact project-specific container, including a stopped one.
   if container_exists "$build_container_name"; then
-    if container_is_running "$build_container_name"; then
-      log_task "Reusing running build container: ${build_container_name}"
-    else
-      log_task "Starting existing stopped build container ${build_container_name}..."
-      ${container_runtime} start "$build_container_name" >/dev/null \
-        || die "Failed to start existing build container '${build_container_name}'."
-    fi
-  else
+    local current_container_status
+    current_container_status=$(container_status "$build_container_name") \
+      || die "Failed to inspect existing build container '${build_container_name}'."
+    case "$current_container_status" in
+      running)
+        log_task "Reusing running build container: ${build_container_name}"
+        ;;
+      created|exited|stopped)
+        log_task "Starting existing stopped build container ${build_container_name}..."
+        ${container_runtime} start "$build_container_name" >/dev/null \
+          || die "Failed to start existing build container '${build_container_name}'."
+        ;;
+      *)
+        log_warn "Build container is ${current_container_status}; force-removing it before recreation."
+        remove_container "$build_container_name" \
+          || die "Failed to remove build container '${build_container_name}' in state '${current_container_status}'."
+        ;;
+    esac
+  fi
+
+  if ! container_exists "$build_container_name"; then
     print_header "SETTING UP BUILD CONTAINER"
     build_container_restarted=true
     log_task "Building the build container image..."
@@ -885,10 +932,8 @@ build_cta() {
 
   fi
 
-  if [[ $build_container_restarted == true || $rebuild_srpms == true ]]; then
+  if [[ $rebuild_srpms == true ]]; then
     print_header "BUILDING SRPMS"
-    local build_srpm_flags=()
-    [[ $clean_build_dirs == true ]] && build_srpm_flags+=(--clean-build-dir)
 
     ${container_runtime} exec "${build_container_name}" \
       .${mount_basedir}/ci/build/build_srpm.sh \
@@ -900,8 +945,7 @@ build_cta() {
       --scheduler-type "${scheduler_type}" \
       --oracle-support "${oracle_support}" \
       --cmake-build-type "${cmake_build_type}" \
-      --jobs "${num_jobs}" \
-      "${build_srpm_flags[@]}"
+      --jobs "${num_jobs}"
   fi
 
   log_task "Compiling CTA from the source directory..."
@@ -909,21 +953,27 @@ build_cta() {
   local build_rpm_flags=()
 
   if [[ $build_container_restarted == true || $reinstall_srpms == true || $force_install == true ]]; then
+    [[ $internal_repos_forced_public == false ]] && enable_internal_repos=true
+    detect_internal_repos
+    build_configuration_json=$(jq -c --argjson internalRepos "$enable_internal_repos" \
+      '.internalRepos = $internalRepos' <<<"$build_configuration_json")
     [[ $reinstall_srpms == true ]] && log_task "Refreshing build dependencies from the regenerated SRPMs..."
     build_rpm_flags+=(--install-srpms)
   fi
 
   [[ $skip_unit_tests == true ]] && build_rpm_flags+=(--skip-unit-tests)
-  [[ $clean_build_dirs == true ]] && build_rpm_flags+=(--clean-build-dir)
   [[ $skip_debug_packages == true ]] && build_rpm_flags+=(--skip-debug-packages)
   [[ $enable_ccache == true ]] && build_rpm_flags+=(--enable-ccache)
   [[ $enable_internal_repos == true ]] && build_rpm_flags+=(--enable-internal-repos)
   [[ $enable_address_sanitizer == true ]] && build_rpm_flags+=(--enable-address-sanitizer)
   if [[ $state_matches_configuration == true \
+      && $previous_build_successful == true \
       && -f "${project_root}/build_rpm/CMakeCache.txt" \
       && $clean_build_dirs == false ]]; then
     build_rpm_flags+=(--skip-cmake)
   fi
+
+  write_build_state "$build_configuration_json" false
 
   print_header "BUILDING RPMS"
   ${container_runtime} exec "${build_container_name}" \
@@ -942,16 +992,16 @@ build_cta() {
     --platform "${platform}" \
     "${build_rpm_flags[@]}"
 
-  printf '%s\n' "$build_state_json" >"$build_state_file"
+  write_build_state "$build_configuration_json" true
 
 }
 
 images_cta() {
-  detect_internal_repos
   # Constants
   local -r rpm_src="build_rpm/RPM/RPMS/x86_64" # note relative to project root
 
   print_header "BUILDING CONTAINER IMAGES"
+  detect_internal_repos
 
   # Build
   log_task "Building container images from ${rpm_src}..."
@@ -976,14 +1026,62 @@ images_cta() {
   fi
 }
 
-deploy_cta() {
+validate_deployment_environment() {
+  local_kubernetes_available \
+    || die "Cannot deploy CTA: neither minikube nor k3s is installed, so local images are unavailable."
+  command -v kubectl >/dev/null 2>&1 || die "kubectl is required to deploy CTA."
   ensure_namespace_owned
-  print_header "DELETING OLD CTA DEPLOYMENTS"
+}
 
+delete_cta_namespace() {
   cd "${project_root}/ci/orchestration"
   # By default we discard the logs from deletion as this is not very useful during development and pollutes the dev machine
   ./delete_instance.sh -n "${namespace}" --discard-logs --keep-pvs
+}
+
+cleanup_background_namespace_deletion() {
+  if [[ -n $namespace_deletion_pid ]]; then
+    wait "$namespace_deletion_pid" >/dev/null 2>&1 || true
+  fi
+  [[ -n $namespace_deletion_log ]] && rm -f -- "$namespace_deletion_log"
+}
+
+start_namespace_deletion() {
+  validate_deployment_environment
+
+  namespace_deletion_log=$(mktemp --tmpdir "cta-dev-namespace-deletion-XXXXXX.log")
+  delete_cta_namespace >"$namespace_deletion_log" 2>&1 &
+  namespace_deletion_pid=$!
+  add_trap cleanup_background_namespace_deletion EXIT
+
+  log_task "Deleting the previous CTA deployment in the background while building..."
+}
+
+finish_namespace_deletion() {
+  print_header "DELETING OLD CTA DEPLOYMENTS"
+
+  if [[ -z $namespace_deletion_pid ]]; then
+    delete_cta_namespace
+    return
+  fi
+
+  local deletion_status=0
+  wait "$namespace_deletion_pid" || deletion_status=$?
+  namespace_deletion_pid=""
+  cat "$namespace_deletion_log"
+  rm -f -- "$namespace_deletion_log"
+  namespace_deletion_log=""
+
+  [[ $deletion_status -eq 0 ]] || die "Failed to delete the previous CTA deployment."
+}
+
+deploy_cta() {
+  validate_deployment_environment
+
+  finish_namespace_deletion
+
   print_header "DEPLOYING CTA"
+  cd "${project_root}/ci/orchestration"
   [[ -n $eos_image_repository ]] && extra_spawn_options+=(--eos-image-repository "$eos_image_repository")
   [[ -n $eos_image_tag ]] && extra_spawn_options+=(--eos-image-tag "$eos_image_tag")
   [[ -n $eos_config ]] && extra_spawn_options+=(--eos-config "$eos_config")
@@ -1072,6 +1170,7 @@ print_stage_summary() {
 }
 
 up_cta() {
+  start_namespace_deletion
   run_timed_stage "Build" build_cta
   run_timed_stage "Images" images_cta
   run_timed_stage "Deploy" deploy_cta
@@ -1114,6 +1213,7 @@ EOF
 }
 
 all_cta() {
+  start_namespace_deletion
   run_timed_stage "Build" build_cta
   run_timed_stage "Images" images_cta
   run_timed_stage "Deploy" deploy_cta
