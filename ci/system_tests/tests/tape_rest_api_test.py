@@ -138,9 +138,9 @@ def _generate_poweruser_scitoken(eos_mgm: EosMgmHost, scope: str) -> str:
         [
             ("scope", scope),
             ("sub", "sub_poweruser1"),
+            ("aud", "ctaeos"),
         ],
         keyid="ctaeos",
-        timeout=600,
     )
 
 
