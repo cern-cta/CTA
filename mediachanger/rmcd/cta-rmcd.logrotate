@@ -21,7 +21,7 @@
     minsize 1G
 
     # Create a new active log immediately after rotation.
-    create 0640 cta tape
+    create 0644 cta tape
 
     # Compress old versions of log files.
     compress

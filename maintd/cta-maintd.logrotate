@@ -36,8 +36,10 @@
     sharedscripts
     postrotate
         # SIGHUP reopens the log descriptor but does not reload the configuration.
-        # Signal every loaded maintd unit; rotation must still succeed when none are active.
-        /usr/bin/systemctl kill --kill-whom=main --signal=HUP 'cta-maintd*.service' > /dev/null 2>&1 || true
+        # Signal the default unit and every loaded template instance.
+        # Rotation must still succeed when none are active.
+        /usr/bin/systemctl kill --kill-whom=main --signal=HUP cta-maintd.service > /dev/null 2>&1 || true
+        /usr/bin/systemctl kill --kill-whom=main --signal=HUP 'cta-maintd@*.service' > /dev/null 2>&1 || true
     endscript
 }
 
