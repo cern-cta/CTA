@@ -297,6 +297,7 @@ include:
     inputs:
       platform: $[[ inputs.platform ]]
       enable-internal-repos: $[[ inputs.enable-internal-repos ]]
+      enable-sbom-generation: $[[ inputs.enable-sbom-generation ]]
   - local: .gitlab/ci/tests.gitlab-ci.yml
     inputs:
       platform: $[[ inputs.platform ]]

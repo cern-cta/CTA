@@ -7,6 +7,8 @@ spec:
       type: string
     enable-internal-repos:
       type: boolean
+    enable-sbom-generation:
+      type: boolean
 ---
 
 # =========================================================================
@@ -109,6 +111,7 @@ spec:
     IMAGE_REF: ${DOCKER_IMAGE_REGISTRY}/${DOCKER_PRIVATE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_BUILD_ID}
     RPM_CONTEXT: ${CI_PROJECT_DIR}/build_rpm/RPM/RPMS/x86_64
     EXTRA_BUILD_ARGS: ""
+    SBOM_RAW_PATH: ${CI_PROJECT_DIR}/sboms/raw/${TARGET_NAME}.cdx.json
     DEST_REGISTRY_PASSWORD: $DOCKER_PRIVATE_LOGIN_PASSWORD
     DEST_REGISTRY_USERNAME: $DOCKER_PRIVATE_LOGIN_USERNAME
   script:
@@ -128,9 +131,22 @@ spec:
       if [[ -n "$EXTRA_BUILD_ARGS" ]]; then
         BUILDAH_ARGS+=($EXTRA_BUILD_ARGS)
       fi
+    - |
+      if [[ "$[[ inputs.enable-sbom-generation ]]" == "true" && "$TARGET_NAME" != "cta-debug" ]]; then
+        mkdir -p "$(dirname "$SBOM_RAW_PATH")"
+        BUILDAH_ARGS+=(
+          --sbom-scanner-image "$IMAGE_TRIVY"
+          --sbom-scanner-command 'trivy filesystem --pkg-types os --format cyclonedx --disable-telemetry --output {OUTPUT} {ROOTFS}'
+          --sbom-output "$SBOM_RAW_PATH"
+        )
+      fi
     - buildah bud "${BUILDAH_ARGS[@]}" .
     - check_oracle_rpms_for_public_image "$IMAGE_REF"
     - buildah push "${IMAGE_REF}"
+  artifacts:
+    expire_in: 3 hours
+    paths:
+      - sboms/raw/*.cdx.json
 
 build-cta-images:
   extends: .build-cta-image
