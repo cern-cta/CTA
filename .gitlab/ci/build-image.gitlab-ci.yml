@@ -137,6 +137,7 @@ spec:
         BUILDAH_ARGS+=(
           --sbom-scanner-image "$IMAGE_TRIVY"
           --sbom-scanner-command 'trivy filesystem --pkg-types os --format cyclonedx --disable-telemetry --output {OUTPUT} {ROOTFS}'
+          --sbom-merge-strategy merge-cyclonedx-by-component-name-and-version
           --sbom-output "$SBOM_RAW_PATH"
         )
       fi

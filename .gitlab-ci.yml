@@ -89,7 +89,7 @@ spec:
           default: "Unix Makefiles"
 
     enable-sbom-generation:
-      description: "Generate an SBOM."
+      description: "Generate an SBOM per image."
       type: boolean
       default: false
 

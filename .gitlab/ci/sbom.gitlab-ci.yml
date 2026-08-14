@@ -15,7 +15,7 @@ spec:
       when: on_success
     - when: never
 
-enrich-sbom-cern-info:
+enrich-sboms-cern-info:
   extends: .sbom-rules
   stage: sbom
   needs:
@@ -54,11 +54,11 @@ enrich-sbom-cern-info:
     paths:
       - sboms/*.cdx.json
 
-score-sbom:
+score-sboms:
   extends: .sbom-rules
   stage: sbom
   needs:
-    - job: enrich-sbom-cern-info
+    - job: enrich-sboms-cern-info
       artifacts: true
   image: $IMAGE_SBOMQS
   variables:
