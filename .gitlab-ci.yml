@@ -157,7 +157,8 @@ variables:
   IMAGE_DOCKER_LINT: "${DOCKER_IMAGE_PROXY}/docker.io/hadolint/hadolint:v2.12.0-alpine"
   IMAGE_LICENSE_CHECK: "${DOCKER_IMAGE_PROXY}/docker.io/fsfe/reuse:6.2"
   IMAGE_TRIVY: "${DOCKER_IMAGE_PROXY}/docker.io/aquasec/trivy@sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c" # 0.69.3
-  IMAGE_SBOMQS: "${DOCKER_IMAGE_PROXY}/ghcr.io/interlynk-io/sbomqs@sha256:b424b19d0ad2c900229302f4b2db8d80093f7ba82a1114b4f16bf073ace6f6e6" # v2.0.5
+  IMAGE_SBOM_HELPER: "registry.cern.ch/code-scanners/sbom-helper:latest"
+  IMAGE_SBOMQS: "${DOCKER_IMAGE_PROXY}/ghcr.io/interlynk-io/sbomqs@sha256:500d5eca9fe4ce3616fdfaed67d877d638b3d52d31ad30bcba6b6cfd4c435767" # v2.0.11
 
   # Should be removed as soon as EOS triggers the CTA pipeline with the new inputs instead of legacy variables.
   PIPELINE_TYPE: "$[[ inputs.pipeline-type ]]"

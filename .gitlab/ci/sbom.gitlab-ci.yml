@@ -24,7 +24,9 @@ enrich-sboms-cern-info:
       parallel:
         matrix:
           - TARGET_NAME: ['$[[ matrix.TARGET_NAME ]]']
-  image: registry.cern.ch/code-scanners/sbom-helper:latest
+  image: $IMAGE_SBOM_HELPER
+  variables:
+    CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
   script:
     - mkdir -p sboms
     - |
@@ -44,7 +46,14 @@ enrich-sboms-cern-info:
       fi
 
       python /app/src/sbom-helper/main.py --env -i "$input"
-      cp "sboms-output/${input}" "$output"
+      python ci/sbom/augment_sbom_metadata.py \
+        --in "sboms-output/${input}" \
+        --out "$output" \
+        --component-name "$TARGET_NAME" \
+        --component-version "$CTA_BUILD_ID" \
+        --author-name "$GITLAB_USER_NAME" \
+        --author-email "$GITLAB_USER_EMAIL" \
+        --project-url "$CI_PROJECT_URL"
   artifacts:
     expire_in: 30 days
     paths:
@@ -64,11 +73,14 @@ score-sboms:
           - TARGET_NAME: ['$[[ matrix.TARGET_NAME ]]']
   image: $IMAGE_SBOMQS
   variables:
-    SBOM_MINIMUM_SCORE: "8.0"
+    # Gate on the NTIA minimum elements instead of fields such as signatures and
+    # package artifact hashes that are not produced by a rootfs inventory.
+    SBOM_MINIMUM_SCORE: "9.0"
+    SBOM_QUALITY_PROFILE: "ntia"
   script:
     - |
       sbom="sboms/${TARGET_NAME}.cdx.json"
-      if report="$(/app/sbomqs score "$sbom" 2>&1)"; then
+      if report="$(/app/sbomqs score --profile "$SBOM_QUALITY_PROFILE" "$sbom" 2>&1)"; then
         status=0
       else
         status=$?
