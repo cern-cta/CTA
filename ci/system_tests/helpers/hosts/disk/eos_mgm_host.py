@@ -39,7 +39,6 @@ class EosMgmHost(DiskInstanceHost):
         version_info = next(entry for entry in version_entries if "EOS_SERVER_VERSION" in entry)
         return Version(version_info["EOS_SERVER_VERSION"])
 
-    @override
     def generate_wlcg_token(
         self,
         sub: str,
