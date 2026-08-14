@@ -2,12 +2,22 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 /var/log/cta/cta-taped*.log {
+    # cta-taped refreshes the parent and child log descriptors on SIGUSR1.
     compress
-    daily
-    missingok
-    rotate 500
+    create 0644 cta tape
+    dateext
+    dateformat -%Y%m%d-%s
     delaycompress
+    hourly
+    maxage 2
+    minsize 1G
+    missingok
+    olddir /var/log/cta/old
+    rotate 24
+    su cta tape
     postrotate
-        /bin/pkill -SIGUSR1 -u cta  ".*-parent" 2> /dev/null || true
+        /usr/bin/systemctl kill --kill-whom=main --signal=USR1 cta-taped.service > /dev/null 2>&1 || true
     endscript
 }
+
+# "hourly" controls eligibility; the system-wide logrotate job must also run hourly.

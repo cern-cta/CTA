@@ -2,10 +2,18 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 /var/log/cta/cta-rmcd*.log {
+    # rmcd opens and closes the log for every message, so rename-based rotation
+    # needs neither copytruncate nor a postrotate signal.
     compress
-    daily
-    missingok
-    rotate 500
+    create 0640 cta tape
+    dateext
+    dateformat -%Y%m%d-%s
     delaycompress
-    endscript
+    hourly
+    maxage 2
+    minsize 1G
+    missingok
+    olddir /var/log/cta/old
+    rotate 24
+    su cta tape
 }

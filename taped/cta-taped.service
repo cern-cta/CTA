@@ -3,19 +3,24 @@
 
 [Unit]
 Description=CERN Tape Archive (CTA) tape server daemon
+Wants=network-online.target
 After=network-online.target
 
 [Service]
-EnvironmentFile=-/etc/sysconfig/cta-taped
-ExecStart=/usr/bin/cta-taped ${CTA_TAPED_OPTIONS}
-LimitCORE=infinity
-OOMScoreAdjust=-1000
-Type=forking
-Restart=no
+Type=exec
 User=cta
 Group=tape
+EnvironmentFile=-/etc/sysconfig/cta-taped
+ExecStart=/usr/bin/cta-taped --foreground --config=/etc/cta/cta-taped.conf --log-to-file=/var/log/cta/cta-taped.log
+LogsDirectory=cta cta/old
+LogsDirectoryMode=0755
+LimitCORE=infinity
+OOMScoreAdjust=-10
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=60
 AmbientCapabilities=CAP_SYS_RAWIO
 CapabilityBoundingSet=CAP_SYS_RAWIO
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target

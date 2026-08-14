@@ -64,8 +64,6 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     microdnf install -y tar jq sudo procps-ng && \
     echo 'cta ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/cta && \
     chmod 0440 /etc/sudoers.d/cta && \
-    # Containers do not process systemd LogsDirectory directives
-    install -d -o cta -g tape -m 0755 /var/log/cta && \
     # Cleanup
     rm -rf /var/lib/dnf/history.*
 
@@ -88,7 +86,7 @@ RUN setcap \
     cap_sys_rawio=+ep /usr/bin/cta-tape-label
 
 USER cta
-CMD ["/usr/bin/cta-taped", "-c", "/etc/cta/cta-taped.conf", "--foreground", "--log-format=json", "--log-to-file=/var/log/cta/cta-taped.log"]
+CMD ["/usr/bin/cta-taped", "-c", "/etc/cta/cta-taped.conf", "--foreground", "--log-format=json", "--stdout"]
 
 # =========================================================================
 #  SERVICE cta-rmcd
@@ -143,7 +141,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     /usr/local/bin/build-service.sh "cta-frontend-grpc cta-catalogue-utils krb5-workstation"
 
 USER cta
-CMD ["/bin/bash", "-c", "/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend.log"]
+CMD ["/usr/bin/cta-frontend-grpc"]
 
 # =========================================================================
 #  TOOLS cta-tools

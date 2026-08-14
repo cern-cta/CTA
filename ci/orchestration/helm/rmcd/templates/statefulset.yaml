@@ -74,6 +74,8 @@ spec:
           mountPath: /scripts
         - name: smcdev
           mountPath: /dev/smc
+        - name: log-dir
+          mountPath: /var/log/cta
         {{ include "common.extraVolumeMounts" . | nindent 8 }}
       volumes:
       - name: smcdev
@@ -84,5 +86,7 @@ spec:
         configMap:
           name: scripts-rmcd
           defaultMode: 0777
+      - name: log-dir
+        emptyDir: {}
       {{ include "common.extraVolumes" . | nindent 6 }}
 ---
