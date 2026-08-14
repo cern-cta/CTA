@@ -42,6 +42,27 @@ spec:
       - name: cta-rmcd
         image: {{ include "rmcd.image" . }}
         imagePullPolicy: {{ include "rmcd.imagePullPolicy" . }}
+        startupProbe:
+          httpGet:
+            path: /health/ready
+            port: 8080
+          initialDelaySeconds: 0
+          periodSeconds: 1
+          failureThreshold: 60
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8080
+          initialDelaySeconds: 0
+          periodSeconds: 5
+          failureThreshold: 2
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 60
+          failureThreshold: 2
         securityContext:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
           privileged: {{ include "common.securityContext.privileged" . }}
@@ -49,8 +70,8 @@ spec:
             add:
               - SYS_RAWIO
         stdin: true
-        command: ["bash", "/scripts/rmcd.sh"] # TODO: remove script
-        args: []
+        command: ["/bin/bash", "-c"]
+        args: ["{{- if .Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/rmcd.sh; {{- if .Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
         env:
         - name: MY_NAME
           value: {{ $rmcdName }}
@@ -64,14 +85,15 @@ spec:
           value: "cta-rmcd"
         - name: TERM
           value: "xterm"
-        - name: RMC_LISTEN_SCOPE
-          value: {{ .Values.listenScope | quote }}
         {{- with .Values.extraEnv }}
         {{- include "common.extraEnv" . | nindent 8 }}
         {{- end }}
         volumeMounts:
         - name: scripts-volume
           mountPath: /scripts
+        - name: cta-rmcd-config
+          mountPath: /etc/cta/cta-rmcd.toml
+          subPath: cta-rmcd.toml
         - name: smcdev
           mountPath: /dev/smc
         - name: log-dir
@@ -86,6 +108,9 @@ spec:
         configMap:
           name: scripts-rmcd
           defaultMode: 0777
+      - name: cta-rmcd-config
+        configMap:
+          name: cta-rmcd-conf
       - name: log-dir
         emptyDir: {}
       {{ include "common.extraVolumes" . | nindent 6 }}

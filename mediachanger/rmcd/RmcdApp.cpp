@@ -5,6 +5,8 @@
 
 #include "RmcdApp.hpp"
 
+#include "rmc_serv.hpp"
+
 namespace cta::rmcd {
 
 void RmcdApp::stop() {

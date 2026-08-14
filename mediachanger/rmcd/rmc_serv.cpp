@@ -108,11 +108,11 @@ int rmc_main(std::string robot, int port, std::string listen_scope) {
   }
 
   g_extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] = '\0';
-  // TODO: use the std string instead of the raw string it used to be
-  if (*robot == '/') {
-    snprintf(g_extended_robot_info.smc_ldr, sizeof(g_extended_robot_info.smc_ldr), "%s", robot);
+
+  if (robot.starts_with('/')) {
+    snprintf(g_extended_robot_info.smc_ldr, sizeof(g_extended_robot_info.smc_ldr), "%s", robot.c_str());
   } else {
-    snprintf(g_extended_robot_info.smc_ldr, sizeof(g_extended_robot_info.smc_ldr), "/dev/%s", robot);
+    snprintf(g_extended_robot_info.smc_ldr, sizeof(g_extended_robot_info.smc_ldr), "/dev/%s", robot.c_str());
   }
   if (g_extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] != '\0') {
     rmc_logit(func, RMC06, "robot");
@@ -194,21 +194,6 @@ int rmc_main(std::string robot, int port, std::string listen_scope) {
     }
     handle_connection(s, &pfd);
   }
-}
-
-/**
- * Returns 1 if the rmcd daemon should run in the background or 0 if the
- * daemon should run in the foreground.
- */
-static int run_rmcd_in_background(const int argc, char** argv) {
-  int i = 0;
-  for (i = 1; i < argc; i++) {
-    if (0 == strcmp(argv[i], "-f")) {
-      return 0;
-    }
-  }
-
-  return 1;
 }
 
 static void rmc_doit(const int rpfd) {

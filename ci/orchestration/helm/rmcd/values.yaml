@@ -28,6 +28,12 @@ securityContext:
 libraryDevice: /dev/smc
 listenScope: any # set to localhost or any other string to ensure it listens on localhost only
 
+logging:
+  level: "INFO"
+
+server:
+  port: 5014
+
 service:
   enabled: true # Set to false if relying on hostnetwork/localhost
 
