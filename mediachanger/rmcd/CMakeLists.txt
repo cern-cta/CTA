@@ -9,7 +9,6 @@ cmake_minimum_required (VERSION 3.17)
 set(RMCD_SRC_FILES
   cta-rmcd.cpp
   RmcdApp.cpp
-  RmcdConfig.cpp
   rmc_serv.cpp
   rmc_logit.cpp
   rmc_logreq.cpp
@@ -23,7 +22,7 @@ set(RMCD_SRC_FILES
 # set_property(SOURCE rmc_send_scsi_cmd.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-format-overflow")
 
 add_executable(cta-rmcd ${RMCD_SRC_FILES})
-target_link_libraries(cta-rmcd ctarmc)
+target_link_libraries(cta-rmcd ctarmc ctacommon)
 install(TARGETS cta-rmcd DESTINATION /usr/bin)
 install(FILES cta-rmcd.logrotate DESTINATION /etc/logrotate.d RENAME cta-rmcd)
 install(FILES cta-rmcd.service DESTINATION ${CTA_SYSTEMD_UNIT_DIR})
@@ -34,4 +33,4 @@ install(FILES cta-rmcd.service DESTINATION ${CTA_SYSTEMD_UNIT_DIR})
 
 add_manpage(cta-rmcd)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-rmcd.1cta DESTINATION /usr/share/man/man1)
-install(FILES cta-rmcd.example.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
+install(FILES cta-rmcd.example.toml DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)

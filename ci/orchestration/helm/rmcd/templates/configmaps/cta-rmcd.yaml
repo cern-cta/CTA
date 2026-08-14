@@ -1,0 +1,35 @@
+{{- /*
+SPDX-FileCopyrightText: 2026 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cta-rmcd-conf
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+data:
+  cta-rmcd.toml: |-
+
+    [logging]
+      level = {{ .Values.logging.level | quote }}
+      format = "json"
+      [logging.attributes]
+        instance = {{ .Release.Namespace | quote }}
+
+    [health_server]
+      enabled = true
+      host = "0.0.0.0"
+      port = 8080
+      use_unix_domain_socket = false
+
+    [media_changer]
+      device = "/dev/smc"
+
+    [server]
+      port = {{ .Values.server.port }}
+      listen_scope = {{ .Values.listenScope | quote }}
+
+    [experimental]
+      telemetry_enabled = false

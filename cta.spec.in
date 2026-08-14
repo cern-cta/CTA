@@ -539,9 +539,10 @@ The Remote Media Changer daemon (rmcd)
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/logrotate.d/cta-rmcd
 %attr(0644,root,root) %doc %{_mandir}/man1/cta-rmcd.1cta*
 %attr(0755,root,root) %{_bindir}/cta-rmcd
-%attr(0644,root,root) %{_sysconfdir}/cta/cta-rmcd.example.conf
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/cta-rmcd
+%attr(0644,root,root) %{_sysconfdir}/cta/cta-rmcd.example.toml
 %attr(0644,root,root) %{_unitdir}/cta-rmcd.service
+# TODO: we should explicitly package this everywhere instead of just in cta-lib
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-logging.schema.json
 
 %post -n cta-rmcd
 %systemd_post cta-rmcd.service
