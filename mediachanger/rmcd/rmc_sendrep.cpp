@@ -30,7 +30,7 @@ static const char* rep_type_to_str(const int rep_type) {
   }
 }
 
-int rmc_sendrep(const int rpfd, const int rep_type, ...) {
+int rmc_sendrep(cta::log::LogContext& lc, const int rpfd, const int rep_type, ...) {
   va_list args;
   char* msg;
   int n;
@@ -39,7 +39,6 @@ int rmc_sendrep(const int rpfd, const int rep_type, ...) {
   int rc;
   char repbuf[RMC_REPBUFSZ];
   int repsize;
-  const char* const func = "rmc_sendrep";
 
   rbp = repbuf;
   marshall_LONG(rbp, RMC_MAGIC);
@@ -51,7 +50,7 @@ int rmc_sendrep(const int rpfd, const int rep_type, ...) {
       vsprintf(prtbuf, msg, args);
       marshall_LONG(rbp, strlen(prtbuf) + 1);
       marshall_STRING(rbp, prtbuf);
-      rmc_logit(func, "%s", prtbuf);
+      lc.log(cta::log::INFO, prtbuf);
       break;
     case MSG_DATA:
       n = va_arg(args, int);
@@ -69,12 +68,12 @@ int rmc_sendrep(const int rpfd, const int rep_type, ...) {
   repsize = rbp - repbuf;
   if (netwrite(rpfd, repbuf, repsize) != repsize) {
     const char* const neterror_str = neterror();
-    rmc_logit(func, RMC02, "send", neterror_str);
-    rmc_logit(func,
-              "Call to netwrite() failed"
-              ": rep_type=%s neterror=%s\n",
-              rep_type_to_str(rep_type),
-              neterror_str);
+    lc.log(cta::log::INFO, rmcFormatLogMessage(RMC02, "send", neterror_str));
+    lc.log(cta::log::INFO,
+           rmcFormatLogMessage("Call to netwrite() failed"
+                               ": rep_type=%s neterror=%s\n",
+                               rep_type_to_str(rep_type),
+                               neterror_str));
     if (rep_type == RMC_RC) {
       close(rpfd);
     }

@@ -523,19 +523,18 @@ static const char* action_to_str(const short action) {
   }
 }
 
-int smc_lasterror(struct smc_status* const smc_stat, const char** const msgaddr) {
+int smc_lasterror(cta::log::LogContext& lc, struct smc_status* const smc_stat, const char** const msgaddr) {
   unsigned int i;
-  const char* const func = "lasterror";
 
-  rmc_logit(func,
-            "Function entered:"
-            " asc=%d ascq=%d save_errno=%d rc=%d sensekey=%d skvalid=%d\n",
-            smc_status.asc,
-            smc_status.ascq,
-            smc_status.save_errno,
-            smc_status.rc,
-            smc_status.sensekey,
-            smc_status.skvalid);
+  lc.log(cta::log::INFO,
+         rmcFormatLogMessage("Function entered:"
+                             " asc=%d ascq=%d save_errno=%d rc=%d sensekey=%d skvalid=%d\n",
+                             smc_status.asc,
+                             smc_status.ascq,
+                             smc_status.save_errno,
+                             smc_status.rc,
+                             smc_status.sensekey,
+                             smc_status.skvalid));
 
   smc_stat->rc = smc_status.rc;
   smc_stat->skvalid = smc_status.skvalid;
@@ -555,16 +554,16 @@ int smc_lasterror(struct smc_status* const smc_stat, const char** const msgaddr)
       const char* const action_str = action_to_str(scsierr_acttbl[i].action);
       *msgaddr = scsierr_acttbl[i].txt;
 
-      rmc_logit(func,
-                "Entry found in scsierr_acttbl:"
-                " action_str=%s\n",
-                action_str);
+      lc.log(cta::log::INFO,
+             rmcFormatLogMessage("Entry found in scsierr_acttbl:"
+                                 " action_str=%s\n",
+                                 action_str));
 
       return scsierr_acttbl[i].action;
     }
   }
 
-  rmc_logit(func, "No matching entry in scsierr_acttbl\n");
+  lc.log(cta::log::INFO, "No matching entry in scsierr_acttbl");
 
   return RBT_NORETRY;
 }
@@ -608,7 +607,7 @@ int smc_move_medium(const int fd, const char* const rbtdev, const int from, cons
   return 0;
 }
 
-static int rmc_usrmsg(const int rpfd, const char* func, const char* const msg, ...) {
+static int rmc_usrmsg(cta::log::LogContext& lc, const int rpfd, const char* func, const char* const msg, ...) {
   va_list args;
   char prtbuf[RMC_PRTBUFSZ];
   const int save_errno = errno;
@@ -627,13 +626,14 @@ static int rmc_usrmsg(const int rpfd, const char* func, const char* const msg, .
       prtbuf[sizeof(prtbuf) - 1] = '\0';
     }
   }
-  rmc_sendrep(rpfd, MSG_ERR, "%s", prtbuf);
+  rmc_sendrep(lc, rpfd, MSG_ERR, "%s", prtbuf);
   va_end(args);
   errno = save_errno;
   return 0;
 }
 
 int smc_dismount(const int rpfd,
+                 cta::log::LogContext& lc,
                  const int fd,
                  const char* const loader,
                  struct robot_info* const robot_info,
@@ -657,18 +657,18 @@ int smc_dismount(const int rpfd,
   /* point in time eventually indicates the tape is accessible.       */
   while (drive_not_unloaded && nb_element_status_reads < max_element_status_reads) {
     if (0 > smc_read_elem_status(fd, loader, 4, robot_info->device_start + drvord, 1, &drive_element_info)) {
-      const int smc_error = smc_lasterror(&smc_status, &msgaddr);
-      rmc_usrmsg(rpfd, func, SR020, "read_elem_status", msgaddr);
+      const int smc_error = smc_lasterror(lc, &smc_status, &msgaddr);
+      rmc_usrmsg(lc, rpfd, func, SR020, "read_elem_status", msgaddr);
       return smc_error;
     }
     if (0 == (drive_element_info.state & 0x1)) {
-      rmc_usrmsg(rpfd, func, SR018, "demount", vid, drvord, "Medium Not Present");
+      rmc_usrmsg(lc, rpfd, func, SR018, "demount", vid, drvord, "Medium Not Present");
       return RBT_OK;
     }
 
     drive_not_unloaded = (0 == (drive_element_info.state & 0x8));
     if (drive_not_unloaded) {
-      rmc_usrmsg(rpfd, func, "read_elem_status of %s on drive %d detected Drive Not Unloaded\n", vid, drvord);
+      rmc_usrmsg(lc, rpfd, func, "read_elem_status of %s on drive %d detected Drive Not Unloaded\n", vid, drvord);
     }
 
     nb_element_status_reads++;
@@ -678,12 +678,12 @@ int smc_dismount(const int rpfd,
     }
   }
   if (drive_not_unloaded) {
-    rmc_usrmsg(rpfd, func, SR018, "demount", vid, drvord, "Drive Not Unloaded");
+    rmc_usrmsg(lc, rpfd, func, SR018, "demount", vid, drvord, "Drive Not Unloaded");
     return RBT_UNLD_DMNT;
   }
 
   if (*vid && strcmp(drive_element_info.name, vid)) {
-    rmc_usrmsg(rpfd, func, SR009, vid, drive_element_info.name);
+    rmc_usrmsg(lc, rpfd, func, SR009, vid, drive_element_info.name);
     return RBT_NORETRY;
   }
   if (0 > smc_move_medium(fd,
@@ -691,16 +691,16 @@ int smc_dismount(const int rpfd,
                           robot_info->device_start + drvord,
                           drive_element_info.source_address,
                           (drive_element_info.flags & 0x40) ? 1 : 0)) {
-    const int smc_error = smc_lasterror(&smc_status, &msgaddr);
-    rmc_usrmsg(rpfd, func, SR018, "demount", vid, drvord, msgaddr);
+    const int smc_error = smc_lasterror(lc, &smc_status, &msgaddr);
+    rmc_usrmsg(lc, rpfd, func, SR018, "demount", vid, drvord, msgaddr);
     return smc_error;
   }
   /* check that the vid is in a slot before returning */
   while (1) {
     struct smc_element_info vol_element_info;
     if (0 > smc_find_cartridge(fd, loader, drive_element_info.name, 0, 0, 1, &vol_element_info, robot_info)) {
-      const int smc_error = smc_lasterror(&smc_status, &msgaddr);
-      rmc_usrmsg(rpfd, func, SR017, "find_cartridge", drive_element_info.name, msgaddr);
+      const int smc_error = smc_lasterror(lc, &smc_status, &msgaddr);
+      rmc_usrmsg(lc, rpfd, func, SR017, "find_cartridge", drive_element_info.name, msgaddr);
       return smc_error;
     }
 
@@ -716,6 +716,7 @@ int smc_dismount(const int rpfd,
 }
 
 int smc_export(const int rpfd,
+               cta::log::LogContext& lc,
                const int fd,
                const char* const loader,
                struct robot_info* const robot_info,
@@ -731,24 +732,24 @@ int smc_export(const int rpfd,
   {
     const int smc_find_cartridge_rc = smc_find_cartridge(fd, loader, vid, 0, 0, 1, &element_info, robot_info);
     if (0 > smc_find_cartridge_rc) {
-      const int smc_lasterror_rc = smc_lasterror(&smc_status, &msgaddr);
-      rmc_usrmsg(rpfd, func, SR017, "find_cartridge", vid, msgaddr);
+      const int smc_lasterror_rc = smc_lasterror(lc, &smc_status, &msgaddr);
+      rmc_usrmsg(lc, rpfd, func, SR017, "find_cartridge", vid, msgaddr);
       return smc_lasterror_rc;
     }
     if (0 == smc_find_cartridge_rc) {
-      rmc_usrmsg(rpfd, func, SR017, "export", vid, "volume not in library");
+      rmc_usrmsg(lc, rpfd, func, SR017, "export", vid, "volume not in library");
       return RBT_NORETRY;
     }
   }
   if (element_info.element_type != 2) {
-    rmc_usrmsg(rpfd, func, SR017, "export", vid, "volume in use");
+    rmc_usrmsg(lc, rpfd, func, SR017, "export", vid, "volume in use");
     return RBT_SLOW_RETRY;
   }
   /* look for a free export slot */
 
   nbelem = robot_info->port_count;
   if ((impexp_info = (struct smc_element_info*) malloc(nbelem * sizeof(struct smc_element_info))) == nullptr) {
-    rmc_usrmsg(rpfd, func, SR012);
+    rmc_usrmsg(lc, rpfd, func, SR012);
     return RBT_NORETRY;
   }
 
@@ -756,8 +757,8 @@ int smc_export(const int rpfd,
     int foundAFreeExportSlot = 0;
     const int nbElementsInReport = smc_read_elem_status(fd, loader, 3, robot_info->port_start, nbelem, impexp_info);
     if (0 > nbElementsInReport) {
-      const int smc_lasterror_rc = smc_lasterror(&smc_status, &msgaddr);
-      rmc_usrmsg(rpfd, func, SR020, "read_elem_status", msgaddr);
+      const int smc_lasterror_rc = smc_lasterror(lc, &smc_status, &msgaddr);
+      rmc_usrmsg(lc, rpfd, func, SR020, "read_elem_status", msgaddr);
       free(impexp_info);
       return smc_lasterror_rc;
     }
@@ -768,7 +769,7 @@ int smc_export(const int rpfd,
       }
     }
     if (!foundAFreeExportSlot) {
-      rmc_usrmsg(rpfd, func, SR013);
+      rmc_usrmsg(lc, rpfd, func, SR013);
       free(impexp_info);
       return RBT_NORETRY;
     }
@@ -778,8 +779,8 @@ int smc_export(const int rpfd,
     const int smc_move_medium_rc =
       smc_move_medium(fd, loader, element_info.element_address, (impexp_info + i)->element_address, 0);
     if (0 > smc_move_medium_rc) {
-      const int smc_lasterror_rc = smc_lasterror(&smc_status, &msgaddr);
-      rmc_usrmsg(rpfd, func, SR017, "export", vid, msgaddr);
+      const int smc_lasterror_rc = smc_lasterror(lc, &smc_status, &msgaddr);
+      rmc_usrmsg(lc, rpfd, func, SR017, "export", vid, msgaddr);
       free(impexp_info);
       return smc_lasterror_rc;
     }
@@ -790,6 +791,7 @@ int smc_export(const int rpfd,
 }
 
 int smc_import(const int rpfd,
+               cta::log::LogContext& lc,
                const int fd,
                const char* const loader,
                struct robot_info* const robot_info,
@@ -807,15 +809,15 @@ int smc_import(const int rpfd,
 
   nbelem = robot_info->transport_count + robot_info->slot_count + robot_info->port_count + robot_info->device_count;
   if ((element_info = (struct smc_element_info*) malloc(nbelem * sizeof(struct smc_element_info))) == nullptr) {
-    rmc_usrmsg(rpfd, func, SR012);
+    rmc_usrmsg(lc, rpfd, func, SR012);
     return RBT_NORETRY;
   }
 
   /* get inventory */
 
   if ((c = smc_read_elem_status(fd, loader, 0, 0, nbelem, element_info)) < 0) {
-    c = smc_lasterror(&smc_status, &msgaddr);
-    rmc_usrmsg(rpfd, func, SR020, "read_elem_status", msgaddr);
+    c = smc_lasterror(lc, &smc_status, &msgaddr);
+    rmc_usrmsg(lc, rpfd, func, SR020, "read_elem_status", msgaddr);
     free(element_info);
     return c;
   }
@@ -867,15 +869,15 @@ int smc_import(const int rpfd,
         }
       }
       if (j >= slot_start + robot_info->slot_count) {
-        rmc_usrmsg(rpfd, func, SR015);
+        rmc_usrmsg(lc, rpfd, func, SR015);
         free(element_info);
         return RBT_NORETRY;
       }
 
       if ((c = smc_move_medium(fd, loader, (element_info + i)->element_address, (element_info + j)->element_address, 0))
           < 0) {
-        c = smc_lasterror(&smc_status, &msgaddr);
-        rmc_usrmsg(rpfd, func, SR017, "import", (element_info + i)->name, msgaddr);
+        c = smc_lasterror(lc, &smc_status, &msgaddr);
+        rmc_usrmsg(lc, rpfd, func, SR017, "import", (element_info + i)->name, msgaddr);
         free(element_info);
         return c;
       }
@@ -890,6 +892,7 @@ int smc_import(const int rpfd,
 }
 
 int smc_mount(const int rpfd,
+              cta::log::LogContext& lc,
               const int fd,
               const char* const loader,
               struct robot_info* const robot_info,
@@ -903,42 +906,42 @@ int smc_mount(const int rpfd,
   const char* const func = "smc_mount";
 
   if ((c = smc_find_cartridge(fd, loader, vid, 0, 0, 1, &element_info, robot_info)) < 0) {
-    c = smc_lasterror(&smc_status, &msgaddr);
-    rmc_usrmsg(rpfd, func, SR017, "find_cartridge", vid, msgaddr);
+    c = smc_lasterror(lc, &smc_status, &msgaddr);
+    rmc_usrmsg(lc, rpfd, func, SR017, "find_cartridge", vid, msgaddr);
     return c;
   }
   if (c == 0) {
-    rmc_usrmsg(rpfd, func, SR018, "mount", vid, drvord, "volume not in library");
+    rmc_usrmsg(lc, rpfd, func, SR018, "mount", vid, drvord, "volume not in library");
     return RBT_NORETRY;
   }
   if (element_info.element_type != 2) {
     /* compare requested and replied vid   */
-    rmc_usrmsg(rpfd, func, "Asked for %s, got reply for %s\n", vid, element_info.name);
+    rmc_usrmsg(lc, rpfd, func, "Asked for %s, got reply for %s\n", vid, element_info.name);
 
     /* detail on a tape's current location */
     switch (element_info.element_type) {
       case 1:
-        rmc_usrmsg(rpfd, func, "Location: medium transport element (0x%x)\n", element_info.element_type);
+        rmc_usrmsg(lc, rpfd, func, "Location: medium transport element (0x%x)\n", element_info.element_type);
         break;
       case 2:
         /* normal case: in its home slot, not possible inside the if */
         break;
       case 3:
-        rmc_usrmsg(rpfd, func, "Location: import/export element (0x%x)\n", element_info.element_type);
+        rmc_usrmsg(lc, rpfd, func, "Location: import/export element (0x%x)\n", element_info.element_type);
         break;
       case 4:
-        rmc_usrmsg(rpfd, func, "Location: data transfer element (0x%x)\n", element_info.element_type);
+        rmc_usrmsg(lc, rpfd, func, "Location: data transfer element (0x%x)\n", element_info.element_type);
         break;
       default:
-        rmc_usrmsg(rpfd, func, "Location: unknown (0x%x)\n", element_info.element_type);
+        rmc_usrmsg(lc, rpfd, func, "Location: unknown (0x%x)\n", element_info.element_type);
     }
 
-    rmc_usrmsg(rpfd, func, SR018, "mount", vid, drvord, "volume in use");
+    rmc_usrmsg(lc, rpfd, func, SR018, "mount", vid, drvord, "volume in use");
     return RBT_SLOW_RETRY;
   }
   if ((c = smc_move_medium(fd, loader, element_info.element_address, robot_info->device_start + drvord, invert)) < 0) {
-    c = smc_lasterror(&smc_status, &msgaddr);
-    rmc_usrmsg(rpfd, func, SR018, "mount", vid, drvord, msgaddr);
+    c = smc_lasterror(lc, &smc_status, &msgaddr);
+    rmc_usrmsg(lc, rpfd, func, SR018, "mount", vid, drvord, msgaddr);
     return c;
   }
   return 0;

@@ -5,4 +5,6 @@
 
 #pragma once
 
-int rmc_sendrep(const int rpfd, const int rep_type, ...);
+#include "common/log/LogContext.hpp"
+
+int rmc_sendrep(cta::log::LogContext& lc, const int rpfd, const int rep_type, ...);

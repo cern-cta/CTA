@@ -929,20 +929,23 @@ class TestRuntimeDeployment:
         "daemon_fixture",
         [
             "cta_maintd",
+            "cta_rmcd",
         ],
     )
     def test_runtime_directory_correctness(self, request: SubRequest, daemon_fixture: str):
         # Compare deployed inputs with their runtime copies and verify the generated service metadata
         daemon = request.getfixturevalue(daemon_fixture)
         daemon.exec(f"comm /etc/cta/cta-{daemon.process_name}.toml /run/cta/config.toml -3")
+        daemon.exec(f"jq -e -r '.service == \"cta-{daemon.process_name}\"' /run/cta/version.json >/dev/null")
+        # Not all services may have these files:
         daemon.exec("comm /etc/cta/cta-catalogue.conf /run/cta/catalogue.config_file -3")
         daemon.exec("comm /etc/cta/cta-otel.yaml /run/cta/telemetry.config_file -3")
-        daemon.exec(f"jq -e -r '.service == \"cta-{daemon.process_name}\"' /run/cta/version.json >/dev/null")
 
     @pytest.mark.parametrize(
         "daemon_fixture",
         [
             "cta_maintd",
+            "cta_rmcd",
         ],
     )
     def test_reopens_logfile_on_sighup(self, request: SubRequest, daemon_fixture: str):
