@@ -5,4 +5,6 @@
 
 #pragma once
 
-int rmc_logit(const char* const func, const char* const msg, ...);
+#include <string>
+
+std::string rmcFormatLogMessage(const char* const msg, ...);

@@ -11,7 +11,6 @@ set(RMCD_SRC_FILES
   RmcdApp.cpp
   rmc_serv.cpp
   rmc_logit.cpp
-  rmc_logreq.cpp
   rmc_marshall_element.cpp
   rmc_procreq.cpp
   rmc_sendrep.cpp
