@@ -35,7 +35,7 @@ def test_general_settings(eos_mgm: EosMgmHost) -> None:
     eos_mgm.exec(f"eos fs add -m {tape_fs_id} tape localhost:1234 /does_not_exist tape", throw_on_failure=False)
 
 
-# This function sets the SciToken add-on convenience in EOS, allowing our test scripts to acquire test SciTokens
+# This function sets the SciToken add-on convenience in EOS, allowing our test scripts to acquire test WLCG tokens
 # from EOS and use them to test the staging token capabilities (and others).
 def test_scitokens_addon_on_eos(eos_mgm: EosMgmHost, remote_scripts_dir: Path) -> None:
     eos_mgm.copy_to(remote_scripts_dir / "eos_mgm" / "eos-jwk-https", Path("/sbin"), permissions="755")

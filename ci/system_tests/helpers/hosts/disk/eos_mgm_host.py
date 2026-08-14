@@ -57,14 +57,14 @@ class EosMgmHost(DiskInstanceHost):
         ]
         claim_args = [f"--claim '{name}={value}'" for name, value in claims]
 
-        print(f"Generating a SciToken with key id {keyid}")
+        print(f"Generating a WLCG token with key id {keyid}")
         token = self.exec_with_output(
             f"eos scitoken create --expires $(($(date +%s) + {timeout})) "
             f"--issuer {issuer} --keyid '{keyid}' --profile wlcg "
             f"{' '.join(claim_args)}"
         )
         if not token:
-            raise RuntimeError(f"SciToken generation returned an empty token for key id {keyid}")
+            raise RuntimeError(f"WLCG token generation returned an empty token for key id {keyid}")
         return token
 
     @cached_property

@@ -297,14 +297,14 @@ def test_well_known_endpoint(disk_client: DiskClientHost, disk_instance: DiskIns
 def test_generate_wlcg_token(eos_mgm: EosMgmHost) -> None:
     print("Generating and validating a SciToken")
     scope = "storage.stage:/eos/"
-    scitoken = eos_mgm.generate_wlcg_token("test_sub", scope, audience="test_aud")
-    payload_json = _decode_jwt_payload(scitoken)
+    wlcg_token = eos_mgm.generate_wlcg_token("test_sub", scope, audience="test_aud")
+    payload_json = _decode_jwt_payload(wlcg_token)
 
-    assert payload_json["sub"] == "test_sub", f"SciToken with wrong sub: {payload_json['sub']}"
-    assert payload_json["aud"] == "test_aud", f"SciToken with wrong sub: {payload_json['aud']}"
-    assert payload_json["iss"] == "https://localhost:4443", f"SciToken with wrong iss: {payload_json['iss']}"
-    assert payload_json["scope"] == scope, f"SciToken with wrong scope: {payload_json['scope']}"
-    assert payload_json["wlcg.ver"] == "1.0", f"SciToken with wrong wlcg version: {payload_json['wlcg.ver']}"
+    assert payload_json["sub"] == "test_sub", f"WLCG token with wrong sub: {payload_json['sub']}"
+    assert payload_json["aud"] == "test_aud", f"WLCG token with wrong sub: {payload_json['aud']}"
+    assert payload_json["iss"] == "https://localhost:4443", f"WLCG token with wrong iss: {payload_json['iss']}"
+    assert payload_json["scope"] == scope, f"WLCG token with wrong scope: {payload_json['scope']}"
+    assert payload_json["wlcg.ver"] == "1.0", f"WLCG token with wrong wlcg version: {payload_json['wlcg.ver']}"
 
 
 def test_archive_file_and_track_archiveinfo(
@@ -718,9 +718,9 @@ def test_wlcg_scitoken_stage_with_invalid_scope_fails(
         certificate_options=rest_api_certificate_options,
     )
     file_status = _assert_stage_status(status_response, request_id, file_path)
-    assert "error" in file_status, f"Invalid SciToken request did not report an error: {file_status}"
-    assert "onDisk" not in file_status, f"Invalid SciToken request leaked disk locality: {file_status}"
-    assert "state" not in file_status, f"Invalid SciToken request leaked stage state: {file_status}"
+    assert "error" in file_status, f"Invalid WLCG token request did not report an error: {file_status}"
+    assert "onDisk" not in file_status, f"Invalid WLCG token request leaked disk locality: {file_status}"
+    assert "state" not in file_status, f"Invalid WLCG token request leaked stage state: {file_status}"
     _delete_stage_request(
         disk_client,
         rest_api_endpoint,
@@ -740,7 +740,7 @@ def test_wlcg_scitoken_stage_request_with_poll_scope_fails(
     rest_api_certificate_options: str,
 ) -> None:
     file_path = test_dir / "test_http-rest-api"
-    print(f"Checking that a storage.poll WLCG SciToken cannot stage {file_path}")
+    print(f"Checking that a storage.poll WLCG token cannot stage {file_path}")
     rest_api_endpoint = _get_rest_api_endpoint(disk_client, disk_instance)
     poll_token = _generate_poweruser_scitoken(eos_mgm, f"storage.poll:{test_dir}")
 
@@ -757,7 +757,7 @@ def test_wlcg_scitoken_stage_request_with_poll_scope_fails(
         certificate_options=rest_api_certificate_options,
     )
     file_status = _assert_stage_status(status_response, request_id, file_path)
-    assert "error" in file_status, f"storage.poll SciToken request did not report an error: {file_status}"
+    assert "error" in file_status, f"Request with WLCG token and storage.poll did not report an error: {file_status}"
     _delete_stage_request(
         disk_client,
         rest_api_endpoint,
