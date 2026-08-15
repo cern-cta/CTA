@@ -4,11 +4,11 @@
 
 import json
 import re
+import shlex
 import sys
 import time
 import uuid
 from collections.abc import Iterator
-from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Union
@@ -240,7 +240,13 @@ def test_eos_xrootd_api_fts_compliance(eos_mgm: EosMgmHost) -> None:
     eos_mgm.force_remove_directory(tmp_dir)
 
 
-def test_simple_archive_retrieve(eos_client: EosClientHost, test_dir: Path, disk_instance_name: str) -> None:
+def test_simple_archive_retrieve(
+    eos_client: EosClientHost,
+    cta_cli: CtaCliHost,
+    test_dir: Path,
+    disk_instance_name: str,
+) -> None:
+    cta_cli.set_all_drives_up()
     file_path = test_dir / "test_simple_archive_retrieve"
     file_path = eos_client.generate_and_archive_file(
         disk_instance_name, destination_path=file_path, wait=True, append_uid=True
@@ -285,67 +291,56 @@ def test_abort_prepare(
     disk_instance_name: str,
     test_dir: Path,
 ) -> None:
-    def retrieve_request_count() -> int:
-        queues = json.loads(cta_cli.exec_with_output("cta-admin --json showqueues"))
-        return sum(int(queue["queuedFiles"]) for queue in queues if queue["mountType"] == "RETRIEVE")
-
+    # This test assumes the archive directory contains only files that have been evicted from disk. This works because
+    # test_archive and test_evict run first.
+    # Once those scripts are migrated, this test should use a dedicated directory.
     archive_directories = eos_client.exec_with_output(f"eos root://{disk_instance_name} ls '{test_dir}'").splitlines()
     assert len(archive_directories) == 1, f"Expected one archive directory below {test_dir}: {archive_directories}"
     archive_directory = test_dir / archive_directories[0]
-    file_number_width = len(str(client_params.file_count - 1))
-    file_paths = [
-        archive_directory / "0" / f"0{file_number:0{file_number_width}d}"
-        for file_number in range(client_params.file_count)
-    ]
-
-    # Let any preceding tape sessions finish before changing the drive state.
-    time.sleep(3)
+    # Set all drives down to ensure requests stay in the queue and we have the opportunity to abort them
+    cta_cli.wait_for_drives_to_stop_transferring()
     cta_cli.set_all_drives_down()
 
-    try:
-
-        def stage(file_path: Path) -> tuple[str, Path]:
-            request_id = eos_client.exec_with_output(
-                "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
-                f"xrdfs {disk_instance_name} prepare -s '{file_path}?activity=T0Reprocess'"
-            )
-            return request_id, file_path
-
-        with ThreadPoolExecutor(max_workers=client_params.process_count) as executor:
-            requests = list(executor.map(stage, file_paths))
-
-        deadline = time.monotonic() + 10
-        while retrieve_request_count() != len(file_paths) and time.monotonic() < deadline:
-            time.sleep(1)
-        assert retrieve_request_count() == len(file_paths), "Not all retrieve requests were queued"
-
-        def abort(request: tuple[str, Path]) -> None:
-            request_id, file_path = request
-            eos_client.exec(
-                "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
-                f"xrdfs {disk_instance_name} prepare -a '{request_id}' '{file_path}'"
-            )
-
-        with ThreadPoolExecutor(max_workers=client_params.process_count) as executor:
-            list(executor.map(abort, requests))
-
-        assert retrieve_request_count() in (0, len(file_paths)), "Only some retrieve requests were cancelled"
-    finally:
-        cta_cli.set_all_drives_up()
-
-    deadline = time.monotonic() + 60
-    while retrieve_request_count() > 0 and time.monotonic() < deadline:
-        time.sleep(1)
-    assert retrieve_request_count() == 0, "Retrieve queue did not clear"
-    localities = eos_client.exec_with_output(
-        f"eos root://{disk_instance_name} ls -y '{archive_directory / '0'}'"
-    ).splitlines()
-    assert not any(re.match(r"^d[1-9][0-9]*::t1", locality) for locality in localities), (
-        "Some files were retrieved despite cancellation"
+    # Submit retrieve requests
+    requests = eos_client.retrieve_directory(
+        disk_instance_name,
+        archive_directory,
+        wait=False,
+        activity="T0Reprocess",
+        parallelism=client_params.process_count,
     )
+    assert requests, f"No archived files found below {archive_directory}"
+
+    # Wait for them to queue
+    deadline = time.monotonic() + 20
+    while cta_cli.retrieve_queue_file_count() != len(requests) and time.monotonic() < deadline:
+        time.sleep(1)
+    assert cta_cli.retrieve_queue_file_count() == len(requests), "Not all retrieve requests were queued"
+
+    # Now abort all of them
+    eos_client.abort_files(disk_instance_name, requests, parallelism=client_params.process_count)
+
+    # CTA clears the cancelled requests when the retrieve queues are processed. Do not wait for UP here because the
+    # drives can immediately transition to TRANSFERING while consuming the queues.
+    cta_cli.set_all_drives_up(wait=False)
+    cta_cli.wait_for_queue_to_empty(wait_timeout_secs=20)
+
+    # Ensure that the files were not actually retrieved on EOS
+    retrieved_file = eos_client.exec(
+        f"eos root://{shlex.quote(disk_instance_name)} find -f {shlex.quote(str(archive_directory))} | "
+        f"xargs -r -P {client_params.process_count} -I{{}} "
+        f"eos root://{shlex.quote(disk_instance_name)} ls -y '{{}}' | "
+        "grep -qE '^d[1-9][0-9]*::t1'",
+        throw_on_failure=False,
+    )
+    assert not retrieved_file.success, "Some files were retrieved despite cancellation"
 
 
-def test_multiple_retrieve(eos_client: EosClientHost, test_dir: Path, remote_scripts_dir: Path) -> None:
+def test_multiple_retrieve(
+    cta_cli: CtaCliHost, eos_client: EosClientHost, test_dir: Path, remote_scripts_dir: Path
+) -> None:
+    # Maybe it makes sense to somehow encode pre and post conditions of these tests?
+    cta_cli.set_all_drives_up()
     eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_multiple_retrieve.sh", Path("/tmp"), permissions="+x")
     eos_client.exec(f". /tmp/client_env && /tmp/test_multiple_retrieve.sh {test_dir}")
 

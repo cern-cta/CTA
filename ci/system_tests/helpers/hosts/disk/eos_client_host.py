@@ -3,13 +3,18 @@
 
 
 import asyncio
+import shlex
+import time
+import uuid
+from collections.abc import Iterator
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Optional, Union
 
 from typing_extensions import override
 
 from system_tests.helpers.connections.remote_connection import ExecResult, RemoteConnection
-from .disk_client_host import DiskClientHost
+from .disk_client_host import DiskClientHost, PrepareRequest, PrepareRequests
 
 
 class EosClientHost(DiskClientHost):
@@ -82,12 +87,200 @@ class EosClientHost(DiskClientHost):
         user: str = "poweruser1",
         wait: bool = True,
         wait_timeout_secs: int = 20,
-    ) -> None:
-        print(f"Retrieving {path} on disk instance {disk_instance_name}")
-        # We need the -s as we are staging the files from tape (see xrootd prepare definition)
-        self.exec(f'KRB5CCNAME=/tmp/{user}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs {disk_instance_name} prepare -s "{path}"')
+        activity: Optional[str] = None,
+    ) -> str:
+        return super().retrieve_file(
+            disk_instance_name,
+            path,
+            user=user,
+            wait=wait,
+            wait_timeout_secs=wait_timeout_secs,
+            activity=activity,
+        )
+
+    @override
+    def retrieve_files(
+        self,
+        disk_instance_name: str,
+        paths: list[Path],
+        *,
+        user: str = "poweruser1",
+        wait: bool = True,
+        wait_timeout_secs: int = 20,
+        activity: Optional[str] = None,
+        parallelism: int = 1,
+    ) -> PrepareRequests:
+        """Submit one retrieve request per path, using workers in the EOS client pod."""
+        if not paths:
+            return PrepareRequests([])
+
+        request_list: list[PrepareRequest] = []
+        for path_batch in self._batches(paths):
+            request_list.extend(
+                self._retrieve_from_path_stream(
+                    disk_instance_name,
+                    self._paths_command(path_batch),
+                    user=user,
+                    activity=activity,
+                    parallelism=parallelism,
+                )
+            )
+        requests = PrepareRequests(request_list)
         if wait:
-            self.wait_for_file_retrieval(disk_instance_name, path, wait_timeout_secs=wait_timeout_secs)
+            self.wait_for_files_retrieval(
+                disk_instance_name, [path for _, path in requests], wait_timeout_secs=wait_timeout_secs
+            )
+        return requests
+
+    def _wait_for_manifest_retrieval(
+        self,
+        disk_instance_name: str,
+        remote_manifest: Path,
+        expected_files: int,
+        *,
+        parallelism: int,
+        wait_timeout_secs: int,
+    ) -> None:
+        print(f"Waiting for retrieval of {expected_files} files...")
+        deadline = time.monotonic() + wait_timeout_secs
+        while time.monotonic() < deadline:
+            on_disk = self.exec_with_output(
+                f"cut -f 2 {shlex.quote(str(remote_manifest))} | "
+                f"xargs -r -P {parallelism} -I{{}} eos root://{shlex.quote(disk_instance_name)} ls -y '{{}}' | "
+                "grep -cE '^d[1-9][0-9]*::t1' || true"
+            )
+            if int(on_disk) == expected_files:
+                print("Files retrieved")
+                return
+            time.sleep(0.1)
+        raise TimeoutError(f"Failed to retrieve all files within timeout of {wait_timeout_secs} seconds")
+
+    @override
+    def retrieve_directory(
+        self,
+        disk_instance_name: str,
+        directory: Path,
+        *,
+        user: str = "poweruser1",
+        wait: bool = True,
+        wait_timeout_secs: int = 20,
+        activity: Optional[str] = None,
+        parallelism: int = 1,
+    ) -> PrepareRequests:
+        """Retrieve every file below a directory without transferring the path list through Python."""
+        # Keep the potentially large request-id/path mapping in the pod. Python only needs the number of requests and
+        # the manifest location; abort_files() can stream the manifest without hitting the process argument-size limit.
+        remote_manifest = Path(f"/tmp/cta-prepare-requests-{uuid.uuid4().hex}")
+        requests = self._retrieve_from_path_stream(
+            disk_instance_name,
+            self._directory_files_command(disk_instance_name, directory),
+            user=user,
+            activity=activity,
+            parallelism=parallelism,
+            remote_manifest=remote_manifest,
+        )
+        if wait:
+            self._wait_for_manifest_retrieval(
+                disk_instance_name,
+                remote_manifest,
+                len(requests),
+                parallelism=parallelism,
+                wait_timeout_secs=wait_timeout_secs,
+            )
+        return requests
+
+    def _retrieve_from_path_stream(
+        self,
+        disk_instance_name: str,
+        path_stream_command: str,
+        *,
+        user: str,
+        activity: Optional[str],
+        parallelism: int,
+        remote_manifest: Optional[Path] = None,
+    ) -> PrepareRequests:
+        if parallelism < 1:
+            raise ValueError("parallelism must be at least 1")
+
+        # xargs supplies the path and activity as $1 and $2 to each worker. Each successful worker emits one
+        # tab-separated request-id/path record, which is safe to process concurrently because each record is short.
+        worker = (
+            'path="$1"; activity="$2"; retrieve_path="$path"; '
+            '[ -z "$activity" ] || retrieve_path="$path?activity=$activity"; '
+            "request_id=$(KRB5CCNAME=/tmp/"
+            f"{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs {shlex.quote(disk_instance_name)} "
+            'prepare -s "$retrieve_path") || exit; printf "%s\\t%s\\n" "$request_id" "$path"'
+        )
+        command = (
+            f"set -o pipefail; {path_stream_command} | xargs -r -P {parallelism} -I{{}} "
+            f"sh -c {shlex.quote(worker)} _ '{{}}' {shlex.quote(activity or '')}"
+        )
+        if remote_manifest is not None:
+            # tee retains the records for a later abort while wc keeps the response returned to Python constant-sized.
+            command += f" | tee {shlex.quote(str(remote_manifest))} | wc -l"
+        output = self.exec_with_output(command)
+        if remote_manifest is not None:
+            return PrepareRequests([], remote_manifest, int(output))
+
+        requests = [
+            (request_id, Path(path))
+            for request_id, path in (line.split("\t", maxsplit=1) for line in output.splitlines())
+        ]
+        return PrepareRequests(requests, remote_manifest)
+
+    @override
+    def abort_file(
+        self,
+        disk_instance_name: str,
+        request_id: str,
+        path: Path,
+        *,
+        user: str = "poweruser1",
+    ) -> None:
+        super().abort_file(disk_instance_name, request_id, path, user=user)
+
+    @override
+    def abort_files(
+        self,
+        disk_instance_name: str,
+        requests: Union[list[PrepareRequest], PrepareRequests],
+        *,
+        user: str = "poweruser1",
+        parallelism: int = 1,
+    ) -> None:
+        """Abort retrieve requests using workers in the EOS client pod."""
+        if not requests:
+            return
+        if parallelism < 1:
+            raise ValueError("parallelism must be at least 1")
+
+        worker = (
+            f"KRB5CCNAME=/tmp/{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 "
+            f'xrdfs {shlex.quote(disk_instance_name)} prepare -a "$1" "$2"'
+        )
+        if isinstance(requests, PrepareRequests) and requests.remote_manifest is not None:
+            # Each xargs item is one manifest line. Split it at the first tab inside the worker rather than expanding
+            # every request into the outer shell command, which would exceed ARG_MAX for large directories.
+            manifest_worker = (
+                'tab=$(printf "\\t"); request_id=${1%%"$tab"*}; path=${1#*"$tab"}; '
+                f"KRB5CCNAME=/tmp/{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 "
+                f'xrdfs {shlex.quote(disk_instance_name)} prepare -a "$request_id" "$path"'
+            )
+            self.exec(
+                f"xargs -r -d '\\n' -P {parallelism} -I{{}} sh -c {shlex.quote(manifest_worker)} _ '{{}}' "
+                f"< {shlex.quote(str(requests.remote_manifest))} && "
+                f"rm -f {shlex.quote(str(requests.remote_manifest))}"
+            )
+            return
+
+        request_list = list(requests)
+        # Explicit Python lists do need to cross the exec boundary, so cap each command to a conservative size.
+        for offset in range(0, len(request_list), 100):
+            arguments = " ".join(
+                f"{shlex.quote(request_id)} {shlex.quote(str(path))}"
+                for request_id, path in request_list[offset : offset + 100]
+            )
+            self.exec(f"printf '%s\\0' {arguments} | xargs -r -0 -n 2 -P {parallelism} sh -c {shlex.quote(worker)} _")
 
     @override
     def evict_file(
@@ -99,21 +292,130 @@ class EosClientHost(DiskClientHost):
         wait: bool = True,
         wait_timeout_secs: int = 20,
     ) -> None:
-        print(f"Evicting {path} on disk instance {disk_instance_name}")
-        self.exec(
-            f"KRB5CCNAME=/tmp/{user}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 "
-            f'root://{disk_instance_name} file drop "{path}" 1'
+        super().evict_file(
+            disk_instance_name,
+            path,
+            user=user,
+            wait=wait,
+            wait_timeout_secs=wait_timeout_secs,
+        )
+
+    @override
+    def evict_files(
+        self,
+        disk_instance_name: str,
+        paths: list[Path],
+        *,
+        user: str = "eosadmin1",
+        wait: bool = True,
+        wait_timeout_secs: int = 20,
+        parallelism: int = 1,
+    ) -> None:
+        evicted_paths = []
+        for path_batch in self._batches(paths):
+            evicted_paths.extend(
+                self._run_path_operation(
+                    self._paths_command(path_batch),
+                    self._evict_worker(disk_instance_name, user),
+                    parallelism,
+                )
+            )
+        if wait:
+            self.wait_for_files_eviction(disk_instance_name, evicted_paths, wait_timeout_secs=wait_timeout_secs)
+
+    @override
+    def evict_directory(
+        self,
+        disk_instance_name: str,
+        directory: Path,
+        *,
+        user: str = "eosadmin1",
+        wait: bool = True,
+        wait_timeout_secs: int = 20,
+        parallelism: int = 1,
+    ) -> None:
+        evicted_paths = self._run_path_operation(
+            self._directory_files_command(disk_instance_name, directory),
+            self._evict_worker(disk_instance_name, user),
+            parallelism,
         )
         if wait:
-            self.wait_for_file_eviction(disk_instance_name, path, wait_timeout_secs=wait_timeout_secs)
+            self.wait_for_files_eviction(disk_instance_name, evicted_paths, wait_timeout_secs=wait_timeout_secs)
+
+    def _evict_worker(self, disk_instance_name: str, user: str) -> str:
+        return (
+            f"KRB5CCNAME=/tmp/{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 "
+            f'root://{shlex.quote(disk_instance_name)} file drop "$1" 1 >/dev/null'
+        )
 
     @override
     def delete_file(self, disk_instance_name: str, path: Path, *, user: str = "poweruser1") -> None:
-        print(f"Deleting {path} on disk instance {disk_instance_name}")
-        self.exec(
-            f"KRB5CCNAME=/tmp/{user}/krb5cc_0 XrdSecPROTOCOL=krb5 "
-            f"eos root://{disk_instance_name} rm -rf --no-confirmation {path}"
+        super().delete_file(disk_instance_name, path, user=user)
+
+    @override
+    def delete_files(
+        self,
+        disk_instance_name: str,
+        paths: list[Path],
+        *,
+        user: str = "poweruser1",
+        parallelism: int = 1,
+    ) -> None:
+        for path_batch in self._batches(paths):
+            self._run_path_operation(
+                self._paths_command(path_batch),
+                self._delete_worker(disk_instance_name, user),
+                parallelism,
+            )
+
+    @override
+    def delete_directory(
+        self,
+        disk_instance_name: str,
+        directory: Path,
+        *,
+        user: str = "poweruser1",
+        parallelism: int = 1,
+    ) -> None:
+        self._run_path_operation(
+            self._directory_files_command(disk_instance_name, directory),
+            self._delete_worker(disk_instance_name, user),
+            parallelism,
         )
+
+    def _delete_worker(self, disk_instance_name: str, user: str) -> str:
+        return (
+            f"KRB5CCNAME=/tmp/{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 "
+            f'eos root://{shlex.quote(disk_instance_name)} rm -rf --no-confirmation "$1" >/dev/null'
+        )
+
+    @staticmethod
+    def _paths_command(paths: list[Path]) -> str:
+        if not paths:
+            return ":"
+        quoted_paths = " ".join(shlex.quote(str(path)) for path in paths)
+        return f"printf '%s\\n' {quoted_paths}"
+
+    @staticmethod
+    def _batches(paths: list[Path], batch_size: int = 100) -> Iterator[list[Path]]:
+        for offset in range(0, len(paths), batch_size):
+            yield paths[offset : offset + batch_size]
+
+    @staticmethod
+    def _directory_files_command(disk_instance_name: str, directory: Path) -> str:
+        return f"eos root://{shlex.quote(disk_instance_name)} find -f {shlex.quote(str(directory))}"
+
+    def _run_path_operation(self, path_stream_command: str, worker: str, parallelism: int) -> list[Path]:
+        if parallelism < 1:
+            raise ValueError("parallelism must be at least 1")
+
+        # Report a path only when its worker succeeds. pipefail also propagates failures from the path producer.
+        reporting_worker = f'{worker} && printf "%s\\n" "$1"'
+        output = self.exec_with_output(
+            f"set -o pipefail; {path_stream_command} | xargs -r -P {parallelism} -I{{}} "
+            f"sh -c {shlex.quote(reporting_worker)} _ '{{}}'"
+        )
+        return [Path(path) for path in output.splitlines()]
 
     def retrieve_async(
         self,
