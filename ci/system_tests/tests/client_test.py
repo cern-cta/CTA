@@ -68,32 +68,27 @@ def _run_eosdf_test(eos_client: EosClientHost, cta_cli: CtaCliHost, disk_instanc
     disk_instance_space = "eosdfDiskInstanceSpace"
     file_path = test_dir / "testfile1_eosdf"
 
-    disk_systems = json.loads(cta_cli.exec_with_output("cta-admin --json ds ls"))
-    if not any(item["name"] == disk_system for item in disk_systems):
-        disk_instances = json.loads(cta_cli.exec_with_output("cta-admin --json di ls"))
-        if not any(item["name"] == disk_instance_name for item in disk_instances):
-            cta_cli.exec(f"cta-admin di add -n '{disk_instance_name}' -m 'EOSDF test'")
-        disk_instance_spaces = json.loads(cta_cli.exec_with_output("cta-admin --json dis ls"))
-        if not any(item["name"] == disk_instance_space for item in disk_instance_spaces):
-            cta_cli.exec(
-                f"cta-admin dis add -n '{disk_instance_space}' --di '{disk_instance_name}' "
-                "-u 'eosSpace:default' -i 1 -m 'EOSDF test'"
-            )
+    # Remove resources just case. Don't throw because normally they shouldn't exist
+    cta_cli.exec(f"cta-admin ds rm -n '{disk_system}'", throw_on_failure=False)
+    cta_cli.exec(f"cta-admin dis rm -n '{disk_instance_space}' --di '{disk_instance_name}'", throw_on_failure=False)
+
+    try:
+        cta_cli.exec(
+            f"cta-admin dis add -n '{disk_instance_space}' --di '{disk_instance_name}' "
+            "-u 'eosSpace:default' -i 1 -m 'EOSDF test'"
+        )
         cta_cli.exec(
             f"cta-admin ds add -n '{disk_system}' --di '{disk_instance_name}' --dis '{disk_instance_space}' "
             "-r '.*/eos/.*' -f 1 -s 20 -m 'EOSDF test'"
         )
-    else:
-        cta_cli.exec(f"cta-admin ds ch -n '{disk_system}' -f 1")
 
-    try:
         file_info = eos_client.exec(f"eos root://{disk_instance_name} fileinfo '{file_path}'", throw_on_failure=False)
         if not file_info.success:
             source_path = Path("/tmp/testfile1_eosdf")
             eos_client.exec(f"printf foo > '{source_path}'")
-            eos_client.archive_file(disk_instance_name, file_path, source_path, wait=True, wait_timeout_secs=90)
+            eos_client.archive_file(disk_instance_name, file_path, source_path, wait=True)
 
-        eos_client.retrieve_file(disk_instance_name, file_path, wait_timeout_secs=90)
+        eos_client.retrieve_file(disk_instance_name, file_path)
         result = _prepare_command(eos_client, disk_instance_name, f"prepare -e '{file_path}'")
         assert result.success, result.stderr
     finally:
@@ -127,7 +122,7 @@ def prepare_test_paths(
     )
     cta_cli.set_all_drives_up()
     tape_file = eos_client.generate_and_archive_file(
-        disk_instance_name, test_dir / "idempotent_prepare", append_uid=True, wait_timeout_secs=90
+        disk_instance_name, test_dir / "idempotent_prepare", append_uid=True
     )
     return PrepareTestPaths(tape_file, no_prepare_dir, missing_dir)
 
@@ -346,6 +341,13 @@ def test_multiple_retrieve(
 
 
 class TestPrepare:
+    """Verify that PREPARE handles every path independently and idempotently.
+
+    A failing path must not affect valid paths in the same stage request, although stage returns an error when every
+    path fails. Query responses must identify failed paths through error_text. Abort and evict differ from stage: they
+    operate on every path but return an error if any individual path fails.
+    """
+
     def test_prepare_existing_file(
         self,
         eos_client: EosClientHost,
@@ -511,9 +513,9 @@ class TestPrepare:
     ) -> None:
         cta_cli.set_all_drives_up()
         file_path = eos_client.generate_and_archive_file(
-            disk_instance_name, test_dir / "prepare_evict", append_uid=True, wait_timeout_secs=90
+            disk_instance_name, test_dir / "prepare_evict", append_uid=True
         )
-        eos_client.retrieve_file(disk_instance_name, file_path, wait_timeout_secs=90)
+        eos_client.retrieve_file(disk_instance_name, file_path)
         paths = [file_path]
         if include_missing:
             paths.append(test_dir / "none" / str(uuid.uuid4()))
@@ -525,10 +527,15 @@ class TestPrepare:
 
 
 def test_delete_on_closew_error(eos_client: EosClientHost, disk_instance_name: str, test_dir: Path) -> None:
+    # An archival failure before the archive request is queued triggers delete-on-close. EOS must remove every replica
+    # and the namespace entry without ever queueing an archive request.
     test_directory = test_dir / "fail_on_closew_test"
     test_file = test_directory / str(uuid.uuid4())
     eos_admin = f"KRB5CCNAME=/tmp/eosadmin1/krb5cc_0 eos -r 0 0 root://{disk_instance_name}"
 
+    # The storage class 'fail_on_closew_test' attribute causes the 'delete-on-close'
+    #   event to be automatically triggered when a file is written to that directory.
+    # This can be used to test the 'delete-on-close' event.
     eos_client.exec(f"{eos_admin} mkdir '{test_directory}'")
     eos_client.exec(f"{eos_admin} attr set sys.archive.storage_class=fail_on_closew_test '{test_directory}'")
     copy_result = eos_client.exec(
@@ -538,6 +545,9 @@ def test_delete_on_closew_error(eos_client: EosClientHost, disk_instance_name: s
     )
     assert not copy_result.success, "xrdcp succeeded despite the CLOSEW workflow error"
 
+    # Since CTA Frontend will fail on CLOSEW, EOS should delete the file
+    # Check that the EOS namespace entry has been removed
+    # This means all replicas are deleted from tape and disks
     file_info = eos_client.exec(
         f"eos root://{disk_instance_name} fileinfo '{test_file}'",
         capture_output=True,
@@ -564,63 +574,88 @@ class TestEosEvict:
     def test_eos_evict_counter_and_missing_tape_copy(
         self, eos_client: EosClientHost, cta_cli: CtaCliHost, disk_instance_name: str, test_dir: Path
     ) -> None:
+        # Put the destination tape drives down so no tape copy can be written
         file_path = test_dir / f"eos_evict_{uuid.uuid4().hex}"
         cta_cli.set_all_drives_down()
-        try:
-            eos_client.archive_file(disk_instance_name, file_path, Path("/etc/group"), wait=False)
-            file_info = json.loads(
+
+        # Write a file for archival and discover the FSID of its disk replica.
+        eos_client.archive_file(disk_instance_name, file_path, Path("/etc/group"), wait=False)
+        file_info = json.loads(
+            eos_client.exec_with_output(
+                "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
+                f"eos --json root://{disk_instance_name} info '{file_path}'"
+            )
+        )
+        disk_fsid = next(
+            location["fsid"] for location in file_info["locations"] if location["schedgroup"].startswith("default")
+        )
+
+        # A normal eviction must fail while no tape replica exists
+        result = eos_client.exec(
+            "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
+            f"eos root://{disk_instance_name} evict '{file_path}'",
+            throw_on_failure=False,
+        )
+        assert not result.success
+
+        # Selecting the disk FSID and bypassing the counter must still fail without a tape replica
+        result = eos_client.exec(
+            "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
+            f"eos root://{disk_instance_name} evict --ignore-evict-counter --fsid {disk_fsid} '{file_path}'",
+            throw_on_failure=False,
+        )
+        assert not result.success
+
+        # Failed eviction attempts must leave the disk replica intact
+        assert eos_client.is_file_on_disk(disk_instance_name, file_path)
+
+        # Allow archival to finish, then verify the disk copy is removed and the tape copy exists
+        cta_cli.set_all_drives_up(wait=False)
+        eos_client.wait_for_file_archival(disk_instance_name, file_path)
+        eos_client.wait_for_file_eviction(disk_instance_name, file_path)
+
+        # Three retrieve requests should produce one disk replica with an eviction counter of three
+        for _ in range(3):
+            result = _prepare_command(eos_client, disk_instance_name, f"prepare -s '{file_path}'")
+            assert result.success
+        eos_client.wait_for_file_retrieval(disk_instance_name, file_path)
+
+        # Each normal evict decrements the counter and preserves the disk replica until it reaches zero
+        for expected_counter in range(3, 0, -1):
+            attributes = json.loads(
                 eos_client.exec_with_output(
                     "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
-                    f"eos --json root://{disk_instance_name} info '{file_path}'"
+                    f"eos --json root://{disk_instance_name} attr get sys.retrieve.evict_counter '{file_path}'"
                 )
             )
-            disk_fsid = next(
-                location["fsid"] for location in file_info["locations"] if location["schedgroup"].startswith("default")
+            assert int(attributes["attr"]["get"][0]["sys"]["retrieve"]["evict_counter"]) == expected_counter
+            eos_client.exec(
+                "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
+                f"eos root://{disk_instance_name} evict '{file_path}'"
             )
-            for options in ("", f"--ignore-evict-counter --fsid {disk_fsid}"):
-                result = eos_client.exec(
-                    "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
-                    f"eos root://{disk_instance_name} evict {options} '{file_path}'",
-                    throw_on_failure=False,
-                )
-                assert not result.success
-            assert eos_client.is_file_on_disk(disk_instance_name, file_path)
 
-            cta_cli.set_all_drives_up(wait=False)
-            eos_client.wait_for_file_archival(disk_instance_name, file_path, wait_timeout_secs=90)
-            eos_client.wait_for_file_eviction(disk_instance_name, file_path, wait_timeout_secs=90)
-            for _ in range(3):
-                result = _prepare_command(eos_client, disk_instance_name, f"prepare -s '{file_path}'")
-                assert result.success
-            eos_client.wait_for_file_retrieval(disk_instance_name, file_path, wait_timeout_secs=90)
+        # The disk replica is removed after the final counter reaches 0
+        eos_client.wait_for_file_eviction(disk_instance_name, file_path)
 
-            for expected_counter in range(3, 0, -1):
-                attributes = json.loads(
-                    eos_client.exec_with_output(
-                        "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
-                        f"eos --json root://{disk_instance_name} attr get sys.retrieve.evict_counter '{file_path}'"
-                    )
-                )
-                assert int(attributes["attr"]["get"][0]["sys"]["retrieve"]["evict_counter"]) == expected_counter
-                eos_client.exec(
-                    "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
-                    f"eos root://{disk_instance_name} evict '{file_path}'"
-                )
-            eos_client.wait_for_file_eviction(disk_instance_name, file_path)
-        finally:
-            cta_cli.set_all_drives_up(wait=False)
-
-    def test_eos_evict_explicit_fsid(self, eos_client: EosClientHost, disk_instance_name: str, test_dir: Path) -> None:
+    def test_eos_evict_explicit_fsid(
+        self,
+        cta_cli: CtaCliHost,
+        eos_client: EosClientHost,
+        disk_instance_name: str,
+        test_dir: Path,
+    ) -> None:
+        cta_cli.set_all_drives_up()
         dummy_file_systems = [(101, "dummy_1"), (102, "dummy_2"), (103, "dummy_3")]
         tape_fsid = 65535
         missing_fsid = 200
         file_path = eos_client.generate_and_archive_file(
-            disk_instance_name, test_dir / "eos_evict_fsid", append_uid=True, wait_timeout_secs=90
+            disk_instance_name, test_dir / "eos_evict_fsid", append_uid=True
         )
         eos_admin = f"KRB5CCNAME=/tmp/eosadmin1/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://{disk_instance_name}"
         eos_power = "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 eos"
 
         try:
+            # Add three dummy filesystems and advertise replicas on them in the namespace
             for fsid, name in dummy_file_systems:
                 eos_client.exec(f"{eos_admin} space define '{name}'")
                 eos_client.exec(f"{eos_admin} fs add -m {fsid} '{name}' localhost:1234 /does_not_exist_{fsid} '{name}'")
@@ -632,34 +667,43 @@ class TestEosEvict:
                 )
                 return len(info["locations"])
 
+            # EOS should now advertise the tape replica and three dummy disk replicas
             assert replica_count() == 4
-            failing_options = [
-                f"--ignore-evict-counter --fsid {tape_fsid}",
-                f"--ignore-evict-counter --fsid {missing_fsid}",
-                "--fsid 101",
-                "--ignore-removal-on-fst",
-                "--ignore-removal-on-fst --fsid 101",
+
+            # Eviction must reject the tape FSID, a nonexistent FSID, and incomplete option combinations
+            failing_cases = [
+                ("tape replica", f"--ignore-evict-counter --fsid {tape_fsid}"),
+                ("nonexistent replica", f"--ignore-evict-counter --fsid {missing_fsid}"),
+                ("counter not bypassed", "--fsid 101"),
+                ("missing FSID", "--ignore-removal-on-fst"),
+                ("counter not bypassed with removal ignored", "--ignore-removal-on-fst --fsid 101"),
             ]
-            for options in failing_options:
+            for case, options in failing_cases:
                 result = eos_client.exec(
                     f"{eos_power} root://{disk_instance_name} evict {options} '{file_path}'", throw_on_failure=False
                 )
-                assert not result.success
+                assert not result.success, f"Eviction unexpectedly succeeded for {case}"
             assert replica_count() == 4
 
+            # Remove one selected replica while preserving all others
             eos_client.exec(
                 f"{eos_power} root://{disk_instance_name} evict --ignore-evict-counter --fsid 101 '{file_path}'"
             )
             assert replica_count() == 3
+
+            # Removing namespace metadata can succeed even if removal on the dummy FST is skipped
             eos_client.exec(
                 f"{eos_power} root://{disk_instance_name} evict "
                 f"--ignore-removal-on-fst --ignore-evict-counter --fsid 102 '{file_path}'"
             )
             assert replica_count() == 2
+
+            # Remove all remaining disk replicas while preserving the tape replica.
             eos_client.exec(f"{eos_power} root://{disk_instance_name} evict --ignore-evict-counter '{file_path}'")
             assert replica_count() == 1
             assert eos_client.is_file_on_tape_only(disk_instance_name, file_path)
         finally:
+            # Clean up
             for fsid, _ in dummy_file_systems:
                 eos_client.exec(f"{eos_admin} fs config {fsid} configstatus=empty", throw_on_failure=False)
                 eos_client.exec(f"{eos_admin} fs rm {fsid}", throw_on_failure=False)
@@ -680,6 +724,7 @@ def test_eos_timestamps_correctness(eos_client: EosClientHost, disk_instance_nam
             timestamps[name] = match.group(1).strip()
         return timestamps["Modify"], timestamps["Birth"]
 
+    # Modify and birth timestamps must remain stable across tape operations. The change timestamp is allowed to change.
     file_path = test_dir / f"test_eos_timestamps_{uuid.uuid4().hex}"
     eos_client.archive_file(disk_instance_name, file_path, Path("/etc/group"), wait=False)
     timestamps_before_archive = persistent_timestamps(eos_client.file_info(disk_instance_name, file_path))
@@ -698,6 +743,12 @@ def test_eos_timestamps_correctness(eos_client: EosClientHost, disk_instance_nam
 
 
 class TestEosdf:
+    """Verify EOS free-space probing and its deliberately non-fatal error handling during retrieval.
+
+    Retrieval must continue when cta-eosdf.sh is absent, non-executable, or cannot contact its EOS instance. Those
+    failures are reported in the taped log instead of failing the tape session.
+    """
+
     def test_eosdf(
         self,
         eos_client: EosClientHost,
