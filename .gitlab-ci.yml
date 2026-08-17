@@ -275,16 +275,12 @@ include:
   - local: .gitlab/ci/.pre.gitlab-ci.yml
     inputs:
       custom-cta-image-tag: $[[ inputs.custom-cta-image-tag ]]
-      custom-eos-image-tag: $[[ inputs.custom-eos-image-tag ]]
       custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]
       platform: $[[ inputs.platform ]]
-      scheduler-type: $[[ inputs.scheduler-type ]]
-      enable-oracle-support: $[[ inputs.enable-oracle-support ]]
-      workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
-      enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
-      keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
   - local: .gitlab/ci/trigger.gitlab-ci.yml
     inputs:
+      custom-eos-image-tag: $[[ inputs.custom-eos-image-tag ]]
+      custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]
       platform: $[[ inputs.platform ]]
       enable-internal-repos: $[[ inputs.enable-internal-repos ]]
       build-generator: $[[ inputs.build-generator ]]
