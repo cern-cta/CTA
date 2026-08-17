@@ -58,7 +58,7 @@ spec:
 
     enable-oracle-support:
       description: "Enable Oracle support."
-    # Boolean values cannot be conditionally hidden yet. See https://gitlab.com/gitlab-org/gitlab/-/issues/587643
+      # Boolean values cannot be conditionally hidden yet. See https://gitlab.com/gitlab-org/gitlab/-/issues/587643
       type: boolean
       default: true
 
@@ -156,9 +156,9 @@ variables:
   IMAGE_DOCKER_IMAGE_BUILDER: "${DOCKER_IMAGE_PROXY}/quay.io/buildah/stable:v1.43-immutable"
   IMAGE_DOCKER_LINT: "${DOCKER_IMAGE_PROXY}/docker.io/hadolint/hadolint:v2.12.0-alpine"
   IMAGE_LICENSE_CHECK: "${DOCKER_IMAGE_PROXY}/docker.io/fsfe/reuse:6.2"
-  IMAGE_TRIVY: "${DOCKER_IMAGE_PROXY}/docker.io/aquasec/trivy@sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c" # 0.69.3
+  IMAGE_TRIVY: "${DOCKER_IMAGE_PROXY}/docker.io/aquasec/trivy@sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c"  # 0.69.3
   IMAGE_SBOM_HELPER: "registry.cern.ch/code-scanners/sbom-helper:latest"
-  IMAGE_SBOMQS: "${DOCKER_IMAGE_PROXY}/ghcr.io/interlynk-io/sbomqs@sha256:500d5eca9fe4ce3616fdfaed67d877d638b3d52d31ad30bcba6b6cfd4c435767" # v2.0.11
+  IMAGE_SBOMQS: "${DOCKER_IMAGE_PROXY}/ghcr.io/interlynk-io/sbomqs@sha256:500d5eca9fe4ce3616fdfaed67d877d638b3d52d31ad30bcba6b6cfd4c435767"  # v2.0.11
 
   # Should be removed as soon as EOS triggers the CTA pipeline with the new inputs instead of legacy variables.
   PIPELINE_TYPE: "$[[ inputs.pipeline-type ]]"
@@ -166,9 +166,9 @@ variables:
   CUSTOM_EOS_IMAGE_TAG: "$[[ inputs.custom-eos-image-tag ]]"
 
   # Release tag selectors
-  TAG_PGSCHED_REGEX: '/(^|\.)pgsched($|\.)/' # Postgres scheduler
-  TAG_PGCAT_REGEX: '/(^|\.)pgcat($|\.)/' # Postgres catalogue (no Oracle)
-  TAG_PGALL_REGEX: '/(^|\.)pgall($|\.)/' # Postgres scheduler + Postgres catalogue
+  TAG_PGSCHED_REGEX: '/(^|\.)pgsched($|\.)/'  # Postgres scheduler
+  TAG_PGCAT_REGEX: '/(^|\.)pgcat($|\.)/'  # Postgres catalogue (no Oracle)
+  TAG_PGALL_REGEX: '/(^|\.)pgall($|\.)/'  # Postgres scheduler + Postgres catalogue
 
   # Build and runtime defaults
   ENABLE_SBOM_GENERATION: "$[[ inputs.enable-sbom-generation ]]"
@@ -184,7 +184,7 @@ variables:
   DOCKER_PUBLIC_REGISTRY_PREFIX: "cta/public_registry"
   DOCKER_PRIVATE_LOGIN_USERNAME: $DOCKER_LOGIN_USERNAME
   DOCKER_PRIVATE_LOGIN_PASSWORD: $DOCKER_LOGIN_PASSWORD
-  DOCKER_PUBLIC_LOGIN_USERNAME: "nonempty" # Tokens don't require a username, but GitLab requires a non-empty value for this variable to be set
+  DOCKER_PUBLIC_LOGIN_USERNAME: "nonempty"  # Tokens don't require a username, but GitLab requires a non-empty value for this variable to be set
   DOCKER_PUBLIC_LOGIN_PASSWORD: $REGISTRYTOKEN_publicpush
 
   # Git checkout
@@ -299,15 +299,16 @@ include:
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
   - local: .gitlab/ci/validate.gitlab-ci.yml
     rules:
-      - if: '$[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
+      - if: '"$[[ inputs.pipeline-type ]]" == "DEFAULT" || "$[[ inputs.pipeline-type ]]" == "REGR_AGAINST_CTA_BRANCH"'
   - local: .gitlab/ci/lint.gitlab-ci.yml
     rules:
-      - if: '$[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
+      # Only lint in the default pipeline
+      - if: '"$[[ inputs.pipeline-type ]]" == "DEFAULT"'
     inputs:
       platform: $[[ inputs.platform ]]
   - local: .gitlab/ci/build.gitlab-ci.yml
     rules:
-      - if: '$[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
+      - if: '"$[[ inputs.pipeline-type ]]" != "REGR_AGAINST_CTA_VERSION"'
     inputs:
       platform: $[[ inputs.platform ]]
       enable-internal-repos: $[[ inputs.enable-internal-repos ]]
@@ -316,20 +317,21 @@ include:
       enable-address-sanitizer: $[[ inputs.enable-address-sanitizer ]]
   - local: .gitlab/ci/build-image.gitlab-ci.yml
     rules:
-      - if: '$[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
+      - if: '"$[[ inputs.pipeline-type ]]" != "REGR_AGAINST_CTA_VERSION"'
     inputs:
       platform: $[[ inputs.platform ]]
       enable-internal-repos: $[[ inputs.enable-internal-repos ]]
   - local: .gitlab/ci/tests.gitlab-ci.yml
     rules:
-      - if: '$[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
+      # Only run unit tests in the default pipeline
+      - if: '"$[[ inputs.pipeline-type ]]" == "DEFAULT"'
     inputs:
       platform: $[[ inputs.platform ]]
       enable-internal-repos: $[[ inputs.enable-internal-repos ]]
       enable-valgrind: $[[ inputs.enable-valgrind ]]
   - local: .gitlab/ci/tests-kubernetes.gitlab-ci.yml
     rules:
-      - if: '$[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
+      - if: '"$[[ inputs.pipeline-type ]]" == "DEFAULT" || "$[[ inputs.pipeline-type ]]" == "REGR_AGAINST_CTA_BRANCH"'
     inputs:
       custom-cta-image-tag: $[[ inputs.custom-cta-image-tag ]]
       workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
@@ -337,15 +339,18 @@ include:
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
   - local: .gitlab/ci/sbom.gitlab-ci.yml
     rules:
-      - if: '$[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
+      # SBOMs are only relevant in the default pipeline
+      - if: '"$[[ inputs.pipeline-type ]]" == "DEFAULT"'
   - local: .gitlab/ci/release.gitlab-ci.yml
     rules:
-      - if: '$[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
+      # Release stage only relevant in default pipeline
+      - if: '"$[[ inputs.pipeline-type ]]" == "DEFAULT"'
     inputs:
       platform: $[[ inputs.platform ]]
   - local: .gitlab/ci/report.gitlab-ci.yml
     rules:
-      - if: '$[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
+      # Reporting is selected by pipeline source rather than pipeline type, so keep it available to branch regressions.
+      - if: '"$[[ inputs.pipeline-type ]]" != "REGR_AGAINST_CTA_VERSION"'
   - local: .gitlab/ci/.post.gitlab-ci.yml
     rules:
-      - if: '$[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
+      - if: '"$[[ inputs.pipeline-type ]]" != "REGR_AGAINST_CTA_VERSION"'

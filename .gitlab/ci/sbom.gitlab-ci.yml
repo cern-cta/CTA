@@ -5,8 +5,6 @@
   rules:
     - if: '$CUSTOM_CTA_IMAGE_TAG != ""'
       when: never
-    - if: '$PIPELINE_TYPE != "DEFAULT" && $PIPELINE_TYPE != "REGR_AGAINST_CTA_BRANCH"'
-      when: never
     - if: '$ENABLE_SBOM_GENERATION == "true"'
       when: on_success
     - when: never
