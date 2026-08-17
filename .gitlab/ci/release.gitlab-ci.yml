@@ -126,7 +126,7 @@ public-release-cta-unstable:
                                     --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/unstable/cta-5/$[[ inputs.platform ]]/cta
                                     --hook /eos/user/c/ctareg/www/public/update_repos.sh
                                     --cta-version ${CTA_VERSION}
-    - REPO_URL="https://cta-public-repo.web.cern.ch/unstable/cta-5/el9/cta/x86_64"
+    - REPO_URL="https://cta-public-repo.web.cern.ch/unstable/cta-5/$[[ inputs.platform ]]/cta/x86_64"
     - ./ci/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "$CTA_VERSION"
 
 public-release-cta-testing:
@@ -147,7 +147,7 @@ public-release-cta-testing:
                                     --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/testing/cta-5/$[[ inputs.platform ]]/cta
                                     --hook /eos/user/c/ctareg/www/public/update_repos.sh
                                     --cta-version ${CTA_VERSION}
-    - REPO_URL="https://cta-public-repo.web.cern.ch/testing/cta-5/el9/cta/x86_64"
+    - REPO_URL="https://cta-public-repo.web.cern.ch/testing/cta-5/$[[ inputs.platform ]]/cta/x86_64"
     - ./ci/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "$CTA_VERSION"
 
 public-release-cta-stable:
@@ -171,7 +171,7 @@ public-release-cta-stable:
                                     --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/stable/cta-5/$[[ inputs.platform ]]/cta
                                     --hook /eos/user/c/ctareg/www/public/update_repos.sh
                                     --cta-version ${CTA_VERSION}
-    - REPO_URL="https://cta-public-repo.web.cern.ch/stable/cta-5/el9/cta/x86_64"
+    - REPO_URL="https://cta-public-repo.web.cern.ch/stable/cta-5/$[[ inputs.platform ]]/cta/x86_64"
     - ./ci/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "$CTA_VERSION"
 
 

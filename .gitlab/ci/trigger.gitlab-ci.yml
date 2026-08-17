@@ -36,10 +36,10 @@ spec:
 # The resolver supplies the matching image and Git tags through its dotenv report. Triggering the same project at that
 # Git tag makes GitLab compile the tagged CI configuration and check out the tagged tests, charts, and orchestration files.
 # Mirroring propagates the regression result through CTA and back to the external EOS pipeline.
-run-cta-version-regression:
+trigger-cta-version-regression-pipeline:
   stage: trigger
   needs:
-    - job: resolve-cta-version-regression
+    - job: prepare-cta-version-regression
       artifacts: true
   rules:
     - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'

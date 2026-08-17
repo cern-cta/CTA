@@ -12,7 +12,7 @@ spec:
 ---
 
 # Resolve the canonical image and matching Git tag before the trigger job creates the release regression pipeline.
-resolve-cta-version-regression:
+prepare-cta-version-regression:
   stage: .pre
   needs: []
   rules:
@@ -22,7 +22,7 @@ resolve-cta-version-regression:
     CTA_REPO_URL: "https://cta-public-repo.web.cern.ch/unstable/cta-5/$[[ inputs.platform ]]/cta/x86_64/"
   script:
     # An explicit tag reproduces a particular release.
-    # Otherwise, select the latest canonical unstable RPM.
+    # Otherwise, construct the tag from the latest unstable RPM.
     - requested_image_tag="$[[ inputs.custom-cta-image-tag ]]"
     - requested_image_tag="$(echo "$requested_image_tag" | xargs)"
     - |
@@ -30,10 +30,11 @@ resolve-cta-version-regression:
         resolved_image_tag="$requested_image_tag"
       else
         echo "No CTA image tag provided. Looking for the latest canonical release in $CTA_REPO_URL"
+        platform="$[[ inputs.platform ]]"
         canonical_versions="$(
           dnf -q --repofrompath=cta-unstable,"$CTA_REPO_URL" --repo=cta-unstable \
             repoquery --qf '%{version}-%{release}' cta-taped |
-            grep -E '^[0-9]+(\.[0-9]+){3}-[0-9]+\.el9$' |
+            grep -E "^[0-9]+(\.[0-9]+){3}-[0-9]+\.${platform}$" |
             sort -Vu
         )"
         resolved_version="$(echo "$canonical_versions" | tail -n 1)"
@@ -45,15 +46,37 @@ resolve-cta-version-regression:
       fi
     # Qualified releases such as rc and pgsched deliberately do not match this canonical image format.
     - |
-      if [[ ! "$resolved_image_tag" =~ ^v[0-9]+(\.[0-9]+){3}-[0-9]+\.el9$ ]]; then
-        echo "CTA image tag must be a canonical release in the form vX.Y.Z.R-N.el9: $resolved_image_tag" >&2
+      platform="$[[ inputs.platform ]]"
+      if [[ ! "$resolved_image_tag" =~ ^v[0-9]+(\.[0-9]+){3}-[0-9]+\.${platform}$ ]]; then
+        echo "CTA image tag must be a canonical release in the form vX.Y.Z.R-N.${platform}: $resolved_image_tag" >&2
         exit 1
       fi
-    - resolved_git_tag="${resolved_image_tag%.el9}"
+    - resolved_git_tag="${resolved_image_tag%.*}"
     # Fail in the dispatcher instead of creating a downstream pipeline for a missing ref.
     - |
       if ! git ls-remote --exit-code --tags origin "refs/tags/${resolved_git_tag}" >/dev/null; then
         echo "CTA Git tag does not exist: $resolved_git_tag" >&2
+        exit 1
+      fi
+    # The downstream pipeline uses the selected tag's CI definition, so validate its CICD inputs before triggering it.
+    - git fetch --quiet --depth 1 origin "refs/tags/${resolved_git_tag}"
+    - git show FETCH_HEAD:.gitlab-ci.yml > selected-gitlab-ci.yml
+    - sed -n '1,/^---$/p' selected-gitlab-ci.yml > selected-pipeline-inputs.yml
+    - |
+      for required_input in pipeline-type custom-cta-image-tag custom-eos-image-tag custom-xrootd-version platform \
+                            scheduler-type enable-oracle-support workflow-api-authentication enable-dcache-tests \
+                            keep-stress-test-namespace; do
+        if ! grep -Eq "^[[:space:]]+${required_input}:" selected-pipeline-inputs.yml; then
+          echo "CTA Git tag $resolved_git_tag does not define the required '$required_input' pipeline input" >&2
+          exit 1
+        fi
+      done
+    - |
+      custom_cta_input="$(
+        sed -n '/^    custom-cta-image-tag:/,/^    custom-eos-image-tag:/p' selected-pipeline-inputs.yml
+      )"
+      if ! grep -Fq 'REGR_AGAINST_CTA_BRANCH' <<< "$custom_cta_input"; then
+        echo "CTA Git tag $resolved_git_tag does not allow custom-cta-image-tag for branch regressions" >&2
         exit 1
       fi
     - echo "Resolved CTA image tag $resolved_image_tag to Git tag $resolved_git_tag"
@@ -93,7 +116,7 @@ modify-project-json:
       if [[ -z "$trimmed_eos_image_tag" ]]; then
         EOS_REPO_URL="https://storage-ci.web.cern.ch/storage-ci/eos/diopside/tag/testing/el-9/x86_64/"
         echo "No CUSTOM_EOS_IMAGE_TAG provided. Getting latest release from: $EOS_REPO_URL"
-        trimmed_eos_image_tag="$(dnf -q --repofrompath=temprepo,$EOS_REPO_URL --repo=temprepo repoquery --latest-limit=1 --qf "%{version}" eos-server).el9"
+        trimmed_eos_image_tag="$(dnf -q --repofrompath=temprepo,$EOS_REPO_URL --repo=temprepo repoquery --latest-limit=1 --qf "%{version}" eos-server).$[[ inputs.platform ]]"
         echo "Using latest stable release: $trimmed_eos_image_tag"
       fi
     - echo "Updating EOS image tag to $trimmed_eos_image_tag"
