@@ -127,7 +127,7 @@ install(TARGETS ctacataloguepostgres DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 
 add_custom_command(
-  OUTPUT AllCatalogueSchema.hpp
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/AllCatalogueSchema.hpp
   COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" bash ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh
@@ -240,7 +240,6 @@ install (FILES cta-catalogue.example.conf
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
 set (SCHEMA_CHECKER_LIB_SRC_FILES
-  AllCatalogueSchema.hpp
   SQLiteSchemaInserter.cpp
   SchemaSqlStatementsReader.cpp
   SchemaComparer.cpp
@@ -262,5 +261,8 @@ endif()
 
 add_library (ctaschemachecker SHARED
    ${SCHEMA_CHECKER_LIB_SRC_FILES})
+
+add_dependencies(ctaschemachecker
+  create_all_catalogue_schema_header)
 
 install (TARGETS ctaschemachecker DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
