@@ -18,7 +18,9 @@ def unknown_tag_handler(loader: GitLabLoader, _tag: str, node: yaml.Node) -> obj
         return loader.construct_sequence(node)
     if isinstance(node, yaml.MappingNode):
         return loader.construct_mapping(node)
-    return loader.construct_scalar(node)
+    if isinstance(node, yaml.ScalarNode):
+        return loader.construct_scalar(node)
+    raise TypeError(f"Unsupported YAML node type: {type(node).__name__}")
 
 
 GitLabLoader.add_multi_constructor("!", unknown_tag_handler)
