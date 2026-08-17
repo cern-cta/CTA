@@ -17,31 +17,38 @@ spec:
       default: "DEFAULT"
 
     custom-cta-image-tag:
-      description: >-
-        Existing CTA image tag to test instead of building CTA from the selected ref. Accepts either a pipeline build
-        tag such as 123456gitabcdef12 or a release image tag produced by the publish-image jobs, such as
-        v5.11.19.1-3.<platform>. REGR_AGAINST_CTA_VERSION only works with releases of the form vX.Y.Z.R-N.<platform>
-        because the matching Git tag vX.Y.Z.R-N is derived from it. Leave empty to build the selected branch or, in the
-        case of REGR_AGAINST_CTA_VERSION, to find the image from the latest unstable release.
+      description: |-
+        Existing CTA image tag to test instead of building CTA from the selected ref.
+
+        Pipeline build example: `123456gitabcdef12`.
+        Published release format: `vX.Y.Z.R-N.PLATFORM`, e.g. `v5.11.19.1-1.el9`.
+
+        `REGR_AGAINST_CTA_VERSION` requires the published release format because it derives Git tag `vX.Y.Z.R-N`.
+        Leave empty to build the selected branch or select the latest canonical unstable release.
       type: string
       rules:
         - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_VERSION"'
           default: ""
 
     custom-eos-image-tag:
-      description: >-
-        Existing EOS image tag for regression pipelines. Use the complete container tag, including the platform suffix,
-        for example abcdef12.<platform> for a pipeline build or 5.3.36.<platform> for a release. Leave empty to use the
-        latest EOS release selected by CTA.
+      description: |-
+        Existing EOS image tag for regression pipelines.
+
+        Pipeline build format: `COMMIT.PLATFORM`.
+        Release format: `VERSION.PLATFORM`.
+
+        Leave empty to use the latest EOS release selected by CTA.
       type: string
       rules:
         - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_VERSION"'
           default: ""
 
     custom-xrootd-version:
-      description: >-
-        XRootD RPM versionlock value for regression pipelines, including epoch, package release, and platform when
-        applicable, for example 1:5.8.4-1.<platform>. Leave empty to use the version declared by the selected CTA ref.
+      description: |-
+        XRootD RPM versionlock value for regression pipelines.
+
+        Include the epoch, package release, and platform when applicable: `1:5.8.4-1.PLATFORM`.
+        Leave empty to use the version declared by the selected CTA ref.
       type: string
       rules:
         - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_VERSION"'
