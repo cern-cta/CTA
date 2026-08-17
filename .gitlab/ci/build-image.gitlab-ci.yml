@@ -96,6 +96,8 @@ spec:
     - job: modify-project-json
       optional: true
   rules:
+    - if: '$CUSTOM_CTA_IMAGE_TAG != ""'
+      when: never
     - if: '$PIPELINE_TYPE != "DEFAULT" && $PIPELINE_TYPE != "REGR_AGAINST_CTA_BRANCH"'
       when: never
       # Debug is manual by default as it's quite large. However, build automatically for tags

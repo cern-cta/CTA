@@ -100,6 +100,8 @@ internal-release-cta:
   needs:
     - build-cta-rpms
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: manual
       allow_failure: true
@@ -117,6 +119,8 @@ public-release-cta-unstable:
   needs:
     - internal-release-cta
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: manual
       allow_failure: true
@@ -138,6 +142,8 @@ public-release-cta-testing:
   needs:
     - internal-release-cta
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: manual
       allow_failure: true
@@ -162,6 +168,8 @@ public-release-cta-stable:
     - public-release-cta-unstable
     - public-release-cta-testing
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: manual
       allow_failure: true
@@ -200,6 +208,8 @@ public-release-cta-stable:
         matrix:
           - TARGET_NAME: ['$[[ matrix.TARGET_NAME ]]']
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: on_success
   image:
@@ -263,6 +273,8 @@ publish-images-private:
 publish-images-public:
   extends: .publish-image
   rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT"'
+      when: never
     - if: '$ENABLE_ORACLE_SUPPORT == "true"'
       when: never
     - if: $CI_COMMIT_TAG

@@ -29,6 +29,21 @@ spec:
       type: boolean
 ---
 
+# The resolver in the .pre stage produces a complete child configuration which imports the selected tag's CI file.
+# Mirroring the child status propagates the release regression result through CTA and back to the external EOS pipeline.
+run-cta-version-regression:
+  stage: trigger
+  needs:
+    - job: resolve-cta-version-regression
+      artifacts: true
+  rules:
+    - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
+  trigger:
+    include:
+      - artifact: regression-child.json
+        job: resolve-cta-version-regression
+    strategy: mirror
+
 .trigger-child-pipeline:
   allow_failure: true
   stage: trigger

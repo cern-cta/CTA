@@ -17,10 +17,10 @@ spec:
       default: "DEFAULT"
 
     custom-cta-image-tag:
-      description: "Custom CTA image tag."
+      description: "Existing CTA image tag to test instead of building CTA from the selected ref."
       type: string
       rules:
-        - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_VERSION"'
+        - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_VERSION"'
           default: ""
 
     custom-eos-image-tag:
@@ -162,6 +162,7 @@ variables:
 
   # Should be removed as soon as EOS triggers the CTA pipeline with the new inputs instead of legacy variables.
   PIPELINE_TYPE: "$[[ inputs.pipeline-type ]]"
+  CUSTOM_CTA_IMAGE_TAG: "$[[ inputs.custom-cta-image-tag ]]"
   CUSTOM_EOS_IMAGE_TAG: "$[[ inputs.custom-eos-image-tag ]]"
 
   # Release tag selectors
@@ -274,8 +275,14 @@ include:
   - local: .gitlab/ci/.pre.gitlab-ci.yml
     inputs:
       custom-cta-image-tag: $[[ inputs.custom-cta-image-tag ]]
+      custom-eos-image-tag: $[[ inputs.custom-eos-image-tag ]]
       custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]
       platform: $[[ inputs.platform ]]
+      scheduler-type: $[[ inputs.scheduler-type ]]
+      enable-oracle-support: $[[ inputs.enable-oracle-support ]]
+      workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
+      enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
+      keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
   - local: .gitlab/ci/trigger.gitlab-ci.yml
     inputs:
       platform: $[[ inputs.platform ]]
@@ -291,10 +298,16 @@ include:
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
   - local: .gitlab/ci/validate.gitlab-ci.yml
+    rules:
+      - if: '$[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
   - local: .gitlab/ci/lint.gitlab-ci.yml
+    rules:
+      - if: '$[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
     inputs:
       platform: $[[ inputs.platform ]]
   - local: .gitlab/ci/build.gitlab-ci.yml
+    rules:
+      - if: '$[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
     inputs:
       platform: $[[ inputs.platform ]]
       enable-internal-repos: $[[ inputs.enable-internal-repos ]]
@@ -302,23 +315,37 @@ include:
       cmake-build-type: $[[ inputs.cmake-build-type ]]
       enable-address-sanitizer: $[[ inputs.enable-address-sanitizer ]]
   - local: .gitlab/ci/build-image.gitlab-ci.yml
+    rules:
+      - if: '$[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
     inputs:
       platform: $[[ inputs.platform ]]
       enable-internal-repos: $[[ inputs.enable-internal-repos ]]
   - local: .gitlab/ci/tests.gitlab-ci.yml
+    rules:
+      - if: '$[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
     inputs:
       platform: $[[ inputs.platform ]]
       enable-internal-repos: $[[ inputs.enable-internal-repos ]]
       enable-valgrind: $[[ inputs.enable-valgrind ]]
   - local: .gitlab/ci/tests-kubernetes.gitlab-ci.yml
+    rules:
+      - if: '$[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
     inputs:
       custom-cta-image-tag: $[[ inputs.custom-cta-image-tag ]]
       workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
   - local: .gitlab/ci/sbom.gitlab-ci.yml
+    rules:
+      - if: '$[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
   - local: .gitlab/ci/release.gitlab-ci.yml
+    rules:
+      - if: '$[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
     inputs:
       platform: $[[ inputs.platform ]]
   - local: .gitlab/ci/report.gitlab-ci.yml
+    rules:
+      - if: '$[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
   - local: .gitlab/ci/.post.gitlab-ci.yml
+    rules:
+      - if: '$[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
