@@ -368,7 +368,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
   {AdminCmd::CMD_SHOWQUEUES,          {"showqueues", "sq", {}}                                },
   {AdminCmd::CMD_STORAGECLASS,        {"storageclass", "sc", {"add", "ch", "rm", "ls"}}       },
   {AdminCmd::CMD_TAPE,                {"tape", "ta", {"add", "ch", "rm", "reclaim", "ls"}}    },
-  {AdminCmd::CMD_TAPEFILE,            {"tapefile", "tf", {"ls", "rm"}}                        },
+  {AdminCmd::CMD_TAPEFILE,            {"tapefile", "tf", {"ch", "rm", "ls"}}                  },
   {AdminCmd::CMD_TAPEPOOL,            {"tapepool", "tp", {"add", "ch", "rm", "ls"}}           },
   {AdminCmd::CMD_VERSION,             {"version", "v", {}}                                    },
   {AdminCmd::CMD_VIRTUALORGANIZATION, {"virtualorganization", "vo", {"add", "ch", "rm", "ls"}}},
@@ -1045,32 +1045,40 @@ tape (ta)
   /**md
 tapefile (tf)
 
-:   List files on a specified tape or delete a tape file.
+:   Change the storage class of archive files, remove tape files or list tape files.
 
-    **ls** lists tape files. Which files to list can be specified by VID, the (disk instance,
-    disk file ID) pair, or the archive file ID.
+    **ch** changes the storage class of archive files:
 
-    **\-\-vid** specifies the volume identifier (VID) of a tape.
+    **\-\-storageclass** specifies the target storage class.
+
+    **\-\-fxidfile** specifies the filename of a text file containing a list of disk file IDs
+    in hexadecimal format. The format of this file is the same as the output of
+    **eos find --fid <path>**.
 
     **\-\-fxid** specifies the disk file ID. EOS disk file IDs should be provided in hexadecimal
     format.
 
-    **\-\-instance** specifies on which disk instance the disk file ID is located.
+    **\-\-diskfileid** specifies a single disk file ID.
 
-    **\-\-fxidfile** specifies the filename of a text file containing a list of disk file IDs
-    in hexadecimal formal. The format of this file is the same as the output of
-    **eos find --fid <path>**.
+    **\-\-instance** specifies the disk instance on which the disk file ID is located.
 
-    **\-\-id** specifies an archive file ID.
+    **\-\-id** specifies a single archive file ID.
 
     **rm** deletes a single tape file. Note that some disk files have more than one associated tape file.
+
+    **\-\-vid** specifies the volume identifier (VID) of a tape.
+
+    **\-\-reason** specifies the reason for deleting the tape file.
+
+    **ls** lists tape files. Which files to list can be specified by VID, the (disk instance,
+    disk file ID) pair, or the archive file ID.
   */
-  {{AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_LS},
-   {opt_vid.optional(),
-    opt_instance.optional(),
+  {{AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_CH},
+   {opt_storageclass,
+    opt_fidfile.optional(),
     opt_fid.optional(),
     opt_diskfileid.optional(),
-    opt_fidfile.optional(),
+    opt_instance.optional(),
     opt_archivefileid.optional()}                                                                                            },
   {{AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_RM},
    {opt_vid,
@@ -1079,7 +1087,13 @@ tapefile (tf)
     opt_diskfileid.optional(),
     opt_archivefileid.optional(),
     opt_reason}                                                                                                              },
-
+  {{AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_LS},
+   {opt_vid.optional(),
+    opt_instance.optional(),
+    opt_fid.optional(),
+    opt_diskfileid.optional(),
+    opt_fidfile.optional(),
+    opt_archivefileid.optional()}                                                                                            },
   /**md
 tapepool (tp)
 
