@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "catalogue/DropSchemaCmd.hpp"
+#include "CreateAdminUserCmd.hpp"
 
 #include <iostream>
 
@@ -11,6 +11,6 @@
 // main
 //------------------------------------------------------------------------------
 int main(const int argc, char* const* const argv) {
-  cta::catalogue::DropSchemaCmd cmd(std::cin, std::cout, std::cerr);
+  cta::catalogue::CreateAdminUserCmd cmd(std::cin, std::cout, std::cerr);
   return cmd.mainImpl(argc, argv);
 }

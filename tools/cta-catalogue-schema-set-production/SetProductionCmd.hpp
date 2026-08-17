@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "CmdLineTool.hpp"
+#include "catalogue/CmdLineTool.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/Login.hpp"
 

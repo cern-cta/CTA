@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "catalogue/DropSchemaCmdLineArgs.hpp"
+#include "CreateSchemaCmdLineArgs.hpp"
 
 #include "common/exception/Exception.hpp"
 
@@ -12,7 +12,7 @@
 
 namespace unitTests {
 
-class cta_catalogue_DropSchemaCmdLineArgsTest : public ::testing::Test {
+class cta_catalogue_CreateSchemaCmdLineArgsTest : public ::testing::Test {
 protected:
   struct Argcv {
     int argc;
@@ -35,7 +35,7 @@ protected:
     return copy;
   }
 
-  void SetUp() override {
+  virtual void SetUp() override {
     // Allow getopt_long to be called again
     optind = 0;
   }
@@ -54,52 +54,90 @@ protected:
   }
 };
 
-TEST_F(cta_catalogue_DropSchemaCmdLineArgsTest, help_short) {
+TEST_F(cta_catalogue_CreateSchemaCmdLineArgsTest, help_short) {
   using namespace cta::catalogue;
 
   Argcv* args = new Argcv();
   m_args.push_back(args);
   args->argc = 2;
   args->argv = new char*[3];
-  args->argv[0] = dupString("cta-catalogue-schema-drop");
+  args->argv[0] = dupString("cta-catalogue-schema-create");
   args->argv[1] = dupString("-h");
   args->argv[2] = nullptr;
 
-  DropSchemaCmdLineArgs cmdLine(args->argc, args->argv);
+  CreateSchemaCmdLineArgs cmdLine(args->argc, args->argv);
 
   ASSERT_TRUE(cmdLine.help);
   ASSERT_TRUE(cmdLine.dbConfigPath.empty());
 }
 
-TEST_F(cta_catalogue_DropSchemaCmdLineArgsTest, help_long) {
+TEST_F(cta_catalogue_CreateSchemaCmdLineArgsTest, help_long) {
   using namespace cta::catalogue;
 
   Argcv* args = new Argcv();
   m_args.push_back(args);
   args->argc = 2;
   args->argv = new char*[3];
-  args->argv[0] = dupString("cta-catalogue-schema-drop");
+  args->argv[0] = dupString("cta-catalogue-schema-create");
   args->argv[1] = dupString("--help");
   args->argv[2] = nullptr;
 
-  DropSchemaCmdLineArgs cmdLine(args->argc, args->argv);
+  CreateSchemaCmdLineArgs cmdLine(args->argc, args->argv);
 
   ASSERT_TRUE(cmdLine.help);
   ASSERT_TRUE(cmdLine.dbConfigPath.empty());
 }
 
-TEST_F(cta_catalogue_DropSchemaCmdLineArgsTest, dbConfigPath) {
+TEST_F(cta_catalogue_CreateSchemaCmdLineArgsTest, version_short) {
+  using namespace cta::catalogue;
+
+  Argcv* args = new Argcv();
+  m_args.push_back(args);
+  args->argc = 4;
+  args->argv = new char*[5];
+  args->argv[0] = dupString("cta-catalogue-schema-create");
+  args->argv[1] = dupString("dbConfigPath");
+  args->argv[2] = dupString("-v");
+  args->argv[3] = dupString("4.5");
+  args->argv[4] = nullptr;
+
+  CreateSchemaCmdLineArgs cmdLine(args->argc, args->argv);
+
+  ASSERT_FALSE(cmdLine.help);
+  ASSERT_EQ(cmdLine.catalogueVersion.value(), "4.5");
+}
+
+TEST_F(cta_catalogue_CreateSchemaCmdLineArgsTest, version_long) {
+  using namespace cta::catalogue;
+
+  Argcv* args = new Argcv();
+  m_args.push_back(args);
+  args->argc = 4;
+  args->argv = new char*[5];
+  args->argv[0] = dupString("cta-catalogue-schema-create");
+  args->argv[1] = dupString("dbConfigPath");
+  args->argv[2] = dupString("--version");
+  args->argv[3] = dupString("4.5");
+  args->argv[4] = nullptr;
+
+  CreateSchemaCmdLineArgs cmdLine(args->argc, args->argv);
+
+  ASSERT_FALSE(cmdLine.help);
+  ASSERT_EQ(cmdLine.catalogueVersion.value(), "4.5");
+}
+
+TEST_F(cta_catalogue_CreateSchemaCmdLineArgsTest, dbConfigPath) {
   using namespace cta::catalogue;
 
   Argcv* args = new Argcv();
   m_args.push_back(args);
   args->argc = 2;
   args->argv = new char*[3];
-  args->argv[0] = dupString("cta-catalogue-schema-drop");
+  args->argv[0] = dupString("cta-catalogue-schema-create");
   args->argv[1] = dupString("dbConfigPath");
   args->argv[2] = nullptr;
 
-  DropSchemaCmdLineArgs cmdLine(args->argc, args->argv);
+  CreateSchemaCmdLineArgs cmdLine(args->argc, args->argv);
 
   ASSERT_FALSE(cmdLine.help);
   ASSERT_EQ(std::string("dbConfigPath"), cmdLine.dbConfigPath);

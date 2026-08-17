@@ -3,17 +3,17 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "catalogue/VerifySchemaCmd.hpp"
+#include "VerifySchemaCmd.hpp"
 
-#include "Catalogue.hpp"
-#include "SQLiteSchemaComparer.hpp"
-#include "SchemaChecker.hpp"
+#include "VerifySchemaCmdLineArgs.hpp"
+#include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "catalogue/OracleCatalogueSchema.hpp"
 #include "catalogue/PostgresCatalogueSchema.hpp"
+#include "catalogue/SQLiteSchemaComparer.hpp"
 #include "catalogue/SQLiteSchemaInserter.hpp"
+#include "catalogue/SchemaChecker.hpp"
 #include "catalogue/SqliteCatalogueSchema.hpp"
-#include "catalogue/VerifySchemaCmdLineArgs.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "rdbms/AutocommitMode.hpp"

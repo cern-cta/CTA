@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "catalogue/CreateSchemaCmd.hpp"
+#include "CreateSchemaCmd.hpp"
 
-#include "catalogue/CreateSchemaCmdLineArgs.hpp"
+#include "CreateSchemaCmdLineArgs.hpp"
 #ifdef SUPPORT_OCCI
 #include "catalogue/OracleCatalogueSchema.hpp"
 #endif

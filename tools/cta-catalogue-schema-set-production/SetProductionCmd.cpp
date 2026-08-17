@@ -5,8 +5,8 @@
 
 #include "SetProductionCmd.hpp"
 
-#include "SchemaChecker.hpp"
 #include "SetProductionCmdLineArgs.hpp"
+#include "catalogue/SchemaChecker.hpp"
 #include "rdbms/Login.hpp"
 
 namespace cta::catalogue {

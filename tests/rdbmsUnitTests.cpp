@@ -4,7 +4,7 @@
  */
 
 #include "catalogue/CatalogueFactoryFactory.hpp"
-#include "catalogue/DropSchemaCmd.hpp"
+#include "tools/cta-catalogue-schema-drop/DropSchemaCmd.hpp"
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
 #else
