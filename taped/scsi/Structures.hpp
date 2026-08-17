@@ -389,8 +389,8 @@ public:
 };
 
 /**
- * LOCATE(10) CDB as described in SSC-3.
- */
+     * LOCATE(10) CDB as described in SSC-3.
+     */
 class locate10CDB_t {
 public:
   locate10CDB_t() {
@@ -424,8 +424,8 @@ public:
 };
 
 /**
- * READ POSITION CDB as described in SSC-3.
- */
+     * READ POSITION CDB as described in SSC-3.
+     */
 class readPositionCDB_t {
 public:
   readPositionCDB_t() {
@@ -452,8 +452,8 @@ public:
 };
 
 /**
- * READ POSITION data format, short form as described in SSC-3.
- */
+     * READ POSITION  data format, short form as described in SSC-3.
+     */
 class readPositionDataShortForm_t {
 public:
   readPositionDataShortForm_t() { zeroStruct(this); }
