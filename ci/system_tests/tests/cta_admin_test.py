@@ -627,7 +627,7 @@ def test_cta_admin_recycle_tape_file_ls(
 
 
 # =========================================================================
-#  Workflow - amr, gmr, rmr, ar, af, mp, sc
+#  Workflow - amr, gmr, rmr, ar, tf, mp, sc
 # =========================================================================
 
 
@@ -773,7 +773,7 @@ def test_cta_admin_archive_route(cta_cli: CtaCliHost, disk_instance_name: str) -
     assert ls_before == cta_cli.exec_with_output("cta-admin --json ar ls")
 
 
-def test_cta_admin_archive_file_ch(
+def test_cta_admin_tape_file_ch(
     cta_cli: CtaCliHost,
     disk_client: DiskClientHost,
     disk_instance: DiskInstanceHost,
@@ -782,8 +782,8 @@ def test_cta_admin_archive_file_ch(
     cta_storage_class: str,
 ) -> None:
     source_sc = cta_storage_class
-    target_sc = "test_cta_admin_archive_file_ch_sc"
-    id_file = "/tmp/cta_admin_af_ids.txt"
+    target_sc = "test_cta_admin_tape_file_ch_sc"
+    fxid_file = "/tmp/cta_admin_tf_fxids.txt"
 
     source_sc_created = cta_cli.get_single_ls_item(
         "sc ls",
@@ -793,13 +793,13 @@ def test_cta_admin_archive_file_ch(
 
     archive_files = []
     test_file_paths = []
-    id_file_created = False
+    fxid_file_created = False
 
     with TempStorageClass(cta_cli, target_sc, vo_name):
         try:
             # Archive two files
             for index in range(2):
-                test_file_path = test_dir / f"cta_admin_af_testfile_{index}"
+                test_file_path = test_dir / f"cta_admin_tf_testfile_{index}"
                 test_file_path = disk_client.generate_and_archive_file(
                     disk_instance_name,
                     destination_path=test_file_path,
@@ -808,7 +808,7 @@ def test_cta_admin_archive_file_ch(
                 )
                 test_file_paths.append(test_file_path)
 
-                # Figure out the fxid and archive file ID
+                # Get the FXID and archive file metadata
                 file_info_out = disk_instance.exec_with_output(f"eos -j file info {test_file_path}")
                 fxid = json.loads(file_info_out)["fxid"]
 
@@ -822,18 +822,19 @@ def test_cta_admin_archive_file_ch(
                 archive_files.append(
                     {
                         "fxid": fxid,
-                        "archive_id": af_created["af"]["archiveId"],
                         "af_created": af_created["af"],
                     }
                 )
 
-            # Write archive file IDs to the file passed to --idfile
-            archive_ids = " ".join(str(archive_file["archive_id"]) for archive_file in archive_files)
-            cta_cli.exec(f"printf '%s\\n' {archive_ids} > {id_file}")
-            id_file_created = True
+            # Write FXIDs to the file passed to --fxidfile
+            fxids = " ".join(str(archive_file["fxid"]) for archive_file in archive_files)
+            cta_cli.exec(f"printf '%s\\n' {fxids} > {fxid_file}")
+            fxid_file_created = True
 
             # Update
-            cta_cli.exec(f"cta-admin af ch -F {id_file} --storageclass {target_sc}")
+            cta_cli.exec(
+                f"cta-admin tf ch --fxidfile {fxid_file} --instance {disk_instance_name} --storageclass {target_sc}"
+            )
 
             # Read
             for archive_file in archive_files:
@@ -850,15 +851,17 @@ def test_cta_admin_archive_file_ch(
                 assert af_updated["af"]["storageClass"] == target_sc
 
         finally:
-            if id_file_created:
+            if fxid_file_created:
                 # Restore
                 cta_cli.exec(
-                    f"cta-admin af ch --idfile {id_file} --storageclass {source_sc}",
+                    f"cta-admin tf ch --fxidfile {fxid_file} "
+                    f"--instance {disk_instance_name} "
+                    f"--storageclass {source_sc}",
                     throw_on_failure=False,
                 )
 
             cta_cli.exec(
-                f"rm -f {id_file}",
+                f"rm -f {fxid_file}",
                 throw_on_failure=False,
             )
 

@@ -6,9 +6,11 @@
 #include "AdminCmd.hpp"
 
 #include "PbException.hpp"
+#include "catalogue/CatalogueItor.hpp"
 #include "catalogue/CreateMountPolicyAttributes.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/MediaType.hpp"
+#include "catalogue/TapeFileSearchCriteria.hpp"
 #include "common/dataStructures/PhysicalLibrary.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/FrontendInstruments.hpp"
@@ -170,6 +172,9 @@ xrd::Response AdminCmd::process() {
       case cmd_pair(admin::AdminCmd::CMD_TAPE, admin::AdminCmd::SUBCMD_RECLAIM):
         processTape_Reclaim(response);
         break;
+      case cmd_pair(admin::AdminCmd::CMD_TAPEFILE, admin::AdminCmd::SUBCMD_CH):
+        processTapeFile_Ch(response);
+        break;
       case cmd_pair(admin::AdminCmd::CMD_TAPEFILE, admin::AdminCmd::SUBCMD_RM):
         processTapeFile_Rm(response);
         break;
@@ -231,7 +236,7 @@ xrd::Response AdminCmd::process() {
         processRecycleTapeFile_Restore(response);
         break;
       case cmd_pair(admin::AdminCmd::CMD_ARCHIVEFILE, admin::AdminCmd::SUBCMD_CH):
-        processArchiveFile_Ch(response);
+        processModifyArchiveFile(response);
         break;
       default:
         throw exception::PbException("Admin command pair <" + AdminCmd_Cmd_Name(m_adminCmd.cmd()) + ", "
@@ -1694,7 +1699,7 @@ void AdminCmd::processRecycleTapeFile_Restore(xrd::Response& response) const {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processArchiveFile_Ch(xrd::Response& response) const {
+void AdminCmd::processModifyArchiveFile(xrd::Response& response) const {
   using namespace cta::admin;
 
   try {
@@ -1727,6 +1732,60 @@ void AdminCmd::processArchiveFile_Ch(xrd::Response& response) const {
     } else {
       throw exception::UserError("Must specify either Storage Class or Disk File ID and Disk Instance");
     }
+    response.set_type(xrd::Response::RSP_SUCCESS);
+  } catch (exception::UserError& ue) {
+    response.set_message_txt(ue.getMessage().str());
+    response.set_type(xrd::Response::RSP_ERR_USER);
+  }
+}
+
+void AdminCmd::processTapeFile_Ch(xrd::Response& response) const {
+  using namespace cta::admin;
+
+  try {
+    const auto& newStorageClassName = getRequired(OptionString::STORAGE_CLASS);
+
+    catalogue::TapeFileSearchCriteria searchCriteria;
+
+    searchCriteria.diskFileIds = getOptional(OptionStrList::FILE_ID);
+
+    const auto diskFileId = getAndValidateDiskFileIdOptional();
+
+    if (diskFileId) {
+      if (!searchCriteria.diskFileIds) {
+        searchCriteria.diskFileIds.emplace();
+      }
+
+      searchCriteria.diskFileIds->push_back(*diskFileId);
+    }
+
+    searchCriteria.diskInstance = getOptional(OptionString::INSTANCE);
+
+    searchCriteria.archiveFileId = getOptional(OptionUInt64::ARCHIVE_FILE_ID);
+
+    const bool hasDiskFileIds = searchCriteria.diskFileIds && !searchCriteria.diskFileIds->empty();
+
+    if (!hasDiskFileIds && !searchCriteria.archiveFileId) {
+      throw exception::UserError("Must specify at least one of the following search options: "
+                                 "fxidfile, fxid, diskfileid or id");
+    }
+
+    std::list<uint64_t> archiveFileIds;
+
+    {
+      auto archiveFiles = m_catalogue.ArchiveFile()->getArchiveFilesItor(searchCriteria);
+
+      while (archiveFiles.hasMore()) {
+        archiveFileIds.push_back(archiveFiles.next().archiveFileID);
+      }
+    }
+
+    if (archiveFileIds.empty()) {
+      throw exception::UserError("No archive files match the specified search options");
+    }
+
+    m_catalogue.ArchiveFile()->modifyArchiveFileStorageClassId(archiveFileIds, newStorageClassName);
+
     response.set_type(xrd::Response::RSP_SUCCESS);
   } catch (exception::UserError& ue) {
     response.set_message_txt(ue.getMessage().str());
