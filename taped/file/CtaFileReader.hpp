@@ -38,8 +38,8 @@ private:
 
   void moveToFirstHeaderBlock();
   void moveReaderByFSeqDelta(const int64_t fSeq_delta);
-  uint64_t getBlockIDTarget(const cta::RetrieveJob& fileToRecall) const;
-  void locateBlockID(uint64_t destinationBlock);
+  uint32_t getBlockIDTarget(const cta::RetrieveJob& fileToRecall) const;
+  void locateBlockID(uint32_t destinationBlock);
   void checkHeaders(const cta::RetrieveJob& fileToRecall);
   void checkTrailers();
 };

@@ -389,8 +389,8 @@ public:
 };
 
 /**
-     * LOCATE(10) CDB as described in SSC-3.
-     */
+ * LOCATE(10) CDB as described in SSC-3.
+ */
 class locate10CDB_t {
 public:
   locate10CDB_t() {
@@ -424,45 +424,8 @@ public:
 };
 
 /**
-     * LOCATE(16) CDB as described in SSC-5.
-     */
-class locate16CDB_t {
-public:
-  locate16CDB_t() {
-    zeroStruct(this);
-    opCode = SCSI::Commands::LOCATE_16;
-  }
-
-  // byte 0
-  unsigned char opCode;  // OPERATION CODE (92h)
-
-  // byte 1
-  unsigned char IMMED     : 1;  // Immediate
-  unsigned char CP        : 1;  // Change Partition
-  unsigned char           : 1;  // Reserved
-  unsigned char DEST_TYPE : 3;  // Destination type
-  unsigned char           : 2;  // Reserved
-
-  // byte 2
-  unsigned char BAM : 1;  // Block Address Mode
-  unsigned char     : 7;  // Reserved
-
-  // byte 3
-  unsigned char partition;  // Partition
-
-  // bytes 4-11
-  unsigned char logicalIdentifier[8];  // Logical object identifier, logical file identifier or EOD
-
-  // bytes 12-14
-  unsigned char reserved[3];
-
-  // byte 15
-  unsigned char control;  // Control byte
-};
-
-/**
-     * READ POSITION CDB as described in SSC-3.
-     */
+ * READ POSITION CDB as described in SSC-3.
+ */
 class readPositionCDB_t {
 public:
   readPositionCDB_t() {
@@ -489,8 +452,8 @@ public:
 };
 
 /**
-     * READ POSITION  data format, short form as described in SSC-3.
-     */
+ * READ POSITION data format, short form as described in SSC-3.
+ */
 class readPositionDataShortForm_t {
 public:
   readPositionDataShortForm_t() { zeroStruct(this); }

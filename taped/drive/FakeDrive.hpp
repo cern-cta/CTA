@@ -25,10 +25,10 @@ private:
   };
 
   std::vector<tapeBlock> m_tape;
-  uint64_t m_currentPosition = 0;
+  uint32_t m_currentPosition = 0;
   uint64_t m_tapeCapacity;
   int m_beginOfCompressStats = 0;
-  uint64_t getRemaingSpace(uint64_t currentPosition);
+  uint64_t getRemaingSpace(uint32_t currentPosition);
 
 public:
   enum FailureMoment { OnWrite, OnFlush };
@@ -59,7 +59,7 @@ public:
   deviceInfo getDeviceInfo() final;
   std::string getGenericSCSIPath() final;
   std::string getSerialNumber() final;
-  void positionToLogicalObject(uint64_t blockId) final;
+  void positionToLogicalObject(uint32_t blockId) final;
   positionInfo getPositionInfo() final;
   physicalPositionInfo getPhysicalPositionInfo() final;
   std::vector<endOfWrapPosition> getEndOfWrapPositions() final;

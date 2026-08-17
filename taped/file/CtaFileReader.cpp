@@ -11,6 +11,7 @@
 #include "scheduler/RetrieveJob.hpp"
 #include "taped/drive/DriveInterface.hpp"
 
+#include <limits>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -46,7 +47,14 @@ void CtaFileReader::positionByFseq(const cta::RetrieveJob& fileToRecall) {
 void CtaFileReader::positionByBlockID(const cta::RetrieveJob& fileToRecall) {
   // Make sure the session state is advanced to cover our failures
   // and allow next call to position to discover we failed half way
-  const uint64_t destinationBlock = getBlockIDTarget(fileToRecall);
+  if (fileToRecall.selectedTapeFile().blockId > std::numeric_limits<uint32_t>::max()) {
+    std::ostringstream ex_str;
+    ex_str << "[FileReader::positionByBlockID] - Block id larger than the supported uint32_t limit: "
+           << fileToRecall.selectedTapeFile().blockId;
+    throw cta::exception::Exception(ex_str.str());
+  }
+
+  const uint32_t destinationBlock = getBlockIDTarget(fileToRecall);
   const bool skipLocate = m_session.getCurrentFilePart() == PartOfFile::Header
                           && m_session.getCurrentFseq() == fileToRecall.selectedTapeFile().fSeq
                           && m_session.isCurrentBlockId(destinationBlock);
@@ -134,12 +142,12 @@ void CtaFileReader::moveReaderByFSeqDelta(const int64_t fSeq_delta) {
   }
 }
 
-uint64_t CtaFileReader::getBlockIDTarget(const cta::RetrieveJob& fileToRecall) const {
+uint32_t CtaFileReader::getBlockIDTarget(const cta::RetrieveJob& fileToRecall) const {
   // if we want the first file on tape (fileInfo.blockId==0) we need to skip the VOL1 header
   return fileToRecall.selectedTapeFile().blockId ? fileToRecall.selectedTapeFile().blockId : 1;
 }
 
-void CtaFileReader::locateBlockID(uint64_t destinationBlock) {
+void CtaFileReader::locateBlockID(uint32_t destinationBlock) {
   /*
   we position using the sg locate because it is supposed to do the
   right thing possibly in a more optimized way (better than st's

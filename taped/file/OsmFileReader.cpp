@@ -11,6 +11,7 @@
 #include "scheduler/RetrieveJob.hpp"
 #include "taped/drive/DriveInterface.hpp"
 
+#include <limits>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -49,6 +50,12 @@ void OsmFileReader::positionByBlockID(const cta::RetrieveJob& fileToRecall) {
   // and allow next call to position to discover we failed half way
   m_session.setCurrentFilePart(PartOfFile::HeaderProcessing);
 
+  if (fileToRecall.selectedTapeFile().blockId > std::numeric_limits<uint32_t>::max()) {
+    std::ostringstream ex_str;
+    ex_str << "[FileReader::positionByBlockID] - Block id larger than the supported uint32_t limit: "
+           << fileToRecall.selectedTapeFile().blockId;
+    throw cta::exception::Exception(ex_str.str());
+  }
   useBlockID(fileToRecall);
   m_session.setCurrentFilePart(PartOfFile::Payload);
   setBlockSize(PAYLOAD_BOLCK_SIZE);
@@ -109,7 +116,7 @@ void OsmFileReader::moveReaderByFSeqDelta(const int64_t fSeq_delta) {
 
 void OsmFileReader::useBlockID(const cta::RetrieveJob& fileToRecall) {
   // if we want the first file on tape (fileInfo.blockId < 2) we need to skip 2 blocks of OSM header
-  const uint64_t destination_block =
+  const uint32_t destination_block =
     fileToRecall.selectedTapeFile().blockId > 2 ? fileToRecall.selectedTapeFile().blockId : 3;
 
   /*

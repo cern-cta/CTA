@@ -140,7 +140,6 @@ public:
     WRITE_ATTRIBUTE = 0x8d,
     VERIFY_16 = 0x8f,
     SYNCHRONIZE_CACHE_16 = 0x91,
-    LOCATE_16 = 0x92,
     WRITE_SAME_16 = 0x93,
     SERVICE_ACTION_IN = 0x9e
   };

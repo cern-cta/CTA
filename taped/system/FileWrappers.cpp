@@ -8,7 +8,6 @@
 #include "taped/scsi/Structures.hpp"
 
 #include <errno.h>
-#include <limits>
 #include <stddef.h>
 #include <stdexcept>
 #include <sys/mtio.h>
@@ -116,8 +115,6 @@ int System::stDeviceFile::ioctl(unsigned long int request, sg_io_hdr_t* sgio_h) 
           return ioctlLogSelect(sgio_h);
         case SCSI::Commands::LOCATE_10:
           return ioctlLocate10(sgio_h);
-        case SCSI::Commands::LOCATE_16:
-          return ioctlLocate16(sgio_h);
         case SCSI::Commands::LOG_SENSE:
           return ioctlLogSense(sgio_h);
         case SCSI::Commands::MODE_SENSE_6:
@@ -170,15 +167,11 @@ int System::stDeviceFile::ioctlReadPosition(sg_io_hdr_t* sgio_h) {
   } else {  // we did seek on tape so we have real values
     /* we need this field to make the replay valid*/
     positionData.PERR = 0;
-    if (blockID > std::numeric_limits<uint32_t>::max()) {
-      positionData.PERR = 1;
-      return 0;
-    }
     /* fill with internal values
      * lastBlockLocation=firstBlockLocation as soon as Buffer is empty.
      */
-    SCSI::Structures::setU32(positionData.firstBlockLocation, static_cast<uint32_t>(blockID));
-    SCSI::Structures::setU32(positionData.lastBlockLocation, static_cast<uint32_t>(blockID));
+    SCSI::Structures::setU32(positionData.firstBlockLocation, blockID);
+    SCSI::Structures::setU32(positionData.lastBlockLocation, blockID);
     SCSI::Structures::zeroStruct(positionData.blocksInBuffer);
     SCSI::Structures::zeroStruct(positionData.bytesInBuffer);
   }
@@ -222,17 +215,6 @@ int System::stDeviceFile::ioctlLocate10(sg_io_hdr_t* sgio_h) {
   /* perform logical seek on tape */
   SCSI::Structures::locate10CDB_t& cdb = *(SCSI::Structures::locate10CDB_t*) sgio_h->cmdp;
   blockID = SCSI::Structures::toU32(cdb.logicalObjectID);
-  return 0;
-}
-
-int System::stDeviceFile::ioctlLocate16(sg_io_hdr_t* sgio_h) {
-  if (SG_DXFER_NONE != sgio_h->dxfer_direction) {
-    errno = EINVAL;
-    return -1;
-  }
-  /* perform logical seek on tape */
-  SCSI::Structures::locate16CDB_t& cdb = *(SCSI::Structures::locate16CDB_t*) sgio_h->cmdp;
-  blockID = SCSI::Structures::toU64(cdb.logicalIdentifier);
   return 0;
 }
 
