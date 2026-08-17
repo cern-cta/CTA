@@ -23,7 +23,7 @@ spec:
         Pipeline build example: `123456gitabcdef12`.
         Published release format: `vX.Y.Z.R-N.PLATFORM`, e.g. `v5.11.19.1-1.el9`.
 
-        `REGR_AGAINST_CTA_VERSION` requires the published release format because it derives Git tag `vX.Y.Z.R-N`.
+        `REGR_AGAINST_CTA_VERSION` only works with the published release format.
         Leave empty to build the selected branch or select the latest canonical unstable release.
       type: string
       rules:
