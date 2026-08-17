@@ -10,6 +10,12 @@
 # - rpm_context is an external BuildKit build context supplied by the build command
 
 # =========================================================================
+# CERN CA CERTIFICATES
+# =========================================================================
+# hadolint ignore=DL3007
+FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest AS cern-ca
+
+# =========================================================================
 # 1. REPO BUILDER
 # Used to feed the RPMs to the other stages
 # =========================================================================
@@ -40,6 +46,9 @@ COPY build-service.sh /usr/local/bin/build-service.sh
 
 COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
 
+# The upstream AlmaLinux image does not include the CERN root CAs so we copy them here explicitly
+COPY --from=cern-ca /etc/ssl/certs/CERN-bundle.pem /etc/pki/ca-trust/source/anchors/CERN-bundle.pem
+
 # Core dependencies
 # hadolint ignore=DL3041
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
@@ -58,6 +67,8 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     printf '%s\n' '[cta]' 'name=Repo containing CTA RPMS' 'baseurl=file:///mnt/rpms' 'gpgcheck=0' 'enabled=1' 'priority=2' > /etc/yum.repos.d/cta.repo && \
     # Add some basic flags to all (micro)dnf commands to improve speed and reduce image size
     printf '%s\n' '[main]' 'tsflags=nodocs' 'install_weak_deps=False' > /etc/dnf/dnf.conf && \
+    # Add the CERN root CAs to the system trust store before accessing package repositories
+    update-ca-trust && \
     # Some basic utils (tar for kubectl cp, jq for many of the tests and convenience, procps-ng for some other utilities used in tests)
     # Requiring sudo is not ideal, but we need an update of the tests to be able to do without it.
     # Anyway, by setting allowPrivilegeEscalation: false in Kubernetes, sudo is unusable anyway
