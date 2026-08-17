@@ -67,8 +67,8 @@ public:
  */
 class positionInfo {
 public:
-  uint32_t currentPosition;
-  uint32_t oldestDirtyObject;
+  uint64_t currentPosition;
+  uint64_t oldestDirtyObject;
   uint32_t dirtyObjectsCount;
   uint32_t dirtyBytesCount;
 };
@@ -197,7 +197,7 @@ public:
   virtual deviceInfo getDeviceInfo() = 0;
   virtual std::string getGenericSCSIPath() = 0;
   virtual std::string getSerialNumber() = 0;
-  virtual void positionToLogicalObject(uint32_t blockId) = 0;
+  virtual void positionToLogicalObject(uint64_t blockId) = 0;
   virtual positionInfo getPositionInfo() = 0;
   virtual physicalPositionInfo getPhysicalPositionInfo() = 0;
   virtual std::vector<endOfWrapPosition> getEndOfWrapPositions() = 0;

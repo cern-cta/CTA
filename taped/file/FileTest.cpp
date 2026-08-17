@@ -271,7 +271,7 @@ TEST_F(ctaTapeFileTest, skipsLocateWhenReadingSequentialFilesByBlockId) {
   m_fileToRecall.archiveFile.tapeFiles.front().blockId = secondFileBlockId;
   readFile(m_fileToRecall);
 
-  ASSERT_EQ(m_drive.getPositionToLogicalObjectCount(), 0);
+  ASSERT_EQ(m_drive.getBlockIdPositioningCount(), 0);
 }
 
 TEST_F(ctaTapeFileTest, locatesWhenBlockIdDoesNotMatchTrackedPosition) {
@@ -304,7 +304,7 @@ TEST_F(ctaTapeFileTest, locatesWhenBlockIdDoesNotMatchTrackedPosition) {
 
   const auto reader = cta::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall);
   ASSERT_NE(reader, nullptr);
-  ASSERT_EQ(m_drive.getPositionToLogicalObjectCount(), 1);
+  ASSERT_EQ(m_drive.getBlockIdPositioningCount(), 1);
 }
 
 INSTANTIATE_TEST_CASE_P(FormatLabelsParam,

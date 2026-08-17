@@ -63,16 +63,16 @@ std::string cta::tape::drive::FakeDrive::getSerialNumber() {
   throw cta::exception::NotImplementedException();
 }
 
-void cta::tape::drive::FakeDrive::positionToLogicalObject(uint32_t blockId) {
-  ++m_positionToLogicalObjectCount;
-  if (blockId > m_tape.size() - 1) {
+void cta::tape::drive::FakeDrive::positionToLogicalObject(uint64_t blockId) {
+  ++m_blockIdPositioningCount;
+  if (blockId >= m_tape.size()) {
     throw cta::exception::Exception("FakeDrive::trying to position beyond the end of data");
   }
   m_currentPosition = blockId;
 }
 
-uint32_t cta::tape::drive::FakeDrive::getPositionToLogicalObjectCount() const {
-  return m_positionToLogicalObjectCount;
+uint32_t cta::tape::drive::FakeDrive::getBlockIdPositioningCount() const {
+  return m_blockIdPositioningCount;
 }
 
 cta::tape::drive::positionInfo cta::tape::drive::FakeDrive::getPositionInfo() {
@@ -209,7 +209,7 @@ void cta::tape::drive::FakeDrive::flush(void) {
   }
 }
 
-uint64_t cta::tape::drive::FakeDrive::getRemaingSpace(uint32_t currentPosition) {
+uint64_t cta::tape::drive::FakeDrive::getRemaingSpace(uint64_t currentPosition) {
   if (!currentPosition) {
     return m_tapeCapacity;
   }

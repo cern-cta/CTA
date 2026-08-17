@@ -279,12 +279,12 @@ std::string drive::DriveGeneric::getSerialNumber() {
  * has completed.
  * @param blockId The blockId, represented in local endianness.
  */
-void drive::DriveGeneric::positionToLogicalObject(uint32_t blockId) {
-  SCSI::Structures::locate10CDB_t cdb;
+void drive::DriveGeneric::positionToLogicalObject(uint64_t blockId) {
+  SCSI::Structures::locate16CDB_t cdb;
   SCSI::Structures::senseData_t<255> senseBuff;
   SCSI::Structures::LinuxSGIO_t sgh;
 
-  SCSI::Structures::setU32(cdb.logicalObjectID, blockId);
+  SCSI::Structures::setU64(cdb.logicalIdentifier, blockId);
 
   sgh.setCDB(&cdb);
   sgh.setSenseBuffer(&senseBuff);

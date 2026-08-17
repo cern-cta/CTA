@@ -106,7 +106,7 @@ public:
    * has completed.
    * @param blockId The blockId, represented in local endianness.
    */
-  void positionToLogicalObject(uint32_t blockId) override;
+  void positionToLogicalObject(uint64_t blockId) override;
 
   /**
    * Return logical position of the drive. This is the address of the next object

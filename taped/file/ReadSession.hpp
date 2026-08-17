@@ -81,7 +81,7 @@ public:
 
   inline uint32_t getCurrentFseq() const { return m_fseq; }
 
-  inline void setCurrentBlockId(uint32_t blockId) { m_blockId = blockId; }
+  inline void setCurrentBlockId(uint64_t blockId) { m_blockId = blockId; }
 
   inline void advanceCurrentBlockId(uint32_t blockCount = 1) {
     if (m_blockId) {
@@ -89,11 +89,11 @@ public:
     }
   }
 
-  inline std::optional<uint32_t> getCurrentBlockId() const { return m_blockId; }
+  inline std::optional<uint64_t> getCurrentBlockId() const { return m_blockId; }
 
   inline void invalidateCurrentBlockId() noexcept { m_blockId.reset(); }
 
-  inline bool isCurrentBlockId(uint32_t blockId) const { return m_blockId && *m_blockId == blockId; }
+  inline bool isCurrentBlockId(uint64_t blockId) const { return m_blockId && *m_blockId == blockId; }
 
   inline const daemon::VolumeInfo& getVolumeInfo() const { return m_volInfo; }
 
@@ -141,7 +141,7 @@ protected:
     * Current logical object ID of the next block to be read.
     * It is valid only while the session can account for all tape motion.
     */
-  std::optional<uint32_t> m_blockId;
+  std::optional<uint64_t> m_blockId;
 
   /**
     * Part of the file we are reading

@@ -71,7 +71,7 @@ public:
 protected:
   struct mtget m_mtStat;
   struct mtop m_mtCmd;
-  uint32_t blockID = 0xFFFFFFFF;  // Logical Object ID - position on tape
+  uint64_t blockID = 0xFFFFFFFF;  // Logical Object ID - position on tape
   bool clearCompressionStats = false;
   unsigned char m_LBPInfoMethod = 0xFA;
   unsigned char m_LBPInfoLength = 0xBC;
@@ -118,6 +118,17 @@ protected:
      *                -1 with appropriate  errno if an error occurred.
      */
   virtual int ioctlLocate10(sg_io_hdr_t* sgio_h);
+
+  /**
+     * This function handles LOCATE_16 CDB and only checks the CDB for the
+     * correct values and sets internal blockID variable (logical seek).
+     *
+     * @param sgio_h  The pointer to the sg_io_hdr_t structure with
+     *                ioctl call data
+     * @return        Returns 0 in success and
+     *                -1 with appropriate  errno if an error occurred.
+     */
+  virtual int ioctlLocate16(sg_io_hdr_t* sgio_h);
 
   /**
      * This function handles LOG_SENSE CDB and prepares the replay with

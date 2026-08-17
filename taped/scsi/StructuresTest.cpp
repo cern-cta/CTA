@@ -282,6 +282,62 @@ TEST(cta_tape_SCSI_Structures, locate10CDB_t) {
   ASSERT_EQ(0xBC, locate10CDB.control);
 }
 
+TEST(cta_tape_SCSI_Structures, locate16CDB_t) {
+  cta::tape::SCSI::Structures::locate16CDB_t locate16CDB;
+  unsigned char* buff = (unsigned char*) &locate16CDB;
+
+  /*
+     * Make sure this struct is a POD (plain old data without virtual table)
+     * (and has the right size).
+     */
+  ASSERT_EQ(16U, sizeof(locate16CDB));
+
+  /* Check proper initialization an location of struct members match
+     the bit/byte locations defined in SSC-5 */
+  ASSERT_EQ(cta::tape::SCSI::Commands::LOCATE_16, locate16CDB.opCode);
+  buff[0] = 0xAB;
+  ASSERT_EQ(0xAB, locate16CDB.opCode);
+
+  ASSERT_EQ(0, locate16CDB.IMMED);
+  buff[1] |= (0x1 & 0x7) << 0;
+  ASSERT_EQ(1, locate16CDB.IMMED);
+
+  ASSERT_EQ(0, locate16CDB.CP);
+  buff[1] |= (0x1 & 0xF) << 1;
+  ASSERT_EQ(1, locate16CDB.CP);
+
+  ASSERT_EQ(0, locate16CDB.DEST_TYPE);
+  buff[1] |= (0x5 & 0x7) << 3;
+  ASSERT_EQ(0x5, locate16CDB.DEST_TYPE);
+
+  ASSERT_EQ(0, locate16CDB.BAM);
+  buff[2] |= 0x1;
+  ASSERT_EQ(1, locate16CDB.BAM);
+
+  ASSERT_EQ(0, locate16CDB.partition);
+  buff[3] = 0xAB;
+  ASSERT_EQ(0xAB, locate16CDB.partition);
+
+  ASSERT_EQ(0ULL, cta::tape::SCSI::Structures::toU64(locate16CDB.logicalIdentifier));
+  buff[4] |= 0x0A;
+  buff[5] |= 0xBC;
+  buff[6] |= 0xDE;
+  buff[7] |= 0xF0;
+  buff[8] |= 0x12;
+  buff[9] |= 0x34;
+  buff[10] |= 0x56;
+  buff[11] |= 0x78;
+  ASSERT_EQ(0x0ABCDEF012345678ULL, cta::tape::SCSI::Structures::toU64(locate16CDB.logicalIdentifier));
+
+  buff[12] |= 0xFF;
+  buff[13] = 0xFF;
+  buff[14] = 0xFF;
+
+  ASSERT_EQ(0, locate16CDB.control);
+  buff[15] |= 0xBC;
+  ASSERT_EQ(0xBC, locate16CDB.control);
+}
+
 TEST(cta_tape_SCSI_Structures, readPositionCDB_t) {
   cta::tape::SCSI::Structures::readPositionCDB_t readPositionCDB;
   unsigned char* buff = (unsigned char*) &readPositionCDB;
