@@ -4,7 +4,7 @@
 import json
 import time
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Optional
 
 from system_tests.helpers.connections.remote_connection import RemoteConnection
 from system_tests.helpers.utils.timeout import Timeout
@@ -36,7 +36,20 @@ class CtaCliHost(RemoteHost):
                 print(f"Drives {drive_name} are set {desired_status}")
                 return
             time.sleep(1)
+        print("Drives failed to reach desired drive status. Printing current status:")
+        self.exec("cta-admin drive ls")
         raise RuntimeError(f"Timeout reached while trying to put drives to: {desired_status}")
+
+    def wait_for_drives_to_stop_transferring(self, *, timeout: int = 60) -> None:
+        print("Waiting for drives to stop transferring")
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            drives = json.loads(self.exec_with_output("cta-admin --json drive ls"))
+            if not any(drive["driveStatus"] == "TRANSFERING" for drive in drives):
+                print("No drives are transferring")
+                return
+            time.sleep(1)
+        raise TimeoutError(f"Drives did not stop transferring within {timeout} seconds")
 
     def set_drive_up(self, drive_name: str, *, wait: bool = True) -> None:
         self.exec(f"cta-admin dr up '{drive_name}' --reason 'Setting drive up'")
@@ -124,9 +137,17 @@ class CtaCliHost(RemoteHost):
         except json.JSONDecodeError:
             return False
 
-    def retrieve_queue_empty(self, vid: str) -> bool:
+    def retrieve_queue_empty(self, vid: Optional[str] = None) -> bool:
         queues = json.loads(self.exec_with_output("cta-admin --json showqueues"))
-        return not any(q["vid"] == vid for q in queues)
+        return not any(queue["mountType"] == "RETRIEVE" and (vid is None or queue["vid"] == vid) for queue in queues)
+
+    def retrieve_queue_file_count(self, vid: Optional[str] = None) -> int:
+        queues = json.loads(self.exec_with_output("cta-admin --json showqueues"))
+        return sum(
+            int(queue["queuedFiles"])
+            for queue in queues
+            if queue["mountType"] == "RETRIEVE" and (vid is None or queue["vid"] == vid)
+        )
 
     def count_files_in_queue(self, vid: str) -> int:
         queues = json.loads(self.exec_with_output("cta-admin --json showqueues"))
@@ -168,13 +189,14 @@ class CtaCliHost(RemoteHost):
                 )
         print("Repack request expanded")
 
-    def wait_for_queue_to_empty(self, vid: str, wait_timeout_secs: int = 30) -> None:
-        print(f"Waiting for retrieve queue of {vid} to be empty...")
+    def wait_for_queue_to_empty(self, vid: Optional[str] = None, wait_timeout_secs: int = 30) -> None:
+        queue_description = f" of {vid}" if vid is not None else ""
+        print(f"Waiting for retrieve queue{queue_description} to be empty...")
         with Timeout(wait_timeout_secs) as t:
             while not self.retrieve_queue_empty(vid) and not t.expired:
                 time.sleep(1)
             if t.expired:
                 raise TimeoutError(
-                    f"Retrieve queue for VID {vid} failed to empty within timeout of {wait_timeout_secs} seconds."
+                    f"Retrieve queue{queue_description} failed to empty within timeout of {wait_timeout_secs} seconds."
                 )
         print("Retrieve queue empty")

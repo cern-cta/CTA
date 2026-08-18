@@ -4,11 +4,31 @@
 import json
 import time
 import uuid
+from collections.abc import Iterator
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Union
 
 from system_tests.helpers.utils.timeout import Timeout
 from system_tests.helpers.hosts.remote_host import RemoteHost
+
+PrepareRequest = tuple[str, Path]
+
+
+@dataclass(frozen=True)
+class PrepareRequests:
+    requests: list[PrepareRequest]
+    remote_manifest: Optional[Path] = None
+    request_count: Optional[int] = None
+
+    def __iter__(self) -> Iterator[PrepareRequest]:
+        return iter(self.requests)
+
+    def __len__(self) -> int:
+        return self.request_count if self.request_count is not None else len(self.requests)
+
+    def __getitem__(self, index: int) -> PrepareRequest:
+        return self.requests[index]
 
 
 class DiskClientHost(RemoteHost):
@@ -179,6 +199,14 @@ class DiskClientHost(RemoteHost):
                 raise TimeoutError(f"Failed to evict file within timeout of {wait_timeout_secs} seconds")
         print("File evicted")
 
+    def wait_for_files_retrieval(self, disk_instance_name: str, paths: list[Path], wait_timeout_secs: int = 20) -> None:
+        for path in paths:
+            self.wait_for_file_retrieval(disk_instance_name, path, wait_timeout_secs=wait_timeout_secs)
+
+    def wait_for_files_eviction(self, disk_instance_name: str, paths: list[Path], wait_timeout_secs: int = 20) -> None:
+        for path in paths:
+            self.wait_for_file_eviction(disk_instance_name, path, wait_timeout_secs=wait_timeout_secs)
+
     def generate_and_archive_file(
         self,
         disk_instance_name: str,
@@ -227,6 +255,59 @@ class DiskClientHost(RemoteHost):
         user: str = "poweruser1",
         wait: bool = True,
         wait_timeout_secs: int = 20,
+        activity: Optional[str] = None,
+    ) -> str:
+        requests = self.retrieve_files(
+            disk_instance_name,
+            [path],
+            user=user,
+            wait=wait,
+            wait_timeout_secs=wait_timeout_secs,
+            activity=activity,
+        )
+        return requests[0][0]
+
+    def retrieve_files(
+        self,
+        disk_instance_name: str,
+        paths: list[Path],
+        *,
+        user: str = "poweruser1",
+        wait: bool = True,
+        wait_timeout_secs: int = 20,
+        activity: Optional[str] = None,
+        parallelism: int = 1,
+    ) -> PrepareRequests: ...
+
+    def retrieve_directory(
+        self,
+        disk_instance_name: str,
+        directory: Path,
+        *,
+        user: str = "poweruser1",
+        wait: bool = True,
+        wait_timeout_secs: int = 20,
+        activity: Optional[str] = None,
+        parallelism: int = 1,
+    ) -> PrepareRequests: ...
+
+    def abort_file(
+        self,
+        disk_instance_name: str,
+        request_id: str,
+        path: Path,
+        *,
+        user: str = "poweruser1",
+    ) -> None:
+        self.abort_files(disk_instance_name, [(request_id, path)], user=user)
+
+    def abort_files(
+        self,
+        disk_instance_name: str,
+        requests: Union[list[PrepareRequest], PrepareRequests],
+        *,
+        user: str = "poweruser1",
+        parallelism: int = 1,
     ) -> None: ...
 
     def evict_file(
@@ -237,8 +318,56 @@ class DiskClientHost(RemoteHost):
         user: str = "eosadmin1",
         wait: bool = True,
         wait_timeout_secs: int = 20,
+    ) -> None:
+        self.evict_files(
+            disk_instance_name,
+            [path],
+            user=user,
+            wait=wait,
+            wait_timeout_secs=wait_timeout_secs,
+        )
+
+    def evict_files(
+        self,
+        disk_instance_name: str,
+        paths: list[Path],
+        *,
+        user: str = "eosadmin1",
+        wait: bool = True,
+        wait_timeout_secs: int = 20,
+        parallelism: int = 1,
     ) -> None: ...
 
-    def delete_file(self, disk_instance_name: str, path: Path, *, user: str = "poweruser1") -> None: ...
+    def evict_directory(
+        self,
+        disk_instance_name: str,
+        directory: Path,
+        *,
+        user: str = "eosadmin1",
+        wait: bool = True,
+        wait_timeout_secs: int = 20,
+        parallelism: int = 1,
+    ) -> None: ...
+
+    def delete_file(self, disk_instance_name: str, path: Path, *, user: str = "poweruser1") -> None:
+        self.delete_files(disk_instance_name, [path], user=user)
+
+    def delete_files(
+        self,
+        disk_instance_name: str,
+        paths: list[Path],
+        *,
+        user: str = "poweruser1",
+        parallelism: int = 1,
+    ) -> None: ...
+
+    def delete_directory(
+        self,
+        disk_instance_name: str,
+        directory: Path,
+        *,
+        user: str = "poweruser1",
+        parallelism: int = 1,
+    ) -> None: ...
 
     def file_info(self, disk_instance_name: str, path: Path) -> str: ...
