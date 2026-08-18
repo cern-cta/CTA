@@ -827,7 +827,7 @@ def test_cta_admin_tape_file_ch(
                 )
 
             # Write FXIDs to the file passed to --fxidfile
-            fxids = " ".join(str(archive_file["fxid"]) for archive_file in archive_files)
+            fxids = " ".join(f"fid={archive_file['fxid']}" for archive_file in archive_files)
             cta_cli.exec(f"printf '%s\\n' {fxids} > {fxid_file}")
             fxid_file_created = True
 
