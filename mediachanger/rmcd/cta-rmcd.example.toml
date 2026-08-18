@@ -8,6 +8,29 @@
 ####################################################################################################
 
 
+[media_changer]
+  # The SCSI-compatible media changer device used by rmcd to control the tape library.
+  # Set this to the operating-system path of the device.
+  # If omitted, "/dev/smc" is used
+  device = "/dev/smc"
+
+
+# Configuration for the RMC protocol endpoint used by clients such as cta-taped.
+# This is separate from the optional health server configured below.
+[rmc_server]
+
+  # TCP port on which rmcd listens for RMC client connections.
+  # If omitted, 5014 is used.
+  port = 5014
+
+  # Network scope from which rmcd accepts RMC client connections.
+  # Use "loopback" to accept connections only from localhost, or "any" to accept connections
+  # from other hosts. The RMC protocol provides no authentication, so use "any" with extreme
+  # caution in production environments.
+  # If omitted, "loopback" is used
+  listen_scope = "loopback"
+
+
 [logging]
   # Logs with a level lower than the LogMask value will be masked. Possible values are EMERG, ALERT,
   # CRIT, ERR, WARNING, NOTICE (USERERR), INFO, DEBUG.
@@ -47,23 +70,3 @@
   # Note that if use_unix_domain_socket is enabled, the service  MUST be started --runtime-dir <runtime-dir> flag.
   # If omitted, false is used.
   use_unix_domain_socket = false
-
-
-[media_changer]
-  # Path to the media changer device.
-  device = "/dev/smc"
-
-
-[server]
-  # Listener port.
-  port = 5014
-
-  # By default, rmcd only accepts connections from localhost.
-  # Set to "any" for rmcd to accept connections outside localhost.
-  # Note that rmcd exposes a simple socket with no authentication.
-  # As such, be extremely careful when setting this to "any" in a production system.
-  listen_scope = "loopback"
-
-
-[experimental]
-  telemetry_enabled = false
