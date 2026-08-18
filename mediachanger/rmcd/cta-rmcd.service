@@ -16,8 +16,6 @@ RuntimeDirectoryMode=0750
 LogsDirectory=cta cta/old
 LogsDirectoryMode=0755
 
-EnvironmentFile=-/etc/sysconfig/cta-rmcd
-# The device argument is deployment-specific and must be set in the environment file.
 ExecStart=/usr/bin/cta-rmcd --config=/etc/cta/cta-rmcd.toml --config-strict --runtime-dir=/run/cta/rmcd --log-file=/var/log/cta/cta-rmcd.log
 
 LimitCORE=infinity

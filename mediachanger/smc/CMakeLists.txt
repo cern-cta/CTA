@@ -19,7 +19,7 @@ set(SMC_SRC_FILES
   smc.cpp)
 
 add_executable(cta-smc ${SMC_SRC_FILES})
-target_link_libraries(cta-smc ctarmc)
+target_link_libraries(cta-smc ctarmc ctacommon)
 install(TARGETS cta-smc DESTINATION /usr/bin)
 
 #

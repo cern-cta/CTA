@@ -36,6 +36,8 @@ int rmc_read_elem_status(const char* const server,
  */
 void rmc_seterrbuf(const char* const buffer, const int buflen);
 
+void rmc_set_port(const unsigned short port);
+
 int send2rmc(const char* const host,
              const char* const reqp,
              const int reql,
