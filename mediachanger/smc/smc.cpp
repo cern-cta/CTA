@@ -3,8 +3,10 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "common/runtime/config/ConfigLoader.hpp"
 #include "mediachanger/librmc/serrno.hpp"
 #include "mediachanger/librmc/spectra_like_libs.hpp"
+#include "mediachanger/rmcd/RmcdConfig.hpp"
 #include "mediachanger/rmcd/rbtsubr_constants.hpp"
 #include "mediachanger/rmcd/rmc_constants.hpp"
 #include "mediachanger/rmcd/smc_constants.hpp"
@@ -14,6 +16,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -536,6 +539,18 @@ int main(const int argc, char** argv) {
   if (errflg || req_type == 0) {
     smc_usage(argv[0]);
     exit(USERR);
+  }
+
+  if (const char* rmcPort = getenv("RMC_PORT")) {
+    rmc_set_port(static_cast<unsigned short>(atoi(rmcPort)));
+  } else {
+    try {
+      const auto rmcdConfig = cta::runtime::loadFromToml<cta::rmcd::RmcdConfig>("/etc/cta/cta-rmcd.toml");
+      rmc_set_port(static_cast<unsigned short>(rmcdConfig.rmc_server.port));
+    } catch (const std::exception& ex) {
+      std::cerr << "Failed to load rmcd configuration: " << ex.what() << std::endl;
+      exit(USERR);
+    }
   }
 
   /* get robot geometry */
