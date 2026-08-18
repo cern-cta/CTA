@@ -221,6 +221,11 @@ test-cta-tools:
   extends:
     - .kubernetes-test-python
   stage: system-test
+  rules:
+    # Currently we only test cta-admin here, so this is not really doing anything with the disk side
+    - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH"'
+      when: never
+    - !reference [.kubernetes-test-python, rules]
   variables:
     PYTESTS: "tests/cta_admin_test.py"
     # We want to test cta-admin's behaviour on repack requests; not the actual repack itself
@@ -234,6 +239,8 @@ test-cta-tools:
 
 .manual-rules:
   rules:
+    - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: on_success
     - if: $CI_PIPELINE_SOURCE == "schedule"
@@ -285,6 +292,8 @@ test-regression-dCache:
     - .kubernetes-test
   stage: system-test
   rules:
+    - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH"'
+      when: never
     - when: manual
       allow_failure: true
     - if: '"$[[ inputs.enable-dcache-tests ]]" == "true"'

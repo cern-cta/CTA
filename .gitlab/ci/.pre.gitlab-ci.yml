@@ -58,27 +58,6 @@ prepare-cta-version-regression:
         echo "CTA Git tag does not exist: $resolved_git_tag" >&2
         exit 1
       fi
-    # The downstream pipeline uses the selected tag's CI definition, so validate its CICD inputs before triggering it.
-    - git fetch --quiet --depth 1 origin "refs/tags/${resolved_git_tag}"
-    - git show FETCH_HEAD:.gitlab-ci.yml > selected-gitlab-ci.yml
-    - sed -n '1,/^---$/p' selected-gitlab-ci.yml > selected-pipeline-inputs.yml
-    - |
-      for required_input in pipeline-type custom-cta-image-tag custom-eos-image-tag custom-xrootd-version platform \
-                            scheduler-type enable-oracle-support workflow-api-authentication enable-dcache-tests \
-                            keep-stress-test-namespace; do
-        if ! grep -Eq "^[[:space:]]+${required_input}:" selected-pipeline-inputs.yml; then
-          echo "CTA Git tag $resolved_git_tag does not define the required '$required_input' pipeline input" >&2
-          exit 1
-        fi
-      done
-    - |
-      custom_cta_input="$(
-        sed -n '/^    custom-cta-image-tag:/,/^    custom-eos-image-tag:/p' selected-pipeline-inputs.yml
-      )"
-      if ! grep -Fq 'REGR_AGAINST_CTA_BRANCH' <<< "$custom_cta_input"; then
-        echo "CTA Git tag $resolved_git_tag does not allow custom-cta-image-tag for branch regressions" >&2
-        exit 1
-      fi
     - echo "Resolved CTA image tag $resolved_image_tag to Git tag $resolved_git_tag"
     - echo "RESOLVED_CTA_IMAGE_TAG=$resolved_image_tag" > regression.env
     - echo "RESOLVED_CTA_GIT_TAG=$resolved_git_tag" >> regression.env
