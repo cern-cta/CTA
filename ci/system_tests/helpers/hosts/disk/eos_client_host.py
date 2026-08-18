@@ -19,14 +19,14 @@ from .disk_client_host import DiskClientHost, PrepareRequest, PrepareRequests
 
 
 class EosClientHost(DiskClientHost):
-    def submit_retrieve_request(
+    def prepare_files(
         self,
         disk_instance_name: str,
         paths: list[Path],
         *,
         user: str = "poweruser1",
     ) -> ExecResult:
-        """Submit one CTA retrieve request containing all supplied paths."""
+        """Submit one XRootD PREPARE stage request containing all supplied paths."""
         path_arguments = " ".join(shlex.quote(str(path)) for path in paths)
         return self.exec(
             f"KRB5CCNAME=/tmp/{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 "
@@ -35,7 +35,7 @@ class EosClientHost(DiskClientHost):
             throw_on_failure=False,
         )
 
-    def query_retrieve_request(
+    def query_prepare(
         self,
         disk_instance_name: str,
         request_id: str,
@@ -43,7 +43,7 @@ class EosClientHost(DiskClientHost):
         *,
         user: str = "poweruser1",
     ) -> dict[str, Any]:
-        """Return EOS's per-path status for a CTA retrieve request."""
+        """Return EOS's per-path status for an XRootD PREPARE request."""
         path_arguments = " ".join(shlex.quote(str(path)) for path in paths)
         output = self.exec_with_output(
             f"KRB5CCNAME=/tmp/{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 "
@@ -51,7 +51,7 @@ class EosClientHost(DiskClientHost):
         )
         return json.loads(output)
 
-    def cancel_retrieve_request(
+    def abort_prepare(
         self,
         disk_instance_name: str,
         request_id: str,
@@ -59,7 +59,7 @@ class EosClientHost(DiskClientHost):
         *,
         user: str = "poweruser1",
     ) -> ExecResult:
-        """Cancel the supplied paths from a CTA retrieve request."""
+        """Abort the supplied paths from an XRootD PREPARE request."""
         path_arguments = " ".join(shlex.quote(str(path)) for path in paths)
         return self.exec(
             f"KRB5CCNAME=/tmp/{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 "
@@ -68,14 +68,14 @@ class EosClientHost(DiskClientHost):
             throw_on_failure=False,
         )
 
-    def request_eviction(
+    def evict_prepare(
         self,
         disk_instance_name: str,
         paths: list[Path],
         *,
         user: str = "poweruser1",
     ) -> ExecResult:
-        """Request eviction of the supplied paths through the XRootD client API."""
+        """Evict the supplied paths through an XRootD PREPARE request."""
         path_arguments = " ".join(shlex.quote(str(path)) for path in paths)
         return self.exec(
             f"KRB5CCNAME=/tmp/{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 "
