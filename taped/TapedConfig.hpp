@@ -51,9 +51,8 @@ struct MountsConfig final {
   int mount_timeout_secs = 600;
   int tape_load_timeout_secs = 300;
   int unmount_timeout_secs = 900;
-  RmcdConfig rmcd;
 
-  static constexpr std::size_t memberCount() { return 9; }
+  static constexpr std::size_t memberCount() { return 8; }
 };
 
 struct ArchiveTransferConfig final {
@@ -113,9 +112,10 @@ struct TapedConfig final {
 
   DriveConfig drive;
   MountsConfig mounts;
+  RmcdConfig rmcd;
   TransfersConfig transfers;
 
-  static constexpr std::size_t memberCount() { return 10; }
+  static constexpr std::size_t memberCount() { return 11; }
 };
 
 }  // namespace cta::tape::daemon

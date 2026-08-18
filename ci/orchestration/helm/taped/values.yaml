@@ -26,11 +26,12 @@ mounts:
   mountTimeoutSecs: 600
   tapeLoadTimeoutSecs: 300
   unmountTimeoutSecs: 900
-  rmcd:
-    host: "cta-rmcd" # Override with localhost if using host networking
-    port: 5014
-    requestTimeoutSecs: 600
-    requestAttempts: 10
+
+rmcd:
+  host: "cta-rmcd" # Override with localhost if using host networking
+  port: 5014
+  requestTimeoutSecs: 600
+  requestAttempts: 10
 
 transfers:
   bufferSizeBytes: 262144

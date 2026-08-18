@@ -962,10 +962,10 @@ void DriveHandler::puttingDriveDown(IScheduler* scheduler,
 
 cta::tape::daemon::Session::EndOfSessionAction DriveHandler::executeCleanerSession(cta::IScheduler* scheduler) const {
   // Mounting management.
-  cta::mediachanger::RmcProxy rmcProxy(m_tapedConfig.mounts.rmcd.host,
-                                       m_tapedConfig.mounts.rmcd.port,
-                                       m_tapedConfig.mounts.rmcd.request_timeout_secs,
-                                       m_tapedConfig.mounts.rmcd.request_attempts);
+  cta::mediachanger::RmcProxy rmcProxy(m_tapedConfig.rmcd.host,
+                                       m_tapedConfig.rmcd.port,
+                                       m_tapedConfig.rmcd.request_timeout_secs,
+                                       m_tapedConfig.rmcd.request_attempts);
   cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, m_lc.logger());
   cta::tape::System::realWrapper sWrapper;
   const auto cleanerSession =
@@ -1090,10 +1090,10 @@ DriveHandler::executeDataTransferSession(IScheduler* scheduler, tape::daemon::Ta
   dataTransferConfig.wdNoBlockMoveMaxSecs = m_tapedConfig.transfers.no_block_move_timeout_secs;
 
   // Mounting management.
-  cta::mediachanger::RmcProxy rmcProxy(m_tapedConfig.mounts.rmcd.host,
-                                       m_tapedConfig.mounts.rmcd.port,
-                                       m_tapedConfig.mounts.rmcd.request_timeout_secs,
-                                       m_tapedConfig.mounts.rmcd.request_attempts);
+  cta::mediachanger::RmcProxy rmcProxy(m_tapedConfig.rmcd.host,
+                                       m_tapedConfig.rmcd.port,
+                                       m_tapedConfig.rmcd.request_timeout_secs,
+                                       m_tapedConfig.rmcd.request_attempts);
   cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, m_lc.logger());
   cta::tape::System::realWrapper sWrapper;
 
