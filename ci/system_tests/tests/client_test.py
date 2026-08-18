@@ -40,26 +40,8 @@ class PrepareTestPaths:
     missing_dir: Path
 
 
-def _prepare_command(eos_client: EosClientHost, disk_instance_name: str, arguments: str) -> Any:
-    return eos_client.exec(
-        f"KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs {disk_instance_name} {arguments}",
-        capture_output=True,
-        throw_on_failure=False,
-    )
-
-
-def _query_prepare(
-    eos_client: EosClientHost, disk_instance_name: str, request_id: str, paths: list[Path]
-) -> dict[str, Any]:
-    path_arguments = " ".join(f"'{path}'" for path in paths)
-    output = eos_client.exec_with_output(
-        "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
-        f"xrdfs {disk_instance_name} query prepare '{request_id}' {path_arguments}"
-    )
-    return json.loads(output)
-
-
-def _prepare_response(response: dict[str, Any], path: Path) -> dict[str, Any]:
+def _response_for_path(response: dict[str, Any], path: Path) -> dict[str, Any]:
+    """Find the per-path result in a multi-file retrieve response."""
     return next(item for item in response["responses"] if item["path"] == str(path))
 
 
@@ -89,7 +71,7 @@ def _run_eosdf_test(eos_client: EosClientHost, cta_cli: CtaCliHost, disk_instanc
             eos_client.archive_file(disk_instance_name, file_path, source_path, wait=True)
 
         eos_client.retrieve_file(disk_instance_name, file_path)
-        result = _prepare_command(eos_client, disk_instance_name, f"prepare -e '{file_path}'")
+        result = eos_client.request_eviction(disk_instance_name, [file_path])
         assert result.success, result.stderr
     finally:
         cta_cli.exec(f"cta-admin ds rm -n '{disk_system}'", throw_on_failure=False)
@@ -283,7 +265,7 @@ def test_evict(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
     eos_client.exec(". /tmp/client_env && /tmp/test_evict.sh")
 
 
-def test_abort_prepare(
+def test_cancel_retrieve_requests(
     eos_client: EosClientHost,
     cta_cli: CtaCliHost,
     client_params: ClientParams,
@@ -296,7 +278,7 @@ def test_abort_prepare(
     archive_directories = eos_client.exec_with_output(f"eos root://{disk_instance_name} ls '{test_dir}'").splitlines()
     assert len(archive_directories) == 1, f"Expected one archive directory below {test_dir}: {archive_directories}"
     archive_directory = test_dir / archive_directories[0]
-    # Set all drives down to ensure requests stay in the queue and we have the opportunity to abort them
+    # Set all drives down to ensure requests stay in the queue and can be cancelled
     cta_cli.wait_for_drives_to_stop_transferring()
     cta_cli.set_all_drives_down()
 
@@ -316,7 +298,7 @@ def test_abort_prepare(
         time.sleep(1)
     assert cta_cli.retrieve_queue_file_count() == len(requests), "Not all retrieve requests were queued"
 
-    # Now abort all of them
+    # Cancel every queued retrieve request
     eos_client.abort_files(disk_instance_name, requests, parallelism=client_params.process_count)
 
     # CTA clears the cancelled requests when the retrieve queues are processed. Do not wait for UP here because the
@@ -345,15 +327,15 @@ def test_multiple_retrieve(
     eos_client.exec(f". /tmp/client_env && /tmp/test_multiple_retrieve.sh {test_dir}")
 
 
-class TestPrepare:
-    """Verify that PREPARE handles every path independently and idempotently.
+class TestRetrieveRequests:
+    """Verify that retrieve requests handle every path independently and idempotently.
 
-    A failing path must not affect valid paths in the same stage request, although stage returns an error when every
-    path fails. Query responses must identify failed paths through error_text. Abort and evict differ from stage: they
-    operate on every path but return an error if any individual path fails.
+    A failing path must not affect valid paths in the same retrieve request, although submission returns an error when
+    every path fails. Query responses must identify failed paths through error_text. Cancellation and eviction operate
+    on every path but return an error if any individual path fails.
     """
 
-    def test_prepare_existing_file(
+    def test_retrieve_existing_file(
         self,
         eos_client: EosClientHost,
         cta_cli: CtaCliHost,
@@ -362,11 +344,13 @@ class TestPrepare:
     ) -> None:
         # Keep the request in the queue so its query response can be inspected deterministically
         cta_cli.set_all_drives_down()
-        result = _prepare_command(eos_client, disk_instance_name, f"prepare -s '{prepare_test_paths.tape_file}'")
+        result = eos_client.submit_retrieve_request(disk_instance_name, [prepare_test_paths.tape_file])
         assert result.success, result.stderr
         # A valid tape file must be represented as an active request without an error
-        response = _prepare_response(
-            _query_prepare(eos_client, disk_instance_name, result.stdout.strip(), [prepare_test_paths.tape_file]),
+        response = _response_for_path(
+            eos_client.query_retrieve_request(
+                disk_instance_name, result.stdout.strip(), [prepare_test_paths.tape_file]
+            ),
             prepare_test_paths.tape_file,
         )
         assert response == {
@@ -377,16 +361,16 @@ class TestPrepare:
             "error_text": "",
         }
 
-    def test_prepare_missing_file_fails(
+    def test_retrieve_missing_file_fails(
         self, eos_client: EosClientHost, disk_instance_name: str, prepare_test_paths: PrepareTestPaths
     ) -> None:
         # A request containing only a nonexistent path must fail immediately
         missing_file = prepare_test_paths.missing_dir / str(uuid.uuid4())
-        result = _prepare_command(eos_client, disk_instance_name, f"prepare -s '{missing_file}'")
+        result = eos_client.submit_retrieve_request(disk_instance_name, [missing_file])
         assert not result.success
 
     @pytest.mark.parametrize("all_forbidden", [False, True], ids=["one-of-two", "all"])
-    def test_prepare_without_permission(
+    def test_retrieve_without_permission(
         self,
         eos_client: EosClientHost,
         cta_cli: CtaCliHost,
@@ -394,7 +378,7 @@ class TestPrepare:
         prepare_test_paths: PrepareTestPaths,
         all_forbidden: bool,
     ) -> None:
-        # Create files whose ACL permits access but explicitly denies prepare requests
+        # Create files whose ACL permits access but explicitly denies retrieve requests
         if not all_forbidden:
             cta_cli.set_all_drives_down()
         forbidden_files = [
@@ -404,22 +388,20 @@ class TestPrepare:
             eos_client.exec(f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp /etc/group root://{disk_instance_name}/{path}")
         # A mixed request succeeds overall, while a request with no valid path fails
         paths = forbidden_files if all_forbidden else [prepare_test_paths.tape_file, forbidden_files[0]]
-        result = _prepare_command(
-            eos_client, disk_instance_name, "prepare -s " + " ".join(f"'{path}'" for path in paths)
-        )
+        result = eos_client.submit_retrieve_request(disk_instance_name, paths)
         assert result.success is not all_forbidden
         # Query the mixed request to ensure the forbidden path did not affect the valid one
         if not all_forbidden:
-            response = _query_prepare(eos_client, disk_instance_name, result.stdout.strip(), paths)
-            failed = _prepare_response(response, forbidden_files[0])
-            valid = _prepare_response(response, prepare_test_paths.tape_file)
+            response = eos_client.query_retrieve_request(disk_instance_name, result.stdout.strip(), paths)
+            failed = _response_for_path(response, forbidden_files[0])
+            valid = _response_for_path(response, prepare_test_paths.tape_file)
             assert failed["path_exists"] is True
             assert failed["requested"] is False
             assert failed["has_reqid"] is False
             assert failed["error_text"]
             assert valid["error_text"] == ""
 
-    def test_prepare_with_valid_and_missing_file(
+    def test_retrieve_with_valid_and_missing_file(
         self,
         eos_client: EosClientHost,
         cta_cli: CtaCliHost,
@@ -430,37 +412,31 @@ class TestPrepare:
         cta_cli.set_all_drives_down()
         missing_file = prepare_test_paths.missing_dir / str(uuid.uuid4())
         paths = [prepare_test_paths.tape_file, missing_file]
-        result = _prepare_command(
-            eos_client, disk_instance_name, "prepare -s " + " ".join(f"'{path}'" for path in paths)
-        )
+        result = eos_client.submit_retrieve_request(disk_instance_name, paths)
         assert result.success
 
         # The missing path reports its own failure without affecting the valid path
-        response = _query_prepare(eos_client, disk_instance_name, result.stdout.strip(), paths)
-        failed = _prepare_response(response, missing_file)
-        valid = _prepare_response(response, prepare_test_paths.tape_file)
+        response = eos_client.query_retrieve_request(disk_instance_name, result.stdout.strip(), paths)
+        failed = _response_for_path(response, missing_file)
+        valid = _response_for_path(response, prepare_test_paths.tape_file)
         assert failed["path_exists"] is False
         assert failed["requested"] is False
         assert failed["has_reqid"] is False
         assert failed["error_text"]
         assert valid["error_text"] == ""
 
-    def test_prepare_with_only_missing_files(
+    def test_retrieve_with_only_missing_files(
         self,
         eos_client: EosClientHost,
         disk_instance_name: str,
         prepare_test_paths: PrepareTestPaths,
     ) -> None:
-        # A stage request containing no valid paths must fail outright
+        # A retrieve request containing no valid paths must fail outright
         missing_files = [prepare_test_paths.missing_dir / str(uuid.uuid4()) for _ in range(2)]
-        result = _prepare_command(
-            eos_client,
-            disk_instance_name,
-            "prepare -s " + " ".join(f"'{path}'" for path in missing_files),
-        )
+        result = eos_client.submit_retrieve_request(disk_instance_name, missing_files)
         assert not result.success
 
-    def test_prepare_multiple_file_response(
+    def test_retrieve_multiple_file_response(
         self,
         eos_client: EosClientHost,
         cta_cli: CtaCliHost,
@@ -488,19 +464,19 @@ class TestPrepare:
             eos_client.exec(f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp /etc/group root://{disk_instance_name}/{path}")
         paths = tape_files + forbidden_files + missing_files
         # Submit all path categories together and validate every response entry
-        result = _prepare_command(eos_client, disk_instance_name, "prepare -s " + " ".join(map(str, paths)))
+        result = eos_client.submit_retrieve_request(disk_instance_name, paths)
         assert result.success
         assert result.stdout.strip()
         assert not result.stdout.strip().isspace()
-        response = _query_prepare(eos_client, disk_instance_name, result.stdout.strip(), paths)
+        response = eos_client.query_retrieve_request(disk_instance_name, result.stdout.strip(), paths)
         assert len(response["responses"]) == len(paths)
-        assert all(_prepare_response(response, path)["path_exists"] for path in tape_files + forbidden_files)
-        assert all(_prepare_response(response, path)["error_text"] == "" for path in tape_files)
-        assert all(_prepare_response(response, path)["error_text"] for path in forbidden_files + missing_files)
-        assert all(not _prepare_response(response, path)["path_exists"] for path in missing_files)
+        assert all(_response_for_path(response, path)["path_exists"] for path in tape_files + forbidden_files)
+        assert all(_response_for_path(response, path)["error_text"] == "" for path in tape_files)
+        assert all(_response_for_path(response, path)["error_text"] for path in forbidden_files + missing_files)
+        assert all(not _response_for_path(response, path)["path_exists"] for path in missing_files)
 
     @pytest.mark.parametrize("include_missing", [False, True], ids=["success", "partial-failure"])
-    def test_prepare_abort(
+    def test_cancel_retrieve_request(
         self,
         eos_client: EosClientHost,
         cta_cli: CtaCliHost,
@@ -508,22 +484,24 @@ class TestPrepare:
         prepare_test_paths: PrepareTestPaths,
         include_missing: bool,
     ) -> None:
-        # Queue a valid stage request, optionally aborting it alongside a missing path
+        # Queue a valid retrieve request, optionally cancelling it alongside a missing path
         cta_cli.set_all_drives_down()
-        stage = _prepare_command(eos_client, disk_instance_name, f"prepare -s '{prepare_test_paths.tape_file}'")
-        assert stage.success
+        retrieve = eos_client.submit_retrieve_request(disk_instance_name, [prepare_test_paths.tape_file])
+        assert retrieve.success
         paths = [prepare_test_paths.tape_file]
         if include_missing:
             paths.append(prepare_test_paths.missing_dir / str(uuid.uuid4()))
-        abort = _prepare_command(
-            eos_client,
+        cancellation = eos_client.cancel_retrieve_request(
             disk_instance_name,
-            f"prepare -a '{stage.stdout.strip()}' " + " ".join(f"'{path}'" for path in paths),
+            retrieve.stdout.strip(),
+            paths,
         )
-        assert abort.success is not include_missing
+        assert cancellation.success is not include_missing
         # The valid path must be cancelled even when another path makes the command fail
-        response = _prepare_response(
-            _query_prepare(eos_client, disk_instance_name, stage.stdout.strip(), [prepare_test_paths.tape_file]),
+        response = _response_for_path(
+            eos_client.query_retrieve_request(
+                disk_instance_name, retrieve.stdout.strip(), [prepare_test_paths.tape_file]
+            ),
             prepare_test_paths.tape_file,
         )
         assert response["path_exists"] is True
@@ -532,7 +510,7 @@ class TestPrepare:
         assert response["error_text"] == ""
 
     @pytest.mark.parametrize("include_missing", [False, True], ids=["success", "partial-failure"])
-    def test_prepare_evict(
+    def test_retrieve_request_eviction(
         self,
         eos_client: EosClientHost,
         cta_cli: CtaCliHost,
@@ -550,9 +528,7 @@ class TestPrepare:
         if include_missing:
             paths.append(test_dir / "none" / str(uuid.uuid4()))
         # A missing companion path changes the command status but must not block the valid eviction
-        result = _prepare_command(
-            eos_client, disk_instance_name, "prepare -e " + " ".join(f"'{path}'" for path in paths)
-        )
+        result = eos_client.request_eviction(disk_instance_name, paths)
         assert result.success is not include_missing
         eos_client.wait_for_file_eviction(disk_instance_name, file_path)
 
@@ -652,7 +628,7 @@ class TestEosEvict:
 
         # Three retrieve requests should produce one disk replica with an eviction counter of three
         for _ in range(3):
-            result = _prepare_command(eos_client, disk_instance_name, f"prepare -s '{file_path}'")
+            result = eos_client.submit_retrieve_request(disk_instance_name, [file_path])
             assert result.success
         eos_client.wait_for_file_retrieval(disk_instance_name, file_path)
 

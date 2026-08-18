@@ -3,13 +3,14 @@
 
 
 import asyncio
+import json
 import shlex
 import time
 import uuid
 from collections.abc import Iterator
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, Union
+from typing import Any, Optional, Union
 
 from typing_extensions import override
 
@@ -18,6 +19,71 @@ from .disk_client_host import DiskClientHost, PrepareRequest, PrepareRequests
 
 
 class EosClientHost(DiskClientHost):
+    def submit_retrieve_request(
+        self,
+        disk_instance_name: str,
+        paths: list[Path],
+        *,
+        user: str = "poweruser1",
+    ) -> ExecResult:
+        """Submit one CTA retrieve request containing all supplied paths."""
+        path_arguments = " ".join(shlex.quote(str(path)) for path in paths)
+        return self.exec(
+            f"KRB5CCNAME=/tmp/{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 "
+            f"xrdfs {shlex.quote(disk_instance_name)} prepare -s {path_arguments}",
+            capture_output=True,
+            throw_on_failure=False,
+        )
+
+    def query_retrieve_request(
+        self,
+        disk_instance_name: str,
+        request_id: str,
+        paths: list[Path],
+        *,
+        user: str = "poweruser1",
+    ) -> dict[str, Any]:
+        """Return EOS's per-path status for a CTA retrieve request."""
+        path_arguments = " ".join(shlex.quote(str(path)) for path in paths)
+        output = self.exec_with_output(
+            f"KRB5CCNAME=/tmp/{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 "
+            f"xrdfs {shlex.quote(disk_instance_name)} query prepare {shlex.quote(request_id)} {path_arguments}"
+        )
+        return json.loads(output)
+
+    def cancel_retrieve_request(
+        self,
+        disk_instance_name: str,
+        request_id: str,
+        paths: list[Path],
+        *,
+        user: str = "poweruser1",
+    ) -> ExecResult:
+        """Cancel the supplied paths from a CTA retrieve request."""
+        path_arguments = " ".join(shlex.quote(str(path)) for path in paths)
+        return self.exec(
+            f"KRB5CCNAME=/tmp/{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 "
+            f"xrdfs {shlex.quote(disk_instance_name)} prepare -a {shlex.quote(request_id)} {path_arguments}",
+            capture_output=True,
+            throw_on_failure=False,
+        )
+
+    def request_eviction(
+        self,
+        disk_instance_name: str,
+        paths: list[Path],
+        *,
+        user: str = "poweruser1",
+    ) -> ExecResult:
+        """Request eviction of the supplied paths through the XRootD client API."""
+        path_arguments = " ".join(shlex.quote(str(path)) for path in paths)
+        return self.exec(
+            f"KRB5CCNAME=/tmp/{shlex.quote(user)}/krb5cc_0 XrdSecPROTOCOL=krb5 "
+            f"xrdfs {shlex.quote(disk_instance_name)} prepare -e {path_arguments}",
+            capture_output=True,
+            throw_on_failure=False,
+        )
+
     def __init__(self, conn: RemoteConnection) -> None:
         super().__init__(conn)
 
