@@ -131,14 +131,14 @@ def prepare_test_paths(
 #  Tests
 # =========================================================================
 
-# For now only the "glue" has been migrated to Python. Most of the scripts invoked in the tests below still need to be
-# migrated at a later point in time
 # Some scripts probably deserve to be their own test module instead of cramming everything in this file
 
 
 def test_setup_client(
     eos_client: EosClientHost, client_params: ClientParams, test_dir: Path, remote_scripts_dir: Path
 ) -> None:
+    # Install the shared client scripts before generating the archive/retrieve test data
+    # This should eventually be removed once all those scripts have been migrated to python
     eos_client.copy_to(remote_scripts_dir / "eos_client" / "client_setup.sh", Path("/tmp"), permissions="+x")
     eos_client.copy_to(remote_scripts_dir / "eos_client" / "client_helper.sh", Path("/tmp"), permissions="+x")
     eos_client.copy_to(remote_scripts_dir / "eos_client" / "cli_calls.sh", Path("/tmp"), permissions="+x")
@@ -162,8 +162,6 @@ def test_setup_client(
 # invalid check:
 # [ ~]# xrdfs root://ctaeos.toto.svc.cluster.local:1095 query config tpc
 # tpc
-
-
 def test_eos_xrootd_third_party_copy_capabilities(eos_mgm: EosMgmHost, disk_instance_name: str) -> None:
     """Verifies that all online EOS FST nodes have xrootd TPC capabilities enabled."""
     del disk_instance_name  # This fixture ensures that a disk instance is available.
@@ -241,6 +239,7 @@ def test_simple_archive_retrieve(
     test_dir: Path,
     disk_instance_name: str,
 ) -> None:
+    # Archive a fresh file and inspect its initial tape-backed state
     cta_cli.set_all_drives_up()
     file_path = test_dir / "test_simple_archive_retrieve"
     file_path = eos_client.generate_and_archive_file(
@@ -249,6 +248,7 @@ def test_simple_archive_retrieve(
     print("Information about the archived testing file:")
     print(eos_client.file_info(disk_instance_name, file_path))
 
+    # Recall the file to disk, then evict its disk replica again.
     eos_client.retrieve_file(disk_instance_name, file_path, wait=True)
     print("Information about the retrieved testing file:")
     print(eos_client.file_info(disk_instance_name, file_path))
@@ -258,10 +258,12 @@ def test_simple_archive_retrieve(
     print("Information about the evicted testing file:")
     print(eos_client.file_info(disk_instance_name, file_path))
 
+    # Remove the namespace entry once the full lifecycle has been exercised
     eos_client.delete_file(disk_instance_name, file_path)
 
 
 def test_archive(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
+    # Run a bulk archive
     eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_archive.sh", Path("/tmp"), permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
     # TODO: replace by something more deterministic. Is this even necessary?
@@ -270,11 +272,13 @@ def test_archive(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
 
 
 def test_retrieve(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
+    # Recall the files created by test_archive
     eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_retrieve.sh", Path("/tmp"), permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_retrieve.sh")
 
 
 def test_evict(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
+    # Evict the recalled files from test_retrieve
     eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_evict.sh", Path("/tmp"), permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_evict.sh")
 
@@ -334,7 +338,8 @@ def test_abort_prepare(
 def test_multiple_retrieve(
     cta_cli: CtaCliHost, eos_client: EosClientHost, test_dir: Path, remote_scripts_dir: Path
 ) -> None:
-    # Maybe it makes sense to somehow encode pre and post conditions of these tests?
+    # Restore the drives before doing concurrent retrieve
+    # Assumes test_evict ran before this as this is the directory it's operating on
     cta_cli.set_all_drives_up()
     eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_multiple_retrieve.sh", Path("/tmp"), permissions="+x")
     eos_client.exec(f". /tmp/client_env && /tmp/test_multiple_retrieve.sh {test_dir}")
@@ -355,9 +360,11 @@ class TestPrepare:
         disk_instance_name: str,
         prepare_test_paths: PrepareTestPaths,
     ) -> None:
+        # Keep the request in the queue so its query response can be inspected deterministically
         cta_cli.set_all_drives_down()
         result = _prepare_command(eos_client, disk_instance_name, f"prepare -s '{prepare_test_paths.tape_file}'")
         assert result.success, result.stderr
+        # A valid tape file must be represented as an active request without an error
         response = _prepare_response(
             _query_prepare(eos_client, disk_instance_name, result.stdout.strip(), [prepare_test_paths.tape_file]),
             prepare_test_paths.tape_file,
@@ -373,6 +380,7 @@ class TestPrepare:
     def test_prepare_missing_file_fails(
         self, eos_client: EosClientHost, disk_instance_name: str, prepare_test_paths: PrepareTestPaths
     ) -> None:
+        # A request containing only a nonexistent path must fail immediately
         missing_file = prepare_test_paths.missing_dir / str(uuid.uuid4())
         result = _prepare_command(eos_client, disk_instance_name, f"prepare -s '{missing_file}'")
         assert not result.success
@@ -386,6 +394,7 @@ class TestPrepare:
         prepare_test_paths: PrepareTestPaths,
         all_forbidden: bool,
     ) -> None:
+        # Create files whose ACL permits access but explicitly denies prepare requests
         if not all_forbidden:
             cta_cli.set_all_drives_down()
         forbidden_files = [
@@ -393,11 +402,13 @@ class TestPrepare:
         ]
         for path in forbidden_files:
             eos_client.exec(f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp /etc/group root://{disk_instance_name}/{path}")
+        # A mixed request succeeds overall, while a request with no valid path fails
         paths = forbidden_files if all_forbidden else [prepare_test_paths.tape_file, forbidden_files[0]]
         result = _prepare_command(
             eos_client, disk_instance_name, "prepare -s " + " ".join(f"'{path}'" for path in paths)
         )
         assert result.success is not all_forbidden
+        # Query the mixed request to ensure the forbidden path did not affect the valid one
         if not all_forbidden:
             response = _query_prepare(eos_client, disk_instance_name, result.stdout.strip(), paths)
             failed = _prepare_response(response, forbidden_files[0])
@@ -408,32 +419,46 @@ class TestPrepare:
             assert failed["error_text"]
             assert valid["error_text"] == ""
 
-    @pytest.mark.parametrize("all_missing", [False, True], ids=["one-of-two", "all"])
-    def test_prepare_with_missing_files(
+    def test_prepare_with_valid_and_missing_file(
         self,
         eos_client: EosClientHost,
         cta_cli: CtaCliHost,
         disk_instance_name: str,
         prepare_test_paths: PrepareTestPaths,
-        all_missing: bool,
     ) -> None:
-        if not all_missing:
-            cta_cli.set_all_drives_down()
-        missing_files = [prepare_test_paths.missing_dir / str(uuid.uuid4()) for _ in range(2 if all_missing else 1)]
-        paths = missing_files if all_missing else [prepare_test_paths.tape_file, missing_files[0]]
+        # Combine a valid tape file with a missing path and keep the valid request queued for inspection
+        cta_cli.set_all_drives_down()
+        missing_file = prepare_test_paths.missing_dir / str(uuid.uuid4())
+        paths = [prepare_test_paths.tape_file, missing_file]
         result = _prepare_command(
             eos_client, disk_instance_name, "prepare -s " + " ".join(f"'{path}'" for path in paths)
         )
-        assert result.success is not all_missing
-        if not all_missing:
-            response = _query_prepare(eos_client, disk_instance_name, result.stdout.strip(), paths)
-            failed = _prepare_response(response, missing_files[0])
-            valid = _prepare_response(response, prepare_test_paths.tape_file)
-            assert failed["path_exists"] is False
-            assert failed["requested"] is False
-            assert failed["has_reqid"] is False
-            assert failed["error_text"]
-            assert valid["error_text"] == ""
+        assert result.success
+
+        # The missing path reports its own failure without affecting the valid path
+        response = _query_prepare(eos_client, disk_instance_name, result.stdout.strip(), paths)
+        failed = _prepare_response(response, missing_file)
+        valid = _prepare_response(response, prepare_test_paths.tape_file)
+        assert failed["path_exists"] is False
+        assert failed["requested"] is False
+        assert failed["has_reqid"] is False
+        assert failed["error_text"]
+        assert valid["error_text"] == ""
+
+    def test_prepare_with_only_missing_files(
+        self,
+        eos_client: EosClientHost,
+        disk_instance_name: str,
+        prepare_test_paths: PrepareTestPaths,
+    ) -> None:
+        # A stage request containing no valid paths must fail outright
+        missing_files = [prepare_test_paths.missing_dir / str(uuid.uuid4()) for _ in range(2)]
+        result = _prepare_command(
+            eos_client,
+            disk_instance_name,
+            "prepare -s " + " ".join(f"'{path}'" for path in missing_files),
+        )
+        assert not result.success
 
     def test_prepare_multiple_file_response(
         self,
@@ -442,6 +467,7 @@ class TestPrepare:
         disk_instance_name: str,
         prepare_test_paths: PrepareTestPaths,
     ) -> None:
+        # Create enough tape, forbidden, and missing files to exercise a heterogeneous response
         tape_files = [prepare_test_paths.tape_file]
         cta_cli.set_all_drives_up()
         tape_files.extend(
@@ -461,6 +487,7 @@ class TestPrepare:
         for path in forbidden_files:
             eos_client.exec(f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp /etc/group root://{disk_instance_name}/{path}")
         paths = tape_files + forbidden_files + missing_files
+        # Submit all path categories together and validate every response entry
         result = _prepare_command(eos_client, disk_instance_name, "prepare -s " + " ".join(map(str, paths)))
         assert result.success
         assert result.stdout.strip()
@@ -481,6 +508,7 @@ class TestPrepare:
         prepare_test_paths: PrepareTestPaths,
         include_missing: bool,
     ) -> None:
+        # Queue a valid stage request, optionally aborting it alongside a missing path
         cta_cli.set_all_drives_down()
         stage = _prepare_command(eos_client, disk_instance_name, f"prepare -s '{prepare_test_paths.tape_file}'")
         assert stage.success
@@ -493,6 +521,7 @@ class TestPrepare:
             f"prepare -a '{stage.stdout.strip()}' " + " ".join(f"'{path}'" for path in paths),
         )
         assert abort.success is not include_missing
+        # The valid path must be cancelled even when another path makes the command fail
         response = _prepare_response(
             _query_prepare(eos_client, disk_instance_name, stage.stdout.strip(), [prepare_test_paths.tape_file]),
             prepare_test_paths.tape_file,
@@ -511,6 +540,7 @@ class TestPrepare:
         test_dir: Path,
         include_missing: bool,
     ) -> None:
+        # Put a freshly archived file on disk before requesting its eviction
         cta_cli.set_all_drives_up()
         file_path = eos_client.generate_and_archive_file(
             disk_instance_name, test_dir / "prepare_evict", append_uid=True
@@ -519,6 +549,7 @@ class TestPrepare:
         paths = [file_path]
         if include_missing:
             paths.append(test_dir / "none" / str(uuid.uuid4()))
+        # A missing companion path changes the command status but must not block the valid eviction
         result = _prepare_command(
             eos_client, disk_instance_name, "prepare -e " + " ".join(f"'{path}'" for path in paths)
         )
@@ -533,30 +564,34 @@ def test_delete_on_closew_error(eos_client: EosClientHost, disk_instance_name: s
     test_file = test_directory / str(uuid.uuid4())
     eos_admin = f"KRB5CCNAME=/tmp/eosadmin1/krb5cc_0 eos -r 0 0 root://{disk_instance_name}"
 
-    # The storage class 'fail_on_closew_test' attribute causes the 'delete-on-close'
-    #   event to be automatically triggered when a file is written to that directory.
-    # This can be used to test the 'delete-on-close' event.
+    # Configure a storage class that makes the CLOSEW workflow fail before CTA queues an archive request
+    eos_client.exec(f"{eos_admin} rm -rf '{test_directory}'", throw_on_failure=False)
     eos_client.exec(f"{eos_admin} mkdir '{test_directory}'")
-    eos_client.exec(f"{eos_admin} attr set sys.archive.storage_class=fail_on_closew_test '{test_directory}'")
-    copy_result = eos_client.exec(
-        f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp /etc/group root://{disk_instance_name}/{test_file}",
-        capture_output=True,
-        throw_on_failure=False,
-    )
-    assert not copy_result.success, "xrdcp succeeded despite the CLOSEW workflow error"
+    try:
+        eos_client.exec(f"{eos_admin} attr set sys.archive.storage_class=fail_on_closew_test '{test_directory}'")
 
-    # Since CTA Frontend will fail on CLOSEW, EOS should delete the file
-    # Check that the EOS namespace entry has been removed
-    # This means all replicas are deleted from tape and disks
-    file_info = eos_client.exec(
-        f"eos root://{disk_instance_name} fileinfo '{test_file}'",
-        capture_output=True,
-        throw_on_failure=False,
-    )
-    assert not file_info.success, "EOS namespace entry is still present after the CLOSEW workflow error"
+        # Writing the file must fail and trigger EOS's delete-on-close handling
+        copy_result = eos_client.exec(
+            f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp /etc/group root://{disk_instance_name}/{test_file}",
+            capture_output=True,
+            throw_on_failure=False,
+        )
+        assert not copy_result.success, "xrdcp succeeded despite the CLOSEW workflow error"
+
+        # Exit status 2 specifically means that EOS removed the namespace entry; other failures must not pass the test
+        file_info_status = eos_client.exec_with_output(
+            f"eos root://{disk_instance_name} fileinfo '{test_file}' >/dev/null 2>&1; printf '%s' $?"
+        )
+        assert file_info_status == "2", (
+            f"Expected EOS fileinfo to report a missing namespace entry (exit 2), got {file_info_status}"
+        )
+    finally:
+        # Keep reruns independent even when an assertion above fails
+        eos_client.exec(f"{eos_admin} rm -rf '{test_directory}'", throw_on_failure=False)
 
 
 def test_archive_zero_length_file(eos_client: EosClientHost, disk_instance_name: str, test_dir: Path) -> None:
+    # Create an empty source and attempt to archive it
     source_path = Path(f"/tmp/empty_file_{uuid.uuid4().hex}")
     destination_path = test_dir / source_path.name
     eos_client.exec(f"truncate -s 0 '{source_path}'")
@@ -565,6 +600,7 @@ def test_archive_zero_length_file(eos_client: EosClientHost, disk_instance_name:
         capture_output=True,
         throw_on_failure=False,
     )
+    # Verify both that the copy failed and that it reached the expected zero-length validation
     assert not result.success, "Archiving a zero-length file unexpectedly succeeded"
     error_output = result.stdout + result.stderr
     assert "0-length" in error_output.lower(), f"Unexpected xrdcp error: {error_output}"
@@ -578,7 +614,7 @@ class TestEosEvict:
         file_path = test_dir / f"eos_evict_{uuid.uuid4().hex}"
         cta_cli.set_all_drives_down()
 
-        # Write a file for archival and discover the FSID of its disk replica.
+        # Write a file for archival and discover the FSID of its disk replica
         eos_client.archive_file(disk_instance_name, file_path, Path("/etc/group"), wait=False)
         file_info = json.loads(
             eos_client.exec_with_output(
@@ -724,11 +760,12 @@ def test_eos_timestamps_correctness(eos_client: EosClientHost, disk_instance_nam
             timestamps[name] = match.group(1).strip()
         return timestamps["Modify"], timestamps["Birth"]
 
-    # Modify and birth timestamps must remain stable across tape operations. The change timestamp is allowed to change.
+    # Modify and birth timestamps must remain stable across tape operations. The change timestamp is allowed to change
     file_path = test_dir / f"test_eos_timestamps_{uuid.uuid4().hex}"
     eos_client.archive_file(disk_instance_name, file_path, Path("/etc/group"), wait=False)
     timestamps_before_archive = persistent_timestamps(eos_client.file_info(disk_instance_name, file_path))
 
+    # Compare the persistent timestamps after archive, retrieve, and eviction transitions
     eos_client.wait_for_file_archival(disk_instance_name, file_path)
     assert persistent_timestamps(eos_client.file_info(disk_instance_name, file_path)) == timestamps_before_archive
 
@@ -757,7 +794,7 @@ class TestEosdf:
         test_dir: Path,
         cta_taped: CtaTapedHost,
     ) -> None:
-        # Ensure that whatever drive we are checking is the one doing the archiving
+        # Restrict work to a single known drive to ensure we can reliably inspect its logs
         cta_cli.set_all_drives_down()
         cta_cli.set_drive_up(cta_taped.drive_name)
         _run_eosdf_test(eos_client, cta_cli, disk_instance_name, test_dir)
@@ -773,6 +810,7 @@ class TestEosdf:
         disk_instance_name: str,
         test_dir: Path,
     ) -> None:
+        # Temporarily hide the probe script, then verify retrieval continues and the failure is logged
         cta_taped.exec("sudo mv /usr/bin/cta-eosdf.sh /usr/bin/eosdf_newname.sh")
         try:
             _run_eosdf_test(eos_client, cta_cli, disk_instance_name, test_dir)
@@ -788,6 +826,7 @@ class TestEosdf:
         disk_instance_name: str,
         test_dir: Path,
     ) -> None:
+        # Make the probe non-executable, then verify retrieval still succeeds with a diagnostic
         cta_taped.exec("chmod -x /usr/bin/cta-eosdf.sh")
         try:
             _run_eosdf_test(eos_client, cta_cli, disk_instance_name, test_dir)
@@ -807,6 +846,7 @@ class TestEosdf:
         disk_instance_name: str,
         test_dir: Path,
     ) -> None:
+        # Point the probe at an unreachable EOS instance to exercise its runtime-error fallback
         cta_taped.exec("sudo sed -i 's|root://$diskInstance|root://nonexistentinstance|g' /usr/bin/cta-eosdf.sh")
         try:
             _run_eosdf_test(eos_client, cta_cli, disk_instance_name, test_dir)
@@ -839,6 +879,7 @@ def test_retrieve_queue_cleanup(
     assert len(non_full_tapes) >= 3
     vo_name = "vo"  # get this from somewhere?
 
+    # Build storage classes with one, two, and three tape copies and matching archive routes.
     tp_names = [f"tp_{i + 1}_copy" for i in range(nb_copies)]
     for i, tp_name in enumerate(tp_names):
         copynb = i + 1
@@ -859,7 +900,7 @@ def test_retrieve_queue_cleanup(
                 f"{j + 1} -m 'Add temp archive route'"
             )
 
-    # The actual test
+    # Exercise cleanup of the retrieve queues
     eos_client.exec(f". /tmp/client_env && /tmp/test_retrieve_queue_cleanup.sh {test_dir}")
 
 
@@ -868,6 +909,7 @@ def test_retrieve_queue_cleanup(
 
 class TestRuntimeDeployment:
     def test_taped_config_dr_ls_consistency(self, cta_cli: CtaCliHost, cta_taped: CtaTapedHost) -> None:
+        # Load the on-disk taped configuration and its catalogue representation
         taped_config = cta_taped.exec_with_output("cat /etc/cta/cta-taped.conf")
         drive_json = cta_cli.exec_with_output("cta-admin --json dr ls")
         entries = [e for e in json.loads(drive_json) if e.get("driveName") == cta_taped.drive_name]
@@ -880,6 +922,7 @@ class TestRuntimeDeployment:
         # For now just skip them
         key_skip_list = ["MountCriteria"]
 
+        # Every relevant configuration entry must be reflected in the registered drive
         for line in taped_config.splitlines():
             stripped_line = line.strip()
             if not stripped_line or stripped_line.startswith("#"):
@@ -902,6 +945,7 @@ class TestRuntimeDeployment:
         ],
     )
     def test_example_config_file_correctness(self, request: SubRequest, daemon_fixture: str):
+        # Ask each runtime-based daemon to strictly validate its packaged example configuration
         daemon = request.getfixturevalue(daemon_fixture)
         config_path = f"/etc/cta/cta-{daemon.process_name}.example.toml"
         daemon.exec(f"cta-{daemon.process_name} --config-strict --config {config_path} --config-check")
@@ -913,6 +957,7 @@ class TestRuntimeDeployment:
         ],
     )
     def test_runtime_directory_correctness(self, request: SubRequest, daemon_fixture: str):
+        # Compare deployed inputs with their runtime copies and verify the generated service metadata
         daemon = request.getfixturevalue(daemon_fixture)
         daemon.exec(f"comm /etc/cta/cta-{daemon.process_name}.toml /run/cta/config.toml -3")
         daemon.exec("comm /etc/cta/cta-catalogue.conf /run/cta/catalogue.config_file -3")
@@ -926,6 +971,7 @@ class TestRuntimeDeployment:
         ],
     )
     def test_reopens_logfile_on_sighup(self, request: SubRequest, daemon_fixture: str):
+        # Record the daemon's current log descriptor before simulating log rotation
         daemon = request.getfixturevalue(daemon_fixture)
 
         log_file = daemon.log_file_path
@@ -956,6 +1002,7 @@ class TestRuntimeDeployment:
                 break
             time.sleep(sleep_time_sec)
 
+        # The descriptor must eventually refer to the replacement file's inode
         assert current_inode == new_inode
 
     # Should be deleted once taped uses the new runtime library
@@ -964,6 +1011,7 @@ class TestRuntimeDeployment:
         cta_taped.exec("sudo bash /tmp/test_refresh_log_fd.sh")
 
     def test_log_schema_correctness(self, env: TestEnv, tmp_path: Path, cta_maintd: CtaMaintdHost) -> None:
+        # Collect the schema and logs from every CTA service that participates in this deployment
         hosts = [*env.cta_admin_api, *env.cta_workflow_api, *env.cta_taped]
         logging_schema_path = tmp_path / "cta-logging.schema.json"
         # Maintd already populates the logging schema in the runtime directory so we just grab it from there
@@ -1007,6 +1055,7 @@ class TestRuntimeDeployment:
         errors = 0
         i = 0
 
+        # Validate each JSON log record while collecting the event names observed across all hosts
         for host in hosts:
             print(f"Checking logs for {host.name}")
             current_logging_path = tmp_path / f"{host.name}.log"
@@ -1045,6 +1094,7 @@ class TestRuntimeDeployment:
                         if fail_fast:
                             sys.exit(1)
 
+        # Require coverage of every schema event that is expected during the system suite
         missing_events = expected_events - observed_events
         if missing_events:
             print("\nERROR: Test coverage incomplete!")
@@ -1066,6 +1116,7 @@ class TestRuntimeDeployment:
 
 
 def test_add_errors_to_whitelist(error_whitelist: set[str]) -> None:
+    # Register errors deliberately produced by the destructive and failure-path scenarios above
     error_whitelist.add("Task failed: counting another error for this session")
     error_whitelist.add("In RecallReportPacker::ReportError::execute(): failing retrieve job after exception.")
     error_whitelist.add("File writing to disk failed")
