@@ -83,18 +83,25 @@ the packaged unit directly. The packaged unit contains:
 
     [Unit]
     Description=CERN Tape Archive (CTA) rmcd daemon
+    Wants=network-online.target
     After=network-online.target
 
     [Service]
+    Type=exec
     User=cta
+    Group=tape
     EnvironmentFile=-/etc/sysconfig/cta-rmcd
-    ExecStart=/usr/bin/cta-rmcd ${CTA_RMCD_OPTIONS}
+    ExecStart=/usr/bin/cta-rmcd -f ${CTA_RMCD_OPTIONS}
+    LogsDirectory=cta cta/old
+    LogsDirectoryMode=0755
     LimitCORE=infinity
-    Type=forking
-    Restart=no
+    OOMScoreAdjust=-10
+    Restart=on-failure
+    RestartSec=5
+    TimeoutStopSec=60
 
     [Install]
-    WantedBy=default.target
+    WantedBy=multi-user.target
 
 Example configuration of */etc/sysconfig/cta-rmcd*:
 

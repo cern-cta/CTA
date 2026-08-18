@@ -3,16 +3,26 @@
 
 [Unit]
 Description=gRPC frontend for CERN Tape Archive (CTA)
+Wants=network-online.target
 After=network-online.target
 
 [Service]
-EnvironmentFile=/etc/sysconfig/cta-frontend-grpc
-ExecStart=/usr/bin/cta-frontend-grpc
-Type=simple
-Restart=always
+Type=exec
 User=cta
 Group=cta
+
+LogsDirectory=cta cta/old
+LogsDirectoryMode=0755
+
+EnvironmentFile=/etc/sysconfig/cta-frontend-grpc
+ExecStart=/usr/bin/cta-frontend-grpc
+
+LimitCORE=infinity
 LimitNOFILE=65535
+OOMScoreAdjust=-10
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=60
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target

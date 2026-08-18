@@ -7,6 +7,11 @@
 #
 ####################################################################################################
 
+# This is an example, not a ready-to-run configuration. Copy it to
+# /etc/cta/cta-maintd.toml, replace all deployment-specific values, and run:
+#   cta-maintd --config=/etc/cta/cta-maintd.toml --config-strict --config-check
+# before enabling or starting the service.
+
 
 [catalogue]
   # Path to the CTA Catalogue configuration file.

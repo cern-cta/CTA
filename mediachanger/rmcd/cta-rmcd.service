@@ -2,16 +2,29 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 [Unit]
-Description=CERN Tape Archive (CTA) rmcd daemon
+Description=CERN Tape Archive (CTA) rmcd service
+Wants=network-online.target
 After=network-online.target
 
 [Service]
+Type=exec
 User=cta
+Group=tape
+
+RuntimeDirectory=cta/rmcd
+RuntimeDirectoryMode=0750
+LogsDirectory=cta cta/old
+LogsDirectoryMode=0755
+
 EnvironmentFile=-/etc/sysconfig/cta-rmcd
-ExecStart=/usr/bin/cta-rmcd ${CTA_RMCD_OPTIONS}
+# The device argument is deployment-specific and must be set in the environment file.
+ExecStart=/usr/bin/cta-rmcd -f ${CTA_RMCD_OPTIONS}
+
 LimitCORE=infinity
-Type=forking
-Restart=no
+OOMScoreAdjust=-10
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=60
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target

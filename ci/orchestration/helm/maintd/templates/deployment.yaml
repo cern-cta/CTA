@@ -115,8 +115,8 @@ spec:
         - name: vfs-storage-volume
           mountPath: /objectstore
         {{- end }}
-        - name: runtime-dir
-          mountPath: /run/cta
+        - name: log-dir
+          mountPath: /var/log/cta
         {{ include "common.extraVolumeMounts" $ | nindent 8 }}
       volumes:
       - name: scripts-volume
@@ -151,7 +151,7 @@ spec:
       - name: opentelemetry-config
         configMap:
           name: cta-maintd-otel-conf
-      - name: runtime-dir
+      - name: log-dir
         emptyDir: {}
       - name: maintd-sss-keytab
         secret:

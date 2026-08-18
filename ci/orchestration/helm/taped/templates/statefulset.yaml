@@ -116,6 +116,8 @@ spec:
           mountPath: /etc/cta/otlp-basic-auth-pwd.conf
           subPath: otlp-basic-auth-pwd.conf
         {{- end }}
+        - name: log-dir
+          mountPath: /var/log/cta
         {{ include "common.extraVolumeMounts" $ | nindent 8 }}
       volumes:
       - name: scripts-volume
@@ -156,6 +158,8 @@ spec:
         secret:
           secretName: {{ $.Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
       {{- end }}
+      - name: log-dir
+        emptyDir: {}
       {{ include "common.extraVolumes" $ | nindent 6 }}
 ---
 {{- end }}

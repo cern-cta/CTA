@@ -9,6 +9,39 @@ Its main goals are (in order of importance):
 
 This runtime library does this by providing a common framework that is easy to use and **checks as much as possible at compile time**.
 
+## Running a Runtime-based Application with systemd
+
+System services using the runtime library should let systemd create their ephemeral runtime and log directories. Use a service-specific runtime directory such as `/run/cta/<service>` rather than sharing `/run/cta` directly: the runtime library writes deterministic names including `config.toml` and `version.json`, which would collide if multiple services shared one directory.
+
+A service unit should follow this pattern:
+
+```systemd
+[Service]
+User=cta
+Group=tape
+RuntimeDirectory=cta/<service>
+RuntimeDirectoryMode=0750
+LogsDirectory=cta cta/old
+LogsDirectoryMode=0755
+ExecStart=/usr/bin/cta-<service> --runtime-dir=/run/cta/<service> --log-file=/var/log/cta/cta-<service>.log
+```
+
+For file logging, rotate by renaming the active file and then use `systemctl kill --kill-whom=main --signal=HUP <unit>` to make the service reopen it. Do not expose this as `ExecReload` unless the application genuinely reloads its configuration: operators reasonably expect `systemctl reload` to apply configuration changes. Do not use `copytruncate`: runtime-based applications refresh their log file descriptor on `SIGHUP`. Use `delaycompress` so compression cannot race with writes made before the signal is processed. If rotated files use an `olddir`, it must be on the same filesystem as the active log.
+
+`cta-maintd` currently implements this convention. Other daemons should adopt it when they migrate to the runtime library. A container that runs exactly one CTA process may use `/run/cta` directly because there is no risk of another process overwriting the deterministic runtime filenames. The image must create that directory with the service account as owner; no runtime volume is required unless the metadata must survive container replacement. Container logging should normally use stdout rather than a systemd-managed log directory.
+
+## Deploying Configuration
+
+Packages should install a documented example configuration, but should not copy it automatically to the live configuration path. Examples necessarily contain deployment-specific placeholders or illustrative values; treating one as a working default can start a service against the wrong resources. This is especially important for services such as `cta-taped`, where values such as the drive name must be supplied by the operator.
+
+Service units should pass the live configuration path explicitly and enable `--config-strict`. An operator or configuration-management system should create the live file from the packaged example, replace every site-specific value, and validate it before starting the service:
+
+```console
+cta-<service> --config=/etc/cta/cta-<service>.toml --config-strict --config-check
+```
+
+Leaving the live file absent is intentional: a fresh installation then fails closed until it has been configured. Example files remain useful as versioned references and may gain new settings during package upgrades without overwriting an operator's live configuration.
+
 Each application/tool has the same two inputs:
 
 1. The commandline arguments.

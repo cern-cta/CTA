@@ -8,6 +8,7 @@
 # - AlmaLinux 9 and repository package versions intentionally float to receive upstream fixes on rebuild
 # - dnf clean is unnecessary because the package caches are BuildKit cache mounts and are not committed to the image
 # - rpm_context is an external BuildKit build context supplied by the build command
+# - Containers log to stdout by default. The CI deployment overrides this command to exercise file logging and mirrors that file to stdout
 
 # =========================================================================
 # CERN CA CERTIFICATES
@@ -75,6 +76,8 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     microdnf install -y tar jq sudo procps-ng && \
     echo 'cta ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/cta && \
     chmod 0440 /etc/sudoers.d/cta && \
+    # For runtime state configured with --runtime-dir
+    install -d -o cta -g tape -m 0750 /run/cta && \
     # Cleanup
     rm -rf /var/lib/dnf/history.*
 
@@ -97,7 +100,7 @@ RUN setcap \
     cap_sys_rawio=+ep /usr/bin/cta-tape-label
 
 USER cta
-CMD ["/usr/bin/cta-taped", "-c", "/etc/cta/cta-taped.conf", "--foreground", "--log-format=json", "--log-to-file=/var/log/cta/cta-taped.log"]
+CMD ["/usr/bin/cta-taped", "-c", "/etc/cta/cta-taped.conf", "--foreground", "--log-format=json", "--stdout"]
 
 # =========================================================================
 #  SERVICE cta-rmcd
@@ -129,7 +132,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     /usr/local/bin/build-service.sh "cta-maintd"
 
 USER cta
-CMD ["/usr/bin/cta-maintd", "--log-file=/var/log/cta/cta-maintd.log", "--config-strict", "--config /etc/cta/cta-maintd.toml", "--runtime-dir /run/cta"]
+CMD ["/usr/bin/cta-maintd", "--config-strict", "--config", "/etc/cta/cta-maintd.toml", "--runtime-dir", "/run/cta"]
 
 # =========================================================================
 #  SERVICE cta-frontend
@@ -148,7 +151,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     /usr/local/bin/build-service.sh "cta-frontend-grpc cta-catalogue-utils krb5-workstation"
 
 USER cta
-CMD ["/bin/bash", "-c", "/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend.log"]
+CMD ["/usr/bin/cta-frontend-grpc"]
 
 # =========================================================================
 #  TOOLS cta-tools

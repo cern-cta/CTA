@@ -589,14 +589,12 @@ The command-line tool for reading files from a CTA tape.
 Summary: CERN Tape Archive common items
 Requires(pre): %{_bindir}/grep, %{_sbindir}/luseradd
 %description -n cta-common
-CERN Tape Archive:
-Common items such as the creation of the cta local user and %{_localstatedir}/log/cta
+CERN Tape Archive common items, such as the creation of the cta local user.
 %pre -n cta-common
 %{_bindir}/grep -q '^cta:' %{_sysconfdir}/passwd || %{_sbindir}/luseradd -s %{_sbindir}/nologin -c "CTA system account" -g tape cta
 %files -n cta-common
 %license COPYING
 %doc CHANGELOG.md
-%attr(0755,cta,tape) %dir %{_localstatedir}/log/cta
 
 %package -n cta-release
 Summary: Repository configuration for CTA and its dependencies
@@ -623,4 +621,3 @@ cta-eosdf reports free disk space in the default EOS namespace.
 %files -n cta-eosdf
 %license COPYING
 %attr(0755,cta,tape) %{_bindir}/cta-eosdf.sh
-
