@@ -13,12 +13,11 @@
 #include "BackendFactory.hpp"
 #include "BackendVFS.hpp"
 #include "RootEntry.hpp"
-#include "common/config/Config.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/utils/utils.hpp"
 
 #include <iostream>
-#include <optional>
 #include <stdexcept>
 
 int main(int argc, char** argv) {
@@ -26,9 +25,9 @@ int main(int argc, char** argv) {
     cta::log::DummyLogger dl("", "");
     std::unique_ptr<cta::objectstore::Backend> be;
     if (1 == argc) {
-      cta::common::Config m_ctaConf("/etc/cta/cta-objectstore-tools.conf");
-      be = std::move(
-        cta::objectstore::BackendFactory::createBackend(m_ctaConf.getOptionValueStr("BackendPath").value(), dl));
+      be = std::move(cta::objectstore::BackendFactory::createBackend(
+        cta::utils::readSingleLineConfigFile("/etc/cta/cta-scheduler.conf"),
+        dl));
     } else if (2 == argc) {
       be.reset(cta::objectstore::BackendFactory::createBackend(argv[1], dl).release());
     } else {
@@ -45,8 +44,6 @@ int main(int argc, char** argv) {
     for (auto o = l.begin(); o != l.end(); o++) {
       std::cout << *o << std::endl;
     }
-  } catch (const std::bad_optional_access&) {
-    std::cerr << "Config file '/etc/cta/cta-objectstore-tools.conf' does not contain the BackendPath entry.";
   } catch (std::exception& e) {
     std::cerr << "Failed to list backend store: " << std::endl << e.what() << std::endl;
   }
