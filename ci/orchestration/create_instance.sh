@@ -19,7 +19,7 @@ usage() {
   echo "  -r, --cta-image-registry <repo>:    Registry to find the CTA images in. Defaults to \"gitlab-registry.cern.ch\"."
   echo "  -i, --cta-image-tag <tag>:          Docker image tag for the CTA chart."
   echo "  -c, --catalogue-version <version>:  Set the catalogue schema version. Defaults to the latest version."
-  echo "  -O, --reset-scheduler:              Reset scheduler datastore content during initialization phase. Defaults to false."
+  echo "  -O, --reset-scheduler:              Reset scheduler content during initialization phase. Defaults to false."
   echo "  -D, --reset-catalogue:              Reset catalogue content during initialization phase. Defaults to false."
   echo "      --max-drives <n>:               If no tapeservers-config is provided, this will specifiy how many drives to use in the deployment."
   echo "      --no-setup:                     Skip the setup scripts for EOS and tape resets."
@@ -137,7 +137,7 @@ create_instance() {
   cta_config="-f presets/dev-cta-common.yaml -f presets/frontend-wfe/auth-jwt.yaml -f presets/frontend-admin/auth-jwt.yaml"
   prometheus_config="presets/dev-prometheus-values.yaml"
   opentelemetry_collector_config="presets/dev-otel-collector-values.yaml"
-  # By default keep Database and keep Scheduler datastore data
+  # By default keep the catalogue and keep the scheduler
   # default should not make user loose data if he forgot the option
   reset_catalogue=false
   reset_scheduler=false
@@ -255,9 +255,9 @@ create_instance() {
   fi
 
   if [[ "$reset_scheduler" == "true" ]]; then
-    log_warn "Scheduler datastore content will be reset."
+    log_warn "Scheduler content will be reset."
   else
-    echo "Scheduler datastore content will be kept."
+    echo "Scheduler content will be kept."
   fi
 
   SECONDS=0

@@ -290,12 +290,10 @@ public:
         config.telemetry.config_file =
           utils::copyFile(config.telemetry.config_file, cliOptions.runtimeDir + "/telemetry.config_file", true);
       }
-#ifdef CTA_PGSCHED
       if constexpr (HasSchedulerConfig<TConfig>) {
         config.scheduler.config_file =
           utils::copyFile(config.scheduler.config_file, cliOptions.runtimeDir + "/scheduler.config_file", true);
       }
-#endif
       if constexpr (HasCatalogueConfig<TConfig>) {
         config.catalogue.config_file =
           utils::copyFile(config.catalogue.config_file, cliOptions.runtimeDir + "/catalogue.config_file", true);

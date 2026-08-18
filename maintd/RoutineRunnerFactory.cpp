@@ -50,11 +50,12 @@ RoutineRunnerFactory::RoutineRunnerFactory(const MaintdConfig& config, cta::log:
   m_lc.log(log::INFO, "In RoutineRunnerFactory::RoutineRunnerFactory(): Initialising Scheduler");
 
 #ifndef CTA_PGSCHED
-  m_schedDbInit =
-    std::make_unique<SchedulerDBInit_t>("Maintd", m_config.scheduler.objectstore_backend_path, m_lc.logger());
+  m_schedDbInit = std::make_unique<SchedulerDBInit_t>("Maintd",
+                                                      utils::readSingleLineConfigFile(m_config.scheduler.config_file),
+                                                      m_lc.logger());
 #else
   m_schedDbInit = std::make_unique<SchedulerDBInit_t>("Maintd",
-                                                      utils::file2string(m_config.scheduler.config_file),
+                                                      utils::readSingleLineConfigFile(m_config.scheduler.config_file),
                                                       m_config.scheduler.number_of_connections,
                                                       m_lc.logger());
 #endif

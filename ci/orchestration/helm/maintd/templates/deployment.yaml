@@ -66,7 +66,7 @@ spec:
             port: 8080
           initialDelaySeconds: 5
           periodSeconds: 60
-          failureThreshold: 2
+          failureThreshold: 100  # For now we don't want the pod to restart in CI
         securityContext:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" $ }}
           privileged: {{ include "common.securityContext.privileged" $ }}
@@ -96,11 +96,10 @@ spec:
         - name: maintd-sss-keytab
           mountPath: /etc/cta/cta-maintd.sss.keytab.grp # note the .grp to make it group readable
           subPath: {{ $.Values.keytab.subPath }}
-        {{- if eq $schedulerConfig.backend "postgres" }}
         - name: scheduler-config
           mountPath: /etc/cta/cta-scheduler.conf
           subPath: cta-scheduler.conf
-        {{- else if eq $schedulerConfig.backend "ceph" }}
+        {{- if eq $schedulerConfig.backend "ceph" }}
         - name: cta-ceph-volume
           mountPath: /etc/ceph/ceph.conf
           subPath: ceph.conf
@@ -126,15 +125,9 @@ spec:
       - name: catalogue-config
         configMap:
           name: cta-catalogue-conf
-      {{- if eq $schedulerConfig.backend "postgres" }}
       - name: scheduler-config
         configMap:
           name: cta-scheduler-conf
-      {{- else }}
-      - name: scheduler-config
-        configMap:
-          name: cta-objectstore-conf
-      {{- end }}
       {{- if eq $schedulerConfig.backend "ceph" }}
       - name: cta-ceph-volume
         configMap:

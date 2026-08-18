@@ -78,15 +78,7 @@ Login Login::parseFile(const std::string& filename) {
 // parseStream
 //------------------------------------------------------------------------------
 Login Login::parseStream(std::istream& inputStream) {
-  const std::vector<std::string> lines = readNonEmptyLines(inputStream);
-
-  if (1 != lines.size()) {
-    throw exception::Exception("There should only be one and only one line containing a connection string");
-  }
-
-  const std::string connectionString = lines.front();
-
-  return parseString(connectionString);
+  return parseString(utils::readSingleLineConfig(inputStream));
 }
 
 //------------------------------------------------------------------------------
@@ -127,39 +119,6 @@ Login::DbTypeAndConnectionDetails Login::parseDbTypeAndConnectionDetails(const s
   }
 
   return dbTypeAndConnectionDetails;
-}
-
-//------------------------------------------------------------------------------
-// readNonEmptyLines
-//------------------------------------------------------------------------------
-std::vector<std::string> Login::readNonEmptyLines(std::istream& inputStream) {
-  std::vector<std::string> lines;
-  std::string line;
-
-  while (std::getline(inputStream, line)) {
-    // Remove the newline character if there is one
-    {
-      const std::string::size_type newlinePos = line.find("\n");
-      if (newlinePos != std::string::npos) {
-        line.resize(newlinePos);
-      }
-    }
-
-    // Left and right trim the line of whitespace
-    line = utils::trimString(std::string(line));
-
-    // Please note:
-    //
-    // Comments at the end of lines are not supported.
-    // Ignoring whitespace, lines starting with '#' are comments.
-
-    // If the line is not empty and is not a comment
-    if (!line.empty() && line.at(0) != '#') {
-      lines.push_back(line);
-    }
-  }
-
-  return lines;
 }
 
 //------------------------------------------------------------------------------

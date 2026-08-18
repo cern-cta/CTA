@@ -140,6 +140,25 @@ bool containsAllSubStrings(std::string_view str, const std::vector<std::string_v
 std::string trimString(std::string_view s);
 
 /**
+ * Reads a configuration value from a stream containing exactly one non-empty, non-comment line.
+ *
+ * Leading and trailing whitespace is removed. Blank lines and lines whose first non-whitespace
+ * character is '#' are ignored. Inline comments are not supported.
+ *
+ * @param inputStream The input stream to read.
+ * @return The configuration value.
+ */
+std::string readSingleLineConfig(std::istream& inputStream);
+
+/**
+ * Reads a configuration value from a file containing exactly one non-empty, non-comment line.
+ *
+ * @param path The path of the configuration file.
+ * @return The configuration value.
+ */
+std::string readSingleLineConfigFile(const std::string& path);
+
+/**
  * Returns a string with an ellipsis in the end if necessary so that the
  * string plus ellipsis does not exceed the maxSize. The returned string is
  * identical to s if it fits the maximum size.

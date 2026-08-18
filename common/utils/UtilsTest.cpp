@@ -19,6 +19,34 @@ protected:
   virtual void TearDown() {}
 };
 
+TEST_F(cta_UtilsTest, readSingleLineConfig_ignoresBlankAndCommentLines) {
+  std::stringstream input;
+  input << "# First comment\n"
+        << "\n"
+        << "  # Indented comment\n"
+        << "  rados://user@pool:namespace  \n";
+
+  ASSERT_EQ("rados://user@pool:namespace", cta::utils::readSingleLineConfig(input));
+}
+
+TEST_F(cta_UtilsTest, readSingleLineConfig_preservesHashWithinValue) {
+  std::stringstream input("oracle:user/password_with_a_hash#@database\n");
+
+  ASSERT_EQ("oracle:user/password_with_a_hash#@database", cta::utils::readSingleLineConfig(input));
+}
+
+TEST_F(cta_UtilsTest, readSingleLineConfig_rejectsMissingValue) {
+  std::stringstream input("# Comment only\n\n");
+
+  ASSERT_THROW(cta::utils::readSingleLineConfig(input), cta::exception::Exception);
+}
+
+TEST_F(cta_UtilsTest, readSingleLineConfig_rejectsMultipleValues) {
+  std::stringstream input("first\nsecond\n");
+
+  ASSERT_THROW(cta::utils::readSingleLineConfig(input), cta::exception::Exception);
+}
+
 TEST_F(cta_UtilsTest, trimSlashes_emptyString) {
   using namespace cta;
 
