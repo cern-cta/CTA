@@ -48,9 +48,10 @@ trigger-cta-version-regression-pipeline:
     branch: $RESOLVED_CTA_GIT_TAG
     strategy: mirror
     forward:
-      # Keep disabled so the downstream pipeline derives CTA_BUILD_ID from its own CI_PIPELINE_ID
+      # Keep YAML variables disabled so the downstream pipeline derives CTA_BUILD_ID from its own CI_PIPELINE_ID.
+      # Pipeline-variable forwarding is required for the resolved tags from the prepare job's dotenv report.
       yaml_variables: false
-      pipeline_variables: false
+      pipeline_variables: true
     inputs:
       pipeline-type: "REGR_AGAINST_CTA_BRANCH"
       custom-cta-image-tag: $RESOLVED_CTA_IMAGE_TAG
