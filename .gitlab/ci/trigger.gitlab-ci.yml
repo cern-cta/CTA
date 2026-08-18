@@ -33,9 +33,10 @@ spec:
       type: boolean
 ---
 
-# The resolver supplies the matching image and Git tags through its dotenv report. Triggering the same project at that
-# Git tag makes GitLab compile the tagged CI configuration and check out the tagged tests, charts, and orchestration files.
-# Mirroring propagates the regression result through CTA and back to the external EOS pipeline.
+# GitLab's trigger:project only supports a different downstream project. Use the trigger API because this pipeline must
+# start the same CTA project at another ref. CI_JOB_TOKEN keeps the pipeline linked in the UI, while polling its status
+# makes this job provide the same result propagation that strategy: mirror would provide.
+# Basically, this job is a hack because GitLab doesn't support what we need here...
 trigger-cta-version-regression-pipeline:
   stage: trigger
   needs:
@@ -43,25 +44,65 @@ trigger-cta-version-regression-pipeline:
       artifacts: true
   rules:
     - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
-  trigger:
-    project: $CI_PROJECT_PATH
-    branch: $RESOLVED_CTA_GIT_TAG
-    strategy: mirror
-    forward:
-      # Keep disabled so the downstream pipeline derives CTA_BUILD_ID from its own CI_PIPELINE_ID
-      yaml_variables: false
-      pipeline_variables: false
-    inputs:
-      pipeline-type: "REGR_AGAINST_CTA_BRANCH"
-      custom-cta-image-tag: $RESOLVED_CTA_IMAGE_TAG
-      custom-eos-image-tag: $[[ inputs.custom-eos-image-tag ]]
-      custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]
-      platform: $[[ inputs.platform ]]
-      scheduler-type: $[[ inputs.scheduler-type ]]
-      enable-oracle-support: $[[ inputs.enable-oracle-support ]]
-      workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
-      enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
-      keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - response_file="$(mktemp)"
+    - |
+      http_status="$(
+        curl --silent --show-error \
+          --output "$response_file" \
+          --write-out '%{http_code}' \
+          --request POST \
+          --form "token=$CI_JOB_TOKEN" \
+          --form "ref=$RESOLVED_CTA_GIT_TAG" \
+          --form "inputs[pipeline-type]=REGR_AGAINST_CTA_BRANCH" \
+          --form "inputs[custom-cta-image-tag]=$RESOLVED_CTA_IMAGE_TAG" \
+          --form "inputs[custom-eos-image-tag]=$[[ inputs.custom-eos-image-tag ]]" \
+          --form "inputs[custom-xrootd-version]=$[[ inputs.custom-xrootd-version ]]" \
+          "$CI_API_V4_URL/projects/$CI_PROJECT_ID/trigger/pipeline"
+      )"
+    - |
+      if [[ "$http_status" -lt 200 || "$http_status" -ge 300 ]]; then
+        echo "Failed to create the CTA version-regression pipeline (HTTP $http_status):" >&2
+        cat "$response_file" >&2
+        exit 1
+      fi
+    - downstream_pipeline_id="$(jq --exit-status --raw-output '.id' "$response_file")"
+    - downstream_pipeline_url="$(jq --exit-status --raw-output '.web_url' "$response_file")"
+    - echo "Created downstream pipeline $downstream_pipeline_url"
+
+    # As we can't mirror the pipeline status natively anymore, just poll
+    - |
+      while true; do
+        if ! pipeline_response="$(
+          curl --fail-with-body --silent --show-error \
+            --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+            "$CI_API_V4_URL/projects/$CI_PROJECT_ID/pipelines/$downstream_pipeline_id"
+        )"; then
+          echo "Could not read downstream pipeline status. Check the CI_JOB_TOKEN READ_PIPELINES permission." >&2
+          exit 1
+        fi
+
+        downstream_status="$(jq --exit-status --raw-output '.status' <<< "$pipeline_response")"
+        echo "Downstream pipeline status: $downstream_status"
+
+        case "$downstream_status" in
+          created|waiting_for_resource|preparing|pending|running|scheduled)
+            sleep 15
+            ;;
+          success)
+            exit 0
+            ;;
+          failed|canceled|skipped|manual)
+            exit 1
+            ;;
+          *)
+            echo "Unexpected downstream pipeline status: $downstream_status" >&2
+            exit 1
+            ;;
+        esac
+      done
 
 .trigger-child-pipeline:
   allow_failure: true

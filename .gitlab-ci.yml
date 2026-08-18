@@ -16,15 +16,16 @@ spec:
         - "UPDATE_PIPELINE_IMAGES"
       default: "DEFAULT"
 
+    # REGR_AGAINST_CTA_VERSION lets EOS always trigger CTA's main branch while CTA selects the release to test.
+    # An empty value selects the latest canonical unstable release without requiring an EOS CI change.
     custom-cta-image-tag:
       description: |-
         Existing CTA image tag to test instead of building CTA from the selected ref.
 
         Pipeline build example: `123456gitabcdef12`.
-        Published release format: `vX.Y.Z.R-N.PLATFORM`, e.g. `v5.11.19.1-1.el9`.
+        Published release format: `vX.Y.Z.R-N.PLATFORM`, e.g. `v5.11.20.1-1.el9`.
 
-        `REGR_AGAINST_CTA_VERSION` only works with the published release format.
-        Leave empty to build the selected branch or select the latest canonical unstable release.
+        Leave empty to build a branch regression or automatically select the version-regression release.
       type: string
       rules:
         - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_VERSION"'
@@ -61,7 +62,7 @@ spec:
       description: "Platform to build, test, and release on."
       type: string
       rules:
-        - if: '$[[ inputs.pipeline-type ]] != "UPDATE_PIPELINE_IMAGES"'
+        - if: '$[[ inputs.pipeline-type ]] != "UPDATE_PIPELINE_IMAGES" && $[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
           options: ["el9"]
           default: "el9"
 
@@ -69,7 +70,7 @@ spec:
       description: "Scheduler implementation to build and test."
       type: string
       rules:
-        - if: '$[[ inputs.pipeline-type ]] != "UPDATE_PIPELINE_IMAGES"'
+        - if: '$[[ inputs.pipeline-type ]] != "UPDATE_PIPELINE_IMAGES" && $[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
           options: ["pgsched", "objectstore"]
           default: "objectstore"
 
@@ -117,7 +118,7 @@ spec:
       description: "Workflow API authentication used by CTA and EOS."
       type: string
       rules:
-        - if: '$[[ inputs.pipeline-type ]] != "UPDATE_PIPELINE_IMAGES"'
+        - if: '$[[ inputs.pipeline-type ]] != "UPDATE_PIPELINE_IMAGES" && $[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
           options: ["jwt", "mtls"]
           default: "jwt"
 
