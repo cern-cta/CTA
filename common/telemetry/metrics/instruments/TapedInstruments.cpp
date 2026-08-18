@@ -21,7 +21,6 @@ std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedBufferUsag
 std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedBufferLimit;
 std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaTapedMountDuration;
 std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedMountType;
-std::shared_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedMountAttempt;
 std::shared_ptr<opentelemetry::metrics::ObservableInstrument> CtaTapedDriveStatus;
 
 }  // namespace cta::telemetry::metrics

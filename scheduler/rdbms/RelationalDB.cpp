@@ -2307,7 +2307,7 @@ void RelationalDB::resubmitInactiveReporting(uint64_t deletionAge, uint64_t batc
       }
       stmt.bindUint64(":LIMIT", batchSize);
       stmt.bindUint64(":NOW_MINUS_DELAY", olderThanTimestamp);
-      // txn.getConn().setDbQuerySummary("update inactive report");
+      txn.getConn().setDbQuerySummary("update inactive report");
       stmt.executeNonQuery();
       auto nrows = stmt.getNbAffectedRows();
       txn.commit();

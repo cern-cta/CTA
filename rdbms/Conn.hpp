@@ -271,7 +271,7 @@ private:
    * but with the current rdbms design,
    * this seems acceptable price to pay at the moment.
    */
-  std::string m_querySummary;
+  std::string m_querySummary = "";
   uint64_t m_rowCount = 0;
   /**
    * The database connection pool to which the m_conn should be returned

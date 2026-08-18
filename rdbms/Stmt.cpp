@@ -196,11 +196,15 @@ Rset Stmt::executeQuery() {
   try {
     if (nullptr != m_stmt) {
       auto result = Rset(m_stmt->executeQuery());
+      if (m_stmt->getDbQuerySummary().empty()) {
+        m_stmt->setDbQuerySummary("execute query");
+      }
       cta::telemetry::metrics::dbClientOperationDuration->Record(
         timer.msecs(),
         {
           {cta::semconv::attr::kDbSystemName,    m_stmt->getDbSystemName()                              },
           {cta::semconv::attr::kDbNamespace,     m_stmt->getDbNamespace()                               },
+          {cta::semconv::attr::kDbQuerySummary,  m_stmt->getDbQuerySummary()                            },
           {cta::semconv::attr::kDbOperationName, cta::semconv::attr::DbOperationNameValues::kTransaction}
       },
         opentelemetry::context::RuntimeContext::GetCurrent());
@@ -215,6 +219,7 @@ Rset Stmt::executeQuery() {
         {cta::semconv::attr::kDbSystemName,    m_stmt->getDbSystemName()                              },
         {cta::semconv::attr::kDbNamespace,     m_stmt->getDbNamespace()                               },
         {cta::semconv::attr::kErrorType,       cta::semconv::attr::ErrorTypeValues::kException        },
+        {cta::semconv::attr::kDbQuerySummary,  "execute query"                                    },
         {cta::semconv::attr::kDbOperationName, cta::semconv::attr::DbOperationNameValues::kTransaction}
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
@@ -230,11 +235,15 @@ void Stmt::executeNonQuery() {
   try {
     if (nullptr != m_stmt) {
       m_stmt->executeNonQuery();
+      if (m_stmt->getDbQuerySummary().empty()) {
+        m_stmt->setDbQuerySummary("execute non query");
+      }
       cta::telemetry::metrics::dbClientOperationDuration->Record(
         timer.msecs(),
         {
           {cta::semconv::attr::kDbSystemName,    m_stmt->getDbSystemName()                              },
           {cta::semconv::attr::kDbNamespace,     m_stmt->getDbNamespace()                               },
+          {cta::semconv::attr::kDbQuerySummary,  m_stmt->getDbQuerySummary()                            },
           {cta::semconv::attr::kDbOperationName, cta::semconv::attr::DbOperationNameValues::kTransaction}
       },
         opentelemetry::context::RuntimeContext::GetCurrent());
@@ -244,6 +253,7 @@ void Stmt::executeNonQuery() {
         {
           {cta::semconv::attr::kDbSystemName,    m_stmt->getDbSystemName()                              },
           {cta::semconv::attr::kDbNamespace,     m_stmt->getDbNamespace()                               },
+          {cta::semconv::attr::kDbQuerySummary,  m_stmt->getDbQuerySummary()                            },
           {cta::semconv::attr::kDbOperationName, cta::semconv::attr::DbOperationNameValues::kTransaction}
       },
         opentelemetry::context::RuntimeContext::GetCurrent());
@@ -258,6 +268,7 @@ void Stmt::executeNonQuery() {
         {cta::semconv::attr::kDbSystemName,    m_stmt->getDbSystemName()                              },
         {cta::semconv::attr::kDbNamespace,     m_stmt->getDbNamespace()                               },
         {cta::semconv::attr::kErrorType,       cta::semconv::attr::ErrorTypeValues::kException        },
+        {cta::semconv::attr::kDbQuerySummary,  "execute non query"                                    },
         {cta::semconv::attr::kDbOperationName, cta::semconv::attr::DbOperationNameValues::kTransaction}
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
