@@ -32,7 +32,14 @@
     dateext
     # Use the date and epoch time for unique, lexically sortable extensions.
     dateformat -%Y%m%d-%s
+
+    sharedscripts
+    postrotate
+        # SIGHUP reopens the log descriptor but does not reload the configuration.
+        # Signal the default unit and every loaded template instance.
+        # Rotation must still succeed when none are active.
+        /usr/bin/systemctl kill --kill-whom=main --signal=HUP cta-rmcd.service > /dev/null 2>&1 || true
+    endscript
 }
 
-# rmcd opens and closes the log for every message, so rotation needs no descriptor-refresh signal.
 # The system-wide logrotate job must run hourly for the hourly directive to take effect.

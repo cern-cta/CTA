@@ -937,8 +937,13 @@ class TestRuntimeDeployment:
         daemon.exec(f"comm /etc/cta/cta-{daemon.process_name}.toml /run/cta/config.toml -3")
         daemon.exec(f"jq -e -r '.service == \"cta-{daemon.process_name}\"' /run/cta/version.json >/dev/null")
         # Not all services may have these files:
-        daemon.exec("comm /etc/cta/cta-catalogue.conf /run/cta/catalogue.config_file -3")
-        daemon.exec("comm /etc/cta/cta-otel.yaml /run/cta/telemetry.config_file -3")
+        daemon.exec(
+            "if test -f /etc/cta/cta-catalogue.conf; then "
+            "comm /etc/cta/cta-catalogue.conf /run/cta/catalogue.config_file -3; fi"
+        )
+        daemon.exec(
+            "if test -f /etc/cta/cta-otel.yaml; then comm /etc/cta/cta-otel.yaml /run/cta/telemetry.config_file -3; fi"
+        )
 
     @pytest.mark.parametrize(
         "daemon_fixture",
