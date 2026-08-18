@@ -44,6 +44,8 @@ trigger-cta-version-regression-pipeline:
   rules:
     - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
   trigger:
+    # Keep the same-project target explicit so GitLab validates the project and ref without variable expansion.
+    project: cta/CTA
     branch: $[[ inputs.cta-version-regression-git-tag ]]
     # Important as it ensures the results are propagated
     strategy: mirror
