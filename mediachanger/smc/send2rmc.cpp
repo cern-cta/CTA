@@ -36,6 +36,7 @@ int send2rmc(const char* const host,
   struct hostent* hp;
   int magic;
   int n;
+  char* p;
   char prtbuf[RMC_PRTBUFSZ];
   int rep_type;
   char repbuf[RMC_REPBUFSZ];
