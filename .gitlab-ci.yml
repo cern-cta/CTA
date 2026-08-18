@@ -80,7 +80,7 @@ spec:
       description: "Platform to build, test, and release on."
       type: string
       rules:
-        - if: '$[[ inputs.pipeline-type ]] != "UPDATE_PIPELINE_IMAGES"'
+        - if: '$[[ inputs.pipeline-type ]] != "UPDATE_PIPELINE_IMAGES" && $[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
           options: ["el9"]
           default: "el9"
 
@@ -88,7 +88,7 @@ spec:
       description: "Scheduler implementation to build and test."
       type: string
       rules:
-        - if: '$[[ inputs.pipeline-type ]] != "UPDATE_PIPELINE_IMAGES"'
+        - if: '$[[ inputs.pipeline-type ]] != "UPDATE_PIPELINE_IMAGES" && $[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
           options: ["pgsched", "objectstore"]
           default: "objectstore"
 
@@ -136,7 +136,7 @@ spec:
       description: "Workflow API authentication used by CTA and EOS."
       type: string
       rules:
-        - if: '$[[ inputs.pipeline-type ]] != "UPDATE_PIPELINE_IMAGES"'
+        - if: '$[[ inputs.pipeline-type ]] != "UPDATE_PIPELINE_IMAGES" && $[[ inputs.pipeline-type ]] != "REGR_AGAINST_CTA_VERSION"'
           options: ["jwt", "mtls"]
           default: "jwt"
 

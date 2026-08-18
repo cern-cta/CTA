@@ -46,9 +46,11 @@ trigger-cta-version-regression-pipeline:
   needs: []
   rules:
     - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
+  variables:
+    GIT_STRATEGY: none
   script:
+    - response_file="$(mktemp)"
     - |
-      response_file="$(mktemp)"
       http_status="$(
         curl --silent --show-error \
           --output "$response_file" \
@@ -62,20 +64,19 @@ trigger-cta-version-regression-pipeline:
           --form "inputs[custom-xrootd-version]=$[[ inputs.custom-xrootd-version ]]" \
           "$CI_API_V4_URL/projects/$CI_PROJECT_ID/trigger/pipeline"
       )"
-
+    - |
       if [[ "$http_status" -lt 200 || "$http_status" -ge 300 ]]; then
         echo "Failed to create the CTA version-regression pipeline (HTTP $http_status):" >&2
         cat "$response_file" >&2
         exit 1
       fi
+    - downstream_pipeline_id="$(jq --exit-status --raw-output '.id' "$response_file")"
+    - downstream_pipeline_url="$(jq --exit-status --raw-output '.web_url' "$response_file")"
+    - echo "Created downstream pipeline $downstream_pipeline_url"
 
-      downstream_pipeline_id="$(jq --exit-status --raw-output '.id' "$response_file")"
-      downstream_pipeline_url="$(jq --exit-status --raw-output '.web_url' "$response_file")"
-      echo "Created downstream pipeline $downstream_pipeline_url"
+    # As we can't mirror the pipeline status natively anymore, just poll
     - |
       while true; do
-        # Pipeline details are private even though CTA is public. Reuse the ephemeral CI_JOB_TOKEN rather than storing
-        # another credential; the CTA project must grant its job tokens the fine-grained READ_PIPELINES permission.
         if ! pipeline_response="$(
           curl --fail-with-body --silent --show-error \
             --header "JOB-TOKEN: $CI_JOB_TOKEN" \
