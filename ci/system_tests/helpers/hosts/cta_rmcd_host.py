@@ -16,6 +16,10 @@ class CtaRmcdHost(RemoteHost):
         super().__init__(conn)
 
     @cached_property
+    def process_name(self) -> str:
+        return "rmcd"
+
+    @cached_property
     def log_file_path(self) -> Path:
         return Path("/var") / "log" / "cta" / "cta-rmcd.log"
 
