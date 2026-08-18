@@ -42,8 +42,6 @@ spec:
   - | # Which image tag to use
     if [[ -n "$[[ inputs.custom-cta-image-tag ]]" ]]; then
       IMAGE_TAG="$[[ inputs.custom-cta-image-tag ]]"
-    elif [[ -n "$CUSTOM_CTA_IMAGE_TAG_ENV" ]]; then
-      IMAGE_TAG=$CUSTOM_CTA_IMAGE_TAG_ENV
     else
       IMAGE_TAG=${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     fi
@@ -62,8 +60,6 @@ spec:
         matrix:
           - TARGET_NAME: *cta-system-test-image-targets
   rules:
-    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
-      when: never
     - when: on_success
   variables:
     TEST_SCRIPT:
@@ -123,8 +119,6 @@ spec:
         matrix:
           - TARGET_NAME: *cta-system-test-image-targets
   rules:
-    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
-      when: never
     - when: on_success
   variables:
     TEST_REPORT_FILE: "${CI_PROJECT_DIR}/report.xml"
@@ -228,11 +222,10 @@ test-cta-tools:
     - .kubernetes-test-python
   stage: system-test
   rules:
-    # Skip this test for regressions as it does not test anything new
-    # with respect to the other tests we run.
-    - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
+    # Currently we only test cta-admin here, so this is not really doing anything with the disk side
+    - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH"'
       when: never
-    - !reference [.kubernetes-test, rules]
+    - !reference [.kubernetes-test-python, rules]
   variables:
     PYTESTS: "tests/cta_admin_test.py"
     # We want to test cta-admin's behaviour on repack requests; not the actual repack itself
@@ -246,7 +239,7 @@ test-cta-tools:
 
 .manual-rules:
   rules:
-    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
+    - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH"'
       when: never
     - if: $CI_COMMIT_TAG
       when: on_success
@@ -299,7 +292,7 @@ test-regression-dCache:
     - .kubernetes-test
   stage: system-test
   rules:
-    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
+    - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH"'
       when: never
     - when: manual
       allow_failure: true
@@ -329,8 +322,6 @@ stress-test:
         matrix:
           - TARGET_NAME: *cta-system-test-image-targets
   rules:
-    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
-      when: never
     - when: manual
       allow_failure: true  # Otherwise this blocks the pipeline
   variables:
@@ -405,8 +396,6 @@ stress-test-python:
         matrix:
           - TARGET_NAME: *cta-system-test-image-targets
   rules:
-    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
-      when: never
     - when: manual
       allow_failure: true  # Otherwise this blocks the pipeline
   variables:

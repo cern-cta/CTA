@@ -3,7 +3,7 @@
 
 .sbom-rules:
   rules:
-    - if: '$PIPELINE_TYPE != "DEFAULT" && $PIPELINE_TYPE != "REGR_AGAINST_CTA_BRANCH"'
+    - if: '$CUSTOM_CTA_IMAGE_TAG != ""'
       when: never
     - if: '$ENABLE_SBOM_GENERATION == "true"'
       when: on_success
@@ -19,8 +19,6 @@ enrich-sboms-cern-info:
         matrix:
           - TARGET_NAME: ['$[[ matrix.TARGET_NAME ]]']
   image: $IMAGE_SBOM_HELPER
-  variables:
-    CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
   script:
     - mkdir -p sboms
     - |

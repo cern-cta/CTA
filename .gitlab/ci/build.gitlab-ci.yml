@@ -21,7 +21,7 @@ build-cta-rpms:
     - job: modify-project-json
       optional: true
   rules:
-    - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION" || $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
+    - if: '$CUSTOM_CTA_IMAGE_TAG != "" || $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
     # These rules serve to prevent the rest of the pipeline from triggering when only trivial files such as the CHANGELOG have been modified
     # GitLab only allows a whitelist and not a blacklist, so we have to list all file changes that should trigger the build job
@@ -45,7 +45,6 @@ build-cta-rpms:
     - when: on_success
   image: $IMAGE_BUILD
   variables:
-    CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     # These inputs are available as variables as certain jobs below override them
     CMAKE_BUILD_TYPE: "$[[ inputs.cmake-build-type ]]"
     BUILD_PATH: "build_rpm/RPM/RPMS"
@@ -58,6 +57,7 @@ build-cta-rpms:
     CCACHE_COMPRESS: "true"
     CCACHE_MAXSIZE: "2G"
   before_script:
+  # TODO: make CTA_VERSION and CTA_VERSION_SUFFIX one variable, then we can just either build_id or commit_tag everywhere easily (including the images)
     - |
       if [[ -z "${CI_COMMIT_TAG}" ]]; then
         export CTA_VERSION=$BUILD_CTA_VERSION

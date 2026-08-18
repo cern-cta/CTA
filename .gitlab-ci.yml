@@ -17,21 +17,38 @@ spec:
       default: "DEFAULT"
 
     custom-cta-image-tag:
-      description: "Custom CTA image tag."
+      description: |-
+        Existing CTA image tag to test instead of building CTA from the selected ref.
+
+        Pipeline build example: `123456gitabcdef12`.
+        Published release format: `vX.Y.Z.R-N.PLATFORM`, e.g. `v5.11.19.1-1.el9`.
+
+        `REGR_AGAINST_CTA_VERSION` only works with the published release format.
+        Leave empty to build the selected branch or select the latest canonical unstable release.
       type: string
       rules:
-        - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_VERSION"'
+        - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_VERSION"'
           default: ""
 
     custom-eos-image-tag:
-      description: "Custom EOS image tag for regression pipelines."
+      description: |-
+        Existing EOS image tag for regression pipelines.
+
+        Pipeline build format: `COMMIT.PLATFORM`.
+        Release format: `VERSION.PLATFORM`.
+
+        Leave empty to use the latest EOS release selected by CTA.
       type: string
       rules:
         - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_VERSION"'
           default: ""
 
     custom-xrootd-version:
-      description: "Custom XRootD version for regression pipelines."
+      description: |-
+        XRootD RPM versionlock value for regression pipelines.
+
+        Include the epoch, package release, and platform when applicable: `1:5.8.4-1.PLATFORM`.
+        Leave empty to use the version declared by the selected CTA ref.
       type: string
       rules:
         - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_VERSION"'
@@ -58,7 +75,7 @@ spec:
 
     enable-oracle-support:
       description: "Enable Oracle support."
-    # Boolean values cannot be conditionally hidden yet. See https://gitlab.com/gitlab-org/gitlab/-/issues/587643
+      # Boolean values cannot be conditionally hidden yet. See https://gitlab.com/gitlab-org/gitlab/-/issues/587643
       type: boolean
       default: true
 
@@ -140,6 +157,7 @@ stages:
 # User-facing settings are defined as inputs. Internal variables expose their effective values to included templates
 # when workflow rules may override the selected input.
 variables:
+
   # Pipeline images
   # Updated by the weekly UPDATE_PIPELINE_IMAGES pipeline after every image has been built successfully
   PIPELINE_IMAGE_VERSION: "2026-08-17-15549541"
@@ -156,20 +174,22 @@ variables:
   IMAGE_DOCKER_IMAGE_BUILDER: "${DOCKER_IMAGE_PROXY}/quay.io/buildah/stable:v1.43-immutable"
   IMAGE_DOCKER_LINT: "${DOCKER_IMAGE_PROXY}/docker.io/hadolint/hadolint:v2.12.0-alpine"
   IMAGE_LICENSE_CHECK: "${DOCKER_IMAGE_PROXY}/docker.io/fsfe/reuse:6.2"
-  IMAGE_TRIVY: "${DOCKER_IMAGE_PROXY}/docker.io/aquasec/trivy@sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c" # 0.69.3
+  IMAGE_TRIVY: "${DOCKER_IMAGE_PROXY}/docker.io/aquasec/trivy@sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c"  # 0.69.3
   IMAGE_SBOM_HELPER: "registry.cern.ch/code-scanners/sbom-helper:latest"
-  IMAGE_SBOMQS: "${DOCKER_IMAGE_PROXY}/ghcr.io/interlynk-io/sbomqs@sha256:500d5eca9fe4ce3616fdfaed67d877d638b3d52d31ad30bcba6b6cfd4c435767" # v2.0.11
+  IMAGE_SBOMQS: "${DOCKER_IMAGE_PROXY}/ghcr.io/interlynk-io/sbomqs@sha256:500d5eca9fe4ce3616fdfaed67d877d638b3d52d31ad30bcba6b6cfd4c435767"  # v2.0.11
 
   # Should be removed as soon as EOS triggers the CTA pipeline with the new inputs instead of legacy variables.
   PIPELINE_TYPE: "$[[ inputs.pipeline-type ]]"
+  CUSTOM_CTA_IMAGE_TAG: "$[[ inputs.custom-cta-image-tag ]]"
   CUSTOM_EOS_IMAGE_TAG: "$[[ inputs.custom-eos-image-tag ]]"
 
   # Release tag selectors
-  TAG_PGSCHED_REGEX: '/(^|\.)pgsched($|\.)/' # Postgres scheduler
-  TAG_PGCAT_REGEX: '/(^|\.)pgcat($|\.)/' # Postgres catalogue (no Oracle)
-  TAG_PGALL_REGEX: '/(^|\.)pgall($|\.)/' # Postgres scheduler + Postgres catalogue
+  TAG_PGSCHED_REGEX: '/(^|\.)pgsched($|\.)/'  # Postgres scheduler
+  TAG_PGCAT_REGEX: '/(^|\.)pgcat($|\.)/'  # Postgres catalogue (no Oracle)
+  TAG_PGALL_REGEX: '/(^|\.)pgall($|\.)/'  # Postgres scheduler + Postgres catalogue
 
   # Build and runtime defaults
+  CTA_BUILD_ID: "${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}"
   ENABLE_SBOM_GENERATION: "$[[ inputs.enable-sbom-generation ]]"
   SCHEDULER_TYPE: "$[[ inputs.scheduler-type ]]"
   ENABLE_ORACLE_SUPPORT: "$[[ inputs.enable-oracle-support ]]"
@@ -183,7 +203,7 @@ variables:
   DOCKER_PUBLIC_REGISTRY_PREFIX: "cta/public_registry"
   DOCKER_PRIVATE_LOGIN_USERNAME: $DOCKER_LOGIN_USERNAME
   DOCKER_PRIVATE_LOGIN_PASSWORD: $DOCKER_LOGIN_PASSWORD
-  DOCKER_PUBLIC_LOGIN_USERNAME: "nonempty" # Tokens don't require a username, but GitLab requires a non-empty value for this variable to be set
+  DOCKER_PUBLIC_LOGIN_USERNAME: "nonempty"  # Tokens don't require a username, but GitLab requires a non-empty value for this variable to be set
   DOCKER_PUBLIC_LOGIN_PASSWORD: $REGISTRYTOKEN_publicpush
 
   # Git checkout
@@ -270,6 +290,9 @@ workflow:
     # But we want to prevent dual pipelines on MRs
     - if: $CI_PIPELINE_SOURCE != "push"
 
+# Whether a job runs is controlled by two things:
+# - The conditional file include below? The conditional includes are useful for skipping entire stages at once
+# - The rules: section of the job
 include:
   - local: .gitlab/ci/.pre.gitlab-ci.yml
     inputs:
@@ -278,6 +301,8 @@ include:
       platform: $[[ inputs.platform ]]
   - local: .gitlab/ci/trigger.gitlab-ci.yml
     inputs:
+      custom-eos-image-tag: $[[ inputs.custom-eos-image-tag ]]
+      custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]
       platform: $[[ inputs.platform ]]
       enable-internal-repos: $[[ inputs.enable-internal-repos ]]
       build-generator: $[[ inputs.build-generator ]]
@@ -291,10 +316,17 @@ include:
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
   - local: .gitlab/ci/validate.gitlab-ci.yml
+    rules:
+      - if: '"$[[ inputs.pipeline-type ]]" == "DEFAULT" || "$[[ inputs.pipeline-type ]]" == "REGR_AGAINST_CTA_BRANCH"'
   - local: .gitlab/ci/lint.gitlab-ci.yml
+    rules:
+      # Only lint in the default pipeline
+      - if: '"$[[ inputs.pipeline-type ]]" == "DEFAULT"'
     inputs:
       platform: $[[ inputs.platform ]]
   - local: .gitlab/ci/build.gitlab-ci.yml
+    rules:
+      - if: '"$[[ inputs.pipeline-type ]]" != "REGR_AGAINST_CTA_VERSION"'
     inputs:
       platform: $[[ inputs.platform ]]
       enable-internal-repos: $[[ inputs.enable-internal-repos ]]
@@ -302,23 +334,41 @@ include:
       cmake-build-type: $[[ inputs.cmake-build-type ]]
       enable-address-sanitizer: $[[ inputs.enable-address-sanitizer ]]
   - local: .gitlab/ci/build-image.gitlab-ci.yml
+    rules:
+      - if: '"$[[ inputs.pipeline-type ]]" != "REGR_AGAINST_CTA_VERSION"'
     inputs:
       platform: $[[ inputs.platform ]]
       enable-internal-repos: $[[ inputs.enable-internal-repos ]]
   - local: .gitlab/ci/tests.gitlab-ci.yml
+    rules:
+      # Only run unit tests in the default pipeline
+      - if: '"$[[ inputs.pipeline-type ]]" == "DEFAULT"'
     inputs:
       platform: $[[ inputs.platform ]]
       enable-internal-repos: $[[ inputs.enable-internal-repos ]]
       enable-valgrind: $[[ inputs.enable-valgrind ]]
   - local: .gitlab/ci/tests-kubernetes.gitlab-ci.yml
+    rules:
+      - if: '"$[[ inputs.pipeline-type ]]" == "DEFAULT" || "$[[ inputs.pipeline-type ]]" == "REGR_AGAINST_CTA_BRANCH"'
     inputs:
       custom-cta-image-tag: $[[ inputs.custom-cta-image-tag ]]
       workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
   - local: .gitlab/ci/sbom.gitlab-ci.yml
+    rules:
+      # SBOMs are only relevant in the default pipeline
+      - if: '"$[[ inputs.pipeline-type ]]" == "DEFAULT"'
   - local: .gitlab/ci/release.gitlab-ci.yml
+    rules:
+      # Release stage only relevant in default pipeline
+      - if: '"$[[ inputs.pipeline-type ]]" == "DEFAULT"'
     inputs:
       platform: $[[ inputs.platform ]]
   - local: .gitlab/ci/report.gitlab-ci.yml
+    rules:
+      # Reporting is selected by pipeline source rather than pipeline type, so keep it available to branch regressions.
+      - if: '"$[[ inputs.pipeline-type ]]" != "REGR_AGAINST_CTA_VERSION"'
   - local: .gitlab/ci/.post.gitlab-ci.yml
+    rules:
+      - if: '"$[[ inputs.pipeline-type ]]" != "REGR_AGAINST_CTA_VERSION"'
