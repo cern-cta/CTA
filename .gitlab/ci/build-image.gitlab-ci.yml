@@ -106,7 +106,6 @@ spec:
       allow_failure: true
     - when: on_success
   variables:
-    CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     DOCKERFILE: ci/docker/cta/$[[ inputs.platform ]]/prod.Dockerfile
     IMAGE_REF: ${DOCKER_IMAGE_REGISTRY}/${DOCKER_PRIVATE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_BUILD_ID}
     RPM_CONTEXT: ${CI_PROJECT_DIR}/build_rpm/RPM/RPMS/x86_64

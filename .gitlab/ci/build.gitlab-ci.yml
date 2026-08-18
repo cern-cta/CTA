@@ -45,7 +45,6 @@ build-cta-rpms:
     - when: on_success
   image: $IMAGE_BUILD
   variables:
-    CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     # These inputs are available as variables as certain jobs below override them
     CMAKE_BUILD_TYPE: "$[[ inputs.cmake-build-type ]]"
     BUILD_PATH: "build_rpm/RPM/RPMS"
@@ -58,6 +57,7 @@ build-cta-rpms:
     CCACHE_COMPRESS: "true"
     CCACHE_MAXSIZE: "2G"
   before_script:
+  # TODO: make CTA_VERSION and CTA_VERSION_SUFFIX one variable, then we can just either build_id or commit_tag everywhere easily (including the images)
     - |
       if [[ -z "${CI_COMMIT_TAG}" ]]; then
         export CTA_VERSION=$BUILD_CTA_VERSION

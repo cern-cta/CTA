@@ -48,6 +48,7 @@ trigger-cta-version-regression-pipeline:
     branch: $RESOLVED_CTA_GIT_TAG
     strategy: mirror
     forward:
+      # Keep disabled so the downstream pipeline derives CTA_BUILD_ID from its own CI_PIPELINE_ID
       yaml_variables: false
       pipeline_variables: false
     inputs:
@@ -75,6 +76,7 @@ trigger-cta-version-regression-pipeline:
       when: manual
   trigger:
     forward:
+      # Keep disabled so the child pipeline derives CTA_BUILD_ID from its own CI_PIPELINE_ID
       yaml_variables: false
     include:
       - local: .gitlab-ci.yml

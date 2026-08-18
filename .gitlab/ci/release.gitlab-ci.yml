@@ -202,7 +202,6 @@ public-release-cta-stable:
     name: $IMAGE_DOCKER_IMAGE_BUILDER
     entrypoint: [""]
   variables:
-    CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     DEST_REGISTRY_AUTH_FILE: "${CI_PROJECT_DIR}/.buildah-destination-auth.json"
     DEST_REGISTRY_PASSWORD: ""
     DEST_REGISTRY_USERNAME: ""

@@ -157,6 +157,7 @@ stages:
 # User-facing settings are defined as inputs. Internal variables expose their effective values to included templates
 # when workflow rules may override the selected input.
 variables:
+
   # Pipeline images
   # Updated by the weekly UPDATE_PIPELINE_IMAGES pipeline after every image has been built successfully
   PIPELINE_IMAGE_VERSION: "2026-08-17-15549541"
@@ -188,6 +189,7 @@ variables:
   TAG_PGALL_REGEX: '/(^|\.)pgall($|\.)/'  # Postgres scheduler + Postgres catalogue
 
   # Build and runtime defaults
+  CTA_BUILD_ID: "${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}"
   ENABLE_SBOM_GENERATION: "$[[ inputs.enable-sbom-generation ]]"
   SCHEDULER_TYPE: "$[[ inputs.scheduler-type ]]"
   ENABLE_ORACLE_SUPPORT: "$[[ inputs.enable-oracle-support ]]"
