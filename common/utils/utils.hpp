@@ -259,25 +259,6 @@ std::string getShortHostname();
 uint32_t getAdler32(const uint8_t* buf, const uint32_t len);
 
 /**
- * Returns true if the attributes of the current process indicate that it will
- * produce a core dump if it receives a signal whose behaviour is to produce a
- * core dump.
- *
- * This method is implemented using prctl().
- *
- * @return true if the current program is dumpable.
- */
-bool getDumpableProcessAttribute();
-
-/**
- * Sets the attributes of the current process to indicate hat it will produce a
- * core dump if it receives a signal whose behaviour is to produce a core dump.
- *
- * @param dumpable true if the current program should be dumpable.
- */
-void setDumpableProcessAttribute(const bool dumpable);
-
-/**
  * Returns the hexadecimal dump of the specified memory.
  *
  * @param mem Pointer to the memory to be dumped.

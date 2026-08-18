@@ -25,6 +25,7 @@ mounts:
   idleSchedulingIntervalSecs: 1 # Make tape servers more responsive, thus improving CI test speed
   mountTimeoutSecs: 600
   tapeLoadTimeoutSecs: 300
+  unmountTimeoutSecs: 900
   rmcd:
     host: "cta-rmcd" # Override with localhost if using host networking
     port: 5014
@@ -41,6 +42,11 @@ transfers:
     fetchMaxFiles: 5000
     flushMaxBytes: 32000000000
     flushMaxFiles: 200
+    underfill:
+      watchPeriodSecs: 300
+      minimumSamples: 3
+      startThresholdPercent: 40
+      recoveryThresholdPercent: 60
   retrieve:
     fetchMaxBytes: 100000000000
     fetchMaxFiles: 5000
@@ -52,14 +58,6 @@ transfers:
   encryption:
     enabled: false
     externalKeyScript: "/usr/local/bin/cta-get-encryption-key.sh"
-
-unmounts:
-  unmountTimeoutSecs: 900
-  archiveUnderfill:
-    watchPeriodSecs: 300
-    minimumSamples: 3
-    startThresholdPercent: 40
-    recoveryThresholdPercent: 60
 
 telemetry:
   enabled: false

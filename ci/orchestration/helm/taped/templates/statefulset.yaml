@@ -127,7 +127,7 @@ spec:
           mountPath: /etc/cta/cta-otel.yaml
           subPath: cta-otel.yaml
         - name: log-dir
-          mountPath: /run/cta
+          mountPath: /var/log/cta
         {{ include "common.extraVolumeMounts" $ | nindent 8 }}
       volumes:
       - name: scripts-volume

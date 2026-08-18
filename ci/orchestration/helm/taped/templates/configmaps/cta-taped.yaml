@@ -68,6 +68,7 @@ data:
       idle_scheduling_interval_secs = {{ $.Values.mounts.idleSchedulingIntervalSecs }}
       mount_timeout_secs = {{ $.Values.mounts.mountTimeoutSecs }}
       tape_load_timeout_secs = {{ $.Values.mounts.tapeLoadTimeoutSecs }}
+      unmount_timeout_secs = {{ $.Values.mounts.unmountTimeoutSecs }}
 
     [mounts.rmcd]
       host = {{ $.Values.mounts.rmcd.host | quote }}
@@ -87,6 +88,12 @@ data:
       flush_max_bytes = {{ int64 $.Values.transfers.archive.flushMaxBytes }}
       flush_max_files = {{ $.Values.transfers.archive.flushMaxFiles }}
 
+    [transfers.archive.underfill]
+      watch_period_secs = {{ $.Values.transfers.archive.underfill.watchPeriodSecs }}
+      minimum_samples = {{ $.Values.transfers.archive.underfill.minimumSamples }}
+      start_threshold_percent = {{ $.Values.transfers.archive.underfill.startThresholdPercent }}
+      recovery_threshold_percent = {{ $.Values.transfers.archive.underfill.recoveryThresholdPercent }}
+
     [transfers.retrieve]
       fetch_max_bytes = {{ int64 $.Values.transfers.retrieve.fetchMaxBytes }}
       fetch_max_files = {{ $.Values.transfers.retrieve.fetchMaxFiles }}
@@ -100,15 +107,6 @@ data:
     [transfers.encryption]
       enabled = {{ $.Values.transfers.encryption.enabled }}
       external_key_script = {{ $.Values.transfers.encryption.externalKeyScript | quote }}
-
-    [unmounts]
-      unmount_timeout_secs = {{ $.Values.unmounts.unmountTimeoutSecs }}
-
-    [unmounts.archive_underfill]
-      watch_period_secs = {{ $.Values.unmounts.archiveUnderfill.watchPeriodSecs }}
-      minimum_samples = {{ $.Values.unmounts.archiveUnderfill.minimumSamples }}
-      start_threshold_percent = {{ $.Values.unmounts.archiveUnderfill.startThresholdPercent }}
-      recovery_threshold_percent = {{ $.Values.unmounts.archiveUnderfill.recoveryThresholdPercent }}
 
 ---
 {{- end }}

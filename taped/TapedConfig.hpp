@@ -33,6 +33,15 @@ struct RmcdConfig final {
   static constexpr std::size_t memberCount() { return 4; }
 };
 
+struct ArchiveUnderfillConfig final {
+  int watch_period_secs = 300;
+  int minimum_samples = 3;
+  int start_threshold_percent = 40;
+  int recovery_threshold_percent = 60;
+
+  static constexpr std::size_t memberCount() { return 4; }
+};
+
 struct MountsConfig final {
   long minimum_queued_bytes = 500000000000;
   long minimum_queued_files = 10000;
@@ -41,9 +50,10 @@ struct MountsConfig final {
   int idle_scheduling_interval_secs = 10;
   int mount_timeout_secs = 600;
   int tape_load_timeout_secs = 300;
+  int unmount_timeout_secs = 900;
   RmcdConfig rmcd;
 
-  static constexpr std::size_t memberCount() { return 8; }
+  static constexpr std::size_t memberCount() { return 9; }
 };
 
 struct ArchiveTransferConfig final {
@@ -51,8 +61,9 @@ struct ArchiveTransferConfig final {
   long fetch_max_files = 5000;
   long flush_max_bytes = 32000000000;
   long flush_max_files = 200;
+  ArchiveUnderfillConfig underfill;
 
-  static constexpr std::size_t memberCount() { return 4; }
+  static constexpr std::size_t memberCount() { return 5; }
 };
 
 struct EncryptionConfig final {
@@ -91,22 +102,6 @@ struct TransfersConfig final {
   static constexpr std::size_t memberCount() { return 7; }
 };
 
-struct ArchiveUnderfillConfig final {
-  int watch_period_secs = 300;
-  int minimum_samples = 3;
-  int start_threshold_percent = 40;
-  int recovery_threshold_percent = 60;
-
-  static constexpr std::size_t memberCount() { return 4; }
-};
-
-struct UnmountsConfig final {
-  int unmount_timeout_secs = 900;
-  ArchiveUnderfillConfig archive_underfill;
-
-  static constexpr std::size_t memberCount() { return 2; }
-};
-
 struct TapedConfig final {
   cta::runtime::CatalogueConfig catalogue;
   cta::runtime::SchedulerConfig scheduler;
@@ -119,9 +114,8 @@ struct TapedConfig final {
   DriveConfig drive;
   MountsConfig mounts;
   TransfersConfig transfers;
-  UnmountsConfig unmounts;
 
-  static constexpr std::size_t memberCount() { return 11; }
+  static constexpr std::size_t memberCount() { return 10; }
 };
 
 }  // namespace cta::tape::daemon

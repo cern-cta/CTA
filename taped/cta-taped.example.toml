@@ -110,6 +110,12 @@
   # If omitted, 300 is used.
   tape_load_timeout_secs = 300
 
+  # Maximum time, in seconds, allowed for RMCD to return an unloaded tape to its library slot. This limit
+  # starts only after the drive has finished rewinding and ejecting the tape. On expiry, the drive process is
+  # killed and a cleaner session is started. The drive is put Down if recovery cannot be completed.
+  # If omitted, 900 is used.
+  unmount_timeout_secs = 900
+
 
 # Controls resources and inactivity limits shared by archive and retrieve data-transfer sessions.
 [transfers]
@@ -159,6 +165,31 @@
     # flush_max_bytes is reached. 
     # If omitted, 200 is used.
     flush_max_files = 200
+
+    # Ends archive sessions whose scheduler batches remain too small to use the drive efficiently. The effective
+    # fill percentage is max(files fetched / fetch_max_files, bytes fetched / fetch_max_bytes). An observation
+    # begins below start_threshold_percent and resets at or above recovery_threshold_percent. The session ends
+    # only after both watch_period_secs and minimum_samples are satisfied.
+    [transfers.archive.underfill]
+      # Minimum duration, in seconds, for which archive batches must remain underfilled before an unmount can be
+      # requested. Increasing it tolerates slow producers longer.
+      # If omitted, 300 is used.
+      watch_period_secs = 300
+
+      # Minimum number of underfilled archive batches required during the observation period before an unmount
+      # can be requested. This prevents a single small batch from ending a session.
+      # If omitted, 3 is used.
+      minimum_samples = 3
+
+      # Fill percentage below which an underfill observation begins. Valid values are 0 through 100 and this
+      # should be lower than recovery_threshold_percent.
+      # If omitted, 40 is used.
+      start_threshold_percent = 40
+
+      # Fill percentage at or above which an underfill observation is cancelled. Valid values are 0 through 100
+      # and this should be higher than start_threshold_percent to provide hysteresis.
+      # If omitted, 60 is used.
+      recovery_threshold_percent = 60
 
   # Batch fetching, disk-space checks, and disk draining for tape-to-disk retrieve sessions.
   [transfers.retrieve]
@@ -210,40 +241,6 @@
     # cta-taped and return the protocol expected by EncryptionControl. It is required when encryption is used.
     # If omitted, /usr/local/bin/cta-get-encryption-key.sh is used.
     external_key_script = "/usr/local/bin/cta-get-encryption-key.sh"
-
-
-# Controls completion of mounted sessions and the physical unmount state.
-[unmounts]
-  # Maximum time, in seconds, that the drive process may remain in the unmounting state. On expiry, the drive process
-  # is killed and a cleaner session is started to recover and unmount the tape.
-  # If omitted, 600 is used.
-  unmount_timeout_secs = 600
-
-  # Ends archive sessions whose scheduler batches remain too small to use the drive efficiently. The effective
-  # fill percentage is max(files fetched / fetch_max_files, bytes fetched / fetch_max_bytes). An observation
-  # begins below start_threshold_percent and resets at or above recovery_threshold_percent. The session ends
-  # only after both watch_period_secs and minimum_samples are satisfied.
-  [unmounts.archive_underfill]
-    # Minimum duration, in seconds, for which archive batches must remain underfilled before an unmount can be
-    # requested. Increasing it tolerates slow producers longer. 
-    # If omitted, 300 is used.
-    watch_period_secs = 300
-
-    # Minimum number of underfilled archive batches required during the observation period before an unmount
-    # can be requested. This prevents a single small batch from ending a session. 
-    # If omitted, 3 is used.
-    minimum_samples = 3
-
-    # Fill percentage below which an underfill observation begins. Valid values are 0 through 100 and this
-    # should be lower than recovery_threshold_percent. 
-    # If omitted, 40 is used.
-    start_threshold_percent = 40
-
-    # Fill percentage at or above which an underfill observation is cancelled. Valid values are 0 through 100
-    # and this should be higher than start_threshold_percent to provide hysteresis. 
-    # If omitted, 60 is used.
-    recovery_threshold_percent = 60
-
 
 # Connection to the Remote Media Changer Daemon (cta-rmcd) used for physical mount and unmount operations.
 [rmcd]

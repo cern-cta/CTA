@@ -477,58 +477,6 @@ std::string getShortHostname() {
   return snn.at(0);
 }
 
-//------------------------------------------------------------------------------
-// getDumpableProcessAttribute
-//------------------------------------------------------------------------------
-bool getDumpableProcessAttribute() {
-  const int rc = prctl(PR_GET_DUMPABLE);
-  switch (rc) {
-    case -1: {
-      const std::string errStr = errnoToString(errno);
-      cta::exception::Exception ex;
-      ex.getMessage() << "Failed to get the dumpable attribute of the process: " << errStr;
-      throw ex;
-    }
-    case 0:
-      return false;
-    case 1:
-      return true;
-    case 2:
-      return true;
-    default: {
-      cta::exception::Exception ex;
-      ex.getMessage() << "Failed to get the dumpable attribute of the process"
-                         ": Unknown value returned by prctl(): rc="
-                      << rc;
-      throw ex;
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// setDumpableProcessAttribute
-//------------------------------------------------------------------------------
-void setDumpableProcessAttribute(const bool dumpable) {
-  const int rc = prctl(PR_SET_DUMPABLE, dumpable ? 1 : 0);
-  switch (rc) {
-    case -1: {
-      const std::string errStr = errnoToString(errno);
-      cta::exception::Exception ex;
-      ex.getMessage() << "Failed to set the dumpable attribute of the process: " << errStr;
-      throw ex;
-    }
-    case 0:
-      return;
-    default: {
-      cta::exception::Exception ex;
-      ex.getMessage() << "Failed to set the dumpable attribute of the process"
-                         ": Unknown value returned by prctl(): rc="
-                      << rc;
-      throw ex;
-    }
-  }
-}
-
 //-----------------------------------------------------------------------------
 // hexDump
 //-----------------------------------------------------------------------------

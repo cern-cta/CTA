@@ -76,7 +76,7 @@ std::map<SessionState, DriveHandler::Timeout> DriveHandler::m_stateChangeTimeout
   {SessionState::Scheduling,     std::chrono::duration_cast<Timeout>(std::chrono::minutes(5)) },
   // We expect mounting (mount+load, in fact) the take no more than 10 minutes.
   {SessionState::Mounting,       std::chrono::duration_cast<Timeout>(std::chrono::minutes(10))},
-  // Like mounting, unmounting is expected to take less than 10 minutes.
+  // Returning an unloaded tape to its library slot is expected to take less than 10 minutes.
   {SessionState::Unmounting,     std::chrono::duration_cast<Timeout>(std::chrono::minutes(10))},
   // Draining to disk is given a grace period of 30 minutes for changing state.
   {SessionState::DrainingToDisk, std::chrono::duration_cast<Timeout>(std::chrono::minutes(30))},
@@ -706,11 +706,11 @@ int DriveHandler::runChild() {
   m_stateChangeTimeouts[session::SessionState::Mounting] =
     std::chrono::duration_cast<Timeout>(std::chrono::seconds(m_tapedConfig.mounts.mount_timeout_secs));
   m_stateChangeTimeouts[session::SessionState::Unmounting] =
-    std::chrono::duration_cast<Timeout>(std::chrono::seconds(m_tapedConfig.unmounts.unmount_timeout_secs));
+    std::chrono::duration_cast<Timeout>(std::chrono::seconds(m_tapedConfig.mounts.unmount_timeout_secs));
   m_stateChangeTimeouts[session::SessionState::DrainingToDisk] = std::chrono::duration_cast<Timeout>(
     std::chrono::seconds(m_tapedConfig.transfers.retrieve.drain_to_disk_timeout_secs));
   m_stateChangeTimeouts[session::SessionState::ShuttingDown] =
-    std::chrono::duration_cast<Timeout>(std::chrono::seconds(m_tapedConfig.unmounts.unmount_timeout_secs + 5));
+    std::chrono::duration_cast<Timeout>(std::chrono::seconds(m_tapedConfig.mounts.unmount_timeout_secs + 5));
 
   // Before launching, and if this is the first session since daemon start, we will
   // put the drive down.
@@ -1006,19 +1006,21 @@ std::shared_ptr<cta::IScheduler> DriveHandler::createScheduler(const std::string
     log::ScopedParamContainer params(m_lc);
     params.add("processName", processName);
 #ifdef CTA_PGSCHED
-    m_sched_db_init = std::make_unique<SchedulerDBInit_t>(processName,
-                                                          cta::utils::file2string(m_tapedConfig.scheduler.config_file),
-                                                          m_tapedConfig.scheduler.number_of_connections,
-                                                          m_lc.logger(),
-                                                          true);
+    m_sched_db_init =
+      std::make_unique<SchedulerDBInit_t>(processName,
+                                          cta::utils::readSingleLineConfigFile(m_tapedConfig.scheduler.config_file),
+                                          m_tapedConfig.scheduler.number_of_connections,
+                                          m_lc.logger(),
+                                          true);
 #else
     m_lc.log(log::DEBUG,
              "In DriveHandler::createScheduler(): will create agent entry. "
              "Enabling leaving non-empty agent behind.");
-    m_sched_db_init = std::make_unique<SchedulerDBInit_t>(processName,
-                                                          m_tapedConfig.scheduler.objectstore_backend_path,
-                                                          m_lc.logger(),
-                                                          true);
+    m_sched_db_init =
+      std::make_unique<SchedulerDBInit_t>(processName,
+                                          cta::utils::readSingleLineConfigFile(m_tapedConfig.scheduler.config_file),
+                                          m_lc.logger(),
+                                          true);
 #endif
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(m_lc);
@@ -1064,10 +1066,10 @@ DriveHandler::executeDataTransferSession(IScheduler* scheduler, tape::daemon::Ta
   dataTransferConfig.bufsz = m_tapedConfig.transfers.buffer_size_bytes;
   dataTransferConfig.bulkRequestMigrationMaxBytes = m_tapedConfig.transfers.archive.fetch_max_bytes;
   dataTransferConfig.bulkRequestMigrationMaxFiles = m_tapedConfig.transfers.archive.fetch_max_files;
-  dataTransferConfig.archiveDismountPolicy.set(m_tapedConfig.unmounts.archive_underfill.watch_period_secs,
-                                               m_tapedConfig.unmounts.archive_underfill.minimum_samples,
-                                               m_tapedConfig.unmounts.archive_underfill.start_threshold_percent,
-                                               m_tapedConfig.unmounts.archive_underfill.recovery_threshold_percent);
+  dataTransferConfig.archiveDismountPolicy.set(m_tapedConfig.transfers.archive.underfill.watch_period_secs,
+                                               m_tapedConfig.transfers.archive.underfill.minimum_samples,
+                                               m_tapedConfig.transfers.archive.underfill.start_threshold_percent,
+                                               m_tapedConfig.transfers.archive.underfill.recovery_threshold_percent);
   dataTransferConfig.bulkRequestRecallMaxBytes = m_tapedConfig.transfers.retrieve.fetch_max_bytes;
   dataTransferConfig.bulkRequestRecallMaxFiles = m_tapedConfig.transfers.retrieve.fetch_max_files;
   dataTransferConfig.maxBytesBeforeFlush = m_tapedConfig.transfers.archive.flush_max_bytes;

@@ -31,8 +31,8 @@ int TapedApp::run(const TapedConfig& config, cta::log::Logger& log) {
   ProcessManager processManager(lc);
   // Signal handler
   auto signalHandler = std::make_unique<SignalHandler>(processManager);
-  // Grace period is the time to unmount + a lil bit extra
-  signalHandler->setTimeout(std::chrono::seconds(config.unmounts.unmount_timeout_secs + 5));
+  // Allow enough time to return the tape to its library slot and finish shutdown bookkeeping.
+  signalHandler->setTimeout(std::chrono::seconds(config.mounts.unmount_timeout_secs + 5));
   processManager.addHandler(std::move(signalHandler));
   // Create the drive handler
   const common::dataStructures::DriveInfo driveInfo(config.drive.name,
