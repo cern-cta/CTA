@@ -53,16 +53,12 @@ trigger-cta-version-regression-pipeline:
       yaml_variables: false
       pipeline_variables: false
     inputs:
+      # Only forward explicit regression overrides. The tagged pipeline should use the defaults from its own CI file;
+      # forwarding every current-ref setting can also make GitLab reject an otherwise valid tagged pipeline definition.
       pipeline-type: "REGR_AGAINST_CTA_BRANCH"
       custom-cta-image-tag: $[[ inputs.custom-cta-image-tag ]]
       custom-eos-image-tag: $[[ inputs.custom-eos-image-tag ]]
       custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]
-      platform: $[[ inputs.platform ]]
-      scheduler-type: $[[ inputs.scheduler-type ]]
-      enable-oracle-support: $[[ inputs.enable-oracle-support ]]
-      workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
-      enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
-      keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
 
 .trigger-child-pipeline:
   allow_failure: true
