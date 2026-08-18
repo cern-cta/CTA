@@ -12,14 +12,14 @@
 namespace cta::rmcd {
 
 struct MediaChangerConfig final {
-  std::string device;
+  std::string device = "/dev/smc";
 
   static constexpr std::size_t memberCount() { return 1; }
 };
 
-struct ServerConfig final {
-  int port;
-  std::string listen_scope;
+struct RmcServerConfig final {
+  int port = 5014;
+  std::string listen_scope = "loopback";
 
   static constexpr std::size_t memberCount() { return 2; }
 };
@@ -28,11 +28,10 @@ struct RmcdConfig final {
   cta::runtime::LoggingConfig logging;
   // cta::runtime::TelemetryConfig telemetry; // No telemetry for rmcd (yet?)
   cta::runtime::HealthServerConfig health_server;
-  cta::runtime::ExperimentalConfig experimental;
   MediaChangerConfig media_changer;
-  ServerConfig server;
+  RmcServerConfig rmc_server;
 
-  static constexpr std::size_t memberCount() { return 5; }
+  static constexpr std::size_t memberCount() { return 4; }
 };
 
 }  // namespace cta::rmcd

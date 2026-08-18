@@ -27,9 +27,6 @@ data:
     [media_changer]
       device = "/dev/smc"
 
-    [server]
+    [rmc_server]
       port = {{ .Values.server.port }}
       listen_scope = {{ .Values.listenScope | quote }}
-
-    [experimental]
-      telemetry_enabled = false
