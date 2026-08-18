@@ -157,7 +157,7 @@ int rmc_main(const std::string& robot, int port, const std::string& listen_scope
   }
   memset(&sin, 0, sizeof(struct sockaddr_in));
   sin.sin_family = AF_INET;
-  sin.sin_port = port;
+  sin.sin_port = htons(port);
   // rmcd should only accept connections from the loopback interface by default
   if (listen_scope == "any") {
     lc.log(cta::log::WARNING,
