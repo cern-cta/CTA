@@ -1,60 +1,38 @@
-## 5.11.20.0-1 (2026-08-18)
+## 5.11.20.0-1
 
 ### New Features
 
 - [Tools] Add optional storage class statistics, per tape, to cta-admin tool (cta/CTA!1410)
-
 - [Misc] Add event_name to important CTA log messages (cta/CTA!1381)
-
 
 ### Changes
 
-- [Misc] Improve service and logrotate configuration (cta/CTA!1524)
-
-- [Misc] Change systemd to weak RPM dependency of CTA (cta/CTA!1509)
-
-- [Misc] Modernise RPM spec metadata and file handling (cta/CTA!1507)
-
-- [Misc] Remove RPM changelog; package CHANGELOG.md as doc (cta/CTA!1508)
-
-- [Misc] Remove noreplace from example configuration files (cta/CTA!1506)
-
-- [Misc] Move systemd units to /usr/lib/systemd/system (cta/CTA!1497)
-
-- [Misc] Change logrotate to weak RPM dependency of CTA (cta/CTA!1505)
-
-- [taped] Drive process crashing produces CRIT message instead of INFO (cta/CTA!1499)
-
-- [taped] Taped no longer sets its own user, group and SYS_RAWIO capability (cta/CTA!1426)
-
-- [taped] cta-eosdf no longer sources sysconfig (cta/CTA!1455)
-
 - [Tools] Change short option for cta-admin af ch --idfile from -I to -F (cta/CTA!1453)
-
+- [taped] Taped no longer sets its own user, group and SYS_RAWIO capability (cta/CTA!1426)
+- [Misc] Improve .service and .logrotate configuration (cta/CTA!1524)
+- [Misc] Modernise RPM spec metadata and file handling (cta/CTA!1507)
+- [Misc] Move systemd units to `/usr/lib/systemd/system` (cta/CTA!1497)
+- [Misc] Change systemd to weak RPM dependency of CTA (cta/CTA!1509)
+- [Misc] Change logrotate to weak RPM dependency of CTA (cta/CTA!1505)
+- [Misc] Remove RPM changelog; package CHANGELOG.md as doc (cta/CTA!1508)
+- [Misc] Remove noreplace from example configuration files (cta/CTA!1506)
+- [taped] Drive process crashing produces CRIT message instead of INFO (cta/CTA!1499)
+- [taped] cta-eosdf no longer sources sysconfig (cta/CTA!1455)
 
 ### Bug Fixes
 
+- [frontend] Forbid reclaiming tapes with recently deleted files (cta/CTA!1418)
+- [frontend] PREPARE gRPC request shouldn't fail without a storage class (cta/CTA!1471)
+- [taped] Fix crash due to accidental pointer arithmetic in exception msg (cta/CTA!1502)
+- [taped] Fix opentelemetry shutdown race condition with objectstore (cta/CTA!1500)
+- [scheduler]: Fix archive unmount decision logic for postgres scheduler (cta/CTA!1450)
+- [frontend] Fix frontend catalogue cache for mount rules (cta/CTA!1490)
 - [CI] Ensure CTA images trust CERN Root CA (cta/CTA!1535)
-
 - [Misc] Ensure CMake correctly installs executables as PROGRAMS (cta/CTA!1523)
 
-- [frontend] Forbid reclaiming tapes with recently deleted files (cta/CTA!1418)
-
-- [taped] Fix crash due to accidental pointer arithmetic in exception msg (cta/CTA!1502)
-
-- [taped] Fix opentelemetry shutdown race condition with objectstore (cta/CTA!1500)
-
-- [scheduler]: Fix archive unmount decision logic for postgres scheduler only (cta/CTA!1450)
-
-- [frontend] Fix frontend catalogue cache for mount rules (cta/CTA!1490)
-
-- [frontend] PREPARE gRPC request shouldn't fail without a storage class (cta/CTA!1471)
-
-
-### Security Fixes
+### Security
 
 - [CI] Generate SBOM for each Docker image (cta/CTA!1532)
-
 
 ### Other
 
