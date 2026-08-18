@@ -151,18 +151,6 @@ struct Login {
   static Login parseString(const std::string& connectionString);
 
   /**
-   * Reads the entire contents of the specified stream and returns a list of the
-   * non-empty lines.
-   *
-   * A line is considered not empty if it contains characters that are not white
-   * space and are not part of a comment.
-   *
-   * @param is The input stream.
-   * @return A list of the non-empty lines.
-   */
-  static std::vector<std::string> readNonEmptyLines(std::istream& inputStream);
-
-  /**
    * Structure containing two strings: the database type string and the
    * connection details string for that database type.
    */

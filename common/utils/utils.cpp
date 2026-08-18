@@ -271,6 +271,35 @@ std::string trimString(std::string_view s) {
   return std::string(it1, it2);
 }
 
+std::string readSingleLineConfig(std::istream& inputStream) {
+  std::vector<std::string> values;
+  std::string line;
+
+  while (std::getline(inputStream, line)) {
+    line = trimString(line);
+
+    if (!line.empty() && line.front() != '#') {
+      values.push_back(line);
+    }
+  }
+
+  if (values.size() != 1) {
+    throw Exception("There should only be a single line containing a configuration value");
+  }
+
+  return values.front();
+}
+
+std::string readSingleLineConfigFile(const std::string& path) {
+  std::ifstream file(path);
+
+  if (!file) {
+    throw Exception("Failed to open configuration file " + path);
+  }
+
+  return readSingleLineConfig(file);
+}
+
 //------------------------------------------------------------------------------
 // postEllipsis
 //------------------------------------------------------------------------------

@@ -47,16 +47,23 @@
 
 
 [catalogue]
-  # Path to the CTA Catalogue configuration file.
+  # Path to the CTA Catalogue configuration file. The file contains a single connection string.
+  # Examples:
+  #   postgresql:postgresql://username:password@hostname/database
+  #   oracle:username/password@database
+  # See /etc/cta/cta-scheduler.example.conf for further details.
   # This setting is required.
   config_file = "/etc/cta/cta-catalogue.conf"
 
 
 [scheduler]
   # Unique name used to identify this scheduler backend in logs and scheduler resources. A conventional
-  # format is "postgres[User|Repack]", for example "postgresUser". This setting is required.
-  backend_name = "postgresUser"
-  # Path to the CTA Scheduler configuration file.
+  # format is "[ceph|postgres|vfs][User|Repack]", for example "cephUser". This setting is required.
+  backend_name = "cephUser"
+  # Path to the CTA Scheduler configuration file. The file contains a single connection string.
+  # Example:
+  #   postgresql:postgresql://username:password@hostname/database
+  # See /etc/cta/cta-scheduler.example.conf for further details.
   # This setting is required.
   config_file = "/etc/cta/cta-scheduler.conf"
   # Number of connections to the scheduler database. If omitted, 3 is used.

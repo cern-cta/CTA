@@ -72,6 +72,10 @@ set_property(TARGET ctascheduler PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install (TARGETS ctascheduler DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
+install (FILES cta-scheduler.example.conf
+  DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
+  PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+
 if(NOT CTA_USE_PGSCHED)
   add_library (ctaschedulerunittests SHARED
     SchedulerDatabaseFactory.cpp
