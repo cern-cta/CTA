@@ -123,21 +123,11 @@ spec:
         - name: vfs-storage-volume
           mountPath: /objectstore
         {{- end }}
-<<<<<<< HEAD
-        {{- if $.Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
-        - name: otlp-basic-auth-pwd
-          mountPath: /etc/cta/otlp-basic-auth-pwd.conf
-          subPath: otlp-basic-auth-pwd.conf
-        {{- end }}
-        - name: log-dir
-          mountPath: /var/log/cta
-=======
         - name: opentelemetry-config
           mountPath: /etc/cta/cta-otel.yaml
           subPath: cta-otel.yaml
-        - name: runtime-dir
+        - name: log-dir
           mountPath: /run/cta
->>>>>>> 96a833b274 (Basic deployment fixes)
         {{ include "common.extraVolumeMounts" $ | nindent 8 }}
       volumes:
       - name: scripts-volume

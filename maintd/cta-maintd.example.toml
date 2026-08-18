@@ -44,37 +44,6 @@
   garbage_collect      = { enabled = true }
 
 
-# Maintd runs all routines sequentially: A -> B -> C -> sleep -> A -> B -> C -> sleep ...
-# Here [A -> B -> C] is a single cycle of routine execution.
-# A full cycle of routine execution refers to executing all enabled routines once and excludes the sleep interval.
-# Due to this operating model, it is not possible to define different sleep intervals per routine.
-# If this behaviour is desired, it is recommended to run several maintd processes, each with only one routine enabled.
-# At that point, a cycle consists of a single routine and cycle_sleep_interval_secs effectively becomes a per-routine sleep interval.
-[routines]
-  # The sleep duration in between cycles of routine executions.
-  # If omitted, 10 is used.
-  cycle_sleep_interval_secs = 10
-
-  # The maximum duration in seconds a single cycle of routine execution is allowed to take.
-  # If a cycle takes longer than this value, it will not be interrupted.
-  # Instead, the process will no longer be considered alive by the health server.
-  # If omitted, 900 is used (15 minutes).
-  max_cycle_duration_secs = 900
-
-  # Routine that reports archive transfer success/failures to the disk system.
-  disk_report_archive  = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
-  # Routine that reports retrieve transfer success/failures to the disk system.
-  disk_report_retrieve = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
-  # Routine that expands repack requests.
-  repack_expand        = { enabled = true, max_to_expand = 2 }
-  # Routine that handles the reporting of the requests created by repack requests.
-  repack_report        = { enabled = true, soft_timeout_secs = 30 }
-  # Objectstore routine that finds queues marked for cleanup, takes ownership of these queues and moves the requests to other queues.
-  queue_cleanup        = { enabled = true, batch_size = 500 }
-  # Objectstore routine that garbage collects stale agents and objects.
-  garbage_collect      = { enabled = true }
-
-
 [catalogue]
   # Path to the CTA Catalogue configuration file. The file contains a single connection string that
   # specifies how to connect to the Catalogue DB.

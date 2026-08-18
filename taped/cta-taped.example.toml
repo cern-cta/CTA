@@ -36,26 +36,33 @@
 
 
 [catalogue]
-  # Path to the CTA Catalogue configuration file.
+  # Path to the CTA Catalogue configuration file. The file contains a single connection string that
+  # specifies how to connect to the Catalogue DB.
+  # Examples:
+  #   postgresql:postgresql://username:password@hostname/database
+  #   oracle:username/password@database
+  # See /etc/cta/cta-catalogue.example.conf for further details.
   # This setting is required.
   config_file = "/etc/cta/cta-catalogue.conf"
 
 
 [scheduler]
   # Unique name used to identify this scheduler backend in logs and scheduler resources. A conventional
-  # format is "[ceph|postgres|vfs][User|Repack]", for example "cephUser". 
-  # This setting is required.
+  # format is "[ceph|postgres|vfs][User|Repack]", for example "cephUser". This setting is required.
   backend_name = "cephUser"
-  # Path to the CTA Scheduler configuration file.
+  # Path to the CTA Scheduler backend configuration file. The file contains a single connection string that
+  # specifies how to connect to the scheduler backend.
+  # Examples:
+  #   rados://user@pool:namespace
+  #   file:///path/to/objectstore
+  # See /etc/cta/cta-scheduler.example.conf for further details.
   # This setting is required.
   config_file = "/etc/cta/cta-scheduler.conf"
   # Maximum age, in seconds, of cached tape statistics used when deciding whether work warrants a mount.
-  # Lower values reflect scheduler changes sooner but increase backend queries. 
-  # If omitted, 600 is used.
+  # Lower values reflect scheduler changes sooner but increase backend queries. If omitted, 600 is used.
   tape_cache_max_age_secs = 600
   # Maximum age, in seconds, of cached retrieve-queue statistics. Lower values reflect newly queued
-  # retrieves sooner but increase backend queries. 
-  # If omitted, 10 is used.
+  # retrieves sooner but increase backend queries. If omitted, 10 is used.
   retrieve_queue_cache_max_age_secs = 10
 
 
