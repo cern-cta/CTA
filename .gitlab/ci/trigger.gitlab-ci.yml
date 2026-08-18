@@ -3,10 +3,6 @@
 
 spec:
   inputs:
-    cta-version-regression-git-tag:
-      type: string
-    custom-cta-image-tag:
-      type: string
     custom-eos-image-tag:
       type: string
     custom-xrootd-version:
@@ -43,7 +39,9 @@ spec:
 # Basically, this job is a hack because GitLab doesn't support what we need here...
 trigger-cta-version-regression-pipeline:
   stage: trigger
-  needs: []
+  needs:
+    - job: prepare-cta-version-regression
+      artifacts: true
   rules:
     - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
   variables:
@@ -57,9 +55,9 @@ trigger-cta-version-regression-pipeline:
           --write-out '%{http_code}' \
           --request POST \
           --form "token=$CI_JOB_TOKEN" \
-          --form "ref=$[[ inputs.cta-version-regression-git-tag ]]" \
+          --form "ref=$RESOLVED_CTA_GIT_TAG" \
           --form "inputs[pipeline-type]=REGR_AGAINST_CTA_BRANCH" \
-          --form "inputs[custom-cta-image-tag]=$[[ inputs.custom-cta-image-tag ]]" \
+          --form "inputs[custom-cta-image-tag]=$RESOLVED_CTA_IMAGE_TAG" \
           --form "inputs[custom-eos-image-tag]=$[[ inputs.custom-eos-image-tag ]]" \
           --form "inputs[custom-xrootd-version]=$[[ inputs.custom-xrootd-version ]]" \
           "$CI_API_V4_URL/projects/$CI_PROJECT_ID/trigger/pipeline"

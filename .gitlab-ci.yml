@@ -16,38 +16,20 @@ spec:
         - "UPDATE_PIPELINE_IMAGES"
       default: "DEFAULT"
 
-    # REGR_AGAINST_CTA_VERSION lets EOS always trigger CTA's main branch while CTA controls the release to test.
-    # Updating these defaults changes the reference for external callers without requiring an EOS CI change.
+    # REGR_AGAINST_CTA_VERSION lets EOS always trigger CTA's main branch while CTA selects the release to test.
+    # An empty value selects the latest canonical unstable release without requiring an EOS CI change.
     custom-cta-image-tag:
       description: |-
         Existing CTA image tag to test instead of building CTA from the selected ref.
 
         Pipeline build example: `123456gitabcdef12`.
-        Published release format: `vX.Y.Z.R-N.PLATFORM`, e.g. `v5.11.19.1-1.el9`.
+        Published release format: `vX.Y.Z.R-N.PLATFORM`, e.g. `v5.11.20.1-1.el9`.
 
-        Leave empty to build the selected branch.
+        Leave empty to build a branch regression or automatically select the version-regression release.
       type: string
       rules:
-        - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH"'
+        - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_VERSION"'
           default: ""
-        - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_VERSION"'
-          default: "v5.11.20.0-1.el9"
-
-    # The image and Git tag defaults must identify the same release and should be updated together.
-    # Automatic discovery would require a job to query the repository, but GitLab must know a multi-project trigger's
-    # branch when it creates the downstream pipeline. Runtime values from dotenv artifacts are not reliably expanded
-    # in that field. Generating another pipeline configuration or calling the API would add extra orchestration and
-    # make status mirroring harder to follow, so this reference is intentionally a visible, overridable input default.
-    # CTA Developers are expected to periodically update this default.
-    cta-version-regression-git-tag:
-      description: |-
-        CTA Git tag whose tests, charts, and orchestration files are used by version regressions.
-
-        This should match `custom-cta-image-tag` without its platform suffix, e.g. `v5.11.20.0-1`.
-      type: string
-      rules:
-        - if: '$[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_VERSION"'
-          default: "v5.11.20.0-1"
 
     custom-eos-image-tag:
       description: |-
@@ -315,12 +297,11 @@ workflow:
 include:
   - local: .gitlab/ci/.pre.gitlab-ci.yml
     inputs:
+      custom-cta-image-tag: $[[ inputs.custom-cta-image-tag ]]
       custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]
       platform: $[[ inputs.platform ]]
   - local: .gitlab/ci/trigger.gitlab-ci.yml
     inputs:
-      cta-version-regression-git-tag: $[[ inputs.cta-version-regression-git-tag ]]
-      custom-cta-image-tag: $[[ inputs.custom-cta-image-tag ]]
       custom-eos-image-tag: $[[ inputs.custom-eos-image-tag ]]
       custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]
       platform: $[[ inputs.platform ]]

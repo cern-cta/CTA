@@ -3,11 +3,68 @@
 
 spec:
   inputs:
+    custom-cta-image-tag:
+      type: string
     custom-xrootd-version:
       type: string
     platform:
       type: string
 ---
+
+# Resolve the image and matching Git tag at runtime for the API-based dispatcher. These dotenv values are suitable for
+# scripts, but cannot reliably populate declarative trigger fields because GitLab evaluates those before jobs run.
+prepare-cta-version-regression:
+  stage: .pre
+  needs: []
+  rules:
+    - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
+  variables:
+    GIT_STRATEGY: none
+    # Automatic version regressions currently follow the canonical EL9 unstable release stream.
+    CTA_REPO_URL: "https://cta-public-repo.web.cern.ch/unstable/cta-5/el9/cta/x86_64/"
+  script:
+    - requested_image_tag="$[[ inputs.custom-cta-image-tag ]]"
+    - requested_image_tag="$(echo "$requested_image_tag" | xargs)"
+    # An explicit tag reproduces a particular release. Otherwise, select the latest canonical unstable RPM.
+    - |
+      if [[ -n "$requested_image_tag" ]]; then
+        resolved_image_tag="$requested_image_tag"
+      else
+        echo "No CTA image tag provided. Looking for the latest canonical release in $CTA_REPO_URL"
+        canonical_versions="$(
+          dnf -q --repofrompath=cta-unstable,"$CTA_REPO_URL" --repo=cta-unstable \
+            repoquery --qf '%{version}-%{release}' cta-taped |
+            grep -E '^[0-9]+(\.[0-9]+){3}-[0-9]+\.el9$' |
+            sort -Vu
+        )"
+        resolved_version="$(echo "$canonical_versions" | tail -n 1)"
+
+        if [[ -z "$resolved_version" ]]; then
+          echo "No canonical CTA release was found in $CTA_REPO_URL" >&2
+          exit 1
+        fi
+
+        resolved_image_tag="v${resolved_version}"
+      fi
+    # Qualified releases such as rc and pgsched deliberately do not match the canonical image format.
+    - |
+      if [[ ! "$resolved_image_tag" =~ ^v[0-9]+(\.[0-9]+){3}-[0-9]+\.[[:alnum:]_-]+$ ]]; then
+        echo "CTA image tag must be a canonical release in the form vX.Y.Z.R-N.PLATFORM: $resolved_image_tag" >&2
+        exit 1
+      fi
+    - resolved_git_tag="${resolved_image_tag%.*}"
+    # Validate the ref without cloning the repository.
+    - |
+      if ! git ls-remote --exit-code --tags "$CI_REPOSITORY_URL" "refs/tags/${resolved_git_tag}" >/dev/null; then
+        echo "CTA Git tag does not exist: $resolved_git_tag" >&2
+        exit 1
+      fi
+    - echo "Resolved CTA image tag $resolved_image_tag to Git tag $resolved_git_tag"
+    - echo "RESOLVED_CTA_IMAGE_TAG=$resolved_image_tag" > regression.env
+    - echo "RESOLVED_CTA_GIT_TAG=$resolved_git_tag" >> regression.env
+  artifacts:
+    reports:
+      dotenv: regression.env
 
 modify-project-json:
   stage: .pre
