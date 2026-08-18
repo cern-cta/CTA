@@ -3,6 +3,10 @@
 
 spec:
   inputs:
+    cta-version-regression-git-tag:
+      type: string
+    custom-cta-image-tag:
+      type: string
     custom-eos-image-tag:
       type: string
     custom-xrootd-version:
@@ -33,28 +37,24 @@ spec:
       type: boolean
 ---
 
-# The resolver supplies the matching image and Git tags through its dotenv report. Triggering the same project at that
-# Git tag makes GitLab compile the tagged CI configuration and check out the tagged tests, charts, and orchestration files.
-# Mirroring propagates the regression result through CTA and back to the external EOS pipeline.
+# This job is just a convenience wrapper around REGR_AGAINST_CTA_BRANCH. See the relevant comments above to the CI/CD inputs
 trigger-cta-version-regression-pipeline:
   stage: trigger
-  needs:
-    - job: prepare-cta-version-regression
-      artifacts: true
+  needs: []
   rules:
     - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
   trigger:
     project: $CI_PROJECT_PATH
-    branch: $RESOLVED_CTA_GIT_TAG
+    branch: $[[ inputs.cta-version-regression-git-tag ]]
+    # Important as it ensures the results are propagated
     strategy: mirror
     forward:
       # Keep YAML variables disabled so the downstream pipeline derives CTA_BUILD_ID from its own CI_PIPELINE_ID.
-      # Pipeline-variable forwarding is required for the resolved tags from the prepare job's dotenv report.
       yaml_variables: false
-      pipeline_variables: true
+      pipeline_variables: false
     inputs:
       pipeline-type: "REGR_AGAINST_CTA_BRANCH"
-      custom-cta-image-tag: $RESOLVED_CTA_IMAGE_TAG
+      custom-cta-image-tag: $[[ inputs.custom-cta-image-tag ]]
       custom-eos-image-tag: $[[ inputs.custom-eos-image-tag ]]
       custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]
       platform: $[[ inputs.platform ]]
