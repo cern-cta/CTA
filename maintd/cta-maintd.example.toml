@@ -45,7 +45,8 @@
 
 
 [catalogue]
-  # Path to the CTA Catalogue configuration file. The file contains a single connection string.
+  # Path to the CTA Catalogue configuration file. The file contains a single connection string that
+  # specifies how to connect to the Catalogue DB.
   # Examples:
   #   postgresql:postgresql://username:password@hostname/database
   #   oracle:username/password@database
@@ -58,7 +59,8 @@
   # Unique name used to identify this scheduler backend in logs and scheduler resources. A conventional
   # format is "[ceph|postgres|vfs][User|Repack]", for example "cephUser". This setting is required.
   backend_name = "cephUser"
-  # Path to the CTA Scheduler configuration file. The file contains a single connection string.
+  # Path to the CTA Scheduler backend configuration file. The file contains a single connection string that
+  # specifies how to connect to the scheduler backend.
   # Examples:
   #   rados://user@pool:namespace
   #   file:///path/to/objectstore
