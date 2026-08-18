@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 [Unit]
-Description=CERN Tape Archive (CTA) tape server daemon
+Description=CERN Tape Archive (CTA) tape daemon
 Wants=network-online.target
 After=network-online.target
 
@@ -11,6 +11,8 @@ Type=exec
 User=cta
 Group=tape
 
+RuntimeDirectory=cta/taped
+RuntimeDirectoryMode=0750
 LogsDirectory=cta cta/old
 LogsDirectoryMode=0755
 
