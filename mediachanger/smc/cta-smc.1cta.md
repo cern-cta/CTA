@@ -43,6 +43,24 @@ cta-smc --- CTA SCSI Media Changer client
 dismounting and exporting of tapes in a robotic tape library and can be
 used to query the state of the library.
 
+# CONFIGURATION
+
+**cta-smc** connects to rmcd on localhost using the port configured by `rmc_server.port` in */etc/cta/cta-rmcd.toml*.
+The port defaults to 5014 when it is omitted from the TOML configuration.
+For backwards compatibility, the **RMC_PORT** environment variable overrides the port configured in TOML.
+
+# ENVIRONMENT
+
+RMC_PORT
+
+:   Overrides the TCP port used to connect to rmcd.
+
+# FILES
+
+*/etc/cta/cta-rmcd.toml*
+
+:   Configuration file from which the rmcd port is read.
+
 # OPTIONS
 
 -d

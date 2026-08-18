@@ -27,7 +27,7 @@ cta-rmcd --- CTA Remote Media Changer Daemon
 
 # SYNOPSIS
 
-systemctl start **cta-rmcd** *device_file*\
+systemctl start **cta-rmcd**\
 systemctl stop **cta-rmcd**\
 systemctl status **cta-rmcd**
 
@@ -41,31 +41,34 @@ system service management software.
 
 # CONFIGURATION
 
-The port number that **cta-rmcd** will listen on should be defined on client hosts and on the
-taped host. The default port number is 5014. It is possible to configure a different port
-number in */etc/services*:
+**cta-rmcd** reads its configuration from */etc/cta/cta-rmcd.toml*.
+See */etc/cta/cta-rmcd.example.toml* for all available settings.
 
-> rmc 657/tcp \# CTA Remote Media Changer (cta-rmcd)\
-> rmc 657/udp \# CTA Remote Media Changer (cta-rmcd)
+The media changer device is configured in the `media_changer` table:
 
-This value can be overridden in */etc/cta/cta-rmcd.conf*:
+> [media_changer]\
+> device = "/dev/smc"
 
-> RMC PORT 5014
+The RMC protocol listener is configured in the `rmc_server` table:
 
-It can also be set in the **RMC_PORT** environment variable.
+> [rmc_server]\
+> port = 5014\
+> listen_scope = "loopback"
 
-# ENVIRONMENT
-
-RMC_PORT
-
-:   Sets the port number on which **cta-rmcd** will listen.
+The default port is 5014.
+`listen_scope` may be set to `loopback` to accept connections only from the local host, or to `any` to accept connections from other hosts.
+The RMC protocol has no authentication, so exposing it beyond the loopback interface requires appropriate network access controls.
+Clients must be configured to use the same port as **cta-rmcd**.
 
 # FILES
 
-*/etc/cta/cta-rmcd.conf*
+*/etc/cta/cta-rmcd.toml*
 
-:   Configuration file. See **CONFIGURATION** above, and
-    */etc/cta/cta-rmcd.example.conf*.
+:   Main configuration file.
+
+*/etc/cta/cta-rmcd.example.toml*
+
+:   Example configuration documenting the available settings.
 
 */var/log/cta/cta-rmcd.log*
 
@@ -90,10 +93,11 @@ the packaged unit directly. The packaged unit contains:
     Type=exec
     User=cta
     Group=tape
-    EnvironmentFile=-/etc/sysconfig/cta-rmcd
-    ExecStart=/usr/bin/cta-rmcd -f ${CTA_RMCD_OPTIONS}
+    RuntimeDirectory=cta/rmcd
+    RuntimeDirectoryMode=0750
     LogsDirectory=cta cta/old
     LogsDirectoryMode=0755
+    ExecStart=/usr/bin/cta-rmcd --config=/etc/cta/cta-rmcd.toml --config-strict --runtime-dir=/run/cta/rmcd --log-file=/var/log/cta/cta-rmcd.log
     LimitCORE=infinity
     OOMScoreAdjust=-10
     Restart=on-failure
@@ -102,11 +106,6 @@ the packaged unit directly. The packaged unit contains:
 
     [Install]
     WantedBy=multi-user.target
-
-Example configuration of */etc/sysconfig/cta-rmcd*:
-
-    DAEMON_COREFILE_LIMIT=unlimited
-    CTA_RMCD_OPTIONS=/dev/smc
 
 Example excerpt from the **cta-rmcd** logfile:
 

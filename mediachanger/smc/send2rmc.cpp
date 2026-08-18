@@ -4,7 +4,6 @@
  */
 
 #include "mediachanger/librmc/Cnetdb.hpp"
-#include "mediachanger/librmc/getconfent.hpp"
 #include "mediachanger/librmc/marshall.hpp"
 #include "mediachanger/librmc/net.hpp"
 #include "mediachanger/librmc/serrno.hpp"
@@ -21,6 +20,12 @@
 
 /* send2tpd - send a request to the SCSI media changer server and wait for the reply */
 
+static unsigned short g_rmc_port = RMC_PORT;
+
+void rmc_set_port(const unsigned short port) {
+  g_rmc_port = port;
+}
+
 int send2rmc(const char* const host,
              const char* const reqp,
              const int reql,
@@ -31,7 +36,6 @@ int send2rmc(const char* const host,
   struct hostent* hp;
   int magic;
   int n;
-  char* p;
   char prtbuf[RMC_PRTBUFSZ];
   int rep_type;
   char repbuf[RMC_REPBUFSZ];
@@ -41,17 +45,7 @@ int send2rmc(const char* const host,
   const char* const func = "send2rmc";
 
   sin.sin_family = AF_INET;
-  p = getenv("RMC_PORT");
-  if (!p) {
-    p = getconfent_fromfile("RMC", "PORT", 0);
-  }
-
-  if (p) {
-    sin.sin_port = htons((unsigned short) atoi(p));
-  } else {
-    sin.sin_port = htons((unsigned short) RMC_PORT);
-    serrno = 0;
-  }
+  sin.sin_port = htons(g_rmc_port);
   if (host && *host) {
     strncpy(rmchost, host, CA_MAXHOSTNAMELEN + 1);
     rmchost[CA_MAXHOSTNAMELEN] = '\0';
