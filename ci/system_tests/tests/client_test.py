@@ -50,7 +50,8 @@ def _run_eosdf_test(eos_client: EosClientHost, cta_cli: CtaCliHost, disk_instanc
     disk_instance_space = "eosdfDiskInstanceSpace"
     file_path = test_dir / "testfile1_eosdf"
 
-    # Remove resources just case. Don't throw because normally they shouldn't exist
+    # Remove resources just in case. They normally do not exist, so both commands may fail as expected
+    print("The following cleanup commands may fail because the EOSDF resources are normally absent")
     cta_cli.exec(f"cta-admin ds rm -n '{disk_system}'", throw_on_failure=False)
     cta_cli.exec(f"cta-admin dis rm -n '{disk_instance_space}' --di '{disk_instance_name}'", throw_on_failure=False)
 
@@ -64,6 +65,7 @@ def _run_eosdf_test(eos_client: EosClientHost, cta_cli: CtaCliHost, disk_instanc
             "-r '.*/eos/.*' -f 1 -s 20 -m 'EOSDF test'"
         )
 
+        print("The following file lookup may fail as expected if the EOSDF test file has not been created yet")
         file_info = eos_client.exec(f"eos root://{disk_instance_name} fileinfo '{file_path}'", throw_on_failure=False)
         if not file_info.success:
             source_path = Path("/tmp/testfile1_eosdf")
@@ -364,6 +366,7 @@ class TestPrepare:
     ) -> None:
         # A request containing only a nonexistent path must fail immediately
         missing_file = prepare_test_paths.missing_dir / str(uuid.uuid4())
+        print("The following PREPARE request is expected to fail because the file does not exist")
         result = eos_client.prepare_files(disk_instance_name, [missing_file])
         assert not result.success
 
@@ -386,6 +389,8 @@ class TestPrepare:
             eos_client.exec(f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp /etc/group root://{disk_instance_name}/{path}")
         # A mixed request succeeds overall, while a request with no valid path fails
         paths = forbidden_files if all_forbidden else [prepare_test_paths.tape_file, forbidden_files[0]]
+        if all_forbidden:
+            print("The following PREPARE request is expected to fail because every path is forbidden")
         result = eos_client.prepare_files(disk_instance_name, paths)
         assert result.success is not all_forbidden
         # Query the mixed request to ensure the forbidden path did not affect the valid one
@@ -431,6 +436,7 @@ class TestPrepare:
     ) -> None:
         # A PREPARE request containing no valid paths must fail outright
         missing_files = [prepare_test_paths.missing_dir / str(uuid.uuid4()) for _ in range(2)]
+        print("The following PREPARE request is expected to fail because every file is missing")
         result = eos_client.prepare_files(disk_instance_name, missing_files)
         assert not result.success
 
@@ -489,6 +495,7 @@ class TestPrepare:
         paths = [prepare_test_paths.tape_file]
         if include_missing:
             paths.append(prepare_test_paths.missing_dir / str(uuid.uuid4()))
+            print("The following PREPARE abort is expected to fail for the missing path")
         abort = eos_client.abort_prepare(
             disk_instance_name,
             prepare.stdout.strip(),
@@ -523,6 +530,7 @@ class TestPrepare:
         paths = [file_path]
         if include_missing:
             paths.append(test_dir / "none" / str(uuid.uuid4()))
+            print("The following PREPARE eviction is expected to fail for the missing path")
         # A missing companion path changes the command status but must not block the valid eviction
         result = eos_client.evict_prepare(disk_instance_name, paths)
         assert result.success is not include_missing
@@ -537,12 +545,14 @@ def test_delete_on_closew_error(eos_client: EosClientHost, disk_instance_name: s
     eos_admin = f"KRB5CCNAME=/tmp/eosadmin1/krb5cc_0 eos -r 0 0 root://{disk_instance_name}"
 
     # Configure a storage class that makes the CLOSEW workflow fail before CTA queues an archive request
+    print("The following cleanup command may fail because the test directory is normally absent")
     eos_client.exec(f"{eos_admin} rm -rf '{test_directory}'", throw_on_failure=False)
     eos_client.exec(f"{eos_admin} mkdir '{test_directory}'")
     try:
         eos_client.exec(f"{eos_admin} attr set sys.archive.storage_class=fail_on_closew_test '{test_directory}'")
 
         # Writing the file must fail and trigger EOS's delete-on-close handling
+        print("The following archive is expected to fail and trigger delete-on-close handling")
         copy_result = eos_client.exec(
             f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp /etc/group root://{disk_instance_name}/{test_file}",
             capture_output=True,
@@ -567,6 +577,7 @@ def test_archive_zero_length_file(eos_client: EosClientHost, disk_instance_name:
     source_path = Path(f"/tmp/empty_file_{uuid.uuid4().hex}")
     destination_path = test_dir / source_path.name
     eos_client.exec(f"truncate -s 0 '{source_path}'")
+    print("The following archive is expected to fail because zero-length files are forbidden")
     result = eos_client.exec(
         f"KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp '{source_path}' root://{disk_instance_name}/{destination_path}",
         capture_output=True,
@@ -599,6 +610,7 @@ class TestEosEvict:
         )
 
         # A normal eviction must fail while no tape replica exists
+        print("The following eviction is expected to fail because the file has no tape replica")
         result = eos_client.exec(
             "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
             f"eos root://{disk_instance_name} evict '{file_path}'",
@@ -607,6 +619,7 @@ class TestEosEvict:
         assert not result.success
 
         # Selecting the disk FSID and bypassing the counter must still fail without a tape replica
+        print("The following forced eviction is expected to fail because the file has no tape replica")
         result = eos_client.exec(
             "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
             f"eos root://{disk_instance_name} evict --ignore-evict-counter --fsid {disk_fsid} '{file_path}'",
@@ -687,6 +700,7 @@ class TestEosEvict:
                 ("counter not bypassed with removal ignored", "--ignore-removal-on-fst --fsid 101"),
             ]
             for case, options in failing_cases:
+                print(f"The following eviction is expected to fail: {case}")
                 result = eos_client.exec(
                     f"{eos_power} root://{disk_instance_name} evict {options} '{file_path}'", throw_on_failure=False
                 )
