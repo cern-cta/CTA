@@ -44,7 +44,6 @@ trigger-cta-version-regression-pipeline:
   rules:
     - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
   trigger:
-    project: $CI_PROJECT_PATH
     branch: $[[ inputs.cta-version-regression-git-tag ]]
     # Important as it ensures the results are propagated
     strategy: mirror
