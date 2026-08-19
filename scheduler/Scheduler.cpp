@@ -3172,27 +3172,25 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
   auto tteltime = ttel.msecs();
   auto repsize = archiveJobsBatch.size();
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
-    tteltime,
+    tteltime - ttel_scheddb,
     {
-      {cta::semconv::attr::kSchedulerOperationName,
-       cta::semconv::attr::SchedulerOperationNameValues::kReportToUserAndDeleteSchedulerDB},
+      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kReportToUser},
       {cta::semconv::attr::kSchedulerOperationWorkflow,
-       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                     }
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                                                  }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
     repsize,
     {
-      {cta::semconv::attr::kSchedulerOperationName,
-       cta::semconv::attr::SchedulerOperationNameValues::kReportToUserAndDeleteSchedulerDB},
+      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kReportToUser},
       {cta::semconv::attr::kSchedulerOperationWorkflow,
-       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                     }
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                                                  }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   log::ScopedParamContainer(lc)
     .add("tteltime", tteltime)
     .add("repsize", repsize)
-    .log(log::INFO, "In Scheduler::reportArchiveJobsBatch(): log kReportToUserAndDeleteSchedulerDB.");
+    .log(log::INFO, "In Scheduler::reportArchiveJobsBatch(): log kReportToUser.");
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
     ttel_scheddb,
     {
@@ -3307,28 +3305,26 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
   });
   auto tteltime = ttel.msecs();
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
-    tteltime,
+    tteltime - ttel_scheddb,
     {
-      {cta::semconv::attr::kSchedulerOperationName,
-       cta::semconv::attr::SchedulerOperationNameValues::kReportToUserAndDeleteSchedulerDB},
+      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kReportToUser},
       {cta::semconv::attr::kSchedulerOperationWorkflow,
-       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve                    }
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve                                                 }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   auto repsize = retrieveJobsBatch.size();
   cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
     repsize,
     {
-      {cta::semconv::attr::kSchedulerOperationName,
-       cta::semconv::attr::SchedulerOperationNameValues::kReportToUserAndDeleteSchedulerDB},
+      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kReportToUser},
       {cta::semconv::attr::kSchedulerOperationWorkflow,
-       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve                    }
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve                                                 }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   log::ScopedParamContainer(lc)
     .add("tteltime", tteltime)
     .add("repsize", repsize)
-    .log(log::INFO, "In Scheduler::getNextArchiveJobsToReportBatch(): log kReportToUserAndDeleteSchedulerDB.");
+    .log(log::INFO, "In Scheduler::getNextArchiveJobsToReportBatch(): log kReportToUser.");
 
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
     ttel_scheddb,

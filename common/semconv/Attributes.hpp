@@ -109,7 +109,7 @@ static constexpr const char* kUpdateFinishedTransfer = "update finished tranfer"
 static constexpr const char* kUpdateSchedulerDB = "update tranfer in scheduler db";
 static constexpr const char* kUpdateInsertCatalogueDB = "update tranfer in catalogue db";
 static constexpr const char* kSelectToReportToUser = "select to report to user";
-static constexpr const char* kReportToUserAndDeleteSchedulerDB = "report and delete";
+static constexpr const char* kReportToUser = "report";
 static constexpr const char* kDeleteSchedulerDB = "delete";
 static constexpr const char* kCancel = "cancel";
 }  // namespace SchedulerOperationNameValues
