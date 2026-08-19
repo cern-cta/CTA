@@ -10,7 +10,6 @@ set(RMCD_SRC_FILES
   cta-rmcd.cpp
   RmcdApp.cpp
   rmc_serv.cpp
-  rmc_logit.cpp
   rmc_marshall_element.cpp
   rmc_procreq.cpp
   rmc_sendrep.cpp
