@@ -64,11 +64,6 @@ void initInstruments() {
                                               cta::semconv::metrics::descrCtaTapedMountType,
                                               cta::semconv::metrics::unitCtaTapedMountType);
 
-  cta::telemetry::metrics::ctaTapedMountAttempt =
-    meter->CreateUInt64Counter(cta::semconv::metrics::kMetricCtaTapedMountAttempt,
-                               cta::semconv::metrics::descrCtaTapedMountAttempt,
-                               cta::semconv::metrics::unitCtaTapedMountAttempt);
-
   cta::telemetry::metrics::CtaTapedDriveStatus =
     meter->CreateInt64ObservableUpDownCounter(cta::semconv::metrics::kMetricCtaTapedDriveStatus,
                                               cta::semconv::metrics::descrCtaTapedDriveStatus,
