@@ -160,7 +160,6 @@ static constexpr const char* kDbDeleteFailedQueues = "delete failed";
 static constexpr const char* kDbSelectInactiveMountInActiveQueue = "select inactive mount in active queue";
 static constexpr const char* kDbUpdateInactiveMountInPendingQueue = "update inactive mount in pending queue";
 static constexpr const char* kDbSelectDeadMountCandidates = "select dead mount candidates";
-static constexpr const char* kDbSelectDeadMountCandidates = "select dead mount candidates";
 static constexpr const char* kDbDiskSleepTracking = "disk sleep tracking";
 static constexpr const char* kDbTransactionStmtExecuteQuery = "execute query";
 static constexpr const char* kDbTransactionStmtExecuteNonQuery = "execute non query";
