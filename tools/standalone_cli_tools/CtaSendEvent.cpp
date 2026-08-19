@@ -35,9 +35,10 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert& alert) 
 using AttrMap = std::map<std::string, std::string>;
 
 // Usage exception
-const std::runtime_error Usage("Usage: eos --json fileinfo /eos/path | cta-send-event CLOSEW|PREPARE "
-                               "-i/--diskinstance <instance> [-e/--diskendpoint <url>] "
-                               "-u/--request.user <user> -g/--request.group <group>");
+const std::runtime_error
+  Usage("Usage: eos --json fileinfo /eos/path | cta-send-event CLOSEW|PREPARE "
+        "-i/--diskinstance <instance> [-e/--diskendpoint <url>] "
+        "-u/--request.user <user> -g/--request.group <group> -n/--storage-class <storage_class>");
 
 // remove leading spaces and quotes
 void ltrim(std::string& s) {
@@ -144,6 +145,8 @@ void fillNotification(cta::eos::Notification& notification,
 
   // Transport
   if (wf_command == "CLOSEW") {
+    const std::string& storageClass = cmdLineArgs.m_storageClassName.value();
+    notification.mutable_file()->set_storage_class(storageClass);
     notification.mutable_transport()->set_report_url(reportUrl);
     notification.mutable_transport()->set_error_report_url(
       "eosQuery://" + disk_endpoint + "//eos/wfe/passwd?mgm.pcmd=event&mgm.fid=" + attr["fxid"] + "&mgm.logid=cta"
