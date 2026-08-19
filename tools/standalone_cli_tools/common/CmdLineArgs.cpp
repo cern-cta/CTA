@@ -36,6 +36,7 @@ static struct option sendEventLongOption[] = {
   {"diskendpoint",  required_argument, nullptr, 'e'},
   {"request.user",  required_argument, nullptr, 'u'},
   {"request.group", required_argument, nullptr, 'g'},
+  {"storage-class", required_argument, nullptr, 'n'},
   {nullptr,         0,                 nullptr, 0  }
 };
 
@@ -77,7 +78,7 @@ std::map<StandaloneCliTool, const option*> longopts = {
 
 std::map<StandaloneCliTool, const char*> shortopts = {
   {StandaloneCliTool::RESTORE_FILES,            "I:i:f:F:v:c:hd:"},
-  {StandaloneCliTool::CTA_SEND_EVENT,           "i:e:u:g:"       },
+  {StandaloneCliTool::CTA_SEND_EVENT,           "i:e:u:g:n:"     },
   {StandaloneCliTool::CTA_VERIFY_FILE,          "I:F:i:u:g:v:h:" },
   {StandaloneCliTool::CTA_CHANGE_STORAGE_CLASS, "I:f:i:j:n:t:h:" },
   {StandaloneCliTool::EOS_NAMESPACE_INJECTION,  "j:h:"           },
@@ -237,7 +238,9 @@ void CmdLineArgs::printUsage(std::ostream& os) const {
       os << "    Usage:" << std::endl
          << "    eos --json fileinfo /eos/path | cta-send-event CLOSEW|PREPARE " << std::endl
          << "                        -i/--diskinstance <instance> [-e/--eos.endpoint <url>]" << std::endl
-         << "                        -u/--request.user <user> -g/--request.group <group>" << std::endl
+         << "                        -u/--request.user <user> -g/--request.group <group> -n/--storage-class "
+            "<storage_class>"
+         << std::endl
          << std::endl;
       break;
     case StandaloneCliTool::CTA_VERIFY_FILE:
