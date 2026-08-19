@@ -1191,6 +1191,14 @@ virtualorganization (vo)
     opt_copynb.optional(),
     opt_archivefileid.optional(),
     opt_instance.optional()}                                                                                                 },
+  // Used by cta-eos-namespace-inject
+  // Will be removed later.
+  {{AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_CH},
+   {opt_storageclass.optional(),
+    opt_archive_file_ids,
+    opt_fid.optional(),
+    opt_diskfileid.optional(),
+    opt_diskinstance.optional()}                                                                                             },
   /*-------------------------------------------------------------------------------------------------------------------------*/
 };
 
