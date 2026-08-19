@@ -255,7 +255,7 @@ private:
   /**
    * The Query type description for OpenTelemetry.
    */
-  std::string m_queryType = "undefined";
+  std::string m_queryType = "";
 
   /**
    * Map from SQL parameter name to parameter index.
