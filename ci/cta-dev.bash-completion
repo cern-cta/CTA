@@ -30,6 +30,7 @@ _ctadev() {
         --enable-unit-tests
         --force-install
         --enable-address-sanitizer
+        --extra-telemetry
         --build-generator
         --cmake-build-type
     "
