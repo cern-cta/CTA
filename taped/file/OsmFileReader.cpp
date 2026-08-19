@@ -50,8 +50,7 @@ void OsmFileReader::positionByBlockID(const cta::RetrieveJob& fileToRecall) {
   // and allow next call to position to discover we failed half way
   m_session.setCurrentFilePart(PartOfFile::HeaderProcessing);
 
-  if (fileToRecall.selectedTapeFile().blockId
-      > std::numeric_limits<decltype(fileToRecall.selectedTapeFile().blockId)>::max()) {
+  if (fileToRecall.selectedTapeFile().blockId > std::numeric_limits<uint32_t>::max()) {
     std::ostringstream ex_str;
     ex_str << "[FileReader::positionByBlockID] - Block id larger than the supported uint32_t limit: "
            << fileToRecall.selectedTapeFile().blockId;

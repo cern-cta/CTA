@@ -9,6 +9,7 @@
 #include "taped/session/VolumeInfo.hpp"
 
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace cta::tape {
@@ -48,7 +49,10 @@ public:
   */
   const bool m_useLbp;
 
-  inline void setCorrupted() noexcept { m_corrupted = true; }
+  inline void setCorrupted() noexcept {
+    m_corrupted = true;
+    invalidateCurrentBlockId();
+  }
 
   inline bool isCorrupted() const noexcept { return m_corrupted; }
 
@@ -73,7 +77,23 @@ public:
 
   inline void setCurrentFseq(uint32_t fseq) { m_fseq = fseq; }
 
+  inline void advanceCurrentFseq(uint32_t count = 1) { m_fseq += count; }
+
   inline uint32_t getCurrentFseq() const { return m_fseq; }
+
+  inline void setCurrentBlockId(uint32_t blockId) { m_blockId = blockId; }
+
+  inline void advanceCurrentBlockId(uint32_t blockCount = 1) {
+    if (m_blockId) {
+      *m_blockId += blockCount;
+    }
+  }
+
+  inline std::optional<uint32_t> getCurrentBlockId() const { return m_blockId; }
+
+  inline void invalidateCurrentBlockId() noexcept { m_blockId.reset(); }
+
+  inline bool isCurrentBlockId(uint32_t blockId) const { return m_blockId && *m_blockId == blockId; }
 
   inline const daemon::VolumeInfo& getVolumeInfo() const { return m_volInfo; }
 
@@ -116,6 +136,12 @@ protected:
     * Current fSeq, used only for positioning by fseq
     */
   uint32_t m_fseq = 1;
+
+  /**
+    * Current logical object ID of the next block to be read.
+    * It is valid only while the session can account for all tape motion.
+    */
+  std::optional<uint32_t> m_blockId;
 
   /**
     * Part of the file we are reading

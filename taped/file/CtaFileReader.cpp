@@ -47,16 +47,22 @@ void CtaFileReader::positionByFseq(const cta::RetrieveJob& fileToRecall) {
 void CtaFileReader::positionByBlockID(const cta::RetrieveJob& fileToRecall) {
   // Make sure the session state is advanced to cover our failures
   // and allow next call to position to discover we failed half way
-  m_session.setCurrentFilePart(PartOfFile::HeaderProcessing);
-
-  if (fileToRecall.selectedTapeFile().blockId
-      > std::numeric_limits<decltype(fileToRecall.selectedTapeFile().blockId)>::max()) {
+  if (fileToRecall.selectedTapeFile().blockId > std::numeric_limits<uint32_t>::max()) {
     std::ostringstream ex_str;
     ex_str << "[FileReader::positionByBlockID] - Block id larger than the supported uint32_t limit: "
            << fileToRecall.selectedTapeFile().blockId;
     throw cta::exception::Exception(ex_str.str());
   }
-  useBlockID(fileToRecall);
+
+  const uint32_t destinationBlock = getBlockIDTarget(fileToRecall);
+  const bool skipLocate = m_session.getCurrentFilePart() == PartOfFile::Header
+                          && m_session.getCurrentFseq() == fileToRecall.selectedTapeFile().fSeq
+                          && m_session.isCurrentBlockId(destinationBlock);
+
+  m_session.setCurrentFilePart(PartOfFile::HeaderProcessing);
+  if (!skipLocate) {
+    locateBlockID(destinationBlock);
+  }
   checkHeaders(fileToRecall);
 }
 
@@ -69,6 +75,7 @@ void CtaFileReader::moveToFirstHeaderBlock() {
   m_session.m_drive.readExactBlock(reinterpret_cast<void*>(&vol1),
                                    sizeof(vol1),
                                    "[FileReader::position] - Reading VOL1");
+  m_session.setCurrentBlockId(1);
   try {
     vol1.verify();
   } catch (std::exception& e) {
@@ -87,8 +94,9 @@ void CtaFileReader::checkTrailers() {
   m_session.m_drive.readExactBlock(reinterpret_cast<void*>(&eof2), sizeof(eof2), "[FileReader::read] - Reading HDR2");
   m_session.m_drive.readExactBlock(reinterpret_cast<void*>(&utl1), sizeof(utl1), "[FileReader::read] - Reading UTL1");
   m_session.m_drive.readFileMark("[FileReader::read] - Reading file mark at the end of file trailer");
+  m_session.advanceCurrentBlockId(4);
 
-  m_session.setCurrentFseq(m_session.getCurrentFseq() + 1);  // moving on to the header of the next file
+  m_session.advanceCurrentFseq();  // moving on to the header of the next file
   m_session.setCurrentFilePart(PartOfFile::Header);
 
   // the size of the headers is fine, now let's check each header
@@ -106,6 +114,7 @@ size_t CtaFileReader::readNextDataBlock(void* data, const size_t size) {
     throw WrongBlockSize();
   }
   size_t bytes_read = m_session.m_drive.readBlock(data, size);
+  m_session.advanceCurrentBlockId();
   // end of file reached! we will keep on reading until we have read the file mark at the end of the trailers
   if (!bytes_read) {
     checkTrailers();
@@ -121,6 +130,7 @@ void CtaFileReader::moveReaderByFSeqDelta(const int64_t fSeq_delta) {
   } else if (fSeq_delta > 0) {
     // we need to skip three file marks per file (header, payload, trailer)
     m_session.m_drive.spaceFileMarksForward(static_cast<uint32_t>(fSeq_delta) * 3);
+    m_session.setCurrentBlockId(m_session.m_drive.getPositionInfo().currentPosition);
   } else {  // fSeq_delta < 0
     // we need to skip three file marks per file
     // (trailer, payload, header) + 1 to go on the BOT (beginning of tape) side
@@ -128,13 +138,16 @@ void CtaFileReader::moveReaderByFSeqDelta(const int64_t fSeq_delta) {
     m_session.m_drive.spaceFileMarksBackwards(static_cast<uint32_t>(std::abs(fSeq_delta)) * 3 + 1);
     m_session.m_drive.readFileMark(
       "[FileReader::position] Reading file mark right before the header of the file we want to read");
+    m_session.setCurrentBlockId(m_session.m_drive.getPositionInfo().currentPosition);
   }
 }
 
-void CtaFileReader::useBlockID(const cta::RetrieveJob& fileToRecall) {
+uint32_t CtaFileReader::getBlockIDTarget(const cta::RetrieveJob& fileToRecall) const {
   // if we want the first file on tape (fileInfo.blockId==0) we need to skip the VOL1 header
-  const uint32_t destination_block =
-    fileToRecall.selectedTapeFile().blockId ? fileToRecall.selectedTapeFile().blockId : 1;
+  return fileToRecall.selectedTapeFile().blockId ? fileToRecall.selectedTapeFile().blockId : 1;
+}
+
+void CtaFileReader::locateBlockID(uint32_t destinationBlock) {
   /*
   we position using the sg locate because it is supposed to do the
   right thing possibly in a more optimized way (better than st's
@@ -143,7 +156,8 @@ void CtaFileReader::useBlockID(const cta::RetrieveJob& fileToRecall) {
 
   // at this point we should be at the beginning of
   // the headers of the desired file, so now let's check the headers...
-  m_session.m_drive.positionToLogicalObject(destination_block);
+  m_session.m_drive.positionToLogicalObject(destinationBlock);
+  m_session.setCurrentBlockId(destinationBlock);
 }
 
 void CtaFileReader::setBlockSize(const UHL1& uhl1) {
@@ -172,6 +186,7 @@ void CtaFileReader::checkHeaders(const cta::RetrieveJob& fileToRecall) {
                                    sizeof(uhl1),
                                    "[FileReader::position] - Reading UHL1");
   m_session.m_drive.readFileMark("[FileReader::position] - Reading file mark at the end of file header");
+  m_session.advanceCurrentBlockId(4);
   // after this we should be where we want, i.e. at the beginning of the file
   m_session.setCurrentFilePart(PartOfFile::Payload);
 
