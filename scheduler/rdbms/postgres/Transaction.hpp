@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common/log/LogContext.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "rdbms/ConnPool.hpp"
 
 #include <chrono>

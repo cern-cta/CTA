@@ -197,7 +197,7 @@ Rset Stmt::executeQuery() {
     if (nullptr != m_stmt) {
       auto result = Rset(m_stmt->executeQuery());
       if (m_stmt->getDbQuerySummary().empty()) {
-        m_stmt->setDbQuerySummary("execute query");
+        m_stmt->setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbTransactionStmtExecuteQuery);
       }
       cta::telemetry::metrics::dbClientOperationDuration->Record(
         timer.msecs(),
@@ -236,7 +236,7 @@ void Stmt::executeNonQuery() {
     if (nullptr != m_stmt) {
       m_stmt->executeNonQuery();
       if (m_stmt->getDbQuerySummary().empty()) {
-        m_stmt->setDbQuerySummary("execute non query");
+        m_stmt->setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbTransactionStmtExecuteNonQuery);
       }
       cta::telemetry::metrics::dbClientOperationDuration->Record(
         timer.msecs(),

@@ -247,7 +247,7 @@ struct RepackRequestTrackingRow {
     stmt.bindUint64(":CREATE_TIME", createLog.time);
     stmt.bindUint64(":REPACK_FINISHED_TIME", repackFinishedTime);
 
-    conn.setDbQuerySummary("insert repack");
+    conn.setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbInsertRepack);
     stmt.executeNonQuery();
   }
 
@@ -315,7 +315,7 @@ struct RepackRequestTrackingRow {
     )SQL";
 
     auto stmt = conn.createStmt(sql);
-    conn.setDbQuerySummary("select repack statistics");
+    conn.setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbSelectRepack);
     return stmt.executeQuery();
   }
 
@@ -389,7 +389,7 @@ struct RepackRequestTrackingRow {
     if (vid != "all") {
       stmt.bindString(":VID", vid);
     }
-    conn.setDbQuerySummary("select repack for processing");
+    conn.setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbSelectRepack);
     return stmt.executeQuery();
   }
 

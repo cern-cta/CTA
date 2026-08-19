@@ -125,4 +125,46 @@ static constexpr const char* kTransaction = "TRANSACTION";
 static constexpr const char* kCommit = "COMMIT";
 }  // namespace DbOperationNameValues
 
+namespace DbQuerySummary {
+static constexpr const char* kDbLock = "db lock";
+static constexpr const char* kDbSelectSummary = "select summary";
+static constexpr const char* kDbInsertRetrieve = "insert retrieve";
+static constexpr const char* kDbDeleteRetrieve = "delete retrieve";
+static constexpr const char* kDbUpdateRetrieve = "update retrieve";
+static constexpr const char* kDbMoveFailedRetrieve = "move failed retrieve";
+static constexpr const char* kDbMoveFailedRepackRetrieve = "move failed repack retrieve";
+static constexpr const char* kDbMoveRetrieveToPending = "move retrieve back to pending";
+static constexpr const char* kDbMoveRetrieveToActive = "move retrieve to active";
+static constexpr const char* kDbMoveRepackRetrieveToArchive = "move repack retrieve to archive";
+static constexpr const char* kDbMoveRetrievePendingToActiveAsFailed = "move pending retrieve to active as failed";
+static constexpr const char* kDbSelectRepack = "select repack";
+static constexpr const char* kDbInsertRepack = "insert repack";
+static constexpr const char* kDbDeleteRepack = "delete repack";
+static constexpr const char* kDbUpdateRepackStatus = "update repack status";
+static constexpr const char* kDbUpdateRepackFailures = "update repack failures";
+static constexpr const char* kDbUpdateRepackProgress = "update repack progress";
+static constexpr const char* kDbInsertArchive = "insert archive";
+static constexpr const char* kDbDeleteArchive = "delete archive";
+static constexpr const char* kDbUpdateArchive = "update archive";
+static constexpr const char* kDbUpdateArchiveMulticopy = "update archive multicopy";
+static constexpr const char* kDbMoveRepackArchiveToFailed = "move repack archive to failed";
+static constexpr const char* kDbMoveArchiveToFailed = "move repack archive to failed";
+static constexpr const char* kDbMoveArchiveBackToPending = "move archive back to pending";
+static constexpr const char* kDbDeleteRepackArchive = "delete repack archive";
+static constexpr const char* kDbSelectRepackArchiveToReport = "select repack archive to report";
+static constexpr const char* kDbUpdateRepackArchiveSuccess = "update repack archive success";
+static constexpr const char* kDbMoveArchiveToActive = "move archive to active";
+static constexpr const char* kDbDeleteMountLastFetchTimes = "delete mount_last_fetch_times";
+static constexpr const char* kDbUpdateInactiveReport = "update inactive report";
+static constexpr const char* kDbDeleteFailedQueues = "delete failed";
+static constexpr const char* kDbSelectInactiveMountInActiveQueue = "select inactive mount in active queue";
+static constexpr const char* kDbUpdateInactiveMountInPendingQueue = "update inactive mount in pending queue";
+static constexpr const char* kDbSelectDeadMountCandidates = "select dead mount candidates";
+static constexpr const char* kDbSelectDeadMountCandidates = "select dead mount candidates";
+static constexpr const char* kDbDiskSleepTracking = "disk sleep tracking";
+static constexpr const char* kDbTransactionStmtExecuteQuery = "execute query";
+static constexpr const char* kDbTransactionStmtExecuteNonQuery = "execute non query";
+
+}  // namespace DbQuerySummary
+
 }  // namespace cta::semconv::attr

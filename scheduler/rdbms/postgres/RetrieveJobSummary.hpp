@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "common/semconv/Attributes.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
 
 namespace cta::schedulerdb::postgres {
@@ -86,7 +87,7 @@ struct RetrieveJobSummaryRow {
 
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
-    conn.setDbQuerySummary("select vid summary");
+    conn.setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbSelectSummary);
     return stmt.executeQuery();
   }
 
@@ -115,7 +116,7 @@ struct RetrieveJobSummaryRow {
     )SQL";
 
     auto stmt = txn.getConn().createStmt(sql);
-    txn.getConn().setDbQuerySummary("select summary");
+    txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbSelectSummary);
     return stmt.executeQuery();
   }
 
@@ -144,7 +145,7 @@ struct RetrieveJobSummaryRow {
     )SQL";
 
     auto stmt = txn.getConn().createStmt(sql);
-    txn.getConn().setDbQuerySummary("select summary");
+    txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbSelectSummary);
     return stmt.executeQuery();
   }
 };

@@ -157,7 +157,7 @@ rdbms::Rset ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
   stmt.bindString(":MOUNT_TYPE", cta::common::dataStructures::toString(mountInfo.mountType));
   stmt.bindString(":LOGICAL_LIBRARY", mountInfo.logicalLibrary);
   stmt.bindUint64(":BYTES_REQUESTED", maxBytesRequested);
-  txn.getConn().setDbQuerySummary("move archive to active queue");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveArchiveToActive);
   auto result = stmt.executeQuery();
   return result;
 }
@@ -216,7 +216,7 @@ uint64_t ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const s
   stmt.bindString(":STATUS_COND_REPLICAS", to_string(ArchiveJobStatus::AJS_WaitReplicasBeforeReportingSuccessToDisk));
   stmt.bindString(":STATUS_WAIT_FOR_ALL_BEFORE_REPORT",
                   to_string(ArchiveJobStatus::AJS_WaitReplicasBeforeReportingSuccessToDisk));
-  txn.getConn().setDbQuerySummary("update archive");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateArchiveMulticopy);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);
@@ -245,7 +245,7 @@ uint64_t ArchiveJobQueueRow::updateJobStatus(Transaction& txn,
         )SQL";
     sql += sqlpart + std::string(")");
     auto stmt1 = txn.getConn().createStmt(sql);
-    txn.getConn().setDbQuerySummary("delete archive");
+    txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDeleteArchive);
     stmt1.executeNonQuery();
     auto nrows = stmt1.getNbAffectedRows();
     txn.setRowCountForTelemetry(nrows);
@@ -255,7 +255,7 @@ uint64_t ArchiveJobQueueRow::updateJobStatus(Transaction& txn,
   sql += "        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT WHERE JOB_ID IN (" + sqlpart + ")";
   auto stmt2 = txn.getConn().createStmt(sql);
   stmt2.bindString(":NEWSTATUS1", to_string(newStatus));
-  txn.getConn().setDbQuerySummary("update archive");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateArchive);
   stmt2.executeNonQuery();
   auto nrows = stmt2.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);
@@ -330,7 +330,7 @@ uint64_t ArchiveJobQueueRow::updateRepackJobSuccess(Transaction& txn, const std:
   stmt1.bindString(":STATUS_SUCCESS", to_string(ArchiveJobStatus::AJS_ToReportToRepackForSuccess));
   stmt1.bindString(":STATUS_READY_FOR_DELETION1", to_string(ArchiveJobStatus::ReadyForDeletion));
   stmt1.bindString(":STATUS_READY_FOR_DELETION2", to_string(ArchiveJobStatus::ReadyForDeletion));
-  txn.getConn().setDbQuerySummary("update repack archive success");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateRepackArchiveSuccess);
   stmt1.executeNonQuery();
   auto nrows = stmt1.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);
@@ -348,7 +348,7 @@ rdbms::Rset ArchiveJobQueueRow::getNextSuccessfulArchiveRepackReportBatch(Transa
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":STATUS", to_string(ArchiveJobStatus::ReadyForDeletion));
   stmt.bindUint32(":LIMIT", static_cast<uint32_t>(limit));
-  txn.getConn().setDbQuerySummary("select successful archive repack report");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbSelectRepackArchiveToReport);
   auto rset = stmt.executeQuery();
   return rset;
 }
@@ -383,7 +383,7 @@ rdbms::Rset ArchiveJobQueueRow::deleteSuccessfulRepackArchiveJobBatch(Transactio
     GROUP BY REPACK_REQUEST_ID, VID;
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
-  txn.getConn().setDbQuerySummary("delete successful repack archive");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDeleteRepackArchive);
   auto rset = stmt.executeQuery();
   return rset;
 }
@@ -432,7 +432,7 @@ uint64_t ArchiveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRepa
   } else {
     stmt.bindUint64(":JOB_ID", jobId);
   }
-  txn.getConn().setDbQuerySummary("update archive");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateArchive);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);
@@ -629,7 +629,7 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
   if (userowjid) {
     stmt.bindUint64(":JOB_ID", jobId);
   }
-  txn.getConn().setDbQuerySummary("move archive back to pending");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveArchiveBackToPending);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);
@@ -757,7 +757,7 @@ uint64_t ArchiveJobQueueRow::requeueJobBatch(Transaction& txn,
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":STATUS", to_string(newStatus));
   stmt.bindString(":FAILURE_LOG", "UNPROCESSED_TASK_QUEUE_JOB_REQUEUED");
-  txn.getConn().setDbQuerySummary("move archive back to pending");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveArchiveBackToPending);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);
@@ -788,7 +788,7 @@ uint64_t ArchiveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
   } else {
     stmt.bindUint64(":JOB_ID", jobId);
   }
-  txn.getConn().setDbQuerySummary("move failed archive");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveRepackArchiveToFailed);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);
@@ -818,7 +818,7 @@ uint64_t ArchiveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn, co
         RETURNING *
     ) INSERT INTO ARCHIVE_FAILED_QUEUE SELECT * FROM MOVED_ROWS;")SQL";
   auto stmt = txn.getConn().createStmt(sql);
-  txn.getConn().setDbQuerySummary("move failed archive");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveArchiveToFailed);
   //txn.setRowCountForTelemetry(jobIDs.size());
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
@@ -846,7 +846,7 @@ rdbms::Rset ArchiveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Trans
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindUint64(":LIMIT", limit);
-  txn.getConn().setDbQuerySummary("move failed repack archive");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveRepackArchiveToFailed);
   auto rset = stmt.executeQuery();
   return rset;
 }
@@ -868,7 +868,7 @@ uint64_t ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, Ar
   stmt.bindBool(":IS_REPORTING", isReporting);
   stmt.bindString(":REPORT_FAILURE_LOG", reportFailureLogs.value_or(""));
   stmt.bindUint64(":JOB_ID", jobId);
-  txn.getConn().setDbQuerySummary("update archive");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateArchive);
   txn.setRowCountForTelemetry(1);
   stmt.executeNonQuery();
   /* if this was the final reporting failure,
@@ -920,7 +920,7 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
     stmt.bindString(placeholderVec[i], statusVec[i]);
   }
   stmt.bindUint64(":LIMIT", limit);
-  txn.getConn().setDbQuerySummary("update archive report");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateArchive);
   return stmt.executeQuery();
 }
 
@@ -951,7 +951,7 @@ ArchiveJobQueueRow::cancelArchiveJob(Transaction& txn, const std::string& diskIn
   auto stmt = txn.getConn().createStmt(sqlActive);
   stmt.bindString(":DISK_INSTANCE", diskInstance);
   stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
-  txn.getConn().setDbQuerySummary("delete archive");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDeleteArchive);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);

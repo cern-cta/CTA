@@ -216,7 +216,7 @@ rdbms::Rset RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
   stmt.bindString(":LOGICAL_LIBRARY", mountInfo.logicalLibrary);
   stmt.bindString(":TAPE_POOL", mountInfo.tapePool.empty() ? "NOT_PROVIDED" : mountInfo.tapePool);
   stmt.bindUint64(":BYTES_REQUESTED", maxBytesRequested);
-  txn.getConn().setDbQuerySummary("move retrieve to active queue");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveRetrieveToActive);
   auto result = stmt.executeQuery();
   return result;
 }
@@ -251,7 +251,7 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
         )SQL";
     sql += sqlpart + std::string(")");
     auto stmt2 = txn.getConn().createStmt(sql);
-    txn.getConn().setDbQuerySummary("delete retrieve");
+    txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDeleteRetrieve);
     stmt2.executeNonQuery();
     auto nrows = stmt2.getNbAffectedRows();
     txn.setRowCountForTelemetry(nrows);
@@ -272,7 +272,7 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
          + sqlpart + ")";
   auto stmt1 = txn.getConn().createStmt(sql);
   stmt1.bindString(":STATUS", to_string(newStatus));
-  txn.getConn().setDbQuerySummary("update retrieve");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateRetrieve);
   stmt1.executeNonQuery();
   auto nrows = stmt1.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);
@@ -306,7 +306,7 @@ uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRep
   stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
   stmt.bindString(":FAILURE_LOG", failureLogs.value_or(""));
   stmt.bindUint64(":JOB_ID", jobId);
-  txn.getConn().setDbQuerySummary("update retrieve");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateRetrieve);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);
@@ -543,7 +543,7 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
   if (userowjid) {
     stmt.bindUint64(":JOB_ID", jobId);
   }
-  txn.getConn().setDbQuerySummary("move retrieve back to pending");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveRetrieveToPending);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);
@@ -707,7 +707,7 @@ uint64_t RetrieveJobQueueRow::requeueJobBatch(Transaction& txn,
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":STATUS", to_string(newStatus));
   stmt.bindString(":FAILURE_LOG", "UNPROCESSED_TASK_QUEUE_JOB_REQUEUED");
-  txn.getConn().setDbQuerySummary("move retrieve back to pending");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveRetrieveToPending);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);
@@ -944,7 +944,7 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
   stmt.bindUint32(":RETRIES_WITHIN_MOUNT_BASE", 0);
   stmt.bindUint32(":RETRIES_WITHIN_MOUNT_ALTERNATE", 0);
   stmt.bindUint32(":LIMIT", limit);
-  txn.getConn().setDbQuerySummary("move repack retrieve to archive");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveRepackRetrieveToArchive);
   return stmt.executeQuery();
 }
 
@@ -1082,7 +1082,7 @@ uint64_t RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Tran
   stmt.bindString(":VID", vid);
   stmt.bindString(":STATUS", to_string(RetrieveJobStatus::RJS_ToReportToUserForFailure));
   stmt.bindString(":FAILURE_LOG", "TAPE_STATE_CHANGE_JOBS_TO_REPORT_FOR_FAILURE");
-  txn.getConn().setDbQuerySummary("move pending retrieve to report failure");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveRetrievePendingToActiveAsFailed);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);
@@ -1100,7 +1100,7 @@ uint64_t RetrieveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindUint64(":JOB_ID", jobId);
-  txn.getConn().setDbQuerySummary("move failed retrieve");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveFailedRetrieve);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);
@@ -1136,7 +1136,7 @@ uint64_t RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn,
   SELECT * FROM MOVED_ROWS
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
-  txn.getConn().setDbQuerySummary("move failed retrieve");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveFailedRetrieve);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);
@@ -1171,7 +1171,7 @@ rdbms::Rset RetrieveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Tran
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindUint64(":LIMIT", limit);
-  txn.getConn().setDbQuerySummary("move failed repack retrieve");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveFailedRepackRetrieve);
   auto rset = stmt.executeQuery();
   return rset;
 }
@@ -1194,7 +1194,7 @@ uint64_t RetrieveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, R
   stmt.bindBool(":IS_REPORTING", isReporting);
   stmt.bindString(":REPORT_FAILURE_LOG", reportFailureLogs.value_or(""));
   stmt.bindUint64(":JOB_ID", jobId);
-  txn.getConn().setDbQuerySummary("update retrieve");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateRetrieve);
   txn.setRowCountForTelemetry(1);
   stmt.executeNonQuery();
   // if this was the final reporting failure,
@@ -1261,7 +1261,7 @@ rdbms::Rset RetrieveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
   }
   stmt.bindUint64(":LIMIT", limit);
 
-  txn.getConn().setDbQuerySummary("update retrieve report");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateRetrieve);
   return stmt.executeQuery();
 }
 
@@ -1289,7 +1289,7 @@ uint64_t RetrieveJobQueueRow::cancelRetrieveJob(Transaction& txn, uint64_t archi
   )SQL";
   auto stmt = txn.getConn().createStmt(sqlActive);
   stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
-  txn.getConn().setDbQuerySummary("delete retrieve");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDeleteRetrieve);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);

@@ -194,6 +194,8 @@ build_srpm() {
   if [[ ${extra_telemetry} = true ]]; then
       echo "Building with telemetry instrumentation for performance measurements."
       cmake_options+=" -D CTA_USE_EXTRA_TELEMETRY:BOOL=TRUE"
+  else
+      cmake_options+=" -D CTA_USE_EXTRA_TELEMETRY:BOOL=FALSE"
   fi
 
   # Scheduler type

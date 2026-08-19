@@ -1813,7 +1813,7 @@ uint64_t RelationalDB::insertOrUpdateDiskSleepEntry(schedulerdb::Transaction& tx
   stmt.bindUint64(":SLEEP_TIME", entry.sleepTime);
   stmt.bindUint64(":LAST_UPDATE_TIME", static_cast<uint64_t>(entry.timestamp));
 
-  txn.getConn().setDbQuerySummary("disk sleep tracking");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDiskSleepTracking);
   stmt.executeNonQuery();
   uint64_t nrows = stmt.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);
@@ -1838,7 +1838,7 @@ RelationalDB::getDiskSystemSleepStatus(rdbms::Conn& conn) {
     uint64_t ts = rset.columnUint64("LAST_UPDATE_TIME");
     sleepEntries[name] = RelationalDB::DiskSleepEntry(sleepTime, ts);
   }
-  conn.setDbQuerySummary("disk sleep tracking");
+  conn.setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDiskSleepTracking);
   conn.setRowCountForTelemetry(rset.getNbRowsRetrieved());
   return sleepEntries;
 }
@@ -1865,7 +1865,7 @@ uint64_t RelationalDB::removeDiskSystemSleepEntries(schedulerdb::Transaction& tx
     stmt.bindString(":DISKNAME" + std::to_string(i), expiredDiskSystemNames[i]);
   }
 
-  txn.getConn().setDbQuerySummary("disk sleep tracking");
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDiskSleepTracking);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);
@@ -1939,7 +1939,7 @@ cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::fetchDeadMountC
     )SQL";
     auto stmt = txn.getConn().createStmt(sql);
     stmt.bindUint64(":OLDER_THAN_TIMESTAMP", mount_gc_timestamp);
-    txn.getConn().setDbQuerySummary("select dead mount candidates");
+    txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbSelectDeadMountCandidates);
     auto rset = stmt.executeQuery();
     while (rset.next()) {
       std::string queueType = rset.columnString("QUEUE_TYPE");
@@ -2092,7 +2092,7 @@ uint64_t RelationalDB::handleInactiveMountPendingQueues(const std::vector<uint64
     )SQL";
     auto stmt = txn.getConn().createStmt(sql);
     stmt.bindUint64(":LIMIT", batchSize);
-    txn.getConn().setDbQuerySummary("update inactive mount in pending queue");
+    txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateInactiveMountInPendingQueue);
     stmt.executeNonQuery();
     njobs = stmt.getNbAffectedRows();
     txn.setRowCountForTelemetry(njobs);
@@ -2167,7 +2167,7 @@ uint64_t RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_
       jobIDsList.emplace_back(std::to_string(rset.columnUint64("JOB_ID")));
       ++njobs;
     }
-    txn.getConn().setDbQuerySummary("select inactive mount in active queue");
+    txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbSelectInactiveMountInActiveQueue);
     txn.setRowCountForTelemetry(rset.getNbRowsRetrieved());
     cta::log::ScopedParamContainer(lc)
       .add("njobs_found", rset.getNbRowsRetrieved())
@@ -2230,7 +2230,7 @@ void RelationalDB::deleteOldFailedQueues(uint64_t deletionAge, uint64_t batchSiz
       auto stmt = txn.getConn().createStmt(sql);
       stmt.bindUint64(":OLDER_THAN_TIMESTAMP", olderThanTimestamp);
       stmt.bindUint64(":LIMIT", batchSize);
-      txn.getConn().setDbQuerySummary("delete failed queues");
+      txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDeleteFailedQueues);
       stmt.executeNonQuery();
       auto nrows = stmt.getNbAffectedRows();
       txn.setRowCountForTelemetry(nrows);
@@ -2307,7 +2307,7 @@ void RelationalDB::resubmitInactiveReporting(uint64_t deletionAge, uint64_t batc
       }
       stmt.bindUint64(":LIMIT", batchSize);
       stmt.bindUint64(":NOW_MINUS_DELAY", olderThanTimestamp);
-      txn.getConn().setDbQuerySummary("update inactive report");
+      txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateInactiveReport);
       stmt.executeNonQuery();
       auto nrows = stmt.getNbAffectedRows();
       txn.commit();
@@ -2349,7 +2349,7 @@ void RelationalDB::cleanOldMountLastFetchTimes(uint64_t deletionAge, uint64_t ba
     auto stmt = txn.getConn().createStmt(sql);
     stmt.bindUint64(":OLDER_THAN_TIMESTAMP", olderThanTimestamp);
     stmt.bindUint64(":LIMIT", batchSize);
-    txn.getConn().setDbQuerySummary("delete mount_last_fetch_times");
+    txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDeleteMountLastFetchTimes);
     stmt.executeNonQuery();
     auto nrows = stmt.getNbAffectedRows();
     txn.setRowCountForTelemetry(nrows);
@@ -2404,7 +2404,7 @@ void RelationalDB::cleanMountLastFetchTimes(std::vector<uint64_t> deadMountIds,
        )SQL";
     auto stmt = txn.getConn().createStmt(sql);
     stmt.bindString(":QUEUE_TYPE", queue_type);
-    txn.getConn().setDbQuerySummary("delete mount_last_fetch_times");
+    txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDeleteMountLastFetchTimes);
     stmt.executeNonQuery();
     auto nrows = stmt.getNbAffectedRows();
     txn.setRowCountForTelemetry(nrows);
