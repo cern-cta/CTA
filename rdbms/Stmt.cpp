@@ -219,7 +219,7 @@ Rset Stmt::executeQuery() {
         {cta::semconv::attr::kDbSystemName,    m_stmt->getDbSystemName()                              },
         {cta::semconv::attr::kDbNamespace,     m_stmt->getDbNamespace()                               },
         {cta::semconv::attr::kErrorType,       cta::semconv::attr::ErrorTypeValues::kException        },
-        {cta::semconv::attr::kDbQuerySummary,  "execute query"                                    },
+        {cta::semconv::attr::kDbQuerySummary,  "execute query"                                        },
         {cta::semconv::attr::kDbOperationName, cta::semconv::attr::DbOperationNameValues::kTransaction}
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
