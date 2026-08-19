@@ -1699,6 +1699,8 @@ void AdminCmd::processRecycleTapeFile_Restore(xrd::Response& response) const {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
+// Kept for standalone tools still using CMD_ARCHIVEFILE such as
+// cta-eos-namespace-inject. Will be removed later.
 void AdminCmd::processModifyArchiveFile(xrd::Response& response) const {
   using namespace cta::admin;
 
