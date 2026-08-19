@@ -12,7 +12,6 @@
 #include "mediachanger/librmc/serrno.hpp"
 #include "mediachanger/librmc/smc_struct.hpp"
 #include "rmc_constants.hpp"
-#include "rmc_logit.hpp"
 #include "rmc_procreq.hpp"
 #include "rmc_sendrep.hpp"
 #include "rmc_smcsubr.hpp"
@@ -102,8 +101,8 @@ int rmc_main(const std::string& robot, int port, const std::string& listen_scope
     lc.log(cta::log::INFO, "found the following localhost.domainname: " + std::string(g_localhost));
   }
   if (robot.empty()) {
-    lc.log(cta::log::INFO, rmcFormatLogMessage(RMC06, "robot"));
-    exit(USERR);
+    lc.log(cta::log::CRIT, "Media changer path cannot be empty");
+    return 1;
   }
 
   g_extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] = '\0';
@@ -114,8 +113,8 @@ int rmc_main(const std::string& robot, int port, const std::string& listen_scope
     snprintf(g_extended_robot_info.smc_ldr, sizeof(g_extended_robot_info.smc_ldr), "/dev/%s", robot.c_str());
   }
   if (g_extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] != '\0') {
-    lc.log(cta::log::INFO, rmcFormatLogMessage(RMC06, "robot"));
-    exit(USERR);
+    lc.log(cta::log::CRIT, "Invalid media changer path: " + robot);
+    return 1;
   }
   g_extended_robot_info.smc_fd = -1;
 
@@ -124,7 +123,9 @@ int rmc_main(const std::string& robot, int port, const std::string& listen_scope
     const int max_nb_attempts = 3;
     int attempt_nb = 1;
     for (attempt_nb = 1; attempt_nb <= max_nb_attempts; attempt_nb++) {
-      lc.log(cta::log::INFO, "Trying to get geometry of tape library: attempt_nb=" + std::to_string(attempt_nb));
+      cta::log::ScopedParamContainer params(lc);
+      params.add("attempt_nb", attempt_nb);
+      lc.log(cta::log::INFO, "Trying to get geometry of tape library");
       c = smc_get_geometry(g_extended_robot_info.smc_fd,
                            g_extended_robot_info.smc_ldr,
                            &g_extended_robot_info.robot_info);
@@ -135,11 +136,11 @@ int rmc_main(const std::string& robot, int port, const std::string& listen_scope
       }
 
       c = smc_lasterror(lc, &smc_status, &msgaddr);
-      lc.log(cta::log::INFO, rmcFormatLogMessage(RMC02, "get_geometry", msgaddr));
+      lc.log(cta::log::ERR, "Failed to get tape library geometry: " + std::string(msgaddr));
 
       // If this was the last attempt
       if (max_nb_attempts == attempt_nb) {
-        exit(c);
+        return 1;
       } else {
         sleep(1);
       }
@@ -152,8 +153,8 @@ int rmc_main(const std::string& robot, int port, const std::string& listen_scope
   /* open request socket */
 
   if ((s = socket(AF_INET, SOCK_STREAM | O_NONBLOCK, 0)) < 0) {
-    lc.log(cta::log::INFO, rmcFormatLogMessage(RMC02, "socket", neterror()));
-    exit(CONFERR);
+    lc.log(cta::log::CRIT, "socket failed: " + std::string(neterror()));
+    return 1;
   }
   memset(&sin, 0, sizeof(struct sockaddr_in));
   sin.sin_family = AF_INET;
@@ -170,11 +171,11 @@ int rmc_main(const std::string& robot, int port, const std::string& listen_scope
     sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   }
   if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, static_cast<const void*>(&on), sizeof(on)) < 0) {
-    lc.log(cta::log::INFO, rmcFormatLogMessage(RMC02, "setsockopt", neterror()));
+    lc.log(cta::log::WARNING, "setsockopt failed: " + std::string(neterror()));
   }
   if (bind(s, reinterpret_cast<const struct sockaddr*>(&sin), sizeof(sin)) < 0) {
-    lc.log(cta::log::INFO, rmcFormatLogMessage(RMC02, "bind", neterror()));
-    exit(CONFERR);
+    lc.log(cta::log::CRIT, "bind failed: " + std::string(neterror()));
+    return 1;
   }
   listen(s, 5);
 
@@ -186,7 +187,7 @@ int rmc_main(const std::string& robot, int port, const std::string& listen_scope
   while (1) {
     // Check for connections
     if (int ret = poll(&pfd, 1, RMC_CHECKI * 1000); ret < 0) {
-      perror("poll() error");
+      perror("poll() error");  // TODO: perror should use native logging
       continue;
     } else if (ret == 0) {
       continue;  // timeout; no new connection
@@ -232,13 +233,16 @@ rmc_getreq(cta::log::LogContext& lc, const int s, int* const req_type, char* con
     *req_type = n;
     unmarshall_LONG(rbp, msglen);
     if (msglen > RMC_REQBUFSZ) {
-      lc.log(cta::log::INFO, rmcFormatLogMessage(RMC46, RMC_REQBUFSZ));
+      cta::log::ScopedParamContainer params(lc);
+      params.add("actual_size", msglen);
+      params.add("max_size", RMC_REQBUFSZ);
+      lc.log(cta::log::ERR, "Request too large");
       return -1;
     }
     l = msglen - sizeof(req_hdr);
     n = netread_timeout(s, req_data, l, RMC_TIMEOUT);
     if (getpeername(s, reinterpret_cast<struct sockaddr*>(&from), &fromlen) < 0) {
-      lc.log(cta::log::INFO, rmcFormatLogMessage(RMC02, "getpeername", neterror()));
+      lc.log(cta::log::ERR, "getpeername failed: " + std::string(neterror()));
       return ERMCUNREC;
     }
     {
@@ -270,9 +274,11 @@ rmc_getreq(cta::log::LogContext& lc, const int s, int* const req_type, char* con
     return 0;
   } else {
     if (l > 0) {
-      lc.log(cta::log::INFO, rmcFormatLogMessage(RMC04, l));
+      cta::log::ScopedParamContainer params(lc);
+      params.add("netread", l);
+      lc.log(cta::log::ERR, "Error getting request");
     } else if (l < 0) {
-      lc.log(cta::log::INFO, rmcFormatLogMessage(RMC02, "netread", sstrerror(serrno)));
+      lc.log(cta::log::ERR, "netread failed: " + std::string(sstrerror(serrno)));
     }
     return ERMCUNREC;
   }

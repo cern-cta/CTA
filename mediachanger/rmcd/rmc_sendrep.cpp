@@ -7,7 +7,6 @@
 #include "mediachanger/librmc/marshall.hpp"
 #include "mediachanger/librmc/net.hpp"
 #include "rmc_constants.hpp"
-#include "rmc_logit.hpp"
 
 #include <errno.h>
 #include <netinet/in.h>
@@ -68,12 +67,10 @@ int rmc_sendrep(cta::log::LogContext& lc, const int rpfd, const int rep_type, ..
   repsize = rbp - repbuf;
   if (netwrite(rpfd, repbuf, repsize) != repsize) {
     const char* const neterror_str = neterror();
-    lc.log(cta::log::INFO, rmcFormatLogMessage(RMC02, "send", neterror_str));
-    lc.log(cta::log::INFO,
-           rmcFormatLogMessage("Call to netwrite() failed"
-                               ": rep_type=%s neterror=%s\n",
-                               rep_type_to_str(rep_type),
-                               neterror_str));
+    cta::log::ScopedParamContainer params(lc);
+    params.add("repType", std::string(rep_type_to_str(rep_type)));
+    params.add("neterror", std::string(neterror_str));
+    lc.log(cta::log::ERR, "netwrite failed");
     if (rep_type == RMC_RC) {
       close(rpfd);
     }

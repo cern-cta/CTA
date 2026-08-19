@@ -9,7 +9,6 @@
 #include "mediachanger/librmc/smc_struct.hpp"
 #include "rbtsubr_constants.hpp"
 #include "rmc_constants.hpp"
-#include "rmc_logit.hpp"
 #include "rmc_send_scsi_cmd.hpp"
 #include "rmc_sendrep.hpp"
 #include "scsictl.hpp"
@@ -526,15 +525,16 @@ static const char* action_to_str(const short action) {
 int smc_lasterror(cta::log::LogContext& lc, struct smc_status* const smc_stat, const char** const msgaddr) {
   unsigned int i;
 
-  lc.log(cta::log::INFO,
-         rmcFormatLogMessage("Function entered:"
-                             " asc=%d ascq=%d save_errno=%d rc=%d sensekey=%d skvalid=%d\n",
-                             smc_status.asc,
-                             smc_status.ascq,
-                             smc_status.save_errno,
-                             smc_status.rc,
-                             smc_status.sensekey,
-                             smc_status.skvalid));
+  {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("asc", smc_status.asc);
+    params.add("ascq", smc_status.ascq);
+    params.add("save_errno", smc_status.save_errno);
+    params.add("rc", smc_status.rc);
+    params.add("sensekey", smc_status.sensekey);
+    params.add("skvalid", smc_status.skvalid);
+    lc.log(cta::log::INFO, "Finding last smc error");
+  }
 
   smc_stat->rc = smc_status.rc;
   smc_stat->skvalid = smc_status.skvalid;
@@ -554,11 +554,9 @@ int smc_lasterror(cta::log::LogContext& lc, struct smc_status* const smc_stat, c
       const char* const action_str = action_to_str(scsierr_acttbl[i].action);
       *msgaddr = scsierr_acttbl[i].txt;
 
-      lc.log(cta::log::INFO,
-             rmcFormatLogMessage("Entry found in scsierr_acttbl:"
-                                 " action_str=%s\n",
-                                 action_str));
-
+      cta::log::ScopedParamContainer params(lc);
+      params.add("action_str", std::string(action_str));
+      lc.log(cta::log::INFO, "Entry found in scsierr_acttbl");
       return scsierr_acttbl[i].action;
     }
   }
