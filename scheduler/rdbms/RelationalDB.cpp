@@ -1658,8 +1658,8 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
     m.bytesQueued += ajsr.jobsTotalSize;
     m.filesQueued += ajsr.jobsCount;
     m.mountPolicyCountMap[ajsr.mountPolicy] = ajsr.jobsCount;
-    m.oldestJobStartTime =
-      ajsr.oldestJobStartTime < m.oldestJobStartTime ? ajsr.oldestJobStartTime : m.oldestJobStartTime;
+    m.oldestJobStartTime = ajsr.oldestJobStartTime;
+    m.youngestJobStartTime = ajsr.youngestJobStartTime;
     m.minRequestAge = ajsr.archiveMinRequestAge;
     m.priority = ajsr.archivePriority;
     m.logicalLibrary = "";

@@ -13,15 +13,15 @@ namespace cta::schedulerdb::postgres {
  * Retrieve job table summary object
  */
 struct RetrieveJobSummaryRow {
-  uint64_t jobsCount;
-  uint64_t jobsTotalSize;
-  uint64_t oldestJobStartTime;
-  uint64_t youngestJobStartTime;
-  std::string vid;
+  uint64_t jobsCount = 0;
+  uint64_t jobsTotalSize = 0;
+  uint64_t oldestJobStartTime = 0;
+  uint64_t youngestJobStartTime = 0;
+  std::string vid = "";
   std::optional<std::string> activity;
-  uint64_t priority;
-  std::string mountPolicy;
-  uint64_t minRetrieveRequestAge;
+  uint64_t priority = 0;
+  std::string mountPolicy = "";
+  uint64_t minRetrieveRequestAge = 0;
   std::optional<std::string> diskSystemName;
 
   RetrieveJobSummaryRow() = default;
