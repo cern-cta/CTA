@@ -299,7 +299,7 @@ public:
           utils::copyFile(config.catalogue.config_file, cliOptions.runtimeDir + "/catalogue.config_file", true);
       }
       std::string loggingSchemaName = "cta-logging.schema.json";
-      utils::copyFile("/etc/cta/" + loggingSchemaName, cliOptions.runtimeDir + "/" + loggingSchemaName, true);
+      utils::copyFile("/usr/share/cta/" + loggingSchemaName, cliOptions.runtimeDir + "/" + loggingSchemaName, true);
     }
 
     m_logPtr = initLogger(config, cliOptions);
