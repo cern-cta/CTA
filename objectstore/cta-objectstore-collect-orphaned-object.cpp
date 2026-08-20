@@ -11,7 +11,6 @@
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
-#include "common/config/Config.hpp"
 #include "common/log/StringLogger.hpp"
 #include "common/utils/utils.hpp"
 #include "objectstore/Agent.hpp"
@@ -26,7 +25,6 @@
 
 #include <bits/unique_ptr.h>
 #include <iostream>
-#include <optional>
 #include <stdexcept>
 
 int main(int argc, char** argv) {
@@ -46,9 +44,9 @@ int main(int argc, char** argv) {
       catalogue = catalogueFactory->create();
       objectName = argv[3];
     } else if (2 == argc) {
-      cta::common::Config m_ctaConf("/etc/cta/cta-objectstore-tools.conf");
-      be = std::move(
-        cta::objectstore::BackendFactory::createBackend(m_ctaConf.getOptionValueStr("BackendPath").value(), sl));
+      be = std::move(cta::objectstore::BackendFactory::createBackend(
+        cta::utils::readSingleLineConfigFile("/etc/cta/cta-scheduler.conf"),
+        sl));
       const cta::rdbms::Login catalogueLogin = cta::rdbms::Login::parseFile("/etc/cta/cta-catalogue.conf");
       const uint64_t nbConns = 1;
       const uint64_t nbArchiveFileListingConns = 0;
@@ -128,9 +126,6 @@ gcpass:
     }
     cta::objectstore::ScopedExclusiveLock agl(ag);
     ag.removeAndUnregisterSelf(lc);
-  } catch (const std::bad_optional_access&) {
-    std::cerr << "Config file '/etc/cta/cta-objectstore-tools.conf' does not contain the BackendPath entry."
-              << std::endl;
   } catch (std::exception& e) {
     std::cerr << "Failed to garbage collect object: " << std::endl << e.what() << std::endl;
   }

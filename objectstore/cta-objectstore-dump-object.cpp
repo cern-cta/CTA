@@ -12,15 +12,14 @@
 #include "BackendFactory.hpp"
 #include "BackendVFS.hpp"
 #include "GenericObject.hpp"
-#include "common/config/Config.hpp"
 #include "common/json/object/JSONCObject.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/utils/utils.hpp"
 
 #include <common/exception/NoSuchObject.hpp>
 #include <getopt.h>
 #include <iostream>
-#include <optional>
 #include <stdexcept>
 
 void print_help(const std::string& cmd) {
@@ -78,9 +77,9 @@ int main(int argc, char** argv) {
       be.reset(cta::objectstore::BackendFactory::createBackend(argv[optind], dl).release());
       objectName = argv[optind + 1];
     } else {
-      cta::common::Config m_ctaConf("/etc/cta/cta-objectstore-tools.conf");
-      be = std::move(
-        cta::objectstore::BackendFactory::createBackend(m_ctaConf.getOptionValueStr("BackendPath").value(), dl));
+      be = std::move(cta::objectstore::BackendFactory::createBackend(
+        cta::utils::readSingleLineConfigFile("/etc/cta/cta-scheduler.conf"),
+        dl));
       objectName = argv[optind];
     }
     // If the backend is a VFS, make sure we don't delete it on exit.
@@ -120,10 +119,6 @@ int main(int argc, char** argv) {
     }
   } catch (cta::exception::NoSuchObject&) {
     std::cerr << "Object not found in the object store" << std::endl;
-    ::exit(EXIT_FAILURE);
-  } catch (const std::bad_optional_access&) {
-    std::cerr << "Config file '/etc/cta/cta-objectstore-tools.conf' does not contain the BackendPath entry."
-              << std::endl;
     ::exit(EXIT_FAILURE);
   } catch (std::exception& e) {
     std::cerr << "Failed to dump object: " << std::endl << e.what() << std::endl;
