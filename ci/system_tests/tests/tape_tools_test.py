@@ -55,7 +55,7 @@ def wait_for_drive_ready(cta_taped: CtaTapedHost, timeout_seconds: int = 60) -> 
     last_result = None
     while time.monotonic() < deadline:
         last_result = cta_taped.exec(
-            f"mt -f {cta_taped.drive_device} status",
+            f"sudo sg_turs {cta_taped.drive_device}",
             capture_output=True,
             throw_on_failure=False,
         )
