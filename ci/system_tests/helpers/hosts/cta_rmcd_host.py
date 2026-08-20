@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import json
 import re
 from collections.abc import Sequence
 from functools import cached_property
@@ -26,36 +27,28 @@ class CtaRmcdHost(RemoteHost):
         return device
 
     def list_tapes_in_library(self) -> set[str]:
-        volume_tags: set[str] = set()
-        output: list[str] = self.exec_with_output(f"mtx -f {self.library_device} status").splitlines()
-        # Extract tape VIDs
-        for line in output:
-            if "Storage Element" in line and "Full" in line:
-                match = re.search(r"VolumeTag *= *(\S{6})", line)
-                if match:
-                    volume_tags.add(match.group(1))
-        return volume_tags
+        volumes = json.loads(self.exec_with_output("cta-smc -q V --json"))
+        return {volume["vid"] for volume in volumes}
 
     def list_loaded_drives(self) -> list[tuple[int, int]]:
-        """Retrieve loaded drives and their slots for this host's library device."""
+        """Retrieve loaded drive ordinals and their source slots using mtx."""
         status_output = self.exec_with_output(f"mtx -f {self.library_device} status").splitlines()
         loaded_drives = []
 
         for line in status_output:
             match = re.search(r"Data Transfer Element (\d+):Full \(Storage Element (\d+) Loaded\)", line)
             if match:
-                drive = int(match.group(1))
-                slot = int(match.group(2))
-                loaded_drives.append((drive, slot))
+                loaded_drives.append((int(match.group(1)), int(match.group(2))))
 
         return loaded_drives
 
     def unload_tapes(self) -> None:
-        """Unloads all loaded tapes from their drives for the library device associated with this rmcd host."""
-        library_device = self.library_device
-        loaded_drives = self.list_loaded_drives()
-        for drive, slot in loaded_drives:
-            self.exec(f"mtx -f {library_device} unload {slot} {drive}")
+        for drive, slot in self.list_loaded_drives():
+            self.exec(f"mtx -f {self.library_device} unload {slot} {drive}")
+
+    def list_mounted_tapes(self) -> list[tuple[int, str]]:
+        drives = json.loads(self.exec_with_output("cta-smc -q D --json"))
+        return [(drive["driveOrdinal"], drive["vid"]) for drive in drives if drive["vid"]]
 
     @staticmethod
     def list_all_tapes_in_libraries(cta_rmcd_hosts: Sequence["CtaRmcdHost"]) -> list[str]:
