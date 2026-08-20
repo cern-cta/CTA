@@ -50,12 +50,12 @@ def smc_query(cta_rmcd: CtaRmcdHost, query_type: str, arguments: str = "") -> li
 
 
 def unload_drive(cta_taped: CtaTapedHost, timeout_seconds: int = 60) -> None:
-    # Retry the unload because the robotic mount can complete before the drive presents the cartridge
+    # Use the SCSI generic device because mt cannot open an nst device before its medium is online
     deadline = time.monotonic() + timeout_seconds
     last_result = None
     while time.monotonic() < deadline:
         last_result = cta_taped.exec(
-            f"mt -f {cta_taped.drive_device} offline",
+            f"sudo sg_start --eject {cta_taped.drive_scsi_generic_device}",
             capture_output=True,
             throw_on_failure=False,
         )
@@ -67,6 +67,23 @@ def unload_drive(cta_taped: CtaTapedHost, timeout_seconds: int = 60) -> None:
     if last_result:
         error = last_result.stderr.strip() or last_result.stdout.strip()
     raise TimeoutError(f"Tape device {cta_taped.drive_device} could not be unloaded: {error}")
+
+
+def wait_for_smc_drive_status(
+    cta_rmcd: CtaRmcdHost,
+    drive_ordinal: int,
+    expected_status: str,
+    timeout_seconds: int = 60,
+) -> dict[str, Any]:
+    # Wait for the media changer view to reflect an asynchronous drive operation
+    deadline = time.monotonic() + timeout_seconds
+    last_drive: dict[str, Any] = {}
+    while time.monotonic() < deadline:
+        last_drive = smc_query(cta_rmcd, "D", f"-D {drive_ordinal}")[0]
+        if last_drive["status"] == expected_status:
+            return last_drive
+        time.sleep(1)
+    raise TimeoutError(f"Drive {drive_ordinal} did not reach {expected_status}: {last_drive}")
 
 
 def run_readtp(
@@ -337,7 +354,7 @@ def test_smc_dismount(
     drive = smc_query(cta_rmcd, "D", f"-D {drive_ordinal}")[0]
     if drive["status"] == "loaded":
         unload_drive(cta_taped)
-    assert smc_query(cta_rmcd, "D", f"-D {drive_ordinal}")[0]["status"] == "unloaded"
+    assert wait_for_smc_drive_status(cta_rmcd, drive_ordinal, "unloaded")["vid"] == vid
     cta_rmcd.exec(f"cta-smc -d -D {drive_ordinal} -V {shlex.quote(vid)}")
 
     assert smc_query(cta_rmcd, "D", f"-D {drive_ordinal}")[0]["status"] == "free"
