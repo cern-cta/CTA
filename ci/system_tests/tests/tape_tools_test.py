@@ -4,6 +4,7 @@
 import hashlib
 import json
 import shlex
+import time
 import uuid
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -46,6 +47,24 @@ def smc_query(cta_rmcd: CtaRmcdHost, query_type: str, arguments: str = "") -> li
     result = json.loads(cta_rmcd.exec_with_output(f"cta-smc -q {query_type} {arguments} --json"))
     assert isinstance(result, list)
     return result
+
+
+def wait_for_drive_ready(cta_taped: CtaTapedHost, timeout_seconds: int = 60) -> None:
+    # The robotic mount can complete before the drive makes the cartridge available through its device
+    deadline = time.monotonic() + timeout_seconds
+    last_result = None
+    while time.monotonic() < deadline:
+        last_result = cta_taped.exec(
+            f"mt -f {cta_taped.drive_device} status",
+            capture_output=True,
+            throw_on_failure=False,
+        )
+        if last_result.success:
+            return
+        time.sleep(1)
+
+    stderr = last_result.stderr.strip() if last_result else ""
+    raise TimeoutError(f"Tape device {cta_taped.drive_device} did not become ready: {stderr}")
 
 
 def run_readtp(
@@ -186,12 +205,14 @@ def mounted_volume(cta_rmcd: CtaRmcdHost, cta_taped: CtaTapedHost) -> Iterator[t
     vid = volume["vid"]
     cta_rmcd.exec(f"cta-smc -m -D {drive_ordinal} -V {shlex.quote(vid)}")
     try:
+        wait_for_drive_ready(cta_taped)
         yield drive_ordinal, vid
     finally:
         # A robot dismount requires the drive mechanism to unload the tape first
         if smc_query(cta_rmcd, "V", f"-V {shlex.quote(vid)}")[0]["elementType"] == "drive":
             drive = smc_query(cta_rmcd, "D", f"-D {drive_ordinal}")[0]
             if drive["status"] == "loaded":
+                wait_for_drive_ready(cta_taped)
                 cta_taped.exec(f"mt -f {cta_taped.drive_device} offline")
             cta_rmcd.exec(f"cta-smc -d -D {drive_ordinal} -V {shlex.quote(vid)}")
 
