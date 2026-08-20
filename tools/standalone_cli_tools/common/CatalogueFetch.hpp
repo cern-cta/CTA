@@ -18,6 +18,11 @@
 
 #include "cta_frontend.pb.h"  //!< Auto-generated message types from .proto file
 
+namespace XrdSsiPb {
+template<>
+void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const;
+}
+
 namespace cta::cliTool {
 
 class CatalogueFetch {
