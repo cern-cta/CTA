@@ -522,5 +522,7 @@ class EosClientHost(DiskClientHost):
         return int(self.exec_with_output(f'eos root://{disk_instance_name} ls {path} -y | grep "d1::t0" | wc -l')) == 1
 
     @override
-    def file_info(self, disk_instance_name: str, path: Path) -> str:
-        return self.exec_with_output(f"eos root://{disk_instance_name} file info {path}")
+    def file_info(self, disk_instance_name: str, path: Path, *, json_output: bool = False) -> str:
+        json_option = "-j " if json_output else ""
+        endpoint = shlex.quote(f"root://{disk_instance_name}")
+        return self.exec_with_output(f"eos {json_option}{endpoint} file info {shlex.quote(str(path))}")

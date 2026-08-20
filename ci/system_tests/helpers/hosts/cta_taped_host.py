@@ -32,6 +32,14 @@ class CtaTapedHost(RemoteHost):
         return device
 
     @cached_property
+    def drive_scsi_generic_device(self) -> str:
+        tape_device_name = Path(self.drive_device).name.removeprefix("n")
+        generic_device_path = self.exec_with_output(
+            f"readlink -f /sys/class/scsi_tape/{tape_device_name}/device/generic"
+        )
+        return str(Path("/dev") / Path(generic_device_path).name)
+
+    @cached_property
     def drive_control_path(self) -> str:
         return self.exec_with_output("printenv DRIVE_CONTROL_PATH")
 
