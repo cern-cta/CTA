@@ -30,7 +30,7 @@ else()
 endif()
 
 install(TARGETS XrdSsiCta DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-install(FILES cta-frontend-xrootd.example.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
+install(FILES cta-frontend-xrootd.example.conf DESTINATION usr/${CMAKE_INSTALL_DOCDIR})
 install(FILES cta-frontend.logrotate DESTINATION /etc/logrotate.d RENAME cta-frontend)
 install(FILES cta-frontend.sysconfig DESTINATION /etc/sysconfig RENAME cta-frontend)
 install(FILES cta-frontend.service DESTINATION ${CTA_SYSTEMD_UNIT_DIR})

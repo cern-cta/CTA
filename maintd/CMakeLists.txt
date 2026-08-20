@@ -40,11 +40,11 @@ install (FILES cta-maintd.logrotate DESTINATION /etc/logrotate.d RENAME cta-main
 install (FILES cta-maintd.service DESTINATION ${CTA_SYSTEMD_UNIT_DIR})
 if(NOT CTA_USE_PGSCHED)
   install (FILES cta-maintd.example.toml
-    DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
+    DESTINATION usr/${CMAKE_INSTALL_DOCDIR}
     PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 else()
   install (FILES cta-maintd.pg.example.toml
-    DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
+    DESTINATION usr/${CMAKE_INSTALL_DOCDIR}
     RENAME cta-maintd.example.toml
     PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 endif()

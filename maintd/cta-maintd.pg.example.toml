@@ -52,7 +52,7 @@
   # Examples:
   #   postgresql:postgresql://username:password@hostname/database
   #   oracle:username/password@database
-  # See /etc/cta/cta-scheduler.example.conf for further details.
+  # See /usr/share/doc/cta/cta-scheduler.example.conf for further details.
   # This setting is required.
   config_file = "/etc/cta/cta-catalogue.conf"
 
@@ -65,7 +65,7 @@
   # specifies how to connect to the scheduler backend.
   # Example:
   #   postgresql:postgresql://username:password@hostname/database
-  # See /etc/cta/cta-scheduler.example.conf for further details.
+  # See /usr/share/doc/cta/cta-scheduler.example.conf for further details.
   # This setting is required.
   config_file = "/etc/cta/cta-scheduler.conf"
   # Number of connections to the scheduler database. If omitted, 3 is used.

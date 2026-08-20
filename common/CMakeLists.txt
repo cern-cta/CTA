@@ -148,7 +148,7 @@ set_property(TARGET ctacommon PROPERTY   VERSION "${CTA_LIBVERSION}")
 install (TARGETS ctacommon DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 install (FILES telemetry/cta-otel.example.yaml
-  DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
+  DESTINATION usr/${CMAKE_INSTALL_DOCDIR}
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
 install (FILES cta-logging.schema.json
