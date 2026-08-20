@@ -21,7 +21,8 @@ struct ArchiveJobSummaryRow {
   std::string mountPolicy;
   uint64_t jobsCount = 0;
   uint64_t jobsTotalSize = 0;
-  time_t oldestJobStartTime = std::numeric_limits<time_t>::max();
+  time_t oldestJobStartTime = 0;
+  time_t youngestJobStartTime = 0;
   uint16_t archivePriority = 0;
   uint32_t archiveMinRequestAge = 0;
   uint32_t lastJobUpdateTime = 0;
@@ -42,6 +43,7 @@ struct ArchiveJobSummaryRow {
     jobsCount = rset.columnUint64("JOBS_COUNT");
     jobsTotalSize = rset.columnUint64("JOBS_TOTAL_SIZE");
     oldestJobStartTime = rset.columnUint64("OLDEST_JOB_START_TIME");
+    youngestJobStartTime = rset.columnUint64("YOUNGEST_JOB_START_TIME");
     archivePriority = rset.columnUint16("ARCHIVE_PRIORITY");
     archiveMinRequestAge = rset.columnUint32("ARCHIVE_MIN_REQUEST_AGE");
     lastJobUpdateTime = rset.columnUint32("LAST_JOB_UPDATE_TIME");
@@ -55,6 +57,7 @@ struct ArchiveJobSummaryRow {
     params.add("jobsCount", jobsCount);
     params.add("jobsTotalSize", jobsTotalSize);
     params.add("oldestJobStartTime", oldestJobStartTime);
+    params.add("youngestJobStartTime", youngestJobStartTime);
     params.add("archivePriority", archivePriority);
     params.add("archiveMinRequestAge", archiveMinRequestAge);
     params.add("lastJobUpdateTime", lastJobUpdateTime);
@@ -75,6 +78,7 @@ struct ArchiveJobSummaryRow {
         JOBS_COUNT,
         JOBS_TOTAL_SIZE,
         OLDEST_JOB_START_TIME,
+        YOUNGEST_JOB_START_TIME,
         ARCHIVE_PRIORITY,
         ARCHIVE_MIN_REQUEST_AGE,
         LAST_JOB_UPDATE_TIME
@@ -89,6 +93,7 @@ struct ArchiveJobSummaryRow {
         JOBS_COUNT,
         JOBS_TOTAL_SIZE,
         OLDEST_JOB_START_TIME,
+        YOUNGEST_JOB_START_TIME,
         ARCHIVE_PRIORITY,
         ARCHIVE_MIN_REQUEST_AGE,
         LAST_JOB_UPDATE_TIME
