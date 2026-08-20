@@ -529,11 +529,11 @@ int smc_lasterror(cta::log::LogContext& lc, struct smc_status* const smc_stat, c
     cta::log::ScopedParamContainer params(lc);
     params.add("asc", smc_status.asc);
     params.add("ascq", smc_status.ascq);
-    params.add("save_errno", smc_status.save_errno);
+    params.add("savedErrno", smc_status.save_errno);
     params.add("rc", smc_status.rc);
-    params.add("sensekey", smc_status.sensekey);
-    params.add("skvalid", smc_status.skvalid);
-    lc.log(cta::log::INFO, "Finding last smc error");
+    params.add("senseKey", smc_status.sensekey);
+    params.add("senseKeyValid", smc_status.skvalid);
+    lc.log(cta::log::DEBUG, "Looking up last SMC error");
   }
 
   smc_stat->rc = smc_status.rc;
@@ -555,13 +555,13 @@ int smc_lasterror(cta::log::LogContext& lc, struct smc_status* const smc_stat, c
       *msgaddr = scsierr_acttbl[i].txt;
 
       cta::log::ScopedParamContainer params(lc);
-      params.add("action_str", std::string(action_str));
-      lc.log(cta::log::INFO, "Entry found in scsierr_acttbl");
+      params.add("action", std::string(action_str));
+      lc.log(cta::log::DEBUG, "Found matching SCSI error action");
       return scsierr_acttbl[i].action;
     }
   }
 
-  lc.log(cta::log::INFO, "No matching entry in scsierr_acttbl");
+  lc.log(cta::log::DEBUG, "No matching SCSI error action found");
 
   return RBT_NORETRY;
 }
