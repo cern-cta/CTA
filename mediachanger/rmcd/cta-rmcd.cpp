@@ -12,7 +12,9 @@ int main(const int argc, char** const argv) {
   return runtime::safeRun([argc, argv]() {
     const std::string appName = "cta-rmcd";
     const std::string description = R"""(
-
+Daemon responsible for controlling a SCSI-compatible robotic tape library on behalf of
+RMC clients. It handles library queries and cartridge mount, dismount, import and export
+requests received over the RMC protocol.
   )""";
     using App = runtime::Application<rmcd::RmcdApp, rmcd::RmcdConfig, runtime::CommonCliOptions>;
     App app(appName, description);
