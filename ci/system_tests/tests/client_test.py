@@ -930,18 +930,6 @@ class TestRuntimeDeployment:
             "cta_maintd",
         ],
     )
-    def test_example_config_file_correctness(self, request: SubRequest, daemon_fixture: str):
-        # Ask each runtime-based daemon to strictly validate its packaged example configuration
-        daemon = request.getfixturevalue(daemon_fixture)
-        config_path = f"/etc/cta/cta-{daemon.process_name}.example.toml"
-        daemon.exec(f"cta-{daemon.process_name} --config-strict --config {config_path} --config-check")
-
-    @pytest.mark.parametrize(
-        "daemon_fixture",
-        [
-            "cta_maintd",
-        ],
-    )
     def test_runtime_directory_correctness(self, request: SubRequest, daemon_fixture: str):
         # Compare deployed inputs with their runtime copies and verify the generated service metadata
         daemon = request.getfixturevalue(daemon_fixture)

@@ -399,7 +399,6 @@ CERN Tape Archive:
 Unit tests and integration tests with virtual tape drives
 %files -n cta-integrationtests
 %license COPYING
-%{_libdir}/libintegrationTestHelperTests.so*
 %{_libdir}/libcta-tapedIntegrationTests.so*
 %{_bindir}/cta-rdbmsUnitTests
 %if "%{occiSupport}" == "1"

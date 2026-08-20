@@ -32,6 +32,21 @@ target_link_libraries(ctamaintd
 add_executable (cta-maintd cta-maintd.cpp)
 target_link_libraries(cta-maintd ctamaintd)
 
+if(NOT CTA_USE_PGSCHED)
+  set(CTA_MAINTD_EXAMPLE_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/cta-maintd.example.toml)
+else()
+  set(CTA_MAINTD_EXAMPLE_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/cta-maintd.pg.example.toml)
+endif()
+
+add_custom_target(cta-maintd-config-check
+  COMMAND $<TARGET_FILE:cta-maintd>
+    --config-strict
+    --config ${CTA_MAINTD_EXAMPLE_CONFIG}
+    --config-check
+  DEPENDS cta-maintd
+  COMMENT "Validating the cta-maintd example configuration" VERBATIM)
+add_dependencies(config-checks cta-maintd-config-check)
+
 add_manpage (cta-maintd)
 
 install (TARGETS cta-maintd DESTINATION usr/bin)
