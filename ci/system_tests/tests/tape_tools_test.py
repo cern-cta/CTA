@@ -49,13 +49,13 @@ def smc_query(cta_rmcd: CtaRmcdHost, query_type: str, arguments: str = "") -> li
     return result
 
 
-def wait_for_drive_ready(cta_taped: CtaTapedHost, timeout_seconds: int = 60) -> None:
-    # The robotic mount can complete before the drive makes the cartridge available through its device
+def unload_drive(cta_taped: CtaTapedHost, timeout_seconds: int = 60) -> None:
+    # Retry the unload because the robotic mount can complete before the drive presents the cartridge
     deadline = time.monotonic() + timeout_seconds
     last_result = None
     while time.monotonic() < deadline:
         last_result = cta_taped.exec(
-            f"sudo sg_turs {cta_taped.drive_device}",
+            f"mt -f {cta_taped.drive_device} offline",
             capture_output=True,
             throw_on_failure=False,
         )
@@ -63,8 +63,10 @@ def wait_for_drive_ready(cta_taped: CtaTapedHost, timeout_seconds: int = 60) -> 
             return
         time.sleep(1)
 
-    stderr = last_result.stderr.strip() if last_result else ""
-    raise TimeoutError(f"Tape device {cta_taped.drive_device} did not become ready: {stderr}")
+    error = ""
+    if last_result:
+        error = last_result.stderr.strip() or last_result.stdout.strip()
+    raise TimeoutError(f"Tape device {cta_taped.drive_device} could not be unloaded: {error}")
 
 
 def run_readtp(
@@ -205,16 +207,11 @@ def mounted_volume(cta_rmcd: CtaRmcdHost, cta_taped: CtaTapedHost) -> Iterator[t
     vid = volume["vid"]
     cta_rmcd.exec(f"cta-smc -m -D {drive_ordinal} -V {shlex.quote(vid)}")
     try:
-        wait_for_drive_ready(cta_taped)
         yield drive_ordinal, vid
     finally:
-        # A robot dismount requires the drive mechanism to unload the tape first
+        # Use the reset path so a failed assertion cannot leave a cartridge in the drive
         if smc_query(cta_rmcd, "V", f"-V {shlex.quote(vid)}")[0]["elementType"] == "drive":
-            drive = smc_query(cta_rmcd, "D", f"-D {drive_ordinal}")[0]
-            if drive["status"] == "loaded":
-                wait_for_drive_ready(cta_taped)
-                cta_taped.exec(f"mt -f {cta_taped.drive_device} offline")
-            cta_rmcd.exec(f"cta-smc -d -D {drive_ordinal} -V {shlex.quote(vid)}")
+            cta_rmcd.unload_tapes()
 
 
 @pytest.fixture(scope="module")
@@ -339,7 +336,7 @@ def test_smc_dismount(
     # Unload the drive mechanism before asking the robot to return the cartridge
     drive = smc_query(cta_rmcd, "D", f"-D {drive_ordinal}")[0]
     if drive["status"] == "loaded":
-        cta_taped.exec(f"mt -f {cta_taped.drive_device} offline")
+        unload_drive(cta_taped)
     assert smc_query(cta_rmcd, "D", f"-D {drive_ordinal}")[0]["status"] == "unloaded"
     cta_rmcd.exec(f"cta-smc -d -D {drive_ordinal} -V {shlex.quote(vid)}")
 
