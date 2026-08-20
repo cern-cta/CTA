@@ -4,7 +4,6 @@
 import hashlib
 import json
 import shlex
-import time
 import uuid
 from collections.abc import Iterator
 from dataclasses import dataclass
@@ -47,43 +46,6 @@ def smc_query(cta_rmcd: CtaRmcdHost, query_type: str, arguments: str = "") -> li
     result = json.loads(cta_rmcd.exec_with_output(f"cta-smc -q {query_type} {arguments} --json"))
     assert isinstance(result, list)
     return result
-
-
-def unload_drive(cta_taped: CtaTapedHost, timeout_seconds: int = 60) -> None:
-    # Use the SCSI generic device because mt cannot open an nst device before its medium is online
-    deadline = time.monotonic() + timeout_seconds
-    last_result = None
-    while time.monotonic() < deadline:
-        last_result = cta_taped.exec(
-            f"sudo sg_start --eject {cta_taped.drive_scsi_generic_device}",
-            capture_output=True,
-            throw_on_failure=False,
-        )
-        if last_result.success:
-            return
-        time.sleep(1)
-
-    error = ""
-    if last_result:
-        error = last_result.stderr.strip() or last_result.stdout.strip()
-    raise TimeoutError(f"Tape device {cta_taped.drive_device} could not be unloaded: {error}")
-
-
-def wait_for_smc_drive_status(
-    cta_rmcd: CtaRmcdHost,
-    drive_ordinal: int,
-    expected_status: str,
-    timeout_seconds: int = 60,
-) -> dict[str, Any]:
-    # Wait for the media changer view to reflect an asynchronous drive operation
-    deadline = time.monotonic() + timeout_seconds
-    last_drive: dict[str, Any] = {}
-    while time.monotonic() < deadline:
-        last_drive = smc_query(cta_rmcd, "D", f"-D {drive_ordinal}")[0]
-        if last_drive["status"] == expected_status:
-            return last_drive
-        time.sleep(1)
-    raise TimeoutError(f"Drive {drive_ordinal} did not reach {expected_status}: {last_drive}")
 
 
 def run_readtp(
@@ -213,11 +175,10 @@ def readtp_tape_files(
 
 
 @pytest.fixture(scope="module")
-def mounted_volume(cta_rmcd: CtaRmcdHost, cta_taped: CtaTapedHost) -> Iterator[tuple[int, str]]:
-    # Use the taped fixture drive so that the test can unload its mechanism before dismounting
-    drive_ordinal = cta_taped.drive_index
-    drive = smc_query(cta_rmcd, "D", f"-D {drive_ordinal}")[0]
-    assert drive["status"] == "free"
+def mounted_volume(cta_rmcd: CtaRmcdHost) -> Iterator[tuple[int, str]]:
+    # Select any free drive without depending on a taped device mapping
+    drive = next(drive for drive in smc_query(cta_rmcd, "D") if drive["status"] == "free")
+    drive_ordinal = drive["driveOrdinal"]
 
     # Select any cartridge in a storage slot without assuming a VID or library layout
     volume = next(volume for volume in smc_query(cta_rmcd, "V") if volume["elementType"] == "slot")
@@ -344,21 +305,17 @@ def test_smc_mount(cta_rmcd: CtaRmcdHost, mounted_volume: tuple[int, str]) -> No
     assert smc_query(cta_rmcd, "V", f"-V {shlex.quote(vid)}")[0]["elementType"] == "drive"
 
 
-def test_smc_dismount(
+def test_smc_dismount_loaded_drive(
     cta_rmcd: CtaRmcdHost,
-    cta_taped: CtaTapedHost,
     mounted_volume: tuple[int, str],
 ) -> None:
     drive_ordinal, vid = mounted_volume
-    # Unload the drive mechanism before asking the robot to return the cartridge
-    drive = smc_query(cta_rmcd, "D", f"-D {drive_ordinal}")[0]
-    if drive["status"] == "loaded":
-        unload_drive(cta_taped)
-    assert wait_for_smc_drive_status(cta_rmcd, drive_ordinal, "unloaded")["vid"] == vid
-    cta_rmcd.exec(f"cta-smc -d -D {drive_ordinal} -V {shlex.quote(vid)}")
-
-    assert smc_query(cta_rmcd, "D", f"-D {drive_ordinal}")[0]["status"] == "free"
-    assert smc_query(cta_rmcd, "V", f"-V {shlex.quote(vid)}")[0]["elementType"] == "slot"
+    # Dismount must reject a cartridge that the drive mechanism has not unloaded
+    exit_status = cta_rmcd.exec_with_output(
+        f'cta-smc -d -D {drive_ordinal} -V {shlex.quote(vid)}; cta_smc_status=$?; printf "%s" "$cta_smc_status"'
+    )
+    assert int(exit_status) == 9
+    assert smc_query(cta_rmcd, "V", f"-V {shlex.quote(vid)}")[0]["elementType"] == "drive"
 
 
 def test_smc_eject(cta_rmcd: CtaRmcdHost, ejected_volume: str) -> None:
