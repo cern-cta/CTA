@@ -1,3 +1,10 @@
+## 5.11.18.3-1
+
+### Bug Fixes
+
+- [Tools] Add `--storage-class` option to `cta-send-event` (cta/CTA!1542)
+- [Tools] Fix cta-verify-file (cta/CTA!1545)
+
 ## 5.11.18.2-1
 
 ### Bug Fixes
