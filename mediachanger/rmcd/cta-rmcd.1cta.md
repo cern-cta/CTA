@@ -1,131 +1,162 @@
 ---
-date: 2024-07-18
+date: 2026-08-20
 section: 1cta
 title: CTA-RMCD
 header: The CERN Tape Archive (CTA)
 ---
-<!---
-@project      The CERN Tape Archive (CTA)
-@copyright    Copyright © 2020-2025 CERN
-@license      This program is free software, distributed under the terms of the GNU General Public
-              Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
-              redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
-              option) any later version.
-
-              This program is distributed in the hope that it will be useful, but WITHOUT ANY
-              WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-              PARTICULAR PURPOSE. See the GNU General Public License for more details.
-
-              In applying this licence, CERN does not waive the privileges and immunities
-              granted to it by virtue of its status as an Intergovernmental Organization or
-              submit itself to any jurisdiction.
---->
 
 # NAME
 
-cta-rmcd --- CTA Remote Media Changer Daemon
+cta-rmcd --- CTA remote media changer daemon
 
 # SYNOPSIS
 
-systemctl start **cta-rmcd**\
-systemctl stop **cta-rmcd**\
-systemctl status **cta-rmcd**
+**cta-rmcd** [OPTIONS]
+
+**cta-rmcd** --help
+**cta-rmcd** --version
 
 # DESCRIPTION
 
-**cta-rmcd** is the Remote Media Changer daemon, used to control SCSI-compatible tape libraries.
+**cta-rmcd** is the daemon responsible for controlling a SCSI-compatible robotic tape library on behalf of RMC clients such as **cta-smc** and **cta-taped**.
 
-The **cta-taped** daemon requires that **cta-rmcd** is installed and running on the same tape
-server as itself. **cta-rmcd** is usually started at system startup time by **systemd** or other
-system service management software.
+The daemon accepts requests over the RMC protocol and translates them into SCSI media changer operations. Clients can query the library geometry and element status, locate cartridges, mount or dismount cartridges, and import or export cartridges.
+
+By default, **cta-rmcd** listens only on the loopback interface. This supports clients running on the same host without exposing the unauthenticated RMC protocol to the network. Remote clients require the listener to be explicitly configured and protected with suitable network access controls.
+
+# OPTIONS
+
+-l, --log-file *PATH*
+
+:   Write logs to *PATH*. If not specified, logs are written to stdout/stderr.
+
+-c, --config *PATH*
+
+:   Path to the main configuration file.
+Defaults to */etc/cta/cta-rmcd.toml* if not provided.
+
+--config-strict
+
+:   Treat unknown keys, missing keys, and type mismatches in the configuration file as errors.
+
+--config-check
+
+:   Validate the configuration, then exit.
+Respects **--config-strict**.
+
+--runtime-dir *PATH*
+
+:   Store runtime state metadata (such as the consumed configuration and version information) in the specified directory.
+
+-v, --version
+
+:   Print version information and exit.
+
+-h, --help
+
+:   Display command usage information and exit.
 
 # CONFIGURATION
 
-**cta-rmcd** reads its configuration from */etc/cta/cta-rmcd.toml*.
-See */etc/cta/cta-rmcd.example.toml* for all available settings.
+The **cta-rmcd** daemon reads its configuration from a TOML file
+(default: */etc/cta/cta-rmcd.toml*).
 
-The media changer device is configured in the `media_changer` table:
+Each section is described below.
 
-> [media_changer]\
-> device = "/dev/smc"
+## [media_changer]
 
-The RMC protocol listener is configured in the `rmc_server` table:
+device *(default: /dev/smc)*
 
-> [rmc_server]\
-> port = 5014\
-> listen_scope = "loopback"
+:   Path to the SCSI-compatible media changer device used to control the tape library.
+A device name without a leading slash is resolved below */dev*.
 
-The default port is 5014.
-`listen_scope` may be set to `loopback` to accept connections only from the local host, or to `any` to accept connections from other hosts.
-The RMC protocol has no authentication, so exposing it beyond the loopback interface requires appropriate network access controls.
-Clients must be configured to use the same port as **cta-rmcd**.
+## [rmc_server]
+
+port *(default: 5014)*
+
+:   TCP port on which the daemon listens for RMC client connections.
+Clients must be configured to use the same port.
+
+listen_scope *(default: loopback)*
+
+:   Network scope from which the daemon accepts RMC client connections.
+Possible values:
+
+- loopback: listen on 127.0.0.1
+- any: listen on 0.0.0.0
+
+The RMC protocol provides no authentication. Setting this option to **any** requires appropriate network access controls.
+An unsupported value is logged and treated as **loopback**.
+
+## [logging]
+
+level *(default: INFO)*
+
+:   Log mask. Messages below this level are suppressed.
+Possible values: EMERG, ALERT, CRIT, ERR, WARNING, NOTICE, INFO, DEBUG.
+
+format *(default: json)*
+
+:   Log output format. Possible values: json, kv.
+
+[logging.attributes]
+
+:   Optional key-value pairs added to all log lines, typically used for monitoring and instance identification.
+
+## [health_server]
+
+enabled *(default: false)*
+
+:   Enable or disable the health server.
+
+host *(default: 127.0.0.1)*
+
+:   Interface to bind to (ignored if using a Unix domain socket).
+
+port *(default: 8080)*
+
+:   TCP port to bind to (ignored if using a Unix domain socket).
+
+use_unix_domain_socket *(default: false)*
+
+:   Expose the health server over a Unix domain socket instead of TCP.
+When enabled, **--runtime-dir** must be provided.
+The socket file will be created at *<runtime-dir>/health.sock*.
+
+The health server exposes:
+
+* /health/ready
+* /health/live
 
 # FILES
 
 */etc/cta/cta-rmcd.toml*
 
-:   Main configuration file.
+:   Default configuration file.
 
 */etc/cta/cta-rmcd.example.toml*
 
-:   Example configuration documenting the available settings.
+:   Example configuration documenting all available settings.
 
 */var/log/cta/cta-rmcd.log*
 
-:   Log of error messages and statistical information. Log lines with
-    code **RMC92** give information about the requestor: (uid,gid) and
-    hostname. Log lines with code **RMC98** contain the command that was
-    sent to the library. The exit status of each command is also logged.
+:   Log file used by the packaged systemd service.
 
-# EXAMPLE
+*/usr/lib/systemd/system/cta-rmcd.service*
 
-The packaged unit is installed as
-*/usr/lib/systemd/system/cta-rmcd.service*. Local customizations should be
-placed in */etc/systemd/system/cta-rmcd.service.d/*.conf* instead of editing
-the packaged unit directly. The packaged unit contains:
-
-    [Unit]
-    Description=CERN Tape Archive (CTA) rmcd daemon
-    Wants=network-online.target
-    After=network-online.target
-
-    [Service]
-    Type=exec
-    User=cta
-    Group=tape
-    RuntimeDirectory=cta/rmcd
-    RuntimeDirectoryMode=0750
-    LogsDirectory=cta cta/old
-    LogsDirectoryMode=0755
-    ExecStart=/usr/bin/cta-rmcd --config=/etc/cta/cta-rmcd.toml --config-strict --runtime-dir=/run/cta/rmcd --log-file=/var/log/cta/cta-rmcd.log
-    LimitCORE=infinity
-    OOMScoreAdjust=-10
-    Restart=on-failure
-    RestartSec=5
-    TimeoutStopSec=60
-
-    [Install]
-    WantedBy=multi-user.target
-
-Example excerpt from the **cta-rmcd** logfile:
-
-    12/06 11:40:58  7971 rmc_srv_mount: RMC92 - mount request by 0,0 from tpsrv015.cern.ch
-    12/06 11:40:58  7971 rmc_srv_mount: RMC98 - mount 000029/0 on drive 2
-    12/06 11:41:08  7971 rmc_srv_mount: returns 0
-    12/06 11:42:43  7971 rmc_srv_unmount: RMC92 - unmount request by 0,0 from tpsrv015.cern.ch
-    12/06 11:42:43  7971 rmc_srv_unmount: RMC98 - unmount 000029 2 0
-    12/06 11:42:48  7971 rmc_srv_unmount: returns 0
+:   Packaged systemd service unit.
 
 # SEE ALSO
 
-**systemctl**(1)\
-**cta-taped**(1cta)
+**cta-smc**(1cta), **cta-taped**(1cta)
 
-CERN Tape Archive documentation [https://cta.docs.cern.ch/](https://cta.docs.cern.ch/)
+CERN Tape Archive documentation
+[https://cta.docs.cern.ch/](https://cta.docs.cern.ch/)
 
 # COPYRIGHT
 
-Copyright © 2025 CERN. License GPLv3+: GNU GPL version 3 or later [http://gnu.org/licenses/gpl.html](http://gnu.org/licenses/gpl.html).
-This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the extent permitted by law.
-In applying this licence, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
-Intergovernmental Organization or submit itself to any jurisdiction.
+Copyright © 2026 CERN.
+License GPLv3+: GNU GPL version 3 or later [http://gnu.org/licenses/gpl.html](http://gnu.org/licenses/gpl.html).
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+In applying this licence, CERN does not waive the privileges and immunities granted to it by virtue of its status as an Intergovernmental Organization or submit itself to any jurisdiction.
