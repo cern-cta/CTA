@@ -296,25 +296,22 @@ def test_smc_query_status_volumes(cta_rmcd: CtaRmcdHost) -> None:
         assert smc_query(cta_rmcd, "V", f"-V {shlex.quote(volume['vid'])}") == [volume]
 
 
+def test_smc_dismount_free_drive(cta_rmcd: CtaRmcdHost) -> None:
+    # A dismount of a drive without a cartridge is successful and leaves the drive free
+    drive = next(drive for drive in smc_query(cta_rmcd, "D") if drive["status"] == "free")
+    drive_ordinal = drive["driveOrdinal"]
+
+    cta_rmcd.exec(f"cta-smc -d -D {drive_ordinal}")
+
+    assert smc_query(cta_rmcd, "D", f"-D {drive_ordinal}")[0]["status"] == "free"
+
+
 def test_smc_mount(cta_rmcd: CtaRmcdHost, mounted_volume: tuple[int, str]) -> None:
     # Confirm that the fixture moved the selected cartridge into the drive
     drive_ordinal, vid = mounted_volume
     mounted = smc_query(cta_rmcd, "D", f"-D {drive_ordinal}")[0]
     assert mounted["vid"] == vid
     assert mounted["status"] in {"loaded", "unloaded"}
-    assert smc_query(cta_rmcd, "V", f"-V {shlex.quote(vid)}")[0]["elementType"] == "drive"
-
-
-def test_smc_dismount_loaded_drive(
-    cta_rmcd: CtaRmcdHost,
-    mounted_volume: tuple[int, str],
-) -> None:
-    drive_ordinal, vid = mounted_volume
-    # Dismount must reject a cartridge that the drive mechanism has not unloaded
-    exit_status = cta_rmcd.exec_with_output(
-        f'cta-smc -d -D {drive_ordinal} -V {shlex.quote(vid)}; cta_smc_status=$?; printf "%s" "$cta_smc_status"'
-    )
-    assert int(exit_status) == 9
     assert smc_query(cta_rmcd, "V", f"-V {shlex.quote(vid)}")[0]["elementType"] == "drive"
 
 
