@@ -27,6 +27,20 @@ const std::string& StmtWrapper::getSql() const {
 }
 
 //------------------------------------------------------------------------------
+// setDbQuerySummary
+//------------------------------------------------------------------------------
+void StmtWrapper::setDbQuerySummary(const std::string& optQuerySummary) {
+  m_queryType = optQuerySummary;
+}
+
+//------------------------------------------------------------------------------
+// getDbQuerySummary
+//------------------------------------------------------------------------------
+const std::string StmtWrapper::getDbQuerySummary() const {
+  return m_queryType;
+}
+
+//------------------------------------------------------------------------------
 // getParamIdx
 //------------------------------------------------------------------------------
 uint32_t StmtWrapper::getParamIdx(const std::string& paramName) const {

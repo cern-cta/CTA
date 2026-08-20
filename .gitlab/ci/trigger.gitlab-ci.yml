@@ -19,6 +19,8 @@ spec:
       type: boolean
     enable-sbom-generation:
       type: boolean
+    compile-with-extra-telemetry:
+      type: boolean
     scheduler-type:
       type: string
     enable-oracle-support:
@@ -134,6 +136,7 @@ trigger-cta-version-regression-pipeline:
           # forwarded to these child pipelines as they break the input type validation
           scheduler-type: $[[ inputs.scheduler-type ]]
           enable-oracle-support: $[[ inputs.enable-oracle-support ]]
+          compile-with-extra-telemetry: $[[ inputs.compile-with-extra-telemetry ]]
           workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
           enable-valgrind: $[[ inputs.enable-valgrind ]]
           enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
@@ -150,6 +153,17 @@ trigger-postgres-scheduler-pipeline:
           <<: *child-pipeline-inputs
           scheduler-type: "pgsched"
     strategy: mirror
+
+trigger-postgres-scheduler-with-extra-telemetry-pipeline:
+  extends:
+    - .trigger-child-pipeline
+  trigger:
+    include:
+      - local: .gitlab-ci.yml
+        inputs:
+          <<: *child-pipeline-inputs
+          scheduler-type: "pgsched"
+          compile-with-extra-telemetry: true
 
 trigger-oracle-disabled-pipeline:
   extends:

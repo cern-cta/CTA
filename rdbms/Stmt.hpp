@@ -195,6 +195,25 @@ public:
    */
   wrapper::StmtWrapper& getStmt();
 
+  /**
+   * @brief Get the query type string describing the query type.
+   *
+   * This should return the OpenTelemetry semantic convention attribute
+   * `db.query.summary`. It identifies the query type being executed.
+   *
+   * @return A string representing the query type.
+   */
+  const std::string getDbQuerySummary() const;
+
+  /**
+   * @brief Set the query type string describing the query type.
+   *
+   * This should set m_queryType to be later used for the OpenTelemetry
+   * semantic convention attribute `db.query.summary`.
+   * It identifies the query type being executed.
+   */
+  void setDbQuerySummary(const std::string& optQuerySummary);
+
 private:
   /**
    * The database statement.

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "common/semconv/Attributes.hpp"
 #include "rdbms/NullDbValue.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
 
@@ -95,6 +96,7 @@ struct ArchiveJobSummaryRow {
     )SQL";
 
     auto stmt = txn.getConn().createStmt(sql);
+    txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbSelectSummary);
     return stmt.executeQuery();
   }
 
@@ -116,6 +118,7 @@ struct ArchiveJobSummaryRow {
     )SQL";
     auto stmt = txn.getConn().createStmt(sql);
     stmt.bindString(":STATUS", "AJS_Failed");
+    txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbSelectSummary);
     return stmt.executeQuery();
   }
 };

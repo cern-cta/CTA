@@ -57,6 +57,7 @@ skip_debug_packages=true
 skip_unit_tests=true
 force_install=false
 enable_address_sanitizer=false
+extra_telemetry=false
 build_generator="Ninja"
 cmake_build_type=$(jq -r .dev.defaultBuildType "${project_root}/project.json")
 
@@ -488,6 +489,10 @@ parse_options() {
         require_command "$1" "$command" build up debug all
         enable_address_sanitizer=true
         ;;
+      --extra-telemetry)
+        require_command "$1" "$command" build up debug all
+        extra_telemetry=true
+        ;;
       --build-generator)
         require_command "$1" "$command" build up debug all
         build_generator="$2"
@@ -677,6 +682,7 @@ create_build_configuration() {
     --argjson skipDebugPackages "$skip_debug_packages" \
     --argjson skipUnitTests "$skip_unit_tests" \
     --argjson enableAddressSanitizer "$enable_address_sanitizer" \
+    --argjson extraTelemetry "$extra_telemetry" \
     --arg ctaVersion "$cta_version" \
     --arg ctaVersionSuffix "$cta_version_suffix" \
     --arg xrootdSsiVersion "$xrootd_ssi_version" \
@@ -686,7 +692,7 @@ create_build_configuration() {
       buildGenerator: $buildGenerator, cmakeBuildType: $cmakeBuildType,
       enableCcache: $enableCcache, buildDebugPackages: ($skipDebugPackages | not),
       runUnitTests: ($skipUnitTests | not), enableAddressSanitizer: $enableAddressSanitizer,
-      ctaVersion: $ctaVersion, ctaVersionSuffix: $ctaVersionSuffix,
+      extraTelemetry: $extraTelemetry, ctaVersion: $ctaVersion, ctaVersionSuffix: $ctaVersionSuffix,
       xrootdSsiVersion: $xrootdSsiVersion, jobs: $jobs, internalRepos: $internalRepos}'
 }
 
@@ -926,6 +932,7 @@ build_cta() {
   [[ $enable_ccache == true ]] && build_rpm_flags+=(--enable-ccache)
   [[ $enable_internal_repos == true ]] && build_rpm_flags+=(--enable-internal-repos)
   [[ $enable_address_sanitizer == true ]] && build_rpm_flags+=(--enable-address-sanitizer)
+  [[ $extra_telemetry == true ]] && build_rpm_flags+=(--extra-telemetry)
   if [[ $state_matches_configuration == true \
       && $previous_build_successful == true \
       && -f "${project_root}/build_rpm/CMakeCache.txt" \

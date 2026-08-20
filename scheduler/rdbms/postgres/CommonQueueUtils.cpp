@@ -38,8 +38,9 @@ uint64_t updateMountQueueLastFetch(Transaction& txn, uint64_t mountId, bool isAc
   const std::string queueType = getQueueType(isActive, isRepack, isArchive);
   stmt.bindString(":QUEUE_TYPE", queueType);
   stmt.bindUint64(":MOUNT_ID", mountId);
-  stmt.executeQuery();
+  stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
+  txn.setRowCountForTelemetry(nrows);
   return nrows;
 }
 

@@ -76,6 +76,8 @@ void ArchiveRequest::insert() {
       std::unique_ptr<postgres::ArchiveJobQueueRow> row = makeJobRow(aj);
       row->addParamsToLogContext(params);
       row->insert(m_conn);
+      m_conn.setRowCountForTelemetry(1);
+      m_conn.commit();
       m_lc.log(log::INFO, "In ArchiveRequest::insert(): added job to queue.");
     } else {
       std::vector<std::unique_ptr<postgres::ArchiveJobQueueRow>> rows;
@@ -83,11 +85,14 @@ void ArchiveRequest::insert() {
       for (const auto& aj : m_jobs) {
         rows.emplace_back(makeJobRow(aj));
       }
+      m_conn.setRowCountForTelemetry(rows.size());
       postgres::ArchiveJobQueueRow::insertBatch(m_conn, rows, false);
+      m_conn.setRowCountForTelemetry(rows.size());
       rows.back()->addParamsToLogContext(params);
       m_lc.log(log::INFO,
                "In ArchiveRequest::insert(): added jobs to queue. Parameters logged only for last job of the bunch "
                "inserted !");
+      m_conn.commit();
     }
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer params(m_lc);

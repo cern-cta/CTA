@@ -44,6 +44,12 @@ static constexpr const char* kMetricDbClientOperationDuration = "db.client.opera
 static constexpr const char* descrDbClientOperationDuration = "Duration of database client operations.";
 static constexpr const char* unitDbClientOperationDuration = "ms";
 
+// See https://opentelemetry.io/docs/specs/semconv/db/database-metrics/#metric-dbclientresponsereturned_rows
+static constexpr const char* kMetricDbClientResponseReturnedRows = "db.client.response.returned_rows";
+static constexpr const char* descrDbClientResponseReturnedRows =
+  "The actual number of records returned by the database operation.";
+static constexpr const char* unitDbClientResponseReturnedRows = "1";
+
 // See https://opentelemetry.io/docs/specs/semconv/database/database-metrics/#metric-dbclientconnectioncount
 static constexpr const char* kMetricDbClientConnectionCount = "db.client.connection.count";
 static constexpr const char* descrDbClientConnectionCount =
@@ -56,6 +62,11 @@ static constexpr const char* unitDbClientConnectionCount = "1";
 static constexpr const char* kMetricCtaSchedulerOperationDuration = "cta.scheduler.operation.duration";
 static constexpr const char* descrCtaSchedulerOperationDuration = "Duration of a CTA scheduling operation";
 static constexpr const char* unitCtaSchedulerOperationDuration = "ms";
+
+static constexpr const char* kMetricCtaSchedulerOperationJobCount = "cta.scheduler.operation.job_count";
+static constexpr const char* descrCtaSchedulerOperationJobCount =
+  "Number of processed jobs by CTA scheduling operation";
+static constexpr const char* unitCtaSchedulerOperationJobCount = "1";
 
 static constexpr const char* kMetricCtaSchedulerDiskReportCount = "cta.scheduler.disk.report.count";
 static constexpr const char* descrCtaSchedulerDiskReportCount = "Number of files reported to disk";
@@ -126,6 +137,10 @@ static constexpr const char* unitCtaTapedMountDuration = "s";
 static constexpr const char* kMetricCtaTapedMountType = "cta.taped.mount.type";
 static constexpr const char* descrCtaTapedMountType = "Number of drive sessions with the given mount type";
 static constexpr const char* unitCtaTapedMountType = "1";
+
+static constexpr const char* kMetricCtaTapedMountAttempt = "cta.taped.mount.attempt";
+static constexpr const char* descrCtaTapedMountAttempt = "Number of attempts to mount a tape";
+static constexpr const char* unitCtaTapedMountAttempt = "1";
 
 static constexpr const char* kMetricCtaTapedDriveStatus = "cta.taped.drive.status";
 static constexpr const char* descrCtaTapedDriveStatus = "Number of drives in a given state";

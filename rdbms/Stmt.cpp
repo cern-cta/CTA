@@ -196,11 +196,16 @@ Rset Stmt::executeQuery() {
   try {
     if (nullptr != m_stmt) {
       auto result = Rset(m_stmt->executeQuery());
+      if (m_stmt->getDbQuerySummary().empty()) {
+        m_stmt->setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbTransactionStmtExecuteQuery);
+      }
       cta::telemetry::metrics::dbClientOperationDuration->Record(
         timer.msecs(),
         {
-          {cta::semconv::attr::kDbSystemName, m_stmt->getDbSystemName()},
-          {cta::semconv::attr::kDbNamespace,  m_stmt->getDbNamespace() }
+          {cta::semconv::attr::kDbSystemName,    m_stmt->getDbSystemName()                              },
+          {cta::semconv::attr::kDbNamespace,     m_stmt->getDbNamespace()                               },
+          {cta::semconv::attr::kDbQuerySummary,  m_stmt->getDbQuerySummary()                            },
+          {cta::semconv::attr::kDbOperationName, cta::semconv::attr::DbOperationNameValues::kTransaction}
       },
         opentelemetry::context::RuntimeContext::GetCurrent());
       return result;
@@ -211,9 +216,11 @@ Rset Stmt::executeQuery() {
     cta::telemetry::metrics::dbClientOperationDuration->Record(
       timer.msecs(),
       {
-        {cta::semconv::attr::kDbSystemName, m_stmt->getDbSystemName()                      },
-        {cta::semconv::attr::kDbNamespace,  m_stmt->getDbNamespace()                       },
-        {cta::semconv::attr::kErrorType,    cta::semconv::attr::ErrorTypeValues::kException}
+        {cta::semconv::attr::kDbSystemName,    m_stmt->getDbSystemName()                              },
+        {cta::semconv::attr::kDbNamespace,     m_stmt->getDbNamespace()                               },
+        {cta::semconv::attr::kErrorType,       cta::semconv::attr::ErrorTypeValues::kException        },
+        {cta::semconv::attr::kDbQuerySummary,  "execute query"                                        },
+        {cta::semconv::attr::kDbOperationName, cta::semconv::attr::DbOperationNameValues::kTransaction}
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
     throw;
@@ -228,13 +235,29 @@ void Stmt::executeNonQuery() {
   try {
     if (nullptr != m_stmt) {
       m_stmt->executeNonQuery();
+      if (m_stmt->getDbQuerySummary().empty()) {
+        m_stmt->setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbTransactionStmtExecuteNonQuery);
+      }
       cta::telemetry::metrics::dbClientOperationDuration->Record(
         timer.msecs(),
         {
-          {cta::semconv::attr::kDbSystemName, m_stmt->getDbSystemName()},
-          {cta::semconv::attr::kDbNamespace,  m_stmt->getDbNamespace() }
+          {cta::semconv::attr::kDbSystemName,    m_stmt->getDbSystemName()                              },
+          {cta::semconv::attr::kDbNamespace,     m_stmt->getDbNamespace()                               },
+          {cta::semconv::attr::kDbQuerySummary,  m_stmt->getDbQuerySummary()                            },
+          {cta::semconv::attr::kDbOperationName, cta::semconv::attr::DbOperationNameValues::kTransaction}
       },
         opentelemetry::context::RuntimeContext::GetCurrent());
+      uint64_t nrows = m_stmt->getNbAffectedRows();
+      cta::telemetry::metrics::dbClientResponseReturnedRows->Record(
+        nrows,
+        {
+          {cta::semconv::attr::kDbSystemName,    m_stmt->getDbSystemName()                              },
+          {cta::semconv::attr::kDbNamespace,     m_stmt->getDbNamespace()                               },
+          {cta::semconv::attr::kDbQuerySummary,  m_stmt->getDbQuerySummary()                            },
+          {cta::semconv::attr::kDbOperationName, cta::semconv::attr::DbOperationNameValues::kTransaction}
+      },
+        opentelemetry::context::RuntimeContext::GetCurrent());
+
     } else {
       throw exception::Exception("Stmt does not contain a cached statement");
     }
@@ -242,9 +265,11 @@ void Stmt::executeNonQuery() {
     cta::telemetry::metrics::dbClientOperationDuration->Record(
       timer.msecs(),
       {
-        {cta::semconv::attr::kDbSystemName, m_stmt->getDbSystemName()                      },
-        {cta::semconv::attr::kDbNamespace,  m_stmt->getDbNamespace()                       },
-        {cta::semconv::attr::kErrorType,    cta::semconv::attr::ErrorTypeValues::kException}
+        {cta::semconv::attr::kDbSystemName,    m_stmt->getDbSystemName()                              },
+        {cta::semconv::attr::kDbNamespace,     m_stmt->getDbNamespace()                               },
+        {cta::semconv::attr::kErrorType,       cta::semconv::attr::ErrorTypeValues::kException        },
+        {cta::semconv::attr::kDbQuerySummary,  "execute non query"                                    },
+        {cta::semconv::attr::kDbOperationName, cta::semconv::attr::DbOperationNameValues::kTransaction}
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
     throw;
@@ -271,6 +296,13 @@ wrapper::StmtWrapper& Stmt::getStmt() {
   } else {
     throw exception::Exception("Stmt does not contain a cached statement");
   }
+}
+
+//------------------------------------------------------------------------------
+// setDbQuerySummary
+//------------------------------------------------------------------------------
+void Stmt::setDbQuerySummary(const std::string& optQuerySummary) {
+  m_stmt->setDbQuerySummary(optQuerySummary);
 }
 
 }  // namespace cta::rdbms

@@ -15,6 +15,11 @@ namespace cta::telemetry::metrics {
 extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaSchedulerOperationDuration;
 
 /**
+ * Duration of a CTA scheduling operation.
+ */
+extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaSchedulerOperationJobCount;
+
+/**
  * Number of files of the given type reported to disk.
  */
 extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaSchedulerDiskReportCount;
