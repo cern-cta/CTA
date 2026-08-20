@@ -62,7 +62,10 @@ void handle_connection(cta::log::LogContext& lc, int s, struct pollfd* pfd) {
     if (errno == EAGAIN || errno == EWOULDBLOCK) {
       return;  // Non-blocking; no connections
     }
-    perror("accept() error");
+    const int acceptErrno = errno;
+    cta::log::ScopedParamContainer params(lc);
+    params.add(cta::semconv::log::errorMessage, std::string(strerror(acceptErrno)));
+    lc.log(cta::log::ERR, "Failed to accept connection");
     return;
   }
 
@@ -85,20 +88,27 @@ int rmc_main(const std::string& robot, int port, const std::string& listen_scope
     strncpy(g_localhost, localhost, CA_MAXHOSTNAMELEN + 1);
   } else {
     if (Cdomainname(domainname, sizeof(domainname)) < 0) {
-      lc.log(cta::log::WARNING, "Unable to get domainname");
+      cta::log::ScopedParamContainer params(lc);
+      params.add("localHost", std::string(localhost));
+      lc.log(cta::log::WARNING, "Unable to get domain name; using unqualified local host name");
+      strncpy(g_localhost, localhost, CA_MAXHOSTNAMELEN + 1);
     } else {
-      lc.log(cta::log::INFO, "Using first word from the list as domain name: " + std::string(domainname));
       // Truncate at first space to avoid multiple domains
       char* first_space = strchr(domainname, ' ');
       if (first_space) {
         *first_space = '\0';
       }
+      cta::log::ScopedParamContainer params(lc);
+      params.add("domainName", std::string(domainname));
+      lc.log(cta::log::INFO, "Using domain name");
+      if (int ret = snprintf(g_localhost, sizeof(g_localhost), "%s.%s", localhost, domainname);
+          ret < 0 || ret >= static_cast<int>(sizeof(g_localhost))) {
+        lc.log(cta::log::WARNING, "Fully qualified local host name exceeds maximum length");
+      }
     }
-    if (int ret = snprintf(g_localhost, CA_MAXHOSTNAMELEN, "%s.%s", localhost, domainname);
-        ret < 0 || ret >= CA_MAXHOSTNAMELEN) {
-      lc.log(cta::log::WARNING, "localhost.domainname exceeds maximum length");
-    }
-    lc.log(cta::log::INFO, "found the following localhost.domainname: " + std::string(g_localhost));
+    cta::log::ScopedParamContainer params(lc);
+    params.add("localHost", std::string(g_localhost));
+    lc.log(cta::log::INFO, "Determined local host name");
   }
   if (robot.empty()) {
     lc.log(cta::log::CRIT, "Media changer path cannot be empty");
@@ -124,19 +134,20 @@ int rmc_main(const std::string& robot, int port, const std::string& listen_scope
     int attempt_nb = 1;
     for (attempt_nb = 1; attempt_nb <= max_nb_attempts; attempt_nb++) {
       cta::log::ScopedParamContainer params(lc);
-      params.add("attempt_nb", attempt_nb);
-      lc.log(cta::log::INFO, "Trying to get geometry of tape library");
+      params.add("attemptNumber", attempt_nb);
+      lc.log(cta::log::INFO, "Attempting to get tape library geometry");
       c = smc_get_geometry(g_extended_robot_info.smc_fd,
                            g_extended_robot_info.smc_ldr,
                            &g_extended_robot_info.robot_info);
 
       if (0 == c) {
-        lc.log(cta::log::INFO, "Got geometry of tape library");
+        lc.log(cta::log::INFO, "Got tape library geometry");
         break;
       }
 
       c = smc_lasterror(lc, &smc_status, &msgaddr);
-      lc.log(cta::log::ERR, "Failed to get tape library geometry: " + std::string(msgaddr));
+      params.add(cta::semconv::log::errorMessage, std::string(msgaddr));
+      lc.log(cta::log::ERR, "Failed to get tape library geometry");
 
       // If this was the last attempt
       if (max_nb_attempts == attempt_nb) {
@@ -153,7 +164,9 @@ int rmc_main(const std::string& robot, int port, const std::string& listen_scope
   /* open request socket */
 
   if ((s = socket(AF_INET, SOCK_STREAM | O_NONBLOCK, 0)) < 0) {
-    lc.log(cta::log::CRIT, "socket failed: " + std::string(neterror()));
+    cta::log::ScopedParamContainer params(lc);
+    params.add(cta::semconv::log::errorMessage, std::string(neterror()));
+    lc.log(cta::log::CRIT, "Failed to create request socket");
     return 1;
   }
   memset(&sin, 0, sizeof(struct sockaddr_in));
@@ -171,10 +184,14 @@ int rmc_main(const std::string& robot, int port, const std::string& listen_scope
     sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   }
   if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, static_cast<const void*>(&on), sizeof(on)) < 0) {
-    lc.log(cta::log::WARNING, "setsockopt failed: " + std::string(neterror()));
+    cta::log::ScopedParamContainer params(lc);
+    params.add(cta::semconv::log::errorMessage, std::string(neterror()));
+    lc.log(cta::log::WARNING, "Failed to enable address reuse on request socket");
   }
   if (bind(s, reinterpret_cast<const struct sockaddr*>(&sin), sizeof(sin)) < 0) {
-    lc.log(cta::log::CRIT, "bind failed: " + std::string(neterror()));
+    cta::log::ScopedParamContainer params(lc);
+    params.add(cta::semconv::log::errorMessage, std::string(neterror()));
+    lc.log(cta::log::CRIT, "Failed to bind request socket");
     return 1;
   }
   listen(s, 5);
@@ -187,7 +204,10 @@ int rmc_main(const std::string& robot, int port, const std::string& listen_scope
   while (1) {
     // Check for connections
     if (int ret = poll(&pfd, 1, RMC_CHECKI * 1000); ret < 0) {
-      perror("poll() error");  // TODO: perror should use native logging
+      const int pollErrno = errno;
+      cta::log::ScopedParamContainer params(lc);
+      params.add(cta::semconv::log::errorMessage, std::string(strerror(pollErrno)));
+      lc.log(cta::log::ERR, "Failed to poll request socket");
       continue;
     } else if (ret == 0) {
       continue;  // timeout; no new connection
@@ -234,15 +254,17 @@ rmc_getreq(cta::log::LogContext& lc, const int s, int* const req_type, char* con
     unmarshall_LONG(rbp, msglen);
     if (msglen > RMC_REQBUFSZ) {
       cta::log::ScopedParamContainer params(lc);
-      params.add("actual_size", msglen);
-      params.add("max_size", RMC_REQBUFSZ);
+      params.add("requestSize", msglen);
+      params.add("maxRequestSize", RMC_REQBUFSZ);
       lc.log(cta::log::ERR, "Request too large");
       return -1;
     }
     l = msglen - sizeof(req_hdr);
     n = netread_timeout(s, req_data, l, RMC_TIMEOUT);
     if (getpeername(s, reinterpret_cast<struct sockaddr*>(&from), &fromlen) < 0) {
-      lc.log(cta::log::ERR, "getpeername failed: " + std::string(neterror()));
+      cta::log::ScopedParamContainer params(lc);
+      params.add(cta::semconv::log::errorMessage, std::string(neterror()));
+      lc.log(cta::log::ERR, "Failed to get client address");
       return ERMCUNREC;
     }
     {
@@ -262,7 +284,10 @@ rmc_getreq(cta::log::LogContext& lc, const int s, int* const req_type, char* con
             != 0
           || hp == nullptr) {
         if (inet_ntop(AF_INET, &from.sin_addr, client_ip, sizeof(client_ip)) == nullptr) {
-          perror("inet_ntop");
+          const int inetNtopErrno = errno;
+          cta::log::ScopedParamContainer params(lc);
+          params.add(cta::semconv::log::errorMessage, std::string(strerror(inetNtopErrno)));
+          lc.log(cta::log::ERR, "Failed to convert client IP address to text");
           return ERMCUNREC;
         }
         // Duplicate the strings to prevent undefined behaviour after exiting function
@@ -275,10 +300,13 @@ rmc_getreq(cta::log::LogContext& lc, const int s, int* const req_type, char* con
   } else {
     if (l > 0) {
       cta::log::ScopedParamContainer params(lc);
-      params.add("netread", l);
-      lc.log(cta::log::ERR, "Error getting request");
+      params.add("bytesRead", l);
+      params.add("expectedBytes", sizeof(req_hdr));
+      lc.log(cta::log::ERR, "Failed to read complete request header");
     } else if (l < 0) {
-      lc.log(cta::log::ERR, "netread failed: " + std::string(sstrerror(serrno)));
+      cta::log::ScopedParamContainer params(lc);
+      params.add(cta::semconv::log::errorMessage, std::string(sstrerror(serrno)));
+      lc.log(cta::log::ERR, "Failed to read request header");
     }
     return ERMCUNREC;
   }

@@ -38,12 +38,11 @@ int rmc_srv_export(cta::log::LogContext& lc, const struct rmc_srv_rqst_context* 
   const char* req_data_end = rqst_context->req_data + REQ_DATA_SIZE;
   unmarshall_LONG(rbp, uid);
   unmarshall_LONG(rbp, gid);
-  // TODO: better parameter names?
   cta::log::ScopedParamContainer params(lc);
-  params.add("request", "eject_cartridge");
-  params.add("request_uid", uid);
-  params.add("request_gid", gid);
-  params.add("request_from", std::string(rqst_context->clienthost));
+  params.add("requestType", "export");
+  params.add("requesterUid", uid);
+  params.add("requesterGid", gid);
+  params.add("clientHost", std::string(rqst_context->clienthost));
   // Unmarshall and ignore the loader field as it is no longer used
   {
     char smc_ldr[CA_MAXRBTNAMELEN + 1];
@@ -75,8 +74,9 @@ int rmc_srv_export(cta::log::LogContext& lc, const struct rmc_srv_rqst_context* 
     c += ERMCRBTERR;
     params.add("rc", c);
     lc.log(cta::log::ERR, "Eject cartridge failed");
+    return c;
   }
-  lc.log(cta::log::INFO, "Eject cartridge success");
+  lc.log(cta::log::INFO, "Eject cartridge succeeded");
   return 0;
 }
 
@@ -102,12 +102,11 @@ int rmc_srv_findcart(cta::log::LogContext& lc, const struct rmc_srv_rqst_context
   unmarshall_LONG(rbp, uid);
   unmarshall_LONG(rbp, gid);
 
-  // TODO: better parameter names?
   cta::log::ScopedParamContainer params(lc);
-  params.add("request", "find_cartridge");
-  params.add("request_uid", uid);
-  params.add("request_gid", gid);
-  params.add("request_from", std::string(rqst_context->clienthost));
+  params.add("requestType", "findCartridge");
+  params.add("requesterUid", uid);
+  params.add("requesterGid", gid);
+  params.add("clientHost", std::string(rqst_context->clienthost));
   // Unmarshall and ignore the loader field as it is no longer used
   {
     char smc_ldr[CA_MAXRBTNAMELEN + 1];
@@ -129,13 +128,15 @@ int rmc_srv_findcart(cta::log::LogContext& lc, const struct rmc_srv_rqst_context
   unmarshall_LONG(rbp, type);
   unmarshall_LONG(rbp, startaddr);
   unmarshall_LONG(rbp, nbelem);
-  params.add("fmt_template", std::string(fmt_template));
-  params.add("nb_elem", nbelem);
+  params.add("formatTemplate", std::string(fmt_template));
+  params.add("elementType", type);
+  params.add("startAddress", startaddr);
+  params.add("elementCount", nbelem);
   lc.log(cta::log::DEBUG, "Attempting to find cartridge");
 
   if (nbelem < 1) {
     rmc_sendrep(lc, rqst_context->rpfd, MSG_ERR, RMC06, "nbelem");
-    params.add(cta::semconv::log::errorMessage, "nb_elem is negative");
+    params.add(cta::semconv::log::errorMessage, "Element count must be positive");
     params.add("rc", ERMCUNREC);
     lc.log(cta::log::ERR, "Find cartridge failed");
     return ERMCUNREC;
@@ -143,7 +144,7 @@ int rmc_srv_findcart(cta::log::LogContext& lc, const struct rmc_srv_rqst_context
   if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info))))
       == nullptr) {
     rmc_sendrep(lc, rqst_context->rpfd, MSG_ERR, RMC05);
-    params.add(cta::semconv::log::errorMessage, "Cast failed");
+    params.add(cta::semconv::log::errorMessage, "Failed to allocate element information buffer");
     params.add("rc", ERMCUNREC);
     lc.log(cta::log::ERR, "Find cartridge failed");
     return ERMCUNREC;
@@ -161,7 +162,7 @@ int rmc_srv_findcart(cta::log::LogContext& lc, const struct rmc_srv_rqst_context
     free(element_info);
     rmc_sendrep(lc, rqst_context->rpfd, MSG_ERR, RMC02, "smc_find_cartridge", msgaddr);
     c += ERMCRBTERR;
-    params.add(cta::semconv::log::errorMessage, "nb_elem is negative");
+    params.add(cta::semconv::log::errorMessage, std::string(msgaddr));
     params.add("rc", c);
     lc.log(cta::log::ERR, "Find cartridge failed");
     return c;
@@ -169,6 +170,7 @@ int rmc_srv_findcart(cta::log::LogContext& lc, const struct rmc_srv_rqst_context
   if ((repbuf = reinterpret_cast<char*>(malloc(c * 18 + 4))) == nullptr) {
     rmc_sendrep(lc, rqst_context->rpfd, MSG_ERR, RMC05);
     free(element_info);
+    params.add(cta::semconv::log::errorMessage, "Failed to allocate reply buffer");
     params.add("rc", ERMCUNREC);
     lc.log(cta::log::ERR, "Find cartridge failed");
     return ERMCUNREC;
@@ -181,7 +183,7 @@ int rmc_srv_findcart(cta::log::LogContext& lc, const struct rmc_srv_rqst_context
   free(element_info);
   rmc_sendrep(lc, rqst_context->rpfd, MSG_DATA, sbp - repbuf, repbuf);
   free(repbuf);
-  lc.log(cta::log::INFO, "Find cartridge success");
+  lc.log(cta::log::INFO, "Find cartridge succeeded");
   return 0;
 }
 
@@ -196,12 +198,11 @@ int rmc_srv_getgeom(cta::log::LogContext& lc, const struct rmc_srv_rqst_context*
   const char* req_data_end = rqst_context->req_data + REQ_DATA_SIZE;
   unmarshall_LONG(rbp, uid);
   unmarshall_LONG(rbp, gid);
-  // TODO: better parameter names?
   cta::log::ScopedParamContainer params(lc);
-  params.add("request", "get_library_robot_geometry");
-  params.add("request_uid", uid);
-  params.add("request_gid", gid);
-  params.add("request_from", std::string(rqst_context->clienthost));
+  params.add("requestType", "getGeometry");
+  params.add("requesterUid", uid);
+  params.add("requesterGid", gid);
+  params.add("clientHost", std::string(rqst_context->clienthost));
   // Unmarshall and ignore the loader field as it is no longer used
   {
     char smc_ldr[CA_MAXRBTNAMELEN + 1];
@@ -228,15 +229,15 @@ int rmc_srv_getgeom(cta::log::LogContext& lc, const struct rmc_srv_rqst_context*
   rmc_sendrep(lc, rqst_context->rpfd, MSG_DATA, sbp - repbuf, repbuf);
 
   params.add("inquiry", std::string(g_extended_robot_info.robot_info.inquiry));
-  params.add("transport_start", g_extended_robot_info.robot_info.transport_start);
-  params.add("transport_count", g_extended_robot_info.robot_info.transport_count);
-  params.add("slot_start", g_extended_robot_info.robot_info.slot_start);
-  params.add("slot_count", g_extended_robot_info.robot_info.slot_count);
-  params.add("port_start", g_extended_robot_info.robot_info.port_start);
-  params.add("port_count", g_extended_robot_info.robot_info.port_count);
-  params.add("device_start", g_extended_robot_info.robot_info.device_start);
-  params.add("device_count", g_extended_robot_info.robot_info.device_count);
-  lc.log(cta::log::INFO, "Get library robot geometry success");
+  params.add("transportStart", g_extended_robot_info.robot_info.transport_start);
+  params.add("transportCount", g_extended_robot_info.robot_info.transport_count);
+  params.add("slotStart", g_extended_robot_info.robot_info.slot_start);
+  params.add("slotCount", g_extended_robot_info.robot_info.slot_count);
+  params.add("portStart", g_extended_robot_info.robot_info.port_start);
+  params.add("portCount", g_extended_robot_info.robot_info.port_count);
+  params.add("deviceStart", g_extended_robot_info.robot_info.device_start);
+  params.add("deviceCount", g_extended_robot_info.robot_info.device_count);
+  lc.log(cta::log::INFO, "Get library robot geometry succeeded");
   return 0;
 }
 
@@ -251,12 +252,11 @@ int rmc_srv_import(cta::log::LogContext& lc, const struct rmc_srv_rqst_context* 
   const char* req_data_end = rqst_context->req_data + REQ_DATA_SIZE;
   unmarshall_LONG(rbp, uid);
   unmarshall_LONG(rbp, gid);
-  // TODO: better parameter names?
   cta::log::ScopedParamContainer params(lc);
-  params.add("request", "inject_cartridge");
-  params.add("request_uid", uid);
-  params.add("request_gid", gid);
-  params.add("request_from", std::string(rqst_context->clienthost));
+  params.add("requestType", "import");
+  params.add("requesterUid", uid);
+  params.add("requesterGid", gid);
+  params.add("clientHost", std::string(rqst_context->clienthost));
   // Unmarshall and ignore the loader field as it is no longer used
   {
     char smc_ldr[CA_MAXRBTNAMELEN + 1];
@@ -290,7 +290,7 @@ int rmc_srv_import(cta::log::LogContext& lc, const struct rmc_srv_rqst_context* 
     lc.log(cta::log::ERR, "Inject cartridge failed");
     return c;
   }
-  lc.log(cta::log::INFO, "Inject cartridge success");
+  lc.log(cta::log::INFO, "Inject cartridge succeeded");
   return 0;
 }
 
@@ -307,12 +307,11 @@ int rmc_srv_mount(cta::log::LogContext& lc, const struct rmc_srv_rqst_context* c
   const char* req_data_end = rqst_context->req_data + REQ_DATA_SIZE;
   unmarshall_LONG(rbp, uid);
   unmarshall_LONG(rbp, gid);
-  // TODO: better parameter names?
   cta::log::ScopedParamContainer params(lc);
-  params.add("request", "mount_cartridge");
-  params.add("request_uid", uid);
-  params.add("request_gid", gid);
-  params.add("request_from", std::string(rqst_context->clienthost));
+  params.add("requestType", "mount");
+  params.add("requesterUid", uid);
+  params.add("requesterGid", gid);
+  params.add("clientHost", std::string(rqst_context->clienthost));
   // Unmarshall and ignore the loader field as it is no longer used
   {
     char smc_ldr[CA_MAXRBTNAMELEN + 1];
@@ -335,7 +334,7 @@ int rmc_srv_mount(cta::log::LogContext& lc, const struct rmc_srv_rqst_context* c
   unmarshall_SHORT(rbp, drvord);
 
   params.add("vid", std::string(vid));
-  params.add("drive_ordinal", drvord);
+  params.add("driveOrdinal", drvord);
   params.add("invert", invert);
   lc.log(cta::log::DEBUG, "Attempting to mount cartridge");
 
@@ -353,7 +352,7 @@ int rmc_srv_mount(cta::log::LogContext& lc, const struct rmc_srv_rqst_context* c
     lc.log(cta::log::ERR, "Mount cartridge failed");
     return c;
   }
-  lc.log(cta::log::INFO, "Mount cartridge success");
+  lc.log(cta::log::INFO, "Mount cartridge succeeded");
   return 0;
 }
 
@@ -377,12 +376,11 @@ int rmc_srv_readelem(cta::log::LogContext& lc, const struct rmc_srv_rqst_context
   const char* req_data_end = rqst_context->req_data + REQ_DATA_SIZE;
   unmarshall_LONG(rbp, uid);
   unmarshall_LONG(rbp, gid);
-  // TODO: better parameter names?
   cta::log::ScopedParamContainer params(lc);
-  params.add("request", "read_element");
-  params.add("request_uid", uid);
-  params.add("request_gid", gid);
-  params.add("request_from", std::string(rqst_context->clienthost));
+  params.add("requestType", "readElement");
+  params.add("requesterUid", uid);
+  params.add("requesterGid", gid);
+  params.add("clientHost", std::string(rqst_context->clienthost));
   // Unmarshall and ignore the loader field as it is no longer used
   {
     char smc_ldr[CA_MAXRBTNAMELEN + 1];
@@ -397,9 +395,9 @@ int rmc_srv_readelem(cta::log::LogContext& lc, const struct rmc_srv_rqst_context
   unmarshall_LONG(rbp, type);
   unmarshall_LONG(rbp, startaddr);
   unmarshall_LONG(rbp, nbelem);
-  params.add("start_addr", startaddr);
-  params.add("nb_elem", nbelem);
-  params.add("type", type);
+  params.add("startAddress", startaddr);
+  params.add("elementCount", nbelem);
+  params.add("elementType", type);
   lc.log(cta::log::DEBUG, "Attempting to read element");
 
   if (type < 0 || type > 4) {
@@ -411,16 +409,16 @@ int rmc_srv_readelem(cta::log::LogContext& lc, const struct rmc_srv_rqst_context
   }
   if (nbelem < 1) {
     rmc_sendrep(lc, rqst_context->rpfd, MSG_ERR, RMC06, "nbelem");
-    params.add(cta::semconv::log::errorMessage, "nb_elem is negative");
-    params.add("rc", c);
+    params.add(cta::semconv::log::errorMessage, "Element count must be positive");
+    params.add("rc", ERMCUNREC);
     lc.log(cta::log::ERR, "Read element failed");
     return ERMCUNREC;
   }
   if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info))))
       == nullptr) {
     rmc_sendrep(lc, rqst_context->rpfd, MSG_ERR, RMC05);
-    // TODO error message
-    params.add("rc", c);
+    params.add(cta::semconv::log::errorMessage, "Failed to allocate element information buffer");
+    params.add("rc", ERMCUNREC);
     lc.log(cta::log::ERR, "Read element failed");
     return ERMCUNREC;
   }
@@ -435,6 +433,7 @@ int rmc_srv_readelem(cta::log::LogContext& lc, const struct rmc_srv_rqst_context
     free(element_info);
     rmc_sendrep(lc, rqst_context->rpfd, MSG_ERR, RMC02, "smc_read_elem_status", msgaddr);
     c += ERMCRBTERR;
+    params.add(cta::semconv::log::errorMessage, std::string(msgaddr));
     params.add("rc", c);
     lc.log(cta::log::ERR, "Read element failed");
     return c;
@@ -442,6 +441,7 @@ int rmc_srv_readelem(cta::log::LogContext& lc, const struct rmc_srv_rqst_context
   if ((repbuf = reinterpret_cast<char*>(malloc(c * 18 + 4))) == nullptr) {
     rmc_sendrep(lc, rqst_context->rpfd, MSG_ERR, RMC05);
     free(element_info);
+    params.add(cta::semconv::log::errorMessage, "Failed to allocate reply buffer");
     params.add("rc", ERMCUNREC);
     lc.log(cta::log::ERR, "Read element failed");
     return ERMCUNREC;
@@ -454,7 +454,7 @@ int rmc_srv_readelem(cta::log::LogContext& lc, const struct rmc_srv_rqst_context
   free(element_info);
   rmc_sendrep(lc, rqst_context->rpfd, MSG_DATA, sbp - repbuf, repbuf);
   free(repbuf);
-  lc.log(cta::log::INFO, "Read element success");
+  lc.log(cta::log::INFO, "Read element succeeded");
   return 0;
 }
 
@@ -472,10 +472,10 @@ int rmc_srv_unmount(cta::log::LogContext& lc, const struct rmc_srv_rqst_context*
   unmarshall_LONG(rbp, uid);
   unmarshall_LONG(rbp, gid);
   cta::log::ScopedParamContainer params(lc);
-  params.add("request", "unmount_cartridge");
-  params.add("request_uid", uid);
-  params.add("request_gid", gid);
-  params.add("request_from", std::string(rqst_context->clienthost));
+  params.add("requestType", "unmount");
+  params.add("requesterUid", uid);
+  params.add("requesterGid", gid);
+  params.add("clientHost", std::string(rqst_context->clienthost));
   // Unmarshall and ignore the loader field as it is no longer used
   {
     char smc_ldr[CA_MAXRBTNAMELEN + 1];
@@ -498,7 +498,7 @@ int rmc_srv_unmount(cta::log::LogContext& lc, const struct rmc_srv_rqst_context*
   unmarshall_SHORT(rbp, force);
 
   params.add("vid", std::string(vid));
-  params.add("drive_ordinal", drvord);
+  params.add("driveOrdinal", drvord);
   params.add("force", force);
   lc.log(cta::log::DEBUG, "Attempting to unmount cartridge");
 
@@ -515,6 +515,6 @@ int rmc_srv_unmount(cta::log::LogContext& lc, const struct rmc_srv_rqst_context*
     lc.log(cta::log::ERR, "Unmount cartridge failed");
     return c;
   }
-  lc.log(cta::log::INFO, "Unmount cartridge success");
+  lc.log(cta::log::INFO, "Unmount cartridge succeeded");
   return 0;
 }
