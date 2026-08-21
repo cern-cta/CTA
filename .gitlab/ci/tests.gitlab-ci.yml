@@ -78,7 +78,6 @@ unit-test-cta:
   before_script:
     - *setup-cta-install
   script:
-    - /usr/bin/cta-maintd --config-strict --config /etc/cta/cta-maintd.example.toml --config-check
     - /usr/bin/cta-unitTests-multiProcess
     - /usr/bin/cta-unitTests
   artifacts:

@@ -109,8 +109,9 @@ cd build
 DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man cmake --build . --target install -j@JOBS_COUNT@
 
 %check
-%if "%{skip_unit_tests}" == "0"
 cd build
+cmake --build . --target cta-example-config-checks -j@JOBS_COUNT@
+%if "%{skip_unit_tests}" == "0"
 cmake --build . --target shortunittests -j@JOBS_COUNT@
 %endif
 
@@ -384,7 +385,6 @@ Requires: cta-lib-catalogue-occi = %{version}-%{release}
 %endif
 Requires: valgrind %{valgrindVersionConstraint}
 Requires: cta-lib = %{version}-%{release}
-Requires: cta-maintd = %{version}-%{release}
 Requires: cta-taped = %{ctaVersion}-%{ctaRelease}%{mydist}
 Requires: make
 Requires: moreutils

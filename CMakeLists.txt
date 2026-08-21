@@ -266,7 +266,7 @@ add_custom_target(fullunittests
   COMMAND ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} --child-silent-after-fork=yes tests/cta-unitTests-multiProcess
   COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests-multiProcess
 
-  DEPENDS cta-example-config-checks tests/cta-unitTests tests/cta-unitTests-multiProcess tests/valgrind.suppr tests/helgrind.suppr
+  DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/valgrind.suppr tests/helgrind.suppr
   COMMENT "Running unit tests with memory leak and race conditions detection" VERBATIM)
 
 add_custom_target(valgrind
@@ -291,7 +291,7 @@ add_custom_target(shortunittests
   tests/cta-unitTests
   COMMAND tests/cta-unitTests-multiProcess
 
-  DEPENDS cta-example-config-checks tests/cta-unitTests tests/cta-unitTests-multiProcess
+  DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess
   COMMENT "Running unit tests" VERBATIM)
 
 add_custom_target(helgrindBase
