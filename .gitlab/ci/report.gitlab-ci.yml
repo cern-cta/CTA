@@ -12,6 +12,12 @@ danger-review:
   variables:
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
     DANGER_GITLAB_USE_THREADS: 1
+  before_script:
+    # Ensure Danger doesn't have to fetch a lot of repo history
+    - DANGER_HEAD_SHA="${CI_MERGE_REQUEST_SOURCE_BRANCH_SHA:-$CI_COMMIT_SHA}"
+    - git fetch --no-tags origin "$CI_MERGE_REQUEST_DIFF_BASE_SHA" "$DANGER_HEAD_SHA"
+    - git branch -f danger_base "$CI_MERGE_REQUEST_DIFF_BASE_SHA"
+    - git branch -f danger_head "$DANGER_HEAD_SHA"
   script:
     - danger --verbose --dangerfile=ci/danger/Dangerfile --fail-on-errors=true
 
