@@ -14,6 +14,7 @@
 #include <unistd.h>
 
 int rmc_find_cartridge(const char* const server,
+                       const unsigned short port,
                        const char* const pattern,
                        const int type,
                        const int startaddr,
@@ -56,7 +57,7 @@ int rmc_find_cartridge(const char* const server,
   msglen = sbp - sendbuf;
   marshall_LONG(q, msglen); /* update length field */
 
-  while ((c = send2rmc(server, sendbuf, msglen, repbuf, sizeof(repbuf))) && serrno == ERMCNACT) {
+  while ((c = send2rmc(server, port, sendbuf, msglen, repbuf, sizeof(repbuf))) && serrno == ERMCNACT) {
     sleep(RMC_RETRYI);
   }
   if (c == 0) {
