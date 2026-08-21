@@ -34,6 +34,7 @@ spec:
     # If necessary, add additional whitelisted (private!) registries for images containing Oracle RPMs here, separated by spaces
     ORACLE_RPM_REGISTRY_WHITELIST: ""
   before_script:
+    - !reference [.merge-train-guard, before_script]
     # Configure storage. See https://gitlab.cern.ch/gitlabci-examples/build_docker_image/-/blob/fce98393aab8f3ffca3b8449036ccb02275c8a46/.gitlab-ci.yml#L19
     - mkdir -p "${CONTAINER_STORAGE}" ~/.config/containers
     - |
@@ -91,6 +92,8 @@ spec:
   extends: .build-image
   stage: build:image
   needs:
+    - job: check-merge-train-duplicate
+      optional: true
     - job: build-cta-rpms
       optional: true  # The job is not included in UPDATE_PIPELINE_IMAGES pipelines.
     - job: modify-project-json
@@ -162,6 +165,8 @@ build-pipeline-images:
   extends: .build-image
   stage: build:image
   needs:
+    - job: check-merge-train-duplicate
+      optional: true
     - job: generate-pipeline-images-tag
       artifacts: true
   rules:

@@ -11,6 +11,23 @@ spec:
       type: string
 ---
 
+check-merge-train-duplicate:
+  stage: .pre
+  needs: []
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"'
+  inherit:
+    default: false
+  image: $IMAGE_DEFAULT
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+    MERGE_TRAIN_DOTENV: merge-train.env
+  script:
+    - python3 ci/checks/merge_train_guard.py
+  artifacts:
+    reports:
+      dotenv: merge-train.env
+
 # Resolve the image and matching Git tag at runtime for the API-based dispatcher. These dotenv values are suitable for
 # scripts, but cannot reliably populate declarative trigger fields because GitLab evaluates those before jobs run.
 prepare-cta-version-regression:

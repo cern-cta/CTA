@@ -27,6 +27,8 @@ spec:
 test-cta-valgrind:
   stage: test
   needs:
+    - job: check-merge-train-duplicate
+      optional: true
     - job: build-cta-rpms
   rules:
     - if: $CI_COMMIT_TAG
@@ -40,6 +42,7 @@ test-cta-valgrind:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
   before_script:
+    - !reference [.merge-train-guard, before_script]
     - *setup-cta-install
   script:
     - /usr/bin/cta-unitPlusIntegrationTests.sh
@@ -49,6 +52,8 @@ integration-test-cta:
   retry: 1
   stage: test
   needs:
+    - job: check-merge-train-duplicate
+      optional: true
     - job: build-cta-rpms
   rules:
     - when: on_success
@@ -57,6 +62,7 @@ integration-test-cta:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
   before_script:
+    - !reference [.merge-train-guard, before_script]
     - *setup-cta-install
   script:
     - /usr/bin/cta-integrationTests
@@ -68,6 +74,8 @@ unit-test-cta:
   interruptible: false
   stage: test
   needs:
+    - job: check-merge-train-duplicate
+      optional: true
     - job: build-cta-rpms
   rules:
     - when: on_success
@@ -76,6 +84,7 @@ unit-test-cta:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
   before_script:
+    - !reference [.merge-train-guard, before_script]
     - *setup-cta-install
   script:
     - /usr/bin/cta-unitTests-multiProcess
@@ -87,6 +96,8 @@ unit-test-cta:
 unit-test-postgresql:
   stage: test
   needs:
+    - job: check-merge-train-duplicate
+      optional: true
     - job: build-cta-rpms
   rules:
     - when: on_success
@@ -95,6 +106,7 @@ unit-test-postgresql:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
   before_script:
+    - !reference [.merge-train-guard, before_script]
     - *setup-cta-install
   script:
     - dnf -y install cta-catalogue-utils
@@ -130,6 +142,8 @@ unit-test-postgresql:
 unit-test-oracle:
   stage: test
   needs:
+    - job: check-merge-train-duplicate
+      optional: true
     - job: build-cta-rpms
   rules:
     - if: '$ENABLE_ORACLE_SUPPORT == "false"'
@@ -144,6 +158,7 @@ unit-test-oracle:
     # Note that this expects the full url; not a shortname relying on tnsnames
     ORACLE_DATABASE: $CI_ORACLE_UNIT_TEST_DB_DATABASE
   before_script:
+    - !reference [.merge-train-guard, before_script]
     - *setup-cta-install
   script:
     - dnf -y install cta-catalogue-utils
@@ -168,6 +183,8 @@ unit-test-oracle:
 test-cta-release:
   stage: test
   needs:
+    - job: check-merge-train-duplicate
+      optional: true
     - job: build-cta-rpms
   rules:
     - if: '$CI_COMMIT_TAG || $CI_COMMIT_BRANCH == "main"'
