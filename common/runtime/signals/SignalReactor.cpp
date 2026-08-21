@@ -40,11 +40,20 @@ SignalReactor::~SignalReactor() {
 // SignalReactor::start
 //------------------------------------------------------------------------------
 void SignalReactor::start() {
-  m_log(log::DEBUG, "In SignalReactor::start(): Blocking and registering signals");
-  sigemptyset(&m_sigset);
-  for (const auto& [signal, func] : m_signalFunctions) {
-    sigaddset(&m_sigset, signal);
+  if (m_hasStarted) {
+    throw exception::Exception("In SignalReactor::start(): SignalReactor cannot be started more than once");
   }
+  m_log(log::DEBUG, "In SignalReactor::start(): Blocking and registering signals");
+  cta::exception::Errnum::throwOnMinusOne(::sigemptyset(&m_sigset), "In SignalReactor::start(): sigemptyset() failed");
+  for (const auto& [signal, func] : m_signalFunctions) {
+    if (signal == SIGKILL || signal == SIGSTOP || !func) {
+      throw exception::Exception("In SignalReactor::start(): invalid callback registration for signal "
+                                 + std::to_string(signal));
+    }
+    cta::exception::Errnum::throwOnMinusOne(::sigaddset(&m_sigset, signal),
+                                            "In SignalReactor::start(): sigaddset() failed");
+  }
+  m_hasStarted = true;
   cta::exception::Errnum::throwOnNonZero(::pthread_sigmask(SIG_BLOCK, &m_sigset, &m_previousSigset),
                                          "In SignalReactor::start(): pthread_sigmask() failed");
   m_startThread = ::pthread_self();

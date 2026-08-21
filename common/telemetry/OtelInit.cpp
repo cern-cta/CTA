@@ -97,9 +97,10 @@ void initOpenTelemetry(const std::string& configFile,
 }
 
 void cleanupOpenTelemetry(cta::log::LogContext& lc) {
-  if (sdk != nullptr) {
-    sdk->UnInstall();
+  if (sdk == nullptr) {
+    return;
   }
+  sdk->UnInstall();
   sdk.reset(nullptr);
   // Ensure all of our instruments are NOOP again
   cta::telemetry::metrics::initAllInstruments();

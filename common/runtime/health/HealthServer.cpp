@@ -60,25 +60,55 @@ bool HealthServer::isUdsHost(std::string_view host) {
 //------------------------------------------------------------------------------
 void HealthServer::start() {
   m_server = std::make_unique<httplib::Server>();
-  m_server->Get("/health/ready", [readinessFunc = m_readinessFunc](const httplib::Request&, httplib::Response& res) {
-    if (readinessFunc()) {
-      res.status = 200;
-      res.set_content("ok\n", "text/plain");
-    } else {
-      res.status = 503;
-      res.set_content("not ready\n", "text/plain");
-    }
-  });
+  m_server->Get("/health/ready",
+                [readinessFunc = m_readinessFunc, &log = m_log](const httplib::Request&, httplib::Response& res) {
+                  try {
+                    if (readinessFunc()) {
+                      res.status = 200;
+                      res.set_content("ok\n", "text/plain");
+                    } else {
+                      res.status = 503;
+                      res.set_content("not ready\n", "text/plain");
+                    }
+                  } catch (const std::exception& ex) {
+                    log(log::ERR,
+                        "Readiness check threw an exception",
+                        {
+                          {semconv::log::exceptionMessage, ex.what()}
+                    });
+                    res.status = 503;
+                    res.set_content("readiness check failed\n", "text/plain");
+                  } catch (...) {
+                    log(log::ERR, "Readiness check threw an unknown exception", {});
+                    res.status = 503;
+                    res.set_content("readiness check failed\n", "text/plain");
+                  }
+                });
 
-  m_server->Get("/health/live", [livenessFunc = m_livenessFunc](const httplib::Request&, httplib::Response& res) {
-    if (livenessFunc()) {
-      res.status = 200;
-      res.set_content("ok\n", "text/plain");
-    } else {
-      res.status = 503;
-      res.set_content("not live\n", "text/plain");
-    }
-  });
+  m_server->Get("/health/live",
+                [livenessFunc = m_livenessFunc, &log = m_log](const httplib::Request&, httplib::Response& res) {
+                  try {
+                    if (livenessFunc()) {
+                      res.status = 200;
+                      res.set_content("ok\n", "text/plain");
+                    } else {
+                      res.status = 503;
+                      res.set_content("not live\n", "text/plain");
+                    }
+                  } catch (const std::exception& ex) {
+                    log(log::ERR,
+                        "Liveness check threw an exception",
+                        {
+                          {semconv::log::exceptionMessage, ex.what()}
+                    });
+                    res.status = 503;
+                    res.set_content("liveness check failed\n", "text/plain");
+                  } catch (...) {
+                    log(log::ERR, "Liveness check threw an unknown exception", {});
+                    res.status = 503;
+                    res.set_content("liveness check failed\n", "text/plain");
+                  }
+                });
 
   // Prevent multiple processes being able to listen on the same port
   // So explicitly disable SO_REUSEPORT

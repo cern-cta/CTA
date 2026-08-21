@@ -6,6 +6,7 @@
 #include "SignalReactor.hpp"
 
 #include "SignalReactorBuilder.hpp"
+#include "common/exception/Exception.hpp"
 #include "common/exception/TimeOut.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/LogContext.hpp"
@@ -144,6 +145,27 @@ TEST(SignalReactor, RestoresCallingThreadSignalMask) {
   for (int signal = 1; signal < NSIG; ++signal) {
     EXPECT_EQ(::sigismember(&before, signal), ::sigismember(&after, signal)) << "signal " << signal;
   }
+}
+
+TEST(SignalReactor, CannotBeStartedMoreThanOnce) {
+  cta::log::DummyLogger dl("dummy", "unitTest");
+
+  auto signalReactor =
+    cta::runtime::SignalReactorBuilder().addSignalFunction(SIGUSR2, []() {}).withTimeoutMsecs(10).build(dl);
+  signalReactor.start();
+  signalReactor.stop();
+
+  EXPECT_THROW(signalReactor.start(), cta::exception::Exception);
+}
+
+TEST(SignalReactor, RejectsInvalidAndUnhandleableSignals) {
+  cta::runtime::SignalReactorBuilder builder;
+
+  EXPECT_THROW(builder.addSignalFunction(0, []() {}), cta::exception::Exception);
+  EXPECT_THROW(builder.addSignalFunction(NSIG, []() {}), cta::exception::Exception);
+  EXPECT_THROW(builder.addSignalFunction(SIGKILL, []() {}), cta::exception::Exception);
+  EXPECT_THROW(builder.addSignalFunction(SIGSTOP, []() {}), cta::exception::Exception);
+  EXPECT_THROW(builder.addSignalFunction(SIGUSR1, {}), cta::exception::Exception);
 }
 
 TEST(SignalReactor, HandlesUnregisteredSignals) {

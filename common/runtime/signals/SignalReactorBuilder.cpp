@@ -9,6 +9,8 @@
 #include "common/exception/Errnum.hpp"
 #include "common/semconv/Attributes.hpp"
 
+#include <signal.h>
+
 namespace cta::runtime {
 
 //------------------------------------------------------------------------------
@@ -16,6 +18,14 @@ namespace cta::runtime {
 //------------------------------------------------------------------------------
 SignalReactorBuilder&
 SignalReactorBuilder::addSignalFunction(int signal, const std::function<void()>& func, bool overwrite) {
+  sigset_t validationSet;
+  if (signal == SIGKILL || signal == SIGSTOP || ::sigemptyset(&validationSet) != 0
+      || ::sigaddset(&validationSet, signal) != 0) {
+    throw exception::Exception("Cannot register invalid or unhandleable signal number " + std::to_string(signal));
+  }
+  if (!func) {
+    throw exception::Exception("Cannot register an empty callback for " + utils::signalToString(signal));
+  }
   if (m_signalFunctions.contains(signal) && !overwrite) {
     throw exception::Exception("Function already registered for " + utils::signalToString(signal)
                                + ", while overwrite was disabled");
