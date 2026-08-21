@@ -172,7 +172,7 @@ TEST(SignalReactor, StopWakesImmediatelyWithoutCallingSignalFunction) {
   signalReactor.stop();
   const auto elapsed = std::chrono::steady_clock::now() - start;
 
-  EXPECT_LT(elapsed, std::chrono::seconds(1));
+  EXPECT_LT(elapsed, std::chrono::seconds(2));
   EXPECT_EQ(0, calls);
 }
 

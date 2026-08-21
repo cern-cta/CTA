@@ -4,12 +4,16 @@
  */
 #pragma once
 
+#include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
 
 namespace cta::telemetry {
 
+CTA_GENERATE_USER_EXCEPTION_CLASS(InvalidResourceAttribute);
+
 /**
- * Initialises telemetry according to the provided config. This config file uses the declarative configuration format from OpenTelemetry.
+ * Initialises telemetry according to the provided config.
+ * This config file uses the declarative configuration format from OpenTelemetry.
  *
  * If this function is not called, any telemetry-related functionality will be a NOOP.
  * This function is not safe to use in a forked environment.

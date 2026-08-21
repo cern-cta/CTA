@@ -6,7 +6,6 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/exception/NullPtrException.hpp"
-#include "common/exception/UserError.hpp"
 #include "common/telemetry/CtaOtelLogHandler.hpp"
 #include "common/telemetry/metrics/InstrumentRegistry.hpp"
 
@@ -30,11 +29,11 @@ void validateResourceAttributes(const std::map<std::string, std::string>& attrib
   // The target environment-variable format provides no escaping here.
   for (const auto& [key, value] : attributes) {
     if (key.empty()) {
-      throw cta::exception::UserError("OpenTelemetry resource attribute keys cannot be empty.");
+      throw InvalidResourceAttribute("OpenTelemetry resource attribute keys cannot be empty.");
     }
     if (key.find_first_of(",=\r\n") != std::string::npos || value.find_first_of(",=\r\n") != std::string::npos) {
-      throw cta::exception::UserError("OpenTelemetry resource attribute '" + key
-                                      + "' contains a character that cannot be serialized: ',', '=', CR, or LF.");
+      throw InvalidResourceAttribute("OpenTelemetry resource attribute '" + key
+                                     + "' contains a character that cannot be serialized: ',', '=', CR, or LF.");
     }
   }
 }
@@ -42,6 +41,7 @@ void validateResourceAttributes(const std::map<std::string, std::string>& attrib
 }  // namespace
 
 static std::unique_ptr<opentelemetry::sdk::configuration::ConfiguredSdk> sdk;
+static bool ctaLogHandlerInstalled = false;
 
 // See https://github.com/open-telemetry/opentelemetry-cpp/blob/main/examples/configuration/main.cc
 void initOpenTelemetry(const std::string& configFile,
@@ -64,6 +64,7 @@ void initOpenTelemetry(const std::string& configFile,
   // Ensure any logged messages go through the CTA logging system
   opentelemetry::sdk::common::internal_log::GlobalLogHandler::SetLogHandler(
     std::make_unique<CtaOtelLogHandler>(lc.logger()));
+  ctaLogHandlerInstalled = true;
 
   // Populate the registry with the core components supported
   auto registry = std::make_shared<opentelemetry::sdk::configuration::Registry>();
@@ -99,14 +100,20 @@ void initOpenTelemetry(const std::string& configFile,
 }
 
 void cleanupOpenTelemetry(cta::log::LogContext& lc) {
-  if (sdk == nullptr) {
-    return;
+  if (sdk != nullptr) {
+    sdk->UnInstall();
+    sdk.reset(nullptr);
+    // Ensure all of our instruments are NOOP again
+    cta::telemetry::metrics::initAllInstruments();
+    lc.log(log::INFO, "In cleanupOpenTelemetry(): OpenTelemetry SDK was cleaned up");
   }
-  sdk->UnInstall();
-  sdk.reset(nullptr);
-  // Ensure all of our instruments are NOOP again
-  cta::telemetry::metrics::initAllInstruments();
-  lc.log(log::INFO, "In cleanupOpenTelemetry(): OpenTelemetry SDK was cleaned up");
+
+  if (ctaLogHandlerInstalled) {
+    using opentelemetry::sdk::common::internal_log::DefaultLogHandler;
+    using opentelemetry::sdk::common::internal_log::GlobalLogHandler;
+    GlobalLogHandler::SetLogHandler(std::make_unique<DefaultLogHandler>());
+    ctaLogHandlerInstalled = false;
+  }
 }
 
 }  // namespace cta::telemetry
