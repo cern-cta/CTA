@@ -97,7 +97,6 @@ install(
     cta-rdbmsUnitTests
     cta-unitTests
     cta-unitTests-multiProcess
-    cta-integrationTests
     cta-immutable-file-test
   DESTINATION
     usr/bin)
@@ -110,7 +109,7 @@ if (OCCI_SUPPORT)
   configure_file(cta-rdbmsUnitTests-oracle.sh.in ${CMAKE_CURRENT_BINARY_DIR}/cta-rdbmsUnitTests-oracle.sh @ONLY)
 endif ()
 
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cta-valgrindUnitTests.sh cta-unitPlusIntegrationTests.sh DESTINATION usr/bin)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cta-valgrindUnitTests.sh DESTINATION usr/bin)
 install(FILES valgrind.suppr helgrind.suppr ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile DESTINATION usr/share/cta-${CTA_VERSION}/unittest/)
 
 if (OCCI_SUPPORT)

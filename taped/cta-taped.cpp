@@ -12,7 +12,9 @@ int main(const int argc, char** const argv) {
   return runtime::safeRun([argc, argv]() {
     const std::string appName = "cta-taped";
     const std::string description = R"""(
-...
+Daemon responsible for controlling a tape drive and executing archive and retrieve
+mounts scheduled by CTA. It manages tape loading and unloading, data transfers,
+drive state, and session recovery.
   )""";
     using App =
       runtime::Application<cta::tape::daemon::TapedApp, cta::tape::daemon::TapedConfig, runtime::CommonCliOptions>;

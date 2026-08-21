@@ -45,7 +45,7 @@ test-cta-valgrind:
     - !reference [.merge-train-guard, before_script]
     - *setup-cta-install
   script:
-    - /usr/bin/cta-unitPlusIntegrationTests.sh
+    - /usr/bin/cta-valgrindUnitTests.sh
 
 unit-test-cta:
   interruptible: false

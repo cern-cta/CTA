@@ -405,7 +405,6 @@ Unit tests and integration tests with virtual tape drives
 %{_bindir}/cta-unitTests
 %{_bindir}/cta-unitTests-multiProcess
 %{_bindir}/cta-valgrindUnitTests.sh
-%{_bindir}/cta-unitPlusIntegrationTests.sh
 %{_libdir}/libctacataloguecmdlineunittests.so*
 %{_libdir}/libctacommonunittests.so*
 %{_libdir}/libctafrontendcommonconfigunittests.so*
