@@ -109,8 +109,9 @@ cd build
 DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man cmake --build . --target install -j@JOBS_COUNT@
 
 %check
-%if "%{skip_unit_tests}" == "0"
 cd build
+cmake --build . --target cta-example-config-checks -j@JOBS_COUNT@
+%if "%{skip_unit_tests}" == "0"
 cmake --build . --target shortunittests -j@JOBS_COUNT@
 %endif
 
@@ -399,7 +400,6 @@ CERN Tape Archive:
 Unit tests and integration tests with virtual tape drives
 %files -n cta-integrationtests
 %license COPYING
-%{_libdir}/libintegrationTestHelperTests.so*
 %{_libdir}/libcta-tapedIntegrationTests.so*
 %{_bindir}/cta-rdbmsUnitTests
 %if "%{occiSupport}" == "1"

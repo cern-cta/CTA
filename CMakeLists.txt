@@ -25,6 +25,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -pedantic -Wall -Wextra -Werror -W
 
 set (BUILD_CMDLINE_ONLY FALSE)
 
+# Applications using the runtime library add their example configuration checks as dependencies of this target.
+add_custom_target(cta-example-config-checks)
+
 # By default the objectstore based scheduler is used.
 # A postgres scheduler may be enabled and the objectstore one disabled by
 # giving -DCTA_USE_PGSCHED:Bool=true on the cmake command line.

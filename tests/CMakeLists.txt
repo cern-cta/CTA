@@ -68,7 +68,8 @@ target_link_libraries(cta-rdbmsUnitTests
   pthread)
 
 add_executable(cta-unitTests-multiProcess
-  ${CTA_UNIT_TEST_SOURCES})
+  ${CTA_UNIT_TEST_SOURCES}
+  SubprocessTests.cpp)
 
 target_link_libraries(cta-unitTests-multiProcess
   ctadaemonunittests-multiprocess
@@ -81,19 +82,10 @@ target_link_libraries(cta-unitTests-multiProcess
 add_library(unitTestHelper
   TempFile.cpp TempDirectory.cpp)
 
-add_library(integrationTestHelperTests SHARED
-  SubprocessIntegrationTests.cpp)
-set_property(TARGET integrationTestHelperTests PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET integrationTestHelperTests PROPERTY   VERSION "${CTA_LIBVERSION}")
-
-target_link_libraries(integrationTestHelperTests
-  ctacommon)
-
 add_executable(cta-integrationTests
   integration_tests.cpp)
 
 target_link_libraries(cta-integrationTests
-  integrationTestHelperTests
   cta-tapedIntegrationTests
   gtest
   pthread)
@@ -117,8 +109,6 @@ install(
     cta-immutable-file-test
   DESTINATION
     usr/bin)
-
-install(TARGETS integrationTestHelperTests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 configure_file(cta-valgrindUnitTests.sh.in ${CMAKE_CURRENT_BINARY_DIR}/cta-valgrindUnitTests.sh)
 configure_file(parallelTestsMakefile.in ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile @ONLY)

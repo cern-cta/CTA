@@ -8,7 +8,7 @@
 
 #include <gtest/gtest.h>
 
-namespace integrationTests {
+namespace unitTests {
 TEST(SubProcessHelper, basicTests) {
   cta::threading::SubProcess sp("/usr/bin/echo", std::list<std::string>({"/usr/bin/echo", "Hello,", "world."}));
   sp.wait();
@@ -32,4 +32,4 @@ TEST(SubProcessHelper, testSubprocessWithStdinInput) {
   ASSERT_EQ(0, sp2.exitValue());
   ASSERT_EQ(stdinInput, sp2.stdout());
 }
-}  // namespace integrationTests
+}  // namespace unitTests
