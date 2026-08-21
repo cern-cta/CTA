@@ -29,7 +29,11 @@ target_link_libraries(ctataped
 add_executable (cta-taped cta-taped.cpp)
 target_link_libraries(cta-taped ctataped)
 
-set(CTA_TAPED_EXAMPLE_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/cta-taped.example.toml)
+if(NOT CTA_USE_PGSCHED)
+  set(CTA_TAPED_EXAMPLE_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/cta-taped.example.toml)
+else()
+  set(CTA_TAPED_EXAMPLE_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/cta-taped.pg.example.toml)
+endif()
 
 add_custom_target(cta-taped-config-check
   COMMAND $<TARGET_FILE:cta-taped>
@@ -46,6 +50,13 @@ install (TARGETS cta-taped DESTINATION usr/bin)
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-taped.1cta DESTINATION /usr/share/man/man1)
 install (FILES cta-taped.logrotate DESTINATION /etc/logrotate.d RENAME cta-taped)
 install (FILES cta-taped.service DESTINATION ${CTA_SYSTEMD_UNIT_DIR})
-install (FILES cta-taped.example.toml
-  DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
-  PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+if(NOT CTA_USE_PGSCHED)
+  install (FILES cta-taped.example.toml
+    DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
+    PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+else()
+  install (FILES cta-taped.pg.example.toml
+    DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
+    RENAME cta-taped.example.toml
+    PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+endif()
