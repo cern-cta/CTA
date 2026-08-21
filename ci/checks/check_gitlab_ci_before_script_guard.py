@@ -14,6 +14,9 @@ import yaml
 
 
 GUARD_JOB = ".merge-train-guard"
+# CI files are grouped by stage, as enforced by check_gitlab_ci_single_stage.py.
+# These stages are excluded from merge-train pipelines, so their jobs don't need the guard.
+MERGE_TRAIN_EXCLUDED_STAGES = {"release", "report", "trigger"}
 
 
 @dataclass(frozen=True)
@@ -83,6 +86,10 @@ def references_guard(job_name: str, jobs: dict[str, dict[str, Any]], visited: se
     )
 
 
+def stage_from_file(path: Path) -> str:
+    return path.name.removesuffix(".gitlab-ci.yml")
+
+
 def main() -> int:
     paths = [Path(argument) for argument in sys.argv[1:]] or [Path(".gitlab-ci.yml"), Path(".gitlab/ci")]
     files = find_ci_files(paths)
@@ -99,7 +106,10 @@ def main() -> int:
     errors = [
         f"{origins[name]}: job '{name}' defines before_script without referencing {GUARD_JOB}"
         for name, definition in jobs.items()
-        if name != GUARD_JOB and "before_script" in definition and not references_guard(name, jobs, set())
+        if name != GUARD_JOB
+        and "before_script" in definition
+        and stage_from_file(origins[name]) not in MERGE_TRAIN_EXCLUDED_STAGES
+        and not references_guard(name, jobs, set())
     ]
     if errors:
         print("\n".join(errors), file=sys.stderr)
