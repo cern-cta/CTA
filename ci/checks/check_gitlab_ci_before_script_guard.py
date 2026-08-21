@@ -27,6 +27,8 @@ class GitLabLoader(yaml.SafeLoader):
 
 
 def reference_constructor(loader: GitLabLoader, node: yaml.Node) -> Reference:
+    if not isinstance(node, yaml.SequenceNode):
+        raise TypeError("!reference must be a sequence")
     values = loader.construct_sequence(node)
     if len(values) != 2 or not all(isinstance(value, str) for value in values):
         raise ValueError("!reference must contain a job name and key")
