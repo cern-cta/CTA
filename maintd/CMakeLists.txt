@@ -45,7 +45,7 @@ add_custom_target(cta-maintd-config-check
     --config-check
   DEPENDS cta-maintd
   COMMENT "Validating the cta-maintd example configuration" VERBATIM)
-add_dependencies(config-checks cta-maintd-config-check)
+add_dependencies(cta-example-config-checks cta-maintd-config-check)
 
 add_manpage (cta-maintd)
 

@@ -25,9 +25,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -pedantic -Wall -Wextra -Werror -W
 
 set (BUILD_CMDLINE_ONLY FALSE)
 
-# Applications using the runtime library add their example configuration checks
-# as dependencies of this target.
-add_custom_target(config-checks)
+# Applications using the runtime library add their example configuration checks as dependencies of this target.
+add_custom_target(cta-example-config-checks)
 
 # By default the objectstore based scheduler is used.
 # A postgres scheduler may be enabled and the objectstore one disabled by
@@ -267,7 +266,7 @@ add_custom_target(fullunittests
   COMMAND ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} --child-silent-after-fork=yes tests/cta-unitTests-multiProcess
   COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests-multiProcess
 
-  DEPENDS config-checks tests/cta-unitTests tests/cta-unitTests-multiProcess tests/valgrind.suppr tests/helgrind.suppr
+  DEPENDS cta-example-config-checks tests/cta-unitTests tests/cta-unitTests-multiProcess tests/valgrind.suppr tests/helgrind.suppr
   COMMENT "Running unit tests with memory leak and race conditions detection" VERBATIM)
 
 add_custom_target(valgrind
@@ -292,7 +291,7 @@ add_custom_target(shortunittests
   tests/cta-unitTests
   COMMAND tests/cta-unitTests-multiProcess
 
-  DEPENDS config-checks tests/cta-unitTests tests/cta-unitTests-multiProcess
+  DEPENDS cta-example-config-checks tests/cta-unitTests tests/cta-unitTests-multiProcess
   COMMENT "Running unit tests" VERBATIM)
 
 add_custom_target(helgrindBase
