@@ -97,10 +97,9 @@ def is_duplicate() -> tuple[bool, str]:  # noqa: PLR0911
     if not isinstance(pipelines, list):
         return False, "malformed_pipeline_response"
 
-    # Reuse a result only when the successful merged-results pipeline ran on this exact synthetic commit.
+    # Reuse a result only when an earlier successful MR pipeline ran on this exact synthetic commit.
     print(f"Checking {len(pipelines)} merge request pipelines for a successful equivalent run.")
     current_pipeline_id = os.environ["CI_PIPELINE_ID"]
-    merged_results_ref = f"refs/merge-requests/{os.environ['CI_MERGE_REQUEST_IID']}/merge"
     match = next(
         (
             pipeline
@@ -108,28 +107,17 @@ def is_duplicate() -> tuple[bool, str]:  # noqa: PLR0911
             if str(pipeline.get("id", "")) != current_pipeline_id
             and pipeline.get("status") == "success"
             and pipeline.get("source") == "merge_request_event"
-            and pipeline.get("ref") == merged_results_ref
             and pipeline.get("sha") == commit_sha
-            and str(pipeline.get("name", "")).startswith("event:merged_result - ")
         ),
         None,
     )
     if not match:
-        candidates = [
-            pipeline
-            for pipeline in pipelines
-            if pipeline.get("source") == "merge_request_event"
-            and str(pipeline.get("name", "")).startswith("event:merged_result - ")
-        ]
-        if candidates:
-            for pipeline in candidates[:5]:
-                print(
-                    "Merged-results candidate: "
-                    f"id={pipeline.get('id')} status={pipeline.get('status')} "
-                    f"sha={pipeline.get('sha')} ref={pipeline.get('ref')}"
-                )
-        else:
-            print("No merged-results pipelines with the expected event marker were returned.")
+        for pipeline in pipelines:
+            print(
+                "Pipeline candidate: "
+                f"id={pipeline.get('id')} status={pipeline.get('status')} source={pipeline.get('source')} "
+                f"sha={pipeline.get('sha')} ref={pipeline.get('ref')} name={pipeline.get('name')}"
+            )
         return False, "no_matching_successful_pipeline"
 
     print(
