@@ -250,6 +250,19 @@ std::string getXattr(const std::string& path, const std::string& name);
 std::string getShortHostname();
 
 /**
+ * Returns true if the current process is configured to produce a core dump
+ * when it receives a signal whose default action is to produce one.
+ */
+bool getDumpableProcessAttribute();
+
+/**
+ * Configures whether the current process produces core dumps.
+ *
+ * @param dumpable true if the process should be dumpable.
+ */
+void setDumpableProcessAttribute(bool dumpable);
+
+/**
  * Returns the alder32 checksum of the specified buffer.
  *
  * @param buf The buffer.

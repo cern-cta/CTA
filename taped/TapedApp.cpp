@@ -6,6 +6,8 @@
 #include "TapedApp.hpp"
 
 #include "TapedUtils.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/utils/utils.hpp"
 #include "daemon/DriveHandler.hpp"
 #include "daemon/ProcessManager.hpp"
 #include "daemon/SignalHandler.hpp"
@@ -17,11 +19,26 @@ namespace cta::tape::daemon {
 
 void TapedApp::stop() {}
 
+std::map<std::string, std::string> TapedApp::getStaticLogAttributes(const TapedConfig& config) const {
+  return {
+    {"drive_name", config.drive.name}
+  };
+}
+
 int TapedApp::run(const TapedConfig& config, cta::log::Logger& log) {
   // TODO: add some non-empty checks on the config
 
   // Create the log context
   log::LogContext lc(log);
+
+  // Linux may mark the process non-dumpable when messing with capabilities in certain cases
+  // To be safe, we explicitly enable it
+  // See https://man7.org/linux/man-pages/man2/pr_set_dumpable.2const.html
+  cta::utils::setDumpableProcessAttribute(true);
+  if (!cta::utils::getDumpableProcessAttribute()) {
+    lc.log(log::WARNING, "Failed to set the dumpable attribute of cta-taped");
+  }
+
   // Set process name
   const auto processName = cta::taped::utils::constructProcessName(config.drive.name, "parent", lc);
   prctl(PR_SET_NAME, processName.c_str());

@@ -8,6 +8,7 @@
 #include "TapedConfig.hpp"
 #include "common/log/LogContext.hpp"
 
+#include <map>
 #include <vector>
 
 namespace cta::tape::daemon {
@@ -21,6 +22,8 @@ public:
   void stop();
 
   int run(const TapedConfig& config, cta::log::Logger& log);
+
+  std::map<std::string, std::string> getStaticLogAttributes(const TapedConfig& config) const;
 
   bool isLive() const;
 

@@ -78,6 +78,12 @@ template<class TConfig>
 concept HasLoggingConfig =
   requires(const TConfig& cfg) { requires std::same_as<std::remove_cvref_t<decltype(cfg.logging)>, LoggingConfig>; };
 
+template<class TApp, class TConfig>
+concept HasStaticLogAttributes = requires(const TApp& app, const TConfig& cfg) {
+  requires std::same_as<std::remove_cvref_t<decltype(app.getStaticLogAttributes(cfg))>,
+                        std::map<std::string, std::string>>;
+};
+
 template<class TConfig>
 concept HasSchedulerConfig = requires(const TConfig& cfg) {
   requires std::same_as<std::remove_cvref_t<decltype(cfg.scheduler)>, SchedulerConfig>;
@@ -398,6 +404,11 @@ private:
     std::map<std::string, std::string> logAttributes;
     for (const auto& [key, value] : config.logging.attributes) {
       logAttributes[key] = value;
+    }
+    if constexpr (HasStaticLogAttributes<TApp, TConfig>) {
+      for (const auto& [key, value] : m_app.getStaticLogAttributes(config)) {
+        logAttributes[key] = value;
+      }
     }
     logPtr->setStaticParams(logAttributes);
     return logPtr;
