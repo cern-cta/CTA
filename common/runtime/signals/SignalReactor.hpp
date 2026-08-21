@@ -63,6 +63,7 @@ private:
   pthread_t m_startThread {};
   bool m_hasStarted = false;
   bool m_maskNeedsRestore = false;
+  int m_wakeupSignal = 0;
 
   // The thread the signalReactor will run on when start() is called
   std::jthread m_thread;

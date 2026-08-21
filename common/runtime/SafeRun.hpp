@@ -15,7 +15,6 @@
 #include <functional>
 #include <iostream>
 #include <type_traits>
-#include <unistd.h>
 
 namespace cta::runtime {
 
@@ -68,7 +67,6 @@ int safeRunWithLog(log::Logger& log, F&& func) {
   } catch (...) {
     log(log::CRIT, "FATAL: Caught an unexpected and unknown exception", {});
   }
-  sleep(1);
   return EXIT_FAILURE;
 }
 

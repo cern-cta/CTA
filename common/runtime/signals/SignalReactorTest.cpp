@@ -158,6 +158,24 @@ TEST(SignalReactor, CannotBeStartedMoreThanOnce) {
   EXPECT_THROW(signalReactor.start(), cta::exception::Exception);
 }
 
+TEST(SignalReactor, StopWakesImmediatelyWithoutCallingSignalFunction) {
+  cta::log::DummyLogger dl("dummy", "unitTest");
+
+  std::atomic<int> calls {0};
+  auto signalReactor = cta::runtime::SignalReactorBuilder()
+                         .addSignalFunction(SIGUSR2, [&]() { calls++; })
+                         .withTimeoutMsecs(5000)
+                         .build(dl);
+  signalReactor.start();
+
+  const auto start = std::chrono::steady_clock::now();
+  signalReactor.stop();
+  const auto elapsed = std::chrono::steady_clock::now() - start;
+
+  EXPECT_LT(elapsed, std::chrono::seconds(1));
+  EXPECT_EQ(0, calls);
+}
+
 TEST(SignalReactor, RejectsInvalidAndUnhandleableSignals) {
   cta::runtime::SignalReactorBuilder builder;
 
