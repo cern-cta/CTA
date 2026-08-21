@@ -894,33 +894,6 @@ def test_retrieve_queue_cleanup(
 
 
 class TestRuntimeDeployment:
-    def test_taped_config_dr_ls_consistency(self, cta_cli: CtaCliHost, cta_taped: CtaTapedHost) -> None:
-        # Load the on-disk taped configuration and its catalogue representation
-        taped_config = cta_taped.exec_with_output("cat /etc/cta/cta-taped.conf")
-        drive_json = cta_cli.exec_with_output("cta-admin --json dr ls")
-        entries = [e for e in json.loads(drive_json) if e.get("driveName") == cta_taped.drive_name]
-        assert entries, "Drive not found"
-        config_json = entries[0].get("driveConfig")
-        assert config_json, "driveconfig missing"
-        indexed = {(e["category"], e["key"], e["value"]) for e in config_json}
-
-        # Because our config files are badly structured, some options end up differently in the catalogue
-        # For now just skip them
-        key_skip_list = ["MountCriteria"]
-
-        # Every relevant configuration entry must be reflected in the registered drive
-        for line in taped_config.splitlines():
-            stripped_line = line.strip()
-            if not stripped_line or stripped_line.startswith("#"):
-                continue
-            parts = stripped_line.split(None, 3)
-            if len(parts) < 3:
-                continue
-            cat, key, val = parts[0], parts[1], parts[2]
-            if key in key_skip_list:
-                continue
-            assert (cat, key, val) in indexed
-
     # The following are standard for all services using the CTA runtime library
     # For now only cta_maintd is supported, but eventually the frontend and taped should be added here
 
@@ -928,6 +901,7 @@ class TestRuntimeDeployment:
         "daemon_fixture",
         [
             "cta_maintd",
+            "cta_taped",
         ],
     )
     def test_runtime_directory_correctness(self, request: SubRequest, daemon_fixture: str):
@@ -979,7 +953,7 @@ class TestRuntimeDeployment:
         # The descriptor must eventually refer to the replacement file's inode
         assert current_inode == new_inode
 
-    # Should be deleted once taped uses the new runtime library
+    # Should be deleted once taped forking is removed
     def test_log_rotation_taped(self, cta_taped: CtaTapedHost, remote_scripts_dir: Path) -> None:
         cta_taped.copy_to(remote_scripts_dir / "cta_taped" / "test_refresh_log_fd.sh", Path("/tmp"), permissions="+x")
         cta_taped.exec("sudo bash /tmp/test_refresh_log_fd.sh")

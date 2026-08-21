@@ -29,12 +29,22 @@ target_link_libraries(ctataped
 add_executable (cta-taped cta-taped.cpp)
 target_link_libraries(cta-taped ctataped)
 
+set(CTA_TAPED_EXAMPLE_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/cta-taped.example.toml)
+
+add_custom_target(cta-taped-config-check
+  COMMAND $<TARGET_FILE:cta-taped>
+    --config-strict
+    --config ${CTA_TAPED_EXAMPLE_CONFIG}
+    --config-check
+  DEPENDS cta-taped
+  COMMENT "Validating the cta-taped example configuration" VERBATIM)
+add_dependencies(cta-example-config-checks cta-taped-config-check)
+
 add_manpage (cta-taped)
 
 install (TARGETS cta-taped DESTINATION usr/bin)
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-taped.1cta DESTINATION /usr/share/man/man1)
 install (FILES cta-taped.logrotate DESTINATION /etc/logrotate.d RENAME cta-taped)
-install (FILES cta-taped.sysconfig DESTINATION /etc/sysconfig RENAME cta-taped)
 install (FILES cta-taped.service DESTINATION ${CTA_SYSTEMD_UNIT_DIR})
 install (FILES cta-taped.example.toml
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta

@@ -15,7 +15,9 @@
   name = ""
 
   # Path to the non-rewinding character device used to access the tape drive, for example /dev/nst0.
-  # It is recommended to rely on /dev/tape/by-name/<drive-name> to avoid device-name changes across reboots.
+  # Use a persistent device symlink, such as one under /dev/tape/by-id, to avoid device-name changes across
+  # reboots. Site-specific udev rules may provide other persistent paths, such as /dev/tape/by-name/<drive-name> 
+  # as populated by ctaops-udev.
   # This value is required and has no useful default.
   device = ""
 

@@ -82,14 +82,6 @@ target_link_libraries(cta-unitTests-multiProcess
 add_library(unitTestHelper
   TempFile.cpp TempDirectory.cpp)
 
-add_executable(cta-integrationTests
-  integration_tests.cpp)
-
-target_link_libraries(cta-integrationTests
-  cta-tapedIntegrationTests
-  gtest
-  pthread)
-
 add_executable(cta-immutable-file-test
   ImmutableFileTest.cpp
   ImmutableFileTestMain.cpp
