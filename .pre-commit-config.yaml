@@ -29,23 +29,12 @@ repos:
       - id: reuse
   - repo: local
     hooks:
-      - id: gitlab-ci-before-script-guard
-        name: Check GitLab CI before_script guards
-        entry: python ci/checks/check_gitlab_ci_before_script_guard.py .gitlab-ci.yml .gitlab/ci/
-        language: python
-        additional_dependencies: [PyYAML==6.0.2]
-        files: '(^|/).*gitlab-ci\.yml$'
-        pass_filenames: false
-      - id: gitlab-ci-key-order
-        name: Check GitLab CI key order
-        entry: python ci/checks/check_gitlab_ci_key_order.py .gitlab/
-        language: python
-        additional_dependencies: [PyYAML==6.0.2]
-        files: '(^|/).*gitlab-ci\.yml$'
-        pass_filenames: false
-      - id: gitlab-ci-single-stage
-        name: Check GitLab CI files use one stage
-        entry: python ci/checks/check_gitlab_ci_single_stage.py .gitlab/ci/
+      - id: gitlab-ci
+        name: Check GitLab CI
+        entry: >-
+          bash -c 'python3 ci/checks/check_gitlab_ci_before_script_guard.py .gitlab-ci.yml .gitlab/ci/
+          && python3 ci/checks/check_gitlab_ci_key_order.py .gitlab/
+          && python3 ci/checks/check_gitlab_ci_single_stage.py .gitlab/ci/'
         language: python
         additional_dependencies: [PyYAML==6.0.2]
         files: '(^|/).*gitlab-ci\.yml$'
