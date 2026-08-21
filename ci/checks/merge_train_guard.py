@@ -39,12 +39,14 @@ def api_get(path: str) -> tuple[Any, dict[str, str], str]:
     raise RuntimeError(f"GitLab API request failed: {last_error}")
 
 
-def is_duplicate() -> tuple[bool, str]:  # noqa: PLR0911
+def is_duplicate() -> tuple[bool, str]:  # noqa: PLR0911, PLR0912, PLR0915
     # A safe skip requires two independent facts:
     # the train commit is based directly on the current target HEAD, and the same synthetic commit already passed.
     if os.environ.get("CI_MERGE_REQUEST_EVENT_TYPE") != "merge_train":
         return False, "not_merge_train"
 
+    # Missing context must always result in running the full pipeline.
+    # Guessing here could incorrectly reuse a pipeline from another MR, commit, or target branch.
     required = [
         "CI_API_V4_URL",
         "CI_PROJECT_ID",
@@ -56,6 +58,7 @@ def is_duplicate() -> tuple[bool, str]:  # noqa: PLR0911
     if any(not os.environ.get(name) for name in required):
         return False, "missing_environment"
 
+    # Resolve the target through the API rather than a local remote-tracking ref, which may be stale in a shallow clone.
     target_branch = urllib.parse.quote(os.environ["CI_MERGE_REQUEST_TARGET_BRANCH_NAME"], safe="")
     branch, _, authentication = api_get(f"repository/branches/{target_branch}")
     target_sha = str(branch["commit"]["id"])
@@ -90,28 +93,67 @@ def is_duplicate() -> tuple[bool, str]:  # noqa: PLR0911
 
     print("The current target HEAD is a direct parent of the synthetic commit.")
 
+    # MR pipeline history contains detached, merged-results, and merge-train pipelines.
+    # Ref, source, status, and commit checks below distinguish the reusable merged-results pipelines.
     mr_iid = urllib.parse.quote(os.environ["CI_MERGE_REQUEST_IID"], safe="")
     pipelines, headers, authentication = api_get(f"merge_requests/{mr_iid}/pipelines?per_page=100")
-    if headers.get("x-next-page", ""):
-        return False, "pipeline_history_paginated"
     if not isinstance(pipelines, list):
         return False, "malformed_pipeline_response"
+    pipeline_history_paginated = bool(headers.get("x-next-page", ""))
 
-    # Reuse a result only when an earlier successful MR pipeline ran on this exact synthetic commit.
+    # GitLab regenerates synthetic commits, so equivalent merged-results and train commits can have different SHAs.
+    # Compare their target parent and resulting trees instead.
     print(f"Checking {len(pipelines)} merge request pipelines for a successful equivalent run.")
     current_pipeline_id = os.environ["CI_PIPELINE_ID"]
-    match = next(
-        (
-            pipeline
-            for pipeline in pipelines
-            if str(pipeline.get("id", "")) != current_pipeline_id
-            and pipeline.get("status") == "success"
-            and pipeline.get("source") == "merge_request_event"
-            and pipeline.get("sha") == commit_sha
-        ),
-        None,
-    )
-    if not match:
+    merged_results_ref = f"refs/merge-requests/{os.environ['CI_MERGE_REQUEST_IID']}/merge"
+    # Only successful pipelines on GitLab's merged-results ref are eligible.
+    # The current train pipeline is excluded explicitly even though it normally uses the /train ref.
+    candidates = [
+        pipeline
+        for pipeline in pipelines
+        if str(pipeline.get("id", "")) != current_pipeline_id
+        and pipeline.get("status") == "success"
+        and pipeline.get("source") == "merge_request_event"
+        and pipeline.get("ref") == merged_results_ref
+        and isinstance(pipeline.get("sha"), str)
+    ]
+
+    match = None
+    for candidate in candidates:
+        candidate_sha = candidate["sha"]
+        # The candidate must have been built directly on the same target HEAD as the current train commit.
+        # This rejects a successful merged-results pipeline created before the target branch advanced.
+        candidate_commit, _, authentication = api_get(f"repository/commits/{candidate_sha}")
+        candidate_parents = candidate_commit.get("parent_ids", [])
+        print(
+            f"Comparing merged-results pipeline {candidate.get('id')} at {candidate_sha}; "
+            f"parents: {', '.join(candidate_parents) if candidate_parents else 'none'}"
+        )
+        if target_sha not in candidate_parents:
+            print("Candidate was not based directly on the current target HEAD.")
+            continue
+
+        # A straight comparison checks the two resulting repository trees without following merge ancestry.
+        # Zero diffs means the earlier pipeline tested exactly the content that the train would test again.
+        comparison_path = urllib.parse.urlencode({"from": candidate_sha, "to": commit_sha, "straight": "true"})
+        comparison, _, authentication = api_get(f"repository/compare?{comparison_path}")
+        diffs = comparison.get("diffs")
+        if comparison.get("compare_timeout") or not isinstance(diffs, list):
+            print("Candidate comparison was incomplete or malformed.")
+            continue
+        print(f"Candidate differs from the train commit in {len(diffs)} file(s).")
+        if not diffs:
+            match = candidate
+            break
+
+    if match is None:
+        # A match in this page is conclusive, regardless of whether older pages exist.
+        # Without a match, however, an unsearched page might contain the equivalent successful pipeline.
+        if pipeline_history_paginated:
+            print("No match was found on the first page, and older pipeline history was not searched.")
+            return False, "pipeline_history_paginated"
+
+        # Print the complete bounded response so unexpected GitLab ref or response behavior is visible in the job log.
         for pipeline in pipelines:
             print(
                 "Pipeline candidate: "
