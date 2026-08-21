@@ -57,6 +57,7 @@ public:
 private:
   cta::log::Logger& m_log;
   sigset_t m_sigset;
+  // Signal masks are thread-local. This mask can only be restored by the thread that called start().
   sigset_t m_previousSigset;
   std::unordered_map<int, std::function<void()>> m_signalFunctions;
 
