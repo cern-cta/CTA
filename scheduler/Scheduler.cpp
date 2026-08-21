@@ -1052,7 +1052,8 @@ void Scheduler::removeDrive(const std::string& driveName, log::LogContext& lc) c
 //------------------------------------------------------------------------------
 void Scheduler::reportSchedulerBackendName(const std::string& driveName, log::LogContext& lc) {
   utils::Timer t;
-  // Temporary for backward compatibility. Should be removed in the next catalogue upgrade as it should be part of the drive state
+  // Temporary for backward compatibility. Should be removed in the next catalogue upgrade as it should be a dedicated column
+  // in the drive state table
   constexpr const char* schedulerBackendNameKey = "SchedulerBackendName";
   auto driveConfig = m_catalogue.DriveConfig()->getTapeDriveConfig(driveName, schedulerBackendNameKey);
   if (driveConfig) {
@@ -1060,13 +1061,13 @@ void Scheduler::reportSchedulerBackendName(const std::string& driveName, log::Lo
                                                      "general",
                                                      schedulerBackendNameKey,
                                                      m_schedulerBackendName,
-                                                     "Config");
+                                                     "TOML config file");
   } else {
     m_catalogue.DriveConfig()->createTapeDriveConfig(driveName,
                                                      "general",
                                                      schedulerBackendNameKey,
                                                      m_schedulerBackendName,
-                                                     "Config");
+                                                     "TOML config file");
   }
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
