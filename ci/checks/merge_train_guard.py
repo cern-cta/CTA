@@ -40,6 +40,8 @@ def api_get(path: str) -> tuple[Any, dict[str, str], str]:
 
 
 def is_duplicate() -> tuple[bool, str]:  # noqa: PLR0911
+    # A safe skip requires two independent facts:
+    # the train commit is based directly on the current target HEAD, and the same synthetic commit already passed.
     if os.environ.get("CI_MERGE_REQUEST_EVENT_TYPE") != "merge_train":
         return False, "not_merge_train"
 
@@ -58,15 +60,32 @@ def is_duplicate() -> tuple[bool, str]:  # noqa: PLR0911
     branch, _, authentication = api_get(f"repository/branches/{target_branch}")
     target_sha = str(branch["commit"]["id"])
 
+    # A two-parent merge containing the current target HEAD as a direct parent is the first entry in an unchanged train.
     commit_sha = os.environ["CI_COMMIT_SHA"]
-    parents = subprocess.run(  # noqa: S603
-        ["/usr/bin/git", "rev-list", "--parents", "-n", "1", commit_sha],
+    commit_info = subprocess.run(  # noqa: S603
+        ["/usr/bin/git", "show", "--no-patch", "--format=%H%n%P%n%s", commit_sha],
         check=True,
         capture_output=True,
         text=True,
-    ).stdout.split()
-    if len(parents) != 3 or parents[1] != target_sha:
+    ).stdout.splitlines()
+    if len(commit_info) < 3:
+        return False, "malformed_synthetic_commit"
+
+    synthetic_sha = commit_info[0]
+    parents = commit_info[1].split()
+    subject = " ".join(commit_info[2:])
+    print(f"Synthetic commit: {synthetic_sha} ({subject})")
+    print(f"Synthetic parents: {', '.join(parents) if parents else 'none'}")
+    print(f"Current target: {os.environ['CI_MERGE_REQUEST_TARGET_BRANCH_NAME']} at {target_sha}")
+
+    if len(parents) != 2:
+        print(f"Expected two synthetic commit parents, found {len(parents)}.")
+        return False, "synthetic_commit_does_not_have_two_parents"
+    if target_sha not in parents:
+        print("The current target HEAD is not a direct parent of the synthetic commit.")
         return False, "target_advanced_or_train_not_empty"
+
+    print("The current target HEAD is a direct parent of the synthetic commit.")
 
     mr_iid = urllib.parse.quote(os.environ["CI_MERGE_REQUEST_IID"], safe="")
     pipelines, headers, authentication = api_get(f"merge_requests/{mr_iid}/pipelines?per_page=100")
@@ -75,6 +94,8 @@ def is_duplicate() -> tuple[bool, str]:  # noqa: PLR0911
     if not isinstance(pipelines, list):
         return False, "malformed_pipeline_response"
 
+    # Reuse a result only when the successful merged-results pipeline ran on this exact synthetic commit.
+    print(f"Checking {len(pipelines)} merge request pipelines for a successful equivalent run.")
     current_pipeline_id = os.environ["CI_PIPELINE_ID"]
     merged_results_ref = f"refs/merge-requests/{os.environ['CI_MERGE_REQUEST_IID']}/merge"
     match = next(
@@ -91,6 +112,21 @@ def is_duplicate() -> tuple[bool, str]:  # noqa: PLR0911
         None,
     )
     if not match:
+        candidates = [
+            pipeline
+            for pipeline in pipelines
+            if pipeline.get("source") == "merge_request_event"
+            and str(pipeline.get("name", "")).startswith("event:merged_result - ")
+        ]
+        if candidates:
+            for pipeline in candidates[:5]:
+                print(
+                    "Merged-results candidate: "
+                    f"id={pipeline.get('id')} status={pipeline.get('status')} "
+                    f"sha={pipeline.get('sha')} ref={pipeline.get('ref')}"
+                )
+        else:
+            print("No merged-results pipelines with the expected event marker were returned.")
         return False, "no_matching_successful_pipeline"
 
     print(
@@ -101,6 +137,7 @@ def is_duplicate() -> tuple[bool, str]:  # noqa: PLR0911
 
 
 def main() -> int:
+    # Any missing or unexpected information fails safe by publishing a "run" decision to downstream jobs.
     try:
         duplicate, reason = is_duplicate()
     except (KeyError, RuntimeError, subprocess.SubprocessError, TypeError, ValueError) as error:

@@ -26,6 +26,7 @@ class GitLabLoader(yaml.SafeLoader):
     pass
 
 
+# Preserve GitLab's cross-file !reference nodes so they can be followed after all CI files are loaded.
 def reference_constructor(loader: GitLabLoader, node: yaml.Node) -> Reference:
     if not isinstance(node, yaml.SequenceNode):
         raise TypeError("!reference must be a sequence")
@@ -49,6 +50,7 @@ def find_ci_files(paths: list[Path]) -> list[Path]:
 
 
 def load_jobs(files: list[Path]) -> tuple[dict[str, dict[str, Any]], dict[str, Path]]:
+    # Build one lookup across the root configuration and its includes, mirroring GitLab's merged configuration.
     jobs: dict[str, dict[str, Any]] = {}
     origins: dict[str, Path] = {}
     ignored = {"default", "image", "include", "services", "spec", "stages", "variables", "workflow"}
@@ -64,6 +66,7 @@ def load_jobs(files: list[Path]) -> tuple[dict[str, dict[str, Any]], dict[str, P
 
 
 def references_guard(job_name: str, jobs: dict[str, dict[str, Any]], visited: set[str]) -> bool:
+    # Follow before_script references transitively so guarded shared setup templates also satisfy the check.
     if job_name == GUARD_JOB:
         return True
     if job_name in visited:

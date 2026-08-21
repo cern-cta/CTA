@@ -108,7 +108,6 @@ trigger-cta-version-regression-pipeline:
 
 .trigger-child-pipeline:
   allow_failure: true
-  interruptible: true
   stage: trigger
   needs: []
   rules:
@@ -143,8 +142,6 @@ trigger-cta-version-regression-pipeline:
           enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
           keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
     strategy: mirror
-  inherit:
-    default: false
 
 trigger-postgres-scheduler-pipeline:
   extends:
@@ -182,7 +179,7 @@ trigger-oracle-disabled-pipeline:
 trigger-sonarcloud-pipeline:
   allow_failure: true
   stage: trigger
-  needs: []
+  needs: []  # Ensure no artifacts are downloaded
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual

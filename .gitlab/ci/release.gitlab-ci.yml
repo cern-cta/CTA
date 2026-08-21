@@ -9,7 +9,7 @@ spec:
 
 changelog-preview:
   stage: release
-  needs: []
+  needs: []  # Ensure this job can be triggered at the beginning if necessary
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
@@ -23,12 +23,13 @@ changelog-preview:
     TO_COMMIT: "HEAD"
     FROM_REF: ""
     RELEASE_VERSION: ""
-  script:
+  before_script:
     - |
       if [[ -z "${RELEASE_VERSION}" ]]; then
         echo "Release version cannot be empty. Please set the RELEASE_VERSION variable manually in the CI."
         exit 1
       fi
+  script:
     # If no from reference (commit hash or tag) is provided, grab the latest tag before the current commit
     - |
       if [[ -z "${FROM_REF}" ]]; then
@@ -210,7 +211,6 @@ public-release-cta-stable:
     SOURCE_REGISTRY_USERNAME: ""
     GIT_SUBMODULE_STRATEGY: none
   before_script:
-    - !reference [.merge-train-guard, before_script]
     - |
       if [[ -z "$SOURCE_REGISTRY_USERNAME" || -z "$SOURCE_REGISTRY_PASSWORD" ]]; then
         echo "Source registry credentials are not configured"
