@@ -104,7 +104,7 @@ void HealthServer::start() {
 // HealthServer::stop
 //------------------------------------------------------------------------------
 void HealthServer::stop() noexcept {
-  m_log(log::INFO, "In HealthServer::stop(): stopping HealthServer");
+  m_log(log::DEBUG, "In HealthServer::stop(): stopping HealthServer");
   if (m_thread.joinable()) {
     if (m_server) {
       m_server->stop();

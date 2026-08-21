@@ -131,6 +131,8 @@ public:
   // int run(const CustomConfig& config, runtime::CommonCliOptions& opts, cta::log::Logger& log);
   bool isLive() const; // Since there is a health_server config, it MUST have an isLive() function
   bool isReady() const; // Since there is a health_server config, it MUST have an isReady() function
+  // Optional program-owned OpenTelemetry resource attributes.
+  std::map<std::string, std::string> getStaticTelemetryAttributes(const CustomConfig& config) const;
 };
 
 int main(const int argc, char** const argv) {
@@ -141,6 +143,11 @@ int main(const int argc, char** const argv) {
   });
 }
 ```
+
+Program-owned telemetry resource attributes can be returned by the optional `getStaticTelemetryAttributes()` application method.
+Operator-configured resource attributes belong in the declarative OpenTelemetry configuration file.
+Runtime identity attributes such as `service.name`, `service.version`, `service.instance.id`, `host.name`, and the scheduler namespace are reserved.
+Attribute keys and values cannot contain commas, equals signs, carriage returns, or line feeds because they are serialized into `CTA_OTEL_RESOURCE_ATTRIBUTES`.
 
 ## App with Custom CLI options
 

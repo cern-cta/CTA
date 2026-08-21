@@ -22,11 +22,9 @@ namespace cta::runtime {
 // constructor
 //------------------------------------------------------------------------------
 SignalReactor::SignalReactor(cta::log::Logger& log,
-                             const sigset_t& sigset,
                              const std::unordered_map<int, std::function<void()>>& signalFunctions,
                              uint32_t waitTimeoutMsecs)
     : m_log(log),
-      m_sigset(sigset),
       m_signalFunctions(signalFunctions),
       m_waitTimeoutMsecs(waitTimeoutMsecs) {}
 
@@ -42,17 +40,30 @@ SignalReactor::~SignalReactor() {
 // SignalReactor::start
 //------------------------------------------------------------------------------
 void SignalReactor::start() {
-  cta::exception::Errnum::throwOnNonZero(::pthread_sigmask(SIG_BLOCK, &m_sigset, nullptr),
+  m_log(log::DEBUG, "In SignalReactor::start(): Blocking and registering signals");
+  sigemptyset(&m_sigset);
+  for (const auto& [signal, func] : m_signalFunctions) {
+    sigaddset(&m_sigset, signal);
+  }
+  cta::exception::Errnum::throwOnNonZero(::pthread_sigmask(SIG_BLOCK, &m_sigset, &m_previousSigset),
                                          "In SignalReactor::start(): pthread_sigmask() failed");
-  m_thread =
-    std::jthread([this](std::stop_token st) { run(st, m_signalFunctions, m_sigset, m_log, m_waitTimeoutMsecs); });
+  m_startThread = ::pthread_self();
+  m_maskNeedsRestore = true;
+  try {
+    m_thread =
+      std::jthread([this](std::stop_token st) { run(st, m_signalFunctions, m_sigset, m_log, m_waitTimeoutMsecs); });
+  } catch (...) {
+    ::pthread_sigmask(SIG_SETMASK, &m_previousSigset, nullptr);
+    m_maskNeedsRestore = false;
+    throw;
+  }
 }
 
 //------------------------------------------------------------------------------
 // SignalReactor::stop
 //------------------------------------------------------------------------------
 void SignalReactor::stop() noexcept {
-  m_log(log::INFO, "In SignalReactor::stop(): stopping SignalReactor");
+  m_log(log::DEBUG, "In SignalReactor::stop(): stopping SignalReactor");
   m_thread.request_stop();
   if (m_thread.joinable()) {
     try {
@@ -64,6 +75,26 @@ void SignalReactor::stop() noexcept {
               {semconv::log::exceptionMessage, e.what()}
       });
     }
+  }
+  if (m_maskNeedsRestore) {
+    if (!::pthread_equal(m_startThread, ::pthread_self())) {
+      m_log(
+        log::ERR,
+        "In SignalReactor::stop(): cannot restore the signal mask from a thread other than the one that called start()",
+        {});
+      return;
+    }
+    const int rc = ::pthread_sigmask(SIG_SETMASK, &m_previousSigset, nullptr);
+    if (rc != 0) {
+      m_log(log::ERR,
+            "In SignalReactor::stop(): failed to restore the signal mask",
+            {
+              {"errno",                    std::to_string(rc)},
+              {semconv::log::errorMessage, ::strerror(rc)    }
+      });
+      return;
+    }
+    m_maskNeedsRestore = false;
   }
 }
 
@@ -108,16 +139,25 @@ void SignalReactor::run(std::stop_token st,
         continue;
       }
 
-      signalFunctions.at(signal)();
+      try {
+        signalFunctions.at(signal)();
+      } catch (const std::exception& ex) {
+        log::ScopedParamContainer exParams(lc);
+        exParams.add("signal", utils::signalToString(signal));
+        exParams.add(semconv::log::exceptionMessage, ex.what());
+        lc.log(log::ERR, "In SignalReactor::run(): signal callback threw an exception");
+      } catch (...) {
+        log::ScopedParamContainer exParams(lc);
+        exParams.add("signal", utils::signalToString(signal));
+        lc.log(log::ERR, "In SignalReactor::run(): signal callback threw an unknown exception");
+      }
     }
   } catch (std::exception& ex) {
     log::ScopedParamContainer exParams(lc);
     exParams.add(semconv::log::exceptionMessage, ex.what());
     lc.log(log::ERR, "In SignalReactor::run(): received a std::exception.");
-    throw ex;
   } catch (...) {
     lc.log(log::ERR, "In SignalReactor::run(): received an unknown exception.");
-    throw;
   }
   lc.log(log::INFO, "In SignalReactor::run(): SignalReactor stopped listening");
 }

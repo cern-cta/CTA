@@ -18,16 +18,15 @@ namespace cta::runtime {
  */
 class SignalReactorBuilder final {
 public:
-  explicit SignalReactorBuilder();
+  SignalReactorBuilder() = default;
 
   SignalReactorBuilder& addSignalFunction(int signal, const std::function<void()>& func, bool overwrite = false);
   SignalReactorBuilder& withTimeoutMsecs(uint32_t msecs);
 
-  SignalReactor build(cta::log::Logger& log) const;
+  SignalReactor build(cta::log::Logger& log);
 
 private:
   std::unordered_map<int, std::function<void()>> m_signalFunctions;
-  sigset_t m_sigset;
   uint32_t m_waitTimeoutMsecs = 1000;
 };
 
