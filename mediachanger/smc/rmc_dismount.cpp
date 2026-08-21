@@ -14,7 +14,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-int rmc_dismount(const char* const server, const char* const vid, const int drvord, const int force) {
+int rmc_dismount(const char* const server,
+                 const unsigned short port,
+                 const char* const vid,
+                 const int drvord,
+                 const int force) {
   int c;
   gid_t gid;
   int msglen;
@@ -48,7 +52,7 @@ int rmc_dismount(const char* const server, const char* const vid, const int drvo
   msglen = sbp - sendbuf;
   marshall_LONG(q, msglen); /* update length field */
 
-  while ((c = send2rmc(server, sendbuf, msglen, repbuf, sizeof(repbuf))) && serrno == ERMCNACT) {
+  while ((c = send2rmc(server, port, sendbuf, msglen, repbuf, sizeof(repbuf))) && serrno == ERMCNACT) {
     sleep(RMC_RETRYI);
   }
   return c;
