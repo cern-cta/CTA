@@ -54,10 +54,13 @@ void SignalReactor::start() {
                                             "In SignalReactor::start(): sigaddset() failed");
   }
   if (m_signalFunctions.empty()) {
+    // An otherwise unused blocked signal is needed to wake an empty reactor.
     m_wakeupSignal = SIGRTMIN;
     cta::exception::Errnum::throwOnMinusOne(::sigaddset(&m_sigset, m_wakeupSignal),
                                             "In SignalReactor::start(): failed to add the wake-up signal");
   } else {
+    // Reuse a blocked signal to interrupt sigtimedwait() during shutdown.
+    // run() checks the stop token before dispatching, so this wake-up never invokes the registered callback.
     m_wakeupSignal = m_signalFunctions.begin()->first;
   }
   m_hasStarted = true;

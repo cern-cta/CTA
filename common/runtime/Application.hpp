@@ -262,6 +262,8 @@ public:
     // If not, it would immediately be destroyed after initHealthServer finished.
     // Note that healthServer lives outside of safeRunWithLog so that it is not destructed before we output a (potential) FATAL message.
     std::unique_ptr<HealthServer> healthServer;
+    // Keep telemetry installed while fatal errors are logged.
+    // Clean it up after safeRunWithLog() reports the failure.
     TelemetryCleanup telemetryCleanup(*m_logPtr);
 
     return safeRunWithLog(*m_logPtr, [this, &cliOptions, &config, &healthServer]() {
@@ -300,6 +302,8 @@ public:
   }
 
 private:
+  // OpenTelemetry uses process-global state.
+  // Cleanup is intentionally unconditional because cleanupOpenTelemetry() is idempotent.
   struct TelemetryCleanup {
     explicit TelemetryCleanup(log::Logger& logger) : log(logger) {}
 
@@ -402,9 +406,7 @@ private:
 
     std::map<std::string, std::string> customAttributes;
     if constexpr (HasStaticTelemetryAttributes<TApp, TConfig>) {
-      addTelemetryAttributes(customAttributes,
-                             m_app.getStaticTelemetryAttributes(config),
-                             "getStaticTelemetryAttributes()");
+      customAttributes = m_app.getStaticTelemetryAttributes(config);
     }
 
     const std::set<std::string> reservedAttributes = {cta::semconv::attr::kServiceName,
@@ -412,6 +414,7 @@ private:
                                                       cta::semconv::attr::kServiceInstanceId,
                                                       cta::semconv::attr::kHostName,
                                                       cta::semconv::attr::kSchedulerNamespace};
+    // Applications may add identifying attributes, but must not override identity attributes owned by the runtime.
     for (const auto& attribute : customAttributes) {
       const auto& key = attribute.first;
       if (reservedAttributes.contains(key)) {
@@ -444,21 +447,6 @@ private:
       params.add(semconv::log::exceptionMessage, ex.getMessage().str());
       lc.log(log::ERR, "Failed to instantiate OpenTelemetry");
       cta::telemetry::cleanupOpenTelemetry(lc);
-    }
-  }
-
-  static void addTelemetryAttributes(std::map<std::string, std::string>& destination,
-                                     const std::map<std::string, std::string>& attributes,
-                                     std::string_view source) {
-    for (const auto& [key, value] : attributes) {
-      if (key.empty()) {
-        throw exception::UserError("Telemetry attribute key in " + std::string(source) + " cannot be empty.");
-      }
-      if (key.find_first_of(",=\r\n") != std::string::npos || value.find_first_of(",=\r\n") != std::string::npos) {
-        throw exception::UserError("Telemetry attribute '" + key + "' in " + std::string(source)
-                                   + " contains a character that cannot be serialized: ',', '=', CR, or LF.");
-      }
-      destination[key] = value;
     }
   }
 

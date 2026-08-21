@@ -60,6 +60,8 @@ bool HealthServer::isUdsHost(std::string_view host) {
 //------------------------------------------------------------------------------
 void HealthServer::start() {
   m_server = std::make_unique<httplib::Server>();
+  // Health checks run application code on the HTTP server thread.
+  // Convert exceptions to 503 responses so a broken check cannot stop the server.
   m_server->Get("/health/ready",
                 [readinessFunc = m_readinessFunc, &log = m_log](const httplib::Request&, httplib::Response& res) {
                   try {

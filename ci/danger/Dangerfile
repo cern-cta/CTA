@@ -6,6 +6,7 @@
 ALLOWED_PREFIXES = %w[
   [CI] [Misc] [Tools] [catalogue]
   [frontend] [scheduler] [taped] [rmcd] [maintd] [rdbms]
+  [runtime] [packaging]
 ]
 
 normalized_title = gitlab.mr_title.sub(/\ADraft: /, '')

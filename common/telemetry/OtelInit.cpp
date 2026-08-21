@@ -26,6 +26,8 @@ namespace cta::telemetry {
 namespace {
 
 void validateResourceAttributes(const std::map<std::string, std::string>& attributes) {
+  // Attributes are serialized as comma-separated key=value pairs.
+  // The target environment-variable format provides no escaping here.
   for (const auto& [key, value] : attributes) {
     if (key.empty()) {
       throw cta::exception::UserError("OpenTelemetry resource attribute keys cannot be empty.");
