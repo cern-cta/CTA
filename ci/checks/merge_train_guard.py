@@ -60,7 +60,10 @@ def is_duplicate() -> tuple[bool, str]:  # noqa: PLR0911
     branch, _, authentication = api_get(f"repository/branches/{target_branch}")
     target_sha = str(branch["commit"]["id"])
 
-    # A two-parent merge containing the current target HEAD as a direct parent is the first entry in an unchanged train.
+    # GitLab can represent the synthetic result as either a single-parent commit or a two-parent merge commit.
+    # This depends on the merge strategy (fast forward merges vs merge commits)
+    # In both cases, a direct parent matching the current target HEAD proves this is the first entry
+    # in an unchanged train.
     commit_sha = os.environ["CI_COMMIT_SHA"]
     commit_info = subprocess.run(  # noqa: S603
         ["/usr/bin/git", "show", "--no-patch", "--format=%H%n%P%n%s", commit_sha],
@@ -78,9 +81,9 @@ def is_duplicate() -> tuple[bool, str]:  # noqa: PLR0911
     print(f"Synthetic parents: {', '.join(parents) if parents else 'none'}")
     print(f"Current target: {os.environ['CI_MERGE_REQUEST_TARGET_BRANCH_NAME']} at {target_sha}")
 
-    if len(parents) != 2:
-        print(f"Expected two synthetic commit parents, found {len(parents)}.")
-        return False, "synthetic_commit_does_not_have_two_parents"
+    if len(parents) not in {1, 2}:
+        print(f"Expected one or two synthetic commit parents, found {len(parents)}.")
+        return False, "synthetic_commit_has_unexpected_parent_count"
     if target_sha not in parents:
         print("The current target HEAD is not a direct parent of the synthetic commit.")
         return False, "target_advanced_or_train_not_empty"
