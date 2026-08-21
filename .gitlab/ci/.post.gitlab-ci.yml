@@ -1,23 +1,6 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Temporary merge-train smoke test.
-# This must not inherit the merge-train guard: it deliberately fails after the guarded workload finishes so the test MR
-# cannot merge.
-verify-merge-train-deduplication:
-  stage: .post
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"'
-  inherit:
-    default: false
-  image: $IMAGE_DEFAULT
-  variables:
-    GIT_STRATEGY: none
-  script:
-    - echo "Merge-train deduplication smoke test completed."
-    - echo "Failing intentionally to prevent the MR from merging."
-    - exit 1
-
 cancel-on-failure:
   stage: .post
   needs:
