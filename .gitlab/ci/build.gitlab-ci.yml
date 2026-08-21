@@ -20,6 +20,8 @@ spec:
 build-cta-rpms:
   stage: build
   needs:
+    - job: check-merge-train-duplicate
+      optional: true
     - job: modify-project-json
       optional: true
   rules:
@@ -60,6 +62,7 @@ build-cta-rpms:
     CCACHE_COMPRESS: "true"
     CCACHE_MAXSIZE: "2G"
   before_script:
+    - !reference [.merge-train-guard, before_script]
   # TODO: make CTA_VERSION and CTA_VERSION_SUFFIX one variable, then we can just either build_id or commit_tag everywhere easily (including the images)
     - |
       if [[ -z "${CI_COMMIT_TAG}" ]]; then
@@ -207,7 +210,9 @@ build-cta-rpms-debug:
 reset-ccache:
   allow_failure: true
   stage: build
-  needs: []
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: manual
@@ -228,7 +233,9 @@ reset-ccache:
 # Documentation export
 export-docs:
   stage: build
-  needs: []
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
   rules:
     - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never

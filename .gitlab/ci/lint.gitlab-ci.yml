@@ -9,7 +9,9 @@ spec:
 
 lint-cpp:
   stage: lint
-  needs: []  # Ensure no artifacts are downloaded
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
   rules:
     - if: $CI_COMMIT_TAG
       when: always
@@ -52,7 +54,9 @@ lint-cpp:
 
 lint-bash:
   stage: lint
-  needs: []  # Ensure no artifacts are downloaded
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
   rules:
     - if: $CI_COMMIT_TAG
       when: always
@@ -80,7 +84,9 @@ lint-bash:
 
 lint-python:
   stage: lint
-  needs: []  # Ensure no artifacts are downloaded
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
   rules:
     - if: $CI_COMMIT_TAG
       when: always
@@ -106,13 +112,17 @@ lint-python:
 
 lint-yaml:
   stage: lint
-  needs: []  # Ensure no artifacts are downloaded
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
   rules:
     - if: $CI_COMMIT_TAG
       when: always
     - changes:
         - "**/*.yaml"
         - "**/*.yml"
+        - "ci/checks/check_gitlab_ci_before_script_guard.py"
+        - "ci/checks/test_check_gitlab_ci_before_script_guard.py"
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
@@ -124,13 +134,17 @@ lint-yaml:
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
   script:
+    - python3 ci/checks/check_gitlab_ci_before_script_guard.py .gitlab-ci.yml .gitlab/ci/
+    - python3 -m unittest ci/checks/test_check_gitlab_ci_before_script_guard.py
     - python3 ci/checks/check_gitlab_ci_key_order.py .gitlab/
     - python3 ci/checks/check_gitlab_ci_single_stage.py .gitlab/ci/
     - yamllint .
 
 lint-licenses:
   stage: lint
-  needs: []  # Ensure no artifacts are downloaded
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
   rules:
     - if: $CI_COMMIT_TAG
       when: always
@@ -145,7 +159,9 @@ lint-licenses:
 
 lint-secrets:
   stage: lint
-  needs: []
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
   rules:
     - if: $CI_COMMIT_TAG
       when: always
@@ -160,7 +176,9 @@ lint-secrets:
 
 lint-dockerfile:
   stage: lint
-  needs: []  # Ensure no artifacts are downloaded
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
   rules:
     - if: $CI_COMMIT_TAG
       when: always
@@ -185,7 +203,9 @@ lint-dockerfile:
 # And then add a before_script: section that populates this FORMAT_DIFF file
 .format-report:
   stage: lint
-  needs: []  # Ensure no artifacts are downloaded
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
   rules:
     - if: $CI_COMMIT_TAG
       when: always
@@ -195,6 +215,7 @@ lint-dockerfile:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for these job
     FORMAT_DIFF:
   before_script:
+    - !reference [.merge-train-guard, before_script]
     - exit 1  # The jobs that extend this job should override this
   script:
     - |
@@ -242,6 +263,7 @@ format-cpp:
   variables:
     FORMAT_DIFF: artifacts/clang-format.diff
   before_script:
+    - !reference [.merge-train-guard, before_script]
     - mkdir -p artifacts
     - TARGET_BRANCH=${CI_MERGE_REQUEST_TARGET_BRANCH_NAME:-$CI_DEFAULT_BRANCH}
     - git fetch --no-tags origin $TARGET_BRANCH:$TARGET_BRANCH
@@ -265,13 +287,16 @@ format-python:
   variables:
     FORMAT_DIFF: artifacts/ruff.diff
   before_script:
+    - !reference [.merge-train-guard, before_script]
     - mkdir -p artifacts
     - echo "Running ruff on all Python files"
     - ruff format . --check --diff | sed "s|$CI_PROJECT_DIR|$CI_PROJECT_NAME|" > "$FORMAT_DIFF"
 
 type-check-python:
   stage: lint
-  needs: []  # Ensure no artifacts are downloaded
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
   rules:
     - if: $CI_COMMIT_TAG
       when: always

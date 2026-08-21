@@ -230,9 +230,20 @@ variables:
   GTEST_REPORT_FILE: "$CI_PROJECT_DIR/test_report.xml"
   GTEST_OUTPUT: ""
 
+# Quick check that should run in every job so that we can easily skip a pipeline
+.merge-train-guard:
+  before_script:
+    - |
+      if [[ "$MERGE_TRAIN_DUPLICATE" == "true" ]]; then
+        echo "Skipping duplicate merge-train workload."
+        exit 0
+      fi
+
 default:
   image: $IMAGE_DEFAULT
   interruptible: true
+  before_script:
+    - !reference [.merge-train-guard, before_script]
 
 workflow:
   name: '$CI_PIPELINE_SOURCE - $CI_COMMIT_SHORT_SHA - $[[ inputs.platform ]] - $PIPELINE_TYPE - $SCHEDULER_TYPE - Oracle:$ENABLE_ORACLE_SUPPORT'
@@ -306,6 +317,10 @@ include:
       custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]
       platform: $[[ inputs.platform ]]
   - local: .gitlab/ci/trigger.gitlab-ci.yml
+    rules:
+      - if: '$CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"'
+        when: never
+      - when: always
     inputs:
       custom-eos-image-tag: $[[ inputs.custom-eos-image-tag ]]
       custom-xrootd-version: $[[ inputs.custom-xrootd-version ]]
@@ -369,12 +384,16 @@ include:
       - if: '"$[[ inputs.pipeline-type ]]" == "DEFAULT"'
   - local: .gitlab/ci/release.gitlab-ci.yml
     rules:
+      - if: '$CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"'
+        when: never
       # Release stage only relevant in default pipeline
       - if: '"$[[ inputs.pipeline-type ]]" == "DEFAULT"'
     inputs:
       platform: $[[ inputs.platform ]]
   - local: .gitlab/ci/report.gitlab-ci.yml
     rules:
+      - if: '$CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"'
+        when: never
       # Reporting is selected by pipeline source rather than pipeline type, so keep it available to branch regressions.
       - if: '"$[[ inputs.pipeline-type ]]" != "REGR_AGAINST_CTA_VERSION"'
   - local: .gitlab/ci/.post.gitlab-ci.yml

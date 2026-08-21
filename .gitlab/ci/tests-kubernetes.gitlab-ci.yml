@@ -51,6 +51,8 @@ spec:
 
 .kubernetes-test:
   needs:
+    - job: check-merge-train-duplicate
+      optional: true
     - job: modify-project-json
       optional: true
     # Image jobs are optional because we may want run with existing docker images
@@ -70,6 +72,7 @@ spec:
     # Passed to the test script verbatim
     EXTRA_TEST_ARGS: ""
   before_script:
+    - !reference [.merge-train-guard, before_script]
     - bash ./ci/checks/check_runner_healthy.sh
     - *setup-k8s-test-variables
   script:
@@ -110,6 +113,8 @@ spec:
 # Once we have migrated everything to python, the above .kubernetes-test can be removed
 .kubernetes-test-python:
   needs:
+    - job: check-merge-train-duplicate
+      optional: true
     - job: modify-project-json
       optional: true
     # Image jobs are optional because we may want run with existing docker images
@@ -132,6 +137,7 @@ spec:
     # Passed to the pytest tests verbatim
     EXTRA_PYTEST_ARGS: ""
   before_script:
+    - !reference [.merge-train-guard, before_script]
     - bash ./ci/checks/check_runner_healthy.sh
     - *setup-k8s-test-variables
     # This is not ideal, but since we are in a shell executor and not in a Docker image, we use a venv to do this without polluting the machine
@@ -313,6 +319,8 @@ stress-test:
   timeout: 10 hours
   stage: system-test
   needs:
+    - job: check-merge-train-duplicate
+      optional: true
     - job: modify-project-json
       optional: true
     # Image jobs are optional because we may want run with existing docker images
@@ -330,6 +338,7 @@ stress-test:
     EXTRA_ARGS: ""
     EXTRA_SPAWN_ARGS: ""
   before_script:
+    - !reference [.merge-train-guard, before_script]
     - bash ./ci/checks/check_runner_healthy.sh
     - *setup-k8s-test-variables
   script:
@@ -387,6 +396,8 @@ stress-test-python:
   timeout: 12 hours
   stage: system-test
   needs:
+    - job: check-merge-train-duplicate
+      optional: true
     - job: modify-project-json
       optional: true
     # Image jobs are optional because we may want run with existing docker images
@@ -405,6 +416,7 @@ stress-test-python:
     # Passed to the pytest tests verbatim
     EXTRA_PYTEST_ARGS: ""
   before_script:
+    - !reference [.merge-train-guard, before_script]
     - bash ./ci/checks/check_runner_healthy.sh
     # This is not ideal, but since we are in a shell executor and not in a Docker image, we use a venv to do this without polluting the machine
     # Note that we use UV instead of pip as it is much faster

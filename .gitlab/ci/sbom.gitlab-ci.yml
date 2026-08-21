@@ -13,6 +13,8 @@ enrich-sboms-cern-info:
   extends: .sbom-rules
   stage: sbom
   needs:
+    - job: check-merge-train-duplicate
+      optional: true
     - job: build-cta-images
       artifacts: true
       parallel:
@@ -58,6 +60,8 @@ score-sboms:
   extends: .sbom-rules
   stage: sbom
   needs:
+    - job: check-merge-train-duplicate
+      optional: true
     - job: enrich-sboms-cern-info
       artifacts: true
       parallel:

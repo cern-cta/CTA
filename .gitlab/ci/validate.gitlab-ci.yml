@@ -3,7 +3,9 @@
 
 validate-catalogue-schema-version:
   stage: validate
-  needs: []  # Ensure no artifacts are downloaded
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
   rules:
     - if: '$PIPELINE_TYPE != "DEFAULT"'
       when: never
@@ -22,6 +24,8 @@ validate-catalogue-schema-version:
 validate-project-json:
   stage: validate
   needs:
+    - job: check-merge-train-duplicate
+      optional: true
     - job: modify-project-json
       optional: true
   rules:
