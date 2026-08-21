@@ -14,6 +14,7 @@
 #include <chrono>
 #include <functional>
 #include <gtest/gtest.h>
+#include <stdexcept>
 #include <thread>
 
 namespace unitTests {
@@ -102,19 +103,56 @@ TEST(SignalReactor, HandlesMultipleSignals) {
   signalReactor.stop();
 }
 
+TEST(SignalReactor, ContinuesAfterSignalCallbackThrows) {
+  cta::log::DummyLogger dl("dummy", "unitTest");
+
+  std::atomic<int> calls {0};
+  auto signalReactor = cta::runtime::SignalReactorBuilder()
+                         .addSignalFunction(SIGUSR1,
+                                            [&]() {
+                                              calls++;
+                                              if (calls == 1) {
+                                                throw std::runtime_error("callback failure");
+                                              }
+                                            })
+                         .withTimeoutMsecs(10)
+                         .build(dl);
+
+  signalReactor.start();
+  auto th = SignalReactorTestAccess::nativeHandle(signalReactor);
+  ASSERT_EQ(0, ::pthread_kill(th, SIGUSR1));
+  cta::utils::waitForCondition([&]() { return calls >= 1; }, 500, 10);
+
+  ASSERT_EQ(0, ::pthread_kill(th, SIGUSR1));
+  cta::utils::waitForCondition([&]() { return calls >= 2; }, 500, 10);
+  EXPECT_EQ(2, calls);
+}
+
+TEST(SignalReactor, RestoresCallingThreadSignalMask) {
+  cta::log::DummyLogger dl("dummy", "unitTest");
+
+  sigset_t before;
+  ASSERT_EQ(0, ::pthread_sigmask(SIG_SETMASK, nullptr, &before));
+
+  auto signalReactor =
+    cta::runtime::SignalReactorBuilder().addSignalFunction(SIGUSR2, []() {}).withTimeoutMsecs(10).build(dl);
+  signalReactor.start();
+  signalReactor.stop();
+
+  sigset_t after;
+  ASSERT_EQ(0, ::pthread_sigmask(SIG_SETMASK, nullptr, &after));
+  for (int signal = 1; signal < NSIG; ++signal) {
+    EXPECT_EQ(::sigismember(&before, signal), ::sigismember(&after, signal)) << "signal " << signal;
+  }
+}
+
 TEST(SignalReactor, HandlesUnregisteredSignals) {
   cta::log::DummyLogger dl("dummy", "unitTest");
 
   std::atomic<int> called {0};
 
-  // Both signals are blocked; only 1 of them has a handler
   // We just want to check that the process doesn't crash
-  sigset_t sigset;
-  sigemptyset(&sigset);
-  sigaddset(&sigset, SIGUSR1);
-  sigaddset(&sigset, SIGUSR2);
   cta::runtime::SignalReactor signalReactor(dl,
-                                            sigset,
                                             {
                                               {SIGUSR1, [&]() { called++; }}
   },
@@ -125,7 +163,7 @@ TEST(SignalReactor, HandlesUnregisteredSignals) {
   auto th = SignalReactorTestAccess::nativeHandle(signalReactor);
 
   // Send an unhandled signal
-  ASSERT_EQ(0, ::pthread_kill(th, SIGUSR2));
+  ASSERT_EQ(0, ::pthread_kill(th, SIGCHLD));
   // Give it a little bit
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 

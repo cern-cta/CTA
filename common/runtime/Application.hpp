@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "SafeRun.hpp"
 #include "cli/ArgParser.hpp"
 #include "cli/CommonCliOptions.hpp"
 #include "common/exception/Errnum.hpp"
@@ -24,6 +25,7 @@
 #include "version.hpp"
 
 #include <concepts>
+#include <set>
 #include <signal.h>
 #include <string>
 #include <utility>
@@ -78,6 +80,18 @@ template<class TConfig>
 concept HasLoggingConfig =
   requires(const TConfig& cfg) { requires std::same_as<std::remove_cvref_t<decltype(cfg.logging)>, LoggingConfig>; };
 
+template<class TApp, class TConfig>
+concept HasStaticLogAttributes = requires(const TApp& app, const TConfig& cfg) {
+  requires std::same_as<std::remove_cvref_t<decltype(app.getStaticLogAttributes(cfg))>,
+                        std::map<std::string, std::string>>;
+};
+
+template<class TApp, class TConfig>
+concept HasStaticTelemetryAttributes = requires(const TApp& app, const TConfig& cfg) {
+  requires std::same_as<std::remove_cvref_t<decltype(app.getStaticTelemetryAttributes(cfg))>,
+                        std::map<std::string, std::string>>;
+};
+
 template<class TConfig>
 concept HasSchedulerConfig = requires(const TConfig& cfg) {
   requires std::same_as<std::remove_cvref_t<decltype(cfg.scheduler)>, SchedulerConfig>;
@@ -88,86 +102,6 @@ template<class TConfig>
 concept HasCatalogueConfig = requires(const TConfig& cfg) {
   requires std::same_as<std::remove_cvref_t<decltype(cfg.catalogue)>, CatalogueConfig>;
 };
-
-//------------------------------------------------------------------------------
-// Utility Functions
-//------------------------------------------------------------------------------
-
-/**
- * @brief Wraps the provided function into a try catch and logs any thrown exceptions to stderr.
- *
- * @param func The function to wrap. Expected to return a returncode.
- * @return int EXIT_FAILURE if an exception was thrown, otherwise the return code of the func.
- */
-template<typename F>
-  requires std::invocable<F> && std::convertible_to<std::invoke_result_t<F>, int>
-int safeRun(F&& func) {
-  int returnCode = EXIT_FAILURE;
-  try {
-    returnCode = func();
-  } catch (const exception::UserError& ex) {
-    // This will be mostly used to print issues with users e.g. making a mistake in the config file.
-    // So we only print FATAL to keep it reasonably user friendly.
-    std::cerr << "FATAL:\n" << ex.getMessage().str() << std::endl;
-    return EXIT_FAILURE;
-  } catch (const exception::Exception& ex) {
-    std::cerr << "FATAL: Caught an unexpected CTA exception:\n" << ex.getMessage().str() << std::endl;
-    return EXIT_FAILURE;
-  } catch (const std::exception& se) {
-    std::cerr << "FATAL: Caught an unexpected exception:\n" << se.what() << std::endl;
-    return EXIT_FAILURE;
-  } catch (...) {
-    std::cerr << "FATAL: Caught an unexpected and unknown exception." << std::endl;
-    return EXIT_FAILURE;
-  }
-  return returnCode;
-}
-
-/**
- * @brief Wraps the provided function into a try catch and logs any thrown exceptions
- * as CRIT errors to the logging system.
- *
- * @param func The function to wrap. Expected to return a returncode.
- * @return int EXIT_FAILURE if an exception was thrown, otherwise the return code of the func.
- * @return int
- */
-template<typename F>
-  requires std::invocable<F> && std::convertible_to<std::invoke_result_t<F>, int>
-int safeRunWithLog(log::Logger& log, F&& func) {
-  int returnCode = EXIT_FAILURE;
-  try {
-    returnCode = func();
-  } catch (const exception::UserError& ex) {
-    log(log::CRIT,
-        "FATAL: User Error",
-        {
-          {semconv::log::exceptionMessage, ex.getMessage().str()}
-    });
-    sleep(1);
-    return EXIT_FAILURE;
-  } catch (const exception::Exception& ex) {
-    log(log::CRIT,
-        "FATAL: Caught an unexpected CTA exception",
-        {
-          {semconv::log::exceptionMessage, ex.getMessage().str()}
-    });
-    sleep(1);
-    return EXIT_FAILURE;
-  } catch (const std::exception& se) {
-    log(log::CRIT,
-        "FATAL: Caught an unexpected exception",
-        {
-          {semconv::log::exceptionMessage, se.what()}
-    });
-    sleep(1);
-    return EXIT_FAILURE;
-  } catch (...) {
-    log(log::CRIT, "FATAL: Caught an unexpected and unknown exception", {});
-    sleep(1);
-    return EXIT_FAILURE;
-  }
-  return returnCode;
-}
 
 //------------------------------------------------------------------------------
 // Application
@@ -287,8 +221,10 @@ public:
       // If we were to read the original file instead of the copy, the original file may have changed in the time it took to copy the file and read it.
       // We make sure that the file names match the full path in the TOML config file to ensure they are deterministic and can easily be correlated by operators.
       if constexpr (HasTelemetryConfig<TConfig>) {
-        config.telemetry.config_file =
-          utils::copyFile(config.telemetry.config_file, cliOptions.runtimeDir + "/telemetry.config_file", true);
+        if (config.experimental.telemetry_enabled && !config.telemetry.config_file.empty()) {
+          config.telemetry.config_file =
+            utils::copyFile(config.telemetry.config_file, cliOptions.runtimeDir + "/telemetry.config_file", true);
+        }
       }
       if constexpr (HasSchedulerConfig<TConfig>) {
         config.scheduler.config_file =
@@ -303,6 +239,7 @@ public:
     }
 
     m_logPtr = initLogger(config, cliOptions);
+
     // We need to start the reactor builder here as we may want to register custom signals.
     // It is also for that reason that we don't build the actual SignalReactor just yet.
     m_signalReactorBuilder.addSignalFunction(SIGTERM, [this]() { m_app.stop(); });
@@ -320,12 +257,14 @@ public:
     });
     auto signalReactor = m_signalReactorBuilder.build(*m_logPtr);
     signalReactor.start();
+
     // The health server must exist at this level as it needs to be in-scope for as long as the main app runs.
     // If not, it would immediately be destroyed after initHealthServer finished.
     // Note that healthServer lives outside of safeRunWithLog so that it is not destructed before we output a (potential) FATAL message.
     std::unique_ptr<HealthServer> healthServer;
+    TelemetryCleanup telemetryCleanup(*m_logPtr);
 
-    return safeRunWithLog(*m_logPtr, [this, &cliOptions, &config, &healthServer]() {
+    return safeRunWithLog(*m_logPtr, [this, &cliOptions, &config, &healthServer, &telemetryCleanup]() {
       cta::log::Logger& log = *m_logPtr;
       log(log::INFO,
           "Starting " + m_appName,
@@ -341,7 +280,7 @@ public:
       }
 
       if constexpr (HasTelemetryConfig<TConfig>) {
-        initTelemetry(config);
+        telemetryCleanup.active = initTelemetry(config);
       }
 
       if constexpr (HasXRootDConfig<TConfig>) {
@@ -361,6 +300,31 @@ public:
   }
 
 private:
+  struct TelemetryCleanup {
+    explicit TelemetryCleanup(log::Logger& logger) : log(logger) {}
+
+    ~TelemetryCleanup() {
+      if (!active) {
+        return;
+      }
+      log::LogContext lc(log);
+      try {
+        cta::telemetry::cleanupOpenTelemetry(lc);
+      } catch (const std::exception& ex) {
+        log(log::ERR,
+            "Failed to clean up OpenTelemetry",
+            {
+              {semconv::log::exceptionMessage, ex.what()}
+        });
+      } catch (...) {
+        log(log::ERR, "Failed to clean up OpenTelemetry due to an unknown exception", {});
+      }
+    }
+
+    log::Logger& log;
+    bool active = false;
+  };
+
   std::unique_ptr<log::Logger> initLogger(const TConfig& config, const TOpts& cliOptions) const {
     using namespace cta;
     std::string shortHostName;
@@ -388,6 +352,11 @@ private:
     std::map<std::string, std::string> logAttributes;
     for (const auto& [key, value] : config.logging.attributes) {
       logAttributes[key] = value;
+    }
+    if constexpr (HasStaticLogAttributes<TApp, TConfig>) {
+      for (const auto& [key, value] : m_app.getStaticLogAttributes(config)) {
+        logAttributes[key] = value;
+      }
     }
     logPtr->setStaticParams(logAttributes);
     return logPtr;
@@ -425,35 +394,77 @@ private:
     return nullptr;
   }
 
-  void initTelemetry(const TConfig& config) {
+  bool initTelemetry(const TConfig& config) {
     if (!config.experimental.telemetry_enabled || config.telemetry.config_file.empty()) {
-      return;
+      return false;
     }
     if (config.telemetry.on_init_failure != "fatal" && config.telemetry.on_init_failure != "warn") {
       throw exception::UserError("Unsupported value for telemetry.on_init_failure: '" + config.telemetry.on_init_failure
                                  + "'. Must be one of [fatal, warn].");
     }
     log::LogContext lc(*m_logPtr);
+
+    std::map<std::string, std::string> customAttributes;
+    if constexpr (HasStaticTelemetryAttributes<TApp, TConfig>) {
+      addTelemetryAttributes(customAttributes,
+                             m_app.getStaticTelemetryAttributes(config),
+                             "getStaticTelemetryAttributes()");
+    }
+
+    const std::set<std::string> reservedAttributes = {cta::semconv::attr::kServiceName,
+                                                      cta::semconv::attr::kServiceVersion,
+                                                      cta::semconv::attr::kServiceInstanceId,
+                                                      cta::semconv::attr::kHostName,
+                                                      cta::semconv::attr::kSchedulerNamespace};
+    for (const auto& attribute : customAttributes) {
+      const auto& key = attribute.first;
+      if (reservedAttributes.contains(key)) {
+        throw exception::UserError("Telemetry attribute '" + key + "' is reserved by the runtime library.");
+      }
+    }
+
     try {
       std::map<std::string, std::string> ctaResourceAttributes = {
-        {cta::semconv::attr::kServiceName,       cta::semconv::attr::ServiceNameValues::kCtaMaintd},
-        {cta::semconv::attr::kServiceVersion,    std::string(CTA_VERSION)                         },
-        {cta::semconv::attr::kServiceInstanceId, cta::utils::generateUuid()                       },
-        {cta::semconv::attr::kHostName,          cta::utils::getShortHostname()                   }
+        {cta::semconv::attr::kServiceName,       m_appName                     },
+        {cta::semconv::attr::kServiceVersion,    std::string(CTA_VERSION)      },
+        {cta::semconv::attr::kServiceInstanceId, cta::utils::generateUuid()    },
+        {cta::semconv::attr::kHostName,          cta::utils::getShortHostname()}
       };
 
       if constexpr (HasSchedulerConfig<TConfig>) {
         ctaResourceAttributes[cta::semconv::attr::kSchedulerNamespace] = config.scheduler.backend_name;
       }
+
+      for (const auto& [key, value] : customAttributes) {
+        ctaResourceAttributes[key] = value;
+      }
+
       cta::telemetry::initOpenTelemetry(config.telemetry.config_file, ctaResourceAttributes, lc);
+      return true;
     } catch (exception::Exception& ex) {
       if (config.telemetry.on_init_failure == "fatal") {
-        throw ex;
+        throw;
       }
       cta::log::ScopedParamContainer params(lc);
       params.add(semconv::log::exceptionMessage, ex.getMessage().str());
       lc.log(log::ERR, "Failed to instantiate OpenTelemetry");
       cta::telemetry::cleanupOpenTelemetry(lc);
+      return false;
+    }
+  }
+
+  static void addTelemetryAttributes(std::map<std::string, std::string>& destination,
+                                     const std::map<std::string, std::string>& attributes,
+                                     std::string_view source) {
+    for (const auto& [key, value] : attributes) {
+      if (key.empty()) {
+        throw exception::UserError("Telemetry attribute key in " + std::string(source) + " cannot be empty.");
+      }
+      if (key.find_first_of(",=\r\n") != std::string::npos || value.find_first_of(",=\r\n") != std::string::npos) {
+        throw exception::UserError("Telemetry attribute '" + key + "' in " + std::string(source)
+                                   + " contains a character that cannot be serialized: ',', '=', CR, or LF.");
+      }
+      destination[key] = value;
     }
   }
 

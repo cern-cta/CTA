@@ -8,6 +8,7 @@
 #include "common/log/Logger.hpp"
 
 #include <functional>
+#include <pthread.h>
 #include <thread>
 #include <unordered_map>
 
@@ -27,7 +28,6 @@ namespace cta::runtime {
 class SignalReactor final {
 public:
   SignalReactor(cta::log::Logger& log,
-                const sigset_t& sigset,
                 const std::unordered_map<int, std::function<void()>>& signalFunctions,
                 uint32_t waitTimeoutMsecs);
 
@@ -50,13 +50,18 @@ public:
 
   /**
    * Stop the SignalReactor (both the thread and the waiting for signal)
+   * Must be called from the same thread as start() so the calling thread's previous signal mask can be restored.
    */
   void stop() noexcept;
 
 private:
   cta::log::Logger& m_log;
-  const sigset_t m_sigset;
+  sigset_t m_sigset;
+  sigset_t m_previousSigset;
   std::unordered_map<int, std::function<void()>> m_signalFunctions;
+
+  pthread_t m_startThread {};
+  bool m_maskNeedsRestore = false;
 
   // The thread the signalReactor will run on when start() is called
   std::jthread m_thread;

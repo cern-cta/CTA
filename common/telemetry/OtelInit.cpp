@@ -6,6 +6,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/exception/NullPtrException.hpp"
+#include "common/exception/UserError.hpp"
 #include "common/telemetry/CtaOtelLogHandler.hpp"
 #include "common/telemetry/metrics/InstrumentRegistry.hpp"
 
@@ -22,6 +23,22 @@
 
 namespace cta::telemetry {
 
+namespace {
+
+void validateResourceAttributes(const std::map<std::string, std::string>& attributes) {
+  for (const auto& [key, value] : attributes) {
+    if (key.empty()) {
+      throw cta::exception::UserError("OpenTelemetry resource attribute keys cannot be empty.");
+    }
+    if (key.find_first_of(",=\r\n") != std::string::npos || value.find_first_of(",=\r\n") != std::string::npos) {
+      throw cta::exception::UserError("OpenTelemetry resource attribute '" + key
+                                      + "' contains a character that cannot be serialized: ',', '=', CR, or LF.");
+    }
+  }
+}
+
+}  // namespace
+
 static std::unique_ptr<opentelemetry::sdk::configuration::ConfiguredSdk> sdk;
 
 // See https://github.com/open-telemetry/opentelemetry-cpp/blob/main/examples/configuration/main.cc
@@ -29,6 +46,7 @@ void initOpenTelemetry(const std::string& configFile,
                        const std::map<std::string, std::string>& ctaResourceAttributes,
                        cta::log::LogContext& lc) {
   lc.log(log::INFO, "In initOpenTelemetry(): Initialising OpenTelemetry");
+  validateResourceAttributes(ctaResourceAttributes);
   // Before we get started, populate the CTA_OTEL_RESOURCE_ATTRIBUTES environment variable
   // This allows operators to reference these in the declarative config
 
