@@ -14,7 +14,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-int rmc_get_geometry(const char* const server, struct robot_info* const robot_info) {
+int rmc_get_geometry(const char* const server, const unsigned short port, struct robot_info* const robot_info) {
   int c;
   gid_t gid;
   int msglen;
@@ -46,7 +46,7 @@ int rmc_get_geometry(const char* const server, struct robot_info* const robot_in
   msglen = sbp - sendbuf;
   marshall_LONG(q, msglen); /* update length field */
 
-  while ((c = send2rmc(server, sendbuf, msglen, repbuf, sizeof(repbuf))) && serrno == ERMCNACT) {
+  while ((c = send2rmc(server, port, sendbuf, msglen, repbuf, sizeof(repbuf))) && serrno == ERMCNACT) {
     sleep(RMC_RETRYI);
   }
   if (c == 0) {

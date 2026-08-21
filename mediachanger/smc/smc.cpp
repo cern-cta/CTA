@@ -120,6 +120,7 @@ void smc_qdrive_jsonPrint(const struct robot_info* const robot_info,
 }
 
 static int smc_qdrive(const char* const rmchost,
+                      const unsigned short rmcPort,
                       [[maybe_unused]] const int fd,
                       const struct robot_info* const robot_info,
                       int drvord,
@@ -140,7 +141,7 @@ static int smc_qdrive(const char* const rmchost,
     fprintf(stderr, SR012);
     return USERR;
   }
-  if ((c = rmc_read_elem_status(rmchost, 4, robot_info->device_start + drvord, nbelem, element_info)) < 0) {
+  if ((c = rmc_read_elem_status(rmchost, rmcPort, 4, robot_info->device_start + drvord, nbelem, element_info)) < 0) {
     free(element_info);
     return c;
   }
@@ -234,6 +235,7 @@ void smc_qport_jsonPrint(const struct smc_element_info* const element_info, cons
 }
 
 static int smc_qport(const char* const rmchost,
+                     const unsigned short rmcPort,
                      [[maybe_unused]] const int fd,
                      const struct robot_info* const robot_info,
                      const int isJsonEnabled) {
@@ -248,7 +250,7 @@ static int smc_qport(const char* const rmchost,
     return USERR;
   }
 
-  if ((c = rmc_read_elem_status(rmchost, 3, robot_info->port_start, nbelem, element_info)) < 0) {
+  if ((c = rmc_read_elem_status(rmchost, rmcPort, 3, robot_info->port_start, nbelem, element_info)) < 0) {
     free(element_info);
     return serrno - ERMCRBTERR;
   }
@@ -285,6 +287,7 @@ void smc_qslot_jsonPrint(const struct smc_element_info* element_info, const int 
 }
 
 static int smc_qslot(const char* const rmchost,
+                     const unsigned short rmcPort,
                      const int fd,
                      const struct robot_info* robot_info,
                      int slotaddr,
@@ -309,7 +312,7 @@ static int smc_qslot(const char* const rmchost,
     return USERR;
   }
 
-  if ((c = rmc_read_elem_status(rmchost, 2, slotaddr, nbelem, element_info)) < 0) {
+  if ((c = rmc_read_elem_status(rmchost, rmcPort, 2, slotaddr, nbelem, element_info)) < 0) {
     free(element_info);
     return serrno - ERMCRBTERR;
   }
@@ -368,6 +371,7 @@ void smc_qvid_jsonPrint(const struct smc_element_info* const element_info, const
 }
 
 static int smc_qvid(const char* const rmchost,
+                    const unsigned short rmcPort,
                     const int fd,
                     const struct robot_info* const robot_info,
                     const char* reqvid,
@@ -395,7 +399,7 @@ static int smc_qvid(const char* const rmchost,
     return USERR;
   }
 
-  if ((c = rmc_find_cartridge(rmchost, vid, 0, 0, nbelem, element_info)) < 0) {
+  if ((c = rmc_find_cartridge(rmchost, rmcPort, vid, 0, 0, nbelem, element_info)) < 0) {
     free(element_info);
     return serrno - ERMCRBTERR;
   }
@@ -420,6 +424,7 @@ int main(const int argc, char** argv) {
   char req_type = 0;
   struct robot_info robot_info;
   const char* rmchost = "localhost";
+  unsigned short rmcPort;
   int slotaddr = -1;
   char vid[7];
   int isJsonEnabled = 0;
@@ -541,12 +546,12 @@ int main(const int argc, char** argv) {
     exit(USERR);
   }
 
-  if (const char* rmcPort = getenv("RMC_PORT")) {
-    rmc_set_port(static_cast<unsigned short>(atoi(rmcPort)));
+  if (const char* rmcPortEnv = getenv("RMC_PORT")) {
+    rmcPort = static_cast<unsigned short>(atoi(rmcPortEnv));
   } else {
     try {
       const auto rmcdConfig = cta::runtime::loadFromToml<cta::rmcd::RmcdConfig>("/etc/cta/cta-rmcd.toml");
-      rmc_set_port(static_cast<unsigned short>(rmcdConfig.rmc_server.port));
+      rmcPort = static_cast<unsigned short>(rmcdConfig.rmc_server.port);
     } catch (const std::exception& ex) {
       std::cerr << "Failed to load rmcd configuration: " << ex.what() << std::endl;
       exit(USERR);
@@ -554,7 +559,7 @@ int main(const int argc, char** argv) {
   }
 
   /* get robot geometry */
-  if (rmc_get_geometry(rmchost, &robot_info)) {
+  if (rmc_get_geometry(rmchost, rmcPort, &robot_info)) {
     exit(serrno);
   }
 
@@ -571,41 +576,41 @@ int main(const int argc, char** argv) {
 
   switch (req_type) {
     case 'd':
-      if ((c = rmc_dismount(rmchost, vid, drvord, 0)) < 0) {
+      if ((c = rmc_dismount(rmchost, rmcPort, vid, drvord, 0)) < 0) {
         c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
       }
       break;
     case 'e':
-      if ((c = rmc_export(rmchost, vid)) < 0) {
+      if ((c = rmc_export(rmchost, rmcPort, vid)) < 0) {
         c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
       }
       break;
     case 'i':
-      if ((c = rmc_import(rmchost, vid)) < 0) {
+      if ((c = rmc_import(rmchost, rmcPort, vid)) < 0) {
         c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
       }
       break;
     case 'm':
-      if ((c = rmc_mount(rmchost, vid, invert, drvord)) < 0) {
+      if ((c = rmc_mount(rmchost, rmcPort, vid, invert, drvord)) < 0) {
         c = (serrno == SECOMERR) ? RBT_FAST_RETRY : serrno - ERMCRBTERR;
       }
       break;
     case 'q':
       switch (qry_type) {
         case 'D':
-          c = smc_qdrive(rmchost, fd, &robot_info, drvord, isJsonEnabled);
+          c = smc_qdrive(rmchost, rmcPort, fd, &robot_info, drvord, isJsonEnabled);
           break;
         case 'L':
           c = smc_qlib(&robot_info, isJsonEnabled);
           break;
         case 'P':
-          c = smc_qport(rmchost, fd, &robot_info, isJsonEnabled);
+          c = smc_qport(rmchost, rmcPort, fd, &robot_info, isJsonEnabled);
           break;
         case 'S':
-          c = smc_qslot(rmchost, fd, &robot_info, slotaddr, nbelem, isJsonEnabled);
+          c = smc_qslot(rmchost, rmcPort, fd, &robot_info, slotaddr, nbelem, isJsonEnabled);
           break;
         case 'V':
-          c = smc_qvid(rmchost, fd, &robot_info, vid, nbelem, isJsonEnabled);
+          c = smc_qvid(rmchost, rmcPort, fd, &robot_info, vid, nbelem, isJsonEnabled);
           break;
       }
       break;
