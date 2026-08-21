@@ -384,6 +384,7 @@ Requires: cta-lib-catalogue-occi = %{version}-%{release}
 %endif
 Requires: valgrind %{valgrindVersionConstraint}
 Requires: cta-lib = %{version}-%{release}
+Requires: cta-maintd = %{version}-%{release}
 Requires: cta-taped = %{ctaVersion}-%{ctaRelease}%{mydist}
 Requires: make
 Requires: moreutils
