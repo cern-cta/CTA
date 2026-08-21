@@ -264,7 +264,7 @@ public:
     std::unique_ptr<HealthServer> healthServer;
     TelemetryCleanup telemetryCleanup(*m_logPtr);
 
-    return safeRunWithLog(*m_logPtr, [this, &cliOptions, &config, &healthServer, &telemetryCleanup]() {
+    return safeRunWithLog(*m_logPtr, [this, &cliOptions, &config, &healthServer]() {
       cta::log::Logger& log = *m_logPtr;
       log(log::INFO,
           "Starting " + m_appName,
@@ -280,7 +280,7 @@ public:
       }
 
       if constexpr (HasTelemetryConfig<TConfig>) {
-        telemetryCleanup.active = initTelemetry(config);
+        initTelemetry(config);
       }
 
       if constexpr (HasXRootDConfig<TConfig>) {
@@ -304,9 +304,6 @@ private:
     explicit TelemetryCleanup(log::Logger& logger) : log(logger) {}
 
     ~TelemetryCleanup() {
-      if (!active) {
-        return;
-      }
       log::LogContext lc(log);
       try {
         cta::telemetry::cleanupOpenTelemetry(lc);
@@ -322,7 +319,6 @@ private:
     }
 
     log::Logger& log;
-    bool active = false;
   };
 
   std::unique_ptr<log::Logger> initLogger(const TConfig& config, const TOpts& cliOptions) const {
@@ -394,9 +390,9 @@ private:
     return nullptr;
   }
 
-  bool initTelemetry(const TConfig& config) {
+  void initTelemetry(const TConfig& config) {
     if (!config.experimental.telemetry_enabled || config.telemetry.config_file.empty()) {
-      return false;
+      return;
     }
     if (config.telemetry.on_init_failure != "fatal" && config.telemetry.on_init_failure != "warn") {
       throw exception::UserError("Unsupported value for telemetry.on_init_failure: '" + config.telemetry.on_init_failure
@@ -440,7 +436,6 @@ private:
       }
 
       cta::telemetry::initOpenTelemetry(config.telemetry.config_file, ctaResourceAttributes, lc);
-      return true;
     } catch (exception::Exception& ex) {
       if (config.telemetry.on_init_failure == "fatal") {
         throw;
@@ -449,7 +444,6 @@ private:
       params.add(semconv::log::exceptionMessage, ex.getMessage().str());
       lc.log(log::ERR, "Failed to instantiate OpenTelemetry");
       cta::telemetry::cleanupOpenTelemetry(lc);
-      return false;
     }
   }
 

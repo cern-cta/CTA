@@ -61,6 +61,7 @@ private:
   std::unordered_map<int, std::function<void()>> m_signalFunctions;
 
   pthread_t m_startThread {};
+  bool m_hasStarted = false;
   bool m_maskNeedsRestore = false;
 
   // The thread the signalReactor will run on when start() is called
