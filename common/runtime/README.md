@@ -146,6 +146,7 @@ int main(const int argc, char** const argv) {
 
 Program-owned telemetry resource attributes can be returned by the optional `getStaticTelemetryAttributes()` application method.
 Operator-configured resource attributes belong in the declarative OpenTelemetry configuration file.
+The runtime uses the application name passed to `Application` unchanged as `service.name`.
 Runtime identity attributes such as `service.name`, `service.version`, `service.instance.id`, `host.name`, and the scheduler namespace are reserved.
 Attribute keys and values cannot contain commas, equals signs, carriage returns, or line feeds because they are serialized into `CTA_OTEL_RESOURCE_ATTRIBUTES`.
 

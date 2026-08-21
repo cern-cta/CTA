@@ -439,6 +439,10 @@ private:
       }
 
       cta::telemetry::initOpenTelemetry(config.telemetry.config_file, ctaResourceAttributes, lc);
+    } catch (const cta::telemetry::InvalidResourceAttribute&) {
+      // Program-provided attributes are programming errors.
+      // They are not recoverable operator configuration failures.
+      throw;
     } catch (exception::Exception& ex) {
       if (config.telemetry.on_init_failure == "fatal") {
         throw;
