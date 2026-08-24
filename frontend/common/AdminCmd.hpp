@@ -121,6 +121,7 @@ private:
   void processTape_Rm(xrd::Response& response);
   void processTape_Reclaim(xrd::Response& response);
   void processTape_Label(xrd::Response& response);
+  void processTapeFile_Ch(xrd::Response& response) const;
   void processTapeFile_Rm(xrd::Response& response) const;
   void processTapePool_Add(xrd::Response& response) const;
   void processTapePool_Ch(xrd::Response& response) const;
@@ -141,7 +142,7 @@ private:
   void processPhysicalLibrary_Ch(xrd::Response& response) const;
   void processPhysicalLibrary_Rm(xrd::Response& response) const;
   void processRecycleTapeFile_Restore(xrd::Response& response) const;
-  void processArchiveFile_Ch(xrd::Response& response) const;
+  void processModifyArchiveFile(xrd::Response& response) const;
 
   void triggerTapeStateChange(const common::dataStructures::SecurityIdentity& admin,
                               const std::string& vid,

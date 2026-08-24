@@ -1,5 +1,5 @@
 ---
-date: 2026-07-27
+date: 2026-08-17
 section: 1cta
 title: CTA-ADMIN
 header: The CERN Tape Archive (CTA)
@@ -60,15 +60,6 @@ archiveroute (ar)
 
 :   Add, change, remove or list the archive routes. Archive routes are the policies linking namespace
     entries to tape pools.
-
-archivefile (af)
-
-:   Change the storage class of archive files.
-
-    **\-\-idfile** specifies the filename of a text file containing a list of
-    archive file IDs.
-
-    **\-\-storageclass** specifies the target storage class.
 
 diskinstance (di)
 
@@ -280,25 +271,33 @@ tape (ta)
 
 tapefile (tf)
 
-:   List files on a specified tape or delete a tape file.
+:   Change the storage class of archive files, remove tape files or list tape files.
 
-    **ls** lists tape files. Which files to list can be specified by VID, the (disk instance,
-    disk file ID) pair, or the archive file ID.
+    **ch** changes the storage class of archive files:
 
-    **\-\-vid** specifies the volume identifier (VID) of a tape.
+    **\-\-storageclass** specifies the target storage class.
+
+    **\-\-fxidfile** specifies the filename of a text file containing a list of disk file IDs
+    in hexadecimal format. The format of this file is the same as the output of
+    **eos find --fid <path>**.
 
     **\-\-fxid** specifies the disk file ID. EOS disk file IDs should be provided in hexadecimal
     format.
 
-    **\-\-instance** specifies on which disk instance the disk file ID is located.
+    **\-\-diskfileid** specifies a single disk file ID.
 
-    **\-\-fxidfile** specifies the filename of a text file containing a list of disk file IDs
-    in hexadecimal formal. The format of this file is the same as the output of
-    **eos find --fid <path>**.
+    **\-\-instance** specifies the disk instance on which the disk file ID is located.
 
-    **\-\-id** specifies an archive file ID.
+    **\-\-id** specifies a single archive file ID.
 
     **rm** deletes a single tape file. Note that some disk files have more than one associated tape file.
+
+    **\-\-vid** specifies the volume identifier (VID) of a tape.
+
+    **\-\-reason** specifies the reason for deleting the tape file.
+
+    **ls** lists tape files. Which files to list can be specified by VID, the (disk instance,
+    disk file ID) pair, or the archive file ID.
 
 tapepool (tp)
 

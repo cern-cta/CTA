@@ -6,6 +6,8 @@
 #include "CtaAdminParsedCmd.hpp"
 
 #include "CtaAdminTextFormatter.hpp"
+#include "common/exception/UserError.hpp"
+#include "common/utils/utils.hpp"
 #include "taped/daemon/common/TapedConfiguration.hpp"
 
 #include <filesystem>
@@ -263,8 +265,11 @@ void CtaAdminParsedCmd::readListFromFile(cta::admin::OptionStrList& str_list, co
         if (item.substr(0, 4) != "fid=") {
           continue;
         }
-        auto fid = item.substr(4);
-        str_list.add_item(fid);
+        const auto fid = item.substr(4);
+        if (!cta::utils::isValidHex(fid)) {
+          throw cta::exception::UserError(fid + " is not a valid hexadecimal file ID value");
+        }
+        str_list.add_item(cta::utils::hexadecimalToDecimal(fid));
       } else {
         // default case: add all items
         str_list.add_item(item);
