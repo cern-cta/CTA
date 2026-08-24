@@ -13,10 +13,13 @@
 #include "common/utils/utils.hpp"
 
 #include <chrono>
+#include <cstdlib>
 #include <functional>
 #include <gtest/gtest.h>
+#include <signal.h>
 #include <stdexcept>
 #include <thread>
+#include <unistd.h>
 
 namespace unitTests {
 
@@ -156,6 +159,26 @@ TEST(SignalReactor, StopWakesImmediatelyWithoutCallingSignalFunction) {
 
   EXPECT_LT(elapsed, std::chrono::seconds(2));
   EXPECT_EQ(0, calls);
+}
+
+TEST(SignalReactor, LeavesUnregisteredSignalsAlone) {
+  ASSERT_EXIT(
+    {
+      cta::log::DummyLogger logger("dummy", "unitTest");
+      // Change the default action of SIGUSR2 to exit with success
+      ::signal(SIGUSR2, [](int) { ::_exit(EXIT_SUCCESS); });
+
+      // Don't register anything for SIGUSR2, just to check we are not (accidentally) blocking
+      // every single signal
+      auto reactor = cta::runtime::SignalReactorBuilder().addSignalFunction(SIGUSR1, []() {}).build(logger);
+      reactor.start();
+
+      // This should now quit with EXIT_SUCCESS
+      ::raise(SIGUSR2);
+      ::_exit(EXIT_FAILURE);
+    },
+    ::testing::ExitedWithCode(EXIT_SUCCESS),
+    "");
 }
 
 TEST(SignalReactor, RejectsInvalidAndUnhandleableSignals) {
