@@ -53,6 +53,7 @@ _ctadev() {
         --publish-telemetry
         --eos-image-repository
         --eos-image-tag
+        --dcache-image-repository
         --catalogue-config
         --scheduler-config
         --cta-config
@@ -94,7 +95,7 @@ _ctadev() {
                 -- "$cur") )
             return
             ;;
-        --cta-version|--cta-image-tag|--eos-image-tag|--eos-image-repository|--spawn-options)
+        --cta-version|--cta-image-tag|--eos-image-tag|--eos-image-repository|--dcache-image-repository|--spawn-options)
             return
             ;;
         --catalogue-config|--scheduler-config|--cta-config|--eos-config)
