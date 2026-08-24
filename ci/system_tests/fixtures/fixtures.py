@@ -20,6 +20,7 @@ from system_tests.helpers.hosts import (
     CtaRmcdHost,
     CtaTapedHost,
     CtaWorkflowApiHost,
+    DCacheHost,
     DiskClientHost,
     DiskInstanceHost,
     EosClientHost,
@@ -134,7 +135,6 @@ def cta_storage_class() -> str:
 
 @pytest.fixture(scope="session")
 def cta_default_tape_pool() -> str:
-    # For now; don't change, because the populate_catalogue.sh script does not use this value (yet)
     return "ctasystest"
 
 
@@ -221,6 +221,13 @@ def eos_mgm(env: TestEnv) -> EosMgmHost:
     if not env.eos_mgm:
         pytest.skip("This test requires an EOS deployment")
     return env.eos_mgm[0]
+
+
+@pytest.fixture(scope="session")
+def dcache(env: TestEnv) -> DCacheHost:
+    if not env.dcache:
+        pytest.skip("This test requires a dCache deployment")
+    return env.dcache[0]
 
 
 @pytest.fixture(scope="session")
