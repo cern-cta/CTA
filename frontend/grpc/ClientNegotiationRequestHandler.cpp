@@ -53,7 +53,6 @@ gss_name_t cta::frontend::grpc::client::NegotiationRequestHandler::gssSpn(const 
 
   gssNameBuf.length = strSpn.size();
   gssNameBuf.value = const_cast<char*>(strSpn.c_str());
-  ;
 
   gssMajStat = gss_import_name(&gssMinStat, &gssNameBuf, GSS_KRB5_NT_PRINCIPAL_NAME, &gssNameSpn);
 
