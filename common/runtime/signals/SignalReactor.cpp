@@ -64,18 +64,10 @@ void SignalReactor::start() {
     m_wakeupSignal = m_signalFunctions.begin()->first;
   }
   m_hasStarted = true;
-  cta::exception::Errnum::throwOnNonZero(::pthread_sigmask(SIG_BLOCK, &m_sigset, &m_previousSigset),
+  cta::exception::Errnum::throwOnNonZero(::pthread_sigmask(SIG_BLOCK, &m_sigset, nullptr),
                                          "In SignalReactor::start(): pthread_sigmask() failed");
-  m_startThread = ::pthread_self();
-  m_maskNeedsRestore = true;
-  try {
-    m_thread =
-      std::jthread([this](std::stop_token st) { run(st, m_signalFunctions, m_sigset, m_log, m_waitTimeoutMsecs); });
-  } catch (...) {
-    ::pthread_sigmask(SIG_SETMASK, &m_previousSigset, nullptr);
-    m_maskNeedsRestore = false;
-    throw;
-  }
+  m_thread =
+    std::jthread([this](std::stop_token st) { run(st, m_signalFunctions, m_sigset, m_log, m_waitTimeoutMsecs); });
 }
 
 //------------------------------------------------------------------------------
@@ -105,26 +97,6 @@ void SignalReactor::stop() noexcept {
               {semconv::log::exceptionMessage, e.what()}
       });
     }
-  }
-  if (m_maskNeedsRestore) {
-    if (!::pthread_equal(m_startThread, ::pthread_self())) {
-      m_log(
-        log::ERR,
-        "In SignalReactor::stop(): cannot restore the signal mask from a thread other than the one that called start()",
-        {});
-      return;
-    }
-    const int rc = ::pthread_sigmask(SIG_SETMASK, &m_previousSigset, nullptr);
-    if (rc != 0) {
-      m_log(log::ERR,
-            "In SignalReactor::stop(): failed to restore the signal mask",
-            {
-              {"errno",                    std::to_string(rc)},
-              {semconv::log::errorMessage, ::strerror(rc)    }
-      });
-      return;
-    }
-    m_maskNeedsRestore = false;
   }
 }
 
@@ -165,14 +137,6 @@ void SignalReactor::run(std::stop_token st,
         break;
       }
       lc.log(log::INFO, "In SignalReactor::run(): received " + utils::signalToString(signal));
-      // Check whether we have something to do for this signal
-      if (!signalFunctions.contains(signal)) {
-        log::ScopedParamContainer params(lc);
-        params.add("signal", utils::signalToString(signal));
-        lc.log(log::INFO, "In SignalReactor::run(): no action for signal");
-        continue;
-      }
-
       try {
         signalFunctions.at(signal)();
       } catch (const std::exception& ex) {

@@ -15,6 +15,11 @@
 
 namespace unitTests {
 
+TEST(Application, LegacyTelemetryServiceNameUsesDots) {
+  EXPECT_EQ("cta.maintd", cta::runtime::legacyTelemetryServiceName("cta-maintd"));
+  EXPECT_EQ("cta.maintd", cta::runtime::legacyTelemetryServiceName("cta.maintd"));
+}
+
 class SignalMaskGuard {
 public:
   explicit SignalMaskGuard(int signal) {

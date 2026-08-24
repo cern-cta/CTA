@@ -52,6 +52,7 @@ The main idea behind the implementation library here is to separate between (1) 
 Both the commandline arguments and the config file are internally defined as simple immutable struct (a data class if you will).
 In addition, the main App is specified as a simple class.
 This means that the developer defines three things (in this order):
+
 1. The struct to store the commandline options
 2. The struct to store the config
 3. The class of your main application
@@ -133,6 +134,8 @@ public:
   bool isReady() const; // Since there is a health_server config, it MUST have an isReady() function
   // Optional program-owned OpenTelemetry resource attributes.
   std::map<std::string, std::string> getStaticTelemetryAttributes(const CustomConfig& config) const;
+  // Optional program-owned attributes added to every log record.
+  std::map<std::string, std::string> getStaticLogAttributes(const CustomConfig& config) const;
 };
 
 int main(const int argc, char** const argv) {
@@ -146,9 +149,10 @@ int main(const int argc, char** const argv) {
 
 Program-owned telemetry resource attributes can be returned by the optional `getStaticTelemetryAttributes()` application method.
 Operator-configured resource attributes belong in the declarative OpenTelemetry configuration file.
-The runtime uses the application name passed to `Application` unchanged as `service.name`.
+For temporary backward compatibility, the runtime replaces hyphens in the application name with dots for `service.name`.
 Runtime identity attributes such as `service.name`, `service.version`, `service.instance.id`, `host.name`, and the scheduler namespace are reserved.
 Attribute keys and values cannot contain commas, equals signs, carriage returns, or line feeds because they are serialized into `CTA_OTEL_RESOURCE_ATTRIBUTES`.
+Program-owned attributes added to every log record can be returned by the optional `getStaticLogAttributes()` application method.
 
 ## App with Custom CLI options
 

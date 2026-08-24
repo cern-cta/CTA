@@ -24,6 +24,7 @@
 #include "signals/SignalReactorBuilder.hpp"
 #include "version.hpp"
 
+#include <algorithm>
 #include <concepts>
 #include <set>
 #include <signal.h>
@@ -31,6 +32,11 @@
 #include <utility>
 
 namespace cta::runtime {
+
+inline std::string legacyTelemetryServiceName(std::string appName) {
+  std::replace(appName.begin(), appName.end(), '-', '.');
+  return appName;
+}
 
 //------------------------------------------------------------------------------
 // Compile time constraints
@@ -423,14 +429,12 @@ private:
     }
 
     try {
-      // Backward compatibility fix; we should use m_appName directly once the telemetry conventions have been updated
-      std::string legacyServiceName = m_appName;
-      std::replace(legacyServiceName.begin(), legacyServiceName.end(), '-', '.');
+      // Backward compatibility fix; use m_appName directly once telemetry consumers accept the new names.
       std::map<std::string, std::string> ctaResourceAttributes = {
-        {cta::semconv::attr::kServiceName,       m_appName                     },
-        {cta::semconv::attr::kServiceVersion,    std::string(CTA_VERSION)      },
-        {cta::semconv::attr::kServiceInstanceId, cta::utils::generateUuid()    },
-        {cta::semconv::attr::kHostName,          cta::utils::getShortHostname()}
+        {cta::semconv::attr::kServiceName,       legacyTelemetryServiceName(m_appName)},
+        {cta::semconv::attr::kServiceVersion,    std::string(CTA_VERSION)             },
+        {cta::semconv::attr::kServiceInstanceId, cta::utils::generateUuid()           },
+        {cta::semconv::attr::kHostName,          cta::utils::getShortHostname()       }
       };
 
       if constexpr (HasSchedulerConfig<TConfig>) {
@@ -442,10 +446,6 @@ private:
       }
 
       cta::telemetry::initOpenTelemetry(config.telemetry.config_file, ctaResourceAttributes, lc);
-    } catch (const cta::telemetry::InvalidResourceAttribute&) {
-      // Program-provided attributes are programming errors.
-      // They are not recoverable operator configuration failures.
-      throw;
     } catch (exception::Exception& ex) {
       if (config.telemetry.on_init_failure == "fatal") {
         throw;
