@@ -13,13 +13,11 @@
 #include "common/utils/utils.hpp"
 
 #include <chrono>
-#include <cstdlib>
 #include <functional>
 #include <gtest/gtest.h>
 #include <signal.h>
 #include <stdexcept>
 #include <thread>
-#include <unistd.h>
 
 namespace unitTests {
 
@@ -162,27 +160,25 @@ TEST(SignalReactor, StopWakesImmediatelyWithoutCallingSignalFunction) {
 }
 
 TEST(SignalReactor, LeavesUnregisteredSignalsAlone) {
-  ASSERT_EXIT(
-    {
-      cta::log::DummyLogger logger("dummy", "unitTest");
-      // Change the default action of SIGUSR2 to exit with success
-      ::signal(SIGUSR2, [](int) { ::_exit(EXIT_SUCCESS); });
-      sigset_t unregisteredSignal;
-      ::sigemptyset(&unregisteredSignal);
-      ::sigaddset(&unregisteredSignal, SIGUSR2);
-      ::pthread_sigmask(SIG_UNBLOCK, &unregisteredSignal, nullptr);
+  cta::log::DummyLogger logger("dummy", "unitTest");
 
-      // Don't register anything for SIGUSR2, just to check we are not (accidentally) blocking
-      // every single signal
-      auto reactor = cta::runtime::SignalReactorBuilder().addSignalFunction(SIGUSR1, []() {}).build(logger);
-      reactor.start();
+  sigset_t originalMask;
+  ASSERT_EQ(0, ::pthread_sigmask(SIG_SETMASK, nullptr, &originalMask));
 
-      // This should now quit with EXIT_SUCCESS
-      ::raise(SIGUSR2);
-      ::_exit(EXIT_FAILURE);
-    },
-    ::testing::ExitedWithCode(EXIT_SUCCESS),
-    "");
+  sigset_t unregisteredSignal;
+  ASSERT_EQ(0, ::sigemptyset(&unregisteredSignal));
+  ASSERT_EQ(0, ::sigaddset(&unregisteredSignal, SIGUSR2));
+  ASSERT_EQ(0, ::pthread_sigmask(SIG_UNBLOCK, &unregisteredSignal, nullptr));
+
+  auto reactor = cta::runtime::SignalReactorBuilder().addSignalFunction(SIGUSR1, []() {}).build(logger);
+  reactor.start();
+
+  sigset_t reactorMask;
+  ASSERT_EQ(0, ::pthread_sigmask(SIG_SETMASK, nullptr, &reactorMask));
+  EXPECT_EQ(0, ::sigismember(&reactorMask, SIGUSR2));
+
+  reactor.stop();
+  ASSERT_EQ(0, ::pthread_sigmask(SIG_SETMASK, &originalMask, nullptr));
 }
 
 TEST(SignalReactor, RejectsInvalidAndUnhandleableSignals) {
