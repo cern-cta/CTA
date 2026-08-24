@@ -6,11 +6,12 @@
 #include "MaintdApp.hpp"
 #include "MaintdConfig.hpp"
 #include "common/runtime/Application.hpp"
+#include "common/semconv/Attributes.hpp"
 
 int main(const int argc, char** const argv) {
   using namespace cta;
   return runtime::safeRun([argc, argv]() {
-    const std::string appName = "cta-maintd";
+    const std::string appName = cta::semconv::attr::ServiceNameValues::kCtaMaintd;
     const std::string description = R"""(
 Daemon responsible for periodically executing a set of routines. These routines are
 responsible for things such as Reporting archive/retrieve status to the disk buffer,

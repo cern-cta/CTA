@@ -423,6 +423,9 @@ private:
     }
 
     try {
+      // Backward compatibility fix; we should use m_appName directly once the telemetry conventions have been updated
+      std::string legacyServiceName = m_appName;
+      std::replace(legacyServiceName.begin(), legacyServiceName.end(), '-', '.');
       std::map<std::string, std::string> ctaResourceAttributes = {
         {cta::semconv::attr::kServiceName,       m_appName                     },
         {cta::semconv::attr::kServiceVersion,    std::string(CTA_VERSION)      },

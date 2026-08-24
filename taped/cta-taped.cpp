@@ -158,7 +158,7 @@ int main(const int argc, char** const argv) {
       std::string otlpBasicAuthUsername = globalConfig.metricsOtlpAuthBasicUsername.value();
       cta::telemetry::TelemetryConfig telemetryConfig =
         cta::telemetry::TelemetryConfigBuilder()
-          .serviceName(cta::semconv::attr::ServiceNameValues::kCtaTaped)
+          .serviceName(cta::semconv::attr::ServiceNameValuesOld::kCtaTaped)
           .serviceNamespace(globalConfig.instanceName.value())
           .serviceVersion(CTA_VERSION)
           .retainInstanceIdOnRestart(globalConfig.retainInstanceIdOnRestart.value())

@@ -71,7 +71,7 @@ format = "json"
 TEST(Application, AppWithNonExistingConfigFile) {
   using namespace cta;
   const std::string appName = "cta-test";
-  Argv args({appName, "--config", "IdontExistwow"});
+  Argv args({appName, "--config", "IDontExistWow"});
   using App = runtime::Application<TestApp, MinimalTestConfig, runtime::CommonCliOptions>;
   App app(appName, "");
   ASSERT_THROW({ app.run(args.count, args.data()); }, exception::UserError);
