@@ -47,7 +47,7 @@ static bool ctaLogHandlerInstalled = false;
 void initOpenTelemetry(const std::string& configFile,
                        const std::map<std::string, std::string>& ctaResourceAttributes,
                        cta::log::LogContext& lc) {
-  lc.log(log::INFO, "In initOpenTelemetry(): Initialising OpenTelemetry");
+  lc.log(log::DEBUG, "Initialising OpenTelemetry");
   validateResourceAttributes(ctaResourceAttributes);
   // Before we get started, populate the CTA_OTEL_RESOURCE_ATTRIBUTES environment variable
   // This allows operators to reference these in the declarative config
@@ -91,12 +91,12 @@ void initOpenTelemetry(const std::string& configFile,
 
   // Deploy the SDK
   if (sdk == nullptr) {
-    throw cta::exception::NullPtrException("in initOpenTelemetry(): failed to create SDK");
+    throw cta::exception::NullPtrException("Failed to create OpenTelemetry SDK");
   }
   sdk->Install();
   // Ensure all of our instruments are re-initialised to use the newly configured SDK
   cta::telemetry::metrics::initAllInstruments();
-  lc.log(log::INFO, "In initOpenTelemetry(): OpenTelemetry was initialised successfully");
+  lc.log(log::INFO, "OpenTelemetry initialised successfully");
 }
 
 void cleanupOpenTelemetry(cta::log::LogContext& lc) {
@@ -105,7 +105,7 @@ void cleanupOpenTelemetry(cta::log::LogContext& lc) {
     sdk.reset(nullptr);
     // Ensure all of our instruments are NOOP again
     cta::telemetry::metrics::initAllInstruments();
-    lc.log(log::INFO, "In cleanupOpenTelemetry(): OpenTelemetry SDK was cleaned up");
+    lc.log(log::INFO, "OpenTelemetry shut down successfully");
   }
 
   if (ctaLogHandlerInstalled) {

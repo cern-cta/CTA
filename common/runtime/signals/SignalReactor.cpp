@@ -43,7 +43,7 @@ void SignalReactor::start() {
   if (m_hasStarted) {
     throw exception::Exception("In SignalReactor::start(): SignalReactor cannot be started more than once");
   }
-  m_log(log::DEBUG, "In SignalReactor::start(): Blocking and registering signals");
+  m_log(log::DEBUG, "Blocking signals and registering signal callbacks");
   cta::exception::Errnum::throwOnMinusOne(::sigemptyset(&m_sigset), "In SignalReactor::start(): sigemptyset() failed");
   for (const auto& [signal, func] : m_signalFunctions) {
     if (signal == SIGKILL || signal == SIGSTOP || !func) {
@@ -74,7 +74,7 @@ void SignalReactor::start() {
 // SignalReactor::stop
 //------------------------------------------------------------------------------
 void SignalReactor::stop() noexcept {
-  m_log(log::DEBUG, "In SignalReactor::stop(): stopping SignalReactor");
+  m_log(log::DEBUG, "Stopping signal reactor");
   m_thread.request_stop();
   if (m_thread.joinable()) {
     // Signal the thread to wake up from its timed wait for faster shutdown
@@ -82,7 +82,7 @@ void SignalReactor::stop() noexcept {
     const int wakeupRc = ::pthread_kill(m_thread.native_handle(), m_wakeupSignal);
     if (wakeupRc != 0 && wakeupRc != ESRCH) {
       m_log(log::ERR,
-            "In SignalReactor::stop(): failed to wake the SignalReactor thread",
+            "Failed to wake signal reactor thread",
             {
               {"errno",                    std::to_string(wakeupRc)},
               {semconv::log::errorMessage, ::strerror(wakeupRc)    }
@@ -92,7 +92,7 @@ void SignalReactor::stop() noexcept {
       m_thread.join();
     } catch (std::system_error& e) {
       m_log(log::ERR,
-            "In SignalReactor::stop(): failed to join thread",
+            "Failed to join signal reactor thread",
             {
               {semconv::log::exceptionMessage, e.what()}
       });
@@ -109,7 +109,7 @@ void SignalReactor::run(std::stop_token st,
                         cta::log::Logger& log,
                         const uint32_t waitTimeoutMsecs) {
   cta::log::LogContext lc(log);
-  lc.log(log::INFO, "In SignalReactor::run(): Starting SignalReactor");
+  lc.log(log::INFO, "Starting signal reactor");
   timespec ts;
   ts.tv_sec = waitTimeoutMsecs / 1000;
   ts.tv_nsec = (waitTimeoutMsecs % 1000) * 1e6;
@@ -129,35 +129,35 @@ void SignalReactor::run(std::stop_token st,
         log::ScopedParamContainer params(lc);
         params.add("errno", std::to_string(e));
         params.add(semconv::log::errorMessage, ::strerror(e));
-        lc.log(log::WARNING, "In SignalReactor::run(): sigtimedwait failed");
+        lc.log(log::WARNING, "Signal reactor failed to wait for a signal");
         continue;
       }
       // Ensure the m_wakeupSignal doesn't invoke an application callback
       if (st.stop_requested()) {
         break;
       }
-      lc.log(log::INFO, "In SignalReactor::run(): received " + utils::signalToString(signal));
+      lc.log(log::INFO, "Signal reactor received " + utils::signalToString(signal));
       try {
         signalFunctions.at(signal)();
       } catch (const std::exception& ex) {
         log::ScopedParamContainer exParams(lc);
         exParams.add("signal", utils::signalToString(signal));
         exParams.add(semconv::log::exceptionMessage, ex.what());
-        lc.log(log::ERR, "In SignalReactor::run(): signal callback threw an exception");
+        lc.log(log::ERR, "Signal callback threw an exception");
       } catch (...) {
         log::ScopedParamContainer exParams(lc);
         exParams.add("signal", utils::signalToString(signal));
-        lc.log(log::ERR, "In SignalReactor::run(): signal callback threw an unknown exception");
+        lc.log(log::ERR, "Signal callback threw an unknown exception");
       }
     }
   } catch (std::exception& ex) {
     log::ScopedParamContainer exParams(lc);
     exParams.add(semconv::log::exceptionMessage, ex.what());
-    lc.log(log::ERR, "In SignalReactor::run(): received a std::exception.");
+    lc.log(log::ERR, "Signal reactor encountered an exception");
   } catch (...) {
-    lc.log(log::ERR, "In SignalReactor::run(): received an unknown exception.");
+    lc.log(log::ERR, "Signal reactor encountered an unknown exception");
   }
-  lc.log(log::INFO, "In SignalReactor::run(): SignalReactor stopped listening");
+  lc.log(log::INFO, "Signal reactor stopped");
 }
 
 }  // namespace cta::runtime

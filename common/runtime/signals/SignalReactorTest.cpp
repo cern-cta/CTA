@@ -167,6 +167,10 @@ TEST(SignalReactor, LeavesUnregisteredSignalsAlone) {
       cta::log::DummyLogger logger("dummy", "unitTest");
       // Change the default action of SIGUSR2 to exit with success
       ::signal(SIGUSR2, [](int) { ::_exit(EXIT_SUCCESS); });
+      sigset_t unregisteredSignal;
+      ::sigemptyset(&unregisteredSignal);
+      ::sigaddset(&unregisteredSignal, SIGUSR2);
+      ::pthread_sigmask(SIG_UNBLOCK, &unregisteredSignal, nullptr);
 
       // Don't register anything for SIGUSR2, just to check we are not (accidentally) blocking
       // every single signal

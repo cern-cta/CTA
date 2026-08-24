@@ -319,12 +319,12 @@ private:
         cta::telemetry::cleanupOpenTelemetry(lc);
       } catch (const std::exception& ex) {
         log(log::ERR,
-            "Failed to clean up OpenTelemetry",
+            "OpenTelemetry cleanup failed",
             {
               {semconv::log::exceptionMessage, ex.what()}
         });
       } catch (...) {
-        log(log::ERR, "Failed to clean up OpenTelemetry due to an unknown exception", {});
+        log(log::ERR, "OpenTelemetry cleanup failed with an unknown exception", {});
       }
     }
 
@@ -452,7 +452,7 @@ private:
       }
       cta::log::ScopedParamContainer params(lc);
       params.add(semconv::log::exceptionMessage, ex.getMessage().str());
-      lc.log(log::ERR, "Failed to instantiate OpenTelemetry");
+      lc.log(log::ERR, "OpenTelemetry initialization failed");
       cta::telemetry::cleanupOpenTelemetry(lc);
     }
   }

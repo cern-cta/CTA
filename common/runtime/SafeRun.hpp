@@ -48,24 +48,24 @@ int safeRunWithLog(log::Logger& log, F&& func) {
     return func();
   } catch (const exception::UserError& ex) {
     log(log::CRIT,
-        "FATAL: User Error",
+        "Fatal user error",
         {
           {semconv::log::exceptionMessage, ex.getMessage().str()}
     });
   } catch (const exception::Exception& ex) {
     log(log::CRIT,
-        "FATAL: Caught an unexpected CTA exception. Stack trace follows.",
+        "Fatal unexpected CTA exception",
         {
           {semconv::log::exceptionMessage, ex.getMessage().str()}
     });
   } catch (const std::exception& ex) {
     log(log::CRIT,
-        "FATAL: Caught an unexpected exception",
+        "Fatal unexpected exception",
         {
           {semconv::log::exceptionMessage, ex.what()}
     });
   } catch (...) {
-    log(log::CRIT, "FATAL: Caught an unexpected and unknown exception", {});
+    log(log::CRIT, "Fatal unknown exception", {});
   }
   return EXIT_FAILURE;
 }
