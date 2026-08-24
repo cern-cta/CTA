@@ -20,8 +20,14 @@ TEST(SubProcessHelper, basicTests) {
   ASSERT_EQ("", sp2.stdout());
   ASSERT_NE(std::string::npos, sp2.stderr().find("/no/such/file"));
   ASSERT_EQ(1, sp2.exitValue());
-  EXPECT_THROW(cta::threading::SubProcess sp3("/no/such/file", std::list<std::string>({"/no/such/file"})),
-               cta::exception::Errnum);
+  try {
+    cta::threading::SubProcess sp3("/no/such/file", std::list<std::string>({"/no/such/file"}));
+    sp3.wait();
+    EXPECT_NE(0, sp3.exitValue());
+  } catch (const cta::exception::Errnum&) {
+    // Valgrind may report the exec error through a nonzero child exit instead of returning it to the parent.
+    // See https://bugs.kde.org/show_bug.cgi?id=481679
+  }
 }
 
 TEST(SubProcessHelper, testSubprocessWithStdinInput) {
