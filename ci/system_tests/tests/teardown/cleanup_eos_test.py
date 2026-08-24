@@ -11,5 +11,6 @@ from system_tests.helpers.test_env import TestEnv
 
 
 def test_cleanup_eos_directories(env: TestEnv) -> None:
-    env.eos_mgm[0].force_remove_directory(env.eos_mgm[0].base_dir_path / "cta")
-    env.eos_mgm[0].force_remove_directory(env.eos_mgm[0].base_dir_path / "repack")
+    for eos_mgm in env.eos_mgm:
+        eos_mgm.force_remove_directory(eos_mgm.base_dir_path / "cta")
+        eos_mgm.force_remove_directory(eos_mgm.base_dir_path / "repack")

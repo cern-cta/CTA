@@ -8,6 +8,7 @@ from pathlib import Path
 from typing_extensions import override
 
 from system_tests.helpers.connections.remote_connection import RemoteConnection
+from .dcache_client_host import DCACHE_ADMIN_AUTH
 from .disk_instance_host import DiskInstanceHost
 
 
@@ -27,17 +28,32 @@ class DCacheHost(DiskInstanceHost):
     def archive_group(self) -> str:
         return "dcacheusers"
 
+    @cached_property
+    def storage_class(self) -> str:
+        # dCache's default store and storage group are emitted to CTA in this form.
+        return "test:tape@cta"
+
+    @cached_property
+    def webdav_url(self) -> str:
+        return "https://localhost:8083"
+
     @override
     def mkdir(self, directory: Path, parent: bool = True) -> None:
-        if not parent:
-            self.exec(f"chimera mkdir {shlex.quote(str(directory))}")
-            return
+        paths = [directory]
+        if parent:
+            first_part = 2 if directory.is_absolute() else 1
+            paths = [Path(*directory.parts[:index]) for index in range(first_part, len(directory.parts) + 1)]
 
-        first_part = 2 if directory.is_absolute() else 1
-        for index in range(first_part, len(directory.parts) + 1):
-            path = Path(*directory.parts[:index])
-            quoted_path = shlex.quote(str(path))
-            self.exec(f"chimera ls {quoted_path} >/dev/null 2>&1 || chimera mkdir {quoted_path}")
+        for path in paths:
+            remote_path = str(path).lstrip("/")
+            url = shlex.quote(f"{self.webdav_url}/{remote_path}")
+            print(f"Creating dCache directory {path}")
+            status = self.exec_with_output(
+                f"curl -ksS -u {shlex.quote(DCACHE_ADMIN_AUTH)} -X MKCOL -o /dev/null -w '%{{http_code}}' {url}"
+            )
+            if status not in ("201", "405"):
+                raise RuntimeError(f"Failed to create dCache directory {path}: HTTP status {status}")
+            print(f"dCache directory {path}: HTTP {status}")
 
     @override
     def force_remove_directory(self, directory: Path) -> None:

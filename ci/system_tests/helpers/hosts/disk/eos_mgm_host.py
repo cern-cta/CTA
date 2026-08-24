@@ -30,6 +30,10 @@ class EosMgmHost(DiskInstanceHost):
         return "eosusers"
 
     @cached_property
+    def storage_class(self) -> str:
+        return "cta_storage_class"
+
+    @cached_property
     def webdav_url(self) -> str:
         return f"https://{self.instance_name}:8443"
 
