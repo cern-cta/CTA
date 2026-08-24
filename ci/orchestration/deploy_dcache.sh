@@ -20,7 +20,8 @@ usage() {
   echo "options:"
   echo "  -h, --help:                             Shows help output."
   echo "  -n, --namespace <namespace>:            Specify the Kubernetes namespace."
-  echo "  -i, --dcache-image-tag <tag>:           The EOS Docker image tag."
+  echo "  -r, --dcache-image-repository <repo>:   The dCache Docker image repository."
+  echo "  -i, --dcache-image-tag <tag>:           The DCache Docker image tag."
   echo "      --dcache-config <file>:             Values file to use for the dCache chart. Defaults to presets/dev-dcache-values.yaml."
   echo
   exit 1
@@ -43,6 +44,9 @@ deploy() {
       -h | --help) usage ;;
       -n|--namespace)
         namespace="$2"
+        shift ;;
+      -r|--dcache-image-repository)
+        dcache_image_repository="$2"
         shift ;;
       -i|--dcache-image-tag)
         dcache_image_tag="$2"
@@ -67,6 +71,11 @@ deploy() {
 
 
   helm_flags=""
+  if [[ -n "$dcache_image_repository" ]]; then
+    dcache_image_registry="${dcache_image_repository%%/*}"
+    dcache_image_name="${dcache_image_repository#*/}"
+    helm_flags+=" --set image.registry=${dcache_image_registry} --set image.repository=${dcache_image_name}"
+  fi
   if [[ -n "$dcache_image_tag" ]]; then
     helm_flags+=" --set image.tag=${dcache_image_tag}"
   fi
