@@ -149,7 +149,7 @@ class TestEnv:
             ),
             eos_mgm_conns=TestEnv.get_k8s_connections_by_selector(namespace, "app.kubernetes.io/name=mgm", "mgm"),
             dcache_client_conns=TestEnv.get_k8s_connections_by_selector(
-                namespace, "app.kubernetes.io/name=client", "client"
+                namespace, "app.kubernetes.io/component=client", "client"
             ),
             dcache_conns=TestEnv.get_k8s_connections_by_selector(
                 namespace, "app.kubernetes.io/name=dcache", "dcache-door"

@@ -21,6 +21,7 @@ from system_tests.helpers.hosts import (
     CtaTapedHost,
     CtaWorkflowApiHost,
     DCacheHost,
+    DCacheClientHost,
     DiskClientHost,
     DiskInstanceHost,
     EosClientHost,
@@ -129,8 +130,8 @@ def postgres_scheduler_enabled(cta_cli: CtaCliHost) -> bool:
 
 
 @pytest.fixture(scope="session")
-def cta_storage_class() -> str:
-    return "cta_storage_class"
+def cta_storage_class(disk_instance: DiskInstanceHost) -> str:
+    return disk_instance.storage_class
 
 
 @pytest.fixture(scope="session")
@@ -228,6 +229,13 @@ def dcache(env: TestEnv) -> DCacheHost:
     if not env.dcache:
         pytest.skip("This test requires a dCache deployment")
     return env.dcache[0]
+
+
+@pytest.fixture(scope="session")
+def dcache_client(env: TestEnv) -> DCacheClientHost:
+    if not env.dcache_client:
+        pytest.skip("This test requires at least one dCache client")
+    return env.dcache_client[0]
 
 
 @pytest.fixture(scope="session")
