@@ -563,7 +563,7 @@ FrontendService::FrontendService(const std::string& configFilename,
     loadGrpcConfigParams(configFilename, config, log);
 
     if ((m_operationMode != OperationMode::WFE && usesAdminAuthMethod(AuthMethod::JWT))
-        || m_wfeAuthMethod == AuthMethod::JWT) {
+        || (m_operationMode == OperationMode::WFE && m_wfeAuthMethod == AuthMethod::JWT)) {
       // JWT has been enabled
       loadJWTConfigParams(configFilename, config, log);
     }
