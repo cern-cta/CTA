@@ -26,6 +26,10 @@ class EosMgmHost(DiskInstanceHost):
         return Path("/eos") / self.instance_name
 
     @cached_property
+    def archive_group(self) -> str:
+        return "eosusers"
+
+    @cached_property
     def webdav_url(self) -> str:
         return f"https://{self.instance_name}:8443"
 

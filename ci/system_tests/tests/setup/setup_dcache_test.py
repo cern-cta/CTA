@@ -6,7 +6,8 @@
 # =========================================================================
 
 
-from system_tests.helpers.test_env import TestEnv
+from system_tests.helpers.hosts import DCacheHost
 
 
-def test_dcache_version(env: TestEnv) -> None: ...
+def test_dcache_version(dcache: DCacheHost) -> None:
+    assert dcache.instance_name == "dcache"
