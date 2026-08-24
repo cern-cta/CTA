@@ -15,3 +15,7 @@ dcache:
 
   hsm:
     enabled: true
+
+services:
+  srm:
+    enabled: false
