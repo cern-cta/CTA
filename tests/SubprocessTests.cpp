@@ -20,8 +20,14 @@ TEST(SubProcessHelper, basicTests) {
   ASSERT_EQ("", sp2.stdout());
   ASSERT_NE(std::string::npos, sp2.stderr().find("/no/such/file"));
   ASSERT_EQ(1, sp2.exitValue());
-  EXPECT_THROW(cta::threading::SubProcess sp3("/no/such/file", std::list<std::string>({"/no/such/file"})),
-               cta::exception::Errnum);
+  try {
+    cta::threading::SubProcess sp3("/no/such/file", std::list<std::string>({"/no/such/file"}));
+    sp3.wait();
+    EXPECT_EQ(127, sp3.exitValue());
+  } catch (const cta::exception::Errnum&) {
+    // posix_spawn behaves differently under Valgrind. This tests accepts either an immediate ENOENT exception or a success, followed by exit 127.
+    // See https://valgrind.org/docs/manual/manual-core.html#manual-core.pthreads and https://bugs.kde.org/show_bug.cgi?id=481679
+  }
 }
 
 TEST(SubProcessHelper, testSubprocessWithStdinInput) {
