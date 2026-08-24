@@ -23,10 +23,10 @@ TEST(SubProcessHelper, basicTests) {
   try {
     cta::threading::SubProcess sp3("/no/such/file", std::list<std::string>({"/no/such/file"}));
     sp3.wait();
-    EXPECT_EQ(127, sp3.exitValue());
+    EXPECT_NE(0, sp3.exitValue());
   } catch (const cta::exception::Errnum&) {
-    // posix_spawn behaves differently under Valgrind. This tests accepts either an immediate ENOENT exception or a success, followed by exit 127.
-    // See https://valgrind.org/docs/manual/manual-core.html#manual-core.pthreads and https://bugs.kde.org/show_bug.cgi?id=481679
+    // Valgrind may report the exec error through a nonzero child exit instead of returning it to the parent.
+    // See https://bugs.kde.org/show_bug.cgi?id=481679
   }
 }
 
