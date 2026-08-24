@@ -74,6 +74,7 @@ enable_debug_image=false
 # Deploy
 cta_image_registry=""
 dcache_enabled=false
+dcache_image_repository=""
 eos_enabled=true
 local_telemetry=false
 publish_telemetry=false
@@ -339,27 +340,28 @@ Usage:
   $(basename "$0") deploy [options]
 
 Options:
-      --namespace <ns>             Kubernetes namespace.
-                                   Defaults to dev.
-      --catalogue-config <path>    Catalogue values file.
-      --scheduler-config <path>    Scheduler values file.
-      --cta-config <paths>         Additional CTA Helm values.
-                                   Comma-separated list.
-      --eos-config <path>          EOS Helm values.
-      --eos-image-repository <r>   EOS image repository.
-      --eos-image-tag <tag>        EOS image tag.
-      --cta-image-tag <tag>        Deploy the images with this tag instead of
-                                   the ones built locally for the CTA version,
-                                   for example an image tag built by the CI.
-                                   Cannot be combined with --cta-version.
-      --cta-image-registry <reg>   Registry to deploy the CTA images from.
-                                   Defaults to ${local_image_registry}, or to
-                                   ${ci_image_registry} when --cta-image-tag
-                                   is given.
-      --spawn-options <options>    Additional deployment options.
-      --with-dcache                Deploy dCache instead of EOS.
-      --local-telemetry            Deploy a local telemetry stack.
-      --publish-telemetry          Publish telemetry to the configured backend.
+      --namespace <ns>              Kubernetes namespace.
+                                    Defaults to dev.
+      --catalogue-config <path>     Catalogue values file.
+      --scheduler-config <path>     Scheduler values file.
+      --cta-config <paths>          Additional CTA Helm values.
+                                    Comma-separated list.
+      --eos-config <path>           EOS Helm values.
+      --eos-image-repository <r>    EOS image repository.
+      --eos-image-tag <tag>         EOS image tag.
+      --cta-image-tag <tag>         Deploy the images with this tag instead of
+                                    the ones built locally for the CTA version,
+                                    for example an image tag built by the CI.
+                                    Cannot be combined with --cta-version.
+      --cta-image-registry <reg>    Registry to deploy the CTA images from.
+                                    Defaults to ${local_image_registry}, or to
+                                    ${ci_image_registry} when --cta-image-tag
+                                    is given.
+      --dcache-image-repository <r> dCache image repository.
+      --spawn-options <options>     Additional deployment options.
+      --with-dcache                 Deploy dCache instead of EOS.
+      --local-telemetry             Deploy a local telemetry stack.
+      --publish-telemetry           Publish telemetry to the configured backend.
 
 $(global_options_help)
 
@@ -585,6 +587,11 @@ parse_options() {
       --eos-image-tag)
         require_command "$1" "$command" deploy up debug all
         eos_image_tag="$2"
+        shift
+        ;;
+      --dcache-image-repository)
+        require_command "$1" "$command" deploy up debug all
+        dcache_image_repository="$2"
         shift
         ;;
       --catalogue-config)
@@ -1123,6 +1130,7 @@ deploy_cta() {
   cd "${project_root}/ci/orchestration"
   [[ -n $eos_image_repository ]] && extra_spawn_options+=(--eos-image-repository "$eos_image_repository")
   [[ -n $eos_image_tag ]] && extra_spawn_options+=(--eos-image-tag "$eos_image_tag")
+  [[ -n $dcache_image_repository ]] && extra_spawn_options+=(--dcache-image-repository "$dcache_image_repository")
   [[ -n $eos_config ]] && extra_spawn_options+=(--eos-config "$eos_config")
   [[ -n $cta_config ]] && extra_spawn_options+=(--cta-config "$cta_config")
   [[ $local_telemetry == true ]] && extra_spawn_options+=(--local-telemetry)

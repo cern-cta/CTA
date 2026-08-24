@@ -27,6 +27,7 @@ usage() {
   echo "      --eos-image-repository <repo>:  Docker image for EOS chart. Should be the full image name, e.g. \"gitlab-registry.cern.ch/dss/eos/eos-ci\"."
   echo "      --eos-config <file>:            Values file to use for the EOS chart."
   echo "      --eos-enabled <true|false>:     Whether to spawn an EOS instance or not. Defaults to true."
+  echo "      --dcache-image-repository <repo>: Docker image repository for the dCache chart."
   echo "      --dcache-enabled <true|false>:  Whether to spawn a dCache instance or not. Defaults to false."
   echo "      --cta-config <files>:           Values file(s) to use for the CTA chart. Comma-separated for composition."
   echo "      --chart-install-timeout <min>:  CTA Helm chart installation timeout in minutes."
@@ -150,6 +151,7 @@ create_instance() {
   eos_config=presets/eos/auth-jwt.yaml
   eos_enabled=true
   # dCache
+  dcache_image_repository=$(jq -r .dev.dCacheImageRepository ${project_json_path})
   dcache_image_tag=$(jq -r .dev.dCacheImageTag ${project_json_path})
   dcache_config=presets/dev-dcache-values.yaml
   dcache_enabled=false
@@ -206,6 +208,9 @@ create_instance() {
         shift ;;
       --dcache-enabled)
         dcache_enabled="$2"
+        shift ;;
+      --dcache-image-repository)
+        dcache_image_repository="$2"
         shift ;;
       --cta-config)
         cta_config=""
@@ -374,6 +379,7 @@ create_instance() {
   if [[ $dcache_enabled == "true" ]]; then
     ./deploy_dcache.sh --namespace "${namespace}" \
                        --dcache-config "${dcache_config}" \
+                       --dcache-image-repository "${dcache_image_repository}" \
                        --dcache-image-tag "${dcache_image_tag}" &
     dcache_pid=$!
   fi
