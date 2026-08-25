@@ -61,10 +61,10 @@ private:
   // GSS
   gss_buffer_desc m_gssRecvToken {0, GSS_C_NO_BUFFER};  // length, value
   gss_buffer_desc m_gssSendToken {0, GSS_C_NO_BUFFER};
-  gss_name_t m_gssNameSpn;
+  gss_name_t m_gssNameSpn = GSS_C_NO_NAME;
   gss_ctx_id_t m_gssCtx = {GSS_C_NO_CONTEXT};
   OM_uint32 m_gssMajStat = {GSS_S_CONTINUE_NEEDED};
-  OM_uint32 m_gssMinStat;
+  OM_uint32 m_gssMinStat = 0;
   OM_uint32 m_gssRetFlags = {GSS_C_REPLAY_FLAG | GSS_C_SEQUENCE_FLAG | GSS_C_MUTUAL_FLAG};
   gss_cred_id_t m_gssCred = {GSS_C_NO_CREDENTIAL};
 

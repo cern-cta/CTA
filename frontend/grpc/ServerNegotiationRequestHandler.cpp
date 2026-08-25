@@ -103,8 +103,8 @@ void cta::frontend::grpc::server::NegotiationRequestHandler::releaseName(const s
 void cta::frontend::grpc::server::NegotiationRequestHandler::acquireCreds(const std::string& strService,
                                                                           gss_OID gssMech,
                                                                           gss_cred_id_t* pGssServerCreds) {
-  gss_buffer_desc gssNameBuf;
-  gss_name_t gssServerName;
+  gss_buffer_desc gssNameBuf = GSS_C_EMPTY_BUFFER;
+  gss_name_t gssServerName = GSS_C_NO_NAME;
   OM_uint32 gssMajStat, gssMinStat;
   gss_OID_set_desc gssMechlist;
   gss_OID_set gssMechs = GSS_C_NO_OID_SET;
@@ -217,8 +217,7 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
       // Accept sec context
       gss_buffer_desc gssRecvToken {0, GSS_C_NO_BUFFER};  // length, value
       gss_buffer_desc gssSendToken {0, GSS_C_NO_BUFFER};
-      ;
-      gss_name_t gssSrcName;
+      gss_name_t gssSrcName = GSS_C_NO_NAME;
       gss_OID gssOidMechType;
       OM_uint32 gssMajStat;
       OM_uint32 gssAccSecMinStat;
@@ -264,7 +263,7 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
           m_response.set_token(nonce);
 
           // Extract the local username (without realm) from the GSS context
-          gss_buffer_desc gssLocalNameBuf;
+          gss_buffer_desc gssLocalNameBuf = GSS_C_EMPTY_BUFFER;
           OM_uint32 gssLocalNameMajStat, gssLocalNameMinStat;
           gssLocalNameMajStat = gss_localname(&gssLocalNameMinStat, gssSrcName, GSS_C_NO_OID, &gssLocalNameBuf);
 
