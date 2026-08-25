@@ -33,7 +33,7 @@ HealthServer::HealthServer(cta::log::Logger& log,
     throw exception::UserError("HealthServer host cannot be empty");
   }
   if (isUdsHost(m_host)) {
-    m_log(log::INFO, "In HealthServer::HealthServer(): Unix Domain Socket detected.");
+    m_log(log::INFO, "Unix domain socket detected for health server");
     // technically the port shouldn't be used but the httplib example uses port 80
     // Anyway, this value doesn't affect how the socket is contacted
     m_port = 80;
@@ -60,25 +60,57 @@ bool HealthServer::isUdsHost(std::string_view host) {
 //------------------------------------------------------------------------------
 void HealthServer::start() {
   m_server = std::make_unique<httplib::Server>();
-  m_server->Get("/health/ready", [readinessFunc = m_readinessFunc](const httplib::Request&, httplib::Response& res) {
-    if (readinessFunc()) {
-      res.status = 200;
-      res.set_content("ok\n", "text/plain");
-    } else {
-      res.status = 503;
-      res.set_content("not ready\n", "text/plain");
-    }
-  });
+  // Health checks run application code on the HTTP server thread.
+  // Convert exceptions to 503 responses so a broken check cannot stop the server.
+  m_server->Get("/health/ready",
+                [readinessFunc = m_readinessFunc, &log = m_log](const httplib::Request&, httplib::Response& res) {
+                  try {
+                    if (readinessFunc()) {
+                      res.status = 200;
+                      res.set_content("ok\n", "text/plain");
+                    } else {
+                      res.status = 503;
+                      res.set_content("not ready\n", "text/plain");
+                    }
+                  } catch (const std::exception& ex) {
+                    log(log::ERR,
+                        "Readiness check threw an exception",
+                        {
+                          {semconv::log::exceptionMessage, ex.what()}
+                    });
+                    res.status = 503;
+                    res.set_content("readiness check failed\n", "text/plain");
+                  } catch (...) {
+                    log(log::ERR, "Readiness check threw an unknown exception", {});
+                    res.status = 503;
+                    res.set_content("readiness check failed\n", "text/plain");
+                  }
+                });
 
-  m_server->Get("/health/live", [livenessFunc = m_livenessFunc](const httplib::Request&, httplib::Response& res) {
-    if (livenessFunc()) {
-      res.status = 200;
-      res.set_content("ok\n", "text/plain");
-    } else {
-      res.status = 503;
-      res.set_content("not live\n", "text/plain");
-    }
-  });
+  m_server->Get("/health/live",
+                [livenessFunc = m_livenessFunc, &log = m_log](const httplib::Request&, httplib::Response& res) {
+                  try {
+                    if (livenessFunc()) {
+                      res.status = 200;
+                      res.set_content("ok\n", "text/plain");
+                    } else {
+                      res.status = 503;
+                      res.set_content("not live\n", "text/plain");
+                    }
+                  } catch (const std::exception& ex) {
+                    log(log::ERR,
+                        "Liveness check threw an exception",
+                        {
+                          {semconv::log::exceptionMessage, ex.what()}
+                    });
+                    res.status = 503;
+                    res.set_content("liveness check failed\n", "text/plain");
+                  } catch (...) {
+                    log(log::ERR, "Liveness check threw an unknown exception", {});
+                    res.status = 503;
+                    res.set_content("liveness check failed\n", "text/plain");
+                  }
+                });
 
   // Prevent multiple processes being able to listen on the same port
   // So explicitly disable SO_REUSEPORT
@@ -95,7 +127,7 @@ void HealthServer::start() {
     // Small check interval to ensure we can start quickly
     utils::waitForCondition([this]() { return isRunning(); }, m_listenTimeoutMsec, 10);
   } catch (const cta::exception::TimeOut&) {
-    m_log(log::ERR, "In HealthServer::start(): failed to start healthServer");
+    m_log(log::ERR, "Health server failed to start");
     stop();
   }
 }
@@ -104,7 +136,7 @@ void HealthServer::start() {
 // HealthServer::stop
 //------------------------------------------------------------------------------
 void HealthServer::stop() noexcept {
-  m_log(log::INFO, "In HealthServer::stop(): stopping HealthServer");
+  m_log(log::DEBUG, "Stopping health server");
   if (m_thread.joinable()) {
     if (m_server) {
       m_server->stop();
@@ -113,7 +145,7 @@ void HealthServer::stop() noexcept {
       m_thread.join();
     } catch (std::system_error& e) {
       m_log(log::ERR,
-            "In HealthServer::stop(): failed to join thread",
+            "Failed to join health server thread",
             {
               {semconv::log::exceptionMessage, e.what()}
       });
@@ -138,7 +170,7 @@ void HealthServer::run(httplib::Server& server, std::string host, int port, cta:
   // LogContext is not thread safe, which is why we pass in the logger and not the logcontext
   cta::log::LogContext lc(log);
   try {
-    lc.log(log::INFO, "In HealthServer::run(): starting HealthServer");
+    lc.log(log::INFO, "Starting health server");
     bool listenSuccess;
     if (isUdsHost(host)) {
       // Unix domain socket
@@ -151,17 +183,17 @@ void HealthServer::run(httplib::Server& server, std::string host, int port, cta:
       log::ScopedParamContainer params(lc);
       params.add("host", host);
       params.add("port", port);
-      lc.log(log::ERR, "In HealthServer::run(): listen() failed. Port potentially already in use");
+      lc.log(log::ERR, "Health server failed to listen; address may already be in use");
       return;
     }
   } catch (std::exception& ex) {
     log::ScopedParamContainer exParams(lc);
     exParams.add(semconv::log::exceptionMessage, ex.what());
-    lc.log(log::ERR, "In HealthServer::run(): received an exception");
+    lc.log(log::ERR, "Health server encountered an exception");
   } catch (...) {
-    lc.log(log::ERR, "In HealthServer::run(): received an unknown exception");
+    lc.log(log::ERR, "Health server encountered an unknown exception");
   }
-  lc.log(log::INFO, "In HealthServer::run(): HealthServer stopped listening");
+  lc.log(log::INFO, "Health server stopped");
 }
 
 }  // namespace cta::runtime

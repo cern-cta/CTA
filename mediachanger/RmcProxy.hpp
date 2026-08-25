@@ -31,7 +31,7 @@ public:
    * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @param netTimeout The timeout in seconds to be applied when performing
    * network read and write operations.
-   * @parm maxRqstAttempts The maximum number of attempts a retriable RMC
+   * @param maxRqstAttempts The maximum number of attempts a retriable RMC
    * request should be issued.
    */
   explicit RmcProxy(const std::string& rmcHost = "localhost",

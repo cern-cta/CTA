@@ -8,6 +8,7 @@
 #include "common/log/Logger.hpp"
 
 #include <functional>
+#include <signal.h>
 #include <thread>
 #include <unordered_map>
 
@@ -27,15 +28,14 @@ namespace cta::runtime {
 class SignalReactor final {
 public:
   SignalReactor(cta::log::Logger& log,
-                const sigset_t& sigset,
                 const std::unordered_map<int, std::function<void()>>& signalFunctions,
                 uint32_t waitTimeoutMsecs);
 
   ~SignalReactor();
 
   /**
-   * Starts the SignalReactor on a separate thread. Note that this will block all registered signals on all threads when this is called.
-   * As such, for this to work correctly, the SignalReactor must be started before any other threads start
+   * Starts the SignalReactor on a separate thread. This blocks registered signals on the calling thread; subsequently
+   * created threads inherit that mask. The reactor must therefore be started before any other threads are created.
    */
   void start();
 
@@ -49,14 +49,17 @@ public:
                   const uint32_t waitTimeoutMsecs);
 
   /**
-   * Stop the SignalReactor (both the thread and the waiting for signal)
+   * Stops the SignalReactor thread. Registered signals remain blocked because the reactor is process-lifetime infrastructure.
    */
   void stop() noexcept;
 
 private:
   cta::log::Logger& m_log;
-  const sigset_t m_sigset;
+  sigset_t m_sigset;
   std::unordered_map<int, std::function<void()>> m_signalFunctions;
+
+  bool m_hasStarted = false;
+  int m_wakeupSignal = 0;
 
   // The thread the signalReactor will run on when start() is called
   std::jthread m_thread;

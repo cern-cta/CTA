@@ -10,9 +10,31 @@
 #include <chrono>
 #include <functional>
 #include <gtest/gtest.h>
+#include <stdexcept>
 #include <thread>
 
 namespace unitTests {
+
+TEST(Application, LegacyTelemetryServiceNameUsesDots) {
+  EXPECT_EQ("cta.maintd", cta::runtime::legacyTelemetryServiceName("cta-maintd"));
+  EXPECT_EQ("cta.maintd", cta::runtime::legacyTelemetryServiceName("cta.maintd"));
+}
+
+class SignalMaskGuard {
+public:
+  explicit SignalMaskGuard(int signal) {
+    sigset_t signals;
+    if (::sigemptyset(&signals) != 0 || ::sigaddset(&signals, signal) != 0
+        || ::pthread_sigmask(SIG_BLOCK, &signals, &m_previousMask) != 0) {
+      throw std::runtime_error("Failed to block signal for test");
+    }
+  }
+
+  ~SignalMaskGuard() { ::pthread_sigmask(SIG_SETMASK, &m_previousMask, nullptr); }
+
+private:
+  sigset_t m_previousMask;
+};
 
 struct MinimalTestConfig {
   cta::runtime::LoggingConfig logging;
@@ -54,7 +76,7 @@ format = "json"
 TEST(Application, AppWithNonExistingConfigFile) {
   using namespace cta;
   const std::string appName = "cta-test";
-  Argv args({appName, "--config", "IdontExistwow"});
+  Argv args({appName, "--config", "IDontExistWow"});
   using App = runtime::Application<TestApp, MinimalTestConfig, runtime::CommonCliOptions>;
   App app(appName, "");
   ASSERT_THROW({ app.run(args.count, args.data()); }, exception::UserError);
@@ -208,8 +230,13 @@ level = "WARNING"
 TEST(Application, AppHandlesSigTerm) {
   using namespace cta;
 
+  // Application must start before any unblocked threads exist. Block SIGTERM before creating the sender so it inherits
+  // the correct mask, leaving the SignalReactor as the only thread that consumes the process-directed signal.
+  SignalMaskGuard signalMaskGuard(SIGTERM);
+
   // Global so that we can wait for this later on
   static std::atomic<bool> stoppableTestApprunning = false;
+  stoppableTestApprunning = false;
 
   class TestStoppableApp {
   public:
@@ -234,17 +261,24 @@ format = "json"
 )toml",
              ".toml");
 
-  std::atomic<int> rc = EXIT_FAILURE;
   const std::string appName = "cta-test";
   Argv args({appName, "--config", f.path()});
   runtime::Application<TestStoppableApp, MinimalTestConfig, runtime::CommonCliOptions> app(appName, "");
-  std::jthread thread([&]() { rc = app.run(args.count, args.data()); });
-  // Give it some time to start
-  cta::utils::waitForCondition([&]() { return stoppableTestApprunning == true; }, 2000, 10);
-  ASSERT_EQ(0, ::kill(::getpid(), SIGTERM));
-  cta::utils::waitForCondition([&]() { return rc == EXIT_SUCCESS; }, 2000, 100);
-  ASSERT_EQ(rc, EXIT_SUCCESS);
-  ASSERT_TRUE(thread.joinable());
+  std::atomic<int> signalResult = -1;
+  std::jthread signalSender([&]() {
+    try {
+      cta::utils::waitForCondition([&]() { return stoppableTestApprunning == true; }, 2000, 10);
+      signalResult = ::kill(::getpid(), SIGTERM);
+    } catch (...) {
+      signalResult = -1;
+    }
+  });
+
+  const int rc = app.run(args.count, args.data());
+  signalSender.join();
+
+  EXPECT_EQ(0, signalResult);
+  EXPECT_EQ(EXIT_SUCCESS, rc);
 }
 
 }  // namespace unitTests

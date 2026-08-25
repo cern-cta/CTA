@@ -311,7 +311,7 @@ FrontendService::FrontendService(const std::string& configFilename,
 
       cta::telemetry::TelemetryConfig telemetryConfig =
         cta::telemetry::TelemetryConfigBuilder()
-          .serviceName(cta::semconv::attr::ServiceNameValues::kCtaFrontend)
+          .serviceName(cta::semconv::attr::ServiceNameValuesOld::kCtaFrontend)
           .serviceNamespace(m_instanceName)
           .serviceVersion(CTA_VERSION)
           .retainInstanceIdOnRestart(retainInstanceIdOnRestart)

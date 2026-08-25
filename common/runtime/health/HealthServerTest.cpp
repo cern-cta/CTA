@@ -13,6 +13,7 @@
 #include <chrono>
 #include <gtest/gtest.h>
 #include <httplib.h>
+#include <stdexcept>
 
 namespace unitTests {
 
@@ -143,6 +144,36 @@ TEST(HealthServer, LiveEndpointNotLive) {
   ASSERT_TRUE(res) << "connection failed";
   EXPECT_EQ(res->status, 503);
   EXPECT_NE(res->body.find("not live"), std::string::npos);
+}
+
+TEST(HealthServer, ReadyEndpointReturnsUnavailableWhenCheckThrows) {
+  cta::log::DummyLogger dl("dummy", "unitTest");
+
+  const std::string host = "127.0.0.1";
+  const int64_t port = getFreePort();
+  cta::runtime::HealthServer
+  hs(dl, host, port, []() -> bool { throw std::runtime_error("readiness failure"); }, []() { return true; });
+  hs.start();
+
+  auto res = httpGet(host, port, "/health/ready");
+  ASSERT_TRUE(res) << "connection failed";
+  EXPECT_EQ(res->status, 503);
+  EXPECT_NE(res->body.find("readiness check failed"), std::string::npos);
+}
+
+TEST(HealthServer, LiveEndpointReturnsUnavailableWhenCheckThrows) {
+  cta::log::DummyLogger dl("dummy", "unitTest");
+
+  const std::string host = "127.0.0.1";
+  const int64_t port = getFreePort();
+  cta::runtime::HealthServer
+    hs(dl, host, port, []() { return true; }, []() -> bool { throw std::runtime_error("liveness failure"); });
+  hs.start();
+
+  auto res = httpGet(host, port, "/health/live");
+  ASSERT_TRUE(res) << "connection failed";
+  EXPECT_EQ(res->status, 503);
+  EXPECT_NE(res->body.find("liveness check failed"), std::string::npos);
 }
 
 TEST(HealthServer, EmptyHostThrowsUserError) {
