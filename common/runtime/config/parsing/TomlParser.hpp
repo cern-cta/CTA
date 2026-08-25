@@ -158,19 +158,22 @@ ParseResult parseNode(T& out,
   using F = std::remove_cvref_t<T>;
   if constexpr (std::same_as<F, bool>) {
     if (!node.is_boolean()) {
-      return ParseResult::error("Field '" + std::string(fieldName) + "' has an invalid value or type.");
+      return ParseResult::error("Field '" + std::string(fieldName) + "' must be a boolean.");
     }
   } else if constexpr (std::integral<F>) {
     if (!node.is_integer()) {
-      return ParseResult::error("Field '" + std::string(fieldName) + "' has an invalid value or type.");
+      return ParseResult::error("Field '" + std::string(fieldName) + "' must be an integer.");
     }
   } else if constexpr (std::floating_point<F>) {
     if (!node.is_floating_point()) {
-      return ParseResult::error("Field '" + std::string(fieldName) + "' has an invalid value or type.");
+      return ParseResult::error("Field '" + std::string(fieldName) + "' must be a floating-point number.");
     }
   }
   auto val = node.value<F>();
   if (!val) {
+    if constexpr (std::integral<F> || std::floating_point<F>) {
+      return ParseResult::error("Field '" + std::string(fieldName) + "' is outside the supported range.");
+    }
     return ParseResult::error("Field '" + std::string(fieldName) + "' has an invalid value or type.");
   }
   out = std::move(*val);
@@ -216,7 +219,7 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
     // In strict mode, we need to do a second pass to spot keys in the TOML but not in T
     for (const auto& [key, value] : tbl) {
       if (!seenFields.contains(key)) {
-        errs.push_back(ParseResult::error("Unknown field '" + std::string(key) + "' in configuration."));
+        errs.push_back(ParseResult::error("Unknown field '" + std::string(key) + "'."));
       }
     }
   }

@@ -76,6 +76,24 @@ struct ComplexConfig {
   static constexpr std::size_t memberCount() { return 9; }
 };
 
+struct ErrorMessageConfig {
+  int mandatory;
+  std::optional<int> maybe = std::nullopt;
+  std::string default_value = "default_value";
+  Endpoint endpoint;
+  Limits limits;
+  std::vector<User> users;
+  std::map<std::string, std::vector<int>> matrix;
+  std::vector<std::vector<int>> nested_arrays;
+  std::optional<std::vector<std::map<std::string, int>>> maybe_tables = std::nullopt;
+  bool boolean = false;
+  double floating = 0.0;
+  std::uint8_t narrow = 0;
+  std::string text;
+
+  static constexpr std::size_t memberCount() { return 13; }
+};
+
 struct IntegerConfig {
   std::int8_t signed_8 = 0;
   std::uint8_t unsigned_8 = 0;
@@ -623,6 +641,10 @@ mandatory = 7
 # maybe should be an int, not a string
 maybe = "123"
 default_value = "hi"
+boolean = 1
+floating = true
+narrow = 256
+text = 1
 
 # a is supposed to be a list
 matrix = { a = "hello" }
@@ -650,19 +672,23 @@ per_user = { alice = "5", bob = 10, "svc-account" = 1 }
              ".toml");
 
   try {
-    cta::runtime::loadFromToml<ComplexConfig>(f.path(), false);
+    cta::runtime::loadFromToml<ErrorMessageConfig>(f.path(), false);
     FAIL() << "Expected cta::exception::UserError";
   } catch (const cta::exception::UserError& e) {
     std::string expectedErrorMessage = "Invalid config in '" + f.path() + R"""(':
-1) Failed to parse field 'limits':
-    1) Field 'max_conn' has an invalid value or type.
+1) Field 'boolean' must be a boolean.
+2) Field 'floating' must be a floating-point number.
+3) Field 'narrow' is outside the supported range.
+4) Field 'text' has an invalid value or type.
+5) Failed to parse field 'limits':
+    1) Field 'max_conn' must be an integer.
     2) Field 'retry_backoff_ms' must be an array.
     3) Failed to parse field 'per_user':
-        1) Field 'alice' has an invalid value or type.
-2) Failed to parse field 'matrix':
+        1) Field 'alice' must be an integer.
+6) Failed to parse field 'matrix':
     1) Field 'a' must be an array.
-3) Failed to parse field 'maybe':
-    1) Field 'maybe' has an invalid value or type.
+7) Failed to parse field 'maybe':
+    1) Field 'maybe' must be an integer.
 
 )""";
     EXPECT_EQ(std::string(e.what()), expectedErrorMessage);
@@ -1113,6 +1139,10 @@ mandatory = 7
 # maybe should be an int, not a string
 maybe = "123"
 default_value = "hi"
+boolean = 1
+floating = true
+narrow = 256
+text = 1
 
 # a is supposed to be a list
 matrix = { a = "hello" }
@@ -1140,21 +1170,25 @@ per_user = { alice = "5", bob = 10, "svc-account" = 1 }
              ".toml");
 
   try {
-    cta::runtime::loadFromToml<ComplexConfig>(f.path(), true);
+    cta::runtime::loadFromToml<ErrorMessageConfig>(f.path(), true);
     FAIL() << "Expected cta::exception::UserError";
   } catch (const cta::exception::UserError& e) {
     std::string expectedErrorMessage = "Invalid config in '" + f.path() + R"""(':
 1) Expected field 'users' is missing.
-2) Unknown field 'idontexist' in configuration.
-3) Failed to parse field 'limits':
-    1) Field 'max_conn' has an invalid value or type.
+2) Field 'boolean' must be a boolean.
+3) Field 'floating' must be a floating-point number.
+4) Field 'narrow' is outside the supported range.
+5) Field 'text' has an invalid value or type.
+6) Unknown field 'idontexist'.
+7) Failed to parse field 'limits':
+    1) Field 'max_conn' must be an integer.
     2) Field 'retry_backoff_ms' must be an array.
     3) Failed to parse field 'per_user':
-        1) Field 'alice' has an invalid value or type.
-4) Failed to parse field 'matrix':
+        1) Field 'alice' must be an integer.
+8) Failed to parse field 'matrix':
     1) Field 'a' must be an array.
-5) Failed to parse field 'maybe':
-    1) Field 'maybe' has an invalid value or type.
+9) Failed to parse field 'maybe':
+    1) Field 'maybe' must be an integer.
 
 )""";
     EXPECT_EQ(std::string(e.what()), expectedErrorMessage);
