@@ -1,3 +1,28 @@
+## 5.11.21.0-1 (2026-08-25)
+
+### New Features
+
+- [scheduler] Add scheduler workflow metrics to OpenTelementry (cta/CTA!1387)
+
+
+### Changes
+
+- [Tools] Move cta-admin af ch command to tf ch (cta/CTA!1525)
+- [Tools] Replace cta-objectstore-tools.conf with cta-scheduler.conf (cta/CTA!1540)
+- [maintd] Change scheduler.objectstore_backend_path to scheduler.config_file (cta/CTA!1518)
+
+
+### Bug Fixes
+
+- [frontend] Fix logic bug in frontend authentication and SEGFAULT in cta-admin (cta/CTA!1558)
+- [Tools] Fix cta-verify-file (cta/CTA!1545)
+- [Tools] Add `--storage-class` option to `cta-send-event` (cta/CTA!1542)
+
+
+### Performance Improvements
+
+- [taped] Skip block reposition request if drive is already positioned correctly (cta/CTA!1527)
+
 ## 5.11.20.0-1
 
 ### New Features
