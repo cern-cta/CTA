@@ -8,9 +8,11 @@
 #include "common/runtime/RuntimeTestHelpers.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
+#include <limits>
 #include <string>
 #include <utility>
 
@@ -74,6 +76,57 @@ struct ComplexConfig {
   static constexpr std::size_t memberCount() { return 9; }
 };
 
+struct ErrorMessageConfig {
+  int mandatory;
+  std::optional<int> maybe = std::nullopt;
+  std::string default_value = "default_value";
+  Endpoint endpoint;
+  Limits limits;
+  std::vector<User> users;
+  std::map<std::string, std::vector<int>> matrix;
+  std::vector<std::vector<int>> nested_arrays;
+  std::optional<std::vector<std::map<std::string, int>>> maybe_tables = std::nullopt;
+  bool boolean = false;
+  double floating = 0.0;
+  std::uint8_t narrow = 0;
+  std::string text;
+
+  static constexpr std::size_t memberCount() { return 13; }
+};
+
+struct IntegerConfig {
+  std::int8_t signed_8 = 0;
+  std::uint8_t unsigned_8 = 0;
+
+  static constexpr std::size_t memberCount() { return 2; }
+};
+
+struct ScalarConfig {
+  bool boolean = false;
+  int integer = 0;
+
+  static constexpr std::size_t memberCount() { return 2; }
+};
+
+struct FloatingPointConfig {
+  float single_precision = 0.0F;
+  double double_precision = 0.0;
+
+  static constexpr std::size_t memberCount() { return 2; }
+};
+
+struct LongLongConfig {
+  long long value = 0;
+
+  static constexpr std::size_t memberCount() { return 1; }
+};
+
+struct OptionalAggregateConfig {
+  std::optional<Endpoint> endpoint = std::nullopt;
+
+  static constexpr std::size_t memberCount() { return 1; }
+};
+
 //------------------------------------------------------------------------------
 // Tests
 //------------------------------------------------------------------------------
@@ -81,6 +134,102 @@ struct ComplexConfig {
 TEST(ConfigLoader, ThrowsOnNonExistingPath) {
   EXPECT_THROW((cta::runtime::loadFromToml<MyConfig>("/tmp/idefinitelydontexist.toml", false)),
                cta::exception::UserError);
+}
+
+TEST(ConfigLoader, AllowsIntegerValuesAtDestinationTypeBounds) {
+  TempFile f(R"toml(
+signed_8 = -128
+unsigned_8 = 255
+)toml",
+             ".toml");
+
+  const auto config = cta::runtime::loadFromToml<IntegerConfig>(f.path());
+  EXPECT_EQ(config.signed_8, std::numeric_limits<std::int8_t>::min());
+  EXPECT_EQ(config.unsigned_8, std::numeric_limits<std::uint8_t>::max());
+}
+
+TEST(ConfigLoader, ThrowsOnNegativeIntegerForUnsignedDestination) {
+  TempFile f("unsigned_8 = -1\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<IntegerConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, ThrowsOnIntegerBelowDestinationTypeMinimum) {
+  TempFile f("signed_8 = -129\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<IntegerConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, ThrowsOnIntegerAboveSignedDestinationTypeMaximum) {
+  TempFile f("signed_8 = 128\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<IntegerConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, ThrowsOnIntegerAboveUnsignedDestinationTypeMaximum) {
+  TempFile f("unsigned_8 = 256\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<IntegerConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, ThrowsOnIntegerForBooleanDestination) {
+  TempFile f("boolean = 2\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<ScalarConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, ThrowsOnBooleanForIntegerDestination) {
+  TempFile f("integer = true\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<ScalarConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, ThrowsOnFloatingPointForIntegerDestination) {
+  TempFile f("integer = 7.0\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<ScalarConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, AllowsFloatingPointValuesForFloatingPointDestinations) {
+  TempFile f("single_precision = 1.5\ndouble_precision = -2.25\n", ".toml");
+
+  const auto config = cta::runtime::loadFromToml<FloatingPointConfig>(f.path());
+  EXPECT_FLOAT_EQ(config.single_precision, 1.5F);
+  EXPECT_DOUBLE_EQ(config.double_precision, -2.25);
+}
+
+TEST(ConfigLoader, ThrowsOnFloatingPointAboveDestinationTypeMaximum) {
+  TempFile f("single_precision = 3.5e38\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<FloatingPointConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, ThrowsOnIntegerForFloatingPointDestination) {
+  TempFile f("double_precision = 7\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<FloatingPointConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, AllowsLongLongValuesAtTomlIntegerBounds) {
+  TempFile minFile("value = -9223372036854775808\n", ".toml");
+  TempFile maxFile("value = 9223372036854775807\n", ".toml");
+
+  EXPECT_EQ(cta::runtime::loadFromToml<LongLongConfig>(minFile.path()).value, std::numeric_limits<long long>::min());
+  EXPECT_EQ(cta::runtime::loadFromToml<LongLongConfig>(maxFile.path()).value, std::numeric_limits<long long>::max());
+}
+
+TEST(ConfigLoader, ThrowsOnIntegerBelowLongLongMinimum) {
+  TempFile f("value = -9223372036854775809\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<LongLongConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, ThrowsOnIntegerAboveLongLongMaximum) {
+  TempFile f("value = 9223372036854775808\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<LongLongConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, ValueInitializesMissingFieldsInOptionalNestedAggregate) {
+  TempFile f(R"toml(
+[endpoint]
+host = "localhost"
+)toml",
+             ".toml");
+
+  const auto config = cta::runtime::loadFromToml<OptionalAggregateConfig>(f.path());
+  ASSERT_TRUE(config.endpoint.has_value());
+  EXPECT_EQ(config.endpoint->host, "localhost");
+  EXPECT_EQ(config.endpoint->port, 0);
 }
 
 // Lenient (default) Mode
@@ -492,6 +641,10 @@ mandatory = 7
 # maybe should be an int, not a string
 maybe = "123"
 default_value = "hi"
+boolean = 1
+floating = true
+narrow = 256
+text = 1
 
 # a is supposed to be a list
 matrix = { a = "hello" }
@@ -519,19 +672,23 @@ per_user = { alice = "5", bob = 10, "svc-account" = 1 }
              ".toml");
 
   try {
-    cta::runtime::loadFromToml<ComplexConfig>(f.path(), false);
+    cta::runtime::loadFromToml<ErrorMessageConfig>(f.path(), false);
     FAIL() << "Expected cta::exception::UserError";
   } catch (const cta::exception::UserError& e) {
     std::string expectedErrorMessage = "Invalid config in '" + f.path() + R"""(':
-1) Failed to parse field 'limits':
-    1) Value named 'max_conn' contains a type mismatch or invalid value.
-    2) Value named 'retry_backoff_ms' is not an array.
+1) Field 'boolean' must be a boolean.
+2) Field 'floating' must be a floating-point number.
+3) Field 'narrow' is outside the supported range.
+4) Field 'text' has an invalid value or type.
+5) Failed to parse field 'limits':
+    1) Field 'max_conn' must be an integer.
+    2) Field 'retry_backoff_ms' must be an array.
     3) Failed to parse field 'per_user':
-        1) Value named 'alice' contains a type mismatch or invalid value.
-2) Failed to parse field 'matrix':
-    1) Value named 'a' is not an array.
-3) Failed to parse field 'maybe':
-    1) Value named 'maybe' contains a type mismatch or invalid value.
+        1) Field 'alice' must be an integer.
+6) Failed to parse field 'matrix':
+    1) Field 'a' must be an array.
+7) Failed to parse field 'maybe':
+    1) Field 'maybe' must be an integer.
 
 )""";
     EXPECT_EQ(std::string(e.what()), expectedErrorMessage);
@@ -982,6 +1139,10 @@ mandatory = 7
 # maybe should be an int, not a string
 maybe = "123"
 default_value = "hi"
+boolean = 1
+floating = true
+narrow = 256
+text = 1
 
 # a is supposed to be a list
 matrix = { a = "hello" }
@@ -1009,21 +1170,25 @@ per_user = { alice = "5", bob = 10, "svc-account" = 1 }
              ".toml");
 
   try {
-    cta::runtime::loadFromToml<ComplexConfig>(f.path(), true);
+    cta::runtime::loadFromToml<ErrorMessageConfig>(f.path(), true);
     FAIL() << "Expected cta::exception::UserError";
   } catch (const cta::exception::UserError& e) {
     std::string expectedErrorMessage = "Invalid config in '" + f.path() + R"""(':
-1) Field named 'users' not found.
-2) Value named 'idontexist' not used.
-3) Failed to parse field 'limits':
-    1) Value named 'max_conn' contains a type mismatch or invalid value.
-    2) Value named 'retry_backoff_ms' is not an array.
+1) Expected field 'users' is missing.
+2) Field 'boolean' must be a boolean.
+3) Field 'floating' must be a floating-point number.
+4) Field 'narrow' is outside the supported range.
+5) Field 'text' has an invalid value or type.
+6) Unknown field 'idontexist'.
+7) Failed to parse field 'limits':
+    1) Field 'max_conn' must be an integer.
+    2) Field 'retry_backoff_ms' must be an array.
     3) Failed to parse field 'per_user':
-        1) Value named 'alice' contains a type mismatch or invalid value.
-4) Failed to parse field 'matrix':
-    1) Value named 'a' is not an array.
-5) Failed to parse field 'maybe':
-    1) Value named 'maybe' contains a type mismatch or invalid value.
+        1) Field 'alice' must be an integer.
+8) Failed to parse field 'matrix':
+    1) Field 'a' must be an array.
+9) Failed to parse field 'maybe':
+    1) Field 'maybe' must be an integer.
 
 )""";
     EXPECT_EQ(std::string(e.what()), expectedErrorMessage);
