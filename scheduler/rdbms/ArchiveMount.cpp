@@ -144,6 +144,7 @@ void ArchiveMount::setDriveStatus(common::dataStructures::DriveStatus status,
   inputs.vid = mountInfo.vid;
   inputs.tapepool = mountInfo.tapePool;
   inputs.vo = mountInfo.vo;
+  inputs.priority = mountInfo.priority;
   inputs.reason = reason;
   // TODO: statistics!
   inputs.byteTransferred = 0;

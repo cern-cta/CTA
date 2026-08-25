@@ -178,6 +178,8 @@ void TapeDrivesCatalogueState::updateDriveStatus(const common::dataStructures::D
       throw exception::Exception("Unexpected status in DriveRegister::reportDriveStatus");
   }
 
+  driveState.currentPriority = driveState.mountType == common::dataStructures::MountType::NoMount ? 0 : inputs.priority;
+
   log::ScopedParamContainer params(lc);
   params.add("next_status", common::dataStructures::TapeDrive::stateToString(inputs.status));
   driveState.convertToLogParams(params, "update_");

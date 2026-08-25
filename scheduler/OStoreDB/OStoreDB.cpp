@@ -3524,6 +3524,7 @@ OStoreDB::TapeMountDecisionInfo::createArchiveMount(const cta::SchedulerDatabase
   am.mountInfo.capacityInBytes = tape.capacityInBytes;
   am.mountInfo.mountType = mount.type;
   am.mountInfo.encryptionKeyName = tape.encryptionKeyName;
+  am.mountInfo.priority = mount.priority;
 
   // We committed the scheduling decision. We can now release the scheduling lock.
   m_lockOnSchedulerGlobalLock.release();
@@ -3582,6 +3583,7 @@ OStoreDB::TapeMountDecisionInfo::createRetrieveMount(const cta::SchedulerDatabas
   rm.mountInfo.capacityInBytes = mount.capacityInBytes;
   rm.mountInfo.activity = mount.activity;
   rm.mountInfo.encryptionKeyName = mount.encryptionKeyName;
+  rm.mountInfo.priority = mount.priority;
 
   // We committed the scheduling decision. We can now release the scheduling lock.
   m_lockOnSchedulerGlobalLock.release();
@@ -3824,6 +3826,7 @@ void OStoreDB::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveS
   inputs.vid = mountInfo.vid;
   inputs.tapepool = mountInfo.tapePool;
   inputs.vo = mountInfo.vo;
+  inputs.priority = mountInfo.priority;
   inputs.reason = reason;
   inputs.activity = mountInfo.activity;
   // TODO: statistics!
@@ -4168,6 +4171,7 @@ void OStoreDB::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveSt
   inputs.vid = mountInfo.vid;
   inputs.tapepool = mountInfo.tapePool;
   inputs.vo = mountInfo.vo;
+  inputs.priority = mountInfo.priority;
   inputs.reason = reason;
   // TODO: statistics!
   inputs.byteTransferred = 0;
