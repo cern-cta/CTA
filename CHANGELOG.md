@@ -1,3 +1,47 @@
+## 5.11.20.1-0 (2026-08-25)
+
+### New Features
+
+- [scheduler] Add scheduler workflow metrics to OpenTelementry (cta/CTA!1387)
+
+
+### Changes
+
+- [Tools] Move cta-admin af ch command to tf ch (cta/CTA!1525)
+
+- [Tools] Replace cta-objectstore-tools.conf with cta-scheduler.conf (cta/CTA!1540)
+
+- [maintd] Change scheduler.objectstore_backend_path to scheduler.config_file (cta/CTA!1518)
+
+
+### Bug Fixes
+
+- [frontend] Fix logic bug in frontend authentication and SEGFAULT in cta-admin (cta/CTA!1558)
+
+- [Tools] Fix cta-verify-file (cta/CTA!1545)
+
+- [Tools] Add `--storage-class` option to `cta-send-event` (cta/CTA!1542)
+
+
+### Performance Improvements
+
+- [taped] Skip block reposition request if drive is already positioned correctly (cta/CTA!1527)
+
+### Commits missing valid Changelog trailers
+
+<!-- Remove these entries or move them to the correct category before saving. -->
+
+- [[CI] Update pipeline images to "2026-08-24-15603587" (cta/CTA!1557)](https://gitlab.cern.ch/cta/CTA/-/commit/d61840e2f0b1aa0900c7859f19ab69b518d71dd6)
+- [[CI] Update MR prefixes in Danger (cta/CTA!1556)](https://gitlab.cern.ch/cta/CTA/-/commit/365479fa04b40b3eb0b674fe1bf9d5101086d330)
+- [[CI] Make SubProcessTest work with Valgrind (cta/CTA!1555)](https://gitlab.cern.ch/cta/CTA/-/commit/d6005fb249a723448441e10cddd9d81ac2fc777c)
+- [[CI] Make Danger Review job run faster (cta/CTA!1553)](https://gitlab.cern.ch/cta/CTA/-/commit/2993d542a3958c51b923c3aae67dfda294e13ad8)
+- [[CI] Automatically skip jobs in merge train if safe (cta/CTA!1552)](https://gitlab.cern.ch/cta/CTA/-/commit/169ff5524b1c20f5ca2f5896c558baffc97db8e3)
+- [[CI] Move config file correctness check to dedicated cmake target (cta/CTA!1551)](https://gitlab.cern.ch/cta/CTA/-/commit/71c86e8608fee8c0a38de70d85bf7b24954d4fbe)
+- [[CI] Fix flaky cta-smc test (cta/CTA!1547)](https://gitlab.cern.ch/cta/CTA/-/commit/cd18fbb6706eddaf61b7a8d860f5bb1c2c386ecf)
+- [[CI] Add system tests for cta-smc and cta-readtp (cta/CTA!1544)](https://gitlab.cern.ch/cta/CTA/-/commit/351694bf4ecf64bba841712513b5146d59e37394)
+- [[CI] Migrate subset of eos_client remote_scripts to Python (cta/CTA!1530)](https://gitlab.cern.ch/cta/CTA/-/commit/711f995b914b020098e7509f4fcd6108d1a8dafa)
+- [[CI] Fix CI not triggering downstream pipeline with different ref (cta/CTA!1539)](https://gitlab.cern.ch/cta/CTA/-/commit/0fb8a6a4c8989a2aa443ebbb690f5497ef2fcb1f)
+
 ## 5.11.20.0-1
 
 ### New Features
