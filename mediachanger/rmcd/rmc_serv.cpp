@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "rmc_serv.hpp"
+
 #include "common/log/LogContext.hpp"
 #include "mediachanger/librmc/Cdomainname.hpp"
 #include "mediachanger/librmc/Cnetdb.hpp"
@@ -72,7 +74,11 @@ void handle_connection(cta::log::LogContext& lc, int s, struct pollfd* pfd) {
   rmc_doit(lc, rpfd);  // Handle accepted connection
 }
 
-int rmc_main(const std::string& robot, int port, const std::string& listen_scope, cta::log::LogContext& lc) {
+int rmc_main(const std::string& robot,
+             int port,
+             const std::string& listen_scope,
+             cta::log::LogContext& lc,
+             std::stop_token stopToken) {
   int c;
   char domainname[CA_MAXHOSTNAMELEN + 1];
   const char* msgaddr;
@@ -161,6 +167,10 @@ int rmc_main(const std::string& robot, int port, const std::string& listen_scope
   signal(SIGPIPE, SIG_IGN);
   signal(SIGXFSZ, SIG_IGN);
 
+  if (stopToken.stop_requested()) {
+    return EXIT_SUCCESS;
+  }
+
   /* open request socket */
 
   if ((s = socket(AF_INET, SOCK_STREAM | O_NONBLOCK, 0)) < 0) {
@@ -192,6 +202,7 @@ int rmc_main(const std::string& robot, int port, const std::string& listen_scope
     cta::log::ScopedParamContainer params(lc);
     params.add(cta::semconv::log::errorMessage, std::string(neterror()));
     lc.log(cta::log::CRIT, "Failed to bind request socket");
+    close(s);
     return 1;
   }
   listen(s, 5);
@@ -201,7 +212,7 @@ int rmc_main(const std::string& robot, int port, const std::string& listen_scope
   pfd.events = POLLIN;
 
   /* main loop */
-  while (1) {
+  while (!stopToken.stop_requested()) {
     // Check for connections
     if (int ret = poll(&pfd, 1, RMC_CHECKI * 1000); ret < 0) {
       const int pollErrno = errno;
@@ -212,8 +223,14 @@ int rmc_main(const std::string& robot, int port, const std::string& listen_scope
     } else if (ret == 0) {
       continue;  // timeout; no new connection
     }
+    if (stopToken.stop_requested()) {
+      break;
+    }
     handle_connection(lc, s, &pfd);
   }
+
+  close(s);
+  return EXIT_SUCCESS;
 }
 
 static void rmc_doit(cta::log::LogContext& lc, const int rpfd) {

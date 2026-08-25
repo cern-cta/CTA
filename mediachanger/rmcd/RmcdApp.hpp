@@ -8,6 +8,8 @@
 #include "RmcdConfig.hpp"
 #include "common/log/LogContext.hpp"
 
+#include <stop_token>
+
 namespace cta::rmcd {
 
 class RmcdApp final {
@@ -23,6 +25,9 @@ public:
   bool isLive() const;
 
   bool isReady() const;
+
+private:
+  std::stop_source m_stopSource;
 };
 
 }  // namespace cta::rmcd
