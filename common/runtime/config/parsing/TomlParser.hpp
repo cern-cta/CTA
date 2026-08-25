@@ -86,7 +86,7 @@ template<StdOptional T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict) {
   if (!node) {
     if (strict) {
-      return ParseResult::error("Field named '" + std::string(fieldName) + "' not found.");
+      return ParseResult::error("Expected field '" + std::string(fieldName) + "' is missing.");
     }
     // In non-strict mode, a missing optional is fine
     return ParseResult::success();
@@ -104,7 +104,7 @@ template<StdVector T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict) {
   const toml::array* arr = node.as_array();
   if (!arr) {
-    return ParseResult::error("Value named '" + std::string(fieldName) + "' is not an array.");
+    return ParseResult::error("Field '" + std::string(fieldName) + "' must be an array.");
   }
   out.clear();
   out.reserve(arr->size());
@@ -130,7 +130,7 @@ template<MapStringKey T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict) {
   const toml::table* tbl = node.as_table();
   if (!tbl) {
-    return ParseResult::error("Value named '" + std::string(fieldName) + "' is not a table.");
+    return ParseResult::error("Field '" + std::string(fieldName) + "' must be a table.");
   }
   out.clear();
   using ElemType = typename std::remove_cvref_t<T>::mapped_type;
@@ -158,24 +158,20 @@ ParseResult parseNode(T& out,
   using F = std::remove_cvref_t<T>;
   if constexpr (std::same_as<F, bool>) {
     if (!node.is_boolean()) {
-      return ParseResult::error("Value named '" + std::string(fieldName)
-                                + "' contains a type mismatch or invalid value.");
+      return ParseResult::error("Field '" + std::string(fieldName) + "' has an invalid value or type.");
     }
   } else if constexpr (std::integral<F>) {
     if (!node.is_integer()) {
-      return ParseResult::error("Value named '" + std::string(fieldName)
-                                + "' contains a type mismatch or invalid value.");
+      return ParseResult::error("Field '" + std::string(fieldName) + "' has an invalid value or type.");
     }
   } else if constexpr (std::floating_point<F>) {
     if (!node.is_floating_point()) {
-      return ParseResult::error("Value named '" + std::string(fieldName)
-                                + "' contains a type mismatch or invalid value.");
+      return ParseResult::error("Field '" + std::string(fieldName) + "' has an invalid value or type.");
     }
   }
   auto val = node.value<F>();
   if (!val) {
-    return ParseResult::error("Value named '" + std::string(fieldName)
-                              + "' contains a type mismatch or invalid value.");
+    return ParseResult::error("Field '" + std::string(fieldName) + "' has an invalid value or type.");
   }
   out = std::move(*val);
   return ParseResult::success();
@@ -185,7 +181,7 @@ template<reflection::Reflectable T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict) {
   const toml::table* tbl = node.as_table();
   if (!tbl) {
-    return ParseResult::error("Value named '" + std::string(fieldName) + "' is not a table.");
+    return ParseResult::error("Field '" + std::string(fieldName) + "' must be a table.");
   }
   return parseTable(out, fieldName, *tbl, strict);
 }
@@ -201,7 +197,7 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
 
     if (!node) {
       if (strict) {
-        errs.push_back(ParseResult::error("Field named '" + std::string(tableFieldName) + "' not found."));
+        errs.push_back(ParseResult::error("Expected field '" + std::string(tableFieldName) + "' is missing."));
       }
       return;
     }
@@ -220,7 +216,7 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
     // In strict mode, we need to do a second pass to spot keys in the TOML but not in T
     for (const auto& [key, value] : tbl) {
       if (!seenFields.contains(key)) {
-        errs.push_back(ParseResult::error("Value named '" + std::string(key) + "' not used."));
+        errs.push_back(ParseResult::error("Unknown field '" + std::string(key) + "' in configuration."));
       }
     }
   }

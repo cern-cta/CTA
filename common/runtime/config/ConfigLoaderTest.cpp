@@ -655,14 +655,14 @@ per_user = { alice = "5", bob = 10, "svc-account" = 1 }
   } catch (const cta::exception::UserError& e) {
     std::string expectedErrorMessage = "Invalid config in '" + f.path() + R"""(':
 1) Failed to parse field 'limits':
-    1) Value named 'max_conn' contains a type mismatch or invalid value.
-    2) Value named 'retry_backoff_ms' is not an array.
+    1) Field 'max_conn' has an invalid value or type.
+    2) Field 'retry_backoff_ms' must be an array.
     3) Failed to parse field 'per_user':
-        1) Value named 'alice' contains a type mismatch or invalid value.
+        1) Field 'alice' has an invalid value or type.
 2) Failed to parse field 'matrix':
-    1) Value named 'a' is not an array.
+    1) Field 'a' must be an array.
 3) Failed to parse field 'maybe':
-    1) Value named 'maybe' contains a type mismatch or invalid value.
+    1) Field 'maybe' has an invalid value or type.
 
 )""";
     EXPECT_EQ(std::string(e.what()), expectedErrorMessage);
@@ -1144,17 +1144,17 @@ per_user = { alice = "5", bob = 10, "svc-account" = 1 }
     FAIL() << "Expected cta::exception::UserError";
   } catch (const cta::exception::UserError& e) {
     std::string expectedErrorMessage = "Invalid config in '" + f.path() + R"""(':
-1) Field named 'users' not found.
-2) Value named 'idontexist' not used.
+1) Expected field 'users' is missing.
+2) Unknown field 'idontexist' in configuration.
 3) Failed to parse field 'limits':
-    1) Value named 'max_conn' contains a type mismatch or invalid value.
-    2) Value named 'retry_backoff_ms' is not an array.
+    1) Field 'max_conn' has an invalid value or type.
+    2) Field 'retry_backoff_ms' must be an array.
     3) Failed to parse field 'per_user':
-        1) Value named 'alice' contains a type mismatch or invalid value.
+        1) Field 'alice' has an invalid value or type.
 4) Failed to parse field 'matrix':
-    1) Value named 'a' is not an array.
+    1) Field 'a' must be an array.
 5) Failed to parse field 'maybe':
-    1) Value named 'maybe' contains a type mismatch or invalid value.
+    1) Field 'maybe' has an invalid value or type.
 
 )""";
     EXPECT_EQ(std::string(e.what()), expectedErrorMessage);
