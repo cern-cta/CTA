@@ -92,7 +92,7 @@ ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const 
     return ParseResult::success();
   }
   using InnerType = typename std::remove_cvref_t<T>::value_type;
-  InnerType tmp;
+  InnerType tmp {};
   if (auto res = parseNode(tmp, fieldName, node, strict); !res.ok()) {
     return ParseResult::error(fieldName, res);
   }
@@ -156,6 +156,22 @@ ParseResult parseNode(T& out,
                       toml::node_view<const toml::node> node,
                       [[maybe_unused]] const bool strict) {
   using F = std::remove_cvref_t<T>;
+  if constexpr (std::same_as<F, bool>) {
+    if (!node.is_boolean()) {
+      return ParseResult::error("Value named '" + std::string(fieldName)
+                                + "' contains a type mismatch or invalid value.");
+    }
+  } else if constexpr (std::integral<F>) {
+    if (!node.is_integer()) {
+      return ParseResult::error("Value named '" + std::string(fieldName)
+                                + "' contains a type mismatch or invalid value.");
+    }
+  } else if constexpr (std::floating_point<F>) {
+    if (!node.is_floating_point()) {
+      return ParseResult::error("Value named '" + std::string(fieldName)
+                                + "' contains a type mismatch or invalid value.");
+    }
+  }
   auto val = node.value<F>();
   if (!val) {
     return ParseResult::error("Value named '" + std::string(fieldName)

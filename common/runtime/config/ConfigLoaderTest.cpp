@@ -103,6 +103,12 @@ struct LongLongConfig {
   static constexpr std::size_t memberCount() { return 1; }
 };
 
+struct OptionalAggregateConfig {
+  std::optional<Endpoint> endpoint = std::nullopt;
+
+  static constexpr std::size_t memberCount() { return 1; }
+};
+
 //------------------------------------------------------------------------------
 // Tests
 //------------------------------------------------------------------------------
@@ -193,6 +199,19 @@ TEST(ConfigLoader, ThrowsOnIntegerBelowLongLongMinimum) {
 TEST(ConfigLoader, ThrowsOnIntegerAboveLongLongMaximum) {
   TempFile f("value = 9223372036854775808\n", ".toml");
   EXPECT_THROW(cta::runtime::loadFromToml<LongLongConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, ValueInitializesMissingFieldsInOptionalNestedAggregate) {
+  TempFile f(R"toml(
+[endpoint]
+host = "localhost"
+)toml",
+             ".toml");
+
+  const auto config = cta::runtime::loadFromToml<OptionalAggregateConfig>(f.path());
+  ASSERT_TRUE(config.endpoint.has_value());
+  EXPECT_EQ(config.endpoint->host, "localhost");
+  EXPECT_EQ(config.endpoint->port, 0);
 }
 
 // Lenient (default) Mode
