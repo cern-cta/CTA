@@ -926,31 +926,47 @@ class TestRuntimeDeployment:
     # For now only cta_maintd is supported, but eventually the frontend and taped should be added here
 
     @pytest.mark.parametrize(
-        "daemon_fixture",
+        ("daemon_fixture", "expected_config_files"),
         [
-            "cta_maintd",
-            "cta_rmcd",
+            pytest.param("cta_maintd", ("catalogue", "telemetry"), id="maintd"),
+            pytest.param("cta_rmcd", (), id="rmcd"),
         ],
     )
-    def test_runtime_directory_correctness(self, request: SubRequest, daemon_fixture: str):
+    def test_runtime_directory_correctness(
+        self,
+        request: SubRequest,
+        daemon_fixture: str,
+        expected_config_files: tuple[str, ...],
+        postgres_scheduler_enabled: bool,
+    ) -> None:
         # Compare deployed inputs with their runtime copies and verify the generated service metadata
         daemon = request.getfixturevalue(daemon_fixture)
-        daemon.exec(f"comm /etc/cta/cta-{daemon.process_name}.toml /run/cta/config.toml -3")
+
+        # Files present for every service
+        daemon.exec(f"cmp /etc/cta/cta-{daemon.process_name}.toml /run/cta/config.toml")
         daemon.exec(f"jq -e -r '.service == \"cta-{daemon.process_name}\"' /run/cta/version.json >/dev/null")
-        # Not all services may have these files:
-        daemon.exec(
-            "if test -f /etc/cta/cta-catalogue.conf; then "
-            "comm /etc/cta/cta-catalogue.conf /run/cta/catalogue.config_file -3; fi"
-        )
-        daemon.exec(
-            "if test -f /etc/cta/cta-otel.yaml; then comm /etc/cta/cta-otel.yaml /run/cta/telemetry.config_file -3; fi"
-        )
+        daemon.exec("cmp /etc/cta/cta-logging.schema.json /run/cta/cta-logging.schema.json")
+
+        # Determine which files we should actually check, because not every service exposes all of them
+        config_files = {
+            "catalogue": ("/etc/cta/cta-catalogue.conf", "/run/cta/catalogue.config_file"),
+            "scheduler": ("/etc/cta/cta-scheduler.conf", "/run/cta/scheduler.config_file"),
+            "telemetry": ("/etc/cta/cta-otel.yaml", "/run/cta/telemetry.config_file"),
+        }
+        files_to_check = list(expected_config_files)
+        if daemon_fixture == "cta_maintd" and postgres_scheduler_enabled:
+            files_to_check.append("scheduler")
+
+        # Now compare
+        for config_name in files_to_check:
+            deployed_path, runtime_path = config_files[config_name]
+            daemon.exec(f"cmp {deployed_path} {runtime_path}")
 
     @pytest.mark.parametrize(
         "daemon_fixture",
         [
-            "cta_maintd",
-            "cta_rmcd",
+            pytest.param("cta_maintd", id="maintd"),
+            pytest.param("cta_rmcd", id="rmcd"),
         ],
     )
     def test_reopens_logfile_on_sighup(self, request: SubRequest, daemon_fixture: str):
