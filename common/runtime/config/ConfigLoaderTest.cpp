@@ -8,9 +8,11 @@
 #include "common/runtime/RuntimeTestHelpers.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <gtest/gtest.h>
+#include <limits>
 #include <string>
 #include <utility>
 
@@ -74,6 +76,33 @@ struct ComplexConfig {
   static constexpr std::size_t memberCount() { return 9; }
 };
 
+struct IntegerConfig {
+  std::int8_t signed_8 = 0;
+  std::uint8_t unsigned_8 = 0;
+
+  static constexpr std::size_t memberCount() { return 2; }
+};
+
+struct ScalarConfig {
+  bool boolean = false;
+  int integer = 0;
+
+  static constexpr std::size_t memberCount() { return 2; }
+};
+
+struct FloatingPointConfig {
+  float single_precision = 0.0F;
+  double double_precision = 0.0;
+
+  static constexpr std::size_t memberCount() { return 2; }
+};
+
+struct LongLongConfig {
+  long long value = 0;
+
+  static constexpr std::size_t memberCount() { return 1; }
+};
+
 //------------------------------------------------------------------------------
 // Tests
 //------------------------------------------------------------------------------
@@ -81,6 +110,89 @@ struct ComplexConfig {
 TEST(ConfigLoader, ThrowsOnNonExistingPath) {
   EXPECT_THROW((cta::runtime::loadFromToml<MyConfig>("/tmp/idefinitelydontexist.toml", false)),
                cta::exception::UserError);
+}
+
+TEST(ConfigLoader, AllowsIntegerValuesAtDestinationTypeBounds) {
+  TempFile f(R"toml(
+signed_8 = -128
+unsigned_8 = 255
+)toml",
+             ".toml");
+
+  const auto config = cta::runtime::loadFromToml<IntegerConfig>(f.path());
+  EXPECT_EQ(config.signed_8, std::numeric_limits<std::int8_t>::min());
+  EXPECT_EQ(config.unsigned_8, std::numeric_limits<std::uint8_t>::max());
+}
+
+TEST(ConfigLoader, ThrowsOnNegativeIntegerForUnsignedDestination) {
+  TempFile f("unsigned_8 = -1\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<IntegerConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, ThrowsOnIntegerBelowDestinationTypeMinimum) {
+  TempFile f("signed_8 = -129\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<IntegerConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, ThrowsOnIntegerAboveSignedDestinationTypeMaximum) {
+  TempFile f("signed_8 = 128\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<IntegerConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, ThrowsOnIntegerAboveUnsignedDestinationTypeMaximum) {
+  TempFile f("unsigned_8 = 256\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<IntegerConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, ThrowsOnIntegerForBooleanDestination) {
+  TempFile f("boolean = 2\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<ScalarConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, ThrowsOnBooleanForIntegerDestination) {
+  TempFile f("integer = true\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<ScalarConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, ThrowsOnFloatingPointForIntegerDestination) {
+  TempFile f("integer = 7.0\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<ScalarConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, AllowsFloatingPointValuesForFloatingPointDestinations) {
+  TempFile f("single_precision = 1.5\ndouble_precision = -2.25\n", ".toml");
+
+  const auto config = cta::runtime::loadFromToml<FloatingPointConfig>(f.path());
+  EXPECT_FLOAT_EQ(config.single_precision, 1.5F);
+  EXPECT_DOUBLE_EQ(config.double_precision, -2.25);
+}
+
+TEST(ConfigLoader, ThrowsOnFloatingPointAboveDestinationTypeMaximum) {
+  TempFile f("single_precision = 3.5e38\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<FloatingPointConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, ThrowsOnIntegerForFloatingPointDestination) {
+  TempFile f("double_precision = 7\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<FloatingPointConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, AllowsLongLongValuesAtTomlIntegerBounds) {
+  TempFile minFile("value = -9223372036854775808\n", ".toml");
+  TempFile maxFile("value = 9223372036854775807\n", ".toml");
+
+  EXPECT_EQ(cta::runtime::loadFromToml<LongLongConfig>(minFile.path()).value, std::numeric_limits<long long>::min());
+  EXPECT_EQ(cta::runtime::loadFromToml<LongLongConfig>(maxFile.path()).value, std::numeric_limits<long long>::max());
+}
+
+TEST(ConfigLoader, ThrowsOnIntegerBelowLongLongMinimum) {
+  TempFile f("value = -9223372036854775809\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<LongLongConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, ThrowsOnIntegerAboveLongLongMaximum) {
+  TempFile f("value = 9223372036854775808\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<LongLongConfig>(f.path()), cta::exception::UserError);
 }
 
 // Lenient (default) Mode
