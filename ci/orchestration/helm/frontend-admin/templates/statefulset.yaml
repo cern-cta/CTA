@@ -135,6 +135,9 @@ spec:
         - name: frontend-config
           mountPath: /etc/cta/cta-frontend.conf
           subPath: cta-frontend.conf
+        - name: frontend-config
+          mountPath: /etc/cta/cta-frontend-grpc.toml
+          subPath: cta-frontend-grpc.toml
         - name: jwks-json
           mountPath: /etc/cta/jwks.json
           subPath: jwks.json

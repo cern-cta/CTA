@@ -49,12 +49,13 @@ conf:
   auth:
     method: jwt
     config:
-      kerberos:
-        secretName: cta-frontend-keytab
-        subPath: cta-frontend.keytab
-        keytab: /etc/cta/cta-frontend.krb5.keytab
-        service_principal: "cta/cta-frontend-admin@TEST.CTA"
-
+      jwt:
+        expectedIssuer: "cta"
+      mtls:
+        aliases:
+          ctaeos:
+            - "eos-mgm.biglab"
+            - "eos-mgm.biglab.ch"
 
   telemetry:
     enabled: false

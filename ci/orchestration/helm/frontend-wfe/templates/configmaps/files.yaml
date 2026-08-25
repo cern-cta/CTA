@@ -13,9 +13,44 @@ metadata:
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
 data:
-  mtls-map.toml: |-
-    [aliases]
-    ctaeos = ["eos-mgm.biglab", "eos-mgm.biglab.ch"]
+  cta-frontend-grpc.toml: |-
+    [grpc]
+      port = {{ .Values.port }}
+      number_of_threads = {{ .Values.conf.numberOfThreads }}
+
+    [grpc.tls]
+      server_key_path = {{ .Values.conf.tls.serverKey | quote }}
+      server_cert_path = {{ .Values.conf.tls.serverCert | quote }}
+      {{- if .Values.conf.tls.caCert }}
+      chain_cert_path = {{ .Values.conf.tls.caCert | quote }}
+      {{- end }}
+
+    {{ if eq .Values.conf.auth.method "jwt" -}}
+    [auth.jwt]
+      enabled = true
+      jwks_uri = "file:///etc/cta/jwks.json"
+      expected_issuer = {{ .Values.conf.auth.config.jwt.expectedIssuer | quote }}
+      {{- if .Values.conf.auth.config.jwt.revokedTokens }}
+
+        {{ range .Values.conf.auth.config.jwt.revokedTokens }}
+        [[auth.jwt.revoked_tokens]]
+          jti = {{ .jti | quote }}
+          reason = {{ .reason | quote }}
+          revoked_at = {{ .revokedAt }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+
+    {{- if eq .Values.conf.auth.method "mtls" -}}
+    [auth.mtls]
+      enabled = true
+
+      [auth.mtls.aliases]
+      {{- range $instance, $hosts := .Values.conf.auth.config.mtls.aliases }}
+        {{ $instance }} = {{ $hosts | toJson }}
+      {{- end }}
+    {{- end }}
+
   cta-frontend.conf: |-
     #
     # CTA options

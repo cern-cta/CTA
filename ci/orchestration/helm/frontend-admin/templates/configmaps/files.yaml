@@ -13,6 +13,41 @@ metadata:
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
 data:
+  cta-frontend-grpc.toml: |-
+    [grpc]
+      port = {{ .Values.port }}
+      number_of_threads = {{ .Values.conf.numberOfThreads }}
+
+    [grpc.tls]
+      server_key_path = {{ .Values.conf.tls.serverKey | quote }}
+      server_cert_path = {{ .Values.conf.tls.serverCert | quote }}
+      {{- if .Values.conf.tls.caCert }}
+      chain_cert_path = {{ .Values.conf.tls.caCert | quote }}
+      {{- end }}
+
+    {{- if has "jwt" .Values.conf.auth.methods }}
+    [auth.jwt]
+      enabled = true
+      jwks_uri = "file:///etc/cta/jwks.json"
+      expected_issuer = {{ .Values.conf.auth.config.jwt.expectedIssuer | quote }}
+      {{- if .Values.conf.auth.config.jwt.revokedTokens }}
+
+        {{ range .Values.conf.auth.config.jwt.revokedTokens }}
+        [[auth.jwt.revoked_tokens]]
+          jti = {{ .jti | quote }}
+          reason = {{ .reason | quote }}
+          revoked_at = {{ .revokedAt }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+
+    {{- if has "kerberos" .Values.conf.auth.methods }}
+      [auth.kerberos]
+        enabled = true
+        keytab_path = {{ .Values.conf.auth.config.kerberos.keytab | quote }}
+        service_principal = {{ .Values.conf.auth.config.kerberos.servicePrincipal | quote }}
+    {{- end }}
+
   cta-frontend.conf: |-
     #
     # CTA options
@@ -103,7 +138,7 @@ data:
     {{- if has "kerberos" .Values.conf.auth.methods }}
     # Kerberos authentication
     grpc.keytab {{ .Values.conf.auth.config.kerberos.keytab }}
-    grpc.service_principal {{ .Values.conf.auth.config.kerberos.service_principal }}
+    grpc.service_principal {{ .Values.conf.auth.config.kerberos.servicePrincipal }}
     {{- end }}
 
     # Telemetry

@@ -122,11 +122,9 @@ spec:
         - name: frontend-config
           mountPath: /etc/cta/cta-frontend.conf
           subPath: cta-frontend.conf
-        {{- if eq .Values.conf.auth.method "mtls" }}
         - name: frontend-config
-          mountPath: /etc/cta/mtls-map.toml
-          subPath: mtls-map.toml
-        {{- end }}
+          mountPath: /etc/cta/cta-frontend-grpc.toml
+          subPath: cta-frontend-grpc.toml
         - name: jwks-json
           mountPath: /etc/cta/jwks.json
           subPath: jwks.json

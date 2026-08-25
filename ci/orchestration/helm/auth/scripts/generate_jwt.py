@@ -83,7 +83,7 @@ def generate_jwt(
 
     payload = {
         "sub": sub,
-        "jti": jti if jti else str(uuid.uuid4()),
+        "jti": jti or str(uuid.uuid4()),
         "iat": now,
         "exp": now + lifetime_sec,
         "typ": "Bearer",

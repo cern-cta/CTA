@@ -51,11 +51,18 @@ conf:
       - kerberos
       - jwt
     config:
+      jwt:
+        expectedIssuer: "cta"
+        revokedTokens:
+          - jti: a7d2099c-68f8-43fa-83c5-28a810f835fa
+            reason: just a revoked token which may come handy for testing
+            revokedAt: 2026-08-25T10:00:00Z
+
       kerberos:
         secretName: cta-frontend-keytab
         subPath: cta-frontend.keytab
         keytab: /etc/cta/cta-frontend.krb5.keytab
-        service_principal: "cta/cta-frontend-admin@TEST.CTA"
+        servicePrincipal: "cta/cta-frontend-admin@TEST.CTA"
 
   telemetry:
     enabled: false
