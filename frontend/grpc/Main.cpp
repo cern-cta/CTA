@@ -190,41 +190,36 @@ int main(const int argc, char* const* const argv) {
   }
 
   IdentityKeyCertPair cert;
+  auto tlsConfig = grpcConfig->grpc.tls;
 
-  if (!frontendService->getTlsKey().has_value()) {
-    throw exception::UserError("TLS specified but TLS key is not defined");  // cppcheck-suppress throwInEntryPoint
-  } else if (!frontendService->getTlsCert().has_value()) {
-    throw exception::UserError("TLS specified but TLS cert is not defined.");  // cppcheck-suppress throwInEntryPoint
-  } else {
-    auto key_file = frontendService->getTlsKey().value();
-    cert.private_key = cta::utils::file2string(key_file);
+  auto keyFile = tlsConfig.server_key_path;
+  cert.private_key = cta::utils::readFileAsString(tlsConfig.server_key_path);
 
-    auto cert_file = frontendService->getTlsCert().value();
-    cert.certificate_chain = cta::utils::file2string(cert_file);
+  auto certFile = tlsConfig.server_cert_path;
+  cert.certificate_chain = cta::utils::readFileAsString(certFile);
 
-    std::shared_ptr<StaticDataCertificateProvider> provider;
-    {
-      log::ScopedParamContainer spc(lc);
-      spc.add("tls_key", key_file).add("tls_cert", cert_file);
+  std::shared_ptr<StaticDataCertificateProvider> provider;
+  {
+    log::ScopedParamContainer spc(lc);
+    spc.add("tls_key", keyFile).add("tls_cert", certFile);
 
-      // if we have a CA certificate chain, use it
-      if (auto ca_chain = frontendService->getTlsChain(); ca_chain.has_value()) {
-        spc.add("tls_chain", ca_chain.value());
-        provider = std::make_shared<StaticDataCertificateProvider>(cta::utils::file2string(ca_chain.value()),
-                                                                   std::vector {cert});
-      } else {
-        spc.add("tls_chain", "<no chain file>");
-        provider = std::make_shared<StaticDataCertificateProvider>(std::vector {cert});
-      }
-      lc.log(log::INFO, "TLS configuration loaded");
+    // if we have a CA certificate chain, use it
+    if (auto caChain = tlsConfig.chain_cert_path; caChain.has_value()) {
+      spc.add("tls_chain", caChain.value());
+      provider = std::make_shared<StaticDataCertificateProvider>(cta::utils::readFileAsString(caChain.value()),
+                                                                 std::vector {cert});
+    } else {
+      spc.add("tls_chain", "<no chain file>");
+      provider = std::make_shared<StaticDataCertificateProvider>(std::vector {cert});
     }
-
-    TlsServerCredentialsOptions tls_options {provider};
-    tls_options.set_cert_request_type(cert_request_type);
-    tls_options.watch_root_certs();
-    tls_options.watch_identity_key_cert_pairs();
-    creds = TlsServerCredentials(tls_options);
+    lc.log(log::INFO, "TLS configuration loaded");
   }
+
+  TlsServerCredentialsOptions tlsOptions {provider};
+  tlsOptions.set_cert_request_type(cert_request_type);
+  tlsOptions.watch_root_certs();
+  tlsOptions.watch_identity_key_cert_pairs();
+  creds = TlsServerCredentials(tlsOptions);
 
   // enable health checking, needed by CI
   grpc::EnableDefaultHealthCheckService(true);

@@ -436,7 +436,13 @@ std::time_t getCurrentEpochTime();
  */
 std::string getProcessName();
 
-std::string file2string(const std::string& filename);
+/**
+ * Read the content of a file to a string, throwing an error in case it doesn't exist
+ *
+ * @param filename The path to the file
+ * @return A std::string with the contents of the file
+ */
+std::string readFileAsString(const std::string& filename);
 
 /**
  * Periodically executes the condition() function every checkIntervalMsec milliseconds.
@@ -450,7 +456,7 @@ void waitForCondition(const std::function<bool()>& condition, int64_t timeoutMse
 /**
  * @brief Joins a range of strings into a single string, separated using
  * a custom string
- * 
+ *
  * @param values The range to join. Can be a set, vector, etc...
  * @param separator The separator string to use between the values
  * @return std::string The comma-separated string representing the list.
@@ -487,7 +493,7 @@ std::string joinCommaSeparated(const R& values) {
 /**
  * @brief Joins a range of strings into a single string, separated using
  * a custom string as well as mapped using a given "converter" function.
- * 
+ *
  * @param values The range to join. Can be a set, vector, etc...
  * @param separator The separator string to use between the values
  * @param converter The "converter" function (can be a lambda)

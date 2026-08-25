@@ -720,8 +720,11 @@ std::string getProcessName() {
   return std::string(name);
 }
 
-std::string file2string(const std::string& filename) {
+std::string readFileAsString(const std::string& filename) {
   std::ifstream as_stream(filename);
+  if (!as_stream.is_open()) {
+    throw std::runtime_error("Could not open file: " + filename);
+  }
   std::ostringstream as_string;
   as_string << as_stream.rdbuf();
   return as_string.str();
