@@ -71,13 +71,15 @@ python3 /scripts/generate_jwt.py \
   --output-dir "$SECRETS_DIR" \
   --cert "$SECRETS_DIR/server-admin.crt.pem" \
   --key "$SECRETS_DIR/server-admin.key.pem" \
-  --jwks "jwks.json" \
+  --jwks jwks.json \
+  --issuer cta \
   --sub ctaadmin1
 python3 /scripts/generate_jwt.py \
   --output-dir "$SECRETS_DIR" \
   --cert "$SECRETS_DIR/server-wfe.crt.pem" \
   --key "$SECRETS_DIR/server-wfe.key.pem" \
-  --jwks "jwks.json" \
+  --jwks jwks.json \
+  --issuer cta \
   --sub ctaeos
 
 # generate cert for ctaeos (to be used with mTLS)
