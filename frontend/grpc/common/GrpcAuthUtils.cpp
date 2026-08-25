@@ -67,7 +67,7 @@ extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::str
         return {Status(StatusCode::UNAUTHENTICATED, "Missing Authorization token"), std::nullopt};
       }
 
-      auto validationResult = cta::auth::ValidateJwt(token, pubkeyCache, lc);
+      auto validationResult = cta::auth::ValidateJwt(token, *pubkeyCache, lc);
 
       if (validationResult.isValid) {
         lc.log(cta::log::DEBUG,
@@ -78,9 +78,9 @@ extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::str
                                         SecurityIdentity::Protocol::JWT);
         return {Status::OK, clientIdentity};
       } else {
-        lc.log(cta::log::WARNING, "JWT authorization process error. Token validation failed.");
-        return {Status(StatusCode::UNAUTHENTICATED, "JWT authorization process error. Token validation failed."),
-                std::nullopt};
+        const auto& errorMsg = validationResult.errorMessage.value_or("Unknown token validation error");
+        lc.log(cta::log::WARNING, "JWT token validation failed: " + errorMsg);
+        return {Status(StatusCode::UNAUTHENTICATED, errorMsg), std::nullopt};
       }
     } else if (auth_header.starts_with("Negotiate")) {
       // KRB5 auth

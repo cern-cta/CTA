@@ -97,6 +97,7 @@ std::string createTestJwt(bool expired, const std::string& kid) {
 
   auto token = jwt::create()
                  .set_issuer("test")
+                 .set_payload_claim("jti", jwt::claim(std::string("test-jti")))
                  .set_payload_claim("exp",
                                     jwt::claim(std::chrono::system_clock::now()
                                                + (expired ? -std::chrono::minutes(60) : std::chrono::minutes(60))))
@@ -117,6 +118,8 @@ protected:
     return std::make_shared<cta::auth::JwkCache>(std::make_unique<MockJwksFetcherValidateJwt>(),
                                                  "http://fake-jwks-uri",
                                                  1200,
+                                                 "test",
+                                                 std::set<std::string, std::less<>>(),
                                                  lc);
   }
 
@@ -124,8 +127,24 @@ protected:
     auto mockFetcher = std::make_unique<MockJwksFetcherValidateJwt>();
     mockFetcher->setJwks("");
 
-    const auto cache = std::make_shared<cta::auth::JwkCache>(std::move(mockFetcher), "http://fake-jwks-uri", 1200, lc);
+    const auto cache = std::make_shared<cta::auth::JwkCache>(std::move(mockFetcher),
+                                                             "http://fake-jwks-uri",
+                                                             1200,
+                                                             "test",
+                                                             std::set<std::string, std::less<>>(),
+                                                             lc);
     return cache;
+  }
+
+  std::shared_ptr<cta::auth::JwkCache> createCacheWithRevokedJti(const std::string& revokedJti) const {
+    std::set<std::string, std::less<>> revokedSet;
+    revokedSet.insert(revokedJti);
+    return std::make_shared<cta::auth::JwkCache>(std::make_unique<MockJwksFetcherValidateJwt>(),
+                                                 "http://fake-jwks-uri",
+                                                 1200,
+                                                 "test",
+                                                 std::move(revokedSet),
+                                                 lc);
   }
 };
 
@@ -136,7 +155,7 @@ TEST_F(ValidateJwtTestFixture, ValidTokenWithCachedKey) {
   // First populate cache by calling updateCache
   cache->updateCache(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
 
-  auto result = cta::auth::ValidateJwt(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, *cache, lc);
   ASSERT_TRUE(result.isValid);
 }
 
@@ -145,7 +164,7 @@ TEST_F(ValidateJwtTestFixture, ValidTokenWithoutCachedKeyCacheFetchSucceeds) {
   std::string token = createTestJwt(false /*expired*/, "test-kid");
   auto entry = cache->find("test-kid");
   ASSERT_FALSE(entry.has_value());
-  auto result = cta::auth::ValidateJwt(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, *cache, lc);
   ASSERT_TRUE(result.isValid);  // validate will succeed even if the key is not already present in the cache
   // because it will be fetched
   entry = cache->find("test-kid");
@@ -158,8 +177,10 @@ TEST_F(ValidateJwtTestFixture, ValidTokenWithoutCachedKeyCacheFetchFails) {
   std::string token = createTestJwt(false /*expired*/, "test-kid");
   auto entry = cache->find("test-kid");
   ASSERT_FALSE(entry.has_value());
-  auto result = cta::auth::ValidateJwt(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, *cache, lc);
   EXPECT_FALSE(result.isValid);  // validate will fail if we cannot find the public key
+  ASSERT_TRUE(result.errorMessage.has_value());
+  EXPECT_EQ(result.errorMessage.value(), "Token validation failed");
   // because it will be fetched
   entry = cache->find("test-kid");
   ASSERT_FALSE(entry.has_value());
@@ -172,8 +193,10 @@ TEST_F(ValidateJwtTestFixture, ExpiredToken) {
   // Populate cache by calling updateCache
   cache->updateCache(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
 
-  auto result = cta::auth::ValidateJwt(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, *cache, lc);
   ASSERT_FALSE(result.isValid);
+  ASSERT_TRUE(result.errorMessage.has_value());
+  EXPECT_EQ(result.errorMessage.value(), "Token validation failed");
 }
 
 // Tests for invalid/malformed tokens
@@ -186,20 +209,25 @@ TEST_F(ValidateJwtTestFixture, BadTokenMissingKid) {
       .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
       .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
-  auto result = cta::auth::ValidateJwt(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, *cache, lc);
   ASSERT_FALSE(result.isValid);
+  ASSERT_TRUE(result.errorMessage.has_value());
+  EXPECT_EQ(result.errorMessage.value(), "Token header does not contain a 'kid' field");
 }
 
 TEST_F(ValidateJwtTestFixture, BadTokenMissingExp) {
   auto cache = createCacheWithMockFetcher();
   std::string token = jwt::create()
                         .set_issuer("test")
+                        .set_payload_claim("jti", jwt::claim(std::string("test-jti")))
                         .set_header_claim("kid", jwt::claim(std::string("test-kid")))
                         .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
                         .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
-  auto result = cta::auth::ValidateJwt(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, *cache, lc);
   ASSERT_FALSE(result.isValid);
+  ASSERT_TRUE(result.errorMessage.has_value());
+  EXPECT_EQ(result.errorMessage.value(), "Token does not contain an 'exp' claim");
 }
 
 TEST_F(ValidateJwtTestFixture, BadTokenInvalidSignature) {
@@ -241,8 +269,10 @@ az8ZaVQPvmSthMu8suOc8w==
       .sign(jwt::algorithm::rs256("", wrongPrivateKey, "", ""));
 
   auto cache = createCacheWithMockFetcher();
-  auto result = cta::auth::ValidateJwt(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, *cache, lc);
   ASSERT_FALSE(result.isValid);
+  ASSERT_TRUE(result.errorMessage.has_value());
+  EXPECT_EQ(result.errorMessage.value(), "Token validation failed");
 }
 
 TEST_F(ValidateJwtTestFixture, BadTokenUnsupportedAlgorithm) {
@@ -255,8 +285,10 @@ TEST_F(ValidateJwtTestFixture, BadTokenUnsupportedAlgorithm) {
       .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
       .sign(jwt::algorithm::hs256(rsa_priv_key));  // we accept RS256 only
 
-  auto result = cta::auth::ValidateJwt(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, *cache, lc);
   ASSERT_FALSE(result.isValid);
+  ASSERT_TRUE(result.errorMessage.has_value());
+  EXPECT_EQ(result.errorMessage.value(), "Token validation failed");
 }
 
 TEST_F(ValidateJwtTestFixture, BadTokenMalformedToken) {
@@ -265,15 +297,19 @@ TEST_F(ValidateJwtTestFixture, BadTokenMalformedToken) {
   // append some garbage to the token string
   token += "GARBAGE";
 
-  auto result = cta::auth::ValidateJwt(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, *cache, lc);
   ASSERT_FALSE(result.isValid);
+  ASSERT_TRUE(result.errorMessage.has_value());
+  EXPECT_EQ(result.errorMessage.value(), "Token validation failed");
 }
 
 TEST_F(ValidateJwtTestFixture, BadTokenEmtpyToken) {
   auto cache = createCacheWithMockFetcher();
   auto token = "";
-  auto result = cta::auth::ValidateJwt(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, *cache, lc);
   ASSERT_FALSE(result.isValid);
+  ASSERT_TRUE(result.errorMessage.has_value());
+  EXPECT_EQ(result.errorMessage.value(), "Token validation failed");
 }
 
 TEST_F(ValidateJwtTestFixture, BadTokenMissingSub) {
@@ -282,12 +318,89 @@ TEST_F(ValidateJwtTestFixture, BadTokenMissingSub) {
   std::string token =
     jwt::create()
       .set_issuer("test")
+      .set_payload_claim("jti", jwt::claim(std::string("test-jti")))
       .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
       .set_header_claim("kid", jwt::claim(std::string("test-kid")))
       .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
-  auto result = cta::auth::ValidateJwt(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, *cache, lc);
   ASSERT_FALSE(result.isValid);
+  ASSERT_TRUE(result.errorMessage.has_value());
+  EXPECT_EQ(result.errorMessage.value(), "Token does not contain a 'sub' claim");
+}
+
+// Tests for issuer validation
+TEST_F(ValidateJwtTestFixture, TokenWithWrongIssuer) {
+  // Cache expects issuer "test", token issued by "wrong-issuer"
+  auto cache = createCacheWithMockFetcher();
+  cache->updateCache(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+
+  std::string token =
+    jwt::create()
+      .set_issuer("wrong-issuer")
+      .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
+      .set_header_claim("kid", jwt::claim(std::string("test-kid")))
+      .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
+      .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
+
+  auto result = cta::auth::ValidateJwt(token, *cache, lc);
+  ASSERT_FALSE(result.isValid);
+  ASSERT_TRUE(result.errorMessage.has_value());
+  EXPECT_EQ(result.errorMessage.value(), "Token validation failed");
+}
+
+// Tests for JTI revocation
+TEST_F(ValidateJwtTestFixture, TokenWithRevokedJti) {
+  auto cache = createCacheWithRevokedJti("revoked-001");
+  cache->updateCache(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+
+  std::string token =
+    jwt::create()
+      .set_issuer("test")
+      .set_payload_claim("jti", jwt::claim(std::string("revoked-001")))
+      .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
+      .set_header_claim("kid", jwt::claim(std::string("test-kid")))
+      .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
+      .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
+
+  auto result = cta::auth::ValidateJwt(token, *cache, lc);
+  ASSERT_FALSE(result.isValid);
+  ASSERT_TRUE(result.errorMessage.has_value());
+  EXPECT_NE(result.errorMessage.value().find("revoked"), std::string::npos);
+}
+
+TEST_F(ValidateJwtTestFixture, TokenWithNonRevokedJti) {
+  auto cache = createCacheWithRevokedJti("revoked-001");
+  cache->updateCache(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+
+  std::string token =
+    jwt::create()
+      .set_issuer("test")
+      .set_payload_claim("jti", jwt::claim(std::string("valid-jti-not-revoked")))
+      .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
+      .set_header_claim("kid", jwt::claim(std::string("test-kid")))
+      .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
+      .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
+
+  auto result = cta::auth::ValidateJwt(token, *cache, lc);
+  ASSERT_TRUE(result.isValid);
+}
+
+// Tests for missing JTI with specific error message
+TEST_F(ValidateJwtTestFixture, TokenMissingJtiHasSpecificErrorMessage) {
+  auto cache = createCacheWithMockFetcher();
+  std::string token =
+    jwt::create()
+      .set_issuer("test")
+      .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
+      .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
+      .set_header_claim("kid", jwt::claim(std::string("test-kid")))
+      .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
+
+  auto result = cta::auth::ValidateJwt(token, *cache, lc);
+  ASSERT_FALSE(result.isValid);
+  ASSERT_TRUE(result.errorMessage.has_value());
+  EXPECT_EQ(result.errorMessage.value(), "Token does not contain a 'jti' claim");
 }
 
 }  // namespace unitTests

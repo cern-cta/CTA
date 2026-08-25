@@ -29,6 +29,7 @@
 #include <future>
 #include <getopt.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
+#include <set>
 #include <thread>
 
 using namespace cta;
@@ -41,15 +42,17 @@ const std::string help = "Usage: cta-frontend-grpc [options]\n"
                          "\n"
                          "where options can be:\n"
                          "\n"
-                         "\t--config <config-file>, -c   \tConfiguration file\n"
-                         "\t--version, -v                \tprint version and exit\n"
-                         "\t--help, -h                   \tprint this help and exit\n";
+                         "\t--config <config-file>, -c        \tConfiguration file\n"
+                         "\t--grpc-config <grpc-config-file>  \tgRPC configuration file (TOML)"
+                         "\t--version, -v                     \tprint version and exit\n"
+                         "\t--help, -h                        \tprint this help and exit\n";
 
 const static struct option long_options[] = {
-  {"config",  required_argument, nullptr, 'c'},
-  {"help",    no_argument,       nullptr, 'h'},
-  {"version", no_argument,       nullptr, 'v'},
-  {nullptr,   0,                 nullptr, 0  }
+  {"config",      required_argument, nullptr, 'c'},
+  {"grpc-config", required_argument, nullptr, 'a'},
+  {"help",        no_argument,       nullptr, 'h'},
+  {"version",     no_argument,       nullptr, 'v'},
+  {nullptr,       0,                 nullptr, 0  }
 };
 
 [[noreturn]] void printHelpAndExit(int rc) {
@@ -83,15 +86,15 @@ void JwksCacheRefreshLoop(std::weak_ptr<cta::auth::JwkCache> weakCache,
 }
 
 int main(const int argc, char* const* const argv) {
-  std::string config_file("/etc/cta/cta-frontend.conf");
-  std::string mtls_mapping_file("/etc/cta/mtls-map.toml");
+  std::string configFile("/etc/cta/cta-frontend.conf");
+  std::string grpcConfigFile("/etc/cta/cta-frontend-grpc.toml");
 
-  char c;
-  int option_index = 0;
+  int c;
+  int optionIndex = 0;
   const std::string shortHostName = utils::getShortHostname();
   std::string port;
 
-  while ((c = getopt_long(argc, argv, "c:m:hv", long_options, &option_index)) != EOF) {
+  while ((c = getopt_long(argc, argv, "c:a:hv", long_options, &optionIndex)) != -1) {
     switch (c) {
       case 'h':
         printHelpAndExit(0);
@@ -100,10 +103,10 @@ int main(const int argc, char* const* const argv) {
         printVersionAndExit();
         break;
       case 'c':
-        config_file = optarg;
+        configFile = optarg;
         break;
-      case 'm':
-        mtls_mapping_file = optarg;
+      case 'a':
+        grpcConfigFile = optarg;
         break;
       default:
         printHelpAndExit(1);
@@ -111,31 +114,41 @@ int main(const int argc, char* const* const argv) {
   }
 
   // Initialize frontend service first to get configuration
-  auto frontendService = std::make_shared<cta::frontend::FrontendService>(config_file, true, mtls_mapping_file);
+  auto frontendService = std::make_shared<cta::frontend::FrontendService>(configFile, grpcConfigFile);
+  auto grpcConfig = frontendService->getGrpcConfig();
 
   // get the log context
   log::LogContext lc = frontendService->getLogContext();
 
-  const auto jwtConfig = frontendService->getJwtConfig();
+  const auto jwtConfig = grpcConfig->auth.jwt;
 
   std::shared_ptr<cta::auth::JwkCache> jwkCache;
   std::optional<std::jthread> cacheRefreshThread;
   std::promise<void> shouldStopThreadPromise;
 
-  if (jwtConfig.has_value()) {
+  if (jwtConfig.has_value() && jwtConfig->enabled) {
     // Build the shared JWK cache
-    auto jwksFetcher {std::make_unique<cta::auth::CurlJwksFetcher>(jwtConfig->m_jwksTotalTimeout)};
-    jwkCache = std::make_shared<cta::auth::JwkCache>(std::move(jwksFetcher),
-                                                     jwtConfig->m_jwksUri,
-                                                     jwtConfig->m_pubkeyTimeout,
-                                                     frontendService->getLogContext());
+    auto jwksFetcher {std::make_unique<cta::auth::CurlJwksFetcher>(jwtConfig->jwks_total_timeout)};
+    jwkCache = std::make_shared<cta::auth::JwkCache>(
+      std::move(jwksFetcher),
+      jwtConfig->jwks_uri,
+      jwtConfig->pub_key_timeout,
+      jwtConfig->expected_issuer,
+      [&jwtConfig]() {
+        std::set<std::string, std::less<>> revokedJtis;
+        for (const auto& entry : jwtConfig->revoked_tokens) {
+          revokedJtis.insert(entry.jti);
+        }
+        return revokedJtis;
+      }(),
+      frontendService->getLogContext());
 
     {
       log::ScopedParamContainer spc(lc);
-      spc.add("jwks_uri", jwtConfig->m_jwksUri)
-        .add("total_timeout", std::to_string(jwtConfig->m_jwksTotalTimeout))
-        .add("key_timeout", std::to_string(jwtConfig->m_pubkeyTimeout))
-        .add("cache_refresh_interval", std::to_string(jwtConfig->m_cacheRefreshInterval));
+      spc.add("jwks_uri", jwtConfig->jwks_uri)
+        .add("total_timeout", std::to_string(jwtConfig->jwks_total_timeout))
+        .add("key_timeout", std::to_string(jwtConfig->pub_key_timeout))
+        .add("cache_refresh_interval", std::to_string(jwtConfig->cache_refresh_interval));
       lc.log(log::INFO, std::string("JWT authentication enabled"));
     }
 
@@ -147,7 +160,7 @@ int main(const int argc, char* const* const argv) {
     cacheRefreshThread = std::jthread(JwksCacheRefreshLoop,
                                       weakCache,
                                       std::move(shouldStopThreadFuture),
-                                      jwtConfig->m_cacheRefreshInterval,
+                                      jwtConfig->cache_refresh_interval,
                                       std::cref(lc));
   }
 
@@ -160,14 +173,7 @@ int main(const int argc, char* const* const argv) {
 
   lc.log(log::INFO, "Starting cta-frontend-grpc");
 
-  // try to update port from config
-  if (frontendService->getPort().has_value()) {
-    port = frontendService->getPort().value();
-  } else {
-    port = defaultPort;
-  }
-
-  std::string server_address("0.0.0.0:" + port);
+  std::string serverAddress("0.0.0.0:" + std::to_string(grpcConfig->grpc.port));
 
   // start gRPC service
 
@@ -176,14 +182,14 @@ int main(const int argc, char* const* const argv) {
   std::shared_ptr<grpc::ServerCredentials> creds;
 
   // get number of threads
-  int threads = frontendService->getThreads().value_or(8 * std::thread::hardware_concurrency());
+  int threads = grpcConfig->grpc.number_of_threads.value_or(8 * std::thread::hardware_concurrency());
   grpc_ssl_client_certificate_request_type cert_request_type = GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE;
 
   using namespace grpc::experimental;
 
   lc.log(log::INFO, "Using gRPC over TLS");
   if (frontendService->getOperationMode() == cta::frontend::OperationMode::WFE
-      && frontendService->getWfeAuthMethod() == cta::frontend::AuthMethod::MTLS) {
+      && frontendService->usesAuthMethod(cta::frontend::AuthMethod::MTLS)) {
     // mTLS requires a check on the client certificate
     cert_request_type = GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY;
     lc.log(log::INFO, "Using mutual TLS to authenticate WFE client requests");
@@ -226,7 +232,7 @@ int main(const int argc, char* const* const argv) {
   // add reflection
   grpc::reflection::InitProtoReflectionServerBuilderPlugin();
   // Listen on the given address without any authentication mechanism.
-  builder.AddListeningPort(server_address, creds);
+  builder.AddListeningPort(serverAddress, creds);
 
   // fixed the number of request threads
   ResourceQuota quota;
@@ -238,13 +244,15 @@ int main(const int argc, char* const* const argv) {
 
   // If we're in Admin Command mode and using Kerberos, we need to set up the negotiation service for Kerberos authentication
   if (frontendService->getOperationMode() != cta::frontend::OperationMode::WFE
-      && frontendService->usesAdminAuthMethod(cta::frontend::AuthMethod::KERBEROS)) {
-    // Get Kerberos configuration
-    std::string strKeytab = frontendService->getKeytab().value_or("/etc/cta/cta-frontend.keytab");
-    std::string strService = frontendService->getServicePrincipal().value_or("cta/" + shortHostName);
+      && frontendService->usesAuthMethod(cta::frontend::AuthMethod::KERBEROS)) {
+    // Get Kerberos configuration - .value() is safe because we've checked that kerberos is enabled
+    auto kerberosConfig = grpcConfig->auth.kerberos.value();
+    std::string keytabPath = kerberosConfig.keytab_path;
+    std::string servicePrincipal = kerberosConfig.service_principal;
 
     lc.log(log::INFO,
-           "Using Kerberos authentication with keytab '" + strKeytab + "' and service principal '" + strService + "'");
+           "Using Kerberos authentication with keytab '" + keytabPath + "' and service principal '" + servicePrincipal
+             + "'");
 
     // Create completion queue that will be used only for the Kerberos negotiation service
     std::unique_ptr<::grpc::ServerCompletionQueue> negCq = builder.AddCompletionQueue();
@@ -253,8 +261,8 @@ int main(const int argc, char* const* const argv) {
     negotiationService = std::make_unique<cta::frontend::grpc::server::NegotiationService>(lc.logger(),
                                                                                            tokenStorage,
                                                                                            std::move(negCq),
-                                                                                           strKeytab,
-                                                                                           strService,
+                                                                                           keytabPath,
+                                                                                           servicePrincipal,
                                                                                            1 /* threads */);
 
     // Register negotiation service on main builder
@@ -274,7 +282,7 @@ int main(const int argc, char* const* const argv) {
                                              frontendService->getCatalogueConnString(),
                                              frontendService->getMissingFileCopiesMinAgeSecs(),
                                              frontendService->getLogContext(),
-                                             frontendService->getAdminAuthMethods(),
+                                             frontendService->getAuthMethods(),
                                              jwkCache,
                                              tokenStorage);
   builder.RegisterService(&streamSvc);
@@ -290,7 +298,7 @@ int main(const int argc, char* const* const argv) {
     negotiationService.value()->startProcessing();
   }
 
-  lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
+  lc.log(cta::log::INFO, "Listening on socket address: " + serverAddress);
   server->Wait();
   lc.logEvent(log::INFO, "Exiting cta-frontend-grpc", semconv::log::EventNameValues::kProgramExiting);
   if (cacheRefreshThread.has_value()) {

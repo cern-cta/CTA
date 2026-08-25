@@ -34,7 +34,7 @@ CtaRpcImpl::checkWFERequestAuthMetadata(::grpc::ServerContext* context,
   std::string clientHost = request->notification().wf().instance().name();
   std::string ourHost = m_frontendService->getInstanceName();
 
-  if (m_frontendService->getWfeAuthMethod() == AuthMethod::MTLS) {
+  if (m_frontendService->usesAuthMethod(AuthMethod::MTLS)) {
     auto auth_context = context->auth_context();
     // fetch the certificate identities from the auth context
     auto cert_idents = auth_context->GetPeerIdentity();
@@ -67,21 +67,21 @@ CtaRpcImpl::checkWFERequestAuthMetadata(::grpc::ServerContext* context,
 
     SecurityIdentity clientIdentity(clientHost, ourHost, context->peer(), SecurityIdentity::Protocol::MTLS);
     return {::grpc::Status::OK, clientIdentity};
-  } else if (m_frontendService->getWfeAuthMethod() == AuthMethod::JWT) {
+  } else if (m_frontendService->usesAuthMethod(AuthMethod::JWT)) {
     const auto& metadata = context->client_metadata();
 
-    auto [status, clientIdentity] = cta::frontend::grpc::common::extractAuthHeaderAndValidate(
-      metadata,
-      m_frontendService->getWfeAuthMethod() == AuthMethod::JWT,
-      m_pubkeyCache,
-      m_tokenStorage,
-      ourHost,
-      context->peer(),
-      lc);
+    auto [status, clientIdentity] =
+      cta::frontend::grpc::common::extractAuthHeaderAndValidate(metadata,
+                                                                m_frontendService->usesAuthMethod(AuthMethod::JWT),
+                                                                m_pubkeyCache,
+                                                                m_tokenStorage,
+                                                                ourHost,
+                                                                context->peer(),
+                                                                lc);
     return {status, clientIdentity};
   } else {
-    throw cta::exception::UserError("Unsupported authentication method for WFE requests: "
-                                    + toString(m_frontendService->getWfeAuthMethod()));
+    // this condition should be caught at config time, so this should be dead code.
+    throw cta::exception::UserError("Neither JWT or mTLS are enabled.");
   }
 }
 
@@ -342,7 +342,7 @@ CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* reque
 
   auto [status, clientIdentity] =
     cta::frontend::grpc::common::extractAuthHeaderAndValidate(metadata,
-                                                              m_frontendService->usesAdminAuthMethod(AuthMethod::JWT),
+                                                              m_frontendService->usesAuthMethod(AuthMethod::JWT),
                                                               m_pubkeyCache,
                                                               m_tokenStorage,
                                                               m_frontendService->getInstanceName(),

@@ -16,8 +16,9 @@ namespace cta::auth {
 struct TokenValidationResult {
   bool isValid;
   std::optional<std::string> subjectClaim;
+  std::optional<std::string> errorMessage;
 };
 
 TokenValidationResult
-ValidateJwt(const std::string& encodedJwt, std::shared_ptr<JwkCache> pubkeyCache, cta::log::LogContext& logContext);
+ValidateJwt(const std::string& encodedJwt, JwkCache& pubkeyCache, const cta::log::LogContext& logContext);
 }  // namespace cta::auth

@@ -42,6 +42,10 @@ void JwtAuthConfig::check(log::Logger& log) {
   if (expected_issuer.empty()) {
     throw exception::UserError("'expected_issuer' cannot be an empty string");
   }
+
+  if (jwks_uri.empty()) {
+    throw exception::UserError("'jwks_uri' cannot be an empty string");
+  }
 }
 
 void AuthConfig::check(OperationMode operationMode, log::Logger& log) {
@@ -100,7 +104,25 @@ void KerberosAuthConfig::check(OperationMode operationMode) const {
   }
 
   if (operationMode == OperationMode::WFE) {
-    throw exception::UserError("Kerberos authentication is cannot be used in WFE mode");
+    throw exception::UserError("Kerberos authentication cannot be used in WFE mode");
+  }
+
+  if (keytab_path.empty()) {
+    throw exception::UserError("'keytab_path' cannot be empty when Kerberos authentication is enabled");
+  }
+
+  if (service_principal.empty()) {
+    throw exception::UserError("'service_principal' cannot be empty when Kerberos authentication is enabled");
+  }
+}
+
+void GrpcTlsConfig::check() const {
+  if (server_key_path.empty()) {
+    throw exception::UserError("'grpc.tls.server_key_path' cannot be empty");
+  }
+
+  if (server_cert_path.empty()) {
+    throw exception::UserError("'grpc.tls.server_cert_path' cannot be empty");
   }
 }
 
@@ -111,6 +133,7 @@ void GrpcConfig::check(OperationMode operationMode, log::Logger& log) {
   }
 
   auth.check(operationMode, log);
+  grpc.tls.check();
 }
 
 }  // namespace cta::frontend::grpc::common

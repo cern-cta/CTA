@@ -14,6 +14,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <set>
 #include <shared_mutex>
 #include <string>
 #include <time.h>
@@ -54,10 +55,14 @@ public:
   JwkCache(std::unique_ptr<JwksFetcher> jwksFetcher,
            const std::string& jwkUri,
            int pubkeyTimeout,
+           const std::string& expectedIssuer,
+           std::set<std::string, std::less<>> revokedSet,
            const cta::log::LogContext& lc);
 
   void updateCache(time_t now);
   std::optional<JwkCacheEntry> find(const std::string& key);
+  bool isRevoked(const std::string& jti) const;
+  const std::string& getExpectedIssuer() const;
 
   JwksFetcher& getFetcher() { return *m_jwksFetcher; }
 
@@ -68,6 +73,10 @@ private:
   std::map<std::string, JwkCacheEntry, std::less<>> m_keymap;
   //!< This gives the option to keep public keys around for longer than the refresh interval.
   const int m_pubkeyTimeout;
+  //!< The expected issuer of tokens
+  std::string m_expectedIssuer;
+  //!< A set of JWT IDs that have been revoked.
+  std::set<std::string, std::less<>> m_revokedSet;
   //!< The logging context
   cta::log::LogContext m_lc;  //!< always make a copy for thread safety
 };

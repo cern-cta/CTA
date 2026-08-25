@@ -14,10 +14,14 @@ namespace cta::auth {
 JwkCache::JwkCache(std::unique_ptr<JwksFetcher> fetcher,
                    const std::string& jwkUri,
                    int pubkeyTimeout,
+                   const std::string& expectedIssuer,
+                   std::set<std::string, std::less<>> revokedSet,
                    const log::LogContext& lc)
     : m_jwksFetcher(std::move(fetcher)),
       m_jwksUri(jwkUri),
       m_pubkeyTimeout(pubkeyTimeout),
+      m_expectedIssuer(expectedIssuer),
+      m_revokedSet(std::move(revokedSet)),
       m_lc(lc) {};
 
 // Function to handle curl responses
@@ -134,5 +138,13 @@ void JwkCache::updateCache(time_t now) {
     spc.add("kid", kid);
     spc.add("cachedTime", std::to_string(now));
   }
+}
+
+bool JwkCache::isRevoked(const std::string& jti) const {
+  return m_revokedSet.contains(jti);
+}
+
+const std::string& JwkCache::getExpectedIssuer() const {
+  return m_expectedIssuer;
 }
 }  // namespace cta::auth

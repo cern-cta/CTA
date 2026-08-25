@@ -14,6 +14,7 @@ add_executable(cta-frontend-grpc
   ${PROJECT_SOURCE_DIR}/tools/CtaAdminCmdParser.cpp
   FrontendGrpcService.cpp
   ${PROJECT_SOURCE_DIR}/frontend/grpc/common/GrpcAuthUtils.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/grpc/common/GrpcConfig.cpp
   callback_api/CtaAdminServerWriteReactor.cpp
   NegotiationService.cpp
   ServerNegotiationRequestHandler.cpp
