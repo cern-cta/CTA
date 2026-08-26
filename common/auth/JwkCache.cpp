@@ -93,18 +93,17 @@ void JwkCache::updateCache(time_t now) {
   }
   // purge any keys that have expired
   lc.log(log::DEBUG, "In function updateCache, waiting to acquire unique lock");
-  std::unique_lock<std::shared_mutex> lock(m_mutex);
+  std::unique_lock lock(m_mutex);
   lc.log(log::DEBUG, "In updateCache, just acquired the unique lock");
-  for (auto it = m_keymap.begin(); it != m_keymap.end();) {
-    auto lastRefresh = it->second.last_refresh_time;
-    // if pubkeyTimeout is 0, then we don't want public keys to expire
-    if ((m_pubkeyTimeout != 0) && (lastRefresh + m_pubkeyTimeout <= now)) {
-      lc.log(log::DEBUG, std::string("Removing entry for key with kid ") + it->first);
-      it = m_keymap.erase(it);  // erase returns next valid iterator
-    } else {
-      ++it;
+
+  std::erase_if(m_keymap, [now, &lc, this](auto item) {
+    bool doErase = (m_pubkeyTimeout != 0) && (item.second.last_refresh_time + m_pubkeyTimeout <= now);
+    if (doErase) {
+      lc.log(log::DEBUG, std::string("Removing entry for key with kid ") + item.first);
     }
-  }
+    return doErase;
+  });
+
   // add the new keys
   auto jwks = jwt::parse_jwks(raw_jwks);
   std::string kid;

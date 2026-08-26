@@ -22,8 +22,7 @@ public:
   void setResponse(const std::string& url, const std::string& jwks) { m_responses[url] = jwks; }
 
   std::string fetchJWKS(const std::string& jwksUrl) override {
-    auto it = m_responses.find(jwksUrl);
-    if (it != m_responses.end()) {
+    if (auto it = m_responses.find(jwksUrl); it != m_responses.end()) {
       return it->second;
     }
     return generateTestJWKS();

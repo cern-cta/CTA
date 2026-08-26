@@ -35,7 +35,7 @@ public:
 
 class CurlJwksFetcher : public JwksFetcher {
 public:
-  CurlJwksFetcher(int totalTimeoutSecs = 30);
+  explicit CurlJwksFetcher(int totalTimeoutSecs);
   ~CurlJwksFetcher() override;
 
   // Delete copy/move to ensure single instance manages curl global state

@@ -62,9 +62,9 @@ struct RevokedTokenEntry final {
 struct JwtAuthConfig final {
   bool enabled;                      //!< Whether JWT auth is enabled
   std::string jwks_uri;              //!< The URI of the JWKS endpoint/file listing trustworthy public keys
-  int cache_refresh_interval = 600;  //!< Time (s) for the public key cache TTL
-  int pub_key_timeout = 0;           //!< Time (s) after which to update the cache entry for a cached key (0 = never)
-  int jwks_total_timeout = 60;       //!< Time (s) for JWKS endpoint cache (default 60)
+  int cache_refresh_interval = 600;  //!< TTL (s) of the JWKS cache, after which the JWKS will be re-fetched
+  int pub_key_timeout = 0;           //!< TTL (s) of a cached public key (0 = never expires)
+  int jwks_total_timeout = 60;       //!< Timeout for JWKS retrieval from a URL (default 60)
   std::string expected_issuer;       //!< The expected issuer of the JWT tokens
 
   std::vector<RevokedTokenEntry> revoked_tokens;
