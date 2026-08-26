@@ -514,6 +514,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
     mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    const auto archiveDriveState = catalogue.DriveState()->getTapeDrive(driveName);
+    ASSERT_TRUE(archiveDriveState.has_value());
+    ASSERT_EQ(s_archivePriority, archiveDriveState->currentPriority.value());
     auto& osdb = getSchedulerDB();
     auto mi = osdb.getMountInfo(lc);
     SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
@@ -616,6 +619,10 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     std::unique_ptr<cta::RetrieveMount> retrieveMount;
     retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
     ASSERT_NE(nullptr, retrieveMount.get());
+    retrieveMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    const auto retrieveDriveState = catalogue.DriveState()->getTapeDrive(driveName);
+    ASSERT_TRUE(retrieveDriveState.has_value());
+    ASSERT_EQ(s_retrievePriority, retrieveDriveState->currentPriority.value());
     std::unique_ptr<cta::RetrieveJob> retrieveJob;
     auto jobBatch = retrieveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_EQ(1, jobBatch.size());
@@ -627,6 +634,10 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     retrieveMount->setJobBatchTransferred(jobQueue, lc);
     jobBatch = retrieveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_EQ(0, jobBatch.size());
+    retrieveMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Up);
+    const auto freeDriveState = catalogue.DriveState()->getTapeDrive(driveName);
+    ASSERT_TRUE(freeDriveState.has_value());
+    ASSERT_EQ(0, freeDriveState->currentPriority.value());
   }
 }
 

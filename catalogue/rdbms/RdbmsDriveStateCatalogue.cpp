@@ -828,6 +828,7 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
       CLEANUP_START_TIME = :CLEANUP_START_TIME,
       SHUTDOWN_TIME = :SHUTDOWN_TIME,
       MOUNT_TYPE = :MOUNT_TYPE,
+      CURRENT_PRIORITY = :CURRENT_PRIORITY,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
       LAST_UPDATE_TIME = :LAST_UPDATE_TIME,
@@ -938,6 +939,7 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
   setOptionalTime(":CLEANUP_START_TIME", tapeDrive.cleanupStartTime);
   setOptionalTime(":SHUTDOWN_TIME", tapeDrive.shutdownTime);
   stmt.bindString(":MOUNT_TYPE", toString(tapeDrive.mountType));
+  stmt.bindUint64(":CURRENT_PRIORITY", tapeDrive.currentPriority);
   stmt.bindString(":LAST_UPDATE_USER_NAME", tapeDrive.lastModificationLog.value().username);
   stmt.bindString(":LAST_UPDATE_HOST_NAME", tapeDrive.lastModificationLog.value().host);
   stmt.bindUint64(":LAST_UPDATE_TIME", tapeDrive.lastModificationLog.value().time);
