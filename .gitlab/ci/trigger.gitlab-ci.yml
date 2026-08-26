@@ -25,6 +25,8 @@ spec:
       type: string
     enable-oracle-support:
       type: boolean
+    admin-api-authentication:
+      type: string
     workflow-api-authentication:
       type: string
     enable-valgrind:
@@ -137,6 +139,7 @@ trigger-cta-version-regression-pipeline:
           scheduler-type: $[[ inputs.scheduler-type ]]
           enable-oracle-support: $[[ inputs.enable-oracle-support ]]
           compile-with-extra-telemetry: $[[ inputs.compile-with-extra-telemetry ]]
+          admin-api-authentication: $[[ inputs.admin-api-authentication ]]
           workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
           enable-valgrind: $[[ inputs.enable-valgrind ]]
           enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]

@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 frontend-admin:
-  # Enabled to allow debugging after a crash
   conf:
     auth:
       methods:
