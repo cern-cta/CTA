@@ -226,7 +226,33 @@ RelationalDB::getArchiveJobs(const std::optional<std::string>& tapePoolName) con
 std::unique_ptr<SchedulerDatabase::IArchiveJobQueueItor>
 RelationalDB::getArchiveJobQueueItor(const std::string& tapePoolName,
                                      common::dataStructures::JobQueueType queueType) const {
-  throw cta::exception::NotImplementedException();
+  schedulerdb::Transaction txn(m_connPool, lc);
+  rdbms::Rset resultSet;
+   try {
+    resultSet = schedulerdb::postgres::ArchiveJobQueueRow::getFailedJobs(txn, tapePoolName, queueType);
+    if (resultSet.isEmpty()) {
+      lc.log(cta::log::INFO, "In RelationalDB::getNextArchiveJobsToReportBatch(): nothing to report.");
+      return ret;
+    }
+    while (resultSet.next()) {
+      // last parameter is false = signaling that this is not a repack workflow
+      ret.emplace_back(std::make_unique<schedulerdb::ArchiveRdbJob>(m_connPool, resultSet, false));
+    }
+    txn.setRowCountForTelemetry(ret.size());
+    txn.commit();
+    timings.insertAndReset("fetchedArchiveJobs", t);
+    timings.addToLog(logParams);
+    lc.log(cta::log::INFO, "Successfully flagged jobs for reporting.");
+  } catch (exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
+    lc.log(cta::log::ERR, "In RelationalDB::getNextArchiveJobsToReportBatch(): failed to flagReportingJobsByStatus.");
+    txn.abort();
+    return ret;
+  }
+  lc.log(log::INFO, "In RelationalDB::getNextArchiveJobsToReportBatch(): Finished getting archive jobs for reporting.");
+  return ret;
+
 }
 
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>

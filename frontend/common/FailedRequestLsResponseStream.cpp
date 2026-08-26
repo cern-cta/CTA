@@ -46,6 +46,7 @@ FailedRequestLsResponseStream::FailedRequestLsResponseStream(cta::catalogue::Cat
   if (m_isSummary) {
     collectSummaryData(!justretrieve, !justarchive);
   } else {
+#ifndef CTA_PGSCHED
     if (!justretrieve) {
       m_archiveJobQueueItorPtr =
         m_schedDb.getArchiveJobQueueItor(tapepool ? *tapepool : "", common::dataStructures::JobQueueType::FailedJobs);
@@ -54,6 +55,16 @@ FailedRequestLsResponseStream::FailedRequestLsResponseStream(cta::catalogue::Cat
       m_retrieveJobQueueItorPtr =
         m_schedDb.getRetrieveJobQueueItor(vid ? *vid : "", common::dataStructures::JobQueueType::FailedJobs);
     }
+#else
+    if (!justretrieve) {
+      m_archiveJobQueueItorPtr =
+        m_schedDb.getArchiveJobQueueItor(tapepool ? *tapepool : "", common::dataStructures::JobQueueType::FailedJobs);
+    }
+    if (!justarchive) {
+      m_retrieveJobQueueItorPtr =
+        m_schedDb.getRetrieveJobQueueItor(vid ? *vid : "", common::dataStructures::JobQueueType::FailedJobs);
+    }
+#endif
   }
 }
 
