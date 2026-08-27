@@ -62,7 +62,7 @@ class CtaTapedHost(RemoteHost):
 
         while time.monotonic() < deadline:
             result = self.exec(
-                f"mt -f {shlex.quote(self.drive_device)} status",
+                f"mt -f {shlex.quote(self.drive_device)} tell",
                 capture_output=True,
                 throw_on_failure=False,
             )
