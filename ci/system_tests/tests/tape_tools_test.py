@@ -296,7 +296,7 @@ def test_smc_query_status_volumes(cta_rmcd: CtaRmcdHost) -> None:
         assert smc_query(cta_rmcd, "V", f"-V {shlex.quote(volume['vid'])}") == [volume]
 
 
-def test_smc_dismount_free_drive(cta_rmcd: CtaRmcdHost) -> None:
+def test_smc_dismount_free_drive(cta_rmcd: CtaRmcdHost, error_whitelist: set[str]) -> None:
     # A dismount of a drive without a cartridge is successful and leaves the drive free
     drive = next(drive for drive in smc_query(cta_rmcd, "D") if drive["status"] == "free")
     drive_ordinal = drive["driveOrdinal"]
@@ -304,6 +304,7 @@ def test_smc_dismount_free_drive(cta_rmcd: CtaRmcdHost) -> None:
     cta_rmcd.exec(f"cta-smc -d -D {drive_ordinal}")
 
     assert smc_query(cta_rmcd, "D", f"-D {drive_ordinal}")[0]["status"] == "free"
+    error_whitelist.add("Unmount cartridge failed")  # This tests produces the following error as expected
 
 
 def test_smc_mount(cta_rmcd: CtaRmcdHost, mounted_volume: tuple[int, str]) -> None:
