@@ -546,6 +546,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
     ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();
+    archiveMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Up);
   }
 
   {
