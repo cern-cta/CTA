@@ -5,6 +5,8 @@ spec:
   inputs:
     custom-cta-image-tag:
       type: string
+    admin-api-authentication:
+      type: string
     workflow-api-authentication:
       type: string
     enable-dcache-tests:
@@ -26,7 +28,7 @@ spec:
 
 .setup-k8s-test-variables: &setup-k8s-test-variables
   - | # Construct the deployment profiles used by Kubernetes tests
-    CTA_VALUES_CHAIN="presets/dev-cta-common.yaml,presets/frontend-wfe/auth-$[[ inputs.workflow-api-authentication ]].yaml,presets/frontend-admin/auth-jwt.yaml"
+    CTA_VALUES_CHAIN="presets/dev-cta-common.yaml,presets/frontend-wfe/auth-$[[ inputs.workflow-api-authentication ]].yaml,presets/frontend-admin/auth-$[[ inputs.admin-api-authentication ]].yaml"
   - | # Which scheduler config to use
     if [[ "$SCHEDULER_TYPE" == "objectstore" ]]; then
       SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml
