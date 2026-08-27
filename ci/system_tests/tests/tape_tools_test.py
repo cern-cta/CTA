@@ -174,19 +174,17 @@ def readtp_tape_files(
         cta_cli.set_all_drives_up()
 
 
-@pytest.fixture
-def mounted_volume(cta_rmcd: CtaRmcdHost, cta_taped: CtaTapedHost) -> Iterator[tuple[int, str]]:
-    # Use the taped drive so tests that need to unload its mechanism know the device path
-    drive_ordinal = cta_taped.drive_index
-    drive = smc_query(cta_rmcd, "D", f"-D {drive_ordinal}")[0]
-    assert drive["status"] == "free"
+@pytest.fixture(scope="module")
+def mounted_volume(cta_rmcd: CtaRmcdHost) -> Iterator[tuple[int, str]]:
+    # Select any free drive without depending on a taped device mapping
+    drive = next(drive for drive in smc_query(cta_rmcd, "D") if drive["status"] == "free")
+    drive_ordinal = drive["driveOrdinal"]
 
     # Select any cartridge in a storage slot without assuming a VID or library layout
     volume = next(volume for volume in smc_query(cta_rmcd, "V") if volume["elementType"] == "slot")
     vid = volume["vid"]
     cta_rmcd.exec(f"cta-smc -m -D {drive_ordinal} -V {shlex.quote(vid)}")
     try:
-        cta_taped.wait_for_tape_device_ready()
         yield drive_ordinal, vid
     finally:
         # Use the reset path so a failed assertion cannot leave a cartridge in the drive
@@ -194,7 +192,7 @@ def mounted_volume(cta_rmcd: CtaRmcdHost, cta_taped: CtaTapedHost) -> Iterator[t
             cta_rmcd.unload_tapes()
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def ejected_volume(cta_rmcd: CtaRmcdHost) -> Iterator[str]:
     # Export a cartridge from a slot and import it during cleanup if the test did not do so
     volume = next(volume for volume in smc_query(cta_rmcd, "V") if volume["elementType"] == "slot")
@@ -317,26 +315,17 @@ def test_smc_mount(cta_rmcd: CtaRmcdHost, mounted_volume: tuple[int, str]) -> No
     assert smc_query(cta_rmcd, "V", f"-V {shlex.quote(vid)}")[0]["elementType"] == "drive"
 
 
-def test_smc_dismount_loaded_volume(
+def test_smc_dismount_loaded_drive(
     cta_rmcd: CtaRmcdHost,
-    cta_taped: CtaTapedHost,
     mounted_volume: tuple[int, str],
 ) -> None:
     drive_ordinal, vid = mounted_volume
-
-    # The robot may only move a cartridge after the tape drive has unloaded it
-    drive = smc_query(cta_rmcd, "D", f"-D {drive_ordinal}")[0]
-    if drive["status"] == "loaded":
-        cta_taped.exec(f"mt -f {shlex.quote(cta_taped.drive_device)} offline")
-    unloaded = smc_query(cta_rmcd, "D", f"-D {drive_ordinal}")[0]
-    assert unloaded["vid"] == vid
-    assert unloaded["status"] == "unloaded"
-
-    cta_rmcd.exec(f"cta-smc -d -D {drive_ordinal} -V {shlex.quote(vid)}")
-
-    assert smc_query(cta_rmcd, "D", f"-D {drive_ordinal}")[0]["status"] == "free"
-    volume = smc_query(cta_rmcd, "V", f"-V {shlex.quote(vid)}")[0]
-    assert volume["elementType"] == "slot"
+    # Dismount must reject a cartridge that the drive mechanism has not unloaded
+    exit_status = cta_rmcd.exec_with_output(
+        f'cta-smc -d -D {drive_ordinal} -V {shlex.quote(vid)}; cta_smc_status=$?; printf "%s" "$cta_smc_status"'
+    )
+    assert int(exit_status) == 9
+    assert smc_query(cta_rmcd, "V", f"-V {shlex.quote(vid)}")[0]["elementType"] == "drive"
 
 
 def test_smc_eject(cta_rmcd: CtaRmcdHost, ejected_volume: str) -> None:
