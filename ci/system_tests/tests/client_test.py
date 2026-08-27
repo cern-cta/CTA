@@ -942,10 +942,16 @@ class TestRuntimeDeployment:
         # Compare deployed inputs with their runtime copies and verify the generated service metadata
         daemon = request.getfixturevalue(daemon_fixture)
 
+        def assert_remote_files_equal(deployed_path: str, runtime_path: str) -> None:
+            daemon.exec(
+                f'test "$(sha256sum < {shlex.quote(deployed_path)})" = "$(sha256sum < {shlex.quote(runtime_path)})"'
+            )
+
         # Files present for every service
-        daemon.exec(f"cmp /etc/cta/cta-{daemon.process_name}.toml /run/cta/config.toml")
         daemon.exec(f"jq -e -r '.service == \"cta-{daemon.process_name}\"' /run/cta/version.json >/dev/null")
-        daemon.exec("cmp /etc/cta/cta-logging.schema.json /run/cta/cta-logging.schema.json")
+        assert_remote_files_equal(f"/etc/cta/cta-{daemon.process_name}.toml", "/run/cta/config.toml")
+        assert_remote_files_equal("/etc/cta/cta-logging.schema.json", "/run/cta/cta-logging.schema.json")
+        daemon.exec("jq -e '.title == \"CTA Logging Schema\"' /run/cta/cta-logging.schema.json >/dev/null")
 
         # Determine which files we should actually check, because not every service exposes all of them
         config_files = {
@@ -960,7 +966,7 @@ class TestRuntimeDeployment:
         # Now compare
         for config_name in files_to_check:
             deployed_path, runtime_path = config_files[config_name]
-            daemon.exec(f"cmp {deployed_path} {runtime_path}")
+            assert_remote_files_equal(deployed_path, runtime_path)
 
     @pytest.mark.parametrize(
         "daemon_fixture",
