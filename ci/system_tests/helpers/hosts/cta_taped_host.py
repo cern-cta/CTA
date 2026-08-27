@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import shlex
+import time
 from functools import cached_property
 from pathlib import Path
 
@@ -53,6 +55,25 @@ class CtaTapedHost(RemoteHost):
     @cached_property
     def logical_library_name(self) -> str:
         return self.exec_with_output("printenv LOGICAL_LIBRARY_NAME")
+
+    def wait_for_tape_device_ready(self, timeout_seconds: int = 60) -> None:
+        deadline = time.monotonic() + timeout_seconds
+        last_error = ""
+
+        while time.monotonic() < deadline:
+            result = self.exec(
+                f"mt -f {shlex.quote(self.drive_device)} status",
+                capture_output=True,
+                throw_on_failure=False,
+            )
+            if result.success:
+                return
+            last_error = result.stderr.strip()
+            time.sleep(1)
+
+        raise TimeoutError(
+            f"Tape device {self.drive_device} did not become ready within {timeout_seconds}s. {last_error}"
+        )
 
     def label_tapes(self, tapes: list[str]) -> None:
         for tape in tapes:

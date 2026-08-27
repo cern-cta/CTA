@@ -186,6 +186,7 @@ def mounted_volume(cta_rmcd: CtaRmcdHost, cta_taped: CtaTapedHost) -> Iterator[t
     vid = volume["vid"]
     cta_rmcd.exec(f"cta-smc -m -D {drive_ordinal} -V {shlex.quote(vid)}")
     try:
+        cta_taped.wait_for_tape_device_ready()
         yield drive_ordinal, vid
     finally:
         # Use the reset path so a failed assertion cannot leave a cartridge in the drive
