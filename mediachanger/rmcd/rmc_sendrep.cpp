@@ -49,7 +49,12 @@ int rmc_sendrep(cta::log::LogContext& lc, const int rpfd, const int rep_type, ..
       vsprintf(prtbuf, msg, args);
       marshall_LONG(rbp, strlen(prtbuf) + 1);
       marshall_STRING(rbp, prtbuf);
-      lc.log(cta::log::INFO, prtbuf);
+      {
+        cta::log::ScopedParamContainer params(lc);
+        params.add("rmcResponseMessage", std::string(prtbuf));
+        // This is deliberately not on the ERR message as rmcd frequently retries where intermediate tries result in errors
+        lc.log(cta::log::INFO, "Sending error response to the rmcd client");
+      }
       break;
     case MSG_DATA:
       n = va_arg(args, int);
