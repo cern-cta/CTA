@@ -12,7 +12,7 @@ from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Callable, Union, cast
 from _pytest.fixtures import SubRequest
 
 import fastjsonschema
@@ -1034,7 +1034,7 @@ class TestRuntimeDeployment:
         print("Verifying log schema")
 
         schema = load_schema(logging_schema_path)
-        validate = fastjsonschema.compile(schema)
+        validate = cast(Callable[[dict[str, Any]], Any], fastjsonschema.compile(schema))
 
         expected_events = extract_expected_events(schema)
         observed_events = set()
@@ -1069,7 +1069,7 @@ class TestRuntimeDeployment:
                     errors += 1
                     print(f"ERROR: Schema violation found on line {i}")
                     print(f"  * Contents: {line}")
-                    print(f"  * Violation: {violation.message}")
+                    print(f"  * Violation: {violation}")
                     if fail_fast:
                         sys.exit(1)
 

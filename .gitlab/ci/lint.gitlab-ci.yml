@@ -318,4 +318,5 @@ type-check-python:
     # It is a bit unfortunate we have to do this explicitly, but they are mostly independent scripts that need this,
     # so not one top-level "install all dependencies" is available
     - uv pip install --system -r ci/system_tests/requirements.txt
+    - uv pip install --system pyjwt cryptography
     - pyright .
