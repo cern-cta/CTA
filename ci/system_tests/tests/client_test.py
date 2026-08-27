@@ -9,13 +9,14 @@ import sys
 import time
 import uuid
 from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Callable, Union, cast
 from _pytest.fixtures import SubRequest
 
+import fastjsonschema
 import pytest
-from jsonschema import Draft202012Validator
 
 from system_tests.helpers.hosts import CtaCliHost, CtaMaintdHost, CtaTapedHost, EosClientHost, EosMgmHost
 from system_tests.helpers.test_config import TestConfig as SystemTestConfig
@@ -988,8 +989,20 @@ class TestRuntimeDeployment:
         # Collect the schema and logs from every CTA service that participates in this deployment
         hosts = [*env.cta_admin_api, *env.cta_workflow_api, *env.cta_taped]
         logging_schema_path = tmp_path / "cta-logging.schema.json"
-        # Maintd already populates the logging schema in the runtime directory so we just grab it from there
-        cta_maintd.copy_from(Path("/run/cta/cta-logging.schema.json"), logging_schema_path)
+        logging_paths = [(host, tmp_path / f"{host.name}.log") for host in hosts]
+
+        # Copying from Kubernetes has significant fixed overhead, so fetch all inputs concurrently
+        with ThreadPoolExecutor(max_workers=len(logging_paths) + 1) as pool:
+            copies = [
+                pool.submit(
+                    cta_maintd.copy_from,
+                    Path("/run/cta/cta-logging.schema.json"),
+                    logging_schema_path,
+                )
+            ]
+            copies.extend(pool.submit(host.copy_from, host.log_file_path, path) for host, path in logging_paths)
+            for copy in copies:
+                copy.result()
 
         fail_fast = True
 
@@ -1021,7 +1034,7 @@ class TestRuntimeDeployment:
         print("Verifying log schema")
 
         schema = load_schema(logging_schema_path)
-        validator = Draft202012Validator(schema)
+        validate = cast(Callable[[dict[str, Any]], Any], fastjsonschema.compile(schema))
 
         expected_events = extract_expected_events(schema)
         observed_events = set()
@@ -1030,10 +1043,8 @@ class TestRuntimeDeployment:
         i = 0
 
         # Validate each JSON log record while collecting the event names observed across all hosts
-        for host in hosts:
+        for host, current_logging_path in logging_paths:
             print(f"Checking logs for {host.name}")
-            current_logging_path = tmp_path / f"{host.name}.log"
-            host.copy_from(host.log_file_path, current_logging_path)
             for i, line in enumerate(iter_lines(current_logging_path), start=1):
                 stripped_line = line.strip()
                 if not stripped_line:
@@ -1052,21 +1063,15 @@ class TestRuntimeDeployment:
                 if "event_name" in obj:
                     observed_events.add(obj["event_name"])
 
-                violations = sorted(validator.iter_errors(obj), key=lambda e: e.path)
-
-                if violations:
+                try:
+                    validate(obj)
+                except fastjsonschema.JsonSchemaException as violation:
                     errors += 1
                     print(f"ERROR: Schema violation found on line {i}")
                     print(f"  * Contents: {line}")
-                    print("  * Violations:")
-                    for v in violations:
-                        path = ".".join(map(str, v.path))
-                        if path:
-                            print(f"      {path}: {v.message}")
-                        else:
-                            print(f"      {v.message}")
-                        if fail_fast:
-                            sys.exit(1)
+                    print(f"  * Violation: {violation}")
+                    if fail_fast:
+                        sys.exit(1)
 
         # Require coverage of every schema event that is expected during the system suite
         missing_events = expected_events - observed_events
