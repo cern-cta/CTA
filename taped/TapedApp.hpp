@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "DriveHandler.hpp"
 #include "TapedConfig.hpp"
 #include "common/log/LogContext.hpp"
 
@@ -30,6 +31,9 @@ public:
   bool isLive() const;
 
   bool isReady() const;
+
+private:
+  std::unique_ptr<DriveHandler> m_driveHandler = nullptr;
 };
 
 }  // namespace cta::tape::daemon
