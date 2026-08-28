@@ -76,7 +76,13 @@ def generate_jwk_from_cert(cert_path: Path) -> dict[str, Union[str, list[str]]]:
 
 
 def generate_jwt(
-    private_key: RSAPrivateKey, kid: str, sub: str, lifetime_sec: int, issuer: str, jti: Optional[str] = None
+    private_key: RSAPrivateKey,
+    kid: str,
+    sub: str,
+    lifetime_sec: int,
+    issuer: str,
+    audience: str,
+    jti: Optional[str] = None,
 ) -> str:
     """Generate a JWT with all claims required by the CTA frontend."""
     now = int(time.time())
@@ -89,6 +95,9 @@ def generate_jwt(
         "typ": "Bearer",
         "iss": issuer,
     }
+
+    if audience:
+        payload["aud"] = audience
 
     return jwt.encode(
         payload,
@@ -104,6 +113,11 @@ def main() -> None:
             "Generate CI files containing a JWKS and one JWT for each --sub passed. Files are put in "
             "the --output-dir directory."
         )
+    )
+    parser.add_argument(
+        "--audience",
+        default="",
+        help="Audience claim to set in the generated JWT (empty = none)",
     )
     parser.add_argument(
         "--sub",
@@ -162,7 +176,7 @@ def main() -> None:
         kid = jwk["kid"]
         if not isinstance(kid, str):
             raise TypeError("JWK kid must be a string")
-        token = generate_jwt(key, kid, sub, args.lifetime, args.issuer, args.set_jti)
+        token = generate_jwt(key, kid, sub, args.lifetime, args.issuer, args.audience, args.set_jti)
 
         safe_sub = sanitize_filename(sub)
         jwt_path = Path(args.output_dir) / f"{safe_sub}.jwt"

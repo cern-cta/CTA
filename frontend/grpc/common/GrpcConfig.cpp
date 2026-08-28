@@ -40,11 +40,15 @@ void JwtAuthConfig::check(log::Logger& log) {
   }
 
   if (expected_issuer.empty()) {
-    throw exception::UserError("'expected_issuer' cannot be an empty string");
+    throw exception::UserError("'expected_issuer' cannot be empty");
+  }
+
+  if (expected_audience.empty()) {
+    throw exception::UserError("'expected_audience' cannot be empty");
   }
 
   if (jwks_uri.empty()) {
-    throw exception::UserError("'jwks_uri' cannot be an empty string");
+    throw exception::UserError("'jwks_uri' cannot be a empty");
   }
 }
 

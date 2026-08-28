@@ -51,6 +51,7 @@ conf:
     config:
       jwt:
         expectedIssuer: "cta"
+        expectedAudience: "cta-wfe"
       mtls:
         aliases:
           ctaeos:

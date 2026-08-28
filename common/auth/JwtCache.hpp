@@ -50,12 +50,13 @@ private:
   long m_totalTimeoutSecs;  //!< Total timeout in seconds
 };
 
-class JwkCache {
+class JwtCache {
 public:
-  JwkCache(std::unique_ptr<JwksFetcher> jwksFetcher,
+  JwtCache(std::unique_ptr<JwksFetcher> jwksFetcher,
            const std::string& jwkUri,
            int pubkeyTimeout,
            const std::string& expectedIssuer,
+           const std::string& expectedAudience,
            std::set<std::string, std::less<>> revokedSet,
            const cta::log::LogContext& lc);
 
@@ -63,6 +64,7 @@ public:
   std::optional<JwkCacheEntry> find(const std::string& key);
   bool isRevoked(const std::string& jti) const;
   const std::string& getExpectedIssuer() const;
+  const std::string& getExpectedAudience() const;
 
   JwksFetcher& getFetcher() { return *m_jwksFetcher; }
 
@@ -75,6 +77,8 @@ private:
   const int m_pubkeyTimeout;
   //!< The expected issuer of tokens
   std::string m_expectedIssuer;
+  //!< The expected audience of tokens
+  std::string m_expectedAudience;
   //!< A set of JWT IDs that have been revoked.
   std::set<std::string, std::less<>> m_revokedSet;
   //!< The logging context

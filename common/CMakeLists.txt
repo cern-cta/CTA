@@ -170,7 +170,7 @@ target_link_libraries (ctacommon
 )
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
-  auth/JwkCacheTest.cpp
+  auth/JwtCacheTest.cpp
   auth/JwtValidationTest.cpp
   checksum/ChecksumBlobTest.cpp
   checksum/CRCTest.cpp
@@ -218,7 +218,7 @@ set_property(TARGET ctacommonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 
 set (AUTH_LIB_SRC_FILES
-  auth/JwkCache.cpp
+  auth/JwtCache.cpp
   auth/JwtValidation.cpp
 )
 

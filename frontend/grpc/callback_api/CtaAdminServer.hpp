@@ -7,7 +7,7 @@
 
 #include "ServerDefaultReactor.hpp"
 #include "ServerVersion.hpp"
-#include "common/auth/JwkCache.hpp"
+#include "common/auth/JwtCache.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
@@ -72,7 +72,7 @@ public:
                    uint64_t missingFileCopiesMinAgeSecs,
                    const cta::log::LogContext& logContext,
                    std::set<AuthMethod, std::less<>> authMethods,
-                   std::shared_ptr<cta::auth::JwkCache> pubkeyCache,
+                   std::shared_ptr<cta::auth::JwtCache> pubkeyCache,
                    server::TokenStorage& tokenStorage)
       : m_lc(logContext),
         m_catalogue(catalogue),
@@ -100,7 +100,7 @@ private:
   std::string m_catalogueConnString;                   //!< Provided by frontendService
   uint64_t m_missingFileCopiesMinAgeSecs;              //!< Provided by the frontendService
   std::set<AuthMethod, std::less<>> m_authMethods;     //!< The authentication methods used
-  std::shared_ptr<cta::auth::JwkCache> m_pubkeyCache;  //!< Shared JWK cache for token validation
+  std::shared_ptr<cta::auth::JwtCache> m_pubkeyCache;  //!< Shared JWK cache for token validation
   server::TokenStorage& m_tokenStorage;                //!< Required for Kerberos token validation
 };
 

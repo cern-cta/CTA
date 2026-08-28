@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "JwkCache.hpp"
+#include "JwtCache.hpp"
 
 #include "jwt-cpp/jwt.h"
 
@@ -11,16 +11,18 @@
 #include <mutex>
 
 namespace cta::auth {
-JwkCache::JwkCache(std::unique_ptr<JwksFetcher> fetcher,
+JwtCache::JwtCache(std::unique_ptr<JwksFetcher> fetcher,
                    const std::string& jwkUri,
                    int pubkeyTimeout,
                    const std::string& expectedIssuer,
+                   const std::string& expectedAudience,
                    std::set<std::string, std::less<>> revokedSet,
                    const log::LogContext& lc)
     : m_jwksFetcher(std::move(fetcher)),
       m_jwksUri(jwkUri),
       m_pubkeyTimeout(pubkeyTimeout),
       m_expectedIssuer(expectedIssuer),
+      m_expectedAudience(expectedAudience),
       m_revokedSet(std::move(revokedSet)),
       m_lc(lc) {};
 
@@ -65,11 +67,11 @@ std::string CurlJwksFetcher::fetchJWKS(const std::string& jwksUrl) {
   return readBuffer;
 }
 
-std::optional<JwkCacheEntry> JwkCache::find(const std::string& key) {
+std::optional<JwkCacheEntry> JwtCache::find(const std::string& key) {
   log::LogContext lc(m_lc);
-  lc.log(log::DEBUG, "Waiting to acquire shared_lock in JwkCache::find");
+  lc.log(log::DEBUG, "Waiting to acquire shared_lock in JwtCache::find");
   std::shared_lock lock(m_mutex);
-  lc.log(log::DEBUG, "Just acquired the shared_lock in JwkCache::find");
+  lc.log(log::DEBUG, "Just acquired the shared_lock in JwtCache::find");
   auto it = m_keymap.find(key);
   if (it == m_keymap.end()) {
     lc.log(log::INFO, std::string("Entry not found for kid ") + key);
@@ -80,7 +82,7 @@ std::optional<JwkCacheEntry> JwkCache::find(const std::string& key) {
   }
 }
 
-void JwkCache::updateCache(time_t now) {
+void JwtCache::updateCache(time_t now) {
   log::LogContext lc(m_lc);
   log::ScopedParamContainer spc(lc);
   lc.log(log::DEBUG, "In function updateCache");
@@ -139,11 +141,15 @@ void JwkCache::updateCache(time_t now) {
   }
 }
 
-bool JwkCache::isRevoked(const std::string& jti) const {
+bool JwtCache::isRevoked(const std::string& jti) const {
   return m_revokedSet.contains(jti);
 }
 
-const std::string& JwkCache::getExpectedIssuer() const {
+const std::string& JwtCache::getExpectedIssuer() const {
   return m_expectedIssuer;
+}
+
+const std::string& JwtCache::getExpectedAudience() const {
+  return m_expectedAudience;
 }
 }  // namespace cta::auth

@@ -53,6 +53,7 @@ conf:
     config:
       jwt:
         expectedIssuer: "cta"
+        expectedAudience: "cta-admin"
         revokedTokens:
           - jti: a7d2099c-68f8-43fa-83c5-28a810f835fa
             reason: just a revoked token which may come handy for testing

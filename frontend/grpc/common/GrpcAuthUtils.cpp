@@ -41,9 +41,9 @@ validateKrb5Token(const std::string& token, server::TokenStorage& tokenStorage, 
 std::pair<Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
 extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::string_ref>& client_metadata,
                              bool jwtAuthEnabled,
-                             std::shared_ptr<cta::auth::JwkCache> pubkeyCache,
+                             std::shared_ptr<cta::auth::JwtCache> pubkeyCache,
                              server::TokenStorage& tokenStorage,
-                             const std::string& ourHost,
+                             const std::string& ourInstance,
                              const std::string& clientHost,
                              cta::log::LogContext& lc) {
   cta::log::ScopedParamContainer sp(lc);
@@ -70,10 +70,9 @@ extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::str
       auto validationResult = cta::auth::ValidateJwt(token, *pubkeyCache, lc);
 
       if (validationResult.isValid) {
-        lc.log(cta::log::DEBUG,
-               "JWT token validation successful. Our host: '" + ourHost + "', client host: '" + clientHost + "'");
+        lc.log(cta::log::DEBUG, "JWT token validation successful. Client host: '" + clientHost + "'");
         SecurityIdentity clientIdentity(validationResult.subjectClaim.value(),
-                                        std::string(ourHost),
+                                        std::string(ourInstance),
                                         std::string(clientHost),
                                         SecurityIdentity::Protocol::JWT);
         return {Status::OK, clientIdentity};
@@ -95,7 +94,7 @@ extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::str
 
       if (validationStatus.ok()) {
         SecurityIdentity clientIdentity(username,
-                                        std::string(ourHost),
+                                        std::string(ourInstance),
                                         std::string(clientHost),
                                         SecurityIdentity::Protocol::KRB5);
         return {Status::OK, clientIdentity};

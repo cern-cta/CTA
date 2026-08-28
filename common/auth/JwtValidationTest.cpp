@@ -7,7 +7,7 @@
 
 #include "JwtValidation.hpp"
 
-#include "common/auth/JwkCache.hpp"
+#include "common/auth/JwtCache.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
 
@@ -103,6 +103,7 @@ std::string createTestJwt(bool expired, const std::string& kid) {
                                                + (expired ? -std::chrono::minutes(60) : std::chrono::minutes(60))))
                  .set_header_claim("kid", jwt::claim(kid))
                  .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
+                 .set_payload_claim("aud", jwt::claim(std::string("test-audience")))
                  .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
   return token;
 }
@@ -114,35 +115,39 @@ protected:
 
   ValidateJwtTestFixture() : log("dummy", "ValidateJwtTests", cta::log::DEBUG), lc(log) {}
 
-  std::shared_ptr<cta::auth::JwkCache> createCacheWithMockFetcher() const {
-    return std::make_shared<cta::auth::JwkCache>(std::make_unique<MockJwksFetcherValidateJwt>(),
+  std::shared_ptr<cta::auth::JwtCache>
+  createCacheWithMockFetcher(const std::string& expectedAudience = "test-audience") const {
+    return std::make_shared<cta::auth::JwtCache>(std::make_unique<MockJwksFetcherValidateJwt>(),
                                                  "http://fake-jwks-uri",
                                                  1200,
                                                  "test",
+                                                 expectedAudience,
                                                  std::set<std::string, std::less<>>(),
                                                  lc);
   }
 
-  std::shared_ptr<cta::auth::JwkCache> createCacheWithEmptyMockFetcher() const {
+  std::shared_ptr<cta::auth::JwtCache> createCacheWithEmptyMockFetcher() const {
     auto mockFetcher = std::make_unique<MockJwksFetcherValidateJwt>();
     mockFetcher->setJwks("");
 
-    const auto cache = std::make_shared<cta::auth::JwkCache>(std::move(mockFetcher),
+    const auto cache = std::make_shared<cta::auth::JwtCache>(std::move(mockFetcher),
                                                              "http://fake-jwks-uri",
                                                              1200,
                                                              "test",
+                                                             "test-audience",
                                                              std::set<std::string, std::less<>>(),
                                                              lc);
     return cache;
   }
 
-  std::shared_ptr<cta::auth::JwkCache> createCacheWithRevokedJti(const std::string& revokedJti) const {
+  std::shared_ptr<cta::auth::JwtCache> createCacheWithRevokedJti(const std::string& revokedJti) const {
     std::set<std::string, std::less<>> revokedSet;
     revokedSet.insert(revokedJti);
-    return std::make_shared<cta::auth::JwkCache>(std::make_unique<MockJwksFetcherValidateJwt>(),
+    return std::make_shared<cta::auth::JwtCache>(std::make_unique<MockJwksFetcherValidateJwt>(),
                                                  "http://fake-jwks-uri",
                                                  1200,
                                                  "test",
+                                                 "test-audience",
                                                  std::move(revokedSet),
                                                  lc);
   }
@@ -222,6 +227,7 @@ TEST_F(ValidateJwtTestFixture, BadTokenMissingExp) {
                         .set_payload_claim("jti", jwt::claim(std::string("test-jti")))
                         .set_header_claim("kid", jwt::claim(std::string("test-kid")))
                         .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
+                        .set_payload_claim("aud", jwt::claim(std::string("test-audience")))
                         .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
   auto result = cta::auth::ValidateJwt(token, *cache, lc);
@@ -321,6 +327,7 @@ TEST_F(ValidateJwtTestFixture, BadTokenMissingSub) {
       .set_payload_claim("jti", jwt::claim(std::string("test-jti")))
       .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
       .set_header_claim("kid", jwt::claim(std::string("test-kid")))
+      .set_payload_claim("aud", jwt::claim(std::string("test-audience")))
       .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
   auto result = cta::auth::ValidateJwt(token, *cache, lc);
@@ -361,6 +368,7 @@ TEST_F(ValidateJwtTestFixture, TokenWithRevokedJti) {
       .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
       .set_header_claim("kid", jwt::claim(std::string("test-kid")))
       .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
+      .set_payload_claim("aud", jwt::claim(std::string("test-audience")))
       .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
   auto result = cta::auth::ValidateJwt(token, *cache, lc);
@@ -380,6 +388,7 @@ TEST_F(ValidateJwtTestFixture, TokenWithNonRevokedJti) {
       .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
       .set_header_claim("kid", jwt::claim(std::string("test-kid")))
       .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
+      .set_payload_claim("aud", jwt::claim(std::string("test-audience")))
       .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
   auto result = cta::auth::ValidateJwt(token, *cache, lc);
@@ -394,6 +403,7 @@ TEST_F(ValidateJwtTestFixture, TokenMissingJtiHasSpecificErrorMessage) {
       .set_issuer("test")
       .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
       .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
+      .set_payload_claim("aud", jwt::claim(std::string("test-audience")))
       .set_header_claim("kid", jwt::claim(std::string("test-kid")))
       .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
@@ -401,6 +411,45 @@ TEST_F(ValidateJwtTestFixture, TokenMissingJtiHasSpecificErrorMessage) {
   ASSERT_FALSE(result.isValid);
   ASSERT_TRUE(result.errorMessage.has_value());
   EXPECT_EQ(result.errorMessage.value(), "Token does not contain a 'jti' claim");
+}
+
+// Tests for audience (aud) claim validation
+TEST_F(ValidateJwtTestFixture, TokenWithMatchingAudienceIsValid) {
+  auto cache = createCacheWithMockFetcher("cta-frontend");
+  cache->updateCache(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+
+  std::string token =
+    jwt::create()
+      .set_issuer("test")
+      .set_payload_claim("jti", jwt::claim(std::string("test-jti")))
+      .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
+      .set_header_claim("kid", jwt::claim(std::string("test-kid")))
+      .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
+      .set_payload_claim("aud", jwt::claim(std::string("cta-frontend")))
+      .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
+
+  auto result = cta::auth::ValidateJwt(token, *cache, lc);
+  ASSERT_TRUE(result.isValid);
+}
+
+TEST_F(ValidateJwtTestFixture, TokenWithMismatchedAudienceIsRejected) {
+  auto cache = createCacheWithMockFetcher("cta-frontend");
+  cache->updateCache(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+
+  std::string token =
+    jwt::create()
+      .set_issuer("test")
+      .set_payload_claim("jti", jwt::claim(std::string("test-jti")))
+      .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
+      .set_header_claim("kid", jwt::claim(std::string("test-kid")))
+      .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
+      .set_payload_claim("aud", jwt::claim(std::string("some-other-audience")))
+      .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
+
+  auto result = cta::auth::ValidateJwt(token, *cache, lc);
+  ASSERT_FALSE(result.isValid);
+  ASSERT_TRUE(result.errorMessage.has_value());
+  EXPECT_NE(result.errorMessage.value().find("audience"), std::string::npos);
 }
 
 }  // namespace unitTests

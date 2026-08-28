@@ -12,7 +12,7 @@
 
 namespace cta::auth {
 TokenValidationResult
-ValidateJwt(const std::string& encodedJwt, JwkCache& pubkeyCache, const log::LogContext& logContext) {
+ValidateJwt(const std::string& encodedJwt, JwtCache& pubkeyCache, const log::LogContext& logContext) {
   /* The validation is done in the following order:
 
     1. Decode the token
@@ -65,6 +65,17 @@ ValidateJwt(const std::string& encodedJwt, JwkCache& pubkeyCache, const log::Log
     // validate the issuer of the JWT
     verifierChain.with_issuer(pubkeyCache.getExpectedIssuer());
     verifierChain.verify(decoded);
+
+    // The audience claim is mandatory and must match the expected audience.
+    if (!decoded.has_payload_claim("aud")) {
+      return {false, std::nullopt, "Token does not contain an 'aud' claim"};
+    }
+    const std::string& expectedAudience = pubkeyCache.getExpectedAudience();
+    // RFC 7519 allows 'aud' to be a single string or an array of strings.
+    auto audiences = decoded.get_audience();
+    if (!audiences.contains(expectedAudience)) {
+      return {false, std::nullopt, "Token audience does not match expected value"};
+    }
 
     // check whether the token has been revoked by any chance
     if (decoded.has_payload_claim("jti")) {

@@ -69,14 +69,6 @@ public:
   void loadGrpcConfigParams(const std::string& configFilePath, log::Logger& log);
 
   /**
-   * @brief Load the JWT config parameters
-   * @param configFileName The name of the configuration file (for logging/errors)
-   * @param config The configuration object
-   * @param log A logger
-   */
-  void loadJWTConfigParams(const std::string& configFileName, const cta::common::Config& config, log::Logger& log);
-
-  /**
     * @brief Look up and identity in the instance -> certificate identity map
     * @param instance the name of the instance to look for in the map
     * @return the set of found certificate identities

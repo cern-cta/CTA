@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "JwkCache.hpp"
+#include "JwtCache.hpp"
 
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
@@ -65,14 +65,15 @@ private:
   }
 };
 
-TEST(JwkCacheTest, UpdateCacheAddsKey) {
-  cta::log::StringLogger log("dummy", "JwkCacheTest_UpdateCacheAddsKey", cta::log::DEBUG);
+TEST(JwtCacheTest, UpdateCacheAddsKey) {
+  cta::log::StringLogger log("dummy", "JwtCacheTest_UpdateCacheAddsKey", cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
-  cta::auth::JwkCache cache(std::make_unique<MockJwksFetcher>(),
+  cta::auth::JwtCache cache(std::make_unique<MockJwksFetcher>(),
                             "http://fake-jwks-uri",
                             1200,
                             "test",
+                            "test-audience",
                             std::set<std::string, std::less<>>(),
                             lc);
 
@@ -85,8 +86,8 @@ TEST(JwkCacheTest, UpdateCacheAddsKey) {
   EXPECT_FALSE(entry.value().pubkey.empty());
 }
 
-TEST(JwkCacheTest, UpdateCacheRemovesExpiredKeys) {
-  cta::log::StringLogger log("dummy", "JwkCacheTest_UpdateCacheRemovesExpiredKeys", cta::log::DEBUG);
+TEST(JwtCacheTest, UpdateCacheRemovesExpiredKeys) {
+  cta::log::StringLogger log("dummy", "JwtCacheTest_UpdateCacheRemovesExpiredKeys", cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
   auto mockFetcher {std::make_unique<MockJwksFetcher>()};
@@ -106,10 +107,11 @@ TEST(JwkCacheTest, UpdateCacheRemovesExpiredKeys) {
     })";
 
   mockFetcher->setResponse("http://fake-jwks-uri", jwksWithKey);
-  cta::auth::JwkCache cache(std::move(mockFetcher),
+  cta::auth::JwtCache cache(std::move(mockFetcher),
                             "http://fake-jwks-uri",
                             200,
                             "test",
+                            "test-audience",
                             std::set<std::string, std::less<>>(),
                             lc);  // very short pubkeyTimeout
 

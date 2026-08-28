@@ -9,7 +9,7 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "catalogue/SchemaVersion.hpp"
-#include "common/auth/JwkCache.hpp"
+#include "common/auth/JwtCache.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/StdoutLogger.hpp"
@@ -65,7 +65,7 @@ const static struct option long_options[] = {
   exit(0);
 }
 
-void JwksCacheRefreshLoop(std::weak_ptr<cta::auth::JwkCache> weakCache,
+void JwksCacheRefreshLoop(std::weak_ptr<cta::auth::JwtCache> weakCache,
                           std::future<void> shouldStopThread,
                           int cacheRefreshInterval,
                           const log::LogContext& lc) {
@@ -75,7 +75,7 @@ void JwksCacheRefreshLoop(std::weak_ptr<cta::auth::JwkCache> weakCache,
   while (shouldStopThread.wait_for(std::chrono::seconds(cacheRefreshInterval)) == std::future_status::timeout) {
     auto cache = weakCache.lock();
     if (!cache) {
-      threadLc.log(log::INFO, "JwkCache no longer exists, exiting JWKS cache refresh thread");
+      threadLc.log(log::INFO, "JwtCache no longer exists, exiting JWKS cache refresh thread");
       break;  // Cache destroyed
     }
     time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -122,18 +122,19 @@ int main(const int argc, char* const* const argv) {
 
   const auto jwtConfig = grpcConfig->auth.jwt;
 
-  std::shared_ptr<cta::auth::JwkCache> jwkCache;
+  std::shared_ptr<cta::auth::JwtCache> jwkCache;
   std::optional<std::jthread> cacheRefreshThread;
   std::promise<void> shouldStopThreadPromise;
 
   if (jwtConfig.has_value() && jwtConfig->enabled) {
     // Build the shared JWK cache
     auto jwksFetcher {std::make_unique<cta::auth::CurlJwksFetcher>(jwtConfig->jwks_total_timeout)};
-    jwkCache = std::make_shared<cta::auth::JwkCache>(
+    jwkCache = std::make_shared<cta::auth::JwtCache>(
       std::move(jwksFetcher),
       jwtConfig->jwks_uri,
       jwtConfig->pub_key_timeout,
       jwtConfig->expected_issuer,
+      jwtConfig->expected_audience,
       [&jwtConfig]() {
         std::set<std::string, std::less<>> revokedJtis;
         for (const auto& entry : jwtConfig->revoked_tokens) {
@@ -152,7 +153,7 @@ int main(const int argc, char* const* const argv) {
       lc.log(log::INFO, std::string("JWT authentication enabled"));
     }
 
-    std::weak_ptr<cta::auth::JwkCache> weakCache {jwkCache};
+    std::weak_ptr<cta::auth::JwtCache> weakCache {jwkCache};
     std::future<void> shouldStopThreadFuture {shouldStopThreadPromise.get_future()};
 
     // Set up the refresh thread
@@ -169,7 +170,7 @@ int main(const int argc, char* const* const argv) {
 
   // Initialize RPC service with shared frontend service and cache
   frontend::grpc::CtaRpcImpl svc(frontendService, jwkCache, tokenStorage);
-  std::weak_ptr<cta::auth::JwkCache> weakCache = jwkCache;
+  std::weak_ptr<cta::auth::JwtCache> weakCache = jwkCache;
 
   lc.log(log::INFO, "Starting cta-frontend-grpc");
 

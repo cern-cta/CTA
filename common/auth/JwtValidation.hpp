@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "JwkCache.hpp"
+#include "JwtCache.hpp"
 #include "common/log/LogContext.hpp"
 
 #include <optional>
@@ -20,5 +20,5 @@ struct TokenValidationResult {
 };
 
 TokenValidationResult
-ValidateJwt(const std::string& encodedJwt, JwkCache& pubkeyCache, const cta::log::LogContext& logContext);
+ValidateJwt(const std::string& encodedJwt, JwtCache& pubkeyCache, const cta::log::LogContext& logContext);
 }  // namespace cta::auth

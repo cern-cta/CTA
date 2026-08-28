@@ -66,6 +66,7 @@ struct JwtAuthConfig final {
   int pub_key_timeout = 0;           //!< TTL (s) of a cached public key (0 = never expires)
   int jwks_total_timeout = 60;       //!< Timeout for JWKS retrieval from a URL (default 60)
   std::string expected_issuer;       //!< The expected issuer of the JWT tokens
+  std::string expected_audience;     //!< The expected audience of the JWT tokens
 
   std::vector<RevokedTokenEntry> revoked_tokens;
 
@@ -76,7 +77,7 @@ struct JwtAuthConfig final {
    */
   void check(log::Logger& log);
 
-  static constexpr std::size_t memberCount() { return 7; }
+  static constexpr std::size_t memberCount() { return 8; }
 };
 
 /**

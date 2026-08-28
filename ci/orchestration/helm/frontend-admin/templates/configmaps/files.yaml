@@ -30,6 +30,7 @@ data:
       enabled = true
       jwks_uri = "file:///etc/cta/jwks.json"
       expected_issuer = {{ .Values.conf.auth.config.jwt.expectedIssuer | quote }}
+      expected_audience = {{ .Values.conf.auth.config.jwt.expectedAudience | quote }}
       {{- if .Values.conf.auth.config.jwt.revokedTokens }}
 
         {{ range .Values.conf.auth.config.jwt.revokedTokens }}

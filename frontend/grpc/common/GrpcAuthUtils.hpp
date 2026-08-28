@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "common/auth/JwkCache.hpp"
+#include "common/auth/JwtCache.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/LogContext.hpp"
 #include "frontend/grpc/TokenStorage.hpp"
@@ -30,9 +30,9 @@ namespace cta::frontend::grpc::common {
 std::pair<::grpc::Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
 extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::string_ref>& client_metadata,
                              bool jwtAuthEnabled,
-                             std::shared_ptr<cta::auth::JwkCache> pubkeyCache,
+                             std::shared_ptr<cta::auth::JwtCache> pubkeyCache,
                              server::TokenStorage& tokenStorage,
-                             const std::string& ourHost,
+                             const std::string& ourInstance,
                              const std::string& clientHost,
                              cta::log::LogContext& lc);
 

@@ -32,7 +32,7 @@ CtaRpcImpl::checkWFERequestAuthMetadata(::grpc::ServerContext* context,
                                         const cta::xrd::Request* request,
                                         cta::log::LogContext& lc) {
   std::string clientHost = request->notification().wf().instance().name();
-  std::string ourHost = m_frontendService->getInstanceName();
+  std::string ourInstance = m_frontendService->getInstanceName();
 
   if (m_frontendService->usesAuthMethod(AuthMethod::MTLS)) {
     auto auth_context = context->auth_context();
@@ -65,7 +65,7 @@ CtaRpcImpl::checkWFERequestAuthMetadata(::grpc::ServerContext* context,
       return {::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "Certificate doesn't match identity"), std::nullopt};
     }
 
-    SecurityIdentity clientIdentity(clientHost, ourHost, context->peer(), SecurityIdentity::Protocol::MTLS);
+    SecurityIdentity clientIdentity(clientHost, ourInstance, context->peer(), SecurityIdentity::Protocol::MTLS);
     return {::grpc::Status::OK, clientIdentity};
   } else if (m_frontendService->usesAuthMethod(AuthMethod::JWT)) {
     const auto& metadata = context->client_metadata();
@@ -75,7 +75,7 @@ CtaRpcImpl::checkWFERequestAuthMetadata(::grpc::ServerContext* context,
                                                                 m_frontendService->usesAuthMethod(AuthMethod::JWT),
                                                                 m_pubkeyCache,
                                                                 m_tokenStorage,
-                                                                ourHost,
+                                                                ourInstance,
                                                                 context->peer(),
                                                                 lc);
     return {status, clientIdentity};
@@ -399,7 +399,7 @@ CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* reque
  * and makes the rpc calls available through this class
  */
 CtaRpcImpl::CtaRpcImpl(std::shared_ptr<cta::frontend::FrontendService> frontendService,
-                       std::shared_ptr<cta::auth::JwkCache> pubkeyCache,
+                       std::shared_ptr<cta::auth::JwtCache> pubkeyCache,
                        server::TokenStorage& tokenStorage)
     : m_frontendService(frontendService),
       m_pubkeyCache(pubkeyCache),
