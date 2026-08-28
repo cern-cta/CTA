@@ -292,7 +292,7 @@ SchedulerDatabase::JobsFailedSummary RelationalDB::getArchiveJobsFailedSummary(l
     auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectFailedJobSummary(txn);
     while (rset.next()) {
       ret.totalFiles += rset.columnUint64("JOBS_COUNT");
-      ret.totalBytes += rset.columnUint64("TOTAL_SIZE");
+      ret.totalBytes += rset.columnUint64("JOBS_TOTAL_SIZE");
     }
 
     txn.setRowCountForTelemetry(rset.getNbRowsRetrieved());
@@ -1644,7 +1644,7 @@ SchedulerDatabase::JobsFailedSummary RelationalDB::getRetrieveJobsFailedSummary(
     auto rset = cta::schedulerdb::postgres::RetrieveJobSummaryRow::selectFailedJobSummary(txn);
     while (rset.next()) {
       ret.totalFiles += rset.columnUint64("JOBS_COUNT");
-      ret.totalBytes += rset.columnUint64("TOTAL_SIZE");
+      ret.totalBytes += rset.columnUint64("JOBS_TOTAL_SIZE");
     }
 
     txn.setRowCountForTelemetry(rset.getNbRowsRetrieved());
