@@ -53,6 +53,8 @@ public:
 
   void ping() override { m_SchedDB->ping(); }
 
+  cta::rdbms::Conn getConn() override { return m_SchedDB->getConn(); }
+
   std::string queueArchive(const std::string& instanceName,
                            const cta::common::dataStructures::ArchiveRequest& request,
                            const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId& criteria,
@@ -84,15 +86,16 @@ public:
     return m_SchedDB->getArchiveJobs(tapePoolName);
   }
 
-  rdbms::Rset getArchiveJobRows(common::dataStructures::QueueType queueType,
-                                const std::optional<std::string>& tapePoolName = nullptr,
-                                const std::optional<std::string>& vid = nullptr) const override {
-    return m_SchedDB->getArchiveJobRows(queueType, tapePoolName, vid);
+  rdbms::Rset getArchiveJobRows(cta::rdbms::Conn& conn,
+                                common::dataStructures::QueueType queueType,
+                                const std::optional<std::string>& tapePoolName = nullptr) const override {
+    return m_SchedDB->getArchiveJobRows(conn, queueType, tapePoolName);
   }
 
-  rdbms::Rset getRetrieveJobRows(common::dataStructures::QueueType queueType,
+  rdbms::Rset getRetrieveJobRows(cta::rdbms::Conn& conn,
+                                 common::dataStructures::QueueType queueType,
                                  const std::optional<std::string>& vid = nullptr) const override {
-    return m_SchedDB->getRetrieveJobRows(queueType, vid);
+    return m_SchedDB->getRetrieveJobRows(conn, queueType, vid);
   }
 
   std::unique_ptr<IArchiveJobQueueItor>

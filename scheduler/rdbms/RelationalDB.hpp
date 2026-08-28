@@ -97,9 +97,9 @@ public:
   std::list<cta::common::dataStructures::ArchiveJob>
   getArchiveJobs(const std::optional<std::string>& tapePoolName) const override;
 
-  rdbms::Rset getArchiveJobRows(common::dataStructures::QueueType queueType,
-                                const std::optional<std::string>& tapePoolName = nullptr,
-                                const std::optional<std::string>& vid = nullptr) const override;
+  rdbms::Rset getArchiveJobRows(cta::rdbms::Conn& conn,
+                                common::dataStructures::QueueType queueType,
+                                const std::optional<std::string>& tapePoolName = nullptr) const override;
 
   std::unique_ptr<IArchiveJobQueueItor>
   getArchiveJobQueueItor(const std::string& tapePoolName,
@@ -200,7 +200,8 @@ public:
   std::list<cta::common::dataStructures::RetrieveJob>
   getPendingRetrieveJobs(const std::optional<std::string>& vid) const override;
 
-  rdbms::Rset getRetrieveJobRows(common::dataStructures::QueueType queueType,
+  rdbms::Rset getRetrieveJobRows(cta::rdbms::Conn& conn,
+                                 common::dataStructures::QueueType queueType,
                                  const std::optional<std::string>& vid = nullptr) const override;
 
   std::unique_ptr<IRetrieveJobQueueItor>
@@ -270,7 +271,7 @@ public:
   /**
    * Provides access to a connection from the connection pool
    */
-  cta::rdbms::Conn getConn();
+  cta::rdbms::Conn getConn() override;
 
   /*
    * for retrieve queue sleep mechanism (filter out disk systems which do not have space)

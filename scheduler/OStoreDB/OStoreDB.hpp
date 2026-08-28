@@ -411,13 +411,17 @@ public:
     QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQueue> m_archiveQueueItor;
   };
 
-  rdbms::Rset getArchiveJobRows(common::dataStructures::QueueType queueType,
+  rdbms::Rset getArchiveJobRows(cta::rdbms::Conn& conn,
+                                common::dataStructures::QueueType queueType,
                                 const std::optional<std::string>& tapePoolName = nullptr,
                                 const std::optional<std::string>& vid = nullptr) const override {
     throw cta::exception::Exception("Not supported for OStoreDB implementation.");
   }
 
-  rdbms::Rset getRetrieveJobRows(common::dataStructures::QueueType queueType,
+  cta::rdbms::Conn getConn() { throw cta::exception::Exception("Not supported for OStoreDB implementation."); }
+
+  rdbms::Rset getRetrieveJobRows(cta::rdbms::Conn& conn,
+                                 common::dataStructures::QueueType queueType,
                                  const std::optional<std::string>& vid = nullptr) const override {
     throw cta::exception::Exception("Not supported for OStoreDB implementation.");
   }

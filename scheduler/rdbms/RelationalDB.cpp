@@ -151,15 +151,12 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>
   return ret;
 }
 
-rdbms::Rset RelationalDB::getArchiveJobRows(common::dataStructures::QueueType queueType,
-                                            const std::optional<std::string>& tapePoolName,
-                                            const std::optional<std::string>& vid) const {
+rdbms::Rset RelationalDB::getArchiveJobRows(cta::rdbms::Conn& conn,
+                                            common::dataStructures::QueueType queueType,
+                                            const std::optional<std::string>& tapePoolName) const {
   // Get a connection
-  auto conn = m_connPool.getConn();
-
   std::string tableName = "ARCHIVE_";
   tableName += toString(queueType);
-
   std::string sql = R"SQL(
     SELECT
       JOB_ID,
@@ -190,25 +187,13 @@ rdbms::Rset RelationalDB::getArchiveJobRows(common::dataStructures::QueueType qu
 
   sql += tableName;
 
-  bool hasWhere = false;
-
   if (tapePoolName.has_value()) {
     sql += " WHERE TAPE_POOL = :TAPE_POOL";
-    hasWhere = true;
   }
-
-  if (vid.has_value()) {
-    sql += hasWhere ? " AND VID = :VID" : " WHERE VID = :VID";
-  }
-
   auto stmt = conn.createStmt(sql);
 
   if (tapePoolName.has_value()) {
     stmt.bindString(":TAPE_POOL", tapePoolName.value());
-  }
-
-  if (vid.has_value()) {
-    stmt.bindString(":VID", vid.value());
   }
 
   return stmt.executeQuery();
@@ -217,7 +202,8 @@ rdbms::Rset RelationalDB::getArchiveJobRows(common::dataStructures::QueueType qu
 std::list<cta::common::dataStructures::ArchiveJob>
 RelationalDB::getArchiveJobs(const std::optional<std::string>& tapePoolName) const {
   std::list<cta::common::dataStructures::ArchiveJob> ret;
-  auto rset = RelationalDB::getArchiveJobRows(common::dataStructures::QueueType::Pending, tapePoolName);
+  auto conn = m_connPool.getConn();
+  auto rset = RelationalDB::getArchiveJobRows(conn, common::dataStructures::QueueType::Pending, tapePoolName);
 
   while (rset.next()) {
     common::dataStructures::ArchiveJob job;
@@ -301,13 +287,14 @@ SchedulerDatabase::JobsFailedSummary RelationalDB::getArchiveJobsFailedSummary(l
   SchedulerDatabase::JobsFailedSummary ret;
   // Get the jobs from DB
   cta::schedulerdb::Transaction txn(m_connPool, lc);
-  auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectFailedJobSummary(txn);
-  while (rset.next()) {
-    cta::schedulerdb::postgres::ArchiveJobSummaryRow afjsr(rset);
-    ret.totalFiles += afjsr.jobsCount;
-    ret.totalBytes += afjsr.jobsTotalSize;
-  }
   try {
+    lc.log(log::INFO, "In RelationalDB::getArchiveJobsFailedSummary(): STARTING ");
+    auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectFailedJobSummary(txn);
+    while (rset.next()) {
+      ret.totalFiles += rset.columnUint64("JOBS_COUNT");
+      ret.totalBytes += rset.columnUint64("TOTAL_SIZE");
+    }
+
     txn.setRowCountForTelemetry(rset.getNbRowsRetrieved());
     txn.commit();
   } catch (cta::exception::Exception& e) {
@@ -659,7 +646,7 @@ RelationalDB::getPendingRetrieveJobs(const std::optional<std::string>& vid) cons
   std::list<cta::common::dataStructures::RetrieveJob> ret;
   // Get a connection
   auto conn = m_connPool.getConn();
-  auto rset = getRetrieveJobRows(common::dataStructures::QueueType::Pending, vid);
+  auto rset = getRetrieveJobRows(conn, common::dataStructures::QueueType::Pending, vid);
 
   while (rset.next()) {
     common::dataStructures::RetrieveJob job;
@@ -704,11 +691,9 @@ RelationalDB::getPendingRetrieveJobs(const std::optional<std::string>& vid) cons
   return ret;
 }
 
-rdbms::Rset RelationalDB::getRetrieveJobRows(common::dataStructures::QueueType queueType,
+rdbms::Rset RelationalDB::getRetrieveJobRows(cta::rdbms::Conn& conn,
+                                             common::dataStructures::QueueType queueType,
                                              const std::optional<std::string>& vid) const {
-  // Get a connection
-  auto conn = m_connPool.getConn();
-
   std::string tableName = "RETRIEVE_";
   tableName += toString(queueType);
 
@@ -1654,13 +1639,14 @@ SchedulerDatabase::JobsFailedSummary RelationalDB::getRetrieveJobsFailedSummary(
   SchedulerDatabase::JobsFailedSummary ret;
   // Get the jobs from DB
   cta::schedulerdb::Transaction txn(m_connPool, lc);
-  auto rset = cta::schedulerdb::postgres::RetrieveJobSummaryRow::selectFailedJobSummary(txn);
-  while (rset.next()) {
-    cta::schedulerdb::postgres::RetrieveJobSummaryRow afjsr(rset);
-    ret.totalFiles += afjsr.jobsCount;
-    ret.totalBytes += afjsr.jobsTotalSize;
-  }
   try {
+    lc.log(log::INFO, "In RelationalDB::getRetrieveJobsFailedSummary(): STARTING ");
+    auto rset = cta::schedulerdb::postgres::RetrieveJobSummaryRow::selectFailedJobSummary(txn);
+    while (rset.next()) {
+      ret.totalFiles += rset.columnUint64("JOBS_COUNT");
+      ret.totalBytes += rset.columnUint64("TOTAL_SIZE");
+    }
+
     txn.setRowCountForTelemetry(rset.getNbRowsRetrieved());
     txn.commit();
   } catch (cta::exception::Exception& e) {
