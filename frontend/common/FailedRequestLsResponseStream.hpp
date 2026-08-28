@@ -6,6 +6,7 @@
 #pragma once
 
 #include "CtaAdminResponseStream.hpp"
+#include "rdbms/ConnPool.hpp"
 #include "rdbms/Rset.hpp"
 
 #include <list>
@@ -43,6 +44,7 @@ private:
   void fillCommonFields(cta::admin::FailedRequestLsItem& fr_item, const cta::rdbms::Rset& item);
   bool m_archiveHasNext = false;
   bool m_retrieveHasNext = false;
+  std::unique_ptr<cta::rdbms::Conn> m_conn;
 #else
   std::unique_ptr<SchedulerDatabase::IArchiveJobQueueItor> m_archiveJobQueueItorPtr;
   std::unique_ptr<SchedulerDatabase::IRetrieveJobQueueItor> m_retrieveJobQueueItorPtr;

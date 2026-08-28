@@ -31,6 +31,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "disk/DiskSystem.hpp"
+#include "rdbms/Conn.hpp"
 #include "rdbms/Rset.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "taped/daemon/common/TapedConfiguration.hpp"
@@ -91,7 +92,7 @@ public:
    * Destructor
    */
   virtual ~SchedulerDatabase() noexcept = 0;
-
+  virtual cta::rdbms::Conn getConn() = 0;
   /*============ Sub thread handling, mostly for unit tests =================*/
   virtual void waitSubthreadsComplete() = 0;
 
@@ -273,11 +274,12 @@ public:
   virtual std::unique_ptr<IArchiveJobQueueItor>
   getArchiveJobQueueItor(const std::string& tapePoolName, common::dataStructures::JobQueueType queueType) const = 0;
 
-  virtual rdbms::Rset getArchiveJobRows(common::dataStructures::QueueType queueType,
-                                        const std::optional<std::string>& tapePoolName = nullptr,
-                                        const std::optional<std::string>& vid = nullptr) const = 0;
+  virtual rdbms::Rset getArchiveJobRows(cta::rdbms::Conn& conn,
+                                        common::dataStructures::QueueType queueType,
+                                        const std::optional<std::string>& tapePoolName = nullptr) const = 0;
 
-  virtual rdbms::Rset getRetrieveJobRows(common::dataStructures::QueueType queueType,
+  virtual rdbms::Rset getRetrieveJobRows(cta::rdbms::Conn& conn,
+                                         common::dataStructures::QueueType queueType,
                                          const std::optional<std::string>& vid = nullptr) const = 0;
 
   /**
