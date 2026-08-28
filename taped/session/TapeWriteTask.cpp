@@ -20,6 +20,7 @@
 #include "telemetry/metrics/TapedMetrics.hpp"
 
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace cta::tape::daemon {
@@ -58,7 +59,7 @@ uint64_t TapeWriteTask::fileSize() {
 //------------------------------------------------------------------------------
 void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
                             MigrationReportPacker& reportPacker,
-                            MigrationWatchDog& watchdog,
+                            TapeSessionTracker& tracker,
                             cta::log::LogContext& lc,
                             cta::utils::Timer& timer) {
   [[maybe_unused]] TransferTaskTracker transferTaskTracer(cta::semconv::attr::CtaIoDirectionValues::kWrite,
@@ -83,18 +84,18 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
   // process we're in, and to count the error if it occurs.
   // We will not record errors for an empty string. This will allow us to
   // prevent counting where error happened upstream.
-  std::string currentErrorToCount = "Error_tapeFSeqOutOfSequenceForWrite";
+  std::optional<TapeSessionError> currentErrorToCount = TapeSessionError::TapeFSeqOutOfSequenceForWrite;
   session.validateNextFSeq(m_archiveJob->tapeFile.fSeq);
   try {
     // Try to open the session
-    currentErrorToCount = "Error_tapeWriteHeader";
-    watchdog.notifyBeginNewJob(m_archiveJob->archiveFile.archiveFileID, m_archiveJob->tapeFile.fSeq);
+    currentErrorToCount = TapeSessionError::TapeWriteHeader;
+    tracker.notifyBeginNewJob(m_archiveJob->archiveFile.archiveFileID, m_archiveJob->tapeFile.fSeq);
     std::unique_ptr<cta::tape::tapeFile::FileWriter> output(openFileWriter(session, lc));
     m_LBPMode = output->getLBPMode();
     m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
-    m_taskStats.headerVolume += TapeSessionStats::headerVolumePerFile;
+    m_taskStats.headerVolume += TapeTransferStats::headerVolumePerFile;
     // We are not error sources here until we actually write.
-    currentErrorToCount = "";
+    currentErrorToCount.reset();
     bool firstBlock = true;
     while (!m_fifo.finished()) {
       MemBlock* const mb = m_fifo.popDataBlock();
@@ -105,14 +106,14 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
       // by leaving a placeholder on the tape (at minimal tape space cost), so we can continue
       // the tape session (and save a tape mount!).
       if (firstBlock && mb->isFailed()) {
-        currentErrorToCount = "Error_tapeWriteData";
+        currentErrorToCount = TapeSessionError::TapeWriteData;
         const char blank[] = "This file intentionally left blank: leaving placeholder after failing to read from disk.";
         output->write(blank, sizeof(blank));
         m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
-        watchdog.notify(sizeof(blank));
-        currentErrorToCount = "Error_tapeWriteTrailer";
+        tracker.notifyBlockMovement(sizeof(blank));
+        currentErrorToCount = TapeSessionError::TapeWriteTrailer;
         output->close();
-        currentErrorToCount = "";
+        currentErrorToCount.reset();
         // Possibly failing writes are finished. We can continue this in catch for skip. outside of the loop.
         throw Skip(mb->errorMsg());
       }
@@ -123,38 +124,38 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
 
       ckSum = mb->m_payload.adler32(ckSum);
       m_taskStats.checksumingTime += timer.secs(cta::utils::Timer::resetCounter);
-      currentErrorToCount = "Error_tapeWriteData";
+      currentErrorToCount = TapeSessionError::TapeWriteData;
       mb->m_payload.write(*output);
-      currentErrorToCount = "";
+      currentErrorToCount.reset();
 
       m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
       m_taskStats.dataVolume += mb->m_payload.size();
-      watchdog.notify(mb->m_payload.size());
+      tracker.notifyBlockMovement(mb->m_payload.size());
       ++memBlockId;
     }
 
     // If, after the FIFO is finished, we are still in the first block, we are in the presence of a 0-length file.
     // This also requires a placeholder.
     if (firstBlock) {
-      currentErrorToCount = "Error_tapeWriteData";
+      currentErrorToCount = TapeSessionError::TapeWriteData;
       const char blank[] = "This file intentionally left blank: zero-length file cannot be recorded to tape.";
       output->write(blank, sizeof(blank));
       m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
-      watchdog.notify(sizeof(blank));
-      currentErrorToCount = "Error_tapeWriteTrailer";
+      tracker.notifyBlockMovement(sizeof(blank));
+      currentErrorToCount = TapeSessionError::TapeWriteTrailer;
       output->close();
-      currentErrorToCount = "";
+      currentErrorToCount.reset();
       // Possibly failing writes are finished. We can continue this in catch for skip. outside of the loop.
       throw Skip("In TapeWriteTask::execute(): inserted a placeholder for zero length file.");
     }
 
     // Finish the writing of the file on tape
     // ut the trailer
-    currentErrorToCount = "Error_tapeWriteTrailer";
+    currentErrorToCount = TapeSessionError::TapeWriteTrailer;
     output->close();
-    currentErrorToCount = "";
+    currentErrorToCount.reset();
     m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
-    m_taskStats.headerVolume += TapeSessionStats::trailerVolumePerFile;
+    m_taskStats.headerVolume += TapeTransferStats::trailerVolumePerFile;
     m_taskStats.filesCount++;
     // Record the fSeq in the tape session
     session.reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
@@ -162,8 +163,9 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
     m_archiveJob->tapeFile.fileSize = m_taskStats.dataVolume;
     m_archiveJob->tapeFile.blockId = output->getBlockId();
     reportPacker.reportCompletedJob(std::move(m_archiveJob), lc);
-    m_taskStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
-    m_taskStats.totalTime = localTime.secs();
+    m_waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
+    tracker.addDiskTransferStats({.waitReportingTime = m_waitReportingTime});
+    m_totalTime = localTime.secs();
     // Log the successful transfer
     logWithStats(cta::log::INFO, "File successfully transmitted to drive", lc);
     cta::telemetry::metrics::ctaTapedTransferFileCount->Add(
@@ -194,22 +196,23 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
     // recycle them, and pass the report to the report packer. After than, we can carry on with
     // the write session->
     circulateMemBlocks();
-    watchdog.addToErrorCount("Info_fileSkipped");
+    tracker.incrementError(TapeSessionError::FileSkipped);
     m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
-    m_taskStats.headerVolume += TapeSessionStats::trailerVolumePerFile;
+    m_taskStats.headerVolume += TapeTransferStats::trailerVolumePerFile;
     m_taskStats.filesCount++;
     // Record the fSeq in the tape session
     session.reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
     reportPacker.reportSkippedJob(std::move(m_archiveJob), s, lc);
-    m_taskStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
-    m_taskStats.totalTime = localTime.secs();
+    m_waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
+    tracker.addDiskTransferStats({.waitReportingTime = m_waitReportingTime});
+    m_totalTime = localTime.secs();
     // Log the successful transfer
     logWithStats(cta::log::INFO, "Left placeholder on tape after skipping unreadable file.", lc);
   } catch (const RecoverableMigrationErrorException& e) {
     // The disk reading failed due to a size mismatch or wrong checksum
     // just want to report a failed job and proceed with the mount
-    if (!currentErrorToCount.empty()) {
-      watchdog.addToErrorCount(currentErrorToCount);
+    if (currentErrorToCount) {
+      tracker.incrementError(*currentErrorToCount);
     }
     // Log and circulate blocks
     LogContext::ScopedParam sp(lc, Param("exceptionCode", cta::log::ERR));
@@ -250,14 +253,14 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
         doReportJobError = false;
       }
       // This is indeed the end of the tape. Not an error.
-      watchdog.setErrorCount("Info_tapeFilledUp", 1);
+      tracker.setErrorCount(TapeSessionError::TapeFilledUp, 1);
       reportPacker.reportTapeFull(lc);
     } catch (...) {
       // The error is not an ENOSPC, so it is, indeed, an error.
       // If we got here with a new error, currentErrorToCount will be non-empty,
-      // and we will pass the error name to the watchdog.
-      if (!currentErrorToCount.empty()) {
-        watchdog.addToErrorCount(currentErrorToCount);
+      // and we will pass the typed error to the session tracker.
+      if (currentErrorToCount) {
+        tracker.incrementError(*currentErrorToCount);
       }
     }
 
@@ -297,7 +300,7 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
     // and go into a degraded mode operation.
     throw;
   }
-  watchdog.fileFinished();
+  tracker.fileFinished();
 }
 
 //------------------------------------------------------------------------------
@@ -390,17 +393,14 @@ void TapeWriteTask::logWithStats(int level, const std::string& msg, cta::log::Lo
   params.add("readWriteTime", m_taskStats.readWriteTime)
     .add("checksumingTime", m_taskStats.checksumingTime)
     .add("waitDataTime", m_taskStats.waitDataTime)
-    .add("waitReportingTime", m_taskStats.waitReportingTime)
+    .add("waitReportingTime", m_waitReportingTime)
     .add("transferTime", m_taskStats.transferTime())
-    .add("totalTime", m_taskStats.totalTime)
+    .add("totalTime", m_totalTime)
     .add("dataVolume", m_taskStats.dataVolume)
     .add("headerVolume", m_taskStats.headerVolume)
     .add("driveTransferSpeedMBps",
-         m_taskStats.totalTime ?
-           1.0 * (m_taskStats.dataVolume + m_taskStats.headerVolume) / 1000 / 1000 / m_taskStats.totalTime :
-           0.0)
-    .add("payloadTransferSpeedMBps",
-         m_taskStats.totalTime ? 1.0 * m_taskStats.dataVolume / 1000 / 1000 / m_taskStats.totalTime : 0.0)
+         m_totalTime ? 1.0 * (m_taskStats.dataVolume + m_taskStats.headerVolume) / 1000 / 1000 / m_totalTime : 0.0)
+    .add("payloadTransferSpeedMBps", m_totalTime ? 1.0 * m_taskStats.dataVolume / 1000 / 1000 / m_totalTime : 0.0)
     .add("fileSize", m_archiveFile.fileSize)
     .add("fileId", m_archiveFile.archiveFileID)
     .add("fSeq", m_tapeFile.fSeq)
@@ -413,7 +413,7 @@ void TapeWriteTask::logWithStats(int level, const std::string& msg, cta::log::Lo
 //------------------------------------------------------------------------------
 //   getTaskStats
 //------------------------------------------------------------------------------
-const TapeSessionStats& TapeWriteTask::getTaskStats() const {
+const TapeTransferStats& TapeWriteTask::getTaskStats() const {
   return m_taskStats;
 }
 

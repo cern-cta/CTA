@@ -9,7 +9,10 @@
 #include "common/log/LogContext.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/utils/Timer.hpp"
+#include "scheduler/ArchiveJob.hpp"
 #include "telemetry/metrics/TapedMetrics.hpp"
+
+#include <optional>
 
 namespace cta::tape::daemon {
 
@@ -33,7 +36,7 @@ DiskReadTask::DiskReadTask(DataConsumer& destination,
 //------------------------------------------------------------------------------
 void DiskReadTask::execute(cta::log::LogContext& lc,
                            cta::disk::DiskFileFactory& fileFactory,
-                           MigrationWatchDog& watchdog,
+                           TapeSessionTracker& tracker,
                            const int threadID) {
   [[maybe_unused]] TransferTaskTracker transferTaskTracker(cta::semconv::attr::CtaIoDirectionValues::kRead,
                                                            cta::semconv::attr::CtaIoMediumValues::kDisk);
@@ -49,30 +52,29 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
   // process we're in, and to count the error if it occurs.
   // We will not record errors for an empty string. This will allow us to
   // prevent counting where error happened upstream.
-  std::string currentErrorToCount = "";
+  std::optional<TapeSessionError> currentErrorToCount;
   try {
     //we first check here to not even try to open the disk  if a previous task has failed
     //because the disk could the very reason why the previous one failed,
     //so dont do the same mistake twice !
     checkMigrationFailing();
-    currentErrorToCount = "Error_diskOpenForRead";
+    currentErrorToCount = TapeSessionError::DiskOpenForRead;
     std::unique_ptr<cta::disk::ReadFile> sourceFile(fileFactory.createReadFile(m_archiveJob->srcURL));
     cta::log::ScopedParamContainer URLcontext(lc);
     URLcontext.add("path", m_archiveJob->srcURL).add("actualURL", sourceFile->URL());
-    currentErrorToCount = "Error_diskFileToReadSizeMismatch";
+    currentErrorToCount = TapeSessionError::DiskFileToReadSizeMismatch;
     if (migratingFileSize != sourceFile->size()) {
       throw cta::exception::Exception("Mismatch between size given by the client "
                                       "and the real one");
     }
-    currentErrorToCount = "";
+    currentErrorToCount.reset();
 
     m_stats.openingTime += localTime.secs(cta::utils::Timer::resetCounter);
 
     LogContext::ScopedParam sp(lc, Param("fileId", m_archiveJob->archiveFile.archiveFileID));
     lc.log(cta::log::INFO, "Opened disk file for read");
 
-    watchdog.addParameter(
-      cta::log::Param("stillOpenFileForThread" + std::to_string((long long) threadID), sourceFile->URL()));
+    tracker.notifyDiskFileOpened(threadID, m_archiveJob->archiveFile.archiveFileID, sourceFile->URL());
 
     while (migratingFileSize > 0) {
       checkMigrationFailing();
@@ -84,7 +86,7 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
       mb->m_fileid = m_archiveJob->archiveFile.archiveFileID;
       mb->m_fileBlock = blockId++;
 
-      currentErrorToCount = "Error_diskRead";
+      currentErrorToCount = TapeSessionError::DiskRead;
       migratingFileSize -= mb->m_payload.read(*sourceFile);
       m_stats.readWriteTime += localTime.secs(cta::utils::Timer::resetCounter);
 
@@ -93,7 +95,7 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
       //we either read at full capacity (ie size=capacity, i.e. fill up the block),
       // or if there different, it should be the end of the file=> migratingFileSize
       // should be 0. If it not, it is an error
-      currentErrorToCount = "Error_diskUnexpectedSizeWhenReading";
+      currentErrorToCount = TapeSessionError::DiskUnexpectedSizeWhenReading;
       if (mb->m_payload.size() != mb->m_payload.totalCapacity() && migratingFileSize > 0) {
         std::string erroMsg =
           "Error while reading a file: memory block not filled up, but the file is not fully read yet";
@@ -111,7 +113,7 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
         // Fail the disk side.
         throw cta::exception::Exception(erroMsg);
       }
-      currentErrorToCount = "";
+      currentErrorToCount.reset();
       m_stats.checkingErrorTime += localTime.secs(cta::utils::Timer::resetCounter);
 
       // We are done with the block, push it to the write task
@@ -151,9 +153,9 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
         {cta::semconv::attr::kErrorType,      cta::semconv::attr::ErrorTypeValues::kException}
     });
 
-    // Send the error for counting to the watchdog
-    if (currentErrorToCount.size()) {
-      watchdog.addToErrorCount(currentErrorToCount);
+    // Send the error for counting to the session tracker.
+    if (currentErrorToCount) {
+      tracker.incrementError(*currentErrorToCount);
     }
     // We have to pump the blocks anyway, mark them failed and then pass them back
     // to TapeWriteTask
@@ -181,7 +183,7 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
     //deal here the number of mem block
     circulateAllBlocks(blockId, mb);
   }  //end of catch
-  watchdog.deleteParameter("stillOpenFileForThread" + std::to_string((long long) threadID));
+  tracker.notifyDiskFileClosed(threadID);
 }
 
 //------------------------------------------------------------------------------

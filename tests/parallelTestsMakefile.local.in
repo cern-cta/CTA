@@ -39,7 +39,7 @@ cta-unit-tests-helgrind-data-transfer: cta-unit-tests-valgrind-multiprocess cta-
 	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
 	--suppressions=@CMAKE_CURRENT_BINARY_DIR@/helgrind.suppr           \
 	@CMAKE_CURRENT_BINARY_DIR@/cta-unit-tests                                                        \
-	--gtest_filter=OStoreDBPlusMockSchedulerTestVFS/DataTransferSessionTest* 2>&1 | ts "hgdt: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
+	--gtest_filter=OStoreDBPlusMockSchedulerTestVFS/TapeSessionTest* 2>&1 | ts "hgdt: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
 
 cta-unit-tests-helgrind-in-memory-catalogue: cta-unit-tests-valgrind-multiprocess cta-unit-tests-helgrind-multiprocess
 	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \

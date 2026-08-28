@@ -5,7 +5,6 @@
 
 #include "MigrationReportPacker.hpp"
 
-#include "TaskWatchDog.hpp"
 #include "catalogue/TapeFileWritten.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/utils/Timer.hpp"
@@ -403,25 +402,11 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
   if (!reportPacker.m_errorHappened) {
     cta::log::ScopedParamContainer sp(reportPacker.m_lc);
     reportPacker.m_lc.log(cta::log::INFO, "Reported end of session to client");
-    if (reportPacker.m_watchdog) {
-      reportPacker.m_watchdog->addParameter(cta::log::Param("status", "success"));
-      // We have a race condition here between the processing of this message by
-      // the initial process and the printing of the end-of-session log, triggered
-      // by the end our process. To delay the latter, we sleep half a second here.
-      usleep(500 * 1000);
-    }
   } else {
     // We have some errors
     cta::log::ScopedParamContainer sp(reportPacker.m_lc);
     sp.add(cta::semconv::log::exceptionMessage, "Previous file errors");
     reportPacker.m_lc.log(cta::log::ERR, "Reported end of session with error to client due to previous file errors");
-    if (reportPacker.m_watchdog) {
-      reportPacker.m_watchdog->addParameter(cta::log::Param("status", "failure"));
-      // We have a race condition here between the processing of this message by
-      // the initial process and the printing of the end-of-session log, triggered
-      // by the end our process. To delay the latter, we sleep half a second here.
-      usleep(500 * 1000);
-    }
   }
 }
 
@@ -440,13 +425,6 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
     reportPacker.m_lc.log(cta::log::INFO, "Reported end of session with error to client after sending file errors");
   } else {
     reportPacker.m_lc.log(cta::log::INFO, "Reported end of session with error to client");
-  }
-  if (reportPacker.m_watchdog) {
-    reportPacker.m_watchdog->addParameter(cta::log::Param("status", m_isTapeFull ? "success" : "failure"));
-    // We have a race condition here between the processing of this message by
-    // the initial process and the printing of the end-of-session log, triggered
-    // by the end our process. To delay the latter, we sleep half a second here.
-    usleep(500 * 1000);
   }
 }
 
@@ -518,9 +496,8 @@ void MigrationReportPacker::WorkerThread::run() {
     lc.log(
       cta::log::ERR,
       "In MigrationReportPacker::WorkerThread::run(): Received a CTA exception while reporting archive mount results.");
-    if (m_parent.m_watchdog) {
-      m_parent.m_watchdog->addToErrorCount("Error_reporting");
-      m_parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
+    if (m_parent.m_tapeSessionTracker) {
+      m_parent.m_tapeSessionTracker->incrementError(TapeSessionError::Reporting);
     }
   } catch (const std::exception& e) {
     //we get there because to tried to close the connection and it failed
@@ -537,9 +514,8 @@ void MigrationReportPacker::WorkerThread::run() {
     lc.log(cta::log::ERR,
            "In MigrationReportPacker::WorkerThread::run(): Received a standard exception while reporting archive mount "
            "results.");
-    if (m_parent.m_watchdog) {
-      m_parent.m_watchdog->addToErrorCount("Error_reporting");
-      m_parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
+    if (m_parent.m_tapeSessionTracker) {
+      m_parent.m_tapeSessionTracker->incrementError(TapeSessionError::Reporting);
     }
   } catch (...) {
     //we get there because to tried to close the connection and it failed
@@ -547,9 +523,8 @@ void MigrationReportPacker::WorkerThread::run() {
     lc.log(cta::log::ERR,
            "In MigrationReportPacker::WorkerThread::run(): Received an unknown exception while reporting archive mount "
            "results.");
-    if (m_parent.m_watchdog) {
-      m_parent.m_watchdog->addToErrorCount("Error_reporting");
-      m_parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
+    if (m_parent.m_tapeSessionTracker) {
+      m_parent.m_tapeSessionTracker->incrementError(TapeSessionError::Reporting);
     }
   }
   // Drain the FIFO if necessary. We know that m_continue will be

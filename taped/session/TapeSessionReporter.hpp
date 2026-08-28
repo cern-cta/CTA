@@ -5,113 +5,93 @@
 
 #pragma once
 
-#include "VolumeInfo.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/process/threading/BlockingQueue.hpp"
+#include "common/log/Param.hpp"
 #include "common/process/threading/Thread.hpp"
-#include "taped/daemon/TapedProxy.hpp"
-#include "taped/session/SessionState.hpp"
-#include "taped/session/SessionType.hpp"
+#include "scheduler/TapeMount.hpp"
+#include "taped/session/TapeSessionTracker.hpp"
 
-#include <memory>
-#include <stdint.h>
-#include <string>
+#include <chrono>
+#include <condition_variable>
+#include <mutex>
 
 namespace cta::tape::daemon {
 
 class TapeSessionReporter : private cta::threading::Thread {
 public:
   /**
-   * Constructor
-   * @param tapedProxy
-   * @param lc
+   * @brief Create a periodic reporter using a borrowed tracker and its attached mount.
+   *
+   * The tracker and mount must outlive reporting and the worker thread must be joined before destruction.
+   *
+   * @param tracker Session state and statistics to publish.
+   * @param lc Log context copied for reporter output.
+   * @param reportPeriod Interval between reports, clamped to at least one millisecond.
+   * @param stuckPeriod Block-inactivity threshold and minimum interval between warnings, clamped to one millisecond.
    */
-  TapeSessionReporter(cta::tape::daemon::TapedProxy& tapedProxy, const cta::log::LogContext& lc);
+  TapeSessionReporter(TapeSessionTracker& tracker,
+                      const cta::log::LogContext& lc,
+                      std::chrono::milliseconds reportPeriod,
+                      std::chrono::milliseconds stuckPeriod);
 
   /**
-   * Put into the waiting list a guard value to signal the thread we want
-   * to stop
+   * @brief Start the background reporting thread.
+   */
+  void startThreads();
+
+  /**
+   * @brief Request the reporting thread to stop and wake its wait loop.
+   *
+   * A final event is emitted only if the session owner established Finished.
+   * Call waitThreads() to join the thread.
    */
   void finish();
 
   /**
-   * Consume the waiting list and exit
+   * @brief Join the reporting thread after requesting it to stop.
    */
-  void bailout();
-
-  /**
-   * Will call TapedProxy::reportState();
-   */
-  void reportState(cta::tape::session::SessionState state, cta::tape::session::SessionType type);
-
-  void setVolInfo(const cta::tape::daemon::VolumeInfo& volumeInfo) { m_volume = volumeInfo; };
-
-  /**
-   * Start and wait for thread to finish
-   */
-  void startThreads();
-
   void waitThreads();
 
+  /**
+   * @brief Immediately report the current tracker contents.
+   */
+  void reportNow();
+
 private:
-  bool m_threadRunning = false;
+  TapeSessionTracker& m_tracker;
+  cta::log::LogContext m_lc;
+  const std::chrono::milliseconds m_reportPeriod;
+  const std::chrono::milliseconds m_stuckPeriod;
 
-  /*
-  This internal mechanism could (should ?) be easily changed to a queue
-   * of {std/boost}::function coupled with bind. For instance, tapeMountedForWrite
-   * should look like
-   *   m_fifo.push(bind(m_tapedProxy,&tapeMountedForWrite,args...))
-   * and execute
-   *  while(1)
-   *   (m_fifo.push())();
-   * But no tr1 neither boost, so, another time ...
-  */
-
-  class Report {
-  public:
-    virtual ~Report() = default;
-
-    virtual void execute(TapeSessionReporter&) = 0;
-  };
-
-  class ReportStateChange : public Report {
-  public:
-    ReportStateChange(cta::tape::session::SessionState state, cta::tape::session::SessionType type);
-
-    void execute(TapeSessionReporter&) override;
-
-  private:
-    cta::tape::session::SessionState m_state;
-    cta::tape::session::SessionType m_type;
-  };
+  std::mutex m_mutex;
+  std::condition_variable m_condition;
+  bool m_finishRequested = false;
+  std::chrono::steady_clock::time_point m_lastStuckReport;
 
   /**
-   * Inherited from Thread, it will do the job : pop a request, execute it
-   * and delete it
+   * @brief Publish periodic statistics and inactivity warnings until finish() is requested.
+   *
+   * Then attempt final reporting if the session state permits it.
    */
   void run() override;
 
   /**
-   * m_fifo is holding all the report waiting to be processed
+   * @brief Warn about an active tape file with no recent block movement, limiting repeated warnings.
    */
-  cta::threading::BlockingQueue<Report*> m_fifo;
+  void reportStuckFileIfNeeded();
 
   /**
-   A bunch of references to proxies to send messages to the
-   * outside world when we have to
+   * @brief Publish final statistics and outcome only when the tracker state is Finished.
    */
-  cta::tape::daemon::TapedProxy& m_tapedProxy;
+  void reportSessionFinished();
 
   /**
-   * Log context, copied because it is in a separated thread
+   * @brief Log a statistics snapshot with current mount metadata, progress and error counters.
+   *
+   * @param sessionFinished Select a final outcome event instead of an in-progress statistics log.
+   * @param stats Statistics snapshot to include in the log.
    */
-  cta::log::LogContext m_lc;
-
-  const std::string m_server;
-  const std::string m_unitName;
-  const std::string m_logicalLibrary;
-  cta::tape::daemon::VolumeInfo m_volume {};
-  const pid_t m_sessionPid = getpid();
+  void logStats(bool sessionFinished, const TapeSessionStats& stats);
 };
 
 }  // namespace cta::tape::daemon

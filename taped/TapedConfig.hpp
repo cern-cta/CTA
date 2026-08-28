@@ -105,12 +105,14 @@ struct MountsConfig final {
   uint32_t scheduling_timeout_secs = 300;
   uint32_t get_next_mount_timeout_secs = 900;
   uint32_t idle_scheduling_interval_secs = 10;
+  uint32_t backend_recovery_interval_secs = 10;
   uint32_t drive_state_poll_interval_secs = 5;
+  uint32_t logical_library_poll_interval_secs = 5;
   uint32_t mount_timeout_secs = 600;
   uint32_t tape_load_timeout_secs = 300;
   uint32_t unmount_timeout_secs = 900;
 
-  static constexpr std::size_t memberCount() { return 9; }
+  static constexpr std::size_t memberCount() { return 11; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
@@ -129,8 +131,14 @@ struct MountsConfig final {
     if (idle_scheduling_interval_secs == 0) {
       result.addError("idle_scheduling_interval_secs", "must be greater than zero");
     }
+    if (backend_recovery_interval_secs == 0) {
+      result.addError("backend_recovery_interval_secs", "must be greater than zero");
+    }
     if (drive_state_poll_interval_secs == 0) {
       result.addError("drive_state_poll_interval_secs", "must be greater than zero");
+    }
+    if (logical_library_poll_interval_secs == 0) {
+      result.addError("logical_library_poll_interval_secs", "must be greater than zero");
     }
     if (mount_timeout_secs == 0) {
       result.addError("mount_timeout_secs", "must be greater than zero");
@@ -233,12 +241,13 @@ struct TransfersConfig final {
   uint32_t buffer_count = 5000;
   uint32_t buffer_size_bytes = 5000000;
   uint32_t disk_io_threads = 10;
+  uint32_t stats_report_interval_secs = 15;
   uint32_t no_block_move_timeout_secs = 1800;
   ArchiveTransferConfig archive;
   RetrieveTransferConfig retrieve;
   EncryptionConfig encryption;
 
-  static constexpr std::size_t memberCount() { return 7; }
+  static constexpr std::size_t memberCount() { return 8; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
@@ -250,6 +259,9 @@ struct TransfersConfig final {
     }
     if (disk_io_threads == 0) {
       result.addError("disk_io_threads", "must be greater than zero");
+    }
+    if (stats_report_interval_secs == 0) {
+      result.addError("stats_report_interval_secs", "must be greater than zero");
     }
     if (no_block_move_timeout_secs == 0) {
       result.addError("no_block_move_timeout_secs", "must be greater than zero");

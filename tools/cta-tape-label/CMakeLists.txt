@@ -10,6 +10,8 @@ target_link_libraries (cta-tape-label
   ctacommon
   ctatapedutils
   ctatapeddrive
+  ctatapedfile
+  ctatapedsession
   ctamediachanger
   ctacatalogue
   ctascsi

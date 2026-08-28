@@ -8,7 +8,7 @@
 #include "DiskStats.hpp"
 #include "DiskWriteTask.hpp"
 #include "RecallReportPacker.hpp"
-#include "TaskWatchDog.hpp"
+#include "TapeSessionTracker.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
 #include "common/process/threading/Thread.hpp"
@@ -41,7 +41,7 @@ public:
    */
   DiskWriteThreadPool(int nbThread,
                       RecallReportPacker& reportPacker,
-                      RecallWatchDog& recallWatchDog,
+                      TapeSessionTracker& tracker,
                       const cta::log::LogContext& lc,
                       uint16_t xrootTimeout);
 
@@ -183,9 +183,9 @@ private:
    * individual files and the end of session (for the last thread) */
   RecallReportPacker& m_reporter;
 
-  /** Reference to the session watchdog, allowing reporting of errors to it.
+  /** Reference to the session tracker, allowing reporting of errors and progress to it.
    */
-  RecallWatchDog& m_watchdog;
+  TapeSessionTracker& m_tracker;
 
   /** logging context that will be copied by each thread for individual context */
   cta::log::LogContext m_lc;

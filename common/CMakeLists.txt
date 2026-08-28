@@ -30,6 +30,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/CancelRetrieveRequest.cpp
   dataStructures/DiskSpaceReservationRequest.cpp
   dataStructures/DeleteArchiveRequest.cpp
+  dataStructures/DriveDownReason.cpp
   dataStructures/DesiredDriveState.cpp
   dataStructures/DiskFileInfo.cpp
   dataStructures/DiskInstance.cpp
@@ -88,17 +89,13 @@ set (COMMON_LIB_SRC_FILES
   priorities/MountCriteria.cpp
   priorities/UserGroup.cpp
   process/ProcessCap.cpp
-  process/threading/ChildProcess.cpp
   process/threading/CondVar.cpp
-  process/threading/Daemon.cpp
   process/threading/Mutex.cpp
   process/threading/RWLock.cpp
   process/threading/RWLockRdLocker.cpp
   process/threading/RWLockWrLocker.cpp
   process/threading/Semaphores.cpp
-  process/threading/SocketPair.cpp
   process/threading/SubProcess.cpp
-  process/threading/System.cpp
   process/threading/Thread.cpp
   remoteFS/RemoteFileStatus.cpp
   remoteFS/RemotePath.cpp
@@ -134,6 +131,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   auth/jwt/JwtValidationTest.cpp
   checksum/ChecksumBlobTest.cpp
   checksum/CRCTest.cpp
+  dataStructures/DriveDownReasonTest.cpp
   dataStructures/ArchiveFileTest.cpp
   dataStructures/LogicalLibraryTest.cpp
   dataStructures/StorageClassTest.cpp
@@ -147,11 +145,8 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   log/LoggerParamTypeTest.cpp
   remoteFS/RemotePathTest.cpp
   process/threading/CondVarTest.cpp
-  process/threading/DaemonTest.cpp
   process/threading/RWLockTest.cpp
-  process/threading/SocketPairTest.cpp
   process/threading/ThreadingBlockingQTests.cpp
-# process/threading/ThreadingMPTests.cpp is commented out because of errors caused by libust
   process/threading/ThreadingMTTests.cpp
   process/threading/ThreadingTests.cpp
   utils/GetOptThreadSafeTest.cpp

@@ -23,7 +23,9 @@ mounts:
   schedulingTimeoutSecs: 300
   getNextMountTimeoutSecs: 900
   idleSchedulingIntervalSecs: 1 # Make tape servers more responsive, thus improving CI test speed
+  backendRecoveryIntervalSecs: 1 # Retry backend connections quickly in CI
   driveStatePollIntervalSecs: 1 # Make tape servers react faster to drive state changes in CI
+  logicalLibraryPollIntervalSecs: 1 # Detect newly created libraries quickly in CI
   mountTimeoutSecs: 600
   tapeLoadTimeoutSecs: 300
   unmountTimeoutSecs: 900
@@ -38,6 +40,8 @@ transfers:
   bufferSizeBytes: 262144
   bufferCount: 200
   diskIoThreads: 4
+  # Interval between periodic tape-session statistics reports, in seconds.
+  statsReportIntervalSecs: 15
   noBlockMoveTimeoutSecs: 1800
   archive:
     fetchMaxBytes: 100000000000
