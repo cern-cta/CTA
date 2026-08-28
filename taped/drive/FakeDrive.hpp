@@ -37,6 +37,7 @@ private:
   const enum FailureMoment m_failureMoment;
   bool m_tapeOverflow = false;
   bool m_failToMount;
+  bool m_tapeInPlace = true;
   lbpToUse m_lbpToUse;
 
 public:
@@ -104,6 +105,7 @@ public:
   cta::tape::SCSI::Structures::RAO::udsLimits getLimitUDS() override;
   void queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int maxSupported) final;
   uint32_t getBlockIdPositioningCount() const;
+  void setTapeInPlace(bool tapeInPlace);
 
 private:
   uint32_t m_blockIdPositioningCount = 0;

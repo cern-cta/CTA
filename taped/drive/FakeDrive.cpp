@@ -200,7 +200,7 @@ void cta::tape::drive::FakeDrive::spaceFileMarksForward(size_t count) {
 }
 
 void cta::tape::drive::FakeDrive::unloadTape(void) {
-  // Nothing to do from a fake drive
+  m_tapeInPlace = false;
 }
 
 void cta::tape::drive::FakeDrive::flush(void) {
@@ -336,7 +336,11 @@ bool cta::tape::drive::FakeDrive::isEncryptionCapEnabled() {
 }
 
 bool cta::tape::drive::FakeDrive::hasTapeInPlace() {
-  return true;
+  return m_tapeInPlace;
+}
+
+void cta::tape::drive::FakeDrive::setTapeInPlace(bool tapeInPlace) {
+  m_tapeInPlace = tapeInPlace;
 }
 
 cta::tape::SCSI::Structures::RAO::udsLimits cta::tape::drive::FakeDrive::getLimitUDS() {
