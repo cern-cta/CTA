@@ -26,4 +26,17 @@ std::string toString(JobQueueType queueType) {
   }
 }
 
+std::string toString(QueueType queueType) {
+  switch (queueType) {
+    case QueueType::Pending:
+      return "PENDING_QUEUE";
+    case QueueType::Active:
+      return "ACTIVE_QUEUE";
+    case QueueType::Failed:
+      return "FAILED_QUEUE";
+    default:
+      return "Unknown queue type.";
+  }
+}
+
 }  // namespace cta::common::dataStructures

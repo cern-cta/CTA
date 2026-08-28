@@ -148,6 +148,25 @@ struct RetrieveJobSummaryRow {
     txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbSelectSummary);
     return stmt.executeQuery();
   }
+
+  /**
+   * Select jobs which do not belong to any drive yet.
+   * This is used for deciding if a new mount shall be created
+   *
+   * @return result set containing all rows in the table
+   */
+  static rdbms::Rset selectFailedJobSummary(Transaction& txn) {
+    const char* const sql = R"SQL(
+      SELECT
+        COUNT(*) AS JOBS_COUNT,
+        SUM(SIZE_IN_BYTES) AS JOBS_TOTAL_SIZE
+      FROM
+        RETRIEVE_FAILED_QUEUE
+    )SQL";
+    auto stmt = txn.getConn().createStmt(sql);
+    txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbSelectSummary);
+    return stmt.executeQuery();
+  }
 };
 
 }  // namespace cta::schedulerdb::postgres

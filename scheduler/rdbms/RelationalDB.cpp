@@ -151,22 +151,25 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>
   return ret;
 }
 
-std::list<cta::common::dataStructures::ArchiveJob>
-RelationalDB::getArchiveJobs(const std::optional<std::string>& tapePoolName) const {
-  std::list<cta::common::dataStructures::ArchiveJob> ret;
-
+rdbms::Rset RelationalDB::getArchiveJobRows(common::dataStructures::QueueType queueType,
+                                            const std::optional<std::string>& tapePoolName,
+                                            const std::optional<std::string>& vid) const {
   // Get a connection
   auto conn = m_connPool.getConn();
 
-  // Query archive jobs for specific tape pool from ARCHIVE_PENDING_QUEUE
+  std::string tableName = "ARCHIVE_";
+  tableName += toString(queueType);
+
   std::string sql = R"SQL(
     SELECT
+      JOB_ID,
       TAPE_POOL,
       ARCHIVE_FILE_ID,
       COPY_NB,
       CREATION_TIME,
       ARCHIVE_REPORT_URL,
       ARCHIVE_ERROR_REPORT_URL,
+      DISK_INSTANCE,
       DISK_FILE_ID,
       DISK_FILE_PATH,
       DISK_FILE_OWNER_UID,
@@ -176,19 +179,45 @@ RelationalDB::getArchiveJobs(const std::optional<std::string>& tapePoolName) con
       STORAGE_CLASS,
       SRC_URL,
       REQUESTER_NAME,
-      REQUESTER_GROUP
-    FROM ARCHIVE_PENDING_QUEUE
+      REQUESTER_GROUP,
+      FAILURE_LOG,
+      REPORT_FAILURE_LOG,
+      TOTAL_RETRIES,
+      TOTAL_REPORT_RETRIES,
+      MAX_REPORT_RETRIES
+    FROM
   )SQL";
+
+  sql += tableName;
+
+  bool hasWhere = false;
+
   if (tapePoolName.has_value()) {
-    sql += R"SQL(
-    WHERE TAPE_POOL = :TAPE_POOL
-  )SQL";
+    sql += " WHERE TAPE_POOL = :TAPE_POOL";
+    hasWhere = true;
   }
+
+  if (vid.has_value()) {
+    sql += hasWhere ? " AND VID = :VID" : " WHERE VID = :VID";
+  }
+
   auto stmt = conn.createStmt(sql);
+
   if (tapePoolName.has_value()) {
     stmt.bindString(":TAPE_POOL", tapePoolName.value());
   }
-  auto rset = stmt.executeQuery();
+
+  if (vid.has_value()) {
+    stmt.bindString(":VID", vid.value());
+  }
+
+  return stmt.executeQuery();
+}
+
+std::list<cta::common::dataStructures::ArchiveJob>
+RelationalDB::getArchiveJobs(const std::optional<std::string>& tapePoolName) const {
+  std::list<cta::common::dataStructures::ArchiveJob> ret;
+  auto rset = RelationalDB::getArchiveJobRows(common::dataStructures::QueueType::Pending, tapePoolName);
 
   while (rset.next()) {
     common::dataStructures::ArchiveJob job;
@@ -226,33 +255,7 @@ RelationalDB::getArchiveJobs(const std::optional<std::string>& tapePoolName) con
 std::unique_ptr<SchedulerDatabase::IArchiveJobQueueItor>
 RelationalDB::getArchiveJobQueueItor(const std::string& tapePoolName,
                                      common::dataStructures::JobQueueType queueType) const {
-  schedulerdb::Transaction txn(m_connPool, lc);
-  rdbms::Rset resultSet;
-   try {
-    resultSet = schedulerdb::postgres::ArchiveJobQueueRow::getFailedJobs(txn, tapePoolName, queueType);
-    if (resultSet.isEmpty()) {
-      lc.log(cta::log::INFO, "In RelationalDB::getNextArchiveJobsToReportBatch(): nothing to report.");
-      return ret;
-    }
-    while (resultSet.next()) {
-      // last parameter is false = signaling that this is not a repack workflow
-      ret.emplace_back(std::make_unique<schedulerdb::ArchiveRdbJob>(m_connPool, resultSet, false));
-    }
-    txn.setRowCountForTelemetry(ret.size());
-    txn.commit();
-    timings.insertAndReset("fetchedArchiveJobs", t);
-    timings.addToLog(logParams);
-    lc.log(cta::log::INFO, "Successfully flagged jobs for reporting.");
-  } catch (exception::Exception& ex) {
-    cta::log::ScopedParamContainer params(lc);
-    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
-    lc.log(cta::log::ERR, "In RelationalDB::getNextArchiveJobsToReportBatch(): failed to flagReportingJobsByStatus.");
-    txn.abort();
-    return ret;
-  }
-  lc.log(log::INFO, "In RelationalDB::getNextArchiveJobsToReportBatch(): Finished getting archive jobs for reporting.");
-  return ret;
-
+  throw cta::exception::NotImplementedException();
 }
 
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>
@@ -309,7 +312,7 @@ SchedulerDatabase::JobsFailedSummary RelationalDB::getArchiveJobsFailedSummary(l
     txn.commit();
   } catch (cta::exception::Exception& e) {
     std::string bt = e.backtrace();
-    lc.log(log::ERR, "In RelationalDB::getNextArchiveJobsToReportBatch(): Exception thrown: " + bt);
+    lc.log(log::ERR, "In RelationalDB::getArchiveJobsFailedSummary(): Exception thrown: " + bt);
     txn.abort();
   }
   return ret;
@@ -595,7 +598,45 @@ void RelationalDB::cancelArchive(const common::dataStructures::DeleteArchiveRequ
 }
 
 void RelationalDB::deleteFailed(const std::string& objectId, log::LogContext& lc) {
-  throw cta::exception::NotImplementedException();
+  schedulerdb::Transaction txn(m_connPool, lc);
+  // extract the job_id
+  bool isArchive = false;
+  uint64_t jobID = 0;
+  constexpr std::string_view archivePrefix = "archive:";
+  constexpr std::string_view retrievePrefix = "retrieve:";
+  if (objectId.starts_with(archivePrefix)) {
+    isArchive = true;
+    jobID = std::stoull(objectId.substr(archivePrefix.size()));
+  } else if (objectId.starts_with(retrievePrefix)) {
+    isArchive = false;
+    jobID = std::stoull(objectId.substr(retrievePrefix.size()));
+  } else {
+   throw exception::UserError("Invalid failed request object ID: " + objectId);
+  }
+  try {
+    uint64_t deletedJobs = 0;
+    if (isArchive) {
+      deletedJobs = schedulerdb::postgres::ArchiveJobQueueRow::deleteFailedArchiveJob(txn, jobID);
+    } else {
+      deletedJobs = schedulerdb::postgres::ArchiveJobQueueRow::deleteFailedRetrieveJob(txn, jobID);
+    }
+    log::ScopedParamContainer(lc)
+      .add("jobID", jobID)
+      .add("objectId", objectId)
+      .add("deletedJobs", deletedJobs)
+      .log(log::INFO, "In RelationalDB::deleteFailed(): removing failed job from the failed queue");
+    if (cancelledJobs != 1) {
+      lc.log(cta::log::WARNING, "In RelationalDB::deleteFailed(): deletion unexpectedly affected more than 1 job !");
+    }
+    txn.commit();
+  } catch (exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
+    lc.log(cta::log::ERR, "In RelationalDB::deleteFailed(): failed to deletefailed job. Aborting the transaction.");
+    txn.abort();
+    throw;
+  }
+  return;
 }
 
 std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>>
@@ -618,38 +659,7 @@ RelationalDB::getPendingRetrieveJobs(const std::optional<std::string>& vid) cons
   std::list<cta::common::dataStructures::RetrieveJob> ret;
   // Get a connection
   auto conn = m_connPool.getConn();
-
-  // Query all retrieve jobs from RETRIEVE_PENDING_QUEUE
-  std::string sql = R"SQL(
-    SELECT
-      VID,
-      ARCHIVE_FILE_ID,
-      COPY_NB,
-      SIZE_IN_BYTES,
-      CREATION_TIME,
-      DST_URL,
-      RETRIEVE_ERROR_REPORT_URL,
-      DISK_FILE_ID,
-      DISK_FILE_PATH,
-      DISK_FILE_OWNER_UID,
-      DISK_FILE_GID,
-      CHECKSUMBLOB,
-      STORAGE_CLASS,
-      REQUESTER_NAME,
-      REQUESTER_GROUP,
-      DISK_INSTANCE
-    FROM RETRIEVE_PENDING_QUEUE
-  )SQL";
-  if (vid) {
-    sql += R"SQL(
-      WHERE VID = :VID
-    )SQL";
-  }
-  auto stmt = conn.createStmt(sql);
-  if (vid) {
-    stmt.bindString(":VID", vid.value());
-  }
-  auto rset = stmt.executeQuery();
+  auto rset = getRetrieveJobRows(common::dataStructures::QueueType::Pending, vid);
 
   while (rset.next()) {
     common::dataStructures::RetrieveJob job;
@@ -692,6 +702,60 @@ RelationalDB::getPendingRetrieveJobs(const std::optional<std::string>& vid) cons
   }
 
   return ret;
+}
+
+rdbms::Rset RelationalDB::getRetrieveJobRows(common::dataStructures::QueueType queueType,
+                                             const std::optional<std::string>& vid) const {
+  // Get a connection
+  auto conn = m_connPool.getConn();
+
+  std::string tableName = "RETRIEVE_";
+  tableName += toString(queueType);
+
+  std::string sql = R"SQL(
+  SELECT
+      JOB_ID,
+      VID,
+      FSEQ,
+      BLOCK_ID,
+      ARCHIVE_FILE_ID,
+      COPY_NB,
+      SIZE_IN_BYTES,
+      CREATION_TIME,
+      DST_URL,
+      RETRIEVE_ERROR_REPORT_URL,
+      DISK_INSTANCE,
+      DISK_FILE_ID,
+      DISK_FILE_PATH,
+      DISK_FILE_OWNER_UID,
+      DISK_FILE_GID,
+      CHECKSUMBLOB,
+      STORAGE_CLASS,
+      REQUESTER_NAME,
+      REQUESTER_GROUP,
+      DISK_INSTANCE,
+      FAILURE_LOG,
+      REPORT_FAILURE_LOG,
+      TOTAL_RETRIES,
+      TOTAL_REPORT_RETRIES,
+      MAX_REPORT_RETRIES
+    FROM
+  )SQL";
+
+  sql += tableName;
+
+  bool hasWhere = false;
+  if (vid.has_value()) {
+    sql += hasWhere ? " AND VID = :VID" : " WHERE VID = :VID";
+  }
+
+  auto stmt = conn.createStmt(sql);
+
+  if (vid.has_value()) {
+    stmt.bindString(":VID", vid.value());
+  }
+
+  return stmt.executeQuery();
 }
 
 std::unique_ptr<SchedulerDatabase::IRetrieveJobQueueItor>
@@ -1587,7 +1651,24 @@ void RelationalDB::trimEmptyQueues(log::LogContext& lc) {
 }
 
 SchedulerDatabase::JobsFailedSummary RelationalDB::getRetrieveJobsFailedSummary(log::LogContext& lc) {
-  throw cta::exception::NotImplementedException();
+  SchedulerDatabase::JobsFailedSummary ret;
+  // Get the jobs from DB
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
+  auto rset = cta::schedulerdb::postgres::RetrieveJobSummaryRow::selectFailedJobSummary(txn);
+  while (rset.next()) {
+    cta::schedulerdb::postgres::RetrieveJobSummaryRow afjsr(rset);
+    ret.totalFiles += afjsr.jobsCount;
+    ret.totalBytes += afjsr.jobsTotalSize;
+  }
+  try {
+    txn.setRowCountForTelemetry(rset.getNbRowsRetrieved());
+    txn.commit();
+  } catch (cta::exception::Exception& e) {
+    std::string bt = e.backtrace();
+    lc.log(log::ERR, "In RelationalDB::getRetrieveJobsFailedSummary(): Exception thrown: " + bt);
+    txn.abort();
+  }
+  return ret;
 }
 
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMountInfo(log::LogContext& lc) {

@@ -6,6 +6,7 @@
 #pragma once
 
 #include "CtaAdminResponseStream.hpp"
+#include "rdbms/Rset.hpp"
 
 #include <list>
 
@@ -36,9 +37,16 @@ private:
 
   // Data storage
   std::list<cta::xrd::Data> m_summaryData;  // Only 3 items max
+#ifdef CTA_PGSCHED
+  std::unique_ptr<rdbms::Rset> m_archiveJobQueueItorPtr;
+  std::unique_ptr<rdbms::Rset> m_retrieveJobQueueItorPtr;
+  void fillCommonFields(cta::admin::FailedRequestLsItem& fr_item, const cta::rdbms::Rset& item);
+  bool m_archiveHasNext = false;
+  bool m_retrieveHasNext = false;
+#else
   std::unique_ptr<SchedulerDatabase::IArchiveJobQueueItor> m_archiveJobQueueItorPtr;
   std::unique_ptr<SchedulerDatabase::IRetrieveJobQueueItor> m_retrieveJobQueueItorPtr;
-
+#endif
   // Helper methods
   cta::xrd::Data getNextArchiveJobsData();
   cta::xrd::Data getNextRetrieveJobsData();

@@ -639,6 +639,15 @@ VALUES )SQL";
   static uint64_t cancelArchiveJob(Transaction& txn, const std::string& diskInstance, uint64_t archiveFileID);
 
   /**
+   * For manual deletion of failed jobs form failed archive queue
+   *
+   * @param txn           Transaction handling the connection to the backend database
+   * @param jobID         The job ID to be deleted
+   *
+   * @return  The number of affected jobs
+   */
+  static uint64_t deleteFailedArchiveJob(Transaction& txn, uint64_t jobID);
+  /**
      * Select any jobs with specified status(es) from the report,
      * flag them as being reported and return the job IDs
      *

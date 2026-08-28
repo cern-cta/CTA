@@ -273,6 +273,13 @@ public:
   virtual std::unique_ptr<IArchiveJobQueueItor>
   getArchiveJobQueueItor(const std::string& tapePoolName, common::dataStructures::JobQueueType queueType) const = 0;
 
+  virtual rdbms::Rset getArchiveJobRows(common::dataStructures::QueueType queueType,
+                                        const std::optional<std::string>& tapePoolName = nullptr,
+                                        const std::optional<std::string>& vid = nullptr) const = 0;
+
+  virtual rdbms::Rset getRetrieveJobRows(common::dataStructures::QueueType queueType,
+                                         const std::optional<std::string>& vid = nullptr) const = 0;
+
   /**
    * Get a a set of jobs to report to the clients. This function is like
    * ArchiveMount::getNextJobBatch. It it not in the context of a mount as any

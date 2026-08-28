@@ -463,8 +463,6 @@ void ArchiveJobQueueRow::updateRetryCounts(uint64_t mountId) {
 };
 
 // requeueFailedJob is used to requeue jobs which were not processed due to finished mount or failed jobs
-// In case of unexpected crashes the job stays in the ARCHIVE_PENDING_QUEUE and needs to be identified
-// in some garbage collection process - TO-BE-DONE.
 uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
                                               ArchiveJobStatus newStatus,
                                               bool keepMountId,
@@ -951,6 +949,23 @@ ArchiveJobQueueRow::cancelArchiveJob(Transaction& txn, const std::string& diskIn
   auto stmt = txn.getConn().createStmt(sqlActive);
   stmt.bindString(":DISK_INSTANCE", diskInstance);
   stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDeleteArchive);
+  stmt.executeNonQuery();
+  auto nrows = stmt.getNbAffectedRows();
+  txn.setRowCountForTelemetry(nrows);
+  return nrows;
+}
+
+
+uint64_t
+ArchiveJobQueueRow::deleteFailedArchiveJob(Transaction& txn, uint64_t jobID) {
+  std::string sqlActive = R"SQL(
+    DELETE FROM ARCHIVE_FAILED_QUEUE
+    WHERE
+      JOB_ID = :JOB_ID
+  )SQL";
+  auto stmt = txn.getConn().createStmt(sqlActive);
+  stmt.bindUint64(":JOB_ID", jobID);
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDeleteArchive);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
