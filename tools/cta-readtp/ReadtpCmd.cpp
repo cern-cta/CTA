@@ -3,11 +3,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "ReadtpCmd.hpp"
+#include "tools/cta-readtp/ReadtpCmd.hpp"
 
-#include "ReadtpCmdLineArgs.hpp"
-#include "TapeFseqRange.hpp"
-#include "TapeFseqRangeListSequence.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
@@ -23,12 +20,15 @@
 #include "scheduler/RetrieveJob.hpp"
 #include "taped/TapedConfig.hpp"
 #include "taped/TapedUtils.hpp"
+#include "taped/drive/EncryptionControl.hpp"
 #include "taped/file/FileReaderFactory.hpp"
 #include "taped/file/ReadSession.hpp"
 #include "taped/file/ReadSessionFactory.hpp"
 #include "taped/file/Structures.hpp"
-#include "taped/session/EncryptionControl.hpp"
-#include "taped/session/Payload.hpp"
+#include "taped/session/pipeline/Payload.hpp"
+#include "tools/cta-readtp/ReadtpCmdLineArgs.hpp"
+#include "tools/cta-readtp/TapeFseqRange.hpp"
+#include "tools/cta-readtp/TapeFseqRangeListSequence.hpp"
 
 namespace cta::tape::readtp {
 

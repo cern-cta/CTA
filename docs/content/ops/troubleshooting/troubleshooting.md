@@ -9,7 +9,8 @@ Diagnose core CTA failures separately from disk-system failures.
 | I need to investigate… | Start here |
 | --- | --- |
 | Failed or stalled archive/retrieve requests | [Failed & Stuck Requests](failed-requests.md) |
-| Startup probing or stuck tape media | [Tapes, Drives & Libraries](../run-and-maintain/administration/tapes-and-drives.md#startup-probing-and-stuck-media) |
+| Tape daemon failures or drive down reasons | [Tape Daemon](tape-daemon.md) |
+| Startup probing or stuck tape media | [Tape daemon failure recovery](tape-daemon.md#tape-daemon-failure-recovery); [hardware procedures](../run-and-maintain/administration/tapes-and-drives.md#mounting-and-unmounting-a-tape) |
 | A partially failed repack | [Repack recovery](../run-and-maintain/administration/repack.md#recovering-from-partial-failures) |
 
 ## Frontend and authentication

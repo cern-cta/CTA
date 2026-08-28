@@ -1,0 +1,817 @@
+/*
+ * SPDX-FileCopyrightText: 2026 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+#include "taped/session/DriveSession.hpp"
+
+#include "catalogue/TapeDrivesCatalogueState.hpp"
+#include "catalogue/dummy/DummyCatalogue.hpp"
+#include "common/log/StringLogger.hpp"
+#include "taped/SchedulerContext.hpp"
+#include "taped/drive/FakeDrive.hpp"
+
+#include <functional>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+#include <stdexcept>
+
+#ifdef CTA_PGSCHED
+#include "scheduler/rdbms/RelationalDBTestFactory.hpp"
+#else
+#include "catalogue/CreateMountPolicyAttributes.hpp"
+#include "catalogue/CreateTapeAttributes.hpp"
+#include "catalogue/InMemoryCatalogue.hpp"
+#include "catalogue/MediaType.hpp"
+#include "objectstore/BackendVFS.hpp"
+#include "scheduler/OStoreDB/OStoreDBFactory.hpp"
+#include "taped/file/LabelSession.hpp"
+#include "tests/TempFile.hpp"
+#endif
+
+namespace cta::tape::daemon {
+namespace {
+using namespace common::dataStructures;
+
+class SessionDriveState : public catalogue::DummyDriveStateCatalogue {
+public:
+  bool missing = false;
+  std::function<void()> onRead;
+  std::function<void(DriveStatus)> onReport;
+  std::function<void(const DesiredDriveState&)> onDesired;
+  std::vector<DriveStatus> reports;
+
+  std::optional<TapeDrive> getTapeDrive(const std::string& name) const override {
+    if (onRead) {
+      onRead();
+    }
+    return missing ? std::nullopt : DummyDriveStateCatalogue::getTapeDrive(name);
+  }
+
+  void setDesiredTapeDriveState(const std::string& name, const DesiredDriveState& state) override {
+    if (onDesired) {
+      onDesired(state);
+    }
+    DummyDriveStateCatalogue::setDesiredTapeDriveState(name, state);
+  }
+
+  bool updateTapeDriveStatus(const TapeDrive& drive) override {
+    reports.push_back(drive.driveStatus);
+    if (onReport) {
+      onReport(drive.driveStatus);
+    }
+    return DummyDriveStateCatalogue::updateTapeDriveStatus(drive);
+  }
+};
+
+class SessionCatalogue : public catalogue::DummyCatalogue {
+public:
+  SessionCatalogue() { m_driveState = std::make_unique<SessionDriveState>(); }
+
+  SessionDriveState& driveState() { return static_cast<SessionDriveState&>(*m_driveState); }
+};
+}  // namespace
+
+class DriveSessionTest : public testing::Test {
+protected:
+  TapedConfig config;
+  log::StringLogger logger {"host", "DriveSessionTest", log::DEBUG};
+  std::unique_ptr<catalogue::Catalogue> catalogue = std::make_unique<SessionCatalogue>();
+  std::unique_ptr<SchedulerDatabase> db;
+  std::unique_ptr<Scheduler> scheduler;
+  std::unique_ptr<SchedulerContext> context;
+  System::fakeWrapper system;
+  std::stop_source stop;
+  std::unique_ptr<DriveSession> session;
+
+  SessionDriveState& driveState() { return dynamic_cast<SessionDriveState&>(*catalogue->DriveState()); }
+
+  void SetUp() override {
+    config.drive.name = "drive";
+    config.drive.logical_library_name = "library";
+    config.drive.device = "/dev/tape_T10D6116";
+    config.drive.control_path = "dummy";
+    config.mounts.tape_load_timeout_secs = 0;
+#ifdef CTA_PGSCHED
+    db = RelationalDBTestFactory().create(catalogue);
+#else
+    db = OStoreDBFactory<objectstore::BackendVFS>().create(catalogue);
+#endif
+    scheduler = std::make_unique<Scheduler>(*catalogue, *db, "test");
+    context = std::make_unique<SchedulerContext>(config, logger, *scheduler);
+    system.setupForVirtualDriveSLC6();
+    installEmptyDrive();
+    TapeDrive drive;
+    drive.driveName = "drive";
+    drive.driveStatus = DriveStatus::Down;
+    drive.mountType = MountType::NoMount;
+    driveState().updateTapeDriveStatus(drive);
+    requestUp(true);
+    driveState().reports.clear();
+    session = std::make_unique<DriveSession>(config, logger, *context, &system);
+  }
+
+  void TearDown() override {
+    driveState().onRead = {};
+    driveState().onReport = {};
+    driveState().onDesired = {};
+    session.reset();
+  }
+
+  void installEmptyDrive() {
+    auto* drive = new drive::FakeDrive(5000, drive::FakeDrive::OnFlush);
+    drive->setTapeInPlace(false);
+    system.m_pathToDrive["/dev/nst0"] = drive;
+  }
+
+  void requestUp(bool up, std::optional<std::string> reason = std::nullopt) {
+    DesiredDriveState desired;
+    desired.up = up;
+    desired.reason = reason;
+    driveState().setDesiredTapeDriveState("drive", desired);
+  }
+
+  TapeDrive reported() { return driveState().getTapeDrive("drive").value(); }
+
+  using IterationAction = DriveSession::IterationAction;
+
+  IterationAction runIteration(DriveSession& target) {
+    target.m_driveReservation.acquire();
+    return target.runIteration(stop.get_token()).action;
+  }
+
+  std::shared_ptr<const TapeSessionTracker> activeTracker(DriveSession& target) {
+    return target.m_activeTracker.load();
+  }
+
+  bool canUseHardware() { return session->m_driveReservation.canUseHardware(); }
+
+  bool prepare(const std::optional<std::string>& vid = std::nullopt) { return session->prepareDrive(vid); }
+
+  std::shared_ptr<const TapeSessionTracker> activeTracker() { return session->m_activeTracker.load(); }
+
+  void publish(const std::shared_ptr<TapeSessionTracker>& tracker) { session->m_activeTracker.store(tracker); }
+
+  void checkCleanupStates(session::TapeSessionState expectedState) {
+    using namespace std::chrono_literals;
+    using enum session::TapeSessionState;
+    const auto tracker = std::const_pointer_cast<TapeSessionTracker>(activeTracker());
+    ASSERT_TRUE(tracker);
+    EXPECT_EQ(expectedState, tracker->livenessSnapshot().state);
+    EXPECT_TRUE(session->isLive());
+    const auto now = TapeSessionTracker::Clock::now();
+    tracker->reportState(Unloading, now - std::chrono::seconds(config.mounts.tape_unload_timeout_secs) - 1s);
+    EXPECT_FALSE(session->isLive());
+    tracker->reportState(Unmounting, now - std::chrono::seconds(config.mounts.unmount_timeout_secs) - 1s);
+    EXPECT_FALSE(session->isLive());
+    // Cleanup uses the same phase limits as transfers.
+    tracker->reportState(Finalizing, now - 24h);
+    EXPECT_FALSE(session->isLive());
+    tracker->reportState(Preparing, now - 24h);
+    EXPECT_FALSE(session->isLive());
+  }
+
+  bool recover() {
+    session->m_driveReservation.acquire();
+    return session->prepareDrive("V00001");
+  }
+};
+
+#ifndef CTA_PGSCHED
+// Keep catalogue scheduling real while observing drive reports through the existing test double.
+class ScheduledSessionCatalogue : public catalogue::InMemoryCatalogue {
+public:
+  explicit ScheduledSessionCatalogue(log::Logger& logger) : InMemoryCatalogue(logger, 1, 1) {
+    m_driveState = std::make_unique<SessionDriveState>();
+  }
+};
+
+enum class CompletionOutcome {
+  Success,
+  TransferFailure,
+  Unusable,
+  OperatorDown,
+  Stop,
+  UpFailure,
+  DownDuringScheduling,
+  StopDuringScheduling
+};
+
+class ScheduledDriveSessionTest : public DriveSessionTest, public testing::WithParamInterface<CompletionOutcome> {
+protected:
+  unitTests::TempFile sourceFile;
+
+  void SetUp() override {
+    catalogue = std::make_unique<ScheduledSessionCatalogue>(logger);
+    DriveSessionTest::SetUp();
+    const SecurityIdentity admin("admin", "host");
+    catalogue->DiskInstance()->createDiskInstance(admin, "disk", "test");
+    VirtualOrganization vo {};
+    vo.name = "vo";
+    vo.diskInstanceName = "disk";
+    vo.readMaxDrives = vo.writeMaxDrives = 1;
+    vo.comment = "test";
+    catalogue->VO()->createVirtualOrganization(admin, vo);
+    catalogue->TapePool()->createTapePool(admin, "pool", "vo", 1, std::nullopt, {}, "test");
+    catalogue->LogicalLibrary()->createLogicalLibrary(admin, "library", false, std::nullopt, "test");
+    catalogue::MediaType media;
+    media.name = "media";
+    media.cartridge = "cartridge";
+    media.capacityInBytes = 1000000;
+    media.comment = "test";
+    catalogue->MediaType()->createMediaType(admin, media);
+    catalogue::CreateTapeAttributes tape;
+    tape.vid = "V00001";
+    tape.mediaType = "media";
+    tape.vendor = "vendor";
+    tape.logicalLibraryName = "library";
+    tape.tapePoolName = "pool";
+    tape.state = common::dataStructures::Tape::ACTIVE;
+    catalogue->Tape()->createTape(admin, tape);
+    catalogue->Tape()->tapeLabelled(tape.vid, "drive");
+    common::dataStructures::StorageClass storageClass;
+    storageClass.name = "storage";
+    storageClass.nbCopies = 1;
+    storageClass.vo.name = "vo";
+    storageClass.comment = "test";
+    catalogue->StorageClass()->createStorageClass(admin, storageClass);
+    catalogue->ArchiveRoute()->createArchiveRoute(admin, "storage", 1, ArchiveRouteType::DEFAULT, "pool", "test");
+    catalogue->MountPolicy()->createMountPolicy(admin, {"policy", 1, 0, 1, 0, "test"});
+    catalogue->RequesterMountRule()->createRequesterMountRule(admin, "policy", "disk", "user", "test");
+
+    sourceFile.randomFill(1000);
+    common::dataStructures::ArchiveRequest request;
+    request.checksumBlob.insert(checksum::ADLER32, sourceFile.adler32());
+    request.storageClass = "storage";
+    request.srcURL = "file://" + sourceFile.path();
+    request.requester.name = "user";
+    request.requester.group = "group";
+    request.fileSize = 1000;
+    request.diskFileID = "1";
+    request.diskFileInfo.path = "/test";
+    request.diskFileInfo.owner_uid = 1000;
+    request.diskFileInfo.gid = 1000;
+    request.archiveReportURL = "test://report";
+    request.archiveErrorReportURL = "test://error";
+    if (GetParam() == CompletionOutcome::TransferFailure) {
+      request.srcURL += ".missing";
+    }
+    log::LogContext lc(logger);
+    const auto id = scheduler->checkAndGetNextArchiveFileId("disk", "storage", request.requester, lc);
+    scheduler->queueArchiveWithGivenId(id, "disk", request, lc);
+    scheduler->waitSchedulerDbSubthreadsComplete();
+
+    auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
+    drive->setTapeInPlace(true);
+    tapeFile::LabelSession::label(drive, "V00001", false);
+    drive->rewind();
+    if (GetParam() == CompletionOutcome::Unusable) {
+      drive->setFailurePoint(drive::FakeDrive::FailurePoint::ClearEncryptionKey);
+    }
+    config.transfers.buffer_count = 10;
+    config.transfers.buffer_size_bytes = 1024 * 1024;
+    config.transfers.disk_io_threads = 1;
+    config.transfers.encryption.enabled = false;
+    config.transfers.archive.fetch_max_files = 10;
+    config.transfers.archive.fetch_max_bytes = 1000000;
+  }
+};
+
+TEST_P(ScheduledDriveSessionTest, CompletesBeforeRenewingOwnedScheduler) {
+  auto& backend = dynamic_cast<objectstore::OStoreDBWrapperInterface&>(*db).getBackend();
+  unitTests::TempFile configFile;
+  configFile.stringFill(backend.getParams()->toURL() + "\n");
+  config.scheduler.config_file = configFile.path();
+  SchedulerContext ownedContext(config, *catalogue, logger);
+  auto ownedSession = std::make_unique<DriveSession>(config, logger, ownedContext, &system);
+  const auto* previousScheduler = &ownedContext.scheduler();
+  std::shared_ptr<const TapeSessionTracker> completedTracker;
+  const bool cancelledBeforeSession =
+    GetParam() == CompletionOutcome::DownDuringScheduling || GetParam() == CompletionOutcome::StopDuringScheduling;
+  bool sessionStarted = false;
+  unsigned postSessionUp = 0;
+  driveState().onReport = [&](DriveStatus status) {
+    if (status == DriveStatus::Up && sessionStarted) {
+      EXPECT_NE(previousScheduler, &ownedContext.scheduler());
+    } else {
+      EXPECT_EQ(previousScheduler, &ownedContext.scheduler());
+    }
+    // Withdraw permission after the initial desired-state check, while mount selection is still pending.
+    if (status == DriveStatus::Up && !sessionStarted) {
+      if (GetParam() == CompletionOutcome::DownDuringScheduling) {
+        requestUp(false, "Maintenance");
+      } else if (GetParam() == CompletionOutcome::StopDuringScheduling) {
+        stop.request_stop();
+      }
+    }
+    if (status == DriveStatus::Starting) {
+      sessionStarted = true;
+      completedTracker = activeTracker(*ownedSession);
+      EXPECT_TRUE(completedTracker);
+      if (GetParam() == CompletionOutcome::OperatorDown) {
+        requestUp(false, "Maintenance");
+      } else if (GetParam() == CompletionOutcome::Stop) {
+        stop.request_stop();
+      }
+    }
+    if (status == DriveStatus::Up && sessionStarted) {
+      ++postSessionUp;
+      EXPECT_FALSE(activeTracker(*ownedSession));
+      if (completedTracker) {
+        EXPECT_EQ(session::TapeSessionState::Finished, completedTracker->state());
+      }
+      if (GetParam() == CompletionOutcome::UpFailure) {
+        throw std::runtime_error("Up publication failed");
+      }
+    }
+  };
+
+  if (GetParam() == CompletionOutcome::UpFailure) {
+    EXPECT_THROW(runIteration(*ownedSession), std::runtime_error);
+  } else {
+    const auto expected = GetParam() == CompletionOutcome::Success         ? IterationAction::Continue :
+                          GetParam() == CompletionOutcome::TransferFailure ? IterationAction::RetryAfterDelay :
+                                                                             IterationAction::EndOwnership;
+    EXPECT_EQ(expected, runIteration(*ownedSession)) << logger.getLog();
+  }
+  EXPECT_EQ(!cancelledBeforeSession, sessionStarted) << logger.getLog();
+  if (cancelledBeforeSession) {
+    EXPECT_THAT(logger.getLog(), testing::HasSubstr("Selected next mount (archive)"));
+    EXPECT_EQ(0, catalogue->Tape()->getTapesByVid("V00001").at("V00001").lastFSeq);
+    log::LogContext lc(logger);
+    EXPECT_EQ(1, ownedContext.scheduler().getPendingArchiveJobs("pool", lc).size());
+  }
+  const bool continuing = GetParam() == CompletionOutcome::Success || GetParam() == CompletionOutcome::TransferFailure;
+  EXPECT_NE(previousScheduler, &ownedContext.scheduler());
+  EXPECT_EQ(continuing || GetParam() == CompletionOutcome::UpFailure ? 1 : 0, postSessionUp);
+  EXPECT_FALSE(activeTracker(*ownedSession));
+
+  // Terminal Down still reaches the catalogue after scheduler replacement.
+  driveState().onReport = [&](DriveStatus status) {
+    EXPECT_EQ(DriveStatus::Down, status);
+    EXPECT_NE(previousScheduler, &ownedContext.scheduler());
+  };
+  ownedSession.reset();
+  EXPECT_EQ(DriveStatus::Down, reported().driveStatus);
+  driveState().onReport = {};
+}
+
+INSTANTIATE_TEST_SUITE_P(Completion,
+                         ScheduledDriveSessionTest,
+                         testing::Values(CompletionOutcome::Success,
+                                         CompletionOutcome::TransferFailure,
+                                         CompletionOutcome::Unusable,
+                                         CompletionOutcome::OperatorDown,
+                                         CompletionOutcome::Stop,
+                                         CompletionOutcome::UpFailure,
+                                         CompletionOutcome::DownDuringScheduling,
+                                         CompletionOutcome::StopDuringScheduling));
+#endif
+
+TEST_F(DriveSessionTest, ConstructionDefersPreparationUntilRun) {
+  EXPECT_TRUE(driveState().reports.empty());
+  EXPECT_FALSE(canUseHardware());
+  EXPECT_TRUE(system.m_pathToDrive.contains("/dev/nst0"));
+  // End after preparation, before attempting to schedule a transfer.
+  driveState().onReport = [&](DriveStatus status) {
+    if (status == DriveStatus::Starting) {
+      EXPECT_FALSE(canUseHardware());
+      EXPECT_TRUE(system.m_pathToDrive.contains("/dev/nst0"));
+    } else if (status == DriveStatus::Down) {
+      EXPECT_FALSE(canUseHardware());
+    } else if (status == DriveStatus::Up) {
+      EXPECT_TRUE(canUseHardware());
+      stop.request_stop();
+    }
+  };
+  session->run(stop.get_token());
+  EXPECT_FALSE(system.m_pathToDrive.contains("/dev/nst0"));
+  EXPECT_THAT(driveState().reports, testing::ElementsAre(DriveStatus::Starting, DriveStatus::Up, DriveStatus::Down));
+  EXPECT_EQ(DriveStatus::Down, reported().driveStatus);
+  EXPECT_TRUE(reported().desiredUp);
+  EXPECT_FALSE(canUseHardware());
+  EXPECT_TRUE(session->isLive());
+}
+
+TEST_F(DriveSessionTest, InitialCleanupPublishesUpOnlyAfterHardwareIsPrepared) {
+  config.drive.clean_on_up = true;
+  auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
+  drive->setTapeInPlace(true);
+  std::shared_ptr<const TapeSessionTracker> cleanup;
+  driveState().onReport = [&](DriveStatus status) {
+    if (status == DriveStatus::Starting || status == DriveStatus::Unloading || status == DriveStatus::Unmounting) {
+      EXPECT_THAT(driveState().reports, testing::Not(testing::Contains(DriveStatus::Up)));
+      cleanup = activeTracker();
+      ASSERT_TRUE(cleanup);
+      EXPECT_EQ(session::SessionType::Cleanup, cleanup->type());
+      EXPECT_FALSE(cleanup->mountAttempted());
+      EXPECT_NE(TapeSessionTracker::Clock::time_point {}, cleanup->sessionStartTime());
+    }
+  };
+
+  ASSERT_TRUE(prepare());
+  ASSERT_TRUE(cleanup);
+  EXPECT_EQ(session::TapeSessionState::Finished, cleanup->state());
+  EXPECT_EQ(DriveStatus::Up, reported().driveStatus);
+  EXPECT_FALSE(activeTracker());
+  EXPECT_THAT(driveState().reports, testing::Contains(DriveStatus::Unmounting));
+}
+
+TEST_F(DriveSessionTest, CleanupPublicationFailureFinishesFailedSessionWithoutHardwareAccess) {
+  config.drive.clean_on_up = true;
+  std::shared_ptr<const TapeSessionTracker> cleanup;
+  driveState().onReport = [&](DriveStatus status) {
+    if (status == DriveStatus::Starting) {
+      cleanup = activeTracker();
+      throw std::runtime_error("Starting publication failed");
+    }
+  };
+
+  EXPECT_THROW(session->run(stop.get_token()), std::runtime_error);
+  ASSERT_TRUE(cleanup);
+  EXPECT_EQ(session::TapeSessionState::Finished, cleanup->state());
+  EXPECT_TRUE(cleanup->hasFailures());
+  EXPECT_TRUE(system.m_pathToDrive.contains("/dev/nst0"));
+  EXPECT_FALSE(canUseHardware());
+  EXPECT_FALSE(activeTracker());
+}
+
+TEST_F(DriveSessionTest, DownDuringCleanupPreservesActivityUntilOwnershipEnds) {
+  config.drive.clean_on_up = true;
+  auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
+  drive->setTapeInPlace(true);
+  driveState().onReport = [&](DriveStatus status) {
+    if (status == DriveStatus::Unloading) {
+      requestUp(false, "Maintenance");
+    } else if (status == DriveStatus::Unmounting) {
+      EXPECT_TRUE(canUseHardware());
+      EXPECT_THAT(driveState().reports, testing::Not(testing::Contains(DriveStatus::Down)));
+      ASSERT_TRUE(activeTracker());
+      EXPECT_EQ(session::TapeSessionState::Unmounting, activeTracker()->state());
+    } else if (status == DriveStatus::Down) {
+      EXPECT_FALSE(canUseHardware());
+    }
+  };
+
+  session->run(stop.get_token());
+  EXPECT_EQ("Maintenance", reported().reasonUpDown);
+  EXPECT_THAT(driveState().reports, testing::Contains(DriveStatus::Unmounting));
+  EXPECT_THAT(driveState().reports, testing::Not(testing::Contains(DriveStatus::Up)));
+}
+
+TEST_F(DriveSessionTest, EmptyProbeDoesNotResetDriveConfiguration) {
+  auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
+  drive->setFailurePoint(drive::FakeDrive::FailurePoint::ClearEncryptionKey);
+  drive->setFailurePoint(drive::FakeDrive::FailurePoint::DisableLogicalBlockProtection);
+  EXPECT_TRUE(prepare());
+  EXPECT_EQ(DriveStatus::Up, reported().driveStatus);
+}
+
+TEST_F(DriveSessionTest, LoadedDriveRequiresCleanOnUpEvenWithStartupRecoveryEnabled) {
+  config.drive.startup.recover_existing_up = true;
+  config.drive.startup.auto_up = true;
+  auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
+  drive->setTapeInPlace(true);
+  session->run(stop.get_token());
+  EXPECT_FALSE(reported().desiredUp);
+  EXPECT_EQ(DriveStatus::Down, reported().driveStatus);
+  ASSERT_TRUE(reported().reasonUpDown);
+  EXPECT_THAT(reported().reasonUpDown,
+              testing::Optional(testing::MatchesRegex(R"(\[cta-taped\] Tape detected in drive)")));
+  EXPECT_THAT(driveState().reports, testing::Not(testing::Contains(DriveStatus::Up)));
+  EXPECT_FALSE(canUseHardware());
+}
+
+TEST_F(DriveSessionTest, LoadedDriveCanBePreparedWhenCleanOnUpIsEnabled) {
+  config.drive.clean_on_up = true;
+  auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
+  drive->setTapeInPlace(true);
+  EXPECT_TRUE(prepare());
+  EXPECT_EQ(DriveStatus::Up, reported().driveStatus);
+  EXPECT_TRUE(reported().desiredUp);
+}
+
+TEST_F(DriveSessionTest, ProbeFailureReturnsDownWithoutRecovery) {
+  auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
+  drive->setFailurePoint(drive::FakeDrive::FailurePoint::HasTapeInPlace);
+  session->run(stop.get_token());
+  EXPECT_FALSE(reported().desiredUp);
+  EXPECT_EQ(DriveStatus::Down, reported().driveStatus);
+  ASSERT_TRUE(reported().reasonUpDown);
+  EXPECT_THAT(*reported().reasonUpDown, testing::HasSubstr("Drive probe failed"));
+  EXPECT_FALSE(canUseHardware());
+  EXPECT_TRUE(session->isLive());
+}
+
+TEST_F(DriveSessionTest, ActiveRecoveryStillCleansLoadedDriveWithCleanOnUpDisabled) {
+  auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
+  drive->setTapeInPlace(true);
+  EXPECT_TRUE(recover());
+  EXPECT_EQ(DriveStatus::Up, reported().driveStatus);
+}
+
+TEST_F(DriveSessionTest, CleanupOwnerFinalizesSuccessfulPreparationAndFailedRecovery) {
+  std::shared_ptr<const TapeSessionTracker> completedTracker;
+  driveState().onReport = [&](DriveStatus status) {
+    if (status == DriveStatus::Down || status == DriveStatus::Starting) {
+      completedTracker = activeTracker();
+      ASSERT_TRUE(completedTracker);
+      EXPECT_EQ(session::TapeSessionState::Preparing, completedTracker->state());
+    }
+  };
+  ASSERT_TRUE(prepare());
+  ASSERT_TRUE(completedTracker);
+  EXPECT_EQ(session::TapeSessionState::Finalizing, completedTracker->state());
+  EXPECT_FALSE(activeTracker());
+
+  // Recovery retains ownership but still finalizes after a failed hardware cleanup.
+  installEmptyDrive();
+  auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
+  drive->setFailurePoint(drive::FakeDrive::FailurePoint::ClearEncryptionKey);
+  ASSERT_FALSE(recover());
+  ASSERT_TRUE(completedTracker);
+  EXPECT_EQ(session::TapeSessionState::Finished, completedTracker->state());
+  EXPECT_FALSE(activeTracker());
+}
+
+TEST_F(DriveSessionTest, RequestedDownSkipsHardwareAndPreservesOperatorReason) {
+  requestUp(false, "Maintenance");
+  session->run(stop.get_token());
+  EXPECT_TRUE(system.m_pathToDrive.contains("/dev/nst0"));
+  EXPECT_EQ("Maintenance", reported().reasonUpDown);
+  EXPECT_FALSE(canUseHardware());
+}
+
+TEST_F(DriveSessionTest, StopBeforeRunSkipsPreparation) {
+  stop.request_stop();
+  session->run(stop.get_token());
+  EXPECT_TRUE(system.m_pathToDrive.contains("/dev/nst0"));
+  EXPECT_THAT(driveState().reports, testing::ElementsAre(DriveStatus::Down));
+}
+
+TEST_F(DriveSessionTest, DownDuringPreparationPreventsUpPublication) {
+  driveState().onReport = [&](DriveStatus status) {
+    if (status == DriveStatus::Starting) {
+      requestUp(false, "Maintenance");
+    }
+  };
+  session->run(stop.get_token());
+  EXPECT_FALSE(system.m_pathToDrive.contains("/dev/nst0"));
+  EXPECT_THAT(driveState().reports, testing::Not(testing::Contains(DriveStatus::Up)));
+  EXPECT_EQ("Maintenance", reported().reasonUpDown);
+  EXPECT_EQ(DriveStatus::Down, reported().driveStatus);
+}
+
+TEST_F(DriveSessionTest, DownBeforeProbeReleasesDrivePreventsUpPublication) {
+  class DownOnReleaseDrive final : public drive::FakeDrive {
+  public:
+    explicit DownOnReleaseDrive(std::function<void()> onRelease)
+        : FakeDrive(5000, OnFlush),
+          m_onRelease(std::move(onRelease)) {
+      setTapeInPlace(false);
+    }
+
+    ~DownOnReleaseDrive() override { m_onRelease(); }
+
+  private:
+    std::function<void()> m_onRelease;
+  };
+
+  delete system.m_pathToDrive.at("/dev/nst0");
+  system.m_pathToDrive["/dev/nst0"] = new DownOnReleaseDrive([&] { requestUp(false, "Maintenance"); });
+  session->run(stop.get_token());
+  EXPECT_THAT(driveState().reports, testing::Not(testing::Contains(DriveStatus::Up)));
+  EXPECT_EQ("Maintenance", reported().reasonUpDown);
+  EXPECT_EQ(DriveStatus::Down, reported().driveStatus);
+  EXPECT_FALSE(canUseHardware());
+}
+
+TEST_F(DriveSessionTest, CleanupDesiredStatePublicationFailurePropagatesUntilOwnershipIsReleased) {
+  config.drive.clean_on_up = true;
+  auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
+  drive->setFailurePoint(drive::FakeDrive::FailurePoint::ClearEncryptionKey);
+  unsigned int desiredAttempts = 0;
+  driveState().onDesired = [&](const DesiredDriveState& desired) {
+    ++desiredAttempts;
+    EXPECT_FALSE(desired.up);
+    EXPECT_TRUE(canUseHardware());
+    throw std::runtime_error("desired publication failed");
+  };
+
+  EXPECT_THROW(session->run(stop.get_token()), std::runtime_error);
+  EXPECT_GT(desiredAttempts, 0);
+  EXPECT_TRUE(canUseHardware());
+  EXPECT_TRUE(reported().desiredUp);
+  EXPECT_EQ(DriveStatus::Unloading, reported().driveStatus);
+  EXPECT_FALSE(activeTracker());
+
+  // A failed request does not acknowledge release; teardown publishes Down after releasing ownership.
+  session.reset();
+  EXPECT_EQ(DriveStatus::Down, reported().driveStatus);
+  EXPECT_TRUE(reported().desiredUp);
+}
+
+TEST_F(DriveSessionTest, CleanupReportedDownFailurePropagatesAfterOwnershipIsReleased) {
+  config.drive.clean_on_up = true;
+  auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
+  drive->setFailurePoint(drive::FakeDrive::FailurePoint::ClearEncryptionKey);
+  unsigned int downAttempts = 0;
+  driveState().onReport = [&](DriveStatus status) {
+    if (status == DriveStatus::Down) {
+      ++downAttempts;
+      EXPECT_FALSE(canUseHardware());
+      throw std::runtime_error("reported publication failed");
+    }
+  };
+
+  EXPECT_THROW(session->run(stop.get_token()), std::runtime_error);
+  EXPECT_EQ(1, downAttempts);
+  EXPECT_FALSE(canUseHardware());
+  EXPECT_FALSE(reported().desiredUp);
+  EXPECT_EQ(DriveStatus::Unloading, reported().driveStatus);
+  ASSERT_TRUE(reported().reasonUpDown);
+  EXPECT_THAT(*reported().reasonUpDown, testing::HasSubstr("Failed to clear encryption key"));
+  EXPECT_FALSE(activeTracker());
+}
+
+TEST_F(DriveSessionTest, MissingDrivePropagatesWithoutHardwareAccess) {
+  driveState().missing = true;
+  EXPECT_THROW(session->run(stop.get_token()), TapeDrivesCatalogueState::NoSuchDrive);
+  EXPECT_TRUE(system.m_pathToDrive.contains("/dev/nst0"));
+  EXPECT_TRUE(driveState().reports.empty());
+  EXPECT_TRUE(session->isLive());
+}
+
+TEST_F(DriveSessionTest, PreparationPublicationFailurePreservesExceptionAndClearsTracker) {
+  driveState().onReport = [](DriveStatus status) {
+    if (status == DriveStatus::Starting) {
+      throw std::runtime_error("publication failed");
+    }
+  };
+  EXPECT_THROW(session->run(stop.get_token()), std::runtime_error);
+  EXPECT_FALSE(canUseHardware());
+  EXPECT_TRUE(system.m_pathToDrive.contains("/dev/nst0"));
+  EXPECT_TRUE(session->isLive());
+  EXPECT_FALSE(reported().desiredUp);
+}
+
+TEST_F(DriveSessionTest, RecoveryCleansEvenAfterOperatorRequestsDown) {
+  ASSERT_TRUE(prepare());
+  ASSERT_TRUE(canUseHardware());
+  installEmptyDrive();
+  requestUp(false, "Maintenance");
+  EXPECT_FALSE(prepare("V00001"));
+  EXPECT_FALSE(system.m_pathToDrive.contains("/dev/nst0"));
+  EXPECT_TRUE(canUseHardware());
+  session.reset();
+  EXPECT_EQ(DriveStatus::Down, reported().driveStatus);
+  EXPECT_EQ("Maintenance", reported().reasonUpDown);
+}
+
+TEST_F(DriveSessionTest, DestructorReleasesAndPreservesPendingUpRequest) {
+  ASSERT_TRUE(prepare());
+  requestUp(true, "Pending operator request");
+  session.reset();
+  EXPECT_EQ(DriveStatus::Down, reported().driveStatus);
+  EXPECT_TRUE(reported().desiredUp);
+  EXPECT_EQ("Pending operator request", reported().reasonUpDown);
+}
+
+TEST_F(DriveSessionTest, DestructorContainsPublicationFailure) {
+  ASSERT_TRUE(prepare());
+  driveState().onReport = [](DriveStatus) { throw std::runtime_error("unavailable"); };
+  EXPECT_NO_THROW(session.reset());
+  EXPECT_THAT(logger.getLog(), testing::HasSubstr("Failed to release drive session or publish Down"));
+}
+
+TEST_F(DriveSessionTest, PreparationIsVisibleAndClearedOnNormalExit) {
+  requestUp(false);
+  EXPECT_FALSE(activeTracker());
+  unsigned int observed = 0;
+  driveState().onRead = [&] {
+    if (activeTracker()) {
+      ++observed;
+      checkCleanupStates(session::TapeSessionState::Preparing);
+    }
+  };
+  // Desired Down returns normally before hardware access, then releases and reports Down.
+  session->run(std::stop_token {});
+  EXPECT_EQ(1, observed);
+  EXPECT_FALSE(activeTracker());
+  EXPECT_TRUE(session->isLive());
+  EXPECT_FALSE(canUseHardware());
+}
+
+TEST_F(DriveSessionTest, PreparationExceptionClearsTracker) {
+  driveState().onRead = [&] {
+    if (activeTracker()) {
+      checkCleanupStates(session::TapeSessionState::Preparing);
+      throw std::runtime_error("catalogue unavailable");
+    }
+  };
+  EXPECT_THROW(session->run(std::stop_token {}), std::runtime_error);
+  EXPECT_FALSE(activeTracker());
+  EXPECT_TRUE(session->isLive());
+}
+
+TEST_F(DriveSessionTest, RecoveryExceptionClearsTrackerAndRetainsOwnership) {
+  driveState().onRead = [&] {
+    // Recovery reads the desired state after hardware cleanup has entered final reporting.
+    checkCleanupStates(session::TapeSessionState::Finalizing);
+    throw std::runtime_error("catalogue unavailable");
+  };
+  EXPECT_THROW(recover(), std::runtime_error);
+  EXPECT_FALSE(activeTracker());
+  EXPECT_TRUE(session->isLive());
+  EXPECT_TRUE(canUseHardware());
+}
+
+TEST_F(DriveSessionTest, ConfiguredPhaseTimeoutsDoNotResetOnRepeatedStateReports) {
+  using namespace std::chrono_literals;
+  using enum session::TapeSessionState;
+  config.mounts.preparing_timeout_secs = 10;
+  config.mounts.finalizing_timeout_secs = 20;
+  auto tracker = std::make_shared<TapeSessionTracker>();
+  publish(tracker);
+  const auto now = TapeSessionTracker::Clock::now();
+  for (const auto state : {Preparing, Finalizing}) {
+    const auto limit = std::chrono::seconds(state == Preparing ? 10 : 20);
+    tracker->reportState(Finished, now);
+    tracker->reportState(state, now - limit + 5s);
+    EXPECT_TRUE(session->isLive());
+    tracker->reportState(Finished, now);
+    tracker->reportState(state, now - limit - 1s);
+    EXPECT_FALSE(session->isLive());
+    tracker->reportState(state, now);
+    EXPECT_FALSE(session->isLive());
+  }
+}
+
+TEST_F(DriveSessionTest, EachTransferPhaseUsesItsConfiguredTimeout) {
+  using namespace std::chrono_literals;
+  using enum session::TapeSessionState;
+  config.mounts.mount_timeout_secs = 11;
+  config.mounts.tape_load_timeout_secs = 12;
+  config.mounts.tape_unload_timeout_secs = 13;
+  config.mounts.unmount_timeout_secs = 14;
+  config.transfers.no_block_move_timeout_secs = 15;
+  config.transfers.retrieve.drain_to_disk_timeout_secs = 16;
+  const std::pair<session::TapeSessionState, unsigned int> cases[] {
+    {Mounting,       11},
+    {Loading,        12},
+    {Unloading,      13},
+    {Unmounting,     14},
+    {Transferring,   15},
+    {DrainingToDisk, 16}
+  };
+  const auto now = TapeSessionTracker::Clock::now();
+  for (const auto& [state, seconds] : cases) {
+    SCOPED_TRACE(static_cast<int>(state));
+    for (const bool expired : {false, true}) {
+      auto tracker = std::make_shared<TapeSessionTracker>();
+      const auto enteredAt = now - std::chrono::seconds(seconds) + (expired ? -1s : 5s);
+      tracker->beginTapeSession(session::SessionType::Archive, enteredAt);
+      tracker->reportState(state, enteredAt);
+      publish(tracker);
+      EXPECT_EQ(!expired, session->isLive());
+      // Neither repeated state publication nor statistics reporting is block movement.
+      tracker->reportState(state, now);
+      tracker->updateTapeTransferStats({.dataVolume = 100});
+      EXPECT_EQ(!expired, session->isLive());
+    }
+  }
+  auto tracker = std::make_shared<TapeSessionTracker>();
+  publish(tracker);
+  EXPECT_TRUE(session->isLive());
+  tracker->reportState(Finished, now - 24h);
+  EXPECT_TRUE(session->isLive());
+  publish(nullptr);
+  EXPECT_TRUE(session->isLive());
+}
+
+TEST_F(DriveSessionTest, BlockMovementRefreshesTransferLivenessAndNewSessionResetsIt) {
+  using namespace std::chrono_literals;
+  using enum session::TapeSessionState;
+  config.transfers.no_block_move_timeout_secs = 10;
+  config.mounts.tape_unload_timeout_secs = 10;
+  const auto now = TapeSessionTracker::Clock::now();
+  auto tracker = std::make_shared<TapeSessionTracker>();
+  publish(tracker);
+  tracker->beginTapeSession(session::SessionType::Archive, now - 30s);
+  tracker->notifyBlockMovement(1, now - 25s);
+  tracker->reportState(Transferring, now - 20s);
+  EXPECT_FALSE(session->isLive());
+  tracker->notifyBlockMovement(1, now);
+  EXPECT_TRUE(session->isLive());
+  tracker->reportState(Unloading, now - 20s);
+  EXPECT_FALSE(session->isLive());
+  // Starting a new session clears the previous session's block-movement timestamp.
+  tracker->beginTapeSession(session::SessionType::Archive, now - 20s);
+  tracker->reportState(Transferring, now - 20s);
+  EXPECT_FALSE(session->isLive());
+  tracker->beginTapeSession(session::SessionType::Archive, now);
+  tracker->reportState(Transferring, now);
+  EXPECT_TRUE(session->isLive());
+}
+
+}  // namespace cta::tape::daemon

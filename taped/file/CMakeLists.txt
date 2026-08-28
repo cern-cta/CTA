@@ -29,6 +29,7 @@ add_executable(cta-test-basic-read-write
   BasicReadWriteTest.cpp)
 
 target_link_libraries(cta-test-basic-read-write
+  ctatapedfile
   ctatapeddrive
   ctamediachanger
   ctascsi
@@ -56,6 +57,7 @@ add_library(ctatapedfileunittests SHARED
 target_include_directories(ctatapedfileunittests PRIVATE ${XROOTD_INCLUDE_DIR})
 
 target_link_libraries(ctatapedfileunittests
+  ctatapedfile
   ctadisk
 )
 
@@ -66,6 +68,7 @@ if(CTA_BUILD_TEST_PACKAGES)
   install(TARGETS ctatapedfileunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
+# The reader executables pull in mockWrapper and need Google Mock at the final link.
 add_executable(cta-test-osm-reader
   OsmReaderTest.cpp)
 
@@ -73,6 +76,9 @@ target_link_libraries(cta-test-osm-reader
   ctacommon
   ctatapedsession
   ctatapedfile
+  ctatapeddrive
+  ctatapedsystem
+  gmock
   gtest
 )
 
@@ -83,6 +89,9 @@ target_link_libraries(cta-test-enstore-large-reader
   ctacommon
   ctatapedsession
   ctatapedfile
+  ctatapeddrive
+  ctatapedsystem
+  gmock
   gtest
 )
 

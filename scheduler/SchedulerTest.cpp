@@ -34,8 +34,8 @@
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "scheduler/TapeMount.hpp"
-#include "taped/session/MigrationReportPacker.hpp"
-#include "taped/session/RecallReportPacker.hpp"
+#include "taped/session/archive/MigrationReportPacker.hpp"
+#include "taped/session/retrieve/RecallReportPacker.hpp"
 #include "tests/TempDirectory.hpp"
 #include "tests/TempFile.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
@@ -634,14 +634,14 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_no_report) {
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     //Test that no mount is available when a logical library is disabled
     ASSERT_EQ(nullptr, mount.get());
@@ -650,7 +650,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_no_report) {
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
-    mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    mount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
     const auto archiveDriveState = catalogue.DriveState()->getTapeDrive(driveName);
     ASSERT_TRUE(archiveDriveState.has_value());
     ASSERT_EQ(s_archivePriority, archiveDriveState->currentPriority.value());
@@ -682,7 +682,10 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_no_report) {
     archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
     ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();
-    archiveMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Up);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
   }
 
   {
@@ -759,7 +762,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_no_report) {
     std::unique_ptr<cta::RetrieveMount> retrieveMount;
     retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
     ASSERT_NE(nullptr, retrieveMount.get());
-    retrieveMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    retrieveMount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
     const auto retrieveDriveState = catalogue.DriveState()->getTapeDrive(driveName);
     ASSERT_TRUE(retrieveDriveState.has_value());
     ASSERT_EQ(s_retrievePriority, retrieveDriveState->currentPriority.value());
@@ -775,7 +778,15 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_no_report) {
     retrieveMount->setJobBatchTransferred(jobQueue, lc);
     jobBatch = retrieveMount->getNextJobBatch(1, 1, lc);
     ASSERT_EQ(0, jobBatch.size());
-    retrieveMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Up);
+    const cta::common::dataStructures::DriveInfo readyDrive {driveName,
+                                                             retrieveDriveState->host,
+                                                             retrieveDriveState->logicalLibrary,
+                                                             "",
+                                                             ""};
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      readyDrive,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
     const auto freeDriveState = catalogue.DriveState()->getTapeDrive(driveName);
     ASSERT_TRUE(freeDriveState.has_value());
     ASSERT_EQ(0, freeDriveState->currentPriority.value());
@@ -881,14 +892,14 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_report) {
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     //Test that no mount is available when a logical library is disabled
     ASSERT_EQ(nullptr, mount.get());
@@ -897,7 +908,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_report) {
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
-    mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    mount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
     auto& osdb = getSchedulerDB();
     auto mi = osdb.getMountInfo(lc);
     SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
@@ -1115,14 +1126,14 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     //Test that no mount is available when a logical library is disabled
     ASSERT_EQ(nullptr, mount.get());
@@ -1131,7 +1142,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
-    mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    mount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
     auto& osdb = getSchedulerDB();
     auto mi = osdb.getMountInfo(lc);
     SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
@@ -1540,14 +1551,14 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
 
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     //Test that no mount is available when a logical library is disabled
@@ -1557,7 +1568,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
-    mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    mount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
     auto& osdb = getSchedulerDB();
     auto mi = osdb.getMountInfo(lc);
     SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
@@ -1622,14 +1633,14 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     //Test that no mount is available when a logical library is disabled
     ASSERT_EQ(nullptr, mount.get());
@@ -1638,7 +1649,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
-    mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    mount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
     auto& osdb = getSchedulerDB();
     auto mi = osdb.getMountInfo(lc);
     SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
@@ -1874,18 +1885,18 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
-    mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    mount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
     auto& osdb = getSchedulerDB();
     auto mi = osdb.getMountInfo(lc);
     SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
@@ -2140,18 +2151,18 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
-    mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    mount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
     auto& osdb = getSchedulerDB();
     auto mi = osdb.getMountInfo(lc);
     SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
@@ -2874,7 +2885,8 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         executedJobs.push_back(std::move(retrieveJob));
       }
       //Now, report the retrieve jobs to be completed
-      cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+      cta::tape::daemon::TapeSessionTracker rrpTracker;
+      cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc, rrpTracker);
 
       rrp.startThreads();
       for (auto it = executedJobs.begin(); it != executedJobs.end(); ++it) {
@@ -2883,7 +2895,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
       rrp.setDiskDone();
       rrp.setTapeDone();
 
-      rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
+      retrieveMount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Unmounting);
 
       rrp.reportEndOfSession(lc);
       rrp.waitThread();
@@ -3551,7 +3563,8 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
       executedJobs.push_back(std::move(retrieveJob));
     }
     //Now, report the retrieve jobs to be completed
-    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+    cta::tape::daemon::TapeSessionTracker rrpTracker;
+    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc, rrpTracker);
 
     rrp.startThreads();
 
@@ -3565,12 +3578,13 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
     std::unique_ptr<cta::RetrieveJob> failedJobUniqPtr = std::move(*(executedJobs.begin()));
     rrp.reportFailedJob(std::move(failedJobUniqPtr),
                         cta::exception::Exception("FailedJob expandRepackRequestFailedRetrieve"),
-                        lc);
+                        lc,
+                        rrpTracker.recordFailure(cta::tape::daemon::TapeSessionFailure::UnclassifiedFile));
 
     rrp.setDiskDone();
     rrp.setTapeDone();
 
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
+    retrieveMount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Unmounting);
 
     rrp.reportEndOfSession(lc);
     rrp.waitThread();
@@ -3780,7 +3794,8 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
       executedJobs.push_back(std::move(retrieveJob));
     }
     //Now, report the retrieve jobs to be completed
-    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+    cta::tape::daemon::TapeSessionTracker rrpTracker;
+    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc, rrpTracker);
 
     rrp.startThreads();
 
@@ -3792,7 +3807,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
     rrp.setDiskDone();
     rrp.setTapeDone();
 
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
+    retrieveMount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Unmounting);
 
     rrp.reportEndOfSession(lc);
     rrp.waitThread();
@@ -3834,7 +3849,8 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
       executedJobs.push_back(std::move(archiveJob));
     }
 
-    cta::tape::daemon::MigrationReportPacker mrp(archiveMount.get(), lc);
+    cta::tape::daemon::TapeSessionTracker mrpTracker;
+    cta::tape::daemon::MigrationReportPacker mrp(archiveMount.get(), lc, mrpTracker);
     mrp.startThreads();
 
     //Report all archive jobs as succeeded
@@ -3844,7 +3860,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
 
     cta::tape::drive::compressionStats compressStats;
     mrp.reportFlush(compressStats, lc);
-    mrp.reportEndOfSession(lc);
+    mrp.reportEndOfSession(cta::tape::daemon::MigrationReportPacker::SessionEndReason::Completed, lc);
     mrp.reportTestGoingToEnd(lc);
     mrp.waitThread();
 
@@ -4045,7 +4061,8 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
       executedJobs.push_back(std::move(retrieveJob));
     }
     //Now, report the retrieve jobs to be completed
-    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+    cta::tape::daemon::TapeSessionTracker rrpTracker;
+    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc, rrpTracker);
 
     rrp.startThreads();
 
@@ -4057,7 +4074,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
     rrp.setDiskDone();
     rrp.setTapeDone();
 
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
+    retrieveMount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Unmounting);
 
     rrp.reportEndOfSession(lc);
     rrp.waitThread();
@@ -4100,12 +4117,16 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
     }
 
     {
-      cta::tape::daemon::MigrationReportPacker mrp(archiveMount.get(), lc);
+      cta::tape::daemon::TapeSessionTracker mrpTracker;
+      cta::tape::daemon::MigrationReportPacker mrp(archiveMount.get(), lc, mrpTracker);
       mrp.startThreads();
 
       //Report all archive jobs as succeeded except the first one
       auto it = executedJobs.begin();
-      mrp.reportSkippedJob(std::move(*it), "expandRepackRequestFailedArchive", lc);
+      mrp.reportFileNotArchived(std::move(*it),
+                                "expandRepackRequestFailedArchive",
+                                lc,
+                                mrpTracker.recordFailure(cta::tape::daemon::TapeSessionFailure::FileNotArchived));
       it++;
       while (it != executedJobs.end()) {
         mrp.reportCompletedJob(std::move(*it), lc);
@@ -4114,7 +4135,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
 
       cta::tape::drive::compressionStats compressStats;
       mrp.reportFlush(compressStats, lc);
-      mrp.reportEndOfSession(lc);
+      mrp.reportEndOfSession(cta::tape::daemon::MigrationReportPacker::SessionEndReason::Completed, lc);
       mrp.reportTestGoingToEnd(lc);
       mrp.waitThread();
 
@@ -4164,16 +4185,18 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
       archiveJob.reset(jobBatch.front().release());
       ASSERT_NE(nullptr, archiveJob.get());
 
-      cta::tape::daemon::MigrationReportPacker mrp(archiveMount.get(), lc);
+      cta::tape::daemon::TapeSessionTracker mrpTracker;
+      cta::tape::daemon::MigrationReportPacker mrp(archiveMount.get(), lc, mrpTracker);
       mrp.startThreads();
 
       mrp.reportFailedJob(std::move(archiveJob),
                           cta::exception::Exception("FailedJob expandRepackRequestFailedArchive"),
-                          lc);
+                          lc,
+                          mrpTracker.recordFailure(cta::tape::daemon::TapeSessionFailure::UnclassifiedFile));
 
       cta::tape::drive::compressionStats compressStats;
       mrp.reportFlush(compressStats, lc);
-      mrp.reportEndOfSession(lc);
+      mrp.reportEndOfSession(cta::tape::daemon::MigrationReportPacker::SessionEndReason::Completed, lc);
       mrp.reportTestGoingToEnd(lc);
       mrp.waitThread();
     }
@@ -5070,14 +5093,14 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
     for (auto i = 0; i < NUMBER_OF_FILES; i++) {
       (void) i;  // ignore unused variable
       mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
@@ -5409,7 +5432,8 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
       executedJobs.push_back(std::move(retrieveJob));
     }
     //Now, report the retrieve jobs to be completed
-    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+    cta::tape::daemon::TapeSessionTracker rrpTracker;
+    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc, rrpTracker);
 
     rrp.startThreads();
 
@@ -5421,7 +5445,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     rrp.setDiskDone();
     rrp.setTapeDone();
 
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
+    retrieveMount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Unmounting);
 
     rrp.reportEndOfSession(lc);
     rrp.waitThread();
@@ -5887,7 +5911,8 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies) {
       executedJobs.push_back(std::move(retrieveJob));
     }
     //Now, report the retrieve jobs to be completed
-    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+    cta::tape::daemon::TapeSessionTracker rrpTracker;
+    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc, rrpTracker);
 
     rrp.startThreads();
 
@@ -5899,7 +5924,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies) {
     rrp.setDiskDone();
     rrp.setTapeDone();
 
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
+    retrieveMount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Unmounting);
 
     rrp.reportEndOfSession(lc);
     rrp.waitThread();
@@ -6188,7 +6213,8 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
         executedJobs.push_back(std::move(retrieveJob));
       }
       //Now, report the retrieve jobs to be completed
-      cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+      cta::tape::daemon::TapeSessionTracker rrpTracker;
+      cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc, rrpTracker);
 
       rrp.startThreads();
 
@@ -6200,7 +6226,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
       rrp.setDiskDone();
       rrp.setTapeDone();
 
-      rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
+      retrieveMount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Unmounting);
 
       rrp.reportEndOfSession(lc);
       rrp.waitThread();
@@ -6396,14 +6422,14 @@ TEST_P(SchedulerTest, getNextMountTapeStatesThatShouldNotReturnAMount) {
   {
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
   }
 
   uint64_t archiveFileId;
@@ -7069,14 +7095,14 @@ TEST_P(SchedulerTest, archiveUserQueueMaxDrivesVoInFlightChangeScheduleMount) {
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
     bool nextMount = scheduler.getNextMountDryRun(s_libraryName, driveName, lc);
     //nextMount should be false as the VO write max drives is 0
     ASSERT_FALSE(nextMount);
@@ -7346,7 +7372,8 @@ TEST_P(SchedulerTest, retrieveArchiveRepackQueueMaxDrivesVoInFlightChangeSchedul
 
     // For each tape we will see if the retrieve jobs are not null
     // Then we will report them as complete
-    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+    cta::tape::daemon::TapeSessionTracker rrpTracker;
+    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc, rrpTracker);
     rrp.startThreads();
     for (uint64_t j = 1; j <= nbArchiveFilesPerTape; ++j) {
       auto jobBatch = retrieveMount->getNextJobBatch(1, archiveFileSize, lc);
@@ -7357,7 +7384,7 @@ TEST_P(SchedulerTest, retrieveArchiveRepackQueueMaxDrivesVoInFlightChangeSchedul
 
     rrp.setDiskDone();
     rrp.setTapeDone();
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
+    retrieveMount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Unmounting);
     rrp.reportEndOfSession(lc);
     rrp.waitThread();
   }
@@ -7602,7 +7629,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
 
     ASSERT_NE(nullptr, tapeMount);
 
-    tapeMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    tapeMount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
 
     std::unique_ptr<cta::ArchiveMount> archiveForUserMount(static_cast<ArchiveMount*>(tapeMount.release()));
 
@@ -7628,7 +7655,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
 
     ASSERT_NE(nullptr, tapeMount);
 
-    tapeMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    tapeMount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
 
     std::unique_ptr<cta::ArchiveMount> archiveForRepackMount(static_cast<ArchiveMount*>(tapeMount.release()));
 
@@ -7660,7 +7687,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
 
     ASSERT_NE(nullptr, tapeMount);
 
-    tapeMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    tapeMount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
 
     std::unique_ptr<cta::RetrieveMount> retrieveMount(static_cast<RetrieveMount*>(tapeMount.release()));
 
@@ -8094,7 +8121,7 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
 
     ASSERT_NE(nullptr, tapeMount);
 
-    tapeMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    tapeMount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
 
     std::unique_ptr<cta::ArchiveMount> archiveForRepackMount(static_cast<ArchiveMount*>(tapeMount.release()));
 
@@ -8158,7 +8185,7 @@ TEST_P(SchedulerTest, getNextMountWithArchiveForUserAndArchiveForRepackShouldRet
 
     ASSERT_NE(nullptr, tapeMount);
 
-    tapeMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    tapeMount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
 
     std::unique_ptr<cta::ArchiveMount> archiveForUserMount(static_cast<ArchiveMount*>(tapeMount.release()));
 
@@ -8205,13 +8232,7 @@ TEST_P(SchedulerTest, testCleaningUpKeepingTapePoolName) {
     tapeDrive.value().driveStatus = common::dataStructures::DriveStatus::CleaningUp;
     catalogue.DriveState()->updateTapeDriveStatus(tapeDrive.value());
     // And simulate the drive had a uncaught exception in CleaningUp state, and it didn't go to Down state
-    TapeDrivesCatalogueState tapeDriveState(catalogue);
-    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    tapeDriveState.reportDriveStatus(driveInfo,
-                                     cta::common::dataStructures::MountType::NoMount,
-                                     cta::common::dataStructures::DriveStatus::CleaningUp,
-                                     std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()),
-                                     lc);
+    // The legacy row above is intentionally retained to exercise scheduler compatibility.
   }
 
   // Create the environment for the migration to happen (library + tape)
@@ -8256,11 +8277,14 @@ TEST_P(SchedulerTest, testCleaningUpWithoutTapePoolName) {
     // and it didn't go to Down state with empty tape pool name
     TapeDrivesCatalogueState tapeDriveState(catalogue);
     cta::common::dataStructures::DriveInfo driveInfo("drive0", "myHost", s_libraryName, "/dev/dummy", "dummySlot");
-    tapeDriveState.reportDriveStatus(driveInfo,
-                                     cta::common::dataStructures::MountType::NoMount,
-                                     cta::common::dataStructures::DriveStatus::CleaningUp,
-                                     std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()),
-                                     lc);
+    tapeDriveState.reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Preparing,
+       .tapeSession =
+         cta::common::dataStructures::TapeSessionReport {.state =
+                                                           cta::common::dataStructures::TapeSessionState::Finalizing},
+       .reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())},
+      lc);
   }
 
   // Create the environment for the migration to happen (library + tape)
@@ -8309,13 +8333,7 @@ TEST_P(SchedulerTest, testShutdownKeepingTapePoolName) {
     tapeDrive.value().driveStatus = common::dataStructures::DriveStatus::Shutdown;
     catalogue.DriveState()->updateTapeDriveStatus(tapeDrive.value());
     // And simulate the drive had a uncaught exception in Shutdown state, and it didn't go to Down state
-    TapeDrivesCatalogueState tapeDriveState(catalogue);
-    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    tapeDriveState.reportDriveStatus(driveInfo,
-                                     cta::common::dataStructures::MountType::NoMount,
-                                     cta::common::dataStructures::DriveStatus::Shutdown,
-                                     std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()),
-                                     lc);
+    // The legacy row above is intentionally retained to exercise scheduler compatibility.
   }
 
   // Create the environment for the migration to happen (library + tape)

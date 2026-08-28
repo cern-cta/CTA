@@ -197,7 +197,6 @@ public:
   enum class OperatingMode { ALL, USER, REPACK };
 
   /*============== Drive state management ====================================*/
-  CTA_GENERATE_EXCEPTION_CLASS(NoSuchDrive);
 
   /**
    * Gets the desired drive state from object store. Used by the tape drive, when scheduling.
@@ -207,16 +206,14 @@ public:
   common::dataStructures::DesiredDriveState getDesiredDriveState(const std::string& driveName,
                                                                  log::LogContext& lc) override;
 
-  /**
-   * Sets the desired drive state. This function is used by the front end to pass instructions to the
-   * object store for the requested drive status. The status is reset to down by the drives
-   * on hardware failures.
-   * @param driveName The drive name
-   * @param desiredState, the structure that contains the desired state informations
-   */
-  void setDesiredDriveState(const std::string& driveName,
-                            const common::dataStructures::DesiredDriveState& desiredState,
-                            log::LogContext& lc) override;
+  /// Operator commands change desired state without changing reported activity.
+  void requestDriveUp(const std::string& driveName, std::string_view reason, log::LogContext& lc) override;
+
+  void requestDriveDown(const std::string& driveName,
+                        const common::dataStructures::DriveDownRequest& request,
+                        log::LogContext& lc) override;
+
+  void setDriveComment(const std::string& driveName, std::string_view comment, log::LogContext& lc) override;
 
   bool checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo& driveInfo, log::LogContext& lc) override;
 
@@ -226,20 +223,6 @@ public:
    * @param driveName The drive name
    */
   void removeDrive(const std::string& driveName, log::LogContext& lc) const;
-
-  /**
-   * Reports the state of the drive to the object store. This function fills
-   * any necessary fields in the drive's state. The drive entry will be created if necessary.
-   * @param defaultState a drive state containing all the default values
-   * @param type the type of the session, if any
-   * @param status the state of the drive. Reporting the state to down will also
-   * mean that  the desired state should be reset to down following an hardware
-   * error encountered by the drive.
-   */
-  void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
-                         cta::common::dataStructures::MountType type,
-                         cta::common::dataStructures::DriveStatus status,
-                         log::LogContext& lc) override;
 
   /**
    * Creates a Table in the Database for a new Tape Drives
@@ -255,12 +238,6 @@ public:
                              const common::dataStructures::DriveStatus& status,
                              const common::dataStructures::SecurityIdentity& identity,
                              log::LogContext& lc) override;
-
-  /**
-   * Reports the scheduler backend name for the drive to the catalogue.
-   * @param tapeDriveName The name of the drive to update.
-   */
-  void reportSchedulerBackendName(const std::string& driveName, log::LogContext& lc) override;
 
   /**
    * Returns the status of a specific drive

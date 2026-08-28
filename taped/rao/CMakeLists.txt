@@ -28,7 +28,7 @@ add_library (ctatapedrao SHARED
 set_property(TARGET ctatapedrao PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedrao PROPERTY VERSION "${CTA_LIBVERSION}")
 
-target_link_libraries(ctatapedrao ctacommon)
+target_link_libraries(ctatapedrao ctacommon ctascheduler)
 
 install(TARGETS ctatapedrao DESTINATION ${CMAKE_INSTALL_LIBDIR})
 

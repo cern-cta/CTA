@@ -4,13 +4,15 @@
  */
 
 #include "commands/sync/handlers/Handlers.hpp"
-#include "common/dataStructures/DesiredDriveState.hpp"
+#include "common/dataStructures/DriveDownRequest.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/utils/Regex.hpp"
 #include "common/utils/utils.hpp"
 
 #include <algorithm>
+#include <functional>
 #include <sstream>
+#include <string_view>
 #include <vector>
 
 namespace cta::admin_api::commands::sync::handlers {
@@ -22,16 +24,11 @@ using admin::OptionUInt64;
 
 namespace {
 
-/// Changes the desired state of the drives whose name matches a regex
-///
-/// @param ctx                What the handlers need from the server
-/// @param regex              The regex to match the drive name(s) to change
-/// @param desiredDriveState  Desired drive state (up, forceDown, reason, comment)
-///
-/// @return The outcome for each matching drive, to return to the client
-std::string setDriveState(const SyncCmdContext& ctx,
+/// Apply one command to matching drives in this scheduler backend and describe the result.
+std::string applyToDrives(const SyncCmdContext& ctx,
                           const std::string& regex,
-                          const common::dataStructures::DesiredDriveState& desiredDriveState) {
+                          std::string_view description,
+                          const std::function<void(const std::string&)>& action) {
   std::stringstream cmdlineOutput;
   utils::Regex driveNameRegex(regex);
 
@@ -43,16 +40,8 @@ std::string setDriveState(const SyncCmdContext& ctx,
     const auto regexResult = driveNameRegex.exec(tapeDriveName);
     if (!regexResult.empty()) {
       is_found = true;
-      ctx.scheduler.setDesiredDriveState(tapeDriveName, desiredDriveState, ctx.lc);
-
-      cmdlineOutput << "Drive " << tapeDriveName << ": set ";
-      if (!desiredDriveState.comment) {
-        cmdlineOutput << (desiredDriveState.up ? "Up" : "Down") << (desiredDriveState.forceDown ? " (forced)" : "")
-                      << "." << std::endl;
-      } else {
-        // We modified the comment so we will output that the comment was changed
-        cmdlineOutput << "a new comment." << std::endl;
-      }
+      action(tapeDriveName);
+      cmdlineOutput << "Drive " << tapeDriveName << ": set " << description << "." << std::endl;
     }
   }
   if (!is_found) {
@@ -65,19 +54,10 @@ std::string setDriveState(const SyncCmdContext& ctx,
 }  // namespace
 
 std::optional<std::string> setDriveUp(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
-  std::optional<std::string> reason = opts.getOptional(OptionString::REASON);
-  common::dataStructures::DesiredDriveState desiredDS;
-  desiredDS.up = true;
-  desiredDS.forceDown = false;
-  desiredDS.reason = reason;
-  if (!desiredDS.reason) {
-    //If reason not provided while setting the drive up, we delete it, so we set it to an empty string
-    desiredDS.reason = "";
-  }
-
-  std::string cmdlineOutput = setDriveState(ctx, '^' + opts.getRequired(OptionString::DRIVE) + '$', desiredDS);
-
-  return cmdlineOutput;
+  const auto reason = opts.getOptional(OptionString::REASON).value_or("");
+  return applyToDrives(ctx, '^' + opts.getRequired(OptionString::DRIVE) + '$', "Up", [&](const auto& name) {
+    ctx.scheduler.requestDriveUp(name, reason, ctx.lc);
+  });
 }
 
 std::optional<std::string> setDriveDown(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
@@ -85,14 +65,11 @@ std::optional<std::string> setDriveDown(const SyncCmdContext& ctx, const AdminCm
   if (utils::trimString(reason).empty()) {
     throw exception::UserError("You must provide a reason in order to set the drive down");
   }
-  common::dataStructures::DesiredDriveState desiredDS;
-  desiredDS.up = false;
-  desiredDS.forceDown = opts.hasFlag(OptionBoolean::FORCE);
-  desiredDS.reason = reason;
-
-  std::string cmdlineOutput = setDriveState(ctx, '^' + opts.getRequired(OptionString::DRIVE) + '$', desiredDS);
-
-  return cmdlineOutput;
+  const common::dataStructures::DriveDownRequest request {.reason = reason, .force = opts.hasFlag(OptionBoolean::FORCE)};
+  return applyToDrives(ctx,
+                       '^' + opts.getRequired(OptionString::DRIVE) + '$',
+                       request.force ? "Down (forced)" : "Down",
+                       [&](const auto& name) { ctx.scheduler.requestDriveDown(name, request, ctx.lc); });
 }
 
 std::optional<std::string> changeDrive(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {
@@ -101,12 +78,10 @@ std::optional<std::string> changeDrive(const SyncCmdContext& ctx, const AdminCmd
     throw exception::UserError("You must provide a comment to change it.");
   }
 
-  common::dataStructures::DesiredDriveState desiredDS;
-  desiredDS.comment = comment;
-
-  std::string cmdlineOutput = setDriveState(ctx, '^' + opts.getRequired(OptionString::DRIVE) + '$', desiredDS);
-
-  return cmdlineOutput;
+  return applyToDrives(ctx,
+                       '^' + opts.getRequired(OptionString::DRIVE) + '$',
+                       "a new comment",
+                       [&](const auto& name) { ctx.scheduler.setDriveComment(name, comment, ctx.lc); });
 }
 
 std::optional<std::string> removeDrive(const SyncCmdContext& ctx, const AdminCmdOptions& opts) {

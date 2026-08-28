@@ -50,29 +50,17 @@ public:
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>
   getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) override;
 
-  /*
-   * Set the status of the drive
-   *
-   * @param status           The drive status
-   * @param mountType       The type of the mount
-   * @param completionTime  The time the operation took it took
-   * @param reason          An optional parameter containing the reason fo the drive status change
-   *
-   * @return void
-   */
-  void setDriveStatus(common::dataStructures::DriveStatus status,
-                      common::dataStructures::MountType mountType,
-                      time_t completionTime,
-                      const std::optional<std::string>& reason = std::nullopt) override;
+  /// Publish activity with this mount's metadata, without changing desired state.
+  void reportTapeSessionState(common::dataStructures::TapeSessionState state, time_t reportTime) override;
 
   /*
    * Set Tape session statistics summary
    *
-   * @param stats       The TapeSessionStats object
+   * @param stats       The tape-side session statistics
    *
    * @return void
    */
-  void setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) override;
+  void setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) override;
 
   /*
    * Setting a batch of jobs to state which informs

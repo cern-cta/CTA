@@ -1,48 +1,51 @@
 # SPDX-FileCopyrightText: 2021 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-add_subdirectory (scsi)
-add_subdirectory (drive)
-add_subdirectory (system)
-add_subdirectory (file)
-add_subdirectory (session)
-add_subdirectory (rao)
-add_subdirectory (daemon)
+# Scheduler ownership is shared by the daemon and drive sessions, without depending on either.
+add_library(ctatapedscheduler
+  SchedulerContext.cpp
+)
+target_link_libraries(ctatapedscheduler PUBLIC ctacommon ctaruntime ctascheduler)
 
-# EL9's packaged GoogleTest 1.11 leaves matcher buffer storage uninitialized, triggering GCC 14 warnings.
-# Suppress them only in affected mock users; other warnings remain errors.
-# Remove when EL9 provides a fixed GoogleTest package and these files build without the suppression (or when we remove EL9).
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 14)
-  foreach(mock_source IN ITEMS
-      scsi/DeviceTest.cpp
-      drive/DriveTest.cpp
-      system/Wrapper.cpp
-      session/TaskWatchDogTest.cpp
-      daemon/DriveHandlerTests.cpp)
-    get_filename_component(mock_directory "${mock_source}" DIRECTORY)
-    set_property(SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/${mock_source}"
-      DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${mock_directory}"
-      APPEND PROPERTY COMPILE_OPTIONS -Wno-uninitialized -Wno-maybe-uninitialized)
-  endforeach()
-endif()
+add_subdirectory(scsi)
+add_subdirectory(system)
+add_subdirectory(file)
+add_subdirectory(rao)
+add_subdirectory(drive)
+add_subdirectory(session)
 
 add_library(ctatapedutils
   TapedUtils.cpp
 )
 target_link_libraries(ctatapedutils PUBLIC ctaruntime)
-target_link_libraries(ctatapedaemon ctatapedutils)
 
 add_library(ctataped
+  DriveStartupPolicy.cpp
   TapedApp.cpp
+  TapeDaemon.cpp
 )
 
+# Application wiring only; session and hardware implementations belong to their own targets.
 target_link_libraries(ctataped
   ctacommon
   ctaruntime
+  ctatapedscheduler
+  ctatapedsession
   ctatelemetrytaped
-  ctatapedaemon
   ctatapedutils
+  ${PROTOBUF3_LIBRARIES}
 )
+
+add_library(ctatapedunittests SHARED
+  DriveStartupPolicyTest.cpp
+  TapeDaemonTest.cpp
+)
+set_property(TARGET ctatapedunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctatapedunittests PROPERTY VERSION "${CTA_LIBVERSION}")
+target_link_libraries(ctatapedunittests PRIVATE ctataped cta-unit-test-helper)
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS ctatapedunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 
 add_executable (cta-taped cta-taped.cpp)
 target_link_libraries(cta-taped ctataped ctaruntime)

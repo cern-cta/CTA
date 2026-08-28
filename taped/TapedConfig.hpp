@@ -12,15 +12,44 @@
 
 namespace cta::tape::daemon {
 
+/// Opt-in automatic activation on first registration in the catalogue.
+struct DriveRegistrationConfig final {
+  bool auto_up = false;
+
+  /// Number of fields exposed to the TOML configuration mapper.
+  static constexpr std::size_t memberCount() { return 1; }
+
+  /// Both registration policies are valid.
+  cta::runtime::ValidationResult validate() const { return {}; }
+};
+
+/// Opt-in automatic startup of drives already present in the catalogue.
+struct DriveStartupConfig final {
+  bool recover_existing_up = false;
+  bool auto_up = false;
+
+  /// Number of fields exposed to the TOML configuration mapper.
+  static constexpr std::size_t memberCount() { return 2; }
+
+  /// Accept all combinations of startup flags.
+  cta::runtime::ValidationResult validate() const { return {}; }
+};
+
+/// Drive identity, device paths and preparation policy.
 struct DriveConfig final {
   std::string name = "";
   std::string device = "";
   std::string control_path = "";
   std::string logical_library_name = "";
-  uint32_t ready_timeout_secs = 120;
 
-  static constexpr std::size_t memberCount() { return 5; }
+  bool clean_on_up = false;
+  DriveStartupConfig startup;
+  DriveRegistrationConfig registration;
 
+  /// Number of fields exposed to the TOML configuration mapper.
+  static constexpr std::size_t memberCount() { return 7; }
+
+  /// Collect missing drive identity and path errors, including startup and registration validation.
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     if (name.empty()) {
@@ -35,21 +64,23 @@ struct DriveConfig final {
     if (logical_library_name.empty()) {
       result.addError("logical_library_name", "cannot be empty");
     }
-    if (ready_timeout_secs == 0) {
-      result.addError("ready_timeout_secs", "must be greater than zero");
-    }
+    result.merge("startup", startup.validate());
+    result.merge("registration", registration.validate());
     return result;
   }
 };
 
+/// Media-changer connection and retry settings.
 struct RmcdConfig final {
   std::string host = "localhost";
   uint16_t port = 5014;
   uint32_t request_timeout_secs = 600;
   uint32_t request_attempts = 10;
 
+  /// Number of fields exposed to the TOML configuration mapper.
   static constexpr std::size_t memberCount() { return 4; }
 
+  /// Collect invalid media-changer endpoint and retry settings.
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     if (host.empty()) {
@@ -68,14 +99,17 @@ struct RmcdConfig final {
   }
 };
 
+/// Thresholds for detecting and recovering from archive underfill.
 struct ArchiveUnderfillConfig final {
   uint64_t watch_period_secs = 300;
   uint64_t minimum_samples = 3;
   uint64_t start_threshold_percent = 40;
   uint64_t recovery_threshold_percent = 60;
 
+  /// Number of fields exposed to the TOML configuration mapper.
   static constexpr std::size_t memberCount() { return 4; }
 
+  /// Collect invalid sampling settings and inconsistent underfill thresholds.
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     if (watch_period_secs == 0) {
@@ -97,19 +131,25 @@ struct ArchiveUnderfillConfig final {
   }
 };
 
+/// Scheduling intervals and drive-phase timeouts.
 struct MountsConfig final {
   uint64_t minimum_queued_bytes = 500000000000;
   uint64_t minimum_queued_files = 10000;
-  uint32_t scheduling_timeout_secs = 300;
   uint32_t get_next_mount_timeout_secs = 900;
   uint32_t idle_scheduling_interval_secs = 10;
   uint32_t drive_state_poll_interval_secs = 5;
-  uint32_t mount_timeout_secs = 600;
-  uint32_t tape_load_timeout_secs = 300;
+  uint32_t logical_library_poll_interval_secs = 5;
+  uint32_t mount_timeout_secs = 900;
+  uint32_t tape_load_timeout_secs = 900;
+  uint32_t tape_unload_timeout_secs = 900;
   uint32_t unmount_timeout_secs = 900;
+  uint32_t preparing_timeout_secs = 900;
+  uint32_t finalizing_timeout_secs = 900;
 
-  static constexpr std::size_t memberCount() { return 9; }
+  /// Number of fields exposed to the TOML configuration mapper.
+  static constexpr std::size_t memberCount() { return 12; }
 
+  /// Collect zero scheduling thresholds, polling intervals and phase timeouts.
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     if (minimum_queued_bytes == 0) {
@@ -117,9 +157,6 @@ struct MountsConfig final {
     }
     if (minimum_queued_files == 0) {
       result.addError("minimum_queued_files", "must be greater than zero");
-    }
-    if (scheduling_timeout_secs == 0) {
-      result.addError("scheduling_timeout_secs", "must be greater than zero");
     }
     if (get_next_mount_timeout_secs == 0) {
       result.addError("get_next_mount_timeout_secs", "must be greater than zero");
@@ -130,11 +167,23 @@ struct MountsConfig final {
     if (drive_state_poll_interval_secs == 0) {
       result.addError("drive_state_poll_interval_secs", "must be greater than zero");
     }
+    if (logical_library_poll_interval_secs == 0) {
+      result.addError("logical_library_poll_interval_secs", "must be greater than zero");
+    }
     if (mount_timeout_secs == 0) {
       result.addError("mount_timeout_secs", "must be greater than zero");
     }
     if (tape_load_timeout_secs == 0) {
       result.addError("tape_load_timeout_secs", "must be greater than zero");
+    }
+    if (tape_unload_timeout_secs == 0) {
+      result.addError("tape_unload_timeout_secs", "must be greater than zero");
+    }
+    if (preparing_timeout_secs == 0) {
+      result.addError("preparing_timeout_secs", "must be greater than zero");
+    }
+    if (finalizing_timeout_secs == 0) {
+      result.addError("finalizing_timeout_secs", "must be greater than zero");
     }
     if (unmount_timeout_secs == 0) {
       result.addError("unmount_timeout_secs", "must be greater than zero");
@@ -143,6 +192,7 @@ struct MountsConfig final {
   }
 };
 
+/// Archive batching, flushing and underfill settings.
 struct ArchiveTransferConfig final {
   uint64_t fetch_max_bytes = 100000000000;
   uint64_t fetch_max_files = 5000;
@@ -150,8 +200,10 @@ struct ArchiveTransferConfig final {
   uint64_t flush_max_files = 200;
   ArchiveUnderfillConfig underfill;
 
+  /// Number of fields exposed to the TOML configuration mapper.
   static constexpr std::size_t memberCount() { return 5; }
 
+  /// Collect invalid archive batch limits and underfill settings.
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     if (fetch_max_bytes == 0) {
@@ -171,12 +223,15 @@ struct ArchiveTransferConfig final {
   }
 };
 
+/// Tape encryption and external key-script settings.
 struct EncryptionConfig final {
   bool enabled = true;
   std::string external_key_script = "/usr/local/bin/cta-get-encryption-key.sh";
 
+  /// Number of fields exposed to the TOML configuration mapper.
   static constexpr std::size_t memberCount() { return 2; }
 
+  /// Require a key-script path when encryption is enabled.
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     if (enabled && external_key_script.empty()) {
@@ -186,12 +241,15 @@ struct EncryptionConfig final {
   }
 };
 
+/// Recommended access order settings for retrieval.
 struct RaoConfig final {
   bool enabled = true;
   std::string lto_algorithm = "sltf";
 
+  /// Number of fields exposed to the TOML configuration mapper.
   static constexpr std::size_t memberCount() { return 2; }
 
+  /// Reject unknown LTO access-order algorithms, even when RAO is disabled.
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     if (lto_algorithm != "linear" && lto_algorithm != "random" && lto_algorithm != "sltf") {
@@ -202,6 +260,7 @@ struct RaoConfig final {
   }
 };
 
+/// Retrieval batching, disk delivery and access-order settings.
 struct RetrieveTransferConfig final {
   uint64_t fetch_max_bytes = 100000000000;
   uint64_t fetch_max_files = 5000;
@@ -209,8 +268,10 @@ struct RetrieveTransferConfig final {
   std::string external_free_disk_space_script = "";
   RaoConfig rao;
 
+  /// Number of fields exposed to the TOML configuration mapper.
   static constexpr std::size_t memberCount() { return 5; }
 
+  /// Collect invalid retrieval batch limits, disk-drain timeout and RAO settings.
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     if (fetch_max_bytes == 0) {
@@ -227,17 +288,21 @@ struct RetrieveTransferConfig final {
   }
 };
 
+/// Shared pipeline resources and direction-specific transfer settings.
 struct TransfersConfig final {
   uint32_t buffer_count = 5000;
   uint32_t buffer_size_bytes = 5000000;
   uint32_t disk_io_threads = 10;
+  uint32_t stats_report_interval_secs = 15;
   uint32_t no_block_move_timeout_secs = 1800;
   ArchiveTransferConfig archive;
   RetrieveTransferConfig retrieve;
   EncryptionConfig encryption;
 
-  static constexpr std::size_t memberCount() { return 7; }
+  /// Number of fields exposed to the TOML configuration mapper.
+  static constexpr std::size_t memberCount() { return 8; }
 
+  /// Collect invalid pipeline resource limits, reporting intervals and transfer settings.
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     if (buffer_count == 0) {
@@ -249,6 +314,9 @@ struct TransfersConfig final {
     if (disk_io_threads == 0) {
       result.addError("disk_io_threads", "must be greater than zero");
     }
+    if (stats_report_interval_secs == 0) {
+      result.addError("stats_report_interval_secs", "must be greater than zero");
+    }
     if (no_block_move_timeout_secs == 0) {
       result.addError("no_block_move_timeout_secs", "must be greater than zero");
     }
@@ -259,6 +327,7 @@ struct TransfersConfig final {
   }
 };
 
+/// Configuration consumed by the taped runtime and daemon.
 struct TapedConfig final {
   cta::runtime::CatalogueConfig catalogue;
   cta::runtime::SchedulerConfig scheduler;
@@ -273,8 +342,10 @@ struct TapedConfig final {
   RmcdConfig rmcd;
   TransfersConfig transfers;
 
+  /// Number of fields exposed to the TOML configuration mapper.
   static constexpr std::size_t memberCount() { return 11; }
 
+  /// Collect validation errors from all sections, prefixed with their section names.
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     result.merge("catalogue", catalogue.validate());

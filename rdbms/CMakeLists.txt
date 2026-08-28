@@ -15,7 +15,6 @@ set (RDBMS_LIB_SRC_FILES
   Login.cpp
   LoginFactory.cpp
   NullDbValue.cpp
-  rdbms.cpp
   Rset.cpp
   Stmt.cpp
   StmtPool.cpp

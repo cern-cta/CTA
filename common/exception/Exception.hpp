@@ -112,6 +112,11 @@ protected:
   Backtrace m_backtrace;
 };
 
+/// Extract a diagnostic from the exception currently being handled.
+/// @pre Called from an active exception handler; otherwise std::terminate is invoked.
+/// @return CTA message without its backtrace, standard exception message, or an unknown-exception fallback.
+std::string currentExceptionMessage();
+
 }  // namespace cta::exception
 
 #define CTA_GENERATE_EXCEPTION_CLASS(A)        \

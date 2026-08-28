@@ -5,7 +5,6 @@
 
 #include "scheduler/OStoreDB/OStoreDB.hpp"
 
-#include "MemQueues.hpp"
 #include "Scheduler.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/TapeDrivesCatalogueState.hpp"
@@ -30,6 +29,7 @@
 #include "objectstore/RepackRequest.hpp"
 #include "objectstore/Sorter.hpp"
 #include "scheduler/LogicalLibrary.hpp"
+#include "scheduler/OStoreDB/MemQueues.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "taped/session/TapeSessionStats.hpp"
 
@@ -3810,40 +3810,27 @@ void OStoreDB::RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<Schedule
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::RetrieveMount::setDriveStatus()
+// OStoreDB::RetrieveMount::reportTapeSessionState()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status,
-                                             cta::common::dataStructures::MountType mountType,
-                                             time_t completionTime,
-                                             const std::optional<std::string>& reason) {
-  // We just report the drive status as instructed by the tape thread.
-  // Reset the drive state.
-  common::dataStructures::DriveInfo driveInfo;
+void OStoreDB::RetrieveMount::reportTapeSessionState(common::dataStructures::TapeSessionState state,
+                                                     time_t reportTime) {
+  using namespace common::dataStructures;
+  DriveInfo driveInfo;
   driveInfo.driveName = mountInfo.drive;
   driveInfo.logicalLibrary = mountInfo.logicalLibrary;
   driveInfo.host = mountInfo.host;
-  ReportDriveStatusInputs inputs;
-  inputs.mountType = mountType;
-  inputs.mountSessionId = mountInfo.mountId;
-  inputs.reportTime = completionTime;
-  inputs.status = status;
-  inputs.vid = mountInfo.vid;
-  inputs.tapepool = mountInfo.tapePool;
-  inputs.vo = mountInfo.vo;
-  inputs.priority = mountInfo.priority;
-  inputs.reason = reason;
-  inputs.activity = mountInfo.activity;
-  // TODO: statistics!
-  inputs.byteTransferred = 0;
-  inputs.filesTransferred = 0;
+  const auto session = mountInfo.makeTapeSessionReport(state);
   log::LogContext lc(m_oStoreDB.m_logger);
-  m_oStoreDB.m_tapeDrivesState->updateDriveStatus(driveInfo, inputs, lc);
+  m_oStoreDB.m_tapeDrivesState->reportDriveState(
+    driveInfo,
+    {.state = ReportedDriveState::Up, .tapeSession = session, .reportTime = reportTime},
+    lc);
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::setTapeSessionStats()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveMount::setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) {
+void OStoreDB::RetrieveMount::setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) {
   // We just report the tape session statistics as instructed by the tape thread.
   // Reset the drive state.
   common::dataStructures::DriveInfo driveInfo;
@@ -4155,39 +4142,26 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::ArchiveMount::setDriveStatus()
+// OStoreDB::ArchiveMount::reportTapeSessionState()
 //------------------------------------------------------------------------------
-void OStoreDB::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status,
-                                            cta::common::dataStructures::MountType mountType,
-                                            time_t completionTime,
-                                            const std::optional<std::string>& reason) {
-  // We just report the drive status as instructed by the tape thread.
-  // Reset the drive state.
-  common::dataStructures::DriveInfo driveInfo;
+void OStoreDB::ArchiveMount::reportTapeSessionState(common::dataStructures::TapeSessionState state, time_t reportTime) {
+  using namespace common::dataStructures;
+  DriveInfo driveInfo;
   driveInfo.driveName = mountInfo.drive;
   driveInfo.logicalLibrary = mountInfo.logicalLibrary;
   driveInfo.host = mountInfo.host;
-  ReportDriveStatusInputs inputs;
-  inputs.mountType = mountType;
-  inputs.mountSessionId = mountInfo.mountId;
-  inputs.reportTime = completionTime;
-  inputs.status = status;
-  inputs.vid = mountInfo.vid;
-  inputs.tapepool = mountInfo.tapePool;
-  inputs.vo = mountInfo.vo;
-  inputs.priority = mountInfo.priority;
-  inputs.reason = reason;
-  // TODO: statistics!
-  inputs.byteTransferred = 0;
-  inputs.filesTransferred = 0;
+  const auto session = mountInfo.makeTapeSessionReport(state);
   log::LogContext lc(m_oStoreDB.m_logger);
-  m_oStoreDB.m_tapeDrivesState->updateDriveStatus(driveInfo, inputs, lc);
+  m_oStoreDB.m_tapeDrivesState->reportDriveState(
+    driveInfo,
+    {.state = ReportedDriveState::Up, .tapeSession = session, .reportTime = reportTime},
+    lc);
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveMount::setTapeSessionStats()
 //------------------------------------------------------------------------------
-void OStoreDB::ArchiveMount::setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) {
+void OStoreDB::ArchiveMount::setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) {
   // We just report the tape session statistics as instructed by the tape thread.
   // Reset the drive state.
   common::dataStructures::DriveInfo driveInfo;

@@ -13,7 +13,7 @@ namespace cta::common::dataStructures {
 enum DriveStatus {
   Down = 1,
   Up = 2,
-  Probing = 3,
+  Probing = 3,  // Retained for catalogue compatibility; taped reports preparation as Starting.
   Starting = 4,
   Mounting = 5,
   Transferring = 6,

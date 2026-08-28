@@ -98,7 +98,8 @@ else()
     SchedulerDatabaseTest.cpp
     RelationalDBSchedulerTest.cpp
     batching/OpportunisticQueueBatcherTest.cpp
-    rdbms/RelationalDBTest.cpp)
+    rdbms/RelationalDBTest.cpp
+    rdbms/TemporaryPostgresInstanceTest.cpp)
 endif()
 
 target_link_libraries (ctaschedulerunittests ctascheduler)

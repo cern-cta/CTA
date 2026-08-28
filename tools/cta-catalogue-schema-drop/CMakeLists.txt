@@ -8,7 +8,7 @@ add_library(ctadropschemacmd SHARED
   DropSchemaCmdLineArgs.cpp)
 set_property(TARGET ctadropschemacmd PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctadropschemacmd PROPERTY VERSION "${CTA_LIBVERSION}")
-target_link_libraries(ctadropschemacmd ctaschemachecker)
+target_link_libraries(ctadropschemacmd ctaschemachecker ctacatalogue)
 
 add_executable(cta-catalogue-schema-drop DropSchemaCmdMain.cpp)
 target_link_libraries(cta-catalogue-schema-drop ctacatalogue ctadropschemacmd)
