@@ -201,6 +201,7 @@ public:
       uint64_t capacityInBytes;
       cta::common::dataStructures::Label::Format labelFormat;
       cta::common::dataStructures::MountType mountType;
+      uint64_t priority = 0;
     } mountInfo;
 
     virtual const MountInfo& getMountInfo() = 0;
@@ -496,6 +497,7 @@ public:
       uint64_t mountId;
       std::optional<std::string> activity;
       cta::common::dataStructures::Label::Format labelFormat;
+      uint64_t priority = 0;
     } mountInfo;
 
     virtual const MountInfo& getMountInfo() = 0;

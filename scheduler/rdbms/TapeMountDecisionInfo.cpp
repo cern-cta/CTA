@@ -76,6 +76,7 @@ TapeMountDecisionInfo::createArchiveMount(const cta::SchedulerDatabase::Potentia
     am.mountInfo.vendor = tape.vendor;
     am.mountInfo.capacityInBytes = tape.capacityInBytes;
     am.mountInfo.encryptionKeyName = tape.encryptionKeyName;
+    am.mountInfo.priority = mount.priority;
     am.setIsRepack(m_lc);
 
     // release the named lock on the DB,
@@ -142,6 +143,7 @@ TapeMountDecisionInfo::createRetrieveMount(const cta::SchedulerDatabase::Potenti
   rm.mountInfo.capacityInBytes = mount.capacityInBytes;
   rm.mountInfo.activity = mount.activity;
   rm.mountInfo.encryptionKeyName = mount.encryptionKeyName;
+  rm.mountInfo.priority = mount.priority;
 
   // check if isRepack mount
   auto defaultRepackVO = m_RelationalDB.getDefaultRepackVo();

@@ -40,6 +40,7 @@ struct ReportDriveStatusInputs {
   std::string vid;
   std::string tapepool;
   std::string vo;
+  uint64_t priority = 0;
   std::optional<std::string> activity;
   std::optional<std::string> reason;
 };
