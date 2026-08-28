@@ -126,34 +126,21 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
   return ret;
 }
 
-void ArchiveMount::setDriveStatus(common::dataStructures::DriveStatus status,
-                                  common::dataStructures::MountType mountType,
-                                  time_t completionTime,
-                                  const std::optional<std::string>& reason) {
-  // We just report the drive status as instructed by the tape thread.
-  // Reset the drive state.
-  common::dataStructures::DriveInfo driveInfo;
+void ArchiveMount::reportTapeSessionState(common::dataStructures::TapeSessionState state, time_t reportTime) {
+  using namespace common::dataStructures;
+  DriveInfo driveInfo;
   driveInfo.driveName = mountInfo.drive;
   driveInfo.logicalLibrary = mountInfo.logicalLibrary;
   driveInfo.host = mountInfo.host;
-  ReportDriveStatusInputs inputs;
-  inputs.mountType = mountType;
-  inputs.mountSessionId = mountInfo.mountId;
-  inputs.reportTime = completionTime;
-  inputs.status = status;
-  inputs.vid = mountInfo.vid;
-  inputs.tapepool = mountInfo.tapePool;
-  inputs.vo = mountInfo.vo;
-  inputs.priority = mountInfo.priority;
-  inputs.reason = reason;
-  // TODO: statistics!
-  inputs.byteTransferred = 0;
-  inputs.filesTransferred = 0;
+  const auto session = mountInfo.makeTapeSessionReport(state);
   log::LogContext lc(m_RelationalDB.m_logger);
-  m_RelationalDB.m_tapeDrivesState->updateDriveStatus(driveInfo, inputs, lc);
+  m_RelationalDB.m_tapeDrivesState->reportDriveState(
+    driveInfo,
+    {.state = ReportedDriveState::Up, .tapeSession = session, .reportTime = reportTime},
+    lc);
 }
 
-void ArchiveMount::setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) {
+void ArchiveMount::setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) {
   // We just report the tape session statistics as instructed by the tape thread.
   // Reset the drive state.
   common::dataStructures::DriveInfo driveInfo;

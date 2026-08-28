@@ -67,10 +67,9 @@ public:
 
   bool bothSidesComplete() override { return false; }
 
-  void setDriveStatus(cta::common::dataStructures::DriveStatus status,
-                      const std::optional<std::string>& reason) override {};
+  void reportTapeSessionState(cta::common::dataStructures::TapeSessionState state) override {};
 
-  void setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) override {};
+  void setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) override {};
 
   void setTapeMounted(log::LogContext& logContext) const override {};
 

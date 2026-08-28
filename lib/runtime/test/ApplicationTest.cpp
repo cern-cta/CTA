@@ -8,11 +8,16 @@
 #include "tests/Argv.hpp"
 #include "tests/TempFile.hpp"
 
+#include <cerrno>
 #include <chrono>
+#include <fstream>
 #include <functional>
 #include <gtest/gtest.h>
+#include <httplib.h>
+#include <iterator>
 #include <stdexcept>
 #include <thread>
+#include <unistd.h>
 
 namespace unitTests {
 
@@ -78,6 +83,47 @@ format = "json"
     return app.run(args.count, args.data());
   });
   ASSERT_EQ(rc, EXIT_SUCCESS);
+}
+
+TEST(ApplicationDeathTest, BrokenPipeReturnsErrorWithoutTerminating) {
+  class BrokenPipeApp {
+  public:
+    void stop() {}
+
+    int run(const MinimalTestConfig&, cta::log::Logger&) {
+      int fds[2];
+      if (::pipe(fds) != 0) {
+        return 2;
+      }
+      ::close(fds[0]);
+      const auto written = ::write(fds[1], "x", 1);
+      const auto error = errno;
+      ::close(fds[1]);
+      return written == -1 && error == EPIPE ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+  };
+
+  TempFile config("[logging]\nlevel = 'WARNING'\nformat = 'json'\n", ".toml");
+  using App = cta::runtime::Application<BrokenPipeApp, MinimalTestConfig, cta::runtime::CommonCliOptions>;
+  ASSERT_EXIT(
+    {
+      struct sigaction action {};
+      action.sa_handler = SIG_DFL;
+      sigset_t signals;
+      if (::sigemptyset(&action.sa_mask) != 0 || ::sigaction(SIGPIPE, &action, nullptr) != 0
+          || ::sigemptyset(&signals) != 0 || ::sigaddset(&signals, SIGPIPE) != 0
+          || ::pthread_sigmask(SIG_UNBLOCK, &signals, nullptr) != 0) {
+        ::_exit(3);
+      }
+      const int rc = cta::runtime::safeRun([&] {
+        Argv args({"cta-test", "--config", config.path()});
+        App app("cta-test", "");
+        return app.run(args.count, args.data());
+      });
+      ::_exit(rc);
+    },
+    testing::ExitedWithCode(EXIT_SUCCESS),
+    "");
 }
 
 TEST(Application, RootConfigValidationIsExercisedDuringConfigCheck) {
@@ -257,12 +303,15 @@ level = "WARNING"
   ASSERT_EQ(rc, EXIT_FAILURE);
 }
 
-TEST(Application, AppHandlesSigTerm) {
+class ApplicationShutdownSignalTest : public testing::TestWithParam<int> {};
+
+TEST_P(ApplicationShutdownSignalTest, RequestsOrderlyShutdown) {
   using namespace cta;
 
-  // Application must start before any unblocked threads exist. Block SIGTERM before creating the sender so it inherits
+  // Application must start before any unblocked threads exist. Block the signal before creating the sender so it inherits
   // the correct mask, leaving the SignalReactor as the only thread that consumes the process-directed signal.
-  SignalMaskGuard signalMaskGuard(SIGTERM);
+  const int shutdownSignal = GetParam();
+  SignalMaskGuard signalMaskGuard(shutdownSignal);
 
   // Global so that we can wait for this later on
   static std::atomic<bool> stoppableTestApprunning = false;
@@ -298,7 +347,7 @@ format = "json"
   std::jthread signalSender([&]() {
     try {
       cta::utils::waitForCondition([&]() { return stoppableTestApprunning == true; }, 2000, 10);
-      signalResult = ::kill(::getpid(), SIGTERM);
+      signalResult = ::kill(::getpid(), shutdownSignal);
     } catch (...) {
       signalResult = -1;
     }
@@ -309,6 +358,188 @@ format = "json"
 
   EXPECT_EQ(0, signalResult);
   EXPECT_EQ(EXIT_SUCCESS, rc);
+}
+
+INSTANTIATE_TEST_SUITE_P(Application, ApplicationShutdownSignalTest, testing::Values(SIGTERM, SIGINT));
+
+// These applications retain configuration and logging references until destruction.
+struct LifecycleConfig {
+  cta::runtime::LoggingConfig logging;
+  cta::runtime::ExperimentalConfig experimental;
+  cta::runtime::TelemetryConfig telemetry;
+  cta::runtime::HealthServerConfig health_server;
+
+  static constexpr std::size_t memberCount() { return 4; }
+
+  cta::runtime::ValidationResult validate() const {
+    cta::runtime::ValidationResult result;
+    result.merge("logging", logging.validate());
+    result.merge("health_server", health_server.validate());
+    return result;
+  }
+};
+
+struct LifecycleState {
+  unsigned destructions = 0;
+  bool throwFromRun = false;
+  bool throwFromLogAttributes = false;
+  bool exerciseCallbacks = false;
+  std::atomic<bool> signalEntered = false;
+  std::atomic<bool> signalFinished = false;
+  std::atomic<unsigned> healthCalls = 0;
+};
+
+class LifecycleApp {
+public:
+  static inline LifecycleState* state = nullptr;
+
+  ~LifecycleApp() {
+    ++state->destructions;
+    if (m_config) {
+      EXPECT_EQ("json", m_config->logging.format);
+    }
+    if (state->exerciseCallbacks) {
+      EXPECT_TRUE(state->signalFinished.load());
+      EXPECT_GT(state->healthCalls.load(), 0);
+      // A live endpoint here would still be able to call this object during destruction.
+      httplib::Client client(*m_config->health_server.host, *m_config->health_server.port);
+      client.set_address_family(AF_UNIX);
+      client.set_connection_timeout(1);
+      client.set_read_timeout(2);
+      EXPECT_FALSE(client.Get("/health/ready"));
+    }
+    if (m_log) {
+      (*m_log)(cta::log::INFO, "Lifecycle app destroyed");
+    }
+  }
+
+  std::map<std::string, std::string> getStaticLogAttributes(const LifecycleConfig& config) const {
+    m_config = &config;
+    if (state->throwFromLogAttributes) {
+      throw std::runtime_error("Static log attributes failed");
+    }
+    return {};
+  }
+
+  void stop() {}
+
+  void customSignal() {
+    state->signalEntered = true;
+    // Keep the callback active briefly after run() is allowed to return.
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    state->signalFinished = true;
+  }
+
+  bool isReady() const {
+    ++state->healthCalls;
+    return true;
+  }
+
+  bool isLive() const { return true; }
+
+  int run(const LifecycleConfig& config, cta::log::Logger& log) {
+    m_log = &log;
+    if (state->exerciseCallbacks) {
+      httplib::Client client(*config.health_server.host, *config.health_server.port);
+      client.set_address_family(AF_UNIX);
+      client.set_connection_timeout(1);
+      client.set_read_timeout(2);
+      const auto response = client.Get("/health/ready");
+      EXPECT_TRUE(response);
+      if (response) {
+        EXPECT_EQ(200, response->status);
+      }
+      EXPECT_EQ(0, ::kill(::getpid(), SIGUSR2));
+      cta::utils::waitForCondition([] { return state->signalEntered.load(); }, 2000, 1);
+    }
+    if (state->throwFromRun) {
+      throw std::runtime_error("Lifecycle run failure");
+    }
+    return EXIT_SUCCESS;
+  }
+
+private:
+  mutable const LifecycleConfig* m_config = nullptr;
+  cta::log::Logger* m_log = nullptr;
+};
+
+TEST(Application, DestroysAppBeforeTelemetryAndAfterCallbacks) {
+  using namespace cta;
+  for (const bool throwFromRun : {false, true}) {
+    SCOPED_TRACE(throwFromRun);
+    LifecycleState state;
+    state.throwFromRun = throwFromRun;
+    state.exerciseCallbacks = true;
+    LifecycleApp::state = &state;
+    TempFile telemetry("file_format: \"1.0-rc.1\"\ndisabled: true\n", ".yaml");
+    TempFile socket("", ".sock");
+    ::unlink(socket.path().c_str());
+    TempFile logs;
+    TempFile config("[logging]\nlevel = \"INFO\"\nformat = \"json\"\n"
+                    "[experimental]\ntelemetry_enabled = true\n"
+                    "[telemetry]\nconfig_file = \""
+                      + telemetry.path()
+                      + "\"\n"
+                        "[health_server]\nenabled = true\nhost = \""
+                      + socket.path() + "\"\nport = 80\n",
+                    ".toml");
+    {
+      runtime::Application<LifecycleApp, LifecycleConfig, runtime::CommonCliOptions> app("cta-test", "");
+      app.addSignalFunction(SIGUSR2, &LifecycleApp::customSignal);
+      Argv args({"cta-test", "--config", config.path(), "--log-file", logs.path()});
+      EXPECT_EQ(throwFromRun ? EXIT_FAILURE : EXIT_SUCCESS, app.run(args.count, args.data()));
+      EXPECT_EQ(1, state.destructions);
+      EXPECT_THROW(app.run(args.count, args.data()), exception::Exception);
+    }
+    EXPECT_EQ(1, state.destructions);
+    std::ifstream input(logs.path());
+    const std::string output((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
+    const auto destroyed = output.find("Lifecycle app destroyed");
+    const auto telemetryStopped = output.find("OpenTelemetry shut down successfully");
+    EXPECT_NE(std::string::npos, destroyed);
+    EXPECT_NE(std::string::npos, telemetryStopped);
+    EXPECT_LT(destroyed, telemetryStopped);
+    if (throwFromRun) {
+      EXPECT_LT(output.find("Fatal unexpected exception"), destroyed);
+    }
+    LifecycleApp::state = nullptr;
+  }
+}
+
+TEST(Application, LoggerInitializationFailureStillDestroysAppBeforeConfig) {
+  using namespace cta;
+  LifecycleState state;
+  state.throwFromLogAttributes = true;
+  LifecycleApp::state = &state;
+  TempFile config("[logging]\nlevel = \"WARNING\"\nformat = \"json\"\n", ".toml");
+  {
+    runtime::Application<LifecycleApp, LifecycleConfig, runtime::CommonCliOptions> app("cta-test", "");
+    Argv args({"cta-test", "--config", config.path()});
+    EXPECT_THROW(app.run(args.count, args.data()), std::runtime_error);
+    EXPECT_EQ(1, state.destructions);
+  }
+  EXPECT_EQ(1, state.destructions);
+  LifecycleApp::state = nullptr;
+}
+
+TEST(Application, InitializationFailureDestroysAppBeforeConfigLeavesScope) {
+  using namespace cta;
+  LifecycleState state;
+  LifecycleApp::state = &state;
+  TempFile invalidTelemetry("not valid SDK configuration: [", ".yaml");
+  TempFile config("[logging]\nlevel = \"WARNING\"\nformat = \"json\"\n"
+                  "[experimental]\ntelemetry_enabled = true\n"
+                  "[telemetry]\non_init_failure = \"fatal\"\nconfig_file = \""
+                    + invalidTelemetry.path() + "\"\n",
+                  ".toml");
+  {
+    runtime::Application<LifecycleApp, LifecycleConfig, runtime::CommonCliOptions> app("cta-test", "");
+    Argv args({"cta-test", "--config", config.path()});
+    EXPECT_EQ(EXIT_FAILURE, app.run(args.count, args.data()));
+    EXPECT_EQ(1, state.destructions);
+  }
+  EXPECT_EQ(1, state.destructions);
+  LifecycleApp::state = nullptr;
 }
 
 }  // namespace unitTests

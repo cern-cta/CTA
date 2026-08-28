@@ -23,6 +23,22 @@ int Cdomainname(char* name, int namelen) {
   struct hostent* hp;
   char* p;
 
+  if (name == nullptr || namelen <= 0) {
+    serrno = EINVAL;
+    return -1;
+  }
+
+  // namelen includes the terminator; reject oversized names before writing anything.
+  const auto copyDomain = [name, namelen](const char* domain) {
+    const size_t length = strlen(domain);
+    if (length >= static_cast<size_t>(namelen)) {
+      serrno = EINVAL;
+      return -1;
+    }
+    memcpy(name, domain, length + 1);
+    return 0;
+  };
+
   /*
 	 * try looking in /etc/resolv.conf
 	 * putting this here and assuming that it is correct, eliminates
@@ -41,18 +57,7 @@ int Cdomainname(char* name, int namelen) {
         if (*p != '\0') {
           *(p + strlen(p) - 1) = '\0';
         }
-        if (namelen == 0) {
-          serrno = EINVAL;
-          return -1;
-        }
-        size_t maxcopy = namelen - 1;
-        name[maxcopy] = '\0';
-        strncpy(name, p, maxcopy);
-        if (name[maxcopy] != '\0') {
-          serrno = EINVAL;
-          return -1;
-        }
-        return 0;
+        return copyDomain(p);
       }
     }
     fclose(fd);
@@ -92,13 +97,7 @@ int Cdomainname(char* name, int namelen) {
         if ((p = strchr(hp2->h_name, '.')) != nullptr) {
           free(haddrarray);
           p++;
-          name[namelen] = '\0';
-          strncpy(name, p, namelen + 1);
-          if (name[namelen] != '\0') {
-            serrno = EINVAL;
-            return -1;
-          }
-          return 0;
+          return copyDomain(p);
         }
 
         /* Look for aliases */
@@ -108,13 +107,7 @@ int Cdomainname(char* name, int namelen) {
           if ((p = strchr(*hal, '.')) != nullptr) {
             free(haddrarray);
             p++;
-            name[namelen - 1] = '\0';
-            strncpy(name, p, namelen);
-            if (name[namelen - 1] != '\0') {
-              serrno = EINVAL;
-              return -1;
-            }
-            return 0;
+            return copyDomain(p);
           }
           hal++;
         }

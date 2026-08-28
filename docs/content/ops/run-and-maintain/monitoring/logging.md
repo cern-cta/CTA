@@ -46,3 +46,7 @@ Due to the way log context propagation is handled internally in CTA, it is diffi
 ## JSON Logging
 
 Every CTA service except for `cta-rmcd` supports JSON logs. It is **highly recommended to configure CTA to produce JSON logs** as these should be natively processed by modern monitoring tools.
+
+## Tape session logging
+
+For tape session summaries, failure counters, tape alerts, and SCSI diagnostics, see [Tape Session Diagnostics](tape-session-diagnostics.md).

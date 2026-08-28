@@ -725,3 +725,48 @@
    obj:*
    obj:*
 }
+
+# These death tests deliberately call _Exit with an active exception to preserve
+# resources that workers may still access. Only suppress possible exception leaks
+# allocated by these two test suites; normal shutdown and definite leaks stay checked.
+{
+   ScopedTapeSessionReporterDeathTest_exception_at_immediate_exit
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:__cxa_allocate_exception
+   ...
+   fun:*ScopedTapeSessionReporterDeathTest*TestBodyEv*
+}
+
+{
+   ScopedTapeSessionReporterDeathTest_exception_message_at_immediate_exit
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:_Znwm
+   ...
+   fun:_ZNSt13runtime_errorC*
+   ...
+   fun:*ScopedTapeSessionReporterDeathTest*TestBodyEv*
+}
+
+{
+   WorkerFailureHandlingDeathTest_exception_at_immediate_exit
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:__cxa_allocate_exception
+   ...
+   fun:*WorkerFailureHandlingDeathTest*TestBodyEv*
+}
+
+{
+   WorkerFailureHandlingDeathTest_exception_message_at_immediate_exit
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:_Znwm
+   ...
+   fun:_ZNSt13runtime_errorC*
+   ...
+   fun:*WorkerFailureHandlingDeathTest*TestBodyEv*
+}

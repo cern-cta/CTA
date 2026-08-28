@@ -50,6 +50,7 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
   - toc:
       permalink: "#"
+      toc_depth: 3
 
 hooks:
   - hooks.py
@@ -225,6 +226,7 @@ nav:
           - 'Monitoring':
               - 'Health Checks & Alerts': ops/run-and-maintain/monitoring/health-and-alerts.md
               - 'Logging': ops/run-and-maintain/monitoring/logging.md
+              - 'Tape Session Diagnostics': ops/run-and-maintain/monitoring/tape-session-diagnostics.md
               - 'Metrics': ops/run-and-maintain/monitoring/metrics.md
               - 'Catalogue Statistics': ops/run-and-maintain/monitoring/catalogue-statistics.md
           # Transition installed software and schemas; developing migrations belongs in Development.
@@ -240,6 +242,7 @@ nav:
       # Diagnose failures and restore service or data, including disk-system-specific remedies.
       - 'Troubleshooting':
           - 'Troubleshooting': ops/troubleshooting/troubleshooting.md
+          - 'Tape Daemon': ops/troubleshooting/tape-daemon.md
           - 'Failed & Stuck Requests': ops/troubleshooting/failed-requests.md
           # Recover deleted-file metadata.
           - 'Recycle Bin & File Recovery': ops/troubleshooting/file-recovery.md

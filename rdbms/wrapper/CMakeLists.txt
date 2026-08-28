@@ -10,7 +10,9 @@ if(CTA_WITH_ORACLE)
   add_compile_definitions(SUPPORT_OCCI)
 endif()
 
+# SQL error formatting is used by the wrapper layer; keep it here to avoid a dependency back to ctardbms.
 set (RDBMS_WRAPPER_LIB_SRC_FILES
+  ../rdbms.cpp
   ColumnNameToIdx.cpp
   ColumnNameToIdxAndType.cpp
   ConnFactoryFactory.cpp

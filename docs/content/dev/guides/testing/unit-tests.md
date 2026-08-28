@@ -30,7 +30,7 @@ A deployed CTA instance, Kubernetes, and virtual tape hardware are not required.
 | `cta-unit-tests-valgrind` | Main and multiprocess suites under Valgrind memory checking. |
 | `cta-unit-tests-helgrind` | Main and multiprocess suites under Helgrind thread-error checking. |
 | `cta-unit-tests-full` | Normal execution plus Valgrind and Helgrind runs. It does not include the separate database or Python suites. |
-| `cta-unit-tests-helgrind-parallel` | Groups the filtered Helgrind targets for the base, scheduler, object-store, data-transfer, and in-memory catalogue tests. |
+| `cta-unit-tests-helgrind-parallel` | Groups the filtered Helgrind targets for the base, scheduler, objectstore, data-transfer, and in-memory catalogue tests. |
 
 For an existing configured build, invoke a run target inside the build environment with:
 

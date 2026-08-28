@@ -12,7 +12,12 @@ TODO: Document libraries, drives, media types, tape registration, and labelling.
 
 ## Change resource state
 
-TODO: Document drive enable/disable and tape-state transitions. See [Tape Lifecycle](../../../concepts/tape/lifecycle.md).
+After requesting desired `Down`, wait for reported `Down` before accessing the drive hardware.
+The daemon may still be finishing a tape session and cleanup while stopping.
+Reported `Down` confirms that the daemon has stopped using the drive; it does not prove that the drive is empty.
+See [Drive state and hardware access](../../../concepts/components/tape-daemon.md#drive-state-and-hardware-access) for the state model.
+
+TODO: Document drive enable/disable commands and tape-state transitions. See [Tape Lifecycle](../../../concepts/tape/lifecycle.md).
 
 ## Verify and reclaim tapes
 
@@ -49,3 +54,8 @@ TODO: Document identity, device-path, library, and configuration changes.
 ### Validate and return to service
 
 TODO: Document checks and criteria for resuming normal operation.
+
+## Tape daemon diagnostics and recovery
+
+See [Tape Daemon Troubleshooting](../../troubleshooting/tape-daemon.md) for drive down reasons and failure recovery.
+Session summaries, counters, and hardware statistics are documented in [Tape Session Diagnostics](../monitoring/tape-session-diagnostics.md).

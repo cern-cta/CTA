@@ -4,13 +4,52 @@
  */
 #include "telemetry/metrics/TapedMetrics.hpp"
 
+#include "common/semconv/Attributes.hpp"
 #include "common/semconv/Meter.hpp"
 #include "common/semconv/Metrics.hpp"
 #include "telemetry/metrics/InstrumentRegistry.hpp"
 #include "telemetry/metrics/MetricsUtils.hpp"
 #include "version.hpp"
 
+#include <array>
 #include <opentelemetry/metrics/provider.h>
+
+namespace {
+void observeDriveStatus(opentelemetry::metrics::ObserverResult result, void*) noexcept {
+  const auto observer = std::get_if<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(&result);
+  if (!observer) {
+    return;
+  }
+  const auto current = cta::telemetry::metrics::getDriveStatus();
+  // All drive statuses are emitted at each interval to prevent missing metrics
+  // See https://opentelemetry.io/docs/specs/semconv/system/k8s-metrics/#metric-k8spodphase
+  for (const auto status : cta::common::dataStructures::AllDriveStatuses) {
+    (*observer)->Observe(status == current ? 1 : 0,
+                         {
+                           {cta::semconv::attr::kCtaTapedDriveState, cta::common::dataStructures::toString(status)}
+    });
+  }
+}
+
+void observeMountType(opentelemetry::metrics::ObserverResult result, void*) noexcept {
+  const auto observer = std::get_if<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(&result);
+  if (!observer) {
+    return;
+  }
+  const auto current = cta::telemetry::metrics::getMountType();
+  using enum cta::common::dataStructures::MountType;
+  // All mount types are emitted at each interval to prevent missing metrics
+  // Note that we ignore the Label and ArchiveAllTypes mount types as these are not actively used
+  constexpr std::array types {ArchiveForUser, ArchiveForRepack, Retrieve, NoMount};
+  for (const auto type : types) {
+    (*observer)->Observe(
+      type == current ? 1 : 0,
+      {
+        {cta::semconv::attr::kCtaTapedMountType, cta::common::dataStructures::toCamelCaseString(type)}
+    });
+  }
+}
+}  // namespace
 
 namespace cta::telemetry::metrics {
 
@@ -22,6 +61,18 @@ std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedBufferLimi
 std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaTapedMountDuration;
 std::shared_ptr<opentelemetry::metrics::ObservableInstrument> ctaTapedMountType;
 std::shared_ptr<opentelemetry::metrics::ObservableInstrument> CtaTapedDriveStatus;
+
+ScopedTapedStateMetrics::ScopedTapedStateMetrics()
+    : m_mountType(ctaTapedMountType),
+      m_driveStatus(CtaTapedDriveStatus) {
+  m_mountType->AddCallback(observeMountType, nullptr);
+  m_driveStatus->AddCallback(observeDriveStatus, nullptr);
+}
+
+ScopedTapedStateMetrics::~ScopedTapedStateMetrics() {
+  m_mountType->RemoveCallback(observeMountType, nullptr);
+  m_driveStatus->RemoveCallback(observeDriveStatus, nullptr);
+}
 
 }  // namespace cta::telemetry::metrics
 

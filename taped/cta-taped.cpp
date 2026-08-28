@@ -8,6 +8,7 @@
 #include "common/semconv/Attributes.hpp"
 #include "runtime/Application.hpp"
 
+/// Run the tape daemon through the common runtime, translating escaping exceptions into exit codes.
 int main(const int argc, char** const argv) {
   using namespace cta;
   return runtime::safeRun([argc, argv]() {

@@ -69,13 +69,19 @@ void TemporaryPostgresEnvironment::dropSchema(const std::string& schemaName) {
   }
 }
 
-TemporaryPostgresEnvironment::TemporaryPostgresEnvironment()
+TemporaryPostgresEnvironment::TemporaryPostgresEnvironment(bool ownsInstance)
     : m_port(15432),
       m_username("cta_test"),
       m_database("cta_scheduler"),
       m_namespace("scheduler"),
-      m_useShm(false)  // Use /tmp instead of /dev/shm (containers often have small shm)
-{
+      m_useShm(false),  // Use /tmp instead of /dev/shm (containers often have small shm)
+      m_ownsInstance(ownsInstance) {
+  // Threadsafe death tests re-execute the binary and its global environments.
+  // Borrow the parent's cluster instead of killing and replacing it.
+  if (!m_ownsInstance) {
+    return;
+  }
+
   // Generate unique temp directory name
   char tmpTemplate[] = "/tmp/cta-pg-test-XXXXXX";
   char shmTemplate[] = "/dev/shm/cta-pg-test-XXXXXX";
@@ -92,11 +98,17 @@ TemporaryPostgresEnvironment::TemporaryPostgresEnvironment()
 }
 
 TemporaryPostgresEnvironment::~TemporaryPostgresEnvironment() {
-  stopPostgres();
-  cleanup();
+  if (m_ownsInstance) {
+    stopPostgres();
+    cleanup();
+  }
 }
 
 void TemporaryPostgresEnvironment::SetUp() {
+  if (!m_ownsInstance) {
+    return;
+  }
+
   std::cout << "\n=== TemporaryPostgresEnvironment Setup ===" << std::endl;
   std::cout << "Creating temporary PostgreSQL instance..." << std::endl;
 
@@ -155,6 +167,13 @@ int TemporaryPostgresEnvironment::runCommand(const std::vector<std::string>& arg
   if (args.empty()) {
     throw std::invalid_argument("No arguments provided to runCommand!");
   }
+  // Prepare arguments before forking; the child may inherit locks held by other threads.
+  std::vector<char*> argv;
+  for (const auto& arg : args) {
+    argv.push_back(const_cast<char*>(arg.c_str()));
+  }
+  argv.push_back(nullptr);
+
   pid_t pid = fork();
   if (pid < 0) {
     throw std::system_error(errno, std::generic_category(), "failed to fork");
@@ -166,21 +185,24 @@ int TemporaryPostgresEnvironment::runCommand(const std::vector<std::string>& arg
       _exit(126);  // 126: command invoked cannot execute
     }
 
-    dup2(fd, STDOUT_FILENO);  // stdout -> /dev/null
-    dup2(fd, STDERR_FILENO);  // stderr -> /dev/null
-    close(fd);
-    // convert args to char* for exec
-    std::vector<char*> argv;
-    for (const auto& arg : args) {
-      argv.push_back(const_cast<char*>(arg.c_str()));
+    if (dup2(fd, STDOUT_FILENO) < 0 || dup2(fd, STDERR_FILENO) < 0) {
+      _exit(126);
     }
-    argv.push_back(nullptr);       // null-terminated
+    // A long-lived server must not inherit GoogleTest's death-test result pipe.
+    // Keeping its write end open prevents EOF, leaving the parent waiting even after the test child exits.
+    if (close_range(STDERR_FILENO + 1, ~0U, 0) != 0) {
+      _exit(126);
+    }
     execvp(argv[0], argv.data());  // will not return unless error occurs
     _exit(EXIT_FAILURE);
   } else {
     // parent
     int status;
-    waitpid(pid, &status, 0);
+    while (waitpid(pid, &status, 0) < 0) {
+      if (errno != EINTR) {
+        throw std::system_error(errno, std::generic_category(), "failed to wait for command");
+      }
+    }
     return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
   }
 }

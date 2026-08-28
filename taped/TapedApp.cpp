@@ -5,27 +5,55 @@
 
 #include "TapedApp.hpp"
 
-#include "TapedUtils.hpp"
-#include "common/exception/Exception.hpp"
+#include "catalogue/CatalogueFactory.hpp"
+#include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/utils/utils.hpp"
-#include "daemon/DriveHandler.hpp"
-#include "daemon/ProcessManager.hpp"
-#include "daemon/SignalHandler.hpp"
+#include "rdbms/Login.hpp"
+#include "telemetry/metrics/TapedMetrics.hpp"
 
+#include <cerrno>
 #include <google/protobuf/stubs/common.h>
+#include <string>
 #include <sys/prctl.h>
+#include <system_error>
 
 namespace cta::tape::daemon {
 
+namespace {
+
+/// Build a Linux process name from the last drive-name component, logging any truncation.
+std::string constructProcessName(const std::string& driveName, log::LogContext& lc) {
+  // Linux allows 15 name bytes; reserve six for the "taped-" prefix.
+  constexpr std::size_t maxShortNameLength = 9;
+  const auto pos = driveName.find_last_of('-');
+  auto shortName = pos == std::string::npos ? driveName : driveName.substr(pos + 1);
+  if (shortName.size() > maxShortNameLength) {
+    lc.log(log::WARNING, "Short drive name '" + shortName + "' exceeds 9 bytes; truncating process name");
+    shortName.resize(maxShortNameLength);
+  }
+  return "taped-" + shortName;
+}
+
+}  // namespace
+
+TapedApp::~TapedApp() {
+  m_tapeDaemon.reset();
+  m_schedulerContext.reset();
+  m_catalogue.reset();
+  google::protobuf::ShutdownProtobufLibrary();
+}
+
 void TapedApp::stop() {
-  // TODO: currently not invoked as the signal handler from the runtime library is disabled for cta-taped
-  // Once the forking mechanism is removed, this should gracefully shutdown taped
+  if (auto* daemon = m_publishedDaemon.load()) {
+    daemon->stop();
+  }
 }
 
 std::map<std::string, std::string> TapedApp::getStaticLogAttributes(const TapedConfig& config) const {
   return {
-    {"drive_name", config.drive.name}
+    {"tapeDrive",      config.drive.name                },
+    {"logicalLibrary", config.drive.logical_library_name}  // The casing is just for backward compatibility
   };
 }
 
@@ -37,54 +65,54 @@ std::map<std::string, std::string> TapedApp::getStaticTelemetryAttributes(const 
 }
 
 int TapedApp::run(const TapedConfig& config, cta::log::Logger& log) {
-  // Create the log context
   log::LogContext lc(log);
-
-  if (config.health_server.enabled) {
-    lc.log(log::WARNING,
-           "The health server is currently unavailable for cta-taped and health_server.enabled will be ignored");
+  const auto processName = constructProcessName(config.drive.name, lc);
+  if (::prctl(PR_SET_NAME, processName.c_str(), 0UL, 0UL, 0UL) == -1) {
+    const int error = errno;
+    log::ScopedParamContainer params(lc);
+    params.add("processName", processName)
+      .add("errorMessage", std::error_code(error, std::generic_category()).message());
+    lc.log(log::WARNING, "Failed to set process name");
   }
 
-  // Linux may mark the process non-dumpable when messing with capabilities in certain cases
-  // To be safe, we explicitly enable it
+  // Capability changes may disable core dumps; restore dumpability for diagnostics.
   // See https://man7.org/linux/man-pages/man2/pr_set_dumpable.2const.html
   cta::utils::setDumpableProcessAttribute(true);
   if (!cta::utils::getDumpableProcessAttribute()) {
-    lc.log(log::WARNING, "Failed to set the dumpable attribute of cta-taped");
+    log(log::WARNING, "Failed to set the dumpable attribute. Core dumps may not be produced");
   }
 
-  // Set process name
-  const auto processName = cta::taped::utils::constructProcessName(config.drive.name, "parent", lc);
-  prctl(PR_SET_NAME, processName.c_str());
+  // Initialises async gauge to monitor mount type and drive status
+  telemetry::metrics::ScopedTapedStateMetrics stateMetrics;
 
-  // Create the process manager
-  ProcessManager processManager(lc);
-  // Signal handler
-  auto signalHandler = std::make_unique<SignalHandler>(processManager);
-  // Allow enough time to return the tape to its library slot and finish shutdown bookkeeping.
-  signalHandler->setTimeout(std::chrono::seconds(config.mounts.unmount_timeout_secs + 5));
-  processManager.addHandler(std::move(signalHandler));
-  // Create the drive handler
-  const common::dataStructures::DriveInfo driveInfo(config.drive.name,
-                                                    utils::getShortHostname(),
-                                                    config.drive.logical_library_name,
-                                                    config.drive.device,
-                                                    config.drive.control_path);
-  auto driveHandler = std::make_unique<DriveHandler>(config, driveInfo, processManager);
-  processManager.addHandler(std::move(driveHandler));
+  lc.log(log::INFO, "Initialising Catalogue");
+  const rdbms::Login catalogueLogin = rdbms::Login::parseFile(config.catalogue.config_file);
+  const uint64_t nbConns = 1;
+  const uint64_t nbArchiveFileListingConns = 1;
+  auto catalogueFactory =
+    catalogue::CatalogueFactoryFactory::create(log, catalogueLogin, nbConns, nbArchiveFileListingConns);
+  m_catalogue = catalogueFactory->create();
+  lc.log(log::INFO, "Catalogue initialised successfully");
 
-  // And run the process manager
-  int ret = processManager.run();
-  google::protobuf::ShutdownProtobufLibrary();
-  return ret;
+  m_schedulerContext = std::make_unique<SchedulerContext>(config, *m_catalogue, log);
+  m_tapeDaemon = std::make_unique<TapeDaemon>(config, log, *m_catalogue, *m_schedulerContext);
+  // Publish only after the daemon and all its dependencies have been constructed.
+  m_publishedDaemon.store(m_tapeDaemon.get());
+  return m_tapeDaemon->run();
 }
 
 bool TapedApp::isReady() const {
-  return true;  // For now taped is always ready. Eventually we should integrate this with the existing watch dog
+  const auto* daemon = m_publishedDaemon.load();
+  return daemon && daemon->isReady();
 }
 
 bool TapedApp::isLive() const {
-  return true;
+  const auto* daemon = m_publishedDaemon.load();
+  if (!daemon) {
+    // We consider ourselves alive if we haven't started yet, because a restart likely won't fix this.
+    return true;
+  }
+  return daemon->isLive();
 }
 
 }  // namespace cta::tape::daemon

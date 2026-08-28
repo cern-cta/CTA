@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "Exception.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace cta::exception {
 
@@ -46,6 +46,18 @@ const char* Exception::what() const noexcept {
 //------------------------------------------------------------------------------
 void Exception::setWhat(std::string_view what) {
   getMessage() << what;
+}
+
+std::string currentExceptionMessage() {
+  try {
+    throw;
+  } catch (const Exception& ex) {
+    return ex.getMessageValue();
+  } catch (const std::exception& ex) {
+    return ex.what();
+  } catch (...) {
+    return "Caught an unknown exception";
+  }
 }
 
 }  // namespace cta::exception

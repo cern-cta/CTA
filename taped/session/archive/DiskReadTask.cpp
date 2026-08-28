@@ -1,0 +1,233 @@
+/*
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+#include "DiskReadTask.hpp"
+
+#include "common/log/LogContext.hpp"
+#include "common/semconv/Attributes.hpp"
+#include "common/utils/Timer.hpp"
+#include "scheduler/ArchiveJob.hpp"
+#include "taped/session/pipeline/TransferTaskTracker.hpp"
+#include "telemetry/metrics/TapedMetrics.hpp"
+
+#include <optional>
+
+namespace cta::tape::daemon {
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+DiskReadTask::DiskReadTask(DataConsumer& destination,
+                           cta::ArchiveJob* archiveJob,
+                           size_t numberOfBlock,
+                           cta::threading::AtomicFlag& errorFlag)
+    : m_nextTask(destination),
+      m_archiveJob(archiveJob),
+      m_numberOfBlock(numberOfBlock),
+      m_errorFlag(errorFlag) {
+  m_archiveJobCachedInfo.remotePath = m_archiveJob->srcURL;
+  m_archiveJobCachedInfo.fileId = m_archiveJob->archiveFile.archiveFileID;
+}
+
+//------------------------------------------------------------------------------
+// DiskReadTask::execute
+//------------------------------------------------------------------------------
+void DiskReadTask::execute(cta::log::LogContext& lc,
+                           cta::disk::DiskFileFactory& fileFactory,
+                           TapeSessionTracker& tracker,
+                           const int threadID) {
+  [[maybe_unused]] TransferTaskTracker transferTaskTracker(cta::semconv::attr::CtaIoDirectionValues::kRead,
+                                                           cta::semconv::attr::CtaIoMediumValues::kDisk);
+  using cta::log::LogContext;
+  using cta::log::Param;
+
+  cta::utils::Timer localTime;
+  cta::utils::Timer totalTime(localTime);
+  size_t blockId = 0;
+  size_t migratingFileSize = m_archiveJob->archiveFile.fileSize;
+  MemBlock* mb = nullptr;
+  // This out-of-try-catch variables allows us to record the stage of the
+  // process we're in, and to count the error if it occurs.
+  // We will not record errors for an empty string. This will allow us to
+  // prevent counting where error happened upstream.
+  std::optional<TapeSessionFailure> currentErrorToCount;
+  try {
+    //we first check here to not even try to open the disk  if a previous task has failed
+    //because the disk could the very reason why the previous one failed,
+    //so dont do the same mistake twice !
+    checkMigrationFailing();
+    currentErrorToCount = TapeSessionFailure::DiskOpenForRead;
+    std::unique_ptr<cta::disk::ReadFile> sourceFile(fileFactory.createReadFile(m_archiveJob->srcURL));
+    cta::log::ScopedParamContainer URLcontext(lc);
+    URLcontext.add("path", m_archiveJob->srcURL).add("actualURL", sourceFile->URL());
+    currentErrorToCount = TapeSessionFailure::DiskFileToReadSizeMismatch;
+    if (migratingFileSize != sourceFile->size()) {
+      throw cta::exception::Exception("Mismatch between size given by the client "
+                                      "and the real one");
+    }
+    currentErrorToCount.reset();
+
+    m_stats.openingTime += localTime.secs(cta::utils::Timer::resetCounter);
+
+    LogContext::ScopedParam sp(lc, Param("fileId", m_archiveJob->archiveFile.archiveFileID));
+    lc.log(cta::log::INFO, "Opened disk file for read");
+
+    tracker.notifyDiskFileOpened(threadID, m_archiveJob->archiveFile.archiveFileID, sourceFile->URL());
+
+    while (migratingFileSize > 0) {
+      checkMigrationFailing();
+
+      mb = m_nextTask.getFreeBlock();
+      m_stats.waitFreeMemoryTime += localTime.secs(cta::utils::Timer::resetCounter);
+
+      //set metadata and read the data
+      mb->m_fileid = m_archiveJob->archiveFile.archiveFileID;
+      mb->m_fileBlock = blockId++;
+
+      currentErrorToCount = TapeSessionFailure::DiskRead;
+      migratingFileSize -= mb->m_payload.read(*sourceFile);
+      m_stats.readWriteTime += localTime.secs(cta::utils::Timer::resetCounter);
+
+      m_stats.dataVolume += mb->m_payload.size();
+
+      //we either read at full capacity (ie size=capacity, i.e. fill up the block),
+      // or if there different, it should be the end of the file=> migratingFileSize
+      // should be 0. If it not, it is an error
+      currentErrorToCount = TapeSessionFailure::DiskUnexpectedSizeWhenReading;
+      if (mb->m_payload.size() != mb->m_payload.totalCapacity() && migratingFileSize > 0) {
+        std::string erroMsg =
+          "Error while reading a file: memory block not filled up, but the file is not fully read yet";
+        // Log the error
+        cta::log::ScopedParamContainer params(lc);
+        params.add("bytesInBlock", mb->m_payload.size())
+          .add("BlockCapacity", mb->m_payload.totalCapacity())
+          .add("BytesNotYetRead", migratingFileSize);
+        lc.log(cta::log::ERR,
+               "Error while reading a file: memory block not filled up, but the file is not fully read yet");
+        // Let the catch path record and hand off this block exactly once.
+        throw cta::exception::Exception(erroMsg);
+      }
+      currentErrorToCount.reset();
+      m_stats.checkingErrorTime += localTime.secs(cta::utils::Timer::resetCounter);
+
+      // We are done with the block, push it to the write task
+      m_nextTask.pushDataBlock(mb);
+      mb = nullptr;
+
+    }  //end of while(migratingFileSize>0)
+    m_stats.filesCount++;
+    m_stats.totalTime = totalTime.secs();
+    // We do not have delayed open like in disk writes, so time spent
+    // transferring equals total time.
+    m_stats.transferTime = m_stats.totalTime;
+    logWithStat(cta::log::INFO, "File successfully read from disk", lc);
+    cta::telemetry::metrics::ctaTapedTransferFileCount->Add(
+      1,
+      {
+        {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
+        {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kDisk   }
+    });
+    cta::telemetry::metrics::ctaTapedTransferFileSize->Add(
+      m_stats.dataVolume,
+      {
+        {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
+        {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kDisk   }
+    });
+  } catch (const cta::tape::daemon::ErrorFlag&) {
+    lc.log(cta::log::DEBUG,
+           "DiskReadTask: a previous file has failed for migration "
+           "Do nothing except circulating blocks");
+    circulateAllBlocks(blockId, mb);
+  } catch (const cta::exception::Exception& e) {
+    cta::telemetry::metrics::ctaTapedTransferFileCount->Add(
+      1,
+      {
+        {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
+        {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kDisk   },
+        {cta::semconv::attr::kErrorType,      cta::semconv::attr::ErrorTypeValues::kException}
+    });
+
+    // Count this file's failure before transferring its receipt to the tape writer.
+    const auto failure = tracker.recordFailure(currentErrorToCount.value_or(TapeSessionFailure::UnclassifiedFile));
+    // We have to pump the blocks anyway, mark them failed and then pass them back
+    // to TapeWriteTask
+    // Otherwise they would be stuck into TapeWriteTask free block fifo
+    // If we got here we had some job to do so there shall be at least one
+    // block either at hand or available.
+    // The tape write task, upon reception of the failed block will mark the
+    // session as failed, hence signalling to the remaining disk read tasks to
+    // cancel as nothing more will be written to tape.
+    if (!mb) {
+      mb = m_nextTask.getFreeBlock();
+      ++blockId;
+    }
+    mb->m_fileid = m_archiveJob->archiveFile.archiveFileID;
+    mb->markAsFailed(e.getMessageValue(), failure);
+    m_nextTask.pushDataBlock(mb);
+    mb = nullptr;
+
+    cta::log::ScopedParamContainer spc(lc);
+    spc.add("blockID", blockId)
+      .add(cta::semconv::log::exceptionMessage, e.getMessageValue())
+      .add("fileSize", m_archiveJob->archiveFile.fileSize);
+    m_archiveJob->archiveFile.checksumBlob.addFirstChecksumToLog(spc);
+    lc.log(cta::log::ERR, "Exception while reading a file");
+
+    //deal here the number of mem block
+    circulateAllBlocks(blockId, mb);
+  }  //end of catch
+  tracker.notifyDiskFileClosed(threadID);
+}
+
+//------------------------------------------------------------------------------
+// DiskReadTask::circulateAllBlocks
+//------------------------------------------------------------------------------
+void DiskReadTask::circulateAllBlocks(size_t fromBlockId, MemBlock* mb) {
+  size_t blockId = fromBlockId;
+  while (blockId < m_numberOfBlock) {
+    if (!mb) {
+      mb = m_nextTask.getFreeBlock();
+      ++blockId;
+    }
+    mb->m_fileid = m_archiveJob->archiveFile.archiveFileID;
+    mb->markAsCancelled();
+    m_nextTask.pushDataBlock(mb);
+    mb = nullptr;
+  }  //end of while
+}
+
+//------------------------------------------------------------------------------
+// logWithStat
+//------------------------------------------------------------------------------
+void DiskReadTask::logWithStat(int level, std::string_view msg, cta::log::LogContext& lc) {
+  cta::log::ScopedParamContainer params(lc);
+  params.add("readWriteTime", m_stats.readWriteTime)
+    .add("checksumingTime", m_stats.checksumingTime)
+    .add("waitFreeMemoryTime", m_stats.waitFreeMemoryTime)
+    .add("waitDataTime", m_stats.waitDataTime)
+    .add("waitReportingTime", m_stats.waitReportingTime)
+    .add("checkingErrorTime", m_stats.checkingErrorTime)
+    .add("openingTime", m_stats.openingTime)
+    .add("transferTime", m_stats.transferTime)
+    .add("totalTime", m_stats.totalTime)
+    .add("dataVolume", m_stats.dataVolume)
+    .add("globalPayloadTransferSpeedMBps",
+         m_stats.totalTime ? 1.0 * m_stats.dataVolume / 1000 / 1000 / m_stats.totalTime : 0)
+    .add("diskPerformanceMBps",
+         m_stats.transferTime ? 1.0 * m_stats.dataVolume / 1000 / 1000 / m_stats.transferTime : 0)
+    .add("openRWCloseToTransferTimeRatio",
+         m_stats.transferTime ?
+           (m_stats.openingTime + m_stats.readWriteTime + m_stats.closingTime) / m_stats.transferTime :
+           0.0)
+    .add("fileId", m_archiveJobCachedInfo.fileId)
+    .add("path", m_archiveJobCachedInfo.remotePath);
+  lc.log(level, msg);
+}
+
+const DiskStats& DiskReadTask::getTaskStats() const {
+  return m_stats;
+}
+
+}  // namespace cta::tape::daemon

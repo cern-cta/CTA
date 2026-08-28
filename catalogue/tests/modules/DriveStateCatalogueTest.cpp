@@ -20,6 +20,7 @@
 #include <gtest/gtest.h>
 #include <list>
 #include <string>
+#include <vector>
 
 namespace unitTests {
 
@@ -106,8 +107,74 @@ void cta_catalogue_DriveStateTest::TearDown() {
   m_catalogue.reset();
 }
 
+// A request stops future work without claiming that the active session has ended.
+TEST_P(cta_catalogue_DriveStateTest, RequestDownPreservesReasonsAndReportedSession) {
+  using namespace cta::common::dataStructures;
+  const std::vector<std::optional<std::string>> reasons {
+    std::nullopt,
+    "",
+    formatDriveDownReason(DriveDownReason::Startup),
+    formatDriveDownReason(DriveDownReason::Shutdown),
+    "Operator maintenance",
+    formatDriveDownReason(DriveDownReason::SessionDriveAccessFailed)};
+  cta::TapeDrivesCatalogueState state(*m_catalogue);
+  cta::log::LogContext lc(m_dummyLog);
+
+  for (const bool up : {false, true}) {
+    for (size_t i = 0; i < reasons.size(); ++i) {
+      SCOPED_TRACE(up);
+      SCOPED_TRACE(reasons[i].value_or("absent"));
+      auto drive = getTapeDriveWithAllElements("request-down");
+      drive.desiredUp = up;
+      drive.reasonUpDown = reasons[i];
+      drive.driveStatus = DriveStatus::Transferring;
+      drive.mountType = MountType::Retrieve;
+      drive.sessionId = 42;
+      m_catalogue->DriveState()->createTapeDrive(drive);
+      const auto before = m_catalogue->DriveState()->getTapeDrive(drive.driveName);
+      ASSERT_TRUE(before);
+
+      state.requestDriveDown(
+        drive.driveName,
+        cta::common::dataStructures::DriveDownRequest::forDaemon(DriveDownReason::DriveCleanupFailed, "detail"),
+        lc);
+
+      const auto stored = m_catalogue->DriveState()->getTapeDrive(drive.driveName);
+      ASSERT_TRUE(stored);
+      EXPECT_FALSE(stored->desiredUp);
+      EXPECT_FALSE(stored->desiredForceDown);
+      if (!up && i >= 4) {
+        EXPECT_EQ(reasons[i], stored->reasonUpDown);
+      } else {
+        ASSERT_TRUE(stored->reasonUpDown);
+        EXPECT_EQ("[cta-taped] Drive cleanup failed: detail", *stored->reasonUpDown);
+      }
+      EXPECT_EQ(before->driveStatus, stored->driveStatus);
+      EXPECT_EQ(before->mountType, stored->mountType);
+      EXPECT_EQ(before->sessionId, stored->sessionId);
+      EXPECT_EQ(before->sessionStartTime, stored->sessionStartTime);
+      EXPECT_EQ(before->transferStartTime, stored->transferStartTime);
+      EXPECT_EQ(before->currentVid, stored->currentVid);
+      EXPECT_EQ(before->currentTapePool, stored->currentTapePool);
+      EXPECT_EQ(before->currentVo, stored->currentVo);
+      EXPECT_EQ(before->userComment, stored->userComment);
+      m_catalogue->DriveState()->deleteTapeDrive(drive.driveName);
+    }
+  }
+}
+
+TEST_P(cta_catalogue_DriveStateTest, RequestDownRejectsMissingDrive) {
+  cta::TapeDrivesCatalogueState state(*m_catalogue);
+  cta::log::LogContext lc(m_dummyLog);
+  EXPECT_THROW(state.requestDriveDown("missing",
+                                      cta::common::dataStructures::DriveDownRequest::forDaemon(
+                                        cta::common::dataStructures::DriveDownReason::Shutdown),
+                                      lc),
+               cta::TapeDrivesCatalogueState::NoSuchDrive);
+}
+
 // Recovery reports must preserve operator reason, including a down request during startup or cleaning.
-TEST_P(cta_catalogue_DriveStateTest, CleaningUpPreservesOperatorReasonAndVid) {
+TEST_P(cta_catalogue_DriveStateTest, CleanupActivityPreservesOperatorReasonAndVid) {
   using namespace cta::common::dataStructures;
   auto drive = getTapeDriveWithAllElements("recovery");
   drive.driveStatus = DriveStatus::Transferring;
@@ -117,11 +184,12 @@ TEST_P(cta_catalogue_DriveStateTest, CleaningUpPreservesOperatorReasonAndVid) {
   cta::log::LogContext lc(m_dummyLog);
   DriveInfo info(drive.driveName, drive.host, drive.logicalLibrary, "", "");
 
-  // Report the drive as CleaningUp
-  state.reportDriveStatus(info, MountType::NoMount, DriveStatus::CleaningUp, time(nullptr), lc);
+  const TapeSessionReport cleanup {.state = TapeSessionState::Unloading, .vid = drive.currentVid.value_or("")};
+  // Publish recovery activity independently of desired state.
+  state.reportDriveState(info, {.state = ReportedDriveState::Preparing, .tapeSession = cleanup}, lc);
   auto stored = m_catalogue->DriveState()->getTapeDrive(drive.driveName);
   ASSERT_TRUE(stored);
-  EXPECT_EQ(DriveStatus::CleaningUp, stored->driveStatus);
+  EXPECT_EQ(DriveStatus::Unloading, stored->driveStatus);
   EXPECT_TRUE(stored->desiredUp);
   EXPECT_EQ(drive.currentVid, stored->currentVid);
   EXPECT_EQ(drive.reasonUpDown, stored->reasonUpDown);
@@ -132,20 +200,20 @@ TEST_P(cta_catalogue_DriveStateTest, CleaningUpPreservesOperatorReasonAndVid) {
   down.reason = "Operator maintenance";
   m_catalogue->DriveState()->setDesiredTapeDriveState(drive.driveName, down);
   // Change the state again
-  state.reportDriveStatus(info, MountType::NoMount, DriveStatus::Unloading, time(nullptr), lc);
-  state.reportDriveStatus(info, MountType::NoMount, DriveStatus::CleaningUp, time(nullptr), lc);
+  state.reportDriveState(info, {.state = ReportedDriveState::Preparing, .tapeSession = cleanup}, lc);
+  state.reportDriveState(info, {.state = ReportedDriveState::Preparing, .tapeSession = cleanup}, lc);
   // Get the current state and ensure the initial operator request is still there
   stored = m_catalogue->DriveState()->getTapeDrive(drive.driveName);
   ASSERT_TRUE(stored);
   EXPECT_FALSE(stored->desiredUp);
   EXPECT_EQ(down.reason, stored->reasonUpDown);
 
-  // Even when the drive reports up, the desired state and reason should still be there
-  state.reportDriveStatus(info, MountType::NoMount, DriveStatus::Up, time(nullptr), lc);
+  // Reported activity stays independent of the pending operator request.
+  state.reportDriveState(info, {.state = ReportedDriveState::Up}, lc);
   stored = m_catalogue->DriveState()->getTapeDrive(drive.driveName);
   ASSERT_TRUE(stored);
   EXPECT_FALSE(stored->desiredUp);
-  EXPECT_EQ(DriveStatus::Down, stored->driveStatus);
+  EXPECT_EQ(DriveStatus::Up, stored->driveStatus);
   EXPECT_EQ(down.reason, stored->reasonUpDown);
 
   // Persistent catalogues retain drive rows between tests.
@@ -282,16 +350,18 @@ TEST_P(cta_catalogue_DriveStateTest, multipleTapeDrives) {
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive2.driveName);
 }
 
-TEST_P(cta_catalogue_DriveStateTest, setDesiredStateEmpty) {
+TEST_P(cta_catalogue_DriveStateTest, DaemonDownPreservesExistingReason) {
   const std::string tapeDriveName = "VDSTK11";
   auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
   tapeDrive.reasonUpDown = "Previous reason";
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
   {
-    cta::common::dataStructures::DesiredDriveState desiredState;
     cta::log::LogContext dummyLc(m_dummyLog);
     auto tapeDrivesState = std::make_unique<cta::TapeDrivesCatalogueState>(*m_catalogue);
-    tapeDrivesState->setDesiredDriveState(tapeDriveName, desiredState, dummyLc);
+    tapeDrivesState->requestDriveDown(
+      tapeDriveName,
+      cta::common::dataStructures::DriveDownRequest::forDaemon(cta::common::dataStructures::DriveDownReason::Shutdown),
+      dummyLc);
   }
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_TRUE(static_cast<bool>(storedTapeDrive.value().reasonUpDown));
@@ -299,18 +369,20 @@ TEST_P(cta_catalogue_DriveStateTest, setDesiredStateEmpty) {
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
 }
 
-TEST_P(cta_catalogue_DriveStateTest, setDesiredStateWithEmptyReason) {
+TEST_P(cta_catalogue_DriveStateTest, OperatorUpClearsReasonAndForceDown) {
   const std::string tapeDriveName = "VDSTK11";
   auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.reasonUpDown = "Previous operator reason";
+  tapeDrive.desiredForceDown = true;
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
   {
-    cta::common::dataStructures::DesiredDriveState desiredState;
-    desiredState.reason = "";
     cta::log::LogContext dummyLc(m_dummyLog);
     auto tapeDrivesState = std::make_unique<cta::TapeDrivesCatalogueState>(*m_catalogue);
-    tapeDrivesState->setDesiredDriveState(tapeDriveName, desiredState, dummyLc);
+    tapeDrivesState->requestDriveUp(tapeDriveName, "", dummyLc);
   }
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
+  ASSERT_TRUE(storedTapeDrive->desiredUp);
+  ASSERT_FALSE(storedTapeDrive->desiredForceDown);
   // SqlLite (InMemory) returns an empty string and Oracle returns a std::nullopt
   if (storedTapeDrive.value().reasonUpDown) {
     ASSERT_TRUE(storedTapeDrive.value().reasonUpDown.value().empty());
@@ -320,9 +392,11 @@ TEST_P(cta_catalogue_DriveStateTest, setDesiredStateWithEmptyReason) {
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
 }
 
-TEST_P(cta_catalogue_DriveStateTest, setDesiredState) {
+TEST_P(cta_catalogue_DriveStateTest, OperatorDownReplacesReasonAndSetsForce) {
   const std::string tapeDriveName = "VDSTK11";
   auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
+  tapeDrive.reasonUpDown = "Previous operator reason";
+  tapeDrive.desiredForceDown = true;
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
   cta::common::dataStructures::DesiredDriveState desiredState;
   desiredState.up = false;
@@ -331,7 +405,9 @@ TEST_P(cta_catalogue_DriveStateTest, setDesiredState) {
   {
     cta::log::LogContext dummyLc(m_dummyLog);
     auto tapeDrivesState = std::make_unique<cta::TapeDrivesCatalogueState>(*m_catalogue);
-    tapeDrivesState->setDesiredDriveState(tapeDriveName, desiredState, dummyLc);
+    tapeDrivesState->requestDriveDown(tapeDriveName,
+                                      {.reason = *desiredState.reason, .force = desiredState.forceDown},
+                                      dummyLc);
   }
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_EQ(storedTapeDrive.value().desiredUp, desiredState.up);
@@ -340,7 +416,7 @@ TEST_P(cta_catalogue_DriveStateTest, setDesiredState) {
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
 }
 
-TEST_P(cta_catalogue_DriveStateTest, setDesiredStateComment) {
+TEST_P(cta_catalogue_DriveStateTest, CommentPreservesDesiredStateAndReason) {
   const std::string tapeDriveName = "VDSTK11";
   auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
   // It should keep this Desired Status
@@ -348,17 +424,11 @@ TEST_P(cta_catalogue_DriveStateTest, setDesiredStateComment) {
   tapeDrive.desiredForceDown = false;
   tapeDrive.reasonUpDown = "reason";
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
-  cta::common::dataStructures::DesiredDriveState desiredState;
-  // It should update only the comment
   const std::string comment = "New Comment";
-  desiredState.up = false;
-  desiredState.forceDown = true;
-  desiredState.reason = "reason2";
-  desiredState.comment = comment;
   {
     cta::log::LogContext dummyLc(m_dummyLog);
     auto tapeDrivesState = std::make_unique<cta::TapeDrivesCatalogueState>(*m_catalogue);
-    tapeDrivesState->setDesiredDriveState(tapeDriveName, desiredState, dummyLc);
+    tapeDrivesState->setDriveComment(tapeDriveName, comment, dummyLc);
   }
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_EQ(storedTapeDrive.value().desiredUp, tapeDrive.desiredUp);
@@ -368,7 +438,7 @@ TEST_P(cta_catalogue_DriveStateTest, setDesiredStateComment) {
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
 }
 
-TEST_P(cta_catalogue_DriveStateTest, setDesiredStateEmptyComment) {
+TEST_P(cta_catalogue_DriveStateTest, CommentCanBeClearedWithoutChangingDesiredState) {
   const std::string tapeDriveName = "VDSTK11";
   auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
   // It should keep this Desired Status
@@ -376,17 +446,11 @@ TEST_P(cta_catalogue_DriveStateTest, setDesiredStateEmptyComment) {
   tapeDrive.desiredForceDown = false;
   tapeDrive.reasonUpDown = "reason";
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
-  cta::common::dataStructures::DesiredDriveState desiredState;
-  // It should update only the comment
   const std::string comment = "";
-  desiredState.up = false;
-  desiredState.forceDown = true;
-  desiredState.reason = "reason2";
-  desiredState.comment = comment;
   {
     cta::log::LogContext dummyLc(m_dummyLog);
     auto tapeDrivesState = std::make_unique<cta::TapeDrivesCatalogueState>(*m_catalogue);
-    tapeDrivesState->setDesiredDriveState(tapeDriveName, desiredState, dummyLc);
+    tapeDrivesState->setDriveComment(tapeDriveName, comment, dummyLc);
   }
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_EQ(storedTapeDrive.value().desiredUp, tapeDrive.desiredUp);
@@ -459,17 +523,10 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusSameAsPrevious) {
   tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Up;
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
   // We update keeping the same status, so it has to update only the lastModificationLog
-  cta::ReportDriveStatusInputs inputs;
-  inputs.status = tapeDrive.driveStatus;
-  // We use a different MountType to check it doesn't update this value in the database
-  inputs.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
+  const auto expectedStatus = tapeDrive.driveStatus;
+  cta::common::dataStructures::DriveReport inputs {.state = cta::common::dataStructures::ReportedDriveState::Up};
+
   inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  inputs.mountSessionId = 0;
-  inputs.byteTransferred = 123456;
-  inputs.filesTransferred = 987654;
-  inputs.vid = "vid";
-  inputs.tapepool = "tapepool";
-  inputs.vo = "vo";
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = tapeDrive.driveName;
   driveInfo.host = tapeDrive.host;
@@ -477,13 +534,13 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusSameAsPrevious) {
   {
     cta::log::LogContext dummyLc(m_dummyLog);
     auto tapeDrivesState = std::make_unique<cta::TapeDrivesCatalogueState>(*m_catalogue);
-    tapeDrivesState->updateDriveStatus(driveInfo, inputs, dummyLc);
+    tapeDrivesState->reportDriveState(driveInfo, inputs, dummyLc);
   }
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_TRUE(static_cast<bool>(storedTapeDrive));
   ASSERT_EQ(driveInfo.driveName, storedTapeDrive.value().driveName);
-  ASSERT_EQ(inputs.status, storedTapeDrive.value().driveStatus);
-  ASSERT_NE(inputs.mountType, storedTapeDrive.value().mountType);  // Not update this value
+  ASSERT_EQ(expectedStatus, storedTapeDrive.value().driveStatus);
+  ASSERT_EQ(tapeDrive.mountType, storedTapeDrive.value().mountType);  // Heartbeats retain the existing row.
   ASSERT_EQ(driveInfo.host, storedTapeDrive.value().host);
   ASSERT_EQ(driveInfo.logicalLibrary, storedTapeDrive.value().logicalLibrary);
   const auto log = cta::common::dataStructures::EntryLog("NO_USER", driveInfo.host, inputs.reportTime);
@@ -510,9 +567,7 @@ TEST_P(cta_catalogue_DriveStateTest, logDriveStatusOnlyOnTransition) {
   driveInfo.host = tapeDrive.host;
   driveInfo.logicalLibrary = tapeDrive.logicalLibrary;
 
-  cta::ReportDriveStatusInputs inputs {};
-  inputs.status = cta::common::dataStructures::DriveStatus::Down;
-  inputs.mountType = cta::common::dataStructures::MountType::NoMount;
+  cta::common::dataStructures::DriveReport inputs {.state = cta::common::dataStructures::ReportedDriveState::Down};
   inputs.reportTime = 1000;
 
   cta::log::StringLogger logger("host", "test", cta::log::INFO);
@@ -520,9 +575,9 @@ TEST_P(cta_catalogue_DriveStateTest, logDriveStatusOnlyOnTransition) {
   cta::TapeDrivesCatalogueState state(*m_catalogue);
 
   // Update the drive state a few times
-  state.updateDriveStatus(driveInfo, inputs, lc);
+  state.reportDriveState(driveInfo, inputs, lc);
   inputs.reportTime++;
-  state.updateDriveStatus(driveInfo, inputs, lc);
+  state.reportDriveState(driveInfo, inputs, lc);
   // Not changing the state should not emit anything
   EXPECT_TRUE(logger.getLog().empty());
 
@@ -531,13 +586,13 @@ TEST_P(cta_catalogue_DriveStateTest, logDriveStatusOnlyOnTransition) {
   ASSERT_TRUE(storedDrive->lastModificationLog);
   EXPECT_EQ(inputs.reportTime, storedDrive->lastModificationLog->time);
 
-  inputs.status = cta::common::dataStructures::DriveStatus::Up;
-  state.updateDriveStatus(driveInfo, inputs, lc);
+  inputs.state = cta::common::dataStructures::ReportedDriveState::Up;
+  state.reportDriveState(driveInfo, inputs, lc);
   const auto upDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_TRUE(upDrive);
   ASSERT_EQ(cta::common::dataStructures::DriveStatus::Up, upDrive->driveStatus);
   inputs.reportTime++;
-  state.updateDriveStatus(driveInfo, inputs, lc);
+  state.reportDriveState(driveInfo, inputs, lc);
   const auto log = logger.getLog();
   const auto message = log.find("Drive status updated.");
   ASSERT_NE(message, std::string::npos);
@@ -558,17 +613,21 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusSameTransferingAsPrevi
   ASSERT_EQ(tapeDrive.sessionStartTime, test.value().sessionStartTime.value());
   // We update keeping the same status, so it has to update only the lastModificationLog
   const uint64_t elapsedTime = 1000;
-  cta::ReportDriveStatusInputs inputs;
-  inputs.status = tapeDrive.driveStatus;
+  const auto expectedStatus = tapeDrive.driveStatus;
+  cta::common::dataStructures::DriveReport inputs {
+    .state = cta::common::dataStructures::ReportedDriveState::Up,
+    .tapeSession = cta::common::dataStructures::TapeSessionReport {
+      .state = cta::common::dataStructures::TapeSessionState::Transferring}};
+
   // We use a different MountType to check it doesn't update this value in the database
-  inputs.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
+  inputs.tapeSession->mountType = cta::common::dataStructures::MountType::ArchiveForUser;
   inputs.reportTime = tapeDrive.sessionStartTime.value() + elapsedTime;
-  inputs.mountSessionId = 0;
-  inputs.byteTransferred = 123456;
-  inputs.filesTransferred = 987654;
-  inputs.vid = "vid";
-  inputs.tapepool = "tapepool";
-  inputs.vo = "vo";
+  inputs.tapeSession->mountSessionId = 0;
+  inputs.tapeSession->bytesTransferred = 123456;
+  inputs.tapeSession->filesTransferred = 987654;
+  inputs.tapeSession->vid = "vid";
+  inputs.tapeSession->tapePool = "tapepool";
+  inputs.tapeSession->vo = "vo";
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = tapeDrive.driveName;
   driveInfo.host = tapeDrive.host;
@@ -576,19 +635,19 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusSameTransferingAsPrevi
   {
     cta::log::LogContext dummyLc(m_dummyLog);
     auto tapeDrivesState = std::make_unique<cta::TapeDrivesCatalogueState>(*m_catalogue);
-    tapeDrivesState->updateDriveStatus(driveInfo, inputs, dummyLc);
+    tapeDrivesState->reportDriveState(driveInfo, inputs, dummyLc);
   }
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_TRUE(static_cast<bool>(storedTapeDrive));
   ASSERT_EQ(driveInfo.driveName, storedTapeDrive.value().driveName);
-  ASSERT_EQ(inputs.status, storedTapeDrive.value().driveStatus);
-  ASSERT_NE(inputs.mountType, storedTapeDrive.value().mountType);  // Not update this value
+  ASSERT_EQ(expectedStatus, storedTapeDrive.value().driveStatus);
+  ASSERT_NE(inputs.tapeSession->mountType, storedTapeDrive.value().mountType);  // Not update this value
   ASSERT_EQ(driveInfo.host, storedTapeDrive.value().host);
   ASSERT_EQ(driveInfo.logicalLibrary, storedTapeDrive.value().logicalLibrary);
   const auto log = cta::common::dataStructures::EntryLog("NO_USER", driveInfo.host, inputs.reportTime);
   ASSERT_EQ(log, storedTapeDrive.value().lastModificationLog.value());
-  ASSERT_EQ(inputs.byteTransferred, storedTapeDrive.value().bytesTransferedInSession.value());
-  ASSERT_EQ(inputs.filesTransferred, storedTapeDrive.value().filesTransferedInSession.value());
+  ASSERT_EQ(inputs.tapeSession->bytesTransferred, storedTapeDrive.value().bytesTransferedInSession.value());
+  ASSERT_EQ(inputs.tapeSession->filesTransferred, storedTapeDrive.value().filesTransferedInSession.value());
   // It will keep names and bytes, because it isn't in state UP
   ASSERT_FALSE(storedTapeDrive.value().reservedBytes);
   ASSERT_FALSE(storedTapeDrive.value().reservationSessionId);
@@ -603,20 +662,12 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusDown) {
   const std::string tapeDriveName = "VDSTK11";
   auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
   tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Up;
+  tapeDrive.reasonUpDown = "testing";
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
 
-  cta::ReportDriveStatusInputs inputs;
-  inputs.status = cta::common::dataStructures::DriveStatus::Down;
-  // We use a different MountType to check it doesn't update this value in the database
-  inputs.mountType = cta::common::dataStructures::MountType::NoMount;
+  cta::common::dataStructures::DriveReport inputs {.state = cta::common::dataStructures::ReportedDriveState::Down};
+
   inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  inputs.mountSessionId = 0;
-  inputs.byteTransferred = 0;
-  inputs.filesTransferred = 0;
-  inputs.vid = "vid";
-  inputs.tapepool = "tapepool";
-  inputs.vo = "vo";
-  inputs.reason = "testing";
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = tapeDrive.driveName;
   driveInfo.host = tapeDrive.host;
@@ -624,7 +675,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusDown) {
   {
     cta::log::LogContext dummyLc(m_dummyLog);
     auto tapeDrivesState = std::make_unique<cta::TapeDrivesCatalogueState>(*m_catalogue);
-    tapeDrivesState->updateDriveStatus(driveInfo, inputs, dummyLc);
+    tapeDrivesState->reportDriveState(driveInfo, inputs, dummyLc);
   }
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_TRUE(static_cast<bool>(storedTapeDrive));
@@ -652,7 +703,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusDown) {
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().currentTapePool));
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().currentVo));
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().currentActivity));
-  ASSERT_EQ(storedTapeDrive.value().reasonUpDown.value(), inputs.reason);
+  ASSERT_EQ(storedTapeDrive.value().reasonUpDown.value(), tapeDrive.reasonUpDown);
 
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
 }
@@ -664,17 +715,9 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusUp) {
   tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Down;  // To force a change of state
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
 
-  cta::ReportDriveStatusInputs inputs;
-  inputs.status = cta::common::dataStructures::DriveStatus::Up;
-  // We use a different MountType to check it doesn't update this value in the database
-  inputs.mountType = cta::common::dataStructures::MountType::NoMount;
+  cta::common::dataStructures::DriveReport inputs {.state = cta::common::dataStructures::ReportedDriveState::Up};
+
   inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  inputs.mountSessionId = 0;
-  inputs.byteTransferred = 0;
-  inputs.filesTransferred = 0;
-  inputs.vid = "vid";
-  inputs.tapepool = "tapepool";
-  inputs.vo = "vo";
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = tapeDrive.driveName;
   driveInfo.host = tapeDrive.host;
@@ -682,7 +725,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusUp) {
   {
     cta::log::LogContext dummyLc(m_dummyLog);
     auto tapeDrivesState = std::make_unique<cta::TapeDrivesCatalogueState>(*m_catalogue);
-    tapeDrivesState->updateDriveStatus(driveInfo, inputs, dummyLc);
+    tapeDrivesState->reportDriveState(driveInfo, inputs, dummyLc);
   }
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_TRUE(static_cast<bool>(storedTapeDrive));
@@ -718,20 +761,12 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusUpButDesiredIsDown) {
   auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
   tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::DrainingToDisk;  // To force a change of state
   tapeDrive.desiredUp = false;
+  tapeDrive.reasonUpDown = "testing";
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
 
-  cta::ReportDriveStatusInputs inputs;
-  inputs.status = cta::common::dataStructures::DriveStatus::Up;
-  // We use a different MountType to check it doesn't update this value in the database
-  inputs.mountType = cta::common::dataStructures::MountType::NoMount;
+  cta::common::dataStructures::DriveReport inputs {.state = cta::common::dataStructures::ReportedDriveState::Up};
+
   inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  inputs.mountSessionId = 0;
-  inputs.byteTransferred = 0;
-  inputs.filesTransferred = 0;
-  inputs.vid = "vid";
-  inputs.tapepool = "tapepool";
-  inputs.vo = "vo";
-  inputs.reason = "testing";
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = tapeDrive.driveName;
   driveInfo.host = tapeDrive.host;
@@ -739,12 +774,14 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusUpButDesiredIsDown) {
   {
     cta::log::LogContext dummyLc(m_dummyLog);
     auto tapeDrivesState = std::make_unique<cta::TapeDrivesCatalogueState>(*m_catalogue);
-    tapeDrivesState->updateDriveStatus(driveInfo, inputs, dummyLc);
+    tapeDrivesState->reportDriveState(driveInfo, inputs, dummyLc);
   }
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_TRUE(static_cast<bool>(storedTapeDrive));
-  ASSERT_EQ(storedTapeDrive.value().driveStatus, cta::common::dataStructures::DriveStatus::Down);
-  ASSERT_EQ(storedTapeDrive.value().reasonUpDown.value(), inputs.reason);
+  // An Up report must not acknowledge the pending Down request on behalf of the drive session.
+  ASSERT_EQ(storedTapeDrive.value().driveStatus, cta::common::dataStructures::DriveStatus::Up);
+  ASSERT_FALSE(storedTapeDrive.value().desiredUp);
+  ASSERT_EQ(storedTapeDrive.value().reasonUpDown.value(), tapeDrive.reasonUpDown);
 
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
 }
@@ -755,20 +792,12 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusUpCleanSpaceReservatio
   tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Down;  // To force a change of state
   tapeDrive.diskSystemName = "DISK_SYSTEM_NAME";
   tapeDrive.reservedBytes = 123456789;
+  tapeDrive.reasonUpDown = "testing";
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
 
-  cta::ReportDriveStatusInputs inputs;
-  inputs.status = cta::common::dataStructures::DriveStatus::Up;
-  // We use a different MountType to check it doesn't update this value in the database
-  inputs.mountType = cta::common::dataStructures::MountType::NoMount;
+  cta::common::dataStructures::DriveReport inputs {.state = cta::common::dataStructures::ReportedDriveState::Up};
+
   inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  inputs.mountSessionId = 0;
-  inputs.byteTransferred = 0;
-  inputs.filesTransferred = 0;
-  inputs.vid = "vid";
-  inputs.tapepool = "tapepool";
-  inputs.vo = "vo";
-  inputs.reason = "testing";
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = tapeDrive.driveName;
   driveInfo.host = tapeDrive.host;
@@ -776,7 +805,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusUpCleanSpaceReservatio
   {
     cta::log::LogContext dummyLc(m_dummyLog);
     auto tapeDrivesState = std::make_unique<cta::TapeDrivesCatalogueState>(*m_catalogue);
-    tapeDrivesState->updateDriveStatus(driveInfo, inputs, dummyLc);
+    tapeDrivesState->reportDriveState(driveInfo, inputs, dummyLc);
   }
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_FALSE(storedTapeDrive.value().diskSystemName);
@@ -793,20 +822,12 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusUpDontCleanSpaceReserv
   tapeDrive.diskSystemName = std::nullopt;
   tapeDrive.reservedBytes = std::nullopt;
   tapeDrive.reservationSessionId = std::nullopt;
+  tapeDrive.reasonUpDown = "testing";
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
 
-  cta::ReportDriveStatusInputs inputs;
-  inputs.status = cta::common::dataStructures::DriveStatus::Up;
-  // We use a different MountType to check it doesn't update this value in the database
-  inputs.mountType = cta::common::dataStructures::MountType::NoMount;
+  cta::common::dataStructures::DriveReport inputs {.state = cta::common::dataStructures::ReportedDriveState::Up};
+
   inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  inputs.mountSessionId = 0;
-  inputs.byteTransferred = 0;
-  inputs.filesTransferred = 0;
-  inputs.vid = "vid";
-  inputs.tapepool = "tapepool";
-  inputs.vo = "vo";
-  inputs.reason = "testing";
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = tapeDrive.driveName;
   driveInfo.host = tapeDrive.host;
@@ -814,66 +835,12 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusUpDontCleanSpaceReserv
   {
     cta::log::LogContext dummyLc(m_dummyLog);
     auto tapeDrivesState = std::make_unique<cta::TapeDrivesCatalogueState>(*m_catalogue);
-    tapeDrivesState->updateDriveStatus(driveInfo, inputs, dummyLc);
+    tapeDrivesState->reportDriveState(driveInfo, inputs, dummyLc);
   }
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_FALSE(storedTapeDrive.value().diskSystemName);
   ASSERT_FALSE(storedTapeDrive.value().reservedBytes);
   ASSERT_FALSE(storedTapeDrive.value().reservationSessionId);
-
-  m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
-}
-
-TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusProbing) {
-  const std::string tapeDriveName = "VDSTK11";
-  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
-  tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Down;  // To force a change of state
-  m_catalogue->DriveState()->createTapeDrive(tapeDrive);
-
-  cta::ReportDriveStatusInputs inputs;
-  inputs.status = cta::common::dataStructures::DriveStatus::Probing;
-  // We use a different MountType to check it doesn't update this value in the database
-  inputs.mountType = cta::common::dataStructures::MountType::NoMount;
-  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  inputs.mountSessionId = 0;
-  inputs.byteTransferred = 0;
-  inputs.filesTransferred = 0;
-  inputs.vid = "vid";
-  inputs.tapepool = "tapepool";
-  inputs.vo = "vo";
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = tapeDrive.driveName;
-  driveInfo.host = tapeDrive.host;
-  driveInfo.logicalLibrary = tapeDrive.logicalLibrary;
-  {
-    cta::log::LogContext dummyLc(m_dummyLog);
-    auto tapeDrivesState = std::make_unique<cta::TapeDrivesCatalogueState>(*m_catalogue);
-    tapeDrivesState->updateDriveStatus(driveInfo, inputs, dummyLc);
-  }
-  const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
-  ASSERT_TRUE(static_cast<bool>(storedTapeDrive));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().sessionId));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().bytesTransferedInSession));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().filesTransferedInSession));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().sessionStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().sessionElapsedTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().mountStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().transferStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().unloadStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().unmountStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().drainingStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().downOrUpStartTime));
-  ASSERT_EQ(storedTapeDrive.value().probeStartTime.value(), inputs.reportTime);
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().cleanupStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().shutdownTime));
-  const auto log = cta::common::dataStructures::EntryLog("NO_USER", driveInfo.host, inputs.reportTime);
-  ASSERT_EQ(storedTapeDrive.value().lastModificationLog.value(), log);
-  ASSERT_EQ(storedTapeDrive.value().mountType, inputs.mountType);
-  ASSERT_EQ(storedTapeDrive.value().driveStatus, inputs.status);
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().currentVid));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().currentTapePool));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().currentVo));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().currentActivity));
 
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
 }
@@ -884,18 +851,22 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusStarting) {
   tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Down;  // To force a change of state
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
 
-  cta::ReportDriveStatusInputs inputs;
-  inputs.status = cta::common::dataStructures::DriveStatus::Starting;
+  const auto expectedStatus = cta::common::dataStructures::DriveStatus::Starting;
+  cta::common::dataStructures::DriveReport inputs {
+    .state = cta::common::dataStructures::ReportedDriveState::Up,
+    .tapeSession = cta::common::dataStructures::TapeSessionReport {
+      .state = cta::common::dataStructures::TapeSessionState::Preparing}};
+
   // We use a different MountType to check it doesn't update this value in the database
-  inputs.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
+  inputs.tapeSession->mountType = cta::common::dataStructures::MountType::ArchiveForUser;
   inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  inputs.mountSessionId = 123456;
-  inputs.byteTransferred = 0;
-  inputs.filesTransferred = 0;
-  inputs.vid = "vid";
-  inputs.tapepool = "tapepool";
-  inputs.vo = "vo";
-  inputs.activity = "activity";
+  inputs.tapeSession->mountSessionId = 123456;
+  inputs.tapeSession->bytesTransferred = 0;
+  inputs.tapeSession->filesTransferred = 0;
+  inputs.tapeSession->vid = "vid";
+  inputs.tapeSession->tapePool = "tapepool";
+  inputs.tapeSession->vo = "vo";
+  inputs.tapeSession->activity = "activity";
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = tapeDrive.driveName;
   driveInfo.host = tapeDrive.host;
@@ -903,11 +874,11 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusStarting) {
   {
     cta::log::LogContext dummyLc(m_dummyLog);
     auto tapeDrivesState = std::make_unique<cta::TapeDrivesCatalogueState>(*m_catalogue);
-    tapeDrivesState->updateDriveStatus(driveInfo, inputs, dummyLc);
+    tapeDrivesState->reportDriveState(driveInfo, inputs, dummyLc);
   }
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_TRUE(static_cast<bool>(storedTapeDrive));
-  ASSERT_EQ(storedTapeDrive.value().sessionId.value(), inputs.mountSessionId);
+  ASSERT_EQ(storedTapeDrive.value().sessionId.value(), inputs.tapeSession->mountSessionId);
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().bytesTransferedInSession));
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().filesTransferedInSession));
   ASSERT_EQ(storedTapeDrive.value().sessionStartTime.value(), inputs.reportTime);
@@ -923,12 +894,12 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusStarting) {
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().shutdownTime));
   const auto log = cta::common::dataStructures::EntryLog("NO_USER", driveInfo.host, inputs.reportTime);
   ASSERT_EQ(storedTapeDrive.value().lastModificationLog.value(), log);
-  ASSERT_EQ(storedTapeDrive.value().mountType, inputs.mountType);
-  ASSERT_EQ(storedTapeDrive.value().driveStatus, inputs.status);
-  ASSERT_EQ(storedTapeDrive.value().currentVid.value(), inputs.vid);
-  ASSERT_EQ(storedTapeDrive.value().currentTapePool.value(), inputs.tapepool);
-  ASSERT_EQ(storedTapeDrive.value().currentVo.value(), inputs.vo);
-  ASSERT_EQ(storedTapeDrive.value().currentActivity.value(), inputs.activity);
+  ASSERT_EQ(storedTapeDrive.value().mountType, inputs.tapeSession->mountType);
+  ASSERT_EQ(storedTapeDrive.value().driveStatus, expectedStatus);
+  ASSERT_EQ(storedTapeDrive.value().currentVid.value(), inputs.tapeSession->vid);
+  ASSERT_EQ(storedTapeDrive.value().currentTapePool.value(), inputs.tapeSession->tapePool);
+  ASSERT_EQ(storedTapeDrive.value().currentVo.value(), inputs.tapeSession->vo);
+  ASSERT_EQ(storedTapeDrive.value().currentActivity.value(), inputs.tapeSession->activity);
 
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
 }
@@ -939,18 +910,21 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusMounting) {
   tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Down;  // To force a change of state
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
 
-  cta::ReportDriveStatusInputs inputs;
-  inputs.status = cta::common::dataStructures::DriveStatus::Mounting;
+  const auto expectedStatus = cta::common::dataStructures::DriveStatus::Mounting;
+  cta::common::dataStructures::DriveReport inputs {.state = cta::common::dataStructures::ReportedDriveState::Up,
+                                                   .tapeSession = cta::common::dataStructures::TapeSessionReport {
+                                                     .state = cta::common::dataStructures::TapeSessionState::Mounting}};
+
   // We use a different MountType to check it doesn't update this value in the database
-  inputs.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
+  inputs.tapeSession->mountType = cta::common::dataStructures::MountType::ArchiveForUser;
   inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  inputs.mountSessionId = 123456;
-  inputs.byteTransferred = 0;
-  inputs.filesTransferred = 0;
-  inputs.vid = "vid";
-  inputs.tapepool = "tapepool";
-  inputs.vo = "vo";
-  inputs.activity = "activity";
+  inputs.tapeSession->mountSessionId = 123456;
+  inputs.tapeSession->bytesTransferred = 0;
+  inputs.tapeSession->filesTransferred = 0;
+  inputs.tapeSession->vid = "vid";
+  inputs.tapeSession->tapePool = "tapepool";
+  inputs.tapeSession->vo = "vo";
+  inputs.tapeSession->activity = "activity";
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = tapeDrive.driveName;
   driveInfo.host = tapeDrive.host;
@@ -958,12 +932,12 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusMounting) {
   {
     cta::log::LogContext dummyLc(m_dummyLog);
     auto tapeDrivesState = std::make_unique<cta::TapeDrivesCatalogueState>(*m_catalogue);
-    tapeDrivesState->updateDriveStatus(driveInfo, inputs, dummyLc);
+    tapeDrivesState->reportDriveState(driveInfo, inputs, dummyLc);
   }
 
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_TRUE(static_cast<bool>(storedTapeDrive));
-  ASSERT_EQ(storedTapeDrive.value().sessionId.value(), inputs.mountSessionId);
+  ASSERT_EQ(storedTapeDrive.value().sessionId.value(), inputs.tapeSession->mountSessionId);
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().bytesTransferedInSession));
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().filesTransferedInSession));
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().sessionStartTime));
@@ -979,12 +953,12 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusMounting) {
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().shutdownTime));
   const auto log = cta::common::dataStructures::EntryLog("NO_USER", driveInfo.host, inputs.reportTime);
   ASSERT_EQ(storedTapeDrive.value().lastModificationLog.value(), log);
-  ASSERT_EQ(storedTapeDrive.value().mountType, inputs.mountType);
-  ASSERT_EQ(storedTapeDrive.value().driveStatus, inputs.status);
-  ASSERT_EQ(storedTapeDrive.value().currentVid.value(), inputs.vid);
-  ASSERT_EQ(storedTapeDrive.value().currentTapePool.value(), inputs.tapepool);
-  ASSERT_EQ(storedTapeDrive.value().currentVo.value(), inputs.vo);
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().currentActivity));
+  ASSERT_EQ(storedTapeDrive.value().mountType, inputs.tapeSession->mountType);
+  ASSERT_EQ(storedTapeDrive.value().driveStatus, expectedStatus);
+  ASSERT_EQ(storedTapeDrive.value().currentVid.value(), inputs.tapeSession->vid);
+  ASSERT_EQ(storedTapeDrive.value().currentTapePool.value(), inputs.tapeSession->tapePool);
+  ASSERT_EQ(storedTapeDrive.value().currentVo.value(), inputs.tapeSession->vo);
+  ASSERT_EQ(storedTapeDrive.value().currentActivity, inputs.tapeSession->activity);
 
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
 }
@@ -995,18 +969,22 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusTransfering) {
   tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Down;  // To force a change of state
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
 
-  cta::ReportDriveStatusInputs inputs;
-  inputs.status = cta::common::dataStructures::DriveStatus::Transferring;
+  const auto expectedStatus = cta::common::dataStructures::DriveStatus::Transferring;
+  cta::common::dataStructures::DriveReport inputs {
+    .state = cta::common::dataStructures::ReportedDriveState::Up,
+    .tapeSession = cta::common::dataStructures::TapeSessionReport {
+      .state = cta::common::dataStructures::TapeSessionState::Transferring}};
+
   // We use a different MountType to check it doesn't update this value in the database
-  inputs.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
+  inputs.tapeSession->mountType = cta::common::dataStructures::MountType::ArchiveForUser;
   inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  inputs.mountSessionId = 123456;
-  inputs.byteTransferred = 987654;
-  inputs.filesTransferred = 456;
-  inputs.vid = "vid";
-  inputs.tapepool = "tapepool";
-  inputs.vo = "vo";
-  inputs.activity = "activity";
+  inputs.tapeSession->mountSessionId = 123456;
+  inputs.tapeSession->bytesTransferred = 987654;
+  inputs.tapeSession->filesTransferred = 456;
+  inputs.tapeSession->vid = "vid";
+  inputs.tapeSession->tapePool = "tapepool";
+  inputs.tapeSession->vo = "vo";
+  inputs.tapeSession->activity = "activity";
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = tapeDrive.driveName;
   driveInfo.host = tapeDrive.host;
@@ -1014,14 +992,14 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusTransfering) {
   {
     cta::log::LogContext dummyLc(m_dummyLog);
     auto tapeDrivesState = std::make_unique<cta::TapeDrivesCatalogueState>(*m_catalogue);
-    tapeDrivesState->updateDriveStatus(driveInfo, inputs, dummyLc);
+    tapeDrivesState->reportDriveState(driveInfo, inputs, dummyLc);
   }
 
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_TRUE(static_cast<bool>(storedTapeDrive));
-  ASSERT_EQ(storedTapeDrive.value().sessionId.value(), inputs.mountSessionId);
-  ASSERT_EQ(storedTapeDrive.value().bytesTransferedInSession.value(), inputs.byteTransferred);
-  ASSERT_EQ(storedTapeDrive.value().filesTransferedInSession.value(), inputs.filesTransferred);
+  ASSERT_EQ(storedTapeDrive.value().sessionId.value(), inputs.tapeSession->mountSessionId);
+  ASSERT_EQ(storedTapeDrive.value().bytesTransferedInSession.value(), inputs.tapeSession->bytesTransferred);
+  ASSERT_EQ(storedTapeDrive.value().filesTransferedInSession.value(), inputs.tapeSession->filesTransferred);
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().sessionStartTime));
   ASSERT_EQ(storedTapeDrive.value().sessionElapsedTime.value(), 0);  // Because it's starting
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().mountStartTime));
@@ -1035,12 +1013,12 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusTransfering) {
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().shutdownTime));
   const auto log = cta::common::dataStructures::EntryLog("NO_USER", driveInfo.host, inputs.reportTime);
   ASSERT_EQ(storedTapeDrive.value().lastModificationLog.value(), log);
-  ASSERT_EQ(storedTapeDrive.value().mountType, inputs.mountType);
-  ASSERT_EQ(storedTapeDrive.value().driveStatus, inputs.status);
-  ASSERT_EQ(storedTapeDrive.value().currentVid.value(), inputs.vid);
-  ASSERT_EQ(storedTapeDrive.value().currentTapePool.value(), inputs.tapepool);
-  ASSERT_EQ(storedTapeDrive.value().currentVo.value(), inputs.vo);
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().currentActivity));
+  ASSERT_EQ(storedTapeDrive.value().mountType, inputs.tapeSession->mountType);
+  ASSERT_EQ(storedTapeDrive.value().driveStatus, expectedStatus);
+  ASSERT_EQ(storedTapeDrive.value().currentVid.value(), inputs.tapeSession->vid);
+  ASSERT_EQ(storedTapeDrive.value().currentTapePool.value(), inputs.tapeSession->tapePool);
+  ASSERT_EQ(storedTapeDrive.value().currentVo.value(), inputs.tapeSession->vo);
+  ASSERT_EQ(storedTapeDrive.value().currentActivity, inputs.tapeSession->activity);
 
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
 }
@@ -1051,18 +1029,22 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusUnloading) {
   tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Down;  // To force a change of state
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
 
-  cta::ReportDriveStatusInputs inputs;
-  inputs.status = cta::common::dataStructures::DriveStatus::Unloading;
+  const auto expectedStatus = cta::common::dataStructures::DriveStatus::Unloading;
+  cta::common::dataStructures::DriveReport inputs {
+    .state = cta::common::dataStructures::ReportedDriveState::Up,
+    .tapeSession = cta::common::dataStructures::TapeSessionReport {
+      .state = cta::common::dataStructures::TapeSessionState::Unloading}};
+
   // We use a different MountType to check it doesn't update this value in the database
-  inputs.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
+  inputs.tapeSession->mountType = cta::common::dataStructures::MountType::ArchiveForUser;
   inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  inputs.mountSessionId = 123456;
-  inputs.byteTransferred = 987654;
-  inputs.filesTransferred = 456;
-  inputs.vid = "vid";
-  inputs.tapepool = "tapepool";
-  inputs.vo = "vo";
-  inputs.activity = "activity";
+  inputs.tapeSession->mountSessionId = 123456;
+  inputs.tapeSession->bytesTransferred = 987654;
+  inputs.tapeSession->filesTransferred = 456;
+  inputs.tapeSession->vid = "vid";
+  inputs.tapeSession->tapePool = "tapepool";
+  inputs.tapeSession->vo = "vo";
+  inputs.tapeSession->activity = "activity";
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = tapeDrive.driveName;
   driveInfo.host = tapeDrive.host;
@@ -1070,12 +1052,12 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusUnloading) {
   {
     cta::log::LogContext dummyLc(m_dummyLog);
     auto tapeDrivesState = std::make_unique<cta::TapeDrivesCatalogueState>(*m_catalogue);
-    tapeDrivesState->updateDriveStatus(driveInfo, inputs, dummyLc);
+    tapeDrivesState->reportDriveState(driveInfo, inputs, dummyLc);
   }
 
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_TRUE(static_cast<bool>(storedTapeDrive));
-  ASSERT_EQ(storedTapeDrive.value().sessionId.value(), inputs.mountSessionId);
+  ASSERT_EQ(storedTapeDrive.value().sessionId.value(), inputs.tapeSession->mountSessionId);
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().bytesTransferedInSession));
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().filesTransferedInSession));
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().sessionStartTime));
@@ -1091,12 +1073,12 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusUnloading) {
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().shutdownTime));
   const auto log = cta::common::dataStructures::EntryLog("NO_USER", driveInfo.host, inputs.reportTime);
   ASSERT_EQ(storedTapeDrive.value().lastModificationLog.value(), log);
-  ASSERT_EQ(storedTapeDrive.value().mountType, inputs.mountType);
-  ASSERT_EQ(storedTapeDrive.value().driveStatus, inputs.status);
-  ASSERT_EQ(storedTapeDrive.value().currentVid.value(), inputs.vid);
-  ASSERT_EQ(storedTapeDrive.value().currentTapePool.value(), inputs.tapepool);
-  ASSERT_EQ(storedTapeDrive.value().currentVo.value(), inputs.vo);
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().currentActivity));
+  ASSERT_EQ(storedTapeDrive.value().mountType, inputs.tapeSession->mountType);
+  ASSERT_EQ(storedTapeDrive.value().driveStatus, expectedStatus);
+  ASSERT_EQ(storedTapeDrive.value().currentVid.value(), inputs.tapeSession->vid);
+  ASSERT_EQ(storedTapeDrive.value().currentTapePool.value(), inputs.tapeSession->tapePool);
+  ASSERT_EQ(storedTapeDrive.value().currentVo.value(), inputs.tapeSession->vo);
+  ASSERT_EQ(storedTapeDrive.value().currentActivity, inputs.tapeSession->activity);
 
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
 }
@@ -1107,18 +1089,22 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusUnmounting) {
   tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Down;  // To force a change of state
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
 
-  cta::ReportDriveStatusInputs inputs;
-  inputs.status = cta::common::dataStructures::DriveStatus::Unmounting;
+  const auto expectedStatus = cta::common::dataStructures::DriveStatus::Unmounting;
+  cta::common::dataStructures::DriveReport inputs {
+    .state = cta::common::dataStructures::ReportedDriveState::Up,
+    .tapeSession = cta::common::dataStructures::TapeSessionReport {
+      .state = cta::common::dataStructures::TapeSessionState::Unmounting}};
+
   // We use a different MountType to check it doesn't update this value in the database
-  inputs.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
+  inputs.tapeSession->mountType = cta::common::dataStructures::MountType::ArchiveForUser;
   inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  inputs.mountSessionId = 123456;
-  inputs.byteTransferred = 987654;
-  inputs.filesTransferred = 456;
-  inputs.vid = "vid";
-  inputs.tapepool = "tapepool";
-  inputs.vo = "vo";
-  inputs.activity = "activity";
+  inputs.tapeSession->mountSessionId = 123456;
+  inputs.tapeSession->bytesTransferred = 987654;
+  inputs.tapeSession->filesTransferred = 456;
+  inputs.tapeSession->vid = "vid";
+  inputs.tapeSession->tapePool = "tapepool";
+  inputs.tapeSession->vo = "vo";
+  inputs.tapeSession->activity = "activity";
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = tapeDrive.driveName;
   driveInfo.host = tapeDrive.host;
@@ -1126,11 +1112,11 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusUnmounting) {
   {
     cta::log::LogContext dummyLc(m_dummyLog);
     auto tapeDrivesState = std::make_unique<cta::TapeDrivesCatalogueState>(*m_catalogue);
-    tapeDrivesState->updateDriveStatus(driveInfo, inputs, dummyLc);
+    tapeDrivesState->reportDriveState(driveInfo, inputs, dummyLc);
   }
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_TRUE(static_cast<bool>(storedTapeDrive));
-  ASSERT_EQ(storedTapeDrive.value().sessionId.value(), inputs.mountSessionId);
+  ASSERT_EQ(storedTapeDrive.value().sessionId.value(), inputs.tapeSession->mountSessionId);
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().bytesTransferedInSession));
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().filesTransferedInSession));
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().sessionStartTime));
@@ -1146,12 +1132,12 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusUnmounting) {
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().shutdownTime));
   const auto log = cta::common::dataStructures::EntryLog("NO_USER", driveInfo.host, inputs.reportTime);
   ASSERT_EQ(storedTapeDrive.value().lastModificationLog.value(), log);
-  ASSERT_EQ(storedTapeDrive.value().mountType, inputs.mountType);
-  ASSERT_EQ(storedTapeDrive.value().driveStatus, inputs.status);
-  ASSERT_EQ(storedTapeDrive.value().currentVid.value(), inputs.vid);
-  ASSERT_EQ(storedTapeDrive.value().currentTapePool.value(), inputs.tapepool);
-  ASSERT_EQ(storedTapeDrive.value().currentVo.value(), inputs.vo);
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().currentActivity));
+  ASSERT_EQ(storedTapeDrive.value().mountType, inputs.tapeSession->mountType);
+  ASSERT_EQ(storedTapeDrive.value().driveStatus, expectedStatus);
+  ASSERT_EQ(storedTapeDrive.value().currentVid.value(), inputs.tapeSession->vid);
+  ASSERT_EQ(storedTapeDrive.value().currentTapePool.value(), inputs.tapeSession->tapePool);
+  ASSERT_EQ(storedTapeDrive.value().currentVo.value(), inputs.tapeSession->vo);
+  ASSERT_EQ(storedTapeDrive.value().currentActivity, inputs.tapeSession->activity);
 
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
 }
@@ -1162,18 +1148,22 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusDrainingToDisk) {
   tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Down;  // To force a change of state
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
 
-  cta::ReportDriveStatusInputs inputs;
-  inputs.status = cta::common::dataStructures::DriveStatus::DrainingToDisk;
+  const auto expectedStatus = cta::common::dataStructures::DriveStatus::DrainingToDisk;
+  cta::common::dataStructures::DriveReport inputs {
+    .state = cta::common::dataStructures::ReportedDriveState::Up,
+    .tapeSession = cta::common::dataStructures::TapeSessionReport {
+      .state = cta::common::dataStructures::TapeSessionState::DrainingToDisk}};
+
   // We use a different MountType to check it doesn't update this value in the database
-  inputs.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
+  inputs.tapeSession->mountType = cta::common::dataStructures::MountType::ArchiveForUser;
   inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  inputs.mountSessionId = 123456;
-  inputs.byteTransferred = 987654;
-  inputs.filesTransferred = 456;
-  inputs.vid = "vid";
-  inputs.tapepool = "tapepool";
-  inputs.vo = "vo";
-  inputs.activity = "activity";
+  inputs.tapeSession->mountSessionId = 123456;
+  inputs.tapeSession->bytesTransferred = 987654;
+  inputs.tapeSession->filesTransferred = 456;
+  inputs.tapeSession->vid = "vid";
+  inputs.tapeSession->tapePool = "tapepool";
+  inputs.tapeSession->vo = "vo";
+  inputs.tapeSession->activity = "activity";
   cta::common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = tapeDrive.driveName;
   driveInfo.host = tapeDrive.host;
@@ -1181,11 +1171,11 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusDrainingToDisk) {
   {
     cta::log::LogContext dummyLc(m_dummyLog);
     auto tapeDrivesState = std::make_unique<cta::TapeDrivesCatalogueState>(*m_catalogue);
-    tapeDrivesState->updateDriveStatus(driveInfo, inputs, dummyLc);
+    tapeDrivesState->reportDriveState(driveInfo, inputs, dummyLc);
   }
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_TRUE(static_cast<bool>(storedTapeDrive));
-  ASSERT_EQ(storedTapeDrive.value().sessionId.value(), inputs.mountSessionId);
+  ASSERT_EQ(storedTapeDrive.value().sessionId.value(), inputs.tapeSession->mountSessionId);
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().bytesTransferedInSession));
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().filesTransferedInSession));
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().sessionStartTime));
@@ -1201,124 +1191,28 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusDrainingToDisk) {
   ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().shutdownTime));
   const auto log = cta::common::dataStructures::EntryLog("NO_USER", driveInfo.host, inputs.reportTime);
   ASSERT_EQ(storedTapeDrive.value().lastModificationLog.value(), log);
-  ASSERT_EQ(storedTapeDrive.value().mountType, inputs.mountType);
-  ASSERT_EQ(storedTapeDrive.value().driveStatus, inputs.status);
-  ASSERT_EQ(storedTapeDrive.value().currentVid.value(), inputs.vid);
-  ASSERT_EQ(storedTapeDrive.value().currentTapePool.value(), inputs.tapepool);
-  ASSERT_EQ(storedTapeDrive.value().currentVo.value(), inputs.vo);
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().currentActivity));
+  ASSERT_EQ(storedTapeDrive.value().mountType, inputs.tapeSession->mountType);
+  ASSERT_EQ(storedTapeDrive.value().driveStatus, expectedStatus);
+  ASSERT_EQ(storedTapeDrive.value().currentVid.value(), inputs.tapeSession->vid);
+  ASSERT_EQ(storedTapeDrive.value().currentTapePool.value(), inputs.tapeSession->tapePool);
+  ASSERT_EQ(storedTapeDrive.value().currentVo.value(), inputs.tapeSession->vo);
+  ASSERT_EQ(storedTapeDrive.value().currentActivity, inputs.tapeSession->activity);
 
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
 }
 
-TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusCleaningUp) {
-  const std::string tapeDriveName = "VDSTK11";
-  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
-  tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Down;  // To force a change of state
-  m_catalogue->DriveState()->createTapeDrive(tapeDrive);
-
-  cta::ReportDriveStatusInputs inputs;
-  inputs.status = cta::common::dataStructures::DriveStatus::CleaningUp;
-  // We use a different MountType to check it doesn't update this value in the database
-  inputs.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
-  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  inputs.mountSessionId = 123456;
-  inputs.byteTransferred = 987654;
-  inputs.filesTransferred = 456;
-  inputs.vid = "vid";
-  inputs.tapepool = "tapepool";
-  inputs.vo = "vo";
-  inputs.activity = "activity";
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = tapeDrive.driveName;
-  driveInfo.host = tapeDrive.host;
-  driveInfo.logicalLibrary = tapeDrive.logicalLibrary;
-  {
-    cta::log::LogContext dummyLc(m_dummyLog);
-    auto tapeDrivesState = std::make_unique<cta::TapeDrivesCatalogueState>(*m_catalogue);
-    tapeDrivesState->updateDriveStatus(driveInfo, inputs, dummyLc);
+// Old catalogue rows remain readable even though new reports no longer produce these states.
+TEST_P(cta_catalogue_DriveStateTest, LegacyStatusesRemainReadable) {
+  using cta::common::dataStructures::DriveStatus;
+  for (const auto status : {DriveStatus::Probing, DriveStatus::CleaningUp, DriveStatus::Shutdown}) {
+    auto drive = getTapeDriveWithAllElements("legacy");
+    drive.driveStatus = status;
+    m_catalogue->DriveState()->createTapeDrive(drive);
+    const auto stored = m_catalogue->DriveState()->getTapeDrive(drive.driveName);
+    ASSERT_TRUE(stored);
+    EXPECT_EQ(drive, *stored);
+    m_catalogue->DriveState()->deleteTapeDrive(drive.driveName);
   }
-  const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
-  ASSERT_TRUE(static_cast<bool>(storedTapeDrive));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().sessionId));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().bytesTransferedInSession));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().filesTransferedInSession));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().sessionStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().sessionElapsedTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().mountStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().transferStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().unloadStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().unmountStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().drainingStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().downOrUpStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().probeStartTime));
-  ASSERT_EQ(storedTapeDrive.value().cleanupStartTime.value(), inputs.reportTime);
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().shutdownTime));
-  const auto log = cta::common::dataStructures::EntryLog("NO_USER", driveInfo.host, inputs.reportTime);
-  ASSERT_EQ(storedTapeDrive.value().lastModificationLog.value(), log);
-  ASSERT_EQ(storedTapeDrive.value().mountType, inputs.mountType);
-  ASSERT_EQ(storedTapeDrive.value().driveStatus, inputs.status);
-  ASSERT_EQ(storedTapeDrive.value().currentVid.value(), inputs.vid);
-  ASSERT_EQ(storedTapeDrive.value().currentTapePool.value(), inputs.tapepool);
-  ASSERT_EQ(storedTapeDrive.value().currentVo.value(), inputs.vo);
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().currentActivity));
-
-  m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
-}
-
-TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusShutdown) {
-  const std::string tapeDriveName = "VDSTK11";
-  auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
-  tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Down;  // To force a change of state
-  m_catalogue->DriveState()->createTapeDrive(tapeDrive);
-
-  cta::ReportDriveStatusInputs inputs;
-  inputs.status = cta::common::dataStructures::DriveStatus::Shutdown;
-  // We use a different MountType to check it doesn't update this value in the database
-  inputs.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
-  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  inputs.mountSessionId = 123456;
-  inputs.byteTransferred = 987654;
-  inputs.filesTransferred = 456;
-  inputs.vid = "vid";
-  inputs.tapepool = "tapepool";
-  inputs.vo = "vo";
-  inputs.activity = "activity";
-  cta::common::dataStructures::DriveInfo driveInfo;
-  driveInfo.driveName = tapeDrive.driveName;
-  driveInfo.host = tapeDrive.host;
-  driveInfo.logicalLibrary = tapeDrive.logicalLibrary;
-  {
-    cta::log::LogContext dummyLc(m_dummyLog);
-    auto tapeDrivesState = std::make_unique<cta::TapeDrivesCatalogueState>(*m_catalogue);
-    tapeDrivesState->updateDriveStatus(driveInfo, inputs, dummyLc);
-  }
-  const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
-  ASSERT_TRUE(static_cast<bool>(storedTapeDrive));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().sessionId));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().bytesTransferedInSession));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().filesTransferedInSession));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().sessionStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().sessionElapsedTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().mountStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().transferStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().unloadStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().unmountStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().drainingStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().downOrUpStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().probeStartTime));
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().cleanupStartTime));
-  ASSERT_EQ(storedTapeDrive.value().shutdownTime.value(), inputs.reportTime);
-  const auto log = cta::common::dataStructures::EntryLog("NO_USER", driveInfo.host, inputs.reportTime);
-  ASSERT_EQ(storedTapeDrive.value().lastModificationLog.value(), log);
-  ASSERT_EQ(storedTapeDrive.value().mountType, inputs.mountType);
-  ASSERT_EQ(storedTapeDrive.value().driveStatus, inputs.status);
-  ASSERT_EQ(storedTapeDrive.value().currentVid.value(), inputs.vid);
-  ASSERT_EQ(storedTapeDrive.value().currentTapePool.value(), inputs.tapepool);
-  ASSERT_EQ(storedTapeDrive.value().currentVo.value(), inputs.vo);
-  ASSERT_FALSE(static_cast<bool>(storedTapeDrive.value().currentActivity));
-
-  m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
 }
 
 TEST_P(cta_catalogue_DriveStateTest, addDiskSpaceReservationWhenItsNull) {

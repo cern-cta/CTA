@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "common/process/threading/ChildProcess.hpp"
 #include "common/process/threading/MutexLocker.hpp"
 #include "common/process/threading/Semaphores.hpp"
 #include "common/process/threading/Thread.hpp"

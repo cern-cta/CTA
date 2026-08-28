@@ -12,6 +12,29 @@ namespace cta {
 //------------------------------------------------------------------------------
 cta::SchedulerDatabase::~SchedulerDatabase() = default;
 
+common::dataStructures::TapeSessionReport SchedulerDatabase::ArchiveMount::MountInfo::makeTapeSessionReport(
+  common::dataStructures::TapeSessionState state) const {
+  return {.state = state,
+          .mountType = mountType,
+          .mountSessionId = mountId,
+          .vid = vid,
+          .tapePool = tapePool,
+          .vo = vo,
+          .priority = priority};
+}
+
+common::dataStructures::TapeSessionReport SchedulerDatabase::RetrieveMount::MountInfo::makeTapeSessionReport(
+  common::dataStructures::TapeSessionState state) const {
+  return {.state = state,
+          .mountType = common::dataStructures::MountType::Retrieve,
+          .mountSessionId = mountId,
+          .vid = vid,
+          .tapePool = tapePool,
+          .vo = vo,
+          .priority = priority,
+          .activity = activity};
+}
+
 SchedulerDatabase::RepackRequestStatistics::RepackRequestStatistics() {
   using Status = common::dataStructures::RepackInfo::Status;
   for (auto& s :

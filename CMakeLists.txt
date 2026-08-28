@@ -227,6 +227,9 @@ if(CTA_BUILD_MODE STREQUAL "compile")
   add_subdirectory(tools)
   add_subdirectory(tests)
 
+  # Apply the test warning policy after all C++ targets have been declared.
+  include(cmake/GoogleTestWarnings.cmake)
+
   # Rust crates
   corrosion_import_crate(MANIFEST_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Cargo.toml" LOCKED
     IMPORTED_CRATES CTA_RUST_CRATES)

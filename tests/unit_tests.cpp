@@ -7,6 +7,7 @@
 #include <google/protobuf/stubs/common.h>
 #include <gtest/gtest.h>
 #include <sqlite3.h>
+#include <string_view>
 
 #ifdef CTA_PGSCHED
 #include "scheduler/rdbms/TemporaryPostgresInstance.hpp"
@@ -19,13 +20,24 @@ int main(int argc, char** argv) {
     return 1;  // Error
   }
 
-  // The following line must be executed to initialize Google Mock
-  // (and Google Test) before running the tests.
+#ifdef CTA_PGSCHED
+  // Threadsafe death-test children inherit PostgreSQL; only the parent owns its lifecycle.
+  // Inspect argv before Google Test consumes it, avoiding version-specific internal flag namespaces.
+  bool ownsPostgres = true;
+  constexpr std::string_view deathTestFlag = "--gtest_internal_run_death_test=";
+  for (int i = 1; i < argc; ++i) {
+    const std::string_view argument(argv[i]);
+    if (argument.starts_with(deathTestFlag) && argument.size() > deathTestFlag.size()) {
+      ownsPostgres = false;
+    }
+  }
+#endif
+
+  // Initialize Google Mock and Google Test before registering the test environment.
   ::testing::InitGoogleMock(&argc, argv);
 
 #ifdef CTA_PGSCHED
-  // When using PostgreSQL scheduler, set up a temporary Postgres instance for tests
-  cta::schedulerdb::g_tempPostgresEnv = new cta::schedulerdb::TemporaryPostgresEnvironment();
+  cta::schedulerdb::g_tempPostgresEnv = new cta::schedulerdb::TemporaryPostgresEnvironment(ownsPostgres);
   ::testing::AddGlobalTestEnvironment(cta::schedulerdb::g_tempPostgresEnv);
 #endif
 

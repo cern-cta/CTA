@@ -534,6 +534,39 @@
    ...
 }
 
+# GCC 14's shared_ptr last-owner fast path uses an atomic count load followed by
+# plain count stores. Helgrind reports these against ActionQueue's reference release
+# (shared_ptr_base.h:343 vs :337), although ownership is determined using atomic reference counts.
+# Reproduced in SchedulerDatabaseTest.createManyArchiveJobs with debug symbols.
+# Packaged builds omit the inlined _M_release frame, so match the two observed enqueue paths;
+# the leading wildcard also accommodates the inline frames in builds with debug info.
+{
+   AgentReference_action_refcount_archive_enqueue
+   Helgrind:Race
+   ...
+   fun:_ZN3cta11objectstore14AgentReference14addToOwnershipE*
+   fun:_ZN3cta8OStoreDB12queueArchiveE*
+}
+
+{
+   AgentReference_action_refcount_retrieve_enqueue
+   Helgrind:Race
+   ...
+   fun:_ZN3cta11objectstore14AgentReference14addToOwnershipE*
+   fun:_ZN3cta8OStoreDB13queueRetrieveE*
+}
+
+# The same Action reference-count fast path occurs after addBatchToOwnership,
+# which tail-calls _M_release and therefore does not appear in this stack.
+{
+   AgentReference_action_refcount_archive_batch_pop
+   Helgrind:Race
+   ...
+   fun:_ZNSt16_Sp_counted_baseILN9__gnu_cxx12_Lock_policyE2EE10_M_releaseEv
+   fun:_ZN3cta11objectstore19ContainerAlgorithmsINS0_12ArchiveQueueENS0_29ArchiveQueueToTransferForUserEE12popNextBatchE*
+   fun:_ZN3cta8OStoreDB12ArchiveMount15getNextJobBatch*
+}
+
 {
    AgentReferenceInterface::Vtable race false positive
    Helgrind:Race

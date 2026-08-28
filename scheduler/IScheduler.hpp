@@ -5,12 +5,17 @@
 
 #pragma once
 
+#include "common/dataStructures/DriveDownRequest.hpp"
+#include "common/dataStructures/DriveStatus.hpp"
+#include "common/dataStructures/MountType.hpp"
+
 #include <string>
 
 namespace cta {
 
 namespace common::dataStructures {
 struct DriveInfo;
+struct SecurityIdentity;
 class DesiredDriveState;
 }  // namespace common::dataStructures
 
@@ -24,14 +29,13 @@ public:
 
   virtual void ping(log::LogContext& lc) = 0;
 
-  virtual void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
-                                 cta::common::dataStructures::MountType type,
-                                 cta::common::dataStructures::DriveStatus status,
-                                 log::LogContext& lc) = 0;
+  virtual void requestDriveUp(const std::string& driveName, std::string_view reason, log::LogContext& lc) = 0;
 
-  virtual void setDesiredDriveState(const std::string& driveName,
-                                    const common::dataStructures::DesiredDriveState& desiredState,
-                                    log::LogContext& lc) = 0;
+  virtual void requestDriveDown(const std::string& driveName,
+                                const common::dataStructures::DriveDownRequest& request,
+                                log::LogContext& lc) = 0;
+
+  virtual void setDriveComment(const std::string& driveName, std::string_view comment, log::LogContext& lc) = 0;
 
   virtual bool checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo& driveInfo, log::LogContext& lc) = 0;
 
@@ -44,8 +48,6 @@ public:
                                      const common::dataStructures::DriveStatus& status,
                                      const common::dataStructures::SecurityIdentity& identity,
                                      log::LogContext& lc) = 0;
-
-  virtual void reportSchedulerBackendName(const std::string& driveName, log::LogContext& lc) = 0;
 };
 
 }  // namespace cta

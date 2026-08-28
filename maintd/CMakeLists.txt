@@ -36,7 +36,6 @@ add_library(ctamaintdunittests SHARED
 target_link_libraries(ctamaintdunittests
   ctacommon
   ctaruntime
-  gtest
 )
 set_property(TARGET ctamaintdunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctamaintdunittests PROPERTY VERSION "${CTA_LIBVERSION}")

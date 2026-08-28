@@ -27,6 +27,7 @@ static constexpr const char* eventName = "event_name";
 namespace EventNameValues {
 static constexpr const char* kProgramStarting = "program_starting";
 static constexpr const char* kProgramExiting = "program_exiting";
+static constexpr const char* kDriveDesiredUpAtStartup = "drive_desired_up_at_startup";
 static constexpr const char* kTapeSessionFinished = "tape_session_finished";
 static constexpr const char* kPuttingTapeDriveDown = "putting_tape_drive_down";
 static constexpr const char* kPuttingTapeDriveUp = "putting_tape_drive_up";

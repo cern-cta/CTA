@@ -14,17 +14,12 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/StringLogger.hpp"
 #include "scheduler/RetrieveJob.hpp"
+#include "taped/drive/DriveCleaner.hpp"
 #include "taped/drive/DriveInterface.hpp"
 #include "taped/scsi/Device.hpp"
-#include "taped/session/CleanerSession.hpp"
+#include "taped/session/TapeSessionTracker.hpp"
 #include "taped/session/VolumeInfo.hpp"
 #include "taped/system/Wrapper.hpp"
-
-#ifdef CTA_PGSCHED
-#include "scheduler/rdbms/RelationalDBTestFactory.hpp"
-#else
-#include "scheduler/OStoreDB/OStoreDBFactory.hpp"
-#endif
 
 #include <gtest/gtest.h>
 #include <string>
@@ -67,10 +62,7 @@ protected:
     m_devName = g_device_name;
   }
 
-  void TearDown() override {
-    m_db.reset();
-    m_catalogue.reset();
-  }
+  void TearDown() override { m_catalogue.reset(); }
 
   void createDrive() {
     // Create drive object and open tape device
@@ -111,7 +103,6 @@ protected:
   cta::tape::System::realWrapper m_sWrapper;
   cta::tape::SCSI::DeviceInfo m_dev;
   std::unique_ptr<cta::tape::drive::DriveInterface> m_drive;
-  std::unique_ptr<cta::SchedulerDatabase> m_db;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::string m_vid;
   std::string m_nstDev;
@@ -161,19 +152,12 @@ TEST_F(OsmReaderTest, CleanDrive) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummylogger);
   cta::common::dataStructures::DriveInfo driveInfo(m_devName, "0.0.0.0", "TestLogicalLibrary", m_nstDev, "dummy");
 
-  // The cleaner needs a valid scheduler even though successful cleaning does not access its database.
-#ifdef CTA_PGSCHED
-  cta::RelationalDBTestFactory factory;
-#else
-  cta::OStoreDBFactory<cta::objectstore::BackendVFS> factory;
-#endif
-  m_db = factory.create(m_catalogue);
-  auto scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_db, "schedulerBackendName");
+  cta::tape::daemon::TapeSessionTracker tracker;
+  cta::tape::daemon::DriveCleaner driveCleaner(mc, strlogger, driveInfo, m_vid, false, 0, *m_catalogue, tracker);
 
-  cta::tape::daemon::CleanerSession
-    cleanerSession(mc, strlogger, driveInfo, m_sWrapper, m_vid, false, 0, *m_catalogue, *scheduler);
-
-  ASSERT_EQ(cta::tape::daemon::Session::MARK_DRIVE_AS_UP, cleanerSession.execute());
+  // This standalone test does not publish drive-status updates.
+  const auto cleanupResult = driveCleaner.cleanDrive(m_sWrapper);
+  ASSERT_TRUE(cleanupResult.driveReusable()) << cleanupResult.errorMessage;
 
   const auto logToCheck = strlogger.getLog();
   ASSERT_NE(std::string::npos, logToCheck.find("Cleaner detected that the tape contains data"));

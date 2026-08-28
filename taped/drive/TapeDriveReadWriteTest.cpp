@@ -3,10 +3,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-/**
- * Test main program. For development use.
- */
-
 #include "DriveInterface.hpp"
 #include "taped/scsi/Device.hpp"
 #include "taped/system/Wrapper.hpp"
@@ -16,12 +12,6 @@
 #include <memory>
 
 namespace {
-/*
- * Prints and compares the current position with the expected one. Returns on
- * success (expected value is the same as the actual value), or else fails the
- * assertion and exits.
- * @param expected_position expected position
- */
 void print_and_assert_position(cta::tape::drive::DriveInterface& drive, int expected_position) {
   int curPos = (int) drive.getPositionInfo().currentPosition;
   std::cout << "CurrentPosition: " << curPos << " (Expected: " << expected_position << ")" << std::endl;
@@ -29,12 +19,6 @@ void print_and_assert_position(cta::tape::drive::DriveInterface& drive, int expe
   return;
 }
 
-/*
- * Prints and compares the current data read with the expected one. Returns on
- * success (expected value is the same as the actual value), or else fails the
- * assertion and exits.
- * @param expected_data expected data
- */
 void print_and_assert_data(const char* expected_data, const char* actual_data) {
   std::cout << "Data Read: " << actual_data << " (Expected: " << expected_data << ")" << std::endl;
   assert(0 == strcmp(expected_data, actual_data));
@@ -55,16 +39,11 @@ int main() {
         // Create drive object and open tape device
         std::unique_ptr<cta::tape::drive::DriveInterface> drive(cta::tape::drive::createDrive(dev, sWrapper));
 
-        /**
-         * From now we could use generic SCSI request for the drive object.
-         * We should be aware that there might be a problem with tape in the
-         * drive for example incompatible media installed.
-         */
+        // From now we could use generic SCSI request for the drive object.
+        // We should be aware that there might be a problem with tape in the
+        // drive for example incompatible media installed.
 
         try {
-          /**
-           * Gets generic device info for the drive object.
-           */
           cta::tape::drive::deviceInfo devInfo;
           devInfo = drive->getDeviceInfo();
           std::cout << "-- INFO --------------------------------------" << std::endl
@@ -82,9 +61,6 @@ int main() {
         }
 
         try {
-          /**
-           * Checks if the drive ready to use the tape installed loaded into it.
-           */
           drive->waitUntilReady(5);
         } catch (cta::exception::Exception& ne) {
           std::string temp = ne.getMessage().str();
@@ -98,9 +74,7 @@ int main() {
         drive->enableCRC32CLogicalBlockProtectionReadWrite();
 
         try {
-          /**
-           * We will write on the tape, so prepare 2 blocks
-           */
+          // We will write on the tape, so prepare 2 blocks
           std::cout << "-- INFO --------------------------------------" << std::endl
                     << " Rewinding, writing 2 blocks and repositioning on block 2" << std::endl
                     << "----------------------------------------------" << std::endl;
@@ -108,9 +82,7 @@ int main() {
           /* For some unexplained (TODO) reason, mhvtl does not accept blocks smaller than 4 bytes */
           drive->writeBlock((void*) "X123", 4);
           drive->writeBlock((void*) "Y123", 4);
-          /**
-           * trying to do position to the block 2.
-           */
+          // trying to do position to the block 2.
           drive->positionToLogicalObject(2);
         } catch (std::exception& e) {
           fail = 1;
@@ -145,10 +117,7 @@ int main() {
         }
 
         try {
-          /**
-           * Trying to get compression from the drive-> Read or write should be
-           * done before to have something in the data fields.
-           */
+          // Query counters after I/O so the drive has traffic to report.
           cta::tape::drive::compressionStats comp = drive->getCompression();
           std::cout << "-- INFO --------------------------------------" << std::endl
                     << "  fromHost : " << comp.fromHost << std::endl
@@ -180,9 +149,7 @@ int main() {
           Alerts.pop_back();
         }
 
-        /**
-         * Rewind/Read/Write/Skip Test
-         */
+        // Rewind/Read/Write/Skip Test
         try {
           const size_t count = 10;
           unsigned char data[count];

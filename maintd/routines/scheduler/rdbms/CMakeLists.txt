@@ -9,6 +9,7 @@ add_library(ctardbroutines SHARED
 )
 
 target_link_libraries(ctardbroutines
+	ctascheduler
 	ctardbms
 	ctacatalogue
 )

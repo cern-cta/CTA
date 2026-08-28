@@ -27,8 +27,8 @@
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "scheduler/TapeMount.hpp"
-#include "taped/session/MigrationReportPacker.hpp"
-#include "taped/session/RecallReportPacker.hpp"
+#include "taped/session/archive/MigrationReportPacker.hpp"
+#include "taped/session/retrieve/RecallReportPacker.hpp"
 #include "tests/TempDirectory.hpp"
 #include "tests/TempFile.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
@@ -709,14 +709,14 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     //Test that no mount is available when a logical library is disabled
     ASSERT_EQ(nullptr, mount.get());
@@ -725,7 +725,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
-    mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    mount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
     const auto archiveDriveState = catalogue.DriveState()->getTapeDrive(driveName);
     ASSERT_TRUE(archiveDriveState.has_value());
     ASSERT_EQ(s_archivePriority, archiveDriveState->currentPriority.value());
@@ -758,7 +758,10 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
     ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();
-    archiveMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Up);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
   }
 
   {
@@ -832,7 +835,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     std::unique_ptr<cta::RetrieveMount> retrieveMount;
     retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
     ASSERT_NE(nullptr, retrieveMount.get());
-    retrieveMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    retrieveMount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
     const auto retrieveDriveState = catalogue.DriveState()->getTapeDrive(driveName);
     ASSERT_TRUE(retrieveDriveState.has_value());
     ASSERT_EQ(s_retrievePriority, retrieveDriveState->currentPriority.value());
@@ -847,7 +850,15 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     retrieveMount->setJobBatchTransferred(jobQueue, lc);
     jobBatch = retrieveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_EQ(0, jobBatch.size());
-    retrieveMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Up);
+    const cta::common::dataStructures::DriveInfo readyDrive {driveName,
+                                                             retrieveDriveState->host,
+                                                             retrieveDriveState->logicalLibrary,
+                                                             "",
+                                                             ""};
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      readyDrive,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
     const auto freeDriveState = catalogue.DriveState()->getTapeDrive(driveName);
     ASSERT_TRUE(freeDriveState.has_value());
     ASSERT_EQ(0, freeDriveState->currentPriority.value());
@@ -926,18 +937,18 @@ TEST_P(SchedulerTest, opportunisticBatchingQueuesConcurrentRetrieveRequests) {
   {
     std::unique_ptr<cta::TapeMount> mount;
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
-    mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    mount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
 
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
@@ -963,7 +974,10 @@ TEST_P(SchedulerTest, opportunisticBatchingQueuesConcurrentRetrieveRequests) {
     archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems, failedToReportArchiveJobs, lc);
     ASSERT_EQ(0u, failedToReportArchiveJobs.size());
     archiveMount->complete();
-    archiveMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Up);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
   }
 
   {
@@ -1091,18 +1105,18 @@ TEST_P(SchedulerTest, opportunisticBatchingIsolatesAPerItemRetrieveFailure) {
   {
     std::unique_ptr<cta::TapeMount> mount;
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
-    mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    mount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
 
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
@@ -1128,7 +1142,10 @@ TEST_P(SchedulerTest, opportunisticBatchingIsolatesAPerItemRetrieveFailure) {
     archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems, failedToReportArchiveJobs, lc);
     ASSERT_EQ(0u, failedToReportArchiveJobs.size());
     archiveMount->complete();
-    archiveMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Up);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
   }
 
   {
@@ -1305,14 +1322,14 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     //Test that no mount is available when a logical library is disabled
     ASSERT_EQ(nullptr, mount.get());
@@ -1321,7 +1338,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
-    mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    mount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
     auto& osdb = getSchedulerDB();
     auto mi = osdb.getMountInfo(lc);
     SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
@@ -1682,14 +1699,14 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
 
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     //Test that no mount is available when a logical library is disabled
@@ -1699,7 +1716,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
-    mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    mount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
     auto& osdb = getSchedulerDB();
     auto mi = osdb.getMountInfo(lc);
     SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
@@ -1765,14 +1782,14 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     //Test that no mount is available when a logical library is disabled
     ASSERT_EQ(nullptr, mount.get());
@@ -1781,7 +1798,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
-    mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    mount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
     auto& osdb = getSchedulerDB();
     auto mi = osdb.getMountInfo(lc);
     SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
@@ -2020,18 +2037,18 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
-    mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    mount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
     auto& osdb = getSchedulerDB();
     auto mi = osdb.getMountInfo(lc);
     SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
@@ -2274,18 +2291,18 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
     mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
     ASSERT_NE(nullptr, mount.get());
     ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
-    mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    mount->reportTapeSessionState(cta::common::dataStructures::TapeSessionState::Preparing);
     auto& osdb = getSchedulerDB();
     auto mi = osdb.getMountInfo(lc);
     SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
@@ -3302,14 +3319,14 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
     for (auto i = 0; i < NUMBER_OF_FILES; i++) {
       (void) i;  // ignore unused variable
       mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
@@ -3493,14 +3510,14 @@ TEST_P(SchedulerTest, getNextMountTapeStatesThatShouldNotReturnAMount) {
   {
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
   }
 
   uint64_t archiveFileId;
@@ -3989,14 +4006,14 @@ TEST_P(SchedulerTest, archiveMaxDrivesVoInFlightChangeScheduleMount) {
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
     bool nextMount = scheduler.getNextMountDryRun(s_libraryName, driveName, lc);
     //nextMount should be false as the VO write max drives is 0
     ASSERT_FALSE(nextMount);
@@ -4078,14 +4095,14 @@ TEST_P(SchedulerTest, getNextMountPhysicalLibraryDisabled) {
     std::unique_ptr<cta::TapeMount> mount;
     // This first initialization is normally done by the dataSession function.
     cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                lc);
-    scheduler.reportDriveStatus(driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Up,
-                                lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Down},
+      lc);
+    cta::TapeDrivesCatalogueState(catalogue).reportDriveState(
+      driveInfo,
+      {.state = cta::common::dataStructures::ReportedDriveState::Up},
+      lc);
     bool nextMount = scheduler.getNextMountDryRun(s_libraryName, driveName, lc);
     //nextMount should be false as the VO write max drives is 0
     ASSERT_FALSE(nextMount);

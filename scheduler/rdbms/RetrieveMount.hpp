@@ -55,12 +55,10 @@ public:
   void requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
                        cta::log::LogContext& logContext) override;
 
-  void setDriveStatus(common::dataStructures::DriveStatus status,
-                      common::dataStructures::MountType mountType,
-                      time_t completionTime,
-                      const std::optional<std::string>& reason) override;
+  /// Publish activity with this mount's metadata, without changing desired state.
+  void reportTapeSessionState(common::dataStructures::TapeSessionState state, time_t reportTime) override;
 
-  void setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) override;
+  void setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) override;
 
   void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
                               log::LogContext& lc) override;

@@ -546,20 +546,16 @@ void cta::RetrieveMount::complete() {
 }
 
 //------------------------------------------------------------------------------
-// setDriveStatus()
+// reportTapeSessionState()
 //------------------------------------------------------------------------------
-void cta::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status,
-                                        const std::optional<std::string>& reason) {
-  m_dbMount->setDriveStatus(status,
-                            getMountType(),
-                            std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()),
-                            reason);
+void cta::RetrieveMount::reportTapeSessionState(common::dataStructures::TapeSessionState state) {
+  m_dbMount->reportTapeSessionState(state, std::time(nullptr));
 }
 
 //------------------------------------------------------------------------------
 // setTapeSessionStats()
 //------------------------------------------------------------------------------
-void cta::RetrieveMount::setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) {
+void cta::RetrieveMount::setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) {
   m_dbMount->setTapeSessionStats(stats);
 }
 

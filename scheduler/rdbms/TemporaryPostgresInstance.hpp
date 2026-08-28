@@ -50,12 +50,14 @@ public:
   /* This is used to avoid shell injection */
   int runCommand(const std::vector<std::string>& args);
 
-  TemporaryPostgresEnvironment();
+  // Death-test subprocesses borrow the parent's server using the same fixed connection settings.
+  // With ownsInstance=false, no directory is created and server startup and cleanup are skipped.
+  explicit TemporaryPostgresEnvironment(bool ownsInstance = true);
   ~TemporaryPostgresEnvironment() override;
 
   /**
    * Called before any tests run.
-   * Initializes and starts a temporary PostgreSQL instance.
+   * Initializes and starts a temporary PostgreSQL instance only when this environment owns it.
    */
   void SetUp() override;
 
@@ -147,6 +149,7 @@ private:
   std::string m_database;
   std::string m_namespace;
   bool m_useShm;  // Use /dev/shm (tmpfs) for in-memory storage
+  const bool m_ownsInstance;
 };
 
 /**

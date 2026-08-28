@@ -8,6 +8,7 @@
 #include "common/dataStructures/DriveStatus.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
 #include "common/dataStructures/MountType.hpp"
+#include "common/dataStructures/TapeSessionState.hpp"
 #include "common/log/LogContext.hpp"
 #include "taped/session/TapeSessionStats.hpp"
 
@@ -86,16 +87,13 @@ public:
      */
   virtual void complete() = 0;
 
-  /**
-     * Report a drive status change
-     */
-  virtual void setDriveStatus(cta::common::dataStructures::DriveStatus status,
-                              const std::optional<std::string>& reason = std::nullopt) = 0;
+  /// Publish tape activity, preserving scheduler-owned mount metadata.
+  virtual void reportTapeSessionState(common::dataStructures::TapeSessionState state) = 0;
 
   /**
      * Report a tape session statistics
      */
-  virtual void setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) = 0;
+  virtual void setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) = 0;
 
   /**
      * Report a tape mounted event

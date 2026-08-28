@@ -17,8 +17,6 @@ std::string toString(SessionType type) {
       return "Retrieve";
     case SessionType::Label:
       return "Label";
-    case SessionType::Undetermined:
-      return "Undetermined";
     case SessionType::Cleanup:
       return "Cleanup";
     default: {

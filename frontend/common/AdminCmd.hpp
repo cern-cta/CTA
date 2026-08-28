@@ -9,6 +9,9 @@
 #include "catalogue/Catalogue.hpp"
 #include "frontend/common/FrontendService.hpp"
 
+#include <functional>
+#include <string_view>
+
 #include "cta_frontend.pb.h"
 
 namespace cta::frontend {
@@ -52,21 +55,10 @@ protected:
    */
   void logAdminCmd(const AdminCmdStatus status, const std::string& reason, utils::Timer& t);
 
-  /*!
-   * Drive state enum
-   */
-  enum DriveState { Up, Down };
-
-  /*!
-   * Changes state for the drives by a given regex.
-   *
-   * @param[in]    regex                The regex to match drive name(s) to change
-   * @param[in]    desiredDriveState    Desired drive state (up, forceDown, reason, comment)
-   *
-   * @return       The result of the operation, to return to the client
-   */
-  std::string setDriveState(const std::string& regex,
-                            const common::dataStructures::DesiredDriveState& desiredDriveState);
+  /// Apply one command to matching drives in this scheduler backend and describe the result.
+  std::string applyToDrives(const std::string& regex,
+                            std::string_view description,
+                            const std::function<void(const std::string&)>& action);
 
   inline static const std::string c_disabledAdminCmdMsg = "Admin command disabled on this frontend.";
 

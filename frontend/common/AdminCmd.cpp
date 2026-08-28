@@ -454,17 +454,10 @@ void AdminCmd::processArchiveRoute_Rm(xrd::Response& response) const {
 void AdminCmd::processDrive_Up(xrd::Response& response) {
   using namespace cta::admin;
 
-  std::optional<std::string> reason = getOptional(OptionString::REASON);
-  common::dataStructures::DesiredDriveState desiredDS;
-  desiredDS.up = true;
-  desiredDS.forceDown = false;
-  desiredDS.reason = reason;
-  if (!desiredDS.reason) {
-    //If reason not provided while setting the drive up, we delete it, so we set it to an empty string
-    desiredDS.reason = "";
-  }
-
-  std::string cmdlineOutput = setDriveState('^' + getRequired(OptionString::DRIVE) + '$', desiredDS);
+  const auto reason = getOptional(OptionString::REASON).value_or("");
+  const auto cmdlineOutput = applyToDrives('^' + getRequired(OptionString::DRIVE) + '$', "Up", [&](const auto& name) {
+    m_scheduler.requestDriveUp(name, reason, m_lc);
+  });
 
   response.set_message_txt(cmdlineOutput);
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -477,12 +470,11 @@ void AdminCmd::processDrive_Down(xrd::Response& response) {
   if (utils::trimString(reason).empty()) {
     throw exception::UserError("You must provide a reason in order to set the drive down");
   }
-  common::dataStructures::DesiredDriveState desiredDS;
-  desiredDS.up = false;
-  desiredDS.forceDown = has_flag(OptionBoolean::FORCE);
-  desiredDS.reason = reason;
-
-  std::string cmdlineOutput = setDriveState('^' + getRequired(OptionString::DRIVE) + '$', desiredDS);
+  const common::dataStructures::DriveDownRequest request {.reason = reason, .force = has_flag(OptionBoolean::FORCE)};
+  const auto cmdlineOutput =
+    applyToDrives('^' + getRequired(OptionString::DRIVE) + '$',
+                  request.force ? "Down (forced)" : "Down",
+                  [&](const auto& name) { m_scheduler.requestDriveDown(name, request, m_lc); });
 
   response.set_message_txt(cmdlineOutput);
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -496,10 +488,9 @@ void AdminCmd::processDrive_Ch(xrd::Response& response) {
     throw exception::UserError("You must provide a comment to change it.");
   }
 
-  common::dataStructures::DesiredDriveState desiredDS;
-  desiredDS.comment = comment;
-
-  std::string cmdlineOutput = setDriveState('^' + getRequired(OptionString::DRIVE) + '$', desiredDS);
+  const auto cmdlineOutput = applyToDrives('^' + getRequired(OptionString::DRIVE) + '$',
+                                           "a new comment",
+                                           [&](const auto& name) { m_scheduler.setDriveComment(name, comment, m_lc); });
 
   response.set_message_txt(cmdlineOutput);
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -1631,8 +1622,9 @@ void AdminCmd::processPhysicalLibrary_Rm(xrd::Response& response) const {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-std::string AdminCmd::setDriveState(const std::string& regex,
-                                    const common::dataStructures::DesiredDriveState& desiredDriveState) {
+std::string AdminCmd::applyToDrives(const std::string& regex,
+                                    std::string_view description,
+                                    const std::function<void(const std::string&)>& action) {
   using namespace cta::admin;
 
   std::stringstream cmdlineOutput;
@@ -1651,16 +1643,8 @@ std::string AdminCmd::setDriveState(const std::string& regex,
     const auto regexResult = driveNameRegex.exec(tapeDriveName);
     if (!regexResult.empty()) {
       is_found = true;
-      m_scheduler.setDesiredDriveState(tapeDriveName, desiredDriveState, m_lc);
-
-      cmdlineOutput << "Drive " << tapeDriveName << ": set ";
-      if (!desiredDriveState.comment) {
-        cmdlineOutput << (desiredDriveState.up ? "Up" : "Down") << (desiredDriveState.forceDown ? " (forced)" : "")
-                      << "." << std::endl;
-      } else {
-        // We modified the comment so we will output that the comment was changed
-        cmdlineOutput << "a new comment." << std::endl;
-      }
+      action(tapeDriveName);
+      cmdlineOutput << "Drive " << tapeDriveName << ": set " << description << "." << std::endl;
     }
   }
   if (!is_found) {

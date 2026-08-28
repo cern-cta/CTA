@@ -428,20 +428,16 @@ void cta::ArchiveMount::complete() {
 cta::ArchiveMount::~ArchiveMount() noexcept = default;
 
 //------------------------------------------------------------------------------
-// setDriveStatus()
+// reportTapeSessionState()
 //------------------------------------------------------------------------------
-void cta::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status,
-                                       const std::optional<std::string>& reason) {
-  m_dbMount->setDriveStatus(status,
-                            getMountType(),
-                            std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()),
-                            reason);
+void cta::ArchiveMount::reportTapeSessionState(common::dataStructures::TapeSessionState state) {
+  m_dbMount->reportTapeSessionState(state, std::time(nullptr));
 }
 
 //------------------------------------------------------------------------------
 // setTapeSessionStats()
 //------------------------------------------------------------------------------
-void cta::ArchiveMount::setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) {
+void cta::ArchiveMount::setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) {
   m_dbMount->setTapeSessionStats(stats);
 }
 

@@ -14,6 +14,7 @@
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/dataStructures/PhysicalLibrary.hpp"
+#include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
@@ -994,33 +995,28 @@ void Scheduler::RepackReportBatch::report(log::LogContext& lc) {
   }
 }
 
+// TODO: there are bunch of drive-related methods here that have no business being in the scheduler
+// To be removed in a separate MR...
 //------------------------------------------------------------------------------
 // getDesiredDriveState
 //------------------------------------------------------------------------------
 common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const std::string& driveName,
-                                                                          log::LogContext& lc) {
-  utils::Timer t;
-  const auto optionalDriveState = m_catalogue.DriveState()->getTapeDrive(driveName);
-  if (!optionalDriveState.has_value()) {
-    throw NoSuchDrive("In Scheduler::getDesiredDriveState(): no such drive");
-  }
-  const auto& driveState = optionalDriveState.value();
-
-  common::dataStructures::DesiredDriveState desiredDriveState;
-  desiredDriveState.up = driveState.desiredUp;
-  desiredDriveState.forceDown = driveState.desiredForceDown;
-  desiredDriveState.reason = driveState.reasonUpDown;
-  desiredDriveState.comment = driveState.userComment;
-  return desiredDriveState;
+                                                                          log::LogContext&) {
+  return m_tapeDrivesState->getDesiredDriveState(driveName);
 }
 
-//------------------------------------------------------------------------------
-// setDesiredDriveState
-//------------------------------------------------------------------------------
-void Scheduler::setDesiredDriveState(const std::string& driveName,
-                                     const common::dataStructures::DesiredDriveState& desiredState,
-                                     log::LogContext& lc) {
-  m_tapeDrivesState->setDesiredDriveState(driveName, desiredState, lc);
+void Scheduler::requestDriveUp(const std::string& driveName, std::string_view reason, log::LogContext& lc) {
+  m_tapeDrivesState->requestDriveUp(driveName, reason, lc);
+}
+
+void Scheduler::requestDriveDown(const std::string& driveName,
+                                 const common::dataStructures::DriveDownRequest& request,
+                                 log::LogContext& lc) {
+  m_tapeDrivesState->requestDriveDown(driveName, request, lc);
+}
+
+void Scheduler::setDriveComment(const std::string& driveName, std::string_view comment, log::LogContext& lc) {
+  m_tapeDrivesState->setDriveComment(driveName, comment, lc);
 }
 
 bool Scheduler::checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo& driveInfo, log::LogContext& lc) {
@@ -1048,55 +1044,6 @@ void Scheduler::removeDrive(const std::string& driveName, log::LogContext& lc) c
   log::ScopedParamContainer spc(lc);
   spc.add("drive", driveName).add("schedulerDbTime", schedulerDbTime);
   lc.log(log::INFO, "In Scheduler::removeDrive(): success.");
-}
-
-//------------------------------------------------------------------------------
-// reportSchedulerBackendName
-//------------------------------------------------------------------------------
-void Scheduler::reportSchedulerBackendName(const std::string& driveName, log::LogContext& lc) {
-  utils::Timer t;
-  // Temporary for backward compatibility. Should be removed in the next catalogue upgrade as it should be a dedicated column
-  // in the drive state table
-  constexpr const char* schedulerBackendNameKey = "SchedulerBackendName";
-  auto driveConfig = m_catalogue.DriveConfig()->getTapeDriveConfig(driveName, schedulerBackendNameKey);
-  if (driveConfig) {
-    m_catalogue.DriveConfig()->modifyTapeDriveConfig(driveName,
-                                                     "general",
-                                                     schedulerBackendNameKey,
-                                                     m_schedulerBackendName,
-                                                     "TOML config file");
-  } else {
-    m_catalogue.DriveConfig()->createTapeDriveConfig(driveName,
-                                                     "general",
-                                                     schedulerBackendNameKey,
-                                                     m_schedulerBackendName,
-                                                     "TOML config file");
-  }
-  auto schedulerDbTime = t.secs();
-  log::ScopedParamContainer spc(lc);
-  spc.add("drive", driveName).add("schedulerDbTime", schedulerDbTime);
-  lc.log(log::INFO, "In Scheduler::reportSchedulerBackendName(): success.");
-}
-
-//------------------------------------------------------------------------------
-// reportDriveStatus
-//------------------------------------------------------------------------------
-void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
-                                  common::dataStructures::MountType type,
-                                  common::dataStructures::DriveStatus status,
-                                  log::LogContext& lc) {
-  utils::Timer t;
-  m_tapeDrivesState->reportDriveStatus(driveInfo,
-                                       type,
-                                       status,
-                                       std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()),
-                                       lc);
-  auto schedulerDbTime = t.secs();
-  if (schedulerDbTime > 1) {
-    log::ScopedParamContainer spc(lc);
-    spc.add("drive", driveInfo.driveName).add("schedulerDbTime", schedulerDbTime);
-    lc.log(log::DEBUG, "In Scheduler::reportDriveStatus(): success.");
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -1366,7 +1313,7 @@ void Scheduler::sortAndGetTapesForMountInfo(
       //The VO of this tapepool does not exist, abort the scheduling as we need it to know the number of allocated drives
       //the VO is allowed to use
       ex.getMessage() << " Aborting scheduling." << std::endl;
-      throw ex;
+      throw;
     }
   }
   std::optional<common::dataStructures::VirtualOrganization> defaultRepackVo =
@@ -2342,6 +2289,9 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
               .add("catalogueTime", catalogueTime);
             lc.log(log::INFO, "In Scheduler::getNextMount(): Selected next mount (archive)");
             return std::unique_ptr<TapeMount>(internalRet.release());
+          } catch (const exception::LostDatabaseConnection&) {
+            // Let the caller wait for backend recovery before attempting more candidates.
+            throw;
           } catch (cta::exception::Exception& ex) {
             log::ScopedParamContainer params(lc);
             params.add(semconv::log::exceptionMessage, ex.getMessage().str());
@@ -2422,6 +2372,9 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
           .add("catalogueTime", catalogueTime);
         lc.log(log::INFO, "In Scheduler::getNextMount(): Selected next mount (retrieve)");
         return std::unique_ptr<TapeMount>(internalRet.release());
+      } catch (const exception::LostDatabaseConnection&) {
+        // Let the caller wait for backend recovery before attempting more candidates.
+        throw;
       } catch (exception::Exception& ex) {
         log::ScopedParamContainer params(lc);
         params.add(semconv::log::exceptionMessage, ex.getMessage().str());
