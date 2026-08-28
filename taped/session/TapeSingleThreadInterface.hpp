@@ -10,9 +10,10 @@
 
 #pragma once
 
+#include "DriveUsability.hpp"
 #include "EncryptionControl.hpp"
-#include "Session.hpp"
 #include "TapeSessionStats.hpp"
+#include "TapeSessionTracker.hpp"
 #include "VolumeInfo.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
@@ -29,8 +30,6 @@
 namespace cta::tape::daemon {
 
 // Forward declaration
-class TapeSessionReporter;
-
 /**
  * This class is the base class for the 2 classes that will be executing
  * all tape-{read|write} tasks. The template parameter Task is the type of
@@ -52,8 +51,8 @@ protected:
   /** Reference to the mount interface */
   cta::mediachanger::MediaChangerFacade& m_mediaChanger;
 
-  /** Reference to the Global reporting interface */
-  TapeSessionReporter& m_reporter;
+  /** Shared session state and statistics. */
+  TapeSessionTracker& m_tracker;
 
   ///The volumeID of the tape on which we want to operate
   const std::string m_vid;
@@ -63,13 +62,32 @@ protected:
 
   VolumeInfo m_volInfo;
 
-  /**
-   * Integer to notify taped if the drive has to be put down or not.
-   */
-  Session::EndOfSessionAction m_hardwareStatus = Session::MARK_DRIVE_AS_UP;
+  bool m_loadingAttempted = false;
+
+  /** Whether the tape thread permits the drive to be reused. */
+  DriveUsability m_hardwareStatus = DriveUsability::Reusable;
 
   /** Session statistics */
-  TapeSessionStats m_stats;
+  TapeTransferStats m_stats;
+  double m_totalTime = 0;
+
+  /** Measure setup operations, including failed attempts, independently of transfer statistics. */
+  template<class Operation>
+  void measureSetupTime(double TapeSetupStats::* field, Operation operation) {
+    cta::utils::Timer timer;
+    const auto record = [&] {
+      TapeSetupStats stats;
+      stats.*field = timer.secs();
+      m_tracker.addTapeSetupStats(stats);
+    };
+    try {
+      operation();
+    } catch (...) {
+      record();
+      throw;
+    }
+    record();
+  }
 
   /** Encryption helper object */
   EncryptionControl m_encryptionControl;
@@ -86,6 +104,7 @@ protected:
     scoped.add("drive_Slot", librarySlot.str());
     try {
       cta::utils::Timer timer;
+      m_loadingAttempted = true;
       m_mediaChanger.mountTapeReadOnly(m_volInfo.vid, librarySlot);
       const std::string modeAsString = "R";
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
@@ -112,6 +131,7 @@ protected:
     scoped.add("drive_Slot", librarySlot.str());
     try {
       cta::utils::Timer timer;
+      m_loadingAttempted = true;
       m_mediaChanger.mountTapeReadWrite(m_volInfo.vid, librarySlot);
       const std::string modeAsString = "RW";
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
@@ -170,9 +190,8 @@ protected:
       m_logContext.log(cta::log::WARNING, "Tape alert detected");
     }
     // Add tape alerts in the tape log parameters
-    std::vector<std::string> tapeAlertsCompact = m_drive.getTapeAlertsCompact(tapeAlertCodes);
-    for (const auto& tac : tapeAlertsCompact) {
-      countTapeLogError(std::string("Error_") + tac);
+    for (const auto tapeAlertCode : tapeAlertCodes) {
+      countTapeAlert(tapeAlertCode);
     }
     return true;
   }
@@ -216,14 +235,17 @@ protected:
   }
 
   /**
-   * Helper virtual function allowing the access to the m_watchdog member
+   * Record a TapeAlert code in the session tracker.
    * in the inherited classes (TapeReadSingleThread and TapeWriteSingleThread)
    * @param error
    */
-  virtual void countTapeLogError(const std::string& error) = 0;
+  virtual void countTapeAlert(uint16_t tapeAlertCode) = 0;
 
 public:
-  Session::EndOfSessionAction getHardwareStatus() const { return m_hardwareStatus; }
+  DriveUsability getHardwareStatus() const { return m_hardwareStatus; }
+
+  // Read after joining the tape thread.
+  bool loadingAttempted() const { return m_loadingAttempted; }
 
   /**
    * Push into the class a sentinel value to trigger to end the the thread.
@@ -269,7 +291,7 @@ public:
    */
   TapeSingleThreadInterface(cta::tape::drive::DriveInterface& drive,
                             cta::mediachanger::MediaChangerFacade& mc,
-                            TapeSessionReporter& tsr,
+                            TapeSessionTracker& tracker,
                             const VolumeInfo& volInfo,
                             const cta::log::LogContext& lc,
                             const bool useEncryption,
@@ -277,7 +299,7 @@ public:
                             const uint32_t tapeLoadTimeout)
       : m_drive(drive),
         m_mediaChanger(mc),
-        m_reporter(tsr),
+        m_tracker(tracker),
         m_vid(volInfo.vid),
         m_logContext(lc),
         m_volInfo(volInfo),

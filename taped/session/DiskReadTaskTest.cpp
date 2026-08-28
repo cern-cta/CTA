@@ -8,11 +8,9 @@
 #include "MemBlock.hpp"
 #include "MigrationMemoryManager.hpp"
 #include "MigrationReportPacker.hpp"
-#include "TapedProxyMock.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
 #include "scheduler/ArchiveMount.hpp"
-#include "scheduler/TapeMountDummy.hpp"
 
 #include <cmath>
 #include <ext/stdio_filebuf.h>
@@ -82,23 +80,6 @@ unsigned long mycopy(T& out, int size) {
   return checksum;
 }
 
-class MockMigrationWatchDog : public MigrationWatchDog {
-public:
-  MockMigrationWatchDog(double periodToReport,
-                        double stuckPeriod,
-                        cta::tape::daemon::TapedProxy& initialProcess,
-                        cta::TapeMount& tapeMount,
-                        const std::string& driveUnitName,
-                        cta::log::LogContext lc,
-                        double pollPeriod = 0.1)
-      : MigrationWatchDog(periodToReport, stuckPeriod, initialProcess, tapeMount, driveUnitName, lc, pollPeriod) {}
-
-private:
-  virtual void logStuckFile() {}
-
-  virtual void run() {}
-};
-
 TEST(cta_tape_daemon, DiskReadTaskTest) {
   char path[] = "/tmp/testDRT-XXXXXX";
   ::close(::mkstemp(path));
@@ -129,10 +110,8 @@ TEST(cta_tape_daemon, DiskReadTaskTest) {
   cta::tape::daemon::DiskReadTask drt(ftwt, &file, blockNeeded, flag);
   DiskFileFactory fileFactory(0);
 
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> tspd;
-  cta::TapeMountDummy tmd;
-  MockMigrationWatchDog mmwd(1.0, 1.0, tspd, tmd, "", lc);
-  drt.execute(lc, fileFactory, mmwd, 0);
+  TapeSessionTracker tracker;
+  drt.execute(lc, fileFactory, tracker, 0);
 
   ASSERT_EQ(original_checksum, ftwt.getChecksum());
   delete ftwt.getFreeBlock();

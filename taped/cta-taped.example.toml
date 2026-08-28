@@ -99,10 +99,18 @@
   # If omitted, 10 is used.
   idle_scheduling_interval_secs = 10
 
+  # Delay between catalogue and scheduler backend connection checks after a lost database connection.
+  # If omitted, 10 is used.
+  backend_recovery_interval_secs = 10
+
   # Delay, in seconds, before polling the desired drive state again while the drive is Down.
   # Lower values make cta-taped react faster when an operator sets the drive Up but increase scheduler polling.
   # If omitted, 5 is used.
   drive_state_poll_interval_secs = 5
+
+  # Delay before checking again for a logical library that does not yet exist.
+  # If omitted, 5 is used.
+  logical_library_poll_interval_secs = 5
 
   # Maximum time, in seconds, that the drive process may remain in the overall mounting state. This includes
   # the RMCD request and the physical tape-load readiness check. On expiry, the drive process is killed and
@@ -141,6 +149,10 @@
   # disk I/O concurrently. Increasing it may improve parallelism but raises disk, network, and CPU load.
   # If omitted, 10 is used.
   disk_io_threads = 10
+
+  # Interval, in seconds, between periodic tape-session statistics reports. Must be greater than zero.
+  # If omitted, 15 is used. Final statistics are reported when the session finishes.
+  stats_report_interval_secs = 15
 
   # Interval, in seconds, after which a file with no tape-block movement is logged as stuck. This setting 
   # only controls reporting and does not end the transfer. Independently, cta-taped currently enforces a 

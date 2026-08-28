@@ -424,14 +424,6 @@ def test_cta_admin_drive(cta_cli: CtaCliHost, cta_taped: CtaTapedHost) -> None:
 
     # Restart taped for the drive in question to ensure it ends up back in the catalogue again
     cta_taped.restart(wait_for_restart=True)
-    # Until taped gets a correct readiness probe, we need this to ensure the drive registers itself in the catalogue.
-    # Ideally this is more deterministic...
-    wait_for_condition(
-        lambda: (
-            cta_cli.exec_with_output(f"cta-admin --json dr ls {dr_name} | jq -r '.[].reason'", throw_on_failure=False)
-            == "[cta-taped] INFO Startup"
-        )
-    )
     cta_cli.set_all_drives_up(wait=True)
     # Since dr ls has things like "time since" in its output, we need to filter certain keys
     ls_after = cta_cli.exec_with_output("cta-admin --json dr ls")

@@ -10,7 +10,7 @@
 #include "DataPipeline.hpp"
 #include "RecallMemoryManager.hpp"
 #include "TapeSessionStats.hpp"
-#include "TaskWatchDog.hpp"
+#include "TapeSessionTracker.hpp"
 #include "TransferTaskTracker.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/semconv/Attributes.hpp"
@@ -19,6 +19,7 @@
 #include "telemetry/metrics/TapedMetrics.hpp"
 
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace cta::tape::daemon {
@@ -45,8 +46,8 @@ public:
      */
   void execute(tapeFile::ReadSession& rs,
                cta::log::LogContext& lc,
-               RecallWatchDog& watchdog,
-               TapeSessionStats& stats,
+               TapeSessionTracker& tracker,
+               TapeTransferStats& stats,
                cta::utils::Timer& timer) {
     [[maybe_unused]] TransferTaskTracker transferTaskTracer(cta::semconv::attr::CtaIoDirectionValues::kRead,
                                                             cta::semconv::attr::CtaIoMediumValues::kTape);
@@ -66,7 +67,8 @@ public:
 
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.
-    TapeSessionStats localStats;
+    TapeTransferStats localStats;
+    double waitReportingTime = 0;
     std::string LBPMode;
     cta::utils::Timer localTime;
     cta::utils::Timer totalTime(localTime);
@@ -81,20 +83,22 @@ public:
     // process we're in, and to count the error if it occurs.
     // We will not record errors for an empty string. This will allow us to
     // prevent counting where error happened upstream.
-    std::string currentErrorToCount = "";
+    std::optional<TapeSessionError> currentErrorToCount;
     MemBlock* mb = nullptr;
     try {
-      currentErrorToCount = "Error_tapePositionForRead";
+      currentErrorToCount = TapeSessionError::TapePositionForRead;
       auto reader = openFileReader(rs, lc);
       LBPMode = reader->getLBPMode();
       // At that point we already read the header.
-      localStats.headerVolume += TapeSessionStats::headerVolumePerFile;
+      localStats.headerVolume += TapeTransferStats::headerVolumePerFile;
 
       lc.log(cta::log::INFO, "Successfully positioned for reading");
       localStats.positionTime += timer.secs(cta::utils::Timer::resetCounter);
-      watchdog.notifyBeginNewJob(m_retrieveJob->archiveFile.archiveFileID, m_retrieveJob->selectedTapeFile().fSeq);
-      localStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
-      currentErrorToCount = "Error_tapeReadData";
+      tracker.notifyBeginNewJob(m_retrieveJob->archiveFile.archiveFileID, m_retrieveJob->selectedTapeFile().fSeq);
+      const auto beginReportingTime = timer.secs(cta::utils::Timer::resetCounter);
+      waitReportingTime += beginReportingTime;
+      tracker.addDiskTransferStats({.waitReportingTime = beginReportingTime});
+      currentErrorToCount = TapeSessionError::TapeReadData;
       auto checksum_adler32 = Payload::zeroAdler32();
       cta::checksum::ChecksumBlob tapeReadChecksum;
       while (stillReading) {
@@ -140,15 +144,17 @@ public:
         // Pass the block to the disk write task
         m_fifo.pushDataBlock(mb);
         mb = nullptr;
-        watchdog.notify(blockSize);
-        localStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
+        tracker.notifyBlockMovement(blockSize);
+        const auto blockReportingTime = timer.secs(cta::utils::Timer::resetCounter);
+        waitReportingTime += blockReportingTime;
+        tracker.addDiskTransferStats({.waitReportingTime = blockReportingTime});
       }  //end of while(stillReading)
       // We have to signal the end of the tape read to the disk write task.
       m_fifo.pushDataBlock(nullptr);
       // Log the successful transfer
-      localStats.totalTime = localTime.secs();
+      const double taskTime = localTime.secs();
       // Count the trailer size
-      localStats.headerVolume += TapeSessionStats::trailerVolumePerFile;
+      localStats.headerVolume += TapeTransferStats::trailerVolumePerFile;
       // We now transmitted one file:
       localStats.filesCount++;
       if (isRepack) {
@@ -161,17 +167,14 @@ public:
       params.add("positionTime", localStats.positionTime)
         .add("readWriteTime", localStats.readWriteTime)
         .add("waitFreeMemoryTime", localStats.waitFreeMemoryTime)
-        .add("waitReportingTime", localStats.waitReportingTime)
+        .add("waitReportingTime", waitReportingTime)
         .add("transferTime", localStats.transferTime())
-        .add("totalTime", localStats.totalTime)
+        .add("totalTime", taskTime)
         .add("dataVolume", localStats.dataVolume)
         .add("headerVolume", localStats.headerVolume)
         .add("driveTransferSpeedMBps",
-             localStats.totalTime ?
-               (1.0 * localStats.dataVolume + 1.0 * localStats.headerVolume) / 1000 / 1000 / localStats.totalTime :
-               0)
-        .add("payloadTransferSpeedMBps",
-             localStats.totalTime ? 1.0 * localStats.dataVolume / 1000 / 1000 / localStats.totalTime : 0)
+             taskTime ? (1.0 * localStats.dataVolume + 1.0 * localStats.headerVolume) / 1000 / 1000 / taskTime : 0)
+        .add("payloadTransferSpeedMBps", taskTime ? 1.0 * localStats.dataVolume / 1000 / 1000 / taskTime : 0)
         .add("LBPMode", LBPMode)
         .add("repackFilesCount", localStats.repackFilesCount)
         .add("repackBytesCount", localStats.repackBytesCount)
@@ -202,7 +205,7 @@ public:
       //-- openReadFile brought us here (can't position to the file)
       //-- m_payload.append brought us here (error while reading the file)
       //-- checksum validation failed (after reading the last block from tape)
-      // Record the error in the watchdog
+      // Record the error in the session tracker.
       cta::telemetry::metrics::ctaTapedTransferFileCount->Add(
         1,
         {
@@ -210,8 +213,8 @@ public:
           {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kTape   },
           {cta::semconv::attr::kErrorType,      cta::semconv::attr::ErrorTypeValues::kException}
       });
-      if (currentErrorToCount.size()) {
-        watchdog.addToErrorCount(currentErrorToCount);
+      if (currentErrorToCount) {
+        tracker.incrementError(*currentErrorToCount);
       }
       // This is an error case. Log and signal to the disk write task
       {
@@ -228,7 +231,7 @@ public:
       // reportErrorToDiskTask will deal with the allocation if required.
       reportErrorToDiskTask(ex.getMessageValue(), mb);
     }  //end of catch
-    watchdog.fileFinished();
+    tracker.fileFinished();
   }
 
   /**

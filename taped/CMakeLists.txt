@@ -7,25 +7,32 @@ add_subdirectory (system)
 add_subdirectory (file)
 add_subdirectory (session)
 add_subdirectory (rao)
-add_subdirectory (daemon)
 
 add_library(ctatapedutils
   TapedUtils.cpp
 )
 target_link_libraries(ctatapedutils PUBLIC ctaruntime)
-target_link_libraries(ctatapedaemon ctatapedutils)
 
 add_library(ctataped
   TapedApp.cpp
+  DriveController.cpp
+  SystemDriveOperations.cpp
 )
 
 target_link_libraries(ctataped
 	ctacommon
   ctaruntime
+	ctatapedsession
 	ctatelemetrytaped
-	ctatapedaemon
 	ctatapedutils
+  ${PROTOBUF3_LIBRARIES}
 )
+
+add_library(ctatapedunittests SHARED DriveControllerTest.cpp)
+set_property(TARGET ctatapedunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctatapedunittests PROPERTY VERSION "${CTA_LIBVERSION}")
+target_link_libraries(ctatapedunittests PRIVATE ctataped gtest gmock)
+install(TARGETS ctatapedunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 add_executable (cta-taped cta-taped.cpp)
 target_link_libraries(cta-taped ctataped ctaruntime)

@@ -4,7 +4,7 @@
 find_package(ZLIB REQUIRED)
 
 set(CTATAPEDSESSION_LIBRARY_SRCS
-  CleanerSession.cpp
+  DriveCleaner.cpp
   DiskReadThreadPool.cpp
   DiskReadTask.cpp
   DiskWriteTask.cpp
@@ -15,17 +15,15 @@ set(CTATAPEDSESSION_LIBRARY_SRCS
   MigrationMemoryManager.cpp
   MigrationReportPacker.cpp
   MigrationTaskInjector.cpp
-  DataTransferSession.cpp
+  TapeSession.cpp
   RecallMemoryManager.cpp
   RecallTaskInjector.cpp
   RecallReportPacker.cpp
-  Session.cpp
   TapeReadSingleThread.cpp
   TapeWriteSingleThread.cpp
   TapeWriteTask.cpp
   TransferTaskTracker.cpp
-  DriveSessionTracker.cpp
-  SessionState.cpp
+  TapeSessionState.cpp
   SessionType.cpp)
 
 add_library(ctatapedsession
@@ -33,28 +31,32 @@ add_library(ctatapedsession
 
 target_link_libraries(ctatapedsession
   ctacommon
+  ctaruntime
   ctascheduler
   ctacatalogue
   ctamediachanger
   ctatapeddrive
+  ctatapedfile
   ctatapedrao
   ctatelemetrytaped
   ZLIB::ZLIB)
 
 add_library(ctatapedsessionunittests SHARED
-  CleanerSessionTest.cpp
-  DataTransferSessionTest.cpp
+  DriveCleanerTest.cpp
+  TapeSessionTest.cpp
   DiskReadTaskTest.cpp
   DiskWriteTaskTest.cpp
   DiskWriteThreadPoolTest.cpp
   MigrationReportPackerTest.cpp
   RecallReportPackerTest.cpp
   RecallTaskInjectorTest.cpp
-  TaskWatchDogTest.cpp
+  TapeSessionReporterTest.cpp
+  TapeSessionTrackerTest.cpp
+  TapedMetricsTest.cpp
 )
 set_property(TARGET ctatapedsessionunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedsessionunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
-target_link_libraries(ctatapedsessionunittests PRIVATE ctatapedsession)
+target_link_libraries(ctatapedsessionunittests PRIVATE ctatapedsession opentelemetry-cpp::metrics)
 if (NOT CTA_USE_PGSCHED)
   target_link_libraries(ctatapedsessionunittests PRIVATE ctaobjectstore)
 endif()

@@ -66,7 +66,9 @@ data:
       scheduling_timeout_secs = {{ $.Values.mounts.schedulingTimeoutSecs }}
       get_next_mount_timeout_secs = {{ $.Values.mounts.getNextMountTimeoutSecs }}
       idle_scheduling_interval_secs = {{ $.Values.mounts.idleSchedulingIntervalSecs }}
+      backend_recovery_interval_secs = {{ $.Values.mounts.backendRecoveryIntervalSecs }}
       drive_state_poll_interval_secs = {{ $.Values.mounts.driveStatePollIntervalSecs }}
+      logical_library_poll_interval_secs = {{ $.Values.mounts.logicalLibraryPollIntervalSecs }}
       mount_timeout_secs = {{ $.Values.mounts.mountTimeoutSecs }}
       tape_load_timeout_secs = {{ $.Values.mounts.tapeLoadTimeoutSecs }}
       unmount_timeout_secs = {{ $.Values.mounts.unmountTimeoutSecs }}
@@ -81,6 +83,7 @@ data:
       buffer_count = {{ $.Values.transfers.bufferCount }}
       buffer_size_bytes = {{ $.Values.transfers.bufferSizeBytes }}
       disk_io_threads = {{ $.Values.transfers.diskIoThreads }}
+      stats_report_interval_secs = {{ $.Values.transfers.statsReportIntervalSecs }}
       no_block_move_timeout_secs = {{ $.Values.transfers.noBlockMoveTimeoutSecs }}
 
     [transfers.archive]

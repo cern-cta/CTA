@@ -19,11 +19,11 @@ namespace cta::tape::daemon {
 DiskReadThreadPool::DiskReadThreadPool(int nbThread,
                                        uint64_t maxFilesReq,
                                        uint64_t maxBytesReq,
-                                       cta::tape::daemon::MigrationWatchDog& migrationWatchDog,
+                                       TapeSessionTracker& tracker,
                                        const cta::log::LogContext& lc,
                                        uint16_t xrootTimeout)
     : m_xrootTimeout(xrootTimeout),
-      m_watchdog(migrationWatchDog),
+      m_tracker(tracker),
       m_lc(lc),
       m_maxFilesReq(maxFilesReq),
       m_maxBytesReq(maxBytesReq) {
@@ -150,7 +150,7 @@ void DiskReadThreadPool::DiskReadWorkerThread::run() {
     task.reset(m_parent.popAndRequestMore(m_lc));
     m_threadStat.waitInstructionsTime += localTime.secs(cta::utils::Timer::resetCounter);
     if (nullptr != task.get()) {
-      task->execute(m_lc, m_diskFileFactory, m_parent.m_watchdog, m_threadID);
+      task->execute(m_lc, m_diskFileFactory, m_parent.m_tracker, m_threadID);
       m_threadStat += task->getTaskStats();
     } else {
       break;

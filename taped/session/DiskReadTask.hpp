@@ -9,7 +9,7 @@
 #include "DataPipeline.hpp"
 #include "DiskStats.hpp"
 #include "ErrorFlag.hpp"
-#include "TaskWatchDog.hpp"
+#include "TapeSessionTracker.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/process/threading/AtomicFlag.hpp"
 #include "disk/DiskFile.hpp"
@@ -29,7 +29,7 @@ public:
                cta::threading::AtomicFlag& errorFlag);
 
   void
-  execute(cta::log::LogContext& lc, cta::disk::DiskFileFactory& fileFactory, MigrationWatchDog& watchdog, int threadID);
+  execute(cta::log::LogContext& lc, cta::disk::DiskFileFactory& fileFactory, TapeSessionTracker& tracker, int threadID);
 
   /**
    * Return the stats of the tasks

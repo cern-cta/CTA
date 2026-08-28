@@ -9,8 +9,8 @@
 #include "DataPipeline.hpp"
 #include "MigrationMemoryManager.hpp"
 #include "TapeSessionStats.hpp"
+#include "TapeSessionTracker.hpp"
 #include "TapeWriteSingleThread.hpp"
-#include "TaskWatchDog.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/process/threading/AtomicFlag.hpp"
 #include "common/process/threading/Thread.hpp"
@@ -30,7 +30,6 @@ CTA_GENERATE_EXCEPTION_CLASS(RecoverableMigrationErrorException);
 
 class MigrationReportPacker;
 class Memblock;
-class TapeSessionStats;
 
 /**
  * The TapeWriteFileTask is responsible to write a single file onto tape as part of a migration
@@ -65,7 +64,7 @@ public:
    */
   virtual void execute(cta::tape::tapeFile::WriteSession& session,
                        MigrationReportPacker& reportPacker,
-                       MigrationWatchDog& watchdog,
+                       TapeSessionTracker& tracker,
                        cta::log::LogContext& lc,
                        cta::utils::Timer& timer);
 
@@ -105,7 +104,7 @@ public:
    * Return the task stats. Should only be called after execute
    * @return
    */
-  const TapeSessionStats& getTaskStats() const;
+  const TapeTransferStats& getTaskStats() const;
 
   /**
     * Return ArchiveJob reference
@@ -182,7 +181,9 @@ private:
   /**
    * Stats
    */
-  TapeSessionStats m_taskStats;
+  TapeTransferStats m_taskStats;
+  double m_totalTime = 0;
+  double m_waitReportingTime = 0;
 
   /**
    * LBP mode tracking
