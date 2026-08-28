@@ -170,7 +170,7 @@ target_link_libraries (ctacommon
 )
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
-  auth/JwtCacheTest.cpp
+  auth/JwkCacheTest.cpp
   auth/JwtValidationTest.cpp
   checksum/ChecksumBlobTest.cpp
   checksum/CRCTest.cpp
@@ -218,8 +218,7 @@ set_property(TARGET ctacommonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 
 set (AUTH_LIB_SRC_FILES
-  auth/JwtCache.cpp
-  auth/JwtValidation.cpp
+  auth/Jwt.cpp
 )
 
 find_package(OpenSSL REQUIRED)

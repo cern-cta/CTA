@@ -7,7 +7,7 @@
 
 #include "ServerDefaultReactor.hpp"
 #include "ServerVersion.hpp"
-#include "common/auth/JwtCache.hpp"
+#include "common/auth/Jwt.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
@@ -72,7 +72,7 @@ public:
                    uint64_t missingFileCopiesMinAgeSecs,
                    const cta::log::LogContext& logContext,
                    std::set<AuthMethod, std::less<>> authMethods,
-                   std::shared_ptr<cta::auth::JwtCache> pubkeyCache,
+                   std::shared_ptr<cta::auth::JwtAuthManager> jwtAuthManager,
                    server::TokenStorage& tokenStorage)
       : m_lc(logContext),
         m_catalogue(catalogue),
@@ -82,7 +82,7 @@ public:
         m_catalogueConnString(connstr),
         m_missingFileCopiesMinAgeSecs(missingFileCopiesMinAgeSecs),
         m_authMethods(authMethods),
-        m_pubkeyCache(pubkeyCache),
+        m_jwtAuthManager(jwtAuthManager),
         m_tokenStorage(tokenStorage) {}
 
   /* gRPC expects the return type of an RPC implemented using the callback API to be
@@ -92,16 +92,16 @@ public:
                                                                            const cta::xrd::Request* request) final;
 
 private:
-  cta::log::LogContext m_lc;                           // <! Provided by the frontendService
-  cta::catalogue::Catalogue& m_catalogue;              //!< Reference to CTA Catalogue
-  cta::Scheduler& m_scheduler;                         //!< Reference to CTA Scheduler
-  std::string m_instanceName;                          //!< Instance name
-  cta::SchedulerDB_t& m_schedDb;                       //!< Reference to CTA SchedulerDB
-  std::string m_catalogueConnString;                   //!< Provided by frontendService
-  uint64_t m_missingFileCopiesMinAgeSecs;              //!< Provided by the frontendService
-  std::set<AuthMethod, std::less<>> m_authMethods;     //!< The authentication methods used
-  std::shared_ptr<cta::auth::JwtCache> m_pubkeyCache;  //!< Shared JWK cache for token validation
-  server::TokenStorage& m_tokenStorage;                //!< Required for Kerberos token validation
+  cta::log::LogContext m_lc;                                    // <! Provided by the frontendService
+  cta::catalogue::Catalogue& m_catalogue;                       //!< Reference to CTA Catalogue
+  cta::Scheduler& m_scheduler;                                  //!< Reference to CTA Scheduler
+  std::string m_instanceName;                                   //!< Instance name
+  cta::SchedulerDB_t& m_schedDb;                                //!< Reference to CTA SchedulerDB
+  std::string m_catalogueConnString;                            //!< Provided by frontendService
+  uint64_t m_missingFileCopiesMinAgeSecs;                       //!< Provided by the frontendService
+  std::set<AuthMethod, std::less<>> m_authMethods;              //!< The authentication methods used
+  std::shared_ptr<cta::auth::JwtAuthManager> m_jwtAuthManager;  //!< Shared JWK cache for token validation
+  server::TokenStorage& m_tokenStorage;                         //!< Required for Kerberos token validation
 };
 
 // request object will be filled in by the Parser of the command on the client-side.
@@ -110,12 +110,9 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
   // Authenticate the request using JWT if enabled
   cta::log::LogContext lc(m_lc);
   // get the client metadata for authentication
-  auto client_metadata = context->client_metadata();
-  auto usingJWT = std::ranges::find(m_authMethods, AuthMethod::JWT) != std::end(m_authMethods);
-
+  const auto client_metadata = context->client_metadata();
   auto [status, clientIdentity] = cta::frontend::grpc::common::extractAuthHeaderAndValidate(client_metadata,
-                                                                                            usingJWT,
-                                                                                            m_pubkeyCache,
+                                                                                            m_jwtAuthManager,
                                                                                             m_tokenStorage,
                                                                                             m_instanceName,
                                                                                             context->peer(),

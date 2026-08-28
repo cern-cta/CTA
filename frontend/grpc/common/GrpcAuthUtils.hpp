@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "common/auth/JwtCache.hpp"
+#include "common/auth/Jwt.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/LogContext.hpp"
 #include "frontend/grpc/TokenStorage.hpp"
@@ -20,8 +20,7 @@ namespace cta::frontend::grpc::common {
  * Extract and validate JWT authorization header from gRPC metadata
  *
  * @param client_metadata The gRPC client metadata containing authorization header
- * @param jwtAuthEnabled Whether JWT authentication is enabled
- * @param pubkeyCache Shared pointer to the JWK cache for token validation (can be nullptr if JWT auth is disabled)
+ * @param jwtAuthManager Shared pointer to the JwtAuthManager for token validation (can be nullptr if JWT auth is disabled)
  * @param instanceName The instance name to use when JWT auth is disabled
  * @param peer The peer connection string
  * @param lc Log context for logging
@@ -29,8 +28,7 @@ namespace cta::frontend::grpc::common {
  */
 std::pair<::grpc::Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
 extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::string_ref>& client_metadata,
-                             bool jwtAuthEnabled,
-                             std::shared_ptr<cta::auth::JwtCache> pubkeyCache,
+                             std::shared_ptr<cta::auth::JwtAuthManager> jwtAuthManager,
                              server::TokenStorage& tokenStorage,
                              const std::string& ourInstance,
                              const std::string& clientHost,

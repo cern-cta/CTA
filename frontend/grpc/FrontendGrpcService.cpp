@@ -7,7 +7,7 @@
 #include "FrontendGrpcService.hpp"
 
 #include "catalogue/Catalogue.hpp"
-#include "common/auth/JwtValidation.hpp"
+#include "common/auth/Jwt.hpp"
 #include "common/checksum/ChecksumBlobSerDeser.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/LogLevel.hpp"
@@ -70,14 +70,12 @@ CtaRpcImpl::checkWFERequestAuthMetadata(::grpc::ServerContext* context,
   } else if (m_frontendService->usesAuthMethod(AuthMethod::JWT)) {
     const auto& metadata = context->client_metadata();
 
-    auto [status, clientIdentity] =
-      cta::frontend::grpc::common::extractAuthHeaderAndValidate(metadata,
-                                                                m_frontendService->usesAuthMethod(AuthMethod::JWT),
-                                                                m_pubkeyCache,
-                                                                m_tokenStorage,
-                                                                ourInstance,
-                                                                context->peer(),
-                                                                lc);
+    auto [status, clientIdentity] = cta::frontend::grpc::common::extractAuthHeaderAndValidate(metadata,
+                                                                                              m_jwtAuthManager,
+                                                                                              m_tokenStorage,
+                                                                                              ourInstance,
+                                                                                              context->peer(),
+                                                                                              lc);
     return {status, clientIdentity};
   } else {
     // this condition should be caught at config time, so this should be dead code.
@@ -342,8 +340,7 @@ CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* reque
 
   auto [status, clientIdentity] =
     cta::frontend::grpc::common::extractAuthHeaderAndValidate(metadata,
-                                                              m_frontendService->usesAuthMethod(AuthMethod::JWT),
-                                                              m_pubkeyCache,
+                                                              m_jwtAuthManager,
                                                               m_tokenStorage,
                                                               m_frontendService->getInstanceName(),
                                                               context->peer(),
@@ -399,9 +396,9 @@ CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* reque
  * and makes the rpc calls available through this class
  */
 CtaRpcImpl::CtaRpcImpl(std::shared_ptr<cta::frontend::FrontendService> frontendService,
-                       std::shared_ptr<cta::auth::JwtCache> pubkeyCache,
+                       std::shared_ptr<cta::auth::JwtAuthManager> jwtAuthManager,
                        server::TokenStorage& tokenStorage)
     : m_frontendService(frontendService),
-      m_pubkeyCache(pubkeyCache),
+      m_jwtAuthManager(jwtAuthManager),
       m_tokenStorage(tokenStorage) {}
 }  // namespace cta::frontend::grpc

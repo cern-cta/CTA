@@ -9,7 +9,7 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "catalogue/SchemaVersion.hpp"
-#include "common/auth/JwtCache.hpp"
+#include "common/auth/Jwt.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/StdoutLogger.hpp"
@@ -65,7 +65,7 @@ const static struct option long_options[] = {
   exit(0);
 }
 
-void JwksCacheRefreshLoop(std::weak_ptr<cta::auth::JwtCache> weakCache,
+void JwksCacheRefreshLoop(std::weak_ptr<cta::auth::JwtAuthManager> weakAuthManager,
                           std::future<void> shouldStopThread,
                           int cacheRefreshInterval,
                           const log::LogContext& lc) {
@@ -73,14 +73,14 @@ void JwksCacheRefreshLoop(std::weak_ptr<cta::auth::JwtCache> weakCache,
   threadLc.log(log::INFO, "Detached JWKS cache refresh thread started");
 
   while (shouldStopThread.wait_for(std::chrono::seconds(cacheRefreshInterval)) == std::future_status::timeout) {
-    auto cache = weakCache.lock();
-    if (!cache) {
-      threadLc.log(log::INFO, "JwtCache no longer exists, exiting JWKS cache refresh thread");
+    auto jwtConfig = weakAuthManager.lock();
+    if (!jwtConfig) {
+      threadLc.log(log::INFO, "jwtAuthManager no longer exists, exiting JWKS cache refresh thread");
       break;  // Cache destroyed
     }
     time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     threadLc.log(log::INFO, "Updating the JWKS cache");
-    cache->updateCache(now);
+    jwtConfig->updateCache(now);
   }
   threadLc.log(log::INFO, "Detached JWKS cache refresh thread ended");
 }
@@ -122,14 +122,14 @@ int main(const int argc, char* const* const argv) {
 
   const auto jwtConfig = grpcConfig->auth.jwt;
 
-  std::shared_ptr<cta::auth::JwtCache> jwkCache;
+  std::shared_ptr<cta::auth::JwtAuthManager> jwtAuthManager;
   std::optional<std::jthread> cacheRefreshThread;
   std::promise<void> shouldStopThreadPromise;
 
   if (jwtConfig.has_value() && jwtConfig->enabled) {
     // Build the shared JWK cache
     auto jwksFetcher {std::make_unique<cta::auth::CurlJwksFetcher>(jwtConfig->jwks_total_timeout)};
-    jwkCache = std::make_shared<cta::auth::JwtCache>(
+    jwtAuthManager = std::make_shared<cta::auth::JwtAuthManager>(
       std::move(jwksFetcher),
       jwtConfig->jwks_uri,
       jwtConfig->pub_key_timeout,
@@ -153,13 +153,13 @@ int main(const int argc, char* const* const argv) {
       lc.log(log::INFO, std::string("JWT authentication enabled"));
     }
 
-    std::weak_ptr<cta::auth::JwtCache> weakCache {jwkCache};
+    std::weak_ptr<cta::auth::JwtAuthManager> weakAuthManager {jwtAuthManager};
     std::future<void> shouldStopThreadFuture {shouldStopThreadPromise.get_future()};
 
     // Set up the refresh thread
     lc.log(log::INFO, "Starting the cache refresh thread for JWKS cache");
     cacheRefreshThread = std::jthread(JwksCacheRefreshLoop,
-                                      weakCache,
+                                      weakAuthManager,
                                       std::move(shouldStopThreadFuture),
                                       jwtConfig->cache_refresh_interval,
                                       std::cref(lc));
@@ -169,8 +169,7 @@ int main(const int argc, char* const* const argv) {
   cta::frontend::grpc::server::TokenStorage tokenStorage;
 
   // Initialize RPC service with shared frontend service and cache
-  frontend::grpc::CtaRpcImpl svc(frontendService, jwkCache, tokenStorage);
-  std::weak_ptr<cta::auth::JwtCache> weakCache = jwkCache;
+  frontend::grpc::CtaRpcImpl svc(frontendService, jwtAuthManager, tokenStorage);
 
   lc.log(log::INFO, "Starting cta-frontend-grpc");
 
@@ -284,7 +283,7 @@ int main(const int argc, char* const* const argv) {
                                              frontendService->getMissingFileCopiesMinAgeSecs(),
                                              frontendService->getLogContext(),
                                              frontendService->getAuthMethods(),
-                                             jwkCache,
+                                             jwtAuthManager,
                                              tokenStorage);
   builder.RegisterService(&streamSvc);
 

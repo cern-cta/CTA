@@ -13,7 +13,7 @@
 
 // need to implement health check for our CI
 #include "TokenStorage.hpp"
-#include "common/auth/JwtCache.hpp"
+#include "common/auth/Jwt.hpp"
 #include "common/log/Logger.hpp"
 #include "frontend/common/AdminCmd.hpp"
 #include "frontend/common/FrontendService.hpp"
@@ -40,12 +40,12 @@ class CtaRpcImpl : public CtaRpc::Service {
 private:
   std::shared_ptr<cta::frontend::FrontendService> m_frontendService;
   ::grpc::HealthCheckServiceInterface* m_healthCheckService = nullptr;
-  std::shared_ptr<cta::auth::JwtCache> m_pubkeyCache;
+  std::shared_ptr<cta::auth::JwtAuthManager> m_jwtAuthManager;
   server::TokenStorage& m_tokenStorage;  // required for the Admin rpc for Kerberos token validation
 
 public:
   CtaRpcImpl(std::shared_ptr<cta::frontend::FrontendService> frontendService,
-             std::shared_ptr<cta::auth::JwtCache> pubkeyCache,
+             std::shared_ptr<cta::auth::JwtAuthManager> jwtAuthManager,
              server::TokenStorage& tokenStorage);
 
   FrontendService& getFrontendService() const { return *m_frontendService; }

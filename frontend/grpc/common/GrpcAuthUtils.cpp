@@ -5,7 +5,7 @@
 
 #include "GrpcAuthUtils.hpp"
 
-#include "common/auth/JwtValidation.hpp"
+#include "common/auth/Jwt.hpp"
 #include "common/log/LogLevel.hpp"
 
 using ::grpc::Status;
@@ -40,8 +40,7 @@ validateKrb5Token(const std::string& token, server::TokenStorage& tokenStorage, 
 
 std::pair<Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
 extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::string_ref>& client_metadata,
-                             bool jwtAuthEnabled,
-                             std::shared_ptr<cta::auth::JwtCache> pubkeyCache,
+                             std::shared_ptr<cta::auth::JwtAuthManager> jwtAuthManager,
                              server::TokenStorage& tokenStorage,
                              const std::string& ourInstance,
                              const std::string& clientHost,
@@ -57,7 +56,7 @@ extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::str
     auto auth_header = std::string(r.data(), r.size());  // "Bearer <token>" or "Negotiate <token>"
     if (auth_header.starts_with("Bearer")) {
       // JWT Auth
-      if (!jwtAuthEnabled) {
+      if (!jwtAuthManager) {
         return {Status(StatusCode::UNAUTHENTICATED, "Token authentication disabled on the CTA Frontend"), std::nullopt};
       }
       // Extract the token part, use substr(7) because that is the length of "Bearer" plus a space character
@@ -67,7 +66,7 @@ extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::str
         return {Status(StatusCode::UNAUTHENTICATED, "Missing Authorization token"), std::nullopt};
       }
 
-      auto validationResult = cta::auth::ValidateJwt(token, *pubkeyCache, lc);
+      auto validationResult = jwtAuthManager->validateJwt(token, lc);
 
       if (validationResult.isValid) {
         lc.log(cta::log::DEBUG, "JWT token validation successful. Client host: '" + clientHost + "'");
