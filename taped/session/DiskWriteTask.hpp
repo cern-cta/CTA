@@ -10,7 +10,7 @@
 #include "DiskStats.hpp"
 #include "RecallMemoryManager.hpp"
 #include "RecallReportPacker.hpp"
-#include "TaskWatchDog.hpp"
+#include "TapeSessionTracker.hpp"
 #include "taped/file/FileWriter.hpp"
 
 #include <memory>
@@ -40,7 +40,7 @@ public:
   virtual bool execute(RecallReportPacker& reporter,
                        cta::log::LogContext& lc,
                        cta::disk::DiskFileFactory& fileFactory,
-                       RecallWatchDog& watchdog,
+                       TapeSessionTracker& tracker,
                        int threadID);
 
   /**

@@ -29,6 +29,7 @@ add_executable(cta-test-basic-read-write
   BasicReadWriteTest.cpp)
 
 target_link_libraries(cta-test-basic-read-write
+  ctatapedfile
   ctatapeddrive
   ctamediachanger
   ctascsi
@@ -56,6 +57,7 @@ add_library(ctatapedfileunittests SHARED
 target_include_directories(ctatapedfileunittests PRIVATE ${XROOTD_INCLUDE_DIR})
 
 target_link_libraries(ctatapedfileunittests
+  ctatapedfile
   ctadisk
 )
 

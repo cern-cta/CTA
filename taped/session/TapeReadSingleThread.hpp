@@ -7,8 +7,8 @@
 
 #include "RecallReportPacker.hpp"
 #include "TapeReadTask.hpp"
+#include "TapeSessionTracker.hpp"
 #include "TapeSingleThreadInterface.hpp"
-#include "TaskWatchDog.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
 #include "common/process/threading/Thread.hpp"
 #include "common/utils/Timer.hpp"
@@ -20,8 +20,6 @@
 #include <stdio.h>
 
 namespace cta::tape::daemon {
-
-class TapeSessionReporter;
 
 class RecallTaskInjector;
 
@@ -36,10 +34,9 @@ public:
    */
   TapeReadSingleThread(cta::tape::drive::DriveInterface& drive,
                        cta::mediachanger::MediaChangerFacade& mediaChanger,
-                       TapeSessionReporter& reporter,
+                       TapeSessionTracker& tracker,
                        const VolumeInfo& volInfo,
                        uint64_t maxFilesRequest,
-                       RecallWatchDog& watchdog,
                        const cta::log::LogContext& logContext,
                        RecallReportPacker& reportPacker,
                        const bool useLbp,
@@ -108,9 +105,6 @@ private:
   ///a pointer to task injector, thus we can ask him for more tasks
   RecallTaskInjector* m_taskInjector {};
 
-  /// Reference to the watchdog, used in run()
-  RecallWatchDog& m_watchdog;
-
   /// Reference to the RecallReportPacker, used to update tape/drive state during recall
   RecallReportPacker& m_reportPacker;
 
@@ -137,8 +131,7 @@ private:
    */
   cta::catalogue::Catalogue& m_catalogue;
 
-  /// Helper virtual function to access the watchdog from parent class
-  void countTapeLogError(const std::string& error) override { m_watchdog.addToErrorCount(error); }
+  void countTapeAlert(uint16_t tapeAlertCode) override { m_tracker.incrementTapeAlert(tapeAlertCode); }
 
 protected:
   /**

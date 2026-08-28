@@ -101,21 +101,13 @@ void MigrationTaskInjector::requestInjection(bool lastCall) {
 bool MigrationTaskInjector::synchronousInjection(bool& noFilesToMigrate) {
   std::list<std::unique_ptr<cta::ArchiveJob>> jobs;
   noFilesToMigrate = false;
-  try {
-    //First popping of files, we multiply the number of popped files / bytes by 2 to avoid multiple mounts on Repack
-    //(it is applied to ArchiveForUser and ArchiveForRepack batches)
-    m_lc.log(cta::log::DEBUG, "Before m_archiveMount.getNextJobBatch()");
-    jobs = m_archiveMount.getNextJobBatch(2 * m_maxFiles, 2 * m_maxBytes, m_lc);
-    m_lc.log(cta::log::DEBUG, "After m_archiveMount.getNextJobBatch()");
-  } catch (cta::exception::Exception& ex) {
-    cta::log::ScopedParamContainer scoped(m_lc);
-    scoped.add("transactionId", m_archiveMount.getMountTransactionId())
-      .add("byteSizeThreshold", m_maxBytes)
-      .add("maxFiles", m_maxFiles)
-      .add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
-    m_lc.log(cta::log::ERR, "Failed to getFilesToMigrate");
-    return false;
-  }
+  // Startup callers need the original exception to select backend recovery.
+  // First popping of files, we multiply the number of popped files / bytes by 2 to avoid multiple mounts on Repack
+  // (it is applied to ArchiveForUser and ArchiveForRepack batches)
+  m_lc.log(cta::log::DEBUG, "Before m_archiveMount.getNextJobBatch()");
+  jobs = m_archiveMount.getNextJobBatch(2 * m_maxFiles, 2 * m_maxBytes, m_lc);
+  m_lc.log(cta::log::DEBUG, "After m_archiveMount.getNextJobBatch()");
+
   cta::log::ScopedParamContainer scoped(m_lc);
   scoped.add("byteSizeThreshold", m_maxBytes).add("maxFiles", m_maxFiles);
   if (jobs.empty()) {

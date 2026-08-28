@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "TaskWatchDog.hpp"
+#include "TapeSessionTracker.hpp"
 #include "common/dataStructures/DiskSpaceReservationRequest.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
@@ -63,7 +63,7 @@ public:
                      cta::RetrieveMount& retrieveMount,
                      uint64_t maxFilesPerRequest,
                      uint64_t maxBytesPerRequest,
-                     RecallWatchDog& recallWatchDog,
+                     TapeSessionTracker& tracker,
                      const cta::log::LogContext& lc)
       : m_thread(*this),
         m_memManager(mm),
@@ -74,7 +74,7 @@ public:
         m_maxBatchFiles(maxFilesPerRequest),
         m_maxBatchBytes(maxBytesPerRequest),
         m_firstTasksInjectedFuture(m_firstTasksInjectedPromise.get_future()),
-        m_watchdog(recallWatchDog) {}
+        m_tracker(tracker) {}
 
   virtual ~RecallTaskInjector() = default;
 
@@ -287,9 +287,9 @@ private:
   */
   bool m_diskSpaceReservationFailed = false;
 
-  /** Reference to the session watchdog, allowing reporting of errors to it.
+  /** Reference to the session tracker, allowing reporting of errors to it.
    */
-  RecallWatchDog& m_watchdog;
+  TapeSessionTracker& m_tracker;
 };
 
 }  // namespace daemon

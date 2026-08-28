@@ -68,11 +68,11 @@ public:
   /*
    * Set Tape session statistics summary
    *
-   * @param stats       The TapeSessionStats object
+   * @param stats       The tape-side session statistics
    *
    * @return void
    */
-  void setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) override;
+  void setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) override;
 
   /*
    * Setting a batch of jobs to state which informs

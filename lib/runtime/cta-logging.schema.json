@@ -25,7 +25,7 @@
       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+-]\\d{4}$"
     },
     "log_schema_version": {
-      "const": "0.3.0",
+      "const": "0.4.0",
       "description": "Version identifier of the log schema."
     },
     "cta_version": {
@@ -80,7 +80,7 @@
       "type": "string",
       "description": "Human-readable log message describing the event."
     },
-    "drive_name": {
+    "tapeDrive": {
       "type": "string",
       "minLength": 1,
       "description": "CTA name of the tape drive associated with the service instance."
@@ -112,7 +112,7 @@
       },
       "then": {
         "required": [
-          "drive_name"
+          "tapeDrive"
         ]
       }
     },
@@ -140,47 +140,221 @@
           "tapeVid",
           "vo",
           "volReqId",
-          "tapeDrive",
+          "sessionState",
+          "sessionType",
+          "wasTapeMounted",
+          "mountTime",
+          "positionTime",
+          "waitInstructionsTime",
+          "waitFreeMemoryTime",
+          "waitDataTime",
+          "waitReportingTime",
+          "checksumingTime",
+          "readWriteTime",
+          "flushTime",
+          "unloadTime",
+          "unmountTime",
+          "encryptionControlTime",
+          "transferTime",
+          "totalTime",
+          "deliveryTime",
+          "drainingTime",
           "filesCount",
           "dataVolume",
+          "headerVolume",
+          "repackFilesCount",
+          "userFilesCount",
+          "verifiedFilesCount",
+          "repackBytesCount",
+          "userBytesCount",
+          "verifiedBytesCount",
+          "payloadTransferSpeedMBps",
           "driveTransferSpeedMBps",
           "mountAttempted"
         ],
         "properties": {
           "logicalLibrary": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "mountType": {
             "type": "string"
           },
           "status": {
-            "type": "string"
+            "enum": [
+              "success",
+              "failure",
+              "error"
+            ]
           },
           "tapePool": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "tapeVid": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "vo": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "volReqId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sessionState": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sessionType": {
             "type": "string"
           },
-          "tapeDrive": {
-            "type": "string"
+          "wasTapeMounted": {
+            "type": "boolean"
+          },
+          "mountTime": {
+            "type": "number",
+            "minimum": 0
+          },
+          "positionTime": {
+            "type": "number",
+            "minimum": 0
+          },
+          "waitInstructionsTime": {
+            "type": "number",
+            "minimum": 0
+          },
+          "waitFreeMemoryTime": {
+            "type": "number",
+            "minimum": 0
+          },
+          "waitDataTime": {
+            "type": "number",
+            "minimum": 0
+          },
+          "waitReportingTime": {
+            "type": "number",
+            "minimum": 0
+          },
+          "checksumingTime": {
+            "type": "number",
+            "minimum": 0
+          },
+          "readWriteTime": {
+            "type": "number",
+            "minimum": 0
+          },
+          "flushTime": {
+            "type": "number",
+            "minimum": 0
+          },
+          "unloadTime": {
+            "type": "number",
+            "minimum": 0
+          },
+          "unmountTime": {
+            "type": "number",
+            "minimum": 0
+          },
+          "encryptionControlTime": {
+            "type": "number",
+            "minimum": 0
+          },
+          "transferTime": {
+            "type": "number",
+            "minimum": 0
+          },
+          "totalTime": {
+            "type": "number",
+            "minimum": 0
+          },
+          "deliveryTime": {
+            "type": "number",
+            "minimum": 0
+          },
+          "drainingTime": {
+            "type": "number",
+            "minimum": 0
           },
           "filesCount": {
-            "type": "string"
+            "type": "integer",
+            "minimum": 0
           },
           "dataVolume": {
-            "type": "string"
+            "type": "integer",
+            "minimum": 0
+          },
+          "headerVolume": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "repackFilesCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "userFilesCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "verifiedFilesCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "repackBytesCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "userBytesCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "verifiedBytesCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "payloadTransferSpeedMBps": {
+            "type": "number",
+            "minimum": 0
           },
           "driveTransferSpeedMBps": {
-            "type": "string"
+            "type": "number",
+            "minimum": 0
           },
           "mountAttempted": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "vendor": {
+            "type": "string"
+          },
+          "mediaType": {
+            "type": "string"
+          },
+          "capacityInBytes": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "patternProperties": {
+          "^(Error|Info)_[A-Za-z0-9_]+$": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "^stillOpenFileForThread[0-9]+$": {
             "type": "string"
           }
         }
@@ -203,10 +377,10 @@
       },
       "then": {
         "required": [
-          "drive_name"
+          "tapeDrive"
         ],
         "properties": {
-          "drive_name": {
+          "tapeDrive": {
             "type": "string"
           }
         }
@@ -229,10 +403,10 @@
       },
       "then": {
         "required": [
-          "drive_name"
+          "tapeDrive"
         ],
         "properties": {
-          "drive_name": {
+          "tapeDrive": {
             "type": "string"
           }
         }

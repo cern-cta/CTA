@@ -5,16 +5,22 @@
 
 #include "TapeWriteSingleThread.hpp"
 
+#include "DriveCleaner.hpp"
 #include "MigrationTaskInjector.hpp"
-#include "TapeSessionReporter.hpp"
+#include "common/dataStructures/DriveDownReason.hpp"
+#include "common/exception/Exception.hpp"
+
+#include <exception>
+#include <optional>
+#include <stdexcept>
+#include <string>
 
 //------------------------------------------------------------------------------
 // Constructor for TapeWriteSingleThread
 //------------------------------------------------------------------------------
 cta::tape::daemon::TapeWriteSingleThread::TapeWriteSingleThread(cta::tape::drive::DriveInterface& drive,
                                                                 cta::mediachanger::MediaChangerFacade& mediaChanger,
-                                                                TapeSessionReporter& reporter,
-                                                                MigrationWatchDog& watchdog,
+                                                                TapeSessionTracker& tracker,
                                                                 const VolumeInfo& volInfo,
                                                                 const cta::log::LogContext& logContext,
                                                                 MigrationReportPacker& reportPacker,
@@ -28,7 +34,7 @@ cta::tape::daemon::TapeWriteSingleThread::TapeWriteSingleThread(cta::tape::drive
                                                                 cta::catalogue::Catalogue& catalogue)
     : TapeSingleThreadInterface<TapeWriteTask>(drive,
                                                mediaChanger,
-                                               reporter,
+                                               tracker,
                                                volInfo,
                                                logContext,
                                                useEncryption,
@@ -38,7 +44,6 @@ cta::tape::daemon::TapeWriteSingleThread::TapeWriteSingleThread(cta::tape::drive
       m_bytesBeforeFlush(bytesBeforeFlush),
       m_reportPacker(reportPacker),
       m_useLbp(useLbp),
-      m_watchdog(watchdog),
       m_archiveMount(archiveMount),
       m_catalogue(catalogue) {}
 
@@ -46,144 +51,88 @@ cta::tape::daemon::TapeWriteSingleThread::TapeWriteSingleThread(cta::tape::drive
 //TapeCleaning::~TapeCleaning()
 //------------------------------------------------------------------------------
 cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
-  m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::CleaningUp,
-                                          std::nullopt,
-                                          m_this.m_logContext);
-
-  // Tell everyone to wrap up the session
-  // We now acknowledge to the task injector that read reached the end. There
-  // will hence be no more requests for more.
-  m_this.m_taskInjector->finish();
-  //then we log/notify
-  m_this.m_logContext.log(cta::log::DEBUG,
-                          "Starting write session cleanup. Signalled end of session to task injector.");
-  m_this.m_stats.waitReportingTime += m_timer.secs(cta::utils::Timer::resetCounter);
-
-  // Disable encryption (or at least try)
-  try {
-    if (m_this.m_encryptionControl.disable(m_this.m_drive)) {
-      m_this.m_logContext.log(cta::log::INFO, "Turned encryption off before unmounting");
+  using common::dataStructures::DriveStatus;
+  // Status publication must not interrupt physical cleanup.
+  auto reportStatusSafely = [&](DriveStatus status, const std::optional<std::string>& reason = std::nullopt) {
+    try {
+      m_this.m_reportPacker.reportDriveStatus(status, reason, m_this.m_logContext);
+    } catch (...) {
+      m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
+      try {
+        m_this.m_tracker.incrementError(TapeSessionError::Reporting);
+      } catch (...) {}
     }
-  } catch (cta::exception::Exception& ex) {
-    cta::log::ScopedParamContainer scoped(m_this.m_logContext);
-    scoped.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
-    m_this.m_logContext.log(cta::log::ERR, "Failed to turn off encryption before unmounting");
-  }
-  m_this.m_stats.encryptionControlTime += m_timer.secs(cta::utils::Timer::resetCounter);
+  };
+  // In contrast to regular drive cleaning, drive status reports go through the reportPacker
+  auto reportStatus = [&](DriveStatus status) {
+    m_this.m_reportPacker.reportDriveStatus(status, std::nullopt, m_this.m_logContext);
+  };
 
-  // Log (safely, exception-wise) the tape alerts (if any) at the end of the session
+  m_this.m_tracker.reportState(session::TapeSessionState::Finalizing);
+  reportStatusSafely(DriveStatus::CleaningUp);
+  try {
+    m_this.m_taskInjector->finish();
+  } catch (...) {
+    m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
+    // Still clean the drive; failed signalling does not guarantee injector shutdown.
+    try {
+      m_this.m_logContext.log(log::ERR, "Failed to signal task injector shutdown during tape cleanup");
+    } catch (...) {}
+  }
+  m_this.m_tracker.addDiskTransferStats({.waitReportingTime = m_timer.secs(utils::Timer::resetCounter)});
   try {
     m_this.logTapeAlerts();
   } catch (...) {}
-  // Log (safely, exception-wise) the tape SCSI metrics at the end of the session
   try {
     m_this.logSCSIMetrics();
   } catch (...) {}
 
-  // Log safely errors at the end of the session
-  // This out-of-try-catch variables allows us to record the stage of the
-  // process we're in, and to count the error if it occurs.
-  // We will not record errors for an empty string. This will allow us to
-  // prevent counting where error happened upstream.
-  std::string currentErrorToCount = "Error_tapeUnload";
+  std::string cleanupError;
+
+  // Borrow the existing drive; DriveCleaner owns only the physical cleanup protocol.
   try {
-    // Do the final cleanup
-    // First check that a tape is actually present in the drive. We can get here
-    // after failing to mount (library error) in which case there is nothing to
-    // do (and trying to unmount will only lead to a failure.)
-    // We give time to the drive for settling after a mount which might have
-    // just happened. If we time out, then we will simply find no tape in the
-    // drive, which is a fine situation (so timeout exceptions are discarded).
-    // Other exception, where we failed to access the drive somehow are at passed
-    // through.
-    const uint32_t waitMediaInDriveTimeout = m_this.m_tapeLoadTimeout;
-    try {
-      m_this.m_drive.waitUntilReady(waitMediaInDriveTimeout);
-    } catch (cta::exception::TimeOut&) {}
-    if (!m_this.m_drive.hasTapeInPlace()) {
-      m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread: No tape to unload");
-      m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up,
-                                              std::nullopt,
-                                              m_this.m_logContext);
-      m_this.m_reporter.reportState(cta::tape::session::SessionState::ShuttingDown,
-                                    cta::tape::session::SessionType::Retrieve);
-
-      //then we terminate the global status m_reporter
-      m_this.m_reporter.finish();
-      return;
+    DriveCleaner cleaner(m_this.m_mediaChanger,
+                         m_this.m_logContext.logger(),
+                         m_this.m_drive.info,
+                         m_this.m_volInfo.vid,
+                         true,
+                         m_this.m_tapeLoadTimeout,
+                         m_this.m_catalogue,
+                         m_this.m_tracker);
+    const auto result = cleaner.cleanDrive(m_this.m_drive, reportStatus);
+    if (!result.driveReusable()) {
+      cleanupError = result.errorMessage;
+      m_this.m_hardwareStatus = DriveUsability::MustRemainDown;
+      m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
+      try {
+        m_this.m_logContext.log(log::ERR, result.errorMessage);
+      } catch (...) {}
     }
-
-    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unloading,
-                                            std::nullopt,
-                                            m_this.m_logContext);
-    m_this.m_drive.unloadTape();
-    m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread: Tape unloaded");
-    m_this.m_stats.unloadTime += m_timer.secs(cta::utils::Timer::resetCounter);
-
-    // And return the tape to the library
-    currentErrorToCount = "Error_tapeDismount";
-    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting,
-                                            std::nullopt,
-                                            m_this.m_logContext);
-    m_this.m_reporter.reportState(cta::tape::session::SessionState::Unmounting,
-                                  cta::tape::session::SessionType::Archive);
-    const auto librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_this.m_drive.info.rawLibrarySlot);
-    m_this.m_mediaChanger.dismountTape(m_this.m_volInfo.vid, librarySlot);
-    m_this.m_drive.disableLogicalBlockProtection();
-    m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
-    m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread : tape unmounted");
-    // We know we are the last thread, just report the drive Up
-    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up,
-                                            std::nullopt,
-                                            m_this.m_logContext);
-    m_this.m_reporter.reportState(cta::tape::session::SessionState::ShuttingDown,
-                                  cta::tape::session::SessionType::Archive);
-    m_this.m_stats.waitReportingTime += m_timer.secs(cta::utils::Timer::resetCounter);
   } catch (const cta::exception::Exception& ex) {
-    // Notify something failed during the cleaning
-    m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
-    const int logLevel = cta::log::ERR;
-    const std::string errorMsg =
-      "Exception in TapeWriteSingleThread-TapeCleaning when unmounting/unloading the tape. Putting the drive down.";
-    std::optional<std::string> reason =
-      cta::common::dataStructures::DesiredDriveState::generateReasonFromLogMsg(logLevel, errorMsg);
-    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down,
-                                            reason,
-                                            m_this.m_logContext);
-    m_this.m_reporter.reportState(cta::tape::session::SessionState::Fatal, cta::tape::session::SessionType::Archive);
-    cta::log::ScopedParamContainer scoped(m_this.m_logContext);
-    scoped.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
-    m_this.m_logContext.log(logLevel, errorMsg);
-
-    // As we do not throw exceptions from here, the watchdog signalling has
-    // to occur from here.
-    try {
-      if (!currentErrorToCount.empty()) {
-        m_this.m_watchdog.addToErrorCount(currentErrorToCount);
-      }
-    } catch (...) {}
+    cleanupError = ex.getMessageValue();
+    m_this.m_hardwareStatus = DriveUsability::MustRemainDown;
+    m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
+  } catch (const std::exception& ex) {
+    cleanupError = ex.what();
+    m_this.m_hardwareStatus = DriveUsability::MustRemainDown;
+    m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
   } catch (...) {
-    // Notify something failed during the cleaning
-    m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
-    const int logLevel = cta::log::ERR;
-    const std::string errorMsg =
-      "Non-CTA exception in TapeWriteSingleThread-TapeCleaning when unmounting the tape. Putting the drive down.";
-    std::optional<std::string> reason =
-      cta::common::dataStructures::DesiredDriveState::generateReasonFromLogMsg(logLevel, errorMsg);
-    m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down,
-                                            reason,
-                                            m_this.m_logContext);
-    m_this.m_reporter.reportState(cta::tape::session::SessionState::Fatal, cta::tape::session::SessionType::Archive);
-    m_this.m_logContext.log(logLevel, errorMsg);
-    try {
-      if (!currentErrorToCount.empty()) {
-        m_this.m_watchdog.addToErrorCount(currentErrorToCount);
-      }
-    } catch (...) {}
+    cleanupError = "Unknown exception during drive cleanup";
+    m_this.m_hardwareStatus = DriveUsability::MustRemainDown;
+    m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
   }
 
-  //then we terminate the global status m_reporter
-  m_this.m_reporter.finish();
+  m_timer.reset();
+  if (m_this.m_hardwareStatus == DriveUsability::MustRemainDown) {
+    reportStatusSafely(
+      DriveStatus::Down,
+      common::dataStructures::formatDriveDownReason(common::dataStructures::DriveDownReason::DriveCleanupFailed,
+                                                    cleanupError));
+  } else {
+    reportStatusSafely(DriveStatus::Up);
+  }
+  m_this.m_tracker.addDiskTransferStats({.waitReportingTime = m_timer.secs(utils::Timer::resetCounter)});
+  m_this.m_tracker.reportState(session::TapeSessionState::Finalizing);
 }
 
 //------------------------------------------------------------------------------
@@ -250,9 +199,8 @@ bool cta::tape::daemon::TapeWriteSingleThread::logAndCheckTapeAlertsForWrite() {
     m_logContext.log(cta::log::WARNING, "Tape alert detected");
   }
   // Add tape alerts in the tape log parameters
-  std::vector<std::string> tapeAlertsCompact = m_drive.getTapeAlertsCompact(tapeAlertCodes);
-  for (const auto& tac : tapeAlertsCompact) {
-    countTapeLogError(std::string("Error_") + tac);
+  for (const auto tapeAlertCode : tapeAlertCodes) {
+    countTapeAlert(tapeAlertCode);
   }
   return (m_drive.tapeAlertsCriticalForWrite(tapeAlertCodes));
 }
@@ -276,191 +224,15 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
   cta::log::ScopedParamContainer threadGlobalParams(m_logContext);
   threadGlobalParams.add("thread", "TapeWrite");
   cta::utils::Timer timer, totalTimer;
-  // This out-of-try-catch variables allows us to record the stage of the
-  // process we're in, and to count the error if it occurs.
-  // We will not record errors for an empty string. This will allow us to
-  // prevent counting where error happened upstream.
-  std::string currentErrorToCount = "Error_tapeMountForWrite";
+  // Track session-level errors separately from failures already counted by individual tasks.
+  TapeSessionError currentErrorToCount = TapeSessionError::TapeMountForWrite;
+  bool countCurrentError = true;
   std::unique_ptr<TapeWriteTask> task;
 
-  try {
-    // Report the parameters of the session to the main thread
-    using Param = cta::log::Param;
-    m_watchdog.addParameter(Param("tapeVid", m_volInfo.vid));
-    m_watchdog.addParameter(Param("mountType", toCamelCaseString(m_volInfo.mountType)));
-    m_watchdog.addParameter(Param("mountId", m_volInfo.mountId));
-    m_watchdog.addParameter(Param("volReqId", m_volInfo.mountId));
-    m_watchdog.addParameter(Param("tapeDrive", m_drive.info.driveName));
-    m_watchdog.addParameter(Param("vendor", m_archiveMount.getVendor()));
-    m_watchdog.addParameter(Param("vo", m_archiveMount.getVo()));
-    m_watchdog.addParameter(Param("mediaType", m_archiveMount.getMediaType()));
-    m_watchdog.addParameter(Param("tapePool", m_archiveMount.getPoolName()));
-    m_watchdog.addParameter(Param("logicalLibrary", m_drive.info.logicalLibrary));
-    m_watchdog.addParameter(Param("capacityInBytes", m_archiveMount.getCapacityInBytes()));
-    m_watchdog.addParameter(Param("mountAttempted", 1));
-
-    // Set the tape thread time in the watchdog for total time estimation in case
-    // of crash
-    m_watchdog.updateThreadTimer(totalTimer);
-
-    // Pair of brackets to create an artificial scope for the tape cleaning
-    {
-      // Log and notify
-      m_logContext.log(cta::log::INFO, "Starting tape write thread");
-
-      // The tape will be loaded
-      // it has to be unloaded, unmounted at all cost -> RAII
-      // will also take care of the TapeSessionReporter
-      TapeCleaning cleaner(*this, timer);
-      // Before anything, the tape should be mounted
-      m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Mounting, std::nullopt, m_logContext);
-      m_reporter.reportState(cta::tape::session::SessionState::Mounting, cta::tape::session::SessionType::Archive);
-      cta::log::ScopedParamContainer params(m_logContext);
-      params.add("mediaType", m_archiveMount.getMediaType());
-      params.add("logicalLibrary", m_drive.info.logicalLibrary);
-      params.add("mountType", toCamelCaseString(m_volInfo.mountType));
-      params.add("vendor", m_archiveMount.getVendor());
-      params.add("capacityInBytes", m_archiveMount.getCapacityInBytes());
-      m_logContext.log(cta::log::INFO, "Tape session started for write");
-      mountTapeReadWrite();
-      currentErrorToCount = "Error_tapeLoad";
-      cta::utils::Timer tapeLoadTimer;
-      waitForDrive();
-      double tapeLoadTime = tapeLoadTimer.secs();
-      currentErrorToCount = "Error_checkingTapeAlert";
-      if (logAndCheckTapeAlertsForWrite()) {
-        throw cta::exception::Exception("Aborting write session in"
-                                        " presence of critical tape alerts");
-      }
-
-      currentErrorToCount = "Error_tapeNotWriteable";
-      isTapeWritable();
-
-      m_stats.mountTime += timer.secs(cta::utils::Timer::resetCounter);
-      {
-        cta::log::ScopedParamContainer scoped(m_logContext);
-        scoped.add("mountTime", m_stats.mountTime);
-        scoped.add("tapeLoadTime", tapeLoadTime);
-        m_logContext.log(cta::log::INFO, "Tape mounted and drive ready");
-      }
-      m_archiveMount.setTapeMounted(m_logContext);
-      try {
-        currentErrorToCount = "Error_tapeEncryptionEnable";
-        // We want those scoped params to last for the whole mount.
-        // This will allow each written file to be logged with its encryption
-        // status:
-        cta::log::ScopedParamContainer encryptionLogParams(m_logContext);
-        {
-          auto encryptionStatus = m_encryptionControl.enable(m_drive, m_volInfo, m_catalogue, true);
-          if (encryptionStatus.on) {
-            encryptionLogParams.add("encryption", "on")
-              .add("encryptionKeyName", encryptionStatus.keyName)
-              .add("scriptPath", m_encryptionControl.getScriptPath())
-              .add("stdout", encryptionStatus.stdout);
-            m_logContext.log(cta::log::INFO, "Drive encryption enabled for this mount");
-          } else {
-            encryptionLogParams.add("encryption", "off");
-            m_logContext.log(cta::log::INFO, "Drive encryption not enabled for this mount");
-          }
-        }
-        m_stats.encryptionControlTime += timer.secs(cta::utils::Timer::resetCounter);
-      } catch (cta::exception::Exception& ex) {
-        cta::log::ScopedParamContainer exceptionParams(m_logContext);
-        exceptionParams.add(cta::semconv::log::exceptionMessage, ex.getMessage().str());
-        m_logContext.log(cta::log::ERR, "Drive encryption could not be enabled for this mount.");
-        throw;
-      }
-      // Then we have to initialize the tape write session
-      currentErrorToCount = "Error_tapePositionForWrite";
-      auto writeSession = openWriteSession();
-      m_stats.positionTime += timer.secs(cta::utils::Timer::resetCounter);
-      //and then report
-      {
-        cta::log::ScopedParamContainer scoped(m_logContext);
-        scoped.add("positionTime", m_stats.positionTime);
-        scoped.add("useLbp", m_useLbp);
-        scoped.add("detectedLbp", writeSession->isTapeWithLbp());
-
-        if (!writeSession->isTapeWithLbp() && m_useLbp) {
-          m_logContext.log(cta::log::INFO,
-                           "Taped started with LBP support but "
-                           "the tape without LBP label mounted");
-        }
-        switch (m_drive.getLbpToUse()) {
-          case drive::lbpToUse::crc32cReadWrite:
-            m_logContext.log(cta::log::INFO,
-                             "Write session initialised with LBP"
-                             " crc32c in ReadWrite mode, tape VID checked and drive positioned"
-                             " for writing");
-            break;
-          case drive::lbpToUse::disabled:
-            m_logContext.log(cta::log::INFO,
-                             "Write session initialised without LBP"
-                             ", tape VID checked and drive positioned for writing");
-            break;
-          default:
-            m_logContext.log(cta::log::ERR,
-                             "Write session initialised with "
-                             "unsupported LBP method, tape VID checked and drive positioned"
-                             " for writing");
-        }
-      }
-
-      m_stats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
-
-      uint64_t bytes = 0;
-      uint64_t files = 0;
-      // Tasks handle their error logging themselves.
-      currentErrorToCount = "";
-      m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring,
-                                       std::nullopt,
-                                       m_logContext);
-      m_reporter.reportState(cta::tape::session::SessionState::Running, cta::tape::session::SessionType::Archive);
-      while (true) {
-        //get a task
-        task.reset(m_tasks.pop());
-        m_stats.waitInstructionsTime += timer.secs(cta::utils::Timer::resetCounter);
-        // If we reached the end
-        if (nullptr == task) {
-          //we flush without asking
-          tapeFlush("No more data to write on tape, unconditional flushing to the client", bytes, files, timer);
-          m_stats.flushTime += timer.secs(cta::utils::Timer::resetCounter);
-          cta::log::LogContext::ScopedParam sp0(m_logContext, cta::log::Param("tapeThreadDuration", totalTimer.secs()));
-          m_logContext.log(cta::log::DEBUG, "writing data to tape has finished");
-          break;
-        }
-        task->execute(*writeSession, m_reportPacker, m_watchdog, m_logContext, timer);
-        // Add the tasks counts to the session's
-        m_stats.add(task->getTaskStats());
-        // Transmit the statistics to the watchdog thread
-        m_watchdog.updateStatsWithoutDeliveryTime(m_stats);
-        // Increase local flush counters (session counters are incremented by
-        // the task)
-        files++;
-        bytes += task->fileSize();
-        //if one flush counter is above a threshold, then we flush
-        if (files >= m_filesBeforeFlush || bytes >= m_bytesBeforeFlush) {
-          currentErrorToCount = "Error_tapeFlush";
-          tapeFlush("Normal flush because thresholds was reached", bytes, files, timer);
-          files = 0;
-          bytes = 0;
-          currentErrorToCount = "";
-        }
-      }  //end of while(true))
-    }
-
-    // The session completed successfully, and the cleaner (unmount) executed
-    // at the end of the previous block. Log the results.
-    cta::log::ScopedParamContainer params(m_logContext);
-    params.add("status", m_watchdog.errorHappened() ? "error" : "success");
-    m_stats.totalTime = totalTimer.secs();
-    m_stats.deliveryTime = m_stats.totalTime;
-    logWithStats(cta::log::INFO, "Tape thread complete", params);
-    // Report one last time the stats, after unloading/unmounting.
-    m_watchdog.updateStats(m_stats);
-    //end of session + log
-    m_reportPacker.reportEndOfSession(m_logContext);
-  } catch (const cta::exception::Exception& e) {
+  // Share operational failure cleanup; other exception types propagate to the caller.
+  const auto handleFailure = [&](const std::exception& e,
+                                 std::string errorMessage,
+                                 [[maybe_unused]] const cta::exception::Exception* ctaException) {
     //we end there because write session could not be opened
     //or because a task failed or because flush failed
 
@@ -471,14 +243,17 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
     // like mounting the tape, then we have to signal the problem to the disk
     // side and the task injector, which will trigger the end of session.
     m_taskInjector->setErrorFlag();
-    // We can still update the session stats one last time (unmount timings
-    // should have been updated by the RAII cleaner/unmounter).
-    m_watchdog.updateStatsWithoutDeliveryTime(m_stats);
+    // Publish transfer statistics; the RAII cleaner recorded cleanup timings independently.
+    m_tracker.updateTapeTransferStats(m_stats);
 #ifdef CTA_PGSCHED
     // report last batch of files which were written but not flushed
     // (no file marks on tape) as failure (last file written to tape when ENOSPC
     // (end of space) was thrown will be included here)
-    m_reportPacker.reportLastBatchError(e, m_logContext);
+    if (ctaException) {
+      m_reportPacker.reportLastBatchError(*ctaException, m_logContext);
+    } else {
+      m_reportPacker.reportLastBatchError(cta::exception::Exception(e.what()), m_logContext);
+    }
 #endif
 
     // If we reached the end of tape, this is not an error (ENOSPC)
@@ -493,14 +268,15 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
         isTapeFull = true;
       }
       // This is indeed the end of the tape. Not an error.
-      m_watchdog.setErrorCount("Info_tapeFilledUp", 1);
+      m_tracker.setErrorCount(TapeSessionError::TapeFilledUp, 1);
       m_reportPacker.reportTapeFull(m_logContext);
     } catch (...) {
+      m_tracker.setOutcome(TapeSessionOutcome::Failure);
       // The error is not an ENOSPC, so it is, indeed, an error.
-      // If we got here with a new error, currentErrorToCount will be non-empty,
-      // and we will pass the error name to the watchdog.
-      if (!currentErrorToCount.empty()) {
-        m_watchdog.addToErrorCount(currentErrorToCount);
+      // If we got here with a new error, countCurrentError will be set,
+      // and we will pass the typed error to the session tracker.
+      if (countCurrentError) {
+        m_tracker.incrementError(currentErrorToCount);
       }
     }
 #ifdef CTA_PGSCHED
@@ -540,7 +316,6 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
     requeueUnprocessedTasks(jobIDsList, m_logContext);
 #endif
     // Prepare the standard error codes for the session
-    std::string errorMessage(e.getMessageValue());
     int logLevel = cta::log::ERR;
     // Override if we got en ENOSPC error (end of tape)
     if (isTapeFull) {
@@ -550,9 +325,179 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
     // prepare logging params
     cta::log::ScopedParamContainer params(m_logContext);
     params.add("status", "error").add(cta::semconv::log::exceptionMessage, errorMessage);
-    m_stats.totalTime = totalTimer.secs();
+    m_totalTime = totalTimer.secs();
+    m_tracker.setTotalTime(m_totalTime);
     logWithStats(logLevel, "Tape thread complete for writing", params);
     m_reportPacker.reportEndOfSessionWithErrors(errorMessage, isTapeFull, m_logContext);
+  };
+
+  try {
+    // Pair of brackets to create an artificial scope for the tape cleaning
+    {
+      // Log and notify
+      m_logContext.log(cta::log::INFO, "Starting tape write thread");
+
+      // The tape will be loaded
+      // it has to be unloaded, unmounted at all cost -> RAII
+      // will also take care of the TapeSessionReporter
+      TapeCleaning cleaner(*this, timer);
+      // Before anything, the tape should be mounted
+      m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Mounting, std::nullopt, m_logContext);
+
+      cta::log::ScopedParamContainer params(m_logContext);
+      params.add("mediaType", m_archiveMount.getMediaType());
+      params.add("logicalLibrary", m_drive.info.logicalLibrary);
+      params.add("mountType", toCamelCaseString(m_volInfo.mountType));
+      params.add("vendor", m_archiveMount.getVendor());
+      params.add("capacityInBytes", m_archiveMount.getCapacityInBytes());
+      m_logContext.log(cta::log::INFO, "Tape session started for write");
+      m_tracker.reportState(cta::tape::session::TapeSessionState::Mounting);
+      measureSetupTime(&TapeSetupStats::initialMountTime, [&] { mountTapeReadWrite(); });
+      currentErrorToCount = TapeSessionError::TapeLoad;
+      m_tracker.reportState(cta::tape::session::TapeSessionState::Loading);
+      measureSetupTime(&TapeSetupStats::tapeLoadTime, [&] { waitForDrive(); });
+      m_tracker.reportState(cta::tape::session::TapeSessionState::Preparing);
+      const double tapeLoadTime = m_tracker.stats().setup.tapeLoadTime;
+      currentErrorToCount = TapeSessionError::CheckingTapeAlert;
+      if (logAndCheckTapeAlertsForWrite()) {
+        throw cta::exception::Exception("Aborting write session in"
+                                        " presence of critical tape alerts");
+      }
+
+      currentErrorToCount = TapeSessionError::TapeNotWriteable;
+      isTapeWritable();
+
+      m_tracker.addTapeSetupStats({.mountTime = timer.secs(cta::utils::Timer::resetCounter)});
+      {
+        cta::log::ScopedParamContainer scoped(m_logContext);
+        scoped.add("mountTime", m_tracker.stats().setup.mountTime);
+        scoped.add("tapeLoadTime", tapeLoadTime);
+        m_logContext.log(cta::log::INFO, "Tape mounted and drive ready");
+      }
+      m_archiveMount.setTapeMounted(m_logContext);
+      try {
+        currentErrorToCount = TapeSessionError::TapeEncryptionEnable;
+        // We want those scoped params to last for the whole mount.
+        // This will allow each written file to be logged with its encryption
+        // status:
+        cta::log::ScopedParamContainer encryptionLogParams(m_logContext);
+        {
+          auto encryptionStatus = m_encryptionControl.enable(m_drive, m_volInfo, m_catalogue, true);
+          if (encryptionStatus.on) {
+            encryptionLogParams.add("encryption", "on")
+              .add("encryptionKeyName", encryptionStatus.keyName)
+              .add("scriptPath", m_encryptionControl.getScriptPath())
+              .add("stdout", encryptionStatus.stdout);
+            m_logContext.log(cta::log::INFO, "Drive encryption enabled for this mount");
+          } else {
+            encryptionLogParams.add("encryption", "off");
+            m_logContext.log(cta::log::INFO, "Drive encryption not enabled for this mount");
+          }
+        }
+        m_tracker.addTapeSetupStats({.encryptionControlTime = timer.secs(cta::utils::Timer::resetCounter)});
+      } catch (cta::exception::Exception& ex) {
+        cta::log::ScopedParamContainer exceptionParams(m_logContext);
+        exceptionParams.add(cta::semconv::log::exceptionMessage, ex.getMessage().str());
+        m_logContext.log(cta::log::ERR, "Drive encryption could not be enabled for this mount.");
+        throw;
+      }
+      // Then we have to initialize the tape write session
+      currentErrorToCount = TapeSessionError::TapePositionForWrite;
+      auto writeSession = openWriteSession();
+      m_tracker.addTapeSetupStats({.positionTime = timer.secs(cta::utils::Timer::resetCounter)});
+      //and then report
+      {
+        cta::log::ScopedParamContainer scoped(m_logContext);
+        scoped.add("positionTime", m_tracker.stats().setup.positionTime);
+        scoped.add("useLbp", m_useLbp);
+        scoped.add("detectedLbp", writeSession->isTapeWithLbp());
+
+        if (!writeSession->isTapeWithLbp() && m_useLbp) {
+          m_logContext.log(cta::log::INFO,
+                           "Taped started with LBP support but "
+                           "the tape without LBP label mounted");
+        }
+        switch (m_drive.getLbpToUse()) {
+          case drive::lbpToUse::crc32cReadWrite:
+            m_logContext.log(cta::log::INFO,
+                             "Write session initialised with LBP"
+                             " crc32c in ReadWrite mode, tape VID checked and drive positioned"
+                             " for writing");
+            break;
+          case drive::lbpToUse::disabled:
+            m_logContext.log(cta::log::INFO,
+                             "Write session initialised without LBP"
+                             ", tape VID checked and drive positioned for writing");
+            break;
+          default:
+            m_logContext.log(cta::log::ERR,
+                             "Write session initialised with "
+                             "unsupported LBP method, tape VID checked and drive positioned"
+                             " for writing");
+        }
+      }
+
+      m_tracker.addDiskTransferStats({.waitReportingTime = timer.secs(cta::utils::Timer::resetCounter)});
+
+      uint64_t bytes = 0;
+      uint64_t files = 0;
+      // Tasks handle their error logging themselves.
+      countCurrentError = false;
+      m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring,
+                                       std::nullopt,
+                                       m_logContext);
+
+      m_tracker.reportState(cta::tape::session::TapeSessionState::Transferring);
+      while (true) {
+        //get a task
+        task.reset(m_tasks.pop());
+        m_stats.waitInstructionsTime += timer.secs(cta::utils::Timer::resetCounter);
+        // If we reached the end
+        if (nullptr == task) {
+          //we flush without asking
+          tapeFlush("No more data to write on tape, unconditional flushing to the client", bytes, files, timer);
+          m_stats.flushTime += timer.secs(cta::utils::Timer::resetCounter);
+          cta::log::LogContext::ScopedParam sp0(m_logContext, cta::log::Param("tapeThreadDuration", totalTimer.secs()));
+          m_logContext.log(cta::log::DEBUG, "writing data to tape has finished");
+          break;
+        }
+        task->execute(*writeSession, m_reportPacker, m_tracker, m_logContext, timer);
+        // Add the tasks counts to the session's
+        m_stats.add(task->getTaskStats());
+        // Publish the current statistics to the session tracker.
+        m_tracker.updateTapeTransferStats(m_stats);
+        // Increase local flush counters (session counters are incremented by
+        // the task)
+        files++;
+        bytes += task->fileSize();
+        //if one flush counter is above a threshold, then we flush
+        if (files >= m_filesBeforeFlush || bytes >= m_bytesBeforeFlush) {
+          currentErrorToCount = TapeSessionError::TapeFlush;
+          countCurrentError = true;
+          tapeFlush("Normal flush because thresholds was reached", bytes, files, timer);
+          files = 0;
+          bytes = 0;
+          countCurrentError = false;
+        }
+      }  //end of while(true))
+    }
+
+    // The session completed successfully, and the cleaner (unmount) executed
+    // at the end of the previous block. Log the results.
+    cta::log::ScopedParamContainer params(m_logContext);
+    params.add("status", m_tracker.errorHappened() ? "error" : "success");
+    m_totalTime = totalTimer.secs();
+    m_tracker.setTotalTime(m_totalTime);
+    m_tracker.setDiskDeliveryTime(m_totalTime);
+    logWithStats(cta::log::INFO, "Tape thread complete", params);
+    // Report one last time the stats, after unloading/unmounting.
+    m_tracker.updateTapeTransferStats(m_stats);
+    //end of session + log
+    m_reportPacker.reportEndOfSession(m_logContext);
+  } catch (const cta::exception::Exception& ex) {
+    handleFailure(ex, ex.getMessageValue(), &ex);
+  } catch (const std::runtime_error& ex) {
+    handleFailure(ex, ex.what(), nullptr);
   }
 }
 
@@ -562,28 +507,30 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
 void cta::tape::daemon::TapeWriteSingleThread::logWithStats(int level,
                                                             const std::string& msg,
                                                             cta::log::ScopedParamContainer& params) {
+  const auto sessionStats = m_tracker.stats();
   params.add("type", "write")
     .add("tapeVid", m_volInfo.vid)
-    .add("mountTime", m_stats.mountTime)
-    .add("positionTime", m_stats.positionTime)
+    .add("mountTime", sessionStats.setup.mountTime)
+    .add("initialMountTime", sessionStats.setup.initialMountTime)
+    .add("tapeLoadTime", sessionStats.setup.tapeLoadTime)
+    .add("positionTime", sessionStats.setup.positionTime + m_stats.positionTime)
     .add("waitInstructionsTime", m_stats.waitInstructionsTime)
     .add("checksumingTime", m_stats.checksumingTime)
     .add("readWriteTime", m_stats.readWriteTime)
     .add("waitDataTime", m_stats.waitDataTime)
-    .add("waitReportingTime", m_stats.waitReportingTime)
+    .add("waitReportingTime", sessionStats.disk.waitReportingTime)
     .add("flushTime", m_stats.flushTime)
-    .add("unloadTime", m_stats.unloadTime)
-    .add("unmountTime", m_stats.unmountTime)
-    .add("encryptionControlTime", m_stats.encryptionControlTime)
+    .add("unloadTime", sessionStats.cleanup.unloadTime)
+    .add("unmountTime", sessionStats.cleanup.unmountTime)
+    .add("encryptionControlTime", sessionStats.setup.encryptionControlTime + sessionStats.cleanup.encryptionControlTime)
     .add("transferTime", m_stats.transferTime())
-    .add("totalTime", m_stats.totalTime)
+    .add("totalTime", m_totalTime)
     .add("dataVolume", m_stats.dataVolume)
     .add("headerVolume", m_stats.headerVolume)
     .add("files", m_stats.filesCount)
-    .add("payloadTransferSpeedMBps",
-         m_stats.totalTime ? 1.0 * m_stats.dataVolume / 1000 / 1000 / m_stats.totalTime : 0.0)
+    .add("payloadTransferSpeedMBps", m_totalTime ? 1.0 * m_stats.dataVolume / 1000 / 1000 / m_totalTime : 0.0)
     .add("driveTransferSpeedMBps",
-         m_stats.totalTime ? 1.0 * (m_stats.dataVolume + m_stats.headerVolume) / 1000 / 1000 / m_stats.totalTime : 0.0);
+         m_totalTime ? 1.0 * (m_stats.dataVolume + m_stats.headerVolume) / 1000 / 1000 / m_totalTime : 0.0);
   m_logContext.log(level, msg);
 }
 

@@ -27,6 +27,27 @@ The drive and its CTA logical library are selected in the process configuration.
 CTA supports SCSI-compatible tape libraries.
 The **cta-rmcd** daemon must be reachable by **cta-taped** for physical mount and unmount operations.
 
+# DRIVE LIFECYCLE
+
+A drive whose reported and desired states are both Down is left untouched, including device probes and robot operations.
+At startup, desired Down keeps the drive Down; desired Up is preserved and authorizes preparation cleaning regardless of the previous reported state.
+This allows recovery after a crash without discarding a pending operator up request.
+A drive without a catalogue entry starts Down.
+
+Preparation publishes CleaningUp before accessing hardware and checks desired state again after cleaning.
+An operator down request during preparation or an active session is honoured after hardware cleanup finishes.
+Reported Down marks the end of hardware activity; a subsequent up request authorizes another preparation attempt.
+Ordinary session completion and handled failures eject the cartridge when the drive and robot permit it.
+A successful eject does not necessarily make the drive reusable: configuration-reset failures can still require Down.
+
+Controlled exits attempt both reported Down and desired Down once drive identity has been validated, including failures before startup becomes ready.
+They preserve existing operator or failure reasons and return failure if down publication fails.
+Shutdown does not perform additional hardware cleanup or wait indefinitely for database recovery.
+Configuration failures before catalogue access and failures to validate drive ownership cannot guarantee down publication.
+
+Graceful signal-driven shutdown and recovery from partial worker startup or worker join failures are not implemented by this lifecycle guarantee.
+Crashes, allocation or logging failures, stuck cartridges, and robot communication failures can prevent cleanup or state publication.
+
 # OPTIONS
 
 -l, --log-file *PATH*
@@ -148,10 +169,18 @@ idle_scheduling_interval_secs *(default: 10)*
 
 :   Delay before retrying after the scheduler reports that no mount is available.
 
+backend_recovery_interval_secs *(default: 10)*
+
+:   Delay between catalogue and scheduler backend connection checks after a lost database connection.
+
 drive_state_poll_interval_secs *(default: 5)*
 
 :   Delay before polling the desired drive state again while the drive is Down.
 Lower values make **cta-taped** react faster when an operator sets the drive Up but increase scheduler polling.
+
+logical_library_poll_interval_secs *(default: 5)*
+
+:   Delay before checking again for a logical library that does not yet exist.
 
 mount_timeout_secs *(default: 600)*
 
@@ -181,6 +210,12 @@ Approximate transfer-cache memory consumption is **buffer_count** multiplied by 
 disk_io_threads *(default: 10)*
 
 :   Number of disk I/O workers and therefore the maximum number of transfers that can perform disk I/O concurrently.
+
+stats_report_interval_secs *(default: 15)*
+
+:   Interval in seconds between periodic tape-session statistics reports to the scheduler and logs.
+Must be greater than zero.
+Final statistics are reported when the session finishes, without waiting for this interval.
 
 no_block_move_timeout_secs *(default: 1800)*
 

@@ -9,6 +9,8 @@
 #include "common/exception/NotImplementedException.hpp"
 #include "taped/scsi/Structures.hpp"
 
+#include <thread>
+
 namespace {
 const long unsigned int max_fake_drive_record_length = 1000;
 const char filemark[] = "";
@@ -100,13 +102,17 @@ std::vector<cta::tape::drive::endOfWrapPosition> cta::tape::drive::FakeDrive::ge
 }
 
 std::vector<uint16_t> cta::tape::drive::FakeDrive::getTapeAlertCodes() {
-  std::vector<uint16_t> empty;
-  return empty;
+  throwIfFailurePoint(FailurePoint::TapeAlertCodes);
+  return m_tapeAlertCodes;
 }
 
-std::vector<std::string> cta::tape::drive::FakeDrive::getTapeAlerts(const std::vector<uint16_t>&) {
-  std::vector<std::string> empty;
-  return empty;
+std::vector<std::string> cta::tape::drive::FakeDrive::getTapeAlerts(const std::vector<uint16_t>& codes) {
+  throwIfFailurePoint(FailurePoint::TapeAlerts);
+  std::vector<std::string> alerts;
+  for (const auto code : codes) {
+    alerts.push_back("Fake tape alert " + std::to_string(code));
+  }
+  return alerts;
 }
 
 std::vector<std::string> cta::tape::drive::FakeDrive::getTapeAlertsCompact(const std::vector<uint16_t>&) {
@@ -340,6 +346,7 @@ bool cta::tape::drive::FakeDrive::isEncryptionCapEnabled() {
 }
 
 bool cta::tape::drive::FakeDrive::hasTapeInPlace() {
+  throwIfFailurePoint(FailurePoint::HasTapeInPlace);
   return m_tapeInPlace;
 }
 
@@ -359,7 +366,18 @@ void cta::tape::drive::FakeDrive::clearFailurePoints() {
   m_failurePoints.clear();
 }
 
+void cta::tape::drive::FakeDrive::setTapeAlertCodes(std::vector<uint16_t> codes) {
+  m_tapeAlertCodes = std::move(codes);
+}
+
+void cta::tape::drive::FakeDrive::setOperationDelay(FailurePoint operation, std::chrono::microseconds delay) {
+  m_operationDelays[operation] = delay;
+}
+
 void cta::tape::drive::FakeDrive::throwIfFailurePoint(FailurePoint failurePoint) const {
+  if (const auto delay = m_operationDelays.find(failurePoint); delay != m_operationDelays.end()) {
+    std::this_thread::sleep_for(delay->second);
+  }
   if (m_failurePoints.contains(failurePoint)) {
     throw cta::exception::Exception("Configured FakeDrive failure");
   }

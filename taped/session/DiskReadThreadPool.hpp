@@ -6,7 +6,7 @@
 #pragma once
 
 #include "DiskReadTask.hpp"
-#include "TaskWatchDog.hpp"
+#include "TapeSessionTracker.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
 #include "common/process/threading/Thread.hpp"
@@ -34,7 +34,7 @@ public:
   DiskReadThreadPool(int nbThread,
                      uint64_t maxFilesReq,
                      uint64_t maxBytesReq,
-                     MigrationWatchDog& migrationWatchDog,
+                     TapeSessionTracker& tracker,
                      const cta::log::LogContext& lc,
                      uint16_t xrootTimeout);
 
@@ -81,7 +81,9 @@ public:
    * fetch more work by the read thread pool when the task queue of the thread
    * pool starts to run low.
    */
-  void setTaskInjector(MigrationTaskInjector* injector) { m_injector = injector; }
+  void setTaskInjector(MigrationTaskInjector* injector) {
+    m_injector = injector;
+  }  // TODO: can we do this through the constructor?
 
 private:
   /**
@@ -181,9 +183,9 @@ private:
   uint16_t m_xrootTimeout;
 
   /**
-   * Reference to the watchdog, for error reporting.
+   * Reference to the session tracker, for error and progress reporting.
    */
-  cta::tape::daemon::MigrationWatchDog& m_watchdog;
+  TapeSessionTracker& m_tracker;
 
   /** The log context. This is copied on construction to prevent interferences
    * between threads.
@@ -192,7 +194,7 @@ private:
 
   /** Pointer to the task injector allowing request for more work, and
    * termination signaling */
-  MigrationTaskInjector* m_injector;
+  MigrationTaskInjector* m_injector = nullptr;
 
   /** The maximum number of files we ask per request. This value is also used as
    * a threshold (half of it, indeed) to trigger the request for more work.
