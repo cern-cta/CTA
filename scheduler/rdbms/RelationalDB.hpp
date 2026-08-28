@@ -97,6 +97,10 @@ public:
   std::list<cta::common::dataStructures::ArchiveJob>
   getArchiveJobs(const std::optional<std::string>& tapePoolName) const override;
 
+  rdbms::Rset getArchiveJobRows(common::dataStructures::QueueType queueType,
+                                const std::optional<std::string>& tapePoolName = nullptr,
+                                const std::optional<std::string>& vid = nullptr) const override;
+
   std::unique_ptr<IArchiveJobQueueItor>
   getArchiveJobQueueItor(const std::string& tapePoolName,
                          common::dataStructures::JobQueueType queueType) const override;
@@ -195,6 +199,9 @@ public:
 
   std::list<cta::common::dataStructures::RetrieveJob>
   getPendingRetrieveJobs(const std::optional<std::string>& vid) const override;
+
+  rdbms::Rset getRetrieveJobRows(common::dataStructures::QueueType queueType,
+                                 const std::optional<std::string>& vid = nullptr) const override;
 
   std::unique_ptr<IRetrieveJobQueueItor>
   getRetrieveJobQueueItor(const std::string& vid, common::dataStructures::JobQueueType queueType) const override;

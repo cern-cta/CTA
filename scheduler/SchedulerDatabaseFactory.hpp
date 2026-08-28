@@ -84,6 +84,17 @@ public:
     return m_SchedDB->getArchiveJobs(tapePoolName);
   }
 
+  rdbms::Rset getArchiveJobRows(common::dataStructures::QueueType queueType,
+                                const std::optional<std::string>& tapePoolName = nullptr,
+                                const std::optional<std::string>& vid = nullptr) const override {
+    return m_SchedDB->getArchiveJobRows(queueType, tapePoolName, vid);
+  }
+
+  rdbms::Rset getRetrieveJobRows(common::dataStructures::QueueType queueType,
+                                 const std::optional<std::string>& vid = nullptr) const override {
+    return m_SchedDB->getRetrieveJobRows(queueType, vid);
+  }
+
   std::unique_ptr<IArchiveJobQueueItor>
   getArchiveJobQueueItor(const std::string& tapePoolName,
                          common::dataStructures::JobQueueType queueType) const override {

@@ -18,6 +18,8 @@ enum class JobQueueType {
   JobsToTransferForRepack
 };
 
+enum class QueueType { Pending, Active, Failed };
+
 static const JobQueueType AllJobQueueTypes[] = {JobQueueType::JobsToTransferForUser,
                                                 JobQueueType::FailedJobs,
                                                 JobQueueType::JobsToReportToUser,
@@ -26,5 +28,7 @@ static const JobQueueType AllJobQueueTypes[] = {JobQueueType::JobsToTransferForU
                                                 JobQueueType::JobsToTransferForRepack};
 
 std::string toString(JobQueueType queueType);
+
+std::string toString(QueueType queueType);
 
 }  // namespace cta::common::dataStructures

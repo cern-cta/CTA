@@ -118,11 +118,8 @@ struct ArchiveJobSummaryRow {
         SUM(SIZE_IN_BYTES) AS JOBS_TOTAL_SIZE
       FROM
         ARCHIVE_FAILED_QUEUE
-      WHERE
-        STATUS = :STATUS::ARCHIVE_JOB_STATUS
     )SQL";
     auto stmt = txn.getConn().createStmt(sql);
-    stmt.bindString(":STATUS", "AJS_Failed");
     txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbSelectSummary);
     return stmt.executeQuery();
   }
