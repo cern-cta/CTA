@@ -9,9 +9,6 @@
 #include "common/exception/Exception.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/utils/utils.hpp"
-#include "daemon/DriveHandler.hpp"
-#include "daemon/ProcessManager.hpp"
-#include "daemon/SignalHandler.hpp"
 
 #include <google/protobuf/stubs/common.h>
 #include <sys/prctl.h>
@@ -19,8 +16,9 @@
 namespace cta::tape::daemon {
 
 void TapedApp::stop() {
-  // TODO: currently not invoked as the signal handler from the runtime library is disabled for cta-taped
-  // Once the forking mechanism is removed, this should gracefully shutdown taped
+  if (m_driveHandler) {
+    m_driveHandler->stop();
+  }
 }
 
 std::map<std::string, std::string> TapedApp::getStaticLogAttributes(const TapedConfig& config) const {
@@ -37,56 +35,30 @@ std::map<std::string, std::string> TapedApp::getStaticTelemetryAttributes(const 
 }
 
 int TapedApp::run(const TapedConfig& config, cta::log::Logger& log) {
-  // TODO: add some non-empty checks on the config
-
-  // Create the log context
   log::LogContext lc(log);
 
-  if (config.health_server.enabled) {
-    lc.log(log::WARNING,
-           "The health server is currently unavailable for cta-taped and health_server.enabled will be ignored");
-  }
-
-  // Linux may mark the process non-dumpable when messing with capabilities in certain cases
-  // To be safe, we explicitly enable it
+  // Linux may mark the process non-dumpable when messing with capabilities in certain cases. To be safe, we explicitly enable it.
   // See https://man7.org/linux/man-pages/man2/pr_set_dumpable.2const.html
   cta::utils::setDumpableProcessAttribute(true);
   if (!cta::utils::getDumpableProcessAttribute()) {
-    lc.log(log::WARNING, "Failed to set the dumpable attribute of cta-taped");
+    log(log::WARNING, "Failed to set the dumpable attribute. Core dumps may not be produced");
   }
 
-  // Set process name
-  const auto processName = cta::taped::utils::constructProcessName(config.drive.name, "parent", lc);
-  prctl(PR_SET_NAME, processName.c_str());
-
-  // Create the process manager
-  ProcessManager processManager(lc);
-  // Signal handler
-  auto signalHandler = std::make_unique<SignalHandler>(processManager);
-  // Allow enough time to return the tape to its library slot and finish shutdown bookkeeping.
-  signalHandler->setTimeout(std::chrono::seconds(config.mounts.unmount_timeout_secs + 5));
-  processManager.addHandler(std::move(signalHandler));
-  // Create the drive handler
-  const common::dataStructures::DriveInfo driveInfo(config.drive.name,
-                                                    utils::getShortHostname(),
-                                                    config.drive.logical_library_name,
-                                                    config.drive.device,
-                                                    config.drive.control_path);
-  auto driveHandler = std::make_unique<DriveHandler>(config, driveInfo, processManager);
-  processManager.addHandler(std::move(driveHandler));
-
-  // And run the process manager
-  int ret = processManager.run();
-  google::protobuf::ShutdownProtobufLibrary();
-  return ret;
+  // Run the main part of taped
+  m_driveHandler = std::make_unique<DriveHandler>(config, log);
+  return m_driveHandler->run();
 }
 
 bool TapedApp::isReady() const {
-  return true;  // For now taped is always ready. Eventually we should integrate this with the existing watch dog
+  return m_driveHandler && m_driveHandler->isReady();
 }
 
 bool TapedApp::isLive() const {
-  return true;
+  if (!m_driveHandler) {
+    // We consider ourselves alive if we haven't started yet, because a restart likely won't fix this.
+    return true;
+  }
+  return m_driveHandler->isLive();
 }
 
 }  // namespace cta::tape::daemon

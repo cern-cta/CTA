@@ -8,21 +8,19 @@ add_subdirectory (system)
 add_subdirectory (file)
 add_subdirectory (session)
 add_subdirectory (rao)
-add_subdirectory (daemon)
 
 add_library(ctatapedutils
   TapedUtils.cpp
 )
 target_link_libraries(ctatapedutils PUBLIC ctacommon)
-target_link_libraries(ctatapedaemon ctatapedutils)
 
 add_library(ctataped
   TapedApp.cpp
+  DriveHandler.cpp
 )
 
 target_link_libraries(ctataped
 	ctacommon
-	ctatapedaemon
 	ctatapedutils
 )
 
