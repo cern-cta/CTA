@@ -17,7 +17,7 @@ ValidateJwt(const std::string& encodedJwt, JwtCache& pubkeyCache, const log::Log
 
     1. Decode the token
     2. Get the 'kid' and fetch the corresponding public key
-    3. Verify the token's signature, expiry, and (optionally) issuer
+    3. Verify the token's signature, expiration, and (optionally) issuer
     4. Check whether the token's 'jti' is in the revoke list
     5. Check that there is a subject
   */
@@ -59,7 +59,7 @@ ValidateJwt(const std::string& encodedJwt, JwtCache& pubkeyCache, const log::Log
 
     pubkeyPem = entry.value().pubkey;
 
-    // if we've survived this far, validate the token's signature using the public key
+    // validate the token's signature using the public key
     auto verifierChain = jwt::verify().allow_algorithm(jwt::algorithm::rs256(pubkeyPem, "", "", ""));
 
     // validate the issuer of the JWT
@@ -71,9 +71,8 @@ ValidateJwt(const std::string& encodedJwt, JwtCache& pubkeyCache, const log::Log
       return {false, std::nullopt, "Token does not contain an 'aud' claim"};
     }
     const std::string& expectedAudience = pubkeyCache.getExpectedAudience();
-    // RFC 7519 allows 'aud' to be a single string or an array of strings.
-    auto audiences = decoded.get_audience();
-    if (!audiences.contains(expectedAudience)) {
+    // 'aud' is actually an array (there can be several audiences)
+    if (auto audiences = decoded.get_audience(); !audiences.contains(expectedAudience)) {
       return {false, std::nullopt, "Token audience does not match expected value"};
     }
 
@@ -103,7 +102,9 @@ ValidateJwt(const std::string& encodedJwt, JwtCache& pubkeyCache, const log::Log
       return {false, std::nullopt, errorMessage};
     }
 
-    // check that the token has an exp claim (expiry is already verified by verifierChain above)
+    // check that the token has an exp claim
+    // technically, the expiration date is already verified by the verifierChain above,
+    // but that will happily accept tokens with no expiration date
     if (!decoded.has_payload_claim("exp")) {
       auto errorMessage = "Token does not contain an 'exp' claim";
       lc.log(cta::log::ERR, errorMessage);

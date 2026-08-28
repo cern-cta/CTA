@@ -24,7 +24,7 @@ JwtCache::JwtCache(std::unique_ptr<JwksFetcher> fetcher,
       m_expectedIssuer(expectedIssuer),
       m_expectedAudience(expectedAudience),
       m_revokedSet(std::move(revokedSet)),
-      m_lc(lc) {};
+      m_lc(lc) {}
 
 // Function to handle curl responses
 size_t WriteCallback(char* contents, size_t size, size_t nmemb, std::string* output) {

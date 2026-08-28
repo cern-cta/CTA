@@ -75,9 +75,9 @@ private:
   std::map<std::string, JwkCacheEntry, std::less<>> m_keymap;
   //!< This gives the option to keep public keys around for longer than the refresh interval.
   const int m_pubkeyTimeout;
-  //!< The expected issuer of tokens
+  //!< The expected issuer for all tokens
   std::string m_expectedIssuer;
-  //!< The expected audience of tokens
+  //!< The expected audience for all tokens
   std::string m_expectedAudience;
   //!< A set of JWT IDs that have been revoked.
   std::set<std::string, std::less<>> m_revokedSet;

@@ -51,7 +51,7 @@ struct GeneralGrpcConfig final {
 struct RevokedTokenEntry final {
   std::string jti;             //!< The token's JTI (UUID)
   std::string reason;          //!< The token's revocation reason (only for audit purposes)
-  toml::date_time revoked_at;  //!< The token's revocation date/time (only for audit purposes)
+  toml::date_time revoked_at;  //!< The token's revocation date/time in UTC (only for audit purposes)
 
   static constexpr std::size_t memberCount() { return 3; }
 };
