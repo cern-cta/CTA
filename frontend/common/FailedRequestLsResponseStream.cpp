@@ -34,7 +34,7 @@ FailedRequestLsResponseStream::FailedRequestLsResponseStream(cta::catalogue::Cat
   }
 
   m_schedulerBackendName = m_scheduler.getSchedulerBackendName();
-
+  std::cout << m_schedulerBackendName << std::endl;
   auto tapepool = request.getOptional(OptionString::TAPE_POOL);
   auto vid = request.getOptional(OptionString::VID);
   bool justarchive = request.has_flag(OptionBoolean::JUSTARCHIVE) || tapepool.has_value();
@@ -49,6 +49,7 @@ FailedRequestLsResponseStream::FailedRequestLsResponseStream(cta::catalogue::Cat
   } else {
 #ifdef CTA_PGSCHED
     if (!justretrieve) {
+      std::cout << "collecting archive rows" << std::endl;
       m_archiveJobQueueItorPtr =
         std::make_unique<rdbms::Rset>(m_schedDb.getArchiveJobRows(common::dataStructures::QueueType::Failed, tapepool));
       if (m_archiveJobQueueItorPtr) {
@@ -56,6 +57,7 @@ FailedRequestLsResponseStream::FailedRequestLsResponseStream(cta::catalogue::Cat
       }
     }
     if (!justarchive) {
+      std::cout << "collecting retrieve rows" << std::endl;
       m_retrieveJobQueueItorPtr =
         std::make_unique<rdbms::Rset>(m_schedDb.getRetrieveJobRows(common::dataStructures::QueueType::Failed, vid));
       if (m_retrieveJobQueueItorPtr) {
@@ -80,6 +82,7 @@ FailedRequestLsResponseStream::FailedRequestLsResponseStream(cta::catalogue::Cat
 
 void FailedRequestLsResponseStream::fillCommonFields(cta::admin::FailedRequestLsItem& fr_item,
                                                      const cta::rdbms::Rset& item) {
+  std::cout << "fillCommonFields" << std::endl;
   fr_item.set_copy_nb(item.columnUint64("COPY_NB"));
 
   fr_item.mutable_requester()->set_username(item.columnString("REQUESTER_NAME"));
@@ -116,9 +119,8 @@ cta::xrd::Data FailedRequestLsResponseStream::getNextArchiveJobsData() {
 
   // Fill archive specific fields
   fr_item->set_request_type(cta::admin::RequestType::ARCHIVE_REQUEST);
+  fr_item->set_object_id(std::string("a:") + std::to_string(item.columnUint64("JOB_ID")));
   fr_item->set_tapepool(item.columnString("TAPE_POOL"));
-  fr_item.set_object_id(std::string("archive:") + std::to_string(item.columnUint64("JOB_ID")));
-
 
   return data;
 }
@@ -134,7 +136,7 @@ cta::xrd::Data FailedRequestLsResponseStream::getNextRetrieveJobsData() {
 
   //  Fill retrieve specific fields
   fr_item->set_request_type(cta::admin::RequestType::RETRIEVE_REQUEST);
-  fr_item.set_object_id(std::string("retrieve:") + std::to_string(item.columnUint64("JOB_ID")));
+  fr_item->set_object_id(std::string("r:") + std::to_string(item.columnUint64("JOB_ID")));
   fr_item->mutable_tf()->set_vid(item.columnString("VID"));
   fr_item->mutable_tf()->set_f_seq(item.columnUint64("FSEQ"));
   fr_item->mutable_tf()->set_block_id(item.columnUint64("BLOCK_ID"));
@@ -272,6 +274,7 @@ bool FailedRequestLsResponseStream::isDone() {
   const auto archiveDone = !m_archiveJobQueueItorPtr || m_archiveJobQueueItorPtr->end();
   const auto retrieveDone = !m_retrieveJobQueueItorPtr || m_retrieveJobQueueItorPtr->end();
 #endif
+   std::cout << "archiveDone && retrieveDone "<< archiveDone && retrieveDone << std::endl;
   return archiveDone && retrieveDone;
 }
 
@@ -287,13 +290,16 @@ cta::xrd::Data FailedRequestLsResponseStream::next() {
   }
 #ifdef CTA_PGSCHED
   if (m_archiveJobQueueItorPtr && m_archiveHasNext) {
+    std::cout << "m_archiveJobQueueItorPtr->next()" << std::endl;
     m_archiveHasNext = m_archiveJobQueueItorPtr->next();
     return getNextArchiveJobsData();
   }
   if (m_retrieveJobQueueItorPtr && m_retrieveHasNext) {
+    std::cout << "m_retrieveJobQueueItorPtr->next()" << std::endl;
     m_retrieveHasNext = m_retrieveJobQueueItorPtr->next();
     return getNextRetrieveJobsData();
   }
+  std::cout << "Stream EXHAUSTEED" << std::endl;
   throw std::runtime_error("Stream is exhausted");
 #else
   if (m_archiveJobQueueItorPtr && !m_archiveJobQueueItorPtr->end()) {

@@ -602,8 +602,8 @@ void RelationalDB::deleteFailed(const std::string& objectId, log::LogContext& lc
   // extract the job_id
   bool isArchive = false;
   uint64_t jobID = 0;
-  constexpr std::string_view archivePrefix = "archive:";
-  constexpr std::string_view retrievePrefix = "retrieve:";
+  constexpr std::string_view archivePrefix = "a:";
+  constexpr std::string_view retrievePrefix = "r:";
   if (objectId.starts_with(archivePrefix)) {
     isArchive = true;
     jobID = std::stoull(objectId.substr(archivePrefix.size()));
@@ -611,21 +611,21 @@ void RelationalDB::deleteFailed(const std::string& objectId, log::LogContext& lc
     isArchive = false;
     jobID = std::stoull(objectId.substr(retrievePrefix.size()));
   } else {
-   throw exception::UserError("Invalid failed request object ID: " + objectId);
+    throw exception::UserError("Invalid failed request object ID: " + objectId);
   }
   try {
     uint64_t deletedJobs = 0;
     if (isArchive) {
       deletedJobs = schedulerdb::postgres::ArchiveJobQueueRow::deleteFailedArchiveJob(txn, jobID);
     } else {
-      deletedJobs = schedulerdb::postgres::ArchiveJobQueueRow::deleteFailedRetrieveJob(txn, jobID);
+      deletedJobs = schedulerdb::postgres::RetrieveJobQueueRow::deleteFailedRetrieveJob(txn, jobID);
     }
     log::ScopedParamContainer(lc)
       .add("jobID", jobID)
       .add("objectId", objectId)
       .add("deletedJobs", deletedJobs)
       .log(log::INFO, "In RelationalDB::deleteFailed(): removing failed job from the failed queue");
-    if (cancelledJobs != 1) {
+    if (deletedJobs != 1) {
       lc.log(cta::log::WARNING, "In RelationalDB::deleteFailed(): deletion unexpectedly affected more than 1 job !");
     }
     txn.commit();
