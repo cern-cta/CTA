@@ -92,10 +92,10 @@ The only thing the developer needs to take care of is that the structure of the 
 Configuration checking is split into three layers with distinct responsibilities:
 
 1. The TOML parser reads TOML into the config struct. It checks syntax, structure, types, numeric bounds, signedness, and strict-mode requirements such as missing or unknown fields.
-2. The config struct's `validate() const` method checks the fully initialized struct. It covers semantic constraints such as non-empty strings, strictly positive values, supported values, and valid combinations of entries. It must not read TOML or inspect external resources.
+2. The config struct's `ValidationResult validate() const` method checks the fully initialized struct. It collects semantic constraints such as non-empty strings, strictly positive values, supported values, and valid combinations of entries. It must not read TOML or inspect external resources.
 3. Application-specific initialization checks external state. Examples include checking that a configured file exists or is readable, connecting to a database, and verifying that a remote service is reachable.
 
-`ConfigLoader` calls `validate()` after the parser has successfully populated the root config struct. Root and parent config structs must explicitly call `validate()` on their custom config children. Keeping these calls explicit makes the validation flow visible and allows parent validation to enforce relationships between its children.
+`ConfigLoader` calls `validate()` after the parser has successfully populated the root config struct. If validation reports errors, the loader presents all of them in one `UserError`. Root and parent config structs must explicitly merge the validation result from each custom config child. Keeping these calls explicit makes the validation flow visible and allows parent validation to enforce relationships between its children.
 
 ## Examples
 
@@ -128,15 +128,17 @@ struct CustomConfig final {
   // If this number is not consistent with the actual number of members, it won't compile
   static constexpr std::size_t memberCount() { return 8; }
 
-  void validate() const {
-    catalogue.validate();
-    scheduler.validate();
-    logging.validate();
-    telemetry.validate();
-    health_server.validate();
-    experimental.validate();
-    xrootd.validate();
-    customConf.validate();
+  cta::runtime::ValidationResult validate() const {
+    cta::runtime::ValidationResult result;
+    result.merge("catalogue", catalogue.validate());
+    result.merge("scheduler", scheduler.validate());
+    result.merge("logging", logging.validate());
+    result.merge("telemetry", telemetry.validate());
+    result.merge("health_server", health_server.validate());
+    result.merge("experimental", experimental.validate());
+    result.merge("xrootd", xrootd.validate());
+    result.merge("customConf", customConf.validate());
+    return result;
   }
 };
 
@@ -202,7 +204,11 @@ struct MinimalConfig final {
 
   static constexpr std::size_t memberCount() { return 1; }
 
-  void validate() const { logging.validate(); }
+  cta::runtime::ValidationResult validate() const {
+    cta::runtime::ValidationResult result;
+    result.merge("logging", logging.validate());
+    return result;
+  }
 };
 
 class MinimalApp {

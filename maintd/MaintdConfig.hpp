@@ -21,13 +21,15 @@ struct DiskReportRoutineConfig final {
 
   static constexpr std::size_t memberCount() { return 3; }
 
-  void validate() const {
+  cta::runtime::ValidationResult validate() const {
+    cta::runtime::ValidationResult result;
     if (batch_size == 0) {
-      throw cta::exception::UserError("Disk report batch_size must be positive");
+      result.addError("batch_size", "must be positive");
     }
     if (soft_timeout_secs == 0) {
-      throw cta::exception::UserError("Disk report soft_timeout_secs must be positive");
+      result.addError("soft_timeout_secs", "must be positive");
     }
+    return result;
   }
 };
 
@@ -37,10 +39,12 @@ struct RepackExpandRoutineConfig final {
 
   static constexpr std::size_t memberCount() { return 2; }
 
-  void validate() const {
+  cta::runtime::ValidationResult validate() const {
+    cta::runtime::ValidationResult result;
     if (max_to_expand == 0) {
-      throw cta::exception::UserError("repack_expand.max_to_expand must be positive");
+      result.addError("max_to_expand", "must be positive");
     }
+    return result;
   }
 };
 
@@ -50,10 +54,12 @@ struct RepackReportRoutineConfig final {
 
   static constexpr std::size_t memberCount() { return 2; }
 
-  void validate() const {
+  cta::runtime::ValidationResult validate() const {
+    cta::runtime::ValidationResult result;
     if (soft_timeout_secs == 0) {
-      throw cta::exception::UserError("repack_report.soft_timeout_secs must be positive");
+      result.addError("soft_timeout_secs", "must be positive");
     }
+    return result;
   }
 };
 
@@ -65,10 +71,12 @@ struct QueueCleanupRoutineConfig final {
 
   static constexpr std::size_t memberCount() { return 2; }
 
-  void validate() const {
+  cta::runtime::ValidationResult validate() const {
+    cta::runtime::ValidationResult result;
     if (batch_size == 0) {
-      throw cta::exception::UserError("queue_cleanup.batch_size must be positive");
+      result.addError("batch_size", "must be positive");
     }
+    return result;
   }
 };
 
@@ -77,7 +85,7 @@ struct GarbageCollectRoutineConfig final {
 
   static constexpr std::size_t memberCount() { return 1; }
 
-  void validate() const {}
+  cta::runtime::ValidationResult validate() const { return {}; }
 };
 
 #else
@@ -89,13 +97,15 @@ struct ActivePendingQueueCleanupRoutineConfig final {
 
   static constexpr std::size_t memberCount() { return 3; }
 
-  void validate() const {
+  cta::runtime::ValidationResult validate() const {
+    cta::runtime::ValidationResult result;
     if (batch_size == 0) {
-      throw cta::exception::UserError("Active/pending queue cleanup batch_size must be positive");
+      result.addError("batch_size", "must be positive");
     }
     if (age_for_collection_secs == 0) {
-      throw cta::exception::UserError("Active/pending queue cleanup age_for_collection_secs must be positive");
+      result.addError("age_for_collection_secs", "must be positive");
     }
+    return result;
   }
 };
 
@@ -106,13 +116,15 @@ struct SchedulerMaintenanceCleanupRoutineConfig final {
 
   static constexpr std::size_t memberCount() { return 3; }
 
-  void validate() const {
+  cta::runtime::ValidationResult validate() const {
+    cta::runtime::ValidationResult result;
     if (batch_size == 0) {
-      throw cta::exception::UserError("Scheduler maintenance cleanup batch_size must be positive");
+      result.addError("batch_size", "must be positive");
     }
     if (age_for_deletion_secs == 0) {
-      throw cta::exception::UserError("Scheduler maintenance cleanup age_for_deletion_secs must be positive");
+      result.addError("age_for_deletion_secs", "must be positive");
     }
+    return result;
   }
 };
 
@@ -143,27 +155,29 @@ struct RoutinesConfig final {
   static constexpr std::size_t memberCount() { return 11; }
 #endif
 
-  void validate() const {
+  cta::runtime::ValidationResult validate() const {
+    cta::runtime::ValidationResult result;
     if (cycle_sleep_interval_secs == 0) {
-      throw cta::exception::UserError("routines.cycle_sleep_interval_secs must be positive");
+      result.addError("cycle_sleep_interval_secs", "must be positive");
     }
     if (max_cycle_duration_secs == 0) {
-      throw cta::exception::UserError("routines.max_cycle_duration_secs must be positive");
+      result.addError("max_cycle_duration_secs", "must be positive");
     }
-    disk_report_archive.validate();
-    disk_report_retrieve.validate();
-    repack_expand.validate();
-    repack_report.validate();
+    result.merge("disk_report_archive", disk_report_archive.validate());
+    result.merge("disk_report_retrieve", disk_report_retrieve.validate());
+    result.merge("repack_expand", repack_expand.validate());
+    result.merge("repack_report", repack_report.validate());
 #ifndef CTA_PGSCHED
-    garbage_collect.validate();
-    queue_cleanup.validate();
+    result.merge("garbage_collect", garbage_collect.validate());
+    result.merge("queue_cleanup", queue_cleanup.validate());
 #else
-    user_active_queue_cleanup.validate();
-    repack_active_queue_cleanup.validate();
-    user_pending_queue_cleanup.validate();
-    repack_pending_queue_cleanup.validate();
-    scheduler_maintenance_cleanup.validate();
+    result.merge("user_active_queue_cleanup", user_active_queue_cleanup.validate());
+    result.merge("repack_active_queue_cleanup", repack_active_queue_cleanup.validate());
+    result.merge("user_pending_queue_cleanup", user_pending_queue_cleanup.validate());
+    result.merge("repack_pending_queue_cleanup", repack_pending_queue_cleanup.validate());
+    result.merge("scheduler_maintenance_cleanup", scheduler_maintenance_cleanup.validate());
 #endif
+    return result;
   }
 };
 
@@ -179,15 +193,17 @@ struct MaintdConfig final {
 
   static constexpr std::size_t memberCount() { return 8; }
 
-  void validate() const {
-    catalogue.validate();
-    scheduler.validate();
-    logging.validate();
-    telemetry.validate();
-    health_server.validate();
-    experimental.validate();
-    xrootd.validate();
-    routines.validate();
+  cta::runtime::ValidationResult validate() const {
+    cta::runtime::ValidationResult result;
+    result.merge("catalogue", catalogue.validate());
+    result.merge("scheduler", scheduler.validate());
+    result.merge("logging", logging.validate());
+    result.merge("telemetry", telemetry.validate());
+    result.merge("health_server", health_server.validate());
+    result.merge("experimental", experimental.validate());
+    result.merge("xrootd", xrootd.validate());
+    result.merge("routines", routines.validate());
+    return result;
   }
 };
 

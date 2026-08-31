@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "common/exception/UserError.hpp"
+#include "ValidationResult.hpp"
 
 #include <algorithm>
 #include <array>
@@ -38,7 +38,7 @@ struct ExperimentalConfig final {
 
   static constexpr std::size_t memberCount() { return 1; }
 
-  void validate() const {}
+  ValidationResult validate() const { return {}; }
 };
 
 /**
@@ -49,10 +49,12 @@ struct CatalogueConfig final {
 
   static constexpr std::size_t memberCount() { return 1; }
 
-  void validate() const {
+  ValidationResult validate() const {
+    ValidationResult result;
     if (config_file.empty()) {
-      throw exception::UserError("catalogue.config_file cannot be empty");
+      result.addError("config_file", "cannot be empty");
     }
+    return result;
   }
 };
 
@@ -76,21 +78,23 @@ struct SchedulerConfig final {
   static constexpr std::size_t memberCount() { return 5; }
 #endif
 
-  void validate() const {
+  ValidationResult validate() const {
+    ValidationResult result;
     if (config_file.empty()) {
-      throw exception::UserError("scheduler.config_file cannot be empty");
+      result.addError("config_file", "cannot be empty");
     }
     if (tape_cache_max_age_secs == 0) {
-      throw exception::UserError("scheduler.tape_cache_max_age_secs must be positive");
+      result.addError("tape_cache_max_age_secs", "must be positive");
     }
     if (retrieve_queue_cache_max_age_secs == 0) {
-      throw exception::UserError("scheduler.retrieve_queue_cache_max_age_secs must be positive");
+      result.addError("retrieve_queue_cache_max_age_secs", "must be positive");
     }
 #ifdef CTA_PGSCHED
     if (number_of_connections == 0) {
-      throw exception::UserError("scheduler.number_of_connections must be positive");
+      result.addError("number_of_connections", "must be positive");
     }
 #endif
+    return result;
   }
 };
 
@@ -104,17 +108,19 @@ struct LoggingConfig final {
 
   static constexpr std::size_t memberCount() { return 3; }
 
-  void validate() const {
+  ValidationResult validate() const {
     static constexpr std::array validLevels =
       {"EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "INFO", "DEBUG", "USERERR"};
     static constexpr std::array validFormats = {"kv", "json"};
 
+    ValidationResult result;
     if (std::ranges::find(validLevels, level) == validLevels.end()) {
-      throw exception::UserError("Unsupported logging.level: '" + level + "'");
+      result.addError("level", "has unsupported value '" + level + "'");
     }
     if (std::ranges::find(validFormats, format) == validFormats.end()) {
-      throw exception::UserError("Unsupported logging.format: '" + format + "'");
+      result.addError("format", "has unsupported value '" + format + "'");
     }
+    return result;
   }
 };
 
@@ -130,11 +136,13 @@ struct TelemetryConfig final {
 
   static constexpr std::size_t memberCount() { return 2; }
 
-  void validate() const {
+  ValidationResult validate() const {
+    ValidationResult result;
     if (on_init_failure != "fatal" && on_init_failure != "warn") {
-      throw exception::UserError("Unsupported telemetry.on_init_failure: '" + on_init_failure
-                                 + "'. Must be one of [fatal, warn].");
+      result.addError("on_init_failure",
+                      "has unsupported value '" + on_init_failure + "'; must be one of [fatal, warn]");
     }
+    return result;
   }
 };
 
@@ -149,25 +157,25 @@ struct HealthServerConfig final {
 
   static constexpr std::size_t memberCount() { return 4; }
 
-  void validate() const {
+  ValidationResult validate() const {
+    ValidationResult result;
     if (!enabled) {
-      return;
+      return result;
     }
     if (use_unix_domain_socket) {
-      return;
+      return result;
     }
     if (!host.has_value()) {
-      throw exception::UserError("health_server.host must be provided for TCP");
-    }
-    if (host->empty()) {
-      throw exception::UserError("health_server.host cannot be empty for TCP");
+      result.addError("host", "must be provided for TCP");
+    } else if (host->empty()) {
+      result.addError("host", "cannot be empty for TCP");
     }
     if (!port.has_value()) {
-      throw exception::UserError("health_server.port must be provided for TCP");
+      result.addError("port", "must be provided for TCP");
+    } else if (*port == 0 || *port > 65535) {
+      result.addError("port", "must be between 1 and 65535");
     }
-    if (*port == 0 || *port > 65535) {
-      throw exception::UserError("health_server.port must be between 1 and 65535");
-    }
+    return result;
   }
 };
 
@@ -181,15 +189,17 @@ struct XRootDConfig final {
 
   static constexpr std::size_t memberCount() { return 2; }
 
-  void validate() const {
+  ValidationResult validate() const {
+    ValidationResult result;
     if (security_protocol.empty()) {
-      throw exception::UserError("xrootd.security_protocol cannot be empty");
+      result.addError("security_protocol", "cannot be empty");
     }
     if (security_protocol == "sss") {
       if (sss_keytab_path.empty()) {
-        throw exception::UserError("xrootd.sss_keytab_path cannot be empty when using the sss security protocol");
+        result.addError("sss_keytab_path", "cannot be empty when using the sss security protocol");
       }
     }
+    return result;
   }
 };
 

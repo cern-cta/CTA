@@ -102,6 +102,7 @@ set (COMMON_LIB_SRC_FILES
   runtime/signals/SignalUtils.cpp
   runtime/health/HealthServer.cpp
   runtime/config/parsing/ParseResult.cpp
+  runtime/config/ValidationResult.cpp
   process/ProcessCap.cpp
   process/threading/ChildProcess.cpp
   process/threading/CondVar.cpp
@@ -190,6 +191,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   runtime/ApplicationTest.cpp
   runtime/config/ConfigLoaderTest.cpp
   runtime/config/CommonConfigTest.cpp
+  runtime/config/ValidationResultTest.cpp
   runtime/config/parsing/ReflectionTest.cpp
   runtime/cli/ArgParserTest.cpp
   runtime/signals/SignalReactorTest.cpp

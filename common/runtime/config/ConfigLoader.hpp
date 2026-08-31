@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "ValidationResult.hpp"
 #include "common/exception/UserError.hpp"
 #include "parsing/TomlParser.hpp"
 
@@ -16,7 +17,7 @@ namespace cta::runtime {
 
 template<class T>
 concept HasValidateMethod = requires(const T& config) {
-  { config.validate() } -> std::same_as<void>;
+  { config.validate() } -> std::same_as<ValidationResult>;
 };
 
 /**
@@ -45,10 +46,9 @@ T loadFromToml(const std::string& filePath, bool strict = false) {
     throw cta::exception::UserError("Invalid config in '" + filePath + "':\n" + res.what(), false);
   }
   if constexpr (HasValidateMethod<T>) {
-    try {
-      config.validate();
-    } catch (const cta::exception::UserError& ex) {
-      throw cta::exception::UserError("Invalid config in '" + filePath + "':\n" + ex.getMessageValue(), false);
+    const auto validationResult = config.validate();
+    if (!validationResult.ok()) {
+      throw cta::exception::UserError("Invalid config in '" + filePath + "':\n" + validationResult.what(), false);
     }
   }
   return config;

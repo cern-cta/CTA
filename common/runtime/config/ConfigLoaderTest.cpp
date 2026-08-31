@@ -129,13 +129,19 @@ struct OptionalAggregateConfig {
 
 struct ValidatedConfig {
   int value = 1;
+  int other_value = 1;
 
-  static constexpr std::size_t memberCount() { return 1; }
+  static constexpr std::size_t memberCount() { return 2; }
 
-  void validate() const {
+  cta::runtime::ValidationResult validate() const {
+    cta::runtime::ValidationResult result;
     if (value == 0) {
-      throw cta::exception::UserError("value must be non-zero");
+      result.addError("value", "must be non-zero");
     }
+    if (other_value == 0) {
+      result.addError("other_value", "must be non-zero");
+    }
+    return result;
   }
 };
 
@@ -163,13 +169,15 @@ mandatory = 7
 }
 
 TEST(ConfigLoader, InvokesRootValidation) {
-  TempFile f("value = 0\n", ".toml");
+  TempFile f("value = 0\nother_value = 0\n", ".toml");
 
   try {
     cta::runtime::loadFromToml<ValidatedConfig>(f.path());
     FAIL() << "Expected cta::exception::UserError";
   } catch (const cta::exception::UserError& ex) {
-    EXPECT_EQ(ex.getMessageValue(), "Invalid config in '" + f.path() + "':\nvalue must be non-zero");
+    EXPECT_EQ(ex.getMessageValue(),
+              "Invalid config in '" + f.path()
+                + "':\n1) Field 'other_value' must be non-zero.\n2) Field 'value' must be non-zero.\n");
   }
 }
 

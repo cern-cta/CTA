@@ -41,7 +41,11 @@ struct MinimalTestConfig {
 
   static constexpr std::size_t memberCount() { return 1; }
 
-  void validate() const { logging.validate(); }
+  cta::runtime::ValidationResult validate() const {
+    cta::runtime::ValidationResult result;
+    result.merge("logging", logging.validate());
+    return result;
+  }
 };
 
 class TestApp {
@@ -175,7 +179,11 @@ TEST(Application, AppCompilesWithCustomConfig) {
 
     static constexpr std::size_t memberCount() { return 2; }
 
-    void validate() const { logging.validate(); }
+    cta::runtime::ValidationResult validate() const {
+      cta::runtime::ValidationResult result;
+      result.merge("logging", logging.validate());
+      return result;
+    }
   };
 
   class TestAppWithCustomConfig {
