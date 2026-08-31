@@ -174,7 +174,7 @@ variables:
 
   # Pipeline images
   # Updated by the weekly UPDATE_PIPELINE_IMAGES pipeline after every image has been built successfully
-  PIPELINE_IMAGE_VERSION: "2026-08-24-15603587"
+  PIPELINE_IMAGE_VERSION: "2026-08-31-15655121"
   DOCKER_IMAGE_PROXY: "registry.cern.ch"
   # Platform-specific images are tagged with the platform name to allow for multiple platforms to be built and tested in parallel
   IMAGE_BUILD: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:${PIPELINE_IMAGE_VERSION}.$[[ inputs.platform ]]"
