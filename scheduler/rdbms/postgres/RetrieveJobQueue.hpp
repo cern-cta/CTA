@@ -792,7 +792,7 @@ public:
   */
   static uint64_t cancelRetrieveJob(Transaction& txn, uint64_t archiveFileID);
 
-   /**
+  /**
    * For manual deletion of failed jobs form failed archive queue
    *
    * @param txn           Transaction handling the connection to the backend database

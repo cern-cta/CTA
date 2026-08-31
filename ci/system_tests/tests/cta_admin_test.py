@@ -24,6 +24,7 @@ from system_tests.helpers.utils import (
     wait_for_condition,
 )
 
+
 # NOTE: these tests are only meant for cta-admin tests. Other tools should get their own test suite
 #
 # The tests below are relative simple as they all (mostly) follow the same pattern:
@@ -48,9 +49,8 @@ from system_tests.helpers.utils import (
 #  Helpers
 # =========================================================================
 
-
 def scheduler_postgres_host(namespace: Optional[str]) -> RemoteHost:
-    """The postgres scheduler DB pod, to seed the failed job queues directly.
+    """Return the postgres scheduler DB pod, used to seed the failed job queues directly.
 
     Not a fixture on purpose: the pod only exists when the postgres scheduler is deployed, so the
     callers have to skip before reaching for it.
@@ -70,7 +70,10 @@ def scheduler_postgres_sql(scheduler_db: RemoteHost, sql: str) -> str:
 
 def insert_failed_job(scheduler_db: RemoteHost, table: str, columns: str, values: str) -> str:
     """Insert one row into a failed job queue and return its JOB_ID."""
-    job_id = scheduler_postgres_sql(scheduler_db, f"INSERT INTO {table} ({columns}) VALUES ({values}) RETURNING JOB_ID")
+    # The statement is built from the literals the callers define below; a table name cannot be
+    # bound as a query parameter anyway
+    sql = f"INSERT INTO {table} ({columns}) VALUES ({values}) RETURNING JOB_ID"  # noqa: S608
+    job_id = scheduler_postgres_sql(scheduler_db, sql)
     assert job_id.isdigit(), f"unexpected JOB_ID returned by the insert into {table}: '{job_id}'"
     return job_id
 
@@ -324,11 +327,11 @@ def test_cta_admin_tape(cta_cli: CtaCliHost) -> None:
 
 
 def test_cta_admin_tape_file(
-    cta_cli: CtaCliHost,
-    disk_client: DiskClientHost,
-    disk_instance: DiskInstanceHost,
-    disk_instance_name: str,
-    test_dir: Path,
+        cta_cli: CtaCliHost,
+        disk_client: DiskClientHost,
+        disk_instance: DiskInstanceHost,
+        disk_instance_name: str,
+        test_dir: Path,
 ) -> None:
     vids: list[str] = cta_cli.list_all_tape_vids()
     assert vids, "No tape VIDs available to test tape file commands."
@@ -449,8 +452,9 @@ def test_cta_admin_drive(cta_cli: CtaCliHost, cta_taped: CtaTapedHost) -> None:
     # Ideally this is more deterministic...
     wait_for_condition(
         lambda: (
-            cta_cli.exec_with_output(f"cta-admin --json dr ls {dr_name} | jq -r '.[].reason'", throw_on_failure=False)
-            == "[cta-taped] INFO Startup"
+                cta_cli.exec_with_output(f"cta-admin --json dr ls {dr_name} | jq -r '.[].reason'",
+                                         throw_on_failure=False)
+                == "[cta-taped] INFO Startup"
         )
     )
     cta_cli.set_all_drives_up(wait=True)
@@ -616,12 +620,12 @@ def test_cta_admin_media_type(cta_cli: CtaCliHost) -> None:
 
 
 def test_cta_admin_recycle_tape_file_ls(
-    cta_cli: CtaCliHost,
-    disk_client: DiskClientHost,
-    disk_instance: DiskInstanceHost,
-    disk_instance_name: str,
-    test_dir: Path,
-    cta_storage_class: str,
+        cta_cli: CtaCliHost,
+        disk_client: DiskClientHost,
+        disk_instance: DiskInstanceHost,
+        disk_instance_name: str,
+        test_dir: Path,
+        cta_storage_class: str,
 ) -> None:
     vids: list[str] = cta_cli.list_all_tape_vids()
     assert vids, "Need at least one VID for rtf ls test."
@@ -802,12 +806,12 @@ def test_cta_admin_archive_route(cta_cli: CtaCliHost, disk_instance_name: str) -
 
 
 def test_cta_admin_tape_file_ch(
-    cta_cli: CtaCliHost,
-    disk_client: DiskClientHost,
-    disk_instance: DiskInstanceHost,
-    disk_instance_name: str,
-    test_dir: Path,
-    cta_storage_class: str,
+        cta_cli: CtaCliHost,
+        disk_client: DiskClientHost,
+        disk_instance: DiskInstanceHost,
+        disk_instance_name: str,
+        test_dir: Path,
+        cta_storage_class: str,
 ) -> None:
     source_sc = cta_storage_class
     target_sc = "test_cta_admin_tape_file_ch_sc"
@@ -965,7 +969,7 @@ def test_cta_admin_storage_class(cta_cli: CtaCliHost, disk_instance_name: str) -
 
 
 def test_cta_admin_show_queue(
-    cta_cli: CtaCliHost, disk_client: DiskClientHost, disk_instance_name: str, test_dir: Path
+        cta_cli: CtaCliHost, disk_client: DiskClientHost, disk_instance_name: str, test_dir: Path
 ) -> None:
     ls_before = cta_cli.exec_with_output("cta-admin --json sq")
     # Ensure we didn't have anything in the queue at this point
@@ -1054,7 +1058,7 @@ def test_cta_admin_repack(cta_cli: CtaCliHost, disk_instance_name: str) -> None:
 
 
 def test_cta_admin_failedrequest_ls_options(cta_cli: CtaCliHost) -> None:
-    """Option validation and the shape of the listing, whatever is queued."""
+    """Check the option validation and the shape of the listing, whatever is queued."""
     fr_ls = json.loads(cta_cli.exec_with_output("cta-admin --json fr ls"))
 
     for item in fr_ls:
@@ -1114,7 +1118,7 @@ def test_cta_admin_failedrequest_rm_invalid_object_id(cta_cli: CtaCliHost, postg
 
 
 def test_cta_admin_failedrequest_with_failed_jobs(
-    cta_cli: CtaCliHost, namespace: Optional[str], postgres_scheduler_enabled: bool
+        cta_cli: CtaCliHost, namespace: Optional[str], postgres_scheduler_enabled: bool
 ) -> None:
     """Seed the four failed job queues and check the listing, the summary and the removal.
 
@@ -1252,7 +1256,9 @@ def test_cta_admin_failedrequest_with_failed_jobs(
     finally:
         # Whatever the assertions did, no seeded row may be left behind
         for prefix, job_id in job_ids.items():
-            scheduler_postgres_sql(scheduler_db, f"DELETE FROM {seeded[prefix][0]} WHERE JOB_ID = {job_id}")
+            # Both the table and the job ID come from this test, not from any external input
+            sql = f"DELETE FROM {seeded[prefix][0]} WHERE JOB_ID = {job_id}"  # noqa: S608
+            scheduler_postgres_sql(scheduler_db, sql)
 
 
 def test_add_errors_to_whitelist(error_whitelist: set[str]) -> None:
