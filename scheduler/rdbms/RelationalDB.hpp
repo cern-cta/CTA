@@ -99,7 +99,8 @@ public:
 
   rdbms::Rset getArchiveJobRows(cta::rdbms::Conn& conn,
                                 common::dataStructures::QueueType queueType,
-                                const std::optional<std::string>& tapePoolName = nullptr) const override;
+                                const std::optional<std::string>& tapePoolName = nullptr,
+                                bool repack = false) const override;
 
   std::unique_ptr<IArchiveJobQueueItor>
   getArchiveJobQueueItor(const std::string& tapePoolName,
@@ -202,7 +203,8 @@ public:
 
   rdbms::Rset getRetrieveJobRows(cta::rdbms::Conn& conn,
                                  common::dataStructures::QueueType queueType,
-                                 const std::optional<std::string>& vid = nullptr) const override;
+                                 const std::optional<std::string>& vid = nullptr,
+                                 bool repack = false) const override;
 
   std::unique_ptr<IRetrieveJobQueueItor>
   getRetrieveJobQueueItor(const std::string& vid, common::dataStructures::JobQueueType queueType) const override;

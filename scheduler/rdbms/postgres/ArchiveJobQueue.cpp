@@ -26,7 +26,7 @@ rdbms::Rset ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
   std::string prefix = isRepack ? "REPACK_" : "";
   std::string sql = R"SQL(
     WITH SET_SELECTION AS (
-      SELECT JOB_ID, PRIORITY, SIZE_IN_BYTES
+      SELECT JOB_ID, ARCHIVE_FILE_ID, PRIORITY, SIZE_IN_BYTES
       FROM
     )SQL";
   sql += prefix + "ARCHIVE_PENDING_QUEUE ";
@@ -34,7 +34,7 @@ rdbms::Rset ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
       WHERE TAPE_POOL = :TAPE_POOL
       AND STATUS = :STATUS
       AND ( MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID )
-      ORDER BY PRIORITY DESC, JOB_ID
+      ORDER BY ARCHIVE_FILE_ID, PRIORITY DESC, JOB_ID
       LIMIT :LIMIT
       FOR UPDATE SKIP LOCKED
     ),
@@ -956,11 +956,16 @@ ArchiveJobQueueRow::cancelArchiveJob(Transaction& txn, const std::string& diskIn
   return nrows;
 }
 
-
-uint64_t
-ArchiveJobQueueRow::deleteFailedArchiveJob(Transaction& txn, uint64_t jobID) {
+uint64_t ArchiveJobQueueRow::deleteFailedArchiveJob(Transaction& txn, uint64_t jobID, bool repack) {
+  std::string tableName = "ARCHIVE_FAILED_QUEUE";
+  if (repack) {
+    tableName = "REPACK_ARCHIVE_FAILED_QUEUE";
+  }
   std::string sqlActive = R"SQL(
-    DELETE FROM ARCHIVE_FAILED_QUEUE
+    DELETE FROM
+ )SQL";
+  sqlActive += tableName;
+  sqlActive += R"SQL(
     WHERE
       JOB_ID = :JOB_ID
   )SQL";

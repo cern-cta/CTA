@@ -800,7 +800,7 @@ public:
    *
    * @return  The number of affected jobs
    */
-  static uint64_t deleteFailedRetrieveJob(Transaction& txn, uint64_t jobID);
+  static uint64_t deleteFailedRetrieveJob(Transaction& txn, uint64_t jobID, bool repack);
 
   /**
     * Select any jobs with specified status(es) from the report,

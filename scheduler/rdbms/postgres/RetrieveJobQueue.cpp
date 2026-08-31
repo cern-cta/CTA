@@ -1294,9 +1294,16 @@ uint64_t RetrieveJobQueueRow::cancelRetrieveJob(Transaction& txn, uint64_t archi
   return nrows;
 }
 
-uint64_t RetrieveJobQueueRow::deleteFailedRetrieveJob(Transaction& txn, uint64_t jobID){
-   std::string sqlActive = R"SQL(
-    DELETE FROM RETRIEVE_FAILED_QUEUE
+uint64_t RetrieveJobQueueRow::deleteFailedRetrieveJob(Transaction& txn, uint64_t jobID, bool repack) {
+  std::string tableName = "RETRIEVE_FAILED_QUEUE";
+  if (repack) {
+    tableName = "REPACK_RETRIEVE_FAILED_QUEUE";
+  }
+  std::string sqlActive = R"SQL(
+    DELETE FROM
+  )SQL";
+  sqlActive += tableName;
+  sqlActive += R"SQL(
     WHERE
       JOB_ID = :JOB_ID
   )SQL";
