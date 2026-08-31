@@ -29,7 +29,6 @@ FailedRequestLsResponseStream::FailedRequestLsResponseStream(cta::catalogue::Cat
   // Parse options
   m_isSummary = request.has_flag(OptionBoolean::SUMMARY);
   m_isLogEntries = request.has_flag(OptionBoolean::SHOW_LOG_ENTRIES);
-  m_conn = std::make_unique<cta::rdbms::Conn>(m_schedDb.getConn());
 
   if (m_isLogEntries && m_isSummary) {
     throw cta::exception::UserError("--log and --summary are mutually exclusive");
@@ -44,32 +43,35 @@ FailedRequestLsResponseStream::FailedRequestLsResponseStream(cta::catalogue::Cat
     throw cta::exception::UserError("--justarchive/--tapepool and --justretrieve/--vid options are mutually exclusive");
   }
 
+  // The summary always covers all the failed jobs: the totals are not filtered by tape pool or
+  // by VID, hence such a request is rejected rather than answered with misleading totals
+  if (m_isSummary && (tapepool.has_value() || vid.has_value())) {
+    throw cta::exception::UserError(
+      "--summary reports the totals of all the failed jobs and is mutually exclusive with --tapepool and --vid");
+  }
+
   if (m_isSummary) {
     collectSummaryData(!justretrieve, !justarchive);
   } else {
 #ifdef CTA_PGSCHED
+    // The summary queries use their own transaction from the pool, so a connection is only
+    // needed to list the jobs. It must outlive the result sets fetched from it.
+    m_conn = std::make_unique<cta::rdbms::Conn>(m_schedDb.getConn());
+
+    m_tapePool = tapepool;
+    m_vid = vid;
+
+    // The user jobs and the repack jobs are kept in separate tables, hence one queue per table
     if (!justretrieve) {
-      try {
-        auto archiveRows = m_schedDb.getArchiveJobRows(*m_conn, common::dataStructures::QueueType::Failed, tapepool);
-        m_archiveJobQueueItorPtr = std::make_unique<rdbms::Rset>(std::move(archiveRows));
-        if (m_archiveJobQueueItorPtr) {
-          m_archiveHasNext = m_archiveJobQueueItorPtr->next();
-        }
-      } catch (exception::Exception& ex) {
-        throw cta::exception::Exception("Unable to retrieve failed jobs from the backend: " + ex.getMessageValue());
-      }
+      m_queuesToList.push_back(FailedQueue::UserArchive);
+      m_queuesToList.push_back(FailedQueue::RepackArchive);
     }
     if (!justarchive) {
-      try {
-        auto retrieveRows = m_schedDb.getRetrieveJobRows(*m_conn, common::dataStructures::QueueType::Failed, vid);
-        m_retrieveJobQueueItorPtr = std::make_unique<rdbms::Rset>(std::move(retrieveRows));
-        if (m_retrieveJobQueueItorPtr) {
-          m_retrieveHasNext = m_retrieveJobQueueItorPtr->next();
-        }
-      } catch (exception::Exception& ex) {
-        throw cta::exception::Exception("Unable to retrieve failed jobs from the backend: " + ex.getMessageValue());
-      }
+      m_queuesToList.push_back(FailedQueue::UserRetrieve);
+      m_queuesToList.push_back(FailedQueue::RepackRetrieve);
     }
+    // Open the first non-empty queue and position it on its first row
+    advanceToNextRow();
 #else
     if (!justretrieve) {
       m_archiveJobQueueItorPtr =
@@ -86,27 +88,67 @@ FailedRequestLsResponseStream::FailedRequestLsResponseStream(cta::catalogue::Cat
 
 #ifdef CTA_PGSCHED
 
+bool FailedRequestLsResponseStream::isArchiveQueue(FailedQueue failedQueue) {
+  return failedQueue == FailedQueue::UserArchive || failedQueue == FailedQueue::RepackArchive;
+}
+
+bool FailedRequestLsResponseStream::isRepackQueue(FailedQueue failedQueue) {
+  return failedQueue == FailedQueue::RepackArchive || failedQueue == FailedQueue::RepackRetrieve;
+}
+
+std::unique_ptr<rdbms::Rset> FailedRequestLsResponseStream::queryFailedQueue(FailedQueue failedQueue) {
+  const bool repack = isRepackQueue(failedQueue);
+  try {
+    if (isArchiveQueue(failedQueue)) {
+      return std::make_unique<rdbms::Rset>(
+        m_schedDb.getArchiveJobRows(*m_conn, common::dataStructures::QueueType::Failed, m_tapePool, repack));
+    }
+    return std::make_unique<rdbms::Rset>(
+      m_schedDb.getRetrieveJobRows(*m_conn, common::dataStructures::QueueType::Failed, m_vid, repack));
+  } catch (exception::Exception& ex) {
+    throw cta::exception::Exception("Unable to retrieve failed jobs from the backend: " + ex.getMessageValue());
+  }
+}
+
+void FailedRequestLsResponseStream::advanceToNextRow() {
+  while (!m_hasNext && !m_queuesToList.empty()) {
+    m_currentQueue = m_queuesToList.front();
+    m_queuesToList.pop_front();
+    // Release the exhausted result set before querying the next queue, as the connection
+    // can only have a single query in flight at a time
+    m_currentRows.reset();
+    m_currentRows = queryFailedQueue(m_currentQueue);
+    // Position on the first row of the queue just opened. An empty queue leaves m_hasNext
+    // false, so the loop moves on to the queue after it
+    m_hasNext = m_currentRows->next();
+  }
+}
+
 void FailedRequestLsResponseStream::fillCommonFields(cta::admin::FailedRequestLsItem& fr_item,
                                                      const cta::rdbms::Rset& item) {
-  fr_item.set_copy_nb(item.columnUint64("COPY_NB"));
+  // Every column read here is nullable in the schema, and the repack jobs are created by the
+  // system rather than by a user, so the requester and the disk file fields may well be unset
+  // for them. The optional getters are used because columnString()/columnUint64() throw on a
+  // null value, which would abort the whole listing instead of reporting an empty field.
+  fr_item.set_copy_nb(item.columnOptionalUint64("COPY_NB").value_or(0));
 
-  fr_item.mutable_requester()->set_username(item.columnString("REQUESTER_NAME"));
-  fr_item.mutable_requester()->set_groupname(item.columnString("REQUESTER_GROUP"));
+  fr_item.mutable_requester()->set_username(item.columnOptionalString("REQUESTER_NAME").value_or(""));
+  fr_item.mutable_requester()->set_groupname(item.columnOptionalString("REQUESTER_GROUP").value_or(""));
 
-  fr_item.mutable_af()->set_archive_id(item.columnUint64("ARCHIVE_FILE_ID"));
-  fr_item.mutable_af()->set_disk_instance(item.columnString("DISK_INSTANCE"));
-  fr_item.mutable_af()->set_disk_id(item.columnString("DISK_FILE_ID"));
-  fr_item.mutable_af()->set_size(item.columnUint64("SIZE_IN_BYTES"));
-  fr_item.mutable_af()->set_storage_class(item.columnString("STORAGE_CLASS"));
-  fr_item.mutable_af()->mutable_df()->set_path(item.columnString("DISK_FILE_PATH"));
-  fr_item.mutable_af()->set_creation_time(item.columnUint64("CREATION_TIME"));
+  fr_item.mutable_af()->set_archive_id(item.columnOptionalUint64("ARCHIVE_FILE_ID").value_or(0));
+  fr_item.mutable_af()->set_disk_instance(item.columnOptionalString("DISK_INSTANCE").value_or(""));
+  fr_item.mutable_af()->set_disk_id(item.columnOptionalString("DISK_FILE_ID").value_or(""));
+  fr_item.mutable_af()->set_size(item.columnOptionalUint64("SIZE_IN_BYTES").value_or(0));
+  fr_item.mutable_af()->set_storage_class(item.columnOptionalString("STORAGE_CLASS").value_or(""));
+  fr_item.mutable_af()->mutable_df()->set_path(item.columnOptionalString("DISK_FILE_PATH").value_or(""));
+  fr_item.mutable_af()->set_creation_time(item.columnOptionalUint64("CREATION_TIME").value_or(0));
 
-  fr_item.set_totalretries(item.columnUint64("TOTAL_RETRIES"));
-  fr_item.set_totalreportretries(item.columnUint64("TOTAL_REPORT_RETRIES"));
+  fr_item.set_totalretries(item.columnOptionalUint64("TOTAL_RETRIES").value_or(0));
+  fr_item.set_totalreportretries(item.columnOptionalUint64("TOTAL_REPORT_RETRIES").value_or(0));
 
   if (m_isLogEntries) {
-    fr_item.add_reportfailurelogs(item.columnString("REPORT_FAILURE_LOG"));
-    fr_item.add_failurelogs(item.columnString("FAILURE_LOG"));
+    fr_item.add_reportfailurelogs(item.columnOptionalString("REPORT_FAILURE_LOG").value_or(""));
+    fr_item.add_failurelogs(item.columnOptionalString("FAILURE_LOG").value_or(""));
   }
 
   fr_item.set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
@@ -114,7 +156,7 @@ void FailedRequestLsResponseStream::fillCommonFields(cta::admin::FailedRequestLs
 }
 
 cta::xrd::Data FailedRequestLsResponseStream::getNextArchiveJobsData() {
-  const auto& item = *m_archiveJobQueueItorPtr;
+  const auto& item = *m_currentRows;
 
   cta::xrd::Data data;
   auto fr_item = data.mutable_frls_item();
@@ -124,14 +166,20 @@ cta::xrd::Data FailedRequestLsResponseStream::getNextArchiveJobsData() {
 
   // Fill archive specific fields
   fr_item->set_request_type(cta::admin::RequestType::ARCHIVE_REQUEST);
-  fr_item->set_object_id(std::string("a:") + std::to_string(item.columnUint64("JOB_ID")));
+  // The repack jobs are reported with the "ra:" prefix and the user jobs with "a:", so that
+  // "failedrequest rm" knows which of the two tables the job ID is to be deleted from
+  if (isRepackQueue(m_currentQueue)) {
+    fr_item->set_object_id(std::string("ra:") + std::to_string(item.columnUint64("JOB_ID")));
+  } else {
+    fr_item->set_object_id(std::string("a:") + std::to_string(item.columnUint64("JOB_ID")));
+  }
   fr_item->set_tapepool(item.columnString("TAPE_POOL"));
 
   return data;
 }
 
 cta::xrd::Data FailedRequestLsResponseStream::getNextRetrieveJobsData() {
-  const auto& item = *m_retrieveJobQueueItorPtr;
+  const auto& item = *m_currentRows;
 
   cta::xrd::Data data;
   auto fr_item = data.mutable_frls_item();
@@ -141,10 +189,16 @@ cta::xrd::Data FailedRequestLsResponseStream::getNextRetrieveJobsData() {
 
   //  Fill retrieve specific fields
   fr_item->set_request_type(cta::admin::RequestType::RETRIEVE_REQUEST);
-  fr_item->set_object_id(std::string("r:") + std::to_string(item.columnUint64("JOB_ID")));
-  fr_item->mutable_tf()->set_vid(item.columnString("VID"));
-  fr_item->mutable_tf()->set_f_seq(item.columnUint64("FSEQ"));
-  fr_item->mutable_tf()->set_block_id(item.columnUint64("BLOCK_ID"));
+  // The repack jobs are reported with the "rr:" prefix and the user jobs with "r:", so that
+  // "failedrequest rm" knows which of the two tables the job ID is to be deleted from
+  if (isRepackQueue(m_currentQueue)) {
+    fr_item->set_object_id(std::string("rr:") + std::to_string(item.columnUint64("JOB_ID")));
+  } else {
+    fr_item->set_object_id(std::string("r:") + std::to_string(item.columnUint64("JOB_ID")));
+  }
+  fr_item->mutable_tf()->set_vid(item.columnString("VID"));  // NOT NULL in the schema
+  fr_item->mutable_tf()->set_f_seq(item.columnOptionalUint64("FSEQ").value_or(0));
+  fr_item->mutable_tf()->set_block_id(item.columnOptionalUint64("BLOCK_ID").value_or(0));
 
   return data;
 }
@@ -273,13 +327,13 @@ bool FailedRequestLsResponseStream::isDone() {
     return m_summaryData.empty();
   }
 #ifdef CTA_PGSCHED
-  const auto archiveDone = !m_archiveJobQueueItorPtr || !m_archiveHasNext;
-  const auto retrieveDone = !m_retrieveJobQueueItorPtr || !m_retrieveHasNext;
+  // advanceToNextRow() only leaves m_hasNext false once every queue has been reported
+  return !m_hasNext;
 #else
   const auto archiveDone = !m_archiveJobQueueItorPtr || m_archiveJobQueueItorPtr->end();
   const auto retrieveDone = !m_retrieveJobQueueItorPtr || m_retrieveJobQueueItorPtr->end();
-#endif
   return archiveDone && retrieveDone;
+#endif
 }
 
 cta::xrd::Data FailedRequestLsResponseStream::next() {
@@ -293,21 +347,13 @@ cta::xrd::Data FailedRequestLsResponseStream::next() {
     return data;
   }
 #ifdef CTA_PGSCHED
-  if (m_archiveJobQueueItorPtr && m_archiveHasNext) {
-    // read the prepared row
-    cta::xrd::Data data = getNextArchiveJobsData();
-    // move to next row
-    m_archiveHasNext = m_archiveJobQueueItorPtr->next();
-    return data;
-  }
-  if (m_retrieveJobQueueItorPtr && m_retrieveHasNext) {
-    // read the prepared row
-    cta::xrd::Data data = getNextRetrieveJobsData();
-    // move to next row
-    m_retrieveHasNext = m_retrieveJobQueueItorPtr->next();
-    return data;
-  }
-  throw std::runtime_error("Stream is exhausted");
+  // Read the prepared row of the queue being listed, before the cursor is moved on, so that
+  // the object ID prefix matches the table this row was read from
+  cta::xrd::Data data = isArchiveQueue(m_currentQueue) ? getNextArchiveJobsData() : getNextRetrieveJobsData();
+  // Move to the next row of the current queue, then on to the following queue if it is exhausted
+  m_hasNext = m_currentRows->next();
+  advanceToNextRow();
+  return data;
 #else
   if (m_archiveJobQueueItorPtr && !m_archiveJobQueueItorPtr->end()) {
     return getNextArchiveJobsData();

@@ -646,7 +646,7 @@ VALUES )SQL";
    *
    * @return  The number of affected jobs
    */
-  static uint64_t deleteFailedArchiveJob(Transaction& txn, uint64_t jobID);
+  static uint64_t deleteFailedArchiveJob(Transaction& txn, uint64_t jobID, bool repack);
   /**
      * Select any jobs with specified status(es) from the report,
      * flag them as being reported and return the job IDs

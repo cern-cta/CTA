@@ -172,6 +172,7 @@ public:
                                      cta::admin::VersionItem,
                                      cta::admin::ArchiveRouteLsItem,
                                      cta::admin::FailedRequestLsItem,
+                                     cta::admin::FailedRequestLsSummary,
                                      cta::admin::GroupMountRuleLsItem,
                                      cta::admin::LogicalLibraryLsItem,
                                      cta::admin::PhysicalLibraryLsItem,
@@ -207,6 +208,7 @@ public:
                     case cta::xrd::Data::kVersionItem: std::visit(visitor, value_t{m_response.data().version_item()}); break;
                     case cta::xrd::Data::kArlsItem:  std::visit(visitor, value_t{m_response.data().arls_item()});  break;
                     case cta::xrd::Data::kFrlsItem:  std::visit(visitor, value_t{m_response.data().frls_item()});  break;
+                    case cta::xrd::Data::kFrlsSummary: std::visit(visitor, value_t{m_response.data().frls_summary()}); break;
                     case cta::xrd::Data::kGmrlsItem: std::visit(visitor, value_t{m_response.data().gmrls_item()}); break;
                     case cta::xrd::Data::kLllsItem:  std::visit(visitor, value_t{m_response.data().llls_item()});  break;
                     case cta::xrd::Data::kPllsItem:  std::visit(visitor, value_t{m_response.data().plls_item()});  break;

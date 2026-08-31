@@ -150,18 +150,28 @@ struct RetrieveJobSummaryRow {
   }
 
   /**
-   * Select jobs which do not belong to any drive yet.
-   * This is used for deciding if a new mount shall be created
+   * Select the summary (file count and total size) of the failed retrieve jobs,
+   * both the user and the repack ones.
    *
-   * @return result set containing all rows in the table
+   * COALESCE is required because SUM() over an empty queue returns NULL.
+   *
+   * @param txn        Transaction to use for this query
+   *
+   * @return result set containing one row per failed retrieve queue
    */
   static rdbms::Rset selectFailedJobSummary(Transaction& txn) {
     const char* const sql = R"SQL(
       SELECT
         COUNT(*) AS JOBS_COUNT,
-        SUM(SIZE_IN_BYTES) AS JOBS_TOTAL_SIZE
-      FROM
-        RETRIEVE_FAILED_QUEUE
+        COALESCE(SUM(SIZE_IN_BYTES), 0) AS JOBS_TOTAL_SIZE
+      FROM RETRIEVE_FAILED_QUEUE
+
+      UNION ALL
+
+      SELECT
+        COUNT(*) AS JOBS_COUNT,
+        COALESCE(SUM(SIZE_IN_BYTES), 0) AS JOBS_TOTAL_SIZE
+      FROM REPACK_RETRIEVE_FAILED_QUEUE
     )SQL";
     auto stmt = txn.getConn().createStmt(sql);
     txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbSelectSummary);

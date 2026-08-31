@@ -276,11 +276,13 @@ public:
 
   virtual rdbms::Rset getArchiveJobRows(cta::rdbms::Conn& conn,
                                         common::dataStructures::QueueType queueType,
-                                        const std::optional<std::string>& tapePoolName = nullptr) const = 0;
+                                        const std::optional<std::string>& tapePoolName = nullptr,
+                                        bool repack = false) const = 0;
 
   virtual rdbms::Rset getRetrieveJobRows(cta::rdbms::Conn& conn,
                                          common::dataStructures::QueueType queueType,
-                                         const std::optional<std::string>& vid = nullptr) const = 0;
+                                         const std::optional<std::string>& vid = nullptr,
+                                         bool repack = false) const = 0;
 
   /**
    * Get a a set of jobs to report to the clients. This function is like
@@ -300,6 +302,12 @@ public:
     uint64_t totalBytes;
   };
 
+  /**
+   * Get the summary (file count and total size) of all the failed archive jobs,
+   * both the user and the repack ones.
+   *
+   * @param logContext  logging context
+   */
   virtual JobsFailedSummary getArchiveJobsFailedSummary(log::LogContext& logContext) = 0;
 
   /**
@@ -754,6 +762,12 @@ public:
                                                  utils::Timer& t,
                                                  log::LogContext& lc) = 0;
 
+  /**
+   * Get the summary (file count and total size) of all the failed retrieve jobs,
+   * both the user and the repack ones.
+   *
+   * @param logContext  logging context
+   */
   virtual JobsFailedSummary getRetrieveJobsFailedSummary(log::LogContext& logContext) = 0;
 
   /*============ Label management: user side =================================*/

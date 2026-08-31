@@ -88,14 +88,16 @@ public:
 
   rdbms::Rset getArchiveJobRows(cta::rdbms::Conn& conn,
                                 common::dataStructures::QueueType queueType,
-                                const std::optional<std::string>& tapePoolName = nullptr) const override {
-    return m_SchedDB->getArchiveJobRows(conn, queueType, tapePoolName);
+                                const std::optional<std::string>& tapePoolName = nullptr,
+                                bool repack = false) const override {
+    return m_SchedDB->getArchiveJobRows(conn, queueType, tapePoolName, repack);
   }
 
   rdbms::Rset getRetrieveJobRows(cta::rdbms::Conn& conn,
                                  common::dataStructures::QueueType queueType,
-                                 const std::optional<std::string>& vid = nullptr) const override {
-    return m_SchedDB->getRetrieveJobRows(conn, queueType, vid);
+                                 const std::optional<std::string>& vid = nullptr,
+                                 bool repack = false) const override {
+    return m_SchedDB->getRetrieveJobRows(conn, queueType, vid, repack);
   }
 
   std::unique_ptr<IArchiveJobQueueItor>

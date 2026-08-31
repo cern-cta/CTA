@@ -414,7 +414,7 @@ public:
   rdbms::Rset getArchiveJobRows(cta::rdbms::Conn& conn,
                                 common::dataStructures::QueueType queueType,
                                 const std::optional<std::string>& tapePoolName = nullptr,
-                                const std::optional<std::string>& vid = nullptr) const override {
+                                bool repack = false) const override {
     throw cta::exception::Exception("Not supported for OStoreDB implementation.");
   }
 
@@ -422,7 +422,8 @@ public:
 
   rdbms::Rset getRetrieveJobRows(cta::rdbms::Conn& conn,
                                  common::dataStructures::QueueType queueType,
-                                 const std::optional<std::string>& vid = nullptr) const override {
+                                 const std::optional<std::string>& vid = nullptr,
+                                 bool repack = false) const override {
     throw cta::exception::Exception("Not supported for OStoreDB implementation.");
   }
 

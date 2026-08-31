@@ -153,9 +153,13 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>
 
 rdbms::Rset RelationalDB::getArchiveJobRows(cta::rdbms::Conn& conn,
                                             common::dataStructures::QueueType queueType,
-                                            const std::optional<std::string>& tapePoolName) const {
-  // Get a connection
-  std::string tableName = "ARCHIVE_";
+                                            const std::optional<std::string>& tapePoolName,
+                                            bool repack) const {
+  std::string tableName = "";
+  if (repack) {
+    tableName += "REPACK_";
+  }
+  tableName += "ARCHIVE_";
   tableName += toString(queueType);
   std::string sql = R"SQL(
     SELECT
@@ -203,7 +207,7 @@ std::list<cta::common::dataStructures::ArchiveJob>
 RelationalDB::getArchiveJobs(const std::optional<std::string>& tapePoolName) const {
   std::list<cta::common::dataStructures::ArchiveJob> ret;
   auto conn = m_connPool.getConn();
-  auto rset = RelationalDB::getArchiveJobRows(conn, common::dataStructures::QueueType::Pending, tapePoolName);
+  auto rset = RelationalDB::getArchiveJobRows(conn, common::dataStructures::QueueType::Pending, tapePoolName, false);
 
   while (rset.next()) {
     common::dataStructures::ArchiveJob job;
@@ -588,24 +592,35 @@ void RelationalDB::deleteFailed(const std::string& objectId, log::LogContext& lc
   schedulerdb::Transaction txn(m_connPool, lc);
   // extract the job_id
   bool isArchive = false;
+  bool isRepack = false;
   uint64_t jobID = 0;
   constexpr std::string_view archivePrefix = "a:";
   constexpr std::string_view retrievePrefix = "r:";
+  constexpr std::string_view repackArchivePrefix = "ra:";
+  constexpr std::string_view repackRetrievePrefix = "rr:";
   if (objectId.starts_with(archivePrefix)) {
     isArchive = true;
     jobID = std::stoull(objectId.substr(archivePrefix.size()));
   } else if (objectId.starts_with(retrievePrefix)) {
     isArchive = false;
     jobID = std::stoull(objectId.substr(retrievePrefix.size()));
+  } else if (objectId.starts_with(repackArchivePrefix)) {
+    isArchive = true;
+    isRepack = true;
+    jobID = std::stoull(objectId.substr(repackArchivePrefix.size()));
+  } else if (objectId.starts_with(repackRetrievePrefix)) {
+    isArchive = false;
+    isRepack = true;
+    jobID = std::stoull(objectId.substr(repackRetrievePrefix.size()));
   } else {
     throw exception::UserError("Invalid failed request object ID: " + objectId);
   }
   try {
     uint64_t deletedJobs = 0;
     if (isArchive) {
-      deletedJobs = schedulerdb::postgres::ArchiveJobQueueRow::deleteFailedArchiveJob(txn, jobID);
+      deletedJobs = schedulerdb::postgres::ArchiveJobQueueRow::deleteFailedArchiveJob(txn, jobID, isRepack);
     } else {
-      deletedJobs = schedulerdb::postgres::RetrieveJobQueueRow::deleteFailedRetrieveJob(txn, jobID);
+      deletedJobs = schedulerdb::postgres::RetrieveJobQueueRow::deleteFailedRetrieveJob(txn, jobID, isRepack);
     }
     log::ScopedParamContainer(lc)
       .add("jobID", jobID)
@@ -693,8 +708,13 @@ RelationalDB::getPendingRetrieveJobs(const std::optional<std::string>& vid) cons
 
 rdbms::Rset RelationalDB::getRetrieveJobRows(cta::rdbms::Conn& conn,
                                              common::dataStructures::QueueType queueType,
-                                             const std::optional<std::string>& vid) const {
-  std::string tableName = "RETRIEVE_";
+                                             const std::optional<std::string>& vid,
+                                             bool repack) const {
+  std::string tableName = "";
+  if (repack) {
+    tableName += "REPACK_";
+  }
+  tableName += "RETRIEVE_";
   tableName += toString(queueType);
 
   std::string sql = R"SQL(
