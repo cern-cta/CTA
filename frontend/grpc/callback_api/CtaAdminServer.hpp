@@ -241,9 +241,9 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
                                                                  m_lc);
         // The stream reports summary records instead of item records when --summary is given,
         // and those need their own header
-        headerType = cta::frontend::AdminCmdOptions(request->admincmd()).has_flag(admin::OptionBoolean::SUMMARY)
-                       ? HeaderType::FAILEDREQUEST_LS_SUMMARY
-                       : HeaderType::FAILEDREQUEST_LS;
+        headerType = cta::frontend::AdminCmdOptions(request->admincmd()).has_flag(admin::OptionBoolean::SUMMARY) ?
+                       HeaderType::FAILEDREQUEST_LS_SUMMARY :
+                       HeaderType::FAILEDREQUEST_LS;
         break;
       default:
         // Just to return an error status code when the specified command is not implemented
