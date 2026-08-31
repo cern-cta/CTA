@@ -123,10 +123,10 @@ public-release-cta-unstable:
     - ./ci/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                     --eos-password ${DOCKER_LOGIN_PASSWORD}
                                     --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
-                                    --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/unstable/cta-5/$[[ inputs.platform ]]/cta
+                                    --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/unstable/cta-6/$[[ inputs.platform ]]/cta
                                     --hook /eos/user/c/ctareg/www/public/update_repos.sh
                                     --cta-version ${CTA_VERSION}
-    - REPO_URL="https://cta-public-repo.web.cern.ch/unstable/cta-5/$[[ inputs.platform ]]/cta/x86_64"
+    - REPO_URL="https://cta-public-repo.web.cern.ch/unstable/cta-6/$[[ inputs.platform ]]/cta/x86_64"
     - ./ci/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "$CTA_VERSION"
 
 public-release-cta-testing:
@@ -144,10 +144,10 @@ public-release-cta-testing:
     - ./ci/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                     --eos-password ${DOCKER_LOGIN_PASSWORD}
                                     --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
-                                    --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/testing/cta-5/$[[ inputs.platform ]]/cta
+                                    --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/testing/cta-6/$[[ inputs.platform ]]/cta
                                     --hook /eos/user/c/ctareg/www/public/update_repos.sh
                                     --cta-version ${CTA_VERSION}
-    - REPO_URL="https://cta-public-repo.web.cern.ch/testing/cta-5/$[[ inputs.platform ]]/cta/x86_64"
+    - REPO_URL="https://cta-public-repo.web.cern.ch/testing/cta-6/$[[ inputs.platform ]]/cta/x86_64"
     - ./ci/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "$CTA_VERSION"
 
 public-release-cta-stable:
@@ -168,10 +168,10 @@ public-release-cta-stable:
     - ./ci/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                     --eos-password ${DOCKER_LOGIN_PASSWORD}
                                     --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
-                                    --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/stable/cta-5/$[[ inputs.platform ]]/cta
+                                    --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/stable/cta-6/$[[ inputs.platform ]]/cta
                                     --hook /eos/user/c/ctareg/www/public/update_repos.sh
                                     --cta-version ${CTA_VERSION}
-    - REPO_URL="https://cta-public-repo.web.cern.ch/stable/cta-5/$[[ inputs.platform ]]/cta/x86_64"
+    - REPO_URL="https://cta-public-repo.web.cern.ch/stable/cta-6/$[[ inputs.platform ]]/cta/x86_64"
     - ./ci/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "$CTA_VERSION"
 
 

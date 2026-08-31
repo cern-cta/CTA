@@ -38,7 +38,7 @@ prepare-cta-version-regression:
   variables:
     GIT_STRATEGY: none
     # Automatic version regressions currently follow the canonical EL9 unstable release stream.
-    CTA_REPO_URL: "https://cta-public-repo.web.cern.ch/unstable/cta-5/el9/cta/x86_64/"
+    CTA_REPO_URL: "https://cta-public-repo.web.cern.ch/unstable/cta-6/el9/cta/x86_64/"
   script:
     - requested_image_tag="$[[ inputs.custom-cta-image-tag ]]"
     - requested_image_tag="$(echo "$requested_image_tag" | xargs)"

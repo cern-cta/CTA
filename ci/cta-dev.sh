@@ -44,7 +44,7 @@ oracle_support="false"
 enable_internal_repos=true
 internal_repos_forced_public=false
 namespace="dev"
-cta_version="5"
+cta_version="6"
 cta_version_suffix="dev"
 cta_image_tag=""
 

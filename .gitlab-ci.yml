@@ -207,7 +207,7 @@ variables:
   ENABLE_SBOM_GENERATION: "$[[ inputs.enable-sbom-generation ]]"
   SCHEDULER_TYPE: "$[[ inputs.scheduler-type ]]"
   ENABLE_ORACLE_SUPPORT: "$[[ inputs.enable-oracle-support ]]"
-  BUILD_CTA_VERSION: "5"
+  BUILD_CTA_VERSION: "6"
   ENABLE_CCACHE: "false"
   BUILD_CACHE_POLICY: "pull"
 
