@@ -45,7 +45,7 @@ void FrontendService::loadGrpcConfigParams(const std::string& configFilePath, lo
   auto grpcConfig = m_grpcConfig.value();
 
   // first, check that the configuration parameters are consistent between them
-  grpcConfig.check(m_operationMode, log);
+  grpcConfig.validate(m_operationMode, log);
 
   // now, set the auth methods accordingly
   m_authMethods = grpcConfig.auth.getEnabledMethods();

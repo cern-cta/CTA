@@ -37,11 +37,9 @@ std::chrono::system_clock::time_point dateTimeToTimePoint(const toml::date_time&
 
 }  // namespace
 
-void JwtAuthConfig::check(log::Logger& log) {
-  auto checkTimeoutBounds = [&](const std::string& paramName, int value, bool checkForZero) {
-    if (value < 0) {
-      throw exception::UserError("value of '" + paramName + "' cannot be negative");
-    } else if (checkForZero && value == 0) {
+void JwtAuthConfig::validate(log::Logger& log) {
+  auto checkTimeoutBounds = [&](const std::string& paramName, uint32_t value, bool checkForZero) {
+    if (checkForZero && value == 0) {
       throw exception::UserError("value of '" + paramName + "' cannot be zero");
     }
   };
@@ -50,7 +48,7 @@ void JwtAuthConfig::check(log::Logger& log) {
     return;
   }
 
-  // check that the timeouts are not negative/zero
+  // check that the timeouts are not zero
   checkTimeoutBounds("cache_refresh_interval", cache_refresh_interval, true);
   checkTimeoutBounds("pub_key_timeout", pub_key_timeout, false);
   checkTimeoutBounds("jwks_total_timeout", jwks_total_timeout, true);
@@ -91,7 +89,7 @@ void JwtAuthConfig::check(log::Logger& log) {
   }
 }
 
-void AuthConfig::check(OperationMode operationMode, log::Logger& log) {
+void AuthConfig::validate(OperationMode operationMode, log::Logger& log) {
   bool jwtEnabled = jwt && jwt->enabled;
   bool mtlsEnabled = mtls && mtls->enabled;
   bool kerberosEnabled = kerberos && kerberos->enabled;
@@ -103,13 +101,13 @@ void AuthConfig::check(OperationMode operationMode, log::Logger& log) {
   }
 
   if (jwt) {
-    jwt.value().check(log);
+    jwt.value().validate(log);
   }
   if (mtls) {
-    mtls.value().check(operationMode, log);
+    mtls.value().validate(operationMode, log);
   }
   if (kerberos) {
-    kerberos.value().check(operationMode);
+    kerberos.value().validate(operationMode);
   }
 }
 
@@ -129,7 +127,7 @@ std::set<AuthMethod, std::less<>> AuthConfig::getEnabledMethods() const {
   return result;
 }
 
-void MtlsAuthConfig::check(OperationMode operationMode, log::Logger& log) const {
+void MtlsAuthConfig::validate(OperationMode operationMode, log::Logger& log) const {
   if (!enabled) {
     return;
   }
@@ -141,7 +139,7 @@ void MtlsAuthConfig::check(OperationMode operationMode, log::Logger& log) const 
   }
 }
 
-void KerberosAuthConfig::check(OperationMode operationMode) const {
+void KerberosAuthConfig::validate(OperationMode operationMode) const {
   if (!enabled) {
     return;
   }
@@ -159,7 +157,7 @@ void KerberosAuthConfig::check(OperationMode operationMode) const {
   }
 }
 
-void GrpcTlsConfig::check() const {
+void GrpcTlsConfig::validate() const {
   if (server_key_path.empty()) {
     throw exception::UserError("'grpc.tls.server_key_path' cannot be empty");
   }
@@ -169,14 +167,14 @@ void GrpcTlsConfig::check() const {
   }
 }
 
-void GrpcConfig::check(OperationMode operationMode, log::Logger& log) {
+void GrpcConfig::validate(OperationMode operationMode, log::Logger& log) {
   // check that our number of threads is OK
   if (auto threads = grpc.number_of_threads; threads.has_value() && threads.value() < 1) {
     throw exception::UserError("value of grpc.number_of_threads must be at least 1");
   }
 
-  auth.check(operationMode, log);
-  grpc.tls.check();
+  auth.validate(operationMode, log);
+  grpc.tls.validate();
 }
 
 }  // namespace cta::frontend::grpc::common

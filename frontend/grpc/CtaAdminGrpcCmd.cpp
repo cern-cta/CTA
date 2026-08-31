@@ -23,7 +23,7 @@ namespace cta::admin {
 void CtaAdminGrpcCmd::setupJwtAuthenticatedAdminCall(grpc::ClientContext& context,
                                                      const std::string& token_path) const {
   // read the token from the path
-  std::string token_contents = cta::utils::readFileAsString(token_path);
+  std::string token_contents = cta::utils::readSingleLineConfigFile(token_path);
 
   context.AddMetadata("authorization", "Bearer " + token_contents);
 }

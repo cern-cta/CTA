@@ -77,7 +77,11 @@ extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::str
         return {Status::OK, clientIdentity};
       } else {
         const auto& errorMsg = validationResult.errorMessage.value_or("Unknown token validation error");
-        lc.log(cta::log::WARNING, "JWT token validation failed: " + errorMsg);
+        {
+          cta::log::ScopedParamContainer params(lc);
+          params.add(cta::semconv::log::errorMessage, errorMsg);
+          lc.log(cta::log::WARNING, "JWT token validation failed");
+        }
         return {Status(StatusCode::UNAUTHENTICATED, errorMsg), std::nullopt};
       }
     } else if (auth_header.starts_with("Negotiate")) {

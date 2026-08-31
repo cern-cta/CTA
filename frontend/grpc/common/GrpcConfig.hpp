@@ -22,14 +22,14 @@ using AliasMap = std::map<std::string, std::vector<std::string>, std::less<>>;
  * @brief TLS Config
  */
 struct GrpcTlsConfig final {
-  std::string server_key_path;                 //!< The path to the private key file
-  std::string server_cert_path;                //!< The path to the certificate file
-  std::optional<std::string> chain_cert_path;  //!< The path to the CA chain file
+  std::string server_key_path;                                //!< The path to the private key file (REQUIRED)
+  std::string server_cert_path;                               //!< The path to the certificate file (REQUIRED)
+  std::optional<std::string> chain_cert_path = std::nullopt;  //!< The path to the CA chain file (optional)
 
   /**
-   * @brief Check the TLS configuration parameters for validity
+   * @brief Validate the TLS configuration parameters
    */
-  void check() const;
+  void validate() const;
 
   static constexpr std::size_t memberCount() { return 3; }
 };
@@ -60,22 +60,21 @@ struct RevokedTokenEntry final {
  * @brief A JWT auth config block
  */
 struct JwtAuthConfig final {
-  bool enabled;                      //!< Whether JWT auth is enabled
-  std::string jwks_uri;              //!< The URI of the JWKS endpoint/file listing trustworthy public keys
-  int cache_refresh_interval = 600;  //!< TTL (s) of the JWKS cache, after which the JWKS will be re-fetched
-  int pub_key_timeout = 0;           //!< TTL (s) of a cached public key (0 = never expires)
-  int jwks_total_timeout = 60;       //!< Timeout for JWKS retrieval from a URL (default 60)
-  std::string expected_issuer;       //!< The expected issuer of the JWT tokens
-  std::string expected_audience;     //!< The expected audience of the JWT tokens
+  bool enabled = false;                   //!< Whether JWT auth is enabled (default: disabled)
+  std::string jwks_uri;                   //!< The URI of the JWKS endpoint (REQUIRED if enabled)
+  uint32_t cache_refresh_interval = 600;  //!< TTL (s) of the JWKS cache, after which the JWKS will be re-fetched
+  uint32_t pub_key_timeout = 0;           //!< TTL (s) of a cached public key (0 = never expires)
+  uint32_t jwks_total_timeout = 60;       //!< Timeout for JWKS retrieval from a URL (default 60)
+  std::string expected_issuer;            //!< The expected issuer of the JWT tokens (REQUIRED if enabled)
+  std::string expected_audience;          //!< The expected audience of the JWT tokens (REQUIRED if enabled)
 
   std::vector<RevokedTokenEntry> revoked_tokens;
 
   /**
-   * @brief Check the configuration parameters for inconsistencies
-   * @param operationMode Operation mode the frontend is working in (WFE/Admin)
+   * @brief Validate the JWT configuration for consistency
    * @param log A logger object
    */
-  void check(log::Logger& log);
+  void validate(log::Logger& log);
 
   static constexpr std::size_t memberCount() { return 8; }
 };
@@ -84,15 +83,15 @@ struct JwtAuthConfig final {
  * @brief An mTLS auth config block
  */
 struct MtlsAuthConfig final {
-  bool enabled;      //!< Whether mTLS auth is enabled
-  AliasMap aliases;  //!< Mapping of identity -> (host)name aliases (SAN)
+  bool enabled = false;  //!< Whether mTLS auth is enabled (default: disabled)
+  AliasMap aliases;      //!< Mapping of identity -> (host)name aliases (SAN)
 
   /**
-   * @brief Check the configuration parameters for inconsistencies
+   * @brief Validate the mTLS configuration for consistency
    * @param operationMode Operation mode the frontend is working in (WFE/Admin)
    * @param log A logger object
    */
-  void check(OperationMode operationMode, log::Logger& log) const;
+  void validate(OperationMode operationMode, log::Logger& log) const;
 
   static constexpr std::size_t memberCount() { return 2; }
 };
@@ -101,16 +100,15 @@ struct MtlsAuthConfig final {
  * @brief A Kerberos auth config block
  */
 struct KerberosAuthConfig final {
-  bool enabled;                   //!< Whether Kerberos auth is enabled
-  std::string keytab_path;        //!< Path to keytab file
-  std::string service_principal;  //!< Kerberos service principal which will be accepted
+  bool enabled = false;           //!< Whether Kerberos auth is enabled (default: disabled)
+  std::string keytab_path;        //!< Path to keytab file (REQUIRED if enabled)
+  std::string service_principal;  //!< Kerberos service principal which will be accepted (REQUIRED if enabled)
 
   /**
-   * @brief Check the configuration parameters for inconsistencies
+   * @brief Validate the Kerberos configuration for consistency
    * @param operationMode Operation mode the frontend is working in (WFE/Admin)
-   * @param log A logger object
    */
-  void check(OperationMode operationMode) const;
+  void validate(OperationMode operationMode) const;
 
   static constexpr std::size_t memberCount() { return 3; }
 };
@@ -121,14 +119,14 @@ struct AuthConfig final {
   std::optional<KerberosAuthConfig> kerberos;  //!< Kerberos auth config (optional)
 
   /**
-   * @brief Check the configuration parameters for inconsistencies
+   * @brief Validate the authentication configuration for consistency
    * @param operationMode Operation mode the frontend is working in (WFE/Admin)
    * @param log A logger object
    */
-  void check(OperationMode operationMode, log::Logger& log);
+  void validate(OperationMode operationMode, log::Logger& log);
 
   /**
-   * @brief Get all auth methods enabled in the configuration
+   * @brief Get all enabled authentication methods
    * @return std::set<AuthMethod>
    */
   std::set<AuthMethod, std::less<>> getEnabledMethods() const;
@@ -144,11 +142,11 @@ struct GrpcConfig final {
   AuthConfig auth;         //!< Authentication configuration
 
   /**
-   * @brief Check the configuration parameters for inconsistencies
+   * @brief Validate the gRPC configuration for consistency
    * @param operationMode Operation mode the frontend is working in (WFE/Admin)
    * @param log A logger object
    */
-  void check(OperationMode operationMode, log::Logger& log);
+  void validate(OperationMode operationMode, log::Logger& log);
 
   static constexpr std::size_t memberCount() { return 2; }
 };
