@@ -67,13 +67,13 @@ struct SchedulerConfig final {
 
   std::string config_file = "/etc/cta/cta-scheduler.conf";
 
-  unsigned int tape_cache_max_age_secs = 600;
-  unsigned int retrieve_queue_cache_max_age_secs = 10;
+  uint32_t tape_cache_max_age_secs = 600;
+  uint32_t retrieve_queue_cache_max_age_secs = 10;
 
 #ifndef CTA_PGSCHED
   static constexpr std::size_t memberCount() { return 4; }
 #else
-  unsigned int number_of_connections = 3;
+  uint32_t number_of_connections = 3;
 
   static constexpr std::size_t memberCount() { return 5; }
 #endif
@@ -153,7 +153,7 @@ struct HealthServerConfig final {
   bool enabled = false;
   bool use_unix_domain_socket = false;
   std::optional<std::string> host = "";
-  std::optional<unsigned int> port = 8080;
+  std::optional<uint16_t> port = 8080;
 
   static constexpr std::size_t memberCount() { return 4; }
 
@@ -172,8 +172,8 @@ struct HealthServerConfig final {
     }
     if (!port.has_value()) {
       result.addError("port", "must be provided for TCP");
-    } else if (*port == 0 || *port > 65535) {
-      result.addError("port", "must be between 1 and 65535");
+    } else if (*port == 0) {
+      result.addError("port", "must be greater than zero");
     }
     return result;
   }

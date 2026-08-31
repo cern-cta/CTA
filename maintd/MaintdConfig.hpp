@@ -16,8 +16,8 @@ namespace cta::maintd {
 
 struct DiskReportRoutineConfig final {
   bool enabled = true;
-  unsigned int batch_size = 500;
-  unsigned int soft_timeout_secs = 30;
+  uint32_t batch_size = 500;
+  uint32_t soft_timeout_secs = 30;
 
   static constexpr std::size_t memberCount() { return 3; }
 
@@ -35,7 +35,7 @@ struct DiskReportRoutineConfig final {
 
 struct RepackExpandRoutineConfig final {
   bool enabled = true;
-  unsigned int max_to_expand = 2;
+  uint32_t max_to_expand = 2;
 
   static constexpr std::size_t memberCount() { return 2; }
 
@@ -50,7 +50,7 @@ struct RepackExpandRoutineConfig final {
 
 struct RepackReportRoutineConfig final {
   bool enabled = true;
-  unsigned int soft_timeout_secs = 900;
+  uint32_t soft_timeout_secs = 900;
 
   static constexpr std::size_t memberCount() { return 2; }
 
@@ -67,7 +67,7 @@ struct RepackReportRoutineConfig final {
 
 struct QueueCleanupRoutineConfig final {
   bool enabled = true;
-  unsigned int batch_size = 500;
+  uint32_t batch_size = 500;
 
   static constexpr std::size_t memberCount() { return 2; }
 
@@ -92,8 +92,8 @@ struct GarbageCollectRoutineConfig final {
 
 struct ActivePendingQueueCleanupRoutineConfig final {
   bool enabled = true;
-  unsigned int batch_size = 500;
-  unsigned int age_for_collection_secs = 900;
+  uint32_t batch_size = 500;
+  uint32_t age_for_collection_secs = 900;
 
   static constexpr std::size_t memberCount() { return 3; }
 
@@ -111,8 +111,8 @@ struct ActivePendingQueueCleanupRoutineConfig final {
 
 struct SchedulerMaintenanceCleanupRoutineConfig final {
   bool enabled = true;
-  unsigned int batch_size = 500;
-  unsigned int age_for_deletion_secs = 1209600;
+  uint32_t batch_size = 500;
+  uint32_t age_for_deletion_secs = 1209600;
 
   static constexpr std::size_t memberCount() { return 3; }
 
@@ -131,8 +131,8 @@ struct SchedulerMaintenanceCleanupRoutineConfig final {
 #endif
 
 struct RoutinesConfig final {
-  unsigned int cycle_sleep_interval_secs = 10;
-  unsigned int max_cycle_duration_secs = 900;
+  uint32_t cycle_sleep_interval_secs = 10;
+  uint32_t max_cycle_duration_secs = 900;
 
   DiskReportRoutineConfig disk_report_archive;
   DiskReportRoutineConfig disk_report_retrieve;

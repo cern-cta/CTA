@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <concepts>
+#include <cstdint>
 #include <set>
 #include <signal.h>
 #include <string>
@@ -373,7 +374,7 @@ private:
   std::unique_ptr<HealthServer> initHealthServer(const TConfig& config, const TOpts& cliOptions) {
     if (config.health_server.enabled) {
       std::string host;
-      unsigned int port;
+      uint16_t port;
       if (config.health_server.use_unix_domain_socket) {
         if (cliOptions.runtimeDir.empty()) {
           throw exception::UserError(
