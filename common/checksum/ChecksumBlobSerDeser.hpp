@@ -31,6 +31,21 @@ inline void ProtobufToChecksumBlob(const common::ChecksumBlob& p_csb, checksum::
       case common::ChecksumBlob::Checksum::SHA1:
         type = SHA1;
         break;
+      case common::ChecksumBlob::Checksum::CRC64:
+        type = CRC64;
+        break;
+      case common::ChecksumBlob::Checksum::SHA256:
+        type = SHA256;
+        break;
+      case common::ChecksumBlob::Checksum::XXHASH64:
+        type = XXHASH64;
+        break;
+      case common::ChecksumBlob::Checksum::BLAKE3:
+        type = BLAKE3;
+        break;
+      case common::ChecksumBlob::Checksum::HWH64:
+        type = HWH64;
+        break;
       case common::ChecksumBlob::Checksum::NONE:
       default:
         type = NONE;
@@ -58,6 +73,21 @@ inline void ChecksumBlobToProtobuf(const checksum::ChecksumBlob& csb, common::Ch
         break;
       case SHA1:
         protobufType = common::ChecksumBlob::Checksum::SHA1;
+        break;
+      case CRC64:
+        protobufType = common::ChecksumBlob::Checksum::CRC64;
+        break;
+      case SHA256:
+        protobufType = common::ChecksumBlob::Checksum::SHA256;
+        break;
+      case XXHASH64:
+        protobufType = common::ChecksumBlob::Checksum::XXHASH64;
+        break;
+      case BLAKE3:
+        protobufType = common::ChecksumBlob::Checksum::BLAKE3;
+        break;
+      case HWH64:
+        protobufType = common::ChecksumBlob::Checksum::HWH64;
         break;
       case NONE:
       default:

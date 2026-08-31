@@ -20,24 +20,34 @@ namespace cta::checksum {
  * We allow all checksum types supported by EOS
  */
 enum ChecksumType {
-  NONE,     //!< No checksum specified
-  ADLER32,  //!< Adler-32 checksum
-  CRC32,    //!< CRC-32 checksum
-  CRC32C,   //!< CRC-32C checksum
-  MD5,      //!< MD5 128-bit hash
-  SHA1      //!< SHA-1 160-bit hash
+  NONE,      //!< No checksum specified
+  ADLER32,   //!< Adler-32 checksum
+  CRC32,     //!< CRC-32 checksum
+  CRC32C,    //!< CRC-32C checksum
+  MD5,       //!< MD5 128-bit hash
+  SHA1,      //!< SHA-1 160-bit hash
+  CRC64,     //!< CRC-64 checksum
+  SHA256,    //!< SHA-256 256-bit hash
+  XXHASH64,  //!< xxHash 64-bit hash
+  BLAKE3,    //!< BLAKE3 256-bit hash
+  HWH64      //!< HighwayHash 64-bit hash
 };
 
 /*!
  * String representations of the checksum types
  */
 const std::map<ChecksumType, std::string> ChecksumTypeName = {
-  {NONE,    "NONE"   },
-  {ADLER32, "ADLER32"},
-  {CRC32,   "CRC32"  },
-  {CRC32C,  "CRC32C" },
-  {MD5,     "MD5"    },
-  {SHA1,    "SHA1"   }
+  {NONE,     "NONE"    },
+  {ADLER32,  "ADLER32" },
+  {CRC32,    "CRC32"   },
+  {CRC32C,   "CRC32C"  },
+  {MD5,      "MD5"     },
+  {SHA1,     "SHA1"    },
+  {CRC64,    "CRC64"   },
+  {SHA256,   "SHA256"  },
+  {XXHASH64, "XXHASH64"},
+  {BLAKE3,   "BLAKE3"  },
+  {HWH64,    "HWH64"   }
 };
 
 /*!

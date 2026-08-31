@@ -22,6 +22,11 @@ void ChecksumBlob::insert(ChecksumType type, const std::string& value) {
     case CRC32C:     expectedLength = 4;  break;
     case MD5:        expectedLength = 16; break;
     case SHA1:       expectedLength = 20; break;
+    case CRC64:
+    case XXHASH64:
+    case HWH64:      expectedLength = 8;  break;
+    case SHA256:
+    case BLAKE3:     expectedLength = 32; break;
   }
   // clang-format on
   if (value.length() > expectedLength) {

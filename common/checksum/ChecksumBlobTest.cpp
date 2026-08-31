@@ -31,6 +31,11 @@ TEST_F(cta_ChecksumBlobTest, checksum_types) {
   ASSERT_THROW(checksumBlob.at(CRC32C), ChecksumTypeMismatch);
   ASSERT_THROW(checksumBlob.at(MD5), ChecksumTypeMismatch);
   ASSERT_THROW(checksumBlob.at(SHA1), ChecksumTypeMismatch);
+  ASSERT_THROW(checksumBlob.at(CRC64), ChecksumTypeMismatch);
+  ASSERT_THROW(checksumBlob.at(SHA256), ChecksumTypeMismatch);
+  ASSERT_THROW(checksumBlob.at(XXHASH64), ChecksumTypeMismatch);
+  ASSERT_THROW(checksumBlob.at(BLAKE3), ChecksumTypeMismatch);
+  ASSERT_THROW(checksumBlob.at(HWH64), ChecksumTypeMismatch);
 
   // valid insertions
   checksumBlob.insert(NONE, "");  // 0 bits
@@ -46,6 +51,16 @@ TEST_F(cta_ChecksumBlobTest, checksum_types) {
   ASSERT_EQ(checksumBlob.size(), 5);
   checksumBlob.insert(SHA1, "12345678901234567890");  // 160 bits
   ASSERT_EQ(checksumBlob.size(), 6);
+  checksumBlob.insert(CRC64, "12345678");  // 64 bits
+  ASSERT_EQ(checksumBlob.size(), 7);
+  checksumBlob.insert(SHA256, "12345678901234567890123456789012");  // 256 bits
+  ASSERT_EQ(checksumBlob.size(), 8);
+  checksumBlob.insert(XXHASH64, "12345678");  // 64 bits
+  ASSERT_EQ(checksumBlob.size(), 9);
+  checksumBlob.insert(BLAKE3, "12345678901234567890123456789012");  // 256 bits
+  ASSERT_EQ(checksumBlob.size(), 10);
+  checksumBlob.insert(HWH64, "12345678");  // 64 bits
+  ASSERT_EQ(checksumBlob.size(), 11);
 
   // check each of the checksums in turn
   ASSERT_EQ(checksumBlob.contains(NONE, ""), true);
@@ -54,6 +69,11 @@ TEST_F(cta_ChecksumBlobTest, checksum_types) {
   ASSERT_EQ(checksumBlob.contains(CRC32C, "1234"), true);
   ASSERT_EQ(checksumBlob.contains(MD5, "1234567890123456"), true);
   ASSERT_EQ(checksumBlob.contains(SHA1, "12345678901234567890"), true);
+  ASSERT_EQ(checksumBlob.contains(CRC64, "12345678"), true);
+  ASSERT_EQ(checksumBlob.contains(SHA256, "12345678901234567890123456789012"), true);
+  ASSERT_EQ(checksumBlob.contains(XXHASH64, "12345678"), true);
+  ASSERT_EQ(checksumBlob.contains(BLAKE3, "12345678901234567890123456789012"), true);
+  ASSERT_EQ(checksumBlob.contains(HWH64, "12345678"), true);
 
   // invalid insertions
   ASSERT_THROW(checksumBlob.insert(NONE, "0"), ChecksumValueMismatch);
@@ -62,6 +82,11 @@ TEST_F(cta_ChecksumBlobTest, checksum_types) {
   ASSERT_THROW(checksumBlob.insert(CRC32C, "12345"), ChecksumValueMismatch);
   ASSERT_THROW(checksumBlob.insert(MD5, "12345678901234567"), ChecksumValueMismatch);
   ASSERT_THROW(checksumBlob.insert(SHA1, "123456789012345678901"), ChecksumValueMismatch);
+  ASSERT_THROW(checksumBlob.insert(CRC64, "123456789"), ChecksumValueMismatch);
+  ASSERT_THROW(checksumBlob.insert(SHA256, "123456789012345678901234567890123"), ChecksumValueMismatch);
+  ASSERT_THROW(checksumBlob.insert(XXHASH64, "123456789"), ChecksumValueMismatch);
+  ASSERT_THROW(checksumBlob.insert(BLAKE3, "123456789012345678901234567890123"), ChecksumValueMismatch);
+  ASSERT_THROW(checksumBlob.insert(HWH64, "123456789"), ChecksumValueMismatch);
   ASSERT_THROW(checksumBlob.insert(MD5, 0x12345678), ChecksumTypeMismatch);
   ASSERT_THROW(checksumBlob.insert(SHA1, 0x12345678), ChecksumTypeMismatch);
 
@@ -147,12 +172,17 @@ TEST_F(cta_ChecksumBlobTest, serialize_deserialize) {
 
   ChecksumBlob checksumBlob1;
 
-  checksumBlob1.insert(NONE, "");                      // 0 bits
-  checksumBlob1.insert(ADLER32, 0x3e80001);            // 32 bits
-  checksumBlob1.insert(CRC32, "0");                    // 32 bits
-  checksumBlob1.insert(CRC32C, "FFFF");                // 32 bits
-  checksumBlob1.insert(MD5, "1234567890123456");       // 128 bits
-  checksumBlob1.insert(SHA1, "12345678901234567890");  // 160 bits
+  checksumBlob1.insert(NONE, "");                                    // 0 bits
+  checksumBlob1.insert(ADLER32, 0x3e80001);                          // 32 bits
+  checksumBlob1.insert(CRC32, "0");                                  // 32 bits
+  checksumBlob1.insert(CRC32C, "FFFF");                              // 32 bits
+  checksumBlob1.insert(MD5, "1234567890123456");                     // 128 bits
+  checksumBlob1.insert(SHA1, "12345678901234567890");                // 160 bits
+  checksumBlob1.insert(CRC64, "12345678");                           // 64 bits
+  checksumBlob1.insert(SHA256, "12345678901234567890123456789012");  // 256 bits
+  checksumBlob1.insert(XXHASH64, "12345678");                        // 64 bits
+  checksumBlob1.insert(BLAKE3, "12345678901234567890123456789012");  // 256 bits
+  checksumBlob1.insert(HWH64, "12345678");                           // 64 bits
 
   auto len = checksumBlob1.length();
   auto bytearray = checksumBlob1.serialize();
