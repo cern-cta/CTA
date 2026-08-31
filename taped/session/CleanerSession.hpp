@@ -110,15 +110,6 @@ private:
   cta::Scheduler& m_scheduler;
 
   /**
-    * Execute the session and return the type of action to be performed
-    * immediately after the session has completed.
-    *
-    * @return Returns the type of action to be performed after the session has
-    * completed.
-    */
-  EndOfSessionAction exceptionThrowingExecute();
-
-  /**
     * Logs and clears (just by reading them...) any outstanding tape alerts
     *
     * @param drive The tape drive.
@@ -182,7 +173,7 @@ private:
   void dismountTape(const std::string& vid);
 
   /** Put the drive down if the cleaner failed. */
-  void setDriveDownAfterCleanerFailed(const std::string& errorMsg);
+  void setDriveDownAfterCleanerFailed(const std::string& errorMsg) noexcept;
 
   /** Prevent a tape with unresolved physical location from being scheduled. */
   void disableTapeAfterFailedEject(const std::string& errorMsg) noexcept;

@@ -3914,7 +3914,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   }));
 }
 
-TEST_P(DataTransferSessionTest, CleanerSessionEjectsBlankTapeAndIsSequentiallyIdempotent) {
+TEST_P(DataTransferSessionTest, CleanerSessionEjectsBlankTapeAndAcceptsEmptyDrive) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
@@ -4017,20 +4017,18 @@ TEST_P(DataTransferSessionTest, CleanerSessionEjectsBlankTapeAndIsSequentiallyId
   ASSERT_NE(std::string::npos, logger.getLog().find("Cleaner could not read the volume label"));
   ASSERT_NE(std::string::npos, logger.getLog().find("Cleaner unloaded tape"));
   ASSERT_NE(std::string::npos, changerLog.getLog().find("Dummy dismount"));
+  const std::string changerLogsAfterFirstRun = changerLog.getLog();
+  const auto firstDismount = changerLogsAfterFirstRun.find("Dummy dismount");
+  ASSERT_EQ(std::string::npos, changerLogsAfterFirstRun.find("Dummy dismount", firstDismount + 1));
 
   // createDrive() takes ownership of the fake drive, so provide another one
-  // before invoking the same cleaner again. Repeated sequential cleanup must
-  // have the same successful outcome, including robotic reconciliation.
+  // before invoking the same cleaner again. An already empty drive is a
+  // successful no-op and must not send another request to rmcd.
   auto* emptyDrive = new cta::tape::drive::FakeDrive(tapeSize, cta::tape::drive::FakeDrive::OnFlush);
   emptyDrive->setTapeInPlace(false);
   mockSys.fake.m_pathToDrive["/dev/nst0"] = emptyDrive;
   ASSERT_EQ(cta::tape::daemon::Session::MARK_DRIVE_AS_UP, cleanerSession.execute());
-  ASSERT_NE(std::string::npos, logger.getLog().find("Cleaner found tape drive unloaded"));
-
-  const std::string changerLogs = changerLog.getLog();
-  const auto firstDismount = changerLogs.find("Dummy dismount");
-  ASSERT_NE(std::string::npos, firstDismount);
-  ASSERT_NE(std::string::npos, changerLogs.find("Dummy dismount", firstDismount + 1));
+  ASSERT_EQ(changerLogsAfterFirstRun, changerLog.getLog());
 
   // An unknown VID must also be accepted. rmcd uses the drive ordinal and an
   // empty VID deliberately disables only the cartridge-name consistency check.
@@ -4038,7 +4036,6 @@ TEST_P(DataTransferSessionTest, CleanerSessionEjectsBlankTapeAndIsSequentiallyId
   mockSys.fake.m_pathToDrive["/dev/nst0"] = unknownVidDrive;
   CleanerSession unknownVidCleaner(mc, logger, driveInfo, mockSys, "", false, 0, catalogue, scheduler);
   ASSERT_EQ(cta::tape::daemon::Session::MARK_DRIVE_AS_UP, unknownVidCleaner.execute());
-  ASSERT_NE(std::string::npos, logger.getLog().find("continuing with VID-less dismount"));
 
   const cta::common::dataStructures::DesiredDriveState newDriveState =
     scheduler.getDesiredDriveState(driveInfo.driveName, logContext);
