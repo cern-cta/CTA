@@ -127,6 +127,27 @@ struct OptionalAggregateConfig {
   static constexpr std::size_t memberCount() { return 1; }
 };
 
+struct ValidatedConfig {
+  int value = 1;
+  int other_value = 1;
+
+  static constexpr std::size_t memberCount() { return 2; }
+
+  cta::runtime::ValidationResult validate() const {
+    cta::runtime::ValidationResult result;
+    if (value == 0) {
+      result.addError("value", "must be non-zero");
+    }
+    if (other_value == 0) {
+      result.addError("other_value", "must be non-zero");
+    }
+    return result;
+  }
+};
+
+static_assert(!cta::runtime::HasValidateMethod<MyConfig>);
+static_assert(cta::runtime::HasValidateMethod<ValidatedConfig>);
+
 //------------------------------------------------------------------------------
 // Tests
 //------------------------------------------------------------------------------
@@ -134,6 +155,30 @@ struct OptionalAggregateConfig {
 TEST(ConfigLoader, ThrowsOnNonExistingPath) {
   EXPECT_THROW((cta::runtime::loadFromToml<MyConfig>("/tmp/idefinitelydontexist.toml", false)),
                cta::exception::UserError);
+}
+
+TEST(ConfigLoader, TypesWithoutValidateRemainSupported) {
+  TempFile f(R"toml(
+mandatory = 7
+)toml",
+             ".toml");
+
+  const auto config = cta::runtime::loadFromToml<MyConfig>(f.path());
+
+  EXPECT_EQ(config.mandatory, 7);
+}
+
+TEST(ConfigLoader, InvokesRootValidation) {
+  TempFile f("value = 0\nother_value = 0\n", ".toml");
+
+  try {
+    cta::runtime::loadFromToml<ValidatedConfig>(f.path());
+    FAIL() << "Expected cta::exception::UserError";
+  } catch (const cta::exception::UserError& ex) {
+    EXPECT_EQ(ex.getMessageValue(),
+              "Invalid config in '" + f.path()
+                + "':\n1) Field 'other_value' must be non-zero.\n2) Field 'value' must be non-zero.\n");
+  }
 }
 
 TEST(ConfigLoader, AllowsIntegerValuesAtDestinationTypeBounds) {

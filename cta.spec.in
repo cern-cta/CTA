@@ -433,6 +433,7 @@ Unit tests and integration tests with virtual tape drives
 %{_libdir}/libctascsiunittests.so*
 %{_libdir}/libctadaemonunittests.so*
 %{_libdir}/libctamediachangerunittests.so*
+%{_libdir}/libctamaintdunittests.so*
 %{_libdir}/libctadiskunittests.so*
 %{_libdir}/libctatapelabelunittests.so*
 %{_libdir}/libctatapedraounittests.so*

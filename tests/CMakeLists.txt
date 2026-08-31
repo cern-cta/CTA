@@ -26,6 +26,7 @@ set (CTA_UNIT_TEST_LIBS
   ctadaemonunittests
   ctaexceptionunittests
   ctamediachangerunittests
+  ctamaintdunittests
   ctainmemorycatalogueunittests
   ctainmemoryconnunittests
   ctainmemorystmtunittests

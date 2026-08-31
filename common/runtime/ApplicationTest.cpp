@@ -40,6 +40,12 @@ struct MinimalTestConfig {
   cta::runtime::LoggingConfig logging;
 
   static constexpr std::size_t memberCount() { return 1; }
+
+  cta::runtime::ValidationResult validate() const {
+    cta::runtime::ValidationResult result;
+    result.merge("logging", logging.validate());
+    return result;
+  }
 };
 
 class TestApp {
@@ -71,6 +77,23 @@ format = "json"
     return app.run(args.count, args.data());
   });
   ASSERT_EQ(rc, EXIT_SUCCESS);
+}
+
+TEST(Application, RootConfigValidationIsExercisedDuringConfigCheck) {
+  using namespace cta;
+
+  TempFile f(R"toml(
+[logging]
+level = "NOT_A_LEVEL"
+format = "json"
+)toml",
+             ".toml");
+
+  const std::string appName = "cta-test";
+  Argv args({appName, "--config", f.path(), "--config-check"});
+  runtime::Application<TestApp, MinimalTestConfig, runtime::CommonCliOptions> app(appName, "");
+
+  ASSERT_THROW(app.run(args.count, args.data()), exception::UserError);
 }
 
 TEST(Application, AppWithNonExistingConfigFile) {
@@ -155,6 +178,12 @@ TEST(Application, AppCompilesWithCustomConfig) {
     std::string extraConfigField;
 
     static constexpr std::size_t memberCount() { return 2; }
+
+    cta::runtime::ValidationResult validate() const {
+      cta::runtime::ValidationResult result;
+      result.merge("logging", logging.validate());
+      return result;
+    }
   };
 
   class TestAppWithCustomConfig {

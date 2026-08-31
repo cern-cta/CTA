@@ -26,6 +26,7 @@
 
 #include <algorithm>
 #include <concepts>
+#include <cstdint>
 #include <set>
 #include <signal.h>
 #include <string>
@@ -131,6 +132,8 @@ concept HasCatalogueConfig = requires(const TConfig& cfg) {
 template<class TApp, class TConfig, class TOpts>
 class Application final {
 public:
+  static_assert(HasValidateMethod<TConfig>, "TConfig must provide a const validate() method");
+
   /**
    * @brief Construct a new Application object.
    *
@@ -371,7 +374,7 @@ private:
   std::unique_ptr<HealthServer> initHealthServer(const TConfig& config, const TOpts& cliOptions) {
     if (config.health_server.enabled) {
       std::string host;
-      int port;
+      uint16_t port;
       if (config.health_server.use_unix_domain_socket) {
         if (cliOptions.runtimeDir.empty()) {
           throw exception::UserError(
