@@ -52,7 +52,7 @@ build_local() {
 
   # Defaults
   local num_jobs=8
-  local cta_version="6"
+  local cta_version="5"
   # These versions don't affect anything functionality wise
   local cta_version_suffix="dev"
   local xrootd_ssi_version="dev"

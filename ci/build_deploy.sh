@@ -90,7 +90,7 @@ build_deploy() {
   num_jobs=$(nproc --ignore=2)
   local restarted=false
   local namespace="dev"
-  local cta_version="6"
+  local cta_version="5"
   local cta_version_suffix="dev"
   local xrootd_ssi_version
   xrootd_ssi_version=$(cd "$project_root/xrootd-ssi-protobuf-interface" && git describe --tags --exact-match)
