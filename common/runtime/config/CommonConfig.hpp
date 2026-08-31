@@ -84,14 +84,14 @@ struct SchedulerConfig final {
       result.addError("config_file", "cannot be empty");
     }
     if (tape_cache_max_age_secs == 0) {
-      result.addError("tape_cache_max_age_secs", "must be positive");
+      result.addError("tape_cache_max_age_secs", "must be greater than zero");
     }
     if (retrieve_queue_cache_max_age_secs == 0) {
-      result.addError("retrieve_queue_cache_max_age_secs", "must be positive");
+      result.addError("retrieve_queue_cache_max_age_secs", "must be greater than zero");
     }
 #ifdef CTA_PGSCHED
     if (number_of_connections == 0) {
-      result.addError("number_of_connections", "must be positive");
+      result.addError("number_of_connections", "must be greater than zero");
     }
 #endif
     return result;

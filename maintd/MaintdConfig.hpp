@@ -24,10 +24,10 @@ struct DiskReportRoutineConfig final {
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     if (batch_size == 0) {
-      result.addError("batch_size", "must be positive");
+      result.addError("batch_size", "must be greater than zero");
     }
     if (soft_timeout_secs == 0) {
-      result.addError("soft_timeout_secs", "must be positive");
+      result.addError("soft_timeout_secs", "must be greater than zero");
     }
     return result;
   }
@@ -42,7 +42,7 @@ struct RepackExpandRoutineConfig final {
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     if (max_to_expand == 0) {
-      result.addError("max_to_expand", "must be positive");
+      result.addError("max_to_expand", "must be greater than zero");
     }
     return result;
   }
@@ -57,7 +57,7 @@ struct RepackReportRoutineConfig final {
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     if (soft_timeout_secs == 0) {
-      result.addError("soft_timeout_secs", "must be positive");
+      result.addError("soft_timeout_secs", "must be greater than zero");
     }
     return result;
   }
@@ -74,7 +74,7 @@ struct QueueCleanupRoutineConfig final {
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     if (batch_size == 0) {
-      result.addError("batch_size", "must be positive");
+      result.addError("batch_size", "must be greater than zero");
     }
     return result;
   }
@@ -100,10 +100,10 @@ struct ActivePendingQueueCleanupRoutineConfig final {
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     if (batch_size == 0) {
-      result.addError("batch_size", "must be positive");
+      result.addError("batch_size", "must be greater than zero");
     }
     if (age_for_collection_secs == 0) {
-      result.addError("age_for_collection_secs", "must be positive");
+      result.addError("age_for_collection_secs", "must be greater than zero");
     }
     return result;
   }
@@ -119,10 +119,10 @@ struct SchedulerMaintenanceCleanupRoutineConfig final {
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     if (batch_size == 0) {
-      result.addError("batch_size", "must be positive");
+      result.addError("batch_size", "must be greater than zero");
     }
     if (age_for_deletion_secs == 0) {
-      result.addError("age_for_deletion_secs", "must be positive");
+      result.addError("age_for_deletion_secs", "must be greater than zero");
     }
     return result;
   }
@@ -158,10 +158,10 @@ struct RoutinesConfig final {
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     if (cycle_sleep_interval_secs == 0) {
-      result.addError("cycle_sleep_interval_secs", "must be positive");
+      result.addError("cycle_sleep_interval_secs", "must be greater than zero");
     }
     if (max_cycle_duration_secs == 0) {
-      result.addError("max_cycle_duration_secs", "must be positive");
+      result.addError("max_cycle_duration_secs", "must be greater than zero");
     }
     result.merge("disk_report_archive", disk_report_archive.validate());
     result.merge("disk_report_retrieve", disk_report_retrieve.validate());
