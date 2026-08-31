@@ -109,8 +109,7 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::CleanerSession
   // Reaching this point means the cleaner failed
 
   if (ejectFailed) {
-    // As we failed to clean the drive (unmount the tape or rewinding impossible),
-    // we set the tape as disabled so that it will not be mounted for future retrieves
+    // As we failed to eject, we set the tape as disabled so that it will not be mounted for future retrieves
     // otherwise, we will go in an infinite loop of mounting with errors.
     // Gitlab ticket reference : https://gitlab.cern.ch/cta/CTA/issues/224
     disableTapeAfterFailedEject(errorMessage);

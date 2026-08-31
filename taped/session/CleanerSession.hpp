@@ -124,8 +124,7 @@ private:
   void cleanDrive(drive::DriveInterface& drive);
 
   /**
-   * Best-effort preparation and reading of the volume label. Failure to read
-   * the label must never prevent the cartridge from being ejected.
+   * Best-effort preparation and reading of the volume label.
    *
    * @param drive The tape drive.
    * @return The VSN from the label, or std::nullopt if it could not be read.
