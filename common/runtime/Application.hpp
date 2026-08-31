@@ -68,6 +68,13 @@ concept HasRunFunctionWithOpts = requires(TApp& app, const TConfig& cfg, const T
 };
 
 template<class TConfig>
+concept HasValidateMethod = requires(const TConfig& cfg) {
+  // TODO: I don't really like this, but for now rely on exception throwing...
+  // std::expected would be cleaner but we don't have c++ 23
+  { cfg.validate() } -> std::same_as<void>;
+};
+
+template<class TConfig>
 concept HasHealthServerConfig = requires(const TConfig& cfg) {
   requires std::same_as<std::remove_cvref_t<decltype(cfg.health_server)>, HealthServerConfig>;
 };
@@ -131,6 +138,8 @@ concept HasCatalogueConfig = requires(const TConfig& cfg) {
 template<class TApp, class TConfig, class TOpts>
 class Application final {
 public:
+  static_assert(HasValidateMethod<TConfig>, "TConfig must provide a const validate() method");
+
   /**
    * @brief Construct a new Application object.
    *
@@ -215,6 +224,7 @@ public:
     }
 
     auto config = runtime::loadFromToml<TConfig>(configFilePath, cliOptions.configStrict);
+    config.validate();
     if (cliOptions.configCheck) {
       std::cout << "Config check passed." << std::endl;
       return EXIT_SUCCESS;
@@ -371,7 +381,7 @@ private:
   std::unique_ptr<HealthServer> initHealthServer(const TConfig& config, const TOpts& cliOptions) {
     if (config.health_server.enabled) {
       std::string host;
-      int port;
+      unsigned int port;
       if (config.health_server.use_unix_domain_socket) {
         if (cliOptions.runtimeDir.empty()) {
           throw exception::UserError(

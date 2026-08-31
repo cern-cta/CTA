@@ -5,6 +5,10 @@
 
 #pragma once
 
+#include "common/exception/UserError.hpp"
+
+#include <algorithm>
+#include <array>
 #include <cstdint>
 #include <map>
 #include <optional>
@@ -13,9 +17,8 @@
 /**
  * @brief Common configuration for all application/tools.
  * Depending on what the app/tool requires, the structs below can be referenced.
- * Every value MUST be initialised. String values MAY be empty, but it is RECOMMENDED
- * to initialise them. Assume that any string MAY be empty, which MUST be checked
- * before it is consumed in the program. This is not checked during config loading.
+ * Every value MUST be initialised. Each struct's validate() method enforces semantic
+ * constraints which cannot be expressed by the TOML loader's type and bounds checks.
  *
  * Assume that all of the structs below are referenced by all applications. As such,
  * don't add options specific to an application here, because it will enforce all
@@ -34,6 +37,8 @@ struct ExperimentalConfig final {
   bool telemetry_enabled = false;
 
   static constexpr std::size_t memberCount() { return 1; }
+
+  void validate() const {}
 };
 
 /**
@@ -43,6 +48,12 @@ struct CatalogueConfig final {
   std::string config_file = "/etc/cta/cta-catalogue.conf";
 
   static constexpr std::size_t memberCount() { return 1; }
+
+  void validate() const {
+    if (config_file.empty()) {
+      throw exception::UserError("catalogue.config_file cannot be empty");
+    }
+  }
 };
 
 /**
@@ -54,16 +65,33 @@ struct SchedulerConfig final {
 
   std::string config_file = "/etc/cta/cta-scheduler.conf";
 
-  int tape_cache_max_age_secs = 600;
-  int retrieve_queue_cache_max_age_secs = 10;
+  unsigned int tape_cache_max_age_secs = 600;
+  unsigned int retrieve_queue_cache_max_age_secs = 10;
 
 #ifndef CTA_PGSCHED
   static constexpr std::size_t memberCount() { return 4; }
 #else
-  int number_of_connections = 3;
+  unsigned int number_of_connections = 3;
 
   static constexpr std::size_t memberCount() { return 5; }
 #endif
+
+  void validate() const {
+    if (config_file.empty()) {
+      throw exception::UserError("scheduler.config_file cannot be empty");
+    }
+    if (tape_cache_max_age_secs == 0) {
+      throw exception::UserError("scheduler.tape_cache_max_age_secs must be positive");
+    }
+    if (retrieve_queue_cache_max_age_secs == 0) {
+      throw exception::UserError("scheduler.retrieve_queue_cache_max_age_secs must be positive");
+    }
+#ifdef CTA_PGSCHED
+    if (number_of_connections == 0) {
+      throw exception::UserError("scheduler.number_of_connections must be positive");
+    }
+#endif
+  }
 };
 
 /**
@@ -75,6 +103,19 @@ struct LoggingConfig final {
   std::map<std::string, std::string> attributes;
 
   static constexpr std::size_t memberCount() { return 3; }
+
+  void validate() const {
+    static constexpr std::array validLevels =
+      {"EMERG", "ALERT", "CRIT", "ERR", "WARNING", "NOTICE", "INFO", "DEBUG", "USERERR"};
+    static constexpr std::array validFormats = {"kv", "json"};
+
+    if (std::ranges::find(validLevels, level) == validLevels.end()) {
+      throw exception::UserError("Unsupported logging.level: '" + level + "'");
+    }
+    if (std::ranges::find(validFormats, format) == validFormats.end()) {
+      throw exception::UserError("Unsupported logging.format: '" + format + "'");
+    }
+  }
 };
 
 /**
@@ -88,6 +129,13 @@ struct TelemetryConfig final {
   std::string on_init_failure = "warn";
 
   static constexpr std::size_t memberCount() { return 2; }
+
+  void validate() const {
+    if (on_init_failure != "fatal" && on_init_failure != "warn") {
+      throw exception::UserError("Unsupported telemetry.on_init_failure: '" + on_init_failure
+                                 + "'. Must be one of [fatal, warn].");
+    }
+  }
 };
 
 /**
@@ -97,9 +145,30 @@ struct HealthServerConfig final {
   bool enabled = false;
   bool use_unix_domain_socket = false;
   std::optional<std::string> host = "";
-  std::optional<int> port = 8080;
+  std::optional<unsigned int> port = 8080;
 
   static constexpr std::size_t memberCount() { return 4; }
+
+  void validate() const {
+    if (!enabled) {
+      return;
+    }
+    if (use_unix_domain_socket) {
+      return;
+    }
+    if (!host.has_value()) {
+      throw exception::UserError("health_server.host must be provided for TCP");
+    }
+    if (host->empty()) {
+      throw exception::UserError("health_server.host cannot be empty for TCP");
+    }
+    if (!port.has_value()) {
+      throw exception::UserError("health_server.port must be provided for TCP");
+    }
+    if (*port == 0 || *port > 65535) {
+      throw exception::UserError("health_server.port must be between 1 and 65535");
+    }
+  }
 };
 
 /**
@@ -111,6 +180,17 @@ struct XRootDConfig final {
   std::string sss_keytab_path = "etc/cta/sss.keytab";
 
   static constexpr std::size_t memberCount() { return 2; }
+
+  void validate() const {
+    if (security_protocol.empty()) {
+      throw exception::UserError("xrootd.security_protocol cannot be empty");
+    }
+    if (security_protocol == "sss") {
+      if (sss_keytab_path.empty()) {
+        throw exception::UserError("xrootd.sss_keytab_path cannot be empty when using the sss security protocol");
+      }
+    }
+  }
 };
 
 }  // namespace cta::runtime

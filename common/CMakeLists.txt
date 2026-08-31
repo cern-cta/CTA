@@ -189,6 +189,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   remoteFS/RemotePathTest.cpp
   runtime/ApplicationTest.cpp
   runtime/config/ConfigLoaderTest.cpp
+  runtime/config/CommonConfigTest.cpp
   runtime/config/parsing/ReflectionTest.cpp
   runtime/cli/ArgParserTest.cpp
   runtime/signals/SignalReactorTest.cpp
