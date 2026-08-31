@@ -34,7 +34,7 @@ rdbms::Rset ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
       WHERE TAPE_POOL = :TAPE_POOL
       AND STATUS = :STATUS
       AND ( MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID )
-      ORDER BY ARCHIVE_FILE_ID, PRIORITY DESC, JOB_ID
+      ORDER BY PRIORITY DESC, ARCHIVE_FILE_ID, JOB_ID
       LIMIT :LIMIT
       FOR UPDATE SKIP LOCKED
     ),
