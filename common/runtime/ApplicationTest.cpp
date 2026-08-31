@@ -75,7 +75,7 @@ format = "json"
   ASSERT_EQ(rc, EXIT_SUCCESS);
 }
 
-TEST(Application, RootConfigValidationIsExercised) {
+TEST(Application, RootConfigValidationIsExercisedDuringConfigCheck) {
   using namespace cta;
 
   TempFile f(R"toml(
@@ -86,7 +86,7 @@ format = "json"
              ".toml");
 
   const std::string appName = "cta-test";
-  Argv args({appName, "--config", f.path()});
+  Argv args({appName, "--config", f.path(), "--config-check"});
   runtime::Application<TestApp, MinimalTestConfig, runtime::CommonCliOptions> app(appName, "");
 
   ASSERT_THROW(app.run(args.count, args.data()), exception::UserError);

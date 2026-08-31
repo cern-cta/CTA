@@ -68,13 +68,6 @@ concept HasRunFunctionWithOpts = requires(TApp& app, const TConfig& cfg, const T
 };
 
 template<class TConfig>
-concept HasValidateMethod = requires(const TConfig& cfg) {
-  // TODO: I don't really like this, but for now rely on exception throwing...
-  // std::expected would be cleaner but we don't have c++ 23
-  { cfg.validate() } -> std::same_as<void>;
-};
-
-template<class TConfig>
 concept HasHealthServerConfig = requires(const TConfig& cfg) {
   requires std::same_as<std::remove_cvref_t<decltype(cfg.health_server)>, HealthServerConfig>;
 };
@@ -224,7 +217,6 @@ public:
     }
 
     auto config = runtime::loadFromToml<TConfig>(configFilePath, cliOptions.configStrict);
-    config.validate();
     if (cliOptions.configCheck) {
       std::cout << "Config check passed." << std::endl;
       return EXIT_SUCCESS;

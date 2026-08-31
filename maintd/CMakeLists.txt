@@ -29,6 +29,17 @@ target_link_libraries(ctamaintd
 	ctarepackroutines
 )
 
+add_library(ctamaintdunittests SHARED
+  MaintdConfigTest.cpp
+)
+target_link_libraries(ctamaintdunittests
+  ctacommon
+  gtest
+)
+set_property(TARGET ctamaintdunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctamaintdunittests PROPERTY VERSION "${CTA_LIBVERSION}")
+install(TARGETS ctamaintdunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
 add_executable (cta-maintd cta-maintd.cpp)
 target_link_libraries(cta-maintd ctamaintd)
 
