@@ -14,12 +14,17 @@ TEST(cta_ChecksumBlobSerDeserTest, serialize_deserialize) {
 
   ChecksumBlob checksumBlob1;
 
-  checksumBlob1.insert(NONE, "");                      // 0 bits
-  checksumBlob1.insert(ADLER32, 0x3e80001);            // 32 bits
-  checksumBlob1.insert(CRC32, "0");                    // 32 bits
-  checksumBlob1.insert(CRC32C, "FFFF");                // 32 bits
-  checksumBlob1.insert(MD5, "1234567890123456");       // 128 bits
-  checksumBlob1.insert(SHA1, "12345678901234567890");  // 160 bits
+  checksumBlob1.insert(NONE, "");                                    // 0 bits
+  checksumBlob1.insert(ADLER32, 0x3e80001);                          // 32 bits
+  checksumBlob1.insert(CRC32, "0");                                  // 32 bits
+  checksumBlob1.insert(CRC32C, "FFFF");                              // 32 bits
+  checksumBlob1.insert(MD5, "1234567890123456");                     // 128 bits
+  checksumBlob1.insert(SHA1, "12345678901234567890");                // 160 bits
+  checksumBlob1.insert(CRC64, "12345678");                           // 64 bits
+  checksumBlob1.insert(SHA256, "12345678901234567890123456789012");  // 256 bits
+  checksumBlob1.insert(XXHASH64, "12345678");                        // 64 bits
+  checksumBlob1.insert(BLAKE3, "12345678901234567890123456789012");  // 256 bits
+  checksumBlob1.insert(HWH64, "12345678");                           // 64 bits
 
   auto len = checksumBlob1.length();
   auto bytearray = checksumBlob1.serialize();
