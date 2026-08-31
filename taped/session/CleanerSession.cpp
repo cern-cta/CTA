@@ -70,7 +70,7 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::CleanerSession
   }
 
   // First open the drive. If that is impossible, the robot can still return the cartridge
-  // because device discovery is not needed for a dismount
+  // because we don't need the drive for that
   std::unique_ptr<drive::DriveInterface> drivePtr;
   std::optional<std::string> driveError;
   try {
@@ -82,7 +82,7 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::CleanerSession
   if (driveError) {
     try {
       dismountTape("");
-      // The tape is safe, but a drive that could not be opened must not be marked up
+      // The tape was safely dismounted, but a drive that could not be opened must not be marked up
       errorMessage = "Tape was dismounted, but the drive could not be opened and must remain down: " + *driveError;
     } catch (...) {
       errorMessage = "Failed to create the drive (" + *driveError + ") and failed to dismount the tape ("
@@ -94,8 +94,6 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::CleanerSession
     try {
       cleanDrive(drive);
     } catch (...) {
-      // cleanDrive only returns after confirming that no tape is present or that dismount succeeded.
-      // Any escaping exception therefore leaves the tape location unresolved.
       errorMessage = currentExceptionMessage();
       ejectFailed = true;
     }
@@ -108,7 +106,8 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::CleanerSession
     }
   }
 
-  // Reaching this point means the cleaner failed and the drive must stay down
+  // Reaching this point means the cleaner failed
+
   if (ejectFailed) {
     // As we failed to clean the drive (unmount the tape or rewinding impossible),
     // we set the tape as disabled so that it will not be mounted for future retrieves
