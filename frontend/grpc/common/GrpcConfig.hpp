@@ -8,11 +8,12 @@
 #include "frontend/common/AuthMethod.hpp"
 #include "frontend/common/OperationModes.hpp"
 
+#include <map>
 #include <optional>
 #include <set>
 #include <string>
-#include <toml++/toml.hpp>
 #include <unordered_map>
+#include <vector>
 
 namespace cta::frontend::grpc::common {
 
@@ -46,17 +47,6 @@ struct GeneralGrpcConfig final {
 };
 
 /**
- * @brief A revoked token
- */
-struct RevokedTokenEntry final {
-  std::string jti;             //!< The token's JTI (UUID)
-  std::string reason;          //!< The token's revocation reason (only for audit purposes)
-  toml::date_time revoked_at;  //!< The token's revocation date/time in UTC (only for audit purposes)
-
-  static constexpr std::size_t memberCount() { return 3; }
-};
-
-/**
  * @brief A JWT auth config block
  */
 struct JwtAuthConfig final {
@@ -68,7 +58,8 @@ struct JwtAuthConfig final {
   std::string expected_issuer;            //!< The expected issuer of the JWT tokens (REQUIRED if enabled)
   std::string expected_audience;          //!< The expected audience of the JWT tokens (REQUIRED if enabled)
 
-  std::vector<RevokedTokenEntry> revoked_tokens;
+  std::optional<std::string> revoke_list_path =
+    std::nullopt;  //!< Path to an external TOML file listing revoked tokens (optional)
 
   /**
    * @brief Validate the JWT configuration for consistency

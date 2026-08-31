@@ -93,12 +93,12 @@ public:
                  int pubKeyTTL,
                  const std::string& expectedIssuer,
                  const std::string& expectedAudience,
-                 std::set<std::string, std::less<>> revokedSet,
+                 const std::optional<std::string>& revokeListPath,
                  const cta::log::LogContext& lc)
       : m_pubKeyCache(JwkCache {std::move(jwksFetcher), jwkUri, pubKeyTTL, lc}),
         m_expectedIssuer(expectedIssuer),
         m_expectedAudience(expectedAudience),
-        m_revokedSet(std::move(revokedSet)) {}
+        m_revokedSet(revokeListPath ? loadRevokedJtis(*revokeListPath) : std::set<std::string, std::less<>> {}) {}
 
   JwkCache& getCache() { return m_pubKeyCache; }
 
@@ -109,6 +109,17 @@ public:
   TokenValidationResult validateJwt(const std::string& encodedJwt, const log::LogContext& logContext);
 
 private:
+  /**
+   * @brief Load the IDs of the revoked tokens from an external TOML file.
+   *
+   * The file must contain a top-level array of tables '[[revoked_tokens]]'. Every entry is
+   * validated; a UserError is thrown for the first invalid one.
+   *
+   * @param filePath Path to the revoke-list TOML file.
+   * @return The JTIs of all revoked tokens.
+   */
+  static std::set<std::string, std::less<>> loadRevokedJtis(const std::string& filePath);
+
   JwkCache m_pubKeyCache;                           //!< The public key cache
   std::string m_expectedIssuer;                     //!< The expected issuer for all tokens
   std::string m_expectedAudience;                   //!< The expected audience for all tokens

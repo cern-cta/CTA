@@ -129,20 +129,13 @@ int main(const int argc, char* const* const argv) {
   if (jwtConfig.has_value() && jwtConfig->enabled) {
     // Build the shared JWK cache
     auto jwksFetcher {std::make_unique<cta::auth::CurlJwksFetcher>(jwtConfig->jwks_total_timeout)};
-    jwtAuthManager = std::make_shared<cta::auth::JwtAuthManager>(
-      std::move(jwksFetcher),
-      jwtConfig->jwks_uri,
-      jwtConfig->pub_key_timeout,
-      jwtConfig->expected_issuer,
-      jwtConfig->expected_audience,
-      [&jwtConfig]() {
-        std::set<std::string, std::less<>> revokedJtis;
-        for (const auto& entry : jwtConfig->revoked_tokens) {
-          revokedJtis.insert(entry.jti);
-        }
-        return revokedJtis;
-      }(),
-      frontendService->getLogContext());
+    jwtAuthManager = std::make_shared<cta::auth::JwtAuthManager>(std::move(jwksFetcher),
+                                                                 jwtConfig->jwks_uri,
+                                                                 jwtConfig->pub_key_timeout,
+                                                                 jwtConfig->expected_issuer,
+                                                                 jwtConfig->expected_audience,
+                                                                 jwtConfig->revoke_list_path,
+                                                                 frontendService->getLogContext());
 
     {
       log::ScopedParamContainer spc(lc);

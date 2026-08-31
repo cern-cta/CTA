@@ -7,35 +7,9 @@
 
 #include "common/exception/UserError.hpp"
 
-#include <chrono>
-#include <ctime>
 #include <set>
-#include <toml++/toml.hpp>
 
 namespace cta::frontend::grpc::common {
-
-namespace {
-
-/// Converts a toml::date_time to a std::chrono::system_clock::time_point.
-/// Adjusts for timezone offset if present; result is in UTC.
-std::chrono::system_clock::time_point dateTimeToTimePoint(const toml::date_time& dt) {
-  std::tm tm {};
-  tm.tm_year = dt.date.year - 1900;
-  tm.tm_mon = dt.date.month - 1;
-  tm.tm_mday = dt.date.day;
-  tm.tm_hour = dt.time.hour;
-  tm.tm_min = dt.time.minute;
-  tm.tm_sec = dt.time.second;
-  tm.tm_isdst = 0;  // UTC has no DST
-
-  std::time_t result = ::timegm(&tm);
-  if (dt.offset.has_value()) {
-    result -= dt.offset->minutes * 60;
-  }
-  return std::chrono::system_clock::from_time_t(result);
-}
-
-}  // namespace
 
 void JwtAuthConfig::validate(log::Logger& log) {
   auto checkTimeoutBounds = [&](const std::string& paramName, uint32_t value, bool checkForZero) {
@@ -72,20 +46,6 @@ void JwtAuthConfig::validate(log::Logger& log) {
 
   if (jwks_uri.empty()) {
     throw exception::UserError("'jwks_uri' cannot be a empty");
-  }
-
-  // validate revoked tokens entries
-  // revoked_at dates are interpreted as UTC
-  for (const auto& entry : revoked_tokens) {
-    if (entry.jti.empty()) {
-      throw exception::UserError("revoked token entry has an empty JTI");
-    }
-    if (dateTimeToTimePoint(entry.revoked_at) > std::chrono::system_clock::now()) {
-      throw exception::UserError("revoked token entry has a revocation date in the future");
-    }
-    if (entry.revoked_at.date.year < 1970) {
-      throw exception::UserError("revoked token entry has a revocation date before 1970");
-    }
   }
 }
 

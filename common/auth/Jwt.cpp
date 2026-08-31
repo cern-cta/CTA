@@ -5,12 +5,41 @@
 
 #include "Jwt.hpp"
 
+#include "common/auth/RevokeList.hpp"
+#include "common/exception/UserError.hpp"
+#include "common/runtime/config/ConfigLoader.hpp"
 #include "jwt-cpp/jwt.h"
 
 #include <curl/curl.h>
 #include <mutex>
 
 namespace cta::auth {
+
+namespace {
+/**
+ * Converts a toml::date_time to a std::chrono::system_clock::time_point.
+ * Adjusts for timezone offset if present, returns result in UTC.
+ *
+ * @param dt the date in TOML format
+ * @return the `time_point` value
+ */
+std::chrono::system_clock::time_point dateTimeToTimePoint(const toml::date_time& dt) {
+  std::tm tm {};
+  tm.tm_year = dt.date.year - 1900;
+  tm.tm_mon = dt.date.month - 1;
+  tm.tm_mday = dt.date.day;
+  tm.tm_hour = dt.time.hour;
+  tm.tm_min = dt.time.minute;
+  tm.tm_sec = dt.time.second;
+  tm.tm_isdst = 0;  // UTC has no DST
+
+  std::time_t result = ::timegm(&tm);
+  if (dt.offset.has_value()) {
+    result -= dt.offset->minutes * 60;
+  }
+  return std::chrono::system_clock::from_time_t(result);
+}
+}  // namespace
 
 // Function to handle curl responses
 size_t WriteCallback(char* contents, size_t size, size_t nmemb, std::string* output) {
@@ -233,6 +262,28 @@ TokenValidationResult JwtAuthManager::validateJwt(const std::string& encodedJwt,
     lc.log(cta::log::ERR, errorMessage);
     return {false, std::nullopt, errorMessage};
   }
+}
+
+std::set<std::string, std::less<>> JwtAuthManager::loadRevokedJtis(const std::string& filePath) {
+  const auto revokeFile = cta::runtime::loadFromToml<RevokeListFile>(filePath, /*strict=*/false);
+
+  // 'revoked_at' dates are interpreted as UTC
+  std::set<std::string, std::less<>> revokedJtis;
+  for (const auto& entry : revokeFile.revoked_tokens) {
+    if (entry.jti.empty()) {
+      throw cta::exception::UserError("revoked token entry in '" + filePath + "' has an empty JTI");
+    }
+    if (entry.revoked_at.date.year < 1970) {
+      throw cta::exception::UserError("revoked token entry '" + entry.jti + "' in '" + filePath
+                                      + "' has a revocation date before 1970");
+    }
+    if (dateTimeToTimePoint(entry.revoked_at) > std::chrono::system_clock::now()) {
+      throw cta::exception::UserError("revoked token entry '" + entry.jti + "' in '" + filePath
+                                      + "' has a revocation date in the future");
+    }
+    revokedJtis.insert(entry.jti);
+  }
+  return revokedJtis;
 }
 
 }  // namespace cta::auth
