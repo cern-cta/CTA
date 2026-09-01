@@ -213,9 +213,13 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       *m_schedDb,
       m_config.routines.scheduler_maintenance_cleanup.batch_size,
       m_config.routines.scheduler_maintenance_cleanup.age_for_deletion_secs));
-  }
-  // Add Disk System Sleep Cleanup
-  if (m_config.routines.disk_system_sleep_cleanup.enabled) {
+    // Disk system sleep entry cleanup rides along with the rest of the scheduler maintenance
+    // cleanup above rather than getting its own routine group and deployment. Mount decisions
+    // already ignore an entry once its own SLEEP_TIME/LAST_UPDATE_TIME has elapsed, independently
+    // of whether the row has been deleted yet, so running this as infrequently as the daily
+    // scheduler_maintenance_cleanup cadence does not affect the disk system sleep (backpressure)
+    // functionality at all — it only affects how long the (at most one per disk system) expired
+    // rows linger in the table.
     routines.push_back(std::make_unique<DeleteExpiredDiskSystemSleepEntriesRoutine>(m_lc, *m_schedDb));
   }
 #endif
