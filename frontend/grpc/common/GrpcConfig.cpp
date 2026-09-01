@@ -11,64 +11,64 @@
 
 namespace cta::frontend::grpc::common {
 
-void JwtAuthConfig::validate(log::Logger& log) {
-  auto checkTimeoutBounds = [&](const std::string& paramName, uint32_t value, bool checkForZero) {
-    if (checkForZero && value == 0) {
-      throw exception::UserError("value of '" + paramName + "' cannot be zero");
-    }
-  };
-
+cta::runtime::ValidationResult JwtAuthConfig::validate(log::Logger& log) const {
+  cta::runtime::ValidationResult result;
   if (!enabled) {
-    return;
+    return result;
   }
 
   // check that the timeouts are not zero
-  checkTimeoutBounds("cache_refresh_interval", cache_refresh_interval, true);
-  checkTimeoutBounds("pub_key_timeout", pub_key_timeout, false);
-  checkTimeoutBounds("jwks_total_timeout", jwks_total_timeout, true);
-
+  if (cache_refresh_interval == 0) {
+    result.addError("cache_refresh_interval", "must be greater than zero");
+  }
+  if (jwks_total_timeout == 0) {
+    result.addError("jwks_total_timeout", "must be greater than zero");
+  }
+  // a zero pub_key_timeout is allowed and means "never expire"
   if (pub_key_timeout == 0) {
     log(log::WARNING, "'pub_key_timeout' is set to zero. Cached public keys will not expire");
-  } else if (pub_key_timeout < cache_refresh_interval) {
-    log(log::WARNING,
-        "Cannot use a value for 'pub_key_timeout' that is less than 'cache_refresh_interval'. "
-        "Setting 'pub_key_timeout' equal to 'cache_refresh_interval'.");
-    pub_key_timeout = cache_refresh_interval;
   }
 
   if (expected_issuer.empty()) {
-    throw exception::UserError("'expected_issuer' cannot be empty");
+    result.addError("expected_issuer", "cannot be empty");
   }
-
   if (expected_audience.empty()) {
-    throw exception::UserError("'expected_audience' cannot be empty");
+    result.addError("expected_audience", "cannot be empty");
   }
-
   if (jwks_uri.empty()) {
-    throw exception::UserError("'jwks_uri' cannot be a empty");
+    result.addError("jwks_uri", "cannot be empty");
   }
+  if (revoke_list_path.has_value() && revoke_list_path->empty()) {
+    result.addError("revoke_list_path", "cannot be empty when provided");
+  }
+  return result;
 }
 
-void AuthConfig::validate(OperationMode operationMode, log::Logger& log) {
+cta::runtime::ValidationResult AuthConfig::validate(OperationMode operationMode, log::Logger& log) const {
   bool jwtEnabled = jwt && jwt->enabled;
   bool mtlsEnabled = mtls && mtls->enabled;
   bool kerberosEnabled = kerberos && kerberos->enabled;
 
+  // These are not constraints on an individual field but on the auth block as a whole: without a usable combination of
+  // authentication methods there is nothing left worth reporting, so fail fast instead of collecting field errors.
   if (operationMode == OperationMode::WFE && (jwtEnabled == mtlsEnabled)) {
     throw exception::UserError("WFE frontend authentication requires exactly one of JWT or mTLS to be enabled");
-  } else if (operationMode != OperationMode::WFE && !jwtEnabled && !kerberosEnabled) {
+  }
+  if (operationMode != OperationMode::WFE && !jwtEnabled && !kerberosEnabled) {
     throw exception::UserError("Admin frontend authentication requires at least one of JWT or Kerberos to be enabled");
   }
 
+  cta::runtime::ValidationResult result;
   if (jwt) {
-    jwt.value().validate(log);
+    result.merge("jwt", jwt->validate(log));
   }
   if (mtls) {
-    mtls.value().validate(operationMode, log);
+    result.merge("mtls", mtls->validate(operationMode, log));
   }
   if (kerberos) {
-    kerberos.value().validate(operationMode);
+    result.merge("kerberos", kerberos->validate(operationMode));
   }
+  return result;
 }
 
 std::set<AuthMethod, std::less<>> AuthConfig::getEnabledMethods() const {
@@ -87,54 +87,77 @@ std::set<AuthMethod, std::less<>> AuthConfig::getEnabledMethods() const {
   return result;
 }
 
-void MtlsAuthConfig::validate(OperationMode operationMode, log::Logger& log) const {
+cta::runtime::ValidationResult MtlsAuthConfig::validate(OperationMode operationMode, log::Logger& log) const {
+  cta::runtime::ValidationResult result;
   if (!enabled) {
-    return;
+    return result;
   }
   if (operationMode != OperationMode::WFE) {
-    throw exception::UserError("mTLS authentication is only usable in WFE mode");
+    result.addError("enabled", "cannot be set outside of WFE mode; mTLS authentication is only usable in WFE mode");
   }
   if (aliases.empty()) {
     log(log::WARNING, "WFE authentication method is set to mTLS, but no certificate aliases were provided");
   }
+  for (const auto& [identity, hostnames] : aliases) {
+    if (identity.empty()) {
+      result.addError("aliases", "cannot contain an empty identity");
+    } else if (hostnames.empty()) {
+      result.addError("aliases", "must provide at least one alias for identity '" + identity + "'");
+    }
+  }
+  return result;
 }
 
-void KerberosAuthConfig::validate(OperationMode operationMode) const {
+cta::runtime::ValidationResult KerberosAuthConfig::validate(OperationMode operationMode) const {
+  cta::runtime::ValidationResult result;
   if (!enabled) {
-    return;
+    return result;
   }
 
   if (operationMode == OperationMode::WFE) {
-    throw exception::UserError("Kerberos authentication cannot be used in WFE mode");
+    result.addError("enabled", "cannot be set in WFE mode; Kerberos authentication is not usable in WFE mode");
   }
-
   if (keytab_path.empty()) {
-    throw exception::UserError("'keytab_path' cannot be empty when Kerberos authentication is enabled");
+    result.addError("keytab_path", "cannot be empty when Kerberos authentication is enabled");
   }
-
   if (service_principal.empty()) {
-    throw exception::UserError("'service_principal' cannot be empty when Kerberos authentication is enabled");
+    result.addError("service_principal", "cannot be empty when Kerberos authentication is enabled");
   }
+  return result;
 }
 
-void GrpcTlsConfig::validate() const {
+cta::runtime::ValidationResult GrpcTlsConfig::validate() const {
+  cta::runtime::ValidationResult result;
   if (server_key_path.empty()) {
-    throw exception::UserError("'grpc.tls.server_key_path' cannot be empty");
+    result.addError("server_key_path", "cannot be empty");
   }
-
   if (server_cert_path.empty()) {
-    throw exception::UserError("'grpc.tls.server_cert_path' cannot be empty");
+    result.addError("server_cert_path", "cannot be empty");
   }
+  if (chain_cert_path.has_value() && chain_cert_path->empty()) {
+    result.addError("chain_cert_path", "cannot be empty when provided");
+  }
+  return result;
 }
 
-void GrpcConfig::validate(OperationMode operationMode, log::Logger& log) {
-  // check that our number of threads is OK
-  if (auto threads = grpc.number_of_threads; threads.has_value() && threads.value() < 1) {
-    throw exception::UserError("value of grpc.number_of_threads must be at least 1");
+cta::runtime::ValidationResult GeneralGrpcConfig::validate() const {
+  cta::runtime::ValidationResult result;
+  if (port == 0) {
+    result.addError("port", "must be greater than zero");
   }
+  // check that our number of threads is OK
+  if (number_of_threads.has_value() && *number_of_threads < 1) {
+    result.addError("number_of_threads", "must be at least 1");
+  }
+  result.merge("tls", tls.validate());
+  return result;
+}
 
-  auth.validate(operationMode, log);
-  grpc.tls.validate();
+cta::runtime::ValidationResult GrpcConfig::validate(OperationMode operationMode, log::Logger& log) const {
+  cta::runtime::ValidationResult result;
+  result.merge("grpc", grpc.validate());
+  result.merge("auth", auth.validate(operationMode, log));
+  return result;
 }
 
 }  // namespace cta::frontend::grpc::common

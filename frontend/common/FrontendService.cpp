@@ -45,7 +45,18 @@ void FrontendService::loadGrpcConfigParams(const std::string& configFilePath, lo
   auto grpcConfig = m_grpcConfig.value();
 
   // first, check that the configuration parameters are consistent between them
-  grpcConfig.validate(m_operationMode, log);
+  if (const auto validationResult = grpcConfig.validate(m_operationMode, log); !validationResult.ok()) {
+    throw exception::UserError("Invalid config in '" + configFilePath + "':\n" + validationResult.what(), false);
+  }
+
+  // some setting adjustments for JWT-enabled configs
+  if (auto jwtConfig = grpcConfig.auth.jwt;
+      jwtConfig.has_value() && jwtConfig->pub_key_timeout < jwtConfig->cache_refresh_interval) {
+    log(log::WARNING,
+        "Cannot use a value for 'pub_key_timeout' that is less than 'cache_refresh_interval'. "
+        "Setting 'pub_key_timeout' equal to 'cache_refresh_interval'.");
+    jwtConfig->pub_key_timeout = jwtConfig->cache_refresh_interval;
+  }
 
   // now, set the auth methods accordingly
   m_authMethods = grpcConfig.auth.getEnabledMethods();

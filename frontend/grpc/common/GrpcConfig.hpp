@@ -5,9 +5,12 @@
 
 #pragma once
 
+#include "common/log/Logger.hpp"
+#include "common/runtime/config/ValidationResult.hpp"
 #include "frontend/common/AuthMethod.hpp"
 #include "frontend/common/OperationModes.hpp"
 
+#include <cstdint>
 #include <map>
 #include <optional>
 #include <set>
@@ -29,8 +32,9 @@ struct GrpcTlsConfig final {
 
   /**
    * @brief Validate the TLS configuration parameters
+   * @return The validation result (will contain the errors if present)
    */
-  void validate() const;
+  cta::runtime::ValidationResult validate() const;
 
   static constexpr std::size_t memberCount() { return 3; }
 };
@@ -42,6 +46,12 @@ struct GeneralGrpcConfig final {
   uint16_t port = 50051;                 //!< Port to listen on for gRPC connections
   std::optional<int> number_of_threads;  //!< Maximum number of threads for the gRPC server
   GrpcTlsConfig tls;                     //!< TLS config (mandatory)
+
+  /**
+   * @brief Validate the general gRPC configuration parameters
+   * @return The validation result (will contain the errors if present)
+   */
+  cta::runtime::ValidationResult validate() const;
 
   static constexpr std::size_t memberCount() { return 3; }
 };
@@ -64,8 +74,9 @@ struct JwtAuthConfig final {
   /**
    * @brief Validate the JWT configuration for consistency
    * @param log A logger object
+   * @return The validation result (will contain the errors if present)
    */
-  void validate(log::Logger& log);
+  cta::runtime::ValidationResult validate(log::Logger& log) const;
 
   static constexpr std::size_t memberCount() { return 8; }
 };
@@ -81,8 +92,9 @@ struct MtlsAuthConfig final {
    * @brief Validate the mTLS configuration for consistency
    * @param operationMode Operation mode the frontend is working in (WFE/Admin)
    * @param log A logger object
+   * @return The validation result (will contain the errors if present)
    */
-  void validate(OperationMode operationMode, log::Logger& log) const;
+  cta::runtime::ValidationResult validate(OperationMode operationMode, log::Logger& log) const;
 
   static constexpr std::size_t memberCount() { return 2; }
 };
@@ -98,8 +110,9 @@ struct KerberosAuthConfig final {
   /**
    * @brief Validate the Kerberos configuration for consistency
    * @param operationMode Operation mode the frontend is working in (WFE/Admin)
+   * @return The validation result (will contain the errors if present)
    */
-  void validate(OperationMode operationMode) const;
+  cta::runtime::ValidationResult validate(OperationMode operationMode) const;
 
   static constexpr std::size_t memberCount() { return 3; }
 };
@@ -113,8 +126,9 @@ struct AuthConfig final {
    * @brief Validate the authentication configuration for consistency
    * @param operationMode Operation mode the frontend is working in (WFE/Admin)
    * @param log A logger object
+   * @return The validation result (will contain the errors if present)
    */
-  void validate(OperationMode operationMode, log::Logger& log);
+  cta::runtime::ValidationResult validate(OperationMode operationMode, log::Logger& log) const;
 
   /**
    * @brief Get all enabled authentication methods
@@ -136,8 +150,9 @@ struct GrpcConfig final {
    * @brief Validate the gRPC configuration for consistency
    * @param operationMode Operation mode the frontend is working in (WFE/Admin)
    * @param log A logger object
+   * @return The validation result (will contain the errors if present)
    */
-  void validate(OperationMode operationMode, log::Logger& log);
+  cta::runtime::ValidationResult validate(OperationMode operationMode, log::Logger& log) const;
 
   static constexpr std::size_t memberCount() { return 2; }
 };
