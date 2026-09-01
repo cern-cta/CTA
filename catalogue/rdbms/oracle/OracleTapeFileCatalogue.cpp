@@ -160,7 +160,11 @@ void OracleTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenP
   const auto& firstEvent = *(*firstEventItor);
   checkTapeItemWrittenFieldsAreSet(firstEvent);
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  threading::MutexLocker locker(m_rdbmsCatalogue->m_mutex);
+  // No process-wide lock is taken here: the per-VID SELECT ... FOR UPDATE below
+  // (selectTapeForUpdateAndGetLastFSeq) already makes the LAST_FSEQ read-validate-write atomic
+  // per tape at the database level, the same way the Postgres backend does. TEMP_TAPE_FILE_INSERTION_BATCH
+  // is a GLOBAL TEMPORARY TABLE (ON COMMIT DELETE ROWS), so its rows are private to each Oracle
+  // session/connection and never visible across concurrent calls on different connections.
   auto conn = m_connPool->getConn();
   rdbms::AutoRollback autoRollback(conn);
 
