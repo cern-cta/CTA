@@ -19,6 +19,7 @@
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
+#include "rdbms/wrapper/PostgresStmt.hpp"
 
 namespace cta::catalogue {
 
@@ -256,9 +257,10 @@ void PostgresArchiveFileCatalogue::copyArchiveFileToFileRecyleLogAndDelete(
 std::map<uint64_t, PostgresArchiveFileCatalogue::FileSizeAndChecksum>
 PostgresArchiveFileCatalogue::selectArchiveFileSizesAndChecksums(rdbms::Conn& conn,
                                                                  const std::set<TapeFileWritten>& events) const {
-  std::vector<uint64_t> archiveFileIdList(events.size());
+  std::vector<std::optional<std::string>> archiveFileIdList;
+  archiveFileIdList.reserve(events.size());
   for (const auto& event : events) {
-    archiveFileIdList.push_back(event.archiveFileId);
+    archiveFileIdList.push_back(std::to_string(event.archiveFileId));
   }
 
   const char* const sql = R"SQL(
@@ -269,10 +271,12 @@ PostgresArchiveFileCatalogue::selectArchiveFileSizesAndChecksums(rdbms::Conn& co
       ARCHIVE_FILE.CHECKSUM_ADLER32 AS CHECKSUM_ADLER32
     FROM
       ARCHIVE_FILE
-    INNER JOIN TEMP_TAPE_FILE_BATCH ON
-      ARCHIVE_FILE.ARCHIVE_FILE_ID = TEMP_TAPE_FILE_BATCH.ARCHIVE_FILE_ID
+    INNER JOIN unnest(:ARCHIVE_FILE_ID::numeric(20,0)[]) AS BATCH(ARCHIVE_FILE_ID) ON
+      ARCHIVE_FILE.ARCHIVE_FILE_ID = BATCH.ARCHIVE_FILE_ID
   )SQL";
   auto stmt = conn.createStmt(sql);
+  auto& postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt&>(stmt.getStmt());
+  postgresStmt.bindStringArray(":ARCHIVE_FILE_ID", archiveFileIdList);
 
   auto rset = stmt.executeQuery();
 

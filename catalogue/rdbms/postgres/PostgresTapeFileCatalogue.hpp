@@ -8,6 +8,7 @@
 #include "catalogue/InsertFileRecycleLog.hpp"
 #include "catalogue/rdbms/RdbmsTapeFileCatalogue.hpp"
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -42,8 +43,24 @@ private:
                                                        log::TimingList* timingList,
                                                        log::LogContext& lc) const override;
 
+  /**
+   * Finds the tape file copies which are being superseded by the given batch (i.e. an existing
+   * TAPE_FILE row for the same archive file id/copy number, but at a different VID/FSEQ), copies
+   * each one to the file recycle log, and returns them so the caller can delete the superseded
+   * TAPE_FILE rows once the new batch has been inserted.
+   *
+   * @param conn The database connection.
+   * @param archiveFileId The archive file id of each row in the batch, in order.
+   * @param copyNb The tape copy number of each row in the batch, in order.
+   * @param vid The destination VID of each row in the batch, in order.
+   * @param fSeq The destination FSEQ of each row in the batch, in order.
+   */
   std::vector<cta::catalogue::InsertFileRecycleLog>
-  insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn& conn) const;
+  insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn& conn,
+                                              const std::vector<std::optional<std::string>>& archiveFileId,
+                                              const std::vector<std::optional<std::string>>& copyNb,
+                                              const std::vector<std::optional<std::string>>& vid,
+                                              const std::vector<std::optional<std::string>>& fSeq) const;
 
   /**
    * Selects the specified tape for update and returns its last FSeq.
@@ -55,14 +72,12 @@ private:
   uint64_t selectTapeForUpdateAndGetLastFSeq(rdbms::Conn& conn, const std::string& vid) const;
 
   /**
-   * Start a database transaction and then create the temporary
-   * tables TEMP_ARCHIVE_FILE_BATCH and TEMP_TAPE_FILE_BATCH.
-   * Sets deferred mode for one of the db constraints to avoid
+   * Start a database transaction and set deferred mode for one of the db constraints to avoid
    * violations during concurrent bulk insert.
    *
    * @parm conn The database connection.
    */
-  void beginCreateTemporarySetDeferred(rdbms::Conn& conn) const;
+  void beginTransactionAndSetDeferred(rdbms::Conn& conn) const;
 
   /**
    * Batch inserts rows into the ARCHIVE_FILE table that correspond to the
@@ -81,15 +96,6 @@ private:
    * @param events The tape file written events.
    */
   void idempotentBatchInsertArchiveFiles(rdbms::Conn& conn, const std::set<TapeFileWritten>& events) const;
-
-  /**
-   * Batch inserts rows into the TAPE_FILE_BATCH temporary table that correspond
-   * to the specified TapeFileWritten events.
-   *
-   * @param conn The database connection.
-   * @param events The tape file written events.
-   */
-  void insertTapeFileBatchIntoTempTable(rdbms::Conn& conn, const std::set<TapeFileWritten>& events) const;
 };  // class PostgresTapeFileCatalogue
 
 }  // namespace catalogue

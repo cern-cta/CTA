@@ -148,6 +148,74 @@ void PostgresStmt::bindBlob(const std::string& paramName, const std::string& par
 }
 
 //------------------------------------------------------------------------------
+// bindStringArray
+//------------------------------------------------------------------------------
+void PostgresStmt::bindStringArray(const std::string& paramName,
+                                   const std::vector<std::optional<std::string>>& values) {
+  std::string literal;
+  literal += '{';
+  for (size_t i = 0; i < values.size(); ++i) {
+    if (i > 0) {
+      literal += ',';
+    }
+    if (!values[i].has_value()) {
+      literal += "NULL";
+      continue;
+    }
+    literal += '"';
+    for (char c : values[i].value()) {
+      if (c == '\\' || c == '"') {
+        literal += '\\';
+      }
+      literal += c;
+    }
+    literal += '"';
+  }
+  literal += '}';
+  try {
+    bindString(paramName, literal);
+  } catch (exception::Exception& ex) {
+    throw exception::Exception("Failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
+// bindBlobArray
+//------------------------------------------------------------------------------
+void PostgresStmt::bindBlobArray(const std::string& paramName,
+                                 const std::vector<std::optional<std::string>>& values) {
+  static const char hexDigits[] = "0123456789abcdef";
+  std::string literal;
+  literal += '{';
+  for (size_t i = 0; i < values.size(); ++i) {
+    if (i > 0) {
+      literal += ',';
+    }
+    if (!values[i].has_value()) {
+      literal += "NULL";
+      continue;
+    }
+    // Postgres bytea hex format is "\x<hexdigits>"; within a double-quoted array element the
+    // literal backslash must itself be escaped, hence the doubled backslash below.
+    literal += '"';
+    literal += '\\';
+    literal += '\\';
+    literal += 'x';
+    for (const unsigned char byte : values[i].value()) {
+      literal += hexDigits[byte >> 4];
+      literal += hexDigits[byte & 0x0F];
+    }
+    literal += '"';
+  }
+  literal += '}';
+  try {
+    bindString(paramName, literal);
+  } catch (exception::Exception& ex) {
+    throw exception::Exception("Failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // bindDouble
 //------------------------------------------------------------------------------
 void PostgresStmt::bindDouble(const std::string& paramName, const std::optional<double>& paramValue) {

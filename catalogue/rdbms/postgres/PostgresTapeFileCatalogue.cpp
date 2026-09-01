@@ -25,102 +25,14 @@
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
-#include "rdbms/wrapper/PostgresColumn.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
 #include <algorithm>
+#include <optional>
 #include <string>
+#include <vector>
 
 namespace cta::catalogue {
-
-namespace {
-/**
- * Structure used to assemble a batch of rows to insert into the TAPE_FILE
- * table.
- */
-struct TapeFileBatch {
-  size_t nbRows;
-  rdbms::wrapper::PostgresColumn vid;
-  rdbms::wrapper::PostgresColumn fSeq;
-  rdbms::wrapper::PostgresColumn blockId;
-  rdbms::wrapper::PostgresColumn fileSize;
-  rdbms::wrapper::PostgresColumn copyNb;
-  rdbms::wrapper::PostgresColumn creationTime;
-  rdbms::wrapper::PostgresColumn archiveFileId;
-
-  /**
-   * Constructor.
-   *
-   * @param nbRowsValue  The Number of rows to be inserted.
-   */
-  explicit TapeFileBatch(const size_t nbRowsValue)
-      : nbRows(nbRowsValue),
-        vid("VID", nbRows),
-        fSeq("FSEQ", nbRows),
-        blockId("BLOCK_ID", nbRows),
-        fileSize("LOGICAL_SIZE_IN_BYTES", nbRows),
-        copyNb("COPY_NB", nbRows),
-        creationTime("CREATION_TIME", nbRows),
-        archiveFileId("ARCHIVE_FILE_ID", nbRows) {}
-};  // struct TapeFileBatch
-
-/**
- * Structure used to assemble a batch of rows to insert into the TEMP_ARCHIVE_FILE_BATCH
- * table.
- */
-struct ArchiveFileBatch {
-  size_t nbRows;
-  rdbms::wrapper::PostgresColumn archiveFileId;
-  rdbms::wrapper::PostgresColumn diskInstance;
-  rdbms::wrapper::PostgresColumn diskFileId;
-  rdbms::wrapper::PostgresColumn diskFileUser;
-  rdbms::wrapper::PostgresColumn diskFileGroup;
-  rdbms::wrapper::PostgresColumn size;
-  rdbms::wrapper::PostgresColumn checksumBlob;
-  rdbms::wrapper::PostgresColumn checksumAdler32;
-  rdbms::wrapper::PostgresColumn storageClassName;
-  rdbms::wrapper::PostgresColumn creationTime;
-  rdbms::wrapper::PostgresColumn reconciliationTime;
-
-  /**
-   * Constructor.
-   *
-   * @param nbRowsValue  The Number of rows to be inserted.
-   */
-  explicit ArchiveFileBatch(const size_t nbRowsValue)
-      : nbRows(nbRowsValue),
-        archiveFileId("ARCHIVE_FILE_ID", nbRows),
-        diskInstance("DISK_INSTANCE_NAME", nbRows),
-        diskFileId("DISK_FILE_ID", nbRows),
-        diskFileUser("DISK_FILE_UID", nbRows),
-        diskFileGroup("DISK_FILE_GID", nbRows),
-        size("SIZE_IN_BYTES", nbRows),
-        checksumBlob("CHECKSUM_BLOB", nbRows),
-        checksumAdler32("CHECKSUM_ADLER32", nbRows),
-        storageClassName("STORAGE_CLASS_NAME", nbRows),
-        creationTime("CREATION_TIME", nbRows),
-        reconciliationTime("RECONCILIATION_TIME", nbRows) {}
-};  // struct ArchiveFileBatch
-
-/**
- * Structure used to assemble a batch of rows to insert into the
- * TAPE_FILE_BATCH temporary table.
- */
-struct TempTapeFileBatch {
-  size_t nbRows;
-  rdbms::wrapper::PostgresColumn archiveFileId;
-
-  /**
-   * Constructor.
-   *
-   * @param nbRowsValue  The Number of rows to be inserted.
-   */
-  explicit TempTapeFileBatch(const size_t nbRowsValue)
-      : nbRows(nbRowsValue),
-        archiveFileId("ARCHIVE_FILE_ID", nbRows) {}
-};  // struct TempTapeFileBatch
-
-}  // anonymous namespace
 
 PostgresTapeFileCatalogue::PostgresTapeFileCatalogue(log::Logger& log,
                                                      std::shared_ptr<rdbms::ConnPool> connPool,
@@ -158,11 +70,10 @@ void PostgresTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWritte
   auto conn = m_connPool->getConn();
   rdbms::AutoRollback autoRollback(conn);
 
-  // Start DB transaction and create temporary tables TEMP_ARCHIVE_FILE_BATCH and TEMP_TAPE_FILE_BATCH.
-  // These two tables will exist only for the duration of the transaction.
-  // Set deferrable for second (disk instance, disk file id) constraint of the ARCHIVE_FILE table
-  // to avoid violation in the case of concurrent inserts of a previously not existing archive file.
-  beginCreateTemporarySetDeferred(conn);
+  // Start DB transaction. Set deferrable for the second (disk instance, disk file id) constraint
+  // of the ARCHIVE_FILE table to avoid violation in the case of concurrent inserts of a
+  // previously not existing archive file.
+  beginTransactionAndSetDeferred(conn);
 
   const uint64_t lastFSeq = selectTapeForUpdateAndGetLastFSeq(conn, firstEvent.vid);
   uint64_t expectedFSeq = lastFSeq + 1;
@@ -174,7 +85,6 @@ void PostgresTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWritte
   size_t filesCount = std::count_if(events.cbegin(), events.cend(), [](const TapeItemWrittenPointer& e) -> bool {
     return typeid(*e) == typeid(TapeFileWritten);
   });
-  TapeFileBatch tapeFileBatch(filesCount);
 
   std::set<TapeFileWritten> fileEvents;
 
@@ -231,8 +141,6 @@ void PostgresTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWritte
   // inserting another tape file.
   idempotentBatchInsertArchiveFiles(conn, fileEvents);
 
-  insertTapeFileBatchIntoTempTable(conn, fileEvents);
-
   // Verify that the archive file entries in the catalogue database agree with
   // the tape file written events
   const auto archiveFileCatalogue = static_cast<PostgresArchiveFileCatalogue*>(m_rdbmsCatalogue->ArchiveFile().get());
@@ -262,65 +170,56 @@ void PostgresTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWritte
     fileSizeAndChecksum.checksumBlob.validate(event.checksumBlob);
   }
 
-  // Store the value of each field
-  uint32_t i = 0;
+  // Build the batch of new TAPE_FILE rows as parallel arrays, in the same fixed (fileEvents)
+  // order. These are bound straight to unnest() below and to
+  // insertOldCopiesOfFilesIfAnyOnFileRecycleLog() -- no staging table needed.
+  const size_t nbFiles = fileEvents.size();
+  std::vector<std::optional<std::string>> vid, fSeq, blockId, fileSize, copyNb, creationTime, archiveFileId;
+  vid.reserve(nbFiles);
+  fSeq.reserve(nbFiles);
+  blockId.reserve(nbFiles);
+  fileSize.reserve(nbFiles);
+  copyNb.reserve(nbFiles);
+  creationTime.reserve(nbFiles);
+  archiveFileId.reserve(nbFiles);
   for (const auto& event : fileEvents) {
-    tapeFileBatch.vid.setFieldValue(i, event.vid);
-    tapeFileBatch.fSeq.setFieldValue(i, event.fSeq);
-    tapeFileBatch.blockId.setFieldValue(i, event.blockId);
-    tapeFileBatch.fileSize.setFieldValue(i, event.size);
-    tapeFileBatch.copyNb.setFieldValue(i, event.copyNb);
-    tapeFileBatch.creationTime.setFieldValue(i, now);
-    tapeFileBatch.archiveFileId.setFieldValue(i, event.archiveFileId);
-    i++;
+    vid.push_back(event.vid);
+    fSeq.push_back(std::to_string(event.fSeq));
+    blockId.push_back(std::to_string(event.blockId));
+    fileSize.push_back(std::to_string(event.size));
+    copyNb.push_back(std::to_string(event.copyNb));
+    creationTime.push_back(std::to_string(now));
+    archiveFileId.push_back(std::to_string(event.archiveFileId));
   }
 
-  const char* const sql = R"SQL(
-    CREATE TEMPORARY TABLE TEMP_TAPE_FILE_INSERTION_BATCH (LIKE TAPE_FILE)
-    ON COMMIT DROP;
-    COPY TEMP_TAPE_FILE_INSERTION_BATCH(
-      VID,
-      FSEQ,
-      BLOCK_ID,
-      LOGICAL_SIZE_IN_BYTES,
-      COPY_NB,
-      CREATION_TIME,
-      ARCHIVE_FILE_ID)
-    FROM STDIN
-    /* :VID,
-       :FSEQ,
-       :BLOCK_ID,
-       :LOGICAL_SIZE_IN_BYTES,
-       :COPY_NB,
-       :CREATION_TIME,
-       :ARCHIVE_FILE_ID; */
-  )SQL";
+  // Find any existing tape file copies which this batch supersedes (e.g. a repack rewrite of the
+  // same archive file/copy number onto a new VID/FSEQ) and copy them to the file recycle log
+  // before the new rows below take their place.
+  auto recycledFiles = insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn, archiveFileId, copyNb, vid, fSeq);
 
-  auto stmt = conn.createStmt(sql);
-  auto& postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt&>(stmt.getStmt());
-  postgresStmt.setColumn(tapeFileBatch.vid);
-  postgresStmt.setColumn(tapeFileBatch.fSeq);
-  postgresStmt.setColumn(tapeFileBatch.blockId);
-  postgresStmt.setColumn(tapeFileBatch.fileSize);
-  postgresStmt.setColumn(tapeFileBatch.copyNb);
-  postgresStmt.setColumn(tapeFileBatch.creationTime);
-  postgresStmt.setColumn(tapeFileBatch.archiveFileId);
-
-  postgresStmt.executeCopyInsert(tapeFileBatch.nbRows);
-
-  auto recycledFiles = insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn);
-
-  //Insert the tapefiles from the TEMP_TAPE_FILE_INSERTION_BATCH
   const char* const insertTapeFileSql = R"SQL(
     INSERT INTO TAPE_FILE (
       VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,
       COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID)
-    SELECT
-      VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES, COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID
-    FROM
-      TEMP_TAPE_FILE_INSERTION_BATCH
+    SELECT * FROM unnest(
+      :VID::varchar(100)[],
+      :FSEQ::numeric(20,0)[],
+      :BLOCK_ID::numeric(20,0)[],
+      :LOGICAL_SIZE_IN_BYTES::numeric(20,0)[],
+      :COPY_NB::numeric(3,0)[],
+      :CREATION_TIME::numeric(20,0)[],
+      :ARCHIVE_FILE_ID::numeric(20,0)[])
   )SQL";
-  conn.executeNonQuery(insertTapeFileSql);
+  auto insertTapeFileStmt = conn.createStmt(insertTapeFileSql);
+  auto& insertTapeFilePgStmt = dynamic_cast<rdbms::wrapper::PostgresStmt&>(insertTapeFileStmt.getStmt());
+  insertTapeFilePgStmt.bindStringArray(":VID", vid);
+  insertTapeFilePgStmt.bindStringArray(":FSEQ", fSeq);
+  insertTapeFilePgStmt.bindStringArray(":BLOCK_ID", blockId);
+  insertTapeFilePgStmt.bindStringArray(":LOGICAL_SIZE_IN_BYTES", fileSize);
+  insertTapeFilePgStmt.bindStringArray(":COPY_NB", copyNb);
+  insertTapeFilePgStmt.bindStringArray(":CREATION_TIME", creationTime);
+  insertTapeFilePgStmt.bindStringArray(":ARCHIVE_FILE_ID", archiveFileId);
+  insertTapeFileStmt.executeNonQuery();
 
   for (auto& recycledFile : recycledFiles) {
     const char* const deleteTapeFileSql = R"SQL(
@@ -336,8 +235,12 @@ void PostgresTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWritte
   conn.commit();
 }
 
-std::vector<cta::catalogue::InsertFileRecycleLog>
-PostgresTapeFileCatalogue::insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn& conn) const {
+std::vector<cta::catalogue::InsertFileRecycleLog> PostgresTapeFileCatalogue::insertOldCopiesOfFilesIfAnyOnFileRecycleLog(
+  rdbms::Conn& conn,
+  const std::vector<std::optional<std::string>>& archiveFileId,
+  const std::vector<std::optional<std::string>>& copyNb,
+  const std::vector<std::optional<std::string>>& vid,
+  const std::vector<std::optional<std::string>>& fSeq) const {
   std::vector<cta::catalogue::InsertFileRecycleLog> fileRecycleLogsToInsert;
   //Get the TAPE_FILE entry to put on the file recycle log
   const char* const sql = R"SQL(
@@ -351,13 +254,19 @@ PostgresTapeFileCatalogue::insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Co
     FROM
       TAPE_FILE
     JOIN
-      TEMP_TAPE_FILE_INSERTION_BATCH
+      unnest(:ARCHIVE_FILE_ID::numeric(20,0)[], :COPY_NB::numeric(3,0)[], :VID::varchar(100)[], :FSEQ::numeric(20,0)[])
+        AS BATCH(ARCHIVE_FILE_ID, COPY_NB, VID, FSEQ)
     ON
-      TEMP_TAPE_FILE_INSERTION_BATCH.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID AND TEMP_TAPE_FILE_INSERTION_BATCH.COPY_NB = TAPE_FILE.COPY_NB
+      BATCH.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID AND BATCH.COPY_NB = TAPE_FILE.COPY_NB
     WHERE
-      TAPE_FILE.VID != TEMP_TAPE_FILE_INSERTION_BATCH.VID OR TAPE_FILE.FSEQ != TEMP_TAPE_FILE_INSERTION_BATCH.FSEQ
+      TAPE_FILE.VID != BATCH.VID OR TAPE_FILE.FSEQ != BATCH.FSEQ
   )SQL";
   auto stmt = conn.createStmt(sql);
+  auto& postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt&>(stmt.getStmt());
+  postgresStmt.bindStringArray(":ARCHIVE_FILE_ID", archiveFileId);
+  postgresStmt.bindStringArray(":COPY_NB", copyNb);
+  postgresStmt.bindStringArray(":VID", vid);
+  postgresStmt.bindStringArray(":FSEQ", fSeq);
   auto rset = stmt.executeQuery();
   while (rset.next()) {
     cta::catalogue::InsertFileRecycleLog fileRecycleLog;
@@ -400,40 +309,39 @@ uint64_t PostgresTapeFileCatalogue::selectTapeForUpdateAndGetLastFSeq(rdbms::Con
   return rset.columnUint64("LAST_FSEQ");
 }
 
-void PostgresTapeFileCatalogue::beginCreateTemporarySetDeferred(rdbms::Conn& conn) const {
+void PostgresTapeFileCatalogue::beginTransactionAndSetDeferred(rdbms::Conn& conn) const {
   conn.executeNonQuery(R"SQL(BEGIN)SQL");
-  conn.executeNonQuery(R"SQL(CREATE TEMPORARY TABLE TEMP_ARCHIVE_FILE_BATCH (LIKE ARCHIVE_FILE) ON COMMIT DROP)SQL");
-  conn.executeNonQuery(R"SQL(ALTER TABLE TEMP_ARCHIVE_FILE_BATCH ADD COLUMN STORAGE_CLASS_NAME VARCHAR(100))SQL");
-  conn.executeNonQuery(R"SQL(ALTER TABLE TEMP_ARCHIVE_FILE_BATCH ALTER COLUMN STORAGE_CLASS_ID DROP NOT NULL)SQL");
-  conn.executeNonQuery(R"SQL(ALTER TABLE TEMP_ARCHIVE_FILE_BATCH ALTER COLUMN IS_DELETED DROP NOT NULL)SQL");
-  conn.executeNonQuery(R"SQL(
-    CREATE INDEX TEMP_A_F_B_ARCHIVE_FILE_ID_I ON TEMP_ARCHIVE_FILE_BATCH(ARCHIVE_FILE_ID)
-  )SQL");
-  conn.executeNonQuery(R"SQL(
-    CREATE INDEX TEMP_A_F_B_DIN_SCN_I ON TEMP_ARCHIVE_FILE_BATCH(DISK_INSTANCE_NAME, STORAGE_CLASS_NAME)
-  )SQL");
-  conn.executeNonQuery(R"SQL(
-    CREATE TEMPORARY TABLE TEMP_TAPE_FILE_BATCH(ARCHIVE_FILE_ID NUMERIC(20,0)) ON COMMIT DROP
-  )SQL");
-  conn.executeNonQuery(R"SQL(CREATE INDEX TEMP_T_F_B_ARCHIVE_FILE_ID_I ON TEMP_TAPE_FILE_BATCH(ARCHIVE_FILE_ID))SQL");
   conn.executeNonQuery(R"SQL(SET CONSTRAINTS ARCHIVE_FILE_DIN_DFI_UN DEFERRED)SQL");
 }
 
 void PostgresTapeFileCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn& conn,
                                                                   const std::set<TapeFileWritten>& events) const {
-  ArchiveFileBatch archiveFileBatch(events.size());
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  const size_t nbRows = events.size();
+
+  std::vector<std::optional<std::string>> archiveFileId, diskInstance, diskFileId, diskFileUid, diskFileGid, size,
+    checksumBlob, checksumAdler32, storageClassName, creationTime, reconciliationTime;
+  archiveFileId.reserve(nbRows);
+  diskInstance.reserve(nbRows);
+  diskFileId.reserve(nbRows);
+  diskFileUid.reserve(nbRows);
+  diskFileGid.reserve(nbRows);
+  size.reserve(nbRows);
+  checksumBlob.reserve(nbRows);
+  checksumAdler32.reserve(nbRows);
+  storageClassName.reserve(nbRows);
+  creationTime.reserve(nbRows);
+  reconciliationTime.reserve(nbRows);
 
   // Store the value of each field
-  uint32_t i = 0;
   for (const auto& event : events) {
-    archiveFileBatch.archiveFileId.setFieldValue(i, event.archiveFileId);
-    archiveFileBatch.diskInstance.setFieldValue(i, event.diskInstance);
-    archiveFileBatch.diskFileId.setFieldValue(i, event.diskFileId);
-    archiveFileBatch.diskFileUser.setFieldValue(i, event.diskFileOwnerUid);
-    archiveFileBatch.diskFileGroup.setFieldValue(i, event.diskFileGid);
-    archiveFileBatch.size.setFieldValue(i, event.size);
-    archiveFileBatch.checksumBlob.setFieldByteA(conn, i, event.checksumBlob.serialize());
+    archiveFileId.push_back(std::to_string(event.archiveFileId));
+    diskInstance.push_back(event.diskInstance);
+    diskFileId.push_back(event.diskFileId);
+    diskFileUid.push_back(std::to_string(event.diskFileOwnerUid));
+    diskFileGid.push_back(std::to_string(event.diskFileGid));
+    size.push_back(std::to_string(event.size));
+    checksumBlob.push_back(event.checksumBlob.serialize());
     // Keep transition ADLER32 checksum up-to-date if it exists
     std::string adler32str;
     try {
@@ -443,58 +351,16 @@ void PostgresTapeFileCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn& c
     } catch (exception::ChecksumTypeMismatch&) {
       adler32str = "0";
     }
-    archiveFileBatch.checksumAdler32.setFieldValue(i, adler32str);
-    archiveFileBatch.storageClassName.setFieldValue(i, event.storageClassName);
-    archiveFileBatch.creationTime.setFieldValue(i, now);
-    archiveFileBatch.reconciliationTime.setFieldValue(i, now);
-    i++;
+    checksumAdler32.push_back(adler32str);
+    storageClassName.push_back(event.storageClassName);
+    creationTime.push_back(std::to_string(now));
+    reconciliationTime.push_back(std::to_string(now));
   }
 
+  // Concerns for bulk insertion in archive_file: deadlock with concurrent
+  // inserts of previously not-existing entry for the same archive file,
+  // hence insert with ORDER BY to define an update order.
   const char* const sql = R"SQL(
-    COPY TEMP_ARCHIVE_FILE_BATCH(
-      ARCHIVE_FILE_ID,
-      DISK_INSTANCE_NAME,
-      DISK_FILE_ID,
-      DISK_FILE_UID,
-      DISK_FILE_GID,
-      SIZE_IN_BYTES,
-      CHECKSUM_BLOB,
-      CHECKSUM_ADLER32,
-      STORAGE_CLASS_NAME,
-      CREATION_TIME,
-      RECONCILIATION_TIME)
-    FROM STDIN /*
-      :ARCHIVE_FILE_ID,
-      :DISK_INSTANCE_NAME,
-      :DISK_FILE_ID,
-      :DISK_FILE_UID,
-      :DISK_FILE_GID,
-      :SIZE_IN_BYTES,
-      :CHECKSUM_BLOB,
-      :CHECKSUM_ADLER32,
-      :STORAGE_CLASS_NAME,
-      :CREATION_TIME,
-      :RECONCILIATION_TIME */
-  )SQL";
-
-  auto stmt = conn.createStmt(sql);
-  auto& postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt&>(stmt.getStmt());
-
-  postgresStmt.setColumn(archiveFileBatch.archiveFileId);
-  postgresStmt.setColumn(archiveFileBatch.diskInstance);
-  postgresStmt.setColumn(archiveFileBatch.diskFileId);
-  postgresStmt.setColumn(archiveFileBatch.diskFileUser);
-  postgresStmt.setColumn(archiveFileBatch.diskFileGroup);
-  postgresStmt.setColumn(archiveFileBatch.size);
-  postgresStmt.setColumn(archiveFileBatch.checksumBlob);
-  postgresStmt.setColumn(archiveFileBatch.checksumAdler32);
-  postgresStmt.setColumn(archiveFileBatch.storageClassName);
-  postgresStmt.setColumn(archiveFileBatch.creationTime);
-  postgresStmt.setColumn(archiveFileBatch.reconciliationTime);
-
-  postgresStmt.executeCopyInsert(archiveFileBatch.nbRows);
-
-  const char* const sql_insert = R"SQL(
     INSERT INTO ARCHIVE_FILE(
       ARCHIVE_FILE_ID,
       DISK_INSTANCE_NAME,
@@ -519,43 +385,42 @@ void PostgresTapeFileCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn& c
       S.STORAGE_CLASS_ID,
       A.CREATION_TIME,
       A.RECONCILIATION_TIME
-    FROM TEMP_ARCHIVE_FILE_BATCH AS A, STORAGE_CLASS AS S
+    FROM
+      unnest(
+        :ARCHIVE_FILE_ID::numeric(20,0)[],
+        :DISK_INSTANCE_NAME::varchar(100)[],
+        :DISK_FILE_ID::varchar(100)[],
+        :DISK_FILE_UID::numeric(10,0)[],
+        :DISK_FILE_GID::numeric(10,0)[],
+        :SIZE_IN_BYTES::numeric(20,0)[],
+        :CHECKSUM_BLOB::bytea[],
+        :CHECKSUM_ADLER32::numeric(10,0)[],
+        :STORAGE_CLASS_NAME::varchar(100)[],
+        :CREATION_TIME::numeric(20,0)[],
+        :RECONCILIATION_TIME::numeric(20,0)[]
+      ) AS A(ARCHIVE_FILE_ID, DISK_INSTANCE_NAME, DISK_FILE_ID, DISK_FILE_UID, DISK_FILE_GID,
+             SIZE_IN_BYTES, CHECKSUM_BLOB, CHECKSUM_ADLER32, STORAGE_CLASS_NAME, CREATION_TIME,
+             RECONCILIATION_TIME),
+      STORAGE_CLASS AS S
     WHERE A.STORAGE_CLASS_NAME = S.STORAGE_CLASS_NAME
     ORDER BY A.ARCHIVE_FILE_ID
     ON CONFLICT (ARCHIVE_FILE_ID) DO NOTHING
   )SQL";
 
-  // Concerns for bulk insertion in archive_file: deadlock with concurrent
-  // inserts of previously not-existing entry for the same archive file,
-  // hence insert with ORDER BY to define an update order.
-
-  auto stmt_insert = conn.createStmt(sql_insert);
-  stmt_insert.executeNonQuery();
-}
-
-void PostgresTapeFileCatalogue::insertTapeFileBatchIntoTempTable(rdbms::Conn& conn,
-                                                                 const std::set<TapeFileWritten>& events) const {
-  TempTapeFileBatch tempTapeFileBatch(events.size());
-
-  // Store the value of each field
-  uint32_t i = 0;
-  for (const auto& event : events) {
-    tempTapeFileBatch.archiveFileId.setFieldValue(i, event.archiveFileId);
-    i++;
-  }
-
-  const char* const sql = R"SQL(
-    COPY TEMP_TAPE_FILE_BATCH(
-      ARCHIVE_FILE_ID)
-    FROM STDIN
-      /* :ARCHIVE_FILE_ID */
-  )SQL";
-
   auto stmt = conn.createStmt(sql);
   auto& postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt&>(stmt.getStmt());
-
-  postgresStmt.setColumn(tempTapeFileBatch.archiveFileId);
-  postgresStmt.executeCopyInsert(tempTapeFileBatch.nbRows);
+  postgresStmt.bindStringArray(":ARCHIVE_FILE_ID", archiveFileId);
+  postgresStmt.bindStringArray(":DISK_INSTANCE_NAME", diskInstance);
+  postgresStmt.bindStringArray(":DISK_FILE_ID", diskFileId);
+  postgresStmt.bindStringArray(":DISK_FILE_UID", diskFileUid);
+  postgresStmt.bindStringArray(":DISK_FILE_GID", diskFileGid);
+  postgresStmt.bindStringArray(":SIZE_IN_BYTES", size);
+  postgresStmt.bindBlobArray(":CHECKSUM_BLOB", checksumBlob);
+  postgresStmt.bindStringArray(":CHECKSUM_ADLER32", checksumAdler32);
+  postgresStmt.bindStringArray(":STORAGE_CLASS_NAME", storageClassName);
+  postgresStmt.bindStringArray(":CREATION_TIME", creationTime);
+  postgresStmt.bindStringArray(":RECONCILIATION_TIME", reconciliationTime);
+  stmt.executeNonQuery();
 }
 
 }  // namespace cta::catalogue

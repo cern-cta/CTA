@@ -8,6 +8,9 @@
 #include "rdbms/wrapper/PostgresColumn.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
+#include <optional>
+#include <vector>
+
 namespace cta::schedulerdb::postgres {
 
 rdbms::Rset RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
@@ -228,13 +231,7 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
   if (jobIDs.empty()) {
     return 0;
   }
-  std::string sqlpart;
-  for (const auto& piece : jobIDs) {
-    sqlpart += piece + ",";
-  }
-  if (!sqlpart.empty()) {
-    sqlpart.pop_back();
-  }
+  const std::vector<std::optional<std::string>> jobIdsArray(jobIDs.begin(), jobIDs.end());
 
   std::string repack_table_name_prefix = isRepack ? "REPACK_" : "";
 
@@ -247,10 +244,11 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
     sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE ";
     sql += R"SQL(
         WHERE
-          JOB_ID IN (
+          JOB_ID = ANY(:JOB_IDS::bigint[])
         )SQL";
-    sql += sqlpart + std::string(")");
     auto stmt2 = txn.getConn().createStmt(sql);
+    auto& postgresStmt2 = dynamic_cast<rdbms::wrapper::PostgresStmt&>(stmt2.getStmt());
+    postgresStmt2.bindStringArray(":JOB_IDS", jobIdsArray);
     txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDeleteRetrieve);
     stmt2.executeNonQuery();
     auto nrows = stmt2.getNbAffectedRows();
@@ -268,9 +266,11 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
   // }
   std::string sql = "UPDATE ";
   sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE ";
-  sql += " SET STATUS = :STATUS, LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT WHERE JOB_ID IN ("
-         + sqlpart + ")";
+  sql += " SET STATUS = :STATUS, LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT WHERE JOB_ID = "
+         "ANY(:JOB_IDS::bigint[])";
   auto stmt1 = txn.getConn().createStmt(sql);
+  auto& postgresStmt1 = dynamic_cast<rdbms::wrapper::PostgresStmt&>(stmt1.getStmt());
+  postgresStmt1.bindStringArray(":JOB_IDS", jobIdsArray);
   stmt1.bindString(":STATUS", to_string(newStatus));
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateRetrieve);
   stmt1.executeNonQuery();
@@ -349,16 +349,11 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
   )SQL";
   sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE ";
   bool userowjid = true;
+  std::vector<std::optional<std::string>> jobIdsArray;
   if (jobIDs.has_value() && !jobIDs.value().empty()) {
     userowjid = false;
-    std::string sqlpart;
-    for (const auto& jid : jobIDs.value()) {
-      sqlpart += jid + ",";
-    }
-    if (!sqlpart.empty()) {
-      sqlpart.pop_back();
-    }
-    sql += std::string("WHERE JOB_ID IN (") + sqlpart + std::string(")");
+    jobIdsArray.assign(jobIDs.value().begin(), jobIDs.value().end());
+    sql += "WHERE JOB_ID = ANY(:JOB_IDS::bigint[])";
   } else {
     sql += R"SQL(
         WHERE JOB_ID = :JOB_ID
@@ -540,6 +535,9 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
   stmt.bindString(":FAILURE_LOG", failureLogs.value_or(""));
   if (userowjid) {
     stmt.bindUint64(":JOB_ID", jobId);
+  } else {
+    auto& postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt&>(stmt.getStmt());
+    postgresStmt.bindStringArray(":JOB_IDS", jobIdsArray);
   }
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveRetrieveToPending);
   stmt.executeNonQuery();
@@ -558,18 +556,10 @@ uint64_t RetrieveJobQueueRow::requeueJobBatch(Transaction& txn,
         DELETE FROM
   )SQL";
   sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE ";
-  if (!jobIDs.empty()) {
-    std::string sqlpart;
-    for (const auto& jid : jobIDs) {
-      sqlpart += jid + ",";
-    }
-    if (!sqlpart.empty()) {
-      sqlpart.pop_back();
-    }
-    sql += std::string("WHERE JOB_ID IN (") + sqlpart + std::string(")");
-  } else {
+  if (jobIDs.empty()) {
     return 0;
   }
+  sql += "WHERE JOB_ID = ANY(:JOB_IDS::bigint[])";
   sql += R"SQL(
         RETURNING *
     )
@@ -703,6 +693,8 @@ uint64_t RetrieveJobQueueRow::requeueJobBatch(Transaction& txn,
   )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
+  auto& postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt&>(stmt.getStmt());
+  postgresStmt.bindStringArray(":JOB_IDS", std::vector<std::optional<std::string>>(jobIDs.begin(), jobIDs.end()));
   stmt.bindString(":STATUS", to_string(newStatus));
   stmt.bindString(":FAILURE_LOG", "UNPROCESSED_TASK_QUEUE_JOB_REQUEUED");
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveRetrieveToPending);
@@ -1108,13 +1100,6 @@ uint64_t RetrieveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
 uint64_t RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn,
                                                              const std::vector<std::string>& jobIDs,
                                                              bool isRepack) {
-  std::string sqlpart;
-  for (const auto& piece : jobIDs) {
-    sqlpart += piece + ",";
-  }
-  if (!sqlpart.empty()) {
-    sqlpart.pop_back();
-  }
   std::string repack_table_name_prefix = isRepack ? "REPACK_" : "";
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
@@ -1122,9 +1107,8 @@ uint64_t RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn,
   )SQL";
   sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE ";
   sql += R"SQL(
-          WHERE JOB_ID IN (
+          WHERE JOB_ID = ANY(:JOB_IDS::bigint[])
   )SQL";
-  sql += sqlpart + ")";
   sql += R"SQL(
         RETURNING *
     ) INSERT INTO
@@ -1134,6 +1118,8 @@ uint64_t RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn,
   SELECT * FROM MOVED_ROWS
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
+  auto& postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt&>(stmt.getStmt());
+  postgresStmt.bindStringArray(":JOB_IDS", std::vector<std::optional<std::string>>(jobIDs.begin(), jobIDs.end()));
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveFailedRetrieve);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();

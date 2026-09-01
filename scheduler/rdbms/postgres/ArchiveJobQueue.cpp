@@ -10,6 +10,9 @@
 #include "rdbms/wrapper/PostgresStmt.hpp"
 #include "scheduler/rdbms/ArchiveMount.hpp"
 
+#include <optional>
+#include <vector>
+
 namespace cta::schedulerdb::postgres {
 
 rdbms::Rset ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
@@ -167,21 +170,11 @@ uint64_t ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const s
     return 0;
   }
   ArchiveJobStatus newStatus = ArchiveJobStatus::AJS_ToReportToUserForSuccess;
-  std::string jobids_sqlpart;
-  for (const auto& piece : jobIDs) {
-    if (!jobids_sqlpart.empty()) {
-      jobids_sqlpart += ",";
-    }
-    jobids_sqlpart += piece;
-  }
   std::string sql = R"SQL(
       WITH target_success_multicopy AS (
         SELECT JOB_ID, ARCHIVE_REQUEST_ID, STATUS, REQUEST_JOB_COUNT
         FROM ARCHIVE_ACTIVE_QUEUE scj
-        WHERE scj.JOB_ID IN (
-      )SQL";
-  sql += jobids_sqlpart;
-  sql += R"SQL( )
+        WHERE scj.JOB_ID = ANY(:JOB_IDS::bigint[])
       ),
       ready_for_reporting_to_disk AS (
         SELECT combined.ARCHIVE_REQUEST_ID
@@ -212,6 +205,8 @@ uint64_t ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const s
       WHERE aj2.ARCHIVE_REQUEST_ID = tsm.ARCHIVE_REQUEST_ID;
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
+  auto& postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt&>(stmt.getStmt());
+  postgresStmt.bindStringArray(":JOB_IDS", std::vector<std::optional<std::string>>(jobIDs.begin(), jobIDs.end()));
   stmt.bindString(":STATUS_READY_FOR_REPORTING", to_string(newStatus));
   stmt.bindString(":STATUS_COND_REPLICAS", to_string(ArchiveJobStatus::AJS_WaitReplicasBeforeReportingSuccessToDisk));
   stmt.bindString(":STATUS_WAIT_FOR_ALL_BEFORE_REPORT",
@@ -229,22 +224,17 @@ uint64_t ArchiveJobQueueRow::updateJobStatus(Transaction& txn,
   if (jobIDs.empty()) {
     return 0;
   }
-  std::string sqlpart;
-  for (const auto& piece : jobIDs) {
-    sqlpart += piece + ",";
-  }
-  if (!sqlpart.empty()) {
-    sqlpart.pop_back();
-  }
+  const std::vector<std::optional<std::string>> jobIdsArray(jobIDs.begin(), jobIDs.end());
   if (newStatus == ArchiveJobStatus::AJS_Complete || newStatus == ArchiveJobStatus::AJS_Failed
       || newStatus == ArchiveJobStatus::ReadyForDeletion) {
     std::string sql = R"SQL(
         DELETE FROM ARCHIVE_ACTIVE_QUEUE
         WHERE
-          JOB_ID IN (
+          JOB_ID = ANY(:JOB_IDS::bigint[])
         )SQL";
-    sql += sqlpart + std::string(")");
     auto stmt1 = txn.getConn().createStmt(sql);
+    auto& postgresStmt1 = dynamic_cast<rdbms::wrapper::PostgresStmt&>(stmt1.getStmt());
+    postgresStmt1.bindStringArray(":JOB_IDS", jobIdsArray);
     txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDeleteArchive);
     stmt1.executeNonQuery();
     auto nrows = stmt1.getNbAffectedRows();
@@ -252,8 +242,10 @@ uint64_t ArchiveJobQueueRow::updateJobStatus(Transaction& txn,
     return nrows;
   }
   std::string sql = "UPDATE ARCHIVE_ACTIVE_QUEUE SET STATUS = :NEWSTATUS1::ARCHIVE_JOB_STATUS, ";
-  sql += "        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT WHERE JOB_ID IN (" + sqlpart + ")";
+  sql += "        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT WHERE JOB_ID = ANY(:JOB_IDS::bigint[])";
   auto stmt2 = txn.getConn().createStmt(sql);
+  auto& postgresStmt2 = dynamic_cast<rdbms::wrapper::PostgresStmt&>(stmt2.getStmt());
+  postgresStmt2.bindStringArray(":JOB_IDS", jobIdsArray);
   stmt2.bindString(":NEWSTATUS1", to_string(newStatus));
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbUpdateArchive);
   stmt2.executeNonQuery();
@@ -266,13 +258,7 @@ uint64_t ArchiveJobQueueRow::updateRepackJobSuccess(Transaction& txn, const std:
   if (jobIDs.empty()) {
     return 0;
   }
-  std::string sqlpart;
-  for (const auto& piece : jobIDs) {
-    if (!sqlpart.empty()) {
-      sqlpart += ",";
-    }
-    sqlpart += piece;
-  }
+  const std::vector<std::optional<std::string>> jobIdsArray(jobIDs.begin(), jobIDs.end());
   /* For Repack, when we report success this query handles the check of all
    * other replica rows/job with the same archive_file_id
    * which needed to be archived too. If all the rows with the same archive_file_id
@@ -282,21 +268,18 @@ uint64_t ArchiveJobQueueRow::updateRepackJobSuccess(Transaction& txn, const std:
    * just to AJS_ToReportToRepackForSuccess. If the required update status is anything
    * else than AJS_ToReportToRepackForSuccess it just updates to that status.
    */
+  // The same batch of job IDs is needed twice below (once per CTE); each bind placeholder can
+  // only be used once per statement, hence the two distinct names bound to the same array.
   std::string sql = R"SQL(
   WITH updated_single_copy_jobs AS (
       UPDATE REPACK_ARCHIVE_ACTIVE_QUEUE rscj
     SET STATUS = :STATUS_READY_FOR_DELETION1::ARCHIVE_JOB_STATUS
-  )SQL";
-  sql += " WHERE rscj.JOB_ID IN (" + sqlpart + ") AND rscj.REQUEST_JOB_COUNT = 1";
-  sql += R"SQL(
+    WHERE rscj.JOB_ID = ANY(:JOB_IDS_1::bigint[]) AND rscj.REQUEST_JOB_COUNT = 1
   ),
   target_success_multicopy AS (
       SELECT JOB_ID, ARCHIVE_FILE_ID, STATUS, REQUEST_JOB_COUNT
       FROM REPACK_ARCHIVE_ACTIVE_QUEUE rscj2
-      WHERE rscj2.REQUEST_JOB_COUNT > 1 AND rscj2.JOB_ID IN (
-  )SQL";
-  sql += sqlpart;
-  sql += R"SQL( )
+      WHERE rscj2.REQUEST_JOB_COUNT > 1 AND rscj2.JOB_ID = ANY(:JOB_IDS_2::bigint[])
   ),
   ready_for_deletion AS (
     SELECT combined.ARCHIVE_FILE_ID
@@ -326,6 +309,9 @@ uint64_t ArchiveJobQueueRow::updateRepackJobSuccess(Transaction& txn, const std:
   WHERE aj2.ARCHIVE_FILE_ID = tsm.ARCHIVE_FILE_ID;
   )SQL";
   auto stmt1 = txn.getConn().createStmt(sql);
+  auto& postgresStmt1 = dynamic_cast<rdbms::wrapper::PostgresStmt&>(stmt1.getStmt());
+  postgresStmt1.bindStringArray(":JOB_IDS_1", jobIdsArray);
+  postgresStmt1.bindStringArray(":JOB_IDS_2", jobIdsArray);
   stmt1.bindString(":STATUS_COND_REPLICAS", to_string(ArchiveJobStatus::AJS_ToReportToRepackForSuccess));
   stmt1.bindString(":STATUS_SUCCESS", to_string(ArchiveJobStatus::AJS_ToReportToRepackForSuccess));
   stmt1.bindString(":STATUS_READY_FOR_DELETION1", to_string(ArchiveJobStatus::ReadyForDeletion));
@@ -355,24 +341,14 @@ rdbms::Rset ArchiveJobQueueRow::getNextSuccessfulArchiveRepackReportBatch(Transa
 
 rdbms::Rset ArchiveJobQueueRow::deleteSuccessfulRepackArchiveJobBatch(Transaction& txn,
                                                                       std::vector<std::string>& jobIDs) {
-  std::string sql = R"SQL(
-    WITH DELETED_ROWS AS (
-        DELETE FROM REPACK_ARCHIVE_ACTIVE_QUEUE
-  )SQL";
-  if (!jobIDs.empty()) {
-    std::string sqlpart;
-    for (const auto& jid : jobIDs) {
-      sqlpart += jid + ",";
-    }
-    if (!sqlpart.empty()) {
-      sqlpart.pop_back();
-    }
-    sql += std::string("WHERE JOB_ID IN (") + sqlpart + std::string(")");
-  } else {
+  if (jobIDs.empty()) {
     rdbms::Rset rset;
     return rset;
   }
-  sql += R"SQL(
+  std::string sql = R"SQL(
+    WITH DELETED_ROWS AS (
+        DELETE FROM REPACK_ARCHIVE_ACTIVE_QUEUE
+        WHERE JOB_ID = ANY(:JOB_IDS::bigint[])
         RETURNING REPACK_REQUEST_ID, VID, SIZE_IN_BYTES
     )
     SELECT
@@ -383,6 +359,8 @@ rdbms::Rset ArchiveJobQueueRow::deleteSuccessfulRepackArchiveJobBatch(Transactio
     GROUP BY REPACK_REQUEST_ID, VID;
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
+  auto& postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt&>(stmt.getStmt());
+  postgresStmt.bindStringArray(":JOB_IDS", std::vector<std::optional<std::string>>(jobIDs.begin(), jobIDs.end()));
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDeleteRepackArchive);
   auto rset = stmt.executeQuery();
   return rset;
@@ -475,16 +453,11 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
   )SQL";
   sql += repack_prefix + "ARCHIVE_ACTIVE_QUEUE ";
   bool userowjid = true;
+  std::vector<std::optional<std::string>> jobIdsArray;
   if (jobIDs.has_value() && !jobIDs.value().empty()) {
     userowjid = false;
-    std::string sqlpart;
-    for (const auto& jid : jobIDs.value()) {
-      sqlpart += jid + ",";
-    }
-    if (!sqlpart.empty()) {
-      sqlpart.pop_back();
-    }
-    sql += std::string("WHERE JOB_ID IN (") + sqlpart + std::string(")");
+    jobIdsArray.assign(jobIDs.value().begin(), jobIDs.value().end());
+    sql += "WHERE JOB_ID = ANY(:JOB_IDS::bigint[])";
   } else {
     sql += R"SQL(
         WHERE JOB_ID = :JOB_ID
@@ -626,6 +599,9 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
   stmt.bindString(":FAILURE_LOG", failureLogs.value_or(""));
   if (userowjid) {
     stmt.bindUint64(":JOB_ID", jobId);
+  } else {
+    auto& postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt&>(stmt.getStmt());
+    postgresStmt.bindStringArray(":JOB_IDS", jobIdsArray);
   }
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveArchiveBackToPending);
   stmt.executeNonQuery();
@@ -644,18 +620,10 @@ uint64_t ArchiveJobQueueRow::requeueJobBatch(Transaction& txn,
         DELETE FROM
   )SQL";
   sql += repack_prefix + "ARCHIVE_ACTIVE_QUEUE ";
-  if (!jobIDs.empty()) {
-    std::string sqlpart;
-    for (const auto& jid : jobIDs) {
-      sqlpart += jid + ",";
-    }
-    if (!sqlpart.empty()) {
-      sqlpart.pop_back();
-    }
-    sql += std::string("WHERE JOB_ID IN (") + sqlpart + std::string(")");
-  } else {
+  if (jobIDs.empty()) {
     return 0;
   }
+  sql += "WHERE JOB_ID = ANY(:JOB_IDS::bigint[])";
   sql += R"SQL(
         RETURNING *
     )
@@ -753,6 +721,8 @@ uint64_t ArchiveJobQueueRow::requeueJobBatch(Transaction& txn,
         FROM MOVED_ROWS M;
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
+  auto& postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt&>(stmt.getStmt());
+  postgresStmt.bindStringArray(":JOB_IDS", std::vector<std::optional<std::string>>(jobIDs.begin(), jobIDs.end()));
   stmt.bindString(":STATUS", to_string(newStatus));
   stmt.bindString(":FAILURE_LOG", "UNPROCESSED_TASK_QUEUE_JOB_REQUEUED");
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveArchiveBackToPending);
@@ -794,28 +764,21 @@ uint64_t ArchiveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
 }
 
 uint64_t ArchiveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn, const std::vector<std::string>& jobIDs) {
-  std::string sqlpart;
-  for (const auto& piece : jobIDs) {
-    if (!sqlpart.empty()) {
-      sqlpart += ",";
-    }
-    sqlpart += piece;
-  }
   std::string sql = R"SQL(
     WITH REQUESTS_TO_MOVE AS (
         SELECT DISTINCT ARCHIVE_REQUEST_ID
         FROM ARCHIVE_ACTIVE_QUEUE
-            WHERE job_id IN (
-         )SQL";
-  sql += sqlpart;
-  sql += R"SQL()
+            WHERE job_id = ANY(:JOB_IDS::bigint[])
     ),
     MOVED_ROWS AS (
         DELETE FROM ARCHIVE_ACTIVE_QUEUE
             WHERE ARCHIVE_REQUEST_ID IN ( SELECT ARCHIVE_REQUEST_ID FROM REQUESTS_TO_MOVE )
         RETURNING *
-    ) INSERT INTO ARCHIVE_FAILED_QUEUE SELECT * FROM MOVED_ROWS;")SQL";
+    ) INSERT INTO ARCHIVE_FAILED_QUEUE SELECT * FROM MOVED_ROWS;
+  )SQL";
   auto stmt = txn.getConn().createStmt(sql);
+  auto& postgresStmt = dynamic_cast<rdbms::wrapper::PostgresStmt&>(stmt.getStmt());
+  postgresStmt.bindStringArray(":JOB_IDS", std::vector<std::optional<std::string>>(jobIDs.begin(), jobIDs.end()));
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveArchiveToFailed);
   //txn.setRowCountForTelemetry(jobIDs.size());
   stmt.executeNonQuery();

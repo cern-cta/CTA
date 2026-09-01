@@ -109,6 +109,32 @@ public:
   void bindDouble(const std::string& paramName, const std::optional<double>& paramValue) override;
 
   /**
+   * Binds a whole vector of optional strings as a single SQL parameter, encoded as a PostgreSQL
+   * array literal (e.g. {"a",NULL,"b"}). The bind placeholder must be cast to the desired array
+   * type in the SQL text, e.g. ":IDS::numeric(20,0)[]" or ":NAMES::varchar(100)[]" -- PostgreSQL
+   * parses each quoted element as text and then casts it, exactly as it would a scalar
+   * bindString() value; an element with no value is written as the unquoted NULL literal.
+   * This lets a batch of rows be passed to a query (typically via unnest()) as ordinary bind
+   * parameters instead of being staged through a temporary table.
+   *
+   * @param paramName The name of the parameter.
+   * @param values The values to be bound, in order.
+   */
+  void bindStringArray(const std::string& paramName, const std::vector<std::optional<std::string>>& values);
+
+  /**
+   * Binds a whole vector of optional binary strings (e.g. checksum blobs) as a single SQL
+   * parameter, encoded as a PostgreSQL array literal of hex-format bytea values
+   * (e.g. {"\\x48656c6c6f",NULL}). The bind placeholder must be cast to "bytea[]" in the SQL
+   * text, e.g. ":BLOBS::bytea[]"; an element with no value is written as the unquoted NULL
+   * literal.
+   *
+   * @param paramName The name of the parameter.
+   * @param values The binary values to be bound, in order.
+   */
+  void bindBlobArray(const std::string& paramName, const std::vector<std::optional<std::string>>& values);
+
+  /**
    * Clears the prepared statement so that it is ready to be reused, without the need to bind new variables.
    */
   void resetQuery() override;
