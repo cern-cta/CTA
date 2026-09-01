@@ -726,7 +726,7 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
         SELECT JOB_ID
         FROM REPACK_RETRIEVE_ACTIVE_QUEUE
         WHERE STATUS = :RETRIEVESTATUS
-        ORDER BY PRIORITY DESC, JOB_ID
+        ORDER BY PRIORITY DESC, ARCHIVE_FILE_ID, JOB_ID
         LIMIT :LIMIT
         FOR UPDATE SKIP LOCKED
     )
