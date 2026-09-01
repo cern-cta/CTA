@@ -9,6 +9,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/StringLogger.hpp"
+#include "common/utils/utils.hpp"
 #include "scheduler/rdbms/RelationalDBTest.hpp"
 #include "scheduler/rdbms/RelationalDBTestFactory.hpp"
 
@@ -404,6 +405,44 @@ TEST_P(RelationalDBTest, queueRepackWithStorageClass) {
   const auto repackInfo = db.getRepackInfo("V99999");
 
   ASSERT_EQ(storageClass, repackInfo.storageClass);
+}
+
+TEST_P(RelationalDBTest, deleteExpiredDiskSystemSleepEntries) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+
+  RelationalDB& relationalDb = getDb().getRelationalDB();
+  const uint64_t now = static_cast<uint64_t>(cta::utils::getCurrentEpochTime());
+
+  // Insert the fixture rows directly: insertOrUpdateDiskSleepEntry() needs a Transaction taken
+  // from the connection pool, which is not exposed outside RelationalDB.
+  auto conn = relationalDb.getConn();
+  auto insertSleepEntry = [&conn](const std::string& diskSystemName, uint64_t sleepTime, uint64_t lastUpdateTime) {
+    auto stmt = conn.createStmt(R"SQL(
+      INSERT INTO DISK_SYSTEM_SLEEP_TRACKING (DISK_SYSTEM_NAME, SLEEP_TIME, LAST_UPDATE_TIME)
+      VALUES (:DISK_SYSTEM_NAME, :SLEEP_TIME, :LAST_UPDATE_TIME)
+    )SQL");
+    stmt.bindString(":DISK_SYSTEM_NAME", diskSystemName);
+    stmt.bindUint64(":SLEEP_TIME", sleepTime);
+    stmt.bindUint64(":LAST_UPDATE_TIME", lastUpdateTime);
+    stmt.executeNonQuery();
+  };
+
+  insertSleepEntry("ds-expired", 10, now - 3600);  // sleep window elapsed an hour ago
+  insertSleepEntry("ds-active", 3600, now);        // still sleeping
+
+  // Only the expired entry should be removed
+  ASSERT_EQ(1u, relationalDb.deleteExpiredDiskSystemSleepEntries(lc));
+
+  const auto activeEntries = relationalDb.getDiskSystemSleepActiveEntries(conn);
+  ASSERT_EQ(1u, activeEntries.size());
+  ASSERT_TRUE(activeEntries.find("ds-active") != activeEntries.end());
+  ASSERT_TRUE(activeEntries.find("ds-expired") == activeEntries.end());
+
+  // A second run finds nothing left to remove
+  ASSERT_EQ(0u, relationalDb.deleteExpiredDiskSystemSleepEntries(lc));
 }
 
 static cta::RelationalDBTestFactory RelationalDBTestFactoryStatic;

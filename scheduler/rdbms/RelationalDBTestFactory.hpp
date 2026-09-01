@@ -62,6 +62,10 @@ public:
   }
 
   std::string getSchemaName() const { return m_schemaName; }
+
+  // Gives tests access to RelationalDB methods which are not part of the SchedulerDatabase
+  // interface that this class otherwise exposes through SchedulerDatabaseDecorator.
+  RelationalDB& getRelationalDB() { return m_RelationalDB; }
 };
 
 /**
