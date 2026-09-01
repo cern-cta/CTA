@@ -21,6 +21,7 @@
 #include "routines/scheduler/objectstore/QueueCleanupRoutine.hpp"
 #else
 #include "routines/scheduler/rdbms/AncientRowRoutines.hpp"
+#include "routines/scheduler/rdbms/DiskSystemSleepRoutines.hpp"
 #include "routines/scheduler/rdbms/InactiveMountQueueRoutines.hpp"
 #include "routines/scheduler/rdbms/ReportingCleanupRoutines.hpp"
 #endif
@@ -212,6 +213,10 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       *m_schedDb,
       m_config.routines.scheduler_maintenance_cleanup.batch_size,
       m_config.routines.scheduler_maintenance_cleanup.age_for_deletion_secs));
+  }
+  // Add Disk System Sleep Cleanup
+  if (m_config.routines.disk_system_sleep_cleanup.enabled) {
+    routines.push_back(std::make_unique<DeleteExpiredDiskSystemSleepEntriesRoutine>(m_lc, *m_schedDb));
   }
 #endif
 

@@ -5,6 +5,7 @@ cmake_minimum_required (VERSION 3.17)
 add_library(ctardbroutines SHARED
 		InactiveMountQueueRoutines.cpp
 		AncientRowRoutines.cpp
+		DiskSystemSleepRoutines.cpp
 		ReportingCleanupRoutines.cpp
 )
 
