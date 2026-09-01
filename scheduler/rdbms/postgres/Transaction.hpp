@@ -87,13 +87,6 @@ public:
    */
   cta::rdbms::Conn& getConn() const;
 
-  /**
-   * Allows to reset the transaction connection to a new one
-   *
-   * @param connPool
-   */
-  void resetConn(cta::rdbms::ConnPool& connPool);
-
   bool isDead() { return !m_begin; }
 
 private:

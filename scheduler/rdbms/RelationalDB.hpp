@@ -20,7 +20,6 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/Logger.hpp"
-#include "common/process/threading/Mutex.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
@@ -288,8 +287,6 @@ public:
     DiskSleepEntry(uint64_t st, uint64_t ts) : sleepTime(st), timestamp(ts) {}
   };
 
-  cta::threading::Mutex m_diskSystemSleepMutex;
-  cta::threading::Mutex m_inactiveMountRoutineMutex;
   /*
    * Get list of diskSystemNames for which the system should
    * not be picking up jobs for retrieve
@@ -298,6 +295,9 @@ public:
    * The transaction of the caller is used for the query. This method must not take a connection of
    * its own: it is called while the caller already holds one, and a nested acquisition can exhaust
    * the connection pool and deadlock, as ConnPool::getConn() waits without a timeout.
+   *
+   * This is a single SELECT, so no process local lock is taken. Such a lock could not serialise
+   * anything anyway, the table being shared by every frontend, taped and maintd process.
    *
    * The entries which have expired are left out by the query, but their rows are not removed
    * here; see deleteExpiredDiskSystemSleepEntries().
@@ -319,11 +319,36 @@ public:
    * the maintd cleanup routine, the job scheduling paths never delete these rows, they only read
    * the active ones through getActiveSleepDiskSystemNames().
    *
+   * This is housekeeping only: an expired entry is already ignored by the readers, and a disk
+   * system which has to be put back to sleep takes its expired row over, see
+   * insertOrUpdateDiskSleepEntry(). Nothing depends on how often this routine runs.
+   *
    * @param logContext  logging context
    *
    * @return the number of rows removed
    */
   uint64_t deleteExpiredDiskSystemSleepEntries(log::LogContext& logContext);
+  /**
+   * Put a disk system to sleep, or restart the sleep of one which is already sleeping.
+   *
+   * An existing entry is overwritten, which matches the objectstore implementation
+   * (OStoreDB::RetrieveMount::putQueueToSleep()). The caller reports a disk system every time it
+   * is found to be out of space, so the sleep window is restarted on every such report and the
+   * disk system wakes up @p entry.sleepTime after the last one, not after the first one. Once the
+   * disk buffer has space again the reports stop, and the last one written here is what the disk
+   * system sleeps for.
+   *
+   * Overwriting is also what allows a disk system to be put back to sleep while its previous,
+   * already expired entry is still in the table: such an entry is ignored by the readers, but it
+   * is only deleted by the maintd cleanup routine, so a request arriving in between has to take
+   * the row over rather than be dropped. See deleteExpiredDiskSystemSleepEntries().
+   *
+   * @param txn             transaction of the caller
+   * @param diskSystemName  the disk system to put to sleep
+   * @param entry           the sleep time and the time the sleep starts from
+   *
+   * @return the number of rows written
+   */
   uint64_t insertOrUpdateDiskSleepEntry(schedulerdb::Transaction& txn,
                                         const std::string& diskSystemName,
                                         const DiskSleepEntry& entry);

@@ -1127,53 +1127,59 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
   log::TimingList timings;
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> ret;
   std::vector<schedulerdb::postgres::RepackRequestProgress> statUpdates;
-  schedulerdb::Transaction txn(m_connPool, lc);
-  // move all finished REPACK_RETRIEVE_ACTIVE_QUEUE to the REPACK_ARCHIVE_PENDING_QUEUE
-  // return back statistics for:
-  //   1) all retrieve rows moved to archive table
-  //   2) all rearchive copies inserted additionally
-  // 1)+2) = the total number of columns being queued to the REPACK_ARCHIVE_PENDING_QUEUE
-  try {
-    auto count_rset =
-      schedulerdb::postgres::RetrieveJobQueueRow::transformJobBatchToArchive(txn, c_repackRetrieveReportBatchSize);
-    auto count = 0;
-    while (count_rset.next()) {
-      schedulerdb::postgres::RepackRequestProgress update;
-      update.reqId = count_rset.columnUint64("REPACK_REQUEST_ID");
-      uint64_t notRetrievedFiles = count_rset.columnUint64("NOT_RETRIEVED_FILES");
-      uint64_t notRetrievedBytes = count_rset.columnUint64("NOT_RETRIEVED_BYTES");
-      // (to be improved) we count the retrieve job in active table with mount_id NULL which are there as a consequence
-      // of insertion of user provided files and are not actually being retrieved just transformed to archive jobs
-      update.retrievedFiles = count_rset.columnUint64("BASE_INSERTED_COUNT") - notRetrievedFiles;
-      update.retrievedBytes = count_rset.columnUint64("BASE_INSERTED_BYTES") - notRetrievedBytes;
-      update.rearchiveCopyNbs = count_rset.columnUint64("ALTERNATE_INSERTED_COUNT");
-      update.rearchiveBytes = count_rset.columnUint64("ALTERNATE_INSERTED_BYTES");
-      count += update.retrievedFiles + update.rearchiveCopyNbs;
+  {
+    // Committing does not put the connection back into the pool, only the destruction of the
+    // transaction does, hence this scope: holding this connection while txn2 below asks for a
+    // second one can exhaust the pool, which ConnPool::getConn() waits on without a timeout.
+    schedulerdb::Transaction txn(m_connPool, lc);
+    // move all finished REPACK_RETRIEVE_ACTIVE_QUEUE to the REPACK_ARCHIVE_PENDING_QUEUE
+    // return back statistics for:
+    //   1) all retrieve rows moved to archive table
+    //   2) all rearchive copies inserted additionally
+    // 1)+2) = the total number of columns being queued to the REPACK_ARCHIVE_PENDING_QUEUE
+    try {
+      auto count_rset =
+        schedulerdb::postgres::RetrieveJobQueueRow::transformJobBatchToArchive(txn, c_repackRetrieveReportBatchSize);
+      auto count = 0;
+      while (count_rset.next()) {
+        schedulerdb::postgres::RepackRequestProgress update;
+        update.reqId = count_rset.columnUint64("REPACK_REQUEST_ID");
+        uint64_t notRetrievedFiles = count_rset.columnUint64("NOT_RETRIEVED_FILES");
+        uint64_t notRetrievedBytes = count_rset.columnUint64("NOT_RETRIEVED_BYTES");
+        // (to be improved) we count the retrieve job in active table with mount_id NULL which are there as a consequence
+        // of insertion of user provided files and are not actually being retrieved just transformed to archive jobs
+        update.retrievedFiles = count_rset.columnUint64("BASE_INSERTED_COUNT") - notRetrievedFiles;
+        update.retrievedBytes = count_rset.columnUint64("BASE_INSERTED_BYTES") - notRetrievedBytes;
+        update.rearchiveCopyNbs = count_rset.columnUint64("ALTERNATE_INSERTED_COUNT");
+        update.rearchiveBytes = count_rset.columnUint64("ALTERNATE_INSERTED_BYTES");
+        count += update.retrievedFiles + update.rearchiveCopyNbs;
+        log::ScopedParamContainer params(lc);
+        params.add("repackRequestId", update.reqId);
+        params.add("retrievedFiles", update.retrievedFiles);
+        params.add("retrievedBytes", update.retrievedBytes);
+        params.add("rearchiveCopyNbs", update.rearchiveCopyNbs);
+        params.add("rearchiveBytes", update.rearchiveBytes);
+        params.add("totalToBeArchivedFiles", update.retrievedFiles + update.rearchiveCopyNbs);
+        params.add("totalToBeArchivedBytes", update.retrievedBytes + update.rearchiveBytes);
+        lc.log(
+          cta::log::INFO,
+          "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): Successfully transformed repack retrieve "
+          "rows to archive queue table.");
+        statUpdates.emplace_back(update);
+      }
+      txn.setRowCountForTelemetry(count);
+      txn.commit();
+      timings.insertAndReset("movedRetrieveRepackJobs", t);
       log::ScopedParamContainer params(lc);
-      params.add("repackRequestId", update.reqId);
-      params.add("retrievedFiles", update.retrievedFiles);
-      params.add("retrievedBytes", update.retrievedBytes);
-      params.add("rearchiveCopyNbs", update.rearchiveCopyNbs);
-      params.add("rearchiveBytes", update.rearchiveBytes);
-      params.add("totalToBeArchivedFiles", update.retrievedFiles + update.rearchiveCopyNbs);
-      params.add("totalToBeArchivedBytes", update.retrievedBytes + update.rearchiveBytes);
-      lc.log(cta::log::INFO,
-             "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): Successfully transformed repack retrieve "
-             "rows to archive queue table.");
-      statUpdates.emplace_back(update);
+      timings.addToLog(params);
+    } catch (exception::Exception& ex) {
+      cta::log::ScopedParamContainer params(lc);
+      params.add(semconv::log::exceptionMessage, ex.getMessageValue());
+      lc.log(cta::log::ERR,
+             "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): failed to transform retrieve jobs to "
+             "archive jobs: ");
+      txn.abort();
     }
-    txn.setRowCountForTelemetry(count);
-    txn.commit();
-    timings.insertAndReset("movedRetrieveRepackJobs", t);
-    log::ScopedParamContainer params(lc);
-    timings.addToLog(params);
-  } catch (exception::Exception& ex) {
-    cta::log::ScopedParamContainer params(lc);
-    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
-    lc.log(cta::log::ERR,
-           "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): failed to transform retrieve jobs to "
-           "archive jobs: ");
-    txn.abort();
   }
   if (statUpdates.empty()) {
     lc.log(cta::log::INFO,
@@ -1189,10 +1195,10 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
     while (vidrset.next()) {}
     log::ScopedParamContainer params(lc);
     params.add("updatedRepackRequests", vidrset.getNbRowsRetrieved());
-    txn.setRowCountForTelemetry(vidrset.getNbRowsRetrieved());
+    txn2.setRowCountForTelemetry(vidrset.getNbRowsRetrieved());
     lc.log(cta::log::INFO,
-           "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): no Repack Retrieve jobs finished, nothing "
-           "to archive.");
+           "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): updated repack request progress after "
+           "converting jobs to archive jobs.");
     txn2.commit();
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(lc)
@@ -1911,10 +1917,18 @@ void RelationalDB::cleanRetrieveQueueForVid(const std::string& vid, log::LogCont
 uint64_t RelationalDB::insertOrUpdateDiskSleepEntry(schedulerdb::Transaction& txn,
                                                     const std::string& diskSystemName,
                                                     const RelationalDB::DiskSleepEntry& entry) {
+  // The sleep window is restarted on every call, as it is in the objectstore implementation: a
+  // disk system is reported here each time it is found to be out of space, so the entry keeps
+  // being refreshed for as long as that lasts, and the disk system wakes up SLEEP_TIME after the
+  // last report rather than SLEEP_TIME after the first one. Overwriting also covers the case of a
+  // row which has already expired but has not been collected yet by the maintd cleanup routine:
+  // without it, such a row would swallow the request and leave the disk system awake.
   std::string sql = R"SQL(
         INSERT INTO DISK_SYSTEM_SLEEP_TRACKING (DISK_SYSTEM_NAME, SLEEP_TIME, LAST_UPDATE_TIME)
         VALUES (:DISK_SYSTEM_NAME, :SLEEP_TIME, :LAST_UPDATE_TIME)
-        ON CONFLICT (DISK_SYSTEM_NAME)  DO NOTHING
+        ON CONFLICT (DISK_SYSTEM_NAME) DO UPDATE
+          SET SLEEP_TIME = EXCLUDED.SLEEP_TIME,
+              LAST_UPDATE_TIME = EXCLUDED.LAST_UPDATE_TIME
     )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
@@ -1979,7 +1993,6 @@ uint64_t RelationalDB::removeExpiredDiskSystemSleepEntries(schedulerdb::Transact
 
 std::unordered_map<std::string, RelationalDB::DiskSleepEntry>
 RelationalDB::getActiveSleepDiskSystemNames(schedulerdb::Transaction& txn, log::LogContext& lc) {
-  cta::threading::MutexLocker ml(m_diskSystemSleepMutex);
   // The transaction of the caller is reused on purpose. Taking another connection from the pool
   // here, while the caller holds one, can exhaust the pool and deadlock it, as
   // ConnPool::getConn() waits for a free connection without a timeout.
@@ -2000,7 +2013,8 @@ RelationalDB::getActiveSleepDiskSystemNames(schedulerdb::Transaction& txn, log::
 uint64_t RelationalDB::deleteExpiredDiskSystemSleepEntries(log::LogContext& lc) {
   // An entry has expired once its own sleep time has elapsed since its last update, so there is
   // nothing to configure here: the database selects the rows to delete from the values they hold.
-  cta::threading::MutexLocker ml(m_diskSystemSleepMutex);
+  // No process local lock is taken: the DELETE evaluates its predicate row by row at execution
+  // time, so it cannot remove an entry which another process has just refreshed.
   schedulerdb::Transaction txn(m_connPool, lc);
   uint64_t nrows = 0;
   try {
