@@ -9,7 +9,6 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
 #include "common/log/TimingList.hpp"
-#include "common/process/threading/MutexLocker.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "scheduler/rdbms/postgres/CommonQueueUtils.hpp"
@@ -316,7 +315,11 @@ void RetrieveMount::addDiskSystemToSkip(const DiskSystemToSkip& diskSystemToSkip
 void RetrieveMount::putQueueToSleep(const std::string& diskSystemName, const uint64_t sleepTime, log::LogContext& lc) {
   if (!diskSystemName.empty()) {
     RelationalDB::DiskSleepEntry dse(sleepTime, std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
-    cta::threading::MutexLocker ml(m_RelationalDB.m_diskSystemSleepMutex);
+    // Called every time the disk system is found to be out of space, and each call restarts the
+    // sleep window: the disk system wakes up sleepTime after the last call, not after the first
+    // one. No process local lock is taken around this, the upsert being a single statement, and
+    // such a lock could not serialise anything anyway, the table being written by every taped
+    // process.
     cta::schedulerdb::Transaction txn(m_connPool, lc);
     try {
       m_RelationalDB.insertOrUpdateDiskSleepEntry(txn, diskSystemName, dse);

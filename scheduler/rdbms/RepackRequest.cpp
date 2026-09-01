@@ -227,7 +227,8 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
             for (auto& tc : rsr.archiveFile.tapeFiles) {
               if (tc.vid == repackInfo.vid) {
                 try {
-                  auto conn = m_connPool.getConn();
+                  // The connection taken above is reused: a second one held at the same time by
+                  // this thread can exhaust the pool, which is waited on without a timeout
                   Helpers::selectBestVid4Retrieve({repackInfo.vid}, m_catalogue, conn, true);
                   bestVid = repackInfo.vid;
                   activeCopyNumber = tc.copyNb;

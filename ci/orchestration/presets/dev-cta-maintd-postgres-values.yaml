@@ -31,8 +31,11 @@ maintd:
       batchSize: 1000
       ageForDeletionSecs: 1209600
     # A disk system sleep entry expires by the sleep time it holds itself, which is a matter of
-    # minutes, so this runs far more often than the cleanups above. It has no options of its own:
-    # every key besides replicas and sleepIntervalSecs becomes a field of the routine config
+    # minutes, so this runs far more often than the cleanups above. Nothing but the lingering of
+    # the collected rows depends on the interval: an expired entry is ignored when the mounts are
+    # decided, and a disk system which runs out of space again takes its expired entry over.
+    # It has no options of its own: every key besides replicas and sleepIntervalSecs becomes a
+    # field of the routine config
     diskSystemSleepCleanup:
       replicas: 1
       sleepIntervalSecs: 300

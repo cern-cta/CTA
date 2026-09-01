@@ -52,6 +52,13 @@ private:
   static bool isRepackQueue(FailedQueue failedQueue);
 
   /**
+   * The connection the failed queues are read from. Declared before the result sets below so
+   * that it is destroyed after them: a result set outliving its connection would be left
+   * pointing at a connection already handed back to the pool.
+   */
+  std::unique_ptr<cta::rdbms::Conn> m_conn;
+
+  /**
    * The failed queues still to be listed, in the order they are reported. A Postgres connection
    * can only have a single query in flight at a time, hence one queue is queried at a time, each
    * one as the previous one gets exhausted.
@@ -64,9 +71,6 @@ private:
   // Filters to apply to the queues which have not been queried yet
   std::optional<std::string> m_tapePool;
   std::optional<std::string> m_vid;
-
-  // The connection must outlive the result sets fetched from it
-  std::unique_ptr<cta::rdbms::Conn> m_conn;
 
   void fillCommonFields(cta::admin::FailedRequestLsItem& fr_item, const cta::rdbms::Rset& item);
 

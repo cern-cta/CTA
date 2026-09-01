@@ -46,6 +46,9 @@
   scheduler_maintenance_cleanup = { enabled = true, batch_size = 1000, age_for_deletion_secs = 1209600 }
   # Routine that removes the disk system sleep entries whose sleep time has elapsed. It takes no
   # age, as an entry expires by the sleep time and the timestamp it holds itself.
+  # This is housekeeping only: an expired entry is already ignored when the mounts are decided,
+  # and a disk system which runs out of space again takes its expired entry over. How often this
+  # routine runs therefore only affects how long the collected rows linger.
   disk_system_sleep_cleanup = { enabled = true }
 
 
