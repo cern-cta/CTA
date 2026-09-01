@@ -2020,9 +2020,6 @@ uint64_t RelationalDB::deleteExpiredDiskSystemSleepEntries(log::LogContext& lc) 
   try {
     nrows = removeExpiredDiskSystemSleepEntries(txn);
     txn.commit();
-    if (0 == nrows) {
-      return 0;
-    }
     cta::log::ScopedParamContainer(lc)
       .add("nrows", nrows)
       .log(cta::log::INFO,
