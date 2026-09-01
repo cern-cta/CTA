@@ -235,7 +235,8 @@ void PostgresTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWritte
   conn.commit();
 }
 
-std::vector<cta::catalogue::InsertFileRecycleLog> PostgresTapeFileCatalogue::insertOldCopiesOfFilesIfAnyOnFileRecycleLog(
+std::vector<cta::catalogue::InsertFileRecycleLog>
+PostgresTapeFileCatalogue::insertOldCopiesOfFilesIfAnyOnFileRecycleLog(
   rdbms::Conn& conn,
   const std::vector<std::optional<std::string>>& archiveFileId,
   const std::vector<std::optional<std::string>>& copyNb,

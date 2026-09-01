@@ -242,7 +242,8 @@ uint64_t ArchiveJobQueueRow::updateJobStatus(Transaction& txn,
     return nrows;
   }
   std::string sql = "UPDATE ARCHIVE_ACTIVE_QUEUE SET STATUS = :NEWSTATUS1::ARCHIVE_JOB_STATUS, ";
-  sql += "        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT WHERE JOB_ID = ANY(:JOB_IDS::bigint[])";
+  sql +=
+    "        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT WHERE JOB_ID = ANY(:JOB_IDS::bigint[])";
   auto stmt2 = txn.getConn().createStmt(sql);
   auto& postgresStmt2 = dynamic_cast<rdbms::wrapper::PostgresStmt&>(stmt2.getStmt());
   postgresStmt2.bindStringArray(":JOB_IDS", jobIdsArray);

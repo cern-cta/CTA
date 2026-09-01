@@ -182,8 +182,7 @@ void PostgresStmt::bindStringArray(const std::string& paramName,
 //------------------------------------------------------------------------------
 // bindBlobArray
 //------------------------------------------------------------------------------
-void PostgresStmt::bindBlobArray(const std::string& paramName,
-                                 const std::vector<std::optional<std::string>>& values) {
+void PostgresStmt::bindBlobArray(const std::string& paramName, const std::vector<std::optional<std::string>>& values) {
   static const char hexDigits[] = "0123456789abcdef";
   std::string literal;
   literal += '{';
