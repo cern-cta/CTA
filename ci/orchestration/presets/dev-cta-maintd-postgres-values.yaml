@@ -25,19 +25,17 @@ maintd:
       sleepIntervalSecs: 60
       batchSize: 1000
       ageForCollectionSecs: 120
+    # schedulerMaintenanceCleanup also removes the disk system sleep entries whose sleep time has
+    # elapsed (see DeleteExpiredDiskSystemSleepEntriesRoutine). It has no options of its own, and it
+    # rides along with this daily cleanup rather than getting its own routine/deployment: mount
+    # decisions already ignore an entry once its own SLEEP_TIME/LAST_UPDATE_TIME has elapsed,
+    # regardless of whether the row has been deleted yet, so the disk system sleep (backpressure)
+    # functionality is unaffected by this 1-day cadence — it only affects how long the (at most one
+    # per disk system) expired rows linger in the table.
     schedulerMaintenanceCleanup:
       replicas: 1
       sleepIntervalSecs: 86400
       batchSize: 1000
       ageForDeletionSecs: 1209600
-    # A disk system sleep entry expires by the sleep time it holds itself, which is a matter of
-    # minutes, so this runs far more often than the cleanups above. Nothing but the lingering of
-    # the collected rows depends on the interval: an expired entry is ignored when the mounts are
-    # decided, and a disk system which runs out of space again takes its expired entry over.
-    # It has no options of its own: every key besides replicas and sleepIntervalSecs becomes a
-    # field of the routine config
-    diskSystemSleepCleanup:
-      replicas: 1
-      sleepIntervalSecs: 300
 
   # The remainder of the values are inherited from the default values.yaml
