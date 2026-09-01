@@ -105,6 +105,7 @@ Additional queue cleanup routines may be enabled when using the Postgres schedul
 * user_pending_queue_cleanup
 * repack_pending_queue_cleanup
 * scheduler_maintenance_cleanup
+* disk_system_sleep_cleanup
 
 # CONFIGURATION
 

@@ -52,7 +52,9 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
     std::vector<std::unique_ptr<SchedulerDatabase::RetrieveJob>> retVector;
     cta::log::ScopedParamContainer params(lc);
     try {
-      auto noSpaceDiskSystemNamesMap = m_RelationalDB.getActiveSleepDiskSystemNamesToFilter(lc);
+      // The transaction in hand is passed on: a nested connection acquisition here, while this
+      // one is held and holds the VID named lock, can exhaust the connection pool and deadlock it
+      auto noSpaceDiskSystemNamesMap = m_RelationalDB.getActiveSleepDiskSystemNames(txn, lc);
       std::vector<std::string> noSpaceDiskSystemNames;
       noSpaceDiskSystemNames.reserve(noSpaceDiskSystemNamesMap.size());
       for (const auto& pair : noSpaceDiskSystemNamesMap) {

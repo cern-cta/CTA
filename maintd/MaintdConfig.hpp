@@ -128,6 +128,14 @@ struct SchedulerMaintenanceCleanupRoutineConfig final {
   }
 };
 
+// Neither an age nor a batch size is configurable here: a disk system sleep entry expires by the
+// sleep time and the timestamp it holds itself, and there is at most one entry per disk system
+struct DiskSystemSleepCleanupRoutineConfig final {
+  bool enabled = true;
+
+  static constexpr std::size_t memberCount() { return 1; }
+};
+
 #endif
 
 struct RoutinesConfig final {
@@ -151,8 +159,9 @@ struct RoutinesConfig final {
   ActivePendingQueueCleanupRoutineConfig user_pending_queue_cleanup;
   ActivePendingQueueCleanupRoutineConfig repack_pending_queue_cleanup;
   SchedulerMaintenanceCleanupRoutineConfig scheduler_maintenance_cleanup;
+  DiskSystemSleepCleanupRoutineConfig disk_system_sleep_cleanup;
 
-  static constexpr std::size_t memberCount() { return 11; }
+  static constexpr std::size_t memberCount() { return 12; }
 #endif
 
   cta::runtime::ValidationResult validate() const {

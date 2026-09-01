@@ -295,18 +295,52 @@ public:
    * not be picking up jobs for retrieve
    * due to insufficient disk space for a specified sleep time interval
    *
+   * The transaction of the caller is used for the query. This method must not take a connection of
+   * its own: it is called while the caller already holds one, and a nested acquisition can exhaust
+   * the connection pool and deadlock, as ConnPool::getConn() waits without a timeout.
+   *
+   * The entries which have expired are left out by the query, but their rows are not removed
+   * here; see deleteExpiredDiskSystemSleepEntries().
+   *
+   * @param txn         transaction of the caller, used for the query
+   * @param logContext  logging context
+   *
    * @return list of diskSystemName strings
    */
   std::unordered_map<std::string, RelationalDB::DiskSleepEntry>
-  getActiveSleepDiskSystemNamesToFilter(log::LogContext& logContext);
+  getActiveSleepDiskSystemNames(schedulerdb::Transaction& txn, log::LogContext& logContext);
+
+  /**
+   * Remove the disk system sleep entries whose sleep time has elapsed.
+   *
+   * An entry expires once its own SLEEP_TIME has passed since its LAST_UPDATE_TIME, so this needs
+   * no configured age. Runs in a transaction of its own and commits it, hence it must not be
+   * called while a transaction of the caller is open on the same connection pool. It is meant for
+   * the maintd cleanup routine, the job scheduling paths never delete these rows, they only read
+   * the active ones through getActiveSleepDiskSystemNames().
+   *
+   * @param logContext  logging context
+   *
+   * @return the number of rows removed
+   */
+  uint64_t deleteExpiredDiskSystemSleepEntries(log::LogContext& logContext);
   uint64_t insertOrUpdateDiskSleepEntry(schedulerdb::Transaction& txn,
                                         const std::string& diskSystemName,
                                         const DiskSleepEntry& entry);
 
-  uint64_t removeDiskSystemSleepEntries(schedulerdb::Transaction& txn,
-                                        const std::vector<std::string>& expiredDiskSystemNames);
+  /**
+   * Delete the rows whose sleep time has elapsed. The rows are selected by the query itself, using
+   * the same comparison as getDiskSystemSleepActiveEntries().
+   *
+   * @return the number of rows deleted
+   */
+  uint64_t removeExpiredDiskSystemSleepEntries(schedulerdb::Transaction& txn);
 
-  std::unordered_map<std::string, DiskSleepEntry> getDiskSystemSleepStatus(rdbms::Conn& conn);
+  /**
+   * Get the disk system sleep entries which are still sleeping. The expired ones are left out by
+   * the query, so no filtering of the result is needed.
+   */
+  std::unordered_map<std::string, DiskSleepEntry> getDiskSystemSleepActiveEntries(rdbms::Conn& conn);
 
   // MountQueueCleanup routine methods
 

@@ -1834,7 +1834,7 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
   txn->setRowCountForTelemetry(totalJobCount);
   //getting info about sleep disk systems
   std::unordered_map<std::string, RelationalDB::DiskSleepEntry> diskSystemSleepMap =
-    getActiveSleepDiskSystemNamesToFilter(lc);
+    getActiveSleepDiskSystemNames(*txn, lc);
   // for now we create a mount per summary row (assuming there would not be
   // the same activity twice with 2 mount policies or 2 different VIDs selected)
   for (const auto& rjsr : rjsr_vector) {
@@ -1861,17 +1861,14 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
     if (rjsr.diskSystemName) {
       auto it = diskSystemSleepMap.find(rjsr.diskSystemName.value());
       if (it != diskSystemSleepMap.end()) {
+        // The map only holds the entries which are still sleeping, the expired ones are left out
+        // by the query, so no comparison against the current time is needed here. A mount whose
+        // disk system is absent from the map keeps sleepingMount at its default of false.
         const auto& entry = it->second;
-        auto now = static_cast<uint64_t>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
-
-        if (now < (entry.timestamp + entry.sleepTime)) {
-          m.sleepingMount = true;
-          m.sleepStartTime = entry.timestamp;
-          m.diskSystemName = rjsr.diskSystemName.value();
-          m.sleepTime = entry.sleepTime;
-        } else {
-          m.sleepingMount = false;
-        }
+        m.sleepingMount = true;
+        m.sleepStartTime = entry.timestamp;
+        m.diskSystemName = rjsr.diskSystemName.value();
+        m.sleepTime = entry.sleepTime;
       }
     }
   }
@@ -1934,11 +1931,16 @@ uint64_t RelationalDB::insertOrUpdateDiskSleepEntry(schedulerdb::Transaction& tx
 }
 
 std::unordered_map<std::string, RelationalDB::DiskSleepEntry>
-RelationalDB::getDiskSystemSleepStatus(rdbms::Conn& conn) {
-  // SQL to fetch all rows from the table
+RelationalDB::getDiskSystemSleepActiveEntries(rdbms::Conn& conn) {
+  // Only the entries which are still sleeping are of interest, so the expired ones are left out
+  // here rather than filtered afterwards. The clock of the database is used, so that every reader
+  // and the cleanup routine agree on which entries have expired. COALESCE keeps a row with a null
+  // sleep time or timestamp from being reported as active for ever.
   std::string sql = R"SQL(
       SELECT DISK_SYSTEM_NAME, SLEEP_TIME, LAST_UPDATE_TIME
       FROM DISK_SYSTEM_SLEEP_TRACKING
+      WHERE COALESCE(LAST_UPDATE_TIME, 0) + COALESCE(SLEEP_TIME, 0)
+            >= EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
   )SQL";
 
   auto stmt = conn.createStmt(sql);
@@ -1956,28 +1958,17 @@ RelationalDB::getDiskSystemSleepStatus(rdbms::Conn& conn) {
   return sleepEntries;
 }
 
-uint64_t RelationalDB::removeDiskSystemSleepEntries(schedulerdb::Transaction& txn,
-                                                    const std::vector<std::string>& expiredDiskSystemNames) {
-  if (expiredDiskSystemNames.empty()) {
-    return 0;
-  }
-  // Construct the SQL with placeholders for each disk name
-  std::string sql = "DELETE FROM DISK_SYSTEM_SLEEP_TRACKING WHERE DISK_SYSTEM_NAME IN (";
-  for (size_t i = 0; i < expiredDiskSystemNames.size(); ++i) {
-    sql += ":DISKNAME" + std::to_string(i);
-    if (i < expiredDiskSystemNames.size() - 1) {
-      sql += ", ";
-    }
-  }
-  sql += ")";
+uint64_t RelationalDB::removeExpiredDiskSystemSleepEntries(schedulerdb::Transaction& txn) {
+  // The entries to remove are selected by the database itself, using the same comparison as
+  // getDiskSystemSleepActiveEntries() so that no entry can be reported as active and deleted at
+  // the same time. A row with a null sleep time or timestamp is treated as expired and collected.
+  std::string sql = R"SQL(
+      DELETE FROM DISK_SYSTEM_SLEEP_TRACKING
+      WHERE COALESCE(LAST_UPDATE_TIME, 0) + COALESCE(SLEEP_TIME, 0)
+            < EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
+  )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
-
-  // Bind each disk name to its corresponding placeholder
-  for (size_t i = 0; i < expiredDiskSystemNames.size(); ++i) {
-    stmt.bindString(":DISKNAME" + std::to_string(i), expiredDiskSystemNames[i]);
-  }
-
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDiskSleepTracking);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
@@ -1987,56 +1978,51 @@ uint64_t RelationalDB::removeDiskSystemSleepEntries(schedulerdb::Transaction& tx
 }
 
 std::unordered_map<std::string, RelationalDB::DiskSleepEntry>
-RelationalDB::getActiveSleepDiskSystemNamesToFilter(log::LogContext& lc) {
+RelationalDB::getActiveSleepDiskSystemNames(schedulerdb::Transaction& txn, log::LogContext& lc) {
   cta::threading::MutexLocker ml(m_diskSystemSleepMutex);
-  auto conn = m_connPool.getConn();
-  std::unordered_map<std::string, RelationalDB::DiskSleepEntry> diskSystemSleepMap = getDiskSystemSleepStatus(conn);
-  conn.commit();
-  if (diskSystemSleepMap.empty()) {
-    return diskSystemSleepMap;
-  }
-  uint64_t currentTime = static_cast<uint64_t>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
-
-  std::vector<std::string> expiredDiskSystems;
-  auto it = diskSystemSleepMap.begin();
-  while (it != diskSystemSleepMap.end()) {
-    const RelationalDB::DiskSleepEntry& entry = it->second;
+  // The transaction of the caller is reused on purpose. Taking another connection from the pool
+  // here, while the caller holds one, can exhaust the pool and deadlock it, as
+  // ConnPool::getConn() waits for a free connection without a timeout.
+  // The expired entries are filtered out by the query itself. Their rows are removed by
+  // DeleteExpiredDiskSystemSleepEntriesRoutine in maintd, not here: this method is called from the
+  // mount decision paths, whose transaction must not be committed here, so a delete placed here
+  // would only become durable if the caller happened to commit.
+  auto activeEntries = getDiskSystemSleepActiveEntries(txn.getConn());
+  if (!activeEntries.empty()) {
     cta::log::ScopedParamContainer(lc)
-      .add("currentTime", currentTime)
-      .add("entry.timestamp", entry.timestamp)
-      .add("entry.sleepTime", entry.sleepTime)
-      .add("currentTime-entry.timestamp", currentTime - entry.timestamp)
+      .add("sleepingDiskSystems", activeEntries.size())
       .log(cta::log::DEBUG,
-           "In RelationalDB::getActiveSleepDiskSystemNamesToFilter(): Checking sleeping disk systems.");
-    if (currentTime - entry.timestamp > entry.sleepTime) {
-      const std::string diskName = it->first;
-      expiredDiskSystems.push_back(diskName);
-      // erase; iterator is invalidated, but the next one is returned
-      it = diskSystemSleepMap.erase(it);
-    } else {
-      ++it;
-    }
+           "In RelationalDB::getActiveSleepDiskSystemNames(): found disk systems still sleeping for lack of space.");
   }
-  if (!expiredDiskSystems.empty()) {
-    schedulerdb::Transaction txn(m_connPool, lc);
-    try {
-      uint64_t nrows = removeDiskSystemSleepEntries(txn, expiredDiskSystems);
-      txn.commit();
-      cta::log::ScopedParamContainer(lc)
-        .add("nrows", nrows)
-        .log(
-          cta::log::INFO,
-          "In RelationalDB::getActiveSleepDiskSystemNamesToFilter(): Removed disk system sleep entries from the DB.");
-    } catch (const std::exception& ex) {
-      cta::log::ScopedParamContainer(lc)
-        .add(semconv::log::exceptionMessage, ex.what())
-        .log(cta::log::ERR,
-             "In RelationalDB::getActiveSleepDiskSystemNamesToFilter(): Failed to remove disk system sleep entries "
-             "from DB.");
-      txn.abort();
+  return activeEntries;
+}
+
+uint64_t RelationalDB::deleteExpiredDiskSystemSleepEntries(log::LogContext& lc) {
+  // An entry has expired once its own sleep time has elapsed since its last update, so there is
+  // nothing to configure here: the database selects the rows to delete from the values they hold.
+  cta::threading::MutexLocker ml(m_diskSystemSleepMutex);
+  schedulerdb::Transaction txn(m_connPool, lc);
+  uint64_t nrows = 0;
+  try {
+    nrows = removeExpiredDiskSystemSleepEntries(txn);
+    txn.commit();
+    if (0 == nrows) {
+      return 0;
     }
+    cta::log::ScopedParamContainer(lc)
+      .add("nrows", nrows)
+      .log(cta::log::INFO,
+           "In RelationalDB::deleteExpiredDiskSystemSleepEntries(): Removed expired disk system sleep entries from "
+           "the DB.");
+  } catch (const std::exception& ex) {
+    cta::log::ScopedParamContainer(lc)
+      .add(semconv::log::exceptionMessage, ex.what())
+      .log(cta::log::ERR,
+           "In RelationalDB::deleteExpiredDiskSystemSleepEntries(): Failed to remove expired disk system sleep "
+           "entries from the DB.");
+    txn.abort();
   }
-  return diskSystemSleepMap;
+  return nrows;
 }
 
 // MountQueueCleanup routine methods
