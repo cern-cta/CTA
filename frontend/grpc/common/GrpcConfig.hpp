@@ -66,6 +66,7 @@ struct JwtAuthConfig final {
   uint32_t jwks_total_timeout = 60;       //!< Timeout for JWKS retrieval from a URL (default 60)
   std::string expected_issuer;            //!< The expected issuer of the JWT tokens (REQUIRED if enabled)
   std::string expected_audience;          //!< The expected audience of the JWT tokens (REQUIRED if enabled)
+  uint32_t min_generation = 0;            //!< The minimum generation (version) of accepted JWT tokens (default: 0)
 
   std::optional<std::string> revoke_list_path =
     std::nullopt;  //!< Path to an external TOML file listing revoked tokens (optional)
@@ -76,7 +77,7 @@ struct JwtAuthConfig final {
    */
   cta::runtime::ValidationResult validate() const;
 
-  static constexpr std::size_t memberCount() { return 8; }
+  static constexpr std::size_t memberCount() { return 9; }
 };
 
 /**

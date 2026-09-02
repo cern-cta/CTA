@@ -254,6 +254,20 @@ TokenValidationResult JwtAuthManager::validateJwt(const std::string& encodedJwt,
       return {false, std::nullopt, errorMessage};
     }
 
+    // check that the token has a gen claim and that it's at least the same as `min_generation`
+    if (decoded.has_payload_claim("gen")) {
+      if (auto genClaim = decoded.get_payload_claim("gen").as_integer();
+          genClaim < static_cast<int64_t>(m_minGeneration)) {
+        auto errorMessage = "Token generation is too old, minimum required is " + std::to_string(m_minGeneration);
+        lc.log(cta::log::ERR, errorMessage);
+        return {false, std::nullopt, errorMessage};
+      }
+    } else {
+      auto errorMessage = "Token does not contain a 'gen' claim";
+      lc.log(cta::log::ERR, errorMessage);
+      return {false, std::nullopt, errorMessage};
+    }
+
     // everything fine, we've successfully validated the token
     return {true, subjectClaim, std::nullopt};
   } catch (const std::exception& e) {

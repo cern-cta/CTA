@@ -93,11 +93,13 @@ public:
                  int pubKeyTTL,
                  const std::string& expectedIssuer,
                  const std::string& expectedAudience,
+                 uint32_t minGeneration,
                  const std::optional<std::string>& revokeListPath,
                  const cta::log::LogContext& lc)
       : m_pubKeyCache(JwkCache {std::move(jwksFetcher), jwkUri, pubKeyTTL, lc}),
         m_expectedIssuer(expectedIssuer),
         m_expectedAudience(expectedAudience),
+        m_minGeneration(minGeneration),
         m_revokedSet(revokeListPath ? loadRevokedJtis(*revokeListPath) : std::set<std::string, std::less<>> {}) {}
 
   JwkCache& getCache() { return m_pubKeyCache; }
@@ -123,6 +125,7 @@ private:
   JwkCache m_pubKeyCache;                           //!< The public key cache
   std::string m_expectedIssuer;                     //!< The expected issuer for all tokens
   std::string m_expectedAudience;                   //!< The expected audience for all tokens
+  uint32_t m_minGeneration;                         //!< The minimum token generation (version) required
   std::set<std::string, std::less<>> m_revokedSet;  //!< A set of JWT IDs that have been revoked.
 };
 }  // namespace cta::auth

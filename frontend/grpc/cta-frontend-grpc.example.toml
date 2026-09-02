@@ -40,7 +40,7 @@
 
 
 #############################################
-# Authentication (multiple methods supported)
+# Authentication
 #############################################
 
 # JWT (JSON Web Token) authentication settings
@@ -64,6 +64,11 @@
   # `expected_audience` (string, REQUIRED if enabled): The expected `aud` (audience) claim
   # value. Use a unique audience per service to avoid token reuse across components.
   expected_audience = "cta-frontend"
+
+  # `min_generation` (integer, optional): minimum token generation (`gen` claim) accepted.
+  # Tokens with a lower `gen` are rejected. Use to mass-invalidate old tokens. Default: 0.
+  # Example:
+  #   min_generation = 0
 
   # `cache_refresh_interval` (integer, seconds): How often (TTL) the JWKS cache is refreshed
   # by fetching the JWKS URI. Default: 600 (10 minutes). Set lower when key rotation is frequent.

@@ -134,6 +134,7 @@ int main(const int argc, char* const* const argv) {
                                                                  jwtConfig->pub_key_timeout,
                                                                  jwtConfig->expected_issuer,
                                                                  jwtConfig->expected_audience,
+                                                                 jwtConfig->min_generation,
                                                                  jwtConfig->revoke_list_path,
                                                                  frontendService->getLogContext());
 

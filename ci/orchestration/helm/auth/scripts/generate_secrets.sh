@@ -76,7 +76,8 @@ python3 /scripts/generate_jwt.py \
   --jwks jwks.json \
   --issuer cta \
   --audience cta-admin \
-  --sub ctaadmin1
+  --sub ctaadmin1 \
+  --gen 0
 
 python3 /scripts/generate_jwt.py \
   --output-dir "$SECRETS_DIR" \
@@ -84,7 +85,8 @@ python3 /scripts/generate_jwt.py \
   --key "$SECRETS_DIR/server-admin.key.pem" \
   --issuer cta \
   --audience cta-wfe \
-  --sub ctaeos
+  --sub ctaeos \
+  --gen 0
 
 # generate cert for ctaeos (to be used with mTLS)
 generate_signed_cert ctaeos-self-signed eos-mgm.biglab localhost ctaeos

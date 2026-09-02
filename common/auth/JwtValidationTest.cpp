@@ -177,7 +177,7 @@ RevokeListEntry revokedAnHourAgo(const std::string& jti) {
   return {jti, toTomlDateTime(std::chrono::system_clock::now() - std::chrono::hours(1))};
 }
 
-std::string createTestJwt(bool expired, const std::string& kid, const std::string& jti = "test-jti") {
+std::string createTestJwt(bool expired, const std::string& kid, const std::string& jti = "test-jti", int gen = 0) {
   // first get the public key in pem format, then use it to sign stuff
 
   auto token = jwt::create()
@@ -186,6 +186,7 @@ std::string createTestJwt(bool expired, const std::string& kid, const std::strin
                  .set_payload_claim("exp",
                                     jwt::claim(std::chrono::system_clock::now()
                                                + (expired ? -std::chrono::minutes(60) : std::chrono::minutes(60))))
+                 .set_payload_claim("gen", jwt::claim(picojson::value(static_cast<int64_t>(gen))))
                  .set_header_claim("kid", jwt::claim(kid))
                  .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
                  .set_payload_claim("aud", jwt::claim(std::string("test-audience")))
@@ -201,12 +202,14 @@ protected:
   ValidateJwtTestFixture() : lc(log) {}
 
   std::shared_ptr<cta::auth::JwtAuthManager>
-  createAuthMgrWithMockFetcher(const std::string& expectedAudience = "test-audience") const {
+  createAuthMgrWithMockFetcher(const std::string& expectedAudience = "test-audience",
+                               uint32_t minGeneration = 0) const {
     return std::make_shared<cta::auth::JwtAuthManager>(std::make_unique<MockJwksFetcherValidateJwt>(),
                                                        "http://fake-jwks-uri",
                                                        1200,
                                                        "test",
                                                        expectedAudience,
+                                                       minGeneration,
                                                        std::nullopt,
                                                        lc);
   }
@@ -224,6 +227,7 @@ protected:
                                                        1200,
                                                        "test",
                                                        "test-audience",
+                                                       0,
                                                        std::nullopt,
                                                        lc);
   }
@@ -262,6 +266,7 @@ protected:
                                                        1200,
                                                        "test",
                                                        "test-audience",
+                                                       0,
                                                        revokeListPath,
                                                        lc);
   }
@@ -445,6 +450,47 @@ TEST_F(ValidateJwtTestFixture, TokenWithWrongIssuer) {
   expectRejectedBecause(authMgr->validateJwt(token, lc), "claim value does not match expected value");
 }
 
+TEST_F(ValidateJwtTestFixture, TokenMissingGenClaimIsRejected) {
+  auto authMgr = createAuthMgrWithMockFetcher();
+  std::string token =
+    jwt::create()
+      .set_issuer("test")
+      .set_payload_claim("jti", jwt::claim(std::string("test-jti")))
+      .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
+      .set_header_claim("kid", jwt::claim(std::string("test-kid")))
+      .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
+      .set_payload_claim("aud", jwt::claim(std::string("test-audience")))
+      .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
+
+  auto result = authMgr->validateJwt(token, lc);
+  ASSERT_FALSE(result.isValid);
+  ASSERT_TRUE(result.errorMessage.has_value());
+  EXPECT_EQ(result.errorMessage.value(), "Token does not contain a 'gen' claim");
+}
+
+TEST_F(ValidateJwtTestFixture, TokenWithGenBelowMinimumIsRejected) {
+  auto authMgr = createAuthMgrWithMockFetcher("test-audience", 5 /*minGeneration*/);
+
+  auto result = authMgr->validateJwt(createTestJwt(false /*expired*/, "test-kid", "test-jti", 4 /*gen*/), lc);
+  ASSERT_FALSE(result.isValid);
+  ASSERT_TRUE(result.errorMessage.has_value());
+  EXPECT_EQ(result.errorMessage.value(), "Token generation is too old, minimum required is 5");
+}
+
+TEST_F(ValidateJwtTestFixture, TokenWithGenEqualToMinimumIsValid) {
+  auto authMgr = createAuthMgrWithMockFetcher("test-audience", 5 /*minGeneration*/);
+
+  auto result = authMgr->validateJwt(createTestJwt(false /*expired*/, "test-kid", "test-jti", 5 /*gen*/), lc);
+  EXPECT_TRUE(result.isValid);
+}
+
+TEST_F(ValidateJwtTestFixture, TokenWithGenAboveMinimumIsValid) {
+  auto authMgr = createAuthMgrWithMockFetcher("test-audience", 5 /*minGeneration*/);
+
+  auto result = authMgr->validateJwt(createTestJwt(false /*expired*/, "test-kid", "test-jti", 6 /*gen*/), lc);
+  EXPECT_TRUE(result.isValid);
+}
+
 TEST_F(ValidateJwtTestFixture, TokenWithRevokedJtiIsRejected) {
   TempFile revokeList(makeRevokeListToml({revokedAnHourAgo("revoked-001")}), ".toml");
   auto authMgr = createAuthMgrWithRevokeListFile(revokeList.path());
@@ -610,6 +656,7 @@ TEST_F(ValidateJwtTestFixture, TokenWithMatchingAudienceIsValid) {
       .set_issuer("test")
       .set_payload_claim("jti", jwt::claim(std::string("test-jti")))
       .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
+      .set_payload_claim("gen", jwt::claim(picojson::value(static_cast<int64_t>(0))))
       .set_header_claim("kid", jwt::claim(std::string("test-kid")))
       .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
       .set_payload_claim("aud", jwt::claim(std::string("cta-frontend")))

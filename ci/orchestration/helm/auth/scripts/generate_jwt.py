@@ -82,6 +82,7 @@ def generate_jwt(
     lifetime_sec: int,
     issuer: str,
     audience: str,
+    gen: int,
     jti: Optional[str] = None,
 ) -> str:
     """Generate a JWT with all claims required by the CTA frontend."""
@@ -91,6 +92,7 @@ def generate_jwt(
         "sub": sub,
         "jti": jti or str(uuid.uuid4()),
         "iat": now,
+        "gen": gen,
         "exp": now + lifetime_sec,
         "typ": "Bearer",
         "iss": issuer,
@@ -124,6 +126,12 @@ def main() -> None:
         action="append",
         required=True,
         help="Subject claim (repeatable). Each --sub argument will generate a separate JWT with the name of the sub.",
+    )
+    parser.add_argument(
+        "--gen",
+        type=int,
+        required=True,
+        help="Generation (version) of the token. Can be used for mass-revocation of tokens by the server.",
     )
     parser.add_argument(
         "--lifetime",
@@ -176,7 +184,7 @@ def main() -> None:
         kid = jwk["kid"]
         if not isinstance(kid, str):
             raise TypeError("JWK kid must be a string")
-        token = generate_jwt(key, kid, sub, args.lifetime, args.issuer, args.audience, args.set_jti)
+        token = generate_jwt(key, kid, sub, args.lifetime, args.issuer, args.audience, args.gen, args.set_jti)
 
         safe_sub = sanitize_filename(sub)
         jwt_path = Path(args.output_dir) / f"{safe_sub}.jwt"
