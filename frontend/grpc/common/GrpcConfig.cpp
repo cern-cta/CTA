@@ -11,7 +11,7 @@
 
 namespace cta::frontend::grpc::common {
 
-cta::runtime::ValidationResult JwtAuthConfig::validate(log::Logger& log) const {
+cta::runtime::ValidationResult JwtAuthConfig::validate() const {
   cta::runtime::ValidationResult result;
   if (!enabled) {
     return result;
@@ -23,10 +23,6 @@ cta::runtime::ValidationResult JwtAuthConfig::validate(log::Logger& log) const {
   }
   if (jwks_total_timeout == 0) {
     result.addError("jwks_total_timeout", "must be greater than zero");
-  }
-  // a zero pub_key_timeout is allowed and means "never expire"
-  if (pub_key_timeout == 0) {
-    log(log::WARNING, "'pub_key_timeout' is set to zero. Cached public keys will not expire");
   }
 
   if (expected_issuer.empty()) {
@@ -44,7 +40,7 @@ cta::runtime::ValidationResult JwtAuthConfig::validate(log::Logger& log) const {
   return result;
 }
 
-cta::runtime::ValidationResult AuthConfig::validate(OperationMode operationMode, log::Logger& log) const {
+cta::runtime::ValidationResult AuthConfig::validate(OperationMode operationMode) const {
   bool jwtEnabled = jwt && jwt->enabled;
   bool mtlsEnabled = mtls && mtls->enabled;
   bool kerberosEnabled = kerberos && kerberos->enabled;
@@ -60,10 +56,10 @@ cta::runtime::ValidationResult AuthConfig::validate(OperationMode operationMode,
 
   cta::runtime::ValidationResult result;
   if (jwt) {
-    result.merge("jwt", jwt->validate(log));
+    result.merge("jwt", jwt->validate());
   }
   if (mtls) {
-    result.merge("mtls", mtls->validate(operationMode, log));
+    result.merge("mtls", mtls->validate(operationMode));
   }
   if (kerberos) {
     result.merge("kerberos", kerberos->validate(operationMode));
@@ -87,16 +83,13 @@ std::set<AuthMethod, std::less<>> AuthConfig::getEnabledMethods() const {
   return result;
 }
 
-cta::runtime::ValidationResult MtlsAuthConfig::validate(OperationMode operationMode, log::Logger& log) const {
+cta::runtime::ValidationResult MtlsAuthConfig::validate(OperationMode operationMode) const {
   cta::runtime::ValidationResult result;
   if (!enabled) {
     return result;
   }
   if (operationMode != OperationMode::WFE) {
     result.addError("enabled", "cannot be set outside of WFE mode; mTLS authentication is only usable in WFE mode");
-  }
-  if (aliases.empty()) {
-    log(log::WARNING, "WFE authentication method is set to mTLS, but no certificate aliases were provided");
   }
   for (const auto& [identity, hostnames] : aliases) {
     if (identity.empty()) {
@@ -153,10 +146,10 @@ cta::runtime::ValidationResult GeneralGrpcConfig::validate() const {
   return result;
 }
 
-cta::runtime::ValidationResult GrpcConfig::validate(OperationMode operationMode, log::Logger& log) const {
+cta::runtime::ValidationResult GrpcConfig::validate(OperationMode operationMode) const {
   cta::runtime::ValidationResult result;
   result.merge("grpc", grpc.validate());
-  result.merge("auth", auth.validate(operationMode, log));
+  result.merge("auth", auth.validate(operationMode));
   return result;
 }
 

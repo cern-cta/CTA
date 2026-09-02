@@ -45,17 +45,29 @@ void FrontendService::loadGrpcConfigParams(const std::string& configFilePath, lo
   auto grpcConfig = m_grpcConfig.value();
 
   // first, check that the configuration parameters are consistent between them
-  if (const auto validationResult = grpcConfig.validate(m_operationMode, log); !validationResult.ok()) {
+  if (const auto validationResult = grpcConfig.validate(m_operationMode); !validationResult.ok()) {
     throw exception::UserError("Invalid config in '" + configFilePath + "':\n" + validationResult.what(), false);
   }
 
-  // some setting adjustments for JWT-enabled configs
-  if (auto jwtConfig = grpcConfig.auth.jwt;
-      jwtConfig.has_value() && jwtConfig->pub_key_timeout < jwtConfig->cache_refresh_interval) {
-    log(log::WARNING,
-        "Cannot use a value for 'pub_key_timeout' that is less than 'cache_refresh_interval'. "
-        "Setting 'pub_key_timeout' equal to 'cache_refresh_interval'.");
-    jwtConfig->pub_key_timeout = jwtConfig->cache_refresh_interval;
+  // some setting adjustments for JWT-enabled configs. jwtConfig is guaranteed to be present thanks
+  // to the validation above
+  if (auto jwtConfig = grpcConfig.auth.jwt; grpcConfig.auth.getEnabledMethods().contains(AuthMethod::JWT)) {
+    // a zero pub_key_timeout is allowed and means "never expire"
+    if (jwtConfig->pub_key_timeout == 0) {
+      log(log::WARNING, "'pub_key_timeout' is set to zero. Cached public keys will not expire");
+    } else if (jwtConfig->pub_key_timeout < jwtConfig->cache_refresh_interval) {
+      log(log::WARNING,
+          "Cannot use a value for 'pub_key_timeout' that is less than 'cache_refresh_interval'. "
+          "Setting 'pub_key_timeout' equal to 'cache_refresh_interval'.");
+      jwtConfig->pub_key_timeout = jwtConfig->cache_refresh_interval;
+    }
+  }
+
+  // emit a warning in case there are no certificate aliases and we're using mTLS. mtlsConfig is guaranteed
+  // to be present, once again thanks to `.validate(...)` above.
+  if (auto mtlsConfig = grpcConfig.auth.mtls;
+      grpcConfig.auth.getEnabledMethods().contains(AuthMethod::MTLS) && mtlsConfig->aliases.empty()) {
+    log(log::WARNING, "mTLS is configured, but no certificate aliases were provided");
   }
 
   // now, set the auth methods accordingly

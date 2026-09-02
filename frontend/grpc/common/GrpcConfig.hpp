@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "common/log/Logger.hpp"
 #include "common/runtime/config/ValidationResult.hpp"
 #include "frontend/common/AuthMethod.hpp"
 #include "frontend/common/OperationModes.hpp"
@@ -73,10 +72,9 @@ struct JwtAuthConfig final {
 
   /**
    * @brief Validate the JWT configuration for consistency
-   * @param log A logger object
    * @return The validation result (will contain the errors if present)
    */
-  cta::runtime::ValidationResult validate(log::Logger& log) const;
+  cta::runtime::ValidationResult validate() const;
 
   static constexpr std::size_t memberCount() { return 8; }
 };
@@ -91,10 +89,9 @@ struct MtlsAuthConfig final {
   /**
    * @brief Validate the mTLS configuration for consistency
    * @param operationMode Operation mode the frontend is working in (WFE/Admin)
-   * @param log A logger object
    * @return The validation result (will contain the errors if present)
    */
-  cta::runtime::ValidationResult validate(OperationMode operationMode, log::Logger& log) const;
+  cta::runtime::ValidationResult validate(OperationMode operationMode) const;
 
   static constexpr std::size_t memberCount() { return 2; }
 };
@@ -125,10 +122,9 @@ struct AuthConfig final {
   /**
    * @brief Validate the authentication configuration for consistency
    * @param operationMode Operation mode the frontend is working in (WFE/Admin)
-   * @param log A logger object
    * @return The validation result (will contain the errors if present)
    */
-  cta::runtime::ValidationResult validate(OperationMode operationMode, log::Logger& log) const;
+  cta::runtime::ValidationResult validate(OperationMode operationMode) const;
 
   /**
    * @brief Get all enabled authentication methods
@@ -149,10 +145,9 @@ struct GrpcConfig final {
   /**
    * @brief Validate the gRPC configuration for consistency
    * @param operationMode Operation mode the frontend is working in (WFE/Admin)
-   * @param log A logger object
    * @return The validation result (will contain the errors if present)
    */
-  cta::runtime::ValidationResult validate(OperationMode operationMode, log::Logger& log) const;
+  cta::runtime::ValidationResult validate(OperationMode operationMode) const;
 
   static constexpr std::size_t memberCount() { return 2; }
 };
