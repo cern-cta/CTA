@@ -17,11 +17,24 @@ class GitError(RuntimeError):
 class Git:
     """Run safe, repository-scoped Git operations for release workflows."""
 
-    def __init__(self, root: Path, dry_run: bool = False, allow_unclean: bool = False):
+    def __init__(self, root: Path, dry_run: bool = False):
         """Create a Git runner rooted at a repository."""
         self.root = root
         self.dry_run = dry_run
-        self.allow_unclean = allow_unclean
+
+    def confirm_checkout_warnings(self, warnings: Sequence[str]) -> None:
+        """Show checkout warnings and require confirmation before continuing."""
+        for warning in warnings:
+            print(f"WARNING: {warning}")
+        if self.dry_run:
+            print("DRY-RUN: would ask for confirmation before continuing")
+            return
+        try:
+            answer = input("Continue with this checkout? [y/N] ").strip().lower()
+        except EOFError as error:
+            raise GitError("Checkout confirmation requires an interactive terminal") from error
+        if answer not in ("y", "yes"):
+            raise GitError("Release declined; no changes were made")
 
     def run(self, arguments: Sequence[str], mutate: bool = False) -> str:
         """Run Git with an argument list, printing mutations during dry runs."""
@@ -49,16 +62,16 @@ class Git:
         if self.run(["rev-parse", "--show-toplevel"]) != str(self.root.resolve()):
             raise GitError(f"Run release from repository root {self.root}")
         current = self.run(["branch", "--show-current"])
-        if self.allow_unclean:
-            print(
-                "WARNING: --allow-unclean skips worktree and current-branch checks; "
-                f"the release commit is still selected from {branch}."
+        checkout_warnings = []
+        if self.run(["status", "--porcelain"]):
+            checkout_warnings.append("The working tree is not clean")
+        if current != branch:
+            checkout_warnings.append(
+                f"The current branch is {current!r}, not {branch!r}; "
+                f"the release commit will still be selected from {branch}"
             )
-        else:
-            if self.run(["status", "--porcelain"]):
-                raise GitError("Working tree is not clean; commit or stash changes before releasing")
-            if current != branch:
-                raise GitError(f"Current branch is {current!r}; switch to {branch!r} before releasing")
+        if checkout_warnings:
+            self.confirm_checkout_warnings(checkout_warnings)
         if fetch:
             self.run(["fetch", "--force", "--tags", remote, branch], mutate=True)
         local = self.run(["rev-parse", branch])
@@ -87,13 +100,10 @@ class Git:
         if self.run(["rev-parse", "--show-toplevel"]) != str(self.root.resolve()):
             raise GitError(f"Run release from repository root {self.root}")
 
-        if self.allow_unclean:
-            print(
-                "WARNING: --allow-unclean skips the clean-worktree check; "
-                "the requested tag target is still resolved explicitly."
+        if self.run(["status", "--porcelain"]):
+            self.confirm_checkout_warnings(
+                ["The working tree is not clean; the requested tag target will still be resolved explicitly"]
             )
-        elif self.run(["status", "--porcelain"]):
-            raise GitError("Working tree is not clean; commit or stash changes before tagging")
 
         if fetch:
             self.run(["fetch", "--force", "--tags", remote, default_branch], mutate=True)

@@ -36,16 +36,21 @@ class GitTest(unittest.TestCase):
             assert git.editor_command() == "vim"
         run.assert_called_once_with(["var", "GIT_EDITOR"])
 
-    def test_allow_unclean_skips_worktree_and_current_branch_checks(self) -> None:
-        git = Git(Path("/tmp"), allow_unclean=True)
-        with patch.object(git, "run", side_effect=["/tmp", "topic", "abc", "abc"]) as run:
+    def test_confirms_dirty_non_release_checkout(self) -> None:
+        git = Git(Path("/tmp"))
+        with (
+            patch.object(git, "run", side_effect=["/tmp", "topic", "dirty", "abc", "abc"]) as run,
+            patch("builtins.input", return_value="yes") as user_input,
+        ):
             assert git.validate_repository("main", "origin", fetch=False) == "abc"
         assert run.call_args_list == [
             call(["rev-parse", "--show-toplevel"]),
             call(["branch", "--show-current"]),
+            call(["status", "--porcelain"]),
             call(["rev-parse", "main"]),
             call(["rev-parse", "origin/main"]),
         ]
+        user_input.assert_called_once_with("Continue with this checkout? [y/N] ")
 
     def test_fast_forwards_current_release_branch(self) -> None:
         git = Git(Path("/tmp"))
@@ -53,9 +58,12 @@ class GitTest(unittest.TestCase):
             assert git.validate_repository("main", "origin", fetch=False) == "new"
         assert run.call_args_list[-1] == call(["merge", "--ff-only", "origin/main"], mutate=True)
 
-    def test_allow_unclean_updates_release_branch_without_switching(self) -> None:
-        git = Git(Path("/tmp"), allow_unclean=True)
-        with patch.object(git, "run", side_effect=["/tmp", "topic", "old", "new", "", ""]) as run:
+    def test_confirmed_checkout_updates_release_branch_without_switching(self) -> None:
+        git = Git(Path("/tmp"))
+        with (
+            patch.object(git, "run", side_effect=["/tmp", "topic", "", "old", "new", "", ""]) as run,
+            patch("builtins.input", return_value="yes"),
+        ):
             assert git.validate_repository("main", "origin", fetch=False) == "new"
         assert run.call_args_list[-1] == call(
             ["branch", "--force", "main", "origin/main"],
@@ -63,13 +71,14 @@ class GitTest(unittest.TestCase):
         )
 
     def test_does_not_overwrite_local_release_branch_commits(self) -> None:
-        git = Git(Path("/tmp"), allow_unclean=True)
+        git = Git(Path("/tmp"))
         with (
             patch.object(
                 git,
                 "run",
-                side_effect=["/tmp", "topic", "local", "remote", GitError("not an ancestor")],
+                side_effect=["/tmp", "topic", "", "local", "remote", GitError("not an ancestor")],
             ),
+            patch("builtins.input", return_value="yes"),
             pytest.raises(GitError, match="Cannot fast-forward main"),
         ):
             git.validate_repository("main", "origin", fetch=False)
@@ -87,8 +96,8 @@ class GitTest(unittest.TestCase):
         assert run.call_args_list[-1] == call(["rev-parse", "--verify", "origin/main^{commit}"])
 
     def test_explicit_tag_target_accepts_any_git_revision(self) -> None:
-        git = Git(Path("/tmp"), allow_unclean=True)
-        with patch.object(git, "run", side_effect=["/tmp", "def456"]) as run:
+        git = Git(Path("/tmp"))
+        with patch.object(git, "run", side_effect=["/tmp", "", "def456"]) as run:
             assert git.resolve_tag_target("origin", "main", "maintenance", fetch=False) == "def456"
         run.assert_called_with(["rev-parse", "--verify", "maintenance^{commit}"])
 

@@ -36,14 +36,13 @@ class ReleaseContext:
         config: ReleaseConfig,
         api: GitLabAPI,
         dry_run: bool,
-        allow_unclean: bool = False,
     ):
         """Create a release context for one repository and invocation."""
         self.root = root
         self.config = config
         self.api = api
         self.dry_run = dry_run
-        self.git = Git(root, dry_run=dry_run, allow_unclean=allow_unclean)
+        self.git = Git(root, dry_run=dry_run)
 
     def find_release_issues(self, version: str) -> list[dict[str, Any]]:
         """Find release-labelled issues with the deterministic version title."""

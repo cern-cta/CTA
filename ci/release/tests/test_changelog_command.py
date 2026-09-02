@@ -74,6 +74,18 @@ class ChangelogCommandTest(unittest.TestCase):
     def test_release_merge_request_assigns_authenticated_user(self) -> None:
         assert changelog.authenticated_user_id({"id": 42, "username": "release-manager"}) == 42
 
+    def test_confirms_changelog_publication_after_editing(self) -> None:
+        with patch("builtins.input", return_value="yes") as user_input:
+            changelog.confirm_changelog_publication()
+        user_input.assert_called_once_with("Continue and publish the edited changelog? [y/N] ")
+
+    def test_declining_changelog_publication_aborts(self) -> None:
+        with (
+            patch("builtins.input", return_value=""),
+            pytest.raises(ReleaseWorkflowError, match="publication declined"),
+        ):
+            changelog.confirm_changelog_publication()
+
     def test_rejects_authenticated_user_without_numeric_id(self) -> None:
         self.api.authenticate.return_value = {"username": "release-manager"}
         with (

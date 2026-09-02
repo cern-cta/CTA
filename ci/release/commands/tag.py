@@ -277,16 +277,22 @@ def _validate_release_metadata(
     # The pipeline gate protects the exact commit that will be tagged.
     info("Checking the pipeline for the selected commit")
     pipeline = context.find_pipeline(target_commit, pipeline_source="push")
-    if pipeline is None:
-        if context.config.require_successful_target_pipeline:
-            raise ReleaseWorkflowError(
-                f"Pipeline for release commit {target_commit} was not found; wait for a successful pipeline"
+    pipeline_status = "not found" if pipeline is None else str(pipeline.get("status") or "unknown")
+    if context.config.require_successful_target_pipeline and pipeline_status != "success":
+        pipeline_url = pipeline.get("web_url") if pipeline else None
+        warning = f"Pipeline for release commit {target_commit} is {pipeline_status}"
+        if pipeline_url:
+            warning += f": {pipeline_url}"
+        print(f"WARNING: {warning}", file=sys.stderr)
+        if not skip_confirmation and not context.dry_run:
+            answer = (
+                input(f"Continue and create tag {version_text} without a successful pipeline? [y/N] ").strip().lower()
             )
+            if answer not in ("y", "yes"):
+                raise ReleaseWorkflowError("Tag creation declined; no changes were made")
+            confirmation_received = True
+    elif pipeline is None:
         info("No pipeline found; the pipeline gate is disabled")
-    elif context.config.require_successful_target_pipeline and pipeline.get("status") != "success":
-        raise ReleaseWorkflowError(
-            f"Pipeline for release commit {target_commit} is {pipeline.get('status')}; wait for a successful pipeline"
-        )
     else:
         info(f"Found successful pipeline: {pipeline.get('web_url') or pipeline.get('id', 'unknown')}")
 

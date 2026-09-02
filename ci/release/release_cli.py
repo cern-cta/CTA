@@ -67,20 +67,12 @@ Common alternatives:
        release status v5.12.0.0-1
   Preview a command, including all validations and planned mutations:
        release --dry-run tag v5.12.0.0-1
-  Test from a dirty or non-main checkout:
-       release --dry-run --allow-unclean tag v5.12.0.0-1
-
 Run "release COMMAND --help" for complete changelog, tag, and status scenarios.
-Global options such as --dry-run and --allow-unclean must precede COMMAND.""",
+Global options such as --dry-run must precede COMMAND.""",
     )
 
     # Global arguments
     argument_parser.add_argument("--dry-run", action="store_true", help="print planned mutations without making them")
-    argument_parser.add_argument(
-        "--allow-unclean",
-        action="store_true",
-        help="allow a dirty or non-main checkout while still resolving the tag target explicitly",
-    )
 
     # For every command, add its parser
     command_subparsers = argument_parser.add_subparsers(required=True)
@@ -108,7 +100,6 @@ def main(argv: list[str] | None = None) -> int:
             release_config,
             gitlab_api,
             parsed_arguments.dry_run,
-            allow_unclean=parsed_arguments.allow_unclean,
         )
 
         parsed_arguments.execute(release_context, parsed_arguments)

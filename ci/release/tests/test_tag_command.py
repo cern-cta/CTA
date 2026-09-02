@@ -174,6 +174,39 @@ class TagCommandTest(unittest.TestCase):
         ):
             tag.run(self.context, "v5.12.0.0-1", skip_confirmation=True, requested_target_ref=None)
 
+    def test_unsuccessful_pipeline_can_be_confirmed(self) -> None:
+        pipeline = {"status": "failed", "web_url": "https://gitlab.example/pipeline/42"}
+        with (
+            patch.object(tag, "inspect_release_context", return_value=({"iid": 1}, [])),
+            patch.object(self.context, "find_pipeline", return_value=pipeline),
+            patch("builtins.input", return_value="yes") as user_input,
+        ):
+            release_issue, confirmed = tag._validate_release_metadata(  # pyright: ignore[reportPrivateUsage]
+                self.context,
+                "v5.12.0.0-1",
+                "abc123",
+                version_was_explicit=True,
+                skip_confirmation=False,
+            )
+        assert release_issue == {"iid": 1}
+        assert confirmed
+        user_input.assert_called_once_with("Continue and create tag v5.12.0.0-1 without a successful pipeline? [y/N] ")
+
+    def test_missing_pipeline_declines_by_default(self) -> None:
+        with (
+            patch.object(tag, "inspect_release_context", return_value=({"iid": 1}, [])),
+            patch.object(self.context, "find_pipeline", return_value=None),
+            patch("builtins.input", return_value=""),
+            pytest.raises(ReleaseWorkflowError, match="Tag creation declined"),
+        ):
+            tag._validate_release_metadata(  # pyright: ignore[reportPrivateUsage]
+                self.context,
+                "v5.12.0.0-1",
+                "abc123",
+                version_was_explicit=True,
+                skip_confirmation=False,
+            )
+
     def test_inferred_version_rejects_missing_release_context(self) -> None:
         with (
             patch.object(self.context, "discover_unfinished_release_version", return_value="v5.12.0.0-1"),

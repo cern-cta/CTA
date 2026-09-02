@@ -115,6 +115,13 @@ def edit_changelog_notes(context: ReleaseContext, notes: str, version: str) -> s
     return edited_notes + "\n"
 
 
+def confirm_changelog_publication() -> None:
+    """Require explicit approval after the edited changelog has been reviewed."""
+    answer = input("Continue and publish the edited changelog? [y/N] ").strip().lower()
+    if answer not in ("y", "yes"):
+        raise ReleaseWorkflowError("Changelog publication declined; no branch or merge request was created")
+
+
 def generate_changelog_notes(
     context: ReleaseContext,
     previous_release: str,
@@ -199,6 +206,7 @@ def _publish_changelog(
     # Let the developer review the generated content.
     info("Opening the generated changelog in Git's editor")
     edited_notes = edit_changelog_notes(context, generated_notes, release_version.text)
+    confirm_changelog_publication()
     changelog_branch = context.config.changelog_branch(release_version.text)
 
     # Create or validate the deterministic changelog branch.
