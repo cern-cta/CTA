@@ -173,15 +173,14 @@ ARG INSTALL_CEPH_COMMON=true
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools \
-    packages="cta-admin-grpc cta-catalogue-utils cta-scheduler-utils \
+    packages="cta-cli cta-catalogue-utils cta-scheduler-utils \
       krb5-workstation cta-immutable-file-test eos-client xrootd-client \
       python3-xrootd bc" && \
     if [ "$INSTALL_CEPH_COMMON" = "true" ] || \
       [ "$INSTALL_CEPH_COMMON" = "1" ]; then \
       packages="$packages ceph-common"; \
     fi && \
-    /usr/local/bin/build-service.sh "$packages" && \
-    ln -sf /usr/bin/cta-admin-grpc /usr/bin/cta-admin
+    /usr/local/bin/build-service.sh "$packages"
 
 ENTRYPOINT ["/bin/bash"]
 

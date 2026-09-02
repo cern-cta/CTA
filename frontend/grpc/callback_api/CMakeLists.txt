@@ -24,26 +24,26 @@ include_directories(${XROOTD_INCLUDE_DIR} ${XROOTD_INCLUDE_DIR}/private)
 ## This is just the client code
 ##
 
-add_executable(cta-admin-grpc-stream
+add_executable(cta-admin-stream
   CtaAdminCmdStreaming.cpp
   ${PROJECT_SOURCE_DIR}/tools/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/tools/CtaAdminCmdParser.cpp
   ${PROJECT_SOURCE_DIR}/tools/CtaAdminParsedCmd.cpp
 )
-target_link_libraries(cta-admin-grpc-stream ProtoCtaFrontend)
+target_link_libraries(cta-admin-stream ProtoCtaFrontend)
 
 if(CTA_USE_PGSCHED)
-  target_link_libraries(cta-admin-grpc-stream
+  target_link_libraries(cta-admin-stream
           ${PROTOBUF3_LIBRARIES}
           ${GRPC_GRPC++_LIBRARY}
           ${GRPC_LIBRARY}
           ctascheduler ctacommon ctatapedaemoncommon ctacatalogue cryptopp)
 else()
-  target_link_libraries(cta-admin-grpc-stream
+  target_link_libraries(cta-admin-stream
           ${PROTOBUF3_LIBRARIES}
           ${GRPC_GRPC++_LIBRARY}
           ${GRPC_LIBRARY}
           ctascheduler ctacommon ctatapedaemoncommon ctaobjectstore ctacatalogue cryptopp)
 endif()
 
-install(TARGETS cta-admin-grpc-stream DESTINATION usr/bin)
+install(TARGETS cta-admin-stream DESTINATION usr/bin)

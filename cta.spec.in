@@ -118,7 +118,7 @@ cmake --build . --target shortunittests -j@JOBS_COUNT@
 %files
 %license COPYING
 
-# The main packages will be cta-taped, cta-frontend, cta-cli
+# Main packages
 
 %package -n cta-taped
 Summary: CERN Tape Archive: tape daemon
@@ -183,36 +183,6 @@ CERN Tape Archive maintenance daemon.
 %postun -n cta-maintd
 %systemd_postun_with_restart cta-maintd.service
 
-%package -n cta-frontend
-Summary: CERN Tape Archive: XRootD plugin
-Recommends: logrotate
-Recommends: systemd
-%{?systemd_ordering}
-Requires: cta-common = %{version}-%{release}
-Requires: cta-lib = %{version}-%{release}
-Requires: cta-lib-catalogue = %{version}-%{release}
-Requires: xrootd-client-libs %{xrootdVersionConstraint}
-Requires: xrootd-server %{xrootdVersionConstraint}
-%description -n cta-frontend
-CERN Tape Archive:
-The XRootD frontend plugin.
-%files -n cta-frontend
-%license COPYING
-%{_libdir}/libXrdSsiCta.so*
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/logrotate.d/cta-frontend
-%attr(0644,root,root) %doc %{_docdir}/cta/cta-frontend-xrootd.example.conf
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/cta-frontend
-%attr(0644,root,root) %{_unitdir}/cta-frontend.service
-
-%post -n cta-frontend
-%systemd_post cta-frontend.service
-
-%preun -n cta-frontend
-%systemd_preun cta-frontend.service
-
-%postun -n cta-frontend
-%systemd_postun_with_restart cta-frontend.service
-
 %package -n cta-frontend-grpc
 Summary: CERN Tape Archive: gRPC based frontend
 Recommends: logrotate
@@ -243,25 +213,10 @@ dCache frontend
 %postun -n cta-frontend-grpc
 %systemd_postun_with_restart cta-frontend-grpc.service
 
-%package -n cta-admin-grpc
-Summary: CERN Tape Archive command-line interface using gRPC
-Requires: grpc
-Provides: cta-admin = %{version}-%{release}
-Obsoletes: cta-admin < %{version}-%{release}
-%description -n cta-admin-grpc
-CERN Tape Archive:
-The cta-admin command-line utility using gRPC as its transport.
-
-%files -n cta-admin-grpc
-%license COPYING
-%attr(0755,root,root) %{_bindir}/cta-admin-grpc
-%attr(0644,root,root) %doc %{_docdir}/cta/cta-cli-grpc.example.conf
-
-
 %package -n cta-cli
 Summary: CERN Tape Archive: command line interface
 Requires: cta-lib-common = %{version}-%{release}
-Requires: xrootd-client-libs %{xrootdVersionConstraint}
+Requires: grpc
 %description -n cta-cli
 CERN Tape Archive:
 The command line utilities
@@ -269,14 +224,6 @@ The command line utilities
 %license COPYING
 %attr(0755,root,root) %{_bindir}/cta-admin
 %attr(0644,root,root) %doc %{_mandir}/man1/cta-admin.1cta*
-%attr(0755,root,root) %{_bindir}/cta-restore-deleted-files
-%attr(0644,root,root) %doc %{_mandir}/man1/cta-restore-deleted-files.1cta*
-%attr(0755,root,root) %{_bindir}/cta-send-event
-%attr(0755,root,root) %{_bindir}/cta-send-closew.sh
-%attr(0755,root,root) %{_bindir}/cta-verify-file
-%attr(0755,root,root) %{_bindir}/cta-change-storage-class
-%attr(0755,root,root) %{_bindir}/cta-eos-namespace-inject
-%attr(0644,root,root) %doc %{_mandir}/man1/cta-change-storage-class.1cta*
 %attr(0644,root,root) %doc %{_docdir}/cta/cta-cli.example.conf
 
 %package -n cta-lib-common

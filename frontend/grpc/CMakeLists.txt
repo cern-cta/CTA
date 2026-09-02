@@ -41,14 +41,14 @@ install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-frontend-grpc.1cta DESTINATION /u
 install (FILES cta-frontend.example.conf cta-frontend-grpc.example.toml jwt-revoke-list.example.toml DESTINATION usr/${CMAKE_INSTALL_DOCDIR})
 
 ##
-## cta-admin-grpc
+## cta-admin
 ##
 include_directories(${XRD_SSI_PB_DIR}/eos_cta/include)
 
 # Compiled protocol buffers
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
-add_executable(cta-admin-grpc
+add_executable(cta-admin
   CtaAdminGrpcCmd.cpp
   ${PROJECT_SOURCE_DIR}/frontend/common/RequestTracker.cpp
   ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmd.cpp
@@ -62,12 +62,12 @@ add_executable(cta-admin-grpc
 )
 
 if (CTA_USE_PGSCHED)
-  target_link_libraries(cta-admin-grpc
+  target_link_libraries(cta-admin
     ctacommon stdc++fs ctatapedaemoncommon ctascheduler ctacatalogue ctagrpc gssapi_krb5)
 else()
-  target_link_libraries(cta-admin-grpc
+  target_link_libraries(cta-admin
     ctacommon stdc++fs ctatapedaemoncommon ctascheduler ctaobjectstore ctacatalogue ctagrpc gssapi_krb5)
 endif()
 
-set_property (TARGET cta-admin-grpc APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
-install(TARGETS cta-admin-grpc DESTINATION usr/bin)
+set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+install(TARGETS cta-admin DESTINATION usr/bin)
