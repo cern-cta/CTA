@@ -54,8 +54,8 @@ convention = 'pep257'
 
 [lint.per-file-ignores]
 # Release helpers invoke trusted tools and validated HTTPS endpoints.
-'ci/release/git_repo.py' = ['S603', 'S607']
-'ci/release/gitlab_api.py' = ['S310']
+'ci/release/src/git_repo.py' = ['S603', 'S607']
+'ci/release/src/gitlab_api.py' = ['S310']
 
 # Release tests use fixed temporary paths and nested mock contexts.
 'ci/release/tests/test_*.py' = ['S108', 'SIM117']

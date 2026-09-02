@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2024 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""Small, dependency-free GitLab API client used by release tooling."""
+"""Small GitLab API client shared by release tooling and adjacent scripts."""
 
 from __future__ import annotations
 
