@@ -48,53 +48,61 @@ export PATH="$PWD/ci/release:$PATH"
 release --help
 ```
 
-Prepare a release from a clean, synchronized `main` checkout:
+Every command requires an explicit, unsuffixed release version such as `v5.12.0.0-1`.
+Prepare the changelog from `main` with:
 
 ```bash
-release prepare v5.12.0.0-1
+release changelog v5.12.0.0-1
 ```
 
-The changelog opens in the editor selected by Git (`GIT_EDITOR`, `core.editor`, `VISUAL`, or `EDITOR`).
+The command validates and synchronizes the selected target branch, generates changes since the previous numeric CTA release, and opens the proposed changelog in the editor selected by Git (`GIT_EDITOR`, `core.editor`, `VISUAL`, or `EDITOR`).
 
 Review and merge the printed changelog merge request, then tag the release:
 
 ```bash
-release tag
+release tag v5.12.0.0-1
 ```
 
-By default, `tag` resolves and tags the latest fetched `origin/main`. Pass any
-Git revision—such as a commit SHA, local branch, remote-tracking branch, or
-existing tag—with `--ref`:
+The tag command finds the unique merged changelog MR and tags its merge or squash commit after verifying that the commit is reachable from the selected target branch.
+It validates release metadata and the commit pipeline, opens Git's editor for a shared annotated-tag description, verifies that the complete selected tag family is absent locally and remotely, and asks for final confirmation.
+The tags are pushed atomically.
+
+By default, `changelog`, `tag`, and `status` use `main` as the target branch.
+For another release branch, pass the same `--target-branch` to every command:
 
 ```bash
-release tag v5.12.0.0-1 --ref origin/maintenance
-release tag v5.12.0.0-1 --ref 0123456789abcdef
+release changelog v5.12.0.0-1 --target-branch maintenance
+release status v5.12.0.0-1 --target-branch maintenance
+release tag v5.12.0.0-1 --target-branch maintenance
 ```
 
-When a version is explicit, missing release issues, merge requests, or
-changelog entries produce warnings and require confirmation. Without a
-version, the command requires an unambiguous merged release MR.
-
-Before creating a new annotated tag, the command opens Git's configured editor
-for a short tag description. For the default `origin/main` target, only a
-successful push pipeline for the selected commit satisfies the pipeline gate.
-On completion, the command prints links to the GitLab tag page and tag
-pipeline.
-
-Use `release --dry-run prepare VERSION` or `release --dry-run tag VERSION`
-to validate and print planned mutations.
-
-For testing the release command from a dirty feature-branch checkout, add
-`--allow-unclean`. This skips the worktree and current-branch checks, but still
-resolves the requested tag target explicitly; `prepare` still requires local
-`main` to match `origin/main`:
+Use `status` to inspect the release issue, changelog MR, release commit, pipeline, and tags without making changes:
 
 ```bash
-release --dry-run --allow-unclean prepare VERSION
+release status v5.12.0.0-1
 ```
 
-Run the release-tool tests with:
+By default, a final release publishes the base tag and the `pgsched`, `pgcat`, and `pgall` variants.
+Use one or more `--suffix` options to publish only selected variants without the base tag:
 
 ```bash
-python3 -m unittest discover -s ci/release/tests -v
+release tag v5.12.0.0-1 --suffix pgsched --suffix pgcat
+```
+
+Use `--release-candidate` to select the next unused RC number automatically.
+The selected RC or final tag family must be completely new; the command fails if any member already exists locally or remotely.
+
+```bash
+release tag v5.12.0.0-1 --release-candidate
+```
+
+If release metadata is incomplete or the release commit does not have a successful push pipeline, `tag` displays the current state and asks whether to continue.
+This approval is separate from the final publication confirmation.
+Use `--yes` with `tag` to accept its confirmations in unattended use.
+
+Place the global `--dry-run` option before the command to perform validation and display planned decisions without editing files or making local or remote mutations:
+
+```bash
+release --dry-run changelog v5.12.0.0-1
+release --dry-run tag v5.12.0.0-1
 ```
