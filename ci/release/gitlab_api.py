@@ -93,6 +93,20 @@ class GitLabAPI:
                 return results
             page = int(next_page)
 
+    def get_page(
+        self,
+        endpoint: str,
+        params: dict[str, Any] | None = None,
+        per_page: int = 20,
+    ) -> list[Any]:
+        """Fetch one bounded page from a list-returning GitLab endpoint."""
+        query = dict(params or {})
+        query.update({"page": 1, "per_page": per_page})
+        result = self._request(endpoint, "GET", params=query)[0]
+        if not isinstance(result, list):
+            raise GitLabAPIError(f"GET {endpoint} returned an object where a list was expected")
+        return result
+
     def post(
         self,
         endpoint: str,

@@ -126,8 +126,21 @@ class ReleaseContext:
         }
         if version:
             query_parameters["source_branch"] = self.config.changelog_branch(version)
+            return self.api.get_all("merge_requests", query_parameters)
 
-        return self.api.get_all("merge_requests", query_parameters)
+        query_parameters.update(
+            {
+                "state": "merged",
+                "labels": self.config.release_label,
+                "order_by": "updated_at",
+                "sort": "desc",
+            }
+        )
+        return self.api.get_page(
+            "merge_requests",
+            query_parameters,
+            per_page=self.config.release_discovery_limit,
+        )
 
     def find_changelog_merge_request(self, version: str) -> dict[str, Any] | None:
         """Find the unique deterministic changelog merge request for a release."""
@@ -147,6 +160,7 @@ class ReleaseContext:
         """Infer the sole merged release whose base tag has not been pushed."""
         info("Searching GitLab for merged release MRs without a corresponding tag")
         candidate_versions: list[str] = []
+        remote_tags = self.git.remote_tag_names(self.config.remote)
 
         for changelog_merge_request in self.find_changelog_merge_requests():
             source_branch = str(changelog_merge_request.get("source_branch", ""))
@@ -161,7 +175,7 @@ class ReleaseContext:
             except VersionError:
                 continue
 
-            if self.git.remote_tag_commit(self.config.remote, version) is None:
+            if version not in remote_tags:
                 candidate_versions.append(version)
 
         candidate_versions = sorted(set(candidate_versions), key=lambda item: CTAVersion.parse(item).core)

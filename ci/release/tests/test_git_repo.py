@@ -101,6 +101,13 @@ class GitTest(unittest.TestCase):
             assert git.resolve_tag_target("origin", "main", "maintenance", fetch=False) == "def456"
         run.assert_called_with(["rev-parse", "--verify", "maintenance^{commit}"])
 
+    def test_lists_remote_tag_names_with_one_request(self) -> None:
+        git = Git(Path("/tmp"))
+        output = "abc refs/tags/v5.1.0.0-1\ndef refs/tags/v5.2.0.0-1.rc1"
+        with patch.object(git, "run", return_value=output) as run:
+            assert git.remote_tag_names("origin") == {"v5.1.0.0-1", "v5.2.0.0-1.rc1"}
+        run.assert_called_once_with(["ls-remote", "--tags", "--refs", "origin"])
+
     def test_creates_multiple_tags_and_pushes_explicit_refs_atomically(self) -> None:
         git = Git(Path("/tmp"))
         with patch.object(git, "run") as run:

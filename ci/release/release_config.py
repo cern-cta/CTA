@@ -21,6 +21,7 @@ class ReleaseConfig:
     issue_template: str = ".gitlab/issue_templates/Release.md"
     release_label: str = "type::release"
     branch_suffix: str = "-changelog-update"
+    release_discovery_limit: int = 20
     # Prevent tag creation unless its target commit has a successful pipeline.
     require_successful_target_pipeline: bool = True
 

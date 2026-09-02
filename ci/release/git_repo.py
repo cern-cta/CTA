@@ -142,6 +142,18 @@ class Git:
             output = self.run(["ls-remote", "--tags", remote, f"refs/tags/{tag_name}"])
         return output.split()[0] if output else None
 
+    def remote_tag_names(self, remote: str) -> set[str]:
+        """List every remote tag name with one request."""
+        output = self.run(["ls-remote", "--tags", "--refs", remote])
+        if not output:
+            return set()
+        prefix = "refs/tags/"
+        return {
+            ref.removeprefix(prefix)
+            for line in output.splitlines()
+            if len(fields := line.split()) == 2 and (ref := fields[1]).startswith(prefix)
+        }
+
     def create_tag(self, target_commit: str, tag_name: str, description: str) -> None:
         """Create one annotated local tag using the multi-tag implementation."""
         self.create_tags(target_commit, {tag_name: description})

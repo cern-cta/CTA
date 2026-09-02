@@ -38,3 +38,13 @@ class GitLabAPITest(unittest.TestCase):
         with patch.object(api, "_request", return_value=({"message": "bad"}, {})):
             with pytest.raises(GitLabAPIError):
                 api.get_all("issues")
+
+    def test_fetches_one_bounded_page(self) -> None:
+        api = GitLabAPI("https://gitlab.example", "1", "secret")
+        with patch.object(api, "_request", return_value=([{"id": 1}], {"x-next-page": "2"})) as request:
+            assert api.get_page("merge_requests", {"state": "merged"}, per_page=20) == [{"id": 1}]
+        request.assert_called_once_with(
+            "merge_requests",
+            "GET",
+            params={"state": "merged", "page": 1, "per_page": 20},
+        )
