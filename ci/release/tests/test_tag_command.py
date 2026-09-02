@@ -43,9 +43,9 @@ class TagCommandTest(unittest.TestCase):
             patch.object(self.context, "add_issue_note"),
             redirect_stdout(StringIO()) as output,
         ):
-            tag.run(self.context, "v5.12.0.0-1", skip_confirmation=True, requested_target_ref=None)
+            tag.run(self.context, "v5.12.0.0-1", skip_confirmation=True)
         assert "Commit to tag for v5.12.0.0-1: abc123" in output.getvalue()
-        find_pipeline.assert_called_once_with("abc123", pipeline_source="push")
+        find_pipeline.assert_called_once_with("abc123", "main", pipeline_source="push")
         assert list(create_tags.call_args.args[1]) == [
             "v5.12.0.0-1",
             "v5.12.0.0-1.pgsched",
@@ -71,7 +71,7 @@ class TagCommandTest(unittest.TestCase):
                 self.context,
                 "v5.12.0.0-1",
                 skip_confirmation=True,
-                requested_target_ref=None,
+                target_branch="main",
                 requested_suffixes=["pgall", "pgsched", "pgall"],
             )
         assert list(create_tags.call_args.args[1]) == ["v5.12.0.0-1.pgsched", "v5.12.0.0-1.pgall"]
@@ -105,7 +105,7 @@ class TagCommandTest(unittest.TestCase):
                 patch.object(self.context, "add_issue_note"),
                 redirect_stdout(StringIO()),
             ):
-                tag.run(self.context, "v5.12.0.0-1", skip_confirmation=False, requested_target_ref=None)
+                tag.run(self.context, "v5.12.0.0-1", skip_confirmation=False)
             assert [tag_call.args[1] for tag_call in remote_tag.call_args_list] == expected_tags
 
     def test_release_candidate_uses_recoverable_family_number(self) -> None:
@@ -130,7 +130,7 @@ class TagCommandTest(unittest.TestCase):
                 self.context,
                 "v5.12.0.0-1",
                 skip_confirmation=True,
-                requested_target_ref=None,
+                target_branch="main",
                 release_candidate=True,
             )
         assert list(create_tags.call_args.args[1]) == [
@@ -172,7 +172,7 @@ class TagCommandTest(unittest.TestCase):
             patch.object(self.context.git, "remote_tag_commit", return_value=None),
             patch.object(self.context, "add_issue_note"),
         ):
-            tag.run(self.context, "v5.12.0.0-1", skip_confirmation=True, requested_target_ref=None)
+            tag.run(self.context, "v5.12.0.0-1", skip_confirmation=True)
 
     def test_unsuccessful_pipeline_can_be_confirmed(self) -> None:
         pipeline = {"status": "failed", "web_url": "https://gitlab.example/pipeline/42"}
@@ -232,4 +232,4 @@ class TagCommandTest(unittest.TestCase):
             patch.object(tag, "inspect_release_context", return_value=(None, ["Changelog entry was not found"])),
             pytest.raises(ReleaseWorkflowError, match="explicit version"),
         ):
-            tag.run(self.context, None, skip_confirmation=True, requested_target_ref=None)
+            tag.run(self.context, None, skip_confirmation=True)

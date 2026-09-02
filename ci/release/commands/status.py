@@ -21,6 +21,7 @@ def add_subparser(subparsers: SubparserRegistry) -> None:
         epilog="""Examples:
   Inspect a known release:
     release status v5.12.0.0-1
+    release status v5.12.0.0-1 --target-branch maintenance
 
   Discover the sole merged changelog MR whose base tag is unfinished:
     release status
@@ -29,22 +30,29 @@ This command is always read-only. Discovery fails rather than guessing when no
 unfinished release or more than one unfinished release is found.""",
     )
     parser.add_argument("version", nargs="?")
+    parser.add_argument(
+        "--target-branch",
+        default="main",
+        help="branch containing the release changelog (default: main)",
+    )
     parser.set_defaults(execute=run_from_arguments)
 
 
 def run_from_arguments(context: ReleaseContext, parsed_arguments: argparse.Namespace) -> None:
     """Translate parsed status arguments into the typed command call."""
-    run(context, parsed_arguments.version)
+    run(context, parsed_arguments.version, parsed_arguments.target_branch)
 
 
-def run(context: ReleaseContext, version_text: str | None) -> None:
+def run(context: ReleaseContext, version_text: str | None, target_branch: str = "main") -> None:
     """Print reconstructed Git and GitLab state for a release."""
-    version_text = version_text or context.discover_unfinished_release_version()
+    version_text = version_text or context.discover_unfinished_release_version(target_branch)
     info(f"Inspecting release status for {version_text}")
     release_issue, changelog_merge_request, release_commit = context.load_release_context(
-        version_text, validate_local=False
+        version_text,
+        validate_local=False,
+        target_branch=target_branch,
     )
-    pipeline = context.find_pipeline(release_commit, context.config.default_branch, pipeline_source="push")
+    pipeline = context.find_pipeline(release_commit, target_branch, pipeline_source="push")
     local_tag_commit = context.git.local_tag_commit(version_text)
     remote_tag_commit = context.git.remote_tag_commit(context.config.remote, version_text)
 

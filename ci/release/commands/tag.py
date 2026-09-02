@@ -50,10 +50,9 @@ Automatically numbered release candidate:
   release tag v5.12.0.0-1 --release-candidate --suffix pgall
     Existing RC families are inspected to choose or safely complete rcN.
 
-Tag a specific commit, branch, or other Git revision:
-  release tag v5.12.0.0-1 --ref origin/maintenance
-  release tag v5.12.0.0-1 --ref 0123456789abcdef
-    Without --ref, the latest origin/main commit is tagged.
+Tag a release merged into another target branch:
+  release tag v5.12.0.0-1 --target-branch maintenance
+    The latest origin/maintenance commit is tagged. The default target branch is main.
 
 Omit VERSION only after merging exactly one unfinished changelog MR:
   release tag
@@ -70,9 +69,9 @@ opening an editor, creating tags, pushing refs, or changing GitLab.""",
     )
     parser.add_argument("version", nargs="?")
     parser.add_argument(
-        "--ref",
-        dest="requested_target_ref",
-        help="commit, branch, tag, or other Git revision to tag (default: latest origin/main)",
+        "--target-branch",
+        default="main",
+        help="branch containing the merged changelog and release commit (default: main)",
     )
     parser.add_argument(
         "--yes",
@@ -102,7 +101,7 @@ def run_from_arguments(context: ReleaseContext, parsed_arguments: argparse.Names
         context,
         parsed_arguments.version,
         parsed_arguments.skip_confirmation,
-        parsed_arguments.requested_target_ref,
+        parsed_arguments.target_branch,
         release_candidate=parsed_arguments.release_candidate,
         requested_suffixes=parsed_arguments.requested_suffixes,
     )
@@ -136,7 +135,10 @@ def edit_tag_description(context: ReleaseContext, version: str, target_commit: s
 
 
 def inspect_release_context(
-    context: ReleaseContext, version_text: str, target_commit: str
+    context: ReleaseContext,
+    version_text: str,
+    target_commit: str,
+    target_branch: str,
 ) -> tuple[dict[str, Any] | None, list[str]]:
     """Return the release issue and non-fatal context validation warnings."""
     warnings: list[str] = []
@@ -146,7 +148,7 @@ def inspect_release_context(
         warnings.append(f"Release issue {context.config.issue_title(version_text)!r} was not found")
 
     info("Looking for the changelog merge request")
-    changelog_merge_request = context.find_changelog_merge_request(version_text)
+    changelog_merge_request = context.find_changelog_merge_request(version_text, target_branch)
     if changelog_merge_request is None:
         warnings.append(f"Release merge request for {version_text} was not found")
     elif changelog_merge_request.get("state") != "merged":
@@ -252,11 +254,12 @@ def _validate_release_metadata(
     target_commit: str,
     version_was_explicit: bool,
     skip_confirmation: bool,
+    target_branch: str = "main",
 ) -> tuple[dict[str, Any] | None, bool]:
     """Validate release metadata and the exact commit pipeline."""
     # Release metadata is advisory only when the version was explicit.
     info("Inspecting release metadata for the selected version and commit")
-    release_issue, warnings = inspect_release_context(context, version_text, target_commit)
+    release_issue, warnings = inspect_release_context(context, version_text, target_commit, target_branch)
     confirmation_received = skip_confirmation
 
     if warnings:
@@ -276,7 +279,7 @@ def _validate_release_metadata(
 
     # The pipeline gate protects the exact commit that will be tagged.
     info("Checking the pipeline for the selected commit")
-    pipeline = context.find_pipeline(target_commit, pipeline_source="push")
+    pipeline = context.find_pipeline(target_commit, target_branch, pipeline_source="push")
     pipeline_status = "not found" if pipeline is None else str(pipeline.get("status") or "unknown")
     if context.config.require_successful_target_pipeline and pipeline_status != "success":
         pipeline_url = pipeline.get("web_url") if pipeline else None
@@ -443,16 +446,17 @@ def run(
     context: ReleaseContext,
     version_text: str | None,
     skip_confirmation: bool,
-    requested_target_ref: str | None,
+    target_branch: str = "main",
     release_candidate: bool = False,
     requested_suffixes: list[str] | None = None,
 ) -> None:
     """Resolve a revision, validate context, and publish a selected tag family."""
+    target_branch = target_branch or context.config.default_branch
     # Resolve the base release and requested build variants.
     version_was_explicit = version_text is not None
     if version_text is None:
         info("No version provided; attempting release version discovery")
-        version_text = context.discover_unfinished_release_version()
+        version_text = context.discover_unfinished_release_version(target_branch)
     else:
         info(f"Using explicitly requested release version {version_text}")
 
@@ -464,12 +468,12 @@ def run(
     )
 
     # Resolve the exact commit independently of the local checkout branch.
-    target_ref = requested_target_ref or f"{context.config.remote}/{context.config.default_branch}"
+    target_ref = f"{context.config.remote}/{target_branch}"
     info(f"Resolving tag target {target_ref!r}")
 
     target_commit = context.git.resolve_tag_target(
         context.config.remote,
-        context.config.default_branch,
+        target_branch,
         target_ref,
         fetch=not context.dry_run,
     )
@@ -483,6 +487,7 @@ def run(
         target_commit,
         version_was_explicit,
         skip_confirmation,
+        target_branch,
     )
 
     selected_versions = _select_tag_versions(

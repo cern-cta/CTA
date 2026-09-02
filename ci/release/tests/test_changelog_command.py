@@ -104,6 +104,7 @@ class ChangelogCommandTest(unittest.TestCase):
                 "## 5.12.0.0-1\n",
                 7,
                 merge_request,
+                "main",
             )
         find_issue.assert_not_called()
 

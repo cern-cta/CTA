@@ -118,11 +118,16 @@ class ReleaseContext:
 
         self.api.post(f"issues/{issue_iid}/notes", json={"body": f"{marker}\n{body}"})
 
-    def find_changelog_merge_requests(self, version: str | None = None) -> list[dict[str, Any]]:
+    def find_changelog_merge_requests(
+        self,
+        version: str | None = None,
+        target_branch: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Find changelog merge requests, optionally restricted to one version."""
+        target_branch = target_branch or self.config.default_branch
         query_parameters: dict[str, Any] = {
             "scope": "all",
-            "target_branch": self.config.default_branch,
+            "target_branch": target_branch,
         }
         if version:
             query_parameters["source_branch"] = self.config.changelog_branch(version)
@@ -142,11 +147,15 @@ class ReleaseContext:
             per_page=self.config.release_discovery_limit,
         )
 
-    def find_changelog_merge_request(self, version: str) -> dict[str, Any] | None:
+    def find_changelog_merge_request(
+        self,
+        version: str,
+        target_branch: str | None = None,
+    ) -> dict[str, Any] | None:
         """Find the unique deterministic changelog merge request for a release."""
         matching_merge_requests = [
             changelog_merge_request
-            for changelog_merge_request in self.find_changelog_merge_requests(version)
+            for changelog_merge_request in self.find_changelog_merge_requests(version, target_branch)
             if changelog_merge_request.get("source_branch") == self.config.changelog_branch(version)
             and changelog_merge_request.get("title") == self.config.changelog_merge_request_title(version)
         ]
@@ -156,13 +165,14 @@ class ReleaseContext:
 
         return matching_merge_requests[0] if matching_merge_requests else None
 
-    def discover_unfinished_release_version(self) -> str:
+    def discover_unfinished_release_version(self, target_branch: str | None = None) -> str:
         """Infer the sole merged release whose base tag has not been pushed."""
+        target_branch = target_branch or self.config.default_branch
         info("Searching GitLab for merged release MRs without a corresponding tag")
         candidate_versions: list[str] = []
         remote_tags = self.git.remote_tag_names(self.config.remote)
 
-        for changelog_merge_request in self.find_changelog_merge_requests():
+        for changelog_merge_request in self.find_changelog_merge_requests(target_branch=target_branch):
             source_branch = str(changelog_merge_request.get("source_branch", ""))
             if changelog_merge_request.get("state") != "merged" or not source_branch.endswith(
                 self.config.branch_suffix
@@ -217,15 +227,19 @@ class ReleaseContext:
         return pipelines[0] if pipelines else None
 
     def load_release_context(
-        self, version_text: str, validate_local: bool
+        self,
+        version_text: str,
+        validate_local: bool,
+        target_branch: str | None = None,
     ) -> tuple[dict[str, Any], dict[str, Any], str]:
         """Validate and reconstruct a release issue, MR, and target commit."""
+        target_branch = target_branch or self.config.default_branch
         info(f"Reconstructing release context for {version_text}")
         CTAVersion.parse(version_text)
 
         if validate_local:
             self.git.validate_repository(
-                self.config.default_branch,
+                target_branch,
                 self.config.remote,
                 fetch=not self.dry_run,
             )
@@ -234,16 +248,15 @@ class ReleaseContext:
         if release_issue is None:
             raise ReleaseWorkflowError(f"Release issue {self.config.issue_title(version_text)!r} does not exist")
 
-        changelog_merge_request = self.find_changelog_merge_request(version_text)
+        changelog_merge_request = self.find_changelog_merge_request(version_text, target_branch)
         if changelog_merge_request is None:
             raise ReleaseWorkflowError(f"Changelog MR for {version_text} does not exist")
         if (
             changelog_merge_request.get("state") != "merged"
-            or changelog_merge_request.get("target_branch") != self.config.default_branch
+            or changelog_merge_request.get("target_branch") != target_branch
         ):
             raise ReleaseWorkflowError(
-                f"Changelog MR {changelog_merge_request.get('web_url')} has not been merged into "
-                f"{self.config.default_branch}"
+                f"Changelog MR {changelog_merge_request.get('web_url')} has not been merged into {target_branch}"
             )
 
         release_commit = changelog_merge_request.get("squash_commit_sha") or changelog_merge_request.get(
@@ -253,8 +266,8 @@ class ReleaseContext:
             raise ReleaseWorkflowError(f"Changelog MR {changelog_merge_request.get('web_url')} has no resulting commit")
 
         containing_refs = self.api.get_all(f"repository/commits/{release_commit}/refs", {"type": "branch"})
-        if not any(ref.get("name") == self.config.default_branch for ref in containing_refs):
-            raise ReleaseWorkflowError(f"Release commit {release_commit} is not on {self.config.default_branch}")
+        if not any(ref.get("name") == target_branch for ref in containing_refs):
+            raise ReleaseWorkflowError(f"Release commit {release_commit} is not on {target_branch}")
 
         changelog, _ = self.read_repository_file(self.config.changelog_file, release_commit)
         if version_text.removeprefix("v") not in changelog:

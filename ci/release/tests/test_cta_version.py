@@ -60,8 +60,18 @@ class VersionTest(unittest.TestCase):
                 CTAVersion.parse(value)
 
     def test_requires_unsuffixed_command_input(self) -> None:
-        with pytest.raises(VersionError):
+        with pytest.raises(VersionError, match=r"release tag v5\.10\.11\.0-1 --suffix pgsched"):
             CTAVersion.parse("v5.10.11.0-1.pgsched", require_base=True)
+
+    def test_manually_appended_release_candidate_suggests_option(self) -> None:
+        with pytest.raises(VersionError, match=r"release tag v5\.10\.11\.0-1 --release-candidate"):
+            CTAVersion.parse("v5.10.11.0-1.rc2", require_base=True)
+
+    def test_malformed_version_includes_expected_format_and_example(self) -> None:
+        with pytest.raises(VersionError) as error:
+            CTAVersion.parse("5.12.0-1", require_base=True)
+        assert "v5.<major>.<minor>.<patch>-<package>" in str(error.value)
+        assert "v5.12.0.0-1" in str(error.value)
 
     def test_variants_are_deduplicated_and_canonically_ordered(self) -> None:
         assert parse_build_variants(["pgall", "pgsched", "pgall"]) == (

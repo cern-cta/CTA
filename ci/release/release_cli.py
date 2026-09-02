@@ -61,6 +61,9 @@ def create_argument_parser() -> argparse.ArgumentParser:
   2. Review and merge the changelog MR printed by the command.
   3. Tag the merged release. With no version, the sole unfinished changelog MR is used:
        release tag
+  For a release from another branch, pass the same target to each command:
+       release changelog v5.12.0.0-1 --target-branch maintenance
+       release tag v5.12.0.0-1 --target-branch maintenance
 
 Common alternatives:
   Inspect progress without changing anything:

@@ -17,6 +17,7 @@ TAG_RE = re.compile(
     r"(?:\.rc([1-9]\d*))?(?:\.(pgsched|pgcat|pgall))?$"
 )
 HISTORICAL_RE = re.compile(r"^v(5)\.(\d+)\.(\d+)\.(\d+)-(\d+)(?:\..+)?$")
+SUFFIXED_BASE_RE = re.compile(r"^(v5\.\d+\.\d+\.\d+-\d+)(\..+)$")
 
 
 class VersionError(RuntimeError):
@@ -70,10 +71,27 @@ class CTAVersion:
         """Parse a supported CTA tag, optionally requiring an unsuffixed base."""
         match = (BASE_RE if require_base else TAG_RE).fullmatch(text)
         if not match:
+            if require_base and (suffixed_match := SUFFIXED_BASE_RE.fullmatch(text)):
+                base_version, suffix = suffixed_match.groups()
+                suffix_hint = ""
+                if tag_match := TAG_RE.fullmatch(text):
+                    options = []
+                    if tag_match.group(6) is not None:
+                        options.append("--release-candidate")
+                    if variant := tag_match.group(7):
+                        options.extend(("--suffix", variant))
+                    suffix_hint = f" Use 'release tag {base_version} {' '.join(options)}' instead."
+                raise VersionError(
+                    f"Release commands require an unsuffixed base version such as {base_version!r}; "
+                    f"do not append {suffix!r} manually.{suffix_hint}"
+                )
+
             expected = "v5.<major>.<minor>.<patch>-<package>"
+            example = "v5.12.0.0-1"
             if not require_base:
                 expected += "[.rcN][.pgsched|.pgcat|.pgall]"
-            raise VersionError(f"Invalid CTA version {text!r}; expected {expected}")
+                example += ".rc1.pgall"
+            raise VersionError(f"Invalid CTA version {text!r}; expected {expected}, for example {example!r}")
         groups = match.groups()
         release_candidate = None if require_base else _optional_int(groups[5])
         variant = None if require_base or groups[6] is None else BuildVariant(groups[6])

@@ -37,7 +37,7 @@ def add_subparser(subparsers: SubparserRegistry) -> None:
         description="Generate, review, and publish a changelog entry for an unsuffixed CTA release version.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""What this command does:
-  1. Validates a clean main checkout, synchronizes it, and checks GitLab authentication.
+  1. Validates and synchronizes the selected target branch, then checks GitLab authentication.
   2. Finds or creates the release ticket.
   3. Generates changes since the previous numeric CTA release.
   4. Opens the generated entry in Git's configured editor.
@@ -45,6 +45,7 @@ def add_subparser(subparsers: SubparserRegistry) -> None:
 
 Example:
   release changelog v5.12.0.0-1
+  release changelog v5.12.0.0-1 --target-branch maintenance
 
 The VERSION must be unsuffixed. Build variants and release candidates share the
 base release's changelog and are selected later by "release tag".
@@ -56,12 +57,17 @@ Use "release --dry-run changelog VERSION" to validate and preview the workflow
 without opening an editor or changing GitLab.""",
     )
     parser.add_argument("version")
+    parser.add_argument(
+        "--target-branch",
+        default="main",
+        help="branch to prepare and merge the changelog into (default: main)",
+    )
     parser.set_defaults(execute=run_from_arguments)
 
 
 def run_from_arguments(context: ReleaseContext, parsed_arguments: argparse.Namespace) -> None:
     """Translate parsed changelog arguments into the typed command call."""
-    run(context, parsed_arguments.version)
+    run(context, parsed_arguments.version, parsed_arguments.target_branch)
 
 
 def merge_request_description(version: str, issue_iid: int) -> str:
@@ -223,6 +229,7 @@ def _publish_changelog(
     generated_notes: str,
     user_id: int,
     existing_merge_request: dict[str, Any] | None,
+    target_branch: str,
 ) -> None:
     """Publish edited notes to a branch and create or reuse its merge request."""
     # Let the developer review the generated content.
@@ -281,13 +288,13 @@ def _publish_changelog(
 
     # Create the reviewable release merge request.
     info("Creating or reusing the changelog merge request")
-    changelog_merge_request = context.find_changelog_merge_request(release_version.text)
+    changelog_merge_request = context.find_changelog_merge_request(release_version.text, target_branch)
     if changelog_merge_request is None:
         changelog_merge_request = context.api.post(
             "merge_requests",
             json={
                 "source_branch": changelog_branch,
-                "target_branch": context.config.default_branch,
+                "target_branch": target_branch,
                 "title": context.config.changelog_merge_request_title(release_version.text),
                 "description": merge_request_description(release_version.text, release_issue["iid"]),
                 "labels": ",".join(MERGE_REQUEST_LABELS),
@@ -323,14 +330,14 @@ def _publish_changelog(
     )
 
 
-def run(context: ReleaseContext, version_text: str) -> None:
+def run(context: ReleaseContext, version_text: str, target_branch: str = "main") -> None:
     """Create or reuse the issue, changelog branch, and merge request."""
     release_version = CTAVersion.parse(version_text, require_base=True)
 
     # Validate local and remote release prerequisites.
     info("Validating the local repository")
     changelog_commit = context.git.validate_repository(
-        context.config.default_branch,
+        target_branch,
         context.config.remote,
         fetch=not context.dry_run,
     )
@@ -339,7 +346,7 @@ def run(context: ReleaseContext, version_text: str) -> None:
 
     # Reuse safe release resources and reject conflicting state.
     info(f"Checking release state for {release_version.text}")
-    existing_merge_request = context.find_changelog_merge_request(release_version.text)
+    existing_merge_request = context.find_changelog_merge_request(release_version.text, target_branch)
     if existing_merge_request and existing_merge_request.get("state") == "merged":
         print(f"{release_version.text} already has a merged changelog MR. Run: release tag {release_version.text}")
         return
@@ -372,4 +379,5 @@ def run(context: ReleaseContext, version_text: str) -> None:
         generated_notes,
         user_id,
         existing_merge_request,
+        target_branch,
     )

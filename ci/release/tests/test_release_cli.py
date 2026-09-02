@@ -49,8 +49,8 @@ class ArgumentParserTest(unittest.TestCase):
                     "tag",
                     "v5.12.0.0-1",
                     "--yes",
-                    "--ref",
-                    "main",
+                    "--target-branch",
+                    "maintenance",
                     "--release-candidate",
                     "--suffix",
                     "pgall",
@@ -60,13 +60,13 @@ class ArgumentParserTest(unittest.TestCase):
 
             status_args = parser.parse_args(["status", "v5.12.0.0-1"])
             status_args.execute(context, status_args)
-        changelog_run.assert_called_once_with(context, "v5.12.0.0-1")
+        changelog_run.assert_called_once_with(context, "v5.12.0.0-1", "main")
         tag_run.assert_called_once_with(
             context,
             "v5.12.0.0-1",
             True,
-            "main",
+            "maintenance",
             release_candidate=True,
             requested_suffixes=["pgall"],
         )
-        status_run.assert_called_once_with(context, "v5.12.0.0-1")
+        status_run.assert_called_once_with(context, "v5.12.0.0-1", "main")
