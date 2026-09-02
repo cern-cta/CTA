@@ -37,7 +37,7 @@ def add_subparser(subparsers: SubparserRegistry) -> None:
         description="Generate, review, and publish a changelog entry for an unsuffixed CTA release version.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""What this command does:
-  1. Validates a clean, synchronized main checkout and GitLab authentication.
+  1. Validates a clean main checkout, synchronizes it, and checks GitLab authentication.
   2. Finds or creates the release ticket.
   3. Generates changes since the previous numeric CTA release.
   4. Opens the generated entry in Git's configured editor.

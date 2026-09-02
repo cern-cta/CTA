@@ -45,9 +45,10 @@ class Git:
         return completed_process.stdout.strip()
 
     def validate_repository(self, branch: str, remote: str, fetch: bool = True) -> str:
-        """Validate a clean checkout synchronized with its remote branch."""
+        """Validate a checkout and fast-forward its local release branch."""
         if self.run(["rev-parse", "--show-toplevel"]) != str(self.root.resolve()):
             raise GitError(f"Run release from repository root {self.root}")
+        current = self.run(["branch", "--show-current"])
         if self.allow_unclean:
             print(
                 "WARNING: --allow-unclean skips worktree and current-branch checks; "
@@ -56,18 +57,24 @@ class Git:
         else:
             if self.run(["status", "--porcelain"]):
                 raise GitError("Working tree is not clean; commit or stash changes before releasing")
-            current = self.run(["branch", "--show-current"])
             if current != branch:
                 raise GitError(f"Current branch is {current!r}; switch to {branch!r} before releasing")
         if fetch:
-            self.run(["fetch", "--tags", remote, branch], mutate=True)
+            self.run(["fetch", "--force", "--tags", remote, branch], mutate=True)
         local = self.run(["rev-parse", branch])
         remote_sha = self.run(["rev-parse", f"{remote}/{branch}"])
         if local != remote_sha:
-            raise GitError(
-                f"{branch} is not synchronized with {remote}/{branch} (local {local[:12]}, remote {remote_sha[:12]})"
-            )
-        return local
+            try:
+                self.run(["merge-base", "--is-ancestor", branch, f"{remote}/{branch}"])
+            except GitError as error:
+                raise GitError(
+                    f"Cannot fast-forward {branch} to {remote}/{branch}; the local branch contains other commits"
+                ) from error
+            if current == branch:
+                self.run(["merge", "--ff-only", f"{remote}/{branch}"], mutate=True)
+            else:
+                self.run(["branch", "--force", branch, f"{remote}/{branch}"], mutate=True)
+        return remote_sha
 
     def resolve_tag_target(
         self,
@@ -89,7 +96,7 @@ class Git:
             raise GitError("Working tree is not clean; commit or stash changes before tagging")
 
         if fetch:
-            self.run(["fetch", "--tags", remote, default_branch], mutate=True)
+            self.run(["fetch", "--force", "--tags", remote, default_branch], mutate=True)
 
         try:
             return self.run(["rev-parse", "--verify", f"{target_ref}^{{commit}}"])

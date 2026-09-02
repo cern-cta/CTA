@@ -8,9 +8,11 @@ import unittest
 from pathlib import Path
 from unittest.mock import call, patch
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from git_repo import Git
+from git_repo import Git, GitError
 
 
 class GitTest(unittest.TestCase):
@@ -36,13 +38,47 @@ class GitTest(unittest.TestCase):
 
     def test_allow_unclean_skips_worktree_and_current_branch_checks(self) -> None:
         git = Git(Path("/tmp"), allow_unclean=True)
-        with patch.object(git, "run", side_effect=["/tmp", "abc", "abc"]) as run:
+        with patch.object(git, "run", side_effect=["/tmp", "topic", "abc", "abc"]) as run:
             assert git.validate_repository("main", "origin", fetch=False) == "abc"
         assert run.call_args_list == [
             call(["rev-parse", "--show-toplevel"]),
+            call(["branch", "--show-current"]),
             call(["rev-parse", "main"]),
             call(["rev-parse", "origin/main"]),
         ]
+
+    def test_fast_forwards_current_release_branch(self) -> None:
+        git = Git(Path("/tmp"))
+        with patch.object(git, "run", side_effect=["/tmp", "main", "", "old", "new", "", ""]) as run:
+            assert git.validate_repository("main", "origin", fetch=False) == "new"
+        assert run.call_args_list[-1] == call(["merge", "--ff-only", "origin/main"], mutate=True)
+
+    def test_allow_unclean_updates_release_branch_without_switching(self) -> None:
+        git = Git(Path("/tmp"), allow_unclean=True)
+        with patch.object(git, "run", side_effect=["/tmp", "topic", "old", "new", "", ""]) as run:
+            assert git.validate_repository("main", "origin", fetch=False) == "new"
+        assert run.call_args_list[-1] == call(
+            ["branch", "--force", "main", "origin/main"],
+            mutate=True,
+        )
+
+    def test_does_not_overwrite_local_release_branch_commits(self) -> None:
+        git = Git(Path("/tmp"), allow_unclean=True)
+        with (
+            patch.object(
+                git,
+                "run",
+                side_effect=["/tmp", "topic", "local", "remote", GitError("not an ancestor")],
+            ),
+            pytest.raises(GitError, match="Cannot fast-forward main"),
+        ):
+            git.validate_repository("main", "origin", fetch=False)
+
+    def test_fetch_refreshes_remote_branch_and_tags(self) -> None:
+        git = Git(Path("/tmp"))
+        with patch.object(git, "run", side_effect=["/tmp", "main", "", "", "new", "new"]) as run:
+            assert git.validate_repository("main", "origin") == "new"
+        assert call(["fetch", "--force", "--tags", "origin", "main"], mutate=True) in run.call_args_list
 
     def test_default_tag_target_is_latest_remote_main(self) -> None:
         git = Git(Path("/tmp"))
