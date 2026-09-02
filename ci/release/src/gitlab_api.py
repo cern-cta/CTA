@@ -19,6 +19,10 @@ Commit = dict[str, Any]
 class GitLabAPIError(RuntimeError):
     """An actionable GitLab API failure."""
 
+    def __init__(self, message: str, status_code: int | None = None):
+        super().__init__(message)
+        self.status_code = status_code
+
 
 class GitLabAPI:
     """Provide typed, dependency-free access to project-scoped GitLab APIs."""
@@ -69,7 +73,10 @@ class GitLabAPI:
                 detail = json.loads(raw).get("message", raw)
             except (json.JSONDecodeError, AttributeError):
                 detail = raw
-            raise GitLabAPIError(f"{method} {endpoint} failed ({error.code}): {detail}") from error
+            raise GitLabAPIError(
+                f"{method} {endpoint} failed ({error.code}): {detail}",
+                status_code=error.code,
+            ) from error
         except URLError as error:
             raise GitLabAPIError(f"{method} {endpoint} failed: {error.reason}") from error
 

@@ -25,29 +25,61 @@ from release_context import ReleaseContext, ReleaseWorkflowError
 TOKEN_FILE = Path.home() / ".config" / "cta" / "gitlab-api-token"
 
 
-def load_token(dry_run: bool) -> str:
-    """Load a GitLab token from the environment, shared file, or prompt."""
+def load_token() -> tuple[str | None, str | None]:
+    """Load a GitLab token and identify where it came from."""
     token = os.environ.get("GITLAB_TOKEN")
     if token:
-        return token
+        return token, "GITLAB_TOKEN"
     if TOKEN_FILE.is_file():
-        return TOKEN_FILE.read_text(encoding="utf-8").strip()
+        return TOKEN_FILE.read_text(encoding="utf-8").strip(), str(TOKEN_FILE)
+    return None, None
 
-    # Token not found:
-    if dry_run:
-        raise ReleaseWorkflowError("Set GITLAB_TOKEN or create ~/.config/cta-ci-debug/token to run diagnostics")
+
+def prompt_for_token(gitlab_url: str, reason: str) -> str:
+    """Explain how to create a token and securely read it from a terminal."""
     if not sys.stdin.isatty():
-        raise ReleaseWorkflowError("GITLAB_TOKEN is required in a non-interactive terminal")
+        raise ReleaseWorkflowError(f"{reason}; set GITLAB_TOKEN to a valid token with the api scope")
 
-    print("GitLab authentication is required (token needs the api scope).")
+    print(f"GitLab authentication is required: {reason}.")
+    print("Create a personal access token with the api scope here:")
+    print(f"  {gitlab_url.rstrip('/')}/-/user_settings/personal_access_tokens")
     token = getpass.getpass("Token: ").strip()
     if not token:
         raise ReleaseWorkflowError("No GitLab token was provided")
+    return token
+
+
+def store_token(token: str) -> None:
+    """Offer to persist a successfully authenticated token."""
     if ask_yes_no(f"Store token in {TOKEN_FILE}?", default_yes=True):
         TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
         TOKEN_FILE.write_text(token, encoding="utf-8")
         TOKEN_FILE.chmod(stat.S_IRUSR | stat.S_IWUSR)
-    return token
+
+
+def create_authenticated_api(config: ReleaseConfig, dry_run: bool = False) -> GitLabAPI:
+    """Load and validate credentials, prompting once for a replacement when needed."""
+    token, token_source = load_token()
+    prompted = token is None
+    if token is None:
+        token = prompt_for_token(config.gitlab_url, "no token was found")
+
+    api = GitLabAPI(config.gitlab_url, config.project_id, token)
+    try:
+        api.authenticate()
+    except GitLabAPIError as error:
+        if error.status_code not in {401, 403}:
+            raise
+        source_description = f"the token from {token_source}" if token_source else "the supplied token"
+        replacement = prompt_for_token(config.gitlab_url, f"{source_description} was rejected by GitLab")
+        api = GitLabAPI(config.gitlab_url, config.project_id, replacement)
+        api.authenticate()
+        token = replacement
+        prompted = True
+
+    if prompted and not dry_run:
+        store_token(token)
+    return api
 
 
 def create_argument_parser() -> argparse.ArgumentParser:
@@ -94,11 +126,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         repository_root = discover_repository_root()
         release_config = ReleaseConfig()
-        gitlab_api = GitLabAPI(
-            release_config.gitlab_url,
-            release_config.project_id,
-            load_token(parsed_arguments.dry_run),
-        )
+        gitlab_api = create_authenticated_api(release_config, parsed_arguments.dry_run)
         release_context = ReleaseContext(
             repository_root,
             release_config,
