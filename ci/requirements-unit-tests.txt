@@ -1,5 +1,0 @@
-# SPDX-FileCopyrightText: 2026 CERN
-# SPDX-License-Identifier: GPL-3.0-or-later
-
-pytest>=8.0.0
-typing-extensions>=4.4.0

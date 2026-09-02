@@ -38,7 +38,7 @@ unit-test-python:
     GIT_SUBMODULE_STRATEGY: "none"
   before_script:
     - !reference [.merge-train-guard, before_script]
-    - uv pip install --system --requirement ci/requirements-unit-tests.txt
+    - uv pip install --system pytest typing-extensions
   script:
     - pytest ci --ignore=ci/system_tests --junitxml=python-ci-unit-tests.xml
   artifacts:
