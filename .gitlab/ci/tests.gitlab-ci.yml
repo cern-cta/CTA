@@ -24,6 +24,28 @@ spec:
     fi
   - dnf -y --nogpgcheck install cta-integrationtests cta-integrationtests-debuginfo
 
+unit-test-python:
+  stage: test
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+  rules:
+    - when: on_success
+  image:
+    name: $IMAGE_LINT # At a future point in time this should reference a better scoped image
+    entrypoint: ["/usr/bin/env"]
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"
+  before_script:
+    - !reference [.merge-train-guard, before_script]
+    - uv pip install --system --requirement ci/requirements-unit-tests.txt
+  script:
+    - pytest ci --ignore=ci/system_tests --junitxml=python-ci-unit-tests.xml
+  artifacts:
+    when: always
+    reports:
+      junit: python-ci-unit-tests.xml
+
 test-cta-valgrind:
   stage: test
   needs:
