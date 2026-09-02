@@ -86,6 +86,27 @@ class ChangelogCommandTest(unittest.TestCase):
         ):
             changelog.confirm_changelog_publication()
 
+    def test_declining_existing_changelog_resources_does_not_create_issue(self) -> None:
+        branch = {"name": "v5.12.0.0-1-changelog-update", "commit": {"id": "abc123"}}
+        merge_request = {"state": "opened", "web_url": "https://gitlab.example/mr/42"}
+        with (
+            patch.object(changelog, "edit_changelog_notes", return_value="## 5.12.0.0-1\n"),
+            patch.object(changelog, "confirm_changelog_publication"),
+            patch.object(self.api, "get_all", return_value=[branch]),
+            patch.object(self.context, "find_or_create_release_issue") as find_issue,
+            patch("builtins.input", return_value=""),
+            pytest.raises(ReleaseWorkflowError, match="resource reuse declined"),
+        ):
+            changelog._publish_changelog(  # pyright: ignore[reportPrivateUsage]
+                self.context,
+                CTAVersion.parse("v5.12.0.0-1"),
+                "abc123",
+                "## 5.12.0.0-1\n",
+                7,
+                merge_request,
+            )
+        find_issue.assert_not_called()
+
     def test_rejects_authenticated_user_without_numeric_id(self) -> None:
         self.api.authenticate.return_value = {"username": "release-manager"}
         with (

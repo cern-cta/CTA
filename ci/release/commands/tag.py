@@ -334,6 +334,7 @@ def _publish_selected_tags(
     target_commit: str,
     selected_versions: list[CTAVersion],
     confirmation_received: bool,
+    skip_confirmation: bool,
 ) -> list[str]:
     """Create missing annotated tags and atomically publish missing refs."""
     selected_tag_names = [version.text for version in selected_versions]
@@ -352,6 +353,17 @@ def _publish_selected_tags(
     if not missing_remote_tags:
         info("All selected tags already exist remotely at the expected commit")
         return selected_tag_names
+
+    reused_local_tags = [tag_name for tag_name in missing_remote_tags if tag_name not in missing_local_tags]
+    if reused_local_tags:
+        print("WARNING: These existing local tags will be reused and pushed:")
+        for tag_name in reused_local_tags:
+            print(f"  {tag_name}")
+        if not skip_confirmation and not context.dry_run:
+            answer = input("Continue and push these existing local tags? [y/N] ").strip().lower()
+            if answer not in ("y", "yes"):
+                raise ReleaseWorkflowError("Local tag reuse declined; no tags were pushed")
+            confirmation_received = True
 
     if not confirmation_received and not context.dry_run:
         answer = input("Create and push the selected tags? [y/N] ").strip().lower()
@@ -488,6 +500,7 @@ def run(
         target_commit,
         selected_versions,
         confirmation_received,
+        skip_confirmation,
     )
 
     _report_tags_and_pipelines(

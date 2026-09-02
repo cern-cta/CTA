@@ -122,6 +122,29 @@ def confirm_changelog_publication() -> None:
         raise ReleaseWorkflowError("Changelog publication declined; no branch or merge request was created")
 
 
+def confirm_changelog_reuse(
+    changelog_branch: str,
+    branch_resource: dict[str, Any] | None,
+    merge_request: dict[str, Any] | None,
+) -> None:
+    """Require approval before reusing an existing changelog branch or open MR."""
+    resources = []
+    if branch_resource is not None:
+        branch_commit = branch_resource.get("commit", {}).get("id", "unknown")
+        resources.append(f"branch {changelog_branch} at {branch_commit}")
+    if merge_request is not None and merge_request.get("state") == "opened":
+        resources.append(f"open merge request {merge_request.get('web_url', 'with unknown URL')}")
+    if not resources:
+        return
+
+    print("Existing changelog resources will be reused:")
+    for resource in resources:
+        print(f"  {resource}")
+    answer = input("Continue and reuse these changelog resources? [y/N] ").strip().lower()
+    if answer not in ("y", "yes"):
+        raise ReleaseWorkflowError("Changelog resource reuse declined; no release issue was created")
+
+
 def generate_changelog_notes(
     context: ReleaseContext,
     previous_release: str,
@@ -199,7 +222,6 @@ def _publish_changelog(
     changelog_commit: str,
     generated_notes: str,
     user_id: int,
-    release_issue: dict[str, Any],
     existing_merge_request: dict[str, Any] | None,
 ) -> None:
     """Publish edited notes to a branch and create or reuse its merge request."""
@@ -216,13 +238,20 @@ def _publish_changelog(
         {"search": f"^{escape_branch_search(changelog_branch)}$"},
     )
     exact_branches = [item for item in branches if item.get("name") == changelog_branch]
-    if exact_branches:
-        branch_resource = exact_branches[0]
-        if exact_branches[0]["commit"]["id"] != changelog_commit and existing_merge_request is None:
-            raise ReleaseWorkflowError(
-                f"Existing branch {changelog_branch} does not start at expected commit {changelog_commit}"
-            )
-    else:
+    branch_resource = exact_branches[0] if exact_branches else None
+    if exact_branches and exact_branches[0]["commit"]["id"] != changelog_commit and existing_merge_request is None:
+        raise ReleaseWorkflowError(
+            f"Existing branch {changelog_branch} does not start at expected commit {changelog_commit}"
+        )
+
+    confirm_changelog_reuse(changelog_branch, branch_resource, existing_merge_request)
+
+    release_issue = context.find_or_create_release_issue(release_version.text, create=True)
+    if release_issue is None:
+        raise ReleaseWorkflowError("Release issue creation returned no issue; cannot create a linked merge request")
+    info(f"Release ticket: {release_issue['web_url']}")
+
+    if branch_resource is None:
         branch_resource = context.api.post(
             "repository/branches",
             params={"branch": changelog_branch, "ref": changelog_commit},
@@ -316,10 +345,6 @@ def run(context: ReleaseContext, version_text: str) -> None:
         return
 
     _validate_tag_is_available(context, release_version)
-    release_issue = context.find_or_create_release_issue(release_version.text, create=True)
-    if release_issue is not None:
-        info(f"Release ticket: {release_issue['web_url']}")
-
     previous_version = previous_release(release_version, context.git.tags())
 
     # Generate the candidate changelog from the previous numeric release.
@@ -340,15 +365,11 @@ def run(context: ReleaseContext, version_text: str) -> None:
         print(f"DRY-RUN: update {context.config.changelog_file} and create or reuse its merge request")
         return
 
-    if release_issue is None:
-        raise ReleaseWorkflowError("Release issue creation returned no issue; cannot create a linked merge request")
-
     _publish_changelog(
         context,
         release_version,
         changelog_commit,
         generated_notes,
         user_id,
-        release_issue,
         existing_merge_request,
     )

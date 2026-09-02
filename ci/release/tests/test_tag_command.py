@@ -16,7 +16,7 @@ from typing_extensions import override
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from commands import tag
-from cta_version import BuildVariant
+from cta_version import BuildVariant, CTAVersion
 from release_config import ReleaseConfig
 from release_context import ReleaseContext, ReleaseWorkflowError
 
@@ -206,6 +206,24 @@ class TagCommandTest(unittest.TestCase):
                 version_was_explicit=True,
                 skip_confirmation=False,
             )
+
+    def test_existing_unpushed_local_tag_requires_confirmation(self) -> None:
+        with (
+            patch.object(self.context.git, "local_tag_commit", return_value="abc123"),
+            patch.object(self.context.git, "remote_tag_commit", return_value=None),
+            patch.object(self.context.git, "push_tags") as push_tags,
+            patch("builtins.input", return_value=""),
+            pytest.raises(ReleaseWorkflowError, match="Local tag reuse declined"),
+        ):
+            tag._publish_selected_tags(  # pyright: ignore[reportPrivateUsage]
+                self.context,
+                "v5.12.0.0-1",
+                "abc123",
+                [CTAVersion.parse("v5.12.0.0-1")],
+                confirmation_received=False,
+                skip_confirmation=False,
+            )
+        push_tags.assert_not_called()
 
     def test_inferred_version_rejects_missing_release_context(self) -> None:
         with (
