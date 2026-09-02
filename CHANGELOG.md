@@ -1,3 +1,18 @@
+## 5.11.21.5-1 (2026-09-02)
+
+### New Features
+
+- [runtime] Add additional validation logic to application config (cta/CTA!1567)
+
+
+### Bug Fixes
+
+- [Tools] Fix 'priority' column in 'cta-admin dr ls' command (cta/CTA!1546)
+
+- [runtime] Make signals, telemetry and health handling more robust (cta/CTA!1554)
+
+- [runtime] Add bounds checking and better error diagnostics to TOML loading (cta/CTA!1559)
+
 ## 5.11.21.0-1 (2026-08-25)
 
 ### New Features
