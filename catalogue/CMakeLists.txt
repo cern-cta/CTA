@@ -130,6 +130,7 @@ add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/AllCatalogueSchema.hpp
   COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" bash ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS
+    create_all_schemas_SQL
     ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh
     ${CMAKE_CURRENT_SOURCE_DIR}/AllCatalogueSchema.hpp.in
 )
