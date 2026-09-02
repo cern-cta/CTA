@@ -8,13 +8,14 @@ from __future__ import annotations
 import argparse
 import shlex
 import subprocess
-import sys
 import tempfile
 import time
+from dataclasses import dataclass
 from typing import Any
 from urllib.parse import quote
 
 from commands import SubparserRegistry
+from confirmation import ask_yes_no, confirm
 from cta_version import (
     BUILD_VARIANTS,
     CTAVersion,
@@ -24,6 +25,17 @@ from cta_version import (
 )
 from gitlab_api import GitLabAPIError
 from release_context import ReleaseContext, ReleaseWorkflowError, info
+
+
+@dataclass(frozen=True)
+class TagPlan:
+    """Fully preflighted tag publication state."""
+
+    version_text: str
+    target_branch: str
+    target_commit: str
+    release_issue: dict[str, Any] | None
+    tag_descriptions: dict[str, str]
 
 
 def add_subparser(subparsers: SubparserRegistry) -> None:
@@ -48,26 +60,22 @@ Only selected build variants (no base tag):
 Automatically numbered release candidate:
   release tag v5.12.0.0-1 --release-candidate
   release tag v5.12.0.0-1 --release-candidate --suffix pgall
-    Existing RC families are inspected to choose or safely complete rcN.
+    Existing RC families are inspected and the next unused rcN is selected.
 
 Tag a release merged into another target branch:
   release tag v5.12.0.0-1 --target-branch maintenance
-    The latest origin/maintenance commit is tagged. The default target branch is main.
-
-Omit VERSION only after merging exactly one unfinished changelog MR:
-  release tag
-    Discovery fails rather than guessing when zero or multiple releases match.
+    The merged changelog MR commit is tagged after verifying it is on origin/maintenance.
+    The default target branch is main.
 
 Before publishing, the command prints the exact commit, checks release metadata,
 requires a successful push pipeline for that commit, opens Git's editor for one
-shared tag description, and validates all selected local and remote tags. Missing
-tags are pushed together. Existing matching tags are safely reused; conflicting
-tag targets stop the command.
+shared tag description, and verifies every selected tag is absent locally and
+remotely. The complete new tag family is pushed atomically.
 
-Use "release --dry-run tag VERSION" to perform discovery and validation without
+Use "release --dry-run tag VERSION" to perform preflight and validation without
 opening an editor, creating tags, pushing refs, or changing GitLab.""",
     )
-    parser.add_argument("version", nargs="?")
+    parser.add_argument("version")
     parser.add_argument(
         "--target-branch",
         default="main",
@@ -82,7 +90,7 @@ opening an editor, creating tags, pushing refs, or changing GitLab.""",
     parser.add_argument(
         "--release-candidate",
         action="store_true",
-        help="automatically select and create the next or recoverable RC tag family",
+        help="automatically select and create the next RC tag family",
     )
     parser.add_argument(
         "--suffix",
@@ -137,10 +145,9 @@ def edit_tag_description(context: ReleaseContext, version: str, target_commit: s
 def inspect_release_context(
     context: ReleaseContext,
     version_text: str,
-    target_commit: str,
     target_branch: str,
-) -> tuple[dict[str, Any] | None, list[str]]:
-    """Return the release issue and non-fatal context validation warnings."""
+) -> tuple[dict[str, Any] | None, dict[str, Any], str, list[str]]:
+    """Load the authoritative merged MR commit and advisory metadata warnings."""
     warnings: list[str] = []
     info(f"Looking for release ticket {context.config.issue_title(version_text)!r}")
     release_issue = context.find_or_create_release_issue(version_text, create=False)
@@ -150,9 +157,15 @@ def inspect_release_context(
     info("Looking for the changelog merge request")
     changelog_merge_request = context.find_changelog_merge_request(version_text, target_branch)
     if changelog_merge_request is None:
-        warnings.append(f"Release merge request for {version_text} was not found")
-    elif changelog_merge_request.get("state") != "merged":
-        warnings.append(f"Release merge request {changelog_merge_request.get('web_url')} is not merged")
+        raise ReleaseWorkflowError(f"Release merge request for {version_text} was not found")
+    if changelog_merge_request.get("state") != "merged":
+        raise ReleaseWorkflowError(f"Release merge request {changelog_merge_request.get('web_url')} is not merged")
+
+    target_commit = changelog_merge_request.get("squash_commit_sha") or changelog_merge_request.get("merge_commit_sha")
+    if not target_commit:
+        raise ReleaseWorkflowError(
+            f"Release merge request {changelog_merge_request.get('web_url')} has no resulting commit"
+        )
 
     try:
         info(f"Checking {context.config.changelog_file} at the selected commit for {version_text}")
@@ -163,7 +176,7 @@ def inspect_release_context(
     except GitLabAPIError as error:
         warnings.append(f"Could not inspect {context.config.changelog_file} at {target_commit}: {error}")
 
-    return release_issue, warnings
+    return release_issue, changelog_merge_request, str(target_commit), warnings
 
 
 def build_tag_description(shared_description: str, variant: BuildVariant | None) -> str:
@@ -184,41 +197,30 @@ def _select_build_variants(
 
     if variants_explicitly_selected:
         return True, build_variants
-    if skip_confirmation:
-        return False, BUILD_VARIANTS
-    if context.dry_run:
-        info("DRY-RUN: would ask whether to include all PostgreSQL variants; selecting the base tag only")
-        return False, build_variants
 
-    answer = input("Also create pgsched, pgcat, and pgall tag variants? [y/N] ").strip().lower()
-    return False, BUILD_VARIANTS if answer in ("y", "yes") else build_variants
+    include_variants = ask_yes_no(
+        "Also create pgsched, pgcat, and pgall tag variants?",
+        assume_yes=skip_confirmation,
+        dry_run=context.dry_run,
+    )
+    return False, BUILD_VARIANTS if include_variants else build_variants
 
 
 def _validate_selected_tags(
     context: ReleaseContext,
     tag_names: list[str],
     target_commit: str,
-) -> tuple[list[str], list[str]]:
-    """Validate tag targets and return missing local and remote tags."""
-    local_commits: dict[str, str | None] = {}
-    remote_commits: dict[str, str | None] = {}
-
-    for tag_name in tag_names:
-        local_commits[tag_name] = context.git.local_tag_commit(tag_name)
-        remote_commits[tag_name] = context.git.remote_tag_commit(context.config.remote, tag_name)
-        local_commit = local_commits[tag_name]
-        remote_commit = remote_commits[tag_name]
-
-        if (local_commit and local_commit != target_commit) or (remote_commit and remote_commit != target_commit):
-            raise ReleaseWorkflowError(
-                f"HIGH SEVERITY: {tag_name} does not point to expected commit {target_commit} "
-                f"(local={local_commit}, remote={remote_commit})"
-            )
-
-    return (
-        [tag_name for tag_name in tag_names if local_commits[tag_name] is None],
-        [tag_name for tag_name in tag_names if remote_commits[tag_name] is None],
-    )
+) -> None:
+    """Require every tag in a new family to be absent locally and remotely."""
+    del target_commit
+    local_tags = {name: context.git.local_tag_commit(name) for name in tag_names}
+    remote_tags = context.git.remote_tag_commits(context.config.remote, tag_names)
+    existing = [name for name in tag_names if local_tags[name] is not None or name in remote_tags]
+    if existing:
+        raise ReleaseWorkflowError(
+            f"Tag family already exists in part or in full: {', '.join(existing)}; "
+            "remove conflicting local state or inspect the existing release"
+        )
 
 
 def _find_tag_pipelines(
@@ -251,29 +253,27 @@ def _find_tag_pipelines(
 def _validate_release_metadata(
     context: ReleaseContext,
     version_text: str,
-    target_commit: str,
-    version_was_explicit: bool,
+    branch_tip: str,
     skip_confirmation: bool,
     target_branch: str = "main",
-) -> tuple[dict[str, Any] | None, bool]:
+) -> tuple[dict[str, Any] | None, str]:
     """Validate release metadata and the exact commit pipeline."""
     # Release metadata is advisory only when the version was explicit.
     info("Inspecting release metadata for the selected version and commit")
-    release_issue, warnings = inspect_release_context(context, version_text, target_commit, target_branch)
-    confirmation_received = skip_confirmation
+    release_issue, _, target_commit, warnings = inspect_release_context(context, version_text, target_branch)
+    if not context.git.is_ancestor(target_commit, branch_tip):
+        raise ReleaseWorkflowError(
+            f"Release commit {target_commit} is not reachable from {context.config.remote}/{target_branch}"
+        )
 
     if warnings:
-        for warning in warnings:
-            print(f"WARNING: {warning}", file=sys.stderr)
-        if not version_was_explicit:
-            raise ReleaseWorkflowError(
-                "Inferred release context is incomplete; rerun release tag with an explicit version to override"
-            )
-        if not skip_confirmation and not context.dry_run:
-            answer = input(f"Continue and create tag {version_text} despite these warnings? [y/N] ").strip().lower()
-            if answer not in ("y", "yes"):
-                raise ReleaseWorkflowError("Tag creation declined; no changes were made")
-            confirmation_received = True
+        confirm(
+            f"Continue preparing tag {version_text} despite these metadata warnings?",
+            "Tag preparation declined; no changes were made",
+            warnings=warnings,
+            assume_yes=skip_confirmation,
+            dry_run=context.dry_run,
+        )
     else:
         info("Release issue, merged MR, and changelog entry were found")
 
@@ -286,20 +286,19 @@ def _validate_release_metadata(
         warning = f"Pipeline for release commit {target_commit} is {pipeline_status}"
         if pipeline_url:
             warning += f": {pipeline_url}"
-        print(f"WARNING: {warning}", file=sys.stderr)
-        if not skip_confirmation and not context.dry_run:
-            answer = (
-                input(f"Continue and create tag {version_text} without a successful pipeline? [y/N] ").strip().lower()
-            )
-            if answer not in ("y", "yes"):
-                raise ReleaseWorkflowError("Tag creation declined; no changes were made")
-            confirmation_received = True
+        confirm(
+            f"Continue preparing tag {version_text} without a successful pipeline?",
+            "Tag preparation declined; no changes were made",
+            warnings=[warning],
+            assume_yes=skip_confirmation,
+            dry_run=context.dry_run,
+        )
     elif pipeline is None:
         info("No pipeline found; the pipeline gate is disabled")
     else:
         info(f"Found successful pipeline: {pipeline.get('web_url') or pipeline.get('id', 'unknown')}")
 
-    return release_issue, confirmation_received
+    return release_issue, target_commit
 
 
 def _select_tag_versions(
@@ -315,8 +314,6 @@ def _select_tag_versions(
         rc_number = select_release_candidate(
             release_version,
             context.git.tags(),
-            build_variants,
-            variants_explicitly_selected=variants_explicitly_selected,
         )
         info(f"Selected release candidate rc{rc_number}")
 
@@ -331,15 +328,16 @@ def _select_tag_versions(
     return selected_versions
 
 
-def _publish_selected_tags(
+def build_tag_plan(
     context: ReleaseContext,
     version_text: str,
+    target_branch: str,
     target_commit: str,
+    release_issue: dict[str, Any] | None,
     selected_versions: list[CTAVersion],
-    confirmation_received: bool,
     skip_confirmation: bool,
-) -> list[str]:
-    """Create missing annotated tags and atomically publish missing refs."""
+) -> TagPlan:
+    """Finish all tag reads, editing, validation, and confirmation."""
     selected_tag_names = [version.text for version in selected_versions]
 
     # Display and validate the entire family before making any mutation.
@@ -348,55 +346,33 @@ def _publish_selected_tags(
         print(f"  {tag_name}")
 
     info("Checking every selected tag locally and remotely")
-    missing_local_tags, missing_remote_tags = _validate_selected_tags(
-        context,
-        selected_tag_names,
-        target_commit,
-    )
-    if not missing_remote_tags:
-        info("All selected tags already exist remotely at the expected commit")
-        return selected_tag_names
+    _validate_selected_tags(context, selected_tag_names, target_commit)
 
-    reused_local_tags = [tag_name for tag_name in missing_remote_tags if tag_name not in missing_local_tags]
-    if reused_local_tags:
-        print("WARNING: These existing local tags will be reused and pushed:")
-        for tag_name in reused_local_tags:
-            print(f"  {tag_name}")
-        if not skip_confirmation and not context.dry_run:
-            answer = input("Continue and push these existing local tags? [y/N] ").strip().lower()
-            if answer not in ("y", "yes"):
-                raise ReleaseWorkflowError("Local tag reuse declined; no tags were pushed")
-            confirmation_received = True
-
-    if not confirmation_received and not context.dry_run:
-        answer = input("Create and push the selected tags? [y/N] ").strip().lower()
-        if answer not in ("y", "yes"):
-            raise ReleaseWorkflowError("Tag creation declined; no changes were made")
-
-    # One editor description is shared by all missing local tags.
-    if missing_local_tags and context.dry_run:
+    if context.dry_run:
         info("DRY-RUN: would open Git's editor for the tag description")
         tag_description = f"Release {version_text}"
-    elif missing_local_tags:
+    else:
         info("Opening Git's editor for the annotated tag description")
         tag_description = edit_tag_description(context, version_text, target_commit)
-    else:
-        tag_description = ""
 
-    descriptions = {
-        tag.text: build_tag_description(tag_description, tag.variant)
-        for tag in selected_versions
-        if tag.text in missing_local_tags
-    }
-    if descriptions:
-        info(f"Creating {len(descriptions)} annotated local tag(s)")
-        context.git.create_tags(target_commit, descriptions)
+    descriptions = {tag.text: build_tag_description(tag_description, tag.variant) for tag in selected_versions}
+    confirm(
+        "Create and atomically push the selected tag family?",
+        "Tag creation declined; no changes were made",
+        assume_yes=skip_confirmation,
+        dry_run=context.dry_run,
+    )
+    return TagPlan(version_text, target_branch, target_commit, release_issue, descriptions)
 
-    # Publish every missing tag together.
-    info(f"Pushing {len(missing_remote_tags)} tag(s) to GitLab")
-    context.git.push_tags(context.config.remote, missing_remote_tags)
 
-    return selected_tag_names
+def execute_tag_plan(context: ReleaseContext, plan: TagPlan) -> list[str]:
+    """Create and publish a fully preflighted tag family."""
+    tag_names = list(plan.tag_descriptions)
+    info(f"Creating {len(tag_names)} annotated local tag(s)")
+    context.git.create_tags(plan.target_commit, plan.tag_descriptions)
+    info(f"Pushing {len(tag_names)} tag(s) to GitLab")
+    context.git.push_tags(context.config.remote, tag_names)
+    return tag_names
 
 
 def _report_tags_and_pipelines(
@@ -444,7 +420,7 @@ def _report_tags_and_pipelines(
 
 def run(
     context: ReleaseContext,
-    version_text: str | None,
+    version_text: str,
     skip_confirmation: bool,
     target_branch: str = "main",
     release_candidate: bool = False,
@@ -452,43 +428,32 @@ def run(
 ) -> None:
     """Resolve a revision, validate context, and publish a selected tag family."""
     target_branch = target_branch or context.config.default_branch
-    # Resolve the base release and requested build variants.
-    version_was_explicit = version_text is not None
-    if version_text is None:
-        info("No version provided; attempting release version discovery")
-        version_text = context.discover_unfinished_release_version(target_branch)
-    else:
-        info(f"Using explicitly requested release version {version_text}")
+    info(f"Using explicitly requested release version {version_text}")
 
     release_version = CTAVersion.parse(version_text, require_base=True)
+    remote_branch = f"{context.config.remote}/{target_branch}"
+    info(f"Refreshing target branch {remote_branch!r}")
+    branch_tip = context.git.resolve_remote_branch(
+        context.config.remote,
+        target_branch,
+        fetch=not context.dry_run,
+    )
+
     variants_explicitly_selected, build_variants = _select_build_variants(
         context,
         skip_confirmation,
         requested_suffixes,
     )
 
-    # Resolve the exact commit independently of the local checkout branch.
-    target_ref = f"{context.config.remote}/{target_branch}"
-    info(f"Resolving tag target {target_ref!r}")
-
-    target_commit = context.git.resolve_tag_target(
-        context.config.remote,
-        target_branch,
-        target_ref,
-        fetch=not context.dry_run,
-    )
-    print(f"Tag target: {target_ref}")
-    print(f"Commit to tag for {version_text}: {target_commit}")
-
-    # Validate metadata and construct the complete tag family before mutation.
-    release_issue, confirmation_received = _validate_release_metadata(
+    release_issue, target_commit = _validate_release_metadata(
         context,
         version_text,
-        target_commit,
-        version_was_explicit,
+        branch_tip,
         skip_confirmation,
         target_branch,
     )
+    print(f"Target branch tip: {remote_branch} at {branch_tip}")
+    print(f"Merged changelog commit to tag for {version_text}: {target_commit}")
 
     selected_versions = _select_tag_versions(
         context,
@@ -498,19 +463,24 @@ def run(
         release_candidate,
     )
 
-    # Publish and report the selected tags.
-    selected_tag_names = _publish_selected_tags(
+    plan = build_tag_plan(
         context,
         version_text,
+        target_branch,
         target_commit,
+        release_issue,
         selected_versions,
-        confirmation_received,
         skip_confirmation,
     )
+    if context.dry_run:
+        print(f"DRY-RUN: create and push tags: {', '.join(plan.tag_descriptions)}")
+        return
+
+    selected_tag_names = execute_tag_plan(context, plan)
 
     _report_tags_and_pipelines(
         context,
-        release_issue,
+        plan.release_issue,
         version_text,
         target_commit,
         selected_tag_names,

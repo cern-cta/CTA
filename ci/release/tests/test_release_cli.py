@@ -33,6 +33,13 @@ class ArgumentParserTest(unittest.TestCase):
         with pytest.raises(SystemExit):
             create_argument_parser().parse_args(["tag", "v5.12.0.0-1", "--suffix", "pg"])
 
+    def test_tag_and_status_require_explicit_versions(self) -> None:
+        parser = create_argument_parser()
+        with pytest.raises(SystemExit):
+            parser.parse_args(["tag"])
+        with pytest.raises(SystemExit):
+            parser.parse_args(["status"])
+
     def test_dispatches_each_command_to_its_module(self) -> None:
         context = MagicMock()
         parser = create_argument_parser()

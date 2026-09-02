@@ -10,16 +10,11 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
-from cta_version import CTAVersion, VersionError
+from cta_version import CTAVersion
+from errors import ReleaseWorkflowError
 from git_repo import Git
 from gitlab_api import GitLabAPI
 from release_config import ReleaseConfig
-
-NOTE_MARKER = "<!-- cta-release:{version}:{stage} -->"
-
-
-class ReleaseWorkflowError(RuntimeError):
-    """A failure while coordinating an otherwise valid release workflow."""
 
 
 def info(message: str) -> None:
@@ -80,6 +75,10 @@ class ReleaseContext:
             print(f"DRY-RUN: create issue {self.config.issue_title(version)!r}")
             return None
 
+        return self.create_release_issue(version)
+
+    def create_release_issue(self, version: str) -> dict[str, Any]:
+        """Create a release issue without repeating preflight discovery."""
         info(f"Creating release issue for {version}")
         issue_description = (self.root / self.config.issue_template).read_text(encoding="utf-8")
 
@@ -99,109 +98,57 @@ class ReleaseContext:
         stage: str,
         body: str,
     ) -> None:
-        """Add one idempotent, stage-marked progress note to a release issue."""
-        marker = NOTE_MARKER.format(version=version, stage=stage)
-
+        """Add an informational progress note to a release issue."""
+        del version, stage
         if release_issue is None:
             if self.dry_run:
                 print(f"DRY-RUN: add release issue note: {body}")
-            return
-
-        issue_iid = release_issue["iid"]
-        existing_notes = self.api.get_all(f"issues/{issue_iid}/notes")
-        if any(marker in note.get("body", "") for note in existing_notes):
             return
 
         if self.dry_run:
             print(f"DRY-RUN: add release issue note: {body}")
             return
 
-        self.api.post(f"issues/{issue_iid}/notes", json={"body": f"{marker}\n{body}"})
+        self.api.post(f"issues/{release_issue['iid']}/notes", json={"body": body})
 
     def find_changelog_merge_requests(
         self,
-        version: str | None = None,
-        target_branch: str | None = None,
+        version: str,
+        target_branch: str,
     ) -> list[dict[str, Any]]:
-        """Find changelog merge requests, optionally restricted to one version."""
-        target_branch = target_branch or self.config.default_branch
-        query_parameters: dict[str, Any] = {
-            "scope": "all",
-            "target_branch": target_branch,
-        }
-        if version:
-            query_parameters["source_branch"] = self.config.changelog_branch(version)
-            return self.api.get_all("merge_requests", query_parameters)
-
-        query_parameters.update(
-            {
-                "state": "merged",
-                "labels": self.config.release_label,
-                "order_by": "updated_at",
-                "sort": "desc",
-            }
-        )
-        return self.api.get_page(
-            "merge_requests",
-            query_parameters,
-            per_page=self.config.release_discovery_limit,
-        )
+        """Find active changelog MRs and reject source-branch collisions."""
+        source_branch = self.config.changelog_branch(version, target_branch)
+        active_merge_requests = [
+            merge_request
+            for merge_request in self.api.get_all(
+                "merge_requests",
+                {"scope": "all", "source_branch": source_branch},
+            )
+            if merge_request.get("source_branch") == source_branch
+            and merge_request.get("state") in ("opened", "merged")
+        ]
+        if any(item.get("target_branch") != target_branch for item in active_merge_requests):
+            raise ReleaseWorkflowError(
+                f"Changelog branch {source_branch} is already used by an active MR targeting another branch"
+            )
+        return [
+            item
+            for item in active_merge_requests
+            if item.get("title") == self.config.changelog_merge_request_title(version)
+        ]
 
     def find_changelog_merge_request(
         self,
         version: str,
-        target_branch: str | None = None,
+        target_branch: str,
     ) -> dict[str, Any] | None:
         """Find the unique deterministic changelog merge request for a release."""
-        matching_merge_requests = [
-            changelog_merge_request
-            for changelog_merge_request in self.find_changelog_merge_requests(version, target_branch)
-            if changelog_merge_request.get("source_branch") == self.config.changelog_branch(version)
-            and changelog_merge_request.get("title") == self.config.changelog_merge_request_title(version)
-        ]
+        matching_merge_requests = list(self.find_changelog_merge_requests(version, target_branch))
 
         if len(matching_merge_requests) > 1:
             raise ReleaseWorkflowError(f"Multiple changelog MRs exist for {version}; resolve duplicates")
 
         return matching_merge_requests[0] if matching_merge_requests else None
-
-    def discover_unfinished_release_version(self, target_branch: str | None = None) -> str:
-        """Infer the sole merged release whose base tag has not been pushed."""
-        target_branch = target_branch or self.config.default_branch
-        info("Searching GitLab for merged release MRs without a corresponding tag")
-        candidate_versions: list[str] = []
-        remote_tags = self.git.remote_tag_names(self.config.remote)
-
-        for changelog_merge_request in self.find_changelog_merge_requests(target_branch=target_branch):
-            source_branch = str(changelog_merge_request.get("source_branch", ""))
-            if changelog_merge_request.get("state") != "merged" or not source_branch.endswith(
-                self.config.branch_suffix
-            ):
-                continue
-
-            version = source_branch[: -len(self.config.branch_suffix)]
-            try:
-                CTAVersion.parse(version, require_base=True)
-            except VersionError:
-                continue
-
-            if version not in remote_tags:
-                candidate_versions.append(version)
-
-        candidate_versions = sorted(set(candidate_versions), key=lambda item: CTAVersion.parse(item).core)
-        info(f"Found {len(candidate_versions)} unfinished release candidate(s)")
-
-        if not candidate_versions:
-            raise ReleaseWorkflowError("No merged, unfinished release merge request was found")
-        if len(candidate_versions) > 1:
-            candidate_listing = "\n".join(f"  {candidate}" for candidate in candidate_versions)
-            raise ReleaseWorkflowError(
-                f"Multiple unfinished releases were found:\n\n{candidate_listing}"
-                f"\n\nRun:\nrelease tag {candidate_versions[-1]}"
-            )
-
-        print(f"Inferred release version: {candidate_versions[0]}")
-        return candidate_versions[0]
 
     def read_repository_file(self, path: str, ref: str) -> tuple[str, str]:
         """Read and decode a repository file from GitLab at a specific ref."""

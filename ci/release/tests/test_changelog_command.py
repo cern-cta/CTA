@@ -75,29 +75,35 @@ class ChangelogCommandTest(unittest.TestCase):
         assert changelog.authenticated_user_id({"id": 42, "username": "release-manager"}) == 42
 
     def test_confirms_changelog_publication_after_editing(self) -> None:
-        with patch("builtins.input", return_value="yes") as user_input:
+        with (
+            patch("builtins.input", return_value="yes") as user_input,
+            patch("confirmation.sys.stdin.isatty", return_value=True),
+        ):
             changelog.confirm_changelog_publication()
         user_input.assert_called_once_with("Continue and publish the edited changelog? [y/N] ")
 
     def test_declining_changelog_publication_aborts(self) -> None:
         with (
             patch("builtins.input", return_value=""),
+            patch("confirmation.sys.stdin.isatty", return_value=True),
             pytest.raises(ReleaseWorkflowError, match="publication declined"),
         ):
             changelog.confirm_changelog_publication()
 
     def test_declining_existing_changelog_resources_does_not_create_issue(self) -> None:
-        branch = {"name": "v5.12.0.0-1-changelog-update", "commit": {"id": "abc123"}}
+        branch = {"name": "v5.12.0.0-1-main-changelog-update", "commit": {"id": "abc123"}}
         merge_request = {"state": "opened", "web_url": "https://gitlab.example/mr/42"}
         with (
             patch.object(changelog, "edit_changelog_notes", return_value="## 5.12.0.0-1\n"),
             patch.object(changelog, "confirm_changelog_publication"),
             patch.object(self.api, "get_all", return_value=[branch]),
+            patch.object(self.context, "read_repository_file", return_value=("## 5.12.0.0-1\n", "blob")),
             patch.object(self.context, "find_or_create_release_issue") as find_issue,
             patch("builtins.input", return_value=""),
+            patch("confirmation.sys.stdin.isatty", return_value=True),
             pytest.raises(ReleaseWorkflowError, match="resource reuse declined"),
         ):
-            changelog._publish_changelog(  # pyright: ignore[reportPrivateUsage]
+            changelog.build_changelog_plan(
                 self.context,
                 CTAVersion.parse("v5.12.0.0-1"),
                 "abc123",
@@ -107,6 +113,40 @@ class ChangelogCommandTest(unittest.TestCase):
                 "main",
             )
         find_issue.assert_not_called()
+
+    def test_mutation_uses_preflight_plan_without_api_reads(self) -> None:
+        branch = {
+            "name": "v5.12.0.0-1-maintenance-changelog-update",
+            "commit": {"id": "abc123"},
+            "web_url": "https://gitlab.example/branch",
+        }
+        plan = changelog.ChangelogPlan(
+            release_version=CTAVersion.parse("v5.12.0.0-1"),
+            target_branch="maintenance",
+            changelog_commit="abc123",
+            edited_notes="## 5.12.0.0-1\n",
+            user_id=7,
+            release_issue={"iid": 1, "web_url": "https://gitlab.example/issue/1"},
+            merge_request=None,
+            branch_resource=branch,
+            old_changelog="old",
+            has_release_heading=True,
+        )
+        self.api.post.side_effect = [
+            {"iid": 42, "web_url": "https://gitlab.example/mr/42", "state": "opened"},
+            {"id": 1},
+        ]
+        with (
+            patch.object(self.api, "get") as get,
+            patch.object(self.api, "get_all") as get_all,
+            patch("sys.stdout", new_callable=MagicMock) as output,
+        ):
+            changelog.execute_changelog_plan(self.context, plan)
+        get.assert_not_called()
+        get_all.assert_not_called()
+        assert self.api.post.call_args_list[0].args[0] == "merge_requests"
+        assert self.api.post.call_args_list[0].kwargs["json"]["target_branch"] == "maintenance"
+        assert any("--target-branch maintenance" in str(item) for item in output.write.call_args_list)
 
     def test_rejects_authenticated_user_without_numeric_id(self) -> None:
         self.api.authenticate.return_value = {"username": "release-manager"}

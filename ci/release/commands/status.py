@@ -23,13 +23,9 @@ def add_subparser(subparsers: SubparserRegistry) -> None:
     release status v5.12.0.0-1
     release status v5.12.0.0-1 --target-branch maintenance
 
-  Discover the sole merged changelog MR whose base tag is unfinished:
-    release status
-
-This command is always read-only. Discovery fails rather than guessing when no
-unfinished release or more than one unfinished release is found.""",
+This command is always read-only.""",
     )
-    parser.add_argument("version", nargs="?")
+    parser.add_argument("version")
     parser.add_argument(
         "--target-branch",
         default="main",
@@ -43,9 +39,9 @@ def run_from_arguments(context: ReleaseContext, parsed_arguments: argparse.Names
     run(context, parsed_arguments.version, parsed_arguments.target_branch)
 
 
-def run(context: ReleaseContext, version_text: str | None, target_branch: str = "main") -> None:
+def run(context: ReleaseContext, version_text: str, target_branch: str = "main") -> None:
     """Print reconstructed Git and GitLab state for a release."""
-    version_text = version_text or context.discover_unfinished_release_version(target_branch)
+    context.git.validate_target_branch(target_branch)
     info(f"Inspecting release status for {version_text}")
     release_issue, changelog_merge_request, release_commit = context.load_release_context(
         version_text,

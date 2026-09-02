@@ -14,6 +14,7 @@ import sys
 from pathlib import Path
 
 from commands import changelog, status, tag
+from confirmation import ConfirmationError, ask_yes_no
 from cta_version import VersionError
 from git_repo import GitError, discover_repository_root
 from gitlab_api import GitLabAPI, GitLabAPIError
@@ -42,7 +43,7 @@ def load_token(dry_run: bool) -> str:
     token = getpass.getpass("Token: ").strip()
     if not token:
         raise ReleaseWorkflowError("No GitLab token was provided")
-    if input(f"Store token in {TOKEN_FILE}? [Y/n] ").strip().lower() in ("", "y", "yes"):
+    if ask_yes_no(f"Store token in {TOKEN_FILE}?", default_yes=True):
         TOKEN_FILE.parent.mkdir(parents=True, exist_ok=True)
         TOKEN_FILE.write_text(token, encoding="utf-8")
         TOKEN_FILE.chmod(stat.S_IRUSR | stat.S_IWUSR)
@@ -56,11 +57,11 @@ def create_argument_parser() -> argparse.ArgumentParser:
         description="Create changelogs and tag CTA releases through GitLab.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Release workflow:
-  1. Start from a clean, synchronized main checkout and generate the changelog:
+  1. Synchronize the target branch and generate the changelog:
        release changelog v5.12.0.0-1
   2. Review and merge the changelog MR printed by the command.
-  3. Tag the merged release. With no version, the sole unfinished changelog MR is used:
-       release tag
+  3. Tag the merged release:
+       release tag v5.12.0.0-1
   For a release from another branch, pass the same target to each command:
        release changelog v5.12.0.0-1 --target-branch maintenance
        release tag v5.12.0.0-1 --target-branch maintenance
@@ -108,6 +109,7 @@ def main(argv: list[str] | None = None) -> int:
         parsed_arguments.execute(release_context, parsed_arguments)
     except (
         ReleaseWorkflowError,
+        ConfirmationError,
         GitError,
         VersionError,
         GitLabAPIError,

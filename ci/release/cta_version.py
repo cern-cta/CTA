@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable
 from contextlib import suppress
 from dataclasses import dataclass, field
 from enum import Enum
@@ -192,11 +192,8 @@ def previous_release(release_version: CTAVersion, tag_names: Iterable[str]) -> C
 def select_release_candidate(
     release_version: CTAVersion,
     tag_names: Iterable[str],
-    requested_build_variants: Sequence[BuildVariant],
-    *,
-    variants_explicitly_selected: bool,
 ) -> int:
-    """Select the next or recoverable RC number for a requested tag family."""
+    """Select the next RC number after every existing family."""
     families: dict[int, set[BuildVariant | None]] = {}
 
     # Group existing RC tags for this release by candidate number.
@@ -205,23 +202,4 @@ def select_release_candidate(
             continue
         families.setdefault(tag_version.release_candidate, set()).add(tag_version.variant)
 
-    if not families:
-        return 1
-
-    # Recover an incomplete latest family when the selection rules allow it.
-    highest_candidate_number = max(families)
-    existing_family = families[highest_candidate_number]
-    if variants_explicitly_selected:
-        required_variants: set[BuildVariant | None] = set(requested_build_variants)
-        return (
-            highest_candidate_number
-            if not required_variants.issubset(existing_family)
-            else highest_candidate_number + 1
-        )
-
-    has_build_variant = any(variant is not None for variant in existing_family)
-    requested_family: set[BuildVariant | None] = {None, *requested_build_variants}
-    if has_build_variant and not requested_family.issubset(existing_family):
-        return highest_candidate_number
-
-    return highest_candidate_number + 1
+    return max(families, default=0) + 1

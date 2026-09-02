@@ -39,11 +39,13 @@ class GitTest(unittest.TestCase):
     def test_confirms_dirty_non_release_checkout(self) -> None:
         git = Git(Path("/tmp"))
         with (
-            patch.object(git, "run", side_effect=["/tmp", "topic", "dirty", "abc", "abc"]) as run,
+            patch.object(git, "run", side_effect=["", "/tmp", "topic", "dirty", "abc", "abc"]) as run,
             patch("builtins.input", return_value="yes") as user_input,
+            patch("confirmation.sys.stdin.isatty", return_value=True),
         ):
             assert git.validate_repository("main", "origin", fetch=False) == "abc"
         assert run.call_args_list == [
+            call(["check-ref-format", "--branch", "main"]),
             call(["rev-parse", "--show-toplevel"]),
             call(["branch", "--show-current"]),
             call(["status", "--porcelain"]),
@@ -54,15 +56,16 @@ class GitTest(unittest.TestCase):
 
     def test_fast_forwards_current_release_branch(self) -> None:
         git = Git(Path("/tmp"))
-        with patch.object(git, "run", side_effect=["/tmp", "main", "", "old", "new", "", ""]) as run:
+        with patch.object(git, "run", side_effect=["", "/tmp", "main", "", "old", "new", "", ""]) as run:
             assert git.validate_repository("main", "origin", fetch=False) == "new"
         assert run.call_args_list[-1] == call(["merge", "--ff-only", "origin/main"], mutate=True)
 
     def test_confirmed_checkout_updates_release_branch_without_switching(self) -> None:
         git = Git(Path("/tmp"))
         with (
-            patch.object(git, "run", side_effect=["/tmp", "topic", "", "old", "new", "", ""]) as run,
+            patch.object(git, "run", side_effect=["", "/tmp", "topic", "", "old", "new", "", ""]) as run,
             patch("builtins.input", return_value="yes"),
+            patch("confirmation.sys.stdin.isatty", return_value=True),
         ):
             assert git.validate_repository("main", "origin", fetch=False) == "new"
         assert run.call_args_list[-1] == call(
@@ -76,37 +79,40 @@ class GitTest(unittest.TestCase):
             patch.object(
                 git,
                 "run",
-                side_effect=["/tmp", "topic", "", "local", "remote", GitError("not an ancestor")],
+                side_effect=["", "/tmp", "topic", "", "local", "remote", GitError("not an ancestor")],
             ),
             patch("builtins.input", return_value="yes"),
+            patch("confirmation.sys.stdin.isatty", return_value=True),
             pytest.raises(GitError, match="Cannot fast-forward main"),
         ):
             git.validate_repository("main", "origin", fetch=False)
 
     def test_fetch_refreshes_remote_branch_and_tags(self) -> None:
         git = Git(Path("/tmp"))
-        with patch.object(git, "run", side_effect=["/tmp", "main", "", "", "new", "new"]) as run:
+        with patch.object(git, "run", side_effect=["", "/tmp", "main", "", "", "new", "new"]) as run:
             assert git.validate_repository("main", "origin") == "new"
         assert call(["fetch", "--force", "--tags", "origin", "main"], mutate=True) in run.call_args_list
 
-    def test_default_tag_target_is_latest_remote_main(self) -> None:
+    def test_resolves_latest_remote_branch(self) -> None:
         git = Git(Path("/tmp"))
-        with patch.object(git, "run", side_effect=["/tmp", "", "abc123"]) as run:
-            assert git.resolve_tag_target("origin", "main", "origin/main", fetch=False) == "abc123"
+        with patch.object(git, "run", side_effect=["", "/tmp", "", "abc123"]) as run:
+            assert git.resolve_remote_branch("origin", "main", fetch=False) == "abc123"
         assert run.call_args_list[-1] == call(["rev-parse", "--verify", "origin/main^{commit}"])
 
-    def test_explicit_tag_target_accepts_any_git_revision(self) -> None:
+    def test_rejects_invalid_target_branch(self) -> None:
         git = Git(Path("/tmp"))
-        with patch.object(git, "run", side_effect=["/tmp", "", "def456"]) as run:
-            assert git.resolve_tag_target("origin", "main", "maintenance", fetch=False) == "def456"
-        run.assert_called_with(["rev-parse", "--verify", "maintenance^{commit}"])
+        with (
+            patch.object(git, "run", side_effect=GitError("invalid")),
+            pytest.raises(GitError, match="Invalid target branch"),
+        ):
+            git.resolve_remote_branch("origin", "--invalid", fetch=False)
 
-    def test_lists_remote_tag_names_with_one_request(self) -> None:
+    def test_resolves_selected_remote_tags_with_one_request(self) -> None:
         git = Git(Path("/tmp"))
-        output = "abc refs/tags/v5.1.0.0-1\ndef refs/tags/v5.2.0.0-1.rc1"
+        output = "tag-object refs/tags/v1\ncommit refs/tags/v1^{}\nother refs/tags/v2"
         with patch.object(git, "run", return_value=output) as run:
-            assert git.remote_tag_names("origin") == {"v5.1.0.0-1", "v5.2.0.0-1.rc1"}
-        run.assert_called_once_with(["ls-remote", "--tags", "--refs", "origin"])
+            assert git.remote_tag_commits("origin", ["v1", "v2"]) == {"v1": "commit", "v2": "other"}
+        run.assert_called_once()
 
     def test_creates_multiple_tags_and_pushes_explicit_refs_atomically(self) -> None:
         git = Git(Path("/tmp"))

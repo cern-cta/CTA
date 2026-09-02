@@ -9,6 +9,8 @@ import subprocess
 from pathlib import Path
 from collections.abc import Sequence
 
+from confirmation import confirm
+
 
 class GitError(RuntimeError):
     """A failure to validate or operate on the local Git repository."""
@@ -24,17 +26,12 @@ class Git:
 
     def confirm_checkout_warnings(self, warnings: Sequence[str]) -> None:
         """Show checkout warnings and require confirmation before continuing."""
-        for warning in warnings:
-            print(f"WARNING: {warning}")
-        if self.dry_run:
-            print("DRY-RUN: would ask for confirmation before continuing")
-            return
-        try:
-            answer = input("Continue with this checkout? [y/N] ").strip().lower()
-        except EOFError as error:
-            raise GitError("Checkout confirmation requires an interactive terminal") from error
-        if answer not in ("y", "yes"):
-            raise GitError("Release declined; no changes were made")
+        confirm(
+            "Continue with this checkout?",
+            "Release declined; no changes were made",
+            warnings=warnings,
+            dry_run=self.dry_run,
+        )
 
     def run(self, arguments: Sequence[str], mutate: bool = False) -> str:
         """Run Git with an argument list, printing mutations during dry runs."""
@@ -57,8 +54,16 @@ class Git:
             raise GitError(f"{' '.join(command)} failed: {detail}") from error
         return completed_process.stdout.strip()
 
+    def validate_target_branch(self, branch: str) -> None:
+        """Require a valid Git branch name before using it as an argument or ref."""
+        try:
+            self.run(["check-ref-format", "--branch", branch])
+        except GitError as error:
+            raise GitError(f"Invalid target branch {branch!r}") from error
+
     def validate_repository(self, branch: str, remote: str, fetch: bool = True) -> str:
         """Validate a checkout and fast-forward its local release branch."""
+        self.validate_target_branch(branch)
         if self.run(["rev-parse", "--show-toplevel"]) != str(self.root.resolve()):
             raise GitError(f"Run release from repository root {self.root}")
         current = self.run(["branch", "--show-current"])
@@ -89,32 +94,32 @@ class Git:
                 self.run(["branch", "--force", branch, f"{remote}/{branch}"], mutate=True)
         return remote_sha
 
-    def resolve_tag_target(
-        self,
-        remote: str,
-        default_branch: str,
-        target_ref: str,
-        fetch: bool = True,
-    ) -> str:
-        """Validate the worktree and resolve an explicit tag target to a commit."""
+    def resolve_remote_branch(self, remote: str, branch: str, fetch: bool = True) -> str:
+        """Refresh and resolve one remote-tracking branch."""
+        self.validate_target_branch(branch)
         if self.run(["rev-parse", "--show-toplevel"]) != str(self.root.resolve()):
             raise GitError(f"Run release from repository root {self.root}")
 
         if self.run(["status", "--porcelain"]):
             self.confirm_checkout_warnings(
-                ["The working tree is not clean; the requested tag target will still be resolved explicitly"]
+                [f"The working tree is not clean; the release commit will be read from {remote}/{branch}"]
             )
 
         if fetch:
-            self.run(["fetch", "--force", "--tags", remote, default_branch], mutate=True)
+            self.run(["fetch", "--force", "--tags", remote, branch], mutate=True)
 
         try:
-            return self.run(["rev-parse", "--verify", f"{target_ref}^{{commit}}"])
+            return self.run(["rev-parse", "--verify", f"{remote}/{branch}^{{commit}}"])
         except GitError as error:
-            raise GitError(
-                f"Tag target {target_ref!r} does not resolve to a commit; "
-                "use a commit SHA, local branch, remote-tracking branch, or tag"
-            ) from error
+            raise GitError(f"Remote branch {remote}/{branch} does not resolve to a commit") from error
+
+    def is_ancestor(self, commit: str, descendant: str) -> bool:
+        """Return whether one commit is reachable from another."""
+        try:
+            self.run(["merge-base", "--is-ancestor", commit, descendant])
+        except GitError:
+            return False
+        return True
 
     def tags(self) -> list[str]:
         """List local tag names."""
@@ -142,17 +147,24 @@ class Git:
             output = self.run(["ls-remote", "--tags", remote, f"refs/tags/{tag_name}"])
         return output.split()[0] if output else None
 
-    def remote_tag_names(self, remote: str) -> set[str]:
-        """List every remote tag name with one request."""
-        output = self.run(["ls-remote", "--tags", "--refs", remote])
-        if not output:
-            return set()
-        prefix = "refs/tags/"
-        return {
-            ref.removeprefix(prefix)
-            for line in output.splitlines()
-            if len(fields := line.split()) == 2 and (ref := fields[1]).startswith(prefix)
-        }
+    def remote_tag_commits(self, remote: str, tag_names: Sequence[str]) -> dict[str, str]:
+        """Resolve selected lightweight or annotated remote tags with one request."""
+        if not tag_names:
+            return {}
+        patterns = [pattern for name in tag_names for pattern in (f"refs/tags/{name}", f"refs/tags/{name}^{{}}")]
+        output = self.run(["ls-remote", "--tags", remote, *patterns])
+        commits: dict[str, str] = {}
+        for line in output.splitlines():
+            fields = line.split()
+            if len(fields) != 2:
+                continue
+            commit, ref = fields
+            name = ref.removeprefix("refs/tags/")
+            peeled = name.endswith("^{}")
+            name = name.removesuffix("^{}")
+            if name in tag_names and (peeled or name not in commits):
+                commits[name] = commit
+        return commits
 
     def create_tag(self, target_commit: str, tag_name: str, description: str) -> None:
         """Create one annotated local tag using the multi-tag implementation."""

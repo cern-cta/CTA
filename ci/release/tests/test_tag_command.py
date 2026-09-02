@@ -16,129 +16,134 @@ from typing_extensions import override
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from commands import tag
-from cta_version import BuildVariant, CTAVersion
+from confirmation import ConfirmationError
+from cta_version import BUILD_VARIANTS, CTAVersion, BuildVariant
 from release_config import ReleaseConfig
 from release_context import ReleaseContext, ReleaseWorkflowError
 
 
 class TagCommandTest(unittest.TestCase):
-    """Test tag-family selection, validation, and publication."""
+    """Test tag-family preflight, validation, and publication."""
 
     @override
     def setUp(self) -> None:
         self.api = MagicMock()
         self.context = ReleaseContext(Path("/tmp"), ReleaseConfig(), self.api, dry_run=False)
 
-    def test_prints_commit_and_publishes_all_variants_with_yes(self) -> None:
+    def test_tags_merged_changelog_commit_when_branch_has_advanced(self) -> None:
         self.context.dry_run = True
         self.context.git.dry_run = True
+        merge_request = {"state": "merged", "web_url": "https://gitlab.example/mr/1"}
         with (
-            patch.object(self.context.git, "resolve_tag_target", return_value="abc123"),
-            patch.object(self.context, "find_pipeline", return_value={"status": "success"}) as find_pipeline,
-            patch.object(tag, "inspect_release_context", return_value=({"iid": 1}, [])),
+            patch.object(self.context.git, "validate_target_branch"),
+            patch.object(self.context.git, "resolve_remote_branch", return_value="newer-tip"),
+            patch.object(self.context.git, "is_ancestor", return_value=True) as is_ancestor,
+            patch.object(
+                tag,
+                "inspect_release_context",
+                return_value=({"iid": 1}, merge_request, "merge-commit", []),
+            ),
+            patch.object(self.context, "find_pipeline", return_value={"status": "success"}),
             patch.object(self.context.git, "local_tag_commit", return_value=None),
-            patch.object(self.context.git, "remote_tag_commit", return_value=None),
-            patch.object(self.context.git, "create_tags") as create_tags,
-            patch.object(self.context.git, "push_tags") as push_tags,
-            patch.object(self.context, "add_issue_note"),
+            patch.object(self.context.git, "remote_tag_commits", return_value={}),
             redirect_stdout(StringIO()) as output,
         ):
             tag.run(self.context, "v5.12.0.0-1", skip_confirmation=True)
-        assert "Commit to tag for v5.12.0.0-1: abc123" in output.getvalue()
-        find_pipeline.assert_called_once_with("abc123", "main", pipeline_source="push")
-        assert list(create_tags.call_args.args[1]) == [
-            "v5.12.0.0-1",
-            "v5.12.0.0-1.pgsched",
-            "v5.12.0.0-1.pgcat",
-            "v5.12.0.0-1.pgall",
-        ]
-        push_tags.assert_called_once_with("origin", list(create_tags.call_args.args[1]))
+        is_ancestor.assert_called_once_with("merge-commit", "newer-tip")
+        assert "Merged changelog commit to tag for v5.12.0.0-1: merge-commit" in output.getvalue()
 
-    def test_explicit_suffixes_create_only_canonical_variants(self) -> None:
-        self.context.dry_run = True
-        self.context.git.dry_run = True
+    def test_release_commit_must_be_reachable_from_target_branch(self) -> None:
         with (
-            patch.object(self.context.git, "resolve_tag_target", return_value="abc123"),
-            patch.object(self.context, "find_pipeline", return_value={"status": "success"}),
-            patch.object(tag, "inspect_release_context", return_value=({"iid": 1}, [])),
-            patch.object(self.context.git, "local_tag_commit", return_value=None),
-            patch.object(self.context.git, "remote_tag_commit", return_value=None),
-            patch.object(self.context.git, "create_tags") as create_tags,
-            patch.object(self.context.git, "push_tags") as push_tags,
-            patch.object(self.context, "add_issue_note"),
+            patch.object(
+                tag,
+                "inspect_release_context",
+                return_value=(None, {"state": "merged"}, "merge-commit", []),
+            ),
+            patch.object(self.context.git, "is_ancestor", return_value=False),
+            pytest.raises(ReleaseWorkflowError, match="not reachable"),
         ):
-            tag.run(
+            tag._validate_release_metadata(  # pyright: ignore[reportPrivateUsage]
                 self.context,
                 "v5.12.0.0-1",
+                "branch-tip",
                 skip_confirmation=True,
-                target_branch="main",
-                requested_suffixes=["pgall", "pgsched", "pgall"],
             )
-        assert list(create_tags.call_args.args[1]) == ["v5.12.0.0-1.pgsched", "v5.12.0.0-1.pgall"]
-        push_tags.assert_called_once_with("origin", ["v5.12.0.0-1.pgsched", "v5.12.0.0-1.pgall"])
 
-    def test_variant_prompt_controls_default_family(self) -> None:
-        for answer, expected_tags in (
-            ("n", ["v5.12.0.0-1"]),
-            (
-                "y",
-                [
-                    "v5.12.0.0-1",
-                    "v5.12.0.0-1.pgsched",
-                    "v5.12.0.0-1.pgcat",
-                    "v5.12.0.0-1.pgall",
-                ],
-            ),
-        ):
-            with (
-                self.subTest(answer=answer),
-                patch("builtins.input", return_value=answer),
-                patch.object(self.context.git, "resolve_tag_target", return_value="abc123"),
-                patch.object(
-                    self.context,
-                    "find_pipeline",
-                    return_value={"status": "success", "web_url": "https://gitlab.example/pipeline"},
-                ),
-                patch.object(tag, "inspect_release_context", return_value=(None, [])),
-                patch.object(self.context.git, "local_tag_commit", return_value="abc123"),
-                patch.object(self.context.git, "remote_tag_commit", return_value="abc123") as remote_tag,
-                patch.object(self.context, "add_issue_note"),
-                redirect_stdout(StringIO()),
-            ):
-                tag.run(self.context, "v5.12.0.0-1", skip_confirmation=False)
-            assert [tag_call.args[1] for tag_call in remote_tag.call_args_list] == expected_tags
-
-    def test_release_candidate_uses_recoverable_family_number(self) -> None:
-        self.context.dry_run = True
-        self.context.git.dry_run = True
+    def test_unsuccessful_pipeline_has_separate_confirmation(self) -> None:
+        pipeline = {"status": "failed", "web_url": "https://gitlab.example/pipeline/42"}
         with (
-            patch.object(self.context.git, "resolve_tag_target", return_value="abc123"),
-            patch.object(self.context, "find_pipeline", return_value={"status": "success"}),
-            patch.object(tag, "inspect_release_context", return_value=({"iid": 1}, [])),
+            patch.object(
+                tag,
+                "inspect_release_context",
+                return_value=({"iid": 1}, {"state": "merged"}, "merge-commit", []),
+            ),
+            patch.object(self.context.git, "is_ancestor", return_value=True),
+            patch.object(self.context, "find_pipeline", return_value=pipeline),
+            patch("confirmation.sys.stdin.isatty", return_value=True),
+            patch("builtins.input", return_value="yes") as user_input,
+        ):
+            issue, commit = tag._validate_release_metadata(  # pyright: ignore[reportPrivateUsage]
+                self.context,
+                "v5.12.0.0-1",
+                "branch-tip",
+                skip_confirmation=False,
+            )
+        assert issue == {"iid": 1}
+        assert commit == "merge-commit"
+        user_input.assert_called_once()
+
+    def test_any_existing_tag_rejects_complete_family(self) -> None:
+        with (
+            patch.object(self.context.git, "local_tag_commit", return_value=None),
             patch.object(
                 self.context.git,
-                "tags",
-                return_value=["v5.12.0.0-1.rc2", "v5.12.0.0-1.rc2.pgsched"],
-            ),
-            patch.object(self.context.git, "local_tag_commit", return_value=None),
-            patch.object(self.context.git, "remote_tag_commit", return_value=None),
-            patch.object(self.context.git, "create_tags") as create_tags,
-            patch.object(self.context.git, "push_tags"),
-            patch.object(self.context, "add_issue_note"),
+                "remote_tag_commits",
+                return_value={"v5.12.0.0-1.pgall": "abc123"},
+            ) as remote_tags,
+            pytest.raises(ReleaseWorkflowError, match="family already exists"),
         ):
-            tag.run(
+            tag._validate_selected_tags(  # pyright: ignore[reportPrivateUsage]
                 self.context,
-                "v5.12.0.0-1",
-                skip_confirmation=True,
-                target_branch="main",
+                ["v5.12.0.0-1", "v5.12.0.0-1.pgall"],
+                "abc123",
+            )
+        remote_tags.assert_called_once()
+
+    def test_next_release_candidate_never_completes_partial_family(self) -> None:
+        version = CTAVersion.parse("v5.12.0.0-1", require_base=True)
+        with patch.object(
+            self.context.git,
+            "tags",
+            return_value=["v5.12.0.0-1.rc2", "v5.12.0.0-1.rc2.pgsched"],
+        ):
+            selected = tag._select_tag_versions(  # pyright: ignore[reportPrivateUsage]
+                self.context,
+                version,
+                BUILD_VARIANTS,
+                variants_explicitly_selected=False,
                 release_candidate=True,
             )
-        assert list(create_tags.call_args.args[1]) == [
-            "v5.12.0.0-1.rc2",
-            "v5.12.0.0-1.rc2.pgsched",
-            "v5.12.0.0-1.rc2.pgcat",
-            "v5.12.0.0-1.rc2.pgall",
-        ]
+        assert selected[0].text == "v5.12.0.0-1.rc3"
+
+    def test_declining_final_confirmation_does_not_create_tags(self) -> None:
+        with (
+            patch.object(tag, "edit_tag_description", return_value="Release notes"),
+            patch.object(tag, "_validate_selected_tags"),
+            patch("confirmation.sys.stdin.isatty", return_value=True),
+            patch("builtins.input", return_value=""),
+            patch.object(self.context.git, "create_tags") as create_tags,
+            pytest.raises(ConfirmationError, match="declined"),
+        ):
+            tag.build_tag_plan(
+                self.context,
+                "v5.12.0.0-1",
+                "main",
+                "abc123",
+                {"iid": 1},
+                [CTAVersion.parse("v5.12.0.0-1")],
+                skip_confirmation=False,
+            )
+        create_tags.assert_not_called()
 
     def test_variant_descriptions_extend_shared_text(self) -> None:
         assert tag.build_tag_description("Shared", None) == "Shared"
@@ -149,7 +154,6 @@ class TagCommandTest(unittest.TestCase):
 
     def test_tag_description_uses_git_editor_and_ignores_comments(self) -> None:
         def write_description(command: list[str], check: bool) -> MagicMock:
-            """Write a simulated editor result to its temporary file."""
             del check
             Path(command[-1]).write_text("Maintenance fixes\n# ignored guidance\n", encoding="utf-8")
             return MagicMock(returncode=0)
@@ -160,76 +164,3 @@ class TagCommandTest(unittest.TestCase):
         ):
             description = tag.edit_tag_description(self.context, "v5.12.0.0-1", "abc123")
         assert description == "Maintenance fixes"
-
-    def test_explicit_version_can_override_missing_release_context(self) -> None:
-        self.context.dry_run = True
-        self.context.git.dry_run = True
-        with (
-            patch.object(self.context.git, "resolve_tag_target", return_value="abc123"),
-            patch.object(tag, "inspect_release_context", return_value=(None, ["Release issue was not found"])),
-            patch.object(self.context, "find_pipeline", return_value={"status": "success"}),
-            patch.object(self.context.git, "local_tag_commit", return_value=None),
-            patch.object(self.context.git, "remote_tag_commit", return_value=None),
-            patch.object(self.context, "add_issue_note"),
-        ):
-            tag.run(self.context, "v5.12.0.0-1", skip_confirmation=True)
-
-    def test_unsuccessful_pipeline_can_be_confirmed(self) -> None:
-        pipeline = {"status": "failed", "web_url": "https://gitlab.example/pipeline/42"}
-        with (
-            patch.object(tag, "inspect_release_context", return_value=({"iid": 1}, [])),
-            patch.object(self.context, "find_pipeline", return_value=pipeline),
-            patch("builtins.input", return_value="yes") as user_input,
-        ):
-            release_issue, confirmed = tag._validate_release_metadata(  # pyright: ignore[reportPrivateUsage]
-                self.context,
-                "v5.12.0.0-1",
-                "abc123",
-                version_was_explicit=True,
-                skip_confirmation=False,
-            )
-        assert release_issue == {"iid": 1}
-        assert confirmed
-        user_input.assert_called_once_with("Continue and create tag v5.12.0.0-1 without a successful pipeline? [y/N] ")
-
-    def test_missing_pipeline_declines_by_default(self) -> None:
-        with (
-            patch.object(tag, "inspect_release_context", return_value=({"iid": 1}, [])),
-            patch.object(self.context, "find_pipeline", return_value=None),
-            patch("builtins.input", return_value=""),
-            pytest.raises(ReleaseWorkflowError, match="Tag creation declined"),
-        ):
-            tag._validate_release_metadata(  # pyright: ignore[reportPrivateUsage]
-                self.context,
-                "v5.12.0.0-1",
-                "abc123",
-                version_was_explicit=True,
-                skip_confirmation=False,
-            )
-
-    def test_existing_unpushed_local_tag_requires_confirmation(self) -> None:
-        with (
-            patch.object(self.context.git, "local_tag_commit", return_value="abc123"),
-            patch.object(self.context.git, "remote_tag_commit", return_value=None),
-            patch.object(self.context.git, "push_tags") as push_tags,
-            patch("builtins.input", return_value=""),
-            pytest.raises(ReleaseWorkflowError, match="Local tag reuse declined"),
-        ):
-            tag._publish_selected_tags(  # pyright: ignore[reportPrivateUsage]
-                self.context,
-                "v5.12.0.0-1",
-                "abc123",
-                [CTAVersion.parse("v5.12.0.0-1")],
-                confirmation_received=False,
-                skip_confirmation=False,
-            )
-        push_tags.assert_not_called()
-
-    def test_inferred_version_rejects_missing_release_context(self) -> None:
-        with (
-            patch.object(self.context, "discover_unfinished_release_version", return_value="v5.12.0.0-1"),
-            patch.object(self.context.git, "resolve_tag_target", return_value="abc123"),
-            patch.object(tag, "inspect_release_context", return_value=(None, ["Changelog entry was not found"])),
-            pytest.raises(ReleaseWorkflowError, match="explicit version"),
-        ):
-            tag.run(self.context, None, skip_confirmation=True)

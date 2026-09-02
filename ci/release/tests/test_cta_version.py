@@ -82,46 +82,33 @@ class VersionTest(unittest.TestCase):
 
     def test_rc_selection_handles_complete_and_partial_families(self) -> None:
         release_version = CTAVersion.parse("v5.10.11.0-1", require_base=True)
-        assert select_release_candidate(release_version, [], (), variants_explicitly_selected=False) == 1
-        assert (
-            select_release_candidate(release_version, ["v5.10.11.0-1.rc1"], (), variants_explicitly_selected=False) == 2
-        )
+        assert select_release_candidate(release_version, []) == 1
+        assert select_release_candidate(release_version, ["v5.10.11.0-1.rc1"]) == 2
         assert (
             select_release_candidate(
                 release_version,
                 ["v5.10.11.0-1.rc2", "v5.10.11.0-1.rc2.pgsched"],
-                BUILD_VARIANTS,
-                variants_explicitly_selected=False,
-            )
-            == 2
-        )
-
-    def test_explicit_variant_can_complete_latest_rc(self) -> None:
-        release_version = CTAVersion.parse("v5.10.11.0-1", require_base=True)
-        assert (
-            select_release_candidate(
-                release_version, ["v5.10.11.0-1.rc3"], (BuildVariant.PGSCHED,), variants_explicitly_selected=True
             )
             == 3
         )
+
+    def test_explicit_variant_starts_a_new_rc_family(self) -> None:
+        release_version = CTAVersion.parse("v5.10.11.0-1", require_base=True)
+        assert select_release_candidate(release_version, ["v5.10.11.0-1.rc3"]) == 4
         assert (
             select_release_candidate(
                 release_version,
                 ["v5.10.11.0-1.rc3.pgsched"],
-                (BuildVariant.PGSCHED,),
-                variants_explicitly_selected=True,
             )
             == 4
         )
 
-    def test_declined_variant_family_allocates_after_existing_base(self) -> None:
+    def test_rc_family_always_allocates_after_existing_base(self) -> None:
         release_version = CTAVersion.parse("v5.10.11.0-1", require_base=True)
         assert (
             select_release_candidate(
                 release_version,
                 ["v5.10.11.0-1.rc3", "v5.10.11.0-1.rc3.pgsched"],
-                (),
-                variants_explicitly_selected=False,
             )
             == 4
         )

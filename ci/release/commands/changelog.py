@@ -9,10 +9,12 @@ import argparse
 import shlex
 import subprocess
 import tempfile
+from dataclasses import dataclass
 from typing import Any
 from urllib.parse import quote
 
 from commands import SubparserRegistry
+from confirmation import confirm
 from cta_version import CTAVersion, previous_release
 from release_context import ReleaseContext, ReleaseWorkflowError, info
 
@@ -29,6 +31,22 @@ CHANGELOG_CATEGORIES = {
 MERGE_REQUEST_LABELS = ("type::release", "priority::high")
 
 
+@dataclass(frozen=True)
+class ChangelogPlan:
+    """Fully preflighted changelog publication state."""
+
+    release_version: CTAVersion
+    target_branch: str
+    changelog_commit: str
+    edited_notes: str
+    user_id: int
+    release_issue: dict[str, Any] | None
+    merge_request: dict[str, Any] | None
+    branch_resource: dict[str, Any] | None
+    old_changelog: str
+    has_release_heading: bool
+
+
 def add_subparser(subparsers: SubparserRegistry) -> None:
     """Register the changelog subcommand and its arguments."""
     parser = subparsers.add_parser(
@@ -38,10 +56,9 @@ def add_subparser(subparsers: SubparserRegistry) -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""What this command does:
   1. Validates and synchronizes the selected target branch, then checks GitLab authentication.
-  2. Finds or creates the release ticket.
-  3. Generates changes since the previous numeric CTA release.
-  4. Opens the generated entry in Git's configured editor.
-  5. Creates or reuses the changelog branch and merge request.
+  2. Generates changes since the previous numeric CTA release.
+  3. Opens the generated entry in Git's configured editor for approval.
+  4. Finds or creates the release ticket, changelog branch, and merge request.
 
 Example:
   release changelog v5.12.0.0-1
@@ -50,8 +67,8 @@ Example:
 The VERSION must be unsuffixed. Build variants and release candidates share the
 base release's changelog and are selected later by "release tag".
 
-After this command completes, review and merge the printed MR, then run:
-  release tag
+After this command completes, review and merge the printed MR, then run release
+tag with the same VERSION and --target-branch selection.
 
 Use "release --dry-run changelog VERSION" to validate and preview the workflow
 without opening an editor or changing GitLab.""",
@@ -121,17 +138,20 @@ def edit_changelog_notes(context: ReleaseContext, notes: str, version: str) -> s
     return edited_notes + "\n"
 
 
-def confirm_changelog_publication() -> None:
+def confirm_changelog_publication(dry_run: bool = False) -> None:
     """Require explicit approval after the edited changelog has been reviewed."""
-    answer = input("Continue and publish the edited changelog? [y/N] ").strip().lower()
-    if answer not in ("y", "yes"):
-        raise ReleaseWorkflowError("Changelog publication declined; no branch or merge request was created")
+    confirm(
+        "Continue and publish the edited changelog?",
+        "Changelog publication declined; no branch or merge request was created",
+        dry_run=dry_run,
+    )
 
 
 def confirm_changelog_reuse(
     changelog_branch: str,
     branch_resource: dict[str, Any] | None,
     merge_request: dict[str, Any] | None,
+    dry_run: bool = False,
 ) -> None:
     """Require approval before reusing an existing changelog branch or open MR."""
     resources = []
@@ -143,12 +163,12 @@ def confirm_changelog_reuse(
     if not resources:
         return
 
-    print("Existing changelog resources will be reused:")
-    for resource in resources:
-        print(f"  {resource}")
-    answer = input("Continue and reuse these changelog resources? [y/N] ").strip().lower()
-    if answer not in ("y", "yes"):
-        raise ReleaseWorkflowError("Changelog resource reuse declined; no release issue was created")
+    confirm(
+        "Continue and reuse these changelog resources?",
+        "Changelog resource reuse declined; no release issue was created",
+        warnings=[f"Existing changelog resource will be reused: {resource}" for resource in resources],
+        dry_run=dry_run,
+    )
 
 
 def generate_changelog_notes(
@@ -222,7 +242,7 @@ def _validate_tag_is_available(context: ReleaseContext, release_version: CTAVers
         )
 
 
-def _publish_changelog(
+def build_changelog_plan(
     context: ReleaseContext,
     release_version: CTAVersion,
     changelog_commit: str,
@@ -230,16 +250,18 @@ def _publish_changelog(
     user_id: int,
     existing_merge_request: dict[str, Any] | None,
     target_branch: str,
-) -> None:
-    """Publish edited notes to a branch and create or reuse its merge request."""
-    # Let the developer review the generated content.
-    info("Opening the generated changelog in Git's editor")
-    edited_notes = edit_changelog_notes(context, generated_notes, release_version.text)
-    confirm_changelog_publication()
-    changelog_branch = context.config.changelog_branch(release_version.text)
+) -> ChangelogPlan:
+    """Finish all remote reads, editing, validation, and confirmation."""
+    if context.dry_run:
+        info("DRY-RUN: would open the generated changelog in Git's editor")
+        edited_notes = generated_notes
+    else:
+        info("Opening the generated changelog in Git's editor")
+        edited_notes = edit_changelog_notes(context, generated_notes, release_version.text)
+    confirm_changelog_publication(context.dry_run)
+    changelog_branch = context.config.changelog_branch(release_version.text, target_branch)
 
-    # Create or validate the deterministic changelog branch.
-    info(f"Creating or verifying changelog branch {changelog_branch}")
+    info(f"Inspecting changelog branch {changelog_branch}")
     branches = context.api.get_all(
         "repository/branches",
         {"search": f"^{escape_branch_search(changelog_branch)}$"},
@@ -251,55 +273,77 @@ def _publish_changelog(
             f"Existing branch {changelog_branch} does not start at expected commit {changelog_commit}"
         )
 
-    confirm_changelog_reuse(changelog_branch, branch_resource, existing_merge_request)
-
-    release_issue = context.find_or_create_release_issue(release_version.text, create=True)
-    if release_issue is None:
-        raise ReleaseWorkflowError("Release issue creation returned no issue; cannot create a linked merge request")
-    info(f"Release ticket: {release_issue['web_url']}")
-
-    if branch_resource is None:
-        branch_resource = context.api.post(
-            "repository/branches",
-            params={"branch": changelog_branch, "ref": changelog_commit},
-        )
-
-    # Add the approved entry to the branch changelog.
-    info(f"Updating {context.config.changelog_file} on {changelog_branch}")
-    old_changelog, _ = context.read_repository_file(context.config.changelog_file, changelog_branch)
+    content_ref = changelog_branch if branch_resource is not None else changelog_commit
+    old_changelog, _ = context.read_repository_file(context.config.changelog_file, content_ref)
     heading_version = release_version.text.removeprefix("v")
     has_release_heading = any(line.startswith("## ") and heading_version in line for line in old_changelog.splitlines())
-    if has_release_heading:
-        print(f"Reusing existing changelog entry for {release_version.text} on {changelog_branch}.")
-    elif existing_merge_request is not None:
+    if existing_merge_request is not None and not has_release_heading:
         raise ReleaseWorkflowError(
             f"Existing changelog MR {existing_merge_request['web_url']} does not contain the expected "
             f"{release_version.text} changelog heading; inspect it before rerunning changelog"
         )
+
+    confirm_changelog_reuse(
+        changelog_branch,
+        branch_resource,
+        existing_merge_request,
+        context.dry_run,
+    )
+    release_issue = context.find_or_create_release_issue(release_version.text, create=False)
+    return ChangelogPlan(
+        release_version=release_version,
+        target_branch=target_branch,
+        changelog_commit=changelog_commit,
+        edited_notes=edited_notes,
+        user_id=user_id,
+        release_issue=release_issue,
+        merge_request=existing_merge_request,
+        branch_resource=branch_resource,
+        old_changelog=old_changelog,
+        has_release_heading=has_release_heading,
+    )
+
+
+def execute_changelog_plan(context: ReleaseContext, plan: ChangelogPlan) -> None:
+    """Apply a fully preflighted changelog plan without further discovery reads."""
+    version = plan.release_version.text
+    changelog_branch = context.config.changelog_branch(version, plan.target_branch)
+    release_issue = plan.release_issue or context.create_release_issue(version)
+    info(f"Release ticket: {release_issue['web_url']}")
+
+    branch_resource = plan.branch_resource
+    if branch_resource is None:
+        branch_resource = context.api.post(
+            "repository/branches",
+            params={"branch": changelog_branch, "ref": plan.changelog_commit},
+        )
+
+    if plan.has_release_heading:
+        print(f"Reusing existing changelog entry for {version} on {changelog_branch}.")
     else:
+        heading_version = version.removeprefix("v")
         context.api.put(
             f"repository/files/{quote(context.config.changelog_file, safe='')}",
             json={
                 "branch": changelog_branch,
-                "content": edited_notes + "\n" + old_changelog.lstrip(),
+                "content": plan.edited_notes + "\n" + plan.old_changelog.lstrip(),
                 "commit_message": f"[Misc] Update changelog for release {heading_version}",
             },
         )
 
-    # Create the reviewable release merge request.
     info("Creating or reusing the changelog merge request")
-    changelog_merge_request = context.find_changelog_merge_request(release_version.text, target_branch)
+    changelog_merge_request = plan.merge_request
     if changelog_merge_request is None:
         changelog_merge_request = context.api.post(
             "merge_requests",
             json={
                 "source_branch": changelog_branch,
-                "target_branch": target_branch,
-                "title": context.config.changelog_merge_request_title(release_version.text),
-                "description": merge_request_description(release_version.text, release_issue["iid"]),
+                "target_branch": plan.target_branch,
+                "title": context.config.changelog_merge_request_title(version),
+                "description": merge_request_description(version, release_issue["iid"]),
                 "labels": ",".join(MERGE_REQUEST_LABELS),
-                "assignee_ids": [user_id],
-                "reviewer_ids": [user_id],
+                "assignee_ids": [plan.user_id],
+                "reviewer_ids": [plan.user_id],
                 "remove_source_branch": True,
                 "squash": True,
             },
@@ -311,22 +355,23 @@ def _publish_changelog(
     )
     context.add_issue_note(
         release_issue,
-        release_version.text,
+        version,
         "changelog",
         changelog_issue_note(
             context,
-            release_version.text,
-            changelog_commit,
+            version,
+            plan.changelog_commit,
             changelog_branch,
             branch_url,
             changelog_merge_request,
         ),
     )
     print(
-        f"\nChangelog for {release_version.text} prepared."
+        f"\nChangelog for {version} prepared."
         f"\n\nRelease ticket:\n{release_issue['web_url']}"
         f"\n\nReview and merge:\n{changelog_merge_request['web_url']}"
-        "\n\nAfter it is merged, run:\nrelease tag"
+        f"\n\nAfter it is merged, run:\nrelease tag {version}"
+        + (f" --target-branch {plan.target_branch}" if plan.target_branch != context.config.default_branch else "")
     )
 
 
@@ -348,7 +393,10 @@ def run(context: ReleaseContext, version_text: str, target_branch: str = "main")
     info(f"Checking release state for {release_version.text}")
     existing_merge_request = context.find_changelog_merge_request(release_version.text, target_branch)
     if existing_merge_request and existing_merge_request.get("state") == "merged":
-        print(f"{release_version.text} already has a merged changelog MR. Run: release tag {release_version.text}")
+        command = f"release tag {release_version.text}"
+        if target_branch != context.config.default_branch:
+            command += f" --target-branch {target_branch}"
+        print(f"{release_version.text} already has a merged changelog MR. Run: {command}")
         return
 
     _validate_tag_is_available(context, release_version)
@@ -363,16 +411,7 @@ def run(context: ReleaseContext, version_text: str, target_branch: str = "main")
         release_version.text.removeprefix("v"),
     )
 
-    if context.dry_run:
-        print(f"DRY-RUN: open generated changelog for {release_version.text} in Git's editor")
-        print(
-            f"DRY-RUN: create or verify branch {context.config.changelog_branch(release_version.text)} "
-            f"at {changelog_commit}"
-        )
-        print(f"DRY-RUN: update {context.config.changelog_file} and create or reuse its merge request")
-        return
-
-    _publish_changelog(
+    plan = build_changelog_plan(
         context,
         release_version,
         changelog_commit,
@@ -381,3 +420,9 @@ def run(context: ReleaseContext, version_text: str, target_branch: str = "main")
         existing_merge_request,
         target_branch,
     )
+    if context.dry_run:
+        changelog_branch = context.config.changelog_branch(release_version.text, target_branch)
+        print(f"DRY-RUN: create or verify branch {changelog_branch} at {changelog_commit}")
+        print(f"DRY-RUN: update {context.config.changelog_file} and create or reuse its merge request")
+        return
+    execute_changelog_plan(context, plan)

@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 
@@ -21,7 +22,6 @@ class ReleaseConfig:
     issue_template: str = ".gitlab/issue_templates/Release.md"
     release_label: str = "type::release"
     branch_suffix: str = "-changelog-update"
-    release_discovery_limit: int = 20
     # Prevent tag creation unless its target commit has a successful pipeline.
     require_successful_target_pipeline: bool = True
 
@@ -33,9 +33,10 @@ class ReleaseConfig:
         """Return the deterministic changelog merge request title."""
         return f"[Misc] Update changelog for release {version.removeprefix('v')}"
 
-    def changelog_branch(self, version: str) -> str:
+    def changelog_branch(self, version: str, target_branch: str) -> str:
         """Return the deterministic changelog branch name."""
-        return f"{version}{self.branch_suffix}"
+        target_slug = re.sub(r"[^A-Za-z0-9._-]+", "-", target_branch).strip(".-")
+        return f"{version}-{target_slug}{self.branch_suffix}"
 
     @property
     def project_web_url(self) -> str:

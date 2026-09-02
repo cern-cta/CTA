@@ -6,7 +6,7 @@ from __future__ import annotations
 import sys
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from typing_extensions import override
@@ -25,46 +25,29 @@ class ReleaseContextTest(unittest.TestCase):
         self.api = MagicMock()
         self.context = ReleaseContext(Path("/tmp"), ReleaseConfig(), self.api, dry_run=False)
 
-    def test_discovers_single_unfinished_release(self) -> None:
-        self.api.get_page.return_value = [
-            {"state": "merged", "target_branch": "main", "source_branch": "v5.12.0.0-1-changelog-update"}
+    def test_closed_changelog_merge_requests_are_ignored(self) -> None:
+        source_branch = "v5.12.0.0-1-main-changelog-update"
+        self.api.get_all.return_value = [
+            {"state": "closed", "target_branch": "main", "source_branch": source_branch},
         ]
-        with patch.object(self.context.git, "remote_tag_names", return_value=set()):
-            assert self.context.discover_unfinished_release_version() == "v5.12.0.0-1"
-        self.api.get_page.assert_called_once_with(
-            "merge_requests",
-            {
-                "scope": "all",
-                "target_branch": "main",
-                "state": "merged",
-                "labels": "type::release",
-                "order_by": "updated_at",
-                "sort": "desc",
-            },
-            per_page=20,
+        assert self.context.find_changelog_merge_request("v5.12.0.0-1", "main") is None
+
+    def test_target_branch_is_part_of_changelog_branch(self) -> None:
+        assert self.context.config.changelog_branch("v5.12.0.0-1", "release/5.12") == (
+            "v5.12.0.0-1-release-5.12-changelog-update"
         )
 
-    def test_discovery_rejects_ambiguity(self) -> None:
-        self.api.get_page.return_value = [
-            {"state": "merged", "source_branch": f"{version}-changelog-update"}
-            for version in ("v5.12.0.0-1", "v5.12.1.0-1")
+    def test_active_source_branch_collision_is_rejected(self) -> None:
+        self.api.get_all.return_value = [
+            {
+                "state": "opened",
+                "title": "[Misc] Update changelog for release 5.12.0.0-1",
+                "target_branch": "other",
+                "source_branch": "v5.12.0.0-1-main-changelog-update",
+            }
         ]
-        with (
-            patch.object(self.context.git, "remote_tag_names", return_value=set()),
-            pytest.raises(ReleaseWorkflowError, match="Multiple unfinished releases"),
-        ):
-            self.context.discover_unfinished_release_version()
-
-    def test_discovery_ignores_unmerged_and_tagged_releases(self) -> None:
-        self.api.get_page.return_value = [
-            {"state": "opened", "source_branch": "v5.12.0.0-1-changelog-update"},
-            {"state": "merged", "source_branch": "v5.12.1.0-1-changelog-update"},
-        ]
-        with (
-            patch.object(self.context.git, "remote_tag_names", return_value={"v5.12.1.0-1"}),
-            pytest.raises(ReleaseWorkflowError, match="No merged"),
-        ):
-            self.context.discover_unfinished_release_version()
+        with pytest.raises(ReleaseWorkflowError, match="targeting another branch"):
+            self.context.find_changelog_merge_request("v5.12.0.0-1", "main")
 
     def test_main_pipeline_is_filtered_to_push_source(self) -> None:
         self.api.get_all.return_value = [{"status": "success"}]
