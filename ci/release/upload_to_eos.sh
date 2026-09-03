@@ -7,10 +7,10 @@
 # Merges Dockerfile and deploy-eos.sh
 # From commit 15c6bdccbee313df5601ce8df34fc4455fe92905
 #
-# Copies provided artifacts and launch an additional hook
+# Copies provided artifacts and updates the corresponding RPM repository metadata
 # Based on the script by Borja Aparicio April 2016
 
-set -e
+set -Eeuo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
 
@@ -20,16 +20,13 @@ usage() {
   echo
   echo "Credentials:"
   echo "  --eos-username     <username>    :    Account username for EOS."
-  echo "  --eos-password     <password>    :    Account password for EOS."
+  echo "  EOS_ACCOUNT_PASSWORD must contain the account password."
   echo
   echo "Directory selection:"
   echo "  --local-source-dir <dir>         :    Local directory that will be uploaded to the provided --eos-target-dir."
   echo "  --eos-source-dir   <dir>         :    EOS directory that will be copied to the provided --eos-target-dir. Must be used with --cta-version."
   echo "  --eos-target-dir   <dir>         :    EOS directory where to upload the files to."
-  echo "  --cta-version      <cta_version> :    CTA release version."
-  echo
-  echo "Other:"
-  echo "  --hook             <hook>        :    Hook to run on lxplus."
+  echo "  --cta-version      <cta_version> :    CTA release tag, with or without its leading v."
   echo
   exit 1
 }
@@ -37,12 +34,11 @@ usage() {
 upload_to_eos() {
 
   local eos_account_username=""
-  local eos_account_password=""
   local eos_target_dir=""
   local local_source_dir=""
   local eos_source_dir=""
   local cta_version=""
-  local hook=""
+  local repository_dir=""
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -56,30 +52,12 @@ upload_to_eos() {
           usage
         fi
         ;;
-      --eos-password)
-        if [[ $# -gt 1 ]]; then
-          eos_account_password="$2"
-          shift
-        else
-          log_error "Error: --eos-password requires an argument"
-          usage
-        fi
-        ;;
       --eos-target-dir)
         if [[ $# -gt 1 ]]; then
           eos_target_dir="$2"
           shift
         else
           log_error "Error: --eos-target-dir requires an argument"
-          usage
-        fi
-        ;;
-      --hook)
-        if [[ $# -gt 1 ]]; then
-          hook="$2"
-          shift
-        else
-          log_error "Error: --hook requires an argument"
           usage
         fi
         ;;
@@ -123,9 +101,9 @@ upload_to_eos() {
     usage
   fi
 
-  if [[ -z "${eos_account_password}" ]]; then
-    echo "Failure: Missing mandatory argument --eos-password"
-    usage
+  if [[ -z "${EOS_ACCOUNT_PASSWORD:-}" ]]; then
+    log_error "Failure: EOS_ACCOUNT_PASSWORD is not set"
+    exit 1
   fi
 
   if [[ -z "${eos_target_dir}" ]]; then
@@ -155,17 +133,40 @@ upload_to_eos() {
     exit 1
   fi
 
-  # Get credentials
-  echo "$eos_account_password" | kinit $eos_account_username@CERN.CH 2>&1 >/dev/null
-  if [[ $? -ne 0 ]]; then
+  if [[ -n "${cta_version}" ]]; then
+    if [[ ! "${cta_version}" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+-[0-9]+(\.rc[1-9][0-9]*)?(\.(pgsched|pgcat|pgall))?$ ]]; then
+      log_error "ERROR: Invalid CTA release tag: ${cta_version}"
+      exit 1
+    fi
+
+    cta_version=${cta_version#v}
+  fi
+
+  if [[ -n "${local_source_dir}" ]]; then
+    repository_dir="${eos_target_dir}/RPMS/x86_64"
+  else
+    repository_dir="${eos_target_dir}/x86_64"
+  fi
+
+  if [[ "${repository_dir}" != "/eos/user/c/ctareg/www/cta-repo/RPMS/x86_64" ]] && \
+     [[ ! "${repository_dir}" =~ ^/eos/user/c/ctareg/www/public/cta-public-repo/(unstable|testing|stable)/cta-[1-9][0-9]*/[A-Za-z0-9._-]+/cta/x86_64$ ]]; then
+    log_error "ERROR: Refusing to publish outside an approved repository: ${repository_dir}"
+    exit 1
+  fi
+
+  # Keep this job's credentials separate from any cache provided by the runner and
+  # destroy them on every exit path.
+  export KRB5CCNAME="FILE:$(mktemp)"
+  trap 'kdestroy 2>/dev/null || true; rm -f -- "${KRB5CCNAME#FILE:}"' EXIT
+
+  if ! printf '%s\n' "${EOS_ACCOUNT_PASSWORD}" | kinit "${eos_account_username}@CERN.CH" >/dev/null 2>&1; then
     log_error "ERROR: Failed to get Krb5 credentials for $eos_account_username"
     exit 1
   fi
 
   if [[ -n "${local_source_dir}" ]]; then
     # Rely on xrootd to do the copy of files to EOS
-    xrdcp --force --recursive "${local_source_dir}"/ root://eoshome.cern.ch/"${eos_target_dir}"/ 2>&1 >/dev/null
-    if [[ $? -ne 0 ]]; then
+    if ! xrdcp --force --recursive "${local_source_dir}"/ "root://eoshome.cern.ch/${eos_target_dir}/" >/dev/null 2>&1; then
       log_error "ERROR: Failed to copy files to ${eos_target_dir} via xrdcp"
       exit 1
     fi
@@ -173,35 +174,32 @@ upload_to_eos() {
 
   if [[ -n "${eos_source_dir}" ]]; then
     # Rely on xrootd to copy the files, inside EOS, with the provided cta-version
-    xrdfs root://eoshome.cern.ch/ ls -R "${eos_source_dir}" \
-      | grep "${cta_version}." \
-      | sed "s|^${eos_source_dir}||" \
-      | xargs -I {} xrdcp --force --recursive root://eoshome.cern.ch/"${eos_source_dir}"/{} root://eoshome.cern.ch/"${eos_target_dir}"/{} 2>&1 >/dev/null
-    if [[ $? -ne 0 ]]; then
+    if ! xrdfs root://eoshome.cern.ch/ ls -R "${eos_source_dir}" \
+      | grep -F -- "${cta_version}." \
+      | while IFS= read -r rpm_path; do
+          relative_path=${rpm_path#"${eos_source_dir}"/}
+          xrdcp --force \
+            "root://eoshome.cern.ch/${rpm_path}" \
+            "root://eoshome.cern.ch/${eos_target_dir}/${relative_path}" \
+            >/dev/null 2>&1
+        done; then
       log_error "ERROR: Failed to copy release ${cta_version} files from ${eos_source_dir} to ${eos_target_dir} via xrdcp"
       exit 1
     fi
   fi
 
-  # Run the provided hook on lxplus
-  if [[ -n "${hook}" ]]; then
-    ssh -o StrictHostKeyChecking=no \
-        -o GSSAPIAuthentication=yes \
-        -o GSSAPITrustDNS=yes \
-        -o GSSAPIDelegateCredentials=yes \
-        $eos_account_username@lxplus.cern.ch $hook 2>&1
-    if [[ $? -ne 0 ]]; then
-      log_error "ERROR: Something went wrong while running hook $hook on lxplus"
-      exit 1
-    fi
-    echo "Hook executed successfully"
+  if ! ssh \
+      -o StrictHostKeyChecking=yes \
+      -o GSSAPIAuthentication=yes \
+      -o GSSAPITrustDNS=yes \
+      -o GSSAPIDelegateCredentials=yes \
+      "${eos_account_username}@lxplus.cern.ch" \
+      /usr/bin/createrepo_c --update -- "${repository_dir}"; then
+    log_error "ERROR: Failed to update repository metadata in ${repository_dir}"
+    exit 1
   fi
 
-  # Destroy credentials
-  kdestroy
-  if [[ $? -ne 0 ]]; then
-    log_warn "WARNING: Krb5 credentials for $eos_account_username have not been cleared up"
-  fi
+  echo "Repository metadata updated successfully"
 }
 
 upload_to_eos "$@"
