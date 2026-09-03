@@ -204,24 +204,19 @@ void cta::tape::daemon::CleanerSession::cleanDrive(drive::DriveInterface& drive)
     m_lc.log(cta::log::WARNING, "Cleaner could not determine whether the drive contains a tape");
   }
 
+  std::optional<std::string> volumeLabel;
   try {
-    // Encryption keys can survive a failed session and affect later tapes
+    // Encryption keys and LBP mode can survive a failed session and affect later tapes
     drive.clearEncryptionKey();
-  } catch (...) {
-    cta::log::ScopedParamContainer params(m_lc);
-    params.add(cta::semconv::log::exceptionMessage, currentExceptionMessage());
-    m_lc.log(cta::log::WARNING, "Cleaner failed to clear the drive encryption key");
-  }
-  try {
-    // LBP mode is also persistent drive state
+    rewindDrive(drive);
     drive.disableLogicalBlockProtection();
+    volumeLabel = readVolumeLabel(drive);
   } catch (...) {
     cta::log::ScopedParamContainer params(m_lc);
     params.add(cta::semconv::log::exceptionMessage, currentExceptionMessage());
-    m_lc.log(cta::log::WARNING, "Cleaner failed to disable logical block protection");
+    m_lc.log(cta::log::WARNING,
+             "Cleaner failed to prepare the drive or read the volume label; continuing with the provided VID");
   }
-
-  std::optional<std::string> volumeLabel = readVolumeLabelBestEffort(drive);
 
   try {
     unloadTape(drive);
@@ -258,9 +253,7 @@ void cta::tape::daemon::CleanerSession::cleanDrive(drive::DriveInterface& drive)
   try {
     dismountTape("");
   } catch (...) {
-    throw CleanerEjectFailed("Failed to dismount tape with an empty VID while bypassing the robot's "
-                             "cartridge-name consistency check: "
-                             + currentExceptionMessage());
+    throw CleanerEjectFailed("Failed to dismount tape: " + currentExceptionMessage());
   }
 }
 
@@ -356,33 +349,25 @@ void cta::tape::daemon::CleanerSession::checkTapeContainsData(drive::DriveInterf
 }
 
 //------------------------------------------------------------------------------
-// readVolumeLabelBestEffort
+// readVolumeLabel
 //------------------------------------------------------------------------------
-std::optional<std::string> cta::tape::daemon::CleanerSession::readVolumeLabelBestEffort(drive::DriveInterface& drive) {
+std::optional<std::string> cta::tape::daemon::CleanerSession::readVolumeLabel(drive::DriveInterface& drive) {
   cta::log::ScopedParamContainer params(m_lc);
 
-  try {
-    rewindDrive(drive);
-    checkTapeContainsData(drive);
-    if (m_vid.empty()) {
-      m_lc.log(cta::log::DEBUG,
-               "Cleaner cannot determine the volume label format without a VID; the robotic dismount will use an empty "
-               "VID and bypass the cartridge-name consistency check");
-      return std::nullopt;
-    }
-
-    using LabelFormat = cta::common::dataStructures::Label::Format;
-    const LabelFormat labelFormat = m_catalogue.Tape()->getTapeLabelFormat(m_vid);
-    const std::string volumeLabelVSN = tapeFile::HeaderChecker::checkVolumeLabel(drive, labelFormat);
-    params.add("volumeLabelVSN", volumeLabelVSN);
-    m_lc.log(cta::log::DEBUG, "Cleaner read the VSN from the volume label");
-    return volumeLabelVSN;
-  } catch (...) {
-    params.add(cta::semconv::log::exceptionMessage, currentExceptionMessage());
-    m_lc.log(cta::log::WARNING,
-             "Cleaner could not read the volume label; continuing with the provided VID when available");
+  checkTapeContainsData(drive);
+  if (m_vid.empty()) {
+    m_lc.log(cta::log::DEBUG,
+             "Cleaner cannot determine the volume label format without a VID; the robotic dismount will use an empty "
+             "VID and bypass the cartridge-name consistency check");
     return std::nullopt;
   }
+
+  using LabelFormat = cta::common::dataStructures::Label::Format;
+  const LabelFormat labelFormat = m_catalogue.Tape()->getTapeLabelFormat(m_vid);
+  const std::string volumeLabelVSN = tapeFile::HeaderChecker::checkVolumeLabel(drive, labelFormat);
+  params.add("volumeLabelVSN", volumeLabelVSN);
+  m_lc.log(cta::log::DEBUG, "Cleaner read the VSN from the volume label");
+  return volumeLabelVSN;
 }
 
 //------------------------------------------------------------------------------

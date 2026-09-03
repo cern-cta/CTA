@@ -124,12 +124,12 @@ private:
   void cleanDrive(drive::DriveInterface& drive);
 
   /**
-   * Best-effort preparation and reading of the volume label.
+   * Reads the volume label when its format can be determined.
    *
    * @param drive The tape drive.
-   * @return The VSN from the label, or std::nullopt if it could not be read.
+   * @return The VSN from the label, or std::nullopt if no VID was provided to determine the label format.
    */
-  std::optional<std::string> readVolumeLabelBestEffort(drive::DriveInterface& drive);
+  std::optional<std::string> readVolumeLabel(drive::DriveInterface& drive);
 
   /**
     * Creates and returns the object that represents the tape drive to be
