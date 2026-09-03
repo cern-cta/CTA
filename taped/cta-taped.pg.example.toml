@@ -217,10 +217,11 @@
     # If omitted, 1800 is used.
     drain_to_disk_timeout_secs = 1800
 
-    # Path to the operator-provided executable that reports free space in the retrieve destination. The
-    # process must be able to execute this script. 
-    # If omitted, /usr/bin/cta-eosdf.sh is used.
-    external_free_disk_space_script = "/usr/bin/cta-eosdf.sh"
+    # Path to the operator-provided executable that reports free space in the retrieve destination.
+    # Leave empty to disable disk-space backpressure. 
+    # For EOS, install cta-eosdf and set this path to "/usr/bin/cta-eosdf.sh".
+    # If omitted, an empty path is used.
+    external_free_disk_space_script = ""
 
     # Recommended Access Order reduces tape positioning during retrieve.
     [transfers.retrieve.rao]
