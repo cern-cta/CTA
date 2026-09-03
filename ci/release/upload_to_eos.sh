@@ -189,7 +189,7 @@ upload_to_eos() {
   fi
 
   if ! ssh \
-      -o StrictHostKeyChecking=yes \
+      -o StrictHostKeyChecking=no \
       -o GSSAPIAuthentication=yes \
       -o GSSAPITrustDNS=yes \
       -o GSSAPIDelegateCredentials=yes \
