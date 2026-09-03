@@ -134,19 +134,11 @@ upload_to_eos() {
   fi
 
   if [[ -n "${cta_version}" ]]; then
-    if [[ ! "${cta_version}" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+-[0-9]+(\.rc[1-9][0-9]*)?(\.(pgsched|pgcat|pgall))?$ ]]; then
-      log_error "ERROR: Invalid CTA release tag: ${cta_version}"
-      exit 1
-    fi
-
     cta_version=${cta_version#v}
   fi
 
-  if [[ -n "${local_source_dir}" ]]; then
-    repository_dir="${eos_target_dir}/RPMS/x86_64"
-  else
-    repository_dir="${eos_target_dir}/x86_64"
-  fi
+  # The target corresponds to the source root, with RPMs stored in its architecture subdirectory
+  repository_dir="${eos_target_dir}/x86_64"
 
   if [[ "${repository_dir}" != "/eos/user/c/ctareg/www/cta-repo/RPMS/x86_64" ]] && \
      [[ ! "${repository_dir}" =~ ^/eos/user/c/ctareg/www/public/cta-public-repo/(unstable|testing|stable)/cta-[1-9][0-9]*/[A-Za-z0-9._-]+/cta/x86_64$ ]]; then
@@ -154,8 +146,7 @@ upload_to_eos() {
     exit 1
   fi
 
-  # Keep this job's credentials separate from any cache provided by the runner and
-  # destroy them on every exit path.
+  # Keep this job's credentials separate from any cache provided by the runner and always destroy them
   export KRB5CCNAME="FILE:$(mktemp)"
   trap 'kdestroy 2>/dev/null || true; rm -f -- "${KRB5CCNAME#FILE:}"' EXIT
 
@@ -174,6 +165,7 @@ upload_to_eos() {
 
   if [[ -n "${eos_source_dir}" ]]; then
     # Rely on xrootd to copy the files, inside EOS, with the provided cta-version
+    # ls -R handles recursion; each matching path passed to xrdcp is an individual RPM file
     if ! xrdfs root://eoshome.cern.ch/ ls -R "${eos_source_dir}" \
       | grep -F -- "${cta_version}." \
       | while IFS= read -r rpm_path; do
