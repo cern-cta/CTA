@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "Jwt.hpp"
+#include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
 

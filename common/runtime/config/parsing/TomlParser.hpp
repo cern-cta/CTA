@@ -10,6 +10,7 @@
 #include "common/exception/UserError.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <concepts>
 #include <map>
 #include <toml++/toml.hpp>
@@ -19,6 +20,10 @@
 #include <unordered_set>
 
 namespace cta::runtime::parsing {
+
+// Utility functions
+
+std::chrono::system_clock::time_point dateTimeToTimePoint(const toml::date_time& dt);
 
 // Constraints
 
@@ -30,6 +35,15 @@ struct is_std_optional<std::optional<U>> : std::true_type {};
 
 template<class T>
 concept StdOptional = is_std_optional<std::remove_cvref_t<T>>::value;
+
+template<class T>
+struct is_std_chrono_time_point : std::false_type {};
+
+template<class U>
+struct is_std_chrono_time_point<std::chrono::time_point<U>> : std::true_type {};
+
+template<class T>
+concept StdChronoTimePoint = is_std_chrono_time_point<std::remove_cvref_t<T>>::value;
 
 template<class T>
 struct is_std_vector : std::false_type {};
@@ -57,10 +71,13 @@ concept TomlValueConvertible =
   requires(toml::node_view<const toml::node> nv) { nv.template value<std::remove_cvref_t<T>>(); };
 
 template<class T>
-concept ScalarLike =
-  TomlValueConvertible<T> && !StdOptional<T> && !reflection::Reflectable<T> && !StdVector<T> && !MapStringKey<T>;
+concept ScalarLike = TomlValueConvertible<T> && !StdOptional<T> && !reflection::Reflectable<T> && !StdVector<T>
+                     && !MapStringKey<T> && !StdChronoTimePoint<T>;
 
 // Forward declarations (needed because we have some recursive calls)
+
+template<StdChronoTimePoint T>
+ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict);
 
 template<StdOptional T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict);
@@ -81,6 +98,20 @@ template<reflection::Reflectable T>
 ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tbl, const bool strict);
 
 // Implementations
+
+/**
+ * Parse a TOML date/time node into a std::chrono::system_clock::time_point.
+ */
+template<StdChronoTimePoint T>
+ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict) {
+  const auto* dt_value = node.as_date_time();
+
+  if (!dt_value) {
+    return ParseResult::error("Field '" + std::string(fieldName) + "' must be a date/time.");
+  }
+  out = dateTimeToTimePoint(**dt_value);
+  return ParseResult::success();
+}
 
 template<StdOptional T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict) {
@@ -113,8 +144,8 @@ ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const 
   std::vector<ParseResult> errs;
   arr->for_each([&out, &fieldName, &errs, strict](auto& val) {
     ElemType elem {};
-    auto res = parseNode(elem, fieldName, toml::node_view<const toml::node> {&val}, strict);
-    if (!res.ok()) {
+
+    if (auto res = parseNode(elem, fieldName, toml::node_view<const toml::node> {&val}, strict); !res.ok()) {
       errs.push_back(res);
       return;
     }

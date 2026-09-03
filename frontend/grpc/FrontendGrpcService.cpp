@@ -7,7 +7,7 @@
 #include "FrontendGrpcService.hpp"
 
 #include "catalogue/Catalogue.hpp"
-#include "common/auth/Jwt.hpp"
+#include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/checksum/ChecksumBlobSerDeser.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/LogLevel.hpp"

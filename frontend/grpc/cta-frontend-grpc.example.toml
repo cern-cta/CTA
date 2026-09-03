@@ -3,6 +3,7 @@
 
 # This is an example of a configuration for the gRPC part of the CTA frontend service,
 # including TLS and authentication settings. It is not a ready-to-run configuration.
+# Copy it to your config dir and adjust the values as needed.
 
 #############################################
 # CTA frontend — gRPC example configuration
@@ -10,34 +11,33 @@
 
 # Top-level gRPC settings
 [grpc]
-  # `port` (integer): TCP port the gRPC server listens on. Default: 50051
+  # TCP port the gRPC server listens on. Default: 50051
+  # (integer, optional)
   port = 50051
 
-  # `number_of_threads` (integer, optional): Maximum number of worker threads used by the
-  # gRPC server. If omitted the server will choose a sensible default based on available CPU
-  # cores (platform-dependent).
-  # Example:
-  #   number_of_threads = 8
-
+  # Maximum number of worker threads used by the gRPC server. If omitted the server will choose a
+  # sensible default based on available CPU cores (platform-dependent).
+  # (integer, optional)
+  number_of_threads = 32
 
   #############################################
   # TLS configuration for the gRPC server
   #############################################
 
   [grpc.tls]
-    # `server_key_path` (string, REQUIRED): Filesystem path to the server private key (PEM).
-    # The process reading the file must have appropriate permissions; prefer a protected directory.
+    # Filesystem path to the server private key (PEM). The process reading the file must have appropriate
+    # permissions. Prefer a protected directory.
+    # (string, REQUIRED)
     server_key_path = "/path/to/your/private-key.pem"
 
-    # `server_cert_path` (string, REQUIRED): Filesystem path to the server certificate (PEM).
+    # Filesystem path to the server certificate (PEM).
+    # (string, REQUIRED)
     server_cert_path = "/path/to/your/certificate.pem"
 
-    # `chain_cert_path` (string, optional): Optional CA chain file (PEM) that forms the full
-    # certificate chain presented to clients. Useful when the certificate is not directly signed
-    # by a widely trusted CA (e.g. internal PKI / testing).
-    # Example:
-    #   chain_cert_path = "/etc/cta/ca-chain.pem"
-
+    # Optional CA chain file (PEM) that forms the full certificate chain presented to clients. Useful when
+    # the certificate is not directly signed by a widely trusted CA (e.g. internal PKI / testing).
+    # (string, optional)
+    chain_cert_path = "/etc/cta/ca-chain.pem"
 
 #############################################
 # Authentication
@@ -46,83 +46,83 @@
 # JWT (JSON Web Token) authentication settings
 # Note: JWT can be used in both Admin and WFE frontend nodes
 [auth.jwt]
-  # `enabled` (boolean): Enable/disable JWT-based authentication.
-  # When `false`, this block is ignored and JWT auth will not be used.
+  # Enable/disable JWT-based authentication. When `false`, this block is ignored and JWT
+  # auth will not be used.
+  # (boolean)
   enabled = true
 
-  # `jwks_uri` (string, REQUIRED if enabled): URI to the JWKS document that contains
-  # public keys used to verify JWT signatures. Supported schemes: `file://` and `https://`.
+  # URI to the JWKS document that contains public keys used to verify JWT signatures.
+  # Supported schemes: `file://` and `https://`.
   # Examples:
   #   file:///etc/cta/jwks.json
   #   https://example.com/.well-known/jwks.json
+  #
+  # (string, REQUIRED if enabled)
   jwks_uri = "file:///etc/cta/jwks.json"
 
-  # `expected_issuer` (string, REQUIRED if enabled): The expected `iss` (issuer) claim value
-  # present in incoming JWTs. Tokens with a different `iss` will be rejected.
+  # The expected `iss` (issuer) claim value present in incoming JWTs. Tokens with a different
+  # `iss` will be rejected.
+  # (string, REQUIRED if enabled)
   expected_issuer = "cta"
 
-  # `expected_audience` (string, REQUIRED if enabled): The expected `aud` (audience) claim
-  # value. Use a unique audience per service to avoid token reuse across components.
+  # The expected `aud` (audience) claim value. Use a unique audience per service to avoid
+  # token reuse across components.
+  # (string, REQUIRED if enabled)
   expected_audience = "cta-frontend"
 
-  # `min_generation` (integer, optional): minimum token generation (`gen` claim) accepted.
-  # Tokens with a lower `gen` are rejected. Use to mass-invalidate old tokens. Default: 0.
-  # Example:
-  #   min_generation = 0
+  # Minimum token generation (`gen` claim) accepted. Tokens with a lower `gen` are rejected.
+  # Use to mass-invalidate old tokens. Default: 0.
+  # (integer, optional)
+  min_generation = 0
 
-  # `cache_refresh_interval` (integer, seconds): How often (TTL) the JWKS cache is refreshed
-  # by fetching the JWKS URI. Default: 600 (10 minutes). Set lower when key rotation is frequent.
-  # Example:
-  #   cache_refresh_interval = 600
+  # How often (TTL) the JWKS cache is refreshed by fetching the JWKS URI. Default: 600
+  # (10 minutes). Set lower when key rotation is frequent.
+  # (integer(s), optional)
+  cache_refresh_interval = 600
 
-  # `pub_key_timeout` (integer, seconds): TTL for an individual cached public key. Use a non-zero
-  # value to force periodic re-validation of keys if you rotate them. Default: 0 (never expires).
-  # Example:
-  #   pub_key_timeout = 0
+  # TTL for an individual cached public key. Use a non-zero value to force periodic re-validation
+  # of keys if you rotate them. Default: 0 (never expires).
+  # (integer(s), optional)
+  pub_key_timeout = 0
 
-  # `jwks_total_timeout` (integer, seconds): HTTP/network timeout when fetching the JWKS
-  # file. Default: 60. Lower values make the service fail faster on unreachable endpoints.
-  # Example:
-  #   jwks_total_timeout = 60
+  # HTTP/network timeout when fetching the JWKS file. Default: 60. Lower values make the service
+  # fail faster on unreachable endpoints.
+  # (integer(s), optional)
+  jwks_total_timeout = 60
 
-  # `revoke_list_path` (string, optional): Path to a TOML file containing a list of revoked
-  # tokens (by `jti`). If present, the frontend will consult this list in addition to signature
-  # checks. Useful for immediate token revocation without changing key material.
-  # Example:
-  #   revoke_list_path = "/etc/cta/jwt-revoke-list.toml"
-  #
-  # Example revoke list (copy into the file referenced by `revoke_list_path`):
-  # [[revoked_tokens]]
-  #   jti = "xxxx-xxxx-xxxx-xxxx-xxxx"
-  #   reason = "Compromised key"
-  #   revoked_at = 2026-07-01T10:30:00Z
-
+  # Path to a TOML file containing a list of revoked tokens (by `jti`). If present, the frontend
+  # will consult this list in addition to signature checks. Useful for immediate token revocation
+  # without changing key material.
+  # (string, optional)
+  revoke_list_path = "/etc/cta/jwt-revoke-list.toml"
 
 # mTLS (Mutual TLS) authentication block
 # Note: mTLS cannot be used in Admin frontend nodes
 [auth.mtls]
-  # `enabled` (boolean): Enables mTLS-based authentication when true.
-  # When `false`, this block is ignored and mTLS auth will not be used.
+  # Enables mTLS-based authentication when true. When `false`, this block is ignored and mTLS auth
+  # will not be used.
+  # (boolean)
   enabled = true
 
-  # `aliases` (table): Map logical client identities to one or more SAN names expected in
-  # client certificates. This allows a single logical identity to cover multiple hostnames.
-  # Example mapping (adjust as needed):
+  # Map logical client identities to one or more SAN names expected in client certificates.
+  # This allows a single logical identity to cover multiple hostnames.
+  # (table, optional)
   [auth.mtls.aliases]
     my_client_identity = ["my-client-machine.biglab", "my-client-machine"]
-
 
 # Kerberos authentication block
 # Note: Kerberos cannot be used in WFE frontend nodes
 [auth.kerberos]
-  # `enabled` (boolean): Enables Kerberos authentication when true.
-  # When `false`, this block is ignored and Kerberos auth will not be used.
+  # Enables Kerberos authentication when true. When `false`, this block is ignored and Kerberos
+  # auth will not be used.
+  # (boolean)
   enabled = true
 
-  # `keytab_path` (string, REQUIRED if enabled): Filesystem path to the Kerberos keytab file
-  # containing the service principal keys used to validate incoming tickets.
+  # Filesystem path to the Kerberos keytab file containing the service principal keys used to
+  # validate incoming tickets.
+  # (string, REQUIRED if enabled)
   keytab_path = "/path/to/file.keytab"
 
-  # `service_principal` (string, REQUIRED if enabled): Kerberos service principal accepted
-  # by the frontend, e.g. "service/instance@REALM".
+  # Kerberos service principal accepted by the frontend, e.g. "service/instance@REALM".
+  # (string, REQUIRED if enabled)
   service_principal = "service/instance@REALM"

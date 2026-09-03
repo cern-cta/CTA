@@ -3,158 +3,14 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "Jwt.hpp"
+#include "JwtAuthManager.hpp"
 
-#include "common/auth/RevokeList.hpp"
+#include "common/auth/jwt/RevokeList.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/runtime/config/ConfigLoader.hpp"
 #include "jwt-cpp/jwt.h"
 
-#include <curl/curl.h>
-#include <mutex>
-
 namespace cta::auth {
-
-namespace {
-/**
- * Converts a toml::date_time to a std::chrono::system_clock::time_point.
- * Adjusts for timezone offset if present, returns result in UTC.
- *
- * @param dt the date in TOML format
- * @return the `time_point` value
- */
-std::chrono::system_clock::time_point dateTimeToTimePoint(const toml::date_time& dt) {
-  std::tm tm {};
-  tm.tm_year = dt.date.year - 1900;
-  tm.tm_mon = dt.date.month - 1;
-  tm.tm_mday = dt.date.day;
-  tm.tm_hour = dt.time.hour;
-  tm.tm_min = dt.time.minute;
-  tm.tm_sec = dt.time.second;
-  tm.tm_isdst = 0;  // UTC has no DST
-
-  std::time_t result = ::timegm(&tm);
-  if (dt.offset.has_value()) {
-    result -= dt.offset->minutes * 60;
-  }
-  return std::chrono::system_clock::from_time_t(result);
-}
-}  // namespace
-
-// Function to handle curl responses
-size_t WriteCallback(char* contents, size_t size, size_t nmemb, std::string* output) {
-  size_t totalSize = size * nmemb;
-  output->append(contents, totalSize);
-  return totalSize;
-};
-
-CurlJwksFetcher::CurlJwksFetcher(int totalTimeoutSecs) : m_totalTimeoutSecs(totalTimeoutSecs) {
-  curl_global_init(CURL_GLOBAL_DEFAULT);
-}
-
-CurlJwksFetcher::~CurlJwksFetcher() {
-  curl_global_cleanup();
-}
-
-std::string CurlJwksFetcher::fetchJWKS(const std::string& jwksUrl) {
-  CURL* curl;
-  CURLcode res;
-  std::string readBuffer;
-
-  curl = curl_easy_init();
-  if (curl) {
-    curl_easy_setopt(curl, CURLOPT_URL, jwksUrl.c_str());
-    // use TLS 1.2 or later
-    curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
-    // Set timeouts to prevent indefinite hangs
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, m_totalTimeoutSecs);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
-    res = curl_easy_perform(curl);
-    if (res != CURLE_OK) {
-      throw CurlException(std::string("CURL failed in fetchJWKS: ") + curl_easy_strerror(res));
-    }
-    curl_easy_cleanup(curl);
-  } else {
-    throw CurlException("CURL failed to call curl_easy_init()");
-  }
-
-  return readBuffer;
-}
-
-std::optional<JwkCacheEntry> JwkCache::find(const std::string& key) {
-  log::LogContext lc(m_lc);
-  lc.log(log::DEBUG, "Waiting to acquire shared_lock in JwkCache::find");
-  std::shared_lock lock(m_mutex);
-  lc.log(log::DEBUG, "Just acquired the shared_lock in JwkCache::find");
-  auto it = m_keymap.find(key);
-  if (it == m_keymap.end()) {
-    lc.log(log::INFO, std::string("Entry not found for kid ") + key);
-    return std::nullopt;
-  } else {
-    lc.log(log::INFO, std::string("Entry found in cache for kid ") + key);
-    return std::optional<JwkCacheEntry>(it->second);
-  }
-}
-
-void JwkCache::update(time_t now) {
-  log::LogContext lc(m_lc);
-  log::ScopedParamContainer spc(lc);
-  lc.log(log::DEBUG, "In function update()");
-  std::string raw_jwks;
-  try {
-    raw_jwks = m_jwksFetcher->fetchJWKS(m_jwksUri);
-  } catch (CurlException& ex) {
-    lc.log(log::ERR, ex.getMessageValue());
-    return;
-  }
-  // purge any keys that have expired
-  lc.log(log::DEBUG, "In function update(), waiting to acquire unique lock");
-  std::unique_lock lock(m_mutex);
-  lc.log(log::DEBUG, "In function update(), just acquired the unique lock");
-
-  std::erase_if(m_keymap, [now, &lc, this](auto item) {
-    bool doErase = (m_pubKeyTTL != 0) && (item.second.last_refresh_time + m_pubKeyTTL <= now);
-    if (doErase) {
-      lc.log(log::DEBUG, std::string("Removing entry for key with kid ") + item.first);
-    }
-    return doErase;
-  });
-
-  // add the new keys
-  auto jwks = jwt::parse_jwks(raw_jwks);
-  std::string kid;
-  std::string x5c;
-  // now iterate over the keys, add the key if it's used for signing
-  for (const auto& jwk : jwks) {
-    try {
-      if (std::string use = jwk.get_use(); use != "sig") {
-        continue;
-      }
-      kid = jwk.get_key_id();
-      x5c = jwk.get_x5c_key_value();
-      if (x5c.empty()) {
-        lc.log(log::WARNING, "Field \"x5c\" missing from JWKS entry '" + kid + "', skipping it");
-        continue;
-      }
-      if (kid.empty()) {
-        lc.log(log::WARNING, "Field \"kid\" missing from JWKS entry, skipping it");
-        continue;
-      }
-    } catch (std::runtime_error& ex) {
-      spc.add(semconv::log::exceptionMessage, ex.what());
-      lc.log(log::WARNING, "Runtime error thrown when parsing JWKS entry '" + kid + "', skipping it");
-      continue;
-    }
-
-    std::string pubkeyPem = jwt::helper::convert_base64_der_to_pem(x5c);
-    JwkCacheEntry entry = {now, pubkeyPem};
-    m_keymap[kid] = entry;
-    lc.log(log::INFO, "Adding new key entry in cache");
-    spc.add("kid", kid);
-    spc.add("cachedTime", std::to_string(now));
-  }
-}
 
 TokenValidationResult JwtAuthManager::validateJwt(const std::string& encodedJwt, const log::LogContext& logContext) {
   /* The validation is done in the following order:
@@ -279,22 +135,24 @@ TokenValidationResult JwtAuthManager::validateJwt(const std::string& encodedJwt,
 }
 
 std::set<std::string, std::less<>> JwtAuthManager::loadRevokedJtis(const std::string& filePath) {
-  const auto revokeFile = cta::runtime::loadFromToml<RevokeListFile>(filePath, /*strict=*/false);
+  const auto revokeFile = cta::runtime::loadFromToml<RevokeListFile>(filePath, false);
 
   // 'revoked_at' dates are interpreted as UTC
   std::set<std::string, std::less<>> revokedJtis;
   for (const auto& entry : revokeFile.revoked_tokens) {
     if (entry.jti.empty()) {
       throw cta::exception::UserError("revoked token entry in '" + filePath + "' has an empty JTI");
-    }
-    if (entry.revoked_at.date.year < 1970) {
+    } else if (entry.revoked_at == std::chrono::system_clock::time_point {}) {
+      throw cta::exception::UserError("revoked token entry '" + entry.jti + "' in '" + filePath
+                                      + "' has a missing or invalid revocation date");
+    } else if (entry.revoked_at < std::chrono::system_clock::from_time_t(0)) {
       throw cta::exception::UserError("revoked token entry '" + entry.jti + "' in '" + filePath
                                       + "' has a revocation date before 1970");
-    }
-    if (dateTimeToTimePoint(entry.revoked_at) > std::chrono::system_clock::now()) {
+    } else if (entry.reason.empty()) {
       throw cta::exception::UserError("revoked token entry '" + entry.jti + "' in '" + filePath
-                                      + "' has a revocation date in the future");
+                                      + "' has a missing revocation reason");
     }
+
     revokedJtis.insert(entry.jti);
   }
   return revokedJtis;

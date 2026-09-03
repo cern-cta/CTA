@@ -55,11 +55,6 @@ void FrontendService::loadGrpcConfigParams(const std::string& configFilePath, lo
     // a zero pub_key_timeout is allowed and means "never expire"
     if (jwtConfig->pub_key_timeout == 0) {
       log(log::WARNING, "'pub_key_timeout' is set to zero. Cached public keys will not expire");
-    } else if (jwtConfig->pub_key_timeout < jwtConfig->cache_refresh_interval) {
-      log(log::WARNING,
-          "Cannot use a value for 'pub_key_timeout' that is less than 'cache_refresh_interval'. "
-          "Setting 'pub_key_timeout' equal to 'cache_refresh_interval'.");
-      jwtConfig->pub_key_timeout = jwtConfig->cache_refresh_interval;
     }
   }
 

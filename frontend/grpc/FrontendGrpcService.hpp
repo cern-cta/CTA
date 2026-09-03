@@ -13,7 +13,7 @@
 
 // need to implement health check for our CI
 #include "TokenStorage.hpp"
-#include "common/auth/Jwt.hpp"
+#include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/log/Logger.hpp"
 #include "frontend/common/AdminCmd.hpp"
 #include "frontend/common/FrontendService.hpp"

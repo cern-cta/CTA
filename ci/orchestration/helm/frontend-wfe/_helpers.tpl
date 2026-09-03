@@ -30,3 +30,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
   {{- end }}
   {{- $schedulerConfig -}}
 {{- end }}
+
+{{- define "ctafrontend.jwtRevokeList" -}}
+  /etc/cta/jwt-revoke-list.toml
+{{- end }}

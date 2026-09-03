@@ -127,6 +127,12 @@ struct OptionalAggregateConfig {
   static constexpr std::size_t memberCount() { return 1; }
 };
 
+struct DateTimeConfig {
+  std::chrono::system_clock::time_point timestamp;
+
+  static constexpr std::size_t memberCount() { return 1; }
+};
+
 struct ValidatedConfig {
   int value = 1;
   int other_value = 1;
@@ -262,6 +268,26 @@ TEST(ConfigLoader, ThrowsOnIntegerBelowLongLongMinimum) {
 TEST(ConfigLoader, ThrowsOnIntegerAboveLongLongMaximum) {
   TempFile f("value = 9223372036854775808\n", ".toml");
   EXPECT_THROW(cta::runtime::loadFromToml<LongLongConfig>(f.path()), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, AllowsDateTimeValuesForTimePointDestinations) {
+  // 22 November 2019, 00:00:00 UTC
+  const auto now = std::chrono::system_clock::from_time_t(1574380800);
+  TempFile f("timestamp = 2019-11-22T00:00:00Z\n", ".toml");
+
+  const auto config = cta::runtime::loadFromToml<DateTimeConfig>(f.path());
+  EXPECT_EQ(config.timestamp, now);
+}
+
+TEST(ConfigLoader, ThrowsOnNonDateTimeForTimePointDestination) {
+  TempFile f1("timestamp = \"2019-11-05T00:00:00Z\"\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<DateTimeConfig>(f1.path()), cta::exception::UserError);
+
+  TempFile f2("timestamp = \"22 November 2019\"\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<DateTimeConfig>(f2.path()), cta::exception::UserError);
+
+  TempFile f3("timestamp = 1574380800\n", ".toml");
+  EXPECT_THROW(cta::runtime::loadFromToml<DateTimeConfig>(f3.path()), cta::exception::UserError);
 }
 
 TEST(ConfigLoader, ValueInitializesMissingFieldsInOptionalNestedAggregate) {

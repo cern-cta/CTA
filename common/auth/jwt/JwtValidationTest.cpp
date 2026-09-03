@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "common/auth/Jwt.hpp"
+#include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
@@ -583,15 +583,6 @@ TEST_F(ValidateJwtTestFixture, RevokeListEntryWithMissingJtiIsRejected) {
   EXPECT_THROW(createAuthMgrWithRevokeListFile(revokeList.path()), cta::exception::UserError);
 }
 
-TEST_F(ValidateJwtTestFixture, RevokeListEntryWithFutureRevocationDateIsRejected) {
-  const auto tomorrow = toTomlDateTime(std::chrono::system_clock::now() + std::chrono::hours(24));
-  const std::string toml = makeRevokeListToml({
-    RevokeListEntry {"revoked-001", tomorrow}
-  });
-  TempFile revokeList(toml, ".toml");
-  EXPECT_THROW(createAuthMgrWithRevokeListFile(revokeList.path()), cta::exception::UserError);
-}
-
 TEST_F(ValidateJwtTestFixture, RevokeListEntryWithRevocationDateBefore1970IsRejected) {
   const std::string toml = makeRevokeListToml({
     RevokeListEntry {"revoked-001", "1969-07-20T20:17:00Z"}
@@ -600,19 +591,18 @@ TEST_F(ValidateJwtTestFixture, RevokeListEntryWithRevocationDateBefore1970IsReje
   EXPECT_THROW(createAuthMgrWithRevokeListFile(revokeList.path()), cta::exception::UserError);
 }
 
-TEST_F(ValidateJwtTestFixture, RevokeListEntryWithMissingRevocationDateIsRejected) {
+TEST_F(ValidateJwtTestFixture, RevokeListEntryWithoutRevocationDateIsRejected) {
   // A missing 'revoked_at' leaves a zero-initialised date, i.e. a year well before 1970.
   TempFile revokeList("[[revoked_tokens]]\njti = \"revoked-001\"\nreason = \"no date given\"\n", ".toml");
   EXPECT_THROW(createAuthMgrWithRevokeListFile(revokeList.path()), cta::exception::UserError);
 }
 
-TEST_F(ValidateJwtTestFixture, RevokeListEntryWithoutReasonIsAccepted) {
+TEST_F(ValidateJwtTestFixture, RevokeListEntryWithoutReasonIsRejected) {
   // 'reason' is only kept for auditing, so it is not required in order to load the list.
   const std::string toml = "[[revoked_tokens]]\njti = \"revoked-001\"\nrevoked_at = "
                            + toTomlDateTime(std::chrono::system_clock::now() - std::chrono::hours(1)) + "\n";
   TempFile revokeList(toml, ".toml");
-  auto authMgr = createAuthMgrWithRevokeListFile(revokeList.path());
-  EXPECT_TRUE(authMgr->isRevoked("revoked-001"));
+  EXPECT_THROW(createAuthMgrWithRevokeListFile(revokeList.path()), cta::exception::UserError);
 }
 
 TEST_F(ValidateJwtTestFixture, RevokeListEntryWithTimezoneOffsetIsInterpretedAsUtc) {

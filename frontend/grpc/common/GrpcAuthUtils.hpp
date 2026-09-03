@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "common/auth/Jwt.hpp"
+#include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/LogContext.hpp"
 #include "frontend/grpc/TokenStorage.hpp"

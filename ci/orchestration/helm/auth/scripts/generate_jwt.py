@@ -147,7 +147,7 @@ def main() -> None:
     )
     parser.add_argument("--cert", required=True, type=Path, help="Path to server certificate")
     parser.add_argument("--key", required=True, type=Path, help="Path to private key")
-    parser.add_argument("--set-jti", help="Set a custom JTI (useful for testing)")
+    parser.add_argument("--jti", help="Set a custom JTI (useful for testing)")
     parser.add_argument("--jwks", help="Filename for the generated JWKS file")
     parser.add_argument(
         "--issuer",
@@ -184,7 +184,7 @@ def main() -> None:
         kid = jwk["kid"]
         if not isinstance(kid, str):
             raise TypeError("JWK kid must be a string")
-        token = generate_jwt(key, kid, sub, args.lifetime, args.issuer, args.audience, args.gen, args.set_jti)
+        token = generate_jwt(key, kid, sub, args.lifetime, args.issuer, args.audience, args.gen, args.jti)
 
         safe_sub = sanitize_filename(sub)
         jwt_path = Path(args.output_dir) / f"{safe_sub}.jwt"

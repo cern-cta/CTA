@@ -9,7 +9,7 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "catalogue/SchemaVersion.hpp"
-#include "common/auth/Jwt.hpp"
+#include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/StdoutLogger.hpp"

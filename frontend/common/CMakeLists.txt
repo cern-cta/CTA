@@ -49,6 +49,8 @@ endif()
 set (FRONTEND_COMMON_CONFIG_UNIT_TESTS_LIB_SRC_FILES
   ../../common/config/Config.cpp
   ../../common/config/ConfigGetOptionValueUIntTests.cpp
+  ../grpc/common/GrpcConfig.cpp
+  ../grpc/common/GrpcConfigTest.cpp
 )
 
 add_library (ctafrontendcommonconfigunittests SHARED

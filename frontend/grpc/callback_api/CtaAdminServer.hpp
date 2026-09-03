@@ -7,7 +7,7 @@
 
 #include "ServerDefaultReactor.hpp"
 #include "ServerVersion.hpp"
-#include "common/auth/Jwt.hpp"
+#include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"

@@ -231,6 +231,7 @@ dCache frontend
 %attr(0644,root,root) %{_sysconfdir}/sysconfig/cta-frontend-grpc
 %attr(0644,root,root) %{_sysconfdir}/cta/cta-frontend.example.conf
 %attr(0644,root,root) %{_sysconfdir}/cta/cta-frontend-grpc.example.toml
+%attr(0644,root,root) %{_sysconfdir}/cta/jwt-revoke-list.example.toml
 %attr(0644,root,root) %doc %{_mandir}/man1/cta-frontend-grpc.1cta*
 
 %post -n cta-frontend-grpc

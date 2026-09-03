@@ -5,7 +5,7 @@
 
 #include "GrpcAuthUtils.hpp"
 
-#include "common/auth/Jwt.hpp"
+#include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/log/LogLevel.hpp"
 
 using ::grpc::Status;

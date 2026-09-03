@@ -1,0 +1,27 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# This is an example revoke list for JWTs (JSON Web Tokens) used in the CTA frontend service.
+# It is not a ready-to-run configuration. Copy it to your config dir.
+
+[[revoked_tokens]]
+  # The token's JTI (JWT ID) claim value. This is a unique identifier for the token and is used
+  # to identify it in the revoke list.
+  # (string, REQUIRED)
+  jti = "xxxx-xxxx-xxxx-xxxx-xxxx"
+
+  # The reason for revoking the token. This is an optional field that can provide context for
+  # why the token was revoked.
+  # (string, optional)
+  reason = "Compromised key"
+
+  # The timestamp when the token was revoked. This is an optional field that can be used to
+  # track when the revocation occurred.
+  # (string, optional, RFC 3339 format)
+  revoked_at = 2026-07-01T10:30:00Z
+
+# You can easily add other revoked tokens by adding more [[revoked_tokens]] blocks
+[[revoked_tokens]]
+  jti = "yyyy-yyyy-yyyy-yyyy-yyyy"
+  reason = "User requested revocation"
+  revoked_at = 2026-07-02T15:45:00Z

@@ -25,6 +25,11 @@ cta::runtime::ValidationResult JwtAuthConfig::validate() const {
     result.addError("jwks_total_timeout", "must be greater than zero");
   }
 
+  // a zero pub_key_timeout means "never expire"
+  if (pub_key_timeout != 0 && pub_key_timeout < cache_refresh_interval) {
+    result.addError("pub_key_timeout", "must be zero or greater than or equal to 'cache_refresh_interval'");
+  }
+
   if (expected_issuer.empty()) {
     result.addError("expected_issuer", "cannot be empty");
   }
