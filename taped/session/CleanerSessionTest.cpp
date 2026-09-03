@@ -219,6 +219,38 @@ TEST_P(CleanerSessionTest, DismountsTapeAfterUnloadFailure) {
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
 }
 
+TEST_P(CleanerSessionTest, DisablesTapeAndPutsDriveDownWhenBothDismountAttemptsFail) {
+  constexpr uint16_t unavailableRmcPort = 0;
+  constexpr uint32_t networkTimeout = 1;
+  constexpr uint32_t maxRequestAttempts = 1;
+  cta::mediachanger::RmcProxy rmcProxy("localhost", unavailableRmcPort, networkTimeout, maxRequestAttempts);
+  cta::mediachanger::MediaChangerFacade mediaChanger(rmcProxy, m_changerLog);
+
+  auto* drive = installDrive();
+  cta::tape::tapeFile::LabelSession::label(drive, m_vid, false);
+  auto driveInfo = m_driveInfo;
+  driveInfo.rawLibrarySlot = "smc0";
+  cta::tape::daemon::CleanerSession
+    cleaner(mediaChanger, m_sessionLog, driveInfo, m_systemWrapper, m_vid, false, 0, *m_catalogue, *m_scheduler);
+
+  ASSERT_EQ(cta::tape::daemon::Session::MARK_DRIVE_AS_DOWN, cleaner.execute());
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner failed to dismount tape with VID"));
+  ASSERT_NE(std::string::npos,
+            m_sessionLog.getLog().find("Cleaner requesting robotic tape dismount with an empty VID"));
+
+  using Tape = cta::common::dataStructures::Tape;
+  const auto tape = m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid);
+  ASSERT_EQ(Tape::DISABLED, tape.state);
+
+  cta::log::LogContext logContext(m_sessionLog);
+  const auto desiredDriveState = m_scheduler->getDesiredDriveState(driveInfo.driveName, logContext);
+  ASSERT_FALSE(desiredDriveState.up);
+
+  const auto tapeDrive = m_catalogue->DriveState()->getTapeDrive(driveInfo.driveName);
+  ASSERT_TRUE(tapeDrive.has_value());
+  ASSERT_EQ(cta::common::dataStructures::DriveStatus::Down, tapeDrive->driveStatus);
+}
+
 TEST_P(CleanerSessionTest, AcceptsEmptyDriveWithoutDismounting) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mediaChanger(rmcProxy, m_changerLog);
