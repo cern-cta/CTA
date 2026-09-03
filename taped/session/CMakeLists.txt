@@ -39,6 +39,7 @@ add_library(ctatapedsession
 target_link_libraries(ctatapedsession ctacommon ctascheduler ctacatalogue ctamediachanger ctatapeddrive ctatapedrao ZLIB::ZLIB)
 
 add_library(ctatapedsessionunittests SHARED
+  CleanerSessionTest.cpp
   DataTransferSessionTest.cpp
   DiskReadTaskTest.cpp
   DiskWriteTaskTest.cpp

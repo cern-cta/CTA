@@ -9,6 +9,7 @@
 #include <limits>
 #include <list>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -32,9 +33,11 @@ private:
 
 public:
   enum FailureMoment { OnWrite, OnFlush };
+  enum class FailurePoint { ClearEncryptionKey, Rewind, DisableLogicalBlockProtection, UnloadTape };
 
 private:
   const enum FailureMoment m_failureMoment;
+  std::set<FailurePoint> m_failurePoints;
   bool m_tapeOverflow = false;
   bool m_failToMount;
   bool m_tapeInPlace = true;
@@ -106,8 +109,11 @@ public:
   void queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int maxSupported) final;
   uint32_t getBlockIdPositioningCount() const;
   void setTapeInPlace(bool tapeInPlace);
+  void setFailurePoint(FailurePoint failurePoint, bool enabled = true);
+  void clearFailurePoints();
 
 private:
+  void throwIfFailurePoint(FailurePoint failurePoint) const;
   uint32_t m_blockIdPositioningCount = 0;
 };
 
