@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Opt-in overlay, pgsched only: opportunistically batch concurrent queueing requests into a single
+# bulk DB insert instead of queueing them one at a time. Has no effect on the objectstore
+# scheduler. Applied conditionally by .setup-k8s-test-variables in tests-kubernetes.gitlab-ci.yml,
+# driven by the enable-opportunistic-batching pipeline input.
+
+frontend-wfe:
+  conf:
+    schedulerdb:
+      opportunisticBatchingEnabled: true
