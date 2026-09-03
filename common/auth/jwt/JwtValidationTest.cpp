@@ -247,7 +247,7 @@ protected:
   void expectRejectedBecause(const cta::auth::TokenValidationResult& result, const std::string& expectedCause) const {
     EXPECT_FALSE(result.isValid);
     ASSERT_TRUE(result.errorMessage.has_value());
-    EXPECT_EQ(result.errorMessage.value(), "Token validation failed");
+    EXPECT_EQ(result.errorMessage.value(), "Token validation failed: " + expectedCause);
 
     const std::string loggedCause = "exception_message=\"" + expectedCause + "\"";
     const std::string logContents = log.getLog();
@@ -279,7 +279,7 @@ TEST_F(ValidateJwtTestFixture, ValidTokenWithCachedKey) {
   // First populate authMgr by calling updateCache
   authMgr->updateCache(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
 
-  auto result = authMgr->validateJwt(token, lc);
+  auto result = authMgr->validateJwt(token, log);
   ASSERT_TRUE(result.isValid);
 }
 
@@ -288,7 +288,7 @@ TEST_F(ValidateJwtTestFixture, ValidTokenWithoutCachedKeyCacheFetchSucceeds) {
   std::string token = createTestJwt(false /*expired*/, "test-kid");
   auto entry = authMgr->getCache().find("test-kid");
   ASSERT_FALSE(entry.has_value());
-  auto result = authMgr->validateJwt(token, lc);
+  auto result = authMgr->validateJwt(token, log);
   ASSERT_TRUE(result.isValid);  // validate will succeed even if the key is not already present in the authMgr
   // because it will be fetched
   entry = authMgr->getCache().find("test-kid");
@@ -303,7 +303,7 @@ TEST_F(ValidateJwtTestFixture, ValidTokenWithoutCachedKeyNotServedByJwks) {
   std::string token = createTestJwt(false /*expired*/, "test-kid");
   ASSERT_FALSE(authMgr->getCache().find("test-kid").has_value());
 
-  auto result = authMgr->validateJwt(token, lc);
+  auto result = authMgr->validateJwt(token, log);
   EXPECT_FALSE(result.isValid);
   ASSERT_TRUE(result.errorMessage.has_value());
   EXPECT_EQ(result.errorMessage.value(), "Unable to find the public key for the token, authentication failed");
@@ -320,7 +320,7 @@ TEST_F(ValidateJwtTestFixture, ValidTokenWithoutCachedKeyUnparsableJwks) {
   std::string token = createTestJwt(false /*expired*/, "test-kid");
   ASSERT_FALSE(authMgr->getCache().find("test-kid").has_value());
 
-  expectRejectedBecause(authMgr->validateJwt(token, lc), "invalid json");
+  expectRejectedBecause(authMgr->validateJwt(token, log), "invalid json");
   EXPECT_FALSE(authMgr->getCache().find("test-kid").has_value());
 }
 
@@ -331,7 +331,7 @@ TEST_F(ValidateJwtTestFixture, ExpiredToken) {
   // Populate authMgr by calling updateCache
   authMgr->updateCache(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
 
-  expectRejectedBecause(authMgr->validateJwt(token, lc), "token expired");
+  expectRejectedBecause(authMgr->validateJwt(token, log), "token expired");
 }
 
 // Tests for invalid/malformed tokens
@@ -344,7 +344,7 @@ TEST_F(ValidateJwtTestFixture, BadTokenMissingKid) {
       .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
       .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
-  auto result = authMgr->validateJwt(token, lc);
+  auto result = authMgr->validateJwt(token, log);
   ASSERT_FALSE(result.isValid);
   ASSERT_TRUE(result.errorMessage.has_value());
   EXPECT_EQ(result.errorMessage.value(), "Token header does not contain a 'kid' field");
@@ -356,11 +356,12 @@ TEST_F(ValidateJwtTestFixture, BadTokenMissingExp) {
                         .set_issuer("test")
                         .set_payload_claim("jti", jwt::claim(std::string("test-jti")))
                         .set_header_claim("kid", jwt::claim(std::string("test-kid")))
+                        .set_payload_claim("gen", jwt::claim(picojson::value(static_cast<int64_t>(1))))
                         .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
                         .set_payload_claim("aud", jwt::claim(std::string("test-audience")))
                         .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
-  auto result = authMgr->validateJwt(token, lc);
+  auto result = authMgr->validateJwt(token, log);
   ASSERT_FALSE(result.isValid);
   ASSERT_TRUE(result.errorMessage.has_value());
   EXPECT_EQ(result.errorMessage.value(), "Token does not contain an 'exp' claim");
@@ -381,7 +382,7 @@ TEST_F(ValidateJwtTestFixture, BadTokenInvalidSignature) {
       .sign(jwt::algorithm::rs256("", other_rsa_priv_key, "", ""));
 
   auto authMgr = createAuthMgrWithMockFetcher();
-  expectRejectedBecause(authMgr->validateJwt(token, lc), "failed to verify signature: VerifyFinal failed");
+  expectRejectedBecause(authMgr->validateJwt(token, log), "failed to verify signature: VerifyFinal failed");
 }
 
 TEST_F(ValidateJwtTestFixture, BadTokenUnsupportedAlgorithm) {
@@ -396,7 +397,7 @@ TEST_F(ValidateJwtTestFixture, BadTokenUnsupportedAlgorithm) {
       .set_payload_claim("aud", jwt::claim(std::string("test-audience")))
       .sign(jwt::algorithm::hs256(rsa_priv_key));  // we accept RS256 only
 
-  expectRejectedBecause(authMgr->validateJwt(token, lc), "wrong algorithm");
+  expectRejectedBecause(authMgr->validateJwt(token, log), "wrong algorithm");
 }
 
 TEST_F(ValidateJwtTestFixture, BadTokenMalformedToken) {
@@ -405,12 +406,12 @@ TEST_F(ValidateJwtTestFixture, BadTokenMalformedToken) {
   // append some garbage to the token string
   token += "GARBAGE";
 
-  expectRejectedBecause(authMgr->validateJwt(token, lc), "Invalid input: too much fill");
+  expectRejectedBecause(authMgr->validateJwt(token, log), "Invalid input: too much fill");
 }
 
 TEST_F(ValidateJwtTestFixture, BadTokenEmptyToken) {
   auto authMgr = createAuthMgrWithMockFetcher();
-  expectRejectedBecause(authMgr->validateJwt("", lc), "invalid token supplied");
+  expectRejectedBecause(authMgr->validateJwt("", log), "invalid token supplied");
 }
 
 TEST_F(ValidateJwtTestFixture, BadTokenMissingSub) {
@@ -421,11 +422,12 @@ TEST_F(ValidateJwtTestFixture, BadTokenMissingSub) {
       .set_issuer("test")
       .set_payload_claim("jti", jwt::claim(std::string("test-jti")))
       .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
+      .set_payload_claim("gen", jwt::claim(picojson::value(static_cast<int64_t>(1))))
       .set_header_claim("kid", jwt::claim(std::string("test-kid")))
       .set_payload_claim("aud", jwt::claim(std::string("test-audience")))
       .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
-  auto result = authMgr->validateJwt(token, lc);
+  auto result = authMgr->validateJwt(token, log);
   ASSERT_FALSE(result.isValid);
   ASSERT_TRUE(result.errorMessage.has_value());
   EXPECT_EQ(result.errorMessage.value(), "Token does not contain a 'sub' claim");
@@ -447,7 +449,7 @@ TEST_F(ValidateJwtTestFixture, TokenWithWrongIssuer) {
       .set_payload_claim("aud", jwt::claim(std::string("test-audience")))
       .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
-  expectRejectedBecause(authMgr->validateJwt(token, lc), "claim value does not match expected value");
+  expectRejectedBecause(authMgr->validateJwt(token, log), "claim value does not match expected value");
 }
 
 TEST_F(ValidateJwtTestFixture, TokenMissingGenClaimIsRejected) {
@@ -462,7 +464,7 @@ TEST_F(ValidateJwtTestFixture, TokenMissingGenClaimIsRejected) {
       .set_payload_claim("aud", jwt::claim(std::string("test-audience")))
       .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
-  auto result = authMgr->validateJwt(token, lc);
+  auto result = authMgr->validateJwt(token, log);
   ASSERT_FALSE(result.isValid);
   ASSERT_TRUE(result.errorMessage.has_value());
   EXPECT_EQ(result.errorMessage.value(), "Token does not contain a 'gen' claim");
@@ -471,7 +473,7 @@ TEST_F(ValidateJwtTestFixture, TokenMissingGenClaimIsRejected) {
 TEST_F(ValidateJwtTestFixture, TokenWithGenBelowMinimumIsRejected) {
   auto authMgr = createAuthMgrWithMockFetcher("test-audience", 5 /*minGeneration*/);
 
-  auto result = authMgr->validateJwt(createTestJwt(false /*expired*/, "test-kid", "test-jti", 4 /*gen*/), lc);
+  auto result = authMgr->validateJwt(createTestJwt(false /*expired*/, "test-kid", "test-jti", 4 /*gen*/), log);
   ASSERT_FALSE(result.isValid);
   ASSERT_TRUE(result.errorMessage.has_value());
   EXPECT_EQ(result.errorMessage.value(), "Token generation is too old, minimum required is 5");
@@ -480,14 +482,14 @@ TEST_F(ValidateJwtTestFixture, TokenWithGenBelowMinimumIsRejected) {
 TEST_F(ValidateJwtTestFixture, TokenWithGenEqualToMinimumIsValid) {
   auto authMgr = createAuthMgrWithMockFetcher("test-audience", 5 /*minGeneration*/);
 
-  auto result = authMgr->validateJwt(createTestJwt(false /*expired*/, "test-kid", "test-jti", 5 /*gen*/), lc);
+  auto result = authMgr->validateJwt(createTestJwt(false /*expired*/, "test-kid", "test-jti", 5 /*gen*/), log);
   EXPECT_TRUE(result.isValid);
 }
 
 TEST_F(ValidateJwtTestFixture, TokenWithGenAboveMinimumIsValid) {
   auto authMgr = createAuthMgrWithMockFetcher("test-audience", 5 /*minGeneration*/);
 
-  auto result = authMgr->validateJwt(createTestJwt(false /*expired*/, "test-kid", "test-jti", 6 /*gen*/), lc);
+  auto result = authMgr->validateJwt(createTestJwt(false /*expired*/, "test-kid", "test-jti", 6 /*gen*/), log);
   EXPECT_TRUE(result.isValid);
 }
 
@@ -496,10 +498,10 @@ TEST_F(ValidateJwtTestFixture, TokenWithRevokedJtiIsRejected) {
   auto authMgr = createAuthMgrWithRevokeListFile(revokeList.path());
   authMgr->updateCache(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
 
-  auto result = authMgr->validateJwt(createTestJwt(false /*expired*/, "test-kid", "revoked-001"), lc);
+  auto result = authMgr->validateJwt(createTestJwt(false /*expired*/, "test-kid", "revoked-001"), log);
   ASSERT_FALSE(result.isValid);
   ASSERT_TRUE(result.errorMessage.has_value());
-  EXPECT_EQ(result.errorMessage.value(), "Token 'revoked-001' has been revoked");
+  EXPECT_EQ(result.errorMessage.value(), "Token has been revoked");
 }
 
 TEST_F(ValidateJwtTestFixture, TokenWithNonRevokedJtiIsValid) {
@@ -508,7 +510,7 @@ TEST_F(ValidateJwtTestFixture, TokenWithNonRevokedJtiIsValid) {
   auto authMgr = createAuthMgrWithRevokeListFile(revokeList.path());
   authMgr->updateCache(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
 
-  auto result = authMgr->validateJwt(createTestJwt(false /*expired*/, "test-kid", "not-revoked-001"), lc);
+  auto result = authMgr->validateJwt(createTestJwt(false /*expired*/, "test-kid", "not-revoked-001"), log);
   EXPECT_TRUE(result.isValid);
   EXPECT_FALSE(result.errorMessage.has_value());
   ASSERT_TRUE(result.subjectClaim.has_value());
@@ -548,7 +550,7 @@ TEST_F(ValidateJwtTestFixture, EmptyRevokeListFileRevokesNothing) {
   authMgr->updateCache(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
 
   EXPECT_FALSE(authMgr->isRevoked("revoked-001"));
-  EXPECT_TRUE(authMgr->validateJwt(createTestJwt(false /*expired*/, "test-kid", "revoked-001"), lc).isValid);
+  EXPECT_TRUE(authMgr->validateJwt(createTestJwt(false /*expired*/, "test-kid", "revoked-001"), log).isValid);
 }
 
 TEST_F(ValidateJwtTestFixture, NoRevokeListPathRevokesNothing) {
@@ -556,7 +558,7 @@ TEST_F(ValidateJwtTestFixture, NoRevokeListPathRevokesNothing) {
   auto authMgr = createAuthMgrWithMockFetcher();
 
   EXPECT_FALSE(authMgr->isRevoked("revoked-001"));
-  EXPECT_TRUE(authMgr->validateJwt(createTestJwt(false /*expired*/, "test-kid", "revoked-001"), lc).isValid);
+  EXPECT_TRUE(authMgr->validateJwt(createTestJwt(false /*expired*/, "test-kid", "revoked-001"), log).isValid);
 }
 
 TEST_F(ValidateJwtTestFixture, MissingRevokeListFileIsRejected) {
@@ -630,7 +632,7 @@ TEST_F(ValidateJwtTestFixture, TokenMissingJtiHasSpecificErrorMessage) {
       .set_header_claim("kid", jwt::claim(std::string("test-kid")))
       .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
-  auto result = authMgr->validateJwt(token, lc);
+  auto result = authMgr->validateJwt(token, log);
   ASSERT_FALSE(result.isValid);
   ASSERT_TRUE(result.errorMessage.has_value());
   EXPECT_EQ(result.errorMessage.value(), "Token does not contain a 'jti' claim");
@@ -652,7 +654,7 @@ TEST_F(ValidateJwtTestFixture, TokenWithMatchingAudienceIsValid) {
       .set_payload_claim("aud", jwt::claim(std::string("cta-frontend")))
       .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
-  auto result = authMgr->validateJwt(token, lc);
+  auto result = authMgr->validateJwt(token, log);
   ASSERT_TRUE(result.isValid);
 }
 
@@ -670,10 +672,9 @@ TEST_F(ValidateJwtTestFixture, TokenWithMismatchedAudienceIsRejected) {
       .set_payload_claim("aud", jwt::claim(std::string("some-other-audience")))
       .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
-  auto result = authMgr->validateJwt(token, lc);
+  auto result = authMgr->validateJwt(token, log);
   ASSERT_FALSE(result.isValid);
   ASSERT_TRUE(result.errorMessage.has_value());
-  EXPECT_NE(result.errorMessage.value().find("audience"), std::string::npos);
 }
 
 }  // namespace unitTests

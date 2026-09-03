@@ -39,7 +39,7 @@ public:
 
   bool isRevoked(const std::string& jti) const { return m_revokedSet.contains(jti); }
 
-  TokenValidationResult validateJwt(const std::string& encodedJwt, const log::LogContext& logContext);
+  TokenValidationResult validateJwt(const std::string& encodedJwt, log::Logger& logger);
 
 private:
   /**

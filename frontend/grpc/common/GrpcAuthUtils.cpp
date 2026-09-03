@@ -45,7 +45,7 @@ extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::str
                              const std::string& ourInstance,
                              const std::string& clientHost,
                              cta::log::LogContext& lc) {
-  cta::log::ScopedParamContainer sp(lc);
+  cta::log::ScopedParamContainer params(lc);
 
   std::string token;
 
@@ -66,7 +66,7 @@ extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::str
         return {Status(StatusCode::UNAUTHENTICATED, "Missing Authorization token"), std::nullopt};
       }
 
-      auto validationResult = jwtAuthManager->validateJwt(token, lc);
+      auto validationResult = jwtAuthManager->validateJwt(token, lc.logger());
 
       if (validationResult.isValid) {
         lc.log(cta::log::DEBUG, "JWT token validation successful. Client host: '" + clientHost + "'");

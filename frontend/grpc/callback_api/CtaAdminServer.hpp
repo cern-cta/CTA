@@ -110,7 +110,7 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
   // Authenticate the request using JWT if enabled
   cta::log::LogContext lc(m_lc);
   // get the client metadata for authentication
-  const auto client_metadata = context->client_metadata();
+  const auto& client_metadata = context->client_metadata();
   auto [status, clientIdentity] = cta::frontend::grpc::common::extractAuthHeaderAndValidate(client_metadata,
                                                                                             m_jwtAuthManager,
                                                                                             m_tokenStorage,
