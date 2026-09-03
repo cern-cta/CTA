@@ -173,7 +173,8 @@ upload_to_eos() {
           xrdcp --force \
             "root://eoshome.cern.ch/${rpm_path}" \
             "root://eoshome.cern.ch/${eos_target_dir}/${relative_path}" \
-            >/dev/null 2>&1
+            >/dev/null 2>&1 \
+            || exit 1
         done; then
       log_error "ERROR: Failed to copy release ${cta_version} files from ${eos_source_dir} to ${eos_target_dir} via xrdcp"
       exit 1
