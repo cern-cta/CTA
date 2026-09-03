@@ -5,6 +5,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 {{- $name := include "ctafrontend.fullname" . }}
+{{- $jwtRevokeListPath := include "ctafrontend.jwtRevokeList" . }}
 
 apiVersion: v1
 kind: ConfigMap
@@ -13,6 +14,34 @@ metadata:
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
 data:
+  cta-frontend-grpc.toml: |-
+    [grpc]
+      port = {{ .Values.port }}
+      number_of_threads = {{ .Values.conf.numberOfThreads }}
+
+    [grpc.tls]
+      server_key_path = {{ .Values.conf.tls.serverKey | quote }}
+      server_cert_path = {{ .Values.conf.tls.serverCert | quote }}
+      {{- if .Values.conf.tls.caCert }}
+      chain_cert_path = {{ .Values.conf.tls.caCert | quote }}
+      {{- end }}
+
+    {{- if has "jwt" .Values.conf.auth.methods }}
+    [auth.jwt]
+      enabled = true
+      jwks_uri = "file:///etc/cta/jwks.json"
+      expected_issuer = {{ .Values.conf.auth.config.jwt.expectedIssuer | quote }}
+      expected_audience = {{ .Values.conf.auth.config.jwt.expectedAudience | quote }}
+      revoke_list_path = {{ $jwtRevokeListPath | quote }}
+    {{- end }}
+
+    {{- if has "kerberos" .Values.conf.auth.methods }}
+      [auth.kerberos]
+        enabled = true
+        keytab_path = {{ .Values.conf.auth.config.kerberos.keytab | quote }}
+        service_principal = {{ .Values.conf.auth.config.kerberos.servicePrincipal | quote }}
+    {{- end }}
+
   cta-frontend.conf: |-
     #
     # CTA options
@@ -78,34 +107,6 @@ data:
     # CTA Verification Mount Policy
     cta.verification.mount_policy verification
 
-    #
-    # gRPC options
-    #
-    grpc.port {{ .Values.port }}
-    grpc.numberofthreads {{ .Values.conf.numberOfThreads }}
-
-    # Auth methods allowed
-    grpc.admin.auth_methods {{ join " " .Values.conf.auth.methods }}
-
-    # TLS related variables
-    grpc.tls.server_key_path {{ .Values.conf.tls.serverKey }}
-    grpc.tls.server_cert_path {{ .Values.conf.tls.serverCert }}
-
-    {{- if .Values.conf.tls.caCert }}
-    grpc.tls.chain_cert_path {{ .Values.conf.tls.caCert }}
-    {{- end }}
-
-    {{- if has "jwt" .Values.conf.auth.methods }}
-    # JWT authentication
-    grpc.jwks.uri file:///etc/cta/jwks.json
-    {{- end }}
-
-    {{- if has "kerberos" .Values.conf.auth.methods }}
-    # Kerberos authentication
-    grpc.keytab {{ .Values.conf.auth.config.kerberos.keytab }}
-    grpc.service_principal {{ .Values.conf.auth.config.kerberos.service_principal }}
-    {{- end }}
-
     # Telemetry
     cta.experimental.telemetry.enabled {{ .Values.conf.telemetry.enabled }}
 
@@ -128,4 +129,12 @@ data:
     {{- end }}
     {{- if .Values.conf.telemetry.metrics.file.endpoint }}
     cta.telemetry.metrics.file.endpoint {{ .Values.conf.telemetry.metrics.file.endpoint }}
+    {{- end }}
+
+  {{ base $jwtRevokeListPath }}: |-
+    {{- range .Values.conf.auth.config.jwt.revokedTokens }}
+    [[revoked_tokens]]
+      jti = {{ .jti | quote }}
+      reason = {{ .reason | quote }}
+      revoked_at = {{ .revokedAt }}
     {{- end }}

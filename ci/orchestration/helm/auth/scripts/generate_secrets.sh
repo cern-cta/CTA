@@ -66,19 +66,27 @@ chmod 0644 $SECRETS_DIR/ca.key.pem
 chmod 0644 $SECRETS_DIR/server-admin.key.pem
 chmod 0644 $SECRETS_DIR/server-wfe.key.pem
 
-# Generate corresponding JWT tokens for these certs, along with a JWKs file
+# Generate JWT tokens for all subjects, along with the JWKS file.
+# A single `server-admin` keypair signs all tokens; the two audiences
+# (`cta-admin` / `cta-wfe`) are used to distinguish the frontends.
 python3 /scripts/generate_jwt.py \
   --output-dir "$SECRETS_DIR" \
   --cert "$SECRETS_DIR/server-admin.crt.pem" \
   --key "$SECRETS_DIR/server-admin.key.pem" \
-  --jwks "jwks.json" \
-  --sub ctaadmin1
+  --jwks jwks.json \
+  --issuer cta \
+  --audience cta-admin \
+  --sub ctaadmin1 \
+  --gen 0
+
 python3 /scripts/generate_jwt.py \
   --output-dir "$SECRETS_DIR" \
-  --cert "$SECRETS_DIR/server-wfe.crt.pem" \
-  --key "$SECRETS_DIR/server-wfe.key.pem" \
-  --jwks "jwks.json" \
-  --sub ctaeos
+  --cert "$SECRETS_DIR/server-admin.crt.pem" \
+  --key "$SECRETS_DIR/server-admin.key.pem" \
+  --issuer cta \
+  --audience cta-wfe \
+  --sub ctaeos \
+  --gen 0
 
 # generate cert for ctaeos (to be used with mTLS)
 generate_signed_cert ctaeos-self-signed eos-mgm.biglab localhost ctaeos

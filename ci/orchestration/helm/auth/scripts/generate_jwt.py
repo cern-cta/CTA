@@ -8,8 +8,9 @@ import json
 import re
 import tempfile
 import time
+import uuid
 from pathlib import Path
-from typing import Union
+from typing import Union, Optional
 
 import jwt
 from cryptography import x509
@@ -74,16 +75,31 @@ def generate_jwk_from_cert(cert_path: Path) -> dict[str, Union[str, list[str]]]:
     }
 
 
-def generate_jwt(private_key: RSAPrivateKey, kid: str, sub: str, lifetime_sec: int) -> str:
+def generate_jwt(
+    private_key: RSAPrivateKey,
+    kid: str,
+    sub: str,
+    lifetime_sec: int,
+    issuer: str,
+    audience: str,
+    gen: int,
+    jti: Optional[str] = None,
+) -> str:
     """Generate a JWT with all claims required by the CTA frontend."""
     now = int(time.time())
 
     payload = {
-        "iat": now,
-        "exp": now + lifetime_sec,
         "sub": sub,
+        "jti": jti or str(uuid.uuid4()),
+        "iat": now,
+        "gen": gen,
+        "exp": now + lifetime_sec,
         "typ": "Bearer",
+        "iss": issuer,
     }
+
+    if audience:
+        payload["aud"] = audience
 
     return jwt.encode(
         payload,
@@ -101,10 +117,21 @@ def main() -> None:
         )
     )
     parser.add_argument(
+        "--audience",
+        default="",
+        help="Audience claim to set in the generated JWT (empty = none)",
+    )
+    parser.add_argument(
         "--sub",
         action="append",
         required=True,
         help="Subject claim (repeatable). Each --sub argument will generate a separate JWT with the name of the sub.",
+    )
+    parser.add_argument(
+        "--gen",
+        type=int,
+        required=True,
+        help="Generation (version) of the token. Can be used for mass-revocation of tokens by the server.",
     )
     parser.add_argument(
         "--lifetime",
@@ -120,7 +147,13 @@ def main() -> None:
     )
     parser.add_argument("--cert", required=True, type=Path, help="Path to server certificate")
     parser.add_argument("--key", required=True, type=Path, help="Path to private key")
+    parser.add_argument("--jti", help="Set a custom JTI (useful for testing)")
     parser.add_argument("--jwks", help="Filename for the generated JWKS file")
+    parser.add_argument(
+        "--issuer",
+        default="cta",
+        help="Issuer claim to set in the generated JWT",
+    )
 
     args = parser.parse_args()
 
@@ -151,7 +184,7 @@ def main() -> None:
         kid = jwk["kid"]
         if not isinstance(kid, str):
             raise TypeError("JWK kid must be a string")
-        token = generate_jwt(key, kid, sub, args.lifetime)
+        token = generate_jwt(key, kid, sub, args.lifetime, args.issuer, args.audience, args.gen, args.jti)
 
         safe_sub = sanitize_filename(sub)
         jwt_path = Path(args.output_dir) / f"{safe_sub}.jwt"

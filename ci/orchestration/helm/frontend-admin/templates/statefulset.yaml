@@ -6,6 +6,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 {{- if and .Values.enabled }}
 {{- $name := include "ctafrontend.fullname" . }}
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
+{{- $jwtRevokeListPath := include "ctafrontend.jwtRevokeList" . }}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -135,9 +136,15 @@ spec:
         - name: frontend-config
           mountPath: /etc/cta/cta-frontend.conf
           subPath: cta-frontend.conf
+        - name: frontend-config
+          mountPath: /etc/cta/cta-frontend-grpc.toml
+          subPath: cta-frontend-grpc.toml
         - name: jwks-json
           mountPath: /etc/cta/jwks.json
           subPath: jwks.json
+        - name: jwks-revoke-list-toml
+          mountPath: {{ $jwtRevokeListPath }}
+          subPath: {{ base $jwtRevokeListPath }}
         - name: grpc-server-crt
           mountPath: /etc/grpc-certs/cert
         - name: grpc-server-key
@@ -188,6 +195,9 @@ spec:
           claimName: scheduler-vfs-pvc
       {{- end }}
       - name: frontend-config
+        configMap:
+          name: cta-frontend-admin-conf
+      - name: jwks-revoke-list-toml
         configMap:
           name: cta-frontend-admin-conf
       - name: grpc-server-crt

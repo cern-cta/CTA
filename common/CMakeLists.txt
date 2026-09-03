@@ -102,6 +102,7 @@ set (COMMON_LIB_SRC_FILES
   runtime/signals/SignalUtils.cpp
   runtime/health/HealthServer.cpp
   runtime/config/parsing/ParseResult.cpp
+  runtime/config/parsing/TomlParser.cpp
   runtime/config/ValidationResult.cpp
   process/ProcessCap.cpp
   process/threading/ChildProcess.cpp
@@ -170,8 +171,8 @@ target_link_libraries (ctacommon
 )
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
-  auth/JwkCacheTest.cpp
-  auth/JwtValidationTest.cpp
+  auth/jwt/JwkCacheTest.cpp
+  auth/jwt/JwtValidationTest.cpp
   checksum/ChecksumBlobTest.cpp
   checksum/CRCTest.cpp
   config/ConfigurationFileTests.cpp
@@ -218,8 +219,9 @@ set_property(TARGET ctacommonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 
 set (AUTH_LIB_SRC_FILES
-  auth/JwkCache.cpp
-  auth/JwtValidation.cpp
+  auth/jwt/JwkCache.cpp
+  auth/jwt/JwksFetcher.cpp
+  auth/jwt/JwtAuthManager.cpp
 )
 
 find_package(OpenSSL REQUIRED)

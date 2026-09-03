@@ -3,12 +3,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "JwkCache.hpp"
-
+#include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
 
 #include <gtest/gtest.h>
+#include <optional>
+#include <set>
 
 namespace unitTests {
 
@@ -20,8 +21,7 @@ public:
   void setResponse(const std::string& url, const std::string& jwks) { m_responses[url] = jwks; }
 
   std::string fetchJWKS(const std::string& jwksUrl) override {
-    auto it = m_responses.find(jwksUrl);
-    if (it != m_responses.end()) {
+    if (auto it = m_responses.find(jwksUrl); it != m_responses.end()) {
       return it->second;
     }
     return generateTestJWKS();
@@ -71,7 +71,7 @@ TEST(JwkCacheTest, UpdateCacheAddsKey) {
   cta::auth::JwkCache cache(std::make_unique<MockJwksFetcher>(), "http://fake-jwks-uri", 1200, lc);
 
   time_t fakeNow = 1000;
-  cache.updateCache(fakeNow);
+  cache.update(fakeNow);
 
   auto entry = cache.find("test-kid");
   ASSERT_TRUE(entry.has_value());
@@ -100,10 +100,11 @@ TEST(JwkCacheTest, UpdateCacheRemovesExpiredKeys) {
     })";
 
   mockFetcher->setResponse("http://fake-jwks-uri", jwksWithKey);
-  cta::auth::JwkCache cache(std::move(mockFetcher), "http://fake-jwks-uri", 200, lc);  // very short pubkeyTimeout
+  cta::auth::JwkCache cache(std::move(mockFetcher), "http://fake-jwks-uri", 200,
+                            lc);  // very short pubkeyTimeout
 
   time_t lastRefreshTime = 1000;
-  cache.updateCache(lastRefreshTime);
+  cache.update(lastRefreshTime);
   EXPECT_TRUE(cache.find("expired-key").has_value());
 
   // Change mock fetcher to return empty JWKS so it doesn't re-add the key
@@ -112,18 +113,18 @@ TEST(JwkCacheTest, UpdateCacheRemovesExpiredKeys) {
   fetcher.setResponse("http://fake-jwks-uri", emptyJwks);
 
   time_t now = lastRefreshTime + 2;
-  cache.updateCache(now);
+  cache.update(now);
   // should not be removed yet, it should be removed after lastRefreshTime + 200 = 1200
   EXPECT_TRUE(cache.find("expired-key").has_value());
 
   now = lastRefreshTime + 120;
-  cache.updateCache(now);
+  cache.update(now);
   // still here
   EXPECT_TRUE(cache.find("expired-key").has_value());
 
   // now the PK has expired, should be removed
   now = lastRefreshTime + 220;
-  cache.updateCache(now);
+  cache.update(now);
   EXPECT_FALSE(cache.find("expired-key").has_value());
 }
 }  // namespace unitTests

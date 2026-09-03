@@ -5,7 +5,7 @@
 
 #include "GrpcAuthUtils.hpp"
 
-#include "common/auth/JwtValidation.hpp"
+#include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/log/LogLevel.hpp"
 
 using ::grpc::Status;
@@ -40,13 +40,12 @@ validateKrb5Token(const std::string& token, server::TokenStorage& tokenStorage, 
 
 std::pair<Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
 extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::string_ref>& client_metadata,
-                             bool jwtAuthEnabled,
-                             std::shared_ptr<cta::auth::JwkCache> pubkeyCache,
+                             std::shared_ptr<cta::auth::JwtAuthManager> jwtAuthManager,
                              server::TokenStorage& tokenStorage,
-                             const std::string& ourHost,
+                             const std::string& ourInstance,
                              const std::string& clientHost,
                              cta::log::LogContext& lc) {
-  cta::log::ScopedParamContainer sp(lc);
+  cta::log::ScopedParamContainer params(lc);
 
   std::string token;
 
@@ -57,7 +56,7 @@ extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::str
     auto auth_header = std::string(r.data(), r.size());  // "Bearer <token>" or "Negotiate <token>"
     if (auth_header.starts_with("Bearer")) {
       // JWT Auth
-      if (!jwtAuthEnabled) {
+      if (!jwtAuthManager) {
         return {Status(StatusCode::UNAUTHENTICATED, "Token authentication disabled on the CTA Frontend"), std::nullopt};
       }
       // Extract the token part, use substr(7) because that is the length of "Bearer" plus a space character
@@ -67,20 +66,23 @@ extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::str
         return {Status(StatusCode::UNAUTHENTICATED, "Missing Authorization token"), std::nullopt};
       }
 
-      auto validationResult = cta::auth::ValidateJwt(token, pubkeyCache, lc);
+      auto validationResult = jwtAuthManager->validateJwt(token, lc.logger());
 
       if (validationResult.isValid) {
-        lc.log(cta::log::DEBUG,
-               "JWT token validation successful. Our host: '" + ourHost + "', client host: '" + clientHost + "'");
+        lc.log(cta::log::DEBUG, "JWT token validation successful. Client host: '" + clientHost + "'");
         SecurityIdentity clientIdentity(validationResult.subjectClaim.value(),
-                                        std::string(ourHost),
+                                        std::string(ourInstance),
                                         std::string(clientHost),
                                         SecurityIdentity::Protocol::JWT);
         return {Status::OK, clientIdentity};
       } else {
-        lc.log(cta::log::WARNING, "JWT authorization process error. Token validation failed.");
-        return {Status(StatusCode::UNAUTHENTICATED, "JWT authorization process error. Token validation failed."),
-                std::nullopt};
+        const auto& errorMsg = validationResult.errorMessage.value_or("Unknown token validation error");
+        {
+          cta::log::ScopedParamContainer params(lc);
+          params.add(cta::semconv::log::errorMessage, errorMsg);
+          lc.log(cta::log::WARNING, "JWT token validation failed");
+        }
+        return {Status(StatusCode::UNAUTHENTICATED, errorMsg), std::nullopt};
       }
     } else if (auth_header.starts_with("Negotiate")) {
       // KRB5 auth
@@ -95,7 +97,7 @@ extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::str
 
       if (validationStatus.ok()) {
         SecurityIdentity clientIdentity(username,
-                                        std::string(ourHost),
+                                        std::string(ourInstance),
                                         std::string(clientHost),
                                         SecurityIdentity::Protocol::KRB5);
         return {Status::OK, clientIdentity};

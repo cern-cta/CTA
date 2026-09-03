@@ -1,0 +1,62 @@
+/*
+ * SPDX-FileCopyrightText: 2025 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+#pragma once
+
+#include "common/auth/jwt/JwkCache.hpp"
+#include "common/auth/jwt/JwksFetcher.hpp"
+#include "common/log/LogContext.hpp"
+
+#include <memory>
+#include <optional>
+
+namespace cta::auth {
+/**
+ * This class encapsulates the verifications which have to be made
+ * on JWTs, together with related caches/lists.
+ */
+class JwtAuthManager {
+public:
+  JwtAuthManager(std::unique_ptr<JwksFetcher> jwksFetcher,
+                 const std::string& jwkUri,
+                 int pubKeyTTL,
+                 const std::string& expectedIssuer,
+                 const std::string& expectedAudience,
+                 uint32_t minGeneration,
+                 const std::optional<std::string>& revokeListPath,
+                 const cta::log::LogContext& lc)
+      : m_pubKeyCache(JwkCache {std::move(jwksFetcher), jwkUri, pubKeyTTL, lc}),
+        m_expectedIssuer(expectedIssuer),
+        m_expectedAudience(expectedAudience),
+        m_minGeneration(minGeneration),
+        m_revokedSet(revokeListPath ? loadRevokedJtis(*revokeListPath) : std::set<std::string, std::less<>> {}) {}
+
+  JwkCache& getCache() { return m_pubKeyCache; }
+
+  void updateCache(time_t now) { m_pubKeyCache.update(now); }
+
+  bool isRevoked(const std::string& jti) const { return m_revokedSet.contains(jti); }
+
+  TokenValidationResult validateJwt(const std::string& encodedJwt, log::Logger& logger);
+
+private:
+  /**
+   * @brief Load the IDs of the revoked tokens from an external TOML file.
+   *
+   * The file must contain a top-level array of tables '[[revoked_tokens]]'. Every entry is
+   * validated; a UserError is thrown for the first invalid one.
+   *
+   * @param filePath Path to the revoke-list TOML file.
+   * @return The JTIs of all revoked tokens.
+   */
+  static std::set<std::string, std::less<>> loadRevokedJtis(const std::string& filePath);
+
+  JwkCache m_pubKeyCache;                           //!< The public key cache
+  std::string m_expectedIssuer;                     //!< The expected issuer for all tokens
+  std::string m_expectedAudience;                   //!< The expected audience for all tokens
+  uint32_t m_minGeneration;                         //!< The minimum token generation (version) required
+  std::set<std::string, std::less<>> m_revokedSet;  //!< A set of JWT IDs that have been revoked.
+};
+}  // namespace cta::auth

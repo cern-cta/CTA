@@ -8,6 +8,7 @@
 #include "AuthMethod.hpp"
 #include "OperationModes.hpp"
 #include "common/config/Config.hpp"
+#include "frontend/grpc/common/GrpcConfig.hpp"
 #include "scheduler/Scheduler.hpp"
 
 #include <stdexcept>
@@ -28,23 +29,9 @@ using MapOfSets = std::map<std::string, std::set<std::string, std::less<>>, std:
  */
 std::string toString(AuthMethod method);
 
-/**
- * @brief Wrapper for JWT configuration options
- */
-struct JWTConfig {
-  // clang-format off
-  std::string m_jwksUri;       //!< The endpoint to obtain public keys from, for validating tokens
-  int m_cacheRefreshInterval;  //!< The number of seconds after which to update the cache of public keys used to sign JWT tokens
-  int m_pubkeyTimeout;         //!< The number of seconds after which to update the cache entry for a cached key
-  int m_jwksTotalTimeout;      //!< The total timeout in seconds for JWKS endpoint (default 60)
-  // clang-format on
-};
-
 class FrontendService {
 public:
-  explicit FrontendService(const std::string& configFilename,
-                           const bool inGrpcMode,
-                           const std::optional<std::string>& mtlsMappingFilename);
+  explicit FrontendService(const std::string& configFilename, const std::optional<std::string>& grpcConfigFilePath);
 
   FrontendService(const FrontendService&) = delete;
 
@@ -53,45 +40,33 @@ public:
   /**
    * @brief Configure the authentication methods for the Admin API and related settings
    * @param configFileName The name of the configuration file (for error messages)
+   * @param authConfigFileName The name of the (TOML) auth configuration file
    * @param config The configuration object
    * @param log A logger
    */
-  void
-  loadAdminAuthConfigParams(const std::string& configFileName, const cta::common::Config& config, log::Logger& log);
+  void loadAdminAuthConfigParams(const std::string& configFileName,
+                                 const std::string& authConfigFileName,
+                                 const cta::common::Config& config,
+                                 log::Logger& log);
 
   /**
    * @brief Configure the authentication method for WFE mode and related settings
    * @param configFileName The name of the configuration file (for logging/errors)
-   * @param mtlsMappingFilename The optional filename of the MTLS mapping table (required if MTLS authentication is enabled)
+   * @param authConfigFileName The name of the (TOML) auth configuration file
    * @param config The configuration object
    * @param log A logger
    */
   void loadWFEAuthConfigParams(const std::string& configFileName,
-                               const std::optional<std::string>& mtlsMappingFilename,
+                               const std::string& authConfigFileName,
                                const cta::common::Config& config,
                                log::Logger& log);
 
   /**
-   * @brief Load the instance -> certificate identity map from its TOML file into memory
-   * @param filePath the path to the TOML file
-   */
-  void loadMtlsMappingTable(const std::string& filePath);
-
-  /**
    * @brief Load the GRPC config parameters
    * @param configFileName The name of the configuration file (for logging/errors)
-   * @param config The configuration object
    * @param log A logger
    */
-  void loadGrpcConfigParams(const std::string& configFileName, const cta::common::Config& config, log::Logger& log);
-
-  /**
-   * @brief Load the JWT config parameters
-   * @param configFileName The name of the configuration file (for logging/errors)
-   * @param config The configuration object
-   * @param log A logger
-   */
-  void loadJWTConfigParams(const std::string& configFileName, const cta::common::Config& config, log::Logger& log);
+  void loadGrpcConfigParams(const std::string& configFilePath, log::Logger& log);
 
   /**
     * @brief Look up and identity in the instance -> certificate identity map
@@ -187,42 +162,7 @@ public:
   /*
    * Get the TlsKey
    */
-  std::optional<std::string> getTlsKey() const { return m_tlsKey; }
-
-  /*
-   * Get the TlsCert
-   */
-  std::optional<std::string> getTlsCert() const { return m_tlsCert; }
-
-  /*
-   * Get the TlsChain
-   */
-  std::optional<std::string> getTlsChain() const { return m_tlsChain; }
-
-  /*
-   * Get the gRPC server port
-   */
-  std::optional<std::string> getPort() const { return m_port; }
-
-  /*
-   * Get the gRPC server keytab
-   */
-  std::optional<std::string> getKeytab() const { return m_keytab; }
-
-  /*
-   * Get the gRPC server service principal
-   */
-  std::optional<std::string> getServicePrincipal() const { return m_servicePrincipal; }
-
-  /*
-   * Get the number of threads
-   */
-  std::optional<int> getThreads() const { return m_threads; }
-
-  /*
-   * Get the JWT Config
-   */
-  std::optional<JWTConfig> getJwtConfig() const { return m_jwtConfig; }
+  std::optional<grpc::common::GrpcConfig> getGrpcConfig() const { return m_grpcConfig; }
 
   /*
    * Get the instanceName from config file
@@ -230,21 +170,16 @@ public:
   const std::string& getInstanceName() const { return m_instanceName; }
 
   /*
-   * Get the authentication method which is configured for the WFE
+   * Check whether a particular auth method is used by this frontend
    */
-  AuthMethod getWfeAuthMethod() const { return m_wfeAuthMethod; }
-
-  /*
-   * Get the authentication method which is configured for the Admin API
-   */
-  const std::set<AuthMethod, std::less<>>& getAdminAuthMethods() const { return m_adminAuthMethods; }
-
-  /*
-   * Check whether a particular auth method is used by the Admin API
-   */
-  bool usesAdminAuthMethod(const AuthMethod method) const {
-    return std::ranges::find(m_adminAuthMethods, method) != std::end(m_adminAuthMethods);
+  bool usesAuthMethod(const AuthMethod method) const {
+    return std::ranges::find(m_authMethods, method) != std::end(m_authMethods);
   }
+
+  /*
+   * Get the auth methods used by this frontend
+   */
+  const std::set<AuthMethod, std::less<>>& getAuthMethods() const { return m_authMethods; }
 
 private:
   /*!
@@ -273,23 +208,12 @@ private:
   std::optional<uint64_t>                       m_repackMaxFilesToSelect;       //!< The max number of files to expand during a repack
   std::string                                   m_verificationMountPolicy;      //!< The mount policy for verification requests
 
-  // GRPC Options
-  std::optional<std::string>                    m_port;                         //!< The port for the gRPC server
-  std::optional<std::string>                    m_keytab;                       //!< The keytab file to be used for Kerberos authentication by the gRPC server
-  std::optional<std::string>                    m_servicePrincipal;             //!< The service principal to be used for Kerberos authentication by the gRPC server
-  std::optional<int>                            m_threads;                      //!< The number of threads used by the gRPC server
-  std::optional<std::string>                    m_certMap;                      //!< The file that maps certificates to clients for authorization purposes
-  std::optional<std::string>                    m_tlsKey;                       //!< The TLS service key file
-  std::optional<std::string>                    m_tlsCert;                      //!< The TLS service certificate file
-  std::optional<std::string>                    m_tlsChain;                     //!< The TLS CA chain file
-  std::optional<JWTConfig>                      m_jwtConfig;                     //!< The JWT configuration parameters
+  std::optional<grpc::common::GrpcConfig>       m_grpcConfig;                   //!< gRPC configuration information
 
   uint64_t                                      m_missingFileCopiesMinAgeSecs;  //!< Missing tape file copies minimum age.
   uint64_t                                      m_recycleLogQuarantineSecs;     //!< Minimum quarantine period before tape reclaim
   std::string                                   m_instanceName;                 //!< value of cta.instance_name in the CTA frontend configuration file
-  AuthMethod                                    m_wfeAuthMethod;                //!< The authentication method which is currently set for the WFE
-  std::set<AuthMethod, std::less<>>             m_adminAuthMethods;             //!< The authentication methods which are currently set for the Admin API
-  MapOfSets                                     m_mtlsMappingTable;             //!< Table which maps instance name -> certificate identities
+  std::set<AuthMethod, std::less<>>             m_authMethods;                  //!< The authentication methods which are currently set for this frontend
   // clang-format on
 };
 
