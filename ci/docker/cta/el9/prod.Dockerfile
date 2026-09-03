@@ -79,7 +79,9 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     # For runtime state configured with --runtime-dir
     install -d -o cta -g tape -m 0750 /run/cta && \
     # Cleanup
-    rm -rf /var/lib/dnf/history.*
+    rm -rf /var/lib/dnf/history.* && \
+    # Prevent parallel service builds from sharing the base image's RPM lock
+    rm -f "$(rpm --eval '%{_dbpath}')/.rpm.lock"
 
 # =========================================================================
 #  SERVICE cta-taped
