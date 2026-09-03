@@ -14,6 +14,7 @@
 #include <condition_variable>
 #include <google/protobuf/util/json_util.h>
 #include <grpcpp/grpcpp.h>
+#include <optional>
 #include <variant>
 
 #include "cta_frontend.grpc.pb.h"
@@ -53,6 +54,25 @@ public:
     std::unique_lock<std::mutex> l(mu_);
     cv_.wait(l, [this] { return done_; });
     return std::move(status_);
+  }
+
+  //! Rethrows the error captured from an RSP_ERR_* header response, if any, reconstructing the same
+  //! exception type OnReadDone() would have thrown. Must be called after Await() has returned, from
+  //! the caller's own thread: see the comment in OnReadDone() for why it cannot throw directly.
+  void throwIfError() const {
+    if (!m_errorType.has_value()) {
+      return;
+    }
+    switch (m_errorType.value()) {
+      case cta::xrd::Response::RSP_ERR_PROTOBUF:
+        throw cta::exception::PbException(m_errorMessage);
+      case cta::xrd::Response::RSP_ERR_USER:
+        throw cta::exception::UserError(m_errorMessage);
+      case cta::xrd::Response::RSP_ERR_CTA:
+        throw std::runtime_error(m_errorMessage);
+      default:
+        throw cta::exception::PbException(m_errorMessage);
+    }
   }
 
   void OnReadDone(bool ok) final {
@@ -150,16 +170,20 @@ public:
                 break;
             }
             break;
+          // OnReadDone() runs on a gRPC-internal thread, not on the caller's stack, so throwing here
+          // has no reachable catch site: the exception would be silently lost instead of ever
+          // reaching the caller. Capture it instead and let throwIfError() raise it from the
+          // caller's own thread once Await() has returned.
           case cta::xrd::Response::RSP_ERR_PROTOBUF:
-            throw cta::exception::PbException(m_response.header().message_txt());
           case cta::xrd::Response::RSP_ERR_USER:
-            throw cta::exception::UserError(m_response.header().message_txt());
           case cta::xrd::Response::RSP_ERR_CTA:
-            throw std::runtime_error(m_response.header().message_txt());
+            m_errorType = m_response.header().type();
+            m_errorMessage = m_response.header().message_txt();
+            return;
           default:
-            throw cta::exception::PbException("Invalid response type.");
-            // strErrorMsg = m_response.header().message_txt();
-            // need to log an ERROR here, but figure out later how to do this
+            m_errorType = m_response.header().type();
+            m_errorMessage = "Invalid response type.";
+            return;
         }
       } else if (m_response.has_data()) {
         using value_t = std::variant<cta::admin::TapeLsItem,
@@ -251,4 +275,6 @@ private:
   bool done_ = false;
   cta::admin::TextFormatter m_textFormatter;
   bool m_isJson;
+  std::optional<cta::xrd::Response::ResponseType> m_errorType;  //!< Set by OnReadDone() on an RSP_ERR_* header
+  std::string m_errorMessage;                                   //!< The message to go with m_errorType
 };

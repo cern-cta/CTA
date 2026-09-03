@@ -1234,6 +1234,60 @@ def test_cta_admin_failedrequest_with_failed_jobs(
             scheduler_postgres.run_sql(sql)
 
 
+def test_cta_admin_failedrequest_ls_error_reporting(
+    cta_cli: CtaCliHost, scheduler_postgres: SchedulerPostgresHost, postgres_scheduler_enabled: bool
+) -> None:
+    """Check that a failing `fr ls` actually reports its error message and exits with the code
+    matching its exception type, for both ways it can fail.
+
+    Regression test: the streaming RPC used by `fr ls` used to lose these errors silently.
+    - A command rejected before any row is streamed (a UserError, e.g. an invalid combination of
+      options) is delivered as a clean gRPC status. See CtaAdminClientReadReactor::throwIfError()
+      for the case where the server instead reports the error inside the stream itself, after
+      the header has already gone out, which used to have no reachable catch site client-side.
+    - An error hit while a row is being read (here: a row too corrupt for the listing to parse) is
+      only detectable once the listing is already under way. See
+      CtaAdminServerWriteReactor::NextWrite() for why this used to crash the whole frontend process
+      instead of ending just this one request.
+    """
+    if not postgres_scheduler_enabled:
+        pytest.skip("Both scenarios below are specific to the postgres scheduler")
+
+    # A UserError, rejected by FailedRequestLsResponseStream's constructor before any row is
+    # streamed: --log and --summary are mutually exclusive. Delivered as a gRPC INVALID_ARGUMENT
+    # status, so the client raises a cta::exception::UserError and exits 2.
+    with pytest.raises(RuntimeError) as user_error:
+        cta_cli.exec("cta-admin fr ls --log --summary")
+    assert "failed with exit code 2" in str(user_error.value)
+    assert "--log and --summary are mutually exclusive" in str(user_error.value)
+
+    # A row that only fails once the listing has started: JOB_ID is read with the non-optional
+    # getter, which rejects a negative value as not being a valid unsigned integer (PostgresRset's
+    # columnUint64). -1 is a perfectly legal BIGINT (JOB_ID carries no CHECK constraint), so the
+    # insert itself succeeds; it is only the read-back that fails. This reaches the client as a gRPC
+    # FAILED_PRECONDITION status, so it raises a plain cta::exception::Exception and exits 1, unlike
+    # the exit code 2 above.
+    try:
+        scheduler_postgres.run_sql(
+            "INSERT INTO ARCHIVE_FAILED_QUEUE "
+            "(JOB_ID, STATUS, MOUNT_POLICY, TAPE_POOL, PRIORITY, MIN_ARCHIVE_REQUEST_AGE, "
+            "ARCHIVE_FILE_ID, SIZE_IN_BYTES) "
+            "VALUES (-1, 'AJS_Failed', 'test_fr_ls_error_mp', 'test_fr_ls_error_tp', 1, 0, 999999999, 1000)"
+        )
+
+        with pytest.raises(RuntimeError) as db_error:
+            cta_cli.exec("cta-admin fr ls")
+        assert "failed with exit code 1" in str(db_error.value)
+        assert "JOB_ID contains the value -1 which is not a valid unsigned integer" in str(db_error.value)
+    finally:
+        # Whatever the assertions did, the malformed row may not be left behind: every other test
+        # calling "fr ls" would start failing the same way
+        scheduler_postgres.run_sql("DELETE FROM ARCHIVE_FAILED_QUEUE WHERE JOB_ID = -1")
+
+    # The listing works normally again once the malformed row is gone
+    cta_cli.exec("cta-admin fr ls")
+
+
 def test_add_errors_to_whitelist(error_whitelist: set[str]) -> None:
     error_whitelist.add("In Scheduler::getDesiredDriveState(): no such drive")
     error_whitelist.add("In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.")

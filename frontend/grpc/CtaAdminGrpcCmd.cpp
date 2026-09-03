@@ -157,10 +157,12 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string
   } else {
     // insecure channel credentials won't work anymore, need TLS
     std::unique_ptr<cta::xrd::CtaRpcStream::Stub> client_stub = cta::xrd::CtaRpcStream::NewStub(spChannel);
-    // Also create a ClientReadReactor instance to handle the command
+    // Also create a ClientReadReactor instance to handle the command. Declared here rather than
+    // inside the try block below, so that it is still in scope for throwIfError() afterwards.
+    std::unique_ptr<CtaAdminClientReadReactor> client_reactor;
     try {
-      auto client_reactor = CtaAdminClientReadReactor(context, client_stub.get(), parsedCmd);
-      status = client_reactor.Await();
+      client_reactor = std::make_unique<CtaAdminClientReadReactor>(context, client_stub.get(), parsedCmd);
+      status = client_reactor->Await();
       // close the json delimiter, open is done inside command execution
       if (CtaAdminParsedCmd::isJson()) {
         std::cout << CtaAdminParsedCmd::jsonCloseDelim();
@@ -168,6 +170,11 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string
     } catch (std::exception& ex) {
       throw std::runtime_error(std::string("An exception was thrown in CtaAdminClientReactor: ") + ex.what());
     }
+    // An RSP_ERR_* response is reported the same way as the status check below: a command the
+    // frontend rejected must not exit with a success code, and the exceptions thrown here are meant
+    // for main() to report with their original type intact, so this must happen outside the try
+    // block above rather than be re-wrapped by its catch.
+    client_reactor->throwIfError();
     // The status is reported the same way as for the non streaming commands above: a command the
     // frontend rejected must not exit with a success code, and the message belongs on stderr so
     // that it does not end up in the output of a --json command. This is done outside of the try

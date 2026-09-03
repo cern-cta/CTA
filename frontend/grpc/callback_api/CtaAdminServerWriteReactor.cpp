@@ -5,6 +5,9 @@
 
 #include "CtaAdminServerWriteReactor.hpp"
 
+#include "common/exception/Exception.hpp"
+#include "common/exception/UserError.hpp"
+#include "frontend/common/PbException.hpp"
 #include "frontend/grpc/RequestMessage.hpp"
 
 #include <catalogue/Catalogue.hpp>
@@ -43,14 +46,30 @@ void CtaAdminServerWriteReactor::NextWrite() {
     return;
   }
 
-  if (!m_stream->isDone()) {
-    cta::xrd::Data* data = new cta::xrd::Data();
-    *data = m_stream->next();
+  // isDone()/next() run a DB query for every queue/row: unlike the code above and below, this can
+  // fail well after the header has already been streamed to the client. Without this try/catch, an
+  // exception here would escape uncaught from a gRPC callback and crash the whole frontend process,
+  // taking down every other in-flight request with it. Mapped onto the same exception types and
+  // gRPC status codes as the equivalent catch chain in FrontendGrpcService.cpp's Admin(), so a
+  // client sees the same kind of error whether the command used the unary or the streaming RPC.
+  try {
+    if (!m_stream->isDone()) {
+      cta::xrd::Data* data = new cta::xrd::Data();
+      *data = m_stream->next();
 
-    m_response.set_allocated_data(data);
-    StartWrite(&m_response);
-  } else {
-    Finish(::grpc::Status::OK);
+      m_response.set_allocated_data(data);
+      StartWrite(&m_response);
+    } else {
+      Finish(::grpc::Status::OK);
+    }
+  } catch (cta::exception::PbException& ex) {
+    Finish(::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.getMessageValue()));
+  } catch (cta::exception::UserError& ex) {
+    Finish(::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.getMessageValue()));
+  } catch (cta::exception::Exception& ex) {
+    Finish(::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.getMessageValue()));
+  } catch (std::exception& ex) {
+    Finish(::grpc::Status(::grpc::StatusCode::UNKNOWN, ex.what()));
   }
 }
 
