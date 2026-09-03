@@ -480,6 +480,9 @@ class TestPrepare:
         assert all(_response_for_path(response, path)["error_text"] for path in forbidden_files + missing_files)
         assert all(not _response_for_path(response, path)["path_exists"] for path in missing_files)
 
+        abort = eos_client.abort_prepare(disk_instance_name, result.stdout.strip(), tape_files)
+        assert abort.success
+
     @pytest.mark.parametrize("include_missing", [False, True], ids=["success", "partial-failure"])
     def test_prepare_abort(
         self,
