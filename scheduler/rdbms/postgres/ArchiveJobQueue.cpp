@@ -26,7 +26,7 @@ rdbms::Rset ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
   std::string prefix = isRepack ? "REPACK_" : "";
   std::string sql = R"SQL(
     WITH SET_SELECTION AS (
-      SELECT JOB_ID, PRIORITY, SIZE_IN_BYTES
+      SELECT JOB_ID, ARCHIVE_FILE_ID, PRIORITY, SIZE_IN_BYTES
       FROM
     )SQL";
   sql += prefix + "ARCHIVE_PENDING_QUEUE ";
@@ -34,7 +34,7 @@ rdbms::Rset ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
       WHERE TAPE_POOL = :TAPE_POOL
       AND STATUS = :STATUS
       AND ( MOUNT_ID IS NULL OR MOUNT_ID = :SAME_MOUNT_ID )
-      ORDER BY PRIORITY DESC, JOB_ID
+      ORDER BY PRIORITY DESC, ARCHIVE_FILE_ID
       LIMIT :LIMIT
       FOR UPDATE SKIP LOCKED
     ),
@@ -463,8 +463,6 @@ void ArchiveJobQueueRow::updateRetryCounts(uint64_t mountId) {
 };
 
 // requeueFailedJob is used to requeue jobs which were not processed due to finished mount or failed jobs
-// In case of unexpected crashes the job stays in the ARCHIVE_PENDING_QUEUE and needs to be identified
-// in some garbage collection process - TO-BE-DONE.
 uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
                                               ArchiveJobStatus newStatus,
                                               bool keepMountId,
@@ -951,6 +949,28 @@ ArchiveJobQueueRow::cancelArchiveJob(Transaction& txn, const std::string& diskIn
   auto stmt = txn.getConn().createStmt(sqlActive);
   stmt.bindString(":DISK_INSTANCE", diskInstance);
   stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDeleteArchive);
+  stmt.executeNonQuery();
+  auto nrows = stmt.getNbAffectedRows();
+  txn.setRowCountForTelemetry(nrows);
+  return nrows;
+}
+
+uint64_t ArchiveJobQueueRow::deleteFailedArchiveJob(Transaction& txn, uint64_t jobID, bool repack) {
+  std::string tableName = "ARCHIVE_FAILED_QUEUE";
+  if (repack) {
+    tableName = "REPACK_ARCHIVE_FAILED_QUEUE";
+  }
+  std::string sqlActive = R"SQL(
+    DELETE FROM
+ )SQL";
+  sqlActive += tableName;
+  sqlActive += R"SQL(
+    WHERE
+      JOB_ID = :JOB_ID
+  )SQL";
+  auto stmt = txn.getConn().createStmt(sqlActive);
+  stmt.bindUint64(":JOB_ID", jobID);
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDeleteArchive);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();

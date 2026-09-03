@@ -25,6 +25,13 @@ maintd:
       sleepIntervalSecs: 60
       batchSize: 1000
       ageForCollectionSecs: 120
+    # schedulerMaintenanceCleanup also removes the disk system sleep entries whose sleep time has
+    # elapsed (see DeleteExpiredDiskSystemSleepEntriesRoutine). It has no options of its own, and it
+    # rides along with this daily cleanup rather than getting its own routine/deployment: mount
+    # decisions already ignore an entry once its own SLEEP_TIME/LAST_UPDATE_TIME has elapsed,
+    # regardless of whether the row has been deleted yet, so the disk system sleep (backpressure)
+    # functionality is unaffected by this 1-day cadence — it only affects how long the (at most one
+    # per disk system) expired rows linger in the table.
     schedulerMaintenanceCleanup:
       replicas: 1
       sleepIntervalSecs: 86400

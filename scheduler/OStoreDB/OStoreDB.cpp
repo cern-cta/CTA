@@ -973,6 +973,8 @@ OStoreDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogConte
 // OStoreDB::getArchiveJobsFailedSummary
 //------------------------------------------------------------------------------
 SchedulerDatabase::JobsFailedSummary OStoreDB::getArchiveJobsFailedSummary(log::LogContext& logContext) {
+  // The objectstore keeps the user and the repack failed jobs in the same queues,
+  // hence both are already covered here.
   RootEntry re(m_objectStore);
   re.fetchNoLock();
 
@@ -3414,6 +3416,8 @@ OStoreDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogCont
 // OStoreDB::getRetrieveJobsFailedSummary
 //------------------------------------------------------------------------------
 SchedulerDatabase::JobsFailedSummary OStoreDB::getRetrieveJobsFailedSummary(log::LogContext& logContext) {
+  // The objectstore keeps the user and the repack failed jobs in the same queues,
+  // hence both are already covered here.
   RootEntry re(m_objectStore);
   re.fetchNoLock();
 

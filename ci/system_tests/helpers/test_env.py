@@ -21,6 +21,7 @@ from .hosts.disk.disk_client_host import DiskClientHost
 from .hosts.disk.disk_instance_host import DiskInstanceHost
 from .hosts.disk.eos_client_host import EosClientHost
 from .hosts.disk.eos_mgm_host import EosMgmHost
+from .hosts.scheduler_postgres_host import SchedulerPostgresHost
 
 
 class TestEnv:
@@ -37,6 +38,7 @@ class TestEnv:
         cta_maintd_conns: Sequence[RemoteConnection] = [],
         eos_client_conns: Sequence[RemoteConnection] = [],
         eos_mgm_conns: Sequence[RemoteConnection] = [],
+        scheduler_postgres_conns: Sequence[RemoteConnection] = [],
     ) -> None:
         self.cta_cli: Sequence[CtaCliHost] = [CtaCliHost(conn) for conn in cta_cli_conns]
         self.cta_admin_api: Sequence[CtaAdminApiHost] = [CtaAdminApiHost(conn) for conn in cta_admin_api_conns]
@@ -48,6 +50,9 @@ class TestEnv:
         self.cta_taped: Sequence[CtaTapedHost] = [CtaTapedHost(conn) for conn in cta_taped_conns]
         self.eos_mgm: Sequence[EosMgmHost] = [EosMgmHost(conn) for conn in eos_mgm_conns]
         self.eos_client: Sequence[EosClientHost] = [EosClientHost(conn) for conn in eos_client_conns]
+        self.scheduler_postgres: Sequence[SchedulerPostgresHost] = [
+            SchedulerPostgresHost(conn) for conn in scheduler_postgres_conns
+        ]
         # These should all fall under DiskInstanceHost and DiskClientHost
         self.disk_instance: Sequence[DiskInstanceHost] = self.eos_mgm  # + self.dcache
         self.disk_client: Sequence[DiskClientHost] = self.eos_client  # + self.dcache_client
@@ -137,6 +142,9 @@ class TestEnv:
                 namespace, "app.kubernetes.io/component=client", "client"
             ),
             eos_mgm_conns=TestEnv.get_k8s_connections_by_selector(namespace, "app.kubernetes.io/name=mgm", "mgm"),
+            scheduler_postgres_conns=TestEnv.get_k8s_connections_by_selector(
+                namespace, "app.kubernetes.io/name=cta-scheduler-postgres-db", "cta-scheduler-postgres"
+            ),
         )
 
     @staticmethod
@@ -193,4 +201,9 @@ class TestEnv:
             cta_taped_conns=create_connections(connection_config, "cta_taped"),
             eos_client_conns=create_connections(connection_config, "eos_client"),
             eos_mgm_conns=create_connections(connection_config, "eos_mgm"),
+            scheduler_postgres_conns=(
+                create_connections(connection_config, "scheduler_postgres")
+                if "scheduler_postgres" in connection_config
+                else []
+            ),
         )

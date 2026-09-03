@@ -53,6 +53,8 @@ public:
 
   void ping() override { m_SchedDB->ping(); }
 
+  cta::rdbms::Conn getConn() override { return m_SchedDB->getConn(); }
+
   std::string queueArchive(const std::string& instanceName,
                            const cta::common::dataStructures::ArchiveRequest& request,
                            const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId& criteria,
@@ -82,6 +84,20 @@ public:
   std::list<cta::common::dataStructures::ArchiveJob>
   getArchiveJobs(const std::optional<std::string>& tapePoolName) const override {
     return m_SchedDB->getArchiveJobs(tapePoolName);
+  }
+
+  rdbms::Rset getArchiveJobRows(cta::rdbms::Conn& conn,
+                                common::dataStructures::QueueType queueType,
+                                const std::optional<std::string>& tapePoolName = nullptr,
+                                bool repack = false) const override {
+    return m_SchedDB->getArchiveJobRows(conn, queueType, tapePoolName, repack);
+  }
+
+  rdbms::Rset getRetrieveJobRows(cta::rdbms::Conn& conn,
+                                 common::dataStructures::QueueType queueType,
+                                 const std::optional<std::string>& vid = nullptr,
+                                 bool repack = false) const override {
+    return m_SchedDB->getRetrieveJobRows(conn, queueType, vid, repack);
   }
 
   std::unique_ptr<IArchiveJobQueueItor>

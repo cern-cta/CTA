@@ -13,6 +13,7 @@
 #include "common/log/Logger.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "frontend/common/ActivityMountRuleLsResponseStream.hpp"
+#include "frontend/common/AdminCmdOptions.hpp"
 #include "frontend/common/AdminLsResponseStream.hpp"
 #include "frontend/common/ArchiveRouteLsResponseStream.hpp"
 #include "frontend/common/DiskInstanceLsResponseStream.hpp"
@@ -235,7 +236,11 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
                                                                  request->admincmd(),
                                                                  m_schedDb,
                                                                  m_lc);
-        headerType = HeaderType::FAILEDREQUEST_LS;
+        // The stream reports summary records instead of item records when --summary is given,
+        // and those need their own header
+        headerType = cta::frontend::AdminCmdOptions(request->admincmd()).has_flag(admin::OptionBoolean::SUMMARY) ?
+                       HeaderType::FAILEDREQUEST_LS_SUMMARY :
+                       HeaderType::FAILEDREQUEST_LS;
         break;
       default:
         // Just to return an error status code when the specified command is not implemented

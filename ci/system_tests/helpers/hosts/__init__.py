@@ -12,6 +12,7 @@ from .disk.disk_instance_host import DiskInstanceHost
 from .disk.eos_client_host import EosClientHost
 from .disk.eos_mgm_host import EosMgmHost
 from .remote_host import RemoteHost
+from .scheduler_postgres_host import SchedulerPostgresHost
 
 __all__ = [
     "CtaAdminApiHost",
@@ -25,4 +26,5 @@ __all__ = [
     "EosClientHost",
     "EosMgmHost",
     "RemoteHost",
+    "SchedulerPostgresHost",
 ]

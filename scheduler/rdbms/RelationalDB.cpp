@@ -151,22 +151,26 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>
   return ret;
 }
 
-std::list<cta::common::dataStructures::ArchiveJob>
-RelationalDB::getArchiveJobs(const std::optional<std::string>& tapePoolName) const {
-  std::list<cta::common::dataStructures::ArchiveJob> ret;
-
-  // Get a connection
-  auto conn = m_connPool.getConn();
-
-  // Query archive jobs for specific tape pool from ARCHIVE_PENDING_QUEUE
+rdbms::Rset RelationalDB::getArchiveJobRows(cta::rdbms::Conn& conn,
+                                            common::dataStructures::QueueType queueType,
+                                            const std::optional<std::string>& tapePoolName,
+                                            bool repack) const {
+  std::string tableName = "";
+  if (repack) {
+    tableName += "REPACK_";
+  }
+  tableName += "ARCHIVE_";
+  tableName += toString(queueType);
   std::string sql = R"SQL(
     SELECT
+      JOB_ID,
       TAPE_POOL,
       ARCHIVE_FILE_ID,
       COPY_NB,
       CREATION_TIME,
       ARCHIVE_REPORT_URL,
       ARCHIVE_ERROR_REPORT_URL,
+      DISK_INSTANCE,
       DISK_FILE_ID,
       DISK_FILE_PATH,
       DISK_FILE_OWNER_UID,
@@ -176,19 +180,34 @@ RelationalDB::getArchiveJobs(const std::optional<std::string>& tapePoolName) con
       STORAGE_CLASS,
       SRC_URL,
       REQUESTER_NAME,
-      REQUESTER_GROUP
-    FROM ARCHIVE_PENDING_QUEUE
+      REQUESTER_GROUP,
+      FAILURE_LOG,
+      REPORT_FAILURE_LOG,
+      TOTAL_RETRIES,
+      TOTAL_REPORT_RETRIES,
+      MAX_REPORT_RETRIES
+    FROM
   )SQL";
+
+  sql += tableName;
+
   if (tapePoolName.has_value()) {
-    sql += R"SQL(
-    WHERE TAPE_POOL = :TAPE_POOL
-  )SQL";
+    sql += " WHERE TAPE_POOL = :TAPE_POOL";
   }
   auto stmt = conn.createStmt(sql);
+
   if (tapePoolName.has_value()) {
     stmt.bindString(":TAPE_POOL", tapePoolName.value());
   }
-  auto rset = stmt.executeQuery();
+
+  return stmt.executeQuery();
+}
+
+std::list<cta::common::dataStructures::ArchiveJob>
+RelationalDB::getArchiveJobs(const std::optional<std::string>& tapePoolName) const {
+  std::list<cta::common::dataStructures::ArchiveJob> ret;
+  auto conn = m_connPool.getConn();
+  auto rset = RelationalDB::getArchiveJobRows(conn, common::dataStructures::QueueType::Pending, tapePoolName, false);
 
   while (rset.next()) {
     common::dataStructures::ArchiveJob job;
@@ -272,18 +291,19 @@ SchedulerDatabase::JobsFailedSummary RelationalDB::getArchiveJobsFailedSummary(l
   SchedulerDatabase::JobsFailedSummary ret;
   // Get the jobs from DB
   cta::schedulerdb::Transaction txn(m_connPool, lc);
-  auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectFailedJobSummary(txn);
-  while (rset.next()) {
-    cta::schedulerdb::postgres::ArchiveJobSummaryRow afjsr(rset);
-    ret.totalFiles += afjsr.jobsCount;
-    ret.totalBytes += afjsr.jobsTotalSize;
-  }
   try {
+    lc.log(log::INFO, "In RelationalDB::getArchiveJobsFailedSummary(): STARTING ");
+    auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectFailedJobSummary(txn);
+    while (rset.next()) {
+      ret.totalFiles += rset.columnUint64("JOBS_COUNT");
+      ret.totalBytes += rset.columnUint64("JOBS_TOTAL_SIZE");
+    }
+
     txn.setRowCountForTelemetry(rset.getNbRowsRetrieved());
     txn.commit();
   } catch (cta::exception::Exception& e) {
     std::string bt = e.backtrace();
-    lc.log(log::ERR, "In RelationalDB::getNextArchiveJobsToReportBatch(): Exception thrown: " + bt);
+    lc.log(log::ERR, "In RelationalDB::getArchiveJobsFailedSummary(): Exception thrown: " + bt);
     txn.abort();
   }
   return ret;
@@ -569,7 +589,56 @@ void RelationalDB::cancelArchive(const common::dataStructures::DeleteArchiveRequ
 }
 
 void RelationalDB::deleteFailed(const std::string& objectId, log::LogContext& lc) {
-  throw cta::exception::NotImplementedException();
+  schedulerdb::Transaction txn(m_connPool, lc);
+  // extract the job_id
+  bool isArchive = false;
+  bool isRepack = false;
+  uint64_t jobID = 0;
+  constexpr std::string_view archivePrefix = "a:";
+  constexpr std::string_view retrievePrefix = "r:";
+  constexpr std::string_view repackArchivePrefix = "ra:";
+  constexpr std::string_view repackRetrievePrefix = "rr:";
+  if (objectId.starts_with(archivePrefix)) {
+    isArchive = true;
+    jobID = std::stoull(objectId.substr(archivePrefix.size()));
+  } else if (objectId.starts_with(retrievePrefix)) {
+    isArchive = false;
+    jobID = std::stoull(objectId.substr(retrievePrefix.size()));
+  } else if (objectId.starts_with(repackArchivePrefix)) {
+    isArchive = true;
+    isRepack = true;
+    jobID = std::stoull(objectId.substr(repackArchivePrefix.size()));
+  } else if (objectId.starts_with(repackRetrievePrefix)) {
+    isArchive = false;
+    isRepack = true;
+    jobID = std::stoull(objectId.substr(repackRetrievePrefix.size()));
+  } else {
+    throw exception::UserError("Invalid failed request object ID: " + objectId);
+  }
+  try {
+    uint64_t deletedJobs = 0;
+    if (isArchive) {
+      deletedJobs = schedulerdb::postgres::ArchiveJobQueueRow::deleteFailedArchiveJob(txn, jobID, isRepack);
+    } else {
+      deletedJobs = schedulerdb::postgres::RetrieveJobQueueRow::deleteFailedRetrieveJob(txn, jobID, isRepack);
+    }
+    log::ScopedParamContainer(lc)
+      .add("jobID", jobID)
+      .add("objectId", objectId)
+      .add("deletedJobs", deletedJobs)
+      .log(log::INFO, "In RelationalDB::deleteFailed(): removing failed job from the failed queue");
+    if (deletedJobs != 1) {
+      lc.log(cta::log::WARNING, "In RelationalDB::deleteFailed(): deletion unexpectedly affected more than 1 job !");
+    }
+    txn.commit();
+  } catch (exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
+    lc.log(cta::log::ERR, "In RelationalDB::deleteFailed(): failed to deletefailed job. Aborting the transaction.");
+    txn.abort();
+    throw;
+  }
+  return;
 }
 
 std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>>
@@ -592,38 +661,7 @@ RelationalDB::getPendingRetrieveJobs(const std::optional<std::string>& vid) cons
   std::list<cta::common::dataStructures::RetrieveJob> ret;
   // Get a connection
   auto conn = m_connPool.getConn();
-
-  // Query all retrieve jobs from RETRIEVE_PENDING_QUEUE
-  std::string sql = R"SQL(
-    SELECT
-      VID,
-      ARCHIVE_FILE_ID,
-      COPY_NB,
-      SIZE_IN_BYTES,
-      CREATION_TIME,
-      DST_URL,
-      RETRIEVE_ERROR_REPORT_URL,
-      DISK_FILE_ID,
-      DISK_FILE_PATH,
-      DISK_FILE_OWNER_UID,
-      DISK_FILE_GID,
-      CHECKSUMBLOB,
-      STORAGE_CLASS,
-      REQUESTER_NAME,
-      REQUESTER_GROUP,
-      DISK_INSTANCE
-    FROM RETRIEVE_PENDING_QUEUE
-  )SQL";
-  if (vid) {
-    sql += R"SQL(
-      WHERE VID = :VID
-    )SQL";
-  }
-  auto stmt = conn.createStmt(sql);
-  if (vid) {
-    stmt.bindString(":VID", vid.value());
-  }
-  auto rset = stmt.executeQuery();
+  auto rset = getRetrieveJobRows(conn, common::dataStructures::QueueType::Pending, vid);
 
   while (rset.next()) {
     common::dataStructures::RetrieveJob job;
@@ -666,6 +704,63 @@ RelationalDB::getPendingRetrieveJobs(const std::optional<std::string>& vid) cons
   }
 
   return ret;
+}
+
+rdbms::Rset RelationalDB::getRetrieveJobRows(cta::rdbms::Conn& conn,
+                                             common::dataStructures::QueueType queueType,
+                                             const std::optional<std::string>& vid,
+                                             bool repack) const {
+  std::string tableName = "";
+  if (repack) {
+    tableName += "REPACK_";
+  }
+  tableName += "RETRIEVE_";
+  tableName += toString(queueType);
+
+  std::string sql = R"SQL(
+  SELECT
+      JOB_ID,
+      VID,
+      FSEQ,
+      BLOCK_ID,
+      ARCHIVE_FILE_ID,
+      COPY_NB,
+      SIZE_IN_BYTES,
+      CREATION_TIME,
+      DST_URL,
+      RETRIEVE_ERROR_REPORT_URL,
+      DISK_INSTANCE,
+      DISK_FILE_ID,
+      DISK_FILE_PATH,
+      DISK_FILE_OWNER_UID,
+      DISK_FILE_GID,
+      CHECKSUMBLOB,
+      STORAGE_CLASS,
+      REQUESTER_NAME,
+      REQUESTER_GROUP,
+      DISK_INSTANCE,
+      FAILURE_LOG,
+      REPORT_FAILURE_LOG,
+      TOTAL_RETRIES,
+      TOTAL_REPORT_RETRIES,
+      MAX_REPORT_RETRIES
+    FROM
+  )SQL";
+
+  sql += tableName;
+
+  bool hasWhere = false;
+  if (vid.has_value()) {
+    sql += hasWhere ? " AND VID = :VID" : " WHERE VID = :VID";
+  }
+
+  auto stmt = conn.createStmt(sql);
+
+  if (vid.has_value()) {
+    stmt.bindString(":VID", vid.value());
+  }
+
+  return stmt.executeQuery();
 }
 
 std::unique_ptr<SchedulerDatabase::IRetrieveJobQueueItor>
@@ -1032,53 +1127,59 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
   log::TimingList timings;
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> ret;
   std::vector<schedulerdb::postgres::RepackRequestProgress> statUpdates;
-  schedulerdb::Transaction txn(m_connPool, lc);
-  // move all finished REPACK_RETRIEVE_ACTIVE_QUEUE to the REPACK_ARCHIVE_PENDING_QUEUE
-  // return back statistics for:
-  //   1) all retrieve rows moved to archive table
-  //   2) all rearchive copies inserted additionally
-  // 1)+2) = the total number of columns being queued to the REPACK_ARCHIVE_PENDING_QUEUE
-  try {
-    auto count_rset =
-      schedulerdb::postgres::RetrieveJobQueueRow::transformJobBatchToArchive(txn, c_repackRetrieveReportBatchSize);
-    auto count = 0;
-    while (count_rset.next()) {
-      schedulerdb::postgres::RepackRequestProgress update;
-      update.reqId = count_rset.columnUint64("REPACK_REQUEST_ID");
-      uint64_t notRetrievedFiles = count_rset.columnUint64("NOT_RETRIEVED_FILES");
-      uint64_t notRetrievedBytes = count_rset.columnUint64("NOT_RETRIEVED_BYTES");
-      // (to be improved) we count the retrieve job in active table with mount_id NULL which are there as a consequence
-      // of insertion of user provided files and are not actually being retrieved just transformed to archive jobs
-      update.retrievedFiles = count_rset.columnUint64("BASE_INSERTED_COUNT") - notRetrievedFiles;
-      update.retrievedBytes = count_rset.columnUint64("BASE_INSERTED_BYTES") - notRetrievedBytes;
-      update.rearchiveCopyNbs = count_rset.columnUint64("ALTERNATE_INSERTED_COUNT");
-      update.rearchiveBytes = count_rset.columnUint64("ALTERNATE_INSERTED_BYTES");
-      count += update.retrievedFiles + update.rearchiveCopyNbs;
+  {
+    // Committing does not put the connection back into the pool, only the destruction of the
+    // transaction does, hence this scope: holding this connection while txn2 below asks for a
+    // second one can exhaust the pool, which ConnPool::getConn() waits on without a timeout.
+    schedulerdb::Transaction txn(m_connPool, lc);
+    // move all finished REPACK_RETRIEVE_ACTIVE_QUEUE to the REPACK_ARCHIVE_PENDING_QUEUE
+    // return back statistics for:
+    //   1) all retrieve rows moved to archive table
+    //   2) all rearchive copies inserted additionally
+    // 1)+2) = the total number of columns being queued to the REPACK_ARCHIVE_PENDING_QUEUE
+    try {
+      auto count_rset =
+        schedulerdb::postgres::RetrieveJobQueueRow::transformJobBatchToArchive(txn, c_repackRetrieveReportBatchSize);
+      auto count = 0;
+      while (count_rset.next()) {
+        schedulerdb::postgres::RepackRequestProgress update;
+        update.reqId = count_rset.columnUint64("REPACK_REQUEST_ID");
+        uint64_t notRetrievedFiles = count_rset.columnUint64("NOT_RETRIEVED_FILES");
+        uint64_t notRetrievedBytes = count_rset.columnUint64("NOT_RETRIEVED_BYTES");
+        // (to be improved) we count the retrieve job in active table with mount_id NULL which are there as a consequence
+        // of insertion of user provided files and are not actually being retrieved just transformed to archive jobs
+        update.retrievedFiles = count_rset.columnUint64("BASE_INSERTED_COUNT") - notRetrievedFiles;
+        update.retrievedBytes = count_rset.columnUint64("BASE_INSERTED_BYTES") - notRetrievedBytes;
+        update.rearchiveCopyNbs = count_rset.columnUint64("ALTERNATE_INSERTED_COUNT");
+        update.rearchiveBytes = count_rset.columnUint64("ALTERNATE_INSERTED_BYTES");
+        count += update.retrievedFiles + update.rearchiveCopyNbs;
+        log::ScopedParamContainer params(lc);
+        params.add("repackRequestId", update.reqId);
+        params.add("retrievedFiles", update.retrievedFiles);
+        params.add("retrievedBytes", update.retrievedBytes);
+        params.add("rearchiveCopyNbs", update.rearchiveCopyNbs);
+        params.add("rearchiveBytes", update.rearchiveBytes);
+        params.add("totalToBeArchivedFiles", update.retrievedFiles + update.rearchiveCopyNbs);
+        params.add("totalToBeArchivedBytes", update.retrievedBytes + update.rearchiveBytes);
+        lc.log(
+          cta::log::INFO,
+          "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): Successfully transformed repack retrieve "
+          "rows to archive queue table.");
+        statUpdates.emplace_back(update);
+      }
+      txn.setRowCountForTelemetry(count);
+      txn.commit();
+      timings.insertAndReset("movedRetrieveRepackJobs", t);
       log::ScopedParamContainer params(lc);
-      params.add("repackRequestId", update.reqId);
-      params.add("retrievedFiles", update.retrievedFiles);
-      params.add("retrievedBytes", update.retrievedBytes);
-      params.add("rearchiveCopyNbs", update.rearchiveCopyNbs);
-      params.add("rearchiveBytes", update.rearchiveBytes);
-      params.add("totalToBeArchivedFiles", update.retrievedFiles + update.rearchiveCopyNbs);
-      params.add("totalToBeArchivedBytes", update.retrievedBytes + update.rearchiveBytes);
-      lc.log(cta::log::INFO,
-             "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): Successfully transformed repack retrieve "
-             "rows to archive queue table.");
-      statUpdates.emplace_back(update);
+      timings.addToLog(params);
+    } catch (exception::Exception& ex) {
+      cta::log::ScopedParamContainer params(lc);
+      params.add(semconv::log::exceptionMessage, ex.getMessageValue());
+      lc.log(cta::log::ERR,
+             "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): failed to transform retrieve jobs to "
+             "archive jobs: ");
+      txn.abort();
     }
-    txn.setRowCountForTelemetry(count);
-    txn.commit();
-    timings.insertAndReset("movedRetrieveRepackJobs", t);
-    log::ScopedParamContainer params(lc);
-    timings.addToLog(params);
-  } catch (exception::Exception& ex) {
-    cta::log::ScopedParamContainer params(lc);
-    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
-    lc.log(cta::log::ERR,
-           "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): failed to transform retrieve jobs to "
-           "archive jobs: ");
-    txn.abort();
   }
   if (statUpdates.empty()) {
     lc.log(cta::log::INFO,
@@ -1094,10 +1195,10 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
     while (vidrset.next()) {}
     log::ScopedParamContainer params(lc);
     params.add("updatedRepackRequests", vidrset.getNbRowsRetrieved());
-    txn.setRowCountForTelemetry(vidrset.getNbRowsRetrieved());
+    txn2.setRowCountForTelemetry(vidrset.getNbRowsRetrieved());
     lc.log(cta::log::INFO,
-           "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): no Repack Retrieve jobs finished, nothing "
-           "to archive.");
+           "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): updated repack request progress after "
+           "converting jobs to archive jobs.");
     txn2.commit();
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(lc)
@@ -1561,7 +1662,25 @@ void RelationalDB::trimEmptyQueues(log::LogContext& lc) {
 }
 
 SchedulerDatabase::JobsFailedSummary RelationalDB::getRetrieveJobsFailedSummary(log::LogContext& lc) {
-  throw cta::exception::NotImplementedException();
+  SchedulerDatabase::JobsFailedSummary ret;
+  // Get the jobs from DB
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
+  try {
+    lc.log(log::INFO, "In RelationalDB::getRetrieveJobsFailedSummary(): STARTING ");
+    auto rset = cta::schedulerdb::postgres::RetrieveJobSummaryRow::selectFailedJobSummary(txn);
+    while (rset.next()) {
+      ret.totalFiles += rset.columnUint64("JOBS_COUNT");
+      ret.totalBytes += rset.columnUint64("JOBS_TOTAL_SIZE");
+    }
+
+    txn.setRowCountForTelemetry(rset.getNbRowsRetrieved());
+    txn.commit();
+  } catch (cta::exception::Exception& e) {
+    std::string bt = e.backtrace();
+    lc.log(log::ERR, "In RelationalDB::getRetrieveJobsFailedSummary(): Exception thrown: " + bt);
+    txn.abort();
+  }
+  return ret;
 }
 
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMountInfo(log::LogContext& lc) {
@@ -1658,8 +1777,8 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
     m.bytesQueued += ajsr.jobsTotalSize;
     m.filesQueued += ajsr.jobsCount;
     m.mountPolicyCountMap[ajsr.mountPolicy] = ajsr.jobsCount;
-    m.oldestJobStartTime =
-      ajsr.oldestJobStartTime < m.oldestJobStartTime ? ajsr.oldestJobStartTime : m.oldestJobStartTime;
+    m.oldestJobStartTime = ajsr.oldestJobStartTime;
+    m.youngestJobStartTime = ajsr.youngestJobStartTime;
     m.minRequestAge = ajsr.archiveMinRequestAge;
     m.priority = ajsr.archivePriority;
     m.logicalLibrary = "";
@@ -1721,7 +1840,7 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
   txn->setRowCountForTelemetry(totalJobCount);
   //getting info about sleep disk systems
   std::unordered_map<std::string, RelationalDB::DiskSleepEntry> diskSystemSleepMap =
-    getActiveSleepDiskSystemNamesToFilter(lc);
+    getActiveSleepDiskSystemNames(*txn, lc);
   // for now we create a mount per summary row (assuming there would not be
   // the same activity twice with 2 mount policies or 2 different VIDs selected)
   for (const auto& rjsr : rjsr_vector) {
@@ -1748,17 +1867,14 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
     if (rjsr.diskSystemName) {
       auto it = diskSystemSleepMap.find(rjsr.diskSystemName.value());
       if (it != diskSystemSleepMap.end()) {
+        // The map only holds the entries which are still sleeping, the expired ones are left out
+        // by the query, so no comparison against the current time is needed here. A mount whose
+        // disk system is absent from the map keeps sleepingMount at its default of false.
         const auto& entry = it->second;
-        auto now = static_cast<uint64_t>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
-
-        if (now < (entry.timestamp + entry.sleepTime)) {
-          m.sleepingMount = true;
-          m.sleepStartTime = entry.timestamp;
-          m.diskSystemName = rjsr.diskSystemName.value();
-          m.sleepTime = entry.sleepTime;
-        } else {
-          m.sleepingMount = false;
-        }
+        m.sleepingMount = true;
+        m.sleepStartTime = entry.timestamp;
+        m.diskSystemName = rjsr.diskSystemName.value();
+        m.sleepTime = entry.sleepTime;
       }
     }
   }
@@ -1801,10 +1917,18 @@ void RelationalDB::cleanRetrieveQueueForVid(const std::string& vid, log::LogCont
 uint64_t RelationalDB::insertOrUpdateDiskSleepEntry(schedulerdb::Transaction& txn,
                                                     const std::string& diskSystemName,
                                                     const RelationalDB::DiskSleepEntry& entry) {
+  // The sleep window is restarted on every call, as it is in the objectstore implementation: a
+  // disk system is reported here each time it is found to be out of space, so the entry keeps
+  // being refreshed for as long as that lasts, and the disk system wakes up SLEEP_TIME after the
+  // last report rather than SLEEP_TIME after the first one. Overwriting also covers the case of a
+  // row which has already expired but has not been collected yet by the maintd cleanup routine:
+  // without it, such a row would swallow the request and leave the disk system awake.
   std::string sql = R"SQL(
         INSERT INTO DISK_SYSTEM_SLEEP_TRACKING (DISK_SYSTEM_NAME, SLEEP_TIME, LAST_UPDATE_TIME)
         VALUES (:DISK_SYSTEM_NAME, :SLEEP_TIME, :LAST_UPDATE_TIME)
-        ON CONFLICT (DISK_SYSTEM_NAME)  DO NOTHING
+        ON CONFLICT (DISK_SYSTEM_NAME) DO UPDATE
+          SET SLEEP_TIME = EXCLUDED.SLEEP_TIME,
+              LAST_UPDATE_TIME = EXCLUDED.LAST_UPDATE_TIME
     )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
@@ -1821,11 +1945,16 @@ uint64_t RelationalDB::insertOrUpdateDiskSleepEntry(schedulerdb::Transaction& tx
 }
 
 std::unordered_map<std::string, RelationalDB::DiskSleepEntry>
-RelationalDB::getDiskSystemSleepStatus(rdbms::Conn& conn) {
-  // SQL to fetch all rows from the table
+RelationalDB::getDiskSystemSleepActiveEntries(rdbms::Conn& conn) {
+  // Only the entries which are still sleeping are of interest, so the expired ones are left out
+  // here rather than filtered afterwards. The clock of the database is used, so that every reader
+  // and the cleanup routine agree on which entries have expired. COALESCE keeps a row with a null
+  // sleep time or timestamp from being reported as active for ever.
   std::string sql = R"SQL(
       SELECT DISK_SYSTEM_NAME, SLEEP_TIME, LAST_UPDATE_TIME
       FROM DISK_SYSTEM_SLEEP_TRACKING
+      WHERE COALESCE(LAST_UPDATE_TIME, 0) + COALESCE(SLEEP_TIME, 0)
+            >= EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
   )SQL";
 
   auto stmt = conn.createStmt(sql);
@@ -1843,28 +1972,17 @@ RelationalDB::getDiskSystemSleepStatus(rdbms::Conn& conn) {
   return sleepEntries;
 }
 
-uint64_t RelationalDB::removeDiskSystemSleepEntries(schedulerdb::Transaction& txn,
-                                                    const std::vector<std::string>& expiredDiskSystemNames) {
-  if (expiredDiskSystemNames.empty()) {
-    return 0;
-  }
-  // Construct the SQL with placeholders for each disk name
-  std::string sql = "DELETE FROM DISK_SYSTEM_SLEEP_TRACKING WHERE DISK_SYSTEM_NAME IN (";
-  for (size_t i = 0; i < expiredDiskSystemNames.size(); ++i) {
-    sql += ":DISKNAME" + std::to_string(i);
-    if (i < expiredDiskSystemNames.size() - 1) {
-      sql += ", ";
-    }
-  }
-  sql += ")";
+uint64_t RelationalDB::removeExpiredDiskSystemSleepEntries(schedulerdb::Transaction& txn) {
+  // The entries to remove are selected by the database itself, using the same comparison as
+  // getDiskSystemSleepActiveEntries() so that no entry can be reported as active and deleted at
+  // the same time. A row with a null sleep time or timestamp is treated as expired and collected.
+  std::string sql = R"SQL(
+      DELETE FROM DISK_SYSTEM_SLEEP_TRACKING
+      WHERE COALESCE(LAST_UPDATE_TIME, 0) + COALESCE(SLEEP_TIME, 0)
+            < EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
+  )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
-
-  // Bind each disk name to its corresponding placeholder
-  for (size_t i = 0; i < expiredDiskSystemNames.size(); ++i) {
-    stmt.bindString(":DISKNAME" + std::to_string(i), expiredDiskSystemNames[i]);
-  }
-
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDiskSleepTracking);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
@@ -1874,56 +1992,48 @@ uint64_t RelationalDB::removeDiskSystemSleepEntries(schedulerdb::Transaction& tx
 }
 
 std::unordered_map<std::string, RelationalDB::DiskSleepEntry>
-RelationalDB::getActiveSleepDiskSystemNamesToFilter(log::LogContext& lc) {
-  cta::threading::MutexLocker ml(m_diskSystemSleepMutex);
-  auto conn = m_connPool.getConn();
-  std::unordered_map<std::string, RelationalDB::DiskSleepEntry> diskSystemSleepMap = getDiskSystemSleepStatus(conn);
-  conn.commit();
-  if (diskSystemSleepMap.empty()) {
-    return diskSystemSleepMap;
-  }
-  uint64_t currentTime = static_cast<uint64_t>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
-
-  std::vector<std::string> expiredDiskSystems;
-  auto it = diskSystemSleepMap.begin();
-  while (it != diskSystemSleepMap.end()) {
-    const RelationalDB::DiskSleepEntry& entry = it->second;
+RelationalDB::getActiveSleepDiskSystemNames(schedulerdb::Transaction& txn, log::LogContext& lc) {
+  // The transaction of the caller is reused on purpose. Taking another connection from the pool
+  // here, while the caller holds one, can exhaust the pool and deadlock it, as
+  // ConnPool::getConn() waits for a free connection without a timeout.
+  // The expired entries are filtered out by the query itself. Their rows are removed by
+  // DeleteExpiredDiskSystemSleepEntriesRoutine in maintd, not here: this method is called from the
+  // mount decision paths, whose transaction must not be committed here, so a delete placed here
+  // would only become durable if the caller happened to commit.
+  auto activeEntries = getDiskSystemSleepActiveEntries(txn.getConn());
+  if (!activeEntries.empty()) {
     cta::log::ScopedParamContainer(lc)
-      .add("currentTime", currentTime)
-      .add("entry.timestamp", entry.timestamp)
-      .add("entry.sleepTime", entry.sleepTime)
-      .add("currentTime-entry.timestamp", currentTime - entry.timestamp)
+      .add("sleepingDiskSystems", activeEntries.size())
       .log(cta::log::DEBUG,
-           "In RelationalDB::getActiveSleepDiskSystemNamesToFilter(): Checking sleeping disk systems.");
-    if (currentTime - entry.timestamp > entry.sleepTime) {
-      const std::string diskName = it->first;
-      expiredDiskSystems.push_back(diskName);
-      // erase; iterator is invalidated, but the next one is returned
-      it = diskSystemSleepMap.erase(it);
-    } else {
-      ++it;
-    }
+           "In RelationalDB::getActiveSleepDiskSystemNames(): found disk systems still sleeping for lack of space.");
   }
-  if (!expiredDiskSystems.empty()) {
-    schedulerdb::Transaction txn(m_connPool, lc);
-    try {
-      uint64_t nrows = removeDiskSystemSleepEntries(txn, expiredDiskSystems);
-      txn.commit();
-      cta::log::ScopedParamContainer(lc)
-        .add("nrows", nrows)
-        .log(
-          cta::log::INFO,
-          "In RelationalDB::getActiveSleepDiskSystemNamesToFilter(): Removed disk system sleep entries from the DB.");
-    } catch (const std::exception& ex) {
-      cta::log::ScopedParamContainer(lc)
-        .add(semconv::log::exceptionMessage, ex.what())
-        .log(cta::log::ERR,
-             "In RelationalDB::getActiveSleepDiskSystemNamesToFilter(): Failed to remove disk system sleep entries "
-             "from DB.");
-      txn.abort();
-    }
+  return activeEntries;
+}
+
+uint64_t RelationalDB::deleteExpiredDiskSystemSleepEntries(log::LogContext& lc) {
+  // An entry has expired once its own sleep time has elapsed since its last update, so there is
+  // nothing to configure here: the database selects the rows to delete from the values they hold.
+  // No process local lock is taken: the DELETE evaluates its predicate row by row at execution
+  // time, so it cannot remove an entry which another process has just refreshed.
+  schedulerdb::Transaction txn(m_connPool, lc);
+  uint64_t nrows = 0;
+  try {
+    nrows = removeExpiredDiskSystemSleepEntries(txn);
+    txn.commit();
+    cta::log::ScopedParamContainer(lc)
+      .add("nrows", nrows)
+      .log(cta::log::INFO,
+           "In RelationalDB::deleteExpiredDiskSystemSleepEntries(): Removed expired disk system sleep entries from "
+           "the DB.");
+  } catch (const std::exception& ex) {
+    cta::log::ScopedParamContainer(lc)
+      .add(semconv::log::exceptionMessage, ex.what())
+      .log(cta::log::ERR,
+           "In RelationalDB::deleteExpiredDiskSystemSleepEntries(): Failed to remove expired disk system sleep "
+           "entries from the DB.");
+    txn.abort();
   }
-  return diskSystemSleepMap;
+  return nrows;
 }
 
 // MountQueueCleanup routine methods

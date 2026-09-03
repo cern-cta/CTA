@@ -6,7 +6,13 @@ from pathlib import Path
 
 import pytest
 
-from system_tests.helpers.hosts import CtaCliHost, CtaTapedHost, DiskClientHost, DiskInstanceHost
+from system_tests.helpers.hosts import (
+    CtaCliHost,
+    CtaTapedHost,
+    DiskClientHost,
+    DiskInstanceHost,
+    SchedulerPostgresHost,
+)
 
 from system_tests.helpers.utils import (
     TempDiskInstanceSpace,
@@ -21,6 +27,7 @@ from system_tests.helpers.utils import (
     canonicalize,
     wait_for_condition,
 )
+
 
 # NOTE: these tests are only meant for cta-admin tests. Other tools should get their own test suite
 #
@@ -1018,6 +1025,266 @@ def test_cta_admin_repack(cta_cli: CtaCliHost, disk_instance_name: str) -> None:
 
     ls_after = cta_cli.exec_with_output("cta-admin re ls")
     assert ls_before == ls_after
+
+
+# =========================================================================
+#  Failed requests - fr
+# =========================================================================
+
+
+def test_cta_admin_failedrequest_ls_options(cta_cli: CtaCliHost) -> None:
+    """Check the option validation and the shape of the listing, whatever is queued."""
+    fr_ls = json.loads(cta_cli.exec_with_output("cta-admin --json fr ls"))
+
+    for item in fr_ls:
+        assert item["requestType"] in ("ARCHIVE_REQUEST", "RETRIEVE_REQUEST")
+
+    # --justarchive and --justretrieve restrict the listing to a single request type
+    for item in json.loads(cta_cli.exec_with_output("cta-admin --json fr ls --justarchive")):
+        assert item["requestType"] == "ARCHIVE_REQUEST"
+    for item in json.loads(cta_cli.exec_with_output("cta-admin --json fr ls --justretrieve")):
+        assert item["requestType"] == "RETRIEVE_REQUEST"
+
+    with pytest.raises(RuntimeError):
+        print("Expected failure after combining --justarchive and --justretrieve:")
+        cta_cli.exec("cta-admin fr ls --justarchive --justretrieve")
+
+    # The summary reports one line per request type plus the total
+    summary = json.loads(cta_cli.exec_with_output("cta-admin --json fr ls --summary"))
+    assert len(summary) == 3
+    assert summary[0]["requestType"] == "ARCHIVE_REQUEST"
+    assert summary[1]["requestType"] == "RETRIEVE_REQUEST"
+    assert summary[2]["requestType"] == "TOTAL"
+    assert int(summary[2]["totalFiles"]) == int(summary[0]["totalFiles"]) + int(summary[1]["totalFiles"])
+    assert int(summary[2]["totalSize"]) == int(summary[0]["totalSize"]) + int(summary[1]["totalSize"])
+    assert int(summary[2]["totalFiles"]) == len(fr_ls)
+
+    # The totals are never filtered, so combining --summary with a filter is rejected rather than
+    # answered with totals which do not match the filter
+    with pytest.raises(RuntimeError):
+        print("Expected failure after combining --summary and --tapepool:")
+        cta_cli.exec("cta-admin fr ls --summary --tapepool ctasystest")
+    with pytest.raises(RuntimeError):
+        print("Expected failure after combining --summary and --vid:")
+        cta_cli.exec("cta-admin fr ls --summary --vid V01001")
+    with pytest.raises(RuntimeError):
+        print("Expected failure after combining --summary and --log:")
+        cta_cli.exec("cta-admin fr ls --summary --log")
+
+    # Listing the failed requests must not change them
+    assert json.loads(cta_cli.exec_with_output("cta-admin --json fr ls")) == fr_ls
+
+
+def test_cta_admin_failedrequest_rm_invalid_object_id(cta_cli: CtaCliHost, postgres_scheduler_enabled: bool) -> None:
+    if not postgres_scheduler_enabled:
+        # The object store reports the object store address as the object ID, so the "<prefix>:<job id>"
+        # format checked here, and its rejection, belong to the postgres scheduler only
+        pytest.skip("The object ID format is specific to the postgres scheduler")
+
+    ls_before = cta_cli.exec_with_output("cta-admin --json fr ls")
+
+    # An object ID naming no queue must be rejected rather than deleting something else
+    for object_id in ("notanobjectid", "x:12345", "a:notanumber", "12345"):
+        with pytest.raises(RuntimeError):
+            print(f"Expected failure after removing a failed request with object ID '{object_id}':")
+            cta_cli.exec(f"cta-admin fr rm -o {object_id}")
+
+    assert cta_cli.exec_with_output("cta-admin --json fr ls") == ls_before
+
+
+def test_cta_admin_failedrequest_with_failed_jobs(
+    cta_cli: CtaCliHost, scheduler_postgres: SchedulerPostgresHost, postgres_scheduler_enabled: bool
+) -> None:
+    """Seed the four failed job queues and check the listing, the summary and the removal.
+
+    A job only reaches a failed queue once it has exhausted all of its retries, which is not
+    something a test can trigger reliably, so the rows are inserted straight into the scheduler DB.
+    The four queues are separate tables (the repack ones carry the REPACK_ prefix) and the table a
+    job was read from is the only thing telling a repack job apart from a user job, which is why
+    all four have to be covered.
+    """
+    if not postgres_scheduler_enabled:
+        pytest.skip("The failed jobs are only kept in dedicated tables by the postgres scheduler")
+
+    # Names of their own, so that the listing filters can be checked without depending on what
+    # else is in the catalogue
+    tape_pool = "test_fr_ls_tape_pool"
+    vid = "ULT0101"
+    mount_policy = "test_fr_ls_mp"
+    archive_file_id = 4200000001
+
+    ls_before = json.loads(cta_cli.exec_with_output("cta-admin --json fr ls"))
+    summary_before = json.loads(cta_cli.exec_with_output("cta-admin --json fr ls --summary"))
+
+    # Only the columns which are NOT NULL in the schema plus the ones the listing reports are set,
+    # which leaves the optional ones null: a repack job has no requester or disk file, and a null
+    # must be reported as an empty field rather than abort the listing
+    archive_columns = (
+        "STATUS, MOUNT_POLICY, TAPE_POOL, PRIORITY, MIN_ARCHIVE_REQUEST_AGE, ARCHIVE_FILE_ID, SIZE_IN_BYTES"
+    )
+    retrieve_columns = "STATUS, MOUNT_POLICY, VID, PRIORITY, MIN_RETRIEVE_REQUEST_AGE, ARCHIVE_FILE_ID, SIZE_IN_BYTES"
+    sizes = {"a": 1000, "ra": 2000, "r": 4000, "rr": 8000}
+    # object ID prefix -> (table, columns, values)
+    seeded = {
+        "a": (
+            "ARCHIVE_FAILED_QUEUE",
+            archive_columns,
+            f"'AJS_Failed', '{mount_policy}', '{tape_pool}', 1, 0, {archive_file_id}, {sizes['a']}",
+        ),
+        "ra": (
+            "REPACK_ARCHIVE_FAILED_QUEUE",
+            archive_columns,
+            f"'AJS_Failed', '{mount_policy}', '{tape_pool}', 1, 0, {archive_file_id + 1}, {sizes['ra']}",
+        ),
+        "r": (
+            "RETRIEVE_FAILED_QUEUE",
+            retrieve_columns,
+            f"'RJS_Failed', '{mount_policy}', '{vid}', 1, 0, {archive_file_id + 2}, {sizes['r']}",
+        ),
+        "rr": (
+            "REPACK_RETRIEVE_FAILED_QUEUE",
+            retrieve_columns,
+            f"'RJS_Failed', '{mount_policy}', '{vid}', 1, 0, {archive_file_id + 3}, {sizes['rr']}",
+        ),
+    }
+
+    job_ids: dict[str, str] = {}
+    try:
+        for prefix, (table, columns, values) in seeded.items():
+            job_ids[prefix] = scheduler_postgres.insert_row(table, columns, values)
+
+        # The object ID prefix says which queue the job came from: a:/r: for the user jobs and
+        # ra:/rr: for the repack ones
+        object_ids = {prefix: f"{prefix}:{job_id}" for prefix, job_id in job_ids.items()}
+
+        fr_ls = json.loads(cta_cli.exec_with_output("cta-admin --json fr ls"))
+        assert len(fr_ls) == len(ls_before) + 4
+        listed = {item["objectId"]: item for item in fr_ls}
+        for prefix, object_id in object_ids.items():
+            assert object_id in listed, f"{object_id} is missing from the listing"
+            item = listed[object_id]
+            if prefix in ("a", "ra"):
+                assert item["requestType"] == "ARCHIVE_REQUEST"
+                assert item["tapepool"] == tape_pool
+            else:
+                assert item["requestType"] == "RETRIEVE_REQUEST"
+                assert item["tf"]["vid"] == vid
+            assert int(item["af"]["size"]) == sizes[prefix]
+            # The columns left unset are reported as empty fields instead of aborting the listing
+            assert item["requester"]["username"] == ""
+            assert item["af"]["df"]["path"] == ""
+
+        # --justarchive / --justretrieve select both the user and the repack table of one type
+        just_archive = {
+            item["objectId"] for item in json.loads(cta_cli.exec_with_output("cta-admin --json fr ls --justarchive"))
+        }
+        assert {object_ids["a"], object_ids["ra"]} <= just_archive
+        assert object_ids["r"] not in just_archive
+        assert object_ids["rr"] not in just_archive
+
+        just_retrieve = {
+            item["objectId"] for item in json.loads(cta_cli.exec_with_output("cta-admin --json fr ls --justretrieve"))
+        }
+        assert {object_ids["r"], object_ids["rr"]} <= just_retrieve
+        assert object_ids["a"] not in just_retrieve
+        assert object_ids["ra"] not in just_retrieve
+
+        # --tapepool and --vid are applied to the user and the repack table alike
+        by_tape_pool = {
+            item["objectId"]
+            for item in json.loads(cta_cli.exec_with_output(f"cta-admin --json fr ls --tapepool {tape_pool}"))
+        }
+        assert by_tape_pool == {object_ids["a"], object_ids["ra"]}
+
+        by_vid = {
+            item["objectId"] for item in json.loads(cta_cli.exec_with_output(f"cta-admin --json fr ls --vid {vid}"))
+        }
+        assert by_vid == {object_ids["r"], object_ids["rr"]}
+
+        # --log reports the failure logs of every job, the seeded ones included
+        with_logs = {item["objectId"] for item in json.loads(cta_cli.exec_with_output("cta-admin --json fr ls --log"))}
+        assert set(object_ids.values()) <= with_logs
+
+        # The summary counts the user and the repack jobs together
+        summary = json.loads(cta_cli.exec_with_output("cta-admin --json fr ls --summary"))
+        assert len(summary) == 3
+        assert int(summary[0]["totalFiles"]) == int(summary_before[0]["totalFiles"]) + 2
+        assert int(summary[0]["totalSize"]) == int(summary_before[0]["totalSize"]) + sizes["a"] + sizes["ra"]
+        assert int(summary[1]["totalFiles"]) == int(summary_before[1]["totalFiles"]) + 2
+        assert int(summary[1]["totalSize"]) == int(summary_before[1]["totalSize"]) + sizes["r"] + sizes["rr"]
+        assert int(summary[2]["totalFiles"]) == int(summary_before[2]["totalFiles"]) + 4
+        assert int(summary[2]["totalSize"]) == int(summary_before[2]["totalSize"]) + sum(sizes.values())
+
+        # Removing by object ID must delete from the queue the prefix names, and only that job. If
+        # "ra:"/"rr:" were routed to the user tables, the repack rows would survive the removals
+        # and the listing below would not match the one from before the test.
+        for prefix, object_id in object_ids.items():
+            cta_cli.exec(f"cta-admin fr rm -o {object_id}")
+            remaining = {item["objectId"] for item in json.loads(cta_cli.exec_with_output("cta-admin --json fr ls"))}
+            assert object_id not in remaining, f"{object_id} was not removed"
+            job_ids.pop(prefix)
+
+        assert json.loads(cta_cli.exec_with_output("cta-admin --json fr ls")) == ls_before
+        assert json.loads(cta_cli.exec_with_output("cta-admin --json fr ls --summary")) == summary_before
+    finally:
+        # Whatever the assertions did, no seeded row may be left behind
+        for prefix, job_id in job_ids.items():
+            # Both the table and the job ID come from this test, not from any external input
+            sql = f"DELETE FROM {seeded[prefix][0]} WHERE JOB_ID = {job_id}"  # noqa: S608
+            scheduler_postgres.run_sql(sql)
+
+
+def test_cta_admin_failedrequest_ls_error_reporting(
+    cta_cli: CtaCliHost, scheduler_postgres: SchedulerPostgresHost, postgres_scheduler_enabled: bool
+) -> None:
+    """Check that a failing `fr ls` reports its error message and exits with the right code.
+
+    Regression test: the streaming RPC used by `fr ls` used to lose these errors silently.
+    - A command rejected before any row is streamed (a UserError, e.g. an invalid combination of
+      options) is delivered as a clean gRPC status. See CtaAdminClientReadReactor::throwIfError()
+      for the case where the server instead reports the error inside the stream itself, after
+      the header has already gone out, which used to have no reachable catch site client-side.
+    - An error hit while a row is being read (here: a row too corrupt for the listing to parse) is
+      only detectable once the listing is already under way. See
+      CtaAdminServerWriteReactor::NextWrite() for why this used to crash the whole frontend process
+      instead of ending just this one request.
+    """
+    if not postgres_scheduler_enabled:
+        pytest.skip("Both scenarios below are specific to the postgres scheduler")
+
+    # A UserError, rejected by FailedRequestLsResponseStream's constructor before any row is
+    # streamed: --log and --summary are mutually exclusive. Delivered as a gRPC INVALID_ARGUMENT
+    # status, so the client raises a cta::exception::UserError and exits 2.
+    with pytest.raises(RuntimeError) as user_error:
+        cta_cli.exec("cta-admin fr ls --log --summary")
+    assert "failed with exit code 2" in str(user_error.value)
+    assert "--log and --summary are mutually exclusive" in str(user_error.value)
+
+    # A row that only fails once the listing has started: JOB_ID is read with the non-optional
+    # getter, which rejects a negative value as not being a valid unsigned integer (PostgresRset's
+    # columnUint64). -1 is a perfectly legal BIGINT (JOB_ID carries no CHECK constraint), so the
+    # insert itself succeeds; it is only the read-back that fails. This reaches the client as a gRPC
+    # FAILED_PRECONDITION status, so it raises a plain cta::exception::Exception and exits 1, unlike
+    # the exit code 2 above.
+    try:
+        scheduler_postgres.run_sql(
+            "INSERT INTO ARCHIVE_FAILED_QUEUE "
+            "(JOB_ID, STATUS, MOUNT_POLICY, TAPE_POOL, PRIORITY, MIN_ARCHIVE_REQUEST_AGE, "
+            "ARCHIVE_FILE_ID, SIZE_IN_BYTES) "
+            "VALUES (-1, 'AJS_Failed', 'test_fr_ls_error_mp', 'test_fr_ls_error_tp', 1, 0, 999999999, 1000)"
+        )
+
+        with pytest.raises(RuntimeError) as db_error:
+            cta_cli.exec("cta-admin fr ls")
+        assert "failed with exit code 1" in str(db_error.value)
+        assert "JOB_ID contains the value -1 which is not a valid unsigned integer" in str(db_error.value)
+    finally:
+        # Whatever the assertions did, the malformed row may not be left behind: every other test
+        # calling "fr ls" would start failing the same way
+        scheduler_postgres.run_sql("DELETE FROM ARCHIVE_FAILED_QUEUE WHERE JOB_ID = -1")
+
+    # The listing works normally again once the malformed row is gone
+    cta_cli.exec("cta-admin fr ls")
 
 
 def test_add_errors_to_whitelist(error_whitelist: set[str]) -> None:

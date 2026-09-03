@@ -110,6 +110,28 @@ CtaAdminParsedCmd::CtaAdminParsedCmd(int argc, const char* const* const argv) : 
   }
 
   parseOptions(has_subcommand ? argno + 1 : argno, argc, argv, option_list_it->second);
+
+  // --summary reports the totals of all the failed jobs and cannot be filtered; fail here rather
+  // than round-tripping to the server for a combination it will reject anyway. Kept in sync with
+  // the equivalent, authoritative check in FailedRequestLsResponseStream's constructor.
+  if (admincmd.cmd() == AdminCmd::CMD_FAILEDREQUEST && admincmd.subcmd() == AdminCmd::SUBCMD_LS) {
+    bool isSummary = false;
+    for (const auto& opt : admincmd.option_bool()) {
+      if (opt.key() == OptionBoolean::SUMMARY) {
+        isSummary = opt.value();
+      }
+    }
+    bool hasTapePoolOrVid = false;
+    for (const auto& opt : admincmd.option_str()) {
+      if (opt.key() == OptionString::TAPE_POOL || opt.key() == OptionString::VID) {
+        hasTapePoolOrVid = true;
+      }
+    }
+    if (isSummary && hasTapePoolOrVid) {
+      throwUsage(
+        "--summary reports the totals of all the failed jobs and is mutually exclusive with --tapepool and --vid");
+    }
+  }
 }
 
 const std::string CtaAdminParsedCmd::getConfigFilePath() const {

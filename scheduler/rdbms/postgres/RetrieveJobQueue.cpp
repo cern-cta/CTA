@@ -337,8 +337,6 @@ void RetrieveJobQueueRow::updateRetryCounts(uint64_t mountId) {
 };
 
 // requeueFailedJob is used to requeue jobs which were not processed due to finished mount or failed jobs
-// In case of unexpected crashed the job stays in the RETRIEVE_PENDING_QUEUE and needs to be identified
-// in some garbage collection process - TO-BE-DONE. ALTERNATE_VIDS
 uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
                                                RetrieveJobStatus newStatus,
                                                bool keepMountId,
@@ -728,7 +726,7 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
         SELECT JOB_ID
         FROM REPACK_RETRIEVE_ACTIVE_QUEUE
         WHERE STATUS = :RETRIEVESTATUS
-        ORDER BY PRIORITY DESC, JOB_ID
+        ORDER BY PRIORITY DESC, ARCHIVE_FILE_ID, JOB_ID
         LIMIT :LIMIT
         FOR UPDATE SKIP LOCKED
     )
@@ -1289,6 +1287,28 @@ uint64_t RetrieveJobQueueRow::cancelRetrieveJob(Transaction& txn, uint64_t archi
   )SQL";
   auto stmt = txn.getConn().createStmt(sqlActive);
   stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
+  txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDeleteRetrieve);
+  stmt.executeNonQuery();
+  auto nrows = stmt.getNbAffectedRows();
+  txn.setRowCountForTelemetry(nrows);
+  return nrows;
+}
+
+uint64_t RetrieveJobQueueRow::deleteFailedRetrieveJob(Transaction& txn, uint64_t jobID, bool repack) {
+  std::string tableName = "RETRIEVE_FAILED_QUEUE";
+  if (repack) {
+    tableName = "REPACK_RETRIEVE_FAILED_QUEUE";
+  }
+  std::string sqlActive = R"SQL(
+    DELETE FROM
+  )SQL";
+  sqlActive += tableName;
+  sqlActive += R"SQL(
+    WHERE
+      JOB_ID = :JOB_ID
+  )SQL";
+  auto stmt = txn.getConn().createStmt(sqlActive);
+  stmt.bindUint64(":JOB_ID", jobID);
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbDeleteRetrieve);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();

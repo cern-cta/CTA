@@ -31,6 +31,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "disk/DiskSystem.hpp"
+#include "rdbms/Conn.hpp"
 #include "rdbms/Rset.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "taped/daemon/common/TapedConfiguration.hpp"
@@ -91,7 +92,7 @@ public:
    * Destructor
    */
   virtual ~SchedulerDatabase() noexcept = 0;
-
+  virtual cta::rdbms::Conn getConn() = 0;
   /*============ Sub thread handling, mostly for unit tests =================*/
   virtual void waitSubthreadsComplete() = 0;
 
@@ -273,6 +274,16 @@ public:
   virtual std::unique_ptr<IArchiveJobQueueItor>
   getArchiveJobQueueItor(const std::string& tapePoolName, common::dataStructures::JobQueueType queueType) const = 0;
 
+  virtual rdbms::Rset getArchiveJobRows(cta::rdbms::Conn& conn,
+                                        common::dataStructures::QueueType queueType,
+                                        const std::optional<std::string>& tapePoolName = nullptr,
+                                        bool repack = false) const = 0;
+
+  virtual rdbms::Rset getRetrieveJobRows(cta::rdbms::Conn& conn,
+                                         common::dataStructures::QueueType queueType,
+                                         const std::optional<std::string>& vid = nullptr,
+                                         bool repack = false) const = 0;
+
   /**
    * Get a a set of jobs to report to the clients. This function is like
    * ArchiveMount::getNextJobBatch. It it not in the context of a mount as any
@@ -291,6 +302,12 @@ public:
     uint64_t totalBytes;
   };
 
+  /**
+   * Get the summary (file count and total size) of all the failed archive jobs,
+   * both the user and the repack ones.
+   *
+   * @param logContext  logging context
+   */
   virtual JobsFailedSummary getArchiveJobsFailedSummary(log::LogContext& logContext) = 0;
 
   /**
@@ -745,6 +762,12 @@ public:
                                                  utils::Timer& t,
                                                  log::LogContext& lc) = 0;
 
+  /**
+   * Get the summary (file count and total size) of all the failed retrieve jobs,
+   * both the user and the repack ones.
+   *
+   * @param logContext  logging context
+   */
   virtual JobsFailedSummary getRetrieveJobsFailedSummary(log::LogContext& logContext) = 0;
 
   /*============ Label management: user side =================================*/
