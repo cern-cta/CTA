@@ -15,9 +15,13 @@ import urllib.request
 from typing import Any
 
 
-def api_get(path: str) -> tuple[Any, dict[str, str], str]:
+def api_get(*path_segments: str, query: dict[str, str | int] | None = None) -> tuple[Any, dict[str, str], str]:
     base_url = os.environ["CI_API_V4_URL"].rstrip("/")
     project_id = urllib.parse.quote(os.environ["CI_PROJECT_ID"], safe="")
+    encoded_path = "/".join(urllib.parse.quote(segment, safe="") for segment in path_segments)
+    url = f"{base_url}/projects/{project_id}/{encoded_path}"
+    if query:
+        url = f"{url}?{urllib.parse.urlencode(query)}"
     credentials = [
         ("job_token", "JOB-TOKEN", os.environ.get("CI_JOB_TOKEN", "")),
         ("project_token", "PRIVATE-TOKEN", os.environ.get("MERGE_TRAIN_READ_API_TOKEN", "")),
@@ -27,7 +31,7 @@ def api_get(path: str) -> tuple[Any, dict[str, str], str]:
         if not token:
             continue
         request = urllib.request.Request(  # noqa: S310
-            f"{base_url}/projects/{project_id}/{path}",
+            url,
             headers={header: token},
         )
         try:
@@ -39,7 +43,7 @@ def api_get(path: str) -> tuple[Any, dict[str, str], str]:
     raise RuntimeError(f"GitLab API request failed: {last_error}")
 
 
-def is_duplicate() -> tuple[bool, str]:  # noqa: PLR0911, PLR0912, PLR0915
+def is_duplicate() -> tuple[bool, str]:  # noqa: PLR0911, PLR0912
     # A safe skip requires two independent facts:
     # the train commit is based directly on the current target HEAD, and the same synthetic commit already passed.
     if os.environ.get("CI_MERGE_REQUEST_EVENT_TYPE") != "merge_train":
@@ -59,8 +63,8 @@ def is_duplicate() -> tuple[bool, str]:  # noqa: PLR0911, PLR0912, PLR0915
         return False, "missing_environment"
 
     # Resolve the target through the API rather than a local remote-tracking ref, which may be stale in a shallow clone.
-    target_branch = urllib.parse.quote(os.environ["CI_MERGE_REQUEST_TARGET_BRANCH_NAME"], safe="")
-    branch, _, authentication = api_get(f"repository/branches/{target_branch}")
+    target_branch = os.environ["CI_MERGE_REQUEST_TARGET_BRANCH_NAME"]
+    branch, _, authentication = api_get("repository", "branches", target_branch)
     target_sha = str(branch["commit"]["id"])
 
     # GitLab can represent the synthetic result as either a single-parent commit or a two-parent merge commit.
@@ -95,8 +99,8 @@ def is_duplicate() -> tuple[bool, str]:  # noqa: PLR0911, PLR0912, PLR0915
 
     # MR pipeline history contains detached, merged-results, and merge-train pipelines.
     # Ref, source, status, and commit checks below distinguish the reusable merged-results pipelines.
-    mr_iid = urllib.parse.quote(os.environ["CI_MERGE_REQUEST_IID"], safe="")
-    pipelines, headers, authentication = api_get(f"merge_requests/{mr_iid}/pipelines?per_page=100")
+    mr_iid = os.environ["CI_MERGE_REQUEST_IID"]
+    pipelines, headers, authentication = api_get("merge_requests", mr_iid, "pipelines", query={"per_page": 100})
     if not isinstance(pipelines, list):
         return False, "malformed_pipeline_response"
     pipeline_history_paginated = bool(headers.get("x-next-page", ""))
@@ -123,7 +127,7 @@ def is_duplicate() -> tuple[bool, str]:  # noqa: PLR0911, PLR0912, PLR0915
         candidate_sha = candidate["sha"]
         # The candidate must have been built directly on the same target HEAD as the current train commit.
         # This rejects a successful merged-results pipeline created before the target branch advanced.
-        candidate_commit, _, authentication = api_get(f"repository/commits/{candidate_sha}")
+        candidate_commit, _, authentication = api_get("repository", "commits", candidate_sha)
         candidate_parents = candidate_commit.get("parent_ids", [])
         print(
             f"Comparing merged-results pipeline {candidate.get('id')} at {candidate_sha}; "
@@ -135,8 +139,11 @@ def is_duplicate() -> tuple[bool, str]:  # noqa: PLR0911, PLR0912, PLR0915
 
         # A straight comparison checks the two resulting repository trees without following merge ancestry.
         # Zero diffs means the earlier pipeline tested exactly the content that the train would test again.
-        comparison_path = urllib.parse.urlencode({"from": candidate_sha, "to": commit_sha, "straight": "true"})
-        comparison, _, authentication = api_get(f"repository/compare?{comparison_path}")
+        comparison, _, authentication = api_get(
+            "repository",
+            "compare",
+            query={"from": candidate_sha, "to": commit_sha, "straight": "true"},
+        )
         diffs = comparison.get("diffs")
         if comparison.get("compare_timeout") or not isinstance(diffs, list):
             print("Candidate comparison was incomplete or malformed.")

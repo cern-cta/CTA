@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import getpass
 import os
+import pwd
 import stat
 import subprocess
 import sys
@@ -22,7 +23,7 @@ from release_config import ReleaseConfig
 from release_context import ReleaseContext, ReleaseWorkflowError
 
 # Default token file shared by various CTA CI scripts that need to make use of the GitLab API
-TOKEN_FILE = Path.home() / ".config" / "cta" / "gitlab-api-token"
+TOKEN_FILE = Path(pwd.getpwuid(os.getuid()).pw_dir) / ".config" / "cta" / "gitlab-api-token"
 
 
 def load_token() -> tuple[str | None, str | None]:
