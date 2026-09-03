@@ -24,6 +24,7 @@ from system_tests.helpers.hosts import (
     DiskInstanceHost,
     EosClientHost,
     EosMgmHost,
+    SchedulerPostgresHost,
 )
 from system_tests.helpers.test_config import TestConfig
 from system_tests.helpers.test_env import TestEnv
@@ -245,6 +246,13 @@ def cta_maintd(env: TestEnv) -> CtaMaintdHost:
 @pytest.fixture(scope="session")
 def cta_admin_api(env: TestEnv) -> CtaAdminApiHost:
     return env.cta_admin_api[0]
+
+
+@pytest.fixture(scope="session")
+def scheduler_postgres(env: TestEnv) -> SchedulerPostgresHost:
+    if not env.scheduler_postgres:
+        pytest.skip("This test requires the postgres scheduler")
+    return env.scheduler_postgres[0]
 
 
 @pytest.fixture(scope="session")

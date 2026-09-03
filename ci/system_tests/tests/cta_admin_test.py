@@ -3,12 +3,16 @@
 
 import json
 from pathlib import Path
-from typing import Optional
 
 import pytest
 
-from system_tests.helpers.connections.k8s_connection import K8sConnection
-from system_tests.helpers.hosts import CtaCliHost, CtaTapedHost, DiskClientHost, DiskInstanceHost, RemoteHost
+from system_tests.helpers.hosts import (
+    CtaCliHost,
+    CtaTapedHost,
+    DiskClientHost,
+    DiskInstanceHost,
+    SchedulerPostgresHost,
+)
 
 from system_tests.helpers.utils import (
     TempDiskInstanceSpace,
@@ -48,36 +52,6 @@ from system_tests.helpers.utils import (
 # =========================================================================
 #  Helpers
 # =========================================================================
-
-
-def scheduler_postgres_host(namespace: Optional[str]) -> RemoteHost:
-    """Return the postgres scheduler DB pod, used to seed the failed job queues directly.
-
-    Not a fixture on purpose: the pod only exists when the postgres scheduler is deployed, so the
-    callers have to skip before reaching for it.
-    """
-    assert namespace is not None
-    return RemoteHost(
-        K8sConnection(namespace, "app.kubernetes.io/name=cta-scheduler-postgres-db", "cta-scheduler-postgres", 0)
-    )
-
-
-def scheduler_postgres_sql(scheduler_db: RemoteHost, sql: str) -> str:
-    """Run one statement against the scheduler DB and return its unaligned, header-less output."""
-    # POSTGRES_USER and POSTGRES_DB are set as environment variables on the scheduler postgres pod
-    return scheduler_db.exec_with_output(
-        f'psql -q -t -A -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "{sql}"'
-    ).strip()
-
-
-def insert_failed_job(scheduler_db: RemoteHost, table: str, columns: str, values: str) -> str:
-    """Insert one row into a failed job queue and return its JOB_ID."""
-    # The statement is built from the literals the callers define below; a table name cannot be
-    # bound as a query parameter anyway
-    sql = f"INSERT INTO {table} ({columns}) VALUES ({values}) RETURNING JOB_ID"  # noqa: S608
-    job_id = scheduler_postgres_sql(scheduler_db, sql)
-    assert job_id.isdigit(), f"unexpected JOB_ID returned by the insert into {table}: '{job_id}'"
-    return job_id
 
 
 def is_in_repacking_state(cta_cli: CtaCliHost, vid_to_check: str) -> bool:
@@ -1119,7 +1093,7 @@ def test_cta_admin_failedrequest_rm_invalid_object_id(cta_cli: CtaCliHost, postg
 
 
 def test_cta_admin_failedrequest_with_failed_jobs(
-    cta_cli: CtaCliHost, namespace: Optional[str], postgres_scheduler_enabled: bool
+    cta_cli: CtaCliHost, scheduler_postgres: SchedulerPostgresHost, postgres_scheduler_enabled: bool
 ) -> None:
     """Seed the four failed job queues and check the listing, the summary and the removal.
 
@@ -1131,8 +1105,6 @@ def test_cta_admin_failedrequest_with_failed_jobs(
     """
     if not postgres_scheduler_enabled:
         pytest.skip("The failed jobs are only kept in dedicated tables by the postgres scheduler")
-
-    scheduler_db = scheduler_postgres_host(namespace)
 
     # Names of their own, so that the listing filters can be checked without depending on what
     # else is in the catalogue
@@ -1179,7 +1151,7 @@ def test_cta_admin_failedrequest_with_failed_jobs(
     job_ids: dict[str, str] = {}
     try:
         for prefix, (table, columns, values) in seeded.items():
-            job_ids[prefix] = insert_failed_job(scheduler_db, table, columns, values)
+            job_ids[prefix] = scheduler_postgres.insert_row(table, columns, values)
 
         # The object ID prefix says which queue the job came from: a:/r: for the user jobs and
         # ra:/rr: for the repack ones
@@ -1259,7 +1231,7 @@ def test_cta_admin_failedrequest_with_failed_jobs(
         for prefix, job_id in job_ids.items():
             # Both the table and the job ID come from this test, not from any external input
             sql = f"DELETE FROM {seeded[prefix][0]} WHERE JOB_ID = {job_id}"  # noqa: S608
-            scheduler_postgres_sql(scheduler_db, sql)
+            scheduler_postgres.run_sql(sql)
 
 
 def test_add_errors_to_whitelist(error_whitelist: set[str]) -> None:
