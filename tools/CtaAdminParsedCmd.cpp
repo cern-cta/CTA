@@ -128,7 +128,8 @@ CtaAdminParsedCmd::CtaAdminParsedCmd(int argc, const char* const* const argv) : 
       }
     }
     if (isSummary && hasTapePoolOrVid) {
-      throwUsage("--summary reports the totals of all the failed jobs and is mutually exclusive with --tapepool and --vid");
+      throwUsage(
+        "--summary reports the totals of all the failed jobs and is mutually exclusive with --tapepool and --vid");
     }
   }
 }

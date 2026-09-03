@@ -1237,8 +1237,7 @@ def test_cta_admin_failedrequest_with_failed_jobs(
 def test_cta_admin_failedrequest_ls_error_reporting(
     cta_cli: CtaCliHost, scheduler_postgres: SchedulerPostgresHost, postgres_scheduler_enabled: bool
 ) -> None:
-    """Check that a failing `fr ls` actually reports its error message and exits with the code
-    matching its exception type, for both ways it can fail.
+    """Check that a failing `fr ls` reports its error message and exits with the right code.
 
     Regression test: the streaming RPC used by `fr ls` used to lose these errors silently.
     - A command rejected before any row is streamed (a UserError, e.g. an invalid combination of
