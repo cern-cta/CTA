@@ -219,12 +219,16 @@ def changelog_issue_note(
     commit_url = f"{context.config.project_web_url}/-/commit/{changelog_commit}"
     return "\n".join(
         [
-            f"The commit produced by merging "
-            f"[merge request !{changelog_merge_request['iid']}]({changelog_merge_request['web_url']}) "
-            f"will be tagged as **{version}**.",
+            (
+                f"The commit produced by merging "
+                f"[merge request !{changelog_merge_request['iid']}]({changelog_merge_request['web_url']}) "
+                f"will be tagged as **{version}**."
+            ),
             "",
-            f"The changelog covers changes through commit [`{changelog_commit[:12]}`]({commit_url}) and was "
-            f"generated on branch [`{changelog_branch}`]({branch_url}).",
+            (
+                f"The changelog covers changes through commit [`{changelog_commit[:12]}`]({commit_url}) and was "
+                f"generated on branch [`{changelog_branch}`]({branch_url})."
+            ),
             "",
             "Awaiting MR approval and merge.",
         ]
