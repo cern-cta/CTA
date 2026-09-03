@@ -1,0 +1,60 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+"""Implementation of the read-only release status command."""
+
+from __future__ import annotations
+
+import argparse
+
+from commands import SubparserRegistry
+from release_context import ReleaseContext, info
+
+
+def add_subparser(subparsers: SubparserRegistry) -> None:
+    """Register the status subcommand and its arguments."""
+    parser = subparsers.add_parser(
+        "status",
+        help="show reconstructed release state",
+        description="Inspect release issue, changelog MR, commit, pipeline, and tag state without making changes.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""Examples:
+  Inspect a known release:
+    release status v5.12.0.0-1
+    release status v5.12.0.0-1 --target-branch maintenance
+
+This command is always read-only.""",
+    )
+    parser.add_argument("version")
+    parser.add_argument(
+        "--target-branch",
+        default="main",
+        help="branch containing the release changelog (default: main)",
+    )
+    parser.set_defaults(execute=run_from_arguments)
+
+
+def run_from_arguments(context: ReleaseContext, parsed_arguments: argparse.Namespace) -> None:
+    """Translate parsed status arguments into the typed command call."""
+    run(context, parsed_arguments.version, parsed_arguments.target_branch)
+
+
+def run(context: ReleaseContext, version_text: str, target_branch: str = "main") -> None:
+    """Print reconstructed Git and GitLab state for a release."""
+    context.git.validate_target_branch(target_branch)
+    info(f"Inspecting release status for {version_text}")
+    release_issue, changelog_merge_request, release_commit = context.load_release_context(
+        version_text,
+        validate_local=False,
+        target_branch=target_branch,
+    )
+    pipeline = context.find_pipeline(release_commit, target_branch, pipeline_source="push")
+    local_tag_commit = context.git.local_tag_commit(version_text)
+    remote_tag_commit = context.git.remote_tag_commit(context.config.remote, version_text)
+
+    print(f"Version:  {version_text}")
+    print(f"Issue:    {release_issue['web_url']}")
+    print(f"MR:       {changelog_merge_request['web_url']} ({changelog_merge_request['state']})")
+    print(f"Commit:   {release_commit}")
+    print(f"Pipeline: {pipeline['status'] if pipeline else 'not found'}")
+    print(f"Tag:      local={local_tag_commit or 'absent'}, remote={remote_tag_commit or 'absent'}")

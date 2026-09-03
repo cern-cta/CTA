@@ -8,10 +8,13 @@ import base64
 import re
 import sys
 import time
+from pathlib import Path
 from typing import Any
 from urllib.parse import quote
 
-from gitlabapi import GitLabAPI
+sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
+
+from gitlab_api import GitLabAPI, GitLabAPIError
 
 PIPELINE_CONFIG_PATH = ".gitlab-ci.yml"
 VERSION_PATTERN = re.compile(r'^( {2}PIPELINE_IMAGE_VERSION: ")[^"]+("\s*)$', re.MULTILINE)
@@ -341,7 +344,7 @@ def main() -> int:
             args.triggering_user_id,
             args.auto_merge == "true",
         )
-    except (PipelineImageUpdateError, ValueError) as error:
+    except (GitLabAPIError, PipelineImageUpdateError, ValueError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
         return 1
 

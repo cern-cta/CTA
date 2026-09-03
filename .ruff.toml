@@ -53,6 +53,13 @@ ignore = [
 convention = 'pep257'
 
 [lint.per-file-ignores]
+# Release helpers invoke trusted tools and validated HTTPS endpoints.
+'ci/release/src/git_repo.py' = ['S603', 'S607']
+'ci/release/src/gitlab_api.py' = ['S310']
+
+# Release tests use fixed temporary paths and nested mock contexts.
+'ci/release/tests/test_*.py' = ['S108', 'SIM117']
+
 # This custom loader inherits from yaml.SafeLoader.
 'ci/checks/check_gitlab_ci_key_order.py' = ['S506']
 
