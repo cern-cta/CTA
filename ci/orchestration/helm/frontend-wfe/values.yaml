@@ -35,6 +35,9 @@ conf:
     disableUserRequests: false
     tapeCacheMaxAgeSecs: 1
     retrieveQueueCacheMaxAgeSecs: 1
+    # Only takes effect with the postgres scheduler (pgsched); ignored by the objectstore
+    # scheduler, which always queues one request at a time regardless of this value.
+    opportunisticBatchingEnabled: false
 
   logger:
     logLevel: "DEBUG"

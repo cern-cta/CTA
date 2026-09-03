@@ -76,6 +76,7 @@ public:
   Scheduler(cta::catalogue::Catalogue& catalogue,
             SchedulerDatabase& db,
             const std::string& schedulerBackendName,
+            const bool enableOpportunisticBatching = false,
             const uint64_t minFilesToWarrantAMount = 5,
             const uint64_t minBytesToWarrantAMount = 2000000);
   // TODO: we have out the mount policy parameters here temporarily we will
@@ -631,6 +632,15 @@ private:
               common::dataStructures::Tape::State::EXPORTED,
               }
   };
+#ifdef CTA_PGSCHED
+  /**
+   * Whether queueArchiveWithGivenId() (and, in future, queueRetrieve()) opportunistically batches
+   * concurrent requests into a single bulk DB insert instead of queueing them one at a time. Only
+   * meaningful for CTA_PGSCHED builds: the batched bulk-insert DB methods this relies on do not
+   * exist for the objectstore scheduler, which always queues file by file regardless of this flag.
+   * See cta.schedulerdb.opportunistic_batching_enabled in the frontend configuration.
+   */
+  const bool m_enableOpportunisticBatching;
   uint64_t processEnqueuedBatch(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
                                 log::LogContext& lc);
   bool m_enqueueBatchInProgress = false;
@@ -642,6 +652,7 @@ private:
                      cta::common::dataStructures::ArchiveInsertQueueCriteriaKeyHash>
     m_archiveInsertQueueCriteriaCache;
   size_t m_archiveInsertQueueCriteriaCacheMaxSize = 10000;
+#endif
 
 };  // class Scheduler
 
