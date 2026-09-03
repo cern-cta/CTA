@@ -95,8 +95,8 @@ def create_argument_parser() -> argparse.ArgumentParser:
   3. Tag the merged release:
        release tag v5.12.0.0-1
   For a release from another branch, pass the same target to each command:
-       release changelog v5.12.0.0-1 --target-branch maintenance
-       release tag v5.12.0.0-1 --target-branch maintenance
+       release changelog v5.12.0.0-1 --target-branch release/v5.11.23.0
+       release tag v5.12.0.0-1 --target-branch release/v5.11.23.0
 
 Common alternatives:
   Inspect progress without changing anything:
