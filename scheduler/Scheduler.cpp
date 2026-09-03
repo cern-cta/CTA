@@ -50,13 +50,19 @@ using namespace std::chrono_literals;
 Scheduler::Scheduler(catalogue::Catalogue& catalogue,
                      SchedulerDatabase& db,
                      const std::string& schedulerBackendName,
+                     [[maybe_unused]] const bool enableOpportunisticBatching,
                      const uint64_t minFilesToWarrantAMount,
                      const uint64_t minBytesToWarrantAMount)
     : m_catalogue(catalogue),
       m_db(db),
       m_schedulerBackendName(schedulerBackendName),
       m_minFilesToWarrantAMount(minFilesToWarrantAMount),
-      m_minBytesToWarrantAMount(minBytesToWarrantAMount) {
+      m_minBytesToWarrantAMount(minBytesToWarrantAMount)
+#ifdef CTA_PGSCHED
+      ,
+      m_enableOpportunisticBatching(enableOpportunisticBatching)
+#endif
+{
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
 }
 
@@ -216,106 +222,109 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
   }
 
 #ifdef CTA_PGSCHED
-
-  std::future<std::string> future;
-  bool isLeader = false;
-  // Enqueue this request
-  {
-    std::unique_lock<std::mutex> lock(m_mutexOpportunisticBatching);
-
-    m_opportunisticInsertBatch.emplace_back(
-      cta::common::dataStructures::ArchiveInsertQueueItem {archiveFileId,
-                                                           instanceName,
-                                                           request,
-                                                           {},
-                                                           {},
-                                                           std::promise<std::string>()});
-    future = m_opportunisticInsertBatch.back().promise.get_future();
-    lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 1 : " + std::to_string(archiveFileId));
-
-    // Leadership election loop
-    while (!isLeader) {
-      // If my request is already processed, return
-      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 2 : " + std::to_string(archiveFileId));
-
-      if (future.wait_for(0s) == std::future_status::ready) {
-        return future.get();
-      }
-      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 3 : " + std::to_string(archiveFileId));
-
-      // If no leader, I become leader
-      if (!m_enqueueBatchInProgress) {
-        m_enqueueBatchInProgress = true;
-        isLeader = true;
-        lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 4 : " + std::to_string(archiveFileId));
-
-        // fall through to leader path
-        break;
-      }
-      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 5 : " + std::to_string(archiveFileId));
-
-      // Otherwise, wait
-      m_cvOpportunisticBatching.wait(lock);
-    }
-  }  // end of scope with the lock
-
-  // ---- LEADER PATH ----
-  if (isLeader) {
-    lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 6 : " + std::to_string(archiveFileId));
-
-    // Opportunistic batching window - with 0 ms, it still bunches but then it calls at 200Hz - 5ms duration which we can batch to contact db less
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 7 : " + std::to_string(archiveFileId));
-
-    std::vector<cta::common::dataStructures::ArchiveInsertQueueItem> batch;
-
+  if (m_enableOpportunisticBatching) {
+    std::future<std::string> future;
+    bool isLeader = false;
+    // Enqueue this request
     {
-      // Steal the batch
-      std::lock_guard<std::mutex> lock(m_mutexOpportunisticBatching);
-      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 8 : " + std::to_string(archiveFileId));
+      std::unique_lock<std::mutex> lock(m_mutexOpportunisticBatching);
 
-      batch.swap(m_opportunisticInsertBatch);
-    }
-    lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 9 : " + std::to_string(archiveFileId));
+      m_opportunisticInsertBatch.emplace_back(
+        cta::common::dataStructures::ArchiveInsertQueueItem {archiveFileId,
+                                                             instanceName,
+                                                             request,
+                                                             {},
+                                                             {},
+                                                             std::promise<std::string>()});
+      future = m_opportunisticInsertBatch.back().promise.get_future();
+      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 1 : " + std::to_string(archiveFileId));
 
-    auto nrows = processEnqueuedBatch(batch, lc);
-    lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 10 : " + std::to_string(archiveFileId));
+      // Leadership election loop
+      while (!isLeader) {
+        // If my request is already processed, return
+        lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 2 : " + std::to_string(archiveFileId));
 
-    {
-      std::lock_guard<std::mutex> lock(m_mutexOpportunisticBatching);
-      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 11 : " + std::to_string(archiveFileId));
+        if (future.wait_for(0s) == std::future_status::ready) {
+          return future.get();
+        }
+        lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 3 : " + std::to_string(archiveFileId));
 
-      m_enqueueBatchInProgress = false;
-    }
-    lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 12 : " + std::to_string(archiveFileId));
+        // If no leader, I become leader
+        if (!m_enqueueBatchInProgress) {
+          m_enqueueBatchInProgress = true;
+          isLeader = true;
+          lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 4 : " + std::to_string(archiveFileId));
 
-    // Wake followers
-    m_cvOpportunisticBatching.notify_all();
-    lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 13 : " + std::to_string(archiveFileId));
-    auto schedulerDbTimeMSecs = t.msecs();
-    cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
-      schedulerDbTimeMSecs,
+          // fall through to leader path
+          break;
+        }
+        lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 5 : " + std::to_string(archiveFileId));
+
+        // Otherwise, wait
+        m_cvOpportunisticBatching.wait(lock);
+      }
+    }  // end of scope with the lock
+
+    // ---- LEADER PATH ----
+    if (isLeader) {
+      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 6 : " + std::to_string(archiveFileId));
+
+      // Opportunistic batching window - with 0 ms, it still bunches but then it calls at 200Hz - 5ms duration which we can batch to contact db less
+      std::this_thread::sleep_for(std::chrono::milliseconds(50));
+      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 7 : " + std::to_string(archiveFileId));
+
+      std::vector<cta::common::dataStructures::ArchiveInsertQueueItem> batch;
+
       {
-        {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kEnqueue},
-        {cta::semconv::attr::kSchedulerOperationWorkflow,
-         cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                                             }
-    },
-      opentelemetry::context::RuntimeContext::GetCurrent());
-    cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
-      nrows,
+        // Steal the batch
+        std::lock_guard<std::mutex> lock(m_mutexOpportunisticBatching);
+        lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 8 : " + std::to_string(archiveFileId));
+
+        batch.swap(m_opportunisticInsertBatch);
+      }
+      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 9 : " + std::to_string(archiveFileId));
+
+      auto nrows = processEnqueuedBatch(batch, lc);
+      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 10 : " + std::to_string(archiveFileId));
+
       {
-        {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kEnqueue},
-        {cta::semconv::attr::kSchedulerOperationWorkflow,
-         cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                                             }
-    },
-      opentelemetry::context::RuntimeContext::GetCurrent());
-    // Return leader's result
+        std::lock_guard<std::mutex> lock(m_mutexOpportunisticBatching);
+        lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 11 : " + std::to_string(archiveFileId));
+
+        m_enqueueBatchInProgress = false;
+      }
+      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 12 : " + std::to_string(archiveFileId));
+
+      // Wake followers
+      m_cvOpportunisticBatching.notify_all();
+      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 13 : " + std::to_string(archiveFileId));
+      auto schedulerDbTimeMSecs = t.msecs();
+      cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+        schedulerDbTimeMSecs,
+        {
+          {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kEnqueue},
+          {cta::semconv::attr::kSchedulerOperationWorkflow,
+           cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                                             }
+      },
+        opentelemetry::context::RuntimeContext::GetCurrent());
+      cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+        nrows,
+        {
+          {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kEnqueue},
+          {cta::semconv::attr::kSchedulerOperationWorkflow,
+           cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                                             }
+      },
+        opentelemetry::context::RuntimeContext::GetCurrent());
+      // Return leader's result
+      return future.get();
+    }
+    // should never be reached
     return future.get();
   }
-  // should never be reached
-  return future.get();
-}
-#else
+#endif
+
+  // File-by-file scheme: used for the objectstore scheduler always, and for CTA_PGSCHED builds when
+  // opportunistic batching is disabled via cta.schedulerdb.opportunistic_batching_enabled.
   const auto queueCriteria =
     m_catalogue.ArchiveFile()->getArchiveFileQueueCriteria(instanceName, request.storageClass, request.requester);
   auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
@@ -367,7 +376,6 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
     opentelemetry::context::RuntimeContext::GetCurrent());
   return archiveReqAddr;
 }
-#endif
 
 //------------------------------------------------------------------------------
 // queueRetrieve

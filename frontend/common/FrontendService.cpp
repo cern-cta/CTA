@@ -335,8 +335,25 @@ FrontendService::FrontendService(const std::string& configFilename,
   }
 
   m_scheddb->initConfig(osThreadPoolSize, osThreadStackSize);
+
+  // Only meaningful for CTA_PGSCHED builds: see Scheduler::m_enableOpportunisticBatching. Defaults
+  // to false (file-by-file queueing) until the known issues with the batched path are addressed.
+  auto opportunisticBatchingEnabled =
+    config.getOptionValueBool("cta.schedulerdb.opportunistic_batching_enabled").value_or(false);
+
+  // Log cta.schedulerdb.opportunistic_batching_enabled
+  {
+    std::vector<log::Param> params;
+    params.emplace_back("source", configFilename);
+    params.emplace_back("category", "cta.schedulerdb");
+    params.emplace_back("key", "opportunistic_batching_enabled");
+    params.emplace_back("value", opportunisticBatchingEnabled ? "true" : "false");
+    log(log::INFO, "Configuration entry", params);
+  }
+
   // Initialise the Scheduler
-  m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, m_schedulerBackendName);
+  m_scheduler =
+    std::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, m_schedulerBackendName, opportunisticBatchingEnabled);
 
   // Initialise the Frontend
   auto archiveFileMaxSize = config.getOptionValueUInt("cta.archivefile.max_size_gb");
