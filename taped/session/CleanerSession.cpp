@@ -164,7 +164,9 @@ void cta::tape::daemon::CleanerSession::disableTapeAfterFailedEject(const std::s
 
     if (!disabledState) {
       params.add("tapeState", Tape::stateToString(tape.state));
-      m_lc.log(cta::log::INFO, "Cleaner did not change tape state after failed eject");
+      m_lc.log(
+        cta::log::WARNING,
+        "Cleaner did not change tape state after failed eject. Current tape state cannot be disabled automatically.");
       return;
     }
 
