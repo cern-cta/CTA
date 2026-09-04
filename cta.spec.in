@@ -112,7 +112,7 @@ DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man cmake --buil
 cd build
 cmake --build . --target cta-example-config-checks -j@JOBS_COUNT@
 %if "%{skip_unit_tests}" == "0"
-cmake --build . --target unit-tests-short -j@JOBS_COUNT@
+cmake --build . --target cta-unit-tests-short -j@JOBS_COUNT@
 %endif
 
 %files
@@ -444,27 +444,27 @@ Unit tests and integration tests with virtual tape drives
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/parallelTestsMakefile
 
-%package -n cta-external-tape-formats-test
+%package -n cta-test-external-tape-formats
 Summary: CERN Tape Archive: command-line tool for testing external tape formats
 Requires: cta-lib-common = %{version}-%{release}
-%description -n cta-external-tape-formats-test
+%description -n cta-test-external-tape-formats
 CERN Tape Archive:
 Command-line tool for testing external tape formats
-%files -n cta-external-tape-formats-test
+%files -n cta-test-external-tape-formats
 %license COPYING
-%{_bindir}/cta-osm-reader-test
-%{_bindir}/cta-enstore-large-reader-test
+%{_bindir}/cta-test-osm-reader
+%{_bindir}/cta-test-enstore-large-reader
 
-%package -n cta-immutable-file-test
+%package -n cta-test-immutable-file
 Summary: CERN Tape Archive: command-line tool for testing immutable files
 Requires: cta-lib-common = %{version}-%{release}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
-%description -n cta-immutable-file-test
+%description -n cta-test-immutable-file
 CERN Tape Archive:
 Command-line tool for testing immutable files
-%files -n cta-immutable-file-test
+%files -n cta-test-immutable-file
 %license COPYING
-%{_bindir}/cta-immutable-file-test
+%{_bindir}/cta-test-immutable-file
 
 %if "%{usingObjectstore}" != "0"
 %package -n cta-scheduler-utils

@@ -80,7 +80,7 @@ target_link_libraries(cta-unit-tests-multiprocess
   pthread
   sqlite3)
 
-add_library(unit-test-helper
+add_library(cta-unit-test-helper
   TempFile.cpp TempDirectory.cpp)
 
 add_executable(cta-integration-tests
@@ -91,14 +91,14 @@ target_link_libraries(cta-integration-tests
   gtest
   pthread)
 
-add_executable(cta-immutable-file-test
+add_executable(cta-test-immutable-file
   ImmutableFileTest.cpp
   ImmutableFileTestMain.cpp
   ImmutableFileTestCmdLineArgs.cpp)
 
-set_property (TARGET cta-immutable-file-test APPEND PROPERTY INCLUDE_DIRECTORIES "/usr/include/xrootd")
+set_property (TARGET cta-test-immutable-file APPEND PROPERTY INCLUDE_DIRECTORIES "/usr/include/xrootd")
 
-target_link_libraries(cta-immutable-file-test
+target_link_libraries(cta-test-immutable-file
   ctacommon XrdCl)
 
 install(
@@ -107,7 +107,7 @@ install(
     cta-unit-tests
     cta-unit-tests-multiprocess
     cta-integration-tests
-    cta-immutable-file-test
+    cta-test-immutable-file
   DESTINATION
     usr/bin)
 

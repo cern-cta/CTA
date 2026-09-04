@@ -28,7 +28,7 @@ set_property(TARGET cta-taped-integration-tests PROPERTY SOVERSION "${CTA_SOVERS
 set_property(TARGET cta-taped-integration-tests PROPERTY VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries(cta-taped-integration-tests
-  unit-test-helper
+  cta-unit-test-helper
   ctacommon)
 
 install(TARGETS cta-taped-integration-tests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

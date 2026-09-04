@@ -83,7 +83,7 @@ ImmutableFileTestCmdLineArgs::ImmutableFileTestCmdLineArgs(const int argc, char*
 void ImmutableFileTestCmdLineArgs::printUsage(std::ostream& os) {
   os << "Usage:"
         "\n"
-        "    cta-immutable-file-test URL"
+        "    cta-test-immutable-file URL"
         "\n"
         "Where:"
         "\n"

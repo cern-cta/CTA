@@ -226,7 +226,7 @@ def test_read_osm_tape(cta_rmcd: CtaRmcdHost, cta_taped: CtaTapedHost, external_
 
 def test_osm_reader(cta_taped: CtaTapedHost) -> None:
     print(f"Using drive: {cta_taped.drive_name}, device: {cta_taped.drive_device}")
-    cta_taped.exec(f"sudo cta-osm-reader-test {cta_taped.drive_name} {cta_taped.drive_device}")
+    cta_taped.exec(f"sudo cta-test-osm-reader {cta_taped.drive_name} {cta_taped.drive_device}")
 
 
 def test_unload_tape(cta_rmcd: CtaRmcdHost) -> None:
@@ -366,7 +366,7 @@ def test_enstore_large_reader(cta_rmcd: CtaRmcdHost, cta_taped: CtaTapedHost) ->
     wait_for_drive_readable(cta_taped, cta_taped.drive_device)
 
     print(f"Using drive: {cta_taped.drive_name}, device: {cta_taped.drive_device}")
-    cta_taped.exec(f"sudo cta-enstore-large-reader-test {cta_taped.drive_name} {cta_taped.drive_device}")
+    cta_taped.exec(f"sudo cta-test-enstore-large-reader {cta_taped.drive_name} {cta_taped.drive_device}")
 
 
 def test_unload_enstore_large_tape(cta_rmcd: CtaRmcdHost, cta_taped: CtaTapedHost) -> None:

@@ -734,7 +734,7 @@ class TestEosEvict:
 
 def test_eos_immutable_file(eos_client: EosClientHost, eos_mgm: EosMgmHost, test_dir: Path) -> None:
     eos_client.exec(
-        f". /tmp/client_env && echo yes | cta-immutable-file-test root://{eos_mgm.instance_name}/{test_dir}/immutable_file"
+        f". /tmp/client_env && echo yes | cta-test-immutable-file root://{eos_mgm.instance_name}/{test_dir}/immutable_file"
     )
 
 

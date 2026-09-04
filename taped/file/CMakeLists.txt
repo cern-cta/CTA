@@ -30,10 +30,10 @@ set(CTATAPEDFILE_LIBRARY_SRCS
   WriteSession.cpp
 )
 
-add_executable(cta-basic-read-write-test
+add_executable(cta-test-basic-read-write
   BasicReadWriteTest.cpp)
 
-target_link_libraries(cta-basic-read-write-test
+target_link_libraries(cta-test-basic-read-write
   ctatapeddrive
   ctamediachanger
   ctascsi
@@ -67,26 +67,26 @@ set_property(TARGET ctatapedfileunittests PROPERTY   VERSION "${CTA_LIBVERSION}"
 
 install(TARGETS ctatapedfileunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-add_executable(cta-osm-reader-test
+add_executable(cta-test-osm-reader
   OsmReaderTest.cpp)
 
-target_link_libraries(cta-osm-reader-test
+target_link_libraries(cta-test-osm-reader
   ctacommon
   ctatapedsession
   ctatapedfile
   gtest
 )
 
-install(TARGETS cta-osm-reader-test DESTINATION usr/bin)
+install(TARGETS cta-test-osm-reader DESTINATION usr/bin)
 
-add_executable(cta-enstore-large-reader-test
+add_executable(cta-test-enstore-large-reader
   EnstoreLargeReaderTest.cpp)
 
-target_link_libraries(cta-enstore-large-reader-test
+target_link_libraries(cta-test-enstore-large-reader
   ctacommon
   ctatapedsession
   ctatapedfile
   gtest
 )
 
-install(TARGETS cta-enstore-large-reader-test DESTINATION usr/bin)
+install(TARGETS cta-test-enstore-large-reader DESTINATION usr/bin)
