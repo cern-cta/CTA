@@ -188,6 +188,24 @@ load_cta_dev_env() {
 #  Help
 # =========================================================================
 
+# Options shared by the commands. Printed by all usage functions, so command-specific help never
+# has to repeat them. Anything only some commands accept, such as --cta-version, is rejected by
+# parse_options with a message naming those commands.
+global_options_help() {
+  cat <<EOF
+Global options:
+  -h, --help                         Show this help.
+      --platform <platform>          Platform to build for. Defaults to project.json.
+      --scheduler-type <type>        Scheduler backend [objectstore, pgsched].
+      --enable-oracle-support        Build RPMs and images with Oracle support.
+      --cta-version <version>        CTA version as <version>-<suffix>, defaults to 5-dev.
+                                     <version> becomes the RPM version and <suffix> the RPM
+                                     release. It is also the CTA image tag.
+      --use-public-repos             Force public YUM repos. By default, CERN internal
+                                     repos are used when they are reachable.
+EOF
+}
+
 usage() {
   cat <<EOF
 
@@ -227,16 +245,7 @@ Commands:
   install    Creates a symlink to invoke this script using '$program_name'.
   help       Show this help.
 
-Global options:
-  -h, --help                         Show this help.
-      --platform <platform>          Platform to build for. Defaults to project.json.
-      --scheduler-type <type>        Scheduler backend [objectstore, pgsched].
-      --enable-oracle-support        Build RPMs and images with Oracle support.
-      --cta-version <version>        CTA version as <version>-<suffix>, defaults to 5-dev.
-                                     <version> becomes the RPM version and <suffix> the RPM
-                                     release. It is also the CTA image tag.
-      --use-public-repos             Force public YUM repos. By default, CERN internal
-                                     repos are used when they are reachable.
+$(global_options_help)
 
 Run the following for command-specific options:
 
@@ -269,7 +278,8 @@ Options:
       --enable-unit-tests           Run unit tests after building.
       --enable-address-sanitizer    Enable AddressSanitizer.
       --force-install               Force SRPM installation.
-      --cta-version <version>       CTA version as <version>-<suffix>.
+
+$(global_options_help)
 
 EOF
 exit 1
@@ -289,9 +299,10 @@ All images are built in parallel.
 Usage:
   $(basename "$0") images [options]
 
-Options:
-      --cta-version <version>       CTA version as <version>-<suffix>.
-                                    Also the tag of the built images.
+The images command has no options of its own: the images are tagged with the
+CTA version.
+
+$(global_options_help)
 
 EOF
 exit 1
@@ -310,6 +321,8 @@ Usage:
 
 The debug command accepts the same build, image, and deployment options as up.
 It keeps the configured CMake build type (RelWithDebInfo by default).
+
+$(global_options_help)
 
 EOF
 exit 1
@@ -335,11 +348,10 @@ Options:
       --eos-config <path>          EOS Helm values.
       --eos-image-repository <r>   EOS image repository.
       --eos-image-tag <tag>        EOS image tag.
-      --cta-version <version>      CTA version as <version>-<suffix>. Selects the
-                                   locally built images with that tag.
-      --cta-image-tag <tag>        Deploy the images with this tag instead, for
-                                   example an image tag built by the CI. Cannot
-                                   be combined with --cta-version.
+      --cta-image-tag <tag>        Deploy the images with this tag instead of
+                                   the ones built locally for the CTA version,
+                                   for example an image tag built by the CI.
+                                   Cannot be combined with --cta-version.
       --cta-image-registry <reg>   Registry to deploy the CTA images from.
                                    Defaults to ${local_image_registry}, or to
                                    ${ci_image_registry} when --cta-image-tag
@@ -348,6 +360,8 @@ Options:
       --with-dcache                Deploy dCache instead of EOS.
       --local-telemetry            Deploy a local telemetry stack.
       --publish-telemetry          Publish telemetry to the configured backend.
+
+$(global_options_help)
 
 EOF
 exit 1
@@ -381,6 +395,11 @@ Examples:
 Setup, verification, and teardown tests are included by default.
 Any additional arguments are passed directly to pytest.
 For additional pytest help, navigate to ci/system_tests and run pytest --help
+
+Options:
+      --namespace <ns>               Kubernetes namespace. Defaults to dev.
+
+$(global_options_help)
 
 EOF
 exit 1
