@@ -135,9 +135,17 @@ public:
     auto sdb = std::move(factory.create(m_catalogue));
     // We don't check the specific type of the SchedulerDatabase as we intend to ge generic
     m_db = std::move(sdb);
+    // Explicit about every argument, including the opportunistic-batching ones: a positional call
+    // with trailing arguments omitted silently absorbs any new parameter Scheduler's constructor
+    // gains. Here that's not just latent risk — CTA_PGSCHED is defined for this build, so an
+    // absorbed parameter can actually flip enableOpportunisticBatching to true, switching every
+    // test in this suite onto the batching code path instead of the file-by-file one they assume.
     m_scheduler = std::make_unique<Scheduler>(*m_catalogue,
                                               *m_db,
                                               "schedulerBackendName",
+                                              /*enableOpportunisticBatching=*/false,
+                                              /*opportunisticBatchingWindowMs=*/50,
+                                              /*opportunisticBatchingMaxBatchSize=*/1000,
                                               s_minFilesToWarrantAMount,
                                               s_minBytesToWarrantAMount);
   }

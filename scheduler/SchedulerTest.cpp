@@ -158,9 +158,16 @@ public:
     dynamic_cast<cta::objectstore::OStoreDBWrapperInterface*>(osdb.get());
     // We know the cast will not fail, so we can safely do it (otherwise we could leak memory)
     m_db.reset(dynamic_cast<cta::objectstore::OStoreDBWrapperInterface*>(osdb.release()));
+    // Explicit about every argument, including the opportunistic-batching ones this test doesn't
+    // care about (irrelevant for an objectstore build, CTA_PGSCHED-only): a positional call with
+    // trailing arguments omitted silently absorbs any new parameter Scheduler's constructor gains,
+    // shifting minFilesToWarrantAMount/minBytesToWarrantAMount into the wrong slots.
     m_scheduler = std::make_unique<Scheduler>(*m_catalogue,
                                               *m_db,
                                               s_schedulerBackendName,
+                                              /*enableOpportunisticBatching=*/false,
+                                              /*opportunisticBatchingWindowMs=*/50,
+                                              /*opportunisticBatchingMaxBatchSize=*/1000,
                                               s_minFilesToWarrantAMount,
                                               s_minBytesToWarrantAMount);
     objectstore::Helpers::flushStatisticsCache();
