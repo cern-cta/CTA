@@ -73,6 +73,8 @@ check_package_available() {
     usage
   fi
 
+  version=${version#v}
+
   echo "Checking whether $package version $version is available in the following repo:"
   echo "    $repository"
 
