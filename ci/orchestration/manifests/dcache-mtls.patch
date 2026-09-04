@@ -1,0 +1,42 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# This file is a temporary attempt at a fix for the helm charts. To be removed....
+
+diff --git a/templates/configmap.yaml b/templates/configmap.yaml
+index 044c7cb..d92db3c 100644
+--- a/templates/configmap.yaml
++++ b/templates/configmap.yaml
+@@ -288,7 +288,7 @@ data:
+       hsm create osm s3 script -command=/usr/bin/s3hsm -debuglog=/dev/null -s3bucket=hsm -s3config=/opt/dcache/etc/s3-tape.yml
+   {{- if .Values.dcache.plugins.cta.enabled }}
+       queue define class -expire=0 -pending=0 -total=0 -open cta *
+-      hsm create cta cta dcache-cta -cta-frontend-addr={{ .Values.dcache.plugins.cta.endpoint }} -cta-user={{ .Values.dcache.plugins.cta.user }} -cta-group={{ .Values.dcache.plugins.cta.group }} -cta-instance-name={{ .Values.dcache.plugins.cta.instance }} -io-port={{ .Values.dcache.plugins.cta.ioport }}
++      hsm create cta cta dcache-cta -cta-frontend-addr={{ .Values.dcache.plugins.cta.endpoint }} -cta-user={{ .Values.dcache.plugins.cta.user }} -cta-group={{ .Values.dcache.plugins.cta.group }} -cta-instance-name={{ .Values.dcache.plugins.cta.instance }} -cta-use-tls={{ .Values.dcache.plugins.cta.useTls }} -cta-ca-chain={{ .Values.dcache.plugins.cta.caChain }} -cta-tls-cert={{ .Values.dcache.plugins.cta.tlsCert }} -cta-tls-key={{ .Values.dcache.plugins.cta.tlsKey }} -io-port={{ .Values.dcache.plugins.cta.ioport }}
+   {{- end }}
+ {{- end }}
+ 
+diff --git a/templates/pool.yaml b/templates/pool.yaml
+index bcbfe4c..039467f 100644
+--- a/templates/pool.yaml
++++ b/templates/pool.yaml
+@@ -52,6 +52,9 @@ spec:
+           subPath: setup
+           readOnly: true
+         {{- end}}
++        {{- if $.Values.extraVolumeMounts }}
++        {{- $.Values.extraVolumeMounts | toYaml | nindent 8 }}
++        {{- end }}
+       initContainers:
+       {{ $host := print $.Release.Name  "-pool-" . "-svc." $.Release.Namespace ".svc.cluster.local" -}}
+       {{ include "dcache.certs.init" $host }}
+@@ -76,6 +79,9 @@ spec:
+           - key: "pool-setup"
+             path: "setup"
+       {{- end}}
++      {{- if $.Values.extraVolumes }}
++      {{- $.Values.extraVolumes | toYaml | nindent 6 }}
++      {{- end }}
+   volumeClaimTemplates:
+   - metadata:
+       name: pool-data

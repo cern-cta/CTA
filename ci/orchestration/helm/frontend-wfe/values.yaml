@@ -57,6 +57,8 @@ conf:
           ctaeos:
             - "eos-mgm.biglab"
             - "eos-mgm.biglab.ch"
+          dcache:
+            - "dcache"
 
   telemetry:
     enabled: false
