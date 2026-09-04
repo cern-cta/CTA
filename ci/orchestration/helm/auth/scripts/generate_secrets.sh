@@ -90,6 +90,9 @@ python3 /scripts/generate_jwt.py \
 
 # generate cert for ctaeos (to be used with mTLS)
 generate_signed_cert ctaeos-self-signed eos-mgm.biglab localhost ctaeos
+
+# Generate a client certificate for the dCache CTA nearline-storage driver.
+generate_signed_cert dcache-self-signed dcache
 # --- Generate K8s secrets for all of these --- #
 
 python3 /scripts/create_k8s_secrets.py \

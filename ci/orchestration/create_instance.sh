@@ -390,6 +390,10 @@ create_instance() {
   wait $scheduler_pid || exit 1
 
   extra_cta_chart_flags=""
+  if [[ "$dcache_enabled" == "true" ]]; then
+    # The dCache CTA nearline-storage driver only supports mTLS.
+    extra_cta_chart_flags+=" --values presets/frontend-wfe/auth-mtls.yaml"
+  fi
   if [[ "$local_telemetry" == "true" ]]; then
     extra_cta_chart_flags+=" --values presets/dev-cta-telemetry-values.yaml"
   fi
