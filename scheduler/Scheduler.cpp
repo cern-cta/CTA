@@ -42,8 +42,6 @@
 
 namespace cta {
 
-using namespace std::chrono_literals;
-
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -68,6 +66,18 @@ Scheduler::Scheduler(catalogue::Catalogue& catalogue,
 #endif
 {
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
+#ifdef CTA_PGSCHED
+  m_archiveBatcher =
+    std::make_unique<OpportunisticBatcher<common::dataStructures::ArchiveInsertQueueItem, std::string>>(
+      m_opportunisticBatchingWindow,
+      m_opportunisticBatchingMaxBatchSize,
+      [this](std::vector<common::dataStructures::ArchiveInsertQueueItem>& batch, log::LogContext& lc) {
+        resolveArchiveBatch(batch, lc);
+      },
+      [this](std::vector<common::dataStructures::ArchiveInsertQueueItem>& batch, log::LogContext& lc) {
+        logQueuedArchiveItems(batch, lc);
+      });
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -138,8 +148,8 @@ uint64_t Scheduler::checkAndGetNextArchiveFileId(const std::string& instanceName
   return archiveFileId;
 }
 #ifdef CTA_PGSCHED
-uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
-                                         log::LogContext& lc) {
+void Scheduler::resolveArchiveBatch(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
+                                    log::LogContext& lc) {
   cta::utils::Timer batchTimer;
   uint64_t successfulJobs = 0;
   uint64_t failedJobs = 0;
@@ -163,34 +173,25 @@ uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures
     log::ScopedParamContainer(lc)
       .add("batchSize", items.size())
       .add("exceptionMessage", exceptionMessage)
-      .log(log::WARNING, "In Scheduler::processEnqueuedBatch(): bulk archive insert failed, failing this batch");
+      .log(log::WARNING, "In Scheduler::resolveArchiveBatch(): bulk archive insert failed, failing this batch");
     for (auto& item : items) {
       item.promise.set_exception(std::current_exception());
       failedJobs += item.copyToPoolMap.size();
     }
   };
 
-  // Releases any followers waiting on this batch. Must run on every path out of this function once
-  // every item's promise is settled — including the validItems.empty() early return below, where
-  // stage 1 already settled (via set_exception) every item in the batch and stage 2 never runs. A
-  // path that resolves all promises without calling this would deadlock every subsequent request,
-  // since none of them could ever become leader again.
-  auto releaseFollowers = [this]() {
-    {
-      std::lock_guard<std::mutex> lock(m_mutexOpportunisticBatching);
-      m_enqueueBatchInProgress = false;
-    }
-    m_cvOpportunisticBatching.notify_all();
-  };
-
   // Stage 1: catalogue lookup, isolated per item. An item that fails here (e.g. an unknown
-  // storage class) gets its own exception on its own promise and is left out of the bulk insert
-  // below, rather than a single bad request failing every other request batched alongside it.
-  // validItems owns the items which passed this stage; the ones left behind in batch are the
-  // failed ones, already settled, and are not touched again.
+  // storage class) gets its own exception on its own promise and is left in place in batch (not
+  // touched again). validItems is moved out of batch, by item, only for the items which passed
+  // this stage; stage1Indices tracks each validItems[i]'s original index in batch, so those items
+  // can be moved back into batch afterwards, once stage 2 has resolved them, since batch (not
+  // validItems, which only lives for this function) is what logQueuedArchiveItems() logs from.
   std::vector<cta::common::dataStructures::ArchiveInsertQueueItem> validItems;
+  std::vector<size_t> stage1Indices;
   validItems.reserve(batch.size());
-  for (auto& item : batch) {
+  stage1Indices.reserve(batch.size());
+  for (size_t i = 0; i < batch.size(); ++i) {
+    auto& item = batch[i];
     try {
       cta::common::dataStructures::ArchiveInsertQueueCriteriaKey k {item.instanceName,
                                                                     item.request.storageClass,
@@ -212,6 +213,7 @@ uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures
           m_archiveInsertQueueCriteriaCache.clear();
         }
       }
+      stage1Indices.push_back(i);
       validItems.push_back(std::move(item));
     } catch (const std::exception& ex) {
       // Preserve the original exception (e.g. a UserError for an unknown storage class) instead
@@ -223,58 +225,55 @@ uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures
       failedJobs += 1;
       logFailedItem(item,
                     ex.what(),
-                    "In Scheduler::processEnqueuedBatch(): failed to resolve archive queue criteria for request");
+                    "In Scheduler::resolveArchiveBatch(): failed to resolve archive queue criteria for request");
     } catch (...) {
       item.promise.set_exception(std::current_exception());
       failedJobs += 1;
       logFailedItem(item,
                     "unknown exception",
-                    "In Scheduler::processEnqueuedBatch(): failed to resolve archive queue criteria for request");
+                    "In Scheduler::resolveArchiveBatch(): failed to resolve archive queue criteria for request");
     }
   }
 
-  if (validItems.empty()) {
-    releaseFollowers();
-    return successfulJobs;
-  }
+  size_t successfulItems = 0;
+  if (!validItems.empty()) {
+    // Stage 2: bulk insert of the items which passed stage 1. This is one SQL statement in one
+    // transaction, so a single bad row fails all of validItems here, not just itself — but unlike
+    // stage 1, this is not retried item by item. Stage 1 already isolated the kind of per-item data
+    // problem worth isolating (an unknown storage class, a bad requester), so what's left to make
+    // the bulk insert itself fail is mostly systemic (lost connection, deadlock, timeout) and would
+    // very likely fail every one of the N individual retries identically, while every follower in
+    // this batch sits blocked waiting for them all to run out. A genuine one-off case (e.g. a
+    // duplicate archiveFileId from a client retry) is recoverable the normal way: the caller gets
+    // an error and retries, rather than paying an unbounded-latency tail for every unrelated
+    // request in the batch.
+    try {
+      auto archiveReqAddrVector = m_db.queueArchive(validItems, lc);
 
-  // Stage 2: bulk insert of the items which passed stage 1. This is one SQL statement in one
-  // transaction, so a single bad row fails all of validItems here, not just itself — but unlike
-  // stage 1, this is not retried item by item. Stage 1 already isolated the kind of per-item data
-  // problem worth isolating (an unknown storage class, a bad requester), so what's left to make the
-  // bulk insert itself fail is mostly systemic (lost connection, deadlock, timeout) and would very
-  // likely fail every one of the N individual retries identically, while every follower in this
-  // batch sits blocked waiting for them all to run out. A genuine one-off case (e.g. a duplicate
-  // archiveFileId from a client retry) is recoverable the normal way: the caller gets an error and
-  // retries, rather than paying an unbounded-latency tail for every unrelated request in the batch.
-  // queuedItems collects, by index into validItems, the items that actually got queued (reached
-  // promise.set_value) so they can be audit-logged below without re-deriving success/failure.
-  std::vector<size_t> queuedItems;
-  queuedItems.reserve(validItems.size());
-  try {
-    auto archiveReqAddrVector = m_db.queueArchive(validItems, lc);
+      if (archiveReqAddrVector.size() != validItems.size()) {
+        throw exception::Exception("queueArchive returned size " + std::to_string(archiveReqAddrVector.size())
+                                   + " but batch size is " + std::to_string(validItems.size()));
+      }
 
-    if (archiveReqAddrVector.size() != validItems.size()) {
-      throw exception::Exception("queueArchive returned size " + std::to_string(archiveReqAddrVector.size())
-                                 + " but batch size is " + std::to_string(validItems.size()));
+      for (size_t i = 0; i < validItems.size(); ++i) {
+        validItems[i].promise.set_value(archiveReqAddrVector[i]);
+        validItems[i].queued = true;
+        successfulJobs += validItems[i].copyToPoolMap.size();
+        ++successfulItems;
+      }
+    } catch (const std::exception& e) {
+      failWholeBatch(validItems, e.what());
+    } catch (...) {
+      failWholeBatch(validItems, "unknown exception");
     }
 
+    // Move every stage-1-passed item back into its original slot in batch, now carrying its
+    // resolved queued/copyToPoolMap/mountPolicy state, so logQueuedArchiveItems() (which only sees
+    // batch, not this function's local validItems) can log it afterwards.
     for (size_t i = 0; i < validItems.size(); ++i) {
-      validItems[i].promise.set_value(archiveReqAddrVector[i]);
-      successfulJobs += validItems[i].copyToPoolMap.size();
-      queuedItems.push_back(i);
+      batch[stage1Indices[i]] = std::move(validItems[i]);
     }
-  } catch (const std::exception& e) {
-    failWholeBatch(validItems, e.what());
-  } catch (...) {
-    failWholeBatch(validItems, "unknown exception");
   }
-
-  // Release followers waiting on this batch as soon as their results exist, before doing the
-  // slower work below (per-item audit logging, one synchronous write() per item under the global
-  // logger mutex). Followers only need their own promise to be ready and to be woken; they have no
-  // stake in this batch's audit logging or metrics.
-  releaseFollowers();
 
   // Duration covers this whole batch operation (stage 1 catalogue lookups plus the stage 2 DB
   // insert(s)) — the actual wall time of queueing this batch — timed here rather than by the caller
@@ -315,19 +314,25 @@ uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures
 
   log::ScopedParamContainer(lc)
     .add("batchSize", batch.size())
-    .add("successfulItems", queuedItems.size())
-    .add("failedItems", batch.size() - queuedItems.size())
+    .add("successfulItems", successfulItems)
+    .add("failedItems", batch.size() - successfulItems)
     .add("successfulJobs", successfulJobs)
     .add("failedJobs", failedJobs)
-    .log(log::INFO, "In Scheduler::processEnqueuedBatch(): processed a batch of archive requests.");
+    .log(log::INFO, "In Scheduler::resolveArchiveBatch(): processed a batch of archive requests.");
+}
 
+void Scheduler::logQueuedArchiveItems(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
+                                      log::LogContext& lc) {
   // Per-item audit log, mirroring the file-by-file path's own "Queued archive request" INFO line
-  // (same fields), done last since followers have already been released above and don't wait on it.
-  // catalogueTime/schedulerDbTime don't apply here (that work is shared across the whole batch, not
-  // attributable to one item), so batchSize is logged in their place instead.
+  // (same fields), run only for items resolveArchiveBatch() actually queued, after followers have
+  // already been released and don't wait on it. catalogueTime/schedulerDbTime don't apply here
+  // (that work is shared across the whole batch, not attributable to one item), so batchSize is
+  // logged in their place instead.
   using utils::midEllipsis;
-  for (size_t idx : queuedItems) {
-    const auto& item = validItems[idx];
+  for (const auto& item : batch) {
+    if (!item.queued) {
+      continue;
+    }
     log::ScopedParamContainer spc(lc);
     spc.add("instanceName", item.instanceName)
       .add("storageClass", item.request.storageClass)
@@ -353,12 +358,10 @@ uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures
       .add("requesterName", item.request.requester.name)
       .add("requesterGroup", item.request.requester.group)
       .add("srcURL", midEllipsis(item.request.srcURL, 50, 15))
-      .add("batchSize", validItems.size());
+      .add("batchSize", batch.size());
     item.request.checksumBlob.addFirstChecksumToLog(spc);
-    lc.log(log::INFO, "In Scheduler::processEnqueuedBatch(): Queued archive request");
+    lc.log(log::INFO, "In Scheduler::logQueuedArchiveItems(): Queued archive request");
   }
-
-  return successfulJobs;
 }
 #endif
 
@@ -381,94 +384,17 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
 
 #ifdef CTA_PGSCHED
   if (m_enableOpportunisticBatching) {
-    std::future<std::string> future;
-    bool isLeader = false;
-    // Enqueue this request
-    {
-      std::unique_lock<std::mutex> lock(m_mutexOpportunisticBatching);
-
-      m_opportunisticInsertBatch.emplace_back(
-        cta::common::dataStructures::ArchiveInsertQueueItem {archiveFileId,
-                                                             instanceName,
-                                                             request,
-                                                             {},
-                                                             {},
-                                                             std::promise<std::string>()});
-      future = m_opportunisticInsertBatch.back().promise.get_future();
-      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 1 : " + std::to_string(archiveFileId));
-
-      if (m_opportunisticInsertBatch.size() >= m_opportunisticBatchingMaxBatchSize) {
-        // Wakes every waiter on this cv, not just the leader. The leader's predicate (batch full)
-        // is now true, so its wait_for() below returns and it starts processing. Any other follower
-        // woken here just re-checks its own two conditions below (own future ready? no one leading?
-        // no), finds both still false, and goes straight back to sleep — harmless, and no different
-        // from the notify_all() already done once per batch at the end of processEnqueuedBatch().
-        m_cvOpportunisticBatching.notify_all();
-      }
-
-      // Leadership election loop
-      while (!isLeader) {
-        // If my request is already processed, return
-        lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 2 : " + std::to_string(archiveFileId));
-
-        if (future.wait_for(0s) == std::future_status::ready) {
-          return future.get();
-        }
-        lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 3 : " + std::to_string(archiveFileId));
-
-        // If no leader, I become leader
-        if (!m_enqueueBatchInProgress) {
-          m_enqueueBatchInProgress = true;
-          isLeader = true;
-          lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 4 : " + std::to_string(archiveFileId));
-
-          // fall through to leader path
-          break;
-        }
-        lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 5 : " + std::to_string(archiveFileId));
-
-        // Otherwise, wait
-        m_cvOpportunisticBatching.wait(lock);
-      }
-    }  // end of scope with the lock
-
-    // ---- LEADER PATH ----
-    if (isLeader) {
-      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 6 : " + std::to_string(archiveFileId));
-
-      std::vector<cta::common::dataStructures::ArchiveInsertQueueItem> batch;
-
-      {
-        // Opportunistic batching window: wait for either the window to elapse or the batch to fill
-        // up to the cap, whichever comes first. wait_for() re-checks the predicate under the lock
-        // before ever sleeping (so a cap already reached by the time we get here returns instantly,
-        // no lost-wakeup race with the notify_all() above), and always re-acquires the lock before
-        // returning — whether woken by that notify, a wakeup meant for someone else on this shared
-        // cv (predicate false, goes back to sleep for what's left of the window), a spurious OS
-        // wakeup (same), or the timeout — so the swap below is always safe to do immediately after.
-        std::unique_lock<std::mutex> lock(m_mutexOpportunisticBatching);
-        m_cvOpportunisticBatching.wait_for(lock, m_opportunisticBatchingWindow, [this] {
-          return m_opportunisticInsertBatch.size() >= m_opportunisticBatchingMaxBatchSize;
-        });
-        lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 7 : " + std::to_string(archiveFileId));
-
-        // Steal the batch
-        batch.swap(m_opportunisticInsertBatch);
-      }
-      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 9 : " + std::to_string(archiveFileId));
-
-      // processEnqueuedBatch() resolves every promise in the batch, releases followers waiting on
-      // it (resetting m_enqueueBatchInProgress and notifying), and records duration/job-count
-      // metrics and per-item audit logs — all internally, in that order, so followers aren't held
-      // up by the audit logging.
-      processEnqueuedBatch(batch, lc);
-      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 10 : " + std::to_string(archiveFileId));
-
-      // Return leader's result
-      return future.get();
-    }
-    // should never be reached
-    return future.get();
+    // m_archiveBatcher handles the leader/follower coordination, the window+cap wait, and releasing
+    // followers as soon as resolveArchiveBatch() has settled every promise in the batch — before the
+    // slower logQueuedArchiveItems() runs, so no follower waits on it. See OpportunisticBatcher.hpp.
+    return m_archiveBatcher->enqueueAndWait(
+      cta::common::dataStructures::ArchiveInsertQueueItem {archiveFileId,
+                                                           instanceName,
+                                                           request,
+                                                           {},
+                                                           {},
+                                                           std::promise<std::string>()},
+      lc);
   }
 #endif
 
