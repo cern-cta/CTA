@@ -159,11 +159,11 @@ TEST_F(OsmReaderTest, CleanDrive) {
   cta::tape::daemon::CleanerSession
     cleanerSession(mc, strlogger, driveInfo, m_sWrapper, m_vid, false, 0, *m_catalogue, *scheduler);
 
-  cleanerSession.execute();
+  ASSERT_EQ(cta::tape::daemon::Session::MARK_DRIVE_AS_UP, cleanerSession.execute());
 
   const auto logToCheck = strlogger.getLog();
-  ASSERT_NE(std::string::npos, logToCheck.find("Cleaner successfully detected tape contains data"));
-  ASSERT_NE(std::string::npos, logToCheck.find("Cleaner detected volume label contains expected VSN"));
+  ASSERT_NE(std::string::npos, logToCheck.find("Cleaner detected that the tape contains data"));
+  ASSERT_NE(std::string::npos, logToCheck.find("Cleaner read the VSN from the volume label"));
   ASSERT_NE(std::string::npos, logToCheck.find("Cleaner unloaded tape"));
   ASSERT_NE(std::string::npos, logToCheck.find("Cleaner dismounted tape"));
 }

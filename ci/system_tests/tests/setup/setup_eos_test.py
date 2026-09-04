@@ -6,6 +6,7 @@
 # =========================================================================
 
 
+import time
 from pathlib import Path
 
 from system_tests.helpers.hosts import EosMgmHost
@@ -33,6 +34,20 @@ def test_general_settings(eos_mgm: EosMgmHost) -> None:
     tape_fs_id = 65535
     eos_mgm.exec("eos space define tape", throw_on_failure=False)
     eos_mgm.exec(f"eos fs add -m {tape_fs_id} tape localhost:1234 /does_not_exist tape", throw_on_failure=False)
+
+    print("Waiting for EOS to report free space on a writable filesystem")
+    deadline = time.monotonic() + 60
+    while time.monotonic() < deadline:
+        result = eos_mgm.exec(
+            "eos fs ls -m | grep 'configstatus=rw' | grep -Eq 'stat.statfs.freebytes=[1-9][0-9]*'",
+            throw_on_failure=False,
+        )
+        if result.success:
+            return
+        time.sleep(1)
+
+    eos_mgm.exec("eos fs ls -m")
+    raise TimeoutError("EOS did not report free space on a writable filesystem within 60 seconds")
 
 
 # This function sets the SciToken add-on convenience in EOS, allowing our test scripts to acquire test WLCG tokens
