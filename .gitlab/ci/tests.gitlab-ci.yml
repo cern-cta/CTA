@@ -145,7 +145,7 @@ unit-test-postgresql:
     - runuser -u postgres -- pg_ctl start -w -t 10 -D ${POSTGRESQL_DATA_DIR} -l ${POSTGRESQL_LOG_DIR}/cta_test_postgres.log
     - runuser -u postgres -- createdb cta
     - runuser -u postgres -- createuser -E cta
-    - CTA_CATALOGUE_CONF=/etc/cta/cta-catalogue.conf
+    - CTA_CATALOGUE_CONF=$(mktemp)
     - echo CTA_CATALOGUE_CONF=${CTA_CATALOGUE_CONF}
     - echo 'postgresql:postgresql://cta@localhost/cta' > ${CTA_CATALOGUE_CONF}
     - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
@@ -183,7 +183,7 @@ unit-test-oracle:
     - *setup-cta-install
   script:
     - dnf -y install cta-catalogue-utils
-    - CTA_CATALOGUE_CONF=/etc/cta/cta-catalogue.conf
+    - CTA_CATALOGUE_CONF=$(mktemp)
     - echo CTA_CATALOGUE_CONF=${CTA_CATALOGUE_CONF}
     - echo oracle:${ORACLE_USERNAME}/${ORACLE_PASSWORD}@${ORACLE_DATABASE} > ${CTA_CATALOGUE_CONF}
     - echo yes | cta-catalogue-schema-drop ${CTA_CATALOGUE_CONF}

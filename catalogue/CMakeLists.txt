@@ -237,7 +237,7 @@ target_link_libraries (ctadbconfigcatalogueunittests
 install (TARGETS ctadbconfigcatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 install (FILES cta-catalogue.example.conf
-  DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
+  DESTINATION usr/${CMAKE_INSTALL_DOCDIR}
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
 set (SCHEMA_CHECKER_LIB_SRC_FILES

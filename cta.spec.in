@@ -137,7 +137,7 @@ The tape server daemon
 %{_libdir}/libctatapedrao.so*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/logrotate.d/cta-taped
 %attr(0755,root,root) %{_bindir}/cta-taped
-%attr(0644,root,root) %{_sysconfdir}/cta/cta-taped.example.conf
+%attr(0644,root,root) %doc %{_docdir}/cta/cta-taped.example.conf
 %attr(0644,root,root) %doc %{_mandir}/man1/cta-taped.1cta*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/cta-taped
 %attr(0644,root,root) %{_unitdir}/cta-taped.service
@@ -170,7 +170,7 @@ CERN Tape Archive maintenance daemon.
 %endif
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/logrotate.d/cta-maintd
 %attr(0755,root,root) %{_bindir}/cta-maintd
-%attr(0644,root,root) %{_sysconfdir}/cta/cta-maintd.example.toml
+%attr(0644,root,root) %doc %{_docdir}/cta/cta-maintd.example.toml
 %attr(0644,root,root) %doc %{_mandir}/man1/cta-maintd.1cta*
 %attr(0644,root,root) %{_unitdir}/cta-maintd.service
 
@@ -200,7 +200,7 @@ The XRootD frontend plugin.
 %license COPYING
 %{_libdir}/libXrdSsiCta.so*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/logrotate.d/cta-frontend
-%attr(0644,root,root) %{_sysconfdir}/cta/cta-frontend-xrootd.example.conf
+%attr(0644,root,root) %doc %{_docdir}/cta/cta-frontend-xrootd.example.conf
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/cta-frontend
 %attr(0644,root,root) %{_unitdir}/cta-frontend.service
 
@@ -229,9 +229,9 @@ dCache frontend
 %attr(0755,root,root) %{_bindir}/cta-frontend-grpc
 %attr(0644,root,root) %{_unitdir}/cta-frontend-grpc.service
 %attr(0644,root,root) %{_sysconfdir}/sysconfig/cta-frontend-grpc
-%attr(0644,root,root) %{_sysconfdir}/cta/cta-frontend.example.conf
-%attr(0644,root,root) %{_sysconfdir}/cta/cta-frontend-grpc.example.toml
-%attr(0644,root,root) %{_sysconfdir}/cta/jwt-revoke-list.example.toml
+%attr(0644,root,root) %doc %{_docdir}/cta/cta-frontend.example.conf
+%attr(0644,root,root) %doc %{_docdir}/cta/cta-frontend-grpc.example.toml
+%attr(0644,root,root) %doc %{_docdir}/cta/jwt-revoke-list.example.toml
 %attr(0644,root,root) %doc %{_mandir}/man1/cta-frontend-grpc.1cta*
 
 %post -n cta-frontend-grpc
@@ -255,7 +255,7 @@ The cta-admin command-line utility using gRPC as its transport.
 %files -n cta-admin-grpc
 %license COPYING
 %attr(0755,root,root) %{_bindir}/cta-admin-grpc
-%attr(0644,root,root) %{_sysconfdir}/cta/cta-cli-grpc.example.conf
+%attr(0644,root,root) %doc %{_docdir}/cta/cta-cli-grpc.example.conf
 
 
 %package -n cta-cli
@@ -277,7 +277,7 @@ The command line utilities
 %attr(0755,root,root) %{_bindir}/cta-change-storage-class
 %attr(0755,root,root) %{_bindir}/cta-eos-namespace-inject
 %attr(0644,root,root) %doc %{_mandir}/man1/cta-change-storage-class.1cta*
-%attr(0644,root,root) %{_sysconfdir}/cta/cta-cli.example.conf
+%attr(0644,root,root) %doc %{_docdir}/cta/cta-cli.example.conf
 
 %package -n cta-lib-common
 Summary: CERN Tape Archive libraries
@@ -373,9 +373,9 @@ The shared libraries
 %{_libdir}/libctardbmspostgres.so*
 %endif
 %{_libdir}/libctadisk.so*
-%attr(0644,root,root) %{_sysconfdir}/cta/cta-catalogue.example.conf
-%attr(0644,root,root) %{_sysconfdir}/cta/cta-scheduler.example.conf
-%attr(0644,root,root) %{_sysconfdir}/cta/cta-otel.example.yaml
+%attr(0644,root,root) %doc %{_docdir}/cta/cta-catalogue.example.conf
+%attr(0644,root,root) %doc %{_docdir}/cta/cta-scheduler.example.conf
+%attr(0644,root,root) %doc %{_docdir}/cta/cta-otel.example.yaml
 %attr(0644,root,root) %{_datadir}/cta/cta-logging.schema.json
 
 %package -n cta-integrationtests
@@ -542,7 +542,7 @@ The Remote Media Changer daemon (rmcd)
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/logrotate.d/cta-rmcd
 %attr(0644,root,root) %doc %{_mandir}/man1/cta-rmcd.1cta*
 %attr(0755,root,root) %{_bindir}/cta-rmcd
-%attr(0644,root,root) %{_sysconfdir}/cta/cta-rmcd.example.conf
+%attr(0644,root,root) %doc %{_docdir}/cta/cta-rmcd.example.conf
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/cta-rmcd
 %attr(0644,root,root) %{_unitdir}/cta-rmcd.service
 
@@ -598,6 +598,7 @@ CERN Tape Archive common items, such as the creation of the cta local user.
 %{_bindir}/grep -q '^cta:' %{_sysconfdir}/passwd || %{_sbindir}/luseradd -s %{_sbindir}/nologin -c "CTA system account" -g tape cta
 %files -n cta-common
 %license COPYING
+%dir %attr(0755,root,root) %{_sysconfdir}/cta
 %doc CHANGELOG.md
 
 %package -n cta-release

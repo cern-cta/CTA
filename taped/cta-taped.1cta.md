@@ -324,12 +324,12 @@ XrdSecSSSKT
 */etc/cta/cta-taped.conf*
 
 :   The CTA Tape Server configuration file, containing the options
-    described above under **CONFIGURATION**. See */etc/cta/cta-taped.example.conf*.
+    described above under **CONFIGURATION**. See */usr/share/doc/cta/cta-taped.example.conf*.
 
 */etc/cta/cta-catalogue.conf*
 
 :   Usual location for the CTA Catalogue configuration file. See **taped CatalogueConfigFile**
-    option under **CONFIGURATION**, and */etc/cta/cta-catalogue.example.conf*.
+    option under **CONFIGURATION**, and */usr/share/doc/cta/cta-catalogue.example.conf*.
 
 */var/log/cta/cta-taped.log*
 
