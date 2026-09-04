@@ -11,13 +11,13 @@ from contextlib import suppress
 from dataclasses import dataclass, field
 from enum import Enum
 
-BASE_RE = re.compile(r"^v(5)\.(\d+)\.(\d+)\.(\d+)-(\d+)$")
+BASE_RE = re.compile(r"^v(6)\.(\d+)\.(\d+)\.(\d+)-(\d+)$")
 TAG_RE = re.compile(
-    r"^v(5)\.(\d+)\.(\d+)\.(\d+)-(\d+)"
+    r"^v(6)\.(\d+)\.(\d+)\.(\d+)-(\d+)"
     r"(?:\.rc([1-9]\d*))?(?:\.(pgsched|pgcat|pgall))?$"
 )
-HISTORICAL_RE = re.compile(r"^v(5)\.(\d+)\.(\d+)\.(\d+)-(\d+)(?:\..+)?$")
-SUFFIXED_BASE_RE = re.compile(r"^(v5\.\d+\.\d+\.\d+-\d+)(\..+)$")
+HISTORICAL_RE = re.compile(r"^v(6)\.(\d+)\.(\d+)\.(\d+)-(\d+)(?:\..+)?$")
+SUFFIXED_BASE_RE = re.compile(r"^(v6\.\d+\.\d+\.\d+-\d+)(\..+)$")
 
 
 class VersionError(RuntimeError):
@@ -86,8 +86,8 @@ class CTAVersion:
                     f"do not append {suffix!r} manually.{suffix_hint}"
                 )
 
-            expected = "v5.<major>.<minor>.<patch>-<package>"
-            example = "v5.12.0.0-1"
+            expected = "v6.<major>.<minor>.<patch>-<package>"
+            example = "v6.12.0.0-1"
             if not require_base:
                 expected += "[.rcN][.pgsched|.pgcat|.pgall]"
                 example += ".rc1.pgall"

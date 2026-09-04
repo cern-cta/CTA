@@ -21,14 +21,14 @@ class GitTest(unittest.TestCase):
     def test_dry_run_does_not_execute_mutation(self) -> None:
         git = Git(Path("/tmp"), dry_run=True)
         with patch("subprocess.run") as run:
-            assert git.run(["tag", "v5.1.0.0-1"], mutate=True) == ""
+            assert git.run(["tag", "v6.1.0.0-1"], mutate=True) == ""
         run.assert_not_called()
 
     def test_create_tag_delegates_to_multi_tag_creation(self) -> None:
         git = Git(Path("/tmp"))
         with patch.object(git, "create_tags") as create_tags:
-            git.create_tag("abc", "v5.1.0.0-1", "Maintenance bug fixes")
-        create_tags.assert_called_once_with("abc", {"v5.1.0.0-1": "Maintenance bug fixes"})
+            git.create_tag("abc", "v6.1.0.0-1", "Maintenance bug fixes")
+        create_tags.assert_called_once_with("abc", {"v6.1.0.0-1": "Maintenance bug fixes"})
 
     def test_editor_command_uses_git_editor_resolution(self) -> None:
         git = Git(Path("/tmp"))

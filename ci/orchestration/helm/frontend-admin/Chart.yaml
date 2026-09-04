@@ -6,7 +6,7 @@ name: frontend-admin
 description: Spawns an Admin frontend for CTA.
 type: application
 version: 0.2.0
-appVersion: "5.11.10.1"
+appVersion: "6.0.0.0"
 
 dependencies:
   - name: common

@@ -6,4 +6,4 @@ name: kdc
 description: Generates necessary secrets and services for CTA and EOS to function in CI
 type: application
 version: 0.2.1
-appVersion: "5.11.10.1"
+appVersion: "6.0.0.0"

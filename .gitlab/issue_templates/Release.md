@@ -1,4 +1,4 @@
-<!-- Ensure the title of this ticket is the name of the release. E.g. `v5.X.Y.Z-R` -->
+<!-- Ensure the title of this ticket is the name of the release. E.g. `v6.X.Y.Z-R` -->
 
 * See [Releasing a new version of CTA](https://cta.docs.cern.ch/latest/dev/ci/releases/)
 

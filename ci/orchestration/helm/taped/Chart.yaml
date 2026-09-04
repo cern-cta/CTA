@@ -6,7 +6,7 @@ name: taped
 description: Spawns a set of taped processes.
 type: application
 version: 0.2.0
-appVersion: "5.11.10.1"
+appVersion: "6.0.0.0"
 
 dependencies:
   - name: common

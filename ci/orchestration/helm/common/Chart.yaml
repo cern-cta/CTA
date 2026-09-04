@@ -6,4 +6,4 @@ name: common
 description: A library chart that contains some common functionality useful for the different charts.
 type: library
 version: 0.1.1
-appVersion: "5.11.10.1"
+appVersion: "6.0.0.0"

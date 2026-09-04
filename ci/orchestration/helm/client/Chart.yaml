@@ -6,7 +6,7 @@ name: client
 description: Sets up an EOS client (with extra CTA RPMs) for a CTA + EOS instance.
 type: application
 version: 0.2.0
-appVersion: "5.11.10.1"
+appVersion: "6.0.0.0"
 
 dependencies:
   - name: common

@@ -46,24 +46,24 @@ def add_subparser(subparsers: SubparserRegistry) -> None:
         description="Validate a release commit and publish one or more annotated CTA tags.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Typical final release:
-  release tag v5.12.0.0-1
+  release tag v6.12.0.0-1
     Prompts whether to create the base tag plus pgsched, pgcat, and pgall.
 
 Unattended final release:
-  release tag v5.12.0.0-1 --yes
+  release tag v6.12.0.0-1 --yes
     Creates the base tag and all three build variants without confirmation.
 
 Only selected build variants (no base tag):
-  release tag v5.12.0.0-1 --suffix pgsched --suffix pgcat
+  release tag v6.12.0.0-1 --suffix pgsched --suffix pgcat
     --suffix may be repeated; duplicates are removed and canonical order is used.
 
 Automatically numbered release candidate:
-  release tag v5.12.0.0-1 --release-candidate
-  release tag v5.12.0.0-1 --release-candidate --suffix pgall
+  release tag v6.12.0.0-1 --release-candidate
+  release tag v6.12.0.0-1 --release-candidate --suffix pgall
     Existing RC families are inspected and the next unused rcN is selected.
 
 Tag a release merged into another target branch:
-  release tag v5.12.0.0-1 --target-branch maintenance
+  release tag v6.12.0.0-1 --target-branch maintenance
     The merged changelog MR commit is tagged after verifying it is on origin/maintenance.
     The default target branch is main.
 
