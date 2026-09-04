@@ -157,7 +157,7 @@ TEST_F(OsmReaderTest, CleanDrive) {
   auto scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_db, "schedulerBackendName");
 
   cta::tape::daemon::CleanerSession
-    cleanerSession(mc, strlogger, driveInfo, m_sWrapper, m_vid, false, 0, "", *m_catalogue, *scheduler);
+    cleanerSession(mc, strlogger, driveInfo, m_sWrapper, m_vid, false, 0, *m_catalogue, *scheduler);
 
   cleanerSession.execute();
 

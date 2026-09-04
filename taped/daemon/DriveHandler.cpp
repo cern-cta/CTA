@@ -978,7 +978,6 @@ cta::tape::daemon::Session::EndOfSessionAction DriveHandler::executeCleanerSessi
                                                         m_sessionVid,
                                                         true,
                                                         m_tapedConfig.tapeLoadTimeout.value(),
-                                                        "",
                                                         *m_catalogue,
                                                         *(dynamic_cast<cta::Scheduler*>(scheduler)));
 

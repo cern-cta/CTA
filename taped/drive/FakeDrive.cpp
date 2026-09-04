@@ -135,6 +135,7 @@ void cta::tape::drive::FakeDrive::enableCRC32CLogicalBlockProtectionReadWrite() 
 }
 
 void cta::tape::drive::FakeDrive::disableLogicalBlockProtection() {
+  throwIfFailurePoint(FailurePoint::DisableLogicalBlockProtection);
   m_lbpToUse = lbpToUse::disabled;
 }
 
@@ -158,6 +159,7 @@ void cta::tape::drive::FakeDrive::fastSpaceToEOM(void) {
 }
 
 void cta::tape::drive::FakeDrive::rewind(void) {
+  throwIfFailurePoint(FailurePoint::Rewind);
   m_currentPosition = 0;
 }
 
@@ -200,7 +202,8 @@ void cta::tape::drive::FakeDrive::spaceFileMarksForward(size_t count) {
 }
 
 void cta::tape::drive::FakeDrive::unloadTape(void) {
-  // Nothing to do from a fake drive
+  throwIfFailurePoint(FailurePoint::UnloadTape);
+  m_tapeInPlace = false;
 }
 
 void cta::tape::drive::FakeDrive::flush(void) {
@@ -328,6 +331,7 @@ void cta::tape::drive::FakeDrive::setEncryptionKey(const std::string& encryption
 }
 
 bool cta::tape::drive::FakeDrive::clearEncryptionKey() {
+  throwIfFailurePoint(FailurePoint::ClearEncryptionKey);
   return false;
 }
 
@@ -336,7 +340,29 @@ bool cta::tape::drive::FakeDrive::isEncryptionCapEnabled() {
 }
 
 bool cta::tape::drive::FakeDrive::hasTapeInPlace() {
-  return true;
+  return m_tapeInPlace;
+}
+
+void cta::tape::drive::FakeDrive::setTapeInPlace(bool tapeInPlace) {
+  m_tapeInPlace = tapeInPlace;
+}
+
+void cta::tape::drive::FakeDrive::setFailurePoint(FailurePoint failurePoint, bool enabled) {
+  if (enabled) {
+    m_failurePoints.insert(failurePoint);
+  } else {
+    m_failurePoints.erase(failurePoint);
+  }
+}
+
+void cta::tape::drive::FakeDrive::clearFailurePoints() {
+  m_failurePoints.clear();
+}
+
+void cta::tape::drive::FakeDrive::throwIfFailurePoint(FailurePoint failurePoint) const {
+  if (m_failurePoints.contains(failurePoint)) {
+    throw cta::exception::Exception("Configured FakeDrive failure");
+  }
 }
 
 cta::tape::SCSI::Structures::RAO::udsLimits cta::tape::drive::FakeDrive::getLimitUDS() {

@@ -5,17 +5,16 @@
 
 #pragma once
 
-#include "EncryptionControl.hpp"
 #include "Session.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
-#include "common/log/Logger.hpp"
+#include "common/log/LogContext.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "taped/drive/DriveInterface.hpp"
-#include "taped/file/Structures.hpp"
 #include "taped/scsi/Device.hpp"
 
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace cta::catalogue {
@@ -42,8 +41,6 @@ public:
     * false otherwise.
     * @param waitMediaInDriveTimeout The maximum number of seconds to wait for
     * the media to be ready for operations inside the drive.
-    * @param externalEncryptionKeyScript path to the operator provided script
-    * for encryption control.
     * @param catalogue the CTA catalogue
     */
   CleanerSession(cta::mediachanger::MediaChangerFacade& mc,
@@ -53,7 +50,6 @@ public:
                  const std::string& vid,
                  const bool waitMediaInDrive,
                  const uint32_t waitMediaInDriveTimeout,
-                 const std::string& externalEncryptionKeyScript,
                  cta::catalogue::Catalogue& catalogue,
                  cta::Scheduler& scheduler);
 
@@ -64,18 +60,16 @@ public:
     * @return Returns the type of action to be performed after the session has
     * completed.
     */
-  EndOfSessionAction execute() noexcept final;
+  EndOfSessionAction execute() final;
 
 private:
   /**
     * The object representing the media changer.
     */
-  cta::mediachanger::MediaChangerFacade& m_mc;
+  cta::mediachanger::MediaChangerFacade& m_mediachanger;
 
-  /**
-    * The logging object
-    */
-  cta::log::Logger& m_log;
+  /** Log context containing parameters shared by every cleaner log entry. */
+  cta::log::LogContext m_lc;
 
   /**
     * The information of the tape drive to be cleaned.
@@ -106,11 +100,6 @@ private:
   const uint32_t m_tapeLoadTimeout;
 
   /**
-    * Encryption helper object
-    */
-  EncryptionControl m_encryptionControl;
-
-  /**
     * CTA catalogue
     */
   cta::catalogue::Catalogue& m_catalogue;
@@ -119,20 +108,6 @@ private:
     * CTA scheduler
     */
   cta::Scheduler& m_scheduler;
-
-  /**
-    * Variable used to log UPDATE_USER_NAME in the DB
-    */
-  const std::string c_defaultUserNameUpdate = "cta-taped";
-
-  /**
-    * Execute the session and return the type of action to be performed
-    * immediately after the session has completed.
-    *
-    * @return Returns the type of action to be performed after the session has
-    * completed.
-    */
-  EndOfSessionAction exceptionThrowingExecute();
 
   /**
     * Logs and clears (just by reading them...) any outstanding tape alerts
@@ -149,6 +124,14 @@ private:
   void cleanDrive(drive::DriveInterface& drive);
 
   /**
+   * Reads the volume label when its format can be determined.
+   *
+   * @param drive The tape drive.
+   * @return The VSN from the label, or std::nullopt if no VID was provided to determine the label format.
+   */
+  std::optional<std::string> readVolumeLabel(drive::DriveInterface& drive);
+
+  /**
     * Creates and returns the object that represents the tape drive to be
     * cleaned.
     *
@@ -161,7 +144,7 @@ private:
     *
     * @param drive The tape drive.
     */
-  void waitUntilMediaIsReady(drive::DriveInterface& drive);
+  void waitForMediaToBeReady(drive::DriveInterface& drive);
 
   /**
     * Rewinds the specified tape drive.
@@ -178,24 +161,8 @@ private:
     */
   void checkTapeContainsData(drive::DriveInterface& drive);
 
-  /**
-    * Checks that the tape in the specified drive contains a valid volume
-    * label.
-    *
-    * @param drive The tape drive for which it is assumed the tape to be
-    * tested is present and rewound to the beginning.
-    * @return The VSN stored within the colue label.
-    */
-  std::string checkVolumeLabel(drive::DriveInterface& drive);
-
-  /**
-    * Unloads the specified tape from the specified tape drive.
-    *
-    * @param vid The volume identifier of the tape to be unloaded.  Please note
-    * that the value of this field is only used for logging purposes.
-    * @param drive The tape drive.
-    */
-  void unloadTape(const std::string& vid, drive::DriveInterface& drive);
+  /** Unloads a tape from the drive. */
+  void unloadTape(drive::DriveInterface& drive);
 
   /**
     * Dismounts the specified tape.
@@ -204,10 +171,12 @@ private:
     */
   void dismountTape(const std::string& vid);
 
-  /**
-    * Put the drive down in case the Cleaner has failed
-    */
-  void setDriveDownAfterCleanerFailed(const std::string& errorMsg);
+  /** Put the drive down if the cleaner failed. */
+  void setDriveDownAfterCleanerFailed(const std::string& errorMsg) noexcept;
+
+  /** Prevent a tape with unresolved physical location from being scheduled. */
+  void disableTapeAfterFailedEject(const std::string& errorMsg) noexcept;
+
 };  // class CleanerSession
 
 }  // namespace cta::tape::daemon
