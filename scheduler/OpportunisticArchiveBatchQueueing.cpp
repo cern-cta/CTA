@@ -4,6 +4,7 @@
  */
 
 #include "catalogue/Catalogue.hpp"
+#include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
 #include "common/utils/Timer.hpp"
@@ -108,7 +109,7 @@ void Scheduler::resolveArchiveBatch(std::vector<cta::common::dataStructures::Arc
     // request in the batch.
     static const char* const failMsg =
       "In Scheduler::resolveArchiveBatch(): bulk archive insert failed, failing this batch";
-    auto jobsPerItem = [](const cta::common::dataStructures::ArchiveInsertQueueItem& item) {
+    auto jobsPerItem = [](const cta::common::dataStructures::ArchiveInsertQueueItem& item) -> uint64_t {
       return item.copyToPoolMap.size();
     };
     try {
