@@ -37,6 +37,6 @@ class StatusCommandTest(unittest.TestCase):
             patch.object(context.git, "remote_tag_commit", return_value="abc123"),
             redirect_stdout(StringIO()) as output,
         ):
-            status.run(context, "v5.12.0.0-1")
+            status.run(context, "v6.12.0.0-1")
         assert "Commit:   abc123" in output.getvalue()
         assert "Pipeline: success" in output.getvalue()

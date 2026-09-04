@@ -61,8 +61,8 @@ def add_subparser(subparsers: SubparserRegistry) -> None:
   4. Finds or creates the release ticket, changelog branch, and merge request.
 
 Example:
-  release changelog v5.12.0.0-1
-  release changelog v5.12.0.0-1 --target-branch maintenance
+  release changelog v6.12.0.0-1
+  release changelog v6.12.0.0-1 --target-branch maintenance
 
 The VERSION must be unsuffixed. Build variants and release candidates share the
 base release's changelog and are selected later by "release tag".

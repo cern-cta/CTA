@@ -48,9 +48,9 @@ class TagCommandTest(unittest.TestCase):
             patch.object(self.context.git, "remote_tag_commits", return_value={}),
             redirect_stdout(StringIO()) as output,
         ):
-            tag.run(self.context, "v5.12.0.0-1", skip_confirmation=True)
+            tag.run(self.context, "v6.12.0.0-1", skip_confirmation=True)
         is_ancestor.assert_called_once_with("merge-commit", "newer-tip")
-        assert "Merged changelog commit to tag for v5.12.0.0-1: merge-commit" in output.getvalue()
+        assert "Merged changelog commit to tag for v6.12.0.0-1: merge-commit" in output.getvalue()
 
     def test_release_commit_must_be_reachable_from_target_branch(self) -> None:
         with (
@@ -64,7 +64,7 @@ class TagCommandTest(unittest.TestCase):
         ):
             tag._validate_release_metadata(  # pyright: ignore[reportPrivateUsage]
                 self.context,
-                "v5.12.0.0-1",
+                "v6.12.0.0-1",
                 "branch-tip",
                 skip_confirmation=True,
             )
@@ -84,7 +84,7 @@ class TagCommandTest(unittest.TestCase):
         ):
             issue, commit = tag._validate_release_metadata(  # pyright: ignore[reportPrivateUsage]
                 self.context,
-                "v5.12.0.0-1",
+                "v6.12.0.0-1",
                 "branch-tip",
                 skip_confirmation=False,
             )
@@ -98,23 +98,23 @@ class TagCommandTest(unittest.TestCase):
             patch.object(
                 self.context.git,
                 "remote_tag_commits",
-                return_value={"v5.12.0.0-1.pgall": "abc123"},
+                return_value={"v6.12.0.0-1.pgall": "abc123"},
             ) as remote_tags,
             pytest.raises(ReleaseWorkflowError, match="family already exists"),
         ):
             tag._validate_selected_tags(  # pyright: ignore[reportPrivateUsage]
                 self.context,
-                ["v5.12.0.0-1", "v5.12.0.0-1.pgall"],
+                ["v6.12.0.0-1", "v6.12.0.0-1.pgall"],
                 "abc123",
             )
         remote_tags.assert_called_once()
 
     def test_next_release_candidate_never_completes_partial_family(self) -> None:
-        version = CTAVersion.parse("v5.12.0.0-1", require_base=True)
+        version = CTAVersion.parse("v6.12.0.0-1", require_base=True)
         with patch.object(
             self.context.git,
             "tags",
-            return_value=["v5.12.0.0-1.rc2", "v5.12.0.0-1.rc2.pgsched"],
+            return_value=["v6.12.0.0-1.rc2", "v6.12.0.0-1.rc2.pgsched"],
         ):
             selected = tag._select_tag_versions(  # pyright: ignore[reportPrivateUsage]
                 self.context,
@@ -123,7 +123,7 @@ class TagCommandTest(unittest.TestCase):
                 variants_explicitly_selected=False,
                 release_candidate=True,
             )
-        assert selected[0].text == "v5.12.0.0-1.rc3"
+        assert selected[0].text == "v6.12.0.0-1.rc3"
 
     def test_declining_final_confirmation_does_not_create_tags(self) -> None:
         with (
@@ -136,11 +136,11 @@ class TagCommandTest(unittest.TestCase):
         ):
             tag.build_tag_plan(
                 self.context,
-                "v5.12.0.0-1",
+                "v6.12.0.0-1",
                 "main",
                 "abc123",
                 {"iid": 1},
-                [CTAVersion.parse("v5.12.0.0-1")],
+                [CTAVersion.parse("v6.12.0.0-1")],
                 skip_confirmation=False,
             )
         create_tags.assert_not_called()
@@ -162,5 +162,5 @@ class TagCommandTest(unittest.TestCase):
             patch.object(self.context.git, "editor_command", return_value="editor"),
             patch("subprocess.run", side_effect=write_description),
         ):
-            description = tag.edit_tag_description(self.context, "v5.12.0.0-1", "abc123")
+            description = tag.edit_tag_description(self.context, "v6.12.0.0-1", "abc123")
         assert description == "Maintenance fixes"

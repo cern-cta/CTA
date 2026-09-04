@@ -23,7 +23,7 @@ spec:
         Existing CTA image tag to test instead of building CTA from the selected ref.
 
         Pipeline build example: `123456gitabcdef12`.
-        Published release format: `vX.Y.Z.R-N.PLATFORM`, e.g. `v5.11.20.1-1.el9`.
+        Published release format: `vX.Y.Z.R-N.PLATFORM`, e.g. `v6.11.20.1-1.el9`.
 
         Leave empty to build a branch regression or automatically select the version-regression release.
       type: string

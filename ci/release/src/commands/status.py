@@ -20,8 +20,8 @@ def add_subparser(subparsers: SubparserRegistry) -> None:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Examples:
   Inspect a known release:
-    release status v5.12.0.0-1
-    release status v5.12.0.0-1 --target-branch maintenance
+    release status v6.12.0.0-1
+    release status v6.12.0.0-1 --target-branch maintenance
 
 This command is always read-only.""",
     )

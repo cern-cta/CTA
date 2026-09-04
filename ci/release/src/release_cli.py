@@ -91,19 +91,19 @@ def create_argument_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""Release workflow:
   1. Synchronize the target branch and generate the changelog:
-       release changelog v5.12.0.0-1
+       release changelog v6.12.0.0-1
   2. Review and merge the changelog MR printed by the command.
   3. Tag the merged release:
-       release tag v5.12.0.0-1
+       release tag v6.12.0.0-1
   For a release from another branch, pass the same target to each command:
-       release changelog v5.12.0.0-1 --target-branch release/v5.11.23.0
-       release tag v5.12.0.0-1 --target-branch release/v5.11.23.0
+       release changelog v6.12.0.0-1 --target-branch release/v6.11.23.0
+       release tag v6.12.0.0-1 --target-branch release/v6.11.23.0
 
 Common alternatives:
   Inspect progress without changing anything:
-       release status v5.12.0.0-1
+       release status v6.12.0.0-1
   Preview a command, including all validations and planned mutations:
-       release --dry-run tag v5.12.0.0-1
+       release --dry-run tag v6.12.0.0-1
 Run "release COMMAND --help" for complete changelog, tag, and status scenarios.
 Global options such as --dry-run must precede COMMAND.""",
     )

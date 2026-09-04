@@ -16,17 +16,17 @@ from release_config import ReleaseConfig
 
 
 def test_release_version_for_variant_release_candidate_tag() -> None:
-    assert release_version_for_tag("v5.12.3.4-2.rc3.pgall") == "v5.12.3.4-2"
+    assert release_version_for_tag("v6.12.3.4-2.rc3.pgall") == "v6.12.3.4-2"
 
 
 def test_new_pipeline_discussion_contains_first_note() -> None:
     api = MagicMock()
-    api.get_all.side_effect = [[{"iid": 42, "title": "Release v5.12.3.4-2"}], []]
+    api.get_all.side_effect = [[{"iid": 42, "title": "Release v6.12.3.4-2"}], []]
 
-    add_release_note(api, ReleaseConfig(), "v5.12.3.4-2.pgcat", "123", "https://pipeline", "RPMs published.")
+    add_release_note(api, ReleaseConfig(), "v6.12.3.4-2.pgcat", "123", "https://pipeline", "RPMs published.")
 
     body = api.post.call_args.kwargs["json"]["body"]
-    assert "### Release pipeline for `v5.12.3.4-2.pgcat`" in body
+    assert "### Release pipeline for `v6.12.3.4-2.pgcat`" in body
     assert "RPMs published." in body
     assert discussion_marker("123") in body
     api.post.assert_called_once()
@@ -35,11 +35,11 @@ def test_new_pipeline_discussion_contains_first_note() -> None:
 def test_existing_pipeline_discussion_gets_reply() -> None:
     api = MagicMock()
     api.get_all.side_effect = [
-        [{"iid": 42, "title": "Release v5.12.3.4-2"}],
+        [{"iid": 42, "title": "Release v6.12.3.4-2"}],
         [{"id": "discussion-id", "notes": [{"body": discussion_marker("123")}]}],
     ]
 
-    add_release_note(api, ReleaseConfig(), "v5.12.3.4-2", "123", "https://pipeline", "Tests passed.")
+    add_release_note(api, ReleaseConfig(), "v6.12.3.4-2", "123", "https://pipeline", "Tests passed.")
 
     api.post.assert_called_once_with(
         "issues/42/discussions/discussion-id/notes",
