@@ -96,6 +96,7 @@ else()
     SchedulerDatabaseFactory.cpp
     SchedulerDatabaseTest.cpp
     RelationalDBSchedulerTest.cpp
+    OpportunisticQueueBatcherTest.cpp
     rdbms/RelationalDBTest.cpp)
 endif()
 
