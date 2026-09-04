@@ -128,13 +128,19 @@ private:
  * archive request can produce several), retrieve counts 1 per item (a retrieve request is always
  * exactly one job).
  */
-template<typename ItemType>
+// countPerItem is its own deduced template parameter (any callable taking `const ItemType&` and
+// returning something convertible to uint64_t) rather than a std::function<uint64_t(const
+// ItemType&)>: with the latter, ItemType appears inside the parameter type itself, so the compiler
+// attempts to deduce it there too — and a raw lambda closure type never matches std::function<...>,
+// so that deduction fails outright before the implicit lambda-to-std::function conversion ever gets
+// a chance to run. Deducing the callable's own type sidesteps that entirely.
+template<typename ItemType, typename CountPerItemFn>
 void failWholeBatch(std::vector<ItemType>& items,
                     log::LogContext& lc,
                     const std::string& exceptionMessage,
                     const char* logMsg,
                     uint64_t& failedCount,
-                    const std::function<uint64_t(const ItemType&)>& countPerItem) {
+                    CountPerItemFn&& countPerItem) {
   log::ScopedParamContainer(lc)
     .add("batchSize", items.size())
     .add("exceptionMessage", exceptionMessage)
