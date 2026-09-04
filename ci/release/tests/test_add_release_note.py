@@ -9,7 +9,7 @@ from unittest.mock import MagicMock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from add_release_note import add_release_note, discussion_marker, release_version_for_tag
+from add_release_note import add_release_note, discussion_marker, main, release_version_for_tag
 from release_config import ReleaseConfig
 
 
@@ -43,3 +43,15 @@ def test_existing_pipeline_discussion_gets_reply() -> None:
         "issues/42/discussions/discussion-id/notes",
         json={"body": "Tests passed."},
     )
+
+
+def test_errors_are_reported_without_failing_the_job(monkeypatch, capsys) -> None:
+    monkeypatch.delenv("CI_COMMIT_TAG", raising=False)
+
+    assert main(["--api-token", "token", "note"]) == 0
+    assert "ERROR: Required CI variable CI_COMMIT_TAG is not set" in capsys.readouterr().err
+
+
+def test_argument_errors_do_not_fail_the_job(capsys) -> None:
+    assert main([]) == 0
+    assert "the following arguments are required" in capsys.readouterr().err

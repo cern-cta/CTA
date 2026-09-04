@@ -15,8 +15,8 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
-from cta_version import CTAVersion, VersionError
-from gitlab_api import GitLabAPI, GitLabAPIError
+from cta_version import CTAVersion
+from gitlab_api import GitLabAPI
 from release_config import ReleaseConfig
 from release_context import ReleaseContext, ReleaseWorkflowError
 
@@ -76,7 +76,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--api-token", required=True, help="GitLab API token")
     parser.add_argument("note", help="Markdown note to add to the release pipeline discussion")
-    args = parser.parse_args(argv)
+    try:
+        args = parser.parse_args(argv)
+    except SystemExit:
+        return 0
 
     try:
         config = ReleaseConfig(
@@ -93,9 +96,10 @@ def main(argv: list[str] | None = None) -> int:
             required_environment("CI_PIPELINE_URL"),
             args.note,
         )
-    except (GitLabAPIError, ReleaseWorkflowError, VersionError) as error:
+    except Exception as error:
         print(f"ERROR: {error}", file=sys.stderr)
-        return 1
+        # We don't want issue notes to fail a CI job, so this script is best-effort
+        return 0
     return 0
 
 
