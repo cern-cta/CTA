@@ -136,7 +136,8 @@ uint64_t Scheduler::checkAndGetNextArchiveFileId(const std::string& instanceName
 #ifdef CTA_PGSCHED
 uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
                                          log::LogContext& lc) {
-  uint64_t totalJobs = 0;
+  cta::utils::Timer batchTimer;
+  uint64_t successfulJobs = 0;
 
   // Stage 1: catalogue lookup, isolated per item. An item that fails here (e.g. an unknown
   // storage class) gets its own exception on its own promise and is left out of the bulk insert
@@ -167,7 +168,6 @@ uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures
           m_archiveInsertQueueCriteriaCache.clear();
         }
       }
-      totalJobs += item.copyToPoolMap.size();
       validItems.push_back(std::move(item));
     } catch (...) {
       // Preserve the original exception (e.g. a UserError for an unknown storage class) instead
@@ -178,7 +178,7 @@ uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures
   }
 
   if (validItems.empty()) {
-    return totalJobs;
+    return successfulJobs;
   }
 
   // Stage 2: bulk insert of the items which passed stage 1. This is one SQL statement in one
@@ -196,6 +196,7 @@ uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures
 
     for (size_t i = 0; i < validItems.size(); ++i) {
       validItems[i].promise.set_value(archiveReqAddrVector[i]);
+      successfulJobs += validItems[i].copyToPoolMap.size();
     }
   } catch (const std::exception& e) {
     log::ScopedParamContainer(lc)
@@ -210,13 +211,39 @@ uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures
                                                                                  item.copyToPoolMap,
                                                                                  item.mountPolicy);
         item.promise.set_value(m_db.queueArchive(item.instanceName, item.request, criteria, lc));
+        successfulJobs += item.copyToPoolMap.size();
       } catch (...) {
         item.promise.set_exception(std::current_exception());
       }
     }
   }
 
-  return totalJobs;
+  // Duration covers this whole batch operation (stage 1 catalogue lookups plus the stage 2 DB
+  // insert(s)) — the actual wall time of queueing this batch — timed here rather than by the caller
+  // in queueArchiveWithGivenId(), whose own elapsed time also includes the opportunistic-batching
+  // wait/sleep, which is about the batching mechanism, not the queueing work itself. Job count only
+  // includes items that actually got queued (i.e. reached promise.set_value), not merely items
+  // which passed stage 1, so a partial failure in the fallback loop above doesn't inflate the
+  // reported throughput.
+  auto batchTimeMSecs = batchTimer.msecs();
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    batchTimeMSecs,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kEnqueue},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                                             }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
+  cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+    successfulJobs,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kEnqueue},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                                             }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
+
+  return successfulJobs;
 }
 #endif
 
@@ -300,7 +327,7 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
       }
       lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 9 : " + std::to_string(archiveFileId));
 
-      auto nrows = processEnqueuedBatch(batch, lc);
+      processEnqueuedBatch(batch, lc);
       lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 10 : " + std::to_string(archiveFileId));
 
       {
@@ -314,23 +341,9 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
       // Wake followers
       m_cvOpportunisticBatching.notify_all();
       lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 13 : " + std::to_string(archiveFileId));
-      auto schedulerDbTimeMSecs = t.msecs();
-      cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
-        schedulerDbTimeMSecs,
-        {
-          {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kEnqueue},
-          {cta::semconv::attr::kSchedulerOperationWorkflow,
-           cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                                             }
-      },
-        opentelemetry::context::RuntimeContext::GetCurrent());
-      cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
-        nrows,
-        {
-          {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kEnqueue},
-          {cta::semconv::attr::kSchedulerOperationWorkflow,
-           cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                                             }
-      },
-        opentelemetry::context::RuntimeContext::GetCurrent());
+      // Duration/job-count metrics for this batch are recorded inside processEnqueuedBatch(), around
+      // the actual catalogue lookup + DB insert work, not here (t also includes the leader-election
+      // wait and the opportunistic-batching sleep above, neither of which is queueing work).
       // Return leader's result
       return future.get();
     }
