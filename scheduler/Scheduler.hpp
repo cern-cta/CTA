@@ -32,7 +32,7 @@
 #include "disk/DiskReporter.hpp"
 #include "disk/DiskReporterFactory.hpp"
 #include "scheduler/IScheduler.hpp"
-#include "scheduler/OpportunisticBatcher.hpp"
+#include "scheduler/OpportunisticQueueBatcher.hpp"
 #include "scheduler/RepackRequest.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
@@ -665,13 +665,31 @@ private:
    */
   const std::chrono::milliseconds m_opportunisticBatchingWindow;
   const size_t m_opportunisticBatchingMaxBatchSize;
-  std::unique_ptr<OpportunisticBatcher<cta::common::dataStructures::ArchiveInsertQueueItem, std::string>>
+  std::unique_ptr<OpportunisticQueueBatcher<cta::common::dataStructures::ArchiveInsertQueueItem, std::string>>
     m_archiveBatcher;
   std::unordered_map<cta::common::dataStructures::ArchiveInsertQueueCriteriaKey,
                      cta::common::dataStructures::ArchiveInsertQueueCriteria,
                      cta::common::dataStructures::ArchiveInsertQueueCriteriaKeyHash>
     m_archiveInsertQueueCriteriaCache;
   size_t m_archiveInsertQueueCriteriaCacheMaxSize = 10000;
+
+  // Resolves every promise in the batch (stage 1: per-item catalogue lookup and disk-system-name
+  // resolution; stage 2: bulk DB insert, which also selects the vid to read each item from), whatever
+  // the internal outcome — this is the fast part, run before followers waiting on the batch are
+  // released.
+  void resolveRetrieveBatch(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
+                            log::LogContext& lc);
+  // Per-item audit log for the items resolveRetrieveBatch() queued successfully — the slow part
+  // (synchronous log writes), run only after followers have already been released.
+  void logQueuedRetrieveItems(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
+                              log::LogContext& lc);
+
+  // Uses the same m_opportunisticBatchingWindow/m_opportunisticBatchingMaxBatchSize as
+  // m_archiveBatcher above: one config, both workflows. Unlike archive, there is no per-item criteria
+  // cache here — archive's is keyed on storage class, shared by many requests; retrieve criteria are
+  // keyed on archiveFileID, unique per request, so nothing would ever be reused from it.
+  std::unique_ptr<OpportunisticQueueBatcher<cta::common::dataStructures::RetrieveInsertQueueItem, std::string>>
+    m_retrieveBatcher;
 #endif
 
 };  // class Scheduler
