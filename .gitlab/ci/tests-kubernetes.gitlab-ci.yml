@@ -13,6 +13,9 @@ spec:
       type: boolean
     keep-stress-test-namespace:
       type: boolean
+    enable-opportunistic-batching:
+      type: boolean
+      default: false
 ---
 
 # All of the below tests use only the docker image generated in the build:image stage.
@@ -40,6 +43,10 @@ spec:
       CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
     else
       CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml
+    fi
+  - | # Opportunistic batching overlay (pgsched only)
+    if [[ "$SCHEDULER_TYPE" == "pgsched" ]] && $[[ inputs.enable-opportunistic-batching ]]; then
+      CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/pgsched-opportunistic-batching-values.yaml"
     fi
   - | # Which image tag to use
     if [[ -n "$[[ inputs.custom-cta-image-tag ]]" ]]; then
