@@ -2,7 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 _ctadev() {
-    local -r project_root=$(git rev-parse --show-toplevel)
+    local cta_dev_path project_root
+    cta_dev_path=$(type -P cta-dev) || return
+    cta_dev_path=$(realpath "$cta_dev_path" 2>/dev/null) || return
+    project_root=$(git -C "$(dirname "$cta_dev_path")" rev-parse --show-toplevel 2>/dev/null) || return
+
+    readonly project_root
     local cur prev command
     COMPREPLY=()
 

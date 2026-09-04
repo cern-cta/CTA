@@ -23,9 +23,9 @@ This directory contains all the files necessary for development and automation w
 `--cta-version <version>-<suffix>`, which defaults to `5-dev`. The part before the
 first hyphen becomes the RPM version and accepts numbers and dots; the part after
 it becomes the RPM release and accepts lowercase letters, numbers, dots, and
-hyphens. CMake historically exposes the suffix as `VCS_VERSION`; the CI interface
-and the underlying build scripts still take the two parts as `--cta-version` and
-`--cta-version-suffix`.
+hyphens. CMake historically exposes the suffix as `VCS_VERSION`. `cta-dev` splits
+the identifier and passes the two parts separately to the underlying build
+scripts, which is also how the CI invokes them.
 
 The CTA version is also the tag of the container images built from those RPMs, so
 `build`, `images`, `up`, `debug`, and `all` take `--cta-version` only.

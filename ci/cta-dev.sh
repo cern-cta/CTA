@@ -498,9 +498,6 @@ parse_options() {
         cta_version_provided=true
         shift
         ;;
-      --cta-version-suffix)
-        unsupported_argument "--cta-version-suffix no longer exists. Pass the combined version instead, for example: --cta-version ${cta_version%%-*}-${2:-<suffix>}"
-        ;;
 
       # =========================================================================
       #  Build options
@@ -1296,6 +1293,12 @@ install_cta_dev() {
   fi
 
   log_success "Installed ${program_name}."
+  if [[ ! -r /usr/share/bash-completion/bash_completion \
+    && ! -r /etc/bash_completion \
+    && ! -r /usr/local/etc/profile.d/bash_completion.sh \
+    && ! -r /opt/homebrew/etc/profile.d/bash_completion.sh ]]; then
+    log_warn "Bash completion does not appear to be available. Install the bash-completion package to enable ${program_name} completion."
+  fi
   log_warn "Restart your shell to use ${program_name} and its Bash completion."
 }
 
