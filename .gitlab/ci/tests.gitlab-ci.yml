@@ -22,7 +22,7 @@ spec:
     if $[[ inputs.enable-internal-repos ]]; then
       cp -f ci/docker/cta/$[[ inputs.platform ]]/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
     fi
-  - dnf -y --nogpgcheck install cta-integrationtests cta-integrationtests-debuginfo
+  - dnf -y --nogpgcheck install cta-tests cta-tests-debuginfo
 
 unit-test-python:
   stage: test
@@ -87,7 +87,7 @@ integration-test-cta:
     - !reference [.merge-train-guard, before_script]
     - *setup-cta-install
   script:
-    - /usr/bin/cta-integrationTests
+    - /usr/bin/cta-integration-tests
   artifacts:
     reports:
       junit: $GTEST_REPORT_FILE
