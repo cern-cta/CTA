@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# SPDX-FileCopyrightText: 2015 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+set -e
+
+if test $# -ne 1; then
+  echo "Wrong number of command-line arguments: expected=1 actual=$#"
+  echo "Usage: cta-unit-tests-rdbms-oracle.sh databaseConnectionFile"
+  exit 1
+fi
+
+DB_CONN_FILE=$1
+
+valgrind --gen-suppressions=all --suppressions=/usr/share/cta-@CTA_VERSION@/unittest/cta-unit-tests-rdbms-oracle.suppr /usr/bin/cta-unit-tests-rdbms ${DB_CONN_FILE}

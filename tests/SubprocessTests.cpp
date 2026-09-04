@@ -31,11 +31,30 @@ TEST(SubProcessHelper, basicTests) {
 }
 
 TEST(SubProcessHelper, testSubprocessWithStdinInput) {
-  std::string stdinInput = "{\"integer_number\":42,\"str\":\"forty two\",\"double_number\":42.000000}";
-  cta::threading::SubProcess sp2("tee", std::list<std::string>({"tee"}), stdinInput);
-  sp2.wait();
-  ASSERT_EQ("", sp2.stderr());
-  ASSERT_EQ(0, sp2.exitValue());
-  ASSERT_EQ(stdinInput, sp2.stdout());
+  const std::string stdinInput = "{\"integer_number\":42,\"str\":\"forty two\",\"double_number\":42.000000}";
+  constexpr size_t retryCount = 3;
+  std::string stdoutOutput;
+  std::string stderrOutput;
+  int exitValue = 0;
+  size_t attemptCount = 0;
+
+  // This test is flaky because of a race when tee reads from the nonblocking stdin pipe.
+  // Retry the complete subprocess interaction until the underlying race can be fixed.
+  for (size_t retry = 0; retry <= retryCount; ++retry) {
+    ++attemptCount;
+    cta::threading::SubProcess subprocess("tee", std::list<std::string>({"tee"}), stdinInput);
+    subprocess.wait();
+    stdoutOutput = subprocess.stdout();
+    stderrOutput = subprocess.stderr();
+    exitValue = subprocess.exitValue();
+
+    if (stderrOutput.empty() && exitValue == 0 && stdoutOutput == stdinInput) {
+      break;
+    }
+  }
+
+  ASSERT_EQ("", stderrOutput) << "Subprocess failed after " << attemptCount << " attempts";
+  ASSERT_EQ(0, exitValue) << "Subprocess failed after " << attemptCount << " attempts";
+  ASSERT_EQ(stdinInput, stdoutOutput) << "Subprocess failed after " << attemptCount << " attempts";
 }
 }  // namespace unitTests

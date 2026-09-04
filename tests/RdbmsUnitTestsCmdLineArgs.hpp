@@ -6,7 +6,7 @@
 #include <string>
 
 /**
- * Structure to store the command-line arguments of cta-rdbmsUnitTests.
+ * Structure to store the command-line arguments of cta-unit-tests-rdbms.
  */
 struct RdbmsUnitTestsCmdLineArgs {
   /**

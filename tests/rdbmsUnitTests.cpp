@@ -23,7 +23,8 @@
  * Prints the usage message of this unit-test program to the specified output stream.
  */
 static void printUsage(std::ostream& os) {
-  os << "Usage:" << std::endl << '\t' << "cta-rdbmsUnitTests [Google test options] databaseConnectionFile" << std::endl;
+  os << "Usage:" << std::endl
+     << '\t' << "cta-unit-tests-rdbms [Google test options] databaseConnectionFile" << std::endl;
 }
 
 /**

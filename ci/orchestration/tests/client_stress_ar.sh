@@ -283,7 +283,7 @@ echo "Listing the EOS extended attributes of ${EOS_DIR}"
 eos root://${EOS_MGM_HOST} attr ls ${EOS_DIR}
 echo
 
-echo yes | cta-immutable-file-test root://${EOS_MGM_HOST}/${EOS_DIR}/immutable_file || die "The cta-immutable-file-test failed."
+echo yes | cta-test-immutable-file root://${EOS_MGM_HOST}/${EOS_DIR}/immutable_file || die "The cta-test-immutable-file failed."
 
 # Create directory for xrootd error reports
 ERROR_DIR="/dev/shm/$(basename ${EOS_DIR})"

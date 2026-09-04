@@ -94,7 +94,7 @@ ARG ENABLE_ORACLE_SUPPORT
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-taped \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-taped \
-    /usr/local/bin/build-service.sh "cta-taped cta-tape-label cta-readtp cta-external-tape-formats-test cta-eosdf mt-st lsscsi sg3_utils"
+    /usr/local/bin/build-service.sh "cta-taped cta-tape-label cta-readtp cta-test-external-tape-formats cta-eosdf mt-st lsscsi sg3_utils"
 
 # See https://github.com/kubernetes/enhancements/blob/master/keps/sig-security/2763-ambient-capabilities/README.md
 RUN setcap \
@@ -174,7 +174,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools \
     packages="cta-admin-grpc cta-catalogue-utils cta-scheduler-utils \
-      krb5-workstation cta-immutable-file-test eos-client xrootd-client \
+      krb5-workstation cta-test-immutable-file eos-client xrootd-client \
       python3-xrootd bc" && \
     if [ "$INSTALL_CEPH_COMMON" = "true" ] || \
       [ "$INSTALL_CEPH_COMMON" = "1" ]; then \

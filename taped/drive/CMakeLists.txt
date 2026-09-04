@@ -10,9 +10,9 @@ set(CTATAPEDDRIVE_LIBRARY_SRCS
 add_library(ctatapeddrive ${CTATAPEDDRIVE_LIBRARY_SRCS})
 target_link_libraries(ctatapeddrive ctascsi ctatapedaemon)
 
-add_executable(cta-TapeDriveReadWriteTest
+add_executable(cta-test-tape-drive-read-write
   TapeDriveReadWriteTest.cpp)
-target_link_libraries(cta-TapeDriveReadWriteTest
+target_link_libraries(cta-test-tape-drive-read-write
   ctatapeddrive
   ctamediachanger
   ctascsi

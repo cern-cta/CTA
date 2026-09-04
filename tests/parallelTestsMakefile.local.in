@@ -1,53 +1,53 @@
 .phony: all
 
-all: baretests valgrind valgrindMultiprocess helgrindBase helgrindScheduler helgrindOStoreDB helgrindDataTransfer helgrindInMemoryCatalogue helgrindMultiprocess
+all: cta-unit-tests-bare cta-unit-tests-valgrind cta-unit-tests-valgrind-multiprocess cta-unit-tests-helgrind-base cta-unit-tests-helgrind-scheduler cta-unit-tests-helgrind-object-store-db cta-unit-tests-helgrind-data-transfer cta-unit-tests-helgrind-in-memory-catalogue cta-unit-tests-helgrind-multiprocess
 
-baretests:
-	MALLOC_CHECK_=3 @CMAKE_CURRENT_BINARY_DIR@/cta-unitTests 2>&1 | ts "bt: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
-	MALLOC_CHECK_=3 @CMAKE_CURRENT_BINARY_DIR@/cta-unitTests-multiProcess 2>&1 | ts "btmp: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
+cta-unit-tests-bare:
+	MALLOC_CHECK_=3 @CMAKE_CURRENT_BINARY_DIR@/cta-unit-tests 2>&1 | ts "bt: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
+	MALLOC_CHECK_=3 @CMAKE_CURRENT_BINARY_DIR@/cta-unit-tests-multiprocess 2>&1 | ts "btmp: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
 
-valgrind: valgrindMultiprocess helgrindMultiprocess
+cta-unit-tests-valgrind: cta-unit-tests-valgrind-multiprocess cta-unit-tests-helgrind-multiprocess
 	valgrind -q @VALGRIND_OPTS_STR@                                               \
 	--suppressions=@CMAKE_CURRENT_BINARY_DIR@/valgrind.suppr           \
-	@CMAKE_CURRENT_BINARY_DIR@/cta-unitTests 2>&1 | ts "vg: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
+	@CMAKE_CURRENT_BINARY_DIR@/cta-unit-tests 2>&1 | ts "vg: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
 
-valgrindMultiprocess:
+cta-unit-tests-valgrind-multiprocess:
 	valgrind -q @VALGRIND_OPTS_STR@ --child-silent-after-fork=yes                 \
 	--suppressions=@CMAKE_CURRENT_BINARY_DIR@/valgrind.suppr           \
-	@CMAKE_CURRENT_BINARY_DIR@/cta-unitTests-multiProcess 2>&1 | ts "vgmp: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
+	@CMAKE_CURRENT_BINARY_DIR@/cta-unit-tests-multiprocess 2>&1 | ts "vgmp: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
 
-helgrindBase: valgrindMultiprocess helgrindMultiprocess
+cta-unit-tests-helgrind-base: cta-unit-tests-valgrind-multiprocess cta-unit-tests-helgrind-multiprocess
 	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
 	--suppressions=@CMAKE_CURRENT_BINARY_DIR@/helgrind.suppr           \
-	@CMAKE_CURRENT_BINARY_DIR@/cta-unitTests                                                        \
+	@CMAKE_CURRENT_BINARY_DIR@/cta-unit-tests                                                        \
 	--gtest_filter=-OStoreDBPlusMockSchedulerTestVFS*:OStoreTestVFS*:OStoreDBPlusMockSchedulerTestVFS*:InMemory* \
 	2>&1 | ts "hgb: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
 
-helgrindScheduler: valgrindMultiprocess helgrindMultiprocess
+cta-unit-tests-helgrind-scheduler: cta-unit-tests-valgrind-multiprocess cta-unit-tests-helgrind-multiprocess
 	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
 	--suppressions=@CMAKE_CURRENT_BINARY_DIR@/helgrind.suppr           \
-	@CMAKE_CURRENT_BINARY_DIR@/cta-unitTests                                                        \
+	@CMAKE_CURRENT_BINARY_DIR@/cta-unit-tests                                                        \
 	--gtest_filter=OStoreDBPlusMockSchedulerTestVFS/Scheduler* 2>&1 | ts "hgs: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
 
-helgrindOStoreDB: valgrindMultiprocess helgrindMultiprocess
+cta-unit-tests-helgrind-object-store-db: cta-unit-tests-valgrind-multiprocess cta-unit-tests-helgrind-multiprocess
 	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
 	--suppressions=@CMAKE_CURRENT_BINARY_DIR@/helgrind.suppr           \
-	@CMAKE_CURRENT_BINARY_DIR@/cta-unitTests                                                        \
+	@CMAKE_CURRENT_BINARY_DIR@/cta-unit-tests                                                        \
 	--gtest_filter=OStoreTestVFS* 2>&1 | ts "hgosdb: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
 
-helgrindDataTransfer: valgrindMultiprocess helgrindMultiprocess
+cta-unit-tests-helgrind-data-transfer: cta-unit-tests-valgrind-multiprocess cta-unit-tests-helgrind-multiprocess
 	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
 	--suppressions=@CMAKE_CURRENT_BINARY_DIR@/helgrind.suppr           \
-	@CMAKE_CURRENT_BINARY_DIR@/cta-unitTests                                                        \
+	@CMAKE_CURRENT_BINARY_DIR@/cta-unit-tests                                                        \
 	--gtest_filter=OStoreDBPlusMockSchedulerTestVFS/DataTransferSessionTest* 2>&1 | ts "hgdt: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
 
-helgrindInMemoryCatalogue: valgrindMultiprocess helgrindMultiprocess
+cta-unit-tests-helgrind-in-memory-catalogue: cta-unit-tests-valgrind-multiprocess cta-unit-tests-helgrind-multiprocess
 	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
 	--suppressions=@CMAKE_CURRENT_BINARY_DIR@/helgrind.suppr           \
-	@CMAKE_CURRENT_BINARY_DIR@/cta-unitTests                                                        \
+	@CMAKE_CURRENT_BINARY_DIR@/cta-unit-tests                                                        \
 	--gtest_filter=InMemory/* 2>&1 | ts "hgimc: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
 
-helgrindMultiprocess: valgrindMultiprocess
+cta-unit-tests-helgrind-multiprocess: cta-unit-tests-valgrind-multiprocess
 	valgrind -q --tool=helgrind @HELGRIND_OPTS_STR@                               \
 	--suppressions=@CMAKE_CURRENT_BINARY_DIR@/helgrind.suppr           \
-	@CMAKE_CURRENT_BINARY_DIR@/cta-unitTests-multiProcess 2>&1 | ts "hgmp: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
+	@CMAKE_CURRENT_BINARY_DIR@/cta-unit-tests-multiprocess 2>&1 | ts "hgmp: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})

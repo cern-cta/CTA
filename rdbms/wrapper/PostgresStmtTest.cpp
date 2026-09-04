@@ -22,7 +22,7 @@ namespace unitTests {
  *
  * $ export GTEST_ALSO_RUN_DISABLED_TESTS=1
  * $ export GTEST_FILTER=*Postgres*
- * $ ./tests/cta-unitTests
+ * $ ./tests/cta-unit-tests
  */
 
 class DISABLED_cta_rdbms_wrapper_PostgresStmtTest : public ::testing::Test {

@@ -66,7 +66,7 @@ make -j 4
 To validate that CTA was build correctly, run the unit tests inside `CTA_build`:
 ```bash
 cd tests/
-./cta-unitTests
+./cta-unit-tests
 ```
 
 ##### 3.1. Build CTA RPMs

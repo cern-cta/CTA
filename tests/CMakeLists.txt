@@ -8,7 +8,7 @@ if(CTA_USE_PGSCHED)
     ${PROJECT_SOURCE_DIR}/scheduler/rdbms/TemporaryPostgresInstance.cpp)
 endif()
 
-add_executable(cta-unitTests ${CTA_UNIT_TEST_SOURCES})
+add_executable(cta-unit-tests ${CTA_UNIT_TEST_SOURCES})
 
 # link with TemporaryPostgresInstance if the pg scheduler is requested
 if(CTA_USE_PGSCHED)
@@ -50,14 +50,14 @@ if(NOT CTA_USE_PGSCHED)
     ctaobjectstoreunittests)
 endif()
 
-target_link_libraries(cta-unitTests ${CTA_UNIT_TEST_LIBS})
+target_link_libraries(cta-unit-tests ${CTA_UNIT_TEST_LIBS})
 
-add_executable(cta-rdbmsUnitTests
+add_executable(cta-unit-tests-rdbms
   GlobalCatalogueFactoryForUnitTests.cpp
   RdbmsUnitTestsCmdLineArgs.cpp
   rdbmsUnitTests.cpp)
 
-target_link_libraries(cta-rdbmsUnitTests
+target_link_libraries(cta-unit-tests-rdbms
   ctadropschemacmd
   ctadbconfigcatalogueunittests
   ctadbconfigconnunittests
@@ -68,11 +68,11 @@ target_link_libraries(cta-rdbmsUnitTests
   gmock
   pthread)
 
-add_executable(cta-unitTests-multiProcess
+add_executable(cta-unit-tests-multiprocess
   ${CTA_UNIT_TEST_SOURCES}
   SubprocessTests.cpp)
 
-target_link_libraries(cta-unitTests-multiProcess
+target_link_libraries(cta-unit-tests-multiprocess
   ctadaemonunittests-multiprocess
   ctacommon
   gtest
@@ -80,49 +80,49 @@ target_link_libraries(cta-unitTests-multiProcess
   pthread
   sqlite3)
 
-add_library(unitTestHelper
+add_library(cta-unit-test-helper
   TempFile.cpp TempDirectory.cpp)
 
-add_executable(cta-integrationTests
+add_executable(cta-integration-tests
   integration_tests.cpp)
 
-target_link_libraries(cta-integrationTests
-  cta-tapedIntegrationTests
+target_link_libraries(cta-integration-tests
+  cta-taped-integration-tests
   gtest
   pthread)
 
-add_executable(cta-immutable-file-test
+add_executable(cta-test-immutable-file
   ImmutableFileTest.cpp
   ImmutableFileTestMain.cpp
   ImmutableFileTestCmdLineArgs.cpp)
 
-set_property (TARGET cta-immutable-file-test APPEND PROPERTY INCLUDE_DIRECTORIES "/usr/include/xrootd")
+set_property (TARGET cta-test-immutable-file APPEND PROPERTY INCLUDE_DIRECTORIES "/usr/include/xrootd")
 
-target_link_libraries(cta-immutable-file-test
+target_link_libraries(cta-test-immutable-file
   ctacommon XrdCl)
 
 install(
   TARGETS
-    cta-rdbmsUnitTests
-    cta-unitTests
-    cta-unitTests-multiProcess
-    cta-integrationTests
-    cta-immutable-file-test
+    cta-unit-tests-rdbms
+    cta-unit-tests
+    cta-unit-tests-multiprocess
+    cta-integration-tests
+    cta-test-immutable-file
   DESTINATION
     usr/bin)
 
-configure_file(cta-valgrindUnitTests.sh.in ${CMAKE_CURRENT_BINARY_DIR}/cta-valgrindUnitTests.sh)
+configure_file(cta-unit-tests-valgrind.sh.in ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-valgrind.sh)
 configure_file(parallelTestsMakefile.in ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile @ONLY)
 configure_file(parallelTestsMakefile.local.in ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile.local @ONLY)
 
 if (OCCI_SUPPORT)
-  configure_file(cta-rdbmsUnitTests-oracle.sh.in ${CMAKE_CURRENT_BINARY_DIR}/cta-rdbmsUnitTests-oracle.sh @ONLY)
+  configure_file(cta-unit-tests-rdbms-oracle.sh.in ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-rdbms-oracle.sh @ONLY)
 endif ()
 
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cta-valgrindUnitTests.sh cta-unitPlusIntegrationTests.sh DESTINATION usr/bin)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-valgrind.sh cta-unit-and-integration-tests.sh DESTINATION usr/bin)
 install(FILES valgrind.suppr helgrind.suppr ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile DESTINATION usr/share/cta-${CTA_VERSION}/unittest/)
 
 if (OCCI_SUPPORT)
-  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cta-rdbmsUnitTests-oracle.sh DESTINATION usr/bin)
-  install(FILES cta-rdbmsUnitTests-oracle.suppr DESTINATION usr/share/cta-${CTA_VERSION}/unittest/)
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-rdbms-oracle.sh DESTINATION usr/bin)
+  install(FILES cta-unit-tests-rdbms-oracle.suppr DESTINATION usr/share/cta-${CTA_VERSION}/unittest/)
 endif ()
