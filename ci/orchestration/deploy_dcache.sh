@@ -36,6 +36,7 @@ check_helm_installed() {
 
 deploy() {
   project_json_path="../../project.json"
+  script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
   dcache_chart_version=$(jq -r .dev.dCacheChartVersion ${project_json_path})
 
   # Parse command line arguments
@@ -85,6 +86,9 @@ deploy() {
 
   helm repo add dcache https://gitlab.desy.de/api/v4/projects/7648/packages/helm/test
   helm repo update
+  dcache_chart_dir=$(mktemp -d)
+  helm pull dcache/dcache --version "${dcache_chart_version}" --untar --untardir "${dcache_chart_dir}"
+  git -C "${dcache_chart_dir}/dcache" apply --no-index "${script_dir}/manifests/dcache-mtls.patch"
   log_run kubectl -n ${namespace} apply -f manifests/dcache-pg-deployment.yaml
   log_run kubectl -n ${namespace} apply -f manifests/dcache-zookeeper-deployment.yaml
   log_run kubectl -n ${namespace} apply -f manifests/dcache-kafka-deployment.yaml
@@ -92,11 +96,15 @@ deploy() {
   kubectl -n ${namespace} wait --for=condition=Ready pod/zookeeper-0
   kubectl -n ${namespace} wait --for=condition=Ready pod/kafka-0
   kubectl -n ${namespace} exec kafka-0 -- /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic billing
-  log_run helm install -n ${namespace} store dcache/dcache --version ${dcache_chart_version} \
+  log_run helm install -n ${namespace} store "${dcache_chart_dir}/dcache" \
                                        --replace --wait --timeout 5m0s \
                                        --set dcache.hsm.enabled=true \
                                        --values presets/dev-dcache-values.yaml \
-                                       ${helm_flags}
+                                       ${helm_flags} \
+                                       --set-string dcache.plugins.cta.useTls=mtls \
+                                       --set-string dcache.plugins.cta.caChain=/etc/grpc-certs/ca.crt.pem \
+                                       --set-string dcache.plugins.cta.tlsCert=/etc/grpc-certs/dcache.crt.pem \
+                                       --set-string dcache.plugins.cta.tlsKey=/etc/grpc-certs/dcache.key.pem
 }
 
 check_helm_installed
