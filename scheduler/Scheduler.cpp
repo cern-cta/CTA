@@ -15,6 +15,7 @@
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/dataStructures/PhysicalLibrary.hpp"
+#include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
@@ -243,6 +244,21 @@ uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures
       validItems[i].promise.set_value(archiveReqAddrVector[i]);
       successfulJobs += validItems[i].copyToPoolMap.size();
       queuedItems.push_back(i);
+    }
+  } catch (const exception::LostDatabaseConnection& e) {
+    // Connection loss is systemic, not row-specific: every one of the per-item retries below would
+    // very likely fail identically, for the exact same reason, while every follower in this batch
+    // sits blocked waiting for them all to run out first. Fail the whole batch immediately instead,
+    // rather than falling back to inserting it one request at a time.
+    log::ScopedParamContainer(lc)
+      .add("batchSize", validItems.size())
+      .add("exceptionMessage", e.what())
+      .log(log::WARNING,
+           "In Scheduler::processEnqueuedBatch(): bulk archive insert failed due to lost database "
+           "connection, failing this batch instead of retrying it one request at a time");
+    for (auto& item : validItems) {
+      item.promise.set_exception(std::current_exception());
+      failedJobs += item.copyToPoolMap.size();
     }
   } catch (const std::exception& e) {
     log::ScopedParamContainer(lc)
