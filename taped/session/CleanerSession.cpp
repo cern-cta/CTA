@@ -395,5 +395,5 @@ void cta::tape::daemon::CleanerSession::dismountTape(const std::string& vid) {
     m_lc.log(cta::log::DEBUG, "Cleaner requesting robotic tape dismount");
   }
   m_mediachanger.dismountTape(vid, librarySlot);
-  m_lc.log(cta::log::DEBUG, "Cleaner completed robotic tape dismount");
+  m_lc.log(cta::log::DEBUG, "Cleaner dismounted tape");
 }
