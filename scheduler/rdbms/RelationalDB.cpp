@@ -81,9 +81,7 @@ std::vector<std::string>
 RelationalDB::queueArchive(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
                            log::LogContext& lc) {
   std::vector<std::unique_ptr<schedulerdb::postgres::ArchiveJobQueueRow>> rowsToInsert;
-  std::vector<std::string> ret_bogus_strings;
   std::vector<uint32_t> groupIds;
-  ret_bogus_strings.reserve(batch.size());
   auto sqlconn = m_connPool.getConn();
   lc.log(log::DEBUG, "In RelationalDB::queueArchive(): 1.");
   uint64_t totalJobCount = 0;
@@ -93,7 +91,6 @@ RelationalDB::queueArchive(std::vector<cta::common::dataStructures::ArchiveInser
   rowsToInsert.reserve(totalJobCount);
   for (size_t i = 0; i < batch.size(); ++i) {
     auto& item = batch[i];
-    ret_bogus_strings.emplace_back("bogus");
 
     // Construct the archive request object
     schedulerdb::ArchiveRequest aReq(sqlconn, lc);
@@ -153,7 +150,13 @@ RelationalDB::queueArchive(std::vector<cta::common::dataStructures::ArchiveInser
 
   lc.log(log::INFO, "In RelationalDB::queueArchive(): enqueued archive.");
 
-  return ret_bogus_strings;
+  // The scheduler DB does not hand back a real per-request address the way the objectstore did;
+  // "bogus" is kept only because callers still expect one string per request, matching
+  // ArchiveRequest::getIdStr() (see its own comment), which the single-item queueArchive()
+  // overload just below returns for the same reason. Built only now that the insert above is
+  // confirmed to have succeeded, so a failed call never returns placeholder entries for requests
+  // which were not actually inserted.
+  return std::vector<std::string>(batch.size(), "bogus");
 }
 
 std::string RelationalDB::queueArchive(const std::string& instanceName,
