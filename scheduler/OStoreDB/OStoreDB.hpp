@@ -453,6 +453,10 @@ public:
                 const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
                 const std::optional<std::string>& diskSystemName,
                 log::LogContext& logContext) override;
+  std::vector<std::string> queueRetrieve(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
+                                         log::LogContext& lc) override {
+    throw cta::exception::Exception("Not supported for OStoreDB implementation.");
+  }
   void cancelRetrieve(const std::string& instanceName,
                       const cta::common::dataStructures::CancelRetrieveRequest& rqst,
                       log::LogContext& lc) override;

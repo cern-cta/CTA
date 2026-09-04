@@ -170,6 +170,9 @@ public:
                 const std::optional<std::string>& diskSystemName,
                 log::LogContext& logContext) override;
 
+  std::vector<std::string> queueRetrieve(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
+                                         log::LogContext& lc) override;
+
   void clearStatisticsCache(const std::string& vid) override;
 
   void setStatisticsCacheConfig(const StatisticsCacheConfig& conf) override;

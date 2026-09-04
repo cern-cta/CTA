@@ -400,6 +400,16 @@ public:
                                             const std::optional<std::string>& diskSystemName,
                                             log::LogContext& logContext) = 0;
 
+  /**
+   * Bulk-queues a whole batch of retrieve requests at once, for opportunistic request batching (see
+   * the archive queueArchive() overload just above). Each item's queueCriteria/diskSystemName are
+   * expected to already be resolved (the caller's stage 1); this call resolves the VID to read each
+   * one from (item.selectedVid) and does the actual insert. Returns one request ID string per item,
+   * in the same order as batch, mirroring queueArchive()'s bulk overload.
+   */
+  virtual std::vector<std::string> queueRetrieve(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
+                                                 log::LogContext& lc) = 0;
+
   virtual void cancelRetrieve(const std::string& instanceName,
                               const cta::common::dataStructures::CancelRetrieveRequest& rqst,
                               log::LogContext& lc) = 0;

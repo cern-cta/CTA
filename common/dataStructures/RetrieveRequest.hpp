@@ -10,7 +10,9 @@
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
+#include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 
+#include <future>
 #include <list>
 #include <map>
 #include <optional>
@@ -53,5 +55,26 @@ struct RetrieveRequest {
 };  // struct RetrieveRequest
 
 std::ostream& operator<<(std::ostream& os, const RetrieveRequest& obj);
+
+/**
+ * One request opportunistically batched by Scheduler::queueRetrieve(). instanceName/request are the
+ * caller's input; criteria/diskSystemName are resolved per item in stage 1 (catalogue lookup); the
+ * copy to read from is only decided during stage 2 (bulk insert), so selectedVid is left empty until
+ * then, same as queued below (see ArchiveInsertQueueItem for why copyToPoolMap-style "still empty"
+ * checks alone can't tell success from failure).
+ */
+struct RetrieveInsertQueueItem {
+  std::string instanceName;
+  cta::common::dataStructures::RetrieveRequest request;
+  cta::common::dataStructures::RetrieveFileQueueCriteria criteria;
+  std::optional<std::string> diskSystemName;
+  std::string selectedVid;
+
+  // Resolves to the request ID (a placeholder "bogus" string, like ArchiveInsertQueueItem's promise
+  // — see ArchiveRequest::getIdStr()'s own comment), which is all Scheduler::queueRetrieve() itself
+  // returns to its own caller.
+  std::promise<std::string> promise;
+  bool queued = false;
+};
 
 }  // namespace cta::common::dataStructures

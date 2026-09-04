@@ -582,6 +582,73 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
   }
 }
 
+std::vector<std::string>
+RelationalDB::queueRetrieve(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
+                            log::LogContext& lc) {
+  // For opportunistic batching of user retrieve requests (Scheduler::queueRetrieve()), following the
+  // same shape already used for repack's own bulk retrieve queueing (RepackRequest.cpp): build one
+  // RetrieveJobQueueRow per item (VID selection included, same as the single-item overload above),
+  // then insert them all in a single statement via RetrieveJobQueueRow::insertBatch(), rather than
+  // one INSERT per item.
+  utils::Timer timeTotal;
+  auto sqlconn = m_connPool.getConn();
+
+  // Pre-warm the tape status cache for every candidate vid across the whole batch in one catalogue
+  // call, rather than letting each item's own selectBestVid4Retrieve() call below lazily fetch cold
+  // vids one at a time.
+  std::set<std::string, std::less<>> allCandidateVids;
+  for (auto& item : batch) {
+    for (auto& tf : item.criteria.archiveFile.tapeFiles) {
+      allCandidateVids.insert(tf.vid);
+    }
+  }
+  cta::schedulerdb::Helpers::warmTapeStatusCache(allCandidateVids, m_catalogue);
+
+  std::vector<std::unique_ptr<schedulerdb::postgres::RetrieveJobQueueRow>> rowsToInsert;
+  rowsToInsert.reserve(batch.size());
+
+  for (auto& item : batch) {
+    std::set<std::string, std::less<>> candidateVids;
+    for (auto& tf : item.criteria.archiveFile.tapeFiles) {
+      candidateVids.insert(tf.vid);
+    }
+    item.selectedVid = cta::schedulerdb::Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, sqlconn, false);
+
+    uint8_t bestCopyNb = 0;
+    for (auto& tf : item.criteria.archiveFile.tapeFiles) {
+      if (tf.vid == item.selectedVid) {
+        bestCopyNb = tf.copyNb;
+        // Appending the file size to the dstURL so that XrootD will fail to retrieve if there is
+        // not enough free space in the eos disk.
+        item.request.appendFileSizeToDstURL(tf.fileSize);
+        break;
+      }
+    }
+
+    schedulerdb::RetrieveRequest rReq(sqlconn, lc);
+    rReq.setActivityIfNeeded(item.request, item.criteria);
+    rReq.setSchedulerRequest(item.request);
+    rReq.fillJobsSetRetrieveFileQueueCriteria(item.criteria);  // fills also m_jobs
+    rReq.setActiveCopyNumber(bestCopyNb);
+    rReq.setIsVerifyOnly(item.request.isVerifyOnly);
+    rReq.setDiskSystemName(item.diskSystemName);
+
+    rowsToInsert.emplace_back(rReq.makeJobRow());
+  }
+
+  schedulerdb::postgres::RetrieveJobQueueRow::insertBatch(sqlconn, rowsToInsert, /*isRepack=*/false);
+
+  log::ScopedParamContainer(lc)
+    .add("nrows", rowsToInsert.size())
+    .add("totalTime", timeTotal.secs())
+    .log(log::INFO, "In RelationalDB::queueRetrieve(): Finished enqueueing batch.");
+
+  // Same placeholder convention as queueArchive()'s bulk overload: getIdStr() always returns
+  // "bogus" too (see RetrieveRequest::getIdStr()'s own comment), so there's no need to call it once
+  // per item just to build this.
+  return std::vector<std::string>(batch.size(), "bogus");
+}
+
 void RelationalDB::cancelRetrieve(const std::string& instanceName,
                                   const cta::common::dataStructures::CancelRetrieveRequest& request,
                                   log::LogContext& lc) {

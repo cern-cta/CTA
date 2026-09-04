@@ -249,6 +249,11 @@ public:
     return m_SchedDB->queueRetrieve(rqst, criteria, diskSystemName, logContext);
   }
 
+  std::vector<std::string> queueRetrieve(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
+                                         log::LogContext& lc) override {
+    return m_SchedDB->queueRetrieve(batch, lc);
+  }
+
   void cancelArchive(const common::dataStructures::DeleteArchiveRequest& request, log::LogContext& lc) override {
     m_SchedDB->cancelArchive(request, lc);
   }
