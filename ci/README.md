@@ -20,14 +20,26 @@ This directory contains all the files necessary for development and automation w
 ### CTA development versions
 
 `cta-dev` uses one identifier for CTA packages and container images:
-`<cta-version>-<cta-version-suffix>`. The base version accepts numbers and dots;
-the suffix accepts lowercase letters, numbers, dots, and hyphens. For example,
-the defaults `5` and `dev` produce package version and image tag `5-dev`.
+`--cta-version <version>-<suffix>`, which defaults to `5-dev`. The part before the
+first hyphen becomes the RPM version and accepts numbers and dots; the part after
+it becomes the RPM release and accepts lowercase letters, numbers, dots, and
+hyphens. CMake historically exposes the suffix as `VCS_VERSION`. `cta-dev` splits
+the identifier and passes the two parts separately to the underlying build
+scripts, which is also how the CI invokes them.
 
-Configure these values with `--cta-version` and `--cta-version-suffix`, or copy
-`.cta-dev.env.example` to `.cta-dev.env` and set `CTA_DEV_CTA_VERSION` and
-`CTA_DEV_CTA_VERSION_SUFFIX`. CMake historically exposes the suffix as
-`VCS_VERSION`; the developer and CI interfaces call it the CTA version suffix.
+The CTA version is also the tag of the container images built from those RPMs, so
+`build`, `images`, `up`, `debug`, and `all` take `--cta-version` only.
+
+`deploy` additionally accepts `--cta-image-tag` to deploy images that were built
+elsewhere, for example a CI image tag such as `5426528gitf4d8f0eb`. It cannot be
+combined with `--cta-version`, which selects a locally built version instead.
+Because such a tag normally refers to an image that is not on the local machine,
+`--cta-image-tag` also switches the image registry from `localhost` to the CI
+registry; override that with `--cta-image-registry`.
+
+Configure the default CTA version with `--cta-version`, or copy
+`.cta-dev.env.example` to `.cta-dev.env` and set `CTA_DEV_CTA_VERSION`. The image
+tag and registry are command-line options only.
 
 ## Useful links
 

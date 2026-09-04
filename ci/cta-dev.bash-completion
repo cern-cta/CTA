@@ -2,7 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 _ctadev() {
-    local -r project_root=$(git rev-parse --show-toplevel)
+    local cta_dev_path project_root
+    cta_dev_path=$(type -P cta-dev) || return
+    cta_dev_path=$(realpath "$cta_dev_path" 2>/dev/null) || return
+    project_root=$(git -C "$(dirname "$cta_dev_path")" rev-parse --show-toplevel 2>/dev/null) || return
+
+    readonly project_root
     local cur prev command
     COMPREPLY=()
 
@@ -20,7 +25,6 @@ _ctadev() {
 
     local version_opts="
         --cta-version
-        --cta-version-suffix
     "
 
     local build_opts="
@@ -36,6 +40,12 @@ _ctadev() {
     "
 
     local image_opts=""
+
+    # Only valid for deploy: every other command deploys the images it just built locally.
+    local deploy_only_opts="
+        --cta-image-tag
+        --cta-image-registry
+    "
 
     local deploy_opts="
         --with-dcache
@@ -78,7 +88,13 @@ _ctadev() {
         --namespace)
             return
             ;;
-        --cta-version|--cta-version-suffix|--eos-image-tag|--eos-image-repository|--spawn-options)
+        --cta-image-registry)
+            COMPREPLY=( $(compgen -W \
+                "localhost $(jq -r .dev.ctaImageRegistry "${project_root}/project.json")" \
+                -- "$cur") )
+            return
+            ;;
+        --cta-version|--cta-image-tag|--eos-image-tag|--eos-image-repository|--spawn-options)
             return
             ;;
         --catalogue-config|--scheduler-config|--cta-config|--eos-config)
@@ -140,7 +156,7 @@ _ctadev() {
             ;;
         deploy)
             COMPREPLY=( $(compgen -W \
-                "$global_opts $version_opts $deploy_opts" \
+                "$global_opts $version_opts $deploy_opts $deploy_only_opts" \
                 -- "$cur") )
             ;;
         test)
