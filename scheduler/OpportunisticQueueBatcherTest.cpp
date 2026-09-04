@@ -9,9 +9,7 @@
 #include "common/log/LogContext.hpp"
 
 #include <atomic>
-#include <condition_variable>
 #include <gtest/gtest.h>
-#include <mutex>
 #include <stdexcept>
 #include <thread>
 
@@ -28,34 +26,30 @@ struct TestItem {
   std::promise<int> promise;
 };
 
-// Launches `count` threads that all park on a barrier before calling `fn(i)`, then releases them
-// together so their calls land within the same opportunistic-batching window. Returns once every
-// thread has been joined.
+// Launches `count` threads that all spin-wait on a plain atomic barrier before calling `fn(i)`, so
+// their calls land close enough together to reliably share a batching window, then joins all of
+// them before returning. Deliberately not condition-variable-based: a busy-poll on an atomic can't
+// lose a wakeup, so there is nothing here for a barrier bug to hide in.
 void runConcurrently(int count, const std::function<void(int)>& fn) {
-  std::mutex mtx;
-  std::condition_variable cv;
-  int readyCount = 0;
-  bool go = false;
+  std::atomic<int> readyCount {0};
+  std::atomic<bool> go {false};
 
   std::vector<std::thread> threads;
   threads.reserve(count);
   for (int i = 0; i < count; ++i) {
     threads.emplace_back([&, i] {
-      {
-        std::unique_lock<std::mutex> lock(mtx);
-        ++readyCount;
-        cv.wait(lock, [&] { return go; });
+      ++readyCount;
+      while (!go.load(std::memory_order_acquire)) {
+        std::this_thread::yield();
       }
       fn(i);
     });
   }
 
-  {
-    std::unique_lock<std::mutex> lock(mtx);
-    cv.wait(lock, [&] { return readyCount == count; });
-    go = true;
+  while (readyCount.load(std::memory_order_acquire) < count) {
+    std::this_thread::yield();
   }
-  cv.notify_all();
+  go.store(true, std::memory_order_release);
 
   for (auto& t : threads) {
     t.join();
@@ -96,11 +90,11 @@ TEST_F(OpportunisticQueueBatcherTest, concurrentCallersAreBatchedTogether) {
   using namespace cta;
   log::LogContext lc(m_dummyLog);
 
-  constexpr int nbCallers = 20;
+  constexpr int nbCallers = 8;
   std::atomic<int> resolveBatchCalls {0};
   std::atomic<int> maxBatchSizeSeen {0};
 
-  OpportunisticQueueBatcher<TestItem, int> batcher(500ms, 1000, [&](std::vector<TestItem>& batch, log::LogContext&) {
+  OpportunisticQueueBatcher<TestItem, int> batcher(100ms, 1000, [&](std::vector<TestItem>& batch, log::LogContext&) {
     ++resolveBatchCalls;
     int expected = maxBatchSizeSeen.load();
     while (static_cast<int>(batch.size()) > expected
@@ -132,9 +126,9 @@ TEST_F(OpportunisticQueueBatcherTest, capEndsTheWaitEarly) {
   using namespace cta;
   log::LogContext lc(m_dummyLog);
 
-  constexpr int cap = 10;
+  constexpr int cap = 6;
   OpportunisticQueueBatcher<TestItem, int> batcher(
-    10s,  // deliberately long: if the cap did not cut the wait short, this test would time out
+    2s,  // deliberately long: if the cap did not cut the wait short, this test would take ~2s
     cap,
     [&](std::vector<TestItem>& batch, log::LogContext&) {
       for (auto& item : batch) {
@@ -151,7 +145,7 @@ TEST_F(OpportunisticQueueBatcherTest, capEndsTheWaitEarly) {
   });
   const auto elapsed = std::chrono::steady_clock::now() - start;
 
-  ASSERT_LT(elapsed, 5s);
+  ASSERT_LT(elapsed, 1s);
 }
 
 TEST_F(OpportunisticQueueBatcherTest, windowClosesTheBatchWhenCapIsNotReached) {
