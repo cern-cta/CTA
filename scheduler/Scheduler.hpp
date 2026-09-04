@@ -37,6 +37,7 @@
 #include "scheduler/TapeMount.hpp"
 #include "taped/daemon/common/TapedConfiguration.hpp"
 
+#include <chrono>
 #include <list>
 #include <map>
 #include <memory>
@@ -77,6 +78,8 @@ public:
             SchedulerDatabase& db,
             const std::string& schedulerBackendName,
             const bool enableOpportunisticBatching = false,
+            const uint64_t opportunisticBatchingWindowMs = 50,
+            const uint64_t opportunisticBatchingMaxBatchSize = 1000,
             const uint64_t minFilesToWarrantAMount = 5,
             const uint64_t minBytesToWarrantAMount = 2000000);
   // TODO: we have out the mount policy parameters here temporarily we will
@@ -644,6 +647,15 @@ private:
   uint64_t processEnqueuedBatch(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
                                 log::LogContext& lc);
   bool m_enqueueBatchInProgress = false;
+  /**
+   * Maximum time the leader waits for concurrent requests to join its batch before processing it,
+   * and the maximum number of requests it will wait to accumulate: whichever limit is hit first
+   * ends the wait. A longer window/larger cap means fewer, bigger DB round trips (more efficient
+   * under load) at the cost of more added latency per request; a shorter window/smaller cap means
+   * less added latency but less batching benefit.
+   */
+  const std::chrono::milliseconds m_opportunisticBatchingWindow;
+  const size_t m_opportunisticBatchingMaxBatchSize;
   std::mutex m_mutexOpportunisticBatching;
   std::condition_variable m_cvOpportunisticBatching;
   std::vector<cta::common::dataStructures::ArchiveInsertQueueItem> m_opportunisticInsertBatch;
