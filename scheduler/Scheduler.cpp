@@ -15,7 +15,6 @@
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/dataStructures/PhysicalLibrary.hpp"
-#include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
@@ -159,6 +158,18 @@ uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures
       .log(log::WARNING, logMsg);
   };
 
+  auto failWholeBatch = [&lc, &failedJobs](std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& items,
+                                           const std::string& exceptionMessage) {
+    log::ScopedParamContainer(lc)
+      .add("batchSize", items.size())
+      .add("exceptionMessage", exceptionMessage)
+      .log(log::WARNING, "In Scheduler::processEnqueuedBatch(): bulk archive insert failed, failing this batch");
+    for (auto& item : items) {
+      item.promise.set_exception(std::current_exception());
+      failedJobs += item.copyToPoolMap.size();
+    }
+  };
+
   // Releases any followers waiting on this batch. Must run on every path out of this function once
   // every item's promise is settled — including the validItems.empty() early return below, where
   // stage 1 already settled (via set_exception) every item in the batch and stage 2 never runs. A
@@ -210,11 +221,15 @@ uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures
       // Job count for this item is unknown (it never got a copyToPoolMap), so it counts as 1
       // failed request standing in for however many jobs it would have produced.
       failedJobs += 1;
-      logFailedItem(item, ex.what(), "In Scheduler::processEnqueuedBatch(): failed to resolve archive queue criteria for request");
+      logFailedItem(item,
+                    ex.what(),
+                    "In Scheduler::processEnqueuedBatch(): failed to resolve archive queue criteria for request");
     } catch (...) {
       item.promise.set_exception(std::current_exception());
       failedJobs += 1;
-      logFailedItem(item, "unknown exception", "In Scheduler::processEnqueuedBatch(): failed to resolve archive queue criteria for request");
+      logFailedItem(item,
+                    "unknown exception",
+                    "In Scheduler::processEnqueuedBatch(): failed to resolve archive queue criteria for request");
     }
   }
 
@@ -224,12 +239,16 @@ uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures
   }
 
   // Stage 2: bulk insert of the items which passed stage 1. This is one SQL statement in one
-  // transaction, so a single bad row can still fail all of validItems here; if it does, fall back
-  // to inserting them one at a time (reusing the same single-item DB call the file-by-file path
-  // uses) so we find out exactly which ones are actually bad instead of failing all of them for a
-  // problem that may only affect one. queuedItems collects, by index into validItems, the items
-  // that actually got queued (reached promise.set_value) so they can be audit-logged below without
-  // re-deriving success/failure.
+  // transaction, so a single bad row fails all of validItems here, not just itself — but unlike
+  // stage 1, this is not retried item by item. Stage 1 already isolated the kind of per-item data
+  // problem worth isolating (an unknown storage class, a bad requester), so what's left to make the
+  // bulk insert itself fail is mostly systemic (lost connection, deadlock, timeout) and would very
+  // likely fail every one of the N individual retries identically, while every follower in this
+  // batch sits blocked waiting for them all to run out. A genuine one-off case (e.g. a duplicate
+  // archiveFileId from a client retry) is recoverable the normal way: the caller gets an error and
+  // retries, rather than paying an unbounded-latency tail for every unrelated request in the batch.
+  // queuedItems collects, by index into validItems, the items that actually got queued (reached
+  // promise.set_value) so they can be audit-logged below without re-deriving success/failure.
   std::vector<size_t> queuedItems;
   queuedItems.reserve(validItems.size());
   try {
@@ -245,49 +264,10 @@ uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures
       successfulJobs += validItems[i].copyToPoolMap.size();
       queuedItems.push_back(i);
     }
-  } catch (const exception::LostDatabaseConnection& e) {
-    // Connection loss is systemic, not row-specific: every one of the per-item retries below would
-    // very likely fail identically, for the exact same reason, while every follower in this batch
-    // sits blocked waiting for them all to run out first. Fail the whole batch immediately instead,
-    // rather than falling back to inserting it one request at a time.
-    log::ScopedParamContainer(lc)
-      .add("batchSize", validItems.size())
-      .add("exceptionMessage", e.what())
-      .log(log::WARNING,
-           "In Scheduler::processEnqueuedBatch(): bulk archive insert failed due to lost database "
-           "connection, failing this batch instead of retrying it one request at a time");
-    for (auto& item : validItems) {
-      item.promise.set_exception(std::current_exception());
-      failedJobs += item.copyToPoolMap.size();
-    }
   } catch (const std::exception& e) {
-    log::ScopedParamContainer(lc)
-      .add("batchSize", validItems.size())
-      .add("exceptionMessage", e.what())
-      .log(log::WARNING,
-           "In Scheduler::processEnqueuedBatch(): bulk archive insert failed, falling back to "
-           "inserting this batch one request at a time");
-    for (size_t i = 0; i < validItems.size(); ++i) {
-      auto& item = validItems[i];
-      try {
-        const common::dataStructures::ArchiveFileQueueCriteriaAndFileId criteria(item.archiveFileId,
-                                                                                 item.copyToPoolMap,
-                                                                                 item.mountPolicy);
-        item.promise.set_value(m_db.queueArchive(item.instanceName, item.request, criteria, lc));
-        successfulJobs += item.copyToPoolMap.size();
-        queuedItems.push_back(i);
-      } catch (const std::exception& ex) {
-        item.promise.set_exception(std::current_exception());
-        // Unlike the stage-1 case, this item's job count is known: it already has a resolved
-        // copyToPoolMap, it just failed to actually get inserted.
-        failedJobs += item.copyToPoolMap.size();
-        logFailedItem(item, ex.what(), "In Scheduler::processEnqueuedBatch(): failed to queue archive request");
-      } catch (...) {
-        item.promise.set_exception(std::current_exception());
-        failedJobs += item.copyToPoolMap.size();
-        logFailedItem(item, "unknown exception", "In Scheduler::processEnqueuedBatch(): failed to queue archive request");
-      }
-    }
+    failWholeBatch(validItems, e.what());
+  } catch (...) {
+    failWholeBatch(validItems, "unknown exception");
   }
 
   // Release followers waiting on this batch as soon as their results exist, before doing the
@@ -300,8 +280,8 @@ uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures
   // insert(s)) — the actual wall time of queueing this batch — timed here rather than by the caller
   // in queueArchiveWithGivenId(), whose own elapsed time also includes the opportunistic-batching
   // wait/sleep, which is about the batching mechanism, not the queueing work itself. Job count only
-  // includes items that actually got queued, not merely items which passed stage 1, so a partial
-  // failure in the fallback loop above doesn't inflate the reported throughput.
+  // includes items that actually got queued, not merely items which passed stage 1, so a stage-2
+  // failure (which fails every item in validItems) doesn't inflate the reported throughput.
   auto batchTimeMSecs = batchTimer.msecs();
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
     batchTimeMSecs,
@@ -328,7 +308,7 @@ uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures
         {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kEnqueue},
         {cta::semconv::attr::kSchedulerOperationWorkflow,
          cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                                             },
-        {cta::semconv::attr::kErrorType,                  cta::semconv::attr::ErrorTypeValues::kException          }
+        {cta::semconv::attr::kErrorType,                  cta::semconv::attr::ErrorTypeValues::kException           }
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
   }
