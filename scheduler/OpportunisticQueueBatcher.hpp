@@ -28,15 +28,15 @@ namespace cta {
  * ItemType must have a public member `std::promise<ResultType> promise`.
  */
 template<typename ItemType, typename ResultType>
-class OpportunisticBatcher {
+class OpportunisticQueueBatcher {
 public:
   using ResolveBatchFn = std::function<void(std::vector<ItemType>&, log::LogContext&)>;
   using AfterReleaseFn = std::function<void(std::vector<ItemType>&, log::LogContext&)>;
 
-  OpportunisticBatcher(std::chrono::milliseconds window,
-                       size_t maxBatchSize,
-                       ResolveBatchFn resolveBatch,
-                       AfterReleaseFn afterRelease = {})
+  OpportunisticQueueBatcher(std::chrono::milliseconds window,
+                            size_t maxBatchSize,
+                            ResolveBatchFn resolveBatch,
+                            AfterReleaseFn afterRelease = {})
       : m_window(window),
         m_maxBatchSize(maxBatchSize),
         m_resolveBatch(std::move(resolveBatch)),
@@ -119,5 +119,29 @@ private:
   bool m_leaderInProgress = false;
   std::vector<ItemType> m_pendingBatch;
 };
+
+/**
+ * Shared stage-2 "give up on the whole batch" policy: fails every item in `items` with the
+ * exception currently being handled (call only from inside a catch block), logging one WARNING for
+ * the batch rather than one per item. `countPerItem` lets each workflow define what a "failure"
+ * counts as for its own telemetry — e.g. archive counts jobs (copyToPoolMap.size(), since one
+ * archive request can produce several), retrieve counts 1 per item (a retrieve request is always
+ * exactly one job).
+ */
+template<typename ItemType>
+void failWholeBatch(std::vector<ItemType>& items,
+                    log::LogContext& lc,
+                    const std::string& exceptionMessage,
+                    const char* logMsg,
+                    uint64_t& failedCount,
+                    const std::function<uint64_t(const ItemType&)>& countPerItem) {
+  log::ScopedParamContainer(lc).add("batchSize", items.size()).add("exceptionMessage", exceptionMessage).log(
+    log::WARNING,
+    logMsg);
+  for (auto& item : items) {
+    item.promise.set_exception(std::current_exception());
+    failedCount += countPerItem(item);
+  }
+}
 
 }  // namespace cta
