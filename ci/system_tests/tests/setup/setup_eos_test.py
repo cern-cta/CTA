@@ -42,7 +42,7 @@ def test_general_settings(eos_mgm: EosMgmHost) -> None:
             "eos fs ls -m | grep 'configstatus=rw' | grep -Eq 'stat.statfs.freebytes=[1-9][0-9]*'",
             throw_on_failure=False,
         )
-        if result.returncode == 0:
+        if result.success:
             return
         time.sleep(1)
 
