@@ -67,7 +67,7 @@ test-cta-valgrind:
     - !reference [.merge-train-guard, before_script]
     - *setup-cta-install
   script:
-    - /usr/bin/cta-unitPlusIntegrationTests.sh
+    - /usr/bin/cta-unit-and-integration-tests.sh
 
 integration-test-cta:
   # Sometimes flaky due to "resource unavailable" error
@@ -108,8 +108,8 @@ unit-test-cta:
     - !reference [.merge-train-guard, before_script]
     - *setup-cta-install
   script:
-    - /usr/bin/cta-unitTests-multiProcess
-    - /usr/bin/cta-unitTests
+    - /usr/bin/cta-unit-tests-multiprocess
+    - /usr/bin/cta-unit-tests
   artifacts:
     reports:
       junit: $GTEST_REPORT_FILE
@@ -151,9 +151,9 @@ unit-test-postgresql:
     - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
     - |
       if $[[ inputs.enable-valgrind ]]; then
-        valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+        valgrind /usr/bin/cta-unit-tests-rdbms ${CTA_CATALOGUE_CONF}
       else
-        /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+        /usr/bin/cta-unit-tests-rdbms ${CTA_CATALOGUE_CONF}
       fi
     - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
   artifacts:
@@ -190,9 +190,9 @@ unit-test-oracle:
     - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
     - |
       if $[[ inputs.enable-valgrind ]]; then
-        valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+        valgrind /usr/bin/cta-unit-tests-rdbms ${CTA_CATALOGUE_CONF}
       else
-        /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+        /usr/bin/cta-unit-tests-rdbms ${CTA_CATALOGUE_CONF}
       fi
   # Adding this resource group ensures only a single instance of this job can run at any given time
   # This is necessary as the job uses a single account on a centralized database.
