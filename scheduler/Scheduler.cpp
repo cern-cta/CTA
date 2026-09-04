@@ -51,6 +51,8 @@ Scheduler::Scheduler(catalogue::Catalogue& catalogue,
                      SchedulerDatabase& db,
                      const std::string& schedulerBackendName,
                      [[maybe_unused]] const bool enableOpportunisticBatching,
+                     [[maybe_unused]] const uint64_t opportunisticBatchingWindowMs,
+                     [[maybe_unused]] const uint64_t opportunisticBatchingMaxBatchSize,
                      const uint64_t minFilesToWarrantAMount,
                      const uint64_t minBytesToWarrantAMount)
     : m_catalogue(catalogue),
@@ -60,7 +62,9 @@ Scheduler::Scheduler(catalogue::Catalogue& catalogue,
       m_minBytesToWarrantAMount(minBytesToWarrantAMount)
 #ifdef CTA_PGSCHED
       ,
-      m_enableOpportunisticBatching(enableOpportunisticBatching)
+      m_enableOpportunisticBatching(enableOpportunisticBatching),
+      m_opportunisticBatchingWindow(opportunisticBatchingWindowMs),
+      m_opportunisticBatchingMaxBatchSize(opportunisticBatchingMaxBatchSize)
 #endif
 {
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
@@ -397,6 +401,15 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
       future = m_opportunisticInsertBatch.back().promise.get_future();
       lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 1 : " + std::to_string(archiveFileId));
 
+      if (m_opportunisticInsertBatch.size() >= m_opportunisticBatchingMaxBatchSize) {
+        // Wakes every waiter on this cv, not just the leader. The leader's predicate (batch full)
+        // is now true, so its wait_for() below returns and it starts processing. Any other follower
+        // woken here just re-checks its own two conditions below (own future ready? no one leading?
+        // no), finds both still false, and goes straight back to sleep — harmless, and no different
+        // from the notify_all() already done once per batch at the end of processEnqueuedBatch().
+        m_cvOpportunisticBatching.notify_all();
+      }
+
       // Leadership election loop
       while (!isLeader) {
         // If my request is already processed, return
@@ -427,17 +440,23 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
     if (isLeader) {
       lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 6 : " + std::to_string(archiveFileId));
 
-      // Opportunistic batching window - with 0 ms, it still bunches but then it calls at 200Hz - 5ms duration which we can batch to contact db less
-      std::this_thread::sleep_for(std::chrono::milliseconds(50));
-      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 7 : " + std::to_string(archiveFileId));
-
       std::vector<cta::common::dataStructures::ArchiveInsertQueueItem> batch;
 
       {
-        // Steal the batch
-        std::lock_guard<std::mutex> lock(m_mutexOpportunisticBatching);
-        lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 8 : " + std::to_string(archiveFileId));
+        // Opportunistic batching window: wait for either the window to elapse or the batch to fill
+        // up to the cap, whichever comes first. wait_for() re-checks the predicate under the lock
+        // before ever sleeping (so a cap already reached by the time we get here returns instantly,
+        // no lost-wakeup race with the notify_all() above), and always re-acquires the lock before
+        // returning — whether woken by that notify, a wakeup meant for someone else on this shared
+        // cv (predicate false, goes back to sleep for what's left of the window), a spurious OS
+        // wakeup (same), or the timeout — so the swap below is always safe to do immediately after.
+        std::unique_lock<std::mutex> lock(m_mutexOpportunisticBatching);
+        m_cvOpportunisticBatching.wait_for(lock, m_opportunisticBatchingWindow, [this] {
+          return m_opportunisticInsertBatch.size() >= m_opportunisticBatchingMaxBatchSize;
+        });
+        lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 7 : " + std::to_string(archiveFileId));
 
+        // Steal the batch
         batch.swap(m_opportunisticInsertBatch);
       }
       lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 9 : " + std::to_string(archiveFileId));
