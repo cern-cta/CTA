@@ -4,15 +4,6 @@
 
 add_subdirectory(cta-catalogue-schema)
 
-add_manpage(
-  cta-catalogue-admin-user-create
-  cta-catalogue-schema-create
-  cta-catalogue-schema-drop
-  cta-catalogue-schema-set-production
-  cta-catalogue-schema-verify
-  cta-database-poll
-)
-
 include_directories (${POSTGRES_INCLUDE_DIRS})
 
 if (OCCI_SUPPORT)
@@ -236,9 +227,13 @@ add_custom_command(
   OUTPUT AllCatalogueSchema.hpp
   COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" bash ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh ${CMAKE_CURRENT_SOURCE_DIR}
   DEPENDS
+    create_all_schemas_SQL
     ${CMAKE_CURRENT_SOURCE_DIR}/CreateAllSchemasCppFile.sh
     ${CMAKE_CURRENT_SOURCE_DIR}/AllCatalogueSchema.hpp.in
 )
+
+add_custom_target(create_all_catalogue_schema_header
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/AllCatalogueSchema.hpp)
 
 add_custom_command(
   OUTPUT sqlite_catalogue_schema.cpp postgres_catalogue_schema.cpp
@@ -363,24 +358,6 @@ install (FILES cta-catalogue.example.conf
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
-set (SCHEMA_CREATE_SRC_FILES
-  AllCatalogueSchema.hpp
-  CreateSchemaCmd.cpp
-  CreateSchemaCmdLineArgs.cpp
-  CreateSchemaCmdMain.cpp
-  VersionedCatalogueSchemas.cpp
-  SqliteCatalogueSchema.cpp
-  PostgresCatalogueSchema.cpp
-)
-
-if (OCCI_SUPPORT)
-  set (SCHEMA_CREATE_SRC_FILES
-    ${SCHEMA_CREATE_SRC_FILES}
-    OracleCatalogueSchema.cpp)
-endif()
-
-add_executable(cta-catalogue-schema-create ${SCHEMA_CREATE_SRC_FILES})
-
 set (SCHEMA_CHECKER_LIB_SRC_FILES
   AllCatalogueSchema.hpp
   SQLiteSchemaInserter.cpp
@@ -405,87 +382,7 @@ endif()
 add_library (ctaschemachecker SHARED
    ${SCHEMA_CHECKER_LIB_SRC_FILES})
 
+add_dependencies(ctaschemachecker
+  create_all_catalogue_schema_header)
+
 install (TARGETS ctaschemachecker DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-
-target_link_libraries (cta-catalogue-schema-create ctacatalogue)
-
-install (TARGETS cta-catalogue-schema-create DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-schema-create.1cta DESTINATION /usr/share/man/man1)
-
-set (DROP_SCHEMA_CMD
-  DropSchemaCmd.cpp
-  DropSchemaCmdLineArgs.cpp
-)
-add_library (ctadropschemacmd SHARED ${DROP_SCHEMA_CMD})
-set_property(TARGET ctadropschemacmd PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET ctadropschemacmd PROPERTY   VERSION "${CTA_LIBVERSION}")
-install (TARGETS ctadropschemacmd DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-target_link_libraries (ctadropschemacmd ctaschemachecker)
-
-add_executable(cta-catalogue-schema-drop DropSchemaCmdMain.cpp)
-
-target_link_libraries (cta-catalogue-schema-drop ctacatalogue ctadropschemacmd)
-
-install (TARGETS cta-catalogue-schema-drop DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-schema-drop.1cta DESTINATION /usr/share/man/man1)
-
-add_executable(cta-catalogue-schema-set-production
-  SetProductionCmd.cpp
-  SetProductionCmdMain.cpp
-  SetProductionCmdLineArgs.cpp
-)
-
-target_link_libraries (cta-catalogue-schema-set-production ctacatalogue ctaschemachecker)
-
-install (TARGETS cta-catalogue-schema-set-production DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-schema-set-production.1cta DESTINATION /usr/share/man/man1)
-
-add_executable(cta-database-poll
-  PollDatabaseCmd.cpp
-  PollDatabaseCmdLineArgs.cpp
-  PollDatabaseCmdMain.cpp)
-
-target_link_libraries (cta-database-poll ctacatalogue)
-
-install (TARGETS cta-database-poll DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-database-poll.1cta DESTINATION /usr/share/man/man1)
-
-add_executable(cta-catalogue-admin-user-create
-  CreateAdminUserCmd.cpp
-  CreateAdminUserCmdLineArgs.cpp
-  CreateAdminUserCmdMain.cpp)
-
-target_link_libraries(cta-catalogue-admin-user-create ctacatalogue)
-
-install(TARGETS cta-catalogue-admin-user-create DESTINATION /usr/bin)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-admin-user-create.1cta DESTINATION /usr/share/man/man1)
-
-add_executable(cta-catalogue-schema-verify
-  VerifySchemaCmd.cpp
-  VerifySchemaCmdLineArgs.cpp
-  VerifySchemaCmdMain.cpp)
-
-target_link_libraries(cta-catalogue-schema-verify ctacatalogue ctaschemachecker)
-
-install (TARGETS cta-catalogue-schema-verify DESTINATION /usr/bin)
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-schema-verify.1cta DESTINATION /usr/share/man/man1)
-
-
-set (CATALOGUE_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES
-  CreateAdminUserCmdLineArgs.cpp
-  CreateAdminUserCmdLineArgsTest.cpp
-  CreateSchemaCmdLineArgs.cpp
-  CreateSchemaCmdLineArgsTest.cpp
-  VerifySchemaCmdLineArgs.cpp
-  VerifySchemaCmdLineArgsTest.cpp
-  DropSchemaCmdLineArgs.cpp
-  DropSchemaCmdLineArgsTest.cpp
-  PollDatabaseCmdLineArgs.cpp
-  PollDatabaseCmdLineArgsTest.cpp)
-
-add_library (ctacataloguecmdlineunittests SHARED
-  ${CATALOGUE_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES})
-set_property(TARGET ctacataloguecmdlineunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET ctacataloguecmdlineunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
-
-install (TARGETS ctacataloguecmdlineunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
