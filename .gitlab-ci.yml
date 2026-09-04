@@ -152,6 +152,11 @@ spec:
       description: "Keep stress-test namespace for debugging."
       type: boolean
       default: false
+
+    enable-opportunistic-batching:
+      description: "pgsched only: opportunistically batch concurrent queueing requests into a single bulk DB insert instead of queueing them one at a time."
+      type: boolean
+      default: false
 ---
 
 stages:
@@ -388,6 +393,7 @@ include:
       workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
+      enable-opportunistic-batching: $[[ inputs.enable-opportunistic-batching ]]
   - local: .gitlab/ci/sbom.gitlab-ci.yml
     rules:
       # SBOMs are only relevant in the default pipeline
