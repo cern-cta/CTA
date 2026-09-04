@@ -30,22 +30,17 @@ cta::threading::Mutex Helpers::g_retrieveQueueStatisticsMutex;
 //------------------------------------------------------------------------------
 std::map<std::string, Helpers::RetrieveQueueStatisticsWithTime, std::less<>> Helpers::g_retrieveQueueStatistics;
 
-std::string Helpers::selectBestVid4Retrieve(const std::set<std::string, std::less<>>& candidateVids,
-                                            cta::catalogue::Catalogue& catalogue,
-                                            rdbms::Conn& conn,
-                                            bool isRepack) {
-  // We will build the retrieve stats of the non-disabled, non-broken/exported candidate vids here
-  std::list<SchedulerDatabase::RetrieveQueueStatistics> candidateVidsStats;
-
-  // We will build the retrieve stats of the disabled vids here, as a fallback
-  std::list<SchedulerDatabase::RetrieveQueueStatistics> candidateVidsStatsFallback;
-
-  // Take the global lock
+void Helpers::warmTapeStatusCache(const std::set<std::string, std::less<>>& vids,
+                                  cta::catalogue::Catalogue& catalogue) {
   cta::threading::MutexLocker grqsmLock(g_retrieveQueueStatisticsMutex);
+  warmTapeStatusCacheLocked(vids, catalogue);
+}
 
+void Helpers::warmTapeStatusCacheLocked(const std::set<std::string, std::less<>>& vids,
+                                        cta::catalogue::Catalogue& catalogue) {
   // Ensure the tape status cache contains all the entries we need
   try {
-    for (auto& v : candidateVids) {
+    for (auto& v : vids) {
       // throw std::out_of_range() if cache item not found or if it is stale
       auto timeSinceLastUpdate =
         std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - g_tapeStatuses.at(v).updateTime;
@@ -65,12 +60,28 @@ std::string Helpers::selectBestVid4Retrieve(const std::set<std::string, std::les
       }
     }
     // Add in all the entries we need for this batch of candidates
-    auto tapeStatuses = catalogue.Tape()->getTapesByVid(candidateVids);
+    auto tapeStatuses = catalogue.Tape()->getTapesByVid(vids);
     for (const auto& [tv, ts] : tapeStatuses) {
       g_tapeStatuses[tv].tapeStatus = ts;
       g_tapeStatuses[tv].updateTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     }
   }
+}
+
+std::string Helpers::selectBestVid4Retrieve(const std::set<std::string, std::less<>>& candidateVids,
+                                            cta::catalogue::Catalogue& catalogue,
+                                            rdbms::Conn& conn,
+                                            bool isRepack) {
+  // We will build the retrieve stats of the non-disabled, non-broken/exported candidate vids here
+  std::list<SchedulerDatabase::RetrieveQueueStatistics> candidateVidsStats;
+
+  // We will build the retrieve stats of the disabled vids here, as a fallback
+  std::list<SchedulerDatabase::RetrieveQueueStatistics> candidateVidsStatsFallback;
+
+  // Take the global lock
+  cta::threading::MutexLocker grqsmLock(g_retrieveQueueStatisticsMutex);
+
+  warmTapeStatusCacheLocked(candidateVids, catalogue);
 
   // Find the vids to be fetched (if any)
   for (auto& v : candidateVids) {
