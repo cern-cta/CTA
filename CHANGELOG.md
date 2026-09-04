@@ -1,3 +1,22 @@
+## 5.11.22.0-1 (2026-09-04)
+
+### New Features
+
+- [frontend] Implement JWT blacklisting on the CTA Frontend (cta/CTA!1548)
+
+- [runtime] Add additional validation logic to application config (cta/CTA!1567)
+
+
+### Bug Fixes
+
+- [scheduler] Fix issues after pg1 release rest: repack admin commands, archive...
+
+- [Tools] Fix 'priority' column in 'cta-admin dr ls' command (cta/CTA!1546)
+
+- [runtime] Make signals, telemetry and health handling more robust (cta/CTA!1554)
+
+- [runtime] Add bounds checking and better error diagnostics to TOML loading (cta/CTA!1559)
+
 ## 5.11.21.0-1 (2026-08-25)
 
 ### New Features
