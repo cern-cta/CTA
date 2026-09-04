@@ -203,7 +203,7 @@ variables:
   TAG_PGALL_REGEX: '/(^|\.)pgall($|\.)/'  # Postgres scheduler + Postgres catalogue
 
   # Major CTA version used for package versions and selecting the matching RPM repository tree.
-  CTA_MAJOR_VERSION: "5"
+  CTA_MAJOR_VERSION: "6"
   # Build and runtime defaults
   CTA_BUILD_ID: "${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}"
   ENABLE_SBOM_GENERATION: "$[[ inputs.enable-sbom-generation ]]"

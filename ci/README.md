@@ -20,7 +20,7 @@ This directory contains all the files necessary for development and automation w
 ### CTA development versions
 
 `cta-dev` uses one identifier for CTA packages and container images:
-`--cta-version <version>-<suffix>`, which defaults to `5-dev`. The part before the
+`--cta-version <version>-<suffix>`, which defaults to `6-dev`. The part before the
 first hyphen becomes the RPM version and accepts numbers and dots; the part after
 it becomes the RPM release and accepts lowercase letters, numbers, dots, and
 hyphens. CMake historically exposes the suffix as `VCS_VERSION`. `cta-dev` splits

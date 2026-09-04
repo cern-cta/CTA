@@ -50,7 +50,7 @@ internal_repos_forced_public=false
 namespace="dev"
 # A single <version>-<suffix> string. <version> becomes the RPM version and <suffix> the RPM
 # release; the same string is the tag of the images built from those RPMs.
-cta_version="5-dev"
+cta_version="6-dev"
 cta_version_base=""
 cta_version_suffix=""
 cta_image_tag=""
@@ -98,7 +98,7 @@ cta_version_is_valid() {
 }
 
 # Validated in both the environment file and the command line.
-readonly cta_version_format_hint="must be <version>-<suffix>, where <version> contains only numbers and dots and <suffix> only lowercase letters, numbers, dots, and hyphens (for example 5-dev)"
+readonly cta_version_format_hint="must be <version>-<suffix>, where <version> contains only numbers and dots and <suffix> only lowercase letters, numbers, dots, and hyphens (for example 6-dev)"
 
 # Container image tags are less restricted than RPM versions, so an explicit tag only has to
 # satisfy the OCI tag grammar.
@@ -198,7 +198,7 @@ Global options:
       --platform <platform>          Platform to build for. Defaults to project.json.
       --scheduler-type <type>        Scheduler backend [objectstore, pgsched].
       --enable-oracle-support        Build RPMs and images with Oracle support.
-      --cta-version <version>        CTA version as <version>-<suffix>, defaults to 5-dev.
+      --cta-version <version>        CTA version as <version>-<suffix>, defaults to '$cta_version'.
                                      <version> becomes the RPM version and <suffix> the RPM
                                      release. It is also the CTA image tag.
       --use-public-repos             Force public YUM repos. By default, CERN internal
