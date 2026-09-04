@@ -32,6 +32,7 @@
 #include "disk/DiskReporter.hpp"
 #include "disk/DiskReporterFactory.hpp"
 #include "scheduler/IScheduler.hpp"
+#include "scheduler/OpportunisticBatcher.hpp"
 #include "scheduler/RepackRequest.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
@@ -644,9 +645,17 @@ private:
    * See cta.schedulerdb.opportunistic_batching_enabled in the frontend configuration.
    */
   const bool m_enableOpportunisticBatching;
-  uint64_t processEnqueuedBatch(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
-                                log::LogContext& lc);
-  bool m_enqueueBatchInProgress = false;
+
+  // Resolves every promise in the batch (stage 1: per-item catalogue lookup; stage 2: bulk DB
+  // insert), whatever the internal outcome — this is the fast part, run before followers waiting on
+  // the batch are released.
+  void resolveArchiveBatch(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
+                           log::LogContext& lc);
+  // Per-item audit log for the items resolveArchiveBatch() queued successfully — the slow part
+  // (synchronous log writes), run only after followers have already been released.
+  void logQueuedArchiveItems(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
+                             log::LogContext& lc);
+
   /**
    * Maximum time the leader waits for concurrent requests to join its batch before processing it,
    * and the maximum number of requests it will wait to accumulate: whichever limit is hit first
@@ -656,9 +665,8 @@ private:
    */
   const std::chrono::milliseconds m_opportunisticBatchingWindow;
   const size_t m_opportunisticBatchingMaxBatchSize;
-  std::mutex m_mutexOpportunisticBatching;
-  std::condition_variable m_cvOpportunisticBatching;
-  std::vector<cta::common::dataStructures::ArchiveInsertQueueItem> m_opportunisticInsertBatch;
+  std::unique_ptr<OpportunisticBatcher<cta::common::dataStructures::ArchiveInsertQueueItem, std::string>>
+    m_archiveBatcher;
   std::unordered_map<cta::common::dataStructures::ArchiveInsertQueueCriteriaKey,
                      cta::common::dataStructures::ArchiveInsertQueueCriteria,
                      cta::common::dataStructures::ArchiveInsertQueueCriteriaKeyHash>

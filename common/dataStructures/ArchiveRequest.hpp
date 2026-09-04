@@ -51,6 +51,10 @@ struct ArchiveInsertQueueItem {
   common::dataStructures::MountPolicy mountPolicy;
 
   std::promise<std::string> promise;
+  // Set once promise is resolved with set_value(); left false on set_exception(). copyToPoolMap
+  // alone can't tell success from failure here, since a failure after stage 1 (queueing itself
+  // failed, not the criteria lookup) still has it populated.
+  bool queued = false;
 };
 
 struct ArchiveInsertQueueCriteria {
