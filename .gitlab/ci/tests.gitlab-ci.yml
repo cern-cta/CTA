@@ -93,7 +93,6 @@ integration-test-cta:
       junit: $GTEST_REPORT_FILE
 
 unit-test-cta:
-  interruptible: false
   stage: test
   needs:
     - job: check-merge-train-duplicate

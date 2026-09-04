@@ -409,6 +409,9 @@ stress-test-python:
         matrix:
           - TARGET_NAME: *cta-system-test-image-targets
   rules:
+    - if: '$CI_COMMIT_TAG =~ $TAG_PGCAT_REGEX || $CI_COMMIT_TAG =~ $TAG_PGALL_REGEX'
+      when: manual
+      allow_failure: true
     - if: $CI_COMMIT_TAG
       when: on_success
     - when: manual
@@ -470,6 +473,15 @@ stress-test-python:
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
     - cd ci/orchestration/
     - ./delete_instance.sh --namespace ${NAMESPACE} --force-delete-cluster-resources
+    - |
+      if [[ -n "$CI_COMMIT_TAG" ]]; then
+        case "$CI_JOB_STATUS" in
+          success) NOTE="✅ [${CI_JOB_NAME}](${CI_JOB_URL}) completed successfully." ;;
+          failed) NOTE="❌ [${CI_JOB_NAME}](${CI_JOB_URL}) failed." ;;
+          *) NOTE="⏹️ [${CI_JOB_NAME}](${CI_JOB_URL}) was canceled." ;;
+        esac
+        python3 "$CI_PROJECT_DIR/ci/release/add_release_note.py" --api-token "$CI_API_TOKEN" "$NOTE"
+      fi
   tags:
     - stress
   # As we only have 1 stress test machine, this resource group ensures only a single instance of this job can run at any given time

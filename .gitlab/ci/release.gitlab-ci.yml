@@ -26,6 +26,14 @@ internal-release-cta:
       ./ci/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                     --local-source-dir build_rpm/RPM/RPMS/x86_64
                                     --eos-target-dir /eos/user/c/ctareg/www/cta-repo/RPMS/x86_64
+  after_script:
+    - |
+      case "$CI_JOB_STATUS" in
+        success) NOTE="✅ [${CI_JOB_NAME}](${CI_JOB_URL}) published the RPMs to the internal CTA repository." ;;
+        failed) NOTE="❌ [${CI_JOB_NAME}](${CI_JOB_URL}) failed to publish the RPMs to the internal CTA repository." ;;
+        *) NOTE="⏹️ [${CI_JOB_NAME}](${CI_JOB_URL}) was canceled." ;;
+      esac
+      python3 "$CI_PROJECT_DIR/ci/release/add_release_note.py" --api-token "$CI_API_TOKEN" "$NOTE"
   resource_group: cta-rpm-publication
 
 .public-release-cta:
@@ -47,6 +55,14 @@ internal-release-cta:
                                     --cta-version ${CI_COMMIT_TAG}
     - REPO_URL="https://cta-public-repo.web.cern.ch/${REPOSITORY_PATH}"
     - ./ci/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "${CI_COMMIT_TAG}"
+  after_script:
+    - |
+      case "$CI_JOB_STATUS" in
+        success) NOTE="✅ [${CI_JOB_NAME}](${CI_JOB_URL}) published and verified the RPMs in the ${RELEASE_CHANNEL} repository." ;;
+        failed) NOTE="❌ [${CI_JOB_NAME}](${CI_JOB_URL}) failed to publish or verify the RPMs in the ${RELEASE_CHANNEL} repository." ;;
+        *) NOTE="⏹️ [${CI_JOB_NAME}](${CI_JOB_URL}) was canceled." ;;
+      esac
+      python3 "$CI_PROJECT_DIR/ci/release/add_release_note.py" --api-token "$CI_API_TOKEN" "$NOTE"
   resource_group: cta-rpm-publication
 
 public-release-cta-unstable:
@@ -136,6 +152,13 @@ public-release-cta-stable:
     - buildah push --authfile "$DEST_REGISTRY_AUTH_FILE" "$DST_IMAGE"
   after_script:
     - rm -f "$SOURCE_REGISTRY_AUTH_FILE" "$DEST_REGISTRY_AUTH_FILE"
+    - |
+      case "$CI_JOB_STATUS" in
+        success) NOTE="✅ [${CI_JOB_NAME}](${CI_JOB_URL}) published ${TARGET_NAME} to ${DEST_REGISTRY}/${DEST_IMAGE_PREFIX}." ;;
+        failed) NOTE="❌ [${CI_JOB_NAME}](${CI_JOB_URL}) failed to publish ${TARGET_NAME} to ${DEST_REGISTRY}/${DEST_IMAGE_PREFIX}." ;;
+        *) NOTE="⏹️ [${CI_JOB_NAME}](${CI_JOB_URL}) was canceled." ;;
+      esac
+      python3 "$CI_PROJECT_DIR/ci/release/add_release_note.py" --api-token "$CI_API_TOKEN" "$NOTE"
 
 publish-images-private:
   extends: .publish-image
