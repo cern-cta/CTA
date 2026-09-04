@@ -135,9 +135,10 @@ void failWholeBatch(std::vector<ItemType>& items,
                     const char* logMsg,
                     uint64_t& failedCount,
                     const std::function<uint64_t(const ItemType&)>& countPerItem) {
-  log::ScopedParamContainer(lc).add("batchSize", items.size()).add("exceptionMessage", exceptionMessage).log(
-    log::WARNING,
-    logMsg);
+  log::ScopedParamContainer(lc)
+    .add("batchSize", items.size())
+    .add("exceptionMessage", exceptionMessage)
+    .log(log::WARNING, logMsg);
   for (auto& item : items) {
     item.promise.set_exception(std::current_exception());
     failedCount += countPerItem(item);
