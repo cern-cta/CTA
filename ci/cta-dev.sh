@@ -37,6 +37,10 @@ readonly program_name="cta-dev"
 readonly build_state_file="${project_root}/.cta-dev-build-state.json"
 readonly debug_profile_file="${project_root}/ci/orchestration/debug/cta-debug-profile.yaml"
 
+readonly local_image_registry="localhost"
+ci_image_registry=$(jq -r .dev.ctaImageRegistry "${project_root}/project.json")
+readonly ci_image_registry
+
 # Global
 platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
 scheduler_type="objectstore"
@@ -44,8 +48,11 @@ oracle_support="false"
 enable_internal_repos=true
 internal_repos_forced_public=false
 namespace="dev"
-cta_version="5"
-cta_version_suffix="dev"
+# A single <version>-<suffix> string. <version> becomes the RPM version and <suffix> the RPM
+# release; the same string is the tag of the images built from those RPMs.
+cta_version="5-dev"
+cta_version_base=""
+cta_version_suffix=""
 cta_image_tag=""
 
 # Build
@@ -65,6 +72,7 @@ cmake_build_type=$(jq -r .dev.defaultBuildType "${project_root}/project.json")
 enable_debug_image=false
 
 # Deploy
+cta_image_registry=""
 dcache_enabled=false
 eos_enabled=true
 local_telemetry=false
@@ -83,6 +91,20 @@ namespace_deletion_pid=""
 namespace_deletion_log=""
 
 source "${script_dir}/utils/log_utils.sh"
+
+# The CTA version is the RPM "<version>-<release>" string.
+cta_version_is_valid() {
+  [[ "$1" =~ ^[0-9][0-9.]*-[a-z0-9][a-z0-9.-]*$ ]]
+}
+
+# Validated in both the environment file and the command line.
+readonly cta_version_format_hint="must be <version>-<suffix>, where <version> contains only numbers and dots and <suffix> only lowercase letters, numbers, dots, and hyphens (for example 5-dev)"
+
+# Container image tags are less restricted than RPM versions, so an explicit tag only has to
+# satisfy the OCI tag grammar.
+cta_image_tag_is_valid() {
+  [[ "$1" =~ ^[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$ ]]
+}
 
 load_cta_dev_env() {
   local -r env_file="${script_dir}/.cta-dev.env"
@@ -147,14 +169,9 @@ load_cta_dev_env() {
         cmake_build_type=$value
         ;;
       CTA_DEV_CTA_VERSION)
-        [[ "$value" =~ ^[0-9.]+$ ]] || \
-          die "Invalid value for ${key} in ${env_file}:${line_number}: only numbers and dots are allowed."
+        cta_version_is_valid "$value" || \
+          die "Invalid value for ${key} in ${env_file}:${line_number}: ${cta_version_format_hint}."
         cta_version=$value
-        ;;
-      CTA_DEV_CTA_VERSION_SUFFIX)
-        [[ "$value" =~ ^[a-z0-9.-]+$ ]] || \
-          die "Invalid value for ${key} in ${env_file}:${line_number}: only lowercase letters, numbers, dots, and hyphens are allowed."
-        cta_version_suffix=$value
         ;;
       CTA_DEV_NAMESPACE)
         [[ -n "$value" ]] || die "Invalid value for ${key} in ${env_file}:${line_number}: must not be empty."
@@ -215,9 +232,9 @@ Global options:
       --platform <platform>          Platform to build for. Defaults to project.json.
       --scheduler-type <type>        Scheduler backend [objectstore, pgsched].
       --enable-oracle-support        Build RPMs and images with Oracle support.
-      --cta-version <version>        Numeric CTA base version (numbers and dots).
-      --cta-version-suffix <suffix>  CTA release/build suffix. The package version and
-                                     image tag are <version>-<suffix>.
+      --cta-version <version>        CTA version as <version>-<suffix>, defaults to 5-dev.
+                                     <version> becomes the RPM version and <suffix> the RPM
+                                     release. It is also the CTA image tag.
       --use-public-repos             Force public YUM repos. By default, CERN internal
                                      repos are used when they are reachable.
 
@@ -252,8 +269,7 @@ Options:
       --enable-unit-tests           Run unit tests after building.
       --enable-address-sanitizer    Enable AddressSanitizer.
       --force-install               Force SRPM installation.
-      --cta-version <version>       Numeric CTA base version.
-      --cta-version-suffix <suffix> CTA release/build suffix.
+      --cta-version <version>       CTA version as <version>-<suffix>.
 
 EOF
 exit 1
@@ -274,8 +290,8 @@ Usage:
   $(basename "$0") images [options]
 
 Options:
-      --cta-version <version>       Numeric CTA base version.
-      --cta-version-suffix <suffix> CTA release/build suffix.
+      --cta-version <version>       CTA version as <version>-<suffix>.
+                                    Also the tag of the built images.
 
 EOF
 exit 1
@@ -319,10 +335,15 @@ Options:
       --eos-config <path>          EOS Helm values.
       --eos-image-repository <r>   EOS image repository.
       --eos-image-tag <tag>        EOS image tag.
-      --cta-version <version>      Numeric CTA base version.
-      --cta-version-suffix <suffix>
-                                   CTA release/build suffix. The CTA image tag is
-                                   constructed as <version>-<suffix>.
+      --cta-version <version>      CTA version as <version>-<suffix>. Selects the
+                                   locally built images with that tag.
+      --cta-image-tag <tag>        Deploy the images with this tag instead, for
+                                   example an image tag built by the CI. Cannot
+                                   be combined with --cta-version.
+      --cta-image-registry <reg>   Registry to deploy the CTA images from.
+                                   Defaults to ${local_image_registry}, or to
+                                   ${ci_image_registry} when --cta-image-tag
+                                   is given.
       --spawn-options <options>    Additional deployment options.
       --with-dcache                Deploy dCache instead of EOS.
       --local-telemetry            Deploy a local telemetry stack.
@@ -396,6 +417,9 @@ require_command() {
 parse_options() {
   local command="$1"
   local -a spawn_options
+  # Only needed to reject the mutually exclusive version and image tag options.
+  local cta_version_provided=false
+  local cta_image_tag_provided=false
   shift
 
   while [[ $# -gt 0 ]]; do
@@ -452,12 +476,11 @@ parse_options() {
       --cta-version)
         require_command "$1" "$command" build images deploy up debug all
         cta_version="$2"
+        cta_version_provided=true
         shift
         ;;
       --cta-version-suffix)
-        require_command "$1" "$command" build images deploy up debug all
-        cta_version_suffix="$2"
-        shift
+        unsupported_argument "--cta-version-suffix no longer exists. Pass the combined version instead, for example: --cta-version ${cta_version%%-*}-${2:-<suffix>}"
         ;;
 
       # =========================================================================
@@ -512,6 +535,19 @@ parse_options() {
       #  Deploy options
       # =========================================================================
 
+      # Only deploy takes an image tag: every other command builds the images it deploys, and
+      # those are always tagged with the CTA version.
+      --cta-image-tag)
+        require_command "$1" "$command" deploy
+        cta_image_tag="$2"
+        cta_image_tag_provided=true
+        shift
+        ;;
+      --cta-image-registry)
+        require_command "$1" "$command" deploy
+        cta_image_registry="$2"
+        shift
+        ;;
       --with-dcache)
         require_command "$1" "$command" deploy up debug all
         dcache_enabled=true
@@ -583,12 +619,32 @@ parse_options() {
     unsupported_argument "--scheduler-type is \"$scheduler_type\" but must be one of [objectstore, pgsched]."
   fi
 
-  [[ "$cta_version" =~ ^[0-9.]+$ ]] || \
-    unsupported_argument "--cta-version is \"$cta_version\" but may contain only numbers and dots."
-  [[ "$cta_version_suffix" =~ ^[a-z0-9.-]+$ ]] || \
-    unsupported_argument "--cta-version-suffix is \"$cta_version_suffix\" but may contain only lowercase letters, numbers, dots, and hyphens."
+  if [[ $cta_version_provided == true && $cta_image_tag_provided == true ]]; then
+    unsupported_argument "--cta-version and --cta-image-tag cannot be combined: the CTA version already determines the image tag. Pass --cta-version to deploy a locally built version, or --cta-image-tag to deploy an image built elsewhere."
+  fi
 
-  cta_image_tag="${cta_version}-${cta_version_suffix}"
+  cta_version_is_valid "$cta_version" || \
+    unsupported_argument "--cta-version is \"$cta_version\" but ${cta_version_format_hint}."
+  # Only the part before the first hyphen may contain digits and dots, so this split is unambiguous.
+  cta_version_base="${cta_version%%-*}"
+  cta_version_suffix="${cta_version#*-}"
+
+  if [[ $cta_image_tag_provided == true ]]; then
+    cta_image_tag_is_valid "$cta_image_tag" || \
+      unsupported_argument "--cta-image-tag is \"$cta_image_tag\" but may contain only letters, numbers, dots, underscores, and hyphens, must not start with a dot or hyphen, and may be at most 128 characters long."
+  else
+    cta_image_tag="$cta_version"
+  fi
+
+  # An explicit image tag refers to an image built elsewhere, most commonly by the CI. Without
+  # one, the images come from the local build.
+  if [[ -z $cta_image_registry ]]; then
+    if [[ $cta_image_tag_provided == true ]]; then
+      cta_image_registry="$ci_image_registry"
+    else
+      cta_image_registry="$local_image_registry"
+    fi
+  fi
 
 }
 
@@ -683,7 +739,7 @@ create_build_configuration() {
     --argjson skipUnitTests "$skip_unit_tests" \
     --argjson enableAddressSanitizer "$enable_address_sanitizer" \
     --argjson extraTelemetry "$extra_telemetry" \
-    --arg ctaVersion "$cta_version" \
+    --arg ctaVersion "$cta_version_base" \
     --arg ctaVersionSuffix "$cta_version_suffix" \
     --arg xrootdSsiVersion "$xrootd_ssi_version" \
     --argjson jobs "$num_jobs" \
@@ -906,7 +962,7 @@ build_cta() {
       --build-dir ${mount_basedir}/build_srpm \
       --build-generator "${build_generator}" \
       --create-build-dir \
-      --cta-version "${cta_version}" \
+      --cta-version "${cta_version_base}" \
       --cta-version-suffix "${cta_version_suffix}" \
       --scheduler-type "${scheduler_type}" \
       --oracle-support "${oracle_support}" \
@@ -949,7 +1005,7 @@ build_cta() {
     --build-generator "${build_generator}" \
     --create-build-dir \
     --srpm-dir ${mount_basedir}/build_srpm/RPM/SRPMS \
-    --cta-version ${cta_version} \
+    --cta-version ${cta_version_base} \
     --cta-version-suffix "${cta_version_suffix}" \
     --xrootd-ssi-version "${xrootd_ssi_version}" \
     --scheduler-type "${scheduler_type}" \
@@ -971,7 +1027,7 @@ images_cta() {
   detect_internal_repos
 
   # Build
-  log_task "Building container images from ${rpm_src}..."
+  log_task "Building container images tagged ${cta_image_tag} from ${rpm_src}..."
   local extra_image_build_options=()
   local load_into_k8s=false
   [[ $enable_internal_repos == true ]] && extra_image_build_options+=(--enable-internal-repos)
@@ -1047,6 +1103,7 @@ deploy_cta() {
   finish_namespace_deletion
 
   print_header "DEPLOYING CTA"
+  log_task "Deploying CTA images ${cta_image_registry}/cta/ctageneric/*:${cta_image_tag}"
   cd "${project_root}/ci/orchestration"
   [[ -n $eos_image_repository ]] && extra_spawn_options+=(--eos-image-repository "$eos_image_repository")
   [[ -n $eos_image_tag ]] && extra_spawn_options+=(--eos-image-tag "$eos_image_tag")
@@ -1062,7 +1119,7 @@ deploy_cta() {
       scheduler_config="presets/dev-scheduler-vfs-values.yaml"
   fi
   ./create_instance.sh --namespace "${namespace}" \
-    --cta-image-registry localhost \
+    --cta-image-registry "${cta_image_registry}" \
     --cta-image-tag "${cta_image_tag}" \
     --catalogue-config "${catalogue_config}" \
     --scheduler-config "${scheduler_config}" \
@@ -1152,7 +1209,7 @@ debug_cta() {
   run_timed_stage "Deploy" deploy_cta
   print_stage_summary
 
-  local -r debug_image="localhost/cta/ctageneric/cta-debug:${cta_image_tag}"
+  local -r debug_image="${cta_image_registry}/cta/ctageneric/cta-debug:${cta_image_tag}"
 
   # In the future we may want to improve this by suggesting specific containers
   cat <<EOF
