@@ -25,7 +25,7 @@ usage() {
   echo "Directory selection:"
   echo "  --local-source-dir <dir>         :    Local directory that will be uploaded to the provided --eos-target-dir."
   echo "  --eos-source-dir   <dir>         :    EOS directory that will be copied to the provided --eos-target-dir. Must be used with --cta-version."
-  echo "  --eos-target-dir   <dir>         :    EOS directory where to upload the files to."
+  echo "  --eos-target-dir   <dir>         :    Final EOS repository directory where RPMs will be uploaded."
   echo "  --cta-version      <cta_version> :    CTA release tag, with or without its leading v."
   echo
   exit 1
@@ -39,6 +39,10 @@ upload_to_eos() {
   local eos_source_dir=""
   local cta_version=""
   local repository_dir=""
+  local rpm_path=""
+  local source_listing=""
+  local source_url=""
+  local -a rpm_paths=()
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -137,8 +141,8 @@ upload_to_eos() {
     cta_version=${cta_version#v}
   fi
 
-  # The target corresponds to the source root, with RPMs stored in its architecture subdirectory
-  repository_dir="${eos_target_dir}/x86_64"
+  # Source directory names are discarded to prevent accidental nested repository layouts.
+  repository_dir="${eos_target_dir}"
 
   if [[ "${repository_dir}" != "/eos/user/c/ctareg/www/cta-repo/RPMS/x86_64" ]] && \
      [[ ! "${repository_dir}" =~ ^/eos/user/c/ctareg/www/public/cta-public-repo/(unstable|testing|stable)/cta-[1-9][0-9]*/[A-Za-z0-9._-]+/cta/x86_64$ ]]; then
@@ -155,31 +159,50 @@ upload_to_eos() {
     exit 1
   fi
 
+  if ! xrdfs root://eoshome.cern.ch/ mkdir -p "${repository_dir}"; then
+    log_error "ERROR: Failed to create repository directory ${repository_dir}"
+    exit 1
+  fi
+
+  log_task "RPMs will be copied into ${repository_dir}"
+
   if [[ -n "${local_source_dir}" ]]; then
-    # Rely on xrootd to do the copy of files to EOS
-    if ! xrdcp --force --recursive "${local_source_dir}"/ "root://eoshome.cern.ch/${eos_target_dir}/" >/dev/null 2>&1; then
-      log_error "ERROR: Failed to copy files to ${eos_target_dir} via xrdcp"
-      exit 1
-    fi
+    mapfile -d '' -t rpm_paths < <(find "${local_source_dir}" -maxdepth 1 -type f -name '*.rpm' -print0)
   fi
 
   if [[ -n "${eos_source_dir}" ]]; then
-    # Rely on xrootd to copy the files, inside EOS, with the provided cta-version
-    # ls -R handles recursion; each matching path passed to xrdcp is an individual RPM file
-    if ! xrdfs root://eoshome.cern.ch/ ls -R "${eos_source_dir}" \
-      | grep -F -- "${cta_version}." \
-      | while IFS= read -r rpm_path; do
-          relative_path=${rpm_path#"${eos_source_dir}"/}
-          xrdcp --force \
-            "root://eoshome.cern.ch/${rpm_path}" \
-            "root://eoshome.cern.ch/${eos_target_dir}/${relative_path}" \
-            >/dev/null 2>&1 \
-            || exit 1
-        done; then
-      log_error "ERROR: Failed to copy release ${cta_version} files from ${eos_source_dir} to ${eos_target_dir} via xrdcp"
+    if ! source_listing=$(xrdfs root://eoshome.cern.ch/ ls "${eos_source_dir}/x86_64"); then
+      log_error "ERROR: Failed to list RPMs in ${eos_source_dir}/x86_64"
       exit 1
     fi
+
+    mapfile -t rpm_paths < <(printf '%s\n' "${source_listing}" | grep -F -- "${cta_version}." | grep -E '\.rpm$' || true)
   fi
+
+  if [[ ${#rpm_paths[@]} -eq 0 ]]; then
+    log_error "ERROR: No RPM files found to publish"
+    exit 1
+  fi
+
+  for rpm_path in "${rpm_paths[@]}"; do
+    if [[ -n "${local_source_dir}" ]]; then
+      source_url="${rpm_path}"
+    else
+      source_url="root://eoshome.cern.ch/${rpm_path}"
+    fi
+
+    log_task "Copying ${rpm_path##*/} to ${repository_dir}"
+
+    if ! xrdcp --force \
+        "${source_url}" \
+        "root://eoshome.cern.ch/${repository_dir}/${rpm_path##*/}" \
+        >/dev/null 2>&1; then
+      log_error "ERROR: Failed to copy RPM ${rpm_path} to ${repository_dir}"
+      exit 1
+    fi
+  done
+
+  log_task "Updating repository metadata in ${repository_dir}"
 
   if ! ssh \
       -o StrictHostKeyChecking=no \
@@ -192,7 +215,7 @@ upload_to_eos() {
     exit 1
   fi
 
-  echo "Repository metadata updated successfully"
+  log_success "Repository metadata updated successfully"
 }
 
 upload_to_eos "$@"
