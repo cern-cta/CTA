@@ -137,10 +137,16 @@ uint64_t Scheduler::checkAndGetNextArchiveFileId(const std::string& instanceName
 uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
                                          log::LogContext& lc) {
   uint64_t totalJobs = 0;
-  // Process sequentially
-  try {
-    for (size_t i = 0; i < batch.size(); ++i) {
-      auto& item = batch[i];
+
+  // Stage 1: catalogue lookup, isolated per item. An item that fails here (e.g. an unknown
+  // storage class) gets its own exception on its own promise and is left out of the bulk insert
+  // below, rather than a single bad request failing every other request batched alongside it.
+  // validItems owns the items which passed this stage; the ones left behind in batch are the
+  // failed ones, already settled, and are not touched again.
+  std::vector<cta::common::dataStructures::ArchiveInsertQueueItem> validItems;
+  validItems.reserve(batch.size());
+  for (auto& item : batch) {
+    try {
       cta::common::dataStructures::ArchiveInsertQueueCriteriaKey k {item.instanceName,
                                                                     item.request.storageClass,
                                                                     item.request.requester.name,
@@ -162,43 +168,53 @@ uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures
         }
       }
       totalJobs += item.copyToPoolMap.size();
+      validItems.push_back(std::move(item));
+    } catch (...) {
+      // Preserve the original exception (e.g. a UserError for an unknown storage class) instead
+      // of flattening it into a generic error, so the caller sees the same error it would have
+      // gotten via the file-by-file path.
+      item.promise.set_exception(std::current_exception());
     }
-    lc.log(log::DEBUG, "In Scheduler::processEnqueuedBatch() 1");
-    std::vector<std::string> archiveReqAddrVector;
-    archiveReqAddrVector.reserve(batch.size());
-    archiveReqAddrVector = m_db.queueArchive(batch, lc);
-    lc.log(log::DEBUG, "In Scheduler::processEnqueuedBatch() 2");
+  }
 
-    // Sanity check
-    if (archiveReqAddrVector.size() != batch.size()) {
-      std::string err = "queueArchive returned size " + std::to_string(archiveReqAddrVector.size())
-                        + " but batch size is " + std::to_string(batch.size());
-      lc.log(log::DEBUG, std::string("In Scheduler::processEnqueuedBatch() 3 ") + err);
-      for (auto& item : batch) {
-        item.promise.set_exception(std::make_exception_ptr(std::runtime_error(err)));
-      }
-      return totalJobs;
-    }
-    lc.log(log::DEBUG, "In Scheduler::processEnqueuedBatch() 4");
-
-    for (size_t i = 0; i < batch.size(); ++i) {
-      try {
-        batch[i].promise.set_value(archiveReqAddrVector[i]);
-      } catch (const std::exception& e) {
-        std::string err = std::string("queueArchive failed to set return value") + e.what();
-        lc.log(log::DEBUG, std::string("In Scheduler::processEnqueuedBatch() 5 ") + err);
-        batch[i].promise.set_exception(std::make_exception_ptr(std::runtime_error(err)));
-      }
-    }
-    lc.log(log::DEBUG, "In Scheduler::processEnqueuedBatch() 6");
-  } catch (const std::exception& e) {
-    std::string err = std::string("queueArchive threw an exception: ") + e.what();
-    lc.log(log::DEBUG, std::string("In Scheduler::processEnqueuedBatch() 7 ") + err);
-    for (auto& item : batch) {
-      item.promise.set_exception(std::make_exception_ptr(std::runtime_error(err)));
-    }
+  if (validItems.empty()) {
     return totalJobs;
-  };
+  }
+
+  // Stage 2: bulk insert of the items which passed stage 1. This is one SQL statement in one
+  // transaction, so a single bad row can still fail all of validItems here; if it does, fall back
+  // to inserting them one at a time (reusing the same single-item DB call the file-by-file path
+  // uses) so we find out exactly which ones are actually bad instead of failing all of them for a
+  // problem that may only affect one.
+  try {
+    auto archiveReqAddrVector = m_db.queueArchive(validItems, lc);
+
+    if (archiveReqAddrVector.size() != validItems.size()) {
+      throw exception::Exception("queueArchive returned size " + std::to_string(archiveReqAddrVector.size())
+                                 + " but batch size is " + std::to_string(validItems.size()));
+    }
+
+    for (size_t i = 0; i < validItems.size(); ++i) {
+      validItems[i].promise.set_value(archiveReqAddrVector[i]);
+    }
+  } catch (const std::exception& e) {
+    log::ScopedParamContainer(lc)
+      .add("batchSize", validItems.size())
+      .add("exceptionMessage", e.what())
+      .log(log::WARNING,
+           "In Scheduler::processEnqueuedBatch(): bulk archive insert failed, falling back to "
+           "inserting this batch one request at a time");
+    for (auto& item : validItems) {
+      try {
+        const common::dataStructures::ArchiveFileQueueCriteriaAndFileId criteria(item.archiveFileId,
+                                                                                 item.copyToPoolMap,
+                                                                                 item.mountPolicy);
+        item.promise.set_value(m_db.queueArchive(item.instanceName, item.request, criteria, lc));
+      } catch (...) {
+        item.promise.set_exception(std::current_exception());
+      }
+    }
+  }
 
   return totalJobs;
 }
