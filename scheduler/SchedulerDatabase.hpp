@@ -407,8 +407,8 @@ public:
    * one from (item.selectedVid) and does the actual insert. Returns one request ID string per item,
    * in the same order as batch, mirroring queueArchive()'s bulk overload.
    */
-  virtual std::vector<std::string> queueRetrieve(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
-                                                 log::LogContext& lc) = 0;
+  virtual std::vector<std::string>
+  queueRetrieve(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch, log::LogContext& lc) = 0;
 
   virtual void cancelRetrieve(const std::string& instanceName,
                               const cta::common::dataStructures::CancelRetrieveRequest& rqst,
