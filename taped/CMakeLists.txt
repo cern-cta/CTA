@@ -22,13 +22,13 @@ install (FILES cta-taped.sysconfig DESTINATION /etc/sysconfig RENAME cta-taped)
 install (FILES cta-taped.service DESTINATION ${CTA_SYSTEMD_UNIT_DIR})
 
 # CTA's cta-taped integration tests.
-add_library(cta-tapedIntegrationTests SHARED
-  cta-tapedIntegrationTests.cpp)
-set_property(TARGET cta-tapedIntegrationTests PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET cta-tapedIntegrationTests PROPERTY   VERSION "${CTA_LIBVERSION}")
+add_library(cta-taped-integration-tests SHARED
+  cta-taped-integration-tests.cpp)
+set_property(TARGET cta-taped-integration-tests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET cta-taped-integration-tests PROPERTY VERSION "${CTA_LIBVERSION}")
 
-target_link_libraries(cta-tapedIntegrationTests
-  unitTestHelper
+target_link_libraries(cta-taped-integration-tests
+  unit-test-helper
   ctacommon)
 
-install(TARGETS cta-tapedIntegrationTests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS cta-taped-integration-tests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

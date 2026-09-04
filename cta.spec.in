@@ -112,7 +112,7 @@ DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man cmake --buil
 cd build
 cmake --build . --target cta-example-config-checks -j@JOBS_COUNT@
 %if "%{skip_unit_tests}" == "0"
-cmake --build . --target shortunittests -j@JOBS_COUNT@
+cmake --build . --target unit-tests-short -j@JOBS_COUNT@
 %endif
 
 %files
@@ -378,7 +378,7 @@ The shared libraries
 %attr(0644,root,root) %{_sysconfdir}/cta/cta-otel.example.yaml
 %attr(0644,root,root) %{_datadir}/cta/cta-logging.schema.json
 
-%package -n cta-integrationtests
+%package -n cta-tests
 Summary: CERN Tape Archive: unit and integration tests with virtual tape drives
 Requires: cta-lib-catalogue-inmemory = %{version}-%{release}
 Requires: cta-lib-catalogue-postgres = %{version}-%{release}
@@ -397,20 +397,20 @@ Requires: gtest-devel %{gtestDevelVersionConstraint}
 %if "%{schedOpt}" == "-DCTA_USE_PGSCHED:Bool=TRUE"
 Requires: postgresql-server
 %endif
-%description -n cta-integrationtests
+%description -n cta-tests
 CERN Tape Archive:
 Unit tests and integration tests with virtual tape drives
-%files -n cta-integrationtests
+%files -n cta-tests
 %license COPYING
-%{_libdir}/libcta-tapedIntegrationTests.so*
-%{_bindir}/cta-rdbmsUnitTests
+%{_libdir}/libcta-taped-integration-tests.so*
+%{_bindir}/cta-unit-tests-rdbms
 %if "%{occiSupport}" == "1"
-%{_bindir}/cta-rdbmsUnitTests-oracle.sh
+%{_bindir}/cta-unit-tests-rdbms-oracle.sh
 %endif
-%{_bindir}/cta-unitTests
-%{_bindir}/cta-unitTests-multiProcess
-%{_bindir}/cta-valgrindUnitTests.sh
-%{_bindir}/cta-unitPlusIntegrationTests.sh
+%{_bindir}/cta-unit-tests
+%{_bindir}/cta-unit-tests-multiprocess
+%{_bindir}/cta-unit-tests-valgrind.sh
+%{_bindir}/cta-unit-and-integration-tests.sh
 %{_libdir}/libctacataloguecmdlineunittests.so*
 %{_libdir}/libctacommonunittests.so*
 %{_libdir}/libctatapedaemoncommonunittests.so*
@@ -439,7 +439,7 @@ Unit tests and integration tests with virtual tape drives
 %{_libdir}/libctadiskunittests.so*
 %{_libdir}/libctatapelabelunittests.so*
 %{_libdir}/libctatapedraounittests.so*
-%{_bindir}/cta-integrationTests
+%{_bindir}/cta-integration-tests
 %{_libdir}/libctadaemonunittests-multiprocess.so*
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/parallelTestsMakefile
@@ -452,8 +452,8 @@ CERN Tape Archive:
 Command-line tool for testing external tape formats
 %files -n cta-external-tape-formats-test
 %license COPYING
-%{_bindir}/cta-osmReaderTest
-%{_bindir}/cta-enstoreLargeReaderTest
+%{_bindir}/cta-osm-reader-test
+%{_bindir}/cta-enstore-large-reader-test
 
 %package -n cta-immutable-file-test
 Summary: CERN Tape Archive: command-line tool for testing immutable files

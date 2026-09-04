@@ -4,5 +4,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 set -e
-/usr/bin/cta-valgrindUnitTests.sh
-/usr/bin/cta-integrationTests
+/usr/bin/cta-unit-tests-valgrind.sh
+/usr/bin/cta-integration-tests

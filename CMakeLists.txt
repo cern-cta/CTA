@@ -257,81 +257,81 @@ IF(NOT DEFINED PackageOnly)
   add_subdirectory(tests)
 ENDIF(NOT DEFINED PackageOnly)
 
-add_custom_target(fullunittests
-  tests/cta-unitTests
-  COMMAND tests/cta-unitTests-multiProcess
-  COMMAND ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} tests/cta-unitTests
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests
-  COMMAND tests/cta-unitTests-multiProcess
-  COMMAND ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} --child-silent-after-fork=yes tests/cta-unitTests-multiProcess
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests-multiProcess
+add_custom_target(unit-tests-full
+  tests/cta-unit-tests
+  COMMAND tests/cta-unit-tests-multiprocess
+  COMMAND ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} tests/cta-unit-tests
+  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unit-tests
+  COMMAND tests/cta-unit-tests-multiprocess
+  COMMAND ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} --child-silent-after-fork=yes tests/cta-unit-tests-multiprocess
+  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unit-tests-multiprocess
 
-  DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/valgrind.suppr tests/helgrind.suppr
+  DEPENDS tests/cta-unit-tests tests/cta-unit-tests-multiprocess tests/valgrind.suppr tests/helgrind.suppr
   COMMENT "Running unit tests with memory leak and race conditions detection" VERBATIM)
 
-add_custom_target(valgrind
-  echo ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} tests/cta-unitTests
-  COMMAND ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} tests/cta-unitTests
-  COMMAND echo ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} --child-silent-after-fork=yes tests/cta-unitTests-multiProcess
-  COMMAND ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} --child-silent-after-fork=yes tests/cta-unitTests-multiProcess
+add_custom_target(unit-tests-valgrind
+  echo ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} tests/cta-unit-tests
+  COMMAND ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} tests/cta-unit-tests
+  COMMAND echo ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} --child-silent-after-fork=yes tests/cta-unit-tests-multiprocess
+  COMMAND ${VALGRIND} ${VALGRIND_OPTS_W_SUPPR} --child-silent-after-fork=yes tests/cta-unit-tests-multiprocess
 
-  DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/valgrind.suppr
+  DEPENDS tests/cta-unit-tests tests/cta-unit-tests-multiprocess tests/valgrind.suppr
   COMMENT "Running unit tests with memory leak detection" VERBATIM)
 
-add_custom_target(helgrind
-  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests
-  COMMAND echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests-multiProcess
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unitTests-multiProcess
+add_custom_target(unit-tests-helgrind
+  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unit-tests
+  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unit-tests
+  COMMAND echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unit-tests-multiprocess
+  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} tests/cta-unit-tests-multiprocess
 
-  DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/helgrind.suppr
+  DEPENDS tests/cta-unit-tests tests/cta-unit-tests-multiprocess tests/helgrind.suppr
   COMMENT "Running unit tests with race conditions detection" VERBATIM)
 
-add_custom_target(shortunittests
-  tests/cta-unitTests
-  COMMAND tests/cta-unitTests-multiProcess
+add_custom_target(unit-tests-short
+  tests/cta-unit-tests
+  COMMAND tests/cta-unit-tests-multiprocess
 
-  DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess
+  DEPENDS tests/cta-unit-tests tests/cta-unit-tests-multiprocess
   COMMENT "Running unit tests" VERBATIM)
 
-add_custom_target(helgrindBase
-  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=-OStoreDBPlusMockSchedulerTestVFS*:OStoreTestVFS*:OStoreDBPlusMockSchedulerTestVFS*:InMemory*
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=-OStoreDBPlusMockSchedulerTestVFS*:OStoreTestVFS*:OStoreDBPlusMockSchedulerTestVFS*:InMemory*
-  COMMAND echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests-multiProcess
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests-multiProcess
+add_custom_target(unit-tests-helgrind-base
+  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unit-tests --gtest_filter=-OStoreDBPlusMockSchedulerTestVFS*:OStoreTestVFS*:OStoreDBPlusMockSchedulerTestVFS*:InMemory*
+  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unit-tests --gtest_filter=-OStoreDBPlusMockSchedulerTestVFS*:OStoreTestVFS*:OStoreDBPlusMockSchedulerTestVFS*:InMemory*
+  COMMAND echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unit-tests-multiprocess
+  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unit-tests-multiprocess
 
-  DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/helgrind.suppr
+  DEPENDS tests/cta-unit-tests tests/cta-unit-tests-multiprocess tests/helgrind.suppr
   COMMENT "Running unit tests with race conditions detection (except slow sections)" VERBATIM)
 
-add_custom_target(helgrindScheduler
-  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/Scheduler*
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/Scheduler*
+add_custom_target(unit-tests-helgrind-scheduler
+  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unit-tests --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/Scheduler*
+  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unit-tests --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/Scheduler*
 
-  DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/helgrind.suppr
+  DEPENDS tests/cta-unit-tests tests/cta-unit-tests-multiprocess tests/helgrind.suppr
   COMMENT "Running unit tests with race conditions detection (Mock scheduler section)" VERBATIM)
 
-add_custom_target(helgrindOStoreDB
-  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=OStoreTestVFS*
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=OStoreTestVFS*
+add_custom_target(unit-tests-helgrind-object-store-db
+  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unit-tests --gtest_filter=OStoreTestVFS*
+  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unit-tests --gtest_filter=OStoreTestVFS*
 
-  DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/helgrind.suppr
+  DEPENDS tests/cta-unit-tests tests/cta-unit-tests-multiprocess tests/helgrind.suppr
   COMMENT "Running unit tests with race conditions detection (Object store DB section)" VERBATIM)
 
-add_custom_target(helgrindDataTransfer
-  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/DataTransferSessionTest*
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/DataTransferSessionTest*
+add_custom_target(unit-tests-helgrind-data-transfer
+  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unit-tests --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/DataTransferSessionTest*
+  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unit-tests --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/DataTransferSessionTest*
 
-  DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/helgrind.suppr
+  DEPENDS tests/cta-unit-tests tests/cta-unit-tests-multiprocess tests/helgrind.suppr
   COMMENT "Running unit tests with race conditions detection (Data transfer section)" VERBATIM)
 
-add_custom_target(helgrindInMemoryCatalogue
-  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=InMemory/*
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unitTests --gtest_filter=InMemory/*
+add_custom_target(unit-tests-helgrind-in-memory-catalogue
+  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unit-tests --gtest_filter=InMemory/*
+  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q tests/cta-unit-tests --gtest_filter=InMemory/*
 
-  DEPENDS tests/cta-unitTests tests/cta-unitTests-multiProcess tests/helgrind.suppr
+  DEPENDS tests/cta-unit-tests tests/cta-unit-tests-multiprocess tests/helgrind.suppr
   COMMENT "Running unit tests with race conditions detection (In memory catalogue section)" VERBATIM)
 
-add_custom_target(parallelHelgrind
+add_custom_target(unit-tests-helgrind-parallel
   echo
 
-  DEPENDS helgrindBase helgrindMockSechduler helgrindOStoreDB helgrindDataTransfer helgrindInMemoryCatalogue)
+  DEPENDS unit-tests-helgrind-base unit-tests-helgrind-scheduler unit-tests-helgrind-object-store-db unit-tests-helgrind-data-transfer unit-tests-helgrind-in-memory-catalogue)
