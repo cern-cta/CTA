@@ -8,6 +8,13 @@ project(cta)
 # Project metadata
 # -----------------------------------------------------------------------------
 include(cmake/DetectPlatform.cmake)
+
+if(NOT CTA_PLATFORM_SUPPORTED)
+  message(FATAL_ERROR
+    "CTA recognizes ${CTA_OS_ID} ${CTA_OS_VERSION} as a ${CTA_OS_FAMILY} platform "
+    "(${PLATFORM}), but this platform is not supported yet")
+endif()
+
 include(cmake/LoadProjectJson.cmake)
 
 # -----------------------------------------------------------------------------
@@ -240,7 +247,7 @@ message(STATUS "CTA_LIBVERSION: ${CTA_LIBVERSION} (SOVERSION ${CTA_SOVERSION})")
 message(STATUS "SUPPORTED_CATALOGUE_VERSIONS: ${SUPPORTED_CTA_CATALOGUE_SCHEMA_VERSIONS_JOINED}")
 message(STATUS "")
 message(STATUS "Build")
-message(STATUS "PLATFORM: ${PLATFORM} (${CTA_OS_ID} ${CTA_OS_VERSION})")
+message(STATUS "PLATFORM: ${PLATFORM} (${CTA_OS_ID} ${CTA_OS_VERSION}, ${CTA_OS_FAMILY}, ${CTA_PACKAGE_FORMAT})")
 message(STATUS "CXX_STANDARD: ${PROJECT_CPP_VERSION}")
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 message(STATUS "CMAKE_GENERATOR: ${CMAKE_GENERATOR}")
