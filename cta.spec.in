@@ -598,6 +598,7 @@ CERN Tape Archive common items, such as the creation of the cta local user.
 %{_bindir}/grep -q '^cta:' %{_sysconfdir}/passwd || %{_sbindir}/luseradd -s %{_sbindir}/nologin -c "CTA system account" -g tape cta
 %files -n cta-common
 %license COPYING
+%dir %attr(0755,root,root) %{_sysconfdir}/cta
 %doc CHANGELOG.md
 
 %package -n cta-release
