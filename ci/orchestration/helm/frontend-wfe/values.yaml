@@ -38,6 +38,9 @@ conf:
     # Only takes effect with the postgres scheduler (pgsched); ignored by the objectstore
     # scheduler, which always queues one request at a time regardless of this value.
     opportunisticBatchingEnabled: false
+    # Only meaningful when opportunisticBatchingEnabled is true: see cta-frontend.example.conf.
+    opportunisticBatchingWindowMs: 50
+    opportunisticBatchingMaxBatchSize: 1000
 
   logger:
     logLevel: "DEBUG"

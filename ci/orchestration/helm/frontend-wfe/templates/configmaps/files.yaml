@@ -74,6 +74,8 @@ data:
     # DB insert instead of queueing them one at a time. Only takes effect with the postgres
     # scheduler; ignored by the objectstore scheduler.
     cta.schedulerdb.opportunistic_batching_enabled {{ .Values.conf.schedulerdb.opportunisticBatchingEnabled }}
+    cta.schedulerdb.opportunistic_batching_window_ms {{ .Values.conf.schedulerdb.opportunisticBatchingWindowMs }}
+    cta.schedulerdb.opportunistic_batching_max_batch_size {{ .Values.conf.schedulerdb.opportunisticBatchingMaxBatchSize }}
 
     # CTA Catalogue options
     cta.catalogue.numberofconnections {{ .Values.conf.catalogue.numberOfConnections }}
