@@ -409,7 +409,10 @@ stress-test-python:
         matrix:
           - TARGET_NAME: *cta-system-test-image-targets
   rules:
-    - if: $CI_COMMIT_TAG
+    - if: '$CI_COMMIT_TAG =~ $TAG_PGCAT_REGEX || $CI_COMMIT_TAG =~ $TAG_PGALL_REGEX'
+      when: manual
+      allow_failure: true
+    - if: '$CI_COMMIT_TAG && $PIPELINE_TYPE == "DEFAULT"'
       when: on_success
     - when: manual
       allow_failure: true  # Otherwise this blocks the pipeline
