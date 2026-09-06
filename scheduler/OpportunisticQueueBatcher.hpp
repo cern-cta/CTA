@@ -89,7 +89,23 @@ public:
       batch.swap(m_pendingBatch);
     }
 
-    m_resolveBatch(batch, lc);
+    try {
+      m_resolveBatch(batch, lc);
+    } catch (...) {
+      // resolveBatch's contract is to resolve every item's promise itself; if it throws instead of
+      // doing that (a bug in it, or e.g. a bad_alloc from some unrelated allocation), items it never
+      // got to would be left unresolved forever — and, far worse, m_leaderInProgress below would
+      // never be reset, permanently blocking every follower already asleep on m_cv and every future
+      // caller of this batcher. Best-effort fallback: propagate this exception to whichever items
+      // aren't already resolved; a promise resolveBatch did manage to resolve before throwing just
+      // rejects the redundant set_exception, which is ignored.
+      auto ex = std::current_exception();
+      for (auto& item : batch) {
+        try {
+          item.promise.set_exception(ex);
+        } catch (const std::future_error&) {}
+      }
+    }
 
     // Release followers waiting on this batch as soon as their results exist, before doing any
     // slower work in afterRelease below. Followers only need their own promise to be ready and to
