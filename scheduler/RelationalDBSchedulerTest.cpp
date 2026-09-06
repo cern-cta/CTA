@@ -18,6 +18,7 @@
 #include "common/dataStructures/RequesterMountRule.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/DummyLogger.hpp"
+#include "common/log/StringLogger.hpp"
 #include "common/utils/Timer.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/LogicalLibrary.hpp"
@@ -32,13 +33,13 @@
 #include "tests/TempFile.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 
+#include <algorithm>
 #include <atomic>
 #include <bits/unique_ptr.h>
-#include <condition_variable>
 #include <exception>
 #include <gtest/gtest.h>
 #include <memory>
-#include <mutex>
+#include <regex>
 #include <thread>
 #include <utility>
 
@@ -101,34 +102,33 @@ std::ostream& operator<<(std::ostream& os, const SchedulerTestParam& c) {
   }
 }
 
-// Launches `count` threads that all park on a barrier before calling `fn(i)`, then releases them
-// together so their calls land within the same opportunistic-batching window, joining all of them
-// before returning. Used by the opportunistic-batching tests below.
+// Launches `count` threads that all spin-wait on a plain atomic barrier before calling `fn(i)`, so
+// their calls land close enough together to reliably share a batching window, then joins all of
+// them before returning. Deliberately not condition-variable-based: a mutex+condvar version of this
+// barrier was tried first and had an intermittent lost-wakeup bug (the main thread's wait for
+// readyCount==count relied on a notify that nothing reliably sent, so it depended on an OS spurious
+// wakeup to ever proceed) — a busy-poll on an atomic can't lose a wakeup, so there is nothing here
+// for that class of bug to hide in. Matches the equivalent helper in OpportunisticQueueBatcherTest.cpp.
 void runConcurrently(int count, const std::function<void(int)>& fn) {
-  std::mutex mtx;
-  std::condition_variable cv;
-  int readyCount = 0;
-  bool go = false;
+  std::atomic<int> readyCount {0};
+  std::atomic<bool> go {false};
 
   std::vector<std::thread> threads;
   threads.reserve(count);
   for (int i = 0; i < count; ++i) {
     threads.emplace_back([&, i] {
-      {
-        std::unique_lock<std::mutex> lock(mtx);
-        ++readyCount;
-        cv.wait(lock, [&] { return go; });
+      ++readyCount;
+      while (!go.load(std::memory_order_acquire)) {
+        std::this_thread::yield();
       }
       fn(i);
     });
   }
 
-  {
-    std::unique_lock<std::mutex> lock(mtx);
-    cv.wait(lock, [&] { return readyCount == count; });
-    go = true;
+  while (readyCount.load(std::memory_order_acquire) < count) {
+    std::this_thread::yield();
   }
-  cv.notify_all();
+  go.store(true, std::memory_order_release);
 
   for (auto& t : threads) {
     t.join();
@@ -165,8 +165,13 @@ public:
 
     // We do a deep reference to the member as the C++ compiler requires the function to be already defined if called implicitly
     const auto& factory = GetParam().m_dbFactory;
-    const uint64_t nbConns = 1;
-    const uint64_t nbArchiveFileListingConns = 1;
+    // 1 connection was enough while every test in this fixture drove the catalogue from a single
+    // thread. The opportunisticBatching* tests below fire several concurrent callers at once (see
+    // their own comments for why that's fine for production connection pool sizing, unlike here),
+    // so a single connection serializes them down to one at a time — matching production's own
+    // default (cta.catalogue.numberofconnections 10) gives them room to actually run concurrently.
+    const uint64_t nbConns = 10;
+    const uint64_t nbArchiveFileListingConns = 10;
     //m_catalogue = std::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
     m_catalogue = std::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
     // Get the SchedulerDatabase from the factory
@@ -475,7 +480,10 @@ TEST_P(SchedulerTest, opportunisticBatchingQueuesConcurrentArchiveRequests) {
                               /*opportunisticBatchingWindowMs=*/200,
                               /*opportunisticBatchingMaxBatchSize=*/1000);
 
-  log::DummyLogger dl("", "");
+  // A StringLogger (rather than DummyLogger) lets us confirm below that requests were genuinely
+  // batched together (batchSize > 1 in at least one resolveArchiveBatch() round), not merely routed
+  // through the batcher one at a time -- resolveArchiveBatch() logs "batchSize" on every round.
+  log::StringLogger dl("dummy", "opportunisticBatchingQueuesConcurrentArchiveRequests", log::INFO);
   constexpr int nbRequests = 10;
   std::vector<std::string> results(nbRequests);
   std::vector<std::exception_ptr> errors(nbRequests);
@@ -518,6 +526,20 @@ TEST_P(SchedulerTest, opportunisticBatchingQueuesConcurrentArchiveRequests) {
     ASSERT_FALSE(errors[i]) << "request " << i << " failed unexpectedly";
     ASSERT_FALSE(results[i].empty()) << "request " << i << " returned no request id";
   }
+
+  // Confirm requests were actually batched together, not just individually routed through the
+  // batcher: at least one resolveArchiveBatch() round must have processed more than one item.
+  const std::string capturedLog = dl.getLog();
+  std::smatch match;
+  auto searchStart = capturedLog.cbegin();
+  std::vector<size_t> batchSizesSeen;
+  while (std::regex_search(searchStart, capturedLog.cend(), match, std::regex(R"re(batchSize="(\d+)")re"))) {
+    batchSizesSeen.push_back(static_cast<size_t>(std::stoul(match[1])));
+    searchStart = match.suffix().first;
+  }
+  const size_t maxBatchSizeSeen = batchSizesSeen.empty() ? 0 : *std::max_element(batchSizesSeen.begin(), batchSizesSeen.end());
+  ASSERT_GT(maxBatchSizeSeen, 1u) << "no resolveArchiveBatch() round batched more than one request together, log:\n"
+                                  << capturedLog;
 
   batchingScheduler.waitSchedulerDbSubthreadsComplete();
 
