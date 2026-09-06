@@ -537,7 +537,8 @@ TEST_P(SchedulerTest, opportunisticBatchingQueuesConcurrentArchiveRequests) {
     batchSizesSeen.push_back(static_cast<size_t>(std::stoul(match[1])));
     searchStart = match.suffix().first;
   }
-  const size_t maxBatchSizeSeen = batchSizesSeen.empty() ? 0 : *std::max_element(batchSizesSeen.begin(), batchSizesSeen.end());
+  const size_t maxBatchSizeSeen =
+    batchSizesSeen.empty() ? 0 : *std::max_element(batchSizesSeen.begin(), batchSizesSeen.end());
   ASSERT_GT(maxBatchSizeSeen, 1u) << "no resolveArchiveBatch() round batched more than one request together, log:\n"
                                   << capturedLog;
 
