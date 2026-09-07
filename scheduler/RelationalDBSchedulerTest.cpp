@@ -1212,9 +1212,9 @@ TEST_P(SchedulerTest, opportunisticBatchingIsolatesAPerItemRetrieveFailure) {
     searchStart = match.suffix().first;
   }
   ASSERT_GT(maxBatchSizeSeen, 1u) << "no resolveRetrieveBatch() round batched more than one request together, "
-                                    "so the bad request's isolation from the others was never actually tested "
-                                    "within a shared batch, log:\n"
-                                 << capturedLog;
+                                     "so the bad request's isolation from the others was never actually tested "
+                                     "within a shared batch, log:\n"
+                                  << capturedLog;
 
   batchingScheduler.waitSchedulerDbSubthreadsComplete();
 
