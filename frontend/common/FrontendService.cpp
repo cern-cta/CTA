@@ -343,7 +343,7 @@ FrontendService::FrontendService(const std::string& configFilename,
   // Only meaningful alongside opportunistic_batching_enabled: see
   // Scheduler::m_opportunisticBatchingWindow/m_opportunisticBatchingMaxBatchSize.
   auto opportunisticBatchingWindowMs =
-    config.getOptionValueUInt("cta.schedulerdb.opportunistic_batching_window_ms").value_or(10);
+    config.getOptionValueUInt("cta.schedulerdb.opportunistic_batching_window_ms").value_or(50);
   auto opportunisticBatchingMaxBatchSize =
     config.getOptionValueUInt("cta.schedulerdb.opportunistic_batching_max_batch_size").value_or(1000);
 

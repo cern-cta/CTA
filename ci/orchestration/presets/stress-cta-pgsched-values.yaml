@@ -27,12 +27,7 @@ frontend-wfe:
       logLevel: "WARNING"
     schedulerdb:
       opportunisticBatchingEnabled: true
-      # Deliberately short: with enqueueAndWait()'s leader-election/window-wait race closed, a batch's
-      # cap-based early exit dominates under real concurrent load (rounds fill and release without
-      # ever waiting out the full window), so a short window costs little batching benefit when
-      # there's actually load to batch -- but it does bound how much latency a request pays when
-      # arriving with nobody to batch with, which is the case this value is actually tuned for.
-      opportunisticBatchingWindowMs: 10
+      opportunisticBatchingWindowMs: 50
       # A safety ceiling on single-round batch size, not a target: real workloads should virtually
       # never hit it (the window ends most rounds first), so it mainly guards against a pathological
       # burst producing one unreasonably large bulk INSERT rather than shaping normal throughput.
