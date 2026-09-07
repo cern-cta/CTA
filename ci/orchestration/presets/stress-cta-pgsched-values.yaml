@@ -25,6 +25,14 @@ frontend-wfe:
       numberOfConnections: 50
     logger:
       logLevel: "WARNING"
+    schedulerdb:
+      opportunisticBatchingEnabled: true
+      opportunisticBatchingWindowMs: 10
+      # TEMPORARY diagnostic: set to 1 to isolate per-call coordination overhead (mutex/promise/future
+      # machinery in OpportunisticQueueBatcher) from cross-thread batch-formation waiting -- with a cap
+      # of 1, every caller still goes through the full enqueueAndWait() mechanism but never actually
+      # waits to merge with anyone. Revert to a real batch size (e.g. 1000) once this experiment is done.
+      opportunisticBatchingMaxBatchSize: 1
 
 taped:
   conf:
