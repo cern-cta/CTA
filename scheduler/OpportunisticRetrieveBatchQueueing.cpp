@@ -11,6 +11,8 @@
 #include "scheduler/OpportunisticQueueBatcher.hpp"
 #include "scheduler/Scheduler.hpp"
 
+#include <future>
+#include <mutex>
 #include <opentelemetry/context/runtime_context.h>
 
 namespace cta {
@@ -43,11 +45,7 @@ Scheduler::resolveRetrieveInsertCriteria(const std::string& instanceName,
     }
   }
 
-  // Deliberately fetched per call rather than cached/shared across a batch, now that this runs on
-  // each caller's own thread rather than once per batch inside resolveRetrieveBatch(): a plain
-  // catalogue list fetch, not worth adding cache/locking machinery for the way the archive criteria
-  // cache was, unlike that one this doesn't fan out into repeated per-item DB round trips avoided.
-  auto diskSystemList = m_catalogue.DiskSystem()->getAllDiskSystems();
+  auto diskSystemList = getCachedDiskSystemList();
   try {
     diskSystemName = diskSystemList.getDSName(request.dstURL);
   } catch (std::out_of_range&) {
@@ -56,6 +54,56 @@ Scheduler::resolveRetrieveInsertCriteria(const std::string& instanceName,
   }
 
   return criteria;
+}
+
+//------------------------------------------------------------------------------
+// getCachedDiskSystemList
+//------------------------------------------------------------------------------
+disk::DiskSystemList Scheduler::getCachedDiskSystemList() {
+  const auto now = std::chrono::steady_clock::now();
+
+  // Same single-flight coalescing pattern as resolveArchiveInsertCriteria()'s cache, just simpler:
+  // there is only one value here, not one per key, so a plain optional<shared_future<>> stands in
+  // for what was a map keyed by ArchiveInsertQueueCriteriaKey there.
+  std::promise<disk::DiskSystemList> fetchPromise;
+  std::shared_future<disk::DiskSystemList> waitOnFuture;
+  bool isFetcher = false;
+  {
+    std::lock_guard<std::mutex> cacheLock(m_diskSystemListCacheMutex);
+    if (m_diskSystemListCache.has_value() && (now - m_diskSystemListCachedAt) < m_diskSystemListCacheTtl) {
+      return *m_diskSystemListCache;
+    }
+    if (m_diskSystemListInFlight.has_value()) {
+      waitOnFuture = *m_diskSystemListInFlight;
+    } else {
+      isFetcher = true;
+      waitOnFuture = fetchPromise.get_future().share();
+      m_diskSystemListInFlight = waitOnFuture;
+    }
+  }
+
+  if (!isFetcher) {
+    return waitOnFuture.get();
+  }
+
+  try {
+    auto list = m_catalogue.DiskSystem()->getAllDiskSystems();
+    {
+      std::lock_guard<std::mutex> cacheLock(m_diskSystemListCacheMutex);
+      m_diskSystemListCache = list;
+      m_diskSystemListCachedAt = now;
+      m_diskSystemListInFlight.reset();
+    }
+    fetchPromise.set_value(list);
+    return list;
+  } catch (...) {
+    {
+      std::lock_guard<std::mutex> cacheLock(m_diskSystemListCacheMutex);
+      m_diskSystemListInFlight.reset();
+    }
+    fetchPromise.set_exception(std::current_exception());
+    throw;
+  }
 }
 
 //------------------------------------------------------------------------------
