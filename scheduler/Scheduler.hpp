@@ -667,6 +667,7 @@ private:
   const size_t m_opportunisticBatchingMaxBatchSize;
   std::unique_ptr<OpportunisticQueueBatcher<cta::common::dataStructures::ArchiveInsertQueueItem, std::string>>
     m_archiveBatcher;
+
   // Pairs a cached criteria lookup with when it was fetched, so a hit can be judged stale (see
   // m_archiveInsertQueueCriteriaCacheTtl below) instead of being trusted forever -- a storage
   // class's routing or mount policy can be changed by an admin at any time, and without this the
@@ -677,6 +678,7 @@ private:
     cta::common::dataStructures::ArchiveInsertQueueCriteria criteria;
     std::chrono::steady_clock::time_point cachedAt;
   };
+
   std::unordered_map<cta::common::dataStructures::ArchiveInsertQueueCriteriaKey,
                      CachedArchiveInsertQueueCriteria,
                      cta::common::dataStructures::ArchiveInsertQueueCriteriaKeyHash>
