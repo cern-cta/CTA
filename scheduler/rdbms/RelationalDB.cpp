@@ -150,6 +150,14 @@ RelationalDB::queueArchive(std::vector<cta::common::dataStructures::ArchiveInser
 
   lc.log(log::INFO, "In RelationalDB::queueArchive(): enqueued archive.");
 
+  // Both the dbClientOperationDuration and dbClientResponseReturnedRows telemetry set up by
+  // insertRequestBatch()'s conn.setDbQuerySummary("insert archive") call are only actually emitted
+  // from inside Conn::commit() -- without this explicit commit, the transaction still lands (via the
+  // connection pool's own implicit commit when the connection is returned, a different, untelemetered
+  // code path), but neither metric is ever recorded.
+  sqlconn.setRowCountForTelemetry(nrows);
+  sqlconn.commit();
+
   // The scheduler DB does not hand back a real per-request address the way the objectstore did;
   // "bogus" is kept only because callers still expect one string per request, matching
   // ArchiveRequest::getIdStr() (see its own comment), which the single-item queueArchive()
@@ -664,6 +672,13 @@ RelationalDB::queueRetrieve(std::vector<cta::common::dataStructures::RetrieveIns
     .add("nrows", rowsToInsert.size())
     .add("totalTime", timeTotal.secs())
     .log(log::INFO, "In RelationalDB::queueRetrieve(): Finished enqueueing batch.");
+
+  // See the equivalent comment in queueArchive()'s bulk overload: without an explicit commit here,
+  // the dbClientOperationDuration/dbClientResponseReturnedRows telemetry set up by insertBatch()'s
+  // own conn.setDbQuerySummary() call is never emitted, even though the transaction itself still
+  // lands via the connection pool's own implicit, untelemetered commit on return.
+  sqlconn.setRowCountForTelemetry(rowsToInsert.size());
+  sqlconn.commit();
 
   // Same placeholder convention as queueArchive()'s bulk overload: getIdStr() always returns
   // "bogus" too (see RetrieveRequest::getIdStr()'s own comment), so there's no need to call it once

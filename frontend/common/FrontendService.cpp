@@ -337,13 +337,13 @@ FrontendService::FrontendService(const std::string& configFilename,
   m_scheddb->initConfig(osThreadPoolSize, osThreadStackSize);
 
   // Only meaningful for CTA_PGSCHED builds: see Scheduler::m_enableOpportunisticBatching. Defaults
-  // to false (file-by-file queueing) until the known issues with the batched path are addressed.
+  // to false (file-by-file queueing) until proven solid by operations in production.
   auto opportunisticBatchingEnabled =
     config.getOptionValueBool("cta.schedulerdb.opportunistic_batching_enabled").value_or(false);
   // Only meaningful alongside opportunistic_batching_enabled: see
   // Scheduler::m_opportunisticBatchingWindow/m_opportunisticBatchingMaxBatchSize.
   auto opportunisticBatchingWindowMs =
-    config.getOptionValueUInt("cta.schedulerdb.opportunistic_batching_window_ms").value_or(50);
+    config.getOptionValueUInt("cta.schedulerdb.opportunistic_batching_window_ms").value_or(10);
   auto opportunisticBatchingMaxBatchSize =
     config.getOptionValueUInt("cta.schedulerdb.opportunistic_batching_max_batch_size").value_or(1000);
 
