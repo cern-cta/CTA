@@ -45,7 +45,8 @@ Scheduler::resolveArchiveInsertCriteria(const std::string& instanceName,
   {
     std::lock_guard<std::mutex> cacheLock(m_archiveInsertQueueCriteriaCacheMutex);
     auto it = m_archiveInsertQueueCriteriaCache.find(k);
-    if (it != m_archiveInsertQueueCriteriaCache.end() && (now - it->second.cachedAt) < m_archiveInsertQueueCriteriaCacheTtl) {
+    if (it != m_archiveInsertQueueCriteriaCache.end()
+        && (now - it->second.cachedAt) < m_archiveInsertQueueCriteriaCacheTtl) {
       return it->second.criteria;
     }
 
@@ -70,8 +71,7 @@ Scheduler::resolveArchiveInsertCriteria(const std::string& instanceName,
   // back into the one-at-a-time pattern this whole move out of resolveArchiveBatch() was meant to
   // avoid. Callers waiting on THIS key are parked on waitOnFuture above, not on the mutex.
   try {
-    auto queueCriteria =
-      m_catalogue.ArchiveFile()->getArchiveFileQueueCriteria(instanceName, storageClass, requester);
+    auto queueCriteria = m_catalogue.ArchiveFile()->getArchiveFileQueueCriteria(instanceName, storageClass, requester);
     cta::common::dataStructures::ArchiveInsertQueueCriteria criteria {std::move(queueCriteria.copyToPoolMap),
                                                                       std::move(queueCriteria.mountPolicy)};
     {
@@ -117,7 +117,8 @@ void Scheduler::resolveArchiveBatch(std::vector<cta::common::dataStructures::Arc
   // before the item is even enqueued with the batcher -- see that method's own comment for why. A
   // request whose lookup failed never reached here at all, having already thrown directly from
   // queueArchiveWithGivenId(). So this is stage 2 only: one bulk insert for the whole batch.
-  static const char* const failMsg = "In Scheduler::resolveArchiveBatch(): bulk archive insert failed, failing this batch";
+  static const char* const failMsg =
+    "In Scheduler::resolveArchiveBatch(): bulk archive insert failed, failing this batch";
   auto jobsPerItem = [](const cta::common::dataStructures::ArchiveInsertQueueItem& item) -> uint64_t {
     return item.copyToPoolMap.size();
   };
