@@ -119,18 +119,16 @@ struct RetrieveJobSummaryRow {
       FROM RETRIEVE_QUEUE_SUMMARY WHERE
         VID = ANY(ARRAY[
     )SQL";
-    size_t i = 0;
-    for (const auto& v : vids) {
+    for (size_t i = 0; i < vids.size(); ++i) {
       if (i > 0) {
         sql += ",";
       }
       sql += ":VID" + std::to_string(i);
-      ++i;
     }
     sql += "])";
 
     auto stmt = conn.createStmt(sql);
-    i = 0;
+    size_t i = 0;
     for (const auto& v : vids) {
       stmt.bindString(":VID" + std::to_string(i), v);
       ++i;
