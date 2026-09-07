@@ -12,10 +12,96 @@
 #include "scheduler/OpportunisticQueueBatcher.hpp"
 #include "scheduler/Scheduler.hpp"
 
+#include <future>
+#include <mutex>
 #include <opentelemetry/context/runtime_context.h>
 #include <sstream>
 
 namespace cta {
+
+//------------------------------------------------------------------------------
+// resolveArchiveInsertCriteria
+//------------------------------------------------------------------------------
+cta::common::dataStructures::ArchiveInsertQueueCriteria
+Scheduler::resolveArchiveInsertCriteria(const std::string& instanceName,
+                                        const std::string& storageClass,
+                                        const cta::common::dataStructures::RequesterIdentity& requester,
+                                        log::LogContext& lc) {
+  cta::common::dataStructures::ArchiveInsertQueueCriteriaKey k {instanceName,
+                                                                storageClass,
+                                                                requester.name,
+                                                                requester.group};
+  const auto now = std::chrono::steady_clock::now();
+
+  // Single-flight coalescing: several concurrent callers can miss on the exact same key at once
+  // (e.g. the first requests for a storage class, or right after its TTL expires, under load).
+  // Whichever caller finds no cache hit AND no fetch already in flight for this key becomes the
+  // fetcher and registers fetchPromise's shared_future for everyone else to find; any other caller
+  // that misses on the same key while that's present just waits on it below instead of repeating the
+  // catalogue call.
+  std::promise<cta::common::dataStructures::ArchiveInsertQueueCriteria> fetchPromise;
+  std::shared_future<cta::common::dataStructures::ArchiveInsertQueueCriteria> waitOnFuture;
+  bool isFetcher = false;
+  {
+    std::lock_guard<std::mutex> cacheLock(m_archiveInsertQueueCriteriaCacheMutex);
+    auto it = m_archiveInsertQueueCriteriaCache.find(k);
+    if (it != m_archiveInsertQueueCriteriaCache.end() && (now - it->second.cachedAt) < m_archiveInsertQueueCriteriaCacheTtl) {
+      return it->second.criteria;
+    }
+
+    auto inFlightIt = m_archiveInsertQueueCriteriaInFlight.find(k);
+    if (inFlightIt != m_archiveInsertQueueCriteriaInFlight.end()) {
+      waitOnFuture = inFlightIt->second;
+    } else {
+      isFetcher = true;
+      waitOnFuture = fetchPromise.get_future().share();
+      m_archiveInsertQueueCriteriaInFlight.emplace(k, waitOnFuture);
+    }
+  }
+
+  if (!isFetcher) {
+    // Rethrows here too if the fetcher's own lookup failed -- the same error every one of these
+    // waiters would have gotten from its own lookup anyway, since they all share the same key.
+    return waitOnFuture.get();
+  }
+
+  // Deliberately called outside the lock: this is the (relatively slow) catalogue round trip, and
+  // holding the mutex across it would serialize every OTHER key's lookups behind this one, right
+  // back into the one-at-a-time pattern this whole move out of resolveArchiveBatch() was meant to
+  // avoid. Callers waiting on THIS key are parked on waitOnFuture above, not on the mutex.
+  try {
+    auto queueCriteria =
+      m_catalogue.ArchiveFile()->getArchiveFileQueueCriteria(instanceName, storageClass, requester);
+    cta::common::dataStructures::ArchiveInsertQueueCriteria criteria {std::move(queueCriteria.copyToPoolMap),
+                                                                      std::move(queueCriteria.mountPolicy)};
+    {
+      std::lock_guard<std::mutex> cacheLock(m_archiveInsertQueueCriteriaCacheMutex);
+      auto it = m_archiveInsertQueueCriteriaCache.find(k);
+      if (it != m_archiveInsertQueueCriteriaCache.end()) {
+        // Refreshed in place rather than counted as new growth, so a small set of hot keys cycling
+        // past the TTL can't by itself trigger the size-based clear below.
+        it->second = {criteria, now};
+      } else {
+        m_archiveInsertQueueCriteriaCache.emplace(k, CachedArchiveInsertQueueCriteria {criteria, now});
+        if (m_archiveInsertQueueCriteriaCache.size() > m_archiveInsertQueueCriteriaCacheMaxSize) {
+          m_archiveInsertQueueCriteriaCache.clear();
+        }
+      }
+      m_archiveInsertQueueCriteriaInFlight.erase(k);
+    }
+    fetchPromise.set_value(criteria);
+    return criteria;
+  } catch (...) {
+    {
+      std::lock_guard<std::mutex> cacheLock(m_archiveInsertQueueCriteriaCacheMutex);
+      m_archiveInsertQueueCriteriaInFlight.erase(k);
+    }
+    // Propagates to every waiter parked on waitOnFuture.get() above, then rethrown here for this
+    // (the fetcher's) own caller too.
+    fetchPromise.set_exception(std::current_exception());
+    throw;
+  }
+}
 
 //------------------------------------------------------------------------------
 // resolveArchiveBatch
@@ -26,137 +112,42 @@ void Scheduler::resolveArchiveBatch(std::vector<cta::common::dataStructures::Arc
   uint64_t successfulJobs = 0;
   uint64_t failedJobs = 0;
 
-  auto logFailedItem = [&lc](const cta::common::dataStructures::ArchiveInsertQueueItem& item,
-                             const std::string& exceptionMessage,
-                             const char* logMsg) {
-    log::ScopedParamContainer(lc)
-      .add("instanceName", item.instanceName)
-      .add("storageClass", item.request.storageClass)
-      .add("diskFileID", item.request.diskFileID)
-      .add("fileId", item.archiveFileId)
-      .add("requesterName", item.request.requester.name)
-      .add("requesterGroup", item.request.requester.group)
-      .add("exceptionMessage", exceptionMessage)
-      .log(log::WARNING, logMsg);
+  // Every item reaching this point already carries a resolved copyToPoolMap/mountPolicy: stage 1
+  // (the catalogue lookup) now runs in resolveArchiveInsertCriteria(), on each caller's own thread,
+  // before the item is even enqueued with the batcher -- see that method's own comment for why. A
+  // request whose lookup failed never reached here at all, having already thrown directly from
+  // queueArchiveWithGivenId(). So this is stage 2 only: one bulk insert for the whole batch.
+  static const char* const failMsg = "In Scheduler::resolveArchiveBatch(): bulk archive insert failed, failing this batch";
+  auto jobsPerItem = [](const cta::common::dataStructures::ArchiveInsertQueueItem& item) -> uint64_t {
+    return item.copyToPoolMap.size();
   };
-
-  // Stage 1: catalogue lookup, isolated per item. An item that fails here (e.g. an unknown
-  // storage class) gets its own exception on its own promise and is left in place in batch (not
-  // touched again). validItems is moved out of batch, by item, only for the items which passed
-  // this stage; stage1Indices tracks each validItems[i]'s original index in batch, so those items
-  // can be moved back into batch afterwards, once stage 2 has resolved them, since batch (not
-  // validItems, which only lives for this function) is what logQueuedArchiveItems() logs from.
-  std::vector<cta::common::dataStructures::ArchiveInsertQueueItem> validItems;
-  std::vector<size_t> stage1Indices;
-  validItems.reserve(batch.size());
-  stage1Indices.reserve(batch.size());
-  for (size_t i = 0; i < batch.size(); ++i) {
-    auto& item = batch[i];
-    try {
-      cta::common::dataStructures::ArchiveInsertQueueCriteriaKey k {item.instanceName,
-                                                                    item.request.storageClass,
-                                                                    item.request.requester.name,
-                                                                    item.request.requester.group};
-      auto it = m_archiveInsertQueueCriteriaCache.find(k);
-      const auto now = std::chrono::steady_clock::now();
-      const bool haveFreshHit = it != m_archiveInsertQueueCriteriaCache.end()
-                                && (now - it->second.cachedAt) < m_archiveInsertQueueCriteriaCacheTtl;
-      if (haveFreshHit) {
-        item.copyToPoolMap = it->second.criteria.copyToPoolMap;
-        item.mountPolicy = it->second.criteria.mountPolicy;
-      } else {
-        auto queueCriteria = m_catalogue.ArchiveFile()->getArchiveFileQueueCriteria(item.instanceName,
-                                                                                    item.request.storageClass,
-                                                                                    item.request.requester);
-        item.copyToPoolMap = queueCriteria.copyToPoolMap;
-        item.mountPolicy = queueCriteria.mountPolicy;
-        cta::common::dataStructures::ArchiveInsertQueueCriteria cacheEntry {std::move(queueCriteria.copyToPoolMap),
-                                                                            std::move(queueCriteria.mountPolicy)};
-        // A stale entry is refreshed in place rather than counted as new growth, so a small set of
-        // hot keys cycling past the TTL can't by itself trigger the size-based clear below.
-        if (it != m_archiveInsertQueueCriteriaCache.end()) {
-          it->second = {std::move(cacheEntry), now};
-        } else {
-          m_archiveInsertQueueCriteriaCache.emplace(std::move(k),
-                                                    CachedArchiveInsertQueueCriteria {std::move(cacheEntry), now});
-          if (m_archiveInsertQueueCriteriaCache.size() > m_archiveInsertQueueCriteriaCacheMaxSize) {
-            m_archiveInsertQueueCriteriaCache.clear();
-          }
-        }
-      }
-      stage1Indices.push_back(i);
-      validItems.push_back(std::move(item));
-    } catch (const std::exception& ex) {
-      // Preserve the original exception (e.g. a UserError for an unknown storage class) instead
-      // of flattening it into a generic error, so the caller sees the same error it would have
-      // gotten via the file-by-file path.
-      item.promise.set_exception(std::current_exception());
-      // Job count for this item is unknown (it never got a copyToPoolMap), so it counts as 1
-      // failed request standing in for however many jobs it would have produced.
-      failedJobs += 1;
-      logFailedItem(item,
-                    ex.what(),
-                    "In Scheduler::resolveArchiveBatch(): failed to resolve archive queue criteria for request");
-    } catch (...) {
-      item.promise.set_exception(std::current_exception());
-      failedJobs += 1;
-      logFailedItem(item,
-                    "unknown exception",
-                    "In Scheduler::resolveArchiveBatch(): failed to resolve archive queue criteria for request");
-    }
-  }
-
   size_t successfulItems = 0;
-  if (!validItems.empty()) {
-    // Stage 2: bulk insert of the items which passed stage 1. This is one SQL statement in one
-    // transaction, so a single bad row fails all of validItems here, not just itself — but unlike
-    // stage 1, this is not retried item by item. Stage 1 already isolated the kind of per-item data
-    // problem worth isolating (an unknown storage class, a bad requester), so what's left to make
-    // the bulk insert itself fail is mostly systemic (lost connection, deadlock, timeout) and would
-    // very likely fail every one of the N individual retries identically, while every follower in
-    // this batch sits blocked waiting for them all to run out. A genuine one-off case (e.g. a
-    // duplicate archiveFileId from a client retry) is recoverable the normal way: the caller gets
-    // an error and retries, rather than paying an unbounded-latency tail for every unrelated
-    // request in the batch.
-    static const char* const failMsg =
-      "In Scheduler::resolveArchiveBatch(): bulk archive insert failed, failing this batch";
-    auto jobsPerItem = [](const cta::common::dataStructures::ArchiveInsertQueueItem& item) -> uint64_t {
-      return item.copyToPoolMap.size();
-    };
-    try {
-      auto archiveReqAddrVector = m_db.queueArchive(validItems, lc);
+  try {
+    auto archiveReqAddrVector = m_db.queueArchive(batch, lc);
 
-      if (archiveReqAddrVector.size() != validItems.size()) {
-        throw exception::Exception("queueArchive returned size " + std::to_string(archiveReqAddrVector.size())
-                                   + " but batch size is " + std::to_string(validItems.size()));
-      }
-
-      for (size_t i = 0; i < validItems.size(); ++i) {
-        validItems[i].promise.set_value(archiveReqAddrVector[i]);
-        validItems[i].queued = true;
-        successfulJobs += validItems[i].copyToPoolMap.size();
-        ++successfulItems;
-      }
-    } catch (const std::exception& e) {
-      cta::failWholeBatch(validItems, lc, e.what(), failMsg, failedJobs, jobsPerItem);
-    } catch (...) {
-      cta::failWholeBatch(validItems, lc, std::string("unknown exception"), failMsg, failedJobs, jobsPerItem);
+    if (archiveReqAddrVector.size() != batch.size()) {
+      throw exception::Exception("queueArchive returned size " + std::to_string(archiveReqAddrVector.size())
+                                 + " but batch size is " + std::to_string(batch.size()));
     }
 
-    // Move every stage-1-passed item back into its original slot in batch, now carrying its
-    // resolved queued/copyToPoolMap/mountPolicy state, so logQueuedArchiveItems() (which only sees
-    // batch, not this function's local validItems) can log it afterwards.
-    for (size_t i = 0; i < validItems.size(); ++i) {
-      batch[stage1Indices[i]] = std::move(validItems[i]);
+    for (size_t i = 0; i < batch.size(); ++i) {
+      batch[i].promise.set_value(archiveReqAddrVector[i]);
+      batch[i].queued = true;
+      successfulJobs += batch[i].copyToPoolMap.size();
+      ++successfulItems;
     }
+  } catch (const std::exception& e) {
+    cta::failWholeBatch(batch, lc, e.what(), failMsg, failedJobs, jobsPerItem);
+  } catch (...) {
+    cta::failWholeBatch(batch, lc, std::string("unknown exception"), failMsg, failedJobs, jobsPerItem);
   }
 
-  // Duration covers this whole batch operation (stage 1 catalogue lookups plus the stage 2 DB
-  // insert(s)) — the actual wall time of queueing this batch — timed here rather than by the caller
-  // in queueArchiveWithGivenId(), whose own elapsed time also includes the opportunistic-batching
+  // Duration covers this batch's bulk insert only now that stage 1 has moved out — the actual DB
+  // wall time of queueing this batch — timed here rather than by the caller in
+  // queueArchiveWithGivenId(), whose own elapsed time also includes the opportunistic-batching
   // wait/sleep, which is about the batching mechanism, not the queueing work itself. Job count only
-  // includes items that actually got queued, not merely items which passed stage 1, so a stage-2
-  // failure (which fails every item in validItems) doesn't inflate the reported throughput.
+  // includes items that actually got queued, not merely items which reached this function, so a
+  // stage-2 failure (which fails every item in batch) doesn't inflate the reported throughput.
   auto batchTimeMSecs = batchTimer.msecs();
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
     batchTimeMSecs,
