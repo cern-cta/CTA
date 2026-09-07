@@ -78,6 +78,9 @@ Pipfile.lock
 
 # --- Miscellaneous ignores ---
 
+# IDE configs
+.vscode/
+
 # Logs and temporary files
 *.log
 *.tmp
