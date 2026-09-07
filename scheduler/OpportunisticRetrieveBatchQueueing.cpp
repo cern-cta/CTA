@@ -90,7 +90,7 @@ disk::DiskSystemList Scheduler::getCachedDiskSystemList() {
     auto list = m_catalogue.DiskSystem()->getAllDiskSystems();
     {
       std::lock_guard<std::mutex> cacheLock(m_diskSystemListCacheMutex);
-      m_diskSystemListCache = list;
+      m_diskSystemListCache.emplace(list);
       m_diskSystemListCachedAt = now;
       m_diskSystemListInFlight.reset();
     }
