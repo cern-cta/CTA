@@ -191,6 +191,52 @@ TEST_F(OpportunisticQueueBatcherTest, exceptionOnPromiseIsRethrownToCaller) {
   ASSERT_THROW(batcher.enqueueAndWait(std::move(item), lc), std::runtime_error);
 }
 
+TEST_F(OpportunisticQueueBatcherTest, resolveBatchThrowingPropagatesToAllConcurrentCallersWithoutDeadlocking) {
+  using namespace cta;
+  log::LogContext lc(m_dummyLog);
+
+  constexpr int nbCallers = 5;
+  std::atomic<int> resolveBatchCalls {0};
+  OpportunisticQueueBatcher<TestItem, int> batcher(100ms, 1000, [&](std::vector<TestItem>& batch, log::LogContext&) {
+    // Simulates a bug in resolveBatch itself (as opposed to exceptionOnPromiseIsRethrownToCaller
+    // above, where resolveBatch behaves correctly and catches its own exception): it fails to honour
+    // its contract of resolving every item's promise itself, and instead lets an exception escape.
+    // This must be caught by enqueueAndWait()'s own fallback (see OpportunisticQueueBatcher.hpp) --
+    // otherwise every follower already asleep on m_cv, and every future caller, would be left
+    // permanently blocked. Only the first round throws, so a normal second round below can confirm
+    // the batcher is still usable afterwards.
+    if (resolveBatchCalls++ == 0) {
+      throw std::runtime_error("resolveBatch itself failed");
+    }
+    for (auto& item : batch) {
+      item.promise.set_value(item.value * 2);
+    }
+  });
+
+  std::vector<std::exception_ptr> errors(nbCallers);
+  runConcurrently(nbCallers, [&](int i) {
+    log::LogContext threadLc(m_dummyLog);
+    TestItem item;
+    item.value = i;
+    try {
+      batcher.enqueueAndWait(std::move(item), threadLc);
+    } catch (...) {
+      errors[i] = std::current_exception();
+    }
+  });
+
+  for (int i = 0; i < nbCallers; ++i) {
+    ASSERT_TRUE(errors[i]) << "caller " << i << " should have received the exception resolveBatch let escape";
+    ASSERT_THROW(std::rethrow_exception(errors[i]), std::runtime_error);
+  }
+
+  // The batcher must not be left in a stuck state (m_leaderInProgress never reset) by the round
+  // above: a plain follow-up call must still succeed normally.
+  TestItem item;
+  item.value = 99;
+  ASSERT_EQ(198, batcher.enqueueAndWait(std::move(item), lc));
+}
+
 TEST_F(OpportunisticQueueBatcherTest, followersAreReleasedBeforeAfterReleaseFinishes) {
   using namespace cta;
   log::LogContext lc(m_dummyLog);
