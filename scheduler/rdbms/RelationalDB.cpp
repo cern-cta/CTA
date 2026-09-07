@@ -613,9 +613,10 @@ RelationalDB::queueRetrieve(std::vector<cta::common::dataStructures::RetrieveIns
   utils::Timer timeTotal;
   auto sqlconn = m_connPool.getConn();
 
-  // Pre-warm the tape status cache for every candidate vid across the whole batch in one catalogue
-  // call, rather than letting each item's own selectBestVid4Retrieve() call below lazily fetch cold
-  // vids one at a time.
+  // Pre-warm the tape status cache and the retrieve-queue-statistics cache for every candidate vid
+  // across the whole batch in one call each, rather than letting each item's own
+  // selectBestVid4Retrieve() call below lazily fetch cold/stale vids one at a time on this same
+  // (single, leader) connection.
   std::set<std::string, std::less<>> allCandidateVids;
   for (auto& item : batch) {
     for (auto& tf : item.criteria.archiveFile.tapeFiles) {
@@ -623,6 +624,7 @@ RelationalDB::queueRetrieve(std::vector<cta::common::dataStructures::RetrieveIns
     }
   }
   cta::schedulerdb::Helpers::warmTapeStatusCache(allCandidateVids, m_catalogue);
+  cta::schedulerdb::Helpers::warmRetrieveQueueStatisticsCache(allCandidateVids, sqlconn);
 
   std::vector<std::unique_ptr<schedulerdb::postgres::RetrieveJobQueueRow>> rowsToInsert;
   rowsToInsert.reserve(batch.size());
