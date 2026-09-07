@@ -39,9 +39,12 @@
 #include "taped/daemon/common/TapedConfiguration.hpp"
 
 #include <chrono>
+#include <future>
 #include <list>
 #include <map>
 #include <memory>
+#include <mutex>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -646,15 +649,31 @@ private:
    */
   const bool m_enableOpportunisticBatching;
 
-  // Resolves every promise in the batch (stage 1: per-item catalogue lookup; stage 2: bulk DB
-  // insert), whatever the internal outcome — this is the fast part, run before followers waiting on
-  // the batch are released.
+  // Resolves the promise for every item in the batch via one bulk DB insert, whatever the internal
+  // outcome — this is the fast part, run before followers waiting on the batch are released. Stage 1
+  // (per-item catalogue lookup) no longer happens here: it runs on each caller's own thread, in
+  // resolveArchiveInsertCriteria() below, before the item is even enqueued -- see that method's own
+  // comment for why. Every item that reaches this function already carries a resolved
+  // copyToPoolMap/mountPolicy.
   void resolveArchiveBatch(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
                            log::LogContext& lc);
   // Per-item audit log for the items resolveArchiveBatch() queued successfully — the slow part
   // (synchronous log writes), run only after followers have already been released.
   void logQueuedArchiveItems(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
                              log::LogContext& lc);
+
+  // Stage 1 of opportunistic archive queueing: resolves (with caching) the copyToPoolMap/mountPolicy
+  // for one request. Called from queueArchiveWithGivenId() on the caller's own thread, before the
+  // item is enqueued with the batcher -- not from resolveArchiveBatch() -- so that concurrent
+  // callers' catalogue lookups run in parallel with each other instead of being serialized, one at a
+  // time, inside the single leader thread's critical round-latency window. A request whose lookup
+  // fails throws directly from here and is never enqueued at all, which is what gives it the same
+  // per-request isolation the old in-batch try/catch used to provide, without needing one any more.
+  cta::common::dataStructures::ArchiveInsertQueueCriteria
+  resolveArchiveInsertCriteria(const std::string& instanceName,
+                               const std::string& storageClass,
+                               const cta::common::dataStructures::RequesterIdentity& requester,
+                               log::LogContext& lc);
 
   /**
    * Maximum time the leader waits for concurrent requests to join its batch before processing it,
@@ -679,11 +698,25 @@ private:
     std::chrono::steady_clock::time_point cachedAt;
   };
 
+  // Guards m_archiveInsertQueueCriteriaCache: now accessed from every caller's own thread inside
+  // resolveArchiveInsertCriteria() (stage 1 runs before enqueueing, in parallel across concurrent
+  // callers), rather than only ever from a single leader thread at a time the way it used to be.
+  std::mutex m_archiveInsertQueueCriteriaCacheMutex;
   std::unordered_map<cta::common::dataStructures::ArchiveInsertQueueCriteriaKey,
                      CachedArchiveInsertQueueCriteria,
                      cta::common::dataStructures::ArchiveInsertQueueCriteriaKeyHash>
     m_archiveInsertQueueCriteriaCache;
   size_t m_archiveInsertQueueCriteriaCacheMaxSize = 1000;
+  // Single-flight coalescing for cold/stale keys: several concurrent callers can miss on the exact
+  // same key at once (e.g. the first requests for a storage class after startup, or right after its
+  // TTL expires under load). Without this, every one of them would independently issue the same
+  // catalogue call. The first to miss registers a shared_future here and becomes the "fetcher"; every
+  // other caller that misses on the same key while it's present just waits on it and reuses the
+  // result (or rethrows the same exception, if the fetch failed) instead of repeating the lookup.
+  std::unordered_map<cta::common::dataStructures::ArchiveInsertQueueCriteriaKey,
+                     std::shared_future<cta::common::dataStructures::ArchiveInsertQueueCriteria>,
+                     cta::common::dataStructures::ArchiveInsertQueueCriteriaKeyHash>
+    m_archiveInsertQueueCriteriaInFlight;
   // Deliberately short: this cache only exists to spare the catalogue a lookup for the (common)
   // case of several concurrent requests in the same opportunistic-batching window sharing a storage
   // class, not to be a long-lived cache -- a stale hit just costs one avoidable catalogue call, so
@@ -691,16 +724,30 @@ private:
   // routing/mount-policy change takes to be picked up.
   static constexpr std::chrono::seconds m_archiveInsertQueueCriteriaCacheTtl {30};
 
-  // Resolves every promise in the batch (stage 1: per-item catalogue lookup and disk-system-name
-  // resolution; stage 2: bulk DB insert, which also selects the vid to read each item from), whatever
-  // the internal outcome — this is the fast part, run before followers waiting on the batch are
-  // released.
+  // Resolves the promise for every item in the batch via one bulk DB insert (which also selects the
+  // vid to read each item from), whatever the internal outcome — this is the fast part, run before
+  // followers waiting on the batch are released. Stage 1 (catalogue lookup and disk-system-name
+  // resolution) no longer happens here: it runs on each caller's own thread, in
+  // resolveRetrieveInsertCriteria() below, before the item is even enqueued.
   void resolveRetrieveBatch(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
                             log::LogContext& lc);
   // Per-item audit log for the items resolveRetrieveBatch() queued successfully — the slow part
   // (synchronous log writes), run only after followers have already been released.
   void logQueuedRetrieveItems(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
                               log::LogContext& lc);
+
+  // Stage 1 of opportunistic retrieve queueing: catalogue lookup and disk-system-name resolution for
+  // one request. Called from queueRetrieve() on the caller's own thread, before the item is
+  // enqueued with the batcher -- not from resolveRetrieveBatch() -- so that concurrent callers'
+  // catalogue lookups run in parallel with each other instead of being serialized, one at a time,
+  // inside the single leader thread's critical round-latency window. A request whose lookup fails
+  // throws directly from here and is never enqueued at all, which is what gives it the same
+  // per-request isolation the old in-batch try/catch used to provide, without needing one any more.
+  cta::common::dataStructures::RetrieveFileQueueCriteria
+  resolveRetrieveInsertCriteria(const std::string& instanceName,
+                                const cta::common::dataStructures::RetrieveRequest& request,
+                                std::optional<std::string>& diskSystemName,
+                                log::LogContext& lc);
 
   // Uses the same m_opportunisticBatchingWindow/m_opportunisticBatchingMaxBatchSize as
   // m_archiveBatcher above: one config, both workflows. Unlike archive, there is no per-item criteria

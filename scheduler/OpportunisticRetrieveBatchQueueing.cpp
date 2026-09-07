@@ -16,6 +16,49 @@
 namespace cta {
 
 //------------------------------------------------------------------------------
+// resolveRetrieveInsertCriteria
+//------------------------------------------------------------------------------
+cta::common::dataStructures::RetrieveFileQueueCriteria
+Scheduler::resolveRetrieveInsertCriteria(const std::string& instanceName,
+                                         const cta::common::dataStructures::RetrieveRequest& request,
+                                         std::optional<std::string>& diskSystemName,
+                                         log::LogContext& lc) {
+  auto criteria = m_catalogue.TapeFile()->prepareToRetrieveFile(instanceName,
+                                                                request.archiveFileID,
+                                                                request.requester,
+                                                                request.activity,
+                                                                lc,
+                                                                request.mountPolicy);
+  criteria.archiveFile.diskFileInfo = request.diskFileInfo;
+
+  // By default, the scheduler makes its decision based on all available vids. But if a vid is
+  // specified in the protobuf, ignore all the others.
+  if (request.vid) {
+    criteria.archiveFile.tapeFiles.removeAllVidsExcept(*request.vid);
+    if (criteria.archiveFile.tapeFiles.empty()) {
+      exception::UserError ex;
+      ex.getMessage() << "In Scheduler::resolveRetrieveInsertCriteria(): VID " << *request.vid
+                      << " does not contain a tape copy of file with archive file ID " << request.archiveFileID;
+      throw ex;
+    }
+  }
+
+  // Deliberately fetched per call rather than cached/shared across a batch, now that this runs on
+  // each caller's own thread rather than once per batch inside resolveRetrieveBatch(): a plain
+  // catalogue list fetch, not worth adding cache/locking machinery for the way the archive criteria
+  // cache was, unlike that one this doesn't fan out into repeated per-item DB round trips avoided.
+  auto diskSystemList = m_catalogue.DiskSystem()->getAllDiskSystems();
+  try {
+    diskSystemName = diskSystemList.getDSName(request.dstURL);
+  } catch (std::out_of_range&) {
+    // If there is no match the function throws an out of range exception. Not a real error:
+    // it just means this request's destination does not match any declared disk system.
+  }
+
+  return criteria;
+}
+
+//------------------------------------------------------------------------------
 // resolveRetrieveBatch
 //------------------------------------------------------------------------------
 void Scheduler::resolveRetrieveBatch(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
@@ -23,109 +66,35 @@ void Scheduler::resolveRetrieveBatch(std::vector<cta::common::dataStructures::Re
   cta::utils::Timer batchTimer;
   uint64_t failedItems = 0;
 
-  auto logFailedItem = [&lc](const cta::common::dataStructures::RetrieveInsertQueueItem& item,
-                             const std::string& exceptionMessage,
-                             const char* logMsg) {
-    log::ScopedParamContainer(lc)
-      .add("instanceName", item.instanceName)
-      .add("fileId", item.request.archiveFileID)
-      .add("requesterName", item.request.requester.name)
-      .add("requesterGroup", item.request.requester.group)
-      .add("exceptionMessage", exceptionMessage)
-      .log(log::WARNING, logMsg);
-  };
-
-  // Stage 1: catalogue lookup and disk-system-name resolution, isolated per item — same pattern as
-  // resolveArchiveBatch()'s stage 1. diskSystemList is fetched once for the whole batch rather than
-  // once per item, since it does not depend on any per-item state.
-  auto diskSystemList = m_catalogue.DiskSystem()->getAllDiskSystems();
-  std::vector<cta::common::dataStructures::RetrieveInsertQueueItem> validItems;
-  std::vector<size_t> stage1Indices;
-  validItems.reserve(batch.size());
-  stage1Indices.reserve(batch.size());
-  for (size_t i = 0; i < batch.size(); ++i) {
-    auto& item = batch[i];
-    try {
-      item.criteria = m_catalogue.TapeFile()->prepareToRetrieveFile(item.instanceName,
-                                                                    item.request.archiveFileID,
-                                                                    item.request.requester,
-                                                                    item.request.activity,
-                                                                    lc,
-                                                                    item.request.mountPolicy);
-      item.criteria.archiveFile.diskFileInfo = item.request.diskFileInfo;
-
-      // By default, the scheduler makes its decision based on all available vids. But if a vid is
-      // specified in the protobuf, ignore all the others.
-      if (item.request.vid) {
-        item.criteria.archiveFile.tapeFiles.removeAllVidsExcept(*item.request.vid);
-        if (item.criteria.archiveFile.tapeFiles.empty()) {
-          exception::UserError ex;
-          ex.getMessage() << "In Scheduler::resolveRetrieveBatch(): VID " << *item.request.vid
-                          << " does not contain a tape copy of file with archive file ID "
-                          << item.request.archiveFileID;
-          throw ex;
-        }
-      }
-
-      try {
-        item.diskSystemName = diskSystemList.getDSName(item.request.dstURL);
-      } catch (std::out_of_range&) {
-        // If there is no match the function throws an out of range exception. Not a real error:
-        // it just means this request's destination does not match any declared disk system.
-      }
-
-      stage1Indices.push_back(i);
-      validItems.push_back(std::move(item));
-    } catch (const std::exception& ex) {
-      item.promise.set_exception(std::current_exception());
-      failedItems += 1;
-      logFailedItem(item,
-                    ex.what(),
-                    "In Scheduler::resolveRetrieveBatch(): failed to resolve retrieve queue criteria for request");
-    } catch (...) {
-      item.promise.set_exception(std::current_exception());
-      failedItems += 1;
-      logFailedItem(item,
-                    "unknown exception",
-                    "In Scheduler::resolveRetrieveBatch(): failed to resolve retrieve queue criteria for request");
-    }
-  }
-
+  // Every item reaching this point already carries resolved criteria/diskSystemName: stage 1 (the
+  // catalogue lookup and disk-system-name resolution) now runs in resolveRetrieveInsertCriteria(),
+  // on each caller's own thread, before the item is even enqueued -- see that method's own comment
+  // for why. A request whose lookup failed never reached here at all, having already thrown directly
+  // from Scheduler::queueRetrieve(). So this is stage 2 only: one bulk insert for the whole batch.
   size_t successfulItems = 0;
-  if (!validItems.empty()) {
-    // Stage 2: bulk insert of the items which passed stage 1, which also selects the vid to read
-    // each one from (see RelationalDB::queueRetrieve()'s bulk overload). Same all-or-nothing policy
-    // as resolveArchiveBatch()'s stage 2, and for the same reason: stage 1 already isolated the
-    // per-item problems worth isolating, so what's left to make this fail is mostly systemic.
+  if (!batch.empty()) {
     static const char* const failMsg =
       "In Scheduler::resolveRetrieveBatch(): bulk retrieve insert failed, failing this batch";
     // A retrieve request is always exactly one job (one copy read), unlike archive requests, which
     // can fan out into several — so failure here is always counted as 1 per item.
     auto oneJobPerItem = [](const cta::common::dataStructures::RetrieveInsertQueueItem&) -> uint64_t { return 1; };
     try {
-      auto requestIds = m_db.queueRetrieve(validItems, lc);
+      auto requestIds = m_db.queueRetrieve(batch, lc);
 
-      if (requestIds.size() != validItems.size()) {
+      if (requestIds.size() != batch.size()) {
         throw exception::Exception("queueRetrieve returned size " + std::to_string(requestIds.size())
-                                   + " but batch size is " + std::to_string(validItems.size()));
+                                   + " but batch size is " + std::to_string(batch.size()));
       }
 
-      for (size_t i = 0; i < validItems.size(); ++i) {
-        validItems[i].promise.set_value(requestIds[i]);
-        validItems[i].queued = true;
+      for (size_t i = 0; i < batch.size(); ++i) {
+        batch[i].promise.set_value(requestIds[i]);
+        batch[i].queued = true;
         ++successfulItems;
       }
     } catch (const std::exception& e) {
-      cta::failWholeBatch(validItems, lc, e.what(), failMsg, failedItems, oneJobPerItem);
+      cta::failWholeBatch(batch, lc, e.what(), failMsg, failedItems, oneJobPerItem);
     } catch (...) {
-      cta::failWholeBatch(validItems, lc, std::string("unknown exception"), failMsg, failedItems, oneJobPerItem);
-    }
-
-    // Move every stage-1-passed item back into its original slot in batch, now carrying its
-    // resolved queued/criteria/selectedVid state, so logQueuedRetrieveItems() (which only sees
-    // batch, not this function's local validItems) can log it afterwards.
-    for (size_t i = 0; i < validItems.size(); ++i) {
-      batch[stage1Indices[i]] = std::move(validItems[i]);
+      cta::failWholeBatch(batch, lc, std::string("unknown exception"), failMsg, failedItems, oneJobPerItem);
     }
   }
 
