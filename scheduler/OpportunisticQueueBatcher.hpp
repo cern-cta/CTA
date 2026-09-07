@@ -46,48 +46,50 @@ public:
   // rethrows whatever exception resolveBatch set on its promise).
   ResultType enqueueAndWait(ItemType&& item, log::LogContext& lc) {
     std::future<ResultType> future;
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_pendingBatch.push_back(std::move(item));
+    future = m_pendingBatch.back().promise.get_future();
+
+    if (m_pendingBatch.size() >= m_maxBatchSize) {
+      // Wakes every waiter on this cv, not just a leader currently waiting out its window: any
+      // other follower woken here just finds its own two conditions below still false and goes
+      // straight back to sleep. Harmless, and no different from the notify_all() at release time.
+      m_cv.notify_all();
+    }
+
+    // Leadership election loop
     bool isLeader = false;
-    {
-      std::unique_lock<std::mutex> lock(m_mutex);
-      m_pendingBatch.push_back(std::move(item));
-      future = m_pendingBatch.back().promise.get_future();
-
-      if (m_pendingBatch.size() >= m_maxBatchSize) {
-        // Wakes every waiter on this cv, not just a leader currently waiting out its window: any
-        // other follower woken here just finds its own two conditions below still false and goes
-        // straight back to sleep. Harmless, and no different from the notify_all() at release time.
-        m_cv.notify_all();
+    while (!isLeader) {
+      // If my own request has already been resolved by a leader, return its result.
+      if (future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+        return future.get();
       }
-
-      // Leadership election loop
-      while (!isLeader) {
-        // If my own request has already been resolved by a leader, return its result.
-        if (future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-          return future.get();
-        }
-        // If nobody is currently leading a round, I become leader.
-        if (!m_leaderInProgress) {
-          m_leaderInProgress = true;
-          isLeader = true;
-          break;
-        }
-        // Otherwise wait to be woken, either as the batch fills up or once the current round ends.
-        m_cv.wait(lock);
+      // If nobody is currently leading a round, I become leader.
+      if (!m_leaderInProgress) {
+        m_leaderInProgress = true;
+        isLeader = true;
+        break;
       }
-    }  // end of scope with the lock
+      // Otherwise wait to be woken, either as the batch fills up or once the current round ends.
+      m_cv.wait(lock);
+    }
 
     // ---- LEADER PATH ----
+    // Still holding `lock`, uninterrupted, from the enqueue/election above: wait_for() re-checks the
+    // predicate immediately under this same lock, before ever sleeping, so a cap already met right
+    // now (e.g. maxBatchSize==1, satisfied by this leader's own item alone) returns instantly with
+    // no other thread ever getting a chance to join this round. Deliberately never released and
+    // re-acquired between becoming leader and this check: doing so used to leave a real gap where
+    // m_mutex was momentarily free, during which another caller could enqueue and, since
+    // m_leaderInProgress was already true, quietly join this round as a follower before the leader
+    // ever got back to look — letting more items into "capped" batches than the cap implied.
+    // wait_for() always re-acquires the lock before returning — by timeout, by the notify_all()
+    // above, by a wakeup meant for someone else on this shared cv, or spuriously — so stealing the
+    // batch right after is always safe here too.
     std::vector<ItemType> batch;
-    {
-      // wait_for() re-checks the predicate under the lock before ever sleeping (so a cap already
-      // reached by the time we get here returns instantly, no lost-wakeup race with the notify_all()
-      // above), and always re-acquires the lock before returning — whether woken by that notify, a
-      // wakeup meant for someone else on this shared cv, a spurious OS wakeup, or the timeout — so
-      // stealing the batch right after is always safe, in the same locked scope, no separate re-lock.
-      std::unique_lock<std::mutex> lock(m_mutex);
-      m_cv.wait_for(lock, m_window, [this] { return m_pendingBatch.size() >= m_maxBatchSize; });
-      batch.swap(m_pendingBatch);
-    }
+    m_cv.wait_for(lock, m_window, [this] { return m_pendingBatch.size() >= m_maxBatchSize; });
+    batch.swap(m_pendingBatch);
+    lock.unlock();
 
     try {
       m_resolveBatch(batch, lc);
@@ -109,11 +111,11 @@ public:
 
     // Release followers waiting on this batch as soon as their results exist, before doing any
     // slower work in afterRelease below. Followers only need their own promise to be ready and to
-    // be woken; they have no stake in this batch's own post-processing.
-    {
-      std::lock_guard<std::mutex> lock(m_mutex);
-      m_leaderInProgress = false;
-    }
+    // be woken; they have no stake in this batch's own post-processing. Reuses `lock` (already
+    // unlocked above) rather than a second lock object, since m_mutex is not recursive.
+    lock.lock();
+    m_leaderInProgress = false;
+    lock.unlock();
     m_cv.notify_all();
 
     if (m_afterRelease) {
