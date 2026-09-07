@@ -31,6 +31,7 @@
 #include "disk/DiskFile.hpp"
 #include "disk/DiskReporter.hpp"
 #include "disk/DiskReporterFactory.hpp"
+#include "disk/DiskSystem.hpp"
 #include "scheduler/IScheduler.hpp"
 #include "scheduler/OpportunisticQueueBatcher.hpp"
 #include "scheduler/RepackRequest.hpp"
@@ -749,10 +750,26 @@ private:
                                 std::optional<std::string>& diskSystemName,
                                 log::LogContext& lc);
 
+  // Returns the (TTL-cached, single-flight coalesced) disk system list used by
+  // resolveRetrieveInsertCriteria() to resolve a request's dstURL to a disk system name. Unlike
+  // m_archiveInsertQueueCriteriaCache, this isn't keyed at all -- there is exactly one disk system
+  // list, shared by every retrieve request regardless of instance/requester/file -- so every caller
+  // either hits the same cached value or coalesces onto the same single in-flight fetch, rather than
+  // each of them independently calling catalogue.DiskSystem()->getAllDiskSystems() (which used to be
+  // fetched once per batch inside resolveRetrieveBatch(), before stage 1 moved to run per caller).
+  disk::DiskSystemList getCachedDiskSystemList();
+  std::mutex m_diskSystemListCacheMutex;
+  std::optional<disk::DiskSystemList> m_diskSystemListCache;
+  std::chrono::steady_clock::time_point m_diskSystemListCachedAt;
+  std::optional<std::shared_future<disk::DiskSystemList>> m_diskSystemListInFlight;
+  static constexpr std::chrono::seconds m_diskSystemListCacheTtl {30};
+
   // Uses the same m_opportunisticBatchingWindow/m_opportunisticBatchingMaxBatchSize as
   // m_archiveBatcher above: one config, both workflows. Unlike archive, there is no per-item criteria
   // cache here — archive's is keyed on storage class, shared by many requests; retrieve criteria are
-  // keyed on archiveFileID, unique per request, so nothing would ever be reused from it.
+  // keyed on archiveFileID, unique per request, so nothing would ever be reused from it. The disk
+  // system list is the one piece of retrieve's stage 1 that is shared across requests -- see
+  // getCachedDiskSystemList() above.
   std::unique_ptr<OpportunisticQueueBatcher<cta::common::dataStructures::RetrieveInsertQueueItem, std::string>>
     m_retrieveBatcher;
 #endif
