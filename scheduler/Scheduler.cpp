@@ -177,6 +177,13 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
 
 #ifdef CTA_PGSCHED
   if (m_enableOpportunisticBatching) {
+    // Stage 1 (catalogue lookup) runs here, on this caller's own thread, before the item is
+    // enqueued — not inside resolveArchiveBatch() on the single leader thread — so concurrent
+    // callers' catalogue lookups run in parallel with each other instead of being serialized one at
+    // a time inside the batch's critical round-latency window. Throws directly (never enqueuing)
+    // on failure, same observable per-request isolation as before, just resolved earlier.
+    auto criteria = resolveArchiveInsertCriteria(instanceName, request.storageClass, request.requester, lc);
+
     // m_archiveBatcher handles the leader/follower coordination, the window+cap wait, and releasing
     // followers as soon as resolveArchiveBatch() has settled every promise in the batch — before the
     // slower logQueuedArchiveItems() runs, so no follower waits on it. See OpportunisticQueueBatcher.hpp.
@@ -184,8 +191,8 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
       cta::common::dataStructures::ArchiveInsertQueueItem {archiveFileId,
                                                            instanceName,
                                                            request,
-                                                           {},
-                                                           {},
+                                                           std::move(criteria.copyToPoolMap),
+                                                           std::move(criteria.mountPolicy),
                                                            std::promise<std::string>()},
       lc);
   }
@@ -257,6 +264,14 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
 
 #ifdef CTA_PGSCHED
   if (m_enableOpportunisticBatching) {
+    // Stage 1 (catalogue lookup and disk-system-name resolution) runs here, on this caller's own
+    // thread, before the item is enqueued — not inside resolveRetrieveBatch() on the single leader
+    // thread — so concurrent callers' catalogue lookups run in parallel with each other instead of
+    // being serialized one at a time inside the batch's critical round-latency window. Throws
+    // directly (never enqueuing) on failure, same observable per-request isolation as before.
+    std::optional<std::string> diskSystemName;
+    auto criteria = resolveRetrieveInsertCriteria(instanceName, request, diskSystemName, lc);
+
     // m_retrieveBatcher handles the leader/follower coordination, the window+cap wait, and releasing
     // followers as soon as resolveRetrieveBatch() has settled every promise in the batch — before the
     // slower logQueuedRetrieveItems() runs, so no follower waits on it. See OpportunisticQueueBatcher.hpp.
@@ -267,8 +282,8 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
     return m_retrieveBatcher->enqueueAndWait(
       cta::common::dataStructures::RetrieveInsertQueueItem {instanceName,
                                                             request,
-                                                            {},
-                                                            std::nullopt,
+                                                            std::move(criteria),
+                                                            std::move(diskSystemName),
                                                             {},
                                                             std::promise<std::string>()},
       lc);
