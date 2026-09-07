@@ -8,6 +8,9 @@
 #include "common/semconv/Attributes.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
 
+#include <set>
+#include <string>
+
 namespace cta::schedulerdb::postgres {
 /*
  * Retrieve job table summary object
@@ -87,6 +90,51 @@ struct RetrieveJobSummaryRow {
 
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
+    conn.setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbSelectSummary);
+    return stmt.executeQuery();
+  }
+
+  /**
+   * Same as selectVid(), for several vids in one round trip instead of one query per vid. Used only
+   * by Helpers::warmRetrieveQueueStatisticsCache() (opportunistic-batching only, see its own
+   * comment) -- selectVid() above is untouched and still used everywhere else. A vid with no queued
+   * jobs simply has no row in the result, same as selectVid() returning an empty Rset for one.
+   *
+   * @param vids must be non-empty.
+   */
+  static rdbms::Rset selectVids(const std::set<std::string, std::less<>>& vids, rdbms::Conn& conn) {
+    std::string sql = R"SQL(
+      SELECT
+        VID,
+        MOUNT_POLICY,
+        ACTIVITY,
+        DISK_SYSTEM_NAME,
+        PRIORITY,
+        JOBS_COUNT,
+        JOBS_TOTAL_SIZE,
+        OLDEST_JOB_START_TIME,
+        YOUNGEST_JOB_START_TIME,
+        RETRIEVE_MIN_REQUEST_AGE,
+        LAST_JOB_UPDATE_TIME
+      FROM RETRIEVE_QUEUE_SUMMARY WHERE
+        VID = ANY(ARRAY[
+    )SQL";
+    size_t i = 0;
+    for (const auto& v : vids) {
+      if (i > 0) {
+        sql += ",";
+      }
+      sql += ":VID" + std::to_string(i);
+      ++i;
+    }
+    sql += "])";
+
+    auto stmt = conn.createStmt(sql);
+    i = 0;
+    for (const auto& v : vids) {
+      stmt.bindString(":VID" + std::to_string(i), v);
+      ++i;
+    }
     conn.setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbSelectSummary);
     return stmt.executeQuery();
   }

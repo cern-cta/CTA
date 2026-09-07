@@ -55,6 +55,18 @@ public:
    */
   static void warmTapeStatusCache(const std::set<std::string, std::less<>>& vids, cta::catalogue::Catalogue& catalogue);
 
+  /**
+   * Opportunistic-batching only: ensures the retrieve-queue-statistics cache holds a fresh entry for
+   * every vid in `vids`, fetching whichever are missing/stale in a single bulk query rather than one
+   * query per vid -- the cost selectBestVid4Retrieve() pays internally, one vid at a time by
+   * deliberate design (see its own comment), when a single leader thread has to resolve several
+   * opportunistically-batched retrieve requests for different, cold tapes in a row. Call once per
+   * batch with the union of every item's candidate vids, alongside warmTapeStatusCache(), before
+   * calling selectBestVid4Retrieve() per item -- leaves selectBestVid4Retrieve() and
+   * getRetrieveQueueStatistics() themselves, and every other caller of the cache, untouched.
+   */
+  static void warmRetrieveQueueStatisticsCache(const std::set<std::string, std::less<>>& vids, cta::rdbms::Conn& conn);
+
   static void setTapeCacheMaxAgeSecs(int cacheMaxAgeSecs);
   static void setRetrieveQueueCacheMaxAgeSecs(int cacheMaxAgeSecs);
 
