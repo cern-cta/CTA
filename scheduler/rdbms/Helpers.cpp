@@ -68,6 +68,49 @@ void Helpers::warmTapeStatusCacheLocked(const std::set<std::string, std::less<>>
   }
 }
 
+void Helpers::warmRetrieveQueueStatisticsCache(const std::set<std::string, std::less<>>& vids, rdbms::Conn& conn) {
+  if (vids.empty()) {
+    return;
+  }
+
+  std::set<std::string, std::less<>> missingOrStale;
+  {
+    threading::MutexLocker grqsmLock(g_retrieveQueueStatisticsMutex);
+    const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    for (const auto& v : vids) {
+      auto it = g_retrieveQueueStatistics.find(v);
+      if (it == g_retrieveQueueStatistics.end() || it->second.updating
+          || (now - it->second.updateTime) >= g_retrieveQueueCacheMaxAge) {
+        missingOrStale.insert(v);
+      }
+    }
+  }
+  if (missingOrStale.empty()) {
+    return;
+  }
+
+  // Deliberately not tracked via the updating/updateFuture machinery selectBestVid4Retrieve() uses
+  // for its own single-vid refreshes: this is a batch-only fast path, and coordinating it with that
+  // machinery for what would only ever be a rare simultaneous request for the same vid from another
+  // caller isn't worth the complexity -- worst case, both fetch it and whichever write lands last
+  // wins, same as any other cache race.
+  auto summaryRows = cta::schedulerdb::postgres::RetrieveJobSummaryRow::selectVids(missingOrStale, conn);
+  std::set<std::string, std::less<>> found;
+  while (summaryRows.next()) {
+    cta::schedulerdb::postgres::RetrieveJobSummaryRow rjs(summaryRows);
+    found.insert(rjs.vid);
+    updateRetrieveQueueStatisticsCache(rjs.vid, rjs.jobsCount, rjs.jobsTotalSize, rjs.priority);
+  }
+  // A vid with no queued jobs simply has no row in the result -- cache it as zeroed (same fallback
+  // as getRetrieveQueueStatistics()'s single-vid path) rather than leaving it missing, which would
+  // just make selectBestVid4Retrieve() redo this fetch itself right afterwards.
+  for (const auto& v : missingOrStale) {
+    if (!found.count(v)) {
+      updateRetrieveQueueStatisticsCache(v, 0, 0, 0);
+    }
+  }
+}
+
 std::string Helpers::selectBestVid4Retrieve(const std::set<std::string, std::less<>>& candidateVids,
                                             cta::catalogue::Catalogue& catalogue,
                                             rdbms::Conn& conn,
