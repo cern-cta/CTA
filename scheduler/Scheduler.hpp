@@ -667,11 +667,27 @@ private:
   const size_t m_opportunisticBatchingMaxBatchSize;
   std::unique_ptr<OpportunisticQueueBatcher<cta::common::dataStructures::ArchiveInsertQueueItem, std::string>>
     m_archiveBatcher;
+  // Pairs a cached criteria lookup with when it was fetched, so a hit can be judged stale (see
+  // m_archiveInsertQueueCriteriaCacheTtl below) instead of being trusted forever -- a storage
+  // class's routing or mount policy can be changed by an admin at any time, and without this the
+  // cache would keep serving whatever was true the first time a given (instance, storage class,
+  // requester) combination was seen, for as long as the process runs (or until the size-based clear
+  // below happens to evict it, which may be never in a low-cardinality deployment).
+  struct CachedArchiveInsertQueueCriteria {
+    cta::common::dataStructures::ArchiveInsertQueueCriteria criteria;
+    std::chrono::steady_clock::time_point cachedAt;
+  };
   std::unordered_map<cta::common::dataStructures::ArchiveInsertQueueCriteriaKey,
-                     cta::common::dataStructures::ArchiveInsertQueueCriteria,
+                     CachedArchiveInsertQueueCriteria,
                      cta::common::dataStructures::ArchiveInsertQueueCriteriaKeyHash>
     m_archiveInsertQueueCriteriaCache;
-  size_t m_archiveInsertQueueCriteriaCacheMaxSize = 10000;
+  size_t m_archiveInsertQueueCriteriaCacheMaxSize = 1000;
+  // Deliberately short: this cache only exists to spare the catalogue a lookup for the (common)
+  // case of several concurrent requests in the same opportunistic-batching window sharing a storage
+  // class, not to be a long-lived cache -- a stale hit just costs one avoidable catalogue call, so
+  // there is little to gain from a longer TTL, while a shorter one bounds how long an admin's
+  // routing/mount-policy change takes to be picked up.
+  static constexpr std::chrono::seconds m_archiveInsertQueueCriteriaCacheTtl {30};
 
   // Resolves every promise in the batch (stage 1: per-item catalogue lookup and disk-system-name
   // resolution; stage 2: bulk DB insert, which also selects the vid to read each item from), whatever
