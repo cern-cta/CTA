@@ -59,9 +59,8 @@ void Scheduler::resolveArchiveBatch(std::vector<cta::common::dataStructures::Arc
                                                                     item.request.requester.group};
       auto it = m_archiveInsertQueueCriteriaCache.find(k);
       const auto now = std::chrono::steady_clock::now();
-      const bool haveFreshHit =
-        it != m_archiveInsertQueueCriteriaCache.end()
-        && (now - it->second.cachedAt) < m_archiveInsertQueueCriteriaCacheTtl;
+      const bool haveFreshHit = it != m_archiveInsertQueueCriteriaCache.end()
+                                && (now - it->second.cachedAt) < m_archiveInsertQueueCriteriaCacheTtl;
       if (haveFreshHit) {
         item.copyToPoolMap = it->second.criteria.copyToPoolMap;
         item.mountPolicy = it->second.criteria.mountPolicy;
