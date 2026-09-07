@@ -62,11 +62,18 @@ struct ArchiveInsertQueueCriteria {
   common::dataStructures::MountPolicy mountPolicy;
 };
 
+// Owns its strings rather than viewing them (deliberately not string_view): this key is used as an
+// std::unordered_map key in a cache that outlives any single batch (Scheduler::
+// m_archiveInsertQueueCriteriaCache), while the strings a string_view here would naturally be built
+// from (an ArchiveInsertQueueItem's own instanceName/storageClass/requester fields) only live as
+// long as that one batch. A string_view key would dangle the moment that batch is destroyed,
+// corrupting every lookup and insertion into the cache after it -- silently, since freed memory
+// often isn't overwritten immediately, making it look like it works until it doesn't.
 struct ArchiveInsertQueueCriteriaKey {
-  std::string_view instanceName;
-  std::string_view storageClass;
-  std::string_view requesterName;
-  std::string_view requesterGroup;
+  std::string instanceName;
+  std::string storageClass;
+  std::string requesterName;
+  std::string requesterGroup;
 
   bool operator==(const ArchiveInsertQueueCriteriaKey& other) const {
     return instanceName == other.instanceName && storageClass == other.storageClass
@@ -77,10 +84,10 @@ struct ArchiveInsertQueueCriteriaKey {
 // Hash function for unordered_map
 struct ArchiveInsertQueueCriteriaKeyHash {
   std::size_t operator()(const ArchiveInsertQueueCriteriaKey& k) const {
-    std::size_t h = std::hash<std::string_view> {}(k.instanceName);
-    h ^= std::hash<std::string_view> {}(k.storageClass) + 0x9e3779b9 + (h << 6) + (h >> 2);
-    h ^= std::hash<std::string_view> {}(k.requesterName) + 0x9e3779b9 + (h << 6) + (h >> 2);
-    h ^= std::hash<std::string_view> {}(k.requesterGroup) + 0x9e3779b9 + (h << 6) + (h >> 2);
+    std::size_t h = std::hash<std::string> {}(k.instanceName);
+    h ^= std::hash<std::string> {}(k.storageClass) + 0x9e3779b9 + (h << 6) + (h >> 2);
+    h ^= std::hash<std::string> {}(k.requesterName) + 0x9e3779b9 + (h << 6) + (h >> 2);
+    h ^= std::hash<std::string> {}(k.requesterGroup) + 0x9e3779b9 + (h << 6) + (h >> 2);
     return h;
   }
 };
