@@ -58,19 +58,31 @@ void Scheduler::resolveArchiveBatch(std::vector<cta::common::dataStructures::Arc
                                                                     item.request.requester.name,
                                                                     item.request.requester.group};
       auto it = m_archiveInsertQueueCriteriaCache.find(k);
-      if (it != m_archiveInsertQueueCriteriaCache.end()) {
-        item.copyToPoolMap = it->second.copyToPoolMap;
-        item.mountPolicy = it->second.mountPolicy;
+      const auto now = std::chrono::steady_clock::now();
+      const bool haveFreshHit =
+        it != m_archiveInsertQueueCriteriaCache.end()
+        && (now - it->second.cachedAt) < m_archiveInsertQueueCriteriaCacheTtl;
+      if (haveFreshHit) {
+        item.copyToPoolMap = it->second.criteria.copyToPoolMap;
+        item.mountPolicy = it->second.criteria.mountPolicy;
       } else {
         auto queueCriteria = m_catalogue.ArchiveFile()->getArchiveFileQueueCriteria(item.instanceName,
                                                                                     item.request.storageClass,
                                                                                     item.request.requester);
         item.copyToPoolMap = queueCriteria.copyToPoolMap;
         item.mountPolicy = queueCriteria.mountPolicy;
-        m_archiveInsertQueueCriteriaCache[k].copyToPoolMap = queueCriteria.copyToPoolMap;
-        m_archiveInsertQueueCriteriaCache[k].mountPolicy = queueCriteria.mountPolicy;
-        if (m_archiveInsertQueueCriteriaCache.size() > m_archiveInsertQueueCriteriaCacheMaxSize) {
-          m_archiveInsertQueueCriteriaCache.clear();
+        cta::common::dataStructures::ArchiveInsertQueueCriteria cacheEntry {std::move(queueCriteria.copyToPoolMap),
+                                                                            std::move(queueCriteria.mountPolicy)};
+        // A stale entry is refreshed in place rather than counted as new growth, so a small set of
+        // hot keys cycling past the TTL can't by itself trigger the size-based clear below.
+        if (it != m_archiveInsertQueueCriteriaCache.end()) {
+          it->second = {std::move(cacheEntry), now};
+        } else {
+          m_archiveInsertQueueCriteriaCache.emplace(std::move(k),
+                                                    CachedArchiveInsertQueueCriteria {std::move(cacheEntry), now});
+          if (m_archiveInsertQueueCriteriaCache.size() > m_archiveInsertQueueCriteriaCacheMaxSize) {
+            m_archiveInsertQueueCriteriaCache.clear();
+          }
         }
       }
       stage1Indices.push_back(i);
