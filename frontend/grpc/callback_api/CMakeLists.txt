@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: 2021 DESY
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-cmake_minimum_required (VERSION 3.17)
 
 include_directories(${PROTOBUF3_INCLUDE_DIRS})
 

@@ -26,7 +26,7 @@ RUN set -ex; \
 RUN set -ex; \
     mkdir build_srpm; \
     cd build_srpm; \
-    cmake3 -DPackageOnly:Bool=true ../cta; \
+    cmake3 -DCTA_PACKAGE_MODE:STRING=source ../cta; \
     make cta_srpm;
 
 RUN set -ex; \

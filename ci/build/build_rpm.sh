@@ -279,6 +279,7 @@ build_rpm() {
     export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=${xrootd_ssi_version}
 
     cmake_options+=" -D VCS_VERSION=${cta_version_suffix}"
+    cmake_options+=" -D CTA_PACKAGE_MODE:STRING=binary"
 
     # Build type
     if [[ ! ${cmake_build_type} = "" ]]; then
@@ -289,46 +290,46 @@ build_rpm() {
     # Debug packages
     if [[ ${skip_debug_packages} = true ]]; then
       log_warn "Skipping debug packages."
-      cmake_options+=" -D SKIP_DEBUG_PACKAGES:STRING=1"
+      cmake_options+=" -D CTA_BUILD_DEBUG_PACKAGES:BOOL=OFF"
     else
       # the else clause is necessary to prevent cmake from caching this variable
-      cmake_options+=" -D SKIP_DEBUG_PACKAGES:STRING=0"
+      cmake_options+=" -D CTA_BUILD_DEBUG_PACKAGES:BOOL=ON"
     fi
 
     # Oracle support
     if [[ ${oracle_support} = false ]]; then
       log_task "Disabling Oracle support..."
-      cmake_options+=" -D DISABLE_ORACLE_SUPPORT:BOOL=ON"
+      cmake_options+=" -D CTA_WITH_ORACLE:BOOL=OFF"
     else
       # the else clause is necessary to prevent cmake from caching this variable
-      cmake_options+=" -D DISABLE_ORACLE_SUPPORT:BOOL=OFF"
+      cmake_options+=" -D CTA_WITH_ORACLE:BOOL=ON"
     fi
 
     # Unit tests
     if [[ ${skip_unit_tests} = true ]]; then
       log_warn "Skipping unit tests."
-      cmake_options+=" -D SKIP_UNIT_TESTS:STRING=1"
+      cmake_options+=" -D CTA_RUN_UNIT_TESTS:BOOL=OFF"
     else
       # the else clause is necessary to prevent cmake from caching this variable
-      cmake_options+=" -D SKIP_UNIT_TESTS:STRING=0"
+      cmake_options+=" -D CTA_RUN_UNIT_TESTS:BOOL=ON"
     fi
 
     # CCache
     if [[ ${enable_ccache} = true ]]; then
       log_task "Enabling ccache..."
-      cmake_options+=" -D ENABLE_CCACHE:STRING=1"
+      cmake_options+=" -D ENABLE_CCACHE:BOOL=ON"
     else
       # the else clause is necessary to prevent cmake from caching this variable
-      cmake_options+=" -D ENABLE_CCACHE:STRING=0"
+      cmake_options+=" -D ENABLE_CCACHE:BOOL=OFF"
     fi
 
     # Address Sanitizer
     if [[ ${enable_address_sanitizer} = true ]]; then
       log_task "Enabling AddressSanitizer..."
-      cmake_options+=" -D ENABLE_ADDRESS_SANITIZER:BOOL=TRUE"
+      cmake_options+=" -D ENABLE_ADDRESS_SANITIZER:BOOL=ON"
     else
       # the else clause is necessary to prevent cmake from caching this variable
-      cmake_options+=" -D ENABLE_ADDRESS_SANITIZER:BOOL=FALSE"
+      cmake_options+=" -D ENABLE_ADDRESS_SANITIZER:BOOL=OFF"
     fi
 
     # Scheduler type
@@ -362,8 +363,9 @@ build_rpm() {
   fi
 
   # Build step
+  echo
   log_task "Building RPMs with ${build_generator}..."
-  cmake --build . --target cta_rpm -- -j "${num_jobs}"
+  cmake --build . --target cta_rpm --parallel "${num_jobs}"
   echo
   log_success "Built CTA RPMs in ${SECONDS} seconds."
 }

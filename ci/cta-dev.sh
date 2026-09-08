@@ -973,7 +973,7 @@ build_cta() {
   if [[ $rebuild_srpms == true ]]; then
     print_header "BUILDING SRPMS"
 
-    podman exec "${build_container_name}" \
+    podman exec --tty "${build_container_name}" \
       .${mount_basedir}/ci/build/build_srpm.sh \
       --build-dir ${mount_basedir}/build_srpm \
       --build-generator "${build_generator}" \
@@ -1015,7 +1015,7 @@ build_cta() {
   write_build_state "$build_configuration_json" false
 
   print_header "BUILDING RPMS"
-  podman exec "${build_container_name}" \
+  podman exec --tty "${build_container_name}" \
     .${mount_basedir}/ci/build/build_rpm.sh \
     --build-dir ${mount_basedir}/build_rpm \
     --build-generator "${build_generator}" \

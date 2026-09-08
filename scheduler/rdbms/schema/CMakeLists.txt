@@ -1,9 +1,6 @@
 # SPDX-FileCopyrightText: 2015 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-cmake_minimum_required (VERSION 3.17)
-
-find_package(postgres REQUIRED)
 
 include_directories (${POSTGRES_INCLUDE_DIRS})
 

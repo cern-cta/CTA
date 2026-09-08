@@ -1,15 +1,13 @@
 # SPDX-FileCopyrightText: 2022 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
-cmake_minimum_required (VERSION 3.17)
 
 add_subdirectory(common)
-
-find_package(Protobuf3 REQUIRED)
 
 # So that we can see WatchdogMessage.pb.h
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # See https://gitlab.cern.ch/cta/CTA/-/issues/791#note_8251696
+set(PROTOBUF3_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 PROTOBUF3_GENERATE_CPP(WDMsgSources WDMsgHeaders WatchdogMessage.proto)
 
 SET_SOURCE_FILES_PROPERTIES(${WDMsgHeaders} PROPERTIES HEADER_FILE_ONLY TRUE)

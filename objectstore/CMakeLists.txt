@@ -1,41 +1,14 @@
 # SPDX-FileCopyrightText: 2015 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-cmake_minimum_required (VERSION 3.17)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../middletier)
-
-find_package(librados2 REQUIRED)
-find_package(Protobuf3 REQUIRED)
 
 set (CTAProtoFiles
   cta.proto)
 
+set(PROTOBUF3_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}")
 PROTOBUF3_GENERATE_CPP(CTAProtoSources CTAProtoHeaders ${CTAProtoFiles})
-
-set (CTAProtoDependants
-  objectstore/Agent.hpp
-  objectstore/ArchiveRequest.hpp
-  objectstore/CreationLog.hpp
-  objectstore/DriveRegister.hpp
-  objectstore/GenericObject.hpp
-  objectstore/ObjectOps.hpp
-  objectstore/RepackIndex.hpp
-  objectstore/RepackRequest.hpp
-  objectstore/RepackQueue.hpp
-  objectstore/RetrieveActivityCountMap.hpp
-  objectstore/RetrieveRequest.hpp
-  objectstore/RootEntry.hpp
-  objectstore/SchedulerGlobalLock.hpp
-  objectstore/TapeQueue.hpp
-  objectstore/ArchiveQueue.hpp
-  objectstore/UserIdentity.hpp
-  objectstore/ValueCountMap.hpp)
-
-SET_SOURCE_FILES_PROPERTIES(${CTAProtoHeaders} PROPERTIES HEADER_FILE_ONLY TRUE)
-SET_SOURCE_FILES_PROPERTIES(${CTAProtoDependants}
-  PROPERTIES OBJECT_DEPENDS ${CTAProtoHeaders})
 
 include_directories (${PROTOBUF3_INCLUDE_DIRS})
 add_library (ctaobjectstore SHARED
@@ -88,7 +61,7 @@ set_property(TARGET ctaobjectstore PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaobjectstore PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries(ctaobjectstore rados cryptopp ctacommon)
-set_source_files_properties(BackendRados.cpp PROPERTIES COMPILE_FLAGS -Wno-deprecated-declarations)
+set_source_files_properties(BackendRados.cpp PROPERTIES COMPILE_OPTIONS -Wno-deprecated-declarations)
 if(NOT CTA_USE_PGSCHED)
   install (TARGETS ctaobjectstore DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 endif()
