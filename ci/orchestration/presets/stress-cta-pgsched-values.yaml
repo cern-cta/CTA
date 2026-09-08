@@ -26,7 +26,11 @@ frontend-wfe:
     logger:
       logLevel: "WARNING"
     schedulerdb:
-      opportunisticBatchingEnabled: true
+      # Tuning only, applied whether or not batching ends up enabled: does NOT itself turn batching
+      # on. That is controlled solely by the enable-opportunistic-batching pipeline input, via
+      # presets/pgsched-opportunistic-batching-values.yaml -- this file used to also hardcode
+      # opportunisticBatchingEnabled: true here, which always won (later file in the values chain)
+      # over that input, making the input a no-op for stress tests.
       opportunisticBatchingWindowMs: 10
       # A safety ceiling on single-round batch size, not a target: real workloads should virtually
       # never hit it (the window ends most rounds first), so it mainly guards against a pathological
