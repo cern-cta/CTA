@@ -970,29 +970,13 @@ build_cta() {
 
   fi
 
-  local source_package_flags=()
-  [[ $extra_telemetry == true ]] && source_package_flags+=(--extra-telemetry)
+  log_task "Preparing CTA package build..."
 
-  if [[ $rebuild_srpms == true ]]; then
-    print_header "BUILDING SRPMS"
-
-    podman exec --tty "${build_container_name}" \
-      .${mount_basedir}/ci/build/build_packages.sh source \
-      --build-dir ${mount_basedir}/build \
-      --build-generator "${build_generator}" \
-      --create-build-dir \
-      --cta-version "${cta_version_base}" \
-      --cta-version-suffix "${cta_version_suffix}" \
-      --scheduler-type "${scheduler_type}" \
-      --oracle-support "${oracle_support}" \
-      --cmake-build-type "${cmake_build_type}" \
-      --jobs "${num_jobs}" \
-      "${source_package_flags[@]}"
-  fi
-
-  log_task "Compiling CTA from the source directory..."
-
+  local package_command=binary
   local build_package_flags=()
+  local install_source_packages=false
+
+  [[ $rebuild_srpms == true ]] && package_command=all
 
   if [[ $build_container_restarted == true || $reinstall_srpms == true || $force_install == true ]]; then
     [[ $internal_repos_forced_public == false ]] && enable_internal_repos=true
@@ -1000,9 +984,15 @@ build_cta() {
     build_configuration_json=$(jq -c --argjson internalRepos "$enable_internal_repos" \
       '.internalRepos = $internalRepos' <<<"$build_configuration_json")
     [[ $reinstall_srpms == true ]] && log_task "Refreshing build dependencies from the regenerated SRPMs..."
-    build_package_flags+=(--install-source-packages)
+    install_source_packages=true
   fi
 
+  if [[ $package_command == binary && $install_source_packages == true ]]; then
+    build_package_flags+=(
+      --install-source-packages
+      --source-package-dir "${mount_basedir}/build/${platform}/RPM/SRPMS"
+    )
+  fi
   [[ $skip_unit_tests == true ]] && build_package_flags+=(--skip-unit-tests)
   [[ $skip_debug_packages == true ]] && build_package_flags+=(--skip-debug-packages)
   [[ $enable_ccache == true ]] && build_package_flags+=(--enable-ccache)
@@ -1019,18 +1009,17 @@ build_cta() {
 
   write_build_state "$build_configuration_json" false
 
-  print_header "BUILDING RPMS"
+  print_header "BUILDING PACKAGES"
   podman exec --tty "${build_container_name}" \
-    .${mount_basedir}/ci/build/build_packages.sh binary \
-    --build-dir ${mount_basedir}/build \
+    .${mount_basedir}/ci/build/build_packages.sh "${package_command}" \
+    --build-dir "${mount_basedir}/build" \
     --build-generator "${build_generator}" \
     --create-build-dir \
-    --source-package-dir ${mount_basedir}/build/${platform}/RPM/SRPMS \
-    --cta-version ${cta_version_base} \
+    --cta-version "${cta_version_base}" \
     --cta-version-suffix "${cta_version_suffix}" \
     --xrootd-ssi-version "${xrootd_ssi_version}" \
     --scheduler-type "${scheduler_type}" \
-    --oracle-support ${oracle_support} \
+    --oracle-support "${oracle_support}" \
     --cmake-build-type "${cmake_build_type}" \
     --jobs "${num_jobs}" \
     "${build_package_flags[@]}"
