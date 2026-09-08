@@ -1,10 +1,24 @@
 # SPDX-FileCopyrightText: 2015 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# As file(DOWNLOAD) fails silently
+# Download a file once and reuse it on subsequent CMake runs.
+#
+# Download to a temporary path so a failed download is not mistaken for a
+# successfully cached file the next time CMake configures the build tree.
 function(safedl SOURCEURL DESTFILE)
+  if(EXISTS "${DESTFILE}")
+    file(SIZE "${DESTFILE}" destfile_size)
+    if(destfile_size GREATER 0)
+      return()
+    endif()
+
+    file(REMOVE "${DESTFILE}")
+  endif()
+
+  set(tempfile "${DESTFILE}.tmp")
+  file(REMOVE "${tempfile}")
   file(DOWNLOAD "${SOURCEURL}"
-    "${DESTFILE}"
+    "${tempfile}"
     STATUS status
   )
 
@@ -12,10 +26,13 @@ function(safedl SOURCEURL DESTFILE)
   list(GET status 1 status_string)
 
   if(NOT status_code EQUAL 0)
+    file(REMOVE "${tempfile}")
     message(WARNING "error:
     downloading ${SOURCEURL} failed
     ${status_string}
   ")
+  else()
+    file(RENAME "${tempfile}" "${DESTFILE}")
   endif()
 endfunction()
 
@@ -28,7 +45,7 @@ safedl("https://download.ceph.com/keys/release.asc"
   "${CMAKE_CURRENT_BINARY_DIR}/RPM-GPG-KEY-ceph"
 )
 
-safedl("https://yum.oracle.com/RPM-GPG-KEY-oracle-ol${CTA_OS_VERSION}"
+safedl("https://yum.oracle.com/RPM-GPG-KEY-oracle-ol${CTA_OS_VERSION_MAJOR}"
   "${CMAKE_CURRENT_BINARY_DIR}/RPM-GPG-KEY-oracle"
 )
 
