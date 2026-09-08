@@ -7,7 +7,6 @@ import argparse
 import base64
 import re
 import sys
-import time
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote
@@ -196,117 +195,8 @@ def create_or_refresh_merge_request(
     return created
 
 
-def wait_for_merge_request_readiness(
-    api: GitLabAPI,
-    iid: int,
-    expected_sha: str,
-    *,
-    timeout_seconds: int = MERGE_REQUEST_READY_TIMEOUT_SECONDS,
-    poll_interval_seconds: int = MERGE_REQUEST_POLL_INTERVAL_SECONDS,
-    additional_transient_statuses: frozenset[str] = frozenset(),
-) -> dict[str, Any]:
-    attempts = max(1, timeout_seconds // max(1, poll_interval_seconds))
-    last_status = "unknown"
-
-    for attempt in range(attempts):
-        merge_request = api.get(
-            f"merge_requests/{iid}",
-            params={"with_merge_status_recheck": "true"},
-        )
-        if not isinstance(merge_request, dict):
-            raise PipelineImageUpdateError(f"Failed to query readiness of merge request !{iid}")
-        if merge_request.get("state") != "opened":
-            raise PipelineImageUpdateError(
-                f"Merge request !{iid} is no longer open (state: {merge_request.get('state', 'unknown')})"
-            )
-        if merge_request.get("sha") != expected_sha:
-            raise PipelineImageUpdateError(f"Merge request !{iid} source SHA changed while waiting")
-
-        last_status = str(merge_request.get("detailed_merge_status", "unknown"))
-        transient_statuses = TRANSIENT_MERGE_STATUSES | additional_transient_statuses
-        if merge_request.get("prepared_at") and last_status not in transient_statuses:
-            log_task(f"Merge request !{iid} is ready (status: {last_status})")
-            return merge_request
-
-        if attempt + 1 < attempts:
-            log_task(f"Waiting for merge request !{iid} readiness (status: {last_status})")
-            time.sleep(poll_interval_seconds)
-
-    raise PipelineImageUpdateError(f"Timed out waiting for merge request !{iid} readiness (last status: {last_status})")
-
-
-def wait_for_merge_request_approval(
-    api: GitLabAPI,
-    iid: int,
-    *,
-    timeout_seconds: int = MERGE_REQUEST_READY_TIMEOUT_SECONDS,
-    poll_interval_seconds: int = MERGE_REQUEST_POLL_INTERVAL_SECONDS,
-) -> None:
-    attempts = max(1, timeout_seconds // max(1, poll_interval_seconds))
-
-    for attempt in range(attempts):
-        approval_state = api.get(f"merge_requests/{iid}/approval_state")
-        if not isinstance(approval_state, dict):
-            raise PipelineImageUpdateError(f"Failed to query approval state of merge request !{iid}")
-        if approval_state.get("approved") is True:
-            log_task(f"Merge request !{iid} satisfies its approval rules")
-            return
-
-        if attempt + 1 < attempts:
-            log_task(f"Waiting for merge request !{iid} approval to become effective")
-            time.sleep(poll_interval_seconds)
-
-    raise PipelineImageUpdateError(f"Merge request !{iid} did not satisfy its approval rules before the timeout")
-
-
-def approve_and_enable_auto_merge(api: GitLabAPI, merge_request: dict[str, Any]) -> None:
-    iid = merge_request.get("iid")
-    sha = merge_request.get("sha")
-    if not isinstance(iid, int) or not isinstance(sha, str):
-        raise PipelineImageUpdateError("Pipeline-image update merge request has no valid IID or SHA")
-
-    log_task(f"Waiting for merge request !{iid} preparation")
-    wait_for_merge_request_readiness(api, iid, sha)
-    log_task(f"Approving merge request !{iid}")
-    approved = api.post(f"merge_requests/{iid}/approve", json={"sha": sha})
-    if not isinstance(approved, dict):
-        raise PipelineImageUpdateError(f"Failed to approve merge request !{iid}")
-
-    log_task(f"Verifying approval rules for merge request !{iid}")
-    wait_for_merge_request_approval(api, iid)
-    log_task(f"Waiting for merge request !{iid} status synchronization")
-    merge_request = wait_for_merge_request_readiness(
-        api,
-        iid,
-        sha,
-        additional_transient_statuses=frozenset({"not_approved"}),
-    )
-
-    if merge_request.get("merge_when_pipeline_succeeds") is True:
-        log_task(f"Merge request !{iid} already has auto-merge enabled")
-        return
-
-    log_task(f"Enabling auto-merge for merge request !{iid}")
-    auto_merge = api.put(
-        f"merge_requests/{iid}/merge",
-        json={
-            "auto_merge": True,
-            "sha": sha,
-            "should_remove_source_branch": True,
-            "squash": True,
-        },
-    )
-    if not isinstance(auto_merge, dict):
-        raise PipelineImageUpdateError(f"Failed to enable auto-merge for merge request !{iid}")
-
-
 def update_pipeline_image_release(
-    api: GitLabAPI,
-    source_branch: str,
-    target_branch: str,
-    version: str,
-    triggering_user_id: int,
-    auto_merge: bool,
+    api: GitLabAPI, source_branch: str, target_branch: str, version: str, triggering_user_id: int
 ) -> str:
     log_task(f"Starting pipeline image release update to {version}")
     title = merge_request_title(version)
@@ -314,10 +204,6 @@ def update_pipeline_image_release(
     merge_request = create_or_refresh_merge_request(
         api, source_branch, target_branch, title, version, triggering_user_id
     )
-    if auto_merge:
-        approve_and_enable_auto_merge(api, merge_request)
-    else:
-        log_task("Automatic approval and merge are disabled for this pipeline ref")
     return str(merge_request.get("web_url", f"!{merge_request['iid']}"))
 
 
@@ -342,7 +228,6 @@ def main() -> int:
             args.target_branch,
             args.version,
             args.triggering_user_id,
-            args.auto_merge == "true",
         )
     except (GitLabAPIError, PipelineImageUpdateError, ValueError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
