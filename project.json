@@ -17,7 +17,13 @@
     "eosImageTag": "5.3.36.el9",
     "eosServerChartVersion": "0.10.6",
     "dCacheChartVersion": "0.1.0",
-    "dCacheImageTag": "94471db7"
+    "dCacheImageTag": "94471db7",
+    "platformConfiguration": {
+      "el9": {
+        "sourcePackageDirectory": "RPM/SRPMS",
+        "binaryPackageDirectory": "RPM/RPMS/x86_64"
+      }
+    }
   },
   "packageGroups": {
     "group-ceph": [

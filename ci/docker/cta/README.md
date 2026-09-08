@@ -93,7 +93,7 @@ cd ci/docker/cta/el9
 
 podman build \
   -f prod.Dockerfile \
-  --build-context rpm_context=/path/to/RPMS/x86_64 \
+  --build-context package_context=/path/to/RPMS/x86_64 \
   --target cta-taped \
   -t cta/ctageneric/cta-taped:dev \
   .
@@ -113,7 +113,7 @@ Example:
 ```bash
 podman build \
   -f prod.Dockerfile \
-  --build-context rpm_context=/path/to/RPMS/x86_64 \
+  --build-context package_context=/path/to/RPMS/x86_64 \
   --target cta-tools \
   -t cta/ctageneric/cta-tools:dev \
   .

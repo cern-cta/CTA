@@ -7,7 +7,7 @@
 # - note sharing=locked and id for concurrency (dnf caching is not thread safe)
 # - AlmaLinux 9 and repository package versions intentionally float to receive upstream fixes on rebuild
 # - dnf clean is unnecessary because the package caches are BuildKit cache mounts and are not committed to the image
-# - rpm_context is an external BuildKit build context supplied by the build command
+# - package_context is an external BuildKit build context supplied by the build command
 # - Containers log to stdout by default. The CI deployment overrides this command to exercise file logging and mirrors that file to stdout
 
 # =========================================================================
@@ -31,7 +31,7 @@ RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
     microdnf install -y createrepo_c
 
 # hadolint ignore=DL3022
-COPY --from=rpm_context . /rpms
+COPY --from=package_context . /rpms
 
 # Ensure this is recreated correctly.
 RUN /bin/bash -o pipefail -c \

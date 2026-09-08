@@ -51,7 +51,8 @@
         "ctaImageRegistry",
         "dCacheChartVersion",
         "dCacheImageTag",
-        "defaultPlatform"
+        "defaultPlatform",
+        "platformConfiguration"
       ],
       "properties": {
         "cppVersion": {
@@ -110,6 +111,28 @@
           "enum": [
             "el9"
           ]
+        },
+        "platformConfiguration": {
+          "description": "Developer build and image settings that vary by target platform.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "sourcePackageDirectory",
+              "binaryPackageDirectory"
+            ],
+            "properties": {
+              "sourcePackageDirectory": {
+                "type": "string",
+                "minLength": 1
+              },
+              "binaryPackageDirectory": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": false
+          }
         }
       },
       "additionalProperties": false

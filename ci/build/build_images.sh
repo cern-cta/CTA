@@ -8,17 +8,17 @@ source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
 
 usage() {
   echo
-  echo "Usage: $0 [options] -t|--tag <image_tag> -s|--rpm-src <rpm source>"
+  echo "Usage: $0 [options] -t|--tag <image_tag> -s|--package-src <package source>"
   echo
-  echo "Builds an image based on the CTA rpms"
+  echo "Builds CTA images from locally built packages."
   echo "  -t, --tag <image_tag>:          Container image tag. For example \"-t dev\""
-  echo "  -s, --rpm-src <rpm source>:     Path to the RPMs to be installed. Can be absolute or relative to where the script is executed from. For example \"-s build/el9/RPM/RPMS/x86_64\""
+  echo "  -s, --package-src <path>:       Path to the packages to install. Can be absolute or relative to the current directory."
   echo
   echo "options:"
   echo "  -h, --help:                         Shows help output."
   echo "  -l, --load-into-k8s:                Load Podman images into the detected local Kubernetes setup."
   echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'ci/docker/cta/{defaultplatform}/prod.Dockerfile')."
-  echo "      --enable-internal-repos:        Use the internal yum repos instead of the public repos."
+  echo "      --enable-internal-repos:        Use internal package repositories instead of public ones."
   echo "      --enable-oracle-support:        Build the images for use with the Oracle catalogue."
   echo
   exit 1
@@ -27,7 +27,7 @@ usage() {
 project_root=$(git rev-parse --show-toplevel)
 
 # Default values
-rpm_src=""
+package_src=""
 image_tag=""
 default_platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
 dockerfile_path="ci/docker/cta/${default_platform}/prod.Dockerfile"
@@ -39,12 +39,12 @@ enable_oracle_support="0"
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
   -h | --help) usage ;;
-  -s | --rpm-src)
+  -s | --package-src | --rpm-src)
     if [[ $# -gt 1 ]]; then
-      rpm_src=$(realpath "$2")
+      package_src=$(realpath "$2")
       shift
     else
-      error_usage "-s|--rpm-src requires an argument"
+      error_usage "-s|--package-src requires an argument"
     fi
     ;;
   -t | --tag)
@@ -78,8 +78,8 @@ if [[ -z "${image_tag}" ]]; then
   die_usage "Missing mandatory argument -t | --tag"
 fi
 
-if [[ -z "${rpm_src}" ]]; then
-  die_usage "Missing mandatory argument -s | --rpm-src"
+if [[ -z "${package_src}" ]]; then
+  die_usage "Missing mandatory argument -s | --package-src"
 fi
 
 # Use registries.conf to configure proxy for image pulling.
@@ -127,7 +127,7 @@ build_target() {
     set -eo pipefail
     "${build_command[@]}" . -f "${dockerfile}" \
       -t "${image_ref}" \
-      --build-context rpm_context="${rpm_src}" \
+      --build-context package_context="${package_src}" \
       --build-arg ENABLE_INTERNAL_REPOS=${enable_internal_repos} \
       --build-arg ENABLE_ORACLE_SUPPORT=${enable_oracle_support} \
       --build-arg INSTALL_CEPH_COMMON=false \
@@ -166,7 +166,7 @@ base_cache_ref="cta/ctageneric/cta-build-base-cache:${image_tag}"
 log_task "Building base to populate the shared stage cache..."
 if ! "${build_command[@]}" . -f "${dockerfile}" \
   -t "${base_cache_ref}" \
-  --build-context rpm_context="${rpm_src}" \
+  --build-context package_context="${package_src}" \
   --build-arg SUPPRESS_BUILD_SERVICE_STDOUT=true \
   --network host \
   --target base; then

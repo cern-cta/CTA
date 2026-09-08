@@ -31,8 +31,8 @@ spec:
     DEST_REGISTRY_USERNAME: ""
     GIT_SUBMODULE_STRATEGY: "none"
     REGISTRIES_CONFIG_PATH: "${CI_PROJECT_DIR}/ci/docker/registries.conf"
-    # If necessary, add additional whitelisted (private!) registries for images containing Oracle RPMs here, separated by spaces
-    ORACLE_RPM_REGISTRY_WHITELIST: ""
+    # If necessary, add additional whitelisted private registries for images containing Oracle packages, separated by spaces.
+    ORACLE_PACKAGE_REGISTRY_WHITELIST: ""
   before_script:
     - !reference [.merge-train-guard, before_script]
     # Configure storage. See https://gitlab.cern.ch/gitlabci-examples/build_docker_image/-/blob/fce98393aab8f3ffca3b8449036ccb02275c8a46/.gitlab-ci.yml#L19
@@ -60,26 +60,27 @@ spec:
         -u "$DEST_REGISTRY_USERNAME"
         --password-stdin
         "$DOCKER_IMAGE_REGISTRY"
-    # Oracle RPMs are not allowed in public images. This function checks for Oracle RPMs in the image and refuses to publish it if any are found
+    # Oracle packages are not allowed in public images. Refuse to publish an image containing any.
     - |
-      check_oracle_rpms_for_public_image() {
+      check_oracle_packages_for_public_image() {
         local image_ref="$1"
         local private_prefix="${DOCKER_IMAGE_REGISTRY}/${DOCKER_PRIVATE_REGISTRY_PREFIX}/"
         local allowed_prefix
-        for allowed_prefix in "$private_prefix" $ORACLE_RPM_REGISTRY_WHITELIST; do
+        for allowed_prefix in "$private_prefix" $ORACLE_PACKAGE_REGISTRY_WHITELIST; do
           if [[ "$image_ref" == "$allowed_prefix"* ]]; then
-            echo "Skipping Oracle RPM check for whitelisted image destination: ${image_ref}"
+            echo "Skipping Oracle package check for whitelisted image destination: ${image_ref}"
             return
           fi
         done
 
-        local check_container installed_rpms oracle_rpms
+        local check_container installed_packages oracle_packages
         check_container="$(buildah from "$image_ref")"
-        installed_rpms="$(buildah run "$check_container" -- rpm -qa)"
+        installed_packages="$(buildah run "$check_container" -- sh -c \
+          'command -v rpm >/dev/null 2>&1 && rpm -qa || true')"
         buildah rm "$check_container"
-        if oracle_rpms="$(grep -Ei '(oracle|occi)' <<< "$installed_rpms")"; then
-          echo "Refusing to publish an image containing Oracle-related RPMs:"
-          echo "$oracle_rpms"
+        if oracle_packages="$(grep -Ei '(oracle|occi)' <<< "$installed_packages")"; then
+          echo "Refusing to publish an image containing Oracle-related packages:"
+          echo "$oracle_packages"
           return 1
         fi
       }
@@ -111,7 +112,6 @@ spec:
   variables:
     DOCKERFILE: ci/docker/cta/$[[ inputs.platform ]]/prod.Dockerfile
     IMAGE_REF: ${DOCKER_IMAGE_REGISTRY}/${DOCKER_PRIVATE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_BUILD_ID}
-    RPM_CONTEXT: ${CI_PROJECT_DIR}/build/$[[ inputs.platform ]]/RPM/RPMS/x86_64
     EXTRA_BUILD_ARGS: ""
     SBOM_RAW_PATH: ${CI_PROJECT_DIR}/sboms/raw/${TARGET_NAME}.cdx.json
     DEST_REGISTRY_PASSWORD: $DOCKER_PRIVATE_LOGIN_PASSWORD
@@ -120,12 +120,14 @@ spec:
     - echo "Building ${TARGET_NAME}"
     - cd "$(dirname "${DOCKERFILE}")"
     - DOCKERFILE_NAME="$(basename "${DOCKERFILE}")"
+    - PACKAGE_DIRECTORY="$(jq -er --arg platform "$[[ inputs.platform ]]" '.dev.platformConfiguration[$platform].binaryPackageDirectory' "${CI_PROJECT_DIR}/project.json")"
+    - PACKAGE_CONTEXT="${CI_PROJECT_DIR}/build/$[[ inputs.platform ]]/${PACKAGE_DIRECTORY}"
     - |
       BUILDAH_ARGS=(
         --target "${TARGET_NAME}"
         --file "${DOCKERFILE_NAME}"
         --tag "${IMAGE_REF}"
-        --build-context rpm_context="${RPM_CONTEXT}"
+        --build-context package_context="${PACKAGE_CONTEXT}"
         --build-arg ENABLE_INTERNAL_REPOS="$[[ inputs.enable-internal-repos ]]"
         --build-arg ENABLE_ORACLE_SUPPORT="${ENABLE_ORACLE_SUPPORT}"
         --build-arg SUPPRESS_BUILD_SERVICE_STDOUT=false
@@ -145,7 +147,7 @@ spec:
         )
       fi
     - buildah bud "${BUILDAH_ARGS[@]}" .
-    - check_oracle_rpms_for_public_image "$IMAGE_REF"
+    - check_oracle_packages_for_public_image "$IMAGE_REF"
     - buildah push "${IMAGE_REF}"
   artifacts:
     expire_in: 3 hours
@@ -203,7 +205,7 @@ build-pipeline-images:
       esac
     - echo "Building ${IMAGE_REF} from ${DOCKERFILE}"
     - buildah bud --file "${DOCKERFILE}" --tag "${IMAGE_REF}" "$CI_PROJECT_DIR"
-    - if [[ "$IMAGE_SCOPE" == "platform" ]]; then check_oracle_rpms_for_public_image "$IMAGE_REF"; fi
+    - if [[ "$IMAGE_SCOPE" == "platform" ]]; then check_oracle_packages_for_public_image "$IMAGE_REF"; fi
     - buildah push "$IMAGE_REF"
   parallel:
     matrix:
