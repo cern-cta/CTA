@@ -4,7 +4,7 @@
 # Creates source and binary RPM targets using CPack for the source archive and
 # rpmbuild for package generation. Tool discovery is intentionally deferred
 # until this function is called so non-packaging builds do not require rpmbuild.
-function(rpmtools_add_rpm_targets rpm_name spec_file)
+function(rpmtools_add_rpm_targets rpm_name spec_file package_mode)
   if(NOT UNIX)
     message(FATAL_ERROR "RPM packaging is only supported on Unix systems")
   endif()
@@ -39,7 +39,7 @@ function(rpmtools_add_rpm_targets rpm_name spec_file)
   message(STATUS "RPM package builder: ${RPMTOOLS_RPMBUILD_EXECUTABLE}")
   message(STATUS "RPM build root: ${rpm_root}")
 
-  # Both targets share the same source archive and configured spec file.
+  # Source packaging is available in both source and binary modes.
   add_custom_target("${rpm_name}_srpm"
     COMMAND "${CMAKE_CPACK_COMMAND}" -G TZST --config CPackSourceConfig.cmake
     COMMAND "${CMAKE_COMMAND}" -E copy
@@ -56,17 +56,19 @@ function(rpmtools_add_rpm_targets rpm_name spec_file)
       "${rpm_root}/SPECS/${spec_name}"
     VERBATIM)
 
-  add_custom_target("${rpm_name}_rpm"
-    COMMAND "${CMAKE_CPACK_COMMAND}" -G TZST --config CPackSourceConfig.cmake
-    COMMAND "${CMAKE_COMMAND}" -E copy
-      "${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.zst"
-      "${rpm_root}/SOURCES"
-    COMMAND "${RPMTOOLS_RPMBUILD_EXECUTABLE}"
-      -bb
-      "--define=_topdir ${rpm_root}"
-      $ENV{RPMDEFS}
-      "--buildroot=${rpm_root}/tmp"
-      "${rpm_root}/SPECS/${spec_name}"
-    JOB_POOL console
-    VERBATIM)
+  if(package_mode STREQUAL "binary")
+    add_custom_target("${rpm_name}_rpm"
+      COMMAND "${CMAKE_CPACK_COMMAND}" -G TZST --config CPackSourceConfig.cmake
+      COMMAND "${CMAKE_COMMAND}" -E copy
+        "${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.zst"
+        "${rpm_root}/SOURCES"
+      COMMAND "${RPMTOOLS_RPMBUILD_EXECUTABLE}"
+        -bb
+        "--define=_topdir ${rpm_root}"
+        $ENV{RPMDEFS}
+        "--buildroot=${rpm_root}/tmp"
+        "${rpm_root}/SPECS/${spec_name}"
+      JOB_POOL console
+      VERBATIM)
+  endif()
 endfunction()

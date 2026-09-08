@@ -9,7 +9,7 @@ project(cta)
 # -----------------------------------------------------------------------------
 include(cmake/DetectPlatform.cmake)
 
-if(NOT CTA_PLATFORM_SUPPORTED)
+if(CTA_PACKAGE_FORMAT STREQUAL "unknown")
   message(FATAL_ERROR
     "CTA recognizes ${CTA_OS_ID} ${CTA_OS_VERSION} as a ${CTA_OS_FAMILY} platform "
     "(${PLATFORM}), but this platform is not supported yet")
@@ -27,10 +27,11 @@ option(CTA_WITH_ORACLE "Build with Oracle catalogue support" ON)
 option(ENABLE_ADDRESS_SANITIZER "Build with AddressSanitizer" OFF)
 option(ENABLE_CCACHE "Use ccache for compilation" OFF)
 option(CTA_ENABLE_TEST_STDOUT_LOGGING "Enable stdout logging in tests" OFF)
-option(CTA_RPM_SOURCE_PACKAGE_ONLY "Configure only the source-package targets" OFF)
-option(CTA_RPM_ENABLE_TARGETS "Create RPM and SRPM build targets" ON)
-option(CTA_RPM_RUN_UNIT_TESTS "Run unit tests while building RPMs" ON)
-option(CTA_RPM_BUILD_DEBUG_PACKAGES "Build RPM debug packages" ON)
+set(CTA_PACKAGE_MODE "binary" CACHE STRING
+  "Package mode: none, source, or binary")
+set_property(CACHE CTA_PACKAGE_MODE PROPERTY STRINGS none source binary)
+option(CTA_RUN_UNIT_TESTS "Run unit tests while building packages" ON)
+option(CTA_BUILD_DEBUG_PACKAGES "Build native debug packages" ON)
 
 set(BUILD_CMDLINE_ONLY FALSE)
 
@@ -44,9 +45,14 @@ else()
 endif()
 set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release MinSizeRel RelWithDebInfo)
 
-if(CTA_RPM_SOURCE_PACKAGE_ONLY)
+set(CTA_PACKAGE_MODES none source binary)
+if(NOT CTA_PACKAGE_MODE IN_LIST CTA_PACKAGE_MODES)
+  message(FATAL_ERROR
+    "CTA_PACKAGE_MODE must be one of: none, source, binary (got: ${CTA_PACKAGE_MODE})")
+endif()
+
+if(CTA_PACKAGE_MODE STREQUAL "source")
   set(CTA_CONFIGURATION_MODE "package-only")
-  set(CTA_RPM_ENABLE_TARGETS ON)
 else()
   set(CTA_CONFIGURATION_MODE "full")
 endif()
@@ -60,42 +66,27 @@ set(JOBS_COUNT "${JOBS_COUNT}" CACHE STRING "Maximum number of parallel build jo
 # -----------------------------------------------------------------------------
 # Derived configuration
 # -----------------------------------------------------------------------------
-if(CTA_RPM_RUN_UNIT_TESTS)
-  set(RPM_SKIP_UNIT_TESTS 0)
+if(CTA_RUN_UNIT_TESTS)
+  set(PACKAGE_SKIP_UNIT_TESTS 0)
 else()
-  set(RPM_SKIP_UNIT_TESTS 1)
+  set(PACKAGE_SKIP_UNIT_TESTS 1)
 endif()
 
-if(CTA_RPM_BUILD_DEBUG_PACKAGES)
-  set(RPM_SKIP_DEBUG_PACKAGES 0)
+if(CTA_BUILD_DEBUG_PACKAGES)
+  set(PACKAGE_SKIP_DEBUG_PACKAGES 0)
 else()
-  set(RPM_SKIP_DEBUG_PACKAGES 1)
+  set(PACKAGE_SKIP_DEBUG_PACKAGES 1)
 endif()
 
 set(OCCI_SUPPORT "${CTA_WITH_ORACLE}")
 if(NOT CTA_WITH_ORACLE)
   set(OCCI_SUPPORT OFF)
-  set(RPM_ORACLE "-DCTA_WITH_ORACLE:BOOL=OFF" CACHE STRING "" FORCE)
-  set(RPM_USING_ORACLE "0" CACHE STRING "" FORCE)
-else()
-  set(RPM_ORACLE "%{nil}" CACHE STRING "" FORCE)
-  set(RPM_USING_ORACLE "1" CACHE STRING "" FORCE)
 endif()
 
 if(CTA_USE_PGSCHED)
   set(CTA_SCHEDULER_BACKEND "Postgres")
-  set(RPM_USINGOBJECTSTORE "0" CACHE STRING "" FORCE)
-  set(RPM_SCHEDOPT "-DCTA_USE_PGSCHED:Bool=TRUE" CACHE STRING "" FORCE)
 else()
   set(CTA_SCHEDULER_BACKEND "objectstore")
-  set(RPM_USINGOBJECTSTORE "1" CACHE STRING "" FORCE)
-  set(RPM_SCHEDOPT "-DCTA_USE_PGSCHED:Bool=FALSE" CACHE STRING "" FORCE)
-endif()
-
-if(ENABLE_ADDRESS_SANITIZER)
-  set(RPM_ADDRESS_SANITIZER_OPT "-DENABLE_ADDRESS_SANITIZER:BOOL=ON" CACHE STRING "" FORCE)
-else()
-  set(RPM_ADDRESS_SANITIZER_OPT "-DENABLE_ADDRESS_SANITIZER:BOOL=OFF" CACHE STRING "" FORCE)
 endif()
 
 # -----------------------------------------------------------------------------
@@ -131,9 +122,6 @@ endif()
 
 if(CTA_USE_EXTRA_TELEMETRY)
   add_compile_definitions(CTA_USE_EXTRA_TELEMETRY)
-  set(RPM_PERF_TELEMETRY_OPT "-DCTA_USE_EXTRA_TELEMETRY:Bool=TRUE" CACHE STRING "" FORCE)
-else()
-  set(RPM_PERF_TELEMETRY_OPT "-DCTA_USE_EXTRA_TELEMETRY:Bool=FALSE" CACHE STRING "" FORCE)
 endif()
 
 # Create the version target after applying the project compiler policy.
@@ -142,7 +130,7 @@ include(cmake/CTAVersions.cmake)
 # -----------------------------------------------------------------------------
 # Full build
 # -----------------------------------------------------------------------------
-if(NOT CTA_RPM_SOURCE_PACKAGE_ONLY)
+if(NOT CTA_PACKAGE_MODE STREQUAL "source")
   set(CMAKE_DISABLE_SOURCE_CHANGES ON)
   list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
   include(GNUInstallDirs)
@@ -213,7 +201,7 @@ endif()
 # -----------------------------------------------------------------------------
 # Packaging
 # -----------------------------------------------------------------------------
-if(CTA_RPM_ENABLE_TARGETS)
+if(NOT CTA_PACKAGE_MODE STREQUAL "none")
   set(CPACK_SOURCE_PACKAGE_FILE_NAME
    "${PROJECT_NAME}-${CTA_VERSION}-${CTA_RELEASE}")
   # Note that not ignoring build folders within the repository here will cause cpack to take longer and longer
@@ -229,10 +217,46 @@ if(CTA_RPM_ENABLE_TARGETS)
     "/image_rpms/"
     "/assets/")
   include(CPack)
-  include(cmake/RPMTools.cmake)
-  rpmtools_add_rpm_targets(
-    "${PROJECT_NAME}"
-    "${PROJECT_NAME}.spec.in")
+
+  if(CTA_PACKAGE_FORMAT STREQUAL "rpm")
+    if(CTA_WITH_ORACLE)
+      set(RPM_ORACLE "%{nil}")
+      set(RPM_USING_ORACLE "1")
+    else()
+      set(RPM_ORACLE "-DCTA_WITH_ORACLE:BOOL=OFF")
+      set(RPM_USING_ORACLE "0")
+    endif()
+
+    if(CTA_USE_PGSCHED)
+      set(RPM_USINGOBJECTSTORE "0")
+      set(RPM_SCHEDOPT "-DCTA_USE_PGSCHED:Bool=TRUE")
+    else()
+      set(RPM_USINGOBJECTSTORE "1")
+      set(RPM_SCHEDOPT "-DCTA_USE_PGSCHED:Bool=FALSE")
+    endif()
+
+    if(CTA_USE_EXTRA_TELEMETRY)
+      set(RPM_PERF_TELEMETRY_OPT "-DCTA_USE_EXTRA_TELEMETRY:Bool=TRUE")
+    else()
+      set(RPM_PERF_TELEMETRY_OPT "-DCTA_USE_EXTRA_TELEMETRY:Bool=FALSE")
+    endif()
+
+    if(ENABLE_ADDRESS_SANITIZER)
+      set(RPM_ADDRESS_SANITIZER_OPT "-DENABLE_ADDRESS_SANITIZER:BOOL=ON")
+    else()
+      set(RPM_ADDRESS_SANITIZER_OPT "-DENABLE_ADDRESS_SANITIZER:BOOL=OFF")
+    endif()
+
+    include(cmake/RPMTools.cmake)
+    rpmtools_add_rpm_targets(
+      "${PROJECT_NAME}"
+      "${PROJECT_NAME}.spec.in"
+      "${CTA_PACKAGE_MODE}")
+  elseif(CTA_PACKAGE_FORMAT STREQUAL "deb")
+    include(cmake/DebTools.cmake)
+  else()
+    message(FATAL_ERROR "Unsupported package format: ${CTA_PACKAGE_FORMAT}")
+  endif()
 endif()
 
 # -----------------------------------------------------------------------------
@@ -265,10 +289,9 @@ message(STATUS "Testing")
 message(STATUS "CTA_ENABLE_TEST_STDOUT_LOGGING: ${CTA_ENABLE_TEST_STDOUT_LOGGING}")
 message(STATUS "")
 message(STATUS "Packaging")
-message(STATUS "CTA_RPM_SOURCE_PACKAGE_ONLY: ${CTA_RPM_SOURCE_PACKAGE_ONLY}")
-message(STATUS "CTA_RPM_ENABLE_TARGETS: ${CTA_RPM_ENABLE_TARGETS}")
-message(STATUS "CTA_RPM_RUN_UNIT_TESTS: ${CTA_RPM_RUN_UNIT_TESTS}")
-message(STATUS "CTA_RPM_BUILD_DEBUG_PACKAGES: ${CTA_RPM_BUILD_DEBUG_PACKAGES}")
+message(STATUS "CTA_PACKAGE_MODE: ${CTA_PACKAGE_MODE}")
+message(STATUS "CTA_RUN_UNIT_TESTS: ${CTA_RUN_UNIT_TESTS}")
+message(STATUS "CTA_BUILD_DEBUG_PACKAGES: ${CTA_BUILD_DEBUG_PACKAGES}")
 message(STATUS "")
 message(STATUS "Installation")
 message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")

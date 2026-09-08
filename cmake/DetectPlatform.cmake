@@ -23,13 +23,10 @@ if(NOT CTA_OS_ID OR NOT CTA_OS_VERSION)
     "Could not detect ID and VERSION_ID from ${CTA_OS_RELEASE_FILE}")
 endif()
 
-set(CTA_PLATFORM_SUPPORTED FALSE)
-
 if(CTA_OS_ID MATCHES "^(centos|rhel|almalinux|rocky)$")
   set(CTA_OS_FAMILY "enterprise-linux")
   set(CTA_PACKAGE_FORMAT "rpm")
   set(PLATFORM "el${CTA_OS_VERSION_MAJOR}")
-  set(CTA_PLATFORM_SUPPORTED TRUE)
 elseif(CTA_OS_ID MATCHES "^(debian|ubuntu)$")
   set(CTA_OS_FAMILY "debian")
   set(CTA_PACKAGE_FORMAT "deb")

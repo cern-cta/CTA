@@ -36,11 +36,11 @@
 
 # Skipping unit tests (for developers)
 #-------------------------------------
-%define skip_unit_tests @RPM_SKIP_UNIT_TESTS@
+%define skip_unit_tests @PACKAGE_SKIP_UNIT_TESTS@
 
 # Skipping debug packages (for developers)
 #-------------------------------------
-%define skipDebugPackages @RPM_SKIP_DEBUG_PACKAGES@
+%define skipDebugPackages @PACKAGE_SKIP_DEBUG_PACKAGES@
 %if %{skipDebugPackages}
 %define debug_package %{nil}
 %endif
@@ -89,7 +89,7 @@ The CTA project is the CERN Tape Archive system.
 
 mkdir -p build
 cd build
-CTA_VERSION=%{ctaVersion} cmake3 -G "%{buildGenerator}" .. -DENABLE_CCACHE:BOOL=@ENABLE_CCACHE@ -DCTA_RPM_ENABLE_TARGETS:BOOL=OFF -DJOBS_COUNT:STRING=@JOBS_COUNT@ -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{perfTelemetryOpt} %{oracleOpt} %{asanOptions}
+CTA_VERSION=%{ctaVersion} cmake3 -G "%{buildGenerator}" .. -DENABLE_CCACHE:BOOL=@ENABLE_CCACHE@ -DCTA_PACKAGE_MODE:STRING=none -DJOBS_COUNT:STRING=@JOBS_COUNT@ -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{perfTelemetryOpt} %{oracleOpt} %{asanOptions}
 cmake --build . --parallel @JOBS_COUNT@
 
 %install

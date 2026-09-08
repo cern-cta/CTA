@@ -279,6 +279,7 @@ build_rpm() {
     export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=${xrootd_ssi_version}
 
     cmake_options+=" -D VCS_VERSION=${cta_version_suffix}"
+    cmake_options+=" -D CTA_PACKAGE_MODE:STRING=binary"
 
     # Build type
     if [[ ! ${cmake_build_type} = "" ]]; then
@@ -289,10 +290,10 @@ build_rpm() {
     # Debug packages
     if [[ ${skip_debug_packages} = true ]]; then
       log_warn "Skipping debug packages."
-      cmake_options+=" -D CTA_RPM_BUILD_DEBUG_PACKAGES:BOOL=OFF"
+      cmake_options+=" -D CTA_BUILD_DEBUG_PACKAGES:BOOL=OFF"
     else
       # the else clause is necessary to prevent cmake from caching this variable
-      cmake_options+=" -D CTA_RPM_BUILD_DEBUG_PACKAGES:BOOL=ON"
+      cmake_options+=" -D CTA_BUILD_DEBUG_PACKAGES:BOOL=ON"
     fi
 
     # Oracle support
@@ -307,10 +308,10 @@ build_rpm() {
     # Unit tests
     if [[ ${skip_unit_tests} = true ]]; then
       log_warn "Skipping unit tests."
-      cmake_options+=" -D CTA_RPM_RUN_UNIT_TESTS:BOOL=OFF"
+      cmake_options+=" -D CTA_RUN_UNIT_TESTS:BOOL=OFF"
     else
       # the else clause is necessary to prevent cmake from caching this variable
-      cmake_options+=" -D CTA_RPM_RUN_UNIT_TESTS:BOOL=ON"
+      cmake_options+=" -D CTA_RUN_UNIT_TESTS:BOOL=ON"
     fi
 
     # CCache
