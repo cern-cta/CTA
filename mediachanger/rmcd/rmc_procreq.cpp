@@ -49,16 +49,16 @@ int rmc_srv_export(cta::log::LogContext& lc, const struct rmc_srv_rqst_context* 
     if (unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN + 1)) {
       rmc_sendrep(lc, rqst_context->rpfd, MSG_ERR, RMC06, "loader");
       params.add(cta::semconv::log::errorMessage, "Failed to unmarshall string for smc loader");
-      lc.log(cta::log::ERR, "Eject cartridge failed");
       params.add("rc", ERMCUNREC);
+      lc.log(cta::log::ERR, "Eject cartridge failed");
       return ERMCUNREC;
     }
   }
   if (unmarshall_STRINGN(&rbp, req_data_end, vid, CA_MAXVIDLEN + 1)) {
     rmc_sendrep(lc, rqst_context->rpfd, MSG_ERR, RMC06, "vid");
     params.add(cta::semconv::log::errorMessage, "Failed to unmarshall string for VID");
-    lc.log(cta::log::ERR, "Eject cartridge failed");
     params.add("rc", ERMCUNREC);
+    lc.log(cta::log::ERR, "Eject cartridge failed");
     return ERMCUNREC;
   }
   params.add("vid", std::string(vid));
