@@ -950,7 +950,7 @@ class TestRuntimeDeployment:
         # Files present for every service
         daemon.exec(f"jq -e -r '.service == \"cta-{daemon.process_name}\"' /run/cta/version.json >/dev/null")
         assert_remote_files_equal(f"/etc/cta/cta-{daemon.process_name}.toml", "/run/cta/config.toml")
-        assert_remote_files_equal("/etc/cta/cta-logging.schema.json", "/run/cta/cta-logging.schema.json")
+        assert_remote_files_equal("/usr/share/cta/cta-logging.schema.json", "/run/cta/cta-logging.schema.json")
         daemon.exec("jq -e '.title == \"CTA Logging Schema\"' /run/cta/cta-logging.schema.json >/dev/null")
 
         # Determine which files we should actually check, because not every service exposes all of them
