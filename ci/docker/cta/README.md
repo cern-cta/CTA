@@ -32,7 +32,7 @@ Example:
 ```bash
 ./ci/build/build_images.sh \
   --tag dev \
-  --rpm-src build_rpm/RPM/RPMS/x86_64
+  --rpm-src build/el9/RPM/RPMS/x86_64
 ```
 
 This creates:
@@ -52,7 +52,7 @@ For local Kubernetes setups:
 ```bash
 ./ci/build/build_images.sh \
   --tag dev \
-  --rpm-src build_rpm/RPM/RPMS/x86_64 \
+  --rpm-src build/el9/RPM/RPMS/x86_64 \
   --load-into-k8s
 ```
 
@@ -70,7 +70,7 @@ To enable internal CERN repositories:
 ```bash
 ./ci/build/build_images.sh \
   --tag dev \
-  --rpm-src build_rpm/RPM/RPMS/x86_64 \
+  --rpm-src build/el9/RPM/RPMS/x86_64 \
   --enable-internal-repos
 ```
 

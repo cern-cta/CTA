@@ -111,7 +111,7 @@ spec:
   variables:
     DOCKERFILE: ci/docker/cta/$[[ inputs.platform ]]/prod.Dockerfile
     IMAGE_REF: ${DOCKER_IMAGE_REGISTRY}/${DOCKER_PRIVATE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_BUILD_ID}
-    RPM_CONTEXT: ${CI_PROJECT_DIR}/build_rpm/RPM/RPMS/x86_64
+    RPM_CONTEXT: ${CI_PROJECT_DIR}/build/$[[ inputs.platform ]]/RPM/RPMS/x86_64
     EXTRA_BUILD_ARGS: ""
     SBOM_RAW_PATH: ${CI_PROJECT_DIR}/sboms/raw/${TARGET_NAME}.cdx.json
     DEST_REGISTRY_PASSWORD: $DOCKER_PRIVATE_LOGIN_PASSWORD

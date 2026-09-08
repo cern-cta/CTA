@@ -13,7 +13,7 @@ spec:
 
 .setup-cta-install: &setup-cta-install
   - mkdir -p ${CTAREPODIR}
-  - cp -r build_rpm/RPM ${CTAREPODIR}
+  - cp -r build/$[[ inputs.platform ]]/RPM ${CTAREPODIR}
   - createrepo ${CTAREPODIR}
   - echo -e "[cta-local-testing]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-local-testing.repo
   - dnf -y --nogpgcheck install cta-release
@@ -225,7 +225,7 @@ test-cta-release:
     CTAREPODIR: /tmp/repo
   script:
     - mkdir -p ${CTAREPODIR}
-    - cp -r build_rpm/RPM ${CTAREPODIR}
+    - cp -r build/$[[ inputs.platform ]]/RPM ${CTAREPODIR}
     - createrepo ${CTAREPODIR}
     - echo -e "[cta-local-testing]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-local-testing.repo
     - dnf install --nogpgcheck -y cta-release

@@ -269,7 +269,7 @@ Usage:
 Options:
   -r, --reset                       Recreate the persistent build container
                                     and rebuild the SRPMs.
-      --clean-build-dirs            Remove build_rpm/ and build_srpm/.
+      --clean-build-dirs            Remove build/<platform>/.
       --build-generator <generator> CMake generator
                                     ["Unix Makefiles", "Ninja"].
       --cmake-build-type <type>     Release, Debug, RelWithDebInfo,
@@ -812,7 +812,7 @@ build_cta() {
   # the SRPMs when needed, while a successful unchanged build can safely use --skip-cmake.
   build_configuration_json=$(create_build_configuration "$xrootd_ssi_version" "$num_jobs")
 
-  [[ -d "${project_root}/build_srpm" || -d "${project_root}/build_rpm" ]] && build_output_exists=true
+  [[ -d "${project_root}/build/${platform}" ]] && build_output_exists=true
 
   if [[ -f "$build_state_file" ]]; then
     previous_build_state_json=$(jq -ce '
@@ -886,8 +886,8 @@ build_cta() {
       | [$field, (.[$field] | tostring), ($desired[$field] | tostring)]
       | @tsv' <<<"$previous_configuration_json")
 
-    if [[ ! -d "${project_root}/build_srpm" ]]; then
-      log_warn "The recorded SRPM build directory is missing."
+    if [[ ! -d "${project_root}/build/${platform}" ]]; then
+      log_warn "The recorded package build directory is missing."
       automatic_clean_build_dirs=true
     fi
   else
@@ -904,7 +904,7 @@ build_cta() {
   fi
 
   if [[ $automatic_clean_build_dirs == true ]]; then
-    log_warn "Automatically cleaning build_srpm/ and build_rpm/."
+    log_warn "Automatically cleaning build/${platform}/."
     clean_build_dirs=true
     rebuild_srpms=true
     reinstall_srpms=true
@@ -914,7 +914,7 @@ build_cta() {
     rebuild_srpms=true
     reinstall_srpms=true
     log_task "Removing build directories..."
-    rm -rf -- "${project_root}/build_srpm" "${project_root}/build_rpm"
+    rm -rf -- "${project_root}/build/${platform}"
   fi
 
   # Remove the project-specific container if reset is requested.
@@ -970,25 +970,13 @@ build_cta() {
 
   fi
 
-  if [[ $rebuild_srpms == true ]]; then
-    print_header "BUILDING SRPMS"
+  log_task "Preparing CTA package build..."
 
-    podman exec --tty "${build_container_name}" \
-      .${mount_basedir}/ci/build/build_srpm.sh \
-      --build-dir ${mount_basedir}/build_srpm \
-      --build-generator "${build_generator}" \
-      --create-build-dir \
-      --cta-version "${cta_version_base}" \
-      --cta-version-suffix "${cta_version_suffix}" \
-      --scheduler-type "${scheduler_type}" \
-      --oracle-support "${oracle_support}" \
-      --cmake-build-type "${cmake_build_type}" \
-      --jobs "${num_jobs}"
-  fi
+  local package_command=binary
+  local build_package_flags=()
+  local install_source_packages=false
 
-  log_task "Compiling CTA from the source directory..."
-
-  local build_rpm_flags=()
+  [[ $rebuild_srpms == true ]] && package_command=all
 
   if [[ $build_container_restarted == true || $reinstall_srpms == true || $force_install == true ]]; then
     [[ $internal_repos_forced_public == false ]] && enable_internal_repos=true
@@ -996,40 +984,45 @@ build_cta() {
     build_configuration_json=$(jq -c --argjson internalRepos "$enable_internal_repos" \
       '.internalRepos = $internalRepos' <<<"$build_configuration_json")
     [[ $reinstall_srpms == true ]] && log_task "Refreshing build dependencies from the regenerated SRPMs..."
-    build_rpm_flags+=(--install-srpms)
+    install_source_packages=true
   fi
 
-  [[ $skip_unit_tests == true ]] && build_rpm_flags+=(--skip-unit-tests)
-  [[ $skip_debug_packages == true ]] && build_rpm_flags+=(--skip-debug-packages)
-  [[ $enable_ccache == true ]] && build_rpm_flags+=(--enable-ccache)
-  [[ $enable_internal_repos == true ]] && build_rpm_flags+=(--enable-internal-repos)
-  [[ $enable_address_sanitizer == true ]] && build_rpm_flags+=(--enable-address-sanitizer)
-  [[ $extra_telemetry == true ]] && build_rpm_flags+=(--extra-telemetry)
+  if [[ $package_command == binary && $install_source_packages == true ]]; then
+    build_package_flags+=(
+      --install-source-packages
+      --source-package-dir "${mount_basedir}/build/${platform}/RPM/SRPMS"
+    )
+  fi
+  [[ $skip_unit_tests == true ]] && build_package_flags+=(--skip-unit-tests)
+  [[ $skip_debug_packages == true ]] && build_package_flags+=(--skip-debug-packages)
+  [[ $enable_ccache == true ]] && build_package_flags+=(--enable-ccache)
+  [[ $enable_internal_repos == true ]] && build_package_flags+=(--enable-internal-repos)
+  [[ $enable_address_sanitizer == true ]] && build_package_flags+=(--enable-address-sanitizer)
+  [[ $extra_telemetry == true ]] && build_package_flags+=(--extra-telemetry)
   if [[ $state_matches_configuration == true \
       && $previous_build_successful == true \
-      && -f "${project_root}/build_rpm/CMakeCache.txt" \
+      && $rebuild_srpms == false \
+      && -f "${project_root}/build/${platform}/CMakeCache.txt" \
       && $clean_build_dirs == false ]]; then
-    build_rpm_flags+=(--skip-cmake)
+    build_package_flags+=(--skip-cmake)
   fi
 
   write_build_state "$build_configuration_json" false
 
-  print_header "BUILDING RPMS"
+  print_header "BUILDING PACKAGES"
   podman exec --tty "${build_container_name}" \
-    .${mount_basedir}/ci/build/build_rpm.sh \
-    --build-dir ${mount_basedir}/build_rpm \
+    .${mount_basedir}/ci/build/build_packages.sh "${package_command}" \
+    --build-dir "${mount_basedir}/build" \
     --build-generator "${build_generator}" \
     --create-build-dir \
-    --srpm-dir ${mount_basedir}/build_srpm/RPM/SRPMS \
-    --cta-version ${cta_version_base} \
+    --cta-version "${cta_version_base}" \
     --cta-version-suffix "${cta_version_suffix}" \
     --xrootd-ssi-version "${xrootd_ssi_version}" \
     --scheduler-type "${scheduler_type}" \
-    --oracle-support ${oracle_support} \
+    --oracle-support "${oracle_support}" \
     --cmake-build-type "${cmake_build_type}" \
     --jobs "${num_jobs}" \
-    --platform "${platform}" \
-    "${build_rpm_flags[@]}"
+    "${build_package_flags[@]}"
 
   write_build_state "$build_configuration_json" true
 
@@ -1037,7 +1030,7 @@ build_cta() {
 
 images_cta() {
   # Constants
-  local -r rpm_src="build_rpm/RPM/RPMS/x86_64" # note relative to project root
+  local -r rpm_src="build/${platform}/RPM/RPMS/x86_64" # note relative to project root
 
   print_header "BUILDING CONTAINER IMAGES"
   detect_internal_repos

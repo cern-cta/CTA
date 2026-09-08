@@ -12,7 +12,7 @@ usage() {
   echo
   echo "Builds an image based on the CTA rpms"
   echo "  -t, --tag <image_tag>:          Container image tag. For example \"-t dev\""
-  echo "  -s, --rpm-src <rpm source>:     Path to the RPMs to be installed. Can be absolute or relative to where the script is executed from. For example \"-s build_rpm/RPM/RPMS/x86_64\""
+  echo "  -s, --rpm-src <rpm source>:     Path to the RPMs to be installed. Can be absolute or relative to where the script is executed from. For example \"-s build/el9/RPM/RPMS/x86_64\""
   echo
   echo "options:"
   echo "  -h, --help:                         Shows help output."

@@ -6,6 +6,7 @@
 %define name cta
 %define ctaVersion @CTA_VERSION@
 %define ctaRelease @CTA_RELEASE@
+%define xrootdSsiVersion @XROOTD_SSI_PROTOBUF_INTERFACE_VERSION@
 %define ctaSummary @PROJECT_SUMMARY@
 %define ctaLicense @PROJECT_LICENSE@
 
@@ -89,7 +90,7 @@ The CTA project is the CERN Tape Archive system.
 
 mkdir -p build
 cd build
-CTA_VERSION=%{ctaVersion} cmake3 -G "%{buildGenerator}" .. -DENABLE_CCACHE:BOOL=@ENABLE_CCACHE@ -DCTA_PACKAGE_MODE:STRING=none -DJOBS_COUNT:STRING=@JOBS_COUNT@ -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{perfTelemetryOpt} %{oracleOpt} %{asanOptions}
+cmake3 -G "%{buildGenerator}" .. -DCTA_VERSION:STRING=%{ctaVersion} -DXROOTD_SSI_PROTOBUF_INTERFACE_VERSION:STRING=%{xrootdSsiVersion} -DENABLE_CCACHE:BOOL=@ENABLE_CCACHE@ -DCTA_PACKAGE_MODE:STRING=none -DJOBS_COUNT:STRING=@JOBS_COUNT@ -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{perfTelemetryOpt} %{oracleOpt} %{asanOptions}
 cmake --build . --parallel @JOBS_COUNT@
 
 %install

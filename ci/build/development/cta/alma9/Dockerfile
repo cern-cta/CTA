@@ -24,16 +24,16 @@ RUN set -ex; \
     git submodule sync --recursive && git submodule update --init --recursive;
 
 RUN set -ex; \
-    mkdir build_srpm; \
-    cd build_srpm; \
+    mkdir -p build/el9; \
+    cd build/el9; \
     cmake3 -DCTA_PACKAGE_MODE:STRING=source ../cta; \
     make cta_srpm;
 
 RUN set -ex; \
-    dnf builddep -y --nogpgcheck build_srpm/RPM/SRPMS/*;
+    dnf builddep -y --nogpgcheck build/el9/RPM/SRPMS/*;
 
 RUN set -ex; \
-    rm -rf build_srpm;
+    rm -rf build;
 
 # Setup SSH server
 RUN /usr/bin/ssh-keygen -A; \

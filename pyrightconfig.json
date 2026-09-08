@@ -9,8 +9,7 @@
     "**/__pycache__",
     "**/.venv",
     "**/venv",
-    "build_rpm",
-    "build_srpm"
+    "build"
   ],
   "reportImplicitOverride": "error",
   "reportMissingTypeArgument": "error",
