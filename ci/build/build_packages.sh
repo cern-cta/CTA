@@ -35,14 +35,15 @@ usage() {
   echo "      --source-package-dir <directory>    Source packages used to install build dependencies."
   echo "      --install-source-packages           Install dependencies from --source-package-dir."
   echo "      --skip-dependency-install           With all, do not install source-package dependencies."
-  echo "      --enable-internal-repos             Enable the internal RPM repositories."
+  echo "      --enable-internal-repos             Enable internal package repositories."
   echo "      --enable-ccache                     Enable ccache."
   echo "      --enable-address-sanitizer          Enable AddressSanitizer."
-  echo "      --skip-debug-packages               Do not build debug RPM packages."
-  echo "      --skip-unit-tests                   Do not run unit tests while building RPMs."
+  echo "      --skip-debug-packages               Do not build native debug packages."
+  echo "      --skip-unit-tests                   Do not run unit tests while building packages."
   echo "      --skip-cmake                        Skip configuration for a standalone binary build."
   echo
-  echo "The host platform is detected automatically. Currently only RHEL-family RPM platforms are supported."
+  echo "The host platform and native package format are detected automatically."
+  echo "Currently, only the enterprise Linux backend is implemented."
   echo
 }
 
@@ -186,7 +187,7 @@ detect_package_backend() {
       platform="el${os_version_id%%.*}"
       ;;
     *)
-      die "Unsupported host platform ${os_id:-unknown} ${os_version_id:-unknown}. This script currently supports only RHEL-family RPM platforms."
+      die "Unsupported host platform ${os_id:-unknown} ${os_version_id:-unknown}. No package backend is implemented for it."
       ;;
   esac
 
@@ -254,6 +255,35 @@ build_target() {
   cmake --build "$build_dir" --target "$target" --parallel "$num_jobs"
 }
 
+source_package_target() {
+  case "$package_format" in
+    rpm) echo cta_srpm ;;
+    *) die "No source-package target is implemented for package format $package_format." ;;
+  esac
+}
+
+binary_package_target() {
+  case "$package_format" in
+    rpm) echo cta_rpm ;;
+    *) die "No binary-package target is implemented for package format $package_format." ;;
+  esac
+}
+
+generated_source_package_dir() {
+  case "$package_format" in
+    rpm) echo "$build_dir/RPM/SRPMS" ;;
+    *) die "No source-package output directory is implemented for package format $package_format." ;;
+  esac
+}
+
+build_source_packages() {
+  build_target "$(source_package_target)"
+}
+
+build_binary_packages() {
+  build_target "$(binary_package_target)"
+}
+
 install_rpm_build_dependencies() {
   local srpm_dir="$1"
 
@@ -295,7 +325,7 @@ prepare_build_directory
 case "$command" in
   source)
     configure_build source
-    build_target cta_srpm
+    build_source_packages
     ;;
   binary)
     if [[ "$install_source_packages" == true ]]; then
@@ -308,18 +338,18 @@ case "$command" in
         || die "Cannot skip CMake: $build_dir/CMakeCache.txt does not exist."
       log_warn "Skipping CMake configuration."
     fi
-    build_target cta_rpm
+    build_binary_packages
     ;;
   all)
     configure_build source
-    build_target cta_srpm
+    build_source_packages
     if [[ "$skip_dependency_install" == false ]]; then
-      install_build_dependencies "$build_dir/RPM/SRPMS"
+      install_build_dependencies "$(generated_source_package_dir)"
     else
       log_warn "Skipping source-package dependency installation."
     fi
     configure_build binary
-    build_target cta_rpm
+    build_binary_packages
     ;;
 esac
 
