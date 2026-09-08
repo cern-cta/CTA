@@ -11,7 +11,7 @@ RMC consists of four software components:
 
 mediachanger/          RMC client library for rmcd (linked by the tape server)
 mediachanger/rmcd      Remote Media Changer Daemon
-mediachanger/smc       SCSI Media Changer, client for rmcd (command-line tool)
+tools/cta-smc          SCSI Media Changer, client for rmcd (command-line tool)
 mediachanger/librmc    Common library functions shared by rmcd and smc
 
 ## git history

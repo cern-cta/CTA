@@ -4,6 +4,7 @@
 
 add_subdirectory (cta-readtp)
 add_subdirectory (cta-tape-label)
+add_subdirectory (cta-smc)
 add_subdirectory (cta-release)
 add_subdirectory (cta-statistics)
 add_subdirectory (cta-catalogue-admin-user-create)

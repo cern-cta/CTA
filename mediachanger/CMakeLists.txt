@@ -3,7 +3,6 @@
 
 add_subdirectory(librmc)
 add_subdirectory(rmcd)
-add_subdirectory(smc)
 
 set (MEDIACHANGER_LIB_SRC_FILES
   CmdLine.cpp
