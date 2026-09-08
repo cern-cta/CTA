@@ -1,11 +1,11 @@
 # SPDX-FileCopyrightText: 2022 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Default CTA Version
-
-set(CTA_VERSION 0)
-set(CTA_RELEASE 1)
-set(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION "v0.0")
+# Version inputs are explicit CMake cache variables.
+set(CTA_VERSION 0 CACHE STRING "CTA version")
+set(CTA_RELEASE 1 CACHE STRING "CTA package release")
+set(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION "v0.0" CACHE STRING
+  "XRootD SSI protobuf interface version")
 
 # Catalogue Schema Version
 include(catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake)
@@ -21,21 +21,6 @@ set(CTA_SOVERSION 0)
 set(CTA_SOMAJOR ${CTA_SOVERSION})
 set(CTA_SOMINOR 1)
 set(CTA_SOPATCH 0)
-
-# Get version number from environment if set.
-if(NOT $ENV{CTA_VERSION} STREQUAL "")
-  set(CTA_VERSION $ENV{CTA_VERSION})
-endif()
-
-# Get xrootd-ssi-protobuf-version-number from environment if set.
-if(NOT $ENV{XROOTD_SSI_PROTOBUF_INTERFACE_VERSION} STREQUAL "")
-  set(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION $ENV{XROOTD_SSI_PROTOBUF_INTERFACE_VERSION})
-endif()
-
-# Get release number from environment if set
-if(NOT $ENV{CTA_RELEASE} STREQUAL "")
-  set(CTA_RELEASE $ENV{CTA_RELEASE})
-endif()
 
 # Change the release number if VCS version is provided
 if(DEFINED VCS_VERSION)

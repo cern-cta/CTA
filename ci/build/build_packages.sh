@@ -221,6 +221,7 @@ configure_build() {
 
   local cmake_options=(
     -D "CTA_PACKAGE_MODE:STRING=${package_mode}"
+    -D "CTA_VERSION:STRING=${cta_version}"
     -D "VCS_VERSION=${cta_version_suffix}"
     -D "CMAKE_BUILD_TYPE=${cmake_build_type}"
     -D "CTA_WITH_ORACLE:BOOL=$(cmake_bool "$oracle_support")"
@@ -228,6 +229,9 @@ configure_build() {
     -D "CTA_USE_PGSCHED:BOOL=$([[ "$scheduler_type" == pgsched ]] && echo ON || echo OFF)"
     -D "JOBS_COUNT:INT=${num_jobs}"
   )
+  if [[ -n "$xrootd_ssi_version" ]]; then
+    cmake_options+=(-D "XROOTD_SSI_PROTOBUF_INTERFACE_VERSION:STRING=${xrootd_ssi_version}")
+  fi
 
   if [[ "$package_mode" == "binary" ]]; then
     cmake_options+=(
@@ -236,10 +240,8 @@ configure_build() {
       -D "ENABLE_CCACHE:BOOL=$(cmake_bool "$enable_ccache")"
       -D "ENABLE_ADDRESS_SANITIZER:BOOL=$(cmake_bool "$enable_address_sanitizer")"
     )
-    export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION="$xrootd_ssi_version"
   fi
 
-  export CTA_VERSION="$cta_version"
   export GTEST_COLOR=yes
 
   log_task "Configuring ${package_mode} package build..."
