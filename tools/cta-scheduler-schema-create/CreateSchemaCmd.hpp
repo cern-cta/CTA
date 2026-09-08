@@ -5,15 +5,15 @@
 
 #pragma once
 
+#include "common/CmdLineTool.hpp"
 #include "rdbms/Conn.hpp"
-#include "scheduler/rdbms/schema/CmdLineTool.hpp"
 
 namespace cta::schedulerdb {
 
 /**
  * Command-line tool for creating the scheduler schema.
  */
-class CreateSchemaCmd : public CmdLineTool {
+class CreateSchemaCmd : public common::CmdLineTool {
 public:
   /**
    * Constructor.

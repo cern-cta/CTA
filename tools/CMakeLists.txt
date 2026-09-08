@@ -12,6 +12,12 @@ add_subdirectory (cta-catalogue-schema-drop)
 add_subdirectory (cta-catalogue-schema-set-production)
 add_subdirectory (cta-catalogue-schema-verify)
 add_subdirectory (cta-database-poll)
+
+if(CTA_USE_PGSCHED)
+  add_subdirectory (cta-scheduler-schema-create)
+  add_subdirectory (cta-scheduler-schema-drop)
+endif()
+
 add_subdirectory (standalone_cli_tools)
 
 # XRootD SSI

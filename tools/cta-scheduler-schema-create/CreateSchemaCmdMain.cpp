@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "scheduler/rdbms/schema/CreateSchemaCmd.hpp"
+#include "tools/cta-scheduler-schema-create/CreateSchemaCmd.hpp"
 
 #include <iostream>
 
@@ -12,5 +12,5 @@
 //------------------------------------------------------------------------------
 int main(const int argc, char* const* const argv) {
   cta::schedulerdb::CreateSchemaCmd cmd(std::cin, std::cout, std::cerr);
-  return cmd.cltMain(argc, argv);
+  return cmd.mainImpl(argc, argv);
 }

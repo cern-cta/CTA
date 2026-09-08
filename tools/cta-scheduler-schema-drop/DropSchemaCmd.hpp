@@ -5,16 +5,16 @@
 
 #pragma once
 
+#include "common/CmdLineTool.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/Login.hpp"
-#include "scheduler/rdbms/schema/CmdLineTool.hpp"
 
 namespace cta::schedulerdb {
 
 /**
  * Command-line tool that drops the schema of the scheduler database.
  */
-class DropSchemaCmd : public CmdLineTool {
+class DropSchemaCmd : public common::CmdLineTool {
 public:
   /**
    * Constructor.
