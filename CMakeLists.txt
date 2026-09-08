@@ -214,8 +214,7 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "none")
     "/ci/system_tests"
     "/ci/orchestration"
     "/build/"
-    # Keep excluding build directories created by the superseded packaging scripts.
-    "/build_packages/"
+    # Keep excluding build directories created by the superseded packaging scripts
     "/build_srpm/"
     "/build_rpm/"
     "/image_rpms/"
