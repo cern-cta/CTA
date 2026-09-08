@@ -48,6 +48,7 @@ jobs:
           export CTA_VERSION
           export CTA_BUILD_ID=${GITHUB_RUN_ID}git${GITHUB_SHA:0:8}
           PLATFORM=$(jq -r .dev.defaultPlatform project.json)
+          echo "PLATFORM=${PLATFORM}" >> "$GITHUB_ENV"
           cp -f ci/docker/cta/${PLATFORM}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
           ./ci/project-json/generate_versionlock.py --platform ${PLATFORM} > /etc/yum/pluginconf.d/versionlock.list
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
@@ -69,22 +70,21 @@ jobs:
           fi
           git config --global --add safe.directory $(pwd)
           git submodule update --init --recursive
-          mkdir build_srpm
-          cd build_srpm
+          mkdir -p build/${PLATFORM}
+          cd build/${PLATFORM}
           echo "CMAKE_OPTIONS=${CMAKE_OPTIONS}" >> "$GITHUB_ENV"
           echo "CTA_VERSION=${CTA_VERSION}" >> "$GITHUB_ENV"
           echo "CTA_BUILD_ID=${CTA_BUILD_ID}" >> "$GITHUB_ENV"
-          cmake -DPackageOnly:Bool=true -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
+          cmake -DCTA_PACKAGE_MODE:STRING=source -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
           make cta_srpm
 
       - name: Run build-wrapper
         run: |
           cd xrootd-ssi-protobuf-interface && export XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
           dnf config-manager --set-enabled crb
-          dnf builddep --nogpgcheck -y build_srpm/RPM/SRPMS/*
-          mkdir build_rpm
-          cd build_rpm
-          cmake -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
+          dnf builddep --nogpgcheck -y build/${PLATFORM}/RPM/SRPMS/*
+          cd build/${PLATFORM}
+          cmake -DCTA_PACKAGE_MODE:STRING=binary -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
           build-wrapper-linux-x86-64 --out-dir ../${{ env.BUILD_WRAPPER_OUT_DIR }} make
 
       - name: Run sonar-scanner

@@ -52,7 +52,7 @@ build-cta-rpms:
     # These inputs are available as variables as certain jobs below override them
     CMAKE_BUILD_TYPE: "$[[ inputs.cmake-build-type ]]"
     COMPILE_WITH_EXTRA_TELEMETRY: "$[[ inputs.compile-with-extra-telemetry ]]"
-    BUILD_PATH: "build_rpm/RPM/RPMS"
+    BUILD_PATH: "build/$[[ inputs.platform ]]/RPM/RPMS"
     XRD_SSI_PATH: "xrootd-ssi-protobuf-interface"
     DNF_CACHE_DIR: "$CI_PROJECT_DIR/.dnf_cache"
     # Will only be used if ccache is enabled
@@ -84,17 +84,6 @@ build-cta-rpms:
     - echo "CCache enabled ${ENABLE_CCACHE}"
     - echo "CCache policy ${BUILD_CACHE_POLICY}"
   script:
-    # SRPMS
-    - ./ci/build/build_srpm.sh --build-dir build_srpm
-                               --build-generator "$[[ inputs.build-generator ]]"
-                               --create-build-dir
-                               --cta-version ${CTA_VERSION}
-                               --cta-version-suffix ${CTA_VERSION_SUFFIX}
-                               --scheduler-type ${SCHEDULER_TYPE}
-                               --oracle-support ${ENABLE_ORACLE_SUPPORT}
-                               --cmake-build-type "${CMAKE_BUILD_TYPE}"
-                               --jobs $(nproc --ignore=1)
-    # RPMS
     - BUILD_OPTIONS=""
     - |
       if [[ "$ENABLE_CCACHE" == "true" ]]; then
@@ -110,21 +99,18 @@ build-cta-rpms:
       if $[[ inputs.compile-with-extra-telemetry ]]; then
         BUILD_OPTIONS+=" --extra-telemetry"
       fi
-    - ./ci/build/build_rpm.sh --build-dir build_rpm
-                              --build-generator "$[[ inputs.build-generator ]]"
-                              --create-build-dir
-                              --srpm-dir build_srpm/RPM/SRPMS
-                              --cta-version ${CTA_VERSION}
-                              --cta-version-suffix ${CTA_VERSION_SUFFIX}
-                              --xrootd-ssi-version ${XRD_SSI_VERSION}
-                              --scheduler-type ${SCHEDULER_TYPE}
-                              --oracle-support ${ENABLE_ORACLE_SUPPORT}
-                              --cmake-build-type "${CMAKE_BUILD_TYPE}"
-                              --jobs $(nproc --ignore=1)
-                              --install-srpms
-                              --platform $[[ inputs.platform ]]
-                              --skip-unit-tests
-                              ${BUILD_OPTIONS}
+    - ./ci/build/build_packages.sh all --build-dir build
+                                      --build-generator "$[[ inputs.build-generator ]]"
+                                      --create-build-dir
+                                      --cta-version ${CTA_VERSION}
+                                      --cta-version-suffix ${CTA_VERSION_SUFFIX}
+                                      --xrootd-ssi-version ${XRD_SSI_VERSION}
+                                      --scheduler-type ${SCHEDULER_TYPE}
+                                      --oracle-support ${ENABLE_ORACLE_SUPPORT}
+                                      --cmake-build-type "${CMAKE_BUILD_TYPE}"
+                                      --jobs $(nproc --ignore=1)
+                                      --skip-unit-tests
+                                      ${BUILD_OPTIONS}
   after_script:
     - if [[ "$ENABLE_CCACHE" == "true" ]]; then ccache --show-stats --verbose; fi
   artifacts:

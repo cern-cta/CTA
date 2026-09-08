@@ -210,11 +210,18 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "none")
     # Ignore any file or directory starting with a dot
     # This is important for e.g. the caching directories in the gitlab CI
     "/[.]"
+    "${CMAKE_BINARY_DIR}/"
     "/ci/system_tests"
     "/ci/orchestration"
+    "/build/"
+    # Keep excluding build directories created by the superseded packaging scripts.
+    "/build_packages/"
     "/build_srpm/"
     "/build_rpm/"
     "/image_rpms/"
+    "/pod_logs/"
+    "/tmp/"
+    "[.]core$"
     "/assets/")
   include(CPack)
 
