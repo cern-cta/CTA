@@ -1292,6 +1292,15 @@ install_cta_dev() {
     "$venv_dir/bin/pip" install -r "$requirements_path"
   fi
 
+  # Setup git merge driver for .secrets.baseline
+  if command -v detect-secrets >/dev/null 2>&1; then
+    log_task "Setting up git merge driver for .secrets.baseline"
+    git config merge.detect-secrets.name "Merge driver for detect-secrets baseline"
+    git config merge.detect-secrets.driver "$project_root/scripts/git-merge-detect-secrets %O %A %B"
+  else
+    log_warn "detect-secrets not found in PATH. Skipping merge driver setup for .secrets.baseline"
+  fi
+
   log_success "Installed ${program_name}."
   if [[ ! -r /usr/share/bash-completion/bash_completion \
     && ! -r /etc/bash_completion \
