@@ -52,7 +52,7 @@ safedl("https://yum.oracle.com/RPM-GPG-KEY-oracle-ol${CTA_OS_VERSION_MAJOR}"
 # generate versionlock file
 
 execute_process(
-    COMMAND grep "%package" ${CMAKE_SOURCE_DIR}/cta.spec.in
+    COMMAND grep "%package" ${CMAKE_SOURCE_DIR}/packaging/rpm/cta.spec.in
     COMMAND awk "{print $3}"
     COMMAND grep -v "cta-release"
     OUTPUT_VARIABLE RESULT OUTPUT_STRIP_TRAILING_WHITESPACE

@@ -29,8 +29,6 @@ add_manpage (cta-rmcd)
 
 install (TARGETS cta-rmcd DESTINATION usr/bin)
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-rmcd.1cta DESTINATION /usr/share/man/man1)
-install (FILES cta-rmcd.logrotate DESTINATION /etc/logrotate.d RENAME cta-rmcd)
-install (FILES cta-rmcd.service DESTINATION ${CTA_SYSTEMD_UNIT_DIR})
 install (FILES cta-rmcd.example.toml
   DESTINATION usr/${CMAKE_INSTALL_DOCDIR}
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)

@@ -214,7 +214,7 @@ test-cta-release:
       changes:
         - tools/cta-release/**/*
         - project.json
-        - cta.spec.in
+        - packaging/rpm/cta.spec.in
       when: on_success
     - when: manual
       allow_failure: true

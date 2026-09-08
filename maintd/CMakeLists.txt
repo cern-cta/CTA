@@ -61,8 +61,6 @@ add_manpage (cta-maintd)
 
 install (TARGETS cta-maintd DESTINATION usr/bin)
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-maintd.1cta DESTINATION /usr/share/man/man1)
-install (FILES cta-maintd.logrotate DESTINATION /etc/logrotate.d RENAME cta-maintd)
-install (FILES cta-maintd.service DESTINATION ${CTA_SYSTEMD_UNIT_DIR})
 if(NOT CTA_USE_PGSCHED)
   install (FILES cta-maintd.example.toml
     DESTINATION usr/${CMAKE_INSTALL_DOCDIR}
