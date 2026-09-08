@@ -131,6 +131,7 @@ build_target() {
       --build-arg ENABLE_INTERNAL_REPOS=${enable_internal_repos} \
       --build-arg ENABLE_ORACLE_SUPPORT=${enable_oracle_support} \
       --build-arg INSTALL_CEPH_COMMON=false \
+      --build-arg SUPPRESS_BUILD_SERVICE_STDOUT=true \
       --network host \
       --label build.id="$BUILD_ID" \
       --target "$target"
@@ -166,6 +167,7 @@ log_task "Building base to populate the shared stage cache..."
 if ! "${build_command[@]}" . -f "${dockerfile}" \
   -t "${base_cache_ref}" \
   --build-context rpm_context="${rpm_src}" \
+  --build-arg SUPPRESS_BUILD_SERVICE_STDOUT=true \
   --network host \
   --target base; then
   log_error "Failed to build the shared base stage."

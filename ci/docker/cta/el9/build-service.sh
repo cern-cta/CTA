@@ -7,8 +7,12 @@ set -eo pipefail
 # While all of this logic could be executed directly in the Dockerfile, it causes a significant amount of code duplication and
 # it is important that everything runs in a single layer to ensure we don't bloat the image sizes
 
-# Since we are building in parallel, suppress stdout to reduce noise and make errors easier to spot
-exec 1> /dev/null
+# Package-manager output is useful when diagnosing slow or failed image builds.
+# Consumers that prefer quieter output can explicitly suppress it.
+if [[ "${SUPPRESS_BUILD_SERVICE_STDOUT:-false}" == "1" ]] || \
+    [[ "${SUPPRESS_BUILD_SERVICE_STDOUT,,}" == "true" ]]; then
+    exec 1> /dev/null
+fi
 
 TARGET_PACKAGES=$1
 
