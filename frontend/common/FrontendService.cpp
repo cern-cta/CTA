@@ -301,12 +301,6 @@ FrontendService::FrontendService(const std::string& configFilename,
 
   m_scheddb = m_scheddbInit->getSchedDB(*m_catalogue, *m_log);
 
-  // Set Scheduler DB cache timeouts
-  SchedulerDatabase::StatisticsCacheConfig statisticsCacheConfig;
-  statisticsCacheConfig.tapeCacheMaxAgeSecs = m_tapeCacheMaxAgeSecs;
-  statisticsCacheConfig.retrieveQueueCacheMaxAgeSecs = m_retrieveQueueCacheMaxAgeSecs;
-  m_scheddb->setStatisticsCacheConfig(statisticsCacheConfig);
-
   /** [[OStoreDB specific]]
    * The osThreadStackSize and osThreadPoolSize variables
    * shall be removed once we decommission OStoreDB
@@ -460,6 +454,11 @@ FrontendService::FrontendService(const std::string& configFilename,
     params.emplace_back("value", retrieveQueueCacheMaxAgeSecsConf.value());
     log(log::INFO, "Configuration entry", params);
   }
+
+  SchedulerDatabase::StatisticsCacheConfig statisticsCacheConfig;
+  statisticsCacheConfig.tapeCacheMaxAgeSecs = m_tapeCacheMaxAgeSecs;
+  statisticsCacheConfig.retrieveQueueCacheMaxAgeSecs = m_retrieveQueueCacheMaxAgeSecs;
+  m_scheddb->setStatisticsCacheConfig(statisticsCacheConfig);
 
   // All done
   log(log::INFO, std::string("cta-frontend started"), {log::Param("version", CTA_VERSION)});
