@@ -43,6 +43,8 @@ RUN /bin/bash -o pipefail -c \
 # hadolint ignore=DL3007
 FROM docker.io/almalinux/9-minimal:latest AS base
 
+ARG SUPPRESS_BUILD_SERVICE_STDOUT=false
+
 COPY build-service.sh /usr/local/bin/build-service.sh
 
 COPY etc/yum.repos.d-internal/ /tmp/internal-repos/

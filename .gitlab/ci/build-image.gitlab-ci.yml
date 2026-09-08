@@ -128,6 +128,7 @@ spec:
         --build-context rpm_context="${RPM_CONTEXT}"
         --build-arg ENABLE_INTERNAL_REPOS="$[[ inputs.enable-internal-repos ]]"
         --build-arg ENABLE_ORACLE_SUPPORT="${ENABLE_ORACLE_SUPPORT}"
+        --build-arg SUPPRESS_BUILD_SERVICE_STDOUT=false
       )
     - |
       if [[ -n "$EXTRA_BUILD_ARGS" ]]; then
