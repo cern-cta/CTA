@@ -9,7 +9,6 @@ cmake_minimum_required(VERSION 3.17)
 set(CTARMC_LIB_SRC_FILES
   Cdomainname.cpp
   Cglobals.cpp
-  Cinitdaemon.cpp
   Cnetdb.cpp
   getconfent.cpp
   marshall.cpp

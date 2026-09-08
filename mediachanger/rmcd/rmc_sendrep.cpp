@@ -7,7 +7,6 @@
 #include "mediachanger/librmc/marshall.hpp"
 #include "mediachanger/librmc/net.hpp"
 #include "rmc_constants.hpp"
-#include "rmc_logit.hpp"
 
 #include <errno.h>
 #include <netinet/in.h>
@@ -30,7 +29,7 @@ static const char* rep_type_to_str(const int rep_type) {
   }
 }
 
-int rmc_sendrep(const int rpfd, const int rep_type, ...) {
+int rmc_sendrep(cta::log::LogContext& lc, const int rpfd, const int rep_type, ...) {
   va_list args;
   char* msg;
   int n;
@@ -39,7 +38,6 @@ int rmc_sendrep(const int rpfd, const int rep_type, ...) {
   int rc;
   char repbuf[RMC_REPBUFSZ];
   int repsize;
-  const char* const func = "rmc_sendrep";
 
   rbp = repbuf;
   marshall_LONG(rbp, RMC_MAGIC);
@@ -51,7 +49,12 @@ int rmc_sendrep(const int rpfd, const int rep_type, ...) {
       vsprintf(prtbuf, msg, args);
       marshall_LONG(rbp, strlen(prtbuf) + 1);
       marshall_STRING(rbp, prtbuf);
-      rmc_logit(func, "%s", prtbuf);
+      {
+        cta::log::ScopedParamContainer params(lc);
+        params.add("rmcResponseMessage", std::string(prtbuf));
+        // This is deliberately not on the ERR message as rmcd frequently retries where intermediate tries result in errors
+        lc.log(cta::log::INFO, "Sending error response to the rmcd client");
+      }
       break;
     case MSG_DATA:
       n = va_arg(args, int);
@@ -69,12 +72,10 @@ int rmc_sendrep(const int rpfd, const int rep_type, ...) {
   repsize = rbp - repbuf;
   if (netwrite(rpfd, repbuf, repsize) != repsize) {
     const char* const neterror_str = neterror();
-    rmc_logit(func, RMC02, "send", neterror_str);
-    rmc_logit(func,
-              "Call to netwrite() failed"
-              ": rep_type=%s neterror=%s\n",
-              rep_type_to_str(rep_type),
-              neterror_str);
+    cta::log::ScopedParamContainer params(lc);
+    params.add("repType", std::string(rep_type_to_str(rep_type)));
+    params.add(cta::semconv::log::errorMessage, std::string(neterror_str));
+    lc.log(cta::log::ERR, "Failed to write response");
     if (rep_type == RMC_RC) {
       close(rpfd);
     }

@@ -3,7 +3,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "Cinit.hpp"
+#include "rmc_serv.hpp"
+
+#include "common/log/LogContext.hpp"
 #include "mediachanger/librmc/Cdomainname.hpp"
 #include "mediachanger/librmc/Cnetdb.hpp"
 #include "mediachanger/librmc/getconfent.hpp"
@@ -12,7 +14,6 @@
 #include "mediachanger/librmc/serrno.hpp"
 #include "mediachanger/librmc/smc_struct.hpp"
 #include "rmc_constants.hpp"
-#include "rmc_logit.hpp"
 #include "rmc_procreq.hpp"
 #include "rmc_sendrep.hpp"
 #include "rmc_smcsubr.hpp"
@@ -35,19 +36,22 @@
 #include <unistd.h>
 
 /* Forward declaration */
-static int rmc_getreq(const int s, int* const req_type, char* const req_data, char** const clienthost);
-static void rmc_procreq(const int rpfd, const int req_type, char* const req_data, char* const clienthost);
-static int rmc_dispatchRqstHandler(const int req_type, const struct rmc_srv_rqst_context* const rqst_context);
-static void rmc_doit(const int rpfd);
+static int
+rmc_getreq(cta::log::LogContext& lc, const int s, int* const req_type, char* const req_data, char** const clienthost);
+static void
+rmc_procreq(cta::log::LogContext& lc, const int rpfd, const int req_type, char* const req_data, char* const clienthost);
+static int rmc_dispatchRqstHandler(cta::log::LogContext& lc,
+                                   const int req_type,
+                                   const struct rmc_srv_rqst_context* const rqst_context);
+static void rmc_doit(cta::log::LogContext& lc, const int rpfd);
 
 /* extern globals */
-int g_jid;
 struct extended_robot_info g_extended_robot_info;
 
 /* globals with file scope */
 char g_localhost[CA_MAXHOSTNAMELEN + 1];
 
-void handle_connection(int s, struct pollfd* pfd) {
+void handle_connection(cta::log::LogContext& lc, int s, struct pollfd* pfd) {
   struct sockaddr_in from;
   socklen_t fromlen = sizeof(from);
 
@@ -60,14 +64,21 @@ void handle_connection(int s, struct pollfd* pfd) {
     if (errno == EAGAIN || errno == EWOULDBLOCK) {
       return;  // Non-blocking; no connections
     }
-    perror("accept() error");
+    const int acceptErrno = errno;
+    cta::log::ScopedParamContainer params(lc);
+    params.add(cta::semconv::log::errorMessage, std::string(strerror(acceptErrno)));
+    lc.log(cta::log::ERR, "Failed to accept connection");
     return;
   }
 
-  rmc_doit(rpfd);  // Handle accepted connection
+  rmc_doit(lc, rpfd);  // Handle accepted connection
 }
 
-int rmc_main(const char* const robot) {
+int rmc_main(const std::string& robot,
+             int port,
+             const std::string& listen_scope,
+             cta::log::LogContext& lc,
+             std::stop_token stopToken) {
   int c;
   char domainname[CA_MAXHOSTNAMELEN + 1];
   const char* msgaddr;
@@ -75,10 +86,6 @@ int rmc_main(const char* const robot) {
   int s;
   struct sockaddr_in sin;
   struct smc_status smc_status;
-  const char* const func = "rmc_serv";
-
-  g_jid = getpid();
-  rmc_logit(func, "started\n");
 
   char localhost[CA_MAXHOSTNAMELEN + 1];
   gethostname(localhost, CA_MAXHOSTNAMELEN + 1);
@@ -87,35 +94,43 @@ int rmc_main(const char* const robot) {
     strncpy(g_localhost, localhost, CA_MAXHOSTNAMELEN + 1);
   } else {
     if (Cdomainname(domainname, sizeof(domainname)) < 0) {
-      rmc_logit(func, "Unable to get domainname\n");
+      cta::log::ScopedParamContainer params(lc);
+      params.add("localHost", std::string(localhost));
+      lc.log(cta::log::WARNING, "Unable to get domain name; using unqualified local host name");
+      strncpy(g_localhost, localhost, CA_MAXHOSTNAMELEN + 1);
     } else {
-      rmc_logit(func, "Using first word from the list as domain name: %s", domainname);
       // Truncate at first space to avoid multiple domains
       char* first_space = strchr(domainname, ' ');
       if (first_space) {
         *first_space = '\0';
       }
+      cta::log::ScopedParamContainer params(lc);
+      params.add("domainName", std::string(domainname));
+      lc.log(cta::log::INFO, "Using domain name");
+      if (int ret = snprintf(g_localhost, sizeof(g_localhost), "%s.%s", localhost, domainname);
+          ret < 0 || ret >= static_cast<int>(sizeof(g_localhost))) {
+        lc.log(cta::log::WARNING, "Fully qualified local host name exceeds maximum length");
+      }
     }
-    if (int ret = snprintf(g_localhost, CA_MAXHOSTNAMELEN, "%s.%s", localhost, domainname);
-        ret < 0 || ret >= CA_MAXHOSTNAMELEN) {
-      rmc_logit(func, "localhost.domainname exceeds maximum length\n");
-    }
-    rmc_logit(func, "found the following localhost.domainname: %s", g_localhost);
+    cta::log::ScopedParamContainer params(lc);
+    params.add("localHost", std::string(g_localhost));
+    lc.log(cta::log::INFO, "Determined local host name");
   }
-  if (*robot == '\0') {
-    rmc_logit(func, RMC06, "robot");
-    exit(USERR);
+  if (robot.empty()) {
+    lc.log(cta::log::CRIT, "Media changer path cannot be empty");
+    return 1;
   }
 
   g_extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] = '\0';
-  if (*robot == '/') {
-    snprintf(g_extended_robot_info.smc_ldr, sizeof(g_extended_robot_info.smc_ldr), "%s", robot);
+
+  if (robot.starts_with('/')) {
+    snprintf(g_extended_robot_info.smc_ldr, sizeof(g_extended_robot_info.smc_ldr), "%s", robot.c_str());
   } else {
-    snprintf(g_extended_robot_info.smc_ldr, sizeof(g_extended_robot_info.smc_ldr), "/dev/%s", robot);
+    snprintf(g_extended_robot_info.smc_ldr, sizeof(g_extended_robot_info.smc_ldr), "/dev/%s", robot.c_str());
   }
   if (g_extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] != '\0') {
-    rmc_logit(func, RMC06, "robot");
-    exit(USERR);
+    lc.log(cta::log::CRIT, "Invalid media changer path: " + robot);
+    return 1;
   }
   g_extended_robot_info.smc_fd = -1;
 
@@ -124,22 +139,25 @@ int rmc_main(const char* const robot) {
     const int max_nb_attempts = 3;
     int attempt_nb = 1;
     for (attempt_nb = 1; attempt_nb <= max_nb_attempts; attempt_nb++) {
-      rmc_logit(func, "Trying to get geometry of tape library: attempt_nb=%d\n", attempt_nb);
+      cta::log::ScopedParamContainer params(lc);
+      params.add("attemptNumber", attempt_nb);
+      lc.log(cta::log::INFO, "Attempting to get tape library geometry");
       c = smc_get_geometry(g_extended_robot_info.smc_fd,
                            g_extended_robot_info.smc_ldr,
                            &g_extended_robot_info.robot_info);
 
       if (0 == c) {
-        rmc_logit(func, "Got geometry of tape library\n");
+        lc.log(cta::log::INFO, "Got tape library geometry");
         break;
       }
 
-      c = smc_lasterror(&smc_status, &msgaddr);
-      rmc_logit(func, RMC02, "get_geometry", msgaddr);
+      c = smc_lasterror(lc, &smc_status, &msgaddr);
+      params.add(cta::semconv::log::errorMessage, std::string(msgaddr));
+      lc.log(cta::log::ERR, "Failed to get tape library geometry");
 
       // If this was the last attempt
       if (max_nb_attempts == attempt_nb) {
-        exit(c);
+        return 1;
       } else {
         sleep(1);
       }
@@ -149,49 +167,43 @@ int rmc_main(const char* const robot) {
   signal(SIGPIPE, SIG_IGN);
   signal(SIGXFSZ, SIG_IGN);
 
+  if (stopToken.stop_requested()) {
+    return EXIT_SUCCESS;
+  }
+
   /* open request socket */
 
   if ((s = socket(AF_INET, SOCK_STREAM | O_NONBLOCK, 0)) < 0) {
-    rmc_logit(func, RMC02, "socket", neterror());
-    exit(CONFERR);
+    cta::log::ScopedParamContainer params(lc);
+    params.add(cta::semconv::log::errorMessage, std::string(neterror()));
+    lc.log(cta::log::CRIT, "Failed to create request socket");
+    return 1;
   }
   memset(&sin, 0, sizeof(struct sockaddr_in));
   sin.sin_family = AF_INET;
-  {
-    const char* p;
-    p = std::getenv("RMC_PORT");
-    if (!p) {
-      p = getconfent_fromfile("RMC", "PORT", 0);
-    }
-
-    if (p) {
-      sin.sin_port = htons((unsigned short) atoi(p));
-    } else {
-      sin.sin_port = htons((unsigned short) RMC_PORT);
-    }
-  }
+  sin.sin_port = htons(port);
   // rmcd should only accept connections from the loopback interface by default
-  auto listen_scope = std::getenv("RMC_LISTEN_SCOPE");
-  if (!listen_scope) {
-    listen_scope = getconfent_fromfile("RMC", "LISTEN_SCOPE", 0);
-  }
-  const auto listen_scope_str = listen_scope ? std::string(listen_scope) : "loopback";
-  if (listen_scope_str == "any") {
-    rmc_logit(func,
-              "Listen scope set to \"any\" (0.0.0.0); this exposes rmcd to unauthenticated remote connections.\n");
+  if (listen_scope == "any") {
+    lc.log(cta::log::WARNING,
+           "Listen scope set to 'any' (0.0.0.0); this exposes rmcd to unauthenticated remote connections.");
     sin.sin_addr.s_addr = htonl(INADDR_ANY);
-  } else if (listen_scope_str == "loopback") {
+  } else if (listen_scope == "loopback") {
     sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   } else {
-    rmc_logit(func, "Received unsupported listen scope: \"%s\". Defaulting to loopback.\n", listen_scope_str.c_str());
+    lc.log(cta::log::WARNING, "Received unsupported listen scope: \"" + listen_scope + "\". Defaulting to loopback.");
     sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   }
   if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, static_cast<const void*>(&on), sizeof(on)) < 0) {
-    rmc_logit(func, RMC02, "setsockopt", neterror());
+    cta::log::ScopedParamContainer params(lc);
+    params.add(cta::semconv::log::errorMessage, std::string(neterror()));
+    lc.log(cta::log::WARNING, "Failed to enable address reuse on request socket");
   }
   if (bind(s, reinterpret_cast<const struct sockaddr*>(&sin), sizeof(sin)) < 0) {
-    rmc_logit(func, RMC02, "bind", neterror());
-    exit(CONFERR);
+    cta::log::ScopedParamContainer params(lc);
+    params.add(cta::semconv::log::errorMessage, std::string(neterror()));
+    lc.log(cta::log::CRIT, "Failed to bind request socket");
+    close(s);
+    return 1;
   }
   listen(s, 5);
 
@@ -200,109 +212,47 @@ int rmc_main(const char* const robot) {
   pfd.events = POLLIN;
 
   /* main loop */
-  while (1) {
+  while (!stopToken.stop_requested()) {
     // Check for connections
     if (int ret = poll(&pfd, 1, RMC_CHECKI * 1000); ret < 0) {
-      perror("poll() error");
+      const int pollErrno = errno;
+      cta::log::ScopedParamContainer params(lc);
+      params.add(cta::semconv::log::errorMessage, std::string(strerror(pollErrno)));
+      lc.log(cta::log::ERR, "Failed to poll request socket");
       continue;
     } else if (ret == 0) {
       continue;  // timeout; no new connection
     }
-    handle_connection(s, &pfd);
-  }
-}
-
-/**
- * Returns 1 if the rmcd daemon should run in the background or 0 if the
- * daemon should run in the foreground.
- */
-static int run_rmcd_in_background(const int argc, char** argv) {
-  int i = 0;
-  for (i = 1; i < argc; i++) {
-    if (0 == strcmp(argv[i], "-f")) {
-      return 0;
-    }
-  }
-
-  return 1;
-}
-
-/**
- * Returns the number of command-line arguments that start with '-'.
- */
-static int get_nb_cmdline_options(const int argc, char** argv) {
-  int nbOptions = 0;
-  for (int i = 1; i < argc; i++) {
-    if (*argv[i] == '-') {
-      nbOptions++;
-    }
-  }
-  return nbOptions;
-}
-
-int main(const int argc, char** argv) {
-  const char* robot = "";
-  const int nb_cmdline_options = get_nb_cmdline_options(argc, argv);
-
-  switch (argc) {
-    case 1:
-      fprintf(stderr, "RMC01 - wrong arguments given ,specify the device file of the tape library\n");
-      exit(USERR);
-    case 2:
-      if (0 == nb_cmdline_options) {
-        robot = argv[1];
-      } else {
-        fprintf(stderr, "RMC01 - robot parameter is mandatory\n");
-        exit(USERR);
-      }
+    if (stopToken.stop_requested()) {
       break;
-    case 3:
-      if (0 == nb_cmdline_options) {
-        fprintf(stderr, "Too many robot parameters\n");
-        exit(USERR);
-      } else if (2 == nb_cmdline_options) {
-        fprintf(stderr, "RMC01 - robot parameter is mandatory\n");
-        exit(USERR);
-        /* At this point there is one argument starting with '-' */
-      } else if (0 == strcmp(argv[1], "-f")) {
-        robot = argv[2];
-      } else if (0 == strcmp(argv[2], "-f")) {
-        robot = argv[1];
-      } else {
-        fprintf(stderr, "Unknown option\n");
-        exit(USERR);
-      }
-      break;
-    default:
-      fprintf(stderr, "Too many command-line arguments\n");
-      exit(USERR);
+    }
+    handle_connection(lc, s, &pfd);
   }
 
-  if (run_rmcd_in_background(argc, argv) && (Cinitdaemon("rmcd", nullptr) < 0)) {
-    exit(SYERR);
-  }
-  exit(rmc_main(robot));
+  close(s);
+  return EXIT_SUCCESS;
 }
 
-static void rmc_doit(const int rpfd) {
+static void rmc_doit(cta::log::LogContext& lc, const int rpfd) {
   int c;
   char* clienthost = nullptr;
   char req_data[REQ_DATA_SIZE];
   int req_type = 0;
 
-  if ((c = rmc_getreq(rpfd, &req_type, req_data, &clienthost)) == 0) {
-    rmc_procreq(rpfd, req_type, req_data, clienthost);
+  if ((c = rmc_getreq(lc, rpfd, &req_type, req_data, &clienthost)) == 0) {
+    rmc_procreq(lc, rpfd, req_type, req_data, clienthost);
     if (clienthost != nullptr) {
       free(clienthost);
     }
   } else if (c > 0) {
-    rmc_sendrep(rpfd, RMC_RC, c);
+    rmc_sendrep(lc, rpfd, RMC_RC, c);
   } else {
     close(rpfd);
   }
 }
 
-static int rmc_getreq(const int s, int* const req_type, char* const req_data, char** const clienthost) {
+static int
+rmc_getreq(cta::log::LogContext& lc, const int s, int* const req_type, char* const req_data, char** const clienthost) {
   struct sockaddr_in from;
   socklen_t fromlen = sizeof(from);
   int l;
@@ -311,7 +261,6 @@ static int rmc_getreq(const int s, int* const req_type, char* const req_data, ch
   int n;
   char* rbp;
   char req_hdr[3 * LONGSIZE];
-  const char* const func = "rmc_getreq";
 
   l = netread_timeout(s, req_hdr, sizeof(req_hdr), RMC_TIMEOUT);
   if (l == sizeof(req_hdr)) {
@@ -321,13 +270,18 @@ static int rmc_getreq(const int s, int* const req_type, char* const req_data, ch
     *req_type = n;
     unmarshall_LONG(rbp, msglen);
     if (msglen > RMC_REQBUFSZ) {
-      rmc_logit(func, RMC46, RMC_REQBUFSZ);
+      cta::log::ScopedParamContainer params(lc);
+      params.add("requestSize", msglen);
+      params.add("maxRequestSize", RMC_REQBUFSZ);
+      lc.log(cta::log::ERR, "Request too large");
       return -1;
     }
     l = msglen - sizeof(req_hdr);
     n = netread_timeout(s, req_data, l, RMC_TIMEOUT);
     if (getpeername(s, reinterpret_cast<struct sockaddr*>(&from), &fromlen) < 0) {
-      rmc_logit(func, RMC02, "getpeername", neterror());
+      cta::log::ScopedParamContainer params(lc);
+      params.add(cta::semconv::log::errorMessage, std::string(neterror()));
+      lc.log(cta::log::ERR, "Failed to get client address");
       return ERMCUNREC;
     }
     {
@@ -347,7 +301,10 @@ static int rmc_getreq(const int s, int* const req_type, char* const req_data, ch
             != 0
           || hp == nullptr) {
         if (inet_ntop(AF_INET, &from.sin_addr, client_ip, sizeof(client_ip)) == nullptr) {
-          perror("inet_ntop");
+          const int inetNtopErrno = errno;
+          cta::log::ScopedParamContainer params(lc);
+          params.add(cta::semconv::log::errorMessage, std::string(strerror(inetNtopErrno)));
+          lc.log(cta::log::ERR, "Failed to convert client IP address to text");
           return ERMCUNREC;
         }
         // Duplicate the strings to prevent undefined behaviour after exiting function
@@ -359,28 +316,32 @@ static int rmc_getreq(const int s, int* const req_type, char* const req_data, ch
     return 0;
   } else {
     if (l > 0) {
-      rmc_logit(func, RMC04, l);
+      cta::log::ScopedParamContainer params(lc);
+      params.add("bytesRead", l);
+      params.add("expectedBytes", sizeof(req_hdr));
+      lc.log(cta::log::ERR, "Failed to read complete request header");
     } else if (l < 0) {
-      rmc_logit(func, RMC02, "netread", sstrerror(serrno));
+      cta::log::ScopedParamContainer params(lc);
+      params.add(cta::semconv::log::errorMessage, std::string(sstrerror(serrno)));
+      lc.log(cta::log::ERR, "Failed to read request header");
     }
     return ERMCUNREC;
   }
 }
 
-static void rmc_procreq(const int rpfd, const int req_type, char* const req_data, char* const clienthost) {
-  struct rmc_srv_rqst_context rqst_context;
+static void rmc_procreq(cta::log::LogContext& lc,
+                        const int rpfd,
+                        const int req_type,
+                        char* const req_data,
+                        char* const clienthost) {
+  struct rmc_srv_rqst_context rqst_context = {g_localhost, rpfd, req_data, clienthost};
 
-  rqst_context.localhost = g_localhost;
-  rqst_context.rpfd = rpfd;
-  rqst_context.req_data = req_data;
-  rqst_context.clienthost = clienthost;
-
-  const int handlerRc = rmc_dispatchRqstHandler(req_type, &rqst_context);
+  const int handlerRc = rmc_dispatchRqstHandler(lc, req_type, &rqst_context);
 
   if (ERMCUNREC == handlerRc) {
-    rmc_sendrep(rpfd, MSG_ERR, RMC03, req_type);
+    rmc_sendrep(lc, rpfd, MSG_ERR, RMC03, req_type);
   }
-  rmc_sendrep(rpfd, RMC_RC, handlerRc);
+  rmc_sendrep(lc, rpfd, RMC_RC, handlerRc);
 }
 
 /**
@@ -390,22 +351,24 @@ static void rmc_procreq(const int rpfd, const int req_type, char* const req_data
  * @param rqst_context The context of the request.
  * @return The result of handling the request.
  */
-static int rmc_dispatchRqstHandler(const int req_type, const struct rmc_srv_rqst_context* const rqst_context) {
+static int rmc_dispatchRqstHandler(cta::log::LogContext& lc,
+                                   const int req_type,
+                                   const struct rmc_srv_rqst_context* const rqst_context) {
   switch (req_type) {
     case RMC_MOUNT:
-      return rmc_srv_mount(rqst_context);
+      return rmc_srv_mount(lc, rqst_context);
     case RMC_UNMOUNT:
-      return rmc_srv_unmount(rqst_context);
+      return rmc_srv_unmount(lc, rqst_context);
     case RMC_EXPORT:
-      return rmc_srv_export(rqst_context);
+      return rmc_srv_export(lc, rqst_context);
     case RMC_IMPORT:
-      return rmc_srv_import(rqst_context);
+      return rmc_srv_import(lc, rqst_context);
     case RMC_GETGEOM:
-      return rmc_srv_getgeom(rqst_context);
+      return rmc_srv_getgeom(lc, rqst_context);
     case RMC_READELEM:
-      return rmc_srv_readelem(rqst_context);
+      return rmc_srv_readelem(lc, rqst_context);
     case RMC_FINDCART:
-      return rmc_srv_findcart(rqst_context);
+      return rmc_srv_findcart(lc, rqst_context);
     default:
       return ERMCUNREC;
   }

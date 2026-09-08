@@ -18,6 +18,6 @@ spec:
   clusterIP: None
   ports:
   - name: {{ $rmcdName }}
-    port: 5014
+    port: {{ .Values.server.port }}
     protocol: TCP
 {{- end }}

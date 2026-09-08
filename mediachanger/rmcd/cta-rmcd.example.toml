@@ -1,0 +1,72 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+####################################################################################################
+#
+# CTA Remote Media Changer Daemon Configuration
+#
+####################################################################################################
+
+
+[media_changer]
+  # The SCSI-compatible media changer device used by rmcd to control the tape library.
+  # Set this to the operating-system path of the device.
+  # If omitted, "/dev/smc" is used
+  device = "/dev/smc"
+
+
+# Configuration for the RMC protocol endpoint used by clients such as cta-taped.
+# This is separate from the optional health server configured below.
+[rmc_server]
+
+  # TCP port on which rmcd listens for RMC client connections.
+  # If omitted, 5014 is used.
+  port = 5014
+
+  # Network scope from which rmcd accepts RMC client connections.
+  # Use "loopback" to accept connections only from localhost, or "any" to accept connections
+  # from other hosts. The RMC protocol provides no authentication, so use "any" with extreme
+  # caution in production environments.
+  # If omitted, "loopback" is used
+  listen_scope = "loopback"
+
+
+[logging]
+  # Logs with a level lower than the LogMask value will be masked. Possible values are EMERG, ALERT,
+  # CRIT, ERR, WARNING, NOTICE (USERERR), INFO, DEBUG.
+  # If omitted INFO is used.
+  level = "INFO"
+
+  # Log format. Possible values are "json" and "kv" (key-value).
+  # If omitted json is used.
+  format = "json"
+
+  # The following key-value pairs are added to all log lines.
+  # All keys are optional as this is purely for monitoring purposes.
+  [logging.attributes]
+    # Unique string to identify CTA's instance the rmcd process is serving (i.e: production, preproduction).
+    instance = "production"
+
+
+# Configuration for a health server. The health server, if enabled, will expose the following endpoints:
+# - host:port/health/ready
+# - host:port/health/live
+# This allows for configuring readiness and liveness probes if so desired.
+[health_server]
+  # Whether to enable the health server or not.
+  # If omitted, false is used.
+  enabled = false
+  # Where to accept connections from. Setting this to 127.0.0.1 will make it only accept connections from localhost.
+  # Set to 0.0.0.0 to accept connections from anywhere.
+  # When use_unix_domain_socket is enabled, this host value will be unused.
+  # If omitted, 127.0.0.1 is used.
+  host = "127.0.0.1"
+  # What port to expose the health server on. Note that multiple processes running on the same host cannot share the same port.
+  # When use_unix_domain_socket is enabled, this port value will be unused.
+  # If omitted, 8080 is used.
+  port = 8080
+  # If enabled, expose the health server over a unix domain socket instead. In this case, the values for host and port are ignored.
+  # Enabling this will put the corresponding socket file in <runtime-dir>/health.sock.
+  # Note that if use_unix_domain_socket is enabled, the service  MUST be started --runtime-dir <runtime-dir> flag.
+  # If omitted, false is used.
+  use_unix_domain_socket = false

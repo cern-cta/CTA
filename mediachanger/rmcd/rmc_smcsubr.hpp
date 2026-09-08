@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "common/log/LogContext.hpp"
 #include "mediachanger/librmc/smc_struct.hpp"
 
 int smc_get_geometry(const int fd, const char* const rbtdev, struct robot_info* const robot_info);
@@ -33,6 +34,37 @@ int smc_find_cartridge(const int fd,
                        struct smc_element_info element_info[],
                        struct robot_info* const robot_info);
 
-int smc_lasterror(struct smc_status* const smc_stat, const char** const msgaddr);
+int smc_lasterror(cta::log::LogContext& lc, struct smc_status* const smc_stat, const char** const msgaddr);
 
 int smc_move_medium(const int fd, const char* const rbtdev, const int from, const int to, const int invert);
+
+int smc_dismount(const int rpfd,
+                 cta::log::LogContext& lc,
+                 const int fd,
+                 const char* const loader,
+                 struct robot_info* const robot_info,
+                 const int drvord,
+                 const char* const vid);
+
+int smc_export(const int rpfd,
+               cta::log::LogContext& lc,
+               const int fd,
+               const char* const loader,
+               struct robot_info* const robot_info,
+               const char* const vid);
+
+int smc_import(const int rpfd,
+               cta::log::LogContext& lc,
+               const int fd,
+               const char* const loader,
+               struct robot_info* const robot_info,
+               const char* const vid);
+
+int smc_mount(const int rpfd,
+              cta::log::LogContext& lc,
+              const int fd,
+              const char* const loader,
+              struct robot_info* const robot_info,
+              const int drvord,
+              const char* const vid,
+              const int invert);
