@@ -83,7 +83,7 @@ public:
             SchedulerDatabase& db,
             const std::string& schedulerBackendName,
             const bool enableOpportunisticBatching = false,
-            const uint64_t opportunisticBatchingWindowMs = 50,
+            const uint64_t opportunisticBatchingWindowMs = 10,
             const uint64_t opportunisticBatchingMaxBatchSize = 1000,
             const uint64_t minFilesToWarrantAMount = 5,
             const uint64_t minBytesToWarrantAMount = 2000000);
