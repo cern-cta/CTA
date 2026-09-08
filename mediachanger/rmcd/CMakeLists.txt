@@ -17,10 +17,6 @@ target_link_libraries(cta-rmcd ctarmc ctacommon)
 
 set(CTA_RMCD_EXAMPLE_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/cta-rmcd.example.toml)
 
-add_manpage(cta-rmcd)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-rmcd.1cta DESTINATION /usr/share/man/man1)
-install(FILES cta-rmcd.example.toml DESTINATION usr/${CMAKE_INSTALL_DOCDIR})
-
 add_custom_target(cta-rmcd-config-check
   COMMAND $<TARGET_FILE:cta-rmcd>
     --config-strict
