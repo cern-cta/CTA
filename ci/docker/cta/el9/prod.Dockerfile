@@ -164,24 +164,17 @@ FROM base AS cta-tools
 
 ARG ENABLE_INTERNAL_REPOS
 ARG ENABLE_ORACLE_SUPPORT
-# CEPH is not required locally, so this allows us to disable it and reduce the image size for local dev workflows
-ARG INSTALL_CEPH_COMMON=true
 
-# There are two reasons why this image is huge:
+# One reason why this image is huge:
 # - eos-client: for now necessary as the system tests still assume the CTA and EOS rpms in one pod.
 #   Once this assumption is removed from the system tests, we can migrate the client pod to use the
 #   official EOS image and we don't need it here anymore
-# - ceph-common: disabled for local development workflows, but required for the objectstore scheduler reset in CI
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools \
     packages="cta-admin-grpc cta-catalogue-utils cta-scheduler-utils \
       krb5-workstation cta-test-immutable-file eos-client xrootd-client \
       python3-xrootd bc" && \
-    if [ "$INSTALL_CEPH_COMMON" = "true" ] || \
-      [ "$INSTALL_CEPH_COMMON" = "1" ]; then \
-      packages="$packages ceph-common"; \
-    fi && \
     /usr/local/bin/build-service.sh "$packages" && \
     ln -sf /usr/bin/cta-admin-grpc /usr/bin/cta-admin
 
