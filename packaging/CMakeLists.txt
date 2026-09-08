@@ -10,14 +10,14 @@ install(FILES
   DESTINATION ${CTA_SYSTEMD_UNIT_DIR})
 
 install(FILES logrotate/cta-frontend.logrotate
-  DESTINATION /etc/logrotate.d
+  DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/logrotate.d
   RENAME cta-frontend)
 install(FILES logrotate/cta-maintd.logrotate
-  DESTINATION /etc/logrotate.d
+  DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/logrotate.d
   RENAME cta-maintd)
 install(FILES logrotate/cta-rmcd.logrotate
-  DESTINATION /etc/logrotate.d
+  DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/logrotate.d
   RENAME cta-rmcd)
 install(FILES logrotate/cta-taped.logrotate
-  DESTINATION /etc/logrotate.d
+  DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/logrotate.d
   RENAME cta-taped)

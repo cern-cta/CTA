@@ -33,7 +33,6 @@ build-cta-rpms:
         - .dockerignore
         - .gitlab-ci.yml
         - CMakeLists.txt
-        - packaging/rpm/cta.spec.in
         - project.json
         - version.hpp.in
         - xrootd-ssi-protobuf-interface
