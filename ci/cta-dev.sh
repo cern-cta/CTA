@@ -48,8 +48,7 @@ oracle_support="false"
 enable_internal_repos=true
 internal_repos_forced_public=false
 namespace="dev"
-# A single <version>-<suffix> string. <version> becomes the RPM version and <suffix> the RPM
-# release; the same string is the tag of the images built from those RPMs.
+# A single <version>-<suffix> string used by the package build and as the image tag.
 cta_version="6-dev"
 cta_version_base=""
 cta_version_suffix=""
@@ -92,7 +91,7 @@ namespace_deletion_log=""
 
 source "${script_dir}/utils/log_utils.sh"
 
-# The CTA version is the RPM "<version>-<release>" string.
+# CTA package version accepted by the currently supported packaging backends.
 cta_version_is_valid() {
   [[ "$1" =~ ^[0-9][0-9.]*-[a-z0-9][a-z0-9.-]*$ ]]
 }
@@ -100,7 +99,7 @@ cta_version_is_valid() {
 # Validated in both the environment file and the command line.
 readonly cta_version_format_hint="must be <version>-<suffix>, where <version> contains only numbers and dots and <suffix> only lowercase letters, numbers, dots, and hyphens (for example 6-dev)"
 
-# Container image tags are less restricted than RPM versions, so an explicit tag only has to
+# Container image tags are less restricted than package versions, so an explicit tag only has to
 # satisfy the OCI tag grammar.
 cta_image_tag_is_valid() {
   [[ "$1" =~ ^[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$ ]]
@@ -197,11 +196,10 @@ Global options:
   -h, --help                         Show this help.
       --platform <platform>          Platform to build for. Defaults to project.json.
       --scheduler-type <type>        Scheduler backend [objectstore, pgsched].
-      --enable-oracle-support        Build RPMs and images with Oracle support.
+      --enable-oracle-support        Build packages and images with Oracle support.
       --cta-version <version>        CTA version as <version>-<suffix>, defaults to '$cta_version'.
-                                     <version> becomes the RPM version and <suffix> the RPM
-                                     release. It is also the CTA image tag.
-      --use-public-repos             Force public YUM repos. By default, CERN internal
+                                     It is also the CTA image tag.
+      --use-public-repos             Force public package repositories. By default, CERN internal
                                      repos are used when they are reachable.
 EOF
 }
@@ -213,10 +211,10 @@ Developer workflow utility for CTA. This script orchestrates the local
 development workflow for CTA. Commands can be executed independently or
 combined into a complete development pipeline.
 
-  [1. BUILD RPMS]             [2. BUILD IMAGES]              [3. DEPLOY SETUP]
+  [1. BUILD PACKAGES]         [2. BUILD IMAGES]              [3. DEPLOY SETUP]
   +--------------------+      +-----------------------+      +-------------------+
-  | Compile source in  |      | Take the built RPMS   |      | Deploy a CTA test |
-  | a persistent build | ---> | and use them to build | ---> | instance on the   |
+  | Compile source in  |      | Use the packages to   |      | Deploy a CTA test |
+  | a persistent build | ---> | build the container   | ---> | instance on the   |
   | container          |      | container images      |      | local K8s cluster |
   +--------------------+      +-----------------------+      +-------------------+
            build                       images                       deploy
@@ -233,13 +231,13 @@ Usage:
   $(basename "$0") <command> [global-options] [command-options]
 
 Commands:
-  build      Build the CTA RPMs inside a persistent build container.
-  images     Build container images from the generated RPMs.
+  build      Build CTA packages inside a persistent build container.
+  images     Build container images from the generated packages.
   deploy     Deploy a local CTA development instance.
   test       Run a system test.
 
   up         Equivalent to: build > images > deploy.
-  debug      Equivalent to up, with debuginfo RPMs and the cta-debug image.
+  debug      Equivalent to up, with debug packages and the cta-debug image.
   all        Equivalent to: build > images > deploy > test.
 
   install    Creates a symlink to invoke this script using '$program_name'.
@@ -258,7 +256,7 @@ exit 1
 usage_build() {
   cat <<EOF
 
-Build the CTA RPMs inside a persistent build container.
+Build CTA packages inside a persistent build container.
 
 The build container is reused across invocations to speed up incremental
 development. Use --reset to recreate it from scratch.
@@ -268,7 +266,7 @@ Usage:
 
 Options:
   -r, --reset                       Recreate the persistent build container
-                                    and rebuild the SRPMs.
+                                    and rebuild the source packages.
       --clean-build-dirs            Remove build/<platform>/.
       --build-generator <generator> CMake generator
                                     ["Unix Makefiles", "Ninja"].
@@ -277,7 +275,7 @@ Options:
       --disable-ccache              Disable ccache.
       --enable-unit-tests           Run unit tests after building.
       --enable-address-sanitizer    Enable AddressSanitizer.
-      --force-install               Force SRPM installation.
+      --force-install               Force source package installation.
 
 $(global_options_help)
 
@@ -288,7 +286,7 @@ exit 1
 usage_images() {
   cat <<EOF
 
-Build CTA container images from the locally generated RPMs.
+Build CTA container images from the locally generated packages.
 
 Images are loaded into a running local minikube or k3s cluster when one is
 detected. Otherwise they remain in the selected container runtime.
@@ -311,7 +309,7 @@ exit 1
 usage_debug() {
   cat <<EOF
 
-Build and deploy CTA with matching debuginfo packages and a cta-debug image.
+Build and deploy CTA with matching debug packages and a cta-debug image.
 
 This replaces the current deployment, including pods and core dumps stored in
 their ephemeral /var/log/tmp volumes. Run it before reproducing a crash.
@@ -668,32 +666,37 @@ detect_internal_repos() {
   # A false value is an explicit request from --use-public-repos or .cta-dev.env.
   [[ $enable_internal_repos == true ]] || return 0
 
-  local -r repo_file="${project_root}/ci/docker/cta/${platform}/etc/yum.repos.d-internal/cta-ci.repo"
-  if [[ ! -r $repo_file ]]; then
-    log_warn "No CERN internal YUM repository definition exists for platform '${platform}'; using public repositories."
-    enable_internal_repos=false
-    return 0
-  fi
-
-  local baseurl
-  baseurl=$(sed -n 's/^[[:space:]]*baseurl[[:space:]]*=[[:space:]]*//p' "$repo_file" | head -n 1)
-  if [[ -z $baseurl ]]; then
-    log_warn "Could not determine the CERN internal YUM repository URL; using public repositories."
-    enable_internal_repos=false
-    return 0
-  fi
-
-  local -r probe_url="${baseurl%/}/repodata/repomd.xml"
+  local probe_url
+  case "$platform" in
+    el9)
+      probe_url="https://cta-ci-repo.web.cern.ch/cta-ci-repo/RPMs/others/el9/x86_64/repodata/repomd.xml"
+      ;;
+    *)
+      log_task "No CERN internal repository is configured for platform '${platform}'; using public repositories."
+      enable_internal_repos=false
+      return 0
+      ;;
+  esac
   if curl --fail --silent \
       --connect-timeout 3 \
       --max-time 5 \
       --output /dev/null \
       "$probe_url" 2>/dev/null; then
-    log_task "CERN internal YUM repositories are reachable."
+    log_task "CERN internal package repositories are reachable."
   else
     enable_internal_repos=false
-    log_warn "CERN internal YUM repositories are unreachable; using public repositories."
+    log_warn "CERN internal package repositories are unreachable; using public repositories."
   fi
+}
+
+package_directory() {
+  local -r package_kind="$1"
+
+  case "${platform}:${package_kind}" in
+    el9:source) echo "RPM/SRPMS" ;;
+    el9:binary) echo "RPM/RPMS/x86_64" ;;
+    *) die "No ${package_kind} package directory is configured for platform '${platform}'." ;;
+  esac
 }
 
 validate_podman() {
@@ -796,9 +799,11 @@ build_cta() {
   local -r mount_basedir="/shared/CTA"
   local -r num_jobs=$(nproc --ignore=2)
   local -r build_command=(podman build)
+  local -r build_dockerfile="ci/docker/cta/${platform}/build.Dockerfile"
+  local -r source_package_directory=$(package_directory source)
 
-  local rebuild_srpms=false
-  local reinstall_srpms=false
+  local rebuild_source_packages=false
+  local reinstall_source_packages=false
   local automatic_clean_build_dirs=false
   local state_is_valid=false
   local state_matches_configuration=false
@@ -809,7 +814,7 @@ build_cta() {
   local build_configuration_json
 
   # Track every option and environment value passed to CMake. Configuration changes can then rebuild
-  # the SRPMs when needed, while a successful unchanged build can safely use --skip-cmake.
+  # the source packages when needed, while a successful unchanged build can safely use --skip-cmake.
   build_configuration_json=$(create_build_configuration "$xrootd_ssi_version" "$num_jobs")
 
   [[ -d "${project_root}/build/${platform}" ]] && build_output_exists=true
@@ -875,7 +880,7 @@ build_cta() {
         jobs) log_warn "CMake job count changed: ${old_value} -> ${new_value}" ;;
         internalRepos)
           log_warn "Repository mode changed: internal repositories ${old_value} -> ${new_value}"
-          reinstall_srpms=true
+          reinstall_source_packages=true
           ;;
       esac
     done < <(jq -r --argjson desired "$build_configuration_json" '
@@ -891,8 +896,8 @@ build_cta() {
       automatic_clean_build_dirs=true
     fi
   else
-    rebuild_srpms=true
-    reinstall_srpms=true
+    rebuild_source_packages=true
+    reinstall_source_packages=true
     if [[ $build_output_exists == true ]]; then
       if [[ -f "$build_state_file" ]]; then
         log_warn "Build state change detected."
@@ -906,13 +911,13 @@ build_cta() {
   if [[ $automatic_clean_build_dirs == true ]]; then
     log_warn "Automatically cleaning build/${platform}/."
     clean_build_dirs=true
-    rebuild_srpms=true
-    reinstall_srpms=true
+    rebuild_source_packages=true
+    reinstall_source_packages=true
   fi
 
   if [[ $clean_build_dirs == true ]]; then
-    rebuild_srpms=true
-    reinstall_srpms=true
+    rebuild_source_packages=true
+    reinstall_source_packages=true
     log_task "Removing build directories..."
     rm -rf -- "${project_root}/build/${platform}"
   fi
@@ -955,7 +960,7 @@ build_cta() {
     print_header "SETTING UP BUILD CONTAINER"
     build_container_restarted=true
     log_task "Building the build container image..."
-    "${build_command[@]}" --no-cache -t "${build_image_name}" -f ci/docker/cta/"${platform}"/build.Dockerfile .
+    "${build_command[@]}" --no-cache -t "${build_image_name}" -f "${build_dockerfile}" .
     log_task "Starting build container ${build_container_name}..."
     local run_output
     if ! run_output=$(podman run -dit --rm --name "${build_container_name}" \
@@ -976,21 +981,21 @@ build_cta() {
   local build_package_flags=()
   local install_source_packages=false
 
-  [[ $rebuild_srpms == true ]] && package_command=all
+  [[ $rebuild_source_packages == true ]] && package_command=all
 
-  if [[ $build_container_restarted == true || $reinstall_srpms == true || $force_install == true ]]; then
+  if [[ $build_container_restarted == true || $reinstall_source_packages == true || $force_install == true ]]; then
     [[ $internal_repos_forced_public == false ]] && enable_internal_repos=true
     detect_internal_repos
     build_configuration_json=$(jq -c --argjson internalRepos "$enable_internal_repos" \
       '.internalRepos = $internalRepos' <<<"$build_configuration_json")
-    [[ $reinstall_srpms == true ]] && log_task "Refreshing build dependencies from the regenerated SRPMs..."
+    [[ $reinstall_source_packages == true ]] && log_task "Refreshing build dependencies from the regenerated source packages..."
     install_source_packages=true
   fi
 
   if [[ $package_command == binary && $install_source_packages == true ]]; then
     build_package_flags+=(
       --install-source-packages
-      --source-package-dir "${mount_basedir}/build/${platform}/RPM/SRPMS"
+      --source-package-dir "${mount_basedir}/build/${platform}/${source_package_directory}"
     )
   fi
   [[ $skip_unit_tests == true ]] && build_package_flags+=(--skip-unit-tests)
@@ -1001,7 +1006,7 @@ build_cta() {
   [[ $extra_telemetry == true ]] && build_package_flags+=(--extra-telemetry)
   if [[ $state_matches_configuration == true \
       && $previous_build_successful == true \
-      && $rebuild_srpms == false \
+      && $rebuild_source_packages == false \
       && -f "${project_root}/build/${platform}/CMakeCache.txt" \
       && $clean_build_dirs == false ]]; then
     build_package_flags+=(--skip-cmake)
@@ -1030,13 +1035,15 @@ build_cta() {
 
 images_cta() {
   # Constants
-  local -r rpm_src="build/${platform}/RPM/RPMS/x86_64" # note relative to project root
+  local -r binary_package_directory=$(package_directory binary)
+  local -r image_dockerfile="ci/docker/cta/${platform}/prod.Dockerfile"
+  local -r package_source="build/${platform}/${binary_package_directory}" # relative to project root
 
   print_header "BUILDING CONTAINER IMAGES"
   detect_internal_repos
 
   # Build
-  log_task "Building container images tagged ${cta_image_tag} from ${rpm_src}..."
+  log_task "Building container images tagged ${cta_image_tag} from ${package_source}..."
   local extra_image_build_options=()
   local load_into_k8s=false
   [[ $enable_internal_repos == true ]] && extra_image_build_options+=(--enable-internal-repos)
@@ -1049,7 +1056,8 @@ images_cta() {
   cd "${project_root}"
   ./ci/build/build_images.sh \
     --tag "${cta_image_tag}" \
-    --rpm-src "${rpm_src}" \
+    --package-src "${package_source}" \
+    --dockerfile "${image_dockerfile}" \
     "${extra_image_build_options[@]}"
 
   if [[ $load_into_k8s == false ]]; then
