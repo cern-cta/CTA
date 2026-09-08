@@ -689,12 +689,14 @@ detect_internal_repos() {
   fi
 }
 
-platform_configuration() {
-  local -r key="$1"
+package_directory() {
+  local -r package_kind="$1"
 
-  jq -er --arg platform "$platform" --arg key "$key" \
-    '.dev.platformConfiguration[$platform][$key] // empty' "${project_root}/project.json" 2>/dev/null \
-    || die "No ${key} is configured for platform '${platform}' in project.json."
+  case "${platform}:${package_kind}" in
+    el9:source) echo "RPM/SRPMS" ;;
+    el9:binary) echo "RPM/RPMS/x86_64" ;;
+    *) die "No ${package_kind} package directory is configured for platform '${platform}'." ;;
+  esac
 }
 
 validate_podman() {
@@ -798,7 +800,7 @@ build_cta() {
   local -r num_jobs=$(nproc --ignore=2)
   local -r build_command=(podman build)
   local -r build_dockerfile="ci/docker/cta/${platform}/build.Dockerfile"
-  local -r source_package_directory=$(platform_configuration sourcePackageDirectory)
+  local -r source_package_directory=$(package_directory source)
 
   local rebuild_source_packages=false
   local reinstall_source_packages=false
@@ -1033,7 +1035,7 @@ build_cta() {
 
 images_cta() {
   # Constants
-  local -r binary_package_directory=$(platform_configuration binaryPackageDirectory)
+  local -r binary_package_directory=$(package_directory binary)
   local -r image_dockerfile="ci/docker/cta/${platform}/prod.Dockerfile"
   local -r package_source="build/${platform}/${binary_package_directory}" # relative to project root
 

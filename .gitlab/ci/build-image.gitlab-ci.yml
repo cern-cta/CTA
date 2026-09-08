@@ -120,7 +120,14 @@ spec:
     - echo "Building ${TARGET_NAME}"
     - cd "$(dirname "${DOCKERFILE}")"
     - DOCKERFILE_NAME="$(basename "${DOCKERFILE}")"
-    - PACKAGE_DIRECTORY="$(jq -er --arg platform "$[[ inputs.platform ]]" '.dev.platformConfiguration[$platform].binaryPackageDirectory' "${CI_PROJECT_DIR}/project.json")"
+    - |
+      case "$[[ inputs.platform ]]" in
+        el9) PACKAGE_DIRECTORY="RPM/RPMS/x86_64" ;;
+        *)
+          echo "No binary package directory is configured for platform '$[[ inputs.platform ]]'"
+          exit 1
+          ;;
+      esac
     - PACKAGE_CONTEXT="${CI_PROJECT_DIR}/build/$[[ inputs.platform ]]/${PACKAGE_DIRECTORY}"
     - |
       BUILDAH_ARGS=(
