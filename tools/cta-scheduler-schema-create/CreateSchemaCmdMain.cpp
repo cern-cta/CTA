@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "tools/cta-scheduler-schema-create/CreateSchemaCmd.hpp"
+#include "CreateSchemaCmd.hpp"
 
 #include <iostream>
 

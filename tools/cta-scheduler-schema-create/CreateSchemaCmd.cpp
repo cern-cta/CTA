@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "tools/cta-scheduler-schema-create/CreateSchemaCmd.hpp"
+#include "CreateSchemaCmd.hpp"
 
+#include "CreateSchemaCmdLineArgs.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
 #include "common/utils/utils.hpp"
@@ -12,7 +13,6 @@
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
 #include "scheduler/rdbms/schema/PostgresSchedulerSchema.hpp"
-#include "tools/cta-scheduler-schema-create/CreateSchemaCmdLineArgs.hpp"
 
 #include <algorithm>
 
