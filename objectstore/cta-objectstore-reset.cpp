@@ -21,6 +21,16 @@ int main(int argc, char** argv) {
       throw std::runtime_error("Wrong number of arguments: expected objectstoreURL");
     }
 
+    std::cout << "WARNING: This is a destructive operation that will wipe the entire objectstore at " << argv[1]
+              << std::endl
+              << R"(Type "yes" to confirm: )";
+
+    std::string confirmation;
+    if (!std::getline(std::cin, confirmation) || confirmation != "yes") {
+      std::cout << "Aborting objectstore reset" << std::endl;
+      return EXIT_FAILURE;
+    }
+
     cta::log::StdoutLogger logger(cta::utils::getShortHostname(), "cta-objectstore-reset");
     backend = cta::objectstore::BackendFactory::createBackend(argv[1], logger);
 

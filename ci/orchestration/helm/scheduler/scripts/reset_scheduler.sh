@@ -30,7 +30,7 @@ elif [[ "$SCHEDULER_BACKEND" == "postgres" ]]; then
   cta-scheduler-schema-create /etc/cta/cta-scheduler.conf || die "ERROR: Could not create scheduler schema. cta-scheduler-schema-create /etc/cta/cta-scheduler.conf FAILED"
 elif [[ "$SCHEDULER_BACKEND" == "ceph" ]]; then
   echo "Wiping objectstore"
-  cta-objectstore-reset "$SCHEDULER_URL" || die "ERROR: Could not reset the objectstore. cta-objectstore-reset $SCHEDULER_URL FAILED"
+  echo "yes" | cta-objectstore-reset "$SCHEDULER_URL" || die "ERROR: Could not reset the objectstore. cta-objectstore-reset $SCHEDULER_URL FAILED"
   cta-objectstore-initialize "$SCHEDULER_URL" || die "ERROR: Could not initialize the objectstore. cta-objectstore-initialize $SCHEDULER_URL FAILED"
   echo "Rados objectstore ${SCHEDULER_URL} content:"
   cta-objectstore-list "$SCHEDULER_URL"
