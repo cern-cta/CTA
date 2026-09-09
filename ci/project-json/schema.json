@@ -154,7 +154,7 @@
           },
           "buildRequires": {
             "description":
-              "These values are used to generate a list of BuildRequires items that are put in the cta.spec.in file.",
+              "These values are used to generate a list of BuildRequires items that are put in the packaging/rpm/cta.spec.in file.",
             "type": "object",
             "additionalProperties": {
               "type": "string"

@@ -175,6 +175,7 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "source")
   # ---------------------------------------------------------------------------
   # Pandocology (to create man pages from Markdown)
   include(cmake/Pandocology.cmake)
+  add_subdirectory(packaging)
   add_subdirectory(eos_cta)
   add_subdirectory(eos_grpc_client)
   add_subdirectory(xroot_plugins)
@@ -256,7 +257,7 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "none")
     include(cmake/RPMTools.cmake)
     rpmtools_add_rpm_targets(
       "${PROJECT_NAME}"
-      "${PROJECT_NAME}.spec.in"
+      "packaging/rpm/${PROJECT_NAME}.spec.in"
       "${CTA_PACKAGE_MODE}")
   elseif(CTA_PACKAGE_FORMAT STREQUAL "deb")
     include(cmake/DebTools.cmake)
