@@ -45,7 +45,6 @@
 #include <exception>
 #include <gtest/gtest.h>
 #include <memory>
-#include <rdbms/schema/CreateSchemaCmd.hpp>
 #include <utility>
 
 #ifdef STDOUT_LOGGING

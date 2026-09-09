@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "scheduler/rdbms/schema/DropSchemaCmd.hpp"
+#include "DropSchemaCmd.hpp"
 
+#include "DropSchemaCmdLineArgs.hpp"
 #include "common/exception/Exception.hpp"
 #include "rdbms/ConnPool.hpp"
-#include "scheduler/rdbms/schema/DropSchemaCmdLineArgs.hpp"
 
 #include <algorithm>
 

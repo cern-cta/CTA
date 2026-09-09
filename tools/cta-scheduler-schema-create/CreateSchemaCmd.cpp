@@ -3,15 +3,15 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "scheduler/rdbms/schema/CreateSchemaCmd.hpp"
+#include "CreateSchemaCmd.hpp"
 
+#include "CreateSchemaCmdLineArgs.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/AutocommitMode.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
-#include "scheduler/rdbms/schema/CreateSchemaCmdLineArgs.hpp"
 #include "scheduler/rdbms/schema/PostgresSchedulerSchema.hpp"
 
 #include <algorithm>

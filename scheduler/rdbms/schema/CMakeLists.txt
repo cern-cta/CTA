@@ -24,31 +24,3 @@ add_library(ctaschedulerschema
   SchedulerSchema.cpp
 )
 target_link_libraries(ctaschedulerschema ctacatalogue)
-
-set (SCHEMA_CREATE_SRC_FILES
-  CmdLineTool.cpp
-  CreateSchemaCmd.cpp
-  CreateSchemaCmdLineArgs.cpp
-  CreateSchemaCmdMain.cpp
-)
-
-add_executable(cta-scheduler-schema-create ${SCHEMA_CREATE_SRC_FILES})
-target_link_libraries (cta-scheduler-schema-create ctaschedulerschema ctacatalogue)
-
-if(CTA_USE_PGSCHED)
-  install (TARGETS cta-scheduler-schema-create DESTINATION /usr/bin)
-endif()
-
-set (DROP_SCHEMA_CMD
-  CmdLineTool.cpp
-  DropSchemaCmd.cpp
-  DropSchemaCmdLineArgs.cpp
-  DropSchemaCmdMain.cpp
-)
-
-add_executable(cta-scheduler-schema-drop ${DROP_SCHEMA_CMD})
-target_link_libraries (cta-scheduler-schema-drop ctaschedulerschema ctacatalogue)
-
-if(CTA_USE_PGSCHED)
-  install (TARGETS cta-scheduler-schema-drop DESTINATION /usr/bin)
-endif()
