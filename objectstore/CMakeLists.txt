@@ -97,6 +97,10 @@ add_executable(cta-objectstore-list cta-objectstore-list.cpp)
 target_link_libraries(cta-objectstore-list
   ctaobjectstore ctacommon)
 
+add_executable(cta-objectstore-reset cta-objectstore-reset.cpp)
+target_link_libraries(cta-objectstore-reset
+  ctaobjectstore ctacommon)
+
 add_executable(cta-objectstore-dump-object cta-objectstore-dump-object.cpp)
 target_link_libraries(cta-objectstore-dump-object
   ctaobjectstore ctacommon)
@@ -114,7 +118,7 @@ target_link_libraries(cta-objectstore-create-missing-repack-index
   ctaobjectstore ctacommon)
 
 if(NOT CTA_USE_PGSCHED)
-  install(TARGETS cta-objectstore-initialize cta-objectstore-list cta-objectstore-dump-object
+  install(TARGETS cta-objectstore-initialize cta-objectstore-list cta-objectstore-reset cta-objectstore-dump-object
     cta-objectstore-dereference-removed-queues cta-objectstore-collect-orphaned-object cta-objectstore-create-missing-repack-index
     DESTINATION usr/bin)
 endif()
