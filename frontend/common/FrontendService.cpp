@@ -302,6 +302,29 @@ FrontendService::FrontendService(const std::string& configFilename,
   m_scheddb = m_scheddbInit->getSchedDB(*m_catalogue, *m_log);
 
   // Set Scheduler DB cache timeouts
+  if (auto tapeCacheMaxAgeSecsConf = config.getOptionValueUInt("cta.schedulerdb.tape_cache_max_age_secs");
+      tapeCacheMaxAgeSecsConf.has_value()) {
+    m_tapeCacheMaxAgeSecs = tapeCacheMaxAgeSecsConf.value();
+    std::vector<log::Param> params;
+    params.emplace_back("source", configFilename);
+    params.emplace_back("category", "cta.schedulerdb");
+    params.emplace_back("key", "tape_cache_max_age_secs");
+    params.emplace_back("value", tapeCacheMaxAgeSecsConf.value());
+    log(log::INFO, "Configuration entry", params);
+  }
+
+  if (auto retrieveQueueCacheMaxAgeSecsConf =
+        config.getOptionValueUInt("cta.schedulerdb.retrieve_queue_cache_max_age_secs");
+      retrieveQueueCacheMaxAgeSecsConf.has_value()) {
+    m_retrieveQueueCacheMaxAgeSecs = retrieveQueueCacheMaxAgeSecsConf.value();
+    std::vector<log::Param> params;
+    params.emplace_back("source", configFilename);
+    params.emplace_back("category", "cta.schedulerdb");
+    params.emplace_back("key", "retrieve_queue_cache_max_age_secs");
+    params.emplace_back("value", retrieveQueueCacheMaxAgeSecsConf.value());
+    log(log::INFO, "Configuration entry", params);
+  }
+
   SchedulerDatabase::StatisticsCacheConfig statisticsCacheConfig;
   statisticsCacheConfig.tapeCacheMaxAgeSecs = m_tapeCacheMaxAgeSecs;
   statisticsCacheConfig.retrieveQueueCacheMaxAgeSecs = m_retrieveQueueCacheMaxAgeSecs;
@@ -436,29 +459,6 @@ FrontendService::FrontendService(const std::string& configFilename,
 
   if (grpcConfigFilePath.has_value()) {
     loadGrpcConfigParams(grpcConfigFilePath.value(), log);
-  }
-
-  if (auto tapeCacheMaxAgeSecsConf = config.getOptionValueUInt("cta.schedulerdb.tape_cache_max_age_secs");
-      tapeCacheMaxAgeSecsConf.has_value()) {
-    m_tapeCacheMaxAgeSecs = tapeCacheMaxAgeSecsConf.value();
-    std::vector<log::Param> params;
-    params.emplace_back("source", configFilename);
-    params.emplace_back("category", "cta.schedulerdb");
-    params.emplace_back("key", "tape_cache_max_age_secs");
-    params.emplace_back("value", tapeCacheMaxAgeSecsConf.value());
-    log(log::INFO, "Configuration entry", params);
-  }
-
-  if (auto retrieveQueueCacheMaxAgeSecsConf =
-        config.getOptionValueUInt("cta.schedulerdb.retrieve_queue_cache_max_age_secs");
-      retrieveQueueCacheMaxAgeSecsConf.has_value()) {
-    m_retrieveQueueCacheMaxAgeSecs = retrieveQueueCacheMaxAgeSecsConf.value();
-    std::vector<log::Param> params;
-    params.emplace_back("source", configFilename);
-    params.emplace_back("category", "cta.schedulerdb");
-    params.emplace_back("key", "retrieve_queue_cache_max_age_secs");
-    params.emplace_back("value", retrieveQueueCacheMaxAgeSecsConf.value());
-    log(log::INFO, "Configuration entry", params);
   }
 
   // All done
