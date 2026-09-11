@@ -19,6 +19,9 @@ target_include_directories(ctaruntime
 target_link_libraries(ctaauth PUBLIC ctaruntime)
 
 install(TARGETS ctaruntime DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(FILES cta-logging.schema.json
+  DESTINATION usr/${CMAKE_INSTALL_DATADIR}/cta
+  PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
 add_library(ctaruntimeunittests SHARED
   test/ApplicationTest.cpp

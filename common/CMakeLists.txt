@@ -126,11 +126,6 @@ install (TARGETS ctacommon DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 install (DIRECTORY DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 
-install (FILES cta-logging.schema.json
-  DESTINATION usr/${CMAKE_INSTALL_DATADIR}/cta
-  PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
-
-
 target_link_libraries (ctacommon
   ctaversioninfo
   uuid
