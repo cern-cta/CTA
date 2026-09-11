@@ -7,9 +7,8 @@
 
 %define ctaRelease @CTA_RELEASE@
 
-%define usingObjectstore @RPM_USINGOBJECTSTORE@
-%define occiSupport @RPM_USING_ORACLE@
-%define schedOpt @RPM_SCHEDOPT@
+%define usePgsched @PACKAGE_USE_PGSCHED@
+%define occiSupport @PACKAGE_WITH_ORACLE@
 
 # Every package in the project.json buildRequires section has a corresponding
 # variable containing its version constraint.
@@ -27,10 +26,7 @@
 %define mydist %{?dist}
 %endif
 
-%define skip_unit_tests @PACKAGE_SKIP_UNIT_TESTS@
-
-%define skipDebugPackages @PACKAGE_SKIP_DEBUG_PACKAGES@
-%if %{skipDebugPackages}
+%if !@PACKAGE_BUILD_DEBUG_PACKAGES@
 %define debug_package %{nil}
 %endif
 
@@ -62,7 +58,7 @@ BuildRequires: systemd-rpm-macros
 
 # PostgreSQL server binaries needed for unit tests when using pgsched
 # Note that this should eventually move to project.json once the objectstore is removed
-%if "%{schedOpt}" == "-DCTA_USE_PGSCHED:Bool=TRUE"
+%if "%{usePgsched}" == "1"
 BuildRequires: postgresql-server
 %endif
 
@@ -88,10 +84,10 @@ cmake3 -G "@CMAKE_GENERATOR@" .. \
   -DCTA_PACKAGE_MODE:STRING=none \
   -DJOBS_COUNT:STRING=@JOBS_COUNT@ \
   -DVCS_VERSION=%{ctaRelease} \
-  %{schedOpt} \
-  @RPM_PERF_TELEMETRY_OPT@ \
-  @RPM_ORACLE@ \
-  @RPM_ADDRESS_SANITIZER_OPT@
+  -DCTA_USE_PGSCHED:BOOL=@CTA_USE_PGSCHED@ \
+  -DCTA_USE_EXTRA_TELEMETRY:BOOL=@CTA_USE_EXTRA_TELEMETRY@ \
+  -DCTA_WITH_ORACLE:BOOL=@CTA_WITH_ORACLE@ \
+  -DENABLE_ADDRESS_SANITIZER:BOOL=@ENABLE_ADDRESS_SANITIZER@
 cmake --build . --parallel @JOBS_COUNT@
 
 %install
@@ -105,7 +101,7 @@ DESTDIR=%{buildroot} \
 %check
 cd build
 cmake --build . --target cta-example-config-checks --parallel @JOBS_COUNT@
-%if "%{skip_unit_tests}" == "0"
+%if @PACKAGE_RUN_UNIT_TESTS@
 cmake --build . --target cta-unit-tests-short --parallel @JOBS_COUNT@
 %endif
 
@@ -175,7 +171,7 @@ Requires: cta-lib-catalogue = %{version}-%{release}
 Provides the daemon that performs background maintenance tasks for CTA.
 %files -n cta-maintd
 %license COPYING
-%if "%{usingObjectstore}" != "0"
+%if "%{usePgsched}" == "0"
 %{_libdir}/libctaosdbroutines.so*
 %else
 %{_libdir}/libctardbroutines.so*
@@ -361,7 +357,7 @@ Provides shared libraries for accessing the CTA catalogue.
 %package -n cta-lib-scheduler
 Summary: CERN Tape Archive scheduler libraries
 Provides: cta-lib = %{version}-%{release}
-%if "%{usingObjectstore}" != "0"
+%if "%{usePgsched}" == "0"
 Requires: librados2 %{radosVersionConstraint}
 %else
 Requires: cta-lib-rdbms-postgres = %{version}-%{release}
@@ -375,7 +371,7 @@ Provides shared libraries for CTA scheduling and disk access.
 %files -n cta-lib-scheduler
 %license COPYING
 %{_libdir}/libctascheduler.so.*
-%if "%{usingObjectstore}" != "0"
+%if "%{usePgsched}" == "0"
 %{_libdir}/libctaobjectstore.so.*
 %endif
 %{_libdir}/libctadisk.so.*
@@ -397,7 +393,7 @@ Provides command-line tools for administering CTA.
 %{_mandir}/man1/cta-admin.1*
 %doc %{_docdir}/cta/cta-admin.example.conf
 
-%if "%{usingObjectstore}" != "0"
+%if "%{usePgsched}" == "0"
 %package -n cta-scheduler-utils
 Summary: CERN Tape Archive object store tools
 Requires: cta-lib-scheduler = %{version}-%{release}
@@ -444,7 +440,7 @@ Provides scripts and command-line utilities for administering the CTA catalogue.
 %{_mandir}/man1/cta-catalogue-schema-verify.1*
 %{_mandir}/man1/cta-database-poll.1*
 
-%if "%{usingObjectstore}" == "0"
+%if "%{usePgsched}" == "1"
 %package -n cta-scheduler-utils
 Summary: CERN Tape Archive scheduler database utilities
 Requires: cta-lib-rdbms-postgres = %{version}-%{release}
@@ -541,7 +537,7 @@ Requires: libtirpc-devel
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
 Requires: gtest-devel %{gtestDevelVersionConstraint}
 # PostgreSQL server binaries needed for unit tests when using pgsched
-%if "%{schedOpt}" == "-DCTA_USE_PGSCHED:Bool=TRUE"
+%if "%{usePgsched}" == "1"
 Requires: postgresql-server
 %endif
 %description -n cta-tests
@@ -570,7 +566,7 @@ Provides CTA unit and integration tests.
 %{_libdir}/libctainmemorycatalogueunittests.so*
 %{_libdir}/libctainmemoryconnunittests.so*
 %{_libdir}/libctainmemorystmtunittests.so*
-%if "%{usingObjectstore}" != "0"
+%if "%{usePgsched}" == "0"
 %{_libdir}/libctaobjectstoreunittests.so*
 %{_libdir}/libctaosdbroutines.so.*
 %endif
@@ -660,7 +656,7 @@ Provides unversioned linker names for developing applications with CTA shared li
 %{_libdir}/libctardbmswrapper.so
 %{_libdir}/libctastatistics.so
 %{_libdir}/libctascheduler.so
-%if "%{usingObjectstore}" != "0"
+%if "%{usePgsched}" == "0"
 %{_libdir}/libctaobjectstore.so
 %endif
 %{_libdir}/libctadisk.so
