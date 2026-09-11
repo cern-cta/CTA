@@ -471,14 +471,21 @@ class TestPrepare:
         # Submit all path categories together and validate every response entry
         result = eos_client.prepare_files(disk_instance_name, paths)
         assert result.success
-        assert result.stdout.strip()
-        assert not result.stdout.strip().isspace()
-        response = eos_client.query_prepare(disk_instance_name, result.stdout.strip(), paths)
-        assert len(response["responses"]) == len(paths)
-        assert all(_response_for_path(response, path)["path_exists"] for path in tape_files + forbidden_files)
-        assert all(_response_for_path(response, path)["error_text"] == "" for path in tape_files)
-        assert all(_response_for_path(response, path)["error_text"] for path in forbidden_files + missing_files)
-        assert all(not _response_for_path(response, path)["path_exists"] for path in missing_files)
+        request_id = result.stdout.strip()
+        assert request_id
+        assert not request_id.isspace()
+
+        try:
+            response = eos_client.query_prepare(disk_instance_name, request_id, paths)
+            assert len(response["responses"]) == len(paths)
+            assert all(_response_for_path(response, path)["path_exists"] for path in tape_files + forbidden_files)
+            assert all(_response_for_path(response, path)["error_text"] == "" for path in tape_files)
+            assert all(_response_for_path(response, path)["error_text"] for path in forbidden_files + missing_files)
+            assert all(not _response_for_path(response, path)["path_exists"] for path in missing_files)
+        finally:
+            # Do not leave valid recalls queued for the next test when the drives are brought back up.
+            abort = eos_client.abort_prepare(disk_instance_name, request_id, tape_files)
+            assert abort.success, abort.stderr
 
     @pytest.mark.parametrize("include_missing", [False, True], ids=["success", "partial-failure"])
     def test_prepare_abort(
