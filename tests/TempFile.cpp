@@ -26,8 +26,7 @@ TempFile::TempFile() {
 
 TempFile::TempFile(const std::string& path) : m_path(path) {}
 
-TempFile::TempFile(const std::string& content, const std::string& suffix) {
-  m_path = "/tmp/testCTA-XXXXXX" + suffix;
+TempFile::TempFile(const std::string& content, const std::string& suffix) : m_path("/tmp/testCTA-XXXXXX" + suffix) {
   const int fd = ::mkstemps(m_path.data(), static_cast<int>(suffix.size()));
   cta::exception::Errnum::throwOnMinusOne(fd, "In TempFile::TempFile: failed to mkstemps: ");
   ::close(fd);
