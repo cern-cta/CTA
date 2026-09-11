@@ -7,7 +7,7 @@
 
 #include "catalogue/CatalogueItor.hpp"
 #include "frontend/common/AdminCmdOptions.hpp"
-#include "lib/protobuf/common/conversions/ChecksumBlobSerDeser.hpp"
+#include "protobuf/common/conversions/ChecksumBlobSerDeser.hpp"
 
 namespace cta::frontend {
 

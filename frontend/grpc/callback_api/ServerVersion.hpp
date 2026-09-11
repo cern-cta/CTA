@@ -6,7 +6,7 @@
 #include "CtaAdminServerWriteReactor.hpp"
 #include "catalogue/SchemaVersion.hpp"
 #include "frontend/common/Version.hpp"
-#include "lib/protobuf/admin/conversions/LabelFormatSerDeser.hpp"
+#include "protobuf/admin/conversions/LabelFormatSerDeser.hpp"
 #include "version.hpp"
 
 #include <catalogue/Catalogue.hpp>

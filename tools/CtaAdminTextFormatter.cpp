@@ -6,10 +6,10 @@
 #include "tools/CtaAdminTextFormatter.hpp"
 
 #include "common/utils/utils.hpp"
-#include "lib/protobuf/admin/conversions/ArchiveRouteTypeSerDeser.hpp"
-#include "lib/protobuf/admin/conversions/DriveStatusSerDeser.hpp"
-#include "lib/protobuf/admin/conversions/MountTypeSerDeser.hpp"
-#include "lib/protobuf/common/conversions/ChecksumBlobSerDeser.hpp"
+#include "protobuf/admin/conversions/ArchiveRouteTypeSerDeser.hpp"
+#include "protobuf/admin/conversions/DriveStatusSerDeser.hpp"
+#include "protobuf/admin/conversions/MountTypeSerDeser.hpp"
+#include "protobuf/common/conversions/ChecksumBlobSerDeser.hpp"
 
 #include <common/dataStructures/ArchiveRouteType.hpp>
 #include <iomanip>

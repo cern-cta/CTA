@@ -27,6 +27,7 @@ set_target_properties(ctaprotobuf PROPERTIES
   LINKER_LANGUAGE CXX
   POSITION_INDEPENDENT_CODE TRUE)
 target_include_directories(ctaprotobuf PUBLIC
+  ${PROJECT_SOURCE_DIR}/lib
   ${CMAKE_CURRENT_BINARY_DIR}
   ${PROTOBUF3_INCLUDE_DIRS})
 target_link_libraries(ctaprotobuf ${PROTOBUF3_LIBRARIES})

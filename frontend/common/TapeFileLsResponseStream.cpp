@@ -8,7 +8,7 @@
 #include "catalogue/TapeFileSearchCriteria.hpp"
 #include "common/exception/UserError.hpp"
 #include "frontend/common/AdminCmdOptions.hpp"
-#include "lib/protobuf/common/conversions/ChecksumBlobSerDeser.hpp"
+#include "protobuf/common/conversions/ChecksumBlobSerDeser.hpp"
 
 namespace cta::frontend {
 
