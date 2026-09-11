@@ -6,7 +6,7 @@ add_subdirectory(cta-catalogue-schema)
 
 include_directories (${POSTGRES_INCLUDE_DIRS})
 
-if (OCCI_SUPPORT)
+if(CTA_WITH_ORACLE)
   include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
   add_compile_definitions(SUPPORT_OCCI)
 endif ()
@@ -123,7 +123,7 @@ target_link_libraries (ctacatalogue
 )
 
 # OCCI
-if (OCCI_SUPPORT)
+if(CTA_WITH_ORACLE)
   set(CATALOGUE_OCCI_LIB_SRC_FILES
     OracleCatalogueFactory.cpp
     rdbms/oracle/OracleArchiveFileCatalogue.cpp
@@ -263,7 +263,7 @@ add_custom_target(create_pre_sqlit_and_postgres_catalogue_schema_cpp ALL
     ${CMAKE_CURRENT_BINARY_DIR}/SqliteCatalogueSchema.cpp
 )
 
-if (OCCI_SUPPORT)
+if(CTA_WITH_ORACLE)
   set(ORACLE_SCHEMA_CPP ${CMAKE_CURRENT_BINARY_DIR}/oracle_catalogue_schema.cpp)
   set(ORACLE_CATALOGUE_SCHEMA_CPP ${CMAKE_CURRENT_BINARY_DIR}/OracleCatalogueSchema.cpp)
 
@@ -376,7 +376,7 @@ set (SCHEMA_CHECKER_LIB_SRC_FILES
   PostgresCatalogueSchema.cpp
 )
 
-if (OCCI_SUPPORT)
+if(CTA_WITH_ORACLE)
   set (SCHEMA_CHECKER_LIB_SRC_FILES
     ${SCHEMA_CHECKER_LIB_SRC_FILES}
     OracleCatalogueSchema.cpp)

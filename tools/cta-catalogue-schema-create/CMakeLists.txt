@@ -16,7 +16,7 @@ set_source_files_properties(
   ${CMAKE_BINARY_DIR}/catalogue/PostgresCatalogueSchema.cpp
   PROPERTIES GENERATED TRUE)
 
-if (OCCI_SUPPORT)
+if(CTA_WITH_ORACLE)
   list(APPEND SCHEMA_CREATE_SRC_FILES
     ${CMAKE_BINARY_DIR}/catalogue/OracleCatalogueSchema.cpp)
   set_source_files_properties(
@@ -29,7 +29,7 @@ add_dependencies(cta-catalogue-schema-create
   create_all_catalogue_schema_header
   create_pre_sqlit_and_postgres_catalogue_schema_cpp)
 
-if (OCCI_SUPPORT)
+if(CTA_WITH_ORACLE)
   target_compile_definitions(cta-catalogue-schema-create PRIVATE SUPPORT_OCCI)
   add_dependencies(cta-catalogue-schema-create create_pre_oracle_catalogue_schema_cpp)
 endif()

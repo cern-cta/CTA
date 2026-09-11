@@ -110,14 +110,14 @@ configure_file(cta-unit-tests-valgrind.sh.in ${CMAKE_CURRENT_BINARY_DIR}/cta-uni
 configure_file(parallelTestsMakefile.in ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile @ONLY)
 configure_file(parallelTestsMakefile.local.in ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile.local @ONLY)
 
-if (OCCI_SUPPORT)
+if(CTA_WITH_ORACLE)
   configure_file(cta-unit-tests-rdbms-oracle.sh.in ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-rdbms-oracle.sh @ONLY)
 endif ()
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-valgrind.sh cta-unit-and-integration-tests.sh DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES valgrind.suppr helgrind.suppr ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile DESTINATION ${CMAKE_INSTALL_DATADIR}/cta/tests)
 
-if (OCCI_SUPPORT)
+if(CTA_WITH_ORACLE)
   install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-rdbms-oracle.sh DESTINATION ${CMAKE_INSTALL_BINDIR})
   install(FILES cta-unit-tests-rdbms-oracle.suppr DESTINATION ${CMAKE_INSTALL_DATADIR}/cta/tests)
 endif ()

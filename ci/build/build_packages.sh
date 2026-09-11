@@ -237,6 +237,7 @@ configure_build() {
     cmake_options+=(
       -D "CTA_BUILD_DEBUG_PACKAGES:BOOL=$(cmake_bool "$build_debug_packages")"
       -D "CTA_RUN_UNIT_TESTS:BOOL=$(cmake_bool "$run_unit_tests")"
+      -D "CTA_SHOW_CONFIGURATION_SUMMARY:BOOL=OFF"
       -D "ENABLE_CCACHE:BOOL=$(cmake_bool "$enable_ccache")"
       -D "ENABLE_ADDRESS_SANITIZER:BOOL=$(cmake_bool "$enable_address_sanitizer")"
     )

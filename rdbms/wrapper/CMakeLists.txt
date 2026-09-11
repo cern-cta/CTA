@@ -6,7 +6,7 @@ add_compile_options(-Wshadow)
 find_package (sqlite REQUIRED)
 include_directories (${POSTGRES_INCLUDE_DIRS})
 
-if (OCCI_SUPPORT)
+if(CTA_WITH_ORACLE)
   include_directories (${ORACLE-INSTANTCLIENT_INCLUDE_DIRS})
   add_compile_definitions(SUPPORT_OCCI)
 endif()
@@ -36,7 +36,7 @@ set (RDBMS_POSTGRES_LIB_SRC_FILES
   PostgresStmt.cpp
   PostgresColumn.cpp)
 
-if (OCCI_SUPPORT)
+if(CTA_WITH_ORACLE)
   set (RDBMS_OCCI_LIB_SRC_FILES
     OcciColumn.cpp
     OcciConn.cpp
@@ -78,7 +78,7 @@ target_link_libraries (ctardbmspostgres ctardbms ctacommon
 install(TARGETS ctardbmspostgres DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # OCCI
-if (OCCI_SUPPORT)
+if(CTA_WITH_ORACLE)
   add_library (ctardbmsocci SHARED
     ${RDBMS_OCCI_LIB_SRC_FILES})
   set_property(TARGET ctardbmsocci PROPERTY SOVERSION "${CTA_SOVERSION}")
@@ -105,7 +105,7 @@ target_link_libraries (ctardbmswrapper
   ctacommon
 )
 
-if (OCCI_SUPPORT)
+if(CTA_WITH_ORACLE)
   set_property (TARGET ctardbmswrapper APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 endif()
 
@@ -117,7 +117,7 @@ set(RDBMS_WRAPPER_UNIT_TESTS_LIB_SRC_FILES
   PostgresStmtTest.cpp
   SqliteStmtTest.cpp)
 
-if (OCCI_SUPPORT)
+if(CTA_WITH_ORACLE)
   set(RDBMS_WRAPPER_UNIT_TESTS_LIB_SRC_FILES
     ${RDBMS_WRAPPER_UNIT_TESTS_LIB_SRC_FILES}
     OcciColumnTest.cpp)
@@ -130,7 +130,7 @@ set_property(TARGET ctardbmswrapperunittests PROPERTY   VERSION "${CTA_LIBVERSIO
 
 target_link_libraries (ctardbmswrapperunittests ctardbmspostgres)
 
-if (OCCI_SUPPORT)
+if(CTA_WITH_ORACLE)
   target_link_libraries (ctardbmswrapperunittests ctardbmsocci)
 endif()
 
