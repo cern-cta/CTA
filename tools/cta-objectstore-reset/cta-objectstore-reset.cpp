@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "BackendFactory.hpp"
-#include "BackendVFS.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/utils/utils.hpp"
+#include "objectstore/BackendFactory.hpp"
+#include "objectstore/BackendVFS.hpp"
 
 #include <cstdlib>
 #include <iostream>

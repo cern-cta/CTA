@@ -9,13 +9,13 @@
  * the path the backend store and exit
  */
 
-#include "BackendFactory.hpp"
-#include "BackendVFS.hpp"
-#include "GenericObject.hpp"
 #include "common/json/object/JSONCObject.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/utils/utils.hpp"
+#include "objectstore/BackendFactory.hpp"
+#include "objectstore/BackendVFS.hpp"
+#include "objectstore/GenericObject.hpp"
 
 #include <common/exception/NoSuchObject.hpp>
 #include <getopt.h>

@@ -94,37 +94,3 @@ target_link_libraries(ctaobjectstoreunittests
 if(NOT CTA_USE_PGSCHED)
   install(TARGETS ctaobjectstoreunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
-
-add_executable(cta-objectstore-initialize cta-objectstore-initialize.cpp)
-target_link_libraries(cta-objectstore-initialize
-  ctaobjectstore ctacommon)
-
-add_executable(cta-objectstore-list cta-objectstore-list.cpp)
-target_link_libraries(cta-objectstore-list
-  ctaobjectstore ctacommon)
-
-add_executable(cta-objectstore-reset cta-objectstore-reset.cpp)
-target_link_libraries(cta-objectstore-reset
-  ctaobjectstore ctacommon)
-
-add_executable(cta-objectstore-dump-object cta-objectstore-dump-object.cpp)
-target_link_libraries(cta-objectstore-dump-object
-  ctaobjectstore ctacommon)
-
-add_executable(cta-objectstore-dereference-removed-queues cta-objectstore-dereference-removed-queues.cpp)
-target_link_libraries(cta-objectstore-dereference-removed-queues
-  ctaobjectstore ctacommon)
-
-add_executable(cta-objectstore-collect-orphaned-object cta-objectstore-collect-orphaned-object.cpp)
-target_link_libraries(cta-objectstore-collect-orphaned-object
-  ctaobjectstore ctacommon ctacatalogue)
-
-add_executable(cta-objectstore-create-missing-repack-index cta-objectstore-create-missing-repack-index.cpp)
-target_link_libraries(cta-objectstore-create-missing-repack-index
-  ctaobjectstore ctacommon)
-
-if(NOT CTA_USE_PGSCHED)
-  install(TARGETS cta-objectstore-initialize cta-objectstore-list cta-objectstore-reset cta-objectstore-dump-object
-    cta-objectstore-dereference-removed-queues cta-objectstore-collect-orphaned-object cta-objectstore-create-missing-repack-index
-    DESTINATION ${CMAKE_INSTALL_BINDIR})
-endif()
