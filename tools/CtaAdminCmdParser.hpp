@@ -556,9 +556,9 @@ const std::set<cmd_key_t> streamCmds = {
  *
  *       After modifying this source file, run the following script to generate the man page:
  *
- *           ./compile_man_md.py cta-admin.1cta.md.in
+ *           cmake --build <build-directory> --target cta-admin_man_page
  *
- *       This will generate "cta-admin.1cta.md", which should be added to the git commit.
+ *       This generates the intermediate Markdown and the cta-admin(1) man page in the build directory.
  */
 const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
   /**md

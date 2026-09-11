@@ -9,7 +9,7 @@
 import os
 import re
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 # Parse source code, extracting all lines between comment delimiters /**md and */
@@ -57,6 +57,11 @@ with open(infile) as fin, open(outfile, "w") as fout:
                     if re.match(r"^ *\/\*\*md$", subline):
                         output = True
         elif re.match(r"^date:$", line):
-            fout.write("date: " + datetime.now().strftime("%Y-%m-%d") + "\n")
+            source_date_epoch = os.environ.get("SOURCE_DATE_EPOCH")
+            if source_date_epoch:
+                build_date = datetime.fromtimestamp(int(source_date_epoch), timezone.utc).strftime("%Y-%m-%d")
+                fout.write(f"date: {build_date}\n")
+            else:
+                fout.write(line)
         else:
             fout.write(line)

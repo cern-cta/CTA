@@ -174,8 +174,7 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "source")
   # ---------------------------------------------------------------------------
   # Components
   # ---------------------------------------------------------------------------
-  # Pandocology (to create man pages from Markdown)
-  include(cmake/Pandocology.cmake)
+  include(cmake/Manpages.cmake)
   add_subdirectory(packaging)
   add_subdirectory(lib/protobuf)
   add_subdirectory(common)
