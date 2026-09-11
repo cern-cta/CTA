@@ -1180,10 +1180,9 @@ virtualorganization (vo)
   {{AdminCmd::CMD_VIRTUALORGANIZATION, AdminCmd::SUBCMD_LS},  {}                                                             },
 
   /*-------------------------------------------------------------------------------------------------------------------------
-   COMMANDS DEFINED IN CTA FRONTEND BUT NOT AVAILABLE TO CTA-ADMIN
+   COMMANDS DEFINED IN CTA FRONTEND BUT NOT AVAILABLE TO CTA-ADMIN - USED ONLY BY CLI POWERTOOLS
    -------------------------------------------------------------------------------------------------------------------------*/
 
-  // Used by cta-restore-deleted-files
   {{AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE},
    {opt_vid.optional(),
     opt_fid.optional(),
@@ -1191,8 +1190,6 @@ virtualorganization (vo)
     opt_copynb.optional(),
     opt_archivefileid.optional(),
     opt_instance.optional()}                                                                                                 },
-  // Used by cta-eos-namespace-inject
-  // Will be removed later.
   {{AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_CH},
    {opt_storageclass.optional(),
     opt_archive_file_ids,

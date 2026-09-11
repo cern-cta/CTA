@@ -101,7 +101,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string
   // Service name
   // Create a channel to the KRB-GSI negotiation service
   std::shared_ptr<::grpc::Channel> spChannel {::grpc::CreateChannel(GRPC_SERVER, credentials)};
-  cta::log::FileLogger log(GRPC_SERVER, "cta-admin-grpc", "/var/log/cta-admin-grpc.log", cta::log::INFO);
+  cta::log::FileLogger log(GRPC_SERVER, "cta-admin", "/var/log/cta-admin.log", cta::log::INFO);
   cta::log::LogContext lc(log);
 
   // Determine authentication method: env variable overrides config, default to krb5
