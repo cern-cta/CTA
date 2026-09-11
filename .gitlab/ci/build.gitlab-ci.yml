@@ -106,7 +106,7 @@ build-cta-rpms:
                                       --scheduler-type ${SCHEDULER_TYPE}
                                       --oracle-support ${ENABLE_ORACLE_SUPPORT}
                                       --cmake-build-type "${CMAKE_BUILD_TYPE}"
-                                      --jobs $(nproc --ignore=1)
+                                      --jobs "$(nproc)"
                                       --skip-unit-tests
                                       ${BUILD_OPTIONS}
   after_script:
