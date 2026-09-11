@@ -20,11 +20,11 @@ add_executable(cta-frontend-grpc
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-frontend-grpc
     ${GRPC_GRPC++_REFLECTION_LIBRARY}
-    ctafrontendcommon ctascheduler ctacommon ctacatalogue ctagrpc ctaauth gssapi_krb5)
+    ctafrontendcommon ctascheduler ctacommon ctacatalogue ctagrpc ctaprotobufconversions ctaauth gssapi_krb5)
 else()
   target_link_libraries(cta-frontend-grpc
     ${GRPC_GRPC++_REFLECTION_LIBRARY}
-    ctafrontendcommon ctascheduler ctacommon ctaobjectstore ctacatalogue ctagrpc ctaauth gssapi_krb5)
+    ctafrontendcommon ctascheduler ctacommon ctaobjectstore ctacatalogue ctagrpc ctaprotobufconversions ctaauth gssapi_krb5)
 endif()
 
 add_manpage(cta-frontend-grpc)
@@ -54,6 +54,7 @@ target_link_libraries(cta-admin
   stdc++fs
   ctatapedaemoncommon
   ctagrpc
+  ctaprotobufconversions
   gssapi_krb5)
 
 set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
