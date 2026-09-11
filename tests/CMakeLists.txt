@@ -13,6 +13,7 @@ set (CTA_UNIT_TEST_LIBS
   ctacataloguecmdlineunittests
   ctacommon
   ctacommonunittests
+  ctaprotobufunittests
   ctafrontendcommonconfigunittests
   ctadaemonunittests
   ctaexceptionunittests

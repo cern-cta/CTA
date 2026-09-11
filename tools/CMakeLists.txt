@@ -20,7 +20,7 @@ if(CTA_USE_PGSCHED)
 endif()
 
 # Compiled protocol buffers
-include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
+include_directories(${CMAKE_BINARY_DIR}/lib/protobuf ${PROTOBUF3_INCLUDE_DIRS})
 
 # Catalogue command line unit tests
 set (CATALOGUE_CMD_LINE_UNIT_TESTS_LIB_SRC_FILES

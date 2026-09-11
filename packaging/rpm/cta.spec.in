@@ -245,9 +245,19 @@ Shared libraries required to access the Oracle-based CTA catalogue
 %{_libdir}/libctardbmsocci.so*
 %endif
 
+%package -n cta-lib-rdbms-postgres
+Summary: CERN Tape Archive PostgreSQL RDBMS plugin
+Requires: postgresql-libs
+%description -n cta-lib-rdbms-postgres
+CERN Tape Archive:
+Shared PostgreSQL RDBMS plugin
+%files -n cta-lib-rdbms-postgres
+%license COPYING
+%{_libdir}/libctardbmspostgres.so*
+
 %package -n cta-lib-catalogue-postgres
 Summary: CERN Tape Archive libraries
-Requires: postgresql-libs
+Requires: cta-lib-rdbms-postgres = %{version}-%{release}
 Provides: cta-lib-catalogue-impl = %{version}-%{release}
 %description -n cta-lib-catalogue-postgres
 CERN Tape Archive:
@@ -255,7 +265,6 @@ Shared libraries required to access the PostgreSQL-based CTA catalogue
 %files -n cta-lib-catalogue-postgres
 %license COPYING
 %{_libdir}/libctacataloguepostgres.so*
-%{_libdir}/libctardbmspostgres.so*
 
 %package -n cta-lib-catalogue-inmemory
 Summary: CERN Tape Archive libraries
@@ -292,7 +301,7 @@ Summary: CERN Tape Archive libraries
 %if "%{usingObjectstore}" != "0"
 Requires: librados2 %{radosVersionConstraint}
 %else
-Requires: postgresql-libs
+Requires: cta-lib-rdbms-postgres = %{version}-%{release}
 %endif
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
 # Explicitly require protobuf to avoid a clash with eos-protobuf
@@ -307,8 +316,6 @@ The shared libraries
 %{_libdir}/libctascheduler.so*
 %if "%{usingObjectstore}" != "0"
 %{_libdir}/libctaobjectstore.so*
-%else
-%{_libdir}/libctardbmspostgres.so*
 %endif
 %{_libdir}/libctadisk.so*
 %attr(0644,root,root) %doc %{_docdir}/cta/cta-catalogue.example.conf
@@ -351,6 +358,7 @@ Unit tests and integration tests with virtual tape drives
 %{_bindir}/cta-unit-and-integration-tests.sh
 %{_libdir}/libctacataloguecmdlineunittests.so*
 %{_libdir}/libctacommonunittests.so*
+%{_libdir}/libctaprotobufunittests.so*
 %{_libdir}/libctatapedaemoncommonunittests.so*
 %{_libdir}/libctafrontendcommonconfigunittests.so*
 %{_libdir}/libctadbconfigcatalogueunittests.so*
@@ -456,7 +464,7 @@ Scripts and utilities for working with the CTA catalogue
 %if "%{usingObjectstore}" == "0"
 %package -n cta-scheduler-utils
 Summary: Utilities for working with the CTA scheduler database
-Requires: postgresql-libs
+Requires: cta-lib-rdbms-postgres = %{version}-%{release}
 %description -n cta-scheduler-utils
 CERN Tape Archive:
 Scripts and utilities for working with the CTA scheduler database

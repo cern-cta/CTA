@@ -11,11 +11,6 @@ add_subdirectory (exception)
 
 include_directories (${XROOTD_INCLUDE_DIR})
 
-#
-# Compiled protocol buffers (used for ChecksumBlob serialization)
-#
-include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
-
 set_source_files_properties(checksum/CRC.cpp PROPERTIES COMPILE_OPTIONS -O2)
 
 set (COMMON_LIB_SRC_FILES
@@ -161,7 +156,6 @@ install (FILES cta-logging.schema.json
 target_include_directories(ctacommon PRIVATE ${OPENTELEMETRY_CPP_INCLUDE_DIRS})
 
 target_link_libraries (ctacommon
-  ctaprotobuf
   ctaversioninfo
   uuid
   cap

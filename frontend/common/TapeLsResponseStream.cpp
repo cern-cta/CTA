@@ -5,8 +5,8 @@
 
 #include "TapeLsResponseStream.hpp"
 
-#include "common/dataStructures/LabelFormatSerDeser.hpp"
 #include "frontend/common/AdminCmdOptions.hpp"
+#include "protobuf/admin/LabelFormatSerDeser.hpp"
 
 namespace cta::frontend {
 

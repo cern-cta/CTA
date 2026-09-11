@@ -59,10 +59,10 @@ set (CTA_SCHEDULER_PG_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
 
 if(NOT CTA_USE_PGSCHED)
     add_library (ctascheduler SHARED ${CTA_SCHEDULER_OS_SRC_FILES})
-    target_link_libraries (ctascheduler ctacommon ctaobjectstore ctadisk)
+    target_link_libraries (ctascheduler ctacommon ctaprotobufconversions ctaobjectstore ctadisk)
 else()
     add_library (ctascheduler SHARED ${CTA_SCHEDULER_PG_SRC_FILES})
-    target_link_libraries (ctascheduler ctaschedulerschema ctacommon ctadisk cryptopp)
+    target_link_libraries (ctascheduler ctaschedulerschema ctacommon ctaprotobufconversions ctadisk cryptopp)
 endif()
 
 set_property(TARGET ctascheduler PROPERTY SOVERSION "${CTA_SOVERSION}")

@@ -6,12 +6,12 @@
 #include "tools/CtaAdminTextFormatter.hpp"
 
 #include "common/utils/utils.hpp"
+#include "protobuf/admin/ArchiveRouteTypeSerDeser.hpp"
+#include "protobuf/admin/DriveStatusSerDeser.hpp"
+#include "protobuf/admin/MountTypeSerDeser.hpp"
+#include "protobuf/common/ChecksumBlobSerDeser.hpp"
 
-#include <common/checksum/ChecksumBlobSerDeser.hpp>
 #include <common/dataStructures/ArchiveRouteType.hpp>
-#include <common/dataStructures/ArchiveRouteTypeSerDeser.hpp>
-#include <common/dataStructures/DriveStatusSerDeser.hpp>
-#include <common/dataStructures/MountTypeSerDeser.hpp>
 #include <iomanip>
 #include <iostream>
 

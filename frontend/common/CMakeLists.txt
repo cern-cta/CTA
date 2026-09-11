@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
-include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
+include_directories(${CMAKE_BINARY_DIR}/lib/protobuf ${PROTOBUF3_INCLUDE_DIRS})
 
 set(FRONTEND_COMMON_SRC_FILES
   WorkflowEvent.cpp
@@ -38,9 +38,9 @@ set(FRONTEND_COMMON_SRC_FILES
 add_library(ctafrontendcommon STATIC ${FRONTEND_COMMON_SRC_FILES})
 
 if(CTA_USE_PGSCHED)
-    target_link_libraries(ctafrontendcommon PRIVATE ctacommon ctacatalogue)
+    target_link_libraries(ctafrontendcommon PRIVATE ctacommon ctaprotobufconversions ctacatalogue)
 else()
-    target_link_libraries(ctafrontendcommon PRIVATE ctacommon ctaobjectstore ctacatalogue)
+    target_link_libraries(ctafrontendcommon PRIVATE ctacommon ctaprotobufconversions ctaobjectstore ctacatalogue)
 endif()
 
 set (FRONTEND_COMMON_CONFIG_UNIT_TESTS_LIB_SRC_FILES
