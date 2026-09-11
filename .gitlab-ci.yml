@@ -108,8 +108,8 @@ spec:
       type: string
       rules:
         - if: '$[[ inputs.pipeline-type ]] == "DEFAULT" || $[[ inputs.pipeline-type ]] == "REGR_AGAINST_CTA_BRANCH"'
-          options: ["Unix Makefiles", "Ninja"]
-          default: "Unix Makefiles"
+          options: ["Ninja", "Unix Makefiles"]
+          default: "Ninja"
 
     enable-sbom-generation:
       description: "Generate an SBOM per image."
