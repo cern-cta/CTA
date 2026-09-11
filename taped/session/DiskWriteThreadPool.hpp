@@ -12,8 +12,8 @@
 #include "common/log/LogContext.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
 #include "common/process/threading/Thread.hpp"
-#include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 #include "common/utils/Timer.hpp"
+#include "telemetry/metrics/TapedMetrics.hpp"
 
 #include <vector>
 

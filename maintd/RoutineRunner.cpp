@@ -8,9 +8,9 @@
 #include "common/exception/Errnum.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/telemetry/metrics/instruments/MaintdInstruments.hpp"
 #include "common/utils/Timer.hpp"
 #include "rdbms/Login.hpp"
+#include "telemetry/metrics/MaintdMetrics.hpp"
 
 #include <chrono>
 #include <opentelemetry/context/runtime_context.h>

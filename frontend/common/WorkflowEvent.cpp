@@ -8,9 +8,9 @@
 #include "PbException.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/telemetry/metrics/instruments/FrontendInstruments.hpp"
 #include "frontend/common/RequestTracker.hpp"
 #include "protobuf/common/ChecksumBlobSerDeser.hpp"
+#include "telemetry/metrics/FrontendMetrics.hpp"
 
 #include <opentelemetry/context/runtime_context.h>
 

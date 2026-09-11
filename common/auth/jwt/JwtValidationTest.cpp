@@ -7,7 +7,7 @@
 #include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
-#include "common/runtime/RuntimeTestHelpers.hpp"
+#include "tests/TempFile.hpp"
 
 #include <array>
 #include <chrono>

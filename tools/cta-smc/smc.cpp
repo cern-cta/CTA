@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "common/runtime/config/ConfigLoader.hpp"
 #include "mediachanger/librmc/serrno.hpp"
 #include "mediachanger/librmc/spectra_like_libs.hpp"
 #include "mediachanger/rmcd/RmcdConfig.hpp"
@@ -11,6 +10,7 @@
 #include "mediachanger/rmcd/rmc_constants.hpp"
 #include "mediachanger/rmcd/smc_constants.hpp"
 #include "rmc_api.hpp"
+#include "runtime/config/ConfigLoader.hpp"
 
 #include <ctype.h>
 #include <errno.h>

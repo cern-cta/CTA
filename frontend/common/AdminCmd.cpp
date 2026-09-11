@@ -13,8 +13,8 @@
 #include "catalogue/TapeFileSearchCriteria.hpp"
 #include "common/dataStructures/PhysicalLibrary.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/telemetry/metrics/instruments/FrontendInstruments.hpp"
 #include "frontend/common/RequestTracker.hpp"
+#include "telemetry/metrics/FrontendMetrics.hpp"
 #include "tools/CtaAdminCmdParser.hpp"
 
 #include <opentelemetry/context/runtime_context.h>

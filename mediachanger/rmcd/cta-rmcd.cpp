@@ -5,7 +5,7 @@
 
 #include "RmcdApp.hpp"
 #include "RmcdConfig.hpp"
-#include "common/runtime/Application.hpp"
+#include "runtime/Application.hpp"
 
 int main(const int argc, char** const argv) {
   using namespace cta;

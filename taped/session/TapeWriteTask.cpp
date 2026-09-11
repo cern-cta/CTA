@@ -17,7 +17,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
+#include "telemetry/metrics/TapedMetrics.hpp"
 
 #include <memory>
 #include <string>

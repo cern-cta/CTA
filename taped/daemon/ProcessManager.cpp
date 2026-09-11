@@ -6,7 +6,7 @@
 #include "ProcessManager.hpp"
 
 #include "common/exception/Errnum.hpp"
-#include "common/telemetry/TelemetryInit.hpp"
+#include "telemetry/TelemetryInit.hpp"
 
 #include <algorithm>
 #include <sys/epoll.h>

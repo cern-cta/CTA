@@ -6,6 +6,7 @@ find_package (binutils REQUIRED)
 find_package (libcap REQUIRED)
 find_package (libuuid REQUIRED)
 find_package (json-c REQUIRED)
+find_package (ZLIB REQUIRED)
 
 add_subdirectory (exception)
 
@@ -90,13 +91,6 @@ set (COMMON_LIB_SRC_FILES
   priorities/DriveQuota.cpp
   priorities/MountCriteria.cpp
   priorities/UserGroup.cpp
-  runtime/signals/SignalReactor.cpp
-  runtime/signals/SignalReactorBuilder.cpp
-  runtime/signals/SignalUtils.cpp
-  runtime/health/HealthServer.cpp
-  runtime/config/parsing/ParseResult.cpp
-  runtime/config/parsing/TomlParser.cpp
-  runtime/config/ValidationResult.cpp
   process/ProcessCap.cpp
   process/threading/ChildProcess.cpp
   process/threading/CondVar.cpp
@@ -113,18 +107,6 @@ set (COMMON_LIB_SRC_FILES
   remoteFS/RemoteFileStatus.cpp
   remoteFS/RemotePath.cpp
   remoteFS/RemotePathAndStatus.cpp
-  telemetry/CtaOtelLogHandler.cpp
-  telemetry/TelemetryInit.cpp
-  telemetry/OtelInit.cpp
-  telemetry/config/TelemetryConfig.cpp
-  telemetry/metrics/MetricsUtils.cpp
-  telemetry/metrics/InstrumentRegistry.cpp
-  telemetry/metrics/instruments/FrontendInstruments.cpp
-  telemetry/metrics/instruments/ObjectstoreInstruments.cpp
-  telemetry/metrics/instruments/RdbmsInstruments.cpp
-  telemetry/metrics/instruments/SchedulerInstruments.cpp
-  telemetry/metrics/instruments/TapedInstruments.cpp
-  telemetry/metrics/instruments/MaintdInstruments.cpp
   utils/Timer.cpp
   utils/Base64.cpp
   utils/FileUtils.cpp
@@ -144,16 +126,10 @@ install (TARGETS ctacommon DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 install (DIRECTORY DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
 
-install (FILES telemetry/cta-otel.example.yaml
-  DESTINATION usr/${CMAKE_INSTALL_DOCDIR}
-  PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
-
 install (FILES cta-logging.schema.json
   DESTINATION usr/${CMAKE_INSTALL_DATADIR}/cta
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
-
-target_include_directories(ctacommon PRIVATE ${OPENTELEMETRY_CPP_INCLUDE_DIRS})
 
 target_link_libraries (ctacommon
   ctaversioninfo
@@ -161,7 +137,7 @@ target_link_libraries (ctacommon
   cap
   json-c
   cryptopp
-  ${OPENTELEMETRY_CPP_LIBRARIES}
+  ZLIB::ZLIB
 )
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
@@ -183,14 +159,6 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   log/StringLoggerTest.cpp
   log/LoggerParamTypeTest.cpp
   remoteFS/RemotePathTest.cpp
-  runtime/ApplicationTest.cpp
-  runtime/config/ConfigLoaderTest.cpp
-  runtime/config/CommonConfigTest.cpp
-  runtime/config/ValidationResultTest.cpp
-  runtime/config/parsing/ReflectionTest.cpp
-  runtime/cli/ArgParserTest.cpp
-  runtime/signals/SignalReactorTest.cpp
-  runtime/health/HealthServerTest.cpp
   process/threading/CondVarTest.cpp
   process/threading/DaemonTest.cpp
   process/threading/RWLockTest.cpp

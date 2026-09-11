@@ -28,7 +28,8 @@ set_property(TARGET ctardbms PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctardbms PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_link_libraries (ctardbms
-  ctardbmswrapper)
+  ctardbmswrapper
+  ctatelemetryrdbms)
 
 install (TARGETS ctardbms DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 

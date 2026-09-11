@@ -13,6 +13,7 @@ set (CTA_UNIT_TEST_LIBS
   ctacataloguecmdlineunittests
   ctacommon
   ctacommonunittests
+  ctaruntimeunittests
   ctaprotobufunittests
   ctafrontendcommonconfigunittests
   ctadaemonunittests
@@ -74,6 +75,8 @@ target_link_libraries(cta-unit-tests-multiprocess
 
 add_library(cta-unit-test-helper
   TempFile.cpp TempDirectory.cpp)
+target_link_libraries(ctaruntimeunittests PRIVATE cta-unit-test-helper)
+target_link_libraries(ctacommonunittests cta-unit-test-helper)
 
 add_executable(cta-integration-tests
   integration_tests.cpp)

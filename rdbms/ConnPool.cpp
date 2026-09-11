@@ -8,8 +8,8 @@
 #include "common/exception/Exception.hpp"
 #include "common/process/threading/MutexLocker.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/telemetry/metrics/instruments/RdbmsInstruments.hpp"
 #include "rdbms/wrapper/ConnFactoryFactory.hpp"
+#include "telemetry/metrics/RdbmsMetrics.hpp"
 
 #include <memory>
 

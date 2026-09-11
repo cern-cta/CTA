@@ -60,7 +60,13 @@ add_library (ctaobjectstore SHARED
 set_property(TARGET ctaobjectstore PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaobjectstore PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_link_libraries(ctaobjectstore rados cryptopp ctacommon ctaprotobufconversions)
+target_link_libraries(ctaobjectstore
+  rados
+  cryptopp
+  ctacommon
+  ctaprotobufconversions
+  ctatelemetryobjectstore
+  ctatelemetryscheduler)
 set_source_files_properties(BackendRados.cpp PROPERTIES COMPILE_OPTIONS -Wno-deprecated-declarations)
 if(NOT CTA_USE_PGSCHED)
   install (TARGETS ctaobjectstore DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

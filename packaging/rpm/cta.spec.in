@@ -222,7 +222,6 @@ Summary: CERN Tape Archive libraries
 # Explicitly require protobuf to avoid a clash with eos-protobuf
 Requires: %{requiredProtobuf}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
-Requires: opentelemetry-cpp %{opentelemetryCppVersionConstraint}
 %description -n cta-lib-common
 CERN Tape Archive:
 The shared libraries base
@@ -230,6 +229,35 @@ The shared libraries base
 %license COPYING
 %{_libdir}/libctacommon.so*
 %{_libdir}/libctatapedaemoncommon.so*
+
+%package -n cta-lib-telemetry
+Summary: CERN Tape Archive telemetry libraries
+Requires: cta-lib-common = %{version}-%{release}
+Requires: opentelemetry-cpp %{opentelemetryCppVersionConstraint}
+%description -n cta-lib-telemetry
+CERN Tape Archive:
+The shared telemetry libraries
+%files -n cta-lib-telemetry
+%license COPYING
+%{_libdir}/libctatelemetry.so*
+# For now cta-lib-telemetry owns all instruments. Arguably not the cleanest, but good enough for now
+%{_libdir}/libctatelemetryfrontend.so*
+%{_libdir}/libctatelemetrymaintd.so*
+%{_libdir}/libctatelemetryobjectstore.so*
+%{_libdir}/libctatelemetryrdbms.so*
+%{_libdir}/libctatelemetryscheduler.so*
+%{_libdir}/libctatelemetrytaped.so*
+
+%package -n cta-lib-runtime
+Summary: CERN Tape Archive application runtime library
+Requires: cta-lib-common = %{version}-%{release}
+Requires: cta-lib-telemetry = %{version}-%{release}
+%description -n cta-lib-runtime
+CERN Tape Archive:
+The shared application runtime library
+%files -n cta-lib-runtime
+%license COPYING
+%{_libdir}/libctaruntime.so*
 
 %if "%{occiSupport}" == "1"
 %package -n cta-lib-catalogue-occi
@@ -358,6 +386,7 @@ Unit tests and integration tests with virtual tape drives
 %{_bindir}/cta-unit-and-integration-tests.sh
 %{_libdir}/libctacataloguecmdlineunittests.so*
 %{_libdir}/libctacommonunittests.so*
+%{_libdir}/libctaruntimeunittests.so*
 %{_libdir}/libctaprotobufunittests.so*
 %{_libdir}/libctatapedaemoncommonunittests.so*
 %{_libdir}/libctafrontendcommonconfigunittests.so*

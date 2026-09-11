@@ -14,9 +14,9 @@
 #include "TransferTaskTracker.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 #include "common/utils/Timer.hpp"
 #include "taped/file/FileReaderFactory.hpp"
+#include "telemetry/metrics/TapedMetrics.hpp"
 
 #include <memory>
 #include <string>

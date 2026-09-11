@@ -31,7 +31,15 @@ set(CTATAPEDSESSION_LIBRARY_SRCS
 add_library(ctatapedsession
   ${CTATAPEDSESSION_LIBRARY_SRCS})
 
-target_link_libraries(ctatapedsession ctacommon ctascheduler ctacatalogue ctamediachanger ctatapeddrive ctatapedrao ZLIB::ZLIB)
+target_link_libraries(ctatapedsession
+  ctacommon
+  ctascheduler
+  ctacatalogue
+  ctamediachanger
+  ctatapeddrive
+  ctatapedrao
+  ctatelemetrytaped
+  ZLIB::ZLIB)
 
 add_library(ctatapedsessionunittests SHARED
   CleanerSessionTest.cpp
@@ -46,7 +54,8 @@ add_library(ctatapedsessionunittests SHARED
 )
 set_property(TARGET ctatapedsessionunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedsessionunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+target_link_libraries(ctatapedsessionunittests PRIVATE ctatapedsession)
 if (NOT CTA_USE_PGSCHED)
-  target_link_libraries(ctatapedsessionunittests ctaobjectstore)
+  target_link_libraries(ctatapedsessionunittests PRIVATE ctaobjectstore)
 endif()
 install(TARGETS ctatapedsessionunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

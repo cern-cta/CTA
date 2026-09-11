@@ -14,12 +14,12 @@
 #include "common/exception/Errnum.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/process/ProcessCap.hpp"
-#include "common/telemetry/TelemetryInit.hpp"
 #include "rdbms/Login.hpp"
 #include "taped/session/CleanerSession.hpp"
 #include "taped/session/DataTransferSession.hpp"
 #include "taped/session/DriveSessionTracker.hpp"
 #include "taped/session/Session.hpp"
+#include "telemetry/TelemetryInit.hpp"
 
 #include <chrono>
 #include <set>

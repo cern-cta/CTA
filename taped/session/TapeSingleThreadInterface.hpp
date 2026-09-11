@@ -18,11 +18,11 @@
 #include "common/process/threading/BlockingQueue.hpp"
 #include "common/process/threading/Thread.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 #include "common/utils/Timer.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "taped/drive/DriveInterface.hpp"
+#include "telemetry/metrics/TapedMetrics.hpp"
 
 #include <opentelemetry/context/runtime_context.h>
 

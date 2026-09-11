@@ -13,12 +13,12 @@
 #include "common/log/FileLogger.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/log/StdoutLogger.hpp"
-#include "common/runtime/config/ConfigLoader.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/telemetry/TelemetryInit.hpp"
-#include "common/telemetry/config/TelemetryConfig.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/Login.hpp"
+#include "runtime/config/ConfigLoader.hpp"
+#include "telemetry/TelemetryInit.hpp"
+#include "telemetry/config/TelemetryConfig.hpp"
 #include "version.hpp"
 
 #include <fstream>

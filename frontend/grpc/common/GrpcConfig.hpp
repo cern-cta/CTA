@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "common/runtime/config/ValidationResult.hpp"
 #include "frontend/common/AuthMethod.hpp"
 #include "frontend/common/OperationModes.hpp"
+#include "runtime/config/ValidationResult.hpp"
 
 #include <cstdint>
 #include <map>

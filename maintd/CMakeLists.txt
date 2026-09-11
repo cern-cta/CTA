@@ -21,6 +21,8 @@ endif()
 
 target_link_libraries(ctamaintd
 	ctacommon
+	ctaruntime
+	ctatelemetrymaintd
 	ctacatalogue
 	ctascheduler
 	${SCHEDROUTINES}
@@ -33,6 +35,7 @@ add_library(ctamaintdunittests SHARED
 )
 target_link_libraries(ctamaintdunittests
   ctacommon
+  ctaruntime
   gtest
 )
 set_property(TARGET ctamaintdunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
@@ -40,7 +43,7 @@ set_property(TARGET ctamaintdunittests PROPERTY VERSION "${CTA_LIBVERSION}")
 install(TARGETS ctamaintdunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 add_executable (cta-maintd cta-maintd.cpp)
-target_link_libraries(cta-maintd ctamaintd)
+target_link_libraries(cta-maintd ctamaintd ctaruntime)
 
 if(NOT CTA_USE_PGSCHED)
   set(CTA_MAINTD_EXAMPLE_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/cta-maintd.example.toml)

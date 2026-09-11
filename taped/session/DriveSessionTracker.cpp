@@ -7,7 +7,7 @@
 
 #include "common/dataStructures/TapeDrive.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
+#include "telemetry/metrics/TapedMetrics.hpp"
 
 #include <opentelemetry/context/runtime_context.h>
 

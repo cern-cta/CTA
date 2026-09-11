@@ -16,8 +16,9 @@ class TempFile {
 public:
   TempFile();
   explicit TempFile(const std::string& path);
+  TempFile(const std::string& content, const std::string& suffix);
 
-  const std::string& path() { return m_path; };
+  const std::string& path() const { return m_path; };
 
   void randomFill(size_t size);
   uint32_t adler32();
