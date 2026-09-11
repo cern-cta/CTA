@@ -124,8 +124,6 @@ set_property(TARGET ctacommon PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install (TARGETS ctacommon DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-install (DIRECTORY DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
-
 target_link_libraries (ctacommon
   ctaversioninfo
   uuid

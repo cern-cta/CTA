@@ -258,7 +258,8 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "none")
     rpmtools_add_rpm_targets(
       "${PROJECT_NAME}"
       "packaging/rpm/${PROJECT_NAME}.spec.in"
-      "${CTA_PACKAGE_MODE}")
+      "${CTA_PACKAGE_MODE}"
+      "packaging/sysusers/cta.conf")
   elseif(CTA_PACKAGE_FORMAT STREQUAL "deb")
     include(cmake/DebTools.cmake)
   else()

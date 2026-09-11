@@ -61,6 +61,7 @@ Summary: %{ctaSummary}
 Version: %{ctaVersion}
 Release: %{ctaRelease}%{mydist}
 Source0: %{name}-%{ctaVersion}-%{ctaRelease}.tar.zst
+Source1: cta.conf
 URL: https://gitlab.cern.ch/cta/CTA
 License: %{ctaLicense}
 Vendor: CERN
@@ -106,17 +107,31 @@ cmake --build . --target cta-example-config-checks --parallel @JOBS_COUNT@
 cmake --build . --target cta-unit-tests-short --parallel @JOBS_COUNT@
 %endif
 
-%files
-%license COPYING
-
 # Main packages
+
+%package -n cta-runtime
+Summary: CERN Tape Archive system runtime
+Requires(pre): group(tape)
+%{?sysusers_requires_compat}
+%description -n cta-runtime
+CERN Tape Archive:
+The system account, configuration directory and shared runtime data
+%files -n cta-runtime
+%license COPYING
+%dir %attr(0755,root,root) %{_sysconfdir}/cta
+%{_sysusersdir}/cta.conf
+%attr(0644,root,root) %{_datadir}/cta/cta-logging.schema.json
+
+%pre -n cta-runtime
+%sysusers_create_compat %{SOURCE1}
 
 %package -n cta-taped
 Summary: CERN Tape Archive: tape daemon
 Recommends: logrotate
 Recommends: systemd
 %{?systemd_ordering}
-Requires: cta-common = %{version}-%{release}
+Requires: cta-lib-runtime = %{version}-%{release}
+Requires: cta-runtime = %{version}-%{release}
 Requires: cta-lib-scheduler = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
@@ -147,7 +162,8 @@ Summary: CERN Tape Archive: maintenance daemon
 Recommends: logrotate
 Recommends: systemd
 %{?systemd_ordering}
-Requires: cta-common = %{version}-%{release}
+Requires: cta-lib-runtime = %{version}-%{release}
+Requires: cta-runtime = %{version}-%{release}
 Requires: cta-lib-scheduler = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
 %description -n cta-maintd
@@ -179,7 +195,8 @@ Summary: CERN Tape Archive: gRPC based frontend
 Recommends: logrotate
 Recommends: systemd
 %{?systemd_ordering}
-Requires: cta-common = %{version}-%{release}
+Requires: cta-lib-runtime = %{version}-%{release}
+Requires: cta-runtime = %{version}-%{release}
 Requires: cta-lib-scheduler = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
 %description -n cta-frontend-grpc
@@ -259,7 +276,6 @@ The shared application runtime library
 %files -n cta-lib-runtime
 %license COPYING
 %{_libdir}/libctaruntime.so*
-%attr(0644,root,root) %{_datadir}/cta/cta-logging.schema.json
 
 %if "%{occiSupport}" == "1"
 %package -n cta-lib-catalogue-occi
@@ -508,7 +524,8 @@ Summary: The Remote Media Changer daemon (rmcd)
 Recommends: logrotate
 Recommends: systemd
 %{?systemd_ordering}
-Requires: cta-common = %{version}-%{release}
+Requires: cta-lib-runtime = %{version}-%{release}
+Requires: cta-runtime = %{version}-%{release}
 %description -n cta-rmcd
 CERN Tape Archive:
 The Remote Media Changer daemon (rmcd)
@@ -549,7 +566,7 @@ CERN Tape Archive:
 The command-line tool for pre-labelling a CTA tape.
 %files -n cta-tape-label
 %license COPYING
-%attr(0750,cta,tape) %caps(cap_sys_rawio=ep) %{_bindir}/cta-tape-label
+%attr(0755,root,root) %caps(cap_sys_rawio=ep) %{_bindir}/cta-tape-label
 %attr(0644,root,root) %{_mandir}/man1/cta-tape-label.1cta*
 
 %package -n cta-readtp
@@ -561,20 +578,8 @@ CERN Tape Archive:
 The command-line tool for reading files from a CTA tape.
 %files -n cta-readtp
 %license COPYING
-%attr(0750,cta,tape) %caps(cap_sys_rawio=ep) %{_bindir}/cta-readtp
+%attr(0755,root,root) %caps(cap_sys_rawio=ep) %{_bindir}/cta-readtp
 %attr(0644,root,root) %{_mandir}/man1/cta-readtp.1cta*
-
-%package -n cta-common
-Summary: CERN Tape Archive common items
-Requires(pre): %{_bindir}/grep, %{_sbindir}/luseradd
-%description -n cta-common
-CERN Tape Archive common items, such as the creation of the cta local user.
-%pre -n cta-common
-%{_bindir}/grep -q '^cta:' %{_sysconfdir}/passwd || %{_sbindir}/luseradd -s %{_sbindir}/nologin -c "CTA system account" -g tape cta
-%files -n cta-common
-%license COPYING
-%dir %attr(0755,root,root) %{_sysconfdir}/cta
-%doc CHANGELOG.md
 
 %package -n cta-release
 Summary: Repository configuration for CTA and its dependencies
@@ -600,4 +605,4 @@ Requires: sed
 cta-eosdf reports free disk space in the default EOS namespace.
 %files -n cta-eosdf
 %license COPYING
-%attr(0755,cta,tape) %{_bindir}/cta-eosdf.sh
+%attr(0755,root,root) %{_bindir}/cta-eosdf.sh
