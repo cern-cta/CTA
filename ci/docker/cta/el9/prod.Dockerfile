@@ -173,7 +173,7 @@ ARG ENABLE_ORACLE_SUPPORT
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools \
-    /usr/local/bin/build-service.sh "cta-admin cta-catalogue-utils cta-scheduler-utils \
+    /usr/local/bin/build-service.sh "cta-cli cta-catalogue-utils cta-scheduler-utils \
       krb5-workstation cta-test-immutable-file eos-client xrootd-client \
       python3-xrootd bc"
 
