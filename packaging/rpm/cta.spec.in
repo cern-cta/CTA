@@ -377,13 +377,7 @@ Unit tests and integration tests with virtual tape drives
 %{_libdir}/libctadiskunittests.so*
 %{_libdir}/libctatapelabelunittests.so*
 %{_libdir}/libctatapedraounittests.so*
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 %{_bindir}/cta-integration-tests
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 %{_libdir}/libctadaemonunittests-multiprocess.so*
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/parallelTestsMakefile
@@ -425,13 +419,7 @@ Tools allowing initialization and inspection of the object store.
 %license COPYING
 %attr(0755,root,root) %{_bindir}/cta-objectstore-initialize
 %attr(0755,root,root) %{_bindir}/cta-objectstore-list
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 %attr(0755,root,root) %{_bindir}/cta-objectstore-reset
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 %attr(0755,root,root) %{_bindir}/cta-objectstore-dump-object
 %attr(0755,root,root) %{_bindir}/cta-objectstore-dereference-removed-queues
 %attr(0755,root,root) %{_bindir}/cta-objectstore-collect-orphaned-object

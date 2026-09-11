@@ -3,15 +3,12 @@
 
 install(FILES
   systemd/cta-frontend-grpc.service
-  systemd/cta-frontend.service
   systemd/cta-maintd.service
   systemd/cta-rmcd.service
   systemd/cta-taped.service
   DESTINATION ${CTA_SYSTEMD_UNIT_DIR})
 
-install(FILES logrotate/cta-frontend.logrotate
-  DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/logrotate.d
-  RENAME cta-frontend)
+# cta-frontend-grpc does not come with a logrotate file yet
 install(FILES logrotate/cta-maintd.logrotate
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/logrotate.d
   RENAME cta-maintd)

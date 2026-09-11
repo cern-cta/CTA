@@ -19,8 +19,6 @@ if(CTA_USE_PGSCHED)
   add_subdirectory (cta-scheduler-schema-drop)
 endif()
 
-find_package(Protobuf3 REQUIRED)
-
 # Compiled protocol buffers
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
