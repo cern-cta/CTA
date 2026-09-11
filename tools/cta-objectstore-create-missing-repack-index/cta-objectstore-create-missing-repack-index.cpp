@@ -9,15 +9,15 @@
  * unblock tape servers after changing the ArchiveQueue schema during development.
  */
 
-#include "Agent.hpp"
-#include "AgentReference.hpp"
-#include "AgentRegister.hpp"
-#include "BackendFactory.hpp"
-#include "BackendVFS.hpp"
-#include "RootEntry.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/utils/utils.hpp"
+#include "objectstore/Agent.hpp"
+#include "objectstore/AgentReference.hpp"
+#include "objectstore/AgentRegister.hpp"
+#include "objectstore/BackendFactory.hpp"
+#include "objectstore/BackendVFS.hpp"
+#include "objectstore/RootEntry.hpp"
 
 #include <iostream>
 #include <stdexcept>

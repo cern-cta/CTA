@@ -9,13 +9,13 @@
  * the path the backend store and exit
  */
 
-#include "Agent.hpp"
-#include "BackendFactory.hpp"
-#include "BackendVFS.hpp"
-#include "RootEntry.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/utils/utils.hpp"
+#include "objectstore/Agent.hpp"
+#include "objectstore/BackendFactory.hpp"
+#include "objectstore/BackendVFS.hpp"
+#include "objectstore/RootEntry.hpp"
 
 #include <iostream>
 #include <stdexcept>
