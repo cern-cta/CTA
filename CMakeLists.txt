@@ -176,6 +176,7 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "source")
   # ---------------------------------------------------------------------------
   include(cmake/Manpages.cmake)
   add_subdirectory(packaging)
+  add_subdirectory(lib/plugin-manager)
   add_subdirectory(lib/protobuf)
   add_subdirectory(common)
   add_subdirectory(lib/telemetry)

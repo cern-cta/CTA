@@ -118,6 +118,7 @@ install (TARGETS ctacatalogue DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctacatalogue
   ctacommon
+  ctapluginmanager
   ctaprotobufconversions
   ctardbms
 )

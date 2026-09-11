@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "PluginInterface.hpp"
+#include "plugin-manager/PluginInterface.hpp"
 
 #include <dlfcn.h>
 #include <functional>
