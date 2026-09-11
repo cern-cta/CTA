@@ -215,7 +215,7 @@ The command line utilities
 %license COPYING
 %attr(0755,root,root) %{_bindir}/cta-admin
 %attr(0644,root,root) %doc %{_mandir}/man1/cta-admin.1cta*
-%attr(0644,root,root) %doc %{_docdir}/cta/cta-cli.example.conf
+%attr(0644,root,root) %doc %{_docdir}/cta/cta-admin.example.conf
 
 %package -n cta-lib-common
 Summary: CERN Tape Archive libraries

@@ -47,4 +47,4 @@ install (TARGETS ctacataloguecmdlineunittests DESTINATION usr/${CMAKE_INSTALL_LI
 add_manpage(cta-admin)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-admin.1cta DESTINATION /usr/share/man/man1)
-install(FILES cta-cli.example.conf DESTINATION usr/${CMAKE_INSTALL_DOCDIR})
+install(FILES cta-admin.example.conf DESTINATION usr/${CMAKE_INSTALL_DOCDIR})

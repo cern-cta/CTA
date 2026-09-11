@@ -36,7 +36,7 @@ using namespace cta;
 using namespace cta::common;
 using namespace cta::frontend::grpc;
 
-constexpr std::string_view defaultPort = "17017";
+constexpr std::string_view defaultPort = "50051";
 
 const std::string help = "Usage: cta-frontend-grpc [options]\n"
                          "\n"
