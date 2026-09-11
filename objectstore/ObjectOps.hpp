@@ -8,10 +8,10 @@
 #include "Backend.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/telemetry/metrics/instruments/ObjectstoreInstruments.hpp"
-#include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
+#include "telemetry/metrics/ObjectstoreMetrics.hpp"
+#include "telemetry/metrics/SchedulerMetrics.hpp"
 
 #include <cryptopp/base64.h>
 #include <memory>

@@ -24,6 +24,7 @@ add_library(ctatapedaemon
 )
 
 target_link_libraries(ctatapedaemon
+  ctatelemetry
   ctatapedsession
   ctatapedaemoncommon
   ctascsi

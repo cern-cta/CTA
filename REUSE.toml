@@ -35,6 +35,7 @@ SPDX-License-Identifier = "GPL-3.0-or-later"
 path = [
     ".gitattributes",
     ".gitmodules",
+    ".gitkeep",
     ".git-blame-ignore-revs",
     ".cppcheck-suppressions.txt",
     ".secrets.baseline",

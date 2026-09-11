@@ -9,7 +9,7 @@
 #include "catalogue/TapeItemWrittenPointer.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
+#include "telemetry/metrics/SchedulerMetrics.hpp"
 
 #include <opentelemetry/context/runtime_context.h>
 

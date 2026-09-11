@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "RuntimeTestHelpers.hpp"
 #include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
-#include "common/runtime/RuntimeTestHelpers.hpp"
 
 #include <array>
 #include <chrono>

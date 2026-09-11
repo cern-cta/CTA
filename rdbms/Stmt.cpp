@@ -7,10 +7,10 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/telemetry/metrics/instruments/RdbmsInstruments.hpp"
 #include "common/utils/Timer.hpp"
 #include "rdbms/StmtPool.hpp"
 #include "rdbms/wrapper/StmtWrapper.hpp"
+#include "telemetry/metrics/RdbmsMetrics.hpp"
 
 #include <opentelemetry/context/runtime_context.h>
 

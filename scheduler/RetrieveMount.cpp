@@ -9,9 +9,9 @@
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/TimingList.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
 #include "common/utils/Timer.hpp"
 #include "disk/DiskSystem.hpp"
+#include "telemetry/metrics/SchedulerMetrics.hpp"
 
 #include <algorithm>
 #include <iterator>

@@ -10,10 +10,10 @@
 #include "common/process/ProcessCap.hpp"
 #include "common/process/threading/System.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/telemetry/TelemetryInit.hpp"
-#include "common/telemetry/config/TelemetryConfig.hpp"
 #include "daemon/TapeDaemon.hpp"
 #include "daemon/common/TapedConfiguration.hpp"
+#include "telemetry/TelemetryInit.hpp"
+#include "telemetry/config/TelemetryConfig.hpp"
 #include "version.hpp"
 
 #include <google/protobuf/stubs/common.h>

@@ -6,9 +6,9 @@
 #include "QueueCleanup.hpp"
 
 #include "common/semconv/Attributes.hpp"
-#include "common/telemetry/metrics/instruments/ObjectstoreInstruments.hpp"
 #include "objectstore/GenericObject.hpp"
 #include "objectstore/Sorter.hpp"
+#include "telemetry/metrics/ObjectstoreMetrics.hpp"
 
 namespace cta::objectstore {
 

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "common/runtime/config/CommonConfig.hpp"
+#include "runtime/config/CommonConfig.hpp"
 
 #include <cstdint>
 #include <string>

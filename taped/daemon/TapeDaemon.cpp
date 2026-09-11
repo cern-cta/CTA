@@ -12,8 +12,8 @@
 #include "common/exception/Errnum.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/process/ProcessCap.hpp"
-#include "common/telemetry/TelemetryInit.hpp"
 #include "common/utils/utils.hpp"
+#include "telemetry/TelemetryInit.hpp"
 
 #include <google/protobuf/service.h>
 #include <limits.h>

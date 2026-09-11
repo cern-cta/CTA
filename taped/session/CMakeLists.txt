@@ -31,7 +31,15 @@ set(CTATAPEDSESSION_LIBRARY_SRCS
 add_library(ctatapedsession
   ${CTATAPEDSESSION_LIBRARY_SRCS})
 
-target_link_libraries(ctatapedsession ctacommon ctascheduler ctacatalogue ctamediachanger ctatapeddrive ctatapedrao ZLIB::ZLIB)
+target_link_libraries(ctatapedsession
+  ctacommon
+  ctascheduler
+  ctacatalogue
+  ctamediachanger
+  ctatapeddrive
+  ctatapedrao
+  ctatelemetrytaped
+  ZLIB::ZLIB)
 
 add_library(ctatapedsessionunittests SHARED
   CleanerSessionTest.cpp

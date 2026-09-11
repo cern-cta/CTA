@@ -10,7 +10,7 @@ add_subdirectory (rao)
 add_subdirectory (daemon)
 
 add_executable (cta-taped cta-taped.cpp)
-target_link_libraries(cta-taped ctatapedaemon ctacommon)
+target_link_libraries(cta-taped ctatapedaemon ctacommon ctatelemetry)
 
 add_manpage(cta-taped)
 

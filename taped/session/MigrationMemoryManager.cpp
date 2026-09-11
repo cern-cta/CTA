@@ -7,7 +7,7 @@
 
 #include "DataPipeline.hpp"
 #include "MemBlock.hpp"
-#include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
+#include "telemetry/metrics/TapedMetrics.hpp"
 
 namespace cta::tape::daemon {
 

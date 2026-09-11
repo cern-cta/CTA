@@ -12,7 +12,7 @@ set(RMCD_SRC_FILES
   rmc_smcsubr.cpp)
 
 add_executable(cta-rmcd ${RMCD_SRC_FILES})
-target_link_libraries(cta-rmcd ctarmc ctacommon)
+target_link_libraries(cta-rmcd ctarmc ctacommon ctaruntime)
 
 set(CTA_RMCD_EXAMPLE_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/cta-rmcd.example.toml)
 

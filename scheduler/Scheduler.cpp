@@ -18,13 +18,13 @@
 #include "common/exception/NoSuchObject.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "disk/DiskFileImplementations.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
+#include "telemetry/metrics/SchedulerMetrics.hpp"
 
 #include <algorithm>
 #include <chrono>

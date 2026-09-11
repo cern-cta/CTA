@@ -7,9 +7,9 @@
 
 #include "common/auth/jwt/RevokeList.hpp"
 #include "common/exception/UserError.hpp"
-#include "common/runtime/config/ConfigLoader.hpp"
 #include "common/utils/utils.hpp"
 #include "jwt-cpp/jwt.h"
+#include "runtime/config/ConfigLoader.hpp"
 
 #include <chrono>
 

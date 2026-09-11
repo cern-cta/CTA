@@ -38,9 +38,11 @@ set(FRONTEND_COMMON_SRC_FILES
 add_library(ctafrontendcommon STATIC ${FRONTEND_COMMON_SRC_FILES})
 
 if(CTA_USE_PGSCHED)
-    target_link_libraries(ctafrontendcommon PRIVATE ctacommon ctaprotobufconversions ctacatalogue)
+    target_link_libraries(ctafrontendcommon PRIVATE
+      ctacommon ctaprotobufconversions ctacatalogue ctaruntime ctatelemetryfrontend)
 else()
-    target_link_libraries(ctafrontendcommon PRIVATE ctacommon ctaprotobufconversions ctaobjectstore ctacatalogue)
+    target_link_libraries(ctafrontendcommon PRIVATE
+      ctacommon ctaprotobufconversions ctaobjectstore ctacatalogue ctaruntime ctatelemetryfrontend)
 endif()
 
 set (FRONTEND_COMMON_CONFIG_UNIT_TESTS_LIB_SRC_FILES
@@ -52,6 +54,7 @@ set (FRONTEND_COMMON_CONFIG_UNIT_TESTS_LIB_SRC_FILES
 
 add_library (ctafrontendcommonconfigunittests SHARED
   ${FRONTEND_COMMON_CONFIG_UNIT_TESTS_LIB_SRC_FILES})
+target_link_libraries(ctafrontendcommonconfigunittests ctaruntime)
 set_property(TARGET ctafrontendcommonconfigunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctafrontendcommonconfigunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 

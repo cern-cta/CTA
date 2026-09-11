@@ -10,8 +10,8 @@
 #include "TransferTaskTracker.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 #include "common/utils/Timer.hpp"
+#include "telemetry/metrics/TapedMetrics.hpp"
 
 namespace cta::tape::daemon {
 

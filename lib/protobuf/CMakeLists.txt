@@ -53,7 +53,7 @@ target_link_libraries(ctagrpc
   gpr
   absl_synchronization
   ${PROTOBUF3_GRPC_LIBRARIES}
-  ${GRPC_GRPC++_LIBRARY})
+  gRPC::grpc++)
 
 # Unit tests
 add_library(ctaprotobufunittests SHARED
