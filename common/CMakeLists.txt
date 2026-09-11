@@ -14,7 +14,7 @@ include_directories (${XROOTD_INCLUDE_DIR})
 #
 # Compiled protocol buffers (used for ChecksumBlob serialization)
 #
-include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
+include_directories(${CMAKE_BINARY_DIR}/lib/protobuf ${PROTOBUF3_INCLUDE_DIRS})
 
 set_source_files_properties(checksum/CRC.cpp PROPERTIES COMPILE_OPTIONS -O2)
 

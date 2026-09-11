@@ -793,7 +793,7 @@ build_cta() {
   cd "$project_root"
 
   # Constants
-  local -r xrootd_ssi_version=$(git -C "$project_root/xrootd-ssi-protobuf-interface" describe --tags --exact-match)
+  local -r xrootd_ssi_version=$(git -C "$project_root/lib/protobuf/xrootd-ssi-protobuf-interface" describe --tags --exact-match)
   local -r build_image_name="cta-build-image-${platform}"
   local -r build_container_name="cta-build${project_root//\//-}-${platform}"
   local -r mount_basedir="/shared/CTA"

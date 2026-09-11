@@ -168,7 +168,7 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "source")
   #
   # Location of git submodule containing the XRootD SSI Protocol Buffer bindings
   #
-  set(XRD_SSI_PB_DIR ${PROJECT_SOURCE_DIR}/xrootd-ssi-protobuf-interface)
+  set(XRD_SSI_PB_DIR ${PROJECT_SOURCE_DIR}/lib/protobuf/xrootd-ssi-protobuf-interface)
 
   # ---------------------------------------------------------------------------
   # Components
@@ -176,8 +176,7 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "source")
   # Pandocology (to create man pages from Markdown)
   include(cmake/Pandocology.cmake)
   add_subdirectory(packaging)
-  add_subdirectory(eos_cta)
-  add_subdirectory(eos_grpc_client)
+  add_subdirectory(lib/protobuf)
   add_subdirectory(frontend/grpc)
   add_subdirectory(frontend/common)
   add_subdirectory(catalogue)

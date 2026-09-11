@@ -5,8 +5,8 @@
 
 include_directories(${PROTOBUF3_INCLUDE_DIRS})
 
-# depends on CTA_EOS definitions
-include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
+# Compiled protocol buffers
+include_directories(${CMAKE_BINARY_DIR}/lib/protobuf ${PROTOBUF3_INCLUDE_DIRS})
 
 ##
 ## cta-frontend-grpc-stream-server

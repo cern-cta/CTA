@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
-include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
+include_directories(${CMAKE_BINARY_DIR}/lib/protobuf ${PROTOBUF3_INCLUDE_DIRS})
 
 # include stuff from the callback api here because we need to serve the streaming commands by registering their service class impl
 add_executable(cta-frontend-grpc
@@ -42,7 +42,7 @@ install (FILES cta-frontend.example.conf cta-frontend-grpc.example.toml jwt-revo
 include_directories(${XRD_SSI_PB_DIR}/eos_cta/include)
 
 # Compiled protocol buffers
-include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
+include_directories(${CMAKE_BINARY_DIR}/lib/protobuf ${PROTOBUF3_INCLUDE_DIRS})
 
 add_executable(cta-admin
   CtaAdminGrpcCmd.cpp
