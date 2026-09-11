@@ -821,12 +821,12 @@ class TestEosdf:
         test_dir: Path,
     ) -> None:
         # Make the probe non-executable, then verify retrieval still succeeds with a diagnostic
-        cta_taped.exec("chmod -x /usr/bin/cta-eosdf.sh")
+        cta_taped.exec("sudo chmod -x /usr/bin/cta-eosdf.sh")
         try:
             _run_eosdf_test(eos_client, cta_cli, disk_instance_name, test_dir)
             cta_taped.exec(f"grep -q 'Permission denied' {cta_taped.log_file_path}")
         finally:
-            cta_taped.exec("chmod +x /usr/bin/cta-eosdf.sh")
+            cta_taped.exec("sudo chmod +x /usr/bin/cta-eosdf.sh")
 
     # Test what happens when the EOS client returns an error.
     # The script uses a nonexistent instance name to make it unreachable.
