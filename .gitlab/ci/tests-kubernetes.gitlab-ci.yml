@@ -233,7 +233,7 @@ test-external-tape-formats:
   variables:
     PYTESTS: "tests/external_tape_formats_test.py"
 
-test-dCache:
+test-dcache:
   extends:
     - .kubernetes-test-python
   stage: system-test
