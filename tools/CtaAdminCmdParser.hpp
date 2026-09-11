@@ -554,11 +554,7 @@ const std::set<cmd_key_t> streamCmds = {
  *       the documentation at the same time. Note that the documentation comments follow a specific
  *       format and indentation is significant.
  *
- *       After modifying this source file, run the following script to generate the man page:
- *
- *           cmake --build <build-directory> --target cta-admin_man_page
- *
- *       This generates the intermediate Markdown and the cta-admin(1) man page in the build directory.
+ *       The build process generates the intermediate Markdown and the cta-admin(1) man page in the build directory.
  */
 const std::map<cmd_key_t, cmd_val_t> cmdOptions = {
   /**md
