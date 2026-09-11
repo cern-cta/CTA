@@ -7,10 +7,10 @@
 
 #include "PbException.hpp"
 #include "catalogue/Catalogue.hpp"
-#include "common/checksum/ChecksumBlobSerDeser.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/FrontendInstruments.hpp"
 #include "frontend/common/RequestTracker.hpp"
+#include "lib/protobuf/common/conversions/ChecksumBlobSerDeser.hpp"
 
 #include <opentelemetry/context/runtime_context.h>
 

@@ -351,6 +351,7 @@ Unit tests and integration tests with virtual tape drives
 %{_bindir}/cta-unit-and-integration-tests.sh
 %{_libdir}/libctacataloguecmdlineunittests.so*
 %{_libdir}/libctacommonunittests.so*
+%{_libdir}/libctaprotobufunittests.so*
 %{_libdir}/libctatapedaemoncommonunittests.so*
 %{_libdir}/libctafrontendcommonconfigunittests.so*
 %{_libdir}/libctadbconfigcatalogueunittests.so*

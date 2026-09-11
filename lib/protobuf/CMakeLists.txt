@@ -21,16 +21,41 @@ set_source_files_properties(
   ${GrpcSourcesCtaFrontend} ${GrpcHeadersCtaFrontend}
   PROPERTIES GENERATED TRUE)
 
+# Generated CTA protobuf message types shared by clients and servers.
 add_library(ctaprotobuf ${ProtoSourcesCtaFrontend})
 set_target_properties(ctaprotobuf PROPERTIES
   LINKER_LANGUAGE CXX
   POSITION_INDEPENDENT_CODE TRUE)
+target_include_directories(ctaprotobuf PUBLIC
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${PROTOBUF3_INCLUDE_DIRS})
 target_link_libraries(ctaprotobuf ${PROTOBUF3_LIBRARIES})
+
+# Domain-to-protobuf conversions, kept separate so ctacommon remains protobuf-free.
+add_library(ctaprotobufconversions
+  common/conversions/ChecksumBlobSerDeser.cpp)
+set_target_properties(ctaprotobufconversions PROPERTIES
+  LINKER_LANGUAGE CXX
+  POSITION_INDEPENDENT_CODE TRUE)
+target_link_libraries(ctaprotobufconversions
+  ctaprotobuf
+  ctacommon)
 
 add_library(ctagrpc ${GrpcSourcesCtaFrontend})
 set_target_properties(ctagrpc PROPERTIES
   LINKER_LANGUAGE CXX
   POSITION_INDEPENDENT_CODE TRUE)
-target_link_libraries(ctagrpc gpr absl_synchronization ${PROTOBUF3_GRPC_LIBRARIES} ${GRPC_GRPC++_LIBRARY})
+target_link_libraries(ctagrpc
+  ctaprotobuf
+  gpr
+  absl_synchronization
+  ${PROTOBUF3_GRPC_LIBRARIES}
+  ${GRPC_GRPC++_LIBRARY})
 
-add_dependencies(ctagrpc ctaprotobuf)
+add_library(ctaprotobufunittests SHARED
+  common/conversions/ChecksumBlobSerDeserTest.cpp)
+set_property(TARGET ctaprotobufunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctaprotobufunittests PROPERTY VERSION "${CTA_LIBVERSION}")
+target_link_libraries(ctaprotobufunittests ctaprotobufconversions)
+
+install(TARGETS ctaprotobufunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

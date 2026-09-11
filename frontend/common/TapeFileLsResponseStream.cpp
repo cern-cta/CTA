@@ -6,9 +6,9 @@
 #include "TapeFileLsResponseStream.hpp"
 
 #include "catalogue/TapeFileSearchCriteria.hpp"
-#include "common/checksum/ChecksumBlobSerDeser.hpp"
 #include "common/exception/UserError.hpp"
 #include "frontend/common/AdminCmdOptions.hpp"
+#include "lib/protobuf/common/conversions/ChecksumBlobSerDeser.hpp"
 
 namespace cta::frontend {
 

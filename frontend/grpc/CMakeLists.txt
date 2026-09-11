@@ -17,8 +17,6 @@ add_executable(cta-frontend-grpc
   ServerNegotiationRequestHandler.cpp
   TokenStorage.cpp
   utils.cpp)
-# target_link_libraries(cta-frontend-grpc ProtoCtaFrontend)
-
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-frontend-grpc
     ${GRPC_GRPC++_REFLECTION_LIBRARY}
@@ -39,17 +37,11 @@ install (FILES cta-frontend.example.conf cta-frontend-grpc.example.toml jwt-revo
 ##
 ## cta-admin
 ##
-include_directories(${XRD_SSI_PB_DIR}/eos_cta/include)
-
 # Compiled protocol buffers
 include_directories(${CMAKE_BINARY_DIR}/lib/protobuf ${PROTOBUF3_INCLUDE_DIRS})
 
 add_executable(cta-admin
   CtaAdminGrpcCmd.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/RequestTracker.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmd.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmdOptions.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/common/OperationModes.cpp
   ${PROJECT_SOURCE_DIR}/tools/CtaAdminParsedCmd.cpp
   ${PROJECT_SOURCE_DIR}/tools/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/tools/CtaAdminCmdParser.cpp
@@ -57,13 +49,12 @@ add_executable(cta-admin
   utils.cpp
 )
 
-if (CTA_USE_PGSCHED)
-  target_link_libraries(cta-admin
-    ctacommon stdc++fs ctatapedaemoncommon ctascheduler ctacatalogue ctagrpc gssapi_krb5)
-else()
-  target_link_libraries(cta-admin
-    ctacommon stdc++fs ctatapedaemoncommon ctascheduler ctaobjectstore ctacatalogue ctagrpc gssapi_krb5)
-endif()
+target_link_libraries(cta-admin
+  ctacommon
+  stdc++fs
+  ctatapedaemoncommon
+  ctagrpc
+  gssapi_krb5)
 
 set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
 install(TARGETS cta-admin DESTINATION usr/bin)

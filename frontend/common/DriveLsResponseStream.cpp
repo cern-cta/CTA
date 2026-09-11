@@ -5,9 +5,9 @@
 
 #include "DriveLsResponseStream.hpp"
 
-#include "common/dataStructures/DriveStatusSerDeser.hpp"
-#include "common/dataStructures/MountTypeSerDeser.hpp"
 #include "frontend/common/AdminCmdOptions.hpp"
+#include "lib/protobuf/admin/conversions/DriveStatusSerDeser.hpp"
+#include "lib/protobuf/admin/conversions/MountTypeSerDeser.hpp"
 
 namespace cta::frontend {
 

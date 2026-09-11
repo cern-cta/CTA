@@ -5,8 +5,8 @@
 
 #include "ShowQueuesResponseStream.hpp"
 
-#include "common/dataStructures/MountTypeSerDeser.hpp"
 #include "frontend/common/AdminCmdOptions.hpp"
+#include "lib/protobuf/admin/conversions/MountTypeSerDeser.hpp"
 
 namespace cta::frontend {
 

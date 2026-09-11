@@ -5,7 +5,7 @@
 
 #include "ArchiveRouteLsResponseStream.hpp"
 
-#include "common/dataStructures/ArchiveRouteTypeSerDeser.hpp"
+#include "lib/protobuf/admin/conversions/ArchiveRouteTypeSerDeser.hpp"
 
 namespace cta::frontend {
 
