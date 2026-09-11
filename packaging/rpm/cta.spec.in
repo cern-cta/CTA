@@ -1,25 +1,18 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Generic macros
-#---------------
-%define name cta
-%define ctaVersion @CTA_VERSION@
+# =========================================================================
+#  Build configuration
+# =========================================================================
+
 %define ctaRelease @CTA_RELEASE@
-%define xrootdSsiVersion @XROOTD_SSI_PROTOBUF_INTERFACE_VERSION@
-%define ctaSummary @PROJECT_SUMMARY@
-%define ctaLicense @PROJECT_LICENSE@
 
 %define usingObjectstore @RPM_USINGOBJECTSTORE@
 %define occiSupport @RPM_USING_ORACLE@
 %define schedOpt @RPM_SCHEDOPT@
-%define perfTelemetryOpt @RPM_PERF_TELEMETRY_OPT@
-%define asanOptions @RPM_ADDRESS_SANITIZER_OPT@
-%define oracleOpt @RPM_ORACLE@
-%define buildGenerator @CMAKE_GENERATOR@
 
-# Versioning
-# Every package defined in project.json BuildRequires has a corresponding variable available containing its version constraint
+# Every package in the project.json buildRequires section has a corresponding
+# variable containing its version constraint.
 %define oracleVersionConstraint @ORACLE_INSTANTCLIENT_VERSION_CONSTRAINT@
 %define valgrindVersionConstraint @VALGRIND_VERSION_CONSTRAINT@
 %define xrootdVersionConstraint @XROOTD_VERSION_CONSTRAINT@
@@ -27,20 +20,15 @@
 %define gtestDevelVersionConstraint @GTEST_VERSION_CONSTRAINT@
 %define opentelemetryCppVersionConstraint @OPENTELEMETRY_CPP_VERSION_CONSTRAINT@
 
-# Neutral packaging (for srpm)
-#-----------------------------
+# Omit the distribution suffix from source RPMs when requested.
 %if 0%{?neutralpackage:1} > 0
 %define mydist %{nil}
 %else
 %define mydist %{?dist}
 %endif
 
-# Skipping unit tests (for developers)
-#-------------------------------------
 %define skip_unit_tests @PACKAGE_SKIP_UNIT_TESTS@
 
-# Skipping debug packages (for developers)
-#-------------------------------------
 %define skipDebugPackages @PACKAGE_SKIP_DEBUG_PACKAGES@
 %if %{skipDebugPackages}
 %define debug_package %{nil}
@@ -49,26 +37,25 @@
 # Disable compression of debuginfo, because this takes a huge amount of time
 %define _find_debuginfo_dwz_opts %{nil}
 
-# Use zstd for compression instead of gzip (which is incredibly slow)
-#--------------------------------------------
+# Use zstd for compression instead of gzip, which is incredibly slow.
 %global _binary_payload w3.zstdio
 %global _source_payload w3.zstdio
 
-# General settings
-#-----------------
-Name: %{name}
-Summary: %{ctaSummary}
-Version: %{ctaVersion}
+# =========================================================================
+#  Package metadata and build requirements
+# =========================================================================
+
+Name: cta
+Summary: @PROJECT_SUMMARY@
+Version: @CTA_VERSION@
 Release: %{ctaRelease}%{mydist}
-Source0: %{name}-%{ctaVersion}-%{ctaRelease}.tar.zst
+Source0: %{name}-%{version}-%{ctaRelease}.tar.zst
 Source1: cta.conf
 URL: https://gitlab.cern.ch/cta/CTA
-License: %{ctaLicense}
+License: @PROJECT_LICENSE@
 Vendor: CERN
 
-%define requiredProtobuf protobuf
-
-# This is populated by the project.json from the buildRequires items
+# Populated from the project.json buildRequires section.
 @BUILD_REQUIREMENTS@
 
 BuildRequires: systemd-rpm-macros
@@ -79,26 +66,41 @@ BuildRequires: systemd-rpm-macros
 BuildRequires: postgresql-server
 %endif
 
-# only build debug info if you're building the whole code
-
 %description
 CERN Tape Archive (CTA) is a scalable tape storage system for archival data.
 
+# =========================================================================
+#  Build stages
+# =========================================================================
+
 %prep
-%autosetup -D -n %{name}-%{ctaVersion}-%{ctaRelease}
+%autosetup -D -n %{name}-%{version}-%{ctaRelease}
 
 %build
-
 mkdir -p build
 cd build
-cmake3 -G "%{buildGenerator}" .. -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCTA_SYSTEMD_UNIT_DIR:PATH=lib/systemd/system -DCTA_VERSION:STRING=%{ctaVersion} -DXROOTD_SSI_PROTOBUF_INTERFACE_VERSION:STRING=%{xrootdSsiVersion} -DENABLE_CCACHE:BOOL=@ENABLE_CCACHE@ -DCTA_PACKAGE_MODE:STRING=none -DJOBS_COUNT:STRING=@JOBS_COUNT@ -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{perfTelemetryOpt} %{oracleOpt} %{asanOptions}
+cmake3 -G "@CMAKE_GENERATOR@" .. \
+  -DCMAKE_INSTALL_PREFIX:PATH=/usr \
+  -DCTA_SYSTEMD_UNIT_DIR:PATH=lib/systemd/system \
+  -DCTA_VERSION:STRING=%{version} \
+  -DXROOTD_SSI_PROTOBUF_INTERFACE_VERSION:STRING=@XROOTD_SSI_PROTOBUF_INTERFACE_VERSION@ \
+  -DENABLE_CCACHE:BOOL=@ENABLE_CCACHE@ \
+  -DCTA_PACKAGE_MODE:STRING=none \
+  -DJOBS_COUNT:STRING=@JOBS_COUNT@ \
+  -DVCS_VERSION=%{ctaRelease} \
+  %{schedOpt} \
+  @RPM_PERF_TELEMETRY_OPT@ \
+  @RPM_ORACLE@ \
+  @RPM_ADDRESS_SANITIZER_OPT@
 cmake --build . --parallel @JOBS_COUNT@
 
 %install
-%{__rm} -rf ${RPM_BUILD_ROOT}
+%{__rm} -rf %{buildroot}
 
 cd build
-DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man cmake --build . --target install --parallel @JOBS_COUNT@
+DESTDIR=%{buildroot} \
+  EXPORTMAN=%{buildroot}%{_mandir} \
+  cmake --build . --target install --parallel @JOBS_COUNT@
 
 %check
 cd build
@@ -107,7 +109,9 @@ cmake --build . --target cta-example-config-checks --parallel @JOBS_COUNT@
 cmake --build . --target cta-unit-tests-short --parallel @JOBS_COUNT@
 %endif
 
-# Main packages
+# =========================================================================
+#  Applications
+# =========================================================================
 
 %package -n cta-runtime
 Summary: CERN Tape Archive system runtime
@@ -221,22 +225,41 @@ Provides the gRPC frontend for admin and workflow commands to CTA.
 %postun -n cta-frontend-grpc
 %systemd_postun_with_restart cta-frontend-grpc.service
 
-%package -n cta-admin
-Summary: CERN Tape Archive command-line interface
-Requires: cta-lib-common = %{version}-%{release}
-Requires: grpc
-%description -n cta-admin
-Provides command-line tools for administering CTA.
-%files -n cta-admin
+%package -n cta-rmcd
+Summary: CERN Tape Archive Remote Media Changer daemon
+Recommends: logrotate
+Recommends: systemd
+%{?systemd_ordering}
+Requires: cta-lib-runtime = %{version}-%{release}
+Requires: cta-runtime = %{version}-%{release}
+%description -n cta-rmcd
+Provides the Remote Media Changer daemon used by CTA to control tape libraries.
+%files -n cta-rmcd
 %license COPYING
-%{_bindir}/cta-admin
-%{_mandir}/man1/cta-admin.1*
-%doc %{_docdir}/cta/cta-admin.example.conf
+%{_libdir}/libctamediachanger.so*
+%config(noreplace) %{_sysconfdir}/logrotate.d/cta-rmcd
+%{_mandir}/man1/cta-rmcd.1*
+%{_bindir}/cta-rmcd
+%doc %{_docdir}/cta/cta-rmcd.example.toml
+%{_unitdir}/cta-rmcd.service
+
+%post -n cta-rmcd
+%systemd_post cta-rmcd.service
+
+%preun -n cta-rmcd
+%systemd_preun cta-rmcd.service
+
+%postun -n cta-rmcd
+%systemd_postun_with_restart cta-rmcd.service
+
+# =========================================================================
+#  Libraries
+# =========================================================================
 
 %package -n cta-lib-common
 Summary: CERN Tape Archive common libraries
-# Explicitly require protobuf to avoid a clash with eos-protobuf
-Requires: %{requiredProtobuf}
+# Explicitly require protobuf to avoid a clash with eos-protobuf.
+Requires: protobuf
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
 %description -n cta-lib-common
 Provides common shared libraries used by CTA components.
@@ -343,8 +366,8 @@ Requires: librados2 %{radosVersionConstraint}
 %else
 Requires: cta-lib-rdbms-postgres = %{version}-%{release}
 %endif
-# Explicitly require protobuf to avoid a clash with eos-protobuf
-Requires: %{requiredProtobuf}
+# Explicitly require protobuf to avoid a clash with eos-protobuf.
+Requires: protobuf
 Requires: cta-lib-common = %{version}-%{release}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
 %description -n cta-lib-scheduler
@@ -358,55 +381,149 @@ Provides shared libraries for CTA scheduling and disk access.
 %{_libdir}/libctadisk.so.*
 %doc %{_docdir}/cta/cta-scheduler.example.conf
 
-%package -n cta-devel
-Summary: Development files for CERN Tape Archive libraries
+# =========================================================================
+#  Tools
+# =========================================================================
+
+%package -n cta-admin
+Summary: CERN Tape Archive command-line interface
 Requires: cta-lib-common = %{version}-%{release}
-Requires: cta-lib-telemetry = %{version}-%{release}
-Requires: cta-lib-runtime = %{version}-%{release}
-Requires: cta-lib-catalogue = %{version}-%{release}
-Requires: cta-lib-catalogue-inmemory = %{version}-%{release}
-Requires: cta-lib-catalogue-postgres = %{version}-%{release}
-Requires: cta-lib-rdbms-postgres = %{version}-%{release}
-Requires: cta-lib-scheduler = %{version}-%{release}
-Requires: cta-taped = %{version}-%{release}
-%if "%{occiSupport}" == "1"
-Requires: cta-lib-catalogue-occi = %{version}-%{release}
-%endif
-%description -n cta-devel
-Provides unversioned linker names for developing applications with CTA shared libraries.
-%files -n cta-devel
+Requires: grpc
+%description -n cta-admin
+Provides command-line tools for administering CTA.
+%files -n cta-admin
 %license COPYING
-%{_libdir}/libctacommon.so
-%{_libdir}/libctatapedaemoncommon.so
-%{_libdir}/libctatelemetry.so
-%{_libdir}/libctatelemetryfrontend.so
-%{_libdir}/libctatelemetrymaintd.so
-%{_libdir}/libctatelemetryobjectstore.so
-%{_libdir}/libctatelemetryrdbms.so
-%{_libdir}/libctatelemetryscheduler.so
-%{_libdir}/libctatelemetrytaped.so
-%{_libdir}/libctaruntime.so
-%if "%{occiSupport}" == "1"
-%{_libdir}/libctacatalogueocci.so
-%{_libdir}/libctardbmsocci.so
-%endif
-%{_libdir}/libctardbmspostgres.so
-%{_libdir}/libctacataloguepostgres.so
-%{_libdir}/libctacatalogueinmemory.so
-%{_libdir}/libctacatalogue.so
-%{_libdir}/libctacataloguesqlite.so
-%{_libdir}/libctadropschemacmd.so
-%{_libdir}/libctaschemachecker.so
-%{_libdir}/libctardbms.so
-%{_libdir}/libctardbmssqlite.so
-%{_libdir}/libctardbmswrapper.so
-%{_libdir}/libctastatistics.so
-%{_libdir}/libctascheduler.so
+%{_bindir}/cta-admin
+%{_mandir}/man1/cta-admin.1*
+%doc %{_docdir}/cta/cta-admin.example.conf
+
 %if "%{usingObjectstore}" != "0"
-%{_libdir}/libctaobjectstore.so
+%package -n cta-scheduler-utils
+Summary: CERN Tape Archive object store tools
+Requires: cta-lib-scheduler = %{version}-%{release}
+Requires: cta-lib-catalogue = %{version}-%{release}
+Requires: xrootd-client-libs %{xrootdVersionConstraint}
+# Used to be called cta-objectstore-tools so this ensures we don't keep the old package around
+Obsoletes: cta-objectstore-tools < 5.11.19
+%description -n cta-scheduler-utils
+Provides tools for initializing, inspecting and maintaining the CTA object store.
+%files -n cta-scheduler-utils
+%license COPYING
+%{_bindir}/cta-objectstore-initialize
+%{_bindir}/cta-objectstore-list
+%{_bindir}/cta-objectstore-reset
+%{_bindir}/cta-objectstore-dump-object
+%{_bindir}/cta-objectstore-dereference-removed-queues
+%{_bindir}/cta-objectstore-collect-orphaned-object
+%{_bindir}/cta-objectstore-create-missing-repack-index
 %endif
-%{_libdir}/libctadisk.so
-%{_libdir}/libctatapedrao.so
+
+%package -n cta-catalogue-utils
+Summary: CERN Tape Archive catalogue utilities
+Requires: cta-lib-catalogue = %{version}-%{release}
+Requires: xrootd-client-libs %{xrootdVersionConstraint}
+# cta-catalogue-utils used to be called so this ensures we don't keep the old package around
+# Can be removed again at some point
+Obsoletes: cta-catalogueutils < 5.11.19
+%description -n cta-catalogue-utils
+Provides scripts and command-line utilities for administering the CTA catalogue.
+%files -n cta-catalogue-utils
+%license COPYING
+%{_bindir}/cta-catalogue-admin-user-create
+%{_bindir}/cta-catalogue-schema-create
+%{_bindir}/cta-catalogue-schema-drop
+%{_bindir}/cta-catalogue-schema-set-production
+%{_bindir}/cta-catalogue-schema-verify
+%{_bindir}/cta-database-poll
+%{_bindir}/cta-statistics-save
+%{_bindir}/cta-statistics-update
+%{_mandir}/man1/cta-catalogue-admin-user-create.1*
+%{_mandir}/man1/cta-catalogue-schema-create.1*
+%{_mandir}/man1/cta-catalogue-schema-drop.1*
+%{_mandir}/man1/cta-catalogue-schema-set-production.1*
+%{_mandir}/man1/cta-catalogue-schema-verify.1*
+%{_mandir}/man1/cta-database-poll.1*
+
+%if "%{usingObjectstore}" == "0"
+%package -n cta-scheduler-utils
+Summary: CERN Tape Archive scheduler database utilities
+Requires: cta-lib-rdbms-postgres = %{version}-%{release}
+%description -n cta-scheduler-utils
+Provides scripts and command-line utilities for administering the CTA scheduler database.
+%files -n cta-scheduler-utils
+%license COPYING
+%{_bindir}/cta-scheduler-schema-create
+%{_bindir}/cta-scheduler-schema-drop
+%endif
+
+%package -n cta-smc
+Summary: CERN Tape Archive Remote Media Changer client
+%description -n cta-smc
+Provides the client for the CTA Remote Media Changer daemon.
+%files -n cta-smc
+%license COPYING
+%{_bindir}/cta-smc
+%{_mandir}/man1/cta-smc.1*
+
+%package -n cta-tape-label
+Summary: CERN Tape Archive tape labelling tool
+Requires: cta-lib-scheduler = %{version}-%{release}
+Requires: xrootd-client-libs %{xrootdVersionConstraint}
+Requires(pre): group(tape)
+%description -n cta-tape-label
+Provides a command-line tool for labelling tapes for use with CTA.
+%files -n cta-tape-label
+%license COPYING
+# CAP_SYS_RAWIO must only be available to trusted tape operators.
+%attr(0750,root,tape) %caps(cap_sys_rawio=ep) %{_bindir}/cta-tape-label
+%{_mandir}/man1/cta-tape-label.1*
+
+%package -n cta-readtp
+Summary: CERN Tape Archive tape reading tool
+Requires: cta-lib-scheduler = %{version}-%{release}
+Requires: xrootd-client-libs %{xrootdVersionConstraint}
+Requires(pre): group(tape)
+%description -n cta-readtp
+Provides a command-line tool for reading files directly from CTA.
+%files -n cta-readtp
+%license COPYING
+# CAP_SYS_RAWIO must only be available to trusted tape operators.
+%attr(0750,root,tape) %caps(cap_sys_rawio=ep) %{_bindir}/cta-readtp
+%{_mandir}/man1/cta-readtp.1*
+
+%package -n cta-eosdf
+Summary: CERN Tape Archive EOS disk buffer space reporter
+Requires: xrootd-client %{xrootdVersionConstraint}
+Requires: sed
+%description -n cta-eosdf
+Provides a command-line tool that reports free space in the default EOS
+namespace used for CTA disk buffers.
+%files -n cta-eosdf
+%license COPYING
+%{_bindir}/cta-eosdf.sh
+
+# =========================================================================
+#  Packaging
+# =========================================================================
+
+%package -n cta-release
+Summary: CERN Tape Archive repository configuration
+Requires: python3-dnf-plugin-versionlock
+Requires: python3
+Requires: epel-release
+Requires: jq
+%description -n cta-release
+Configures package repositories, signing keys and version locks for CTA and its dependencies.
+%files -n cta-release
+%license COPYING
+%config(noreplace) %{_sysconfdir}/yum.repos.d/*
+%{_sysconfdir}/pki/rpm-gpg/*
+%{_sysconfdir}/yum/pluginconf.d/versionlock.cta
+%{_bindir}/cta-versionlock
+
+# =========================================================================
+#  Tests
+# =========================================================================
 
 %package -n cta-tests
 Summary: CERN Tape Archive unit and integration tests
@@ -417,7 +534,7 @@ Requires: cta-lib-catalogue-occi = %{version}-%{release}
 %endif
 Requires: valgrind %{valgrindVersionConstraint}
 Requires: cta-lib-scheduler = %{version}-%{release}
-Requires: cta-taped = %{ctaVersion}-%{ctaRelease}%{mydist}
+Requires: cta-taped = %{version}-%{release}
 Requires: make
 Requires: moreutils
 Requires: libtirpc-devel
@@ -495,149 +612,56 @@ Provides a command-line tool for testing immutable files with CTA.
 %license COPYING
 %{_bindir}/cta-test-immutable-file
 
-%if "%{usingObjectstore}" != "0"
-%package -n cta-scheduler-utils
-Summary: CERN Tape Archive object store tools
-Requires: cta-lib-scheduler = %{version}-%{release}
-Requires: cta-lib-catalogue = %{version}-%{release}
-Requires: xrootd-client-libs %{xrootdVersionConstraint}
-# Used to be called cta-objectstore-tools so this ensures we don't keep the old package around
-Obsoletes: cta-objectstore-tools < 5.11.19
-%description -n cta-scheduler-utils
-Provides tools for initializing, inspecting and maintaining the CTA object store.
-%files -n cta-scheduler-utils
-%license COPYING
-%{_bindir}/cta-objectstore-initialize
-%{_bindir}/cta-objectstore-list
-%{_bindir}/cta-objectstore-reset
-%{_bindir}/cta-objectstore-dump-object
-%{_bindir}/cta-objectstore-dereference-removed-queues
-%{_bindir}/cta-objectstore-collect-orphaned-object
-%{_bindir}/cta-objectstore-create-missing-repack-index
-%endif
+# =========================================================================
+#  Development
+# =========================================================================
 
-%package -n cta-catalogue-utils
-Summary: CERN Tape Archive catalogue utilities
-Requires: cta-lib-catalogue = %{version}-%{release}
-Requires: xrootd-client-libs %{xrootdVersionConstraint}
-# cta-catalogue-utils used to be called so this ensures we don't keep the old package around
-# Can be removed again at some point
-Obsoletes: cta-catalogueutils < 5.11.19
-%description -n cta-catalogue-utils
-Provides scripts and command-line utilities for administering the CTA catalogue.
-%files -n cta-catalogue-utils
-%license COPYING
-%{_bindir}/cta-catalogue-admin-user-create
-%{_bindir}/cta-catalogue-schema-create
-%{_bindir}/cta-catalogue-schema-drop
-%{_bindir}/cta-catalogue-schema-set-production
-%{_bindir}/cta-catalogue-schema-verify
-%{_bindir}/cta-database-poll
-%{_bindir}/cta-statistics-save
-%{_bindir}/cta-statistics-update
-%{_mandir}/man1/cta-catalogue-admin-user-create.1*
-%{_mandir}/man1/cta-catalogue-schema-create.1*
-%{_mandir}/man1/cta-catalogue-schema-drop.1*
-%{_mandir}/man1/cta-catalogue-schema-set-production.1*
-%{_mandir}/man1/cta-catalogue-schema-verify.1*
-%{_mandir}/man1/cta-database-poll.1*
-
-%if "%{usingObjectstore}" == "0"
-%package -n cta-scheduler-utils
-Summary: CERN Tape Archive scheduler database utilities
-Requires: cta-lib-rdbms-postgres = %{version}-%{release}
-%description -n cta-scheduler-utils
-Provides scripts and command-line utilities for administering the CTA scheduler database.
-%files -n cta-scheduler-utils
-%license COPYING
-%{_bindir}/cta-scheduler-schema-create
-%{_bindir}/cta-scheduler-schema-drop
-%endif
-
-%package -n cta-rmcd
-Summary: CERN Tape Archive Remote Media Changer daemon
-Recommends: logrotate
-Recommends: systemd
-%{?systemd_ordering}
+%package -n cta-devel
+Summary: Development files for CERN Tape Archive libraries
+Requires: cta-lib-common = %{version}-%{release}
+Requires: cta-lib-telemetry = %{version}-%{release}
 Requires: cta-lib-runtime = %{version}-%{release}
-Requires: cta-runtime = %{version}-%{release}
-%description -n cta-rmcd
-Provides the Remote Media Changer daemon used by CTA to control tape libraries.
-%files -n cta-rmcd
-%license COPYING
-%{_libdir}/libctamediachanger.so*
-%config(noreplace) %{_sysconfdir}/logrotate.d/cta-rmcd
-%{_mandir}/man1/cta-rmcd.1*
-%{_bindir}/cta-rmcd
-%doc %{_docdir}/cta/cta-rmcd.example.toml
-%{_unitdir}/cta-rmcd.service
-
-%post -n cta-rmcd
-%systemd_post cta-rmcd.service
-
-%preun -n cta-rmcd
-%systemd_preun cta-rmcd.service
-
-%postun -n cta-rmcd
-%systemd_postun_with_restart cta-rmcd.service
-
-%package -n cta-smc
-Summary: CERN Tape Archive Remote Media Changer client
-%description -n cta-smc
-Provides the client for the CTA Remote Media Changer daemon.
-%files -n cta-smc
-%license COPYING
-%{_bindir}/cta-smc
-%{_mandir}/man1/cta-smc.1*
-
-%package -n cta-tape-label
-Summary: CERN Tape Archive tape labelling tool
+Requires: cta-lib-catalogue = %{version}-%{release}
+Requires: cta-lib-catalogue-inmemory = %{version}-%{release}
+Requires: cta-lib-catalogue-postgres = %{version}-%{release}
+Requires: cta-lib-rdbms-postgres = %{version}-%{release}
 Requires: cta-lib-scheduler = %{version}-%{release}
-Requires: xrootd-client-libs %{xrootdVersionConstraint}
-Requires(pre): group(tape)
-%description -n cta-tape-label
-Provides a command-line tool for labelling tapes for use with CTA.
-%files -n cta-tape-label
+Requires: cta-taped = %{version}-%{release}
+%if "%{occiSupport}" == "1"
+Requires: cta-lib-catalogue-occi = %{version}-%{release}
+%endif
+%description -n cta-devel
+Provides unversioned linker names for developing applications with CTA shared libraries.
+%files -n cta-devel
 %license COPYING
-# CAP_SYS_RAWIO must only be available to trusted tape operators.
-%attr(0750,root,tape) %caps(cap_sys_rawio=ep) %{_bindir}/cta-tape-label
-%{_mandir}/man1/cta-tape-label.1*
-
-%package -n cta-readtp
-Summary: CERN Tape Archive tape reading tool
-Requires: cta-lib-scheduler = %{version}-%{release}
-Requires: xrootd-client-libs %{xrootdVersionConstraint}
-Requires(pre): group(tape)
-%description -n cta-readtp
-Provides a command-line tool for reading files directly from CTA.
-%files -n cta-readtp
-%license COPYING
-# CAP_SYS_RAWIO must only be available to trusted tape operators.
-%attr(0750,root,tape) %caps(cap_sys_rawio=ep) %{_bindir}/cta-readtp
-%{_mandir}/man1/cta-readtp.1*
-
-%package -n cta-release
-Summary: CERN Tape Archive repository configuration
-Requires: python3-dnf-plugin-versionlock
-Requires: python3
-Requires: epel-release
-Requires: jq
-%description -n cta-release
-Configures package repositories, signing keys and version locks for CTA and its dependencies.
-%files -n cta-release
-%license COPYING
-%config(noreplace) %{_sysconfdir}/yum.repos.d/*
-%{_sysconfdir}/pki/rpm-gpg/*
-%{_sysconfdir}/yum/pluginconf.d/versionlock.cta
-%{_bindir}/cta-versionlock
-
-%package -n cta-eosdf
-Summary: CERN Tape Archive EOS disk buffer space reporter
-Requires: xrootd-client %{xrootdVersionConstraint}
-Requires: sed
-%description -n cta-eosdf
-Provides a command-line tool that reports free space in the default EOS
-namespace used for CTA disk buffers.
-%files -n cta-eosdf
-%license COPYING
-%{_bindir}/cta-eosdf.sh
+%{_libdir}/libctacommon.so
+%{_libdir}/libctatapedaemoncommon.so
+%{_libdir}/libctatelemetry.so
+%{_libdir}/libctatelemetryfrontend.so
+%{_libdir}/libctatelemetrymaintd.so
+%{_libdir}/libctatelemetryobjectstore.so
+%{_libdir}/libctatelemetryrdbms.so
+%{_libdir}/libctatelemetryscheduler.so
+%{_libdir}/libctatelemetrytaped.so
+%{_libdir}/libctaruntime.so
+%if "%{occiSupport}" == "1"
+%{_libdir}/libctacatalogueocci.so
+%{_libdir}/libctardbmsocci.so
+%endif
+%{_libdir}/libctardbmspostgres.so
+%{_libdir}/libctacataloguepostgres.so
+%{_libdir}/libctacatalogueinmemory.so
+%{_libdir}/libctacatalogue.so
+%{_libdir}/libctacataloguesqlite.so
+%{_libdir}/libctadropschemacmd.so
+%{_libdir}/libctaschemachecker.so
+%{_libdir}/libctardbms.so
+%{_libdir}/libctardbmssqlite.so
+%{_libdir}/libctardbmswrapper.so
+%{_libdir}/libctastatistics.so
+%{_libdir}/libctascheduler.so
+%if "%{usingObjectstore}" != "0"
+%{_libdir}/libctaobjectstore.so
+%endif
+%{_libdir}/libctadisk.so
+%{_libdir}/libctatapedrao.so
