@@ -221,13 +221,13 @@ Provides the gRPC frontend for admin and workflow commands to CTA.
 %postun -n cta-frontend-grpc
 %systemd_postun_with_restart cta-frontend-grpc.service
 
-%package -n cta-cli
+%package -n cta-admin
 Summary: CERN Tape Archive command-line interface
 Requires: cta-lib-common = %{version}-%{release}
 Requires: grpc
-%description -n cta-cli
+%description -n cta-admin
 Provides command-line tools for administering CTA.
-%files -n cta-cli
+%files -n cta-admin
 %license COPYING
 %{_bindir}/cta-admin
 %{_mandir}/man1/cta-admin.1*

@@ -230,7 +230,7 @@ test-cta-release:
     - echo -e "[cta-local-testing]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-local-testing.repo
     - dnf install --nogpgcheck -y cta-release
     - cta-versionlock apply
-    - dnf install --nogpgcheck -y cta-cli
+    - dnf install --nogpgcheck -y cta-admin
                                   cta-catalogue-utils
                                   cta-scheduler-utils
                                   cta-frontend-grpc
