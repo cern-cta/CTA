@@ -137,7 +137,7 @@ build-cta-rpms:
 # They continue to use the DNF cache.
 
 # Specifically build CTA without ccache and with debug packages enabled
-build-cta-rpms-no-cache:
+build-cta-rpms-no-ccache:
   extends:
     - build-cta-rpms
   rules:
