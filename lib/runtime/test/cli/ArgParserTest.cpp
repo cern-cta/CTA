@@ -5,9 +5,9 @@
 
 #include "runtime/cli/ArgParser.hpp"
 
-#include "RuntimeTestHelpers.hpp"
 #include "common/exception/UserError.hpp"
 #include "runtime/cli/CommonCliOptions.hpp"
+#include "tests/Argv.hpp"
 #include "version.hpp"
 
 #include <chrono>

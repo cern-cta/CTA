@@ -33,6 +33,5 @@ add_library(ctaruntimeunittests SHARED
 set_property(TARGET ctaruntimeunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaruntimeunittests PROPERTY VERSION "${CTA_LIBVERSION}")
 target_link_libraries(ctaruntimeunittests PUBLIC ctaruntime)
-target_include_directories(ctaruntimeunittests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/test)
 
 install(TARGETS ctaruntimeunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

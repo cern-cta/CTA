@@ -176,8 +176,6 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
 
 add_library (ctacommonunittests SHARED
   ${COMMON_UNIT_TESTS_LIB_SRC_FILES})
-target_include_directories(ctacommonunittests PRIVATE
-  ${PROJECT_SOURCE_DIR}/lib/runtime/test)
 set_property(TARGET ctacommonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacommonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 

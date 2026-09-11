@@ -5,7 +5,7 @@
 
 #include "runtime/config/ConfigLoader.hpp"
 
-#include "RuntimeTestHelpers.hpp"
+#include "tests/TempFile.hpp"
 
 #include <chrono>
 #include <cstdint>

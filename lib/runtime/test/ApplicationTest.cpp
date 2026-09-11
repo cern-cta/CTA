@@ -5,7 +5,8 @@
 
 #include "runtime/Application.hpp"
 
-#include "RuntimeTestHelpers.hpp"
+#include "tests/Argv.hpp"
+#include "tests/TempFile.hpp"
 
 #include <chrono>
 #include <functional>
