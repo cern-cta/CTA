@@ -6,7 +6,7 @@
 #include "TapeLsResponseStream.hpp"
 
 #include "frontend/common/AdminCmdOptions.hpp"
-#include "protobuf/admin/conversions/LabelFormatSerDeser.hpp"
+#include "protobuf/admin/LabelFormatSerDeser.hpp"
 
 namespace cta::frontend {
 

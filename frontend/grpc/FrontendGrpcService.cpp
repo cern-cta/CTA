@@ -13,7 +13,7 @@
 #include "frontend/common/FrontendService.hpp"
 #include "frontend/common/WorkflowEvent.hpp"
 #include "frontend/grpc/common/GrpcAuthUtils.hpp"
-#include "protobuf/common/conversions/ChecksumBlobSerDeser.hpp"
+#include "protobuf/common/ChecksumBlobSerDeser.hpp"
 
 #include <optional>
 

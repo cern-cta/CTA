@@ -10,7 +10,7 @@
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/FrontendInstruments.hpp"
 #include "frontend/common/RequestTracker.hpp"
-#include "protobuf/common/conversions/ChecksumBlobSerDeser.hpp"
+#include "protobuf/common/ChecksumBlobSerDeser.hpp"
 
 #include <opentelemetry/context/runtime_context.h>
 
