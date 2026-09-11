@@ -1,5 +1,5 @@
 [submodule "xrootd-ssi-protobuf-interface"]
-	path = lib/protobuf/xrootd-ssi-protobuf-interface
+	path = lib/protobuf/external/xrootd-ssi-protobuf-interface
 	url = https://:@gitlab.cern.ch:8443/eos/xrootd-ssi-protobuf-interface.git
 [submodule "catalogue/cta-catalogue-schema"]
 	path = catalogue/cta-catalogue-schema

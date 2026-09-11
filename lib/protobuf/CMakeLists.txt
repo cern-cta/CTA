@@ -34,10 +34,12 @@ target_link_libraries(ctaprotobuf ${PROTOBUF3_LIBRARIES})
 
 # Domain-to-protobuf conversions, kept separate so ctacommon remains protobuf-free.
 add_library(ctaprotobufconversions
-  common/conversions/ChecksumBlobSerDeser.cpp)
+  src/common/conversions/ChecksumBlobSerDeser.cpp)
 set_target_properties(ctaprotobufconversions PROPERTIES
   LINKER_LANGUAGE CXX
   POSITION_INDEPENDENT_CODE TRUE)
+target_include_directories(ctaprotobufconversions PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(ctaprotobufconversions
   ctaprotobuf
   ctacommon)
@@ -54,7 +56,7 @@ target_link_libraries(ctagrpc
   ${GRPC_GRPC++_LIBRARY})
 
 add_library(ctaprotobufunittests SHARED
-  common/conversions/ChecksumBlobSerDeserTest.cpp)
+  test/common/conversions/ChecksumBlobSerDeserTest.cpp)
 set_property(TARGET ctaprotobufunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaprotobufunittests PROPERTY VERSION "${CTA_LIBVERSION}")
 target_link_libraries(ctaprotobufunittests ctaprotobufconversions)

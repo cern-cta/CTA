@@ -79,7 +79,7 @@ jobs:
 
       - name: Run build-wrapper
         run: |
-          cd xrootd-ssi-protobuf-interface && XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ..
+          cd lib/protobuf/external/xrootd-ssi-protobuf-interface && XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ../../../..
           dnf config-manager --set-enabled crb
           dnf builddep --nogpgcheck -y build/${PLATFORM}/RPM/SRPMS/*
           cd build/${PLATFORM}

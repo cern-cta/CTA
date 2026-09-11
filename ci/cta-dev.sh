@@ -793,7 +793,12 @@ build_cta() {
   cd "$project_root"
 
   # Constants
-  local -r xrootd_ssi_version=$(git -C "$project_root/lib/protobuf/xrootd-ssi-protobuf-interface" describe --tags --exact-match)
+  local xrootd_ssi_version
+  if ! xrootd_ssi_version=$(git -C "$project_root/lib/protobuf/external/xrootd-ssi-protobuf-interface" describe --tags --exact-match 2>/dev/null); then
+    log_error "Could not determine the XRootD SSI interface version. Run 'git submodule update --init' and try again."
+    return 1
+  fi
+  readonly xrootd_ssi_version
   local -r build_image_name="cta-build-image-${platform}"
   local -r build_container_name="cta-build${project_root//\//-}-${platform}"
   local -r mount_basedir="/shared/CTA"

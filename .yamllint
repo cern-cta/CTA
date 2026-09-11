@@ -16,4 +16,4 @@ ignore: |
   common/jwt-cpp/
   catalogue/cta-catalogue-schema/
   eos_cta/grpc-proto/
-  xrootd-ssi-protobuf-interface/
+  lib/protobuf/external/xrootd-ssi-protobuf-interface/

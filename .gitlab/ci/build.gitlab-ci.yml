@@ -51,7 +51,7 @@ build-cta-rpms:
     CMAKE_BUILD_TYPE: "$[[ inputs.cmake-build-type ]]"
     COMPILE_WITH_EXTRA_TELEMETRY: "$[[ inputs.compile-with-extra-telemetry ]]"
     BUILD_PATH: "build/$[[ inputs.platform ]]/RPM/RPMS"
-    XRD_SSI_PATH: "lib/protobuf/xrootd-ssi-protobuf-interface"
+    XRD_SSI_PATH: "lib/protobuf/external/xrootd-ssi-protobuf-interface"
     DNF_CACHE_DIR: "$CI_PROJECT_DIR/.dnf_cache"
     # Will only be used if ccache is enabled
     CCACHE_BASEDIR: "/builds/cta"

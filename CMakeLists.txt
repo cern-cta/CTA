@@ -168,7 +168,7 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "source")
   #
   # Location of git submodule containing the XRootD SSI Protocol Buffer bindings
   #
-  set(XRD_SSI_PB_DIR ${PROJECT_SOURCE_DIR}/lib/protobuf/xrootd-ssi-protobuf-interface)
+  set(XRD_SSI_PB_DIR ${PROJECT_SOURCE_DIR}/lib/protobuf/external/xrootd-ssi-protobuf-interface)
 
   # ---------------------------------------------------------------------------
   # Components
