@@ -118,6 +118,7 @@ Provides the system account, configuration directories and shared runtime data
 used by CERN Tape Archive services.
 %files -n cta-runtime
 %license COPYING
+%doc CHANGELOG.md
 %dir %{_sysconfdir}/cta
 %dir %{_datadir}/cta
 %{_sysusersdir}/cta.conf
