@@ -59,7 +59,7 @@ set_property(TARGET ctardbmssqlite PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_compile_definitions(ctardbmssqlite PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
 
-target_link_libraries (ctardbmssqlite ctardbms ctacommon
+target_link_libraries (ctardbmssqlite ctardbms ctacommon ctapluginmanager
   ${SQLITE_LIBRARIES})
 
 install(TARGETS ctardbmssqlite DESTINATION ${CMAKE_INSTALL_LIBDIR})
@@ -72,7 +72,7 @@ set_property(TARGET ctardbmspostgres PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_compile_definitions(ctardbmspostgres PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
 
-target_link_libraries (ctardbmspostgres ctardbms ctacommon
+target_link_libraries (ctardbmspostgres ctardbms ctacommon ctapluginmanager
   ${POSTGRES_LIBRARIES})
 
 install(TARGETS ctardbmspostgres DESTINATION ${CMAKE_INSTALL_LIBDIR})
@@ -86,7 +86,7 @@ if(CTA_WITH_ORACLE)
 
   target_compile_definitions(ctardbmsocci PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
 
-  target_link_libraries (ctardbmsocci ctardbms ctacommon
+  target_link_libraries (ctardbmsocci ctardbms ctacommon ctapluginmanager
     ${ORACLE-INSTANTCLIENT_LIBRARIES})
 
   install(TARGETS ctardbmsocci DESTINATION ${CMAKE_INSTALL_LIBDIR})
@@ -103,6 +103,7 @@ target_compile_definitions(ctardbmswrapper PRIVATE
 
 target_link_libraries (ctardbmswrapper
   ctacommon
+  ctapluginmanager
 )
 
 if(CTA_WITH_ORACLE)
