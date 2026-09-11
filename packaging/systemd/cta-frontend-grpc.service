@@ -9,7 +9,7 @@ After=network-online.target
 [Service]
 Type=exec
 User=cta
-Group=cta
+Group=tape
 
 LogsDirectory=cta cta/old
 LogsDirectoryMode=0755

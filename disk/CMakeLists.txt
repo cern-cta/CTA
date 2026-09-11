@@ -29,7 +29,7 @@ target_include_directories(ctadiskunittests PRIVATE ${XROOTD_INCLUDE_DIR})
 set_property(TARGET ctadiskunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctadiskunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-install(TARGETS ctadisk DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-install(TARGETS ctadiskunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctadisk DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctadiskunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-install(PROGRAMS scripts/cta-eosdf.sh DESTINATION /usr/bin)
+install(PROGRAMS scripts/cta-eosdf.sh DESTINATION ${CMAKE_INSTALL_BINDIR})

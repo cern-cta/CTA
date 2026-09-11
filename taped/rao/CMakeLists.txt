@@ -25,9 +25,12 @@ set(CTATAPEDRAO_LIBRARY_SRCS
 add_library (ctatapedrao SHARED
   ${CTATAPEDRAO_LIBRARY_SRCS})
 
+set_property(TARGET ctatapedrao PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctatapedrao PROPERTY VERSION "${CTA_LIBVERSION}")
+
 target_link_libraries(ctatapedrao ctacommon)
 
-install(TARGETS ctatapedrao DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctatapedrao DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 add_library(ctatapedraounittests SHARED
   RAOTest.cpp)
@@ -35,4 +38,4 @@ add_library(ctatapedraounittests SHARED
 set_property(TARGET ctatapedraounittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedraounittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-install(TARGETS ctatapedraounittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctatapedraounittests DESTINATION ${CMAKE_INSTALL_LIBDIR})

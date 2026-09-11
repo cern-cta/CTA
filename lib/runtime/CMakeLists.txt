@@ -18,10 +18,7 @@ target_include_directories(ctaruntime
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(ctaauth PUBLIC ctaruntime)
 
-install(TARGETS ctaruntime DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-install(FILES cta-logging.schema.json
-  DESTINATION usr/${CMAKE_INSTALL_DATADIR}/cta
-  PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+install(TARGETS ctaruntime DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 add_library(ctaruntimeunittests SHARED
   test/ApplicationTest.cpp
@@ -37,4 +34,4 @@ set_property(TARGET ctaruntimeunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaruntimeunittests PROPERTY VERSION "${CTA_LIBVERSION}")
 target_link_libraries(ctaruntimeunittests PUBLIC ctaruntime)
 
-install(TARGETS ctaruntimeunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctaruntimeunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})

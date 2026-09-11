@@ -110,9 +110,11 @@ add_library (ctacatalogue SHARED
 set_property(TARGET ctacatalogue PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacatalogue PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_compile_definitions(ctacatalogue PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+target_compile_definitions(ctacatalogue PRIVATE
+  CTA_ABI_SOVERSION="${CTA_SOVERSION}"
+  VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
 
-install (TARGETS ctacatalogue DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctacatalogue DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctacatalogue
   ctacommon
@@ -148,7 +150,7 @@ if (OCCI_SUPPORT)
     ctardbmsocci ctacatalogue
   )
 
-  install(TARGETS ctacatalogueocci DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+  install(TARGETS ctacatalogueocci DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
 # SQLITE - Sqlite file based databases are not supported
@@ -176,7 +178,7 @@ target_compile_definitions(ctacataloguesqlite PRIVATE VERSION_API="${CTA_VERSION
 
 target_link_libraries (ctacataloguesqlite ctardbmssqlite ctacatalogue)
 
-install(TARGETS ctacataloguesqlite DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctacataloguesqlite DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # IN_MEMORY
 set(CATALOGUE_IN_MEMORY_LIB_SRC_FILES
@@ -192,7 +194,7 @@ set_property(TARGET ctacatalogueinmemory PROPERTY   VERSION "${CTA_LIBVERSION}")
 target_compile_definitions(ctacatalogueinmemory PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
 target_link_libraries (ctacatalogueinmemory ctacataloguesqlite)
 
-install(TARGETS ctacatalogueinmemory DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctacatalogueinmemory DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # POSTGRES
 set(CATALOGUE_POSTGRES_LIB_SRC_FILES
@@ -221,7 +223,7 @@ target_link_libraries (ctacataloguepostgres
   ctardbmspostgres ctacatalogue
 )
 
-install(TARGETS ctacataloguepostgres DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctacataloguepostgres DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 
 add_custom_command(
@@ -334,7 +336,7 @@ target_compile_options(ctainmemorycatalogueunittests PRIVATE -fno-var-tracking-a
 target_link_libraries (ctainmemorycatalogueunittests
   ctacatalogue ctadisk ctacatalogueinmemory)
 
-install (TARGETS ctainmemorycatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctainmemorycatalogueunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 set (DBCONFIG_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   ${CATALOGUE_MODULES_TESTS_SRC_FILES}
@@ -353,10 +355,10 @@ target_compile_options(ctadbconfigcatalogueunittests PRIVATE -fno-var-tracking-a
 target_link_libraries (ctadbconfigcatalogueunittests
   ctacatalogue)
 
-install (TARGETS ctadbconfigcatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctadbconfigcatalogueunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 install (FILES cta-catalogue.example.conf
-  DESTINATION usr/${CMAKE_INSTALL_DOCDIR}
+  DESTINATION ${CMAKE_INSTALL_DOCDIR}
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
 set (SCHEMA_CHECKER_LIB_SRC_FILES
@@ -383,7 +385,10 @@ endif()
 add_library (ctaschemachecker SHARED
    ${SCHEMA_CHECKER_LIB_SRC_FILES})
 
+set_property(TARGET ctaschemachecker PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctaschemachecker PROPERTY VERSION "${CTA_LIBVERSION}")
+
 add_dependencies(ctaschemachecker
   create_all_catalogue_schema_header)
 
-install (TARGETS ctaschemachecker DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctaschemachecker DESTINATION ${CMAKE_INSTALL_LIBDIR})

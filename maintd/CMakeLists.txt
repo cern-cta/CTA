@@ -40,7 +40,7 @@ target_link_libraries(ctamaintdunittests
 )
 set_property(TARGET ctamaintdunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctamaintdunittests PROPERTY VERSION "${CTA_LIBVERSION}")
-install(TARGETS ctamaintdunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctamaintdunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 add_executable (cta-maintd cta-maintd.cpp)
 target_link_libraries(cta-maintd ctamaintd ctaruntime)
@@ -62,15 +62,15 @@ add_dependencies(cta-example-config-checks cta-maintd-config-check)
 
 add_manpage (cta-maintd)
 
-install (TARGETS cta-maintd DESTINATION usr/bin)
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-maintd.1cta DESTINATION /usr/share/man/man1)
+install (TARGETS cta-maintd DESTINATION ${CMAKE_INSTALL_BINDIR})
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-maintd.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 if(NOT CTA_USE_PGSCHED)
   install (FILES cta-maintd.example.toml
-    DESTINATION usr/${CMAKE_INSTALL_DOCDIR}
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}
     PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 else()
   install (FILES cta-maintd.pg.example.toml
-    DESTINATION usr/${CMAKE_INSTALL_DOCDIR}
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}
     RENAME cta-maintd.example.toml
     PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 endif()

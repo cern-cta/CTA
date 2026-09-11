@@ -26,6 +26,11 @@ function(rpmtools_add_rpm_targets rpm_name spec_file package_mode)
     file(MAKE_DIRECTORY "${rpm_root}/${directory}")
   endforeach()
 
+  foreach(extra_source IN LISTS ARGN)
+    get_filename_component(extra_source_name "${extra_source}" NAME)
+    configure_file("${extra_source}" "${rpm_root}/SOURCES/${extra_source_name}" COPYONLY)
+  endforeach()
+
   get_filename_component(spec_extension "${spec_file}" EXT)
   if(spec_extension STREQUAL ".spec")
     get_filename_component(spec_name "${spec_file}" NAME)

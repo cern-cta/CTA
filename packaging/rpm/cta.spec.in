@@ -61,6 +61,7 @@ Summary: %{ctaSummary}
 Version: %{ctaVersion}
 Release: %{ctaRelease}%{mydist}
 Source0: %{name}-%{ctaVersion}-%{ctaRelease}.tar.zst
+Source1: cta.conf
 URL: https://gitlab.cern.ch/cta/CTA
 License: %{ctaLicense}
 Vendor: CERN
@@ -81,7 +82,7 @@ BuildRequires: postgresql-server
 # only build debug info if you're building the whole code
 
 %description
-The CTA project is the CERN Tape Archive system.
+CERN Tape Archive (CTA) is a scalable tape storage system for archival data.
 
 %prep
 %autosetup -D -n %{name}-%{ctaVersion}-%{ctaRelease}
@@ -90,7 +91,7 @@ The CTA project is the CERN Tape Archive system.
 
 mkdir -p build
 cd build
-cmake3 -G "%{buildGenerator}" .. -DCTA_VERSION:STRING=%{ctaVersion} -DXROOTD_SSI_PROTOBUF_INTERFACE_VERSION:STRING=%{xrootdSsiVersion} -DENABLE_CCACHE:BOOL=@ENABLE_CCACHE@ -DCTA_PACKAGE_MODE:STRING=none -DJOBS_COUNT:STRING=@JOBS_COUNT@ -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{perfTelemetryOpt} %{oracleOpt} %{asanOptions}
+cmake3 -G "%{buildGenerator}" .. -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCTA_SYSTEMD_UNIT_DIR:PATH=lib/systemd/system -DCTA_VERSION:STRING=%{ctaVersion} -DXROOTD_SSI_PROTOBUF_INTERFACE_VERSION:STRING=%{xrootdSsiVersion} -DENABLE_CCACHE:BOOL=@ENABLE_CCACHE@ -DCTA_PACKAGE_MODE:STRING=none -DJOBS_COUNT:STRING=@JOBS_COUNT@ -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{perfTelemetryOpt} %{oracleOpt} %{asanOptions}
 cmake --build . --parallel @JOBS_COUNT@
 
 %install
@@ -106,32 +107,47 @@ cmake --build . --target cta-example-config-checks --parallel @JOBS_COUNT@
 cmake --build . --target cta-unit-tests-short --parallel @JOBS_COUNT@
 %endif
 
-%files
-%license COPYING
-
 # Main packages
 
+%package -n cta-runtime
+Summary: CERN Tape Archive system runtime
+Requires(pre): group(tape)
+%{?sysusers_requires_compat}
+%description -n cta-runtime
+Provides the system account, configuration directories and shared runtime data
+used by CERN Tape Archive services.
+%files -n cta-runtime
+%license COPYING
+%doc CHANGELOG.md
+%dir %{_sysconfdir}/cta
+%dir %{_datadir}/cta
+%{_sysusersdir}/cta.conf
+%{_datadir}/cta/cta-logging.schema.json
+
+%pre -n cta-runtime
+%sysusers_create_compat %{SOURCE1}
+
 %package -n cta-taped
-Summary: CERN Tape Archive: tape daemon
+Summary: CERN Tape Archive tape daemon
 Recommends: logrotate
 Recommends: systemd
 %{?systemd_ordering}
-Requires: cta-common = %{version}-%{release}
+Requires: cta-lib-runtime = %{version}-%{release}
+Requires: cta-runtime = %{version}-%{release}
 Requires: cta-lib-scheduler = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
 %description -n cta-taped
-CERN Tape Archive:
-The tape server daemon
+Provides the daemon that manages tape drives and tape I/O for CTA.
 %files -n cta-taped
 %license COPYING
-%{_libdir}/libctatapedrao.so*
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/logrotate.d/cta-taped
-%attr(0755,root,root) %{_bindir}/cta-taped
-%attr(0644,root,root) %doc %{_docdir}/cta/cta-taped.example.conf
-%attr(0644,root,root) %{_mandir}/man1/cta-taped.1cta*
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/sysconfig/cta-taped
-%attr(0644,root,root) %{_unitdir}/cta-taped.service
+%{_libdir}/libctatapedrao.so.*
+%config(noreplace) %{_sysconfdir}/logrotate.d/cta-taped
+%{_bindir}/cta-taped
+%doc %{_docdir}/cta/cta-taped.example.conf
+%{_mandir}/man1/cta-taped.1*
+%config(noreplace) %{_sysconfdir}/sysconfig/cta-taped
+%{_unitdir}/cta-taped.service
 
 %post -n cta-taped
 %systemd_post cta-taped.service
@@ -143,15 +159,16 @@ The tape server daemon
 %systemd_postun_with_restart cta-taped.service
 
 %package -n cta-maintd
-Summary: CERN Tape Archive: maintenance daemon
+Summary: CERN Tape Archive maintenance daemon
 Recommends: logrotate
 Recommends: systemd
 %{?systemd_ordering}
-Requires: cta-common = %{version}-%{release}
+Requires: cta-lib-runtime = %{version}-%{release}
+Requires: cta-runtime = %{version}-%{release}
 Requires: cta-lib-scheduler = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
 %description -n cta-maintd
-CERN Tape Archive maintenance daemon.
+Provides the daemon that performs background maintenance tasks for CTA.
 %files -n cta-maintd
 %license COPYING
 %if "%{usingObjectstore}" != "0"
@@ -159,11 +176,11 @@ CERN Tape Archive maintenance daemon.
 %else
 %{_libdir}/libctardbroutines.so*
 %endif
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/logrotate.d/cta-maintd
-%attr(0755,root,root) %{_bindir}/cta-maintd
-%attr(0644,root,root) %doc %{_docdir}/cta/cta-maintd.example.toml
-%attr(0644,root,root) %{_mandir}/man1/cta-maintd.1cta*
-%attr(0644,root,root) %{_unitdir}/cta-maintd.service
+%config(noreplace) %{_sysconfdir}/logrotate.d/cta-maintd
+%{_bindir}/cta-maintd
+%doc %{_docdir}/cta/cta-maintd.example.toml
+%{_mandir}/man1/cta-maintd.1*
+%{_unitdir}/cta-maintd.service
 
 %post -n cta-maintd
 %systemd_post cta-maintd.service
@@ -175,25 +192,25 @@ CERN Tape Archive maintenance daemon.
 %systemd_postun_with_restart cta-maintd.service
 
 %package -n cta-frontend-grpc
-Summary: CERN Tape Archive: gRPC based frontend
+Summary: CERN Tape Archive gRPC frontend
 Recommends: logrotate
 Recommends: systemd
 %{?systemd_ordering}
-Requires: cta-common = %{version}-%{release}
+Requires: cta-lib-runtime = %{version}-%{release}
+Requires: cta-runtime = %{version}-%{release}
 Requires: cta-lib-scheduler = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
 %description -n cta-frontend-grpc
-CERN Tape Archive:
-dCache frontend
+Provides the gRPC frontend for admin and workflow commands to CTA.
 %files -n cta-frontend-grpc
 %license COPYING
-%attr(0755,root,root) %{_bindir}/cta-frontend-grpc
-%attr(0644,root,root) %{_unitdir}/cta-frontend-grpc.service
-%attr(0644,root,root) %{_sysconfdir}/sysconfig/cta-frontend-grpc
-%attr(0644,root,root) %doc %{_docdir}/cta/cta-frontend.example.conf
-%attr(0644,root,root) %doc %{_docdir}/cta/cta-frontend-grpc.example.toml
-%attr(0644,root,root) %doc %{_docdir}/cta/jwt-revoke-list.example.toml
-%attr(0644,root,root) %{_mandir}/man1/cta-frontend-grpc.1cta*
+%{_bindir}/cta-frontend-grpc
+%{_unitdir}/cta-frontend-grpc.service
+%config(noreplace) %{_sysconfdir}/sysconfig/cta-frontend-grpc
+%doc %{_docdir}/cta/cta-frontend.example.conf
+%doc %{_docdir}/cta/cta-frontend-grpc.example.toml
+%doc %{_docdir}/cta/jwt-revoke-list.example.toml
+%{_mandir}/man1/cta-frontend-grpc.1*
 
 %post -n cta-frontend-grpc
 %systemd_post cta-frontend-grpc.service
@@ -205,106 +222,98 @@ dCache frontend
 %systemd_postun_with_restart cta-frontend-grpc.service
 
 %package -n cta-cli
-Summary: CERN Tape Archive: command line interface
+Summary: CERN Tape Archive command-line interface
 Requires: cta-lib-common = %{version}-%{release}
 Requires: grpc
 %description -n cta-cli
-CERN Tape Archive:
-The command line utilities
+Provides command-line tools for administering CTA.
 %files -n cta-cli
 %license COPYING
-%attr(0755,root,root) %{_bindir}/cta-admin
-%attr(0644,root,root) %{_mandir}/man1/cta-admin.1cta*
-%attr(0644,root,root) %doc %{_docdir}/cta/cta-admin.example.conf
+%{_bindir}/cta-admin
+%{_mandir}/man1/cta-admin.1*
+%doc %{_docdir}/cta/cta-admin.example.conf
 
 %package -n cta-lib-common
-Summary: CERN Tape Archive libraries
+Summary: CERN Tape Archive common libraries
 # Explicitly require protobuf to avoid a clash with eos-protobuf
 Requires: %{requiredProtobuf}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
 %description -n cta-lib-common
-CERN Tape Archive:
-The shared libraries base
+Provides common shared libraries used by CTA components.
 %files -n cta-lib-common
 %license COPYING
-%{_libdir}/libctacommon.so*
-%{_libdir}/libctatapedaemoncommon.so*
+%{_libdir}/libctacommon.so.*
+%{_libdir}/libctatapedaemoncommon.so.*
 
 %package -n cta-lib-telemetry
 Summary: CERN Tape Archive telemetry libraries
 Requires: cta-lib-common = %{version}-%{release}
 Requires: opentelemetry-cpp %{opentelemetryCppVersionConstraint}
 %description -n cta-lib-telemetry
-CERN Tape Archive:
-The shared telemetry libraries
+Provides shared libraries and instrumentation for CTA telemetry.
 %files -n cta-lib-telemetry
 %license COPYING
-%{_libdir}/libctatelemetry.so*
+%{_libdir}/libctatelemetry.so.*
 # For now cta-lib-telemetry owns all instruments. Arguably not the cleanest, but good enough for now
-%{_libdir}/libctatelemetryfrontend.so*
-%{_libdir}/libctatelemetrymaintd.so*
-%{_libdir}/libctatelemetryobjectstore.so*
-%{_libdir}/libctatelemetryrdbms.so*
-%{_libdir}/libctatelemetryscheduler.so*
-%{_libdir}/libctatelemetrytaped.so*
-%attr(0644,root,root) %doc %{_docdir}/cta/cta-otel.example.yaml
+%{_libdir}/libctatelemetryfrontend.so.*
+%{_libdir}/libctatelemetrymaintd.so.*
+%{_libdir}/libctatelemetryobjectstore.so.*
+%{_libdir}/libctatelemetryrdbms.so.*
+%{_libdir}/libctatelemetryscheduler.so.*
+%{_libdir}/libctatelemetrytaped.so.*
+%doc %{_docdir}/cta/cta-otel.example.yaml
 
 %package -n cta-lib-runtime
 Summary: CERN Tape Archive application runtime library
 Requires: cta-lib-common = %{version}-%{release}
 Requires: cta-lib-telemetry = %{version}-%{release}
 %description -n cta-lib-runtime
-CERN Tape Archive:
-The shared application runtime library
+Provides the shared application runtime library used by CTA services and tools.
 %files -n cta-lib-runtime
 %license COPYING
-%{_libdir}/libctaruntime.so*
-%attr(0644,root,root) %{_datadir}/cta/cta-logging.schema.json
+%{_libdir}/libctaruntime.so.*
 
 %if "%{occiSupport}" == "1"
 %package -n cta-lib-catalogue-occi
-Summary: CERN Tape Archive Oracle catalogue plugin
+Summary: CERN Tape Archive Oracle catalogue plug-in
 Provides: cta-lib-catalogue-impl = %{version}-%{release}
 Requires: oracle-instantclient-basic %{oracleVersionConstraint}
 %description -n cta-lib-catalogue-occi
-CERN Tape Archive:
-Shared libraries required to access the Oracle-based CTA catalogue
+Provides the shared libraries required to access a CTA catalogue running on Oracle.
 %files -n cta-lib-catalogue-occi
 %license COPYING
-%{_libdir}/libctacatalogueocci.so*
-%{_libdir}/libctardbmsocci.so*
+%{_libdir}/libctacatalogueocci.so.*
+%{_libdir}/libctardbmsocci.so.*
 %endif
 
 %package -n cta-lib-rdbms-postgres
-Summary: CERN Tape Archive PostgreSQL RDBMS plugin
+Summary: CERN Tape Archive PostgreSQL RDBMS plug-in
 Requires: postgresql-libs
 %description -n cta-lib-rdbms-postgres
-CERN Tape Archive:
-Shared PostgreSQL RDBMS plugin
+Provides the PostgreSQL RDBMS plug-in used by CTA.
 %files -n cta-lib-rdbms-postgres
 %license COPYING
-%{_libdir}/libctardbmspostgres.so*
+%{_libdir}/libctardbmspostgres.so.*
 
 %package -n cta-lib-catalogue-postgres
-Summary: CERN Tape Archive PostgreSQL catalogue plugin
+Summary: CERN Tape Archive PostgreSQL catalogue plug-in
 Requires: cta-lib-rdbms-postgres = %{version}-%{release}
 Provides: cta-lib-catalogue-impl = %{version}-%{release}
 %description -n cta-lib-catalogue-postgres
-CERN Tape Archive:
-Shared libraries required to access the PostgreSQL-based CTA catalogue
+Provides the shared libraries required to access a CTA catalogue running on PostgreSQL.
 %files -n cta-lib-catalogue-postgres
 %license COPYING
-%{_libdir}/libctacataloguepostgres.so*
+%{_libdir}/libctacataloguepostgres.so.*
 
 %package -n cta-lib-catalogue-inmemory
-Summary: CERN Tape Archive in-memory catalogue plugin
+Summary: CERN Tape Archive in-memory catalogue plug-in
 Provides: cta-lib-catalogue-impl = %{version}-%{release}
 %description -n cta-lib-catalogue-inmemory
-CERN Tape Archive:
-Shared libraries required to access the in-memory SQLite CTA catalogue
+Provides the shared libraries required to use the in-memory SQLite catalogue
+for CTA.
 %files -n cta-lib-catalogue-inmemory
 %license COPYING
-%{_libdir}/libctacatalogueinmemory.so*
+%{_libdir}/libctacatalogueinmemory.so.*
 
 %package -n cta-lib-catalogue
 Summary: CERN Tape Archive catalogue libraries
@@ -313,19 +322,18 @@ Requires: cta-lib-catalogue-impl = %{version}-%{release}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
 Recommends: cta-lib-catalogue-postgres = %{version}-%{release}
 %description -n cta-lib-catalogue
-CERN Tape Archive:
-Shared libraries required to access the CTA catalogue
+Provides shared libraries for accessing the CTA catalogue.
 %files -n cta-lib-catalogue
 %license COPYING
-%{_libdir}/libctacatalogue.so*
-%{_libdir}/libctacataloguesqlite.so*
-%{_libdir}/libctadropschemacmd.so*
-%{_libdir}/libctardbms.so*
-%{_libdir}/libctardbmssqlite.so*
-%{_libdir}/libctardbmswrapper.so*
-%{_libdir}/libctaschemachecker.so*
-%{_libdir}/libctastatistics.so*
-%attr(0644,root,root) %doc %{_docdir}/cta/cta-catalogue.example.conf
+%{_libdir}/libctacatalogue.so.*
+%{_libdir}/libctacataloguesqlite.so.*
+%{_libdir}/libctadropschemacmd.so.*
+%{_libdir}/libctardbms.so.*
+%{_libdir}/libctardbmssqlite.so.*
+%{_libdir}/libctardbmswrapper.so.*
+%{_libdir}/libctaschemachecker.so.*
+%{_libdir}/libctastatistics.so.*
+%doc %{_docdir}/cta/cta-catalogue.example.conf
 
 %package -n cta-lib-scheduler
 Summary: CERN Tape Archive scheduler libraries
@@ -340,19 +348,68 @@ Requires: %{requiredProtobuf}
 Requires: cta-lib-common = %{version}-%{release}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
 %description -n cta-lib-scheduler
-CERN Tape Archive:
-The shared scheduler libraries
+Provides shared libraries for CTA scheduling and disk access.
 %files -n cta-lib-scheduler
 %license COPYING
-%{_libdir}/libctascheduler.so*
+%{_libdir}/libctascheduler.so.*
 %if "%{usingObjectstore}" != "0"
-%{_libdir}/libctaobjectstore.so*
+%{_libdir}/libctaobjectstore.so.*
 %endif
-%{_libdir}/libctadisk.so*
-%attr(0644,root,root) %doc %{_docdir}/cta/cta-scheduler.example.conf
+%{_libdir}/libctadisk.so.*
+%doc %{_docdir}/cta/cta-scheduler.example.conf
+
+%package -n cta-devel
+Summary: Development files for CERN Tape Archive libraries
+Requires: cta-lib-common = %{version}-%{release}
+Requires: cta-lib-telemetry = %{version}-%{release}
+Requires: cta-lib-runtime = %{version}-%{release}
+Requires: cta-lib-catalogue = %{version}-%{release}
+Requires: cta-lib-catalogue-inmemory = %{version}-%{release}
+Requires: cta-lib-catalogue-postgres = %{version}-%{release}
+Requires: cta-lib-rdbms-postgres = %{version}-%{release}
+Requires: cta-lib-scheduler = %{version}-%{release}
+Requires: cta-taped = %{version}-%{release}
+%if "%{occiSupport}" == "1"
+Requires: cta-lib-catalogue-occi = %{version}-%{release}
+%endif
+%description -n cta-devel
+Provides unversioned linker names for developing applications with CTA shared libraries.
+%files -n cta-devel
+%license COPYING
+%{_libdir}/libctacommon.so
+%{_libdir}/libctatapedaemoncommon.so
+%{_libdir}/libctatelemetry.so
+%{_libdir}/libctatelemetryfrontend.so
+%{_libdir}/libctatelemetrymaintd.so
+%{_libdir}/libctatelemetryobjectstore.so
+%{_libdir}/libctatelemetryrdbms.so
+%{_libdir}/libctatelemetryscheduler.so
+%{_libdir}/libctatelemetrytaped.so
+%{_libdir}/libctaruntime.so
+%if "%{occiSupport}" == "1"
+%{_libdir}/libctacatalogueocci.so
+%{_libdir}/libctardbmsocci.so
+%endif
+%{_libdir}/libctardbmspostgres.so
+%{_libdir}/libctacataloguepostgres.so
+%{_libdir}/libctacatalogueinmemory.so
+%{_libdir}/libctacatalogue.so
+%{_libdir}/libctacataloguesqlite.so
+%{_libdir}/libctadropschemacmd.so
+%{_libdir}/libctaschemachecker.so
+%{_libdir}/libctardbms.so
+%{_libdir}/libctardbmssqlite.so
+%{_libdir}/libctardbmswrapper.so
+%{_libdir}/libctastatistics.so
+%{_libdir}/libctascheduler.so
+%if "%{usingObjectstore}" != "0"
+%{_libdir}/libctaobjectstore.so
+%endif
+%{_libdir}/libctadisk.so
+%{_libdir}/libctatapedrao.so
 
 %package -n cta-tests
-Summary: CERN Tape Archive: unit and integration tests with virtual tape drives
+Summary: CERN Tape Archive unit and integration tests
 Requires: cta-lib-catalogue-inmemory = %{version}-%{release}
 Requires: cta-lib-catalogue-postgres = %{version}-%{release}
 %if "%{occiSupport}" == "1"
@@ -371,8 +428,7 @@ Requires: gtest-devel %{gtestDevelVersionConstraint}
 Requires: postgresql-server
 %endif
 %description -n cta-tests
-CERN Tape Archive:
-Unit tests and integration tests with virtual tape drives
+Provides CTA unit and integration tests.
 %files -n cta-tests
 %license COPYING
 %{_libdir}/libcta-taped-integration-tests.so*
@@ -399,7 +455,7 @@ Unit tests and integration tests with virtual tape drives
 %{_libdir}/libctainmemorystmtunittests.so*
 %if "%{usingObjectstore}" != "0"
 %{_libdir}/libctaobjectstoreunittests.so*
-%{_libdir}/libctaosdbroutines.so*
+%{_libdir}/libctaosdbroutines.so.*
 %endif
 %{_libdir}/libctardbmsunittests.so*
 %{_libdir}/libctardbmswrapperunittests.so*
@@ -416,110 +472,105 @@ Unit tests and integration tests with virtual tape drives
 %{_libdir}/libctatapedraounittests.so*
 %{_bindir}/cta-integration-tests
 %{_libdir}/libctadaemonunittests-multiprocess.so*
-%attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
-%attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/parallelTestsMakefile
+%{_datadir}/cta/tests/*.suppr
+%{_datadir}/cta/tests/parallelTestsMakefile
 
 %package -n cta-test-external-tape-formats
-Summary: CERN Tape Archive: command-line tool for testing external tape formats
+Summary: CERN Tape Archive external tape format tests
 Requires: cta-lib-common = %{version}-%{release}
 %description -n cta-test-external-tape-formats
-CERN Tape Archive:
-Command-line tool for testing external tape formats
+Provides command-line tools for testing tapes written in external formats.
 %files -n cta-test-external-tape-formats
 %license COPYING
 %{_bindir}/cta-test-osm-reader
 %{_bindir}/cta-test-enstore-large-reader
 
 %package -n cta-test-immutable-file
-Summary: CERN Tape Archive: command-line tool for testing immutable files
+Summary: CERN Tape Archive immutable file test tool
 Requires: cta-lib-common = %{version}-%{release}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
 %description -n cta-test-immutable-file
-CERN Tape Archive:
-Command-line tool for testing immutable files
+Provides a command-line tool for testing immutable files with CTA.
 %files -n cta-test-immutable-file
 %license COPYING
 %{_bindir}/cta-test-immutable-file
 
 %if "%{usingObjectstore}" != "0"
 %package -n cta-scheduler-utils
-Summary: CERN Tape Archive: object store tools
+Summary: CERN Tape Archive object store tools
 Requires: cta-lib-scheduler = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
 # Used to be called cta-objectstore-tools so this ensures we don't keep the old package around
 Obsoletes: cta-objectstore-tools < 5.11.19
 %description -n cta-scheduler-utils
-CERN Tape Archive:
-Tools allowing initialization and inspection of the object store.
+Provides tools for initializing, inspecting and maintaining the CTA object store.
 %files -n cta-scheduler-utils
 %license COPYING
-%attr(0755,root,root) %{_bindir}/cta-objectstore-initialize
-%attr(0755,root,root) %{_bindir}/cta-objectstore-list
-%attr(0755,root,root) %{_bindir}/cta-objectstore-reset
-%attr(0755,root,root) %{_bindir}/cta-objectstore-dump-object
-%attr(0755,root,root) %{_bindir}/cta-objectstore-dereference-removed-queues
-%attr(0755,root,root) %{_bindir}/cta-objectstore-collect-orphaned-object
-%attr(0755,root,root) %{_bindir}/cta-objectstore-create-missing-repack-index
+%{_bindir}/cta-objectstore-initialize
+%{_bindir}/cta-objectstore-list
+%{_bindir}/cta-objectstore-reset
+%{_bindir}/cta-objectstore-dump-object
+%{_bindir}/cta-objectstore-dereference-removed-queues
+%{_bindir}/cta-objectstore-collect-orphaned-object
+%{_bindir}/cta-objectstore-create-missing-repack-index
 %endif
 
 %package -n cta-catalogue-utils
-Summary: Utilities for working with the CTA catalogue
+Summary: CERN Tape Archive catalogue utilities
 Requires: cta-lib-catalogue = %{version}-%{release}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
 # cta-catalogue-utils used to be called so this ensures we don't keep the old package around
 # Can be removed again at some point
 Obsoletes: cta-catalogueutils < 5.11.19
 %description -n cta-catalogue-utils
-CERN Tape Archive:
-Scripts and utilities for working with the CTA catalogue
+Provides scripts and command-line utilities for administering the CTA catalogue.
 %files -n cta-catalogue-utils
 %license COPYING
-%attr(0755,root,root) %{_bindir}/cta-catalogue-admin-user-create
-%attr(0755,root,root) %{_bindir}/cta-catalogue-schema-create
-%attr(0755,root,root) %{_bindir}/cta-catalogue-schema-drop
-%attr(0755,root,root) %{_bindir}/cta-catalogue-schema-set-production
-%attr(0755,root,root) %{_bindir}/cta-catalogue-schema-verify
-%attr(0755,root,root) %{_bindir}/cta-database-poll
-%attr(0755,root,root) %{_bindir}/cta-statistics-save
-%attr(0755,root,root) %{_bindir}/cta-statistics-update
-%attr(0644,root,root) %{_mandir}/man1/cta-catalogue-admin-user-create.1cta*
-%attr(0644,root,root) %{_mandir}/man1/cta-catalogue-schema-create.1cta*
-%attr(0644,root,root) %{_mandir}/man1/cta-catalogue-schema-drop.1cta*
-%attr(0644,root,root) %{_mandir}/man1/cta-catalogue-schema-set-production.1cta*
-%attr(0644,root,root) %{_mandir}/man1/cta-catalogue-schema-verify.1cta*
-%attr(0644,root,root) %{_mandir}/man1/cta-database-poll.1cta*
+%{_bindir}/cta-catalogue-admin-user-create
+%{_bindir}/cta-catalogue-schema-create
+%{_bindir}/cta-catalogue-schema-drop
+%{_bindir}/cta-catalogue-schema-set-production
+%{_bindir}/cta-catalogue-schema-verify
+%{_bindir}/cta-database-poll
+%{_bindir}/cta-statistics-save
+%{_bindir}/cta-statistics-update
+%{_mandir}/man1/cta-catalogue-admin-user-create.1*
+%{_mandir}/man1/cta-catalogue-schema-create.1*
+%{_mandir}/man1/cta-catalogue-schema-drop.1*
+%{_mandir}/man1/cta-catalogue-schema-set-production.1*
+%{_mandir}/man1/cta-catalogue-schema-verify.1*
+%{_mandir}/man1/cta-database-poll.1*
 
 %if "%{usingObjectstore}" == "0"
 %package -n cta-scheduler-utils
-Summary: Utilities for working with the CTA scheduler database
+Summary: CERN Tape Archive scheduler database utilities
 Requires: cta-lib-rdbms-postgres = %{version}-%{release}
 %description -n cta-scheduler-utils
-CERN Tape Archive:
-Scripts and utilities for working with the CTA scheduler database
+Provides scripts and command-line utilities for administering the CTA scheduler database.
 %files -n cta-scheduler-utils
 %license COPYING
-%attr(0755,root,root) %{_bindir}/cta-scheduler-schema-create
-%attr(0755,root,root) %{_bindir}/cta-scheduler-schema-drop
+%{_bindir}/cta-scheduler-schema-create
+%{_bindir}/cta-scheduler-schema-drop
 %endif
 
 %package -n cta-rmcd
-Summary: The Remote Media Changer daemon (rmcd)
+Summary: CERN Tape Archive Remote Media Changer daemon
 Recommends: logrotate
 Recommends: systemd
 %{?systemd_ordering}
-Requires: cta-common = %{version}-%{release}
+Requires: cta-lib-runtime = %{version}-%{release}
+Requires: cta-runtime = %{version}-%{release}
 %description -n cta-rmcd
-CERN Tape Archive:
-The Remote Media Changer daemon (rmcd)
+Provides the Remote Media Changer daemon used by CTA to control tape libraries.
 %files -n cta-rmcd
 %license COPYING
 %{_libdir}/libctamediachanger.so*
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/logrotate.d/cta-rmcd
-%attr(0644,root,root) %{_mandir}/man1/cta-rmcd.1cta*
-%attr(0755,root,root) %{_bindir}/cta-rmcd
-%attr(0644,root,root) %doc %{_docdir}/cta/cta-rmcd.example.toml
-%attr(0644,root,root) %{_unitdir}/cta-rmcd.service
+%config(noreplace) %{_sysconfdir}/logrotate.d/cta-rmcd
+%{_mandir}/man1/cta-rmcd.1*
+%{_bindir}/cta-rmcd
+%doc %{_docdir}/cta/cta-rmcd.example.toml
+%{_unitdir}/cta-rmcd.service
 
 %post -n cta-rmcd
 %systemd_post cta-rmcd.service
@@ -531,73 +582,62 @@ The Remote Media Changer daemon (rmcd)
 %systemd_postun_with_restart cta-rmcd.service
 
 %package -n cta-smc
-Summary: The client of the Remote Media Changer Daemon (rmcd)
+Summary: CERN Tape Archive Remote Media Changer client
 %description -n cta-smc
-CERN Tape Archive:
-The client of the Remote Media Changer Daemon (rmcd)
+Provides the client for the CTA Remote Media Changer daemon.
 %files -n cta-smc
 %license COPYING
-%attr(0755,root,root) %{_bindir}/cta-smc
-%attr(0644,root,root) %{_mandir}/man1/cta-smc.1cta*
+%{_bindir}/cta-smc
+%{_mandir}/man1/cta-smc.1*
 
 %package -n cta-tape-label
-Summary: The command-line tool for pre-labelling a CTA tape.
+Summary: CERN Tape Archive tape labelling tool
 Requires: cta-lib-scheduler = %{version}-%{release}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
+Requires(pre): group(tape)
 %description -n cta-tape-label
-CERN Tape Archive:
-The command-line tool for pre-labelling a CTA tape.
+Provides a command-line tool for labelling tapes for use with CTA.
 %files -n cta-tape-label
 %license COPYING
-%attr(0750,cta,tape) %caps(cap_sys_rawio=ep) %{_bindir}/cta-tape-label
-%attr(0644,root,root) %{_mandir}/man1/cta-tape-label.1cta*
+# CAP_SYS_RAWIO must only be available to trusted tape operators.
+%attr(0750,root,tape) %caps(cap_sys_rawio=ep) %{_bindir}/cta-tape-label
+%{_mandir}/man1/cta-tape-label.1*
 
 %package -n cta-readtp
-Summary: The command-line tool for reading files from a CTA tape.
+Summary: CERN Tape Archive tape reading tool
 Requires: cta-lib-scheduler = %{version}-%{release}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
+Requires(pre): group(tape)
 %description -n cta-readtp
-CERN Tape Archive:
-The command-line tool for reading files from a CTA tape.
+Provides a command-line tool for reading files directly from CTA.
 %files -n cta-readtp
 %license COPYING
-%attr(0750,cta,tape) %caps(cap_sys_rawio=ep) %{_bindir}/cta-readtp
-%attr(0644,root,root) %{_mandir}/man1/cta-readtp.1cta*
-
-%package -n cta-common
-Summary: CERN Tape Archive common items
-Requires(pre): %{_bindir}/grep, %{_sbindir}/luseradd
-%description -n cta-common
-CERN Tape Archive common items, such as the creation of the cta local user.
-%pre -n cta-common
-%{_bindir}/grep -q '^cta:' %{_sysconfdir}/passwd || %{_sbindir}/luseradd -s %{_sbindir}/nologin -c "CTA system account" -g tape cta
-%files -n cta-common
-%license COPYING
-%dir %attr(0755,root,root) %{_sysconfdir}/cta
-%doc CHANGELOG.md
+# CAP_SYS_RAWIO must only be available to trusted tape operators.
+%attr(0750,root,tape) %caps(cap_sys_rawio=ep) %{_bindir}/cta-readtp
+%{_mandir}/man1/cta-readtp.1*
 
 %package -n cta-release
-Summary: Repository configuration for CTA and its dependencies
+Summary: CERN Tape Archive repository configuration
 Requires: python3-dnf-plugin-versionlock
 Requires: python3
 Requires: epel-release
 Requires: jq
 %description -n cta-release
-Repository configuration for CTA and its dependencies
-This package contains .repo files, gpg keys and versionlock configuration for CTA
+Configures package repositories, signing keys and version locks for CTA and its dependencies.
 %files -n cta-release
 %license COPYING
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/yum.repos.d/*
-%attr(0644,root,root) %{_sysconfdir}/pki/rpm-gpg/*
-%attr(0644,root,root) %{_sysconfdir}/yum/pluginconf.d/versionlock.cta
-%attr(0755,root,root) %{_bindir}/cta-versionlock
+%config(noreplace) %{_sysconfdir}/yum.repos.d/*
+%{_sysconfdir}/pki/rpm-gpg/*
+%{_sysconfdir}/yum/pluginconf.d/versionlock.cta
+%{_bindir}/cta-versionlock
 
 %package -n cta-eosdf
-Summary: Report free space for EOS-managed CTA disk buffers
+Summary: CERN Tape Archive EOS disk buffer space reporter
 Requires: xrootd-client %{xrootdVersionConstraint}
 Requires: sed
 %description -n cta-eosdf
-cta-eosdf reports free disk space in the default EOS namespace.
+Provides a command-line tool that reports free space in the default EOS
+namespace used for CTA disk buffers.
 %files -n cta-eosdf
 %license COPYING
-%attr(0755,cta,tape) %{_bindir}/cta-eosdf.sh
+%{_bindir}/cta-eosdf.sh

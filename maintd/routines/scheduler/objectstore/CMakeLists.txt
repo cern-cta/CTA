@@ -13,4 +13,4 @@ target_link_libraries(ctaosdbroutines
 
 set_property(TARGET ctaosdbroutines PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaosdbroutines PROPERTY   VERSION "${CTA_LIBVERSION}")
-install(TARGETS ctaosdbroutines DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctaosdbroutines DESTINATION ${CMAKE_INSTALL_LIBDIR})

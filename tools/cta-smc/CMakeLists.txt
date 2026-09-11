@@ -19,11 +19,11 @@ set(SMC_SRC_FILES
 
 add_executable(cta-smc ${SMC_SRC_FILES})
 target_link_libraries(cta-smc ctarmc ctacommon ctaruntime)
-install(TARGETS cta-smc DESTINATION /usr/bin)
+install(TARGETS cta-smc DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 #
 # documentation
 #
 
 add_manpage(cta-smc)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-smc.1cta DESTINATION /usr/share/man/man1)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-smc.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)

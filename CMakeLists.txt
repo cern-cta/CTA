@@ -134,8 +134,10 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "source")
   set(CMAKE_DISABLE_SOURCE_CHANGES ON)
   list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
   include(GNUInstallDirs)
-  set(CMAKE_INSTALL_PREFIX "/")
-  set(CTA_SYSTEMD_UNIT_DIR "usr/lib/systemd/system" CACHE PATH
+  if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+    set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Installation prefix" FORCE)
+  endif()
+  set(CTA_SYSTEMD_UNIT_DIR "lib/systemd/system" CACHE PATH
     "Installation directory for systemd system units")
 
   include_directories(${PROJECT_SOURCE_DIR})
@@ -161,9 +163,6 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "source")
   if(NOT CTA_USE_PGSCHED)
     find_package(librados2 REQUIRED)
   endif()
-
-  install (CODE "message (STATUS \"Installing directory \$ENV{DESTDIR}/var/log/cta\")")
-  install (CODE "file (MAKE_DIRECTORY \$ENV{DESTDIR}/var/log/cta)")
 
   #
   # Location of git submodule containing the XRootD SSI Protocol Buffer bindings
@@ -258,7 +257,8 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "none")
     rpmtools_add_rpm_targets(
       "${PROJECT_NAME}"
       "packaging/rpm/${PROJECT_NAME}.spec.in"
-      "${CTA_PACKAGE_MODE}")
+      "${CTA_PACKAGE_MODE}"
+      "packaging/sysusers/cta.conf")
   elseif(CTA_PACKAGE_FORMAT STREQUAL "deb")
     include(cmake/DebTools.cmake)
   else()

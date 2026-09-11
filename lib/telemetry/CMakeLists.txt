@@ -18,9 +18,9 @@ target_include_directories(ctatelemetry PUBLIC
 target_include_directories(ctatelemetry PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_link_libraries(ctatelemetry PUBLIC ctacommon ${OPENTELEMETRY_CPP_LIBRARIES})
 
-install(TARGETS ctatelemetry DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctatelemetry DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES cta-otel.example.yaml
-  DESTINATION usr/${CMAKE_INSTALL_DOCDIR}
+  DESTINATION ${CMAKE_INSTALL_DOCDIR}
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
 foreach(component frontend maintd objectstore rdbms scheduler taped)
@@ -35,5 +35,5 @@ foreach(component frontend maintd objectstore rdbms scheduler taped)
   set_property(TARGET ctatelemetry${component} PROPERTY VERSION "${CTA_LIBVERSION}")
   target_include_directories(ctatelemetry${component} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
   target_link_libraries(ctatelemetry${component} PUBLIC ctatelemetry)
-  install(TARGETS ctatelemetry${component} DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+  install(TARGETS ctatelemetry${component} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endforeach()

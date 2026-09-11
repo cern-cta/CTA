@@ -20,5 +20,5 @@ target_link_libraries(cta-readtp
 
 add_manpage(cta-readtp)
 
-install(TARGETS cta-readtp DESTINATION /usr/bin)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-readtp.1cta DESTINATION /usr/share/man/man1)
+install(TARGETS cta-readtp DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-readtp.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)

@@ -10,5 +10,5 @@ add_executable(cta-database-poll
 
 target_link_libraries(cta-database-poll ctacatalogue)
 
-install(TARGETS cta-database-poll DESTINATION /usr/bin)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-database-poll.1cta DESTINATION /usr/share/man/man1)
+install(TARGETS cta-database-poll DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-database-poll.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)

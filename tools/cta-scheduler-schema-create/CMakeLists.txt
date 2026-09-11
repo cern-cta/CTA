@@ -8,4 +8,4 @@ add_executable(cta-scheduler-schema-create
 
 target_link_libraries(cta-scheduler-schema-create ctaschedulerschema ctacatalogue)
 
-install(TARGETS cta-scheduler-schema-create DESTINATION /usr/bin)
+install(TARGETS cta-scheduler-schema-create DESTINATION ${CMAKE_INSTALL_BINDIR})

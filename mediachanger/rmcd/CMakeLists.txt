@@ -27,8 +27,8 @@ add_dependencies(cta-example-config-checks cta-rmcd-config-check)
 
 add_manpage (cta-rmcd)
 
-install (TARGETS cta-rmcd DESTINATION usr/bin)
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-rmcd.1cta DESTINATION /usr/share/man/man1)
+install (TARGETS cta-rmcd DESTINATION ${CMAKE_INSTALL_BINDIR})
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-rmcd.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 install (FILES cta-rmcd.example.toml
-  DESTINATION usr/${CMAKE_INSTALL_DOCDIR}
+  DESTINATION ${CMAKE_INSTALL_DOCDIR}
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)

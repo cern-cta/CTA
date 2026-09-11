@@ -58,7 +58,8 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,sharing=locked \
     --mount=type=cache,target=/var/cache/yum,sharing=locked \
     # Ensure consistent user ID for CTA services
-    # cta-common adds this user already, but it gives no guarantees on its ID, which we need to be stable for Kubernetes
+    # cta-runtime adds this user already, but it gives no guarantees on its ID.
+    # We need the ID to be stable for Kubernetes.
     # Tape group already exists by default with gid 33
     useradd -m -u 1000 -g tape cta && \
     # Ensure cta-versionlock can update the versionlock file (file needs to exist)

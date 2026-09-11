@@ -36,5 +36,5 @@ endif()
 
 target_link_libraries(cta-catalogue-schema-create ctacatalogue)
 
-install(TARGETS cta-catalogue-schema-create DESTINATION /usr/bin)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-schema-create.1cta DESTINATION /usr/share/man/man1)
+install(TARGETS cta-catalogue-schema-create DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-schema-create.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
