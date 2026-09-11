@@ -62,7 +62,7 @@ target_compile_definitions(ctardbmssqlite PRIVATE VERSION_API="${CTA_VERSION}-${
 target_link_libraries (ctardbmssqlite ctardbms ctacommon
   ${SQLITE_LIBRARIES})
 
-install(TARGETS ctardbmssqlite DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctardbmssqlite DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # POSTGRES
 add_library (ctardbmspostgres SHARED
@@ -75,7 +75,7 @@ target_compile_definitions(ctardbmspostgres PRIVATE VERSION_API="${CTA_VERSION}-
 target_link_libraries (ctardbmspostgres ctardbms ctacommon
   ${POSTGRES_LIBRARIES})
 
-install(TARGETS ctardbmspostgres DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctardbmspostgres DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 # OCCI
 if (OCCI_SUPPORT)
@@ -89,7 +89,7 @@ if (OCCI_SUPPORT)
   target_link_libraries (ctardbmsocci ctardbms ctacommon
     ${ORACLE-INSTANTCLIENT_LIBRARIES})
 
-  install(TARGETS ctardbmsocci DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+  install(TARGETS ctardbmsocci DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
 add_library (ctardbmswrapper SHARED
@@ -97,7 +97,9 @@ add_library (ctardbmswrapper SHARED
 set_property(TARGET ctardbmswrapper PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctardbmswrapper PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_compile_definitions(ctardbmswrapper PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+target_compile_definitions(ctardbmswrapper PRIVATE
+  CTA_ABI_SOVERSION="${CTA_SOVERSION}"
+  VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
 
 target_link_libraries (ctardbmswrapper
   ctacommon
@@ -107,7 +109,7 @@ if (OCCI_SUPPORT)
   set_property (TARGET ctardbmswrapper APPEND PROPERTY INSTALL_RPATH ${ORACLE-INSTANTCLIENT_RPATH})
 endif()
 
-install (TARGETS ctardbmswrapper DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctardbmswrapper DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 set(RDBMS_WRAPPER_UNIT_TESTS_LIB_SRC_FILES
   ConnTest.cpp
@@ -132,4 +134,4 @@ if (OCCI_SUPPORT)
   target_link_libraries (ctardbmswrapperunittests ctardbmsocci)
 endif()
 
-install(TARGETS ctardbmswrapperunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctardbmswrapperunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})

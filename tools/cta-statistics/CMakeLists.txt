@@ -20,7 +20,7 @@ add_library (ctastatistics SHARED
 set_property(TARGET ctastatistics PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctastatistics PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-install (TARGETS ctastatistics DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctastatistics DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctastatistics
   ctacatalogue
@@ -29,7 +29,7 @@ target_link_libraries (ctastatistics
   ctardbms)
 
 install (FILES ${CMAKE_SOURCE_DIR}/catalogue/cta-catalogue.example.conf
-  DESTINATION usr/${CMAKE_INSTALL_DOCDIR}
+  DESTINATION ${CMAKE_INSTALL_DOCDIR}
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
 add_executable(cta-statistics-save
@@ -40,7 +40,7 @@ add_executable(cta-statistics-save
 
 target_link_libraries (cta-statistics-save ctastatistics)
 
-install (TARGETS cta-statistics-save DESTINATION /usr/bin)
+install (TARGETS cta-statistics-save DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 add_executable(cta-statistics-update
   StatisticsUpdateCmd.cpp
@@ -50,4 +50,4 @@ add_executable(cta-statistics-update
 
 target_link_libraries (cta-statistics-update ctastatistics)
 
-install (TARGETS cta-statistics-update DESTINATION /usr/bin)
+install (TARGETS cta-statistics-update DESTINATION ${CMAKE_INSTALL_BINDIR})

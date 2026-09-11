@@ -10,5 +10,5 @@ add_executable(cta-catalogue-admin-user-create
 
 target_link_libraries(cta-catalogue-admin-user-create ctacatalogue)
 
-install(TARGETS cta-catalogue-admin-user-create DESTINATION /usr/bin)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-admin-user-create.1cta DESTINATION /usr/share/man/man1)
+install(TARGETS cta-catalogue-admin-user-create DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-catalogue-admin-user-create.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)

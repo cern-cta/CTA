@@ -34,14 +34,14 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login& login) {
   switch (login.dbType) {
     case Login::DBTYPE_IN_MEMORY:
     case Login::DBTYPE_SQLITE:
-      pm.load("libctardbmssqlite.so");
+      pm.load("libctardbmssqlite.so." CTA_ABI_SOVERSION);
       if (!pm.isRegistered("ctardbmssqlite")) {
         pm.bootstrap("factory");
       }
       return pm.plugin("ctardbmssqlite").make("SqliteConnFactory", login);
     case Login::DBTYPE_ORACLE:
 #ifdef SUPPORT_OCCI
-      pm.load("libctardbmsocci.so");
+      pm.load("libctardbmsocci.so." CTA_ABI_SOVERSION);
       if (!pm.isRegistered("ctardbmsocci")) {
         pm.bootstrap("factory");
       }
@@ -50,7 +50,7 @@ std::unique_ptr<ConnFactory> ConnFactoryFactory::create(const Login& login) {
       throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
 #endif
     case Login::DBTYPE_POSTGRESQL:
-      pm.load("libctardbmspostgres.so");
+      pm.load("libctardbmspostgres.so." CTA_ABI_SOVERSION);
       if (!pm.isRegistered("ctardbmspostgres")) {
         pm.bootstrap("factory");
       }

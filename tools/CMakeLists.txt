@@ -40,9 +40,9 @@ add_library (ctacataloguecmdlineunittests SHARED
 set_property(TARGET ctacataloguecmdlineunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacataloguecmdlineunittests PROPERTY VERSION "${CTA_LIBVERSION}")
 
-install (TARGETS ctacataloguecmdlineunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctacataloguecmdlineunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 add_manpage(cta-admin)
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-admin.1cta DESTINATION /usr/share/man/man1)
-install(FILES cta-admin.example.conf DESTINATION usr/${CMAKE_INSTALL_DOCDIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-admin.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
+install(FILES cta-admin.example.conf DESTINATION ${CMAKE_INSTALL_DOCDIR})

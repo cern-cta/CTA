@@ -31,7 +31,7 @@ target_link_libraries (ctardbms
   ctardbmswrapper
   ctatelemetryrdbms)
 
-install (TARGETS ctardbms DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctardbms DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 set(RDBMS_UNIT_TESTS_LIB_SRC_FILES
   ConnPoolTest.cpp
@@ -48,7 +48,7 @@ set_property(TARGET ctardbmsunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 target_link_libraries (ctardbmsunittests
   ctardbms)
 
-install(TARGETS ctardbmsunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctardbmsunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 set(IN_MEMORY_CONN_UNIT_TESTS_LIB_SRC_FILES
   ConnTest.cpp
@@ -62,7 +62,7 @@ set_property(TARGET ctainmemoryconnunittests PROPERTY   VERSION "${CTA_LIBVERSIO
 target_link_libraries (ctainmemoryconnunittests
   ctardbms)
 
-install (TARGETS ctainmemoryconnunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctainmemoryconnunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 set(IN_MEMORY_STMT_UNIT_TESTS_LIB_SRC_FILES
   StmtTest.cpp
@@ -76,7 +76,7 @@ set_property(TARGET ctainmemorystmtunittests PROPERTY   VERSION "${CTA_LIBVERSIO
 target_link_libraries (ctainmemorystmtunittests
   ctardbms)
 
-install (TARGETS ctainmemorystmtunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctainmemorystmtunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 set (DBCONFIG_CONN_UNIT_TESTS_LIB_SRC_FILES
   ConnTest.cpp
@@ -90,7 +90,7 @@ set_property(TARGET ctadbconfigconnunittests PROPERTY   VERSION "${CTA_LIBVERSIO
 target_link_libraries (ctadbconfigconnunittests
   ctardbms)
 
-install (TARGETS ctadbconfigconnunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctadbconfigconnunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 set (DBCONFIG_STMT_UNIT_TESTS_LIB_SRC_FILES
   StmtTest.cpp
@@ -104,4 +104,4 @@ set_property(TARGET ctadbconfigstmtunittests PROPERTY   VERSION "${CTA_LIBVERSIO
 target_link_libraries (ctadbconfigstmtunittests
   ctardbms)
 
-install (TARGETS ctadbconfigstmtunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctadbconfigstmtunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})

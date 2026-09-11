@@ -32,7 +32,7 @@ target_link_libraries (ctamediachanger
   ctacommon
 )
 
-install (TARGETS ctamediachanger DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctamediachanger DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 set (MEDIACHANGER_UNIT_TESTS_LIB_SRC_FILES
   IoTest.cpp
@@ -47,4 +47,4 @@ set_property(TARGET ctamediachangerunittests PROPERTY   VERSION "${CTA_LIBVERSIO
 target_link_libraries (ctamediachangerunittests
   ctamediachanger)
 
-install (TARGETS ctamediachangerunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctamediachangerunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})

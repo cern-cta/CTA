@@ -488,7 +488,7 @@ function(add_manpage)
   foreach(arg IN LISTS ARGN)
     add_document(
       TARGET ${arg}_man_page
-      OUTPUT_FILE ${arg}.1cta
+      OUTPUT_FILE ${arg}.1
       SOURCES ${arg}.1cta.md
       NO_EXPORT_PRODUCT
       PANDOC_DIRECTIVES --standalone --to man

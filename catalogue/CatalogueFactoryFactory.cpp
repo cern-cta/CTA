@@ -43,7 +43,7 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(log::Logger& l
 
   switch (login.dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
-      pm.load("libctacatalogueinmemory.so");
+      pm.load("libctacatalogueinmemory.so." CTA_ABI_SOVERSION);
       if (!pm.isRegistered("ctacatalogueinmemory")) {
         pm.bootstrap("factory");
       }
@@ -51,7 +51,7 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(log::Logger& l
         .make("InMemoryCatalogueFactory", log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
     case rdbms::Login::DBTYPE_ORACLE:
 #ifdef SUPPORT_OCCI
-      pm.load("libctacatalogueocci.so");
+      pm.load("libctacatalogueocci.so." CTA_ABI_SOVERSION);
       if (!pm.isRegistered("ctacatalogueocci")) {
         pm.bootstrap("factory");
       }
@@ -61,7 +61,7 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(log::Logger& l
       throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
 #endif
     case rdbms::Login::DBTYPE_POSTGRESQL:
-      pm.load("libctacataloguepostgres.so");
+      pm.load("libctacataloguepostgres.so." CTA_ABI_SOVERSION);
       if (!pm.isRegistered("ctacataloguepostgres")) {
         pm.bootstrap("factory");
       }

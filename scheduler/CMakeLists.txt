@@ -69,15 +69,15 @@ endif()
 set_property(TARGET ctascheduler PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctascheduler PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-install (TARGETS ctascheduler DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctascheduler DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 if(NOT CTA_USE_PGSCHED)
   install (FILES cta-scheduler.example.conf
-    DESTINATION usr/${CMAKE_INSTALL_DOCDIR}
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}
     PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 else()
   install (FILES cta-scheduler.pg.example.conf
-    DESTINATION usr/${CMAKE_INSTALL_DOCDIR}
+    DESTINATION ${CMAKE_INSTALL_DOCDIR}
     RENAME cta-scheduler.example.conf
     PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 endif()
@@ -101,4 +101,4 @@ target_link_libraries (ctaschedulerunittests ctascheduler)
 set_property(TARGET ctaschedulerunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaschedulerunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-install(TARGETS ctaschedulerunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctaschedulerunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})

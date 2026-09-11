@@ -31,4 +31,4 @@ target_link_libraries(ctatapeddriveunittests
   ctatapedsystem
   ctatapeddrive)
 
-install(TARGETS ctatapeddriveunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctatapeddriveunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})

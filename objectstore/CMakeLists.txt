@@ -69,7 +69,7 @@ target_link_libraries(ctaobjectstore
   ctatelemetryscheduler)
 set_source_files_properties(BackendRados.cpp PROPERTIES COMPILE_OPTIONS -Wno-deprecated-declarations)
 if(NOT CTA_USE_PGSCHED)
-  install (TARGETS ctaobjectstore DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+  install (TARGETS ctaobjectstore DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
 set(ObjectStoreUnitTests
@@ -92,7 +92,7 @@ set_property(TARGET ctaobjectstoreunittests PROPERTY   VERSION "${CTA_LIBVERSION
 target_link_libraries(ctaobjectstoreunittests
   rados ctacommon gtest ctaobjectstore)
 if(NOT CTA_USE_PGSCHED)
-  install(TARGETS ctaobjectstoreunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+  install(TARGETS ctaobjectstoreunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 
 add_executable(cta-objectstore-initialize cta-objectstore-initialize.cpp)
@@ -126,5 +126,5 @@ target_link_libraries(cta-objectstore-create-missing-repack-index
 if(NOT CTA_USE_PGSCHED)
   install(TARGETS cta-objectstore-initialize cta-objectstore-list cta-objectstore-reset cta-objectstore-dump-object
     cta-objectstore-dereference-removed-queues cta-objectstore-collect-orphaned-object cta-objectstore-create-missing-repack-index
-    DESTINATION usr/bin)
+    DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()

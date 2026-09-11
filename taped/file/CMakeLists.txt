@@ -61,7 +61,7 @@ target_link_libraries(ctatapedfileunittests
 set_property(TARGET ctatapedfileunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedfileunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-install(TARGETS ctatapedfileunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctatapedfileunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 add_executable(cta-test-osm-reader
   OsmReaderTest.cpp)
@@ -73,7 +73,7 @@ target_link_libraries(cta-test-osm-reader
   gtest
 )
 
-install(TARGETS cta-test-osm-reader DESTINATION usr/bin)
+install(TARGETS cta-test-osm-reader DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 add_executable(cta-test-enstore-large-reader
   EnstoreLargeReaderTest.cpp)
@@ -85,4 +85,4 @@ target_link_libraries(cta-test-enstore-large-reader
   gtest
 )
 
-install(TARGETS cta-test-enstore-large-reader DESTINATION usr/bin)
+install(TARGETS cta-test-enstore-large-reader DESTINATION ${CMAKE_INSTALL_BINDIR})

@@ -15,4 +15,4 @@ target_link_libraries(ctardbroutines
 
 set_property(TARGET ctardbroutines PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctardbroutines PROPERTY   VERSION "${CTA_LIBVERSION}")
-install(TARGETS ctardbroutines DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctardbroutines DESTINATION ${CMAKE_INSTALL_LIBDIR})

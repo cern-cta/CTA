@@ -122,7 +122,7 @@ add_library (ctacommon SHARED
 set_property(TARGET ctacommon PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacommon PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-install (TARGETS ctacommon DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install (TARGETS ctacommon DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctacommon
   ctaversioninfo
@@ -185,6 +185,6 @@ target_include_directories(ctaauth PUBLIC ${CMAKE_SOURCE_DIR}/common/jwt-cpp/inc
 target_link_libraries(ctaauth PRIVATE curl OpenSSL::Crypto)
 target_link_libraries(ctacommonunittests ctaauth)
 
-install(TARGETS ctacommonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctacommonunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
 add_executable(mutexLtrace process/threading/MutexLtrace.cpp)
 target_link_libraries(mutexLtrace ctacommon)
