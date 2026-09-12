@@ -45,14 +45,6 @@ cta/ctageneric/cta-frontend:dev
 cta/ctageneric/cta-tools:dev
 ```
 
-### Loading images into the local Kubernetes runtime
-
-`cta-dev deploy` loads locally built images into a detected minikube or k3s image store before creating the deployment.
-
-```bash
-./ci/cta-dev.sh deploy --cta-version 6-dev
-```
-
 ### Using internal repositories
 
 To enable internal CERN repositories:
