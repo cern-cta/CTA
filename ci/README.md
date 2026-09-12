@@ -16,6 +16,7 @@ This directory contains all the files necessary for development and automation w
 * `ci-debug.sh`: Opens an interactive debug container for investigating core dumps from a CI pipeline.
 * `cta-dev.bash-completion`: Script for auto-completion of `cta-dev`. Used during `cta-dev install`.
 * `cta-dev.sh`: The main script used for development: builds the project, the corresponding Docker image and deploys a local CTA test instance. See `./cta-dev.sh --help`.
+* `ci-download-artifacts.sh`: Downloads and extracts the artifacts of a single GitLab pipeline job.
 
 ### CTA development versions
 

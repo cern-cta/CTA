@@ -45,24 +45,6 @@ cta/ctageneric/cta-frontend:dev
 cta/ctageneric/cta-tools:dev
 ```
 
-### Loading images into the local Kubernetes runtime
-
-For local Kubernetes setups:
-
-```bash
-./ci/build/build_images.sh \
-  --tag dev \
-  --rpm-src build/el9/RPM/RPMS/x86_64 \
-  --load-into-k8s
-```
-
-The script automatically detects:
-
-* `minikube`
-* `k3s`
-
-and imports the generated images into the corresponding image store.
-
 ### Using internal repositories
 
 To enable internal CERN repositories:

@@ -288,9 +288,6 @@ usage_images() {
 
 Build CTA container images from the locally generated packages.
 
-Images are loaded into a running local minikube or k3s cluster when one is
-detected. Otherwise they remain in the selected container runtime.
-
 Will build a single Docker image per CTA service.
 All images are built in parallel.
 
@@ -1050,24 +1047,15 @@ images_cta() {
   # Build
   log_task "Building container images tagged ${cta_image_tag} from ${package_source}..."
   local extra_image_build_options=()
-  local load_into_k8s=false
   [[ $enable_internal_repos == true ]] && extra_image_build_options+=(--enable-internal-repos)
   [[ $oracle_support == true ]] && extra_image_build_options+=(--enable-oracle-support)
   [[ $enable_debug_image == true ]] && extra_image_build_options+=(--enable-debug-image)
-  if local_kubernetes_available; then
-    extra_image_build_options+=(--load-into-k8s)
-    load_into_k8s=true
-  fi
   cd "${project_root}"
   ./ci/build/build_images.sh \
     --tag "${cta_image_tag}" \
     --package-src "${package_source}" \
     --dockerfile "${image_dockerfile}" \
     "${extra_image_build_options[@]}"
-
-  if [[ $load_into_k8s == false ]]; then
-    log_warn "Kubernetes image loading skipped: neither minikube nor k3s is installed."
-  fi
 }
 
 validate_deployment_environment() {
@@ -1119,8 +1107,34 @@ finish_namespace_deletion() {
   [[ $deletion_status -eq 0 ]] || die "Failed to delete the previous CTA deployment."
 }
 
+load_cta_images_into_kubernetes() {
+  [[ $cta_image_registry == "$local_image_registry" ]] || return 0
+
+  local targets=(cta-taped cta-maintd cta-rmcd cta-frontend cta-tools)
+  [[ $enable_debug_image == true ]] && targets+=(cta-debug)
+
+  local image_refs=()
+  local target
+  for target in "${targets[@]}"; do
+    image_refs+=("cta/ctageneric/${target}:${cta_image_tag}")
+  done
+
+  # Save all images together so their shared layers occur only once in the archive.
+  if command -v minikube >/dev/null 2>&1; then
+    log_task "Loading container images into minikube..."
+    podman save --multi-image-archive "${image_refs[@]}" | minikube image load --overwrite -
+  fi
+
+  if command -v k3s >/dev/null 2>&1; then
+    log_task "Loading container images into k3s/containerd..."
+    podman save --multi-image-archive "${image_refs[@]}" | sudo /usr/local/bin/k3s ctr images import --local -
+  fi
+}
+
 deploy_cta() {
   validate_deployment_environment
+
+  load_cta_images_into_kubernetes
 
   finish_namespace_deletion
 
@@ -1337,7 +1351,15 @@ main() {
 
   load_cta_dev_env
   parse_options "$command" "$@"
-  validate_podman
+
+  case "$command" in
+    build|images|up|debug|all)
+      validate_podman
+      ;;
+    deploy)
+      [[ $cta_image_registry != "$local_image_registry" ]] || validate_podman
+      ;;
+  esac
 
   case "$command" in
     build)
