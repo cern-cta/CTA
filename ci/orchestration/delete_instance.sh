@@ -43,7 +43,6 @@ save_logs() {
   tmpdir=$(mktemp --tmpdir="${log_dir}" -d -t "${namespace}-deletion-logs-XXXX")
   # Ensure tmp dir is always cleaned up
   add_trap 'rm -rf -- "$tmpdir"' EXIT
-  mkdir -p "${tmpdir}/pods"
   log_task "Collecting logs in ${tmpdir}..."
 
   # We get all the pod details in one go so that we don't have to do too many kubectl calls
@@ -68,7 +67,7 @@ save_logs() {
       ]
     | join("\u001f")
   ' | while IFS=$'\x1f' read -r pod instance phase containers; do
-    pod_dir="${tmpdir}/pods/${pod}"
+    pod_dir="${tmpdir}/${pod}"
     mkdir -p "${pod_dir}"
 
     kubectl -n "${namespace}" describe pod "${pod}" > "${pod_dir}/describe.log" || {
