@@ -63,7 +63,8 @@
       "rbd-nbd"
     ],
     "group-ceph-devel": [
-      "librados-devel"
+      "librados-devel",
+      "libradospp-devel"
     ],
     "group-eos": [
       "eos-archive",
