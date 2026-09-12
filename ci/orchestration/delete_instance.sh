@@ -43,7 +43,7 @@ save_logs() {
   tmpdir=$(mktemp --tmpdir="${log_dir}" -d -t "${namespace}-deletion-logs-XXXX")
   # Ensure tmp dir is always cleaned up
   add_trap 'rm -rf -- "$tmpdir"' EXIT
-  mkdir -p "${tmpdir}/pods" "${tmpdir}/varlogs"
+  mkdir -p "${tmpdir}/pods"
   log_task "Collecting logs in ${tmpdir}..."
 
   # We get all the pod details in one go so that we don't have to do too many kubectl calls
@@ -82,11 +82,6 @@ save_logs() {
         rm -f "${pod_dir}/${container}.stdout.log"
       fi
 
-      if ! kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- true 2&> /dev/null; then
-        # Cannot exec into the pod for whatever reason (e.g. a completed job), so skip
-        continue
-      fi
-
       # Collect /var/log for any pod part of the eos or cta instances
       if [[ "${instance}" == "cta" || "${instance}" == "eos" ]]; then
         max_allowed_size=$((2 * 1024 * 1024 * 1024)) # 2 GB
@@ -104,9 +99,6 @@ save_logs() {
           log_error "Failed to collect /var/log contents for ${pod}/${container}."
           continue
         fi
-        log_task "Collecting /var/log contents for ${pod}/${container}..."
-        var_log_dir="${tmpdir}/varlogs/${pod}/${container}"
-        mkdir -p "${var_log_dir}"
         # Only tar part of the logs
         subdirs_to_tar=("cta" "eos" "tmp" "xrootd" "*/xrd_errors")
         if ! existing_dirs=$(
@@ -117,27 +109,16 @@ save_logs() {
           continue
         fi
 
-        kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
+        log_task "Streaming and compressing /var/log contents for ${pod}/${container}..."
+        if ! kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
           tar --warning=no-file-removed --ignore-failed-read -C /var/log -cf - ${existing_dirs} \
-          | tar -C "${var_log_dir}" -xf - \
-          || echo "    Failed to collect /var/log contents" >&2
-        # Remove empty files and directories to prevent polluting the output logs
-        find "${var_log_dir}" -type d -empty -delete -o -type f -empty -delete
-
-        if [[ -d "${var_log_dir}" ]]; then
-          log_task "Compressing /var/log contents for ${pod}/${container}..."
-          if ! XZ_OPT='-0 -T0' tar --warning=no-file-removed --ignore-failed-read \
-            -C "${var_log_dir}" -Jcf "${pod_dir}/${container}.varlog.tar.xz" .; then
-            log_warn "Failed to compress /var/log contents for ${pod}/${container}."
-            rm -f "${pod_dir}/${container}.varlog.tar.xz"
-          fi
+          | XZ_OPT='-0 -T0' xz > "${pod_dir}/${container}.varlog.tar.xz"; then
+          log_warn "Failed to collect /var/log contents for ${pod}/${container}."
+          rm -f "${pod_dir}/${container}.varlog.tar.xz"
         fi
       fi
     done
   done
-
-  # Clean up uncompressed /var/log contents
-  rm -rf "${tmpdir}/varlogs"
 
   # Save artifacts if running in CI
   if [[ -n "${CI_PIPELINE_ID}" ]]; then
