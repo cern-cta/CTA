@@ -43,86 +43,83 @@ save_logs() {
   tmpdir=$(mktemp --tmpdir="${log_dir}" -d -t "${namespace}-deletion-logs-XXXX")
   # Ensure tmp dir is always cleaned up
   add_trap 'rm -rf -- "$tmpdir"' EXIT
-  mkdir -p "${tmpdir}/varlogs"
   log_task "Collecting logs in ${tmpdir}..."
 
   # We get all the pod details in one go so that we don't have to do too many kubectl calls
   pods=$(kubectl --namespace "${namespace}" get pods -o json)
 
   # Iterate over pods
+  # Use a non-whitespace delimiter so that Bash preserves empty fields such as a missing instance label.
   echo "${pods}" | jq -r '
     .items[]
     | [
         .metadata.name,
         (.metadata.labels["app.kubernetes.io/instance"] // ""),
-        (.spec.containers | map(.name) | join(" "))
+        (.status.phase // ""),
+        (
+          (
+            ((.spec.initContainers // []) | map(.name + ":init"))
+            + (.spec.containers | map(.name + ":regular"))
+            + ((.spec.ephemeralContainers // []) | map(.name + ":ephemeral"))
+          )
+          | join(" ")
+        )
       ]
-    | @tsv
-  ' | while IFS=$'\t' read -r pod instance containers; do
-    # Pod-level probe: cheap and avoids SIGPIPE/pipefail issues
-    if ! kubectl -n "${namespace}" logs "${pod}" --limit-bytes=1 >/dev/null 2>&1; then
-      echo "[pod=${pod}]"
-      log_warn "Pod ${pod} failed to start. Collecting describe output."
-      kubectl -n "${namespace}" describe pod "${pod}" > "${tmpdir}/${pod}-describe.log"
-      continue
-    fi
+    | join("\u001f")
+  ' | while IFS=$'\x1f' read -r pod instance phase containers; do
+    pod_dir="${tmpdir}/${pod}"
+    mkdir -p "${pod_dir}"
 
-    set -- ${containers}
-    num_containers=$#
+    kubectl -n "${namespace}" describe pod "${pod}" > "${pod_dir}/describe.log" || {
+      log_warn "Failed to collect describe output for ${pod}."
+      rm -f "${pod_dir}/describe.log"
+    }
 
-    for container in ${containers}; do
-      # Name of the (sub)directory to output logs to
-      output_dir="${pod}"
-      [[ "${num_containers}" -gt 1 ]] && output_dir="${pod}-${container}"
-      echo "[pod=${pod}] [container=${container}]"
+    for container_entry in ${containers}; do
+      container="${container_entry%:*}"
+      container_type="${container_entry##*:}"
 
-      log_task "Collecting stdout logs for ${pod}/${container}..."
       # Collect stdout logs
-      kubectl -n "${namespace}" logs "${pod}" -c "${container}" > "${tmpdir}/${output_dir}.log"
-
-      if ! kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- true 2&> /dev/null; then
-        # Cannot exec into the pod for whatever reason (e.g. a completed job), so skip
-        continue
+      if ! kubectl -n "${namespace}" logs "${pod}" -c "${container}" > "${pod_dir}/${container}.stdout.log"; then
+        log_warn "Failed to collect stdout logs for ${pod}/${container}."
+        rm -f "${pod_dir}/${container}.stdout.log"
       fi
 
-      # Collect /var/log for any pod part of the eos or cta instances
-      if [[ "${instance}" == "cta" || "${instance}" == "eos" ]]; then
+      # Init and ephemeral containers are not expected to hold the service's /var/log contents.
+      if [[ ("${instance}" == "cta" || "${instance}" == "eos") \
+        && "${phase}" == "Running" && "${container_type}" == "regular" ]]; then
         max_allowed_size=$((2 * 1024 * 1024 * 1024)) # 2 GB
-        var_log_size=$(
-          kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
-            du -sb /var/log 2>/dev/null | awk '{print $1}'
-        )
+        var_log_size=$(kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
+          du -sb /var/log 2>/dev/null || true)
+        var_log_size="${var_log_size%%[[:space:]]*}"
+        [[ "${var_log_size}" =~ ^[0-9]+$ ]] || var_log_size=0
 
         if (( var_log_size > max_allowed_size )); then
           log_warn "Skipping /var/log for ${pod}/${container}: ${var_log_size} bytes is too large."
-          kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- du -h /var/log >&2
+          kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- du -h /var/log >&2 || true
           log_error "Failed to collect /var/log contents for ${pod}/${container}."
           continue
         fi
-        log_task "Collecting /var/log contents for ${pod}/${container}..."
-        mkdir -p "${tmpdir}/varlogs/${output_dir}"
         # Only tar part of the logs
         subdirs_to_tar=("cta" "eos" "tmp" "xrootd" "*/xrd_errors")
-        existing_dirs=$(
+        if ! existing_dirs=$(
           kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
-            bash -c "cd /var/log && find ${subdirs_to_tar[*]} -maxdepth 0 -type d 2>/dev/null || true"
-        )
+            bash -c "cd /var/log && find ${subdirs_to_tar[*]} -maxdepth 0 -type d 2>/dev/null || true" 2>/dev/null
+        ); then
+          log_warn "Failed to discover /var/log contents for ${pod}/${container}."
+          continue
+        fi
+        [[ -n "${existing_dirs}" ]] || continue
 
-        kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
+        if ! kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
           tar --warning=no-file-removed --ignore-failed-read -C /var/log -cf - ${existing_dirs} \
-          | tar -C "${tmpdir}/varlogs/${output_dir}" -xf - \
-          || echo "    Failed to collect /var/log contents" >&2
-        # Remove empty files and directories to prevent polluting the output logs
-        find "${tmpdir}/varlogs/${output_dir}" -type d -empty -delete -o -type f -empty -delete
+          | XZ_OPT='-0 -T0' xz > "${pod_dir}/${container}.varlog.tar.xz"; then
+          log_warn "Failed to collect /var/log contents for ${pod}/${container}."
+          rm -f "${pod_dir}/${container}.varlog.tar.xz"
+        fi
       fi
     done
   done
-
-  # Compress /var/log contents
-  log_task "Compressing collected /var/log contents..."
-  XZ_OPT='-0 -T0' tar --warning=no-file-removed --ignore-failed-read -C "${tmpdir}/varlogs" -Jcf "${tmpdir}/varlog.tar.xz" .
-  # Clean up uncompressed files
-  rm -rf "${tmpdir}/varlogs"
 
   # Save artifacts if running in CI
   if [[ -n "${CI_PIPELINE_ID}" ]]; then

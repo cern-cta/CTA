@@ -183,7 +183,14 @@ spec:
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
     - cd ci/orchestration/
     - delete_start=$(date +%s)
-    - ./delete_instance.sh --namespace ${NAMESPACE}
+    # Successful MR jobs do not need diagnostic logs; failures and cancelled jobs still collect them.
+    # Skipped for increased pipeline speed
+    - |
+      delete_args=(--namespace "${NAMESPACE}")
+      if [[ -n "${CI_MERGE_REQUEST_ID}" && "${CI_JOB_STATUS}" == "success" ]]; then
+        delete_args+=(--discard-logs)
+      fi
+      ./delete_instance.sh "${delete_args[@]}"
     - delete_end=$(date +%s)
     - echo "k8s_${CI_JOB_NAME_SLUG//-/_}_delete_instance_duration_sec $((delete_end - delete_start))" >> $METRICS_FILE
   tags:  # Used to indicate that these jobs should run on our own runners

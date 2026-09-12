@@ -252,8 +252,11 @@ def test_archive(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
     eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_archive.sh", Path("/tmp"), permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
     # TODO: replace by something more deterministic. Is this even necessary?
-    print("Sleeping 5 seconds to allow MGM-FST communication to settle after disk copy deletion.")
-    time.sleep(5)
+    # We need a deterministic check for this: the mgm may report d0::t1
+    # even though the FST has not completed deletion of the file
+    # If we can somehow (efficiently) wait for this deletion, then this is no longer necessary
+    print("Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion.")
+    time.sleep(10)
 
 
 def test_retrieve(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
