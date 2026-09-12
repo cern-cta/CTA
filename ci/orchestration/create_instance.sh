@@ -335,7 +335,6 @@ create_instance() {
   fi
 
   # Note that some of these charts are installed in parallel
-  # See README.md for details on the order
   log_run helm upgrade --install auth helm/auth \
                                 --namespace "${namespace}" \
                                 --wait --wait-for-jobs --timeout 2m &
@@ -360,8 +359,8 @@ create_instance() {
                                 --wait --wait-for-jobs --timeout 4m &
   scheduler_pid=$!
 
-  wait $auth_pid || exit 1
-
+  # While the EOS and dCache charts need some secrets/config from the auth chart,
+  # Kubernetes will simply keep the pods pending until those are available
   if [[ $eos_enabled == "true" ]]; then
     ./deploy_eos.sh --namespace "${namespace}" \
                     --eos-config "${eos_config}" \
@@ -412,6 +411,7 @@ create_instance() {
                                 --wait --timeout "${chart_install_timeout}"m ${extra_cta_chart_flags}
   log_success "Deployed CTA in namespace ${namespace}."
 
+  wait $auth_pid || exit 1
   # At this point the disk buffer(s) should also be ready
   if [[ $eos_enabled == "true" ]]; then
     wait $eos_pid || exit 1
