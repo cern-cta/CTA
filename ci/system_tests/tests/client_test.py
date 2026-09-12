@@ -349,18 +349,24 @@ class TestPrepare:
         cta_cli.set_all_drives_down()
         result = eos_client.prepare_files(disk_instance_name, [prepare_test_paths.tape_file])
         assert result.success, result.stderr
-        # A valid tape file must be represented as an active request without an error
-        response = _response_for_path(
-            eos_client.query_prepare(disk_instance_name, result.stdout.strip(), [prepare_test_paths.tape_file]),
-            prepare_test_paths.tape_file,
-        )
-        assert response == {
-            **response,
-            "path_exists": True,
-            "requested": True,
-            "has_reqid": True,
-            "error_text": "",
-        }
+        request_id = result.stdout.strip()
+
+        try:
+            # A valid tape file must be represented as an active request without an error
+            response = _response_for_path(
+                eos_client.query_prepare(disk_instance_name, request_id, [prepare_test_paths.tape_file]),
+                prepare_test_paths.tape_file,
+            )
+            assert response == {
+                **response,
+                "path_exists": True,
+                "requested": True,
+                "has_reqid": True,
+                "error_text": "",
+            }
+        finally:
+            abort = eos_client.abort_prepare(disk_instance_name, request_id, [prepare_test_paths.tape_file])
+            assert abort.success, abort.stderr
 
     def test_prepare_missing_file_fails(
         self, eos_client: EosClientHost, disk_instance_name: str, prepare_test_paths: PrepareTestPaths
@@ -396,14 +402,20 @@ class TestPrepare:
         assert result.success is not all_forbidden
         # Query the mixed request to ensure the forbidden path did not affect the valid one
         if not all_forbidden:
-            response = eos_client.query_prepare(disk_instance_name, result.stdout.strip(), paths)
-            failed = _response_for_path(response, forbidden_files[0])
-            valid = _response_for_path(response, prepare_test_paths.tape_file)
-            assert failed["path_exists"] is True
-            assert failed["requested"] is False
-            assert failed["has_reqid"] is False
-            assert failed["error_text"]
-            assert valid["error_text"] == ""
+            request_id = result.stdout.strip()
+
+            try:
+                response = eos_client.query_prepare(disk_instance_name, request_id, paths)
+                failed = _response_for_path(response, forbidden_files[0])
+                valid = _response_for_path(response, prepare_test_paths.tape_file)
+                assert failed["path_exists"] is True
+                assert failed["requested"] is False
+                assert failed["has_reqid"] is False
+                assert failed["error_text"]
+                assert valid["error_text"] == ""
+            finally:
+                abort = eos_client.abort_prepare(disk_instance_name, request_id, [prepare_test_paths.tape_file])
+                assert abort.success, abort.stderr
 
     def test_prepare_with_valid_and_missing_file(
         self,
@@ -418,16 +430,21 @@ class TestPrepare:
         paths = [prepare_test_paths.tape_file, missing_file]
         result = eos_client.prepare_files(disk_instance_name, paths)
         assert result.success
+        request_id = result.stdout.strip()
 
-        # The missing path reports its own failure without affecting the valid path
-        response = eos_client.query_prepare(disk_instance_name, result.stdout.strip(), paths)
-        failed = _response_for_path(response, missing_file)
-        valid = _response_for_path(response, prepare_test_paths.tape_file)
-        assert failed["path_exists"] is False
-        assert failed["requested"] is False
-        assert failed["has_reqid"] is False
-        assert failed["error_text"]
-        assert valid["error_text"] == ""
+        try:
+            # The missing path reports its own failure without affecting the valid path
+            response = eos_client.query_prepare(disk_instance_name, request_id, paths)
+            failed = _response_for_path(response, missing_file)
+            valid = _response_for_path(response, prepare_test_paths.tape_file)
+            assert failed["path_exists"] is False
+            assert failed["requested"] is False
+            assert failed["has_reqid"] is False
+            assert failed["error_text"]
+            assert valid["error_text"] == ""
+        finally:
+            abort = eos_client.abort_prepare(disk_instance_name, request_id, [prepare_test_paths.tape_file])
+            assert abort.success, abort.stderr
 
     def test_prepare_with_only_missing_files(
         self,

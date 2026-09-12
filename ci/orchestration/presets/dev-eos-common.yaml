@@ -86,6 +86,10 @@ mgm:
 fst:
   replicaCount: 1
 
+  # CI uses ephemeral node storage, which can temporarily dip below the
+  # production-oriented chart default of 5 GB when ci job pressure is high
+  minFsSizeGb: 1
+
   pod:
     extraSpec:
       terminationGracePeriodSeconds: 1

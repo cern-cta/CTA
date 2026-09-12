@@ -43,6 +43,8 @@ def test_general_settings(eos_mgm: EosMgmHost) -> None:
             throw_on_failure=False,
         )
         if result.success:
+            print("EOS filesystem capacity:")
+            eos_mgm.exec("eos fs ls -m")
             return
         time.sleep(1)
 
