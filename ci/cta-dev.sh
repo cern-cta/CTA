@@ -1122,12 +1122,12 @@ load_cta_images_into_kubernetes() {
   # Save all images together so their shared layers occur only once in the archive.
   if command -v minikube >/dev/null 2>&1; then
     log_task "Loading container images into minikube..."
-    podman save "${image_refs[@]}" | minikube image load --overwrite -
+    podman save --multi-image-archive "${image_refs[@]}" | minikube image load --overwrite -
   fi
 
   if command -v k3s >/dev/null 2>&1; then
     log_task "Loading container images into k3s/containerd..."
-    podman save "${image_refs[@]}" | sudo /usr/local/bin/k3s ctr images import --local -
+    podman save --multi-image-archive "${image_refs[@]}" | sudo /usr/local/bin/k3s ctr images import --local -
   fi
 }
 
