@@ -154,7 +154,6 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "source")
   find_package(Protobuf3 REQUIRED)
   find_package(opentelemetry-cpp CONFIG REQUIRED)
   find_package(GRPC REQUIRED)
-  find_package(xrootd REQUIRED)
   find_package(xrootdclient REQUIRED)
   find_package(postgres REQUIRED)
 

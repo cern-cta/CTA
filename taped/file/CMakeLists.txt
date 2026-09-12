@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2003 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-include_directories (${XROOTD_INCLUDE_DIR})
 include_directories(/usr/include/tirpc) # rpc headers are now provided by libtirpc-devel
 
 set(CTATAPEDFILE_LIBRARY_SRCS
@@ -53,6 +52,8 @@ add_library(ctatapedfileunittests SHARED
   OSMFileTest.cpp
   EnstoreFileTest.cpp
 )
+
+target_include_directories(ctatapedfileunittests PRIVATE ${XROOTD_INCLUDE_DIR})
 
 target_link_libraries(ctatapedfileunittests
   ctadisk

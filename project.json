@@ -63,8 +63,7 @@
       "rbd-nbd"
     ],
     "group-ceph-devel": [
-      "librados-devel",
-      "libradosstriper-devel"
+      "librados-devel"
     ],
     "group-eos": [
       "eos-archive",
@@ -128,9 +127,7 @@
     ],
     "group-xrootd-devel": [
       "xrootd-devel",
-      "xrootd-client-devel",
-      "xrootd-private-devel",
-      "xrootd-server-devel"
+      "xrootd-client-devel"
     ],
     "group-protobuf": [
       "protobuf-compiler",
@@ -182,11 +179,9 @@
         "json-c-devel": ">= 0.11",
         "libattr-devel": ">= 2.4.44",
         "cmake3": ">= 3.19",
-        "valgrind": ">= 3.8.1",
         "openssl-devel": ">= 1.0.1",
         "tomlplusplus-devel": "",
         "cpp-httplib-devel": "",
-        "libcurl": "",
         "libcurl-devel": "",
         "valgrind-devel": "",
         "group-grpc": "",
@@ -194,8 +189,7 @@
         "krb5-devel": "",
         "libtirpc-devel": "",
         "redhat-rpm-config": "",
-        "pandoc": "",
-        "which": ""
+        "pandoc": ""
       }
     }
   }
