@@ -47,21 +47,11 @@ cta/ctageneric/cta-tools:dev
 
 ### Loading images into the local Kubernetes runtime
 
-For local Kubernetes setups:
+`cta-dev deploy` loads locally built images into a detected minikube or k3s image store before creating the deployment.
 
 ```bash
-./ci/build/build_images.sh \
-  --tag dev \
-  --rpm-src build/el9/RPM/RPMS/x86_64 \
-  --load-into-k8s
+./ci/cta-dev.sh deploy --cta-version 6-dev
 ```
-
-The script automatically detects:
-
-* `minikube`
-* `k3s`
-
-and imports the generated images into the corresponding image store.
 
 ### Using internal repositories
 

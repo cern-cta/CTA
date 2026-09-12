@@ -16,7 +16,6 @@ usage() {
   echo
   echo "options:"
   echo "  -h, --help:                         Shows help output."
-  echo "  -l, --load-into-k8s:                Load Podman images into the detected local Kubernetes setup."
   echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'ci/docker/cta/{defaultplatform}/prod.Dockerfile')."
   echo "      --enable-internal-repos:        Use internal package repositories instead of public ones."
   echo "      --enable-oracle-support:        Build the images for use with the Oracle catalogue."
@@ -31,7 +30,6 @@ package_src=""
 image_tag=""
 default_platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
 dockerfile_path="ci/docker/cta/${default_platform}/prod.Dockerfile"
-load_into_k8s=false
 enable_debug_image=false
 enable_internal_repos="0"
 enable_oracle_support="0"
@@ -55,7 +53,6 @@ while [[ "$#" -gt 0 ]]; do
       error_usage "-t|--tag requires an argument"
     fi
     ;;
-  -l | --load-into-k8s) load_into_k8s=true ;;
   --enable-debug-image) enable_debug_image=true ;;
   --enable-internal-repos) enable_internal_repos="1" ;;
   --enable-oracle-support) enable_oracle_support="1" ;;
@@ -124,7 +121,6 @@ build_target() {
   local image_ref="cta/ctageneric/${target}:${image_tag}"
 
   (
-    set -eo pipefail
     "${build_command[@]}" . -f "${dockerfile}" \
       -t "${image_ref}" \
       --build-context package_context="${package_src}" \
@@ -134,20 +130,6 @@ build_target() {
       --network host \
       --label build.id="$BUILD_ID" \
       --target "$target"
-    # Note that the below checks are rather crude (for speed)
-    if [[ "$load_into_k8s" == "true" ]]; then
-      # Load into minikube (use stdin to avoid a temp file)
-      if command -v minikube >/dev/null 2>&1; then
-        log_task "Loading ${image_ref} into minikube..."
-        podman save "${image_ref}" | minikube image load --overwrite -
-      fi
-
-      # Load into k3s (stream into containerd)
-      if command -v k3s >/dev/null 2>&1; then
-        log_task "Loading ${image_ref} into k3s/containerd..."
-        podman save "${image_ref}" | sudo /usr/local/bin/k3s ctr images import -
-      fi
-    fi
   ) 2>&1 | # some magic to get color output
     awk -v prefix="[$target]:" -v color="$color" '
       {
@@ -177,7 +159,7 @@ echo
 
 pids=()
 
-# The common stages are now cached, so build and load the remaining targets in parallel.
+# The common stages are now cached, so build the remaining targets in parallel.
 i=0
 for target in "${targets[@]}"; do
   color="${colors[$((i % ${#colors[@]}))]}"
@@ -192,7 +174,7 @@ for pid in "${pids[@]}"; do
 done
 
 if [[ $status == 1 ]]; then
-  log_error "Failed to build or load one or more container images."
+  log_error "Failed to build one or more container images."
   exit "$status"
 fi
 
@@ -211,4 +193,4 @@ echo
 echo "Built images:"
 podman images --filter "label=build.id=$BUILD_ID"
 echo
-log_success "Built and loaded container images in ${SECONDS} seconds."
+log_success "Built container images in ${SECONDS} seconds."
