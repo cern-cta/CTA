@@ -50,48 +50,50 @@ save_logs() {
   pods=$(kubectl --namespace "${namespace}" get pods -o json)
 
   # Iterate over pods
+  # Use a non-whitespace delimiter so that Bash preserves empty fields such as a missing instance label.
   echo "${pods}" | jq -r '
     .items[]
     | [
         .metadata.name,
         (.metadata.labels["app.kubernetes.io/instance"] // ""),
+        (.status.phase // ""),
         (
-          ((.spec.initContainers // []) + .spec.containers + (.spec.ephemeralContainers // []))
-          | map(.name)
+          (
+            ((.spec.initContainers // []) | map(.name + ":init"))
+            + (.spec.containers | map(.name + ":regular"))
+            + ((.spec.ephemeralContainers // []) | map(.name + ":ephemeral"))
+          )
           | join(" ")
         )
       ]
-    | @tsv
-  ' | while IFS=$'\t' read -r pod instance containers; do
+    | join("\u001f")
+  ' | while IFS=$'\x1f' read -r pod instance phase containers; do
     pod_dir="${tmpdir}/pods/${pod}"
     mkdir -p "${pod_dir}"
 
-    log_task "Collecting describe output for ${pod}..."
     kubectl -n "${namespace}" describe pod "${pod}" > "${pod_dir}/describe.log" || {
       log_warn "Failed to collect describe output for ${pod}."
       rm -f "${pod_dir}/describe.log"
     }
 
-    for container in ${containers}; do
-      echo "[pod=${pod}] [container=${container}]"
+    for container_entry in ${containers}; do
+      container="${container_entry%:*}"
+      container_type="${container_entry##*:}"
 
-      log_task "Collecting stdout logs for ${pod}/${container}..."
       # Collect stdout logs
       if ! kubectl -n "${namespace}" logs "${pod}" -c "${container}" > "${pod_dir}/${container}.stdout.log"; then
         log_warn "Failed to collect stdout logs for ${pod}/${container}."
         rm -f "${pod_dir}/${container}.stdout.log"
       fi
 
-      # Collect /var/log for any pod part of the eos or cta instances
-      if [[ "${instance}" == "cta" || "${instance}" == "eos" ]]; then
+      # Init and ephemeral containers are not expected to hold the service's /var/log contents.
+      if [[ ("${instance}" == "cta" || "${instance}" == "eos") \
+        && "${phase}" == "Running" && "${container_type}" == "regular" ]]; then
         max_allowed_size=$((2 * 1024 * 1024 * 1024)) # 2 GB
-        if ! var_log_size=$(
-          kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
-            du -sb /var/log 2>/dev/null | awk '{print $1}'
-        ); then
-          log_warn "Could not determine /var/log size for ${pod}/${container}; attempting collection anyway."
-          var_log_size=0
-        fi
+        var_log_size=$(kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
+          du -sb /var/log 2>/dev/null || true)
+        var_log_size="${var_log_size%%[[:space:]]*}"
+        [[ "${var_log_size}" =~ ^[0-9]+$ ]] || var_log_size=0
 
         if (( var_log_size > max_allowed_size )); then
           log_warn "Skipping /var/log for ${pod}/${container}: ${var_log_size} bytes is too large."
@@ -103,13 +105,13 @@ save_logs() {
         subdirs_to_tar=("cta" "eos" "tmp" "xrootd" "*/xrd_errors")
         if ! existing_dirs=$(
           kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
-            bash -c "cd /var/log && find ${subdirs_to_tar[*]} -maxdepth 0 -type d 2>/dev/null || true"
+            bash -c "cd /var/log && find ${subdirs_to_tar[*]} -maxdepth 0 -type d 2>/dev/null || true" 2>/dev/null
         ); then
           log_warn "Failed to discover /var/log contents for ${pod}/${container}."
           continue
         fi
+        [[ -n "${existing_dirs}" ]] || continue
 
-        log_task "Streaming and compressing /var/log contents for ${pod}/${container}..."
         if ! kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
           tar --warning=no-file-removed --ignore-failed-read -C /var/log -cf - ${existing_dirs} \
           | XZ_OPT='-0 -T0' xz > "${pod_dir}/${container}.varlog.tar.xz"; then
