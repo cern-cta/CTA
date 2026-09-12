@@ -70,26 +70,19 @@ mgm:
     liveness: false
 
   extraEnv:
-    # Remove once we are on EOS 5.4
-    - name: EOS_USE_MQ_ON_QDB
-      value: "1"
-    - name: EOS_HA_REDIRECT_READS
-      value: "1"
-    - name: LD_PRELOAD
-      value: "/usr/lib64/libjemalloc.so.2"
-    - name: SCITOKEN_CONFIG_TLS_CA_FILE
-      value: "/etc/grid-security/certificates/ca.crt.pem"
+    EOS_USE_MQ_ON_QDB: "1"
+    EOS_HA_REDIRECT_READS: "1"
+    SCITOKEN_CONFIG_TLS_CA_FILE: "/etc/grid-security/certificates/ca.crt.pem"
     # For some reason EOS is on another time zone, so set this to CET
-    - name: TZ
-      value: "CET"
+    TZ: "CET"
 
 fst:
   replicaCount: 1
+  podManagementPolicy: Parallel
 
   pod:
     extraSpec:
       terminationGracePeriodSeconds: 1
-      podManagementPolicy: Parallel
 
   xrd:
     # Increasing 2x the thread pool size w.r.t. the minimal default 256.
@@ -99,11 +92,8 @@ fst:
     liveness: false
 
   extraEnv:
-    # Remove once we are on EOS 5.4
-    - name: EOS_USE_MQ_ON_QDB
-      value: "1"
-    - name: TZ
-      value: "CET"
+    EOS_USE_MQ_ON_QDB: "1"
+    TZ: "CET"
 
 qdb:
   replicaCount: 1
@@ -113,10 +103,7 @@ qdb:
       terminationGracePeriodSeconds: 1
 
   extraEnv:
-    - name: LD_PRELOAD
-      value: "/usr/lib64/libjemalloc.so.2"
-    - name: TZ
-      value: "CET"
+    TZ: "CET"
 
   probes:
     liveness: false
