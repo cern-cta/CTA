@@ -10,8 +10,6 @@ find_package (ZLIB REQUIRED)
 
 add_subdirectory (exception)
 
-include_directories (${XROOTD_INCLUDE_DIR})
-
 set_source_files_properties(checksum/CRC.cpp PROPERTIES COMPILE_OPTIONS -O2)
 
 set (COMMON_LIB_SRC_FILES

@@ -137,7 +137,8 @@ Requires: cta-lib-runtime = %{version}-%{release}
 Requires: cta-runtime = %{version}-%{release}
 Requires: cta-lib-scheduler = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
-Requires: xrootd-client-libs %{xrootdVersionConstraint}
+# Explicitly require protobuf to avoid a clash with eos-protobuf.
+Requires: protobuf
 %description -n cta-taped
 Provides the daemon that manages tape drives and tape I/O for CTA.
 %files -n cta-taped
@@ -201,6 +202,9 @@ Requires: cta-lib-runtime = %{version}-%{release}
 Requires: cta-runtime = %{version}-%{release}
 Requires: cta-lib-scheduler = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
+# Explicitly require grpc and protobuf to avoid clashes with EOS-provided variants.
+Requires: grpc
+Requires: protobuf
 %description -n cta-frontend-grpc
 Provides the gRPC frontend for admin and workflow commands to CTA.
 %files -n cta-frontend-grpc
@@ -255,9 +259,6 @@ Provides the Remote Media Changer daemon used by CTA to control tape libraries.
 
 %package -n cta-lib-common
 Summary: CERN Tape Archive common libraries
-# Explicitly require protobuf to avoid a clash with eos-protobuf.
-Requires: protobuf
-Requires: xrootd-client-libs %{xrootdVersionConstraint}
 %description -n cta-lib-common
 Provides common shared libraries used by CTA components.
 %files -n cta-lib-common
@@ -339,7 +340,6 @@ for CTA.
 Summary: CERN Tape Archive catalogue libraries
 Requires: cta-lib-common = %{version}-%{release}
 Requires: cta-lib-catalogue-impl = %{version}-%{release}
-Requires: xrootd-client-libs %{xrootdVersionConstraint}
 Recommends: cta-lib-catalogue-postgres = %{version}-%{release}
 %description -n cta-lib-catalogue
 Provides shared libraries for accessing the CTA catalogue.
@@ -386,6 +386,7 @@ Provides shared libraries for CTA scheduling and disk access.
 Summary: CERN Tape Archive command-line interface
 Requires: cta-lib-common = %{version}-%{release}
 Requires: grpc
+Requires: protobuf
 %description -n cta-admin
 Provides command-line tools for administering CTA.
 %files -n cta-admin
@@ -399,7 +400,6 @@ Provides command-line tools for administering CTA.
 Summary: CERN Tape Archive object store tools
 Requires: cta-lib-scheduler = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
-Requires: xrootd-client-libs %{xrootdVersionConstraint}
 # Used to be called cta-objectstore-tools so this ensures we don't keep the old package around
 Obsoletes: cta-objectstore-tools < 5.11.19
 %description -n cta-scheduler-utils
@@ -418,7 +418,6 @@ Provides tools for initializing, inspecting and maintaining the CTA object store
 %package -n cta-catalogue-utils
 Summary: CERN Tape Archive catalogue utilities
 Requires: cta-lib-catalogue = %{version}-%{release}
-Requires: xrootd-client-libs %{xrootdVersionConstraint}
 # cta-catalogue-utils used to be called so this ensures we don't keep the old package around
 # Can be removed again at some point
 Obsoletes: cta-catalogueutils < 5.11.19
@@ -465,7 +464,6 @@ Provides the client for the CTA Remote Media Changer daemon.
 %package -n cta-tape-label
 Summary: CERN Tape Archive tape labelling tool
 Requires: cta-lib-scheduler = %{version}-%{release}
-Requires: xrootd-client-libs %{xrootdVersionConstraint}
 Requires(pre): group(tape)
 %description -n cta-tape-label
 Provides a command-line tool for labelling tapes for use with CTA.
@@ -478,7 +476,6 @@ Provides a command-line tool for labelling tapes for use with CTA.
 %package -n cta-readtp
 Summary: CERN Tape Archive tape reading tool
 Requires: cta-lib-scheduler = %{version}-%{release}
-Requires: xrootd-client-libs %{xrootdVersionConstraint}
 Requires(pre): group(tape)
 %description -n cta-readtp
 Provides a command-line tool for reading files directly from CTA.
@@ -508,7 +505,6 @@ Summary: CERN Tape Archive repository configuration
 Requires: python3-dnf-plugin-versionlock
 Requires: python3
 Requires: epel-release
-Requires: jq
 %description -n cta-release
 Configures package repositories, signing keys and version locks for CTA and its dependencies.
 %files -n cta-release
@@ -535,7 +531,6 @@ Requires: cta-taped = %{version}-%{release}
 Requires: make
 Requires: moreutils
 Requires: libtirpc-devel
-Requires: xrootd-client-libs %{xrootdVersionConstraint}
 Requires: gtest-devel %{gtestDevelVersionConstraint}
 # PostgreSQL server binaries needed for unit tests when using pgsched
 %if "%{usePgsched}" == "1"
