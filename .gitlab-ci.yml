@@ -188,7 +188,8 @@ variables:
   IMAGE_DOCKER_IMAGE_BUILDER: "${DOCKER_IMAGE_PROXY}/quay.io/buildah/stable:v1.43-immutable"
   IMAGE_DOCKER_LINT: "${DOCKER_IMAGE_PROXY}/docker.io/hadolint/hadolint:v2.12.0-alpine"
   IMAGE_LICENSE_CHECK: "${DOCKER_IMAGE_PROXY}/docker.io/fsfe/reuse:6.2"
-  IMAGE_TRIVY: "${DOCKER_IMAGE_PROXY}/docker.io/aquasec/trivy@sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c"  # 0.69.3
+  # Trivy does not use the proxy on purpose as registries.conf takes care of that during image building
+  IMAGE_TRIVY: "docker.io/aquasec/trivy@sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c"  # 0.69.3
   IMAGE_SBOM_HELPER: "registry.cern.ch/code-scanners/sbom-helper:latest"
   IMAGE_SBOMQS: "${DOCKER_IMAGE_PROXY}/ghcr.io/interlynk-io/sbomqs@sha256:500d5eca9fe4ce3616fdfaed67d877d638b3d52d31ad30bcba6b6cfd4c435767"  # v2.0.11
 

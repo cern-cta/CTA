@@ -13,4 +13,4 @@ fi
 
 DB_CONN_FILE=$1
 
-valgrind --gen-suppressions=all --suppressions=/usr/share/cta-@CTA_VERSION@/unittest/cta-unit-tests-rdbms-oracle.suppr /usr/bin/cta-unit-tests-rdbms ${DB_CONN_FILE}
+valgrind --gen-suppressions=all --suppressions=@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_DATADIR@/cta/tests/cta-unit-tests-rdbms-oracle.suppr /usr/bin/cta-unit-tests-rdbms ${DB_CONN_FILE}
