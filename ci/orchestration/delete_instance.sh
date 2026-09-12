@@ -43,7 +43,7 @@ save_logs() {
   tmpdir=$(mktemp --tmpdir="${log_dir}" -d -t "${namespace}-deletion-logs-XXXX")
   # Ensure tmp dir is always cleaned up
   add_trap 'rm -rf -- "$tmpdir"' EXIT
-  mkdir -p "${tmpdir}/varlogs"
+  mkdir -p "${tmpdir}/pods" "${tmpdir}/varlogs"
   log_task "Collecting logs in ${tmpdir}..."
 
   # We get all the pod details in one go so that we don't have to do too many kubectl calls
@@ -55,30 +55,32 @@ save_logs() {
     | [
         .metadata.name,
         (.metadata.labels["app.kubernetes.io/instance"] // ""),
-        (.spec.containers | map(.name) | join(" "))
+        (
+          ((.spec.initContainers // []) + .spec.containers + (.spec.ephemeralContainers // []))
+          | map(.name)
+          | join(" ")
+        )
       ]
     | @tsv
   ' | while IFS=$'\t' read -r pod instance containers; do
-    # Pod-level probe: cheap and avoids SIGPIPE/pipefail issues
-    if ! kubectl -n "${namespace}" logs "${pod}" --limit-bytes=1 >/dev/null 2>&1; then
-      echo "[pod=${pod}]"
-      log_warn "Pod ${pod} failed to start. Collecting describe output."
-      kubectl -n "${namespace}" describe pod "${pod}" > "${tmpdir}/${pod}-describe.log"
-      continue
-    fi
+    pod_dir="${tmpdir}/pods/${pod}"
+    mkdir -p "${pod_dir}"
 
-    set -- ${containers}
-    num_containers=$#
+    log_task "Collecting describe output for ${pod}..."
+    kubectl -n "${namespace}" describe pod "${pod}" > "${pod_dir}/describe.log" || {
+      log_warn "Failed to collect describe output for ${pod}."
+      rm -f "${pod_dir}/describe.log"
+    }
 
     for container in ${containers}; do
-      # Name of the (sub)directory to output logs to
-      output_dir="${pod}"
-      [[ "${num_containers}" -gt 1 ]] && output_dir="${pod}-${container}"
       echo "[pod=${pod}] [container=${container}]"
 
       log_task "Collecting stdout logs for ${pod}/${container}..."
       # Collect stdout logs
-      kubectl -n "${namespace}" logs "${pod}" -c "${container}" > "${tmpdir}/${output_dir}.log"
+      if ! kubectl -n "${namespace}" logs "${pod}" -c "${container}" > "${pod_dir}/${container}.stdout.log"; then
+        log_warn "Failed to collect stdout logs for ${pod}/${container}."
+        rm -f "${pod_dir}/${container}.stdout.log"
+      fi
 
       if ! kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- true 2&> /dev/null; then
         # Cannot exec into the pod for whatever reason (e.g. a completed job), so skip
@@ -88,40 +90,53 @@ save_logs() {
       # Collect /var/log for any pod part of the eos or cta instances
       if [[ "${instance}" == "cta" || "${instance}" == "eos" ]]; then
         max_allowed_size=$((2 * 1024 * 1024 * 1024)) # 2 GB
-        var_log_size=$(
+        if ! var_log_size=$(
           kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
             du -sb /var/log 2>/dev/null | awk '{print $1}'
-        )
+        ); then
+          log_warn "Could not determine /var/log size for ${pod}/${container}; attempting collection anyway."
+          var_log_size=0
+        fi
 
         if (( var_log_size > max_allowed_size )); then
           log_warn "Skipping /var/log for ${pod}/${container}: ${var_log_size} bytes is too large."
-          kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- du -h /var/log >&2
+          kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- du -h /var/log >&2 || true
           log_error "Failed to collect /var/log contents for ${pod}/${container}."
           continue
         fi
         log_task "Collecting /var/log contents for ${pod}/${container}..."
-        mkdir -p "${tmpdir}/varlogs/${output_dir}"
+        var_log_dir="${tmpdir}/varlogs/${pod}/${container}"
+        mkdir -p "${var_log_dir}"
         # Only tar part of the logs
         subdirs_to_tar=("cta" "eos" "tmp" "xrootd" "*/xrd_errors")
-        existing_dirs=$(
+        if ! existing_dirs=$(
           kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
             bash -c "cd /var/log && find ${subdirs_to_tar[*]} -maxdepth 0 -type d 2>/dev/null || true"
-        )
+        ); then
+          log_warn "Failed to discover /var/log contents for ${pod}/${container}."
+          continue
+        fi
 
         kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
           tar --warning=no-file-removed --ignore-failed-read -C /var/log -cf - ${existing_dirs} \
-          | tar -C "${tmpdir}/varlogs/${output_dir}" -xf - \
+          | tar -C "${var_log_dir}" -xf - \
           || echo "    Failed to collect /var/log contents" >&2
         # Remove empty files and directories to prevent polluting the output logs
-        find "${tmpdir}/varlogs/${output_dir}" -type d -empty -delete -o -type f -empty -delete
+        find "${var_log_dir}" -type d -empty -delete -o -type f -empty -delete
+
+        if [[ -d "${var_log_dir}" ]]; then
+          log_task "Compressing /var/log contents for ${pod}/${container}..."
+          if ! XZ_OPT='-0 -T0' tar --warning=no-file-removed --ignore-failed-read \
+            -C "${var_log_dir}" -Jcf "${pod_dir}/${container}.varlog.tar.xz" .; then
+            log_warn "Failed to compress /var/log contents for ${pod}/${container}."
+            rm -f "${pod_dir}/${container}.varlog.tar.xz"
+          fi
+        fi
       fi
     done
   done
 
-  # Compress /var/log contents
-  log_task "Compressing collected /var/log contents..."
-  XZ_OPT='-0 -T0' tar --warning=no-file-removed --ignore-failed-read -C "${tmpdir}/varlogs" -Jcf "${tmpdir}/varlog.tar.xz" .
-  # Clean up uncompressed files
+  # Clean up uncompressed /var/log contents
   rm -rf "${tmpdir}/varlogs"
 
   # Save artifacts if running in CI

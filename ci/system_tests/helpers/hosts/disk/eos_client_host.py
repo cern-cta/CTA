@@ -4,6 +4,7 @@
 
 import asyncio
 import json
+import re
 import shlex
 import time
 import uuid
@@ -508,6 +509,19 @@ class EosClientHost(DiskClientHost):
     @override
     def is_file_on_tape_only(self, disk_instance_name: str, path: Path) -> bool:
         return int(self.exec_with_output(f'eos root://{disk_instance_name} ls {path} -y | grep "d0::t1" | wc -l')) == 1
+
+    @override
+    def is_file_eviction_complete(self, disk_instance_name: str, path: Path) -> bool:
+        if not self.is_file_on_tape_only(disk_instance_name, path):
+            return False
+
+        tracking = self.exec_with_output(
+            f"eos root://{disk_instance_name} attr get sys.fs.tracking {shlex.quote(str(path))}"
+        )
+        unlinked_fsids = set(re.findall(r"-(\d+)", tracking))
+        deleted_fsids = set(re.findall(r"/(\d+)", tracking))
+
+        return bool(unlinked_fsids) and unlinked_fsids <= deleted_fsids
 
     @override
     def is_file_on_tape(self, disk_instance_name: str, path: Path) -> bool:

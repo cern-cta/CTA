@@ -163,6 +163,10 @@ class DiskClientHost(RemoteHost):
 
     def is_file_on_tape_only(self, disk_instance_name: str, path: Path) -> bool: ...
 
+    def is_file_eviction_complete(self, disk_instance_name: str, path: Path) -> bool:
+        """Return whether eviction, including any asynchronous disk cleanup, has completed."""
+        return self.is_file_on_tape_only(disk_instance_name, path)
+
     def is_file_on_tape(self, disk_instance_name: str, path: Path) -> bool: ...
 
     def is_file_on_disk(self, disk_instance_name: str, path: Path) -> bool: ...
@@ -192,7 +196,7 @@ class DiskClientHost(RemoteHost):
     def wait_for_file_eviction(self, disk_instance_name: str, path: Path, wait_timeout_secs: int = 20) -> None:
         print(f"Waiting for eviction of {path}...")
         with Timeout(wait_timeout_secs) as t:
-            while not self.is_file_on_tape_only(disk_instance_name, path) and not t.expired:
+            while not self.is_file_eviction_complete(disk_instance_name, path) and not t.expired:
                 time.sleep(0.1)
             if t.expired:
                 print(self.file_info(disk_instance_name, path))

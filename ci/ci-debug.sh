@@ -456,17 +456,19 @@ download_artifacts() {
     while IFS= read -r -d '' archive; do
 
       log_task "Extracting $(basename "${archive}")..."
+      extraction_dir="${archive%.varlog.tar.xz}.varlog"
+      mkdir -p "${extraction_dir}"
 
       tar \
         -xJf "${archive}" \
-        -C "$(dirname "${archive}")"
+        -C "${extraction_dir}"
 
       rm -f "${archive}"
 
     done < <(
       find "${artifact_dir}/${name}" \
         -type f \
-        -name varlog.tar.xz \
+        -name '*.varlog.tar.xz' \
         -print0
     )
 
