@@ -23,6 +23,7 @@ ci/.cta-dev.env
 /test_logs/
 /tmp/
 *.core
+target/
 
 # Helm files
 Chart.lock

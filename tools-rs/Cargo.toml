@@ -1,0 +1,17 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[workspace]
+name = "cta-rs"
+resolver = "3"
+members = [
+    # protobuf libs
+    "eos-protobuf-rs",
+    "cta-protobuf-rs",
+
+    # higher-level libs
+    "cta-lib-rs",
+
+    # tools
+    "cta-restore-files"
+]
