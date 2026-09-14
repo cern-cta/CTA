@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import Union, Optional
 
 import jwt
-from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPrivateKey, RSAPublicKey
 
@@ -22,27 +21,12 @@ def sanitize_filename(s: str) -> str:
     return re.sub(r"[^a-zA-Z0-9._-]", "_", s)
 
 
-def load_cert_x5c(cert_path: Path) -> str:
-    with cert_path.open("rb") as f:
-        cert = f.read()
-
-    if b"BEGIN CERTIFICATE" in cert:
-        cert_obj = x509.load_pem_x509_certificate(cert)
-        cert = cert_obj.public_bytes(serialization.Encoding.DER)
-
-    return base64.b64encode(cert).decode("ascii")
-
-
-def generate_jwk_from_cert(cert_path: Path) -> dict[str, Union[str, list[str]]]:
-    with cert_path.open("rb") as f:
-        cert_data = f.read()
-
-    if b"BEGIN CERTIFICATE" in cert_data:
-        cert_obj = x509.load_pem_x509_certificate(cert_data)
-    else:
-        cert_obj = x509.load_der_x509_certificate(cert_data)
-
-    public_key = cert_obj.public_key()
+def generate_jwk_from_public_key(
+    public_key_path: Path,
+) -> dict[str, Union[str, list[str]]]:
+    public_key = serialization.load_pem_public_key(
+        public_key_path.read_bytes(),
+    )
     if not isinstance(public_key, RSAPublicKey):
         raise TypeError("Certificate public key must be RSA")
 
@@ -71,7 +55,6 @@ def generate_jwk_from_cert(cert_path: Path) -> dict[str, Union[str, list[str]]]:
         "kid": kid,
         "n": n_b64,
         "e": e_b64,
-        "x5c": [load_cert_x5c(cert_path)],
     }
 
 
@@ -111,10 +94,11 @@ def generate_jwt(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
+        allow_abbrev=False,
         description=(
             "Generate CI files containing a JWKS and one JWT for each --sub passed. Files are put in "
             "the --output-dir directory."
-        )
+        ),
     )
     parser.add_argument(
         "--audience",
@@ -145,8 +129,15 @@ def main() -> None:
         default=Path(tempfile.gettempdir()),
         help="Directory to put the generated files in",
     )
-    parser.add_argument("--cert", required=True, type=Path, help="Path to server certificate")
+
+    parser.add_argument("--pub", required=True, type=Path, help="Path to public key")
     parser.add_argument("--key", required=True, type=Path, help="Path to private key")
+    parser.add_argument(
+        "--password",
+        type=str,
+        default=None,
+        help="Private key password prefix with 'pass:'",
+    )
     parser.add_argument("--jti", help="Set a custom JTI (useful for testing)")
     parser.add_argument("--jwks", help="Filename for the generated JWKS file")
     parser.add_argument(
@@ -157,14 +148,16 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    with args.key.open("rb") as f:
-        key = serialization.load_pem_private_key(f.read(), password=None)
+    key = serialization.load_pem_private_key(
+        args.key.read_bytes(),
+        password=(bytes(args.password.split(":")[-1], encoding="utf-8") if args.password is not None else None),
+    )
     if not isinstance(key, RSAPrivateKey):
         raise TypeError("Private key must be RSA")
-    jwk = generate_jwk_from_cert(args.cert)
+    jwk = generate_jwk_from_public_key(args.pub)
 
     if args.jwks is not None:
-        print(f"Adding key from cert {args.cert} to JWKS file {args.jwks}")
+        print(f"Adding key from public-key {args.pub} to JWKS file {args.jwks}")
         jwks_path = Path(args.output_dir) / args.jwks
         if jwks_path.exists():
             print("JWKS file already exists, appending key")
