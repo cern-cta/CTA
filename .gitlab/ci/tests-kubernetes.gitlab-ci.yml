@@ -238,7 +238,7 @@ test-cta-tools:
   stage: system-test
   rules:
     # Currently we only test cta-admin here, so this is not really doing anything with the disk side
-    - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH"'
+    - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH" || $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
       when: never
     - !reference [.kubernetes-test-python, rules]
   variables:
@@ -254,7 +254,7 @@ test-cta-tools:
 
 .manual-rules:
   rules:
-    - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH"'
+    - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH" || $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
       when: never
     - if: $CI_COMMIT_TAG
       when: on_success
@@ -307,7 +307,7 @@ test-regression-dCache:
     - .kubernetes-test
   stage: system-test
   rules:
-    - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH"'
+    - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH" || $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
       when: never
     - when: manual
       allow_failure: true
