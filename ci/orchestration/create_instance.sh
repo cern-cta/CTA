@@ -359,8 +359,10 @@ create_instance() {
                                 --wait --wait-for-jobs --timeout 4m &
   scheduler_pid=$!
 
-  # While the EOS and dCache charts need some secrets/config from the auth chart,
-  # Kubernetes will simply keep the pods pending until those are available
+  # The disk-buffer init containers need both the auth secrets and a responsive KDC.
+  # Waiting only for the secrets can make their first kadmin call race KDC startup.
+  wait $auth_pid || exit 1
+
   if [[ $eos_enabled == "true" ]]; then
     ./deploy_eos.sh --namespace "${namespace}" \
                     --eos-config "${eos_config}" \
@@ -411,7 +413,6 @@ create_instance() {
                                 --wait --timeout "${chart_install_timeout}"m ${extra_cta_chart_flags}
   log_success "Deployed CTA in namespace ${namespace}."
 
-  wait $auth_pid || exit 1
   # At this point the disk buffer(s) should also be ready
   if [[ $eos_enabled == "true" ]]; then
     wait $eos_pid || exit 1
