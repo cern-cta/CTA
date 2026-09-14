@@ -18,7 +18,14 @@ from _pytest.fixtures import SubRequest
 import fastjsonschema
 import pytest
 
-from system_tests.helpers.hosts import CtaCliHost, CtaMaintdHost, CtaTapedHost, EosClientHost, EosMgmHost
+from system_tests.helpers.hosts import (
+    EOS_TAPE_FILESYSTEM_ID,
+    CtaCliHost,
+    CtaMaintdHost,
+    CtaTapedHost,
+    EosClientHost,
+    EosMgmHost,
+)
 from system_tests.helpers.test_config import TestConfig as SystemTestConfig
 from system_tests.helpers.test_env import TestEnv
 
@@ -247,16 +254,11 @@ def test_simple_archive_retrieve(
     eos_client.delete_file(disk_instance_name, file_path)
 
 
-def test_archive(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
+def test_archive(eos_client: EosClientHost, disk_instance_name: str, test_dir: Path, remote_scripts_dir: Path) -> None:
     # Run a bulk archive
     eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_archive.sh", Path("/tmp"), permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
-    # TODO: replace by something more deterministic. Is this even necessary?
-    # We need a deterministic check for this: the mgm may report d0::t1
-    # even though the FST has not completed deletion of the file
-    # If we can somehow (efficiently) wait for this deletion, then this is no longer necessary
-    print("Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion.")
-    time.sleep(10)
+    eos_client.wait_for_directory_eviction(disk_instance_name, test_dir)
 
 
 def test_retrieve(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
@@ -695,7 +697,6 @@ class TestEosEvict:
     ) -> None:
         cta_cli.set_all_drives_up()
         dummy_file_systems = [(101, "dummy_1"), (102, "dummy_2"), (103, "dummy_3")]
-        tape_fsid = 65535
         missing_fsid = 200
         file_path = eos_client.generate_and_archive_file(
             disk_instance_name, test_dir / "eos_evict_fsid", append_uid=True
@@ -721,7 +722,7 @@ class TestEosEvict:
 
             # Eviction must reject the tape FSID, a nonexistent FSID, and incomplete option combinations
             failing_cases = [
-                ("tape replica", f"--ignore-evict-counter --fsid {tape_fsid}"),
+                ("tape replica", f"--ignore-evict-counter --fsid {EOS_TAPE_FILESYSTEM_ID}"),
                 ("nonexistent replica", f"--ignore-evict-counter --fsid {missing_fsid}"),
                 ("counter not bypassed", "--fsid 101"),
                 ("missing FSID", "--ignore-removal-on-fst"),
@@ -783,6 +784,7 @@ def test_eos_timestamps_correctness(eos_client: EosClientHost, disk_instance_nam
     eos_client.wait_for_file_archival(disk_instance_name, file_path)
     assert persistent_timestamps(eos_client.file_info(disk_instance_name, file_path)) == timestamps_before_archive
 
+    eos_client.wait_for_file_eviction(disk_instance_name, file_path)
     eos_client.retrieve_file(disk_instance_name, file_path)
     assert persistent_timestamps(eos_client.file_info(disk_instance_name, file_path)) == timestamps_before_archive
 

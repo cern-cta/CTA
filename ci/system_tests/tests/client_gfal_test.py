@@ -57,12 +57,12 @@ def test_setup_client_gfal_xrootd(
     )
 
 
-def test_archive_gfal_xrootd(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
+def test_archive_gfal_xrootd(
+    eos_client: EosClientHost, disk_instance_name: str, test_dir: Path, remote_scripts_dir: Path
+) -> None:
     eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_archive.sh", Path("/tmp"), permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
-    # TODO: replace by something more deterministic. Is this even necessary?
-    print("Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion.")
-    time.sleep(10)
+    eos_client.wait_for_directory_eviction(disk_instance_name, test_dir)
 
 
 def test_retrieve_gfal_xrootd(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
@@ -90,12 +90,12 @@ def test_setup_client_gfal_https(eos_client: EosClientHost, test_dir: Path, gfal
     eos_client.exec("sed -i 's/INSECURE=false/INSECURE=true/g' /etc/gfal2.d/http_plugin.conf")
 
 
-def test_archive_gfal_https(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
+def test_archive_gfal_https(
+    eos_client: EosClientHost, disk_instance_name: str, test_dir: Path, remote_scripts_dir: Path
+) -> None:
     eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_archive.sh", Path("/tmp"), permissions="+x")
     eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
-    # TODO: replace by something more deterministic. Is this even necessary?
-    print("Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion.")
-    time.sleep(10)
+    eos_client.wait_for_directory_eviction(disk_instance_name, test_dir)
 
 
 def test_retrieve_gfal_https(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
@@ -126,6 +126,8 @@ def test_gfal_activity_ends_up_in_eos_report(
     )
     eos_client.wait_for_file_archival(disk_instance_name, valid_instance_file)
     eos_client.wait_for_file_archival(disk_instance_name, invalid_instance_file)
+    eos_client.wait_for_file_eviction(disk_instance_name, valid_instance_file)
+    eos_client.wait_for_file_eviction(disk_instance_name, invalid_instance_file)
 
     # Query .well-known tape rest api endpoint to get the sitename
     site_name = eos_client.exec_with_output(

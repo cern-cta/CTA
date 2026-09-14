@@ -15,7 +15,9 @@ from typing import Any, Optional, Union
 from typing_extensions import override
 
 from system_tests.helpers.connections.remote_connection import ExecResult, RemoteConnection
+from system_tests.helpers.utils.timeout import Timeout
 from .disk_client_host import DiskClientHost, PrepareRequest, PrepareRequests
+from .eos_constants import EOS_TAPE_FILESYSTEM_ID
 
 
 class EosClientHost(DiskClientHost):
@@ -510,6 +512,26 @@ class EosClientHost(DiskClientHost):
         return int(self.exec_with_output(f'eos root://{disk_instance_name} ls {path} -y | grep "d0::t1" | wc -l')) == 1
 
     @override
+    def is_file_eviction_complete(self, disk_instance_name: str, path: Path) -> bool:
+        if not self.is_file_on_tape_only(disk_instance_name, path):
+            return False
+
+        file_info = json.loads(self.file_info(disk_instance_name, path, json_output=True))
+        locations = file_info.get("locations")
+        if not isinstance(locations, list):
+            raise TypeError(f"EOS file info returned invalid locations for {path}: {locations!r}")
+
+        # Any non-tape location means asynchronous deletion on an FST has not finished yet.
+        filesystem_ids: set[int] = set()
+        for location in locations:
+            filesystem_id: object = location.get("fsid") if isinstance(location, dict) else location
+            if not isinstance(filesystem_id, (int, str)):
+                raise TypeError(f"EOS file info returned an invalid filesystem ID for {path}: {filesystem_id!r}")
+            filesystem_ids.add(int(filesystem_id))
+
+        return all(filesystem_id == EOS_TAPE_FILESYSTEM_ID for filesystem_id in filesystem_ids)
+
+    @override
     def is_file_on_tape(self, disk_instance_name: str, path: Path) -> bool:
         return int(self.exec_with_output(f'eos root://{disk_instance_name} ls {path} -y | grep "::t1" | wc -l')) == 1
 
@@ -520,6 +542,47 @@ class EosClientHost(DiskClientHost):
     @override
     def is_file_on_disk_only(self, disk_instance_name: str, path: Path) -> bool:
         return int(self.exec_with_output(f'eos root://{disk_instance_name} ls {path} -y | grep "d1::t0" | wc -l')) == 1
+
+    @override
+    def wait_for_directory_eviction(
+        self, disk_instance_name: str, directory: Path, wait_timeout_secs: int = 20
+    ) -> None:
+        endpoint = f"root://{shlex.quote(disk_instance_name)}"
+        path_stream = self._directory_files_command(disk_instance_name, directory)
+        # Eviction is complete once fileinfo reports only EOS's reserved tape filesystem ID.
+        location_filter = (
+            '(.locations | type == "array") and '
+            "(.locations | length > 0) and "
+            f'all(.locations[]; ((if type == "object" then .fsid else . end) | tonumber) == '
+            f"{EOS_TAPE_FILESYSTEM_ID})"
+        )
+        # Print only incomplete paths so the outer command can reduce the result to a count.
+        worker = (
+            f'file_info=$(eos -j {endpoint} file info "$1") && '
+            f'printf "%s" "$file_info" | jq -e {shlex.quote(location_filter)} >/dev/null || printf "%s\\n" "$1"'
+        )
+        print(f"Waiting for eviction of files in {directory}...")
+        previous_remaining: Optional[int] = None
+        with Timeout(wait_timeout_secs) as timeout:
+            while not timeout.expired:
+                # Check files concurrently in the client pod and return only aggregate progress to pytest.
+                remaining = int(
+                    self.exec_with_output(
+                        f"set -o pipefail; {path_stream} | "
+                        f"xargs -r -P 10 -I{{}} sh -c {shlex.quote(worker)} _ '{{}}' | wc -l"
+                    )
+                )
+                if remaining == 0:
+                    print(f"All files in {directory} evicted")
+                    return
+                if remaining != previous_remaining:
+                    print(f"Waiting for {remaining} files in {directory} to finish eviction")
+                    previous_remaining = remaining
+                time.sleep(1)
+
+        raise TimeoutError(
+            f"Failed to evict {previous_remaining} files in {directory} within {wait_timeout_secs} seconds"
+        )
 
     @override
     def file_info(self, disk_instance_name: str, path: Path, *, json_output: bool = False) -> str:
