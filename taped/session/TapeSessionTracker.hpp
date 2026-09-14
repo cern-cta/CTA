@@ -53,6 +53,7 @@ enum class TapeSessionError {
   TapeFilledUp
 };
 
+// TODO: maybe we don't need this
 enum class TapeSessionOutcome { Automatic, Success, Failure };
 
 // TODO: unordered map?

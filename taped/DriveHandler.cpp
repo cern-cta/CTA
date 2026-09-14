@@ -17,6 +17,8 @@
 #include "session/EmptyDriveProbe.hpp"
 #include "session/Session.hpp"
 
+#include <utility>
+
 namespace cta::tape::daemon {
 
 DriveHandler::DriveHandler(const TapedConfig& config, log::Logger& log)
@@ -317,6 +319,8 @@ bool DriveHandler::executeDataTransferSession(std::unique_ptr<TapeMount> tapeMou
                                           m_sysWrapper,
                                           m_driveInfo,
                                           m_mediaChanger,
+                                          std::move(tapeMount),
+                                          m_tapeSessionTracker,
                                           m_config.transfers,
                                           *m_scheduler);
   // This is hacky; this whole end of session action stuff should be ripped out

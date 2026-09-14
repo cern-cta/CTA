@@ -32,9 +32,9 @@
 #include "taped/session/VolumeInfo.hpp"
 
 #include <chrono>
-#include <google/protobuf/stubs/common.h>
 #include <memory>
 #include <string>
+#include <utility>
 
 //------------------------------------------------------------------------------
 //Constructor
@@ -44,10 +44,12 @@ cta::tape::daemon::DataTransferSession::DataTransferSession([[maybe_unused]] con
                                                             System::virtualWrapper& sysWrapper,
                                                             const cta::common::dataStructures::DriveInfo& driveInfo,
                                                             cta::mediachanger::MediaChangerFacade& mc,
+                                                            std::unique_ptr<cta::TapeMount> tapeMount,
                                                             cta::tape::daemon::TapeSessionTracker& tapeSessionTracker,
                                                             const DataTransferConfig& dataTransferConfig,
                                                             cta::Scheduler& scheduler)
     : m_log(log),
+      m_tapeMount(std::move(tapeMount)),
       m_sysWrapper(sysWrapper),
       m_dataTransferConfig(dataTransferConfig),
       m_driveInfo(driveInfo),
@@ -70,25 +72,24 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
   // 1) Prepare the logging environment
   cta::log::LogContext lc(m_log);
 
-  // std::unique_ptr<cta::TapeMount> tapeMount;
   cta::utils::Timer t;
 
-  m_volInfo.vid = tapeMount->getVid();
-  m_volInfo.mountType = tapeMount->getMountType();
-  m_volInfo.nbFiles = tapeMount->getNbFiles();
-  m_volInfo.mountId = tapeMount->getMountTransactionId();
-  m_volInfo.labelFormat = tapeMount->getLabelFormat();
-  m_volInfo.encryptionKeyName = tapeMount->getEncryptionKeyName();
-  m_volInfo.tapePool = tapeMount->getPoolName();
+  m_volInfo.vid = m_tapeMount->getVid();
+  m_volInfo.mountType = m_tapeMount->getMountType();
+  m_volInfo.nbFiles = m_tapeMount->getNbFiles();
+  m_volInfo.mountId = m_tapeMount->getMountTransactionId();
+  m_volInfo.labelFormat = m_tapeMount->getLabelFormat();
+  m_volInfo.encryptionKeyName = m_tapeMount->getEncryptionKeyName();
+  m_volInfo.tapePool = m_tapeMount->getPoolName();
   // Report drive status and mount info through tapeMount interface
-  tapeMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+  m_tapeMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
   // 2c) ... and log.
   // Make the DGN and TPVID parameter permanent.
   cta::log::ScopedParamContainer params(lc);
   params.add("tapeVid", m_volInfo.vid)
     .add("mountId", m_volInfo.mountId)
-    .add("vo", tapeMount->getVo())
-    .add("tapePool", tapeMount->getPoolName());
+    .add("vo", m_tapeMount->getVo())
+    .add("tapePool", m_tapeMount->getPoolName());
   {
     cta::log::ScopedParamContainer localParams(lc);
     localParams.add("tapebridgeTransId", m_volInfo.mountId).add("mountType", toCamelCaseString(m_volInfo.mountType));
@@ -98,12 +99,12 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
   // Depending on the type of session, branch into the right execution
   switch (m_volInfo.mountType) {
     case cta::common::dataStructures::MountType::Retrieve:
-      return executeRead(lc, dynamic_cast<cta::RetrieveMount*>(tapeMount.get()));
+      return executeRead(lc, dynamic_cast<cta::RetrieveMount*>(m_tapeMount.get()));
     case cta::common::dataStructures::MountType::ArchiveForUser:
     case cta::common::dataStructures::MountType::ArchiveForRepack:
-      return executeWrite(lc, dynamic_cast<cta::ArchiveMount*>(tapeMount.get()));
+      return executeWrite(lc, dynamic_cast<cta::ArchiveMount*>(m_tapeMount.get()));
     case cta::common::dataStructures::MountType::Label:
-      return executeLabel(lc, dynamic_cast<cta::LabelMount*>(tapeMount.get()));
+      return executeLabel(lc, dynamic_cast<cta::LabelMount*>(m_tapeMount.get()));
     default:
       return MARK_DRIVE_AS_UP;
   }
@@ -516,15 +517,4 @@ void cta::tape::daemon::DataTransferSession::putDriveDown(const std::string& hea
   logContext.log(cta::log::ERR, "Notified client of end session with error");
 }
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-cta::tape::daemon::DataTransferSession::~DataTransferSession() noexcept {
-  try {
-    google::protobuf::ShutdownProtobufLibrary();
-  } catch (...) {
-    m_log(cta::log::ERR,
-          "google::protobuf::ShutdownProtobufLibrary() threw an"
-          " unexpected exception");
-  }
-}
+cta::tape::daemon::DataTransferSession::~DataTransferSession() noexcept = default;

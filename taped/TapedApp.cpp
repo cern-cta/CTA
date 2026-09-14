@@ -15,6 +15,11 @@
 
 namespace cta::tape::daemon {
 
+TapedApp::~TapedApp() {
+  m_driveHandler.reset();
+  google::protobuf::ShutdownProtobufLibrary();
+}
+
 void TapedApp::stop() {
   if (m_driveHandler) {
     m_driveHandler->stop();

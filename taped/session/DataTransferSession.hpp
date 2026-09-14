@@ -19,12 +19,12 @@
 #include "scheduler/TapeMount.hpp"
 #include "taped/system/Wrapper.hpp"
 
+#include <memory>
+
 namespace cta::tape::daemon {
 
 /**
- * The main class handling a tape session. This is the main container started
- * by the master process. It will drive a separate process. Only the sub
- * process interface is not included here to allow testability.
+ * The main class handling a tape data-transfer session.
  */
 class DataTransferSession : public Session {
 public:
@@ -38,6 +38,7 @@ public:
                       System::virtualWrapper& sysWrapper,
                       const cta::common::dataStructures::DriveInfo& driveInfo,
                       cta::mediachanger::MediaChangerFacade& mc,
+                      std::unique_ptr<cta::TapeMount> tapeMount,
                       cta::tape::daemon::TapeSessionTracker& tapeSessionTracker,
                       const DataTransferConfig& dataTransferConfig,
                       cta::Scheduler& scheduler);
@@ -77,6 +78,7 @@ private:
    * Object representing the API of the CTA logging system.
    */
   cta::log::Logger& m_log;
+  std::unique_ptr<cta::TapeMount> m_tapeMount;
   VolumeInfo m_volInfo {};
   System::virtualWrapper& m_sysWrapper;
   const DataTransferConfig m_dataTransferConfig;

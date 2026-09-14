@@ -7,7 +7,6 @@
 // by inttypes.h, so we shoot first)
 #include "DataTransferSession.hpp"
 
-#include "TapedProxyMock.hpp"
 #include "catalogue/CatalogueItor.hpp"
 #include "catalogue/CreateMountPolicyAttributes.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
@@ -643,9 +642,17 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  cta::tape::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
+  TapeSessionTracker tracker;
+  cta::tape::daemon::DataTransferSession sess(
+    "tapeHost",
+    logger,
+    mockSys,
+    driveInfo,
+    mc,
+    scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext),
+    tracker,
+    dataTransferConf,
+    scheduler);
   // 8) Run the data transfer session
   sess.execute();
 
@@ -884,9 +891,17 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  cta::tape::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
+  TapeSessionTracker tracker;
+  cta::tape::daemon::DataTransferSession sess(
+    "tapeHost",
+    logger,
+    mockSys,
+    driveInfo,
+    mc,
+    scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext),
+    tracker,
+    dataTransferConf,
+    scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1159,8 +1174,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
+  TapeSessionTracker tracker;
+  DataTransferSession sess("tapeHost",
+                           logger,
+                           mockSys,
+                           driveInfo,
+                           mc,
+                           scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext),
+                           tracker,
+                           dataTransferConf,
+                           scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1380,9 +1403,17 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  cta::tape::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
+  TapeSessionTracker tracker;
+  cta::tape::daemon::DataTransferSession sess(
+    "tapeHost",
+    logger,
+    mockSys,
+    driveInfo,
+    mc,
+    scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext),
+    tracker,
+    dataTransferConf,
+    scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1607,9 +1638,17 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  cta::tape::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
+  TapeSessionTracker tracker;
+  cta::tape::daemon::DataTransferSession sess(
+    "tapeHost",
+    logger,
+    mockSys,
+    driveInfo,
+    mc,
+    scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext),
+    tracker,
+    dataTransferConf,
+    scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1835,9 +1874,17 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  cta::tape::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
+  TapeSessionTracker tracker;
+  cta::tape::daemon::DataTransferSession sess(
+    "tapeHost",
+    logger,
+    mockSys,
+    driveInfo,
+    mc,
+    scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext),
+    tracker,
+    dataTransferConf,
+    scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -2067,9 +2114,17 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  cta::tape::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
+  TapeSessionTracker tracker;
+  cta::tape::daemon::DataTransferSession sess(
+    "tapeHost",
+    logger,
+    mockSys,
+    driveInfo,
+    mc,
+    scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext),
+    tracker,
+    dataTransferConf,
+    scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -2285,8 +2340,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
+  TapeSessionTracker tracker;
+  DataTransferSession sess("tapeHost",
+                           logger,
+                           mockSys,
+                           driveInfo,
+                           mc,
+                           scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext),
+                           tracker,
+                           dataTransferConf,
+                           scheduler);
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
   ASSERT_NE(std::string::npos, logger.getLog().find("Error looking for path to tape drive"));
@@ -2454,8 +2517,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
+  TapeSessionTracker tracker;
+  DataTransferSession sess("tapeHost",
+                           logger,
+                           mockSys,
+                           driveInfo,
+                           mc,
+                           scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext),
+                           tracker,
+                           dataTransferConf,
+                           scheduler);
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
   ASSERT_NE(std::string::npos, logger.getLog().find("Failed to mount the tape"));
@@ -2629,8 +2700,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
+  TapeSessionTracker tracker;
+  DataTransferSession sess("tapeHost",
+                           logger,
+                           mockSys,
+                           driveInfo,
+                           mc,
+                           scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext),
+                           tracker,
+                           dataTransferConf,
+                           scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
@@ -2818,8 +2897,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
+  TapeSessionTracker tracker;
+  DataTransferSession sess("tapeHost",
+                           logger,
+                           mockSys,
+                           driveInfo,
+                           mc,
+                           scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext),
+                           tracker,
+                           dataTransferConf,
+                           scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
@@ -3019,8 +3106,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
+  TapeSessionTracker tracker;
+  DataTransferSession sess("tapeHost",
+                           logger,
+                           mockSys,
+                           driveInfo,
+                           mc,
+                           scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext),
+                           tracker,
+                           dataTransferConf,
+                           scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
@@ -3222,8 +3317,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
+  TapeSessionTracker tracker;
+  DataTransferSession sess("tapeHost",
+                           logger,
+                           mockSys,
+                           driveInfo,
+                           mc,
+                           scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext),
+                           tracker,
+                           dataTransferConf,
+                           scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
@@ -3424,8 +3527,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
+  TapeSessionTracker tracker;
+  DataTransferSession sess("tapeHost",
+                           logger,
+                           mockSys,
+                           driveInfo,
+                           mc,
+                           scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext),
+                           tracker,
+                           dataTransferConf,
+                           scheduler);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";
@@ -3623,8 +3734,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
+  TapeSessionTracker tracker;
+  DataTransferSession sess("tapeHost",
+                           logger,
+                           mockSys,
+                           driveInfo,
+                           mc,
+                           scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext),
+                           tracker,
+                           dataTransferConf,
+                           scheduler);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";
@@ -3844,8 +3963,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveInfo, mc, initialProcess, dataTransferConf, scheduler);
+  TapeSessionTracker tracker;
+  DataTransferSession sess("tapeHost",
+                           logger,
+                           mockSys,
+                           driveInfo,
+                           mc,
+                           scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext),
+                           tracker,
+                           dataTransferConf,
+                           scheduler);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";

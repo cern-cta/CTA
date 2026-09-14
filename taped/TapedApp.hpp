@@ -18,7 +18,7 @@ class TapedApp final {
 public:
   TapedApp() = default;
 
-  ~TapedApp() = default;
+  ~TapedApp();
 
   void stop();
 

@@ -8,6 +8,7 @@
 #include "common/config/Config.hpp"
 #include "common/log/LogContext.hpp"
 #include "scheduler/Scheduler.hpp"
+#include "session/TapeSessionTracker.hpp"
 #include "system/Wrapper.hpp"
 
 #ifdef CTA_PGSCHED
@@ -56,6 +57,7 @@ private:
   std::unique_ptr<SchedulerDBInit_t> m_schedDbInit;
   std::unique_ptr<SchedulerDB_t> m_schedDb;
   std::unique_ptr<Scheduler> m_scheduler;
+  TapeSessionTracker m_tapeSessionTracker;
 };
 
 }  // namespace cta::tape::daemon

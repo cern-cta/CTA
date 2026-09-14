@@ -11,7 +11,6 @@
 
 #include <cxxabi.h>
 #include <iostream>
-#include <signal.h>
 
 using cta::log::LogContext;
 using cta::log::Param;
