@@ -521,8 +521,14 @@ class EosClientHost(DiskClientHost):
 
         # The tape location uses the reserved filesystem ID 65535. Any other location reported by fileinfo means that
         # asynchronous deletion on an FST has not finished, even if MGM already reports d0::t1.
-        filesystem_ids = {location.get("fsid") if isinstance(location, dict) else location for location in locations}
-        return all(int(filesystem_id) == 65535 for filesystem_id in filesystem_ids)
+        filesystem_ids: set[int] = set()
+        for location in locations:
+            filesystem_id: object = location.get("fsid") if isinstance(location, dict) else location
+            if not isinstance(filesystem_id, (int, str)):
+                raise TypeError(f"EOS file info returned an invalid filesystem ID for {path}: {filesystem_id!r}")
+            filesystem_ids.add(int(filesystem_id))
+
+        return all(filesystem_id == 65535 for filesystem_id in filesystem_ids)
 
     @override
     def is_file_on_tape(self, disk_instance_name: str, path: Path) -> bool:
