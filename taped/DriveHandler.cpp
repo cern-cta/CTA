@@ -88,7 +88,7 @@ void DriveHandler::waitForDriveToBeUp() {
         break;
       }
     } catch (Scheduler::NoSuchDrive& e) {
-      // The object store does not even know about this drive. We will report our state
+      // The scheduler does not even know about this drive. We will report our state
       // (default status is down).
       putDriveDown(e.getMessageValue());
       // TODO
@@ -138,22 +138,24 @@ std::unique_ptr<TapeMount> DriveHandler::getNextMount() {
   return nullptr;
 }
 
+// TODO: handle lost database connections cleanly. No need to crash the whole thing on those
+// We should have clearly defined behaviour there
 int DriveHandler::run() {
-  // TODO: telemetry drive state tracking
+  // TODO: wait for catalogue and scheduler to be reachable within a reasonable timeout
 
+  // For a separate MR: add a config option for automatically putting the drive up on startup when possible
+  if (!registerDrive(false)) {
+    return 1;
+  }
+  // TODO: telemetry drive state tracking
   // Needs to be done after the catalogue initialization
+
   // TODO: we probably don't need this polling anymore; add it to reportDriveStatus
   // [[maybe_unused]] ::daemon::DriveSessionTracker driveSessionTracker(m_catalogue, driveInfo.driveName); // TODO
 
-  // Start by registering the drive in the catalogue. Drives start as down
-  // If the drive already exists and it was down, we ensure we don't overwrite the reason
-
-  // TODO: handle lost database connections cleanly. No need to crash the whole thing on those
-  // We should have clearly defined behaviour there
-
-  // TODO: if the catalogue/scheduler is not reachable, do we quit or do we idle until they become reachable?
-
   // TODO: add stop token here
+
+  std::optional<std::string> active_vid;
   while (true) {
     if (driveNotUp()) {
       waitForDriveToBeUp();
@@ -166,8 +168,12 @@ int DriveHandler::run() {
       m_lc.log(log::DEBUG, "Transition from down to up detected. Will check if a tape is in the drive.");
 
       // Start by running the cleaner to unload any possible tape
-      // Add an option to skip this!
-      executeCleanerSession();
+      // For a separate MR: Add an option to config to allow this
+      if (false) {
+        // TODO: handle failure of this correctly
+        // Can the cleaner return true/false based on whether it succeeded or not?
+        executeCleanerSession(active_vid);
+      }
 
       if (!emptyDriveProbe.driveIsEmpty()) {
         // TODO: log warning
@@ -194,6 +200,9 @@ int DriveHandler::run() {
     utils::Timer t;
     try {
       tapeMount = getNextMount();
+      if (tapeMount != nullptr) {
+        active_vid = tapeMount->getVid();
+      }
     } catch (exception::TimeoutException&) {
       log::ScopedParamContainer params(m_lc);
       // TODO: should this be a string?
@@ -215,6 +224,7 @@ int DriveHandler::run() {
 
     // Now that we have a mount, execute the data transfer session
     bool success = executeDataTransferSession(std::move(tapeMount));
+    active_vid = std::nullopt;
     if (!success) {
       // TODO: we need a better reason here
       putDriveDown("Data transfer session failed");
@@ -233,6 +243,58 @@ int DriveHandler::run() {
 }
 
 void DriveHandler::executeCleanerSession() noexcept {}
+
+void DriveHandler::registerDrive(bool putUpIfPossible) {
+  // TODO: I don't think this method works correctly
+  if (!m_scheduler->checkDriveCanBeCreated(driveInfo, m_lc)) {
+    // TODO: log message?
+    return false;
+  }
+
+  cta::common::dataStructures::DesiredDriveState currentDesiredDriveState;
+  try {
+    currentDesiredDriveState = m_scheduler->getDesiredDriveState(m_driveInfo.driveName, m_lc);
+  } catch (Scheduler::NoSuchDrive&) {
+    m_lc.log(log::INFO, "In DriveHandler::runChild(): the desired drive state doesn't exist in the Catalogue DB");
+  }
+
+  cta::common::dataStructures::SecurityIdentity securityIdentity;
+  cta::common::dataStructures::DesiredDriveState driveState;
+  driveState.up = false;
+  driveState.forceDown = false;
+  m_scheduler->createTapeDriveStatus(driveInfo,
+                                     driveState,
+                                     cta::common::dataStructures::MountType::NoMount,
+                                     cta::common::dataStructures::DriveStatus::Down,
+                                     securityIdentity,
+                                     m_lc);
+
+  // This is not the same as the previous reason; should we rethink those reasons?
+  std::string startupReason = "[cta-taped] Startup";
+
+  // If there was no previous reason or if the previous reason was a clean exit,
+
+  // Get the drive state to see if there is a reason or not, we don't want to change the reason
+  // why a drive is down at the startup of taped. If it's setted up a previous Reason From Log
+  // it will be change for this one.
+  if (!currentDesiredDriveState.reason
+      || currentDesiredDriveState.reason.value().substr(0, 11) == "[cta-taped] Exiting cta-taped") {
+    // If there is no
+    driveState.reason = startupReason;
+    if (putUpIfPossible) {
+      // In these cases we could safely put the drive up
+      driveState.up = true;
+    }
+  } else {
+    // In all other cases, we keep the same reason as before and we put the drive down
+    driveState.reason = currentDesiredDriveState.reason.value();
+  }
+
+  scheduler->setDesiredDriveState(m_driveInfo.driveName, driveState, m_lc);
+  scheduler->reportSchedulerBackendName(m_driveInfo.driveName, m_lc);
+  return true;
+  // TODO: catch exception?
+}
 
 bool DriveHandler::executeDataTransferSession(std::unique_ptr<TapeMount> tapeMount) {
   // This should not happen; just a double check

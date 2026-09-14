@@ -35,6 +35,7 @@ public:
   bool isReady() const;
 
 private:
+  bool registerDrive(bool putUpIfPossible);
   void waitForDriveToBeUp();
   void putDriveDown(std::string_view errorMsg);
   bool executeDataTransferSession(std::unique_ptr<TapeMount> tapeMount);

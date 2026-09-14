@@ -66,7 +66,6 @@ add_executable(cta-unit-tests-multiprocess
   SubprocessTests.cpp)
 
 target_link_libraries(cta-unit-tests-multiprocess
-  ctadaemonunittests-multiprocess
   ctacommon
   gtest
   gmock
