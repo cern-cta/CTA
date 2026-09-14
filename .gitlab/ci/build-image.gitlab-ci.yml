@@ -119,6 +119,13 @@ spec:
   script:
     - echo "Building ${TARGET_NAME}"
     - cd "$(dirname "${DOCKERFILE}")"
+    - |
+      case "${TARGET_NAME}" in
+        cta-tools)
+          mkdir -p scripts
+          cp "${CI_PROJECT_DIR}/ci/orchestration/helm/auth/scripts/generate_jwt.py" scripts/
+          ;;
+      esac
     - DOCKERFILE_NAME="$(basename "${DOCKERFILE}")"
     - |
       case "$[[ inputs.platform ]]" in
