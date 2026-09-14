@@ -18,7 +18,14 @@ from _pytest.fixtures import SubRequest
 import fastjsonschema
 import pytest
 
-from system_tests.helpers.hosts import CtaCliHost, CtaMaintdHost, CtaTapedHost, EosClientHost, EosMgmHost
+from system_tests.helpers.hosts import (
+    EOS_TAPE_FILESYSTEM_ID,
+    CtaCliHost,
+    CtaMaintdHost,
+    CtaTapedHost,
+    EosClientHost,
+    EosMgmHost,
+)
 from system_tests.helpers.test_config import TestConfig as SystemTestConfig
 from system_tests.helpers.test_env import TestEnv
 
@@ -690,7 +697,6 @@ class TestEosEvict:
     ) -> None:
         cta_cli.set_all_drives_up()
         dummy_file_systems = [(101, "dummy_1"), (102, "dummy_2"), (103, "dummy_3")]
-        tape_fsid = 65535
         missing_fsid = 200
         file_path = eos_client.generate_and_archive_file(
             disk_instance_name, test_dir / "eos_evict_fsid", append_uid=True
@@ -716,7 +722,7 @@ class TestEosEvict:
 
             # Eviction must reject the tape FSID, a nonexistent FSID, and incomplete option combinations
             failing_cases = [
-                ("tape replica", f"--ignore-evict-counter --fsid {tape_fsid}"),
+                ("tape replica", f"--ignore-evict-counter --fsid {EOS_TAPE_FILESYSTEM_ID}"),
                 ("nonexistent replica", f"--ignore-evict-counter --fsid {missing_fsid}"),
                 ("counter not bypassed", "--fsid 101"),
                 ("missing FSID", "--ignore-removal-on-fst"),

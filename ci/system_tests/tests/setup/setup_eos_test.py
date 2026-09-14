@@ -9,7 +9,7 @@
 import time
 from pathlib import Path
 
-from system_tests.helpers.hosts import EosMgmHost
+from system_tests.helpers.hosts import EOS_TAPE_FILESYSTEM_ID, EosMgmHost
 from system_tests.helpers.test_env import TestEnv
 
 
@@ -31,9 +31,11 @@ def test_general_settings(eos_mgm: EosMgmHost) -> None:
     eos_mgm.exec("eos space config default space.token.generation=1")
     eos_mgm.exec("eos attr -r set default=replica /eos")
     eos_mgm.exec("eos attr -r set sys.forced.nstripes=1 /eos")
-    tape_fs_id = 65535
     eos_mgm.exec("eos space define tape", throw_on_failure=False)
-    eos_mgm.exec(f"eos fs add -m {tape_fs_id} tape localhost:1234 /does_not_exist tape", throw_on_failure=False)
+    eos_mgm.exec(
+        f"eos fs add -m {EOS_TAPE_FILESYSTEM_ID} tape localhost:1234 /does_not_exist tape",
+        throw_on_failure=False,
+    )
 
     print("Waiting for EOS to report free space on a writable filesystem")
     deadline = time.monotonic() + 60
