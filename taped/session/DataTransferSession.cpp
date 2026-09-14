@@ -31,6 +31,7 @@
 #include "taped/scsi/Device.hpp"
 #include "taped/session/VolumeInfo.hpp"
 
+#include <chrono>
 #include <google/protobuf/stubs/common.h>
 #include <memory>
 #include <string>
@@ -114,6 +115,28 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
 cta::tape::daemon::Session::EndOfSessionAction
 cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logContext,
                                                     cta::RetrieveMount* retrieveMount) {
+  m_tapeSessionTracker.reportState(cta::tape::session::SessionState::Scheduling,
+                                   cta::tape::session::SessionType::Retrieve);
+  TapeSessionReporter reporter(m_tapeSessionTracker,
+                               *retrieveMount,
+                               logContext,
+                               std::chrono::seconds(15),
+                               std::chrono::seconds(m_dataTransferConfig.wdNoBlockMoveMaxSecs));
+  reporter.addParameters({
+    {"tapeVid",         m_volInfo.vid                         },
+    {"mountType",       toCamelCaseString(m_volInfo.mountType)},
+    {"mountId",         m_volInfo.mountId                     },
+    {"volReqId",        m_volInfo.mountId                     },
+    {"tapeDrive",       m_driveInfo.driveName                 },
+    {"vendor",          retrieveMount->getVendor()            },
+    {"vo",              retrieveMount->getVo()                },
+    {"mediaType",       retrieveMount->getMediaType()         },
+    {"tapePool",        retrieveMount->getPoolName()          },
+    {"logicalLibrary",  m_driveInfo.logicalLibrary            },
+    {"capacityInBytes", retrieveMount->getCapacityInBytes()   },
+    {"mountAttempted",  1                                     }
+  });
+  reporter.startThreads();
   // We are ready to start the session. We need to create the whole machinery
   // in order to get the task injector ready to check if we actually have a
   // file to recall.
@@ -123,11 +146,14 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
   std::unique_ptr<cta::tape::drive::DriveInterface> drive(findDrive(logContext, retrieveMount));
 
   if (!drive) {
-    // reporter.bailout();
+    reporter.addParameters({
+      {"status",         "failure"},
+      {"mountAttempted", 0        }
+    });
+    reporter.finish();
+    reporter.waitThreads();
     return MARK_DRIVE_AS_DOWN;
   }
-
-  // TODO: the watchdog has been removed, but we may still want a separate thread to report session stats
 
   // We can now start instantiating all the components of the data path
   {
@@ -135,21 +161,13 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
     // to refer them to each other)
     RecallReportPacker reportPacker(retrieveMount, logContext);
     reportPacker.disableBulk();  //no bulk needed anymore
-    RecallWatchDog watchDog(15,
-                            m_dataTransferConfig.wdNoBlockMoveMaxSecs,
-                            m_initialProcess,
-                            *retrieveMount,
-                            m_driveInfo.driveName,
-                            logContext);
-
     RecallMemoryManager memoryManager(m_dataTransferConfig.nbBufs, m_dataTransferConfig.bufsz, logContext);
 
     TapeReadSingleThread readSingleThread(*drive,
                                           m_mediaChanger,
-                                          reporter,
+                                          m_tapeSessionTracker,
                                           m_volInfo,
                                           m_dataTransferConfig.bulkRequestRecallMaxFiles,
-                                          watchDog,
                                           logContext,
                                           reportPacker,
                                           m_dataTransferConfig.useLbp,
@@ -162,7 +180,7 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
 
     DiskWriteThreadPool threadPool(m_dataTransferConfig.nbDiskThreads,
                                    reportPacker,
-                                   watchDog,
+                                   m_tapeSessionTracker,
                                    logContext,
                                    m_dataTransferConfig.xrootTimeout);
     RecallTaskInjector taskInjector(memoryManager,
@@ -171,12 +189,12 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
                                     *retrieveMount,
                                     m_dataTransferConfig.bulkRequestRecallMaxFiles,
                                     m_dataTransferConfig.bulkRequestRecallMaxBytes,
-                                    watchDog,
+                                    m_tapeSessionTracker,
                                     logContext);
     // Workaround for bug CASTOR-4829: tapegateway: should request positioning by blockid for recalls instead of fseq
     // In order to implement the fix, the task injector needs to know the type of the client
     readSingleThread.setTaskInjector(&taskInjector);
-    reportPacker.setWatchdog(watchDog);
+    reportPacker.setTapeSessionTracker(m_tapeSessionTracker);
 
     taskInjector.setDriveInterface(readSingleThread.getDriveReference());
 
@@ -219,13 +237,13 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
       threadPool.startThreads();
       reportPacker.startThreads();
       taskInjector.startThreads();
-      reporter.startThreads();
       // This thread is now going to be idle until the system unwinds at the end of the session
       // All client notifications are done by the report packer, including the end of session
       taskInjector.waitThreads();
       threadPool.waitThreads();
       readSingleThread.waitThreads();
       reportPacker.waitThread();
+      reporter.finish();
       reporter.waitThreads();
 
       // If the disk thread finished the last, it leaves the drive in DrainingToDisk state
@@ -269,16 +287,18 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
       try {
         retrieveMount->complete();
-        watchDog.updateStats(TapeSessionStats());
-        watchDog.reportStats();
+        m_tapeSessionTracker.updateTapeStats({});
         if (!reservationResult) {
-          watchDog.addToErrorCount("Info_diskSpaceReservationTestFailure");
+          m_tapeSessionTracker.incrementError(TapeSessionError::DiskSpaceReservationTestFailure);
         }
         if (!noFilesToRecall) {
-          watchDog.addToErrorCount("Info_noFilesToRecall");
+          m_tapeSessionTracker.incrementError(TapeSessionError::NoFilesToRecall);
         }
-        watchDog.addToErrorCount("Info_emptyMount");
-        watchDog.reportParams();
+        m_tapeSessionTracker.incrementError(TapeSessionError::EmptyMount);
+        reporter.addParameters({
+          {"status",         status},
+          {"mountAttempted", 0     }
+        });
         cta::log::LogContext::ScopedParam sp08(logContext, cta::log::Param("MountTransactionId", mountId));
         logContext.log(priority, "Notified client of end session with error");
       } catch (cta::exception::Exception& ex) {
@@ -292,6 +312,8 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
                                     cta::common::dataStructures::MountType::NoMount,
                                     cta::common::dataStructures::DriveStatus::Up,
                                     logContext);
+      reporter.finish();
+      reporter.waitThreads();
       return MARK_DRIVE_AS_UP;
     }
   }
@@ -303,13 +325,40 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
 cta::tape::daemon::Session::EndOfSessionAction
 cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logContext,
                                                      cta::ArchiveMount* archiveMount) {
+  m_tapeSessionTracker.reportState(cta::tape::session::SessionState::Scheduling,
+                                   cta::tape::session::SessionType::Archive);
+  TapeSessionReporter reporter(m_tapeSessionTracker,
+                               *archiveMount,
+                               logContext,
+                               std::chrono::seconds(15),
+                               std::chrono::seconds(m_dataTransferConfig.wdNoBlockMoveMaxSecs));
+  reporter.addParameters({
+    {"tapeVid",         m_volInfo.vid                         },
+    {"mountType",       toCamelCaseString(m_volInfo.mountType)},
+    {"mountId",         m_volInfo.mountId                     },
+    {"volReqId",        m_volInfo.mountId                     },
+    {"tapeDrive",       m_driveInfo.driveName                 },
+    {"vendor",          archiveMount->getVendor()             },
+    {"vo",              archiveMount->getVo()                 },
+    {"mediaType",       archiveMount->getMediaType()          },
+    {"tapePool",        archiveMount->getPoolName()           },
+    {"logicalLibrary",  m_driveInfo.logicalLibrary            },
+    {"capacityInBytes", archiveMount->getCapacityInBytes()    },
+    {"mountAttempted",  1                                     }
+  });
+  reporter.startThreads();
   // We are ready to start the session. We need to create the whole machinery
   // in order to get the task injector ready to check if we actually have a
   // file to migrate.
   // 1) Get hold of the drive error logs are done inside the findDrive function
   std::unique_ptr<cta::tape::drive::DriveInterface> drive(findDrive(logContext, archiveMount));
   if (!drive) {
-    reporter.bailout();
+    reporter.addParameters({
+      {"status",         "failure"},
+      {"mountAttempted", 0        }
+    });
+    reporter.finish();
+    reporter.waitThreads();
     return MARK_DRIVE_AS_DOWN;
   }
   // Once we got hold of the drive, we can run the session
@@ -320,8 +369,7 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
     MigrationReportPacker reportPacker(archiveMount, logContext);
     TapeWriteSingleThread writeSingleThread(*drive,
                                             m_mediaChanger,
-                                            reporter,
-                                            watchDog,
+                                            m_tapeSessionTracker,
                                             m_volInfo,
                                             logContext,
                                             reportPacker,
@@ -337,7 +385,7 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
     DiskReadThreadPool threadPool(m_dataTransferConfig.nbDiskThreads,
                                   m_dataTransferConfig.bulkRequestMigrationMaxFiles,
                                   m_dataTransferConfig.bulkRequestMigrationMaxBytes,
-                                  watchDog,
+                                  m_tapeSessionTracker,
                                   logContext,
                                   m_dataTransferConfig.xrootTimeout);
 
@@ -351,7 +399,7 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
                                        logContext);
     threadPool.setTaskInjector(&taskInjector);
     writeSingleThread.setTaskInjector(&taskInjector);
-    reportPacker.setWatchdog(watchDog);
+    reportPacker.setTapeSessionTracker(m_tapeSessionTracker);
     cta::utils::Timer timer;
     bool noFilesToMigrate = false;
     if (taskInjector.synchronousInjection(noFilesToMigrate)) {
@@ -368,13 +416,13 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
       writeSingleThread.startThreads();
       reportPacker.startThreads();
       taskInjector.startThreads();
-      reporter.startThreads();
       // Synchronise with end of threads
       taskInjector.waitThreads();
       writeSingleThread.waitThreads();
       threadPool.waitThreads();
       memoryManager.waitThreads();
       reportPacker.waitThread();
+      reporter.finish();
       reporter.waitThreads();
 
       return writeSingleThread.getHardwareStatus();
@@ -404,14 +452,15 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
       try {
         archiveMount->complete();
-        // TODO: I guess watchDog functionality should be in tapeSessionTracker?
-        watchDog.updateStats(TapeSessionStats());
-        watchDog.reportStats();
+        m_tapeSessionTracker.updateTapeStats({});
         if (noFilesToMigrate) {
-          watchDog.addToErrorCount("Info_noFilesToMigrate");
+          m_tapeSessionTracker.incrementError(TapeSessionError::NoFilesToMigrate);
         }
-        watchDog.addToErrorCount("Info_emptyMount");
-        watchDog.reportParams();
+        m_tapeSessionTracker.incrementError(TapeSessionError::EmptyMount);
+        reporter.addParameters({
+          {"status",         status},
+          {"mountAttempted", 0     }
+        });
         cta::log::LogContext::ScopedParam sp11(logContext, cta::log::Param("MountTransactionId", mountId));
         logContext.log(priority, "Notified client of end session with error");
       } catch (cta::exception::Exception& ex) {
@@ -425,6 +474,8 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
                                     cta::common::dataStructures::MountType::NoMount,
                                     cta::common::dataStructures::DriveStatus::Up,
                                     logContext);
+      reporter.finish();
+      reporter.waitThreads();
       return MARK_DRIVE_AS_UP;
     }
   }

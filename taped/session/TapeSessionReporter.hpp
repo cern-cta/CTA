@@ -8,6 +8,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/log/Param.hpp"
 #include "common/process/threading/Thread.hpp"
+#include "scheduler/TapeMount.hpp"
 #include "taped/session/TapeSessionTracker.hpp"
 
 #include <chrono>
@@ -22,6 +23,7 @@ namespace cta::tape::daemon {
 class TapeSessionReporter : private cta::threading::Thread {
 public:
   TapeSessionReporter(TapeSessionTracker& tracker,
+                      cta::TapeMount& mount,
                       const cta::log::LogContext& lc,
                       std::chrono::milliseconds reportPeriod,
                       std::chrono::milliseconds stuckPeriod);
@@ -31,10 +33,7 @@ public:
   void waitThreads();
 
   // TODO: maybe in the future we can find a cleaner way to do this
-  void addParameter(const cta::log::Param& parameter);
   void addParameters(const std::vector<cta::log::Param>& parameters);
-  void deleteParameter(const std::string& name);
-  void resetParameters();
 
   /** Immediately report the current tracker contents. */
   void reportNow();
@@ -46,6 +45,7 @@ private:
   void logStats(bool sessionFinished);
 
   TapeSessionTracker& m_tracker;
+  cta::TapeMount& m_mount;
   cta::log::LogContext m_lc;
   const std::chrono::milliseconds m_reportPeriod;
   const std::chrono::milliseconds m_stuckPeriod;

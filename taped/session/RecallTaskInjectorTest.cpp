@@ -7,16 +7,12 @@
 
 #include "DiskWriteThreadPool.hpp"
 #include "TapeReadSingleThread.hpp"
-#include "TapeSessionReporter.hpp"
-#include "TapedProxyMock.hpp"
-#include "TaskWatchDog.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "common/exception/NotImplementedException.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/StringLogger.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
-#include "scheduler/TapeMountDummy.hpp"
 #include "scheduler/testingMocks/MockRetrieveMount.hpp"
 #include "taped/drive/FakeDrive.hpp"
 
@@ -79,8 +75,8 @@ class FakeDiskWriteThreadPool : public DiskWriteThreadPool {
 public:
   using DiskWriteThreadPool::m_tasks;
 
-  FakeDiskWriteThreadPool(RecallReportPacker& rrp, RecallWatchDog& rwd, cta::log::LogContext& lc)
-      : DiskWriteThreadPool(1, rrp, rwd, lc, 0) {}
+  FakeDiskWriteThreadPool(RecallReportPacker& rrp, TapeSessionTracker& tracker, cta::log::LogContext& lc)
+      : DiskWriteThreadPool(1, rrp, tracker, lc, 0) {}
 
   virtual ~FakeDiskWriteThreadPool() {};
 };
@@ -91,11 +87,11 @@ public:
 
   FakeSingleTapeReadThread(drive::DriveInterface& drive,
                            cta::mediachanger::MediaChangerFacade& mc,
-                           daemon::TapeSessionReporter& tsr,
+                           TapeSessionTracker& tracker,
                            const daemon::VolumeInfo& volInfo,
                            const uint32_t tapeLoadTimeout,
                            cta::log::LogContext& lc)
-      : TapeSingleThreadInterface<TapeReadTask>(drive, mc, tsr, volInfo, lc, false, "", tapeLoadTimeout) {}
+      : TapeSingleThreadInterface<TapeReadTask>(drive, mc, tracker, volInfo, lc, false, "", tapeLoadTimeout) {}
 
   ~FakeSingleTapeReadThread() {
     const unsigned int size = m_tasks.size();
@@ -108,7 +104,7 @@ public:
 
   virtual void push(TapeReadTask* t) { m_tasks.push(t); }
 
-  virtual void countTapeLogError(const std::string& error) {};
+  virtual void countTapeAlert(uint16_t tapeAlertCode) {};
 
 protected:
   virtual void logSCSIMetrics() {};
@@ -129,7 +125,7 @@ class TestingDatabaseRetrieveMount : public cta::SchedulerDatabase::RetrieveMoun
     throw cta::exception::NotImplementedException();
   }
 
-  void setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) override {
+  void setTapeSessionStats(const cta::tape::daemon::TapeSideStats& stats) override {
     throw cta::exception::NotImplementedException();
   }
 
@@ -176,22 +172,18 @@ TEST_F(cta_tape_daemonTest, RecallTaskInjectorNominal) {
   trm.createRetrieveJobs(nbJobs);
   //EXPECT_CALL(trm, internalGetNextJob()).Times(nbJobs+1);
 
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> tspd;
-  cta::TapeMountDummy tmd;
-  RecallWatchDog rwd(1, 1, tspd, tmd, "", lc);
+  TapeSessionTracker tracker;
   std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
   MockRecallReportPacker mrrp(&trm, lc);
-  FakeDiskWriteThreadPool diskWrite(mrrp, rwd, lc);
+  FakeDiskWriteThreadPool diskWrite(mrrp, tracker, lc);
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
   cta::tape::daemon::VolumeInfo volume;
   volume.vid = "V12345";
   volume.mountType = cta::common::dataStructures::MountType::Retrieve;
-  cta::tape::daemon::TapeSessionReporter gsr(initialProcess, lc);
-  FakeSingleTapeReadThread tapeRead(drive, mc, gsr, volume, 60, lc);
-  daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, maxNbJobsInjectedAtOnce, blockSize, rwd, lc);
+  FakeSingleTapeReadThread tapeRead(drive, mc, tracker, volume, 60, lc);
+  daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, maxNbJobsInjectedAtOnce, blockSize, tracker, lc);
 
   bool noFilesToRecall;
   ASSERT_EQ(true, rti.synchronousFetch(noFilesToRecall));
@@ -239,22 +231,18 @@ TEST_F(cta_tape_daemonTest, RecallTaskInjectorNoFiles) {
   trm.createRetrieveJobs(0);
   //EXPECT_CALL(trm, internalGetNextJob()).Times(1); //no work: single call to getnextjob
 
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> tspd;
-  cta::TapeMountDummy tmd;
-  RecallWatchDog rwd(1, 1, tspd, tmd, "", lc);
+  TapeSessionTracker tracker;
   std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
   MockRecallReportPacker mrrp(&trm, lc);
-  FakeDiskWriteThreadPool diskWrite(mrrp, rwd, lc);
+  FakeDiskWriteThreadPool diskWrite(mrrp, tracker, lc);
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
   cta::tape::daemon::VolumeInfo volume;
   volume.vid = "V12345";
   volume.mountType = cta::common::dataStructures::MountType::Retrieve;
-  cta::tape::daemon::TapeSessionReporter tsr(initialProcess, lc);
-  FakeSingleTapeReadThread tapeRead(drive, mc, tsr, volume, 60, lc);
-  daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, 6, blockSize, rwd, lc);
+  FakeSingleTapeReadThread tapeRead(drive, mc, tracker, volume, 60, lc);
+  daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, 6, blockSize, tracker, lc);
 
   bool noFilesToRecall;
   ASSERT_FALSE(rti.synchronousFetch(noFilesToRecall));

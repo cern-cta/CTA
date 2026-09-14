@@ -19,12 +19,12 @@ namespace cta::tape::daemon {
 //------------------------------------------------------------------------------
 DiskWriteThreadPool::DiskWriteThreadPool(int nbThread,
                                          RecallReportPacker& report,
-                                         RecallWatchDog& recallWatchDog,
+                                         TapeSessionTracker& tracker,
                                          const cta::log::LogContext& lc,
                                          uint16_t xrootTimeout)
     : m_xrootTimeout(xrootTimeout),
       m_reporter(report),
-      m_watchdog(recallWatchDog),
+      m_tracker(tracker),
       m_lc(lc) {
   m_lc.push(cta::log::Param("threadCount", nbThread));
   for (int i = 0; i < nbThread; i++) {
@@ -146,7 +146,7 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
           == task->execute(m_parentThreadPool.m_reporter,
                            m_lc,
                            m_diskFileFactory,
-                           m_parentThreadPool.m_watchdog,
+                           m_parentThreadPool.m_tracker,
                            m_threadID)) {
         ++m_parentThreadPool.m_failedWriteCount;
         cta::log::ScopedParamContainer params(m_lc);
@@ -181,7 +181,7 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
       }
     }
     const double deliveryTime = m_parentThreadPool.m_totalTime.secs();
-    m_parentThreadPool.m_watchdog.updateStatsDeliveryTime(deliveryTime);
+    m_parentThreadPool.m_tracker.setDiskDeliveryTime(deliveryTime);
   }
 }
 

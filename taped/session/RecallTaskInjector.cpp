@@ -244,7 +244,7 @@ void RecallTaskInjector::injectBulkRecalls() {
     m_bytes -= job->archiveFile.fileSize;
   }
   if (!reserveSpaceForNextJobBatch(retrieveJobsBatch)) {
-    m_watchdog.addToErrorCount("Info_diskSpaceReservationFailure");
+    m_tracker.incrementError(TapeSessionError::DiskSpaceReservationFailure);
     return;
   }
   bool setPromise = (retrieveJobsBatch.size() != 0);

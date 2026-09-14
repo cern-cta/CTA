@@ -52,7 +52,6 @@ add_library(ctatapedsessionunittests SHARED
   RecallTaskInjectorTest.cpp
   TapeSessionReporterTest.cpp
   TapeSessionTrackerTest.cpp
-  TaskWatchDogTest.cpp
 )
 set_property(TARGET ctatapedsessionunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedsessionunittests PROPERTY   VERSION "${CTA_LIBVERSION}")

@@ -6,6 +6,7 @@
 #include "TapeSessionTracker.hpp"
 
 #include <gtest/gtest.h>
+#include <thread>
 
 namespace cta::tape::daemon {
 
@@ -36,6 +37,48 @@ TEST(TapeSessionTrackerTest, UpdatesTapeAndDiskStatsIndependently) {
   EXPECT_EQ(5, tracker.tapeStats().totalTime);
   EXPECT_EQ(8, tracker.diskStats().deliveryTime);
   EXPECT_EQ(5, tracker.diskStats().waitReportingTime);
+}
+
+TEST(TapeSessionTrackerTest, SetsDeliveryTimeWithoutReplacingAccumulatedDiskStats) {
+  TapeSessionTracker tracker;
+  tracker.addDiskStats({.waitReportingTime = 3});
+
+  tracker.setDiskDeliveryTime(8);
+
+  EXPECT_EQ(8, tracker.diskStats().deliveryTime);
+  EXPECT_EQ(3, tracker.diskStats().waitReportingTime);
+}
+
+TEST(TapeSessionTrackerTest, TracksActiveDiskFilesByThread) {
+  TapeSessionTracker tracker;
+
+  tracker.notifyDiskFileOpened(1, 1234, "file:///one");
+  tracker.notifyDiskFileOpened(2, 5678, "file:///two");
+
+  const auto files = tracker.activeDiskFiles();
+  ASSERT_EQ(2, files.size());
+  EXPECT_EQ(1234, files.at(1).fileId);
+  EXPECT_EQ("file:///one", files.at(1).path);
+  EXPECT_NE(std::chrono::steady_clock::time_point {}, files.at(1).openedAt);
+  EXPECT_EQ(5678, files.at(2).fileId);
+
+  tracker.notifyDiskFileClosed(1);
+  EXPECT_FALSE(tracker.activeDiskFiles().contains(1));
+  EXPECT_TRUE(tracker.activeDiskFiles().contains(2));
+}
+
+TEST(TapeSessionTrackerTest, ConcurrentDiskThreadsRetainIndependentEntries) {
+  TapeSessionTracker tracker;
+
+  std::thread first([&tracker] { tracker.notifyDiskFileOpened(1, 1234, "file:///one"); });
+  std::thread second([&tracker] { tracker.notifyDiskFileOpened(2, 5678, "file:///two"); });
+  first.join();
+  second.join();
+
+  const auto files = tracker.activeDiskFiles();
+  ASSERT_EQ(2, files.size());
+  EXPECT_EQ(1234, files.at(1).fileId);
+  EXPECT_EQ(5678, files.at(2).fileId);
 }
 
 TEST(TapeSessionTrackerTest, TracksBlockMovement) {
@@ -122,6 +165,7 @@ TEST(TapeSessionTrackerTest, EnteringSchedulingResetsSessionDataOnce) {
   tracker.incrementError(TapeSessionError::DiskRead);
   tracker.incrementTapeAlert(0x01);
   tracker.notifyBlockMovement(100);
+  tracker.notifyDiskFileOpened(1, 1234, "file:///one");
 
   tracker.reportState(cta::tape::session::SessionState::Scheduling, cta::tape::session::SessionType::Undetermined);
 
@@ -131,6 +175,7 @@ TEST(TapeSessionTrackerTest, EnteringSchedulingResetsSessionDataOnce) {
   EXPECT_TRUE(tracker.tapeAlertStats().empty());
   EXPECT_EQ(0, tracker.bytesMoved());
   EXPECT_EQ(std::chrono::steady_clock::time_point {}, tracker.lastBlockMovement());
+  EXPECT_TRUE(tracker.activeDiskFiles().empty());
   const auto sessionStartTime = tracker.sessionStartTime();
   EXPECT_NE(std::chrono::steady_clock::time_point {}, sessionStartTime);
 

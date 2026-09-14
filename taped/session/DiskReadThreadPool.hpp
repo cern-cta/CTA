@@ -6,7 +6,7 @@
 #pragma once
 
 #include "DiskReadTask.hpp"
-#include "TaskWatchDog.hpp"
+#include "TapeSessionTracker.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
 #include "common/process/threading/Thread.hpp"
@@ -34,7 +34,7 @@ public:
   DiskReadThreadPool(int nbThread,
                      uint64_t maxFilesReq,
                      uint64_t maxBytesReq,
-                     MigrationWatchDog& migrationWatchDog,
+                     TapeSessionTracker& tracker,
                      const cta::log::LogContext& lc,
                      uint16_t xrootTimeout);
 
@@ -181,9 +181,9 @@ private:
   uint16_t m_xrootTimeout;
 
   /**
-   * Reference to the watchdog, for error reporting.
+   * Reference to the session tracker, for error and progress reporting.
    */
-  cta::tape::daemon::MigrationWatchDog& m_watchdog;
+  TapeSessionTracker& m_tracker;
 
   /** The log context. This is copied on construction to prevent interferences
    * between threads.

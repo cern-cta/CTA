@@ -8,14 +8,12 @@
 #include "RecallReportPacker.hpp"
 #include "RecallTaskInjector.hpp"
 #include "ReportPackerInterface.hpp"
-#include "TapedProxyMock.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "common/exception/NotImplementedException.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
-#include "scheduler/TapeMountDummy.hpp"
 #include "scheduler/testingMocks/MockRetrieveMount.hpp"
 
 #include <gtest/gtest.h>
@@ -37,7 +35,7 @@ class TestingDatabaseRetrieveMount : public cta::SchedulerDatabase::RetrieveMoun
     throw cta::exception::NotImplementedException();
   }
 
-  void setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) override {
+  void setTapeSessionStats(const cta::tape::daemon::TapeSideStats& stats) override {
     throw cta::exception::NotImplementedException();
   }
 
@@ -182,10 +180,8 @@ TEST(cta_tape_daemon, DiskWriteTaskFailedBlock) {
 
   t.pushDataBlock(mb);
   t.pushDataBlock(nullptr);
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> tspd;
-  cta::TapeMountDummy tmd;
-  RecallWatchDog rwd(1, 1, tspd, tmd, "", lc);
-  t.execute(report, lc, fileFactory, rwd, 0);
+  TapeSessionTracker tracker;
+  t.execute(report, lc, fileFactory, tracker, 0);
   ASSERT_EQ(1, report.failedJobs);
 }
 }  // namespace unitTests

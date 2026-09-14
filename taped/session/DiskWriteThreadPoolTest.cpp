@@ -9,12 +9,10 @@
 #include "RecallReportPacker.hpp"
 #include "RecallTaskInjector.hpp"
 #include "ReportPackerInterface.hpp"
-#include "TapedProxyMock.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "common/exception/NotImplementedException.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
-#include "scheduler/TapeMountDummy.hpp"
 
 #include <gtest/gtest.h>
 
@@ -35,7 +33,7 @@ class TestingDatabaseRetrieveMount : public cta::SchedulerDatabase::RetrieveMoun
     throw cta::exception::NotImplementedException();
   }
 
-  void setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) override {
+  void setTapeSessionStats(const cta::tape::daemon::TapeSideStats& stats) override {
     throw cta::exception::NotImplementedException();
   }
 
@@ -162,11 +160,9 @@ TEST(cta_tape_daemon, DiskWriteThreadPoolTest) {
 
   RecallMemoryManager mm(10, 100, lc);
 
-  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> tspd;
-  cta::TapeMountDummy tmd;
-  RecallWatchDog rwd(1, 1, tspd, tmd, "", lc);
+  TapeSessionTracker tracker;
 
-  DiskWriteThreadPool dwtp(2, report, rwd, lc, 0);
+  DiskWriteThreadPool dwtp(2, report, tracker, lc, 0);
   dwtp.startThreads();
   report.setTapeDone();
 

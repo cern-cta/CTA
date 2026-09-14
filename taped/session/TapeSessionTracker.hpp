@@ -13,6 +13,8 @@
 #include <cstdint>
 #include <map>
 #include <mutex>
+#include <string>
+#include <utility>
 
 namespace cta::tape::daemon {
 
@@ -55,6 +57,14 @@ enum class TapeSessionError {
 using TapeSessionErrorStats = std::map<TapeSessionError, uint32_t>;
 using TapeAlertStats = std::map<uint16_t, uint32_t>;
 
+struct DiskFileProgress {
+  uint64_t fileId = 0;
+  std::string path;
+  std::chrono::steady_clock::time_point openedAt;
+};
+
+using ActiveDiskFiles = std::map<uint32_t, DiskFileProgress>;
+
 struct TapeSessionProgress {
   uint64_t fileId = 0;
   uint64_t fSeq = 0;
@@ -75,6 +85,7 @@ public:
       m_diskStats = {};
       m_errorStats.clear();
       m_tapeAlertStats.clear();
+      m_activeDiskFiles.clear();
       m_fileId = 0;
       m_fSeq = 0;
       m_fileBeingMoved = false;
@@ -135,6 +146,27 @@ public:
   void addDiskStats(const DiskSideStats& stats) {
     std::lock_guard lock(m_mutex);
     m_diskStats.add(stats);
+  }
+
+  void setDiskDeliveryTime(double deliveryTime) {
+    std::lock_guard lock(m_mutex);
+    m_diskStats.deliveryTime = deliveryTime;
+  }
+
+  void notifyDiskFileOpened(uint32_t threadId, uint64_t fileId, std::string path) {
+    std::lock_guard lock(m_mutex);
+    m_activeDiskFiles.insert_or_assign(threadId,
+                                       DiskFileProgress {fileId, std::move(path), std::chrono::steady_clock::now()});
+  }
+
+  void notifyDiskFileClosed(uint32_t threadId) {
+    std::lock_guard lock(m_mutex);
+    m_activeDiskFiles.erase(threadId);
+  }
+
+  ActiveDiskFiles activeDiskFiles() const {
+    std::lock_guard lock(m_mutex);
+    return m_activeDiskFiles;
   }
 
   TapeSessionErrorStats errorStats() const {
@@ -230,6 +262,7 @@ private:
   DiskSideStats m_diskStats;
   TapeSessionErrorStats m_errorStats;
   TapeAlertStats m_tapeAlertStats;
+  ActiveDiskFiles m_activeDiskFiles;
 
   uint64_t m_bytesMoved = 0;
   std::chrono::steady_clock::time_point m_lastBlockMovement;

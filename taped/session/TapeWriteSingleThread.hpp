@@ -6,9 +6,9 @@
 #pragma once
 
 #include "MigrationReportPacker.hpp"
+#include "TapeSessionTracker.hpp"
 #include "TapeSingleThreadInterface.hpp"
 #include "TapeWriteTask.hpp"
-#include "TaskWatchDog.hpp"
 #include "common/process/ProcessCap.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
 #include "common/process/threading/Thread.hpp"
@@ -24,8 +24,6 @@
 namespace cta::tape::daemon {
 
 // forward declaration
-class TapeSessionReporter;
-
 class MigrationTaskInjector;
 
 /**
@@ -39,8 +37,7 @@ public:
    */
   TapeWriteSingleThread(cta::tape::drive::DriveInterface& drive,
                         cta::mediachanger::MediaChangerFacade& mediaChanger,
-                        TapeSessionReporter& reporter,
-                        MigrationWatchDog& watchdog,
+                        TapeSessionTracker& tracker,
                         const VolumeInfo& volInfo,
                         const cta::log::LogContext& logContext,
                         MigrationReportPacker& reportPacker,
@@ -165,11 +162,6 @@ private:
   const bool m_useLbp;
 
   /**
-   * Reference to the watchdog, used in run()
-   */
-  MigrationWatchDog& m_watchdog;
-
-  /**
    * Reference to the archive mount object that
    * stores the virtual organization (vo) of the tape, the tape pool in which the tape is
    * and the density of the tape
@@ -182,10 +174,7 @@ private:
   cta::catalogue::Catalogue& m_catalogue;
 
 protected:
-  /***
-   * Helper virtual function to access the watchdog from parent class
-   */
-  void countTapeLogError(const std::string& error) override { m_watchdog.addToErrorCount(error); }
+  void countTapeAlert(uint16_t tapeAlertCode) override { m_tracker.incrementTapeAlert(tapeAlertCode); }
 
   /**
    * Logs SCSI metrics for write session.

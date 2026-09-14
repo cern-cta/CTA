@@ -96,10 +96,12 @@ void pushParameter(cta::log::ScopedParamContainer& container, const cta::log::Pa
 }  // namespace
 
 TapeSessionReporter::TapeSessionReporter(TapeSessionTracker& tracker,
+                                         cta::TapeMount& mount,
                                          const cta::log::LogContext& lc,
                                          std::chrono::milliseconds reportPeriod,
                                          std::chrono::milliseconds stuckPeriod)
     : m_tracker(tracker),
+      m_mount(mount),
       m_lc(lc),
       m_reportPeriod(std::max(reportPeriod, std::chrono::milliseconds(1))),
       m_stuckPeriod(std::max(stuckPeriod, std::chrono::milliseconds(1))) {
@@ -122,26 +124,11 @@ void TapeSessionReporter::waitThreads() {
   wait();
 }
 
-void TapeSessionReporter::addParameter(const cta::log::Param& parameter) {
-  std::lock_guard lock(m_mutex);
-  m_parameters.insert_or_assign(parameter.getName(), parameter);
-}
-
 void TapeSessionReporter::addParameters(const std::vector<cta::log::Param>& parameters) {
   std::lock_guard lock(m_mutex);
   for (const auto& parameter : parameters) {
     m_parameters.insert_or_assign(parameter.getName(), parameter);
   }
-}
-
-void TapeSessionReporter::deleteParameter(const std::string& name) {
-  std::lock_guard lock(m_mutex);
-  m_parameters.erase(name);
-}
-
-void TapeSessionReporter::resetParameters() {
-  std::lock_guard lock(m_mutex);
-  m_parameters.clear();
 }
 
 void TapeSessionReporter::run() {
@@ -201,10 +188,12 @@ void TapeSessionReporter::reportStuckFileIfNeeded() {
 
 void TapeSessionReporter::reportNow() {
   logStats(false);
+  m_mount.setTapeSessionStats(m_tracker.tapeStats());
 }
 
 void TapeSessionReporter::reportSessionFinished() {
   logStats(true);
+  m_mount.setTapeSessionStats(m_tracker.tapeStats());
 }
 
 void TapeSessionReporter::logStats(bool sessionFinished) {
@@ -257,6 +246,9 @@ void TapeSessionReporter::logStats(bool sessionFinished) {
   }
   for (const auto& [tapeAlertCode, count] : m_tracker.tapeAlertStats()) {
     set("Error_" + cta::tape::SCSI::tapeAlertToCompactString(tapeAlertCode), count);
+  }
+  for (const auto& [threadId, file] : m_tracker.activeDiskFiles()) {
+    set("stillOpenFileForThread" + std::to_string(threadId), file.path);
   }
   {
     std::lock_guard lock(m_mutex);

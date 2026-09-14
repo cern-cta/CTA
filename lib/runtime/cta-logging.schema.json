@@ -350,6 +350,9 @@
           "^(Error|Info)_[A-Za-z0-9_]+$": {
             "type": "integer",
             "minimum": 0
+          },
+          "^stillOpenFileForThread[0-9]+$": {
+            "type": "string"
           }
         }
       }
