@@ -7,3 +7,6 @@
 [submodule "common/jwt-cpp"]
 	path = common/jwt-cpp
 	url = https://github.com/Thalhammer/jwt-cpp.git
+[submodule "tools-rs/eos-protobuf-rs/external/eos-grpc-proto"]
+	path = tools-rs/eos-protobuf-rs/external/eos-grpc-proto
+	url = https://gitlab.cern.ch/eos/grpc-proto.git
