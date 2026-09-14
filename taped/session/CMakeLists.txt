@@ -50,6 +50,7 @@ add_library(ctatapedsessionunittests SHARED
   MigrationReportPackerTest.cpp
   RecallReportPackerTest.cpp
   RecallTaskInjectorTest.cpp
+  TapeSessionReporterTest.cpp
   TapeSessionTrackerTest.cpp
   TaskWatchDogTest.cpp
 )

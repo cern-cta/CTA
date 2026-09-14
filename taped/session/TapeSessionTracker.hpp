@@ -55,6 +55,15 @@ enum class TapeSessionError {
 using TapeSessionErrorStats = std::map<TapeSessionError, uint32_t>;
 using TapeAlertStats = std::map<uint16_t, uint32_t>;
 
+struct TapeSessionProgress {
+  uint64_t fileId = 0;
+  uint64_t fSeq = 0;
+  bool fileBeingMoved = false;
+  std::chrono::steady_clock::time_point fileStartTime;
+  uint64_t bytesMoved = 0;
+  std::chrono::steady_clock::time_point lastBlockMovement;
+};
+
 class TapeSessionTracker {
 public:
   void reportState(cta::tape::session::SessionState state, cta::tape::session::SessionType type) {
@@ -69,8 +78,10 @@ public:
       m_fileId = 0;
       m_fSeq = 0;
       m_fileBeingMoved = false;
+      m_fileStartTime = {};
       m_bytesMoved = 0;
       m_lastBlockMovement = {};
+      m_sessionStartTime = std::chrono::steady_clock::now();
     }
 
     m_state = state;
@@ -162,11 +173,30 @@ public:
     return m_lastBlockMovement;
   }
 
+  TapeSessionProgress progress() const {
+    std::lock_guard lock(m_mutex);
+    return {m_fileId, m_fSeq, m_fileBeingMoved, m_fileStartTime, m_bytesMoved, m_lastBlockMovement};
+  }
+
+  std::chrono::steady_clock::time_point sessionStartTime() const {
+    std::lock_guard lock(m_mutex);
+    return m_sessionStartTime;
+  }
+
+  std::chrono::steady_clock::duration sessionElapsedTime() const {
+    std::lock_guard lock(m_mutex);
+    if (m_sessionStartTime == std::chrono::steady_clock::time_point {}) {
+      return {};
+    }
+    return std::chrono::steady_clock::now() - m_sessionStartTime;
+  }
+
   void notifyBeginNewJob(uint64_t fileId, uint64_t fSeq) {
     std::lock_guard lock(m_mutex);
     m_fileId = fileId;
     m_fSeq = fSeq;
     m_fileBeingMoved = true;
+    m_fileStartTime = std::chrono::steady_clock::now();
   }
 
   /**
@@ -177,6 +207,7 @@ public:
     m_fileBeingMoved = false;
     m_fileId = 0;
     m_fSeq = 0;
+    m_fileStartTime = {};
   }
 
   bool errorHappened() const {
@@ -193,6 +224,7 @@ private:
   uint64_t m_fileId = 0;
   uint64_t m_fSeq = 0;
   bool m_fileBeingMoved = false;
+  std::chrono::steady_clock::time_point m_fileStartTime;
 
   TapeSideStats m_tapeStats;
   DiskSideStats m_diskStats;
@@ -201,6 +233,7 @@ private:
 
   uint64_t m_bytesMoved = 0;
   std::chrono::steady_clock::time_point m_lastBlockMovement;
+  std::chrono::steady_clock::time_point m_sessionStartTime;
 };
 
 }  // namespace cta::tape::daemon

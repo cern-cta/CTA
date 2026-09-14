@@ -42,13 +42,44 @@ TEST(TapeSessionTrackerTest, TracksBlockMovement) {
   TapeSessionTracker tracker;
   const auto initialMovement = tracker.lastBlockMovement();
 
+  tracker.notifyBeginNewJob(1234, 42);
   tracker.notifyBlockMovement(10);
   const auto firstMovement = tracker.lastBlockMovement();
   tracker.notifyBlockMovement(15);
 
+  const auto progress = tracker.progress();
   EXPECT_EQ(25, tracker.bytesMoved());
   EXPECT_GT(firstMovement, initialMovement);
   EXPECT_GE(tracker.lastBlockMovement(), firstMovement);
+  EXPECT_EQ(1234, progress.fileId);
+  EXPECT_EQ(42, progress.fSeq);
+  EXPECT_TRUE(progress.fileBeingMoved);
+  EXPECT_NE(std::chrono::steady_clock::time_point {}, progress.fileStartTime);
+  EXPECT_EQ(25, progress.bytesMoved);
+  EXPECT_EQ(tracker.lastBlockMovement(), progress.lastBlockMovement);
+
+  tracker.fileFinished();
+  const auto finishedProgress = tracker.progress();
+  EXPECT_EQ(0, finishedProgress.fileId);
+  EXPECT_EQ(0, finishedProgress.fSeq);
+  EXPECT_FALSE(finishedProgress.fileBeingMoved);
+  EXPECT_EQ(std::chrono::steady_clock::time_point {}, finishedProgress.fileStartTime);
+}
+
+TEST(TapeSessionTrackerTest, TracksSessionElapsedTimeFromScheduling) {
+  TapeSessionTracker tracker;
+
+  EXPECT_EQ(std::chrono::steady_clock::time_point {}, tracker.sessionStartTime());
+  EXPECT_EQ(std::chrono::steady_clock::duration {}, tracker.sessionElapsedTime());
+
+  tracker.reportState(cta::tape::session::SessionState::Scheduling, cta::tape::session::SessionType::Undetermined);
+  const auto startTime = tracker.sessionStartTime();
+
+  EXPECT_NE(std::chrono::steady_clock::time_point {}, startTime);
+  EXPECT_GE(tracker.sessionElapsedTime(), std::chrono::steady_clock::duration {});
+
+  tracker.reportState(cta::tape::session::SessionState::Scheduling, cta::tape::session::SessionType::Undetermined);
+  EXPECT_EQ(startTime, tracker.sessionStartTime());
 }
 
 TEST(TapeSessionTrackerTest, SetsAndClearsErrorCounts) {
@@ -100,6 +131,8 @@ TEST(TapeSessionTrackerTest, EnteringSchedulingResetsSessionDataOnce) {
   EXPECT_TRUE(tracker.tapeAlertStats().empty());
   EXPECT_EQ(0, tracker.bytesMoved());
   EXPECT_EQ(std::chrono::steady_clock::time_point {}, tracker.lastBlockMovement());
+  const auto sessionStartTime = tracker.sessionStartTime();
+  EXPECT_NE(std::chrono::steady_clock::time_point {}, sessionStartTime);
 
   tracker.updateTapeStats(tapeStats);
   tracker.incrementError(TapeSessionError::DiskRead);
@@ -111,6 +144,7 @@ TEST(TapeSessionTrackerTest, EnteringSchedulingResetsSessionDataOnce) {
   EXPECT_TRUE(tracker.errorHappened());
   EXPECT_EQ(1, tracker.tapeAlertStats().at(0x01));
   EXPECT_EQ(100, tracker.bytesMoved());
+  EXPECT_EQ(sessionStartTime, tracker.sessionStartTime());
 }
 
 }  // namespace cta::tape::daemon
