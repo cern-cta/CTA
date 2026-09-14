@@ -69,7 +69,7 @@ execute_cmd_with_log() {
     if [[ $keepnamespace == 0 ]]; then
       echo "Cleaning up environment"
       cd ${orchestration_dir}
-      ./delete_instance.sh -n ${namespace}
+      ./delete_instance.sh -n ${namespace} --collect-logs "${log_dir}/pods"
       echo "Cleanup completed"
     else
       echo "Skipping environment clean up"
@@ -171,7 +171,7 @@ run_systemtest() {
     die_usage "Missing mandatory argument: -d | --catalogue-config"
   fi
 
-  log_dir="${orchestration_dir}/../../pod_logs/${namespace}"
+  log_dir="${orchestration_dir}/../../test_logs/${namespace}"
   mkdir -p "${log_dir}"
   if [[ -d "${log_dir}" ]]; then
     # Delete log contents of previous runs if they exist
@@ -182,7 +182,7 @@ run_systemtest() {
   if [[ $cleanup_namespaces == 1 ]]; then
     echo "Cleaning up old namespaces"
     echo $old_namespaces
-    echo $old_namespaces | xargs -itoto ./delete_instance.sh -n toto -D
+    echo $old_namespaces | xargs -itoto ./delete_instance.sh -n toto
     echo "Cleanup complete"
   elif kubectl get namespace ${namespace} > /dev/null 2>&1; then
     die "Namespace ${namespace} already exists"
@@ -227,7 +227,7 @@ run_systemtest() {
   if [[ $keepnamespace == 1 ]]; then
     exit 0
   fi
-  ./delete_instance.sh -n ${namespace}
+  ./delete_instance.sh -n ${namespace} --collect-logs "${log_dir}/pods"
   exit $?
 }
 

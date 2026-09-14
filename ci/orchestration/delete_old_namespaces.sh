@@ -25,7 +25,7 @@ if ((${#old_namespaces[@]} == 0)); then
 fi
 
 for ns in "${old_namespaces[@]}"; do
-  ./delete_instance.sh --namespace "$ns" --discard-logs
+  ./delete_instance.sh --namespace "$ns"
 done
 
 echo "Cleanup complete"
