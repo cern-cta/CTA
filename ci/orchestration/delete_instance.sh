@@ -26,8 +26,7 @@ usage() {
   echo "options:"
   echo "  -h, --help:                             Shows help output."
   echo "  -n, --namespace <namespace>:            Specify the Kubernetes namespace."
-  echo "  -l, --log-dir <dir>:                    Base directory to output the logs to. Defaults to /tmp."
-  echo "  -D, --discard-logs:                     Do not collect the logs when deleting an instance."
+  echo "      --collect-logs <dir>:               Collect pod logs and diagnostics in the specified directory."
   echo "      --keep-pvs:                         Skip the wiping and reclaiming of released Persistent Volumes after namespace cleanup."
   echo "      --keep-cluster-resources:           Keep cluster roles and bindings owned by this namespace."
   echo "      --force-delete-cluster-resources:   Delete named cluster roles and bindings even when ownership cannot be verified."
@@ -37,13 +36,10 @@ usage() {
 
 save_logs() {
   namespace="$1"
-  log_dir="$2"
+  destination="$2"
 
-  # Temporary directory for logs
-  tmpdir=$(mktemp --tmpdir="${log_dir}" -d -t "${namespace}-deletion-logs-XXXX")
-  # Ensure tmp dir is always cleaned up
-  add_trap 'rm -rf -- "$tmpdir"' EXIT
-  log_task "Collecting logs in ${tmpdir}..."
+  mkdir -p "${destination}" || return 1
+  log_task "Collecting logs in ${destination}..."
 
   # We get all the pod details in one go so that we don't have to do too many kubectl calls
   pods=$(kubectl --namespace "${namespace}" get pods -o json)
@@ -67,7 +63,7 @@ save_logs() {
       ]
     | join("\u001f")
   ' | while IFS=$'\x1f' read -r pod instance phase containers; do
-    pod_dir="${tmpdir}/${pod}"
+    pod_dir="${destination}/${pod}"
     mkdir -p "${pod_dir}"
 
     kubectl -n "${namespace}" describe pod "${pod}" > "${pod_dir}/describe.log" || {
@@ -121,13 +117,6 @@ save_logs() {
     done
   done
 
-  # Save artifacts if running in CI
-  if [[ -n "${CI_PIPELINE_ID}" ]]; then
-    log_task "Saving logs as artifacts..."
-    # Note that this directory must be in the repository so that they can be properly saved as artifacts
-    mkdir -p "../../pod_logs/${namespace}"
-    cp -r "${tmpdir}"/* "../../pod_logs/${namespace}"
-  fi
 }
 
 reclaim_released_pvs() {
@@ -196,8 +185,7 @@ delete_cluster_resource_if_owned() {
 }
 
 delete_instance() {
-  local log_dir=/tmp
-  local collect_logs=true
+  local log_directory=""
   local wipe_pvs=true
   local delete_cluster_resources=true
   local force_delete_cluster_resources=false
@@ -210,15 +198,13 @@ delete_instance() {
       -n|--namespace)
         namespace="$2"
         shift ;;
-      -D|--discard-logs) collect_logs=false ;;
+      --collect-logs)
+        [[ $# -ge 2 && -n "$2" ]] || die_usage "--collect-logs requires a directory"
+        log_directory="$2"
+        shift ;;
       --keep-pvs) wipe_pvs=false ;;
       --keep-cluster-resources) delete_cluster_resources=false ;;
       --force-delete-cluster-resources) force_delete_cluster_resources=true ;;
-      -l|--log-dir)
-        log_dir="$2"
-        [[ -d "${log_dir}" ]] || local_die "ERROR: Log directory ${log_dir} does not exist"
-        [[ -w "${log_dir}" ]] || local_die "ERROR: Canot write to log directory ${log_dir}"
-        shift ;;
       *)
         die_usage "Unsupported argument: $1"
         ;;
@@ -246,12 +232,10 @@ delete_instance() {
   kubectl get pods --namespace ${namespace}
 
   # Optional log collection
-  if [[ "$collect_logs" = true ]]; then
-    if ! save_logs "$namespace" "$log_dir"; then
+  if [[ -n "${log_directory}" ]]; then
+    if ! save_logs "$namespace" "$log_directory"; then
       log_error "Log collection failed for namespace ${namespace}; continuing with namespace deletion."
     fi
-  else
-    log_warn "Skipping log collection for the current deployment."
   fi
 
   # Cleanup of old library values files:

@@ -18,7 +18,9 @@ ci/.cta-dev.env
 /build_srpm/
 /build_rpm/
 /image_rpms/
+# Output left by older system-test runs.
 /pod_logs/
+/test_logs/
 /tmp/
 *.core
 

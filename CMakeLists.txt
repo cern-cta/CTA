@@ -220,6 +220,7 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "none")
     "/build_rpm/"
     "/image_rpms/"
     "/pod_logs/"
+    "/test_logs/"
     "/tmp/"
     "[.]core$"
     "/assets/")

@@ -1068,7 +1068,7 @@ validate_deployment_environment() {
 delete_cta_namespace() {
   cd "${project_root}/ci/orchestration"
   # By default we discard the logs from deletion as this is not very useful during development and pollutes the dev machine
-  ./delete_instance.sh -n "${namespace}" --discard-logs --keep-pvs
+  ./delete_instance.sh -n "${namespace}" --keep-pvs
 }
 
 cleanup_background_namespace_deletion() {
