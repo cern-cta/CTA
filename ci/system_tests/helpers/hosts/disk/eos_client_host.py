@@ -510,6 +510,21 @@ class EosClientHost(DiskClientHost):
         return int(self.exec_with_output(f'eos root://{disk_instance_name} ls {path} -y | grep "d0::t1" | wc -l')) == 1
 
     @override
+    def is_file_eviction_complete(self, disk_instance_name: str, path: Path) -> bool:
+        if not self.is_file_on_tape_only(disk_instance_name, path):
+            return False
+
+        file_info = json.loads(self.file_info(disk_instance_name, path, json_output=True))
+        locations = file_info.get("locations")
+        if not isinstance(locations, list):
+            raise TypeError(f"EOS file info returned invalid locations for {path}: {locations!r}")
+
+        # The tape location uses the reserved filesystem ID 65535. Any other location reported by fileinfo means that
+        # asynchronous deletion on an FST has not finished, even if MGM already reports d0::t1.
+        filesystem_ids = {location.get("fsid") if isinstance(location, dict) else location for location in locations}
+        return all(int(filesystem_id) == 65535 for filesystem_id in filesystem_ids)
+
+    @override
     def is_file_on_tape(self, disk_instance_name: str, path: Path) -> bool:
         return int(self.exec_with_output(f'eos root://{disk_instance_name} ls {path} -y | grep "::t1" | wc -l')) == 1
 
@@ -520,6 +535,16 @@ class EosClientHost(DiskClientHost):
     @override
     def is_file_on_disk_only(self, disk_instance_name: str, path: Path) -> bool:
         return int(self.exec_with_output(f'eos root://{disk_instance_name} ls {path} -y | grep "d1::t0" | wc -l')) == 1
+
+    @override
+    def wait_for_directory_eviction(
+        self, disk_instance_name: str, directory: Path, wait_timeout_secs: int = 20
+    ) -> None:
+        output = self.exec_with_output(
+            f"eos root://{shlex.quote(disk_instance_name)} find -f {shlex.quote(str(directory))}"
+        )
+        paths = [Path(path) for path in output.splitlines()]
+        self.wait_for_files_eviction(disk_instance_name, paths, wait_timeout_secs=wait_timeout_secs)
 
     @override
     def file_info(self, disk_instance_name: str, path: Path, *, json_output: bool = False) -> str:
