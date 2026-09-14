@@ -131,7 +131,8 @@ std::unique_ptr<TapeMount> DriveHandler::getNextMount() {
                                          * 1000000);  // TODO: is this multiplication correct? (probably not)
     }
   } catch (exception::LostDatabaseConnection&) {
-    // TODO: add retry mechanism
+    // TODO: add retry mechanism (or wait for the DB to be up again)
+    // This should probably be consolidated with the rest of the lost DB functionality
     m_lc.log(log::ERR, "Lost database error while scheduling new mount. Retrying.");
   }
   return nullptr;
@@ -146,11 +147,6 @@ int DriveHandler::run() {
 
   // Start by registering the drive in the catalogue. Drives start as down
   // If the drive already exists and it was down, we ensure we don't overwrite the reason
-
-  // Start by running the cleaner to unload any possible tape
-  executeCleanerSession();
-  // Cleaner doesn't modify drive state, so if it fails, the drive is already down and we just proceed to the loop
-  // where we wait for the drive to be put again (by an operator)
 
   // TODO: handle lost database connections cleanly. No need to crash the whole thing on those
   // We should have clearly defined behaviour there
@@ -168,6 +164,11 @@ int DriveHandler::run() {
                                      m_lc);
       EmptyDriveProbe emptyDriveProbe(m_lc.logger(), m_driveInfo, m_sysWrapper);
       m_lc.log(log::DEBUG, "Transition from down to up detected. Will check if a tape is in the drive.");
+
+      // Start by running the cleaner to unload any possible tape
+      // Add an option to skip this!
+      executeCleanerSession();
+
       if (!emptyDriveProbe.driveIsEmpty()) {
         // TODO: log warning
         std::string errorMsg = "A tape was detected in the drive. Putting the drive down.";
@@ -219,11 +220,14 @@ int DriveHandler::run() {
       putDriveDown("Data transfer session failed");
       // After this, the loop will continue by waiting to be up again
     }
-    // Also, should we execute the cleaner here instead of having the sessions rely on doing this?
+    // This is for another MR, but we should rip out the cleaner functionality from the transfer sessions and rely on CleanerSession only
   }
 
   // At this point, the drive is exiting. Start cleanup
   executeCleanerSession();
+  // Put the drive down
+  // TODO: this is not correct, because it may already be down
+  putDriveDown("[cta-taped] Exiting cta-taped");
   // TODO: correct exit code
   return 0;
 }
@@ -256,17 +260,14 @@ bool DriveHandler::executeDataTransferSession(std::unique_ptr<TapeMount> tapeMou
   return dataTransferSession.execute() == EndOfSessionAction::MARK_DRIVE_AS_UP;
 }
 
-void DriveHandler::executeCleanerSession() {
-  // TODO: refactor Cleanersession to figure out vid by itself?
-  // Otherwise, take it fro tapeMount
+void DriveHandler::executeCleanerSession(const std::optional<std::string>& vid) {
   const auto cleanerSession = std::make_unique<CleanerSession>(m_mediaChanger,
                                                                m_lc.logger(),
                                                                m_driveInfo,
                                                                m_sysWrapper,
-                                                               "",
+                                                               vid,
                                                                true,
                                                                m_config.mounts.tape_load_timeout_secs,
-                                                               "",
                                                                *m_catalogue,
                                                                *m_scheduler);
 
