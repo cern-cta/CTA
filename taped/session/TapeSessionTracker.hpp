@@ -9,6 +9,7 @@
 #include "taped/session/SessionType.hpp"
 #include "taped/session/TapeSessionStats.hpp"
 
+#include <chrono>
 #include <cstdint>
 #include <map>
 #include <mutex>
@@ -50,18 +51,26 @@ enum class TapeSessionError {
   TapeFilledUp
 };
 
+// TODO: unordered map?
+using TapeSessionErrorStats = std::map<TapeSessionError, uint32_t>;
+using TapeAlertStats = std::map<uint16_t, uint32_t>;
+
 class TapeSessionTracker {
 public:
   void reportState(cta::tape::session::SessionState state, cta::tape::session::SessionType type) {
     std::lock_guard lock(m_mutex);
 
-    // TODO: for now the transition to scheduler clears the stats
+    // TODO: for now the transition to scheduler clears the stats, but we may want to update the state
     if (state == cta::tape::session::SessionState::Scheduling && m_state != state) {
-      m_sessionStats = {};
+      m_tapeStats = {};
+      m_diskStats = {};
       m_errorStats.clear();
+      m_tapeAlertStats.clear();
       m_fileId = 0;
       m_fSeq = 0;
       m_fileBeingMoved = false;
+      m_bytesMoved = 0;
+      m_lastBlockMovement = {};
     }
 
     m_state = state;
@@ -83,14 +92,38 @@ public:
     ++m_errorStats[error];
   }
 
-  void updateStats(const TapeSessionStats& stats) {
+  void setErrorCount(TapeSessionError error, uint32_t count) {
     std::lock_guard lock(m_mutex);
-    m_sessionStats = stats;
+    if (count == 0) {
+      m_errorStats.erase(error);
+    } else {
+      m_errorStats[error] = count;
+    }
   }
 
-  void addStats(const TapeSessionStats& stats) {
+  void incrementTapeAlert(uint16_t tapeAlertCode) {
     std::lock_guard lock(m_mutex);
-    m_sessionStats.add(stats);
+    ++m_tapeAlertStats[tapeAlertCode];
+  }
+
+  void updateTapeStats(const TapeSideStats& stats) {
+    std::lock_guard lock(m_mutex);
+    m_tapeStats = stats;
+  }
+
+  void addTapeStats(const TapeSideStats& stats) {
+    std::lock_guard lock(m_mutex);
+    m_tapeStats.add(stats);
+  }
+
+  void updateDiskStats(const DiskSideStats& stats) {
+    std::lock_guard lock(m_mutex);
+    m_diskStats = stats;
+  }
+
+  void addDiskStats(const DiskSideStats& stats) {
+    std::lock_guard lock(m_mutex);
+    m_diskStats.add(stats);
   }
 
   TapeSessionErrorStats errorStats() const {
@@ -98,9 +131,35 @@ public:
     return m_errorStats;
   }
 
-  TapeSessionStats sessionStats() const {
+  TapeAlertStats tapeAlertStats() const {
     std::lock_guard lock(m_mutex);
-    return m_sessionStats;
+    return m_tapeAlertStats;
+  }
+
+  TapeSideStats tapeStats() const {
+    std::lock_guard lock(m_mutex);
+    return m_tapeStats;
+  }
+
+  DiskSideStats diskStats() const {
+    std::lock_guard lock(m_mutex);
+    return m_diskStats;
+  }
+
+  void notifyBlockMovement(uint64_t bytes) {
+    std::lock_guard lock(m_mutex);
+    m_bytesMoved += bytes;
+    m_lastBlockMovement = std::chrono::steady_clock::now();
+  }
+
+  uint64_t bytesMoved() const {
+    std::lock_guard lock(m_mutex);
+    return m_bytesMoved;
+  }
+
+  std::chrono::steady_clock::time_point lastBlockMovement() const {
+    std::lock_guard lock(m_mutex);
+    return m_lastBlockMovement;
   }
 
   void notifyBeginNewJob(uint64_t fileId, uint64_t fSeq) {
@@ -122,7 +181,7 @@ public:
 
   bool errorHappened() const {
     std::lock_guard lock(m_mutex);
-    return !m_errorStats.empty();
+    return !m_errorStats.empty() || !m_tapeAlertStats.empty();
   }
 
 private:
@@ -135,9 +194,13 @@ private:
   uint64_t m_fSeq = 0;
   bool m_fileBeingMoved = false;
 
-  TapeSessionStats m_sessionStats;
-  // TODO: unordered map?
-  std::map<TapeSessionError, uint32_t> m_errorStats;
+  TapeSideStats m_tapeStats;
+  DiskSideStats m_diskStats;
+  TapeSessionErrorStats m_errorStats;
+  TapeAlertStats m_tapeAlertStats;
+
+  uint64_t m_bytesMoved = 0;
+  std::chrono::steady_clock::time_point m_lastBlockMovement;
 };
 
 }  // namespace cta::tape::daemon

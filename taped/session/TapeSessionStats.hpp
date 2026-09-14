@@ -5,13 +5,14 @@
 
 #pragma once
 
+#include <cstdint>
+
 namespace cta::tape::daemon {
 
 /**
-   * Structure holding the timers and stats for the tape session. We use doubles,
-   * for time and all measurements are in seconds or uint64_t for bytes.
-   */
-struct TapeSessionStats {
+ * Statistics owned by the tape side of a data-transfer session.
+ */
+struct TapeSideStats {
   /** Mounting time, in seconds */
   double mountTime = 0;
 
@@ -45,23 +46,14 @@ struct TapeSessionStats {
   /** Cumulated time spent by the tape thread waiting for a task. */
   double waitInstructionsTime = 0;
 
-  /** Cumulated time spent reporting */
-  double waitReportingTime = 0;
-
   /** Time spent during the session, except mounting, positioning and
      * unloading / unmounting. This a derived value */
   double transferTime() const {
-    return checksumingTime + readWriteTime + flushTime + waitDataTime + waitFreeMemoryTime + waitInstructionsTime
-           + waitReportingTime;
+    return checksumingTime + readWriteTime + flushTime + waitDataTime + waitFreeMemoryTime + waitInstructionsTime;
   }
 
   /** Total time of the session, computed in parallel */
   double totalTime = 0;
-
-  /** Time to delivery data to the client equal disk threads totalTime
-     * for recall and the tape thread totalTime for migration
-     */
-  double deliveryTime = 0;
 
   /** Cumulated data volume (actual payload), in bytes. */
   uint64_t dataVolume = 0;
@@ -94,7 +86,7 @@ struct TapeSessionStats {
   static const uint64_t trailerVolumePerFile = 3 * 80;
 
   /** Accumulate contents of another stats block */
-  void add(const TapeSessionStats& other) {
+  void add(const TapeSideStats& other) {
     mountTime += other.mountTime;
     positionTime += other.positionTime;
     checksumingTime += other.checksumingTime;
@@ -106,9 +98,7 @@ struct TapeSessionStats {
     waitDataTime += other.waitDataTime;
     waitFreeMemoryTime += other.waitFreeMemoryTime;
     waitInstructionsTime += other.waitInstructionsTime;
-    waitReportingTime += other.waitReportingTime;
     // totalTime is not cumulative between threads (it's real time)
-    // deliveryTime is not cumulative between thread
     dataVolume += other.dataVolume;
     headerVolume += other.headerVolume;
     filesCount += other.filesCount;
@@ -118,6 +108,19 @@ struct TapeSessionStats {
     repackBytesCount += other.repackBytesCount;
     userBytesCount += other.userBytesCount;
     verifiedBytesCount += other.verifiedBytesCount;
+  }
+};
+
+/**
+ * Statistics owned by the disk side of a data-transfer session.
+ */
+struct DiskSideStats {
+  double deliveryTime = 0;
+  double waitReportingTime = 0;
+
+  void add(const DiskSideStats& other) {
+    // deliveryTime is elapsed wall-clock time and is not cumulative between threads.
+    waitReportingTime += other.waitReportingTime;
   }
 };
 

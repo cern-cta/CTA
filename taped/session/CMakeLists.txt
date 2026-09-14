@@ -50,6 +50,7 @@ add_library(ctatapedsessionunittests SHARED
   MigrationReportPackerTest.cpp
   RecallReportPackerTest.cpp
   RecallTaskInjectorTest.cpp
+  TapeSessionTrackerTest.cpp
   TaskWatchDogTest.cpp
 )
 set_property(TARGET ctatapedsessionunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
