@@ -8,6 +8,8 @@
 
 namespace cta::tape::session {
 
+// TODO: clean up subprocess states
+
 /** Possible states for the tape session. */
 enum class SessionState : uint32_t {
   PendingFork,     ///< The subprocess is not started yet (internal state).

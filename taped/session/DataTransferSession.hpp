@@ -7,6 +7,7 @@
 
 #include "DataTransferConfig.hpp"
 #include "Session.hpp"
+#include "TapeSessionTracker.hpp"  // TODO: I don't think tapesession is accurate here, but that's for later
 #include "TapeSingleThreadInterface.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
@@ -16,7 +17,6 @@
 #include "scheduler/RetrieveMount.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/TapeMount.hpp"
-#include "taped/daemon/TapedProxy.hpp"
 #include "taped/system/Wrapper.hpp"
 
 namespace cta::tape::daemon {
@@ -38,7 +38,7 @@ public:
                       System::virtualWrapper& sysWrapper,
                       const cta::common::dataStructures::DriveInfo& driveInfo,
                       cta::mediachanger::MediaChangerFacade& mc,
-                      cta::tape::daemon::TapedProxy& initialProcess,
+                      cta::tape::daemon::TapeSessionTracker& tapeSessionTracker,
                       const DataTransferConfig& dataTransferConfig,
                       cta::Scheduler& scheduler);
 
@@ -99,12 +99,10 @@ private:
   void putDriveDown(const std::string& headerErrMsg, cta::TapeMount* mount, cta::log::LogContext& logContext);
 
   /** sub-part of execute for the read sessions */
-  EndOfSessionAction
-  executeRead(cta::log::LogContext& logContext, cta::RetrieveMount* retrieveMount, TapeSessionReporter& reporter);
+  EndOfSessionAction executeRead(cta::log::LogContext& logContext, cta::RetrieveMount* retrieveMount);
 
   /** sub-part of execute for a write session */
-  EndOfSessionAction
-  executeWrite(cta::log::LogContext& logContext, cta::ArchiveMount* archiveMount, TapeSessionReporter& reporter);
+  EndOfSessionAction executeWrite(cta::log::LogContext& logContext, cta::ArchiveMount* archiveMount);
 
   /** sub-part of execute for a label session */
   EndOfSessionAction executeLabel(cta::log::LogContext& logContext, cta::LabelMount* labelMount) const;
@@ -112,10 +110,10 @@ private:
   /** Reference to the MediaChangerFacade, allowing the mounting of the tape
    * by the library. It will be used exclusively by the tape thread. */
   cta::mediachanger::MediaChangerFacade& m_mediaChanger;
-  /** Reference to the tape server's parent process to report detailed status */
-  cta::tape::daemon::TapedProxy& m_initialProcess;
+  /** For session tracking and reporting */
+  cta::tape::daemon::TapeSessionTracker& m_tapeSessionTracker;
   /** hostname, used to report status of the drive */
-  const std::string m_hostname;
+  const std::string m_hostname;  // TODO: do we even need this?
   /**
    * The scheduler, i.e. the local interface to the Objectstore DB
    */

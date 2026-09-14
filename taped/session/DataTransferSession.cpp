@@ -43,7 +43,7 @@ cta::tape::daemon::DataTransferSession::DataTransferSession([[maybe_unused]] con
                                                             System::virtualWrapper& sysWrapper,
                                                             const cta::common::dataStructures::DriveInfo& driveInfo,
                                                             cta::mediachanger::MediaChangerFacade& mc,
-                                                            cta::tape::daemon::TapedProxy& initialProcess,
+                                                            cta::tape::daemon::TapeSessionTracker& tapeSessionTracker,
                                                             const DataTransferConfig& dataTransferConfig,
                                                             cta::Scheduler& scheduler)
     : m_log(log),
@@ -51,7 +51,7 @@ cta::tape::daemon::DataTransferSession::DataTransferSession([[maybe_unused]] con
       m_dataTransferConfig(dataTransferConfig),
       m_driveInfo(driveInfo),
       m_mediaChanger(mc),
-      m_initialProcess(initialProcess),
+      m_tapeSessionTracker(tapeSessionTracker),
       m_scheduler(scheduler) {}
 
 //------------------------------------------------------------------------------
@@ -69,9 +69,6 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
   // 1) Prepare the logging environment
   cta::log::LogContext lc(m_log);
 
-  // TODO: pass this in
-  TapeSessionReporter tapeSessionReporter(m_initialProcess, lc);
-
   // std::unique_ptr<cta::TapeMount> tapeMount;
   cta::utils::Timer t;
 
@@ -82,7 +79,6 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
   m_volInfo.labelFormat = tapeMount->getLabelFormat();
   m_volInfo.encryptionKeyName = tapeMount->getEncryptionKeyName();
   m_volInfo.tapePool = tapeMount->getPoolName();
-  tapeSessionReporter.setVolInfo(m_volInfo);
   // Report drive status and mount info through tapeMount interface
   tapeMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
   // 2c) ... and log.
@@ -101,10 +97,10 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
   // Depending on the type of session, branch into the right execution
   switch (m_volInfo.mountType) {
     case cta::common::dataStructures::MountType::Retrieve:
-      return executeRead(lc, dynamic_cast<cta::RetrieveMount*>(tapeMount.get()), tapeSessionReporter);
+      return executeRead(lc, dynamic_cast<cta::RetrieveMount*>(tapeMount.get()));
     case cta::common::dataStructures::MountType::ArchiveForUser:
     case cta::common::dataStructures::MountType::ArchiveForRepack:
-      return executeWrite(lc, dynamic_cast<cta::ArchiveMount*>(tapeMount.get()), tapeSessionReporter);
+      return executeWrite(lc, dynamic_cast<cta::ArchiveMount*>(tapeMount.get()));
     case cta::common::dataStructures::MountType::Label:
       return executeLabel(lc, dynamic_cast<cta::LabelMount*>(tapeMount.get()));
     default:
@@ -117,8 +113,7 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
 //------------------------------------------------------------------------------
 cta::tape::daemon::Session::EndOfSessionAction
 cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logContext,
-                                                    cta::RetrieveMount* retrieveMount,
-                                                    TapeSessionReporter& reporter) {
+                                                    cta::RetrieveMount* retrieveMount) {
   // We are ready to start the session. We need to create the whole machinery
   // in order to get the task injector ready to check if we actually have a
   // file to recall.
@@ -128,9 +123,12 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
   std::unique_ptr<cta::tape::drive::DriveInterface> drive(findDrive(logContext, retrieveMount));
 
   if (!drive) {
-    reporter.bailout();
+    // reporter.bailout();
     return MARK_DRIVE_AS_DOWN;
   }
+
+  // TODO: the watchdog has been removed, but we may still want a separate thread to report session stats
+
   // We can now start instantiating all the components of the data path
   {
     // Allocate all the elements of the memory management (in proper order
@@ -217,7 +215,6 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
     if (fetchResult && reservationResult) {
       // We got something to recall. Time to start the machinery
       readSingleThread.setWaitForInstructionsTime(timer.secs());
-      watchDog.startThread();
       readSingleThread.startThreads();
       threadPool.startThreads();
       reportPacker.startThreads();
@@ -230,7 +227,6 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
       readSingleThread.waitThreads();
       reportPacker.waitThread();
       reporter.waitThreads();
-      watchDog.stopAndWaitThread();
 
       // If the disk thread finished the last, it leaves the drive in DrainingToDisk state
       // Return the drive back to UP state
@@ -283,17 +279,6 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
         }
         watchDog.addToErrorCount("Info_emptyMount");
         watchDog.reportParams();
-        std::vector<cta::log::Param> paramList {errorMessageParam,
-                                                mountIdParam,
-                                                mountTypeParam,
-                                                statusParam,
-                                                mountAttemptedParam,
-                                                logicalLibraryParam,
-                                                tapePoolParam,
-                                                tapeVidParam,
-                                                voParam,
-                                                volReqIdParam};
-        m_initialProcess.addLogParams(paramList);
         cta::log::LogContext::ScopedParam sp08(logContext, cta::log::Param("MountTransactionId", mountId));
         logContext.log(priority, "Notified client of end session with error");
       } catch (cta::exception::Exception& ex) {
@@ -317,8 +302,7 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
 //------------------------------------------------------------------------------
 cta::tape::daemon::Session::EndOfSessionAction
 cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logContext,
-                                                     cta::ArchiveMount* archiveMount,
-                                                     TapeSessionReporter& reporter) {
+                                                     cta::ArchiveMount* archiveMount) {
   // We are ready to start the session. We need to create the whole machinery
   // in order to get the task injector ready to check if we actually have a
   // file to migrate.
@@ -334,12 +318,6 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
     //then findDrive would have return nullptr and we would have not end up there
     MigrationMemoryManager memoryManager(m_dataTransferConfig.nbBufs, m_dataTransferConfig.bufsz, logContext);
     MigrationReportPacker reportPacker(archiveMount, logContext);
-    MigrationWatchDog watchDog(15,
-                               m_dataTransferConfig.wdNoBlockMoveMaxSecs,
-                               m_initialProcess,
-                               *archiveMount,
-                               m_driveInfo.driveName,
-                               logContext);
     TapeWriteSingleThread writeSingleThread(*drive,
                                             m_mediaChanger,
                                             reporter,
@@ -386,7 +364,6 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
       // We have something to do: start the session by starting all the threads.
       memoryManager.startThreads();
       threadPool.startThreads();
-      watchDog.startThread();
       writeSingleThread.setWaitForInstructionsTime(timer.secs());
       writeSingleThread.startThreads();
       reportPacker.startThreads();
@@ -399,7 +376,6 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
       memoryManager.waitThreads();
       reportPacker.waitThread();
       reporter.waitThreads();
-      watchDog.stopAndWaitThread();
 
       return writeSingleThread.getHardwareStatus();
     } else {
@@ -428,6 +404,7 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
       try {
         archiveMount->complete();
+        // TODO: I guess watchDog functionality should be in tapeSessionTracker?
         watchDog.updateStats(TapeSessionStats());
         watchDog.reportStats();
         if (noFilesToMigrate) {
@@ -435,17 +412,6 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
         }
         watchDog.addToErrorCount("Info_emptyMount");
         watchDog.reportParams();
-        std::vector<cta::log::Param> paramList {errorMessageParam,
-                                                mountIdParam,
-                                                mountTypeParam,
-                                                statusParam,
-                                                mountAttemptedParam,
-                                                logicalLibraryParam,
-                                                tapePoolParam,
-                                                tapeVidParam,
-                                                voParam,
-                                                volReqIdParam};
-        m_initialProcess.addLogParams(paramList);
         cta::log::LogContext::ScopedParam sp11(logContext, cta::log::Param("MountTransactionId", mountId));
         logContext.log(priority, "Notified client of end session with error");
       } catch (cta::exception::Exception& ex) {

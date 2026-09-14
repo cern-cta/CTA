@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common/log/LogContext.hpp"
+#include "taped/session/TapeSessionTracker.hpp"
 
 #include <memory>
 
@@ -22,9 +23,6 @@ struct Migration {};
 enum ReportBatching { ReportInBulk, ReportByFile };
 }  // namespace detail
 
-// Forward declaration to avoid circular inclusions.
-class TaskWatchDog;
-
 /**
  * Utility class that should be inherited privately/protectedly
  * the type PlaceHolder is either detail::Recall or detail::Migration
@@ -32,8 +30,7 @@ class TaskWatchDog;
 template<class PlaceHolder>
 class ReportPackerInterface {
 public:
-  // Pass a reference to the watchdog for initial process reporting.
-  void setWatchdog(TaskWatchDog& wd) { m_watchdog = &wd; }
+  void setTapeSessionTracker(TapeSessionTracker& tracker) { m_tapeSessionTracker = &tracker; }
 
 protected:
   virtual ~ReportPackerInterface() = default;
@@ -96,11 +93,7 @@ public:
    */
   virtual void disableBulk() { m_reportBatching = detail::ReportByFile; }
 
-  /**
-   * Pointer to the watchdog, so we can communicate communication errors
-   * and end of session results to the initial process
-   */
-  TaskWatchDog* m_watchdog = nullptr;
+  TapeSessionTracker* m_tapeSessionTracker = nullptr;
 };
 
 }  // namespace cta::tape::daemon

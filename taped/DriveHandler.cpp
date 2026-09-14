@@ -201,6 +201,7 @@ int DriveHandler::run() {
     try {
       tapeMount = getNextMount();
       if (tapeMount != nullptr) {
+        // TODO: session tracker should get volume info
         active_vid = tapeMount->getVid();
       }
     } catch (exception::TimeoutException&) {

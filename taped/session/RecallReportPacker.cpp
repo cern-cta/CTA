@@ -5,7 +5,6 @@
 
 #include "RecallReportPacker.hpp"
 
-#include "TaskWatchDog.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/Logger.hpp"
 #include "common/utils/utils.hpp"
@@ -122,24 +121,10 @@ void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent) {
 void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& reportPacker) {
   if (!reportPacker.errorHappened()) {
     reportPacker.m_lc.log(cta::log::INFO, "Nominal RecallReportPacker::EndofSession has been reported");
-    if (reportPacker.m_watchdog) {
-      reportPacker.m_watchdog->addParameter(cta::log::Param("status", "success"));
-      // We have a race condition here between the processing of this message by
-      // the initial process and the printing of the end-of-session log, triggered
-      // by the end our process. To delay the latter, we sleep half a second here.
-      usleep(500 * 1000);
-    }
   } else {
     const std::string& msg =
       "RecallReportPacker::EndofSession has been reported  but an error happened somewhere in the process";
     reportPacker.m_lc.log(cta::log::ERR, msg);
-    if (reportPacker.m_watchdog) {
-      reportPacker.m_watchdog->addParameter(cta::log::Param("status", "failure"));
-      // We have a race condition here between the processing of this message by
-      // the initial process and the printing of the end-of-session log, triggered
-      // by the end our process. To delay the latter, we sleep half a second here.
-      usleep(500 * 1000);
-    }
   }
 }
 
@@ -177,13 +162,6 @@ void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacke
     const std::string& msg =
       "RecallReportPacker::EndofSessionWithErrors has been reported but NO error was detected during the process";
     parent.m_lc.log(cta::log::ERR, msg);
-  }
-  if (parent.m_watchdog) {
-    parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
-    // We have a race condition here between the processing of this message by
-    // the initial process and the printing of the end-of-session log, triggered
-    // by the end our process. To delay the latter, we sleep half a second here.
-    usleep(500 * 1000);
   }
 }
 
@@ -286,9 +264,8 @@ void RecallReportPacker::WorkerThread::run() {
       m_parent.m_lc.log(
         cta::log::ERR,
         "In RecallReportPacker::WorkerThread::run(): Received a CTA exception while reporting retrieve mount results.");
-      if (m_parent.m_watchdog) {
-        m_parent.m_watchdog->addToErrorCount("Error_reporting");
-        m_parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
+      if (m_parent.m_tapeSessionTracker) {
+        m_parent.m_tapeSessionTracker->incrementError(TapeSessionError::Reporting);
       }
     } catch (const std::exception& e) {
       //we get there because to tried to close the connection and it failed
@@ -298,9 +275,8 @@ void RecallReportPacker::WorkerThread::run() {
       m_parent.m_lc.log(cta::log::ERR,
                         "In RecallReportPacker::WorkerThread::run(): Received a standard exception while reporting "
                         "retrieve mount results.");
-      if (m_parent.m_watchdog) {
-        m_parent.m_watchdog->addToErrorCount("Error_reporting");
-        m_parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
+      if (m_parent.m_tapeSessionTracker) {
+        m_parent.m_tapeSessionTracker->incrementError(TapeSessionError::Reporting);
       }
     } catch (...) {
       //we get there because to tried to close the connection and it failed
@@ -308,9 +284,8 @@ void RecallReportPacker::WorkerThread::run() {
       m_parent.m_lc.log(cta::log::ERR,
                         "In RecallReportPacker::WorkerThread::run(): Received an unknown exception while reporting "
                         "retrieve mount results.");
-      if (m_parent.m_watchdog) {
-        m_parent.m_watchdog->addToErrorCount("Error_reporting");
-        m_parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
+      if (m_parent.m_tapeSessionTracker) {
+        m_parent.m_tapeSessionTracker->incrementError(TapeSessionError::Reporting);
       }
     }
     if (endFound) {
@@ -336,9 +311,8 @@ void RecallReportPacker::WorkerThread::run() {
     m_parent.m_lc.log(
       cta::log::ERR,
       "In RecallReportPacker::WorkerThread::run(): Received a CTA exception while reporting retrieve mount results.");
-    if (m_parent.m_watchdog) {
-      m_parent.m_watchdog->addToErrorCount("Error_reporting");
-      m_parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
+    if (m_parent.m_tapeSessionTracker) {
+      m_parent.m_tapeSessionTracker->incrementError(TapeSessionError::Reporting);
     }
   } catch (const std::exception& e) {
     cta::log::ScopedParamContainer params(m_parent.m_lc);
@@ -346,17 +320,15 @@ void RecallReportPacker::WorkerThread::run() {
     m_parent.m_lc.log(cta::log::ERR,
                       "In RecallReportPacker::WorkerThread::run(): Received a standard exception while reporting "
                       "retrieve mount results.");
-    if (m_parent.m_watchdog) {
-      m_parent.m_watchdog->addToErrorCount("Error_reporting");
-      m_parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
+    if (m_parent.m_tapeSessionTracker) {
+      m_parent.m_tapeSessionTracker->incrementError(TapeSessionError::Reporting);
     }
   } catch (...) {
     m_parent.m_lc.log(cta::log::ERR,
                       "In RecallReportPacker::WorkerThread::run(): Received an unknown exception while reporting "
                       "retrieve mount results.");
-    if (m_parent.m_watchdog) {
-      m_parent.m_watchdog->addToErrorCount("Error_reporting");
-      m_parent.m_watchdog->addParameter(cta::log::Param("status", "failure"));
+    if (m_parent.m_tapeSessionTracker) {
+      m_parent.m_tapeSessionTracker->incrementError(TapeSessionError::Reporting);
     }
   }
 
@@ -390,7 +362,7 @@ void RecallReportPacker::WorkerThread::run() {
 //errorHappened()
 //------------------------------------------------------------------------------
 bool RecallReportPacker::errorHappened() {
-  return m_errorHappened || (m_watchdog && m_watchdog->errorHappened());
+  return m_errorHappened || (m_tapeSessionTracker && m_tapeSessionTracker->errorHappened());
 }
 
 //------------------------------------------------------------------------------
