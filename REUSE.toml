@@ -45,7 +45,8 @@ path = [
     "rdbms/cta_rdbms_class_diagram.svg",
     "taped/AUTHORS",
     "tests/parallelTestsMakefile.in",
-    "tests/parallelTestsMakefile.local.in"
+    "tests/parallelTestsMakefile.local.in",
+    "tools-rs/**/Cargo.lock"
 ]
 SPDX-FileCopyrightText = "2025 CERN"
 SPDX-License-Identifier = "GPL-3.0-or-later"

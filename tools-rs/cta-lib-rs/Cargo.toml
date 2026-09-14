@@ -1,0 +1,17 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[package]
+name = "cta-lib"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+cta-protobuf = { path = "../cta-protobuf-rs" }
+eos-protobuf = { path = "../eos-protobuf-rs" }
+tonic = { version = "0.14.6", features = ["tls-native-roots", "tls-ring"] }
+tokio-stream = "0.1.19"
+thiserror = "2.0.20"
+log = "^0.4"
+nix = { version = "^0.31", features = ["fs"] }
+url = "^2.5"
