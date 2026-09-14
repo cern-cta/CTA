@@ -778,6 +778,7 @@ def test_eos_timestamps_correctness(eos_client: EosClientHost, disk_instance_nam
     eos_client.wait_for_file_archival(disk_instance_name, file_path)
     assert persistent_timestamps(eos_client.file_info(disk_instance_name, file_path)) == timestamps_before_archive
 
+    eos_client.wait_for_file_eviction(disk_instance_name, file_path)
     eos_client.retrieve_file(disk_instance_name, file_path)
     assert persistent_timestamps(eos_client.file_info(disk_instance_name, file_path)) == timestamps_before_archive
 

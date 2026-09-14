@@ -126,6 +126,8 @@ def test_gfal_activity_ends_up_in_eos_report(
     )
     eos_client.wait_for_file_archival(disk_instance_name, valid_instance_file)
     eos_client.wait_for_file_archival(disk_instance_name, invalid_instance_file)
+    eos_client.wait_for_file_eviction(disk_instance_name, valid_instance_file)
+    eos_client.wait_for_file_eviction(disk_instance_name, invalid_instance_file)
 
     # Query .well-known tape rest api endpoint to get the sitename
     site_name = eos_client.exec_with_output(

@@ -15,6 +15,7 @@ from typing import Any, Optional, Union
 from typing_extensions import override
 
 from system_tests.helpers.connections.remote_connection import ExecResult, RemoteConnection
+from system_tests.helpers.utils.timeout import Timeout
 from .disk_client_host import DiskClientHost, PrepareRequest, PrepareRequests
 
 
@@ -546,11 +547,41 @@ class EosClientHost(DiskClientHost):
     def wait_for_directory_eviction(
         self, disk_instance_name: str, directory: Path, wait_timeout_secs: int = 20
     ) -> None:
-        output = self.exec_with_output(
-            f"eos root://{shlex.quote(disk_instance_name)} find -f {shlex.quote(str(directory))}"
+        endpoint = f"root://{shlex.quote(disk_instance_name)}"
+        path_stream = self._directory_files_command(disk_instance_name, directory)
+        # Eviction is complete once fileinfo reports only EOS's reserved tape filesystem ID.
+        location_filter = (
+            '(.locations | type == "array") and '
+            "(.locations | length > 0) and "
+            'all(.locations[]; ((if type == "object" then .fsid else . end) | tonumber) == 65535)'
         )
-        paths = [Path(path) for path in output.splitlines()]
-        self.wait_for_files_eviction(disk_instance_name, paths, wait_timeout_secs=wait_timeout_secs)
+        # Print only incomplete paths so the outer command can reduce the result to a count.
+        worker = (
+            f'file_info=$(eos -j {endpoint} file info "$1") && '
+            f'printf "%s" "$file_info" | jq -e {shlex.quote(location_filter)} >/dev/null || printf "%s\\n" "$1"'
+        )
+        print(f"Waiting for eviction of files in {directory}...")
+        previous_remaining: Optional[int] = None
+        with Timeout(wait_timeout_secs) as timeout:
+            while not timeout.expired:
+                # Check files concurrently in the client pod and return only aggregate progress to pytest.
+                remaining = int(
+                    self.exec_with_output(
+                        f"set -o pipefail; {path_stream} | "
+                        f"xargs -r -P 10 -I{{}} sh -c {shlex.quote(worker)} _ '{{}}' | wc -l"
+                    )
+                )
+                if remaining == 0:
+                    print(f"All files in {directory} evicted")
+                    return
+                if remaining != previous_remaining:
+                    print(f"Waiting for {remaining} files in {directory} to finish eviction")
+                    previous_remaining = remaining
+                time.sleep(1)
+
+        raise TimeoutError(
+            f"Failed to evict {previous_remaining} files in {directory} within {wait_timeout_secs} seconds"
+        )
 
     @override
     def file_info(self, disk_instance_name: str, path: Path, *, json_output: bool = False) -> str:
