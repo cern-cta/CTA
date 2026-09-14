@@ -13,10 +13,7 @@
 
 #include <chrono>
 #include <condition_variable>
-#include <map>
 #include <mutex>
-#include <string>
-#include <vector>
 
 namespace cta::tape::daemon {
 
@@ -31,9 +28,6 @@ public:
   void startThreads();
   void finish();
   void waitThreads();
-
-  // TODO: maybe in the future we can find a cleaner way to do this
-  void addParameters(const std::vector<cta::log::Param>& parameters);
 
   /** Immediately report the current tracker contents. */
   void reportNow();
@@ -54,7 +48,6 @@ private:
   std::condition_variable m_condition;
   bool m_finishRequested = false;
   std::chrono::steady_clock::time_point m_lastStuckReport;
-  std::map<std::string, cta::log::Param> m_parameters;
 };
 
 }  // namespace cta::tape::daemon

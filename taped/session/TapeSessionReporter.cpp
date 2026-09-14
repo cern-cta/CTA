@@ -10,6 +10,8 @@
 #include "taped/scsi/Constants.hpp"
 
 #include <algorithm>
+#include <map>
+#include <string>
 
 namespace cta::tape::daemon {
 
@@ -124,13 +126,6 @@ void TapeSessionReporter::waitThreads() {
   wait();
 }
 
-void TapeSessionReporter::addParameters(const std::vector<cta::log::Param>& parameters) {
-  std::lock_guard lock(m_mutex);
-  for (const auto& parameter : parameters) {
-    m_parameters.insert_or_assign(parameter.getName(), parameter);
-  }
-}
-
 void TapeSessionReporter::run() {
   while (true) {
     {
@@ -239,7 +234,27 @@ void TapeSessionReporter::logStats(bool sessionFinished) {
       totalTime ? (tapeStats.dataVolume + tapeStats.headerVolume) / 1000.0 / 1000.0 / totalTime : 0.0);
   set("sessionState", cta::tape::session::toString(m_tracker.state()));
   set("sessionType", cta::tape::session::toString(m_tracker.type()));
-  set("status", m_tracker.errorHappened() ? "failure" : "success");
+  switch (m_tracker.outcome()) {
+    case TapeSessionOutcome::Automatic:
+      set("status", m_tracker.errorHappened() ? "failure" : "success");
+      break;
+    case TapeSessionOutcome::Success:
+      set("status", "success");
+      break;
+    case TapeSessionOutcome::Failure:
+      set("status", "failure");
+      break;
+  }
+  set("mountAttempted", m_tracker.mountAttempted() ? 1 : 0);
+  set("tapeVid", m_mount.getVid());
+  set("mountType", cta::common::dataStructures::toCamelCaseString(m_mount.getMountType()));
+  set("mountId", m_mount.getMountTransactionId());
+  set("volReqId", m_mount.getMountTransactionId());
+  set("vendor", m_mount.getVendor());
+  set("vo", m_mount.getVo());
+  set("mediaType", m_mount.getMediaType());
+  set("tapePool", m_mount.getPoolName());
+  set("capacityInBytes", m_mount.getCapacityInBytes());
 
   for (const auto& [error, count] : m_tracker.errorStats()) {
     set(errorName(error), count);
@@ -250,13 +265,6 @@ void TapeSessionReporter::logStats(bool sessionFinished) {
   for (const auto& [threadId, file] : m_tracker.activeDiskFiles()) {
     set("stillOpenFileForThread" + std::to_string(threadId), file.path);
   }
-  {
-    std::lock_guard lock(m_mutex);
-    for (const auto& [name, parameter] : m_parameters) {
-      reportParameters.insert_or_assign(name, parameter);
-    }
-  }
-
   cta::log::ScopedParamContainer params(m_lc);
   for (const auto& [name, parameter] : reportParameters) {
     pushParameter(params, parameter);

@@ -49,6 +49,16 @@ TEST(TapeSessionTrackerTest, SetsDeliveryTimeWithoutReplacingAccumulatedDiskStat
   EXPECT_EQ(3, tracker.diskStats().waitReportingTime);
 }
 
+TEST(TapeSessionTrackerTest, StoresTypedSessionOutcomeAndMountAttemptState) {
+  TapeSessionTracker tracker;
+
+  tracker.setOutcome(TapeSessionOutcome::Failure);
+  tracker.setMountAttempted(false);
+
+  EXPECT_EQ(TapeSessionOutcome::Failure, tracker.outcome());
+  EXPECT_FALSE(tracker.mountAttempted());
+}
+
 TEST(TapeSessionTrackerTest, TracksActiveDiskFilesByThread) {
   TapeSessionTracker tracker;
 
@@ -166,6 +176,8 @@ TEST(TapeSessionTrackerTest, EnteringSchedulingResetsSessionDataOnce) {
   tracker.incrementTapeAlert(0x01);
   tracker.notifyBlockMovement(100);
   tracker.notifyDiskFileOpened(1, 1234, "file:///one");
+  tracker.setOutcome(TapeSessionOutcome::Failure);
+  tracker.setMountAttempted(false);
 
   tracker.reportState(cta::tape::session::SessionState::Scheduling, cta::tape::session::SessionType::Undetermined);
 
@@ -176,6 +188,8 @@ TEST(TapeSessionTrackerTest, EnteringSchedulingResetsSessionDataOnce) {
   EXPECT_EQ(0, tracker.bytesMoved());
   EXPECT_EQ(std::chrono::steady_clock::time_point {}, tracker.lastBlockMovement());
   EXPECT_TRUE(tracker.activeDiskFiles().empty());
+  EXPECT_EQ(TapeSessionOutcome::Automatic, tracker.outcome());
+  EXPECT_TRUE(tracker.mountAttempted());
   const auto sessionStartTime = tracker.sessionStartTime();
   EXPECT_NE(std::chrono::steady_clock::time_point {}, sessionStartTime);
 

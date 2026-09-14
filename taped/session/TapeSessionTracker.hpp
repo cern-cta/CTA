@@ -53,6 +53,8 @@ enum class TapeSessionError {
   TapeFilledUp
 };
 
+enum class TapeSessionOutcome { Automatic, Success, Failure };
+
 // TODO: unordered map?
 using TapeSessionErrorStats = std::map<TapeSessionError, uint32_t>;
 using TapeAlertStats = std::map<uint16_t, uint32_t>;
@@ -86,6 +88,8 @@ public:
       m_errorStats.clear();
       m_tapeAlertStats.clear();
       m_activeDiskFiles.clear();
+      m_outcome = TapeSessionOutcome::Automatic;
+      m_mountAttempted = true;
       m_fileId = 0;
       m_fSeq = 0;
       m_fileBeingMoved = false;
@@ -107,6 +111,26 @@ public:
   cta::tape::session::SessionType type() const {
     std::lock_guard lock(m_mutex);
     return m_type;
+  }
+
+  void setOutcome(TapeSessionOutcome outcome) {
+    std::lock_guard lock(m_mutex);
+    m_outcome = outcome;
+  }
+
+  TapeSessionOutcome outcome() const {
+    std::lock_guard lock(m_mutex);
+    return m_outcome;
+  }
+
+  void setMountAttempted(bool attempted) {
+    std::lock_guard lock(m_mutex);
+    m_mountAttempted = attempted;
+  }
+
+  bool mountAttempted() const {
+    std::lock_guard lock(m_mutex);
+    return m_mountAttempted;
   }
 
   void incrementError(TapeSessionError error) {
@@ -252,6 +276,8 @@ private:
 
   cta::tape::session::SessionState m_state = cta::tape::session::SessionState::StartingUp;
   cta::tape::session::SessionType m_type = cta::tape::session::SessionType::Undetermined;
+  TapeSessionOutcome m_outcome = TapeSessionOutcome::Automatic;
+  bool m_mountAttempted = true;
 
   uint64_t m_fileId = 0;
   uint64_t m_fSeq = 0;

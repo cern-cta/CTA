@@ -122,20 +122,6 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
                                logContext,
                                std::chrono::seconds(15),
                                std::chrono::seconds(m_dataTransferConfig.wdNoBlockMoveMaxSecs));
-  reporter.addParameters({
-    {"tapeVid",         m_volInfo.vid                         },
-    {"mountType",       toCamelCaseString(m_volInfo.mountType)},
-    {"mountId",         m_volInfo.mountId                     },
-    {"volReqId",        m_volInfo.mountId                     },
-    {"tapeDrive",       m_driveInfo.driveName                 },
-    {"vendor",          retrieveMount->getVendor()            },
-    {"vo",              retrieveMount->getVo()                },
-    {"mediaType",       retrieveMount->getMediaType()         },
-    {"tapePool",        retrieveMount->getPoolName()          },
-    {"logicalLibrary",  m_driveInfo.logicalLibrary            },
-    {"capacityInBytes", retrieveMount->getCapacityInBytes()   },
-    {"mountAttempted",  1                                     }
-  });
   reporter.startThreads();
   // We are ready to start the session. We need to create the whole machinery
   // in order to get the task injector ready to check if we actually have a
@@ -146,10 +132,8 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
   std::unique_ptr<cta::tape::drive::DriveInterface> drive(findDrive(logContext, retrieveMount));
 
   if (!drive) {
-    reporter.addParameters({
-      {"status",         "failure"},
-      {"mountAttempted", 0        }
-    });
+    m_tapeSessionTracker.setOutcome(TapeSessionOutcome::Failure);
+    m_tapeSessionTracker.setMountAttempted(false);
     reporter.finish();
     reporter.waitThreads();
     return MARK_DRIVE_AS_DOWN;
@@ -261,28 +245,16 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
       // If the first pop from the queue fails, just log this was an empty mount and that's it. The memory management
       // will be deallocated automatically.
       int priority = cta::log::ERR;
-      std::string status = "failure";
       if (noFilesToRecall) {
         // If empty mount because the queue contained no jobs log warning and set success
         priority = cta::log::WARNING;
-        status = "success";
       }
 
       logContext.log(priority, "Aborting recall mount startup: empty mount");
 
       std::string mountId = retrieveMount->getMountTransactionId();
-      std::string mountType = cta::common::dataStructures::toCamelCaseString(retrieveMount->getMountType());
 
       cta::log::Param errorMessageParam(cta::semconv::log::errorMessage, "Aborted: empty recall mount");
-      cta::log::Param mountIdParam("mountId", mountId);
-      cta::log::Param mountTypeParam("mountType", mountType);
-      cta::log::Param statusParam("status", status);
-      cta::log::Param mountAttemptedParam("mountAttempted", 0);
-      cta::log::Param logicalLibraryParam("logicalLibrary", std::nullopt);
-      cta::log::Param tapePoolParam("tapePool", std::nullopt);
-      cta::log::Param tapeVidParam("tapeVid", std::nullopt);
-      cta::log::Param voParam("vo", std::nullopt);
-      cta::log::Param volReqIdParam("volReqId", std::nullopt);
 
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
       try {
@@ -295,10 +267,8 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
           m_tapeSessionTracker.incrementError(TapeSessionError::NoFilesToRecall);
         }
         m_tapeSessionTracker.incrementError(TapeSessionError::EmptyMount);
-        reporter.addParameters({
-          {"status",         status},
-          {"mountAttempted", 0     }
-        });
+        m_tapeSessionTracker.setOutcome(noFilesToRecall ? TapeSessionOutcome::Success : TapeSessionOutcome::Failure);
+        m_tapeSessionTracker.setMountAttempted(false);
         cta::log::LogContext::ScopedParam sp08(logContext, cta::log::Param("MountTransactionId", mountId));
         logContext.log(priority, "Notified client of end session with error");
       } catch (cta::exception::Exception& ex) {
@@ -332,20 +302,6 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
                                logContext,
                                std::chrono::seconds(15),
                                std::chrono::seconds(m_dataTransferConfig.wdNoBlockMoveMaxSecs));
-  reporter.addParameters({
-    {"tapeVid",         m_volInfo.vid                         },
-    {"mountType",       toCamelCaseString(m_volInfo.mountType)},
-    {"mountId",         m_volInfo.mountId                     },
-    {"volReqId",        m_volInfo.mountId                     },
-    {"tapeDrive",       m_driveInfo.driveName                 },
-    {"vendor",          archiveMount->getVendor()             },
-    {"vo",              archiveMount->getVo()                 },
-    {"mediaType",       archiveMount->getMediaType()          },
-    {"tapePool",        archiveMount->getPoolName()           },
-    {"logicalLibrary",  m_driveInfo.logicalLibrary            },
-    {"capacityInBytes", archiveMount->getCapacityInBytes()    },
-    {"mountAttempted",  1                                     }
-  });
   reporter.startThreads();
   // We are ready to start the session. We need to create the whole machinery
   // in order to get the task injector ready to check if we actually have a
@@ -353,10 +309,8 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
   // 1) Get hold of the drive error logs are done inside the findDrive function
   std::unique_ptr<cta::tape::drive::DriveInterface> drive(findDrive(logContext, archiveMount));
   if (!drive) {
-    reporter.addParameters({
-      {"status",         "failure"},
-      {"mountAttempted", 0        }
-    });
+    m_tapeSessionTracker.setOutcome(TapeSessionOutcome::Failure);
+    m_tapeSessionTracker.setMountAttempted(false);
     reporter.finish();
     reporter.waitThreads();
     return MARK_DRIVE_AS_DOWN;
@@ -429,25 +383,13 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
     } else {
       // Just log this was an empty mount and that's it. The memory management will be deallocated automatically.
       int priority = cta::log::ERR;
-      std::string status = "failure";
       if (noFilesToMigrate) {
         priority = cta::log::WARNING;
-        status = "success";
       }
       logContext.log(priority, "Aborting migration mount startup: empty mount");
 
       std::string mountId = archiveMount->getMountTransactionId();
-      std::string mountType = cta::common::dataStructures::toCamelCaseString(archiveMount->getMountType());
       cta::log::Param errorMessageParam(cta::semconv::log::errorMessage, "Aborted: empty migration mount");
-      cta::log::Param mountIdParam("mountId", mountId);
-      cta::log::Param mountTypeParam("mountType", mountType);
-      cta::log::Param statusParam("status", status);
-      cta::log::Param mountAttemptedParam("mountAttempted", 0);
-      cta::log::Param logicalLibraryParam("logicalLibrary", std::nullopt);
-      cta::log::Param tapePoolParam("tapePool", std::nullopt);
-      cta::log::Param tapeVidParam("tapeVid", std::nullopt);
-      cta::log::Param voParam("vo", std::nullopt);
-      cta::log::Param volReqIdParam("volReqId", std::nullopt);
 
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
       try {
@@ -457,10 +399,8 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
           m_tapeSessionTracker.incrementError(TapeSessionError::NoFilesToMigrate);
         }
         m_tapeSessionTracker.incrementError(TapeSessionError::EmptyMount);
-        reporter.addParameters({
-          {"status",         status},
-          {"mountAttempted", 0     }
-        });
+        m_tapeSessionTracker.setOutcome(noFilesToMigrate ? TapeSessionOutcome::Success : TapeSessionOutcome::Failure);
+        m_tapeSessionTracker.setMountAttempted(false);
         cta::log::LogContext::ScopedParam sp11(logContext, cta::log::Param("MountTransactionId", mountId));
         logContext.log(priority, "Notified client of end session with error");
       } catch (cta::exception::Exception& ex) {
