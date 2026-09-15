@@ -2,16 +2,39 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 [package]
-name = "cta-lib"
-version = "0.1.0"
-edition = "2024"
+  name                    = "cta-lib"
+  description             = "High-level client library for the CTA frontend and EOS namespace gRPC APIs"
+  version.workspace       = true
+  edition.workspace       = true
+  authors.workspace       = true
+  license.workspace       = true
+  repository.workspace    = true
+  homepage.workspace      = true
+  documentation.workspace = true
+  keywords.workspace      = true
+  categories.workspace    = true
+  publish.workspace       = true
+  readme                  = "README.md"
+
+[lints]
+  workspace = true
 
 [dependencies]
-cta-protobuf = { path = "../cta-protobuf-rs" }
-eos-protobuf = { path = "../eos-protobuf-rs" }
-tonic = { version = "0.14.6", features = ["tls-native-roots", "tls-ring"] }
-tokio-stream = "0.1.19"
-thiserror = "2.0.20"
-log = "^0.4"
-nix = { version = "^0.31", features = ["fs"] }
-url = "^2.5"
+  cta-protobuf = { workspace = true }
+  eos-protobuf = { workspace = true }
+  tonic        = { workspace = true, features = ["tls-native-roots", "tls-ring"] }
+  tokio-stream = { workspace = true }
+  thiserror    = { workspace = true }
+  log          = { workspace = true }
+  nix          = { workspace = true, features = ["fs"] }
+  url          = { workspace = true }
+
+# Only needed by `src/test_support.rs`, which builds gRPC responses without a
+# server (see that module for why no third-party mock harness is used).
+[dev-dependencies]
+  tokio          = { workspace = true, features = ["macros", "rt"] }
+  prost          = { workspace = true }
+  tonic-prost    = { workspace = true }
+  bytes          = { workspace = true }
+  http-body      = { workspace = true }
+  http-body-util = { workspace = true }

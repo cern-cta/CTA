@@ -2,15 +2,29 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 [package]
-name = "eos-protobuf"
-authors = ["CERN"]
-version = "0.1.0"
-edition = "2024"
+  name                    = "eos-protobuf"
+  description             = "Generated Rust protobuf/gRPC bindings for the EOS namespace interface"
+  version.workspace       = true
+  edition.workspace       = true
+  authors.workspace       = true
+  license.workspace       = true
+  repository.workspace    = true
+  homepage.workspace      = true
+  documentation.workspace = true
+  keywords.workspace      = true
+  categories.workspace    = true
+  publish.workspace       = true
+  readme                  = "README.md"
+  # Regenerate the bindings whenever the vendored .proto definitions change.
+  build = "build.rs"
+
+[lints]
+  workspace = true
 
 [dependencies]
-tonic = "^0.14"
-prost = "^0.14"
-tonic-prost = "^0.14"
+  tonic       = { workspace = true }
+  prost       = { workspace = true }
+  tonic-prost = { workspace = true }
 
 [build-dependencies]
-tonic-prost-build = "^0.14"
+  tonic-prost-build = { workspace = true }

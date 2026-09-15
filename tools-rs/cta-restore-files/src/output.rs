@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 CERN
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+//! Incremental rendering of recycle-bin listings.
 use cta_lib::ResponseError;
 use cta_protobuf::cta::xrd::data::Data;
 use serde_json::json;
@@ -8,20 +9,30 @@ use serde_json::json;
 use std::{borrow::Cow, io::IsTerminal};
 use tokio_stream::{Stream, StreamExt};
 
+/// How a listing should be presented.
 #[derive(Debug)]
 pub enum OutputFormat {
+    /// Do not print anything; return the items to the caller instead.
     None,
+    /// Print one JSON object per item and line.
     Json,
+    /// Print a human-readable table.
     Table,
 }
 
 /// A simple line-buffered table printer for streaming rows to stdout
+///
+/// `N` is the number of columns, fixed at compile time so that rows are checked
 pub struct TablePrinter<const N: usize> {
     widths: [usize; N],
     color: bool,
 }
 
 impl<const N: usize> TablePrinter<N> {
+    /// Prints the header and returns a printer for the remaining rows.
+    ///
+    /// Each column is given as a `(name, width)` pair; a width of `0` means
+    /// "just wide enough for the column name".
     pub fn new(columns: [(&str, usize); N]) -> Self {
         let color = std::io::stdout().is_terminal();
 
@@ -48,6 +59,7 @@ impl<const N: usize> TablePrinter<N> {
         Self { widths, color }
     }
 
+    /// Prints one row, padding or truncating each value to its column width.
     pub fn print_row(&self, values: [Cow<'_, str>; N]) {
         let sep = paint(self.color, "2", "|");
         let row = values
@@ -59,6 +71,7 @@ impl<const N: usize> TablePrinter<N> {
         println!("{row}");
     }
 
+    /// Prints the closing rule and consumes the printer.
     pub fn close(self) {
         let rule = self
             .widths
@@ -70,6 +83,8 @@ impl<const N: usize> TablePrinter<N> {
     }
 }
 
+/// Pads the string with spaces to `width` characters, or truncates it and appends an
+/// ellipsis if it is longer.
 fn fit(s: &str, width: usize) -> String {
     let len = s.chars().count();
     if len > width {
@@ -80,6 +95,8 @@ fn fit(s: &str, width: usize) -> String {
     }
 }
 
+/// Wraps the string in the ANSI escape sequence `code` when `color` is `true`,
+/// and returns it unchanged otherwise.
 fn paint(color: bool, code: &str, s: &str) -> String {
     if color {
         format!("\x1b[{code}m{s}\x1b[0m")
@@ -88,6 +105,12 @@ fn paint(color: bool, code: &str, s: &str) -> String {
     }
 }
 
+/// Streams the recycle-bin items of `iter` to stdout as a table.
+///
+/// # Errors
+///
+/// Fails on a stream error, or if the stream yields an item that is not a
+/// recycle tape file record.
 pub async fn output_as_table<I: Stream<Item = Result<Data, ResponseError>> + Unpin>(
     iter: &mut I,
 ) -> anyhow::Result<()> {
@@ -124,6 +147,12 @@ pub async fn output_as_table<I: Stream<Item = Result<Data, ResponseError>> + Unp
     Ok(())
 }
 
+/// Streams the recycle-bin items of `iter` to stdout as JSON Lines.
+///
+/// # Errors
+///
+/// Fails on a stream error, or if the stream yields an item that is not a
+/// recycle tape file record.
 pub async fn output_as_json<I: Stream<Item = Result<Data, ResponseError>> + Unpin>(
     iter: &mut I,
 ) -> anyhow::Result<()> {

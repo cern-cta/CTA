@@ -1,6 +1,13 @@
 // SPDX-FileCopyrightText: 2026 CERN
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+//! Reconstruction of deleted files in the EOS namespace.
+//!
+//! CTA keeps enough metadata in its recycle bin to recreate the namespace entry
+//! of a deleted file: path, owner, size, checksum and storage class. This
+//! module turns such a record back into an EOS file entry — see
+//! [`restore_deleted_file`].
+
 use anyhow::{Result, anyhow};
 use std::num::ParseIntError;
 use std::path::PathBuf;
@@ -10,12 +17,25 @@ use cta_lib::eos::{DEFAULT_FILE_MODE, EosGrpcClient, Error, system_time_now};
 use cta_protobuf::cta::admin::RecycleTapeFileLsItem;
 use eos_protobuf::eos::rpc::{Checksum, FileMdProto, Time};
 
+/// Layout id assigned to restored files: Adler32 checksum, a single replica,
+/// one stripe, 4K blocks and block checksums enabled.
 const DEFAULT_FILE_LAYOUT: u32 = 0x2 /* Adler */ |
     (0x1 << 4)    /* 1 replica */  |
 //  (0x0 << 8)    /* 1 stripe */   |
 //  (0x0 << 16)   /* 4K blocks */  |
     (0x1 << 20)   /* block checksum */;
 
+/// Decodes a hexadecimal string into its bytes, most significant byte first.
+///
+/// An optional `0x`/`0X` prefix is accepted and an odd number of digits is
+/// left-padded with a zero, so `"0x1a2"` decodes to `[0x01, 0xa2]`. This is
+/// needed because CTA stores checksums as hex strings while EOS expects raw
+/// bytes.
+///
+/// # Errors
+///
+/// Returns a [`ParseIntError`] if the input contains non-hexadecimal
+/// characters.
 pub fn hex_to_byte_array(hex_string: &str) -> Result<Vec<u8>, ParseIntError> {
     let mut hex_string = hex_string.to_string();
 
@@ -36,6 +56,24 @@ pub fn hex_to_byte_array(hex_string: &str) -> Result<Vec<u8>, ParseIntError> {
 }
 
 /// Restore a file which has been deleted, within the EOS namespace.
+///
+/// Returns the EOS file id (disk file id) of the restored entry. The operation
+/// is idempotent: if a file already exists at the recorded path, its id is
+/// returned without touching the namespace.
+///
+/// Otherwise the parent containers are created as needed (inheriting the
+/// record's storage class) and a file entry is inserted with the owner, size,
+/// [`DEFAULT_FILE_LAYOUT`], [`DEFAULT_FILE_MODE`] and checksum from the
+/// recycle-bin record, plus these extended attributes:
+///
+/// * `sys.archive.file_id` — the CTA archive file id, used to retrieve the
+///   file from tape;
+/// * `eos.btime` — the "birth time" of the entry
+///
+/// # Errors
+///
+/// Fails if the record does not carry exactly one ADLER32 checksum, if its
+/// path has no parent container, or if any of the EOS calls fail.
 pub async fn restore_deleted_file(
     eos: &mut EosGrpcClient,
     file: &RecycleTapeFileLsItem,
@@ -75,7 +113,12 @@ pub async fn restore_deleted_file(
 
     // First, create the container
     let container_id = eos
-        .add_container(&parent_dir.to_string_lossy(), &file.storage_class, true)
+        .add_container(
+            &parent_dir.to_string_lossy(),
+            &file.storage_class,
+            true,
+            None,
+        )
         .await?;
 
     log::debug!("Container ID is '{container_id}'");

@@ -1,8 +1,10 @@
 // SPDX-FileCopyrightText: 2026 CERN
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#![doc = include_str!("../README.md")]
 #![feature(gethostname)]
 #![feature(iter_array_chunks)]
+#![warn(missing_docs)]
 
 mod cli;
 mod cta;
@@ -21,6 +23,7 @@ use cta_protobuf::cta::admin::RecycleTapeFileLsItem;
 
 use crate::{cli::Cli, eos::restore_deleted_file, output::OutputFormat};
 
+/// Dispatches the parsed subcommand.
 async fn run_commands(
     config: EndpointConfig,
     args: Cli,
@@ -73,10 +76,7 @@ async fn run_commands(
                     log::info!(
                         "Restoring file '{disk_file_id}', which doesn't exist in EOS anymore"
                     );
-                    let mut client = endpoint_map
-                        .get_client(disk_instance)
-                        .await
-                        .expect("Invalid disk instance");
+                    let mut client = endpoint_map.get_client(disk_instance).await?;
                     let new_disk_file_id = restore_deleted_file(&mut client, &file).await?;
                     file.disk_file_id = new_disk_file_id.to_string();
                 }
@@ -91,6 +91,11 @@ async fn run_commands(
     Ok(())
 }
 
+/// Entry point: parses the command line, builds the CTA and EOS endpoint
+/// configuration and runs the requested subcommand.
+///
+/// Exits with status 1 on a usage error (unsupported endpoint scheme,
+/// unreadable keytab) or when the subcommand fails.
 #[tokio::main]
 async fn main() {
     // Initialize logging
