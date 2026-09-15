@@ -47,6 +47,8 @@ private:
   // Helpers recover only from expected local conditions. Operational failures propagate to run().
   // Registration returns false for an ownership conflict and creates an entry if one is absent.
   bool registerDrive(bool putUpIfPossible);
+  // Wait for the configured logical library to exist before reading drive state at startup.
+  void waitForLogicalLibrary();
   // Re-register a missing drive as down while polling for the operator's desired state.
   void waitForDriveToBeUp();
   void putDriveDown(common::dataStructures::DriveDownReason reason, std::string_view detail = {});

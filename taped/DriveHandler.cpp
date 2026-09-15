@@ -20,6 +20,7 @@
 #include "session/EmptyDriveProbe.hpp"
 #include "session/Session.hpp"
 
+#include <algorithm>
 #include <unistd.h>
 #include <utility>
 
@@ -72,6 +73,33 @@ DriveHandler::DriveHandler(const TapedConfig& config, log::Logger& log)
 
 void DriveHandler::stop() {
   m_stopSource.request_stop();
+}
+
+void DriveHandler::waitForLogicalLibrary() {
+  bool waitingLogged = false;
+  while (true) {
+    const auto libraries = m_catalogue->LogicalLibrary()->getLogicalLibraries();
+    const bool exists = std::any_of(libraries.begin(), libraries.end(), [this](const auto& library) {
+      return library.name == m_driveInfo.logicalLibrary;
+    });
+
+    if (exists) {
+      if (waitingLogged) {
+        m_lc.log(log::INFO, "Logical library " + m_driveInfo.logicalLibrary + " is now available. Continuing startup.");
+      }
+      return;
+    }
+
+    if (!waitingLogged) {
+      m_lc.log(log::WARNING,
+               "Logical library " + m_driveInfo.logicalLibrary + " does not exist. Waiting for creation.");
+      waitingLogged = true;
+    }
+
+    // Database failures propagate; only an absent library is retried here.
+    // TODO (separate MR): make this startup wait interruptible by graceful shutdown.
+    sleep(m_config.mounts.drive_state_poll_interval_secs);
+  }
 }
 
 void DriveHandler::waitForDriveToBeUp() {
@@ -224,23 +252,37 @@ bool DriveHandler::isReady() const {
   return true;
 }
 
-// TODO: handle lost database connections cleanly. No need to crash the whole thing on those
-// We should have clearly defined behaviour there
 int DriveHandler::run() {
-  // TODO: wait for catalogue and scheduler to be reachable within a reasonable timeout
+  // TODO: handle startup exceptions separately from failures during an active session.
+  // TODO: define bounded database recovery for each phase; helpers propagate operational failures.
+  // TODO: wait for catalogue and scheduler to be reachable within a reasonable timeout.
 
-  // For a separate MR: add a config option for automatically putting the drive up on startup when possible
+  // Register the drive. It will put the drive down with a startup reason.
+  // If the drive was already down with an existing reason, this reason will be carried over.
+  // The only exception is if the down reason is a previous clean exit.
+  // Registration conflicts prevent taped from using the drive.
+  // TODO (separate MR): configure whether startup may request the drive to be up.
   if (!registerDrive(false)) {
     return 1;
   }
 
-  // TODO: if the logical library does not exist (yet), what do we do? Just wait?
+  // A drive may be defined with a logical library that does not exist (yet)
+  // In which case scheduling will not work
+  // The scheduler itself already handles this okay, but this is just to avoid spitting out a bunch
+  // of repeated warnings.
+  waitForLogicalLibrary();
 
-  // TODO: add graceful shutdown
+  // TODO (separate MR): stop scheduling on shutdown and reach the final cleanup below.
   while (true) {
+    // Honour the operator's desired state before scheduling another mount.
+    // TODO: recover a missing drive here too; this lookup can fail before waitForDriveToBeUp().
+    // TODO: handle desired-state lookup and status-publication failures at this phase boundary.
     // TODO: track whether probing is required locally so an early desired-state change cannot skip it.
     if (!m_scheduler->getDesiredDriveState(m_driveInfo.driveName, m_lc).up) {
+      // Wait for an up request; the helper re-registers a missing drive as down.
       waitForDriveToBeUp();
+
+      // Verify the drive is empty before allowing transfers.
 
       m_scheduler->reportDriveStatus(m_driveInfo,
                                      common::dataStructures::MountType::NoMount,
@@ -249,27 +291,28 @@ int DriveHandler::run() {
       EmptyDriveProbe emptyDriveProbe(m_lc.logger(), m_driveInfo, m_sysWrapper);
       m_lc.log(log::DEBUG, "Transition from down to up detected. Will check if a tape is in the drive.");
 
-      // Start by running the cleaner to unload any possible tape
-      // For a separate MR: Add an option to config to allow this
+      // Startup recovery cleaning is currently disabled; an unknown VID lets the cleaner inspect loaded media.
+      // TODO (separate MR): configure startup cleaning before probing.
       if (false) {
-        // TODO: handle failure of this correctly
-        // Can the cleaner return true/false based on whether it succeeded or not?
+        // TODO: check the cleaner result and handle escaping exceptions before proceeding to the probe.
         executeCleanerSession();
       }
 
+      // A non-empty or failed probe prevents scheduling and requires another operator up request.
+      // TODO: handle probe exceptions without allowing transfers on an unverified drive.
       if (!emptyDriveProbe.driveIsEmpty()) {
         // TODO: distinguish a detected tape from a failed probe when reporting the drive-down reason.
-        // TODO: log warning
+        // TODO: log the probe outcome at warning severity.
         putDriveDown(common::dataStructures::DriveDownReason::TapeDetected,
                      emptyDriveProbe.getProbeErrorMsg().value_or(""));
-        // Continue the loop so that we wait for the drive to come up again
+        // Re-enter desired-state polling after successfully requesting down.
         continue;
       } else {
         m_lc.log(log::DEBUG, "No tape detected in the drive. Proceeding with scheduling.");
       }
     }
 
-    // Report state
+    // Advertise an idle drive with no active mount before asking the scheduler for work.
     m_scheduler->reportDriveStatus(m_driveInfo,
                                    common::dataStructures::MountType::NoMount,
                                    common::dataStructures::DriveStatus::Up,
@@ -278,14 +321,18 @@ int DriveHandler::run() {
     // tapeSessionReporter.reportState(::session::SessionState::Scheduling,
     //                                 ::session::SessionType::Undetermined);
 
+    // Retain mount ownership until the transfer and its reporting threads have finished.
     std::unique_ptr<TapeMount> tapeMount;
 
+    // Clear the borrowed tracker reference before destroying the mount, including during unwinding.
     struct MountReferenceReset {
       TapeSessionTracker& tracker;
 
       ~MountReferenceReset() { tracker.setMount(nullptr); }
     } mountReferenceReset {m_tapeSessionTracker};
 
+    // Acquire work; a scheduling timeout is recoverable by waiting and trying again.
+    // TODO: handle other scheduling failures separately from transfer failures.
     utils::Timer t;
     try {
       tapeMount = getNextMount();
@@ -304,32 +351,34 @@ int DriveHandler::run() {
       m_lc.log(log::DEBUG,
                "No new mount found. (sleeping " + std::to_string(m_config.mounts.idle_scheduling_interval_secs)
                  + " seconds)");
-      // TODO Before we sleep, should we check for down/up transition to be more responsive?
-      // TODO What about graceful shutdown? It should be able to interrupt this sleep
+      // TODO: make idle waiting responsive to desired-state changes and graceful shutdown.
       sleep(m_config.mounts.idle_scheduling_interval_secs);
-      // At this point, start the loop from the beginning
+      // Recheck desired state before attempting scheduling again.
       continue;
     }
 
     // TODO: if no mount is available, wait and continue instead of treating nullptr as a transfer failure.
-    // Now that we have a mount, execute the data transfer session
-    // TODO: handle non-database transfer exceptions too, setting drive state and handling cleanup.
+    // The session result describes hardware usability, not whether every file transferred successfully.
+    // TODO: handle transfer exceptions here and establish safe hardware recovery before scheduling again.
+    // TODO: ensure session workers and reporters are joined during exception unwinding.
     bool driveCanRemainUp = tapeMount != nullptr && executeDataTransferSession(*tapeMount);
     if (!driveCanRemainUp) {
-      // TODO: we need a better reason here
       // TODO: preserve more specific drive-open or cleaning reasons already recorded by the session.
+      // TODO: if putting the drive down fails, retain both the original failure and the reporting failure.
       putDriveDown(common::dataStructures::DriveDownReason::TransferSessionFailed);
-      // After this, the loop will continue by waiting to be up again
+      // Require another operator up request before attempting recovery and scheduling.
     }
-    // This is for another MR, but we should rip out the cleaner functionality from the transfer sessions and rely on CleanerSession only
+    // TODO (separate MR): move transfer cleaning to CleanerSession, called after every transfer here.
   }
 
-  // At this point, the drive is exiting. Start cleanup
+  // Final cleanup is currently unreachable because the scheduling loop never exits.
+  // Use an unknown VID; final cleanup does not depend on a surviving transfer mount.
+  // TODO: handle the cleaner result and exceptions while still attempting shutdown status publication.
   executeCleanerSession();
-  // Put the drive down
-  // TODO: this is not correct, because it may already be down
+  // Publish a clean shutdown reason after cleanup.
+  // TODO: preserve an existing failure reason and account for failed cleanup.
   putDriveDown(common::dataStructures::DriveDownReason::Shutdown);
-  // TODO: correct exit code
+  // TODO: select the exit code from the shutdown and cleanup outcomes.
   return 0;
 }
 
