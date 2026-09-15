@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "DataTransferConfig.hpp"
 #include "Session.hpp"
 #include "TapeSessionTracker.hpp"  // TODO: I don't think tapesession is accurate here, but that's for later
 #include "TapeSingleThreadInterface.hpp"
@@ -17,6 +16,7 @@
 #include "scheduler/RetrieveMount.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/TapeMount.hpp"
+#include "taped/TapedConfig.hpp"
 #include "taped/system/Wrapper.hpp"
 
 #include <memory>
@@ -40,7 +40,8 @@ public:
                       cta::mediachanger::MediaChangerFacade& mc,
                       cta::TapeMount& tapeMount,
                       cta::tape::daemon::TapeSessionTracker& tapeSessionTracker,
-                      const DataTransferConfig& dataTransferConfig,
+                      const TransfersConfig& transfersConfig,
+                      uint32_t tapeLoadTimeoutSecs,
                       cta::Scheduler& scheduler);
 
   /**
@@ -81,7 +82,8 @@ private:
   cta::TapeMount& m_tapeMount;
   VolumeInfo m_volInfo {};
   System::virtualWrapper& m_sysWrapper;
-  const DataTransferConfig m_dataTransferConfig;
+  const TransfersConfig m_transfersConfig;
+  const uint32_t m_tapeLoadTimeoutSecs;
   /**
    * The drive information bundle allowing drive register update.
    * Filled up at construction time.

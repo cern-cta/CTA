@@ -181,42 +181,17 @@ bool DriveHandler::executeDataTransferSession(TapeMount& tapeMount) {
       "In DriveHandler::executeDataTransferSession(): tracker does not reference the supplied tape mount");
   }
 
-  // TODO: this should eventually rely only on transfer config
-  // Anything that needs something non-transfer related should probably be extracted out of data transfer session
-  DataTransferConfig dataTransferConfig;
-  dataTransferConfig.bufsz = m_config.transfers.buffer_size_bytes;
-  dataTransferConfig.bulkRequestMigrationMaxBytes = m_config.transfers.archive.fetch_max_bytes;
-  dataTransferConfig.bulkRequestMigrationMaxFiles = m_config.transfers.archive.fetch_max_files;
-  dataTransferConfig.archiveDismountPolicy.set(m_config.transfers.archive.underfill.watch_period_secs,
-                                               m_config.transfers.archive.underfill.minimum_samples,
-                                               m_config.transfers.archive.underfill.start_threshold_percent,
-                                               m_config.transfers.archive.underfill.recovery_threshold_percent);
-  dataTransferConfig.bulkRequestRecallMaxBytes = m_config.transfers.retrieve.fetch_max_bytes;
-  dataTransferConfig.bulkRequestRecallMaxFiles = m_config.transfers.retrieve.fetch_max_files;
-  dataTransferConfig.maxBytesBeforeFlush = m_config.transfers.archive.flush_max_bytes;
-  dataTransferConfig.maxFilesBeforeFlush = m_config.transfers.archive.flush_max_files;
-  dataTransferConfig.nbBufs = m_config.transfers.buffer_count;
-  dataTransferConfig.nbDiskThreads = m_config.transfers.disk_io_threads;
-  dataTransferConfig.useLbp = true;
-  dataTransferConfig.useRAO = m_config.transfers.retrieve.rao.enabled;
-  dataTransferConfig.raoLtoAlgorithm = m_config.transfers.retrieve.rao.lto_algorithm;
-  dataTransferConfig.raoLtoAlgorithmOptions = "cost_heuristic_name:cta";  // Only option available
-  dataTransferConfig.externalFreeDiskSpaceScript = m_config.transfers.retrieve.external_free_disk_space_script;
-  dataTransferConfig.tapeLoadTimeout = m_config.mounts.tape_load_timeout_secs;
-  dataTransferConfig.xrootTimeout = 0;
-  dataTransferConfig.useEncryption = m_config.transfers.encryption.enabled;
-  dataTransferConfig.externalEncryptionKeyScript = m_config.transfers.encryption.external_key_script;
-  dataTransferConfig.wdNoBlockMoveMaxSecs = m_config.transfers.no_block_move_timeout_secs;
-
-  DataTransferSession dataTransferSession(utils::getShortHostname(),
-                                          m_lc.logger(),
-                                          m_sysWrapper,
-                                          m_driveInfo,
-                                          m_mediaChanger,
-                                          tapeMount,
-                                          m_tapeSessionTracker,
-                                          dataTransferConfig,
-                                          *m_scheduler);
+  DataTransferSession dataTransferSession(
+    utils::getShortHostname(),
+    m_lc.logger(),
+    m_sysWrapper,
+    m_driveInfo,
+    m_mediaChanger,
+    tapeMount,
+    m_tapeSessionTracker,
+    m_config.transfers,
+    m_config.mounts.tape_load_timeout_secs,  // TODO: DataTransferSession should not be responsible for tape loading
+    *m_scheduler);
   // This is hacky; this whole end of session action stuff should be ripped out
   return dataTransferSession.execute() == Session::EndOfSessionAction::MARK_DRIVE_AS_UP;
 }

@@ -630,23 +630,49 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 7) Create the data transfer session
-  DataTransferConfig dataTransferConf;
-  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  dataTransferConf.nbBufs = 10;
-  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
-  dataTransferConf.nbDiskThreads = 1;
-  dataTransferConf.tapeLoadTimeout = 300;
-  dataTransferConf.useEncryption = false;
-  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
+  TransfersConfig dataTransferConf;
+  dataTransferConf.buffer_count = 0;
+  dataTransferConf.buffer_size_bytes = 0;
+  dataTransferConf.disk_io_threads = 0;
+  dataTransferConf.archive.fetch_max_bytes = 0;
+  dataTransferConf.archive.fetch_max_files = 0;
+  dataTransferConf.archive.flush_max_bytes = 0;
+  dataTransferConf.archive.flush_max_files = 0;
+  dataTransferConf.archive.underfill.watch_period_secs = 0;
+  dataTransferConf.archive.underfill.minimum_samples = 0;
+  dataTransferConf.archive.underfill.start_threshold_percent = 0;
+  dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
+  dataTransferConf.retrieve.fetch_max_bytes = 0;
+  dataTransferConf.retrieve.fetch_max_files = 0;
+  dataTransferConf.retrieve.rao.enabled = false;
+  dataTransferConf.retrieve.rao.lto_algorithm.clear();
+  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.no_block_move_timeout_secs = 600;
+  uint32_t tapeLoadTimeoutSecs = 300;
+  dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.buffer_count = 10;
+  dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.retrieve.fetch_max_files = 1000;
+  dataTransferConf.disk_io_threads = 1;
+  tapeLoadTimeoutSecs = 300;
+  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  cta::tape::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, scheduler);
+  cta::tape::daemon::DataTransferSession sess("tapeHost",
+                                              logger,
+                                              mockSys,
+                                              driveInfo,
+                                              mc,
+                                              *tapeMount,
+                                              tracker,
+                                              dataTransferConf,
+                                              tapeLoadTimeoutSecs,
+                                              scheduler);
   // 8) Run the data transfer session
   sess.execute();
 
@@ -873,23 +899,49 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 7) Create the data transfer session
-  DataTransferConfig dataTransferConf;
-  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  dataTransferConf.nbBufs = 10;
-  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
-  dataTransferConf.nbDiskThreads = 1;
-  dataTransferConf.tapeLoadTimeout = 300;
-  dataTransferConf.useEncryption = false;
-  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
+  TransfersConfig dataTransferConf;
+  dataTransferConf.buffer_count = 0;
+  dataTransferConf.buffer_size_bytes = 0;
+  dataTransferConf.disk_io_threads = 0;
+  dataTransferConf.archive.fetch_max_bytes = 0;
+  dataTransferConf.archive.fetch_max_files = 0;
+  dataTransferConf.archive.flush_max_bytes = 0;
+  dataTransferConf.archive.flush_max_files = 0;
+  dataTransferConf.archive.underfill.watch_period_secs = 0;
+  dataTransferConf.archive.underfill.minimum_samples = 0;
+  dataTransferConf.archive.underfill.start_threshold_percent = 0;
+  dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
+  dataTransferConf.retrieve.fetch_max_bytes = 0;
+  dataTransferConf.retrieve.fetch_max_files = 0;
+  dataTransferConf.retrieve.rao.enabled = false;
+  dataTransferConf.retrieve.rao.lto_algorithm.clear();
+  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.no_block_move_timeout_secs = 600;
+  uint32_t tapeLoadTimeoutSecs = 300;
+  dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.buffer_count = 10;
+  dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.retrieve.fetch_max_files = 1000;
+  dataTransferConf.disk_io_threads = 1;
+  tapeLoadTimeoutSecs = 300;
+  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  cta::tape::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, scheduler);
+  cta::tape::daemon::DataTransferSession sess("tapeHost",
+                                              logger,
+                                              mockSys,
+                                              driveInfo,
+                                              mc,
+                                              *tapeMount,
+                                              tracker,
+                                              dataTransferConf,
+                                              tapeLoadTimeoutSecs,
+                                              scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1150,23 +1202,49 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 7) Create the data transfer session
-  DataTransferConfig dataTransferConf;
-  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  dataTransferConf.nbBufs = 10;
-  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
-  dataTransferConf.nbDiskThreads = 1;
-  dataTransferConf.tapeLoadTimeout = 300;
-  dataTransferConf.useEncryption = false;
-  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
+  TransfersConfig dataTransferConf;
+  dataTransferConf.buffer_count = 0;
+  dataTransferConf.buffer_size_bytes = 0;
+  dataTransferConf.disk_io_threads = 0;
+  dataTransferConf.archive.fetch_max_bytes = 0;
+  dataTransferConf.archive.fetch_max_files = 0;
+  dataTransferConf.archive.flush_max_bytes = 0;
+  dataTransferConf.archive.flush_max_files = 0;
+  dataTransferConf.archive.underfill.watch_period_secs = 0;
+  dataTransferConf.archive.underfill.minimum_samples = 0;
+  dataTransferConf.archive.underfill.start_threshold_percent = 0;
+  dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
+  dataTransferConf.retrieve.fetch_max_bytes = 0;
+  dataTransferConf.retrieve.fetch_max_files = 0;
+  dataTransferConf.retrieve.rao.enabled = false;
+  dataTransferConf.retrieve.rao.lto_algorithm.clear();
+  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.no_block_move_timeout_secs = 600;
+  uint32_t tapeLoadTimeoutSecs = 300;
+  dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.buffer_count = 10;
+  dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.retrieve.fetch_max_files = 1000;
+  dataTransferConf.disk_io_threads = 1;
+  tapeLoadTimeoutSecs = 300;
+  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, scheduler);
+  DataTransferSession sess("tapeHost",
+                           logger,
+                           mockSys,
+                           driveInfo,
+                           mc,
+                           *tapeMount,
+                           tracker,
+                           dataTransferConf,
+                           tapeLoadTimeoutSecs,
+                           scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1373,24 +1451,50 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 7) Create the data transfer session
-  DataTransferConfig dataTransferConf;
-  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  dataTransferConf.nbBufs = 10;
-  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestRecallMaxFiles = MAX_BULK_RECALLS - 1;
-  dataTransferConf.nbDiskThreads = 1;
-  dataTransferConf.useRAO = true;
-  dataTransferConf.tapeLoadTimeout = 300;
-  dataTransferConf.useEncryption = false;
-  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
+  TransfersConfig dataTransferConf;
+  dataTransferConf.buffer_count = 0;
+  dataTransferConf.buffer_size_bytes = 0;
+  dataTransferConf.disk_io_threads = 0;
+  dataTransferConf.archive.fetch_max_bytes = 0;
+  dataTransferConf.archive.fetch_max_files = 0;
+  dataTransferConf.archive.flush_max_bytes = 0;
+  dataTransferConf.archive.flush_max_files = 0;
+  dataTransferConf.archive.underfill.watch_period_secs = 0;
+  dataTransferConf.archive.underfill.minimum_samples = 0;
+  dataTransferConf.archive.underfill.start_threshold_percent = 0;
+  dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
+  dataTransferConf.retrieve.fetch_max_bytes = 0;
+  dataTransferConf.retrieve.fetch_max_files = 0;
+  dataTransferConf.retrieve.rao.enabled = false;
+  dataTransferConf.retrieve.rao.lto_algorithm.clear();
+  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.no_block_move_timeout_secs = 600;
+  uint32_t tapeLoadTimeoutSecs = 300;
+  dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.buffer_count = 10;
+  dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.retrieve.fetch_max_files = MAX_BULK_RECALLS - 1;
+  dataTransferConf.disk_io_threads = 1;
+  dataTransferConf.retrieve.rao.enabled = true;
+  tapeLoadTimeoutSecs = 300;
+  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  cta::tape::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, scheduler);
+  cta::tape::daemon::DataTransferSession sess("tapeHost",
+                                              logger,
+                                              mockSys,
+                                              driveInfo,
+                                              mc,
+                                              *tapeMount,
+                                              tracker,
+                                              dataTransferConf,
+                                              tapeLoadTimeoutSecs,
+                                              scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1601,25 +1705,51 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 7) Create the data transfer session
-  DataTransferConfig dataTransferConf;
-  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  dataTransferConf.nbBufs = 10;
-  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestRecallMaxFiles = MAX_BULK_RECALLS - 1;
-  dataTransferConf.nbDiskThreads = 1;
-  dataTransferConf.useRAO = true;
-  dataTransferConf.raoLtoAlgorithm = "linear";
-  dataTransferConf.tapeLoadTimeout = 300;
-  dataTransferConf.useEncryption = false;
-  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
+  TransfersConfig dataTransferConf;
+  dataTransferConf.buffer_count = 0;
+  dataTransferConf.buffer_size_bytes = 0;
+  dataTransferConf.disk_io_threads = 0;
+  dataTransferConf.archive.fetch_max_bytes = 0;
+  dataTransferConf.archive.fetch_max_files = 0;
+  dataTransferConf.archive.flush_max_bytes = 0;
+  dataTransferConf.archive.flush_max_files = 0;
+  dataTransferConf.archive.underfill.watch_period_secs = 0;
+  dataTransferConf.archive.underfill.minimum_samples = 0;
+  dataTransferConf.archive.underfill.start_threshold_percent = 0;
+  dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
+  dataTransferConf.retrieve.fetch_max_bytes = 0;
+  dataTransferConf.retrieve.fetch_max_files = 0;
+  dataTransferConf.retrieve.rao.enabled = false;
+  dataTransferConf.retrieve.rao.lto_algorithm.clear();
+  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.no_block_move_timeout_secs = 600;
+  uint32_t tapeLoadTimeoutSecs = 300;
+  dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.buffer_count = 10;
+  dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.retrieve.fetch_max_files = MAX_BULK_RECALLS - 1;
+  dataTransferConf.disk_io_threads = 1;
+  dataTransferConf.retrieve.rao.enabled = true;
+  dataTransferConf.retrieve.rao.lto_algorithm = "linear";
+  tapeLoadTimeoutSecs = 300;
+  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  cta::tape::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, scheduler);
+  cta::tape::daemon::DataTransferSession sess("tapeHost",
+                                              logger,
+                                              mockSys,
+                                              driveInfo,
+                                              mc,
+                                              *tapeMount,
+                                              tracker,
+                                              dataTransferConf,
+                                              tapeLoadTimeoutSecs,
+                                              scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1830,17 +1960,35 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 7) Create the data transfer session
-  DataTransferConfig dataTransferConf;
-  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  dataTransferConf.nbBufs = 10;
-  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestRecallMaxFiles = MAX_BULK_RECALLS - 1;
-  dataTransferConf.nbDiskThreads = 1;
-  dataTransferConf.useRAO = true;
-  dataTransferConf.tapeLoadTimeout = 300;
-  dataTransferConf.raoLtoAlgorithm = "DOES_NOT_EXIST";
-  dataTransferConf.useEncryption = false;
-  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
+  TransfersConfig dataTransferConf;
+  dataTransferConf.buffer_count = 0;
+  dataTransferConf.buffer_size_bytes = 0;
+  dataTransferConf.disk_io_threads = 0;
+  dataTransferConf.archive.fetch_max_bytes = 0;
+  dataTransferConf.archive.fetch_max_files = 0;
+  dataTransferConf.archive.flush_max_bytes = 0;
+  dataTransferConf.archive.flush_max_files = 0;
+  dataTransferConf.archive.underfill.watch_period_secs = 0;
+  dataTransferConf.archive.underfill.minimum_samples = 0;
+  dataTransferConf.archive.underfill.start_threshold_percent = 0;
+  dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
+  dataTransferConf.retrieve.fetch_max_bytes = 0;
+  dataTransferConf.retrieve.fetch_max_files = 0;
+  dataTransferConf.retrieve.rao.enabled = false;
+  dataTransferConf.retrieve.rao.lto_algorithm.clear();
+  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.no_block_move_timeout_secs = 600;
+  uint32_t tapeLoadTimeoutSecs = 300;
+  dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.buffer_count = 10;
+  dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.retrieve.fetch_max_files = MAX_BULK_RECALLS - 1;
+  dataTransferConf.disk_io_threads = 1;
+  dataTransferConf.retrieve.rao.enabled = true;
+  tapeLoadTimeoutSecs = 300;
+  dataTransferConf.retrieve.rao.lto_algorithm = "DOES_NOT_EXIST";
+  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.no_block_move_timeout_secs = 600;
 
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
@@ -1848,8 +1996,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  cta::tape::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, scheduler);
+  cta::tape::daemon::DataTransferSession sess("tapeHost",
+                                              logger,
+                                              mockSys,
+                                              driveInfo,
+                                              mc,
+                                              *tapeMount,
+                                              tracker,
+                                              dataTransferConf,
+                                              tapeLoadTimeoutSecs,
+                                              scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -2064,26 +2220,51 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 7) Create the data transfer session
-  DataTransferConfig dataTransferConf;
-  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  dataTransferConf.nbBufs = 10;
-  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestRecallMaxFiles = MAX_BULK_RECALLS - 1;
-  dataTransferConf.nbDiskThreads = 1;
-  dataTransferConf.useRAO = true;
-  dataTransferConf.tapeLoadTimeout = 300;
-  dataTransferConf.raoLtoAlgorithm = "sltf";
-  dataTransferConf.raoLtoAlgorithmOptions = "cost_heuristic_name:cta";
-  dataTransferConf.useEncryption = false;
-  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
+  TransfersConfig dataTransferConf;
+  dataTransferConf.buffer_count = 0;
+  dataTransferConf.buffer_size_bytes = 0;
+  dataTransferConf.disk_io_threads = 0;
+  dataTransferConf.archive.fetch_max_bytes = 0;
+  dataTransferConf.archive.fetch_max_files = 0;
+  dataTransferConf.archive.flush_max_bytes = 0;
+  dataTransferConf.archive.flush_max_files = 0;
+  dataTransferConf.archive.underfill.watch_period_secs = 0;
+  dataTransferConf.archive.underfill.minimum_samples = 0;
+  dataTransferConf.archive.underfill.start_threshold_percent = 0;
+  dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
+  dataTransferConf.retrieve.fetch_max_bytes = 0;
+  dataTransferConf.retrieve.fetch_max_files = 0;
+  dataTransferConf.retrieve.rao.enabled = false;
+  dataTransferConf.retrieve.rao.lto_algorithm.clear();
+  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.no_block_move_timeout_secs = 600;
+  uint32_t tapeLoadTimeoutSecs = 300;
+  dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.buffer_count = 10;
+  dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.retrieve.fetch_max_files = MAX_BULK_RECALLS - 1;
+  dataTransferConf.disk_io_threads = 1;
+  dataTransferConf.retrieve.rao.enabled = true;
+  tapeLoadTimeoutSecs = 300;
+  dataTransferConf.retrieve.rao.lto_algorithm = "sltf";
+  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  cta::tape::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, scheduler);
+  cta::tape::daemon::DataTransferSession sess("tapeHost",
+                                              logger,
+                                              mockSys,
+                                              driveInfo,
+                                              mc,
+                                              *tapeMount,
+                                              tracker,
+                                              dataTransferConf,
+                                              tapeLoadTimeoutSecs,
+                                              scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -2290,20 +2471,46 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 8) Create the data transfer session
-  DataTransferConfig dataTransferConf;
-  dataTransferConf.bufsz = 1024;
-  dataTransferConf.tapeLoadTimeout = 300;
-  dataTransferConf.nbBufs = 10;
-  dataTransferConf.useEncryption = false;
-  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
+  TransfersConfig dataTransferConf;
+  dataTransferConf.buffer_count = 0;
+  dataTransferConf.buffer_size_bytes = 0;
+  dataTransferConf.disk_io_threads = 0;
+  dataTransferConf.archive.fetch_max_bytes = 0;
+  dataTransferConf.archive.fetch_max_files = 0;
+  dataTransferConf.archive.flush_max_bytes = 0;
+  dataTransferConf.archive.flush_max_files = 0;
+  dataTransferConf.archive.underfill.watch_period_secs = 0;
+  dataTransferConf.archive.underfill.minimum_samples = 0;
+  dataTransferConf.archive.underfill.start_threshold_percent = 0;
+  dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
+  dataTransferConf.retrieve.fetch_max_bytes = 0;
+  dataTransferConf.retrieve.fetch_max_files = 0;
+  dataTransferConf.retrieve.rao.enabled = false;
+  dataTransferConf.retrieve.rao.lto_algorithm.clear();
+  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.no_block_move_timeout_secs = 600;
+  uint32_t tapeLoadTimeoutSecs = 300;
+  dataTransferConf.buffer_size_bytes = 1024;
+  tapeLoadTimeoutSecs = 300;
+  dataTransferConf.buffer_count = 10;
+  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, scheduler);
+  DataTransferSession sess("tapeHost",
+                           logger,
+                           mockSys,
+                           driveInfo,
+                           mc,
+                           *tapeMount,
+                           tracker,
+                           dataTransferConf,
+                           tapeLoadTimeoutSecs,
+                           scheduler);
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
   ASSERT_NE(std::string::npos, logger.getLog().find("Error looking for path to tape drive"));
@@ -2459,23 +2666,49 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 8) Create the data transfer session
-  DataTransferConfig dataTransferConf;
-  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  dataTransferConf.nbBufs = 10;
-  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
-  dataTransferConf.nbDiskThreads = 3;
-  dataTransferConf.tapeLoadTimeout = 300;
-  dataTransferConf.useEncryption = false;
-  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
+  TransfersConfig dataTransferConf;
+  dataTransferConf.buffer_count = 0;
+  dataTransferConf.buffer_size_bytes = 0;
+  dataTransferConf.disk_io_threads = 0;
+  dataTransferConf.archive.fetch_max_bytes = 0;
+  dataTransferConf.archive.fetch_max_files = 0;
+  dataTransferConf.archive.flush_max_bytes = 0;
+  dataTransferConf.archive.flush_max_files = 0;
+  dataTransferConf.archive.underfill.watch_period_secs = 0;
+  dataTransferConf.archive.underfill.minimum_samples = 0;
+  dataTransferConf.archive.underfill.start_threshold_percent = 0;
+  dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
+  dataTransferConf.retrieve.fetch_max_bytes = 0;
+  dataTransferConf.retrieve.fetch_max_files = 0;
+  dataTransferConf.retrieve.rao.enabled = false;
+  dataTransferConf.retrieve.rao.lto_algorithm.clear();
+  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.no_block_move_timeout_secs = 600;
+  uint32_t tapeLoadTimeoutSecs = 300;
+  dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.buffer_count = 10;
+  dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.retrieve.fetch_max_files = 1000;
+  dataTransferConf.disk_io_threads = 3;
+  tapeLoadTimeoutSecs = 300;
+  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, scheduler);
+  DataTransferSession sess("tapeHost",
+                           logger,
+                           mockSys,
+                           driveInfo,
+                           mc,
+                           *tapeMount,
+                           tracker,
+                           dataTransferConf,
+                           tapeLoadTimeoutSecs,
+                           scheduler);
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
   ASSERT_NE(std::string::npos, logger.getLog().find("Failed to mount the tape"));
@@ -2635,25 +2868,51 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create the data transfer session
-  DataTransferConfig dataTransferConf;
-  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  dataTransferConf.nbBufs = 10;
-  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
-  dataTransferConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestMigrationMaxFiles = 1000;
-  dataTransferConf.nbDiskThreads = 1;
-  dataTransferConf.tapeLoadTimeout = 300;
-  dataTransferConf.useEncryption = false;
-  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
+  TransfersConfig dataTransferConf;
+  dataTransferConf.buffer_count = 0;
+  dataTransferConf.buffer_size_bytes = 0;
+  dataTransferConf.disk_io_threads = 0;
+  dataTransferConf.archive.fetch_max_bytes = 0;
+  dataTransferConf.archive.fetch_max_files = 0;
+  dataTransferConf.archive.flush_max_bytes = 0;
+  dataTransferConf.archive.flush_max_files = 0;
+  dataTransferConf.archive.underfill.watch_period_secs = 0;
+  dataTransferConf.archive.underfill.minimum_samples = 0;
+  dataTransferConf.archive.underfill.start_threshold_percent = 0;
+  dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
+  dataTransferConf.retrieve.fetch_max_bytes = 0;
+  dataTransferConf.retrieve.fetch_max_files = 0;
+  dataTransferConf.retrieve.rao.enabled = false;
+  dataTransferConf.retrieve.rao.lto_algorithm.clear();
+  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.no_block_move_timeout_secs = 600;
+  uint32_t tapeLoadTimeoutSecs = 300;
+  dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.buffer_count = 10;
+  dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.retrieve.fetch_max_files = 1000;
+  dataTransferConf.archive.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.archive.fetch_max_files = 1000;
+  dataTransferConf.disk_io_threads = 1;
+  tapeLoadTimeoutSecs = 300;
+  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, scheduler);
+  DataTransferSession sess("tapeHost",
+                           logger,
+                           mockSys,
+                           driveInfo,
+                           mc,
+                           *tapeMount,
+                           tracker,
+                           dataTransferConf,
+                           tapeLoadTimeoutSecs,
+                           scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
@@ -2827,25 +3086,51 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create the data transfer session
-  DataTransferConfig dataTransferConf;
-  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  dataTransferConf.nbBufs = 10;
-  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
-  dataTransferConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestMigrationMaxFiles = 1000;
-  dataTransferConf.nbDiskThreads = 1;
-  dataTransferConf.tapeLoadTimeout = 300;
-  dataTransferConf.useEncryption = false;
-  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
+  TransfersConfig dataTransferConf;
+  dataTransferConf.buffer_count = 0;
+  dataTransferConf.buffer_size_bytes = 0;
+  dataTransferConf.disk_io_threads = 0;
+  dataTransferConf.archive.fetch_max_bytes = 0;
+  dataTransferConf.archive.fetch_max_files = 0;
+  dataTransferConf.archive.flush_max_bytes = 0;
+  dataTransferConf.archive.flush_max_files = 0;
+  dataTransferConf.archive.underfill.watch_period_secs = 0;
+  dataTransferConf.archive.underfill.minimum_samples = 0;
+  dataTransferConf.archive.underfill.start_threshold_percent = 0;
+  dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
+  dataTransferConf.retrieve.fetch_max_bytes = 0;
+  dataTransferConf.retrieve.fetch_max_files = 0;
+  dataTransferConf.retrieve.rao.enabled = false;
+  dataTransferConf.retrieve.rao.lto_algorithm.clear();
+  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.no_block_move_timeout_secs = 600;
+  uint32_t tapeLoadTimeoutSecs = 300;
+  dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.buffer_count = 10;
+  dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.retrieve.fetch_max_files = 1000;
+  dataTransferConf.archive.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.archive.fetch_max_files = 1000;
+  dataTransferConf.disk_io_threads = 1;
+  tapeLoadTimeoutSecs = 300;
+  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, scheduler);
+  DataTransferSession sess("tapeHost",
+                           logger,
+                           mockSys,
+                           driveInfo,
+                           mc,
+                           *tapeMount,
+                           tracker,
+                           dataTransferConf,
+                           tapeLoadTimeoutSecs,
+                           scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
@@ -3031,25 +3316,51 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create the data transfer session
-  DataTransferConfig dataTransferConf;
-  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  dataTransferConf.nbBufs = 10;
-  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
-  dataTransferConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestMigrationMaxFiles = 1000;
-  dataTransferConf.nbDiskThreads = 1;
-  dataTransferConf.tapeLoadTimeout = 300;
-  dataTransferConf.useEncryption = false;
-  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
+  TransfersConfig dataTransferConf;
+  dataTransferConf.buffer_count = 0;
+  dataTransferConf.buffer_size_bytes = 0;
+  dataTransferConf.disk_io_threads = 0;
+  dataTransferConf.archive.fetch_max_bytes = 0;
+  dataTransferConf.archive.fetch_max_files = 0;
+  dataTransferConf.archive.flush_max_bytes = 0;
+  dataTransferConf.archive.flush_max_files = 0;
+  dataTransferConf.archive.underfill.watch_period_secs = 0;
+  dataTransferConf.archive.underfill.minimum_samples = 0;
+  dataTransferConf.archive.underfill.start_threshold_percent = 0;
+  dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
+  dataTransferConf.retrieve.fetch_max_bytes = 0;
+  dataTransferConf.retrieve.fetch_max_files = 0;
+  dataTransferConf.retrieve.rao.enabled = false;
+  dataTransferConf.retrieve.rao.lto_algorithm.clear();
+  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.no_block_move_timeout_secs = 600;
+  uint32_t tapeLoadTimeoutSecs = 300;
+  dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.buffer_count = 10;
+  dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.retrieve.fetch_max_files = 1000;
+  dataTransferConf.archive.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.archive.fetch_max_files = 1000;
+  dataTransferConf.disk_io_threads = 1;
+  tapeLoadTimeoutSecs = 300;
+  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, scheduler);
+  DataTransferSession sess("tapeHost",
+                           logger,
+                           mockSys,
+                           driveInfo,
+                           mc,
+                           *tapeMount,
+                           tracker,
+                           dataTransferConf,
+                           tapeLoadTimeoutSecs,
+                           scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
@@ -3237,25 +3548,51 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create the data transfer session
-  DataTransferConfig dataTransferConf;
-  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  dataTransferConf.nbBufs = 10;
-  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
-  dataTransferConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestMigrationMaxFiles = 1000;
-  dataTransferConf.nbDiskThreads = 1;
-  dataTransferConf.tapeLoadTimeout = 300;
-  dataTransferConf.useEncryption = false;
-  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
+  TransfersConfig dataTransferConf;
+  dataTransferConf.buffer_count = 0;
+  dataTransferConf.buffer_size_bytes = 0;
+  dataTransferConf.disk_io_threads = 0;
+  dataTransferConf.archive.fetch_max_bytes = 0;
+  dataTransferConf.archive.fetch_max_files = 0;
+  dataTransferConf.archive.flush_max_bytes = 0;
+  dataTransferConf.archive.flush_max_files = 0;
+  dataTransferConf.archive.underfill.watch_period_secs = 0;
+  dataTransferConf.archive.underfill.minimum_samples = 0;
+  dataTransferConf.archive.underfill.start_threshold_percent = 0;
+  dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
+  dataTransferConf.retrieve.fetch_max_bytes = 0;
+  dataTransferConf.retrieve.fetch_max_files = 0;
+  dataTransferConf.retrieve.rao.enabled = false;
+  dataTransferConf.retrieve.rao.lto_algorithm.clear();
+  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.no_block_move_timeout_secs = 600;
+  uint32_t tapeLoadTimeoutSecs = 300;
+  dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.buffer_count = 10;
+  dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.retrieve.fetch_max_files = 1000;
+  dataTransferConf.archive.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.archive.fetch_max_files = 1000;
+  dataTransferConf.disk_io_threads = 1;
+  tapeLoadTimeoutSecs = 300;
+  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, scheduler);
+  DataTransferSession sess("tapeHost",
+                           logger,
+                           mockSys,
+                           driveInfo,
+                           mc,
+                           *tapeMount,
+                           tracker,
+                           dataTransferConf,
+                           tapeLoadTimeoutSecs,
+                           scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
@@ -3440,27 +3777,53 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create the data transfer session
-  DataTransferConfig dataTransferConf;
-  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  dataTransferConf.nbBufs = 10;
-  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
-  dataTransferConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestMigrationMaxFiles = 1000;
-  dataTransferConf.nbDiskThreads = 1;
-  dataTransferConf.maxBytesBeforeFlush = 9999999;
-  dataTransferConf.maxFilesBeforeFlush = 9999999;
-  dataTransferConf.tapeLoadTimeout = 300;
-  dataTransferConf.useEncryption = false;
-  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
+  TransfersConfig dataTransferConf;
+  dataTransferConf.buffer_count = 0;
+  dataTransferConf.buffer_size_bytes = 0;
+  dataTransferConf.disk_io_threads = 0;
+  dataTransferConf.archive.fetch_max_bytes = 0;
+  dataTransferConf.archive.fetch_max_files = 0;
+  dataTransferConf.archive.flush_max_bytes = 0;
+  dataTransferConf.archive.flush_max_files = 0;
+  dataTransferConf.archive.underfill.watch_period_secs = 0;
+  dataTransferConf.archive.underfill.minimum_samples = 0;
+  dataTransferConf.archive.underfill.start_threshold_percent = 0;
+  dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
+  dataTransferConf.retrieve.fetch_max_bytes = 0;
+  dataTransferConf.retrieve.fetch_max_files = 0;
+  dataTransferConf.retrieve.rao.enabled = false;
+  dataTransferConf.retrieve.rao.lto_algorithm.clear();
+  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.no_block_move_timeout_secs = 600;
+  uint32_t tapeLoadTimeoutSecs = 300;
+  dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.buffer_count = 10;
+  dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.retrieve.fetch_max_files = 1000;
+  dataTransferConf.archive.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.archive.fetch_max_files = 1000;
+  dataTransferConf.disk_io_threads = 1;
+  dataTransferConf.archive.flush_max_bytes = 9999999;
+  dataTransferConf.archive.flush_max_files = 9999999;
+  tapeLoadTimeoutSecs = 300;
+  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, scheduler);
+  DataTransferSession sess("tapeHost",
+                           logger,
+                           mockSys,
+                           driveInfo,
+                           mc,
+                           *tapeMount,
+                           tracker,
+                           dataTransferConf,
+                           tapeLoadTimeoutSecs,
+                           scheduler);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";
@@ -3644,25 +4007,51 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create the data transfer session
-  DataTransferConfig dataTransferConf;
-  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  dataTransferConf.nbBufs = 10;
-  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
-  dataTransferConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestMigrationMaxFiles = 1000;
-  dataTransferConf.nbDiskThreads = 1;
-  dataTransferConf.tapeLoadTimeout = 300;
-  dataTransferConf.useEncryption = false;
-  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
+  TransfersConfig dataTransferConf;
+  dataTransferConf.buffer_count = 0;
+  dataTransferConf.buffer_size_bytes = 0;
+  dataTransferConf.disk_io_threads = 0;
+  dataTransferConf.archive.fetch_max_bytes = 0;
+  dataTransferConf.archive.fetch_max_files = 0;
+  dataTransferConf.archive.flush_max_bytes = 0;
+  dataTransferConf.archive.flush_max_files = 0;
+  dataTransferConf.archive.underfill.watch_period_secs = 0;
+  dataTransferConf.archive.underfill.minimum_samples = 0;
+  dataTransferConf.archive.underfill.start_threshold_percent = 0;
+  dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
+  dataTransferConf.retrieve.fetch_max_bytes = 0;
+  dataTransferConf.retrieve.fetch_max_files = 0;
+  dataTransferConf.retrieve.rao.enabled = false;
+  dataTransferConf.retrieve.rao.lto_algorithm.clear();
+  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.no_block_move_timeout_secs = 600;
+  uint32_t tapeLoadTimeoutSecs = 300;
+  dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.buffer_count = 10;
+  dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.retrieve.fetch_max_files = 1000;
+  dataTransferConf.archive.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.archive.fetch_max_files = 1000;
+  dataTransferConf.disk_io_threads = 1;
+  tapeLoadTimeoutSecs = 300;
+  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, scheduler);
+  DataTransferSession sess("tapeHost",
+                           logger,
+                           mockSys,
+                           driveInfo,
+                           mc,
+                           *tapeMount,
+                           tracker,
+                           dataTransferConf,
+                           tapeLoadTimeoutSecs,
+                           scheduler);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";
@@ -3868,25 +4257,51 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create the data transfer session
-  DataTransferConfig dataTransferConf;
-  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  dataTransferConf.nbBufs = 10;
-  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
-  dataTransferConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  dataTransferConf.bulkRequestMigrationMaxFiles = 1000;
-  dataTransferConf.nbDiskThreads = 1;
-  dataTransferConf.tapeLoadTimeout = 300;
-  dataTransferConf.useEncryption = false;
-  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
+  TransfersConfig dataTransferConf;
+  dataTransferConf.buffer_count = 0;
+  dataTransferConf.buffer_size_bytes = 0;
+  dataTransferConf.disk_io_threads = 0;
+  dataTransferConf.archive.fetch_max_bytes = 0;
+  dataTransferConf.archive.fetch_max_files = 0;
+  dataTransferConf.archive.flush_max_bytes = 0;
+  dataTransferConf.archive.flush_max_files = 0;
+  dataTransferConf.archive.underfill.watch_period_secs = 0;
+  dataTransferConf.archive.underfill.minimum_samples = 0;
+  dataTransferConf.archive.underfill.start_threshold_percent = 0;
+  dataTransferConf.archive.underfill.recovery_threshold_percent = 0;
+  dataTransferConf.retrieve.fetch_max_bytes = 0;
+  dataTransferConf.retrieve.fetch_max_files = 0;
+  dataTransferConf.retrieve.rao.enabled = false;
+  dataTransferConf.retrieve.rao.lto_algorithm.clear();
+  dataTransferConf.encryption.external_key_script.clear();
+  dataTransferConf.no_block_move_timeout_secs = 600;
+  uint32_t tapeLoadTimeoutSecs = 300;
+  dataTransferConf.buffer_size_bytes = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.buffer_count = 10;
+  dataTransferConf.retrieve.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.retrieve.fetch_max_files = 1000;
+  dataTransferConf.archive.fetch_max_bytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.archive.fetch_max_files = 1000;
+  dataTransferConf.disk_io_threads = 1;
+  tapeLoadTimeoutSecs = 300;
+  dataTransferConf.encryption.enabled = false;
+  dataTransferConf.no_block_move_timeout_secs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  DataTransferSession
-    sess("tapeHost", logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, scheduler);
+  DataTransferSession sess("tapeHost",
+                           logger,
+                           mockSys,
+                           driveInfo,
+                           mc,
+                           *tapeMount,
+                           tracker,
+                           dataTransferConf,
+                           tapeLoadTimeoutSecs,
+                           scheduler);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";

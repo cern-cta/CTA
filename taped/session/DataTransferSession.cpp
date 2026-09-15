@@ -36,6 +36,12 @@
 #include <string>
 #include <utility>
 
+namespace {
+constexpr bool c_useLbp = true;
+constexpr uint16_t c_xrootTimeout = 0;
+constexpr const char* c_raoLtoAlgorithmOptions = "cost_heuristic_name:cta";
+}  // namespace
+
 //------------------------------------------------------------------------------
 //Constructor
 //------------------------------------------------------------------------------
@@ -46,12 +52,14 @@ cta::tape::daemon::DataTransferSession::DataTransferSession([[maybe_unused]] con
                                                             cta::mediachanger::MediaChangerFacade& mc,
                                                             cta::TapeMount& tapeMount,
                                                             cta::tape::daemon::TapeSessionTracker& tapeSessionTracker,
-                                                            const DataTransferConfig& dataTransferConfig,
+                                                            const TransfersConfig& transfersConfig,
+                                                            uint32_t tapeLoadTimeoutSecs,
                                                             cta::Scheduler& scheduler)
     : m_log(log),
       m_tapeMount(tapeMount),
       m_sysWrapper(sysWrapper),
-      m_dataTransferConfig(dataTransferConfig),
+      m_transfersConfig(transfersConfig),
+      m_tapeLoadTimeoutSecs(tapeLoadTimeoutSecs),
       m_driveInfo(driveInfo),
       m_mediaChanger(mc),
       m_tapeSessionTracker(tapeSessionTracker),
@@ -121,14 +129,14 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
   TapeSessionReporter reporter(m_tapeSessionTracker,
                                logContext,
                                std::chrono::seconds(15),
-                               std::chrono::seconds(m_dataTransferConfig.wdNoBlockMoveMaxSecs));
+                               std::chrono::seconds(m_transfersConfig.no_block_move_timeout_secs));
   reporter.startThreads();
   // We are ready to start the session. We need to create the whole machinery
   // in order to get the task injector ready to check if we actually have a
   // file to recall.
   // findDrive does not throw exceptions (it catches them to log errors)
   // A nullptr is returned on failure
-  retrieveMount->setExternalFreeDiskSpaceScript(m_dataTransferConfig.externalFreeDiskSpaceScript);
+  retrieveMount->setExternalFreeDiskSpaceScript(m_transfersConfig.retrieve.external_free_disk_space_script);
   std::unique_ptr<cta::tape::drive::DriveInterface> drive(findDrive(logContext, retrieveMount));
 
   if (!drive) {
@@ -145,32 +153,32 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
     // to refer them to each other)
     RecallReportPacker reportPacker(retrieveMount, logContext);
     reportPacker.disableBulk();  //no bulk needed anymore
-    RecallMemoryManager memoryManager(m_dataTransferConfig.nbBufs, m_dataTransferConfig.bufsz, logContext);
+    RecallMemoryManager memoryManager(m_transfersConfig.buffer_count, m_transfersConfig.buffer_size_bytes, logContext);
 
     TapeReadSingleThread readSingleThread(*drive,
                                           m_mediaChanger,
                                           m_tapeSessionTracker,
                                           m_volInfo,
-                                          m_dataTransferConfig.bulkRequestRecallMaxFiles,
+                                          m_transfersConfig.retrieve.fetch_max_files,
                                           logContext,
                                           reportPacker,
-                                          m_dataTransferConfig.useLbp,
-                                          m_dataTransferConfig.useRAO,
-                                          m_dataTransferConfig.useEncryption,
-                                          m_dataTransferConfig.externalEncryptionKeyScript,
-                                          m_dataTransferConfig.tapeLoadTimeout,
+                                          c_useLbp,
+                                          m_transfersConfig.retrieve.rao.enabled,
+                                          m_transfersConfig.encryption.enabled,
+                                          m_transfersConfig.encryption.external_key_script,
+                                          m_tapeLoadTimeoutSecs,
                                           m_scheduler.getCatalogue());
 
-    DiskWriteThreadPool threadPool(m_dataTransferConfig.nbDiskThreads,
+    DiskWriteThreadPool threadPool(m_transfersConfig.disk_io_threads,
                                    reportPacker,
                                    m_tapeSessionTracker,
                                    logContext,
-                                   m_dataTransferConfig.xrootTimeout);
+                                   c_xrootTimeout);
     RecallTaskInjector taskInjector(memoryManager,
                                     readSingleThread,
                                     threadPool,
-                                    m_dataTransferConfig.bulkRequestRecallMaxFiles,
-                                    m_dataTransferConfig.bulkRequestRecallMaxBytes,
+                                    m_transfersConfig.retrieve.fetch_max_files,
+                                    m_transfersConfig.retrieve.fetch_max_bytes,
                                     m_tapeSessionTracker,
                                     logContext);
     // Workaround for bug CASTOR-4829: tapegateway: should request positioning by blockid for recalls instead of fseq
@@ -185,7 +193,7 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
     cta::utils::Timer timer;
 
     // The RecallTaskInjector and the TapeReadSingleThread share the promise
-    if (m_dataTransferConfig.useRAO) {
+    if (m_transfersConfig.retrieve.rao.enabled) {
       using LabelFormat = cta::common::dataStructures::Label::Format;
       if (m_volInfo.labelFormat == LabelFormat::Enstore || m_volInfo.labelFormat == LabelFormat::EnstoreLarge) {
         LabelFormat format = static_cast<LabelFormat>(m_volInfo.labelFormat);
@@ -197,9 +205,9 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
         logContext.log(cta::log::INFO,
                        "DataTransferSession::executeRead Tape LabelFormat incompatible with RAO. Setting RAO false.");
       } else {
-        cta::tape::rao::RAOParams raoDataConfig(m_dataTransferConfig.useRAO,
-                                                m_dataTransferConfig.raoLtoAlgorithm,
-                                                m_dataTransferConfig.raoLtoAlgorithmOptions,
+        cta::tape::rao::RAOParams raoDataConfig(m_transfersConfig.retrieve.rao.enabled,
+                                                m_transfersConfig.retrieve.rao.lto_algorithm,
+                                                c_raoLtoAlgorithmOptions,
                                                 m_volInfo.vid);
         taskInjector.initRAO(raoDataConfig, &m_scheduler.getCatalogue());
       }
@@ -298,7 +306,7 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
   TapeSessionReporter reporter(m_tapeSessionTracker,
                                logContext,
                                std::chrono::seconds(15),
-                               std::chrono::seconds(m_dataTransferConfig.wdNoBlockMoveMaxSecs));
+                               std::chrono::seconds(m_transfersConfig.no_block_move_timeout_secs));
   reporter.startThreads();
   // We are ready to start the session. We need to create the whole machinery
   // in order to get the task injector ready to check if we actually have a
@@ -316,7 +324,9 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
   {
     //dereferencing configLine is safe, because if configLine were not valid,
     //then findDrive would have return nullptr and we would have not end up there
-    MigrationMemoryManager memoryManager(m_dataTransferConfig.nbBufs, m_dataTransferConfig.bufsz, logContext);
+    MigrationMemoryManager memoryManager(m_transfersConfig.buffer_count,
+                                         m_transfersConfig.buffer_size_bytes,
+                                         logContext);
     MigrationReportPacker reportPacker(archiveMount, logContext);
     TapeWriteSingleThread writeSingleThread(*drive,
                                             m_mediaChanger,
@@ -324,27 +334,33 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
                                             m_volInfo,
                                             logContext,
                                             reportPacker,
-                                            m_dataTransferConfig.maxFilesBeforeFlush,
-                                            m_dataTransferConfig.maxBytesBeforeFlush,
-                                            m_dataTransferConfig.useLbp,
-                                            m_dataTransferConfig.useEncryption,
-                                            m_dataTransferConfig.externalEncryptionKeyScript,
-                                            m_dataTransferConfig.tapeLoadTimeout,
+                                            m_transfersConfig.archive.flush_max_files,
+                                            m_transfersConfig.archive.flush_max_bytes,
+                                            c_useLbp,
+                                            m_transfersConfig.encryption.enabled,
+                                            m_transfersConfig.encryption.external_key_script,
+                                            m_tapeLoadTimeoutSecs,
                                             m_scheduler.getCatalogue());
 
-    DiskReadThreadPool threadPool(m_dataTransferConfig.nbDiskThreads,
-                                  m_dataTransferConfig.bulkRequestMigrationMaxFiles,
-                                  m_dataTransferConfig.bulkRequestMigrationMaxBytes,
+    DiskReadThreadPool threadPool(m_transfersConfig.disk_io_threads,
+                                  m_transfersConfig.archive.fetch_max_files,
+                                  m_transfersConfig.archive.fetch_max_bytes,
                                   m_tapeSessionTracker,
                                   logContext,
-                                  m_dataTransferConfig.xrootTimeout);
+                                  c_xrootTimeout);
 
+    const auto& underfill = m_transfersConfig.archive.underfill;
+    const cta::common::dataStructures::ArchiveDismountPolicy archiveDismountPolicy(
+      underfill.watch_period_secs,
+      underfill.minimum_samples,
+      underfill.start_threshold_percent,
+      underfill.recovery_threshold_percent);
     MigrationTaskInjector taskInjector(memoryManager,
                                        threadPool,
                                        writeSingleThread,
-                                       m_dataTransferConfig.bulkRequestMigrationMaxFiles,
-                                       m_dataTransferConfig.bulkRequestMigrationMaxBytes,
-                                       m_dataTransferConfig.archiveDismountPolicy,
+                                       m_transfersConfig.archive.fetch_max_files,
+                                       m_transfersConfig.archive.fetch_max_bytes,
+                                       archiveDismountPolicy,
                                        logContext);
     threadPool.setTaskInjector(&taskInjector);
     writeSingleThread.setTaskInjector(&taskInjector);
