@@ -1,23 +1,33 @@
 // SPDX-FileCopyrightText: 2026 CERN
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+//! Command line interface of `cta-restore-files`.
+//!
+//! [`Cli`] holds the global options (connection, credentials and the filters
+//! that select the recycle-bin entries to act on) and the [`Command`] to run.
+
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 use url::Url;
 
+/// The subcommand to execute.
 #[derive(Subcommand)]
 pub(crate) enum Command {
+    /// List the deleted tape files matching the selection options.
     List {
         /// Show results as JSON
         #[arg(long, default_value_t = false)]
         json: bool,
     },
+    /// Restore the deleted tape files matching the selection options
     Restore,
 }
 
+/// Parsed command line arguments.
 #[derive(Parser)]
 pub(crate) struct Cli {
+    /// The operation to perform.
     #[command(subcommand)]
     pub(crate) command: Command,
 
@@ -41,7 +51,7 @@ pub(crate) struct Cli {
     #[arg(long, default_value = "namespace.keytab")]
     pub(crate) namespace_keytab_file: PathBuf,
 
-    /// Archive file ID of the files to recover (comma-separated list)
+    /// Archive file ID of the file to recover
     #[arg(long)]
     pub(crate) archive_file_id: Option<u64>,
 
