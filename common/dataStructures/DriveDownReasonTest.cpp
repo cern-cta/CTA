@@ -13,6 +13,9 @@ TEST(DriveDownReasonTest, FormatsSeverityAndDetails) {
   EXPECT_EQ(log::INFO, driveDownReasonSeverity(DriveDownReason::Startup));
   EXPECT_EQ(log::INFO, driveDownReasonSeverity(DriveDownReason::Shutdown));
   EXPECT_EQ(log::ERR, driveDownReasonSeverity(DriveDownReason::DriveOpenFailed));
+  EXPECT_EQ(log::ERR, driveDownReasonSeverity(DriveDownReason::DriveProbeFailed));
+  EXPECT_EQ("[cta-taped] ERROR Drive probe failed: device unavailable",
+            formatDriveDownReason(DriveDownReason::DriveProbeFailed, "device unavailable"));
   EXPECT_EQ("[cta-taped] INFO Startup", formatDriveDownReason(DriveDownReason::Startup));
   EXPECT_EQ("[cta-taped] ERROR Drive open failed: permission denied",
             formatDriveDownReason(DriveDownReason::DriveOpenFailed, "permission denied"));

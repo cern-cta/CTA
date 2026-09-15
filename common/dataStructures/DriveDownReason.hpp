@@ -13,6 +13,7 @@ enum class DriveDownReason {
   Startup,
   Shutdown,
   TapeDetected,
+  DriveProbeFailed,
   TransferSessionFailed,
   DriveNotFound,
   DriveDiscoveryFailed,

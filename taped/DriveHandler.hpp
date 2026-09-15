@@ -49,6 +49,8 @@ private:
   bool registerDrive(bool putUpIfPossible);
   // Wait for the configured logical library to exist before scheduling at startup.
   void waitForLogicalLibrary();
+  // Read desired state, registering a missing drive as down. Operational failures propagate.
+  common::dataStructures::DesiredDriveState getDesiredDriveState();
   // Re-register a missing drive as down while polling for the operator's desired state.
   void waitForDriveToBeUp();
   // Attempt both publications and propagate the first failure after logging each failed operation.

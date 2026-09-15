@@ -115,25 +115,25 @@ void DriveHandler::waitForLogicalLibrary() {
   }
 }
 
+common::dataStructures::DesiredDriveState DriveHandler::getDesiredDriveState() {
+  try {
+    return m_scheduler->getDesiredDriveState(m_driveInfo.driveName, m_lc);
+  } catch (const Scheduler::NoSuchDrive&) {
+    m_lc.log(log::WARNING, "Drive is missing from the catalogue. Attempting to register it as down.");
+    if (!registerDrive(false)) {
+      throw exception::Exception("In DriveHandler::getDesiredDriveState(): failed to register the missing drive");
+    }
+    m_lc.log(log::INFO, "Missing drive registered as down. Waiting for an operator up request.");
+    // Registration requested down; read the operator's state again on the next polling iteration.
+    return {};
+  }
+}
+
 void DriveHandler::waitForDriveToBeUp() {
   m_lc.log(log::INFO, "Waiting for the desired drive state to become up.");
   // TODO: graceful shutdown (separate MR)
   while (true) {
-    common::dataStructures::DesiredDriveState desiredState;
-    try {
-      desiredState = m_scheduler->getDesiredDriveState(m_driveInfo.driveName, m_lc);
-    } catch (const Scheduler::NoSuchDrive&) {
-      m_lc.log(log::WARNING, "Drive is missing from the catalogue. Attempting to register it as down.");
-      if (!registerDrive(false)) {
-        m_lc.log(log::CRIT, "Failed to register the missing drive. Cannot continue waiting for it to become up.");
-        throw exception::Exception("In DriveHandler::waitForDriveToBeUp(): failed to register the missing drive");
-      }
-      m_lc.log(log::INFO, "Missing drive registered as down. Waiting for the desired drive state to become up.");
-      // Re-read the desired state on the next iteration after registration.
-      // TODO: Ensure graceful shutdown can interrupt this sleep
-      sleep(m_config.mounts.drive_state_poll_interval_secs);
-      continue;
-    }
+    const auto desiredState = getDesiredDriveState();
 
     if (desiredState.up) {
       m_lc.log(log::INFO, "Desired drive state is up. Proceeding with drive probing.");
@@ -259,11 +259,6 @@ bool DriveHandler::registerDrive(bool putUpIfPossible) {
 }
 
 bool DriveHandler::executeDataTransferSession(TapeMount& tapeMount) {
-  if (m_tapeSessionTracker.mount() != &tapeMount) {
-    throw exception::Exception(
-      "In DriveHandler::executeDataTransferSession(): tracker does not reference the supplied tape mount");
-  }
-
   DataTransferSession dataTransferSession(
     m_lc.logger(),
     m_sysWrapper,
@@ -307,9 +302,8 @@ bool DriveHandler::isReady() const {
 
 bool DriveHandler::prepareDriveForScheduling() {
   // Honour the operator's desired state before scheduling another mount.
-  // TODO: recover a missing drive here too; this lookup can fail before waitForDriveToBeUp().
   // TODO: handle desired-state lookup and status-publication failures at this phase boundary.
-  if (!m_scheduler->getDesiredDriveState(m_driveInfo.driveName, m_lc).up) {
+  if (!getDesiredDriveState().up) {
     // Wait for an up request; the helper re-registers a missing drive as down.
     waitForDriveToBeUp();
   }
@@ -330,12 +324,12 @@ bool DriveHandler::prepareDriveForScheduling() {
   }
 
   // A non-empty or failed probe prevents scheduling and requires another operator up request.
-  // TODO: handle probe exceptions without allowing transfers on an unverified drive.
   if (!emptyDriveProbe.driveIsEmpty()) {
-    // TODO: distinguish a detected tape from a failed probe when reporting the drive-down reason.
     m_lc.log(log::WARNING, "Drive probe did not confirm an empty drive. Requesting the drive down.");
-    putDriveDown(common::dataStructures::DriveDownReason::TapeDetected,
-                 emptyDriveProbe.getProbeErrorMsg().value_or(""));
+    const auto probeError = emptyDriveProbe.getProbeErrorMsg();
+    putDriveDown(probeError ? common::dataStructures::DriveDownReason::DriveProbeFailed :
+                              common::dataStructures::DriveDownReason::TapeDetected,
+                 probeError.value_or(""));
     return false;
   }
   m_lc.log(log::DEBUG, "No tape detected in the drive. Proceeding with scheduling.");
@@ -446,6 +440,10 @@ int DriveHandler::run() {
 
     m_tapeSessionTracker.setMount(tapeMount.get());
 
+    if (m_tapeSessionTracker.mount() != tapeMount.get()) {
+      throw exception::Exception("In DriveHandler::run(): tracker does not reference the supplied tape mount");
+    }
+
     // The session result describes hardware usability, not whether every file transferred successfully.
     // TODO: ensure DataTransferSession stops and joins workers/reporters before exceptions escape.
     // TODO: expose the hardware cleanup outcome when a transfer exits exceptionally.
@@ -456,7 +454,9 @@ int DriveHandler::run() {
       // Database recovery remains separate from software/job failure handling.
       throw;
     } catch (const std::exception& ex) {
-      logDriveFailure(m_lc, "Data transfer session threw an exception. Returning to scheduling.", ex);
+      logDriveFailure(m_lc, "Data transfer session threw an exception. Waiting before retrying scheduling.", ex);
+      // TODO: make retry waiting interruptible by graceful shutdown.
+      sleep(m_config.mounts.idle_scheduling_interval_secs);
       // The next preparation probes for retained media before scheduling another mount.
       continue;
     }

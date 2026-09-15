@@ -24,6 +24,8 @@ ReasonDescription describe(DriveDownReason reason) {
       return {log::INFO, "Shutdown"};
     case DriveDownReason::TapeDetected:
       return {log::ERR, "Tape detected in drive"};
+    case DriveDownReason::DriveProbeFailed:
+      return {log::ERR, "Drive probe failed"};
     case DriveDownReason::TransferSessionFailed:
       return {log::ERR, "Data transfer session failed"};
     case DriveDownReason::DriveNotFound:

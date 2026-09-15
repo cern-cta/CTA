@@ -60,7 +60,7 @@ bool cta::tape::daemon::EmptyDriveProbe::exceptionThrowingDriveIsEmpty() {
     m_log(cta::log::INFO, "Probe found tape drive with a tape inside", params);
     return false;
   } else {
-    m_log(cta::log::INFO, "Probe found tape drive is empty", params);
+    m_log(cta::log::DEBUG, "Probe found tape drive is empty", params);
     return true;
   }
 }
