@@ -50,7 +50,7 @@ generate_signed_cert() {
   echo "Generating cert/key pair '$file_prefix' for '$host'"
 
   openssl genrsa -passout pass:1234 -des3 -out $key 4096
-  openssl rsa -passin pass:1234 -in jwt-private.pem -pubout -out $pub
+  openssl rsa -passin pass:1234 -in $key -pubout -out $pub
   openssl req -passin pass:1234 -new -key $key -out $csr \
     -subj "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Server/CN=$host" \
     -addext "subjectAltName=$subject_alt_names"
@@ -73,9 +73,8 @@ chmod 0644 $SECRETS_DIR/server-wfe.key.pem
 # (`cta-admin` / `cta-wfe`) are used to distinguish the frontends.
 python3 /scripts/generate_jwt.py \
   --output-dir "$SECRETS_DIR" \
-  --public-key "$SECRETS_DIR/server-admin.pub.pem" \
-  --private-key "$SECRETS_DIR/server-admin.key.pem" \
-  --password pass:1234 \
+  --pub "$SECRETS_DIR/server-admin.pub.pem" \
+  --key "$SECRETS_DIR/server-admin.key.pem" \
   --jwks jwks.json \
   --issuer cta \
   --audience cta-admin \
@@ -84,9 +83,8 @@ python3 /scripts/generate_jwt.py \
 
 python3 /scripts/generate_jwt.py \
   --output-dir "$SECRETS_DIR" \
-  --public-key "$SECRETS_DIR/server-admin.pub.pem" \
-  --private-key "$SECRETS_DIR/server-admin.key.pem" \
-  --password pass:1234 \
+  --pub "$SECRETS_DIR/server-admin.pub.pem" \
+  --key "$SECRETS_DIR/server-admin.key.pem" \
   --issuer cta \
   --audience cta-wfe \
   --sub ctaeos \
