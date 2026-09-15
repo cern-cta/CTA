@@ -41,6 +41,7 @@ std::map<std::string, std::string> TapedApp::getStaticTelemetryAttributes(const 
 
 int TapedApp::run(const TapedConfig& config, cta::log::Logger& log) {
   log::LogContext lc(log);
+  // TODO: we should still set a recognisable process name
 
   // Linux may mark the process non-dumpable when messing with capabilities in certain cases. To be safe, we explicitly enable it.
   // See https://man7.org/linux/man-pages/man2/pr_set_dumpable.2const.html

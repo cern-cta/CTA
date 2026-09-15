@@ -21,6 +21,7 @@ TEST(DriveDownReasonTest, FormatsSeverityAndDetails) {
             formatDriveDownReason(DriveDownReason::DriveOpenFailed, "permission denied"));
 }
 
+// TODO: no reason to preserve legacy behaviour here
 TEST(DriveDownReasonTest, RecognizesCurrentAndLegacyShutdownReasons) {
   EXPECT_TRUE(isCleanDriveShutdownReason(formatDriveDownReason(DriveDownReason::Shutdown)));
   for (const auto* reason : {"[cta-taped] Exiting cta-taped",

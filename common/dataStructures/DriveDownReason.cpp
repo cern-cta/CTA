@@ -11,6 +11,7 @@
 
 namespace cta::common::dataStructures {
 namespace {
+// TODO: simplify?
 struct ReasonDescription {
   int severity;
   std::string_view message;

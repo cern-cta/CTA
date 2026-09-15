@@ -81,7 +81,9 @@ public:
    * fetch more work by the read thread pool when the task queue of the thread
    * pool starts to run low.
    */
-  void setTaskInjector(MigrationTaskInjector* injector) { m_injector = injector; }
+  void setTaskInjector(MigrationTaskInjector* injector) {
+    m_injector = injector;
+  }  // TODO: can we do this through the constructor?
 
 private:
   /**

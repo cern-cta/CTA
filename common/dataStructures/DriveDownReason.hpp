@@ -9,6 +9,7 @@
 
 namespace cta::common::dataStructures {
 
+// TODO: add some comments on what each of these mean
 enum class DriveDownReason {
   Startup,
   Shutdown,
