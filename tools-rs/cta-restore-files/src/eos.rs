@@ -14,7 +14,7 @@ use std::path::PathBuf;
 
 use cta_lib::eos::{DEFAULT_FILE_MODE, EosGrpcClient, Error, system_time_now};
 
-use cta_protobuf::cta::admin::RecycleTapeFileLsItem;
+use cta_protobuf::cta::{admin::RecycleTapeFileLsItem, common::checksum_blob::checksum::Type};
 use eos_protobuf::eos::rpc::{Checksum, FileMdProto, Time};
 
 /// Layout id assigned to restored files: Adler32 checksum, a single replica,
@@ -28,31 +28,44 @@ const DEFAULT_FILE_LAYOUT: u32 = 0x2 /* Adler */ |
 /// Decodes a hexadecimal string into its bytes, most significant byte first.
 ///
 /// An optional `0x`/`0X` prefix is accepted and an odd number of digits is
-/// left-padded with a zero, so `"0x1a2"` decodes to `[0x01, 0xa2]`. This is
-/// needed because CTA stores checksums as hex strings while EOS expects raw
-/// bytes.
+/// treated as if it were left-padded with a zero, so `"0x1a2"` decodes to
+/// `[0x01, 0xa2]`. An empty string (or a bare prefix) decodes to an empty
+/// vector.
 ///
 /// # Errors
 ///
-/// Returns a [`ParseIntError`] if the input contains non-hexadecimal
-/// characters.
+/// Returns a [`ParseIntError`] if the input contains anything other than
+/// hexadecimal digits, including non-ASCII characters.
 pub fn hex_to_byte_array(hex_string: &str) -> Result<Vec<u8>, ParseIntError> {
-    let mut hex_string = hex_string.to_string();
+    let digits = hex_string
+        .strip_prefix("0x")
+        .or_else(|| hex_string.strip_prefix("0X"))
+        .unwrap_or(hex_string);
 
-    if hex_string.starts_with("0x") || hex_string.starts_with("0X") {
-        hex_string.drain(0..2);
+    // Reject anything that is not an ASCII hex digit up front
+    if let Some(invalid) = digits.chars().find(|c| !c.is_ascii_hexdigit()) {
+        let mut buffer = [0u8; 4];
+        return Err(u8::from_str_radix(invalid.encode_utf8(&mut buffer), 16)
+            .expect_err("a non-hexadecimal character must fail to parse"));
     }
 
-    if hex_string.len() % 2 == 1 {
-        hex_string.insert(0, '0');
+    // From here on every character is one ASCII byte, so byte offsets and
+    // character offsets coincide.
+    let mut bytes = Vec::with_capacity(digits.len().div_ceil(2));
+    let mut offset = 0;
+
+    // An odd number of digits means the leading nibble stands alone.
+    if digits.len() % 2 == 1 {
+        bytes.push(u8::from_str_radix(&digits[..1], 16)?);
+        offset = 1;
     }
 
-    hex_string
-        .into_bytes()
-        .into_iter()
-        .array_chunks::<2>()
-        .map(|v| u8::from_str_radix(std::str::from_utf8(&v).unwrap(), 16))
-        .collect()
+    while offset < digits.len() {
+        bytes.push(u8::from_str_radix(&digits[offset..offset + 2], 16)?);
+        offset += 2;
+    }
+
+    Ok(bytes)
 }
 
 /// Restore a file which has been deleted, within the EOS namespace.
@@ -82,12 +95,27 @@ pub async fn restore_deleted_file(
     // they're not ok.
 
     // we assume there is a single checksum which is Adler32
-    (file.checksum.len() == 1).ok_or(anyhow!("File should have one and only one checksum!"))?;
-
-    let cs = file.checksum.first().unwrap();
-    (cs.r#type().as_str_name() == "ADLER32").ok_or(Error::UnexpectedReturnValue(
-        "Only ADLER32 checksums are supported".into(),
-    ))?;
+    let cs = match file.checksum.as_slice() {
+        [checksum] => checksum,
+        [] => return Err(anyhow!("File '{}' has no checksums", file.disk_file_path)),
+        many => {
+            return Err(anyhow!(
+                "File '{}' has {} checksums, expected exactly one",
+                file.disk_file_path,
+                many.len()
+            ));
+        }
+    };
+    // Only ADLER32 checksums are supported
+    match cs.r#type() {
+        Type::Adler32 => { /* ok */ }
+        other => {
+            return Err(Error::UnexpectedReturnValue(format!(
+                "Unsupported checksum type: {other:?}"
+            ))
+            .into());
+        }
+    }
 
     let eos_ids = eos.get_current_ids().await?;
     println!("{eos_ids:?}");
@@ -194,4 +222,63 @@ pub async fn restore_deleted_file(
     log::info!("The new file ID is {}", new_id);
 
     Ok(new_id)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn decodes_plain_hex() {
+        assert_eq!(hex_to_byte_array("1a2b").unwrap(), [0x1a, 0x2b]);
+        assert_eq!(hex_to_byte_array("00").unwrap(), [0x00]);
+        assert_eq!(hex_to_byte_array("ff").unwrap(), [0xff]);
+    }
+
+    #[test]
+    fn accepts_both_prefix_spellings() {
+        assert_eq!(hex_to_byte_array("0x1a2b").unwrap(), [0x1a, 0x2b]);
+        assert_eq!(hex_to_byte_array("0X1a2b").unwrap(), [0x1a, 0x2b]);
+    }
+
+    #[test]
+    fn left_pads_an_odd_number_of_digits() {
+        assert_eq!(hex_to_byte_array("0x1a2").unwrap(), [0x01, 0xa2]);
+        assert_eq!(hex_to_byte_array("f").unwrap(), [0x0f]);
+        assert_eq!(hex_to_byte_array("abcde").unwrap(), [0x0a, 0xbc, 0xde]);
+    }
+
+    #[test]
+    fn is_case_insensitive() {
+        assert_eq!(
+            hex_to_byte_array("DEADBEEF").unwrap(),
+            hex_to_byte_array("deadbeef").unwrap()
+        );
+    }
+
+    #[test]
+    fn decodes_an_empty_input_to_no_bytes() {
+        assert!(hex_to_byte_array("").unwrap().is_empty());
+        assert!(hex_to_byte_array("0x").unwrap().is_empty());
+    }
+
+    #[test]
+    fn rejects_non_hexadecimal_digits() {
+        assert!(hex_to_byte_array("12zz").is_err());
+        assert!(hex_to_byte_array("hello").is_err());
+        assert!(hex_to_byte_array("12 34").is_err());
+    }
+
+    /// Multi-byte characters used to be chunked on byte boundaries, which fed
+    /// invalid UTF-8 into `str::from_utf8().unwrap()` and panicked instead of
+    /// returning an error.
+    #[test]
+    fn rejects_multi_byte_characters_without_panicking() {
+        for input in ["€", "0x€", "ä", "12€34", "aä", "🦀"] {
+            assert!(
+                hex_to_byte_array(input).is_err(),
+                "{input:?} should be rejected"
+            );
+        }
+    }
 }
