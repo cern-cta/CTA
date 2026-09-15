@@ -174,6 +174,7 @@ TEST_P(OStoreDBTest, setJobBatchTransferredWithMissingArchiveRequests) {
   cta::log::LogContext lc(logger);
   auto& osdbi = getDb();
 
+  // Queue three archive requests to exercise consecutive failures
   for (uint64_t fileId = 1; fileId <= 3; ++fileId) {
     cta::common::dataStructures::ArchiveRequest request;
     request.fileSize = 123;
@@ -186,6 +187,7 @@ TEST_P(OStoreDBTest, setJobBatchTransferredWithMissingArchiveRequests) {
   }
   osdbi.waitSubthreadsComplete();
 
+  // Save the request addresses before acquiring the jobs empties the queue
   std::list<std::string> requestAddresses;
   {
     cta::objectstore::RootEntry root(osdbi.getBackend());
@@ -202,6 +204,7 @@ TEST_P(OStoreDBTest, setJobBatchTransferredWithMissingArchiveRequests) {
     }
   }
 
+  // Acquire the full batch through an archive mount
   auto mountInfo = osdbi.getMountInfo(lc);
   cta::catalogue::TapeForWriting tape;
   tape.capacityInBytes = 1;
@@ -215,13 +218,14 @@ TEST_P(OStoreDBTest, setJobBatchTransferredWithMissingArchiveRequests) {
   auto jobs = mount->getNextJobBatch(giveAll, giveAll, lc);
   ASSERT_EQ(3, jobs.size());
 
-  // Remove the requests after the jobs have been acquired, including the final job in the batch.
+  // Remove the requests after the jobs have been acquired, including the final job in the batch
   for (const auto& address : requestAddresses) {
     osdbi.getBackend().remove(address);
   }
   logger.clearLog();
   ASSERT_NO_THROW(mount->setJobBatchTransferred(jobs, lc));
   EXPECT_TRUE(jobs.empty());
+  // Each warning must identify the failed job, including the final one
   for (uint64_t fileId = 1; fileId <= 3; ++fileId) {
     EXPECT_NE(std::string::npos, logger.getLog().find("fileId=\"" + std::to_string(fileId) + "\""));
   }
