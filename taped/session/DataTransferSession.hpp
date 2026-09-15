@@ -8,6 +8,7 @@
 #include "Session.hpp"
 #include "TapeSessionTracker.hpp"  // TODO: I don't think tapesession is accurate here, but that's for later
 #include "TapeSingleThreadInterface.hpp"
+#include "common/dataStructures/DriveDownReason.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
@@ -33,8 +34,7 @@ public:
    *
    * @param log Object representing the API of the CTA logging system.
    */
-  DataTransferSession(const std::string& hostname,
-                      cta::log::Logger& log,
+  DataTransferSession(cta::log::Logger& log,
                       System::virtualWrapper& sysWrapper,
                       const cta::common::dataStructures::DriveInfo& driveInfo,
                       cta::mediachanger::MediaChangerFacade& mc,
@@ -100,7 +100,10 @@ private:
    * If mount is passed, it will be marked as complete.
    * Log the error with drive and mount details
    */
-  void putDriveDown(const std::string& headerErrMsg, cta::TapeMount* mount, cta::log::LogContext& logContext);
+  void putDriveDown(common::dataStructures::DriveDownReason reason,
+                    cta::TapeMount* mount,
+                    cta::log::LogContext& logContext,
+                    std::string_view detail = {});
 
   /** sub-part of execute for the read sessions */
   EndOfSessionAction executeRead(cta::log::LogContext& logContext, cta::RetrieveMount* retrieveMount);
@@ -116,8 +119,6 @@ private:
   cta::mediachanger::MediaChangerFacade& m_mediaChanger;
   /** For session tracking and reporting */
   cta::tape::daemon::TapeSessionTracker& m_tapeSessionTracker;
-  /** hostname, used to report status of the drive */
-  const std::string m_hostname;  // TODO: do we even need this?
   /**
    * The scheduler, i.e. the local interface to the Objectstore DB
    */

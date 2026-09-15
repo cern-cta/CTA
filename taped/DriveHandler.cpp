@@ -28,7 +28,6 @@ namespace cta::tape::daemon {
 DriveHandler::DriveHandler(const TapedConfig& config, log::Logger& log)
     : m_config(config),
       m_driveInfo(m_config.drive.name,
-                  utils::getShortHostname(),
                   m_config.drive.logical_library_name,
                   m_config.drive.device,
                   m_config.drive.control_path),
@@ -108,8 +107,11 @@ void DriveHandler::waitForDriveToBeUp() {
   }
 }
 
-void DriveHandler::putDriveDown(std::string_view errorMsg) {
-  m_lc.logEvent(log::ERR, errorMsg, semconv::log::EventNameValues::kPuttingTapeDriveDown);
+void DriveHandler::putDriveDown(common::dataStructures::DriveDownReason reason, std::string_view detail) {
+  const auto errorMsg = common::dataStructures::formatDriveDownReason(reason, detail);
+  m_lc.logEvent(common::dataStructures::driveDownReasonSeverity(reason),
+                errorMsg,
+                semconv::log::EventNameValues::kPuttingTapeDriveDown);
   m_scheduler->reportDriveStatus(m_driveInfo,
                                  common::dataStructures::MountType::NoMount,
                                  common::dataStructures::DriveStatus::Down,
@@ -117,7 +119,7 @@ void DriveHandler::putDriveDown(std::string_view errorMsg) {
   common::dataStructures::DesiredDriveState driveState;
   driveState.up = false;
   driveState.forceDown = false;
-  driveState.setReasonFromLogMsg(log::ERR, errorMsg);
+  driveState.reason = errorMsg;
   m_scheduler->setDesiredDriveState(m_config.drive.name, driveState, m_lc);
 }
 
@@ -148,14 +150,10 @@ bool DriveHandler::registerDrive(bool putUpIfPossible) {
 
   common::dataStructures::DesiredDriveState driveState;
   driveState.comment = currentDesiredDriveState.comment;
-  // TODO: make a central place for these down reasons and remove this fromLog stuff; it's ugly
-  const auto cleanExitReason =
-    common::dataStructures::DesiredDriveState::generateReasonFromLogMsg(log::ERR, "Exiting cta-taped");
-
   // Replace absent or clean-exit reasons with the startup reason. Preserve other reasons for being down.
-  if (!currentDesiredDriveState.reason || *currentDesiredDriveState.reason == cleanExitReason
-      || *currentDesiredDriveState.reason == "[cta-taped] Exiting cta-taped") {
-    driveState.reason = "[cta-taped] Startup";
+  if (!currentDesiredDriveState.reason
+      || common::dataStructures::isCleanDriveShutdownReason(*currentDesiredDriveState.reason)) {
+    driveState.reason = common::dataStructures::formatDriveDownReason(common::dataStructures::DriveDownReason::Startup);
     driveState.up = putUpIfPossible;
   } else {
     driveState.reason = currentDesiredDriveState.reason;
@@ -182,7 +180,6 @@ bool DriveHandler::executeDataTransferSession(TapeMount& tapeMount) {
   }
 
   DataTransferSession dataTransferSession(
-    utils::getShortHostname(),
     m_lc.logger(),
     m_sysWrapper,
     m_driveInfo,
@@ -234,14 +231,8 @@ int DriveHandler::run() {
   }
 
   // TODO: if the logical library does not exist (yet), what do we do? Just wait?
-  // TODO: telemetry drive state tracking
-  // Needs to be done after the catalogue initialization
 
-  // TODO: we probably don't need this polling anymore; add it to reportDriveStatus
-  // [[maybe_unused]] ::daemon::DriveSessionTracker driveSessionTracker(m_catalogue, driveInfo.driveName); // TODO
-
-  // TODO: add stop token here
-
+  // TODO: add graceful shutdown
   while (true) {
     // TODO: track whether probing is required locally so an early desired-state change cannot skip it.
     if (!m_scheduler->getDesiredDriveState(m_driveInfo.driveName, m_lc).up) {
@@ -265,9 +256,8 @@ int DriveHandler::run() {
       if (!emptyDriveProbe.driveIsEmpty()) {
         // TODO: distinguish a detected tape from a failed probe when reporting the drive-down reason.
         // TODO: log warning
-        std::string errorMsg = "A tape was detected in the drive. Putting the drive down.";
-        errorMsg += emptyDriveProbe.getProbeErrorMsg().value_or("");
-        putDriveDown(errorMsg);
+        putDriveDown(common::dataStructures::DriveDownReason::TapeDetected,
+                     emptyDriveProbe.getProbeErrorMsg().value_or(""));
         // Continue the loop so that we wait for the drive to come up again
         continue;
       } else {
@@ -323,7 +313,8 @@ int DriveHandler::run() {
     bool driveCanRemainUp = tapeMount != nullptr && executeDataTransferSession(*tapeMount);
     if (!driveCanRemainUp) {
       // TODO: we need a better reason here
-      putDriveDown("Data transfer session failed");
+      // TODO: preserve more specific drive-open or cleaning reasons already recorded by the session.
+      putDriveDown(common::dataStructures::DriveDownReason::TransferSessionFailed);
       // After this, the loop will continue by waiting to be up again
     }
     // This is for another MR, but we should rip out the cleaner functionality from the transfer sessions and rely on CleanerSession only
@@ -333,7 +324,7 @@ int DriveHandler::run() {
   executeCleanerSession();
   // Put the drive down
   // TODO: this is not correct, because it may already be down
-  putDriveDown("Exiting cta-taped");
+  putDriveDown(common::dataStructures::DriveDownReason::Shutdown);
   // TODO: correct exit code
   return 0;
 }

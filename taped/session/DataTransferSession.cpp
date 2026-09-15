@@ -45,8 +45,7 @@ constexpr const char* c_raoLtoAlgorithmOptions = "cost_heuristic_name:cta";
 //------------------------------------------------------------------------------
 //Constructor
 //------------------------------------------------------------------------------
-cta::tape::daemon::DataTransferSession::DataTransferSession([[maybe_unused]] const std::string& hostname,
-                                                            cta::log::Logger& log,
+cta::tape::daemon::DataTransferSession::DataTransferSession(cta::log::Logger& log,
                                                             System::virtualWrapper& sysWrapper,
                                                             const cta::common::dataStructures::DriveInfo& driveInfo,
                                                             cta::mediachanger::MediaChangerFacade& mc,
@@ -467,15 +466,18 @@ cta::tape::drive::DriveInterface* cta::tape::daemon::DataTransferSession::findDr
     driveInfo = dv.findBySymlink(m_driveInfo.devFilename);
   } catch (cta::tape::SCSI::DeviceVector::NotFound&) {
     // We could not find this drive in the system's SCSI devices
-    putDriveDown("Drive not found on this path", mount, logContext);
+    putDriveDown(common::dataStructures::DriveDownReason::DriveNotFound, mount, logContext);
     return nullptr;
-  } catch (cta::exception::Exception&) {
+  } catch (cta::exception::Exception& ex) {
     // We could not find this drive in the system's SCSI devices
-    putDriveDown("Error looking for path to tape drive", mount, logContext);
+    putDriveDown(common::dataStructures::DriveDownReason::DriveDiscoveryFailed,
+                 mount,
+                 logContext,
+                 ex.getMessageValue());
     return nullptr;
   } catch (...) {
     // We could not find this drive in the system's SCSI devices
-    putDriveDown("Unexpected exception while looking for drive", mount, logContext);
+    putDriveDown(common::dataStructures::DriveDownReason::DriveDiscoveryFailed, mount, logContext);
     return nullptr;
   }
   try {
@@ -484,13 +486,13 @@ cta::tape::drive::DriveInterface* cta::tape::daemon::DataTransferSession::findDr
       drive->info = m_driveInfo;
     }
     return drive.release();
-  } catch (cta::exception::Exception&) {
+  } catch (cta::exception::Exception& ex) {
     // We could not find this drive in the system's SCSI devices
-    putDriveDown("Error opening tape drive", mount, logContext);
+    putDriveDown(common::dataStructures::DriveDownReason::DriveOpenFailed, mount, logContext, ex.getMessageValue());
     return nullptr;
   } catch (...) {
     // We could not find this drive in the system's SCSI devices
-    putDriveDown("Unexpected exception while opening drive", mount, logContext);
+    putDriveDown(common::dataStructures::DriveDownReason::DriveOpenFailed, mount, logContext);
     return nullptr;
   }
 }
@@ -498,9 +500,11 @@ cta::tape::drive::DriveInterface* cta::tape::daemon::DataTransferSession::findDr
 //------------------------------------------------------------------------------
 // Get drive down with reason
 //------------------------------------------------------------------------------
-void cta::tape::daemon::DataTransferSession::putDriveDown(const std::string& headerErrMsg,
+void cta::tape::daemon::DataTransferSession::putDriveDown(common::dataStructures::DriveDownReason reason,
                                                           cta::TapeMount* mount,
-                                                          cta::log::LogContext& logContext) {
+                                                          cta::log::LogContext& logContext,
+                                                          std::string_view detail) {
+  const auto headerErrMsg = common::dataStructures::formatDriveDownReason(reason, detail);
   cta::log::ScopedParamContainer params(logContext);
   params.add("devFilename", m_driveInfo.devFilename).add(cta::semconv::log::errorMessage, headerErrMsg);
 
@@ -512,7 +516,7 @@ void cta::tape::daemon::DataTransferSession::putDriveDown(const std::string& hea
       .add("VO", mount->getVo());
   }
 
-  logContext.log(cta::log::ERR, headerErrMsg);
+  logContext.log(common::dataStructures::driveDownReasonSeverity(reason), headerErrMsg);
 
   m_scheduler.reportDriveStatus(m_driveInfo,
                                 cta::common::dataStructures::MountType::NoMount,
@@ -521,7 +525,7 @@ void cta::tape::daemon::DataTransferSession::putDriveDown(const std::string& hea
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = false;
   driveState.forceDown = false;
-  driveState.setReasonFromLogMsg(cta::log::ERR, headerErrMsg);
+  driveState.reason = headerErrMsg;
   m_scheduler.setDesiredDriveState(m_driveInfo.driveName, driveState, logContext);
 
   logContext.log(cta::log::ERR, "Notified client of end session with error");

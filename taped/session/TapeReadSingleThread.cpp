@@ -6,6 +6,7 @@
 #include "TapeReadSingleThread.hpp"
 
 #include "RecallTaskInjector.hpp"
+#include "common/dataStructures/DriveDownReason.hpp"
 #include "taped/drive/DriveInterface.hpp"
 #include "taped/file/ReadSession.hpp"
 #include "taped/file/ReadSessionFactory.hpp"
@@ -151,11 +152,12 @@ cta::tape::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
   } catch (const cta::exception::Exception& ex) {
     // Notify something failed during the cleaning
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
-    const int logLevel = cta::log::ERR;
+    const int logLevel = cta::common::dataStructures::driveDownReasonSeverity(
+      cta::common::dataStructures::DriveDownReason::TapeCleanupFailed);
     const std::string errorMsg =
       "Exception in TapeReadSingleThread-TapeCleaning when unmounting/unloading the tape. Putting the drive down.";
-    std::optional<std::string> reason =
-      cta::common::dataStructures::DesiredDriveState::generateReasonFromLogMsg(logLevel, errorMsg);
+    std::optional<std::string> reason = cta::common::dataStructures::formatDriveDownReason(
+      cta::common::dataStructures::DriveDownReason::TapeCleanupFailed);
     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down,
                                             reason,
                                             m_this.m_logContext);
@@ -172,11 +174,12 @@ cta::tape::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
   } catch (...) {
     // Notify something failed during the cleaning
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
-    const int logLevel = cta::log::ERR;
+    const int logLevel = cta::common::dataStructures::driveDownReasonSeverity(
+      cta::common::dataStructures::DriveDownReason::TapeCleanupFailed);
     const std::string errorMsg =
       "Non-CTA exception in TapeReadSingleThread-TapeCleaning when unmounting the tape. Putting the drive down.";
-    std::optional<std::string> reason =
-      cta::common::dataStructures::DesiredDriveState::generateReasonFromLogMsg(logLevel, errorMsg);
+    std::optional<std::string> reason = cta::common::dataStructures::formatDriveDownReason(
+      cta::common::dataStructures::DriveDownReason::TapeCleanupFailed);
     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down,
                                             reason,
                                             m_this.m_logContext);

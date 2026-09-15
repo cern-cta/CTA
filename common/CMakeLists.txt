@@ -30,6 +30,7 @@ set (COMMON_LIB_SRC_FILES
   dataStructures/CancelRetrieveRequest.cpp
   dataStructures/DiskSpaceReservationRequest.cpp
   dataStructures/DeleteArchiveRequest.cpp
+  dataStructures/DriveDownReason.cpp
   dataStructures/DesiredDriveState.cpp
   dataStructures/DiskFileInfo.cpp
   dataStructures/DiskInstance.cpp
@@ -134,6 +135,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   auth/jwt/JwtValidationTest.cpp
   checksum/ChecksumBlobTest.cpp
   checksum/CRCTest.cpp
+  dataStructures/DriveDownReasonTest.cpp
   dataStructures/ArchiveFileTest.cpp
   dataStructures/LogicalLibraryTest.cpp
   dataStructures/StorageClassTest.cpp

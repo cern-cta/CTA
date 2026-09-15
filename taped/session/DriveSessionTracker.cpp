@@ -15,6 +15,8 @@ namespace cta::tape::daemon {
 
 using namespace cta;
 
+// TODO: use some central interface to change these properties so that we can add the telemetry there instead of querying the catalogue
+
 //------------------------------------------------------------------------------
 // Callback for observing metrics
 //------------------------------------------------------------------------------

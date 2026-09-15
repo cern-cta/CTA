@@ -7,6 +7,7 @@
 
 #include "TapedConfig.hpp"
 #include "catalogue/Catalogue.hpp"
+#include "common/dataStructures/DriveDownReason.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
 #include "common/log/LogContext.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
@@ -45,7 +46,7 @@ public:
 private:
   bool registerDrive(bool putUpIfPossible);
   void waitForDriveToBeUp();
-  void putDriveDown(std::string_view errorMsg);
+  void putDriveDown(common::dataStructures::DriveDownReason reason, std::string_view detail = {});
   bool executeDataTransferSession(TapeMount& tapeMount);
   bool executeCleanerSession(const std::optional<std::string>& vid = std::nullopt, bool waitMediaInDrive = true);
   std::unique_ptr<TapeMount> getNextMount();

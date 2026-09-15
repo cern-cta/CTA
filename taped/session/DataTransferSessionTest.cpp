@@ -663,16 +663,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  cta::tape::daemon::DataTransferSession sess("tapeHost",
-                                              logger,
-                                              mockSys,
-                                              driveInfo,
-                                              mc,
-                                              *tapeMount,
-                                              tracker,
-                                              dataTransferConf,
-                                              tapeLoadTimeoutSecs,
-                                              scheduler);
+  cta::tape::daemon::DataTransferSession
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
   // 8) Run the data transfer session
   sess.execute();
 
@@ -932,16 +924,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  cta::tape::daemon::DataTransferSession sess("tapeHost",
-                                              logger,
-                                              mockSys,
-                                              driveInfo,
-                                              mc,
-                                              *tapeMount,
-                                              tracker,
-                                              dataTransferConf,
-                                              tapeLoadTimeoutSecs,
-                                              scheduler);
+  cta::tape::daemon::DataTransferSession
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1235,16 +1219,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  DataTransferSession sess("tapeHost",
-                           logger,
-                           mockSys,
-                           driveInfo,
-                           mc,
-                           *tapeMount,
-                           tracker,
-                           dataTransferConf,
-                           tapeLoadTimeoutSecs,
-                           scheduler);
+  DataTransferSession
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1485,16 +1461,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  cta::tape::daemon::DataTransferSession sess("tapeHost",
-                                              logger,
-                                              mockSys,
-                                              driveInfo,
-                                              mc,
-                                              *tapeMount,
-                                              tracker,
-                                              dataTransferConf,
-                                              tapeLoadTimeoutSecs,
-                                              scheduler);
+  cta::tape::daemon::DataTransferSession
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1740,16 +1708,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  cta::tape::daemon::DataTransferSession sess("tapeHost",
-                                              logger,
-                                              mockSys,
-                                              driveInfo,
-                                              mc,
-                                              *tapeMount,
-                                              tracker,
-                                              dataTransferConf,
-                                              tapeLoadTimeoutSecs,
-                                              scheduler);
+  cta::tape::daemon::DataTransferSession
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1996,16 +1956,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  cta::tape::daemon::DataTransferSession sess("tapeHost",
-                                              logger,
-                                              mockSys,
-                                              driveInfo,
-                                              mc,
-                                              *tapeMount,
-                                              tracker,
-                                              dataTransferConf,
-                                              tapeLoadTimeoutSecs,
-                                              scheduler);
+  cta::tape::daemon::DataTransferSession
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -2255,16 +2207,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  cta::tape::daemon::DataTransferSession sess("tapeHost",
-                                              logger,
-                                              mockSys,
-                                              driveInfo,
-                                              mc,
-                                              *tapeMount,
-                                              tracker,
-                                              dataTransferConf,
-                                              tapeLoadTimeoutSecs,
-                                              scheduler);
+  cta::tape::daemon::DataTransferSession
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -2501,19 +2445,11 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  DataTransferSession sess("tapeHost",
-                           logger,
-                           mockSys,
-                           driveInfo,
-                           mc,
-                           *tapeMount,
-                           tracker,
-                           dataTransferConf,
-                           tapeLoadTimeoutSecs,
-                           scheduler);
+  DataTransferSession
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
-  ASSERT_NE(std::string::npos, logger.getLog().find("Error looking for path to tape drive"));
+  ASSERT_NE(std::string::npos, logger.getLog().find("Drive discovery failed"));
 }
 
 TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
@@ -2699,16 +2635,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  DataTransferSession sess("tapeHost",
-                           logger,
-                           mockSys,
-                           driveInfo,
-                           mc,
-                           *tapeMount,
-                           tracker,
-                           dataTransferConf,
-                           tapeLoadTimeoutSecs,
-                           scheduler);
+  DataTransferSession
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
   ASSERT_NE(std::string::npos, logger.getLog().find("Failed to mount the tape"));
@@ -2903,16 +2831,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  DataTransferSession sess("tapeHost",
-                           logger,
-                           mockSys,
-                           driveInfo,
-                           mc,
-                           *tapeMount,
-                           tracker,
-                           dataTransferConf,
-                           tapeLoadTimeoutSecs,
-                           scheduler);
+  DataTransferSession
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
@@ -3121,16 +3041,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  DataTransferSession sess("tapeHost",
-                           logger,
-                           mockSys,
-                           driveInfo,
-                           mc,
-                           *tapeMount,
-                           tracker,
-                           dataTransferConf,
-                           tapeLoadTimeoutSecs,
-                           scheduler);
+  DataTransferSession
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
@@ -3351,16 +3263,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  DataTransferSession sess("tapeHost",
-                           logger,
-                           mockSys,
-                           driveInfo,
-                           mc,
-                           *tapeMount,
-                           tracker,
-                           dataTransferConf,
-                           tapeLoadTimeoutSecs,
-                           scheduler);
+  DataTransferSession
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
@@ -3583,16 +3487,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  DataTransferSession sess("tapeHost",
-                           logger,
-                           mockSys,
-                           driveInfo,
-                           mc,
-                           *tapeMount,
-                           tracker,
-                           dataTransferConf,
-                           tapeLoadTimeoutSecs,
-                           scheduler);
+  DataTransferSession
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
@@ -3814,16 +3710,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  DataTransferSession sess("tapeHost",
-                           logger,
-                           mockSys,
-                           driveInfo,
-                           mc,
-                           *tapeMount,
-                           tracker,
-                           dataTransferConf,
-                           tapeLoadTimeoutSecs,
-                           scheduler);
+  DataTransferSession
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";
@@ -4042,16 +3930,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  DataTransferSession sess("tapeHost",
-                           logger,
-                           mockSys,
-                           driveInfo,
-                           mc,
-                           *tapeMount,
-                           tracker,
-                           dataTransferConf,
-                           tapeLoadTimeoutSecs,
-                           scheduler);
+  DataTransferSession
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";
@@ -4292,16 +4172,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
-  DataTransferSession sess("tapeHost",
-                           logger,
-                           mockSys,
-                           driveInfo,
-                           mc,
-                           *tapeMount,
-                           tracker,
-                           dataTransferConf,
-                           tapeLoadTimeoutSecs,
-                           scheduler);
+  DataTransferSession
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";

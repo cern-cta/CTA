@@ -6,6 +6,7 @@
 #include "CleanerSession.hpp"
 
 #include "catalogue/Catalogue.hpp"
+#include "common/dataStructures/DriveDownReason.hpp"
 #include "common/process/ProcessCap.hpp"
 #include "common/utils/utils.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
@@ -134,7 +135,9 @@ void cta::tape::daemon::CleanerSession::setDriveDownAfterCleanerFailed(const std
     cta::common::dataStructures::DesiredDriveState driveState;
     driveState.up = false;
     driveState.forceDown = false;
-    driveState.setReasonFromLogMsg(cta::log::ERR, "Cleaner failed: " + errorMsg);
+    driveState.reason =
+      cta::common::dataStructures::formatDriveDownReason(cta::common::dataStructures::DriveDownReason::CleanerFailed,
+                                                         errorMsg);
     m_scheduler.setDesiredDriveState(m_driveInfo.driveName, driveState, m_lc);
   } catch (...) {
     cta::log::ScopedParamContainer params(m_lc);
