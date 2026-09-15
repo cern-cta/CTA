@@ -74,7 +74,7 @@ cta::tape::daemon::DataTransferSession::DataTransferSession(cta::log::Logger& lo
  * 2b) Log The result
  * Then branch to the right execution
  */
-cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSession::execute() {
+cta::tape::daemon::TransferSessionResult cta::tape::daemon::DataTransferSession::execute() {
   // 1) Prepare the logging environment
   cta::log::LogContext lc(m_log);
 
@@ -112,16 +112,23 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
     case cta::common::dataStructures::MountType::Label:
       return executeLabel(lc, dynamic_cast<cta::LabelMount*>(&m_tapeMount));
     default:
-      return MARK_DRIVE_AS_UP;
+      break;
   }
+
+  TransferSessionResult result;
+  result.vid = m_volInfo.vid;
+  return result;
 }
 
 //------------------------------------------------------------------------------
 //DataTransferSession::executeRead
 //------------------------------------------------------------------------------
-cta::tape::daemon::Session::EndOfSessionAction
+cta::tape::daemon::TransferSessionResult
 cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logContext,
                                                     cta::RetrieveMount* retrieveMount) {
+  TransferSessionResult result;
+  result.vid = m_volInfo.vid;
+
   m_tapeSessionTracker.reportState(cta::tape::session::SessionState::Scheduling,
                                    cta::tape::session::SessionType::Retrieve);
   TapeSessionReporter reporter(m_tapeSessionTracker,
@@ -138,11 +145,13 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
   std::unique_ptr<cta::tape::drive::DriveInterface> drive(findDrive(logContext, retrieveMount));
 
   if (!drive) {
+    result.transferOutcome = TransferSessionResult::Outcome::Failure;
     m_tapeSessionTracker.setOutcome(TapeSessionOutcome::Failure);
     m_tapeSessionTracker.setMountAttempted(false);
     reporter.finish();
     reporter.waitThreads();
-    return MARK_DRIVE_AS_DOWN;
+    result.driveUsability = DriveUsability::MustRemainDown;
+    return result;
   }
 
   // We can now start instantiating all the components of the data path
@@ -246,7 +255,9 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
                                       logContext);
       }
 
-      return readSingleThread.getHardwareStatus();
+      result.driveUsability = readSingleThread.getHardwareStatus();
+      result.loadingAttempted = readSingleThread.loadingAttempted();
+      return result;
     } else {
       // If the first pop from the queue fails, just log this was an empty mount and that's it. The memory management
       // will be deallocated automatically.
@@ -256,6 +267,9 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
         priority = cta::log::WARNING;
       }
 
+      result.transferOutcome =
+        noFilesToRecall ? TransferSessionResult::Outcome::Success : TransferSessionResult::Outcome::Failure;
+      result.hardwareCleanupOutcome = TransferSessionResult::Outcome::NotRequired;
       logContext.log(priority, "Aborting recall mount startup: empty mount");
 
       std::string mountId = retrieveMount->getMountTransactionId();
@@ -278,6 +292,7 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
         cta::log::LogContext::ScopedParam sp08(logContext, cta::log::Param("MountTransactionId", mountId));
         logContext.log(priority, "Notified client of end session with error");
       } catch (cta::exception::Exception& ex) {
+        result.reportingFinalizationOutcome = TransferSessionResult::Outcome::Failure;
         cta::log::LogContext::ScopedParam sp12(
           logContext,
           cta::log::Param(cta::semconv::log::exceptionMessage, ex.getMessageValue()));
@@ -290,7 +305,7 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
                                     logContext);
       reporter.finish();
       reporter.waitThreads();
-      return MARK_DRIVE_AS_UP;
+      return result;
     }
   }
 }
@@ -298,9 +313,12 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
 //------------------------------------------------------------------------------
 //DataTransferSession::executeWrite
 //------------------------------------------------------------------------------
-cta::tape::daemon::Session::EndOfSessionAction
+cta::tape::daemon::TransferSessionResult
 cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logContext,
                                                      cta::ArchiveMount* archiveMount) {
+  TransferSessionResult result;
+  result.vid = m_volInfo.vid;
+
   m_tapeSessionTracker.reportState(cta::tape::session::SessionState::Scheduling,
                                    cta::tape::session::SessionType::Archive);
   TapeSessionReporter reporter(m_tapeSessionTracker,
@@ -314,11 +332,13 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
   // 1) Get hold of the drive error logs are done inside the findDrive function
   std::unique_ptr<cta::tape::drive::DriveInterface> drive(findDrive(logContext, archiveMount));
   if (!drive) {
+    result.transferOutcome = TransferSessionResult::Outcome::Failure;
     m_tapeSessionTracker.setOutcome(TapeSessionOutcome::Failure);
     m_tapeSessionTracker.setMountAttempted(false);
     reporter.finish();
     reporter.waitThreads();
-    return MARK_DRIVE_AS_DOWN;
+    result.driveUsability = DriveUsability::MustRemainDown;
+    return result;
   }
   // Once we got hold of the drive, we can run the session
   {
@@ -392,13 +412,18 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
       reporter.finish();
       reporter.waitThreads();
 
-      return writeSingleThread.getHardwareStatus();
+      result.driveUsability = writeSingleThread.getHardwareStatus();
+      result.loadingAttempted = writeSingleThread.loadingAttempted();
+      return result;
     } else {
       // Just log this was an empty mount and that's it. The memory management will be deallocated automatically.
       int priority = cta::log::ERR;
       if (noFilesToMigrate) {
         priority = cta::log::WARNING;
       }
+      result.transferOutcome =
+        noFilesToMigrate ? TransferSessionResult::Outcome::Success : TransferSessionResult::Outcome::Failure;
+      result.hardwareCleanupOutcome = TransferSessionResult::Outcome::NotRequired;
       logContext.log(priority, "Aborting migration mount startup: empty mount");
 
       std::string mountId = archiveMount->getMountTransactionId();
@@ -417,6 +442,7 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
         cta::log::LogContext::ScopedParam sp11(logContext, cta::log::Param("MountTransactionId", mountId));
         logContext.log(priority, "Notified client of end session with error");
       } catch (cta::exception::Exception& ex) {
+        result.reportingFinalizationOutcome = TransferSessionResult::Outcome::Failure;
         cta::log::LogContext::ScopedParam sp12(
           logContext,
           cta::log::Param(cta::semconv::log::exceptionMessage, ex.getMessageValue()));
@@ -429,7 +455,7 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
                                     logContext);
       reporter.finish();
       reporter.waitThreads();
-      return MARK_DRIVE_AS_UP;
+      return result;
     }
   }
 }
@@ -437,7 +463,7 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
 //------------------------------------------------------------------------------
 //DataTransferSession::executeLabel
 //------------------------------------------------------------------------------
-cta::tape::daemon::Session::EndOfSessionAction
+cta::tape::daemon::TransferSessionResult
 cta::tape::daemon::DataTransferSession::executeLabel([[maybe_unused]] cta::log::LogContext& logContext,
                                                      [[maybe_unused]] cta::LabelMount* labelMount) const {
   throw cta::exception::NotImplementedException();
@@ -533,5 +559,3 @@ void cta::tape::daemon::DataTransferSession::putDriveDown(common::dataStructures
 
   logContext.log(cta::log::ERR, "Notified client of end session with error");
 }
-
-cta::tape::daemon::DataTransferSession::~DataTransferSession() noexcept = default;

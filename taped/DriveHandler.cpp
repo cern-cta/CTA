@@ -19,7 +19,6 @@
 #include "session/CleanerSession.hpp"
 #include "session/DataTransferSession.hpp"
 #include "session/EmptyDriveProbe.hpp"
-#include "session/Session.hpp"
 
 #include <algorithm>
 #include <exception>
@@ -260,7 +259,7 @@ bool DriveHandler::registerDrive(bool putUpIfPossible) {
   return true;
 }
 
-bool DriveHandler::executeDataTransferSession(TapeMount& tapeMount) {
+TransferSessionResult DriveHandler::executeDataTransferSession(TapeMount& tapeMount) {
   DataTransferSession dataTransferSession(
     m_lc.logger(),
     m_sysWrapper,
@@ -271,8 +270,7 @@ bool DriveHandler::executeDataTransferSession(TapeMount& tapeMount) {
     m_config.transfers,
     m_config.mounts.tape_load_timeout_secs,  // TODO: DataTransferSession should not be responsible for tape loading
     *m_scheduler);
-  // This is hacky; this whole end of session action stuff should be ripped out
-  return dataTransferSession.execute() == Session::EndOfSessionAction::MARK_DRIVE_AS_UP;
+  return dataTransferSession.execute();
 }
 
 bool DriveHandler::executeCleanerSession(const std::optional<std::string>& vid, bool waitMediaInDrive) {
@@ -287,8 +285,7 @@ bool DriveHandler::executeCleanerSession(const std::optional<std::string>& vid, 
                                 *m_scheduler,
                                 &m_tapeSessionTracker);
 
-  // This is hacky; this whole end of session action stuff should be ripped out
-  return cleanerSession.execute() == Session::EndOfSessionAction::MARK_DRIVE_AS_UP;
+  return cleanerSession.execute() == DriveUsability::Reusable;
 }
 
 bool DriveHandler::isLive() const {
@@ -450,9 +447,11 @@ int DriveHandler::run() {
     // The session result describes hardware usability, not whether every file transferred successfully.
     // TODO: ensure DataTransferSession stops and joins workers/reporters before exceptions escape.
     // TODO: expose the hardware cleanup outcome when a transfer exits exceptionally.
-    bool driveCanRemainUp;
+    TransferSessionResult transferResult;
     try {
-      driveCanRemainUp = executeDataTransferSession(*tapeMount);
+      // The transfer session handles mounting and cleaning as this is intertwined with some of the internal logic there.
+      // For example, in the case of an empty mount (which we don't know at this point in time), we don't load the tape
+      transferResult = executeDataTransferSession(*tapeMount);
     } catch (const exception::LostDatabaseConnection&) {
       // Database recovery remains separate from software/job failure handling.
       throw;
@@ -464,7 +463,7 @@ int DriveHandler::run() {
       continue;
     }
 
-    if (!driveCanRemainUp) {
+    if (transferResult.driveUsability != DriveUsability::Reusable) {
       // Preserve specific session or operator reasons. Publication failures propagate.
       putDriveDown(common::dataStructures::DriveDownReason::TransferSessionFailed, {}, true);
       // Require another operator up request before attempting recovery and scheduling.

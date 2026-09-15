@@ -13,6 +13,7 @@
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "session/TapeSessionTracker.hpp"
+#include "session/TransferSessionResult.hpp"
 #include "system/Wrapper.hpp"
 
 #ifdef CTA_PGSCHED
@@ -61,7 +62,7 @@ private:
   bool prepareDriveForScheduling();
   // Clean and publish down, returning a nonzero exit code if either operation fails.
   int shutdownDrive();
-  bool executeDataTransferSession(TapeMount& tapeMount);
+  TransferSessionResult executeDataTransferSession(TapeMount& tapeMount);
   bool executeCleanerSession(const std::optional<std::string>& vid = std::nullopt, bool waitMediaInDrive = true);
   // A null mount means no work is available. Scheduling failures propagate.
   std::unique_ptr<TapeMount> getNextMount();

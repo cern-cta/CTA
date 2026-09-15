@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "Session.hpp"
+#include "DriveUsability.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
 #include "common/log/LogContext.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
@@ -28,7 +28,7 @@ class TapeSessionTracker;
 /**
   * Class responsible for cleaning up a tape drive left in a (possibly) dirty state.
   */
-class CleanerSession : public Session {
+class CleanerSession {
 public:
   /**
     * Constructor
@@ -57,14 +57,8 @@ public:
                  cta::Scheduler& scheduler,
                  TapeSessionTracker* tracker = nullptr);
 
-  /**
-    * Execute the session and return the type of action to be performed
-    * immediately after the session has completed.
-    *
-    * @return Returns the type of action to be performed after the session has
-    * completed.
-    */
-  EndOfSessionAction execute() final;
+  /** Clean the drive and return whether it can be reused. */
+  DriveUsability execute();
 
   // An empty drive counts as successful eject. Reset failures still prevent reuse.
   struct CleanupResult {

@@ -10,8 +10,8 @@
 
 #pragma once
 
+#include "DriveUsability.hpp"
 #include "EncryptionControl.hpp"
-#include "Session.hpp"
 #include "TapeSessionStats.hpp"
 #include "TapeSessionTracker.hpp"
 #include "VolumeInfo.hpp"
@@ -62,10 +62,10 @@ protected:
 
   VolumeInfo m_volInfo;
 
-  /**
-   * Integer to notify taped if the drive has to be put down or not.
-   */
-  Session::EndOfSessionAction m_hardwareStatus = Session::MARK_DRIVE_AS_UP;
+  bool m_loadingAttempted = false;
+
+  /** Whether the tape thread permits the drive to be reused. */
+  DriveUsability m_hardwareStatus = DriveUsability::Reusable;
 
   /** Session statistics */
   TapeTransferStats m_stats;
@@ -104,6 +104,7 @@ protected:
     scoped.add("drive_Slot", librarySlot.str());
     try {
       cta::utils::Timer timer;
+      m_loadingAttempted = true;
       m_mediaChanger.mountTapeReadOnly(m_volInfo.vid, librarySlot);
       const std::string modeAsString = "R";
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
@@ -130,6 +131,7 @@ protected:
     scoped.add("drive_Slot", librarySlot.str());
     try {
       cta::utils::Timer timer;
+      m_loadingAttempted = true;
       m_mediaChanger.mountTapeReadWrite(m_volInfo.vid, librarySlot);
       const std::string modeAsString = "RW";
       scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
@@ -240,7 +242,10 @@ protected:
   virtual void countTapeAlert(uint16_t tapeAlertCode) = 0;
 
 public:
-  Session::EndOfSessionAction getHardwareStatus() const { return m_hardwareStatus; }
+  DriveUsability getHardwareStatus() const { return m_hardwareStatus; }
+
+  // Read after joining the tape thread.
+  bool loadingAttempted() const { return m_loadingAttempted; }
 
   /**
    * Push into the class a sentinel value to trigger to end the the thread.

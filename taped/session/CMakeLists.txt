@@ -19,7 +19,6 @@ set(CTATAPEDSESSION_LIBRARY_SRCS
   RecallMemoryManager.cpp
   RecallTaskInjector.cpp
   RecallReportPacker.cpp
-  Session.cpp
   TapeReadSingleThread.cpp
   TapeWriteSingleThread.cpp
   TapeWriteTask.cpp

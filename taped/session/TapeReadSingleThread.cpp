@@ -151,7 +151,7 @@ cta::tape::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
     m_this.m_tracker.addDiskTransferStats({.waitReportingTime = m_timer.secs(cta::utils::Timer::resetCounter)});
   } catch (const cta::exception::Exception& ex) {
     // Notify something failed during the cleaning
-    m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
+    m_this.m_hardwareStatus = DriveUsability::MustRemainDown;
     const int logLevel = cta::common::dataStructures::driveDownReasonSeverity(
       cta::common::dataStructures::DriveDownReason::TapeCleanupFailed);
     const std::string errorMsg =
@@ -173,7 +173,7 @@ cta::tape::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
     } catch (...) {}
   } catch (...) {
     // Notify something failed during the cleaning
-    m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
+    m_this.m_hardwareStatus = DriveUsability::MustRemainDown;
     const int logLevel = cta::common::dataStructures::driveDownReasonSeverity(
       cta::common::dataStructures::DriveDownReason::TapeCleanupFailed);
     const std::string errorMsg =

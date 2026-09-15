@@ -135,8 +135,8 @@ protected:
                                               &m_tracker);
 
     const bool resetFailed = failurePoint != cta::tape::drive::FakeDrive::FailurePoint::Rewind;
-    ASSERT_EQ(resetFailed ? cta::tape::daemon::Session::MARK_DRIVE_AS_DOWN :
-                            cta::tape::daemon::Session::MARK_DRIVE_AS_UP,
+    ASSERT_EQ(resetFailed ? cta::tape::daemon::DriveUsability::MustRemainDown :
+                            cta::tape::daemon::DriveUsability::Reusable,
               cleaner.execute());
     cta::log::LogContext logContext(m_sessionLog);
     ASSERT_EQ(!resetFailed, m_scheduler->getDesiredDriveState(m_driveInfo.driveName, logContext).up);
@@ -195,7 +195,7 @@ TEST_P(CleanerSessionTest, EjectsBlankTape) {
                                             *m_scheduler,
                                             &m_tracker);
 
-  ASSERT_EQ(cta::tape::daemon::Session::MARK_DRIVE_AS_UP, cleaner.execute());
+  ASSERT_EQ(cta::tape::daemon::DriveUsability::Reusable, cleaner.execute());
   ASSERT_NE(std::string::npos,
             m_sessionLog.getLog().find("Cleaner failed to prepare the drive or read the volume label"));
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner unloaded tape"));
@@ -226,7 +226,7 @@ TEST_P(CleanerSessionTest, EjectsLabeledTape) {
                                             *m_scheduler,
                                             &m_tracker);
 
-  ASSERT_EQ(cta::tape::daemon::Session::MARK_DRIVE_AS_UP, cleaner.execute());
+  ASSERT_EQ(cta::tape::daemon::DriveUsability::Reusable, cleaner.execute());
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner read the VSN from the volume label"));
   ASSERT_EQ(std::string::npos,
             m_sessionLog.getLog().find("Cleaner failed to prepare the drive or read the volume label"));
@@ -357,7 +357,7 @@ TEST_P(CleanerSessionTest, DismountsTapeAfterUnloadFailure) {
                                             *m_scheduler,
                                             &m_tracker);
 
-  ASSERT_EQ(cta::tape::daemon::Session::MARK_DRIVE_AS_UP, cleaner.execute());
+  ASSERT_EQ(cta::tape::daemon::DriveUsability::Reusable, cleaner.execute());
   ASSERT_EQ(1, m_tracker.errorStats().at(cta::tape::daemon::TapeSessionError::TapeUnload));
   ASSERT_EQ(cta::tape::session::SessionState::Unmounting, m_tracker.state());
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner unload command failed"));
@@ -386,7 +386,7 @@ TEST_P(CleanerSessionTest, DisablesTapeAndPutsDriveDownWhenBothDismountAttemptsF
                                             *m_scheduler,
                                             &m_tracker);
 
-  ASSERT_EQ(cta::tape::daemon::Session::MARK_DRIVE_AS_DOWN, cleaner.execute());
+  ASSERT_EQ(cta::tape::daemon::DriveUsability::MustRemainDown, cleaner.execute());
   ASSERT_EQ(2, m_tracker.errorStats().at(cta::tape::daemon::TapeSessionError::TapeDismount));
   ASSERT_EQ(cta::tape::session::SessionType::Cleanup, m_tracker.type());
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner failed to dismount tape with VID"));
@@ -422,7 +422,7 @@ TEST_P(CleanerSessionTest, AcceptsEmptyDriveWithoutDismounting) {
                                             *m_scheduler,
                                             &m_tracker);
 
-  ASSERT_EQ(cta::tape::daemon::Session::MARK_DRIVE_AS_UP, cleaner.execute());
+  ASSERT_EQ(cta::tape::daemon::DriveUsability::Reusable, cleaner.execute());
   ASSERT_EQ(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
 }
 
@@ -442,7 +442,7 @@ TEST_P(CleanerSessionTest, PutsEmptyDriveDownAfterConfigurationResetFailure) {
                                             *m_scheduler,
                                             &m_tracker);
 
-  ASSERT_EQ(cta::tape::daemon::Session::MARK_DRIVE_AS_DOWN, cleaner.execute());
+  ASSERT_EQ(cta::tape::daemon::DriveUsability::MustRemainDown, cleaner.execute());
   ASSERT_EQ(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
   cta::log::LogContext logContext(m_sessionLog);
   ASSERT_FALSE(m_scheduler->getDesiredDriveState(m_driveInfo.driveName, logContext).up);
@@ -464,7 +464,7 @@ TEST_P(CleanerSessionTest, EjectsTapeWithUnknownVid) {
                                                       *m_catalogue,
                                                       *m_scheduler,
                                                       &m_tracker);
-  ASSERT_EQ(cta::tape::daemon::Session::MARK_DRIVE_AS_UP, unknownVidCleaner.execute());
+  ASSERT_EQ(cta::tape::daemon::DriveUsability::Reusable, unknownVidCleaner.execute());
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
 }
 

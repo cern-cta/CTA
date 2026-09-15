@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "Session.hpp"
 #include "TapeSessionTracker.hpp"  // TODO: I don't think tapesession is accurate here, but that's for later
 #include "TapeSingleThreadInterface.hpp"
+#include "TransferSessionResult.hpp"
 #include "common/dataStructures/DriveDownReason.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
@@ -27,7 +27,7 @@ namespace cta::tape::daemon {
 /**
  * The main class handling a tape data-transfer session.
  */
-class DataTransferSession : public Session {
+class DataTransferSession {
 public:
   /**
    * Constructor.
@@ -45,26 +45,10 @@ public:
                       cta::Scheduler& scheduler);
 
   /**
-   * Execute the session and return the type of action to be performed
-   * immediately after the session has completed.
-   *
-   * The session is responsible for mounting a tape into the tape drive,
-   * working with that tape, unloading the tape from the drive and then
-   * dismounting the tape from the drive and storing it back in its home slot
-   * within the tape library.
-   *
-   * If this method throws an exception and the session is not a cleaner
-   * session then it assumed that the post session action is
-   * EndOfSessionAction::CLEAN_DRIVE.
-   *
-   * If this method throws an exception and the session is a cleaner
-   * session then it assumed that the post session action is
-   * EndOfSessionAction::MARK_DRIVE_AS_DOWN.
-   *
-   * @return Returns the type of action to be performed after the session has
-   * completed.
+   * Mount, transfer, unload and dismount the tape, returning the session outcomes.
+   * Exceptions propagate unchanged; the result describes sessions that return normally.
    */
-  EndOfSessionAction execute() override;
+  TransferSessionResult execute();
 
   /** Temporary method used for debugging while building the session class */
   const std::string& getVid() const { return m_volInfo.vid; }
@@ -72,7 +56,7 @@ public:
   /**
    * Destructor.
    */
-  ~DataTransferSession() noexcept override;
+  ~DataTransferSession() noexcept = default;
 
 private:
   /**
@@ -106,13 +90,13 @@ private:
                     std::string_view detail = {});
 
   /** sub-part of execute for the read sessions */
-  EndOfSessionAction executeRead(cta::log::LogContext& logContext, cta::RetrieveMount* retrieveMount);
+  TransferSessionResult executeRead(cta::log::LogContext& logContext, cta::RetrieveMount* retrieveMount);
 
   /** sub-part of execute for a write session */
-  EndOfSessionAction executeWrite(cta::log::LogContext& logContext, cta::ArchiveMount* archiveMount);
+  TransferSessionResult executeWrite(cta::log::LogContext& logContext, cta::ArchiveMount* archiveMount);
 
   /** sub-part of execute for a label session */
-  EndOfSessionAction executeLabel(cta::log::LogContext& logContext, cta::LabelMount* labelMount) const;
+  TransferSessionResult executeLabel(cta::log::LogContext& logContext, cta::LabelMount* labelMount) const;
 
   /** Reference to the MediaChangerFacade, allowing the mounting of the tape
    * by the library. It will be used exclusively by the tape thread. */

@@ -84,7 +84,7 @@ cta::tape::daemon::CleanerSession::CleanerSession(cta::mediachanger::MediaChange
 //------------------------------------------------------------------------------
 // execute
 //------------------------------------------------------------------------------
-cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::CleanerSession::execute() {
+cta::tape::daemon::DriveUsability cta::tape::daemon::CleanerSession::execute() {
   CleanupTiming timing(m_tracker, &TapeCleanupStats::cleanupTime);
   std::string errorMessage;
   bool ejectFailed = false;
@@ -126,7 +126,7 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::CleanerSession
     logAndClearTapeAlerts(drive);
     if (result.driveReusable()) {
       m_lc.log(cta::log::INFO, "Cleaner completed successfully");
-      return MARK_DRIVE_AS_UP;
+      return DriveUsability::Reusable;
     }
   }
 
@@ -140,7 +140,7 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::CleanerSession
   }
   setDriveDownAfterCleanerFailed(errorMessage);
 
-  return MARK_DRIVE_AS_DOWN;
+  return DriveUsability::MustRemainDown;
 }
 
 void cta::tape::daemon::CleanerSession::setDriveDownAfterCleanerFailed(const std::string& errorMsg) noexcept {
