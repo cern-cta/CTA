@@ -1,12 +1,6 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# The Rust tools in this workspace require a nightly compiler: `cta-restore-files`
-# uses the unstable `gethostname` and `iter_array_chunks` features.
-#
-# For reproducible builds, replace the channel below with a dated nightly (e.g.
-# "nightly-2026-08-17") and bump it deliberately. A plain "nightly" is used for
-# now so that developers and CI do not have to download a second toolchain.
 [toolchain]
   channel    = "nightly"
   components = ["clippy", "rustfmt", "rust-docs"]

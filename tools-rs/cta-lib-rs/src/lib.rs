@@ -404,7 +404,7 @@ mod tests {
                 ..Default::default()
             },
         ];
-        let mut response = streaming_response(&responses);
+        let response = streaming_response(&responses);
 
         let items: Vec<_> = response
             .collect::<Result<Vec<_>, _>>()
