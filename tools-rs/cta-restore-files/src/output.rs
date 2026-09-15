@@ -3,7 +3,7 @@
 
 //! Incremental rendering of recycle-bin listings.
 use cta_lib::ResponseError;
-use cta_protobuf::cta::xrd::data::Data;
+use cta_protobuf::cta::{admin::RecycleTapeFileLsItem, xrd::data::Data};
 use serde_json::json;
 
 use std::{borrow::Cow, io::IsTerminal};
@@ -76,7 +76,7 @@ impl<const N: usize> TablePrinter<N> {
         let rule = self
             .widths
             .iter()
-            .map(|w| "-".repeat(*w))
+            .map(|w| "─".repeat(*w))
             .collect::<Vec<_>>()
             .join("-+-");
         println!("{}", paint(self.color, "2", &rule));
@@ -147,12 +147,44 @@ pub async fn output_as_table<I: Stream<Item = Result<Data, ResponseError>> + Unp
     Ok(())
 }
 
-/// Streams the recycle-bin items of `iter` to stdout as JSON Lines.
-///
-/// # Errors
-///
-/// Fails on a stream error, or if the stream yields an item that is not a
-/// recycle tape file record.
+/// Converts a `RecycleTapeFileLsItem` to JSON, ensuring all fields are serialized.
+/// This function documents the expected schema and catches schema drift at
+/// compile time if new fields are added to the proto.
+fn item_to_json(item: &RecycleTapeFileLsItem) -> serde_json::Value {
+    let checksum_json: Vec<_> = item
+        .checksum
+        .iter()
+        .map(|c| json!({ "type": c.r#type, "value": c.value }))
+        .collect();
+
+    json!({
+        "vid": item.vid,
+        "fseq": item.fseq,
+        "block_id": item.block_id,
+        "copy_nb": item.copy_nb,
+        "tape_file_creation_time": item.tape_file_creation_time,
+        "archive_file_id": item.archive_file_id,
+        "disk_instance": item.disk_instance,
+        "disk_file_id": item.disk_file_id,
+        "disk_file_id_when_deleted": item.disk_file_id_when_deleted,
+        "disk_file_uid": item.disk_file_uid,
+        "disk_file_gid": item.disk_file_gid,
+        "size_in_bytes": item.size_in_bytes,
+        "checksum": checksum_json,
+        "storage_class": item.storage_class,
+        "archive_file_creation_time": item.archive_file_creation_time,
+        "reconciliation_time": item.reconciliation_time,
+        "collocation_hint": item.collocation_hint,
+        "disk_file_path": item.disk_file_path,
+        "reason_log": item.reason_log,
+        "recycle_log_time": item.recycle_log_time,
+        "virtual_organization": item.virtual_organization,
+        "instance_name": item.instance_name,
+    })
+}
+
+/// Streams items from the server and outputs each as a line of JSON.
+/// Each line is a complete JSON object representing one deleted file record.
 pub async fn output_as_json<I: Stream<Item = Result<Data, ResponseError>> + Unpin>(
     iter: &mut I,
 ) -> anyhow::Result<()> {
@@ -160,36 +192,7 @@ pub async fn output_as_json<I: Stream<Item = Result<Data, ResponseError>> + Unpi
         match res {
             Ok(Data::RtflsItem(item)) => {
                 log::info!("{item:#?}");
-                let checksum_json: Vec<_> = item
-                    .checksum
-                    .iter()
-                    .map(|c| json!({ "type": c.r#type, "value": c.value }))
-                    .collect();
-
-                let json = json!({
-                    "vid": item.vid,
-                    "fseq": item.fseq,
-                    "block_id": item.block_id,
-                    "copy_nb": item.copy_nb,
-                    "tape_file_creation_time": item.tape_file_creation_time,
-                    "archive_file_id": item.archive_file_id,
-                    "disk_instance": item.disk_instance,
-                    "disk_file_id": item.disk_file_id,
-                    "disk_file_id_when_deleted": item.disk_file_id_when_deleted,
-                    "disk_file_uid": item.disk_file_uid,
-                    "disk_file_gid": item.disk_file_gid,
-                    "size_in_bytes": item.size_in_bytes,
-                    "checksum": checksum_json,
-                    "storage_class": item.storage_class,
-                    "archive_file_creation_time": item.archive_file_creation_time,
-                    "reconciliation_time": item.reconciliation_time,
-                    "collocation_hint": item.collocation_hint,
-                    "disk_file_path": item.disk_file_path,
-                    "reason_log": item.reason_log,
-                    "recycle_log_time": item.recycle_log_time,
-                    "virtual_organization": item.virtual_organization,
-                    "instance_name": item.instance_name,
-                });
+                let json = item_to_json(&item);
                 println!("{json}");
             }
             Ok(d) => anyhow::bail!("Unexpected item: {d:#?}"),

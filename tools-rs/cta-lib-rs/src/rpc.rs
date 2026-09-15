@@ -70,6 +70,27 @@ pub enum Error {
     /// The configured endpoint is not a valid gRPC URI.
     #[error("Invalid URI: {0}")]
     InvalidURI(String),
+    /// The endpoint URL uses a scheme this crate cannot connect to.
+    #[error("Unrecognized scheme: {0}. Use either 'http' or 'https'")]
+    UnsupportedScheme(String),
+}
+
+/// The endpoint URL schemes [`EndpointConfig::build_channel`] can connect to
+pub const SUPPORTED_SCHEMES: [&str; 2] = ["http", "https"];
+
+/// Checks that `endpoint` carries a scheme this crate can connect to.
+/// # Errors
+///
+/// Returns [`Error::UnsupportedScheme`] for anything outside
+/// [`SUPPORTED_SCHEMES`].
+pub fn validate_scheme(endpoint: &Url) -> Result<(), Error> {
+    let scheme = endpoint.scheme();
+
+    if SUPPORTED_SCHEMES.contains(&scheme) {
+        Ok(())
+    } else {
+        Err(Error::UnsupportedScheme(scheme.to_string()))
+    }
 }
 
 impl EndpointConfig {
@@ -95,10 +116,13 @@ impl EndpointConfig {
     ///
     /// # Errors
     ///
-    /// Returns [`Error::InvalidURI`] if the endpoint cannot be used as a gRPC
-    /// URI, [`Error::IO`] if the CA bundle cannot be read and
+    /// Returns [`Error::UnsupportedScheme`] if the endpoint scheme is not one
+    /// of [`SUPPORTED_SCHEMES`], [`Error::InvalidURI`] if the endpoint cannot
+    /// be used as a gRPC URI, [`Error::IO`] if the CA bundle cannot be read and
     /// [`Error::Transport`] if TLS setup or the connection itself fails.
     pub async fn build_channel(&self) -> Result<Channel, Error> {
+        // Only `http` is plaintext; every other supported scheme gets TLS.
+        validate_scheme(&self.endpoint)?;
         let insecure = self.endpoint.scheme() == "http";
 
         let endpoint = Channel::from_shared(self.endpoint.to_string())
@@ -136,19 +160,20 @@ pub struct AuthorizationInterceptor {
 impl AuthorizationInterceptor {
     /// Pre-renders the authorization header from the given credentials.
     ///
-    /// # Panics
+    /// # Errors
     ///
-    /// Panics if the token is not valid UTF-8 or cannot be represented as an
-    /// ASCII metadata value.
-    pub fn new(auth: crate::rpc::JwtAuth) -> Self {
-        let token: MetadataValue<_> = format!(
-            "Bearer {}",
-            str::from_utf8(&auth.token).expect("Token is not valid UTF-8")
-        )
-        .parse()
-        .expect("Token is not valid metadata");
+    /// Returns [`Error::CorruptedToken`] if the token is not valid UTF-8, and
+    /// [`Error::InvalidMetadata`] if it cannot be represented as an ASCII
+    /// metadata value (for example because it contains a line break).
+    pub fn new(auth: crate::rpc::JwtAuth) -> Result<Self, Error> {
+        let token = str::from_utf8(&auth.token)
+            .map_err(|e| Error::CorruptedToken(format!("token is not valid UTF-8: {e}")))?;
 
-        Self { token }
+        let token: MetadataValue<_> = format!("Bearer {token}")
+            .parse()
+            .map_err(Error::InvalidMetadata)?;
+
+        Ok(Self { token })
     }
 }
 
@@ -177,7 +202,8 @@ mod tests {
     #[test]
     fn interceptor_adds_a_bearer_authorization_header() {
         let mut interceptor =
-            AuthorizationInterceptor::new(JwtAuth::new(b"a.token.value".to_vec()));
+            AuthorizationInterceptor::new(JwtAuth::new(b"a.token.value".to_vec()))
+                .expect("a plain token should be accepted");
 
         let request = interceptor
             .call(tonic::Request::new(()))
@@ -193,15 +219,62 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Token is not valid UTF-8")]
     fn interceptor_rejects_a_non_utf8_token() {
-        let _ = AuthorizationInterceptor::new(JwtAuth::new(vec![0xff, 0xfe]));
+        let error = AuthorizationInterceptor::new(JwtAuth::new(vec![0xff, 0xfe]))
+            .err()
+            .expect("a non-UTF-8 token should be rejected");
+
+        assert!(
+            matches!(error, Error::CorruptedToken(_)),
+            "expected a CorruptedToken error, got {error:?}"
+        );
     }
 
     #[test]
-    #[should_panic(expected = "Token is not valid metadata")]
     fn interceptor_rejects_a_token_with_control_characters() {
-        let _ = AuthorizationInterceptor::new(JwtAuth::new(b"line\nbreak".to_vec()));
+        let error = AuthorizationInterceptor::new(JwtAuth::new(b"line\nbreak".to_vec()))
+            .err()
+            .expect("a token with a line break should be rejected");
+
+        assert!(
+            matches!(error, Error::InvalidMetadata(_)),
+            "expected an InvalidMetadata error, got {error:?}"
+        );
+    }
+
+    #[test]
+    fn validate_scheme_accepts_http_and_https() {
+        for scheme in SUPPORTED_SCHEMES {
+            let url = Url::parse(&format!("{scheme}://frontend.example.org:17017")).unwrap();
+            assert!(validate_scheme(&url).is_ok(), "{scheme} should be accepted");
+        }
+    }
+
+    #[test]
+    fn validate_scheme_rejects_anything_else() {
+        for endpoint in ["grpc://frontend.example.org", "file:///tmp/socket"] {
+            let url = Url::parse(endpoint).unwrap();
+            let error = validate_scheme(&url).expect_err("{endpoint} should be rejected");
+
+            assert!(
+                matches!(error, Error::UnsupportedScheme(_)),
+                "expected an UnsupportedScheme error, got {error:?}"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn build_channel_rejects_an_unsupported_scheme() {
+        // Must fail on the scheme rather than silently attempting TLS.
+        let error = config("grpc://frontend.example.org:17017")
+            .build_channel()
+            .await
+            .expect_err("an unsupported scheme should be an error");
+
+        assert!(
+            matches!(error, Error::UnsupportedScheme(ref s) if s == "grpc"),
+            "expected an UnsupportedScheme error, got {error:?}"
+        );
     }
 
     #[tokio::test]

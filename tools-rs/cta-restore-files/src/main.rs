@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #![doc = include_str!("../README.md")]
-#![feature(gethostname)]
-#![feature(iter_array_chunks)]
 #![warn(missing_docs)]
 
 mod cli;
@@ -12,12 +10,12 @@ mod eos;
 mod output;
 mod parse;
 
-use std::{fs, net::hostname, process::exit};
+use std::process::exit;
 
 use clap::Parser;
 use cta_lib::{
     eos::EosEndpointMap,
-    rpc::{EndpointConfig, JwtAuth},
+    rpc::{self, EndpointConfig, JwtAuth},
 };
 use cta_protobuf::cta::admin::RecycleTapeFileLsItem;
 
@@ -102,26 +100,28 @@ async fn main() {
     env_logger::init();
 
     let args = cli::Cli::parse();
-    let scheme = args.cta_frontend_endpoint.scheme();
 
-    if !["http", "https"].contains(&scheme) {
-        eprintln!("Scheme '{scheme}' is not recognized. Use 'http' or 'https'");
+    if let Err(e) = rpc::validate_scheme(&args.cta_frontend_endpoint) {
+        eprintln!("Invalid CTA frontend endpoint: {e}");
         std::process::exit(1);
     }
 
+    let jwt_token = tokio::fs::read(&args.jwt_token_file)
+        .await
+        .unwrap_or_else(|e| {
+            eprintln!(
+                "Error reading JWT token file '{}': {e}",
+                args.jwt_token_file.to_string_lossy()
+            );
+            std::process::exit(1);
+        });
+
     let cta_config = EndpointConfig::new(
         args.cta_frontend_endpoint.clone(),
-        JwtAuth::new(fs::read(&args.jwt_token_file).unwrap_or_else(|_| {
-            panic!(
-                "Can't open file '{}'",
-                args.jwt_token_file.to_string_lossy()
-            )
-        })),
+        JwtAuth::new(jwt_token),
         args.ca_cert_bundle.as_ref().map(|v| v.into()),
         args.alternative_cta_hostname.clone(),
     );
-
-    let _hostname = hostname().unwrap_or("<unknown>".into());
 
     let endpoint_map = parse::set_namespace_map(
         cta_config.ca_cert_bundle.clone(),

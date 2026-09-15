@@ -34,11 +34,10 @@ impl CtaEndpoint {
     ///
     /// The return value depends on `output_format`:
     ///
-    /// * [`OutputFormat::None`] — nothing is printed and the collected items
-    ///   are returned as `Some(items)`, for further processing by the `restore`
-    ///   subcommand.
+    /// * [`OutputFormat::None`] — nothing is printed; the collected items
+    ///   are returned as `Some(items)` for processing by the `restore` subcommand.
     /// * [`OutputFormat::Table`] / [`OutputFormat::Json`] — the items are
-    ///   streamed to stdout as they arrive and `None` is returned.
+    ///   rendered to stdout and `None` is returned.
     ///
     /// # Errors
     ///
@@ -54,6 +53,7 @@ impl CtaEndpoint {
         copy_number: Option<u64>,
         file_ids: Option<Vec<String>>,
     ) -> Result<Option<Vec<RecycleTapeFileLsItem>>, anyhow::Error> {
+        // Build command with filters
         let mut cmd = AdminCmd::default();
         cmd.set_cmd(admin_cmd::Cmd::Recycletapefile);
         cmd.set_subcmd(admin_cmd::SubCmd::SubcmdLs);
@@ -93,32 +93,37 @@ impl CtaEndpoint {
             });
         }
 
+        // Print header for table output
         if let OutputFormat::Table = output_format {
             println!("Listing deleted files in CTA Catalogue:");
         }
 
+        // Execute command and get stream
         let mut client = CtaGrpcClient::new_streaming(&self.config).await?;
         let mut response_stream = client.admin_cmd(cmd).await?;
         let mut iter = response_stream.stream_response();
 
+        // Process stream based on output format (collection vs rendering)
         match output_format {
             OutputFormat::None => {
-                let iter: Result<Vec<_>, _> = iter.collect().await;
-                Ok(Some(
-                    iter?
-                        .into_iter()
-                        .filter_map(|e| match e {
-                            Data::RtflsItem(item) => Some(item),
-                            _ => None,
-                        })
-                        .collect(),
-                ))
+                // Collect all items and return for further processing
+                let mut items = Vec::new();
+                while let Some(res) = iter.next().await {
+                    match res {
+                        Ok(Data::RtflsItem(item)) => items.push(item),
+                        Ok(other) => anyhow::bail!("Unexpected item in stream: {other:#?}"),
+                        Err(e) => anyhow::bail!("Stream error: {e:#?}"),
+                    }
+                }
+                Ok(Some(items))
             }
             OutputFormat::Json => {
+                // Stream items directly to JSON output
                 output_as_json(&mut iter).await?;
                 Ok(None)
             }
             OutputFormat::Table => {
+                // Stream items directly to table output
                 output_as_table(&mut iter).await?;
                 Ok(None)
             }

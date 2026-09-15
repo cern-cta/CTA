@@ -66,10 +66,10 @@ pub enum Error {
     #[error("Disk instance '{0}' not found")]
     DiskInstanceNotFound(String),
     /// The connection to the EOS endpoint could not be established.
-    #[error("RPC Error: {0}")]
+    #[error("gRPC Connection Error: {0}")]
     Rpc(rpc::Error),
     /// EOS returned an error status for the call.
-    #[error("RPC Error: {0}")]
+    #[error("gRPC Status Error: {0}")]
     Tonic(tonic::Status),
     /// A numeric identifier could not be parsed from its string form.
     #[error("Error parsing '{0}': {1}")]
@@ -88,9 +88,6 @@ pub enum Error {
     /// parent container left to create.
     #[error("Root container reached")]
     RootContainerReached,
-    /// A file entry lacks the checksum required to recreate it.
-    #[error("Checksum missing in file '{0}'")]
-    ChecksumMissing(String),
     /// Invalid file/container path
     #[error("Invalid path: {0}")]
     InvalidPath(String),
@@ -122,13 +119,13 @@ impl EosGrpcClient {
     ///
     /// # Errors
     ///
-    /// Propagates the connection errors of
-    /// [`EndpointConfig::build_channel`].
+    /// Propagates the connection errors of [`EndpointConfig::build_channel`]
+    /// and the token errors of [`AuthorizationInterceptor::new`].
     pub async fn new(config: &EndpointConfig) -> Result<Self, rpc::Error> {
         let channel = config.build_channel().await?;
         let client = EosClient::new(InterceptedService::new(
             channel,
-            AuthorizationInterceptor::new(config.authentication.clone()),
+            AuthorizationInterceptor::new(config.authentication.clone())?,
         ));
         Ok(Self {
             _inner: client,
@@ -148,7 +145,7 @@ impl EosGrpcClient {
     async fn get_metadata(&mut self, r#type: Type, id: MdId) -> Result<MdResponse, Error> {
         log::debug!("Retrieving EOS metadata for file {id:?}");
 
-        let mut response_stream = self
+        let response_stream = self
             ._inner
             .md(with_auth_key_from!(
                 self.authentication,
@@ -163,9 +160,7 @@ impl EosGrpcClient {
             .map_err(Error::Tonic)?
             .into_inner();
 
-        let stream = response_stream.stream_response();
-
-        let res = stream
+        let res = response_stream
             .collect::<Result<Vec<_>, _>>()
             .await
             .map_err(Error::Tonic)?;
@@ -530,6 +525,10 @@ impl EosEndpointMap {
     endpoint_method!(get_file_disk_id_by_path, (path: &str) => u64);
     endpoint_method!(get_current_ids, () => (u64, u64));
     endpoint_method!(check_file_exists_by_disk_id, (disk_file_id: &str) => bool);
+    endpoint_method!(get_container_metadata, (id: MdId) => ContainerMdProto);
+    endpoint_method!(get_container_disk_id_by_path, (path: &str) => u64);
+    endpoint_method!(add_container, (path: &str, storage_class: &str, create_parents: bool, file_mode: Option<Mode>) => u64);
+    endpoint_method!(insert_files, (files: &[FileMdProto]) => InsertReply);
 }
 
 impl From<HashMap<String, EndpointConfig>> for EosEndpointMap {

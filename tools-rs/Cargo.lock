@@ -276,13 +276,10 @@ dependencies = [
  "env_logger",
  "eos-protobuf",
  "log",
- "prost",
  "serde_json",
  "thiserror",
  "tokio",
  "tokio-stream",
- "tonic",
- "tonic-prost",
  "url",
 ]
 
