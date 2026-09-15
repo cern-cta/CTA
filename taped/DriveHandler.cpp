@@ -8,6 +8,7 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
+#include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/TimeoutException.hpp"
 #include "common/semconv/Logging.hpp"
@@ -75,13 +76,13 @@ void DriveHandler::stop() {
 }
 
 void DriveHandler::waitForDriveToBeUp() {
+  m_lc.log(log::INFO, "Waiting for the desired drive state to become up.");
   // TODO: graceful shutdown (separate MR)
   while (true) {
     try {
-      m_lc.log(log::DEBUG, "Transition from down to up starting.");
       auto desiredState = m_scheduler->getDesiredDriveState(m_config.drive.name, m_lc);
       if (!desiredState.up) {
-        m_lc.log(log::DEBUG, "Desired drive state is NOT UP, setting it DOWN");
+        m_lc.log(log::DEBUG, "Desired drive state is down. Refreshing the reported down status.");
         // Refresh the status to trigger the timeout update
         m_scheduler->reportDriveStatus(m_driveInfo,
                                        common::dataStructures::MountType::NoMount,
@@ -92,57 +93,159 @@ void DriveHandler::waitForDriveToBeUp() {
         // TODO: Ensure graceful shutdown can interrupt this sleep
         sleep(m_config.mounts.drive_state_poll_interval_secs);
       } else {
-        m_lc.log(log::DEBUG, "Desired drive state is UP.");
+        m_lc.log(log::INFO, "Desired drive state is up. Proceeding with drive probing.");
         break;
       }
-    } catch (Scheduler::NoSuchDrive& e) {
-      // The scheduler does not even know about this drive. We will report our state
-      // (default status is down).
-      putDriveDown(e.getMessageValue());
-      // TODO
+    } catch (Scheduler::NoSuchDrive&) {
+      m_lc.log(log::WARNING, "Drive is missing from the catalogue. Attempting to register it as down.");
+      if (!registerDrive(false)) {
+        m_lc.log(log::CRIT, "Failed to register the missing drive. Cannot continue waiting for it to become up.");
+        throw exception::Exception("In DriveHandler::waitForDriveToBeUp(): failed to register the missing drive");
+      }
+      m_lc.log(log::INFO, "Missing drive registered as down. Waiting for the desired drive state to become up.");
+      sleep(m_config.mounts.drive_state_poll_interval_secs);
     }
   }
 }
 
 void DriveHandler::putDriveDown(std::string_view errorMsg) {
   m_lc.logEvent(log::ERR, errorMsg, semconv::log::EventNameValues::kPuttingTapeDriveDown);
-  try {
-    m_scheduler->reportDriveStatus(m_driveInfo,
-                                   common::dataStructures::MountType::NoMount,
-                                   common::dataStructures::DriveStatus::Down,
-                                   m_lc);
-    common::dataStructures::DesiredDriveState driveState;
-    driveState.up = false;
-    driveState.forceDown = false;
-    driveState.setReasonFromLogMsg(log::ERR, errorMsg);
-    m_scheduler->setDesiredDriveState(m_config.drive.name, driveState, m_lc);
-  } catch (exception::Exception& ex) {
-    // TODO: we probably need a separate exception for this so that we can handle this
-    // This is not recoverable
-    log::ScopedParamContainer param(m_lc);
-    param.add(semconv::log::exceptionMessage, ex.getMessageValue());
-    m_lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set the drive down. Reporting fatal error.");
-    // TODO: state reporting?
-    // driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
-    sleep(1);
-  }
+  m_scheduler->reportDriveStatus(m_driveInfo,
+                                 common::dataStructures::MountType::NoMount,
+                                 common::dataStructures::DriveStatus::Down,
+                                 m_lc);
+  common::dataStructures::DesiredDriveState driveState;
+  driveState.up = false;
+  driveState.forceDown = false;
+  driveState.setReasonFromLogMsg(log::ERR, errorMsg);
+  m_scheduler->setDesiredDriveState(m_config.drive.name, driveState, m_lc);
 }
 
 std::unique_ptr<TapeMount> DriveHandler::getNextMount() {
-  try {
-    // TODO: add timeout?
-    if (m_scheduler->getNextMountDryRun(m_driveInfo.logicalLibrary, m_driveInfo.driveName, m_lc)) {
-      return m_scheduler->getNextMount(m_driveInfo.logicalLibrary,
-                                       m_driveInfo.driveName,
-                                       m_lc,
-                                       static_cast<uint64_t>(m_config.mounts.get_next_mount_timeout_secs) * 1000000);
-    }
-  } catch (exception::LostDatabaseConnection&) {
-    // TODO: add retry mechanism (or wait for the DB to be up again)
-    // This should probably be consolidated with the rest of the lost DB functionality
-    m_lc.log(log::ERR, "Lost database error while scheduling new mount. Retrying.");
+  // TODO: add timeout?
+  if (m_scheduler->getNextMountDryRun(m_driveInfo.logicalLibrary, m_driveInfo.driveName, m_lc)) {
+    return m_scheduler->getNextMount(m_driveInfo.logicalLibrary,
+                                     m_driveInfo.driveName,
+                                     m_lc,
+                                     static_cast<uint64_t>(m_config.mounts.get_next_mount_timeout_secs) * 1000000);
   }
   return nullptr;
+}
+
+bool DriveHandler::registerDrive(bool putUpIfPossible) {
+  m_lc.log(log::INFO, "Registering the drive in the catalogue.");
+  if (!m_scheduler->checkDriveCanBeCreated(m_driveInfo, m_lc)) {
+    m_lc.log(log::CRIT, "Cannot register the drive: its name belongs to a different host or logical library.");
+    return false;
+  }
+
+  common::dataStructures::DesiredDriveState currentDesiredDriveState;
+  try {
+    currentDesiredDriveState = m_scheduler->getDesiredDriveState(m_driveInfo.driveName, m_lc);
+  } catch (Scheduler::NoSuchDrive&) {
+    m_lc.log(log::INFO, "Drive has no existing catalogue entry. Creating one.");
+  }
+
+  common::dataStructures::DesiredDriveState driveState;
+  driveState.comment = currentDesiredDriveState.comment;
+  // TODO: make a central place for these down reasons and remove this fromLog stuff; it's ugly
+  const auto cleanExitReason =
+    common::dataStructures::DesiredDriveState::generateReasonFromLogMsg(log::ERR, "Exiting cta-taped");
+
+  // Replace absent or clean-exit reasons with the startup reason. Preserve other reasons for being down.
+  if (!currentDesiredDriveState.reason || *currentDesiredDriveState.reason == cleanExitReason
+      || *currentDesiredDriveState.reason == "[cta-taped] Exiting cta-taped") {
+    driveState.reason = "[cta-taped] Startup";
+    driveState.up = putUpIfPossible;
+  } else {
+    driveState.reason = currentDesiredDriveState.reason;
+  }
+
+  common::dataStructures::SecurityIdentity securityIdentity;
+  m_scheduler->createTapeDriveStatus(m_driveInfo,
+                                     driveState,
+                                     common::dataStructures::MountType::NoMount,
+                                     common::dataStructures::DriveStatus::Down,
+                                     securityIdentity,
+                                     m_lc);
+  m_scheduler->reportSchedulerBackendName(m_driveInfo.driveName, m_lc);
+  m_lc.log(log::INFO,
+           "Drive registered with reported status down and desired state "
+             + std::string(driveState.up ? "up." : "down."));
+  return true;
+}
+
+bool DriveHandler::executeDataTransferSession(TapeMount& tapeMount) {
+  if (m_tapeSessionTracker.mount() != &tapeMount) {
+    throw exception::Exception(
+      "In DriveHandler::executeDataTransferSession(): tracker does not reference the supplied tape mount");
+  }
+
+  // TODO: this should eventually rely only on transfer config
+  // Anything that needs something non-transfer related should probably be extracted out of data transfer session
+  DataTransferConfig dataTransferConfig;
+  dataTransferConfig.bufsz = m_config.transfers.buffer_size_bytes;
+  dataTransferConfig.bulkRequestMigrationMaxBytes = m_config.transfers.archive.fetch_max_bytes;
+  dataTransferConfig.bulkRequestMigrationMaxFiles = m_config.transfers.archive.fetch_max_files;
+  dataTransferConfig.archiveDismountPolicy.set(m_config.transfers.archive.underfill.watch_period_secs,
+                                               m_config.transfers.archive.underfill.minimum_samples,
+                                               m_config.transfers.archive.underfill.start_threshold_percent,
+                                               m_config.transfers.archive.underfill.recovery_threshold_percent);
+  dataTransferConfig.bulkRequestRecallMaxBytes = m_config.transfers.retrieve.fetch_max_bytes;
+  dataTransferConfig.bulkRequestRecallMaxFiles = m_config.transfers.retrieve.fetch_max_files;
+  dataTransferConfig.maxBytesBeforeFlush = m_config.transfers.archive.flush_max_bytes;
+  dataTransferConfig.maxFilesBeforeFlush = m_config.transfers.archive.flush_max_files;
+  dataTransferConfig.nbBufs = m_config.transfers.buffer_count;
+  dataTransferConfig.nbDiskThreads = m_config.transfers.disk_io_threads;
+  dataTransferConfig.useLbp = true;
+  dataTransferConfig.useRAO = m_config.transfers.retrieve.rao.enabled;
+  dataTransferConfig.raoLtoAlgorithm = m_config.transfers.retrieve.rao.lto_algorithm;
+  dataTransferConfig.raoLtoAlgorithmOptions = "cost_heuristic_name:cta";  // Only option available
+  dataTransferConfig.externalFreeDiskSpaceScript = m_config.transfers.retrieve.external_free_disk_space_script;
+  dataTransferConfig.tapeLoadTimeout = m_config.mounts.tape_load_timeout_secs;
+  dataTransferConfig.xrootTimeout = 0;
+  dataTransferConfig.useEncryption = m_config.transfers.encryption.enabled;
+  dataTransferConfig.externalEncryptionKeyScript = m_config.transfers.encryption.external_key_script;
+  dataTransferConfig.wdNoBlockMoveMaxSecs = m_config.transfers.no_block_move_timeout_secs;
+
+  DataTransferSession dataTransferSession(utils::getShortHostname(),
+                                          m_lc.logger(),
+                                          m_sysWrapper,
+                                          m_driveInfo,
+                                          m_mediaChanger,
+                                          tapeMount,
+                                          m_tapeSessionTracker,
+                                          dataTransferConfig,
+                                          *m_scheduler);
+  // This is hacky; this whole end of session action stuff should be ripped out
+  return dataTransferSession.execute() == Session::EndOfSessionAction::MARK_DRIVE_AS_UP;
+}
+
+bool DriveHandler::executeCleanerSession(const std::optional<std::string>& vid, bool waitMediaInDrive) {
+  CleanerSession cleanerSession(m_mediaChanger,
+                                m_lc.logger(),
+                                m_driveInfo,
+                                m_sysWrapper,
+                                vid.value_or(""),
+                                waitMediaInDrive,
+                                m_config.mounts.tape_load_timeout_secs,
+                                *m_catalogue,
+                                *m_scheduler);
+
+  // This is hacky; this whole end of session action stuff should be ripped out
+  return cleanerSession.execute() == Session::EndOfSessionAction::MARK_DRIVE_AS_UP;
+}
+
+bool DriveHandler::isLive() const {
+  // TODO: look into the timeouts and see if we have spent too much time in any given state
+  // We don't ping the catalogue/scheduler here as that would just result in cascading failures
+  // A restart won't fix things
+  return true;
+}
+
+bool DriveHandler::isReady() const {
+  // TODO ping catalogue and scheduler
+  return true;
 }
 
 // TODO: handle lost database connections cleanly. No need to crash the whole thing on those
@@ -242,8 +345,8 @@ int DriveHandler::run() {
     // TODO: if no mount is available, wait and continue instead of treating nullptr as a transfer failure.
     // Now that we have a mount, execute the data transfer session
     // TODO: handle non-database transfer exceptions too, setting drive state and handling cleanup.
-    bool success = tapeMount != nullptr && executeDataTransferSession(*tapeMount);
-    if (!success) {
+    bool driveCanRemainUp = tapeMount != nullptr && executeDataTransferSession(*tapeMount);
+    if (!driveCanRemainUp) {
       // TODO: we need a better reason here
       putDriveDown("Data transfer session failed");
       // After this, the loop will continue by waiting to be up again
@@ -255,131 +358,9 @@ int DriveHandler::run() {
   executeCleanerSession();
   // Put the drive down
   // TODO: this is not correct, because it may already be down
-  putDriveDown("[cta-taped] Exiting cta-taped");
+  putDriveDown("Exiting cta-taped");
   // TODO: correct exit code
   return 0;
 }
 
-bool DriveHandler::registerDrive(bool putUpIfPossible) {
-  // TODO: I don't think this method works correctly
-  if (!m_scheduler->checkDriveCanBeCreated(m_driveInfo, m_lc)) {
-    // TODO: log message?
-    return false;
-  }
-
-  cta::common::dataStructures::DesiredDriveState currentDesiredDriveState;
-  try {
-    currentDesiredDriveState = m_scheduler->getDesiredDriveState(m_driveInfo.driveName, m_lc);
-  } catch (Scheduler::NoSuchDrive&) {
-    m_lc.log(log::INFO, "In DriveHandler::runChild(): the desired drive state doesn't exist in the Catalogue DB");
-  }
-
-  cta::common::dataStructures::SecurityIdentity securityIdentity;
-  cta::common::dataStructures::DesiredDriveState driveState;
-  driveState.up = false;
-  driveState.forceDown = false;
-  m_scheduler->createTapeDriveStatus(m_driveInfo,
-                                     driveState,
-                                     cta::common::dataStructures::MountType::NoMount,
-                                     cta::common::dataStructures::DriveStatus::Down,
-                                     securityIdentity,
-                                     m_lc);
-
-  // This is not the same as the previous reason; should we rethink those reasons?
-  std::string startupReason = "[cta-taped] Startup";
-
-  // If there was no previous reason or if the previous reason was a clean exit,
-
-  // Get the drive state to see if there is a reason or not, we don't want to change the reason
-  // why a drive is down at the startup of taped. If it's setted up a previous Reason From Log
-  // it will be change for this one.
-  // TODO: fix the clean-exit comparison; an 11-character substring cannot match the full exit reason.
-  if (!currentDesiredDriveState.reason
-      || currentDesiredDriveState.reason.value().substr(0, 11) == "[cta-taped] Exiting cta-taped") {
-    // If there is no
-    driveState.reason = startupReason;
-    if (putUpIfPossible) {
-      // In these cases we could safely put the drive up
-      driveState.up = true;
-    }
-  } else {
-    // In all other cases, we keep the same reason as before and we put the drive down
-    driveState.reason = currentDesiredDriveState.reason.value();
-  }
-
-  m_scheduler->setDesiredDriveState(m_driveInfo.driveName, driveState, m_lc);
-  m_scheduler->reportSchedulerBackendName(m_driveInfo.driveName, m_lc);
-  return true;
-  // TODO: catch exception?
-}
-
-bool DriveHandler::executeDataTransferSession(TapeMount& tapeMount) {
-  // TODO: this should eventually rely only on transfer config
-  // Anything that needs something non-transfer related should probably be extracted out of data transfer session
-  DataTransferConfig dataTransferConfig;
-  dataTransferConfig.bufsz = m_config.transfers.buffer_size_bytes;
-  dataTransferConfig.bulkRequestMigrationMaxBytes = m_config.transfers.archive.fetch_max_bytes;
-  dataTransferConfig.bulkRequestMigrationMaxFiles = m_config.transfers.archive.fetch_max_files;
-  dataTransferConfig.archiveDismountPolicy.set(m_config.transfers.archive.underfill.watch_period_secs,
-                                               m_config.transfers.archive.underfill.minimum_samples,
-                                               m_config.transfers.archive.underfill.start_threshold_percent,
-                                               m_config.transfers.archive.underfill.recovery_threshold_percent);
-  dataTransferConfig.bulkRequestRecallMaxBytes = m_config.transfers.retrieve.fetch_max_bytes;
-  dataTransferConfig.bulkRequestRecallMaxFiles = m_config.transfers.retrieve.fetch_max_files;
-  dataTransferConfig.maxBytesBeforeFlush = m_config.transfers.archive.flush_max_bytes;
-  dataTransferConfig.maxFilesBeforeFlush = m_config.transfers.archive.flush_max_files;
-  dataTransferConfig.nbBufs = m_config.transfers.buffer_count;
-  dataTransferConfig.nbDiskThreads = m_config.transfers.disk_io_threads;
-  dataTransferConfig.useLbp = true;
-  dataTransferConfig.useRAO = m_config.transfers.retrieve.rao.enabled;
-  dataTransferConfig.raoLtoAlgorithm = m_config.transfers.retrieve.rao.lto_algorithm;
-  dataTransferConfig.raoLtoAlgorithmOptions = "cost_heuristic_name:cta";  // Only option available
-  dataTransferConfig.externalFreeDiskSpaceScript = m_config.transfers.retrieve.external_free_disk_space_script;
-  dataTransferConfig.tapeLoadTimeout = m_config.mounts.tape_load_timeout_secs;
-  dataTransferConfig.xrootTimeout = 0;
-  dataTransferConfig.useEncryption = m_config.transfers.encryption.enabled;
-  dataTransferConfig.externalEncryptionKeyScript = m_config.transfers.encryption.external_key_script;
-  dataTransferConfig.wdIdleSessionTimer = m_config.mounts.idle_scheduling_interval_secs;
-  dataTransferConfig.driveStatePollIntervalSecs = m_config.mounts.drive_state_poll_interval_secs;
-  dataTransferConfig.wdGetNextMountMaxSecs = m_config.mounts.get_next_mount_timeout_secs;
-  dataTransferConfig.wdNoBlockMoveMaxSecs = m_config.transfers.no_block_move_timeout_secs;
-
-  DataTransferSession dataTransferSession(utils::getShortHostname(),
-                                          m_lc.logger(),
-                                          m_sysWrapper,
-                                          m_driveInfo,
-                                          m_mediaChanger,
-                                          tapeMount,
-                                          m_tapeSessionTracker,
-                                          dataTransferConfig,
-                                          *m_scheduler);
-  // This is hacky; this whole end of session action stuff should be ripped out
-  return dataTransferSession.execute() == Session::EndOfSessionAction::MARK_DRIVE_AS_UP;
-}
-
-void DriveHandler::executeCleanerSession(const std::optional<std::string>& vid) {
-  const auto cleanerSession = std::make_unique<CleanerSession>(m_mediaChanger,
-                                                               m_lc.logger(),
-                                                               m_driveInfo,
-                                                               m_sysWrapper,
-                                                               vid.value_or(""),
-                                                               true,
-                                                               m_config.mounts.tape_load_timeout_secs,
-                                                               *m_catalogue,
-                                                               *m_scheduler);
-
-  cleanerSession->execute();
-}
-
-bool DriveHandler::isLive() const {
-  // TODO: look into the timeouts and see if we have spent too much time in any given state
-  // We don't ping the catalogue/scheduler here as that would just result in cascading failures
-  // A restart won't fix things
-  return true;
-}
-
-bool DriveHandler::isReady() const {
-  // TODO ping catalogue and scheduler
-  return true;
-}
 }  // namespace cta::tape::daemon

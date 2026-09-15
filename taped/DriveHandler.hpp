@@ -47,7 +47,7 @@ private:
   void waitForDriveToBeUp();
   void putDriveDown(std::string_view errorMsg);
   bool executeDataTransferSession(TapeMount& tapeMount);
-  void executeCleanerSession(const std::optional<std::string>& vid = std::nullopt);
+  bool executeCleanerSession(const std::optional<std::string>& vid = std::nullopt, bool waitMediaInDrive = true);
   std::unique_ptr<TapeMount> getNextMount();
 
   std::stop_source m_stopSource;

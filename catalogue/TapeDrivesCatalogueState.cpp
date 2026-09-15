@@ -41,21 +41,15 @@ void TapeDrivesCatalogueState::createTapeDriveStatus(const common::dataStructure
 }
 
 void TapeDrivesCatalogueState::checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo& driveInfo) const {
-  const auto driveNames = m_catalogue.DriveState()->getTapeDriveNames();
-  try {
-    const auto tapeDrive = m_catalogue.DriveState()->getTapeDrive(driveInfo.driveName);
-    if (!tapeDrive) {
-      return;  // tape drive does not exist
-    }
-    if (tapeDrive.value().logicalLibrary != driveInfo.logicalLibrary || tapeDrive.value().host != driveInfo.host) {
-      throw DriveAlreadyExistsException(
-        std::string("The drive name=") + driveInfo.driveName + " logicalLibrary=" + driveInfo.logicalLibrary
-        + " host=" + driveInfo.host + " cannot be created because a drive with a same name with logicalLibrary="
-        + tapeDrive.value().logicalLibrary + " host=" + tapeDrive.value().host + " already exists.");
-    }
-  } catch (cta::exception::Exception&) {
-    // Drive does not exist
-    // We can create it, do nothing then
+  const auto tapeDrive = m_catalogue.DriveState()->getTapeDrive(driveInfo.driveName);
+  if (!tapeDrive) {
+    return;
+  }
+  if (tapeDrive.value().logicalLibrary != driveInfo.logicalLibrary || tapeDrive.value().host != driveInfo.host) {
+    throw DriveAlreadyExistsException(
+      std::string("The drive name=") + driveInfo.driveName + " logicalLibrary=" + driveInfo.logicalLibrary
+      + " host=" + driveInfo.host + " cannot be created because a drive with a same name with logicalLibrary="
+      + tapeDrive.value().logicalLibrary + " host=" + tapeDrive.value().host + " already exists.");
   }
 }
 
