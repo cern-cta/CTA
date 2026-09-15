@@ -286,6 +286,7 @@ public:
 
 private:
   mutable std::mutex m_mutex;
+  // TODO: can we have something that is not a raw pointer here?
   cta::TapeMount* m_mount = nullptr;
 
   cta::tape::session::SessionState m_state = cta::tape::session::SessionState::StartingUp;

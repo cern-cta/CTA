@@ -21,10 +21,23 @@
 #include "session/Session.hpp"
 
 #include <algorithm>
+#include <exception>
 #include <unistd.h>
 #include <utility>
 
 namespace cta::tape::daemon {
+
+namespace {
+void logDriveFailure(log::LogContext& lc, const char* message, const std::exception& ex) {
+  log::ScopedParamContainer params(lc);
+  if (const auto* ctaException = dynamic_cast<const exception::Exception*>(&ex)) {
+    params.add(semconv::log::exceptionMessage, ctaException->getMessageValue());
+  } else {
+    params.add(semconv::log::exceptionMessage, ex.what());
+  }
+  lc.log(log::ERR, message);
+}
+}  // namespace
 
 DriveHandler::DriveHandler(const TapedConfig& config, log::Logger& log)
     : m_config(config),
@@ -139,20 +152,60 @@ void DriveHandler::waitForDriveToBeUp() {
   }
 }
 
-void DriveHandler::putDriveDown(common::dataStructures::DriveDownReason reason, std::string_view detail) {
-  const auto errorMsg = common::dataStructures::formatDriveDownReason(reason, detail);
-  m_lc.logEvent(common::dataStructures::driveDownReasonSeverity(reason),
-                errorMsg,
-                semconv::log::EventNameValues::kPuttingTapeDriveDown);
-  m_scheduler->reportDriveStatus(m_driveInfo,
-                                 common::dataStructures::MountType::NoMount,
-                                 common::dataStructures::DriveStatus::Down,
-                                 m_lc);
+void DriveHandler::putDriveDown(common::dataStructures::DriveDownReason reason,
+                                std::string_view detail,
+                                bool preserveExistingReason) {
   common::dataStructures::DesiredDriveState driveState;
-  driveState.up = false;
-  driveState.forceDown = false;
-  driveState.reason = errorMsg;
-  m_scheduler->setDesiredDriveState(m_config.drive.name, driveState, m_lc);
+  driveState.reason = common::dataStructures::formatDriveDownReason(reason, detail);
+  std::exception_ptr firstFailure;
+  const auto recordFailure = [&](const char* message, const std::exception& ex) {
+    if (!firstFailure) {
+      firstFailure = std::current_exception();
+    }
+    logDriveFailure(m_lc, message, ex);
+  };
+
+  if (preserveExistingReason) {
+    try {
+      const auto currentState = m_scheduler->getDesiredDriveState(m_driveInfo.driveName, m_lc);
+      const auto startupReason =
+        common::dataStructures::formatDriveDownReason(common::dataStructures::DriveDownReason::Startup);
+      if (currentState.reason && !currentState.reason->empty() && *currentState.reason != startupReason
+          && !common::dataStructures::isCleanDriveShutdownReason(*currentState.reason)) {
+        // Leave the catalogue reason untouched, including operator and session failure reasons.
+        driveState.reason.reset();
+      }
+    } catch (const std::exception& ex) {
+      driveState.reason.reset();
+      recordFailure("Failed to read the existing drive-down reason.", ex);
+    }
+  }
+
+  if (driveState.reason) {
+    m_lc.logEvent(common::dataStructures::driveDownReasonSeverity(reason),
+                  *driveState.reason,
+                  semconv::log::EventNameValues::kPuttingTapeDriveDown);
+  }
+
+  // Failure of one publication must not prevent attempting the other.
+  try {
+    m_scheduler->reportDriveStatus(m_driveInfo,
+                                   common::dataStructures::MountType::NoMount,
+                                   common::dataStructures::DriveStatus::Down,
+                                   m_lc);
+  } catch (const std::exception& ex) {
+    recordFailure("Failed to publish the reported down status.", ex);
+  }
+
+  try {
+    m_scheduler->setDesiredDriveState(m_driveInfo.driveName, driveState, m_lc);
+  } catch (const std::exception& ex) {
+    recordFailure("Failed to publish the desired down state.", ex);
+  }
+
+  if (firstFailure) {
+    std::rethrow_exception(firstFailure);
+  }
 }
 
 std::unique_ptr<TapeMount> DriveHandler::getNextMount() {
@@ -252,10 +305,88 @@ bool DriveHandler::isReady() const {
   return true;
 }
 
+bool DriveHandler::prepareDriveForScheduling() {
+  // Honour the operator's desired state before scheduling another mount.
+  // TODO: recover a missing drive here too; this lookup can fail before waitForDriveToBeUp().
+  // TODO: handle desired-state lookup and status-publication failures at this phase boundary.
+  if (!m_scheduler->getDesiredDriveState(m_driveInfo.driveName, m_lc).up) {
+    // Wait for an up request; the helper re-registers a missing drive as down.
+    waitForDriveToBeUp();
+  }
+
+  // Verify the drive is empty before every scheduling attempt, including after transfer exceptions.
+  m_scheduler->reportDriveStatus(m_driveInfo,
+                                 common::dataStructures::MountType::NoMount,
+                                 common::dataStructures::DriveStatus::Probing,
+                                 m_lc);
+  EmptyDriveProbe emptyDriveProbe(m_lc.logger(), m_driveInfo, m_sysWrapper);
+  m_lc.log(log::DEBUG, "Checking whether the drive is empty before scheduling.");
+
+  // Automatic recovery cleaning is currently disabled.
+  // TODO (separate MR): configure automatic cleaning before probing.
+  if (false) {
+    // TODO: check the cleaner result and handle escaping exceptions before proceeding to the probe.
+    executeCleanerSession();
+  }
+
+  // A non-empty or failed probe prevents scheduling and requires another operator up request.
+  // TODO: handle probe exceptions without allowing transfers on an unverified drive.
+  if (!emptyDriveProbe.driveIsEmpty()) {
+    // TODO: distinguish a detected tape from a failed probe when reporting the drive-down reason.
+    m_lc.log(log::WARNING, "Drive probe did not confirm an empty drive. Requesting the drive down.");
+    putDriveDown(common::dataStructures::DriveDownReason::TapeDetected,
+                 emptyDriveProbe.getProbeErrorMsg().value_or(""));
+    return false;
+  }
+  m_lc.log(log::DEBUG, "No tape detected in the drive. Proceeding with scheduling.");
+
+  // Advertise an idle drive with no active mount before asking the scheduler for work.
+  m_scheduler->reportDriveStatus(m_driveInfo,
+                                 common::dataStructures::MountType::NoMount,
+                                 common::dataStructures::DriveStatus::Up,
+                                 m_lc);
+  // TODO: rip out session reporting
+  // tapeSessionReporter.reportState(::session::SessionState::Scheduling,
+  //                                 ::session::SessionType::Undetermined);
+
+  return true;
+}
+
+int DriveHandler::shutdownDrive() {
+  // Use an unknown VID; final cleanup does not depend on a surviving transfer mount.
+  int exitCode = 0;
+  bool cleaningSucceeded = false;
+
+  // Cleanup failure must not prevent attempting to publish the down state.
+  try {
+    cleaningSucceeded = executeCleanerSession();
+    if (!cleaningSucceeded) {
+      m_lc.log(log::ERR, "Final drive cleaning failed.");
+      exitCode = 1;
+    }
+  } catch (const std::exception& ex) {
+    logDriveFailure(m_lc, "Final drive cleaning threw an exception.", ex);
+    exitCode = 1;
+  }
+
+  // Preserve existing reasons; publish a clean shutdown only when cleaning succeeded.
+  try {
+    putDriveDown(cleaningSucceeded ? common::dataStructures::DriveDownReason::Shutdown :
+                                     common::dataStructures::DriveDownReason::CleanerFailed,
+                 {},
+                 true);
+  } catch (const std::exception&) {
+    // The helper has logged each failure and attempted both down-state publications.
+    exitCode = 1;
+  }
+
+  return exitCode;
+}
+
 int DriveHandler::run() {
   // TODO: handle startup exceptions separately from failures during an active session.
   // TODO: define bounded database recovery for each phase; helpers propagate operational failures.
-  // TODO: wait for catalogue and scheduler to be reachable within a reasonable timeout.
+  // TODO: wait for catalogue and scheduler to be reachable within a reasonable timeout?
 
   // Register the drive. It will put the drive down with a startup reason.
   // If the drive was already down with an existing reason, this reason will be carried over.
@@ -274,52 +405,9 @@ int DriveHandler::run() {
 
   // TODO (separate MR): stop scheduling on shutdown and reach the final cleanup below.
   while (true) {
-    // Honour the operator's desired state before scheduling another mount.
-    // TODO: recover a missing drive here too; this lookup can fail before waitForDriveToBeUp().
-    // TODO: handle desired-state lookup and status-publication failures at this phase boundary.
-    // TODO: track whether probing is required locally so an early desired-state change cannot skip it.
-    if (!m_scheduler->getDesiredDriveState(m_driveInfo.driveName, m_lc).up) {
-      // Wait for an up request; the helper re-registers a missing drive as down.
-      waitForDriveToBeUp();
-
-      // Verify the drive is empty before allowing transfers.
-
-      m_scheduler->reportDriveStatus(m_driveInfo,
-                                     common::dataStructures::MountType::NoMount,
-                                     common::dataStructures::DriveStatus::Probing,
-                                     m_lc);
-      EmptyDriveProbe emptyDriveProbe(m_lc.logger(), m_driveInfo, m_sysWrapper);
-      m_lc.log(log::DEBUG, "Transition from down to up detected. Will check if a tape is in the drive.");
-
-      // Startup recovery cleaning is currently disabled; an unknown VID lets the cleaner inspect loaded media.
-      // TODO (separate MR): configure startup cleaning before probing.
-      if (false) {
-        // TODO: check the cleaner result and handle escaping exceptions before proceeding to the probe.
-        executeCleanerSession();
-      }
-
-      // A non-empty or failed probe prevents scheduling and requires another operator up request.
-      // TODO: handle probe exceptions without allowing transfers on an unverified drive.
-      if (!emptyDriveProbe.driveIsEmpty()) {
-        // TODO: distinguish a detected tape from a failed probe when reporting the drive-down reason.
-        // TODO: log the probe outcome at warning severity.
-        putDriveDown(common::dataStructures::DriveDownReason::TapeDetected,
-                     emptyDriveProbe.getProbeErrorMsg().value_or(""));
-        // Re-enter desired-state polling after successfully requesting down.
-        continue;
-      } else {
-        m_lc.log(log::DEBUG, "No tape detected in the drive. Proceeding with scheduling.");
-      }
+    if (!prepareDriveForScheduling()) {
+      continue;
     }
-
-    // Advertise an idle drive with no active mount before asking the scheduler for work.
-    m_scheduler->reportDriveStatus(m_driveInfo,
-                                   common::dataStructures::MountType::NoMount,
-                                   common::dataStructures::DriveStatus::Up,
-                                   m_lc);
-    // TODO: rip out session reporting
-    // tapeSessionReporter.reportState(::session::SessionState::Scheduling,
-    //                                 ::session::SessionType::Undetermined);
 
     // Retain mount ownership until the transfer and its reporting threads have finished.
     std::unique_ptr<TapeMount> tapeMount;
@@ -334,52 +422,55 @@ int DriveHandler::run() {
     // Acquire work; a scheduling timeout is recoverable by waiting and trying again.
     // TODO: handle other scheduling failures separately from transfer failures.
     utils::Timer t;
+    bool schedulingTimedOut = false;
     try {
       tapeMount = getNextMount();
-      if (tapeMount != nullptr) {
-        m_tapeSessionTracker.setMount(tapeMount.get());
-      }
-    } catch (exception::TimeoutException&) {
+    } catch (const exception::TimeoutException& ex) {
+      schedulingTimedOut = true;
       log::ScopedParamContainer params(m_lc);
-      // TODO: should this be a string?
-      params.add("totalScheduleMountTime", std::to_string(t.secs()));
-      // TODO: is this really a locking issue?
-      m_lc.log(log::WARNING,
-               "Timed out while scheduling new mount. Could not acquire global scheduler lock in "
-                 + std::to_string(m_config.mounts.get_next_mount_timeout_secs) + " seconds.");
+      params.add("totalScheduleMountTime", t.secs())
+        .add("scheduleMountTimeoutSecs", m_config.mounts.get_next_mount_timeout_secs)
+        .add(semconv::log::exceptionMessage, ex.getMessageValue());
+      m_lc.log(log::WARNING, "Scheduling timed out; waiting before retrying.");
+    }
 
-      m_lc.log(log::DEBUG,
-               "No new mount found. (sleeping " + std::to_string(m_config.mounts.idle_scheduling_interval_secs)
-                 + " seconds)");
+    if (tapeMount == nullptr) {
+      if (!schedulingTimedOut) {
+        m_lc.log(log::DEBUG, "No mount available; waiting before retrying.");
+      }
       // TODO: make idle waiting responsive to desired-state changes and graceful shutdown.
       sleep(m_config.mounts.idle_scheduling_interval_secs);
       // Recheck desired state before attempting scheduling again.
       continue;
     }
 
-    // TODO: if no mount is available, wait and continue instead of treating nullptr as a transfer failure.
+    m_tapeSessionTracker.setMount(tapeMount.get());
+
     // The session result describes hardware usability, not whether every file transferred successfully.
-    // TODO: handle transfer exceptions here and establish safe hardware recovery before scheduling again.
-    // TODO: ensure session workers and reporters are joined during exception unwinding.
-    bool driveCanRemainUp = tapeMount != nullptr && executeDataTransferSession(*tapeMount);
+    // TODO: ensure DataTransferSession stops and joins workers/reporters before exceptions escape.
+    // TODO: expose the hardware cleanup outcome when a transfer exits exceptionally.
+    bool driveCanRemainUp;
+    try {
+      driveCanRemainUp = executeDataTransferSession(*tapeMount);
+    } catch (const exception::LostDatabaseConnection&) {
+      // Database recovery remains separate from software/job failure handling.
+      throw;
+    } catch (const std::exception& ex) {
+      logDriveFailure(m_lc, "Data transfer session threw an exception. Returning to scheduling.", ex);
+      // The next preparation probes for retained media before scheduling another mount.
+      continue;
+    }
+
     if (!driveCanRemainUp) {
-      // TODO: preserve more specific drive-open or cleaning reasons already recorded by the session.
-      // TODO: if putting the drive down fails, retain both the original failure and the reporting failure.
-      putDriveDown(common::dataStructures::DriveDownReason::TransferSessionFailed);
+      // Preserve specific session or operator reasons. Publication failures propagate.
+      putDriveDown(common::dataStructures::DriveDownReason::TransferSessionFailed, {}, true);
       // Require another operator up request before attempting recovery and scheduling.
     }
     // TODO (separate MR): move transfer cleaning to CleanerSession, called after every transfer here.
   }
 
-  // Final cleanup is currently unreachable because the scheduling loop never exits.
-  // Use an unknown VID; final cleanup does not depend on a surviving transfer mount.
-  // TODO: handle the cleaner result and exceptions while still attempting shutdown status publication.
-  executeCleanerSession();
-  // Publish a clean shutdown reason after cleanup.
-  // TODO: preserve an existing failure reason and account for failed cleanup.
-  putDriveDown(common::dataStructures::DriveDownReason::Shutdown);
-  // TODO: select the exit code from the shutdown and cleanup outcomes.
-  return 0;
+  // Loop-local mount ownership and the borrowed tracker reference are released before final cleaning.
+  return shutdownDrive();
 }
 
 }  // namespace cta::tape::daemon
