@@ -68,7 +68,6 @@ use std::{
 use cta_protobuf::cta::xrd::{
     StreamResponse, data::Data, response::ResponseType, stream_response::Contents,
 };
-use eos_protobuf::eos::rpc::MdResponse;
 use tokio_stream::Stream;
 use tonic::{Status, Streaming};
 
@@ -87,11 +86,20 @@ pub enum ResponseError {
 /// An iter which goes over a stream of response contents and produces the individual results.
 ///
 /// The CTA frontend sends a header frame followed by an arbitrary number of data
-/// frames. This adapter validates the header, skips framing artifacts and yields
-/// only the payloads ([`Data`]), so callers can treat an admin command like a
-/// plain stream of records.
+/// frames. This adapter enforces that the header arrives first, validates its
+/// success/failure status, skips framing artifacts and yields only the payloads
+/// ([`Data`]), so callers can treat an admin command like a plain stream of records.
+///
+/// # Protocol Invariants
+///
+/// A valid stream is always `[Header, Data*, Data*, ...]` where:
+/// - The header *must* be the first frame and *must* indicate success
+/// - Any data frames *must* follow the header
+/// - A second header is a protocol violation
+/// - A stream that ends without a header is an error
 pub struct CtaResponseIter<'t> {
     pub(crate) response: &'t mut Streaming<StreamResponse>,
+    header_seen: bool,
 }
 
 impl<'t> Stream for CtaResponseIter<'t> {
@@ -105,6 +113,13 @@ impl<'t> Stream for CtaResponseIter<'t> {
                     contents: Some(contents),
                 }))) => match contents {
                     Contents::Header(header) => {
+                        if this.header_seen {
+                            return Poll::Ready(Some(Err(ResponseError::CtaStreamError(
+                                ResponseType::RspErrUser,
+                            ))));
+                        }
+                        this.header_seen = true;
+
                         if header.r#type() != ResponseType::RspSuccess {
                             return Poll::Ready(Some(Err(ResponseError::CtaStreamError(
                                 header.r#type(),
@@ -113,18 +128,38 @@ impl<'t> Stream for CtaResponseIter<'t> {
                         // header ok, not a payload — keep polling for the real data
                     }
                     Contents::Data(data) => {
+                        if !this.header_seen {
+                            return Poll::Ready(Some(Err(ResponseError::CtaStreamError(
+                                ResponseType::RspErrUser,
+                            ))));
+                        }
+
                         if let Some(d) = data.data {
                             return Poll::Ready(Some(Ok(d)));
                         }
+                        // Skip empty data frames, keep polling
                     }
                 },
                 Poll::Ready(Some(Ok(StreamResponse { contents: None }))) => {
+                    if !this.header_seen {
+                        return Poll::Ready(Some(Err(ResponseError::CtaStreamError(
+                            ResponseType::RspErrUser,
+                        ))));
+                    }
+                    // A frame with no contents after we've seen the header means EOF.
                     return Poll::Ready(None);
                 }
                 Poll::Ready(Some(Err(e))) => {
                     return Poll::Ready(Some(Err(ResponseError::GrpcError(e))));
                 }
-                Poll::Ready(None) => return Poll::Ready(None),
+                Poll::Ready(None) => {
+                    if !this.header_seen {
+                        return Poll::Ready(Some(Err(ResponseError::CtaStreamError(
+                            ResponseType::RspErrUser,
+                        ))));
+                    }
+                    return Poll::Ready(None);
+                }
                 Poll::Pending => return Poll::Pending,
             }
         }
@@ -134,12 +169,11 @@ impl<'t> Stream for CtaResponseIter<'t> {
 /// Extension trait that turns a raw gRPC response stream into a higher-level
 /// [`Stream`] of individual items.
 ///
-/// It is implemented for the response streams of both services:
+/// It is implemented for CTA response streams:
 ///
 /// | Stream type | Adapter | Item |
 /// | ----------- | ------- | ---- |
 /// | `Streaming<StreamResponse>` | [`CtaResponseIter`] | `Result<Data, ResponseError>` |
-/// | `Streaming<MdResponse>` | [`EosResponseIter`] | `Result<MdResponse, Status>` |
 pub trait StreamResponseExt<'t, T> {
     /// Borrows the stream and wraps it in the matching adapter.
     fn stream_response(&'t mut self) -> T
@@ -152,35 +186,10 @@ impl<'t> StreamResponseExt<'t, CtaResponseIter<'t>> for Streaming<StreamResponse
     where
         CtaResponseIter<'t>: 't,
     {
-        CtaResponseIter { response: self }
-    }
-}
-
-/// A [`Stream`] over the [`MdResponse`] items of an EOS metadata query.
-pub struct EosResponseIter<'t> {
-    pub(crate) response: &'t mut Streaming<MdResponse>,
-}
-
-impl<'t> Stream for EosResponseIter<'t> {
-    type Item = Result<MdResponse, Status>;
-
-    fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        let this = self.get_mut();
-        match Pin::new(&mut *this.response).poll_next(cx) {
-            Poll::Ready(Some(Ok(md_r))) => Poll::Ready(Some(Ok(md_r))),
-            Poll::Ready(Some(Err(e))) => Poll::Ready(Some(Err(e))),
-            Poll::Ready(None) => Poll::Ready(None),
-            Poll::Pending => Poll::Pending,
+        CtaResponseIter {
+            response: self,
+            header_seen: false,
         }
-    }
-}
-
-impl<'t> StreamResponseExt<'t, EosResponseIter<'t>> for Streaming<MdResponse> {
-    fn stream_response(&'t mut self) -> EosResponseIter<'t>
-    where
-        EosResponseIter<'t>: 't,
-    {
-        EosResponseIter { response: self }
     }
 }
 
@@ -194,6 +203,7 @@ mod tests {
         admin::RecycleTapeFileLsItem,
         xrd::{Data as XrdData, Response as XrdResponse},
     };
+    use eos_protobuf::eos::rpc::MdResponse;
     use tokio_stream::StreamExt;
 
     /// A `StreamResponse` carrying just a header with the given response type.
@@ -286,10 +296,17 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn cta_stream_of_an_empty_body_terminates_immediately() {
+    async fn cta_stream_of_an_empty_body_is_an_error() {
         let mut response = streaming_response::<StreamResponse>(&[]);
 
-        assert!(response.stream_response().next().await.is_none());
+        let first = response.stream_response().next().await;
+
+        match first {
+            Some(Err(ResponseError::CtaStreamError(ResponseType::RspErrUser))) => {
+                // Correct: error for missing header
+            }
+            other => panic!("expected CtaStreamError for missing header, got {other:#?}"),
+        }
     }
 
     #[tokio::test]
@@ -309,12 +326,57 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn cta_stream_stops_at_a_frame_without_contents() {
-        // `contents: None` is the end-of-stream marker of the adapter.
+    async fn cta_stream_rejects_data_before_header() {
+        let mut response = streaming_response(&[
+            rtfls_item("V01001"), // Data first, no header
+            header(ResponseType::RspSuccess),
+        ]);
+
+        let first = response
+            .stream_response()
+            .next()
+            .await
+            .expect("stream should yield an item");
+
+        match first {
+            Err(ResponseError::CtaStreamError(ResponseType::RspErrUser)) => {
+                // Correct: error for data before header
+            }
+            other => panic!("expected CtaStreamError for data before header, got {other:#?}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn cta_stream_rejects_multiple_headers() {
         let mut response = streaming_response(&[
             header(ResponseType::RspSuccess),
-            StreamResponse { contents: None },
+            header(ResponseType::RspSuccess), // Second header
+        ]);
+
+        let _first = response.stream_response().next().await;
+
+        // First header is ok (doesn't yield)
+        let second = response
+            .stream_response()
+            .next()
+            .await
+            .expect("stream should yield an item");
+
+        match second {
+            Err(ResponseError::CtaStreamError(ResponseType::RspErrUser)) => {
+                // Correct: error for duplicate header
+            }
+            other => panic!("expected CtaStreamError for duplicate header, got {other:#?}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn cta_stream_with_valid_sequence_yields_all_data() {
+        let mut response = streaming_response(&[
+            header(ResponseType::RspSuccess),
             rtfls_item("V01001"),
+            rtfls_item("V01002"),
+            StreamResponse { contents: None }, // Proper EOF
         ]);
 
         let items: Vec<_> = response
@@ -323,7 +385,11 @@ mod tests {
             .await
             .expect("stream should succeed");
 
-        assert!(items.is_empty(), "nothing after the marker is yielded");
+        assert_eq!(
+            items.len(),
+            2,
+            "both items yielded, stream properly terminated"
+        );
     }
 
     #[tokio::test]
@@ -341,7 +407,6 @@ mod tests {
         let mut response = streaming_response(&responses);
 
         let items: Vec<_> = response
-            .stream_response()
             .collect::<Result<Vec<_>, _>>()
             .await
             .expect("stream should succeed");
@@ -353,7 +418,7 @@ mod tests {
     async fn eos_stream_propagates_a_decoding_failure() {
         let mut response = corrupt_streaming_response::<MdResponse>();
 
-        let first: Option<Result<MdResponse, Status>> = response.stream_response().next().await;
+        let first: Option<Result<MdResponse, Status>> = response.next().await;
 
         assert!(
             matches!(first, Some(Err(_))),
@@ -365,6 +430,6 @@ mod tests {
     async fn eos_stream_of_an_empty_body_terminates_immediately() {
         let mut response = streaming_response_from_bytes::<MdResponse>(bytes::Bytes::new());
 
-        assert!(response.stream_response().next().await.is_none());
+        assert!(response.next().await.is_none());
     }
 }

@@ -70,8 +70,4 @@ pub(crate) struct Cli {
     /// Copy number of the files to restore
     #[arg(long)]
     pub(crate) copy_number: Option<u64>,
-
-    /// Default file layout for restored files in EOS
-    #[arg(long)]
-    pub(crate) default_file_layout: Option<i32>,
 }
