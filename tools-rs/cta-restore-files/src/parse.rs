@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 CERN
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+//! Parsing of the namespace keytab file.
+
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
@@ -10,12 +12,22 @@ use cta_lib::eos::EosEndpointMap;
 use cta_lib::rpc::{EndpointConfig, JwtAuth};
 use url::Url;
 
+/// Errors raised while reading the namespace keytab file.
 #[derive(Debug, thiserror::Error)]
 pub enum KeytabError {
+    /// The keytab file could not be opened or read.
     #[error("Failed to open namespace keytab configuration file: {0}")]
     Io(io::Error),
+    /// A line has the wrong number of fields, or an endpoint that is not a
+    /// valid URL.
     #[error("Could not parse namespace keytab configuration file line {line_no}: {line}")]
-    Parse { line_no: usize, line: String },
+    Parse {
+        /// Zero-based index of the offending line.
+        line_no: usize,
+        /// The offending line, or the field that failed to parse.
+        line: String,
+    },
+    /// The endpoint URL uses a scheme other than `http` or `https`.
     #[error("Unrecognized scheme: {0}. Use either 'http' or 'https'")]
     InvalidScheme(String),
 }
@@ -28,10 +40,18 @@ impl From<io::Error> for KeytabError {
 
 /// Parses a namespace keytab file into a map of diskInstance -> Namespace.
 ///
-/// Expected line format: `<diskInstance> <endpoint> <token>`
+/// Expected line format: `<diskInstance> <endpoint> <token> [<alternativeHost>]`
 /// - `#` starts a comment (rest of line ignored)
 /// - Blank lines (after stripping comments) are skipped
-/// - Any other line must have exactly 3 whitespace-separated fields
+/// - Any other line must have exactly 3 whitespace-separated fields, plus an
+///   optional 4th one: the hostname to verify the TLS certificate against
+///
+/// # Errors
+///
+/// Returns [`KeytabError::Io`] if the file cannot be read,
+/// [`KeytabError::Parse`] for a malformed line and
+/// [`KeytabError::InvalidScheme`] for an endpoint that is neither `http` nor
+/// `https`.
 pub fn set_namespace_map(
     ca_cert_bundle: Option<PathBuf>,
     keytab_file: &str,
