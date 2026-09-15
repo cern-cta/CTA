@@ -9,6 +9,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/utils/Timer.hpp"
+#include "scheduler/ArchiveJob.hpp"
 #include "telemetry/metrics/TapedMetrics.hpp"
 
 #include <optional>

@@ -3,10 +3,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#pragma once
+
 #include "TapedConfig.hpp"
 #include "catalogue/Catalogue.hpp"
-#include "common/config/Config.hpp"
+#include "common/dataStructures/DriveInfo.hpp"
 #include "common/log/LogContext.hpp"
+#include "mediachanger/MediaChangerFacade.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "session/TapeSessionTracker.hpp"
 #include "system/Wrapper.hpp"
@@ -17,7 +20,11 @@
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #endif
 
+#include <memory>
+#include <optional>
 #include <stop_token>
+#include <string>
+#include <string_view>
 
 namespace cta::tape::daemon {
 
@@ -40,7 +47,7 @@ private:
   void waitForDriveToBeUp();
   void putDriveDown(std::string_view errorMsg);
   bool executeDataTransferSession(std::unique_ptr<TapeMount> tapeMount);
-  void executeCleanerSession() noexcept {};
+  void executeCleanerSession(const std::optional<std::string>& vid = std::nullopt);
   std::unique_ptr<TapeMount> getNextMount();
 
   std::stop_source m_stopSource;

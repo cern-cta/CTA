@@ -16,7 +16,6 @@ set (CTA_UNIT_TEST_LIBS
   ctaruntimeunittests
   ctaprotobufunittests
   ctafrontendcommonconfigunittests
-  ctadaemonunittests
   ctaexceptionunittests
   ctamediachangerunittests
   ctamaintdunittests
@@ -43,7 +42,7 @@ if(NOT CTA_USE_PGSCHED)
     ctaobjectstoreunittests)
 endif()
 
-target_link_libraries(cta-unit-tests ${CTA_UNIT_TEST_LIBS})
+target_link_libraries(cta-unit-tests ${CTA_UNIT_TEST_LIBS} ${PROTOBUF3_LIBRARIES})
 
 add_executable(cta-unit-tests-rdbms
   GlobalCatalogueFactoryForUnitTests.cpp
@@ -67,6 +66,7 @@ add_executable(cta-unit-tests-multiprocess
 
 target_link_libraries(cta-unit-tests-multiprocess
   ctacommon
+  ${PROTOBUF3_LIBRARIES}
   gtest
   gmock
   pthread

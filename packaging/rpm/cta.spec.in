@@ -568,7 +568,6 @@ Provides CTA unit and integration tests.
 %{_libdir}/libctatapeddriveunittests.so*
 %{_libdir}/libctatapedfileunittests.so*
 %{_libdir}/libctascsiunittests.so*
-%{_libdir}/libctadaemonunittests.so*
 %{_libdir}/libctamediachangerunittests.so*
 %{_libdir}/libctamaintdunittests.so*
 %{_libdir}/libctadiskunittests.so*

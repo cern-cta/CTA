@@ -37,6 +37,7 @@ target_link_libraries(ctatapedsession
   ctacatalogue
   ctamediachanger
   ctatapeddrive
+  ctatapedfile
   ctatapedrao
   ctatelemetrytaped
   ZLIB::ZLIB)

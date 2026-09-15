@@ -21,8 +21,10 @@ add_library(ctataped
 target_link_libraries(ctataped
 	ctacommon
   ctaruntime
+	ctatapedsession
 	ctatelemetrytaped
 	ctatapedutils
+  ${PROTOBUF3_LIBRARIES}
 )
 
 add_executable (cta-taped cta-taped.cpp)

@@ -7,6 +7,7 @@
 
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/Logger.hpp"
+#include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 
 #include <cxxabi.h>

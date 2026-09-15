@@ -244,9 +244,9 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
   cta::utils::Timer timer, totalTimer;
   // This out-of-try-catch variables allows us to record the stage of the
   // process we're in, and to count the error if it occurs.
-  // We will not record errors for an empty string. This will allow us to
-  // prevent counting where error happened upstream.
-  std::optional<TapeSessionError> currentErrorToCount = TapeSessionError::TapeMountForRead;
+  // Stop counting the current stage once individual tasks take over error reporting.
+  TapeSessionError currentErrorToCount = TapeSessionError::TapeMountForRead;
+  bool countCurrentError = true;
   try {
     // Pair of brackets to create an artificial scope for the tapeCleaner
     {
@@ -363,7 +363,7 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
       // We do it with a promise
       m_taskInjector->waitForFirstTasksInjectedPromise();
       // From now on, the tasks will identify problems when executed.
-      currentErrorToCount.reset();
+      countCurrentError = false;
       std::unique_ptr<TapeReadTask> task;
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring,
                                        std::nullopt,
@@ -429,8 +429,8 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
     m_stats.totalTime = totalTimer.secs();
     logWithStat(cta::log::ERR, "Tape thread complete for reading", params);
     // Also transmit the error step to the session tracker.
-    if (currentErrorToCount) {
-      m_tracker.incrementError(*currentErrorToCount);
+    if (countCurrentError) {
+      m_tracker.incrementError(currentErrorToCount);
     }
     // Flush the remaining tasks to cleanly exit.
     while (true) {
