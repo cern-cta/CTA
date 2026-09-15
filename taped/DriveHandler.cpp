@@ -8,6 +8,7 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
+#include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/TimeoutException.hpp"
@@ -42,6 +43,7 @@ void logDriveFailure(log::LogContext& lc, const char* message, const std::except
 DriveHandler::DriveHandler(const TapedConfig& config, log::Logger& log)
     : m_config(config),
       m_driveInfo(m_config.drive.name,
+                  utils::getShortHostname(),
                   m_config.drive.logical_library_name,
                   m_config.drive.device,
                   m_config.drive.control_path),

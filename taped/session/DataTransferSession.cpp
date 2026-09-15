@@ -23,7 +23,6 @@
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 #include "common/process/ProcessCap.hpp"
-#include "common/process/threading/System.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "taped/drive/DriveInterface.hpp"
@@ -165,6 +164,7 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
                                           m_transfersConfig.retrieve.rao.enabled,
                                           m_transfersConfig.encryption.enabled,
                                           m_transfersConfig.encryption.external_key_script,
+                                          *retrieveMount,
                                           m_tapeLoadTimeoutSecs,
                                           m_scheduler.getCatalogue());
 
@@ -176,6 +176,7 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
     RecallTaskInjector taskInjector(memoryManager,
                                     readSingleThread,
                                     threadPool,
+                                    *retrieveMount,
                                     m_transfersConfig.retrieve.fetch_max_files,
                                     m_transfersConfig.retrieve.fetch_max_bytes,
                                     m_tapeSessionTracker,
@@ -338,6 +339,7 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
                                             c_useLbp,
                                             m_transfersConfig.encryption.enabled,
                                             m_transfersConfig.encryption.external_key_script,
+                                            *archiveMount,
                                             m_tapeLoadTimeoutSecs,
                                             m_scheduler.getCatalogue());
 
@@ -357,6 +359,7 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
     MigrationTaskInjector taskInjector(memoryManager,
                                        threadPool,
                                        writeSingleThread,
+                                       *archiveMount,
                                        m_transfersConfig.archive.fetch_max_files,
                                        m_transfersConfig.archive.fetch_max_bytes,
                                        archiveDismountPolicy,

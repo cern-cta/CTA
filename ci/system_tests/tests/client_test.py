@@ -973,6 +973,7 @@ class TestRuntimeDeployment:
         "daemon_fixture",
         [
             pytest.param("cta_maintd", id="maintd"),
+            pytest.param("cta_taped", id="taped"),
             pytest.param("cta_rmcd", id="rmcd"),
         ],
     )
@@ -1010,11 +1011,6 @@ class TestRuntimeDeployment:
 
         # The descriptor must eventually refer to the replacement file's inode
         assert current_inode == new_inode
-
-    # Should be deleted once taped forking is removed
-    def test_log_rotation_taped(self, cta_taped: CtaTapedHost, remote_scripts_dir: Path) -> None:
-        cta_taped.copy_to(remote_scripts_dir / "cta_taped" / "test_refresh_log_fd.sh", Path("/tmp"), permissions="+x")
-        cta_taped.exec("sudo bash /tmp/test_refresh_log_fd.sh")
 
     def test_log_schema_correctness(self, env: TestEnv, tmp_path: Path, cta_maintd: CtaMaintdHost) -> None:
         # Collect the schema and logs from every CTA service that participates in this deployment

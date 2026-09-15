@@ -33,6 +33,7 @@ add_library(ctatapedsession
 
 target_link_libraries(ctatapedsession
   ctacommon
+  ctaruntime
   ctascheduler
   ctacatalogue
   ctamediachanger
