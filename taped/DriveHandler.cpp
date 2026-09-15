@@ -78,32 +78,36 @@ void DriveHandler::waitForDriveToBeUp() {
   m_lc.log(log::INFO, "Waiting for the desired drive state to become up.");
   // TODO: graceful shutdown (separate MR)
   while (true) {
+    common::dataStructures::DesiredDriveState desiredState;
     try {
-      auto desiredState = m_scheduler->getDesiredDriveState(m_config.drive.name, m_lc);
-      if (!desiredState.up) {
-        m_lc.log(log::DEBUG, "Desired drive state is down. Refreshing the reported down status.");
-        // Refresh the status to trigger the timeout update
-        m_scheduler->reportDriveStatus(m_driveInfo,
-                                       common::dataStructures::MountType::NoMount,
-                                       common::dataStructures::DriveStatus::Down,
-                                       m_lc);
-
-        // We wait a bit before polling the scheduler again.
-        // TODO: Ensure graceful shutdown can interrupt this sleep
-        sleep(m_config.mounts.drive_state_poll_interval_secs);
-      } else {
-        m_lc.log(log::INFO, "Desired drive state is up. Proceeding with drive probing.");
-        break;
-      }
-    } catch (Scheduler::NoSuchDrive&) {
+      desiredState = m_scheduler->getDesiredDriveState(m_driveInfo.driveName, m_lc);
+    } catch (const Scheduler::NoSuchDrive&) {
       m_lc.log(log::WARNING, "Drive is missing from the catalogue. Attempting to register it as down.");
       if (!registerDrive(false)) {
         m_lc.log(log::CRIT, "Failed to register the missing drive. Cannot continue waiting for it to become up.");
         throw exception::Exception("In DriveHandler::waitForDriveToBeUp(): failed to register the missing drive");
       }
       m_lc.log(log::INFO, "Missing drive registered as down. Waiting for the desired drive state to become up.");
+      // Re-read the desired state on the next iteration after registration.
+      // TODO: Ensure graceful shutdown can interrupt this sleep
       sleep(m_config.mounts.drive_state_poll_interval_secs);
+      continue;
     }
+
+    if (desiredState.up) {
+      m_lc.log(log::INFO, "Desired drive state is up. Proceeding with drive probing.");
+      return;
+    }
+
+    m_lc.log(log::DEBUG, "Desired drive state is down. Refreshing the reported down status.");
+    // Refresh the status to trigger the timeout update. Reporting failures propagate to the caller.
+    m_scheduler->reportDriveStatus(m_driveInfo,
+                                   common::dataStructures::MountType::NoMount,
+                                   common::dataStructures::DriveStatus::Down,
+                                   m_lc);
+
+    // TODO: Ensure graceful shutdown can interrupt this sleep
+    sleep(m_config.mounts.drive_state_poll_interval_secs);
   }
 }
 
@@ -144,7 +148,7 @@ bool DriveHandler::registerDrive(bool putUpIfPossible) {
   common::dataStructures::DesiredDriveState currentDesiredDriveState;
   try {
     currentDesiredDriveState = m_scheduler->getDesiredDriveState(m_driveInfo.driveName, m_lc);
-  } catch (Scheduler::NoSuchDrive&) {
+  } catch (const Scheduler::NoSuchDrive&) {
     m_lc.log(log::INFO, "Drive has no existing catalogue entry. Creating one.");
   }
 
