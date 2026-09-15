@@ -166,8 +166,6 @@ FROM base AS cta-tools
 ARG ENABLE_INTERNAL_REPOS
 ARG ENABLE_ORACLE_SUPPORT
 
-
-COPY scripts/ /opt/cta/
 # One reason why this image is huge:
 # - eos-client: for now necessary as the system tests still assume the CTA and EOS rpms in one pod.
 #   Once this assumption is removed from the system tests, we can migrate the client pod to use the
@@ -177,7 +175,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools \
     /usr/local/bin/build-service.sh "cta-admin cta-catalogue-utils cta-scheduler-utils \
       krb5-workstation cta-test-immutable-file eos-client xrootd-client \
-      python3-xrootd bc python3-cryptography python3-jwt"
+      python3-xrootd bc"
 
 ENTRYPOINT ["/bin/bash"]
 
