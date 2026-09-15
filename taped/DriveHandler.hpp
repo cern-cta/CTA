@@ -37,6 +37,7 @@ public:
   DriveHandler(const TapedConfig& tapedConfig, cta::log::Logger& lc);
 
   // Inject external operations while retaining the handler's lifecycle and recovery decisions.
+  // TODO: ideally remove this and update the unit tests to work without it
   struct Operations {
     std::function<bool()> logicalLibraryExists;
     std::function<std::pair<bool, std::optional<std::string>>()> probeDrive;
