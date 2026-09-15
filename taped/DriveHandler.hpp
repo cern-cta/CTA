@@ -46,7 +46,7 @@ private:
   bool registerDrive(bool putUpIfPossible);
   void waitForDriveToBeUp();
   void putDriveDown(std::string_view errorMsg);
-  bool executeDataTransferSession(std::unique_ptr<TapeMount> tapeMount);
+  bool executeDataTransferSession(TapeMount& tapeMount);
   void executeCleanerSession(const std::optional<std::string>& vid = std::nullopt);
   std::unique_ptr<TapeMount> getNextMount();
 

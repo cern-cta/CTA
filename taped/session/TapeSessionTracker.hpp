@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "scheduler/TapeMount.hpp"
 #include "taped/session/SessionState.hpp"
 #include "taped/session/SessionType.hpp"
 #include "taped/session/TapeSessionStats.hpp"
@@ -79,6 +80,17 @@ struct TapeSessionProgress {
 
 class TapeSessionTracker {
 public:
+  // The owner must keep the mount alive while session workers and the reporter use it.
+  void setMount(cta::TapeMount* mount) {
+    std::lock_guard lock(m_mutex);
+    m_mount = mount;
+  }
+
+  cta::TapeMount* mount() const {
+    std::lock_guard lock(m_mutex);
+    return m_mount;
+  }
+
   void reportState(cta::tape::session::SessionState state, cta::tape::session::SessionType type) {
     std::lock_guard lock(m_mutex);
 
@@ -274,6 +286,7 @@ public:
 
 private:
   mutable std::mutex m_mutex;
+  cta::TapeMount* m_mount = nullptr;
 
   cta::tape::session::SessionState m_state = cta::tape::session::SessionState::StartingUp;
   cta::tape::session::SessionType m_type = cta::tape::session::SessionType::Undetermined;

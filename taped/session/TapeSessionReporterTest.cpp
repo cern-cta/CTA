@@ -40,9 +40,10 @@ public:
 TEST(TapeSessionReporterTest, ReportsTrackerContentsOnDemand) {
   cta::log::StringLogger log("dummy", "TapeSessionReporterTest", cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  TapeSessionTracker tracker;
   ReportingTapeMount mount;
-  TapeSessionReporter reporter(tracker, mount, lc, 1s, 1s);
+  TapeSessionTracker tracker;
+  tracker.setMount(&mount);
+  TapeSessionReporter reporter(tracker, lc, 1s, 1s);
 
   tracker.notifyBlockMovement(25);
   tracker.incrementError(TapeSessionError::DiskRead);
@@ -57,9 +58,10 @@ TEST(TapeSessionReporterTest, ReportsTrackerContentsOnDemand) {
 TEST(TapeSessionReporterTest, PeriodicallyReportsAndFlushesOnShutdown) {
   cta::log::StringLogger log("dummy", "TapeSessionReporterTest", cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  TapeSessionTracker tracker;
   ReportingTapeMount mount;
-  TapeSessionReporter reporter(tracker, mount, lc, 5ms, 1s);
+  TapeSessionTracker tracker;
+  tracker.setMount(&mount);
+  TapeSessionReporter reporter(tracker, lc, 5ms, 1s);
 
   reporter.startThreads();
   std::this_thread::sleep_for(20ms);
@@ -74,9 +76,10 @@ TEST(TapeSessionReporterTest, PeriodicallyReportsAndFlushesOnShutdown) {
 TEST(TapeSessionReporterTest, DerivesMountMetadataAndUsesTypedOutcome) {
   cta::log::StringLogger log("dummy", "TapeSessionReporterTest", cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  TapeSessionTracker tracker;
   ReportingTapeMount mount;
-  TapeSessionReporter reporter(tracker, mount, lc, 1s, 1s);
+  TapeSessionTracker tracker;
+  tracker.setMount(&mount);
+  TapeSessionReporter reporter(tracker, lc, 1s, 1s);
 
   tracker.setOutcome(TapeSessionOutcome::Failure);
   tracker.setMountAttempted(false);
@@ -94,9 +97,10 @@ TEST(TapeSessionReporterTest, DerivesMountMetadataAndUsesTypedOutcome) {
 TEST(TapeSessionReporterTest, ReportsOnlyActiveDiskFilesWithLegacyParameterNames) {
   cta::log::StringLogger log("dummy", "TapeSessionReporterTest", cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  TapeSessionTracker tracker;
   ReportingTapeMount mount;
-  TapeSessionReporter reporter(tracker, mount, lc, 1s, 1s);
+  TapeSessionTracker tracker;
+  tracker.setMount(&mount);
+  TapeSessionReporter reporter(tracker, lc, 1s, 1s);
 
   tracker.notifyDiskFileOpened(1, 1234, "file:///closed");
   tracker.notifyDiskFileOpened(2, 5678, "file:///active");
@@ -115,9 +119,10 @@ TEST(TapeSessionReporterTest, ReportsOnlyActiveDiskFilesWithLegacyParameterNames
 TEST(TapeSessionReporterTest, ReportsAStuckFile) {
   cta::log::StringLogger log("dummy", "TapeSessionReporterTest", cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  TapeSessionTracker tracker;
   ReportingTapeMount mount;
-  TapeSessionReporter reporter(tracker, mount, lc, 5ms, 5ms);
+  TapeSessionTracker tracker;
+  tracker.setMount(&mount);
+  TapeSessionReporter reporter(tracker, lc, 5ms, 5ms);
 
   tracker.notifyBeginNewJob(1234, 42);
   reporter.startThreads();

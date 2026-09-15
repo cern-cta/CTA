@@ -19,8 +19,8 @@ namespace cta::tape::daemon {
 
 class TapeSessionReporter : private cta::threading::Thread {
 public:
+  // The tracker must reference a live mount until all reporting has finished.
   TapeSessionReporter(TapeSessionTracker& tracker,
-                      cta::TapeMount& mount,
                       const cta::log::LogContext& lc,
                       std::chrono::milliseconds reportPeriod,
                       std::chrono::milliseconds stuckPeriod);
@@ -39,7 +39,6 @@ private:
   void logStats(bool sessionFinished);
 
   TapeSessionTracker& m_tracker;
-  cta::TapeMount& m_mount;
   cta::log::LogContext m_lc;
   const std::chrono::milliseconds m_reportPeriod;
   const std::chrono::milliseconds m_stuckPeriod;

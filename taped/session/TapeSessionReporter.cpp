@@ -98,12 +98,10 @@ void pushParameter(cta::log::ScopedParamContainer& container, const cta::log::Pa
 }  // namespace
 
 TapeSessionReporter::TapeSessionReporter(TapeSessionTracker& tracker,
-                                         cta::TapeMount& mount,
                                          const cta::log::LogContext& lc,
                                          std::chrono::milliseconds reportPeriod,
                                          std::chrono::milliseconds stuckPeriod)
     : m_tracker(tracker),
-      m_mount(mount),
       m_lc(lc),
       m_reportPeriod(std::max(reportPeriod, std::chrono::milliseconds(1))),
       m_stuckPeriod(std::max(stuckPeriod, std::chrono::milliseconds(1))) {
@@ -183,15 +181,16 @@ void TapeSessionReporter::reportStuckFileIfNeeded() {
 
 void TapeSessionReporter::reportNow() {
   logStats(false);
-  m_mount.setTapeSessionStats(m_tracker.tapeStats());
+  m_tracker.mount()->setTapeSessionStats(m_tracker.tapeStats());
 }
 
 void TapeSessionReporter::reportSessionFinished() {
   logStats(true);
-  m_mount.setTapeSessionStats(m_tracker.tapeStats());
+  m_tracker.mount()->setTapeSessionStats(m_tracker.tapeStats());
 }
 
 void TapeSessionReporter::logStats(bool sessionFinished) {
+  const auto& mount = *m_tracker.mount();
   const auto tapeStats = m_tracker.tapeStats();
   const auto diskStats = m_tracker.diskStats();
   const auto elapsedTime = std::chrono::duration<double>(m_tracker.sessionElapsedTime()).count();
@@ -246,15 +245,15 @@ void TapeSessionReporter::logStats(bool sessionFinished) {
       break;
   }
   set("mountAttempted", m_tracker.mountAttempted() ? 1 : 0);
-  set("tapeVid", m_mount.getVid());
-  set("mountType", cta::common::dataStructures::toCamelCaseString(m_mount.getMountType()));
-  set("mountId", m_mount.getMountTransactionId());
-  set("volReqId", m_mount.getMountTransactionId());
-  set("vendor", m_mount.getVendor());
-  set("vo", m_mount.getVo());
-  set("mediaType", m_mount.getMediaType());
-  set("tapePool", m_mount.getPoolName());
-  set("capacityInBytes", m_mount.getCapacityInBytes());
+  set("tapeVid", mount.getVid());
+  set("mountType", cta::common::dataStructures::toCamelCaseString(mount.getMountType()));
+  set("mountId", mount.getMountTransactionId());
+  set("volReqId", mount.getMountTransactionId());
+  set("vendor", mount.getVendor());
+  set("vo", mount.getVo());
+  set("mediaType", mount.getMediaType());
+  set("tapePool", mount.getPoolName());
+  set("capacityInBytes", mount.getCapacityInBytes());
 
   for (const auto& [error, count] : m_tracker.errorStats()) {
     set(errorName(error), count);

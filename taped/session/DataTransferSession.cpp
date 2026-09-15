@@ -44,12 +44,12 @@ cta::tape::daemon::DataTransferSession::DataTransferSession([[maybe_unused]] con
                                                             System::virtualWrapper& sysWrapper,
                                                             const cta::common::dataStructures::DriveInfo& driveInfo,
                                                             cta::mediachanger::MediaChangerFacade& mc,
-                                                            std::unique_ptr<cta::TapeMount> tapeMount,
+                                                            cta::TapeMount& tapeMount,
                                                             cta::tape::daemon::TapeSessionTracker& tapeSessionTracker,
                                                             const DataTransferConfig& dataTransferConfig,
                                                             cta::Scheduler& scheduler)
     : m_log(log),
-      m_tapeMount(std::move(tapeMount)),
+      m_tapeMount(tapeMount),
       m_sysWrapper(sysWrapper),
       m_dataTransferConfig(dataTransferConfig),
       m_driveInfo(driveInfo),
@@ -74,22 +74,22 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
 
   cta::utils::Timer t;
 
-  m_volInfo.vid = m_tapeMount->getVid();
-  m_volInfo.mountType = m_tapeMount->getMountType();
-  m_volInfo.nbFiles = m_tapeMount->getNbFiles();
-  m_volInfo.mountId = m_tapeMount->getMountTransactionId();
-  m_volInfo.labelFormat = m_tapeMount->getLabelFormat();
-  m_volInfo.encryptionKeyName = m_tapeMount->getEncryptionKeyName();
-  m_volInfo.tapePool = m_tapeMount->getPoolName();
+  m_volInfo.vid = m_tapeMount.getVid();
+  m_volInfo.mountType = m_tapeMount.getMountType();
+  m_volInfo.nbFiles = m_tapeMount.getNbFiles();
+  m_volInfo.mountId = m_tapeMount.getMountTransactionId();
+  m_volInfo.labelFormat = m_tapeMount.getLabelFormat();
+  m_volInfo.encryptionKeyName = m_tapeMount.getEncryptionKeyName();
+  m_volInfo.tapePool = m_tapeMount.getPoolName();
   // Report drive status and mount info through tapeMount interface
-  m_tapeMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+  m_tapeMount.setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
   // 2c) ... and log.
   // Make the DGN and TPVID parameter permanent.
   cta::log::ScopedParamContainer params(lc);
   params.add("tapeVid", m_volInfo.vid)
     .add("mountId", m_volInfo.mountId)
-    .add("vo", m_tapeMount->getVo())
-    .add("tapePool", m_tapeMount->getPoolName());
+    .add("vo", m_tapeMount.getVo())
+    .add("tapePool", m_tapeMount.getPoolName());
   {
     cta::log::ScopedParamContainer localParams(lc);
     localParams.add("tapebridgeTransId", m_volInfo.mountId).add("mountType", toCamelCaseString(m_volInfo.mountType));
@@ -99,12 +99,12 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
   // Depending on the type of session, branch into the right execution
   switch (m_volInfo.mountType) {
     case cta::common::dataStructures::MountType::Retrieve:
-      return executeRead(lc, dynamic_cast<cta::RetrieveMount*>(m_tapeMount.get()));
+      return executeRead(lc, dynamic_cast<cta::RetrieveMount*>(&m_tapeMount));
     case cta::common::dataStructures::MountType::ArchiveForUser:
     case cta::common::dataStructures::MountType::ArchiveForRepack:
-      return executeWrite(lc, dynamic_cast<cta::ArchiveMount*>(m_tapeMount.get()));
+      return executeWrite(lc, dynamic_cast<cta::ArchiveMount*>(&m_tapeMount));
     case cta::common::dataStructures::MountType::Label:
-      return executeLabel(lc, dynamic_cast<cta::LabelMount*>(m_tapeMount.get()));
+      return executeLabel(lc, dynamic_cast<cta::LabelMount*>(&m_tapeMount));
     default:
       return MARK_DRIVE_AS_UP;
   }
@@ -119,7 +119,6 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
   m_tapeSessionTracker.reportState(cta::tape::session::SessionState::Scheduling,
                                    cta::tape::session::SessionType::Retrieve);
   TapeSessionReporter reporter(m_tapeSessionTracker,
-                               *retrieveMount,
                                logContext,
                                std::chrono::seconds(15),
                                std::chrono::seconds(m_dataTransferConfig.wdNoBlockMoveMaxSecs));
@@ -159,7 +158,6 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
                                           m_dataTransferConfig.useRAO,
                                           m_dataTransferConfig.useEncryption,
                                           m_dataTransferConfig.externalEncryptionKeyScript,
-                                          *retrieveMount,
                                           m_dataTransferConfig.tapeLoadTimeout,
                                           m_scheduler.getCatalogue());
 
@@ -171,7 +169,6 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
     RecallTaskInjector taskInjector(memoryManager,
                                     readSingleThread,
                                     threadPool,
-                                    *retrieveMount,
                                     m_dataTransferConfig.bulkRequestRecallMaxFiles,
                                     m_dataTransferConfig.bulkRequestRecallMaxBytes,
                                     m_tapeSessionTracker,
@@ -299,7 +296,6 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
   m_tapeSessionTracker.reportState(cta::tape::session::SessionState::Scheduling,
                                    cta::tape::session::SessionType::Archive);
   TapeSessionReporter reporter(m_tapeSessionTracker,
-                               *archiveMount,
                                logContext,
                                std::chrono::seconds(15),
                                std::chrono::seconds(m_dataTransferConfig.wdNoBlockMoveMaxSecs));
@@ -333,7 +329,6 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
                                             m_dataTransferConfig.useLbp,
                                             m_dataTransferConfig.useEncryption,
                                             m_dataTransferConfig.externalEncryptionKeyScript,
-                                            *archiveMount,
                                             m_dataTransferConfig.tapeLoadTimeout,
                                             m_scheduler.getCatalogue());
 
@@ -347,7 +342,6 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
     MigrationTaskInjector taskInjector(memoryManager,
                                        threadPool,
                                        writeSingleThread,
-                                       *archiveMount,
                                        m_dataTransferConfig.bulkRequestMigrationMaxFiles,
                                        m_dataTransferConfig.bulkRequestMigrationMaxBytes,
                                        m_dataTransferConfig.archiveDismountPolicy,

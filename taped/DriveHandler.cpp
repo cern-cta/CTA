@@ -61,8 +61,11 @@ DriveHandler::DriveHandler(const TapedConfig& config, log::Logger& log)
   statisticsCacheConfig.tapeCacheMaxAgeSecs = m_config.scheduler.tape_cache_max_age_secs;
   statisticsCacheConfig.retrieveQueueCacheMaxAgeSecs = m_config.scheduler.retrieve_queue_cache_max_age_secs;
   m_schedDb->setStatisticsCacheConfig(statisticsCacheConfig);
-  // TODO: pass the configured minimum queued files and bytes instead of using Scheduler's defaults.
-  m_scheduler = std::make_unique<Scheduler>(*m_catalogue, *m_schedDb, config.scheduler.backend_name);
+  m_scheduler = std::make_unique<Scheduler>(*m_catalogue,
+                                            *m_schedDb,
+                                            m_config.scheduler.backend_name,
+                                            m_config.mounts.minimum_queued_files,
+                                            m_config.mounts.minimum_queued_bytes);
 
   m_lc.log(log::INFO, "Scheduler and Catalogue initialised");
 }
@@ -132,8 +135,7 @@ std::unique_ptr<TapeMount> DriveHandler::getNextMount() {
       return m_scheduler->getNextMount(m_driveInfo.logicalLibrary,
                                        m_driveInfo.driveName,
                                        m_lc,
-                                       m_config.mounts.get_next_mount_timeout_secs
-                                         * 1000000);  // TODO: is this multiplication correct? (probably not)
+                                       static_cast<uint64_t>(m_config.mounts.get_next_mount_timeout_secs) * 1000000);
     }
   } catch (exception::LostDatabaseConnection&) {
     // TODO: add retry mechanism (or wait for the DB to be up again)
@@ -162,7 +164,6 @@ int DriveHandler::run() {
 
   // TODO: add stop token here
 
-  std::optional<std::string> active_vid;
   while (true) {
     // TODO: track whether probing is required locally so an early desired-state change cannot skip it.
     if (!m_scheduler->getDesiredDriveState(m_driveInfo.driveName, m_lc).up) {
@@ -180,7 +181,7 @@ int DriveHandler::run() {
       if (false) {
         // TODO: handle failure of this correctly
         // Can the cleaner return true/false based on whether it succeeded or not?
-        executeCleanerSession(active_vid);
+        executeCleanerSession();
       }
 
       if (!emptyDriveProbe.driveIsEmpty()) {
@@ -206,12 +207,18 @@ int DriveHandler::run() {
     //                                 ::session::SessionType::Undetermined);
 
     std::unique_ptr<TapeMount> tapeMount;
+
+    struct MountReferenceReset {
+      TapeSessionTracker& tracker;
+
+      ~MountReferenceReset() { tracker.setMount(nullptr); }
+    } mountReferenceReset {m_tapeSessionTracker};
+
     utils::Timer t;
     try {
       tapeMount = getNextMount();
       if (tapeMount != nullptr) {
-        // TODO: session tracker should get volume info
-        active_vid = tapeMount->getVid();
+        m_tapeSessionTracker.setMount(tapeMount.get());
       }
     } catch (exception::TimeoutException&) {
       log::ScopedParamContainer params(m_lc);
@@ -234,9 +241,8 @@ int DriveHandler::run() {
 
     // TODO: if no mount is available, wait and continue instead of treating nullptr as a transfer failure.
     // Now that we have a mount, execute the data transfer session
-    // TODO: handle non-database transfer exceptions too, preserving the active VID for cleanup and setting drive state.
-    bool success = executeDataTransferSession(std::move(tapeMount));
-    active_vid = std::nullopt;
+    // TODO: handle non-database transfer exceptions too, setting drive state and handling cleanup.
+    bool success = tapeMount != nullptr && executeDataTransferSession(*tapeMount);
     if (!success) {
       // TODO: we need a better reason here
       putDriveDown("Data transfer session failed");
@@ -307,13 +313,7 @@ bool DriveHandler::registerDrive(bool putUpIfPossible) {
   // TODO: catch exception?
 }
 
-bool DriveHandler::executeDataTransferSession(std::unique_ptr<TapeMount> tapeMount) {
-  // This should not happen; just a double check
-  if (tapeMount == nullptr) {
-    // Something went wrong
-    return false;
-  }
-
+bool DriveHandler::executeDataTransferSession(TapeMount& tapeMount) {
   // TODO: this should eventually rely only on transfer config
   // Anything that needs something non-transfer related should probably be extracted out of data transfer session
   DataTransferConfig dataTransferConfig;
@@ -349,7 +349,7 @@ bool DriveHandler::executeDataTransferSession(std::unique_ptr<TapeMount> tapeMou
                                           m_sysWrapper,
                                           m_driveInfo,
                                           m_mediaChanger,
-                                          std::move(tapeMount),
+                                          tapeMount,
                                           m_tapeSessionTracker,
                                           dataTransferConfig,
                                           *m_scheduler);

@@ -38,7 +38,7 @@ public:
                       System::virtualWrapper& sysWrapper,
                       const cta::common::dataStructures::DriveInfo& driveInfo,
                       cta::mediachanger::MediaChangerFacade& mc,
-                      std::unique_ptr<cta::TapeMount> tapeMount,
+                      cta::TapeMount& tapeMount,
                       cta::tape::daemon::TapeSessionTracker& tapeSessionTracker,
                       const DataTransferConfig& dataTransferConfig,
                       cta::Scheduler& scheduler);
@@ -78,7 +78,7 @@ private:
    * Object representing the API of the CTA logging system.
    */
   cta::log::Logger& m_log;
-  std::unique_ptr<cta::TapeMount> m_tapeMount;
+  cta::TapeMount& m_tapeMount;
   VolumeInfo m_volInfo {};
   System::virtualWrapper& m_sysWrapper;
   const DataTransferConfig m_dataTransferConfig;
