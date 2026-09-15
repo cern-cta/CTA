@@ -68,7 +68,26 @@ protected:
   Session::EndOfSessionAction m_hardwareStatus = Session::MARK_DRIVE_AS_UP;
 
   /** Session statistics */
-  TapeSideStats m_stats;
+  TapeTransferStats m_stats;
+  double m_totalTime = 0;
+
+  /** Measure setup operations, including failed attempts, independently of transfer statistics. */
+  template<class Operation>
+  void measureSetupTime(double TapeSetupStats::* field, Operation operation) {
+    cta::utils::Timer timer;
+    const auto record = [&] {
+      TapeSetupStats stats;
+      stats.*field = timer.secs();
+      m_tracker.addTapeSetupStats(stats);
+    };
+    try {
+      operation();
+    } catch (...) {
+      record();
+      throw;
+    }
+    record();
+  }
 
   /** Encryption helper object */
   EncryptionControl m_encryptionControl;

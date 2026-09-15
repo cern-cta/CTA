@@ -93,7 +93,7 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
     std::unique_ptr<cta::tape::tapeFile::FileWriter> output(openFileWriter(session, lc));
     m_LBPMode = output->getLBPMode();
     m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
-    m_taskStats.headerVolume += TapeSideStats::headerVolumePerFile;
+    m_taskStats.headerVolume += TapeTransferStats::headerVolumePerFile;
     // We are not error sources here until we actually write.
     currentErrorToCount.reset();
     bool firstBlock = true;
@@ -155,7 +155,7 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
     output->close();
     currentErrorToCount.reset();
     m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
-    m_taskStats.headerVolume += TapeSideStats::trailerVolumePerFile;
+    m_taskStats.headerVolume += TapeTransferStats::trailerVolumePerFile;
     m_taskStats.filesCount++;
     // Record the fSeq in the tape session
     session.reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
@@ -164,8 +164,8 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
     m_archiveJob->tapeFile.blockId = output->getBlockId();
     reportPacker.reportCompletedJob(std::move(m_archiveJob), lc);
     m_waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
-    tracker.addDiskStats({.waitReportingTime = m_waitReportingTime});
-    m_taskStats.totalTime = localTime.secs();
+    tracker.addDiskTransferStats({.waitReportingTime = m_waitReportingTime});
+    m_totalTime = localTime.secs();
     // Log the successful transfer
     logWithStats(cta::log::INFO, "File successfully transmitted to drive", lc);
     cta::telemetry::metrics::ctaTapedTransferFileCount->Add(
@@ -198,14 +198,14 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
     circulateMemBlocks();
     tracker.incrementError(TapeSessionError::FileSkipped);
     m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
-    m_taskStats.headerVolume += TapeSideStats::trailerVolumePerFile;
+    m_taskStats.headerVolume += TapeTransferStats::trailerVolumePerFile;
     m_taskStats.filesCount++;
     // Record the fSeq in the tape session
     session.reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
     reportPacker.reportSkippedJob(std::move(m_archiveJob), s, lc);
     m_waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
-    tracker.addDiskStats({.waitReportingTime = m_waitReportingTime});
-    m_taskStats.totalTime = localTime.secs();
+    tracker.addDiskTransferStats({.waitReportingTime = m_waitReportingTime});
+    m_totalTime = localTime.secs();
     // Log the successful transfer
     logWithStats(cta::log::INFO, "Left placeholder on tape after skipping unreadable file.", lc);
   } catch (const RecoverableMigrationErrorException& e) {
@@ -395,15 +395,12 @@ void TapeWriteTask::logWithStats(int level, const std::string& msg, cta::log::Lo
     .add("waitDataTime", m_taskStats.waitDataTime)
     .add("waitReportingTime", m_waitReportingTime)
     .add("transferTime", m_taskStats.transferTime())
-    .add("totalTime", m_taskStats.totalTime)
+    .add("totalTime", m_totalTime)
     .add("dataVolume", m_taskStats.dataVolume)
     .add("headerVolume", m_taskStats.headerVolume)
     .add("driveTransferSpeedMBps",
-         m_taskStats.totalTime ?
-           1.0 * (m_taskStats.dataVolume + m_taskStats.headerVolume) / 1000 / 1000 / m_taskStats.totalTime :
-           0.0)
-    .add("payloadTransferSpeedMBps",
-         m_taskStats.totalTime ? 1.0 * m_taskStats.dataVolume / 1000 / 1000 / m_taskStats.totalTime : 0.0)
+         m_totalTime ? 1.0 * (m_taskStats.dataVolume + m_taskStats.headerVolume) / 1000 / 1000 / m_totalTime : 0.0)
+    .add("payloadTransferSpeedMBps", m_totalTime ? 1.0 * m_taskStats.dataVolume / 1000 / 1000 / m_totalTime : 0.0)
     .add("fileSize", m_archiveFile.fileSize)
     .add("fileId", m_archiveFile.archiveFileID)
     .add("fSeq", m_tapeFile.fSeq)
@@ -416,7 +413,7 @@ void TapeWriteTask::logWithStats(int level, const std::string& msg, cta::log::Lo
 //------------------------------------------------------------------------------
 //   getTaskStats
 //------------------------------------------------------------------------------
-const TapeSideStats& TapeWriteTask::getTaskStats() const {
+const TapeTransferStats& TapeWriteTask::getTaskStats() const {
   return m_taskStats;
 }
 

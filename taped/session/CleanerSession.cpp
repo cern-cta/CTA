@@ -5,6 +5,7 @@
 
 #include "CleanerSession.hpp"
 
+#include "TapeSessionTracker.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/dataStructures/DriveDownReason.hpp"
 #include "common/process/ProcessCap.hpp"
@@ -18,6 +19,27 @@
 
 namespace {
 
+// Record elapsed time on every exit, including early returns and failed operations.
+class CleanupTiming {
+public:
+  CleanupTiming(cta::tape::daemon::TapeSessionTracker* tracker, double cta::tape::daemon::TapeCleanupStats::* field)
+      : m_tracker(tracker),
+        m_field(field) {}
+
+  ~CleanupTiming() {
+    if (m_tracker) {
+      cta::tape::daemon::TapeCleanupStats stats;
+      stats.*m_field = m_timer.secs();
+      m_tracker->addTapeCleanupStats(stats);
+    }
+  }
+
+private:
+  cta::tape::daemon::TapeSessionTracker* const m_tracker;
+  double cta::tape::daemon::TapeCleanupStats::* const m_field;
+  cta::utils::Timer m_timer;
+};
+
 std::string currentExceptionMessage() {
   try {
     throw;
@@ -29,8 +51,6 @@ std::string currentExceptionMessage() {
     return "Caught an unknown exception";
   }
 }
-
-CTA_GENERATE_EXCEPTION_CLASS(CleanerEjectFailed);
 
 }  // namespace
 
@@ -45,8 +65,10 @@ cta::tape::daemon::CleanerSession::CleanerSession(cta::mediachanger::MediaChange
                                                   const bool waitMediaInDrive,
                                                   const uint32_t waitMediaInDriveTimeout,
                                                   cta::catalogue::Catalogue& catalogue,
-                                                  cta::Scheduler& scheduler)
-    : m_mediachanger(mc),
+                                                  cta::Scheduler& scheduler,
+                                                  TapeSessionTracker* tracker)
+    : m_tracker(tracker),
+      m_mediachanger(mc),
       m_lc(log),
       m_driveInfo(driveInfo),
       m_sysWrapper(sysWrapper),
@@ -63,8 +85,12 @@ cta::tape::daemon::CleanerSession::CleanerSession(cta::mediachanger::MediaChange
 // execute
 //------------------------------------------------------------------------------
 cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::CleanerSession::execute() {
+  CleanupTiming timing(m_tracker, &TapeCleanupStats::cleanupTime);
   std::string errorMessage;
   bool ejectFailed = false;
+  if (m_tracker) {
+    m_tracker->reportState(session::SessionState::Checking, session::SessionType::Cleanup);
+  }
 
   if (!server::ProcessCap::hasRawIoCap()) {
     m_lc.log(cta::log::ERR, "Missing CAP_SYS_RAWIO capability. Unable to use raw tape drive I/O.");
@@ -92,16 +118,13 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::CleanerSession
     }
   } else {
     drive::DriveInterface& drive = *drivePtr;
-    try {
-      cleanDrive(drive);
-    } catch (...) {
-      errorMessage = currentExceptionMessage();
-      ejectFailed = true;
-    }
+    const auto result = cleanDriveImpl(drive);
+    errorMessage = result.errorMessage;
+    ejectFailed = result.ejectFailed;
 
     // Read and clear tape alerts whether cleaning succeeded or failed
     logAndClearTapeAlerts(drive);
-    if (errorMessage.empty()) {
+    if (result.driveReusable()) {
       m_lc.log(cta::log::INFO, "Cleaner completed successfully");
       return MARK_DRIVE_AS_UP;
     }
@@ -189,17 +212,59 @@ void cta::tape::daemon::CleanerSession::disableTapeAfterFailedEject(const std::s
 //------------------------------------------------------------------------------
 // cleanDrive
 //------------------------------------------------------------------------------
-void cta::tape::daemon::CleanerSession::cleanDrive(drive::DriveInterface& drive) {
-  // Cleaning has two independent stages: unload from the tape mechanism, then
-  // return the cartridge from the library drive element to its storage slot.
+auto cta::tape::daemon::CleanerSession::cleanDrive(drive::DriveInterface& drive) -> CleanupResult {
+  CleanupTiming timing(m_tracker, &TapeCleanupStats::cleanupTime);
+  return cleanDriveImpl(drive);
+}
+
+auto cta::tape::daemon::CleanerSession::cleanDriveImpl(drive::DriveInterface& drive) -> CleanupResult {
+  CleanupResult result;
+  if (m_tracker) {
+    const auto type = m_tracker->type();
+    m_tracker->reportState(session::SessionState::Checking,
+                           type == session::SessionType::Undetermined ? session::SessionType::Cleanup : type);
+  }
+  auto recordResetFailure = [&](const std::string& operation, TapeSessionError error) {
+    if (m_tracker) {
+      m_tracker->incrementError(error);
+    }
+    result.configurationResetFailed = true;
+    if (!result.errorMessage.empty()) {
+      result.errorMessage += "; ";
+    }
+    result.errorMessage += operation + ": " + currentExceptionMessage();
+    cta::log::ScopedParamContainer params(m_lc);
+    params.add(cta::semconv::log::exceptionMessage, result.errorMessage);
+    m_lc.log(cta::log::WARNING, "Cleaner failed to reset drive configuration; continuing with tape eject");
+  };
+
   if (m_waitMediaInDrive) {
     waitForMediaToBeReady(drive);
+  }
+
+  // Reset persistent configuration even when the drive is empty.
+  cta::utils::Timer encryptionTimer;
+  try {
+    drive.clearEncryptionKey();
+  } catch (...) {
+    recordResetFailure("Failed to clear encryption key", TapeSessionError::TapeEncryptionDisable);
+  }
+  if (m_tracker) {
+    m_tracker->addTapeCleanupStats({.encryptionControlTime = encryptionTimer.secs()});
+  }
+  {
+    CleanupTiming timing(m_tracker, &TapeCleanupStats::lbpResetTime);
+    try {
+      drive.disableLogicalBlockProtection();
+    } catch (...) {
+      recordResetFailure("Failed to disable logical block protection", TapeSessionError::TapeLbpDisable);
+    }
   }
 
   try {
     if (!drive.hasTapeInPlace()) {
       m_lc.log(cta::log::INFO, "Cleaner found no tape in the drive; nothing to do");
-      return;
+      return result;
     }
   } catch (...) {
     cta::log::ScopedParamContainer params(m_lc);
@@ -209,10 +274,7 @@ void cta::tape::daemon::CleanerSession::cleanDrive(drive::DriveInterface& drive)
 
   std::optional<std::string> volumeLabel;
   try {
-    // Encryption keys and LBP mode can survive a failed session and affect later tapes
-    drive.clearEncryptionKey();
     rewindDrive(drive);
-    drive.disableLogicalBlockProtection();
     volumeLabel = readVolumeLabel(drive);
   } catch (...) {
     cta::log::ScopedParamContainer params(m_lc);
@@ -241,7 +303,7 @@ void cta::tape::daemon::CleanerSession::cleanDrive(drive::DriveInterface& drive)
   if (!dismountVid.empty()) {
     try {
       dismountTape(dismountVid);
-      return;
+      return result;
     } catch (...) {
       cta::log::ScopedParamContainer params(m_lc);
       params.add("dismountVid", dismountVid);
@@ -256,8 +318,13 @@ void cta::tape::daemon::CleanerSession::cleanDrive(drive::DriveInterface& drive)
   try {
     dismountTape("");
   } catch (...) {
-    throw CleanerEjectFailed("Failed to dismount tape: " + currentExceptionMessage());
+    result.ejectFailed = true;
+    if (!result.errorMessage.empty()) {
+      result.errorMessage += "; ";
+    }
+    result.errorMessage += "Failed to dismount tape: " + currentExceptionMessage();
   }
+  return result;
 }
 
 //------------------------------------------------------------------------------
@@ -267,6 +334,11 @@ void cta::tape::daemon::CleanerSession::logAndClearTapeAlerts(drive::DriveInterf
   std::string errorMessage;
   try {
     if (std::vector<uint16_t> tapeAlertCodes = drive.getTapeAlertCodes(); !tapeAlertCodes.empty()) {
+      if (m_tracker) {
+        for (const auto code : tapeAlertCodes) {
+          m_tracker->incrementTapeAlert(code);
+        }
+      }
       size_t alertNumber = 0;
       // Log tape alerts in the logs.
       std::vector<std::string> tapeAlerts = drive.getTapeAlerts(tapeAlertCodes);
@@ -314,6 +386,7 @@ std::unique_ptr<cta::tape::drive::DriveInterface> cta::tape::daemon::CleanerSess
 // waitUntilDriveIsReady
 //------------------------------------------------------------------------------
 void cta::tape::daemon::CleanerSession::waitForMediaToBeReady(drive::DriveInterface& drive) {
+  CleanupTiming timing(m_tracker, &TapeCleanupStats::readinessWaitTime);
   cta::log::ScopedParamContainer params(m_lc);
   params.add("waitMediaInDriveTimeout", m_tapeLoadTimeout);
 
@@ -333,6 +406,7 @@ void cta::tape::daemon::CleanerSession::waitForMediaToBeReady(drive::DriveInterf
 // rewindDrive
 //------------------------------------------------------------------------------
 void cta::tape::daemon::CleanerSession::rewindDrive(drive::DriveInterface& drive) {
+  CleanupTiming timing(m_tracker, &TapeCleanupStats::rewindTime);
   m_lc.log(cta::log::DEBUG, "Cleaner rewinding tape");
   drive.rewind();
   m_lc.log(cta::log::DEBUG, "Cleaner rewound tape");
@@ -355,6 +429,7 @@ void cta::tape::daemon::CleanerSession::checkTapeContainsData(drive::DriveInterf
 // readVolumeLabel
 //------------------------------------------------------------------------------
 std::optional<std::string> cta::tape::daemon::CleanerSession::readVolumeLabel(drive::DriveInterface& drive) {
+  CleanupTiming timing(m_tracker, &TapeCleanupStats::labelReadTime);
   cta::log::ScopedParamContainer params(m_lc);
 
   checkTapeContainsData(drive);
@@ -378,7 +453,19 @@ std::optional<std::string> cta::tape::daemon::CleanerSession::readVolumeLabel(dr
 //------------------------------------------------------------------------------
 void cta::tape::daemon::CleanerSession::unloadTape(drive::DriveInterface& drive) {
   m_lc.log(cta::log::DEBUG, "Cleaner unloading tape");
-  drive.unloadTape();
+  cta::utils::Timer timer;
+  try {
+    drive.unloadTape();
+  } catch (...) {
+    if (m_tracker) {
+      m_tracker->addTapeCleanupStats({.unloadTime = timer.secs()});
+      m_tracker->incrementError(TapeSessionError::TapeUnload);
+    }
+    throw;
+  }
+  if (m_tracker) {
+    m_tracker->addTapeCleanupStats({.unloadTime = timer.secs()});
+  }
   m_lc.log(cta::log::DEBUG, "Cleaner unloaded tape");
 }
 
@@ -397,6 +484,21 @@ void cta::tape::daemon::CleanerSession::dismountTape(const std::string& vid) {
   } else {
     m_lc.log(cta::log::DEBUG, "Cleaner requesting robotic tape dismount");
   }
-  m_mediachanger.dismountTape(vid, librarySlot);
+  if (m_tracker) {
+    m_tracker->reportState(session::SessionState::Unmounting, m_tracker->type());
+  }
+  cta::utils::Timer timer;
+  try {
+    m_mediachanger.dismountTape(vid, librarySlot);
+  } catch (...) {
+    if (m_tracker) {
+      m_tracker->addTapeCleanupStats({.unmountTime = timer.secs()});
+      m_tracker->incrementError(TapeSessionError::TapeDismount);
+    }
+    throw;
+  }
+  if (m_tracker) {
+    m_tracker->addTapeCleanupStats({.unmountTime = timer.secs()});
+  }
   m_lc.log(cta::log::DEBUG, "Cleaner dismounted tape");
 }

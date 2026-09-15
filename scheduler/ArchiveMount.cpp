@@ -441,7 +441,7 @@ void cta::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus 
 //------------------------------------------------------------------------------
 // setTapeSessionStats()
 //------------------------------------------------------------------------------
-void cta::ArchiveMount::setTapeSessionStats(const cta::tape::daemon::TapeSideStats& stats) {
+void cta::ArchiveMount::setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) {
   m_dbMount->setTapeSessionStats(stats);
 }
 

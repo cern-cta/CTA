@@ -104,7 +104,7 @@ public:
    * Return the task stats. Should only be called after execute
    * @return
    */
-  const TapeSideStats& getTaskStats() const;
+  const TapeTransferStats& getTaskStats() const;
 
   /**
     * Return ArchiveJob reference
@@ -181,7 +181,8 @@ private:
   /**
    * Stats
    */
-  TapeSideStats m_taskStats;
+  TapeTransferStats m_taskStats;
+  double m_totalTime = 0;
   double m_waitReportingTime = 0;
 
   /**

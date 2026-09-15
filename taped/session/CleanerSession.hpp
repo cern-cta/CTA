@@ -23,6 +23,8 @@ class Catalogue;
 
 namespace cta::tape::daemon {
 
+class TapeSessionTracker;
+
 /**
   * Class responsible for cleaning up a tape drive left in a (possibly) dirty state.
   */
@@ -41,6 +43,7 @@ public:
     * false otherwise.
     * @param waitMediaInDriveTimeout The maximum number of seconds to wait for
     * the media to be ready for operations inside the drive.
+    * @param tracker Optional borrowed tracker, which must outlive this session.
     * @param catalogue the CTA catalogue
     */
   CleanerSession(cta::mediachanger::MediaChangerFacade& mc,
@@ -51,7 +54,8 @@ public:
                  const bool waitMediaInDrive,
                  const uint32_t waitMediaInDriveTimeout,
                  cta::catalogue::Catalogue& catalogue,
-                 cta::Scheduler& scheduler);
+                 cta::Scheduler& scheduler,
+                 TapeSessionTracker* tracker = nullptr);
 
   /**
     * Execute the session and return the type of action to be performed
@@ -62,7 +66,27 @@ public:
     */
   EndOfSessionAction execute() final;
 
+  // An empty drive counts as successful eject. Reset failures still prevent reuse.
+  struct CleanupResult {
+    bool configurationResetFailed = false;
+    bool ejectFailed = false;
+    std::string errorMessage;
+
+    bool driveReusable() const { return !configurationResetFailed && !ejectFailed; }
+  };
+
+  /**
+   * Clean an already open drive without taking ownership or publishing scheduler/catalogue state.
+   * The caller owns failure publication and tape disabling when ejectFailed is true.
+   * A successful eject does not imply that the drive configuration was reset successfully.
+   */
+  CleanupResult cleanDrive(drive::DriveInterface& drive);
+
 private:
+  CleanupResult cleanDriveImpl(drive::DriveInterface& drive);
+
+  TapeSessionTracker* const m_tracker;
+
   /**
     * The object representing the media changer.
     */
@@ -115,13 +139,6 @@ private:
     * @param drive The tape drive.
     */
   void logAndClearTapeAlerts(drive::DriveInterface& drive) noexcept;
-
-  /**
-    * Does the actual steps to clean the drive
-    *
-    * @param drive The tape drive.
-    */
-  void cleanDrive(drive::DriveInterface& drive);
 
   /**
    * Reads the volume label when its format can be determined.

@@ -265,7 +265,7 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
       try {
         retrieveMount->complete();
-        m_tapeSessionTracker.updateTapeStats({});
+        m_tapeSessionTracker.updateTapeTransferStats({});
         if (!reservationResult) {
           m_tapeSessionTracker.incrementError(TapeSessionError::DiskSpaceReservationTestFailure);
         }
@@ -407,7 +407,7 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
       try {
         archiveMount->complete();
-        m_tapeSessionTracker.updateTapeStats({});
+        m_tapeSessionTracker.updateTapeTransferStats({});
         if (noFilesToMigrate) {
           m_tapeSessionTracker.incrementError(TapeSessionError::NoFilesToMigrate);
         }

@@ -149,7 +149,7 @@ public:
   /**
     * Report a tape session statistics
     */
-  void setTapeSessionStats(const cta::tape::daemon::TapeSideStats& stats) override;
+  void setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) override;
 
   /**
     * Report a tape mounted event

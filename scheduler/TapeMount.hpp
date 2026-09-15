@@ -95,7 +95,7 @@ public:
   /**
      * Report a tape session statistics
      */
-  virtual void setTapeSessionStats(const cta::tape::daemon::TapeSideStats& stats) = 0;
+  virtual void setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) = 0;
 
   /**
      * Report a tape mounted event

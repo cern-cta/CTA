@@ -36,7 +36,7 @@ private:
   void run() override;
   void reportStuckFileIfNeeded();
   void reportSessionFinished();
-  void logStats(bool sessionFinished);
+  void logStats(bool sessionFinished, const TapeSessionStats& stats);
 
   TapeSessionTracker& m_tracker;
   cta::log::LogContext m_lc;

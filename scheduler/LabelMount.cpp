@@ -41,7 +41,7 @@ void LabelMount::setDriveStatus(common::dataStructures::DriveStatus status, cons
   throw exception::NotImplementedException();
 }
 
-void LabelMount::setTapeSessionStats(const cta::tape::daemon::TapeSideStats& stats) {
+void LabelMount::setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) {
   throw exception::NotImplementedException();
 }
 

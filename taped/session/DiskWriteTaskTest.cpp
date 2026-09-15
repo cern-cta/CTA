@@ -35,7 +35,7 @@ class TestingDatabaseRetrieveMount : public cta::SchedulerDatabase::RetrieveMoun
     throw cta::exception::NotImplementedException();
   }
 
-  void setTapeSessionStats(const cta::tape::daemon::TapeSideStats& stats) override {
+  void setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) override {
     throw cta::exception::NotImplementedException();
   }
 

@@ -61,6 +61,10 @@ const char* errorName(TapeSessionError error) {
       return "Error_tapeNotWriteable";
     case TapeSessionError::TapeEncryptionEnable:
       return "Error_tapeEncryptionEnable";
+    case TapeSessionError::TapeEncryptionDisable:
+      return "Error_tapeEncryptionDisable";
+    case TapeSessionError::TapeLbpDisable:
+      return "Error_tapeLbpDisable";
     case TapeSessionError::TapePositionForWrite:
       return "Error_tapePositionForWrite";
     case TapeSessionError::TapeFlush:
@@ -180,21 +184,25 @@ void TapeSessionReporter::reportStuckFileIfNeeded() {
 }
 
 void TapeSessionReporter::reportNow() {
-  logStats(false);
-  m_tracker.mount()->setTapeSessionStats(m_tracker.tapeStats());
+  const auto stats = m_tracker.stats();
+  logStats(false, stats);
+  m_tracker.mount()->setTapeSessionStats(stats.tape);
 }
 
 void TapeSessionReporter::reportSessionFinished() {
-  logStats(true);
-  m_tracker.mount()->setTapeSessionStats(m_tracker.tapeStats());
+  const auto stats = m_tracker.stats();
+  logStats(true, stats);
+  m_tracker.mount()->setTapeSessionStats(stats.tape);
 }
 
-void TapeSessionReporter::logStats(bool sessionFinished) {
+void TapeSessionReporter::logStats(bool sessionFinished, const TapeSessionStats& stats) {
   const auto& mount = *m_tracker.mount();
-  const auto tapeStats = m_tracker.tapeStats();
-  const auto diskStats = m_tracker.diskStats();
+  const auto& setupStats = stats.setup;
+  const auto& tapeStats = stats.tape;
+  const auto& diskStats = stats.disk;
+  const auto& cleanupStats = stats.cleanup;
   const auto elapsedTime = std::chrono::duration<double>(m_tracker.sessionElapsedTime()).count();
-  const double totalTime = tapeStats.totalTime ? tapeStats.totalTime : elapsedTime;
+  const double totalTime = stats.totalTime ? stats.totalTime : elapsedTime;
   const double deliveryTime = diskStats.deliveryTime ? diskStats.deliveryTime : elapsedTime;
 
   std::map<std::string, cta::log::Param> reportParameters;
@@ -202,9 +210,11 @@ void TapeSessionReporter::logStats(bool sessionFinished) {
     reportParameters.insert_or_assign(name, cta::log::Param(name, value));
   };
 
-  set("wasTapeMounted", tapeStats.mountTime != 0.0);
-  set("mountTime", tapeStats.mountTime);
-  set("positionTime", tapeStats.positionTime);
+  set("wasTapeMounted", setupStats.mountTime != 0.0);
+  set("mountTime", setupStats.mountTime);
+  set("initialMountTime", setupStats.initialMountTime);
+  set("tapeLoadTime", setupStats.tapeLoadTime);
+  set("positionTime", setupStats.positionTime + tapeStats.positionTime);
   set("waitInstructionsTime", tapeStats.waitInstructionsTime);
   set("waitFreeMemoryTime", tapeStats.waitFreeMemoryTime);
   set("waitDataTime", tapeStats.waitDataTime);
@@ -212,9 +222,14 @@ void TapeSessionReporter::logStats(bool sessionFinished) {
   set("checksumingTime", tapeStats.checksumingTime);
   set("readWriteTime", tapeStats.readWriteTime);
   set("flushTime", tapeStats.flushTime);
-  set("unloadTime", tapeStats.unloadTime);
-  set("unmountTime", tapeStats.unmountTime);
-  set("encryptionControlTime", tapeStats.encryptionControlTime);
+  set("unloadTime", cleanupStats.unloadTime);
+  set("unmountTime", cleanupStats.unmountTime);
+  set("encryptionControlTime", setupStats.encryptionControlTime + cleanupStats.encryptionControlTime);
+  set("cleanupTime", cleanupStats.cleanupTime);
+  set("lbpResetTime", cleanupStats.lbpResetTime);
+  set("readinessWaitTime", cleanupStats.readinessWaitTime);
+  set("rewindTime", cleanupStats.rewindTime);
+  set("labelReadTime", cleanupStats.labelReadTime);
   set("transferTime", tapeStats.transferTime());
   set("totalTime", totalTime);
   set("deliveryTime", deliveryTime);

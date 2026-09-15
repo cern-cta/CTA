@@ -60,7 +60,7 @@ public:
                       time_t completionTime,
                       const std::optional<std::string>& reason) override;
 
-  void setTapeSessionStats(const cta::tape::daemon::TapeSideStats& stats) override;
+  void setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) override;
 
   void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobsBatch,
                               log::LogContext& lc) override;

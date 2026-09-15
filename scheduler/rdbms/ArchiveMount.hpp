@@ -72,7 +72,7 @@ public:
    *
    * @return void
    */
-  void setTapeSessionStats(const cta::tape::daemon::TapeSideStats& stats) override;
+  void setTapeSessionStats(const cta::tape::daemon::TapeTransferStats& stats) override;
 
   /*
    * Setting a batch of jobs to state which informs

@@ -47,7 +47,7 @@ public:
   void execute(tapeFile::ReadSession& rs,
                cta::log::LogContext& lc,
                TapeSessionTracker& tracker,
-               TapeSideStats& stats,
+               TapeTransferStats& stats,
                cta::utils::Timer& timer) {
     [[maybe_unused]] TransferTaskTracker transferTaskTracer(cta::semconv::attr::CtaIoDirectionValues::kRead,
                                                             cta::semconv::attr::CtaIoMediumValues::kTape);
@@ -67,7 +67,7 @@ public:
 
     // We will clock the stats for the file itself, and eventually add those
     // stats to the session's.
-    TapeSideStats localStats;
+    TapeTransferStats localStats;
     double waitReportingTime = 0;
     std::string LBPMode;
     cta::utils::Timer localTime;
@@ -90,14 +90,14 @@ public:
       auto reader = openFileReader(rs, lc);
       LBPMode = reader->getLBPMode();
       // At that point we already read the header.
-      localStats.headerVolume += TapeSideStats::headerVolumePerFile;
+      localStats.headerVolume += TapeTransferStats::headerVolumePerFile;
 
       lc.log(cta::log::INFO, "Successfully positioned for reading");
       localStats.positionTime += timer.secs(cta::utils::Timer::resetCounter);
       tracker.notifyBeginNewJob(m_retrieveJob->archiveFile.archiveFileID, m_retrieveJob->selectedTapeFile().fSeq);
       const auto beginReportingTime = timer.secs(cta::utils::Timer::resetCounter);
       waitReportingTime += beginReportingTime;
-      tracker.addDiskStats({.waitReportingTime = beginReportingTime});
+      tracker.addDiskTransferStats({.waitReportingTime = beginReportingTime});
       currentErrorToCount = TapeSessionError::TapeReadData;
       auto checksum_adler32 = Payload::zeroAdler32();
       cta::checksum::ChecksumBlob tapeReadChecksum;
@@ -147,14 +147,14 @@ public:
         tracker.notifyBlockMovement(blockSize);
         const auto blockReportingTime = timer.secs(cta::utils::Timer::resetCounter);
         waitReportingTime += blockReportingTime;
-        tracker.addDiskStats({.waitReportingTime = blockReportingTime});
+        tracker.addDiskTransferStats({.waitReportingTime = blockReportingTime});
       }  //end of while(stillReading)
       // We have to signal the end of the tape read to the disk write task.
       m_fifo.pushDataBlock(nullptr);
       // Log the successful transfer
-      localStats.totalTime = localTime.secs();
+      const double taskTime = localTime.secs();
       // Count the trailer size
-      localStats.headerVolume += TapeSideStats::trailerVolumePerFile;
+      localStats.headerVolume += TapeTransferStats::trailerVolumePerFile;
       // We now transmitted one file:
       localStats.filesCount++;
       if (isRepack) {
@@ -169,15 +169,12 @@ public:
         .add("waitFreeMemoryTime", localStats.waitFreeMemoryTime)
         .add("waitReportingTime", waitReportingTime)
         .add("transferTime", localStats.transferTime())
-        .add("totalTime", localStats.totalTime)
+        .add("totalTime", taskTime)
         .add("dataVolume", localStats.dataVolume)
         .add("headerVolume", localStats.headerVolume)
         .add("driveTransferSpeedMBps",
-             localStats.totalTime ?
-               (1.0 * localStats.dataVolume + 1.0 * localStats.headerVolume) / 1000 / 1000 / localStats.totalTime :
-               0)
-        .add("payloadTransferSpeedMBps",
-             localStats.totalTime ? 1.0 * localStats.dataVolume / 1000 / 1000 / localStats.totalTime : 0)
+             taskTime ? (1.0 * localStats.dataVolume + 1.0 * localStats.headerVolume) / 1000 / 1000 / taskTime : 0)
+        .add("payloadTransferSpeedMBps", taskTime ? 1.0 * localStats.dataVolume / 1000 / 1000 / taskTime : 0)
         .add("LBPMode", LBPMode)
         .add("repackFilesCount", localStats.repackFilesCount)
         .add("repackBytesCount", localStats.repackBytesCount)

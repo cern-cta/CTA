@@ -284,7 +284,8 @@ bool DriveHandler::executeCleanerSession(const std::optional<std::string>& vid, 
                                 waitMediaInDrive,
                                 m_config.mounts.tape_load_timeout_secs,
                                 *m_catalogue,
-                                *m_scheduler);
+                                *m_scheduler,
+                                &m_tapeSessionTracker);
 
   // This is hacky; this whole end of session action stuff should be ripped out
   return cleanerSession.execute() == Session::EndOfSessionAction::MARK_DRIVE_AS_UP;

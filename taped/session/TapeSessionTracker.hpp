@@ -41,6 +41,8 @@ enum class TapeSessionError {
   CheckingTapeAlert,
   TapeNotWriteable,
   TapeEncryptionEnable,
+  TapeEncryptionDisable,
+  TapeLbpDisable,
   TapePositionForWrite,
   TapeFlush,
   TapesCheckLabelBeforeReading,
@@ -96,8 +98,7 @@ public:
 
     // TODO: for now the transition to scheduler clears the stats, but we may want to update the state
     if (state == cta::tape::session::SessionState::Scheduling && m_state != state) {
-      m_tapeStats = {};
-      m_diskStats = {};
+      m_stats = {};
       m_errorStats.clear();
       m_tapeAlertStats.clear();
       m_activeDiskFiles.clear();
@@ -165,29 +166,54 @@ public:
     ++m_tapeAlertStats[tapeAlertCode];
   }
 
-  void updateTapeStats(const TapeSideStats& stats) {
+  void updateTapeSetupStats(const TapeSetupStats& stats) {
     std::lock_guard lock(m_mutex);
-    m_tapeStats = stats;
+    m_stats.setup = stats;
   }
 
-  void addTapeStats(const TapeSideStats& stats) {
+  void addTapeSetupStats(const TapeSetupStats& stats) {
     std::lock_guard lock(m_mutex);
-    m_tapeStats.add(stats);
+    m_stats.setup.add(stats);
   }
 
-  void updateDiskStats(const DiskSideStats& stats) {
+  void updateTapeTransferStats(const TapeTransferStats& stats) {
     std::lock_guard lock(m_mutex);
-    m_diskStats = stats;
+    m_stats.tape = stats;
   }
 
-  void addDiskStats(const DiskSideStats& stats) {
+  void addTapeTransferStats(const TapeTransferStats& stats) {
     std::lock_guard lock(m_mutex);
-    m_diskStats.add(stats);
+    m_stats.tape.add(stats);
+  }
+
+  void updateDiskTransferStats(const DiskTransferStats& stats) {
+    std::lock_guard lock(m_mutex);
+    m_stats.disk = stats;
+  }
+
+  void addDiskTransferStats(const DiskTransferStats& stats) {
+    std::lock_guard lock(m_mutex);
+    m_stats.disk.add(stats);
+  }
+
+  void updateTapeCleanupStats(const TapeCleanupStats& stats) {
+    std::lock_guard lock(m_mutex);
+    m_stats.cleanup = stats;
+  }
+
+  void addTapeCleanupStats(const TapeCleanupStats& stats) {
+    std::lock_guard lock(m_mutex);
+    m_stats.cleanup.add(stats);
+  }
+
+  void setTotalTime(double totalTime) {
+    std::lock_guard lock(m_mutex);
+    m_stats.totalTime = totalTime;
   }
 
   void setDiskDeliveryTime(double deliveryTime) {
     std::lock_guard lock(m_mutex);
-    m_diskStats.deliveryTime = deliveryTime;
+    m_stats.disk.deliveryTime = deliveryTime;
   }
 
   void notifyDiskFileOpened(uint32_t threadId, uint64_t fileId, std::string path) {
@@ -216,14 +242,9 @@ public:
     return m_tapeAlertStats;
   }
 
-  TapeSideStats tapeStats() const {
+  TapeSessionStats stats() const {
     std::lock_guard lock(m_mutex);
-    return m_tapeStats;
-  }
-
-  DiskSideStats diskStats() const {
-    std::lock_guard lock(m_mutex);
-    return m_diskStats;
+    return m_stats;
   }
 
   void notifyBlockMovement(uint64_t bytes) {
@@ -299,8 +320,7 @@ private:
   bool m_fileBeingMoved = false;
   std::chrono::steady_clock::time_point m_fileStartTime;
 
-  TapeSideStats m_tapeStats;
-  DiskSideStats m_diskStats;
+  TapeSessionStats m_stats;
   TapeSessionErrorStats m_errorStats;
   TapeAlertStats m_tapeAlertStats;
   ActiveDiskFiles m_activeDiskFiles;

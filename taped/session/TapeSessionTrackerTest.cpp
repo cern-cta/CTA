@@ -5,48 +5,128 @@
 
 #include "TapeSessionTracker.hpp"
 
+#include <atomic>
 #include <gtest/gtest.h>
 #include <thread>
 
 namespace cta::tape::daemon {
 
-TEST(TapeSessionTrackerTest, UpdatesTapeAndDiskStatsIndependently) {
+TEST(TapeSessionTrackerTest, UpdatesTransferAndCleanupStatsIndependently) {
   TapeSessionTracker tracker;
 
-  TapeSideStats tapeStats;
+  TapeTransferStats tapeStats;
   tapeStats.dataVolume = 10;
-  tapeStats.totalTime = 5;
-  tracker.updateTapeStats(tapeStats);
+  tracker.setTotalTime(5);
+  tracker.updateTapeTransferStats(tapeStats);
 
-  TapeSideStats additionalTapeStats;
+  TapeTransferStats additionalTapeStats;
   additionalTapeStats.dataVolume = 15;
-  additionalTapeStats.totalTime = 20;
-  tracker.addTapeStats(additionalTapeStats);
+  tracker.addTapeTransferStats(additionalTapeStats);
 
-  DiskSideStats diskStats;
+  DiskTransferStats diskStats;
   diskStats.deliveryTime = 8;
   diskStats.waitReportingTime = 2;
-  tracker.updateDiskStats(diskStats);
+  tracker.updateDiskTransferStats(diskStats);
 
-  DiskSideStats additionalDiskStats;
+  DiskTransferStats additionalDiskStats;
   additionalDiskStats.deliveryTime = 50;
   additionalDiskStats.waitReportingTime = 3;
-  tracker.addDiskStats(additionalDiskStats);
+  tracker.addDiskTransferStats(additionalDiskStats);
 
-  EXPECT_EQ(25, tracker.tapeStats().dataVolume);
-  EXPECT_EQ(5, tracker.tapeStats().totalTime);
-  EXPECT_EQ(8, tracker.diskStats().deliveryTime);
-  EXPECT_EQ(5, tracker.diskStats().waitReportingTime);
+  EXPECT_EQ(25, tracker.stats().tape.dataVolume);
+  EXPECT_EQ(5, tracker.stats().totalTime);
+  EXPECT_EQ(8, tracker.stats().disk.deliveryTime);
+  EXPECT_EQ(5, tracker.stats().disk.waitReportingTime);
+
+  tracker.updateTapeCleanupStats({.cleanupTime = 4, .lbpResetTime = 1});
+  tracker.addTapeCleanupStats({.unloadTime = 2, .cleanupTime = 3, .lbpResetTime = 2});
+  tracker.updateTapeTransferStats({.dataVolume = 30});
+  const auto stats = tracker.stats();
+  EXPECT_EQ(30, stats.tape.dataVolume);
+  EXPECT_EQ(8, stats.disk.deliveryTime);
+  EXPECT_EQ(5, stats.disk.waitReportingTime);
+  EXPECT_EQ(7, stats.cleanup.cleanupTime);
+  EXPECT_EQ(3, stats.cleanup.lbpResetTime);
+  EXPECT_EQ(2, stats.cleanup.unloadTime);
+  EXPECT_EQ(5, stats.totalTime);
+}
+
+TEST(TapeSessionTrackerTest, SetupStatsAccumulateAndSurviveTransferReplacement) {
+  TapeSessionTracker tracker;
+  tracker.updateTapeSetupStats(
+    {.mountTime = 1, .initialMountTime = 2, .tapeLoadTime = 3, .encryptionControlTime = 4, .positionTime = 5});
+  tracker.addTapeSetupStats(
+    {.mountTime = 6, .initialMountTime = 7, .tapeLoadTime = 8, .encryptionControlTime = 9, .positionTime = 10});
+  tracker.addTapeCleanupStats({.cleanupTime = 11});
+  tracker.addDiskTransferStats({.waitReportingTime = 12});
+  tracker.updateTapeTransferStats({.dataVolume = 13});
+  const auto snapshot = tracker.stats();
+  EXPECT_EQ(7, snapshot.setup.mountTime);
+  EXPECT_EQ(9, snapshot.setup.initialMountTime);
+  EXPECT_EQ(11, snapshot.setup.tapeLoadTime);
+  EXPECT_EQ(13, snapshot.setup.encryptionControlTime);
+  EXPECT_EQ(15, snapshot.setup.positionTime);
+  EXPECT_EQ(11, snapshot.cleanup.cleanupTime);
+  EXPECT_EQ(12, snapshot.disk.waitReportingTime);
+  EXPECT_EQ(13, snapshot.tape.dataVolume);
+
+  tracker.updateTapeSetupStats({.tapeLoadTime = 14});
+  EXPECT_EQ(0, tracker.stats().setup.mountTime);
+  EXPECT_EQ(14, tracker.stats().setup.tapeLoadTime);
+  EXPECT_EQ(13, tracker.stats().tape.dataVolume);
+  EXPECT_EQ(11, snapshot.setup.tapeLoadTime);
+}
+
+TEST(TapeSessionTrackerTest, ConcurrentComponentUpdatesProduceConsistentSnapshots) {
+  TapeSessionTracker tracker;
+  std::atomic<unsigned> finished = 0;
+  constexpr unsigned iterations = 1000;
+
+  std::thread tape([&] {
+    for (unsigned i = 0; i < iterations; ++i) {
+      tracker.addTapeTransferStats({.dataVolume = 1, .filesCount = 1});
+    }
+    ++finished;
+  });
+  std::thread disk([&] {
+    for (unsigned i = 0; i < iterations; ++i) {
+      tracker.addDiskTransferStats({.waitReportingTime = 1});
+    }
+    ++finished;
+  });
+  std::thread cleanup([&] {
+    for (unsigned i = 0; i < iterations; ++i) {
+      tracker.addTapeCleanupStats({.unloadTime = 2, .cleanupTime = 1});
+    }
+    ++finished;
+  });
+
+  while (finished != 3) {
+    const auto stats = tracker.stats();
+    EXPECT_EQ(stats.tape.dataVolume, stats.tape.filesCount);
+    EXPECT_EQ(2 * stats.cleanup.cleanupTime, stats.cleanup.unloadTime);
+  }
+  tape.join();
+  disk.join();
+  cleanup.join();
+
+  const auto snapshot = tracker.stats();
+  EXPECT_EQ(iterations, snapshot.tape.dataVolume);
+  EXPECT_EQ(iterations, snapshot.disk.waitReportingTime);
+  EXPECT_EQ(iterations, snapshot.cleanup.cleanupTime);
+  tracker.updateTapeTransferStats({});
+  EXPECT_EQ(iterations, snapshot.tape.dataVolume);
+  EXPECT_EQ(iterations, tracker.stats().cleanup.cleanupTime);
 }
 
 TEST(TapeSessionTrackerTest, SetsDeliveryTimeWithoutReplacingAccumulatedDiskStats) {
   TapeSessionTracker tracker;
-  tracker.addDiskStats({.waitReportingTime = 3});
+  tracker.addDiskTransferStats({.waitReportingTime = 3});
 
   tracker.setDiskDeliveryTime(8);
 
-  EXPECT_EQ(8, tracker.diskStats().deliveryTime);
-  EXPECT_EQ(3, tracker.diskStats().waitReportingTime);
+  EXPECT_EQ(8, tracker.stats().disk.deliveryTime);
+  EXPECT_EQ(3, tracker.stats().disk.waitReportingTime);
 }
 
 TEST(TapeSessionTrackerTest, StoresTypedSessionOutcomeAndMountAttemptState) {
@@ -165,13 +245,16 @@ TEST(TapeSessionTrackerTest, CountsTapeAlertsByCode) {
 
 TEST(TapeSessionTrackerTest, EnteringSchedulingResetsSessionDataOnce) {
   TapeSessionTracker tracker;
-  TapeSideStats tapeStats;
+  TapeTransferStats tapeStats;
   tapeStats.filesCount = 2;
-  DiskSideStats diskStats;
+  DiskTransferStats diskStats;
   diskStats.deliveryTime = 3;
 
-  tracker.updateTapeStats(tapeStats);
-  tracker.updateDiskStats(diskStats);
+  tracker.updateTapeTransferStats(tapeStats);
+  tracker.updateDiskTransferStats(diskStats);
+  tracker.addTapeSetupStats({.mountTime = 6, .tapeLoadTime = 7});
+  tracker.addTapeCleanupStats({.cleanupTime = 4});
+  tracker.setTotalTime(5);
   tracker.incrementError(TapeSessionError::DiskRead);
   tracker.incrementTapeAlert(0x01);
   tracker.notifyBlockMovement(100);
@@ -181,8 +264,12 @@ TEST(TapeSessionTrackerTest, EnteringSchedulingResetsSessionDataOnce) {
 
   tracker.reportState(cta::tape::session::SessionState::Scheduling, cta::tape::session::SessionType::Undetermined);
 
-  EXPECT_EQ(0, tracker.tapeStats().filesCount);
-  EXPECT_EQ(0, tracker.diskStats().deliveryTime);
+  EXPECT_EQ(0, tracker.stats().setup.mountTime);
+  EXPECT_EQ(0, tracker.stats().setup.tapeLoadTime);
+  EXPECT_EQ(0, tracker.stats().tape.filesCount);
+  EXPECT_EQ(0, tracker.stats().disk.deliveryTime);
+  EXPECT_EQ(0, tracker.stats().cleanup.cleanupTime);
+  EXPECT_EQ(0, tracker.stats().totalTime);
   EXPECT_FALSE(tracker.errorHappened());
   EXPECT_TRUE(tracker.tapeAlertStats().empty());
   EXPECT_EQ(0, tracker.bytesMoved());
@@ -193,13 +280,20 @@ TEST(TapeSessionTrackerTest, EnteringSchedulingResetsSessionDataOnce) {
   const auto sessionStartTime = tracker.sessionStartTime();
   EXPECT_NE(std::chrono::steady_clock::time_point {}, sessionStartTime);
 
-  tracker.updateTapeStats(tapeStats);
+  tracker.updateTapeTransferStats(tapeStats);
+  tracker.addTapeSetupStats({.mountTime = 6, .tapeLoadTime = 7});
+  tracker.addTapeCleanupStats({.cleanupTime = 4});
+  tracker.setTotalTime(5);
   tracker.incrementError(TapeSessionError::DiskRead);
   tracker.incrementTapeAlert(0x01);
   tracker.notifyBlockMovement(100);
   tracker.reportState(cta::tape::session::SessionState::Scheduling, cta::tape::session::SessionType::Undetermined);
 
-  EXPECT_EQ(2, tracker.tapeStats().filesCount);
+  EXPECT_EQ(6, tracker.stats().setup.mountTime);
+  EXPECT_EQ(7, tracker.stats().setup.tapeLoadTime);
+  EXPECT_EQ(2, tracker.stats().tape.filesCount);
+  EXPECT_EQ(4, tracker.stats().cleanup.cleanupTime);
+  EXPECT_EQ(5, tracker.stats().totalTime);
   EXPECT_TRUE(tracker.errorHappened());
   EXPECT_EQ(1, tracker.tapeAlertStats().at(0x01));
   EXPECT_EQ(100, tracker.bytesMoved());

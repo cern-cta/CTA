@@ -57,7 +57,7 @@ cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
   //then we log/notify
   m_this.m_logContext.log(cta::log::DEBUG,
                           "Starting write session cleanup. Signalled end of session to task injector.");
-  m_this.m_tracker.addDiskStats({.waitReportingTime = m_timer.secs(cta::utils::Timer::resetCounter)});
+  m_this.m_tracker.addDiskTransferStats({.waitReportingTime = m_timer.secs(cta::utils::Timer::resetCounter)});
 
   // Disable encryption (or at least try)
   try {
@@ -69,7 +69,7 @@ cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
     scoped.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
     m_this.m_logContext.log(cta::log::ERR, "Failed to turn off encryption before unmounting");
   }
-  m_this.m_stats.encryptionControlTime += m_timer.secs(cta::utils::Timer::resetCounter);
+  m_this.m_tracker.addTapeCleanupStats({.encryptionControlTime = m_timer.secs(cta::utils::Timer::resetCounter)});
 
   // Log (safely, exception-wise) the tape alerts (if any) at the end of the session
   try {
@@ -115,7 +115,7 @@ cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
                                             m_this.m_logContext);
     m_this.m_drive.unloadTape();
     m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread: Tape unloaded");
-    m_this.m_stats.unloadTime += m_timer.secs(cta::utils::Timer::resetCounter);
+    m_this.m_tracker.addTapeCleanupStats({.unloadTime = m_timer.secs(cta::utils::Timer::resetCounter)});
 
     // And return the tape to the library
     currentErrorToCount = TapeSessionError::TapeDismount;
@@ -127,7 +127,7 @@ cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
     const auto librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_this.m_drive.info.rawLibrarySlot);
     m_this.m_mediaChanger.dismountTape(m_this.m_volInfo.vid, librarySlot);
     m_this.m_drive.disableLogicalBlockProtection();
-    m_this.m_stats.unmountTime += m_timer.secs(cta::utils::Timer::resetCounter);
+    m_this.m_tracker.addTapeCleanupStats({.unmountTime = m_timer.secs(cta::utils::Timer::resetCounter)});
     m_this.m_logContext.log(cta::log::INFO, "TapeWriteSingleThread : tape unmounted");
     // We know we are the last thread, just report the drive Up
     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up,
@@ -135,7 +135,7 @@ cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
                                             m_this.m_logContext);
     m_this.m_tracker.reportState(cta::tape::session::SessionState::ShuttingDown,
                                  cta::tape::session::SessionType::Archive);
-    m_this.m_tracker.addDiskStats({.waitReportingTime = m_timer.secs(cta::utils::Timer::resetCounter)});
+    m_this.m_tracker.addDiskTransferStats({.waitReportingTime = m_timer.secs(cta::utils::Timer::resetCounter)});
   } catch (const cta::exception::Exception& ex) {
     // Notify something failed during the cleaning
     m_this.m_hardwareStatus = Session::MARK_DRIVE_AS_DOWN;
@@ -294,11 +294,10 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
       params.add("vendor", m_archiveMount.getVendor());
       params.add("capacityInBytes", m_archiveMount.getCapacityInBytes());
       m_logContext.log(cta::log::INFO, "Tape session started for write");
-      mountTapeReadWrite();
+      measureSetupTime(&TapeSetupStats::initialMountTime, [&] { mountTapeReadWrite(); });
       currentErrorToCount = TapeSessionError::TapeLoad;
-      cta::utils::Timer tapeLoadTimer;
-      waitForDrive();
-      double tapeLoadTime = tapeLoadTimer.secs();
+      measureSetupTime(&TapeSetupStats::tapeLoadTime, [&] { waitForDrive(); });
+      const double tapeLoadTime = m_tracker.stats().setup.tapeLoadTime;
       currentErrorToCount = TapeSessionError::CheckingTapeAlert;
       if (logAndCheckTapeAlertsForWrite()) {
         throw cta::exception::Exception("Aborting write session in"
@@ -308,10 +307,10 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
       currentErrorToCount = TapeSessionError::TapeNotWriteable;
       isTapeWritable();
 
-      m_stats.mountTime += timer.secs(cta::utils::Timer::resetCounter);
+      m_tracker.addTapeSetupStats({.mountTime = timer.secs(cta::utils::Timer::resetCounter)});
       {
         cta::log::ScopedParamContainer scoped(m_logContext);
-        scoped.add("mountTime", m_stats.mountTime);
+        scoped.add("mountTime", m_tracker.stats().setup.mountTime);
         scoped.add("tapeLoadTime", tapeLoadTime);
         m_logContext.log(cta::log::INFO, "Tape mounted and drive ready");
       }
@@ -335,7 +334,7 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
             m_logContext.log(cta::log::INFO, "Drive encryption not enabled for this mount");
           }
         }
-        m_stats.encryptionControlTime += timer.secs(cta::utils::Timer::resetCounter);
+        m_tracker.addTapeSetupStats({.encryptionControlTime = timer.secs(cta::utils::Timer::resetCounter)});
       } catch (cta::exception::Exception& ex) {
         cta::log::ScopedParamContainer exceptionParams(m_logContext);
         exceptionParams.add(cta::semconv::log::exceptionMessage, ex.getMessage().str());
@@ -345,11 +344,11 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
       // Then we have to initialize the tape write session
       currentErrorToCount = TapeSessionError::TapePositionForWrite;
       auto writeSession = openWriteSession();
-      m_stats.positionTime += timer.secs(cta::utils::Timer::resetCounter);
+      m_tracker.addTapeSetupStats({.positionTime = timer.secs(cta::utils::Timer::resetCounter)});
       //and then report
       {
         cta::log::ScopedParamContainer scoped(m_logContext);
-        scoped.add("positionTime", m_stats.positionTime);
+        scoped.add("positionTime", m_tracker.stats().setup.positionTime);
         scoped.add("useLbp", m_useLbp);
         scoped.add("detectedLbp", writeSession->isTapeWithLbp());
 
@@ -378,7 +377,7 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
         }
       }
 
-      m_tracker.addDiskStats({.waitReportingTime = timer.secs(cta::utils::Timer::resetCounter)});
+      m_tracker.addDiskTransferStats({.waitReportingTime = timer.secs(cta::utils::Timer::resetCounter)});
 
       uint64_t bytes = 0;
       uint64_t files = 0;
@@ -405,7 +404,7 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
         // Add the tasks counts to the session's
         m_stats.add(task->getTaskStats());
         // Publish the current statistics to the session tracker.
-        m_tracker.updateTapeStats(m_stats);
+        m_tracker.updateTapeTransferStats(m_stats);
         // Increase local flush counters (session counters are incremented by
         // the task)
         files++;
@@ -425,11 +424,12 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
     // at the end of the previous block. Log the results.
     cta::log::ScopedParamContainer params(m_logContext);
     params.add("status", m_tracker.errorHappened() ? "error" : "success");
-    m_stats.totalTime = totalTimer.secs();
-    m_tracker.setDiskDeliveryTime(m_stats.totalTime);
+    m_totalTime = totalTimer.secs();
+    m_tracker.setTotalTime(m_totalTime);
+    m_tracker.setDiskDeliveryTime(m_totalTime);
     logWithStats(cta::log::INFO, "Tape thread complete", params);
     // Report one last time the stats, after unloading/unmounting.
-    m_tracker.updateTapeStats(m_stats);
+    m_tracker.updateTapeTransferStats(m_stats);
     //end of session + log
     m_reportPacker.reportEndOfSession(m_logContext);
   } catch (const cta::exception::Exception& e) {
@@ -443,9 +443,8 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
     // like mounting the tape, then we have to signal the problem to the disk
     // side and the task injector, which will trigger the end of session.
     m_taskInjector->setErrorFlag();
-    // We can still update the session stats one last time (unmount timings
-    // should have been updated by the RAII cleaner/unmounter).
-    m_tracker.updateTapeStats(m_stats);
+    // Publish transfer statistics; the RAII cleaner recorded cleanup timings independently.
+    m_tracker.updateTapeTransferStats(m_stats);
 #ifdef CTA_PGSCHED
     // report last batch of files which were written but not flushed
     // (no file marks on tape) as failure (last file written to tape when ENOSPC
@@ -522,7 +521,8 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
     // prepare logging params
     cta::log::ScopedParamContainer params(m_logContext);
     params.add("status", "error").add(cta::semconv::log::exceptionMessage, errorMessage);
-    m_stats.totalTime = totalTimer.secs();
+    m_totalTime = totalTimer.secs();
+    m_tracker.setTotalTime(m_totalTime);
     logWithStats(logLevel, "Tape thread complete for writing", params);
     m_reportPacker.reportEndOfSessionWithErrors(errorMessage, isTapeFull, m_logContext);
   }
@@ -534,28 +534,30 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
 void cta::tape::daemon::TapeWriteSingleThread::logWithStats(int level,
                                                             const std::string& msg,
                                                             cta::log::ScopedParamContainer& params) {
+  const auto sessionStats = m_tracker.stats();
   params.add("type", "write")
     .add("tapeVid", m_volInfo.vid)
-    .add("mountTime", m_stats.mountTime)
-    .add("positionTime", m_stats.positionTime)
+    .add("mountTime", sessionStats.setup.mountTime)
+    .add("initialMountTime", sessionStats.setup.initialMountTime)
+    .add("tapeLoadTime", sessionStats.setup.tapeLoadTime)
+    .add("positionTime", sessionStats.setup.positionTime + m_stats.positionTime)
     .add("waitInstructionsTime", m_stats.waitInstructionsTime)
     .add("checksumingTime", m_stats.checksumingTime)
     .add("readWriteTime", m_stats.readWriteTime)
     .add("waitDataTime", m_stats.waitDataTime)
-    .add("waitReportingTime", m_tracker.diskStats().waitReportingTime)
+    .add("waitReportingTime", sessionStats.disk.waitReportingTime)
     .add("flushTime", m_stats.flushTime)
-    .add("unloadTime", m_stats.unloadTime)
-    .add("unmountTime", m_stats.unmountTime)
-    .add("encryptionControlTime", m_stats.encryptionControlTime)
+    .add("unloadTime", sessionStats.cleanup.unloadTime)
+    .add("unmountTime", sessionStats.cleanup.unmountTime)
+    .add("encryptionControlTime", sessionStats.setup.encryptionControlTime + sessionStats.cleanup.encryptionControlTime)
     .add("transferTime", m_stats.transferTime())
-    .add("totalTime", m_stats.totalTime)
+    .add("totalTime", m_totalTime)
     .add("dataVolume", m_stats.dataVolume)
     .add("headerVolume", m_stats.headerVolume)
     .add("files", m_stats.filesCount)
-    .add("payloadTransferSpeedMBps",
-         m_stats.totalTime ? 1.0 * m_stats.dataVolume / 1000 / 1000 / m_stats.totalTime : 0.0)
+    .add("payloadTransferSpeedMBps", m_totalTime ? 1.0 * m_stats.dataVolume / 1000 / 1000 / m_totalTime : 0.0)
     .add("driveTransferSpeedMBps",
-         m_stats.totalTime ? 1.0 * (m_stats.dataVolume + m_stats.headerVolume) / 1000 / 1000 / m_stats.totalTime : 0.0);
+         m_totalTime ? 1.0 * (m_stats.dataVolume + m_stats.headerVolume) / 1000 / 1000 / m_totalTime : 0.0);
   m_logContext.log(level, msg);
 }
 
