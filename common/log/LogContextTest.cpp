@@ -14,6 +14,19 @@
 using namespace cta::log;
 
 namespace unitTests {
+TEST(cta_log_LogContextTest, scopedParamContainerLogsCallerSourceLocation) {
+  StringLogger logger("dummy", "cta_log_LogContextTest", DEBUG);
+  logger.setLogFormat("json");
+  LogContext lc(logger);
+
+  const auto line = __LINE__ + 1;
+  ScopedParamContainer(lc).add("fileId", 123).log(INFO, "Caller location");
+
+  EXPECT_NE(std::string::npos,
+            logger.getLog().find("\"source_location\":\"LogContextTest.cpp:" + std::to_string(line) + "\""));
+  EXPECT_EQ(0U, lc.size());
+}
+
 TEST(cta_log_LogContextTest, additionScopedRemove) {
   DummyLogger dl("dummy", "cta_log_LogContextTest");
   LogContext lc(dl);
