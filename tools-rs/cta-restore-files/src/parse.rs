@@ -9,7 +9,7 @@ use std::io::{self, BufRead, BufReader};
 use std::path::PathBuf;
 
 use cta_lib::eos::EosEndpointMap;
-use cta_lib::rpc::{EndpointConfig, JwtAuth};
+use cta_lib::rpc::{self, EndpointConfig, JwtAuth};
 use url::Url;
 
 /// Errors raised while reading the namespace keytab file.
@@ -22,9 +22,9 @@ pub enum KeytabError {
     /// valid URL.
     #[error("Could not parse namespace keytab configuration file line {line_no}: {line}")]
     Parse {
-        /// Zero-based index of the offending line.
+        /// One-based line number (as displayed in text editors).
         line_no: usize,
-        /// The offending line, or the field that failed to parse.
+        /// The complete offending line.
         line: String,
     },
     /// The endpoint URL uses a scheme other than `http` or `https`.
@@ -84,14 +84,12 @@ pub fn set_namespace_map(
             // 3 or 4 fields, nothing trailing -> valid entry
             (Some(d), Some(endpoint), Some(t), host, None) => {
                 let endpoint_url = Url::parse(endpoint).map_err(|_e| KeytabError::Parse {
-                    line_no: lineno,
-                    line: endpoint.into(),
+                    line_no: lineno + 1,
+                    line: raw_line.clone(),
                 })?;
 
-                let scheme = endpoint_url.scheme().to_string();
-                if !["http", "https"].contains(&scheme.as_str()) {
-                    return Err(KeytabError::InvalidScheme(scheme));
-                }
+                rpc::validate_scheme(&endpoint_url)
+                    .map_err(|_| KeytabError::InvalidScheme(endpoint_url.scheme().to_string()))?;
 
                 endpoint_map.insert(
                     d.to_string(),
@@ -106,7 +104,7 @@ pub fn set_namespace_map(
             // Anything else (1, 2 fields, or more than 3) -> malformed
             _ => {
                 return Err(KeytabError::Parse {
-                    line_no: lineno,
+                    line_no: lineno + 1,
                     line: raw_line,
                 });
             }

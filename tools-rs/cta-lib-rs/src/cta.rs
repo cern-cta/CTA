@@ -40,24 +40,18 @@ pub type UnaryClientType = CtaRpcClient<InterceptedService<Channel, Authorizatio
 pub type StreamingClientType =
     CtaRpcStreamClient<InterceptedService<Channel, AuthorizationInterceptor>>;
 
-impl<C> CtaGrpcClient<C> {
-    /// Returns a reference to the wrapped generated client, for ad-hoc calls
-    pub fn connection(&self) -> &C {
-        &self._inner
-    }
-}
-
 impl CtaGrpcClient<UnaryClientType> {
     /// Connects to the unary admin service described by `config`.
     ///
     /// # Errors
     ///
-    /// Propagates the connection errors of [`EndpointConfig::build_channel`].
+    /// Propagates the connection errors of [`EndpointConfig::build_channel`]
+    /// and the token errors of [`AuthorizationInterceptor::new`].
     pub async fn new_unary(config: &EndpointConfig) -> Result<Self, Error> {
         let channel = config.build_channel().await?;
         let client = CtaRpcClient::new(InterceptedService::new(
             channel,
-            AuthorizationInterceptor::new(config.authentication.clone()),
+            AuthorizationInterceptor::new(config.authentication.clone())?,
         ));
         Ok(Self { _inner: client })
     }
@@ -86,13 +80,13 @@ impl CtaGrpcClient<StreamingClientType> {
     ///
     /// # Errors
     ///
-    /// Propagates the connection errors of
-    /// [`EndpointConfig::build_channel`].
+    /// Propagates the connection errors of [`EndpointConfig::build_channel`]
+    /// and the token errors of [`AuthorizationInterceptor::new`].
     pub async fn new_streaming(config: &EndpointConfig) -> Result<Self, Error> {
         let channel = config.build_channel().await?;
         let client = CtaRpcStreamClient::new(InterceptedService::new(
             channel,
-            AuthorizationInterceptor::new(config.authentication.clone()),
+            AuthorizationInterceptor::new(config.authentication.clone())?,
         ));
         Ok(Self { _inner: client })
     }
