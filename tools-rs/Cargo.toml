@@ -2,9 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 [workspace]
-name = "cta-rs"
-resolver = "3"
-members = [
+  resolver = "3"
+  members = [
     # protobuf libs
     "eos-protobuf-rs",
     "cta-protobuf-rs",
@@ -13,5 +12,75 @@ members = [
     "cta-lib-rs",
 
     # tools
-    "cta-restore-files"
-]
+    "cta-restore-files",
+  ]
+
+  # Metadata inherited by every member via `field.workspace = true`.
+  [workspace.package]
+    version       = "0.1.0"
+    edition       = "2024"
+    authors       = ["CERN"]
+    license       = "GPL-3.0-or-later"
+    repository    = "https://gitlab.cern.ch/cta/CTA"
+    homepage      = "https://cta.docs.cern.ch/"
+    documentation = "https://cta.docs.cern.ch/latest/dev/overview/"
+    keywords      = ["cta", "tape", "eos", "grpc", "storage"]
+    categories    = ["science", "filesystem"]
+    # The crates are built and shipped as part of CTA, not published to crates.io.
+    publish = false
+    # Note: `readme` is intentionally not inherited here, because an inherited
+    # value resolves against the workspace root. Each member points at its own
+    # README.md instead.
+
+  # Single source of truth for dependency versions across the workspace.
+  [workspace.dependencies]
+    # internal
+    cta-lib      = { path = "cta-lib-rs" }
+    cta-protobuf = { path = "cta-protobuf-rs" }
+    eos-protobuf = { path = "eos-protobuf-rs" }
+    # gRPC / protobuf
+    prost             = "^0.14"
+    tonic             = "^0.14"
+    tonic-prost       = "^0.14"
+    tonic-prost-build = "^0.14"
+    # async
+    tokio        = "^1"
+    tokio-stream = "^0.1"
+    # HTTP plumbing, only needed to build gRPC bodies in tests
+    bytes          = "^1"
+    http-body      = "^1"
+    http-body-util = "^0.1"
+    # error handling, logging, misc
+    anyhow     = "^1.0"
+    clap       = "^4.6"
+    env_logger = "^0.11"
+    log        = "^0.4"
+    nix        = "^0.31"
+    serde_json = "^1.0"
+    thiserror  = "^2.0"
+    url        = "^2.5"
+
+  # Lint policy for the whole workspace. Members opt in with
+  # `[lints] workspace = true`.
+  [workspace.lints.rust]
+    missing_docs = "warn"
+
+  [workspace.lints.rustdoc]
+    broken_intra_doc_links  = "deny"
+    private_intra_doc_links = "warn"
+
+  [workspace.lints.clippy]
+    doc_markdown       = "warn"
+    missing_errors_doc = "warn"
+    missing_panics_doc = "warn"
+
+# Release builds are packaged into RPMs alongside the C++ code, which is built
+# as RelWithDebInfo
+[profile.release]
+  opt-level     = 3
+  lto           = "thin"
+  codegen-units = 1
+  debug         = "line-tables-only"
+  strip         = "none"
+  panic         = "unwind"
+  incremental   = false
