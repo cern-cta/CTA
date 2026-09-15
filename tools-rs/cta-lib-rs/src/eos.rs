@@ -32,10 +32,7 @@ use eos_protobuf::eos::rpc::{
 use tokio_stream::StreamExt;
 use tonic::{service::interceptor::InterceptedService, transport::Channel};
 
-use crate::{
-    StreamResponseExt,
-    rpc::{self, AuthorizationInterceptor, EndpointConfig},
-};
+use crate::rpc::{self, AuthorizationInterceptor, EndpointConfig};
 
 use nix::sys::stat::Mode;
 

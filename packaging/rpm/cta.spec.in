@@ -514,6 +514,15 @@ namespace used for CTA disk buffers.
 %license COPYING
 %{_bindir}/cta-eosdf.sh
 
+%package -n cta-tools-rs
+Summary: Rust CLI tools for CTA
+%description -n cta-tools-rs
+Provides CTA's Rust-based CLI tools
+%files -n cta-tools-rs
+%license COPYING
+%{_bindir}/cta-restore-files
+
+
 # =========================================================================
 #  Packaging
 # =========================================================================

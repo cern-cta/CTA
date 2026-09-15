@@ -202,6 +202,7 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "source")
   add_subdirectory(taped)
   add_subdirectory(maintd)
   add_subdirectory(tools)
+  add_subdirectory(tools-rs)
   add_subdirectory(tests)
 
 endif()
@@ -230,7 +231,8 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "none")
     "/test_logs/"
     "/tmp/"
     "[.]core$"
-    "/assets/")
+    "/assets/"
+    "/tools-rs/([^/]+/)*target/")
   include(CPack)
 
   if(CTA_PACKAGE_FORMAT STREQUAL "rpm")
