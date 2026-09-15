@@ -9,12 +9,16 @@
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "catalogue/MediaType.hpp"
+#include "catalogue/dummy/DummyCatalogue.hpp"
+#include "catalogue/dummy/DummyTapeCatalogue.hpp"
 #include "common/dataStructures/DiskInstance.hpp"
 #include "common/dataStructures/TapeDrive.hpp"
 #include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/StringLogger.hpp"
+#include "mediachanger/CommonMarshal.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
+#include "mediachanger/RmcMarshal.hpp"
 #include "mediachanger/RmcProxy.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/SchedulerDatabaseFactory.hpp"
@@ -22,9 +26,12 @@
 #include "taped/file/LabelSession.hpp"
 #include "taped/system/Wrapper.hpp"
 
+#include <exception>
+#include <future>
 #include <gtest/gtest.h>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <string>
 
 #ifdef CTA_PGSCHED
@@ -37,6 +44,154 @@
 namespace unitTests {
 
 namespace {
+
+// Exercise cartridge-name fallback with real RMC requests and a bounded local robot simulation.
+class ScriptedRobot {
+public:
+  explicit ScriptedRobot(std::vector<uint32_t> replies) : m_listener(socket(AF_INET, SOCK_STREAM, 0)) {
+    sockaddr_in address {};
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    if (m_listener.get() < 0 || bind(m_listener.get(), reinterpret_cast<sockaddr*>(&address), sizeof(address)) < 0
+        || listen(m_listener.get(), 2) < 0) {
+      throw std::runtime_error("Cannot create test robot listener");
+    }
+    socklen_t size = sizeof(address);
+    if (getsockname(m_listener.get(), reinterpret_cast<sockaddr*>(&address), &size) < 0) {
+      throw std::runtime_error("Cannot get test robot port");
+    }
+    m_port = ntohs(address.sin_port);
+    m_requests = std::async(std::launch::async, [this, replies] {
+      using namespace cta::mediachanger;
+      std::vector<std::string> vids;
+      for (const auto status : replies) {
+        cta::SmartFd connection(acceptConnection(m_listener.get(), 2));
+        char headerBuffer[12];
+        readBytes(connection.get(), 2, sizeof(headerBuffer), headerBuffer);
+        const char* source = headerBuffer;
+        size_t length = sizeof(headerBuffer);
+        MessageHeader header;
+        unmarshal(source, length, header);
+        if (header.magic != RMC_MAGIC || header.reqType != RMC_UNMOUNT || header.lenOrStatus < 12
+            || header.lenOrStatus > 256) {
+          throw std::runtime_error("Unexpected test robot request");
+        }
+        std::vector<char> body(header.lenOrStatus - 12);
+        readBytes(connection.get(), 2, body.size(), body.data());
+        source = body.data();
+        length = body.size();
+        RmcUnmountMsgBody request;
+        unmarshal(source, length, request);
+        vids.emplace_back(request.vid);
+        MessageHeader response;
+        response.magic = RMC_MAGIC;
+        response.reqType = RMC_RC;
+        response.lenOrStatus = status;
+        char responseBuffer[12];
+        const auto bytes = marshal(responseBuffer, response);
+        writeBytes(connection.get(), 2, bytes, responseBuffer);
+      }
+      return vids;
+    });
+  }
+
+  uint16_t port() const { return m_port; }
+
+  std::vector<std::string> requests() { return m_requests.get(); }
+
+private:
+  cta::SmartFd m_listener;
+  uint16_t m_port;
+  std::future<std::vector<std::string>> m_requests;
+};
+
+using cta::tape::daemon::DriveUsability;
+using cta::tape::daemon::TapeSessionError;
+using FailurePoint = cta::tape::drive::FakeDrive::FailurePoint;
+using Tape = cta::common::dataStructures::Tape;
+
+// Delegate normal tape operations so each test can fail just the catalogue operation under review.
+class FailingTapeCatalogue : public cta::catalogue::DummyTapeCatalogue {
+public:
+  explicit FailingTapeCatalogue(cta::catalogue::TapeCatalogue& delegate) : m_delegate(delegate) {}
+
+  std::exception_ptr lookupFailure;
+  std::exception_ptr modificationFailure;
+  std::exception_ptr labelFailure;
+  unsigned int modifications = 0;
+
+  cta::common::dataStructures::VidToTapeMap getTapesByVid(const std::string& vid) const override {
+    if (lookupFailure) {
+      std::rethrow_exception(lookupFailure);
+    }
+    return m_delegate.getTapesByVid(vid);
+  }
+
+  cta::common::dataStructures::Label::Format getTapeLabelFormat(const std::string& vid) const override {
+    if (labelFailure) {
+      std::rethrow_exception(labelFailure);
+    }
+    return m_delegate.getTapeLabelFormat(vid);
+  }
+
+  void modifyTapeState(const cta::common::dataStructures::SecurityIdentity& admin,
+                       const std::string& vid,
+                       const Tape::State& state,
+                       const std::optional<Tape::State>& previous,
+                       const std::optional<std::string>& reason) override {
+    ++modifications;
+    if (modificationFailure) {
+      std::rethrow_exception(modificationFailure);
+    }
+    m_delegate.modifyTapeState(admin, vid, state, previous, reason);
+  }
+
+private:
+  cta::catalogue::TapeCatalogue& m_delegate;
+};
+
+class CleanerCatalogue : public cta::catalogue::DummyCatalogue {
+public:
+  explicit CleanerCatalogue(cta::catalogue::TapeCatalogue& delegate)
+      : m_tape(std::make_unique<FailingTapeCatalogue>(delegate)) {}
+
+  const std::unique_ptr<cta::catalogue::TapeCatalogue>& Tape() const override { return m_tape; }
+
+  FailingTapeCatalogue& failures() { return static_cast<FailingTapeCatalogue&>(*m_tape); }
+
+private:
+  std::unique_ptr<cta::catalogue::TapeCatalogue> m_tape;
+};
+
+class FailingCleanerScheduler : public cta::Scheduler {
+public:
+  using cta::Scheduler::Scheduler;
+  std::exception_ptr reportedFailure;
+  std::exception_ptr desiredFailure;
+  unsigned int reportedCalls = 0;
+  unsigned int desiredCalls = 0;
+
+  void reportDriveStatus(const cta::common::dataStructures::DriveInfo& info,
+                         cta::common::dataStructures::MountType type,
+                         cta::common::dataStructures::DriveStatus status,
+                         cta::log::LogContext& lc) override {
+    ++reportedCalls;
+    if (reportedFailure) {
+      std::rethrow_exception(reportedFailure);
+    }
+    cta::Scheduler::reportDriveStatus(info, type, status, lc);
+  }
+
+  void setDesiredDriveState(const std::string& name,
+                            const cta::common::dataStructures::DesiredDriveState& state,
+                            cta::log::LogContext& lc) override {
+    ++desiredCalls;
+    if (desiredFailure) {
+      std::rethrow_exception(desiredFailure);
+    }
+    cta::Scheduler::setDesiredDriveState(name, state, lc);
+  }
+};
 
 struct CleanerSessionTestParam {
   cta::SchedulerDatabaseFactory& dbFactory;
@@ -115,6 +270,46 @@ protected:
     drive->setTapeInPlace(tapeInPlace);
     m_systemWrapper.fake.m_pathToDrive["/dev/nst0"] = drive;
     return drive;
+  }
+
+  DriveUsability runCleaner(const std::string& vid,
+                            bool robotFails = false,
+                            bool wait = false,
+                            bool tracked = true,
+                            cta::catalogue::Catalogue* catalogue = nullptr,
+                            cta::Scheduler* scheduler = nullptr) {
+    cta::mediachanger::RmcProxy rmcProxy("localhost", 0, 1, 1);
+    cta::mediachanger::MediaChangerFacade mediaChanger(rmcProxy, m_changerLog);
+    auto info = m_driveInfo;
+    if (robotFails) {
+      info.rawLibrarySlot = "smc0";
+    }
+    cta::tape::daemon::CleanerSession cleaner(mediaChanger,
+                                              m_sessionLog,
+                                              info,
+                                              m_systemWrapper,
+                                              vid,
+                                              wait,
+                                              0,
+                                              catalogue ? *catalogue : *m_catalogue,
+                                              scheduler ? *scheduler : *m_scheduler,
+                                              tracked ? &m_tracker : nullptr);
+    return cleaner.execute();
+  }
+
+  void assertDriveDown() {
+    cta::log::LogContext lc(m_sessionLog);
+    const auto desired = m_scheduler->getDesiredDriveState(m_driveInfo.driveName, lc);
+    ASSERT_FALSE(desired.up);
+    ASSERT_TRUE(desired.reason);
+    ASSERT_NE(std::string::npos, desired.reason->find("Cleaner"));
+    const auto drive = m_catalogue->DriveState()->getTapeDrive(m_driveInfo.driveName);
+    ASSERT_TRUE(drive);
+    ASSERT_EQ(cta::common::dataStructures::DriveStatus::Down, drive->driveStatus);
+  }
+
+  void setTapeState(Tape::State state) {
+    m_catalogue->Tape()->modifyTapeState(m_admin, m_vid, state, std::nullopt, "Test setup");
   }
 
   void assertEjectsAfterDriveFailure(cta::tape::drive::FakeDrive::FailurePoint failurePoint) {
@@ -250,6 +445,9 @@ TEST_P(CleanerSessionTest, BorrowedDriveResetsLbpAfterEncryptionClearFailureWith
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mediaChanger(rmcProxy, m_changerLog);
   cta::tape::drive::FakeDrive drive(5000, cta::tape::drive::FakeDrive::OnFlush);
+  // Keep the existing accumulation assertions meaningful even for sub-microsecond fake operations.
+  drive.setOperationDelay(cta::tape::drive::FakeDrive::FailurePoint::UnloadTape, std::chrono::milliseconds(1));
+  drive.setOperationDelay(cta::tape::drive::FakeDrive::FailurePoint::Rewind, std::chrono::milliseconds(1));
   drive.setTapeInPlace(true);
   drive.enableCRC32CLogicalBlockProtectionReadWrite();
   drive.setFailurePoint(cta::tape::drive::FakeDrive::FailurePoint::ClearEncryptionKey);
@@ -466,6 +664,281 @@ TEST_P(CleanerSessionTest, EjectsTapeWithUnknownVid) {
                                                       &m_tracker);
   ASSERT_EQ(cta::tape::daemon::DriveUsability::Reusable, unknownVidCleaner.execute());
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
+}
+
+TEST_P(CleanerSessionTest, DriveOpenFailureStillDismountsAndKeepsDriveDown) {
+  // Device discovery succeeds; drive construction fails before ownership is established.
+  EXPECT_CALL(m_systemWrapper, getDriveByPath("/dev/nst0"))
+    .WillOnce(testing::Throw(std::runtime_error("drive open failed")));
+  ASSERT_EQ(DriveUsability::MustRemainDown, runCleaner(m_vid));
+  assertDriveDown();
+  ASSERT_EQ(Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("drive could not be opened"));
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find(R"(dismountVid="")"));
+  ASSERT_EQ(0, m_tracker.errorStats().count(TapeSessionError::TapeDismount));
+}
+
+TEST_P(CleanerSessionTest, DriveDiscoveryFailureStillAttemptsDismount) {
+  m_systemWrapper.fake.m_stats.erase(m_driveInfo.devFilename);
+  ASSERT_EQ(DriveUsability::MustRemainDown, runCleaner(m_vid));
+  assertDriveDown();
+  ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
+  ASSERT_EQ(Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
+}
+
+TEST_P(CleanerSessionTest, DriveOpenAndDismountFailureDisableTapeAndKeepDriveDown) {
+  EXPECT_CALL(m_systemWrapper, getDriveByPath("/dev/nst0"))
+    .WillOnce(testing::Throw(cta::exception::Exception("drive open failed")));
+  ASSERT_EQ(DriveUsability::MustRemainDown, runCleaner(m_vid, true));
+  assertDriveDown();
+  ASSERT_EQ(Tape::DISABLED, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
+  ASSERT_EQ(1, m_tracker.errorStats().at(TapeSessionError::TapeDismount));
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("failed to dismount the tape"));
+}
+
+TEST_P(CleanerSessionTest, ReadinessFailureDoesNotPreventResetsAndEject) {
+  auto* drive = new cta::tape::drive::FakeDrive(5000, cta::tape::drive::FakeDrive::OnFlush, true);
+  drive->enableCRC32CLogicalBlockProtectionReadWrite();
+  m_systemWrapper.fake.m_pathToDrive["/dev/nst0"] = drive;
+  ASSERT_EQ(DriveUsability::Reusable, runCleaner(m_vid, false, true));
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("non-fatal exception while waiting"));
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner unloaded tape"));
+  ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
+  ASSERT_EQ(0, m_tracker.errorStats().count(TapeSessionError::TapeLbpDisable));
+}
+
+TEST_P(CleanerSessionTest, MediaPresenceFailureStillAttemptsEject) {
+  installDrive()->setFailurePoint(FailurePoint::HasTapeInPlace);
+  ASSERT_EQ(DriveUsability::Reusable, runCleaner(m_vid));
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("could not determine whether the drive contains a tape"));
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner unloaded tape"));
+  ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
+}
+
+TEST_P(CleanerSessionTest, CombinedResetFailuresStillEjectAndRecordBothErrors) {
+  auto* drive = installDrive();
+  drive->setFailurePoint(FailurePoint::ClearEncryptionKey);
+  drive->setFailurePoint(FailurePoint::DisableLogicalBlockProtection);
+  ASSERT_EQ(DriveUsability::MustRemainDown, runCleaner(m_vid));
+  assertDriveDown();
+  ASSERT_EQ(1, m_tracker.errorStats().at(TapeSessionError::TapeEncryptionDisable));
+  ASSERT_EQ(1, m_tracker.errorStats().at(TapeSessionError::TapeLbpDisable));
+  ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
+  ASSERT_EQ(Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
+}
+
+TEST_P(CleanerSessionTest, CombinedResetUnloadAndDismountFailuresRecordAllErrors) {
+  auto* drive = installDrive();
+  drive->setFailurePoint(FailurePoint::ClearEncryptionKey);
+  drive->setFailurePoint(FailurePoint::DisableLogicalBlockProtection);
+  drive->setFailurePoint(FailurePoint::UnloadTape);
+  ASSERT_EQ(DriveUsability::MustRemainDown, runCleaner(m_vid, true));
+  assertDriveDown();
+  ASSERT_EQ(1, m_tracker.errorStats().at(TapeSessionError::TapeEncryptionDisable));
+  ASSERT_EQ(1, m_tracker.errorStats().at(TapeSessionError::TapeLbpDisable));
+  ASSERT_EQ(1, m_tracker.errorStats().at(TapeSessionError::TapeUnload));
+  ASSERT_EQ(2, m_tracker.errorStats().at(TapeSessionError::TapeDismount));
+  ASSERT_EQ(Tape::DISABLED, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
+}
+
+TEST_P(CleanerSessionTest, FailedEjectDisablesRepackingTape) {
+  installDrive();
+  setTapeState(Tape::REPACKING);
+  ASSERT_EQ(DriveUsability::MustRemainDown, runCleaner(m_vid, true));
+  ASSERT_EQ(Tape::REPACKING_DISABLED, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
+  assertDriveDown();
+}
+
+TEST_P(CleanerSessionTest, FailedEjectPreservesStatesThatCannotBeDisabledAutomatically) {
+  for (const auto state : {Tape::DISABLED,
+                           Tape::REPACKING_DISABLED,
+                           Tape::BROKEN,
+                           Tape::EXPORTED,
+                           Tape::BROKEN_PENDING,
+                           Tape::REPACKING_PENDING,
+                           Tape::EXPORTED_PENDING}) {
+    SCOPED_TRACE(Tape::stateToString(state));
+    installDrive();
+    setTapeState(state);
+    ASSERT_EQ(DriveUsability::MustRemainDown, runCleaner(m_vid, true));
+    const auto tape = m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid);
+    ASSERT_EQ(state, tape.state);
+    ASSERT_EQ("Test setup", tape.stateReason);
+    assertDriveDown();
+  }
+}
+
+TEST_P(CleanerSessionTest, FailedEjectWithoutVidDoesNotDisableAnyTape) {
+  installDrive();
+  ASSERT_EQ(DriveUsability::MustRemainDown, runCleaner("", true));
+  ASSERT_EQ(1, m_tracker.errorStats().at(TapeSessionError::TapeDismount));
+  ASSERT_EQ(Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
+  ASSERT_NE(std::string::npos,
+            m_sessionLog.getLog().find("cannot disable tape after failed eject because its VID is unknown"));
+  assertDriveDown();
+}
+
+TEST_P(CleanerSessionTest, TapeLookupFailureDoesNotPreventDriveDownPublication) {
+  installDrive();
+  CleanerCatalogue catalogue(*m_catalogue->Tape());
+  catalogue.failures().lookupFailure = std::make_exception_ptr(std::runtime_error("tape lookup failed"));
+  ASSERT_EQ(DriveUsability::MustRemainDown, runCleaner(m_vid, true, false, true, &catalogue));
+  ASSERT_EQ(0, catalogue.failures().modifications);
+  ASSERT_EQ(Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("tape lookup failed"));
+  assertDriveDown();
+}
+
+TEST_P(CleanerSessionTest, TapeStateModificationFailureDoesNotPreventDriveDownPublication) {
+  installDrive();
+  CleanerCatalogue catalogue(*m_catalogue->Tape());
+  catalogue.failures().modificationFailure = std::make_exception_ptr(cta::exception::Exception("state update failed"));
+  ASSERT_EQ(DriveUsability::MustRemainDown, runCleaner(m_vid, true, false, true, &catalogue));
+  ASSERT_EQ(1, catalogue.failures().modifications);
+  ASSERT_EQ(Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("state update failed"));
+  assertDriveDown();
+}
+
+TEST_P(CleanerSessionTest, LabelFormatLookupFailureStillEjectsWithProvidedVid) {
+  auto* drive = installDrive();
+  cta::tape::tapeFile::LabelSession::label(drive, m_vid, false);
+  CleanerCatalogue catalogue(*m_catalogue->Tape());
+  catalogue.failures().labelFailure = std::make_exception_ptr(std::runtime_error("label format unavailable"));
+  ASSERT_EQ(DriveUsability::Reusable, runCleaner(m_vid, false, false, true, &catalogue));
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("label format unavailable"));
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find(R"(dismountVid="TSTVID")"));
+}
+
+TEST_P(CleanerSessionTest, DesiredStatePublicationFailureIsContainedAfterReportedDown) {
+  installDrive(false)->setFailurePoint(FailurePoint::ClearEncryptionKey);
+  FailingCleanerScheduler scheduler(*m_catalogue, *m_db, "schedulerBackendName");
+  scheduler.desiredFailure = std::make_exception_ptr(std::runtime_error("desired publication failed"));
+  ASSERT_EQ(DriveUsability::MustRemainDown, runCleaner(m_vid, false, false, true, nullptr, &scheduler));
+  ASSERT_EQ(1, scheduler.reportedCalls);
+  ASSERT_EQ(1, scheduler.desiredCalls);
+  ASSERT_EQ(cta::common::dataStructures::DriveStatus::Down,
+            m_catalogue->DriveState()->getTapeDrive(m_driveInfo.driveName)->driveStatus);
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("desired publication failed"));
+}
+
+TEST_P(CleanerSessionTest, ReportedStatePublicationFailureIsContained) {
+  installDrive(false)->setFailurePoint(FailurePoint::ClearEncryptionKey);
+  FailingCleanerScheduler scheduler(*m_catalogue, *m_db, "schedulerBackendName");
+  scheduler.reportedFailure = std::make_exception_ptr(cta::exception::Exception("reported publication failed"));
+  ASSERT_EQ(DriveUsability::MustRemainDown, runCleaner(m_vid, false, false, true, nullptr, &scheduler));
+  ASSERT_EQ(1, scheduler.reportedCalls);
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("reported publication failed"));
+}
+
+TEST_P(CleanerSessionTest, TapeAlertsAreCountedAndLoggedAfterSuccessfulCleanup) {
+  installDrive()->setTapeAlertCodes({1, 2, 1});
+  ASSERT_EQ(DriveUsability::Reusable, runCleaner(m_vid));
+  ASSERT_EQ(2, m_tracker.tapeAlertStats().at(1));
+  ASSERT_EQ(1, m_tracker.tapeAlertStats().at(2));
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Fake tape alert 1"));
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Fake tape alert 2"));
+}
+
+TEST_P(CleanerSessionTest, TapeAlertsAreReportedAfterFailedCleanup) {
+  auto* drive = installDrive();
+  drive->setTapeAlertCodes({1});
+  drive->setFailurePoint(FailurePoint::ClearEncryptionKey);
+  ASSERT_EQ(DriveUsability::MustRemainDown, runCleaner(m_vid));
+  ASSERT_EQ(1, m_tracker.tapeAlertStats().at(1));
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Fake tape alert 1"));
+}
+
+TEST_P(CleanerSessionTest, TapeAlertQueryFailureDoesNotChangeReusableResult) {
+  installDrive()->setFailurePoint(FailurePoint::TapeAlertCodes);
+  ASSERT_EQ(DriveUsability::Reusable, runCleaner(m_vid));
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner failed to get tape alerts"));
+}
+
+TEST_P(CleanerSessionTest, TapeAlertDescriptionFailurePreservesCountedAlerts) {
+  auto* drive = installDrive();
+  drive->setTapeAlertCodes({1, 2});
+  drive->setFailurePoint(FailurePoint::TapeAlerts);
+  ASSERT_EQ(DriveUsability::Reusable, runCleaner(m_vid));
+  ASSERT_EQ(1, m_tracker.tapeAlertStats().at(1));
+  ASSERT_EQ(1, m_tracker.tapeAlertStats().at(2));
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner failed to get tape alerts"));
+}
+
+TEST_P(CleanerSessionTest, ExecutesWithoutTrackerOnSuccessAndFailure) {
+  installDrive()->setTapeAlertCodes({1});
+  ASSERT_EQ(DriveUsability::Reusable, runCleaner(m_vid, false, false, false));
+  installDrive()->setFailurePoint(FailurePoint::ClearEncryptionKey);
+  ASSERT_EQ(DriveUsability::MustRemainDown, runCleaner(m_vid, true, false, false));
+  ASSERT_EQ(Tape::DISABLED, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
+  assertDriveDown();
+}
+
+TEST_P(CleanerSessionTest, BorrowedDriveRemainsOwnedByCallerAndResetsPersistentConfiguration) {
+  cta::mediachanger::RmcProxy proxy;
+  cta::mediachanger::MediaChangerFacade changer(proxy, m_changerLog);
+  cta::tape::drive::FakeDrive drive;
+  drive.enableCRC32CLogicalBlockProtectionReadWrite();
+  cta::tape::daemon::CleanerSession
+    cleaner(changer, m_sessionLog, m_driveInfo, m_systemWrapper, m_vid, false, 0, *m_catalogue, *m_scheduler);
+  const auto result = cleaner.cleanDrive(drive);
+  ASSERT_TRUE(result.driveReusable());
+  ASSERT_FALSE(result.configurationResetFailed);
+  ASSERT_FALSE(result.ejectFailed);
+  ASSERT_TRUE(result.errorMessage.empty());
+  ASSERT_FALSE(drive.hasTapeInPlace());
+  ASSERT_EQ(cta::tape::drive::lbpToUse::disabled, drive.getLbpToUse());
+}
+
+TEST_P(CleanerSessionTest, BorrowedFailedEjectDoesNotPublishDownOrDisableTape) {
+  cta::mediachanger::RmcProxy proxy("localhost", 0, 1, 1);
+  cta::mediachanger::MediaChangerFacade changer(proxy, m_changerLog);
+  cta::tape::drive::FakeDrive drive;
+  auto info = m_driveInfo;
+  info.rawLibrarySlot = "smc0";
+  cta::tape::daemon::CleanerSession
+    cleaner(changer, m_sessionLog, info, m_systemWrapper, m_vid, false, 0, *m_catalogue, *m_scheduler, &m_tracker);
+  const auto result = cleaner.cleanDrive(drive);
+  ASSERT_FALSE(result.driveReusable());
+  ASSERT_TRUE(result.ejectFailed);
+  ASSERT_FALSE(result.configurationResetFailed);
+  ASSERT_NE(std::string::npos, result.errorMessage.find("Failed to dismount tape"));
+  ASSERT_EQ(Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
+  cta::log::LogContext lc(m_sessionLog);
+  ASSERT_TRUE(m_scheduler->getDesiredDriveState(m_driveInfo.driveName, lc).up);
+  ASSERT_EQ(cta::common::dataStructures::DriveStatus::Up,
+            m_catalogue->DriveState()->getTapeDrive(m_driveInfo.driveName)->driveStatus);
+}
+
+TEST_P(CleanerSessionTest, DismountRetriesWithEmptyVidAfterCartridgeNameFailure) {
+  ScriptedRobot robot({1, 0});
+  cta::mediachanger::RmcProxy proxy("localhost", robot.port(), 2, 1);
+  cta::mediachanger::MediaChangerFacade changer(proxy, m_changerLog);
+  installDrive();
+  auto info = m_driveInfo;
+  info.rawLibrarySlot = "smc0";
+  cta::tape::daemon::CleanerSession
+    cleaner(changer, m_sessionLog, info, m_systemWrapper, m_vid, false, 0, *m_catalogue, *m_scheduler, &m_tracker);
+  ASSERT_EQ(DriveUsability::Reusable, cleaner.execute());
+  ASSERT_EQ((std::vector<std::string> {m_vid, ""}), robot.requests());
+  ASSERT_EQ(1, m_tracker.errorStats().at(TapeSessionError::TapeDismount));
+  ASSERT_EQ(Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
+}
+
+TEST_P(CleanerSessionTest, MismatchedLabelUsesActualLabelForRoboticDismount) {
+  const std::string actualVid = "ACTUAL";
+  ScriptedRobot robot({0});
+  cta::mediachanger::RmcProxy proxy("localhost", robot.port(), 2, 1);
+  cta::mediachanger::MediaChangerFacade changer(proxy, m_changerLog);
+  auto* drive = installDrive();
+  cta::tape::tapeFile::LabelSession::label(drive, actualVid, false);
+  auto info = m_driveInfo;
+  info.rawLibrarySlot = "smc0";
+  cta::tape::daemon::CleanerSession
+    cleaner(changer, m_sessionLog, info, m_systemWrapper, m_vid, false, 0, *m_catalogue, *m_scheduler, &m_tracker);
+  ASSERT_EQ(DriveUsability::Reusable, cleaner.execute());
+  ASSERT_EQ((std::vector<std::string> {actualVid}), robot.requests());
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("volume label does not match provided VID"));
 }
 
 #ifdef CTA_PGSCHED

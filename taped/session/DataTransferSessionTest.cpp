@@ -149,7 +149,8 @@ public:
     m_catalogue = std::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
 #endif
     m_db = param.dbFactory.create(m_catalogue);
-    m_scheduler = std::make_unique<Scheduler>(*m_catalogue, *m_db, "schedulerBackendName");
+    // These tests exercise transfers, including single-file failures, as soon as work is queued.
+    m_scheduler = std::make_unique<Scheduler>(*m_catalogue, *m_db, "schedulerBackendName", 1);
 
     strncpy(m_tmpDir, "/tmp/DataTransferSessionTestXXXXXX", sizeof(m_tmpDir));
     if (!mkdtemp(m_tmpDir)) {
@@ -661,6 +662,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
+  ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
   cta::tape::daemon::DataTransferSession
@@ -922,6 +924,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
+  ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
   cta::tape::daemon::DataTransferSession
@@ -1217,6 +1220,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
+  ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
   DataTransferSession
@@ -1459,6 +1463,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
+  ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
   cta::tape::daemon::DataTransferSession
@@ -1706,6 +1711,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
+  ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
   cta::tape::daemon::DataTransferSession
@@ -1954,6 +1960,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
+  ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
   cta::tape::daemon::DataTransferSession
@@ -2205,6 +2212,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
+  ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
   cta::tape::daemon::DataTransferSession
@@ -2443,6 +2451,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
+  ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
   DataTransferSession
@@ -2633,6 +2642,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
+  ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
   DataTransferSession
@@ -2829,6 +2839,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
+  ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
   DataTransferSession
@@ -3039,6 +3050,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
+  ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
   DataTransferSession
@@ -3261,6 +3273,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
+  ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
   DataTransferSession
@@ -3485,6 +3498,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
+  ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
   DataTransferSession
@@ -3708,6 +3722,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
+  ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
   DataTransferSession
@@ -3928,6 +3943,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
+  ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
   DataTransferSession
@@ -4170,6 +4186,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
+  ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   TapeSessionTracker tracker;
   tracker.setMount(tapeMount.get());
   DataTransferSession

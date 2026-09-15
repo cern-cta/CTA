@@ -27,6 +27,12 @@ target_link_libraries(ctataped
   ${PROTOBUF3_LIBRARIES}
 )
 
+add_library(ctatapedunittests SHARED DriveHandlerTest.cpp)
+set_property(TARGET ctatapedunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctatapedunittests PROPERTY VERSION "${CTA_LIBVERSION}")
+target_link_libraries(ctatapedunittests PRIVATE ctataped gtest gmock)
+install(TARGETS ctatapedunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
 add_executable (cta-taped cta-taped.cpp)
 target_link_libraries(cta-taped ctataped ctaruntime)
 

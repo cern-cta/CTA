@@ -22,17 +22,32 @@
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #endif
 
+#include <functional>
 #include <memory>
 #include <optional>
 #include <stop_token>
 #include <string>
 #include <string_view>
+#include <utility>
 
 namespace cta::tape::daemon {
 
 class DriveHandler final {
 public:
   DriveHandler(const TapedConfig& tapedConfig, cta::log::Logger& lc);
+
+  // Inject external operations while retaining the handler's lifecycle and recovery decisions.
+  struct Operations {
+    std::function<bool()> logicalLibraryExists;
+    std::function<std::pair<bool, std::optional<std::string>>()> probeDrive;
+    std::function<std::unique_ptr<TapeMount>()> getNextMount;
+    std::function<TransferSessionResult(TapeMount&)> transfer;
+    std::function<bool()> clean;
+    std::function<void(unsigned int)> sleep;
+  };
+
+  // The config and scheduler must outlive the handler. All injected operations must be supplied.
+  DriveHandler(const TapedConfig& config, log::Logger& log, IScheduler& scheduler, Operations operations);
 
   ~DriveHandler() = default;
 
@@ -45,6 +60,17 @@ public:
   bool isReady() const;
 
 private:
+  friend class DriveHandlerTest;
+
+  struct InitializeMembers {};
+
+  DriveHandler(const TapedConfig& config, log::Logger& log, InitializeMembers);
+  void runIteration();
+  void sleep(unsigned int seconds);
+
+  IScheduler* m_driveScheduler = nullptr;
+  Operations m_operations;
+
   // Helpers recover only from expected local conditions. Operational failures propagate to run().
   // Registration returns false for an ownership conflict and creates an entry if one is absent.
   bool registerDrive(bool putUpIfPossible);

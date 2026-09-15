@@ -92,7 +92,8 @@ cta::tape::daemon::TransferSessionResult cta::tape::daemon::DataTransferSession:
   // 2c) ... and log.
   // Make the DGN and TPVID parameter permanent.
   cta::log::ScopedParamContainer params(lc);
-  params.add("tapeVid", m_volInfo.vid)
+  params.add("tapeDrive", m_driveInfo.driveName)
+    .add("tapeVid", m_volInfo.vid)
     .add("mountId", m_volInfo.mountId)
     .add("vo", m_tapeMount.getVo())
     .add("tapePool", m_tapeMount.getPoolName());

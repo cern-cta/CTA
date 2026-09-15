@@ -564,6 +564,7 @@ Provides CTA unit and integration tests.
 %{_libdir}/libctardbmsunittests.so*
 %{_libdir}/libctardbmswrapperunittests.so*
 %{_libdir}/libctaschedulerunittests.so*
+%{_libdir}/libctatapedunittests.so*
 %{_libdir}/libctatapedsessionunittests.so*
 %{_libdir}/libctatapeddriveunittests.so*
 %{_libdir}/libctatapedfileunittests.so*

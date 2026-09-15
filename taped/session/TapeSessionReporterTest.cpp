@@ -45,6 +45,7 @@ public:
 
 TEST(TapeSessionReporterTest, ReportsTrackerContentsOnDemand) {
   cta::log::StringLogger log("dummy", "TapeSessionReporterTest", cta::log::DEBUG);
+  log.setLogFormat("json");
   cta::log::LogContext lc(log);
   ReportingTapeMount mount;
   TapeSessionTracker tracker;
@@ -134,6 +135,7 @@ TEST(TapeSessionReporterTest, PeriodicallyReportsAndFlushesOnShutdown) {
 
 TEST(TapeSessionReporterTest, DerivesMountMetadataAndUsesTypedOutcome) {
   cta::log::StringLogger log("dummy", "TapeSessionReporterTest", cta::log::DEBUG);
+  log.setLogFormat("json");
   cta::log::LogContext lc(log);
   ReportingTapeMount mount;
   TapeSessionTracker tracker;

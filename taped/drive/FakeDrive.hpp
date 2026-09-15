@@ -6,6 +6,7 @@
 
 #include "DriveInterface.hpp"
 
+#include <chrono>
 #include <limits>
 #include <list>
 #include <map>
@@ -33,11 +34,21 @@ private:
 
 public:
   enum FailureMoment { OnWrite, OnFlush };
-  enum class FailurePoint { ClearEncryptionKey, Rewind, DisableLogicalBlockProtection, UnloadTape };
+  enum class FailurePoint {
+    ClearEncryptionKey,
+    Rewind,
+    DisableLogicalBlockProtection,
+    UnloadTape,
+    HasTapeInPlace,
+    TapeAlertCodes,
+    TapeAlerts
+  };
 
 private:
   const enum FailureMoment m_failureMoment;
   std::set<FailurePoint> m_failurePoints;
+  std::map<FailurePoint, std::chrono::microseconds> m_operationDelays;
+  std::vector<uint16_t> m_tapeAlertCodes;
   bool m_tapeOverflow = false;
   bool m_failToMount;
   bool m_tapeInPlace = true;
@@ -111,6 +122,9 @@ public:
   void setTapeInPlace(bool tapeInPlace);
   void setFailurePoint(FailurePoint failurePoint, bool enabled = true);
   void clearFailurePoints();
+  void setTapeAlertCodes(std::vector<uint16_t> codes);
+  // Give timing tests a measurable operation duration, including when the operation fails.
+  void setOperationDelay(FailurePoint operation, std::chrono::microseconds delay);
 
 private:
   void throwIfFailurePoint(FailurePoint failurePoint) const;
