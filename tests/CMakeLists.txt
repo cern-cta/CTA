@@ -168,9 +168,10 @@ add_custom_target(cta-unit-tests-helgrind
 add_custom_target(cta-unit-tests-short
   $<TARGET_FILE:cta-unit-tests>
   COMMAND $<TARGET_FILE:cta-unit-tests-multiprocess>
+  COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target cta-rust-tests
 
-  DEPENDS cta-unit-tests cta-unit-tests-multiprocess
-  COMMENT "Running unit tests" VERBATIM)
+  DEPENDS cta-unit-tests cta-unit-tests-multiprocess cta-rust-tests
+  COMMENT "Running C++ and Rust unit tests" VERBATIM)
 
 add_custom_target(cta-unit-tests-helgrind-base
   echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests> --gtest_filter=-OStoreDBPlusMockSchedulerTestVFS*:OStoreTestVFS*:OStoreDBPlusMockSchedulerTestVFS*:InMemory*

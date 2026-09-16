@@ -82,4 +82,16 @@ add_custom_target(cta-rust-tools ALL DEPENDS ${CTA_RUST_TOOL_BINARIES})
 install(PROGRAMS ${CTA_RUST_TOOL_BINARIES}
   DESTINATION ${CMAKE_INSTALL_BINDIR})
 
+# Test target: runs cargo test for the workspace
+add_custom_target(cta-rust-tests
+  COMMAND ${CARGO_EXECUTABLE} test ${CARGO_PROFILE_FLAGS}
+    --manifest-path "${CMAKE_CURRENT_SOURCE_DIR}/Cargo.toml"
+    --locked
+    --workspace
+  WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+  COMMENT "Running Rust unit tests with cargo"
+  VERBATIM
+  DEPENDS cta-rust-tools
+)
+
 message(STATUS "Rust tools: ${CTA_RUST_TOOLS} (cargo ${CARGO_PROFILE_DIR})")
