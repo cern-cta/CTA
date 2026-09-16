@@ -19,3 +19,11 @@ RUN dnf install -y epel-release && \
     make install MATCHCOMPILER=yes FILESDIR=/usr/share/cppcheck HAVE_RULES=yes \
         CXXFLAGS="-O2 -DNDEBUG -Wall -Wno-sign-compare -Wno-unused-function" -j $(nproc) && \
     cd .. && rm -rf cppcheck
+
+# Install rustup and nightly toolchain
+RUN curl -O https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init && \
+    chmod +x rustup-init && \
+    ./rustup-init -y --no-modify-path --default-toolchain nightly && \
+    rm rustup-init
+
+ENV PATH="/root/.cargo/bin:${PATH}"
