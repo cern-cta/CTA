@@ -86,14 +86,23 @@ int DriveController::run() {
     return 1;
   }
 
-  // TODO (separate MR): graceful shutdown
-  // This is the main loop
-  while (true) {
-    runIteration();
+  bool iterationFailed = false;
+  try {
+    // TODO (separate MR): graceful shutdown
+    while (true) {
+      runIteration();
+    }
+  } catch (const std::exception& ex) {
+    logDriveFailure(m_lc, "Drive iteration failed. Cleaning before exit.", ex);
+    iterationFailed = true;
+  } catch (...) {
+    m_lc.log(log::ERR, "Drive iteration failed with an unknown exception. Cleaning before exit.");
+    iterationFailed = true;
   }
 
-  // Do a final drive cleaning to ensure we don't leave a cartridge behind
-  return shutdownDrive();
+  // Cleanup cannot hide the original failure.
+  const int shutdownResult = shutdownDrive();
+  return iterationFailed ? 1 : shutdownResult;
 }
 
 void DriveController::runIteration() {
@@ -127,12 +136,11 @@ void DriveController::runIteration() {
     waitForBackendRecovery();
     return;
   } catch (const std::exception& ex) {
-    // TODO: inventory unexpected getNextMount() errors and decide which are recoverable.
-    logDriveFailure(m_lc, "Scheduling failed unexpectedly.", ex);
-    throw;
+    // No transfer has started; retry through normal drive preparation after the idle delay.
+    logDriveFailure(m_lc, "Scheduling failed unexpectedly; waiting before retrying.", ex);
   }
 
-  // Not finding a mount is not an error; we just sleep and retry in the next iteration
+  // Wait before retrying when no mount was found or scheduling failed without acquiring one.
   if (tapeMount == nullptr) {
     // TODO (separate MR): graceful shutdown should interrupt sleep
     m_operations.sleep(m_config.mounts.idle_scheduling_interval_secs);

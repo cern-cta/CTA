@@ -14,6 +14,7 @@
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/dataStructures/PhysicalLibrary.hpp"
+#include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
@@ -1360,10 +1361,9 @@ void Scheduler::sortAndGetTapesForMountInfo(
       tapepoolVoNameMap[tapepool] = vo.name;
       voNameVoMap[vo.name] = vo;
     } catch (cta::exception::Exception& ex) {
-      //The VO of this tapepool does not exist, abort the scheduling as we need it to know the number of allocated drives
-      //the VO is allowed to use
+      // Abort if the VO lookup fails; its drive allocation limits are required for scheduling.
       ex.getMessage() << " Aborting scheduling." << std::endl;
-      throw ex;
+      throw;
     }
   }
   std::optional<common::dataStructures::VirtualOrganization> defaultRepackVo =
@@ -2339,6 +2339,9 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
               .add("catalogueTime", catalogueTime);
             lc.log(log::INFO, "In Scheduler::getNextMount(): Selected next mount (archive)");
             return std::unique_ptr<TapeMount>(internalRet.release());
+          } catch (const exception::LostDatabaseConnection&) {
+            // Let the caller wait for backend recovery before attempting more candidates.
+            throw;
           } catch (cta::exception::Exception& ex) {
             log::ScopedParamContainer params(lc);
             params.add(semconv::log::exceptionMessage, ex.getMessage().str());
@@ -2419,6 +2422,9 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
           .add("catalogueTime", catalogueTime);
         lc.log(log::INFO, "In Scheduler::getNextMount(): Selected next mount (retrieve)");
         return std::unique_ptr<TapeMount>(internalRet.release());
+      } catch (const exception::LostDatabaseConnection&) {
+        // Let the caller wait for backend recovery before attempting more candidates.
+        throw;
       } catch (exception::Exception& ex) {
         log::ScopedParamContainer params(lc);
         params.add(semconv::log::exceptionMessage, ex.getMessage().str());

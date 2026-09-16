@@ -171,6 +171,13 @@ protected:
 
   void down(bool preserve = false) { controller->putDriveDown(DriveDownReason::Shutdown, {}, preserve); }
 
+  void expectRunStartup() {
+    EXPECT_CALL(scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
+    EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
+    EXPECT_CALL(scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _));
+    EXPECT_CALL(scheduler, reportSchedulerBackendName("drive", _));
+  }
+
   void expectPreparation() {
     testing::InSequence sequence;
     DesiredDriveState state;
@@ -339,6 +346,10 @@ TEST_F(DriveControllerTest, SchedulerBackendPublicationFailureAbortsStartupBefor
  * Library checks and scheduling must not start without a registered drive.
  */
 TEST_F(DriveControllerTest, StartupDatabaseFailureAbortsBeforeLibraryOrScheduling) {
+  clean = [] {
+    ADD_FAILURE() << "Startup failure must not touch tape hardware";
+    return true;
+  };
   unsigned int libraryChecks = 0;
   libraryExists = [&] {
     ++libraryChecks;
@@ -544,17 +555,36 @@ TEST_F(DriveControllerTest, SchedulingDatabaseFailureWaitsForRecoveryBeforeRetry
 }
 
 /*
- * Unexpected scheduling failures are logged and propagated to the caller.
- * No retry wait or active mount should remain after the failure.
+ * Unexpected scheduling failures are logged and retried after the idle delay without cleaning.
+ * The next iteration checks the desired state and probes before acquiring another mount.
  */
-TEST_F(DriveControllerTest, UnexpectedSchedulingFailureIsLoggedAndPropagated) {
+TEST_F(DriveControllerTest, UnexpectedSchedulingFailureWaitsAndAllowsAnotherIteration) {
   schedule = []() -> std::unique_ptr<TapeMount> { throw std::runtime_error("unexpected scheduler failure"); };
+  unsigned int cleanAttempts = 0;
+  clean = [&] {
+    ++cleanAttempts;
+    return true;
+  };
   expectPreparation();
 
-  EXPECT_THROW(iteration(), std::runtime_error);
+  EXPECT_NO_THROW(iteration());
   EXPECT_THAT(logger.getLog(), testing::HasSubstr("Scheduling failed unexpectedly"));
+  EXPECT_THAT(logger.getLog(), testing::HasSubstr("LVL=\"ERROR\""));
   EXPECT_EQ(nullptr, mount());
-  EXPECT_TRUE(sleeps.empty());
+  EXPECT_EQ(0, cleanAttempts);
+  EXPECT_EQ(0, transfers);
+  EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.idle_scheduling_interval_secs));
+
+  supplyMount();
+  expectPreparation();
+  EXPECT_NO_THROW(iteration());
+  EXPECT_EQ(2, probes);
+  EXPECT_EQ(2, schedules);
+  EXPECT_EQ(1, transfers);
+  EXPECT_EQ(1, destroyed);
+  EXPECT_EQ(nullptr, mount());
+  EXPECT_EQ(0, cleanAttempts);
+  EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.idle_scheduling_interval_secs));
 }
 
 /*
@@ -938,6 +968,82 @@ TEST_F(DriveControllerTest, ReasonLookupFailureStillAttemptsBothDownPublications
 }
 
 // Shutdown.
+
+/*
+ * An exception escaping drive preparation triggers final cleaning and both down publications.
+ * Successful, failed, or throwing cleanup must all retain a failing process exit status.
+ */
+TEST_F(DriveControllerTest, IterationExceptionCleansAndPublishesDownBeforeFailingExit) {
+  for (const auto cleanupOutcome : {"success", "failure", "exception"}) {
+    SCOPED_TRACE(cleanupOutcome);
+    testing::InSequence sequence;
+    expectRunStartup();
+    EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Throw(std::runtime_error("iteration failed")));
+
+    unsigned int cleanAttempts = 0;
+    clean = [&]() -> bool {
+      ++cleanAttempts;
+      EXPECT_EQ(nullptr, mount());
+      if (std::string(cleanupOutcome) == "exception") {
+        throw std::runtime_error("cleaner failed");
+      }
+      return std::string(cleanupOutcome) == "success";
+    };
+    EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Invoke([&](const auto&, auto&) {
+      EXPECT_EQ(1, cleanAttempts);
+      return DesiredDriveState {};
+    }));
+    EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
+    EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
+      .WillOnce(Invoke([&](const auto&, const DesiredDriveState& state, auto&) {
+        EXPECT_FALSE(state.up);
+        const auto reason =
+          std::string(cleanupOutcome) == "success" ? DriveDownReason::Shutdown : DriveDownReason::CleanerFailed;
+        EXPECT_EQ(formatDriveDownReason(reason), state.reason);
+      }));
+
+    EXPECT_EQ(1, controller->run());
+    EXPECT_EQ(1, cleanAttempts);
+    EXPECT_THAT(logger.getLog(), testing::HasSubstr("Drive iteration failed. Cleaning before exit."));
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&scheduler));
+  }
+}
+
+/*
+ * An unknown transfer exception unwinds the active mount before final cleaning.
+ * Cleanup preserves an existing operator reason and cannot turn the exit into success.
+ */
+TEST_F(DriveControllerTest, UnknownIterationExceptionReleasesMountBeforeFinalCleaning) {
+  testing::InSequence sequence;
+  expectRunStartup();
+  expectPreparation();
+  supplyMount();
+  transfer = [](TapeMount&) -> TransferSessionResult { throw 42; };
+  unsigned int cleanAttempts = 0;
+  clean = [&] {
+    ++cleanAttempts;
+    EXPECT_EQ(nullptr, mount());
+    EXPECT_EQ(1, destroyed);
+    return true;
+  };
+  DesiredDriveState state;
+  state.reason = "Operator intervention";
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(state));
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
+  EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
+    .WillOnce(Invoke([&](const auto&, const DesiredDriveState& desired, auto&) {
+      EXPECT_EQ(1, cleanAttempts);
+      EXPECT_FALSE(desired.up);
+      EXPECT_FALSE(desired.reason);
+    }));
+
+  EXPECT_EQ(1, controller->run());
+  EXPECT_EQ(1, cleanAttempts);
+  EXPECT_EQ(1, transfers);
+  EXPECT_EQ(1, destroyed);
+  EXPECT_EQ(nullptr, mount());
+  EXPECT_THAT(logger.getLog(), testing::HasSubstr("Drive iteration failed with an unknown exception"));
+}
 
 /*
  * If final cleaning returns failure, shutdown still publishes the drive as down.
