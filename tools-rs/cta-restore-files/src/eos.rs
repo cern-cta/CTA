@@ -182,10 +182,16 @@ pub async fn restore_deleted_file(
         ..Default::default()
     };
 
-    new_file.checksums = vec![Checksum {
+    let checksum = Checksum {
         r#type: "ADLER32".to_string(),
         value: hex_to_byte_array(&cs.value).map_err(|e| Error::ParseInt(cs.value.clone(), e))?,
-    }];
+    };
+    // TODO: remove this once the EOS protobuf API is fixed
+    #[allow(deprecated)]
+    {
+        new_file.checksum = Some(checksum.clone());
+    }
+    new_file.checksums = vec![checksum];
 
     // Extended attributes:
     //
@@ -196,11 +202,12 @@ pub async fn restore_deleted_file(
     );
 
     // 2. Birth Time
-    // POSIX ATIME (Access Time) is used by CTA to store the file creation time. EOS calls this "birth time",
-    // but there is no place in the namespace to store it, so it is stored as an extended attribute.
-    new_file
-        .xattrs
-        .insert("eos.btime".to_string(), secs_since_epoch.to_string().into());
+    // POSIX ATIME (Access Time) is used by CTA to store the file creation time.
+    // EOS reads the birth time from the `sys.eos.btime` extended attribute
+    new_file.xattrs.insert(
+        "sys.eos.btime".to_string(),
+        secs_since_epoch.to_string().into(),
+    );
 
     if file.size_in_bytes > 0 {
         // Indicate that there is a tape-resident replica of this file (except for zero-length files)
