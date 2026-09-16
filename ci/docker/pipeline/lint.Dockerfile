@@ -7,7 +7,7 @@ ARG CPPCHECK_VERSION=2.20.0
 
 RUN dnf install -y epel-release && \
     dnf install -y git git-clang-format patch python3 python3-pip wget which \
-        podman bat shellcheck yamllint g++ pcre-devel make && \
+        podman bat shellcheck yamllint g++ pcre-devel make protobuf-compiler && \
     python3 -m pip install -U uv && \
     uv pip install --exclude-newer "14 days" --no-cache-dir -U --system --only-binary :all: \
         cppcheck_codequality jsonschema black ruff detect-secrets pyright[nodejs] && \
