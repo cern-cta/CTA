@@ -486,9 +486,9 @@ TEST_P(cta_catalogue_DriveStateTest, logDriveStatusOnlyOnTransition) {
   inputs.reportTime++;
   state.updateDriveStatus(driveInfo, inputs, lc);
   const auto log = logger.getLog();
-  const auto message = log.find("Drive status changed.");
+  const auto message = log.find("Drive status updated.");
   ASSERT_NE(message, std::string::npos);
-  EXPECT_EQ(log.find("Drive status changed.", message + 1), std::string::npos);
+  EXPECT_EQ(log.find("Drive status updated.", message + 1), std::string::npos);
   EXPECT_NE(log.find("new_status"), std::string::npos);
   EXPECT_NE(log.find("UP"), std::string::npos);
 
