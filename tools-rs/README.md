@@ -24,8 +24,7 @@ top of them, and tools built on it (currently only `cta-restore-files`).
 (`lib/protobuf/external/xrootd-ssi-protobuf-interface/`), so the submodules of
 the repository must be initialised before building:
 
-`protoc` is provided by `tonic-prost-build`, so no system protobuf compiler is
-needed.
+`protoc` should be made available in the system path.
 
 ## Build, test, document
 
