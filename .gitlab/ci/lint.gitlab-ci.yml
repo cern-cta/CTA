@@ -110,6 +110,56 @@ lint-python:
     reports:
       codequality: ruff.json
 
+lint-rust:
+  stage: lint
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: always
+    - changes:
+        - "**/*.rs"
+        - ".gitlab-ci.yml"  # For changes in the image
+      when: always
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - when: manual
+      allow_failure: true
+  image:
+    name: $IMAGE_LINT
+    entrypoint: ["/usr/bin/env"]
+  variables:
+    GIT_SUBMODULE_STRATEGY: "recursive" # we need the proto defs
+  before_script:
+    - !reference [.merge-train-guard, before_script]
+    - rustup component add clippy
+    - cargo install cargo-sonar
+    - set -o pipefail
+  script:
+    - |
+      set +e
+      cargo clippy --manifest-path tools-rs/Cargo.toml --all-targets --all-features --message-format=json | tee clippy-output.json
+      CARGO_EXIT_CODE=$?
+      set -e
+
+      # Fail if cargo itself failed (a genuine build error), or if any clippy diagnostic is present at warning/error level.
+      # We deliberately don't pass -D warnings to cargo clippy here: doing so promotes every warning to an "error" diagnostic
+      # before cargo-sonar ever sees it, which makes everything show up as "critical" in the GitLab code quality report.
+      if [ "$CARGO_EXIT_CODE" -ne 0 ] || jq -e 'select(.reason == "compiler-message") | select(.message.level == "warning" or .message.level == "error")' clippy-output.json > /dev/null; then
+        CLIPPY_EXIT_CODE=1
+      else
+        CLIPPY_EXIT_CODE=0
+      fi
+
+      (cd tools-rs && cargo codeclimate --clippy --clippy-path "$CI_PROJECT_DIR/clippy-output.json" --codeclimate-path "$CI_PROJECT_DIR/cargo-clippy.json")
+      exit $CLIPPY_EXIT_CODE
+  artifacts:
+    when: always
+    expire_in: 7 days
+    reports:
+      codequality: cargo-clippy.json
+
 lint-yaml:
   stage: lint
   needs:
@@ -290,6 +340,28 @@ format-python:
     - mkdir -p artifacts
     - echo "Running ruff on all Python files"
     - ruff format . --check --diff | sed "s|$CI_PROJECT_DIR|$CI_PROJECT_NAME|" > "$FORMAT_DIFF"
+
+format-rust:
+  extends:
+    - .format-report
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: always
+    - changes:
+        - "**/*.rs"
+        - ".gitlab-ci.yml"  # For changes in the image
+      when: always
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - when: manual
+      allow_failure: true
+  variables:
+    FORMAT_DIFF: artifacts/cargo-fmt.diff
+  before_script:
+    - !reference [.merge-train-guard, before_script]
+    - mkdir -p artifacts
+    - echo "Running cargo fmt on all Rust files"
+    - cargo fmt --manifest-path tools-rs/Cargo.toml --all -- --check > "$FORMAT_DIFF" 2>&1 || true
 
 type-check-python:
   stage: lint
