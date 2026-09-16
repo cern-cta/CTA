@@ -8,21 +8,35 @@
 #include "common/log/StringLogger.hpp"
 #include "scheduler/TapeMountDummy.hpp"
 
+#include <atomic>
 #include <chrono>
 #include <gtest/gtest.h>
 #include <map>
 #include <regex>
+#include <string_view>
 #include <thread>
 
 namespace cta::tape::daemon {
 
 using namespace std::chrono_literals;
 
+size_t countMessage(const std::string& output, std::string_view message) {
+  size_t count = 0;
+  for (size_t pos = output.find(message); pos != std::string::npos; pos = output.find(message, pos + message.size())) {
+    ++count;
+  }
+  return count;
+}
+
 class ReportingTapeMount : public cta::TapeMountDummy {
 public:
   TapeTransferStats reportedStats;
+  std::atomic<unsigned int> statsReports = 0;
 
-  void setTapeSessionStats(const TapeTransferStats& stats) override { reportedStats = stats; }
+  void setTapeSessionStats(const TapeTransferStats& stats) override {
+    reportedStats = stats;
+    ++statsReports;
+  }
 
   std::string getMountTransactionId() const override { return "12345"; }
 
@@ -121,16 +135,30 @@ TEST(TapeSessionReporterTest, PeriodicallyReportsAndFlushesOnShutdown) {
   ReportingTapeMount mount;
   TapeSessionTracker tracker;
   tracker.setMount(&mount);
+  tracker.updateTapeTransferStats({.dataVolume = 42, .filesCount = 1});
   TapeSessionReporter reporter(tracker, lc, 5ms, 1s);
 
   reporter.startThreads();
-  std::this_thread::sleep_for(20ms);
+  const auto deadline = std::chrono::steady_clock::now() + 2s;
+  while (mount.statsReports.load() == 0 && std::chrono::steady_clock::now() < deadline) {
+    std::this_thread::sleep_for(1ms);
+  }
+  tracker.updateTapeTransferStats({.dataVolume = 84, .filesCount = 2});
   reporter.finish();
   reporter.waitThreads();
 
-  EXPECT_NE(std::string::npos, log.getLog().find("Tape session statistics"));
-  EXPECT_NE(std::string::npos, log.getLog().find("Tape session finished"));
-  EXPECT_NE(std::string::npos, log.getLog().find("tape_session_finished"));
+  const auto output = log.getLog();
+  EXPECT_NE(std::string::npos, output.find("Tape session statistics"));
+  EXPECT_NE(std::string::npos, output.find("dataVolume=\"42\""));
+  EXPECT_EQ(1, countMessage(output, "Tape session finished"));
+  const auto finishedAt = output.find("Tape session finished");
+  if (finishedAt != std::string::npos) {
+    EXPECT_EQ(0, countMessage(output.substr(finishedAt), "Tape session statistics"));
+  }
+  EXPECT_NE(std::string::npos, output.find("tape_session_finished"));
+  EXPECT_EQ(84, mount.reportedStats.dataVolume);
+  EXPECT_EQ(2, mount.reportedStats.filesCount);
+  EXPECT_GE(mount.statsReports.load(), 2U);
 }
 
 TEST(TapeSessionReporterTest, DerivesMountMetadataAndUsesTypedOutcome) {
@@ -192,6 +220,31 @@ TEST(TapeSessionReporterTest, ReportsAStuckFile) {
   reporter.waitThreads();
 
   EXPECT_NE(std::string::npos, log.getLog().find("No tape block movement for too long"));
+}
+
+TEST(TapeSessionReporterTest, MovementAndCompletionStopStuckFileWarnings) {
+  cta::log::StringLogger log("dummy", "TapeSessionReporterTest", cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+  ReportingTapeMount mount;
+  TapeSessionTracker tracker;
+  tracker.setMount(&mount);
+  TapeSessionReporter reporter(tracker, lc, 5ms, 20ms);
+
+  tracker.notifyBeginNewJob(1234, 42);
+  reporter.startThreads();
+  // Wait for the first stuck warning without reading the logger concurrently.
+  const auto deadline = std::chrono::steady_clock::now() + 2s;
+  while (mount.statsReports.load() < 5 && std::chrono::steady_clock::now() < deadline) {
+    std::this_thread::sleep_for(1ms);
+  }
+  tracker.notifyBlockMovement(100);
+  std::this_thread::sleep_for(5ms);
+  tracker.fileFinished();
+  std::this_thread::sleep_for(25ms);
+  reporter.finish();
+  reporter.waitThreads();
+
+  EXPECT_EQ(1, countMessage(log.getLog(), "No tape block movement for too long"));
 }
 
 }  // namespace cta::tape::daemon

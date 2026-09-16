@@ -47,6 +47,7 @@
 #include <ranges>
 #include <stdexcept>
 #include <stdint.h>
+#include <string_view>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -71,6 +72,15 @@ using namespace cta::tape;
 using namespace cta::tape::daemon;
 
 namespace unitTests {
+
+// Count report messages without depending on the logger's output format.
+size_t countLogMessages(const std::string& log, std::string_view message) {
+  size_t count = 0;
+  for (size_t pos = log.find(message); pos != std::string::npos; pos = log.find(message, pos + message.size())) {
+    ++count;
+  }
+  return count;
+}
 
 const uint32_t DISK_FILE_OWNER_UID = 9751;
 const uint32_t DISK_FILE_GID = 9752;
@@ -244,7 +254,13 @@ public:
     }
   }
 
-  void setTapeSessionStats(const TapeTransferStats&) override {}
+  void setTapeSessionStats(const TapeTransferStats& stats) override {
+    ++statsReports;
+    lastReportedStats = stats;
+  }
+
+  unsigned int statsReports = 0;
+  TapeTransferStats lastReportedStats;
 
   unsigned int archiveFetchAttempts() const {
     if constexpr (std::is_same_v<Base, cta::MockArchiveMount>) {
@@ -842,6 +858,30 @@ public:
     EXPECT_EQ(1, mount.completionAttempts);
     EXPECT_EQ(threadsBefore, transferTestThreadCount());
     EXPECT_EQ(&mount, tracker.mount());
+    if (point != TransferFailurePoint::Metadata && point != TransferFailurePoint::StartingStatus) {
+      const auto expectedType = std::is_same_v<Mount, FailingTransferRetrieveMount> ?
+                                  cta::tape::session::SessionType::Retrieve :
+                                  cta::tape::session::SessionType::Archive;
+      EXPECT_EQ(expectedType, tracker.type());
+      EXPECT_EQ(1, countLogMessages(logger.getLog(), "Tape session finished"));
+      EXPECT_GE(mount.statsReports, 1U);
+      EXPECT_EQ(tracker.stats().tape.filesCount, mount.lastReportedStats.filesCount);
+    }
+    if (point == TransferFailurePoint::None || point == TransferFailurePoint::Discovery) {
+      EXPECT_EQ(cta::tape::session::SessionState::Scheduling, tracker.state());
+      EXPECT_EQ(0, tracker.stats().tape.filesCount);
+      EXPECT_EQ(0, tracker.stats().tape.dataVolume);
+      EXPECT_FALSE(tracker.progress().fileBeingMoved);
+      EXPECT_FALSE(tracker.mountAttempted());
+      EXPECT_EQ(point == TransferFailurePoint::None ? TapeSessionOutcome::Success : TapeSessionOutcome::Failure,
+                tracker.outcome());
+      if (point == TransferFailurePoint::None) {
+        EXPECT_EQ(1, tracker.errorStats()[TapeSessionError::EmptyMount]);
+        EXPECT_NE(std::string::npos, logger.getLog().find("Info_emptyMount"));
+      } else {
+        EXPECT_TRUE(tracker.errorStats().empty());
+      }
+    }
     if (discoveryFails || openFails) {
       EXPECT_EQ(1, scheduler.downAttempts);
       EXPECT_EQ(1, scheduler.desiredDownAttempts);
@@ -1683,6 +1723,18 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
     sess(logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
   // 8) Run the data transfer session
   sess.execute();
+
+  // The real read path must publish its final counters before reporting shutdown.
+  EXPECT_EQ(cta::tape::session::SessionType::Retrieve, tracker.type());
+  EXPECT_EQ(cta::tape::session::SessionState::ShuttingDown, tracker.state());
+  EXPECT_EQ(remoteFilePaths.size(), tracker.stats().tape.filesCount);
+  EXPECT_EQ(1000 * remoteFilePaths.size(), tracker.stats().tape.dataVolume);
+  EXPECT_FALSE(tracker.errorHappened());
+  EXPECT_FALSE(tracker.progress().fileBeingMoved);
+  EXPECT_TRUE(tracker.activeDiskFiles().empty());
+  EXPECT_EQ(1, countLogMessages(logger.getLog(), "Tape session finished"));
+  EXPECT_NE(std::string::npos, logger.getLog().find("filesCount=\"10\""));
+  EXPECT_NE(std::string::npos, logger.getLog().find("dataVolume=\"10000\""));
 
   // 9) Check the session git the correct VID
   ASSERT_EQ(s_vid, sess.getVid());
@@ -3895,6 +3947,16 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   DataTransferSession
     sess(logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
   sess.execute();
+  EXPECT_EQ(cta::tape::session::SessionType::Archive, tracker.type());
+  EXPECT_EQ(cta::tape::session::SessionState::ShuttingDown, tracker.state());
+  EXPECT_EQ(sourceFiles.size(), tracker.stats().tape.filesCount);
+  EXPECT_EQ(1000 * sourceFiles.size(), tracker.stats().tape.dataVolume);
+  EXPECT_FALSE(tracker.errorHappened());
+  EXPECT_FALSE(tracker.progress().fileBeingMoved);
+  EXPECT_TRUE(tracker.activeDiskFiles().empty());
+  EXPECT_EQ(1, countLogMessages(logger.getLog(), "Tape session finished"));
+  EXPECT_NE(std::string::npos, logger.getLog().find("filesCount=\"10\""));
+  EXPECT_NE(std::string::npos, logger.getLog().find("dataVolume=\"10000\""));
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
   auto afiiter = archiveFileIds.begin();

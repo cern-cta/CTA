@@ -73,6 +73,11 @@ target_link_libraries(cta-unit-tests-multiprocess
   pthread
   sqlite3)
 
+if(CTA_USE_PGSCHED)
+  # The temporary PostgreSQL test environment uses the RDBMS and scheduler schema libraries.
+  target_link_libraries(cta-unit-tests-multiprocess ctardbms ctaschedulerschema)
+endif()
+
 add_library(cta-unit-test-helper
   TempFile.cpp TempDirectory.cpp)
 target_link_libraries(ctaruntimeunittests PRIVATE cta-unit-test-helper)

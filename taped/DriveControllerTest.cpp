@@ -548,6 +548,50 @@ TEST_F(DriveControllerTest, FileFailureWithReusableDriveDoesNotRequestDown) {
   EXPECT_TRUE(sleeps.empty());
 }
 
+TEST_F(DriveControllerTest, SuccessiveMountsNeverExposeThePreviousMount) {
+  supplyMount();
+  transfer = [&](TapeMount& tapeMount) {
+    EXPECT_EQ(&tapeMount, mount());
+    return TransferSessionResult {};
+  };
+
+  expectPreparation();
+  iteration();
+  EXPECT_EQ(nullptr, mount());
+  expectPreparation();
+  iteration();
+
+  EXPECT_EQ(2, transfers);
+  EXPECT_EQ(2, destroyed);
+  EXPECT_EQ(nullptr, mount());
+}
+
+TEST_F(DriveControllerTest, StopAfterIdleIterationRunsFinalCleanup) {
+  DesiredDriveState state;
+  state.up = true;
+  EXPECT_CALL(scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
+  EXPECT_CALL(scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _));
+  EXPECT_CALL(scheduler, reportSchedulerBackendName("drive", _));
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillRepeatedly(Return(state));
+  EXPECT_CALL(scheduler, reportDriveStatus(_, _, _, _)).Times(testing::AnyNumber());
+  EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _));
+
+  unsigned int scheduleAttempts = 0;
+  schedule = [&]() -> std::unique_ptr<TapeMount> {
+    if (++scheduleAttempts == 1) {
+      controller->stop();
+      return nullptr;
+    }
+    throw std::runtime_error("Controller scheduled after stop");
+  };
+
+  int exitCode = -1;
+  EXPECT_NO_THROW(exitCode = controller->run());
+  EXPECT_EQ(0, exitCode);
+  EXPECT_EQ(1, scheduleAttempts);
+  EXPECT_EQ(1, sleeps.size());
+}
+
 /*
  * If an ordinary transfer exception is cleaned successfully, the controller releases its mount.
  * It can probe and schedule again without requesting the drive down.
