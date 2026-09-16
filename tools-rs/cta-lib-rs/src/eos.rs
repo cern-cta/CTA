@@ -323,7 +323,7 @@ impl EosGrpcClient {
                 self.authentication,
                 ContainerInsertRequest {
                     container: vec![dir],
-                    inherit_md: false,
+                    inherit_md: true,
                 }
             ))
             .await
