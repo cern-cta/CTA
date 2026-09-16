@@ -3,12 +3,14 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "DriveHandler.hpp"
+#include "DriveController.hpp"
 
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/TimeoutException.hpp"
 #include "common/log/StringLogger.hpp"
+#include "scheduler/Scheduler.hpp"
 
+#include <functional>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <stdexcept>
@@ -85,12 +87,12 @@ public:
 };
 }  // namespace
 
-class DriveHandlerTest : public testing::Test {
+class DriveControllerTest : public testing::Test {
 protected:
   TapedConfig config;
-  log::StringLogger logger {"host", "DriveHandlerTest", log::DEBUG};
+  log::StringLogger logger {"host", "DriveControllerTest", log::DEBUG};
   testing::StrictMock<MockDriveScheduler> scheduler;
-  std::unique_ptr<DriveHandler> handler;
+  std::unique_ptr<DriveController> controller;
   testing::Expectation preparationComplete;
   bool empty = true;
   std::optional<std::string> probeError;
@@ -104,48 +106,63 @@ protected:
   std::function<bool()> libraryExists = [] { return true; };
   std::function<bool()> clean = [] { return true; };
 
+  class FakeDriveOperations final : public DriveOperations {
+  public:
+    explicit FakeDriveOperations(DriveControllerTest& fixture) : fixture(fixture) {}
+
+    IScheduler& scheduler() override { return fixture.scheduler; }
+
+    bool logicalLibraryExists() override { return fixture.libraryExists(); }
+
+    std::pair<bool, std::optional<std::string>> probeDrive() override {
+      ++fixture.probes;
+      EXPECT_EQ(nullptr, fixture.mount());
+      return {fixture.empty, fixture.probeError};
+    }
+
+    std::unique_ptr<TapeMount> getNextMount() override {
+      ++fixture.schedules;
+      return fixture.schedule ? fixture.schedule() : nullptr;
+    }
+
+    TransferSessionResult transfer(TapeMount& tapeMount, TapeSessionTracker& tracker) override {
+      ++fixture.transfers;
+      EXPECT_EQ(&tapeMount, tracker.mount());
+      return fixture.transfer ? fixture.transfer(tapeMount) : TransferSessionResult {};
+    }
+
+    bool clean(const std::optional<std::string>&, bool, TapeSessionTracker&) override { return fixture.clean(); }
+
+    void sleep(unsigned int seconds) override {
+      if (fixture.sleeps.size() >= 10) {
+        throw std::runtime_error("Unexpected repeated controller wait");
+      }
+      fixture.sleeps.push_back(seconds);
+    }
+
+  private:
+    DriveControllerTest& fixture;
+  } operations {*this};
+
   void SetUp() override {
     config.drive.name = "drive";
     config.mounts.idle_scheduling_interval_secs = 7;
-    DriveHandler::Operations operations;
-    operations.logicalLibraryExists = [this] { return libraryExists(); };
-    operations.probeDrive = [this] {
-      ++probes;
-      EXPECT_EQ(nullptr, mount());
-      return std::make_pair(empty, probeError);
-    };
-    operations.getNextMount = [this] {
-      ++schedules;
-      return schedule ? schedule() : nullptr;
-    };
-    operations.transfer = [this](TapeMount& tapeMount) {
-      ++transfers;
-      EXPECT_EQ(&tapeMount, mount());
-      return transfer ? transfer(tapeMount) : TransferSessionResult {};
-    };
-    operations.clean = [this] { return clean(); };
-    operations.sleep = [this](unsigned int seconds) {
-      if (sleeps.size() >= 10) {
-        throw std::runtime_error("Unexpected repeated handler wait");
-      }
-      sleeps.push_back(seconds);
-    };
-    handler = std::make_unique<DriveHandler>(config, logger, scheduler, std::move(operations));
+    controller = std::make_unique<DriveController>(config, logger, operations);
   }
 
-  void waitForLibrary() { handler->waitForLogicalLibrary(); }
+  void waitForLibrary() { controller->waitForLogicalLibrary(); }
 
-  void iteration() { handler->runIteration(); }
+  void iteration() { controller->runIteration(); }
 
-  int shutdown() { return handler->shutdownDrive(); }
+  int shutdown() { return controller->shutdownDrive(); }
 
-  bool registerDrive() { return handler->registerDrive(false); }
+  bool registerDrive() { return controller->registerDrive(false); }
 
-  DesiredDriveState desiredState() { return handler->getDesiredDriveState(); }
+  void waitForUp() { controller->waitUntilDriveIsRequestedUp(); }
 
-  TapeMount* mount() { return handler->m_tapeSessionTracker.mount(); }
+  TapeMount* mount() { return controller->m_tapeSessionTracker.mount(); }
 
-  void down(bool preserve = false) { handler->putDriveDown(DriveDownReason::Shutdown, {}, preserve); }
+  void down(bool preserve = false) { controller->putDriveDown(DriveDownReason::Shutdown, {}, preserve); }
 
   void expectPreparation() {
     testing::InSequence sequence;
@@ -176,9 +193,9 @@ protected:
  * If the drive name is owned by another host or logical library, registration fails.
  * Startup must stop before probing or requesting work for that drive.
  */
-TEST_F(DriveHandlerTest, RegistrationConflictStopsStartup) {
+TEST_F(DriveControllerTest, RegistrationConflictStopsStartup) {
   EXPECT_CALL(scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(false));
-  EXPECT_EQ(1, handler->run());
+  EXPECT_EQ(1, controller->run());
   EXPECT_EQ(0, schedules);
 }
 
@@ -186,7 +203,7 @@ TEST_F(DriveHandlerTest, RegistrationConflictStopsStartup) {
  * If the drive already has an operator reason and comment, registration preserves both.
  * Startup must not erase an operator's explanation or make the drive available.
  */
-TEST_F(DriveHandlerTest, RegistrationPreservesOperatorReasonAndComment) {
+TEST_F(DriveControllerTest, RegistrationPreservesOperatorReasonAndComment) {
   DesiredDriveState state;
   state.up = true;
   state.reason = "Operator intervention";
@@ -207,7 +224,7 @@ TEST_F(DriveHandlerTest, RegistrationPreservesOperatorReasonAndComment) {
  * If the drive has no down reason or was cleanly shut down, drive registration replaces that state with
  * the startup reason and leaves the drive down. 
  */
-TEST_F(DriveHandlerTest, RegistrationReplacesAbsentAndCleanShutdownReasonsWithStartup) {
+TEST_F(DriveControllerTest, RegistrationReplacesAbsentAndCleanShutdownReasonsWithStartup) {
   // Check both states that should receive a fresh startup reason.
   for (const auto& reason :
        std::vector<std::optional<std::string>> {std::nullopt, formatDriveDownReason(DriveDownReason::Shutdown)}) {
@@ -233,13 +250,16 @@ TEST_F(DriveHandlerTest, RegistrationReplacesAbsentAndCleanShutdownReasonsWithSt
 }
 
 /*
- * If the desired-state lookup finds no drive entry, the handler registers the missing drive as down.
+ * If the desired-state lookup finds no drive entry, the controller registers the missing drive as down.
  * It must wait for an explicit up request before using the drive.
  */
-TEST_F(DriveHandlerTest, MissingDriveIsRegisteredDown) {
+TEST_F(DriveControllerTest, MissingDriveIsRegisteredDownUntilOperatorUp) {
+  DesiredDriveState up;
+  up.up = true;
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _))
-    .Times(2)
-    .WillRepeatedly(Throw(Scheduler::NoSuchDrive("missing")));
+    .WillOnce(Throw(Scheduler::NoSuchDrive("missing")))
+    .WillOnce(Throw(Scheduler::NoSuchDrive("missing")))
+    .WillOnce(Return(up));
   EXPECT_CALL(scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
   EXPECT_CALL(scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _))
     .WillOnce(Invoke([](const auto&, const DesiredDriveState& desired, const auto&, const auto&, const auto&, auto&) {
@@ -247,24 +267,28 @@ TEST_F(DriveHandlerTest, MissingDriveIsRegisteredDown) {
       EXPECT_EQ(formatDriveDownReason(DriveDownReason::Startup), desired.reason);
     }));
   EXPECT_CALL(scheduler, reportSchedulerBackendName("drive", _));
-  EXPECT_FALSE(desiredState().up);
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
+  waitForUp();
+  EXPECT_EQ(0, probes);
+  EXPECT_EQ(0, schedules);
+  EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.drive_state_poll_interval_secs));
 }
 
 /*
  * If a missing drive cannot be registered because of a conflict, desired-state lookup fails.
- * The handler must not proceed under an entry owned elsewhere.
+ * The controller must not proceed under an entry owned elsewhere.
  */
-TEST_F(DriveHandlerTest, MissingDriveRegistrationConflictPropagates) {
+TEST_F(DriveControllerTest, MissingDriveRegistrationConflictPropagates) {
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Throw(Scheduler::NoSuchDrive("missing")));
   EXPECT_CALL(scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(false));
-  EXPECT_THROW(desiredState(), exception::Exception);
+  EXPECT_THROW(waitForUp(), exception::Exception);
 }
 
 /*
  * If publishing the drive registration fails, run should end with a failure result.
  * It must not check the library or schedule work for an unregistered drive.
  */
-TEST_F(DriveHandlerTest, RegistrationPublicationFailureAbortsStartupBeforeLibraryOrScheduling) {
+TEST_F(DriveControllerTest, RegistrationPublicationFailureAbortsStartupBeforeLibraryOrScheduling) {
   unsigned int libraryChecks = 0;
   libraryExists = [&] {
     ++libraryChecks;
@@ -275,7 +299,7 @@ TEST_F(DriveHandlerTest, RegistrationPublicationFailureAbortsStartupBeforeLibrar
   EXPECT_CALL(scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _))
     .WillOnce(Throw(std::runtime_error("registration publication failed")));
 
-  EXPECT_EQ(1, handler->run());
+  EXPECT_EQ(1, controller->run());
   EXPECT_EQ(0, libraryChecks);
   EXPECT_EQ(0, probes);
   EXPECT_EQ(0, schedules);
@@ -285,7 +309,7 @@ TEST_F(DriveHandlerTest, RegistrationPublicationFailureAbortsStartupBeforeLibrar
  * If publishing the scheduler backend name fails, run should end with a failure result.
  * The drive must not begin scheduling with incomplete registration.
  */
-TEST_F(DriveHandlerTest, SchedulerBackendPublicationFailureAbortsStartupBeforeLibraryOrScheduling) {
+TEST_F(DriveControllerTest, SchedulerBackendPublicationFailureAbortsStartupBeforeLibraryOrScheduling) {
   unsigned int libraryChecks = 0;
   libraryExists = [&] {
     ++libraryChecks;
@@ -297,7 +321,7 @@ TEST_F(DriveHandlerTest, SchedulerBackendPublicationFailureAbortsStartupBeforeLi
   EXPECT_CALL(scheduler, reportSchedulerBackendName("drive", _))
     .WillOnce(Throw(std::runtime_error("backend publication failed")));
 
-  EXPECT_EQ(1, handler->run());
+  EXPECT_EQ(1, controller->run());
   EXPECT_EQ(0, libraryChecks);
   EXPECT_EQ(0, probes);
   EXPECT_EQ(0, schedules);
@@ -307,7 +331,7 @@ TEST_F(DriveHandlerTest, SchedulerBackendPublicationFailureAbortsStartupBeforeLi
  * If registration loses its database connection, run should end with a failure result.
  * Library checks and scheduling must not start without a registered drive.
  */
-TEST_F(DriveHandlerTest, StartupDatabaseFailureAbortsBeforeLibraryOrScheduling) {
+TEST_F(DriveControllerTest, StartupDatabaseFailureAbortsBeforeLibraryOrScheduling) {
   unsigned int libraryChecks = 0;
   libraryExists = [&] {
     ++libraryChecks;
@@ -316,7 +340,7 @@ TEST_F(DriveHandlerTest, StartupDatabaseFailureAbortsBeforeLibraryOrScheduling) 
   EXPECT_CALL(scheduler, checkDriveCanBeCreated(_, _))
     .WillOnce(Throw(exception::LostDatabaseConnection("objectstore unavailable")));
 
-  EXPECT_EQ(1, handler->run());
+  EXPECT_EQ(1, controller->run());
   EXPECT_EQ(0, libraryChecks);
   EXPECT_EQ(0, probes);
   EXPECT_EQ(0, schedules);
@@ -326,7 +350,7 @@ TEST_F(DriveHandlerTest, StartupDatabaseFailureAbortsBeforeLibraryOrScheduling) 
  * If the configured logical library is absent, startup waits for it to appear.
  * It must not request mounts before the library exists.
  */
-TEST_F(DriveHandlerTest, MissingLogicalLibraryWaitsUntilAvailable) {
+TEST_F(DriveControllerTest, MissingLogicalLibraryWaitsUntilAvailable) {
   unsigned int checks = 0;
   libraryExists = [&] { return ++checks == 3; };
   waitForLibrary();
@@ -341,7 +365,7 @@ TEST_F(DriveHandlerTest, MissingLogicalLibraryWaitsUntilAvailable) {
  * If the logical-library lookup loses its database connection, startup propagates the error.
  * A backend failure must not be mistaken for a library awaiting creation.
  */
-TEST_F(DriveHandlerTest, LogicalLibraryDatabaseFailurePropagatesWithoutWaiting) {
+TEST_F(DriveControllerTest, LogicalLibraryDatabaseFailurePropagatesWithoutWaiting) {
   libraryExists = []() -> bool { throw exception::LostDatabaseConnection("database unavailable"); };
   EXPECT_THROW(waitForLibrary(), exception::LostDatabaseConnection);
   EXPECT_TRUE(sleeps.empty());
@@ -351,14 +375,14 @@ TEST_F(DriveHandlerTest, LogicalLibraryDatabaseFailurePropagatesWithoutWaiting) 
  * If the logical-library lookup loses its database connection, run should end with a failure result.
  * Scheduling cannot begin until startup has verified the library.
  */
-TEST_F(DriveHandlerTest, LogicalLibraryDatabaseFailureEndsStartupWithoutScheduling) {
+TEST_F(DriveControllerTest, LogicalLibraryDatabaseFailureEndsStartupWithoutScheduling) {
   libraryExists = []() -> bool { throw exception::LostDatabaseConnection("objectstore unavailable"); };
   EXPECT_CALL(scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
   EXPECT_CALL(scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _));
   EXPECT_CALL(scheduler, reportSchedulerBackendName("drive", _));
 
-  EXPECT_EQ(1, handler->run());
+  EXPECT_EQ(1, controller->run());
   EXPECT_EQ(0, probes);
   EXPECT_EQ(0, schedules);
 }
@@ -369,7 +393,7 @@ TEST_F(DriveHandlerTest, LogicalLibraryDatabaseFailureEndsStartupWithoutScheduli
  * If the desired-state lookup loses its database connection, the iteration propagates the error.
  * Probing and scheduling cannot proceed without a reliable operator state.
  */
-TEST_F(DriveHandlerTest, DesiredStateDatabaseFailurePropagates) {
+TEST_F(DriveControllerTest, DesiredStateDatabaseFailurePropagates) {
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _))
     .WillOnce(Throw(exception::LostDatabaseConnection("database unavailable")));
   EXPECT_THROW(iteration(), exception::LostDatabaseConnection);
@@ -378,12 +402,11 @@ TEST_F(DriveHandlerTest, DesiredStateDatabaseFailurePropagates) {
 }
 
 /*
- * If the desired state remains down, the handler refreshes its reported status and waits.
+ * If the desired state remains down, the controller refreshes its reported status and waits.
  * It probes and schedules only after the operator requests the drive up.
  */
-TEST_F(DriveHandlerTest, DownDriveWaitsForOperatorUpBeforeProbing) {
+TEST_F(DriveControllerTest, DownDriveWaitsForOperatorUpBeforeProbing) {
   testing::InSequence sequence;
-  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
   DesiredDriveState up;
@@ -398,10 +421,10 @@ TEST_F(DriveHandlerTest, DownDriveWaitsForOperatorUpBeforeProbing) {
 }
 
 /*
- * If publishing the probing status fails, the handler stops before touching hardware.
+ * If publishing the probing status fails, the controller stops before touching hardware.
  * The backend must reflect the transition before the drive is probed.
  */
-TEST_F(DriveHandlerTest, ProbingPublicationFailurePreventsHardwareAccessAndScheduling) {
+TEST_F(DriveControllerTest, ProbingPublicationFailurePreventsHardwareAccessAndScheduling) {
   DesiredDriveState up;
   up.up = true;
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
@@ -413,10 +436,10 @@ TEST_F(DriveHandlerTest, ProbingPublicationFailurePreventsHardwareAccessAndSched
 }
 
 /*
- * If the probe finds retained media, the handler attempts recovery cleaning before scheduling.
+ * If the probe finds retained media, the controller attempts recovery cleaning before scheduling.
  * A successful clean must be followed by a fresh empty-drive probe.
  */
-TEST_F(DriveHandlerTest, RetainedTapeIsCleanedAndReprobedBeforeScheduling) {
+TEST_F(DriveControllerTest, RetainedTapeIsCleanedAndReprobedBeforeScheduling) {
   empty = false;
   unsigned int cleanAttempts = 0;
   clean = [&] {
@@ -434,10 +457,10 @@ TEST_F(DriveHandlerTest, RetainedTapeIsCleanedAndReprobedBeforeScheduling) {
 }
 
 /*
- * If the drive probe fails, the handler publishes the probe failure as the down reason.
+ * If the drive probe fails, the controller publishes the probe failure as the down reason.
  * Scheduling must stop because the drive's empty state is unknown.
  */
-TEST_F(DriveHandlerTest, ProbeFailurePublishesItsReasonAndPreventsScheduling) {
+TEST_F(DriveControllerTest, ProbeFailurePublishesItsReasonAndPreventsScheduling) {
   empty = false;
   probeError = "Cannot open drive";
   expectPreparation();
@@ -452,10 +475,10 @@ TEST_F(DriveHandlerTest, ProbeFailurePublishesItsReasonAndPreventsScheduling) {
 }
 
 /*
- * If scheduling returns no mount, the handler waits before the next attempt.
+ * If scheduling returns no mount, the controller waits before the next attempt.
  * It checks the drive state and probes again before asking for more work.
  */
-TEST_F(DriveHandlerTest, IdleMountWaitsAndRechecksDriveBeforeRetry) {
+TEST_F(DriveControllerTest, IdleMountWaitsAndRechecksDriveBeforeRetry) {
   expectPreparation();
   iteration();
   expectPreparation();
@@ -467,10 +490,10 @@ TEST_F(DriveHandlerTest, IdleMountWaitsAndRechecksDriveBeforeRetry) {
 }
 
 /*
- * If mount scheduling times out, the handler waits and allows a later iteration.
+ * If mount scheduling times out, the controller waits and allows a later iteration.
  * A timeout should not permanently stop an otherwise usable drive.
  */
-TEST_F(DriveHandlerTest, SchedulingTimeoutWaitsAndAllowsAnotherIteration) {
+TEST_F(DriveControllerTest, SchedulingTimeoutWaitsAndAllowsAnotherIteration) {
   schedule = []() -> std::unique_ptr<TapeMount> { throw exception::TimeoutException("timeout"); };
   expectPreparation();
   EXPECT_NO_THROW(iteration());
@@ -483,10 +506,10 @@ TEST_F(DriveHandlerTest, SchedulingTimeoutWaitsAndAllowsAnotherIteration) {
 }
 
 /*
- * If scheduling loses its database connection, the handler logs an error and waits for the backend.
+ * If scheduling loses its database connection, the controller logs an error and waits for the backend.
  * Once a ping succeeds, it can probe and schedule again without an operator up request.
  */
-TEST_F(DriveHandlerTest, SchedulingDatabaseFailureWaitsForRecoveryBeforeRetry) {
+TEST_F(DriveControllerTest, SchedulingDatabaseFailureWaitsForRecoveryBeforeRetry) {
   schedule = []() -> std::unique_ptr<TapeMount> { throw exception::LostDatabaseConnection("database unavailable"); };
   expectPreparation();
   testing::Expectation failedPing =
@@ -508,10 +531,10 @@ TEST_F(DriveHandlerTest, SchedulingDatabaseFailureWaitsForRecoveryBeforeRetry) {
 // Transfers and recovery.
 
 /*
- * If a transfer reports a file failure but the drive remains reusable, the handler leaves it available.
+ * If a transfer reports a file failure but the drive remains reusable, the controller leaves it available.
  * A failed file alone does not establish a hardware problem.
  */
-TEST_F(DriveHandlerTest, FileFailureWithReusableDriveDoesNotRequestDown) {
+TEST_F(DriveControllerTest, FileFailureWithReusableDriveDoesNotRequestDown) {
   supplyMount();
   transfer = [](TapeMount&) {
     TransferSessionResult result;
@@ -526,10 +549,10 @@ TEST_F(DriveHandlerTest, FileFailureWithReusableDriveDoesNotRequestDown) {
 }
 
 /*
- * If an ordinary transfer exception is cleaned successfully, the handler releases its mount.
+ * If an ordinary transfer exception is cleaned successfully, the controller releases its mount.
  * It can probe and schedule again without requesting the drive down.
  */
-TEST_F(DriveHandlerTest, OrdinaryTransferExceptionCleansAndRetriesWithoutOperatorUp) {
+TEST_F(DriveControllerTest, OrdinaryTransferExceptionCleansAndRetriesWithoutOperatorUp) {
   supplyMount();
   transfer = [](TapeMount&) -> TransferSessionResult { throw std::runtime_error("transfer failed"); };
   unsigned int cleanAttempts = 0;
@@ -554,10 +577,10 @@ TEST_F(DriveHandlerTest, OrdinaryTransferExceptionCleansAndRetriesWithoutOperato
 }
 
 /*
- * If transfer recovery cleaning returns failure, the handler should request the drive down.
+ * If transfer recovery cleaning returns failure, the controller should request the drive down.
  * The cleaner failure must be reported instead of allowing another mount.
  */
-TEST_F(DriveHandlerTest, TransferExceptionWithFailedCleanupRequestsCleanerFailureDown) {
+TEST_F(DriveControllerTest, TransferExceptionWithFailedCleanupRequestsCleanerFailureDown) {
   supplyMount();
   transfer = [](TapeMount&) -> TransferSessionResult { throw std::runtime_error("transfer failed"); };
   unsigned int cleanAttempts = 0;
@@ -583,10 +606,10 @@ TEST_F(DriveHandlerTest, TransferExceptionWithFailedCleanupRequestsCleanerFailur
 }
 
 /*
- * If transfer recovery cleaning throws, the handler should still request the drive down.
+ * If transfer recovery cleaning throws, the controller should still request the drive down.
  * A cleaner exception must not leave the drive available for scheduling.
  */
-TEST_F(DriveHandlerTest, TransferExceptionWithThrowingCleanupRequestsCleanerFailureDown) {
+TEST_F(DriveControllerTest, TransferExceptionWithThrowingCleanupRequestsCleanerFailureDown) {
   supplyMount();
   transfer = [](TapeMount&) -> TransferSessionResult { throw std::runtime_error("transfer failed"); };
   unsigned int cleanAttempts = 0;
@@ -612,10 +635,10 @@ TEST_F(DriveHandlerTest, TransferExceptionWithThrowingCleanupRequestsCleanerFail
 }
 
 /*
- * If a transfer loses its object-store connection, the handler releases the mount and cleans the drive.
+ * If a transfer loses its object-store connection, the controller releases the mount and cleans the drive.
  * It waits for the backend to recover, then probes and schedules without an operator up request.
  */
-TEST_F(DriveHandlerTest, TransferDatabaseFailureCleansAndWaitsForRecovery) {
+TEST_F(DriveControllerTest, TransferDatabaseFailureCleansAndWaitsForRecovery) {
   supplyMount();
   transfer = [](TapeMount&) -> TransferSessionResult {
     throw exception::LostDatabaseConnection("objectstore unavailable");
@@ -648,7 +671,7 @@ TEST_F(DriveHandlerTest, TransferDatabaseFailureCleansAndWaitsForRecovery) {
  * If a transfer loses its database connection and recovery cleaning fails, the drive is requested down.
  * Backend recovery must not make hardware with failed cleanup available for another mount.
  */
-TEST_F(DriveHandlerTest, TransferDatabaseFailureWithFailedCleanupRequestsDown) {
+TEST_F(DriveControllerTest, TransferDatabaseFailureWithFailedCleanupRequestsDown) {
   supplyMount();
   transfer = [](TapeMount&) -> TransferSessionResult {
     throw exception::LostDatabaseConnection("objectstore unavailable");
@@ -679,9 +702,9 @@ TEST_F(DriveHandlerTest, TransferDatabaseFailureWithFailedCleanupRequestsDown) {
 
 /*
  * If a transfer exception is followed by retained media, failed recovery cleaning requests down.
- * The handler must not schedule a second mount onto occupied hardware.
+ * The controller must not schedule a second mount onto occupied hardware.
  */
-TEST_F(DriveHandlerTest, RetainedMediaAfterTransferWithFailedCleaningPreventsAnotherMount) {
+TEST_F(DriveControllerTest, RetainedMediaAfterTransferWithFailedCleaningPreventsAnotherMount) {
   supplyMount();
   transfer = [](TapeMount&) -> TransferSessionResult { throw std::runtime_error("transfer failed"); };
   unsigned int cleanAttempts = 0;
@@ -707,10 +730,10 @@ TEST_F(DriveHandlerTest, RetainedMediaAfterTransferWithFailedCleaningPreventsAno
 }
 
 /*
- * If a transfer reports an unusable drive with a specific reason, the handler requests it down.
+ * If a transfer reports an unusable drive with a specific reason, the controller requests it down.
  * It preserves that reason so the more precise diagnosis is not overwritten.
  */
-TEST_F(DriveHandlerTest, UnusableDriveRequestsDownAndPreservesSpecificReason) {
+TEST_F(DriveControllerTest, UnusableDriveRequestsDownAndPreservesSpecificReason) {
   supplyMount();
   transfer = [](TapeMount&) {
     TransferSessionResult result;
@@ -732,10 +755,10 @@ TEST_F(DriveHandlerTest, UnusableDriveRequestsDownAndPreservesSpecificReason) {
 }
 
 /*
- * If a transfer marks the drive unusable without a specific reason, the handler requests it down.
+ * If a transfer marks the drive unusable without a specific reason, the controller requests it down.
  * It supplies a transfer-failure reason so the down state is explained.
  */
-TEST_F(DriveHandlerTest, UnusableDriveWithoutSpecificReasonPublishesTransferFailure) {
+TEST_F(DriveControllerTest, UnusableDriveWithoutSpecificReasonPublishesTransferFailure) {
   supplyMount();
   transfer = [](TapeMount&) {
     TransferSessionResult result;
@@ -758,9 +781,9 @@ TEST_F(DriveHandlerTest, UnusableDriveWithoutSpecificReasonPublishesTransferFail
 
 /*
  * If down-state publication fails after an unusable transfer, the error propagates.
- * The handler must still release the mount and clear the tracker reference.
+ * The controller must still release the mount and clear the tracker reference.
  */
-TEST_F(DriveHandlerTest, DownPublicationFailureAfterTransferStillReleasesMount) {
+TEST_F(DriveControllerTest, DownPublicationFailureAfterTransferStillReleasesMount) {
   supplyMount();
   transfer = [](TapeMount&) {
     TransferSessionResult result;
@@ -781,10 +804,10 @@ TEST_F(DriveHandlerTest, DownPublicationFailureAfterTransferStillReleasesMount) 
 // Down-state publication.
 
 /*
- * If publishing the reported down status fails, the handler still tries the desired down state.
+ * If publishing the reported down status fails, the controller still tries the desired down state.
  * When both publications fail, the first error remains the one propagated.
  */
-TEST_F(DriveHandlerTest, DownPublicationsBothRunAndFirstExceptionIsPreserved) {
+TEST_F(DriveControllerTest, DownPublicationsBothRunAndFirstExceptionIsPreserved) {
   testing::InSequence sequence;
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _))
     .WillOnce(Throw(std::runtime_error("reported state failed")));
@@ -798,20 +821,20 @@ TEST_F(DriveHandlerTest, DownPublicationsBothRunAndFirstExceptionIsPreserved) {
 }
 
 /*
- * If publishing the desired down state fails, the handler propagates the error.
+ * If publishing the desired down state fails, the controller propagates the error.
  * The caller must know that the drive was not reliably taken out of service.
  */
-TEST_F(DriveHandlerTest, DesiredPublicationFailurePropagates) {
+TEST_F(DriveControllerTest, DesiredPublicationFailurePropagates) {
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
   EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _)).WillOnce(Throw(std::runtime_error("failed")));
   EXPECT_THROW(down(), std::runtime_error);
 }
 
 /*
- * If reading the existing down reason fails, the handler still attempts both down publications.
+ * If reading the existing down reason fails, the controller still attempts both down publications.
  * It avoids overwriting an unknown reason while preserving the lookup error.
  */
-TEST_F(DriveHandlerTest, ReasonLookupFailureStillAttemptsBothDownPublications) {
+TEST_F(DriveControllerTest, ReasonLookupFailureStillAttemptsBothDownPublications) {
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Throw(std::runtime_error("lookup failed")));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
   EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
@@ -828,7 +851,7 @@ TEST_F(DriveHandlerTest, ReasonLookupFailureStillAttemptsBothDownPublications) {
  * If final cleaning returns failure, shutdown still publishes the drive as down.
  * It records the cleaner failure and returns a nonzero result.
  */
-TEST_F(DriveHandlerTest, FailedShutdownCleaningStillPublishesDown) {
+TEST_F(DriveControllerTest, FailedShutdownCleaningStillPublishesDown) {
   clean = [] { return false; };
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
@@ -843,7 +866,7 @@ TEST_F(DriveHandlerTest, FailedShutdownCleaningStillPublishesDown) {
  * If final cleaning throws, shutdown still attempts both down-state publications.
  * A publication failure must not prevent the other publication attempt.
  */
-TEST_F(DriveHandlerTest, ShutdownCleaningExceptionStillAttemptsDownAfterPublicationFailure) {
+TEST_F(DriveControllerTest, ShutdownCleaningExceptionStillAttemptsDownAfterPublicationFailure) {
   clean = []() -> bool { throw std::runtime_error("cleaner failed"); };
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _))
@@ -856,7 +879,7 @@ TEST_F(DriveHandlerTest, ShutdownCleaningExceptionStillAttemptsDownAfterPublicat
  * If final cleaning succeeds but down-state publication fails, shutdown returns failure.
  * Successful hardware cleanup cannot hide an unreported drive state.
  */
-TEST_F(DriveHandlerTest, SuccessfulCleaningWithPublicationFailureReturnsNonzero) {
+TEST_F(DriveControllerTest, SuccessfulCleaningWithPublicationFailureReturnsNonzero) {
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
   EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _)).WillOnce(Throw(std::runtime_error("publication failed")));
@@ -867,7 +890,7 @@ TEST_F(DriveHandlerTest, SuccessfulCleaningWithPublicationFailureReturnsNonzero)
  * If shutdown finds no active failure reason, it publishes a clean-shutdown reason.
  * An existing operator reason remains intact so shutdown does not erase it.
  */
-TEST_F(DriveHandlerTest, ShutdownReplacesStartupAndCleanReasonsButPreservesOperatorReason) {
+TEST_F(DriveControllerTest, ShutdownReplacesStartupAndCleanReasonsButPreservesOperatorReason) {
   for (const auto& reason : std::vector<std::string> {"",
                                                       formatDriveDownReason(DriveDownReason::Startup),
                                                       formatDriveDownReason(DriveDownReason::Shutdown),

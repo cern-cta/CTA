@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "DriveHandler.hpp"
+#include "DriveController.hpp"
 #include "TapedConfig.hpp"
 #include "common/log/LogContext.hpp"
 
@@ -33,7 +33,7 @@ public:
   bool isReady() const;
 
 private:
-  std::unique_ptr<DriveHandler> m_driveHandler = nullptr;
+  std::unique_ptr<DriveController> m_driveController = nullptr;
 };
 
 }  // namespace cta::tape::daemon

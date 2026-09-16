@@ -16,13 +16,13 @@
 namespace cta::tape::daemon {
 
 TapedApp::~TapedApp() {
-  m_driveHandler.reset();
+  m_driveController.reset();
   google::protobuf::ShutdownProtobufLibrary();
 }
 
 void TapedApp::stop() {
-  if (m_driveHandler) {
-    m_driveHandler->stop();
+  if (m_driveController) {
+    m_driveController->stop();
   }
 }
 
@@ -51,20 +51,20 @@ int TapedApp::run(const TapedConfig& config, cta::log::Logger& log) {
   }
 
   // Run the main part of taped
-  m_driveHandler = std::make_unique<DriveHandler>(config, log);
-  return m_driveHandler->run();
+  m_driveController = std::make_unique<DriveController>(config, log);
+  return m_driveController->run();
 }
 
 bool TapedApp::isReady() const {
-  return m_driveHandler && m_driveHandler->isReady();
+  return m_driveController && m_driveController->isReady();
 }
 
 bool TapedApp::isLive() const {
-  if (!m_driveHandler) {
+  if (!m_driveController) {
     // We consider ourselves alive if we haven't started yet, because a restart likely won't fix this.
     return true;
   }
-  return m_driveHandler->isLive();
+  return m_driveController->isLive();
 }
 
 }  // namespace cta::tape::daemon
