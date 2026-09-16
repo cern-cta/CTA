@@ -80,6 +80,7 @@ cta::tape::daemon::TransferSessionResult cta::tape::daemon::DataTransferSession:
 
   cta::utils::Timer t;
 
+  // TODO: finalize the borrowed mount once even if metadata lookup or Starting status publication throws.
   m_volInfo.vid = m_tapeMount.getVid();
   m_volInfo.mountType = m_tapeMount.getMountType();
   m_volInfo.nbFiles = m_tapeMount.getNbFiles();
@@ -136,6 +137,7 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
                                logContext,
                                std::chrono::seconds(15),
                                std::chrono::seconds(m_transfersConfig.no_block_move_timeout_secs));
+  // TODO: stop and join the reporter on every exception path before the mount or tracker can be released.
   reporter.startThreads();
   // We are ready to start the session. We need to create the whole machinery
   // in order to get the task injector ready to check if we actually have a
@@ -237,6 +239,7 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
       threadPool.startThreads();
       reportPacker.startThreads();
       taskInjector.startThreads();
+      // TODO: join every started worker if a later start or wait throws, before finalizing the mount.
       // This thread is now going to be idle until the system unwinds at the end of the session
       // All client notifications are done by the report packer, including the end of session
       taskInjector.waitThreads();
@@ -278,6 +281,7 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
       cta::log::Param errorMessageParam(cta::semconv::log::errorMessage, "Aborted: empty recall mount");
 
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
+      // TODO: handle standard exceptions from mount completion and still stop the reporter.
       try {
         retrieveMount.complete();
         m_tapeSessionTracker.updateTapeTransferStats({});
@@ -326,6 +330,7 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
                                logContext,
                                std::chrono::seconds(15),
                                std::chrono::seconds(m_transfersConfig.no_block_move_timeout_secs));
+  // TODO: stop and join the reporter on every exception path before the mount or tracker can be released.
   reporter.startThreads();
   // We are ready to start the session. We need to create the whole machinery
   // in order to get the task injector ready to check if we actually have a
@@ -404,6 +409,7 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
       writeSingleThread.startThreads();
       reportPacker.startThreads();
       taskInjector.startThreads();
+      // TODO: join every started worker if a later start or wait throws, before finalizing the mount.
       // Synchronise with end of threads
       taskInjector.waitThreads();
       writeSingleThread.waitThreads();
@@ -431,6 +437,7 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
       cta::log::Param errorMessageParam(cta::semconv::log::errorMessage, "Aborted: empty migration mount");
 
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
+      // TODO: handle standard exceptions from mount completion and still stop the reporter.
       try {
         archiveMount.complete();
         m_tapeSessionTracker.updateTapeTransferStats({});

@@ -13,6 +13,7 @@
 #include "session/TapeSessionTracker.hpp"
 
 #include <memory>
+#include <optional>
 #include <stop_token>
 #include <string>
 #include <string_view>
@@ -46,6 +47,8 @@ private:
   bool registerDrive(bool putUpIfPossible);
   // Wait for the configured logical library to exist before scheduling at startup.
   void waitForLogicalLibrary();
+  // Poll until the catalogue and scheduler backend are reachable again.
+  void waitForBackendRecovery();
   // Register a missing drive as down while waiting for the operator's up request.
   void waitUntilDriveIsRequestedUp();
   // Attempt both publications and propagate the first failure after logging each failed operation.
@@ -54,6 +57,8 @@ private:
                     bool preserveExistingReason = false);
   // Return false when probing requests down and scheduling must be skipped.
   bool prepareDriveForScheduling();
+  // Convert cleaner exceptions to a failed cleaning result and log the caller's context.
+  bool cleanDrive(const std::optional<std::string>& vid, const char* failureMessage);
   // Clean and publish down, returning a nonzero exit code if either operation fails.
   int shutdownDrive();
 

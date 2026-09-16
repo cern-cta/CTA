@@ -58,55 +58,53 @@ void DriveController::stop() {
 }
 
 bool DriveController::isLive() const {
-  // TODO: look into the timeouts and see if we have spent too much time in any given state
+  // TODO (separate MR): look into the timeouts and see if we have spent too much time in any given state
   // We don't ping the catalogue/scheduler here as that would just result in cascading failures
   // A restart won't fix things
   return true;
 }
 
 bool DriveController::isReady() const {
-  // TODO ping catalogue and scheduler
+  // TODO (separate MR): ping catalogue and scheduler
   return true;
 }
 
 int DriveController::run() {
-  // TODO: handle startup exceptions separately from failures during an active session.
-  // TODO: define bounded database recovery for each phase; helpers propagate operational failures.
-  // TODO: wait for catalogue and scheduler to be reachable within a reasonable timeout?
-
-  // Register the drive. It will put the drive down with a startup reason.
-  // If the drive was already down with an existing reason, this reason will be carried over.
-  // The only exception is if the down reason is a previous clean exit.
-  // Registration conflicts prevent taped from using the drive.
   // TODO (separate MR): configure whether startup may request the drive to be up.
-  if (!registerDrive(false)) {
+  try {
+    // Start by registering the drive in the catalogue
+    if (!registerDrive(false)) {
+      return 1;
+    }
+
+    // An absent logical library can appear later, so wait before scheduling.
+    // Scheduling can deal with a missing logical library just fine; this is just to reduce
+    // the number of (transient) errors at startup
+    waitForLogicalLibrary();
+  } catch (const std::exception& ex) {
+    logDriveFailure(m_lc, "Drive startup failed.", ex);
     return 1;
   }
 
-  // A drive may be defined with a logical library that does not exist (yet)
-  // In which case scheduling will not work
-  // The scheduler itself already handles this okay, but this is just to avoid spitting out a bunch
-  // of repeated warnings.
-  waitForLogicalLibrary();
-
-  // TODO (separate MR): stop scheduling on shutdown and reach the final cleanup below.
+  // TODO (separate MR): graceful shutdown
+  // This is the main loop
   while (true) {
     runIteration();
   }
 
-  // Loop-local mount ownership and the borrowed tracker reference are released before final cleaning.
+  // Do a final drive cleaning to ensure we don't leave a cartridge behind
   return shutdownDrive();
 }
 
 void DriveController::runIteration() {
+  // Ensure among other things that the drive is Up before we proceed
   if (!prepareDriveForScheduling()) {
     return;
   }
 
-  // Retain mount ownership until the transfer and its reporting threads have finished.
   std::unique_ptr<TapeMount> tapeMount;
 
-  // Clear the borrowed tracker reference before destroying the mount, including during unwinding.
+  // The tracker has a reference/pointer to the tapeMount. This RAII structure ensures we clear it before the tapeMount is destroyed.
   struct MountReferenceReset {
     TapeSessionTracker& tracker;
 
@@ -114,61 +112,76 @@ void DriveController::runIteration() {
   } mountReferenceReset {m_tapeSessionTracker};
 
   // Acquire work; a scheduling timeout is recoverable by waiting and trying again.
-  // TODO: handle other scheduling failures separately from transfer failures.
   utils::Timer t;
-  bool schedulingTimedOut = false;
   try {
     tapeMount = m_operations.getNextMount();
   } catch (const exception::TimeoutException& ex) {
-    schedulingTimedOut = true;
     log::ScopedParamContainer params(m_lc);
     params.add("totalScheduleMountTime", t.secs())
       .add("scheduleMountTimeoutSecs", m_config.mounts.get_next_mount_timeout_secs)
       .add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(log::WARNING, "Scheduling timed out; waiting before retrying.");
+  } catch (const exception::LostDatabaseConnection& ex) {
+    // If we lose connection, we log an error, wait for the DB to be up again and continue with the next iteration.
+    logDriveFailure(m_lc, "Scheduling lost its database connection.", ex);
+    waitForBackendRecovery();
+    return;
+  } catch (const std::exception& ex) {
+    // TODO: inventory unexpected getNextMount() errors and decide which are recoverable.
+    logDriveFailure(m_lc, "Scheduling failed unexpectedly.", ex);
+    throw;
   }
 
+  // Not finding a mount is not an error; we just sleep and retry in the next iteration
   if (tapeMount == nullptr) {
-    if (!schedulingTimedOut) {
-      m_lc.log(log::DEBUG, "No mount available; waiting before retrying.");
-    }
-    // TODO: make idle waiting responsive to desired-state changes and graceful shutdown.
+    // TODO (separate MR): graceful shutdown should interrupt sleep
     m_operations.sleep(m_config.mounts.idle_scheduling_interval_secs);
-    // Recheck desired state before attempting scheduling again.
     return;
   }
 
+  // At this point we know we have a "proper" mount candidate
   m_tapeSessionTracker.setMount(tapeMount.get());
 
-  if (m_tapeSessionTracker.mount() != tapeMount.get()) {
-    throw exception::Exception("In DriveController::run(): tracker does not reference the supplied tape mount");
-  }
-
   // The session result describes hardware usability, not whether every file transferred successfully.
-  // TODO: ensure DataTransferSession stops and joins workers/reporters before exceptions escape.
-  // TODO: expose the hardware cleanup outcome when a transfer exits exceptionally.
   TransferSessionResult transferResult;
+
   try {
     // The transfer session handles mounting and cleaning as this is intertwined with its internal logic.
-    // For example, an empty mount is discovered inside the session and does not load the tape.
+    // For example, if an empty mount is discovered inside the session, it does not load the tape.
     transferResult = m_operations.transfer(*tapeMount, m_tapeSessionTracker);
-  } catch (const exception::LostDatabaseConnection&) {
-    // Database recovery remains separate from software/job failure handling.
-    throw;
-  } catch (const std::exception& ex) {
-    logDriveFailure(m_lc, "Data transfer session threw an exception. Waiting before retrying scheduling.", ex);
-    // TODO: make retry waiting interruptible by graceful shutdown.
+  } catch (const exception::LostDatabaseConnection& ex) {
+    logDriveFailure(m_lc, "Data transfer lost its database connection. Cleaning before retrying scheduling.", ex);
+    const bool cleaningSucceeded =
+      cleanDrive(tapeMount->getVid(), "Drive cleaning after a transfer failure threw an exception.");
+
+    // Successful cleaning does not establish that the backends are available again.
+    // Wait before publishing a down state or attempting another mount.
+    waitForBackendRecovery();
+    if (!cleaningSucceeded) {
+      putDriveDown(common::dataStructures::DriveDownReason::CleanerFailed, {}, true);
+      return;
+    }
+    // TODO (separate MR): graceful shutdown should interrupt sleep
     m_operations.sleep(m_config.mounts.idle_scheduling_interval_secs);
-    // The next preparation probes for retained media before scheduling another mount.
+    return;
+  } catch (const std::exception& ex) {
+    // Similar to losing the connection, except we don't wait for backend recovery
+    logDriveFailure(m_lc, "Data transfer session threw an exception. Cleaning before retrying scheduling.", ex);
+    if (!cleanDrive(tapeMount->getVid(), "Drive cleaning after a transfer failure threw an exception.")) {
+      putDriveDown(common::dataStructures::DriveDownReason::CleanerFailed, {}, true);
+      return;
+    }
+    // TODO (separate MR): graceful shutdown should interrupt sleep
+    m_operations.sleep(m_config.mounts.idle_scheduling_interval_secs);
     return;
   }
 
+  // The session result tells us something about whether the hardware is safe to reuse.
+  // This is because cleaning happens inside the session as well
   if (transferResult.driveUsability != DriveUsability::Reusable) {
     // Preserve specific session or operator reasons. Publication failures propagate.
     putDriveDown(common::dataStructures::DriveDownReason::TransferSessionFailed, {}, true);
-    // Require another operator up request before attempting recovery and scheduling.
   }
-  // TODO (separate MR): move transfer cleaning to CleanerSession, called after every transfer here.
 }
 
 void DriveController::waitForLogicalLibrary() {
@@ -190,8 +203,21 @@ void DriveController::waitForLogicalLibrary() {
     }
 
     // Database failures propagate; only an absent library is retried here.
-    // TODO (separate MR): make this startup wait interruptible by graceful shutdown.
-    m_operations.sleep(m_config.mounts.drive_state_poll_interval_secs);
+    // TODO (separate MR): graceful shutdown should interrupt sleep
+    m_operations.sleep(m_config.mounts.logical_library_poll_interval_secs);
+  }
+}
+
+void DriveController::waitForBackendRecovery() {
+  // Scheduler::ping checks both the catalogue and scheduler backend.
+  while (true) {
+    try {
+      m_operations.scheduler().ping(m_lc);
+      return;
+    } catch (const exception::LostDatabaseConnection& ex) {
+      logDriveFailure(m_lc, "Database is still unavailable; waiting before retrying.", ex);
+      m_operations.sleep(m_config.mounts.backend_recovery_interval_secs);
+    }
   }
 }
 
@@ -199,6 +225,7 @@ void DriveController::waitUntilDriveIsRequestedUp() {
   auto& scheduler = m_operations.scheduler();
   bool waitingLogged = false;
 
+  // TODO (separate MR): graceful shutdown
   while (true) {
     common::dataStructures::DesiredDriveState desiredState;
     try {
@@ -229,7 +256,7 @@ void DriveController::waitUntilDriveIsRequestedUp() {
                                 common::dataStructures::MountType::NoMount,
                                 common::dataStructures::DriveStatus::Down,
                                 m_lc);
-    // TODO: Make this wait interruptible by graceful shutdown.
+    // TODO (separate MR): graceful shutdown should interrupt sleep
     m_operations.sleep(m_config.mounts.drive_state_poll_interval_secs);
   }
 }
@@ -240,6 +267,7 @@ void DriveController::putDriveDown(common::dataStructures::DriveDownReason reaso
   auto& scheduler = m_operations.scheduler();
   common::dataStructures::DesiredDriveState driveState;
   driveState.reason = common::dataStructures::formatDriveDownReason(reason, detail);
+  // This allows us to rethrow only the first exception we encountered
   std::exception_ptr firstFailure;
   const auto recordFailure = [&](const char* message, const std::exception& ex) {
     if (!firstFailure) {
@@ -333,7 +361,8 @@ bool DriveController::registerDrive(bool putUpIfPossible) {
 
 bool DriveController::prepareDriveForScheduling() {
   auto& scheduler = m_operations.scheduler();
-  // Honour the operator's desired state before scheduling another mount.
+
+  // A drive must be up before we can schedule.
   waitUntilDriveIsRequestedUp();
 
   // Verify the drive is empty before every scheduling attempt, including after transfer exceptions.
@@ -342,13 +371,6 @@ bool DriveController::prepareDriveForScheduling() {
                               common::dataStructures::DriveStatus::Probing,
                               m_lc);
   m_lc.log(log::DEBUG, "Checking whether the drive is empty before scheduling.");
-
-  // Automatic recovery cleaning is currently disabled.
-  // TODO (separate MR): configure automatic cleaning before probing.
-  if (false) {
-    // TODO: check the cleaner result and handle escaping exceptions before proceeding to the probe.
-    m_operations.clean(std::nullopt, true, m_tapeSessionTracker);
-  }
 
   // A non-empty or failed probe prevents scheduling and requires another operator up request.
   const auto [empty, probeError] = m_operations.probeDrive();
@@ -366,11 +388,19 @@ bool DriveController::prepareDriveForScheduling() {
                               common::dataStructures::MountType::NoMount,
                               common::dataStructures::DriveStatus::Up,
                               m_lc);
-  // TODO: rip out session reporting
-  // tapeSessionReporter.reportState(::session::SessionState::Scheduling,
-  //                                 ::session::SessionType::Undetermined);
+  // The transfer session owns reporting once a mount has been acquired.
+  m_tapeSessionTracker.reportState(session::SessionState::Scheduling, session::SessionType::Undetermined);
 
   return true;
+}
+
+bool DriveController::cleanDrive(const std::optional<std::string>& vid, const char* failureMessage) {
+  try {
+    return m_operations.clean(vid, true, m_tapeSessionTracker);
+  } catch (const std::exception& ex) {
+    logDriveFailure(m_lc, failureMessage, ex);
+    return false;
+  }
 }
 
 int DriveController::shutdownDrive() {

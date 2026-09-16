@@ -105,12 +105,14 @@ struct MountsConfig final {
   uint32_t scheduling_timeout_secs = 300;
   uint32_t get_next_mount_timeout_secs = 900;
   uint32_t idle_scheduling_interval_secs = 10;
+  uint32_t backend_recovery_interval_secs = 10;
   uint32_t drive_state_poll_interval_secs = 5;
+  uint32_t logical_library_poll_interval_secs = 5;
   uint32_t mount_timeout_secs = 600;
   uint32_t tape_load_timeout_secs = 300;
   uint32_t unmount_timeout_secs = 900;
 
-  static constexpr std::size_t memberCount() { return 9; }
+  static constexpr std::size_t memberCount() { return 11; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
@@ -129,8 +131,14 @@ struct MountsConfig final {
     if (idle_scheduling_interval_secs == 0) {
       result.addError("idle_scheduling_interval_secs", "must be greater than zero");
     }
+    if (backend_recovery_interval_secs == 0) {
+      result.addError("backend_recovery_interval_secs", "must be greater than zero");
+    }
     if (drive_state_poll_interval_secs == 0) {
       result.addError("drive_state_poll_interval_secs", "must be greater than zero");
+    }
+    if (logical_library_poll_interval_secs == 0) {
+      result.addError("logical_library_poll_interval_secs", "must be greater than zero");
     }
     if (mount_timeout_secs == 0) {
       result.addError("mount_timeout_secs", "must be greater than zero");
