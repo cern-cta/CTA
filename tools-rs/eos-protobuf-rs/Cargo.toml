@@ -14,7 +14,6 @@
   keywords.workspace      = true
   categories.workspace    = true
   publish.workspace       = true
-  readme                  = "README.md"
   # Regenerate the bindings whenever the vendored .proto definitions change.
   build = "build.rs"
 
