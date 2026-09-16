@@ -105,7 +105,7 @@ void DriveStateCatalogueRetryWrapper::updateTapeDriveStatistics(
     m_maxTriesToConnect);
 }
 
-void DriveStateCatalogueRetryWrapper::updateTapeDriveStatus(const common::dataStructures::TapeDrive& tapeDrive) {
+bool DriveStateCatalogueRetryWrapper::updateTapeDriveStatus(const common::dataStructures::TapeDrive& tapeDrive) {
   return retryOnLostConnection(
     m_log,
     [this, &tapeDrive] { return m_catalogue.DriveState()->updateTapeDriveStatus(tapeDrive); },

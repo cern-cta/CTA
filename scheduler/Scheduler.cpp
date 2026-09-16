@@ -1072,7 +1072,7 @@ void Scheduler::reportSchedulerBackendName(const std::string& driveName, log::Lo
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("drive", driveName).add("schedulerDbTime", schedulerDbTime);
-  lc.log(log::INFO, "In Scheduler::reportSchedulerBackendName(): success.");
+  lc.log(log::INFO, "Successfully reported the scheduler backend name of drive in the catalogue.");
 }
 
 //------------------------------------------------------------------------------

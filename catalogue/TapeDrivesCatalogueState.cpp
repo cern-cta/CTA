@@ -174,12 +174,13 @@ void TapeDrivesCatalogueState::updateDriveStatus(const common::dataStructures::D
 
   driveState.currentPriority = driveState.mountType == common::dataStructures::MountType::NoMount ? 0 : inputs.priority;
 
-  log::ScopedParamContainer params(lc);
-  params.add("next_status", common::dataStructures::TapeDrive::stateToString(inputs.status));
-  driveState.convertToLogParams(params, "update_");
-  lc.log(log::INFO, "In TapeDrivesCatalogueState::updateDriveStatus(): Updating drive status.");
-
-  m_catalogue.DriveState()->updateTapeDriveStatus(driveState);
+  const bool statusChanged = m_catalogue.DriveState()->updateTapeDriveStatus(driveState);
+  if (statusChanged) {
+    log::ScopedParamContainer params(lc);
+    params.add("drive_name", driveInfo.driveName)
+      .add("new_status", common::dataStructures::TapeDrive::stateToString(driveState.driveStatus));
+    lc.log(log::INFO, "Drive status updated.");
+  }
 }
 
 void TapeDrivesCatalogueState::setDriveDown(common::dataStructures::TapeDrive& driveState,

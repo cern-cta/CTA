@@ -15,6 +15,7 @@
 #include "common/dataStructures/TapeDrive.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/log/StringLogger.hpp"
 
 #include <gtest/gtest.h>
 #include <list>
@@ -447,6 +448,49 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusSameAsPrevious) {
   ASSERT_FALSE(storedTapeDrive.value().diskSystemName);
   ASSERT_FALSE(storedTapeDrive.value().reservedBytes);
   ASSERT_FALSE(storedTapeDrive.value().reservationSessionId);
+
+  m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
+}
+
+TEST_P(cta_catalogue_DriveStateTest, logDriveStatusOnlyOnTransition) {
+  auto tapeDrive = getTapeDriveWithMandatoryElements("VDSTK11");
+  tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Down;
+  m_catalogue->DriveState()->createTapeDrive(tapeDrive);
+
+  cta::common::dataStructures::DriveInfo driveInfo;
+  driveInfo.driveName = tapeDrive.driveName;
+  driveInfo.host = tapeDrive.host;
+  driveInfo.logicalLibrary = tapeDrive.logicalLibrary;
+
+  cta::ReportDriveStatusInputs inputs {};
+  inputs.status = cta::common::dataStructures::DriveStatus::Down;
+  inputs.mountType = cta::common::dataStructures::MountType::NoMount;
+  inputs.reportTime = 1000;
+
+  cta::log::StringLogger logger("host", "test", cta::log::INFO);
+  cta::log::LogContext lc(logger);
+  cta::TapeDrivesCatalogueState state(*m_catalogue);
+
+  state.updateDriveStatus(driveInfo, inputs, lc);
+  inputs.reportTime++;
+  state.updateDriveStatus(driveInfo, inputs, lc);
+  EXPECT_TRUE(logger.getLog().empty());
+
+  const auto storedDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
+  ASSERT_TRUE(storedDrive);
+  ASSERT_TRUE(storedDrive->lastModificationLog);
+  EXPECT_EQ(inputs.reportTime, storedDrive->lastModificationLog->time);
+
+  inputs.status = cta::common::dataStructures::DriveStatus::Up;
+  state.updateDriveStatus(driveInfo, inputs, lc);
+  inputs.reportTime++;
+  state.updateDriveStatus(driveInfo, inputs, lc);
+  const auto log = logger.getLog();
+  const auto message = log.find("Drive status changed.");
+  ASSERT_NE(message, std::string::npos);
+  EXPECT_EQ(log.find("Drive status changed.", message + 1), std::string::npos);
+  EXPECT_NE(log.find("new_status"), std::string::npos);
+  EXPECT_NE(log.find("UP"), std::string::npos);
 
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
 }

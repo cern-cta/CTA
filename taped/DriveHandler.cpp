@@ -74,6 +74,7 @@ DriveHandler::DriveHandler(const TapedConfig& config, log::Logger& log)
     catalogue::CatalogueFactoryFactory::create(m_lc.logger(), catalogueLogin, nbConns, nbArchiveFileListingConns);
   m_catalogue = catalogueFactory->create();
 
+  m_lc.log(log::INFO, "Catalogue initialised successfully");
   m_lc.log(log::INFO, "Initialising Scheduler");
 #ifndef CTA_PGSCHED
   m_schedDbInit = std::make_unique<SchedulerDBInit_t>("Taped",
@@ -97,7 +98,7 @@ DriveHandler::DriveHandler(const TapedConfig& config, log::Logger& log)
                                             m_config.mounts.minimum_queued_bytes);
 
   m_driveScheduler = m_scheduler.get();
-  m_lc.log(log::INFO, "Scheduler and Catalogue initialised");
+  m_lc.log(log::INFO, "Scheduler initialised successfully");
 }
 
 void DriveHandler::stop() {
@@ -159,7 +160,8 @@ void DriveHandler::waitForDriveToBeUp() {
     }
 
     m_lc.log(log::DEBUG, "Desired drive state is down. Refreshing the reported down status.");
-    // Refresh the status to trigger the timeout update. Reporting failures propagate to the caller.
+    // Keep the catalogue timestamp fresh so a waiting drive is not shown as stale.
+    // Reporting failures propagate to the caller.
     m_driveScheduler->reportDriveStatus(m_driveInfo,
                                         common::dataStructures::MountType::NoMount,
                                         common::dataStructures::DriveStatus::Down,
