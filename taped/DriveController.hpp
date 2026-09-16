@@ -41,8 +41,6 @@ private:
 
   void runIteration();
 
-  DriveOperations* m_operations;
-
   // Helpers recover only from expected local conditions. Operational failures propagate to run().
   // Registration returns false for an ownership conflict and creates an entry if one is absent.
   bool registerDrive(bool putUpIfPossible);
@@ -67,6 +65,7 @@ private:
 
   // Destroy the owned operations before the drive information it borrows.
   std::unique_ptr<DriveOperations> m_ownedOperations;
+  DriveOperations& m_operations;
   TapeSessionTracker m_tapeSessionTracker;
 };
 

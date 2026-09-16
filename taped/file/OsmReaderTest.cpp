@@ -17,6 +17,7 @@
 #include "taped/drive/DriveInterface.hpp"
 #include "taped/scsi/Device.hpp"
 #include "taped/session/CleanerSession.hpp"
+#include "taped/session/TapeSessionTracker.hpp"
 #include "taped/session/VolumeInfo.hpp"
 #include "taped/system/Wrapper.hpp"
 
@@ -157,8 +158,9 @@ TEST_F(OsmReaderTest, CleanDrive) {
 
   auto scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_db, "schedulerBackendName");
 
+  cta::tape::daemon::TapeSessionTracker tracker;
   cta::tape::daemon::CleanerSession
-    cleanerSession(mc, strlogger, driveInfo, m_sWrapper, m_vid, false, 0, *m_catalogue, *scheduler);
+    cleanerSession(mc, strlogger, driveInfo, m_sWrapper, m_vid, false, 0, *m_catalogue, *scheduler, tracker);
 
   ASSERT_EQ(cta::tape::daemon::DriveUsability::Reusable, cleanerSession.execute());
 

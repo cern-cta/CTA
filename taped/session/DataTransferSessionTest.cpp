@@ -962,6 +962,10 @@ protected:
 
 };  // class DataTransferSessionTest
 
+/*
+ * If an archive mount has no jobs, the session finishes without loading tape.
+ * The mount is still completed and no worker is left running.
+ */
 TEST_P(DataTransferSessionTest, ArchiveEmptyMountCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -973,6 +977,10 @@ TEST_P(DataTransferSessionTest, ArchiveEmptyMountCleansUp) {
     "");
 }
 
+/*
+ * If a retrieve mount has no jobs, the session finishes without loading tape.
+ * The mount is still completed and no worker is left running.
+ */
 TEST_P(DataTransferSessionTest, RetrieveEmptyMountCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -984,6 +992,10 @@ TEST_P(DataTransferSessionTest, RetrieveEmptyMountCleansUp) {
     "");
 }
 
+/*
+ * If archive mount metadata throws, the session exits cleanly.
+ * Mount finalization must run even before hardware setup starts.
+ */
 TEST_P(DataTransferSessionTest, ArchiveMetadataFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -995,6 +1007,10 @@ TEST_P(DataTransferSessionTest, ArchiveMetadataFailureCleansUp) {
     "");
 }
 
+/*
+ * If publishing archive startup status throws, the session exits cleanly.
+ * Mount finalization must run even before hardware setup starts.
+ */
 TEST_P(DataTransferSessionTest, ArchiveStartingStatusFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1006,6 +1022,10 @@ TEST_P(DataTransferSessionTest, ArchiveStartingStatusFailureCleansUp) {
     "");
 }
 
+/*
+ * If archive drive discovery fails, the session requests drive down.
+ * The mount must still complete without leaving workers behind.
+ */
 TEST_P(DataTransferSessionTest, ArchiveDiscoveryFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1017,6 +1037,10 @@ TEST_P(DataTransferSessionTest, ArchiveDiscoveryFailureCleansUp) {
     "");
 }
 
+/*
+ * If opening the archive drive throws a CTA exception, the session requests drive down.
+ * The mount must still complete without leaving workers behind.
+ */
 TEST_P(DataTransferSessionTest, ArchiveOpenCtaFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1028,6 +1052,10 @@ TEST_P(DataTransferSessionTest, ArchiveOpenCtaFailureCleansUp) {
     "");
 }
 
+/*
+ * If opening the archive drive throws a standard exception, the session requests drive down.
+ * The mount must still complete without leaving workers behind.
+ */
 TEST_P(DataTransferSessionTest, ArchiveOpenStandardFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1039,6 +1067,10 @@ TEST_P(DataTransferSessionTest, ArchiveOpenStandardFailureCleansUp) {
     "");
 }
 
+/*
+ * If archive mount completion throws a CTA exception, the session exits cleanly.
+ * It must attempt completion only once and release its workers.
+ */
 TEST_P(DataTransferSessionTest, ArchiveCompleteCtaFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1050,6 +1082,10 @@ TEST_P(DataTransferSessionTest, ArchiveCompleteCtaFailureCleansUp) {
     "");
 }
 
+/*
+ * If archive mount completion throws a standard exception, the session exits cleanly.
+ * It must attempt completion only once and release its workers.
+ */
 TEST_P(DataTransferSessionTest, ArchiveCompleteStandardFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1061,6 +1097,10 @@ TEST_P(DataTransferSessionTest, ArchiveCompleteStandardFailureCleansUp) {
     "");
 }
 
+/*
+ * If archive drive-down publication fails during open, cleanup still runs.
+ * The session must not leave the mount or workers active.
+ */
 TEST_P(DataTransferSessionTest, ArchiveReportDownFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1072,6 +1112,10 @@ TEST_P(DataTransferSessionTest, ArchiveReportDownFailureCleansUp) {
     "");
 }
 
+/*
+ * If requesting archive drive down fails during open, cleanup still runs.
+ * The session must not leave the mount or workers active.
+ */
 TEST_P(DataTransferSessionTest, ArchiveDesiredDownFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1083,6 +1127,10 @@ TEST_P(DataTransferSessionTest, ArchiveDesiredDownFailureCleansUp) {
     "");
 }
 
+/*
+ * If archive drive-up publication fails, the session still finalizes the mount.
+ * The failure must not leave a worker running.
+ */
 TEST_P(DataTransferSessionTest, ArchiveReportUpFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1094,6 +1142,10 @@ TEST_P(DataTransferSessionTest, ArchiveReportUpFailureCleansUp) {
     "");
 }
 
+/*
+ * If retrieve mount metadata throws, the session exits cleanly.
+ * Mount finalization must run even before hardware setup starts.
+ */
 TEST_P(DataTransferSessionTest, RetrieveMetadataFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1105,6 +1157,10 @@ TEST_P(DataTransferSessionTest, RetrieveMetadataFailureCleansUp) {
     "");
 }
 
+/*
+ * If publishing retrieve startup status throws, the session exits cleanly.
+ * Mount finalization must run even before hardware setup starts.
+ */
 TEST_P(DataTransferSessionTest, RetrieveStartingStatusFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1116,6 +1172,10 @@ TEST_P(DataTransferSessionTest, RetrieveStartingStatusFailureCleansUp) {
     "");
 }
 
+/*
+ * If retrieve drive discovery fails, the session requests drive down.
+ * The mount must still complete without leaving workers behind.
+ */
 TEST_P(DataTransferSessionTest, RetrieveDiscoveryFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1127,6 +1187,10 @@ TEST_P(DataTransferSessionTest, RetrieveDiscoveryFailureCleansUp) {
     "");
 }
 
+/*
+ * If opening the retrieve drive throws a CTA exception, the session requests drive down.
+ * The mount must still complete without leaving workers behind.
+ */
 TEST_P(DataTransferSessionTest, RetrieveOpenCtaFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1138,6 +1202,10 @@ TEST_P(DataTransferSessionTest, RetrieveOpenCtaFailureCleansUp) {
     "");
 }
 
+/*
+ * If opening the retrieve drive throws a standard exception, the session requests drive down.
+ * The mount must still complete without leaving workers behind.
+ */
 TEST_P(DataTransferSessionTest, RetrieveOpenStandardFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1149,6 +1217,10 @@ TEST_P(DataTransferSessionTest, RetrieveOpenStandardFailureCleansUp) {
     "");
 }
 
+/*
+ * If retrieve mount completion throws a CTA exception, the session exits cleanly.
+ * It must attempt completion only once and release its workers.
+ */
 TEST_P(DataTransferSessionTest, RetrieveCompleteCtaFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1160,6 +1232,10 @@ TEST_P(DataTransferSessionTest, RetrieveCompleteCtaFailureCleansUp) {
     "");
 }
 
+/*
+ * If retrieve mount completion throws a standard exception, the session exits cleanly.
+ * It must attempt completion only once and release its workers.
+ */
 TEST_P(DataTransferSessionTest, RetrieveCompleteStandardFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1171,6 +1247,10 @@ TEST_P(DataTransferSessionTest, RetrieveCompleteStandardFailureCleansUp) {
     "");
 }
 
+/*
+ * If retrieve drive-down publication fails during open, cleanup still runs.
+ * The session must not leave the mount or workers active.
+ */
 TEST_P(DataTransferSessionTest, RetrieveReportDownFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1182,6 +1262,10 @@ TEST_P(DataTransferSessionTest, RetrieveReportDownFailureCleansUp) {
     "");
 }
 
+/*
+ * If requesting retrieve drive down fails during open, cleanup still runs.
+ * The session must not leave the mount or workers active.
+ */
 TEST_P(DataTransferSessionTest, RetrieveDesiredDownFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1193,6 +1277,10 @@ TEST_P(DataTransferSessionTest, RetrieveDesiredDownFailureCleansUp) {
     "");
 }
 
+/*
+ * If retrieve drive-up publication fails, the session still finalizes the mount.
+ * The failure must not leave a worker running.
+ */
 TEST_P(DataTransferSessionTest, RetrieveReportUpFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1204,6 +1292,10 @@ TEST_P(DataTransferSessionTest, RetrieveReportUpFailureCleansUp) {
     "");
 }
 
+/*
+ * If fetching retrieve jobs throws a CTA exception, the session completes cleanup.
+ * The failed fetch must not retain a job or worker.
+ */
 TEST_P(DataTransferSessionTest, RetrieveFetchCtaFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1215,6 +1307,10 @@ TEST_P(DataTransferSessionTest, RetrieveFetchCtaFailureCleansUp) {
     "");
 }
 
+/*
+ * If fetching retrieve jobs throws a standard exception, the session completes cleanup.
+ * The failed fetch must not retain a job or worker.
+ */
 TEST_P(DataTransferSessionTest, RetrieveFetchStandardFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1226,6 +1322,10 @@ TEST_P(DataTransferSessionTest, RetrieveFetchStandardFailureCleansUp) {
     "");
 }
 
+/*
+ * If fetching archive jobs throws a CTA exception, the session completes cleanup.
+ * The failed fetch must not retain a job or worker.
+ */
 TEST_P(DataTransferSessionTest, ArchiveFetchCtaFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1237,6 +1337,10 @@ TEST_P(DataTransferSessionTest, ArchiveFetchCtaFailureCleansUp) {
     "");
 }
 
+/*
+ * If fetching archive jobs throws a standard exception, the session completes cleanup.
+ * The failed fetch must not retain a job or worker.
+ */
 TEST_P(DataTransferSessionTest, ArchiveFetchStandardFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1248,6 +1352,10 @@ TEST_P(DataTransferSessionTest, ArchiveFetchStandardFailureCleansUp) {
     "");
 }
 
+/*
+ * If retrieve disk reservation throws a CTA exception, the session completes cleanup.
+ * The failed reservation must not retain a job or worker.
+ */
 TEST_P(DataTransferSessionTest, RetrieveReservationCtaFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1259,6 +1367,10 @@ TEST_P(DataTransferSessionTest, RetrieveReservationCtaFailureCleansUp) {
     "");
 }
 
+/*
+ * If retrieve disk reservation throws a standard exception, the session completes cleanup.
+ * The failed reservation must not retain a job or worker.
+ */
 TEST_P(DataTransferSessionTest, RetrieveReservationStandardFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1270,6 +1382,10 @@ TEST_P(DataTransferSessionTest, RetrieveReservationStandardFailureCleansUp) {
     "");
 }
 
+/*
+ * If requeueing a retrieve job throws, the session completes cleanup.
+ * The failed requeue must not retain a job or worker.
+ */
 TEST_P(DataTransferSessionTest, RetrieveRequeueStandardFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1281,6 +1397,10 @@ TEST_P(DataTransferSessionTest, RetrieveRequeueStandardFailureCleansUp) {
     "");
 }
 
+/*
+ * If retrieve tape-mounted publication throws a CTA exception, cleanup still runs.
+ * The retrieve job and worker must be released.
+ */
 TEST_P(DataTransferSessionTest, RetrieveTapeMountedCtaFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1292,6 +1412,10 @@ TEST_P(DataTransferSessionTest, RetrieveTapeMountedCtaFailureCleansUp) {
     "");
 }
 
+/*
+ * If retrieve tape-mounted publication throws a standard exception, cleanup still runs.
+ * The retrieve job and worker must be released.
+ */
 TEST_P(DataTransferSessionTest, RetrieveTapeMountedStandardFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1303,6 +1427,10 @@ TEST_P(DataTransferSessionTest, RetrieveTapeMountedStandardFailureCleansUp) {
     "");
 }
 
+/*
+ * If retrieve tape-mounted publication and tape unloading both fail, cleanup still runs.
+ * The result must keep the drive down and record the unload error.
+ */
 TEST_P(DataTransferSessionTest, RetrieveTapeMountedAndUnloadFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1314,6 +1442,10 @@ TEST_P(DataTransferSessionTest, RetrieveTapeMountedAndUnloadFailureCleansUp) {
     "");
 }
 
+/*
+ * If archive tape-mounted publication throws a CTA exception, cleanup still runs.
+ * The archive job and worker must be released.
+ */
 TEST_P(DataTransferSessionTest, ArchiveTapeMountedCtaFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1325,6 +1457,10 @@ TEST_P(DataTransferSessionTest, ArchiveTapeMountedCtaFailureCleansUp) {
     "");
 }
 
+/*
+ * If archive tape-mounted publication throws a standard exception, cleanup still runs.
+ * The archive job and worker must be released.
+ */
 TEST_P(DataTransferSessionTest, ArchiveTapeMountedStandardFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1336,6 +1472,10 @@ TEST_P(DataTransferSessionTest, ArchiveTapeMountedStandardFailureCleansUp) {
     "");
 }
 
+/*
+ * If archive tape-mounted publication and tape unloading both fail, cleanup still runs.
+ * The result must keep the drive down and record the unload error.
+ */
 TEST_P(DataTransferSessionTest, ArchiveTapeMountedAndUnloadFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1347,6 +1487,10 @@ TEST_P(DataTransferSessionTest, ArchiveTapeMountedAndUnloadFailureCleansUp) {
     "");
 }
 
+/*
+ * If retrieve requests target valid tape files, the session recalls them successfully.
+ * The test checks the resulting disk files and completed scheduler jobs.
+ */
 TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
@@ -1609,6 +1753,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
 }
 
 // this test will issue several retrieve requests it seems
+/*
+ * If a recalled file has the wrong checksum, the session reports the file failure.
+ * Other retrieve requests must still be handled by the session.
+ */
 TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
@@ -1881,6 +2029,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
 
 // disk_file_path throws an exception in this test
 
+/*
+ * If recall parameters are wrong, the first retrieval fails and the next is cancelled.
+ * The session must report both outcomes without treating them as successful recalls.
+ */
 TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   // This test is the same as DataTransferSessionGooddayRecall, with
   // wrong parameters set for the recall, so that we fail
@@ -2142,6 +2294,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   }));
 }
 
+/*
+ * If retrieve jobs enable RAO, the session orders tape reads accordingly.
+ * The recorded read order verifies that the scheduling hint reached the tape reader.
+ */
 TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
@@ -2392,6 +2548,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   ASSERT_EQ(expectedRAOFseqOrder, getRAOFseqs(logToCheck));
 }
 
+/*
+ * If the linear RAO algorithm is selected, retrieval follows its computed order.
+ * The test checks the algorithm recorded in the log and the resulting file sequence.
+ */
 TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
@@ -2640,6 +2800,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   ASSERT_EQ(expectedRAOOrder, getRAOFseqs(logToCheck));
 }
 
+/*
+ * If the configured RAO algorithm does not exist, retrieval falls back to linear order.
+ * The session must still complete the recall with a valid ordering.
+ */
 TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistShouldApplyLinear) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
@@ -2893,6 +3057,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   ASSERT_EQ(expectedRAOOrder, getRAOFseqs(logToCheck));
 }
 
+/*
+ * If the SLTF RAO algorithm is selected, retrieval follows its computed order.
+ * The log and file sequence confirm that the requested algorithm ran.
+ */
 TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
@@ -3144,6 +3312,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   ASSERT_EQ(expectedRAOOrder, getRAOFseqs(logToCheck));
 }
 
+/*
+ * If the configured tape drive is unavailable, the session cannot run a transfer.
+ * The failure must be reported instead of treating the mount as successful.
+ */
 TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
@@ -3331,6 +3503,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   ASSERT_NE(std::string::npos, logger.getLog().find("Drive discovery failed"));
 }
 
+/*
+ * If the tape cannot be mounted, the session reports the mount failure.
+ * No file transfer should be reported as successful.
+ */
 TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
@@ -3557,6 +3733,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   }));
 }
 
+/*
+ * If archive jobs contain valid disk files, the session writes them to tape.
+ * The test checks the catalogue and job state after migration.
+ */
 TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
@@ -3763,6 +3943,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   }));
 }
 
+/*
+ * If the first archive file has the wrong size, only that file fails.
+ * Later files in the batch must still reach tape and the catalogue.
+ */
 TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   // This test is the same as DataTransferSessionGooddayMigration, with
   // wrong file size on the first file migrated. As a fix for #1096, all files
@@ -3980,6 +4164,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   }));
 }
 
+/*
+ * If the first archive file has the wrong checksum, the session reports its failure.
+ * The test records the current behavior for the remaining batch.
+ */
 TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   // This test is the same as DataTransferSessionGooddayMigration, with
   // wrong file checksum on the first file migrated.
@@ -4211,6 +4399,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   }));
 }
 
+/*
+ * If a middle archive file has the wrong size, that file fails.
+ * The other files must still reach tape and the catalogue.
+ */
 TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchMigration) {
   // This test is the same as DataTransferSessionGooddayMigration, with
   // wrong file size on the fifth file migrated. As a fix for #1096, all files
@@ -4433,6 +4625,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
 // This test is the same as DataTransferSessionGooddayMigration, except that the files are deleted
 // from filesystem immediately. The disk tasks will then fail on open.
 ///
+/*
+ * If archive source files are missing, the session reports those job failures.
+ * It must not claim that missing data was written to tape.
+ */
 TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
@@ -4660,6 +4856,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
 // only a finite number of bytes and hence we will report a full tape skip the
 // last migrations
 //
+/*
+ * If the tape fills during migration, the session stops writing to that tape.
+ * The affected jobs and tape state must reflect the capacity failure.
+ */
 TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
@@ -4903,6 +5103,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   }));
 }
 
+/*
+ * If the tape fills while flushing archive data, the session handles the late failure.
+ * The affected jobs and tape state must reflect the capacity failure.
+ */
 TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   // 0) Prepare the logger for everyone
   cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);

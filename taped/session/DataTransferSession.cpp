@@ -106,10 +106,10 @@ cta::tape::daemon::TransferSessionResult cta::tape::daemon::DataTransferSession:
   // Depending on the type of session, branch into the right execution
   switch (m_volInfo.mountType) {
     case cta::common::dataStructures::MountType::Retrieve:
-      return executeRead(lc, dynamic_cast<cta::RetrieveMount*>(&m_tapeMount));
+      return executeRead(lc, dynamic_cast<cta::RetrieveMount&>(m_tapeMount));
     case cta::common::dataStructures::MountType::ArchiveForUser:
     case cta::common::dataStructures::MountType::ArchiveForRepack:
-      return executeWrite(lc, dynamic_cast<cta::ArchiveMount*>(&m_tapeMount));
+      return executeWrite(lc, dynamic_cast<cta::ArchiveMount&>(m_tapeMount));
     case cta::common::dataStructures::MountType::Label:
       return executeLabel(lc, dynamic_cast<cta::LabelMount*>(&m_tapeMount));
     default:
@@ -126,7 +126,7 @@ cta::tape::daemon::TransferSessionResult cta::tape::daemon::DataTransferSession:
 //------------------------------------------------------------------------------
 cta::tape::daemon::TransferSessionResult
 cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logContext,
-                                                    cta::RetrieveMount* retrieveMount) {
+                                                    cta::RetrieveMount& retrieveMount) {
   TransferSessionResult result;
   result.vid = m_volInfo.vid;
 
@@ -142,8 +142,8 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
   // file to recall.
   // findDrive does not throw exceptions (it catches them to log errors)
   // A nullptr is returned on failure
-  retrieveMount->setExternalFreeDiskSpaceScript(m_transfersConfig.retrieve.external_free_disk_space_script);
-  std::unique_ptr<cta::tape::drive::DriveInterface> drive(findDrive(logContext, retrieveMount));
+  retrieveMount.setExternalFreeDiskSpaceScript(m_transfersConfig.retrieve.external_free_disk_space_script);
+  auto drive = findDrive(logContext, retrieveMount);
 
   if (!drive) {
     result.transferOutcome = TransferSessionResult::Outcome::Failure;
@@ -159,7 +159,7 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
   {
     // Allocate all the elements of the memory management (in proper order
     // to refer them to each other)
-    RecallReportPacker reportPacker(retrieveMount, logContext);
+    RecallReportPacker reportPacker(&retrieveMount, logContext);
     reportPacker.disableBulk();  //no bulk needed anymore
     RecallMemoryManager memoryManager(m_transfersConfig.buffer_count, m_transfersConfig.buffer_size_bytes, logContext);
 
@@ -174,7 +174,7 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
                                           m_transfersConfig.retrieve.rao.enabled,
                                           m_transfersConfig.encryption.enabled,
                                           m_transfersConfig.encryption.external_key_script,
-                                          *retrieveMount,
+                                          retrieveMount,
                                           m_tapeLoadTimeoutSecs,
                                           m_scheduler.getCatalogue());
 
@@ -186,7 +186,7 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
     RecallTaskInjector taskInjector(memoryManager,
                                     readSingleThread,
                                     threadPool,
-                                    *retrieveMount,
+                                    retrieveMount,
                                     m_transfersConfig.retrieve.fetch_max_files,
                                     m_transfersConfig.retrieve.fetch_max_bytes,
                                     m_tapeSessionTracker,
@@ -273,13 +273,13 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
       result.hardwareCleanupOutcome = TransferSessionResult::Outcome::NotRequired;
       logContext.log(priority, "Aborting recall mount startup: empty mount");
 
-      std::string mountId = retrieveMount->getMountTransactionId();
+      std::string mountId = retrieveMount.getMountTransactionId();
 
       cta::log::Param errorMessageParam(cta::semconv::log::errorMessage, "Aborted: empty recall mount");
 
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
       try {
-        retrieveMount->complete();
+        retrieveMount.complete();
         m_tapeSessionTracker.updateTapeTransferStats({});
         if (!reservationResult) {
           m_tapeSessionTracker.incrementError(TapeSessionError::DiskSpaceReservationTestFailure);
@@ -316,7 +316,7 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
 //------------------------------------------------------------------------------
 cta::tape::daemon::TransferSessionResult
 cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logContext,
-                                                     cta::ArchiveMount* archiveMount) {
+                                                     cta::ArchiveMount& archiveMount) {
   TransferSessionResult result;
   result.vid = m_volInfo.vid;
 
@@ -331,7 +331,7 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
   // in order to get the task injector ready to check if we actually have a
   // file to migrate.
   // 1) Get hold of the drive error logs are done inside the findDrive function
-  std::unique_ptr<cta::tape::drive::DriveInterface> drive(findDrive(logContext, archiveMount));
+  auto drive = findDrive(logContext, archiveMount);
   if (!drive) {
     result.transferOutcome = TransferSessionResult::Outcome::Failure;
     m_tapeSessionTracker.setOutcome(TapeSessionOutcome::Failure);
@@ -348,7 +348,7 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
     MigrationMemoryManager memoryManager(m_transfersConfig.buffer_count,
                                          m_transfersConfig.buffer_size_bytes,
                                          logContext);
-    MigrationReportPacker reportPacker(archiveMount, logContext);
+    MigrationReportPacker reportPacker(&archiveMount, logContext);
     TapeWriteSingleThread writeSingleThread(*drive,
                                             m_mediaChanger,
                                             m_tapeSessionTracker,
@@ -360,7 +360,7 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
                                             c_useLbp,
                                             m_transfersConfig.encryption.enabled,
                                             m_transfersConfig.encryption.external_key_script,
-                                            *archiveMount,
+                                            archiveMount,
                                             m_tapeLoadTimeoutSecs,
                                             m_scheduler.getCatalogue());
 
@@ -380,7 +380,7 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
     MigrationTaskInjector taskInjector(memoryManager,
                                        threadPool,
                                        writeSingleThread,
-                                       *archiveMount,
+                                       archiveMount,
                                        m_transfersConfig.archive.fetch_max_files,
                                        m_transfersConfig.archive.fetch_max_bytes,
                                        archiveDismountPolicy,
@@ -427,12 +427,12 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
       result.hardwareCleanupOutcome = TransferSessionResult::Outcome::NotRequired;
       logContext.log(priority, "Aborting migration mount startup: empty mount");
 
-      std::string mountId = archiveMount->getMountTransactionId();
+      std::string mountId = archiveMount.getMountTransactionId();
       cta::log::Param errorMessageParam(cta::semconv::log::errorMessage, "Aborted: empty migration mount");
 
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
       try {
-        archiveMount->complete();
+        archiveMount.complete();
         m_tapeSessionTracker.updateTapeTransferStats({});
         if (noFilesToMigrate) {
           m_tapeSessionTracker.incrementError(TapeSessionError::NoFilesToMigrate);
@@ -487,8 +487,8 @@ cta::tape::daemon::DataTransferSession::executeLabel([[maybe_unused]] cta::log::
  * @param logContext For logging purpose
  * @return the drive if found, nullptr otherwise
  */
-cta::tape::drive::DriveInterface* cta::tape::daemon::DataTransferSession::findDrive(cta::log::LogContext& logContext,
-                                                                                    cta::TapeMount* mount) {
+std::unique_ptr<cta::tape::drive::DriveInterface>
+cta::tape::daemon::DataTransferSession::findDrive(cta::log::LogContext& logContext, cta::TapeMount& mount) {
   // Find the drive in the system's SCSI devices
   cta::tape::SCSI::DeviceVector dv(m_sysWrapper);
   cta::tape::SCSI::DeviceInfo driveInfo;
@@ -496,18 +496,18 @@ cta::tape::drive::DriveInterface* cta::tape::daemon::DataTransferSession::findDr
     driveInfo = dv.findBySymlink(m_driveInfo.devFilename);
   } catch (cta::tape::SCSI::DeviceVector::NotFound&) {
     // We could not find this drive in the system's SCSI devices
-    putDriveDown(common::dataStructures::DriveDownReason::DriveNotFound, mount, logContext);
+    putDriveDown(common::dataStructures::DriveDownReason::DriveNotFound, &mount, logContext);
     return nullptr;
   } catch (cta::exception::Exception& ex) {
     // We could not find this drive in the system's SCSI devices
     putDriveDown(common::dataStructures::DriveDownReason::DriveDiscoveryFailed,
-                 mount,
+                 &mount,
                  logContext,
                  ex.getMessageValue());
     return nullptr;
   } catch (...) {
     // We could not find this drive in the system's SCSI devices
-    putDriveDown(common::dataStructures::DriveDownReason::DriveDiscoveryFailed, mount, logContext);
+    putDriveDown(common::dataStructures::DriveDownReason::DriveDiscoveryFailed, &mount, logContext);
     return nullptr;
   }
   try {
@@ -515,14 +515,14 @@ cta::tape::drive::DriveInterface* cta::tape::daemon::DataTransferSession::findDr
     if (drive) {
       drive->info = m_driveInfo;
     }
-    return drive.release();
+    return drive;
   } catch (cta::exception::Exception& ex) {
     // We could not find this drive in the system's SCSI devices
-    putDriveDown(common::dataStructures::DriveDownReason::DriveOpenFailed, mount, logContext, ex.getMessageValue());
+    putDriveDown(common::dataStructures::DriveDownReason::DriveOpenFailed, &mount, logContext, ex.getMessageValue());
     return nullptr;
   } catch (...) {
     // We could not find this drive in the system's SCSI devices
-    putDriveDown(common::dataStructures::DriveDownReason::DriveOpenFailed, mount, logContext);
+    putDriveDown(common::dataStructures::DriveDownReason::DriveOpenFailed, &mount, logContext);
     return nullptr;
   }
 }

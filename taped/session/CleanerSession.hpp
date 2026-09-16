@@ -43,7 +43,7 @@ public:
     * false otherwise.
     * @param waitMediaInDriveTimeout The maximum number of seconds to wait for
     * the media to be ready for operations inside the drive.
-    * @param tracker Optional borrowed tracker, which must outlive this session.
+    * @param tracker Borrowed tracker, which must outlive this session.
     * @param catalogue the CTA catalogue
     */
   CleanerSession(cta::mediachanger::MediaChangerFacade& mc,
@@ -55,7 +55,7 @@ public:
                  const uint32_t waitMediaInDriveTimeout,
                  cta::catalogue::Catalogue& catalogue,
                  cta::Scheduler& scheduler,
-                 TapeSessionTracker* tracker = nullptr);
+                 TapeSessionTracker& tracker);
 
   /** Clean the drive and return whether it can be reused. */
   DriveUsability execute();
@@ -79,7 +79,7 @@ public:
 private:
   CleanupResult cleanDriveImpl(drive::DriveInterface& drive);
 
-  TapeSessionTracker* const m_tracker;
+  TapeSessionTracker& m_tracker;
 
   /**
     * The object representing the media changer.

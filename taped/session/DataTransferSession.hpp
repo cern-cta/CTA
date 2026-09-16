@@ -77,7 +77,7 @@ private:
   /** utility to find the drive on the system. This function logs
    * all errors and hence does not throw exceptions. It returns nullptr
    * in case of failure. */
-  cta::tape::drive::DriveInterface* findDrive(cta::log::LogContext& logContext, cta::TapeMount* mount);
+  std::unique_ptr<cta::tape::drive::DriveInterface> findDrive(cta::log::LogContext& logContext, cta::TapeMount& mount);
 
   /**
    * Put drive down with reason with [cta-taped] prefix, update the desired state (which is also down).
@@ -90,10 +90,10 @@ private:
                     std::string_view detail = {});
 
   /** sub-part of execute for the read sessions */
-  TransferSessionResult executeRead(cta::log::LogContext& logContext, cta::RetrieveMount* retrieveMount);
+  TransferSessionResult executeRead(cta::log::LogContext& logContext, cta::RetrieveMount& retrieveMount);
 
   /** sub-part of execute for a write session */
-  TransferSessionResult executeWrite(cta::log::LogContext& logContext, cta::ArchiveMount* archiveMount);
+  TransferSessionResult executeWrite(cta::log::LogContext& logContext, cta::ArchiveMount& archiveMount);
 
   /** sub-part of execute for a label session */
   TransferSessionResult executeLabel(cta::log::LogContext& logContext, cta::LabelMount* labelMount) const;

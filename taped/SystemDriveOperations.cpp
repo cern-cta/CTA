@@ -127,7 +127,7 @@ public:
                            m_config.mounts.tape_load_timeout_secs,
                            *m_catalogue,
                            *m_scheduler,
-                           &tracker);
+                           tracker);
     return session.execute() == DriveUsability::Reusable;
   }
 
