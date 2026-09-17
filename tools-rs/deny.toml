@@ -1,0 +1,25 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# This list list covers already most packages on crates.io. We should update it as we
+# add dependencies. Don't forget to check whether the license in question is compatible
+# with our own.
+[licenses]
+allow = [
+    "Apache-2.0",
+    "BSD-3-Clause",
+    "GPL-3.0-or-later",
+    "ISC",
+    "MIT",
+    "Unicode-3.0",
+    "Zlib"
+]
+
+[sources]
+# don't allow unknown registries by default
+unknown-registry = "deny"
+# fail when people add a git:// repo directly
+# (you should explicitly add it to sources.allow-org or allow-git)
+unknown-git = "deny"
+# allow the default cargo registry only
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
