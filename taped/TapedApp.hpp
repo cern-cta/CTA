@@ -9,6 +9,7 @@
 #include "TapedConfig.hpp"
 #include "common/log/LogContext.hpp"
 
+#include <atomic>
 #include <map>
 #include <vector>
 
@@ -72,6 +73,8 @@ public:
 
 private:
   std::unique_ptr<DriveController> m_driveController = nullptr;
+  // Health callbacks run concurrently with controller construction.
+  std::atomic<DriveController*> m_publishedController {nullptr};
 };
 
 }  // namespace cta::tape::daemon

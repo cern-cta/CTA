@@ -21,8 +21,8 @@ TapedApp::~TapedApp() {
 }
 
 void TapedApp::stop() {
-  if (m_driveController) {
-    m_driveController->stop();
+  if (auto* controller = m_publishedController.load()) {
+    controller->stop();
   }
 }
 
@@ -53,19 +53,22 @@ int TapedApp::run(const TapedConfig& config, cta::log::Logger& log) {
 
   // Run the main part of taped
   m_driveController = std::make_unique<DriveController>(config, log);
+  m_publishedController.store(m_driveController.get());
   return m_driveController->run();
 }
 
 bool TapedApp::isReady() const {
-  return m_driveController && m_driveController->isReady();
+  const auto* controller = m_publishedController.load();
+  return controller && controller->isReady();
 }
 
 bool TapedApp::isLive() const {
-  if (!m_driveController) {
+  const auto* controller = m_publishedController.load();
+  if (!controller) {
     // We consider ourselves alive if we haven't started yet, because a restart likely won't fix this.
     return true;
   }
-  return m_driveController->isLive();
+  return controller->isLive();
 }
 
 }  // namespace cta::tape::daemon

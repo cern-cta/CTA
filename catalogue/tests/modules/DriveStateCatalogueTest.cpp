@@ -143,6 +143,9 @@ TEST_P(cta_catalogue_DriveStateTest, CleaningUpPreservesOperatorIntentAndVid) {
   EXPECT_FALSE(stored->desiredUp);
   EXPECT_EQ(DriveStatus::Down, stored->driveStatus);
   EXPECT_EQ(down.reason, stored->reasonUpDown);
+
+  // Persistent catalogues retain drive rows between tests.
+  m_catalogue->DriveState()->deleteTapeDrive(drive.driveName);
 }
 
 TEST_P(cta_catalogue_DriveStateTest, getTapeDriveNames) {

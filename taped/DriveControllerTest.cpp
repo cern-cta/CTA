@@ -465,6 +465,7 @@ TEST_F(DriveControllerTest, StartupRecoveryUsesPreviousStateAndEmptyVid) {
           }));
       }
       ASSERT_TRUE(registerDrive());
+      EXPECT_TRUE(controller->isReady());
       EXPECT_EQ(previousCleanings, cleanings);
       if (recover) {
         DesiredDriveState up;
@@ -492,6 +493,7 @@ TEST_F(DriveControllerTest, RecoveryStatusPublicationFailureDoesNotTouchHardware
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _))
     .WillOnce(Throw(std::runtime_error("publication failed")));
   EXPECT_EQ(1, controller->run());
+  EXPECT_FALSE(controller->isReady());
   EXPECT_EQ(0, cleanings);
   EXPECT_EQ(0, probes);
   EXPECT_EQ(0, schedules);
@@ -728,6 +730,7 @@ TEST_F(DriveControllerTest, DiagnosticProbeFailuresDoNotPreventCleanup) {
 TEST_F(DriveControllerTest, RegistrationConflictStopsStartup) {
   EXPECT_CALL(scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(false));
   EXPECT_EQ(1, controller->run());
+  EXPECT_FALSE(controller->isReady());
   EXPECT_EQ(0, schedules);
 }
 
@@ -738,7 +741,7 @@ TEST_F(DriveControllerTest, RegistrationConflictStopsStartup) {
  */
 TEST_F(DriveControllerTest, RegistrationPreservesOperatorReasonAndComment) {
   DesiredDriveState state;
-  state.up = true;
+  state.up = false;
   state.reason = "Operator intervention";
   state.comment = "Inspect drive";
   EXPECT_CALL(scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
@@ -751,6 +754,43 @@ TEST_F(DriveControllerTest, RegistrationPreservesOperatorReasonAndComment) {
     }));
   EXPECT_CALL(scheduler, reportSchedulerBackendName("drive", _));
   EXPECT_TRUE(registerDrive());
+}
+
+// An up reason must not survive a startup that deliberately requests down.
+TEST_F(DriveControllerTest, RegistrationReplacesUpReasonAndPublishesReadinessLast) {
+  DesiredDriveState state;
+  state.up = true;
+  state.reason = "Setting drive up";
+  state.comment = "Operator comment";
+  EXPECT_FALSE(controller->isReady());
+  EXPECT_CALL(scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(state));
+  EXPECT_CALL(scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _))
+    .WillOnce(Invoke([&](const auto&, const DesiredDriveState& desired, const auto&, const auto&, const auto&, auto&) {
+      EXPECT_FALSE(controller->isReady());
+      EXPECT_FALSE(desired.up);
+      EXPECT_EQ(formatDriveDownReason(DriveDownReason::Startup), desired.reason);
+      EXPECT_EQ(state.comment, desired.comment);
+    }));
+  EXPECT_CALL(scheduler, reportSchedulerBackendName("drive", _)).WillOnce(Invoke([&](const auto&, auto&) {
+    EXPECT_FALSE(controller->isReady());
+  }));
+  EXPECT_TRUE(registerDrive());
+  EXPECT_TRUE(controller->isReady());
+}
+
+TEST_F(DriveControllerTest, ShutdownDoesNotPreserveUpReason) {
+  DesiredDriveState state;
+  state.up = true;
+  state.reason = "Setting drive up";
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(state));
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
+  EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
+    .WillOnce(Invoke([](const auto&, const DesiredDriveState& desired, auto&) {
+      EXPECT_FALSE(desired.up);
+      EXPECT_EQ(formatDriveDownReason(DriveDownReason::Shutdown), desired.reason);
+    }));
+  down(true);
 }
 
 /**
@@ -837,6 +877,7 @@ TEST_F(DriveControllerTest, RegistrationPublicationFailureAbortsStartupBeforeLib
     .WillOnce(Throw(std::runtime_error("registration publication failed")));
 
   EXPECT_EQ(1, controller->run());
+  EXPECT_FALSE(controller->isReady());
   EXPECT_EQ(0, libraryChecks);
   EXPECT_EQ(0, probes);
   EXPECT_EQ(0, schedules);
@@ -860,6 +901,7 @@ TEST_F(DriveControllerTest, SchedulerBackendPublicationFailureAbortsStartupBefor
     .WillOnce(Throw(std::runtime_error("backend publication failed")));
 
   EXPECT_EQ(1, controller->run());
+  EXPECT_FALSE(controller->isReady());
   EXPECT_EQ(0, libraryChecks);
   EXPECT_EQ(0, probes);
   EXPECT_EQ(0, schedules);
@@ -884,6 +926,7 @@ TEST_F(DriveControllerTest, StartupDatabaseFailureAbortsBeforeLibraryOrSchedulin
     .WillOnce(Throw(exception::LostDatabaseConnection("objectstore unavailable")));
 
   EXPECT_EQ(1, controller->run());
+  EXPECT_FALSE(controller->isReady());
   EXPECT_EQ(0, libraryChecks);
   EXPECT_EQ(0, probes);
   EXPECT_EQ(0, schedules);
@@ -929,6 +972,7 @@ TEST_F(DriveControllerTest, LogicalLibraryDatabaseFailureEndsStartupWithoutSched
   EXPECT_CALL(scheduler, reportSchedulerBackendName("drive", _));
 
   EXPECT_EQ(1, controller->run());
+  EXPECT_FALSE(controller->isReady());
   EXPECT_EQ(0, probes);
   EXPECT_EQ(0, schedules);
 }
@@ -1293,6 +1337,7 @@ TEST_F(DriveControllerTest, EscapingSessionExceptionsExitWithoutRetrying) {
       }));
 
     EXPECT_EQ(1, controller->run());
+    EXPECT_FALSE(controller->isReady());
     EXPECT_EQ(2, cleanAttempts);
     EXPECT_EQ(previousTransfers + 1, transfers);
     EXPECT_EQ(previousSchedules + 1, schedules);
@@ -1460,6 +1505,7 @@ TEST_F(DriveControllerTest, IterationExceptionCleansAndPublishesDownBeforeFailin
       }));
 
     EXPECT_EQ(1, controller->run());
+    EXPECT_FALSE(controller->isReady());
     EXPECT_EQ(1, cleanAttempts);
     EXPECT_THAT(logger.getLog(), testing::HasSubstr("Drive controller failed. Cleaning before exit."));
     ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&scheduler));
@@ -1499,6 +1545,7 @@ TEST_F(DriveControllerTest, UnknownIterationExceptionReleasesMountBeforeFinalCle
     }));
 
   EXPECT_EQ(1, controller->run());
+  EXPECT_FALSE(controller->isReady());
   EXPECT_EQ(2, cleanAttempts);
   EXPECT_EQ(1, transfers);
   EXPECT_EQ(1, destroyed);

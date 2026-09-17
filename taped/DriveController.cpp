@@ -74,8 +74,7 @@ bool DriveController::isLive() const {
 }
 
 bool DriveController::isReady() const {
-  // TODO (separate MR): ping catalogue and scheduler
-  return true;
+  return m_registered.load();
 }
 
 int DriveController::run() {
@@ -91,6 +90,7 @@ int DriveController::run() {
     // the number of (transient) errors at startup
     waitForLogicalLibrary();
   } catch (const std::exception& ex) {
+    m_registered.store(false);
     logDriveFailure(m_lc, "Drive startup failed.", ex);
     return 1;
   }
@@ -109,6 +109,9 @@ int DriveController::run() {
     iterationFailed = true;
   }
 
+  // TODO: Avoid hardware cleanup when a database failure interrupts waiting with the drive desired and reported Down.
+  // Track whether this controller has begun hardware operations that may require cleanup before calling shutdownDrive().
+  m_registered.store(false);
   // Cleanup cannot hide the original failure.
   const int shutdownResult = shutdownDrive();
   return iterationFailed ? 1 : shutdownResult;
@@ -264,7 +267,8 @@ void DriveController::putDriveDown(common::dataStructures::DriveDownReason reaso
       const auto currentState = scheduler.getDesiredDriveState(m_driveInfo.driveName, m_lc);
       const auto startupReason =
         common::dataStructures::formatDriveDownReason(common::dataStructures::DriveDownReason::Startup);
-      if (currentState.reason && !currentState.reason->empty() && *currentState.reason != startupReason
+      if (!currentState.up && currentState.reason && !currentState.reason->empty()
+          && *currentState.reason != startupReason
           && !common::dataStructures::isCleanDriveShutdownReason(*currentState.reason)) {
         // Leave the catalogue reason untouched, including operator and session failure reasons.
         driveState.reason.reset();
@@ -303,6 +307,7 @@ void DriveController::putDriveDown(common::dataStructures::DriveDownReason reaso
 }
 
 bool DriveController::registerDrive(bool putUpIfPossible) {
+  m_registered.store(false);
   auto& scheduler = m_operations.scheduler();
   m_lc.log(log::INFO, "Registering the drive in the catalogue.");
   if (!scheduler.checkDriveCanBeCreated(m_driveInfo, m_lc)) {
@@ -324,6 +329,7 @@ bool DriveController::registerDrive(bool putUpIfPossible) {
                                 m_lc);
     scheduler.reportSchedulerBackendName(m_driveInfo.driveName, m_lc);
     m_lc.log(log::INFO, "Registered interrupted drive for recovery before scheduling.");
+    m_registered.store(true);
     return true;
   }
 
@@ -336,8 +342,8 @@ bool DriveController::registerDrive(bool putUpIfPossible) {
 
   common::dataStructures::DesiredDriveState driveState;
   driveState.comment = currentDesiredDriveState.comment;
-  // Replace absent or clean-exit reasons with the startup reason. Preserve other reasons for being down.
-  if (!currentDesiredDriveState.reason
+  // Preserve reasons only for existing down requests; an up reason cannot explain startup-down.
+  if (currentDesiredDriveState.up || !currentDesiredDriveState.reason || currentDesiredDriveState.reason->empty()
       || common::dataStructures::isCleanDriveShutdownReason(*currentDesiredDriveState.reason)) {
     driveState.reason = common::dataStructures::formatDriveDownReason(common::dataStructures::DriveDownReason::Startup);
     driveState.up = putUpIfPossible;
@@ -356,6 +362,7 @@ bool DriveController::registerDrive(bool putUpIfPossible) {
   m_lc.log(log::INFO,
            "Drive registered with reported status down and desired state "
              + std::string(driveState.up ? "up." : "down."));
+  m_registered.store(true);
   return true;
 }
 

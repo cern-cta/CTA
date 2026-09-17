@@ -11,6 +11,7 @@
 #include "common/dataStructures/DriveInfo.hpp"
 #include "common/log/LogContext.hpp"
 
+#include <atomic>
 #include <memory>
 #include <stop_token>
 #include <string>
@@ -69,9 +70,9 @@ public:
   bool isLive() const;
 
   /**
-   * @brief Return the controller readiness result.
+   * @brief Return whether drive registration has completed.
    *
-   * @return True when the application or controller considers itself ready.
+   * @return True after catalogue registration and scheduler-backend publication succeed.
    */
   bool isReady() const;
 
@@ -79,6 +80,9 @@ private:
   friend class DriveControllerTest;
 
   std::stop_source m_stopSource;
+
+  // Read by the health-server thread; registration publishes readiness last.
+  std::atomic<bool> m_registered {false};
 
   const TapedConfig& m_config;
   const common::dataStructures::DriveInfo m_driveInfo;
