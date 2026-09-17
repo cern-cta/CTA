@@ -18,6 +18,12 @@ namespace cta::tape::daemon {
 
 namespace {
 
+/**
+ * @brief Map a session error to its log-field name, with a fallback for unknown values.
+ *
+ * @param error Session error category to count or name.
+ * @return Log-field name for the error, or Error_unknown for an unrecognized value.
+ */
 const char* errorName(TapeSessionError error) {
   switch (error) {
     case TapeSessionError::DiskOpenForWrite:
@@ -92,6 +98,12 @@ const char* errorName(TapeSessionError error) {
   return "Error_unknown";
 }
 
+/**
+ * @brief Copy a typed log parameter into a scoped container, preserving absent values.
+ *
+ * @param container Scoped log-parameter destination.
+ * @param parameter Typed parameter to copy, preserving an absent value.
+ */
 void pushParameter(cta::log::ScopedParamContainer& container, const cta::log::Param& parameter) {
   if (!parameter.getValueVariant()) {
     container.add(parameter.getName(), std::nullopt);

@@ -8,6 +8,13 @@
 #include "common/semconv/Attributes.hpp"
 #include "runtime/Application.hpp"
 
+/**
+ * @brief Run the tape daemon through the common runtime and its exception-to-exit-code handling.
+ *
+ * @param argc Number of command-line arguments.
+ * @param argv Command-line argument array.
+ * @return Runtime exit code, including failures handled by safeRun().
+ */
 int main(const int argc, char** const argv) {
   using namespace cta;
   return runtime::safeRun([argc, argv]() {

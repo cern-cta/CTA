@@ -16,10 +16,18 @@
 #include "scheduler/TapeMount.hpp"
 
 #include <exception>
+#include <optional>
 
 namespace cta::tape::daemon {
 
 namespace {
+/**
+ * @brief Log a drive-lifecycle exception, using the CTA message when available.
+ *
+ * @param lc Log context for diagnostics.
+ * @param message Context describing the failed drive operation.
+ * @param ex Exception whose diagnostic is written to the log.
+ */
 void logDriveFailure(log::LogContext& lc, const char* message, const std::exception& ex) {
   log::ScopedParamContainer params(lc);
   if (const auto* ctaException = dynamic_cast<const exception::Exception*>(&ex)) {
@@ -211,13 +219,15 @@ void DriveController::waitUntilDriveIsRequestedUp() {
       m_lc.log(log::INFO, "Missing drive registered as down. Waiting for an operator up request.");
     }
 
-    // TODO (separate MR): On down -> up transition, clean the drive
     if (desiredState.up) {
       if (waitingLogged) {
         m_lc.log(log::INFO, "Desired drive state is up. Proceeding with drive probing.");
       }
       return;
     }
+
+    // An operator may use the drive while it is down. Clean again on the next up request.
+    m_cleanBeforeScheduling = true;
 
     if (!waitingLogged) {
       m_lc.log(log::INFO, "Waiting for the desired drive state to become up.");
@@ -237,6 +247,7 @@ void DriveController::waitUntilDriveIsRequestedUp() {
 void DriveController::putDriveDown(common::dataStructures::DriveDownReason reason,
                                    std::string_view detail,
                                    bool preserveExistingReason) {
+  m_cleanBeforeScheduling = true;
   auto& scheduler = m_operations.scheduler();
   common::dataStructures::DesiredDriveState driveState;
   driveState.reason = common::dataStructures::formatDriveDownReason(reason, detail);
@@ -300,6 +311,23 @@ bool DriveController::registerDrive(bool putUpIfPossible) {
     return false;
   }
 
+  m_cleanBeforeScheduling = true;
+  // Registration normally replaces the catalogue record, so capture recovery context first.
+  const auto previous = m_operations.getDriveState();
+  // If at registration time we found an existing state, we check if if that drive exited cleanly.
+  // A clean taped exit should always mean the drive was put down. If that was not the case, then it means we did
+  // not exit cleanly and we recover
+  if (previous && previous->desiredUp && previous->driveStatus != common::dataStructures::DriveStatus::Down) {
+    // Keep the existing entry and operator intent. CleaningUp does not change desired-up.
+    scheduler.reportDriveStatus(m_driveInfo,
+                                common::dataStructures::MountType::NoMount,
+                                common::dataStructures::DriveStatus::CleaningUp,
+                                m_lc);
+    scheduler.reportSchedulerBackendName(m_driveInfo.driveName, m_lc);
+    m_lc.log(log::INFO, "Registered interrupted drive for recovery before scheduling.");
+    return true;
+  }
+
   common::dataStructures::DesiredDriveState currentDesiredDriveState;
   try {
     currentDesiredDriveState = scheduler.getDesiredDriveState(m_driveInfo.driveName, m_lc);
@@ -338,6 +366,10 @@ bool DriveController::prepareDriveForScheduling() {
   // A drive must be up before we can schedule.
   waitUntilDriveIsRequestedUp();
 
+  if (m_cleanBeforeScheduling && !cleanBeforeScheduling()) {
+    return false;
+  }
+
   // Check readiness before every scheduling attempt without publishing a transient drive state.
   m_lc.log(log::DEBUG, "Checking whether the drive is empty before scheduling.");
 
@@ -359,6 +391,28 @@ bool DriveController::prepareDriveForScheduling() {
                               m_lc);
 
   return true;
+}
+
+bool DriveController::cleanBeforeScheduling() {
+  m_lc.log(log::INFO, "Cleaning drive before allowing scheduling.");
+  bool cleaned = false;
+  try {
+    cleaned = m_operations.clean(std::nullopt, true);
+  } catch (const std::exception& ex) {
+    logDriveFailure(m_lc, "Drive recovery cleaning failed.", ex);
+  } catch (...) {
+    m_lc.log(log::ERR, "Drive recovery cleaning failed with an unknown exception.");
+  }
+
+  if (!cleaned) {
+    putDriveDown(common::dataStructures::DriveDownReason::CleanerFailed, {}, true);
+    return false;
+  }
+
+  // Cleaning takes time; an operator may have withdrawn the up request while it ran.
+  // Never publish desired-up here. The catalogue also gates reported Up on current desired state.
+  m_cleanBeforeScheduling = !m_operations.scheduler().getDesiredDriveState(m_driveInfo.driveName, m_lc).up;
+  return !m_cleanBeforeScheduling;
 }
 
 int DriveController::shutdownDrive() {

@@ -45,11 +45,26 @@ constexpr const char* c_raoLtoAlgorithmOptions = "cost_heuristic_name:cta";
 // The reporter has no pipeline dependencies: stopping it only wakes its own wait loop.
 class ScopedReporter {
 public:
+  /**
+   * @brief Borrow a reporter without starting its thread.
+   *
+   * @param reporter Borrowed reporter whose thread is managed by this guard.
+   */
   explicit ScopedReporter(cta::tape::daemon::TapeSessionReporter& reporter) : m_reporter(reporter) {}
 
+  /**
+   * @brief Disallow copying the owner of a reporter thread.
+   */
   ScopedReporter(const ScopedReporter&) = delete;
+
+  /**
+   * @brief Disallow assigning ownership of a reporter thread.
+   */
   ScopedReporter& operator=(const ScopedReporter&) = delete;
 
+  /**
+   * @brief Stop and join a started reporter; terminate if joining fails to protect borrowed session state.
+   */
   ~ScopedReporter() noexcept {
     if (m_started) {
       try {
@@ -61,11 +76,17 @@ public:
     }
   }
 
+  /**
+   * @brief Start reporting and record that this guard must join the thread.
+   */
   void start() {
     m_reporter.startThreads();
     m_started = true;
   }
 
+  /**
+   * @brief Request shutdown and join the reporter if it was started.
+   */
   void finish() {
     if (!m_started) {
       return;
@@ -80,7 +101,16 @@ private:
   bool m_started = false;
 };
 
-// Preserve fatal errors while allowing independent finalization operations to run.
+/**
+ * @brief Record recovery decisions while preserving the first fatal failure for later propagation.
+ *
+ * Logging failures are contained so remaining finalization operations can still run.
+ *
+ * @param result Session recovery decisions updated to reflect the failure.
+ * @param failure Exception captured from the failed session operation.
+ * @param fatalFailure First fatal exception retained for propagation after finalization.
+ * @param lc Log context for diagnostics.
+ */
 void recordFailure(cta::tape::daemon::TapeSessionResult& result,
                    std::exception_ptr failure,
                    std::exception_ptr& fatalFailure,
@@ -187,7 +217,7 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
         break;
       case cta::common::dataStructures::MountType::Label:
         m_tapeSessionTracker.setType(cta::tape::session::SessionType::Label);
-        state.result = executeLabel(lc, dynamic_cast<cta::LabelMount*>(&m_tapeMount));
+        throw cta::exception::NotImplementedException();
         break;
       default:
         throw std::logic_error("Unsupported tape mount type");
@@ -473,16 +503,6 @@ void cta::tape::daemon::TapeSession::executeWrite(cta::log::LogContext& logConte
       logContext.log(cta::log::WARNING, "Aborting migration mount startup: empty mount");
     }
   }
-}
-
-//------------------------------------------------------------------------------
-//TapeSession::executeLabel
-//------------------------------------------------------------------------------
-cta::tape::daemon::TapeSessionResult
-cta::tape::daemon::TapeSession::executeLabel([[maybe_unused]] cta::log::LogContext& logContext,
-                                             [[maybe_unused]] cta::LabelMount* labelMount) const {
-  throw cta::exception::NotImplementedException();
-  // TODO
 }
 
 //------------------------------------------------------------------------------

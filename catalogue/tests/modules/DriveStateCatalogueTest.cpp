@@ -106,6 +106,45 @@ void cta_catalogue_DriveStateTest::TearDown() {
   m_catalogue.reset();
 }
 
+// Recovery reports must preserve operator intent, including a down request during startup or cleaning.
+TEST_P(cta_catalogue_DriveStateTest, CleaningUpPreservesOperatorIntentAndVid) {
+  using namespace cta::common::dataStructures;
+  auto drive = getTapeDriveWithAllElements("recovery");
+  drive.driveStatus = DriveStatus::Transferring;
+  drive.desiredUp = true;
+  m_catalogue->DriveState()->createTapeDrive(drive);
+  cta::TapeDrivesCatalogueState state(*m_catalogue);
+  cta::log::LogContext lc(m_dummyLog);
+  DriveInfo info(drive.driveName, drive.host, drive.logicalLibrary, "", "");
+
+  state.reportDriveStatus(info, MountType::NoMount, DriveStatus::CleaningUp, time(nullptr), lc);
+  auto stored = m_catalogue->DriveState()->getTapeDrive(drive.driveName);
+  ASSERT_TRUE(stored);
+  EXPECT_EQ(DriveStatus::CleaningUp, stored->driveStatus);
+  EXPECT_TRUE(stored->desiredUp);
+  EXPECT_EQ(drive.currentVid, stored->currentVid);
+  EXPECT_EQ(drive.reasonUpDown, stored->reasonUpDown);
+  EXPECT_EQ(drive.userComment, stored->userComment);
+
+  // A down request before another cleanup report or final Up report must survive both.
+  DesiredDriveState down;
+  down.reason = "Operator maintenance";
+  m_catalogue->DriveState()->setDesiredTapeDriveState(drive.driveName, down);
+  state.reportDriveStatus(info, MountType::NoMount, DriveStatus::Unloading, time(nullptr), lc);
+  state.reportDriveStatus(info, MountType::NoMount, DriveStatus::CleaningUp, time(nullptr), lc);
+  stored = m_catalogue->DriveState()->getTapeDrive(drive.driveName);
+  ASSERT_TRUE(stored);
+  EXPECT_FALSE(stored->desiredUp);
+  EXPECT_EQ(down.reason, stored->reasonUpDown);
+
+  state.reportDriveStatus(info, MountType::NoMount, DriveStatus::Up, time(nullptr), lc);
+  stored = m_catalogue->DriveState()->getTapeDrive(drive.driveName);
+  ASSERT_TRUE(stored);
+  EXPECT_FALSE(stored->desiredUp);
+  EXPECT_EQ(DriveStatus::Down, stored->driveStatus);
+  EXPECT_EQ(down.reason, stored->reasonUpDown);
+}
+
 TEST_P(cta_catalogue_DriveStateTest, getTapeDriveNames) {
   const std::vector<std::string> tapeDriveNames = {"VDSTK11", "VDSTK12", "VDSTK21", "VDSTK22"};
   for (const auto& name : tapeDriveNames) {

@@ -36,6 +36,15 @@ namespace {
 
 class SystemDriveOperations final : public DriveOperations {
 public:
+  /**
+   * @brief Initialize catalogue, scheduler and media changer access for a borrowed drive identity.
+   *
+   * The configuration, logger and drive identity must outlive this object; setup failures propagate.
+   *
+   * @param config Daemon configuration; borrowed configuration must outlive the owning object.
+   * @param log Logger used for diagnostics; it must outlive objects retaining a reference to it.
+   * @param driveInfo Drive identity and device paths; retained references must remain valid for the object lifetime.
+   */
   SystemDriveOperations(const TapedConfig& config, log::Logger& log, const common::dataStructures::DriveInfo& driveInfo)
       : m_config(config),
         m_driveInfo(driveInfo),
@@ -79,8 +88,27 @@ public:
     m_lc.log(log::INFO, "Scheduler initialised successfully");
   }
 
+  /**
+   * @brief Return the scheduler used for drive state and backend health operations.
+   *
+   * @return Reference to the scheduler used by these operations.
+   */
   IScheduler& scheduler() override { return *m_scheduler; }
 
+  /**
+   * @brief Read the existing catalogue entry, or return std::nullopt when the drive is absent.
+   *
+   * @return Existing catalogue drive entry, or std::nullopt when no entry exists.
+   */
+  std::optional<common::dataStructures::TapeDrive> getDriveState() override {
+    return m_catalogue->DriveState()->getTapeDrive(m_driveInfo.driveName);
+  }
+
+  /**
+   * @brief Check whether the configured logical library exists in the catalogue.
+   *
+   * @return True if the configured logical library exists.
+   */
   bool logicalLibraryExists() override {
     const auto libraries = m_catalogue->LogicalLibrary()->getLogicalLibraries();
     return std::any_of(libraries.begin(), libraries.end(), [this](const auto& library) {
@@ -88,12 +116,22 @@ public:
     });
   }
 
+  /**
+   * @brief Check that the drive is empty without changing its contents.
+   *
+   * @return Empty-drive confirmation and an optional explanation of a failed probe.
+   */
   std::pair<bool, std::optional<std::string>> probeDrive() override {
     EmptyDriveProbe probe(m_lc.logger(), m_driveInfo, m_sysWrapper);
     const bool empty = probe.driveIsEmpty();
     return {empty, probe.getProbeErrorMsg()};
   }
 
+  /**
+   * @brief Acquire the next scheduled mount, or return nullptr when no work is available.
+   *
+   * @return Owned mount to execute, or nullptr when no work is available.
+   */
   std::unique_ptr<TapeMount> getNextMount() override {
     // TODO: add timeout?
     if (m_scheduler->getNextMountDryRun(m_driveInfo.logicalLibrary, m_driveInfo.driveName, m_lc)) {
@@ -105,6 +143,12 @@ public:
     return nullptr;
   }
 
+  /**
+   * @brief Execute a borrowed mount and return the recovery decisions for the controller.
+   *
+   * @param mount Mount kept alive by the caller until the session returns.
+   * @return Drive usability and backend-recovery or retry-delay decisions from the session.
+   */
   TapeSessionResult runTapeSession(TapeMount& mount) override {
     TapeSession session(m_lc.logger(),
                         m_sysWrapper,
@@ -117,6 +161,13 @@ public:
     return session.execute();
   }
 
+  /**
+   * @brief Reset drive configuration and eject any remaining tape.
+   *
+   * @param vid Cartridge identifier when known; std::nullopt allows cleanup without one.
+   * @param waitMediaInDrive Whether to wait for media readiness before cleanup.
+   * @return True when cleaning permits reuse of the drive.
+   */
   bool clean(const std::optional<std::string>& vid, bool waitMediaInDrive) override {
     TapeSessionTracker tracker;
     DriveCleaner session(m_mediaChanger,
@@ -130,6 +181,11 @@ public:
     return session.execute(m_sysWrapper) == DriveUsability::Reusable;
   }
 
+  /**
+   * @brief Wait for the requested number of seconds before retrying an operation.
+   *
+   * @param seconds Requested delay in seconds.
+   */
   void sleep(unsigned int seconds) override { ::sleep(seconds); }
 
 private:

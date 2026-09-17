@@ -241,7 +241,6 @@ struct TransfersConfig final {
   uint32_t buffer_count = 5000;
   uint32_t buffer_size_bytes = 5000000;
   uint32_t disk_io_threads = 10;
-  // Periodic tape-session statistics publication interval.
   uint32_t stats_report_interval_secs = 15;
   uint32_t no_block_move_timeout_secs = 1800;
   ArchiveTransferConfig archive;

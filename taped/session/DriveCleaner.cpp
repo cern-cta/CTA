@@ -27,10 +27,19 @@ namespace {
 // Record elapsed time on every exit, including early returns and failed operations.
 class CleanupTiming {
 public:
+  /**
+   * @brief Begin measuring a cleanup operation for the selected statistics field.
+   *
+   * @param tracker Borrowed session tracker that must outlive this object.
+   * @param field Cleanup-statistics field to which elapsed seconds are added on scope exit.
+   */
   CleanupTiming(cta::tape::daemon::TapeSessionTracker& tracker, double cta::tape::daemon::TapeCleanupStats::* field)
       : m_tracker(tracker),
         m_field(field) {}
 
+  /**
+   * @brief Accumulate elapsed seconds in the selected cleanup field on scope exit.
+   */
   ~CleanupTiming() {
     cta::tape::daemon::TapeCleanupStats stats;
     stats.*m_field = m_timer.secs();
@@ -43,6 +52,12 @@ private:
   cta::utils::Timer m_timer;
 };
 
+/**
+ * @brief Extract a diagnostic from the exception currently being handled.
+ *
+ * @pre Called from an active exception handler.
+ * @return CTA or standard exception diagnostic, or a fallback for unknown exceptions.
+ */
 std::string currentExceptionMessage() {
   try {
     throw;

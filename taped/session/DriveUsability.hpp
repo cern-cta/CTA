@@ -7,8 +7,9 @@
 
 namespace cta::tape::daemon {
 
-// Whether the existing session logic permits scheduling another mount.
-// This does not independently establish the hardware cleanup outcome.
+/**
+ * @brief Whether the existing session logic permits scheduling another mount.
+ */
 enum class DriveUsability { Reusable, MustRemainDown };
 
 }  // namespace cta::tape::daemon

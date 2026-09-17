@@ -9,13 +9,25 @@
 
 namespace cta::tape::daemon {
 
-// Decisions needed by DriveController after a session returns.
-// Transfer outcome and statistics remain in TapeSessionTracker.
+/**
+ * @brief Decisions needed by DriveController after a tape session returns.
+ */
 struct TapeSessionResult {
+  /**
+   * @brief Whether the drive is still usable after the tape session. 
+   * If e.g. tape session cleanup failed, this may be set to MustRemainDown.
+   */
   DriveUsability driveUsability = DriveUsability::Reusable;
 
-  // Recovery requested after the session has safely finished its local work.
+  /**
+   * @brief Whether to wait for backend recovery after local session work has finished.
+   * Can be set due to e.g. lost backend connections.
+   */
   bool backendRecoveryRequired = false;
+
+  /**
+   * @brief Whether to delay the next scheduling attempt when the drive remains reusable.
+   */
   bool retryDelayRequired = false;
 };
 
