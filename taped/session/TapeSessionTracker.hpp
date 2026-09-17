@@ -57,6 +57,7 @@ enum class TapeSessionError {
   TapeFilledUp
 };
 
+// TODO: decide on what consistutes a failure; we should always get this from the error counter
 enum class TapeSessionOutcome { Automatic, Success, Failure };
 
 using TapeSessionErrorStats = std::map<TapeSessionError, uint32_t>;

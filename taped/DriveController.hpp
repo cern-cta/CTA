@@ -139,7 +139,7 @@ private:
                     bool preserveExistingReason = false);
 
   /**
-   * @brief Wait for up intent, clean when needed and probe before advertising an idle drive.
+   * @brief Wait for up intent, probe once and clean when needed before advertising an idle drive.
    *
    * @return False when cleaning or probing prevents scheduling.
    */

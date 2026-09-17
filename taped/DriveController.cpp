@@ -213,8 +213,7 @@ void DriveController::waitUntilDriveIsRequestedUp() {
     } catch (const Scheduler::NoSuchDrive&) {
       m_lc.log(log::WARNING, "Drive is missing from the catalogue. Attempting to register it as down.");
       if (!registerDrive(false)) {
-        throw exception::Exception(
-          "In DriveController::waitUntilDriveIsRequestedUp(): failed to register the missing drive");
+        throw exception::Exception("Failed to register the missing drive");
       }
       m_lc.log(log::INFO, "Missing drive registered as down. Waiting for an operator up request.");
     }
@@ -366,23 +365,39 @@ bool DriveController::prepareDriveForScheduling() {
   // A drive must be up before we can schedule.
   waitUntilDriveIsRequestedUp();
 
-  if (m_cleanBeforeScheduling && !cleanBeforeScheduling()) {
-    return false;
+  // Probe once, before cleanup can remove unexpected media.
+  m_lc.log(log::DEBUG, "Checking whether the drive is empty.");
+  bool empty = false;
+  std::optional<std::string> probeError;
+  try {
+    const auto result = m_operations.probeDrive();
+    empty = result.first;
+    probeError = result.second;
+  } catch (...) {
+    if (!m_cleanBeforeScheduling) {
+      throw;
+    }
+    m_lc.log(log::WARNING, "Drive probe failed before preparation. Attempting drive cleanup.");
+    probeError = "Drive probe failed before preparation";
   }
 
-  // Check readiness before every scheduling attempt without publishing a transient drive state.
-  m_lc.log(log::DEBUG, "Checking whether the drive is empty before scheduling.");
-
-  // A non-empty or failed probe prevents scheduling and requires another operator up request.
-  const auto [empty, probeError] = m_operations.probeDrive();
-  if (!empty) {
+  if (m_cleanBeforeScheduling) {
+    if (!empty && !probeError) {
+      m_lc.log(log::WARNING, "Tape found in drive while preparing to bring it up. Attempting drive cleanup.");
+    }
+    // Successful cleanup establishes readiness even when the diagnostic probe failed.
+    if (!cleanBeforeScheduling()) {
+      return false;
+    }
+  } else if (!empty) {
+    // Without cleanup, a non-empty or failed probe requires another operator up request.
     m_lc.log(log::WARNING, "Drive probe did not confirm an empty drive. Requesting the drive down.");
     putDriveDown(probeError ? common::dataStructures::DriveDownReason::DriveProbeFailed :
                               common::dataStructures::DriveDownReason::TapeDetected,
                  probeError.value_or(""));
     return false;
   }
-  m_lc.log(log::DEBUG, "No tape detected in the drive. Proceeding with scheduling.");
+  m_lc.log(log::DEBUG, "Drive is ready. Proceeding with scheduling.");
 
   // Advertise an idle drive with no active mount before asking the scheduler for work.
   scheduler.reportDriveStatus(m_driveInfo,

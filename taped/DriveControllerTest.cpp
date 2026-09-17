@@ -213,6 +213,7 @@ protected:
   std::function<std::unique_ptr<TapeMount>()> schedule;
   std::function<TapeSessionResult(TapeMount&)> transfer;
   std::function<bool()> libraryExists = [] { return true; };
+  std::function<void()> probe;
   std::function<bool()> clean = [] { return true; };
   std::optional<TapeDrive> previousDrive;
   unsigned int stateReads = 0;
@@ -261,6 +262,9 @@ protected:
     std::pair<bool, std::optional<std::string>> probeDrive() override {
       ++fixture.probes;
       EXPECT_EQ(nullptr, fixture.liveMount());
+      if (fixture.probe) {
+        fixture.probe();
+      }
       return {fixture.empty, fixture.probeError};
     }
 
@@ -517,7 +521,7 @@ TEST_F(DriveControllerTest, OperatorDownBeforeRecoveryDefersCleaning) {
   clean = [&] {
     EXPECT_FALSE(cleanedVid.has_value());
     EXPECT_EQ(1, sleeps.size());
-    EXPECT_EQ(0, probes);
+    EXPECT_EQ(1, probes);
     return true;
   };
   iteration();
@@ -526,7 +530,7 @@ TEST_F(DriveControllerTest, OperatorDownBeforeRecoveryDefersCleaning) {
 }
 
 /**
- * @brief Verify a down request during cleanup prevents probing and scheduling.
+ * @brief Verify a down request during cleanup prevents scheduling.
  */
 TEST_F(DriveControllerTest, RecoveryRespectsOperatorDownDuringCleaning) {
   previousDrive.emplace();
@@ -550,7 +554,7 @@ TEST_F(DriveControllerTest, RecoveryRespectsOperatorDownDuringCleaning) {
   };
   iteration();
   EXPECT_EQ(1, cleanings);
-  EXPECT_EQ(0, probes);
+  EXPECT_EQ(1, probes);
   EXPECT_EQ(0, schedules);
   EXPECT_FALSE(state.up);
   EXPECT_EQ("Operator maintenance", state.reason);
@@ -577,7 +581,7 @@ TEST_F(DriveControllerTest, CleaningFailureRequiresAnotherUpRequestAndPreservesR
   clean = [] { return false; };
   iteration();
   EXPECT_EQ(1, cleanings);
-  EXPECT_EQ(0, probes);
+  EXPECT_EQ(1, probes);
   EXPECT_EQ(0, schedules);
 
   // No new hardware access while down. An explicit up retries cleaning with no stale VID.
@@ -587,7 +591,7 @@ TEST_F(DriveControllerTest, CleaningFailureRequiresAnotherUpRequestAndPreservesR
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _));
   clean = [&] {
     EXPECT_EQ(1, sleeps.size());
-    EXPECT_EQ(0, probes);
+    EXPECT_EQ(2, probes);
     return true;
   };
   iteration();
@@ -621,7 +625,7 @@ TEST_F(DriveControllerTest, CleaningExceptionsKeepDriveDown) {
       throw std::runtime_error("cleaner failed");
     };
     iteration();
-    EXPECT_EQ(0, probes);
+    EXPECT_EQ(unknown ? 2 : 1, probes);
     EXPECT_EQ(0, schedules);
     ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&scheduler));
   }
@@ -638,7 +642,7 @@ TEST_F(DriveControllerTest, UpTransitionCleansOnlyOnceBeforeScheduling) {
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).Times(2).WillRepeatedly(Return(up));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _));
   clean = [&] {
-    EXPECT_EQ(0, probes);
+    EXPECT_EQ(1, probes);
     EXPECT_EQ(0, schedules);
     return true;
   };
@@ -648,7 +652,72 @@ TEST_F(DriveControllerTest, UpTransitionCleansOnlyOnceBeforeScheduling) {
   expectPreparation();
   iteration();
   EXPECT_EQ(1, cleanings);
+  EXPECT_EQ(2, probes);
   EXPECT_EQ(2, schedules);
+  EXPECT_THAT(logger.getLog(), testing::Not(testing::HasSubstr("Tape found in drive")));
+}
+
+// Unexpected media is diagnostic only; cleanup can still make the drive usable.
+TEST_F(DriveControllerTest, TapeBeforePreparationWarnsAndContinuesWithCleanup) {
+  requireCleaning();
+  empty = false;
+  clean = [&] {
+    EXPECT_EQ(1, probes);
+    EXPECT_THAT(logger.getLog(), testing::HasSubstr("LVL=\"WARN\""));
+    EXPECT_THAT(logger.getLog(),
+                testing::HasSubstr("Tape found in drive while preparing to bring it up. Continuing with cleanup."));
+    empty = true;
+    return true;
+  };
+  DesiredDriveState up;
+  up.up = true;
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).Times(2).WillRepeatedly(Return(up));
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _));
+  iteration();
+  EXPECT_EQ(1, cleanings);
+  EXPECT_EQ(1, probes);
+  EXPECT_EQ(1, schedules);
+
+  const auto preparationLog = logger.getLog();
+  expectPreparation();
+  iteration();
+  EXPECT_EQ(1, cleanings);
+  EXPECT_EQ(2, probes);
+  EXPECT_THAT(logger.getLog().substr(preparationLog.size()), testing::Not(testing::HasSubstr("Tape found in drive")));
+}
+
+// Neither returned probe errors nor exceptions should block the existing recovery path.
+TEST_F(DriveControllerTest, DiagnosticProbeFailuresDoNotPreventCleanup) {
+  for (const int failure : {0, 1, 2}) {
+    SCOPED_TRACE(failure);
+    requireCleaning();
+    empty = false;
+    probeError = "Probe failed";
+    probe = [failure] {
+      if (failure == 1) {
+        throw std::runtime_error("Probe failed");
+      }
+      if (failure == 2) {
+        throw 42;
+      }
+    };
+    clean = [&] {
+      empty = true;
+      probeError.reset();
+      probe = {};
+      return true;
+    };
+    DesiredDriveState up;
+    up.up = true;
+    EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).Times(2).WillRepeatedly(Return(up));
+    EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _));
+    iteration();
+    EXPECT_EQ(failure + 1, cleanings);
+    EXPECT_EQ(failure + 1, schedules);
+    EXPECT_EQ(failure + 1, probes);
+    EXPECT_THAT(logger.getLog(), testing::Not(testing::HasSubstr("Tape found in drive")));
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&scheduler));
+  }
 }
 
 /**
