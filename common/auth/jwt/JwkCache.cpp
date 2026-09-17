@@ -50,38 +50,73 @@ void JwkCache::update(time_t now) {
     return doErase;
   });
 
-  // add the new keys
+  // parse the key data
   auto jwks = jwt::parse_jwks(raw_jwks);
-  std::string kid;
-  std::string x5c;
-  // now iterate over the keys, add the key if it's used for signing
+  uint32_t counter = 0;
+
+  // now iterate over the keys
   for (const auto& jwk : jwks) {
+    std::string kid;
+    log::ScopedParamContainer jwkSpc(lc);
+
+    jwkSpc.add("jwk_idx", counter);
+    counter += 1;
+
     try {
       if (std::string use = jwk.get_use(); use != "sig") {
         continue;
-      }
-      kid = jwk.get_key_id();
-      x5c = jwk.get_x5c_key_value();
-      if (x5c.empty()) {
-        lc.log(log::WARNING, "Field \"x5c\" missing from JWKS entry '" + kid + "', skipping it");
+      } else if (!jwk.has_key_id()) {
+        lc.log(log::WARNING, "Field 'kid' missing from JWKS entry, skipping it");
         continue;
       }
-      if (kid.empty()) {
-        lc.log(log::WARNING, "Field \"kid\" missing from JWKS entry, skipping it");
+
+      kid = jwk.get_key_id();
+      jwkSpc.add("jwk_kid", kid);
+
+      if (!jwk.has_key_type()) {
+        lc.log(log::WARNING, "Field 'kty' missing from JWKS entry, skipping it");
+        continue;
+      }
+
+      auto keyType = jwk.get_key_type();
+      jwkSpc.add("jwk_kty", keyType);
+
+      if (keyType != "RSA") {
+        lc.log(log::WARNING, "JWKS entry has type '" + keyType + "', which is not supported");
         continue;
       }
     } catch (std::runtime_error& ex) {
-      spc.add(semconv::log::exceptionMessage, ex.what());
+      jwkSpc.add(semconv::log::exceptionMessage, ex.what());
       lc.log(log::WARNING, "Runtime error thrown when parsing JWKS entry '" + kid + "', skipping it");
       continue;
     }
 
-    std::string pubkeyPem = jwt::helper::convert_base64_der_to_pem(x5c);
+    // we should construct the PEM from the modulus and exponent
+    if (!jwk.has_jwk_claim("n") || !jwk.has_jwk_claim("e")) {
+      lc.log(log::WARNING, "JWKS entry doesn't have both 'n' and 'e' claims, skipping it");
+      continue;
+    }
+
+    // build PEM from n and e (modulus and exponent)
+    auto n = jwk.get_jwk_claim("n").as_string();
+    auto e = jwk.get_jwk_claim("e").as_string();
+
+    jwkSpc.add("jwk_n", n);
+    jwkSpc.add("jwk_e", e);
+
+    std::error_code ec;
+    std::string pubkeyPem = jwt::helper::create_public_key_from_rsa_components(n, e, ec);
+
+    // something went wrong
+    if (ec) {
+      lc.log(log::WARNING, "Couldn't build PEM from modulus and exponent, skipping JWKS entry");
+      continue;
+    }
+
     JwkCacheEntry entry = {now, pubkeyPem};
     m_keymap[kid] = entry;
+    jwkSpc.add("cachedTime", std::to_string(now));
     lc.log(log::INFO, "Adding new key entry in cache");
-    spc.add("kid", kid);
-    spc.add("cachedTime", std::to_string(now));
   }
 }
 }  // namespace cta::auth
