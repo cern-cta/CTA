@@ -50,33 +50,51 @@ void JwkCache::update(time_t now) {
     return doErase;
   });
 
-  // add the new keys
+  // parse the key data
   auto jwks = jwt::parse_jwks(raw_jwks);
-  std::string kid;
-  std::string x5c;
-  // now iterate over the keys, add the key if it's used for signing
+
+  // now iterate over the keys
   for (const auto& jwk : jwks) {
+    std::string kid;
     try {
       if (std::string use = jwk.get_use(); use != "sig") {
         continue;
-      }
-      kid = jwk.get_key_id();
-      x5c = jwk.get_x5c_key_value();
-      if (x5c.empty()) {
-        lc.log(log::WARNING, "Field \"x5c\" missing from JWKS entry '" + kid + "', skipping it");
-        continue;
-      }
-      if (kid.empty()) {
+      } else if (!jwk.has_key_id()) {
         lc.log(log::WARNING, "Field \"kid\" missing from JWKS entry, skipping it");
         continue;
+      } else if (!jwk.has_key_type()) {
+        lc.log(log::WARNING, "Field \"kty\" missing from JWKS entry, skipping it");
+        continue;
+      } else if (auto keyType = jwk.get_key_type(); keyType != "RSA") {
+        lc.log(log::WARNING, "JWKS entry has type '" + keyType + "', which is not supported");
+        continue;
       }
+      kid = jwk.get_key_id();
     } catch (std::runtime_error& ex) {
       spc.add(semconv::log::exceptionMessage, ex.what());
       lc.log(log::WARNING, "Runtime error thrown when parsing JWKS entry '" + kid + "', skipping it");
       continue;
     }
 
-    std::string pubkeyPem = jwt::helper::convert_base64_der_to_pem(x5c);
+    // we should construct the PEM from the modulus and exponent
+    if (!jwk.has_jwk_claim("n") || !jwk.has_jwk_claim("e")) {
+      lc.log(log::WARNING, "JWKS entry doesn't have both 'n' and 'e' claims, skipping it");
+      continue;
+    }
+
+    // build PEM from n and e (modulus and exponent)
+    auto n = jwk.get_jwk_claim("n").as_string();
+    auto e = jwk.get_jwk_claim("e").as_string();
+
+    std::error_code ec;
+    std::string pubkeyPem = jwt::helper::create_public_key_from_rsa_components(n, e, ec);
+
+    // something went wrong
+    if (ec) {
+      lc.log(log::WARNING, "Couldn't build PEM from modulus and exponent, skipping JWKS entry");
+      continue;
+    }
+
     JwkCacheEntry entry = {now, pubkeyPem};
     m_keymap[kid] = entry;
     lc.log(log::INFO, "Adding new key entry in cache");
