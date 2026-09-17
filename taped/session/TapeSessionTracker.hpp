@@ -6,14 +6,15 @@
 #pragma once
 
 #include "scheduler/TapeMount.hpp"
-#include "taped/session/SessionState.hpp"
 #include "taped/session/SessionType.hpp"
 #include "taped/session/TapeSessionStats.hpp"
+#include "taped/session/TransferState.hpp"
 
 #include <chrono>
 #include <cstdint>
 #include <map>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -56,7 +57,6 @@ enum class TapeSessionError {
   TapeFilledUp
 };
 
-// TODO: maybe we don't need this
 enum class TapeSessionOutcome { Automatic, Success, Failure };
 
 // TODO: unordered map?
@@ -93,33 +93,54 @@ public:
     return m_mount;
   }
 
-  void reportState(cta::tape::session::SessionState state, cta::tape::session::SessionType type) {
+  // Only the session owner starts a transfer; state transitions never reset its data.
+  void beginTransfer() {
     std::lock_guard lock(m_mutex);
+    m_stats = {};
+    m_errorStats.clear();
+    m_tapeAlertStats.clear();
+    m_activeDiskFiles.clear();
+    m_outcome = TapeSessionOutcome::Automatic;
+    m_mountAttempted = true;
+    m_fileId = 0;
+    m_fSeq = 0;
+    m_fileBeingMoved = false;
+    m_fileStartTime = {};
+    m_bytesMoved = 0;
+    m_lastBlockMovement = {};
+    m_tapeDone = false;
+    m_diskDone = false;
+    m_sessionStartTime = std::chrono::steady_clock::now();
+    m_state = cta::tape::session::TransferState::Preparing;
+    m_type = cta::tape::session::SessionType::Undetermined;
+  }
 
-    // TODO: for now the transition to scheduler clears the stats, but we may want to update the state
-    if (state == cta::tape::session::SessionState::Scheduling && m_state != state) {
-      m_stats = {};
-      m_errorStats.clear();
-      m_tapeAlertStats.clear();
-      m_activeDiskFiles.clear();
-      m_outcome = TapeSessionOutcome::Automatic;
-      m_mountAttempted = true;
-      m_fileId = 0;
-      m_fSeq = 0;
-      m_fileBeingMoved = false;
-      m_fileStartTime = {};
-      m_bytesMoved = 0;
-      m_lastBlockMovement = {};
-      m_sessionStartTime = std::chrono::steady_clock::now();
-    }
-
+  void reportState(cta::tape::session::TransferState state) {
+    std::lock_guard lock(m_mutex);
     m_state = state;
+  }
+
+  std::optional<cta::tape::session::TransferState> state() const {
+    std::lock_guard lock(m_mutex);
+    return m_state;
+  }
+
+  void setType(cta::tape::session::SessionType type) {
+    std::lock_guard lock(m_mutex);
     m_type = type;
   }
 
-  cta::tape::session::SessionState state() const {
+  // Either retrieval worker can finish first; update both flags and the phase atomically.
+  void notifyTapeDone() {
     std::lock_guard lock(m_mutex);
-    return m_state;
+    m_tapeDone = true;
+    updateRetrievalCompletionState();
+  }
+
+  void notifyDiskDone() {
+    std::lock_guard lock(m_mutex);
+    m_diskDone = true;
+    updateRetrievalCompletionState();
   }
 
   cta::tape::session::SessionType type() const {
@@ -129,7 +150,10 @@ public:
 
   void setOutcome(TapeSessionOutcome outcome) {
     std::lock_guard lock(m_mutex);
-    m_outcome = outcome;
+    // A later successful operation cannot hide an earlier explicit failure.
+    if (m_outcome != TapeSessionOutcome::Failure) {
+      m_outcome = outcome;
+    }
   }
 
   TapeSessionOutcome outcome() const {
@@ -150,6 +174,9 @@ public:
   void incrementError(TapeSessionError error) {
     std::lock_guard lock(m_mutex);
     ++m_errorStats[error];
+    if (error == TapeSessionError::Reporting) {
+      m_outcome = TapeSessionOutcome::Failure;
+    }
   }
 
   void setErrorCount(TapeSessionError error, uint32_t count) {
@@ -158,6 +185,9 @@ public:
       m_errorStats.erase(error);
     } else {
       m_errorStats[error] = count;
+      if (error == TapeSessionError::Reporting) {
+        m_outcome = TapeSessionOutcome::Failure;
+      }
     }
   }
 
@@ -306,11 +336,22 @@ public:
   }
 
 private:
+  // Called with m_mutex held. Only the session owner may establish Finished.
+  void updateRetrievalCompletionState() {
+    using cta::tape::session::TransferState;
+    if (m_type == cta::tape::session::SessionType::Retrieve && m_tapeDone && m_state
+        && m_state != TransferState::Finished) {
+      m_state = m_diskDone ? TransferState::Finalizing : TransferState::DrainingToDisk;
+    }
+  }
+
   mutable std::mutex m_mutex;
   // TODO: can we have something that is not a raw pointer here?
   cta::TapeMount* m_mount = nullptr;
 
-  cta::tape::session::SessionState m_state = cta::tape::session::SessionState::StartingUp;
+  std::optional<cta::tape::session::TransferState> m_state;
+  bool m_tapeDone = false;
+  bool m_diskDone = false;
   cta::tape::session::SessionType m_type = cta::tape::session::SessionType::Undetermined;
   TapeSessionOutcome m_outcome = TapeSessionOutcome::Automatic;
   bool m_mountAttempted = true;

@@ -49,6 +49,7 @@ cta::tape::daemon::TapeReadSingleThread::TapeReadSingleThread(cta::tape::drive::
 //TapeCleaning::~TapeCleaning()
 //------------------------------------------------------------------------------
 cta::tape::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
+  m_this.m_tracker.reportState(cta::tape::session::TransferState::Finalizing);
   m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::CleaningUp,
                                           std::nullopt,
                                           m_this.m_logContext);
@@ -67,6 +68,8 @@ cta::tape::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
       m_this.m_logContext.log(cta::log::INFO, "Turned encryption off before unmounting");
     }
   } catch (cta::exception::Exception& ex) {
+    m_this.m_tracker.incrementError(TapeSessionError::TapeEncryptionDisable);
+    m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
     cta::log::ScopedParamContainer scoped(m_this.m_logContext);
     scoped.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
     m_this.m_logContext.log(cta::log::ERR, "Failed to turn off encryption before unmounting");
@@ -107,8 +110,7 @@ cta::tape::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
       m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up,
                                               std::nullopt,
                                               m_this.m_logContext);
-      m_this.m_tracker.reportState(cta::tape::session::SessionState::ShuttingDown,
-                                   cta::tape::session::SessionType::Retrieve);
+
       return;
     }
 
@@ -124,8 +126,7 @@ cta::tape::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting,
                                             std::nullopt,
                                             m_this.m_logContext);
-    m_this.m_tracker.reportState(cta::tape::session::SessionState::Unmounting,
-                                 cta::tape::session::SessionType::Retrieve);
+
     const auto librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_this.m_drive.info.rawLibrarySlot);
     m_this.m_mediaChanger.dismountTape(m_this.m_volInfo.vid, librarySlot);
     m_this.m_drive.disableLogicalBlockProtection();
@@ -138,14 +139,10 @@ cta::tape::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
       m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up,
                                               std::nullopt,
                                               m_this.m_logContext);
-      m_this.m_tracker.reportState(cta::tape::session::SessionState::ShuttingDown,
-                                   cta::tape::session::SessionType::Retrieve);
     } else {
       m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::DrainingToDisk,
                                               std::nullopt,
                                               m_this.m_logContext);
-      m_this.m_tracker.reportState(cta::tape::session::SessionState::DrainingToDisk,
-                                   cta::tape::session::SessionType::Retrieve);
     }
 
     m_this.m_tracker.addDiskTransferStats({.waitReportingTime = m_timer.secs(cta::utils::Timer::resetCounter)});
@@ -161,7 +158,8 @@ cta::tape::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down,
                                             reason,
                                             m_this.m_logContext);
-    m_this.m_tracker.reportState(cta::tape::session::SessionState::Fatal, cta::tape::session::SessionType::Retrieve);
+
+    m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
     cta::log::ScopedParamContainer scoped(m_this.m_logContext);
     scoped.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
     m_this.m_logContext.log(logLevel, errorMsg);
@@ -183,7 +181,8 @@ cta::tape::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down,
                                             reason,
                                             m_this.m_logContext);
-    m_this.m_tracker.reportState(cta::tape::session::SessionState::Fatal, cta::tape::session::SessionType::Retrieve);
+
+    m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
     m_this.m_logContext.log(logLevel, errorMsg);
     try {
       m_this.m_tracker.incrementError(currentErrorToCount);
@@ -263,7 +262,6 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
 
       // Before anything, the tape should be mounted
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Mounting, std::nullopt, m_logContext);
-      m_tracker.reportState(cta::tape::session::SessionState::Mounting, cta::tape::session::SessionType::Retrieve);
 
       std::ostringstream ossLabelFormat;
       ossLabelFormat << std::showbase << std::internal << std::setfill('0') << std::hex << std::setw(4)
@@ -370,7 +368,8 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring,
                                        std::nullopt,
                                        m_logContext);
-      m_tracker.reportState(cta::tape::session::SessionState::Running, cta::tape::session::SessionType::Retrieve);
+
+      m_tracker.reportState(cta::tape::session::TransferState::Transferring);
       while (true) {
         // get a task
         task.reset(popAndRequestMoreJobs());
@@ -419,6 +418,7 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
       }
     }
   } catch (const cta::exception::Exception& e) {
+    m_tracker.setOutcome(TapeSessionOutcome::Failure);
     // Publish transfer statistics; the RAII cleaner recorded cleanup timings independently.
     m_tracker.updateTapeTransferStats(m_stats);
     // We end up here because one step failed, be it at mount time, of after
@@ -461,6 +461,8 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
       }
     }
   }
+  // Both the normal path and handled failures have finished tape cleanup and task cancellation.
+  m_tracker.notifyTapeDone();
 }
 
 //------------------------------------------------------------------------------

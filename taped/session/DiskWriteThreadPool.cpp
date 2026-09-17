@@ -164,6 +164,7 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
   logWithStat(cta::log::INFO, "Finishing DiskWriteWorkerThread");
   m_parentThreadPool.addThreadStats(m_threadStat);
   if (0 == --m_parentThreadPool.m_nbActiveThread) {
+    m_parentThreadPool.m_tracker.notifyDiskDone();
     // Notify all disk threads are finished
     m_parentThreadPool.m_reporter.setDiskDone();
 

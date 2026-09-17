@@ -848,6 +848,11 @@ public:
     }
     if (exceptionCaught) {
       EXPECT_NE(std::string::npos, exceptionMessage.find("injected"));
+      EXPECT_EQ(TapeSessionOutcome::Failure, tracker.outcome());
+      if (point == TransferFailurePoint::Metadata || point == TransferFailurePoint::StartingStatus) {
+        EXPECT_EQ(cta::tape::session::TransferState::Preparing, tracker.state());
+        EXPECT_EQ(0, countLogMessages(logger.getLog(), "Tape session finished"));
+      }
     }
     if (point == TransferFailurePoint::None) {
       ASSERT_TRUE(result.has_value());
@@ -863,12 +868,17 @@ public:
                                   cta::tape::session::SessionType::Retrieve :
                                   cta::tape::session::SessionType::Archive;
       EXPECT_EQ(expectedType, tracker.type());
-      EXPECT_EQ(1, countLogMessages(logger.getLog(), "Tape session finished"));
-      EXPECT_GE(mount.statsReports, 1U);
-      EXPECT_EQ(tracker.stats().tape.filesCount, mount.lastReportedStats.filesCount);
+      if (tracker.state() == cta::tape::session::TransferState::Finished) {
+        EXPECT_EQ(1, countLogMessages(logger.getLog(), "Tape session finished"));
+        EXPECT_GE(mount.statsReports, 1U);
+        EXPECT_EQ(tracker.stats().tape.filesCount, mount.lastReportedStats.filesCount);
+      } else {
+        EXPECT_TRUE(exceptionCaught);
+        EXPECT_EQ(0, countLogMessages(logger.getLog(), "Tape session finished"));
+      }
     }
     if (point == TransferFailurePoint::None || point == TransferFailurePoint::Discovery) {
-      EXPECT_EQ(cta::tape::session::SessionState::Scheduling, tracker.state());
+      EXPECT_EQ(cta::tape::session::TransferState::Finished, tracker.state());
       EXPECT_EQ(0, tracker.stats().tape.filesCount);
       EXPECT_EQ(0, tracker.stats().tape.dataVolume);
       EXPECT_FALSE(tracker.progress().fileBeingMoved);
@@ -907,6 +917,7 @@ public:
     }
     if (point == TransferFailurePoint::CompleteCta && result) {
       EXPECT_EQ(TransferSessionResult::Outcome::Failure, result->reportingFinalizationOutcome);
+      EXPECT_EQ(TapeSessionOutcome::Failure, tracker.outcome());
     }
     if (point == TransferFailurePoint::Metadata || point == TransferFailurePoint::StartingStatus) {
       EXPECT_TRUE(exceptionCaught);
@@ -1724,9 +1735,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // 8) Run the data transfer session
   sess.execute();
 
-  // The real read path must publish its final counters before reporting shutdown.
+  // The real read path must publish its final counters before reporting transfer completion.
   EXPECT_EQ(cta::tape::session::SessionType::Retrieve, tracker.type());
-  EXPECT_EQ(cta::tape::session::SessionState::ShuttingDown, tracker.state());
+  EXPECT_EQ(cta::tape::session::TransferState::Finished, tracker.state());
   EXPECT_EQ(remoteFilePaths.size(), tracker.stats().tape.filesCount);
   EXPECT_EQ(1000 * remoteFilePaths.size(), tracker.stats().tape.dataVolume);
   EXPECT_FALSE(tracker.errorHappened());
@@ -3948,7 +3959,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
     sess(logger, mockSys, driveInfo, mc, *tapeMount, tracker, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
   sess.execute();
   EXPECT_EQ(cta::tape::session::SessionType::Archive, tracker.type());
-  EXPECT_EQ(cta::tape::session::SessionState::ShuttingDown, tracker.state());
+  EXPECT_EQ(cta::tape::session::TransferState::Finished, tracker.state());
   EXPECT_EQ(sourceFiles.size(), tracker.stats().tape.filesCount);
   EXPECT_EQ(1000 * sourceFiles.size(), tracker.stats().tape.dataVolume);
   EXPECT_FALSE(tracker.errorHappened());

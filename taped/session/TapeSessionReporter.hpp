@@ -26,6 +26,7 @@ public:
                       std::chrono::milliseconds stuckPeriod);
 
   void startThreads();
+  // Stop reporting; a final event is emitted only if the session owner established Finished.
   void finish();
   void waitThreads();
 

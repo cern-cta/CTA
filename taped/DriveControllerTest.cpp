@@ -165,7 +165,7 @@ protected:
 
   TapeMount* mount() { return controller->m_tapeSessionTracker.mount(); }
 
-  cta::tape::session::SessionState sessionState() { return controller->m_tapeSessionTracker.state(); }
+  std::optional<cta::tape::session::TransferState> transferState() { return controller->m_tapeSessionTracker.state(); }
 
   cta::tape::session::SessionType sessionType() { return controller->m_tapeSessionTracker.type(); }
 
@@ -588,15 +588,15 @@ TEST_F(DriveControllerTest, UnexpectedSchedulingFailureWaitsAndAllowsAnotherIter
 }
 
 /*
- * An idle drive reports scheduling with an undetermined session type.
+ * Scheduling does not start a transfer or assign a transfer state.
  * The tracker must not reference a mount when no work was acquired.
  */
-TEST_F(DriveControllerTest, IdleDriveReportsSchedulingStateWithoutAMount) {
+TEST_F(DriveControllerTest, IdleDriveDoesNotStartATransfer) {
   expectPreparation();
 
   iteration();
 
-  EXPECT_EQ(cta::tape::session::SessionState::Scheduling, sessionState());
+  EXPECT_FALSE(transferState().has_value());
   EXPECT_EQ(cta::tape::session::SessionType::Undetermined, sessionType());
   EXPECT_EQ(nullptr, mount());
 }

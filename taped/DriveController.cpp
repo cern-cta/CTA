@@ -396,8 +396,6 @@ bool DriveController::prepareDriveForScheduling() {
                               common::dataStructures::MountType::NoMount,
                               common::dataStructures::DriveStatus::Up,
                               m_lc);
-  // The transfer session owns reporting once a mount has been acquired.
-  m_tapeSessionTracker.reportState(session::SessionState::Scheduling, session::SessionType::Undetermined);
 
   return true;
 }

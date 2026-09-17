@@ -86,7 +86,6 @@ cta::tape::daemon::DriveUsability cta::tape::daemon::CleanerSession::execute() {
   CleanupTiming timing(m_tracker, &TapeCleanupStats::cleanupTime);
   std::string errorMessage;
   bool ejectFailed = false;
-  m_tracker.reportState(session::SessionState::Checking, session::SessionType::Cleanup);
 
   if (!server::ProcessCap::hasRawIoCap()) {
     m_lc.log(cta::log::ERR, "Missing CAP_SYS_RAWIO capability. Unable to use raw tape drive I/O.");
@@ -215,9 +214,6 @@ auto cta::tape::daemon::CleanerSession::cleanDrive(drive::DriveInterface& drive)
 
 auto cta::tape::daemon::CleanerSession::cleanDriveImpl(drive::DriveInterface& drive) -> CleanupResult {
   CleanupResult result;
-  const auto type = m_tracker.type();
-  m_tracker.reportState(session::SessionState::Checking,
-                        type == session::SessionType::Undetermined ? session::SessionType::Cleanup : type);
   auto recordResetFailure = [&](const std::string& operation, TapeSessionError error) {
     m_tracker.incrementError(error);
     result.configurationResetFailed = true;
@@ -468,7 +464,6 @@ void cta::tape::daemon::CleanerSession::dismountTape(const std::string& vid) {
   } else {
     m_lc.log(cta::log::DEBUG, "Cleaner requesting robotic tape dismount");
   }
-  m_tracker.reportState(session::SessionState::Unmounting, m_tracker.type());
   cta::utils::Timer timer;
   try {
     m_mediachanger.dismountTape(vid, librarySlot);

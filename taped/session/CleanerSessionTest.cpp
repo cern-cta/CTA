@@ -461,7 +461,9 @@ TEST_P(CleanerSessionTest, BorrowedDriveResetsLbpAfterEncryptionClearFailureWith
                                             *m_scheduler,
                                             m_tracker);
 
-  m_tracker.reportState(cta::tape::session::SessionState::Running, cta::tape::session::SessionType::Retrieve);
+  m_tracker.beginTransfer();
+  m_tracker.setType(cta::tape::session::SessionType::Retrieve);
+  m_tracker.reportState(cta::tape::session::TransferState::Finished);
   m_tracker.updateTapeSetupStats({.encryptionControlTime = 5});
   m_tracker.updateTapeTransferStats({.dataVolume = 1234, .filesCount = 2});
   m_tracker.updateTapeCleanupStats({.unloadTime = 10,
@@ -481,7 +483,7 @@ TEST_P(CleanerSessionTest, BorrowedDriveResetsLbpAfterEncryptionClearFailureWith
   ASSERT_TRUE(result.configurationResetFailed);
   ASSERT_FALSE(result.ejectFailed);
   ASSERT_FALSE(result.driveReusable());
-  ASSERT_EQ(cta::tape::session::SessionState::Unmounting, m_tracker.state());
+  ASSERT_EQ(cta::tape::session::TransferState::Finished, m_tracker.state());
   ASSERT_EQ(0, m_tracker.errorStats().count(cta::tape::daemon::TapeSessionError::TapeLbpDisable));
   ASSERT_GT(m_tracker.stats().cleanup.encryptionControlTime, 30);
   ASSERT_GT(m_tracker.stats().cleanup.unloadTime, 10);
@@ -520,8 +522,8 @@ TEST_P(CleanerSessionTest, BorrowedEmptyDriveAttemptsBothConfigurationResets) {
   ASSERT_TRUE(result.configurationResetFailed);
   ASSERT_FALSE(result.ejectFailed);
   ASSERT_FALSE(result.driveReusable());
-  ASSERT_EQ(cta::tape::session::SessionState::Checking, m_tracker.state());
-  ASSERT_EQ(cta::tape::session::SessionType::Cleanup, m_tracker.type());
+  ASSERT_FALSE(m_tracker.state().has_value());
+  ASSERT_EQ(cta::tape::session::SessionType::Undetermined, m_tracker.type());
   ASSERT_EQ(1, m_tracker.errorStats().at(cta::tape::daemon::TapeSessionError::TapeEncryptionDisable));
   ASSERT_EQ(1, m_tracker.errorStats().at(cta::tape::daemon::TapeSessionError::TapeLbpDisable));
   ASSERT_NE(std::string::npos, result.errorMessage.find("Failed to clear encryption key"));
@@ -556,7 +558,7 @@ TEST_P(CleanerSessionTest, DismountsTapeAfterUnloadFailure) {
 
   ASSERT_EQ(cta::tape::daemon::DriveUsability::Reusable, cleaner.execute());
   ASSERT_EQ(1, m_tracker.errorStats().at(cta::tape::daemon::TapeSessionError::TapeUnload));
-  ASSERT_EQ(cta::tape::session::SessionState::Unmounting, m_tracker.state());
+  ASSERT_FALSE(m_tracker.state().has_value());
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner unload command failed"));
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
 }
@@ -585,7 +587,7 @@ TEST_P(CleanerSessionTest, DisablesTapeAndPutsDriveDownWhenBothDismountAttemptsF
 
   ASSERT_EQ(cta::tape::daemon::DriveUsability::MustRemainDown, cleaner.execute());
   ASSERT_EQ(2, m_tracker.errorStats().at(cta::tape::daemon::TapeSessionError::TapeDismount));
-  ASSERT_EQ(cta::tape::session::SessionType::Cleanup, m_tracker.type());
+  ASSERT_EQ(cta::tape::session::SessionType::Undetermined, m_tracker.type());
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner failed to dismount tape with VID"));
   ASSERT_NE(std::string::npos,
             m_sessionLog.getLog().find("Cleaner requesting robotic tape dismount with an empty VID"));

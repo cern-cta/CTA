@@ -24,7 +24,7 @@ set(CTATAPEDSESSION_LIBRARY_SRCS
   TapeWriteTask.cpp
   TransferTaskTracker.cpp
   DriveSessionTracker.cpp
-  SessionState.cpp
+  TransferState.cpp
   SessionType.cpp)
 
 add_library(ctatapedsession

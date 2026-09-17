@@ -46,6 +46,7 @@ cta::tape::daemon::TapeWriteSingleThread::TapeWriteSingleThread(cta::tape::drive
 //TapeCleaning::~TapeCleaning()
 //------------------------------------------------------------------------------
 cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
+  m_this.m_tracker.reportState(cta::tape::session::TransferState::Finalizing);
   m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::CleaningUp,
                                           std::nullopt,
                                           m_this.m_logContext);
@@ -65,6 +66,8 @@ cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
       m_this.m_logContext.log(cta::log::INFO, "Turned encryption off before unmounting");
     }
   } catch (cta::exception::Exception& ex) {
+    m_this.m_tracker.incrementError(TapeSessionError::TapeEncryptionDisable);
+    m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
     cta::log::ScopedParamContainer scoped(m_this.m_logContext);
     scoped.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
     m_this.m_logContext.log(cta::log::ERR, "Failed to turn off encryption before unmounting");
@@ -105,8 +108,7 @@ cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
       m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up,
                                               std::nullopt,
                                               m_this.m_logContext);
-      m_this.m_tracker.reportState(cta::tape::session::SessionState::ShuttingDown,
-                                   cta::tape::session::SessionType::Archive);
+
       return;
     }
 
@@ -122,8 +124,7 @@ cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting,
                                             std::nullopt,
                                             m_this.m_logContext);
-    m_this.m_tracker.reportState(cta::tape::session::SessionState::Unmounting,
-                                 cta::tape::session::SessionType::Archive);
+
     const auto librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_this.m_drive.info.rawLibrarySlot);
     m_this.m_mediaChanger.dismountTape(m_this.m_volInfo.vid, librarySlot);
     m_this.m_drive.disableLogicalBlockProtection();
@@ -133,8 +134,7 @@ cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Up,
                                             std::nullopt,
                                             m_this.m_logContext);
-    m_this.m_tracker.reportState(cta::tape::session::SessionState::ShuttingDown,
-                                 cta::tape::session::SessionType::Archive);
+
     m_this.m_tracker.addDiskTransferStats({.waitReportingTime = m_timer.secs(cta::utils::Timer::resetCounter)});
   } catch (const cta::exception::Exception& ex) {
     // Notify something failed during the cleaning
@@ -148,7 +148,8 @@ cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down,
                                             reason,
                                             m_this.m_logContext);
-    m_this.m_tracker.reportState(cta::tape::session::SessionState::Fatal, cta::tape::session::SessionType::Archive);
+
+    m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
     cta::log::ScopedParamContainer scoped(m_this.m_logContext);
     scoped.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
     m_this.m_logContext.log(logLevel, errorMsg);
@@ -170,7 +171,8 @@ cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Down,
                                             reason,
                                             m_this.m_logContext);
-    m_this.m_tracker.reportState(cta::tape::session::SessionState::Fatal, cta::tape::session::SessionType::Archive);
+
+    m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
     m_this.m_logContext.log(logLevel, errorMsg);
     try {
       m_this.m_tracker.incrementError(currentErrorToCount);
@@ -286,7 +288,7 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
       TapeCleaning cleaner(*this, timer);
       // Before anything, the tape should be mounted
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Mounting, std::nullopt, m_logContext);
-      m_tracker.reportState(cta::tape::session::SessionState::Mounting, cta::tape::session::SessionType::Archive);
+
       cta::log::ScopedParamContainer params(m_logContext);
       params.add("mediaType", m_archiveMount.getMediaType());
       params.add("logicalLibrary", m_drive.info.logicalLibrary);
@@ -386,7 +388,8 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring,
                                        std::nullopt,
                                        m_logContext);
-      m_tracker.reportState(cta::tape::session::SessionState::Running, cta::tape::session::SessionType::Archive);
+
+      m_tracker.reportState(cta::tape::session::TransferState::Transferring);
       while (true) {
         //get a task
         task.reset(m_tasks.pop());
@@ -467,6 +470,7 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
       m_tracker.setErrorCount(TapeSessionError::TapeFilledUp, 1);
       m_reportPacker.reportTapeFull(m_logContext);
     } catch (...) {
+      m_tracker.setOutcome(TapeSessionOutcome::Failure);
       // The error is not an ENOSPC, so it is, indeed, an error.
       // If we got here with a new error, currentErrorToCount will be non-empty,
       // and we will pass the typed error to the session tracker.

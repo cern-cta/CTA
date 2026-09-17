@@ -140,7 +140,7 @@
           "tapeVid",
           "vo",
           "volReqId",
-          "sessionState",
+          "transferState",
           "sessionType",
           "wasTapeMounted",
           "mountTime",
@@ -213,8 +213,11 @@
               "null"
             ]
           },
-          "sessionState": {
-            "type": "string"
+          "transferState": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "sessionType": {
             "type": "string"

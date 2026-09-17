@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <map>
+#include <optional>
 #include <string>
 
 namespace cta::tape::daemon {
@@ -190,9 +191,20 @@ void TapeSessionReporter::reportNow() {
 }
 
 void TapeSessionReporter::reportSessionFinished() {
+  // Stopping the reporter alone does not establish that transfer workers have stopped.
+  if (m_tracker.state() != cta::tape::session::TransferState::Finished) {
+    return;
+  }
+
   const auto stats = m_tracker.stats();
+  try {
+    m_tracker.mount()->setTapeSessionStats(stats.tape);
+  } catch (...) {
+    m_tracker.incrementError(TapeSessionError::Reporting);
+    m_lc.log(cta::log::WARNING, "Failed to publish final tape session statistics");
+  }
+  // Publication failures must be reflected in the single final outcome log.
   logStats(true, stats);
-  m_tracker.mount()->setTapeSessionStats(stats.tape);
 }
 
 void TapeSessionReporter::logStats(bool sessionFinished, const TapeSessionStats& stats) {
@@ -246,18 +258,27 @@ void TapeSessionReporter::logStats(bool sessionFinished, const TapeSessionStats&
   set("payloadTransferSpeedMBps", totalTime ? tapeStats.dataVolume / 1000.0 / 1000.0 / totalTime : 0.0);
   set("driveTransferSpeedMBps",
       totalTime ? (tapeStats.dataVolume + tapeStats.headerVolume) / 1000.0 / 1000.0 / totalTime : 0.0);
-  set("sessionState", cta::tape::session::toString(m_tracker.state()));
+  const auto state = m_tracker.state();
+  if (state) {
+    set("transferState", cta::tape::session::toString(*state));
+  } else {
+    set("transferState", std::nullopt);
+  }
   set("sessionType", cta::tape::session::toString(m_tracker.type()));
-  switch (m_tracker.outcome()) {
-    case TapeSessionOutcome::Automatic:
-      set("status", m_tracker.errorHappened() ? "failure" : "success");
-      break;
-    case TapeSessionOutcome::Success:
-      set("status", "success");
-      break;
-    case TapeSessionOutcome::Failure:
-      set("status", "failure");
-      break;
+  if (!sessionFinished) {
+    set("status", "in_progress");
+  } else {
+    switch (m_tracker.outcome()) {
+      case TapeSessionOutcome::Automatic:
+        set("status", m_tracker.errorHappened() ? "failure" : "success");
+        break;
+      case TapeSessionOutcome::Success:
+        set("status", "success");
+        break;
+      case TapeSessionOutcome::Failure:
+        set("status", "failure");
+        break;
+    }
   }
   set("mountAttempted", m_tracker.mountAttempted() ? 1 : 0);
   set("tapeVid", mount.getVid());
