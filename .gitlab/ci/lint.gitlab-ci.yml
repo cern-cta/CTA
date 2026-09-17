@@ -110,6 +110,7 @@ lint-python:
     reports:
       codequality: ruff.json
 
+# general code quality (using clippy)
 lint-rust:
   stage: lint
   needs:
@@ -131,15 +132,14 @@ lint-rust:
     entrypoint: ["/usr/bin/env"]
   variables:
     GIT_SUBMODULE_STRATEGY: "recursive" # we need the proto defs
+    RUST_CODE_PATH: "tools-rs"
   before_script:
     - !reference [.merge-train-guard, before_script]
-    - rustup component add clippy
-    - cargo install cargo-sonar
     - set -o pipefail
   script:
     - |
       set +e
-      cargo clippy --manifest-path tools-rs/Cargo.toml --all-targets --all-features --message-format=json | tee clippy-output.json
+      cargo clippy --manifest-path ${RUST_CODE_PATH}/Cargo.toml --all-targets --all-features --message-format=json > clippy-output.json
       CARGO_EXIT_CODE=$?
       set -e
 
@@ -147,18 +147,83 @@ lint-rust:
       # We deliberately don't pass -D warnings to cargo clippy here: doing so promotes every warning to an "error" diagnostic
       # before cargo-sonar ever sees it, which makes everything show up as "critical" in the GitLab code quality report.
       if [ "$CARGO_EXIT_CODE" -ne 0 ] || jq -e 'select(.reason == "compiler-message") | select(.message.level == "warning" or .message.level == "error")' clippy-output.json > /dev/null; then
+        echo "Clippy detected errors:"
+        cat clippy-output.json | jq -C
+        echo "📎 Everyone makes mistakes - it's how we learn and grow."
         CLIPPY_EXIT_CODE=1
       else
         CLIPPY_EXIT_CODE=0
       fi
 
-      (cd tools-rs && cargo codeclimate --clippy --clippy-path "$CI_PROJECT_DIR/clippy-output.json" --codeclimate-path "$CI_PROJECT_DIR/cargo-clippy.json")
+      # convert to code climate format (readable by GitLab)
+      (cd tools-rs && cargo codeclimate --clippy --clippy-path "$CI_PROJECT_DIR/clippy-output.json" --codeclimate-path "$CI_PROJECT_DIR/cargo-clippy-raw.json")
+
+      # cargo-codeclimate must run from inside RUST_CODE_PATH, but this means the file paths it emits are relative to the former
+      jq --arg prefix "$RUST_CODE_PATH/" 'map(.location.path |= $prefix + .)' "$CI_PROJECT_DIR/cargo-clippy-raw.json" > "$CI_PROJECT_DIR/cargo-clippy.json"
+
       exit $CLIPPY_EXIT_CODE
   artifacts:
     when: always
     expire_in: 7 days
     reports:
       codequality: cargo-clippy.json
+
+# check for security advisories, bans, licenses and package sources
+deny-rust:
+  stage: lint
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: always
+    - changes:
+        - "**/Cargo.toml"
+        - "**/Cargo.lock"
+        - "**/deny.toml"
+        - ".gitlab-ci.yml"
+      when: always
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - when: manual
+      allow_failure: true
+  image:
+    name: $IMAGE_LINT
+    entrypoint: ["/usr/bin/env"]
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"
+    RUST_CODE_PATH: "tools-rs"
+  script:
+    - cargo deny --manifest-path "$RUST_CODE_PATH/Cargo.toml" --config "$RUST_CODE_PATH/deny.toml" check
+
+# check for unused dependencies
+machete-rust:
+  stage: lint
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: always
+    - changes:
+        - "**/Cargo.toml"
+        - "**/*.rs"
+        - ".gitlab-ci.yml"
+      when: always
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - when: manual
+      allow_failure: true
+  image:
+    name: $IMAGE_LINT
+    entrypoint: ["/usr/bin/env"]
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"
+    RUST_CODE_PATH: "tools-rs"
+  before_script:
+    - !reference [.merge-train-guard, before_script]
+  script:
+    - cargo machete $RUST_CODE_PATH/
 
 lint-yaml:
   stage: lint
@@ -289,7 +354,6 @@ lint-dockerfile:
     expire_in: 7 days
     paths:
       - $FORMAT_DIFF
-
 
 format-cpp:
   extends:
