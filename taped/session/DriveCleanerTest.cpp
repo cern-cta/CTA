@@ -490,7 +490,7 @@ TEST_P(DriveCleanerTest, BorrowedEmptyDriveAttemptsBothConfigurationResets) {
   const auto stats = m_tracker.stats().cleanup;
   ASSERT_GT(stats.cleanupTime, 0);
   ASSERT_GT(stats.lbpResetTime, 0);
-  ASSERT_GT(stats.readinessWaitTime, 0);
+  ASSERT_EQ(0, stats.readinessWaitTime);
   ASSERT_EQ(0, stats.rewindTime);
   ASSERT_EQ(0, stats.labelReadTime);
   ASSERT_EQ(0, stats.unloadTime);
@@ -559,15 +559,48 @@ TEST_P(DriveCleanerTest, AcceptsEmptyDriveWithoutDismounting) {
   ASSERT_EQ(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
 }
 
+TEST_P(DriveCleanerTest, EmptyDriveSkipsReadinessWaitAndResetsConfiguration) {
+  cta::mediachanger::RmcProxy rmcProxy;
+  cta::mediachanger::MediaChangerFacade mediaChanger(rmcProxy, m_changerLog);
+  // A readiness call would throw; an empty drive must bypass it and still reset LBP.
+  cta::tape::drive::FakeDrive drive(5000, cta::tape::drive::FakeDrive::OnFlush, true);
+  drive.setTapeInPlace(false);
+  drive.enableCRC32CLogicalBlockProtectionReadWrite();
+  cta::tape::daemon::DriveCleaner
+    cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, true, 300, *m_catalogue, m_tracker);
+
+  ASSERT_TRUE(cleaner.cleanDrive(drive, [](auto) {}).driveReusable());
+  ASSERT_EQ(cta::tape::drive::lbpToUse::disabled, drive.getLbpToUse());
+  ASSERT_EQ(0, m_tracker.stats().cleanup.readinessWaitTime);
+  ASSERT_EQ(std::string::npos, m_sessionLog.getLog().find("Cleaner waiting for drive to become ready"));
+  ASSERT_EQ(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
+}
+
+TEST_P(DriveCleanerTest, OccupiedDriveWaitsForReadinessBeforeEjecting) {
+  installDrive();
+  ASSERT_EQ(DriveUsability::Reusable, runCleaner(m_vid, false, true));
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner detected that the drive is ready"));
+  ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
+}
+
+TEST_P(DriveCleanerTest, MediaDetectionFailureRetainsReadinessWaitAndEjects) {
+  installDrive()->setFailurePoint(FailurePoint::HasTapeInPlace);
+  ASSERT_EQ(DriveUsability::Reusable, runCleaner(m_vid, false, true));
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("could not detect media before readiness wait"));
+  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner detected that the drive is ready"));
+  ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
+}
+
 TEST_P(DriveCleanerTest, PutsEmptyDriveDownAfterConfigurationResetFailure) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mediaChanger(rmcProxy, m_changerLog);
   auto* drive = installDrive(false);
   drive->setFailurePoint(cta::tape::drive::FakeDrive::FailurePoint::DisableLogicalBlockProtection);
   cta::tape::daemon::DriveCleaner
-    cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, false, 0, *m_catalogue, m_tracker);
+    cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, true, 300, *m_catalogue, m_tracker);
 
   ASSERT_EQ(cta::tape::daemon::DriveUsability::MustRemainDown, cleaner.execute(m_systemWrapper));
+  ASSERT_EQ(0, m_tracker.stats().cleanup.readinessWaitTime);
   ASSERT_EQ(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
   cta::log::LogContext logContext(m_sessionLog);
   ASSERT_FALSE(m_scheduler->getDesiredDriveState(m_driveInfo.driveName, logContext).up);

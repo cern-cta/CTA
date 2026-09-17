@@ -266,7 +266,18 @@ auto cta::tape::daemon::DriveCleaner::cleanDriveImpl(drive::DriveInterface& driv
   };
 
   if (m_waitMediaInDrive) {
-    waitForMediaToBeReady(drive);
+    // Empty drives cannot become media-ready. Keep the recovery wait if detection fails.
+    bool mayContainMedia = true;
+    try {
+      mayContainMedia = drive.hasTapeInPlace();
+    } catch (...) {
+      cta::log::ScopedParamContainer params(m_lc);
+      params.add(cta::semconv::log::exceptionMessage, currentExceptionMessage());
+      m_lc.log(cta::log::WARNING, "Cleaner could not detect media before readiness wait; retaining the wait");
+    }
+    if (mayContainMedia) {
+      waitForMediaToBeReady(drive);
+    }
   }
 
   // Reset persistent configuration even when the drive is empty.

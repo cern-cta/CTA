@@ -665,7 +665,7 @@ TEST_F(DriveControllerTest, TapeBeforePreparationWarnsAndContinuesWithCleanup) {
     EXPECT_EQ(1, probes);
     EXPECT_THAT(logger.getLog(), testing::HasSubstr("LVL=\"WARN\""));
     EXPECT_THAT(logger.getLog(),
-                testing::HasSubstr("Tape found in drive while preparing to bring it up. Continuing with cleanup."));
+                testing::HasSubstr("Tape found in drive while preparing to bring it up. Attempting drive cleanup."));
     empty = true;
     return true;
   };

@@ -28,7 +28,8 @@ void TapedApp::stop() {
 
 std::map<std::string, std::string> TapedApp::getStaticLogAttributes(const TapedConfig& config) const {
   return {
-    {"drive_name", config.drive.name}
+    {"drive_name",     config.drive.name                },
+    {"logicalLibrary", config.drive.logical_library_name}  // The casing is just for backward compatibility
   };
 }
 
