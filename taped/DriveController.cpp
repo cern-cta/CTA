@@ -13,6 +13,7 @@
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "scheduler/Scheduler.hpp"
+#include "scheduler/TapeMount.hpp"
 
 #include <exception>
 
@@ -93,10 +94,10 @@ int DriveController::run() {
       runIteration();
     }
   } catch (const std::exception& ex) {
-    logDriveFailure(m_lc, "Drive iteration failed. Cleaning before exit.", ex);
+    logDriveFailure(m_lc, "Drive controller failed. Cleaning before exit.", ex);
     iterationFailed = true;
   } catch (...) {
-    m_lc.log(log::ERR, "Drive iteration failed with an unknown exception. Cleaning before exit.");
+    m_lc.log(log::ERR, "Drive controller failed with an unknown exception. Cleaning before exit.");
     iterationFailed = true;
   }
 
@@ -112,13 +113,6 @@ void DriveController::runIteration() {
   }
 
   std::unique_ptr<TapeMount> tapeMount;
-
-  // The tracker has a reference/pointer to the tapeMount. This RAII structure ensures we clear it before the tapeMount is destroyed.
-  struct MountReferenceReset {
-    TapeSessionTracker& tracker;
-
-    ~MountReferenceReset() { tracker.setMount(nullptr); }
-  } mountReferenceReset {m_tapeSessionTracker};
 
   // Acquire work; a scheduling timeout is recoverable by waiting and trying again.
   utils::Timer t;
@@ -147,48 +141,20 @@ void DriveController::runIteration() {
     return;
   }
 
-  // At this point we know we have a "proper" mount candidate
-  m_tapeSessionTracker.setMount(tapeMount.get());
+  // TapeSession handles recoverable failures; escaping exceptions are fatal and reach run().
+  const auto transferResult = m_operations.runTapeSession(*tapeMount);
 
-  // The session result describes hardware usability, not whether every file transferred successfully.
-  TransferSessionResult transferResult;
-
-  try {
-    // The transfer session handles mounting and cleaning as this is intertwined with its internal logic.
-    // For example, if an empty mount is discovered inside the session, it does not load the tape.
-    transferResult = m_operations.transfer(*tapeMount, m_tapeSessionTracker);
-  } catch (const exception::LostDatabaseConnection& ex) {
-    logDriveFailure(m_lc, "Data transfer lost its database connection. Cleaning before retrying scheduling.", ex);
-    const bool cleaningSucceeded =
-      cleanDrive(tapeMount->getVid(), "Drive cleaning after a transfer failure threw an exception.");
-
-    // Successful cleaning does not establish that the backends are available again.
-    // Wait before publishing a down state or attempting another mount.
+  // Handled finalization failures need scheduling recovery, not another hardware cleanup.
+  if (transferResult.backendRecoveryRequired) {
     waitForBackendRecovery();
-    if (!cleaningSucceeded) {
-      putDriveDown(common::dataStructures::DriveDownReason::CleanerFailed, {}, true);
-      return;
-    }
-    // TODO (separate MR): graceful shutdown should interrupt sleep
-    m_operations.sleep(m_config.mounts.idle_scheduling_interval_secs);
-    return;
-  } catch (const std::exception& ex) {
-    // Similar to losing the connection, except we don't wait for backend recovery
-    logDriveFailure(m_lc, "Data transfer session threw an exception. Cleaning before retrying scheduling.", ex);
-    if (!cleanDrive(tapeMount->getVid(), "Drive cleaning after a transfer failure threw an exception.")) {
-      putDriveDown(common::dataStructures::DriveDownReason::CleanerFailed, {}, true);
-      return;
-    }
-    // TODO (separate MR): graceful shutdown should interrupt sleep
-    m_operations.sleep(m_config.mounts.idle_scheduling_interval_secs);
-    return;
   }
 
-  // The session result tells us something about whether the hardware is safe to reuse.
-  // This is because cleaning happens inside the session as well
   if (transferResult.driveUsability != DriveUsability::Reusable) {
     // Preserve specific session or operator reasons. Publication failures propagate.
     putDriveDown(common::dataStructures::DriveDownReason::TransferSessionFailed, {}, true);
+  }
+  if (transferResult.retryDelayRequired && transferResult.driveUsability == DriveUsability::Reusable) {
+    m_operations.sleep(m_config.mounts.idle_scheduling_interval_secs);
   }
 }
 
@@ -247,6 +213,7 @@ void DriveController::waitUntilDriveIsRequestedUp() {
       m_lc.log(log::INFO, "Missing drive registered as down. Waiting for an operator up request.");
     }
 
+    // TODO (separate MR): On down -> up transition, clean the drive
     if (desiredState.up) {
       if (waitingLogged) {
         m_lc.log(log::INFO, "Desired drive state is up. Proceeding with drive probing.");
@@ -400,15 +367,6 @@ bool DriveController::prepareDriveForScheduling() {
   return true;
 }
 
-bool DriveController::cleanDrive(const std::optional<std::string>& vid, const char* failureMessage) {
-  try {
-    return m_operations.clean(vid, true, m_tapeSessionTracker);
-  } catch (const std::exception& ex) {
-    logDriveFailure(m_lc, failureMessage, ex);
-    return false;
-  }
-}
-
 int DriveController::shutdownDrive() {
   // Use an unknown VID; final cleanup does not depend on a surviving transfer mount.
   int exitCode = 0;
@@ -416,7 +374,7 @@ int DriveController::shutdownDrive() {
 
   // Cleanup failure must not prevent attempting to publish the down state.
   try {
-    cleaningSucceeded = m_operations.clean(std::nullopt, true, m_tapeSessionTracker);
+    cleaningSucceeded = m_operations.clean(std::nullopt, true);
     if (!cleaningSucceeded) {
       m_lc.log(log::ERR, "Final drive cleaning failed.");
       exitCode = 1;

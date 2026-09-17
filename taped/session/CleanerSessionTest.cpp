@@ -461,9 +461,9 @@ TEST_P(CleanerSessionTest, BorrowedDriveResetsLbpAfterEncryptionClearFailureWith
                                             *m_scheduler,
                                             m_tracker);
 
-  m_tracker.beginTransfer();
+  m_tracker.beginTapeSession();
   m_tracker.setType(cta::tape::session::SessionType::Retrieve);
-  m_tracker.reportState(cta::tape::session::TransferState::Finished);
+  m_tracker.reportState(cta::tape::session::TapeSessionState::Finished);
   m_tracker.updateTapeSetupStats({.encryptionControlTime = 5});
   m_tracker.updateTapeTransferStats({.dataVolume = 1234, .filesCount = 2});
   m_tracker.updateTapeCleanupStats({.unloadTime = 10,
@@ -483,7 +483,7 @@ TEST_P(CleanerSessionTest, BorrowedDriveResetsLbpAfterEncryptionClearFailureWith
   ASSERT_TRUE(result.configurationResetFailed);
   ASSERT_FALSE(result.ejectFailed);
   ASSERT_FALSE(result.driveReusable());
-  ASSERT_EQ(cta::tape::session::TransferState::Finished, m_tracker.state());
+  ASSERT_EQ(cta::tape::session::TapeSessionState::Finished, m_tracker.state());
   ASSERT_EQ(0, m_tracker.errorStats().count(cta::tape::daemon::TapeSessionError::TapeLbpDisable));
   ASSERT_GT(m_tracker.stats().cleanup.encryptionControlTime, 30);
   ASSERT_GT(m_tracker.stats().cleanup.unloadTime, 10);

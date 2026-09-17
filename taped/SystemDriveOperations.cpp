@@ -16,8 +16,9 @@
 #include "rdbms/Login.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "session/CleanerSession.hpp"
-#include "session/DataTransferSession.hpp"
 #include "session/EmptyDriveProbe.hpp"
+#include "session/TapeSession.hpp"
+#include "session/TapeSessionTracker.hpp"
 #include "system/Wrapper.hpp"
 
 #ifdef CTA_PGSCHED
@@ -104,20 +105,20 @@ public:
     return nullptr;
   }
 
-  TransferSessionResult transfer(TapeMount& mount, TapeSessionTracker& tracker) override {
-    DataTransferSession session(m_lc.logger(),
-                                m_sysWrapper,
-                                m_driveInfo,
-                                m_mediaChanger,
-                                mount,
-                                tracker,
-                                m_config.transfers,
-                                m_config.mounts.tape_load_timeout_secs,
-                                *m_scheduler);
+  TapeSessionResult runTapeSession(TapeMount& mount) override {
+    TapeSession session(m_lc.logger(),
+                        m_sysWrapper,
+                        m_driveInfo,
+                        m_mediaChanger,
+                        mount,
+                        m_config.transfers,
+                        m_config.mounts.tape_load_timeout_secs,
+                        *m_scheduler);
     return session.execute();
   }
 
-  bool clean(const std::optional<std::string>& vid, bool waitMediaInDrive, TapeSessionTracker& tracker) override {
+  bool clean(const std::optional<std::string>& vid, bool waitMediaInDrive) override {
+    TapeSessionTracker tracker;
     CleanerSession session(m_mediaChanger,
                            m_lc.logger(),
                            m_driveInfo,

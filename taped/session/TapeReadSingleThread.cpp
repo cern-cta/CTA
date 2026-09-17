@@ -49,7 +49,7 @@ cta::tape::daemon::TapeReadSingleThread::TapeReadSingleThread(cta::tape::drive::
 //TapeCleaning::~TapeCleaning()
 //------------------------------------------------------------------------------
 cta::tape::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
-  m_this.m_tracker.reportState(cta::tape::session::TransferState::Finalizing);
+  m_this.m_tracker.reportState(cta::tape::session::TapeSessionState::Finalizing);
   m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::CleaningUp,
                                           std::nullopt,
                                           m_this.m_logContext);
@@ -117,7 +117,9 @@ cta::tape::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
     m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unloading,
                                             std::nullopt,
                                             m_this.m_logContext);
+    m_this.m_tracker.reportState(cta::tape::session::TapeSessionState::Unloading);
     m_this.m_drive.unloadTape();
+    m_this.m_tracker.reportState(cta::tape::session::TapeSessionState::Finalizing);
     m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread: Tape unloaded");
     m_this.m_tracker.addTapeCleanupStats({.unloadTime = m_timer.secs(cta::utils::Timer::resetCounter)});
 
@@ -128,7 +130,9 @@ cta::tape::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
                                             m_this.m_logContext);
 
     const auto librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_this.m_drive.info.rawLibrarySlot);
+    m_this.m_tracker.reportState(cta::tape::session::TapeSessionState::Unmounting);
     m_this.m_mediaChanger.dismountTape(m_this.m_volInfo.vid, librarySlot);
+    m_this.m_tracker.reportState(cta::tape::session::TapeSessionState::Finalizing);
     m_this.m_drive.disableLogicalBlockProtection();
     m_this.m_logContext.log(cta::log::INFO, "TapeReadSingleThread : tape unmounted");
     m_this.m_tracker.addTapeCleanupStats({.unmountTime = m_timer.secs(cta::utils::Timer::resetCounter)});
@@ -188,6 +192,7 @@ cta::tape::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
       m_this.m_tracker.incrementError(currentErrorToCount);
     } catch (...) {}
   }
+  m_this.m_tracker.reportState(cta::tape::session::TapeSessionState::Finalizing);
 }
 
 //------------------------------------------------------------------------------
@@ -277,8 +282,11 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
       m_logContext.log(cta::log::INFO, "Tape session started for read");
 
       currentErrorToCount = TapeSessionError::TapeLoad;
+      m_tracker.reportState(cta::tape::session::TapeSessionState::Mounting);
       measureSetupTime(&TapeSetupStats::initialMountTime, [&] { mountTapeReadOnly(); });
+      m_tracker.reportState(cta::tape::session::TapeSessionState::Loading);
       measureSetupTime(&TapeSetupStats::tapeLoadTime, [&] { waitForDrive(); });
+      m_tracker.reportState(cta::tape::session::TapeSessionState::Preparing);
       const double tapeLoadTime = m_tracker.stats().setup.tapeLoadTime;
       currentErrorToCount = TapeSessionError::CheckingTapeAlert;
       logTapeAlerts();
@@ -369,7 +377,7 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
                                        std::nullopt,
                                        m_logContext);
 
-      m_tracker.reportState(cta::tape::session::TransferState::Transferring);
+      m_tracker.reportState(cta::tape::session::TapeSessionState::Transferring);
       while (true) {
         // get a task
         task.reset(popAndRequestMoreJobs());

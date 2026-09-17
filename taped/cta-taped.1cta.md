@@ -190,6 +190,12 @@ disk_io_threads *(default: 10)*
 
 :   Number of disk I/O workers and therefore the maximum number of transfers that can perform disk I/O concurrently.
 
+stats_report_interval_secs *(default: 15)*
+
+:   Interval in seconds between periodic tape-session statistics reports to the scheduler and logs.
+Must be greater than zero.
+Final statistics are reported when the session finishes, without waiting for this interval.
+
 no_block_move_timeout_secs *(default: 1800)*
 
 :   Interval after which a file with no tape-block movement is logged as stuck.

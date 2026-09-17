@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "DataTransferSession.hpp"
+#include "TapeSession.hpp"
 
 #include "DiskReadThreadPool.hpp"
 #include "DiskWriteThreadPool.hpp"
@@ -40,20 +40,29 @@ namespace {
 constexpr bool c_useLbp = true;
 constexpr uint16_t c_xrootTimeout = 0;
 constexpr const char* c_raoLtoAlgorithmOptions = "cost_heuristic_name:cta";
+
+// Only use this on handled paths that can still stop all started workers and reporters.
+void recordFinalizationFailure(cta::tape::daemon::TapeSessionResult& result, std::exception_ptr failure) {
+  result.retryDelayRequired = true;
+  try {
+    std::rethrow_exception(failure);
+  } catch (const cta::exception::LostDatabaseConnection&) {
+    result.backendRecoveryRequired = true;
+  } catch (...) {}
+}
 }  // namespace
 
 //------------------------------------------------------------------------------
 //Constructor
 //------------------------------------------------------------------------------
-cta::tape::daemon::DataTransferSession::DataTransferSession(cta::log::Logger& log,
-                                                            System::virtualWrapper& sysWrapper,
-                                                            const cta::common::dataStructures::DriveInfo& driveInfo,
-                                                            cta::mediachanger::MediaChangerFacade& mc,
-                                                            cta::TapeMount& tapeMount,
-                                                            cta::tape::daemon::TapeSessionTracker& tapeSessionTracker,
-                                                            const TransfersConfig& transfersConfig,
-                                                            uint32_t tapeLoadTimeoutSecs,
-                                                            cta::Scheduler& scheduler)
+cta::tape::daemon::TapeSession::TapeSession(cta::log::Logger& log,
+                                            System::virtualWrapper& sysWrapper,
+                                            const cta::common::dataStructures::DriveInfo& driveInfo,
+                                            cta::mediachanger::MediaChangerFacade& mc,
+                                            cta::TapeMount& tapeMount,
+                                            const TransfersConfig& transfersConfig,
+                                            uint32_t tapeLoadTimeoutSecs,
+                                            cta::Scheduler& scheduler)
     : m_log(log),
       m_tapeMount(tapeMount),
       m_sysWrapper(sysWrapper),
@@ -61,11 +70,12 @@ cta::tape::daemon::DataTransferSession::DataTransferSession(cta::log::Logger& lo
       m_tapeLoadTimeoutSecs(tapeLoadTimeoutSecs),
       m_driveInfo(driveInfo),
       m_mediaChanger(mc),
-      m_tapeSessionTracker(tapeSessionTracker),
-      m_scheduler(scheduler) {}
+      m_scheduler(scheduler) {
+  m_tapeSessionTracker.setMount(&m_tapeMount);
+}
 
 //------------------------------------------------------------------------------
-//DataTransferSession::execute
+//TapeSession::execute
 //------------------------------------------------------------------------------
 /**
  * Function's synopsis
@@ -75,8 +85,8 @@ cta::tape::daemon::DataTransferSession::DataTransferSession(cta::log::Logger& lo
  * 2b) Log The result
  * Then branch to the right execution
  */
-cta::tape::daemon::TransferSessionResult cta::tape::daemon::DataTransferSession::execute() try {
-  m_tapeSessionTracker.beginTransfer();
+cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() try {
+  m_tapeSessionTracker.beginTapeSession();
   // 1) Prepare the logging environment
   cta::log::LogContext lc(m_log);
 
@@ -122,9 +132,8 @@ cta::tape::daemon::TransferSessionResult cta::tape::daemon::DataTransferSession:
       break;
   }
 
-  TransferSessionResult result;
-  result.vid = m_volInfo.vid;
-  m_tapeSessionTracker.reportState(cta::tape::session::TransferState::Finished);
+  TapeSessionResult result;
+  m_tapeSessionTracker.reportState(cta::tape::session::TapeSessionState::Finished);
   return result;
 } catch (...) {
   // Worker shutdown on exceptional exits remains a separate repair; do not claim completion here.
@@ -133,17 +142,15 @@ cta::tape::daemon::TransferSessionResult cta::tape::daemon::DataTransferSession:
 }
 
 //------------------------------------------------------------------------------
-//DataTransferSession::executeRead
+//TapeSession::executeRead
 //------------------------------------------------------------------------------
-cta::tape::daemon::TransferSessionResult
-cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logContext,
-                                                    cta::RetrieveMount& retrieveMount) {
-  TransferSessionResult result;
-  result.vid = m_volInfo.vid;
+cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::executeRead(cta::log::LogContext& logContext,
+                                                                                 cta::RetrieveMount& retrieveMount) {
+  TapeSessionResult result;
 
   TapeSessionReporter reporter(m_tapeSessionTracker,
                                logContext,
-                               std::chrono::seconds(15),
+                               std::chrono::seconds(m_transfersConfig.stats_report_interval_secs),
                                std::chrono::seconds(m_transfersConfig.no_block_move_timeout_secs));
   // TODO: stop and join the reporter on every exception path before the mount or tracker can be released.
   reporter.startThreads();
@@ -156,10 +163,9 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
   auto drive = findDrive(logContext, retrieveMount);
 
   if (!drive) {
-    result.transferOutcome = TransferSessionResult::Outcome::Failure;
     m_tapeSessionTracker.setOutcome(TapeSessionOutcome::Failure);
     m_tapeSessionTracker.setMountAttempted(false);
-    m_tapeSessionTracker.reportState(cta::tape::session::TransferState::Finished);
+    m_tapeSessionTracker.reportState(cta::tape::session::TapeSessionState::Finished);
     reporter.finish();
     reporter.waitThreads();
     result.driveUsability = DriveUsability::MustRemainDown;
@@ -224,7 +230,7 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
         cta::log::ScopedParamContainer params(logContext);
         params.add("tapeVid", m_volInfo.vid).add("mountId", m_volInfo.mountId).add("labelFormat", format_str.str());
         logContext.log(cta::log::INFO,
-                       "DataTransferSession::executeRead Tape LabelFormat incompatible with RAO. Setting RAO false.");
+                       "TapeSession::executeRead Tape LabelFormat incompatible with RAO. Setting RAO false.");
       } else {
         cta::tape::rao::RAOParams raoDataConfig(m_transfersConfig.retrieve.rao.enabled,
                                                 m_transfersConfig.retrieve.rao.lto_algorithm,
@@ -255,8 +261,7 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
       threadPool.waitThreads();
       readSingleThread.waitThreads();
       reportPacker.waitThread();
-      // All workers have joined. Include a failed drive publication in the final outcome before rethrowing it.
-      std::exception_ptr publicationFailure;
+      // All transfer workers have joined; return publication failures without requesting hardware cleanup.
       try {
         // If disk delivery finished last, return the drive from DrainingToDisk to Up.
         if (m_scheduler.getDriveStatus(m_driveInfo.driveName, &logContext)
@@ -268,17 +273,13 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
         }
       } catch (...) {
         m_tapeSessionTracker.incrementError(TapeSessionError::Reporting);
-        publicationFailure = std::current_exception();
+        recordFinalizationFailure(result, std::current_exception());
       }
-      m_tapeSessionTracker.reportState(cta::tape::session::TransferState::Finished);
+      m_tapeSessionTracker.reportState(cta::tape::session::TapeSessionState::Finished);
       reporter.finish();
       reporter.waitThreads();
-      if (publicationFailure) {
-        std::rethrow_exception(publicationFailure);
-      }
 
       result.driveUsability = readSingleThread.getHardwareStatus();
-      result.loadingAttempted = readSingleThread.loadingAttempted();
       return result;
     } else {
       // If the first pop from the queue fails, just log this was an empty mount and that's it. The memory management
@@ -289,9 +290,6 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
         priority = cta::log::WARNING;
       }
 
-      result.transferOutcome =
-        noFilesToRecall ? TransferSessionResult::Outcome::Success : TransferSessionResult::Outcome::Failure;
-      result.hardwareCleanupOutcome = TransferSessionResult::Outcome::NotRequired;
       logContext.log(priority, "Aborting recall mount startup: empty mount");
 
       std::string mountId = retrieveMount.getMountTransactionId();
@@ -299,7 +297,7 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
       cta::log::Param errorMessageParam(cta::semconv::log::errorMessage, "Aborted: empty recall mount");
 
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
-      m_tapeSessionTracker.reportState(cta::tape::session::TransferState::Finalizing);
+      m_tapeSessionTracker.reportState(cta::tape::session::TapeSessionState::Finalizing);
       // TODO: handle standard exceptions from mount completion and still stop the reporter.
       m_tapeSessionTracker.setOutcome(noFilesToRecall ? TapeSessionOutcome::Success : TapeSessionOutcome::Failure);
       m_tapeSessionTracker.setMountAttempted(false);
@@ -316,7 +314,7 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
         cta::log::LogContext::ScopedParam sp08(logContext, cta::log::Param("MountTransactionId", mountId));
         logContext.log(priority, "Notified client of end session with error");
       } catch (cta::exception::Exception& ex) {
-        result.reportingFinalizationOutcome = TransferSessionResult::Outcome::Failure;
+        recordFinalizationFailure(result, std::current_exception());
         m_tapeSessionTracker.incrementError(TapeSessionError::Reporting);
         cta::log::LogContext::ScopedParam sp12(
           logContext,
@@ -328,7 +326,7 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
                                     cta::common::dataStructures::MountType::NoMount,
                                     cta::common::dataStructures::DriveStatus::Up,
                                     logContext);
-      m_tapeSessionTracker.reportState(cta::tape::session::TransferState::Finished);
+      m_tapeSessionTracker.reportState(cta::tape::session::TapeSessionState::Finished);
       reporter.finish();
       reporter.waitThreads();
       return result;
@@ -337,17 +335,15 @@ cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logCon
 }
 
 //------------------------------------------------------------------------------
-//DataTransferSession::executeWrite
+//TapeSession::executeWrite
 //------------------------------------------------------------------------------
-cta::tape::daemon::TransferSessionResult
-cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logContext,
-                                                     cta::ArchiveMount& archiveMount) {
-  TransferSessionResult result;
-  result.vid = m_volInfo.vid;
+cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::executeWrite(cta::log::LogContext& logContext,
+                                                                                  cta::ArchiveMount& archiveMount) {
+  TapeSessionResult result;
 
   TapeSessionReporter reporter(m_tapeSessionTracker,
                                logContext,
-                               std::chrono::seconds(15),
+                               std::chrono::seconds(m_transfersConfig.stats_report_interval_secs),
                                std::chrono::seconds(m_transfersConfig.no_block_move_timeout_secs));
   // TODO: stop and join the reporter on every exception path before the mount or tracker can be released.
   reporter.startThreads();
@@ -357,10 +353,9 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
   // 1) Get hold of the drive error logs are done inside the findDrive function
   auto drive = findDrive(logContext, archiveMount);
   if (!drive) {
-    result.transferOutcome = TransferSessionResult::Outcome::Failure;
     m_tapeSessionTracker.setOutcome(TapeSessionOutcome::Failure);
     m_tapeSessionTracker.setMountAttempted(false);
-    m_tapeSessionTracker.reportState(cta::tape::session::TransferState::Finished);
+    m_tapeSessionTracker.reportState(cta::tape::session::TapeSessionState::Finished);
     reporter.finish();
     reporter.waitThreads();
     result.driveUsability = DriveUsability::MustRemainDown;
@@ -436,12 +431,11 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
       threadPool.waitThreads();
       memoryManager.waitThreads();
       reportPacker.waitThread();
-      m_tapeSessionTracker.reportState(cta::tape::session::TransferState::Finished);
+      m_tapeSessionTracker.reportState(cta::tape::session::TapeSessionState::Finished);
       reporter.finish();
       reporter.waitThreads();
 
       result.driveUsability = writeSingleThread.getHardwareStatus();
-      result.loadingAttempted = writeSingleThread.loadingAttempted();
       return result;
     } else {
       // Just log this was an empty mount and that's it. The memory management will be deallocated automatically.
@@ -449,16 +443,14 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
       if (noFilesToMigrate) {
         priority = cta::log::WARNING;
       }
-      result.transferOutcome =
-        noFilesToMigrate ? TransferSessionResult::Outcome::Success : TransferSessionResult::Outcome::Failure;
-      result.hardwareCleanupOutcome = TransferSessionResult::Outcome::NotRequired;
+
       logContext.log(priority, "Aborting migration mount startup: empty mount");
 
       std::string mountId = archiveMount.getMountTransactionId();
       cta::log::Param errorMessageParam(cta::semconv::log::errorMessage, "Aborted: empty migration mount");
 
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
-      m_tapeSessionTracker.reportState(cta::tape::session::TransferState::Finalizing);
+      m_tapeSessionTracker.reportState(cta::tape::session::TapeSessionState::Finalizing);
       // TODO: handle standard exceptions from mount completion and still stop the reporter.
       m_tapeSessionTracker.setOutcome(noFilesToMigrate ? TapeSessionOutcome::Success : TapeSessionOutcome::Failure);
       m_tapeSessionTracker.setMountAttempted(false);
@@ -472,7 +464,7 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
         cta::log::LogContext::ScopedParam sp11(logContext, cta::log::Param("MountTransactionId", mountId));
         logContext.log(priority, "Notified client of end session with error");
       } catch (cta::exception::Exception& ex) {
-        result.reportingFinalizationOutcome = TransferSessionResult::Outcome::Failure;
+        recordFinalizationFailure(result, std::current_exception());
         m_tapeSessionTracker.incrementError(TapeSessionError::Reporting);
         cta::log::LogContext::ScopedParam sp12(
           logContext,
@@ -484,7 +476,7 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
                                     cta::common::dataStructures::MountType::NoMount,
                                     cta::common::dataStructures::DriveStatus::Up,
                                     logContext);
-      m_tapeSessionTracker.reportState(cta::tape::session::TransferState::Finished);
+      m_tapeSessionTracker.reportState(cta::tape::session::TapeSessionState::Finished);
       reporter.finish();
       reporter.waitThreads();
       return result;
@@ -493,17 +485,17 @@ cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logCo
 }
 
 //------------------------------------------------------------------------------
-//DataTransferSession::executeLabel
+//TapeSession::executeLabel
 //------------------------------------------------------------------------------
-cta::tape::daemon::TransferSessionResult
-cta::tape::daemon::DataTransferSession::executeLabel([[maybe_unused]] cta::log::LogContext& logContext,
-                                                     [[maybe_unused]] cta::LabelMount* labelMount) const {
+cta::tape::daemon::TapeSessionResult
+cta::tape::daemon::TapeSession::executeLabel([[maybe_unused]] cta::log::LogContext& logContext,
+                                             [[maybe_unused]] cta::LabelMount* labelMount) const {
   throw cta::exception::NotImplementedException();
   // TODO
 }
 
 //------------------------------------------------------------------------------
-//DataTransferSession::findDrive
+//TapeSession::findDrive
 //------------------------------------------------------------------------------
 /*
  * Function synopsis  :
@@ -519,7 +511,7 @@ cta::tape::daemon::DataTransferSession::executeLabel([[maybe_unused]] cta::log::
  * @return the drive if found, nullptr otherwise
  */
 std::unique_ptr<cta::tape::drive::DriveInterface>
-cta::tape::daemon::DataTransferSession::findDrive(cta::log::LogContext& logContext, cta::TapeMount& mount) {
+cta::tape::daemon::TapeSession::findDrive(cta::log::LogContext& logContext, cta::TapeMount& mount) {
   // Find the drive in the system's SCSI devices
   cta::tape::SCSI::DeviceVector dv(m_sysWrapper);
   cta::tape::SCSI::DeviceInfo driveInfo;
@@ -561,10 +553,10 @@ cta::tape::daemon::DataTransferSession::findDrive(cta::log::LogContext& logConte
 //------------------------------------------------------------------------------
 // Get drive down with reason
 //------------------------------------------------------------------------------
-void cta::tape::daemon::DataTransferSession::putDriveDown(common::dataStructures::DriveDownReason reason,
-                                                          cta::TapeMount* mount,
-                                                          cta::log::LogContext& logContext,
-                                                          std::string_view detail) {
+void cta::tape::daemon::TapeSession::putDriveDown(common::dataStructures::DriveDownReason reason,
+                                                  cta::TapeMount* mount,
+                                                  cta::log::LogContext& logContext,
+                                                  std::string_view detail) {
   const auto headerErrMsg = common::dataStructures::formatDriveDownReason(reason, detail);
   cta::log::ScopedParamContainer params(logContext);
   params.add("devFilename", m_driveInfo.devFilename).add(cta::semconv::log::errorMessage, headerErrMsg);

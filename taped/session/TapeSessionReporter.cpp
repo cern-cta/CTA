@@ -192,7 +192,7 @@ void TapeSessionReporter::reportNow() {
 
 void TapeSessionReporter::reportSessionFinished() {
   // Stopping the reporter alone does not establish that transfer workers have stopped.
-  if (m_tracker.state() != cta::tape::session::TransferState::Finished) {
+  if (m_tracker.state() != cta::tape::session::TapeSessionState::Finished) {
     return;
   }
 
@@ -260,9 +260,9 @@ void TapeSessionReporter::logStats(bool sessionFinished, const TapeSessionStats&
       totalTime ? (tapeStats.dataVolume + tapeStats.headerVolume) / 1000.0 / 1000.0 / totalTime : 0.0);
   const auto state = m_tracker.state();
   if (state) {
-    set("transferState", cta::tape::session::toString(*state));
+    set("sessionState", cta::tape::session::toString(*state));
   } else {
-    set("transferState", std::nullopt);
+    set("sessionState", std::nullopt);
   }
   set("sessionType", cta::tape::session::toString(m_tracker.type()));
   if (!sessionFinished) {

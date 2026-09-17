@@ -241,12 +241,14 @@ struct TransfersConfig final {
   uint32_t buffer_count = 5000;
   uint32_t buffer_size_bytes = 5000000;
   uint32_t disk_io_threads = 10;
+  // Periodic tape-session statistics publication interval.
+  uint32_t stats_report_interval_secs = 15;
   uint32_t no_block_move_timeout_secs = 1800;
   ArchiveTransferConfig archive;
   RetrieveTransferConfig retrieve;
   EncryptionConfig encryption;
 
-  static constexpr std::size_t memberCount() { return 7; }
+  static constexpr std::size_t memberCount() { return 8; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
@@ -258,6 +260,9 @@ struct TransfersConfig final {
     }
     if (disk_io_threads == 0) {
       result.addError("disk_io_threads", "must be greater than zero");
+    }
+    if (stats_report_interval_secs == 0) {
+      result.addError("stats_report_interval_secs", "must be greater than zero");
     }
     if (no_block_move_timeout_secs == 0) {
       result.addError("no_block_move_timeout_secs", "must be greater than zero");

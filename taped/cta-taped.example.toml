@@ -150,6 +150,10 @@
   # If omitted, 10 is used.
   disk_io_threads = 10
 
+  # Interval, in seconds, between periodic tape-session statistics reports. Must be greater than zero.
+  # If omitted, 15 is used. Final statistics are reported when the session finishes.
+  stats_report_interval_secs = 15
+
   # Interval, in seconds, after which a file with no tape-block movement is logged as stuck. This setting 
   # only controls reporting and does not end the transfer. Independently, cta-taped currently enforces a 
   # non-configurable 15-minute limit with no data movement in the Running and DrainingToDisk states. Reaching 

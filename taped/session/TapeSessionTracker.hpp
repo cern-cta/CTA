@@ -7,8 +7,8 @@
 
 #include "scheduler/TapeMount.hpp"
 #include "taped/session/SessionType.hpp"
+#include "taped/session/TapeSessionState.hpp"
 #include "taped/session/TapeSessionStats.hpp"
-#include "taped/session/TransferState.hpp"
 
 #include <chrono>
 #include <cstdint>
@@ -93,8 +93,8 @@ public:
     return m_mount;
   }
 
-  // Only the session owner starts a transfer; state transitions never reset its data.
-  void beginTransfer() {
+  // Only the session owner starts a TapeSession; state transitions never reset its data.
+  void beginTapeSession() {
     std::lock_guard lock(m_mutex);
     m_stats = {};
     m_errorStats.clear();
@@ -111,16 +111,16 @@ public:
     m_tapeDone = false;
     m_diskDone = false;
     m_sessionStartTime = std::chrono::steady_clock::now();
-    m_state = cta::tape::session::TransferState::Preparing;
+    m_state = cta::tape::session::TapeSessionState::Preparing;
     m_type = cta::tape::session::SessionType::Undetermined;
   }
 
-  void reportState(cta::tape::session::TransferState state) {
+  void reportState(cta::tape::session::TapeSessionState state) {
     std::lock_guard lock(m_mutex);
     m_state = state;
   }
 
-  std::optional<cta::tape::session::TransferState> state() const {
+  std::optional<cta::tape::session::TapeSessionState> state() const {
     std::lock_guard lock(m_mutex);
     return m_state;
   }
@@ -338,10 +338,10 @@ public:
 private:
   // Called with m_mutex held. Only the session owner may establish Finished.
   void updateRetrievalCompletionState() {
-    using cta::tape::session::TransferState;
+    using cta::tape::session::TapeSessionState;
     if (m_type == cta::tape::session::SessionType::Retrieve && m_tapeDone && m_state
-        && m_state != TransferState::Finished) {
-      m_state = m_diskDone ? TransferState::Finalizing : TransferState::DrainingToDisk;
+        && m_state != TapeSessionState::Finished) {
+      m_state = m_diskDone ? TapeSessionState::Finalizing : TapeSessionState::DrainingToDisk;
     }
   }
 
@@ -349,7 +349,7 @@ private:
   // TODO: can we have something that is not a raw pointer here?
   cta::TapeMount* m_mount = nullptr;
 
-  std::optional<cta::tape::session::TransferState> m_state;
+  std::optional<cta::tape::session::TapeSessionState> m_state;
   bool m_tapeDone = false;
   bool m_diskDone = false;
   cta::tape::session::SessionType m_type = cta::tape::session::SessionType::Undetermined;

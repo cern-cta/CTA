@@ -10,7 +10,6 @@
 #include "common/dataStructures/DriveDownReason.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
 #include "common/log/LogContext.hpp"
-#include "session/TapeSessionTracker.hpp"
 
 #include <memory>
 #include <optional>
@@ -58,7 +57,6 @@ private:
   // Return false when probing requests down and scheduling must be skipped.
   bool prepareDriveForScheduling();
   // Convert cleaner exceptions to a failed cleaning result and log the caller's context.
-  bool cleanDrive(const std::optional<std::string>& vid, const char* failureMessage);
   // Clean and publish down, returning a nonzero exit code if either operation fails.
   int shutdownDrive();
 
@@ -71,7 +69,6 @@ private:
   // Destroy the owned operations before the drive information it borrows.
   std::unique_ptr<DriveOperations> m_ownedOperations;
   DriveOperations& m_operations;
-  TapeSessionTracker m_tapeSessionTracker;
 };
 
 }  // namespace cta::tape::daemon

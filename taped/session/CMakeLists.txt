@@ -15,7 +15,7 @@ set(CTATAPEDSESSION_LIBRARY_SRCS
   MigrationMemoryManager.cpp
   MigrationReportPacker.cpp
   MigrationTaskInjector.cpp
-  DataTransferSession.cpp
+  TapeSession.cpp
   RecallMemoryManager.cpp
   RecallTaskInjector.cpp
   RecallReportPacker.cpp
@@ -24,7 +24,7 @@ set(CTATAPEDSESSION_LIBRARY_SRCS
   TapeWriteTask.cpp
   TransferTaskTracker.cpp
   DriveSessionTracker.cpp
-  TransferState.cpp
+  TapeSessionState.cpp
   SessionType.cpp)
 
 add_library(ctatapedsession
@@ -44,7 +44,7 @@ target_link_libraries(ctatapedsession
 
 add_library(ctatapedsessionunittests SHARED
   CleanerSessionTest.cpp
-  DataTransferSessionTest.cpp
+  TapeSessionTest.cpp
   DiskReadTaskTest.cpp
   DiskWriteTaskTest.cpp
   DiskWriteThreadPoolTest.cpp

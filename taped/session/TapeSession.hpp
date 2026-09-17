@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "TapeSessionTracker.hpp"  // TODO: I don't think tapesession is accurate here, but that's for later
+#include "TapeSessionResult.hpp"
+#include "TapeSessionTracker.hpp"
 #include "TapeSingleThreadInterface.hpp"
-#include "TransferSessionResult.hpp"
 #include "common/dataStructures/DriveDownReason.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
@@ -25,30 +25,32 @@
 namespace cta::tape::daemon {
 
 /**
- * The main class handling a tape data-transfer session.
+ * The main class handling a tape session.
  */
-class DataTransferSession {
+class TapeSession {
 public:
   /**
    * Constructor.
    *
    * @param log Object representing the API of the CTA logging system.
    */
-  DataTransferSession(cta::log::Logger& log,
-                      System::virtualWrapper& sysWrapper,
-                      const cta::common::dataStructures::DriveInfo& driveInfo,
-                      cta::mediachanger::MediaChangerFacade& mc,
-                      cta::TapeMount& tapeMount,
-                      cta::tape::daemon::TapeSessionTracker& tapeSessionTracker,
-                      const TransfersConfig& transfersConfig,
-                      uint32_t tapeLoadTimeoutSecs,
-                      cta::Scheduler& scheduler);
+  TapeSession(cta::log::Logger& log,
+              System::virtualWrapper& sysWrapper,
+              const cta::common::dataStructures::DriveInfo& driveInfo,
+              cta::mediachanger::MediaChangerFacade& mc,
+              cta::TapeMount& tapeMount,
+              const TransfersConfig& transfersConfig,
+              uint32_t tapeLoadTimeoutSecs,
+              cta::Scheduler& scheduler);
 
   /**
    * Mount, transfer, unload and dismount the tape, returning the session outcomes.
    * Exceptions propagate unchanged; the result describes sessions that return normally.
    */
-  TransferSessionResult execute();
+  TapeSessionResult execute();
+
+  // Read-only inspection remains valid for the lifetime of this session.
+  const TapeSessionTracker& tracker() const { return m_tapeSessionTracker; }
 
   /** Temporary method used for debugging while building the session class */
   const std::string& getVid() const { return m_volInfo.vid; }
@@ -56,9 +58,12 @@ public:
   /**
    * Destructor.
    */
-  ~DataTransferSession() noexcept = default;
+  ~TapeSession() noexcept = default;
 
 private:
+  // Owned tracking state outlives the workers and reporter created by execute().
+  TapeSessionTracker m_tapeSessionTracker;
+
   /**
    * Object representing the API of the CTA logging system.
    */
@@ -90,19 +95,17 @@ private:
                     std::string_view detail = {});
 
   /** sub-part of execute for the read sessions */
-  TransferSessionResult executeRead(cta::log::LogContext& logContext, cta::RetrieveMount& retrieveMount);
+  TapeSessionResult executeRead(cta::log::LogContext& logContext, cta::RetrieveMount& retrieveMount);
 
   /** sub-part of execute for a write session */
-  TransferSessionResult executeWrite(cta::log::LogContext& logContext, cta::ArchiveMount& archiveMount);
+  TapeSessionResult executeWrite(cta::log::LogContext& logContext, cta::ArchiveMount& archiveMount);
 
   /** sub-part of execute for a label session */
-  TransferSessionResult executeLabel(cta::log::LogContext& logContext, cta::LabelMount* labelMount) const;
+  TapeSessionResult executeLabel(cta::log::LogContext& logContext, cta::LabelMount* labelMount) const;
 
   /** Reference to the MediaChangerFacade, allowing the mounting of the tape
    * by the library. It will be used exclusively by the tape thread. */
   cta::mediachanger::MediaChangerFacade& m_mediaChanger;
-  /** For session tracking and reporting */
-  cta::tape::daemon::TapeSessionTracker& m_tapeSessionTracker;
   /**
    * The scheduler, i.e. the local interface to the Objectstore DB
    */

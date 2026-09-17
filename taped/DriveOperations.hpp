@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "session/TransferSessionResult.hpp"
+#include "session/TapeSessionResult.hpp"
 
 #include <memory>
 #include <optional>
@@ -19,9 +19,8 @@ class TapeMount;
 
 namespace cta::tape::daemon {
 
-class TapeSessionTracker;
-
 // External operations needed by the drive lifecycle.
+// This is mostly there so that we can nicely implement the unit tests for the DriveController
 class DriveOperations {
 public:
   virtual ~DriveOperations() = default;
@@ -30,8 +29,8 @@ public:
   virtual bool logicalLibraryExists() = 0;
   virtual std::pair<bool, std::optional<std::string>> probeDrive() = 0;
   virtual std::unique_ptr<TapeMount> getNextMount() = 0;
-  virtual TransferSessionResult transfer(TapeMount& mount, TapeSessionTracker& tracker) = 0;
-  virtual bool clean(const std::optional<std::string>& vid, bool waitMediaInDrive, TapeSessionTracker& tracker) = 0;
+  virtual TapeSessionResult runTapeSession(TapeMount& mount) = 0;
+  virtual bool clean(const std::optional<std::string>& vid, bool waitMediaInDrive) = 0;
   virtual void sleep(unsigned int seconds) = 0;
 };
 

@@ -454,6 +454,8 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusSameAsPrevious) {
 
 TEST_P(cta_catalogue_DriveStateTest, logDriveStatusOnlyOnTransition) {
   auto tapeDrive = getTapeDriveWithMandatoryElements("VDSTK11");
+  // Allow the reported Up status to become the stored state.
+  tapeDrive.desiredUp = true;
   tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Down;
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
 
@@ -483,6 +485,9 @@ TEST_P(cta_catalogue_DriveStateTest, logDriveStatusOnlyOnTransition) {
 
   inputs.status = cta::common::dataStructures::DriveStatus::Up;
   state.updateDriveStatus(driveInfo, inputs, lc);
+  const auto upDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
+  ASSERT_TRUE(upDrive);
+  ASSERT_EQ(cta::common::dataStructures::DriveStatus::Up, upDrive->driveStatus);
   inputs.reportTime++;
   state.updateDriveStatus(driveInfo, inputs, lc);
   const auto log = logger.getLog();

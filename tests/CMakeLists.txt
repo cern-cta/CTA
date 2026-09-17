@@ -192,8 +192,8 @@ add_custom_target(cta-unit-tests-helgrind-object-store-db
   COMMENT "Running unit tests with race conditions detection (Object store DB section)" VERBATIM)
 
 add_custom_target(cta-unit-tests-helgrind-data-transfer
-  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests> --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/DataTransferSessionTest*
-  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests> --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/DataTransferSessionTest*
+  echo ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests> --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/TapeSessionTest*
+  COMMAND ${VALGRIND} --tool=helgrind ${HELGRIND_OPTS_W_SUPPR} -q $<TARGET_FILE:cta-unit-tests> --gtest_filter=OStoreDBPlusMockSchedulerTestVFS/TapeSessionTest*
 
   DEPENDS cta-unit-tests cta-unit-tests-multiprocess ${CMAKE_CURRENT_BINARY_DIR}/helgrind.suppr
   COMMENT "Running unit tests with race conditions detection (Data transfer section)" VERBATIM)

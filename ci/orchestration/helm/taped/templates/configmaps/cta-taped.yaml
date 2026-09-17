@@ -83,6 +83,7 @@ data:
       buffer_count = {{ $.Values.transfers.bufferCount }}
       buffer_size_bytes = {{ $.Values.transfers.bufferSizeBytes }}
       disk_io_threads = {{ $.Values.transfers.diskIoThreads }}
+      stats_report_interval_secs = {{ $.Values.transfers.statsReportIntervalSecs }}
       no_block_move_timeout_secs = {{ $.Values.transfers.noBlockMoveTimeoutSecs }}
 
     [transfers.archive]

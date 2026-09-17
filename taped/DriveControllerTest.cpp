@@ -10,6 +10,7 @@
 #include "common/log/StringLogger.hpp"
 #include "runtime/config/parsing/TomlParser.hpp"
 #include "scheduler/Scheduler.hpp"
+#include "scheduler/TapeMount.hpp"
 
 #include <functional>
 #include <gmock/gmock.h>
@@ -101,9 +102,10 @@ protected:
   unsigned int schedules = 0;
   unsigned int transfers = 0;
   unsigned int destroyed = 0;
+  TapeMount* m_liveMount = nullptr;
   std::vector<unsigned int> sleeps;
   std::function<std::unique_ptr<TapeMount>()> schedule;
-  std::function<TransferSessionResult(TapeMount&)> transfer;
+  std::function<TapeSessionResult(TapeMount&)> transfer;
   std::function<bool()> libraryExists = [] { return true; };
   std::function<bool()> clean = [] { return true; };
 
@@ -117,7 +119,7 @@ protected:
 
     std::pair<bool, std::optional<std::string>> probeDrive() override {
       ++fixture.probes;
-      EXPECT_EQ(nullptr, fixture.mount());
+      EXPECT_EQ(nullptr, fixture.liveMount());
       return {fixture.empty, fixture.probeError};
     }
 
@@ -126,13 +128,13 @@ protected:
       return fixture.schedule ? fixture.schedule() : nullptr;
     }
 
-    TransferSessionResult transfer(TapeMount& tapeMount, TapeSessionTracker& tracker) override {
+    TapeSessionResult runTapeSession(TapeMount& tapeMount) override {
       ++fixture.transfers;
-      EXPECT_EQ(&tapeMount, tracker.mount());
-      return fixture.transfer ? fixture.transfer(tapeMount) : TransferSessionResult {};
+      EXPECT_EQ(&tapeMount, fixture.liveMount());
+      return fixture.transfer ? fixture.transfer(tapeMount) : TapeSessionResult {};
     }
 
-    bool clean(const std::optional<std::string>&, bool, TapeSessionTracker&) override { return fixture.clean(); }
+    bool clean(const std::optional<std::string>&, bool) override { return fixture.clean(); }
 
     void sleep(unsigned int seconds) override {
       if (fixture.sleeps.size() >= 10) {
@@ -163,11 +165,7 @@ protected:
 
   void waitForUp() { controller->waitUntilDriveIsRequestedUp(); }
 
-  TapeMount* mount() { return controller->m_tapeSessionTracker.mount(); }
-
-  std::optional<cta::tape::session::TransferState> transferState() { return controller->m_tapeSessionTracker.state(); }
-
-  cta::tape::session::SessionType sessionType() { return controller->m_tapeSessionTracker.type(); }
+  TapeMount* liveMount() { return m_liveMount; }
 
   void down(bool preserve = false) { controller->putDriveDown(DriveDownReason::Shutdown, {}, preserve); }
 
@@ -192,8 +190,10 @@ protected:
   void supplyMount() {
     schedule = [this] {
       auto tapeMount = std::make_unique<TestMount>();
+      EXPECT_EQ(nullptr, liveMount());
+      m_liveMount = tapeMount.get();
       tapeMount->onDestroy = [this] {
-        EXPECT_EQ(nullptr, mount());
+        m_liveMount = nullptr;
         ++destroyed;
       };
       return tapeMount;
@@ -542,7 +542,7 @@ TEST_F(DriveControllerTest, SchedulingDatabaseFailureWaitsForRecoveryBeforeRetry
 
   EXPECT_NO_THROW(iteration());
   EXPECT_THAT(logger.getLog(), testing::HasSubstr("LVL=\"ERROR\""));
-  EXPECT_EQ(nullptr, mount());
+  EXPECT_EQ(nullptr, liveMount());
 
   schedule = {};
   expectPreparation();
@@ -570,7 +570,7 @@ TEST_F(DriveControllerTest, UnexpectedSchedulingFailureWaitsAndAllowsAnotherIter
   EXPECT_NO_THROW(iteration());
   EXPECT_THAT(logger.getLog(), testing::HasSubstr("Scheduling failed unexpectedly"));
   EXPECT_THAT(logger.getLog(), testing::HasSubstr("LVL=\"ERROR\""));
-  EXPECT_EQ(nullptr, mount());
+  EXPECT_EQ(nullptr, liveMount());
   EXPECT_EQ(0, cleanAttempts);
   EXPECT_EQ(0, transfers);
   EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.idle_scheduling_interval_secs));
@@ -582,36 +582,32 @@ TEST_F(DriveControllerTest, UnexpectedSchedulingFailureWaitsAndAllowsAnotherIter
   EXPECT_EQ(2, schedules);
   EXPECT_EQ(1, transfers);
   EXPECT_EQ(1, destroyed);
-  EXPECT_EQ(nullptr, mount());
+  EXPECT_EQ(nullptr, liveMount());
   EXPECT_EQ(0, cleanAttempts);
   EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.idle_scheduling_interval_secs));
 }
 
 /*
- * Scheduling does not start a transfer or assign a transfer state.
- * The tracker must not reference a mount when no work was acquired.
+ * Scheduling without work does not start a TapeSession.
  */
-TEST_F(DriveControllerTest, IdleDriveDoesNotStartATransfer) {
+TEST_F(DriveControllerTest, IdleDriveDoesNotStartATapeSession) {
   expectPreparation();
 
   iteration();
 
-  EXPECT_FALSE(transferState().has_value());
-  EXPECT_EQ(cta::tape::session::SessionType::Undetermined, sessionType());
-  EXPECT_EQ(nullptr, mount());
+  EXPECT_EQ(0, transfers);
+  EXPECT_EQ(nullptr, liveMount());
 }
 
 // Transfers and recovery.
 
 /*
- * If a transfer reports a file failure but the drive remains reusable, the controller leaves it available.
- * A failed file alone does not establish a hardware problem.
+ * A reusable drive without a recovery request remains available for scheduling.
  */
-TEST_F(DriveControllerTest, FileFailureWithReusableDriveDoesNotRequestDown) {
+TEST_F(DriveControllerTest, ReusableDriveWithoutRecoveryDoesNotRequestDown) {
   supplyMount();
   transfer = [](TapeMount&) {
-    TransferSessionResult result;
-    result.transferOutcome = TransferSessionResult::Outcome::Failure;
+    TapeSessionResult result;
     return result;
   };
   expectPreparation();
@@ -622,147 +618,57 @@ TEST_F(DriveControllerTest, FileFailureWithReusableDriveDoesNotRequestDown) {
 }
 
 /*
- * Each transfer exposes only its own mount through the tracker.
- * The reference is cleared before destruction and before the next scheduling attempt.
+ * Each session receives its own live mount, released before scheduling again.
  */
-TEST_F(DriveControllerTest, SuccessiveMountsNeverExposeThePreviousMount) {
+TEST_F(DriveControllerTest, SuccessiveSessionsReceiveTheirOwnMount) {
   supplyMount();
   transfer = [&](TapeMount& tapeMount) {
-    EXPECT_EQ(&tapeMount, mount());
-    return TransferSessionResult {};
+    EXPECT_EQ(&tapeMount, liveMount());
+    return TapeSessionResult {};
   };
 
   expectPreparation();
   iteration();
-  EXPECT_EQ(nullptr, mount());
+  EXPECT_EQ(nullptr, liveMount());
   expectPreparation();
   iteration();
 
   EXPECT_EQ(2, transfers);
   EXPECT_EQ(2, destroyed);
-  EXPECT_EQ(nullptr, mount());
+  EXPECT_EQ(nullptr, liveMount());
 }
 
-/*
- * If an ordinary transfer exception is cleaned successfully, the controller releases its mount.
- * It can probe and schedule again without requesting the drive down.
- */
-TEST_F(DriveControllerTest, OrdinaryTransferExceptionCleansAndRetriesWithoutOperatorUp) {
+// A handled finalization failure has already completed the session's local cleanup.
+TEST_F(DriveControllerTest, HandledSessionFailureRetriesWithoutCleaning) {
   supplyMount();
-  transfer = [](TapeMount&) -> TransferSessionResult { throw std::runtime_error("transfer failed"); };
-  unsigned int cleanAttempts = 0;
-  clean = [&] {
-    ++cleanAttempts;
-    return true;
+  transfer = [](TapeMount&) {
+    TapeSessionResult result;
+    result.retryDelayRequired = true;
+    return result;
   };
-  expectPreparation();
-
-  EXPECT_NO_THROW(iteration());
-  EXPECT_EQ(1, cleanAttempts);
-  EXPECT_EQ(1, destroyed);
-  EXPECT_EQ(nullptr, mount());
-
-  transfer = {};
-  expectPreparation();
-  iteration();
-  EXPECT_EQ(2, probes);
-  EXPECT_EQ(2, schedules);
-  EXPECT_EQ(2, destroyed);
-  EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.idle_scheduling_interval_secs));
-}
-
-/*
- * A failed transfer keeps its mount alive while recovery cleaning runs.
- * The tracker reference is cleared before the mount is destroyed afterward.
- */
-TEST_F(DriveControllerTest, TransferFailureKeepsMountAliveThroughCleaning) {
-  supplyMount();
-  transfer = [](TapeMount&) -> TransferSessionResult { throw std::runtime_error("transfer failed"); };
-  clean = [&] {
-    EXPECT_NE(nullptr, mount());
-    EXPECT_EQ(0, destroyed);
-    return true;
-  };
-  expectPreparation();
-
-  iteration();
-
-  EXPECT_EQ(1, destroyed);
-  EXPECT_EQ(nullptr, mount());
-}
-
-/*
- * If transfer recovery cleaning returns failure, the controller should request the drive down.
- * The cleaner failure must be reported instead of allowing another mount.
- */
-TEST_F(DriveControllerTest, TransferExceptionWithFailedCleanupRequestsCleanerFailureDown) {
-  supplyMount();
-  transfer = [](TapeMount&) -> TransferSessionResult { throw std::runtime_error("transfer failed"); };
-  unsigned int cleanAttempts = 0;
-  clean = [&] {
-    ++cleanAttempts;
+  clean = [] {
+    ADD_FAILURE() << "Handled session failures must not trigger another cleanup";
     return false;
   };
   expectPreparation();
-  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _))
-    .After(preparationComplete)
-    .WillOnce(Return(DesiredDriveState {}));
-  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
-  EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
-    .WillOnce(Invoke([](const auto&, const DesiredDriveState& state, auto&) {
-      EXPECT_FALSE(state.up);
-      EXPECT_EQ(formatDriveDownReason(DriveDownReason::CleanerFailed), state.reason);
-    }));
 
   EXPECT_NO_THROW(iteration());
-  EXPECT_EQ(1, cleanAttempts);
   EXPECT_EQ(1, destroyed);
-  EXPECT_EQ(nullptr, mount());
+  EXPECT_EQ(nullptr, liveMount());
+  EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.idle_scheduling_interval_secs));
 }
 
-/*
- * If transfer recovery cleaning throws, the controller should still request the drive down.
- * A cleaner exception must not leave the drive available for scheduling.
- */
-TEST_F(DriveControllerTest, TransferExceptionWithThrowingCleanupRequestsCleanerFailureDown) {
+TEST_F(DriveControllerTest, HandledSessionFailureWaitsForBackendWithoutCleaning) {
   supplyMount();
-  transfer = [](TapeMount&) -> TransferSessionResult { throw std::runtime_error("transfer failed"); };
-  unsigned int cleanAttempts = 0;
-  clean = [&]() -> bool {
-    ++cleanAttempts;
-    throw std::runtime_error("cleaner failed");
+  transfer = [](TapeMount&) {
+    TapeSessionResult result;
+    result.backendRecoveryRequired = true;
+    result.retryDelayRequired = true;
+    return result;
   };
-  expectPreparation();
-  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _))
-    .After(preparationComplete)
-    .WillOnce(Return(DesiredDriveState {}));
-  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
-  EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
-    .WillOnce(Invoke([](const auto&, const DesiredDriveState& state, auto&) {
-      EXPECT_FALSE(state.up);
-      EXPECT_EQ(formatDriveDownReason(DriveDownReason::CleanerFailed), state.reason);
-    }));
-
-  EXPECT_NO_THROW(iteration());
-  EXPECT_EQ(1, cleanAttempts);
-  EXPECT_EQ(1, destroyed);
-  EXPECT_EQ(nullptr, mount());
-}
-
-/*
- * If a transfer loses its object-store connection, the controller cleans while keeping the mount alive.
- * The mount is released after cleaning and backend recovery.
- * It waits for the backend to recover, then probes and schedules without an operator up request.
- */
-TEST_F(DriveControllerTest, TransferDatabaseFailureCleansAndWaitsForRecovery) {
-  supplyMount();
-  transfer = [](TapeMount&) -> TransferSessionResult {
-    throw exception::LostDatabaseConnection("objectstore unavailable");
-  };
-  unsigned int cleanAttempts = 0;
-  clean = [&] {
-    ++cleanAttempts;
-    return true;
+  clean = [] {
+    ADD_FAILURE() << "Handled session failures must not trigger another cleanup";
+    return false;
   };
   expectPreparation();
   testing::Expectation failedPing =
@@ -770,85 +676,56 @@ TEST_F(DriveControllerTest, TransferDatabaseFailureCleansAndWaitsForRecovery) {
   EXPECT_CALL(scheduler, ping(_)).After(failedPing);
 
   EXPECT_NO_THROW(iteration());
-  EXPECT_EQ(1, cleanAttempts);
   EXPECT_EQ(1, destroyed);
-  EXPECT_EQ(nullptr, mount());
-
-  transfer = {};
-  expectPreparation();
-  iteration();
-  EXPECT_EQ(2, probes);
-  EXPECT_EQ(2, schedules);
-  EXPECT_EQ(2, destroyed);
+  EXPECT_EQ(nullptr, liveMount());
   EXPECT_THAT(
     sleeps,
     testing::ElementsAre(config.mounts.backend_recovery_interval_secs, config.mounts.idle_scheduling_interval_secs));
 }
 
-/*
- * If a transfer loses its database connection and recovery cleaning fails, the drive is requested down.
- * Backend recovery must not make hardware with failed cleanup available for another mount.
- */
-TEST_F(DriveControllerTest, TransferDatabaseFailureWithFailedCleanupRequestsDown) {
-  supplyMount();
-  transfer = [](TapeMount&) -> TransferSessionResult {
-    throw exception::LostDatabaseConnection("objectstore unavailable");
-  };
-  unsigned int cleanAttempts = 0;
-  clean = [&] {
-    ++cleanAttempts;
-    return false;
-  };
-  expectPreparation();
-  EXPECT_CALL(scheduler, ping(_));
-  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _))
-    .After(preparationComplete)
-    .WillOnce(Return(DesiredDriveState {}));
-  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
-  EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
-    .WillOnce(Invoke([](const auto&, const DesiredDriveState& state, auto&) {
-      EXPECT_FALSE(state.up);
-      EXPECT_EQ(formatDriveDownReason(DriveDownReason::CleanerFailed), state.reason);
-    }));
+// Escaping session exceptions are fatal, including database disconnections.
+// Only final shutdown cleaning runs, after the mount has been released.
+TEST_F(DriveControllerTest, EscapingSessionExceptionsExitWithoutRetrying) {
+  for (const auto failure : {"standard", "database", "unknown"}) {
+    SCOPED_TRACE(failure);
+    testing::InSequence sequence;
+    expectRunStartup();
+    expectPreparation();
+    supplyMount();
+    transfer = [failure](TapeMount&) -> TapeSessionResult {
+      if (std::string(failure) == "database") {
+        throw exception::LostDatabaseConnection("database unavailable");
+      }
+      if (std::string(failure) == "standard") {
+        throw std::runtime_error("session failed");
+      }
+      throw 42;
+    };
+    const auto previousTransfers = transfers;
+    const auto previousSchedules = schedules;
+    const auto previousDestroyed = destroyed;
+    unsigned int cleanAttempts = 0;
+    clean = [&] {
+      ++cleanAttempts;
+      EXPECT_EQ(nullptr, liveMount());
+      EXPECT_EQ(previousDestroyed + 1, destroyed);
+      return true;
+    };
+    EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
+    EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
+    EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
+      .WillOnce(Invoke([](const auto&, const DesiredDriveState& state, auto&) {
+        EXPECT_FALSE(state.up);
+        EXPECT_EQ(formatDriveDownReason(DriveDownReason::Shutdown), state.reason);
+      }));
 
-  EXPECT_NO_THROW(iteration());
-  EXPECT_EQ(1, cleanAttempts);
-  EXPECT_EQ(1, destroyed);
-  EXPECT_EQ(nullptr, mount());
-  EXPECT_EQ(1, schedules);
-}
-
-/*
- * If media remains after transfer recovery cleaning, the next probe requests down for operator inspection.
- * No additional cleaning is attempted at the start of scheduling.
- * The controller must not schedule a second mount onto occupied hardware.
- */
-TEST_F(DriveControllerTest, RetainedMediaAfterTransferRequestsDownWithoutAdditionalCleaning) {
-  supplyMount();
-  transfer = [](TapeMount&) -> TransferSessionResult { throw std::runtime_error("transfer failed"); };
-  unsigned int cleanAttempts = 0;
-  clean = [&] {
-    ++cleanAttempts;
-    return true;
-  };
-  expectPreparation();
-  iteration();
-
-  empty = false;
-  expectPreparation();
-  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
-  EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
-    .WillOnce(Invoke([](const auto&, const DesiredDriveState& state, auto&) {
-      EXPECT_FALSE(state.up);
-      EXPECT_EQ(formatDriveDownReason(DriveDownReason::TapeDetected), state.reason);
-    }));
-
-  iteration();
-  EXPECT_EQ(1, cleanAttempts);
-  EXPECT_EQ(2, probes);
-  EXPECT_EQ(1, schedules);
-  EXPECT_EQ(1, transfers);
-  EXPECT_EQ(1, destroyed);
+    EXPECT_EQ(1, controller->run());
+    EXPECT_EQ(1, cleanAttempts);
+    EXPECT_EQ(previousTransfers + 1, transfers);
+    EXPECT_EQ(previousSchedules + 1, schedules);
+    EXPECT_TRUE(sleeps.empty());
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&scheduler));
+  }
 }
 
 /*
@@ -858,7 +735,7 @@ TEST_F(DriveControllerTest, RetainedMediaAfterTransferRequestsDownWithoutAdditio
 TEST_F(DriveControllerTest, UnusableDriveRequestsDownAndPreservesSpecificReason) {
   supplyMount();
   transfer = [](TapeMount&) {
-    TransferSessionResult result;
+    TapeSessionResult result;
     result.driveUsability = DriveUsability::MustRemainDown;
     return result;
   };
@@ -883,7 +760,7 @@ TEST_F(DriveControllerTest, UnusableDriveRequestsDownAndPreservesSpecificReason)
 TEST_F(DriveControllerTest, UnusableDriveWithoutSpecificReasonPublishesTransferFailure) {
   supplyMount();
   transfer = [](TapeMount&) {
-    TransferSessionResult result;
+    TapeSessionResult result;
     result.driveUsability = DriveUsability::MustRemainDown;
     return result;
   };
@@ -903,12 +780,12 @@ TEST_F(DriveControllerTest, UnusableDriveWithoutSpecificReasonPublishesTransferF
 
 /*
  * If down-state publication fails after an unusable transfer, the error propagates.
- * The controller must still release the mount and clear the tracker reference.
+ * The controller must still release the mount.
  */
 TEST_F(DriveControllerTest, DownPublicationFailureAfterTransferStillReleasesMount) {
   supplyMount();
   transfer = [](TapeMount&) {
-    TransferSessionResult result;
+    TapeSessionResult result;
     result.driveUsability = DriveUsability::MustRemainDown;
     return result;
   };
@@ -983,7 +860,7 @@ TEST_F(DriveControllerTest, IterationExceptionCleansAndPublishesDownBeforeFailin
     unsigned int cleanAttempts = 0;
     clean = [&]() -> bool {
       ++cleanAttempts;
-      EXPECT_EQ(nullptr, mount());
+      EXPECT_EQ(nullptr, liveMount());
       if (std::string(cleanupOutcome) == "exception") {
         throw std::runtime_error("cleaner failed");
       }
@@ -1004,7 +881,7 @@ TEST_F(DriveControllerTest, IterationExceptionCleansAndPublishesDownBeforeFailin
 
     EXPECT_EQ(1, controller->run());
     EXPECT_EQ(1, cleanAttempts);
-    EXPECT_THAT(logger.getLog(), testing::HasSubstr("Drive iteration failed. Cleaning before exit."));
+    EXPECT_THAT(logger.getLog(), testing::HasSubstr("Drive controller failed. Cleaning before exit."));
     ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&scheduler));
   }
 }
@@ -1018,11 +895,11 @@ TEST_F(DriveControllerTest, UnknownIterationExceptionReleasesMountBeforeFinalCle
   expectRunStartup();
   expectPreparation();
   supplyMount();
-  transfer = [](TapeMount&) -> TransferSessionResult { throw 42; };
+  transfer = [](TapeMount&) -> TapeSessionResult { throw 42; };
   unsigned int cleanAttempts = 0;
   clean = [&] {
     ++cleanAttempts;
-    EXPECT_EQ(nullptr, mount());
+    EXPECT_EQ(nullptr, liveMount());
     EXPECT_EQ(1, destroyed);
     return true;
   };
@@ -1041,8 +918,8 @@ TEST_F(DriveControllerTest, UnknownIterationExceptionReleasesMountBeforeFinalCle
   EXPECT_EQ(1, cleanAttempts);
   EXPECT_EQ(1, transfers);
   EXPECT_EQ(1, destroyed);
-  EXPECT_EQ(nullptr, mount());
-  EXPECT_THAT(logger.getLog(), testing::HasSubstr("Drive iteration failed with an unknown exception"));
+  EXPECT_EQ(nullptr, liveMount());
+  EXPECT_THAT(logger.getLog(), testing::HasSubstr("Drive controller failed with an unknown exception"));
 }
 
 /*
