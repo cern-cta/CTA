@@ -146,7 +146,7 @@ TokenValidationResult JwtAuthManager::validateJwt(const std::string& encodedJwt,
   } catch (const std::exception& e) {
     params.add(semconv::log::exceptionMessage, e.what());
     lc.log(cta::log::ERR, "Token validation failed due to an exception");
-    return {false, std::nullopt, "Token validation failed: " + std::string(e.what())};
+    return {false, std::nullopt, "Token validation failed due to an unexpected error"};
   }
 }
 
