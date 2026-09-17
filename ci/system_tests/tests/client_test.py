@@ -984,7 +984,8 @@ class TestRuntimeDeployment:
         log_file = daemon.log_file_path
         pid = daemon.exec_with_output(f"pgrep -u cta {daemon.process_name}")
 
-        fd = daemon.exec_with_output(f"find /proc/{pid}/fd -maxdepth 1 -lname '{log_file}' -printf '%f\n'")
+        # Use sudo for /proc FD access: taped's capabilities trigger ptrace permission checks.
+        fd = daemon.exec_with_output(f"sudo find /proc/{pid}/fd -maxdepth 1 -lname '{log_file}' -printf '%f\n'")
         assert fd
 
         rotated = f"{log_file}.pytest"
@@ -1004,7 +1005,7 @@ class TestRuntimeDeployment:
         max_iter = 50
         sleep_time_sec = 0.1
         for _ in range(max_iter):
-            current_inode = daemon.exec_with_output(f"stat -Lc '%d:%i' /proc/{pid}/fd/{fd}")
+            current_inode = daemon.exec_with_output(f"sudo stat -Lc '%d:%i' /proc/{pid}/fd/{fd}")
             if current_inode == new_inode:
                 break
             time.sleep(sleep_time_sec)

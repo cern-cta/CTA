@@ -87,10 +87,6 @@ cta::tape::daemon::DriveUsability cta::tape::daemon::CleanerSession::execute() {
   std::string errorMessage;
   bool ejectFailed = false;
 
-  if (!server::ProcessCap::hasRawIoCap()) {
-    m_lc.log(cta::log::ERR, "Missing CAP_SYS_RAWIO capability. Unable to use raw tape drive I/O.");
-  }
-
   // First open the drive. If that is impossible, the robot can still return the cartridge
   // because we don't need the drive for that
   std::unique_ptr<drive::DriveInterface> drivePtr;

@@ -144,11 +144,9 @@ void DriveController::runIteration() {
   // TapeSession handles recoverable failures; escaping exceptions are fatal and reach run().
   const auto transferResult = m_operations.runTapeSession(*tapeMount);
 
-  // Handled finalization failures need scheduling recovery, not another hardware cleanup.
   if (transferResult.backendRecoveryRequired) {
     waitForBackendRecovery();
   }
-
   if (transferResult.driveUsability != DriveUsability::Reusable) {
     // Preserve specific session or operator reasons. Publication failures propagate.
     putDriveDown(common::dataStructures::DriveDownReason::TransferSessionFailed, {}, true);
