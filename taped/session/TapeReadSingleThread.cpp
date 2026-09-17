@@ -425,7 +425,12 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
         m_reportPacker.reportEndOfSessionWithErrors("End of recall session with error(s)", m_logContext);
       }
     }
-  } catch (const cta::exception::Exception& e) {
+  } catch (const std::exception& e) {
+    const auto* ctaException = dynamic_cast<const cta::exception::Exception*>(&e);
+    // Operational runtime errors need the same task draining as CTA failures.
+    if (!ctaException && !dynamic_cast<const std::runtime_error*>(&e)) {
+      throw;
+    }
     m_tracker.setOutcome(TapeSessionOutcome::Failure);
     // Publish transfer statistics; the RAII cleaner recorded cleanup timings independently.
     m_tracker.updateTapeTransferStats(m_stats);
@@ -435,7 +440,8 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
     // positioning mode).
     // This can happen late in the session, so we can still print the stats.
     cta::log::ScopedParamContainer params(m_logContext);
-    params.add("status", "error").add(cta::semconv::log::exceptionMessage, e.getMessageValue());
+    params.add("status", "error")
+      .add(cta::semconv::log::exceptionMessage, (ctaException ? ctaException->getMessageValue() : e.what()));
     m_totalTime = totalTimer.secs();
     m_tracker.setTotalTime(m_totalTime);
     logWithStat(cta::log::ERR, "Tape thread complete for reading", params);

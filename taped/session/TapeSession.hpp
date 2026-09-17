@@ -45,7 +45,8 @@ public:
 
   /**
    * Mount, transfer, unload and dismount the tape, returning the session outcomes.
-   * Exceptions propagate unchanged; the result describes sessions that return normally.
+   * Recoverable operational failures return recovery decisions after local cleanup.
+   * Unrecoverable failures propagate; partial worker startup/termination recovery is not yet supported.
    */
   TapeSessionResult execute();
 
@@ -61,6 +62,8 @@ public:
   ~TapeSession() noexcept = default;
 
 private:
+  struct ExecutionState;
+
   // Owned tracking state outlives the workers and reporter created by execute().
   TapeSessionTracker m_tapeSessionTracker;
 
@@ -79,26 +82,11 @@ private:
    */
   const cta::common::dataStructures::DriveInfo m_driveInfo;
 
-  /** utility to find the drive on the system. This function logs
-   * all errors and hence does not throw exceptions. It returns nullptr
-   * in case of failure. */
-  std::unique_ptr<cta::tape::drive::DriveInterface> findDrive(cta::log::LogContext& logContext, cta::TapeMount& mount);
+  // Discover/open the drive, recording a down decision before propagating failures.
+  std::unique_ptr<cta::tape::drive::DriveInterface> findDrive(cta::log::LogContext& logContext, ExecutionState& state);
 
-  /**
-   * Put drive down with reason with [cta-taped] prefix, update the desired state (which is also down).
-   * If mount is passed, it will be marked as complete.
-   * Log the error with drive and mount details
-   */
-  void putDriveDown(common::dataStructures::DriveDownReason reason,
-                    cta::TapeMount* mount,
-                    cta::log::LogContext& logContext,
-                    std::string_view detail = {});
-
-  /** sub-part of execute for the read sessions */
-  TapeSessionResult executeRead(cta::log::LogContext& logContext, cta::RetrieveMount& retrieveMount);
-
-  /** sub-part of execute for a write session */
-  TapeSessionResult executeWrite(cta::log::LogContext& logContext, cta::ArchiveMount& archiveMount);
+  void executeRead(cta::log::LogContext& logContext, cta::RetrieveMount& retrieveMount, ExecutionState& state);
+  void executeWrite(cta::log::LogContext& logContext, cta::ArchiveMount& archiveMount, ExecutionState& state);
 
   /** sub-part of execute for a label session */
   TapeSessionResult executeLabel(cta::log::LogContext& logContext, cta::LabelMount* labelMount) const;

@@ -84,10 +84,7 @@ cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
   } catch (...) {}
 
   // Log safely errors at the end of the session
-  // This out-of-try-catch variables allows us to record the stage of the
-  // process we're in, and to count the error if it occurs.
-  // We will not record errors for an empty string. This will allow us to
-  // prevent counting where error happened upstream.
+  // Track session-level errors separately from failures already counted by individual tasks.
   TapeSessionError currentErrorToCount = TapeSessionError::TapeUnload;
   try {
     // Do the final cleanup
@@ -274,11 +271,9 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
   cta::log::ScopedParamContainer threadGlobalParams(m_logContext);
   threadGlobalParams.add("thread", "TapeWrite");
   cta::utils::Timer timer, totalTimer;
-  // This out-of-try-catch variables allows us to record the stage of the
-  // process we're in, and to count the error if it occurs.
-  // We will not record errors for an empty string. This will allow us to
-  // prevent counting where error happened upstream.
-  std::optional<TapeSessionError> currentErrorToCount = TapeSessionError::TapeMountForWrite;
+  // Track session-level errors separately from failures already counted by individual tasks.
+  TapeSessionError currentErrorToCount = TapeSessionError::TapeMountForWrite;
+  bool countCurrentError = true;
   std::unique_ptr<TapeWriteTask> task;
 
   try {
@@ -392,7 +387,7 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
       uint64_t bytes = 0;
       uint64_t files = 0;
       // Tasks handle their error logging themselves.
-      currentErrorToCount.reset();
+      countCurrentError = false;
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring,
                                        std::nullopt,
                                        m_logContext);
@@ -423,10 +418,11 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
         //if one flush counter is above a threshold, then we flush
         if (files >= m_filesBeforeFlush || bytes >= m_bytesBeforeFlush) {
           currentErrorToCount = TapeSessionError::TapeFlush;
+          countCurrentError = true;
           tapeFlush("Normal flush because thresholds was reached", bytes, files, timer);
           files = 0;
           bytes = 0;
-          currentErrorToCount.reset();
+          countCurrentError = false;
         }
       }  //end of while(true))
     }
@@ -443,7 +439,12 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
     m_tracker.updateTapeTransferStats(m_stats);
     //end of session + log
     m_reportPacker.reportEndOfSession(m_logContext);
-  } catch (const cta::exception::Exception& e) {
+  } catch (const std::exception& e) {
+    const auto* ctaException = dynamic_cast<const cta::exception::Exception*>(&e);
+    // Operational runtime errors need the same task draining as CTA failures.
+    if (!ctaException && !dynamic_cast<const std::runtime_error*>(&e)) {
+      throw;
+    }
     //we end there because write session could not be opened
     //or because a task failed or because flush failed
 
@@ -460,7 +461,11 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
     // report last batch of files which were written but not flushed
     // (no file marks on tape) as failure (last file written to tape when ENOSPC
     // (end of space) was thrown will be included here)
-    m_reportPacker.reportLastBatchError(e, m_logContext);
+    if (ctaException) {
+      m_reportPacker.reportLastBatchError(*ctaException, m_logContext);
+    } else {
+      m_reportPacker.reportLastBatchError(cta::exception::Exception(e.what()), m_logContext);
+    }
 #endif
 
     // If we reached the end of tape, this is not an error (ENOSPC)
@@ -480,10 +485,10 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
     } catch (...) {
       m_tracker.setOutcome(TapeSessionOutcome::Failure);
       // The error is not an ENOSPC, so it is, indeed, an error.
-      // If we got here with a new error, currentErrorToCount will be non-empty,
+      // If we got here with a new error, countCurrentError will be set,
       // and we will pass the typed error to the session tracker.
-      if (currentErrorToCount) {
-        m_tracker.incrementError(*currentErrorToCount);
+      if (countCurrentError) {
+        m_tracker.incrementError(currentErrorToCount);
       }
     }
 #ifdef CTA_PGSCHED
@@ -523,7 +528,7 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
     requeueUnprocessedTasks(jobIDsList, m_logContext);
 #endif
     // Prepare the standard error codes for the session
-    std::string errorMessage(e.getMessageValue());
+    std::string errorMessage((ctaException ? ctaException->getMessageValue() : e.what()));
     int logLevel = cta::log::ERR;
     // Override if we got en ENOSPC error (end of tape)
     if (isTapeFull) {

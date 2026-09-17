@@ -33,6 +33,7 @@
 #include <chrono>
 #include <exception>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -41,16 +42,82 @@ constexpr bool c_useLbp = true;
 constexpr uint16_t c_xrootTimeout = 0;
 constexpr const char* c_raoLtoAlgorithmOptions = "cost_heuristic_name:cta";
 
-// Only use this on handled paths that can still stop all started workers and reporters.
-void recordFinalizationFailure(cta::tape::daemon::TapeSessionResult& result, std::exception_ptr failure) {
+// The reporter has no pipeline dependencies: stopping it only wakes its own wait loop.
+class ScopedReporter {
+public:
+  explicit ScopedReporter(cta::tape::daemon::TapeSessionReporter& reporter) : m_reporter(reporter) {}
+
+  ScopedReporter(const ScopedReporter&) = delete;
+  ScopedReporter& operator=(const ScopedReporter&) = delete;
+
+  ~ScopedReporter() noexcept {
+    if (m_started) {
+      try {
+        finish();
+      } catch (...) {
+        // Never destroy a reporter that may still reference the session's stack.
+        std::terminate();
+      }
+    }
+  }
+
+  void start() {
+    m_reporter.startThreads();
+    m_started = true;
+  }
+
+  void finish() {
+    if (!m_started) {
+      return;
+    }
+    m_reporter.finish();
+    m_reporter.waitThreads();
+    m_started = false;
+  }
+
+private:
+  cta::tape::daemon::TapeSessionReporter& m_reporter;
+  bool m_started = false;
+};
+
+// Preserve fatal errors while allowing independent finalization operations to run.
+void recordFailure(cta::tape::daemon::TapeSessionResult& result,
+                   std::exception_ptr failure,
+                   std::exception_ptr& fatalFailure,
+                   cta::log::LogContext& lc) {
   result.retryDelayRequired = true;
+  const char* message = "Unrecoverable tape session failure";
   try {
     std::rethrow_exception(failure);
-  } catch (const cta::exception::LostDatabaseConnection&) {
+  } catch (const cta::exception::LostDatabaseConnection& ex) {
+    message = ex.what();
     result.backendRecoveryRequired = true;
+  } catch (const cta::exception::Exception& ex) {
+    message = ex.what();
+  } catch (const std::runtime_error& ex) {
+    message = ex.what();
+  } catch (...) {
+    if (!fatalFailure) {
+      fatalFailure = failure;
+    }
+  }
+  // Logging must not interrupt the remaining cleanup or replace the original exception.
+  try {
+    cta::log::ScopedParamContainer params(lc);
+    params.add(cta::semconv::log::exceptionMessage, message);
+    lc.log(cta::log::ERR, "Tape session operation failed");
   } catch (...) {}
 }
 }  // namespace
+
+// Local to one execute() call; transfer reporting takes over completion after startup.
+struct cta::tape::daemon::TapeSession::ExecutionState {
+  TapeSessionResult result;
+  bool completionOwned = true;
+  bool workersRunning = false;
+  bool driveOpened = false;
+  std::optional<std::string> downReason;
+};
 
 //------------------------------------------------------------------------------
 //Constructor
@@ -77,100 +144,122 @@ cta::tape::daemon::TapeSession::TapeSession(cta::log::Logger& log,
 //------------------------------------------------------------------------------
 //TapeSession::execute
 //------------------------------------------------------------------------------
-/**
- * Function's synopsis
- * 1) Prepare the logging environment
- *  Create a sticky thread name, which will be overridden by the other threads
- * 2a) Get initial information from the client
- * 2b) Log The result
- * Then branch to the right execution
- */
-cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() try {
+cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
   m_tapeSessionTracker.beginTapeSession();
-  // 1) Prepare the logging environment
+  m_tapeSessionTracker.setMountAttempted(false);
   cta::log::LogContext lc(m_log);
-
-  cta::utils::Timer t;
-
-  // TODO: finalize the borrowed mount once even if metadata lookup or Starting status publication throws.
-  m_volInfo.vid = m_tapeMount.getVid();
-  m_volInfo.mountType = m_tapeMount.getMountType();
-  m_volInfo.nbFiles = m_tapeMount.getNbFiles();
-  m_volInfo.mountId = m_tapeMount.getMountTransactionId();
-  m_volInfo.labelFormat = m_tapeMount.getLabelFormat();
-  m_volInfo.encryptionKeyName = m_tapeMount.getEncryptionKeyName();
-  m_volInfo.tapePool = m_tapeMount.getPoolName();
-  // Report drive status and mount info through tapeMount interface
-  m_tapeMount.setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
-  // 2c) ... and log.
-  // Make the DGN and TPVID parameter permanent.
   cta::log::ScopedParamContainer params(lc);
-  params.add("tapeDrive", m_driveInfo.driveName)
-    .add("tapeVid", m_volInfo.vid)
-    .add("mountId", m_volInfo.mountId)
-    .add("vo", m_tapeMount.getVo())
-    .add("tapePool", m_tapeMount.getPoolName());
-  {
-    cta::log::ScopedParamContainer localParams(lc);
-    localParams.add("tapebridgeTransId", m_volInfo.mountId).add("mountType", toCamelCaseString(m_volInfo.mountType));
+  params.add("tapeDrive", m_driveInfo.driveName);
+  ExecutionState state;
+  std::exception_ptr fatalFailure;
+  TapeSessionReporter reporter(m_tapeSessionTracker,
+                               lc,
+                               std::chrono::seconds(m_transfersConfig.stats_report_interval_secs),
+                               std::chrono::seconds(m_transfersConfig.no_block_move_timeout_secs));
+  ScopedReporter reporterScope(reporter);
+
+  try {
+    m_volInfo.vid = m_tapeMount.getVid();
+    m_volInfo.mountType = m_tapeMount.getMountType();
+    m_volInfo.nbFiles = m_tapeMount.getNbFiles();
+    m_volInfo.mountId = m_tapeMount.getMountTransactionId();
+    m_volInfo.labelFormat = m_tapeMount.getLabelFormat();
+    m_volInfo.encryptionKeyName = m_tapeMount.getEncryptionKeyName();
+    m_volInfo.tapePool = m_tapeMount.getPoolName();
+    m_tapeMount.setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+    params.add("tapeVid", m_volInfo.vid)
+      .add("mountId", m_volInfo.mountId)
+      .add("vo", m_tapeMount.getVo())
+      .add("tapePool", m_volInfo.tapePool);
     lc.log(cta::log::INFO, "Got volume from client");
+
+    switch (m_volInfo.mountType) {
+      case cta::common::dataStructures::MountType::Retrieve:
+        m_tapeSessionTracker.setType(cta::tape::session::SessionType::Retrieve);
+        reporterScope.start();
+        executeRead(lc, dynamic_cast<cta::RetrieveMount&>(m_tapeMount), state);
+        break;
+      case cta::common::dataStructures::MountType::ArchiveForUser:
+      case cta::common::dataStructures::MountType::ArchiveForRepack:
+        m_tapeSessionTracker.setType(cta::tape::session::SessionType::Archive);
+        reporterScope.start();
+        executeWrite(lc, dynamic_cast<cta::ArchiveMount&>(m_tapeMount), state);
+        break;
+      case cta::common::dataStructures::MountType::Label:
+        m_tapeSessionTracker.setType(cta::tape::session::SessionType::Label);
+        state.result = executeLabel(lc, dynamic_cast<cta::LabelMount*>(&m_tapeMount));
+        break;
+      default:
+        throw std::logic_error("Unsupported tape mount type");
+    }
+  } catch (...) {
+    m_tapeSessionTracker.setOutcome(TapeSessionOutcome::Failure);
+    // Partial startup and unexpected worker termination still require a separate lifecycle repair.
+    // The reporter guard is not a worker shutdown mechanism; do not claim a finished session here.
+    if (state.workersRunning) {
+      throw;
+    }
+    recordFailure(state.result, std::current_exception(), fatalFailure, lc);
   }
 
-  // Depending on the type of session, branch into the right execution
-  switch (m_volInfo.mountType) {
-    case cta::common::dataStructures::MountType::Retrieve:
-      m_tapeSessionTracker.setType(cta::tape::session::SessionType::Retrieve);
-      return executeRead(lc, dynamic_cast<cta::RetrieveMount&>(m_tapeMount));
-    case cta::common::dataStructures::MountType::ArchiveForUser:
-    case cta::common::dataStructures::MountType::ArchiveForRepack:
-      m_tapeSessionTracker.setType(cta::tape::session::SessionType::Archive);
-      return executeWrite(lc, dynamic_cast<cta::ArchiveMount&>(m_tapeMount));
-    case cta::common::dataStructures::MountType::Label:
-      m_tapeSessionTracker.setType(cta::tape::session::SessionType::Label);
-      return executeLabel(lc, dynamic_cast<cta::LabelMount*>(&m_tapeMount));
-    default:
-      break;
+  // One failed publication must not skip mount completion or another state update.
+  const auto finalize = [&](auto&& operation) {
+    try {
+      operation();
+    } catch (...) {
+      m_tapeSessionTracker.incrementError(TapeSessionError::Reporting);
+      recordFailure(state.result, std::current_exception(), fatalFailure, lc);
+    }
+  };
+  m_tapeSessionTracker.reportState(cta::tape::session::TapeSessionState::Finalizing);
+  if (state.completionOwned) {
+    state.completionOwned = false;
+    finalize([&] { m_tapeMount.complete(); });
+    if (state.driveOpened) {
+      finalize([&] {
+        m_scheduler.reportDriveStatus(m_driveInfo,
+                                      cta::common::dataStructures::MountType::NoMount,
+                                      cta::common::dataStructures::DriveStatus::Up,
+                                      lc);
+      });
+    }
+  }
+  if (state.downReason) {
+    finalize([&] {
+      m_scheduler.reportDriveStatus(m_driveInfo,
+                                    cta::common::dataStructures::MountType::NoMount,
+                                    cta::common::dataStructures::DriveStatus::Down,
+                                    lc);
+    });
+    finalize([&] {
+      cta::common::dataStructures::DesiredDriveState desired;
+      desired.up = false;
+      desired.forceDown = false;
+      desired.reason = *state.downReason;
+      m_scheduler.setDesiredDriveState(m_driveInfo.driveName, desired, lc);
+    });
   }
 
-  TapeSessionResult result;
   m_tapeSessionTracker.reportState(cta::tape::session::TapeSessionState::Finished);
-  return result;
-} catch (...) {
-  // Worker shutdown on exceptional exits remains a separate repair; do not claim completion here.
-  m_tapeSessionTracker.setOutcome(TapeSessionOutcome::Failure);
-  throw;
+  reporterScope.finish();
+  state.result.retryDelayRequired |= m_tapeSessionTracker.outcome() == TapeSessionOutcome::Failure;
+  if (fatalFailure) {
+    std::rethrow_exception(fatalFailure);
+  }
+  return state.result;
 }
 
 //------------------------------------------------------------------------------
 //TapeSession::executeRead
 //------------------------------------------------------------------------------
-cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::executeRead(cta::log::LogContext& logContext,
-                                                                                 cta::RetrieveMount& retrieveMount) {
-  TapeSessionResult result;
-
-  TapeSessionReporter reporter(m_tapeSessionTracker,
-                               logContext,
-                               std::chrono::seconds(m_transfersConfig.stats_report_interval_secs),
-                               std::chrono::seconds(m_transfersConfig.no_block_move_timeout_secs));
-  // TODO: stop and join the reporter on every exception path before the mount or tracker can be released.
-  reporter.startThreads();
+void cta::tape::daemon::TapeSession::executeRead(cta::log::LogContext& logContext,
+                                                 cta::RetrieveMount& retrieveMount,
+                                                 ExecutionState& state) {
   // We are ready to start the session. We need to create the whole machinery
   // in order to get the task injector ready to check if we actually have a
   // file to recall.
-  // findDrive does not throw exceptions (it catches them to log errors)
-  // A nullptr is returned on failure
   retrieveMount.setExternalFreeDiskSpaceScript(m_transfersConfig.retrieve.external_free_disk_space_script);
-  auto drive = findDrive(logContext, retrieveMount);
-
-  if (!drive) {
-    m_tapeSessionTracker.setOutcome(TapeSessionOutcome::Failure);
-    m_tapeSessionTracker.setMountAttempted(false);
-    m_tapeSessionTracker.reportState(cta::tape::session::TapeSessionState::Finished);
-    reporter.finish();
-    reporter.waitThreads();
-    result.driveUsability = DriveUsability::MustRemainDown;
-    return result;
-  }
+  auto drive = findDrive(logContext, state);
 
   // We can now start instantiating all the components of the data path
   {
@@ -250,10 +339,13 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::executeRead
     if (fetchResult && reservationResult) {
       // We got something to recall. Time to start the machinery
       readSingleThread.setWaitForInstructionsTime(timer.secs());
+      m_tapeSessionTracker.setMountAttempted(true);
+      state.workersRunning = true;
       readSingleThread.startThreads();
       threadPool.startThreads();
       reportPacker.startThreads();
       taskInjector.startThreads();
+      state.completionOwned = false;
       // TODO: join every started worker if a later start or wait throws, before finalizing the mount.
       // This thread is now going to be idle until the system unwinds at the end of the session
       // All client notifications are done by the report packer, including the end of session
@@ -261,75 +353,27 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::executeRead
       threadPool.waitThreads();
       readSingleThread.waitThreads();
       reportPacker.waitThread();
-      // All transfer workers have joined; return publication failures without requesting hardware cleanup.
-      try {
-        // If disk delivery finished last, return the drive from DrainingToDisk to Up.
-        if (m_scheduler.getDriveStatus(m_driveInfo.driveName, &logContext)
-            == cta::common::dataStructures::DriveStatus::DrainingToDisk) {
-          m_scheduler.reportDriveStatus(m_driveInfo,
-                                        cta::common::dataStructures::MountType::NoMount,
-                                        cta::common::dataStructures::DriveStatus::Up,
-                                        logContext);
-        }
-      } catch (...) {
-        m_tapeSessionTracker.incrementError(TapeSessionError::Reporting);
-        recordFinalizationFailure(result, std::current_exception());
+      state.workersRunning = false;
+      state.result.driveUsability = readSingleThread.getHardwareStatus();
+      // If disk delivery finished last, return the drive from DrainingToDisk to Up.
+      if (state.result.driveUsability == DriveUsability::Reusable
+          && m_scheduler.getDriveStatus(m_driveInfo.driveName, &logContext)
+               == cta::common::dataStructures::DriveStatus::DrainingToDisk) {
+        m_scheduler.reportDriveStatus(m_driveInfo,
+                                      cta::common::dataStructures::MountType::NoMount,
+                                      cta::common::dataStructures::DriveStatus::Up,
+                                      logContext);
       }
-      m_tapeSessionTracker.reportState(cta::tape::session::TapeSessionState::Finished);
-      reporter.finish();
-      reporter.waitThreads();
-
-      result.driveUsability = readSingleThread.getHardwareStatus();
-      return result;
+      return;
     } else {
-      // If the first pop from the queue fails, just log this was an empty mount and that's it. The memory management
-      // will be deallocated automatically.
-      int priority = cta::log::ERR;
-      if (noFilesToRecall) {
-        // If empty mount because the queue contained no jobs log warning and set success
-        priority = cta::log::WARNING;
-      }
-
-      logContext.log(priority, "Aborting recall mount startup: empty mount");
-
-      std::string mountId = retrieveMount.getMountTransactionId();
-
-      cta::log::Param errorMessageParam(cta::semconv::log::errorMessage, "Aborted: empty recall mount");
-
-      cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
-      m_tapeSessionTracker.reportState(cta::tape::session::TapeSessionState::Finalizing);
-      // TODO: handle standard exceptions from mount completion and still stop the reporter.
       m_tapeSessionTracker.setOutcome(noFilesToRecall ? TapeSessionOutcome::Success : TapeSessionOutcome::Failure);
       m_tapeSessionTracker.setMountAttempted(false);
-      try {
-        retrieveMount.complete();
-        m_tapeSessionTracker.updateTapeTransferStats({});
-        if (!reservationResult) {
-          m_tapeSessionTracker.incrementError(TapeSessionError::DiskSpaceReservationTestFailure);
-        }
-        if (!noFilesToRecall) {
-          m_tapeSessionTracker.incrementError(TapeSessionError::NoFilesToRecall);
-        }
-        m_tapeSessionTracker.incrementError(TapeSessionError::EmptyMount);
-        cta::log::LogContext::ScopedParam sp08(logContext, cta::log::Param("MountTransactionId", mountId));
-        logContext.log(priority, "Notified client of end session with error");
-      } catch (cta::exception::Exception& ex) {
-        recordFinalizationFailure(result, std::current_exception());
-        m_tapeSessionTracker.incrementError(TapeSessionError::Reporting);
-        cta::log::LogContext::ScopedParam sp12(
-          logContext,
-          cta::log::Param(cta::semconv::log::exceptionMessage, ex.getMessageValue()));
-        logContext.log(cta::log::ERR, "Failed to notified client of end session with error");
+      m_tapeSessionTracker.updateTapeTransferStats({});
+      if (fetchResult && !reservationResult) {
+        m_tapeSessionTracker.incrementError(TapeSessionError::DiskSpaceReservationTestFailure);
       }
-      // Empty mount, hardware is OK
-      m_scheduler.reportDriveStatus(m_driveInfo,
-                                    cta::common::dataStructures::MountType::NoMount,
-                                    cta::common::dataStructures::DriveStatus::Up,
-                                    logContext);
-      m_tapeSessionTracker.reportState(cta::tape::session::TapeSessionState::Finished);
-      reporter.finish();
-      reporter.waitThreads();
-      return result;
+      m_tapeSessionTracker.incrementError(TapeSessionError::EmptyMount);
+      logContext.log(cta::log::WARNING, "Aborting recall mount startup: empty mount");
     }
   }
 }
@@ -337,34 +381,16 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::executeRead
 //------------------------------------------------------------------------------
 //TapeSession::executeWrite
 //------------------------------------------------------------------------------
-cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::executeWrite(cta::log::LogContext& logContext,
-                                                                                  cta::ArchiveMount& archiveMount) {
-  TapeSessionResult result;
-
-  TapeSessionReporter reporter(m_tapeSessionTracker,
-                               logContext,
-                               std::chrono::seconds(m_transfersConfig.stats_report_interval_secs),
-                               std::chrono::seconds(m_transfersConfig.no_block_move_timeout_secs));
-  // TODO: stop and join the reporter on every exception path before the mount or tracker can be released.
-  reporter.startThreads();
+void cta::tape::daemon::TapeSession::executeWrite(cta::log::LogContext& logContext,
+                                                  cta::ArchiveMount& archiveMount,
+                                                  ExecutionState& state) {
   // We are ready to start the session. We need to create the whole machinery
   // in order to get the task injector ready to check if we actually have a
   // file to migrate.
   // 1) Get hold of the drive error logs are done inside the findDrive function
-  auto drive = findDrive(logContext, archiveMount);
-  if (!drive) {
-    m_tapeSessionTracker.setOutcome(TapeSessionOutcome::Failure);
-    m_tapeSessionTracker.setMountAttempted(false);
-    m_tapeSessionTracker.reportState(cta::tape::session::TapeSessionState::Finished);
-    reporter.finish();
-    reporter.waitThreads();
-    result.driveUsability = DriveUsability::MustRemainDown;
-    return result;
-  }
+  auto drive = findDrive(logContext, state);
   // Once we got hold of the drive, we can run the session
   {
-    //dereferencing configLine is safe, because if configLine were not valid,
-    //then findDrive would have return nullptr and we would have not end up there
     MigrationMemoryManager memoryManager(m_transfersConfig.buffer_count,
                                          m_transfersConfig.buffer_size_bytes,
                                          logContext);
@@ -418,12 +444,15 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::executeWrit
       writeSingleThread.setlastFseq(firstFseqFromClient - 1);
 
       // We have something to do: start the session by starting all the threads.
+      m_tapeSessionTracker.setMountAttempted(true);
+      state.workersRunning = true;
       memoryManager.startThreads();
       threadPool.startThreads();
       writeSingleThread.setWaitForInstructionsTime(timer.secs());
       writeSingleThread.startThreads();
       reportPacker.startThreads();
       taskInjector.startThreads();
+      state.completionOwned = false;
       // TODO: join every started worker if a later start or wait throws, before finalizing the mount.
       // Synchronise with end of threads
       taskInjector.waitThreads();
@@ -431,55 +460,17 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::executeWrit
       threadPool.waitThreads();
       memoryManager.waitThreads();
       reportPacker.waitThread();
-      m_tapeSessionTracker.reportState(cta::tape::session::TapeSessionState::Finished);
-      reporter.finish();
-      reporter.waitThreads();
+      state.workersRunning = false;
 
-      result.driveUsability = writeSingleThread.getHardwareStatus();
-      return result;
+      state.result.driveUsability = writeSingleThread.getHardwareStatus();
+      return;
     } else {
-      // Just log this was an empty mount and that's it. The memory management will be deallocated automatically.
-      int priority = cta::log::ERR;
-      if (noFilesToMigrate) {
-        priority = cta::log::WARNING;
-      }
-
-      logContext.log(priority, "Aborting migration mount startup: empty mount");
-
-      std::string mountId = archiveMount.getMountTransactionId();
-      cta::log::Param errorMessageParam(cta::semconv::log::errorMessage, "Aborted: empty migration mount");
-
-      cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
-      m_tapeSessionTracker.reportState(cta::tape::session::TapeSessionState::Finalizing);
-      // TODO: handle standard exceptions from mount completion and still stop the reporter.
       m_tapeSessionTracker.setOutcome(noFilesToMigrate ? TapeSessionOutcome::Success : TapeSessionOutcome::Failure);
       m_tapeSessionTracker.setMountAttempted(false);
-      try {
-        archiveMount.complete();
-        m_tapeSessionTracker.updateTapeTransferStats({});
-        if (noFilesToMigrate) {
-          m_tapeSessionTracker.incrementError(TapeSessionError::NoFilesToMigrate);
-        }
-        m_tapeSessionTracker.incrementError(TapeSessionError::EmptyMount);
-        cta::log::LogContext::ScopedParam sp11(logContext, cta::log::Param("MountTransactionId", mountId));
-        logContext.log(priority, "Notified client of end session with error");
-      } catch (cta::exception::Exception& ex) {
-        recordFinalizationFailure(result, std::current_exception());
-        m_tapeSessionTracker.incrementError(TapeSessionError::Reporting);
-        cta::log::LogContext::ScopedParam sp12(
-          logContext,
-          cta::log::Param(cta::semconv::log::exceptionMessage, ex.getMessageValue()));
-        logContext.log(cta::log::ERR, "Failed to notified client of end session with error");
-      }
-      // Empty mount, hardware safe
-      m_scheduler.reportDriveStatus(m_driveInfo,
-                                    cta::common::dataStructures::MountType::NoMount,
-                                    cta::common::dataStructures::DriveStatus::Up,
-                                    logContext);
-      m_tapeSessionTracker.reportState(cta::tape::session::TapeSessionState::Finished);
-      reporter.finish();
-      reporter.waitThreads();
-      return result;
+      m_tapeSessionTracker.updateTapeTransferStats({});
+      m_tapeSessionTracker.incrementError(TapeSessionError::NoFilesToMigrate);
+      m_tapeSessionTracker.incrementError(TapeSessionError::EmptyMount);
+      logContext.log(cta::log::WARNING, "Aborting migration mount startup: empty mount");
     }
   }
 }
@@ -497,89 +488,31 @@ cta::tape::daemon::TapeSession::executeLabel([[maybe_unused]] cta::log::LogConte
 //------------------------------------------------------------------------------
 //TapeSession::findDrive
 //------------------------------------------------------------------------------
-/*
- * Function synopsis  :
- *  1) Get hold of the drive and check it.
- *  --- Check If we did not find the configured drive, we have a problem
- *  2) Try to find the drive
- *    Log if we do not find it
- *  3) Try to open it, log if we fail
- */
-/**
- * Try to find the drive that is described by m_request.driveUnit
- * @param logContext For logging purpose
- * @return the drive if found, nullptr otherwise
- */
 std::unique_ptr<cta::tape::drive::DriveInterface>
-cta::tape::daemon::TapeSession::findDrive(cta::log::LogContext& logContext, cta::TapeMount& mount) {
-  // Find the drive in the system's SCSI devices
-  cta::tape::SCSI::DeviceVector dv(m_sysWrapper);
-  cta::tape::SCSI::DeviceInfo driveInfo;
+cta::tape::daemon::TapeSession::findDrive(cta::log::LogContext& logContext, ExecutionState& state) {
+  auto reason = common::dataStructures::DriveDownReason::DriveDiscoveryFailed;
   try {
-    driveInfo = dv.findBySymlink(m_driveInfo.devFilename);
-  } catch (cta::tape::SCSI::DeviceVector::NotFound&) {
-    // We could not find this drive in the system's SCSI devices
-    putDriveDown(common::dataStructures::DriveDownReason::DriveNotFound, &mount, logContext);
-    return nullptr;
-  } catch (cta::exception::Exception& ex) {
-    // We could not find this drive in the system's SCSI devices
-    putDriveDown(common::dataStructures::DriveDownReason::DriveDiscoveryFailed,
-                 &mount,
-                 logContext,
-                 ex.getMessageValue());
-    return nullptr;
-  } catch (...) {
-    // We could not find this drive in the system's SCSI devices
-    putDriveDown(common::dataStructures::DriveDownReason::DriveDiscoveryFailed, &mount, logContext);
-    return nullptr;
-  }
-  try {
+    cta::tape::SCSI::DeviceVector devices(m_sysWrapper);
+    const auto driveInfo = devices.findBySymlink(m_driveInfo.devFilename);
+    reason = common::dataStructures::DriveDownReason::DriveOpenFailed;
     auto drive = cta::tape::drive::createDrive(driveInfo, m_sysWrapper);
-    if (drive) {
-      drive->info = m_driveInfo;
+    if (!drive) {
+      throw cta::exception::Exception("Drive creation returned no drive");
     }
+    drive->info = m_driveInfo;
+    state.driveOpened = true;
     return drive;
-  } catch (cta::exception::Exception& ex) {
-    // We could not find this drive in the system's SCSI devices
-    putDriveDown(common::dataStructures::DriveDownReason::DriveOpenFailed, &mount, logContext, ex.getMessageValue());
-    return nullptr;
+  } catch (const cta::tape::SCSI::DeviceVector::NotFound&) {
+    reason = common::dataStructures::DriveDownReason::DriveNotFound;
+    state.downReason = common::dataStructures::formatDriveDownReason(reason);
+    state.result.driveUsability = DriveUsability::MustRemainDown;
+    logContext.log(common::dataStructures::driveDownReasonSeverity(reason), *state.downReason);
+    throw;
   } catch (...) {
-    // We could not find this drive in the system's SCSI devices
-    putDriveDown(common::dataStructures::DriveDownReason::DriveOpenFailed, &mount, logContext);
-    return nullptr;
+    // Record the hardware decision before propagating to the session's failure handler.
+    state.downReason = common::dataStructures::formatDriveDownReason(reason);
+    state.result.driveUsability = DriveUsability::MustRemainDown;
+    logContext.log(common::dataStructures::driveDownReasonSeverity(reason), *state.downReason);
+    throw;
   }
-}
-
-//------------------------------------------------------------------------------
-// Get drive down with reason
-//------------------------------------------------------------------------------
-void cta::tape::daemon::TapeSession::putDriveDown(common::dataStructures::DriveDownReason reason,
-                                                  cta::TapeMount* mount,
-                                                  cta::log::LogContext& logContext,
-                                                  std::string_view detail) {
-  const auto headerErrMsg = common::dataStructures::formatDriveDownReason(reason, detail);
-  cta::log::ScopedParamContainer params(logContext);
-  params.add("devFilename", m_driveInfo.devFilename).add(cta::semconv::log::errorMessage, headerErrMsg);
-
-  if (mount) {
-    mount->complete();
-    params.add("tapebridgeTransId", mount->getMountTransactionId())
-      .add("mountType", mount->getMountType())
-      .add("pool", mount->getPoolName())
-      .add("VO", mount->getVo());
-  }
-
-  logContext.log(common::dataStructures::driveDownReasonSeverity(reason), headerErrMsg);
-
-  m_scheduler.reportDriveStatus(m_driveInfo,
-                                cta::common::dataStructures::MountType::NoMount,
-                                cta::common::dataStructures::DriveStatus::Down,
-                                logContext);
-  cta::common::dataStructures::DesiredDriveState driveState;
-  driveState.up = false;
-  driveState.forceDown = false;
-  driveState.reason = headerErrMsg;
-  m_scheduler.setDesiredDriveState(m_driveInfo.driveName, driveState, logContext);
-
-  logContext.log(cta::log::ERR, "Notified client of end session with error");
 }

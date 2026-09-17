@@ -20,6 +20,7 @@
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/RequesterMountRule.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/LostDatabaseConnection.hpp"
 #include "common/log/StringLogger.hpp"
 #include "common/process/threading/Thread.hpp"
 #include "common/utils/utils.hpp"
@@ -44,6 +45,7 @@
 #include <fcntl.h>
 #include <gtest/gtest.h>
 #include <inttypes.h>
+#include <new>
 #include <ranges>
 #include <stdexcept>
 #include <stdint.h>
@@ -106,6 +108,12 @@ enum class TransferFailurePoint {
   None,
   Metadata,
   StartingStatus,
+  MetadataDatabase,
+  FetchDatabase,
+  CompleteDatabase,
+  MetadataAllocation,
+  MetadataLogic,
+  MetadataUnknown,
   Discovery,
   OpenCta,
   OpenStandard,
@@ -164,6 +172,9 @@ public:
   std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>
   getNextJobBatch(uint64_t, uint64_t, cta::log::LogContext&) override {
     ++fetchAttempts;
+    if (failure == TransferFailurePoint::FetchDatabase) {
+      throw cta::exception::LostDatabaseConnection("injected fetch disconnection");
+    }
     if (failure == TransferFailurePoint::FetchCta) {
       throw cta::exception::Exception("injected archive fetch failure");
     }
@@ -210,6 +221,18 @@ public:
   mutable unsigned int mountedAttempts = 0;
 
   std::string getVid() const override {
+    switch (failure) {
+      case TransferFailurePoint::MetadataDatabase:
+        throw cta::exception::LostDatabaseConnection("injected metadata disconnection");
+      case TransferFailurePoint::MetadataAllocation:
+        throw std::bad_alloc();
+      case TransferFailurePoint::MetadataLogic:
+        throw std::logic_error("injected metadata logic failure");
+      case TransferFailurePoint::MetadataUnknown:
+        throw 42;
+      default:
+        break;
+    }
     if (failure == TransferFailurePoint::Metadata) {
       throw std::runtime_error("injected metadata failure");
     }
@@ -286,6 +309,9 @@ public:
 
   void complete() override {
     ++completionAttempts;
+    if (failure == TransferFailurePoint::CompleteDatabase) {
+      throw cta::exception::LostDatabaseConnection("injected completion disconnection");
+    }
     if (failure == TransferFailurePoint::CompleteCta) {
       throw cta::exception::Exception("injected completion failure");
     }
@@ -346,6 +372,9 @@ public:
 
   std::list<std::unique_ptr<cta::RetrieveJob>> getNextJobBatch(uint64_t, uint64_t, cta::log::LogContext&) override {
     ++getJobs;
+    if (failure == TransferFailurePoint::FetchDatabase) {
+      throw cta::exception::LostDatabaseConnection("injected fetch disconnection");
+    }
     if (failure == TransferFailurePoint::FetchCta) {
       throw cta::exception::Exception("injected fetch failure");
     }
@@ -783,6 +812,14 @@ public:
     FailingTransferScheduler scheduler(getCatalogue(), *m_db, "schedulerBackendName");
     scheduler.failure = point;
     Mount mount(getCatalogue(), point);
+    const bool fatal = point == TransferFailurePoint::MetadataAllocation || point == TransferFailurePoint::MetadataLogic
+                       || point == TransferFailurePoint::MetadataUnknown;
+    const bool startupFails = fatal || point == TransferFailurePoint::Metadata
+                              || point == TransferFailurePoint::MetadataDatabase
+                              || point == TransferFailurePoint::StartingStatus;
+    const bool backendFailure = point == TransferFailurePoint::MetadataDatabase
+                                || point == TransferFailurePoint::FetchDatabase
+                                || point == TransferFailurePoint::CompleteDatabase;
     const bool workerStarts = point == TransferFailurePoint::TapeMountedCta
                               || point == TransferFailurePoint::TapeMountedStandard
                               || point == TransferFailurePoint::TapeMountedAndUnload;
@@ -812,7 +849,7 @@ public:
           }
           throw std::runtime_error("injected drive open failure");
         }));
-    } else if (point != TransferFailurePoint::Metadata && point != TransferFailurePoint::StartingStatus) {
+    } else if (!startupFails) {
       auto* drive = new TransferDriveWithDestructionCounter(driveDestructions);
       if (point == TransferFailurePoint::TapeMountedAndUnload) {
         drive->setFailurePoint(cta::tape::drive::FakeDrive::FailurePoint::UnloadTape);
@@ -833,48 +870,53 @@ public:
     cta::mediachanger::RmcProxy proxy;
     cta::mediachanger::MediaChangerFacade changer(proxy, logger);
     std::optional<TapeSessionResult> result;
-    bool exceptionCaught = false;
-    std::string exceptionMessage;
     TapeSession session(logger, system, info, changer, mount, config, 1, scheduler);
     const auto& tracker = session.tracker();
     EXPECT_FALSE(tracker.state().has_value());
     EXPECT_EQ(&mount, tracker.mount());
-    try {
-      result = session.execute();
-    } catch (const std::exception& ex) {
-      exceptionCaught = true;
-      exceptionMessage = ex.what();
-    }
-    if (exceptionCaught) {
-      EXPECT_NE(std::string::npos, exceptionMessage.find("injected"));
-      EXPECT_EQ(TapeSessionOutcome::Failure, tracker.outcome());
-      if (point == TransferFailurePoint::Metadata || point == TransferFailurePoint::StartingStatus) {
-        EXPECT_EQ(cta::tape::session::TapeSessionState::Preparing, tracker.state());
-        EXPECT_EQ(0, countLogMessages(logger.getLog(), "Tape session finished"));
+    // Operational failures return recovery decisions; fatal failures retain their original type.
+    if (point == TransferFailurePoint::MetadataAllocation) {
+      EXPECT_THROW(session.execute(), std::bad_alloc);
+    } else if (point == TransferFailurePoint::MetadataLogic) {
+      EXPECT_THROW(session.execute(), std::logic_error);
+    } else if (point == TransferFailurePoint::MetadataUnknown) {
+      try {
+        session.execute();
+        ADD_FAILURE() << "Expected the injected non-standard exception";
+      } catch (int value) {
+        EXPECT_EQ(42, value);
+      } catch (...) {
+        ADD_FAILURE() << "Fatal exception type was not preserved";
       }
+    } else {
+      EXPECT_NO_THROW(result = session.execute());
+      EXPECT_TRUE(result.has_value());
+      EXPECT_EQ(cta::tape::session::TapeSessionState::Finished, tracker.state());
     }
-    if (point == TransferFailurePoint::None) {
-      ASSERT_TRUE(result.has_value());
-      EXPECT_EQ(TapeSessionOutcome::Success, tracker.outcome());
+    EXPECT_EQ(point == TransferFailurePoint::None ? TapeSessionOutcome::Success : TapeSessionOutcome::Failure,
+              tracker.outcome());
+    // Check cleanup even if a recoverable case incorrectly throws and leaves no result.
+    if (result) {
+      EXPECT_EQ(point != TransferFailurePoint::None, result->retryDelayRequired);
+      EXPECT_EQ(backendFailure, result->backendRecoveryRequired);
+      EXPECT_EQ(discoveryFails || openFails || point == TransferFailurePoint::TapeMountedAndUnload ?
+                  DriveUsability::MustRemainDown :
+                  DriveUsability::Reusable,
+                result->driveUsability);
     }
     // The mount is borrowed. Finalize it once, including when startup or a
     // publication throws, and keep it alive until every worker has stopped.
     EXPECT_EQ(1, mount.completionAttempts);
     EXPECT_EQ(threadsBefore, transferTestThreadCount());
     EXPECT_EQ(&mount, tracker.mount());
-    if (point != TransferFailurePoint::Metadata && point != TransferFailurePoint::StartingStatus) {
+    if (!startupFails) {
       const auto expectedType = std::is_same_v<Mount, FailingTransferRetrieveMount> ?
                                   cta::tape::session::SessionType::Retrieve :
                                   cta::tape::session::SessionType::Archive;
       EXPECT_EQ(expectedType, tracker.type());
-      if (tracker.state() == cta::tape::session::TapeSessionState::Finished) {
-        EXPECT_EQ(1, countLogMessages(logger.getLog(), "Tape session finished"));
-        EXPECT_GE(mount.statsReports, 1U);
-        EXPECT_EQ(tracker.stats().tape.filesCount, mount.lastReportedStats.filesCount);
-      } else {
-        EXPECT_TRUE(exceptionCaught);
-        EXPECT_EQ(0, countLogMessages(logger.getLog(), "Tape session finished"));
-      }
+      EXPECT_EQ(1, countLogMessages(logger.getLog(), "Tape session finished"));
+      EXPECT_GE(mount.statsReports, 1U);
+      EXPECT_EQ(tracker.stats().tape.filesCount, mount.lastReportedStats.filesCount);
     }
     if (point == TransferFailurePoint::None || point == TransferFailurePoint::Discovery) {
       EXPECT_EQ(cta::tape::session::TapeSessionState::Finished, tracker.state());
@@ -894,31 +936,11 @@ public:
     if (discoveryFails || openFails) {
       EXPECT_EQ(1, scheduler.downAttempts);
       EXPECT_EQ(1, scheduler.desiredDownAttempts);
-      if (result) {
-        EXPECT_EQ(DriveUsability::MustRemainDown, result->driveUsability);
-        EXPECT_EQ(TapeSessionOutcome::Failure, tracker.outcome());
-      }
-    } else if (point != TransferFailurePoint::Metadata && point != TransferFailurePoint::StartingStatus) {
+    } else if (!startupFails) {
       EXPECT_EQ(1, driveDestructions);
       if (!workerStarts) {
         EXPECT_EQ(1, scheduler.upAttempts);
       }
-      if (result) {
-        EXPECT_EQ(point == TransferFailurePoint::TapeMountedAndUnload ? DriveUsability::MustRemainDown :
-                                                                        DriveUsability::Reusable,
-                  result->driveUsability);
-      }
-    }
-    if (point == TransferFailurePoint::CompleteCta && result) {
-      EXPECT_TRUE(result->retryDelayRequired);
-      EXPECT_FALSE(result->backendRecoveryRequired);
-      EXPECT_EQ(TapeSessionOutcome::Failure, tracker.outcome());
-    }
-    if (point == TransferFailurePoint::Metadata || point == TransferFailurePoint::StartingStatus) {
-      EXPECT_TRUE(exceptionCaught);
-    }
-    if (point == TransferFailurePoint::FetchCta && result) {
-      EXPECT_EQ(TapeSessionOutcome::Failure, tracker.outcome());
     }
     if constexpr (std::is_same_v<Mount, FailingTransferRetrieveMount>) {
       if (mount.needsJob()) {
@@ -937,12 +959,14 @@ public:
           EXPECT_NE(std::string::npos, logger.getLog().find("TapeReadSingleThread : tape unmounted"));
         }
       }
-      if (point == TransferFailurePoint::FetchCta || point == TransferFailurePoint::FetchStandard) {
+      if (point == TransferFailurePoint::FetchCta || point == TransferFailurePoint::FetchStandard
+          || point == TransferFailurePoint::FetchDatabase) {
         EXPECT_EQ(1, mount.getJobs);
       }
     }
     if constexpr (std::is_same_v<Mount, FailingTransferMount<cta::MockArchiveMount>>) {
-      if (point == TransferFailurePoint::FetchCta || point == TransferFailurePoint::FetchStandard) {
+      if (point == TransferFailurePoint::FetchCta || point == TransferFailurePoint::FetchStandard
+          || point == TransferFailurePoint::FetchDatabase) {
         EXPECT_EQ(1, mount.archiveFetchAttempts());
       }
     }
@@ -1032,6 +1056,138 @@ TEST_P(TapeSessionTest, RetrieveEmptyMountCleansUp) {
   ASSERT_EXIT(
     {
       checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::None);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+TEST_P(TapeSessionTest, ArchiveMetadataDisconnectionReturnsRecovery) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferMount<cta::MockArchiveMount>>(TransferFailurePoint::MetadataDatabase);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+TEST_P(TapeSessionTest, ArchiveFetchDisconnectionReturnsRecovery) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferMount<cta::MockArchiveMount>>(TransferFailurePoint::FetchDatabase);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+TEST_P(TapeSessionTest, ArchiveCompletionDisconnectionReturnsRecovery) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferMount<cta::MockArchiveMount>>(TransferFailurePoint::CompleteDatabase);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+TEST_P(TapeSessionTest, ArchiveAllocationFailureEscapesAfterCleanup) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferMount<cta::MockArchiveMount>>(TransferFailurePoint::MetadataAllocation);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+TEST_P(TapeSessionTest, ArchiveLogicFailureEscapesAfterCleanup) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferMount<cta::MockArchiveMount>>(TransferFailurePoint::MetadataLogic);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+TEST_P(TapeSessionTest, ArchiveUnknownFailureEscapesAfterCleanup) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferMount<cta::MockArchiveMount>>(TransferFailurePoint::MetadataUnknown);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+TEST_P(TapeSessionTest, RetrieveMetadataDisconnectionReturnsRecovery) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::MetadataDatabase);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+TEST_P(TapeSessionTest, RetrieveFetchDisconnectionReturnsRecovery) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::FetchDatabase);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+TEST_P(TapeSessionTest, RetrieveCompletionDisconnectionReturnsRecovery) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::CompleteDatabase);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+TEST_P(TapeSessionTest, RetrieveAllocationFailureEscapesAfterCleanup) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::MetadataAllocation);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+TEST_P(TapeSessionTest, RetrieveLogicFailureEscapesAfterCleanup) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::MetadataLogic);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+TEST_P(TapeSessionTest, RetrieveUnknownFailureEscapesAfterCleanup) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::MetadataUnknown);
       _exit(::testing::Test::HasFailure() ? 1 : 0);
     },
     testing::ExitedWithCode(0),

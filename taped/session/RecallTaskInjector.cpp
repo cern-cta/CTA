@@ -281,7 +281,7 @@ void RecallTaskInjector::injectBulkRecalls() {
 //synchronousFetch
 //------------------------------------------------------------------------------
 bool RecallTaskInjector::synchronousFetch(bool& noFilesToRecall) {
-  noFilesToRecall = true;
+  noFilesToRecall = false;
   /* If RAO is enabled, we must ask for files up to 1PB.
    * We are limiting to 1PB because the size will be passed as
    * oracle::occi::Number which is limited to ~56 bits precision
@@ -300,24 +300,16 @@ bool RecallTaskInjector::synchronousFetch(bool& noFilesToRecall) {
     return true;  //No need to pop from the queue, injector already holds enough bytes, but we return there is still work to be done
   }
   reqSize -= m_bytes;
-  try {
-    auto jobsList = m_retrieveMount.getNextJobBatch(reqFiles, reqSize, m_lc);
-    for (auto& j : jobsList) {
-      m_files++;
-      m_bytes += j->archiveFile.fileSize;
-      m_jobs.emplace_back(j.release());
-    }
-    m_fetched = jobsList.size();
-    noFilesToRecall = !jobsList.size();
-  } catch (cta::exception::Exception& ex) {
-    cta::log::ScopedParamContainer scoped(m_lc);
-    scoped.add("transactionId", m_retrieveMount.getMountTransactionId())
-      .add("requestedBytes", reqSize)
-      .add("requestedFiles", reqFiles)
-      .add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
-    m_lc.log(cta::log::ERR, "Failed to getFilesToRecall");
-    return false;
+  // Startup callers need the original exception to select backend recovery.
+  auto jobsList = m_retrieveMount.getNextJobBatch(reqFiles, reqSize, m_lc);
+  for (auto& j : jobsList) {
+    m_files++;
+    m_bytes += j->archiveFile.fileSize;
+    m_jobs.emplace_back(j.release());
   }
+  m_fetched = jobsList.size();
+  noFilesToRecall = !jobsList.size();
+
   if (m_jobs.empty()) {
     m_lc.log(cta::log::INFO, "No files left to recall on the queue or in the injector");
     return false;
@@ -396,52 +388,60 @@ void RecallTaskInjector::WorkerThread::run() {
   using cta::log::LogContext;
   m_parent.m_lc.push(Param("thread", "RecallTaskInjector"));
   m_parent.m_lc.log(cta::log::DEBUG, "Starting RecallTaskInjector thread");
-  if (m_parent.m_raoManager.useRAO()) {
-    /* RecallTaskInjector is waiting to have access to the drive in order
+  try {
+    if (m_parent.m_raoManager.useRAO()) {
+      /* RecallTaskInjector is waiting to have access to the drive in order
      * to perform the RAO query;
      * This waitForPromise() call means that the drive is mounted
      */
-    m_parent.waitForPromise();
-    try {
-      m_parent.m_raoManager.setEnterpriseRAOUdsLimits(m_parent.m_drive->getLimitUDS());
-      LogContext::ScopedParam sp(m_parent.m_lc,
-                                 Param("maxSupportedUDS", m_parent.m_raoManager.getMaxFilesSupported().value()));
-      m_parent.m_lc.log(cta::log::INFO, "Query getLimitUDS for RAO Enterprise completed");
-    } catch (cta::tape::SCSI::Exception& e) {
-      cta::log::ScopedParamContainer spc(m_parent.m_lc);
-      spc.add(cta::semconv::log::exceptionMessage, e.getMessageValue());
-      m_parent.m_lc.log(cta::log::INFO,
-                        "Error while fetching the limitUDS for RAO enterprise drive. Will run a CTA RAO.");
-    } catch (const cta::tape::drive::DriveDoesNotSupportRAOException&) {
-      m_parent.m_lc.log(cta::log::INFO, "The drive does not support RAO Enterprise, will run a CTA RAO.");
+      m_parent.waitForPromise();
+      try {
+        m_parent.m_raoManager.setEnterpriseRAOUdsLimits(m_parent.m_drive->getLimitUDS());
+        LogContext::ScopedParam sp(m_parent.m_lc,
+                                   Param("maxSupportedUDS", m_parent.m_raoManager.getMaxFilesSupported().value()));
+        m_parent.m_lc.log(cta::log::INFO, "Query getLimitUDS for RAO Enterprise completed");
+      } catch (cta::tape::SCSI::Exception& e) {
+        cta::log::ScopedParamContainer spc(m_parent.m_lc);
+        spc.add(cta::semconv::log::exceptionMessage, e.getMessageValue());
+        m_parent.m_lc.log(cta::log::INFO,
+                          "Error while fetching the limitUDS for RAO enterprise drive. Will run a CTA RAO.");
+      } catch (const cta::tape::drive::DriveDoesNotSupportRAOException&) {
+        m_parent.m_lc.log(cta::log::INFO, "The drive does not support RAO Enterprise, will run a CTA RAO.");
+      }
+      std::optional<uint64_t> maxFilesSupportedByRAO = m_parent.m_raoManager.getMaxFilesSupported();
+      if (maxFilesSupportedByRAO && m_parent.m_fetched < maxFilesSupportedByRAO.value()) {
+        /* Fetching until we reach maxSupported for the tape drive RAO */
+        //unused boolean here but need to be kept to respect the synchronousFetch signature
+        bool noFilesToRecall;
+        m_parent.synchronousFetch(noFilesToRecall);
+      }
     }
-    std::optional<uint64_t> maxFilesSupportedByRAO = m_parent.m_raoManager.getMaxFilesSupported();
-    if (maxFilesSupportedByRAO && m_parent.m_fetched < maxFilesSupportedByRAO.value()) {
-      /* Fetching until we reach maxSupported for the tape drive RAO */
-      //unused boolean here but need to be kept to respect the synchronousFetch signature
-      bool noFilesToRecall;
-      m_parent.synchronousFetch(noFilesToRecall);
-    }
-  }
 
-  m_parent.injectBulkRecalls();  //do an initial injection before entering loop
-  if (m_parent.m_diskSpaceReservationFailed) {
-    m_parent.signalEndDataMovement();
-    m_parent.setFirstTasksInjectedPromise();
-  } else {
-    try {
-      popRecalls();
-    } catch (const cta::exception::Exception& ex) {
-      //we end up there because we could not talk to the client
-      cta::log::ScopedParamContainer container(m_parent.m_lc);
-      container.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
-      m_parent.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
-      m_parent.m_lc.log(cta::log::ERR,
-                        "In RecallJobInjector::WorkerThread::run(): "
-                        "could not retrieve a list of file to recall. End of session");
+    m_parent.injectBulkRecalls();  //do an initial injection before entering loop
+    if (m_parent.m_diskSpaceReservationFailed) {
       m_parent.signalEndDataMovement();
-      m_parent.deleteAllTasks();
+      m_parent.setFirstTasksInjectedPromise();
+    } else {
+      popRecalls();
     }
+  } catch (const std::exception& ex) {
+    const auto* ctaException = dynamic_cast<const cta::exception::Exception*>(&ex);
+    if (!ctaException && !dynamic_cast<const std::runtime_error*>(&ex)) {
+      throw;
+    }
+    m_parent.m_tracker.setOutcome(TapeSessionOutcome::Failure);
+    //we end up there because we could not talk to the client
+    cta::log::ScopedParamContainer container(m_parent.m_lc);
+    container.add(cta::semconv::log::exceptionMessage, (ctaException ? ctaException->getMessageValue() : ex.what()));
+    if (ctaException) {
+      m_parent.m_lc.logBacktrace(cta::log::INFO, ctaException->backtrace());
+    }
+    m_parent.m_lc.log(cta::log::ERR,
+                      "In RecallJobInjector::WorkerThread::run(): "
+                      "could not retrieve a list of file to recall. End of session");
+    m_parent.signalEndDataMovement();
+    m_parent.deleteAllTasks();
+    m_parent.setFirstTasksInjectedPromise();
   }
   //-------------
   m_parent.m_lc.log(cta::log::DEBUG, "Finishing RecallTaskInjector thread");
