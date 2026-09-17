@@ -1,0 +1,10 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# TODO: remove this once it's stabilized (end 2026)
+[unstable]
+min-publish-age = true
+
+# Set a cooldown period of 14 days for dependencies
+[registry]
+global-min-publish-age = "14 days"
