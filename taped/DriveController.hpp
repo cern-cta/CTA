@@ -60,6 +60,8 @@ private:
   // Clean and publish down, returning a nonzero exit code if either operation fails.
   int shutdownDrive();
 
+  // Reuse a successful probe while idle; sessions and recovery invalidate it.
+  bool m_probeRequired = true;
   std::stop_source m_stopSource;
 
   const TapedConfig& m_config;
