@@ -176,14 +176,11 @@ protected:
     EXPECT_CALL(scheduler, reportSchedulerBackendName("drive", _));
   }
 
-  void expectPreparation(bool probeRequired = true) {
+  void expectPreparation() {
     testing::InSequence sequence;
     DesiredDriveState state;
     state.up = true;
-    EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(state));
-    if (probeRequired) {
-      preparationComplete = EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Probing, _));
-    }
+    preparationComplete = EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(state));
     if (empty) {
       preparationComplete = EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _));
     }
@@ -432,7 +429,6 @@ TEST_F(DriveControllerTest, DownDriveWaitsForOperatorUpBeforeProbing) {
   DesiredDriveState up;
   up.up = true;
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
-  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Probing, _));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _));
   iteration();
   EXPECT_EQ(1, probes);
@@ -441,17 +437,16 @@ TEST_F(DriveControllerTest, DownDriveWaitsForOperatorUpBeforeProbing) {
 }
 
 /*
- * If publishing the probing status fails, the controller stops before touching hardware.
- * The backend must reflect the transition before the drive is probed.
+ * If publishing Up fails after a successful probe, the controller must not schedule work.
  */
-TEST_F(DriveControllerTest, ProbingPublicationFailurePreventsHardwareAccessAndScheduling) {
+TEST_F(DriveControllerTest, UpPublicationFailureAfterProbePreventsScheduling) {
   DesiredDriveState up;
   up.up = true;
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
-  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Probing, _))
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _))
     .WillOnce(Throw(std::runtime_error("publication failed")));
   EXPECT_THROW(iteration(), std::runtime_error);
-  EXPECT_EQ(0, probes);
+  EXPECT_EQ(1, probes);
   EXPECT_EQ(0, schedules);
 }
 
@@ -500,14 +495,14 @@ TEST_F(DriveControllerTest, ProbeFailurePublishesItsReasonAndPreventsScheduling)
 
 /*
  * If scheduling returns no mount, the controller waits before the next attempt.
- * It checks the desired state and refreshes the idle status without probing again.
+ * It checks the desired state, probes again, and refreshes the idle status.
  */
 TEST_F(DriveControllerTest, IdleMountWaitsAndRechecksDriveBeforeRetry) {
   expectPreparation();
   iteration();
-  expectPreparation(false);
+  expectPreparation();
   iteration();
-  EXPECT_EQ(1, probes);
+  EXPECT_EQ(2, probes);
   EXPECT_EQ(2, schedules);
   EXPECT_EQ(0, transfers);
   EXPECT_THAT(
@@ -515,7 +510,7 @@ TEST_F(DriveControllerTest, IdleMountWaitsAndRechecksDriveBeforeRetry) {
     testing::ElementsAre(config.mounts.idle_scheduling_interval_secs, config.mounts.idle_scheduling_interval_secs));
 }
 
-// An operator down/up request invalidates the probe retained during idle scheduling.
+// Scheduling resumes with a fresh probe after an operator down/up request.
 TEST_F(DriveControllerTest, OperatorDownUpRequiresAnotherProbe) {
   expectPreparation();
   iteration();
@@ -545,9 +540,9 @@ TEST_F(DriveControllerTest, SchedulingTimeoutWaitsAndAllowsAnotherIteration) {
   expectPreparation();
   EXPECT_NO_THROW(iteration());
   schedule = {};
-  expectPreparation(false);
+  expectPreparation();
   iteration();
-  EXPECT_EQ(1, probes);
+  EXPECT_EQ(2, probes);
   EXPECT_EQ(2, schedules);
   EXPECT_THAT(sleeps, testing::ElementsAre(7, 7));
 }
@@ -579,7 +574,7 @@ TEST_F(DriveControllerTest, SchedulingDatabaseFailureWaitsForRecoveryBeforeRetry
 
 /*
  * Unexpected scheduling failures are logged and retried after the idle delay without cleaning.
- * The next attempt checks the desired state without repeating the successful probe.
+ * The next attempt checks the desired state and probes again before scheduling.
  */
 TEST_F(DriveControllerTest, UnexpectedSchedulingFailureWaitsAndAllowsAnotherIteration) {
   schedule = []() -> std::unique_ptr<TapeMount> { throw std::runtime_error("unexpected scheduler failure"); };
@@ -599,9 +594,9 @@ TEST_F(DriveControllerTest, UnexpectedSchedulingFailureWaitsAndAllowsAnotherIter
   EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.idle_scheduling_interval_secs));
 
   supplyMount();
-  expectPreparation(false);
+  expectPreparation();
   EXPECT_NO_THROW(iteration());
-  EXPECT_EQ(1, probes);
+  EXPECT_EQ(2, probes);
   EXPECT_EQ(2, schedules);
   EXPECT_EQ(1, transfers);
   EXPECT_EQ(1, destroyed);

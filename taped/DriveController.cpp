@@ -142,7 +142,6 @@ void DriveController::runIteration() {
   }
 
   // TapeSession handles recoverable failures; escaping exceptions are fatal and reach run().
-  m_probeRequired = true;
   const auto transferResult = m_operations.runTapeSession(*tapeMount);
 
   // Handled finalization failures need scheduling recovery, not another hardware cleanup.
@@ -184,7 +183,6 @@ void DriveController::waitForLogicalLibrary() {
 }
 
 void DriveController::waitForBackendRecovery() {
-  m_probeRequired = true;
   // Scheduler::ping checks both the catalogue and scheduler backend.
   while (true) {
     try {
@@ -223,7 +221,6 @@ void DriveController::waitUntilDriveIsRequestedUp() {
       return;
     }
 
-    m_probeRequired = true;
     if (!waitingLogged) {
       m_lc.log(log::INFO, "Waiting for the desired drive state to become up.");
       waitingLogged = true;
@@ -343,27 +340,19 @@ bool DriveController::prepareDriveForScheduling() {
   // A drive must be up before we can schedule.
   waitUntilDriveIsRequestedUp();
 
-  if (m_probeRequired) {
-    // Probe once before idle scheduling, and again after a session, recovery, or operator down/up.
-    scheduler.reportDriveStatus(m_driveInfo,
-                                common::dataStructures::MountType::NoMount,
-                                common::dataStructures::DriveStatus::Probing,
-                                m_lc);
-    m_lc.log(log::DEBUG, "Checking whether the drive is empty before scheduling.");
+  // Check readiness before every scheduling attempt without publishing a transient drive state.
+  m_lc.log(log::DEBUG, "Checking whether the drive is empty before scheduling.");
 
-    // A non-empty or failed probe prevents scheduling and requires another operator up request.
-    const auto [empty, probeError] = m_operations.probeDrive();
-    if (!empty) {
-      m_lc.log(log::WARNING, "Drive probe did not confirm an empty drive. Requesting the drive down.");
-      putDriveDown(probeError ? common::dataStructures::DriveDownReason::DriveProbeFailed :
-                                common::dataStructures::DriveDownReason::TapeDetected,
-                   probeError.value_or(""));
-      return false;
-    }
-    m_lc.log(log::DEBUG, "No tape detected in the drive. Proceeding with scheduling.");
-
-    m_probeRequired = false;
+  // A non-empty or failed probe prevents scheduling and requires another operator up request.
+  const auto [empty, probeError] = m_operations.probeDrive();
+  if (!empty) {
+    m_lc.log(log::WARNING, "Drive probe did not confirm an empty drive. Requesting the drive down.");
+    putDriveDown(probeError ? common::dataStructures::DriveDownReason::DriveProbeFailed :
+                              common::dataStructures::DriveDownReason::TapeDetected,
+                 probeError.value_or(""));
+    return false;
   }
+  m_lc.log(log::DEBUG, "No tape detected in the drive. Proceeding with scheduling.");
 
   // Advertise an idle drive with no active mount before asking the scheduler for work.
   scheduler.reportDriveStatus(m_driveInfo,
