@@ -194,7 +194,7 @@ private:
 
   /** Pointer to the task injector allowing request for more work, and
    * termination signaling */
-  MigrationTaskInjector* m_injector;
+  MigrationTaskInjector* m_injector = nullptr;
 
   /** The maximum number of files we ask per request. This value is also used as
    * a threshold (half of it, indeed) to trigger the request for more work.
