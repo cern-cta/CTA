@@ -899,9 +899,7 @@ public:
     if (result) {
       EXPECT_EQ(point != TransferFailurePoint::None, result->retryDelayRequired);
       EXPECT_EQ(backendFailure, result->backendRecoveryRequired);
-      EXPECT_EQ(discoveryFails || openFails || point == TransferFailurePoint::TapeMountedAndUnload ?
-                  DriveUsability::MustRemainDown :
-                  DriveUsability::Reusable,
+      EXPECT_EQ(discoveryFails || openFails ? DriveUsability::MustRemainDown : DriveUsability::Reusable,
                 result->driveUsability);
     }
     // The mount is borrowed. Finalize it once, including when startup or a
@@ -956,7 +954,7 @@ public:
         if (point == TransferFailurePoint::TapeMountedAndUnload) {
           EXPECT_EQ(1, tracker.errorStats().at(TapeSessionError::TapeUnload));
         } else {
-          EXPECT_NE(std::string::npos, logger.getLog().find("TapeReadSingleThread : tape unmounted"));
+          EXPECT_NE(std::string::npos, logger.getLog().find("Cleaner dismounted tape"));
         }
       }
       if (point == TransferFailurePoint::FetchCta || point == TransferFailurePoint::FetchStandard
@@ -978,7 +976,7 @@ public:
         if (point == TransferFailurePoint::TapeMountedAndUnload) {
           EXPECT_EQ(1, tracker.errorStats().at(TapeSessionError::TapeUnload));
         } else {
-          EXPECT_NE(std::string::npos, logger.getLog().find("TapeWriteSingleThread : tape unmounted"));
+          EXPECT_NE(std::string::npos, logger.getLog().find("Cleaner dismounted tape"));
         }
       }
     }
@@ -1631,7 +1629,7 @@ TEST_P(TapeSessionTest, RetrieveTapeMountedStandardFailureCleansUp) {
 
 /*
  * If retrieve tape-mounted publication and tape unloading both fail, cleanup still runs.
- * The result must keep the drive down and record the unload error.
+ * Successful robotic dismount permits reuse; the unload error must still be recorded.
  */
 TEST_P(TapeSessionTest, RetrieveTapeMountedAndUnloadFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
@@ -1676,7 +1674,7 @@ TEST_P(TapeSessionTest, ArchiveTapeMountedStandardFailureCleansUp) {
 
 /*
  * If archive tape-mounted publication and tape unloading both fail, cleanup still runs.
- * The result must keep the drive down and record the unload error.
+ * Successful robotic dismount permits reuse; the unload error must still be recorded.
  */
 TEST_P(TapeSessionTest, ArchiveTapeMountedAndUnloadFailureCleansUp) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";

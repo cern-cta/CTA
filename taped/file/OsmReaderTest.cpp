@@ -16,7 +16,7 @@
 #include "scheduler/RetrieveJob.hpp"
 #include "taped/drive/DriveInterface.hpp"
 #include "taped/scsi/Device.hpp"
-#include "taped/session/CleanerSession.hpp"
+#include "taped/session/DriveCleaner.hpp"
 #include "taped/session/TapeSessionTracker.hpp"
 #include "taped/session/VolumeInfo.hpp"
 #include "taped/system/Wrapper.hpp"
@@ -156,13 +156,10 @@ TEST_F(OsmReaderTest, CleanDrive) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummylogger);
   cta::common::dataStructures::DriveInfo driveInfo(m_devName, "0.0.0.0", "TestLogicalLibrary", m_nstDev, "dummy");
 
-  auto scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_db, "schedulerBackendName");
-
   cta::tape::daemon::TapeSessionTracker tracker;
-  cta::tape::daemon::CleanerSession
-    cleanerSession(mc, strlogger, driveInfo, m_sWrapper, m_vid, false, 0, *m_catalogue, *scheduler, tracker);
+  cta::tape::daemon::DriveCleaner driveCleaner(mc, strlogger, driveInfo, m_vid, false, 0, *m_catalogue, tracker);
 
-  ASSERT_EQ(cta::tape::daemon::DriveUsability::Reusable, cleanerSession.execute());
+  ASSERT_EQ(cta::tape::daemon::DriveUsability::Reusable, driveCleaner.execute(m_sWrapper));
 
   const auto logToCheck = strlogger.getLog();
   ASSERT_NE(std::string::npos, logToCheck.find("Cleaner detected that the tape contains data"));

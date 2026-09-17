@@ -15,7 +15,7 @@
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "rdbms/Login.hpp"
 #include "scheduler/Scheduler.hpp"
-#include "session/CleanerSession.hpp"
+#include "session/DriveCleaner.hpp"
 #include "session/EmptyDriveProbe.hpp"
 #include "session/TapeSession.hpp"
 #include "session/TapeSessionTracker.hpp"
@@ -119,17 +119,15 @@ public:
 
   bool clean(const std::optional<std::string>& vid, bool waitMediaInDrive) override {
     TapeSessionTracker tracker;
-    CleanerSession session(m_mediaChanger,
-                           m_lc.logger(),
-                           m_driveInfo,
-                           m_sysWrapper,
-                           vid.value_or(""),
-                           waitMediaInDrive,
-                           m_config.mounts.tape_load_timeout_secs,
-                           *m_catalogue,
-                           *m_scheduler,
-                           tracker);
-    return session.execute() == DriveUsability::Reusable;
+    DriveCleaner session(m_mediaChanger,
+                         m_lc.logger(),
+                         m_driveInfo,
+                         vid.value_or(""),
+                         waitMediaInDrive,
+                         m_config.mounts.tape_load_timeout_secs,
+                         *m_catalogue,
+                         tracker);
+    return session.execute(m_sysWrapper) == DriveUsability::Reusable;
   }
 
   void sleep(unsigned int seconds) override { ::sleep(seconds); }
