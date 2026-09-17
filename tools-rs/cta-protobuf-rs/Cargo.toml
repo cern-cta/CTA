@@ -27,3 +27,7 @@
 
 [build-dependencies]
   tonic-prost-build = { workspace = true }
+
+# machete can't figure out that our auto-generated code requires these crates
+[package.metadata.cargo-machete]
+ignored = ["prost", "tonic-prost"]
