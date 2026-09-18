@@ -56,7 +56,7 @@ public:
    * @brief Register the drive, wait for its library and run scheduling iterations.
    *
    * Startup failures exit without touching hardware.
-   * Exceptions escaping the scheduling loop trigger final cleanup and down-state publication.
+   * Exceptions escaping the scheduling loop trigger down-state publication without touching tape hardware.
    *
    * @return A nonzero exit code on startup, iteration or shutdown failure.
    */
@@ -157,9 +157,9 @@ private:
   bool cleanBeforeScheduling();
 
   /**
-   * @brief Attempt final cleanup and publish down while preserving an existing failure reason.
+   * @brief Publish down without touching tape hardware, preserving an existing failure reason.
    *
-   * @return Zero on success, or a nonzero exit code when cleaning or publication fails.
+   * @return Zero on success, or a nonzero exit code when publication fails.
    */
   int shutdownDrive();
 };

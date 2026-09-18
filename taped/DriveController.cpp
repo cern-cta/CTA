@@ -102,18 +102,15 @@ int DriveController::run() {
       runIteration();
     }
   } catch (const std::exception& ex) {
-    logDriveFailure(m_lc, "Drive controller failed. Cleaning before exit.", ex);
+    logDriveFailure(m_lc, "Drive controller failed. Publishing down state before exit.", ex);
     iterationFailed = true;
   } catch (...) {
-    m_lc.log(log::ERR, "Drive controller failed with an unknown exception. Cleaning before exit.");
+    m_lc.log(log::ERR, "Drive controller failed with an unknown exception. Publishing down state before exit.");
     iterationFailed = true;
   }
 
-  // TODO: Avoid hardware cleanup when a database failure interrupts waiting with the drive desired and reported Down.
-  // Track whether this controller has begun hardware operations that may require cleanup before calling shutdownDrive().
   m_registered.store(false);
-  // Cleanup cannot hide the original failure.
-  // TODO: we should not clean up the drive if we never acquired a tape. Invariant: an actual down + desired down state should not touch tape hardware
+  // Shutdown publication cannot hide the original failure.
   const int shutdownResult = shutdownDrive();
   return iterationFailed ? 1 : shutdownResult;
 }
@@ -439,28 +436,11 @@ bool DriveController::cleanBeforeScheduling() {
 }
 
 int DriveController::shutdownDrive() {
-  // Use an unknown VID; final cleanup does not depend on a surviving transfer mount.
   int exitCode = 0;
-  bool cleaningSucceeded = false;
 
-  // Cleanup failure must not prevent attempting to publish the down state.
+  // Sessions own tape cleanup; a down drive may be in use by an operator.
   try {
-    cleaningSucceeded = m_operations.clean(std::nullopt, true);
-    if (!cleaningSucceeded) {
-      m_lc.log(log::ERR, "Final drive cleaning failed.");
-      exitCode = 1;
-    }
-  } catch (const std::exception& ex) {
-    logDriveFailure(m_lc, "Final drive cleaning threw an exception.", ex);
-    exitCode = 1;
-  }
-
-  // Preserve existing reasons; publish a clean shutdown only when cleaning succeeded.
-  try {
-    putDriveDown(cleaningSucceeded ? common::dataStructures::DriveDownReason::Shutdown :
-                                     common::dataStructures::DriveDownReason::CleanerFailed,
-                 {},
-                 true);
+    putDriveDown(common::dataStructures::DriveDownReason::Shutdown, {}, true);
   } catch (const std::exception&) {
     // The helper has logged each failure and attempted both down-state publications.
     exitCode = 1;

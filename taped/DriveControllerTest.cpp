@@ -1297,7 +1297,7 @@ TEST_F(DriveControllerTest, HandledSessionFailureWaitsForBackendWithoutCleaning)
 /**
  * @brief Escaping session exceptions are fatal, including database disconnections.
  *
- * After initial up-request cleaning, final shutdown cleaning runs once the mount has been released.
+ * Only initial up-request cleaning runs; shutdown releases the mount without cleaning again.
  */
 TEST_F(DriveControllerTest, EscapingSessionExceptionsExitWithoutRetrying) {
   for (const auto failure : {"standard", "database", "unknown"}) {
@@ -1325,7 +1325,7 @@ TEST_F(DriveControllerTest, EscapingSessionExceptionsExitWithoutRetrying) {
     clean = [&] {
       ++cleanAttempts;
       EXPECT_EQ(nullptr, liveMount());
-      EXPECT_EQ(previousDestroyed + (cleanAttempts == 1 ? 0 : 1), destroyed);
+      EXPECT_EQ(previousDestroyed, destroyed);
       return true;
     };
     EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
@@ -1338,7 +1338,7 @@ TEST_F(DriveControllerTest, EscapingSessionExceptionsExitWithoutRetrying) {
 
     EXPECT_EQ(1, controller->run());
     EXPECT_FALSE(controller->isReady());
-    EXPECT_EQ(2, cleanAttempts);
+    EXPECT_EQ(1, cleanAttempts);
     EXPECT_EQ(previousTransfers + 1, transfers);
     EXPECT_EQ(previousSchedules + 1, schedules);
     EXPECT_TRUE(sleeps.empty());
@@ -1471,53 +1471,37 @@ TEST_F(DriveControllerTest, ReasonLookupFailureStillAttemptsBothDownPublications
 // Shutdown.
 
 /**
- * @brief An exception escaping drive preparation triggers final cleaning and both down publications.
- *
- * Successful, failed, or throwing cleanup must all retain a failing process exit status.
+ * @brief A failure while the drive is down publishes down without touching tape hardware.
  */
-TEST_F(DriveControllerTest, IterationExceptionCleansAndPublishesDownBeforeFailingExit) {
-  for (const auto cleanupOutcome : {"success", "failure", "exception"}) {
-    SCOPED_TRACE(cleanupOutcome);
-    testing::InSequence sequence;
-    expectRunStartup();
-    EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Throw(std::runtime_error("iteration failed")));
-
-    unsigned int cleanAttempts = 0;
-    clean = [&]() -> bool {
-      ++cleanAttempts;
-      EXPECT_EQ(nullptr, liveMount());
-      if (std::string(cleanupOutcome) == "exception") {
-        throw std::runtime_error("cleaner failed");
-      }
-      return std::string(cleanupOutcome) == "success";
-    };
-    EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Invoke([&](const auto&, auto&) {
-      EXPECT_EQ(1, cleanAttempts);
-      return DesiredDriveState {};
+TEST_F(DriveControllerTest, IterationExceptionPublishesDownWithoutCleaning) {
+  testing::InSequence sequence;
+  expectRunStartup();
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Throw(std::runtime_error("iteration failed")));
+  clean = [] {
+    ADD_FAILURE() << "Shutdown must not clean a drive that may be used by an operator";
+    return false;
+  };
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
+  EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
+    .WillOnce(Invoke([](const auto&, const DesiredDriveState& state, auto&) {
+      EXPECT_FALSE(state.up);
+      EXPECT_EQ(formatDriveDownReason(DriveDownReason::Shutdown), state.reason);
     }));
-    EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
-    EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
-      .WillOnce(Invoke([&](const auto&, const DesiredDriveState& state, auto&) {
-        EXPECT_FALSE(state.up);
-        const auto reason =
-          std::string(cleanupOutcome) == "success" ? DriveDownReason::Shutdown : DriveDownReason::CleanerFailed;
-        EXPECT_EQ(formatDriveDownReason(reason), state.reason);
-      }));
 
-    EXPECT_EQ(1, controller->run());
-    EXPECT_FALSE(controller->isReady());
-    EXPECT_EQ(1, cleanAttempts);
-    EXPECT_THAT(logger.getLog(), testing::HasSubstr("Drive controller failed. Cleaning before exit."));
-    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&scheduler));
-  }
+  EXPECT_EQ(1, controller->run());
+  EXPECT_FALSE(controller->isReady());
+  EXPECT_EQ(0, cleanings);
+  EXPECT_EQ(0, probes);
+  EXPECT_THAT(logger.getLog(), testing::HasSubstr("Drive controller failed. Publishing down state before exit."));
 }
 
 /**
- * @brief An unknown transfer exception unwinds the active mount before final cleaning.
+ * @brief An unknown transfer exception unwinds the active mount before publishing down.
  *
- * Cleanup preserves an existing operator reason and cannot turn the exit into success.
+ * Shutdown preserves an existing operator reason and cannot turn the exit into success.
  */
-TEST_F(DriveControllerTest, UnknownIterationExceptionReleasesMountBeforeFinalCleaning) {
+TEST_F(DriveControllerTest, UnknownIterationExceptionReleasesMountWithoutFinalCleaning) {
   testing::InSequence sequence;
   expectRunStartup();
   DesiredDriveState up;
@@ -1530,7 +1514,7 @@ TEST_F(DriveControllerTest, UnknownIterationExceptionReleasesMountBeforeFinalCle
   clean = [&] {
     ++cleanAttempts;
     EXPECT_EQ(nullptr, liveMount());
-    EXPECT_EQ(cleanAttempts == 1 ? 0 : 1, destroyed);
+    EXPECT_EQ(0, destroyed);
     return true;
   };
   DesiredDriveState state;
@@ -1539,14 +1523,14 @@ TEST_F(DriveControllerTest, UnknownIterationExceptionReleasesMountBeforeFinalCle
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
   EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
     .WillOnce(Invoke([&](const auto&, const DesiredDriveState& desired, auto&) {
-      EXPECT_EQ(2, cleanAttempts);
+      EXPECT_EQ(1, cleanAttempts);
       EXPECT_FALSE(desired.up);
       EXPECT_FALSE(desired.reason);
     }));
 
   EXPECT_EQ(1, controller->run());
   EXPECT_FALSE(controller->isReady());
-  EXPECT_EQ(2, cleanAttempts);
+  EXPECT_EQ(1, cleanAttempts);
   EXPECT_EQ(1, transfers);
   EXPECT_EQ(1, destroyed);
   EXPECT_EQ(nullptr, liveMount());
@@ -1554,45 +1538,45 @@ TEST_F(DriveControllerTest, UnknownIterationExceptionReleasesMountBeforeFinalCle
 }
 
 /**
- * @brief If final cleaning returns failure, shutdown still publishes the drive as down.
- *
- * It records the cleaner failure and returns a nonzero result.
+ * @brief Shutdown publishes down without invoking the cleaner.
  */
-TEST_F(DriveControllerTest, FailedShutdownCleaningStillPublishesDown) {
-  clean = [] { return false; };
+TEST_F(DriveControllerTest, ShutdownPublishesDownWithoutCleaning) {
+  clean = [] {
+    ADD_FAILURE() << "Shutdown must not clean the drive";
+    return false;
+  };
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
   EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
     .WillOnce(Invoke([](const auto&, const DesiredDriveState& state, auto&) {
-      EXPECT_EQ(formatDriveDownReason(DriveDownReason::CleanerFailed), state.reason);
+      EXPECT_FALSE(state.up);
+      EXPECT_EQ(formatDriveDownReason(DriveDownReason::Shutdown), state.reason);
     }));
-  EXPECT_EQ(1, shutdown());
+  EXPECT_EQ(0, shutdown());
+  EXPECT_EQ(0, cleanings);
 }
 
 /**
- * @brief If final cleaning throws, shutdown still attempts both down-state publications.
- *
- * A publication failure must not prevent the other publication attempt.
+ * @brief A reported-state publication failure must not prevent the desired-state publication.
  */
-TEST_F(DriveControllerTest, ShutdownCleaningExceptionStillAttemptsDownAfterPublicationFailure) {
-  clean = []() -> bool { throw std::runtime_error("cleaner failed"); };
+TEST_F(DriveControllerTest, ShutdownAttemptsBothDownPublicationsAfterFailure) {
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _))
     .WillOnce(Throw(std::runtime_error("reported state failed")));
   EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _));
   EXPECT_EQ(1, shutdown());
+  EXPECT_EQ(0, cleanings);
 }
 
 /**
- * @brief If final cleaning succeeds but down-state publication fails, shutdown returns failure.
- *
- * Successful hardware cleanup cannot hide an unreported drive state.
+ * @brief A desired-state publication failure makes shutdown return failure.
  */
-TEST_F(DriveControllerTest, SuccessfulCleaningWithPublicationFailureReturnsNonzero) {
+TEST_F(DriveControllerTest, ShutdownPublicationFailureReturnsNonzero) {
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
   EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _)).WillOnce(Throw(std::runtime_error("publication failed")));
   EXPECT_EQ(1, shutdown());
+  EXPECT_EQ(0, cleanings);
 }
 
 /**
