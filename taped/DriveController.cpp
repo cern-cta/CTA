@@ -113,6 +113,7 @@ int DriveController::run() {
   // Track whether this controller has begun hardware operations that may require cleanup before calling shutdownDrive().
   m_registered.store(false);
   // Cleanup cannot hide the original failure.
+  // TODO: we should not clean up the drive if we never acquired a tape. Invariant: an actual down + desired down state should not touch tape hardware
   const int shutdownResult = shutdownDrive();
   return iterationFailed ? 1 : shutdownResult;
 }
