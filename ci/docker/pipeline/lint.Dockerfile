@@ -8,6 +8,7 @@ ARG CARGO_DENY_VERSION="=0.20.2"
 ARG CARGO_MACHETE_VERSION="=0.9.2"
 ARG CARGO_NEXTEST_VERSION="=0.9.145"
 ARG CARGO_SONAR_VERSION="=1.6.0"
+ARG CARGO_LLVM_COV_VERSION="=0.9.1"
 
 RUN dnf install -y epel-release && \
     dnf install -y git git-clang-format patch python3 python3-pip wget which \
@@ -32,11 +33,12 @@ RUN curl -O https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/ru
 
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-# Add clippy (linting)
-RUN rustup component add clippy
+# Add clippy (linting) and llvm-tools-preview (needed for coverage tests)
+RUN rustup component add clippy llvm-tools-preview
 
 # Add other Rust code checking tools
 RUN cargo install cargo-deny@${CARGO_DENY_VERSION} \
+                  cargo-llvm-cov@${CARGO_LLVM_COV_VERSION} \
                   cargo-machete@${CARGO_MACHETE_VERSION} \
                   cargo-nextest@${CARGO_NEXTEST_VERSION} \
                   cargo-sonar@${CARGO_SONAR_VERSION}
