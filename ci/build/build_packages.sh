@@ -42,6 +42,7 @@ usage() {
   echo "      --skip-test-packages                Compile tests but do not package them."
   echo "      --skip-unit-tests                   Do not run unit tests while building packages."
   echo "      --skip-cmake                        Skip configuration for a standalone binary build."
+  echo "      --sbom-path <path>                  Generate the Rust CycloneDX BOM and copy it to this path."
   echo
   echo "The host platform and native package format are detected automatically."
   echo "Currently, only the enterprise Linux backend is implemented."
@@ -86,11 +87,14 @@ skip_test_packages=false
 skip_debug_packages=false
 skip_unit_tests=false
 skip_cmake=false
+rust_dir_path="tools-rs"
+sbom_path=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --build-dir | --build-generator | --scheduler-type | --cta-version | --cta-version-suffix | \
-      --cmake-build-type | --xrootd-ssi-version | --source-package-dir | -j | --jobs | --oracle-support)
+      --cmake-build-type | --xrootd-ssi-version | --source-package-dir | -j | --jobs | \
+      --oracle-support | --sbom-path)
       [[ $# -gt 1 ]] || error_usage "$1 requires an argument"
       option="$1"
       value="$2"
@@ -113,6 +117,7 @@ while [[ $# -gt 0 ]]; do
             *) die_usage "--oracle-support must be ON or OFF" ;;
           esac
           ;;
+        --sbom-path) sbom_path=$(realpath -m "$value") ;;
       esac
       ;;
     --clean-build-dir) clean_build_dir=true; shift ;;
@@ -293,6 +298,23 @@ build_binary_packages() {
   build_target "$(binary_package_target)"
 }
 
+build_rust_sbom() {
+  local dest_dir="$1"
+
+  if [[ ! -e "$dest_dir" ]]; then
+    mkdir -p "$dest_dir"
+  fi
+
+  log_task "Building Rust CycloneDX BOMs..."
+  pushd $rust_dir_path
+  cargo cyclonedx --format json
+  popd
+
+  local bom_src_files="${rust_dir_path}/**/*.cdx.json"
+  cp $bom_src_files "$dest_dir"/
+  log_success "Rust BOMs copied to ${dest_dir}"
+}
+
 install_rpm_build_dependencies() {
   local srpm_dir="$1"
 
@@ -348,6 +370,9 @@ case "$command" in
       log_warn "Skipping CMake configuration."
     fi
     build_binary_packages
+    if [[ -n "$sbom_path" ]]; then
+      build_rust_sbom "$sbom_path"
+    fi
     ;;
   all)
     configure_build source
@@ -359,6 +384,9 @@ case "$command" in
     fi
     configure_build binary
     build_binary_packages
+    if [[ -n "$sbom_path" ]]; then
+      build_rust_sbom "$sbom_path"
+    fi
     ;;
 esac
 

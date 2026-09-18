@@ -156,7 +156,7 @@ lint-rust:
       fi
 
       # convert to code climate format (readable by GitLab)
-      (cd tools-rs && cargo codeclimate --clippy --clippy-path "$CI_PROJECT_DIR/clippy-output.json" --codeclimate-path "$CI_PROJECT_DIR/cargo-clippy-raw.json")
+      (cd $RUST_CODE_PATH && cargo codeclimate --clippy --clippy-path "$CI_PROJECT_DIR/clippy-output.json" --codeclimate-path "$CI_PROJECT_DIR/cargo-clippy-raw.json")
 
       # cargo-codeclimate must run from inside RUST_CODE_PATH, but this means the file paths it emits are relative to the former
       jq --arg prefix "$RUST_CODE_PATH/" 'map(.location.path |= $prefix + .)' "$CI_PROJECT_DIR/cargo-clippy-raw.json" > "$CI_PROJECT_DIR/cargo-clippy.json"
@@ -421,11 +421,12 @@ format-rust:
       allow_failure: true
   variables:
     FORMAT_DIFF: artifacts/cargo-fmt.diff
+    RUST_CODE_PATH: "tools-rs"
   before_script:
     - !reference [.merge-train-guard, before_script]
     - mkdir -p artifacts
     - echo "Running cargo fmt on all Rust files"
-    - cargo fmt --manifest-path tools-rs/Cargo.toml --all -- --check > "$FORMAT_DIFF" 2>&1 || true
+    - cargo fmt --manifest-path ${RUST_CODE_PATH}/Cargo.toml --all -- --check > "$FORMAT_DIFF" 2>&1 || true
 
 type-check-python:
   stage: lint

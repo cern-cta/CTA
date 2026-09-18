@@ -97,6 +97,11 @@ build-cta-rpms:
       if $[[ inputs.compile-with-extra-telemetry ]]; then
         BUILD_OPTIONS+=" --extra-telemetry"
       fi
+    - |
+      SBOM_OPTIONS=""
+      if [[ "$ENABLE_SBOM_GENERATION" == "true" ]]; then
+        SBOM_OPTIONS="--sbom-path ${CI_PROJECT_DIR}/sboms"
+      fi
     - ./ci/build/build_packages.sh all --build-dir build
                                       --build-generator "$[[ inputs.build-generator ]]"
                                       --create-build-dir
@@ -109,12 +114,17 @@ build-cta-rpms:
                                       --jobs "$(nproc)"
                                       --skip-unit-tests
                                       ${BUILD_OPTIONS}
+                                      ${SBOM_OPTIONS}
   after_script:
     - if [[ "$ENABLE_CCACHE" == "true" ]]; then ccache --show-stats --verbose; fi
   artifacts:
     expire_in: 30 days
     paths:
       - ${BUILD_PATH}
+      - sboms
+    reports:
+      cyclonedx:
+        - sboms/*.cdx.json
 
   cache:
     - &dnf-cache
