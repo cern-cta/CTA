@@ -48,14 +48,14 @@ public:
   ~DriveController();
 
   /**
-   * @brief Gracefully stop the drive controller (including any active tape sessions).
+   * @brief Request a stop; observing the stop token is deferred to graceful-shutdown work.
    */
   void stop();
 
   /**
    * @brief Register the drive, wait for its library and run scheduling iterations.
    *
-   * Startup failures exit without touching hardware.
+   * Startup failures exit without touching hardware and attempt down publication after identity validation.
    * Exceptions escaping the scheduling loop trigger down-state publication without touching tape hardware.
    *
    * @return A nonzero exit code on startup, iteration or shutdown failure.
@@ -83,6 +83,9 @@ private:
 
   // Read by the health-server thread; registration publishes readiness last.
   std::atomic<bool> m_registered {false};
+
+  // Set before registration mutates the catalogue; independent of readiness.
+  bool m_identityValidated = false;
 
   const TapedConfig& m_config;
   const common::dataStructures::DriveInfo m_driveInfo;

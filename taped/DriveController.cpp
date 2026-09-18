@@ -78,9 +78,8 @@ bool DriveController::isReady() const {
 }
 
 int DriveController::run() {
-  // TODO (separate MR): configure whether startup may request the drive to be up.
+  bool failed = false;
   try {
-    // Start by registering the drive in the catalogue
     if (!registerDrive(false)) {
       return 1;
     }
@@ -89,30 +88,22 @@ int DriveController::run() {
     // Scheduling can deal with a missing logical library just fine; this is just to reduce
     // the number of (transient) errors at startup
     waitForLogicalLibrary();
-  } catch (const std::exception& ex) {
-    m_registered.store(false);
-    logDriveFailure(m_lc, "Drive startup failed.", ex);
-    return 1;
-  }
-
-  bool iterationFailed = false;
-  try {
     // TODO (separate MR): graceful shutdown
     while (true) {
       runIteration();
     }
   } catch (const std::exception& ex) {
     logDriveFailure(m_lc, "Drive controller failed. Publishing down state before exit.", ex);
-    iterationFailed = true;
+    failed = true;
   } catch (...) {
     m_lc.log(log::ERR, "Drive controller failed with an unknown exception. Publishing down state before exit.");
-    iterationFailed = true;
+    failed = true;
   }
 
   m_registered.store(false);
-  // Shutdown publication cannot hide the original failure.
-  const int shutdownResult = shutdownDrive();
-  return iterationFailed ? 1 : shutdownResult;
+  // A partial registration still needs down publication, but never modify another drive's identity.
+  const int shutdownResult = m_identityValidated ? shutdownDrive() : 0;
+  return failed ? 1 : shutdownResult;
 }
 
 void DriveController::runIteration() {
@@ -253,11 +244,17 @@ void DriveController::putDriveDown(common::dataStructures::DriveDownReason reaso
   driveState.reason = common::dataStructures::formatDriveDownReason(reason, detail);
   // This allows us to rethrow only the first exception we encountered
   std::exception_ptr firstFailure;
-  const auto recordFailure = [&](const char* message, const std::exception& ex) {
+  const auto recordFailure = [&](const char* message) {
     if (!firstFailure) {
       firstFailure = std::current_exception();
     }
-    logDriveFailure(m_lc, message, ex);
+    try {
+      std::rethrow_exception(std::current_exception());
+    } catch (const std::exception& ex) {
+      logDriveFailure(m_lc, message, ex);
+    } catch (...) {
+      m_lc.log(log::ERR, message);
+    }
   };
 
   if (preserveExistingReason) {
@@ -271,9 +268,9 @@ void DriveController::putDriveDown(common::dataStructures::DriveDownReason reaso
         // Leave the catalogue reason untouched, including operator and session failure reasons.
         driveState.reason.reset();
       }
-    } catch (const std::exception& ex) {
+    } catch (...) {
       driveState.reason.reset();
-      recordFailure("Failed to read the existing drive-down reason.", ex);
+      recordFailure("Failed to read the existing drive-down reason.");
     }
   }
 
@@ -289,14 +286,14 @@ void DriveController::putDriveDown(common::dataStructures::DriveDownReason reaso
                                 common::dataStructures::MountType::NoMount,
                                 common::dataStructures::DriveStatus::Down,
                                 m_lc);
-  } catch (const std::exception& ex) {
-    recordFailure("Failed to publish the reported down status.", ex);
+  } catch (...) {
+    recordFailure("Failed to publish the reported down status.");
   }
 
   try {
     scheduler.setDesiredDriveState(m_driveInfo.driveName, driveState, m_lc);
-  } catch (const std::exception& ex) {
-    recordFailure("Failed to publish the desired down state.", ex);
+  } catch (...) {
+    recordFailure("Failed to publish the desired down state.");
   }
 
   if (firstFailure) {
@@ -306,6 +303,7 @@ void DriveController::putDriveDown(common::dataStructures::DriveDownReason reaso
 
 bool DriveController::registerDrive(bool putUpIfPossible) {
   m_registered.store(false);
+  m_identityValidated = false;
   auto& scheduler = m_operations.scheduler();
   m_lc.log(log::INFO, "Registering the drive in the catalogue.");
   if (!scheduler.checkDriveCanBeCreated(m_driveInfo, m_lc)) {
@@ -313,13 +311,12 @@ bool DriveController::registerDrive(bool putUpIfPossible) {
     return false;
   }
 
+  m_identityValidated = true;
   m_cleanBeforeScheduling = true;
   // Registration normally replaces the catalogue record, so capture recovery context first.
   const auto previous = m_operations.getDriveState();
-  // If at registration time we found an existing state, we check if if that drive exited cleanly.
-  // A clean taped exit should always mean the drive was put down. If that was not the case, then it means we did
-  // not exit cleanly and we recover
-  if (previous && previous->desiredUp && previous->driveStatus != common::dataStructures::DriveStatus::Down) {
+  // Desired Up survives crashes and also represents an operator's pending up request.
+  if (previous && previous->desiredUp) {
     // Keep the existing entry and operator intent. CleaningUp does not change desired-up.
     scheduler.reportDriveStatus(m_driveInfo,
                                 common::dataStructures::MountType::NoMount,
@@ -340,9 +337,11 @@ bool DriveController::registerDrive(bool putUpIfPossible) {
 
   common::dataStructures::DesiredDriveState driveState;
   driveState.comment = currentDesiredDriveState.comment;
-  // Preserve reasons only for existing down requests; an up reason cannot explain startup-down.
-  if (currentDesiredDriveState.up || !currentDesiredDriveState.reason || currentDesiredDriveState.reason->empty()
-      || common::dataStructures::isCleanDriveShutdownReason(*currentDesiredDriveState.reason)) {
+  // An up request may have arrived since the initial snapshot; preserve that intent too.
+  if (currentDesiredDriveState.up) {
+    driveState = currentDesiredDriveState;
+  } else if (!currentDesiredDriveState.reason || currentDesiredDriveState.reason->empty()
+             || common::dataStructures::isCleanDriveShutdownReason(*currentDesiredDriveState.reason)) {
     driveState.reason = common::dataStructures::formatDriveDownReason(common::dataStructures::DriveDownReason::Startup);
     driveState.up = putUpIfPossible;
   } else {
@@ -369,6 +368,20 @@ bool DriveController::prepareDriveForScheduling() {
 
   // A drive must be up before we can schedule.
   waitUntilDriveIsRequestedUp();
+
+  if (!m_cleanBeforeScheduling) {
+    // Session publication can become Down before a new up request, without the loop observing desired Down.
+    const auto reported = m_operations.getDriveState();
+    m_cleanBeforeScheduling = reported && reported->driveStatus == common::dataStructures::DriveStatus::Down;
+  }
+
+  if (m_cleanBeforeScheduling) {
+    // Mark the up transition before probing or cleaning; Down relinquishes hardware ownership.
+    scheduler.reportDriveStatus(m_driveInfo,
+                                common::dataStructures::MountType::NoMount,
+                                common::dataStructures::DriveStatus::CleaningUp,
+                                m_lc);
+  }
 
   // Probe once, before cleanup can remove unexpected media.
   m_lc.log(log::DEBUG, "Checking whether the drive is empty.");
@@ -432,6 +445,13 @@ bool DriveController::cleanBeforeScheduling() {
   // Cleaning takes time; an operator may have withdrawn the up request while it ran.
   // Never publish desired-up here. The catalogue also gates reported Up on current desired state.
   m_cleanBeforeScheduling = !m_operations.scheduler().getDesiredDriveState(m_driveInfo.driveName, m_lc).up;
+  if (m_cleanBeforeScheduling) {
+    // Cleanup is complete. Honour the operator's down request without replacing its reason.
+    m_operations.scheduler().reportDriveStatus(m_driveInfo,
+                                               common::dataStructures::MountType::NoMount,
+                                               common::dataStructures::DriveStatus::Down,
+                                               m_lc);
+  }
   return !m_cleanBeforeScheduling;
 }
 
@@ -441,7 +461,7 @@ int DriveController::shutdownDrive() {
   // Sessions own tape cleanup; a down drive may be in use by an operator.
   try {
     putDriveDown(common::dataStructures::DriveDownReason::Shutdown, {}, true);
-  } catch (const std::exception&) {
+  } catch (...) {
     // The helper has logged each failure and attempted both down-state publications.
     exitCode = 1;
   }

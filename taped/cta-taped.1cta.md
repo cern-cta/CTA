@@ -27,6 +27,27 @@ The drive and its CTA logical library are selected in the process configuration.
 CTA supports SCSI-compatible tape libraries.
 The **cta-rmcd** daemon must be reachable by **cta-taped** for physical mount and unmount operations.
 
+# DRIVE LIFECYCLE
+
+A drive whose reported and desired states are both Down is left untouched, including device probes and robot operations.
+At startup, desired Down keeps the drive Down; desired Up is preserved and authorizes preparation cleaning regardless of the previous reported state.
+This allows recovery after a crash without discarding a pending operator up request.
+A drive without a catalogue entry starts Down.
+
+Preparation publishes CleaningUp before accessing hardware and checks desired state again after cleaning.
+An operator down request during preparation or an active session is honoured after hardware cleanup finishes.
+Reported Down marks the end of hardware activity; a subsequent up request authorizes another preparation attempt.
+Ordinary session completion and handled failures eject the cartridge when the drive and robot permit it.
+A successful eject does not necessarily make the drive reusable: configuration-reset failures can still require Down.
+
+Controlled exits attempt both reported Down and desired Down once drive identity has been validated, including failures before startup becomes ready.
+They preserve existing operator or failure reasons and return failure if down publication fails.
+Shutdown does not perform additional hardware cleanup or wait indefinitely for database recovery.
+Configuration failures before catalogue access and failures to validate drive ownership cannot guarantee down publication.
+
+Graceful signal-driven shutdown and recovery from partial worker startup or worker join failures are not implemented by this lifecycle guarantee.
+Crashes, allocation or logging failures, stuck cartridges, and robot communication failures can prevent cleanup or state publication.
+
 # OPTIONS
 
 -l, --log-file *PATH*

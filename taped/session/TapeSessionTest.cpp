@@ -129,7 +129,8 @@ enum class TransferFailurePoint {
   RequeueStandard,
   TapeMountedCta,
   TapeMountedStandard,
-  TapeMountedAndUnload
+  TapeMountedAndUnload,
+  TapeMountedAndComplete
 };
 
 class TransferArchiveJobWithDestructionCounter : public cta::SchedulerDatabase::ArchiveJob {
@@ -184,7 +185,8 @@ public:
     std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> jobs;
     if (fetchAttempts == 1
         && (failure == TransferFailurePoint::TapeMountedCta || failure == TransferFailurePoint::TapeMountedStandard
-            || failure == TransferFailurePoint::TapeMountedAndUnload)) {
+            || failure == TransferFailurePoint::TapeMountedAndUnload
+            || failure == TransferFailurePoint::TapeMountedAndComplete)) {
       jobs.emplace_back(std::make_unique<TransferArchiveJobWithDestructionCounter>(jobDestructions));
     }
     return jobs;
@@ -301,7 +303,8 @@ public:
 
   void setTapeMounted(cta::log::LogContext&) const override {
     ++mountedAttempts;
-    if (failure == TransferFailurePoint::TapeMountedCta || failure == TransferFailurePoint::TapeMountedAndUnload) {
+    if (failure == TransferFailurePoint::TapeMountedCta || failure == TransferFailurePoint::TapeMountedAndUnload
+        || failure == TransferFailurePoint::TapeMountedAndComplete) {
       throw cta::exception::Exception("injected mounted publication failure");
     }
     throw std::runtime_error("injected mounted publication failure");
@@ -315,7 +318,7 @@ public:
     if (failure == TransferFailurePoint::CompleteCta) {
       throw cta::exception::Exception("injected completion failure");
     }
-    if (failure == TransferFailurePoint::CompleteStandard) {
+    if (failure == TransferFailurePoint::CompleteStandard || failure == TransferFailurePoint::TapeMountedAndComplete) {
       throw std::runtime_error("injected completion failure");
     }
   }
@@ -349,7 +352,8 @@ public:
     return failure == TransferFailurePoint::ReservationCta || failure == TransferFailurePoint::ReservationStandard
            || failure == TransferFailurePoint::RequeueStandard || failure == TransferFailurePoint::TapeMountedCta
            || failure == TransferFailurePoint::TapeMountedStandard
-           || failure == TransferFailurePoint::TapeMountedAndUnload;
+           || failure == TransferFailurePoint::TapeMountedAndUnload
+           || failure == TransferFailurePoint::TapeMountedAndComplete;
   }
 
   bool testReserveDiskSpace(const cta::DiskSpaceReservationRequest&, cta::log::LogContext&) override {
@@ -820,9 +824,9 @@ public:
     const bool backendFailure = point == TransferFailurePoint::MetadataDatabase
                                 || point == TransferFailurePoint::FetchDatabase
                                 || point == TransferFailurePoint::CompleteDatabase;
-    const bool workerStarts = point == TransferFailurePoint::TapeMountedCta
-                              || point == TransferFailurePoint::TapeMountedStandard
-                              || point == TransferFailurePoint::TapeMountedAndUnload;
+    const bool workerStarts =
+      point == TransferFailurePoint::TapeMountedCta || point == TransferFailurePoint::TapeMountedStandard
+      || point == TransferFailurePoint::TapeMountedAndUnload || point == TransferFailurePoint::TapeMountedAndComplete;
     if constexpr (std::is_same_v<Mount, FailingTransferRetrieveMount>) {
       mount.destination = "file://" + std::string(m_tmpDir) + "/failed-recall";
     }
@@ -895,6 +899,10 @@ public:
     }
     EXPECT_EQ(point == TransferFailurePoint::None ? TapeSessionOutcome::Success : TapeSessionOutcome::Failure,
               tracker.outcome());
+    if (startupFails) {
+      EXPECT_FALSE(tracker.mountAttempted());
+      EXPECT_EQ(0, driveDestructions);
+    }
     // Check cleanup even if a recoverable case incorrectly throws and leaves no result.
     if (result) {
       EXPECT_EQ(point != TransferFailurePoint::None, result->retryDelayRequired);
@@ -1093,7 +1101,7 @@ TEST_P(TapeSessionTest, ArchiveCompletionDisconnectionReturnsRecovery) {
     "");
 }
 
-TEST_P(TapeSessionTest, ArchiveAllocationFailureEscapesAfterCleanup) {
+TEST_P(TapeSessionTest, ArchiveAllocationFailureBeforeMountFinalizes) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
     {
@@ -1104,7 +1112,7 @@ TEST_P(TapeSessionTest, ArchiveAllocationFailureEscapesAfterCleanup) {
     "");
 }
 
-TEST_P(TapeSessionTest, ArchiveLogicFailureEscapesAfterCleanup) {
+TEST_P(TapeSessionTest, ArchiveLogicFailureBeforeMountFinalizes) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
     {
@@ -1115,7 +1123,7 @@ TEST_P(TapeSessionTest, ArchiveLogicFailureEscapesAfterCleanup) {
     "");
 }
 
-TEST_P(TapeSessionTest, ArchiveUnknownFailureEscapesAfterCleanup) {
+TEST_P(TapeSessionTest, ArchiveUnknownFailureBeforeMountFinalizes) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
     {
@@ -1159,7 +1167,7 @@ TEST_P(TapeSessionTest, RetrieveCompletionDisconnectionReturnsRecovery) {
     "");
 }
 
-TEST_P(TapeSessionTest, RetrieveAllocationFailureEscapesAfterCleanup) {
+TEST_P(TapeSessionTest, RetrieveAllocationFailureBeforeMountFinalizes) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
     {
@@ -1170,7 +1178,7 @@ TEST_P(TapeSessionTest, RetrieveAllocationFailureEscapesAfterCleanup) {
     "");
 }
 
-TEST_P(TapeSessionTest, RetrieveLogicFailureEscapesAfterCleanup) {
+TEST_P(TapeSessionTest, RetrieveLogicFailureBeforeMountFinalizes) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
     {
@@ -1181,7 +1189,7 @@ TEST_P(TapeSessionTest, RetrieveLogicFailureEscapesAfterCleanup) {
     "");
 }
 
-TEST_P(TapeSessionTest, RetrieveUnknownFailureEscapesAfterCleanup) {
+TEST_P(TapeSessionTest, RetrieveUnknownFailureBeforeMountFinalizes) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
     {
@@ -1685,6 +1693,24 @@ TEST_P(TapeSessionTest, ArchiveTapeMountedAndUnloadFailureCleansUp) {
     },
     testing::ExitedWithCode(0),
     "");
+}
+
+// Completion reporting must not undo ejection after an earlier mounted-session failure.
+TEST_P(TapeSessionTest, ArchiveCompletionFailureAfterMountCleansUp) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    (checkExceptionCleanup<FailingTransferMount<cta::MockArchiveMount>>(TransferFailurePoint::TapeMountedAndComplete),
+     _exit(::testing::Test::HasFailure() ? 1 : 0)),
+    ::testing::ExitedWithCode(0),
+    "");
+}
+
+TEST_P(TapeSessionTest, RetrieveCompletionFailureAfterMountCleansUp) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT((checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::TapeMountedAndComplete),
+               _exit(::testing::Test::HasFailure() ? 1 : 0)),
+              ::testing::ExitedWithCode(0),
+              "");
 }
 
 /*
