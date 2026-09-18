@@ -23,7 +23,6 @@ set(CTATAPEDSESSION_LIBRARY_SRCS
   TapeWriteSingleThread.cpp
   TapeWriteTask.cpp
   TransferTaskTracker.cpp
-  DriveSessionTracker.cpp
   TapeSessionState.cpp
   SessionType.cpp)
 
@@ -53,10 +52,11 @@ add_library(ctatapedsessionunittests SHARED
   RecallTaskInjectorTest.cpp
   TapeSessionReporterTest.cpp
   TapeSessionTrackerTest.cpp
+  TapedMetricsTest.cpp
 )
 set_property(TARGET ctatapedsessionunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedsessionunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
-target_link_libraries(ctatapedsessionunittests PRIVATE ctatapedsession)
+target_link_libraries(ctatapedsessionunittests PRIVATE ctatapedsession opentelemetry-cpp::metrics)
 if (NOT CTA_USE_PGSCHED)
   target_link_libraries(ctatapedsessionunittests PRIVATE ctaobjectstore)
 endif()

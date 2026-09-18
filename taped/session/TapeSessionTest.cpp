@@ -7,6 +7,7 @@
 // by inttypes.h, so we shoot first)
 #include "TapeSession.hpp"
 
+#include "TapedMetricsTestUtils.hpp"
 #include "catalogue/CatalogueItor.hpp"
 #include "catalogue/CreateMountPolicyAttributes.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
@@ -245,11 +246,15 @@ public:
 
   cta::common::dataStructures::MountType getMountType() const override {
     if constexpr (std::is_same_v<Base, cta::MockArchiveMount>) {
-      return cta::common::dataStructures::MountType::ArchiveForUser;
+      return repack ? cta::common::dataStructures::MountType::ArchiveForRepack :
+                      cta::common::dataStructures::MountType::ArchiveForUser;
     } else {
       return cta::common::dataStructures::MountType::Retrieve;
     }
   }
+
+  bool repack = false;
+  std::function<void(cta::common::dataStructures::DriveStatus)> observeStatus;
 
   uint32_t getNbFiles() const override { return 0; }
 
@@ -273,6 +278,9 @@ public:
 
   void setDriveStatus(cta::common::dataStructures::DriveStatus status,
                       const std::optional<std::string>& reason = std::nullopt) override {
+    if (observeStatus) {
+      observeStatus(status);
+    }
     if (status == cta::common::dataStructures::DriveStatus::Down) {
       downReason = reason;
     }
@@ -815,15 +823,18 @@ public:
   }
 
   template<typename Mount>
-  void checkExceptionCleanup(TransferFailurePoint point, bool cleanupFails = false) {
+  void checkExceptionCleanup(TransferFailurePoint point, bool cleanupFails = false, bool repack = false) {
     // Bound failures involving virtual hardware and in-memory queues. Neither
     // a robot nor a disk server is contacted by these scenarios.
     alarm(5);
+    cta::telemetry::testing::ScopedTapedMetrics observed;
     const auto threadsBefore = transferTestThreadCount();
     cta::log::StringLogger logger("dummy", "transferFailureTest", cta::log::DEBUG);
     FailingTransferScheduler scheduler(getCatalogue(), *m_db, "schedulerBackendName");
     scheduler.failure = point;
     Mount mount(getCatalogue(), point);
+    mount.repack = repack;
+    mount.observeStatus = [&](auto) { EXPECT_EQ(1, observed.mountType(mount.getMountType())); };
     const bool fatal = point == TransferFailurePoint::MetadataAllocation || point == TransferFailurePoint::MetadataLogic
                        || point == TransferFailurePoint::MetadataUnknown;
     const bool startupFails = fatal || point == TransferFailurePoint::Metadata
@@ -915,6 +926,7 @@ public:
       EXPECT_TRUE(result.has_value());
       EXPECT_EQ(cta::tape::session::TapeSessionState::Finished, tracker.state());
     }
+    EXPECT_EQ(1, observed.mountType(cta::common::dataStructures::MountType::NoMount));
     EXPECT_EQ(point == TransferFailurePoint::None ? TapeSessionOutcome::Success : TapeSessionOutcome::Failure,
               tracker.outcome());
     if (startupFails) {
@@ -1258,6 +1270,17 @@ TEST_P(TapeSessionTest, ArchiveStartingStatusFailureCleansUp) {
   ASSERT_EXIT(
     {
       checkExceptionCleanup<FailingTransferMount<cta::MockArchiveMount>>(TransferFailurePoint::StartingStatus);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+TEST_P(TapeSessionTest, RepackMountTypeIsVisibleUntilSessionFinishes) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferMount<cta::MockArchiveMount>>(TransferFailurePoint::None, false, true);
       _exit(::testing::Test::HasFailure() ? 1 : 0);
     },
     testing::ExitedWithCode(0),

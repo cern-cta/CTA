@@ -6,6 +6,7 @@
 #include "DriveCleaner.hpp"
 
 #include "TapeSessionTracker.hpp"
+#include "TapedMetricsTestUtils.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "catalogue/MediaType.hpp"
@@ -780,6 +781,7 @@ TEST_P(DriveCleanerTest, DesiredStatePublicationFailureIsContainedAfterReportedD
 }
 
 TEST_P(DriveCleanerTest, ReportedStatePublicationFailureIsContained) {
+  cta::telemetry::testing::ScopedTapedMetrics observed;
   installDrive(false)->setFailurePoint(FailurePoint::ClearEncryptionKey);
   CleanerCatalogue catalogue(*m_catalogue);
   auto& failures = catalogue.driveFailures();
@@ -790,6 +792,7 @@ TEST_P(DriveCleanerTest, ReportedStatePublicationFailureIsContained) {
   cta::log::LogContext lc(m_sessionLog);
   ASSERT_FALSE(m_scheduler->getDesiredDriveState(m_driveInfo.driveName, lc).up);
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("reported publication failed"));
+  EXPECT_EQ(1, observed.driveStatus(cta::common::dataStructures::DriveStatus::Down));
 }
 
 TEST_P(DriveCleanerTest, TapeAlertsAreCountedAndLoggedAfterSuccessfulCleanup) {

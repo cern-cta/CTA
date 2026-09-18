@@ -4,10 +4,16 @@
  */
 #pragma once
 
+#include "common/dataStructures/MountType.hpp"
+#include "telemetry/metrics/DriveStatus.hpp"
+
 #include <opentelemetry/metrics/meter.h>
 #include <opentelemetry/metrics/provider.h>
 
 namespace cta::telemetry::metrics {
+
+// Record local lifecycle decisions independently of backend publication.
+void setMountType(common::dataStructures::MountType type) noexcept;
 
 extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedTransferFileCount;
 extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedTransferFileSize;

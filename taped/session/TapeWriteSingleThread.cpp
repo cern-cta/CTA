@@ -12,6 +12,7 @@
 
 #include <exception>
 #include <optional>
+#include <stdexcept>
 #include <string>
 
 //------------------------------------------------------------------------------
@@ -228,6 +229,108 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
   bool countCurrentError = true;
   std::unique_ptr<TapeWriteTask> task;
 
+  // Share operational failure cleanup; other exception types propagate to the caller.
+  const auto handleFailure = [&](const std::exception& e,
+                                 std::string errorMessage,
+                                 [[maybe_unused]] const cta::exception::Exception* ctaException) {
+    //we end there because write session could not be opened
+    //or because a task failed or because flush failed
+
+    // First off, indicate the problem to the task injector so it does not inject
+    // more work in the pipeline
+    // If the problem did not originate here, we just re-flag the error, and
+    // this has no effect, but if we had a problem with a non-file operation
+    // like mounting the tape, then we have to signal the problem to the disk
+    // side and the task injector, which will trigger the end of session.
+    m_taskInjector->setErrorFlag();
+    // Publish transfer statistics; the RAII cleaner recorded cleanup timings independently.
+    m_tracker.updateTapeTransferStats(m_stats);
+#ifdef CTA_PGSCHED
+    // report last batch of files which were written but not flushed
+    // (no file marks on tape) as failure (last file written to tape when ENOSPC
+    // (end of space) was thrown will be included here)
+    if (ctaException) {
+      m_reportPacker.reportLastBatchError(*ctaException, m_logContext);
+    } else {
+      m_reportPacker.reportLastBatchError(cta::exception::Exception(e.what()), m_logContext);
+    }
+#endif
+
+    // If we reached the end of tape, this is not an error (ENOSPC)
+    bool isTapeFull = false;
+    try {
+      // If it's not the error we're looking for, we will go about our business
+      // in the catch section. dynamic cast will throw, and we'll do ourselves
+      // if the error code is not the one we want.
+      if (const auto& en = dynamic_cast<const cta::exception::Errnum&>(e); en.errorNumber() != ENOSPC) {
+        throw 0;
+      } else {
+        isTapeFull = true;
+      }
+      // This is indeed the end of the tape. Not an error.
+      m_tracker.setErrorCount(TapeSessionError::TapeFilledUp, 1);
+      m_reportPacker.reportTapeFull(m_logContext);
+    } catch (...) {
+      m_tracker.setOutcome(TapeSessionOutcome::Failure);
+      // The error is not an ENOSPC, so it is, indeed, an error.
+      // If we got here with a new error, countCurrentError will be set,
+      // and we will pass the typed error to the session tracker.
+      if (countCurrentError) {
+        m_tracker.incrementError(currentErrorToCount);
+      }
+    }
+#ifdef CTA_PGSCHED
+    // If isTapeFull is true, it is not possible to run flushTape() (no space for the file marks)
+    // in this case last job has already been reported as completed, in other case as failed
+    // if TapeWriteTasked crashed before the last job was reported, we try to report it here
+    std::list<std::string> jobIDsList;
+    try {
+      if (nullptr != task && task->hasArchiveJob()) {
+        jobIDsList.emplace_back(task->getArchiveJob().getJobID());
+      }
+    } catch (cta::exception::Exception& ex) {
+      cta::log::ScopedParamContainer exceptionParams(m_logContext);
+      exceptionParams.add(cta::semconv::log::exceptionMessage, ex.getMessage().str());
+      m_logContext.log(
+        cta::log::ERR,
+        "TapeWriteSingleThread::run(): job ID could not be retrieved for the last task of the crashed session.");
+    }
+    m_logContext.log(cta::log::DEBUG, "TapeWriteSingleThread::run(): CheckNr3: After jobIDsList assembly.");
+#endif
+    // empty all the remaining tasks waiting in the queue and circulate mem blocks
+    while (true) {
+      std::unique_ptr<TapeWriteTask> remaining_task(m_tasks.pop());
+      if (remaining_task == nullptr) {
+        break;
+      }
+#ifdef CTA_PGSCHED
+      // prepare job IDs for re-queueing
+      if (remaining_task->hasArchiveJob()) {
+        jobIDsList.emplace_back(remaining_task->getArchiveJob().getJobID());
+      }
+#endif
+      remaining_task->circulateMemBlocks();
+    }
+#ifdef CTA_PGSCHED
+    // requeue the unprocessed tasks
+    requeueUnprocessedTasks(jobIDsList, m_logContext);
+#endif
+    // Prepare the standard error codes for the session
+    int logLevel = cta::log::ERR;
+    // Override if we got en ENOSPC error (end of tape)
+    if (isTapeFull) {
+      errorMessage = "End of migration due to tape full";
+      logLevel = cta::log::INFO;
+    }
+    // prepare logging params
+    cta::log::ScopedParamContainer params(m_logContext);
+    params.add("status", "error").add(cta::semconv::log::exceptionMessage, errorMessage);
+    m_totalTime = totalTimer.secs();
+    m_tracker.setTotalTime(m_totalTime);
+    logWithStats(logLevel, "Tape thread complete for writing", params);
+    m_reportPacker.reportEndOfSessionWithErrors(errorMessage, isTapeFull, m_logContext);
+  };
+
   try {
     // Pair of brackets to create an artificial scope for the tape cleaning
     {
@@ -391,109 +494,10 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
     m_tracker.updateTapeTransferStats(m_stats);
     //end of session + log
     m_reportPacker.reportEndOfSession(m_logContext);
-  } catch (const std::exception& e) {
-    const auto* ctaException = dynamic_cast<const cta::exception::Exception*>(&e);
-    // Operational runtime errors need the same task draining as CTA failures.
-    if (!ctaException && !dynamic_cast<const std::runtime_error*>(&e)) {
-      throw;
-    }
-    //we end there because write session could not be opened
-    //or because a task failed or because flush failed
-
-    // First off, indicate the problem to the task injector so it does not inject
-    // more work in the pipeline
-    // If the problem did not originate here, we just re-flag the error, and
-    // this has no effect, but if we had a problem with a non-file operation
-    // like mounting the tape, then we have to signal the problem to the disk
-    // side and the task injector, which will trigger the end of session.
-    m_taskInjector->setErrorFlag();
-    // Publish transfer statistics; the RAII cleaner recorded cleanup timings independently.
-    m_tracker.updateTapeTransferStats(m_stats);
-#ifdef CTA_PGSCHED
-    // report last batch of files which were written but not flushed
-    // (no file marks on tape) as failure (last file written to tape when ENOSPC
-    // (end of space) was thrown will be included here)
-    if (ctaException) {
-      m_reportPacker.reportLastBatchError(*ctaException, m_logContext);
-    } else {
-      m_reportPacker.reportLastBatchError(cta::exception::Exception(e.what()), m_logContext);
-    }
-#endif
-
-    // If we reached the end of tape, this is not an error (ENOSPC)
-    bool isTapeFull = false;
-    try {
-      // If it's not the error we're looking for, we will go about our business
-      // in the catch section. dynamic cast will throw, and we'll do ourselves
-      // if the error code is not the one we want.
-      if (const auto& en = dynamic_cast<const cta::exception::Errnum&>(e); en.errorNumber() != ENOSPC) {
-        throw 0;
-      } else {
-        isTapeFull = true;
-      }
-      // This is indeed the end of the tape. Not an error.
-      m_tracker.setErrorCount(TapeSessionError::TapeFilledUp, 1);
-      m_reportPacker.reportTapeFull(m_logContext);
-    } catch (...) {
-      m_tracker.setOutcome(TapeSessionOutcome::Failure);
-      // The error is not an ENOSPC, so it is, indeed, an error.
-      // If we got here with a new error, countCurrentError will be set,
-      // and we will pass the typed error to the session tracker.
-      if (countCurrentError) {
-        m_tracker.incrementError(currentErrorToCount);
-      }
-    }
-#ifdef CTA_PGSCHED
-    // If isTapeFull is true, it is not possible to run flushTape() (no space for the file marks)
-    // in this case last job has already been reported as completed, in other case as failed
-    // if TapeWriteTasked crashed before the last job was reported, we try to report it here
-    std::list<std::string> jobIDsList;
-    try {
-      if (nullptr != task && task->hasArchiveJob()) {
-        jobIDsList.emplace_back(task->getArchiveJob().getJobID());
-      }
-    } catch (cta::exception::Exception& ex) {
-      cta::log::ScopedParamContainer exceptionParams(m_logContext);
-      exceptionParams.add(cta::semconv::log::exceptionMessage, ex.getMessage().str());
-      m_logContext.log(
-        cta::log::ERR,
-        "TapeWriteSingleThread::run(): job ID could not be retrieved for the last task of the crashed session.");
-    }
-    m_logContext.log(cta::log::DEBUG, "TapeWriteSingleThread::run(): CheckNr3: After jobIDsList assembly.");
-#endif
-    // empty all the remaining tasks waiting in the queue and circulate mem blocks
-    while (true) {
-      std::unique_ptr<TapeWriteTask> remaining_task(m_tasks.pop());
-      if (remaining_task == nullptr) {
-        break;
-      }
-#ifdef CTA_PGSCHED
-      // prepare job IDs for re-queueing
-      if (remaining_task->hasArchiveJob()) {
-        jobIDsList.emplace_back(remaining_task->getArchiveJob().getJobID());
-      }
-#endif
-      remaining_task->circulateMemBlocks();
-    }
-#ifdef CTA_PGSCHED
-    // requeue the unprocessed tasks
-    requeueUnprocessedTasks(jobIDsList, m_logContext);
-#endif
-    // Prepare the standard error codes for the session
-    std::string errorMessage((ctaException ? ctaException->getMessageValue() : e.what()));
-    int logLevel = cta::log::ERR;
-    // Override if we got en ENOSPC error (end of tape)
-    if (isTapeFull) {
-      errorMessage = "End of migration due to tape full";
-      logLevel = cta::log::INFO;
-    }
-    // prepare logging params
-    cta::log::ScopedParamContainer params(m_logContext);
-    params.add("status", "error").add(cta::semconv::log::exceptionMessage, errorMessage);
-    m_totalTime = totalTimer.secs();
-    m_tracker.setTotalTime(m_totalTime);
-    logWithStats(logLevel, "Tape thread complete for writing", params);
-    m_reportPacker.reportEndOfSessionWithErrors(errorMessage, isTapeFull, m_logContext);
+  } catch (const cta::exception::Exception& ex) {
+    handleFailure(ex, ex.getMessageValue(), &ex);
+  } catch (const std::runtime_error& ex) {
+    handleFailure(ex, ex.what(), nullptr);
   }
 }
 

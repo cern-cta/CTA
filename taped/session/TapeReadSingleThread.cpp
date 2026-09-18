@@ -15,6 +15,7 @@
 
 #include <exception>
 #include <optional>
+#include <stdexcept>
 #include <string>
 
 //------------------------------------------------------------------------------
@@ -196,6 +197,53 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
   // Stop counting the current stage once individual tasks take over error reporting.
   TapeSessionError currentErrorToCount = TapeSessionError::TapeMountForRead;
   bool countCurrentError = true;
+
+  // Share operational failure cleanup; other exception types propagate to the caller.
+  const auto handleFailure = [&](const std::string& errorMessage) {
+    m_tracker.setOutcome(TapeSessionOutcome::Failure);
+    // Publish transfer statistics; the RAII cleaner recorded cleanup timings independently.
+    m_tracker.updateTapeTransferStats(m_stats);
+    // We end up here because one step failed, be it at mount time, of after
+    // failing to position by fseq (this is fatal to a read session as we need
+    // to know where we are to proceed to the next file incrementally in fseq
+    // positioning mode).
+    // This can happen late in the session, so we can still print the stats.
+    cta::log::ScopedParamContainer params(m_logContext);
+    params.add("status", "error").add(cta::semconv::log::exceptionMessage, errorMessage);
+    m_totalTime = totalTimer.secs();
+    m_tracker.setTotalTime(m_totalTime);
+    logWithStat(cta::log::ERR, "Tape thread complete for reading", params);
+    // Also transmit the error step to the session tracker.
+    if (countCurrentError) {
+      m_tracker.incrementError(currentErrorToCount);
+    }
+    // Flush the remaining tasks to cleanly exit.
+    while (true) {
+      TapeReadTask* task = m_tasks.pop();
+      if (!task) {
+        break;
+      }
+      task->reportCancellationToDiskTask();
+      delete task;
+    }
+
+    // Notify tape thread is finished to gracefully end the session
+    m_reportPacker.setTapeDone();
+    m_reportPacker.setTapeComplete();
+
+    if (m_reportPacker.allThreadsDone()) {
+      // If disk threads finished before (for example, due to write error), report end of session
+      if (!m_tracker.errorHappened()) {
+        m_reportPacker.reportEndOfSession(m_logContext);
+        m_logContext.log(
+          cta::log::INFO,
+          "Both DiskWriteWorkerThread and TapeReadSingleThread existed, reported a successful end of session");
+      } else {
+        m_reportPacker.reportEndOfSessionWithErrors("End of recall session with error(s)", m_logContext);
+      }
+    }
+  };
+
   try {
     // Pair of brackets to create an artificial scope for the tapeCleaner
     {
@@ -367,55 +415,10 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
         m_reportPacker.reportEndOfSessionWithErrors("End of recall session with error(s)", m_logContext);
       }
     }
-  } catch (const std::exception& e) {
-    const auto* ctaException = dynamic_cast<const cta::exception::Exception*>(&e);
-    // Operational runtime errors need the same task draining as CTA failures.
-    if (!ctaException && !dynamic_cast<const std::runtime_error*>(&e)) {
-      throw;
-    }
-    m_tracker.setOutcome(TapeSessionOutcome::Failure);
-    // Publish transfer statistics; the RAII cleaner recorded cleanup timings independently.
-    m_tracker.updateTapeTransferStats(m_stats);
-    // We end up here because one step failed, be it at mount time, of after
-    // failing to position by fseq (this is fatal to a read session as we need
-    // to know where we are to proceed to the next file incrementally in fseq
-    // positioning mode).
-    // This can happen late in the session, so we can still print the stats.
-    cta::log::ScopedParamContainer params(m_logContext);
-    params.add("status", "error")
-      .add(cta::semconv::log::exceptionMessage, (ctaException ? ctaException->getMessageValue() : e.what()));
-    m_totalTime = totalTimer.secs();
-    m_tracker.setTotalTime(m_totalTime);
-    logWithStat(cta::log::ERR, "Tape thread complete for reading", params);
-    // Also transmit the error step to the session tracker.
-    if (countCurrentError) {
-      m_tracker.incrementError(currentErrorToCount);
-    }
-    // Flush the remaining tasks to cleanly exit.
-    while (true) {
-      TapeReadTask* task = m_tasks.pop();
-      if (!task) {
-        break;
-      }
-      task->reportCancellationToDiskTask();
-      delete task;
-    }
-
-    // Notify tape thread is finished to gracefully end the session
-    m_reportPacker.setTapeDone();
-    m_reportPacker.setTapeComplete();
-
-    if (m_reportPacker.allThreadsDone()) {
-      // If disk threads finished before (for example, due to write error), report end of session
-      if (!m_tracker.errorHappened()) {
-        m_reportPacker.reportEndOfSession(m_logContext);
-        m_logContext.log(
-          cta::log::INFO,
-          "Both DiskWriteWorkerThread and TapeReadSingleThread existed, reported a successful end of session");
-      } else {
-        m_reportPacker.reportEndOfSessionWithErrors("End of recall session with error(s)", m_logContext);
-      }
-    }
+  } catch (const cta::exception::Exception& ex) {
+    handleFailure(ex.getMessageValue());
+  } catch (const std::runtime_error& ex) {
+    handleFailure(ex.what());
   }
   // Both the normal path and handled failures have finished tape cleanup and task cancellation.
   m_tracker.notifyTapeDone();

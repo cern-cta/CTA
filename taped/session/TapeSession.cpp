@@ -29,6 +29,7 @@
 #include "taped/rao/RAOParams.hpp"
 #include "taped/scsi/Device.hpp"
 #include "taped/session/VolumeInfo.hpp"
+#include "telemetry/metrics/TapedMetrics.hpp"
 
 #include <chrono>
 #include <exception>
@@ -42,6 +43,17 @@ namespace {
 constexpr bool c_useLbp = true;
 constexpr uint16_t c_xrootTimeout = 0;
 constexpr const char* c_raoLtoAlgorithmOptions = "cost_heuristic_name:cta";
+
+// Keep the active mount visible until all session finalization and worker shutdown have finished.
+class ScopedMountType {
+public:
+  ScopedMountType() { cta::telemetry::metrics::setMountType(cta::common::dataStructures::MountType::NoMount); }
+
+  ~ScopedMountType() { cta::telemetry::metrics::setMountType(cta::common::dataStructures::MountType::NoMount); }
+
+  ScopedMountType(const ScopedMountType&) = delete;
+  ScopedMountType& operator=(const ScopedMountType&) = delete;
+};
 
 // The reporter has no pipeline dependencies: stopping it only wakes its own wait loop.
 class ScopedReporter {
@@ -176,6 +188,7 @@ cta::tape::daemon::TapeSession::TapeSession(cta::log::Logger& log,
 //TapeSession::execute
 //------------------------------------------------------------------------------
 cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
+  const ScopedMountType mountScope;
   m_tapeSessionTracker.beginTapeSession();
   m_tapeSessionTracker.setMountAttempted(false);
   cta::log::LogContext lc(m_log);
@@ -192,6 +205,7 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
   try {
     m_volInfo.vid = m_tapeMount.getVid();
     m_volInfo.mountType = m_tapeMount.getMountType();
+    cta::telemetry::metrics::setMountType(m_volInfo.mountType);
     m_volInfo.nbFiles = m_tapeMount.getNbFiles();
     m_volInfo.mountId = m_tapeMount.getMountTransactionId();
     m_volInfo.labelFormat = m_tapeMount.getLabelFormat();

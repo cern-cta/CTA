@@ -4,15 +4,60 @@
  */
 #include "telemetry/metrics/TapedMetrics.hpp"
 
+#include "common/semconv/Attributes.hpp"
 #include "common/semconv/Meter.hpp"
 #include "common/semconv/Metrics.hpp"
 #include "telemetry/metrics/InstrumentRegistry.hpp"
 #include "telemetry/metrics/MetricsUtils.hpp"
 #include "version.hpp"
 
+#include <array>
+#include <atomic>
 #include <opentelemetry/metrics/provider.h>
 
+namespace {
+// Each taped process owns one drive. Callbacks retain no session or catalogue pointers.
+std::atomic<cta::common::dataStructures::MountType> mountType {cta::common::dataStructures::MountType::NoMount};
+
+void observeDriveStatus(opentelemetry::metrics::ObserverResult result, void*) noexcept {
+  const auto observer = std::get_if<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(&result);
+  if (!observer) {
+    return;
+  }
+  const auto current = cta::telemetry::metrics::getDriveStatus();
+  // Emit every category so inactive values become zero rather than disappearing.
+  for (const auto status : cta::common::dataStructures::AllDriveStatuses) {
+    (*observer)->Observe(status == current ? 1 : 0,
+                         {
+                           {cta::semconv::attr::kCtaTapedDriveState, cta::common::dataStructures::toString(status)}
+    });
+  }
+}
+
+void observeMountType(opentelemetry::metrics::ObserverResult result, void*) noexcept {
+  const auto observer = std::get_if<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(&result);
+  if (!observer) {
+    return;
+  }
+  const auto current = mountType.load(std::memory_order_relaxed);
+  using enum cta::common::dataStructures::MountType;
+  // Retain the existing categories; Label and ArchiveAllTypes are not active mount types.
+  constexpr std::array types {ArchiveForUser, ArchiveForRepack, Retrieve, NoMount};
+  for (const auto type : types) {
+    (*observer)->Observe(
+      type == current ? 1 : 0,
+      {
+        {cta::semconv::attr::kCtaTapedMountType, cta::common::dataStructures::toCamelCaseString(type)}
+    });
+  }
+}
+}  // namespace
+
 namespace cta::telemetry::metrics {
+
+void setMountType(common::dataStructures::MountType type) noexcept {
+  mountType.store(type, std::memory_order_relaxed);
+}
 
 std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedTransferFileCount;
 std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaTapedTransferFileSize;
@@ -27,6 +72,13 @@ std::shared_ptr<opentelemetry::metrics::ObservableInstrument> CtaTapedDriveStatu
 
 namespace {
 void initInstruments() {
+  // Reinitialization must not leave callbacks attached to the previous instruments.
+  if (cta::telemetry::metrics::ctaTapedMountType) {
+    cta::telemetry::metrics::ctaTapedMountType->RemoveCallback(observeMountType, nullptr);
+  }
+  if (cta::telemetry::metrics::CtaTapedDriveStatus) {
+    cta::telemetry::metrics::CtaTapedDriveStatus->RemoveCallback(observeDriveStatus, nullptr);
+  }
   auto meter = cta::telemetry::metrics::getMeter(cta::semconv::meter::kCtaTaped, CTA_VERSION);
 
   cta::telemetry::metrics::ctaTapedTransferFileCount =
@@ -68,6 +120,9 @@ void initInstruments() {
     meter->CreateInt64ObservableUpDownCounter(cta::semconv::metrics::kMetricCtaTapedDriveStatus,
                                               cta::semconv::metrics::descrCtaTapedDriveStatus,
                                               cta::semconv::metrics::unitCtaTapedDriveStatus);
+
+  cta::telemetry::metrics::ctaTapedMountType->AddCallback(observeMountType, nullptr);
+  cta::telemetry::metrics::CtaTapedDriveStatus->AddCallback(observeDriveStatus, nullptr);
 }
 
 // Register and run this init function at start time

@@ -15,6 +15,7 @@
 #include "taped/session/VolumeInfo.hpp"
 
 #include <optional>
+#include <stdexcept>
 #include <stdint.h>
 
 using cta::log::LogContext;
@@ -388,6 +389,23 @@ void RecallTaskInjector::WorkerThread::run() {
   using cta::log::LogContext;
   m_parent.m_lc.push(Param("thread", "RecallTaskInjector"));
   m_parent.m_lc.log(cta::log::DEBUG, "Starting RecallTaskInjector thread");
+  // Share operational failure cleanup; other exception types propagate to the caller.
+  const auto handleFailure = [&](const std::string& errorMessage, const cta::exception::Exception* ctaException) {
+    m_parent.m_tracker.setOutcome(TapeSessionOutcome::Failure);
+    //we end up there because we could not talk to the client
+    cta::log::ScopedParamContainer container(m_parent.m_lc);
+    container.add(cta::semconv::log::exceptionMessage, errorMessage);
+    if (ctaException) {
+      m_parent.m_lc.logBacktrace(cta::log::INFO, ctaException->backtrace());
+    }
+    m_parent.m_lc.log(cta::log::ERR,
+                      "In RecallJobInjector::WorkerThread::run(): "
+                      "could not retrieve a list of file to recall. End of session");
+    m_parent.signalEndDataMovement();
+    m_parent.deleteAllTasks();
+    m_parent.setFirstTasksInjectedPromise();
+  };
+
   try {
     if (m_parent.m_raoManager.useRAO()) {
       /* RecallTaskInjector is waiting to have access to the drive in order
@@ -424,24 +442,10 @@ void RecallTaskInjector::WorkerThread::run() {
     } else {
       popRecalls();
     }
-  } catch (const std::exception& ex) {
-    const auto* ctaException = dynamic_cast<const cta::exception::Exception*>(&ex);
-    if (!ctaException && !dynamic_cast<const std::runtime_error*>(&ex)) {
-      throw;
-    }
-    m_parent.m_tracker.setOutcome(TapeSessionOutcome::Failure);
-    //we end up there because we could not talk to the client
-    cta::log::ScopedParamContainer container(m_parent.m_lc);
-    container.add(cta::semconv::log::exceptionMessage, (ctaException ? ctaException->getMessageValue() : ex.what()));
-    if (ctaException) {
-      m_parent.m_lc.logBacktrace(cta::log::INFO, ctaException->backtrace());
-    }
-    m_parent.m_lc.log(cta::log::ERR,
-                      "In RecallJobInjector::WorkerThread::run(): "
-                      "could not retrieve a list of file to recall. End of session");
-    m_parent.signalEndDataMovement();
-    m_parent.deleteAllTasks();
-    m_parent.setFirstTasksInjectedPromise();
+  } catch (const cta::exception::Exception& ex) {
+    handleFailure(ex.getMessageValue(), &ex);
+  } catch (const std::runtime_error& ex) {
+    handleFailure(ex.what(), nullptr);
   }
   //-------------
   m_parent.m_lc.log(cta::log::DEBUG, "Finishing RecallTaskInjector thread");
