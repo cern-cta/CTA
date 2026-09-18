@@ -145,6 +145,7 @@ cta::tape::daemon::DriveUsability cta::tape::daemon::DriveCleaner::execute(Syste
   }
 
   // Reaching this point means the cleaner failed
+  // TODO: this is wrong; we now have ejection handling in two places
 
   if (ejectFailed) {
     // As we failed to eject, we set the tape as disabled so that it will not be mounted for future retrieves
@@ -241,6 +242,10 @@ auto cta::tape::daemon::DriveCleaner::cleanDrive(drive::DriveInterface& drive, c
   CleanupTiming timing(m_tracker, &TapeCleanupStats::cleanupTime);
   try {
     auto result = cleanDriveImpl(drive, reportStatus);
+    // Session cleanup knows the mounted VID and must also disable a stuck tape.
+    if (result.ejectFailed) {
+      disableTapeAfterFailedEject(result.errorMessage);
+    }
     m_tracker.reportState(session::TapeSessionState::Finalizing);
     return result;
   } catch (...) {

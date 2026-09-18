@@ -148,6 +148,7 @@ void DriveController::runIteration() {
     waitForBackendRecovery();
   }
   if (transferResult.driveUsability != DriveUsability::Reusable) {
+    m_cleanupVid = tapeMount->getVid();
     // Preserve specific session or operator reasons. Publication failures propagate.
     putDriveDown(common::dataStructures::DriveDownReason::SessionLeftDriveUnusable, {}, true);
   }
@@ -218,6 +219,10 @@ void DriveController::waitUntilDriveIsRequestedUp() {
     }
 
     // An operator may use the drive while it is down. Clean again on the next up request.
+    if (!m_cleanBeforeScheduling) {
+      const auto reported = m_operations.getDriveState();
+      m_cleanupVid = reported ? reported->currentVid : std::nullopt;
+    }
     m_cleanBeforeScheduling = true;
 
     if (!waitingLogged) {
@@ -315,6 +320,7 @@ bool DriveController::registerDrive(bool putUpIfPossible) {
   m_cleanBeforeScheduling = true;
   // Registration normally replaces the catalogue record, so capture recovery context first.
   const auto previous = m_operations.getDriveState();
+  m_cleanupVid = previous ? previous->currentVid : std::nullopt;
   // Desired Up survives crashes and also represents an operator's pending up request.
   if (previous && previous->desiredUp) {
     // Keep the existing entry and operator intent. CleaningUp does not change desired-up.
@@ -369,9 +375,12 @@ bool DriveController::prepareDriveForScheduling() {
   // A drive must be up before we can schedule.
   waitUntilDriveIsRequestedUp();
 
+  const auto reported = m_operations.getDriveState();
+  if (reported && reported->currentVid && !reported->currentVid->empty()) {
+    m_cleanupVid = reported->currentVid;
+  }
   if (!m_cleanBeforeScheduling) {
     // Session publication can become Down before a new up request, without the loop observing desired Down.
-    const auto reported = m_operations.getDriveState();
     m_cleanBeforeScheduling = reported && reported->driveStatus == common::dataStructures::DriveStatus::Down;
   }
 
@@ -431,7 +440,7 @@ bool DriveController::cleanBeforeScheduling() {
   bool cleaned = false;
   std::string cleanupError;
   try {
-    cleaned = m_operations.clean(std::nullopt, true);
+    cleaned = m_operations.clean(m_cleanupVid, true);
   } catch (const cta::exception::Exception& ex) {
     cleanupError = ex.getMessageValue();
     logDriveFailure(m_lc, "Drive recovery cleaning failed.", ex);
@@ -447,6 +456,8 @@ bool DriveController::cleanBeforeScheduling() {
     putDriveDown(common::dataStructures::DriveDownReason::DriveCleanupFailed, cleanupError, true);
     return false;
   }
+
+  m_cleanupVid.reset();
 
   // Cleaning takes time; an operator may have withdrawn the up request while it ran.
   // Never publish desired-up here. The catalogue also gates reported Up on current desired state.

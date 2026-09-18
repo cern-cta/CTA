@@ -10,7 +10,6 @@
 #include "taped/scsi/Constants.hpp"
 
 #include <algorithm>
-#include <map>
 #include <optional>
 #include <string>
 
@@ -96,20 +95,6 @@ const char* errorName(TapeSessionError error) {
       return "Info_tapeFilledUp";
   }
   return "Error_unknown";
-}
-
-/**
- * @brief Copy a typed log parameter into a scoped container, preserving absent values.
- *
- * @param container Scoped log-parameter destination.
- * @param parameter Typed parameter to copy, preserving an absent value.
- */
-void pushParameter(cta::log::ScopedParamContainer& container, const cta::log::Param& parameter) {
-  if (!parameter.getValueVariant()) {
-    container.add(parameter.getName(), std::nullopt);
-    return;
-  }
-  std::visit([&](const auto& value) { container.add(parameter.getName(), value); }, *parameter.getValueVariant());
 }
 
 }  // namespace
@@ -229,92 +214,85 @@ void TapeSessionReporter::logStats(bool sessionFinished, const TapeSessionStats&
   const double totalTime = stats.totalTime ? stats.totalTime : elapsedTime;
   const double deliveryTime = diskStats.deliveryTime ? diskStats.deliveryTime : elapsedTime;
 
-  std::map<std::string, cta::log::Param> reportParameters;
-  const auto set = [&reportParameters](const std::string& name, const auto& value) {
-    reportParameters.insert_or_assign(name, cta::log::Param(name, value));
-  };
+  cta::log::ScopedParamContainer params(m_lc);
 
-  set("wasTapeMounted", setupStats.mountTime != 0.0);
-  set("mountTime", setupStats.mountTime);
-  set("initialMountTime", setupStats.initialMountTime);
-  set("tapeLoadTime", setupStats.tapeLoadTime);
-  set("positionTime", setupStats.positionTime + tapeStats.positionTime);
-  set("waitInstructionsTime", tapeStats.waitInstructionsTime);
-  set("waitFreeMemoryTime", tapeStats.waitFreeMemoryTime);
-  set("waitDataTime", tapeStats.waitDataTime);
-  set("waitReportingTime", diskStats.waitReportingTime);
-  set("checksumingTime", tapeStats.checksumingTime);
-  set("readWriteTime", tapeStats.readWriteTime);
-  set("flushTime", tapeStats.flushTime);
-  set("unloadTime", cleanupStats.unloadTime);
-  set("unmountTime", cleanupStats.unmountTime);
-  set("encryptionControlTime", setupStats.encryptionControlTime + cleanupStats.encryptionControlTime);
-  set("cleanupTime", cleanupStats.cleanupTime);
-  set("lbpResetTime", cleanupStats.lbpResetTime);
-  set("readinessWaitTime", cleanupStats.readinessWaitTime);
-  set("rewindTime", cleanupStats.rewindTime);
-  set("labelReadTime", cleanupStats.labelReadTime);
-  set("transferTime", tapeStats.transferTime());
-  set("totalTime", totalTime);
-  set("deliveryTime", deliveryTime);
-  set("drainingTime", std::max(deliveryTime - totalTime, 0.0));
-  set("dataVolume", tapeStats.dataVolume);
-  set("filesCount", tapeStats.filesCount);
-  set("headerVolume", tapeStats.headerVolume);
-  set("repackFilesCount", tapeStats.repackFilesCount);
-  set("userFilesCount", tapeStats.userFilesCount);
-  set("verifiedFilesCount", tapeStats.verifiedFilesCount);
-  set("repackBytesCount", tapeStats.repackBytesCount);
-  set("userBytesCount", tapeStats.userBytesCount);
-  set("verifiedBytesCount", tapeStats.verifiedBytesCount);
-  set("payloadTransferSpeedMBps", totalTime ? tapeStats.dataVolume / 1000.0 / 1000.0 / totalTime : 0.0);
-  set("driveTransferSpeedMBps",
-      totalTime ? (tapeStats.dataVolume + tapeStats.headerVolume) / 1000.0 / 1000.0 / totalTime : 0.0);
+  params.add("wasTapeMounted", setupStats.mountTime != 0.0);
+  params.add("mountTime", setupStats.mountTime);
+  params.add("initialMountTime", setupStats.initialMountTime);
+  params.add("tapeLoadTime", setupStats.tapeLoadTime);
+  params.add("positionTime", setupStats.positionTime + tapeStats.positionTime);
+  params.add("waitInstructionsTime", tapeStats.waitInstructionsTime);
+  params.add("waitFreeMemoryTime", tapeStats.waitFreeMemoryTime);
+  params.add("waitDataTime", tapeStats.waitDataTime);
+  params.add("waitReportingTime", diskStats.waitReportingTime);
+  params.add("checksumingTime", tapeStats.checksumingTime);
+  params.add("readWriteTime", tapeStats.readWriteTime);
+  params.add("flushTime", tapeStats.flushTime);
+  params.add("unloadTime", cleanupStats.unloadTime);
+  params.add("unmountTime", cleanupStats.unmountTime);
+  params.add("encryptionControlTime", setupStats.encryptionControlTime + cleanupStats.encryptionControlTime);
+  params.add("cleanupTime", cleanupStats.cleanupTime);
+  params.add("lbpResetTime", cleanupStats.lbpResetTime);
+  params.add("readinessWaitTime", cleanupStats.readinessWaitTime);
+  params.add("rewindTime", cleanupStats.rewindTime);
+  params.add("labelReadTime", cleanupStats.labelReadTime);
+  params.add("transferTime", tapeStats.transferTime());
+  params.add("totalTime", totalTime);
+  params.add("deliveryTime", deliveryTime);
+  params.add("drainingTime", std::max(deliveryTime - totalTime, 0.0));
+  params.add("dataVolume", tapeStats.dataVolume);
+  params.add("filesCount", tapeStats.filesCount);
+  params.add("headerVolume", tapeStats.headerVolume);
+  params.add("repackFilesCount", tapeStats.repackFilesCount);
+  params.add("userFilesCount", tapeStats.userFilesCount);
+  params.add("verifiedFilesCount", tapeStats.verifiedFilesCount);
+  params.add("repackBytesCount", tapeStats.repackBytesCount);
+  params.add("userBytesCount", tapeStats.userBytesCount);
+  params.add("verifiedBytesCount", tapeStats.verifiedBytesCount);
+  params.add("payloadTransferSpeedMBps", totalTime ? tapeStats.dataVolume / 1000.0 / 1000.0 / totalTime : 0.0);
+  params.add("driveTransferSpeedMBps",
+             totalTime ? (tapeStats.dataVolume + tapeStats.headerVolume) / 1000.0 / 1000.0 / totalTime : 0.0);
   const auto state = m_tracker.state();
   if (state) {
-    set("sessionState", cta::tape::session::toString(*state));
+    params.add("sessionState", cta::tape::session::toString(*state));
   } else {
-    set("sessionState", std::nullopt);
+    params.add("sessionState", std::nullopt);
   }
-  set("sessionType", cta::tape::session::toString(m_tracker.type()));
+  params.add("sessionType", cta::tape::session::toString(m_tracker.type()));
   if (!sessionFinished) {
-    set("status", "in_progress");
+    params.add("status", "in_progress");
   } else {
     switch (m_tracker.outcome()) {
       case TapeSessionOutcome::Automatic:
-        set("status", m_tracker.errorHappened() ? "failure" : "success");
+        params.add("status", m_tracker.errorHappened() ? "failure" : "success");
         break;
       case TapeSessionOutcome::Success:
-        set("status", "success");
+        params.add("status", "success");
         break;
       case TapeSessionOutcome::Failure:
-        set("status", "failure");
+        params.add("status", "failure");
         break;
     }
   }
-  set("mountAttempted", m_tracker.mountAttempted() ? 1 : 0);
-  set("tapeVid", mount.getVid());
-  set("mountType", cta::common::dataStructures::toCamelCaseString(mount.getMountType()));
-  set("mountId", mount.getMountTransactionId());
-  set("volReqId", mount.getMountTransactionId());
-  set("vendor", mount.getVendor());
-  set("vo", mount.getVo());
-  set("mediaType", mount.getMediaType());
-  set("tapePool", mount.getPoolName());
-  set("capacityInBytes", mount.getCapacityInBytes());
+  params.add("mountAttempted", m_tracker.mountAttempted() ? 1 : 0);
+  params.add("tapeVid", mount.getVid());
+  params.add("mountType", cta::common::dataStructures::toCamelCaseString(mount.getMountType()));
+  params.add("mountId", mount.getMountTransactionId());
+  params.add("volReqId", mount.getMountTransactionId());
+  params.add("vendor", mount.getVendor());
+  params.add("vo", mount.getVo());
+  params.add("mediaType", mount.getMediaType());
+  params.add("tapePool", mount.getPoolName());
+  params.add("capacityInBytes", mount.getCapacityInBytes());
 
   for (const auto& [error, count] : m_tracker.errorStats()) {
-    set(errorName(error), count);
+    params.add(errorName(error), count);
   }
   for (const auto& [tapeAlertCode, count] : m_tracker.tapeAlertStats()) {
-    set("Error_" + cta::tape::SCSI::tapeAlertToCompactString(tapeAlertCode), count);
+    params.add("Error_" + cta::tape::SCSI::tapeAlertToCompactString(tapeAlertCode), count);
   }
   for (const auto& [threadId, file] : m_tracker.activeDiskFiles()) {
-    set("stillOpenFileForThread" + std::to_string(threadId), file.path);
-  }
-  cta::log::ScopedParamContainer params(m_lc);
-  for (const auto& [name, parameter] : reportParameters) {
-    pushParameter(params, parameter);
+    params.add("stillOpenFileForThread" + std::to_string(threadId), file.path);
   }
 
   if (sessionFinished) {

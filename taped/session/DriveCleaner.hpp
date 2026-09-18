@@ -88,7 +88,7 @@ public:
   /**
    * @brief Clean a drive, delegating progress publication to the caller.
    *
-   * This method neither publishes a final down decision nor disables tapes.
+   * Disable a known tape after failed ejection; the caller owns the final drive-down decision.
    * The caller is responsible for handling the returned failure flags.
    * A successful eject does not imply that the drive configuration was reset successfully.
    * Progress is reported synchronously; callback failures are counted without interrupting cleanup.

@@ -13,6 +13,7 @@
 
 #include <atomic>
 #include <memory>
+#include <optional>
 #include <stop_token>
 #include <string>
 #include <string_view>
@@ -98,6 +99,9 @@ private:
   // Arm once per observed down period, explicit controller down, or registration.
   bool m_cleanBeforeScheduling = true;
 
+  // Preserve the cartridge identity across status publications that clear currentVid.
+  std::optional<std::string> m_cleanupVid;
+
   /**
    * @brief Prepare the drive, acquire and execute a mount, and apply recovery decisions.
    *
@@ -153,7 +157,7 @@ private:
   bool prepareDriveForScheduling();
 
   /**
-   * @brief Clean with an unknown VID, then recheck operator intent.
+   * @brief Clean with the last known VID, then recheck operator intent.
    *
    * @return False if cleaning fails or the operator has requested down.
    */

@@ -440,7 +440,7 @@ protected:
 /**
  * @brief Eligibility is based on the pre-registration record, including the operator's intent.
  */
-TEST_F(DriveControllerTest, StartupRecoveryUsesPreviousStateAndEmptyVid) {
+TEST_F(DriveControllerTest, StartupRecoveryPreservesKnownVidAcrossStatusPublication) {
   for (const auto status : AllDriveStatuses) {
     for (const bool desiredUp : {false, true}) {
       SCOPED_TRACE(toString(status) + (desiredUp ? " desired up" : " desired down"));
@@ -448,6 +448,7 @@ TEST_F(DriveControllerTest, StartupRecoveryUsesPreviousStateAndEmptyVid) {
       previousDrive->driveStatus = status;
       previousDrive->desiredUp = desiredUp;
       previousDrive->currentVid = status == DriveStatus::Up ? std::nullopt : std::make_optional<std::string>("V00001");
+      const auto expectedVid = previousDrive->currentVid;
       // Unknown and Shutdown do not establish that cleanup completed either.
       const bool recover = desiredUp;
       const auto previousCleanings = cleanings;
@@ -470,6 +471,7 @@ TEST_F(DriveControllerTest, StartupRecoveryUsesPreviousStateAndEmptyVid) {
           .WillOnce(Invoke([&](const auto&, auto, auto, auto&) {
             EXPECT_GT(stateReads, 0);
             EXPECT_EQ(previousCleanings, cleanings);
+            previousDrive->currentVid.reset();
           }));
       }
       ASSERT_TRUE(registerDrive());
@@ -485,7 +487,7 @@ TEST_F(DriveControllerTest, StartupRecoveryUsesPreviousStateAndEmptyVid) {
         EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _));
         ASSERT_TRUE(prepare());
         EXPECT_EQ(previousCleanings + 1, cleanings);
-        EXPECT_FALSE(cleanedVid.has_value());
+        EXPECT_EQ(expectedVid, cleanedVid);
         EXPECT_TRUE(waitedForMedia);
       }
       if (!recover) {
@@ -533,7 +535,8 @@ TEST_F(DriveControllerTest, OperatorDownBeforeRecoveryDefersCleaning) {
   previousDrive->desiredUp = true;
   previousDrive->currentVid = "V00001";
   EXPECT_CALL(scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
-  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _));
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _))
+    .WillOnce(Invoke([&](const auto&, auto, auto, auto&) { previousDrive->currentVid.reset(); }));
   EXPECT_CALL(scheduler, reportSchedulerBackendName("drive", _));
   ASSERT_TRUE(registerDrive());
 
@@ -548,7 +551,7 @@ TEST_F(DriveControllerTest, OperatorDownBeforeRecoveryDefersCleaning) {
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _));
   clean = [&] {
-    EXPECT_FALSE(cleanedVid.has_value());
+    EXPECT_EQ("V00001", cleanedVid);
     EXPECT_EQ(1, sleeps.size());
     EXPECT_EQ(1, probes);
     return true;
@@ -1542,6 +1545,24 @@ TEST_F(DriveControllerTest, UnusableDriveRequestsDownAndPreservesSpecificReason)
     }));
   iteration();
   EXPECT_EQ(1, destroyed);
+
+  // Recover using the session VID even after its mount has been destroyed.
+  schedule = {};
+  DesiredDriveState up;
+  up.up = true;
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).Times(2).WillRepeatedly(Return(up));
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _));
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _));
+  iteration();
+  EXPECT_EQ("V00001", cleanedVid);
+
+  // Successful ejection must not carry that VID into an unrelated cleanup.
+  requireCleaning();
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).Times(2).WillRepeatedly(Return(up));
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _));
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _));
+  iteration();
+  EXPECT_FALSE(cleanedVid.has_value());
 }
 
 /**

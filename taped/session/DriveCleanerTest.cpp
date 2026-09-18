@@ -893,7 +893,7 @@ TEST_P(DriveCleanerTest, BorrowedDriveRemainsOwnedByCallerAndResetsPersistentCon
   ASSERT_EQ(cta::tape::drive::lbpToUse::disabled, drive.getLbpToUse());
 }
 
-TEST_P(DriveCleanerTest, BorrowedFailedEjectDoesNotPublishDownOrDisableTape) {
+TEST_P(DriveCleanerTest, BorrowedFailedEjectDisablesTapeWithoutPublishingDown) {
   cta::mediachanger::RmcProxy proxy("localhost", 0, 1, 1);
   cta::mediachanger::MediaChangerFacade changer(proxy, m_changerLog);
   cta::tape::drive::FakeDrive drive;
@@ -905,7 +905,7 @@ TEST_P(DriveCleanerTest, BorrowedFailedEjectDoesNotPublishDownOrDisableTape) {
   ASSERT_TRUE(result.ejectFailed);
   ASSERT_FALSE(result.configurationResetFailed);
   ASSERT_NE(std::string::npos, result.errorMessage.find("Failed to dismount tape"));
-  ASSERT_EQ(Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
+  ASSERT_EQ(Tape::DISABLED, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
   cta::log::LogContext lc(m_sessionLog);
   ASSERT_TRUE(m_scheduler->getDesiredDriveState(m_driveInfo.driveName, lc).up);
   ASSERT_EQ(cta::common::dataStructures::DriveStatus::Up,
