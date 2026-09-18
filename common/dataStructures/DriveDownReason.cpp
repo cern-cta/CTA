@@ -11,7 +11,7 @@
 
 namespace cta::common::dataStructures {
 namespace {
-// TODO: simplify?
+// Keep severity and message together in a single mapping for logging and formatting.
 struct ReasonDescription {
   int severity;
   std::string_view message;
@@ -27,18 +27,12 @@ ReasonDescription describe(DriveDownReason reason) {
       return {log::ERR, "Tape detected in drive"};
     case DriveDownReason::DriveProbeFailed:
       return {log::ERR, "Drive probe failed"};
-    case DriveDownReason::TransferSessionFailed:
-      return {log::ERR, "Data transfer session failed"};
-    case DriveDownReason::DriveNotFound:
-      return {log::ERR, "Drive not found"};
-    case DriveDownReason::DriveDiscoveryFailed:
-      return {log::ERR, "Drive discovery failed"};
-    case DriveDownReason::DriveOpenFailed:
-      return {log::ERR, "Drive open failed"};
-    case DriveDownReason::CleanerFailed:
-      return {log::ERR, "Cleaner failed"};
-    case DriveDownReason::TapeCleanupFailed:
-      return {log::ERR, "Tape cleanup failed"};
+    case DriveDownReason::SessionDriveAccessFailed:
+      return {log::ERR, "Session drive access failed"};
+    case DriveDownReason::DriveCleanupFailed:
+      return {log::ERR, "Drive cleanup failed"};
+    case DriveDownReason::SessionLeftDriveUnusable:
+      return {log::ERR, "Session left drive unusable"};
   }
   throw std::invalid_argument("Unknown drive-down reason");
 }
@@ -62,8 +56,6 @@ std::string formatDriveDownReason(DriveDownReason reason, std::string_view detai
 }
 
 bool isCleanDriveShutdownReason(std::string_view reason) {
-  return reason == formatDriveDownReason(DriveDownReason::Shutdown) || reason == "[cta-taped] Exiting cta-taped"
-         || reason == "[cta-taped] INFO Exiting cta-taped" || reason == "[cta-taped] ERROR Exiting cta-taped"
-         || reason == "[cta-taped] ERROR [cta-taped] Exiting cta-taped";
+  return reason == formatDriveDownReason(DriveDownReason::Shutdown);
 }
 }  // namespace cta::common::dataStructures

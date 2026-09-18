@@ -299,7 +299,7 @@ protected:
     const auto desired = m_scheduler->getDesiredDriveState(m_driveInfo.driveName, lc);
     ASSERT_FALSE(desired.up);
     ASSERT_TRUE(desired.reason);
-    ASSERT_NE(std::string::npos, desired.reason->find("Cleaner"));
+    ASSERT_NE(std::string::npos, desired.reason->find("[cta-taped] ERROR Drive cleanup failed: "));
     const auto drive = m_catalogue->DriveState()->getTapeDrive(m_driveInfo.driveName);
     ASSERT_TRUE(drive);
     ASSERT_EQ(cta::common::dataStructures::DriveStatus::Down, drive->driveStatus);
@@ -626,6 +626,10 @@ TEST_P(DriveCleanerTest, DriveOpenFailureStillDismountsAndKeepsDriveDown) {
   assertDriveDown();
   ASSERT_EQ(Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("drive could not be opened"));
+  cta::log::LogContext lc(m_sessionLog);
+  const auto state = m_scheduler->getDesiredDriveState(m_driveInfo.driveName, lc);
+  ASSERT_TRUE(state.reason);
+  EXPECT_THAT(*state.reason, testing::HasSubstr("drive open failed"));
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find(R"(dismountVid="")"));
   ASSERT_EQ(0, m_tracker.errorStats().count(TapeSessionError::TapeDismount));
 }

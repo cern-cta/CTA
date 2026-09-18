@@ -180,9 +180,9 @@ void cta::tape::daemon::DriveCleaner::setDriveDownAfterCleanerFailed(const std::
     cta::common::dataStructures::DesiredDriveState driveState;
     driveState.up = false;
     driveState.forceDown = false;
-    driveState.reason =
-      cta::common::dataStructures::formatDriveDownReason(cta::common::dataStructures::DriveDownReason::CleanerFailed,
-                                                         errorMsg);
+    driveState.reason = cta::common::dataStructures::formatDriveDownReason(
+      cta::common::dataStructures::DriveDownReason::DriveCleanupFailed,
+      errorMsg);
     TapeDrivesCatalogueState(m_catalogue).setDesiredDriveState(m_driveInfo.driveName, driveState, m_lc);
   } catch (...) {
     try {

@@ -635,11 +635,11 @@ TEST_F(DriveControllerTest, CleaningFailureRequiresAnotherUpRequestAndPreservesR
 }
 
 /**
- * @brief Verify standard and unknown cleanup exceptions keep the drive down.
+ * @brief Verify failed cleanup retains available exception details and keeps the drive down.
  */
 TEST_F(DriveControllerTest, CleaningExceptionsKeepDriveDown) {
-  for (const bool unknown : {false, true}) {
-    SCOPED_TRACE(unknown);
+  for (const int failure : {0, 1, 2, 3}) {
+    SCOPED_TRACE(failure);
     requireCleaning();
     DesiredDriveState up;
     up.up = true;
@@ -649,18 +649,28 @@ TEST_F(DriveControllerTest, CleaningExceptionsKeepDriveDown) {
     EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
     EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
     EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
-      .WillOnce(Invoke([](const auto&, const DesiredDriveState& state, auto&) {
+      .WillOnce(Invoke([failure](const auto&, const DesiredDriveState& state, auto&) {
         EXPECT_FALSE(state.up);
-        EXPECT_EQ(formatDriveDownReason(DriveDownReason::CleanerFailed), state.reason);
+        EXPECT_EQ(formatDriveDownReason(DriveDownReason::DriveCleanupFailed,
+                                        failure == 3 ? "Unknown exception during drive cleanup" :
+                                        failure == 0 ? "" :
+                                                       "cleaner failed"),
+                  state.reason);
       }));
-    clean = [unknown]() -> bool {
-      if (unknown) {
+    clean = [failure]() -> bool {
+      if (failure == 0) {
+        return false;
+      }
+      if (failure == 2) {
+        throw cta::exception::Exception("cleaner failed");
+      }
+      if (failure == 3) {
         throw 42;
       }
       throw std::runtime_error("cleaner failed");
     };
     iteration();
-    EXPECT_EQ(unknown ? 2 : 1, probes);
+    EXPECT_EQ(failure + 1, probes);
     EXPECT_EQ(0, schedules);
     ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&scheduler));
   }
@@ -1554,7 +1564,7 @@ TEST_F(DriveControllerTest, UnusableDriveWithoutSpecificReasonPublishesTransferF
   EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
     .WillOnce(Invoke([](const auto&, const DesiredDriveState& state, auto&) {
       EXPECT_FALSE(state.up);
-      EXPECT_EQ(formatDriveDownReason(DriveDownReason::TransferSessionFailed), state.reason);
+      EXPECT_EQ(formatDriveDownReason(DriveDownReason::SessionLeftDriveUnusable), state.reason);
     }));
   iteration();
   EXPECT_EQ(1, destroyed);

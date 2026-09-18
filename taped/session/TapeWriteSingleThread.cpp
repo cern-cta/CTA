@@ -8,8 +8,11 @@
 #include "DriveCleaner.hpp"
 #include "MigrationTaskInjector.hpp"
 #include "common/dataStructures/DriveDownReason.hpp"
+#include "common/exception/Exception.hpp"
 
+#include <exception>
 #include <optional>
+#include <string>
 
 //------------------------------------------------------------------------------
 // Constructor for TapeWriteSingleThread
@@ -83,6 +86,8 @@ cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
     m_this.logSCSIMetrics();
   } catch (...) {}
 
+  std::string cleanupError;
+
   // Borrow the existing drive; DriveCleaner owns only the physical cleanup protocol.
   try {
     DriveCleaner cleaner(m_this.m_mediaChanger,
@@ -95,13 +100,23 @@ cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
                          m_this.m_tracker);
     const auto result = cleaner.cleanDrive(m_this.m_drive, reportStatus);
     if (!result.driveReusable()) {
+      cleanupError = result.errorMessage;
       m_this.m_hardwareStatus = DriveUsability::MustRemainDown;
       m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
       try {
         m_this.m_logContext.log(log::ERR, result.errorMessage);
       } catch (...) {}
     }
+  } catch (const cta::exception::Exception& ex) {
+    cleanupError = ex.getMessageValue();
+    m_this.m_hardwareStatus = DriveUsability::MustRemainDown;
+    m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
+  } catch (const std::exception& ex) {
+    cleanupError = ex.what();
+    m_this.m_hardwareStatus = DriveUsability::MustRemainDown;
+    m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
   } catch (...) {
+    cleanupError = "Unknown exception during drive cleanup";
     m_this.m_hardwareStatus = DriveUsability::MustRemainDown;
     m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
   }
@@ -110,7 +125,8 @@ cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
   if (m_this.m_hardwareStatus == DriveUsability::MustRemainDown) {
     reportStatusSafely(
       DriveStatus::Down,
-      common::dataStructures::formatDriveDownReason(common::dataStructures::DriveDownReason::TapeCleanupFailed));
+      common::dataStructures::formatDriveDownReason(common::dataStructures::DriveDownReason::DriveCleanupFailed,
+                                                    cleanupError));
   } else {
     reportStatusSafely(DriveStatus::Up);
   }

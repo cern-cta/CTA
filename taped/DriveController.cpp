@@ -149,7 +149,7 @@ void DriveController::runIteration() {
   }
   if (transferResult.driveUsability != DriveUsability::Reusable) {
     // Preserve specific session or operator reasons. Publication failures propagate.
-    putDriveDown(common::dataStructures::DriveDownReason::TransferSessionFailed, {}, true);
+    putDriveDown(common::dataStructures::DriveDownReason::SessionLeftDriveUnusable, {}, true);
   }
   if (transferResult.retryDelayRequired && transferResult.driveUsability == DriveUsability::Reusable) {
     m_operations.sleep(m_config.mounts.idle_scheduling_interval_secs);
@@ -429,16 +429,22 @@ bool DriveController::prepareDriveForScheduling() {
 bool DriveController::cleanBeforeScheduling() {
   m_lc.log(log::INFO, "Cleaning drive before allowing scheduling.");
   bool cleaned = false;
+  std::string cleanupError;
   try {
     cleaned = m_operations.clean(std::nullopt, true);
+  } catch (const cta::exception::Exception& ex) {
+    cleanupError = ex.getMessageValue();
+    logDriveFailure(m_lc, "Drive recovery cleaning failed.", ex);
   } catch (const std::exception& ex) {
+    cleanupError = ex.what();
     logDriveFailure(m_lc, "Drive recovery cleaning failed.", ex);
   } catch (...) {
+    cleanupError = "Unknown exception during drive cleanup";
     m_lc.log(log::ERR, "Drive recovery cleaning failed with an unknown exception.");
   }
 
   if (!cleaned) {
-    putDriveDown(common::dataStructures::DriveDownReason::CleanerFailed, {}, true);
+    putDriveDown(common::dataStructures::DriveDownReason::DriveCleanupFailed, cleanupError, true);
     return false;
   }
 

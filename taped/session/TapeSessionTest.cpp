@@ -115,6 +115,8 @@ enum class TransferFailurePoint {
   MetadataLogic,
   MetadataUnknown,
   Discovery,
+  DeviceEnumeration,
+  MissingDrive,
   OpenCta,
   OpenStandard,
   CompleteCta,
@@ -271,6 +273,9 @@ public:
 
   void setDriveStatus(cta::common::dataStructures::DriveStatus status,
                       const std::optional<std::string>& reason = std::nullopt) override {
+    if (status == cta::common::dataStructures::DriveStatus::Down) {
+      downReason = reason;
+    }
     if (status == cta::common::dataStructures::DriveStatus::Starting) {
       ++startingAttempts;
       if (failure == TransferFailurePoint::StartingStatus) {
@@ -284,6 +289,7 @@ public:
     lastReportedStats = stats;
   }
 
+  std::optional<std::string> downReason;
   unsigned int statsReports = 0;
   TapeTransferStats lastReportedStats;
 
@@ -402,6 +408,7 @@ public:
   unsigned int downAttempts = 0;
   unsigned int upAttempts = 0;
   unsigned int desiredDownAttempts = 0;
+  std::optional<std::string> downReason;
 
   void reportDriveStatus(const cta::common::dataStructures::DriveInfo&,
                          cta::common::dataStructures::MountType,
@@ -425,6 +432,7 @@ public:
                             cta::log::LogContext&) override {
     EXPECT_FALSE(state.up);
     ++desiredDownAttempts;
+    downReason = state.reason;
     if (failure == TransferFailurePoint::DesiredDown) {
       throw std::runtime_error("injected desired down failure");
     }
@@ -807,7 +815,7 @@ public:
   }
 
   template<typename Mount>
-  void checkExceptionCleanup(TransferFailurePoint point) {
+  void checkExceptionCleanup(TransferFailurePoint point, bool cleanupFails = false) {
     // Bound failures involving virtual hardware and in-memory queues. Neither
     // a robot nor a disk server is contacted by these scenarios.
     alarm(5);
@@ -839,11 +847,18 @@ public:
                                                 "TestLogicalLibrary",
                                                 "/dev/tape_T10D6116",
                                                 "dummy");
-    const bool discoveryFails = point == TransferFailurePoint::Discovery;
+    const bool discoveryFails = point == TransferFailurePoint::Discovery
+                                || point == TransferFailurePoint::DeviceEnumeration
+                                || point == TransferFailurePoint::MissingDrive;
     const bool openFails = point == TransferFailurePoint::OpenCta || point == TransferFailurePoint::OpenStandard
                            || point == TransferFailurePoint::ReportDown || point == TransferFailurePoint::DesiredDown;
     unsigned int driveDestructions = 0;
-    if (discoveryFails) {
+    if (point == TransferFailurePoint::DeviceEnumeration) {
+      EXPECT_CALL(system, opendir(testing::_))
+        .WillOnce(testing::Throw(std::runtime_error("injected discovery failure")));
+    } else if (point == TransferFailurePoint::MissingDrive) {
+      system.fake.m_stats.at(info.devFilename).st_rdev = static_cast<dev_t>(-1);
+    } else if (discoveryFails) {
       system.fake.m_stats.erase(info.devFilename);
     } else if (openFails) {
       EXPECT_CALL(system, getDriveByPath("/dev/nst0"))
@@ -855,6 +870,9 @@ public:
         }));
     } else if (!startupFails) {
       auto* drive = new TransferDriveWithDestructionCounter(driveDestructions);
+      if (cleanupFails) {
+        drive->setFailurePoint(cta::tape::drive::FakeDrive::FailurePoint::DisableLogicalBlockProtection);
+      }
       if (point == TransferFailurePoint::TapeMountedAndUnload) {
         drive->setFailurePoint(cta::tape::drive::FakeDrive::FailurePoint::UnloadTape);
       }
@@ -907,7 +925,7 @@ public:
     if (result) {
       EXPECT_EQ(point != TransferFailurePoint::None, result->retryDelayRequired);
       EXPECT_EQ(backendFailure, result->backendRecoveryRequired);
-      EXPECT_EQ(discoveryFails || openFails ? DriveUsability::MustRemainDown : DriveUsability::Reusable,
+      EXPECT_EQ(discoveryFails || openFails || cleanupFails ? DriveUsability::MustRemainDown : DriveUsability::Reusable,
                 result->driveUsability);
     }
     // The mount is borrowed. Finalize it once, including when startup or a
@@ -939,9 +957,25 @@ public:
         EXPECT_TRUE(tracker.errorStats().empty());
       }
     }
+    if (cleanupFails) {
+      ASSERT_TRUE(mount.downReason);
+      EXPECT_THAT(*mount.downReason, testing::HasSubstr("[cta-taped] ERROR Drive cleanup failed: "));
+      EXPECT_THAT(*mount.downReason, testing::HasSubstr("Failed to disable logical block protection"));
+    }
     if (discoveryFails || openFails) {
       EXPECT_EQ(1, scheduler.downAttempts);
       EXPECT_EQ(1, scheduler.desiredDownAttempts);
+      ASSERT_TRUE(scheduler.downReason);
+      EXPECT_THAT(*scheduler.downReason, testing::HasSubstr("[cta-taped] ERROR Session drive access failed: "));
+      std::string_view stage = "Configured drive lookup failed: Could not stat path";
+      if (openFails) {
+        stage = "Drive opening failed: injected drive open failure";
+      } else if (point == TransferFailurePoint::DeviceEnumeration) {
+        stage = "Drive discovery failed: injected discovery failure";
+      } else if (point == TransferFailurePoint::MissingDrive) {
+        stage = "Configured drive lookup failed: Could not find tape device";
+      }
+      EXPECT_THAT(*scheduler.downReason, testing::HasSubstr(std::string(stage)));
     } else if (!startupFails) {
       EXPECT_EQ(1, driveDestructions);
       if (!workerStarts) {
@@ -1224,6 +1258,74 @@ TEST_P(TapeSessionTest, ArchiveStartingStatusFailureCleansUp) {
   ASSERT_EXIT(
     {
       checkExceptionCleanup<FailingTransferMount<cta::MockArchiveMount>>(TransferFailurePoint::StartingStatus);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+// Verify operation categories retain the underlying failure details.
+TEST_P(TapeSessionTest, ArchiveDeviceEnumerationReason) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferMount<cta::MockArchiveMount>>(TransferFailurePoint::DeviceEnumeration);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+TEST_P(TapeSessionTest, ArchiveMissingDriveReason) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferMount<cta::MockArchiveMount>>(TransferFailurePoint::MissingDrive);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+TEST_P(TapeSessionTest, ArchiveCleanupFailureReason) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferMount<cta::MockArchiveMount>>(TransferFailurePoint::TapeMountedStandard,
+                                                                         true);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+TEST_P(TapeSessionTest, RetrieveDeviceEnumerationReason) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::DeviceEnumeration);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+TEST_P(TapeSessionTest, RetrieveMissingDriveReason) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::MissingDrive);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
+TEST_P(TapeSessionTest, RetrieveCleanupFailureReason) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::TapeMountedStandard, true);
       _exit(::testing::Test::HasFailure() ? 1 : 0);
     },
     testing::ExitedWithCode(0),
@@ -3721,7 +3823,7 @@ TEST_P(TapeSessionTest, TapeSessionNoSuchDrive) {
   TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
-  ASSERT_NE(std::string::npos, logger.getLog().find("Drive discovery failed"));
+  ASSERT_NE(std::string::npos, logger.getLog().find("Session drive access failed: Configured drive lookup failed"));
 }
 
 /*

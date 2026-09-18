@@ -35,6 +35,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace {
@@ -510,11 +511,13 @@ void cta::tape::daemon::TapeSession::executeWrite(cta::log::LogContext& logConte
 //------------------------------------------------------------------------------
 std::unique_ptr<cta::tape::drive::DriveInterface>
 cta::tape::daemon::TapeSession::findDrive(cta::log::LogContext& logContext, ExecutionState& state) {
-  auto reason = common::dataStructures::DriveDownReason::DriveDiscoveryFailed;
+  constexpr auto reason = common::dataStructures::DriveDownReason::SessionDriveAccessFailed;
+  std::string_view stage = "Drive discovery failed";
   try {
     cta::tape::SCSI::DeviceVector devices(m_sysWrapper);
+    stage = "Configured drive lookup failed";
     const auto driveInfo = devices.findBySymlink(m_driveInfo.devFilename);
-    reason = common::dataStructures::DriveDownReason::DriveOpenFailed;
+    stage = "Drive opening failed";
     auto drive = cta::tape::drive::createDrive(driveInfo, m_sysWrapper);
     if (!drive) {
       throw cta::exception::Exception("Drive creation returned no drive");
@@ -522,15 +525,20 @@ cta::tape::daemon::TapeSession::findDrive(cta::log::LogContext& logContext, Exec
     drive->info = m_driveInfo;
     state.driveOpened = true;
     return drive;
-  } catch (const cta::tape::SCSI::DeviceVector::NotFound&) {
-    reason = common::dataStructures::DriveDownReason::DriveNotFound;
-    state.downReason = common::dataStructures::formatDriveDownReason(reason);
-    state.result.driveUsability = DriveUsability::MustRemainDown;
-    logContext.log(common::dataStructures::driveDownReasonSeverity(reason), *state.downReason);
-    throw;
   } catch (...) {
-    // Record the hardware decision before propagating to the session's failure handler.
-    state.downReason = common::dataStructures::formatDriveDownReason(reason);
+    // Record the operation stage and cause before propagating the original exception.
+    std::string detail(stage);
+    detail += ": ";
+    try {
+      throw;
+    } catch (const cta::exception::Exception& ex) {
+      detail += ex.getMessageValue();
+    } catch (const std::exception& ex) {
+      detail += ex.what();
+    } catch (...) {
+      detail += "Unknown exception";
+    }
+    state.downReason = common::dataStructures::formatDriveDownReason(reason, detail);
     state.result.driveUsability = DriveUsability::MustRemainDown;
     logContext.log(common::dataStructures::driveDownReasonSeverity(reason), *state.downReason);
     throw;
