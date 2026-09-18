@@ -48,6 +48,31 @@ unit-test-python:
     reports:
       junit: python-ci-unit-tests.xml
 
+unit-test-rust:
+  stage: test
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+  rules:
+    - changes:
+        - "**/*.rs"
+        - "**/Cargo.toml"
+      when: on_success
+  image:
+    name: $IMAGE_LINT # At a future point in time this should reference a better scoped image
+    entrypoint: ["/usr/bin/env"]
+  variables:
+    GIT_SUBMODULE_STRATEGY: "recursive"
+    RUST_CODE_PATH: "tools-rs"
+  before_script:
+    - !reference [.merge-train-guard, before_script]
+  script:
+    - cd $RUST_CODE_PATH && cargo nextest run --profile ci
+  artifacts:
+    when: always
+    reports:
+      junit: ${RUST_CODE_PATH}/target/nextest/ci/junit.xml
+
 test-cta-valgrind:
   stage: test
   needs:
