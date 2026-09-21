@@ -227,6 +227,8 @@ configure_build() {
   local cmake_options=(
     -D "CTA_PACKAGE_MODE:STRING=${package_mode}"
     -D "CTA_BUILD_TEST_PACKAGES:BOOL=$(cmake_bool "$build_test_packages")"
+    -D "CTA_BUILD_DEBUG_PACKAGES:BOOL=$(cmake_bool "$build_debug_packages")"
+    -D "CTA_RUN_UNIT_TESTS:BOOL=$(cmake_bool "$run_unit_tests")"
     -D "CTA_VERSION:STRING=${cta_version}"
     -D "VCS_VERSION=${cta_version_suffix}"
     -D "CMAKE_BUILD_TYPE=${cmake_build_type}"
@@ -241,8 +243,6 @@ configure_build() {
 
   if [[ "$package_mode" == "binary" ]]; then
     cmake_options+=(
-      -D "CTA_BUILD_DEBUG_PACKAGES:BOOL=$(cmake_bool "$build_debug_packages")"
-      -D "CTA_RUN_UNIT_TESTS:BOOL=$(cmake_bool "$run_unit_tests")"
       -D "CTA_SHOW_CONFIGURATION_SUMMARY:BOOL=OFF"
       -D "ENABLE_CCACHE:BOOL=$(cmake_bool "$enable_ccache")"
       -D "ENABLE_ADDRESS_SANITIZER:BOOL=$(cmake_bool "$enable_address_sanitizer")"

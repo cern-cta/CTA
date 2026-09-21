@@ -83,6 +83,9 @@ cmake3 -G "@CMAKE_GENERATOR@" .. \
   -DXROOTD_SSI_PROTOBUF_INTERFACE_VERSION:STRING=@XROOTD_SSI_PROTOBUF_INTERFACE_VERSION@ \
   -DENABLE_CCACHE:BOOL=@ENABLE_CCACHE@ \
   -DCTA_PACKAGE_MODE:STRING=none \
+  -DCTA_RUN_UNIT_TESTS:BOOL=@CTA_RUN_UNIT_TESTS@ \
+  -DCTA_BUILD_DEBUG_PACKAGES:BOOL=@CTA_BUILD_DEBUG_PACKAGES@ \
+  -DCTA_BUILD_TEST_PACKAGES:BOOL=@CTA_BUILD_TEST_PACKAGES@ \
   -DJOBS_COUNT:STRING=@JOBS_COUNT@ \
   -DVCS_VERSION=%{ctaRelease} \
   -DCTA_USE_PGSCHED:BOOL=@CTA_USE_PGSCHED@ \
@@ -103,7 +106,8 @@ DESTDIR=%{buildroot} \
 %if !@PACKAGE_BUILD_TEST_PACKAGES@
 # CMake installs test files even when the cta-tests package is disabled.
 # Remove them from the staging directory to avoid RPM's "Installed (but unpackaged) file(s) found" error.
-# Keep build-tree tests available for test execution; omit only their installed payload.
+# This still keeps the binaries around for the test execution; it's just the installed payload we are skipping.
+# The arguably cleaner (future?) solution to this would be to not install them at all in the first place if this option is disabled.
 rm -f %{buildroot}%{_libdir}/libcta*unittests*.so* \
   %{buildroot}%{_libdir}/libcta-taped-integration-tests.so* \
   %{buildroot}%{_bindir}/cta-unit-tests \
