@@ -8,7 +8,7 @@ use std::path::PathBuf;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let manifest_dir = env::var("CARGO_MANIFEST_DIR")?;
-    let proto_dir = PathBuf::from(manifest_dir).join("external/eos-grpc-proto");
+    let proto_dir = PathBuf::from(manifest_dir).join("../../lib/protobuf/external/eos-grpc-proto");
 
     tonic_prost_build::configure()
         // we only need client-side bindings
