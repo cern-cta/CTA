@@ -48,16 +48,18 @@ void cta::frontend::grpc::server::NegotiationRequestHandler::init() {
 }
 
 void cta::frontend::grpc::server::NegotiationRequestHandler::logGSSErrors(const std::string& strContext,
-                                                                          OM_uint32 gssCode,
+                                                                          uint32_t gssCode,
                                                                           int iType) {
   log::LogContext lc(m_log);
   log::ScopedParamContainer params(lc);
-  std::ostringstream osMsgScopeParam;
-  OM_uint32 gssMinStat;
+  uint32_t displayCallMinStatus;
+  uint32_t displayCallStatus;
   gss_buffer_desc gssMsg;
-  OM_uint32 gssMsgCtx = 0;
+  uint32_t gssMsgCtx = 0;
+  uint32_t idx = 0;
 
   params.add("tag", m_tag);
+  params.add("gssCode", std::to_string(gssCode));
 
   /*
    * Because gss_display_status() only displays one status code at a time,
@@ -65,11 +67,20 @@ void cta::frontend::grpc::server::NegotiationRequestHandler::logGSSErrors(const 
    * it should be invoked as part of a loop.
    */
   do {
-    gss_display_status(&gssMinStat, gssCode, iType, GSS_C_NULL_OID, &gssMsgCtx, &gssMsg);
-    osMsgScopeParam << "GSS-API-ERROR:" << gssMsgCtx;
-    params.add(osMsgScopeParam.str(), std::string((char*) gssMsg.value));
-    osMsgScopeParam.str("");  // reset ostringstream
-    gss_release_buffer(&gssMinStat, &gssMsg);
+    displayCallStatus = gss_display_status(&displayCallMinStatus, gssCode, iType, GSS_C_NULL_OID, &gssMsgCtx, &gssMsg);
+    if (GSS_ERROR(displayCallStatus)) {
+      // gss_display_status errored
+      params.add("gssMsgCtx_" + std::to_string(idx), std::to_string(gssMsgCtx));
+      params.add("gssDisplayCallStatus_" + std::to_string(idx), std::to_string(displayCallStatus));
+      params.add("gssDisplayCallMinStatus_" + std::to_string(idx), std::to_string(displayCallMinStatus));
+      break;
+    }
+
+    params.add("gssMsgStr_" + std::to_string(idx), std::string((char*) gssMsg.value, gssMsg.length));
+    gss_release_buffer(&displayCallMinStatus, &gssMsg);
+
+    ++idx;
+
   } while (gssMsgCtx);
 
   lc.log(cta::log::ERR, strContext);
@@ -309,7 +320,10 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
           m_streamState = StreamState::ERROR;
           logGSSErrors("In grpc::server::NegotiationRequestHandler::next(): gss_accept_sec_context() major status.",
                        gssMajStat,
-                       gssAccSecMinStat);
+                       GSS_C_GSS_CODE);
+          logGSSErrors("In grpc::server::NegotiationRequestHandler::next(): gss_accept_sec_context() minor status.",
+                       gssAccSecMinStat,
+                       GSS_C_MECH_CODE);
           m_response.set_is_complete(false);
           m_response.set_challenge("");
           m_response.set_token("");
@@ -337,7 +351,7 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
         if (gssMinStat != GSS_S_COMPLETE) {
           logGSSErrors("In grpc::server::NegotiationRequestHandler::next(): gss_delete_sec_context() minor status",
                        gssMinStat,
-                       GSS_C_GSS_CODE);
+                       GSS_C_MECH_CODE);
         }
       }
       bNext = false;
