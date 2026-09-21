@@ -101,6 +101,8 @@ DESTDIR=%{buildroot} \
   cmake --build . --target install --parallel @JOBS_COUNT@
 
 %if !@PACKAGE_BUILD_TEST_PACKAGES@
+# CMake installs test files even when the cta-tests package is disabled.
+# Remove them from the staging directory to avoid RPM's "Installed (but unpackaged) file(s) found" error.
 # Keep build-tree tests available for test execution; omit only their installed payload.
 rm -f %{buildroot}%{_libdir}/libcta*unittests*.so* \
   %{buildroot}%{_libdir}/libcta-taped-integration-tests.so* \

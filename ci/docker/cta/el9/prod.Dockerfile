@@ -54,7 +54,7 @@ COPY --from=cern-ca /etc/ssl/certs/CERN-bundle.pem /etc/pki/ca-trust/source/anch
 
 # Core dependencies are independent of the changing CTA RPM repository.
 # Downloaded packages stay in cache mounts, outside the image layers.
-# hadolint ignore=DL3041
+# hadolint ignore=DL3040,DL3041
 RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
     --mount=type=cache,target=/var/cache/yum,sharing=locked \
     # Ensure consistent user ID for CTA services
