@@ -14,11 +14,19 @@ if [[ "${SUPPRESS_BUILD_SERVICE_STDOUT:-false}" == "1" ]] || \
     exec 1> /dev/null
 fi
 
-TARGET_PACKAGES=$1
+# Split the package list while leaving RPM globs for DNF to expand.
+read -r -a target_packages <<< "${1//$'\n'/ }"
 
 # Install cta-release
 # We install need to install regular dnf, because microdnf has no versionlocking functionality
+base_packages=$(rpm -qa --qf '%{NAME}\n' | sort -u)
 microdnf install -y cta-release dnf
+
+# microdnf does not record dependency reasons for DNF; mark only newly added bootstrap packages as removable.
+mapfile -t bootstrap_packages < <(comm -13 <(printf '%s\n' "$base_packages") <(rpm -qa --qf '%{NAME}\n' | sort -u))
+if (( ${#bootstrap_packages[@]} )); then
+    dnf mark remove "${bootstrap_packages[@]}"
+fi
 cta-versionlock apply
 
 # Conditionally overwrite public repos
@@ -30,7 +38,7 @@ fi
 
 # Conditionally add Oracle support
 if [[ "$ENABLE_ORACLE_SUPPORT" == "1" ]] || [[ "${ENABLE_ORACLE_SUPPORT,,}" == "true" ]]; then
-    TARGET_PACKAGES="$TARGET_PACKAGES cta-lib-catalogue-occi"
+    target_packages+=(cta-lib-catalogue-occi)
 fi
 
 # By default dnf looks at /etc/dnf for the versionlock; not /etc/yum
@@ -38,18 +46,13 @@ ln -sf /etc/yum/pluginconf.d/versionlock.list /etc/dnf/plugins/versionlock.list
 
 # Install the target-specific packages
 # Using dnf instead of microdnf! microdnf does not support versionlocking
-dnf install -y --enablerepo crb $TARGET_PACKAGES
+dnf install -y --enablerepo crb "${target_packages[@]}"
 
-# Cleanup to reduce image size
-# cta-release brings in Python, but uninstalling it for some reason does not remove it
-microdnf remove -y cta-release
-rpm -e dnf # dnf is protected; microdnf does not want to delete it
+# Keep requested packages and their dependencies when removing build-only tools.
+dnf mark install "${target_packages[@]}"
 
-# cta-release pulls in python, but microdnf does not autoremove it when uninstalling cta-release.
-# Nothing in CTA requires python and it adds a lot to the final image size, so we remove it here explicitly
-# Future improvement: handle this gracefully. Basically we try to remove python but if there are packages requiring it, we don't
-# It produces some potentially misleading error messages though
-microdnf remove -y python* > /dev/null || true
+# Allow DNF to remove itself and unused dependencies, including Python where it is not needed.
+dnf remove -y --setopt=protected_packages= --setopt=clean_requirements_on_remove=True cta-release dnf
 
 if [[ "$ENABLE_INTERNAL_REPOS" == "1" ]] || [[ "${ENABLE_INTERNAL_REPOS,,}" == "true" ]]; then
     while IFS= read -r filename; do

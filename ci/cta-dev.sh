@@ -91,7 +91,7 @@ namespace_deletion_log=""
 
 source "${script_dir}/utils/log_utils.sh"
 
-# CTA package version accepted by the currently supported packaging backends.
+# Check whether a CTA version is accepted by the package backends.
 cta_version_is_valid() {
   [[ "$1" =~ ^[0-9][0-9.]*-[a-z0-9][a-z0-9.-]*$ ]]
 }
@@ -99,12 +99,12 @@ cta_version_is_valid() {
 # Validated in both the environment file and the command line.
 readonly cta_version_format_hint="must be <version>-<suffix>, where <version> contains only numbers and dots and <suffix> only lowercase letters, numbers, dots, and hyphens (for example 6-dev)"
 
-# Container image tags are less restricted than package versions, so an explicit tag only has to
-# satisfy the OCI tag grammar.
+# Check whether an explicit container image tag has a valid format.
 cta_image_tag_is_valid() {
   [[ "$1" =~ ^[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$ ]]
 }
 
+# Load and validate optional worktree defaults from ci/.cta-dev.env.
 load_cta_dev_env() {
   local -r env_file="${script_dir}/.cta-dev.env"
   [[ -f "$env_file" ]] || return 0
@@ -187,9 +187,7 @@ load_cta_dev_env() {
 #  Help
 # =========================================================================
 
-# Options shared by the commands. Printed by all usage functions, so command-specific help never
-# has to repeat them. Anything only some commands accept, such as --cta-version, is rejected by
-# parse_options with a message naming those commands.
+# Print the shared options included in command help.
 global_options_help() {
   cat <<EOF
 Global options:
@@ -204,6 +202,7 @@ Global options:
 EOF
 }
 
+# Print the command overview and general usage.
 usage() {
   cat <<EOF
 
@@ -253,6 +252,7 @@ EOF
 exit 1
 }
 
+# Print help for building CTA packages.
 usage_build() {
   cat <<EOF
 
@@ -283,6 +283,7 @@ EOF
 exit 1
 }
 
+# Print help for building CTA container images.
 usage_images() {
   cat <<EOF
 
@@ -303,6 +304,7 @@ EOF
 exit 1
 }
 
+# Print help for building and deploying a debugging environment.
 usage_debug() {
   cat <<EOF
 
@@ -323,6 +325,7 @@ EOF
 exit 1
 }
 
+# Print deployment options and usage.
 usage_deploy() {
   cat <<EOF
 
@@ -362,6 +365,13 @@ EOF
 exit 1
 }
 
+# List the available system tests and lifecycle stages.
+print_available_tests() {
+  printf 'Available tests:\n'
+  printf '  %s\n' "${available_tests[@]}"
+}
+
+# Print system-test usage, available tests, and pytest examples.
 usage_test() {
   cat <<EOF
 
@@ -373,8 +383,7 @@ Run a system test.
 Note that any options passed AFTER the test name are forwarded to pytest.
 If no test is specified, an interactive menu is displayed.
 
-Available tests:
-$(printf "  %s\n" "${available_tests[@]}")
+$(print_available_tests)
 
 Examples:
   $(basename "$0") test
@@ -404,6 +413,7 @@ exit 1
 #  Option parsing
 # =========================================================================
 
+# Report an invalid argument and exit with an error.
 unsupported_argument() {
     local message="$1"
     log_error "Invalid option(s) provided:"
@@ -415,6 +425,7 @@ unsupported_argument() {
 
 }
 
+# Reject an option when the current command does not support it.
 require_command() {
     local option="$1"
     local command="$2"
@@ -428,6 +439,7 @@ require_command() {
     unsupported_argument "${option} is only valid for the following commands: $*"
 }
 
+# Parse and validate command options, forwarding test arguments to pytest.
 parse_options() {
   local command="$1"
   local -a spawn_options
@@ -453,6 +465,7 @@ parse_options() {
           echo
           print_available_tests
           echo
+          echo "Example: ${program_name} test client"
           echo "Run '$(basename "$0") test' to choose a test interactively."
           exit 1
         fi
@@ -659,6 +672,7 @@ parse_options() {
 
 }
 
+# Use public repositories when CERN repositories are disabled or unreachable.
 detect_internal_repos() {
   # A false value is an explicit request from --use-public-repos or .cta-dev.env.
   [[ $enable_internal_repos == true ]] || return 0
@@ -686,6 +700,7 @@ detect_internal_repos() {
   fi
 }
 
+# Print the source or binary package directory for the selected platform.
 package_directory() {
   local -r package_kind="$1"
 
@@ -696,6 +711,7 @@ package_directory() {
   esac
 }
 
+# Require an installed and usable Podman runtime.
 validate_podman() {
   command -v podman >/dev/null 2>&1 \
     || die "Podman is required to use cta-dev."
@@ -703,10 +719,12 @@ validate_podman() {
     || die "Podman is installed but unusable. Check your Podman configuration."
 }
 
+# Check whether minikube or k3s is installed.
 local_kubernetes_available() {
   command -v minikube >/dev/null 2>&1 || command -v k3s >/dev/null 2>&1
 }
 
+# Refuse to replace an existing namespace unless CTA tooling manages it.
 ensure_namespace_owned() {
   local owner
   if kubectl get namespace "$namespace" >/dev/null 2>&1; then
@@ -716,16 +734,19 @@ ensure_namespace_owned() {
   fi
 }
 
+# Check whether the named Podman container exists.
 container_exists() {
   local -r container_name="$1"
   podman container exists "$container_name"
 }
 
+# Print the current state of the named Podman container.
 container_status() {
   local -r container_name="$1"
   podman container inspect --format '{{.State.Status}}' "$container_name" 2>/dev/null
 }
 
+# Remove a Podman container, retrying until it disappears.
 remove_container() {
   local -r container_name="$1"
   local attempt
@@ -740,6 +761,7 @@ remove_container() {
   return 0
 }
 
+# Serialize the effective build configuration as JSON for reuse checks.
 create_build_configuration() {
   local -r xrootd_ssi_version="$1"
   local -r num_jobs="$2"
@@ -768,6 +790,7 @@ create_build_configuration() {
       xrootdSsiVersion: $xrootdSsiVersion, jobs: $jobs, internalRepos: $internalRepos}'
 }
 
+# Atomically record the build configuration and success status.
 write_build_state() {
   local -r configuration_json="$1"
   local -r build_successful="$2"
@@ -786,6 +809,7 @@ write_build_state() {
 #  Commands
 # =========================================================================
 
+# Build CTA packages in a reusable container, refreshing configuration and dependencies as needed.
 build_cta() {
   cd "$project_root"
 
@@ -1017,7 +1041,8 @@ build_cta() {
   write_build_state "$build_configuration_json" false
 
   print_header "BUILDING PACKAGES"
-  podman exec --tty "${build_container_name}" \
+  # Forward terminal input, including Ctrl-C, while preserving Ninja's progress display.
+  podman exec --interactive --tty "${build_container_name}" \
     .${mount_basedir}/ci/build/build_packages.sh "${package_command}" \
     --build-dir "${mount_basedir}/build" \
     --build-generator "${build_generator}" \
@@ -1035,6 +1060,7 @@ build_cta() {
 
 }
 
+# Build the CTA service images from local packages.
 images_cta() {
   # Constants
   local -r binary_package_directory=$(package_directory binary)
@@ -1058,6 +1084,7 @@ images_cta() {
     "${extra_image_build_options[@]}"
 }
 
+# Check deployment prerequisites and namespace ownership.
 validate_deployment_environment() {
   local_kubernetes_available \
     || die "Cannot deploy CTA: neither minikube nor k3s is installed, so local images are unavailable."
@@ -1065,11 +1092,13 @@ validate_deployment_environment() {
   ensure_namespace_owned
 }
 
+# Delete the CTA instance while preserving its persistent volumes.
 delete_cta_namespace() {
   cd "${project_root}/ci/orchestration"
   ./delete_instance.sh -n "${namespace}" --keep-pvs
 }
 
+# Wait for background namespace deletion and remove its temporary log.
 cleanup_background_namespace_deletion() {
   if [[ -n $namespace_deletion_pid ]]; then
     wait "$namespace_deletion_pid" >/dev/null 2>&1 || true
@@ -1077,6 +1106,7 @@ cleanup_background_namespace_deletion() {
   [[ -n $namespace_deletion_log ]] && rm -f -- "$namespace_deletion_log"
 }
 
+# Start deleting the previous deployment in the background while the build runs.
 start_namespace_deletion() {
   validate_deployment_environment
 
@@ -1088,6 +1118,7 @@ start_namespace_deletion() {
   log_task "Deleting the previous CTA deployment in the background while building..."
 }
 
+# Complete namespace deletion and report any background deletion failure.
 finish_namespace_deletion() {
   print_header "DELETING OLD CTA DEPLOYMENTS"
 
@@ -1106,30 +1137,84 @@ finish_namespace_deletion() {
   [[ $deletion_status -eq 0 ]] || die "Failed to delete the previous CTA deployment."
 }
 
+# Print image references and configuration IDs from the selected Kubernetes runtime.
+kubernetes_image_ids() {
+  local -r runtime="$1"
+  shift
+  case "$runtime" in
+    minikube)
+      minikube ssh -- sudo crictl images --output json | jq -r '
+        .images[] | .id as $id | .repoTags[]? | "\(.) \($id | ltrimstr("sha256:"))"'
+      ;;
+    k3s)
+      # List once, then read only the requested manifests using the permitted ctr commands.
+      local images image_ref _media_type digest _remaining_fields image_id
+      images=$(sudo /usr/local/bin/k3s ctr images list) || return 1
+      while read -r image_ref _media_type digest _remaining_fields; do
+        [[ " $* " == *" $image_ref "* ]] || continue
+        image_id=$(sudo /usr/local/bin/k3s ctr content get "$digest" | jq -er '.config.digest // empty') \
+          || continue
+        printf '%s %s\n' "$image_ref" "${image_id#sha256:}"
+      done <<<"$images"
+      ;;
+  esac
+}
+
+# Import local CTA images that are changed or missing in each installed runtime.
 load_cta_images_into_kubernetes() {
   [[ $cta_image_registry == "$local_image_registry" ]] || return 0
 
   local targets=(cta-taped cta-maintd cta-rmcd cta-frontend cta-tools)
   [[ $enable_debug_image == true ]] && targets+=(cta-debug)
 
-  local image_refs=()
-  local target
+  local runtime target image_ref local_images loaded_images local_id i
+  local image_refs=() local_ids=() images_to_load=()
   for target in "${targets[@]}"; do
-    image_refs+=("cta/ctageneric/${target}:${cta_image_tag}")
+    image_refs+=("${local_image_registry}/cta/ctageneric/${target}:${cta_image_tag}")
   done
 
-  # Save all images together so their shared layers occur only once in the archive.
-  if command -v minikube >/dev/null 2>&1; then
-    log_task "Loading container images into minikube..."
-    podman save --multi-image-archive "${image_refs[@]}" | minikube image load --overwrite -
-  fi
+  # Inspect all local images once, even when loading into both runtimes.
+  local_images=$(podman image inspect --format '{{.Id}}' "${image_refs[@]}") \
+    || die "Could not inspect local images. Run '${program_name} images' first."
+  mapfile -t local_ids <<<"$local_images"
+  [[ ${#local_ids[@]} -eq ${#image_refs[@]} ]] || die "Could not determine all local image IDs."
 
-  if command -v k3s >/dev/null 2>&1; then
-    log_task "Loading container images into k3s/containerd..."
-    podman save --multi-image-archive "${image_refs[@]}" | sudo /usr/local/bin/k3s ctr images import --local -
-  fi
+  for runtime in minikube k3s; do
+    command -v "$runtime" >/dev/null 2>&1 || continue
+
+    if ! loaded_images=$(kubernetes_image_ids "$runtime" "${image_refs[@]}"); then
+      log_warn "Could not inspect ${runtime} images; loading all requested images."
+      loaded_images=""
+    fi
+
+    images_to_load=()
+    for i in "${!image_refs[@]}"; do
+      image_ref=${image_refs[i]}
+      local_id=${local_ids[i]#sha256:}
+      [[ -n $local_id ]] || die "Local image ${image_ref} has no image ID."
+
+      grep -Fxq -- "$image_ref $local_id" <<<"$loaded_images" || images_to_load+=("$image_ref")
+    done
+
+    if [[ ${#images_to_load[@]} -eq 0 ]]; then
+      log_task "CTA images are unchanged in ${runtime}. Skipping image loading."
+      continue
+    fi
+
+    # Batch changed images so shared layers occur only once in the archive.
+    log_task "Loading ${#images_to_load[@]} changed or missing container images into ${runtime}..."
+    case "$runtime" in
+      minikube)
+        podman save --multi-image-archive "${images_to_load[@]}" | minikube image load --overwrite - || return $?
+        ;;
+      k3s)
+        podman save --multi-image-archive "${images_to_load[@]}" | sudo /usr/local/bin/k3s ctr images import --local - || return $?
+        ;;
+    esac
+  done
 }
 
+# Load images and recreate the CTA development instance with the selected configuration.
 deploy_cta() {
   validate_deployment_environment
 
@@ -1165,6 +1250,7 @@ deploy_cta() {
     "${extra_spawn_options[@]}"
 }
 
+# Select and run a system test in the installed Python environment.
 test_cta() {
   [[ -x "$venv_dir/bin/python" && -x "$venv_dir/bin/pytest" ]] || \
     die "CTA system-test environment is missing. Run '$(basename "$0") install' first."
@@ -1204,6 +1290,7 @@ test_cta() {
   deactivate
 }
 
+# Run a workflow stage and record its elapsed time.
 run_timed_stage() {
   local -r stage_name="$1"
   local -r stage_function="$2"
@@ -1215,6 +1302,7 @@ run_timed_stage() {
   stage_durations+=("$((SECONDS - start_time))")
 }
 
+# Print recorded stage durations and their total.
 print_stage_summary() {
   echo
   echo "$program_name stage durations:"
@@ -1227,6 +1315,7 @@ print_stage_summary() {
   printf "  %-7s %d seconds\n" "Total:" "$total_duration"
 }
 
+# Build packages and images, then deploy CTA and report stage timings.
 up_cta() {
   start_namespace_deletion
   run_timed_stage "Build" build_cta
@@ -1235,6 +1324,7 @@ up_cta() {
   print_stage_summary
 }
 
+# Build and deploy CTA with debug symbols and print debugger attachment instructions.
 debug_cta() {
   skip_debug_packages=false
   enable_debug_image=true
@@ -1270,6 +1360,7 @@ Example: gdb /usr/bin/<executable> /var/log/tmp/<core-file>
 EOF
 }
 
+# Build, deploy, and run system tests, then report stage timings.
 all_cta() {
   start_namespace_deletion
   run_timed_stage "Build" build_cta
@@ -1279,6 +1370,7 @@ all_cta() {
   print_stage_summary
 }
 
+# Install the command, Bash completion, test environment, and optional merge driver.
 install_cta_dev() {
   local -r bin_dir="$HOME/.local/bin"
   local -r link_path="$bin_dir/$program_name"
@@ -1334,6 +1426,7 @@ install_cta_dev() {
 #  Main
 # =========================================================================
 
+# Load configuration, validate arguments and prerequisites, and dispatch the requested command.
 main() {
   if [[ $# -eq 0 ]]; then
     usage
