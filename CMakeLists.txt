@@ -33,6 +33,7 @@ set(CTA_PACKAGE_MODE "binary" CACHE STRING
 set_property(CACHE CTA_PACKAGE_MODE PROPERTY STRINGS none source binary)
 option(CTA_RUN_UNIT_TESTS "Run unit tests while building packages" ON)
 option(CTA_BUILD_DEBUG_PACKAGES "Build native debug packages" ON)
+option(CTA_BUILD_TEST_PACKAGES "Package compiled CTA tests" ON)
 
 set(BUILD_CMDLINE_ONLY FALSE)
 
@@ -71,6 +72,12 @@ if(CTA_RUN_UNIT_TESTS)
   set(PACKAGE_RUN_UNIT_TESTS 1)
 else()
   set(PACKAGE_RUN_UNIT_TESTS 0)
+endif()
+
+if(CTA_BUILD_TEST_PACKAGES)
+  set(PACKAGE_BUILD_TEST_PACKAGES 1)
+else()
+  set(PACKAGE_BUILD_TEST_PACKAGES 0)
 endif()
 
 if(CTA_BUILD_DEBUG_PACKAGES)

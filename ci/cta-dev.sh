@@ -260,6 +260,7 @@ Build CTA packages inside a persistent build container.
 
 The build container is reused across invocations to speed up incremental
 development. Use --reset to recreate it from scratch.
+Tests are compiled but not packaged; the debug workflow also packages tests.
 
 Usage:
   $(basename "$0") build [options]
@@ -273,7 +274,7 @@ Options:
       --cmake-build-type <type>     Release, Debug, RelWithDebInfo,
                                     or MinSizeRel.
       --disable-ccache              Disable ccache.
-      --enable-unit-tests           Run unit tests after building.
+      --enable-unit-tests           Run compiled unit tests without packaging them.
       --enable-address-sanitizer    Enable AddressSanitizer.
       --force-install               Force source package installation.
 
@@ -773,6 +774,7 @@ create_build_configuration() {
     --arg buildGenerator "$build_generator" \
     --arg cmakeBuildType "$cmake_build_type" \
     --argjson enableCcache "$enable_ccache" \
+    --argjson buildTestPackages "$enable_debug_image" \
     --argjson skipDebugPackages "$skip_debug_packages" \
     --argjson skipUnitTests "$skip_unit_tests" \
     --argjson enableAddressSanitizer "$enable_address_sanitizer" \
@@ -784,7 +786,7 @@ create_build_configuration() {
     --argjson internalRepos "$enable_internal_repos" \
     '{platform: $platform, schedulerType: $schedulerType, oracleSupport: $oracleSupport,
       buildGenerator: $buildGenerator, cmakeBuildType: $cmakeBuildType,
-      enableCcache: $enableCcache, buildDebugPackages: ($skipDebugPackages | not),
+      enableCcache: $enableCcache, buildTestPackages: $buildTestPackages, buildDebugPackages: ($skipDebugPackages | not),
       runUnitTests: ($skipUnitTests | not), enableAddressSanitizer: $enableAddressSanitizer,
       extraTelemetry: $extraTelemetry, ctaVersion: $ctaVersion, ctaVersionSuffix: $ctaVersionSuffix,
       xrootdSsiVersion: $xrootdSsiVersion, jobs: $jobs, internalRepos: $internalRepos}'
@@ -897,6 +899,7 @@ build_cta() {
           ;;
         cmakeBuildType) log_warn "CMake build type changed: ${old_value} -> ${new_value}" ;;
         enableCcache) log_warn "Ccache setting changed: ${old_value} -> ${new_value}" ;;
+        buildTestPackages) log_warn "Test package setting changed: ${old_value} -> ${new_value}" ;;
         buildDebugPackages) log_warn "Debug package setting changed: ${old_value} -> ${new_value}" ;;
         runUnitTests) log_warn "Unit test setting changed: ${old_value} -> ${new_value}" ;;
         enableAddressSanitizer) log_warn "AddressSanitizer setting changed: ${old_value} -> ${new_value}" ;;
@@ -911,7 +914,7 @@ build_cta() {
       esac
     done < <(jq -r --argjson desired "$build_configuration_json" '
       ["schedulerType", "oracleSupport", "buildGenerator", "platform", "cmakeBuildType",
-       "enableCcache", "buildDebugPackages", "runUnitTests", "enableAddressSanitizer",
+       "enableCcache", "buildTestPackages", "buildDebugPackages", "runUnitTests", "enableAddressSanitizer",
        "ctaVersion", "ctaVersionSuffix", "xrootdSsiVersion", "jobs", "internalRepos"][] as $field
       | select(.[$field] != $desired[$field])
       | [$field, (.[$field] | tostring), ($desired[$field] | tostring)]
@@ -1024,6 +1027,7 @@ build_cta() {
       --source-package-dir "${mount_basedir}/build/${platform}/${source_package_directory}"
     )
   fi
+  [[ $enable_debug_image == false ]] && build_package_flags+=(--skip-test-packages)
   [[ $skip_unit_tests == true ]] && build_package_flags+=(--skip-unit-tests)
   [[ $skip_debug_packages == true ]] && build_package_flags+=(--skip-debug-packages)
   [[ $enable_ccache == true ]] && build_package_flags+=(--enable-ccache)
