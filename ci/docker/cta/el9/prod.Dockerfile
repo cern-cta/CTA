@@ -10,9 +10,6 @@
 # - package_context is an external BuildKit build context supplied by the build command
 # - Containers log to stdout by default. The CI deployment overrides this command to exercise file logging and mirrors that file to stdout
 
-# Identify working containers for cancellation cleanup without invalidating stage caches.
-ARG CTA_BUILD_INVOCATION
-
 # =========================================================================
 # CERN CA CERTIFICATES
 # =========================================================================

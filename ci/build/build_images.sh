@@ -79,13 +79,21 @@ if [[ -z "${package_src}" ]]; then
   die_usage "Missing mandatory argument -s | --package-src"
 fi
 
-# A global build argument identifies working containers without changing layer cache keys.
-build_invocation="cta-images-$$-$(date +%s%N)"
-build_container_store=$(podman info --format '{{.Store.GraphRoot}}/{{.Store.GraphDriverName}}-containers')
+list_build_containers() {
+  podman ps --all --external --format json \
+    | jq -r '.[] | select(.State == "storage" and .Command == ["buildah"]) | .Id'
+}
+
+# Preserve existing working containers. Unrelated builds must not run concurrently under this user.
+initial_build_containers=$(list_build_containers)
+declare -A existing_build_containers=()
+while IFS= read -r container_id; do
+  [[ -z "$container_id" ]] || existing_build_containers["$container_id"]=1
+done <<< "$initial_build_containers"
 
 # Use registries.conf to configure proxy for image pulling.
 build_command=(setsid env REGISTRIES_CONFIG_PATH="${project_root}/ci/docker/registries.conf"
-  podman build --build-arg "CTA_BUILD_INVOCATION=${build_invocation}")
+  podman build)
 
 cd "$(dirname ${dockerfile_path})"
 dockerfile="$(basename ${dockerfile_path})"
@@ -122,19 +130,22 @@ done
 declare -A active_build_pids=()
 
 # Podman can exit on a signal before Buildah's deferred cleanup runs.
-# Inspect only Buildah metadata and remove containers with this invocation's exact marker.
+# Remove only working containers that appeared since the initial snapshot.
 remove_build_containers() {
-  local metadata container_id
+  local current_build_containers container_id
   local container_ids=()
 
-  for metadata in "$build_container_store"/*/userdata/buildah.json; do
-    [[ -f "$metadata" ]] || continue
-    if container_id=$(jq -er --arg invocation "$build_invocation" '
-      select(.Args.CTA_BUILD_INVOCATION == $invocation)
-      | .["container-id"] | select(test("^[a-f0-9]{64}$"))' "$metadata"); then
+  if ! current_build_containers=$(list_build_containers); then
+    log_warn "Could not list leftover working containers for this image build."
+    return
+  fi
+
+  while IFS= read -r container_id; do
+    [[ -n "$container_id" ]] || continue
+    if [[ -z "${existing_build_containers[$container_id]:-}" ]]; then
       container_ids+=("$container_id")
     fi
-  done
+  done <<< "$current_build_containers"
 
   if (( ${#container_ids[@]} )); then
     log_task "Removing ${#container_ids[@]} leftover working containers from this build..."
