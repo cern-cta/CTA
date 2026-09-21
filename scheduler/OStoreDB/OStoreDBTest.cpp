@@ -169,6 +169,68 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
   ASSERT_EQ(false, osdbi.getBackend().exists(aqAddr));
 }
 
+TEST_P(OStoreDBTest, setJobBatchTransferredWithMissingArchiveRequests) {
+  cta::log::StringLogger logger("dummy", "OStoreAbstractTest", cta::log::DEBUG);
+  cta::log::LogContext lc(logger);
+  auto& osdbi = getDb();
+
+  // Queue three archive requests to exercise consecutive failures
+  for (uint64_t fileId = 1; fileId <= 3; ++fileId) {
+    cta::common::dataStructures::ArchiveRequest request;
+    request.fileSize = 123;
+    cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId criteria;
+    criteria.copyToPoolMap[1] = "Tapepool1";
+    criteria.fileId = fileId;
+    criteria.mountPolicy.name = "policy";
+    criteria.mountPolicy.archivePriority = 1;
+    osdbi.queueArchive("testInstance", request, criteria, lc);
+  }
+  osdbi.waitSubthreadsComplete();
+
+  // Save the request addresses before acquiring the jobs empties the queue
+  std::list<std::string> requestAddresses;
+  {
+    cta::objectstore::RootEntry root(osdbi.getBackend());
+    cta::objectstore::ScopedSharedLock rootLock(root);
+    root.fetch();
+    const auto queueAddress =
+      root.getArchiveQueueAddress("Tapepool1", cta::common::dataStructures::JobQueueType::JobsToTransferForUser);
+    rootLock.release();
+    cta::objectstore::ArchiveQueue queue(queueAddress, osdbi.getBackend());
+    cta::objectstore::ScopedSharedLock queueLock(queue);
+    queue.fetch();
+    for (const auto& job : queue.dumpJobs()) {
+      requestAddresses.push_back(job.address);
+    }
+  }
+
+  // Acquire the full batch through an archive mount
+  auto mountInfo = osdbi.getMountInfo(lc);
+  cta::catalogue::TapeForWriting tape;
+  tape.capacityInBytes = 1;
+  tape.dataOnTapeInBytes = 0;
+  tape.lastFSeq = 1;
+  tape.tapePool = "Tapepool1";
+  tape.vid = "tape";
+  ASSERT_EQ(1, mountInfo->potentialMounts.size());
+  auto mount = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tape, "drive", "library", "host");
+  const auto giveAll = std::numeric_limits<uint64_t>::max();
+  auto jobs = mount->getNextJobBatch(giveAll, giveAll, lc);
+  ASSERT_EQ(3, jobs.size());
+
+  // Remove the requests after the jobs have been acquired, including the final job in the batch
+  for (const auto& address : requestAddresses) {
+    osdbi.getBackend().remove(address);
+  }
+  logger.clearLog();
+  ASSERT_NO_THROW(mount->setJobBatchTransferred(jobs, lc));
+  EXPECT_TRUE(jobs.empty());
+  // Each warning must identify the failed job, including the final one
+  for (uint64_t fileId = 1; fileId <= 3; ++fileId) {
+    EXPECT_NE(std::string::npos, logger.getLog().find("fileId=\"" + std::to_string(fileId) + "\""));
+  }
+}
+
 TEST_P(OStoreDBTest, MemQueuesSharedAddToArchiveQueue) {
   using cta::objectstore::ArchiveQueue;
   using cta::objectstore::ArchiveRequest;

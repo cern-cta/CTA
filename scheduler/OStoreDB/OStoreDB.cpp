@@ -4228,15 +4228,15 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(
       castFromSchedDBJob(jobsBatchItor->get())->asyncSucceedTransfer();
       jobsBatchItor++;
     } catch (cta::exception::NoSuchObject& ex) {
-      jobsBatch.erase(jobsBatchItor++);
       log::ScopedParamContainer(lc)
         .add("tapeVid", (*jobsBatchItor)->tapeFile.vid)
         .add("fileId", (*jobsBatchItor)->archiveFile.archiveFileID)
         .add("requestObject", castFromSchedDBJob(jobsBatchItor->get())->m_archiveRequest.getAddressIfSet())
         .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::WARNING,
-             "In OStoreDB::RetrieveMount::setJobBatchTransferred(): async succeed transfer failed, "
+             "In OStoreDB::ArchiveMount::setJobBatchTransferred(): async succeed transfer failed, "
              "job does not exist in the objectstore.");
+      jobsBatchItor = jobsBatch.erase(jobsBatchItor);
     }
   }
 
@@ -4263,13 +4263,13 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(
       }
       jobsBatchItor++;
     } catch (cta::exception::NoSuchObject& ex) {
-      jobsBatch.erase(jobsBatchItor++);
       log::ScopedParamContainer(lc)
         .add("fileId", (*jobsBatchItor)->archiveFile.archiveFileID)
         .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::WARNING,
-             "In OStoreDB::RetrieveMount::setJobBatchTransferred(): wait async succeed transfer failed, "
+             "In OStoreDB::ArchiveMount::setJobBatchTransferred(): wait async succeed transfer failed, "
              "job does not exist in the objectstore.");
+      jobsBatchItor = jobsBatch.erase(jobsBatchItor);
     }
   }
   timingList.insertAndReset("asyncSucceedCompletionTime", t);

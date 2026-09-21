@@ -158,7 +158,11 @@ public:
     return *this;
   }
 
-  void log(int iPriority, std::string_view strvMsg) noexcept { m_context.log(iPriority, strvMsg); }
+  void log(int iPriority,
+           std::string_view strvMsg,
+           const std::source_location location = std::source_location::current()) noexcept {
+    m_context.log(iPriority, strvMsg, location);
+  }
 
 private:
   LogContext& m_context;
