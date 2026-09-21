@@ -107,7 +107,7 @@ if [[ "$enable_debug_image" == "true" ]]; then
 fi
 
 declare -A previous_image_ids=()
-for target in "${targets[@]}"; do
+for target in "${targets[@]}" cta-build-base-cache; do
   previous_image_ids["$target"]="$(podman image inspect \
     --format '{{.Id}}' "cta/ctageneric/${target}:${image_tag}" 2>/dev/null || true)"
 done
@@ -169,25 +169,38 @@ for target in "${targets[@]}"; do
 done
 
 status=0
-for pid in "${pids[@]}"; do
-  wait "$pid" || status=1
+successful_targets=()
+for i in "${!pids[@]}"; do
+  if wait "${pids[$i]}"; then
+    successful_targets+=("${targets[$i]}")
+  else
+    status=1
+  fi
+done
+
+# Clean up the old base last, after removing superseded service images that may depend on it.
+successful_targets+=(cta-build-base-cache)
+
+log_task "Cleaning up superseded CTA images..."
+for target in "${successful_targets[@]}"; do
+  previous_image_id="${previous_image_ids[$target]}"
+  [[ -z "$previous_image_id" ]] && continue
+  if ! new_image_id="$(podman image inspect \
+    --format '{{.Id}}' "cta/ctageneric/${target}:${image_tag}" 2>&1)"; then
+    log_warn "Could not inspect rebuilt ${target}; skipping cleanup: ${new_image_id}"
+    continue
+  fi
+  if [[ -n "$new_image_id" && "$previous_image_id" != "$new_image_id" ]]; then
+    if ! removal_output=$(podman image rm "$previous_image_id" 2>&1); then
+      log_warn "Could not remove superseded ${target} image ${previous_image_id}: ${removal_output}"
+    fi
+  fi
 done
 
 if [[ $status == 1 ]]; then
   log_error "Failed to build one or more container images."
   exit "$status"
 fi
-
-log_task "Cleaning up superseded CTA images..."
-for target in "${targets[@]}"; do
-  previous_image_id="${previous_image_ids[$target]}"
-  [[ -z "$previous_image_id" ]] && continue
-  new_image_id="$(podman image inspect \
-    --format '{{.Id}}' "cta/ctageneric/${target}:${image_tag}" 2>/dev/null || true)"
-  if [[ -n "$new_image_id" && "$previous_image_id" != "$new_image_id" ]]; then
-    podman image rm "$previous_image_id" >/dev/null 2>&1 || true
-  fi
-done
 
 echo
 echo "Built images:"
