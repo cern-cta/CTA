@@ -186,14 +186,11 @@ for target in "${successful_targets[@]}"; do
   previous_image_id="${previous_image_ids[$target]}"
   [[ -z "$previous_image_id" ]] && continue
   if ! new_image_id="$(podman image inspect \
-    --format '{{.Id}}' "cta/ctageneric/${target}:${image_tag}" 2>&1)"; then
-    log_warn "Could not inspect rebuilt ${target}; skipping cleanup: ${new_image_id}"
+    --format '{{.Id}}' "cta/ctageneric/${target}:${image_tag}" 2>/dev/null)"; then
     continue
   fi
   if [[ -n "$new_image_id" && "$previous_image_id" != "$new_image_id" ]]; then
-    if ! removal_output=$(podman image rm "$previous_image_id" 2>&1); then
-      log_warn "Could not remove superseded ${target} image ${previous_image_id}: ${removal_output}"
-    fi
+    podman image rm "$previous_image_id" >/dev/null 2>&1 || true
   fi
 done
 
