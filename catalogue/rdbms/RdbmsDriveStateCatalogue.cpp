@@ -762,7 +762,7 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatistics(
   }
 }
 
-void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDrive& tapeDrive) {
+bool RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDrive& tapeDrive) {
   const std::string driveStatusStr = common::dataStructures::TapeDrive::stateToString(tapeDrive.driveStatus);
 
   // Case 1 : Drive status stays the same
@@ -807,7 +807,7 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
 
   // If the update succeeded, we are done. Otherwise proceed to Case 2.
   if (stmt.getNbAffectedRows() > 0) {
-    return;
+    return false;
   }
 
   // Case 2 : Drive status is changing
@@ -971,6 +971,7 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
     throw exception::UserError(std::string("Cannot update status for drive ") + tapeDrive.driveName
                                + ". Drive not found.");
   }
+  return true;
 }
 
 //------------------------------------------------------------------------------

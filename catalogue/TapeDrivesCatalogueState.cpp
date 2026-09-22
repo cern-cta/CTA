@@ -13,6 +13,7 @@
 #include "common/dataStructures/TapeDriveStatistics.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
+#include "telemetry/metrics/DriveStatus.hpp"
 #include "version.hpp"
 
 #include <algorithm>
@@ -28,6 +29,7 @@ void TapeDrivesCatalogueState::createTapeDriveStatus(const common::dataStructure
                                                      const common::dataStructures::DriveStatus& status,
                                                      const common::dataStructures::SecurityIdentity& identity,
                                                      log::LogContext& lc) const {
+  telemetry::metrics::setDriveStatus(status);
   auto tapeDriveStatus = setTapeDriveStatus(driveInfo, desiredState, type, status, identity);
   auto driveNames = m_catalogue.DriveState()->getTapeDriveNames();
   if (auto it = std::find(driveNames.begin(), driveNames.end(), tapeDriveStatus.driveName); it != driveNames.end()) {
@@ -41,21 +43,15 @@ void TapeDrivesCatalogueState::createTapeDriveStatus(const common::dataStructure
 }
 
 void TapeDrivesCatalogueState::checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo& driveInfo) const {
-  const auto driveNames = m_catalogue.DriveState()->getTapeDriveNames();
-  try {
-    const auto tapeDrive = m_catalogue.DriveState()->getTapeDrive(driveInfo.driveName);
-    if (!tapeDrive) {
-      return;  // tape drive does not exist
-    }
-    if (tapeDrive.value().logicalLibrary != driveInfo.logicalLibrary || tapeDrive.value().host != driveInfo.host) {
-      throw DriveAlreadyExistsException(
-        std::string("The drive name=") + driveInfo.driveName + " logicalLibrary=" + driveInfo.logicalLibrary
-        + " host=" + driveInfo.host + " cannot be created because a drive with a same name with logicalLibrary="
-        + tapeDrive.value().logicalLibrary + " host=" + tapeDrive.value().host + " already exists.");
-    }
-  } catch (cta::exception::Exception&) {
-    // Drive does not exist
-    // We can create it, do nothing then
+  const auto tapeDrive = m_catalogue.DriveState()->getTapeDrive(driveInfo.driveName);
+  if (!tapeDrive) {
+    return;
+  }
+  if (tapeDrive.value().logicalLibrary != driveInfo.logicalLibrary || tapeDrive.value().host != driveInfo.host) {
+    throw DriveAlreadyExistsException(
+      std::string("The drive name=") + driveInfo.driveName + " logicalLibrary=" + driveInfo.logicalLibrary
+      + " host=" + driveInfo.host + " cannot be created because a drive with a same name with logicalLibrary="
+      + tapeDrive.value().logicalLibrary + " host=" + tapeDrive.value().host + " already exists.");
   }
 }
 
@@ -133,6 +129,8 @@ void TapeDrivesCatalogueState::reportDriveStatus(const common::dataStructures::D
 void TapeDrivesCatalogueState::updateDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
                                                  const ReportDriveStatusInputs& inputs,
                                                  log::LogContext& lc) const {
+  // Publish local intent with a lock-free store; metric collection/export happens elsewhere.
+  telemetry::metrics::setDriveStatus(inputs.status);
   common::dataStructures::TapeDrive driveState;
   // Set the parameters that we always set
   driveState.driveName = driveInfo.driveName;
@@ -180,12 +178,13 @@ void TapeDrivesCatalogueState::updateDriveStatus(const common::dataStructures::D
 
   driveState.currentPriority = driveState.mountType == common::dataStructures::MountType::NoMount ? 0 : inputs.priority;
 
-  log::ScopedParamContainer params(lc);
-  params.add("next_status", common::dataStructures::TapeDrive::stateToString(inputs.status));
-  driveState.convertToLogParams(params, "update_");
-  lc.log(log::INFO, "In TapeDrivesCatalogueState::updateDriveStatus(): Updating drive status.");
-
-  m_catalogue.DriveState()->updateTapeDriveStatus(driveState);
+  const bool statusChanged = m_catalogue.DriveState()->updateTapeDriveStatus(driveState);
+  if (statusChanged) {
+    log::ScopedParamContainer params(lc);
+    params.add("drive_name", driveInfo.driveName)
+      .add("new_status", common::dataStructures::TapeDrive::stateToString(driveState.driveStatus));
+    lc.log(log::INFO, "Drive status updated.");
+  }
 }
 
 void TapeDrivesCatalogueState::setDriveDown(common::dataStructures::TapeDrive& driveState,
