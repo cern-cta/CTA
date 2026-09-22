@@ -27,7 +27,7 @@ FROM docker.io/almalinux/9-minimal:latest AS repo-builder
 RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
     --mount=type=cache,target=/var/cache/yum,sharing=locked \
     # Add some basic flags to all (micro)dnf commands to improve speed
-    printf '%s\n' '[main]' 'tsflags=nodocs' 'install_weak_deps=False' > /etc/dnf/dnf.conf && \
+    printf '%s\n' '[main]' 'keepcache=True' 'tsflags=nodocs' 'install_weak_deps=False' > /etc/dnf/dnf.conf && \
     microdnf install -y createrepo_c
 
 # hadolint ignore=DL3022
@@ -52,10 +52,10 @@ COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
 # The upstream AlmaLinux image does not include the CERN root CAs so we copy them here explicitly
 COPY --from=cern-ca /etc/ssl/certs/CERN-bundle.pem /etc/pki/ca-trust/source/anchors/CERN-bundle.pem
 
-# Core dependencies
-# hadolint ignore=DL3041
-RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
-    --mount=type=cache,target=/var/cache/dnf,sharing=locked \
+# Core dependencies are independent of the changing CTA RPM repository.
+# Downloaded packages stay in cache mounts, outside the image layers.
+# hadolint ignore=DL3040,DL3041
+RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
     --mount=type=cache,target=/var/cache/yum,sharing=locked \
     # Ensure consistent user ID for CTA services
     # cta-runtime adds this user already, but it gives no guarantees on its ID.
@@ -67,24 +67,28 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     touch /etc/yum/pluginconf.d/versionlock.list && \
     # Ensure we can execute the script that installs packages
     chmod +x /usr/local/bin/build-service.sh && \
-    # Create a .repo file pointing to the RPM repo we created in rep-builder
-    printf '%s\n' '[cta]' 'name=Repo containing CTA RPMS' 'baseurl=file:///mnt/rpms' 'gpgcheck=0' 'enabled=1' 'priority=2' > /etc/yum.repos.d/cta.repo && \
     # Add some basic flags to all (micro)dnf commands to improve speed and reduce image size
-    printf '%s\n' '[main]' 'tsflags=nodocs' 'install_weak_deps=False' > /etc/dnf/dnf.conf && \
+    printf '%s\n' '[main]' 'keepcache=True' 'tsflags=nodocs' 'install_weak_deps=False' > /etc/dnf/dnf.conf && \
     # Add the CERN root CAs to the system trust store before accessing package repositories
     update-ca-trust && \
     # Some basic utils (tar for kubectl cp, jq for many of the tests and convenience, procps-ng for some other utilities used in tests)
     # Requiring sudo is not ideal, but we need an update of the tests to be able to do without it.
     # Anyway, by setting allowPrivilegeEscalation: false in Kubernetes, sudo is unusable anyway
     microdnf install -y tar jq sudo procps-ng && \
+    # Configure CTA after OS installation; always refresh metadata for rebuilt same-version RPMs.
+    printf '%s\n' '[cta]' 'name=Repo containing CTA RPMS' 'baseurl=file:///mnt/rpms' 'metadata_expire=0' 'gpgcheck=0' 'enabled=1' 'priority=2' > /etc/yum.repos.d/cta.repo && \
     echo 'cta ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/cta && \
     chmod 0440 /etc/sudoers.d/cta && \
     # For runtime state configured with --runtime-dir
     install -d -o cta -g tape -m 0750 /run/cta && \
-    # Cleanup
-    rm -rf /var/lib/dnf/history.* && \
     # Prevent parallel service builds from sharing the base image's RPM lock
     rm -f "$(rpm --eval '%{_dbpath}')/.rpm.lock"
+
+# Bind-mounted RPM changes do not reliably invalidate Podman RUN caches.
+# Copy their checksums after OS installation to preserve that layer across RPM rebuilds.
+
+# hadolint ignore=DL3022
+COPY --from=repo-builder /rpms/.rpm-hash /tmp/cta-rpm-hash
 
 # =========================================================================
 #  SERVICE cta-taped
@@ -170,12 +174,13 @@ ARG ENABLE_ORACLE_SUPPORT
 # - eos-client: for now necessary as the system tests still assume the CTA and EOS rpms in one pod.
 #   Once this assumption is removed from the system tests, we can migrate the client pod to use the
 #   official EOS image and we don't need it here anymore
+# Keep EPEL configured after cleanup so client tests can install their GFAL dependencies.
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools \
     /usr/local/bin/build-service.sh "cta-admin cta-catalogue-utils cta-scheduler-utils \
       krb5-workstation cta-test-immutable-file eos-client xrootd-client \
-      python3-xrootd bc"
+      python3-xrootd epel-release bc"
 
 ENTRYPOINT ["/bin/bash"]
 

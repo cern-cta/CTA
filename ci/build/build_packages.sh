@@ -39,6 +39,7 @@ usage() {
   echo "      --enable-ccache                     Enable ccache."
   echo "      --enable-address-sanitizer          Enable AddressSanitizer."
   echo "      --skip-debug-packages               Do not build native debug packages."
+  echo "      --skip-test-packages                Compile tests but do not package them."
   echo "      --skip-unit-tests                   Do not run unit tests while building packages."
   echo "      --skip-cmake                        Skip configuration for a standalone binary build."
   echo
@@ -81,6 +82,7 @@ skip_dependency_install=false
 use_internal_repos=false
 enable_ccache=false
 enable_address_sanitizer=false
+skip_test_packages=false
 skip_debug_packages=false
 skip_unit_tests=false
 skip_cmake=false
@@ -121,6 +123,7 @@ while [[ $# -gt 0 ]]; do
     --enable-internal-repos) use_internal_repos=true; shift ;;
     --enable-ccache) enable_ccache=true; shift ;;
     --enable-address-sanitizer) enable_address_sanitizer=true; shift ;;
+    --skip-test-packages) skip_test_packages=true; shift ;;
     --skip-debug-packages) skip_debug_packages=true; shift ;;
     --skip-unit-tests) skip_unit_tests=true; shift ;;
     --skip-cmake) skip_cmake=true; shift ;;
@@ -214,6 +217,8 @@ cmake_bool() {
 
 configure_build() {
   local package_mode="$1"
+  local build_test_packages=true
+  [[ "$skip_test_packages" == true ]] && build_test_packages=false
   local build_debug_packages=true
   local run_unit_tests=true
   [[ "$skip_debug_packages" == true ]] && build_debug_packages=false
@@ -221,6 +226,9 @@ configure_build() {
 
   local cmake_options=(
     -D "CTA_PACKAGE_MODE:STRING=${package_mode}"
+    -D "CTA_BUILD_TEST_PACKAGES:BOOL=$(cmake_bool "$build_test_packages")"
+    -D "CTA_BUILD_DEBUG_PACKAGES:BOOL=$(cmake_bool "$build_debug_packages")"
+    -D "CTA_RUN_UNIT_TESTS:BOOL=$(cmake_bool "$run_unit_tests")"
     -D "CTA_VERSION:STRING=${cta_version}"
     -D "VCS_VERSION=${cta_version_suffix}"
     -D "CMAKE_BUILD_TYPE=${cmake_build_type}"
@@ -235,8 +243,6 @@ configure_build() {
 
   if [[ "$package_mode" == "binary" ]]; then
     cmake_options+=(
-      -D "CTA_BUILD_DEBUG_PACKAGES:BOOL=$(cmake_bool "$build_debug_packages")"
-      -D "CTA_RUN_UNIT_TESTS:BOOL=$(cmake_bool "$run_unit_tests")"
       -D "CTA_SHOW_CONFIGURATION_SUMMARY:BOOL=OFF"
       -D "ENABLE_CCACHE:BOOL=$(cmake_bool "$enable_ccache")"
       -D "ENABLE_ADDRESS_SANITIZER:BOOL=$(cmake_bool "$enable_address_sanitizer")"

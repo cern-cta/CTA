@@ -79,8 +79,21 @@ if [[ -z "${package_src}" ]]; then
   die_usage "Missing mandatory argument -s | --package-src"
 fi
 
+list_build_containers() {
+  podman ps --all --external --format json \
+    | jq -r '.[] | select(.State == "storage" and .Command == ["buildah"]) | .Id'
+}
+
+# Preserve existing working containers. Unrelated builds must not run concurrently under this user.
+initial_build_containers=$(list_build_containers)
+declare -A existing_build_containers=()
+while IFS= read -r container_id; do
+  [[ -z "$container_id" ]] || existing_build_containers["$container_id"]=1
+done <<< "$initial_build_containers"
+
 # Use registries.conf to configure proxy for image pulling.
-build_command=(env REGISTRIES_CONFIG_PATH="${project_root}/ci/docker/registries.conf" podman build)
+build_command=(setsid env REGISTRIES_CONFIG_PATH="${project_root}/ci/docker/registries.conf"
+  podman build)
 
 cd "$(dirname ${dockerfile_path})"
 dockerfile="$(basename ${dockerfile_path})"
@@ -107,10 +120,67 @@ if [[ "$enable_debug_image" == "true" ]]; then
 fi
 
 declare -A previous_image_ids=()
-for target in "${targets[@]}"; do
+for target in "${targets[@]}" cta-build-base-cache; do
   previous_image_ids["$target"]="$(podman image inspect \
     --format '{{.Id}}' "cta/ctageneric/${target}:${image_tag}" 2>/dev/null || true)"
 done
+
+declare -A active_build_pids=()
+
+# This and the cancel_builds method ensure we don't leave a lot of garbage behind when
+# someone interrupts the image build
+remove_build_containers() {
+  local current_build_containers container_id
+  local container_ids=()
+
+  if ! current_build_containers=$(list_build_containers); then
+    log_warn "Could not list leftover working containers for this image build."
+    return
+  fi
+
+  while IFS= read -r container_id; do
+    [[ -n "$container_id" ]] || continue
+    if [[ -z "${existing_build_containers[$container_id]:-}" ]]; then
+      container_ids+=("$container_id")
+    fi
+  done <<< "$current_build_containers"
+
+  if (( ${#container_ids[@]} )); then
+    log_task "Removing ${#container_ids[@]} leftover working containers from this build..."
+    podman rm --force --ignore "${container_ids[@]}" >/dev/null \
+      || log_warn "Could not remove all working containers for this image build."
+  fi
+}
+
+cancel_builds() {
+  local exit_status="$1"
+  local pid
+
+  trap '' INT TERM
+  trap - EXIT
+  if (( ${#active_build_pids[@]} )); then
+    log_warn "Stopping image builds and waiting for Podman cleanup..."
+    for pid in "${!active_build_pids[@]}"; do
+      kill -TERM "$pid" 2>/dev/null || true
+    done
+    for pid in "${!active_build_pids[@]}"; do
+      wait "$pid" || true
+    done
+  fi
+  remove_build_containers
+  exit "$exit_status"
+}
+
+wait_build() {
+  local status=0
+  wait "$1" || status=$?
+  unset "active_build_pids[$1]"
+  return "$status"
+}
+
+trap 'cancel_builds 130' INT
+trap 'cancel_builds 143' TERM
+trap 'cancel_builds "$?"' EXIT
 
 BUILD_ID=$(date +%Y%m%d-%H%M%S)
 SECONDS=0
@@ -120,37 +190,41 @@ build_target() {
   local color="$2"
   local image_ref="cta/ctageneric/${target}:${image_tag}"
 
-  (
-    "${build_command[@]}" . -f "${dockerfile}" \
-      -t "${image_ref}" \
-      --build-context package_context="${package_src}" \
-      --build-arg ENABLE_INTERNAL_REPOS=${enable_internal_repos} \
-      --build-arg ENABLE_ORACLE_SUPPORT=${enable_oracle_support} \
-      --build-arg SUPPRESS_BUILD_SERVICE_STDOUT=true \
-      --network host \
-      --label build.id="$BUILD_ID" \
-      --target "$target"
-  ) 2>&1 | # some magic to get color output
-    awk -v prefix="[$target]:" -v color="$color" '
-      {
-        printf "%s%s\033[0m %s\n", color, prefix, $0
-        fflush()
-      }
-    '
+  "${build_command[@]}" . -f "${dockerfile}" \
+    -t "${image_ref}" \
+    --build-context package_context="${package_src}" \
+    --build-arg ENABLE_INTERNAL_REPOS=${enable_internal_repos} \
+    --build-arg ENABLE_ORACLE_SUPPORT=${enable_oracle_support} \
+    --build-arg SUPPRESS_BUILD_SERVICE_STDOUT=true \
+    --network host \
+    --label build.id="$BUILD_ID" \
+    --target "$target" > >(
+      # Keep draining output while Podman handles cancellation and removes build containers.
+      trap '' INT TERM
+      awk -v prefix="[$target]:" -v color="$color" '
+        {
+          printf "%s%s\033[0m %s\n", color, prefix, $0
+          fflush()
+        }
+      '
+    ) 2>&1 &
+  pids+=("$!")
+  active_build_pids[$!]=1
 }
 
-# Build only the common stages first. Starting every service target at once on a
-# clean cache makes the independent builder processes duplicate repo-builder and
-# base before any of them can reuse the resulting layers.
+# Warm the base and its RPM repository dependency before parallel service builds.
 base_cache_ref="cta/ctageneric/cta-build-base-cache:${image_tag}"
 
 log_task "Building base to populate the shared stage cache..."
-if ! "${build_command[@]}" . -f "${dockerfile}" \
+"${build_command[@]}" . -f "${dockerfile}" \
   -t "${base_cache_ref}" \
   --build-context package_context="${package_src}" \
   --build-arg SUPPRESS_BUILD_SERVICE_STDOUT=true \
   --network host \
-  --target base; then
+  --target base &
+base_pid=$!
+active_build_pids[$base_pid]=1
+if ! wait_build "$base_pid"; then
   log_error "Failed to build the shared base stage."
   exit 1
 fi
@@ -164,30 +238,39 @@ i=0
 for target in "${targets[@]}"; do
   color="${colors[$((i % ${#colors[@]}))]}"
   (( ++i ))
-  build_target "$target" "$color" &
-  pids+=($!)
+  build_target "$target" "$color"
 done
 
 status=0
-for pid in "${pids[@]}"; do
-  wait "$pid" || status=1
+successful_targets=()
+for i in "${!pids[@]}"; do
+  if wait_build "${pids[$i]}"; then
+    successful_targets+=("${targets[$i]}")
+  else
+    status=1
+  fi
+done
+
+# Clean up the base after the superseded service images that may depend on it.
+successful_targets+=(cta-build-base-cache)
+
+log_task "Cleaning up superseded CTA images..."
+for target in "${successful_targets[@]}"; do
+  previous_image_id="${previous_image_ids[$target]}"
+  [[ -z "$previous_image_id" ]] && continue
+  if ! new_image_id="$(podman image inspect \
+    --format '{{.Id}}' "cta/ctageneric/${target}:${image_tag}" 2>/dev/null)"; then
+    continue
+  fi
+  if [[ -n "$new_image_id" && "$previous_image_id" != "$new_image_id" ]]; then
+    podman image rm "$previous_image_id" >/dev/null 2>&1 || true
+  fi
 done
 
 if [[ $status == 1 ]]; then
   log_error "Failed to build one or more container images."
   exit "$status"
 fi
-
-log_task "Cleaning up superseded CTA images..."
-for target in "${targets[@]}"; do
-  previous_image_id="${previous_image_ids[$target]}"
-  [[ -z "$previous_image_id" ]] && continue
-  new_image_id="$(podman image inspect \
-    --format '{{.Id}}' "cta/ctageneric/${target}:${image_tag}" 2>/dev/null || true)"
-  if [[ -n "$new_image_id" && "$previous_image_id" != "$new_image_id" ]]; then
-    podman image rm "$previous_image_id" >/dev/null 2>&1 || true
-  fi
-done
 
 echo
 echo "Built images:"

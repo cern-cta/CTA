@@ -76,12 +76,16 @@ CERN Tape Archive (CTA) is a scalable tape storage system for archival data.
 mkdir -p build
 cd build
 cmake3 -G "@CMAKE_GENERATOR@" .. \
+  -DCMAKE_BUILD_TYPE:STRING=@CMAKE_BUILD_TYPE@ \
   -DCMAKE_INSTALL_PREFIX:PATH=/usr \
   -DCTA_SYSTEMD_UNIT_DIR:PATH=lib/systemd/system \
   -DCTA_VERSION:STRING=%{version} \
   -DXROOTD_SSI_PROTOBUF_INTERFACE_VERSION:STRING=@XROOTD_SSI_PROTOBUF_INTERFACE_VERSION@ \
   -DENABLE_CCACHE:BOOL=@ENABLE_CCACHE@ \
   -DCTA_PACKAGE_MODE:STRING=none \
+  -DCTA_RUN_UNIT_TESTS:BOOL=@CTA_RUN_UNIT_TESTS@ \
+  -DCTA_BUILD_DEBUG_PACKAGES:BOOL=@CTA_BUILD_DEBUG_PACKAGES@ \
+  -DCTA_BUILD_TEST_PACKAGES:BOOL=@CTA_BUILD_TEST_PACKAGES@ \
   -DJOBS_COUNT:STRING=@JOBS_COUNT@ \
   -DVCS_VERSION=%{ctaRelease} \
   -DCTA_USE_PGSCHED:BOOL=@CTA_USE_PGSCHED@ \
@@ -98,6 +102,20 @@ cd build
 DESTDIR=%{buildroot} \
   EXPORTMAN=%{buildroot}%{_mandir} \
   cmake --build . --target install --parallel @JOBS_COUNT@
+
+%if !@PACKAGE_BUILD_TEST_PACKAGES@
+# CMake installs test files even when the cta-tests package is disabled.
+# Remove them from the staging directory to avoid RPM's "Installed (but unpackaged) file(s) found" error.
+# This still keeps the binaries around for the test execution; it's just the installed payload we are skipping.
+# The arguably cleaner (future?) solution to this would be to not install them at all in the first place if this option is disabled.
+rm -f %{buildroot}%{_libdir}/libcta*unittests*.so* \
+  %{buildroot}%{_libdir}/libcta-taped-integration-tests.so* \
+  %{buildroot}%{_bindir}/cta-unit-tests \
+  %{buildroot}%{_bindir}/cta-unit-tests-* \
+  %{buildroot}%{_bindir}/cta-unit-and-integration-tests.sh \
+  %{buildroot}%{_bindir}/cta-integration-tests
+rm -rf %{buildroot}%{_datadir}/cta/tests
+%endif
 
 %check
 cd build
@@ -518,6 +536,7 @@ Configures package repositories, signing keys and version locks for CTA and its 
 #  Tests
 # =========================================================================
 
+%if @PACKAGE_BUILD_TEST_PACKAGES@
 %package -n cta-tests
 Summary: CERN Tape Archive unit and integration tests
 Requires: cta-lib-catalogue-inmemory = %{version}-%{release}
@@ -564,7 +583,6 @@ Provides CTA unit and integration tests.
 %{_libdir}/libctainmemorystmtunittests.so*
 %if "%{usePgsched}" == "0"
 %{_libdir}/libctaobjectstoreunittests.so*
-%{_libdir}/libctaosdbroutines.so.*
 %endif
 %{_libdir}/libctardbmsunittests.so*
 %{_libdir}/libctardbmswrapperunittests.so*
@@ -583,6 +601,7 @@ Provides CTA unit and integration tests.
 %{_libdir}/libctadaemonunittests-multiprocess.so*
 %{_datadir}/cta/tests/*.suppr
 %{_datadir}/cta/tests/parallelTestsMakefile
+%endif
 
 %package -n cta-test-external-tape-formats
 Summary: CERN Tape Archive external tape format tests
