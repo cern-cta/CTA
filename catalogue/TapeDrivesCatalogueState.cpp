@@ -174,10 +174,13 @@ void TapeDrivesCatalogueState::updateDriveStatus(const common::dataStructures::D
 
   driveState.currentPriority = driveState.mountType == common::dataStructures::MountType::NoMount ? 0 : inputs.priority;
 
+  log::ScopedParamContainer params(lc);
+  params.add("next_status", common::dataStructures::TapeDrive::stateToString(inputs.status));
+  driveState.convertToLogParams(params, "update_");
+
   const bool statusChanged = m_catalogue.DriveState()->updateTapeDriveStatus(driveState);
   if (statusChanged) {
-    log::ScopedParamContainer params(lc);
-    params.add("new_status", common::dataStructures::TapeDrive::stateToString(driveState.driveStatus));
+    // Only log if the status changed to prevent polluting the logs too much
     lc.log(log::INFO, "Drive status updated.");
   }
 }
