@@ -39,6 +39,7 @@ double cta::ArchiveJob::reportTime() {
 //------------------------------------------------------------------------------
 cta::catalogue::TapeItemWrittenPointer cta::ArchiveJob::validateAndGetTapeFileWritten() {
   validate();
+  tapeFile.checksumBlob = archiveFile.checksumBlob;
   auto fileReportUP = std::make_unique<catalogue::TapeFileWritten>();
   auto& fileReport = *fileReportUP;
   fileReport.archiveFileId = archiveFile.archiveFileID;
@@ -69,8 +70,10 @@ void cta::ArchiveJob::validate() {
   if (archiveFile.checksumBlob.empty() || tapeFile.checksumBlob.empty()) {
     throw ChecksumNotSet("In cta::ArchiveJob::validate(): checksums not set");
   }
-  // And matches
-  archiveFile.checksumBlob.validate(tapeFile.checksumBlob);
+  // Compare CTA's calculated ADLER32 with EOS's value, if EOS supplied one.
+  if (archiveFile.checksumBlob.getMap().count(cta::checksum::ADLER32) != 0) {
+    archiveFile.checksumBlob.validate(cta::checksum::ADLER32, tapeFile.checksumBlob.at(cta::checksum::ADLER32));
+  }
 }
 
 //------------------------------------------------------------------------------
