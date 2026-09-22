@@ -24,6 +24,7 @@ class K8sConnection(RemoteConnection):
         self.ordinal = ordinal
         self.container = container
         self._cached_pod = None
+        self._stateful_pod_name: Optional[str] = None
         config.load_kube_config()
         self.core = client.CoreV1Api()
 
@@ -227,9 +228,19 @@ class K8sConnection(RemoteConnection):
             if pod.spec is not None and any(c.name == self.container for c in pod.spec.containers or [])
         ]
 
+        # StatefulSet pod names survive replacement; list positions do not.
+        if self._stateful_pod_name is not None:
+            for pod in pods:
+                if pod.metadata and pod.metadata.name == self._stateful_pod_name:
+                    return pod
+            raise RuntimeError(f"Waiting for StatefulSet pod {self._stateful_pod_name}")
+
         if self.ordinal >= len(pods):
             raise RuntimeError(
                 f'Expected at least {self.ordinal + 1} pod(s) matching "{self.label_selector}", found {len(pods)}'
             )
 
-        return pods[self.ordinal]
+        pod = pods[self.ordinal]
+        if pod.metadata and any(ref.kind == "StatefulSet" for ref in pod.metadata.owner_references or []):
+            self._stateful_pod_name = pod.metadata.name
+        return pod
