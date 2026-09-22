@@ -65,24 +65,17 @@ class CtaRpcStreamImpl : public cta::xrd::CtaRpcStream::CallbackService {
 public:
   cta::log::LogContext getLogContext() const { return m_lc; }
 
-  CtaRpcStreamImpl(cta::catalogue::Catalogue& catalogue,
-                   cta::Scheduler& scheduler,
-                   cta::SchedulerDB_t& schedDB,
-                   const std::string& instanceName,
-                   const std::string& connstr,
-                   uint64_t missingFileCopiesMinAgeSecs,
-                   const cta::log::LogContext& logContext,
-                   std::set<AuthMethod, std::less<>> authMethods,
+  CtaRpcStreamImpl(cta::frontend::FrontendService& frontendService,
                    std::shared_ptr<cta::auth::JwtAuthManager> jwtAuthManager,
                    server::TokenStorage& tokenStorage)
-      : m_lc(logContext),
-        m_catalogue(catalogue),
-        m_scheduler(scheduler),
-        m_instanceName(instanceName),
-        m_schedDb(schedDB),
-        m_catalogueConnString(connstr),
-        m_missingFileCopiesMinAgeSecs(missingFileCopiesMinAgeSecs),
-        m_authMethods(authMethods),
+      : m_lc(*frontendService.getLoggerPointer()),
+        m_catalogue(frontendService.getCatalogue()),
+        m_scheduler(frontendService.getScheduler()),
+        m_instanceName(frontendService.getInstanceName()),
+        m_schedDb(frontendService.getSchedDb()),
+        m_catalogueConnString(frontendService.getCatalogueConnString()),
+        m_missingFileCopiesMinAgeSecs(frontendService.getMissingFileCopiesMinAgeSecs()),
+        m_authMethods(frontendService.getAuthMethods()),
         m_jwtAuthManager(jwtAuthManager),
         m_tokenStorage(tokenStorage) {}
 

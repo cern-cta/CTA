@@ -11,6 +11,7 @@
 #include "frontend/grpc/common/GrpcConfig.hpp"
 #include "scheduler/Scheduler.hpp"
 
+#include <memory>
 #include <stdexcept>
 #ifdef CTA_PGSCHED
 #include "scheduler/rdbms/RelationalDBInit.hpp"
@@ -74,6 +75,11 @@ public:
     * @return the set of found certificate identities
     */
   std::set<std::string, std::less<>> getMtlsCertIdentitiesForInstance(const std::string& instance) const;
+
+  /*!
+   * Get a shared pointer to the log object
+   */
+  std::shared_ptr<cta::log::Logger> getLoggerPointer() const { return m_log; }
 
   /*!
    * Get the log context
@@ -191,7 +197,7 @@ private:
 
   // Member variables
   // clang-format off
-  std::unique_ptr<cta::log::Logger>             m_log;                          //!< The logger
+  std::shared_ptr<cta::log::Logger>             m_log;                          //!< The logger
   std::unique_ptr<cta::catalogue::Catalogue>    m_catalogue;                    //!< Catalogue of tapes and tape files
   std::unique_ptr<SchedulerDBInit_t>            m_scheddbInit;                  //!< Persistent initialiser object for Scheduler DB
   std::unique_ptr<cta::SchedulerDB_t>           m_scheddb;                      //!< Scheduler DB for persistent objects (queues and requests)

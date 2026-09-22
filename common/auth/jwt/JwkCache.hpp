@@ -35,14 +35,11 @@ struct JwkCacheEntry {
  */
 class JwkCache {
 public:
-  JwkCache(std::unique_ptr<JwksFetcher> jwksFetcher,
-           const std::string& jwkUri,
-           int pubKeyTTL,
-           const cta::log::LogContext& lc)
+  JwkCache(std::unique_ptr<JwksFetcher> jwksFetcher, const std::string& jwkUri, int pubKeyTTL, cta::log::Logger& logger)
       : m_jwksFetcher(std::move(jwksFetcher)),
         m_jwksUri(jwkUri),
         m_pubKeyTTL(pubKeyTTL),
-        m_lc(lc) {}
+        m_lc(logger) {}
 
   std::optional<JwkCacheEntry> find(const std::string& key);
   void update(time_t now);
