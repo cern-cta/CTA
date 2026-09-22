@@ -1005,39 +1005,30 @@ class TestRuntimeDeployment:
         ],
     )
     def test_reopens_logfile_on_sighup(self, request: SubRequest, daemon_fixture: str):
-        # Record the daemon's current log descriptor before simulating log rotation
         daemon = request.getfixturevalue(daemon_fixture)
+        log_file = shlex.quote(str(daemon.log_file_path))
+        pid_command = f"pgrep -u cta {daemon.process_name}"
+        pid = daemon.exec_with_output(pid_command).strip()
+        assert pid.isdecimal(), f"Expected one {daemon.process_name} process, got {pid!r}"
 
-        log_file = daemon.log_file_path
-        pid = daemon.exec_with_output(f"pgrep -u cta {daemon.process_name}")
+        rotated = shlex.quote(f"{daemon.log_file_path}.pytest.{uuid.uuid4().hex}")
 
-        fd = daemon.exec_with_output(f"find /proc/{pid}/fd -maxdepth 1 -lname '{log_file}' -printf '%f\n'")
-        assert fd
-
-        rotated = f"{log_file}.pytest"
-
-        # Move the log file; the CTA daemon should keep writing to this moved location
-        # as the file descriptor has not been refreshed yet
+        # Start with an empty replacement so an earlier reopen message cannot satisfy this check.
         daemon.exec(f"sudo mv {log_file} {rotated}")
-        # Create a new log file in the original location
         daemon.exec(f"sudo install -o cta -g tape -m 0644 /dev/null {log_file}")
-        new_inode = daemon.exec_with_output(f"stat -Lc '%d:%i' {log_file}")
+        daemon.exec(f"kill -s HUP {pid}")
 
-        # Send signal to refresh file descriptor
-        daemon.exec(f"pkill -SIGHUP -u cta {daemon.process_name}")
-        # Wait until it starts writing to the new file
-        current_inode = None
-
-        max_iter = 50
-        sleep_time_sec = 0.1
-        for _ in range(max_iter):
-            current_inode = daemon.exec_with_output(f"stat -Lc '%d:%i' /proc/{pid}/fd/{fd}")
-            if current_inode == new_inode:
+        # FileLogger writes this message after reopening; /proc FD access requires unavailable capabilities.
+        deadline = time.monotonic() + 5
+        while True:
+            reopened = daemon.exec(f"grep -Fq 'Log file descriptor reopened' {log_file}", throw_on_failure=False)
+            if reopened.success:
                 break
-            time.sleep(sleep_time_sec)
+            assert time.monotonic() < deadline, f"{daemon.process_name} did not reopen {log_file} after SIGHUP"
+            time.sleep(0.1)
 
-        # The descriptor must eventually refer to the replacement file's inode
-        assert current_inode == new_inode
+        # A restart must not masquerade as successful in-process log rotation.
+        assert daemon.exec_with_output(pid_command).strip() == pid
 
     # Should be deleted once taped uses the new runtime library
     def test_log_rotation_taped(self, cta_taped: CtaTapedHost, remote_scripts_dir: Path) -> None:
