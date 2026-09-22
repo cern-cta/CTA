@@ -125,12 +125,10 @@ for target in "${targets[@]}" cta-build-base-cache; do
     --format '{{.Id}}' "cta/ctageneric/${target}:${image_tag}" 2>/dev/null || true)"
 done
 
-# Track Podman itself, rather than a shell wrapping an output pipeline.
-# Separate sessions keep terminal signals from interrupting cleanup a second time.
 declare -A active_build_pids=()
 
-# Podman can exit on a signal before Buildah's deferred cleanup runs.
-# Remove only working containers that appeared since the initial snapshot.
+# This and the cancel_builds method ensure we don't leave a lot of garbage behind when
+# someone interrupts the image build
 remove_build_containers() {
   local current_build_containers container_id
   local container_ids=()

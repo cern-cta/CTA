@@ -1168,6 +1168,7 @@ kubernetes_image_ids() {
 load_cta_images_into_kubernetes() {
   [[ $cta_image_registry == "$local_image_registry" ]] || return 0
 
+  # Maybe there is a cleaner way to do this in the future to reduce some of this duplication
   local targets=(cta-taped cta-maintd cta-rmcd cta-frontend cta-tools)
   [[ $enable_debug_image == true ]] && targets+=(cta-debug)
 
@@ -1177,7 +1178,6 @@ load_cta_images_into_kubernetes() {
     image_refs+=("${local_image_registry}/cta/ctageneric/${target}:${cta_image_tag}")
   done
 
-  # Inspect all local images once, even when loading into both runtimes.
   local_images=$(podman image inspect --format '{{.Id}}' "${image_refs[@]}") \
     || die "Could not inspect local images. Run '${program_name} images' first."
   mapfile -t local_ids <<<"$local_images"
