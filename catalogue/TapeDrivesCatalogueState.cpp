@@ -13,7 +13,6 @@
 #include "common/dataStructures/TapeDriveStatistics.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
-#include "telemetry/metrics/DriveStatus.hpp"
 #include "version.hpp"
 
 #include <algorithm>
@@ -29,7 +28,6 @@ void TapeDrivesCatalogueState::createTapeDriveStatus(const common::dataStructure
                                                      const common::dataStructures::DriveStatus& status,
                                                      const common::dataStructures::SecurityIdentity& identity,
                                                      log::LogContext& lc) const {
-  telemetry::metrics::setDriveStatus(status);
   auto tapeDriveStatus = setTapeDriveStatus(driveInfo, desiredState, type, status, identity);
   auto driveNames = m_catalogue.DriveState()->getTapeDriveNames();
   if (auto it = std::find(driveNames.begin(), driveNames.end(), tapeDriveStatus.driveName); it != driveNames.end()) {
@@ -129,8 +127,6 @@ void TapeDrivesCatalogueState::reportDriveStatus(const common::dataStructures::D
 void TapeDrivesCatalogueState::updateDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
                                                  const ReportDriveStatusInputs& inputs,
                                                  log::LogContext& lc) const {
-  // Publish local intent with a lock-free store; metric collection/export happens elsewhere.
-  telemetry::metrics::setDriveStatus(inputs.status);
   common::dataStructures::TapeDrive driveState;
   // Set the parameters that we always set
   driveState.driveName = driveInfo.driveName;
@@ -181,8 +177,7 @@ void TapeDrivesCatalogueState::updateDriveStatus(const common::dataStructures::D
   const bool statusChanged = m_catalogue.DriveState()->updateTapeDriveStatus(driveState);
   if (statusChanged) {
     log::ScopedParamContainer params(lc);
-    params.add("drive_name", driveInfo.driveName)
-      .add("new_status", common::dataStructures::TapeDrive::stateToString(driveState.driveStatus));
+    params.add("new_status", common::dataStructures::TapeDrive::stateToString(driveState.driveStatus));
     lc.log(log::INFO, "Drive status updated.");
   }
 }

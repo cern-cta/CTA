@@ -117,7 +117,6 @@ target_compile_definitions(ctacatalogue PRIVATE
 install (TARGETS ctacatalogue DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 target_link_libraries (ctacatalogue
-  ctatelemetry
   ctacommon
   ctapluginmanager
   ctaprotobufconversions
