@@ -11,7 +11,9 @@
 #include "common/utils/utils.hpp"
 #include "version.hpp"
 
+#include <cassert>
 #include <iomanip>
+#include <iostream>
 #include <ranges>
 #include <sys/time.h>
 #include <variant>
@@ -296,8 +298,22 @@ std::string Logger::createMsgBody(std::string_view logLevel,
   os << m_staticParamsStr;
 
   // Process parameters
-  for (const auto& paramVector : paramsMap | std::views::values) {
+  for (const auto& [key, paramVector] : paramsMap) {
+    // This shouldn't happen by definition, as keys are only added together with parameters and
+    // parameters are deleted with their respective keys. If this blows up, then the object is
+    // most likely being used in a thread-unsafe way and being corrupted.
+    assert(!paramVector.empty());
+
+    // since the assert will not work in production code, let's log it to stderr
+    if (paramVector.empty()) {
+      std::cerr << "Logger::createMsgBody: paramVector is empty (key = '" + key
+                     + "'). This is likely a bug. Skipping parameter."
+                << std::endl;
+      continue;
+    }
+
     auto& param = paramVector.back();
+
     // Write the name and value to the buffer
     switch (m_logFormat) {
       case LogFormat::DEFAULT: {

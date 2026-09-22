@@ -26,8 +26,8 @@ public:
                  const std::string& expectedAudience,
                  uint32_t minGeneration,
                  const std::optional<std::string>& revokeListPath,
-                 const cta::log::LogContext& lc)
-      : m_pubKeyCache(JwkCache {std::move(jwksFetcher), jwkUri, pubKeyTTL, lc}),
+                 log::Logger& logger)
+      : m_pubKeyCache(JwkCache {std::move(jwksFetcher), jwkUri, pubKeyTTL, logger}),
         m_expectedIssuer(expectedIssuer),
         m_expectedAudience(expectedAudience),
         m_minGeneration(minGeneration),

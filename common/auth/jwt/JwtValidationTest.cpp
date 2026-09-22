@@ -177,13 +177,11 @@ std::string createTestJwt(bool expired, const std::string& kid, const std::strin
 class ValidateJwtTestFixture : public ::testing::Test {
 protected:
   cta::log::StringLogger log {"dummy", "ValidateJwtTests", cta::log::DEBUG};
-  cta::log::LogContext lc;
 
-  ValidateJwtTestFixture() : lc(log) {}
+  ValidateJwtTestFixture() = default;
 
   std::shared_ptr<cta::auth::JwtAuthManager>
-  createAuthMgrWithMockFetcher(const std::string& expectedAudience = "test-audience",
-                               uint32_t minGeneration = 0) const {
+  createAuthMgrWithMockFetcher(const std::string& expectedAudience = "test-audience", uint32_t minGeneration = 0) {
     return std::make_shared<cta::auth::JwtAuthManager>(std::make_unique<MockJwksFetcherValidateJwt>(),
                                                        "http://fake-jwks-uri",
                                                        1200,
@@ -191,14 +189,14 @@ protected:
                                                        expectedAudience,
                                                        minGeneration,
                                                        std::nullopt,
-                                                       lc);
+                                                       log);
   }
 
   /**
    * Builds an auth manager whose JWKS endpoint serves the given document verbatim, so that tests
    * can serve a JWKS which is unparsable, or which simply does not carry the requested key.
    */
-  std::shared_ptr<cta::auth::JwtAuthManager> createAuthMgrServingJwks(const std::string& jwks) const {
+  std::shared_ptr<cta::auth::JwtAuthManager> createAuthMgrServingJwks(const std::string& jwks) {
     auto mockFetcher = std::make_unique<MockJwksFetcherValidateJwt>();
     mockFetcher->setJwks(jwks);
 
@@ -209,14 +207,14 @@ protected:
                                                        "test-audience",
                                                        0,
                                                        std::nullopt,
-                                                       lc);
+                                                       log);
   }
 
   /**
    * Builds an auth manager whose revoke list is loaded from the given TOML file path.
    * The path is passed through verbatim, so it may also point at a missing or invalid file.
    */
-  std::shared_ptr<cta::auth::JwtAuthManager> createAuthMgrWithRevokeListFile(const std::string& revokeListPath) const {
+  std::shared_ptr<cta::auth::JwtAuthManager> createAuthMgrWithRevokeListFile(const std::string& revokeListPath) {
     return std::make_shared<cta::auth::JwtAuthManager>(std::make_unique<MockJwksFetcherValidateJwt>(),
                                                        "http://fake-jwks-uri",
                                                        1200,
@@ -224,7 +222,7 @@ protected:
                                                        "test-audience",
                                                        0,
                                                        revokeListPath,
-                                                       lc);
+                                                       log);
   }
 };
 

@@ -68,8 +68,8 @@ const static struct option long_options[] = {
 void JwksCacheRefreshLoop(std::weak_ptr<cta::auth::JwtAuthManager> weakAuthManager,
                           std::future<void> shouldStopThread,
                           int cacheRefreshInterval,
-                          const log::LogContext& lc) {
-  log::LogContext threadLc(lc);
+                          std::shared_ptr<cta::log::Logger> logger) {
+  log::LogContext threadLc(*logger);
   threadLc.log(log::INFO, "Detached JWKS cache refresh thread started");
 
   while (shouldStopThread.wait_for(std::chrono::seconds(cacheRefreshInterval)) == std::future_status::timeout) {
@@ -136,7 +136,7 @@ int main(const int argc, char* const* const argv) {
                                                                  jwtConfig->expected_audience,
                                                                  jwtConfig->min_generation,
                                                                  jwtConfig->revoke_list_path,
-                                                                 frontendService->getLogContext());
+                                                                 *frontendService->getLoggerPointer());
 
     {
       log::ScopedParamContainer spc(lc);
@@ -156,7 +156,7 @@ int main(const int argc, char* const* const argv) {
                                       weakAuthManager,
                                       std::move(shouldStopThreadFuture),
                                       jwtConfig->cache_refresh_interval,
-                                      std::cref(lc));
+                                      frontendService->getLoggerPointer());
   }
 
   // Setup TokenStorage for Kerberos authentication
@@ -269,16 +269,7 @@ int main(const int argc, char* const* const argv) {
 
   lc.log(log::DEBUG, "Instance name is: '" + frontendService->getInstanceName() + "'");
 
-  frontend::grpc::CtaRpcStreamImpl streamSvc(frontendService->getCatalogue(),
-                                             frontendService->getScheduler(),
-                                             frontendService->getSchedDb(),
-                                             frontendService->getInstanceName(),
-                                             frontendService->getCatalogueConnString(),
-                                             frontendService->getMissingFileCopiesMinAgeSecs(),
-                                             frontendService->getLogContext(),
-                                             frontendService->getAuthMethods(),
-                                             jwtAuthManager,
-                                             tokenStorage);
+  frontend::grpc::CtaRpcStreamImpl streamSvc(*frontendService, jwtAuthManager, tokenStorage);
   builder.RegisterService(&streamSvc);
 
   // add reflection

@@ -5,6 +5,7 @@
 
 #include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/log/Logger.hpp"
 #include "common/log/StringLogger.hpp"
 
 #include <gtest/gtest.h>
@@ -46,9 +47,7 @@ private:
 
 TEST(JwkCacheTest, UpdateCacheAddsKey) {
   cta::log::StringLogger log("dummy", "JwkCacheTest_UpdateCacheAddsKey", cta::log::DEBUG);
-  cta::log::LogContext lc(log);
-
-  cta::auth::JwkCache cache(std::make_unique<MockJwksFetcher>(), "http://fake-jwks-uri", 1200, lc);
+  cta::auth::JwkCache cache(std::make_unique<MockJwksFetcher>(), "http://fake-jwks-uri", 1200, log);
 
   time_t fakeNow = 1000;
   cache.update(fakeNow);
@@ -61,8 +60,6 @@ TEST(JwkCacheTest, UpdateCacheAddsKey) {
 
 TEST(JwkCacheTest, UpdateCacheRemovesExpiredKeys) {
   cta::log::StringLogger log("dummy", "JwkCacheTest_UpdateCacheRemovesExpiredKeys", cta::log::DEBUG);
-  cta::log::LogContext lc(log);
-
   auto mockFetcher {std::make_unique<MockJwksFetcher>()};
 
   // Set up JWKS with a key that will initially be added
@@ -79,7 +76,7 @@ TEST(JwkCacheTest, UpdateCacheRemovesExpiredKeys) {
 
   mockFetcher->setResponse("http://fake-jwks-uri", jwksWithKey);
   cta::auth::JwkCache cache(std::move(mockFetcher), "http://fake-jwks-uri", 200,
-                            lc);  // very short pubkeyTimeout
+                            log);  // very short pubkeyTimeout
 
   time_t lastRefreshTime = 1000;
   cache.update(lastRefreshTime);
