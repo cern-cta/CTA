@@ -292,6 +292,9 @@ Build CTA container images from the locally generated packages.
 
 Will build a single Docker image per CTA service.
 All images are built in parallel.
+After a successful build, local images are loaded into each available local Kubernetes runtime.
+If no local runtime is available, the images remain in Podman and loading is skipped.
+Rerun this command after recreating a local cluster to load its images again.
 
 Usage:
   $(basename "$0") images [options]
@@ -333,6 +336,7 @@ usage_deploy() {
 Deploy a local CTA development instance.
 
 An existing deployment is replaced only when it was created by CTA tooling.
+Local images must already be loaded into the cluster by the images command.
 
 Usage:
   $(basename "$0") deploy [options]
@@ -1064,7 +1068,42 @@ build_cta() {
 
 }
 
-# Build the CTA service images from local packages.
+# Import the complete local CTA image batch into each available local Kubernetes runtime.
+load_cta_images_into_kubernetes() {
+  [[ $cta_image_registry == "$local_image_registry" ]] || return 0
+
+  local targets=(cta-taped cta-maintd cta-rmcd cta-frontend cta-tools)
+  [[ $enable_debug_image == true ]] && targets+=(cta-debug)
+
+  local runtime target
+  local loaded=false
+  local image_refs=()
+  for target in "${targets[@]}"; do
+    image_refs+=("${local_image_registry}/cta/ctageneric/${target}:${cta_image_tag}")
+  done
+
+  for runtime in minikube k3s; do
+    command -v "$runtime" >/dev/null 2>&1 || continue
+
+    # Batch images so shared layers occur only once in the archive.
+    log_task "Loading ${#image_refs[@]} container images into ${runtime}..."
+    case "$runtime" in
+      minikube)
+        podman save --multi-image-archive "${image_refs[@]}" | minikube image load --overwrite - || return $?
+        ;;
+      k3s)
+        podman save --multi-image-archive "${image_refs[@]}" | sudo /usr/local/bin/k3s ctr images import --local - || return $?
+        ;;
+    esac
+    loaded=true
+  done
+
+  if [[ $loaded == false ]]; then
+    log_task "No local Kubernetes runtime is available. Images remain available in Podman."
+  fi
+}
+
+# Build CTA service images from local packages and load them into available local Kubernetes runtimes.
 images_cta() {
   # Constants
   local -r binary_package_directory=$(package_directory binary)
@@ -1085,7 +1124,9 @@ images_cta() {
     --tag "${cta_image_tag}" \
     --package-src "${package_source}" \
     --dockerfile "${image_dockerfile}" \
-    "${extra_image_build_options[@]}"
+    "${extra_image_build_options[@]}" || return $?
+
+  load_cta_images_into_kubernetes
 }
 
 # Check deployment prerequisites and namespace ownership.
@@ -1141,88 +1182,9 @@ finish_namespace_deletion() {
   [[ $deletion_status -eq 0 ]] || die "Failed to delete the previous CTA deployment."
 }
 
-# Print image references and configuration IDs from the selected Kubernetes runtime.
-kubernetes_image_ids() {
-  local -r runtime="$1"
-  shift
-  case "$runtime" in
-    minikube)
-      minikube ssh -- sudo crictl images --output json | jq -r '
-        .images[] | .id as $id | .repoTags[]? | "\(.) \($id | ltrimstr("sha256:"))"'
-      ;;
-    k3s)
-      # List once, then read only the requested manifests using the permitted ctr commands.
-      local images image_ref _media_type digest _remaining_fields image_id
-      images=$(sudo /usr/local/bin/k3s ctr images list) || return 1
-      while read -r image_ref _media_type digest _remaining_fields; do
-        [[ " $* " == *" $image_ref "* ]] || continue
-        image_id=$(sudo /usr/local/bin/k3s ctr content get "$digest" | jq -er '.config.digest // empty') \
-          || continue
-        printf '%s %s\n' "$image_ref" "${image_id#sha256:}"
-      done <<<"$images"
-      ;;
-  esac
-}
-
-# Import local CTA images that are changed or missing in each installed runtime.
-load_cta_images_into_kubernetes() {
-  [[ $cta_image_registry == "$local_image_registry" ]] || return 0
-
-  # Maybe there is a cleaner way to do this in the future to reduce some of this duplication
-  local targets=(cta-taped cta-maintd cta-rmcd cta-frontend cta-tools)
-  [[ $enable_debug_image == true ]] && targets+=(cta-debug)
-
-  local runtime target image_ref local_images loaded_images local_id i
-  local image_refs=() local_ids=() images_to_load=()
-  for target in "${targets[@]}"; do
-    image_refs+=("${local_image_registry}/cta/ctageneric/${target}:${cta_image_tag}")
-  done
-
-  local_images=$(podman image inspect --format '{{.Id}}' "${image_refs[@]}") \
-    || die "Could not inspect local images. Run '${program_name} images' first."
-  mapfile -t local_ids <<<"$local_images"
-  [[ ${#local_ids[@]} -eq ${#image_refs[@]} ]] || die "Could not determine all local image IDs."
-
-  for runtime in minikube k3s; do
-    command -v "$runtime" >/dev/null 2>&1 || continue
-
-    if ! loaded_images=$(kubernetes_image_ids "$runtime" "${image_refs[@]}"); then
-      log_warn "Could not inspect ${runtime} images; loading all requested images."
-      loaded_images=""
-    fi
-
-    images_to_load=()
-    for i in "${!image_refs[@]}"; do
-      image_ref=${image_refs[i]}
-      local_id=${local_ids[i]#sha256:}
-      [[ -n $local_id ]] || die "Local image ${image_ref} has no image ID."
-
-      grep -Fxq -- "$image_ref $local_id" <<<"$loaded_images" || images_to_load+=("$image_ref")
-    done
-
-    if [[ ${#images_to_load[@]} -eq 0 ]]; then
-      log_task "CTA images are unchanged in ${runtime}. Skipping image loading."
-      continue
-    fi
-
-    # Batch changed images so shared layers occur only once in the archive.
-    log_task "Loading ${#images_to_load[@]} changed or missing container images into ${runtime}..."
-    case "$runtime" in
-      minikube)
-        podman save --multi-image-archive "${images_to_load[@]}" | minikube image load --overwrite - || return $?
-        ;;
-      k3s)
-        podman save --multi-image-archive "${images_to_load[@]}" | sudo /usr/local/bin/k3s ctr images import --local - || return $?
-        ;;
-    esac
-  done
-}
-
-# Load images and recreate the CTA development instance with the selected configuration.
+# Recreate the CTA development instance using images already available to the cluster.
 deploy_cta() {
   validate_deployment_environment
-
-  load_cta_images_into_kubernetes
 
   finish_namespace_deletion
 
