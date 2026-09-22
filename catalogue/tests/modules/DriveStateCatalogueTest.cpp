@@ -107,8 +107,8 @@ void cta_catalogue_DriveStateTest::TearDown() {
   m_catalogue.reset();
 }
 
-// Recovery reports must preserve operator intent, including a down request during startup or cleaning.
-TEST_P(cta_catalogue_DriveStateTest, CleaningUpPreservesOperatorIntentAndVid) {
+// Recovery reports must preserve operator reason, including a down request during startup or cleaning.
+TEST_P(cta_catalogue_DriveStateTest, CleaningUpPreservesOperatorReasonAndVid) {
   using namespace cta::common::dataStructures;
   auto drive = getTapeDriveWithAllElements("recovery");
   drive.driveStatus = DriveStatus::Transferring;
@@ -118,6 +118,7 @@ TEST_P(cta_catalogue_DriveStateTest, CleaningUpPreservesOperatorIntentAndVid) {
   cta::log::LogContext lc(m_dummyLog);
   DriveInfo info(drive.driveName, drive.host, drive.logicalLibrary, "", "");
 
+  // Report the drive as CleaningUp
   state.reportDriveStatus(info, MountType::NoMount, DriveStatus::CleaningUp, time(nullptr), lc);
   auto stored = m_catalogue->DriveState()->getTapeDrive(drive.driveName);
   ASSERT_TRUE(stored);
@@ -131,13 +132,16 @@ TEST_P(cta_catalogue_DriveStateTest, CleaningUpPreservesOperatorIntentAndVid) {
   DesiredDriveState down;
   down.reason = "Operator maintenance";
   m_catalogue->DriveState()->setDesiredTapeDriveState(drive.driveName, down);
+  // Change the state again
   state.reportDriveStatus(info, MountType::NoMount, DriveStatus::Unloading, time(nullptr), lc);
   state.reportDriveStatus(info, MountType::NoMount, DriveStatus::CleaningUp, time(nullptr), lc);
+  // Get the current state and ensure the initial operator request is still there
   stored = m_catalogue->DriveState()->getTapeDrive(drive.driveName);
   ASSERT_TRUE(stored);
   EXPECT_FALSE(stored->desiredUp);
   EXPECT_EQ(down.reason, stored->reasonUpDown);
 
+  // Even when the drive reports up, the desired state and reason should still be there
   state.reportDriveStatus(info, MountType::NoMount, DriveStatus::Up, time(nullptr), lc);
   stored = m_catalogue->DriveState()->getTapeDrive(drive.driveName);
   ASSERT_TRUE(stored);
@@ -516,9 +520,11 @@ TEST_P(cta_catalogue_DriveStateTest, logDriveStatusOnlyOnTransition) {
   cta::log::LogContext lc(logger);
   cta::TapeDrivesCatalogueState state(*m_catalogue);
 
+  // Update the drive state a few times
   state.updateDriveStatus(driveInfo, inputs, lc);
   inputs.reportTime++;
   state.updateDriveStatus(driveInfo, inputs, lc);
+  // Not changing the state should not emit anything
   EXPECT_TRUE(logger.getLog().empty());
 
   const auto storedDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
@@ -537,7 +543,7 @@ TEST_P(cta_catalogue_DriveStateTest, logDriveStatusOnlyOnTransition) {
   const auto message = log.find("Drive status updated.");
   ASSERT_NE(message, std::string::npos);
   EXPECT_EQ(log.find("Drive status updated.", message + 1), std::string::npos);
-  EXPECT_NE(log.find("new_status"), std::string::npos);
+  EXPECT_NE(log.find("next_status"), std::string::npos);
   EXPECT_NE(log.find("UP"), std::string::npos);
 
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
