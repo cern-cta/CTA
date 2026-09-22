@@ -97,7 +97,8 @@ public:
                                          const std::string& logicalLibrary,
                                          const common::dataStructures::TapeDriveStatistics& statistics) = 0;
 
-  virtual void updateTapeDriveStatus(const common::dataStructures::TapeDrive& tapeDrive) = 0;
+  // Return true when the reported drive status changes.
+  virtual bool updateTapeDriveStatus(const common::dataStructures::TapeDrive& tapeDrive) = 0;
 
   /**
    * Deletes the entry of a Tape Drive

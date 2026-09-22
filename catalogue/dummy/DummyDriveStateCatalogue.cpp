@@ -105,8 +105,11 @@ void DummyDriveStateCatalogue::updateTapeDriveStatistics(
   m_tapeDriveStatus.lastModificationLog = statistics.lastModificationLog;
 }
 
-void DummyDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDrive& tapeDrive) {
+bool DummyDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDrive& tapeDrive) {
+  const bool changed =
+    m_tapeDriveStatus.driveName != tapeDrive.driveName || m_tapeDriveStatus.driveStatus != tapeDrive.driveStatus;
   m_tapeDriveStatus = tapeDrive;
+  return changed;
 }
 
 std::map<std::string, uint64_t, std::less<>> DummyDriveStateCatalogue::getDiskSpaceReservations() const {

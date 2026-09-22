@@ -50,7 +50,7 @@ public:
                                  const std::string& logicalLibrary,
                                  const common::dataStructures::TapeDriveStatistics& statistics) override;
 
-  void updateTapeDriveStatus(const common::dataStructures::TapeDrive& tapeDrive) override;
+  bool updateTapeDriveStatus(const common::dataStructures::TapeDrive& tapeDrive) override;
 
   void deleteTapeDrive(const std::string& tapeDriveName) override;
 
