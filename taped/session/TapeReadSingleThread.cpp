@@ -50,6 +50,11 @@ cta::tape::daemon::TapeReadSingleThread::TapeReadSingleThread(cta::tape::drive::
       m_retrieveMount(retrieveMount),
       m_catalogue(catalogue) {}
 
+void cta::tape::daemon::TapeReadSingleThread::startThreads(RecallTaskInjector& injector) {
+  m_taskInjector = &injector;
+  TapeSingleThreadInterface<TapeReadTask>::startThreads();
+}
+
 //------------------------------------------------------------------------------
 //TapeCleaning::~TapeCleaning()
 //------------------------------------------------------------------------------

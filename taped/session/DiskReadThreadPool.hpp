@@ -46,9 +46,14 @@ public:
   ~DiskReadThreadPool();
 
   /**
-   * Starts the threads which were created at construction time.
+   * @brief Attach the task injector and start the threads created at construction time.
+   *
+   * The injector supplies more work when the pool's task queue runs low.
+   * It is attached here because its construction requires the pool to exist first.
+   *
+   * @param injector Borrowed task injector; must remain alive until all pool threads have been joined.
    */
-  void startThreads();
+  void startThreads(MigrationTaskInjector& injector);
 
   /**
    * Waits for threads completion of all threads. Should be called before
@@ -72,18 +77,6 @@ public:
    * See push()
    */
   void finish();
-
-  /**
-   * Sets up the pointer to the task injector. This cannot be done at
-   * construction time as both task injector and read thread pool refer to
-   * each other. This function should be called before starting the threads.
-   * This is used for the feedback loop where the injector is requested to
-   * fetch more work by the read thread pool when the task queue of the thread
-   * pool starts to run low.
-   */
-  void setTaskInjector(MigrationTaskInjector* injector) {
-    m_injector = injector;
-  }  // TODO: can we do this through the constructor?
 
 private:
   /**

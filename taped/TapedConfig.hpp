@@ -111,7 +111,7 @@ struct MountsConfig final {
   uint32_t tape_load_timeout_secs = 300;
   uint32_t unmount_timeout_secs = 900;
 
-  static constexpr std::size_t memberCount() { return 11; }
+  static constexpr std::size_t memberCount() { return 10; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
