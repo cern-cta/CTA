@@ -9,7 +9,8 @@
 
 namespace cta::telemetry::metrics {
 
-// Process-local snapshots let telemetry observe drive state without querying the catalogue.
+// We don't want to query the catalogue periodically just for telemetry, so these methods
+// allow us to have a process-local snapshot of these values so that we can asynchronously observe them.
 // Updates are independent of backend publication and do not activate metric observation.
 void setDriveStatus(common::dataStructures::DriveStatus status) noexcept;
 common::dataStructures::DriveStatus getDriveStatus() noexcept;
