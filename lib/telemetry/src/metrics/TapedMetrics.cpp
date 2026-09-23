@@ -21,7 +21,8 @@ void observeDriveStatus(opentelemetry::metrics::ObserverResult result, void*) no
     return;
   }
   const auto current = cta::telemetry::metrics::getDriveStatus();
-  // Emit every category so inactive values become zero rather than disappearing.
+  // All drive statuses are emitted at each interval to prevent missing metrics
+  // See https://opentelemetry.io/docs/specs/semconv/system/k8s-metrics/#metric-k8spodphase
   for (const auto status : cta::common::dataStructures::AllDriveStatuses) {
     (*observer)->Observe(status == current ? 1 : 0,
                          {
@@ -37,7 +38,8 @@ void observeMountType(opentelemetry::metrics::ObserverResult result, void*) noex
   }
   const auto current = cta::telemetry::metrics::getMountType();
   using enum cta::common::dataStructures::MountType;
-  // Retain the existing categories; Label and ArchiveAllTypes are not active mount types.
+  // All mount types are emitted at each interval to prevent missing metrics
+  // Note that we ignore the Label and ArchiveAllTypes mount types as these are not actively used
   constexpr std::array types {ArchiveForUser, ArchiveForRepack, Retrieve, NoMount};
   for (const auto type : types) {
     (*observer)->Observe(

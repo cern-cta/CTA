@@ -20,12 +20,6 @@ struct TapeSessionResult {
   DriveUsability driveUsability = DriveUsability::Reusable;
 
   /**
-   * @brief Whether to wait for backend recovery after local session work has finished.
-   * Can be set due to e.g. lost backend connections.
-   */
-  bool backendRecoveryRequired = false;
-
-  /**
    * @brief Whether to delay the next scheduling attempt when the drive remains reusable.
    */
   bool retryDelayRequired = false;
