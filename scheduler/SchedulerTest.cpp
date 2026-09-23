@@ -2874,7 +2874,8 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         executedJobs.push_back(std::move(retrieveJob));
       }
       //Now, report the retrieve jobs to be completed
-      cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+      cta::tape::daemon::TapeSessionTracker rrpTracker;
+      cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc, rrpTracker);
 
       rrp.startThreads();
       for (auto it = executedJobs.begin(); it != executedJobs.end(); ++it) {
@@ -3551,7 +3552,8 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
       executedJobs.push_back(std::move(retrieveJob));
     }
     //Now, report the retrieve jobs to be completed
-    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+    cta::tape::daemon::TapeSessionTracker rrpTracker;
+    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc, rrpTracker);
 
     rrp.startThreads();
 
@@ -3565,7 +3567,8 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
     std::unique_ptr<cta::RetrieveJob> failedJobUniqPtr = std::move(*(executedJobs.begin()));
     rrp.reportFailedJob(std::move(failedJobUniqPtr),
                         cta::exception::Exception("FailedJob expandRepackRequestFailedRetrieve"),
-                        lc);
+                        lc,
+                        rrpTracker.recordFailure(cta::tape::daemon::TapeSessionFailure::UnclassifiedFile));
 
     rrp.setDiskDone();
     rrp.setTapeDone();
@@ -3780,7 +3783,8 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
       executedJobs.push_back(std::move(retrieveJob));
     }
     //Now, report the retrieve jobs to be completed
-    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+    cta::tape::daemon::TapeSessionTracker rrpTracker;
+    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc, rrpTracker);
 
     rrp.startThreads();
 
@@ -3834,7 +3838,8 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
       executedJobs.push_back(std::move(archiveJob));
     }
 
-    cta::tape::daemon::MigrationReportPacker mrp(archiveMount.get(), lc);
+    cta::tape::daemon::TapeSessionTracker mrpTracker;
+    cta::tape::daemon::MigrationReportPacker mrp(archiveMount.get(), lc, mrpTracker);
     mrp.startThreads();
 
     //Report all archive jobs as succeeded
@@ -4045,7 +4050,8 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
       executedJobs.push_back(std::move(retrieveJob));
     }
     //Now, report the retrieve jobs to be completed
-    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+    cta::tape::daemon::TapeSessionTracker rrpTracker;
+    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc, rrpTracker);
 
     rrp.startThreads();
 
@@ -4100,12 +4106,16 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
     }
 
     {
-      cta::tape::daemon::MigrationReportPacker mrp(archiveMount.get(), lc);
+      cta::tape::daemon::TapeSessionTracker mrpTracker;
+      cta::tape::daemon::MigrationReportPacker mrp(archiveMount.get(), lc, mrpTracker);
       mrp.startThreads();
 
       //Report all archive jobs as succeeded except the first one
       auto it = executedJobs.begin();
-      mrp.reportSkippedJob(std::move(*it), "expandRepackRequestFailedArchive", lc);
+      mrp.reportFileNotArchived(std::move(*it),
+                                "expandRepackRequestFailedArchive",
+                                lc,
+                                mrpTracker.recordFailure(cta::tape::daemon::TapeSessionFailure::FileNotArchived));
       it++;
       while (it != executedJobs.end()) {
         mrp.reportCompletedJob(std::move(*it), lc);
@@ -4164,12 +4174,14 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
       archiveJob.reset(jobBatch.front().release());
       ASSERT_NE(nullptr, archiveJob.get());
 
-      cta::tape::daemon::MigrationReportPacker mrp(archiveMount.get(), lc);
+      cta::tape::daemon::TapeSessionTracker mrpTracker;
+      cta::tape::daemon::MigrationReportPacker mrp(archiveMount.get(), lc, mrpTracker);
       mrp.startThreads();
 
       mrp.reportFailedJob(std::move(archiveJob),
                           cta::exception::Exception("FailedJob expandRepackRequestFailedArchive"),
-                          lc);
+                          lc,
+                          mrpTracker.recordFailure(cta::tape::daemon::TapeSessionFailure::UnclassifiedFile));
 
       cta::tape::drive::compressionStats compressStats;
       mrp.reportFlush(compressStats, lc);
@@ -5409,7 +5421,8 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
       executedJobs.push_back(std::move(retrieveJob));
     }
     //Now, report the retrieve jobs to be completed
-    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+    cta::tape::daemon::TapeSessionTracker rrpTracker;
+    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc, rrpTracker);
 
     rrp.startThreads();
 
@@ -5887,7 +5900,8 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies) {
       executedJobs.push_back(std::move(retrieveJob));
     }
     //Now, report the retrieve jobs to be completed
-    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+    cta::tape::daemon::TapeSessionTracker rrpTracker;
+    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc, rrpTracker);
 
     rrp.startThreads();
 
@@ -6188,7 +6202,8 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
         executedJobs.push_back(std::move(retrieveJob));
       }
       //Now, report the retrieve jobs to be completed
-      cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+      cta::tape::daemon::TapeSessionTracker rrpTracker;
+      cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc, rrpTracker);
 
       rrp.startThreads();
 
@@ -7346,7 +7361,8 @@ TEST_P(SchedulerTest, retrieveArchiveRepackQueueMaxDrivesVoInFlightChangeSchedul
 
     // For each tape we will see if the retrieve jobs are not null
     // Then we will report them as complete
-    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+    cta::tape::daemon::TapeSessionTracker rrpTracker;
+    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc, rrpTracker);
     rrp.startThreads();
     for (uint64_t j = 1; j <= nbArchiveFilesPerTape; ++j) {
       auto jobBatch = retrieveMount->getNextJobBatch(1, archiveFileSize, lc);

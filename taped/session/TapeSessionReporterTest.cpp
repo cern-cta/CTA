@@ -68,7 +68,7 @@ TEST(TapeSessionReporterTest, ReportsTrackerContentsOnDemand) {
   TapeSessionReporter reporter(tracker, lc, 1s, 1s);
 
   tracker.notifyBlockMovement(25);
-  tracker.incrementError(TapeSessionError::DiskRead);
+  tracker.recordFailure(TapeSessionFailure::DiskRead);
   tracker.reportState(cta::tape::session::TapeSessionState::Transferring);
 
   reporter.reportNow();
@@ -183,7 +183,7 @@ TEST(TapeSessionReporterTest, DerivesMountMetadataAndUsesTypedOutcome) {
   tracker.setMount(&mount);
   TapeSessionReporter reporter(tracker, lc, 1s, 1s);
 
-  tracker.setOutcome(TapeSessionOutcome::Failure);
+  tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
   tracker.setMountAttempted(false);
   reporter.startThreads();
   tracker.reportState(cta::tape::session::TapeSessionState::Finished);
@@ -271,7 +271,7 @@ TEST(TapeSessionReporterTest, StoppingReporterDoesNotClaimTransferCompletion) {
   TapeSessionTracker tracker;
   tracker.setMount(&mount);
   tracker.beginTapeSession();
-  tracker.setOutcome(TapeSessionOutcome::Failure);
+  tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
   TapeSessionReporter reporter(tracker, lc, 1s, 1s);
   reporter.startThreads();
   reporter.finish();
@@ -296,7 +296,6 @@ TEST(TapeSessionReporterTest, FinalPublicationFailureOverridesSuccessfulOutcome)
   TapeSessionTracker tracker;
   tracker.setMount(&mount);
   tracker.beginTapeSession();
-  tracker.setOutcome(TapeSessionOutcome::Success);
   tracker.reportState(cta::tape::session::TapeSessionState::Finished);
   TapeSessionReporter reporter(tracker, lc, 1s, 1s);
   reporter.startThreads();
@@ -304,8 +303,8 @@ TEST(TapeSessionReporterTest, FinalPublicationFailureOverridesSuccessfulOutcome)
   reporter.waitThreads();
 
   EXPECT_EQ(1U, mount.statsReports.load());
-  EXPECT_EQ(TapeSessionOutcome::Failure, tracker.outcome());
-  EXPECT_EQ(1, tracker.errorStats().at(TapeSessionError::Reporting));
+  EXPECT_TRUE(tracker.outcomeSnapshot().hasFailures);
+  EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::Reporting));
   EXPECT_EQ(1, countMessage(log.getLog(), "Tape session finished"));
   EXPECT_NE(std::string::npos, log.getLog().find("\"sessionState\":\"Finished\""));
   EXPECT_NE(std::string::npos, log.getLog().find("\"status\":\"failure\""));
@@ -320,8 +319,7 @@ TEST(TapeSessionReporterTest, SuccessfulEmptyMountHasAFinalSuccessOutcome) {
   TapeSessionTracker tracker;
   tracker.setMount(&mount);
   tracker.beginTapeSession();
-  tracker.incrementError(TapeSessionError::EmptyMount);
-  tracker.setOutcome(TapeSessionOutcome::Success);
+  tracker.recordEvent(TapeSessionEvent::EmptyMount);
   tracker.reportState(cta::tape::session::TapeSessionState::Finished);
   TapeSessionReporter reporter(tracker, lc, 1s, 1s);
   reporter.startThreads();
@@ -333,7 +331,7 @@ TEST(TapeSessionReporterTest, SuccessfulEmptyMountHasAFinalSuccessOutcome) {
   EXPECT_EQ(std::string::npos, log.getLog().find("\"status\":\"in_progress\""));
 }
 
-TEST(TapeSessionReporterTest, AutomaticOutcomeIsOnlyReportedAtCompletion) {
+TEST(TapeSessionReporterTest, OutcomeIsOnlyReportedAtCompletion) {
   for (bool failed : {false, true}) {
     cta::log::StringLogger log("dummy", "TapeSessionReporterTest", cta::log::DEBUG);
     log.setLogFormat("json");
@@ -343,7 +341,7 @@ TEST(TapeSessionReporterTest, AutomaticOutcomeIsOnlyReportedAtCompletion) {
     tracker.setMount(&mount);
     tracker.beginTapeSession();
     if (failed) {
-      tracker.incrementError(TapeSessionError::DiskWrite);
+      tracker.recordFailure(TapeSessionFailure::DiskWrite);
     }
     TapeSessionReporter reporter(tracker, lc, 1s, 1s);
     reporter.reportNow();
@@ -360,6 +358,32 @@ TEST(TapeSessionReporterTest, AutomaticOutcomeIsOnlyReportedAtCompletion) {
     EXPECT_EQ(1, countMessage(finalOutput, "Tape session finished"));
     EXPECT_NE(std::string::npos, finalOutput.find(failed ? "\"status\":\"failure\"" : "\"status\":\"success\""));
   }
+}
+
+TEST(TapeSessionReporterTest, InformationalEventsAndAlertsKeepLegacyFieldsWithoutFailing) {
+  cta::log::StringLogger log("dummy", "TapeSessionReporterTest", cta::log::DEBUG);
+  log.setLogFormat("json");
+  cta::log::LogContext lc(log);
+  ReportingTapeMount mount;
+  TapeSessionTracker tracker;
+  tracker.setMount(&mount);
+  tracker.beginTapeSession();
+  tracker.recordEvent(TapeSessionEvent::TapeFilledUp);
+  tracker.recordEvent(TapeSessionEvent::TapeFilledUp);
+  tracker.recordEvent(TapeSessionEvent::DiskSpaceReservationFailure);
+  tracker.recordEvent(TapeSessionEvent::DiskSpaceReservationTestFailure);
+  tracker.incrementTapeAlert(0x01);
+  tracker.reportState(cta::tape::session::TapeSessionState::Finished);
+  TapeSessionReporter reporter(tracker, lc, 1s, 1s);
+  reporter.startThreads();
+  reporter.finish();
+  reporter.waitThreads();
+  const auto output = log.getLog();
+  EXPECT_NE(std::string::npos, output.find("\"status\":\"success\""));
+  EXPECT_NE(std::string::npos, output.find("\"Info_tapeFilledUp\":1"));
+  EXPECT_NE(std::string::npos, output.find("Info_diskSpaceReservationFailure"));
+  EXPECT_NE(std::string::npos, output.find("Info_diskSpaceReservationTestFailure"));
+  EXPECT_EQ(1, tracker.outcomeSnapshot().tapeAlerts.at(0x01));
 }
 
 }  // namespace cta::tape::daemon

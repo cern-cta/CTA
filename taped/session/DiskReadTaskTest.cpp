@@ -35,13 +35,15 @@ using namespace cta::disk;
 struct MockMigrationReportPacker : public MigrationReportPacker {
   void reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext& lc) override {}
 
-  void reportSkippedJob(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob,
-                        const std::string& failure,
-                        cta::log::LogContext& lc) override {}
+  void reportFileNotArchived(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
+                             const std::string& failure,
+                             cta::log::LogContext& lc,
+                             RecordedFailure recordedFailure) override {}
 
   void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
                        const cta::exception::Exception& ex,
-                       cta::log::LogContext& lc) override {}
+                       cta::log::LogContext& lc,
+                       RecordedFailure recordedFailure) override {}
 
   void reportEndOfSession(cta::log::LogContext& lc) override {}
 
@@ -49,7 +51,8 @@ struct MockMigrationReportPacker : public MigrationReportPacker {
 
   void disableBulk() override {}
 
-  MockMigrationReportPacker(cta::ArchiveMount* rm, cta::log::LogContext lc) : MigrationReportPacker(rm, lc) {}
+  MockMigrationReportPacker(cta::ArchiveMount* rm, cta::log::LogContext lc, TapeSessionTracker& tracker)
+      : MigrationReportPacker(rm, lc, tracker) {}
 };
 
 class FakeTapeWriteTask : public DataConsumer {

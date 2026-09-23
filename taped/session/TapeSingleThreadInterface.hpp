@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "DriveUsability.hpp"
 #include "EncryptionControl.hpp"
 #include "TapeSessionStats.hpp"
 #include "TapeSessionTracker.hpp"
@@ -65,7 +64,7 @@ protected:
   bool m_loadingAttempted = false;
 
   /** Whether the tape thread permits the drive to be reused. */
-  DriveUsability m_hardwareStatus = DriveUsability::Reusable;
+  bool m_driveReusable = true;
 
   /** Session statistics */
   TapeTransferStats m_stats;
@@ -242,7 +241,7 @@ protected:
   virtual void countTapeAlert(uint16_t tapeAlertCode) = 0;
 
 public:
-  DriveUsability getHardwareStatus() const { return m_hardwareStatus; }
+  bool isDriveReusable() const { return m_driveReusable; }
 
   // Read after joining the tape thread.
   bool loadingAttempted() const { return m_loadingAttempted; }

@@ -8,14 +8,15 @@
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/TimeoutException.hpp"
 #include "common/log/StringLogger.hpp"
+#include "common/utils/ScopeExit.hpp"
 #include "runtime/config/parsing/TomlParser.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/TapeMount.hpp"
-#include "session/ActiveTapeSession.hpp"
 
 #include <functional>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <memory>
 #include <stdexcept>
 #include <vector>
 
@@ -99,7 +100,7 @@ public:
 class DriveControllerTest : public testing::Test {
 protected:
   using Clock = TapeSessionTracker::Clock;
-  ActiveTapeSession activeSession;
+  std::shared_ptr<const TapeSessionTracker> activeTracker {nullptr};
   TapedConfig config;
   log::StringLogger logger {"host", "DriveControllerTest", log::DEBUG};
   testing::StrictMock<MockDriveScheduler> scheduler;
@@ -130,7 +131,11 @@ protected:
     explicit FakeDriveOperations(DriveControllerTest& fixture) : fixture(fixture) {}
 
     std::optional<TapeSessionLivenessSnapshot> tapeSessionLiveness() const override {
-      return fixture.activeSession.snapshot();
+      const auto tracker = std::atomic_load(&fixture.activeTracker);
+      if (!tracker) {
+        return std::nullopt;
+      }
+      return tracker->livenessSnapshot();
     }
 
     IScheduler& scheduler() override { return fixture.scheduler; }
@@ -1103,6 +1108,7 @@ TEST_F(DriveControllerTest, ReusableDriveWithoutRecoveryDoesNotRequestDown) {
   supplyMount();
   transfer = [](TapeMount&) {
     TapeSessionResult result;
+    result.successful = true;
     return result;
   };
   expectPreparation();
@@ -1137,7 +1143,7 @@ TEST_F(DriveControllerTest, HandledSessionFailureRetriesWithoutCleaning) {
   supplyMount();
   transfer = [](TapeMount&) {
     TapeSessionResult result;
-    result.retryDelayRequired = true;
+    result.successful = false;
     return result;
   };
   clean = [] {
@@ -1150,6 +1156,34 @@ TEST_F(DriveControllerTest, HandledSessionFailureRetriesWithoutCleaning) {
   EXPECT_EQ(1, destroyed);
   EXPECT_EQ(nullptr, liveMount());
   EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.idle_scheduling_interval_secs));
+}
+
+// File failures and informational events are paced using the same final outcome as the session log.
+TEST_F(DriveControllerTest, SessionOutcomeDeterminesSchedulingDelay) {
+  for (const bool fileFailed : {false, true}) {
+    TapeSessionTracker tracker;
+    tracker.beginTapeSession();
+    if (fileFailed) {
+      tracker.recordFailure(TapeSessionFailure::DiskRead);
+    } else {
+      tracker.recordEvent(TapeSessionEvent::DiskSpaceReservationTestFailure);
+    }
+    tracker.reportState(cta::tape::session::TapeSessionState::Finished);
+    supplyMount();
+    transfer = [&](TapeMount&) {
+      TapeSessionResult result;
+      result.successful = !tracker.hasFailures();
+      return result;
+    };
+    sleeps.clear();
+    expectPreparation();
+    iteration();
+    if (fileFailed) {
+      EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.idle_scheduling_interval_secs));
+    } else {
+      EXPECT_TRUE(sleeps.empty());
+    }
+  }
 }
 
 // Escaping session exceptions are fatal, including database disconnections.
@@ -1206,7 +1240,8 @@ TEST_F(DriveControllerTest, UnusableDriveRequestsDownAndPreservesSpecificReason)
   supplyMount();
   transfer = [](TapeMount&) {
     TapeSessionResult result;
-    result.driveUsability = DriveUsability::MustRemainDown;
+    result.driveReusable = false;
+    result.successful = false;
     return result;
   };
   expectPreparation();
@@ -1221,6 +1256,7 @@ TEST_F(DriveControllerTest, UnusableDriveRequestsDownAndPreservesSpecificReason)
     }));
   iteration();
   EXPECT_EQ(1, destroyed);
+  EXPECT_TRUE(sleeps.empty());
 
   // Recover using the session VID even after its mount has been destroyed.
   schedule = {};
@@ -1246,7 +1282,7 @@ TEST_F(DriveControllerTest, UnusableDriveWithoutSpecificReasonPublishesTransferF
   supplyMount();
   transfer = [](TapeMount&) {
     TapeSessionResult result;
-    result.driveUsability = DriveUsability::MustRemainDown;
+    result.driveReusable = false;
     return result;
   };
   expectPreparation();
@@ -1268,7 +1304,7 @@ TEST_F(DriveControllerTest, DownPublicationFailureAfterTransferStillReleasesMoun
   supplyMount();
   transfer = [](TapeMount&) {
     TapeSessionResult result;
-    result.driveUsability = DriveUsability::MustRemainDown;
+    result.driveReusable = false;
     return result;
   };
   expectPreparation();
@@ -1287,7 +1323,7 @@ TEST_F(DriveControllerTest, UnusableSessionThenDownWaitAndShutdownNeverAccessHar
   supplyMount();
   transfer = [](TapeMount&) {
     TapeSessionResult result;
-    result.driveUsability = DriveUsability::MustRemainDown;
+    result.driveReusable = false;
     return result;
   };
   testing::InSequence sequence;
@@ -1608,7 +1644,9 @@ TEST_F(DriveControllerTest, LivenessUsesEachStateTimeoutAtItsBoundary) {
   const auto start = Clock::time_point {} + 100s;
   EXPECT_TRUE(liveAt(start));
   auto tracker = std::make_shared<TapeSessionTracker>();
-  const ActiveTapeSession::Scope active(activeSession, tracker);
+  std::atomic_store<const TapeSessionTracker>(&activeTracker, tracker);
+  const utils::ScopeExit clearActiveTracker(
+    [this] { std::atomic_store<const TapeSessionTracker>(&activeTracker, nullptr); });
   EXPECT_TRUE(liveAt(start));  // A published tracker may not have started yet.
   tracker->beginTapeSession(start);
   const std::pair<cta::tape::session::TapeSessionState, unsigned int> cases[] {
@@ -1644,7 +1682,9 @@ TEST_F(DriveControllerTest, TransferProgressRefreshesOnlyInactivityAndNewSession
   const auto start = Clock::time_point {} + 100s;
   config.transfers.no_block_move_timeout_secs = 10;
   auto tracker = std::make_shared<TapeSessionTracker>();
-  const ActiveTapeSession::Scope active(activeSession, tracker);
+  std::atomic_store<const TapeSessionTracker>(&activeTracker, tracker);
+  const utils::ScopeExit clearActiveTracker(
+    [this] { std::atomic_store<const TapeSessionTracker>(&activeTracker, nullptr); });
   tracker->beginTapeSession(start);
   tracker->notifyBlockMovement(1, start + 1s);
   tracker->reportState(Transferring, start + 2s);
@@ -1670,7 +1710,9 @@ TEST_F(DriveControllerTest, ActiveTrackerIsOwnedAndClearedOnReturnAndException) 
       weak = tracker;
       tracker->beginTapeSession(start);
       tracker->reportState(cta::tape::session::TapeSessionState::Mounting, start);
-      const ActiveTapeSession::Scope active(activeSession, tracker);
+      std::atomic_store<const TapeSessionTracker>(&activeTracker, tracker);
+      const utils::ScopeExit clearActiveTracker(
+        [this] { std::atomic_store<const TapeSessionTracker>(&activeTracker, nullptr); });
       tracker.reset();
       EXPECT_FALSE(weak.expired());
       EXPECT_FALSE(liveAt(start + 1s));
@@ -1684,7 +1726,7 @@ TEST_F(DriveControllerTest, ActiveTrackerIsOwnedAndClearedOnReturnAndException) 
       EXPECT_NO_THROW(execute());
     }
     EXPECT_TRUE(weak.expired());
-    EXPECT_FALSE(activeSession.snapshot());
+    EXPECT_FALSE(std::atomic_load(&activeTracker));
     EXPECT_TRUE(liveAt(start + 1s));
   }
 }

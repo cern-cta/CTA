@@ -20,10 +20,11 @@ namespace cta::tape::daemon {
 class MigrationReportPacker : public ReportPackerInterface<detail::Migration> {
 public:
   /**
+   * @param tracker Session tracker, which must outlive the report worker.
    * @param tg The client who is asking for a migration of his files
    * and to whom we have to report to the status of the operations.
    */
-  MigrationReportPacker(cta::ArchiveMount* archiveMount, const cta::log::LogContext& lc);
+  MigrationReportPacker(cta::ArchiveMount* archiveMount, const cta::log::LogContext& lc, TapeSessionTracker& tracker);
 
   ~MigrationReportPacker() override;
 
@@ -36,15 +37,17 @@ public:
   virtual void reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext& lc);
 
   /**
-   * Create into the MigrationReportPacker a report for a skipped file. We left a placeholder on tape, so
-   * writing can carry on, but this fSeq holds no data. In the mean time, the job has to count a failure.
-   * @param skippedArchiveJob the failed file
+   * Report a file that was not archived. A placeholder preserves the tape sequence so writing can continue.
+   * The job is reported as failed.
+   * @param failedArchiveJob the failed file
    * @param ex the reason for the failure
    * @param lc log context provided by the calling thread.
+   * @param recordedFailure Receipt for this file\'s failure, already recorded by the session tracker.
    */
-  virtual void reportSkippedJob(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob,
-                                const std::string& failure,
-                                cta::log::LogContext& lc);
+  virtual void reportFileNotArchived(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
+                                     const std::string& failure,
+                                     cta::log::LogContext& lc,
+                                     RecordedFailure recordedFailure);
 
   /**
    * Create into the MigrationReportPacker a report for the failed migration of migratedFile
@@ -52,10 +55,12 @@ public:
    * @param migratedFile the file which failed
    * @param ex the reason for the failure
    * @param lc log context provided by the calling thread.
+   * @param recordedFailure Receipt for this file\'s failure, already recorded by the session tracker.
    */
   virtual void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
                                const cta::exception::Exception& ex,
-                               cta::log::LogContext& lc);
+                               cta::log::LogContext& lc,
+                               RecordedFailure recordedFailure);
 
   /**
    * Create into the MigrationReportPacker a report for the signaling a flushing on tape
@@ -137,17 +142,17 @@ private:
     void execute(MigrationReportPacker& reportPacker) override;
   };
 
-  class ReportSkipped : public Report {
+  class ReportFileNotArchived : public Report {
     const std::string m_failureLog;
     /**
-     * The failed archive job we skipped
+     * The failed archive job whose tape entry is a placeholder
      */
-    std::unique_ptr<cta::ArchiveJob> m_skippedArchiveJob;
+    std::unique_ptr<cta::ArchiveJob> m_failedArchiveJob;
 
   public:
-    ReportSkipped(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob, std::string& failureLog)
+    ReportFileNotArchived(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, std::string& failureLog)
         : m_failureLog(failureLog),
-          m_skippedArchiveJob(std::move(skippedArchiveJob)) {}
+          m_failedArchiveJob(std::move(failedArchiveJob)) {}
 
     void execute(MigrationReportPacker& reportPacker) override;
   };
@@ -265,7 +270,7 @@ private:
    * Sanity check variable to register if an error has happened
    * Is set at true as soon as a ReportError has been processed.
    */
-  bool m_errorHappened = false;
+  bool m_failedJobReported = false;
 
   /* bool to keep the inner thread running. Is set at false
    * when an end of session (with error) is called

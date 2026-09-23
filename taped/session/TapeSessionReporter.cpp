@@ -23,78 +23,98 @@ namespace {
  * @param error Session error category to count or name.
  * @return Log-field name for the error, or Error_unknown for an unrecognized value.
  */
-const char* errorName(TapeSessionError error) {
+const char* errorName(TapeSessionFailure error) {
   switch (error) {
-    case TapeSessionError::DiskOpenForWrite:
+    case TapeSessionFailure::DiskOpenForWrite:
       return "Error_diskOpenForWrite";
-    case TapeSessionError::DiskWrite:
+    case TapeSessionFailure::DiskWrite:
       return "Error_diskWrite";
-    case TapeSessionError::DiskCloseAfterWrite:
+    case TapeSessionFailure::DiskCloseAfterWrite:
       return "Error_diskCloseAfterWrite";
-    case TapeSessionError::DiskOpenForRead:
+    case TapeSessionFailure::DiskOpenForRead:
       return "Error_diskOpenForRead";
-    case TapeSessionError::DiskFileToReadSizeMismatch:
+    case TapeSessionFailure::DiskFileToReadSizeMismatch:
       return "Error_diskFileToReadSizeMismatch";
-    case TapeSessionError::DiskRead:
+    case TapeSessionFailure::DiskRead:
       return "Error_diskRead";
-    case TapeSessionError::DiskUnexpectedSizeWhenReading:
+    case TapeSessionFailure::DiskUnexpectedSizeWhenReading:
       return "Error_diskUnexpectedSizeWhenReading";
-    case TapeSessionError::TapeFSeqOutOfSequenceForWrite:
+    case TapeSessionFailure::TapeFSeqOutOfSequenceForWrite:
       return "Error_tapeFSeqOutOfSequenceForWrite";
-    case TapeSessionError::TapeWriteHeader:
+    case TapeSessionFailure::TapeWriteHeader:
       return "Error_tapeWriteHeader";
-    case TapeSessionError::TapeWriteData:
+    case TapeSessionFailure::TapeWriteData:
       return "Error_tapeWriteData";
-    case TapeSessionError::TapeWriteTrailer:
+    case TapeSessionFailure::TapeWriteTrailer:
       return "Error_tapeWriteTrailer";
-    case TapeSessionError::TapePositionForRead:
+    case TapeSessionFailure::TapePositionForRead:
       return "Error_tapePositionForRead";
-    case TapeSessionError::TapeReadData:
+    case TapeSessionFailure::TapeReadData:
       return "Error_tapeReadData";
-    case TapeSessionError::TapeUnload:
+    case TapeSessionFailure::TapeUnload:
       return "Error_tapeUnload";
-    case TapeSessionError::TapeDismount:
+    case TapeSessionFailure::TapeDismount:
       return "Error_tapeDismount";
-    case TapeSessionError::TapeMountForWrite:
+    case TapeSessionFailure::TapeMountForWrite:
       return "Error_tapeMountForWrite";
-    case TapeSessionError::TapeMountForRead:
+    case TapeSessionFailure::TapeMountForRead:
       return "Error_tapeMountForRead";
-    case TapeSessionError::TapeLoad:
+    case TapeSessionFailure::TapeLoad:
       return "Error_tapeLoad";
-    case TapeSessionError::CheckingTapeAlert:
+    case TapeSessionFailure::CheckingTapeAlert:
       return "Error_checkingTapeAlert";
-    case TapeSessionError::TapeNotWriteable:
+    case TapeSessionFailure::TapeNotWriteable:
       return "Error_tapeNotWriteable";
-    case TapeSessionError::TapeEncryptionEnable:
+    case TapeSessionFailure::TapeEncryptionEnable:
       return "Error_tapeEncryptionEnable";
-    case TapeSessionError::TapeEncryptionDisable:
+    case TapeSessionFailure::TapeEncryptionDisable:
       return "Error_tapeEncryptionDisable";
-    case TapeSessionError::TapeLbpDisable:
+    case TapeSessionFailure::TapeLbpDisable:
       return "Error_tapeLbpDisable";
-    case TapeSessionError::TapePositionForWrite:
+    case TapeSessionFailure::TapePositionForWrite:
       return "Error_tapePositionForWrite";
-    case TapeSessionError::TapeFlush:
+    case TapeSessionFailure::TapeFlush:
       return "Error_tapeFlush";
-    case TapeSessionError::TapesCheckLabelBeforeReading:
+    case TapeSessionFailure::TapesCheckLabelBeforeReading:
       return "Error_tapesCheckLabelBeforeReading";
-    case TapeSessionError::Reporting:
+    case TapeSessionFailure::Reporting:
       return "Error_reporting";
-    case TapeSessionError::DiskSpaceReservationTestFailure:
-      return "Info_diskSpaceReservationTestFailure";
-    case TapeSessionError::DiskSpaceReservationFailure:
-      return "Info_diskSpaceReservationFailure";
-    case TapeSessionError::NoFilesToRecall:
-      return "Info_noFilesToRecall";
-    case TapeSessionError::NoFilesToMigrate:
-      return "Info_noFilesToMigrate";
-    case TapeSessionError::EmptyMount:
-      return "Info_emptyMount";
-    case TapeSessionError::FileSkipped:
+    case TapeSessionFailure::FileNotArchived:
       return "Info_fileSkipped";
-    case TapeSessionError::TapeFilledUp:
-      return "Info_tapeFilledUp";
+    case TapeSessionFailure::UnexpectedSession:
+      return "Error_unexpectedSession";
+    case TapeSessionFailure::TaskInjection:
+      return "Error_taskInjection";
+    case TapeSessionFailure::WorkerSignalling:
+      return "Error_workerSignalling";
+    case TapeSessionFailure::UnexpectedCleanup:
+      return "Error_unexpectedCleanup";
+    case TapeSessionFailure::UnclassifiedFile:
+      return "Error_unclassifiedFile";
+    case TapeSessionFailure::Count:
+      break;
   }
   return "Error_unknown";
+}
+
+const char* eventName(TapeSessionEvent event) {
+  switch (event) {
+    case TapeSessionEvent::DiskSpaceReservationTestFailure:
+      return "Info_diskSpaceReservationTestFailure";
+    case TapeSessionEvent::DiskSpaceReservationFailure:
+      return "Info_diskSpaceReservationFailure";
+    case TapeSessionEvent::NoFilesToRecall:
+      return "Info_noFilesToRecall";
+    case TapeSessionEvent::NoFilesToMigrate:
+      return "Info_noFilesToMigrate";
+    case TapeSessionEvent::EmptyMount:
+      return "Info_emptyMount";
+    case TapeSessionEvent::TapeFilledUp:
+      return "Info_tapeFilledUp";
+    case TapeSessionEvent::Count:
+      break;
+  }
+  return "Info_unknown";
 }
 
 }  // namespace
@@ -139,7 +159,7 @@ void TapeSessionReporter::run() {
     try {
       reportNow();
     } catch (const std::exception& ex) {
-      m_tracker.incrementError(TapeSessionError::Reporting);
+      m_tracker.recordFailure(TapeSessionFailure::Reporting);
       cta::log::ScopedParamContainer params(m_lc);
       params.add("what", ex.what());
       m_lc.log(cta::log::WARNING, "Failed to report tape session statistics");
@@ -149,7 +169,7 @@ void TapeSessionReporter::run() {
   try {
     reportSessionFinished();
   } catch (const std::exception& ex) {
-    m_tracker.incrementError(TapeSessionError::Reporting);
+    m_tracker.recordFailure(TapeSessionFailure::Reporting);
     cta::log::ScopedParamContainer params(m_lc);
     params.add("what", ex.what());
     m_lc.log(cta::log::WARNING, "Failed to send final tape session statistics");
@@ -197,7 +217,7 @@ void TapeSessionReporter::reportSessionFinished() {
   try {
     m_tracker.mount()->setTapeSessionStats(stats.tape);
   } catch (...) {
-    m_tracker.incrementError(TapeSessionError::Reporting);
+    m_tracker.recordFailure(TapeSessionFailure::Reporting);
     m_lc.log(cta::log::WARNING, "Failed to publish final tape session statistics");
   }
   // Publication failures must be reflected in the single final outcome log.
@@ -259,21 +279,10 @@ void TapeSessionReporter::logStats(bool sessionFinished, const TapeSessionStats&
     params.add("sessionState", std::nullopt);
   }
   params.add("sessionType", cta::tape::session::toString(m_tracker.type()));
-  if (!sessionFinished) {
-    params.add("status", "in_progress");
-  } else {
-    switch (m_tracker.outcome()) {
-      case TapeSessionOutcome::Automatic:
-        params.add("status", m_tracker.errorHappened() ? "failure" : "success");
-        break;
-      case TapeSessionOutcome::Success:
-        params.add("status", "success");
-        break;
-      case TapeSessionOutcome::Failure:
-        params.add("status", "failure");
-        break;
-    }
-  }
+  const auto assessment = m_tracker.outcomeSnapshot();
+  params.add("status",
+             !sessionFinished || !assessment.finished ? "in_progress" :
+                                                        (assessment.hasFailures ? "failure" : "success"));
   params.add("mountAttempted", m_tracker.mountAttempted() ? 1 : 0);
   params.add("tapeVid", mount.getVid());
   params.add("mountType", cta::common::dataStructures::toCamelCaseString(mount.getMountType()));
@@ -285,10 +294,17 @@ void TapeSessionReporter::logStats(bool sessionFinished, const TapeSessionStats&
   params.add("tapePool", mount.getPoolName());
   params.add("capacityInBytes", mount.getCapacityInBytes());
 
-  for (const auto& [error, count] : m_tracker.errorStats()) {
-    params.add(errorName(error), count);
+  for (size_t i = 0; i < assessment.failures.size(); ++i) {
+    if (assessment.failures[i]) {
+      params.add(errorName(static_cast<TapeSessionFailure>(i)), assessment.failures[i]);
+    }
   }
-  for (const auto& [tapeAlertCode, count] : m_tracker.tapeAlertStats()) {
+  for (size_t i = 0; i < assessment.events.size(); ++i) {
+    if (assessment.events[i]) {
+      params.add(eventName(static_cast<TapeSessionEvent>(i)), assessment.events[i]);
+    }
+  }
+  for (const auto& [tapeAlertCode, count] : assessment.tapeAlerts) {
     params.add("Error_" + cta::tape::SCSI::tapeAlertToCompactString(tapeAlertCode), count);
   }
   for (const auto& [threadId, file] : m_tracker.activeDiskFiles()) {

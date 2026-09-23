@@ -65,9 +65,8 @@ cta::tape::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
     try {
       m_this.m_reportPacker.reportDriveStatus(status, reason, m_this.m_logContext);
     } catch (...) {
-      m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
       try {
-        m_this.m_tracker.incrementError(TapeSessionError::Reporting);
+        m_this.m_tracker.recordFailure(TapeSessionFailure::Reporting);
       } catch (...) {}
     }
   };
@@ -81,7 +80,7 @@ cta::tape::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
   try {
     m_this.m_taskInjector->finish();
   } catch (...) {
-    m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
+    m_this.m_tracker.recordFailure(TapeSessionFailure::WorkerSignalling);
     // Still clean the drive; failed signalling does not guarantee injector shutdown.
     try {
       m_this.m_logContext.log(log::ERR, "Failed to signal task injector shutdown during tape cleanup");
@@ -110,28 +109,28 @@ cta::tape::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
     const auto result = cleaner.cleanDrive(m_this.m_drive, reportStatus);
     if (!result.driveReusable()) {
       cleanupError = result.errorMessage;
-      m_this.m_hardwareStatus = DriveUsability::MustRemainDown;
-      m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
+      m_this.m_driveReusable = false;
+      m_this.m_tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedCleanup);
       try {
         m_this.m_logContext.log(log::ERR, result.errorMessage);
       } catch (...) {}
     }
   } catch (const cta::exception::Exception& ex) {
     cleanupError = ex.getMessageValue();
-    m_this.m_hardwareStatus = DriveUsability::MustRemainDown;
-    m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
+    m_this.m_driveReusable = false;
+    m_this.m_tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedCleanup);
   } catch (const std::exception& ex) {
     cleanupError = ex.what();
-    m_this.m_hardwareStatus = DriveUsability::MustRemainDown;
-    m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
+    m_this.m_driveReusable = false;
+    m_this.m_tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedCleanup);
   } catch (...) {
     cleanupError = "Unknown exception during drive cleanup";
-    m_this.m_hardwareStatus = DriveUsability::MustRemainDown;
-    m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
+    m_this.m_driveReusable = false;
+    m_this.m_tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedCleanup);
   }
 
   m_timer.reset();
-  if (m_this.m_hardwareStatus == DriveUsability::MustRemainDown) {
+  if (!m_this.m_driveReusable) {
     reportStatusSafely(
       DriveStatus::Down,
       common::dataStructures::formatDriveDownReason(common::dataStructures::DriveDownReason::DriveCleanupFailed,
@@ -200,12 +199,17 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
   // This out-of-try-catch variables allows us to record the stage of the
   // process we're in, and to count the error if it occurs.
   // Stop counting the current stage once individual tasks take over error reporting.
-  TapeSessionError currentErrorToCount = TapeSessionError::TapeMountForRead;
+  TapeSessionFailure currentErrorToCount = TapeSessionFailure::TapeMountForRead;
   bool countCurrentError = true;
 
   // Share operational failure cleanup; other exception types propagate to the caller.
   const auto handleFailure = [&](const std::string& errorMessage) {
-    m_tracker.setOutcome(TapeSessionOutcome::Failure);
+    // Also transmit the error step to the session tracker.
+    if (countCurrentError) {
+      m_tracker.recordFailure(currentErrorToCount);
+    } else {
+      m_tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
+    }
     // Publish transfer statistics; the RAII cleaner recorded cleanup timings independently.
     m_tracker.updateTapeTransferStats(m_stats);
     // We end up here because one step failed, be it at mount time, of after
@@ -214,14 +218,11 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
     // positioning mode).
     // This can happen late in the session, so we can still print the stats.
     cta::log::ScopedParamContainer params(m_logContext);
-    params.add("status", "error").add(cta::semconv::log::exceptionMessage, errorMessage);
+    params.add("status", m_tracker.hasFailures() ? "error" : "success")
+      .add(cta::semconv::log::exceptionMessage, errorMessage);
     m_totalTime = totalTimer.secs();
     m_tracker.setTotalTime(m_totalTime);
     logWithStat(cta::log::ERR, "Tape thread complete for reading", params);
-    // Also transmit the error step to the session tracker.
-    if (countCurrentError) {
-      m_tracker.incrementError(currentErrorToCount);
-    }
     // Flush the remaining tasks to cleanly exit.
     while (true) {
       TapeReadTask* task = m_tasks.pop();
@@ -238,7 +239,7 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
 
     if (m_reportPacker.allThreadsDone()) {
       // If disk threads finished before (for example, due to write error), report end of session
-      if (!m_tracker.errorHappened()) {
+      if (!m_tracker.recallCompletionHasDiagnostics()) {
         m_reportPacker.reportEndOfSession(m_logContext);
         m_logContext.log(
           cta::log::INFO,
@@ -276,14 +277,14 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
       params.add("capacityInBytes", m_retrieveMount.getCapacityInBytes());
       m_logContext.log(cta::log::INFO, "Tape session started for read");
 
-      currentErrorToCount = TapeSessionError::TapeLoad;
+      currentErrorToCount = TapeSessionFailure::TapeLoad;
       m_tracker.reportState(cta::tape::session::TapeSessionState::Mounting);
       measureSetupTime(&TapeSetupStats::initialMountTime, [&] { mountTapeReadOnly(); });
       m_tracker.reportState(cta::tape::session::TapeSessionState::Loading);
       measureSetupTime(&TapeSetupStats::tapeLoadTime, [&] { waitForDrive(); });
       m_tracker.reportState(cta::tape::session::TapeSessionState::Preparing);
       const double tapeLoadTime = m_tracker.stats().setup.tapeLoadTime;
-      currentErrorToCount = TapeSessionError::CheckingTapeAlert;
+      currentErrorToCount = TapeSessionFailure::CheckingTapeAlert;
       logTapeAlerts();
       m_tracker.addTapeSetupStats({.mountTime = timer.secs(cta::utils::Timer::resetCounter)});
       {
@@ -294,7 +295,7 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
       }
       m_retrieveMount.setTapeMounted(m_logContext);
       try {
-        currentErrorToCount = TapeSessionError::TapeEncryptionEnable;
+        currentErrorToCount = TapeSessionFailure::TapeEncryptionEnable;
         // We want those scoped params to last for the whole mount.
         // This will allow each session to be logged with its encryption
         // status:
@@ -324,7 +325,7 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
         m_taskInjector->setPromise();
       }
       // Then we have to initialise the tape read session
-      currentErrorToCount = TapeSessionError::TapesCheckLabelBeforeReading;
+      currentErrorToCount = TapeSessionFailure::TapesCheckLabelBeforeReading;
       auto readSession = openReadSession();
       m_tracker.addTapeSetupStats({.positionTime = timer.secs(cta::utils::Timer::resetCounter)});
       // and then report
@@ -396,7 +397,7 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
     // The session completed successfully, and the cleaner (unmount) executed
     // at the end of the previous block. Log the results.
     cta::log::ScopedParamContainer params(m_logContext);
-    params.add("status", m_tracker.errorHappened() ? "error" : "success");
+    params.add("status", m_tracker.hasFailures() ? "error" : "success");
     m_totalTime = totalTimer.secs();
     m_tracker.setTotalTime(m_totalTime);
     logWithStat(cta::log::INFO, "Tape thread complete", params);
@@ -411,7 +412,7 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
 
     if (m_reportPacker.allThreadsDone()) {
       // If disk threads finished before (for example, due to write error), report end of session
-      if (!m_tracker.errorHappened()) {
+      if (!m_tracker.recallCompletionHasDiagnostics()) {
         m_reportPacker.reportEndOfSession(m_logContext);
         m_logContext.log(
           cta::log::INFO,

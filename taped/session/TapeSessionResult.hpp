@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include "DriveUsability.hpp"
-
 namespace cta::tape::daemon {
 
 /**
@@ -14,15 +12,15 @@ namespace cta::tape::daemon {
  */
 struct TapeSessionResult {
   /**
-   * @brief Whether the drive is still usable after the tape session. 
-   * If e.g. tape session cleanup failed, this may be set to MustRemainDown.
+   * @brief Whether the drive is still usable after the tape session.
+   * False means the drive must remain down, for example after a cleanup failure.
    */
-  DriveUsability driveUsability = DriveUsability::Reusable;
+  bool driveReusable = true;
 
   /**
-   * @brief Whether to delay the next scheduling attempt when the drive remains reusable.
+   * @brief True if the completed session has no recorded failures, including final reporting failures.
    */
-  bool retryDelayRequired = false;
+  bool successful = true;
 };
 
 }  // namespace cta::tape::daemon

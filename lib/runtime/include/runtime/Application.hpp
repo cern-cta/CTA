@@ -15,6 +15,7 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/utils/FileUtils.hpp"
+#include "common/utils/ScopeExit.hpp"
 #include "common/utils/utils.hpp"
 #include "config/CommonConfig.hpp"
 #include "config/ConfigLoader.hpp"
@@ -223,8 +224,8 @@ public:
 
     auto config = runtime::loadFromToml<TConfig>(configFilePath, cliOptions.configStrict);
     // Even initialization callbacks can retain config references; destroy the app before config on every exit.
-    TelemetryCleanup telemetryCleanup(m_logPtr);
-    AppCleanup appCleanup(m_app);
+    const utils::ScopeExit telemetryCleanup([this] { cleanupTelemetry(); });
+    const utils::ScopeExit appCleanup([this] { m_app.reset(); });
     if (cliOptions.configCheck) {
       std::cout << "Config check passed." << std::endl;
       return EXIT_SUCCESS;
@@ -317,39 +318,25 @@ public:
   }
 
 private:
-  // Stop callbacks before destroying their target, while config, telemetry and logging remain alive.
-  struct AppCleanup {
-    std::optional<TApp>& app;
-
-    ~AppCleanup() { app.reset(); }
-  };
-
-  // OpenTelemetry uses process-global state.
-  // Cleanup is intentionally unconditional because cleanupOpenTelemetry() is idempotent.
-  struct TelemetryCleanup {
-    explicit TelemetryCleanup(const std::unique_ptr<log::Logger>& logger) : logger(logger) {}
-
-    ~TelemetryCleanup() {
-      if (!logger) {
-        return;
-      }
-      auto& log = *logger;
-      log::LogContext lc(log);
-      try {
-        cta::telemetry::cleanupOpenTelemetry(lc);
-      } catch (const std::exception& ex) {
-        log(log::ERR,
-            "OpenTelemetry cleanup failed",
-            {
-              {semconv::log::exceptionMessage, ex.what()}
-        });
-      } catch (...) {
-        log(log::ERR, "OpenTelemetry cleanup failed with an unknown exception", {});
-      }
+  // OpenTelemetry cleanup is idempotent, so attempt it even after partial initialization.
+  void cleanupTelemetry() noexcept {
+    if (!m_logPtr) {
+      return;
     }
-
-    const std::unique_ptr<log::Logger>& logger;
-  };
+    auto& log = *m_logPtr;
+    log::LogContext lc(log);
+    try {
+      cta::telemetry::cleanupOpenTelemetry(lc);
+    } catch (const std::exception& ex) {
+      log(log::ERR,
+          "OpenTelemetry cleanup failed",
+          {
+            {semconv::log::exceptionMessage, ex.what()}
+      });
+    } catch (...) {
+      log(log::ERR, "OpenTelemetry cleanup failed with an unknown exception", {});
+    }
+  }
 
   std::unique_ptr<log::Logger> initLogger(const TConfig& config, const TOpts& cliOptions) const {
     using namespace cta;

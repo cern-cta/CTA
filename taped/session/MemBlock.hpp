@@ -6,6 +6,7 @@
 #pragma once
 
 #include "Payload.hpp"
+#include "RecordedFailure.hpp"
 #include "common/exception/Exception.hpp"
 
 #include <memory>
@@ -17,38 +18,12 @@ namespace cta::tape::daemon {
  * Individual memory block with metadata
  */
 class MemBlock {
-  struct AlterationContext {
-    /** Flag indicating to the receiver that the file read failed */
-    bool m_failed;
+  enum class State { Normal, Failed, Cancelled, VerifyOnly };
 
-    /** Flag indicating that the transfer was cancelled, usually due to a
-     previous failure. */
-    bool m_cancelled;
-
-    /** Flag indicating that the transfer is verify only, no disk file
-     should be written. */
-    bool m_verifyOnly;
-
-    /**
-     * in case of error, the error message
-     */
-    std::string m_errorMsg;
-
-    static AlterationContext Failed(const std::string& msg) { return {true, false, false, msg}; }
-
-    static AlterationContext Cancelled() { return {false, true, false, ""}; }
-
-    static AlterationContext VerifyOnly() { return {false, false, true, ""}; }
-
-  private:
-    AlterationContext(const bool failed, const bool cancelled, const bool verifyOnly, const std::string& msg)
-        : m_failed(failed),
-          m_cancelled(cancelled),
-          m_verifyOnly(verifyOnly),
-          m_errorMsg(msg) {};
-  };
-
-  std::optional<AlterationContext> m_context;
+  // Keep the state outside optional storage so reset blocks always have an initialized discriminator.
+  State m_state = State::Normal;
+  std::optional<std::string> m_errorMsg;
+  std::optional<RecordedFailure> m_recordedFailure;
 
 public:
   /**
@@ -64,8 +39,8 @@ public:
    * @return
    */
   std::string errorMsg() const {
-    if (m_context) {
-      return m_context->m_errorMsg;
+    if (m_errorMsg) {
+      return *m_errorMsg;
     }
 
     throw cta::exception::Exception("Error Context is not set ="
@@ -76,27 +51,30 @@ public:
    * Return true if the block has been marked as failed
    * @return
    */
-  bool isFailed() const { return m_context.has_value() && m_context->m_failed; }
+  bool isFailed() const { return m_state == State::Failed; }
 
   /**
    * Return true if the block has been marked as canceled
    * @return
    */
-  bool isCanceled() const { return m_context.has_value() && m_context->m_cancelled; }
+  bool isCanceled() const { return m_state == State::Cancelled; }
 
   /**
    * Return true if the block has been marked as verify only
    * @return
    */
-  bool isVerifyOnly() const { return m_context.has_value() && m_context->m_verifyOnly; }
+  bool isVerifyOnly() const { return m_state == State::VerifyOnly; }
+
+  // A failed block carries the source diagnostic through the reader/writer handoff.
+  std::optional<RecordedFailure> recordedFailure() const { return m_recordedFailure; }
 
   /**
-   * Mark this block as failed ie
-   * m_failed is true, m_fileBlock and m_tapeFileBlock are set at -1
-   * Other members do not change
+   * Mark this block as failed and clear the file and tape block indices.
    */
-  void markAsFailed(const std::string& msg) {
-    m_context = AlterationContext::Failed(msg);
+  void markAsFailed(const std::string& msg, RecordedFailure failure) {
+    m_recordedFailure = failure;
+    m_errorMsg = msg;
+    m_state = State::Failed;
     m_fileBlock.reset();
     m_tapeFileBlock.reset();
   }
@@ -109,7 +87,9 @@ public:
    * (when positioning by fSeq, there's nothing we can do).
    */
   void markAsCancelled() {
-    m_context = AlterationContext::Cancelled();
+    m_recordedFailure.reset();
+    m_errorMsg = "";
+    m_state = State::Cancelled;
     m_fileBlock.reset();
     m_tapeFileBlock.reset();
   }
@@ -118,11 +98,14 @@ public:
    * Mark the block as verify only: no disk file will be written but the
    * file should otherwise be processed normally
    */
-  void markAsVerifyOnly() { m_context = AlterationContext::VerifyOnly(); }
+  void markAsVerifyOnly() {
+    m_recordedFailure.reset();
+    m_errorMsg = "";
+    m_state = State::VerifyOnly;
+  }
 
   /**
-   * Reset all the members.
-   * Numerical ones are set at -1.and m_failed to false.
+   * Clear transfer metadata, payload, alteration state and recorded failure.
    */
   void reset() noexcept {
     m_fileid.reset();
@@ -131,9 +114,9 @@ public:
     m_tapeFileBlock.reset();
     m_payload.reset();
 
-    //delete the previous m_context (if allocated)
-    //and set the new one to nullptr
-    m_context.reset();
+    m_state = State::Normal;
+    m_errorMsg.reset();
+    m_recordedFailure.reset();
   }
 
   /** Unique memory block id */

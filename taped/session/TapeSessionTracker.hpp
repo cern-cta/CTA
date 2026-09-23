@@ -5,12 +5,15 @@
 
 #pragma once
 
+#include "RecordedFailure.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "taped/session/SessionType.hpp"
 #include "taped/session/TapeSessionState.hpp"
 #include "taped/session/TapeSessionStats.hpp"
 
+#include <array>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <map>
 #include <mutex>
@@ -20,7 +23,7 @@
 
 namespace cta::tape::daemon {
 
-enum class TapeSessionError {
+enum class TapeSessionFailure {
   DiskOpenForWrite,
   DiskWrite,
   DiskCloseAfterWrite,
@@ -48,20 +51,40 @@ enum class TapeSessionError {
   TapeFlush,
   TapesCheckLabelBeforeReading,
   Reporting,
+  FileNotArchived,
+  UnexpectedSession,
+  TaskInjection,
+  WorkerSignalling,
+  UnexpectedCleanup,
+  UnclassifiedFile,
+  Count
+};
+
+// Normal stopping conditions are diagnostics, not session failures.
+enum class TapeSessionEvent {
   DiskSpaceReservationTestFailure,
   DiskSpaceReservationFailure,
   NoFilesToRecall,
   NoFilesToMigrate,
   EmptyMount,
-  FileSkipped,
-  TapeFilledUp
+  TapeFilledUp,
+  Count
 };
 
-// TODO: decide on what consistutes a failure; we should always get this from the error counter
-enum class TapeSessionOutcome { Automatic, Success, Failure };
+using TapeSessionFailureStats = std::map<TapeSessionFailure, uint32_t>;
+using TapeSessionFailureCounts = std::array<uint32_t, static_cast<size_t>(TapeSessionFailure::Count)>;
+using TapeSessionEventCounts = std::array<uint32_t, static_cast<size_t>(TapeSessionEvent::Count)>;
 
-using TapeSessionErrorStats = std::map<TapeSessionError, uint32_t>;
 using TapeAlertStats = std::map<uint16_t, uint32_t>;
+
+struct TapeSessionOutcomeSnapshot {
+  // Derived from session state; failure presence is meaningful before completion too.
+  bool finished;
+  bool hasFailures;
+  TapeSessionFailureCounts failures;
+  TapeSessionEventCounts events;
+  TapeAlertStats tapeAlerts;
+};
 
 struct DiskFileProgress {
   uint64_t fileId = 0;
@@ -125,10 +148,12 @@ public:
   void beginTapeSession(Clock::time_point now = Clock::now()) {
     std::lock_guard lock(m_mutex);
     m_stats = {};
-    m_errorStats.clear();
+    m_failureCounts.fill(0);
+    m_eventCounts.fill(0);
+    m_hasFailures = false;
+    m_recallCompletionHasDiagnostics = false;
     m_tapeAlertStats.clear();
     m_activeDiskFiles.clear();
-    m_outcome = TapeSessionOutcome::Automatic;
     m_mountAttempted = true;
     m_fileId = 0;
     m_fSeq = 0;
@@ -202,27 +227,25 @@ public:
     return m_type;
   }
 
-  /**
-   * @brief Set the explicit outcome without replacing an already recorded failure.
-   *
-   * @param outcome Requested outcome; an existing explicit failure is preserved.
-   */
-  void setOutcome(TapeSessionOutcome outcome) {
+  /** Snapshot completion and persistent failures together; only finished sessions have a final log status. */
+  TapeSessionOutcomeSnapshot outcomeSnapshot() const {
     std::lock_guard lock(m_mutex);
-    // A later successful operation cannot hide an earlier explicit failure.
-    if (m_outcome != TapeSessionOutcome::Failure) {
-      m_outcome = outcome;
-    }
+    return {m_state == cta::tape::session::TapeSessionState::Finished,
+            m_hasFailures,
+            m_failureCounts,
+            m_eventCounts,
+            m_tapeAlertStats};
   }
 
-  /**
-   * @brief Return the explicit outcome policy used by the reporter.
-   *
-   * @return Current explicit outcome or Automatic for error-based outcome reporting.
-   */
-  TapeSessionOutcome outcome() const {
+  bool hasFailures() const {
     std::lock_guard lock(m_mutex);
-    return m_outcome;
+    return m_hasFailures;
+  }
+
+  /** Preserve recall's existing end-report selection, including informational diagnostics and alerts. */
+  bool recallCompletionHasDiagnostics() const {
+    std::lock_guard lock(m_mutex);
+    return m_recallCompletionHasDiagnostics;
   }
 
   /**
@@ -245,37 +268,30 @@ public:
     return m_mountAttempted;
   }
 
-  /**
-   * @brief Increment an error counter; reporting errors also force a failure outcome.
-   *
-   * @param error Session error category to count or name.
-   */
-  void incrementError(TapeSessionError error) {
+  /** Count the owning operation's failure and return a receipt for propagation, without choosing recovery. */
+  RecordedFailure recordFailure(TapeSessionFailure failure) {
     std::lock_guard lock(m_mutex);
-    ++m_errorStats[error];
-    if (error == TapeSessionError::Reporting) {
-      m_outcome = TapeSessionOutcome::Failure;
+    recordFailureLocked(failure);
+    return RecordedFailure(*this, failure);
+  }
+
+  /** Propagated errors need a fallback reason only when no operation has classified a failure. */
+  void recordFailureIfNone(TapeSessionFailure failure) {
+    std::lock_guard lock(m_mutex);
+    if (!m_hasFailures) {
+      recordFailureLocked(failure);
     }
   }
 
-  /**
-   * @brief Replace an error count, removing zero counts.
-   *
-   * A nonzero reporting-error count forces failure; clearing it does not reset the outcome.
-   *
-   * @param error Session error category to count or name.
-   * @param count Replacement error count; zero removes the counter without resetting a failure outcome.
-   */
-  void setErrorCount(TapeSessionError error, uint32_t count) {
+  void recordEvent(TapeSessionEvent event) {
     std::lock_guard lock(m_mutex);
-    if (count == 0) {
-      m_errorStats.erase(error);
+    auto& count = m_eventCounts.at(static_cast<size_t>(event));
+    if (event == TapeSessionEvent::TapeFilledUp) {
+      count = 1;
     } else {
-      m_errorStats[error] = count;
-      if (error == TapeSessionError::Reporting) {
-        m_outcome = TapeSessionOutcome::Failure;
-      }
+      ++count;
     }
+    m_recallCompletionHasDiagnostics = true;
   }
 
   /**
@@ -286,6 +302,7 @@ public:
   void incrementTapeAlert(uint16_t tapeAlertCode) {
     std::lock_guard lock(m_mutex);
     ++m_tapeAlertStats[tapeAlertCode];
+    m_recallCompletionHasDiagnostics = true;
   }
 
   /**
@@ -422,13 +439,19 @@ public:
   }
 
   /**
-   * @brief Return a snapshot of the session error counters.
+   * @brief Return a snapshot of the session failure counters.
    *
-   * @return Snapshot of session error counts.
+   * @return Snapshot of session failure counts.
    */
-  TapeSessionErrorStats errorStats() const {
+  TapeSessionFailureStats failureStats() const {
     std::lock_guard lock(m_mutex);
-    return m_errorStats;
+    TapeSessionFailureStats result;
+    for (size_t i = 0; i < m_failureCounts.size(); ++i) {
+      if (m_failureCounts[i]) {
+        result.emplace(static_cast<TapeSessionFailure>(i), m_failureCounts[i]);
+      }
+    }
+    return result;
   }
 
   /**
@@ -546,17 +569,23 @@ public:
     m_fileStartTime = {};
   }
 
-  /**
-   * @brief Return whether any error or tape alert counters remain recorded.
-   *
-   * @return True if any error or tape alert counters are present.
-   */
-  bool errorHappened() const {
-    std::lock_guard lock(m_mutex);
-    return !m_errorStats.empty() || !m_tapeAlertStats.empty();
+private:
+  void recordFailureLocked(TapeSessionFailure failure) {
+    ++m_failureCounts.at(static_cast<size_t>(failure));
+    m_hasFailures = true;
+    // Newly classified propagation failures must not change the legacy recall end-report protocol.
+    switch (failure) {
+      case TapeSessionFailure::UnexpectedSession:
+      case TapeSessionFailure::TaskInjection:
+      case TapeSessionFailure::WorkerSignalling:
+      case TapeSessionFailure::UnexpectedCleanup:
+      case TapeSessionFailure::UnclassifiedFile:
+        break;
+      default:
+        m_recallCompletionHasDiagnostics = true;
+    }
   }
 
-private:
   // The caller holds m_mutex. Repeated reports must not postpone the phase deadline.
   void setStateLocked(cta::tape::session::TapeSessionState state, Clock::time_point now) {
     if (m_state != state) {
@@ -588,7 +617,8 @@ private:
   bool m_tapeDone = false;
   bool m_diskDone = false;
   cta::tape::session::SessionType m_type = cta::tape::session::SessionType::Undetermined;
-  TapeSessionOutcome m_outcome = TapeSessionOutcome::Automatic;
+  bool m_hasFailures = false;
+  bool m_recallCompletionHasDiagnostics = false;
   bool m_mountAttempted = true;
 
   uint64_t m_fileId = 0;
@@ -597,7 +627,8 @@ private:
   std::chrono::steady_clock::time_point m_fileStartTime;
 
   TapeSessionStats m_stats;
-  TapeSessionErrorStats m_errorStats;
+  TapeSessionFailureCounts m_failureCounts {};
+  TapeSessionEventCounts m_eventCounts {};
   TapeAlertStats m_tapeAlertStats;
   ActiveDiskFiles m_activeDiskFiles;
 

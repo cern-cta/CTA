@@ -40,7 +40,8 @@ struct MockRecallReportPacker : public RecallReportPacker {
 
   void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob,
                        const cta::exception::Exception& ex,
-                       cta::log::LogContext& lc) override {
+                       cta::log::LogContext& lc,
+                       RecordedFailure recordedFailure) override {
     cta::threading::MutexLocker ml(m_mutex);
     failedJobs++;
   }
@@ -57,8 +58,8 @@ struct MockRecallReportPacker : public RecallReportPacker {
     endSessionsWithError++;
   }
 
-  MockRecallReportPacker(cta::RetrieveMount* rm, cta::log::LogContext lc)
-      : RecallReportPacker(rm, lc),
+  MockRecallReportPacker(cta::RetrieveMount* rm, cta::log::LogContext lc, TapeSessionTracker& tracker)
+      : RecallReportPacker(rm, lc, tracker),
         completeJobs(0),
         failedJobs(0),
         endSessions(0),
@@ -174,7 +175,7 @@ TEST_F(cta_tape_daemonTest, RecallTaskInjectorNominal) {
 
   TapeSessionTracker tracker;
   std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
-  MockRecallReportPacker mrrp(&trm, lc);
+  MockRecallReportPacker mrrp(&trm, lc, tracker);
   FakeDiskWriteThreadPool diskWrite(mrrp, tracker, lc);
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
@@ -233,7 +234,7 @@ TEST_F(cta_tape_daemonTest, RecallTaskInjectorNoFiles) {
 
   TapeSessionTracker tracker;
   std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
-  MockRecallReportPacker mrrp(&trm, lc);
+  MockRecallReportPacker mrrp(&trm, lc, tracker);
   FakeDiskWriteThreadPool diskWrite(mrrp, tracker, lc);
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;

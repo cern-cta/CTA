@@ -83,10 +83,10 @@ public:
     // process we're in, and to count the error if it occurs.
     // We will not record errors for an empty string. This will allow us to
     // prevent counting where error happened upstream.
-    std::optional<TapeSessionError> currentErrorToCount;
+    std::optional<TapeSessionFailure> currentErrorToCount;
     MemBlock* mb = nullptr;
     try {
-      currentErrorToCount = TapeSessionError::TapePositionForRead;
+      currentErrorToCount = TapeSessionFailure::TapePositionForRead;
       auto reader = openFileReader(rs, lc);
       LBPMode = reader->getLBPMode();
       // At that point we already read the header.
@@ -98,7 +98,7 @@ public:
       const auto beginReportingTime = timer.secs(cta::utils::Timer::resetCounter);
       waitReportingTime += beginReportingTime;
       tracker.addDiskTransferStats({.waitReportingTime = beginReportingTime});
-      currentErrorToCount = TapeSessionError::TapeReadData;
+      currentErrorToCount = TapeSessionFailure::TapeReadData;
       auto checksum_adler32 = Payload::zeroAdler32();
       cta::checksum::ChecksumBlob tapeReadChecksum;
       while (stillReading) {
@@ -213,9 +213,7 @@ public:
           {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kTape   },
           {cta::semconv::attr::kErrorType,      cta::semconv::attr::ErrorTypeValues::kException}
       });
-      if (currentErrorToCount) {
-        tracker.incrementError(*currentErrorToCount);
-      }
+      const auto failure = tracker.recordFailure(currentErrorToCount.value_or(TapeSessionFailure::UnclassifiedFile));
       // This is an error case. Log and signal to the disk write task
       {
         cta::log::LogContext::ScopedParam sp0(lc, Param("fileBlock", fileBlock));
@@ -229,7 +227,7 @@ public:
 
       // mb might or might not be allocated at this point, but
       // reportErrorToDiskTask will deal with the allocation if required.
-      reportErrorToDiskTask(ex.getMessageValue(), mb);
+      reportErrorToDiskTask(ex.getMessageValue(), failure, mb);
     }  //end of catch
     tracker.fileFinished();
   }
@@ -252,7 +250,7 @@ private:
    * @param errorMsg The error message we will give to the client
    * @param mb The mem block we will use
    */
-  void reportErrorToDiskTask(const std::string& msg, MemBlock* mb = nullptr) {
+  void reportErrorToDiskTask(const std::string& msg, RecordedFailure failure, MemBlock* mb = nullptr) {
     // If we are not provided with a block, allocate it and
     // fill it up
     if (!mb) {
@@ -261,7 +259,7 @@ private:
       mb->m_fileid = m_retrieveJob->retrieveRequest.archiveFileID;
     }
     // mark the block failed and push it (plus signal the end)
-    mb->markAsFailed(msg);
+    mb->markAsFailed(msg, failure);
     m_fifo.pushDataBlock(mb);
     m_fifo.pushDataBlock(nullptr);
   }

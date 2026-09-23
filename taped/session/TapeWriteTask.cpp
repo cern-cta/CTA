@@ -84,11 +84,12 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
   // process we're in, and to count the error if it occurs.
   // We will not record errors for an empty string. This will allow us to
   // prevent counting where error happened upstream.
-  std::optional<TapeSessionError> currentErrorToCount = TapeSessionError::TapeFSeqOutOfSequenceForWrite;
+  std::optional<TapeSessionFailure> currentErrorToCount = TapeSessionFailure::TapeFSeqOutOfSequenceForWrite;
+  std::optional<RecordedFailure> failure;
   session.validateNextFSeq(m_archiveJob->tapeFile.fSeq);
   try {
     // Try to open the session
-    currentErrorToCount = TapeSessionError::TapeWriteHeader;
+    currentErrorToCount = TapeSessionFailure::TapeWriteHeader;
     tracker.notifyBeginNewJob(m_archiveJob->archiveFile.archiveFileID, m_archiveJob->tapeFile.fSeq);
     std::unique_ptr<cta::tape::tapeFile::FileWriter> output(openFileWriter(session, lc));
     m_LBPMode = output->getLBPMode();
@@ -101,21 +102,25 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
       MemBlock* const mb = m_fifo.popDataBlock();
       m_taskStats.waitDataTime += timer.secs(cta::utils::Timer::resetCounter);
       AutoReleaseBlock<MigrationMemoryManager> releaser(mb, m_memManager);
+      // Preserve the receipt for this file before releasing the failed block.
+      if (mb->isFailed() && mb->m_fileid == m_archiveJob->archiveFile.archiveFileID) {
+        failure = mb->recordedFailure();
+      }
 
       // Special treatment for 1st block. If disk failed to provide anything, we can skip the file
       // by leaving a placeholder on the tape (at minimal tape space cost), so we can continue
       // the tape session (and save a tape mount!).
       if (firstBlock && mb->isFailed()) {
-        currentErrorToCount = TapeSessionError::TapeWriteData;
+        currentErrorToCount = TapeSessionFailure::TapeWriteData;
         const char blank[] = "This file intentionally left blank: leaving placeholder after failing to read from disk.";
         output->write(blank, sizeof(blank));
         m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
         tracker.notifyBlockMovement(sizeof(blank));
-        currentErrorToCount = TapeSessionError::TapeWriteTrailer;
+        currentErrorToCount = TapeSessionFailure::TapeWriteTrailer;
         output->close();
         currentErrorToCount.reset();
         // Possibly failing writes are finished. We can continue this in catch for skip. outside of the loop.
-        throw Skip(mb->errorMsg());
+        throw FileNotArchived(mb->errorMsg());
       }
       firstBlock = false;
 
@@ -124,7 +129,7 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
 
       ckSum = mb->m_payload.adler32(ckSum);
       m_taskStats.checksumingTime += timer.secs(cta::utils::Timer::resetCounter);
-      currentErrorToCount = TapeSessionError::TapeWriteData;
+      currentErrorToCount = TapeSessionFailure::TapeWriteData;
       mb->m_payload.write(*output);
       currentErrorToCount.reset();
 
@@ -137,21 +142,21 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
     // If, after the FIFO is finished, we are still in the first block, we are in the presence of a 0-length file.
     // This also requires a placeholder.
     if (firstBlock) {
-      currentErrorToCount = TapeSessionError::TapeWriteData;
+      currentErrorToCount = TapeSessionFailure::TapeWriteData;
       const char blank[] = "This file intentionally left blank: zero-length file cannot be recorded to tape.";
       output->write(blank, sizeof(blank));
       m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
       tracker.notifyBlockMovement(sizeof(blank));
-      currentErrorToCount = TapeSessionError::TapeWriteTrailer;
+      currentErrorToCount = TapeSessionFailure::TapeWriteTrailer;
       output->close();
       currentErrorToCount.reset();
       // Possibly failing writes are finished. We can continue this in catch for skip. outside of the loop.
-      throw Skip("In TapeWriteTask::execute(): inserted a placeholder for zero length file.");
+      throw FileNotArchived("In TapeWriteTask::execute(): inserted a placeholder for zero length file.");
     }
 
     // Finish the writing of the file on tape
     // ut the trailer
-    currentErrorToCount = TapeSessionError::TapeWriteTrailer;
+    currentErrorToCount = TapeSessionFailure::TapeWriteTrailer;
     output->close();
     currentErrorToCount.reset();
     m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
@@ -191,18 +196,18 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
     // We throw again because we want TWST to stop all tasks from execution
     // and go into a degraded mode operation.
     throw;
-  } catch (const Skip& s) {
+  } catch (const FileNotArchived& s) {
     // We failed to read anything from the file. We can get rid of any block from the queue to
     // recycle them, and pass the report to the report packer. After than, we can carry on with
     // the write session->
     circulateMemBlocks();
-    tracker.incrementError(TapeSessionError::FileSkipped);
+    failure = tracker.recordFailure(TapeSessionFailure::FileNotArchived);
     m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
     m_taskStats.headerVolume += TapeTransferStats::trailerVolumePerFile;
     m_taskStats.filesCount++;
     // Record the fSeq in the tape session
     session.reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
-    reportPacker.reportSkippedJob(std::move(m_archiveJob), s, lc);
+    reportPacker.reportFileNotArchived(std::move(m_archiveJob), s, lc, *failure);
     m_waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
     tracker.addDiskTransferStats({.waitReportingTime = m_waitReportingTime});
     m_totalTime = localTime.secs();
@@ -212,7 +217,10 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
     // The disk reading failed due to a size mismatch or wrong checksum
     // just want to report a failed job and proceed with the mount
     if (currentErrorToCount) {
-      tracker.incrementError(*currentErrorToCount);
+      failure = tracker.recordFailure(*currentErrorToCount);
+    }
+    if (!failure) {
+      failure = tracker.recordFailure(TapeSessionFailure::UnclassifiedFile);
     }
     // Log and circulate blocks
     LogContext::ScopedParam sp(lc, Param("exceptionCode", cta::log::ERR));
@@ -222,7 +230,7 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
 
     // Record the fSeq in the tape session
     session.reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
-    reportPacker.reportFailedJob(std::move(m_archiveJob), e, lc);
+    reportPacker.reportFailedJob(std::move(m_archiveJob), e, lc, *failure);
     lc.log(cta::log::INFO, "Left placeholder on tape after skipping unreadable file.");
     return;
   } catch (const cta::exception::Exception& e) {
@@ -253,14 +261,14 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
         doReportJobError = false;
       }
       // This is indeed the end of the tape. Not an error.
-      tracker.setErrorCount(TapeSessionError::TapeFilledUp, 1);
+      tracker.recordEvent(TapeSessionEvent::TapeFilledUp);
       reportPacker.reportTapeFull(lc);
     } catch (...) {
       // The error is not an ENOSPC, so it is, indeed, an error.
       // If we got here with a new error, currentErrorToCount will be non-empty,
       // and we will pass the typed error to the session tracker.
       if (currentErrorToCount) {
-        tracker.incrementError(*currentErrorToCount);
+        failure = tracker.recordFailure(*currentErrorToCount);
       }
     }
 
@@ -279,8 +287,11 @@ void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
     circulateMemBlocks();
     // this last job will be either reported as failure or success
     if (doReportJobError) {
+      if (!failure) {
+        failure = tracker.recordFailure(TapeSessionFailure::UnclassifiedFile);
+      }
       // we should report job failure for exception
-      reportPacker.reportFailedJob(std::move(m_archiveJob), e, lc);
+      reportPacker.reportFailedJob(std::move(m_archiveJob), e, lc, *failure);
     }
 #ifdef CTA_PGSCHED
     if (!doReportJobError) {

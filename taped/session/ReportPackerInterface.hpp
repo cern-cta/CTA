@@ -29,13 +29,12 @@ enum ReportBatching { ReportInBulk, ReportByFile };
  */
 template<class PlaceHolder>
 class ReportPackerInterface {
-public:
-  void setTapeSessionTracker(TapeSessionTracker& tracker) { m_tapeSessionTracker = &tracker; }
-
 protected:
   virtual ~ReportPackerInterface() = default;
 
-  explicit ReportPackerInterface(const cta::log::LogContext& lc) : m_lc(lc) {}
+  ReportPackerInterface(const cta::log::LogContext& lc, TapeSessionTracker& tracker)
+      : m_lc(lc),
+        m_tapeSessionTracker(tracker) {}
 
   /**
    * Log a set of files independently of the success/failure
@@ -93,7 +92,9 @@ public:
    */
   virtual void disableBulk() { m_reportBatching = detail::ReportByFile; }
 
-  TapeSessionTracker* m_tapeSessionTracker = nullptr;
+protected:
+  // The session owner keeps the tracker alive until report workers have joined.
+  TapeSessionTracker& m_tapeSessionTracker;
 };
 
 }  // namespace cta::tape::daemon

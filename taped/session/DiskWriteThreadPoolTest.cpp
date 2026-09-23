@@ -95,7 +95,8 @@ struct MockRecallReportPacker : public RecallReportPacker {
 
   void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob,
                        const cta::exception::Exception& ex,
-                       cta::log::LogContext& lc) override {
+                       cta::log::LogContext& lc,
+                       RecordedFailure recordedFailure) override {
     cta::threading::MutexLocker ml(m_mutex);
     failedJobs++;
   }
@@ -127,8 +128,8 @@ struct MockRecallReportPacker : public RecallReportPacker {
     return m_tapeThreadComplete && m_diskThreadComplete;
   }
 
-  MockRecallReportPacker(cta::RetrieveMount* rm, cta::log::LogContext lc)
-      : RecallReportPacker(rm, lc),
+  MockRecallReportPacker(cta::RetrieveMount* rm, cta::log::LogContext lc, TapeSessionTracker& tracker)
+      : RecallReportPacker(rm, lc, tracker),
         completeJobs(0),
         failedJobs(0),
         endSessions(0),
@@ -156,11 +157,10 @@ TEST(cta_tape_daemon, DiskWriteThreadPoolTest) {
   std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount);
   std::unique_ptr<cta::catalogue::Catalogue> catalogue(new cta::catalogue::DummyCatalogue);
   TestingRetrieveMount trm(*catalogue, std::move(dbrm));
-  MockRecallReportPacker report(&trm, lc);
+  TapeSessionTracker tracker;
+  MockRecallReportPacker report(&trm, lc, tracker);
 
   RecallMemoryManager mm(10, 100, lc);
-
-  TapeSessionTracker tracker;
 
   DiskWriteThreadPool dwtp(2, report, tracker, lc, 0);
   dwtp.startThreads();
