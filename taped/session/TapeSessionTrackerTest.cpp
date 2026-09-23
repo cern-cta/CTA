@@ -5,9 +5,12 @@
 
 #include "TapeSessionTracker.hpp"
 
+#include "MemBlock.hpp"
+
 #include <atomic>
 #include <gtest/gtest.h>
 #include <thread>
+#include <type_traits>
 
 namespace cta::tape::daemon {
 
@@ -132,10 +135,10 @@ TEST(TapeSessionTrackerTest, SetsDeliveryTimeWithoutReplacingAccumulatedDiskStat
 TEST(TapeSessionTrackerTest, StoresTypedSessionOutcomeAndMountAttemptState) {
   TapeSessionTracker tracker;
 
-  tracker.setOutcome(TapeSessionOutcome::Failure);
+  tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
   tracker.setMountAttempted(false);
 
-  EXPECT_EQ(TapeSessionOutcome::Failure, tracker.outcome());
+  EXPECT_TRUE(tracker.hasFailures());
   EXPECT_FALSE(tracker.mountAttempted());
 }
 
@@ -216,19 +219,20 @@ TEST(TapeSessionTrackerTest, TracksSessionElapsedTimeFromBeginTapeSession) {
   EXPECT_EQ(startTime, tracker.sessionStartTime());
 }
 
-TEST(TapeSessionTrackerTest, SetsAndClearsErrorCounts) {
+TEST(TapeSessionTrackerTest, FailuresPersistUntilTheNextSession) {
   TapeSessionTracker tracker;
-
-  tracker.incrementError(TapeSessionError::Reporting);
-  tracker.setErrorCount(TapeSessionError::Reporting, 4);
-
-  ASSERT_TRUE(tracker.errorStats().contains(TapeSessionError::Reporting));
-  EXPECT_EQ(4, tracker.errorStats().at(TapeSessionError::Reporting));
-
-  tracker.setErrorCount(TapeSessionError::Reporting, 0);
-
-  EXPECT_FALSE(tracker.errorHappened());
-  EXPECT_FALSE(tracker.errorStats().contains(TapeSessionError::Reporting));
+  tracker.beginTapeSession();
+  tracker.recordFailure(TapeSessionFailure::Reporting);
+  tracker.recordFailure(TapeSessionFailure::Reporting);
+  tracker.recordEvent(TapeSessionEvent::EmptyMount);
+  EXPECT_TRUE(tracker.hasFailures());
+  EXPECT_EQ(2, tracker.failureStats().at(TapeSessionFailure::Reporting));
+  EXPECT_FALSE(tracker.outcomeSnapshot().finished);
+  tracker.reportState(cta::tape::session::TapeSessionState::Finished);
+  EXPECT_TRUE(tracker.outcomeSnapshot().hasFailures);
+  tracker.beginTapeSession();
+  EXPECT_FALSE(tracker.hasFailures());
+  EXPECT_TRUE(tracker.failureStats().empty());
 }
 
 TEST(TapeSessionTrackerTest, CountsTapeAlertsByCode) {
@@ -241,7 +245,8 @@ TEST(TapeSessionTrackerTest, CountsTapeAlertsByCode) {
   const auto tapeAlerts = tracker.tapeAlertStats();
   EXPECT_EQ(2, tapeAlerts.at(0x01));
   EXPECT_EQ(1, tapeAlerts.at(0x32));
-  EXPECT_TRUE(tracker.errorHappened());
+  EXPECT_FALSE(tracker.hasFailures());
+  EXPECT_TRUE(tracker.recallCompletionHasDiagnostics());
 }
 
 TEST(TapeSessionTrackerTest, BeginningTransferResetsDataAndTransitionsPreserveIt) {
@@ -256,11 +261,11 @@ TEST(TapeSessionTrackerTest, BeginningTransferResetsDataAndTransitionsPreserveIt
   tracker.addTapeSetupStats({.mountTime = 6, .tapeLoadTime = 7});
   tracker.addTapeCleanupStats({.cleanupTime = 4});
   tracker.setTotalTime(5);
-  tracker.incrementError(TapeSessionError::DiskRead);
+  tracker.recordFailure(TapeSessionFailure::DiskRead);
   tracker.incrementTapeAlert(0x01);
   tracker.notifyBlockMovement(100);
   tracker.notifyDiskFileOpened(1, 1234, "file:///one");
-  tracker.setOutcome(TapeSessionOutcome::Failure);
+  tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
   tracker.setMountAttempted(false);
 
   tracker.beginTapeSession();
@@ -271,12 +276,12 @@ TEST(TapeSessionTrackerTest, BeginningTransferResetsDataAndTransitionsPreserveIt
   EXPECT_EQ(0, tracker.stats().disk.deliveryTime);
   EXPECT_EQ(0, tracker.stats().cleanup.cleanupTime);
   EXPECT_EQ(0, tracker.stats().totalTime);
-  EXPECT_FALSE(tracker.errorHappened());
+  EXPECT_FALSE(tracker.hasFailures());
   EXPECT_TRUE(tracker.tapeAlertStats().empty());
   EXPECT_EQ(0, tracker.bytesMoved());
   EXPECT_EQ(std::chrono::steady_clock::time_point {}, tracker.lastBlockMovement());
   EXPECT_TRUE(tracker.activeDiskFiles().empty());
-  EXPECT_EQ(TapeSessionOutcome::Automatic, tracker.outcome());
+  EXPECT_FALSE(tracker.outcomeSnapshot().finished);
   EXPECT_TRUE(tracker.mountAttempted());
   const auto sessionStartTime = tracker.sessionStartTime();
   EXPECT_NE(std::chrono::steady_clock::time_point {}, sessionStartTime);
@@ -285,7 +290,7 @@ TEST(TapeSessionTrackerTest, BeginningTransferResetsDataAndTransitionsPreserveIt
   tracker.addTapeSetupStats({.mountTime = 6, .tapeLoadTime = 7});
   tracker.addTapeCleanupStats({.cleanupTime = 4});
   tracker.setTotalTime(5);
-  tracker.incrementError(TapeSessionError::DiskRead);
+  tracker.recordFailure(TapeSessionFailure::DiskRead);
   tracker.incrementTapeAlert(0x01);
   tracker.notifyBlockMovement(100);
   tracker.setType(cta::tape::session::SessionType::Retrieve);
@@ -306,7 +311,7 @@ TEST(TapeSessionTrackerTest, BeginningTransferResetsDataAndTransitionsPreserveIt
     EXPECT_EQ(2, tracker.stats().tape.filesCount);
     EXPECT_EQ(4, tracker.stats().cleanup.cleanupTime);
     EXPECT_EQ(5, tracker.stats().totalTime);
-    EXPECT_TRUE(tracker.errorHappened());
+    EXPECT_TRUE(tracker.hasFailures());
     EXPECT_EQ(1, tracker.tapeAlertStats().at(0x01));
     EXPECT_EQ(100, tracker.bytesMoved());
     EXPECT_EQ(sessionStartTime, tracker.sessionStartTime());
@@ -318,16 +323,16 @@ TEST(TapeSessionTrackerTest, BeginningAgainResetsPreparationFailuresAndCompletio
   using cta::tape::session::TapeSessionState;
   TapeSessionTracker tracker;
   tracker.beginTapeSession();
-  tracker.incrementError(TapeSessionError::DiskRead);
-  tracker.setOutcome(TapeSessionOutcome::Failure);
+  tracker.recordFailure(TapeSessionFailure::DiskRead);
+  tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
   tracker.notifyBeginNewJob(12, 34);
   tracker.notifyDiskDone();
   EXPECT_EQ(TapeSessionState::Preparing, tracker.state());
 
   tracker.beginTapeSession();
   EXPECT_EQ(TapeSessionState::Preparing, tracker.state());
-  EXPECT_FALSE(tracker.errorHappened());
-  EXPECT_EQ(TapeSessionOutcome::Automatic, tracker.outcome());
+  EXPECT_FALSE(tracker.hasFailures());
+  EXPECT_FALSE(tracker.outcomeSnapshot().finished);
   EXPECT_FALSE(tracker.progress().fileBeingMoved);
   EXPECT_EQ(0, tracker.progress().fileId);
   EXPECT_EQ(0, tracker.progress().fSeq);
@@ -356,8 +361,8 @@ TEST(TapeSessionTrackerTest, RetrievalCompletionTracksEitherWorkerOrderAndFailur
       }
       tracker.reportState(TapeSessionState::Finalizing);
       if (failed) {
-        tracker.incrementError(TapeSessionError::TapeUnload);
-        tracker.setOutcome(TapeSessionOutcome::Failure);
+        tracker.recordFailure(TapeSessionFailure::TapeUnload);
+        tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
       }
       tracker.notifyTapeDone();
       EXPECT_EQ(diskFirst ? TapeSessionState::Finalizing : TapeSessionState::DrainingToDisk, tracker.state());
@@ -367,24 +372,121 @@ TEST(TapeSessionTrackerTest, RetrievalCompletionTracksEitherWorkerOrderAndFailur
       tracker.notifyTapeDone();
       tracker.notifyDiskDone();
       EXPECT_EQ(TapeSessionState::Finished, tracker.state());
-      EXPECT_EQ(failed ? TapeSessionOutcome::Failure : TapeSessionOutcome::Automatic, tracker.outcome());
+      EXPECT_EQ(failed, tracker.outcomeSnapshot().hasFailures);
     }
   }
 }
 
-TEST(TapeSessionTrackerTest, ExplicitFailureSurvivesSuccessAndAutomaticAssignments) {
+TEST(TapeSessionTrackerTest, EveryFailureCategoryContributesToFinalFailure) {
+  for (size_t i = 0; i < static_cast<size_t>(TapeSessionFailure::Count); ++i) {
+    TapeSessionTracker tracker;
+    tracker.beginTapeSession();
+    tracker.recordFailure(static_cast<TapeSessionFailure>(i));
+    auto snapshot = tracker.outcomeSnapshot();
+    EXPECT_TRUE(snapshot.hasFailures);
+    EXPECT_EQ(1, snapshot.failures[i]);
+    EXPECT_FALSE(snapshot.finished);
+    tracker.reportState(cta::tape::session::TapeSessionState::Finished);
+    EXPECT_TRUE(tracker.outcomeSnapshot().hasFailures);
+  }
+}
+
+TEST(TapeSessionTrackerTest, EveryInformationalEventLeavesOutcomeSuccessful) {
+  for (size_t i = 0; i < static_cast<size_t>(TapeSessionEvent::Count); ++i) {
+    TapeSessionTracker tracker;
+    tracker.beginTapeSession();
+    tracker.recordEvent(static_cast<TapeSessionEvent>(i));
+    tracker.recordEvent(static_cast<TapeSessionEvent>(i));
+    tracker.reportState(cta::tape::session::TapeSessionState::Finished);
+    const auto snapshot = tracker.outcomeSnapshot();
+    EXPECT_TRUE(snapshot.finished);
+    EXPECT_FALSE(snapshot.hasFailures);
+    EXPECT_EQ(i == static_cast<size_t>(TapeSessionEvent::TapeFilledUp) ? 1 : 2, snapshot.events[i]);
+    EXPECT_TRUE(tracker.recallCompletionHasDiagnostics());
+  }
+}
+
+TEST(TapeSessionTrackerTest, PropagationDoesNotDuplicateClassifiedFailures) {
+  TapeSessionTracker tracker;
+  tracker.recordFailure(TapeSessionFailure::DiskRead);
+  tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
+  EXPECT_EQ(1, tracker.failureStats().size());
+  EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::DiskRead));
+  tracker.beginTapeSession();
+  tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
+  EXPECT_TRUE(tracker.hasFailures());
+  EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::UnexpectedSession));
+}
+
+TEST(TapeSessionTrackerTest, AlertsAndOperationalAlertFailuresAreDistinct) {
   TapeSessionTracker tracker;
   tracker.beginTapeSession();
-  tracker.setOutcome(TapeSessionOutcome::Failure);
-  tracker.setOutcome(TapeSessionOutcome::Success);
-  tracker.setOutcome(TapeSessionOutcome::Automatic);
-  EXPECT_EQ(TapeSessionOutcome::Failure, tracker.outcome());
+  tracker.incrementTapeAlert(0x01);
+  EXPECT_FALSE(tracker.hasFailures());
+  EXPECT_TRUE(tracker.recallCompletionHasDiagnostics());
+  // An existing critical-alert check rejecting an operation records a real failure.
+  tracker.recordFailure(TapeSessionFailure::CheckingTapeAlert);
+  tracker.reportState(cta::tape::session::TapeSessionState::Finished);
+  const auto snapshot = tracker.outcomeSnapshot();
+  EXPECT_TRUE(snapshot.hasFailures);
+  EXPECT_EQ(1, snapshot.tapeAlerts.at(0x01));
+}
 
+TEST(TapeSessionTrackerTest, NewFailureReasonsDoNotChangeRecallCompletionProtocol) {
+  for (auto reason : {TapeSessionFailure::UnexpectedSession,
+                      TapeSessionFailure::TaskInjection,
+                      TapeSessionFailure::WorkerSignalling,
+                      TapeSessionFailure::UnexpectedCleanup,
+                      TapeSessionFailure::UnclassifiedFile}) {
+    TapeSessionTracker tracker;
+    tracker.recordFailure(reason);
+    EXPECT_TRUE(tracker.hasFailures());
+    EXPECT_FALSE(tracker.recallCompletionHasDiagnostics());
+  }
+}
+
+TEST(TapeSessionTrackerTest, FailedBlocksCarryReceiptsAndClearThemWhenReused) {
+  static_assert(!std::is_default_constructible_v<RecordedFailure>);
+  TapeSessionTracker tracker;
+  TapeSessionTracker other;
+  const auto failure = tracker.recordFailure(TapeSessionFailure::DiskRead);
+  EXPECT_TRUE(failure.belongsTo(tracker));
+  EXPECT_FALSE(failure.belongsTo(other));
+  EXPECT_EQ(TapeSessionFailure::DiskRead, failure.reason());
+  MemBlock block(0, 100);
+  block.markAsFailed("failed file", failure);
+  ASSERT_TRUE(block.recordedFailure());
+  EXPECT_TRUE(block.recordedFailure()->belongsTo(tracker));
+  block.reset();
+  EXPECT_FALSE(block.isFailed());
+  EXPECT_FALSE(block.recordedFailure());
+  block.markAsFailed("failed file", failure);
+  block.markAsCancelled();
+  EXPECT_FALSE(block.recordedFailure());
+  block.markAsFailed("failed file", failure);
+  block.markAsVerifyOnly();
+  EXPECT_FALSE(block.recordedFailure());
+  EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::DiskRead));
+}
+
+TEST(TapeSessionTrackerTest, ConcurrentRecordingProducesConsistentOutcomeSnapshots) {
+  TapeSessionTracker tracker;
   tracker.beginTapeSession();
-  tracker.setOutcome(TapeSessionOutcome::Success);
-  tracker.incrementError(TapeSessionError::Reporting);
-  tracker.setOutcome(TapeSessionOutcome::Success);
-  EXPECT_EQ(TapeSessionOutcome::Failure, tracker.outcome());
+  auto record = [&] {
+    for (unsigned int i = 0; i < 100; ++i) {
+      tracker.recordFailure(TapeSessionFailure::DiskWrite);
+      tracker.recordEvent(TapeSessionEvent::TapeFilledUp);
+      const auto snapshot = tracker.outcomeSnapshot();
+      EXPECT_TRUE(snapshot.hasFailures);
+      EXPECT_GT(snapshot.failures[static_cast<size_t>(TapeSessionFailure::DiskWrite)], 0);
+    }
+  };
+  std::thread first(record);
+  std::thread second(record);
+  first.join();
+  second.join();
+  EXPECT_EQ(200, tracker.failureStats().at(TapeSessionFailure::DiskWrite));
+  EXPECT_EQ(1, tracker.outcomeSnapshot().events[static_cast<size_t>(TapeSessionEvent::TapeFilledUp)]);
 }
 
 TEST(TapeSessionTrackerTest, LivenessTimesCompletionTransitionsAndSessionReset) {

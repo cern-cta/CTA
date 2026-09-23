@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "DriveUsability.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
 #include "common/dataStructures/DriveStatus.hpp"
 #include "common/log/LogContext.hpp"
@@ -58,9 +57,9 @@ public:
    * If ejection fails, attempt to disable the tape when its VID is known.
    *
    * @param sysWrapper System-call wrapper used to discover and open the drive.
-   * @return Reusable when cleanup permits reuse; MustRemainDown when a recorded failure prevents it.
+   * @return True when cleanup permits drive reuse; false when the drive must remain down.
    */
-  DriveUsability execute(System::virtualWrapper& sysWrapper);
+  bool execute(System::virtualWrapper& sysWrapper);
 
   /**
    * @brief Record drive-configuration reset and tape-ejection failures.

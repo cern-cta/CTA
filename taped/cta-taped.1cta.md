@@ -162,7 +162,9 @@ On expiry, a warning is logged and the request is retried.
 
 idle_scheduling_interval_secs *(default: 10)*
 
-:   Delay before retrying after the scheduler reports that no mount is available.
+:   Delay before retrying when no mount is available or scheduling fails.
+Also applied after a failed tape session if the drive remains reusable.
+Successful sessions do not incur this delay.
 
 drive_state_poll_interval_secs *(default: 5)*
 

@@ -126,6 +126,7 @@ enum class TransferFailurePoint {
   ReportUp,
   FetchCta,
   FetchStandard,
+  ReservationDenied,
   ReservationCta,
   ReservationStandard,
   RequeueStandard,
@@ -358,9 +359,9 @@ public:
   unsigned int requeueAttempts = 0;
 
   bool needsJob() const {
-    return failure == TransferFailurePoint::ReservationCta || failure == TransferFailurePoint::ReservationStandard
-           || failure == TransferFailurePoint::RequeueStandard || failure == TransferFailurePoint::TapeMountedCta
-           || failure == TransferFailurePoint::TapeMountedStandard
+    return failure == TransferFailurePoint::ReservationDenied || failure == TransferFailurePoint::ReservationCta
+           || failure == TransferFailurePoint::ReservationStandard || failure == TransferFailurePoint::RequeueStandard
+           || failure == TransferFailurePoint::TapeMountedCta || failure == TransferFailurePoint::TapeMountedStandard
            || failure == TransferFailurePoint::TapeMountedAndUnload
            || failure == TransferFailurePoint::TapeMountedAndComplete;
   }
@@ -373,12 +374,14 @@ public:
     if (failure == TransferFailurePoint::ReservationStandard) {
       throw std::runtime_error("injected reservation failure");
     }
-    return failure != TransferFailurePoint::RequeueStandard;
+    return failure != TransferFailurePoint::RequeueStandard && failure != TransferFailurePoint::ReservationDenied;
   }
 
   void requeueJobBatch(std::vector<std::unique_ptr<cta::RetrieveJob>>&, cta::log::LogContext&) override {
     ++requeueAttempts;
-    throw std::runtime_error("injected requeue failure");
+    if (failure == TransferFailurePoint::RequeueStandard) {
+      throw std::runtime_error("injected requeue failure");
+    }
   }
 
   void diskComplete() override { complete(); }
@@ -916,17 +919,16 @@ public:
       EXPECT_TRUE(result.has_value());
       EXPECT_EQ(cta::tape::session::TapeSessionState::Finished, tracker.state());
     }
-    EXPECT_EQ(point == TransferFailurePoint::None ? TapeSessionOutcome::Success : TapeSessionOutcome::Failure,
-              tracker.outcome());
+    EXPECT_EQ(point != TransferFailurePoint::None && point != TransferFailurePoint::ReservationDenied,
+              tracker.outcomeSnapshot().hasFailures);
     if (startupFails) {
       EXPECT_FALSE(tracker.mountAttempted());
       EXPECT_EQ(0, driveDestructions);
     }
     // Check cleanup even if a recoverable case incorrectly throws and leaves no result.
     if (result) {
-      EXPECT_EQ(point != TransferFailurePoint::None, result->retryDelayRequired);
-      EXPECT_EQ(discoveryFails || openFails || cleanupFails ? DriveUsability::MustRemainDown : DriveUsability::Reusable,
-                result->driveUsability);
+      EXPECT_EQ(!tracker.hasFailures(), result->successful);
+      EXPECT_EQ(!(discoveryFails || openFails || cleanupFails), result->driveReusable);
     }
     // The mount is borrowed. Finalize it once, including when startup or a
     // publication throws, and keep it alive until every worker has stopped.
@@ -948,13 +950,12 @@ public:
       EXPECT_EQ(0, tracker.stats().tape.dataVolume);
       EXPECT_FALSE(tracker.progress().fileBeingMoved);
       EXPECT_FALSE(tracker.mountAttempted());
-      EXPECT_EQ(point == TransferFailurePoint::None ? TapeSessionOutcome::Success : TapeSessionOutcome::Failure,
-                tracker.outcome());
+      EXPECT_EQ(point != TransferFailurePoint::None, tracker.outcomeSnapshot().hasFailures);
       if (point == TransferFailurePoint::None) {
-        EXPECT_EQ(1, tracker.errorStats()[TapeSessionError::EmptyMount]);
+        EXPECT_EQ(1, tracker.outcomeSnapshot().events[static_cast<size_t>(TapeSessionEvent::EmptyMount)]);
         EXPECT_NE(std::string::npos, logger.getLog().find("Info_emptyMount"));
       } else {
-        EXPECT_TRUE(tracker.errorStats().empty());
+        EXPECT_TRUE(tracker.hasFailures());
       }
     }
     if (cleanupFails) {
@@ -987,14 +988,21 @@ public:
         EXPECT_EQ(1, mount.jobDestructions.load());
         EXPECT_EQ(1, mount.reservationAttempts);
       }
-      if (point == TransferFailurePoint::RequeueStandard) {
+      if (point == TransferFailurePoint::RequeueStandard || point == TransferFailurePoint::ReservationDenied) {
         EXPECT_EQ(1, mount.requeueAttempts);
+      }
+      if (point == TransferFailurePoint::ReservationDenied) {
+        EXPECT_FALSE(tracker.mountAttempted());
+        EXPECT_FALSE(tracker.hasFailures());
+        EXPECT_EQ(
+          1,
+          tracker.outcomeSnapshot().events[static_cast<size_t>(TapeSessionEvent::DiskSpaceReservationTestFailure)]);
       }
       if (workerStarts) {
         EXPECT_EQ(1, mount.mountedAttempts);
         EXPECT_NE(std::string::npos, logger.getLog().find("injected mounted publication failure"));
         if (point == TransferFailurePoint::TapeMountedAndUnload) {
-          EXPECT_EQ(1, tracker.errorStats().at(TapeSessionError::TapeUnload));
+          EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::TapeUnload));
         } else {
           EXPECT_NE(std::string::npos, logger.getLog().find("Cleaner dismounted tape"));
         }
@@ -1016,7 +1024,7 @@ public:
         EXPECT_EQ(1, mount.mountedAttempts);
         EXPECT_NE(std::string::npos, logger.getLog().find("injected mounted publication failure"));
         if (point == TransferFailurePoint::TapeMountedAndUnload) {
-          EXPECT_EQ(1, tracker.errorStats().at(TapeSessionError::TapeUnload));
+          EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::TapeUnload));
         } else {
           EXPECT_NE(std::string::npos, logger.getLog().find("Cleaner dismounted tape"));
         }
@@ -1673,6 +1681,17 @@ TEST_P(TapeSessionTest, ArchiveFetchStandardFailureCleansUp) {
     "");
 }
 
+TEST_P(TapeSessionTest, RetrieveReservationDeniedReturnsSuccess) {
+  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
+  ASSERT_EXIT(
+    {
+      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::ReservationDenied);
+      _exit(::testing::Test::HasFailure() ? 1 : 0);
+    },
+    testing::ExitedWithCode(0),
+    "");
+}
+
 /*
  * If retrieve disk reservation throws a CTA exception, the session completes cleanup.
  * The failed reservation must not retain a job or worker.
@@ -2057,7 +2076,7 @@ TEST_P(TapeSessionTest, TapeSessionGooddayRecall) {
   EXPECT_EQ(cta::tape::session::TapeSessionState::Finished, tracker.state());
   EXPECT_EQ(remoteFilePaths.size(), tracker.stats().tape.filesCount);
   EXPECT_EQ(1000 * remoteFilePaths.size(), tracker.stats().tape.dataVolume);
-  EXPECT_FALSE(tracker.errorHappened());
+  EXPECT_FALSE(tracker.hasFailures());
   EXPECT_FALSE(tracker.progress().fileBeingMoved);
   EXPECT_TRUE(tracker.activeDiskFiles().empty());
   EXPECT_EQ(1, countLogMessages(logger.getLog(), "Tape session finished"));
@@ -2328,7 +2347,9 @@ TEST_P(TapeSessionTest, TapeSessionWrongChecksumRecall) {
     sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
 
   // 8) Run the data transfer session
-  sess.execute();
+  const auto result = sess.execute();
+  EXPECT_TRUE(sess.tracker().outcomeSnapshot().hasFailures);
+  EXPECT_FALSE(result.successful);
 
   // 9) Check the session git the correct VID
   ASSERT_EQ(s_vid, sess.getVid());
@@ -4259,7 +4280,7 @@ TEST_P(TapeSessionTest, TapeSessionGooddayMigration) {
   EXPECT_EQ(cta::tape::session::TapeSessionState::Finished, tracker.state());
   EXPECT_EQ(sourceFiles.size(), tracker.stats().tape.filesCount);
   EXPECT_EQ(1000 * sourceFiles.size(), tracker.stats().tape.dataVolume);
-  EXPECT_FALSE(tracker.errorHappened());
+  EXPECT_FALSE(tracker.hasFailures());
   EXPECT_FALSE(tracker.progress().fileBeingMoved);
   EXPECT_TRUE(tracker.activeDiskFiles().empty());
   EXPECT_EQ(1, countLogMessages(logger.getLog(), "Tape session finished"));
@@ -4477,7 +4498,9 @@ TEST_P(TapeSessionTest, TapeSessionWrongFileSizeMigration) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
-  sess.execute();
+  const auto result = sess.execute();
+  EXPECT_TRUE(sess.tracker().outcomeSnapshot().hasFailures);
+  EXPECT_FALSE(result.successful);
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
 
@@ -4701,7 +4724,9 @@ TEST_P(TapeSessionTest, TapeSessionWrongChecksumMigration) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
-  sess.execute();
+  const auto result = sess.execute();
+  EXPECT_TRUE(sess.tracker().outcomeSnapshot().hasFailures);
+  EXPECT_FALSE(result.successful);
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
 
@@ -4927,7 +4952,9 @@ TEST_P(TapeSessionTest, TapeSessionWrongFilesizeInMiddleOfBatchMigration) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
-  sess.execute();
+  const auto result = sess.execute();
+  EXPECT_TRUE(sess.tracker().outcomeSnapshot().hasFailures);
+  EXPECT_FALSE(result.successful);
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
   auto afiiter = archiveFileIds.begin();

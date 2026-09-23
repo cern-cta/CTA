@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <memory>
 #include <numeric>
+#include <stdexcept>
 
 using cta::log::LogContext;
 using cta::log::Param;
@@ -23,8 +24,10 @@ namespace cta::tape::daemon {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-MigrationReportPacker::MigrationReportPacker(cta::ArchiveMount* archiveMount, const cta::log::LogContext& lc)
-    : ReportPackerInterface<detail::Migration>(lc),
+MigrationReportPacker::MigrationReportPacker(cta::ArchiveMount* archiveMount,
+                                             const cta::log::LogContext& lc,
+                                             TapeSessionTracker& tracker)
+    : ReportPackerInterface<detail::Migration>(lc, tracker),
       m_workerThread(*this),
       m_archiveMount(archiveMount) {}
 
@@ -61,16 +64,20 @@ void MigrationReportPacker::reportCompletedJob(std::unique_ptr<cta::ArchiveJob> 
 }
 
 //------------------------------------------------------------------------------
-//reportSkippedJob
+//reportFileNotArchived
 //------------------------------------------------------------------------------
-void MigrationReportPacker::reportSkippedJob(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob,
-                                             const std::string& failure,
-                                             cta::log::LogContext& lc) {
+void MigrationReportPacker::reportFileNotArchived(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
+                                                  const std::string& failure,
+                                                  cta::log::LogContext& lc,
+                                                  RecordedFailure recordedFailure) {
+  if (!recordedFailure.belongsTo(m_tapeSessionTracker)) {
+    throw std::logic_error("Failed-job report belongs to a different session tracker");
+  }
   std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + failure;
-  auto rep = std::make_unique<ReportSkipped>(std::move(skippedArchiveJob), failureLog);
+  auto rep = std::make_unique<ReportFileNotArchived>(std::move(failedArchiveJob), failureLog);
   cta::log::ScopedParamContainer params(lc);
-  params.add("type", "ReportSkipped");
-  lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportSkippedJob(), pushing a report.");
+  params.add("type", "ReportFileNotArchived");
+  lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportFileNotArchived(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(std::move(rep));
 }
@@ -80,7 +87,11 @@ void MigrationReportPacker::reportSkippedJob(std::unique_ptr<cta::ArchiveJob> sk
 //------------------------------------------------------------------------------
 void MigrationReportPacker::reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
                                             const cta::exception::Exception& ex,
-                                            cta::log::LogContext& lc) {
+                                            cta::log::LogContext& lc,
+                                            RecordedFailure recordedFailure) {
+  if (!recordedFailure.belongsTo(m_tapeSessionTracker)) {
+    throw std::logic_error("Failed-job report belongs to a different session tracker");
+  }
   std::string failureLog =
     cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + ex.getMessageValue();
   auto rep = std::make_unique<ReportError>(std::move(failedArchiveJob), failureLog);
@@ -175,43 +186,46 @@ void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& rep
 }
 
 //------------------------------------------------------------------------------
-//reportSkipped:execute
+//ReportFileNotArchived::execute
 //------------------------------------------------------------------------------
-void MigrationReportPacker::ReportSkipped::execute(MigrationReportPacker& reportPacker) {
+void MigrationReportPacker::ReportFileNotArchived::execute(MigrationReportPacker& reportPacker) {
   // We have no successful file to add, but we should report the failure for the file.
   {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("failureLog", m_failureLog)
-      .add("fileSize", m_skippedArchiveJob->archiveFile.fileSize)
-      .add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
-    m_skippedArchiveJob->archiveFile.checksumBlob.addFirstChecksumToLog(params);
+      .add("fileSize", m_failedArchiveJob->archiveFile.fileSize)
+      .add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
+    m_failedArchiveJob->archiveFile.checksumBlob.addFirstChecksumToLog(params);
 
     reportPacker.m_lc.log(cta::log::DEBUG,
-                          "In MigrationReportPacker::ReportSkipped::execute(): skipping archive job after exception.");
+                          "In MigrationReportPacker::ReportFileNotArchived::execute(): "
+                          "reporting file not archived after exception.");
   }
   try {
-    m_skippedArchiveJob->transferFailed(m_failureLog, reportPacker.m_lc);
+    m_failedArchiveJob->transferFailed(m_failureLog, reportPacker.m_lc);
   } catch (cta::exception::NoSuchObject& ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add(cta::semconv::log::exceptionMessage, ex.getMessageValue())
-      .add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
-    reportPacker.m_lc.log(cta::log::WARNING,
-                          "In MigrationReportPacker::ReportSkipped::execute(): call to m_failedArchiveJob->failed(), "
-                          "job does not exist in the objectstore.");
+      .add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
+    reportPacker.m_lc.log(
+      cta::log::WARNING,
+      "In MigrationReportPacker::ReportFileNotArchived::execute(): call to m_failedArchiveJob->failed(), "
+      "job does not exist in the objectstore.");
   } catch (cta::exception::Exception& ex) {
+    reportPacker.m_tapeSessionTracker.recordFailure(TapeSessionFailure::Reporting);
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add(cta::semconv::log::exceptionMessage, ex.getMessageValue())
-      .add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
-    reportPacker.m_lc.log(
-      cta::log::ERR,
-      "In MigrationReportPacker::ReportSkipped::execute(): call to m_failedArchiveJob->failed() threw an exception.");
+      .add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
+    reportPacker.m_lc.log(cta::log::ERR,
+                          "In MigrationReportPacker::ReportFileNotArchived::execute(): call to "
+                          "m_failedArchiveJob->failed() threw an exception.");
     reportPacker.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
   }
   reportPacker.m_skippedFiles.push(cta::catalogue::TapeItemWritten());
   auto& tapeItem = reportPacker.m_skippedFiles.back();
-  tapeItem.fSeq = m_skippedArchiveJob->tapeFile.fSeq;
+  tapeItem.fSeq = m_failedArchiveJob->tapeFile.fSeq;
   tapeItem.tapeDrive = reportPacker.m_archiveMount->getDrive();
-  tapeItem.vid = m_skippedArchiveJob->tapeFile.vid;
+  tapeItem.vid = m_failedArchiveJob->tapeFile.vid;
 }
 
 //------------------------------------------------------------------------------
@@ -263,6 +277,7 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
     try {
       jobIDsList.emplace_back(job->getJobID());
     } catch (cta::exception::Exception& ex) {
+      reportPacker.m_tapeSessionTracker.recordFailure(TapeSessionFailure::Reporting);
       cta::log::ScopedParamContainer params(reportPacker.m_lc);
       params.add(cta::semconv::log::exceptionMessage, ex.getMessageValue())
         .add("archiveFileId", job->archiveFile.archiveFileID)
@@ -279,6 +294,7 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
     uint64_t nrows = reportPacker.m_archiveMount->requeueJobBatch(jobIDsList, reportPacker.m_lc);
     params.add("jobsToRequeud", nrows);
     if (njobstorequeue != nrows) {
+      reportPacker.m_tapeSessionTracker.recordFailure(TapeSessionFailure::Reporting);
       reportPacker.m_lc.log(
         cta::log::ERR,
         "In MigrationReportPacker::ReportLastBatchError::execute(): requeueJobBatch() call failed, the "
@@ -289,6 +305,7 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
         "In MigrationReportPacker::ReportLastBatchError::execute(): requeueJobBatch() call succeeded.");
     }
   } catch (cta::exception::Exception& ex) {
+    reportPacker.m_tapeSessionTracker.recordFailure(TapeSessionFailure::Reporting);
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add(cta::semconv::log::exceptionMessage, ex.getMessageValue())
       .add("reportPackerJobsToRequeue", njobstorequeue);
@@ -303,7 +320,7 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
 //ReportFlush::execute
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPacker) {
-  if (!reportPacker.m_errorHappened) {
+  if (!reportPacker.m_failedJobReported) {
     // We can receive double flushes when the periodic flush happens
     // right before the end of session (which triggers also a flush)
     // We refrain from sending an empty report to the client in this case.
@@ -339,6 +356,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
                                 "In MigrationReportPacker::ReportFlush::execute(): failed to failTransfer for the "
                                 "archive job because it does not exist in the objectstore.");
         } catch (const cta::exception::Exception&) {
+          reportPacker.m_tapeSessionTracker.recordFailure(TapeSessionFailure::Reporting);
           //If the failTransfer method fails, we can't do anything about it
           cta::log::ScopedParamContainer params(reportPacker.m_lc);
           params.add("fileId", archiveJob->archiveFile.archiveFileID)
@@ -365,6 +383,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
                                 "In MigrationReportPacker::ReportFlush::execute(): failed to failReport for the "
                                 "archive job because it does not exist in the objectstore.");
         } catch (const cta::exception::Exception&) {
+          reportPacker.m_tapeSessionTracker.recordFailure(TapeSessionFailure::Reporting);
           //If the failReport method fails, we can't do anything about it
           cta::log::ScopedParamContainer params(reportPacker.m_lc);
           params.add("fileId", archiveJob->archiveFile.archiveFileID)
@@ -399,7 +418,7 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
   reportPacker.m_lc.log(cta::log::DEBUG,
                         "In MigrationReportPacker::ReportEndofSession::execute(): reporting session complete.");
   reportPacker.m_archiveMount->complete();
-  if (!reportPacker.m_errorHappened) {
+  if (!reportPacker.m_failedJobReported) {
     cta::log::ScopedParamContainer sp(reportPacker.m_lc);
     reportPacker.m_lc.log(cta::log::INFO, "Reported end of session to client");
   } else {
@@ -419,7 +438,7 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
     cta::log::DEBUG,
     "In MigrationReportPacker::ReportEndofSessionWithErrors::execute(): reporting session complete.");
   reportPacker.m_archiveMount->complete();
-  if (reportPacker.m_errorHappened) {
+  if (reportPacker.m_failedJobReported) {
     cta::log::ScopedParamContainer sp(reportPacker.m_lc);
     sp.add(cta::semconv::log::exceptionMessage, m_message).add("isTapeFull", m_isTapeFull);
     reportPacker.m_lc.log(cta::log::INFO, "Reported end of session with error to client after sending file errors");
@@ -432,7 +451,7 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
 //ReportError::execute
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPacker) {
-  reportPacker.m_errorHappened = true;
+  reportPacker.m_failedJobReported = true;
   {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("failureLog", m_failureLog).add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
@@ -449,6 +468,7 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPa
                           "In MigrationReportPacker::ReportError::execute(): call to m_failedArchiveJob->failed(), job "
                           "does not exist in the objectstore.");
   } catch (cta::exception::Exception& ex) {
+    reportPacker.m_tapeSessionTracker.recordFailure(TapeSessionFailure::Reporting);
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add(cta::semconv::log::exceptionMessage, ex.getMessageValue())
       .add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
@@ -496,9 +516,7 @@ void MigrationReportPacker::WorkerThread::run() {
     lc.log(
       cta::log::ERR,
       "In MigrationReportPacker::WorkerThread::run(): Received a CTA exception while reporting archive mount results.");
-    if (m_parent.m_tapeSessionTracker) {
-      m_parent.m_tapeSessionTracker->incrementError(TapeSessionError::Reporting);
-    }
+    m_parent.m_tapeSessionTracker.recordFailure(TapeSessionFailure::Reporting);
   } catch (const std::exception& e) {
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
@@ -514,18 +532,14 @@ void MigrationReportPacker::WorkerThread::run() {
     lc.log(cta::log::ERR,
            "In MigrationReportPacker::WorkerThread::run(): Received a standard exception while reporting archive mount "
            "results.");
-    if (m_parent.m_tapeSessionTracker) {
-      m_parent.m_tapeSessionTracker->incrementError(TapeSessionError::Reporting);
-    }
+    m_parent.m_tapeSessionTracker.recordFailure(TapeSessionFailure::Reporting);
   } catch (...) {
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
     lc.log(cta::log::ERR,
            "In MigrationReportPacker::WorkerThread::run(): Received an unknown exception while reporting archive mount "
            "results.");
-    if (m_parent.m_tapeSessionTracker) {
-      m_parent.m_tapeSessionTracker->incrementError(TapeSessionError::Reporting);
-    }
+    m_parent.m_tapeSessionTracker.recordFailure(TapeSessionFailure::Reporting);
   }
   // Drain the FIFO if necessary. We know that m_continue will be
   // set by ReportEndofSessionWithErrors or ReportEndofSession

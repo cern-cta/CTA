@@ -86,7 +86,8 @@
   # If omitted, 900 is used.
   get_next_mount_timeout_secs = 900
 
-  # Delay, in seconds, before retrying after the scheduler reports that no mount is currently available.
+  # Delay, in seconds, before retrying when no mount is available or scheduling fails.
+  # Also applied after a failed tape session if the drive remains reusable; successful sessions do not wait.
   # Lower values react faster to new work but increase scheduler polling; higher values reduce polling but
   # may add mount-start latency. 
   # If omitted, 10 is used.

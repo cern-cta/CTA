@@ -98,7 +98,9 @@ struct MockRecallReportPacker : public RecallReportPacker {
 
   void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob,
                        const cta::exception::Exception& ex,
-                       cta::log::LogContext& lc) override {
+                       cta::log::LogContext& lc,
+                       RecordedFailure recordedFailure) override {
+    EXPECT_TRUE(recordedFailure.belongsTo(m_tapeSessionTracker));
     cta::threading::MutexLocker ml(m_mutex);
     failedJobs++;
   }
@@ -130,8 +132,8 @@ struct MockRecallReportPacker : public RecallReportPacker {
     return m_tapeThreadComplete && m_diskThreadComplete;
   }
 
-  MockRecallReportPacker(cta::RetrieveMount* rm, cta::log::LogContext lc)
-      : RecallReportPacker(rm, lc),
+  MockRecallReportPacker(cta::RetrieveMount* rm, cta::log::LogContext lc, TapeSessionTracker& tracker)
+      : RecallReportPacker(rm, lc, tracker),
         completeJobs(0),
         failedJobs(0),
         endSessions(0),
@@ -155,7 +157,8 @@ TEST(cta_tape_daemon, DiskWriteTaskFailedBlock) {
   std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
   std::unique_ptr<cta::catalogue::Catalogue> catalogue(new cta::catalogue::DummyCatalogue);
   TestingRetrieveMount trm(*catalogue, std::move(dbrm));
-  MockRecallReportPacker report(&trm, lc);
+  TapeSessionTracker tracker;
+  MockRecallReportPacker report(&trm, lc, tracker);
   RecallMemoryManager mm(10, 100, lc);
   DiskFileFactory fileFactory(0);
 
@@ -172,7 +175,7 @@ TEST(cta_tape_daemon, DiskWriteTaskFailedBlock) {
     mb->m_fileid = 0;
     mb->m_fileBlock = i;
     if (5 == i) {
-      mb->markAsFailed("Test error");
+      mb->markAsFailed("Test error", tracker.recordFailure(TapeSessionFailure::TapeReadData));
     }
     t.pushDataBlock(mb);
   }
@@ -180,8 +183,43 @@ TEST(cta_tape_daemon, DiskWriteTaskFailedBlock) {
 
   t.pushDataBlock(mb);
   t.pushDataBlock(nullptr);
-  TapeSessionTracker tracker;
   t.execute(report, lc, fileFactory, tracker, 0);
   ASSERT_EQ(1, report.failedJobs);
+  // An unrelated error recorded while preparing later blocks must not suppress this file's mismatch.
+  EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::TapeReadData));
+  EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::UnclassifiedFile));
 }
+
+TEST(cta_tape_daemon, UpstreamFailureIsNotCountedAgain) {
+  cta::log::StringLogger log("dummy", "upstreamFailure", cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+  std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
+  cta::catalogue::DummyCatalogue catalogue;
+  TestingRetrieveMount mount(catalogue, std::move(dbrm));
+  TapeSessionTracker tracker;
+  MockRecallReportPacker report(&mount, lc, tracker);
+  RecallMemoryManager memory(2, 100, lc);
+  DiskFileFactory factory(0);
+  cta::MockRetrieveMount jobMount(catalogue);
+  auto job = std::make_unique<TestingRetrieveJob>(jobMount);
+  job->retrieveRequest.archiveFileID = 1;
+  job->selectedCopyNb = 1;
+  cta::common::dataStructures::TapeFile tapeFile;
+  tapeFile.copyNb = 1;
+  job->archiveFile.tapeFiles.push_back(tapeFile);
+  DiskWriteTask task(job.release(), memory);
+  tracker.recordFailure(TapeSessionFailure::DiskRead);  // Unrelated earlier failure.
+  auto* block = memory.getFreeBlock();
+  block->m_fileid = 1;
+  block->markAsFailed("upstream read failed", tracker.recordFailure(TapeSessionFailure::TapeReadData));
+  task.pushDataBlock(block);
+  task.pushDataBlock(nullptr);
+
+  EXPECT_FALSE(task.execute(report, lc, factory, tracker, 0));
+  EXPECT_EQ(1, report.failedJobs);
+  EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::TapeReadData));
+  EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::DiskRead));
+  EXPECT_EQ(0, tracker.failureStats().count(TapeSessionFailure::UnclassifiedFile));
+}
+
 }  // namespace unitTests

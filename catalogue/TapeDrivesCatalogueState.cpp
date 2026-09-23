@@ -70,7 +70,7 @@ void TapeDrivesCatalogueState::setDesiredDriveState(const std::string& drive,
                                                     const common::dataStructures::DesiredDriveState& desiredState,
                                                     [[maybe_unused]] log::LogContext& lc) const {
   log::ScopedParamContainer spc(lc);
-  spc.add("drive_name", drive)
+  spc.add("tapeDrive", drive)
     .add("up", desiredState.up ? "up" : "down")
     .add("force", desiredState.forceDown ? "yes" : "no")
     .add("reason", desiredState.reason.value_or(""))

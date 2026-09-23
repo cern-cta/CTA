@@ -52,17 +52,17 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
   // process we're in, and to count the error if it occurs.
   // We will not record errors for an empty string. This will allow us to
   // prevent counting where error happened upstream.
-  std::optional<TapeSessionError> currentErrorToCount;
+  std::optional<TapeSessionFailure> currentErrorToCount;
   try {
     //we first check here to not even try to open the disk  if a previous task has failed
     //because the disk could the very reason why the previous one failed,
     //so dont do the same mistake twice !
     checkMigrationFailing();
-    currentErrorToCount = TapeSessionError::DiskOpenForRead;
+    currentErrorToCount = TapeSessionFailure::DiskOpenForRead;
     std::unique_ptr<cta::disk::ReadFile> sourceFile(fileFactory.createReadFile(m_archiveJob->srcURL));
     cta::log::ScopedParamContainer URLcontext(lc);
     URLcontext.add("path", m_archiveJob->srcURL).add("actualURL", sourceFile->URL());
-    currentErrorToCount = TapeSessionError::DiskFileToReadSizeMismatch;
+    currentErrorToCount = TapeSessionFailure::DiskFileToReadSizeMismatch;
     if (migratingFileSize != sourceFile->size()) {
       throw cta::exception::Exception("Mismatch between size given by the client "
                                       "and the real one");
@@ -86,7 +86,7 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
       mb->m_fileid = m_archiveJob->archiveFile.archiveFileID;
       mb->m_fileBlock = blockId++;
 
-      currentErrorToCount = TapeSessionError::DiskRead;
+      currentErrorToCount = TapeSessionFailure::DiskRead;
       migratingFileSize -= mb->m_payload.read(*sourceFile);
       m_stats.readWriteTime += localTime.secs(cta::utils::Timer::resetCounter);
 
@@ -95,7 +95,7 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
       //we either read at full capacity (ie size=capacity, i.e. fill up the block),
       // or if there different, it should be the end of the file=> migratingFileSize
       // should be 0. If it not, it is an error
-      currentErrorToCount = TapeSessionError::DiskUnexpectedSizeWhenReading;
+      currentErrorToCount = TapeSessionFailure::DiskUnexpectedSizeWhenReading;
       if (mb->m_payload.size() != mb->m_payload.totalCapacity() && migratingFileSize > 0) {
         std::string erroMsg =
           "Error while reading a file: memory block not filled up, but the file is not fully read yet";
@@ -106,11 +106,7 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
           .add("BytesNotYetRead", migratingFileSize);
         lc.log(cta::log::ERR,
                "Error while reading a file: memory block not filled up, but the file is not fully read yet");
-        // Mark the block as failed
-        mb->markAsFailed(erroMsg);
-        // Transmit to the tape write task, which will finish the session
-        m_nextTask.pushDataBlock(mb);
-        // Fail the disk side.
+        // Let the catch path record and hand off this block exactly once.
         throw cta::exception::Exception(erroMsg);
       }
       currentErrorToCount.reset();
@@ -153,10 +149,8 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
         {cta::semconv::attr::kErrorType,      cta::semconv::attr::ErrorTypeValues::kException}
     });
 
-    // Send the error for counting to the session tracker.
-    if (currentErrorToCount) {
-      tracker.incrementError(*currentErrorToCount);
-    }
+    // Count this file's failure before transferring its receipt to the tape writer.
+    const auto failure = tracker.recordFailure(currentErrorToCount.value_or(TapeSessionFailure::UnclassifiedFile));
     // We have to pump the blocks anyway, mark them failed and then pass them back
     // to TapeWriteTask
     // Otherwise they would be stuck into TapeWriteTask free block fifo
@@ -169,7 +163,8 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
       mb = m_nextTask.getFreeBlock();
       ++blockId;
     }
-    mb->markAsFailed(e.getMessageValue());
+    mb->m_fileid = m_archiveJob->archiveFile.archiveFileID;
+    mb->markAsFailed(e.getMessageValue(), failure);
     m_nextTask.pushDataBlock(mb);
     mb = nullptr;
 

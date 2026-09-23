@@ -12,6 +12,7 @@
 
 #include <cxxabi.h>
 #include <iostream>
+#include <stdexcept>
 
 using cta::log::LogContext;
 using cta::log::Param;
@@ -21,8 +22,10 @@ namespace cta::tape::daemon {
 //------------------------------------------------------------------------------
 //Constructor
 //------------------------------------------------------------------------------
-RecallReportPacker::RecallReportPacker(cta::RetrieveMount* retrieveMount, cta::log::LogContext& lc)
-    : ReportPackerInterface<detail::Recall>(lc),
+RecallReportPacker::RecallReportPacker(cta::RetrieveMount* retrieveMount,
+                                       cta::log::LogContext& lc,
+                                       TapeSessionTracker& tracker)
+    : ReportPackerInterface<detail::Recall>(lc, tracker),
       m_workerThread(*this),
       m_retrieveMount(retrieveMount) {}
 
@@ -51,7 +54,11 @@ void RecallReportPacker::reportCompletedJob(std::unique_ptr<cta::RetrieveJob> su
 //------------------------------------------------------------------------------
 void RecallReportPacker::reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob,
                                          const cta::exception::Exception& ex,
-                                         cta::log::LogContext& lc) {
+                                         cta::log::LogContext& lc,
+                                         RecordedFailure recordedFailure) {
+  if (!recordedFailure.belongsTo(m_tapeSessionTracker)) {
+    throw std::logic_error("Failed-job report belongs to a different session tracker");
+  }
   std::string failureLog =
     cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + ex.getMessageValue();
   auto rep = std::make_unique<ReportError>(std::move(failedRetrieveJob), failureLog);
@@ -119,7 +126,7 @@ void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent) {
 //ReportEndofSession::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& reportPacker) {
-  if (!reportPacker.errorHappened()) {
+  if (!reportPacker.completionHasDiagnostics()) {
     reportPacker.m_lc.log(cta::log::INFO, "Nominal RecallReportPacker::EndofSession has been reported");
   } else {
     const std::string& msg =
@@ -156,7 +163,7 @@ bool RecallReportPacker::ReportDriveStatus::goingToEnd() {
 //ReportEndofSessionWithErrors::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacker& parent) {
-  if (parent.m_errorHappened) {
+  if (parent.m_failedJobReported) {
     parent.m_lc.log(cta::log::ERR, m_message);
   } else {
     const std::string& msg =
@@ -176,7 +183,7 @@ bool RecallReportPacker::ReportEndofSessionWithErrors::goingToEnd() {
 //ReportError::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportError::execute(RecallReportPacker& reportPacker) {
-  reportPacker.m_errorHappened = true;
+  reportPacker.m_failedJobReported = true;
   {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
     params.add("failureLog", m_failureLog).add("fileId", m_failedRetrieveJob->archiveFile.archiveFileID);
@@ -264,9 +271,7 @@ void RecallReportPacker::WorkerThread::run() {
       m_parent.m_lc.log(
         cta::log::ERR,
         "In RecallReportPacker::WorkerThread::run(): Received a CTA exception while reporting retrieve mount results.");
-      if (m_parent.m_tapeSessionTracker) {
-        m_parent.m_tapeSessionTracker->incrementError(TapeSessionError::Reporting);
-      }
+      m_parent.m_tapeSessionTracker.recordFailure(TapeSessionFailure::Reporting);
     } catch (const std::exception& e) {
       //we get there because to tried to close the connection and it failed
       //either from the catch a few lines above or directly from rep->execute
@@ -275,18 +280,14 @@ void RecallReportPacker::WorkerThread::run() {
       m_parent.m_lc.log(cta::log::ERR,
                         "In RecallReportPacker::WorkerThread::run(): Received a standard exception while reporting "
                         "retrieve mount results.");
-      if (m_parent.m_tapeSessionTracker) {
-        m_parent.m_tapeSessionTracker->incrementError(TapeSessionError::Reporting);
-      }
+      m_parent.m_tapeSessionTracker.recordFailure(TapeSessionFailure::Reporting);
     } catch (...) {
       //we get there because to tried to close the connection and it failed
       //either from the catch a few lines above or directly from rep->execute
       m_parent.m_lc.log(cta::log::ERR,
                         "In RecallReportPacker::WorkerThread::run(): Received an unknown exception while reporting "
                         "retrieve mount results.");
-      if (m_parent.m_tapeSessionTracker) {
-        m_parent.m_tapeSessionTracker->incrementError(TapeSessionError::Reporting);
-      }
+      m_parent.m_tapeSessionTracker.recordFailure(TapeSessionFailure::Reporting);
     }
     if (endFound) {
       break;
@@ -311,25 +312,19 @@ void RecallReportPacker::WorkerThread::run() {
     m_parent.m_lc.log(
       cta::log::ERR,
       "In RecallReportPacker::WorkerThread::run(): Received a CTA exception while reporting retrieve mount results.");
-    if (m_parent.m_tapeSessionTracker) {
-      m_parent.m_tapeSessionTracker->incrementError(TapeSessionError::Reporting);
-    }
+    m_parent.m_tapeSessionTracker.recordFailure(TapeSessionFailure::Reporting);
   } catch (const std::exception& e) {
     cta::log::ScopedParamContainer params(m_parent.m_lc);
     params.add(cta::semconv::log::exceptionMessage, e.what()).add(cta::semconv::log::exceptionType, typeid(e).name());
     m_parent.m_lc.log(cta::log::ERR,
                       "In RecallReportPacker::WorkerThread::run(): Received a standard exception while reporting "
                       "retrieve mount results.");
-    if (m_parent.m_tapeSessionTracker) {
-      m_parent.m_tapeSessionTracker->incrementError(TapeSessionError::Reporting);
-    }
+    m_parent.m_tapeSessionTracker.recordFailure(TapeSessionFailure::Reporting);
   } catch (...) {
     m_parent.m_lc.log(cta::log::ERR,
                       "In RecallReportPacker::WorkerThread::run(): Received an unknown exception while reporting "
                       "retrieve mount results.");
-    if (m_parent.m_tapeSessionTracker) {
-      m_parent.m_tapeSessionTracker->incrementError(TapeSessionError::Reporting);
-    }
+    m_parent.m_tapeSessionTracker.recordFailure(TapeSessionFailure::Reporting);
   }
 
   // Drain the fifo in case we got an exception
@@ -359,10 +354,10 @@ void RecallReportPacker::WorkerThread::run() {
 }
 
 //------------------------------------------------------------------------------
-//errorHappened()
+//completionHasDiagnostics()
 //------------------------------------------------------------------------------
-bool RecallReportPacker::errorHappened() {
-  return m_errorHappened || (m_tapeSessionTracker && m_tapeSessionTracker->errorHappened());
+bool RecallReportPacker::completionHasDiagnostics() {
+  return m_failedJobReported || m_tapeSessionTracker.recallCompletionHasDiagnostics();
 }
 
 //------------------------------------------------------------------------------

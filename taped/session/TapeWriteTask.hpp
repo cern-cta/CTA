@@ -70,10 +70,10 @@ public:
 
 private:
   /** Utility class used in execute()'s implementation*/
-  class Skip : public std::string {
+  class FileNotArchived : public std::string {
   public:
     template<typename T>
-    explicit Skip(const T& t) : std::string(t) {}
+    explicit FileNotArchived(const T& t) : std::string(t) {}
   };
 
 public:
