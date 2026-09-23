@@ -14,6 +14,7 @@
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/TapeMount.hpp"
 
+#include <algorithm>
 #include <exception>
 #include <optional>
 
@@ -66,10 +67,46 @@ void DriveController::stop() {
 }
 
 bool DriveController::isLive() const {
-  // TODO (separate MR): look into the timeouts and see if we have spent too much time in any given state
-  // We don't ping the catalogue/scheduler here as that would just result in cascading failures
-  // A restart won't fix things
-  return true;
+  return isLive(std::chrono::steady_clock::now());
+}
+
+bool DriveController::isLive(std::chrono::steady_clock::time_point now) const {
+  const auto snapshot = m_operations.tapeSessionLiveness();
+  if (!snapshot || !snapshot->state) {
+    return true;
+  }
+
+  auto lastActivity = snapshot->stateEnteredAt;
+  uint32_t timeoutSecs;
+  using enum cta::tape::session::TapeSessionState;
+  switch (*snapshot->state) {
+    case Mounting:
+      timeoutSecs = m_config.mounts.mount_timeout_secs;
+      break;
+    case Loading:
+      timeoutSecs = m_config.mounts.tape_load_timeout_secs;
+      break;
+    case Unloading:
+      timeoutSecs = m_config.mounts.tape_unload_timeout_secs;
+      break;
+    case Unmounting:
+      timeoutSecs = m_config.mounts.unmount_timeout_secs;
+      break;
+    case Transferring:
+      timeoutSecs = m_config.transfers.no_block_move_timeout_secs;
+      lastActivity = std::max(lastActivity, snapshot->lastBlockMovement);
+      break;
+    case DrainingToDisk:
+      timeoutSecs = m_config.transfers.retrieve.drain_to_disk_timeout_secs;
+      break;
+    case Preparing:
+    case Finalizing:
+    case Finished:
+      return true;
+    default:
+      return true;
+  }
+  return now - lastActivity < std::chrono::seconds(timeoutSecs);
 }
 
 bool DriveController::isReady() const {

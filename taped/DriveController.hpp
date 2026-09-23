@@ -12,6 +12,7 @@
 #include "common/log/LogContext.hpp"
 
 #include <atomic>
+#include <chrono>
 #include <memory>
 #include <optional>
 #include <stop_token>
@@ -79,6 +80,9 @@ public:
 
 private:
   friend class DriveControllerTest;
+
+  // An explicit evaluation time keeps timeout-boundary tests deterministic.
+  bool isLive(std::chrono::steady_clock::time_point now) const;
 
   std::stop_source m_stopSource;
 
