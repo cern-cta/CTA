@@ -37,6 +37,9 @@ public:
    */
   virtual IScheduler& scheduler() = 0;
 
+  /** Retire backend ownership after all mounts and jobs are destroyed; PostgreSQL needs no reset. */
+  virtual void resetScheduler() = 0;
+
   /**
    * @brief Read the existing catalogue entry, or return std::nullopt when the drive is absent.
    *

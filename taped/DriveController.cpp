@@ -160,9 +160,11 @@ void DriveController::runIteration() {
       .add("scheduleMountTimeoutSecs", m_config.mounts.get_next_mount_timeout_secs)
       .add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(log::WARNING, "Scheduling timed out; waiting before retrying.");
+    m_operations.resetScheduler();
   } catch (const std::exception& ex) {
     // No transfer has started; retry through normal drive preparation after the idle delay.
     logDriveFailure(m_lc, "Scheduling failed unexpectedly; waiting before retrying.", ex);
+    m_operations.resetScheduler();
   }
 
   // Wait before retrying when no mount was found or scheduling failed without acquiring one.
@@ -180,6 +182,9 @@ void DriveController::runIteration() {
     // Preserve specific session or operator reasons. Publication failures propagate.
     putDriveDown(common::dataStructures::DriveDownReason::SessionLeftDriveUnusable, {}, true);
   }
+  // Release every borrower before retiring the agent, including before any retry delay.
+  tapeMount.reset();
+  m_operations.resetScheduler();
   if (!transferResult.successful && transferResult.driveReusable) {
     m_operations.sleep(m_config.mounts.idle_scheduling_interval_secs);
   }
