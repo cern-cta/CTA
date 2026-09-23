@@ -52,11 +52,10 @@ add_library(ctatapedsessionunittests SHARED
   RecallTaskInjectorTest.cpp
   TapeSessionReporterTest.cpp
   TapeSessionTrackerTest.cpp
-  TapedMetricsTest.cpp
 )
 set_property(TARGET ctatapedsessionunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedsessionunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
-target_link_libraries(ctatapedsessionunittests PRIVATE ctatapedsession opentelemetry-cpp::metrics)
+target_link_libraries(ctatapedsessionunittests PRIVATE ctatapedsession)
 if (NOT CTA_USE_PGSCHED)
   target_link_libraries(ctatapedsessionunittests PRIVATE ctaobjectstore)
 endif()

@@ -129,7 +129,6 @@ void TapeDrivesCatalogueState::reportDriveStatus(const common::dataStructures::D
 void TapeDrivesCatalogueState::updateDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
                                                  const ReportDriveStatusInputs& inputs,
                                                  log::LogContext& lc) const {
-  // Publish local intent with a lock-free store; metric collection/export happens elsewhere.
   telemetry::metrics::setDriveStatus(inputs.status);
   common::dataStructures::TapeDrive driveState;
   // Set the parameters that we always set
