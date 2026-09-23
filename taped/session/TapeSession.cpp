@@ -269,8 +269,20 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
     });
   }
 
-  m_tapeSessionTracker->reportState(cta::tape::session::TapeSessionState::Finished);
   reporterScope.finish();
+  m_tapeSessionTracker->reportState(cta::tape::session::TapeSessionState::Finished);
+  // Final reporting belongs to the session even if startup never reached the periodic reporter.
+  try {
+    reporter.reportSessionFinished();
+  } catch (const std::exception& ex) {
+    m_tapeSessionTracker->recordFailure(TapeSessionFailure::Reporting);
+    cta::log::ScopedParamContainer reportingParams(lc);
+    reportingParams.add("what", ex.what());
+    lc.log(cta::log::WARNING, "Failed to send final tape session statistics");
+  } catch (...) {
+    m_tapeSessionTracker->recordFailure(TapeSessionFailure::Reporting);
+    lc.log(cta::log::WARNING, "Failed to send final tape session statistics");
+  }
   // Final reporting can turn an otherwise successful session into a failure.
   state.result.successful = !m_tapeSessionTracker->hasFailures();
   if (fatalFailure) {
