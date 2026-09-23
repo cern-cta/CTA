@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <concepts>
 #include <cstdint>
+#include <optional>
 #include <set>
 #include <signal.h>
 #include <string>
@@ -175,8 +176,7 @@ public:
    * @return Application& This application object. Can be used to easily chain multiple of these calls together.
    */
   Application& addSignalFunction(int signal, void (TApp::*method)(), bool overwrite = false) {
-    auto& app = m_app;
-    m_signalReactorBuilder.addSignalFunction(signal, [&app, method] { (app.*method)(); }, overwrite);
+    m_signalReactorBuilder.addSignalFunction(signal, [this, method] { ((*m_app).*method)(); }, overwrite);
     return *this;
   }
 
@@ -197,6 +197,10 @@ public:
    * @return int Return code.
    */
   int run(const int argc, char** const argv) {
+    if (!m_app) {
+      throw exception::Exception("Application cannot run again after shutdown");
+    }
+
     // Parse commandline opts
     auto cliOptions = m_argParser.parse(argc, argv);
     if (cliOptions.showHelp) {
@@ -218,6 +222,9 @@ public:
     }
 
     auto config = runtime::loadFromToml<TConfig>(configFilePath, cliOptions.configStrict);
+    // Even initialization callbacks can retain config references; destroy the app before config on every exit.
+    TelemetryCleanup telemetryCleanup(m_logPtr);
+    AppCleanup appCleanup(m_app);
     if (cliOptions.configCheck) {
       std::cout << "Config check passed." << std::endl;
       return EXIT_SUCCESS;
@@ -251,7 +258,7 @@ public:
 
     // We need to start the reactor builder here as we may want to register custom signals.
     // It is also for that reason that we don't build the actual SignalReactor just yet.
-    m_signalReactorBuilder.addSignalFunction(SIGTERM, [this]() { m_app.stop(); });
+    m_signalReactorBuilder.addSignalFunction(SIGTERM, [this]() { m_app->stop(); });
     // Both SIGHUP and SIGUSR1 trigger a refresh of the log file descriptor
     // Eventually SIGUSR1 will be deprecated
     m_signalReactorBuilder.addSignalFunction(SIGHUP, [this]() {
@@ -265,15 +272,14 @@ public:
       }
     });
     auto signalReactor = m_signalReactorBuilder.build(*m_logPtr);
-    signalReactor.start();
 
     // The health server must exist at this level as it needs to be in-scope for as long as the main app runs.
     // If not, it would immediately be destroyed after initHealthServer finished.
     // Note that healthServer lives outside of safeRunWithLog so that it is not destructed before we output a (potential) FATAL message.
     std::unique_ptr<HealthServer> healthServer;
-    // Keep telemetry installed while fatal errors are logged.
-    // Clean it up after safeRunWithLog() reports the failure.
-    TelemetryCleanup telemetryCleanup(*m_logPtr);
+    // Reverse destruction order joins health/signal callbacks, destroys the app, then cleans up telemetry.
+    // safeRunWithLog reports failures before any of these guards are destroyed.
+    signalReactor.start();
 
     return safeRunWithLog(*m_logPtr, [this, &cliOptions, &config, &healthServer]() {
       cta::log::Logger& log = *m_logPtr;
@@ -301,9 +307,9 @@ public:
       // Not all apps need to consume the CliOptions.
       // So here we allow either the full run() signature, or one that omits the CliOptions
       if constexpr (HasRunFunctionWithOpts<TApp, TConfig, TOpts, log::Logger>) {
-        return m_app.run(config, cliOptions, log);
+        return m_app->run(config, cliOptions, log);
       } else if constexpr (HasRunFunction<TApp, TConfig, log::Logger>) {
-        return m_app.run(config, log);
+        return m_app->run(config, log);
       } else {
         static_assert([] { return false; }(), "TApp has no suitable run(...) overload");
       }
@@ -311,12 +317,23 @@ public:
   }
 
 private:
+  // Stop callbacks before destroying their target, while config, telemetry and logging remain alive.
+  struct AppCleanup {
+    std::optional<TApp>& app;
+
+    ~AppCleanup() { app.reset(); }
+  };
+
   // OpenTelemetry uses process-global state.
   // Cleanup is intentionally unconditional because cleanupOpenTelemetry() is idempotent.
   struct TelemetryCleanup {
-    explicit TelemetryCleanup(log::Logger& logger) : log(logger) {}
+    explicit TelemetryCleanup(const std::unique_ptr<log::Logger>& logger) : logger(logger) {}
 
     ~TelemetryCleanup() {
+      if (!logger) {
+        return;
+      }
+      auto& log = *logger;
       log::LogContext lc(log);
       try {
         cta::telemetry::cleanupOpenTelemetry(lc);
@@ -331,7 +348,7 @@ private:
       }
     }
 
-    log::Logger& log;
+    const std::unique_ptr<log::Logger>& logger;
   };
 
   std::unique_ptr<log::Logger> initLogger(const TConfig& config, const TOpts& cliOptions) const {
@@ -363,7 +380,7 @@ private:
       logAttributes[key] = value;
     }
     if constexpr (HasStaticLogAttributes<TApp, TConfig>) {
-      for (const auto& [key, value] : m_app.getStaticLogAttributes(config)) {
+      for (const auto& [key, value] : m_app->getStaticLogAttributes(config)) {
         logAttributes[key] = value;
       }
     }
@@ -395,8 +412,8 @@ private:
         *m_logPtr,
         host,
         port,
-        [this]() { return m_app.isReady(); },
-        [this]() { return m_app.isLive(); });
+        [this]() { return m_app->isReady(); },
+        [this]() { return m_app->isLive(); });
       healthServer->start();
       return healthServer;
     }
@@ -415,7 +432,7 @@ private:
 
     std::map<std::string, std::string> customAttributes;
     if constexpr (HasStaticTelemetryAttributes<TApp, TConfig>) {
-      customAttributes = m_app.getStaticTelemetryAttributes(config);
+      customAttributes = m_app->getStaticTelemetryAttributes(config);
     }
 
     const std::set<std::string> reservedAttributes = {cta::semconv::attr::kServiceName,
@@ -483,7 +500,7 @@ private:
 
   ArgParser<TOpts> m_argParser;
   // The actual application class
-  TApp m_app;
+  std::optional<TApp> m_app {std::in_place};
 
   SignalReactorBuilder m_signalReactorBuilder;
 };

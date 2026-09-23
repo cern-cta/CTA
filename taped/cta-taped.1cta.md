@@ -45,7 +45,9 @@ They preserve existing operator or failure reasons and return failure if down pu
 Shutdown does not perform additional hardware cleanup or wait indefinitely for database recovery.
 Configuration failures before catalogue access and failures to validate drive ownership cannot guarantee down publication.
 
-Graceful signal-driven shutdown and recovery from partial worker startup or worker join failures are not implemented by this lifecycle guarantee.
+SIGTERM requests an exit between scheduling iterations or polling attempts.
+An active tape session finishes before exit; sleeps and blocking operations are not interrupted.
+Full graceful shutdown and recovery from partial worker startup or worker join failures are not implemented by this lifecycle guarantee.
 Crashes, allocation or logging failures, stuck cartridges, and robot communication failures can prevent cleanup or state publication.
 
 # OPTIONS

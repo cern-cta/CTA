@@ -34,9 +34,10 @@ struct TapeTransferStats {
   /** Cumulated time spent by the tape thread waiting for a task. */
   double waitInstructionsTime = 0;
 
-  /** Derived time spent transferring files, excluding loading, positioning, and cleanup. */
-  double transferTime() const {
-    return checksumingTime + readWriteTime + flushTime + waitDataTime + waitFreeMemoryTime + waitInstructionsTime;
+  /** Derived transfer time, including reporting waits but excluding loading, positioning, and cleanup. */
+  double transferTime(double waitReportingTime) const {
+    return checksumingTime + readWriteTime + flushTime + waitDataTime + waitFreeMemoryTime + waitInstructionsTime
+           + waitReportingTime;
   }
 
   /** Cumulated data volume (actual payload), in bytes. */

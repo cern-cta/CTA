@@ -28,7 +28,7 @@ public:
   ~TapedApp();
 
   /**
-   * @brief Gracefully shutdown taped.
+   * @brief Request controller exit after its current operation or tape session.
    */
   void stop();
 

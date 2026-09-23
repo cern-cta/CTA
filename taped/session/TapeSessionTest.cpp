@@ -1826,6 +1826,36 @@ TEST_P(TapeSessionTest, RetrieveCompletionFailureAfterMountCleansUp) {
               "");
 }
 
+// Verify the public timing fields at all three reporting levels against the legacy sum.
+void checkTransferTimingLogs(const std::string& output, const std::string& fileMessage) {
+  unsigned files = 0, threads = 0, sessions = 0;
+  for (const auto& line : cta::utils::splitStringToVector(output, '\n')) {
+    const bool file = line.find("MSG=\"" + fileMessage + "\"") != std::string::npos;
+    const bool thread = line.find("MSG=\"Tape thread complete\"") != std::string::npos;
+    const bool session = line.find("MSG=\"Tape session finished\"") != std::string::npos;
+    if (!file && !thread && !session) {
+      continue;
+    }
+    SCOPED_TRACE(line);
+    const auto value = [&](const std::string& field) {
+      const auto pos = line.find(" " + field + "=\"");
+      return pos == std::string::npos ? 0.0 : std::stod(line.substr(pos + field.size() + 3));
+    };
+    const double expected = value("checksumingTime") + value("readWriteTime") + value("flushTime")
+                            + value("waitDataTime") + value("waitFreeMemoryTime") + value("waitInstructionsTime")
+                            + value("waitReportingTime");
+    EXPECT_GT(value("waitReportingTime"), 0);
+    // Text logs round each floating-point field independently.
+    EXPECT_NEAR(expected, value("transferTime"), expected * 0.00001);
+    files += file;
+    threads += thread;
+    sessions += session;
+  }
+  EXPECT_GT(files, 0);
+  EXPECT_EQ(1, threads);
+  EXPECT_EQ(1, sessions);
+}
+
 /*
  * If retrieve requests target valid tape files, the session recalls them successfully.
  * The test checks the resulting disk files and completed scheduler jobs.
@@ -2049,6 +2079,7 @@ TEST_P(TapeSessionTest, TapeSessionGooddayRecall) {
   // 10) Check logs
   // 10) Check logs
   std::string logToCheck = logger.getLog();
+  checkTransferTimingLogs(logToCheck, "File successfully read from tape");
   auto logLines = cta::utils::splitStringToVector(logToCheck, '\n');
 
   // Check if any of the lines contains all of these substrings
@@ -4235,6 +4266,7 @@ TEST_P(TapeSessionTest, TapeSessionGooddayMigration) {
   EXPECT_NE(std::string::npos, logger.getLog().find("filesCount=\"10\""));
   EXPECT_NE(std::string::npos, logger.getLog().find("dataVolume=\"10000\""));
   std::string logToCheck = logger.getLog();
+  checkTransferTimingLogs(logToCheck, "File successfully transmitted to drive");
   ASSERT_EQ(s_vid, sess.getVid());
   auto afiiter = archiveFileIds.begin();
   for (const auto& sf : sourceFiles) {
