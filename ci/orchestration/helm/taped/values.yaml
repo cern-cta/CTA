@@ -40,7 +40,6 @@ transfers:
   bufferSizeBytes: 262144
   bufferCount: 200
   diskIoThreads: 4
-  # Interval between periodic tape-session statistics reports, in seconds.
   statsReportIntervalSecs: 15
   noBlockMoveTimeoutSecs: 1800
   archive:
