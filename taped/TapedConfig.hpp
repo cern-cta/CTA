@@ -105,7 +105,6 @@ struct MountsConfig final {
   uint32_t scheduling_timeout_secs = 300;
   uint32_t get_next_mount_timeout_secs = 900;
   uint32_t idle_scheduling_interval_secs = 10;
-  uint32_t backend_recovery_interval_secs = 10;
   uint32_t drive_state_poll_interval_secs = 5;
   uint32_t logical_library_poll_interval_secs = 5;
   uint32_t mount_timeout_secs = 600;
@@ -130,9 +129,6 @@ struct MountsConfig final {
     }
     if (idle_scheduling_interval_secs == 0) {
       result.addError("idle_scheduling_interval_secs", "must be greater than zero");
-    }
-    if (backend_recovery_interval_secs == 0) {
-      result.addError("backend_recovery_interval_secs", "must be greater than zero");
     }
     if (drive_state_poll_interval_secs == 0) {
       result.addError("drive_state_poll_interval_secs", "must be greater than zero");

@@ -23,7 +23,6 @@ mounts:
   schedulingTimeoutSecs: 300
   getNextMountTimeoutSecs: 900
   idleSchedulingIntervalSecs: 1 # Make tape servers more responsive, thus improving CI test speed
-  backendRecoveryIntervalSecs: 1 # Retry backend connections quickly in CI
   driveStatePollIntervalSecs: 1 # Make tape servers react faster to drive state changes in CI
   logicalLibraryPollIntervalSecs: 1 # Detect newly created libraries quickly in CI
   mountTimeoutSecs: 600

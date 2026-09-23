@@ -833,9 +833,6 @@ public:
     const bool startupFails = fatal || point == TransferFailurePoint::Metadata
                               || point == TransferFailurePoint::MetadataDatabase
                               || point == TransferFailurePoint::StartingStatus;
-    const bool backendFailure = point == TransferFailurePoint::MetadataDatabase
-                                || point == TransferFailurePoint::FetchDatabase
-                                || point == TransferFailurePoint::CompleteDatabase;
     const bool workerStarts =
       point == TransferFailurePoint::TapeMountedCta || point == TransferFailurePoint::TapeMountedStandard
       || point == TransferFailurePoint::TapeMountedAndUnload || point == TransferFailurePoint::TapeMountedAndComplete;
@@ -928,7 +925,6 @@ public:
     // Check cleanup even if a recoverable case incorrectly throws and leaves no result.
     if (result) {
       EXPECT_EQ(point != TransferFailurePoint::None, result->retryDelayRequired);
-      EXPECT_EQ(backendFailure, result->backendRecoveryRequired);
       EXPECT_EQ(discoveryFails || openFails || cleanupFails ? DriveUsability::MustRemainDown : DriveUsability::Reusable,
                 result->driveUsability);
     }

@@ -126,11 +126,6 @@ private:
   void waitForLogicalLibrary();
 
   /**
-   * @brief Retry scheduler health checks while database connections remain unavailable.
-   */
-  void waitForBackendRecovery();
-
-  /**
    * @brief Poll operator intent, keeping a waiting drive reported down.
    *
    * Register a missing drive as down and arm cleanup for the next up request.

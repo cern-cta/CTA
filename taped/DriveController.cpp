@@ -7,7 +7,6 @@
 
 #include "SystemDriveOperations.hpp"
 #include "common/exception/Exception.hpp"
-#include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/TimeoutException.hpp"
 #include "common/semconv/Logging.hpp"
 #include "common/utils/Timer.hpp"
@@ -124,11 +123,6 @@ void DriveController::runIteration() {
       .add("scheduleMountTimeoutSecs", m_config.mounts.get_next_mount_timeout_secs)
       .add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(log::WARNING, "Scheduling timed out; waiting before retrying.");
-  } catch (const exception::LostDatabaseConnection& ex) {
-    // If we lose connection, we log an error, wait for the DB to be up again and continue with the next iteration.
-    logDriveFailure(m_lc, "Scheduling lost its database connection.", ex);
-    waitForBackendRecovery();
-    return;
   } catch (const std::exception& ex) {
     // No transfer has started; retry through normal drive preparation after the idle delay.
     logDriveFailure(m_lc, "Scheduling failed unexpectedly; waiting before retrying.", ex);
@@ -144,9 +138,6 @@ void DriveController::runIteration() {
   // TapeSession handles recoverable failures; escaping exceptions are fatal and reach run().
   const auto transferResult = m_operations.runTapeSession(*tapeMount);
 
-  if (transferResult.backendRecoveryRequired) {
-    waitForBackendRecovery();
-  }
   if (transferResult.driveUsability != DriveUsability::Reusable) {
     m_cleanupVid = tapeMount->getVid();
     // Preserve specific session or operator reasons. Publication failures propagate.
@@ -178,19 +169,6 @@ void DriveController::waitForLogicalLibrary() {
     // Database failures propagate; only an absent library is retried here.
     // TODO (separate MR): graceful shutdown should interrupt sleep
     m_operations.sleep(m_config.mounts.logical_library_poll_interval_secs);
-  }
-}
-
-void DriveController::waitForBackendRecovery() {
-  // Scheduler::ping checks both the catalogue and scheduler backend.
-  while (true) {
-    try {
-      m_operations.scheduler().ping(m_lc);
-      return;
-    } catch (const exception::LostDatabaseConnection& ex) {
-      logDriveFailure(m_lc, "Database is still unavailable; waiting before retrying.", ex);
-      m_operations.sleep(m_config.mounts.backend_recovery_interval_secs);
-    }
   }
 }
 
