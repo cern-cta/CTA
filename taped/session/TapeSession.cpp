@@ -338,9 +338,6 @@ void cta::tape::daemon::TapeSession::executeRead(cta::log::LogContext& logContex
                                     m_transfersConfig.retrieve.fetch_max_bytes,
                                     m_tapeSessionTracker,
                                     logContext);
-    // Workaround for bug CASTOR-4829: tapegateway: should request positioning by blockid for recalls instead of fseq
-    // In order to implement the fix, the task injector needs to know the type of the client
-    readSingleThread.setTaskInjector(&taskInjector);
     reportPacker.setTapeSessionTracker(m_tapeSessionTracker);
 
     taskInjector.setDriveInterface(readSingleThread.getDriveReference());
@@ -382,7 +379,7 @@ void cta::tape::daemon::TapeSession::executeRead(cta::log::LogContext& logContex
       readSingleThread.setWaitForInstructionsTime(timer.secs());
       m_tapeSessionTracker.setMountAttempted(true);
       state.workersRunning = true;
-      readSingleThread.startThreads();
+      readSingleThread.startThreads(taskInjector);
       threadPool.startThreads();
       reportPacker.startThreads();
       taskInjector.startThreads();
@@ -472,7 +469,6 @@ void cta::tape::daemon::TapeSession::executeWrite(cta::log::LogContext& logConte
                                        m_transfersConfig.archive.fetch_max_bytes,
                                        archiveDismountPolicy,
                                        logContext);
-    threadPool.setTaskInjector(&taskInjector);
     writeSingleThread.setTaskInjector(&taskInjector);
     reportPacker.setTapeSessionTracker(m_tapeSessionTracker);
     cta::utils::Timer timer;
@@ -488,7 +484,7 @@ void cta::tape::daemon::TapeSession::executeWrite(cta::log::LogContext& logConte
       m_tapeSessionTracker.setMountAttempted(true);
       state.workersRunning = true;
       memoryManager.startThreads();
-      threadPool.startThreads();
+      threadPool.startThreads(taskInjector);
       writeSingleThread.setWaitForInstructionsTime(timer.secs());
       writeSingleThread.startThreads();
       reportPacker.startThreads();
