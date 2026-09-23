@@ -110,6 +110,7 @@ protected:
   unsigned int destroyed = 0;
   TapeMount* m_liveMount = nullptr;
   std::vector<unsigned int> sleeps;
+  std::function<void()> onSleep;
   std::function<std::unique_ptr<TapeMount>()> schedule;
   std::function<TapeSessionResult(TapeMount&)> transfer;
   std::function<bool()> libraryExists = [] { return true; };
@@ -167,6 +168,9 @@ protected:
         throw std::runtime_error("Unexpected repeated controller wait");
       }
       fixture.sleeps.push_back(seconds);
+      if (fixture.onSleep) {
+        fixture.onSleep();
+      }
     }
 
   private:
@@ -195,6 +199,8 @@ protected:
   bool prepare() { return controller->prepareDriveForScheduling(); }
 
   void requireCleaning() { controller->m_cleanBeforeScheduling = true; }
+
+  void markPrepared() { controller->m_cleanBeforeScheduling = false; }
 
   TapeMount* liveMount() { return m_liveMount; }
 
@@ -1488,6 +1494,97 @@ TEST_F(DriveControllerTest, ShutdownReplacesStartupAndCleanReasonsButPreservesOp
     EXPECT_EQ(0, shutdown());
     ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&scheduler));
   }
+}
+
+TEST_F(DriveControllerTest, StopWhileWaitingForLibraryExitsWithoutHardwareAccess) {
+  testing::InSequence sequence;
+  expectRunStartup();
+  expectShutdown();
+  libraryExists = [] { return false; };
+  onSleep = [&] { controller->stop(); };
+
+  EXPECT_EQ(0, controller->run());
+  EXPECT_FALSE(controller->isReady());
+  EXPECT_EQ(0, probes);
+  EXPECT_EQ(0, cleanings);
+  EXPECT_EQ(0, schedules);
+  EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.logical_library_poll_interval_secs));
+}
+
+TEST_F(DriveControllerTest, StopWhileWaitingForUpExitsWithoutHardwareAccess) {
+  testing::InSequence sequence;
+  expectRunStartup();
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
+  expectShutdown();
+  onSleep = [&] { controller->stop(); };
+
+  EXPECT_EQ(0, controller->run());
+  EXPECT_FALSE(controller->isReady());
+  EXPECT_EQ(0, probes);
+  EXPECT_EQ(0, cleanings);
+  EXPECT_EQ(0, schedules);
+  EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.drive_state_poll_interval_secs));
+}
+
+TEST_F(DriveControllerTest, StopDuringIdleSleepPublishesDownAndExits) {
+  testing::InSequence sequence;
+  expectRunStartup();
+  // Startup normally arms cleaning; isolate stopping after an idle scheduling iteration.
+  libraryExists = [&] {
+    markPrepared();
+    return true;
+  };
+  expectPreparation();
+  expectShutdown();
+  onSleep = [&] { controller->stop(); };
+
+  EXPECT_EQ(0, controller->run());
+  EXPECT_EQ(1, schedules);
+  EXPECT_EQ(0, transfers);
+  EXPECT_FALSE(controller->isReady());
+}
+
+TEST_F(DriveControllerTest, StopDuringSessionAllowsCompletionBeforeShutdown) {
+  testing::InSequence sequence;
+  expectRunStartup();
+  libraryExists = [&] {
+    markPrepared();
+    return true;
+  };
+  expectPreparation();
+  expectShutdown();
+  supplyMount();
+  bool completed = false;
+  transfer = [&](TapeMount&) {
+    controller->stop();
+    EXPECT_NE(nullptr, liveMount());
+    completed = true;
+    return TapeSessionResult {};
+  };
+
+  EXPECT_EQ(0, controller->run());
+  EXPECT_TRUE(completed);
+  EXPECT_EQ(1, transfers);
+  EXPECT_EQ(1, destroyed);
+  EXPECT_FALSE(controller->isReady());
+}
+
+TEST_F(DriveControllerTest, StopStillReturnsFailureWhenShutdownPublicationFails) {
+  testing::InSequence sequence;
+  expectRunStartup();
+  libraryExists = [&] {
+    controller->stop();
+    return true;
+  };
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _))
+    .WillOnce(Throw(std::runtime_error("publication failed")));
+  EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _));
+
+  EXPECT_EQ(1, controller->run());
+  EXPECT_FALSE(controller->isReady());
+  EXPECT_EQ(0, probes);
 }
 
 }  // namespace cta::tape::daemon

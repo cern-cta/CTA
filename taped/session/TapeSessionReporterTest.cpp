@@ -105,6 +105,11 @@ TEST(TapeSessionReporterTest, ReportsSplitStatsWithExistingFieldNamesAndCalculat
 
   reporter.reportNow();
 
+  tracker.reportState(cta::tape::session::TapeSessionState::Finished);
+  reporter.startThreads();
+  reporter.finish();
+  reporter.waitThreads();
+
   const auto output = log.getLog();
   for (const auto& [field, value] : std::map<std::string, unsigned> {
          {"mountTime",                1 },
@@ -119,7 +124,7 @@ TEST(TapeSessionReporterTest, ReportsSplitStatsWithExistingFieldNamesAndCalculat
          {"rewindTime",               1 },
          {"labelReadTime",            1 },
          {"encryptionControlTime",    8 },
-         {"transferTime",             4 },
+         {"transferTime",             6 },
          {"totalTime",                10},
          {"deliveryTime",             15},
          {"drainingTime",             5 },
@@ -129,6 +134,7 @@ TEST(TapeSessionReporterTest, ReportsSplitStatsWithExistingFieldNamesAndCalculat
       std::regex_search(output, std::regex("\"" + field + "\":" + std::to_string(value) + R"((?:\.0+)?[,}])")))
       << field;
   }
+  EXPECT_EQ(2, countMessage(output, "\"transferTime\":6"));
   EXPECT_EQ(10000000, mount.reportedStats.dataVolume);
   EXPECT_EQ(2, mount.reportedStats.filesCount);
   EXPECT_EQ(7, mount.reportedStats.positionTime);

@@ -394,7 +394,7 @@ void TapeWriteTask::logWithStats(int level, const std::string& msg, cta::log::Lo
     .add("checksumingTime", m_taskStats.checksumingTime)
     .add("waitDataTime", m_taskStats.waitDataTime)
     .add("waitReportingTime", m_waitReportingTime)
-    .add("transferTime", m_taskStats.transferTime())
+    .add("transferTime", m_taskStats.transferTime(m_waitReportingTime))
     .add("totalTime", m_totalTime)
     .add("dataVolume", m_taskStats.dataVolume)
     .add("headerVolume", m_taskStats.headerVolume)

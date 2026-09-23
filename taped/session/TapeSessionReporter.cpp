@@ -236,7 +236,7 @@ void TapeSessionReporter::logStats(bool sessionFinished, const TapeSessionStats&
   params.add("readinessWaitTime", cleanupStats.readinessWaitTime);
   params.add("rewindTime", cleanupStats.rewindTime);
   params.add("labelReadTime", cleanupStats.labelReadTime);
-  params.add("transferTime", tapeStats.transferTime());
+  params.add("transferTime", tapeStats.transferTime(diskStats.waitReportingTime));
   params.add("totalTime", totalTime);
   params.add("deliveryTime", deliveryTime);
   params.add("drainingTime", std::max(deliveryTime - totalTime, 0.0));
