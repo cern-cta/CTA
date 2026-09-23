@@ -49,7 +49,9 @@ DiskReadThreadPool::~DiskReadThreadPool() {
 //------------------------------------------------------------------------------
 // DiskReadThreadPool::startThreads
 //------------------------------------------------------------------------------
-void DiskReadThreadPool::startThreads() {
+void DiskReadThreadPool::startThreads(MigrationTaskInjector& injector) {
+  m_injector = &injector;
+
   for (std::vector<DiskReadWorkerThread*>::iterator i = m_threads.begin(); i != m_threads.end(); ++i) {
     (*i)->start();
   }
