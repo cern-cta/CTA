@@ -169,10 +169,6 @@ idle_scheduling_interval_secs *(default: 10)*
 
 :   Delay before retrying after the scheduler reports that no mount is available.
 
-backend_recovery_interval_secs *(default: 10)*
-
-:   Delay between catalogue and scheduler backend connection checks after a lost database connection.
-
 drive_state_poll_interval_secs *(default: 5)*
 
 :   Delay before polling the desired drive state again while the drive is Down.

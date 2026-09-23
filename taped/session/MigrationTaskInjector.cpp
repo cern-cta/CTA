@@ -101,7 +101,7 @@ void MigrationTaskInjector::requestInjection(bool lastCall) {
 bool MigrationTaskInjector::synchronousInjection(bool& noFilesToMigrate) {
   std::list<std::unique_ptr<cta::ArchiveJob>> jobs;
   noFilesToMigrate = false;
-  // Startup callers need the original exception to select backend recovery.
+  // Preserve the original exception for session failure handling.
   // First popping of files, we multiply the number of popped files / bytes by 2 to avoid multiple mounts on Repack
   // (it is applied to ArchiveForUser and ArchiveForRepack batches)
   m_lc.log(cta::log::DEBUG, "Before m_archiveMount.getNextJobBatch()");

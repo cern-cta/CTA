@@ -30,7 +30,7 @@ public:
   virtual ~DriveOperations() = default;
 
   /**
-   * @brief Return the scheduler used for drive state and backend health operations.
+   * @brief Return the scheduler used for drive state operations.
    *
    * @return Reference to the scheduler used by these operations.
    */

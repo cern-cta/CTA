@@ -326,7 +326,6 @@ protected:
   void SetUp() override {
     config.drive.name = "drive";
     config.mounts.idle_scheduling_interval_secs = 7;
-    config.mounts.backend_recovery_interval_secs = 11;
     config.mounts.logical_library_poll_interval_secs = 17;
     controller = std::make_unique<DriveController>(config, logger, operations);
     // Iteration tests start from an already prepared drive; registration re-arms cleaning.
@@ -1307,16 +1306,14 @@ TEST_F(DriveControllerTest, SchedulingTimeoutWaitsAndAllowsAnotherIteration) {
 }
 
 /**
- * @brief If scheduling loses its database connection, the controller logs an error and waits for the backend.
+ * @brief Database failures during scheduling use the ordinary retry delay.
  *
- * Once a ping succeeds, it can probe and schedule again without an operator up request.
+ * The next iteration probes and schedules again without separate backend health checks.
  */
-TEST_F(DriveControllerTest, SchedulingDatabaseFailureWaitsForRecoveryBeforeRetry) {
+TEST_F(DriveControllerTest, SchedulingDatabaseFailureWaitsAndAllowsAnotherIteration) {
   schedule = []() -> std::unique_ptr<TapeMount> { throw exception::LostDatabaseConnection("database unavailable"); };
   expectPreparation();
-  testing::Expectation failedPing =
-    EXPECT_CALL(scheduler, ping(_)).WillOnce(Throw(exception::LostDatabaseConnection("database unavailable")));
-  EXPECT_CALL(scheduler, ping(_)).After(failedPing);
+  EXPECT_CALL(scheduler, ping(_)).Times(0);
 
   EXPECT_NO_THROW(iteration());
   EXPECT_THAT(logger.getLog(), testing::HasSubstr("LVL=\"ERROR\""));
@@ -1329,7 +1326,7 @@ TEST_F(DriveControllerTest, SchedulingDatabaseFailureWaitsForRecoveryBeforeRetry
   EXPECT_EQ(2, schedules);
   EXPECT_THAT(
     sleeps,
-    testing::ElementsAre(config.mounts.backend_recovery_interval_secs, config.mounts.idle_scheduling_interval_secs));
+    testing::ElementsAre(config.mounts.idle_scheduling_interval_secs, config.mounts.idle_scheduling_interval_secs));
 }
 
 /**
@@ -1438,34 +1435,6 @@ TEST_F(DriveControllerTest, HandledSessionFailureRetriesWithoutCleaning) {
   EXPECT_EQ(1, destroyed);
   EXPECT_EQ(nullptr, liveMount());
   EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.idle_scheduling_interval_secs));
-}
-
-/**
- * @brief Verify handled transfer failures wait for backend recovery without repeating cleanup.
- */
-TEST_F(DriveControllerTest, HandledSessionFailureWaitsForBackendWithoutCleaning) {
-  supplyMount();
-  transfer = [](TapeMount&) {
-    TapeSessionResult result;
-    result.backendRecoveryRequired = true;
-    result.retryDelayRequired = true;
-    return result;
-  };
-  clean = [] {
-    ADD_FAILURE() << "Handled session failures must not trigger another cleanup";
-    return false;
-  };
-  expectPreparation();
-  testing::Expectation failedPing =
-    EXPECT_CALL(scheduler, ping(_)).WillOnce(Throw(exception::LostDatabaseConnection("database unavailable")));
-  EXPECT_CALL(scheduler, ping(_)).After(failedPing);
-
-  EXPECT_NO_THROW(iteration());
-  EXPECT_EQ(1, destroyed);
-  EXPECT_EQ(nullptr, liveMount());
-  EXPECT_THAT(
-    sleeps,
-    testing::ElementsAre(config.mounts.backend_recovery_interval_secs, config.mounts.idle_scheduling_interval_secs));
 }
 
 /**

@@ -17,7 +17,6 @@
 #include "common/dataStructures/ArchiveDismountPolicy.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
 #include "common/exception/Exception.hpp"
-#include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/NotImplementedException.hpp"
 #include "common/exception/TimeoutException.hpp"
 #include "common/log/LogContext.hpp"
@@ -132,9 +131,6 @@ void recordFailure(cta::tape::daemon::TapeSessionResult& result,
   const char* message = "Unrecoverable tape session failure";
   try {
     std::rethrow_exception(failure);
-  } catch (const cta::exception::LostDatabaseConnection& ex) {
-    message = ex.what();
-    result.backendRecoveryRequired = true;
   } catch (const cta::exception::Exception& ex) {
     message = ex.what();
   } catch (const std::runtime_error& ex) {

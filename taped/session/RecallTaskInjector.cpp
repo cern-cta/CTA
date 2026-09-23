@@ -301,7 +301,7 @@ bool RecallTaskInjector::synchronousFetch(bool& noFilesToRecall) {
     return true;  //No need to pop from the queue, injector already holds enough bytes, but we return there is still work to be done
   }
   reqSize -= m_bytes;
-  // Startup callers need the original exception to select backend recovery.
+  // Preserve the original exception for session failure handling.
   auto jobsList = m_retrieveMount.getNextJobBatch(reqFiles, reqSize, m_lc);
   for (auto& j : jobsList) {
     m_files++;
