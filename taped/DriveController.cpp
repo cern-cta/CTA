@@ -175,12 +175,12 @@ void DriveController::runIteration() {
   // TapeSession handles recoverable failures; escaping exceptions are fatal and reach run().
   const auto transferResult = m_operations.runTapeSession(*tapeMount);
 
-  if (transferResult.driveUsability != DriveUsability::Reusable) {
+  if (!transferResult.driveReusable) {
     m_cleanupVid = tapeMount->getVid();
     // Preserve specific session or operator reasons. Publication failures propagate.
     putDriveDown(common::dataStructures::DriveDownReason::SessionLeftDriveUnusable, {}, true);
   }
-  if (transferResult.retryDelayRequired && transferResult.driveUsability == DriveUsability::Reusable) {
+  if (!transferResult.successful && transferResult.driveReusable) {
     m_operations.sleep(m_config.mounts.idle_scheduling_interval_secs);
   }
 }

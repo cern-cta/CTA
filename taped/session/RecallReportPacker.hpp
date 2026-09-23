@@ -21,10 +21,11 @@ class RecallReportPacker : public ReportPackerInterface<detail::Recall> {
 public:
   /**
    * Constructor
+   * @param tracker Session tracker, which must outlive the report worker.
    * @param tg the client to whom we report the success/failures
    * @param lc log context, copied du to threads
    */
-  RecallReportPacker(cta::RetrieveMount* retrieveMount, cta::log::LogContext& lc);
+  RecallReportPacker(cta::RetrieveMount* retrieveMount, cta::log::LogContext& lc, TapeSessionTracker& tracker);
 
   ~RecallReportPacker() override;
 
@@ -42,10 +43,12 @@ public:
    * @param migratedFile the file which failed
    * @param ex the reason for the failure
    * @param lc log context provided by the calling thread.
+   * @param recordedFailure Receipt for this file\'s failure, already recorded by the session tracker.
    */
   virtual void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob,
                                const cta::exception::Exception& ex,
-                               cta::log::LogContext& lc);
+                               cta::log::LogContext& lc,
+                               RecordedFailure recordedFailure);
 
   /**
    * Create into the RecallReportPacker a report for the nominal end of session
@@ -105,9 +108,9 @@ public:
   void waitThread() { m_workerThread.wait(); }
 
   /**
-   * Was there an error?
+   * Whether the existing recall completion protocol has diagnostics to report.
    */
-  bool errorHappened();
+  bool completionHasDiagnostics();
 
 private:
   //inner classes use to store content while receiving a report
@@ -202,7 +205,7 @@ private:
    * That we can do a sanity check to make sure we always call
    * the right end of the session
    */
-  bool m_errorHappened = false;
+  bool m_failedJobReported = false;
 
   /**
    * The mount object used to send reports

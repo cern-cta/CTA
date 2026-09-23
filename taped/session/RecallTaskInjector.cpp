@@ -245,7 +245,7 @@ void RecallTaskInjector::injectBulkRecalls() {
     m_bytes -= job->archiveFile.fileSize;
   }
   if (!reserveSpaceForNextJobBatch(retrieveJobsBatch)) {
-    m_tracker.incrementError(TapeSessionError::DiskSpaceReservationFailure);
+    m_tracker.recordEvent(TapeSessionEvent::DiskSpaceReservationFailure);
     return;
   }
   bool setPromise = (retrieveJobsBatch.size() != 0);
@@ -391,7 +391,7 @@ void RecallTaskInjector::WorkerThread::run() {
   m_parent.m_lc.log(cta::log::DEBUG, "Starting RecallTaskInjector thread");
   // Share operational failure cleanup; other exception types propagate to the caller.
   const auto handleFailure = [&](const std::string& errorMessage, const cta::exception::Exception* ctaException) {
-    m_parent.m_tracker.setOutcome(TapeSessionOutcome::Failure);
+    m_parent.m_tracker.recordFailure(TapeSessionFailure::TaskInjection);
     //we end up there because we could not talk to the client
     cta::log::ScopedParamContainer container(m_parent.m_lc);
     container.add(cta::semconv::log::exceptionMessage, errorMessage);

@@ -57,9 +57,8 @@ cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
     try {
       m_this.m_reportPacker.reportDriveStatus(status, reason, m_this.m_logContext);
     } catch (...) {
-      m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
       try {
-        m_this.m_tracker.incrementError(TapeSessionError::Reporting);
+        m_this.m_tracker.recordFailure(TapeSessionFailure::Reporting);
       } catch (...) {}
     }
   };
@@ -73,7 +72,7 @@ cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
   try {
     m_this.m_taskInjector->finish();
   } catch (...) {
-    m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
+    m_this.m_tracker.recordFailure(TapeSessionFailure::WorkerSignalling);
     // Still clean the drive; failed signalling does not guarantee injector shutdown.
     try {
       m_this.m_logContext.log(log::ERR, "Failed to signal task injector shutdown during tape cleanup");
@@ -102,28 +101,28 @@ cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
     const auto result = cleaner.cleanDrive(m_this.m_drive, reportStatus);
     if (!result.driveReusable()) {
       cleanupError = result.errorMessage;
-      m_this.m_hardwareStatus = DriveUsability::MustRemainDown;
-      m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
+      m_this.m_driveReusable = false;
+      m_this.m_tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedCleanup);
       try {
         m_this.m_logContext.log(log::ERR, result.errorMessage);
       } catch (...) {}
     }
   } catch (const cta::exception::Exception& ex) {
     cleanupError = ex.getMessageValue();
-    m_this.m_hardwareStatus = DriveUsability::MustRemainDown;
-    m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
+    m_this.m_driveReusable = false;
+    m_this.m_tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedCleanup);
   } catch (const std::exception& ex) {
     cleanupError = ex.what();
-    m_this.m_hardwareStatus = DriveUsability::MustRemainDown;
-    m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
+    m_this.m_driveReusable = false;
+    m_this.m_tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedCleanup);
   } catch (...) {
     cleanupError = "Unknown exception during drive cleanup";
-    m_this.m_hardwareStatus = DriveUsability::MustRemainDown;
-    m_this.m_tracker.setOutcome(TapeSessionOutcome::Failure);
+    m_this.m_driveReusable = false;
+    m_this.m_tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedCleanup);
   }
 
   m_timer.reset();
-  if (m_this.m_hardwareStatus == DriveUsability::MustRemainDown) {
+  if (!m_this.m_driveReusable) {
     reportStatusSafely(
       DriveStatus::Down,
       common::dataStructures::formatDriveDownReason(common::dataStructures::DriveDownReason::DriveCleanupFailed,
@@ -225,7 +224,7 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
   threadGlobalParams.add("thread", "TapeWrite");
   cta::utils::Timer timer, totalTimer;
   // Track session-level errors separately from failures already counted by individual tasks.
-  TapeSessionError currentErrorToCount = TapeSessionError::TapeMountForWrite;
+  TapeSessionFailure currentErrorToCount = TapeSessionFailure::TapeMountForWrite;
   bool countCurrentError = true;
   std::unique_ptr<TapeWriteTask> task;
 
@@ -268,15 +267,16 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
         isTapeFull = true;
       }
       // This is indeed the end of the tape. Not an error.
-      m_tracker.setErrorCount(TapeSessionError::TapeFilledUp, 1);
+      m_tracker.recordEvent(TapeSessionEvent::TapeFilledUp);
       m_reportPacker.reportTapeFull(m_logContext);
     } catch (...) {
-      m_tracker.setOutcome(TapeSessionOutcome::Failure);
       // The error is not an ENOSPC, so it is, indeed, an error.
       // If we got here with a new error, countCurrentError will be set,
       // and we will pass the typed error to the session tracker.
       if (countCurrentError) {
-        m_tracker.incrementError(currentErrorToCount);
+        m_tracker.recordFailure(currentErrorToCount);
+      } else {
+        m_tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
       }
     }
 #ifdef CTA_PGSCHED
@@ -324,7 +324,8 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
     }
     // prepare logging params
     cta::log::ScopedParamContainer params(m_logContext);
-    params.add("status", "error").add(cta::semconv::log::exceptionMessage, errorMessage);
+    params.add("status", m_tracker.hasFailures() ? "error" : "success")
+      .add(cta::semconv::log::exceptionMessage, errorMessage);
     m_totalTime = totalTimer.secs();
     m_tracker.setTotalTime(m_totalTime);
     logWithStats(logLevel, "Tape thread complete for writing", params);
@@ -353,18 +354,18 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
       m_logContext.log(cta::log::INFO, "Tape session started for write");
       m_tracker.reportState(cta::tape::session::TapeSessionState::Mounting);
       measureSetupTime(&TapeSetupStats::initialMountTime, [&] { mountTapeReadWrite(); });
-      currentErrorToCount = TapeSessionError::TapeLoad;
+      currentErrorToCount = TapeSessionFailure::TapeLoad;
       m_tracker.reportState(cta::tape::session::TapeSessionState::Loading);
       measureSetupTime(&TapeSetupStats::tapeLoadTime, [&] { waitForDrive(); });
       m_tracker.reportState(cta::tape::session::TapeSessionState::Preparing);
       const double tapeLoadTime = m_tracker.stats().setup.tapeLoadTime;
-      currentErrorToCount = TapeSessionError::CheckingTapeAlert;
+      currentErrorToCount = TapeSessionFailure::CheckingTapeAlert;
       if (logAndCheckTapeAlertsForWrite()) {
         throw cta::exception::Exception("Aborting write session in"
                                         " presence of critical tape alerts");
       }
 
-      currentErrorToCount = TapeSessionError::TapeNotWriteable;
+      currentErrorToCount = TapeSessionFailure::TapeNotWriteable;
       isTapeWritable();
 
       m_tracker.addTapeSetupStats({.mountTime = timer.secs(cta::utils::Timer::resetCounter)});
@@ -376,7 +377,7 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
       }
       m_archiveMount.setTapeMounted(m_logContext);
       try {
-        currentErrorToCount = TapeSessionError::TapeEncryptionEnable;
+        currentErrorToCount = TapeSessionFailure::TapeEncryptionEnable;
         // We want those scoped params to last for the whole mount.
         // This will allow each written file to be logged with its encryption
         // status:
@@ -402,7 +403,7 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
         throw;
       }
       // Then we have to initialize the tape write session
-      currentErrorToCount = TapeSessionError::TapePositionForWrite;
+      currentErrorToCount = TapeSessionFailure::TapePositionForWrite;
       auto writeSession = openWriteSession();
       m_tracker.addTapeSetupStats({.positionTime = timer.secs(cta::utils::Timer::resetCounter)});
       //and then report
@@ -472,7 +473,7 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
         bytes += task->fileSize();
         //if one flush counter is above a threshold, then we flush
         if (files >= m_filesBeforeFlush || bytes >= m_bytesBeforeFlush) {
-          currentErrorToCount = TapeSessionError::TapeFlush;
+          currentErrorToCount = TapeSessionFailure::TapeFlush;
           countCurrentError = true;
           tapeFlush("Normal flush because thresholds was reached", bytes, files, timer);
           files = 0;
@@ -485,7 +486,7 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
     // The session completed successfully, and the cleaner (unmount) executed
     // at the end of the previous block. Log the results.
     cta::log::ScopedParamContainer params(m_logContext);
-    params.add("status", m_tracker.errorHappened() ? "error" : "success");
+    params.add("status", m_tracker.hasFailures() ? "error" : "success");
     m_totalTime = totalTimer.secs();
     m_tracker.setTotalTime(m_totalTime);
     m_tracker.setDiskDeliveryTime(m_totalTime);

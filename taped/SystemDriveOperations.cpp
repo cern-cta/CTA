@@ -11,11 +11,11 @@
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
+#include "common/utils/ScopeExit.hpp"
 #include "common/utils/utils.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "rdbms/Login.hpp"
 #include "scheduler/Scheduler.hpp"
-#include "session/ActiveTapeSession.hpp"
 #include "session/DriveCleaner.hpp"
 #include "session/EmptyDriveProbe.hpp"
 #include "session/TapeSession.hpp"
@@ -29,6 +29,7 @@
 #endif
 
 #include <algorithm>
+#include <memory>
 #include <unistd.h>
 
 namespace cta::tape::daemon {
@@ -159,11 +160,20 @@ public:
                         m_config.transfers,
                         m_config.mounts.tape_load_timeout_secs,
                         *m_scheduler);
-    const ActiveTapeSession::Scope active(m_activeSession, session.sharedTracker());
+    std::atomic_store<const TapeSessionTracker>(&m_activeTracker, session.sharedTracker());
+    const utils::ScopeExit clearActiveTracker(
+      [this] { std::atomic_store<const TapeSessionTracker>(&m_activeTracker, nullptr); });
     return session.execute();
   }
 
-  std::optional<TapeSessionLivenessSnapshot> tapeSessionLiveness() const override { return m_activeSession.snapshot(); }
+  std::optional<TapeSessionLivenessSnapshot> tapeSessionLiveness() const override {
+    // Retain the tracker while copying the snapshot, even if the session ends concurrently.
+    const auto tracker = std::atomic_load(&m_activeTracker);
+    if (!tracker) {
+      return std::nullopt;
+    }
+    return tracker->livenessSnapshot();
+  }
 
   /**
    * @brief Reset drive configuration and eject any remaining tape.
@@ -182,7 +192,7 @@ public:
                          m_config.mounts.tape_load_timeout_secs,
                          *m_catalogue,
                          tracker);
-    return session.execute(m_sysWrapper) == DriveUsability::Reusable;
+    return session.execute(m_sysWrapper);
   }
 
   /**
@@ -193,7 +203,8 @@ public:
   void sleep(unsigned int seconds) override { ::sleep(seconds); }
 
 private:
-  ActiveTapeSession m_activeSession;
+  // Use atomic shared_ptr access for compatibility with the EL9 standard library.
+  std::shared_ptr<const TapeSessionTracker> m_activeTracker {nullptr};
   const TapedConfig& m_config;
   const common::dataStructures::DriveInfo& m_driveInfo;
   log::LogContext m_lc;

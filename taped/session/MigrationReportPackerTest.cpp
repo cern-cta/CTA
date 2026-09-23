@@ -21,6 +21,7 @@
 
 #include <catalogue/Catalogue.hpp>
 #include <gtest/gtest.h>
+#include <stdexcept>
 
 using ::testing::_;
 using ::testing::Invoke;
@@ -235,7 +236,8 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerNominal) 
 
   cta::log::StringLogger log("dummy", "cta_tape_daemon_MigrationReportPackerNominal", cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  daemon::MigrationReportPacker mrp(&tam, lc);
+  cta::tape::daemon::TapeSessionTracker mrpTracker;
+  daemon::MigrationReportPacker mrp(&tam, lc, mrpTracker);
   mrp.startThreads();
 
   mrp.reportCompletedJob(std::move(job1), lc);
@@ -252,6 +254,19 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerNominal) 
   ASSERT_EQ(1, tam.completes);
   ASSERT_EQ(1, job1completes);
   ASSERT_EQ(1, job2completes);
+}
+
+TEST_F(cta_tape_daemon_MigrationReportPackerTest, RejectsFailureFromAnotherTracker) {
+  cta::MockArchiveMount mount(*m_catalogue);
+  cta::log::StringLogger log("dummy", "wrongTracker", cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+  daemon::TapeSessionTracker tracker;
+  daemon::TapeSessionTracker other;
+  daemon::MigrationReportPacker reporter(&mount, lc, tracker);
+  const auto failure = other.recordFailure(daemon::TapeSessionFailure::DiskRead);
+  EXPECT_THROW(reporter.reportFailedJob(nullptr, cta::exception::Exception("failed"), lc, failure), std::logic_error);
+  EXPECT_THROW(reporter.reportFileNotArchived(nullptr, "skipped", lc, failure), std::logic_error);
+  EXPECT_FALSE(tracker.hasFailures());
 }
 
 TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerFailure) {
@@ -278,7 +293,8 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerFailure) 
 
   cta::log::StringLogger log("dummy", "cta_tape_daemon_MigrationReportPackerFailure", cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  daemon::MigrationReportPacker mrp(&tam, lc);
+  cta::tape::daemon::TapeSessionTracker mrpTracker;
+  daemon::MigrationReportPacker mrp(&tam, lc, mrpTracker);
   mrp.startThreads();
 
   mrp.reportCompletedJob(std::move(job1), lc);
@@ -286,13 +302,18 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerFailure) 
 
   const std::string error_msg = "ERROR_TEST_MSG";
   const cta::exception::Exception ex(error_msg);
-  mrp.reportFailedJob(std::move(job3), ex, lc);
+  mrpTracker.recordFailure(cta::tape::daemon::TapeSessionFailure::DiskRead);
+  const auto failure = mrpTracker.recordFailure(cta::tape::daemon::TapeSessionFailure::UnclassifiedFile);
+  mrp.reportFailedJob(std::move(job3), ex, lc, failure);
 
   const drive::compressionStats statsCompress;
   mrp.reportFlush(statsCompress, lc);
   mrp.reportEndOfSession(lc);
   mrp.reportTestGoingToEnd(lc);
   mrp.waitThread();
+  EXPECT_TRUE(mrpTracker.hasFailures());
+  EXPECT_EQ(1, mrpTracker.failureStats().at(cta::tape::daemon::TapeSessionFailure::UnclassifiedFile));
+  EXPECT_EQ(1, mrpTracker.failureStats().at(cta::tape::daemon::TapeSessionFailure::DiskRead));
 
   std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find(error_msg));
@@ -440,7 +461,8 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerBadFile) 
 
   cta::log::StringLogger log("dummy", "cta_tape_daemon_MigrationReportPackerOneByteFile", cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  daemon::MigrationReportPacker mrp(&tam, lc);
+  cta::tape::daemon::TapeSessionTracker mrpTracker;
+  daemon::MigrationReportPacker mrp(&tam, lc, mrpTracker);
   mrp.startThreads();
 
   mrp.reportCompletedJob(std::move(migratedBigFile), lc);

@@ -49,7 +49,8 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,
   // process we're in, and to count the error if it occurs.
   // We will not record errors for an empty string. This will allow us to
   // prevent counting where error happened upstream.
-  std::optional<TapeSessionError> currentErrorToCount;
+  std::optional<TapeSessionFailure> currentErrorToCount;
+  std::optional<RecordedFailure> failure;
   bool isVerifyOnly(false);
   try {
     currentErrorToCount.reset();
@@ -74,6 +75,10 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,
           return true;
         }
 
+        // Keep the upstream receipt before the block is recycled during exception unwinding.
+        if (mb->isFailed() && mb->m_fileid == m_retrieveJob->retrieveRequest.archiveFileID) {
+          failure = mb->recordedFailure();
+        }
         //will throw (thus exiting the loop) if something is wrong
         checkErrors(mb, blockId, lc);
         m_stats.checkingErrorTime += localTime.secs(cta::utils::Timer::resetCounter);
@@ -82,7 +87,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,
         if (!writeFile.get()) {
           lc.log(cta::log::DEBUG, "About to open disk file for writing");
           // Synchronise the counter with the open time counter.
-          currentErrorToCount = TapeSessionError::DiskOpenForWrite;
+          currentErrorToCount = TapeSessionFailure::DiskOpenForWrite;
           transferTime = localTime;
           writeFile.reset(fileFactory.createWriteFile(m_retrieveJob->retrieveRequest.dstURL));
           URLcontext.add("actualURL", writeFile->URL());
@@ -92,7 +97,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,
         }
 
         // Write the data.
-        currentErrorToCount = TapeSessionError::DiskWrite;
+        currentErrorToCount = TapeSessionFailure::DiskWrite;
         m_stats.dataVolume += mb->m_payload.size();
         if (mb->m_payload.size()) {
           mb->m_payload.write(*writeFile);
@@ -112,7 +117,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,
         //close has to be explicit, because it may throw.
         //A close is done  in WriteFile's destructor, but it may lead to some
         //silent data loss
-        currentErrorToCount = TapeSessionError::DiskCloseAfterWrite;
+        currentErrorToCount = TapeSessionFailure::DiskCloseAfterWrite;
         writeFile->close();
         m_stats.closingTime += localTime.secs(cta::utils::Timer::resetCounter);
         m_stats.filesCount++;
@@ -172,7 +177,9 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,
 
     // Propagate the error to the session tracker.
     if (currentErrorToCount) {
-      tracker.incrementError(*currentErrorToCount);
+      failure = tracker.recordFailure(*currentErrorToCount);
+    } else if (!failure) {
+      failure = tracker.recordFailure(TapeSessionFailure::UnclassifiedFile);
     }
 
     m_stats.waitReportingTime += localTime.secs(cta::utils::Timer::resetCounter);
@@ -181,7 +188,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,
     params.add(cta::semconv::log::exceptionMessage, e.getMessageValue());
     logWithStat(cta::log::ERR, isVerifyOnly ? "File verification failed" : "File writing to disk failed", lc);
     lc.logBacktrace(cta::log::INFO, e.backtrace());
-    reporter.reportFailedJob(std::move(m_retrieveJob), e, lc);
+    reporter.reportFailedJob(std::move(m_retrieveJob), e, lc, *failure);
 
     tracker.notifyDiskFileClosed(threadID);
 

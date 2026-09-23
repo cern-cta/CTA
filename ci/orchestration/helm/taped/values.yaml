@@ -23,6 +23,7 @@ mounts:
   logicalLibraryPollIntervalSecs: 1 # Detect newly created libraries quickly in CI
   mountTimeoutSecs: 600
   tapeLoadTimeoutSecs: 300
+  tapeUnloadTimeoutSecs: 900 # Liveness timeout only; does not interrupt unloading
   unmountTimeoutSecs: 900
 
 rmcd:

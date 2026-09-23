@@ -13,6 +13,7 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <stdexcept>
 
 using ::testing::_;
 using ::testing::Invoke;
@@ -65,7 +66,8 @@ TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerNominal) {
 
   cta::log::StringLogger log("dummy", "cta_tape_RecallReportPackerNominal", cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  cta::tape::daemon::RecallReportPacker rrp(&retrieveMount, lc);
+  cta::tape::daemon::TapeSessionTracker rrpTracker;
+  cta::tape::daemon::RecallReportPacker rrp(&retrieveMount, lc, rrpTracker);
   rrp.startThreads();
 
   rrp.reportCompletedJob(std::move(job1), lc);
@@ -115,7 +117,8 @@ TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerBadBadEnd) {
   cta::log::StringLogger log("dummy", "cta_tape_RecallReportPackerBadBadEnd", cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
-  cta::tape::daemon::RecallReportPacker rrp(&retrieveMount, lc);
+  cta::tape::daemon::TapeSessionTracker rrpTracker;
+  cta::tape::daemon::RecallReportPacker rrp(&retrieveMount, lc, rrpTracker);
   rrp.startThreads();
 
   rrp.reportCompletedJob(std::move(job1), lc);
@@ -123,7 +126,9 @@ TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerBadBadEnd) {
 
   const std::string error_msg = "ERROR_TEST_MSG";
   const cta::exception::Exception ex(error_msg);
-  rrp.reportFailedJob(std::move(job3), ex, lc);
+  rrpTracker.recordFailure(cta::tape::daemon::TapeSessionFailure::DiskRead);
+  const auto failure = rrpTracker.recordFailure(cta::tape::daemon::TapeSessionFailure::UnclassifiedFile);
+  rrp.reportFailedJob(std::move(job3), ex, lc, failure);
 
   rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
 
@@ -131,6 +136,9 @@ TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerBadBadEnd) {
   rrp.setDiskDone();
   rrp.reportEndOfSession(lc);
   rrp.waitThread();
+  EXPECT_TRUE(rrpTracker.hasFailures());
+  EXPECT_EQ(1, rrpTracker.failureStats().at(cta::tape::daemon::TapeSessionFailure::UnclassifiedFile));
+  EXPECT_EQ(1, rrpTracker.failureStats().at(cta::tape::daemon::TapeSessionFailure::DiskRead));
 
   const std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find(error_msg));
@@ -138,6 +146,19 @@ TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerBadBadEnd) {
   ASSERT_EQ(1, job2completes);
   ASSERT_EQ(1, job3failures);
   ASSERT_EQ(1, retrieveMount.completes);
+}
+
+TEST_F(cta_tape_daemon_RecallReportPackerTest, RejectsFailureFromAnotherTracker) {
+  cta::catalogue::DummyCatalogue catalogue;
+  cta::MockRetrieveMount mount(catalogue);
+  cta::log::StringLogger log("dummy", "wrongTracker", cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+  cta::tape::daemon::TapeSessionTracker tracker;
+  cta::tape::daemon::TapeSessionTracker other;
+  cta::tape::daemon::RecallReportPacker reporter(&mount, lc, tracker);
+  const auto failure = other.recordFailure(cta::tape::daemon::TapeSessionFailure::DiskWrite);
+  EXPECT_THROW(reporter.reportFailedJob(nullptr, cta::exception::Exception("failed"), lc, failure), std::logic_error);
+  EXPECT_FALSE(tracker.hasFailures());
 }
 
 }  // namespace unitTests

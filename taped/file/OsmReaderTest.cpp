@@ -159,7 +159,7 @@ TEST_F(OsmReaderTest, CleanDrive) {
   cta::tape::daemon::TapeSessionTracker tracker;
   cta::tape::daemon::DriveCleaner driveCleaner(mc, strlogger, driveInfo, m_vid, false, 0, *m_catalogue, tracker);
 
-  ASSERT_EQ(cta::tape::daemon::DriveUsability::Reusable, driveCleaner.execute(m_sWrapper));
+  ASSERT_TRUE(driveCleaner.execute(m_sWrapper));
 
   const auto logToCheck = strlogger.getLog();
   ASSERT_NE(std::string::npos, logToCheck.find("Cleaner detected that the tape contains data"));

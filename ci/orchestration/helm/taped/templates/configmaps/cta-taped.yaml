@@ -68,6 +68,7 @@ data:
       logical_library_poll_interval_secs = {{ $.Values.mounts.logicalLibraryPollIntervalSecs }}
       mount_timeout_secs = {{ $.Values.mounts.mountTimeoutSecs }}
       tape_load_timeout_secs = {{ $.Values.mounts.tapeLoadTimeoutSecs }}
+      tape_unload_timeout_secs = {{ $.Values.mounts.tapeUnloadTimeoutSecs }}
       unmount_timeout_secs = {{ $.Values.mounts.unmountTimeoutSecs }}
 
     [rmcd]
