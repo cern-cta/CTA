@@ -40,6 +40,7 @@
 #include "tests/TempFile.hpp"
 
 #include <atomic>
+#include <chrono>
 #include <cstdio>
 #include <dirent.h>
 #include <fcntl.h>
@@ -53,6 +54,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <thread>
 #include <type_traits>
 #include <unistd.h>
 #include <zlib.h>
@@ -933,7 +935,15 @@ public:
     // The mount is borrowed. Finalize it once, including when startup or a
     // publication throws, and keep it alive until every worker has stopped.
     EXPECT_EQ(1, mount.completionAttempts);
-    EXPECT_EQ(threadsBefore, transferTestThreadCount());
+    // pthread_join() can return before Linux removes the thread from /proc/self/task.
+    // Allow kernel teardown to finish, but still fail for a persistent thread leak.
+    const auto threadCleanupDeadline = std::chrono::steady_clock::now() + std::chrono::seconds(1);
+    auto threadsAfter = transferTestThreadCount();
+    while (threadsAfter != threadsBefore && std::chrono::steady_clock::now() < threadCleanupDeadline) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      threadsAfter = transferTestThreadCount();
+    }
+    EXPECT_EQ(threadsBefore, threadsAfter) << "Thread count did not return to baseline within one second";
     EXPECT_EQ(&mount, tracker.mount());
     // Starting-status failures occur before the reporter starts, but still complete the session.
     if (!startupFails || point == TransferFailurePoint::StartingStatus) {
