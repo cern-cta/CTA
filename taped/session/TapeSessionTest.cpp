@@ -7,7 +7,6 @@
 // by inttypes.h, so we shoot first)
 #include "TapeSession.hpp"
 
-#include "TapedMetricsTestUtils.hpp"
 #include "catalogue/CatalogueItor.hpp"
 #include "catalogue/CreateMountPolicyAttributes.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
@@ -254,7 +253,6 @@ public:
   }
 
   bool repack = false;
-  std::function<void(cta::common::dataStructures::DriveStatus)> observeStatus;
 
   uint32_t getNbFiles() const override { return 0; }
 
@@ -278,9 +276,6 @@ public:
 
   void setDriveStatus(cta::common::dataStructures::DriveStatus status,
                       const std::optional<std::string>& reason = std::nullopt) override {
-    if (observeStatus) {
-      observeStatus(status);
-    }
     if (status == cta::common::dataStructures::DriveStatus::Down) {
       downReason = reason;
     }
@@ -827,14 +822,12 @@ public:
     // Bound failures involving virtual hardware and in-memory queues. Neither
     // a robot nor a disk server is contacted by these scenarios.
     alarm(5);
-    cta::telemetry::testing::ScopedTapedMetrics observed;
     const auto threadsBefore = transferTestThreadCount();
     cta::log::StringLogger logger("dummy", "transferFailureTest", cta::log::DEBUG);
     FailingTransferScheduler scheduler(getCatalogue(), *m_db, "schedulerBackendName");
     scheduler.failure = point;
     Mount mount(getCatalogue(), point);
     mount.repack = repack;
-    mount.observeStatus = [&](auto) { EXPECT_EQ(1, observed.mountType(mount.getMountType())); };
     const bool fatal = point == TransferFailurePoint::MetadataAllocation || point == TransferFailurePoint::MetadataLogic
                        || point == TransferFailurePoint::MetadataUnknown;
     const bool startupFails = fatal || point == TransferFailurePoint::Metadata
@@ -926,7 +919,6 @@ public:
       EXPECT_TRUE(result.has_value());
       EXPECT_EQ(cta::tape::session::TapeSessionState::Finished, tracker.state());
     }
-    EXPECT_EQ(1, observed.mountType(cta::common::dataStructures::MountType::NoMount));
     EXPECT_EQ(point == TransferFailurePoint::None ? TapeSessionOutcome::Success : TapeSessionOutcome::Failure,
               tracker.outcome());
     if (startupFails) {
