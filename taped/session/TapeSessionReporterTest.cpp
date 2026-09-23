@@ -109,6 +109,7 @@ TEST(TapeSessionReporterTest, ReportsSplitStatsWithExistingFieldNamesAndCalculat
   reporter.startThreads();
   reporter.finish();
   reporter.waitThreads();
+  reporter.reportSessionFinished();
 
   const auto output = log.getLog();
   for (const auto& [field, value] : std::map<std::string, unsigned> {
@@ -141,7 +142,7 @@ TEST(TapeSessionReporterTest, ReportsSplitStatsWithExistingFieldNamesAndCalculat
   EXPECT_NE(std::string::npos, output.find("\"sessionState\":null"));
 }
 
-TEST(TapeSessionReporterTest, PeriodicallyReportsAndFlushesOnShutdown) {
+TEST(TapeSessionReporterTest, PeriodicReportingStopsBeforeExplicitFinalReport) {
   cta::log::StringLogger log("dummy", "TapeSessionReporterTest", cta::log::DEBUG);
   cta::log::LogContext lc(log);
   ReportingTapeMount mount;
@@ -159,6 +160,8 @@ TEST(TapeSessionReporterTest, PeriodicallyReportsAndFlushesOnShutdown) {
   tracker.reportState(cta::tape::session::TapeSessionState::Finished);
   reporter.finish();
   reporter.waitThreads();
+  EXPECT_EQ(0, countMessage(log.getLog(), "Tape session finished"));
+  reporter.reportSessionFinished();
 
   const auto output = log.getLog();
   EXPECT_NE(std::string::npos, output.find("Tape session statistics"));
@@ -174,7 +177,7 @@ TEST(TapeSessionReporterTest, PeriodicallyReportsAndFlushesOnShutdown) {
   EXPECT_GE(mount.statsReports.load(), 2U);
 }
 
-TEST(TapeSessionReporterTest, DerivesMountMetadataAndUsesTypedOutcome) {
+TEST(TapeSessionReporterTest, DerivesMountMetadataAndReportsFailureWithoutStartingThread) {
   cta::log::StringLogger log("dummy", "TapeSessionReporterTest", cta::log::DEBUG);
   log.setLogFormat("json");
   cta::log::LogContext lc(log);
@@ -185,11 +188,10 @@ TEST(TapeSessionReporterTest, DerivesMountMetadataAndUsesTypedOutcome) {
 
   tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
   tracker.setMountAttempted(false);
-  reporter.startThreads();
   tracker.reportState(cta::tape::session::TapeSessionState::Finished);
-  reporter.finish();
-  reporter.waitThreads();
+  reporter.reportSessionFinished();
 
+  EXPECT_EQ(1, countMessage(log.getLog(), "Tape session finished"));
   EXPECT_NE(std::string::npos, log.getLog().find("\"status\":\"failure\""));
   EXPECT_NE(std::string::npos, log.getLog().find("\"mountAttempted\":0"));
   EXPECT_NE(std::string::npos, log.getLog().find("V12345"));
@@ -213,6 +215,7 @@ TEST(TapeSessionReporterTest, ReportsOnlyActiveDiskFilesWithLegacyParameterNames
   tracker.reportState(cta::tape::session::TapeSessionState::Finished);
   reporter.finish();
   reporter.waitThreads();
+  reporter.reportSessionFinished();
 
   EXPECT_EQ(std::string::npos, log.getLog().find("stillOpenFileForThread1"));
   EXPECT_EQ(std::string::npos, log.getLog().find("file:///closed"));
@@ -234,6 +237,7 @@ TEST(TapeSessionReporterTest, ReportsAStuckFile) {
   tracker.reportState(cta::tape::session::TapeSessionState::Finished);
   reporter.finish();
   reporter.waitThreads();
+  reporter.reportSessionFinished();
 
   EXPECT_NE(std::string::npos, log.getLog().find("No tape block movement for too long"));
 }
@@ -260,6 +264,7 @@ TEST(TapeSessionReporterTest, MovementAndCompletionStopStuckFileWarnings) {
   tracker.reportState(cta::tape::session::TapeSessionState::Finished);
   reporter.finish();
   reporter.waitThreads();
+  reporter.reportSessionFinished();
 
   EXPECT_EQ(1, countMessage(log.getLog(), "No tape block movement for too long"));
 }
@@ -276,6 +281,7 @@ TEST(TapeSessionReporterTest, StoppingReporterDoesNotClaimTransferCompletion) {
   reporter.startThreads();
   reporter.finish();
   reporter.waitThreads();
+  reporter.reportSessionFinished();
 
   EXPECT_EQ(cta::tape::session::TapeSessionState::Preparing, tracker.state());
   EXPECT_EQ(0, countMessage(log.getLog(), "Tape session finished"));
@@ -301,6 +307,7 @@ TEST(TapeSessionReporterTest, FinalPublicationFailureOverridesSuccessfulOutcome)
   reporter.startThreads();
   reporter.finish();
   reporter.waitThreads();
+  reporter.reportSessionFinished();
 
   EXPECT_EQ(1U, mount.statsReports.load());
   EXPECT_TRUE(tracker.outcomeSnapshot().hasFailures);
@@ -325,6 +332,7 @@ TEST(TapeSessionReporterTest, SuccessfulEmptyMountHasAFinalSuccessOutcome) {
   reporter.startThreads();
   reporter.finish();
   reporter.waitThreads();
+  reporter.reportSessionFinished();
 
   EXPECT_EQ(1, countMessage(log.getLog(), "Tape session finished"));
   EXPECT_NE(std::string::npos, log.getLog().find("\"status\":\"success\""));
@@ -354,6 +362,7 @@ TEST(TapeSessionReporterTest, OutcomeIsOnlyReportedAtCompletion) {
     reporter.startThreads();
     reporter.finish();
     reporter.waitThreads();
+    reporter.reportSessionFinished();
     const auto finalOutput = log.getLog().substr(periodic.size());
     EXPECT_EQ(1, countMessage(finalOutput, "Tape session finished"));
     EXPECT_NE(std::string::npos, finalOutput.find(failed ? "\"status\":\"failure\"" : "\"status\":\"success\""));
@@ -378,6 +387,7 @@ TEST(TapeSessionReporterTest, InformationalEventsAndAlertsKeepLegacyFieldsWithou
   reporter.startThreads();
   reporter.finish();
   reporter.waitThreads();
+  reporter.reportSessionFinished();
   const auto output = log.getLog();
   EXPECT_NE(std::string::npos, output.find("\"status\":\"success\""));
   EXPECT_NE(std::string::npos, output.find("\"Info_tapeFilledUp\":1"));

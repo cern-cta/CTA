@@ -165,15 +165,6 @@ void TapeSessionReporter::run() {
       m_lc.log(cta::log::WARNING, "Failed to report tape session statistics");
     }
   }
-
-  try {
-    reportSessionFinished();
-  } catch (const std::exception& ex) {
-    m_tracker.recordFailure(TapeSessionFailure::Reporting);
-    cta::log::ScopedParamContainer params(m_lc);
-    params.add("what", ex.what());
-    m_lc.log(cta::log::WARNING, "Failed to send final tape session statistics");
-  }
 }
 
 void TapeSessionReporter::reportStuckFileIfNeeded() {
