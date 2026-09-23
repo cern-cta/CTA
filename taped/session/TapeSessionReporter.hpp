@@ -42,7 +42,6 @@ public:
   /**
    * @brief Request the reporting thread to stop and wake its wait loop.
    *
-   * A final event is emitted only if the session owner established Finished.
    * Call waitThreads() to join the thread.
    */
   void finish();
@@ -57,6 +56,13 @@ public:
    */
   void reportNow();
 
+  /**
+   * @brief Synchronously publish final statistics and outcome if the tracker state is Finished.
+   *
+   * The session owner calls this once after joining the reporting thread, or if it was never started.
+   */
+  void reportSessionFinished();
+
 private:
   TapeSessionTracker& m_tracker;
   cta::log::LogContext m_lc;
@@ -70,8 +76,6 @@ private:
 
   /**
    * @brief Publish periodic statistics and inactivity warnings until finish() is requested.
-   *
-   * Then attempt final reporting if the session state permits it.
    */
   void run() override;
 
@@ -79,11 +83,6 @@ private:
    * @brief Warn about an active tape file with no recent block movement, limiting repeated warnings.
    */
   void reportStuckFileIfNeeded();
-
-  /**
-   * @brief Publish final statistics and outcome only when the tracker state is Finished.
-   */
-  void reportSessionFinished();
 
   /**
    * @brief Log a statistics snapshot with current mount metadata, progress and error counters.

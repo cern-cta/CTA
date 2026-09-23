@@ -935,12 +935,15 @@ public:
     EXPECT_EQ(1, mount.completionAttempts);
     EXPECT_EQ(threadsBefore, transferTestThreadCount());
     EXPECT_EQ(&mount, tracker.mount());
+    // Starting-status failures occur before the reporter starts, but still complete the session.
+    if (!startupFails || point == TransferFailurePoint::StartingStatus) {
+      EXPECT_EQ(1, countLogMessages(logger.getLog(), "Tape session finished"));
+    }
     if (!startupFails) {
       const auto expectedType = std::is_same_v<Mount, FailingTransferRetrieveMount> ?
                                   cta::tape::session::SessionType::Retrieve :
                                   cta::tape::session::SessionType::Archive;
       EXPECT_EQ(expectedType, tracker.type());
-      EXPECT_EQ(1, countLogMessages(logger.getLog(), "Tape session finished"));
       EXPECT_GE(mount.statsReports, 1U);
       EXPECT_EQ(tracker.stats().tape.filesCount, mount.lastReportedStats.filesCount);
     }
