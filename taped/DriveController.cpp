@@ -87,8 +87,8 @@ int DriveController::run() {
     // Scheduling can deal with a missing logical library just fine; this is just to reduce
     // the number of (transient) errors at startup
     waitForLogicalLibrary();
-    // TODO (separate MR): graceful shutdown
-    while (true) {
+    // TODO (separate MR): graceful shutdown of active sessions and blocking operations.
+    while (!m_stopSource.stop_requested()) {
       runIteration();
     }
   } catch (const std::exception& ex) {
@@ -107,7 +107,7 @@ int DriveController::run() {
 
 void DriveController::runIteration() {
   // Ensure among other things that the drive is Up before we proceed
-  if (!prepareDriveForScheduling()) {
+  if (!prepareDriveForScheduling() || m_stopSource.stop_requested()) {
     return;
   }
 
@@ -150,7 +150,7 @@ void DriveController::runIteration() {
 
 void DriveController::waitForLogicalLibrary() {
   bool waitingLogged = false;
-  while (true) {
+  while (!m_stopSource.stop_requested()) {
     const bool exists = m_operations.logicalLibraryExists();
 
     if (exists) {
@@ -176,8 +176,7 @@ void DriveController::waitUntilDriveIsRequestedUp() {
   auto& scheduler = m_operations.scheduler();
   bool waitingLogged = false;
 
-  // TODO (separate MR): graceful shutdown
-  while (true) {
+  while (!m_stopSource.stop_requested()) {
     common::dataStructures::DesiredDriveState desiredState;
     try {
       desiredState = scheduler.getDesiredDriveState(m_driveInfo.driveName, m_lc);
@@ -352,6 +351,10 @@ bool DriveController::prepareDriveForScheduling() {
 
   // A drive must be up before we can schedule.
   waitUntilDriveIsRequestedUp();
+  // Cancellation must not turn a down-state wait into permission to access hardware.
+  if (m_stopSource.stop_requested()) {
+    return false;
+  }
 
   const auto reported = m_operations.getDriveState();
   if (reported && reported->currentVid && !reported->currentVid->empty()) {

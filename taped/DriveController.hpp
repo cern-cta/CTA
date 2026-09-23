@@ -49,7 +49,7 @@ public:
   ~DriveController();
 
   /**
-   * @brief Request a stop; observing the stop token is deferred to graceful-shutdown work.
+   * @brief Request a stop between controller operations; active sessions and sleeps are not interrupted.
    */
   void stop();
 

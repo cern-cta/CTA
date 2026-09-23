@@ -449,7 +449,7 @@ void cta::tape::daemon::TapeReadSingleThread::logWithStat(int level,
     .add("unloadTime", sessionStats.cleanup.unloadTime)
     .add("unmountTime", sessionStats.cleanup.unmountTime)
     .add("encryptionControlTime", sessionStats.setup.encryptionControlTime + sessionStats.cleanup.encryptionControlTime)
-    .add("transferTime", m_stats.transferTime())
+    .add("transferTime", m_stats.transferTime(sessionStats.disk.waitReportingTime))
     .add("totalTime", m_totalTime)
     .add("dataVolume", m_stats.dataVolume)
     .add("headerVolume", m_stats.headerVolume)

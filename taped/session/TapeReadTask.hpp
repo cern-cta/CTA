@@ -168,7 +168,7 @@ public:
         .add("readWriteTime", localStats.readWriteTime)
         .add("waitFreeMemoryTime", localStats.waitFreeMemoryTime)
         .add("waitReportingTime", waitReportingTime)
-        .add("transferTime", localStats.transferTime())
+        .add("transferTime", localStats.transferTime(waitReportingTime))
         .add("totalTime", taskTime)
         .add("dataVolume", localStats.dataVolume)
         .add("headerVolume", localStats.headerVolume)
