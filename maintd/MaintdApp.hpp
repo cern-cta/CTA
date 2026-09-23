@@ -26,7 +26,6 @@ public:
   bool isReady() const;
 
 private:
-  // TODO: Synchronize runner publication: run() assigns this pointer while health and signal threads may read it.
   std::unique_ptr<RoutineRunner> m_routineRunner;
 };
 
