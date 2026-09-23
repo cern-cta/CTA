@@ -19,9 +19,8 @@ struct DriveConfig final {
   std::string device = "";
   std::string control_path = "";
   std::string logical_library_name = "";
-  uint32_t ready_timeout_secs = 120;
 
-  static constexpr std::size_t memberCount() { return 5; }
+  static constexpr std::size_t memberCount() { return 4; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
@@ -36,9 +35,6 @@ struct DriveConfig final {
     }
     if (logical_library_name.empty()) {
       result.addError("logical_library_name", "cannot be empty");
-    }
-    if (ready_timeout_secs == 0) {
-      result.addError("ready_timeout_secs", "must be greater than zero");
     }
     return result;
   }
@@ -102,13 +98,13 @@ struct ArchiveUnderfillConfig final {
 struct MountsConfig final {
   uint64_t minimum_queued_bytes = 500000000000;
   uint64_t minimum_queued_files = 10000;
-  uint32_t scheduling_timeout_secs = 300;
   uint32_t get_next_mount_timeout_secs = 900;
   uint32_t idle_scheduling_interval_secs = 10;
   uint32_t drive_state_poll_interval_secs = 5;
   uint32_t logical_library_poll_interval_secs = 5;
   uint32_t mount_timeout_secs = 600;
   uint32_t tape_load_timeout_secs = 300;
+  uint32_t tape_unload_timeout_secs = 900;
   uint32_t unmount_timeout_secs = 900;
 
   static constexpr std::size_t memberCount() { return 10; }
@@ -120,9 +116,6 @@ struct MountsConfig final {
     }
     if (minimum_queued_files == 0) {
       result.addError("minimum_queued_files", "must be greater than zero");
-    }
-    if (scheduling_timeout_secs == 0) {
-      result.addError("scheduling_timeout_secs", "must be greater than zero");
     }
     if (get_next_mount_timeout_secs == 0) {
       result.addError("get_next_mount_timeout_secs", "must be greater than zero");
@@ -141,6 +134,9 @@ struct MountsConfig final {
     }
     if (tape_load_timeout_secs == 0) {
       result.addError("tape_load_timeout_secs", "must be greater than zero");
+    }
+    if (tape_unload_timeout_secs == 0) {
+      result.addError("tape_unload_timeout_secs", "must be greater than zero");
     }
     if (unmount_timeout_secs == 0) {
       result.addError("unmount_timeout_secs", "must be greater than zero");

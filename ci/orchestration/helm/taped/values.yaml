@@ -14,13 +14,9 @@ scheduler:
   retrieveQueueCacheMaxAgeSecs: 1
   numberOfConnections: 3
 
-drive:
-  readyTimeoutSecs: 120
-
 mounts:
   minimumQueuedBytes: 2000000
   minimumQueuedFiles: 100
-  schedulingTimeoutSecs: 300
   getNextMountTimeoutSecs: 900
   idleSchedulingIntervalSecs: 1 # Make tape servers more responsive, thus improving CI test speed
   driveStatePollIntervalSecs: 1 # Make tape servers react faster to drive state changes in CI

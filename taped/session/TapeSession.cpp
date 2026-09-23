@@ -177,7 +177,7 @@ cta::tape::daemon::TapeSession::TapeSession(cta::log::Logger& log,
       m_driveInfo(driveInfo),
       m_mediaChanger(mc),
       m_scheduler(scheduler) {
-  m_tapeSessionTracker.setMount(&m_tapeMount);
+  m_tapeSessionTracker->setMount(&m_tapeMount);
 }
 
 //------------------------------------------------------------------------------
@@ -185,14 +185,14 @@ cta::tape::daemon::TapeSession::TapeSession(cta::log::Logger& log,
 //------------------------------------------------------------------------------
 cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
   const ScopedMountType mountScope;
-  m_tapeSessionTracker.beginTapeSession();
-  m_tapeSessionTracker.setMountAttempted(false);
+  m_tapeSessionTracker->beginTapeSession();
+  m_tapeSessionTracker->setMountAttempted(false);
   cta::log::LogContext lc(m_log);
   cta::log::ScopedParamContainer params(lc);
   params.add("tapeDrive", m_driveInfo.driveName);
   ExecutionState state;
   std::exception_ptr fatalFailure;
-  TapeSessionReporter reporter(m_tapeSessionTracker,
+  TapeSessionReporter reporter(*m_tapeSessionTracker,
                                lc,
                                std::chrono::seconds(m_transfersConfig.stats_report_interval_secs),
                                std::chrono::seconds(m_transfersConfig.no_block_move_timeout_secs));
@@ -216,25 +216,25 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
 
     switch (m_volInfo.mountType) {
       case cta::common::dataStructures::MountType::Retrieve:
-        m_tapeSessionTracker.setType(cta::tape::session::SessionType::Retrieve);
+        m_tapeSessionTracker->setType(cta::tape::session::SessionType::Retrieve);
         reporterScope.start();
         executeRead(lc, dynamic_cast<cta::RetrieveMount&>(m_tapeMount), state);
         break;
       case cta::common::dataStructures::MountType::ArchiveForUser:
       case cta::common::dataStructures::MountType::ArchiveForRepack:
-        m_tapeSessionTracker.setType(cta::tape::session::SessionType::Archive);
+        m_tapeSessionTracker->setType(cta::tape::session::SessionType::Archive);
         reporterScope.start();
         executeWrite(lc, dynamic_cast<cta::ArchiveMount&>(m_tapeMount), state);
         break;
       case cta::common::dataStructures::MountType::Label:
-        m_tapeSessionTracker.setType(cta::tape::session::SessionType::Label);
+        m_tapeSessionTracker->setType(cta::tape::session::SessionType::Label);
         throw cta::exception::NotImplementedException();
         break;
       default:
         throw std::logic_error("Unsupported tape mount type");
     }
   } catch (...) {
-    m_tapeSessionTracker.setOutcome(TapeSessionOutcome::Failure);
+    m_tapeSessionTracker->setOutcome(TapeSessionOutcome::Failure);
     // Partial startup and unexpected worker termination still require a separate lifecycle repair.
     // The reporter guard is not a worker shutdown mechanism; do not claim a finished session here.
     if (state.workersRunning) {
@@ -248,11 +248,11 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
     try {
       operation();
     } catch (...) {
-      m_tapeSessionTracker.incrementError(TapeSessionError::Reporting);
+      m_tapeSessionTracker->incrementError(TapeSessionError::Reporting);
       recordFailure(state.result, std::current_exception(), fatalFailure, lc);
     }
   };
-  m_tapeSessionTracker.reportState(cta::tape::session::TapeSessionState::Finalizing);
+  m_tapeSessionTracker->reportState(cta::tape::session::TapeSessionState::Finalizing);
   if (state.completionOwned) {
     state.completionOwned = false;
     finalize([&] { m_tapeMount.complete(); });
@@ -281,9 +281,9 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
     });
   }
 
-  m_tapeSessionTracker.reportState(cta::tape::session::TapeSessionState::Finished);
+  m_tapeSessionTracker->reportState(cta::tape::session::TapeSessionState::Finished);
   reporterScope.finish();
-  state.result.retryDelayRequired |= m_tapeSessionTracker.outcome() == TapeSessionOutcome::Failure;
+  state.result.retryDelayRequired |= m_tapeSessionTracker->outcome() == TapeSessionOutcome::Failure;
   if (fatalFailure) {
     std::rethrow_exception(fatalFailure);
   }
@@ -312,7 +312,7 @@ void cta::tape::daemon::TapeSession::executeRead(cta::log::LogContext& logContex
 
     TapeReadSingleThread readSingleThread(*drive,
                                           m_mediaChanger,
-                                          m_tapeSessionTracker,
+                                          *m_tapeSessionTracker,
                                           m_volInfo,
                                           m_transfersConfig.retrieve.fetch_max_files,
                                           logContext,
@@ -327,7 +327,7 @@ void cta::tape::daemon::TapeSession::executeRead(cta::log::LogContext& logContex
 
     DiskWriteThreadPool threadPool(m_transfersConfig.disk_io_threads,
                                    reportPacker,
-                                   m_tapeSessionTracker,
+                                   *m_tapeSessionTracker,
                                    logContext,
                                    c_xrootTimeout);
     RecallTaskInjector taskInjector(memoryManager,
@@ -336,9 +336,9 @@ void cta::tape::daemon::TapeSession::executeRead(cta::log::LogContext& logContex
                                     retrieveMount,
                                     m_transfersConfig.retrieve.fetch_max_files,
                                     m_transfersConfig.retrieve.fetch_max_bytes,
-                                    m_tapeSessionTracker,
+                                    *m_tapeSessionTracker,
                                     logContext);
-    reportPacker.setTapeSessionTracker(m_tapeSessionTracker);
+    reportPacker.setTapeSessionTracker(*m_tapeSessionTracker);
 
     taskInjector.setDriveInterface(readSingleThread.getDriveReference());
 
@@ -377,7 +377,7 @@ void cta::tape::daemon::TapeSession::executeRead(cta::log::LogContext& logContex
     if (fetchResult && reservationResult) {
       // We got something to recall. Time to start the machinery
       readSingleThread.setWaitForInstructionsTime(timer.secs());
-      m_tapeSessionTracker.setMountAttempted(true);
+      m_tapeSessionTracker->setMountAttempted(true);
       state.workersRunning = true;
       readSingleThread.startThreads(taskInjector);
       threadPool.startThreads();
@@ -404,13 +404,13 @@ void cta::tape::daemon::TapeSession::executeRead(cta::log::LogContext& logContex
       }
       return;
     } else {
-      m_tapeSessionTracker.setOutcome(noFilesToRecall ? TapeSessionOutcome::Success : TapeSessionOutcome::Failure);
-      m_tapeSessionTracker.setMountAttempted(false);
-      m_tapeSessionTracker.updateTapeTransferStats({});
+      m_tapeSessionTracker->setOutcome(noFilesToRecall ? TapeSessionOutcome::Success : TapeSessionOutcome::Failure);
+      m_tapeSessionTracker->setMountAttempted(false);
+      m_tapeSessionTracker->updateTapeTransferStats({});
       if (fetchResult && !reservationResult) {
-        m_tapeSessionTracker.incrementError(TapeSessionError::DiskSpaceReservationTestFailure);
+        m_tapeSessionTracker->incrementError(TapeSessionError::DiskSpaceReservationTestFailure);
       }
-      m_tapeSessionTracker.incrementError(TapeSessionError::EmptyMount);
+      m_tapeSessionTracker->incrementError(TapeSessionError::EmptyMount);
       logContext.log(cta::log::WARNING, "Aborting recall mount startup: empty mount");
     }
   }
@@ -435,7 +435,7 @@ void cta::tape::daemon::TapeSession::executeWrite(cta::log::LogContext& logConte
     MigrationReportPacker reportPacker(&archiveMount, logContext);
     TapeWriteSingleThread writeSingleThread(*drive,
                                             m_mediaChanger,
-                                            m_tapeSessionTracker,
+                                            *m_tapeSessionTracker,
                                             m_volInfo,
                                             logContext,
                                             reportPacker,
@@ -451,7 +451,7 @@ void cta::tape::daemon::TapeSession::executeWrite(cta::log::LogContext& logConte
     DiskReadThreadPool threadPool(m_transfersConfig.disk_io_threads,
                                   m_transfersConfig.archive.fetch_max_files,
                                   m_transfersConfig.archive.fetch_max_bytes,
-                                  m_tapeSessionTracker,
+                                  *m_tapeSessionTracker,
                                   logContext,
                                   c_xrootTimeout);
 
@@ -470,7 +470,7 @@ void cta::tape::daemon::TapeSession::executeWrite(cta::log::LogContext& logConte
                                        archiveDismountPolicy,
                                        logContext);
     writeSingleThread.setTaskInjector(&taskInjector);
-    reportPacker.setTapeSessionTracker(m_tapeSessionTracker);
+    reportPacker.setTapeSessionTracker(*m_tapeSessionTracker);
     cta::utils::Timer timer;
     bool noFilesToMigrate = false;
     if (taskInjector.synchronousInjection(noFilesToMigrate)) {
@@ -481,7 +481,7 @@ void cta::tape::daemon::TapeSession::executeWrite(cta::log::LogContext& logConte
       writeSingleThread.setlastFseq(firstFseqFromClient - 1);
 
       // We have something to do: start the session by starting all the threads.
-      m_tapeSessionTracker.setMountAttempted(true);
+      m_tapeSessionTracker->setMountAttempted(true);
       state.workersRunning = true;
       memoryManager.startThreads();
       threadPool.startThreads(taskInjector);
@@ -502,11 +502,11 @@ void cta::tape::daemon::TapeSession::executeWrite(cta::log::LogContext& logConte
       state.result.driveUsability = writeSingleThread.getHardwareStatus();
       return;
     } else {
-      m_tapeSessionTracker.setOutcome(noFilesToMigrate ? TapeSessionOutcome::Success : TapeSessionOutcome::Failure);
-      m_tapeSessionTracker.setMountAttempted(false);
-      m_tapeSessionTracker.updateTapeTransferStats({});
-      m_tapeSessionTracker.incrementError(TapeSessionError::NoFilesToMigrate);
-      m_tapeSessionTracker.incrementError(TapeSessionError::EmptyMount);
+      m_tapeSessionTracker->setOutcome(noFilesToMigrate ? TapeSessionOutcome::Success : TapeSessionOutcome::Failure);
+      m_tapeSessionTracker->setMountAttempted(false);
+      m_tapeSessionTracker->updateTapeTransferStats({});
+      m_tapeSessionTracker->incrementError(TapeSessionError::NoFilesToMigrate);
+      m_tapeSessionTracker->incrementError(TapeSessionError::EmptyMount);
       logContext.log(cta::log::WARNING, "Aborting migration mount startup: empty mount");
     }
   }

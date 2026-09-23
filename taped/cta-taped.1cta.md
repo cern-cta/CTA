@@ -112,11 +112,6 @@ logical_library_name
 
 :   Name of the existing CTA logical library to which the drive belongs.
 
-ready_timeout_secs *(default: 120)*
-
-:   Maximum time that the drive process may remain in the readiness-checking state without making progress.
-On expiry, the drive process is killed and restarted, but the drive remains Up.
-
 ## [catalogue]
 
 config_file
@@ -146,6 +141,9 @@ retrieve_queue_cache_max_age_secs *(default: 10)*
 
 ## [mounts]
 
+Session timeout checks affect liveness only; they do not terminate or recover sessions.
+Preparing, Finalizing and controller operations remain unchecked.
+
 minimum_queued_bytes *(default: 500000000000)*
 
 :   Minimum queued bytes required before the scheduler considers an archive or retrieve queue large enough to mount.
@@ -156,11 +154,6 @@ minimum_queued_files *(default: 10000)*
 
 :   Minimum queued files required before the scheduler considers an archive or retrieve queue large enough to mount.
 This is combined with **minimum_queued_bytes** using OR semantics.
-
-scheduling_timeout_secs *(default: 300)*
-
-:   Maximum time that the drive process may remain in the scheduling state without reporting progress.
-On expiry, the drive process is killed and restarted, but the drive remains Up.
 
 get_next_mount_timeout_secs *(default: 900)*
 
@@ -173,8 +166,8 @@ idle_scheduling_interval_secs *(default: 10)*
 
 drive_state_poll_interval_secs *(default: 5)*
 
-:   Delay before polling the desired drive state again while the drive is Down.
-Lower values make **cta-taped** react faster when an operator sets the drive Up but increase scheduler polling.
+:   Delay before polling the catalogue for the desired drive state again while the drive is Down.
+Lower values make **cta-taped** react faster when an operator sets the drive Up but increase catalogue polling.
 
 logical_library_poll_interval_secs *(default: 5)*
 
@@ -182,17 +175,21 @@ logical_library_poll_interval_secs *(default: 5)*
 
 mount_timeout_secs *(default: 600)*
 
-:   Maximum time that the drive process may remain in the overall mounting state, including the RMCD request and physical tape-load readiness check.
-On expiry, the drive process is killed and a cleaner session attempts recovery.
+:   Maximum time in Mounting before liveness becomes unhealthy.
 
 tape_load_timeout_secs *(default: 300)*
 
-:   Maximum time allowed for the physical drive to load the tape and become ready after the RMCD mount request returns.
+:   Maximum time in Loading before liveness becomes unhealthy.
+Also limits the existing physical drive readiness wait, whose failure starts cleanup.
+
+tape_unload_timeout_secs *(default: 900)*
+
+:   Maximum time in Unloading before liveness becomes unhealthy.
+Must be positive and nonzero.
 
 unmount_timeout_secs *(default: 900)*
 
-:   Maximum time allowed for RMCD to return an unloaded tape to its library slot.
-This limit starts after the drive has finished rewinding and ejecting the tape.
+:   Maximum time in Unmounting before liveness becomes unhealthy.
 
 ## [transfers]
 
@@ -217,8 +214,9 @@ Final statistics are reported when the session finishes, without waiting for thi
 
 no_block_move_timeout_secs *(default: 1800)*
 
-:   Interval after which a file with no tape-block movement is logged as stuck.
-This setting controls reporting and does not terminate the transfer.
+:   Maximum inactivity in Transferring before liveness becomes unhealthy.
+Measured from the later of state entry and last block movement; reporter activity does not count.
+Also preserves the existing stuck-file warning interval.
 
 ## [transfers.archive]
 
@@ -277,7 +275,7 @@ fetch_max_files *(default: 5000)*
 
 drain_to_disk_timeout_secs *(default: 1800)*
 
-:   Maximum total time allowed to finish writing retrieved data to disk after the tape is unmounted.
+:   Maximum time in DrainingToDisk before liveness becomes unhealthy.
 
 external_free_disk_space_script *(default: /usr/bin/cta-eosdf.sh)*
 

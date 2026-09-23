@@ -15,6 +15,7 @@
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "rdbms/Login.hpp"
 #include "scheduler/Scheduler.hpp"
+#include "session/ActiveTapeSession.hpp"
 #include "session/DriveCleaner.hpp"
 #include "session/EmptyDriveProbe.hpp"
 #include "session/TapeSession.hpp"
@@ -158,8 +159,11 @@ public:
                         m_config.transfers,
                         m_config.mounts.tape_load_timeout_secs,
                         *m_scheduler);
+    const ActiveTapeSession::Scope active(m_activeSession, session.sharedTracker());
     return session.execute();
   }
+
+  std::optional<TapeSessionLivenessSnapshot> tapeSessionLiveness() const override { return m_activeSession.snapshot(); }
 
   /**
    * @brief Reset drive configuration and eject any remaining tape.
@@ -189,6 +193,7 @@ public:
   void sleep(unsigned int seconds) override { ::sleep(seconds); }
 
 private:
+  ActiveTapeSession m_activeSession;
   const TapedConfig& m_config;
   const common::dataStructures::DriveInfo& m_driveInfo;
   log::LogContext m_lc;

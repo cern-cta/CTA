@@ -7,6 +7,7 @@
 
 #include "common/dataStructures/TapeDrive.hpp"
 #include "session/TapeSessionResult.hpp"
+#include "session/TapeSessionTracker.hpp"
 
 #include <memory>
 #include <optional>
@@ -71,6 +72,9 @@ public:
    * @return Drive usability and backend-recovery or retry-delay decisions from the session.
    */
   virtual TapeSessionResult runTapeSession(TapeMount& mount) = 0;
+
+  /** Return only in-memory liveness data, or nullopt when no tape session is active. */
+  virtual std::optional<TapeSessionLivenessSnapshot> tapeSessionLiveness() const = 0;
 
   /**
    * @brief Reset drive configuration and eject any remaining tape.

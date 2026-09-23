@@ -31,11 +31,6 @@
   # This value is required and has no useful default.
   logical_library_name = "example-library"
 
-  # Maximum time, in seconds, that the drive process may remain in the readiness-checking state without
-  # making progress. On expiry, the drive process is killed and restarted, but the drive will remain Up.
-  # If omitted, 120 is used.
-  ready_timeout_secs = 120
-
 
 [catalogue]
   # Path to the CTA Catalogue configuration file. The file contains a single connection string that
@@ -69,6 +64,9 @@
 
 
 # Controls when cta-taped requests work from the scheduler and how long the physical mount may take.
+# Session timeout checks affect liveness only; they do not terminate or recover sessions.
+# Preparing, Finalizing and controller operations are not checked by liveness.
+
 [mounts]
   # Minimum amount of queued archive or retrieve data, in bytes, required before the scheduler considers
   # the queue large enough to start a tape mount. A mount can still start below this threshold when the
@@ -83,11 +81,6 @@
   # If omitted, 10000 is used.
   minimum_queued_files = 10000
 
-  # Maximum time, in seconds, that the drive process may remain in the scheduling state without reporting
-  # progress. On expiry, the drive process is killed and restarted, but the drive will remain Up.
-  # If omitted, 300 is used.
-  scheduling_timeout_secs = 300
-
   # Maximum time, in seconds, allowed for selecting the next mount. On expiry, the request logs a warning 
   # and is retried. 
   # If omitted, 900 is used.
@@ -99,8 +92,8 @@
   # If omitted, 10 is used.
   idle_scheduling_interval_secs = 10
 
-  # Delay, in seconds, before polling the desired drive state again while the drive is Down.
-  # Lower values make cta-taped react faster when an operator sets the drive Up but increase scheduler polling.
+  # Delay, in seconds, before polling the catalogue for the desired drive state again while the drive is Down.
+  # Lower values make cta-taped react faster when an operator sets the drive Up but increase catalogue polling.
   # If omitted, 5 is used.
   drive_state_poll_interval_secs = 5
 
@@ -108,22 +101,20 @@
   # If omitted, 5 is used.
   logical_library_poll_interval_secs = 5
 
-  # Maximum time, in seconds, that the drive process may remain in the overall mounting state. This includes
-  # the RMCD request and the physical tape-load readiness check. On expiry, the drive process is killed and
-  # a cleaner session starts to recover and unmount the potentially loaded tape. The drive is put Down if
-  # recovery cannot be completed. 
+  # Maximum time in Mounting before liveness becomes unhealthy.
   # If omitted, 600 is used.
   mount_timeout_secs = 600
 
-  # Maximum time, in seconds, allowed for the physical tape drive to load and become ready after the RMCD
-  # mount request returns. Expiry reports an error and starts cleanup. The drive is put Down only if the tape 
-  # cannot then be unloaded and unmounted successfully. 
+  # Maximum time in Loading before liveness becomes unhealthy.
+  # Also limits the existing physical drive readiness wait, whose failure starts cleanup.
   # If omitted, 300 is used.
   tape_load_timeout_secs = 300
 
-  # Maximum time, in seconds, allowed for RMCD to return an unloaded tape to its library slot. This limit
-  # starts only after the drive has finished rewinding and ejecting the tape. On expiry, the drive process is
-  # killed and a cleaner session is started. The drive is put Down if recovery cannot be completed.
+  # Maximum time in Unloading before liveness becomes unhealthy. Must be positive.
+  # If omitted, 900 is used.
+  tape_unload_timeout_secs = 900
+
+  # Maximum time in Unmounting before liveness becomes unhealthy.
   # If omitted, 900 is used.
   unmount_timeout_secs = 900
 
@@ -150,10 +141,9 @@
   # If omitted, 15 is used. Final statistics are reported when the session finishes.
   stats_report_interval_secs = 15
 
-  # Interval, in seconds, after which a file with no tape-block movement is logged as stuck. This setting 
-  # only controls reporting and does not end the transfer. Independently, cta-taped currently enforces a 
-  # non-configurable 15-minute limit with no data movement in the Running and DrainingToDisk states. Reaching 
-  # that limit kills and restarts the drive process; cleanup is attempted when a tape may be loaded.
+  # Maximum inactivity in Transferring before liveness becomes unhealthy.
+  # Measured from the later of state entry and last block movement; reporter activity does not count.
+  # Also preserves the existing stuck-file warning interval.
   # If omitted, 1800 is used.
   no_block_move_timeout_secs = 1800
 
@@ -218,8 +208,7 @@
     # If omitted, 5000 is used.
     fetch_max_files = 5000
 
-    # Maximum total time, in seconds, allowed to finish writing retrieved data to disk after the tape has been
-    # unmounted. On expiry, the drive process is killed and restarted, but the drive will remain Up.
+    # Maximum time in DrainingToDisk before liveness becomes unhealthy.
     # If omitted, 1800 is used.
     drain_to_disk_timeout_secs = 1800
 

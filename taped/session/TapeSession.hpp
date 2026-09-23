@@ -66,7 +66,10 @@ public:
    *
    * @return Read-only reference to the tracker, valid for this session lifetime.
    */
-  const TapeSessionTracker& tracker() const { return m_tapeSessionTracker; }
+  const TapeSessionTracker& tracker() const { return *m_tapeSessionTracker; }
+
+  /** Share tracking state with health readers; the borrowed mount is still session-scoped. */
+  std::shared_ptr<const TapeSessionTracker> sharedTracker() const { return m_tapeSessionTracker; }
 
   /**
    * @brief Return the volume identifier captured during execute(), or an empty string before it is known.
@@ -84,7 +87,7 @@ private:
   struct ExecutionState;
 
   // Owned tracking state outlives the workers and reporter created by execute().
-  TapeSessionTracker m_tapeSessionTracker;
+  std::shared_ptr<TapeSessionTracker> m_tapeSessionTracker = std::make_shared<TapeSessionTracker>();
   cta::log::Logger& m_log;
   cta::TapeMount& m_tapeMount;
   VolumeInfo m_volInfo {};

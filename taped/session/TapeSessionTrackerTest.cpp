@@ -387,4 +387,42 @@ TEST(TapeSessionTrackerTest, ExplicitFailureSurvivesSuccessAndAutomaticAssignmen
   EXPECT_EQ(TapeSessionOutcome::Failure, tracker.outcome());
 }
 
+TEST(TapeSessionTrackerTest, LivenessTimesCompletionTransitionsAndSessionReset) {
+  using enum cta::tape::session::TapeSessionState;
+  using namespace std::chrono_literals;
+  const auto start = TapeSessionTracker::Clock::time_point {} + 100s;
+  for (const bool diskFirst : {false, true}) {
+    TapeSessionTracker tracker;
+    tracker.beginTapeSession(start);
+    tracker.setType(cta::tape::session::SessionType::Retrieve);
+    tracker.reportState(Transferring, start + 1s);
+    tracker.notifyBlockMovement(42, start + 2s);
+    if (diskFirst) {
+      tracker.notifyDiskDone(start + 3s);
+      EXPECT_EQ(start + 1s, tracker.livenessSnapshot().stateEnteredAt);
+    }
+    tracker.notifyTapeDone(start + 4s);
+    auto snapshot = tracker.livenessSnapshot();
+    EXPECT_EQ(diskFirst ? Finalizing : DrainingToDisk, snapshot.state);
+    EXPECT_EQ(start + 4s, snapshot.stateEnteredAt);
+    EXPECT_EQ(start + 2s, snapshot.lastBlockMovement);
+    tracker.notifyTapeDone(start + 5s);
+    EXPECT_EQ(start + 4s, tracker.livenessSnapshot().stateEnteredAt);
+    tracker.notifyDiskDone(start + 6s);
+    snapshot = tracker.livenessSnapshot();
+    EXPECT_EQ(Finalizing, snapshot.state);
+    EXPECT_EQ(start + (diskFirst ? 4s : 6s), snapshot.stateEnteredAt);
+    tracker.reportState(Finished, start + 7s);
+    tracker.notifyDiskDone(start + 8s);
+    EXPECT_EQ(start + 7s, tracker.livenessSnapshot().stateEnteredAt);
+    tracker.beginTapeSession(start + 9s);
+    snapshot = tracker.livenessSnapshot();
+    EXPECT_EQ(Preparing, snapshot.state);
+    EXPECT_EQ(start + 9s, snapshot.stateEnteredAt);
+    EXPECT_EQ(TapeSessionTracker::Clock::time_point {}, snapshot.lastBlockMovement);
+    tracker.beginTapeSession(start + 10s);
+    EXPECT_EQ(start + 10s, tracker.livenessSnapshot().stateEnteredAt);
+  }
+}
+
 }  // namespace cta::tape::daemon
