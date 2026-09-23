@@ -11,6 +11,7 @@
 #include "runtime/config/parsing/TomlParser.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/TapeMount.hpp"
+#include "session/ActiveTapeSession.hpp"
 
 #include <functional>
 #include <gmock/gmock.h>
@@ -97,6 +98,8 @@ public:
 
 class DriveControllerTest : public testing::Test {
 protected:
+  using Clock = TapeSessionTracker::Clock;
+  ActiveTapeSession activeSession;
   TapedConfig config;
   log::StringLogger logger {"host", "DriveControllerTest", log::DEBUG};
   testing::StrictMock<MockDriveScheduler> scheduler;
@@ -125,6 +128,10 @@ protected:
   class FakeDriveOperations final : public DriveOperations {
   public:
     explicit FakeDriveOperations(DriveControllerTest& fixture) : fixture(fixture) {}
+
+    std::optional<TapeSessionLivenessSnapshot> tapeSessionLiveness() const override {
+      return fixture.activeSession.snapshot();
+    }
 
     IScheduler& scheduler() override { return fixture.scheduler; }
 
@@ -185,6 +192,8 @@ protected:
     // Iteration tests start from an already prepared drive; registration re-arms cleaning.
     controller->m_cleanBeforeScheduling = false;
   }
+
+  bool liveAt(Clock::time_point now) const { return controller->isLive(now); }
 
   void waitForLibrary() { controller->waitForLogicalLibrary(); }
 
@@ -1585,6 +1594,109 @@ TEST_F(DriveControllerTest, StopStillReturnsFailureWhenShutdownPublicationFails)
   EXPECT_EQ(1, controller->run());
   EXPECT_FALSE(controller->isReady());
   EXPECT_EQ(0, probes);
+}
+
+TEST_F(DriveControllerTest, LivenessUsesEachStateTimeoutAtItsBoundary) {
+  using enum cta::tape::session::TapeSessionState;
+  using namespace std::chrono_literals;
+  config.mounts.mount_timeout_secs = 11;
+  config.mounts.tape_load_timeout_secs = 12;
+  config.mounts.tape_unload_timeout_secs = 13;
+  config.mounts.unmount_timeout_secs = 14;
+  config.transfers.no_block_move_timeout_secs = 15;
+  config.transfers.retrieve.drain_to_disk_timeout_secs = 16;
+  const auto start = Clock::time_point {} + 100s;
+  EXPECT_TRUE(liveAt(start));
+  auto tracker = std::make_shared<TapeSessionTracker>();
+  const ActiveTapeSession::Scope active(activeSession, tracker);
+  EXPECT_TRUE(liveAt(start));  // A published tracker may not have started yet.
+  tracker->beginTapeSession(start);
+  const std::pair<cta::tape::session::TapeSessionState, unsigned int> cases[] {
+    {Mounting,       11},
+    {Loading,        12},
+    {Unloading,      13},
+    {Unmounting,     14},
+    {Transferring,   15},
+    {DrainingToDisk, 16}
+  };
+  for (const auto& [state, seconds] : cases) {
+    tracker->reportState(state, start);
+    const auto deadline = start + std::chrono::seconds(seconds);
+    EXPECT_TRUE(liveAt(deadline - 1ns));
+    EXPECT_FALSE(liveAt(deadline));
+    tracker->reportState(state, deadline);
+    EXPECT_FALSE(liveAt(deadline));  // Repeated reports must not postpone expiry.
+    tracker->updateTapeTransferStats({.dataVolume = 100});
+    EXPECT_FALSE(liveAt(deadline));  // Statistics reporting is not block movement.
+  }
+  for (const auto state : {Preparing, Finalizing, Finished}) {
+    tracker->reportState(state, start);
+    EXPECT_TRUE(liveAt(start + 24h));
+  }
+  EXPECT_EQ(0, probes);
+  EXPECT_EQ(0, schedules);
+  EXPECT_EQ(0, stateReads);
+}
+
+TEST_F(DriveControllerTest, TransferProgressRefreshesOnlyInactivityAndNewSessionResetsIt) {
+  using enum cta::tape::session::TapeSessionState;
+  using namespace std::chrono_literals;
+  const auto start = Clock::time_point {} + 100s;
+  config.transfers.no_block_move_timeout_secs = 10;
+  auto tracker = std::make_shared<TapeSessionTracker>();
+  const ActiveTapeSession::Scope active(activeSession, tracker);
+  tracker->beginTapeSession(start);
+  tracker->notifyBlockMovement(1, start + 1s);
+  tracker->reportState(Transferring, start + 2s);
+  EXPECT_TRUE(liveAt(start + 11s));
+  EXPECT_FALSE(liveAt(start + 12s));
+  tracker->notifyBlockMovement(1, start + 12s);
+  EXPECT_TRUE(liveAt(start + 12s));  // An expired check is not latched.
+  EXPECT_FALSE(liveAt(start + 22s));
+  tracker->beginTapeSession(start + 30s);
+  tracker->reportState(Transferring, start + 30s);
+  EXPECT_TRUE(liveAt(start + 39s));
+  EXPECT_FALSE(liveAt(start + 40s));
+}
+
+TEST_F(DriveControllerTest, ActiveTrackerIsOwnedAndClearedOnReturnAndException) {
+  using namespace std::chrono_literals;
+  const auto start = Clock::time_point {} + 100s;
+  config.mounts.mount_timeout_secs = 1;
+  for (const bool fail : {false, true}) {
+    std::weak_ptr<TapeSessionTracker> weak;
+    const auto execute = [&] {
+      auto tracker = std::make_shared<TapeSessionTracker>();
+      weak = tracker;
+      tracker->beginTapeSession(start);
+      tracker->reportState(cta::tape::session::TapeSessionState::Mounting, start);
+      const ActiveTapeSession::Scope active(activeSession, tracker);
+      tracker.reset();
+      EXPECT_FALSE(weak.expired());
+      EXPECT_FALSE(liveAt(start + 1s));
+      if (fail) {
+        throw std::runtime_error("session failed");
+      }
+    };
+    if (fail) {
+      EXPECT_THROW(execute(), std::runtime_error);
+    } else {
+      EXPECT_NO_THROW(execute());
+    }
+    EXPECT_TRUE(weak.expired());
+    EXPECT_FALSE(activeSession.snapshot());
+    EXPECT_TRUE(liveAt(start + 1s));
+  }
+}
+
+TEST_F(DriveControllerTest, UnloadTimeoutDefaultsAndValidation) {
+  EXPECT_EQ(900, config.mounts.tape_unload_timeout_secs);
+  EXPECT_TRUE(config.mounts.validate().ok());
+  config.mounts.tape_unload_timeout_secs = 0;
+  EXPECT_FALSE(config.mounts.validate().ok());
+  EXPECT_NE(std::string::npos, config.mounts.validate().what().find("tape_unload_timeout_secs"));
+  config.mounts.tape_unload_timeout_secs = 1;
+  EXPECT_TRUE(config.mounts.validate().ok());
 }
 
 }  // namespace cta::tape::daemon

@@ -80,6 +80,13 @@ struct TapeSessionProgress {
   std::chrono::steady_clock::time_point lastBlockMovement;
 };
 
+// A consistent, mount-independent view for health checks.
+struct TapeSessionLivenessSnapshot {
+  std::optional<cta::tape::session::TapeSessionState> state;
+  std::chrono::steady_clock::time_point stateEnteredAt;
+  std::chrono::steady_clock::time_point lastBlockMovement;
+};
+
 /**
  * @brief Track session state, statistics and progress shared by workers and the reporter.
  *
@@ -88,6 +95,8 @@ struct TapeSessionProgress {
  */
 class TapeSessionTracker {
 public:
+  using Clock = std::chrono::steady_clock;
+
   /**
    * @brief Attach a borrowed mount; the owner must keep it alive while workers or the reporter use it.
    *
@@ -113,7 +122,7 @@ public:
    *
    * Only the session owner may begin a session; subsequent state changes do not reset its data.
    */
-  void beginTapeSession() {
+  void beginTapeSession(Clock::time_point now = Clock::now()) {
     std::lock_guard lock(m_mutex);
     m_stats = {};
     m_errorStats.clear();
@@ -129,7 +138,8 @@ public:
     m_lastBlockMovement = {};
     m_tapeDone = false;
     m_diskDone = false;
-    m_sessionStartTime = std::chrono::steady_clock::now();
+    m_sessionStartTime = now;
+    m_stateEnteredAt = now;
     m_state = cta::tape::session::TapeSessionState::Preparing;
     m_type = cta::tape::session::SessionType::Undetermined;
   }
@@ -139,9 +149,9 @@ public:
    *
    * @param state Session phase to record without resetting other tracking data.
    */
-  void reportState(cta::tape::session::TapeSessionState state) {
+  void reportState(cta::tape::session::TapeSessionState state, Clock::time_point now = Clock::now()) {
     std::lock_guard lock(m_mutex);
-    m_state = state;
+    setStateLocked(state, now);
   }
 
   /**
@@ -167,19 +177,19 @@ public:
   /**
    * @brief Mark tape work complete and atomically update the retrieval draining or finalizing phase.
    */
-  void notifyTapeDone() {
+  void notifyTapeDone(Clock::time_point now = Clock::now()) {
     std::lock_guard lock(m_mutex);
     m_tapeDone = true;
-    updateRetrievalCompletionState();
+    updateRetrievalCompletionState(now);
   }
 
   /**
    * @brief Mark disk work complete and atomically update the retrieval phase when tape work is done.
    */
-  void notifyDiskDone() {
+  void notifyDiskDone(Clock::time_point now = Clock::now()) {
     std::lock_guard lock(m_mutex);
     m_diskDone = true;
-    updateRetrievalCompletionState();
+    updateRetrievalCompletionState(now);
   }
 
   /**
@@ -446,10 +456,10 @@ public:
    *
    * @param bytes Additional transferred bytes to accumulate.
    */
-  void notifyBlockMovement(uint64_t bytes) {
+  void notifyBlockMovement(uint64_t bytes, Clock::time_point now = Clock::now()) {
     std::lock_guard lock(m_mutex);
     m_bytesMoved += bytes;
-    m_lastBlockMovement = std::chrono::steady_clock::now();
+    m_lastBlockMovement = now;
   }
 
   /**
@@ -480,6 +490,12 @@ public:
   TapeSessionProgress progress() const {
     std::lock_guard lock(m_mutex);
     return {m_fileId, m_fSeq, m_fileBeingMoved, m_fileStartTime, m_bytesMoved, m_lastBlockMovement};
+  }
+
+  /** Return phase and progress timestamps together without accessing the borrowed mount. */
+  TapeSessionLivenessSnapshot livenessSnapshot() const {
+    std::lock_guard lock(m_mutex);
+    return {m_state, m_stateEnteredAt, m_lastBlockMovement};
   }
 
   /**
@@ -541,17 +557,25 @@ public:
   }
 
 private:
+  // The caller holds m_mutex. Repeated reports must not postpone the phase deadline.
+  void setStateLocked(cta::tape::session::TapeSessionState state, Clock::time_point now) {
+    if (m_state != state) {
+      m_state = state;
+      m_stateEnteredAt = now;
+    }
+  }
+
   /**
    * @brief Advance retrieval to draining or finalizing once tape work has completed.
    *
    * @pre The caller holds m_mutex.
    * Only the session owner may establish Finished; this method preserves that state.
    */
-  void updateRetrievalCompletionState() {
+  void updateRetrievalCompletionState(Clock::time_point now) {
     using cta::tape::session::TapeSessionState;
     if (m_type == cta::tape::session::SessionType::Retrieve && m_tapeDone && m_state
         && m_state != TapeSessionState::Finished) {
-      m_state = m_diskDone ? TapeSessionState::Finalizing : TapeSessionState::DrainingToDisk;
+      setStateLocked(m_diskDone ? TapeSessionState::Finalizing : TapeSessionState::DrainingToDisk, now);
     }
   }
 
@@ -560,6 +584,7 @@ private:
   cta::TapeMount* m_mount = nullptr;
 
   std::optional<cta::tape::session::TapeSessionState> m_state;
+  Clock::time_point m_stateEnteredAt;
   bool m_tapeDone = false;
   bool m_diskDone = false;
   cta::tape::session::SessionType m_type = cta::tape::session::SessionType::Undetermined;
