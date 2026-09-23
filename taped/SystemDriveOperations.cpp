@@ -65,29 +65,7 @@ public:
     m_catalogue = catalogueFactory->create();
 
     m_lc.log(log::INFO, "Catalogue initialised successfully");
-    m_lc.log(log::INFO, "Initialising Scheduler");
-#ifndef CTA_PGSCHED
-    m_schedDbInit = std::make_unique<SchedulerDBInit_t>("Taped",
-                                                        utils::readSingleLineConfigFile(m_config.scheduler.config_file),
-                                                        m_lc.logger());
-#else
-    m_schedDbInit = std::make_unique<SchedulerDBInit_t>("Taped",
-                                                        utils::readSingleLineConfigFile(m_config.scheduler.config_file),
-                                                        m_config.scheduler.number_of_connections,
-                                                        m_lc.logger());
-#endif
-    m_schedDb = m_schedDbInit->getSchedDB(*m_catalogue, m_lc.logger());
-    SchedulerDatabase::StatisticsCacheConfig statisticsCacheConfig;
-    statisticsCacheConfig.tapeCacheMaxAgeSecs = m_config.scheduler.tape_cache_max_age_secs;
-    statisticsCacheConfig.retrieveQueueCacheMaxAgeSecs = m_config.scheduler.retrieve_queue_cache_max_age_secs;
-    m_schedDb->setStatisticsCacheConfig(statisticsCacheConfig);
-    m_scheduler = std::make_unique<Scheduler>(*m_catalogue,
-                                              *m_schedDb,
-                                              m_config.scheduler.backend_name,
-                                              m_config.mounts.minimum_queued_files,
-                                              m_config.mounts.minimum_queued_bytes);
-
-    m_lc.log(log::INFO, "Scheduler initialised successfully");
+    initialiseScheduler();
   }
 
   /**
@@ -96,6 +74,15 @@ public:
    * @return Reference to the scheduler used by these operations.
    */
   IScheduler& scheduler() override { return *m_scheduler; }
+
+  void resetScheduler() override {
+#ifndef CTA_PGSCHED
+    // Object-store retries depend on retiring the owning agent between mounts.
+    initialiseScheduler();
+#else
+    // PostgreSQL recovers inactive mounts without retiring a process agent.
+#endif
+  }
 
   /**
    * @brief Read the existing catalogue entry, or return std::nullopt when the drive is absent.
@@ -203,6 +190,40 @@ public:
   void sleep(unsigned int seconds) override { ::sleep(seconds); }
 
 private:
+  void initialiseScheduler() {
+    m_lc.log(log::INFO, "Initialising Scheduler");
+#ifndef CTA_PGSCHED
+    // Nonempty agents must remain registered so garbage collection can recover abandoned jobs.
+    auto schedDbInit =
+      std::make_unique<SchedulerDBInit_t>("Taped",
+                                          utils::readSingleLineConfigFile(m_config.scheduler.config_file),
+                                          m_lc.logger(),
+                                          true);
+#else
+    auto schedDbInit =
+      std::make_unique<SchedulerDBInit_t>("Taped",
+                                          utils::readSingleLineConfigFile(m_config.scheduler.config_file),
+                                          m_config.scheduler.number_of_connections,
+                                          m_lc.logger());
+#endif
+    auto schedDb = schedDbInit->getSchedDB(*m_catalogue, m_lc.logger());
+    SchedulerDatabase::StatisticsCacheConfig statisticsCacheConfig;
+    statisticsCacheConfig.tapeCacheMaxAgeSecs = m_config.scheduler.tape_cache_max_age_secs;
+    statisticsCacheConfig.retrieveQueueCacheMaxAgeSecs = m_config.scheduler.retrieve_queue_cache_max_age_secs;
+    schedDb->setStatisticsCacheConfig(statisticsCacheConfig);
+    auto scheduler = std::make_unique<Scheduler>(*m_catalogue,
+                                                 *schedDb,
+                                                 m_config.scheduler.backend_name,
+                                                 m_config.mounts.minimum_queued_files,
+                                                 m_config.mounts.minimum_queued_bytes);
+
+    // Publish only a fully constructed replacement. Locals destroy the old context in reverse order.
+    m_schedDbInit.swap(schedDbInit);
+    m_schedDb.swap(schedDb);
+    m_scheduler.swap(scheduler);
+    m_lc.log(log::INFO, "Scheduler initialised successfully");
+  }
+
   // Use atomic shared_ptr access for compatibility with the EL9 standard library.
   std::shared_ptr<const TapeSessionTracker> m_activeTracker {nullptr};
   const TapedConfig& m_config;

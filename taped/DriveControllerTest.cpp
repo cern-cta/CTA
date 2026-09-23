@@ -110,6 +110,8 @@ protected:
   std::optional<std::string> probeError;
   unsigned int probes = 0;
   unsigned int schedules = 0;
+  unsigned int schedulerResets = 0;
+  std::function<void()> onSchedulerReset;
   unsigned int transfers = 0;
   unsigned int destroyed = 0;
   TapeMount* m_liveMount = nullptr;
@@ -139,6 +141,14 @@ protected:
     }
 
     IScheduler& scheduler() override { return fixture.scheduler; }
+
+    void resetScheduler() override {
+      EXPECT_EQ(nullptr, fixture.liveMount());
+      ++fixture.schedulerResets;
+      if (fixture.onSchedulerReset) {
+        fixture.onSchedulerReset();
+      }
+    }
 
     std::optional<TapeDrive> getDriveState() override {
       ++fixture.stateReads;
@@ -1030,6 +1040,7 @@ TEST_F(DriveControllerTest, OperatorDownUpRequiresCleaningAndAnotherProbe) {
 
 // If mount scheduling times out, the controller waits and allows a later iteration.
 TEST_F(DriveControllerTest, SchedulingTimeoutWaitsAndAllowsAnotherIteration) {
+  onSleep = [&] { EXPECT_EQ(1, schedulerResets); };
   schedule = []() -> std::unique_ptr<TapeMount> { throw exception::TimeoutException("timeout"); };
   expectPreparation();
   EXPECT_NO_THROW(iteration());
@@ -1043,6 +1054,7 @@ TEST_F(DriveControllerTest, SchedulingTimeoutWaitsAndAllowsAnotherIteration) {
 
 // Database failures during scheduling use the ordinary retry delay.
 TEST_F(DriveControllerTest, SchedulingDatabaseFailureWaitsAndAllowsAnotherIteration) {
+  onSleep = [&] { EXPECT_EQ(1, schedulerResets); };
   schedule = []() -> std::unique_ptr<TapeMount> { throw exception::LostDatabaseConnection("database unavailable"); };
   expectPreparation();
   EXPECT_CALL(scheduler, ping(_)).Times(0);
@@ -1063,6 +1075,7 @@ TEST_F(DriveControllerTest, SchedulingDatabaseFailureWaitsAndAllowsAnotherIterat
 
 // Unexpected scheduling failures are logged and retried after the idle delay without cleaning.
 TEST_F(DriveControllerTest, UnexpectedSchedulingFailureWaitsAndAllowsAnotherIteration) {
+  onSleep = [&] { EXPECT_EQ(1, schedulerResets); };
   schedule = []() -> std::unique_ptr<TapeMount> { throw std::runtime_error("unexpected scheduler failure"); };
   unsigned int cleanAttempts = 0;
   clean = [&] {
@@ -1098,7 +1111,57 @@ TEST_F(DriveControllerTest, IdleDriveDoesNotStartATapeSession) {
   iteration();
 
   EXPECT_EQ(0, transfers);
+  EXPECT_EQ(0, schedulerResets);
   EXPECT_EQ(nullptr, liveMount());
+}
+
+TEST_F(DriveControllerTest, SchedulerRetiredAfterMountDestructionAndBeforeDelay) {
+  for (const bool successful : {true, false}) {
+    supplyMount();
+    transfer = [successful](TapeMount&) {
+      TapeSessionResult result;
+      result.successful = successful;
+      return result;
+    };
+    const auto previousResets = schedulerResets;
+    const auto previousDestroyed = destroyed;
+    onSchedulerReset = [&] { EXPECT_EQ(previousDestroyed + 1, destroyed); };
+    onSleep = [&] { EXPECT_EQ(previousResets + 1, schedulerResets); };
+    expectPreparation();
+    iteration();
+    EXPECT_EQ(previousResets + 1, schedulerResets);
+  }
+}
+
+TEST_F(DriveControllerTest, SchedulerResetFailurePropagatesWithoutRetrySleep) {
+  supplyMount();
+  onSchedulerReset = [] { throw std::runtime_error("scheduler replacement failed"); };
+  expectPreparation();
+  EXPECT_THROW(iteration(), std::runtime_error);
+  EXPECT_EQ(1, destroyed);
+  EXPECT_EQ(1, schedulerResets);
+  EXPECT_TRUE(sleeps.empty());
+}
+
+TEST_F(DriveControllerTest, SchedulerResetFailurePublishesDownAndExits) {
+  testing::InSequence sequence;
+  expectRunStartup();
+  DesiredDriveState up;
+  up.up = true;
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _));
+  expectPreparation();
+  supplyMount();
+  onSchedulerReset = [] { throw std::runtime_error("scheduler replacement failed"); };
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
+  EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _));
+
+  EXPECT_EQ(1, controller->run());
+  EXPECT_EQ(1, schedulerResets);
+  EXPECT_EQ(1, destroyed);
+  EXPECT_FALSE(controller->isReady());
+  EXPECT_TRUE(sleeps.empty());
 }
 
 // Transfers and recovery.
@@ -1231,12 +1294,15 @@ TEST_F(DriveControllerTest, EscapingSessionExceptionsExitWithoutRetrying) {
     EXPECT_EQ(previousTransfers + 1, transfers);
     EXPECT_EQ(previousSchedules + 1, schedules);
     EXPECT_TRUE(sleeps.empty());
+    EXPECT_EQ(0, schedulerResets);
     ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&scheduler));
   }
 }
 
 // If a transfer reports an unusable drive with a specific reason, the controller requests it down.
 TEST_F(DriveControllerTest, UnusableDriveRequestsDownAndPreservesSpecificReason) {
+  bool downPublished = false;
+  onSchedulerReset = [&] { EXPECT_TRUE(downPublished); };
   supplyMount();
   transfer = [](TapeMount&) {
     TapeSessionResult result;
@@ -1250,12 +1316,14 @@ TEST_F(DriveControllerTest, UnusableDriveRequestsDownAndPreservesSpecificReason)
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).After(preparationComplete).WillOnce(Return(state));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
   EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
-    .WillOnce(Invoke([](const auto&, const DesiredDriveState& desired, auto&) {
+    .WillOnce(Invoke([&](const auto&, const DesiredDriveState& desired, auto&) {
+      downPublished = true;
       EXPECT_FALSE(desired.up);
       EXPECT_FALSE(desired.reason);
     }));
   iteration();
   EXPECT_EQ(1, destroyed);
+  EXPECT_EQ(1, schedulerResets);
   EXPECT_TRUE(sleeps.empty());
 
   // Recover using the session VID even after its mount has been destroyed.
