@@ -14,6 +14,8 @@ scheduler/rdbms/schema/postgres_scheduler_schema.cpp.in
 ci/.cta-dev.env
 .cta-dev-build-state.json
 /build/
+target/
+*/Cargo.lock
 # Legacy package build directories may still exist in older checkouts
 /build_srpm/
 /build_rpm/
@@ -23,7 +25,6 @@ ci/.cta-dev.env
 /test_logs/
 /tmp/
 *.core
-target/
 
 # Helm files
 Chart.lock
@@ -69,7 +70,8 @@ venv/
 .env/
 .venv/
 env/
-Pipfile.lock
+Pipfile.lockcta-restore-files/Cargo.lock
+
 
 # Pytest
 .pytest_cache

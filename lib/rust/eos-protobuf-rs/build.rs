@@ -3,12 +3,12 @@
 
 //! Build script: generates the Rust bindings for the EOS protobuf/gRPC
 //! interface. See the crate documentation in `src/lib.rs` for details.
-use std::env;
-use std::path::PathBuf;
+use std::{env, path::PathBuf};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let manifest_dir = env::var("CARGO_MANIFEST_DIR")?;
-    let proto_dir = PathBuf::from(manifest_dir).join("../../lib/protobuf/external/eos-grpc-proto");
+    let proto_dir =
+        PathBuf::from(manifest_dir).join("../../../lib/protobuf/external/eos-grpc-proto");
 
     tonic_prost_build::configure()
         // we only need client-side bindings
