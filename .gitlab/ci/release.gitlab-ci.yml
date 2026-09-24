@@ -26,8 +26,6 @@ internal-release-cta:
       ./ci/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                     --local-source-dir build/$[[ inputs.platform ]]/RPM/RPMS/x86_64
                                     --eos-target-dir /eos/user/c/ctareg/www/cta-repo/RPMS/x86_64
-    - mkdir -p build/release
-    - printf '%s\n' "$CI_COMMIT_TAG" > build/release/internal-published-tag
   after_script:
     - |
       case "$CI_JOB_STATUS" in
@@ -37,10 +35,6 @@ internal-release-cta:
       esac
       python3 "$CI_PROJECT_DIR/ci/release/add_release_note.py" --api-token "$CI_API_TOKEN" "$NOTE"
   resource_group: cta-rpm-publication
-  artifacts:
-    paths:
-      - build/release/internal-published-tag
-    expire_in: 30 days
 
 .public-release-cta:
   stage: release
@@ -209,7 +203,7 @@ publish-images-public:
     matrix:
       - TARGET_NAME: *cta-image-targets
 
-# Publish only after the internal RPMs and all tagged private images are available.
+# Follow the existing release-job dependencies without an additional success marker.
 publish-docs:
   interruptible: false
   stage: release
@@ -217,7 +211,7 @@ publish-docs:
     - job: build-docs
       artifacts: false
     - job: internal-release-cta
-      artifacts: true
+      artifacts: false
     - job: publish-images-private
       artifacts: false
   rules:
@@ -232,8 +226,6 @@ publish-docs:
     - !reference [.merge-train-guard, before_script]
     - source ci/docs/prepare-environment.sh
   script:
-    # internal-release-cta allows failure, so require its success-only artifact too.
-    - test "$(cat build/release/internal-published-tag)" = "$CI_COMMIT_TAG"
     - test -n "$DOCS_PUBLISH_TOKEN"
     - git config user.name "CTA documentation CI"
     - git config user.email "cta-developers@cern.ch"
