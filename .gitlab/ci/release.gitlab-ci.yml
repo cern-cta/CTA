@@ -230,7 +230,7 @@ publish-docs:
     GIT_TERMINAL_PROMPT: "0"
   before_script:
     - !reference [.merge-train-guard, before_script]
-    - source docs/scripts/prepare-environment.sh
+    - source ci/docs/prepare-environment.sh
   script:
     # internal-release-cta allows failure, so require its success-only artifact too.
     - test "$(cat build/release/internal-published-tag)" = "$CI_COMMIT_TAG"
@@ -238,8 +238,8 @@ publish-docs:
     - git config user.name "CTA documentation CI"
     - git config user.email "cta-developers@cern.ch"
     - git remote set-url origin "${CI_SERVER_URL}/${CI_PROJECT_PATH}.git"
-    - export GIT_ASKPASS="$CI_PROJECT_DIR/docs/scripts/git-askpass.sh"
-    - python docs/scripts/publish.py --tag "$CI_COMMIT_TAG"
+    - export GIT_ASKPASS="$CI_PROJECT_DIR/ci/docs/git-askpass.sh"
+    - python ci/docs/publish.py --tag "$CI_COMMIT_TAG"
   resource_group: cta-docs-publication
   artifacts:
     paths:

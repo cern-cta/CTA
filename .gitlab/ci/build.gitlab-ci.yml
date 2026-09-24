@@ -259,6 +259,7 @@ build-docs:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" || ($CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH)'
       changes:
         - docs/**/*
+        - ci/docs/**/*
         - '**/*.1cta.md'
         - tools/cta-admin.1cta.md.in
         - tools/compile_man_md.py
@@ -278,9 +279,9 @@ build-docs:
     GIT_SUBMODULE_STRATEGY: none
   before_script:
     - !reference [.merge-train-guard, before_script]
-    - source docs/scripts/prepare-environment.sh
+    - source ci/docs/prepare-environment.sh
   script:
-    - python -m unittest discover --start-directory docs/scripts --pattern 'test_*.py'
+    - python -m unittest discover --start-directory ci/docs --pattern 'test_*.py'
     - mkdocs build --strict --config-file docs/mkdocs.yml
   artifacts:
     paths:
