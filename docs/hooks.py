@@ -7,15 +7,25 @@ from pathlib import Path
 import subprocess
 import sys
 
+from typing import Any, Protocol
 
-def on_config(config):
+
+class MkDocsConfig(Protocol):
+    """The configuration interface used by these hooks."""
+
+    config_file_path: str
+
+    def __getitem__(self, key: str) -> Any: ...
+
+
+def on_config(config: MkDocsConfig) -> MkDocsConfig:
     # Resolve snippets from the config location, independent of the launch directory.
     root = Path(config.config_file_path).resolve().parent.parent
     config["mdx_configs"]["pymdownx.snippets"]["base_path"] = [str(root)]
     return config
 
 
-def on_pre_build(config):
+def on_pre_build(config: MkDocsConfig) -> None:
     root = Path(config.config_file_path).resolve().parent.parent
     output = root / "build/docs/generated/cta-admin.1cta.md"
     output.parent.mkdir(parents=True, exist_ok=True)

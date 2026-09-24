@@ -3,8 +3,10 @@
 
 """Exercise release ordering and real mike publication against a local Git remote."""
 
-# Use stdlib unittest so the published documentation environment needs no test dependencies.
+# Use unittest for the temporary-repository integration tests.
 # ruff: noqa: PT009, PT027
+
+from __future__ import annotations
 
 import json
 import os
@@ -13,6 +15,9 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from typing import Any
+
+from typing_extensions import override
 
 from publish import publication_decision, release_key
 
@@ -38,7 +43,8 @@ class VersionTests(unittest.TestCase):
 
 
 class PublicationTests(unittest.TestCase):
-    def setUp(self):
+    @override
+    def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
@@ -80,7 +86,7 @@ class PublicationTests(unittest.TestCase):
         self.command("git", "push", "origin", "gl-pages")
         self.command("git", "checkout", "main")
 
-    def command(self, *args, cwd=None, check=True):
+    def command(self, *args: str, cwd: Path | None = None, check: bool = True) -> subprocess.CompletedProcess[str]:
         result = subprocess.run(  # noqa: S603 - Fixed test commands in temporary repositories.
             args,
             cwd=cwd or self.repo,
@@ -94,15 +100,16 @@ class PublicationTests(unittest.TestCase):
             self.fail(f"Command failed: {args}\n{result.stdout}")
         return result
 
-    def deploy(self, tag):
+    def deploy(self, tag: str) -> tuple[Path, list[dict[str, Any]]]:
         self.command("git", "tag", "--force", tag)
         self.command(sys.executable, str(self.publisher), "--tag", tag)
         output = self.repo / "build/docs/public"
         return output, json.loads((output / "versions.json").read_text())
 
     def test_versions_aliases_retries_and_preservation(self):
-        for tag in ["v6.9.1-1", "v6.12.0.0-1", "v6.9.2-1", "v6.12.1.0-2", "v6.12.1.0-2"]:
-            output, versions = self.deploy(tag)
+        for tag in ["v6.9.1-1", "v6.12.0.0-1", "v6.9.2-1", "v6.12.1.0-2"]:
+            self.deploy(tag)
+        output, versions = self.deploy("v6.12.1.0-2")
         latest = next(version for version in versions if "latest" in version["aliases"])
         self.assertEqual(latest["version"], "6.12")
         self.assertEqual(latest["properties"]["source_tag"], "v6.12.1.0-2")

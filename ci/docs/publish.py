@@ -14,6 +14,7 @@ import shutil
 import subprocess
 import tarfile
 import tempfile
+from typing import Any
 
 CANONICAL_TAG = re.compile(r"v(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?-(\d+)")
 SERIES = re.compile(r"(\d+)\.(\d+)")
@@ -27,7 +28,7 @@ def release_key(tag: str) -> tuple[int, ...]:
     return tuple(int(part or 0) for part in match.groups())
 
 
-def publication_decision(tag: str, commit: str, versions: list[dict]) -> tuple[str, bool, str]:
+def publication_decision(tag: str, commit: str, versions: list[dict[str, Any]]) -> tuple[str, bool, str]:
     key = release_key(tag)
     series = f"{key[0]}.{key[1]}"
     publish = True
