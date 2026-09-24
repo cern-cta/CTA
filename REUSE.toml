@@ -49,3 +49,10 @@ path = [
 ]
 SPDX-FileCopyrightText = "2025 CERN"
 SPDX-License-Identifier = "GPL-3.0-or-later"
+
+# Imported documentation snapshot; preserve any embedded attribution.
+[[annotations]]
+path = ["docs/content/**", "docs/includes/**", "docs/overrides/**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 CERN"
+SPDX-License-Identifier = "GPL-3.0-or-later"

@@ -1,0 +1,183 @@
+[data-md-color-scheme="cta-light"] {
+    /* === Base background and text === */
+    --md-default-bg-color: #f5f6fa;
+    --md-default-bg-color--light: #ffffff;
+    --md-default-bg-color--lighter: #f0f1f4;
+
+    --md-default-fg-color: #3b4252;
+    --md-default-fg-color--light: #5e6675;
+    --md-default-fg-color--lighter: #7c8391;
+
+    --md-typeset-color: #3b4252;
+    --md-typeset-color--light: #5e6675;
+    --md-typeset-color--lighter: #7c8391;
+
+    /* === Primary UI (header bar, buttons, etc.) === */
+    --md-primary-fg-color: #232634;
+    --md-primary-fg-color--light: #2e3244;
+    --md-primary-fg-color--lighter: #3a3e52;
+
+    /* === Accent (links, interactive elements) === */
+    --md-accent-fg-color: #c94d0b;
+    --md-accent-fg-color--light: #f6884e;
+    --md-accent-fg-color--lighter: #f8a97f;
+    --md-accent-fg-color--transparent: #f3681e33;
+
+    /* === Markdown inline links === */
+    --md-typeset-a-color: #f3681e;
+
+    /* === Code blocks === */
+    --md-code-bg-color: #f0f1f4;
+    --md-code-fg-color: #24292e;
+
+    /* === Admonitions / Callouts === */
+    --md-admonition-bg-color: #e9ecf1;
+    --md-admonition-fg-color: #3b4252;
+
+    /* === Tabs === */
+    --md-tabs-bg-color: #f5f6fa;
+    --md-tabs-fg-color: #3b4252;
+    --md-tabs-fg-color--light: #5e6675;
+    --md-tabs-fg-color--lighter: #7c8391;
+    --md-tabs-fg-color--active: #3d70a2;
+    --md-tabs-indicator-color: #3d70a2;
+
+    /* === Footer === */
+    --md-footer-bg-color: #1a1b26;
+    --md-footer-bg-color--dark: #13131d;
+    --md-footer-fg-color: #b3b9c9;
+    --md-footer-fg-color--light: #9aa1b2;
+    --md-footer-fg-color--lighter: #7f8694;
+}
+
+[data-md-color-scheme="cta-light"] .md-button {
+    color: var(--md-default-bg-color);
+    background-color: var(--md-typeset-a-color);
+    border-radius: 2rem;
+}
+
+[data-md-color-scheme="cta-dark"] {
+    /* === Base background and text === */
+    --md-default-bg-color: #1e1e2e;
+    --md-default-bg-color--light: #2a2a3a;
+    --md-default-bg-color--lighter: #313244;
+
+    --md-default-fg-color: #d0d5e0;
+    --md-default-fg-color--light: #b3b9c9;
+    --md-default-fg-color--lighter: #9aa1b2;
+    --md-default-fg-color--lightest: #313244;
+
+    --md-typeset-color: #d0d5e0;
+    --md-typeset-color--light: #b3b9c9;
+    --md-typeset-color--lighter: #9aa1b2;
+
+    /* === Primary UI (header bar, buttons, etc.) === */
+    --md-primary-fg-color: #232634;
+    --md-primary-fg-color--light: #2e3244;
+    --md-primary-fg-color--lighter: #3a3e52;
+
+    /* === Accent (links, interactive elements) === */
+    --md-accent-fg-color: #c94d0b;
+    --md-accent-fg-color--light: #f6884e;
+    --md-accent-fg-color--lighter: #f8a97f;
+    --md-accent-fg-color--transparent: #f3681e33;
+
+    /* === Markdown inline links === */
+    --md-typeset-a-color: #f3681e;
+
+    /* === Code blocks === */
+    --md-code-bg-color: #2b2d3a;
+    --md-code-fg-color: #e0def4;
+
+    /* === Admonitions / Callouts === */
+    --md-admonition-bg-color: #2c2e3e;
+    --md-admonition-fg-color: #d0d5e0;
+
+    /* === Tabs === */
+    --md-tabs-bg-color: #1b1c28;
+    --md-tabs-fg-color: #d0d5e0;
+    --md-tabs-fg-color--light: #b3b9c9;
+    --md-tabs-fg-color--lighter: #9aa1b2;
+    --md-tabs-fg-color--active: #81a1c1;
+    --md-tabs-indicator-color: #81a1c1;
+
+    /* === Footer === */
+    --md-footer-bg-color: #1a1b26;
+    --md-footer-bg-color--dark: #13131d;
+    --md-footer-fg-color: #b3b9c9;
+    --md-footer-fg-color--light: #9aa1b2;
+    --md-footer-fg-color--lighter: #7f8694;
+}
+
+[data-md-color-scheme="cta-dark"] .md-button {
+    color: var(--md-default-bg-color);
+    background-color: var(--md-typeset-a-color);
+    border-radius: 2rem;
+}
+
+[data-md-color-scheme="cta-dark"] .md-button:hover {
+    color: var(--md-default-bg-color);
+}
+
+.md-typeset code {
+    border: 1px solid var(--md-default-bg-color--lighter);
+    border-radius: .5em;
+}
+
+.highlight {
+    background: none !important;
+}
+
+.spacer-xl {
+    margin-top: 3rem;
+}
+
+.spacer-xxl {
+    margin-top: 5rem;
+}
+
+.grid.cards {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+.landing-title {
+  font-weight: 800;   /* bolder than default */
+  font-size: 2.2rem;  /* slightly larger */
+}
+
+/* Two columns, centered vertically */
+.logos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+
+}
+
+/* Same visual height; maintain aspect ratio */
+.logos img {
+  height: var(--logo-h);
+  width: auto;
+  object-fit: contain;
+}
+
+/* Right-align the second image within its grid cell */
+.logos > p:last-child {
+  justify-self: end;
+  text-align: right;
+}
+
+.md-typeset .admonition.terminal,
+.md-typeset details.terminal {
+  border-color: rgb(200, 200, 200);
+}
+.md-typeset .terminal > .admonition-title,
+.md-typeset .terminal > summary {
+  background-color: rgba(150, 150, 150, 0.1);
+}
+.md-typeset .terminal > .admonition-title::before,
+.md-typeset .terminal > summary::before {
+  background-color: rgb(200, 120, 200);
+  -webkit-mask-image: var(--md-admonition-icon--terminal);
+          mask-image: var(--md-admonition-icon--terminal);
+}

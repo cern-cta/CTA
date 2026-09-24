@@ -259,6 +259,9 @@ workflow:
   auto_cancel:
     on_new_commit: interruptible
   rules:
+    # Generated documentation is published by the release job itself.
+    - if: '$CI_COMMIT_BRANCH == "gl-pages"'
+      when: never
     # PostgreSQL release variants
     - if: '$CI_COMMIT_TAG =~ $TAG_PGALL_REGEX'
       auto_cancel:

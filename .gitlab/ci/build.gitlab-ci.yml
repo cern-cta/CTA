@@ -244,3 +244,45 @@ export-docs:
     expire_in: 30 days
     paths:
       - docs/
+
+# Documentation is independent of CTA compilation and consumes this checkout only.
+build-docs:
+  stage: build
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+  rules:
+    - if: '$PIPELINE_TYPE != "DEFAULT" || $CI_PIPELINE_SOURCE == "parent_pipeline"'
+      when: never
+    - if: $CI_COMMIT_TAG
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" || ($CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH)'
+      changes:
+        - docs/**/*
+        - '**/*.1cta.md'
+        - tools/cta-admin.1cta.md.in
+        - tools/compile_man_md.py
+        - tools/CtaAdminCmdParser.hpp
+        - frontend/grpc/cta-frontend.example.conf
+        - taped/daemon/cta-taped.example.conf
+        - maintd/cta-maintd.example.toml
+        - mediachanger/rmcd/cta-rmcd.example.toml
+        - lib/telemetry/cta-otel.example.yaml
+        - .gitlab-ci.yml
+        - .gitlab/ci/build.gitlab-ci.yml
+        - .gitlab/ci/release.gitlab-ci.yml
+        - .gitlab/ci/build-image.gitlab-ci.yml
+        - ci/docker/pipeline/default.Dockerfile
+  image: $IMAGE_DEFAULT
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+  before_script:
+    - !reference [.merge-train-guard, before_script]
+    - source docs/scripts/prepare-environment.sh
+  script:
+    - python -m unittest discover --start-directory docs/scripts --pattern 'test_*.py'
+    - mkdocs build --strict --config-file docs/mkdocs.yml
+  artifacts:
+    paths:
+      - build/docs/site/
+    expire_in: 7 days
