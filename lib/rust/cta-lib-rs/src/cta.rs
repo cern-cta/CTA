@@ -116,9 +116,10 @@ impl CtaGrpcClient<StreamingClientType> {
 
 #[cfg(test)]
 mod tests {
+    use url::Url;
+
     use super::*;
     use crate::rpc::JwtAuth;
-    use url::Url;
 
     /// An endpoint on the loopback interface where nothing is ever listening.
     fn unreachable_config() -> EndpointConfig {

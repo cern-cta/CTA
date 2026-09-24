@@ -3,13 +3,17 @@
 
 //! Parsing of the namespace keytab file.
 
-use std::collections::HashMap;
-use std::fs::File;
-use std::io::{self, BufRead, BufReader};
-use std::path::PathBuf;
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::{self, BufRead, BufReader},
+    path::PathBuf,
+};
 
-use cta_lib::eos::EosEndpointMap;
-use cta_lib::rpc::{self, EndpointConfig, JwtAuth};
+use cta_lib::{
+    eos::EosEndpointMap,
+    rpc::{self, EndpointConfig, JwtAuth},
+};
 use url::Url;
 
 /// Errors raised while reading the namespace keytab file.

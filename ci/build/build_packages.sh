@@ -87,7 +87,6 @@ skip_test_packages=false
 skip_debug_packages=false
 skip_unit_tests=false
 skip_cmake=false
-rust_dir_path="tools-rs"
 sbom_path=""
 
 while [[ $# -gt 0 ]]; do
@@ -306,12 +305,9 @@ build_rust_sbom() {
   fi
 
   log_task "Building Rust CycloneDX BOMs..."
-  pushd $rust_dir_path
   cargo cyclonedx --format json
-  popd
 
-  local bom_src_files="${rust_dir_path}/**/*.cdx.json"
-  cp $bom_src_files "$dest_dir"/
+  cp "lib/rust/**/*.cdx.json" "tools/cta-restore-files/*.cdx.json" "$dest_dir"/
   log_success "Rust BOMs copied to ${dest_dir}"
 }
 

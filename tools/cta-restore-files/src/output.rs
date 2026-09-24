@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 //! Incremental rendering of recycle-bin listings.
+use std::{borrow::Cow, io::IsTerminal};
+
 use cta_lib::ResponseError;
 use cta_protobuf::cta::{admin::RecycleTapeFileLsItem, xrd::data::Data};
 use serde_json::json;
-
-use std::{borrow::Cow, io::IsTerminal};
 use tokio_stream::{Stream, StreamExt};
 
 /// How a listing should be presented.

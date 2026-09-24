@@ -30,7 +30,10 @@ async fn run_commands(
     let client = cta::CtaEndpoint { config };
 
     match args.command {
-        cli::Command::List { json } => {
+        cli::Command::List {
+            json,
+            common_options: common,
+        } => {
             client
                 .list_deleted_files(
                     if json {
@@ -38,24 +41,24 @@ async fn run_commands(
                     } else {
                         OutputFormat::Table
                     },
-                    args.vid,
-                    args.disk_instance,
-                    args.archive_file_id,
-                    args.copy_number,
-                    args.file_ids,
+                    common.vid,
+                    common.disk_instance,
+                    common.archive_file_id,
+                    common.copy_number,
+                    common.file_ids,
                 )
                 .await?;
         }
-        cli::Command::Restore => {
+        cli::Command::Restore(common) => {
             // unwrap: it's OK because OutputFormat::None implies a Some(...) return value
             let deleted_files = client
                 .list_deleted_files(
                     OutputFormat::None,
-                    args.vid,
-                    args.disk_instance,
-                    args.archive_file_id,
-                    args.copy_number,
-                    args.file_ids,
+                    common.vid,
+                    common.disk_instance,
+                    common.archive_file_id,
+                    common.copy_number,
+                    common.file_ids,
                 )
                 .await?
                 .unwrap();

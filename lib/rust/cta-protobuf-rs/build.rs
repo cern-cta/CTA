@@ -4,7 +4,13 @@
 //! Build script: generates the Rust bindings for the CTA frontend protobuf/gRPC
 //! interface.
 
+use std::path::PathBuf;
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let proto_dir = PathBuf::from(
+        "../../../lib/protobuf/external/xrootd-ssi-protobuf-interface/eos_cta/protobuf",
+    );
+
     tonic_prost_build::configure()
         // do not build server bindings, as we only have client apps for now
         .build_server(false)
@@ -16,12 +22,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // actual .proto source files and includes
         .compile_protos(
             &[
-                "../../lib/protobuf/external/xrootd-ssi-protobuf-interface/eos_cta/protobuf/cta_eos.proto",
-                "../../lib/protobuf/external/xrootd-ssi-protobuf-interface/eos_cta/protobuf/cta_admin.proto",
-                "../../lib/protobuf/external/xrootd-ssi-protobuf-interface/eos_cta/protobuf/cta_common.proto",
-                "../../lib/protobuf/external/xrootd-ssi-protobuf-interface/eos_cta/protobuf/cta_frontend.proto",
+                proto_dir.join("cta_eos.proto"),
+                proto_dir.join("cta_admin.proto"),
+                proto_dir.join("cta_common.proto"),
+                proto_dir.join("cta_frontend.proto"),
             ],
-            &["../../lib/protobuf/external/xrootd-ssi-protobuf-interface/eos_cta/protobuf/"],
+            &[proto_dir],
         )?;
     Ok(())
 }
