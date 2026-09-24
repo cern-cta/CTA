@@ -29,12 +29,11 @@ use eos_protobuf::eos::rpc::{
     ContainerInsertRequest, ContainerMdProto, FileInsertRequest, FileMdProto, InsertReply, MdId,
     MdRequest, MdResponse, NsStatRequest, Time, Type, eos_client::EosClient,
 };
+use nix::sys::stat::Mode;
 use tokio_stream::StreamExt;
 use tonic::{service::interceptor::InterceptedService, transport::Channel};
 
 use crate::rpc::{self, AuthorizationInterceptor, EndpointConfig};
-
-use nix::sys::stat::Mode;
 
 /// The EOS API requires us to send the token as a GRPC protobuf field, rather
 /// than the more standard request header. This helper macro makes it less verbose.
@@ -536,9 +535,10 @@ impl From<HashMap<String, EndpointConfig>> for EosEndpointMap {
 
 #[cfg(test)]
 mod tests {
+    use url::Url;
+
     use super::*;
     use crate::rpc::JwtAuth;
-    use url::Url;
 
     fn endpoint_config() -> EndpointConfig {
         EndpointConfig::new(

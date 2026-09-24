@@ -7,10 +7,7 @@
 //! [`CtaEndpoint::list_deleted_files`] runs its `ls` subcommand (streaming) and
 //! [`CtaEndpoint::restore_deleted_file_copy`] its `restore` subcommand (unary).
 
-use crate::output::{OutputFormat, output_as_json, output_as_table};
 use cta_lib::{StreamResponseExt, cta::CtaGrpcClient, rpc::EndpointConfig};
-use tokio_stream::StreamExt;
-
 use cta_protobuf::cta::{
     admin::{
         AdminCmd, OptionStrList, OptionString, OptionUInt64, RecycleTapeFileLsItem, admin_cmd,
@@ -18,6 +15,9 @@ use cta_protobuf::cta::{
     },
     xrd::{data::Data, response::ResponseType},
 };
+use tokio_stream::StreamExt;
+
+use crate::output::{OutputFormat, output_as_json, output_as_table};
 
 /// A handle on the CTA frontend admin interface.
 #[derive(Debug, Clone)]

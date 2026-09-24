@@ -163,6 +163,7 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "source")
   find_package(GRPC REQUIRED)
   find_package(xrootdclient REQUIRED)
   find_package(postgres REQUIRED)
+  find_package(Corrosion REQUIRED)
 
   if(CTA_WITH_ORACLE)
     find_package(oracle-instantclient REQUIRED)
@@ -202,9 +203,27 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "source")
   add_subdirectory(taped)
   add_subdirectory(maintd)
   add_subdirectory(tools)
-  add_subdirectory(tools-rs)
   add_subdirectory(tests)
 
+  # Rust crates
+  corrosion_import_crate(MANIFEST_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Cargo.toml" LOCKED)
+
+  # Rust-based tools
+  set(CTA_RUST_TOOLS cta-restore-files)
+
+  foreach(tool IN LISTS CTA_RUST_TOOLS)
+    install(PROGRAMS $<TARGET_FILE:${tool}> DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endforeach()
+
+  # Corrosion can't handle tests
+  add_custom_target(cta-rust-tests
+    COMMAND ${CMAKE_COMMAND} -E env
+      cargo test --locked --workspace
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    COMMENT "Running Rust unit tests with cargo"
+    VERBATIM
+    DEPENDS ${CTA_RUST_TOOLS}
+  )
 endif()
 
 # -----------------------------------------------------------------------------
@@ -232,7 +251,7 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "none")
     "/tmp/"
     "[.]core$"
     "/assets/"
-    "/tools-rs/([^/]+/)*target/")
+    "/([^/]+/)*target/")
   include(CPack)
 
   if(CTA_PACKAGE_FORMAT STREQUAL "rpm")

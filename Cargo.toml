@@ -4,15 +4,11 @@
 [workspace]
   resolver = "3"
   members = [
-    # protobuf libs
-    "eos-protobuf-rs",
-    "cta-protobuf-rs",
-
-    # higher-level libs
-    "cta-lib-rs",
+    # libs
+    "lib/rust/*",
 
     # tools
-    "cta-restore-files",
+    "tools/cta-restore-files",
   ]
 
   # Metadata inherited by every member via `field.workspace = true`.
@@ -35,9 +31,9 @@
   # Single source of truth for dependency versions across the workspace.
   [workspace.dependencies]
     # internal
-    cta-lib      = { path = "cta-lib-rs" }
-    cta-protobuf = { path = "cta-protobuf-rs" }
-    eos-protobuf = { path = "eos-protobuf-rs" }
+    cta-lib      = { path = "lib/rust/cta-lib-rs" }
+    cta-protobuf = { path = "lib/rust/cta-protobuf-rs" }
+    eos-protobuf = { path = "lib/rust/eos-protobuf-rs" }
     # gRPC / protobuf
     prost             = "^0.14"
     tonic             = "^0.14"

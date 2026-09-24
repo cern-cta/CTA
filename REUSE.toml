@@ -46,7 +46,7 @@ path = [
     "taped/AUTHORS",
     "tests/parallelTestsMakefile.in",
     "tests/parallelTestsMakefile.local.in",
-    "tools-rs/**/Cargo.lock"
+    "Cargo.lock"
 ]
 SPDX-FileCopyrightText = "2025 CERN"
 SPDX-License-Identifier = "GPL-3.0-or-later"

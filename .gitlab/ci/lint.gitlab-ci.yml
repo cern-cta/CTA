@@ -132,14 +132,13 @@ lint-rust:
     entrypoint: ["/usr/bin/env"]
   variables:
     GIT_SUBMODULE_STRATEGY: "recursive" # we need the proto defs
-    RUST_CODE_PATH: "tools-rs"
   before_script:
     - !reference [.merge-train-guard, before_script]
     - set -o pipefail
   script:
     - |
       set +e
-      cargo clippy --manifest-path ${RUST_CODE_PATH}/Cargo.toml --all-targets --all-features --message-format=json > clippy-output.json
+      cargo clippy --all-targets --all-features --message-format=json > clippy-output.json
       CARGO_EXIT_CODE=$?
       set -e
 
@@ -156,10 +155,7 @@ lint-rust:
       fi
 
       # convert to code climate format (readable by GitLab)
-      (cd $RUST_CODE_PATH && cargo codeclimate --clippy --clippy-path "$CI_PROJECT_DIR/clippy-output.json" --codeclimate-path "$CI_PROJECT_DIR/cargo-clippy-raw.json")
-
-      # cargo-codeclimate must run from inside RUST_CODE_PATH, but this means the file paths it emits are relative to the former
-      jq --arg prefix "$RUST_CODE_PATH/" 'map(.location.path |= $prefix + .)' "$CI_PROJECT_DIR/cargo-clippy-raw.json" > "$CI_PROJECT_DIR/cargo-clippy.json"
+      cargo codeclimate --clippy --clippy-path clippy-output.json --codeclimate-path cargo-clippy.json
 
       exit $CLIPPY_EXIT_CODE
   artifacts:
@@ -192,9 +188,8 @@ deny-rust:
     entrypoint: ["/usr/bin/env"]
   variables:
     GIT_SUBMODULE_STRATEGY: "none"
-    RUST_CODE_PATH: "tools-rs"
   script:
-    - cargo deny --manifest-path "$RUST_CODE_PATH/Cargo.toml" --config "$RUST_CODE_PATH/deny.toml" check
+    - cargo deny --config .cargo/deny.toml check
 
 # check for unused dependencies
 machete-rust:
@@ -219,11 +214,10 @@ machete-rust:
     entrypoint: ["/usr/bin/env"]
   variables:
     GIT_SUBMODULE_STRATEGY: "none"
-    RUST_CODE_PATH: "tools-rs"
   before_script:
     - !reference [.merge-train-guard, before_script]
   script:
-    - cargo machete $RUST_CODE_PATH/
+    - cargo machete
 
 lint-yaml:
   stage: lint
@@ -421,12 +415,11 @@ format-rust:
       allow_failure: true
   variables:
     FORMAT_DIFF: artifacts/cargo-fmt.diff
-    RUST_CODE_PATH: "tools-rs"
   before_script:
     - !reference [.merge-train-guard, before_script]
     - mkdir -p artifacts
     - echo "Running cargo fmt on all Rust files"
-    - cargo fmt --manifest-path ${RUST_CODE_PATH}/Cargo.toml --all -- --check > "$FORMAT_DIFF" 2>&1 || true
+    - cargo fmt --all -- --check > "$FORMAT_DIFF" 2>&1 || true
 
 type-check-python:
   stage: lint

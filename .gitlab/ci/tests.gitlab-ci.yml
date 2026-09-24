@@ -63,21 +63,19 @@ unit-test-rust:
     entrypoint: ["/usr/bin/env"]
   variables:
     GIT_SUBMODULE_STRATEGY: "recursive"
-    RUST_CODE_PATH: "tools-rs"
   before_script:
     - !reference [.merge-train-guard, before_script]
   script:
     - |
-      cd $RUST_CODE_PATH &&
-      cargo llvm-cov nextest --profile ci --cobertura --output-path cobertura.xml &&
+      cargo llvm-cov nextest --config-file .cargo/nextest.toml --profile ci --cobertura --output-path cobertura.xml &&
       cargo llvm-cov report --summary-only
   artifacts:
     when: always
     reports:
-      junit: ${RUST_CODE_PATH}/target/nextest/ci/junit.xml
+      junit: target/nextest/ci/junit.xml
       coverage_report:
         coverage_format: cobertura
-        path: ${RUST_CODE_PATH}/cobertura.xml
+        path: cobertura.xml
   coverage: '/^TOTAL.*\s(\d+\.\d+)%/'
 
 test-cta-valgrind:

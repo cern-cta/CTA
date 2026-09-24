@@ -8,12 +8,10 @@
 //! module turns such a record back into an EOS file entry — see
 //! [`restore_deleted_file`].
 
+use std::{num::ParseIntError, path::PathBuf};
+
 use anyhow::{Result, anyhow};
-use std::num::ParseIntError;
-use std::path::PathBuf;
-
 use cta_lib::eos::{DEFAULT_FILE_MODE, EosGrpcClient, Error, system_time_now};
-
 use cta_protobuf::cta::{admin::RecycleTapeFileLsItem, common::checksum_blob::checksum::Type};
 use eos_protobuf::eos::rpc::{Checksum, FileMdProto, Time};
 

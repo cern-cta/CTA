@@ -22,5 +22,5 @@ vendored in `external/eos-grpc-proto/` (`Authentication`, `File`, `Metadata`,
 | `eos::console` | `eos.console` | Message types behind the EOS console (`eos ...`) commands |
 | `eos::traffic_shaping` | `eos.traffic_shaping` | Scheduling and traffic-shaping messages |
 
-Prefer the higher-level wrappers in [`cta-lib`](https://gitlab.cern.ch/cta/CTA/-/blob/main/tools-rs/cta-lib-rs/README.md), which
+Prefer the higher-level wrappers in [`cta-lib`](https://gitlab.cern.ch/cta/CTA/-/blob/main/lib/rust/cta-lib-rs/README.md), which
 handle channel setup, authentication and response streaming.
