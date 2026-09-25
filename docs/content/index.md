@@ -4,6 +4,8 @@ hide:
   - toc
 ---
 
+<div class="cta-home" markdown>
+
 ![CTA logo](cta-logo.png)
 
 <div class="spacer-xl"></div>
@@ -109,3 +111,5 @@ Use the guides below to get oriented quickly.
 
 !!! tip "Looking for something specific?"
     Use the search bar at the top. It covers the entire CTA documentation.
+
+</div>

@@ -27,7 +27,9 @@ MkDocs Material builds the site, including manpages and example configurations f
 Dependencies are maintained in `requirements.txt`; generated files go into `build/docs/`.
 
 The theme in `content/stylesheets/extra.css` follows the CTA website's orange,
-neutral surfaces, local Arial font stack, and rounded cards. Material's `default`
+neutral surfaces and rounded cards, with a native system UI font stack that needs
+no font downloads. Typography follows the visitor's operating system. Home-page
+links omit underlines; article links retain them. Material's `default`
 and `slate` palettes provide light and dark modes, including syntax highlighting
 and diagrams. Keep palette overrides at the top of that stylesheet and component
 styles below them. No external fonts or website images are required.

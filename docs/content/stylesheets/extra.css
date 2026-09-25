@@ -3,7 +3,9 @@
  * CTA website palette and typography, adapted to Material's documentation UI.
  */
 :root {
-  --md-text-font: Arial, Helvetica, sans-serif;
+  /* Native UI fonts: modern typography without downloading font assets. */
+  --md-text-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
   --md-code-font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
     "Liberation Mono", monospace;
   --cta-brand: #f3681e;
@@ -21,9 +23,8 @@
   --md-default-fg-color--light: #4e5b62;
   --md-default-fg-color--lighter: #6f7d85;
   --md-default-fg-color--lightest: #dfe4e7;
-  /* Slightly deeper than the website's orange for small documentation links. */
-  --md-typeset-a-color: #b84709;
-  --md-accent-fg-color: #b84709;
+  --md-typeset-a-color: var(--cta-brand);
+  --md-accent-fg-color: var(--cta-brand);
   --md-accent-fg-color--transparent: #f3681e14;
   --md-code-bg-color: #f4f6f7;
   --md-code-fg-color: #15191c;
@@ -65,10 +66,13 @@
 body { -webkit-font-smoothing: antialiased; }
 
 /* A compact, dark masthead keeps the CTA identity visible in both modes. */
-.md-header { box-shadow: none; border-bottom: 1px solid #ffffff24; }
+.md-header {
+  box-shadow: 0 2px 6px rgb(0 0 0 / 16%);
+  border-bottom: 1px solid #ffffff24;
+}
 .md-header__title { font-weight: 700; letter-spacing: -0.018em; }
 .md-header__button.md-logo img { width: 1.6rem; height: 1.6rem; }
-.md-header .md-source { border: 1px solid #ffffff24; border-radius: var(--cta-radius-sm); padding-inline: .5rem; }
+.md-header .md-source { padding-inline: .5rem; }
 .md-header a:hover, .md-header button:hover { color: #ff8c4d; }
 .md-tabs { border-bottom: 1px solid #ffffff24; }
 .md-tabs__link { margin-top: 0; padding-block: .7rem; opacity: 1; color: #b4c0c6; }
@@ -80,17 +84,18 @@ body { -webkit-font-smoothing: antialiased; }
 .md-typeset { line-height: 1.65; }
 .md-typeset h1, .md-typeset h2, .md-typeset h3, .md-typeset h4 {
   color: var(--cta-heading);
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: -0.018em;
   line-height: 1.2;
 }
-.md-typeset h1 { font-size: 2.25em; margin-bottom: .85em; }
+.md-typeset h1 { font-size: 2.25em; font-weight: 700; margin-bottom: .85em; }
 .md-typeset h2 { margin-top: 1.8em; }
 .md-typeset a { text-underline-offset: .16em; }
 .md-typeset p a:not(.md-button), .md-typeset li > a:not(.md-button) {
   text-decoration: underline;
   text-decoration-thickness: 1px;
 }
+.md-typeset .cta-home a:not(.md-button) { text-decoration: none; }
 .md-typeset hr { border-color: var(--cta-border); }
 .md-nav__link { border-radius: 4px; }
 .md-nav__link:hover { color: var(--md-typeset-a-color); }
