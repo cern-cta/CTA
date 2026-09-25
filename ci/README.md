@@ -5,6 +5,7 @@ This directory contains all the files necessary for development and automation w
 * `build/`: Files for building the CTA software
 * `checks/`: Collection of scripts that perform validation checks within the CI pipeline
 * `danger/`: Configuration for the Danger bot that runs on Merge Requests
+* `docs/`: Documentation CI environment, publication, authentication, and publication tests
 * `docker/`: Docker files and content to build the docker images
 * `orchestration/`: Files to set up a local development cluster
 * `project-json/`: Files related to the project.json in the root of the repository

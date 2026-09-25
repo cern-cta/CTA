@@ -32,17 +32,24 @@ unit-test-python:
   rules:
     - changes:
         - "**/*.py"
+        - '**/*requirements.txt'
+        - ci/docs/**/*
+        - ci/docker/pipeline/default.Dockerfile
+        - '.gitlab/ci/*.gitlab-ci.yml'
+        - .gitlab-ci.yml
       when: on_success
   image:
-    name: $IMAGE_LINT # At a future point in time this should reference a better scoped image
+    name: $IMAGE_DEFAULT
     entrypoint: ["/usr/bin/env"]
   variables:
     GIT_SUBMODULE_STRATEGY: "none"
   before_script:
     - !reference [.merge-train-guard, before_script]
-    - uv pip install --system pytest typing-extensions
+    # The suite includes real mike/MkDocs publication tests.
+    - source ci/docs/prepare-environment.sh
+    - uv pip install --python "$(command -v python)" pytest
   script:
-    - pytest ci --ignore=ci/system_tests --junitxml=python-ci-unit-tests.xml
+    - python -m pytest ci --ignore=ci/system_tests --junitxml=python-ci-unit-tests.xml
   artifacts:
     when: always
     reports:

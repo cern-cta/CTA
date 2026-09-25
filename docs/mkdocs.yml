@@ -1,0 +1,269 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+docs_dir: content
+site_dir: ../build/docs/site
+strict: true
+
+watch:
+  - includes
+  - ../tools
+  - ../catalogue
+  - ../frontend/grpc
+  - ../taped
+  - ../maintd
+  - ../mediachanger/rmcd
+  - ../lib/telemetry
+
+site_name: CTA Documentation
+site_description: Operator and developer documentation for the CERN Tape Archive (CTA) system
+site_author: CERN Tape Archive Team
+site_url: https://cta.docs.cern.ch
+
+repo_name: cta/CTA
+repo_url: https://gitlab.cern.ch/cta/CTA
+
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - md_in_html
+  - def_list
+  - footnotes
+  - pymdownx.smartsymbols
+  - pymdownx.inlinehilite
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      pygments_style: one-dark
+      noclasses: true
+  - pymdownx.snippets:
+      check_paths: true
+      auto_append:
+        - docs/includes/abbreviations.md
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - toc:
+      permalink: "#"
+
+hooks:
+  - hooks.py
+
+plugins:
+  - search
+
+theme:
+  name: material
+  custom_dir: overrides
+  logo: assets/images/favicon.ico
+  icon:
+    admonition:
+      terminal: octicons/command-palette-16
+  favicon: assets/images/favicon.ico
+  font: false
+  features:
+    - content.action.repo
+    - content.code.copy
+    - content.code.select
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.instant.prefetch
+    - navigation.path
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.sections
+    - navigation.prune
+    - announce.dismiss
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: cta-light
+      toggle:
+        icon: material/white-balance-sunny
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: cta-dark
+      toggle:
+        icon: material/brightness-3
+        name: Switch to system preference
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  version:
+    provider: mike
+    alias: true
+  social:
+    - icon: material/clipboard-text-clock
+      link: https://gitlab.cern.ch/cta/CTA/-/blob/main/CHANGELOG.md
+    - icon: fontawesome/brands/gitlab
+      link: https://gitlab.cern.ch/cta/CTA
+    - icon: fontawesome/brands/discourse
+      link: https://cta-community.web.cern.ch
+
+copyright: Copyright &copy; 2026 CERN
+
+nav:
+  - 'Home': index.md
+  - 'Overview':
+      - 'Introduction': overview/introduction.md
+      - 'Deployment': overview/deployment.md
+      - 'Tape Infrastructure':
+          - 'Tape Media':
+              - 'Overview': overview/tape/media/index.md
+              - 'Tape Labels': overview/tape/media/labels.md
+              - 'CTA Tape Format': overview/tape/media/format.md
+          - 'Tape Drives': overview/tape/drives.md
+          - 'Tape Servers': overview/tape/servers.md
+          - 'Tape Libraries': overview/tape/libraries.md
+          - 'Tape Lifecycle': overview/tape/lifecycle.md
+      - 'CTA Components':
+          - 'Introduction': overview/components/introduction.md
+          - 'Disk Buffer': overview/components/disk-buffer.md
+          - 'CTA Catalogue': overview/components/catalogue.md
+          - 'CTA Scheduler': overview/components/scheduler.md
+          - 'CTA Frontend': overview/components/frontend.md
+          - 'CTA Tape Daemon': overview/components/taped.md
+          - 'CTA Maintenance Daemon': overview/components/maintd.md
+          - 'Authentication': overview/components/authentication.md
+      - 'CTA File Lifecycle':
+          - 'Introduction': overview/file-lifecycle/introduction.md
+          - 'Archival': overview/file-lifecycle/archival.md
+          - 'Retrieval': overview/file-lifecycle/retrieval.md
+          - 'Deletion': overview/file-lifecycle/deletion.md
+  - 'Operations':
+      - 'Introduction': ops/introduction.md
+      - 'Deployment':
+          - 'Installation': ops/deployment/installation.md
+          - 'RPM Packages and Services': ops/deployment/rpm-packages-and-services.md
+          - 'Recommendations': ops/deployment/recommendations.md
+          - 'Configuration':
+              - 'Config Files': ops/deployment/configuration/example-configs.md
+              - 'cta-frontend': ops/deployment/configuration/cta-frontend.md
+              - 'cta-taped': ops/deployment/configuration/cta-taped.md
+              - 'cta-rmcd': ops/deployment/configuration/cta-rmcd.md
+              - 'cta-maintd': ops/deployment/configuration/cta-maintd.md
+      - 'Monitoring':
+          - 'Logging': ops/monitoring/logging.md
+          - 'Metrics': ops/monitoring/metrics.md
+          - 'Recommendations': ops/monitoring/recommendations.md
+      - 'Tools':
+          - 'CTA Tools':
+              - 'cta-admin': ops/tools/cta-admin.md
+              - 'cta-change-storage-class': ops/tools/cta-change-storage-class.md
+              - 'cta-restore-deleted-files': ops/tools/cta-restore-deleted-files.md
+              # - 'cta-eos-namespace-inject': ops/tools/cta-eos-namespace-inject.md
+              # - 'cta-statistics-save': ops/tools/cta-statistics-save.md
+              # - 'cta-statistics-update': ops/tools/cta-statistics-update.md
+              - 'cta-catalogue-set-production': ops/tools/cta-catalogue-set-production.md
+              - 'cta-catalogue-schema-verify': ops/tools/cta-catalogue-schema-verify.md
+              - 'cta-catalogue-schema-drop': ops/tools/cta-catalogue-schema-drop.md
+              - 'cta-objectstore-dump-object': ops/tools/cta-objectstore-dump-object.md
+          - 'Operator Utilities':
+              - 'Overview': ops/tools/ops-utils/operator-utils.md
+              - 'cta-ops-repack (ATRESYS)': ops/tools/ops-utils/atresys.md
+              - 'cta-ops-admin': ops/tools/ops-utils/cta-ops-admin.md
+              - 'cta-ops-drive-config-generate': ops/tools/ops-utils/cta-ops-drv-conf-gen.md
+              - 'cta-ops-eos': ops/tools/ops-utils/cta-ops-eos.md
+              - 'cta-ops-pool-supply': ops/tools/ops-utils/cta-pool-supply.md
+              - 'cta-ops-tape-verify': ops/tools/ops-utils/cta-tape-verify.md
+              - 'cta-ops-drive-environmentals': ops/tools/ops-utils/cta-ops-drive-environmentals.md
+              - 'cta-ops-data-monitoring': ops/tools/ops-utils/cta-ops-data-monitoring.md
+              - 'Library: CTA Utils': ops/tools/ops-utils/cta-utils.md
+              - 'Library: CTA Tape Admin': ops/tools/ops-utils/cta-tape-admin.md
+      - 'Procedures':
+          - 'Upgrading CTA': ops/procedures/upgrading-cta.md
+          - 'Upgrading EOS': ops/procedures/upgrading-eos.md
+          - 'Upgrading CTA Catalogue schema':
+              - 'Introduction': ops/procedures/upgrading-cta-catalogue-schema/index.md
+              - 'Automated procedure': ops/procedures/upgrading-cta-catalogue-schema/automated.md
+              - 'Manual procedure': ops/procedures/upgrading-cta-catalogue-schema/manual.md
+          - 'Hardware Installation': ops/procedures/hw-installation.md
+          - 'Hardware Replacement': ops/procedures/hw-replacement.md
+          - 'Troubleshooting': ops/procedures/troubleshooting.md
+      - 'EOS':
+          - 'File Attributes': ops/eos/file-attributes.md
+  - 'Development':
+      - 'Overview': dev/overview.md
+      - 'Getting Started':
+          - 'Development Setup': dev/getting-started/setup.md
+          - 'Intro Walkthrough': dev/getting-started/walkthrough.md
+          - 'cta-dev': dev/getting-started/cta-dev.md
+          - 'Build Your Own Images': dev/getting-started/building-rpms-and-images.md
+          - 'EOS Development': dev/getting-started/eos-development.md
+          - 'mhVTL': dev/getting-started/mhvtl.md
+      - 'Contributing':
+          - 'Issues': dev/contributing/issues.md
+          - 'Branches': dev/contributing/branches.md
+          - 'Merge Requests': dev/contributing/merge-requests.md
+          - 'Changelog': dev/contributing/changelog.md
+      - 'Continuous Integration':
+          - 'CI Overview': dev/ci/overview.md
+          - 'GitLab Bots': dev/ci/bots.md
+          - 'GitLab Pipelines': dev/ci/pipelines.md
+          - 'Orchestration': dev/ci/orchestration.md
+      - 'OpenTelemetry':
+          - 'Introduction': dev/otel/introduction.md
+          - 'Metrics': dev/otel/metrics.md
+          - 'Testing': dev/otel/testing.md
+      - 'Procedures':
+          - 'Creating a CTA Release': dev/procedures/releases.md
+          - 'Modifying the CTA Catalogue Schema':
+              - 'Introduction': dev/procedures/catalogue-schema-update/index.md
+              - 'Creating a new schema version': dev/procedures/catalogue-schema-update/create-new-version.md
+              - 'Naming conventions': dev/procedures/catalogue-schema-update/naming-conventions.md
+              - 'Backwards-compatible schema updates': dev/procedures/catalogue-schema-update/backward-compatible-upgrades.md
+              - 'Backwards-incompatible schema updates': dev/procedures/catalogue-schema-update/backward-incompatible-upgrades.md
+              - 'Create the Liquibase changelog file': dev/procedures/catalogue-schema-update/create-liquibase-changelog-file.md
+      - 'Architecture':
+          - 'Components':
+              - 'Catalogue': dev/architecture/components/catalogue.md
+              - 'Scheduler':
+                  - 'Introduction': dev/architecture/components/scheduler.md
+                  - 'Scheduling Workflow': dev/architecture/workflows/scheduling.md
+                  - 'PostgreSQL Backend':
+                      - 'Introduction': dev/architecture/components/scheduler_backend/backend-introduction.md
+                      - 'Build': dev/architecture/components/scheduler_backend/backend-build.md
+                      - 'Backend Schema': dev/architecture/components/scheduler_backend/backend-schema.md
+                      - 'Worflow Integration': dev/architecture/components/scheduler_backend/backend-workflow.md
+                      - 'Opportunistic Batching of Enqueued Requests': dev/architecture/components/scheduler_backend/opportunistic-batching-of-enqueued-requests.md
+                      - 'Garbage Collection Routines': dev/architecture/components/scheduler_backend/backend-garbage-collection.md
+                      - 'Routine Deployment Tips': dev/architecture/components/scheduler_backend/backend-routine-deployment.md
+              - 'Tape Daemon': dev/architecture/components/taped.md
+              - 'Maintenance Daemon': dev/architecture/components/maintd.md
+          - 'Workflows':
+              - 'Introduction': dev/architecture/workflows/workflows.md
+              - 'Archival': dev/architecture/workflows/archival.md
+              - 'Retrieval': dev/architecture/workflows/retrieval.md
+              - 'Repack': dev/architecture/workflows/repack.md
+              - 'Deletion': dev/architecture/workflows/deletion.md
+              - 'Scheduling': dev/architecture/workflows/scheduling.md
+              - 'EOS Garbage Collection': dev/architecture/workflows/garbage-collection.md
+              - 'Recycle Bin': dev/architecture/workflows/recycle-bin.md
+  - 'Conventions':
+      - 'Introduction': conventions/introduction.md
+      - 'Packaging':
+          - 'RPM SPEC and Service Integration': conventions/packaging/rpm-spec-and-service-integration.md
+      # - 'Semantic Conventions':
+      #   - 'General': conventions/semantic/general.md
+      - 'Coding Conventions':
+          - 'General': conventions/coding/general.md
+          # - 'Project Structure': conventions/coding/project-structure.md
+          - 'C++': conventions/coding/cpp.md
+          - 'Bash': conventions/coding/bash.md
+          - 'Copyright': conventions/coding/copyright.md
+      - 'CI Conventions':
+          - 'GitLab CI': conventions/ci/gitlab.md
+          - 'Container Images': conventions/ci/container-images.md
+          - 'Orchestration': conventions/ci/orchestration.md
+  - 'Glossary': glossary.md
