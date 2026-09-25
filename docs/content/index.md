@@ -6,7 +6,7 @@ hide:
 
 <div class="cta-home" markdown>
 
-![CTA logo](cta-logo.png)
+![CTA logo](assets/images/cta-logo.png)
 
 <div class="spacer-xl"></div>
 # <span class="landing-title">CERN Tape Archive Documentation</span>

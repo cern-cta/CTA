@@ -26,6 +26,8 @@ mkdocs build --strict --config-file docs/mkdocs.yml
 MkDocs Material builds the site, including manpages and example configurations from the current checkout.
 Dependencies are maintained in `requirements.txt`; generated files go into `build/docs/`.
 
+Shared branding images and favicons live in `content/assets/images/`; the repository README also uses these assets. Keep `overrides/` for templates.
+
 The theme in `content/stylesheets/extra.css` follows the main CTA website's colors and theme.
 
 Pages with ambiguous navigation labels use an explicit `title` in their Markdown

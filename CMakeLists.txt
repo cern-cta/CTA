@@ -230,7 +230,7 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "none")
     "/test_logs/"
     "/tmp/"
     "[.]core$"
-    "/assets/")
+    "/docs/content/assets/")
   include(CPack)
 
   if(CTA_PACKAGE_FORMAT STREQUAL "rpm")
