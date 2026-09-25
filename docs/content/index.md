@@ -28,7 +28,7 @@ Choose a starting point below.
 
     Learn about CTA concepts, architecture, file lifecycle, and terminology.
 
-    [:octicons-arrow-right-24: CTA overview](overview/introduction.md)
+    [CTA overview](overview/introduction.md)
     · [Glossary](glossary.md)
 
 -   :material-server:{ .lg .middle } [__Running CTA__](ops/introduction.md)
@@ -37,8 +37,7 @@ Choose a starting point below.
 
     Install, configure, monitor, and upgrade a CTA deployment.
 
-    [:octicons-arrow-right-24: Operations guide](ops/introduction.md)
-
+    [Operations guide](ops/introduction.md) ·
     [Installation](ops/deployment/installation.md) · [Upgrading CTA](ops/procedures/upgrading-cta.md)
 
 </div>
@@ -51,7 +50,7 @@ Choose a starting point below.
 
     Set up a development environment, build from source, run tests, and contribute changes.
 
-    [:octicons-arrow-right-24: Developer guide](dev/overview.md)
+    [Developer guide](dev/overview.md)
     · [Conventions](conventions/introduction.md)
 
 -   :material-forum:{ .lg .middle } [__Getting help__](https://cta-community.web.cern.ch/)
@@ -60,7 +59,7 @@ Choose a starting point below.
 
     Ask questions about operating and developing CTA, or report a bug.
 
-    [:octicons-arrow-right-24: Community forum](https://cta-community.web.cern.ch/)
+    [Community forum](https://cta-community.web.cern.ch/)
     · [Issue tracker](https://gitlab.cern.ch/cta/CTA/-/issues)
 </div>
 
