@@ -22,7 +22,6 @@ end
 # --- Description checks ---
 
 required_checklist_items = [
-  "- [x] Documentation reflects the changes made.",
   "- [x] Merge Request title is clear, concise, and suitable as a changelog entry."
 ]
 
@@ -70,6 +69,16 @@ end
 
 if !labels.include?("changelog: required")
   message("**Changelog Label Missing**\n\nIf this MR requires a changelog entry, please add the `changelog: required` label.")
+end
+
+
+# --- Documentation check ---
+
+# Include additions and deletions so documentation moves and removals count too.
+changed_files = git.added_files + git.modified_files + git.deleted_files
+
+if labels.include?("needs documentation") && !changed_files.any? { |path| path.start_with?("docs/") }
+  fail("**Documentation Changes Required**\n\nThis merge request has the `needs documentation` label. Please update the documentation under `docs/` before merging.")
 end
 
 
