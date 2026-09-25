@@ -1,4 +1,6 @@
-# Health Checks
+# Readiness and Liveness
+
+This page covers service readiness/liveness endpoints and their implementation. These checks expose basic process status; logs, metrics, and request state provide the detail needed for investigation.
 
 !!! info "Documentation outline"
     Detailed implementation guidance will be added during the content review.

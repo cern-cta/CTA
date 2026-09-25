@@ -115,14 +115,13 @@ nav:
   - 'Home': index.md
   # Explain CTA roles, terminology, and behaviour; commands belong in Operations, code in Development.
   - 'Concepts':
-      # Introduce the system, its boundaries, and vocabulary; avoid duplicating component guides.
-      - 'Overview':
-          - 'Introduction': concepts/index.md
-          - 'Architecture': concepts/architecture.md
-          - 'Glossary': concepts/glossary.md
+      - 'Introduction': concepts/index.md
+      - 'Glossary': concepts/glossary.md
       # Explain component responsibilities and connections; deployment settings belong in Operations.
       - 'Components':
           - 'Overview': concepts/components/index.md
+          # Explain identities and trust boundaries; credential configuration and rotation belong in Operations.
+          - 'Authentication': concepts/components/authentication.md
           # Describe API and daemon roles; exclude config files, startup commands, and implementation walkthroughs.
           - 'Services':
               - 'Workflow API': concepts/components/workflow-api.md
@@ -136,8 +135,6 @@ nav:
               - 'Scheduler': concepts/components/scheduler.md
           # Explain external namespace and disk-copy responsibilities; vendor setup belongs in Disk Buffer Integration.
           - 'Disk Buffer': concepts/components/disk-buffer.md
-          # Explain identities and trust boundaries; credential configuration and rotation belong in Operations.
-          - 'Authentication': concepts/components/authentication.md
       # Explain media, hardware roles, tape states, formats, and positioning behaviour.
       # Host/device setup belongs in Operations > Installation & Deployment; labelling, mounts,
       # state changes, replacement, and recovery procedures belong in Operations > Administration.
@@ -181,6 +178,8 @@ nav:
               - 'Docker Images': ops/deployment/installation/docker-images.md
           # Prepare hosts, HBAs, devices, and permissions; hardware roles belong in Concepts.
           - 'Tape Server Setup': ops/deployment/tape-servers.md
+          # Bind stable hardware identities to non-rewinding paths; runtime settings belong in Configuration.
+          - 'Stable Drive Identities & udev': ops/deployment/udev-rules.md
           - 'Initialisation & Verification': ops/deployment/initialisation.md
       # Explain settings, prerequisites, and examples; managing live resources belongs in Administration.
       - 'Configuration':
@@ -218,6 +217,8 @@ nav:
           - 'Services': ops/administration/services.md
           # Commission, label, mount, drain, and replace resources; hardware theory belongs in Concepts.
           - 'Tapes, Drives & Libraries': ops/administration/tapes-and-drives.md
+          # Prepare, register, and label media for use; format details belong in Concepts.
+          - 'Media Initialisation': ops/administration/media-initialisation.md
           - 'Storage Policies': ops/administration/storage-policies.md
           - 'Scheduling & Queues': ops/administration/requests.md
           - 'Repacking Tapes': ops/administration/repack.md
@@ -389,12 +390,12 @@ nav:
               - 'Environment Setup': dev/integrations/eos/environment-setup.md
               - 'Walkthrough': dev/integrations/eos/walkthrough.md
           - 'dCache': dev/integrations/dcache.md
-      # Implement and test emitted logs, metrics, and health signals; collection and alerting belong in Operations.
+      # Implement logging, metrics, and readiness/liveness endpoints; collection and alerting belong in Operations.
       - 'Logging & Monitoring':
           - 'Overview': dev/observability/index.md
           - 'Logging': dev/observability/logging.md
           - 'Metrics': dev/observability/metrics.md
-          - 'Health Checks': dev/observability/health-checks.md
+          - 'Readiness & Liveness': dev/observability/health-checks.md
           - 'Testing': dev/observability/testing.md
       # Coordinate releases and administer project infrastructure; ordinary code changes stay in contributor guides.
       - 'For Maintainers':

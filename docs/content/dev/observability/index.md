@@ -4,7 +4,7 @@ This section explains how developers produce and test signals from CTA services.
 
 - [Logging](logging.md): useful events, severity, structured fields, and context.
 - [Metrics](metrics.md): instrument selection, attributes, and metric implementation.
-- [Health Checks](health-checks.md): readiness and liveness behaviour.
+- [Readiness and Liveness](health-checks.md): the service endpoints used to check whether a process is ready or alive.
 - [Testing](testing.md): validating emitted signals in development and CI.
 
 CTA's metric implementation uses OpenTelemetry; its background and SDK dependencies are described below.

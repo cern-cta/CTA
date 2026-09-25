@@ -8,31 +8,41 @@ It is the job of the library to keep track of which tape is where, and to respon
 Physical libraries vary from manufacturer to manufacturer in terms of terminology and functionality.
 We recommend studying the manuals provided by your vendor.
 
-At CERN we presently use IBM TS4500 and Spectra Logic TFinity libraries, so the vocabulary and concepts in these pages are influenced by their particulars.
+The examples here draw on IBM TS4500 and Spectra Logic TFinity libraries used at CERN.
 Some terms to know include:
 
-TODO
+- **Storage slots** hold cartridges when they are not mounted.
+- **Import/export slots** allow cartridges to be inserted into or removed from the library.
+- **Drives** read and write mounted cartridges.
+- **Robotics** move cartridges between slots and drives, under the control of the library.
 
 ### Partitions
 
-A tape library is partitioned into one or more sets of tape media and drives, which are called partitions.
-Tapes are assigned to partitions through their corresponding VOLSER ranges, of which multiple may be assigned to one partition, without overlap between partitions.
+A tape library can be partitioned into separate sets of tape media and drives, called hardware partitions.
+The partitioning mechanism is vendor-specific.
 Partitions act as hardware groupings which are independent from one another, and allow for features such as:
 
 * Running CTA alongside other magnetic tape data management software products
-* Moving tape media into special partitions without tape drives, such that they are safe from attempts at overwriting them (also known as *Safeguarded Tape*)
+* On libraries that support it, isolating cartridges in partitions without drives to prevent normal drive access (for example, vendor-specific *Safeguarded Tape* features)
 
-### Physical libraries and CTA
+## Library control and inventory
 
-Within CTA one may administrate the physical libraries known to the system using the `cta-admin physicallibrary` command. 
-Use of the physical library concept is optional, it us purely a convenience and monitoring/record-keeping feature.
-For instance, it provides helpful features for operations, such as the disabling the associated parts of the infrastructure during maintenance windows, and monitoring of properties such as library slot usage.
+CTA selects tape work through the scheduler. The tape daemon requests a mount through the [Media Changer Daemon](../components/media-changer-daemon.md) (`cta-rmcd`), which asks the library robotics to move the cartridge into the selected drive. File data passes through the tape drive, not through the robotics interface.
 
-#### Logical libraries
+The library tracks the physical locations of cartridges. CTA's catalogue tracks tape identities, library membership, and file copies. Registering a tape or changing its catalogue assignment does not physically move it or change a hardware partition.
 
-A physical library may be further partitioned into multiple *logical libraries* within CTA.
-Each logical library has its own set of associated tape media, tape drives, etc.
-This feature may for instance be used to organize multiple generations of media and drives within the same library.
-A logical library must only contain compatible combinations of drives and media.
+## Libraries in CTA
 
+### Physical libraries
 
+A physical-library record is optional in CTA. It groups logical libraries for administration and records information about the hardware, such as slot counts. These catalogue values should not be confused with an automatically discovered, live hardware inventory.
+
+Associating logical libraries with a physical-library record also allows the corresponding resources to be disabled together for maintenance. See [Tapes, Drives, and Libraries](../../ops/administration/tapes-and-drives.md) for registration and state changes.
+
+### Logical libraries
+
+A *logical library* in CTA groups tapes and drives that can be used together. It may be associated with a physical-library record, but does not require one.
+
+CTA logical libraries are administrative groupings, not representations that must match hardware partitions one-to-one. Operators can define their own groupings within the same hardware partition—for example, to separate media generations or dedicate sets of drives and tapes to different workloads. Creating these groups does not partition the hardware or enforce isolation in the library itself.
+
+The grouping must still make physical sense: drives assigned to a CTA logical library must be able to mount and use the tapes assigned to it. A catalogue assignment cannot make a cartridge accessible across an inaccessible hardware partition, or make incompatible media readable by a drive. Conversely, sharing a hardware partition does not make drives in another CTA logical library eligible to serve those tapes; CTA uses logical-library membership when selecting work.
