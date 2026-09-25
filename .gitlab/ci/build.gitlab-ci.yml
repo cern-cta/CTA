@@ -27,19 +27,38 @@ build-cta-rpms:
   rules:
     - if: '$CUSTOM_CTA_IMAGE_TAG != "" || $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
-    # These rules serve to prevent the rest of the pipeline from triggering when only trivial files such as the CHANGELOG have been modified
-    # GitLab only allows a whitelist and not a blacklist, so we have to list all file changes that should trigger the build job
+    # Automatically build only when source, build configuration, or CI inputs change.
     - changes:
+        # Top-level files relevant for builds
         - .dockerignore
         - .gitlab-ci.yml
+        - .gitmodules
         - CMakeLists.txt
         - project.json
         - version.hpp.in
-        # To be safe, all files in all sub-directories
-        # Once we have a src/ directory, we can be a bit more specific without having to specify a long list here
-        - '*/**/*'
+        # Build, packaging, and CI inputs
+        - cmake/**/*
+        - packaging/**/*
+        - ci/**/*
+        - .gitlab/**/*
+        # Target source layout
+        - app/**/*
+        - lib/**/*
+        - tools/**/*
+        - tests/**/*
+        # Legacy source directories: remove entries as their contents move to app/, lib/, or tools/
+        - catalogue/**/*
+        - common/**/*
+        - disk/**/*
+        - frontend/**/*
+        - maintd/**/*
+        - mediachanger/**/*
+        - objectstore/**/*
+        - rdbms/**/*
+        - scheduler/**/*
+        - taped/**/*
       when: on_success
-    # If only "trivial" changes were done and we are in a MR, set this job to manual
+    # Keep the build available manually for MRs without matching changes.
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual
       allow_failure: true  # Ensures the pipeline counts as "passed" instead of "blocked"
