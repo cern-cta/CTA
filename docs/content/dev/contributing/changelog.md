@@ -1,7 +1,8 @@
 
-# Changelog Entries
+# Writing Changelog Entries
 
 The changelog can be found in `CHANGELOG.md` in the root of the CTA repository. It is used to convey relevant changes in CTA for a given release to the user.
+It is also published in the documentation as [Release Notes](../../release-notes.md).
 Changelog entries are automatically generated based on the contents of the commit that will be merged before every release.
 
 ## What warrants a changelog entry

@@ -22,36 +22,36 @@ Choose a starting point below.
 
 <div class="grid cards" markdown>
 
--   :material-information-outline:{ .lg .middle } [__Understanding CTA__](overview/introduction.md)
+-   :material-information-outline:{ .lg .middle } [__Understanding CTA__](concepts/index.md)
 
     ---
 
     Learn about CTA concepts, architecture, file lifecycle, and terminology.
 
-    [CTA overview](overview/introduction.md)
-    · [Glossary](glossary.md)
+    [CTA concepts](concepts/index.md)
+    · [Glossary](concepts/glossary.md)
 
--   :material-server:{ .lg .middle } [__Running CTA__](ops/introduction.md)
+-   :material-server:{ .lg .middle } [__Running CTA__](ops/index.md)
 
     ---
 
     Install, configure, monitor, and upgrade a CTA deployment.
 
-    [Operations guide](ops/introduction.md) ·
-    [Installation](ops/deployment/installation.md) · [Upgrading CTA](ops/procedures/upgrading-cta.md)
+    [Operations guide](ops/index.md) ·
+    [Installation](ops/deployment/installation/index.md) · [Upgrading CTA](ops/upgrades/cta.md)
 
 </div>
 
 <div class="grid cards" markdown>
 
--   :material-code-tags:{ .lg .middle } [__Developing CTA__](dev/overview.md)
+-   :material-code-tags:{ .lg .middle } [__Developing CTA__](dev/index.md)
 
     ---
 
     Set up a development environment, build from source, run tests, and contribute changes.
 
-    [Developer guide](dev/overview.md)
-    · [Conventions](conventions/introduction.md)
+    [Developer guide](dev/index.md)
+    · [Conventions](dev/conventions/index.md)
 
 -   :material-forum:{ .lg .middle } [__Getting help__](https://cta-community.web.cern.ch/)
 
@@ -67,6 +67,6 @@ Choose a starting point below.
 
 - [Main CTA website](https://cta.web.cern.ch/) — Project background, presentations, and publications.
 - [Source code](https://gitlab.cern.ch/cta/CTA) — Browse the repository and contribute.
-- [Release notes](https://gitlab.cern.ch/cta/CTA/-/blob/main/CHANGELOG.md) — Features, fixes, and changes in each release.
+- [Release notes](release-notes.md) — Features, fixes, and changes in each release.
 
 </div>

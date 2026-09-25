@@ -87,7 +87,7 @@ Using these two concepts, we assign priorities based on the following urgency-pr
 
 To complement our Git workflow, we use the GitLab Issue status to indicate the status of the issue. This issue status can be found on the top right of the issue overview:
 
-![](./issue_status.png)
+![](issue_status.png)
 
 The typical lifecycle of an issue as follows:
 

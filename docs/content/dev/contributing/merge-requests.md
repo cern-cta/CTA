@@ -26,11 +26,11 @@ If the MR has been approved and the CI pipeline passes the MR is ready to be mer
 
 !!! info
 
-    The [Danger Bot](../ci/bots.md) runs on merge requests and will automatically perform a number of checks. Be sure to address these as quickly as possible and ideally before assigning a reviewer.
+    The [Danger Bot](automated-checks.md) runs on merge requests and will automatically perform a number of checks. Be sure to address these as quickly as possible and ideally before assigning a reviewer.
 
 **The reviewer should:**
 
-1. Check that the MR title is clear, concise and suitable as a changelog entry. See the [Changelog page](./changelog.md).
+1. Check that the MR title is clear, concise and suitable as a changelog entry. See the [Changelog page](changelog.md).
     - Even if the MR contains only developer-facing changes, the MR title (and consequently the squashed commit message) should read as a changelog entry. This ensures that viewing the commit history gives developers a good idea of all the changes that happened (not just the user-facing changes).
 2. Confirm that the MR description summarises the changes correctly.
 3. Confirm whether documentation changes are needed.

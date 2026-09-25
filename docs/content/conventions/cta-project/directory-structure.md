@@ -1,1 +1,0 @@
-# CTA Project Structure

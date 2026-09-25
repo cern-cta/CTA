@@ -278,6 +278,7 @@ build-docs:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" || ($CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH)'
       changes:
         - docs/**/*
+        - CHANGELOG.md
         - ci/docs/**/*
         - '**/*.1cta.md*'
         - '**/*requirements.txt'

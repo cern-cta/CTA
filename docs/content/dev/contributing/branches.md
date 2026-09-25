@@ -1,8 +1,8 @@
 # Branches
 
-All development work is done on branches, which are merged into `main` via [merge requests](./merge-requests.md).
+All development work is done on branches, which are merged into `main` via [merge requests](merge-requests.md).
 
-- **Start from an issue.** All work must be tracked in a CTA GitLab issue. Follow the [issue guidelines](./issues.md) and apply the required labels.
+- **Start from an issue.** All work must be tracked in a CTA GitLab issue. Follow the [issue guidelines](issues.md) and apply the required labels.
 - **Create development branches from the issue via “Create merge request”.** This enforces naming, opens an MR immediately, and the branch will be **auto-deleted** on merge.
 - **Create non-merging branches via “Create branch”.** Use this for benchmarking/testing spikes. It links to the issue but **does not** open an MR; **you must delete** the branch when finished.
 
