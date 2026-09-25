@@ -239,36 +239,3 @@ publish-docs:
   pages:
     publish: build/docs/public
     expire_in: never
-
-# Temporary hosting cutover: remove before merging add-docs-directory.
-publish-docs-bootstrap:
-  interruptible: false
-  stage: release
-  needs: []
-  rules:
-    - if: '$PIPELINE_TYPE == "DEFAULT" && $CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH == "add-docs-directory" && $CI_PROJECT_PATH == "cta/CTA"'
-      when: manual
-      allow_failure: true
-    - when: never
-  image: $IMAGE_DEFAULT
-  variables:
-    GIT_SUBMODULE_STRATEGY: none
-    GIT_TERMINAL_PROMPT: "0"
-  before_script:
-    - !reference [.merge-train-guard, before_script]
-  script:
-    # Fetch inside the publication resource group and deploy the existing site unchanged.
-    - git fetch --no-tags origin refs/heads/gl-pages
-    - mkdir -p build/docs
-    - git archive --format=tar --output=build/docs/pages-bootstrap.tar FETCH_HEAD public
-    - tar -xf build/docs/pages-bootstrap.tar -C build/docs
-    - test -s build/docs/public/index.html
-    - test -s build/docs/public/versions.json
-  resource_group: cta-docs-publication
-  artifacts:
-    paths:
-      - build/docs/public/
-    expire_in: 7 days
-  pages:
-    publish: build/docs/public
-    expire_in: never
