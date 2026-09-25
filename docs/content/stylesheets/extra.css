@@ -15,19 +15,19 @@
 
 [data-md-color-scheme="default"] {
   color-scheme: light;
-  --cta-surface: #f4f6f7;
+  --cta-surface: #edf1f4;
   --cta-border: #dfe4e7;
-  --cta-heading: #15191c;
-  --md-default-bg-color: #ffffff;
-  --md-default-fg-color: #15191c;
-  --md-default-fg-color--light: #4e5b62;
-  --md-default-fg-color--lighter: #6f7d85;
+  --cta-heading: #2d3841;
+  --md-default-bg-color: #f7f8fa;
+  --md-default-fg-color: #283239;
+  --md-default-fg-color--light: #45525a;
+  --md-default-fg-color--lighter: #616f78;
   --md-default-fg-color--lightest: #dfe4e7;
-  --md-typeset-a-color: var(--cta-brand);
-  --md-accent-fg-color: var(--cta-brand);
+  --md-typeset-a-color: #d2530c;
+  --md-accent-fg-color: #d2530c;
   --md-accent-fg-color--transparent: #f3681e14;
-  --md-code-bg-color: #f4f6f7;
-  --md-code-fg-color: #15191c;
+  --md-code-bg-color: #edf1f4;
+  --md-code-fg-color: #283239;
 }
 
 [data-md-color-scheme="slate"] {
@@ -84,7 +84,7 @@ body { -webkit-font-smoothing: antialiased; }
 .md-typeset { line-height: 1.65; }
 .md-typeset h1, .md-typeset h2, .md-typeset h3, .md-typeset h4 {
   color: var(--cta-heading);
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: -0.018em;
   line-height: 1.2;
 }
