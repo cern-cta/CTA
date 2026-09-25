@@ -6,17 +6,16 @@
 #include "utils.hpp"
 
 #include "common/exception/Exception.hpp"
+#include "common/exception/UserError.hpp"
 
 #include <fstream>
+#include <regex>
 #include <sstream>
 #include <string>
 
 namespace cta::frontend::grpc::utils {
 
-/**
- * Load the content of the file into a string
- */
-void read(const std::string& strPath, std::string& strValu) {
+void read(const std::string& strPath, std::string& strValue) {
   if (strPath.empty()) {
     throw cta::exception::Exception("Path is an empty string");
   }
@@ -29,7 +28,12 @@ void read(const std::string& strPath, std::string& strValu) {
     throw cta::exception::Exception(osExMsg.str());
   }
 
-  strValu.assign(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
+  strValue.assign(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
+}
+
+bool isJwtFormatValid(const std::string& token) {
+  static const std::regex jwtPattern(R"(^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$)");
+  return std::regex_match(token, jwtPattern);
 }
 
 }  // namespace cta::frontend::grpc::utils

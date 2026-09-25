@@ -134,20 +134,43 @@ CtaAdminParsedCmd::CtaAdminParsedCmd(int argc, const char* const* const argv) : 
   }
 }
 
-const std::string CtaAdminParsedCmd::getConfigFilePath() const {
-  std::filesystem::path config_file = DEFAULT_CLI_CONFIG;
+std::string CtaAdminParsedCmd::getConfigFilePath() const {
+  // Order of resolution:
+  //   1. $XDG_CONFIG_HOME/cta/cta-cli.conf
+  //   2. $HOME/.config/cta/cta-cli.conf
+  //   3. $HOME/.cta (deprecated)
+  //   4. /etc/cta/cta-cli.conf (system default)
+  //   5. --config flag overrides all of the above
 
-  if (std::getenv("HOME")) {
-    const std::filesystem::path home = std::getenv("HOME");
-    const std::filesystem::path home_dir_config_file = home / ".cta/cta-cli.conf";
-    if (std::filesystem::exists(home_dir_config_file)) {
-      config_file = home_dir_config_file;
+  std::filesystem::path configFile = DEFAULT_CLI_CONFIG;
+
+  // Options 1 and 2
+  if (const std::filesystem::path home {cta::utils::getEnv("HOME")}; !home.empty()) {
+    // $HOME/.cta is the worst-case scenario
+    if (const auto deprecatedConfigFile = home / ".cta" / "cta-cli.conf";
+        std::filesystem::exists(deprecatedConfigFile)) {
+      configFile = deprecatedConfigFile;
+    }
+
+    // Then let's try $HOME/.config/cta/cta-cli.conf (better)
+    if (const auto homeConfigFile = home / ".config" / "cta" / "cta-cli.conf";
+        std::filesystem::exists(homeConfigFile)) {
+      configFile = homeConfigFile;
     }
   }
-  if (m_config) {
-    config_file = m_config.value();
+
+  // $XDG_CONFIG_HOME/cta/cta-cli.conf is the best option
+  if (const std::filesystem::path xdgConfigHome {cta::utils::getEnv("XDG_CONFIG_HOME")}; !xdgConfigHome.empty()) {
+    if (const auto xdgConfigFile = xdgConfigHome / "cta" / "cta-cli.conf"; std::filesystem::exists(xdgConfigFile)) {
+      configFile = xdgConfigFile;
+    }
   }
-  return config_file;
+
+  // --config flag - overrides all of the above
+  if (m_config.has_value()) {
+    configFile = m_config.value();
+  }
+  return configFile;
 }
 
 void CtaAdminParsedCmd::parseOptions(int start, int argc, const char* const* const argv, const cmd_val_t& options) {

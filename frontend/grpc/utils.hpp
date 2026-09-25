@@ -12,6 +12,11 @@ namespace cta::frontend::grpc::utils {
 /**
  * Load the content of the file into a string
  */
-void read(const std::string& strPath, std::string& strValu);
+void read(const std::string& strPath, std::string& strValue);
+
+/*
+ * Validate the format of a JWT
+ */
+bool isJwtFormatValid(const std::string& token);
 
 }  // namespace cta::frontend::grpc::utils
