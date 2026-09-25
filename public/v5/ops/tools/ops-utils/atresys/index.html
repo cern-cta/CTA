@@ -1,0 +1,2546 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Operator and developer documentation for the CERN Tape Archive (CTA) system">
+      
+      
+        <meta name="author" content="CERN Tape Archive Team">
+      
+      
+        <link rel="canonical" href="https://cta.docs.cern.ch/v5/ops/tools/ops-utils/atresys/">
+      
+      
+        <link rel="prev" href="../operator-utils/">
+      
+      
+        <link rel="next" href="../cta-ops-admin/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../../assets/images/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>cta-ops-repack (ATRESYS) - CTA Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+  
+  
+    
+      
+      
+    
+  
+  
+  <style>:root{--md-admonition-icon--terminal:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20d%3D%22m6.354%208.04-4.773%204.773a.75.75%200%201%200%201.061%201.06L7.945%208.57a.75.75%200%200%200%200-1.06L2.642%202.206a.75.75%200%200%200-1.06%201.061L6.353%208.04ZM8.75%2011.5a.75.75%200%200%200%200%201.5h5.5a.75.75%200%200%200%200-1.5z%22/%3E%3C/svg%3E');}</style>
+
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="cta-light" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#atresys-automated-tape-repacking-system" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../../.." title="CTA Documentation" class="md-header__button md-logo" aria-label="CTA Documentation" data-md-component="logo">
+      
+  <img src="../../../../assets/images/favicon.ico" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            CTA Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              cta-ops-repack (ATRESYS)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="cta-light" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m3.55 19.09 1.41 1.41 1.8-1.79-1.42-1.42M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6c0-3.32-2.69-6-6-6m8 7h3v-2h-3m-2.76 7.71 1.8 1.79 1.41-1.41-1.79-1.8M20.45 5l-1.41-1.4-1.8 1.79 1.42 1.42M13 1h-2v3h2M6.76 5.39 4.96 3.6 3.55 5l1.79 1.81zM1 13h3v-2H1m12 9h-2v3h2"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="cta-dark" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.04 7 9.54s-2.94 8.27-7 9.54c.95.3 1.95.46 3 .46a10 10 0 0 0 10-10A10 10 0 0 0 9 2"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://gitlab.cern.ch/cta/CTA" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cta/CTA
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../overview/introduction/" class="md-tabs__link">
+          
+  
+  
+  Overview
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../introduction/" class="md-tabs__link">
+          
+  
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../dev/overview/" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../conventions/introduction/" class="md-tabs__link">
+          
+  
+  
+  Conventions
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../glossary/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Glossary
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="CTA Documentation" class="md-nav__button md-logo" aria-label="CTA Documentation" data-md-component="logo">
+      
+  <img src="../../../../assets/images/favicon.ico" alt="logo">
+
+    </a>
+    CTA Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://gitlab.cern.ch/cta/CTA" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cta/CTA
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../overview/introduction/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../deployment/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../deployment/rpm-packages-and-services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RPM Packages and Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../deployment/recommendations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recommendations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../deployment/configuration/example-configs/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Monitoring
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../monitoring/logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Logging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../monitoring/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../monitoring/recommendations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recommendations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../cta-admin/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CTA Tools
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_4_2" id="__nav_3_4_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operator Utilities
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_4_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operator Utilities
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../operator-utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cta-ops-repack (ATRESYS)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cta-ops-repack (ATRESYS)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#states-and-operation-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        States and operation modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#command-line-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Command line tool
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scheduled-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scheduled scripts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-decisionsphilosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design decisions/philosophy
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta-ops-admin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cta-ops-admin
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta-ops-drv-conf-gen/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cta-ops-drive-config-generate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta-ops-eos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cta-ops-eos
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta-pool-supply/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cta-ops-pool-supply
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta-tape-verify/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cta-ops-tape-verify
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta-ops-drive-environmentals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cta-ops-drive-environmentals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta-ops-data-monitoring/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cta-ops-data-monitoring
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta-utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Library: CTA Utils
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta-tape-admin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Library: CTA Tape Admin
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Procedures
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Procedures
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../procedures/upgrading-cta/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading CTA
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../procedures/upgrading-eos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading EOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../procedures/upgrading-cta-catalogue-schema/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading CTA Catalogue schema
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../procedures/hw-installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../procedures/hw-replacement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Replacement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../procedures/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    EOS
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    EOS
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../eos/file-attributes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    File Attributes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../dev/overview/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../../conventions/introduction/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Usage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#states-and-operation-modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        States and operation modes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#command-line-tool" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Command line tool
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#scheduled-scripts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scheduled scripts
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-decisionsphilosophy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design decisions/philosophy
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../../introduction/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Operations
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../cta-admin/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Tools
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../operator-utils/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Operator Utilities
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="atresys-automated-tape-repacking-system">ATRESYS - Automated Tape REpacking SYStem<a class="headerlink" href="#atresys-automated-tape-repacking-system" title="Permanent link">#</a></h1>
+<p>ATRESYS is a tool for automating the tape repack process in a CTA system. The automation tools manage the repack on a 
+level one step higher than the repack concept in CTA, such that the whole workflow both before and after the repack 
+itself can be automated.</p>
+<p>ATRESYS contains:</p>
+<ul>
+<li>A command line tool <code>cta-ops-repack-manager</code>, which allows an operator to interact with the system.</li>
+<li>A set of scripts <code>cta-ops-repack-&lt;1-6&gt;...</code> and <code>cta-ops-repack-monitor</code>, which are intended to be run by a job scheduler such as Rundeck or cron.</li>
+</ul>
+<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">#</a></h2>
+<p>Besides installing the package, a table like the following has to be set up in the target database:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code><span style="color: #ABB2BF">                         </span><span style="color: #C678DD">Table</span><span style="color: #ABB2BF"> </span><span style="color: #98C379">"public.repack_status_prod"</span>
+<span style="color: #ABB2BF">     </span><span style="color: #C678DD">Column</span><span style="color: #ABB2BF">      </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">              </span><span style="color: #C678DD">Type</span><span style="color: #ABB2BF">              </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">Collation</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">Nullable</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">Default</span><span style="color: #ABB2BF"> </span>
+<span style="color: #7F848E">-----------------+--------------------------------+-----------+----------+---------</span>
+<span style="color: #ABB2BF"> </span><span style="color: #E06C75">tape</span><span style="color: #ABB2BF">            </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #E5C07B">character</span><span style="color: #ABB2BF"> </span><span style="color: #E5C07B">varying</span><span style="color: #ABB2BF">(</span><span style="color: #D19A66">20</span><span style="color: #ABB2BF">)          </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">           </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">not</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">null</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span>
+<span style="color: #ABB2BF"> </span><span style="color: #E06C75">entered</span><span style="color: #ABB2BF">         </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">timestamp</span><span style="color: #ABB2BF">(</span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">) </span><span style="color: #C678DD">without</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">time</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">zone</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">           </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">not</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">null</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span>
+<span style="color: #ABB2BF"> </span><span style="color: #E06C75">started</span><span style="color: #ABB2BF">         </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">timestamp</span><span style="color: #ABB2BF">(</span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">) </span><span style="color: #C678DD">without</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">time</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">zone</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">           </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">          </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span>
+<span style="color: #ABB2BF"> </span><span style="color: #E06C75">repacked</span><span style="color: #ABB2BF">        </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">timestamp</span><span style="color: #ABB2BF">(</span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">) </span><span style="color: #C678DD">without</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">time</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">zone</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">           </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">          </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span>
+<span style="color: #ABB2BF"> </span><span style="color: #E06C75">quarantined</span><span style="color: #ABB2BF">     </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">timestamp</span><span style="color: #ABB2BF">(</span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">) </span><span style="color: #C678DD">without</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">time</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">zone</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">           </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">          </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span>
+<span style="color: #ABB2BF"> </span><span style="color: #E06C75">reclaimed</span><span style="color: #ABB2BF">       </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">timestamp</span><span style="color: #ABB2BF">(</span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">) </span><span style="color: #C678DD">without</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">time</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">zone</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">           </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">          </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span>
+<span style="color: #ABB2BF"> </span><span style="color: #E06C75">finished</span><span style="color: #ABB2BF">        </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">timestamp</span><span style="color: #ABB2BF">(</span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">) </span><span style="color: #C678DD">without</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">time</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">zone</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">           </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">          </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span>
+<span style="color: #ABB2BF"> </span><span style="color: #E06C75">files</span><span style="color: #ABB2BF">           </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #E5C07B">bigint</span><span style="color: #ABB2BF">                         </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">           </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">not</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">null</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span>
+<span style="color: #ABB2BF"> </span><span style="color: #E06C75">bytes</span><span style="color: #ABB2BF">           </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #E5C07B">bigint</span><span style="color: #ABB2BF">                         </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">           </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">not</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">null</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span>
+<span style="color: #ABB2BF"> </span><span style="color: #C678DD">usage</span><span style="color: #ABB2BF">           </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #E5C07B">smallint</span><span style="color: #ABB2BF">                       </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">           </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">not</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">null</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span>
+<span style="color: #ABB2BF"> </span><span style="color: #E06C75">last_write_date</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">timestamp</span><span style="color: #ABB2BF">(</span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">) </span><span style="color: #C678DD">without</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">time</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">zone</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">           </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">          </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span>
+<span style="color: #ABB2BF"> </span><span style="color: #C678DD">mode</span><span style="color: #ABB2BF">            </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #E06C75">automation_modes</span><span style="color: #ABB2BF">               </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">           </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">not</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">null</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span>
+<span style="color: #ABB2BF"> </span><span style="color: #E06C75">priority</span><span style="color: #ABB2BF">        </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #E5C07B">smallint</span><span style="color: #ABB2BF">                       </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">           </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">not</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">null</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span>
+<span style="color: #ABB2BF"> </span><span style="color: #E06C75">mediatype</span><span style="color: #ABB2BF">       </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #E5C07B">character</span><span style="color: #ABB2BF"> </span><span style="color: #E5C07B">varying</span><span style="color: #ABB2BF">(</span><span style="color: #D19A66">20</span><span style="color: #ABB2BF">)          </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">           </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">not</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">null</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span>
+<span style="color: #ABB2BF"> </span><span style="color: #E06C75">tapepool</span><span style="color: #ABB2BF">        </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #E5C07B">character</span><span style="color: #ABB2BF"> </span><span style="color: #E5C07B">varying</span><span style="color: #ABB2BF">(</span><span style="color: #D19A66">20</span><span style="color: #ABB2BF">)          </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">           </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">not</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">null</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span>
+<span style="color: #ABB2BF"> </span><span style="color: #E06C75">responsible</span><span style="color: #ABB2BF">     </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #E5C07B">character</span><span style="color: #ABB2BF"> </span><span style="color: #E5C07B">varying</span><span style="color: #ABB2BF">(</span><span style="color: #D19A66">40</span><span style="color: #ABB2BF">)          </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF">           </span><span style="color: #56B6C2">|</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">not</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">null</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">|</span>
+<span style="color: #E06C75">Indexes</span><span style="color: #ABB2BF">:</span>
+<span style="color: #ABB2BF">    </span><span style="color: #98C379">"repack_status_prod_pkey"</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">PRIMARY</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">KEY</span><span style="color: #ABB2BF">, </span><span style="color: #E06C75">btree</span><span style="color: #ABB2BF"> (</span><span style="color: #E06C75">tape</span><span style="color: #ABB2BF">)</span>
+</code></pre></div>
+<h3 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">#</a></h3>
+<ul>
+<li>A DB with a schema as shown above. The tool is intended to be used with Postgresql.</li>
+<li>A working CTA environment. Use <code>cta-ops-repack-manager check-env</code> to verify that all needed pools have been created.</li>
+<li>An external scheduling tool, such as <code>cron</code> or <code>Rundeck</code>.</li>
+</ul>
+<h3 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">#</a></h3>
+<p>The behavior, database and priorities used by the tools can be configured using the following options:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code><span style="color: #E06C75">tools</span><span style="color: #ABB2BF">:</span>
+<span style="color: #ABB2BF">  </span><span style="color: #7F848E"># ----------------------</span>
+<span style="color: #ABB2BF">  </span><span style="color: #7F848E"># ATRESYS - Automated Tape REpacking SYStem</span>
+<span style="color: #ABB2BF">  </span><span style="color: #7F848E"># ----------------------</span>
+<span style="color: #ABB2BF">  </span><span style="color: #E06C75">cta-ops-repack-automation</span><span style="color: #ABB2BF">:</span>
+<span style="color: #ABB2BF">    </span><span style="color: #7F848E"># Set debug-level logging by default</span>
+<span style="color: #ABB2BF">    </span><span style="color: #E06C75">debug</span><span style="color: #ABB2BF">: false</span>
+<span style="color: #ABB2BF">    </span><span style="color: #7F848E"># Set a new subdirectory specifically for repack</span>
+<span style="color: #ABB2BF">    </span><span style="color: #E06C75">logging</span><span style="color: #ABB2BF">:</span>
+<span style="color: #ABB2BF">      </span><span style="color: #E06C75">log_dir</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"/var/log/cta-ops/repack/"</span>
+<span style="color: #ABB2BF">    </span><span style="color: #7F848E"># Credentials and details for the repack backend database</span>
+<span style="color: #ABB2BF">    </span><span style="color: #E06C75">database</span><span style="color: #ABB2BF">:</span>
+<span style="color: #ABB2BF">      </span><span style="color: #E06C75">username</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"changeme"</span>
+<span style="color: #ABB2BF">      </span><span style="color: #E06C75">password</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"changeme"</span>
+<span style="color: #ABB2BF">      </span><span style="color: #E06C75">name</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"cta_repack"</span>
+<span style="color: #ABB2BF">      </span><span style="color: #E06C75">host</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"changeme"</span>
+<span style="color: #ABB2BF">      </span><span style="color: #E06C75">port</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"changeme"</span>
+<span style="color: #ABB2BF">      </span><span style="color: #E06C75">repack_table_name</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"REPACK_STATUS"</span>
+<span style="color: #ABB2BF">    </span><span style="color: #7F848E"># Maximum number of concurrent repacks executed by these tools</span>
+<span style="color: #ABB2BF">    </span><span style="color: #E06C75">max_active_repacks</span><span style="color: #ABB2BF">: 10</span>
+<span style="color: #ABB2BF">    </span><span style="color: #7F848E"># The number of days a tape spends in the quarantine pool before being</span>
+<span style="color: #ABB2BF">    </span><span style="color: #7F848E"># reclaimed</span>
+<span style="color: #ABB2BF">    </span><span style="color: #E06C75">quarantine_days</span><span style="color: #ABB2BF">: 31</span>
+<span style="color: #ABB2BF">    </span><span style="color: #7F848E"># Settings specific to each script file</span>
+<span style="color: #ABB2BF">    </span><span style="color: #E06C75">cta-ops-repack-0-scan</span><span style="color: #ABB2BF">:</span>
+<span style="color: #ABB2BF">      </span><span style="color: #7F848E"># By default only tapes with occupancy &gt; usage_threshold are selected</span>
+<span style="color: #ABB2BF">      </span><span style="color: #E06C75">tape_usage_threshold</span><span style="color: #ABB2BF">: 0.4</span>
+<span style="color: #ABB2BF">      </span><span style="color: #7F848E"># Default size of scan result</span>
+<span style="color: #ABB2BF">      </span><span style="color: #E06C75">number_of_tapes</span><span style="color: #ABB2BF">: 10</span>
+<span style="color: #ABB2BF">      </span><span style="color: #7F848E"># Exclude tapes in these pools from the scan</span>
+<span style="color: #ABB2BF">      </span><span style="color: #E06C75">ignore_pools</span><span style="color: #ABB2BF">:</span>
+<span style="color: #ABB2BF">        - </span><span style="color: #98C379">"quarantine"</span>
+<span style="color: #ABB2BF">    </span><span style="color: #E06C75">cta-ops-repack-2-start</span><span style="color: #ABB2BF">:</span>
+<span style="color: #ABB2BF">      </span><span style="color: #7F848E"># Path for the text file containing the list of files found inside a given</span>
+<span style="color: #ABB2BF">      </span><span style="color: #7F848E"># tape, before the repack has started.</span>
+<span style="color: #ABB2BF">      </span><span style="color: #E06C75">existing_files_on_tape</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"/var/log/cta-ops/repack/repack-tapefile-$DATE-$TAPE.txt"</span>
+<span style="color: #ABB2BF">      </span><span style="color: #7F848E"># Use this pattern to match the above created files for periodic cleanup.</span>
+<span style="color: #ABB2BF">      </span><span style="color: #E06C75">cleanup_pattern</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"*repack-tapefile*"</span>
+<span style="color: #ABB2BF">      </span><span style="color: #7F848E"># Keep tapefile listings for this amount of days</span>
+<span style="color: #ABB2BF">      </span><span style="color: #E06C75">keep_tf_files_days</span><span style="color: #ABB2BF">: 14</span>
+<span style="color: #ABB2BF">    </span><span style="color: #E06C75">cta-ops-repack-3-end</span><span style="color: #ABB2BF">:</span>
+<span style="color: #ABB2BF">      </span><span style="color: #7F848E"># Log location for end-of-CTA-repack statistics</span>
+<span style="color: #ABB2BF">      </span><span style="color: #E06C75">repack-end-json-path</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"/var/log/cta-ops/repack/cta-ops-repack-end-json.log"</span>
+<span style="color: #ABB2BF">    </span><span style="color: #E06C75">cta-ops-repack-monitor</span><span style="color: #ABB2BF">:</span>
+<span style="color: #ABB2BF">      </span><span style="color: #7F848E"># Fluentd-based monitoring</span>
+<span style="color: #ABB2BF">      </span><span style="color: #E06C75">ls_out</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"/var/log/cta-ops/repack/cta-ops-repack-automation-json.log"</span>
+<span style="color: #ABB2BF">    </span><span style="color: #7F848E"># Mapping of priorities and mountpolicies</span>
+<span style="color: #ABB2BF">    </span><span style="color: #E06C75">default_priority</span><span style="color: #ABB2BF">: 10</span>
+<span style="color: #ABB2BF">    </span><span style="color: #E06C75">priorities</span><span style="color: #ABB2BF">:</span>
+<span style="color: #ABB2BF">      </span><span style="color: #E06C75">10</span><span style="color: #ABB2BF">:</span>
+<span style="color: #ABB2BF">        </span><span style="color: #E06C75">name</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"low"</span>
+<span style="color: #ABB2BF">        </span><span style="color: #E06C75">mount_policy</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"repack_low_priority"</span>
+<span style="color: #ABB2BF">        </span><span style="color: #E06C75">default_dst_pool_prefix</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"tolabel"</span>
+<span style="color: #ABB2BF">      </span><span style="color: #E06C75">11</span><span style="color: #ABB2BF">:</span>
+<span style="color: #ABB2BF">        </span><span style="color: #E06C75">name</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"low-erase"</span>
+<span style="color: #ABB2BF">        </span><span style="color: #E06C75">mount_policy</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"repack_low_priority"</span>
+<span style="color: #ABB2BF">        </span><span style="color: #E06C75">default_dst_pool_prefix</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"erase"</span>
+<span style="color: #ABB2BF">      </span><span style="color: #E06C75">49</span><span style="color: #ABB2BF">:</span>
+<span style="color: #ABB2BF">        </span><span style="color: #E06C75">name</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"high-tolabel"</span>
+<span style="color: #ABB2BF">        </span><span style="color: #E06C75">mount_policy</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"repack_high_priority"</span>
+<span style="color: #ABB2BF">        </span><span style="color: #E06C75">default_dst_pool_prefix</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"tolabel"</span>
+<span style="color: #ABB2BF">      </span><span style="color: #E06C75">50</span><span style="color: #ABB2BF">:</span>
+<span style="color: #ABB2BF">        </span><span style="color: #E06C75">name</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"high"</span>
+<span style="color: #ABB2BF">        </span><span style="color: #E06C75">mount_policy</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"repack_high_priority"</span>
+<span style="color: #ABB2BF">        </span><span style="color: #E06C75">default_dst_pool_prefix</span><span style="color: #ABB2BF">: </span><span style="color: #98C379">"erase"</span>
+</code></pre></div>
+<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">#</a></h2>
+<h3 id="states-and-operation-modes">States and operation modes<a class="headerlink" href="#states-and-operation-modes" title="Permanent link">#</a></h3>
+<p>As a repacking tape moves through the system it will go through the following <em>states</em>:</p>
+<ol>
+<li><strong>Entered:</strong> The tape has been entered into the automation system.</li>
+<li><strong>Started:</strong> A repack object for the tape has been created in CTA.</li>
+<li><strong>Repacked:</strong> The repack of the tape has completed in CTA.</li>
+<li><strong>Quarantined:</strong> The tape is being held in quarantine before being reclaimed.</li>
+<li><strong>Reclaimed:</strong> The tape has been reclaimed using <code>cta-admin tape reclaim</code>.</li>
+<li><strong>Finished:</strong> The tape has been moved to its destination tolabel/erase pool.</li>
+</ol>
+<p>Additionally, an automated repack may run in three different <em>modes</em>:</p>
+<ul>
+<li><strong>auto:</strong> The tape is being processed by the repack automation system.</li>
+<li><strong>manual:</strong> An operator is working with the tape, the repack automation system will not interact with it.</li>
+<li><strong>error:</strong> An error has been detected and the repack automation system will not process the tape further until an operator has intervened.</li>
+</ul>
+<h3 id="command-line-tool">Command line tool<a class="headerlink" href="#command-line-tool" title="Permanent link">#</a></h3>
+<p>The repack automation system comes with a command line tool for operators to manage the automated repacks: <code>cta-ops-repack-manager</code></p>
+<p>This tool can be used similarly to cta-admin-ops, in order to view, change, remove, etc. jobs from the system.
+Run <code>cta-ops-repack-manager --help</code> for a complete list of options</p>
+<h3 id="scheduled-scripts">Scheduled scripts<a class="headerlink" href="#scheduled-scripts" title="Permanent link">#</a></h3>
+<ul>
+<li><strong>cta-ops-repack-0-scan:</strong></li>
+<li>Scans through all known tapes and identifies tapes which should be repacked</li>
+<li>Right now the script supports scanning for full tapes with a low level of utilization</li>
+<li><strong>cta-ops-repack-1-prepare:</strong></li>
+<li>Prepares tapes for repack (adds them to the database)<ul>
+<li>Performs validity checks</li>
+</ul>
+</li>
+<li><strong>cta-ops-repack-2-start:</strong></li>
+<li>Launches the repack of the tapes which have not been repacked yet</li>
+<li>Limits number of concurrent repacks in CTA</li>
+<li><strong>cta-ops-repack-3-end:</strong></li>
+<li>Identifies tapes which have been successfully repacked</li>
+<li><strong>cta-ops-repack-4-quarantine:</strong></li>
+<li>Moves repacked tapes to the quarantine pool and updates the DB accordingly</li>
+<li><strong>cta-ops-repack-5-reclaim:</strong></li>
+<li>Reclaims tapes that have completed their quarantine</li>
+<li><strong>cta-ops-repack-6-finish:</strong></li>
+<li>Identifies tapes that have been reclaimed and moves them to the appropriate "tolabel_" or "erase" pool</li>
+<li><strong>cta-ops-repack-monitor:</strong></li>
+<li>Exports the current contents of the DB table to a JSON log file, which can be consumed by a monitoring tool</li>
+</ul>
+<h2 id="design-decisionsphilosophy">Design decisions/philosophy<a class="headerlink" href="#design-decisionsphilosophy" title="Permanent link">#</a></h2>
+<ul>
+<li><code>cta-ops-repack-manager</code> supports both short and extended output forms. The short output should be the default, the extended output can be used for troubleshooting.</li>
+<li><code>cta-ops-repack-monitor</code> outputs JSON logs for easy parsing using, for instance, Fluentd.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 CERN
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://gitlab.cern.ch/cta/CTA/-/blob/main/CHANGELOG.md" target="_blank" rel="noopener" title="gitlab.cern.ch" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 11.11V5a2 2 0 0 0-2-2h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h6.11c1.26 1.24 2.98 2 4.89 2 3.87 0 7-3.13 7-7 0-1.91-.76-3.63-2-4.89M12 3c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1M6 7h12v2H6zm3.08 10H6v-2h3.08c-.05.33-.08.66-.08 1s.03.67.08 1M6 13v-2h5.11c-.61.57-1.07 1.25-1.43 2zm10 8c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5m.5-4.75 2.86 1.69-.75 1.22L15 17v-5h1.5z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://gitlab.cern.ch/cta/CTA" target="_blank" rel="noopener" title="gitlab.cern.ch" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="m504 204.6-.7-1.8L433.6 21c-1.4-3.6-3.9-6.6-7.2-8.6-2.4-1.6-5.1-2.5-8-2.8s-5.7.1-8.4 1.1-5.1 2.7-7.1 4.8c-1.9 2.1-3.3 4.7-4.1 7.4l-47 144H161.3l-47.1-144c-.8-2.8-2.2-5.3-4.1-7.4-2-2.1-4.4-3.7-7.1-4.8-2.6-1-5.5-1.4-8.4-1.1s-5.6 1.2-8 2.8c-3.2 2-5.8 5.1-7.2 8.6L9.8 202.8l-.8 1.8c-10 26.2-11.3 55-3.5 82 7.7 26.9 24 50.7 46.4 67.6l.3.2.6.4 106 79.5c38.5 29.1 66.7 50.3 84.6 63.9 3.7 1.9 8.3 4.3 13 4.3s9.3-2.4 13-4.3c17.9-13.5 46.1-34.9 84.6-63.9l106.7-79.9.3-.3c22.4-16.9 38.7-40.6 45.6-67.5 8.6-27 7.4-55.8-2.6-82"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://cta-community.web.cern.ch" target="_blank" rel="noopener" title="cta-community.web.cern.ch" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M225.9 32C103.3 32 0 130.5 0 252.1 0 256 .1 480 .1 480l225.8-.2c122.7 0 222.1-102.3 222.1-223.9S348.6 32 225.9 32M224 384c-19.4 0-37.9-4.3-54.4-12.1L88.5 392l22.9-75c-9.8-18.1-15.4-38.9-15.4-61 0-70.7 57.3-128 128-128s128 57.3 128 128-57.3 128-128 128"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../../..", "features": ["content.action.repo", "content.code.copy", "content.code.select", "navigation.instant", "navigation.instant.progress", "navigation.instant.prefetch", "navigation.path", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.sections", "navigation.prune", "announce.dismiss"], "search": "../../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "provider": "mike"}}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

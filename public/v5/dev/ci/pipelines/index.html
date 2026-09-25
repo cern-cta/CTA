@@ -1,0 +1,2281 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Operator and developer documentation for the CERN Tape Archive (CTA) system">
+      
+      
+        <meta name="author" content="CERN Tape Archive Team">
+      
+      
+        <link rel="canonical" href="https://cta.docs.cern.ch/v5/dev/ci/pipelines/">
+      
+      
+        <link rel="prev" href="../bots/">
+      
+      
+        <link rel="next" href="../orchestration/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>GitLab Pipelines - CTA Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+  
+  
+    
+      
+      
+    
+  
+  
+  <style>:root{--md-admonition-icon--terminal:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20d%3D%22m6.354%208.04-4.773%204.773a.75.75%200%201%200%201.061%201.06L7.945%208.57a.75.75%200%200%200%200-1.06L2.642%202.206a.75.75%200%200%200-1.06%201.061L6.353%208.04ZM8.75%2011.5a.75.75%200%200%200%200%201.5h5.5a.75.75%200%200%200%200-1.5z%22/%3E%3C/svg%3E');}</style>
+
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="cta-light" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#gitlab-pipelines" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="CTA Documentation" class="md-header__button md-logo" aria-label="CTA Documentation" data-md-component="logo">
+      
+  <img src="../../../assets/images/favicon.ico" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            CTA Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              GitLab Pipelines
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="cta-light" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m3.55 19.09 1.41 1.41 1.8-1.79-1.42-1.42M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6c0-3.32-2.69-6-6-6m8 7h3v-2h-3m-2.76 7.71 1.8 1.79 1.41-1.41-1.79-1.8M20.45 5l-1.41-1.4-1.8 1.79 1.42 1.42M13 1h-2v3h2M6.76 5.39 4.96 3.6 3.55 5l1.79 1.81zM1 13h3v-2H1m12 9h-2v3h2"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="cta-dark" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.04 7 9.54s-2.94 8.27-7 9.54c.95.3 1.95.46 3 .46a10 10 0 0 0 10-10A10 10 0 0 0 9 2"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://gitlab.cern.ch/cta/CTA" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cta/CTA
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../overview/introduction/" class="md-tabs__link">
+          
+  
+  
+  Overview
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../ops/introduction/" class="md-tabs__link">
+          
+  
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../overview/" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../conventions/introduction/" class="md-tabs__link">
+          
+  
+  
+  Conventions
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../glossary/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Glossary
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="CTA Documentation" class="md-nav__button md-logo" aria-label="CTA Documentation" data-md-component="logo">
+      
+  <img src="../../../assets/images/favicon.ico" alt="logo">
+
+    </a>
+    CTA Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://gitlab.cern.ch/cta/CTA" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cta/CTA
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../overview/introduction/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../ops/introduction/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/walkthrough/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Intro Walkthrough
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/cta-dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cta-dev
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/building-rpms-and-images/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build Your Own Images
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/eos-development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    EOS Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/mhvtl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    mhVTL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/branches/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Branches
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/merge-requests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Merge Requests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Continuous Integration
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Continuous Integration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitLab Bots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitLab Pipelines
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitLab Pipelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#pipeline-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipeline-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline Images
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scheduled-pipelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scheduled Pipelines
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipeline-stages-and-jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline stages and jobs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pipeline stages and jobs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#system-tests-organization-and-design-constraints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System tests organization and design constraints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../orchestration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_5" id="__nav_4_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenTelemetry
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    OpenTelemetry
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../otel/introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../otel/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../otel/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Procedures
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Procedures
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../procedures/releases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating a CTA Release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../procedures/catalogue-schema-update/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modifying the CTA Catalogue Schema
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../architecture/components/catalogue/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Components
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../architecture/workflows/workflows/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../conventions/introduction/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#pipeline-types" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipeline-images" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline Images
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scheduled-pipelines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scheduled Pipelines
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pipeline-stages-and-jobs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline stages and jobs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pipeline stages and jobs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#system-tests-organization-and-design-constraints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System tests organization and design constraints
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../overview/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Development
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../overview/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Continuous Integration
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="gitlab-pipelines">GitLab Pipelines<a class="headerlink" href="#gitlab-pipelines" title="Permanent link">#</a></h1>
+<p>As seen in the CI overview, developers can easily interact and iterate while their changes are in their local machines or in the GitLab pipelines. In this section we will cover the versatility and possible uses of these pipelines to get the most out of them.</p>
+<p>Pipelines consist of stages and jobs. Stages are logical groupings of jobs. Our pipeline does not rely on stages to sequence the jobs. Instead, it uses the <a href="https://docs.gitlab.com/ee/ci/yaml/needs.html">Directed Acyclic Graph</a> feature from GitLab. This allows us to start executing jobs as soon as their conditions are met. This improves parallelism and reduces the runtime of our pipelines.</p>
+<p>Below you can find the DAG of the default pipeline running in CTA:</p>
+<p><img alt="CTA CI DAG" src="../dag.png" /></p>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>Before doing any development work on the (GitLab) CI, please read through <a href="../../../conventions/ci/gitlab/">conventions</a></p>
+</div>
+<h2 id="pipeline-types">Pipeline types<a class="headerlink" href="#pipeline-types" title="Permanent link">#</a></h2>
+<p>We introduced the logical concept of <strong>pipeline type</strong> to our CI to address the need for different use cases outside of the merge request pipelines. Currently we have the following types of pipelines:</p>
+<ul>
+<li><code>DEFAULT</code>: the full pipeline that runs most of the jobs including validation, linting, building and testing. This runs automatically on merge-requests and on pushes to <code>main</code>.</li>
+<li><code>REGR_AGAINST_CTA_BRANCH</code>: runs the default pipeline, but with possible different versions for XRootD or EOS.</li>
+<li><code>REGR_AGAINST_CTA_VERSION</code>: tests an existing CTA image against a provided version of EOS.</li>
+<li><code>UPDATE_PIPELINE_IMAGES</code>: builds a set of new Docker images, tags them, and creates a Merge Request to <code>main</code> to replace the base image tag for all of the custom-build pipeline images. See <a href="#pipeline-images">Pipeline Images</a></li>
+</ul>
+<h2 id="pipeline-images">Pipeline Images<a class="headerlink" href="#pipeline-images" title="Permanent link">#</a></h2>
+<p>Nearly every pipeline job requires some dependency to run the required tools/scripts. Downloading these at every job invocation is extremely inefficient: it makes the pipeline take longer and needlessly stresses the download targets. There have been various cases in the past of jobs failing due to <code>429</code> errors. Instead, every images in CI should come with the required dependencies installed where possible. However, creating custom images comes with a few challenges:</p>
+<ol>
+<li>Where and how the images are published. It can't be from within the same pipeline, because that would defeat the purpose.</li>
+<li>How often the images are published. Images need to be updated periodically, because packages maybe updated (for new features, but also security fixes).</li>
+<li>How do we reference these images in the CI. We cannot use <code>latest</code> tags because that may mean checking out an older commit will break the pipeline as it would use dependency versions perhaps not intended for that commit. Every pipeline definition must be self-contained and refer to a specific image tag.</li>
+<li>How to require minimal manual intervention. We don't want to spend time each weak just to manually update these images.</li>
+</ol>
+<p>We address these challenges as follows:</p>
+<ol>
+<li>We have a pipeline type <code>UPDATE_PIPELINE_IMAGES</code> which is used for building these CI images.</li>
+<li>Images are built and published weekly on a scheduled pipeline.</li>
+<li>Images have a date in their tag (for easy reference), which is explicitly referenced from the CTA pipeline in the global GitLab CI variables.</li>
+<li>The scheduled pipeline automatically creates a commit and merge request on the CTA repository to update these image tags.</li>
+</ol>
+<h2 id="scheduled-pipelines">Scheduled Pipelines<a class="headerlink" href="#scheduled-pipelines" title="Permanent link">#</a></h2>
+<p>Certain jobs and workflows are unnecessary or too long to run in every single pipeline. However, these should still be run periodically. For this we use scheduled pipelines, which can be checked at: <a href="https://gitlab.cern.ch/cta/CTA/-/pipeline_schedules">https://gitlab.cern.ch/cta/CTA/-/pipeline_schedules</a>.</p>
+<p>These scheduled pipelines help keep the developer workflow as streamlined as possible while checking new changes don't break compatibility with different configurations. There is drawback for this approach, which is that the developer must check if its changes caused some of the nightly pipelines to fail. Any failures to the nightly pipelines should be taken seriously. If such a failure occurs, a ticket should be created for it so that it can be fixed.</p>
+<h2 id="pipeline-stages-and-jobs">Pipeline stages and jobs<a class="headerlink" href="#pipeline-stages-and-jobs" title="Permanent link">#</a></h2>
+<p>A job is the building block of the CI and jobs are logically grouped into stages. Our CI consists of the following stages and jobs, which may or may not be executed depending on the type of pipeline:</p>
+<ul>
+<li><strong>stage: <code>.pre</code></strong><ul>
+<li><code>modify-project-json</code>: on certain pipeline types, dependency versions change. This job modifies the <code>project.json</code> by updating those dependency versions so that they are used in the rest of the build/deploy process.</li>
+<li><code>generate-pipeline-images-tag</code>: generates the tag to be used in the <code>UPDATE_PIPELINE_IMAGES</code> pipeline type.</li>
+</ul>
+</li>
+<li><strong>stage: <code>trigger</code></strong><ul>
+<li><code>trigger-postgres-scheduler-pipeline</code>: triggers a <a href="https://docs.gitlab.com/ci/pipelines/downstream_pipelines/#parent-child-pipelines">child pipeline</a> in CTA to build and test with the Postgres scheduler instead of the objectstore</li>
+<li><code>trigger-oracle-disabled-pipeline</code>: triggers a <a href="https://docs.gitlab.com/ci/pipelines/downstream_pipelines/#parent-child-pipelines">child pipeline</a> in CTA to build and test without Oracle support (i.e. Postgres only)</li>
+<li><code>trigger-sonarcloud</code>: Asynchronously triggers a <a href="https://github.com/cern-cta/CTA/actions">pipeline on GitHub</a> that will run the full build and scan with SonarCloud. Note that a completion of this trigger job only means the pipeline was triggered. It does not wait for it to complete. The analysis results can be found <a href="https://sonarcloud.io/project/overview?id=cern-cta_CTA">on sonarcloud.io</a>. It is not executed synchronously with the pipeline because the analysis is heavy and takes too long to be integrated into the developer workflow. To run it we use a GitHub mirror of the CTA repository that does the analysis for every commit on the main branch. You should also check the results of the analysis run after your commits reach the main branch to check if the committed code generated any new issues.</li>
+</ul>
+</li>
+<li><strong>stage: <code>validate</code></strong><ul>
+<li><code>validate-catalogue-schema-version</code>: performs various consistency checks on the schema versions indicated in the <code>project.json</code> and those in the <code>cta-catalogue-schema</code> submodule.</li>
+<li><code>validate-project-json</code>: ensures the integrity, completeness and correctness of the <code>project.json</code> file in the root of the repository.</li>
+</ul>
+</li>
+<li><strong>stage: <code>lint</code></strong><ul>
+<li><code>lint-cpp</code>: static analysis for C++ using <a href="https://github.com/danmar/cppcheck">cppcheck</a>. For cppcheck, a number of errors are suppressed based on the <a href="https://gitlab.cern.ch/cta/CTA/-/blob/main/.cppcheck-suppressions.txt">.cppcheck-supression</a> file.</li>
+<li><code>lint-bash</code>: static analysis for Bash using <a href="https://github.com/koalaman/shellcheck">shellcheck</a>.</li>
+<li><code>lint-python</code>: static analysis for Python using <a href="https://github.com/astral-sh/ruff">Ruff</a>.</li>
+<li><code>lint-yaml</code>: static analysis for YAML files using <a href="https://github.com/adrienverge/yamllint">yamllint</a> and a custom script that checks the key order in <code>*.gitlab-ci.yml</code>  files.</li>
+<li><code>lint-licenses</code>: static analysis for all files using <a href="https://reuse.readthedocs.io/en/stable/man/reuse-lint.html">REUSE</a> to check for license correctness.</li>
+<li><code>lint-secrets</code>: check for secret presence using <a href="https://github.com/Yelp/detect-secrets">detect-secrets</a>.</li>
+<li><code>lint-dockerfile</code>: static analysis for Dockerfiles using <a href="https://github.com/hadolint/hadolintl">Hadolint</a>.</li>
+<li><code>format-cpp</code>: run a formatter on all C++ code. Specifically, checks clang-format for the lines that differ from the main branch. Does not perform the formatting itself. This is the job of the developer (or better: the pre-commit hook)</li>
+<li><code>format-python</code>: run a formatter on all Python code. Uses <a href="https://github.com/psf/black">black</a>.</li>
+<li><code>type-check-python</code>: runs a static type check on all Python files using <a href="https://github.com/microsoft/pyright">Pyright</a>.</li>
+</ul>
+</li>
+<li><strong>stage: <code>build</code></strong><ul>
+<li><code>build-cta-rpms</code>: build the RPMs for the current commit. The output can be used to build a container image for the development setup or uploaded to a repository as a tagged CTA version.</li>
+<li><code>build-cta-rpms-no-cache</code>: same as <code>build-cta-rpms</code> but with <code>ccache</code> disabled.</li>
+<li><code>build-cta-rpms-pgsched</code>: additional build job to verify the commit compiles correctly with Postgres scheduler enabled. Not used further down in the pipeline as this is only a quick compilation check during merge request pipelines.</li>
+<li><code>build-cta-rpms-debug</code>: additional build job to verify the commit compiles correctly when using <code>Debug</code> instead of <code>RelWithDebInfo</code> (default). Not used further down in the pipeline as this is only a quick compilation check during merge request pipelines.</li>
+<li><code>reset-ccache</code>: reset <code>ccache</code> for builds on the current branch. Can be manually invoked by the developer if issues with <code>ccache</code> arise.</li>
+<li><code>export-docs</code>: converts the man pages of the project as markdown and uploads then as an artifact to be consumed by the eoscta-docs project.</li>
+</ul>
+</li>
+<li><strong>stage: <code>build:image</code></strong><ul>
+<li><code>build-cta-images</code>: build and push the container images for each of the different CTA services from the RPMs generated in the build stage.</li>
+<li><code>build-pipeline-images</code>: build, push and tag the container images used for the CI pipeline. Used only in the <code>UPDATE_PIPELINE_IMAGES</code> pipeline type.</li>
+</ul>
+</li>
+<li><strong>stage: <code>test</code></strong><ul>
+<li><code>integration-test-cta</code>: small set of integration tests for CTA.</li>
+<li><code>test-cta-valgrind</code>: runs valgrind tests to check for memory leaks.</li>
+<li><code>test-cta-release</code>: checks that the <code>cta-release</code> <abbr title="RPM Package Manager">RPM</abbr> works as expected.</li>
+<li><code>unit-test</code>: series of unit tests for CTA.</li>
+<li><code>unit-test-postgresql</code>: series of CTA Catalogue unit tests run against a live Postgres DB.</li>
+<li><code>unit-test-oracle</code>: series of CTA Catalogue unit tests run against a live Oracle DB.</li>
+</ul>
+</li>
+<li><strong>stage: <code>system-test</code></strong><ul>
+<li><code>test-client</code>: tests rest API compliance; file immutability; archival, retrieval, eviction, retrieval abort and deletion of 10.000 files; multiple retrieve test; idempotent prepare; deletion on <code>closew</code> errors; eviction before archival; EOS evict command; ObjectStore queue cleanup.</li>
+<li><code>test-client-gfal2</code>: archival, retrieval, eviction and deletion of 2.000 files. Using the gfal2 library, core library for <abbr title="File Transfer Service">FTS</abbr>, 1.000 files are tested against the XRootD protocol and the other 1.000 against the HTTP protocol. It also checks for activity passing through the gfal2 stack.</li>
+<li><code>test-repack</code>: tests of repacking workflows.</li>
+<li><code>test-tools</code>: exercises the execution and tests the different <code>cta-amdin</code> commands.</li>
+<li><code>test-catalogue-schema-update</code>: tests the upgrade and downgrade of the different schema versions of the Catalogue.</li>
+<li><code>test-external-tape-formats</code>: tests the support of tapes configured by other tape software.</li>
+<li><code>test-regression-dCache</code>: dCache regression tests.</li>
+<li><code>stress-test</code>: runs the stress test on a dedicated runner.</li>
+<li><code>stress-test-python</code>: runs the new Python implementation of the stress test on a dedicated runner.</li>
+</ul>
+</li>
+<li><strong>stage: <code>sbom</code></strong><ul>
+<li><code>prepare-rootfs</code>: Installs all CTA components in a plain root file system.</li>
+<li><code>generate-sbom-trivy</code>: Uses <a href="https://trivy.dev/">Trivy</a> to generate a Software Bill of Materials (SBOM) by doing an analysis of the rootfs with all CTA components installed.</li>
+<li><code>enrich-sbom-cern-info</code>: Enriches the generated SBOM with additional information.</li>
+<li><code>score-sbom</code>: Analysis the SBOM and produces a score so that we have some insights into the quality of the generated SBOM.</li>
+</ul>
+</li>
+<li><strong>stage: <code>report</code></strong><ul>
+<li><code>danger-review</code>: runs the Danger bot. Only triggered in merge requests.</li>
+</ul>
+</li>
+<li><strong>stage: <code>release</code></strong><ul>
+<li><code>changelog-preview</code>: produces a preview of the changelog based on all the commits between two commits (the latest commit and the latest tag by default)</li>
+<li><code>changelog-update</code>: generates a merge request with an update to the <code>CHANGELOG.md</code> file.</li>
+<li><code>internal-release-cta</code>: publishes the RPMs to a CTA internal repo, making them available to be deployed in the stress tests and later stages.</li>
+<li><code>public-release-cta-unstable</code>: publishes the RPMs to the public unstable repository.</li>
+<li><code>public-release-cta-testing</code>: publishes the RPMs to the public testing repository.</li>
+<li><code>public-release-cta-stable</code>: publishes the RPMs to the public stable repository.</li>
+<li><code>publish-images-private</code>: publishes the Docker images to the private <code>cta/ctageneric</code> registry.</li>
+<li><code>publish-images-public</code>: publishes the Docker images to the public <code>cta/public_registry</code> registry. Is only available when Oracle RPMs are not present.</li>
+</ul>
+</li>
+<li><strong>stage: <code>.post</code></strong><ul>
+<li><code>cancel-on-failure</code>: cancels the CI pipeline on failure of certain jobs. GitLab provides an option to auto-cancel on any failure, but this is too aggressive for our use case as it can prevent developer from getting all the feedback they need and we don't need to protect the runner resources as much. Instead, this job allows us to carefully control which job failures should cancel the entire pipeline.</li>
+<li><code>update-pipeline-image-version</code>: generates the merge request to update the pipeline image tags in the <code>UPDATE_PIPELINE_IMAGES</code> pipeline type.</li>
+</ul>
+</li>
+</ul>
+<h3 id="system-tests-organization-and-design-constraints">System tests organization and design constraints<a class="headerlink" href="#system-tests-organization-and-design-constraints" title="Permanent link">#</a></h3>
+<p>For system tests we have at our disposal a limited number of custom runners, (5 at the time of writing). Each runner can only run one test at a time. The current run time of the longest system test (<code>test_client.sh</code>) is around 10 minutes. Whenever a test is run, the virtual environment is created and it is destroyed after the test. The creation of the environment has an overhead of ~2 minutes, the destruction is much faster. This is important to ensure consistency and reproducibility.</p>
+<p>Ideally, the tests should be logically grouped together, this means that related workflows should be tested in the creation of the same environment, this helps to better understand the source of the failure. Nevertheless the logs produced by the tests should be clear enough about what was being tested and why it failed.</p>
+<p>This ideal is not always achievable, as it is important to find the right balance of number of tests and execution length to minimize execution time. Having a single test containing everything leads to resource under-utilization and longer pipelines, especially when there are not many developers pushing to the repository at the same time; and splitting them too much will create an excessive amount of overhead due to instance creation/deletion which leads to wasted time, specially when many pipelines are being executed at the same time.</p>
+<p>The main reason these tests need to run on dedicated runners is <code>mhvtl</code>, which is a kernel module. This prevents from using just any Kubernetes cluster.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 CERN
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://gitlab.cern.ch/cta/CTA/-/blob/main/CHANGELOG.md" target="_blank" rel="noopener" title="gitlab.cern.ch" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 11.11V5a2 2 0 0 0-2-2h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h6.11c1.26 1.24 2.98 2 4.89 2 3.87 0 7-3.13 7-7 0-1.91-.76-3.63-2-4.89M12 3c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1M6 7h12v2H6zm3.08 10H6v-2h3.08c-.05.33-.08.66-.08 1s.03.67.08 1M6 13v-2h5.11c-.61.57-1.07 1.25-1.43 2zm10 8c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5m.5-4.75 2.86 1.69-.75 1.22L15 17v-5h1.5z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://gitlab.cern.ch/cta/CTA" target="_blank" rel="noopener" title="gitlab.cern.ch" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="m504 204.6-.7-1.8L433.6 21c-1.4-3.6-3.9-6.6-7.2-8.6-2.4-1.6-5.1-2.5-8-2.8s-5.7.1-8.4 1.1-5.1 2.7-7.1 4.8c-1.9 2.1-3.3 4.7-4.1 7.4l-47 144H161.3l-47.1-144c-.8-2.8-2.2-5.3-4.1-7.4-2-2.1-4.4-3.7-7.1-4.8-2.6-1-5.5-1.4-8.4-1.1s-5.6 1.2-8 2.8c-3.2 2-5.8 5.1-7.2 8.6L9.8 202.8l-.8 1.8c-10 26.2-11.3 55-3.5 82 7.7 26.9 24 50.7 46.4 67.6l.3.2.6.4 106 79.5c38.5 29.1 66.7 50.3 84.6 63.9 3.7 1.9 8.3 4.3 13 4.3s9.3-2.4 13-4.3c17.9-13.5 46.1-34.9 84.6-63.9l106.7-79.9.3-.3c22.4-16.9 38.7-40.6 45.6-67.5 8.6-27 7.4-55.8-2.6-82"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://cta-community.web.cern.ch" target="_blank" rel="noopener" title="cta-community.web.cern.ch" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M225.9 32C103.3 32 0 130.5 0 252.1 0 256 .1 480 .1 480l225.8-.2c122.7 0 222.1-102.3 222.1-223.9S348.6 32 225.9 32M224 384c-19.4 0-37.9-4.3-54.4-12.1L88.5 392l22.9-75c-9.8-18.1-15.4-38.9-15.4-61 0-70.7 57.3-128 128-128s128 57.3 128 128-57.3 128-128 128"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["content.action.repo", "content.code.copy", "content.code.select", "navigation.instant", "navigation.instant.progress", "navigation.instant.prefetch", "navigation.path", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.sections", "navigation.prune", "announce.dismiss"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "provider": "mike"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

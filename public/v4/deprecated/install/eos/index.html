@@ -1,0 +1,3992 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="EOSCTA Documentation">
+      
+      
+        <meta name="author" content="CERN Tape Archive Team">
+      
+      
+        <link rel="canonical" href="https://eoscta.docs.cern.ch/v4/deprecated/install/eos/">
+      
+      
+        <link rel="prev" href="../start/">
+      
+      
+        <link rel="next" href="../mhvtl/">
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.25">
+    
+    
+      
+        <title>Install EOS - EOSCTA Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.6543a935.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#install-a-local-eos-instance" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="EOSCTA Docs" class="md-header__button md-logo" aria-label="EOSCTA Docs" data-md-component="logo">
+      
+  <img src="../../../assets/favicon.ico" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            EOSCTA Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Install EOS
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9h-1.9M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69m-9.15 3.96h2.3L12 9l-1.15 3.65Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="light-blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="light-blue"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://gitlab.cern.ch/cta/eoscta-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitLab
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../overview/introduction/" class="md-tabs__link">
+          
+  
+  Overview
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../dev/introduction/" class="md-tabs__link">
+          
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../ops/introduction/" class="md-tabs__link">
+          
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../glossary/" class="md-tabs__link">
+        
+  
+    
+  
+  Glossary
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../cta/Constraints/" class="md-tabs__link">
+          
+  
+  ⚠️ Deprecated
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="EOSCTA Docs" class="md-nav__button md-logo" aria-label="EOSCTA Docs" data-md-component="logo">
+      
+  <img src="../../../assets/favicon.ico" alt="logo">
+
+    </a>
+    EOSCTA Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://gitlab.cern.ch/cta/eoscta-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitLab
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../../overview/introduction/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../../dev/introduction/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Development
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../../ops/introduction/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Operations
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../glossary/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Glossary
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    ⚠️ Deprecated
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            ⚠️ Deprecated
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1" id="__nav_6_1_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    CTA Design
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            CTA Design
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cta/Constraints/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Design Constraints
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cta/Questions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Questions and Answers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Software Development
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            Software Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../software/eoscta_native_dev_environment/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Create a native EOSCTA development environment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../software/coding/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coding Conventions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cta/git_workflow/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Git Workflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cta/tag_cta/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tagging a new CTA release
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6_3" id="__nav_6_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Deployment Guide
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6_3">
+            <span class="md-nav__icon md-icon"></span>
+            Deployment Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../buildcta/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Build CTA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_3_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6_3_3" id="__nav_6_3_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Native server installation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_6_3_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            Native server installation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Install CTA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configure CTA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../start/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Start CTA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Install EOS
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Install EOS
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#install-xroot-and-eos-rpms" class="md-nav__link">
+    <span class="md-ellipsis">
+      Install XRoot and EOS RPMs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-kerberos-keytab-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create a Kerberos keytab file
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-simple-shared-secret-keytab-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create a Simple Shared Secret keytab file
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configure-eos-sysconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure EOS sysconfig
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configure-xroot-mgm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure XRoot mgm
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configure-xroot-fst" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure XRoot fst
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#start-xroot-daemons" class="md-nav__link">
+    <span class="md-ellipsis">
+      Start XRoot daemons
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enable-eos-authentication-mechanisms" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enable EOS authentication mechanisms
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configure-the-default-eos-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure the default EOS space
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configure-the-spinner-eos-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure the spinner EOS space
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setting-eos_mgm_statvfs_default_space" class="md-nav__link">
+    <span class="md-ellipsis">
+      Setting EOS_MGM_STATVFS_DEFAULT_SPACE
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuring-the-mgm-tape-aware-garbage-collector" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuring the MGM tape-aware garbage collector
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-the-eos-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test the EOS Installation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installing-eos-in-docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installing EOS in Docker
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#eos-access-control-lists" class="md-nav__link">
+    <span class="md-ellipsis">
+      EOS Access Control Lists
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mhvtl/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Install mhVTL
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../gitlab/alma9_runner/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Containerised installation
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gitlab/orchestration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CTA Continuous Integration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../software/eoscta_upgrade_eos_ci/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Updating the EOS version used by CTA in the CI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../install_public_rpms/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Public RPMs installation instructions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configure_multi_tapelibs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configure multiple tape libraries in CTA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_4" id="__nav_6_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    File Lifecycle
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_4">
+            <span class="md-nav__icon md-icon"></span>
+            File Lifecycle
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Intro/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Checksum/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Checksums
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Archive/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Archival
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Retrieve/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Retrieval
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Delete/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deletion
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Repack/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Repack
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Reconciliation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reconciliation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Zero-length-files/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Zero-length files
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Recycle_bin/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Recycle-bin
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Restoring/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Restoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/garbage_collection/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Garbage Collection
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/ChangeStorageClass/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Change Storage Class
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/NamespaceInjection/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS Namespace Injection
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/MoveFilesToInstance/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Move to Instance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_5" id="__nav_6_5_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Database
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_5">
+            <span class="md-nav__icon md-icon"></span>
+            Database
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../database/protecting_the_production_db/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Protecting the Production DB
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../database/how_to_drop_an_oracle_database_account_from_the_inside/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    How to drop an Oracle database account
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_6" id="__nav_6_6_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    CTA Catalogue Schema
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_6">
+            <span class="md-nav__icon md-icon"></span>
+            CTA Catalogue Schema
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../catalogue/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../catalogue/updating_the_schema/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Updating the schema
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../catalogue/upgrading_the_schema/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Upgrading the schema
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../catalogue/tools/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Tools
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    CTA statistics
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_7">
+            <span class="md-nav__icon md-icon"></span>
+            CTA statistics
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../statistics/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../statistics/cta-statistics-update/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    The cta-statistics-update tool
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../statistics/cta-statistics-save/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    The cta-statistics-save tool
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_8" id="__nav_6_8_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Queues and Scheduling
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_8">
+            <span class="md-nav__icon md-icon"></span>
+            Queues and Scheduling
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../scheduling/cta-scheduling/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    How CTA mount scheduling works
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../queues/failed_requests/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Failed Requests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../repack/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Repack Lifecycle
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rucio/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Rucio Integration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_9" id="__nav_6_9_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Authentication and Security
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_9">
+            <span class="md-nav__icon md-icon"></span>
+            Authentication and Security
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../authentication/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Authentication
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cta/Security/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Security
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_10" id="__nav_6_10_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    RAO
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_10">
+            <span class="md-nav__icon md-icon"></span>
+            RAO
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rao/configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuration of RAO in CTA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lto/reports/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LTO Reports
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lto/lto/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LTO Tapes
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lto/scsi/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    SCSI Commands
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lto/experiments/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    RAO for LTO Experiments
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_11" id="__nav_6_11_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Tape Infrastructure
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_11">
+            <span class="md-nav__icon md-icon"></span>
+            Tape Infrastructure
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../drives/dedications/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Drives
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../libraries/spectralogic/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Libraries
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../tape/disabled_tape/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Tapes
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_12" id="__nav_6_12_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    EOS
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_12">
+            <span class="md-nav__icon md-icon"></span>
+            EOS
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos/Protocol/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS-CTA Protocol
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos_converters_and_fids/eos_converters_and_fids/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS converters and file identifiers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos_failure_statistics/eos_failure_statistics/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS failure statistics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos_operations_procedures/eos_operations_procedures/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS operations procedures
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos_disk_file_repairs/eos_disk_file_repairs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS disk file repairs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../rate_limiter/introduction/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    EOS rate limiter
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../space_vs_layout/space_vs_layout/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS spaces versus disk storage layouts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tape_replicas/tape_replicas/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS tape replicas
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos_disk_layout_cgi/eos_disk_layout_cgi/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS disk layout CGI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../failure_modes/introduction/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    EOSCTA failure modes
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://codimd.web.cern.ch/VSU_DFN_SXaVtZuYkjILdA" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOSCTALICE instance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../fst_gc/introduction/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    FST garbage collector
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos_ns_master/eos_ns_master/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    The EOS namespace is the master
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tape_rest_api/tape_rest_api/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tape REST API
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_13" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_13" id="__nav_6_13_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    CASTOR
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_13">
+            <span class="md-nav__icon md-icon"></span>
+            CASTOR
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../castor/castor_tape_scheduling_responsibilities/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CASTOR tape scheduling responsibilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#install-xroot-and-eos-rpms" class="md-nav__link">
+    <span class="md-ellipsis">
+      Install XRoot and EOS RPMs
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-kerberos-keytab-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create a Kerberos keytab file
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-a-simple-shared-secret-keytab-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create a Simple Shared Secret keytab file
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configure-eos-sysconfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure EOS sysconfig
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configure-xroot-mgm" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure XRoot mgm
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configure-xroot-fst" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure XRoot fst
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#start-xroot-daemons" class="md-nav__link">
+    <span class="md-ellipsis">
+      Start XRoot daemons
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enable-eos-authentication-mechanisms" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enable EOS authentication mechanisms
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configure-the-default-eos-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure the default EOS space
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configure-the-spinner-eos-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure the spinner EOS space
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#setting-eos_mgm_statvfs_default_space" class="md-nav__link">
+    <span class="md-ellipsis">
+      Setting EOS_MGM_STATVFS_DEFAULT_SPACE
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuring-the-mgm-tape-aware-garbage-collector" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuring the MGM tape-aware garbage collector
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#test-the-eos-installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test the EOS Installation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installing-eos-in-docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      Installing EOS in Docker
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#eos-access-control-lists" class="md-nav__link">
+    <span class="md-ellipsis">
+      EOS Access Control Lists
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<div class="admonition warning">
+<p class="admonition-title">Deprecated</p>
+<p>This page is deprecated and may contain information that is no longer up to date.</p>
+</div>
+<h1 id="install-a-local-eos-instance">Install a Local <abbr title="EOS Open Storage">EOS</abbr> Instance<a class="headerlink" href="#install-a-local-eos-instance" title="Permanent link">&para;</a></h1>
+<p>This Appendix describes how to install a local <abbr title="EOS Open Storage">EOS</abbr> instance.</p>
+<h2 id="install-xroot-and-eos-rpms">Install XRoot and <abbr title="EOS Open Storage">EOS</abbr> RPMs<a class="headerlink" href="#install-xroot-and-eos-rpms" title="Permanent link">&para;</a></h2>
+<p>The yum repos, priorities and version lock list should be configured as
+described in Section <a href="/install/buildcta#configure-yum-repos-priorities-and-versions">configure yum</a>.</p>
+<p>Next, install the RPMs:</p>
+<div class="language-text highlight"><pre><span></span><code># yum install eos-client eos-server xrootd-client xrootd-debuginfo xrootd-server heimdal-server heimdal-workstation
+</code></pre></div>
+<p>Now the list of installed <abbr title="EOS Open Storage">EOS</abbr> and XRoot RPMs should look something like
+this:</p>
+<div class="language-text highlight"><pre><span></span><code># rpm -qa | egrep &#39;eos|xrootd|heimdal&#39; | sort
+eos-client-4.1.11-20170118171644git24cd94a.el7.x86_64
+eos-server-4.1.11-20170118171644git24cd94a.el7.x86_64
+heimdal-libs-1.6.0-0.9.20140621gita5adc06.el7.x86_64
+heimdal-server-1.6.0-0.9.20140621gita5adc06.el7.x86_64
+heimdal-workstation-1.6.0-0.9.20140621gita5adc06.el7.x86_64
+libmicrohttpd-0.9.38-eos.wves.el7.cern.x86_64
+xrootd-4.4.1-1.el7.x86_64
+xrootd-client-4.4.1-1.el7.x86_64
+xrootd-client-libs-4.4.1-1.el7.x86_64
+xrootd-debuginfo-4.4.1-1.el7.x86_64
+xrootd-libs-4.4.1-1.el7.x86_64
+xrootd-selinux-4.4.1-1.el7.noarch
+xrootd-server-4.4.1-1.el7.x86_64
+xrootd-server-libs-4.4.1-1.el7.x86_64
+</code></pre></div>
+<h2 id="create-a-kerberos-keytab-file">Create a Kerberos <code>keytab</code> file<a class="headerlink" href="#create-a-kerberos-keytab-file" title="Permanent link">&para;</a></h2>
+<p>The instructions below are for machines on structured cabling which have
+a fixed IP address. Machines without a fixed IP address—including
+virtual machines or Docker pods—are not recognised by the CERN Kerberos
+servers. To install a local <abbr title="EOS Open Storage">EOS</abbr> instance in this case, we need to run
+our own <abbr title="Key Distribution Center">KDC</abbr> server. See Section <a href="#installing-eos-in-docker">Installing <abbr title="EOS Open Storage">EOS</abbr> in docker</a>
+for more information on how to do this.</p>
+<p>The <abbr title="EOS Open Storage">EOS</abbr> <code>mgm</code> in the XRoot daemon authenticates users using a key from
+the Kerberos <code>keytab</code>.</p>
+<p>If <code>/etc/krb5.keytab</code> does not already exist, we need to create a new
+<abbr title="EOS Open Storage">EOS</abbr> service principal in the <code>kdc</code>, and install the key in the keytab.</p>
+<p>In the case of machines at CERN with a fixed IP address, there is a
+package for this<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>:</p>
+<div class="language-text highlight"><pre><span></span><code># yum install cern-get-keytab
+</code></pre></div>
+<p>This can be used to create the host and <abbr title="EOS Open Storage">EOS</abbr> service kerberos keys and
+host and <abbr title="CERN Tape Archive">CTA</abbr> service key as follows:</p>
+<div class="language-text highlight"><pre><span></span><code># rm -f /etc/krb5.keytab
+# cern-get-keytab --service eosdev --force
+# rm /etc/krb5.keytab
+# cern-get-keytab --service cta --force
+# echo -e &quot;read_kt /etc/krb5.keytab
+</code></pre></div>
+<p>list
+quit" | ktutil</p>
+<p>Extract the key for the <abbr title="EOS Open Storage">EOS</abbr> principal to a new keytab, which should be
+owned by user <code>daemon</code> so that it is readable by the <code>mgm</code>:</p>
+<div class="language-text highlight"><pre><span></span><code># rm -f /etc/krb5.keytab.eosdev
+# cp /etc/krb5.keytab /etc/krb5.keytab.eosdev
+# chown daemon:daemon /etc/krb5.keytab.eosdev
+# echo -e &quot;read_kt /etc/krb5.keytab.eosdev
+</code></pre></div>
+<p>list
+quit" | ktutil</p>
+<p>Note that this process re-generates a new version of every other key for
+this host, which might require the client users to <code>kdestroy</code> their
+corresponding tickets in caches.</p>
+<p>Note that the ktutil utility can also be run in interactive mode. Here
+is a more verbose way to extract the keys:</p>
+<div class="language-text highlight"><pre><span></span><code># ktutil
+ktutil:  @@read_kt /etc/krb5.keytab@@
+ktutil:  @@list@@
+slot KVNO Principal
+---- ---- ---------------------------------------------------------------------
+   1   14                          devbox$@CERN.CH
+   2   14                          devbox$@CERN.CH
+   3   14                          devbox$@CERN.CH
+   4   14               eoscta/devbox.cern.ch@CERN.CH
+   5   14               eoscta/devbox.cern.ch@CERN.CH
+   6   14               eoscta/devbox.cern.ch@CERN.CH
+ktutil:  @@delent 1@@
+ktutil:  @@delent 1@@
+ktutil:  @@delent 1@@
+ktutil:  @@list@@
+slot KVNO Principal
+---- ---- ---------------------------------------------------------------------
+   1   14               eoscta/devbox.cern.ch@CERN.CH
+   2   14               eoscta/devbox.cern.ch@CERN.CH
+   3   14               eoscta/devbox.cern.ch@CERN.CH
+ktutil:  @@write_kt /etc/krb5.keytab.eos@@
+ktutil:  @@quit@@
+</code></pre></div>
+<h2 id="create-a-simple-shared-secret-keytab-file">Create a Simple Shared Secret <code>keytab</code> file<a class="headerlink" href="#create-a-simple-shared-secret-keytab-file" title="Permanent link">&para;</a></h2>
+<p>The <code>cta</code> user must exist before creating the <abbr title="Simple Shared Secret">SSS</abbr> keys. This should be
+done automatically when the <abbr title="CERN Tape Archive">CTA</abbr> RPMs are installed.</p>
+<p>The <abbr title="EOS Open Storage">EOS</abbr> <code>mgm</code> and <code>fst</code> nodes authenticate to each other using the
+Simple Shared Secret (<abbr title="Simple Shared Secret">SSS</abbr>) mechanism. The <code>xrdsssadmin</code> tool is used to
+create a keytab containing the Tape Server key and <abbr title="EOS Open Storage">EOS</abbr> instance key:</p>
+<div class="language-text highlight"><pre><span></span><code># xrdsssadmin -k cta-taped -u cta -g cta add /etc/eos.keytab
+xrdsssadmin: Keyfile &#39;/etc/eos.keytab&#39; does not exist. Create it? (y | n): y
+xrdsssadmin: 1 key out of 1 kept (0 expired).
+# xrdsssadmin -k eosdev -u daemon -g daemon add /etc/eos.keytab
+xrdsssadmin: 2 keys out of 2 kept (0 expired).
+# chown daemon:daemon /etc/eos.keytab
+</code></pre></div>
+<p>Then create a second keytab containing only the Tape Server key.</p>
+<div class="language-text highlight"><pre><span></span><code># cp /etc/eos.keytab /etc/cta-taped.keytab
+# xrdsssadmin -k eosdev del /etc/cta-taped.keytab
+xrdsssadmin: 1 key out of 2 kept (0 expired).
+# chown cta:tape /etc/cta-taped.keytab
+</code></pre></div>
+<p>Note that XRoot clients which parse a multi-line <abbr title="Simple Shared Secret">SSS</abbr> keytab file use the
+last line in the file as their key.</p>
+<h2 id="configure-eos-sysconfig">Configure <abbr title="EOS Open Storage">EOS</abbr> <code>sysconfig</code><a class="headerlink" href="#configure-eos-sysconfig" title="Permanent link">&para;</a></h2>
+<p>It looks like there is a new config file <code>/etc/eos.systemd.conf</code> which
+overlaps with (or supercedes?) <code>/etc/syconfig/eos_env</code>. Check which of
+these is the correct one to use.</p>
+<p>Create the <code>/etc/syconfig/eos_env</code> file based on the example installed
+by the <code>eos-server</code> <abbr title="RPM Package Manager">RPM</abbr>:</p>
+<div class="language-text highlight"><pre><span></span><code># cp /etc/sysconfig/eos_env.example /etc/sysconfig/eos_env
+</code></pre></div>
+<p>Edit the file and comment out the lines for the SYNC and FED daemons.
+This reduces the XRoot daemon roles to the minimum set of three (mq, mgm
+and fst). <em>i.e.</em>, there will be three XRoot daemons running for <abbr title="EOS Open Storage">EOS</abbr> on
+the local development box.</p>
+<div class="language-text highlight"><pre><span></span><code>#sync=sync
+#fed=fed
+</code></pre></div>
+<p>Continue editing the file to set the name of the <abbr title="EOS Open Storage">EOS</abbr> instance and
+replace all the hostnames with the fully-qualified domain name of the
+local development box. The resulting hostname entries should look
+something like the following (where <code>devbox.cern.ch</code> should be replaced
+with the FQDN of the development box where <abbr title="EOS Open Storage">EOS</abbr> is being installed):</p>
+<div class="language-text highlight"><pre><span></span><code>EOS_INSTANCE_NAME=eosdev
+EOS_GEOTAG=devbox # 8 characters max
+EOS_MGM_HOST=devbox.cern.ch
+EOS_MGM_HOST_TARGET=devbox.cern.ch
+EOS_MGM_MASTER1=devbox.cern.ch
+EOS_MGM_MASTER2=devbox.cern.ch
+EOS_MGM_ALIAS=devbox.cern.ch
+EOS_MAIL_CC=&quot;your.name@cern.ch&quot;
+</code></pre></div>
+<h2 id="configure-xroot-mgm">Configure XRoot <code>mgm</code><a class="headerlink" href="#configure-xroot-mgm" title="Permanent link">&para;</a></h2>
+<p><abbr title="Simple Shared Secret">SSS</abbr> will be used for communication between the <abbr title="CERN Tape Archive">CTA</abbr> Tape Server and <abbr title="EOS Open Storage">EOS</abbr>.
+In a production system, Kerberos is also required for communication
+between the user and <abbr title="EOS Open Storage">EOS</abbr>.</p>
+<p>This is configured in the <code>/etc/xrd.cf.mgm</code> file which was installed by
+the <code>eos-server</code> <abbr title="RPM Package Manager">RPM</abbr>. Edit this file and comment out the UNIX- and
+GSI-based authentication mechanisms and leave only Simple Shared Secret
+(<abbr title="Simple Shared Secret">SSS</abbr>) and Kerberos (KRB) authentication enabled. Then edit the Kerberos
+protocol to use the <abbr title="EOS Open Storage">EOS</abbr>-specific kerberos <code>keytab</code> file as shown below:</p>
+<div class="language-text highlight"><pre><span></span><code># UNIX authentication
+#sec.protocol unix
+# SSS authentication
+sec.protocol sss -c /etc/eos.keytab -s /etc/eos.keytab
+# KRB  authentication
+sec.protocol krb5 /etc/krb5.keytab.eosdev eosdev/&lt;host&gt;@CERN.CH
+# GSI authentication
+#sec.protocol gsi -crl:0 -cert:/etc/grid-security/daemon/hostcert.pem ...
+</code></pre></div>
+<p>Set the order of authentication mechanisms on all hosts to be Kerberos
+followed by Simple Shared Secret:</p>
+<div class="language-text highlight"><pre><span></span><code>#sec.protbind localhost.localdomain unix sss
+#sec.protbind localhost unix sss
+sec.protbind * only krb5 sss
+</code></pre></div>
+<p>Configure the <abbr title="EOS Open Storage">EOS</abbr> <code>mgm</code> instance name:</p>
+<div class="language-text highlight"><pre><span></span><code>mgmofs.broker root://devbox.cern.ch:1097//eos/
+mgmofs.instance eosdev
+mgmofs.cfgredishost devbox.cern.ch
+</code></pre></div>
+<p>Ensure that the <abbr title="EOS Open Storage">EOS</abbr> namespace plugin will be loaded:</p>
+<div class="language-text highlight"><pre><span></span><code>#-------------------------------------------------------------------------------
+# Set the namespace plugin implementation
+#-------------------------------------------------------------------------------
+mgmofs.nslib /usr/lib64/libEosNsInMemory.so
+</code></pre></div>
+<p>Configure the <abbr title="CERN Tape Archive">CTA</abbr> Frontend endpoint and resources:</p>
+<div class="language-text highlight"><pre><span></span><code>mgmofs.protowfendpoint ctafrontend.cern.ch:10955
+mgmofs.protowfresource /ctafrontend
+</code></pre></div>
+<p>The <abbr title="EOS Open Storage">EOS</abbr> <abbr title="EOS Metadata Manager">MGM</abbr> is responsible for constructing the destination “open for
+write” URLs that are passed to <abbr title="CERN Tape Archive">CTA</abbr> prepare requests. These destination
+URLs are used by tape servers to open the disk files they are writing
+back to disk. By default tape servers will write disk files to the
+<code>default</code> <abbr title="EOS Open Storage">EOS</abbr> space. If this must be changed then the following line
+should be added to <code>/etc/xrd.cf.mgm</code>. The example given names the
+destination <abbr title="EOS Open Storage">EOS</abbr> space as <code>spinner</code>. The <code>spinner</code> space is specific to a
+EOSCTA installation for ALICE. Please see section
+ [section:configurespinnereosspace] for more details.</p>
+<div class="language-text highlight"><pre><span></span><code>mgmofs.prepare.dest.space spinner
+</code></pre></div>
+<p>A prepare request with the Prep_EVICT flag can only call XrdMgmOfs::prepare() if XRootD believes an alternative Prepare plugin is present.  "xrootd.fslib -2" invokes XrdSfsGetFileSystem2() which tells XRootD that such a plugin is present.</p>
+<p>xrootd.fslib -2 libXrdEosMgm.so
+   xrootd.seclib libXrdSec.so
+   xrootd.async off nosf
+   xrootd.chksum adler32</p>
+<p>xrd.sched mint 8 maxt 256 idle 64</p>
+<p>Create a local directory for <abbr title="EOS Open Storage">EOS</abbr> <code>mgm</code>. It seems this is not actually
+used for anything, but creating it suppresses a spurious error in the
+<abbr title="EOS Open Storage">EOS</abbr> logs.</p>
+<div class="language-text highlight"><pre><span></span><code># mkdir -p /mgm
+# chown daemon:daemon /mgm/
+</code></pre></div>
+<h2 id="configure-xroot-fst">Configure XRoot <code>fst</code><a class="headerlink" href="#configure-xroot-fst" title="Permanent link">&para;</a></h2>
+<p>In <code>/etc/xrd.cf.fst</code>, replace references to <code>localhost</code> with the FQDN of
+the local development box:</p>
+<div class="language-text highlight"><pre><span></span><code>fstofs.broker root://devbox.cern.ch:1097//eos/
+</code></pre></div>
+<p>Create a local directory to be used to store files by the <abbr title="EOS Open Storage">EOS</abbr> <code>fst</code>:</p>
+<div class="language-text highlight"><pre><span></span><code># mkdir -p /fst
+# chown daemon:daemon /fst
+</code></pre></div>
+<p>In order to allow for third party copying, make sure the following lines
+exist in <code>/etc/sysconfig/eos_env</code> on the <code>fst</code> node:</p>
+<div class="language-text highlight"><pre><span></span><code># Switch off enforcement of SSS in order to allow third party copies to work
+export EOS_FST_NO_SSS_ENFORCEMENT=1
+</code></pre></div>
+<p>Also make sure the <code>ofs.tpc</code> directive is set within the
+<code>/etc/xrd.cf.fst</code> file. For example:</p>
+<div class="language-text highlight"><pre><span></span><code>ofs.tpc  pgm /usr/bin/xrdcp
+</code></pre></div>
+<h2 id="start-xroot-daemons">Start XRoot daemons<a class="headerlink" href="#start-xroot-daemons" title="Permanent link">&para;</a></h2>
+<p>Start the XRoot daemons that will run the <abbr title="EOS Open Storage">EOS</abbr> <code>mgm</code>, <code>mq</code> and <code>fst</code>
+plugins:</p>
+<div class="language-text highlight"><pre><span></span><code># systemctl start eos
+</code></pre></div>
+<p>The logs for the XRoot daemons will be created under <code>/var/log/eos/fst</code>,
+<code>/var/log/eos/mgm</code> and <code>/var/log/eos/mq</code>.</p>
+<h2 id="enable-eos-authentication-mechanisms">Enable <abbr title="EOS Open Storage">EOS</abbr> authentication mechanisms<a class="headerlink" href="#enable-eos-authentication-mechanisms" title="Permanent link">&para;</a></h2>
+<p>Enable the Kerberos and Simple Shared Secret authentication mechanisms
+within <abbr title="EOS Open Storage">EOS</abbr> (as opposed to XRoot):</p>
+<div class="language-text highlight"><pre><span></span><code># eos vid enable sss
+# eos vid enable krb5
+</code></pre></div>
+<h2 id="configure-the-default-eos-space">Configure the default <abbr title="EOS Open Storage">EOS</abbr> space<a class="headerlink" href="#configure-the-default-eos-space" title="Permanent link">&para;</a></h2>
+<p>Register the directory for the default <abbr title="EOS Open Storage">EOS</abbr> space:</p>
+<div class="language-text highlight"><pre><span></span><code># echo &#39;EOS_MGM_URL=root://devbox.cern.ch&#39; &gt; /etc/sysconfig/eos
+# eosfstregister -r /fst default:1
+###########################
+# &lt;eosfstregister&gt; v1.0.0
+###########################
+/fst : uuid=abae0ba6-ffc5-491f-9ef3-291f291493af fsid=undef
+success:   mapped &#39;abae0ba6-ffc5-491f-9ef3-291f291493af&#39; &lt;=&gt; fsid=1
+</code></pre></div>
+<p><code>/usr/sbin/eosfsregister</code> is a convenience script for registering an <abbr title="EOS Open Storage">EOS</abbr>
+<code>fst</code> node with an <abbr title="EOS Open Storage">EOS</abbr> <code>mgm</code> node. It parses the deprecated
+configuration file <code>/etc/sysconfig/eos</code> to determine the location of the
+<abbr title="EOS Open Storage">EOS</abbr> <code>mgm</code> node. For the time being, we need to create this file even
+though it is not used by <abbr title="EOS Open Storage">EOS</abbr> directly.</p>
+<p><code>eosfsregister</code> is not maintained by the <abbr title="EOS Open Storage">EOS</abbr> developers, and the same
+work can be done by standard <abbr title="EOS Open Storage">EOS</abbr> commands. We will modify our <abbr title="CERN Tape Archive">CTA</abbr>
+install/configure/setup scripts to use the standard commands instead of
+<code>eosfsregister</code>.</p>
+<p>Enable the WorkFlow Engine (<abbr title="Workflow Engine">WFE</abbr>) for the default <abbr title="EOS Open Storage">EOS</abbr> space, enable
+default <abbr title="EOS Open Storage">EOS</abbr> space, bring the <abbr title="EOS Open Storage">EOS</abbr> <code>fst</code> node on-line:</p>
+<div class="language-text highlight"><pre><span></span><code># eos space config default space.wfe=on
+# eos space set default on
+# eos node set devbox.cern.ch on
+</code></pre></div>
+<p>Wait until the <abbr title="EOS Open Storage">EOS</abbr> disk filesystem comes online:</p>
+<div class="language-text highlight"><pre><span></span><code># eos fs ls /fst | grep online
+devbox.cern.ch (1095) 1 /fst default.0 ...evbox.cern.ch booted rw nodrain @@online@@ unknown raid
+</code></pre></div>
+<p>Create the <code>/eos</code> directory within the <abbr title="EOS Open Storage">EOS</abbr> namespace, map it to the <abbr title="EOS Open Storage">EOS</abbr>
+<code>default</code> space, set the number of replicas to 1:</p>
+<div class="language-text highlight"><pre><span></span><code># 
+# eos attr -r set sys.forced.layout=&quot;replica&quot; /eos
+# eos attr -r set sys.forced.nstripes=1 /eos
+</code></pre></div>
+<h2 id="configure-the-spinner-eos-space">Configure the spinner <abbr title="EOS Open Storage">EOS</abbr> space<a class="headerlink" href="#configure-the-spinner-eos-space" title="Permanent link">&para;</a></h2>
+<p>The requirements of the ALICE LHC experiment will require their EOSCTA
+instance to have two <abbr title="EOS Open Storage">EOS</abbr> storage spaces: the <code>default</code> space for
+archiving files to tape and the <code>spinner</code> space for retrieving them
+back.</p>
+<p>The <abbr title="EOS Open Storage">EOS</abbr> space named <code>default</code> will be composed of SSDs. End users
+wishing to store files on tape will copy their files into the <code>default</code>
+space. The <abbr title="CERN Tape Archive">CTA</abbr> tape servers will then read these files and write them to
+tape. Once these files are safely stored on tape they will be
+immediately deleted from the <code>default</code> space. The <code>default</code> space will
+be used as a pure consumer producer buffer where the files contained
+within it have a relatively short lifespan.</p>
+<p>The <abbr title="EOS Open Storage">EOS</abbr> space named <code>spinner</code> will be composed of mechanical spinning
+hard drives. The tape servers will use the <code>spinner</code> space when
+retrieving files back from tape. Files will remain in the <code>spinner</code>
+space for a relatively long period of time. Tape servers will explicitly
+set the space to be used when opening the disk files for writing. The
+“open for writing” URLS will include <code>eos.space=spinner</code>.</p>
+<p>Please note that the <code>default</code> space must not be enforced using the
+<code>sys.forced.space</code> extended attribute. If this attribute is set then the
+“open for writing” URLs of the tape servers would also need to include
+<code>eos.layout.noforce</code> plus the full description of the disk file layout.
+It was decided that there was no point in sending around disk layout
+information if it could be avoided.</p>
+<p>Create the <code>spinner</code> <abbr title="EOS Open Storage">EOS</abbr> space:</p>
+<div class="language-text highlight"><pre><span></span><code># eos group set spinner.0 on
+</code></pre></div>
+<p>Assuming that you have created a <code>/spinner_fst</code> directory. Register it
+for the <code>spinner</code> <abbr title="EOS Open Storage">EOS</abbr> space:</p>
+<div class="language-text highlight"><pre><span></span><code># eosfstregister -r /spinner_fst spinner:1
+</code></pre></div>
+<p>There is no need to enable the WorkFlow Engine (<abbr title="Workflow Engine">WFE</abbr>) for the <code>spinner</code>
+space because previously enabling it for the <code>default</code> space enables it
+for all spaces.</p>
+<p>Wait until the <abbr title="EOS Open Storage">EOS</abbr> disk filesystem comes online:</p>
+<div class="language-text highlight"><pre><span></span><code># eos fs ls /spinner_fst | grep online
+devbox.cern.ch (1095) 1 /spinner_fst spinner.0 ...evbox.cern.ch booted rw nodrain @@online@@ unknown raid
+</code></pre></div>
+<h2 id="setting-eos_mgm_statvfs_default_space">Setting <code>EOS_MGM_STATVFS_DEFAULT_SPACE</code><a class="headerlink" href="#setting-eos_mgm_statvfs_default_space" title="Permanent link">&para;</a></h2>
+<p>Users who only use <code>xrdcp</code> and <code>xrdfs</code> can query the storage statistics of the <abbr title="EOS Open Storage">EOS</abbr> space named <code>default</code> by executing the following <code>xrdfs</code> command:</p>
+<ul>
+<li><code>xrdfs query space /</code></li>
+</ul>
+<p>Users can also query a specific <abbr title="EOS Open Storage">EOS</abbr> space by providing its name in CGI appended to the end of the previous <code>xrdfs query space /</code> command like so:</p>
+<ul>
+<li><code>xrdfs query space /?eos.space=EOS_SPACE_NAME</code></li>
+</ul>
+<p>If users executing the "space-less" <code>xrdfs query space /</code> command should ALWAYS get the storage statistics of an <abbr title="EOS Open Storage">EOS</abbr> space other than <code>default</code> then the <code>EOS_MGM_STATVFS_DEFAULT_SPACE</code> parameter of the <code>/etc/sysconfig/eos_env</code> file can be used as follows:</p>
+<ul>
+<li><code>EOS_MGM_STATVFS_DEFAULT_SPACE=“Name of the EOS space”</code></li>
+</ul>
+<p>The <abbr title="EOS Metadata Manager">MGM</abbr> will of course need to be restarted in order for this configuration change to take place:</p>
+<ul>
+<li><code>systemctl restart eos@mgm</code></li>
+</ul>
+<h2 id="configuring-the-mgm-tape-aware-garbage-collector">Configuring the <abbr title="EOS Metadata Manager">MGM</abbr> tape-aware garbage collector<a class="headerlink" href="#configuring-the-mgm-tape-aware-garbage-collector" title="Permanent link">&para;</a></h2>
+<p>There are two types of tape-aware garbage collector within an EOSCTA system, one type in each <abbr title="EOS Metadata Manager">MGM</abbr> and the other type in each <abbr title="File Storage server">FST</abbr>.  The garbage collector in the <abbr title="EOS Metadata Manager">MGM</abbr>, referred to as the <abbr title="EOS Metadata Manager">MGM</abbr> <abbr title="Garbage Collector">GC</abbr>, uses a queue of file identifiers organised in Least Recently Used (<abbr title="Least Recently Used">LRU</abbr>) order to decide which disk replica should be garbage collected next if and when free disk space is considered to be running low.  A garbage collector within an <abbr title="File Storage server">FST</abbr>, referred to as an <abbr title="File Storage server">FST</abbr> <abbr title="Garbage Collector">GC</abbr>, is purposely very simple.  It iterates through the listings of all of the local disk replicas and considers a file for garbage collector if free space is too low and the file being examined is considered too old.</p>
+<p>This section describes how to configure an <abbr title="EOS Metadata Manager">MGM</abbr> <abbr title="Garbage Collector">GC</abbr>.   This garbage collector is part of the <abbr title="EOS Metadata Manager">MGM</abbr> <code>xrootd</code> process and is configured via the <code>/etc/xrd.cf.mgm</code> configuration file and via runtime configuration commands via the <code>eos</code> client program.</p>
+<p>The following parameters must be set in <code>/etc/xrd.cf.mgm</code>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>mgmofs.tapeenabled true
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>mgmofs.tgc.enablespace EOS_SPACE_NAME
+</span></code></pre></div>
+<p>The MGC <abbr title="Garbage Collector">GC</abbr> abides by the value of the <code>mgmofs.tapeenabled</code> parameter and to this effect will not take any action unless the value is set to <code>true</code>.  Garbage collection has to then be enabled per <abbr title="EOS Open Storage">EOS</abbr> space and hence the <code>mgmofs.tgc.enablespace</code> parameter.</p>
+<p>How the <abbr title="EOS Metadata Manager">MGM</abbr> <abbr title="Garbage Collector">GC</abbr> garbage collects an <abbr title="EOS Open Storage">EOS</abbr> space can be fine tuned using the following <code>eos</code> commands:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>sudo eos space config EOS_SPACE_NAME space.tgc.availbytes=NB_BYTES
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>sudo eos space config EOS_SPACE_NAME space.tgc.qryperiodsecs=NB_SECS
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>sudo eos space config EOS_SPACE_NAME space.tgc.totalbytes=NB_BYTES
+</span></code></pre></div>
+<p>The <code>space.tgc.availbytes</code> parameter specifies the threshold where the <abbr title="EOS Metadata Manager">MGM</abbr> <abbr title="Garbage Collector">GC</abbr> considers there to be enough free/available space.  The <abbr title="EOS Metadata Manager">MGM</abbr> <abbr title="Garbage Collector">GC</abbr> will not attempt to garbage collect any files if the actual amount of free/available space is above this number.</p>
+<p>The <code>space.tgc.totalbytes</code> parameter specifies the number of storage bytes that must be available to the <abbr title="EOS Metadata Manager">MGM</abbr> for read/write access before the <abbr title="EOS Metadata Manager">MGM</abbr> <abbr title="Garbage Collector">GC</abbr> can even begin to take action.   This parameter solves a “startup” problem.  Once an <abbr title="EOS Metadata Manager">MGM</abbr> XRootD process is started, the <abbr title="EOS Metadata Manager">MGM</abbr> <abbr title="Garbage Collector">GC</abbr> must not immediately start considering files for garbage collection because FSTs will not have had time to register their free/available space and the <abbr title="EOS Metadata Manager">MGM</abbr> <abbr title="Garbage Collector">GC</abbr> will see too little free/available space and will start prematurely and incorrectly garbage collecting.</p>
+<p>The <code>space.tgc.qryperiodsecs</code> parameter specifies the period at which the garbage collector should query the <abbr title="EOS Metadata Manager">MGM</abbr> for statistics about the <abbr title="EOS Open Storage">EOS</abbr> space being managed.  This value should be greater than the value of <code>EOS_FST_DELETE_QUERY_INTERVAL</code> in <code>/etc/sysconfig/eos_env</code> and 5 seconds greater than the value of <code>publish.interval</code> of each <abbr title="EOS Open Storage">EOS</abbr> node/<abbr title="File Storage server">FST</abbr> in the <abbr title="EOS Open Storage">EOS</abbr> space being managed by the garabage collector.  An eos node/<abbr title="File Storage server">FST</abbr> publishes its file system statistics at a period of <code>publish.interval</code> seconds &plusmn; 5.  The value of <code>publish.interval</code> for a given <abbr title="File Storage server">FST</abbr> can be set using the following command:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>eos node config NODE publish.interval=NB_SECS
+</span></code></pre></div>
+<p>The value of <code>publish.interval</code> for a given <abbr title="EOS Open Storage">EOS</abbr> node/<abbr title="File Storage server">FST</abbr> can be displayed if it has been set at least once by running the following command:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>eos node status NODE | egrep &#39;^publish.interval&#39;
+</span></code></pre></div>
+<h2 id="test-the-eos-installation">Test the <abbr title="EOS Open Storage">EOS</abbr> Installation<a class="headerlink" href="#test-the-eos-installation" title="Permanent link">&para;</a></h2>
+<p>Perform a simple write and read test of the new <abbr title="EOS Open Storage">EOS</abbr> installation:</p>
+<div class="language-text highlight"><pre><span></span><code># eos mkdir /eos/users/test
+# eos chmod 777 /eos/users/test
+# xrdcp /etc/motd root://devbox.cern.ch//eos/users/test/
+# xrdcp root://devbox.cern.ch//eos/users/test/motd /tmp/eostest
+# diff /tmp/eostest /etc/motd
+</code></pre></div>
+<h2 id="installing-eos-in-docker">Installing <abbr title="EOS Open Storage">EOS</abbr> in Docker<a class="headerlink" href="#installing-eos-in-docker" title="Permanent link">&para;</a></h2>
+<p>The instructions above are for installing <abbr title="EOS Open Storage">EOS</abbr> on real hardware. To
+install <abbr title="EOS Open Storage">EOS</abbr> in a Docker pod, note that you must:</p>
+<ol>
+<li>
+<p>Create a Docker network to allow DNS/reverse DNS queries to work.</p>
+</li>
+<li>
+<p>Use a privileged Docker container and mount the <code>cgroup</code> to allow
+    <code>systemd</code> to run.</p>
+</li>
+</ol>
+<p>To run <code>systemd</code> on Docker host <code>bandersnatch</code> on network <code>wonderland</code>,
+the command would be:</p>
+<div class="language-text highlight"><pre><span></span><code>sudo docker network create wonderland
+sudo docker run --net=wonderland --name bandersnatch --hostname bandersnatch.wonderland --privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro -d ctatest /usr/sbin/init
+</code></pre></div>
+<p>See also the <a href="https://gitlab.cern.ch/eos/eos-docker">eos-docker</a> GitLab
+project, prepared by the IT-ST-AD section.</p>
+<p>The <abbr title="EOS Open Storage">EOS</abbr> <code>mgm</code> startup script checks if we are running under <code>systemd</code>,
+but the test it performs does not work inside a Docker container, as (a)
+pidof is part of <code>sysvtools-init</code>, which is not installed and (b) the
+<code>systemd</code> process is started as <code>init</code> (a symbolic link to <code>systemd</code>):</p>
+<div class="language-text highlight"><pre><span></span><code>/usr/sbin/pidof systemd
+</code></pre></div>
+<p>This has been reported to the <abbr title="EOS Open Storage">EOS</abbr> team to fix. In the meantime, here is
+a hack to work around the problem:</p>
+<div class="language-text highlight"><pre><span></span><code># yum install -y sysvinit-tools
+# ln -s /usr/bin/sleep /tmp/systemd
+# /tmp/systemd 1000 &amp;
+# systemctl start eos
+</code></pre></div>
+<h2 id="eos-access-control-lists"><abbr title="EOS Open Storage">EOS</abbr> Access Control Lists<a class="headerlink" href="#eos-access-control-lists" title="Permanent link">&para;</a></h2>
+<p>Access control lists in <abbr title="EOS Open Storage">EOS</abbr> are based on POSIX ACLs but with some
+differences.</p>
+<p><abbr title="EOS Open Storage">EOS</abbr> user access permission bits are:</p>
+<div class="language-text highlight"><pre><span></span><code>a          Archive flag (archiving allowed)
+c          Chown flag (owner change allowed)
+m,!m       Chmod flag (mode change allowed/disallowed)
+r,w,x      Read, Write, Execute (browse)
+wo         Write-once access (allows creation, disallows delete)
+[+]d,!d    Deletable flag (allows/disallows deletion)
+[+]u,!u    Update flag (allows/disallows updates)
+q          Quota flag (set quota allowed)
+i          Directory immutable flag
+</code></pre></div>
+<p><abbr title="EOS Open Storage">EOS</abbr> system access permission bits are:</p>
+<div class="language-text highlight"><pre><span></span><code>p           Prepare flag (allows triggering workflows)
+</code></pre></div>
+<p>Directories with tape workflows must have the <code>!u</code> and <code>p</code> bits set.</p>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p>For more details, see
+<a href="http://linux.web.cern.ch/linux/docs/kerberos-access.shtml">http://linux.web.cern.ch/linux/docs/kerberos-access.shtml</a>&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">May 17, 2024</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3h-2Z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 25, 2023</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../start/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Start CTA">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Start CTA
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../mhvtl/" class="md-footer__link md-footer__link--next" aria-label="Next: Install mhVTL">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Install mhVTL
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["content.code.copy", "navigation.expand", "navigation.instant", "navigation.instant.progress", "navigation.instant.prefetch", "navigation.path", "navigation.prune", "navigation.sections", "navigation.tabs", "navigation.top", "navigation.footer", "toc.follow"], "search": "../../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "provider": "mike"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.081f42fc.min.js"></script>
+      
+    
+  </body>
+</html>

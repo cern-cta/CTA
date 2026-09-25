@@ -1,0 +1,2475 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Operator and developer documentation for the CERN Tape Archive (CTA) system">
+      
+      
+        <meta name="author" content="CERN Tape Archive Team">
+      
+      
+        <link rel="canonical" href="https://cta.docs.cern.ch/v5/dev/otel/metrics/">
+      
+      
+        <link rel="prev" href="../introduction/">
+      
+      
+        <link rel="next" href="../testing/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Metrics - CTA Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+  
+  
+    
+      
+      
+    
+  
+  
+  <style>:root{--md-admonition-icon--terminal:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20d%3D%22m6.354%208.04-4.773%204.773a.75.75%200%201%200%201.061%201.06L7.945%208.57a.75.75%200%200%200%200-1.06L2.642%202.206a.75.75%200%200%200-1.06%201.061L6.353%208.04ZM8.75%2011.5a.75.75%200%200%200%200%201.5h5.5a.75.75%200%200%200%200-1.5z%22/%3E%3C/svg%3E');}</style>
+
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="cta-light" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#opentelemetry-metrics-in-cta" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="CTA Documentation" class="md-header__button md-logo" aria-label="CTA Documentation" data-md-component="logo">
+      
+  <img src="../../../assets/images/favicon.ico" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            CTA Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Metrics
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="cta-light" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m3.55 19.09 1.41 1.41 1.8-1.79-1.42-1.42M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6c0-3.32-2.69-6-6-6m8 7h3v-2h-3m-2.76 7.71 1.8 1.79 1.41-1.41-1.79-1.8M20.45 5l-1.41-1.4-1.8 1.79 1.42 1.42M13 1h-2v3h2M6.76 5.39 4.96 3.6 3.55 5l1.79 1.81zM1 13h3v-2H1m12 9h-2v3h2"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="cta-dark" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.04 7 9.54s-2.94 8.27-7 9.54c.95.3 1.95.46 3 .46a10 10 0 0 0 10-10A10 10 0 0 0 9 2"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://gitlab.cern.ch/cta/CTA" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cta/CTA
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../overview/introduction/" class="md-tabs__link">
+          
+  
+  
+  Overview
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../ops/introduction/" class="md-tabs__link">
+          
+  
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../overview/" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../conventions/introduction/" class="md-tabs__link">
+          
+  
+  
+  Conventions
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../glossary/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Glossary
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="CTA Documentation" class="md-nav__button md-logo" aria-label="CTA Documentation" data-md-component="logo">
+      
+  <img src="../../../assets/images/favicon.ico" alt="logo">
+
+    </a>
+    CTA Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://gitlab.cern.ch/cta/CTA" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cta/CTA
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../overview/introduction/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../ops/introduction/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/walkthrough/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Intro Walkthrough
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/cta-dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cta-dev
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/building-rpms-and-images/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build Your Own Images
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/eos-development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    EOS Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/mhvtl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    mhVTL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/branches/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Branches
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/merge-requests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Merge Requests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Continuous Integration
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Continuous Integration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci/bots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitLab Bots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci/pipelines/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitLab Pipelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci/orchestration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4_5" id="__nav_4_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenTelemetry
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    OpenTelemetry
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#instrument-kinds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instrument Kinds
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-new-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding new metrics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding new metrics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0-deciding-what-to-instrument" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0. Deciding what to instrument
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1-picking-the-correct-instrument" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Picking the correct instrument
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-naming-your-metric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Naming your metric
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-defining-the-instrument" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Defining the instrument
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-using-the-instrument" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Using the instrument
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-adding-attributes-to-your-instrument-recordings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Adding attributes to your instrument recordings
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Decisions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design Decisions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cumulative-vs-delta-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cumulative vs Delta Metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#uniquely-identifiable-processes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Uniquely Identifiable Processes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instrument-reuse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instrument Reuse
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Procedures
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Procedures
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../procedures/releases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating a CTA Release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../procedures/catalogue-schema-update/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modifying the CTA Catalogue Schema
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../architecture/components/catalogue/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Components
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../architecture/workflows/workflows/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../conventions/introduction/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#instrument-kinds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instrument Kinds
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-new-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding new metrics
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding new metrics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#0-deciding-what-to-instrument" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0. Deciding what to instrument
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1-picking-the-correct-instrument" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Picking the correct instrument
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-naming-your-metric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Naming your metric
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-defining-the-instrument" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Defining the instrument
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-using-the-instrument" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Using the instrument
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-adding-attributes-to-your-instrument-recordings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Adding attributes to your instrument recordings
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design Decisions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design Decisions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cumulative-vs-delta-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cumulative vs Delta Metrics
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#uniquely-identifiable-processes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Uniquely Identifiable Processes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#instrument-reuse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Instrument Reuse
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../overview/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Development
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../introduction/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    OpenTelemetry
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="opentelemetry-metrics-in-cta">OpenTelemetry Metrics in CTA<a class="headerlink" href="#opentelemetry-metrics-in-cta" title="Permanent link">#</a></h1>
+<p>In CTA, we use OpenTelemetry to produce <a href="https://opentelemetry.io/docs/concepts/signals/metrics/">Metrics</a> that allow us to gain valuable insights into the availability and performance of the system. Metrics are measurements captured at runtime that are produced by <a href="https://opentelemetry.io/docs/concepts/instrumentation/">instruments</a>. The moment of capturing a measurement is known as a metric event, which consists not only of the measurement itself, but also the time at which it was captured and associated metadata<sup id="fnref:1"><a class="footnote-ref" href="#fn:1">1</a></sup>. This associated metadata comes in the form of attributes, similar to how a log entry has additional context besides just the message.</p>
+<p>Attributes are useful to gain additional understanding about a measurement. Attributes can be per-metric, but they can also be at the <a href="https://opentelemetry.io/docs/concepts/resources/">Resource</a> level. A resource is an entity that produces metrics. Some examples of attributes at the resource level could be a process name, a container name, a pod name, a namespace and a deployment name. These all help to identify the entity producing certain metrics. For example, if you are seeing long latencies on particular requests, it is useful to understand the entity (process/container/host) responsible for this.</p>
+<h2 id="instrument-kinds">Instrument Kinds<a class="headerlink" href="#instrument-kinds" title="Permanent link">#</a></h2>
+<p>A metric instrument is something that captures measurements and therefore produces metrics. We will refer to this simply as an "instrument" in the remainder of this page.
+Different instrument kinds exist:</p>
+<ul>
+<li>Counters: A value that accumulates over time, but can only go up.</li>
+<li>UpDownCounters: A value that accumulates over time, but can also go down again.</li>
+<li>Histograms: A client-side aggregation of values, such as request latencies.</li>
+<li>Gauge: Measures a current value at the time it is read (think e.g. temperature or CPU usage %).</li>
+</ul>
+<p>For a more detailed and complete list of the instrument kinds, see <a href="https://opentelemetry.io/docs/concepts/signals/metrics/#metric-instruments">https://opentelemetry.io/docs/concepts/signals/metrics/#metric-instruments</a>.</p>
+<h2 id="adding-new-metrics">Adding new metrics<a class="headerlink" href="#adding-new-metrics" title="Permanent link">#</a></h2>
+<p>Telemetry in CTA has been set up in such a way that it should be easy to add new metrics (see <a href="#design-decisions">Design Decisions</a>).
+However, adding the metric itself is the easy part. The more tricky part comes from deciding <em>when</em> to instrument and <em>what</em> to instrument.
+The steps required for adding a new metric are detailed below.</p>
+<h3 id="0-deciding-what-to-instrument">0. Deciding what to instrument<a class="headerlink" href="#0-deciding-what-to-instrument" title="Permanent link">#</a></h3>
+<p>Instrumentation is a very powerful tool to gain insights in the performance and usage of an application. However, with great power comes great responsibility.
+You should careful consider the following:</p>
+<ul>
+<li>If your measurement requires high cardinality to be useful, it cannot be instrumented.<ul>
+<li>Example: tagging every metric with a unique <code>vid</code> or <code>query_text</code> would create millions of distinct time series.</li>
+</ul>
+</li>
+<li>While the performance impact of telemetry is generally minimal, adding an instrument to something that is called tens of thousands of times per second may negatively impact performance.</li>
+<li>If the metric won’t drive a decision or alert, it may add noise rather than value.</li>
+<li>If the data only makes sense per individual event and loses meaning when aggregated (e.g., exact stack traces, raw error strings, mount IDs), a metric isn’t the right tool.</li>
+</ul>
+<p>We also highly advise you to read the following short section on when not to instrument from the official docs:</p>
+<ul>
+<li><a href="https://opentelemetry.io/docs/concepts/instrumentation/libraries/#when-not-to-instrument">https://opentelemetry.io/docs/concepts/instrumentation/libraries/#when-not-to-instrument</a></li>
+</ul>
+<h3 id="1-picking-the-correct-instrument">1. Picking the correct instrument<a class="headerlink" href="#1-picking-the-correct-instrument" title="Permanent link">#</a></h3>
+<p>To prevent repeating the official OpenTelemetry documentation, please read through the following section:</p>
+<ul>
+<li><a href="https://opentelemetry.io/docs/specs/otel/metrics/supplementary-guidelines/#guidelines-for-instrumentation-library-authors">https://opentelemetry.io/docs/specs/otel/metrics/supplementary-guidelines/#guidelines-for-instrumentation-library-authors</a></li>
+</ul>
+<h3 id="2-naming-your-metric">2. Naming your metric<a class="headerlink" href="#2-naming-your-metric" title="Permanent link">#</a></h3>
+<p>The name, description and unit of your metric should go into <code>common/semconv/Metrics.hpp</code>. Before you do this, first check whether your instrument already fits into the <a href="https://opentelemetry.io/docs/specs/semconv/general/metrics/">established semantic conventions</a>. If so, use those conventions (along with any relevant attributes). If not, define your own name, closely following the conventions of CTA and OpenTelemetry. Do not invent your own instrument/attribute names without cross-checking these with existing OpenTelemetry conventions.</p>
+<h3 id="3-defining-the-instrument">3. Defining the instrument<a class="headerlink" href="#3-defining-the-instrument" title="Permanent link">#</a></h3>
+<p>Instruments are defined as global variables in the <code>cta::telemetry::metrics</code> namespace. Generally, all instrument for a given library reside in the same file. For now, all instruments reside in <code>common/telemetry/metrics/instruments/</code>.</p>
+<p>The header file should contain the instrument declaration. For example, for the <code>taped</code> instrumentation, we would <em>declare</em> the following in <code>TapedInstruments.hpp</code>:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code><span style="color: #C678DD">namespace</span><span style="color: #ABB2BF"> </span><span style="color: #E06C75">cta</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">telemetry</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">metrics</span><span style="color: #ABB2BF"> {</span>
+
+<span style="color: #7F848E">/**</span>
+<span style="color: #7F848E"> * Number of files transferred to/from tape.</span>
+<span style="color: #7F848E"> */</span>
+<span style="color: #C678DD">extern</span><span style="color: #ABB2BF"> </span><span style="color: #E06C75">std</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">unique_ptr</span><span style="color: #56B6C2">&lt;</span><span style="color: #E06C75">opentelemetry</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">metrics</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">Counter</span><span style="color: #56B6C2">&lt;</span><span style="color: #E5C07B">uint64_t</span><span style="color: #56B6C2">&gt;&gt;</span><span style="color: #ABB2BF"> </span><span style="color: #E06C75">ctaTapedTransferCount</span><span style="color: #ABB2BF">;</span>
+
+<span style="color: #7F848E">/**</span>
+<span style="color: #7F848E"> * Bytes transferred to/from tape.</span>
+<span style="color: #7F848E"> */</span>
+<span style="color: #C678DD">extern</span><span style="color: #ABB2BF"> </span><span style="color: #E06C75">std</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">unique_ptr</span><span style="color: #56B6C2">&lt;</span><span style="color: #E06C75">opentelemetry</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">metrics</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">Counter</span><span style="color: #56B6C2">&lt;</span><span style="color: #E5C07B">uint64_t</span><span style="color: #56B6C2">&gt;&gt;</span><span style="color: #ABB2BF"> </span><span style="color: #E06C75">ctaTapedTransferIO</span><span style="color: #ABB2BF">;</span>
+
+<span style="color: #ABB2BF">}  </span><span style="color: #7F848E">// namespace cta::telemetry::metrics</span>
+</code></pre></div>
+<p>Then in <code>TapedInstruments.cpp</code>, we need to <em>define</em> these variables:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code><span style="color: #C678DD">namespace</span><span style="color: #ABB2BF"> </span><span style="color: #E06C75">cta</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">telemetry</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">metrics</span><span style="color: #ABB2BF"> {</span>
+
+<span style="color: #E06C75">std</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">unique_ptr</span><span style="color: #56B6C2">&lt;</span><span style="color: #E06C75">opentelemetry</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">metrics</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">Counter</span><span style="color: #56B6C2">&lt;</span><span style="color: #E5C07B">uint64_t</span><span style="color: #56B6C2">&gt;&gt;</span><span style="color: #ABB2BF"> </span><span style="color: #E06C75">ctaTapedTransferCount</span><span style="color: #ABB2BF">;</span>
+<span style="color: #E06C75">std</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">unique_ptr</span><span style="color: #56B6C2">&lt;</span><span style="color: #E06C75">opentelemetry</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">metrics</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">Counter</span><span style="color: #56B6C2">&lt;</span><span style="color: #E5C07B">uint64_t</span><span style="color: #56B6C2">&gt;&gt;</span><span style="color: #ABB2BF"> </span><span style="color: #E06C75">ctaTapedTransferIO</span><span style="color: #ABB2BF">;</span>
+
+<span style="color: #ABB2BF">}  </span><span style="color: #7F848E">// namespace cta::telemetry::metrics</span>
+</code></pre></div>
+<p>The header uses extern to <em>declare</em> the variables, while the <code>.cpp</code> file provides their single <em>definition</em>. This is intentional: it lets any translation unit that includes the header refer to the same variables without creating multiple definitions.</p>
+<p>However, as you might notice, we did not initialise the instrument yet. This is done in an <code>initInstruments()</code> function residing in an anonymous namespace:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code><span style="color: #7F848E">#include</span><span style="color: #ABB2BF"> </span><span style="color: #7F848E">"common/semconv/Meter.hpp"</span>
+<span style="color: #7F848E">#include</span><span style="color: #ABB2BF"> </span><span style="color: #7F848E">"common/semconv/Metrics.hpp"</span>
+
+<span style="color: #C678DD">namespace</span><span style="color: #ABB2BF"> {</span>
+<span style="color: #E5C07B">void</span><span style="color: #ABB2BF"> </span><span style="color: #61AFEF; font-weight: bold">initInstruments</span><span style="color: #ABB2BF">() {</span>
+<span style="color: #ABB2BF">   </span><span style="color: #C678DD">auto</span><span style="color: #ABB2BF"> </span><span style="color: #E06C75">meter</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">=</span><span style="color: #ABB2BF"> </span><span style="color: #E06C75">cta</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">telemetry</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">metrics</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">getMeter</span><span style="color: #ABB2BF">(</span><span style="color: #E06C75">cta</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">semconv</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">meter</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">kCtaTaped</span><span style="color: #ABB2BF">, </span><span style="color: #E06C75">CTA_VERSION</span><span style="color: #ABB2BF">);</span>
+
+<span style="color: #ABB2BF">  </span><span style="color: #7F848E">// Note the usage of the semantic convention constants here</span>
+<span style="color: #ABB2BF">  </span><span style="color: #E06C75">cta</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">telemetry</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">metrics</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">ctaTapedTransferCount</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">=</span>
+<span style="color: #ABB2BF">    </span><span style="color: #E06C75">meter</span><span style="color: #56B6C2">-&gt;</span><span style="color: #E06C75">CreateUInt64Counter</span><span style="color: #ABB2BF">(</span><span style="color: #E06C75">cta</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">semconv</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">metrics</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">kMetricCtaTapedTransferCount</span><span style="color: #ABB2BF">,</span>
+<span style="color: #ABB2BF">                               </span><span style="color: #E06C75">cta</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">semconv</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">metrics</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">descrCtaTapedTransferCount</span><span style="color: #ABB2BF">,</span>
+<span style="color: #ABB2BF">                               </span><span style="color: #E06C75">cta</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">semconv</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">metrics</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">unitCtaTapedTransferCount</span><span style="color: #ABB2BF">);</span>
+
+<span style="color: #ABB2BF">  </span><span style="color: #E06C75">cta</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">telemetry</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">metrics</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">ctaTapedTransferIO</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">=</span>
+<span style="color: #ABB2BF">    </span><span style="color: #E06C75">meter</span><span style="color: #56B6C2">-&gt;</span><span style="color: #E06C75">CreateUInt64Counter</span><span style="color: #ABB2BF">(</span><span style="color: #E06C75">cta</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">semconv</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">metrics</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">kMetricCtaTapedTransferIO</span><span style="color: #ABB2BF">,</span>
+<span style="color: #ABB2BF">                               </span><span style="color: #E06C75">cta</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">semconv</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">metrics</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">descrCtaTapedTransferIO</span><span style="color: #ABB2BF">,</span>
+<span style="color: #ABB2BF">                               </span><span style="color: #E06C75">cta</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">semconv</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">metrics</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">unitCtaTapedTransferIO</span><span style="color: #ABB2BF">);</span>
+
+<span style="color: #ABB2BF">  </span><span style="color: #E06C75">cta</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">telemetry</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">metrics</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">ctaTapedMountDuration</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">=</span>
+<span style="color: #ABB2BF">    </span><span style="color: #E06C75">meter</span><span style="color: #56B6C2">-&gt;</span><span style="color: #E06C75">CreateUInt64Histogram</span><span style="color: #ABB2BF">(</span><span style="color: #E06C75">cta</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">semconv</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">metrics</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">kMetricCtaTapedMountDuration</span><span style="color: #ABB2BF">,</span>
+<span style="color: #ABB2BF">                                 </span><span style="color: #E06C75">cta</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">semconv</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">metrics</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">descrCtaTapedMountDuration</span><span style="color: #ABB2BF">,</span>
+<span style="color: #ABB2BF">                                 </span><span style="color: #E06C75">cta</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">semconv</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">metrics</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">unitCtaTapedMountDuration</span><span style="color: #ABB2BF">);</span>
+<span style="color: #ABB2BF">}</span>
+
+<span style="color: #7F848E">// Register and run this init function at start time</span>
+<span style="color: #C678DD">const</span><span style="color: #ABB2BF"> </span><span style="color: #C678DD">auto</span><span style="color: #ABB2BF"> </span><span style="color: #E06C75">_</span><span style="color: #ABB2BF"> </span><span style="color: #56B6C2">=</span><span style="color: #ABB2BF"> </span><span style="color: #E06C75">cta</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">telemetry</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">metrics</span><span style="color: #56B6C2">::</span><span style="color: #E06C75">InstrumentRegistrar</span><span style="color: #ABB2BF">(</span><span style="color: #E06C75">initInstruments</span><span style="color: #ABB2BF">);</span>
+<span style="color: #ABB2BF">}  </span><span style="color: #7F848E">// namespace</span>
+</code></pre></div>
+<p>To briefly explain the important parts here. First, we initialise the <a href="https://opentelemetry.io/docs/concepts/signals/metrics/#meter">meter</a> for the library. A meter is what initialises instruments and is specific to a given library/component and version (of said library).</p>
+<p>This meter is used to initialise the global instruments, which typically take a name, description and unit.</p>
+<p>Finally, we create the instrument registrar as a static variable in the anonymous namespace. This ensures that the <code>initInstruments</code> function is registered at program start time so that it can be called when telemetry is initialised.</p>
+<h3 id="4-using-the-instrument">4. Using the instrument<a class="headerlink" href="#4-using-the-instrument" title="Permanent link">#</a></h3>
+<p>To use the instrument, simply import the relevant <code>*Instruments.hpp</code> file and use the <code>-&gt;Add(..)</code>/<code>-&gt;Record(..)</code> methods from the instruments themselves to capture your measurements.</p>
+<h3 id="5-adding-attributes-to-your-instrument-recordings">5. Adding attributes to your instrument recordings<a class="headerlink" href="#5-adding-attributes-to-your-instrument-recordings" title="Permanent link">#</a></h3>
+<p>Adding metric-level attributes can help with investigating metrics. However, adding attributes also increases the cardinality of your metric.
+<strong>Controlling cardinality is crucial</strong>.</p>
+<p>To a degree, high cardinality is unavoidable in an environment where many services are deployed. For the majority of time-series, it is desirable to be able to identify a given service. For example, in the future our CTA deployment might have O(1000) processes running, which means that a single instrument can already produce a similar number of time series.</p>
+<p>Prometheus recommends to keep the cardinality of metrics below 10. <strong>As such, for any attribute added to a metric, its number of possible values must be very small</strong>. The majority of metrics should have no additional attributes. Remember that the resource attributes already contain a lot of information (such as Catalogue/Scheduler info), so it is not necessary to add these as metric attributes.</p>
+<p>If your instrument is one already defined by the <a href="https://opentelemetry.io/docs/specs/semconv/general/metrics/">established semantic conventions</a>, it is typically desirable to include the required attributes as defined there.</p>
+<p>Attribute names are part of the semantic conventions and should therefore go in <code>common/semconv/Attributes.hpp</code>.</p>
+<p>References:</p>
+<ul>
+<li><a href="https://grafana.com/blog/2022/10/20/how-to-manage-high-cardinality-metrics-in-prometheus-and-kubernetes/">https://grafana.com/blog/2022/10/20/how-to-manage-high-cardinality-metrics-in-prometheus-and-kubernetes/</a></li>
+<li><a href="https://prometheus.io/docs/practices/instrumentation/#do-not-overuse-labels">https://prometheus.io/docs/practices/instrumentation/#do-not-overuse-labels</a></li>
+<li><a href="https://prometheus.io/docs/practices/instrumentation/#use-labels">https://prometheus.io/docs/practices/instrumentation/#use-labels</a></li>
+</ul>
+<hr />
+<h2 id="design-decisions">Design Decisions<a class="headerlink" href="#design-decisions" title="Permanent link">#</a></h2>
+<p>Due to the complexity of OpenTelemetry, there are various design decisions that were made when implementing this. Below, we list the most important ones.
+Please read through these carefully before making any changes to the way telemetry was set up.</p>
+<h3 id="cumulative-vs-delta-metrics">Cumulative vs Delta Metrics<a class="headerlink" href="#cumulative-vs-delta-metrics" title="Permanent link">#</a></h3>
+<p>There are two types of <a href="https://opentelemetry.io/docs/specs/otel/metrics/data-model/#temporality">temporality</a> in OpenTelemetry metrics: cumulative and delta.</p>
+<ul>
+<li>Cumulative: Each data point represents the total value of a metric since the start of measurement (or the last reset). For example, a counter measuring HTTP requests will always increase over time until it resets.</li>
+<li>Delta: Each data point represents the change since the last collection interval. Using the same example, the metric would report only the number of HTTP requests received in the most recent collection period.</li>
+</ul>
+<p>It is recommended to use the same temporality as the one used by the backend system:</p>
+<ul>
+<li>Prometheus (our target time-series database) expects cumulative metrics. Therefore, CTA will emit cumulative metrics by default.<ul>
+<li>Once all services support the <a href="https://opentelemetry.io/docs/languages/sdk-configuration/declarative-configuration/">declarative configuration</a> this can be changed by operators to suit their needs.</li>
+<li>If delta metrics are required (e.g., for integration with other systems or processors), the OpenTelemetry Collector can convert cumulative metrics to delta using a processor.</li>
+</ul>
+</li>
+</ul>
+<p>References:</p>
+<ul>
+<li><a href="https://opentelemetry.io/docs/specs/otel/metrics/data-model/#temporality">https://opentelemetry.io/docs/specs/otel/metrics/data-model/#temporality</a></li>
+<li><a href="https://grafana.com/blog/2023/09/26/opentelemetry-metrics-a-guide-to-delta-vs.-cumulative-temporality-trade-offs/">https://grafana.com/blog/2023/09/26/opentelemetry-metrics-a-guide-to-delta-vs.-cumulative-temporality-trade-offs/</a></li>
+</ul>
+<h3 id="uniquely-identifiable-processes">Uniquely Identifiable Processes<a class="headerlink" href="#uniquely-identifiable-processes" title="Permanent link">#</a></h3>
+<p>Every service/process must be uniquely identifiable, see <a href="https://opentelemetry.io/docs/specs/otel/metrics/data-model/#single-writer">Single-Writer</a>. Failing to satisfy this constraint can lead to data loss and/or incorrect metrics.</p>
+<p>In CTA, we deal with (1) by having each process include a globally unique uuid in the <code>service.instance.id</code> resource attribute, as recommended by <a href="https://opentelemetry.io/docs/specs/semconv/registry/attributes/service/">the docs</a>. This guarantees that each process is uniquely identifiable. However, this presents issues with cardinality: each time <code>cta-taped</code> forks we generate a new <code>service.instance.id</code>. To combat this, we provide the option to use a deterministic <code>service.instance.id</code>, comprised of the host name and the process title.</p>
+<p>This ensures that we do not create new time series every time <code>cta-taped</code> forks. Things such as counter resets can be detected by the Observability backend to due <a href="https://opentelemetry.io/docs/specs/otel/metrics/data-model/#resets-and-gaps">a change in start time</a>. Once forking is removed from taped, it can follow the same strategy as the other services.</p>
+<h3 id="instrument-reuse">Instrument Reuse<a class="headerlink" href="#instrument-reuse" title="Permanent link">#</a></h3>
+<p>Duplicate instrument registrations are considered semantic errors, see <a href="https://opentelemetry.io/docs/specs/otel/metrics/data-model/#opentelemetry-protocol-data-model-producer-recommendations">Producer Recommendations</a>. For example, if an instrument is initialised in the constructor of a class and two instances of said class are created, we are dealing with a semantic error. Similar to the single writer principle, failing to satisfy this constraint can lead to data loss and/or incorrect metrics.</p>
+<p>To tackle this, we need a way to prevent duplicate instrument registrations. Two approaches were considered for this: a caching mechanism and defining all instruments as global variables. Ultimately, CTA uses global variables to keep track of its instruments, as this approach is simpler, faster and less error-prone. A caching mechanism has several disadvantages:</p>
+<ul>
+<li>It would require locks to ensure thread-safety when it comes to initialisation. Seeing as instruments can be called extremely frequently, this would hurt performance.</li>
+<li>It might entice developers to "cache" the instruments by defining them as class members to overcome the locking contention. However, this can lead to unexpected errors when it comes to (re)initialisation of the instruments.</li>
+<li>It means the instrument definitions would be spread out all over the code, making it difficult to find which instruments exist and what attributes they use.</li>
+<li>Instruments need to be defined in multiple places (wherever they are used), which can lead to semantic errors if they don't have the exact same properties.</li>
+</ul>
+<p>The global variable approach handles this a lot better:</p>
+<ul>
+<li>No thread safety is required when it comes to initialisation. Note that instrument <em>usage</em> is already thread-safe by default.</li>
+<li>No need for caching, as it is already possible to directly access the instrument.</li>
+<li>All instrument definitions can be done in a single place, making it easy to find which instruments are being used.</li>
+</ul>
+<div class="footnote">
+<hr />
+<ol>
+<li id="fn:1">
+<p><a href="https://opentelemetry.io/docs/concepts/signals/metrics/">https://opentelemetry.io/docs/concepts/signals/metrics/</a>&#160;<a class="footnote-backref" href="#fnref:1" title="Jump back to footnote 1 in the text">&#8617;</a></p>
+</li>
+</ol>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 CERN
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://gitlab.cern.ch/cta/CTA/-/blob/main/CHANGELOG.md" target="_blank" rel="noopener" title="gitlab.cern.ch" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 11.11V5a2 2 0 0 0-2-2h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h6.11c1.26 1.24 2.98 2 4.89 2 3.87 0 7-3.13 7-7 0-1.91-.76-3.63-2-4.89M12 3c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1M6 7h12v2H6zm3.08 10H6v-2h3.08c-.05.33-.08.66-.08 1s.03.67.08 1M6 13v-2h5.11c-.61.57-1.07 1.25-1.43 2zm10 8c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5m.5-4.75 2.86 1.69-.75 1.22L15 17v-5h1.5z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://gitlab.cern.ch/cta/CTA" target="_blank" rel="noopener" title="gitlab.cern.ch" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="m504 204.6-.7-1.8L433.6 21c-1.4-3.6-3.9-6.6-7.2-8.6-2.4-1.6-5.1-2.5-8-2.8s-5.7.1-8.4 1.1-5.1 2.7-7.1 4.8c-1.9 2.1-3.3 4.7-4.1 7.4l-47 144H161.3l-47.1-144c-.8-2.8-2.2-5.3-4.1-7.4-2-2.1-4.4-3.7-7.1-4.8-2.6-1-5.5-1.4-8.4-1.1s-5.6 1.2-8 2.8c-3.2 2-5.8 5.1-7.2 8.6L9.8 202.8l-.8 1.8c-10 26.2-11.3 55-3.5 82 7.7 26.9 24 50.7 46.4 67.6l.3.2.6.4 106 79.5c38.5 29.1 66.7 50.3 84.6 63.9 3.7 1.9 8.3 4.3 13 4.3s9.3-2.4 13-4.3c17.9-13.5 46.1-34.9 84.6-63.9l106.7-79.9.3-.3c22.4-16.9 38.7-40.6 45.6-67.5 8.6-27 7.4-55.8-2.6-82"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://cta-community.web.cern.ch" target="_blank" rel="noopener" title="cta-community.web.cern.ch" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M225.9 32C103.3 32 0 130.5 0 252.1 0 256 .1 480 .1 480l225.8-.2c122.7 0 222.1-102.3 222.1-223.9S348.6 32 225.9 32M224 384c-19.4 0-37.9-4.3-54.4-12.1L88.5 392l22.9-75c-9.8-18.1-15.4-38.9-15.4-61 0-70.7 57.3-128 128-128s128 57.3 128 128-57.3 128-128 128"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["content.action.repo", "content.code.copy", "content.code.select", "navigation.instant", "navigation.instant.progress", "navigation.instant.prefetch", "navigation.path", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.sections", "navigation.prune", "announce.dismiss"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "provider": "mike"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

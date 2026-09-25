@@ -1,0 +1,2421 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Operator and developer documentation for the CERN Tape Archive (CTA) system">
+      
+      
+        <meta name="author" content="CERN Tape Archive Team">
+      
+      
+        <link rel="canonical" href="https://cta.docs.cern.ch/v5/ops/tools/cta-admin/">
+      
+      
+        <link rel="prev" href="../../monitoring/recommendations/">
+      
+      
+        <link rel="next" href="../cta-change-storage-class/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>cta-admin - CTA Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+  
+  
+    
+      
+      
+    
+  
+  
+  <style>:root{--md-admonition-icon--terminal:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20d%3D%22m6.354%208.04-4.773%204.773a.75.75%200%201%200%201.061%201.06L7.945%208.57a.75.75%200%200%200%200-1.06L2.642%202.206a.75.75%200%200%200-1.06%201.061L6.353%208.04ZM8.75%2011.5a.75.75%200%200%200%200%201.5h5.5a.75.75%200%200%200%200-1.5z%22/%3E%3C/svg%3E');}</style>
+
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="cta-light" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#name" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="CTA Documentation" class="md-header__button md-logo" aria-label="CTA Documentation" data-md-component="logo">
+      
+  <img src="../../../assets/images/favicon.ico" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            CTA Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              cta-admin
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="cta-light" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m3.55 19.09 1.41 1.41 1.8-1.79-1.42-1.42M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6c0-3.32-2.69-6-6-6m8 7h3v-2h-3m-2.76 7.71 1.8 1.79 1.41-1.41-1.79-1.8M20.45 5l-1.41-1.4-1.8 1.79 1.42 1.42M13 1h-2v3h2M6.76 5.39 4.96 3.6 3.55 5l1.79 1.81zM1 13h3v-2H1m12 9h-2v3h2"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="cta-dark" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.04 7 9.54s-2.94 8.27-7 9.54c.95.3 1.95.46 3 .46a10 10 0 0 0 10-10A10 10 0 0 0 9 2"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://gitlab.cern.ch/cta/CTA" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cta/CTA
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../overview/introduction/" class="md-tabs__link">
+          
+  
+  
+  Overview
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../introduction/" class="md-tabs__link">
+          
+  
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../dev/overview/" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../conventions/introduction/" class="md-tabs__link">
+          
+  
+  
+  Conventions
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../glossary/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Glossary
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="CTA Documentation" class="md-nav__button md-logo" aria-label="CTA Documentation" data-md-component="logo">
+      
+  <img src="../../../assets/images/favicon.ico" alt="logo">
+
+    </a>
+    CTA Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://gitlab.cern.ch/cta/CTA" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cta/CTA
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../overview/introduction/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Deployment
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/rpm-packages-and-services/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RPM Packages and Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../deployment/recommendations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recommendations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../deployment/configuration/example-configs/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Monitoring
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Monitoring
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../monitoring/logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Logging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../monitoring/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../monitoring/recommendations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Recommendations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tools
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_4_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3_4_1" id="__nav_3_4_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CTA Tools
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_3_4_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3_4_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    CTA Tools
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cta-admin
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta-change-storage-class/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cta-change-storage-class
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta-restore-deleted-files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cta-restore-deleted-files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta-catalogue-set-production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cta-catalogue-set-production
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta-catalogue-schema-verify/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cta-catalogue-schema-verify
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta-catalogue-schema-drop/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cta-catalogue-schema-drop
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta-objectstore-dump-object/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cta-objectstore-dump-object
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../ops-utils/operator-utils/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operator Utilities
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Procedures
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Procedures
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../procedures/upgrading-cta/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading CTA
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../procedures/upgrading-eos/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading EOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../procedures/upgrading-cta-catalogue-schema/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrading CTA Catalogue schema
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../procedures/hw-installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../procedures/hw-replacement/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hardware Replacement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../procedures/troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_6" id="__nav_3_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    EOS
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    EOS
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos/file-attributes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    File Attributes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../dev/overview/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../conventions/introduction/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../introduction/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Operations
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Tools
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    CTA Tools
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<hr />
+<p>date: 2026-08-17
+section: 1cta
+title: CTA-ADMIN
+header: The CERN Tape Archive (CTA)</p>
+<hr />
+<!---
+@project      The CERN Tape Archive (CTA)
+@copyright    Copyright © 2020-2024 CERN
+@license      This program is free software, distributed under the terms of the GNU General Public
+              Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
+              redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
+              option) any later version.
+
+              This program is distributed in the hope that it will be useful, but WITHOUT ANY
+              WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+              PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+              In applying this licence, CERN does not waive the privileges and immunities
+              granted to it by virtue of its status as an Intergovernmental Organization or
+              submit itself to any jurisdiction.
+--->
+
+<h1 id="name">NAME<a class="headerlink" href="#name" title="Permanent link">#</a></h1>
+<p>cta-admin --- Administrative command-line interface to CTA Frontend</p>
+<h1 id="synopsis">SYNOPSIS<a class="headerlink" href="#synopsis" title="Permanent link">#</a></h1>
+<p><strong>cta-admin</strong> [--json] [--config <em>path</em>] <em>command</em> [<em>subcommand</em>] [<em>options</em>]</p>
+<p><strong>cta-admin</strong> --help</p>
+<h1 id="description">DESCRIPTION<a class="headerlink" href="#description" title="Permanent link">#</a></h1>
+<p><strong>cta-admin</strong> sends the specified command to the CTA Frontend (see <strong>CONFIGURATION</strong> below).</p>
+<p>Invoking <strong>cta-admin</strong> with no command line parameters shows a list of valid commands. To show the
+subcommands and options for a specific command, type:</p>
+<blockquote>
+<p><strong>cta-admin</strong> <em>command</em> help</p>
+</blockquote>
+<h2 id="commands">Commands<a class="headerlink" href="#commands" title="Permanent link">#</a></h2>
+<p>Commands have a long version and an abbreviated version (shown in brackets).</p>
+<dl>
+<dt>activitymountrule (amr)</dt>
+<dd>
+<p>Add, change, remove or list the activity mount rules. This is provided as an alternative to
+requester mount rules and group mount rules. Activity mount rules allow the scheduling priority
+to be set based on metadata sent by the client rather than the authenticated identity of the
+requestor.</p>
+</dd>
+<dt>admin (ad)</dt>
+<dd>
+<p>Add, change, remove or list the administrators of the system. In order to use <strong>cta-admin</strong>,
+users must be included in the list of administrators, in addition to being authenticated.</p>
+</dd>
+<dt>archiveroute (ar)</dt>
+<dd>
+<p>Add, change, remove or list the archive routes. Archive routes are the policies linking namespace
+entries to tape pools.</p>
+</dd>
+<dt>diskinstance (di)</dt>
+<dd>
+<p>Add, change, remove or list the disk instances. A disk instance is a separate namespace. A CTA
+installation has one or more disk instances. Multiple disk instances can be configured if it is
+desired to have a separate namespace for each Virtual Organization (<abbr title="Virtual Organization">VO</abbr>).</p>
+<p><strong>--name</strong> specifies the disk instance name, which is the unique identifier of the disk
+instance and cannot be changed.</p>
+</dd>
+<dt>diskinstancespace (dis)</dt>
+<dd>
+<p>Add, change, remove or list the disk instance spaces. A disk instance can contain zero or more
+disk instance spaces. A disk instance space is a partition of the disk.</p>
+<p>A typical use case for disk instance spaces is to configure separate spaces for archival and
+retrieval operations on each instance.</p>
+<p><strong>--name</strong> specifies the disk instance space name. The disk instance name (<strong>--diskinstance</strong>)
+and disk instance space name form a pair which is the unique identifier for the disk instance space.</p>
+<p><strong>--diskinstance</strong> specifies the name of the disk instance to query, e.g. <strong>eosctapublic</strong></p>
+<p><strong>--freespacequeryurl</strong> specifies the URL to query the free disk space on this disk instance
+space. It should be specified in the following format:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>&lt;query protocol&gt;:&lt;name of disk space&gt;
+</code></pre></div>
+<p>Example:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>eosSpace:retrieve
+</code></pre></div>
+<p><strong>--refreshinterval</strong> specifies how long (in seconds) the cached value of the free space query
+will be used before performing a new query.</p>
+</dd>
+<dt>disksystem (ds)</dt>
+<dd>
+<p>Add, change, remove or list the disk systems. The disk system defines the disk buffer to be used
+for CTA archive and retrieval operations for each <abbr title="Virtual Organization">VO</abbr>. It corresponds to a specific directory tree
+on a disk instance space.</p>
+<p><strong>--disksystem</strong> specifies the unique identifier of the disk system.</p>
+<p><strong>--diskinstance</strong> and <strong>--diskinstancespace</strong> form a pair which specifies the disk instance
+and partition where this disk system is physically located.</p>
+<p><strong>--fileregexp</strong> specifies the regular expression to match filenames (from <em>destinationURL</em>) to disk systems.</p>
+<p>Example:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>destinationURL root://eos_instance//eos/cta/myfile?eos.lfn=fxid:7&amp;eos.space=spinners
+</code></pre></div>
+<p>will match the regular expression:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>^root://eos_instance//eos/cta(.*)eos.space=spinners
+</code></pre></div>
+<p>The two options below are provided to configure backpressure for retrieve operations. Backpressure
+is a mechanism to postpone retrieval of files from tape to the disk buffer when there is insufficient
+disk space. It can be configured separately for each disk system.</p>
+<p>Before a retrieve mount, the destination URL of each file is pattern-matched to identify the disk
+system. The corresponding disk instance space is queried to determine if there is sufficient free
+space to perform the mount. If there is insufficient space, the tape server sleeps for the specified
+interval.</p>
+<p><strong>--targetedfreespace</strong> specifies how much free space should be available before processing a
+batch of retrieve requests. It should be calculated based on the free space update latency (based
+on <em>diskinstancespace</em> parameters) and the expected bandwidth for transfers to the external Storage
+Element.</p>
+<p><strong>--sleeptime</strong> specifies how long (in seconds) to sleep when the disk system has insufficient
+space, before retrying the retrieve mount.</p>
+</dd>
+<dt>drive (dr)</dt>
+<dd>
+<p>Bring tape drives up or down, list tape drives or remove tape drives from the CTA system.</p>
+<p>This is a synchronous command to set and read back the state of one or more tape drives. The
+<em>drive_name</em> option accepts a regular expression. If the <em>drive_name</em> option is set to <strong>first</strong>,
+the <strong>up</strong>, <strong>down</strong>, <strong>ls</strong> and <strong>ch</strong> commands will scan the local configuration directory
+<em>\/etc\/cta</em> and use the drive from the first tape server configuration file found. This does not
+guarantee that the same drive will be used every time. This command will act only on drives that
+have the same SchedulerBackendName configured as the frontend the cta-admin client is querying.
+The only exception to this rule is the <em>dr ls --all</em> command, which shows all the drives registered
+in the catalogue.</p>
+<p><strong>up</strong> puts a drive into active state, able to perform an archive or retrieve mount.</p>
+<p><strong>down</strong> puts a drive into inactive state, unable to mount. Drives will complete any running session
+and dismount the tape before changing state.</p>
+<p><strong>--reason</strong> specifies the reason (free text) why the drive is being put down. The reason will
+be displayed in the output of <strong>ls</strong>.</p>
+<p><strong>ls</strong> lists the drives matching <em>drive_name</em>, or all drives by default. An exclamation mark (<strong>!</strong>)
+is displayed in front of the drive name for drives in disabled libraries.</p>
+<p><strong>rm</strong> deletes the drive definition. Drives must be in the <strong>down</strong> state before deleting.
+(Override with <strong>--force</strong>).</p>
+</dd>
+<dt>failedrequest (fr)</dt>
+<dd>
+<p>List and remove requests which failed and for which all retry attempts failed.</p>
+</dd>
+<dt>groupmountrule (gmr)</dt>
+<dd>
+<p>Add, change, remove or list the group mount rules.</p>
+</dd>
+<dt>logicallibrary (ll)</dt>
+<dd>
+<p>Add, change, remove or list the logical libraries. Logical libraries are logical groupings of
+tapes and drives based on physical location and tape drive capabilities.</p>
+<p>A tape can be accessed by a drive if it is in the same physical library and if the drive is
+capable of reading or writing the tape. In this case, that tape and that drive should normally
+be in the same logical library.</p>
+</dd>
+<dt>mediatype (mt)</dt>
+<dd>
+<p>Add, change, remove or list the tape cartridge media types. This command is used to specify the
+nominal capacity of each media type, which is used to estimate the total capacity of tape pools.</p>
+<p>Optionally, specify the parameters for software Recommended Access Order (LTO-8 or older tape
+technology only). See <strong>cta-taped(1cta)</strong> for details.</p>
+</dd>
+<dt>mountpolicy (mp)</dt>
+<dd>
+<p>Add, change, remove or list the mount policies.</p>
+</dd>
+<dt>physicallibrary (pl)</dt>
+<dd>
+<p>Add, change, remove or list the physical tape libraries.</p>
+</dd>
+<dt>recycletf (rtf)</dt>
+<dd>
+<p>List tape files in the recycle log.</p>
+<p>Tape files in the recycle log can be listed by <abbr title="Volume ID, the indentifier of a particular tape">VID</abbr>, EOS disk file ID, EOS disk instance,
+ArchiveFileId or copy number. Disk file IDs should be provided in hexadecimal format (fxid).</p>
+</dd>
+<dt>repack (re)</dt>
+<dd>
+<p>Add or remove a request to repack one or more tapes, list repack requests in progress, display
+repack errors.</p>
+<p><strong>add</strong> adds one or more tapes to the active repack requests:</p>
+<p><strong>--mountpolicy</strong> specifies the mount policy that will be applied to the repack subrequests
+(the retrieve and archive requests).</p>
+<p><strong>--vid</strong> specifies a single tape to repack.</p>
+<p><strong>--vidfile</strong> specifies the filename of a text file containing a list of tapes to repack.</p>
+<p><strong>--bufferurl</strong> optionally specifies the buffer to use in place of the default repack buffer
+URL (specified in the CTA Frontend configuration). It should follow this format:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>root://eos_instance//path/to/repack/buffer
+</code></pre></div>
+<p><strong>--maxfilestoselect</strong> optionally limits the the number of files to be repacked to the specified
+value, overriding the default value (specified in the CTA Frontend configuration). Set the value
+to zero to force all files to be selected.</p>
+<p><strong>--no-recall</strong> inhibits the retrieve mount. Only files that are already located in the disk
+buffer will be considered for archival.</p>
+<p>By default, CTA will migrate files onto a new tape (or multiple tapes) AND add new (or missing)
+copies of the file. The expected number of copies is defined by the storage class of the file.</p>
+<p><strong>--justmove</strong> means that the files located on the tape to repack will be migrated onto new
+tape(s), without creating any additional copies.</p>
+<p><strong>--justaddcopies</strong> means that new (or missing) copies of the files located on the tape to
+repack will be created on the new tape(s), but the source tape file will not be migrated.</p>
+<p><strong>rm</strong> removes a tape from the list of tapes to repack.</p>
+<p><strong>ls</strong> lists repack requests in progress. Rows marked with the <strong>*</strong> flag indicate that not all
+files were selected for repack. The number of files to repack at once can be restricted to avoid
+overloading the Scheduler Database. To repack the remaining files, repeat the operation.</p>
+<p><strong>err</strong> displays any repack errors.</p>
+</dd>
+<dt>requestermountrule (rmr)</dt>
+<dd>
+<p>Add, change, remove or list the requester mount rules.</p>
+</dd>
+<dt>showqueues (sq)</dt>
+<dd>
+<p>Show the status of all active queues. The bottom section shows requests already being serviced by
+tape servers, which is why the values of some fields are at zero.</p>
+</dd>
+<dt>storageclass (sc)</dt>
+<dd>
+<p>Add, change, remove or list the storage classes. The storage class of a file specifies its
+expected number of tape copies, and the corresponding tape pool that each copy should be archived
+to.</p>
+<p>In EOS, the storage class is specified as an extended attribute of the directory, which is
+inherited as an extended attribute of the file at creation time.</p>
+</dd>
+<dt>tape (ta)</dt>
+<dd>
+<p>Add, change, remove, reclaim, list or label tapes. This command is used to manage the physical
+tape cartridges in each library.</p>
+<p><strong>--get-storage-class-stats</strong> includes file counts and total data size per storage class for
+each tape. This is an expensive operation and delays output until all statistics are loaded.</p>
+</dd>
+<dt>tapefile (tf)</dt>
+<dd>
+<p>Change the storage class of archive files, remove tape files or list tape files.</p>
+<p><strong>ch</strong> changes the storage class of archive files:</p>
+<p><strong>--storageclass</strong> specifies the target storage class.</p>
+<p><strong>--fxidfile</strong> specifies the filename of a text file containing a list of disk file IDs
+in hexadecimal format. The format of this file is the same as the output of
+<strong>eos find --fid <path></strong>.</p>
+<p><strong>--fxid</strong> specifies the disk file ID. EOS disk file IDs should be provided in hexadecimal
+format.</p>
+<p><strong>--diskfileid</strong> specifies a single disk file ID.</p>
+<p><strong>--instance</strong> specifies the disk instance on which the disk file ID is located.</p>
+<p><strong>--id</strong> specifies a single archive file ID.</p>
+<p><strong>rm</strong> deletes a single tape file. Note that some disk files have more than one associated tape file.</p>
+<p><strong>--vid</strong> specifies the volume identifier (<abbr title="Volume ID, the indentifier of a particular tape">VID</abbr>) of a tape.</p>
+<p><strong>--reason</strong> specifies the reason for deleting the tape file.</p>
+<p><strong>ls</strong> lists tape files. Which files to list can be specified by <abbr title="Volume ID, the indentifier of a particular tape">VID</abbr>, the (disk instance,
+disk file ID) pair, or the archive file ID.</p>
+</dd>
+<dt>tapepool (tp)</dt>
+<dd>
+<p>Add, change, remove or list tape pools. Tape pools are logical sets of tapes which are used to
+manage the tape lifecycle:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>label → supply pool → user pool → erase → label
+</code></pre></div>
+<p><strong>add</strong> creates a new tapepool:</p>
+<p><strong>--partialtapesnumber</strong> specifies the number of tapes which should be made available for
+writing in this tape pool. If the number of tapes eligible for writing falls below this number
+(for example, because a tape becomes full), a new tape will be added from a supply pool.</p>
+<p><strong>--supply</strong> specifies a comma-separated list of tape pools to use as supply pools, when
+adding new (empty) tapes to this tape pool.</p>
+<p><strong>ls</strong> shows statistics such as the total number of tapes in the pool and number of free tapes.</p>
+</dd>
+<dt>version (v)</dt>
+<dd>
+<p>Display the version of <strong>cta-admin</strong>, the CTA Frontend, the protocol buffer used for client/server
+communication, and the CTA Catalogue schema.</p>
+</dd>
+<dt>virtualorganization (vo)</dt>
+<dd>
+<p>Add, change, remove or list the Virtual Organisations (VOs). A <abbr title="Virtual Organization">VO</abbr> corresponds to an entity whose
+data transfers and storage should be managed independently of the others, for example an experimental
+collaboration.</p>
+<p><strong>--virtualorganisation</strong> specifies the name of the virtual organisation. It must be unique.</p>
+<p><strong>--readmaxdrives</strong> specifies the maximum number of drives the virtual organisation is allowed
+to use for reading&gt;</p>
+<p><strong>--writemaxdrives</strong> specifies the maximum number of drives the virtual organisation is allowed
+to use for writing.</p>
+<p><strong>--maxfilesize</strong> specifies the maximum file size for this virtual organisation. Default is 0,
+which means no limit.</p>
+<p><strong>--isrepackvo</strong> if set to <strong>true</strong>, normal data archival and retrieval is inhibited for this <abbr title="Virtual Organization">VO</abbr>;
+it can only be used for repack operations.</p>
+</dd>
+</dl>
+<h1 id="options">OPTIONS<a class="headerlink" href="#options" title="Permanent link">#</a></h1>
+<dl>
+<dt><strong>--json</strong></dt>
+<dd>
+<p>Return the output of <strong>cta-admin</strong> as a JSON object rather than columnar text. This option is
+intended for use by scripts to ease automated processing of results.</p>
+</dd>
+<dt><strong>--config</strong></dt>
+<dd>
+<p>Override the default configuration file <em>/etc/cta/cta-cli.conf</em>.</p>
+</dd>
+</dl>
+<h1 id="configuration">CONFIGURATION<a class="headerlink" href="#configuration" title="Permanent link">#</a></h1>
+<p><strong>cta-admin</strong> reads its configuration parameters from <em>/etc/cta/cta-cli.conf</em>.
+Each option is listed with its <em>default</em> value.</p>
+<dl>
+<dt>cta.endpoint (no default)</dt>
+<dd>
+<p>Specifies the CTA Frontend hostname (FQDN) and TCP port.</p>
+</dd>
+<dt>cta.resource.options <em>none</em></dt>
+<dd>
+<p>Currently the only supported option is <em>Reusable</em>. For an explanation of XRootD SSI reusable
+resources, see:
+<a href="http://xrootd.org/doc/dev49/ssi_reference-V2.htm#_Toc506323429">http://xrootd.org/doc/dev49/ssi_reference-V2.htm#_Toc506323429</a>.</p>
+</dd>
+<dt>cta.log <em>none</em></dt>
+<dd>
+<p>Sets the client log level (see <strong>XrdSsiPbLogLevel</strong> below).</p>
+</dd>
+<dt>cta.log.hiRes <em>false</em></dt>
+<dd>
+<p>Specify whether log timestamps should have second (<em>false</em>) or microsecond (<em>true</em>) resolution.</p>
+</dd>
+</dl>
+<h1 id="exit-status">EXIT STATUS<a class="headerlink" href="#exit-status" title="Permanent link">#</a></h1>
+<p><strong>cta-admin</strong> returns 0 on success.</p>
+<p>If there is an error, a message will be printed on <em>stderr</em>. XRootD errors, protocol buffer
+errors and CTA Frontend errors return exit code 1. User errors (e.g. invalid tape pool or <abbr title="Volume ID, the indentifier of a particular tape">VID</abbr>) return
+with exit code 2.</p>
+<p>In the case of user errors, when the <strong>--json</strong> option is specified, <strong>cta-admin</strong> will return an empty JSON array
+to <em>stdout</em> in addition to the error message printed on <em>stderr</em>. Scripts using <strong>cta-admin</strong> should interpret
+the error code to determine whether valid parameters were used.</p>
+<h1 id="environment">ENVIRONMENT<a class="headerlink" href="#environment" title="Permanent link">#</a></h1>
+<dl>
+<dt>XrdSecPROTOCOL</dt>
+<dd>
+<p>Sets the XRootD security protocol to use for client/server connections.</p>
+</dd>
+<dt>XrdSsiPbLogLevel <em>none</em></dt>
+<dd>
+<p>Set the desired log level. Logging is sent to stderr.</p>
+<p>Available log levels are: <em>none</em> <em>error</em> <em>warning</em> <em>info</em> <em>debug</em></p>
+<p>There are two additional debugging flags to expose details of the communication between client and server:</p>
+<p><em>protobuf</em> shows the contents of the Google Protocol buffers used for communication in JSON format\
+<em>protoraw</em> shows the serialized Google Protocol buffer, i.e. the binary format sent on the wire</p>
+<p>Log level <em>all</em> is a synonym for "<em>debug</em> <em>protobuf</em> <em>protoraw</em>".</p>
+</dd>
+<dt>XRDDEBUG</dt>
+<dd>
+<p>If the XRootD environment variable XRDDEBUG=1, the log level is set to <em>all</em> (see above).</p>
+</dd>
+<dt>XrdSecDEBUG</dt>
+<dd>
+<p>If the XRootD environment variable XrdSecDEBUG=1, authentication messages are logged. This is
+useful for debugging problems with Kerberos or <abbr title="Simple Shared Secret">SSS</abbr> authentication.</p>
+</dd>
+<dt>XRDSSIDEBUG</dt>
+<dd>
+<p>If the XRootD environment variable XRDSSIDEBUG=1, debug messages will be displayed for each
+low-level SSI event.</p>
+</dd>
+<dt>XRD_REQUESTTIMEOUT <em>1800</em></dt>
+<dd>
+<p>Specifies the timeout (in seconds) for the entire request to be processed: connection to load balancer +
+redirection + connection to data server + request/response round-trip. Normally this should be less than
+one second, but for a heavily-loaded system can take more than one minute.</p>
+<p>The same timeout is also applied to the response for list commands. List commands can return arbitrarily
+long output, but by using the XRootD SSI stream mechanism, the timeout is applied to each packet of the
+response rather than the total time taken to process the response.</p>
+</dd>
+<dt>XRD_STREAMTIMEOUT</dt>
+<dd>
+<p>Note that the XRootD stream timeout is explicitly disabled by the XRootD server for SSI requests,
+so this environment variable is <strong>not</strong> used.</p>
+</dd>
+<dt>XRD_CONNECTIONRETRY <em>1</em></dt>
+<dd>
+<p>By default, if the connection to the CTA Frontend fails for any reason, <strong>cta-admin</strong> returns
+immediately with <strong>[FATAL] Connection error</strong>. XRD_CONNECTIONRETRY and XRD_CONNECTIONWINDOW
+can be used to configure retry behaviour. Note that Connection Retry is a misnomer as it sets
+the total number of attempts, not the number of retries.</p>
+</dd>
+</dl>
+<h1 id="files">FILES<a class="headerlink" href="#files" title="Permanent link">#</a></h1>
+<dl>
+<dt><em>/etc/cta/cta-cli.conf</em></dt>
+<dd>
+<p>See <strong>CONFIGURATION</strong> above, and <em>/etc/cta/cta-cli.example.conf</em>.</p>
+</dd>
+</dl>
+<h1 id="bugs">BUGS<a class="headerlink" href="#bugs" title="Permanent link">#</a></h1>
+<p>When using the <strong>--json</strong> option, 64-bit integer fields are returned as strings. This is a feature of the
+Google Protocol Buffers library, to cope with the fact that JavaScript parsers do not have the ability
+to handle integers with more than 32-bit precision.</p>
+<h1 id="see-also">SEE ALSO<a class="headerlink" href="#see-also" title="Permanent link">#</a></h1>
+<p>CERN Tape Archive documentation <a href="https://cta.docs.cern.ch/">https://cta.docs.cern.ch/</a></p>
+<h1 id="copyright">COPYRIGHT<a class="headerlink" href="#copyright" title="Permanent link">#</a></h1>
+<p>Copyright © 2024 CERN. License GPLv3+: GNU GPL version 3 or later <a href="http://gnu.org/licenses/gpl.html">http://gnu.org/licenses/gpl.html</a>.
+This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the extent permitted by law.
+In applying this licence, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
+Intergovernmental Organization or submit itself to any jurisdiction.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 CERN
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://gitlab.cern.ch/cta/CTA/-/blob/main/CHANGELOG.md" target="_blank" rel="noopener" title="gitlab.cern.ch" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 11.11V5a2 2 0 0 0-2-2h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h6.11c1.26 1.24 2.98 2 4.89 2 3.87 0 7-3.13 7-7 0-1.91-.76-3.63-2-4.89M12 3c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1M6 7h12v2H6zm3.08 10H6v-2h3.08c-.05.33-.08.66-.08 1s.03.67.08 1M6 13v-2h5.11c-.61.57-1.07 1.25-1.43 2zm10 8c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5m.5-4.75 2.86 1.69-.75 1.22L15 17v-5h1.5z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://gitlab.cern.ch/cta/CTA" target="_blank" rel="noopener" title="gitlab.cern.ch" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="m504 204.6-.7-1.8L433.6 21c-1.4-3.6-3.9-6.6-7.2-8.6-2.4-1.6-5.1-2.5-8-2.8s-5.7.1-8.4 1.1-5.1 2.7-7.1 4.8c-1.9 2.1-3.3 4.7-4.1 7.4l-47 144H161.3l-47.1-144c-.8-2.8-2.2-5.3-4.1-7.4-2-2.1-4.4-3.7-7.1-4.8-2.6-1-5.5-1.4-8.4-1.1s-5.6 1.2-8 2.8c-3.2 2-5.8 5.1-7.2 8.6L9.8 202.8l-.8 1.8c-10 26.2-11.3 55-3.5 82 7.7 26.9 24 50.7 46.4 67.6l.3.2.6.4 106 79.5c38.5 29.1 66.7 50.3 84.6 63.9 3.7 1.9 8.3 4.3 13 4.3s9.3-2.4 13-4.3c17.9-13.5 46.1-34.9 84.6-63.9l106.7-79.9.3-.3c22.4-16.9 38.7-40.6 45.6-67.5 8.6-27 7.4-55.8-2.6-82"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://cta-community.web.cern.ch" target="_blank" rel="noopener" title="cta-community.web.cern.ch" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M225.9 32C103.3 32 0 130.5 0 252.1 0 256 .1 480 .1 480l225.8-.2c122.7 0 222.1-102.3 222.1-223.9S348.6 32 225.9 32M224 384c-19.4 0-37.9-4.3-54.4-12.1L88.5 392l22.9-75c-9.8-18.1-15.4-38.9-15.4-61 0-70.7 57.3-128 128-128s128 57.3 128 128-57.3 128-128 128"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["content.action.repo", "content.code.copy", "content.code.select", "navigation.instant", "navigation.instant.progress", "navigation.instant.prefetch", "navigation.path", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.sections", "navigation.prune", "announce.dismiss"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "provider": "mike"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

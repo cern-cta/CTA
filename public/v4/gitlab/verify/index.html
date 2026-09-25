@@ -1,0 +1,3966 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="EOSCTA Documentation">
+      
+      
+        <meta name="author" content="CERN Tape Archive team">
+      
+      
+        <link rel="canonical" href="https://eoscta.docs.cern.ch/v4/gitlab/verify/">
+      
+      
+        <link rel="prev" href="../alma9_runner/">
+      
+      
+        <link rel="next" href="../frontend/">
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.25">
+    
+    
+      
+        <title>Verify the CTA installation - EOSCTA Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.6543a935.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/fonts.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#verify-cta-installation" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="EOSCTA Docs" class="md-header__button md-logo" aria-label="EOSCTA Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            EOSCTA Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Verify the CTA installation
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://gitlab.cern.ch/cta/eoscta-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitLab
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="EOSCTA Docs" class="md-nav__button md-logo" aria-label="EOSCTA Docs" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    EOSCTA Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://gitlab.cern.ch/cta/eoscta-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitLab
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    CTA Design
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            CTA Design
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cta/Constraints/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Design Constraints
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cta/Questions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Questions and Answers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Software Development
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            Software Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../software/eoscta_dev_environment/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Create a native EOSCTA development environment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../software/coding/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coding Conventions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cta/git_workflow/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Git Workflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cta/tag_cta/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tagging a new CTA release
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Deployment Guide
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Deployment Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/buildcta/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Build CTA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Native server installation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            Native server installation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/install/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Install CTA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configure CTA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/start/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Start CTA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/eos/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Install EOS
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/mhvtl/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Install mhVTL
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Containerised installation
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            Containerised installation
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../runner/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    A CTA instance built from source in a standalone VM
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../alma9_runner/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CI Runner in Alma9
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Verify the CTA installation
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Verify the CTA installation
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#running-a-simple-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running a simple test
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#get-an-interactive-access-to-the-pod" class="md-nav__link">
+    <span class="md-ellipsis">
+      Get an interactive access to the pod
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#post-mortem-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Post-mortem analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Post-mortem analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      logs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dump-the-objectstore-content" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dump the objectstore content
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-a-kubernetes-test-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Delete a kubernetes test instance
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#long-running-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Long running tests
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../frontend/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CTA Frontend in a Docker container
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/eoscta_doublebuildtree/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Building EOS (for developers)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../postgres/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Running with Postgres
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../orchestration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CTA Continuous Integration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../software/eoscta_upgrade_eos_ci/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Updating the EOS version used by CTA in the CI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/install_public_rpms/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Public RPMs installation instructions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/configure_multi_tapelibs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configure multiple tape libraries in CTA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    File Lifecycle
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            File Lifecycle
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Intro/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Checksum/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Checksums
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Archive/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Archival
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Retrieve/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Retrieval
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Delete/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deletion
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Repack/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Repack
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Reconciliation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reconciliation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Zero-length-files/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Zero-length files
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Recycle_bin/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Recycle-bin
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Restoring/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Restoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/garbage_collection/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Garbage Collection
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/ChangeStorageClass/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Change Storage Class
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/NamespaceInjection/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS Namespace Injection
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/MoveFilesToInstance/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Move to Instance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Database
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Database
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../database/protecting_the_production_db/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Protecting the Production DB
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../database/how_to_drop_an_oracle_database_account_from_the_inside/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    How to drop an Oracle database account
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    CTA Catalogue Schema
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            CTA Catalogue Schema
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../catalogue/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Updating the schema
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            Updating the schema
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../catalogue/updating_the_schema/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../catalogue/updating_the_schema/create_new_version/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Creating a new schema version
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../catalogue/updating_the_schema/naming_conventions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Naming conventions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../catalogue/updating_the_schema/backward_compatible_upgrades/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Backwards-compatible schema updates
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../catalogue/updating_the_schema/backward_incompatible_upgrades/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Backwards-incompatible schema updates
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../catalogue/updating_the_schema/create_liquibase_changelog_file/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Create the Liquibase changelog file
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Upgrading the schema
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            Upgrading the schema
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../catalogue/upgrading_the_schema/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../catalogue/upgrading_the_schema/container/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Automated upgrade
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../catalogue/upgrading_the_schema/manual/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Manual upgrade
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_4" id="__nav_7_4_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Tools
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_4">
+            <span class="md-nav__icon md-icon"></span>
+            Tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../catalogue/tools/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../catalogue/tools/schema_verify_tool/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    cta-catalogue-schema-verify
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../catalogue/tools/liquibase/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Liquibase
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    CTA statistics
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            CTA statistics
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../statistics/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../statistics/cta-statistics-update/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    The cta-statistics-update tool
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../statistics/cta-statistics-save/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    The cta-statistics-save tool
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Queues and Scheduling
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Queues and Scheduling
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../scheduling/cta-scheduling/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    How CTA mount scheduling works
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../queues/failed_requests/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Failed Requests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../repack/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Repack Lifecycle
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rucio/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Rucio Integration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Authentication and Security
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            Authentication and Security
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/authentication/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Authentication
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cta/Security/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Security
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    RAO
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            RAO
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rao/configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuration of RAO in CTA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lto/reports/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LTO Reports
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lto/lto/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LTO Tapes
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lto/scsi/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    SCSI Commands
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lto/experiments/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    RAO for LTO Experiments
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Tape Infrastructure
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12">
+            <span class="md-nav__icon md-icon"></span>
+            Tape Infrastructure
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_12_1" id="__nav_12_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Drives
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_12_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12_1">
+            <span class="md-nav__icon md-icon"></span>
+            Drives
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../drives/dedications/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Drive Dedications
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../drives/tape_in_drive/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tape in Drive Check
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../drives/drive_status/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tape Drive Status Diagram
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_12_2" id="__nav_12_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Libraries
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_12_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12_2">
+            <span class="md-nav__icon md-icon"></span>
+            Libraries
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../libraries/spectralogic/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    SpectraLogic
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_12_3" id="__nav_12_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Tapes
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_12_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12_3">
+            <span class="md-nav__icon md-icon"></span>
+            Tapes
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tape/disabled_tape/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Disabled Tapes
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tape/media_types/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Media Types
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tape/tape_lifecycle/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tape lifecycle
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tape/tape_verification/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tape Verification
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tape/tape_format/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tape Format
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_13" >
+        
+          
+          <label class="md-nav__link" for="__nav_13" id="__nav_13_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    EOS
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_13">
+            <span class="md-nav__icon md-icon"></span>
+            EOS
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos/Protocol/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS-CTA Protocol
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos_converters_and_fids/eos_converters_and_fids/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS converters and file identifiers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos_failure_statistics/eos_failure_statistics/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS failure statistics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos_operations_procedures/eos_operations_procedures/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS operations procedures
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos_disk_file_repairs/eos_disk_file_repairs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS disk file repairs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_13_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_13_6" id="__nav_13_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    EOS rate limiter
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_13_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_13_6">
+            <span class="md-nav__icon md-icon"></span>
+            EOS rate limiter
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rate_limiter/introduction/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rate_limiter/currently_deployed/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Currently deployed rate limits
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rate_limiter/implementation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Implementation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../space_vs_layout/space_vs_layout/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS spaces versus disk storage layouts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tape_replicas/tape_replicas/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS tape replicas
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos_disk_layout_cgi/eos_disk_layout_cgi/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS disk layout CGI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_13_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_13_10" id="__nav_13_10_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    EOSCTA failure modes
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_13_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_13_10">
+            <span class="md-nav__icon md-icon"></span>
+            EOSCTA failure modes
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../failure_modes/introduction/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../failure_modes/file_system_off/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    File system off
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../failure_modes/lost_disk_replica/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Lost disk replica
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../failure_modes/too_big_disk_replica/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Too big disk replica
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../failure_modes/too_small_disk_replica/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Too small disk replica
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../failure_modes/truncated_disk_replica/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Truncated disk replica
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../failure_modes/wrong_checksum_disk_replica/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Wrong checksum disk replica
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://codimd.web.cern.ch/VSU_DFN_SXaVtZuYkjILdA" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOSCTALICE instance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_13_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_13_12" id="__nav_13_12_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    FST garbage collector
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_13_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_13_12">
+            <span class="md-nav__icon md-icon"></span>
+            FST garbage collector
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../fst_gc/introduction/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../fst_gc/implementation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Implementation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../fst_gc/eos_space_dicussions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS space discussions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../fst_gc/eosctacmspps/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Current deployment on eosctacmspps
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../fst_gc/mgm_query_rates/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS MGM query rates
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../fst_gc/cpp_vs_py/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    C++ versus Python
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../fst_gc/use_cases/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Use cases
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos_ns_master/eos_ns_master/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    The EOS namespace is the master
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tape_rest_api/tape_rest_api/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tape REST API
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    CASTOR
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
+            <span class="md-nav__icon md-icon"></span>
+            CASTOR
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../castor/castor_tape_scheduling_responsibilities/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CASTOR tape scheduling responsibilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../glossary/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Glossary
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#running-a-simple-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running a simple test
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#get-an-interactive-access-to-the-pod" class="md-nav__link">
+    <span class="md-ellipsis">
+      Get an interactive access to the pod
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#post-mortem-analysis" class="md-nav__link">
+    <span class="md-ellipsis">
+      Post-mortem analysis
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Post-mortem analysis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      logs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dump-the-objectstore-content" class="md-nav__link">
+    <span class="md-ellipsis">
+      Dump the objectstore content
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-a-kubernetes-test-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Delete a kubernetes test instance
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#long-running-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Long running tests
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<h1 id="verify-cta-installation">Verify <abbr title="CERN Tape Archive">CTA</abbr> installation<a class="headerlink" href="#verify-cta-installation" title="Permanent link">&para;</a></h1>
+<p>Here are the various pods in our <code>cta</code> namespace:</p>
+<div class="highlight"><pre><span></span><code>[root@ctadevjulien orchestration]# kubectl get namespace
+NAME          STATUS    AGE
+cta           Active    4m
+default       Active    88d
+kube-system   Active    88d
+[root@ctadevjulien orchestration]# kubectl get pods -a --namespace cta
+NAME          READY     STATUS      RESTARTS   AGE
+ctacli        1/1       Running     0          3m
+ctaeos        1/1       Running     0          3m
+ctafrontend   1/1       Running     0          3m
+init          0/1       Completed   0          4m
+kdc           1/1       Running     0          3m
+tpsrv         2/2       Running     0          3m
+</code></pre></div>
+<p>Everything looks fine, you can even check the logs of <code>eos</code> mgm:</p>
+<div class="highlight"><pre><span></span><code>[root@ctadevjulien CTA]# kubectl --namespace $NAMESPACE logs ctaeos
+...
+### ctaeos mgm ready ###
+</code></pre></div>
+<p>Or the <code>Completed</code> init pod:</p>
+<div class="highlight"><pre><span></span><code>[root@ctadevjulien CTA]# kubectl --namespace $NAMESPACE logs init
+...
+Using this configuration for library:
+Configuring mhvtl library
+DRIVESLOT is not defined, using driveslot 0
+export LIBRARYTYPE=mhvtl
+export LIBRARYNAME=VLSTK60
+export LIBRARYDEVICE=sg35
+export DRIVENAMES=(VDSTK61 VDSTK62 VDSTK63)
+export DRIVEDEVICES=(nst15 nst16 nst17)
+export TAPES=(V06001 V06002 V06003 V06004 V06005 V06006 V06007)
+export driveslot=0
+Configuring objectstore:
+Configuring ceph objectstore
+Wiping objectstore
+Rados objectstore rados://cta-julien@tapetest:cta-julien is not empty: deleting content
+New object store path: rados://cta-julien@tapetest:cta-julien
+Rados objectstore rados://cta-julien@tapetest:cta-julien content:
+driveRegister-cta-objectstore-initialize-init-295-20170307-23:20:49-1
+cta-objectstore-initialize-init-295-20170307-23:20:49
+agentRegister-cta-objectstore-initialize-init-295-20170307-23:20:49-0
+schedulerGlobalLock-cta-objectstore-initialize-init-295-20170307-23:20:49-2
+root
+Configuring database:
+Configuring oracle database
+Wiping database
+Aborting: unlockSchema failed: executeNonQuery failed for SQL statement... ORA-00942: table or view does not exist
+Aborting: schemaIsLocked failed: executeQuery failed for SQL statement ... ORA-00942: table or view does not exist
+Aborting: schemaIsLocked failed: executeQuery failed for SQL statement ... ORA-00942: table or view does not exist
+Database contains no tables. Assuming the schema has already been dropped.
+Labelling tapes using the first drive in VLSTK60: VDSTK61 on /dev/nst15:
+V06001 in slot 1 Loading media from Storage Element 1 into drive 0...done
+1+0 records in
+1+0 records out
+80 bytes (80 B) copied, 0.00448803 s, 17.8 kB/s
+Unloading drive 0 into Storage Element 1...done
+OK
+...
+</code></pre></div>
+<h2 id="running-a-simple-test">Running a simple test<a class="headerlink" href="#running-a-simple-test" title="Permanent link">&para;</a></h2>
+<p>The test will archive and retrieve 10000 files.</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>continuousintegration/orchestration/tests
+./test_client.sh<span class="w"> </span>-n<span class="w"> </span>cta
+</code></pre></div>
+<p>It configures <abbr title="CERN Tape Archive">CTA</abbr> instance for the tests and <code>xrdcp</code> a file to <abbr title="EOS Open Storage">EOS</abbr> instance, checks that it is on tape and recalls it.</p>
+<p>If something goes wrong, please check the logs from the various containers running on the pods that were defined during dev meetings:</p>
+<ol>
+<li><code>init</code><ul>
+<li>Initializes the system, e.g. labels tapes using cat, creates/wipes the catalog database, creates/wipes the <abbr title="CERN Tape Archive">CTA</abbr> object store and makes sure all drives are empty and tapes are back in their home slots.</li>
+</ul>
+</li>
+<li><code>kdc</code><ul>
+<li>Runs the KDC server for authenticating <abbr title="EOS Open Storage">EOS</abbr> end-users and <abbr title="CERN Tape Archive">CTA</abbr> tape operators.</li>
+</ul>
+</li>
+<li><code>eoscli</code><ul>
+<li>Hosts the command-line tools to be used by an end-user of <abbr title="EOS Open Storage">EOS</abbr>, namely xrdcp, xrdfs and eos.</li>
+</ul>
+</li>
+<li><code>ctaeos</code><ul>
+<li>One <abbr title="EOS Open Storage">EOS</abbr> mgm.</li>
+<li>One <abbr title="EOS Open Storage">EOS</abbr> fst.</li>
+<li>One <abbr title="EOS Open Storage">EOS</abbr> mq.</li>
+<li>The <abbr title="EOS Open Storage">EOS</abbr> Simple Shared Secret (SSS) to be used by the <abbr title="EOS Open Storage">EOS</abbr> mgm and <abbr title="EOS Open Storage">EOS</abbr> fst to authenticate each other.</li>
+<li>The <abbr title="CERN Tape Archive">CTA</abbr> SSS to be used by the <abbr title="EOS Open Storage">EOS</abbr> <abbr title="EOS metadata server">MGM</abbr> to authenticate itself with the <abbr title="CERN Tape Archive">CTA</abbr> frontend.</li>
+<li>The tape server SSS to be used by the <abbr title="EOS Open Storage">EOS</abbr> mgm to authenticate file transfer requests from the tape servers.</li>
+</ul>
+</li>
+<li><code>ctacli</code><ul>
+<li>The cta-admin command-line tool to be used by tape operators.</li>
+<li>This pod has the keytab of <code>ctaadmin1</code> who is allowed to type <code>cta</code> admin commands.</li>
+</ul>
+</li>
+<li><code>ctafrontend</code><ul>
+<li>One <abbr title="CERN Tape Archive">CTA</abbr> front-end.</li>
+<li>The <abbr title="CERN Tape Archive">CTA</abbr> SSS of the <abbr title="EOS Open Storage">EOS</abbr> instance that will be used by the <abbr title="CERN Tape Archive">CTA</abbr> frontend to authenticate the <abbr title="EOS Open Storage">EOS</abbr> <abbr title="EOS metadata server">MGM</abbr>.</li>
+</ul>
+</li>
+<li><code>tpsrvXX</code> <em>No two pods in the same namespace can have the same name, hence each tpsrv pod will be numbered differently</em><ul>
+<li>One <code>cta-taped</code> daemon running in <code>taped</code> container of <code>tpsrvxxx</code> pod.</li>
+<li>One <code>cta-rmcd</code> daemon running in <code>rmcd</code> container of <code>tpsrvxxx</code> pod.</li>
+<li>The tape server SSS to be used by cta-taped to authenticate its file transfer requests with the <abbr title="EOS Open Storage">EOS</abbr> mgm (all tape servers will use the same SSS).</li>
+</ul>
+</li>
+<li><code>client</code><ul>
+<li>The <code>cta</code> command-line tool to be used by <code>eosusers</code>.</li>
+<li>The <code>eos</code> command-line tool.</li>
+<li>This pod has the keytab of <code>user1</code> who is allowed to read-write file in <code>root://ctaeos//eos/ctaeos/cta</code>.</li>
+</ul>
+</li>
+</ol>
+<h2 id="get-an-interactive-access-to-the-pod">Get an interactive access to the pod<a class="headerlink" href="#get-an-interactive-access-to-the-pod" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>--namespace<span class="w"> </span><span class="nv">$NAMESPACE</span><span class="w"> </span><span class="nb">exec</span><span class="w"> </span>&lt;pod&gt;<span class="w"> </span>-ti<span class="w"> </span>bash
+</code></pre></div>
+<h2 id="post-mortem-analysis">Post-mortem analysis<a class="headerlink" href="#post-mortem-analysis" title="Permanent link">&para;</a></h2>
+<h3 id="logs">logs<a class="headerlink" href="#logs" title="Permanent link">&para;</a></h3>
+<p>An interesting feature is to collect the logs from the various processes running in containers on the various pods.
+Kubernetes allows to collect <code>stdout</code> and <code>stderr</code> from any container and add time stamps to ease post-mortem analysis.</p>
+<p>Those are the logs of the <code>init</code> pod first container:</p>
+<div class="highlight"><pre><span></span><code>[root@ctadev01 CTA]# kubectl logs init --timestamps  --namespace $NAMESPACE
+2016-11-08T20:00:28.154608000Z New object store path: file:///shared/test/objectstore
+2016-11-08T20:00:31.490246000Z Loading media from Storage Element 1 into drive 0...done
+2016-11-08T20:00:32.712066000Z 1+0 records in
+2016-11-08T20:00:32.712247000Z 1+0 records out
+2016-11-08T20:00:32.712373000Z 80 bytes (80 B) copied, 0.221267 s, 0.4 kB/s
+2016-11-08T20:00:32.733046000Z Unloading drive 0 into Storage Element 1...done
+</code></pre></div>
+<h3 id="dump-the-objectstore-content">Dump the objectstore content<a class="headerlink" href="#dump-the-objectstore-content" title="Permanent link">&para;</a></h3>
+<p>Connect to a pod where the objectstore is configured, like <code>ctafrontend</code>:</p>
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>--namespace<span class="w"> </span><span class="nv">$NAMESPACE</span><span class="w"> </span><span class="nb">exec</span><span class="w"> </span>ctafrontend<span class="w"> </span>-ti<span class="w"> </span>bash
+</code></pre></div>
+<p>From there, you need to configure the objecstore environment variables, sourcing <code>/tmp/objectstore-rc.sh</code> install the missing <code>protocolbuffer</code> tools like <code>protoc</code> binary, and then dump all the objects you want:</p>
+<div class="highlight"><pre><span></span><code>[root@ctafrontend /]# yum install -y  protobuf-compiler
+...
+Installed:
+  protobuf-compiler.x86_64 0:2.5.0-7.el7
+
+Complete!
+
+[root@ctafrontend /]# . /tmp/objectstore-rc.sh
+
+[root@ctafrontend /]# cta-objectstore-list
+OStoreDBFactory-tpsrv-340-20161216-14:17:51
+OStoreDBFactory-ctafrontend-188-20161216-14:15:35
+schedulerGlobalLock-makeMinimalVFS-init-624-20161216-14:14:17-2
+driveRegister-makeMinimalVFS-init-624-20161216-14:14:17-1
+makeMinimalVFS-init-624-20161216-14:14:17
+agentRegister-makeMinimalVFS-init-624-20161216-14:14:17-0
+root
+RetrieveQueue-OStoreDBFactory-ctafrontend-188-20161216-14:15:35-3
+
+[root@ctafrontend /]# cta-objectstore-dump-object RetrieveQueue-OStoreDBFactory-ctafrontend-188-20161216-14:15:35-3
+1: 10
+2: 0
+3: "root"
+4: "root"
+5 {
+  10100: "V02001"
+  10131 {
+    9301: 1
+    9302: 1
+  }
+  10132 {
+    9301: 1
+    9302: 1
+  }
+  10133 {
+    9301: 1
+    9302: 1
+  }
+  10140: 406
+  10150: 0
+}
+</code></pre></div>
+<h3 id="delete-a-kubernetes-test-instance">Delete a <code>kubernetes</code> test instance<a class="headerlink" href="#delete-a-kubernetes-test-instance" title="Permanent link">&para;</a></h3>
+<p>Deletion manages the removal of the infrastructure that had been created and populated during the creation procedure: it deletes the database content and drop the schema, remove all the objects in the objectstore independently of the type of resources (ceph objectstore, file based objectstore, oracle database, sqlite database...).</p>
+<p>In our example:</p>
+<div class="highlight"><pre><span></span><code>[root@ctadevjulien CTA]# ./delete_instance.sh -n $NAMESPACE
+Deleting cta instance
+Unlock cta catalog DB
+Delete cta catalog DB for instance
+Deleted 1 admin users
+Deleted 1 admin hosts
+Deleted 1 archive routes
+Deleted 1 requester mount-rules
+Deleted 0 requester-group mount-rules
+Deleted 1 archive files and their associated tape copies
+Deleted 7 tapes
+Deleted 1 storage classes
+Deleted 1 tape pools
+Deleted 1 logical libraries
+Deleted 1 mount policies
+Status cta catalog DB for instance
+UNLOCKED
+Drop cta catalog DB schema for instance
+namespace "cta" deleted
+................................OK
+Deleting PV sg34 with status Released
+persistentvolume "sg34" created
+OK
+Status of library pool after test:
+NAME      CAPACITY   ACCESSMODES   STATUS      CLAIM     REASON    AGE
+sg30      1Mi        RWO           Available                       19h
+sg31      1Mi        RWO           Available                       19h
+sg32      1Mi        RWO           Available                       19h
+sg33      1Mi        RWO           Available                       18h
+sg34      1Mi        RWO           Available                       0s
+sg35      1Mi        RWO           Available                       19h
+sg36      1Mi        RWO           Available                       19h
+sg37      1Mi        RWO           Available                       19h
+sg38      1Mi        RWO           Available                       19h
+sg39      1Mi        RWO           Available                       18h
+</code></pre></div>
+<p>When this deletion script is finished, the <code>cta</code> instance is gone: feel free to start another one...</p>
+<div class="highlight"><pre><span></span><code>[root@ctadevjulien CTA]# kubectl get namespace
+NAME          STATUS    AGE
+default       Active    6d
+kube-system   Active    6d
+</code></pre></div>
+<h3 id="long-running-tests">Long running tests<a class="headerlink" href="#long-running-tests" title="Permanent link">&para;</a></h3>
+<p>If some tests run for long, the kerberos token in the cli pod should be renewed with:</p>
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>--namespace<span class="o">=</span><span class="si">${</span><span class="nv">instance</span><span class="si">}</span><span class="w"> </span><span class="nb">exec</span><span class="w"> </span>ctacli<span class="w"> </span>--<span class="w"> </span>kinit<span class="w"> </span>-kt<span class="w"> </span>/root/admin1.keytab<span class="w"> </span>admin1@TEST.CTA
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../..", "features": [], "search": "../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.081f42fc.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@8.4.0/dist/mermaid.min.js"></script>
+      
+    
+  </body>
+</html>

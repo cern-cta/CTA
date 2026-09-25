@@ -1,0 +1,10 @@
+:root {
+    --md-primary-fg-color: #ce6300;
+    --md-primary-fg-color--light: #ce6300;
+    --md-primary-fg-color--dark:  #ce6300;
+  }
+
+  .md-header, .md-tabs {
+    background-image: linear-gradient(90deg, #d82c0e 0%, #ce6300 50%, #daba53 100%);
+    /* background-image: linear-gradient(90deg, #6206d0 0%, #ffe48f 100%); */
+  }

@@ -1,0 +1,1601 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="EOSCTA Documentation">
+      
+      
+        <meta name="author" content="CERN Tape Archive Team">
+      
+      
+        <link rel="canonical" href="https://eoscta.docs.cern.ch/v4/ops/tools/ops_utils/cta_tape_verify/">
+      
+      
+        <link rel="prev" href="../cta_tape_admin/">
+      
+      
+        <link rel="next" href="../../../../glossary/">
+      
+      
+      <link rel="icon" href="../../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.25">
+    
+    
+      
+        <title>CTA Tape Verify - EOSCTA Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../../assets/stylesheets/main.6543a935.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cta-tape-verify" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../../.." title="EOSCTA Docs" class="md-header__button md-logo" aria-label="EOSCTA Docs" data-md-component="logo">
+      
+  <img src="../../../../assets/favicon.ico" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            EOSCTA Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              CTA Tape Verify
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9h-1.9M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69m-9.15 3.96h2.3L12 9l-1.15 3.65Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="light-blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="light-blue"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://gitlab.cern.ch/cta/eoscta-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitLab
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../.." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../overview/introduction/" class="md-tabs__link">
+          
+  
+  Overview
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../dev/introduction/" class="md-tabs__link">
+          
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../../introduction/" class="md-tabs__link">
+          
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../../glossary/" class="md-tabs__link">
+        
+  
+    
+  
+  Glossary
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../../deprecated/cta/Constraints/" class="md-tabs__link">
+          
+  
+  ⚠️ Deprecated
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../../.." title="EOSCTA Docs" class="md-nav__button md-logo" aria-label="EOSCTA Docs" data-md-component="logo">
+      
+  <img src="../../../../assets/favicon.ico" alt="logo">
+
+    </a>
+    EOSCTA Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://gitlab.cern.ch/cta/eoscta-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitLab
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../../../overview/introduction/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../../../dev/introduction/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Development
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Operations
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Operations
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../introduction/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Operations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Tape Drive Interface
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            Tape Drive Interface
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../td_interface/scsi/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    scsi
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Tools
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            Tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cta_admin/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    cta-admin
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cta_change_storage_class/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    cta-change-storage-class
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cta_eos_namespace_inject/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    cta-eos-namespace-inject
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cta_restore_deleted_files/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    cta-restore-deleted-files
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cta_statistics_save/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    cta-statistics-save
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cta_statistics_update/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    cta-statistics-update
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../catalogue/cta_catalogue_set_production/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Catalogue
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4_3_8" id="__nav_4_3_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Operator Utilities
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="3" aria-labelledby="__nav_4_3_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4_3_8">
+            <span class="md-nav__icon md-icon"></span>
+            Operator Utilities
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../operator_utils/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../artresys/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ATRESYS
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta_ops_admin/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CTA Ops Admin
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta_ops_drv_conf_gen/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CTA Operations Drive Config Generate
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta_ops_eos/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CTA Ops EOS
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta_utils/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CTA Utils
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta_pool_supply/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CTA Tape Pool Supply
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta_tape_admin/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CTA Tape Admin
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    CTA Tape Verify
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    CTA Tape Verify
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#cta-verify-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      cta-verify-file
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cta-verify-tape" class="md-nav__link">
+    <span class="md-ellipsis">
+      cta-verify-tape
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verification monitoring
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verification monitoring">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#verification-job-submission-on-a-tape" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verification job submission on a tape
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verification-job-finished" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verification job finished
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cta-verification-feeder" class="md-nav__link">
+    <span class="md-ellipsis">
+      cta-verification-feeder
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../../glossary/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Glossary
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    
+  
+  
+    <a href="../../../../deprecated/cta/Constraints/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    ⚠️ Deprecated
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+  
+
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#cta-verify-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      cta-verify-file
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cta-verify-tape" class="md-nav__link">
+    <span class="md-ellipsis">
+      cta-verify-tape
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#verification-monitoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verification monitoring
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Verification monitoring">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#verification-job-submission-on-a-tape" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verification job submission on a tape
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#verification-job-finished" class="md-nav__link">
+    <span class="md-ellipsis">
+      Verification job finished
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cta-verification-feeder" class="md-nav__link">
+    <span class="md-ellipsis">
+      cta-verification-feeder
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<div class="admonition info">
+<p class="admonition-title">WIP</p>
+<p>This page is still work in progress.</p>
+</div>
+<h1 id="cta-tape-verify"><abbr title="CERN Tape Archive">CTA</abbr> Tape Verify<a class="headerlink" href="#cta-tape-verify" title="Permanent link">&para;</a></h1>
+<p>The <abbr title="CERN Tape Archive">CTA</abbr> Tape Verify framework monitors tapes in the <abbr title="CERN Tape Archive">CTA</abbr> system and alerts in case of potential data loss/corruption.</p>
+<p>The framework is composed by a set of scripts (namely <code>cta-verify-file</code>, <code>cta-verify-tape</code>, <code>cta-verification-feeder</code>), a monitoring flume agent that parses the <abbr title="CERN Tape Archive">CTA</abbr> logs and extracts logs related to verification and related periodic rundeck jobs.</p>
+<h3 id="cta-verify-file">cta-verify-file<a class="headerlink" href="#cta-verify-file" title="Permanent link">&para;</a></h3>
+<p>This command submits a verification request to the <abbr title="CERN Tape Archive">CTA</abbr> frontend. A verification request is a retrieve request with the <code>isVerifyOnly</code> flag set to true. <abbr title="CERN Tape Archive">CTA</abbr> handles this requests specially:</p>
+<ul>
+<li>
+<p>On queuing time, the mount policy n attributed to the request is hard-coded in the <code>/etc/cta/cta-frontend-xrootd.conf</code> file (configuration options <code>cta.verification.mount_policy</code>). This is done so that verification jobs run with the lowest possible priority in the cta scheduler. The verification mount policy should be associated to a specific verification virtual organization to allow tracking ongoing verification jobs in <code>cta-admin sq</code></p>
+</li>
+<li>
+<p>When a verification retrieve job is executed, the tape file is streamed to <code>/dev/null</code>.</p>
+</li>
+<li>
+<p>When a recall tape session is finished, verified jobs and bytes are accounted separately from user or repack jobs in the "Tape session finished message".</p>
+</li>
+</ul>
+<p>The options for this command are:</p>
+<ul>
+<li><strong>request.user</strong>: The user submitting the request. This will be "verification"</li>
+<li><strong>request.group</strong>: The group of the user submitting the request. This will be "it"</li>
+<li><strong>instance</strong>: The disk instance of the retrieve request. This can be any disk instance since verification jobs don't write the file anywhere.</li>
+<li><strong>vid</strong>: Optional. The vid of the tape the file belongs to.</li>
+</ul>
+<h3 id="cta-verify-tape">cta-verify-tape<a class="headerlink" href="#cta-verify-tape" title="Permanent link">&para;</a></h3>
+<p>The <code>cta-verify-tape</code> command submits a tape for verification by selecting some files from it and issuing a <code>cta-verify-file</code> command for each of them.</p>
+<p>When a tape is submitted for verification, it's <code>verification_status</code> is updated to <code>{date: &lt;current_date&gt;, status: ongoing, files_submitted: &lt;number of files&gt;, files_verified: 0, files_failed: 0}</code>.</p>
+<p>The options for this command are:</p>
+<ul>
+<li><strong>vid</strong>: The vid of the tape to be verified.</li>
+<li><strong>read_time</strong>: The minimum amount of time it should take to read a tape (assuming a read speed of 300 MB/s).</li>
+<li><strong>data_size</strong>: The minimum amount of data that should be read from the tape.</li>
+<li><strong>first</strong>: The number of files that should be read from the beginning of the tape (fseq order)</li>
+<li><strong>last</strong>: The number of files that should be read from the end of the tape (fseq order)</li>
+<li><strong>random</strong>: The number of files that should be read from the middle of the tape</li>
+<li><strong>all</strong>: If present, all tape files will be verified</li>
+<li><strong>options</strong>: Options to pass to the <code>cta-verify-file</code> commands.</li>
+</ul>
+<p>The <code>cta-verify-tape</code> command should be run from the cta frontend. It's logs are written in <code>/var/log/cta/verification/cta-verify-tape.log</code></p>
+<h3 id="verification-monitoring">Verification monitoring<a class="headerlink" href="#verification-monitoring" title="Permanent link">&para;</a></h3>
+<h4 id="verification-job-submission-on-a-tape">Verification job submission on a tape<a class="headerlink" href="#verification-job-submission-on-a-tape" title="Permanent link">&para;</a></h4>
+<p>File submission is caught on <code>cta-frontend</code> MSG.</p>
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>May<span class="w"> </span><span class="m">11</span><span class="w"> </span><span class="m">14</span>:57:36.567479<span class="w"> </span>ctafrontend<span class="w"> </span>cta-frontend:<span class="w"> </span><span class="nv">LVL</span><span class="o">=</span><span class="s2">&quot;INFO&quot;</span><span class="w"> </span><span class="nv">PID</span><span class="o">=</span><span class="s2">&quot;210&quot;</span><span class="w"> </span><span class="nv">TID</span><span class="o">=</span><span class="s2">&quot;800&quot;</span><span class="w"> </span><span class="nv">MSG</span><span class="o">=</span><span class="s2">&quot;Queued retrieve request&quot;</span><span class="w"> </span><span class="nv">user</span><span class="o">=</span><span class="s2">&quot;ctaadmin1@ctafrontend&quot;</span><span class="w"> </span><span class="nv">fileId</span><span class="o">=</span><span class="s2">&quot;10026&quot;</span><span class="w"> </span><span class="nv">instanceName</span><span class="o">=</span><span class="s2">&quot;ctaeos&quot;</span><span class="w"> </span><span class="nv">diskFilePath</span><span class="o">=</span><span class="s2">&quot;dummy&quot;</span><span class="w"> </span><span class="nv">diskFileOwnerUid</span><span class="o">=</span><span class="s2">&quot;0&quot;</span><span class="w"> </span><span class="nv">diskFileGid</span><span class="o">=</span><span class="s2">&quot;0&quot;</span><span class="w"> </span><span class="nv">dstURL</span><span class="o">=</span><span class="s2">&quot;file://dummy&quot;</span><span class="w"> </span><span class="nv">errorReportURL</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="w"> </span><span class="nv">creationHost</span><span class="o">=</span><span class="s2">&quot;ctafrontend&quot;</span><span class="w"> </span><span class="nv">creationTime</span><span class="o">=</span><span class="s2">&quot;1652273856&quot;</span><span class="w"> </span><span class="nv">creationUser</span><span class="o">=</span><span class="s2">&quot;ctaeos&quot;</span><span class="w"> </span><span class="nv">requesterName</span><span class="o">=</span><span class="s2">&quot;verification&quot;</span><span class="w"> </span><span class="nv">requesterGroup</span><span class="o">=</span><span class="s2">&quot;it&quot;</span><span class="w"> </span><span class="nv">criteriaArchiveFileId</span><span class="o">=</span><span class="s2">&quot;10026&quot;</span><span class="w"> </span><span class="nv">criteriaCreationTime</span><span class="o">=</span><span class="s2">&quot;1652273277&quot;</span><span class="w"> </span><span class="nv">criteriaDiskFileId</span><span class="o">=</span><span class="s2">&quot;10016&quot;</span><span class="w"> </span><span class="nv">criteriaDiskFileOwnerUid</span><span class="o">=</span><span class="s2">&quot;0&quot;</span><span class="w"> </span><span class="nv">criteriaDiskInstance</span><span class="o">=</span><span class="s2">&quot;ctaeos&quot;</span><span class="w"> </span><span class="nv">criteriaFileSize</span><span class="o">=</span><span class="s2">&quot;407&quot;</span><span class="w"> </span><span class="nv">reconciliationTime</span><span class="o">=</span><span class="s2">&quot;1652273277&quot;</span><span class="w"> </span><span class="nv">storageClass</span><span class="o">=</span><span class="s2">&quot;ctaStorageClass&quot;</span><span class="w"> </span><span class="nv">checksumType</span><span class="o">=</span><span class="s2">&quot;ADLER32&quot;</span><span class="w"> </span><span class="nv">checksumValue</span><span class="o">=</span><span class="s2">&quot;20ce7e60&quot;</span><span class="w"> </span><span class="nv">tapeTapefile0</span><span class="o">=</span><span class="s2">&quot;(vid=V01007 fSeq=10006 blockId=100051 fileSize=407 copyNb=1 creationTime=1652273277)&quot;</span><span class="w"> </span><span class="nv">selectedVid</span><span class="o">=</span><span class="s2">&quot;V01007&quot;</span><span class="w"> </span><span class="nv">verifyOnly</span><span class="o">=</span><span class="s2">&quot;1&quot;</span><span class="w"> </span><span class="nv">catalogueTime</span><span class="o">=</span><span class="s2">&quot;0.004542&quot;</span><span class="w"> </span><span class="nv">schedulerDbTime</span><span class="o">=</span><span class="s2">&quot;0.008317&quot;</span><span class="w"> </span><span class="nv">policyName</span><span class="o">=</span><span class="s2">&quot;verification&quot;</span><span class="w"> </span><span class="nv">policyMinAge</span><span class="o">=</span><span class="s2">&quot;1&quot;</span><span class="w"> </span><span class="nv">policyPriority</span><span class="o">=</span><span class="s2">&quot;1&quot;</span><span class="w"> </span><span class="nv">retrieveRequestId</span><span class="o">=</span><span class="s2">&quot;RetrieveRequest-Frontend-ctafrontend-210-20220511-14:35:58-0-30326&quot;</span><span class="w"> </span>
+</span></code></pre></div>
+<h4 id="verification-job-finished">Verification job finished<a class="headerlink" href="#verification-job-finished" title="Permanent link">&para;</a></h4>
+<p>End of verification job is caught in the <code>Tape session finished</code> MSG from <code>cta-taped</code>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>[1651668122.508010000] May  4 14:42:02.508010 tpsrv327.cern.ch cta-taped: LVL=&quot;INFO&quot; PID=&quot;29084&quot; TID=&quot;29084&quot; MSG=&quot;Tape session finished&quot; tapeVid=&quot;L86417&quot; mountType=&quot;Retrieve&quot; mountId=&quot;1409&quot; volReqId=&quot;1409&quot; tapeDrive=&quot;S1L91024&quot; vendor=&quot;IBM-SONY&quot; vo=&quot;VERIFICATION&quot; mediaType=&quot;LTO9&quot; tapePool=&quot;verification&quot; logicalLibrary=&quot;SPC1L9&quot; capacityInBytes=&quot;18000000000000&quot; wasTapeMounted=&quot;1&quot; mountTime=&quot;24.315550&quot; positionTime=&quot;292.720636&quot; waitInstructionsTime=&quot;0.225751&quot; waitFreeMemoryTime=&quot;0.003217&quot; waitDataTime=&quot;0.000000&quot; waitReportingTime=&quot;0.018863&quot; checksumingTime=&quot;0.000000&quot; readWriteTime=&quot;28.752113&quot; flushTime=&quot;0.000000&quot; unloadTime=&quot;140.028687&quot; unmountTime=&quot;16.560684&quot; encryptionControlTime=&quot;0.084526&quot; transferTime=&quot;28.999944&quot; totalTime=&quot;502.537895&quot; deliveryTime=&quot;346.121073&quot; drainingTime=&quot;0.000000&quot; dataVolume=&quot;6146917032&quot; filesCount=&quot;32&quot; headerVolume=&quot;15360&quot; payloadTransferSpeedMBps=&quot;12.231748&quot; driveTransferSpeedMBps=&quot;12.231779&quot; repackFilesCount=&quot;0&quot; userFilesCount=&quot;0&quot; verifiedFilesCount=&quot;32&quot; repackBytesCount=&quot;0&quot; userBytesCount=&quot;0&quot; verifiedBytesCount=&quot;6146917032&quot; status=&quot;success&quot; 
+</span></code></pre></div>
+<p>Here 32 files have been verified on tape <code>L86417</code>.</p>
+<p>This message allows to mix user jobs and verification jobs, is this something we need?</p>
+<p>Indeed: if a tape is mounted for a read it is verified by user reads by definition...</p>
+<h2 id="cta-verification-feeder">cta-verification-feeder<a class="headerlink" href="#cta-verification-feeder" title="Permanent link">&para;</a></h2>
+<p>This command is responsible for selecting which tapes are to be verified according to user supplied parameters. It is run periodically from rundeck and handles the following:</p>
+<ul>
+<li>Check the tapes that have an ongoing verification status. If the verification has finished (<code>cta-admin --json sq</code> does now show the <code>verification</code> mount policy for the queue) change the verification status to <code>finished</code>).</li>
+<li>Compare the number of ongoing verifications with a user supplied maximum. If it is less than the maximum, submit new tapes for verification until the limit is reached.</li>
+</ul>
+<p>The feeder can use three parameters to choose which tape to submit for verification:</p>
+<ul>
+<li><strong>last_read</strong>: Choose the tape that has not been read in the longest time.</li>
+<li><strong>last_write</strong>: Choose the tape that has not been written in the longest time.</li>
+<li><strong>last_verified</strong>: Choose the tape that has not been verified in the longest time.</li>
+</ul>
+<p>The options for the <code>cta-verification-feeder</code> are as follows:</p>
+<ul>
+<li><strong>filter</strong>: Filter out tapes matching the states passed.</li>
+<li><strong>tapepool</strong>: Only verify tapes in the specified tapepool</li>
+<li><strong>min_data_on_tape</strong>: Minimum number of bytes on tape for it to be verified</li>
+<li><strong>min_relative_capacity</strong>: Minimum relative filled capacity of tape for it to be verified</li>
+<li><strong>verify_path</strong>: Location of <code>cta-verify-tape</code> executable.</li>
+<li><strong>verify_policy</strong>: One of <code>last_read</code>, <code>last_written</code>, <code>last_verified</code>.</li>
+<li><strong>full_tape</strong>: Verify only tapes that are full.</li>
+<li><strong>noaction</strong>: Dry run, do not submit the tapes for verification.</li>
+<li><strong>minage</strong>: Verify only tapes which have not been verified for so many days.</li>
+<li><strong>maxverify</strong>: maximum number verify processes to run concurrently.</li>
+<li><strong>verify_options</strong>: Options to pass to <code>cta-verify-tape</code>.</li>
+<li><strong>logfile</strong>: Log file path.</li>
+</ul>
+<p>The feeder calls the <code>cta-verify-tape</code> script for each tape it decides to verify.</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">June 3, 2024</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3h-2Z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">June 5, 2024</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../cta_tape_admin/" class="md-footer__link md-footer__link--prev" aria-label="Previous: CTA Tape Admin">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                CTA Tape Admin
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../../../../glossary/" class="md-footer__link md-footer__link--next" aria-label="Next: Glossary">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Glossary
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../../../..", "features": ["content.code.copy", "navigation.expand", "navigation.instant", "navigation.instant.progress", "navigation.instant.prefetch", "navigation.path", "navigation.prune", "navigation.sections", "navigation.tabs", "navigation.top", "navigation.footer", "toc.follow"], "search": "../../../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "provider": "mike"}}</script>
+    
+    
+      <script src="../../../../assets/javascripts/bundle.081f42fc.min.js"></script>
+      
+    
+  </body>
+</html>

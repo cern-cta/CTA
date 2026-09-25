@@ -1,0 +1,2435 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Operator and developer documentation for the CERN Tape Archive (CTA) system">
+      
+      
+        <meta name="author" content="CERN Tape Archive Team">
+      
+      
+        <link rel="canonical" href="https://cta.docs.cern.ch/v5/dev/getting-started/setup/">
+      
+      
+        <link rel="prev" href="../../overview/">
+      
+      
+        <link rel="next" href="../walkthrough/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Development Setup - CTA Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+  
+  
+    
+      
+      
+    
+  
+  
+  <style>:root{--md-admonition-icon--terminal:url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cpath%20d%3D%22m6.354%208.04-4.773%204.773a.75.75%200%201%200%201.061%201.06L7.945%208.57a.75.75%200%200%200%200-1.06L2.642%202.206a.75.75%200%200%200-1.06%201.061L6.353%208.04ZM8.75%2011.5a.75.75%200%200%200%200%201.5h5.5a.75.75%200%200%200%200-1.5z%22/%3E%3C/svg%3E');}</style>
+
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="cta-light" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#setting-up-a-development-environment" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="CTA Documentation" class="md-header__button md-logo" aria-label="CTA Documentation" data-md-component="logo">
+      
+  <img src="../../../assets/images/favicon.ico" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            CTA Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Development Setup
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="cta-light" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m3.55 19.09 1.41 1.41 1.8-1.79-1.42-1.42M12 6c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6c0-3.32-2.69-6-6-6m8 7h3v-2h-3m-2.76 7.71 1.8 1.79 1.41-1.41-1.79-1.8M20.45 5l-1.41-1.4-1.8 1.79 1.42 1.42M13 1h-2v3h2M6.76 5.39 4.96 3.6 3.55 5l1.79 1.81zM1 13h3v-2H1m12 9h-2v3h2"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="cta-dark" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.04 7 9.54s-2.94 8.27-7 9.54c.95.3 1.95.46 3 .46a10 10 0 0 0 10-10A10 10 0 0 0 9 2"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://gitlab.cern.ch/cta/CTA" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cta/CTA
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../overview/introduction/" class="md-tabs__link">
+          
+  
+  
+  Overview
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../ops/introduction/" class="md-tabs__link">
+          
+  
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../overview/" class="md-tabs__link">
+          
+  
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../conventions/introduction/" class="md-tabs__link">
+          
+  
+  
+  Conventions
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../glossary/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Glossary
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="CTA Documentation" class="md-nav__button md-logo" aria-label="CTA Documentation" data-md-component="logo">
+      
+  <img src="../../../assets/images/favicon.ico" alt="logo">
+
+    </a>
+    CTA Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://gitlab.cern.ch/cta/CTA" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    cta/CTA
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../overview/introduction/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../ops/introduction/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Development
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Setup
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Development Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#initial-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Initial setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pre-commit-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pre-commit Hooks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pre-commit Hooks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#detect-secrets-hook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detect-secrets hook
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installing-the-kubernetes-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installing the Kubernetes Environment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installing the Kubernetes Environment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#testing-kubernetes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Kubernetes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-ssh-keys-on-the-vm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using ssh Keys on the VM
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#containerised-compilation-and-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Containerised Compilation and Deployment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#simple-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Simple workflow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Simple workflow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#more-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        More tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cheat-sheet-a-quick-summary-of-how-to-work-with-pods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cheat Sheet: A quick summary of how to work with pods
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../walkthrough/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Intro Walkthrough
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cta-dev/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    cta-dev
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../building-rpms-and-images/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build Your Own Images
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../eos-development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    EOS Development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mhvtl/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    mhVTL
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/issues/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Issues
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/branches/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Branches
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/merge-requests/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Merge Requests
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/changelog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Continuous Integration
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Continuous Integration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CI Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci/bots/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitLab Bots
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci/pipelines/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitLab Pipelines
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ci/orchestration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_5" id="__nav_4_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenTelemetry
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    OpenTelemetry
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../otel/introduction/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Introduction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../otel/metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../otel/testing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Testing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Procedures
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Procedures
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../procedures/releases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Creating a CTA Release
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../procedures/catalogue-schema-update/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Modifying the CTA Catalogue Schema
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../architecture/components/catalogue/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Components
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../architecture/workflows/workflows/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+  
+    <a href="../../../conventions/introduction/" class="md-nav__link">
+      
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conventions
+  
+
+    
+  </span>
+  
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#initial-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Initial setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pre-commit-hooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pre-commit Hooks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pre-commit Hooks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#detect-secrets-hook" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Detect-secrets hook
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installing-the-kubernetes-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installing the Kubernetes Environment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installing the Kubernetes Environment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#testing-kubernetes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Kubernetes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-ssh-keys-on-the-vm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using ssh Keys on the VM
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#containerised-compilation-and-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Containerised Compilation and Deployment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#simple-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Simple workflow
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Simple workflow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#more-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        More tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cheat-sheet-a-quick-summary-of-how-to-work-with-pods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cheat Sheet: A quick summary of how to work with pods
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="../../overview/" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Development
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="setting-up-a-development-environment">Setting up a Development Environment<a class="headerlink" href="#setting-up-a-development-environment" title="Permanent link">#</a></h1>
+<p>This document describes how to get a CTA+EOS instance, with CTA built from source, running in a standalone VM (Virtual Machine) with Alma9 as operating system.</p>
+<h2 id="initial-setup">Initial setup<a class="headerlink" href="#initial-setup" title="Permanent link">#</a></h2>
+<p>Before you start your development. Git should be configured to use your CERN email and username using the following commands:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>git<span style="color: #ABB2BF"> </span>config<span style="color: #ABB2BF"> </span>--global<span style="color: #ABB2BF"> </span>user.email<span style="color: #ABB2BF"> </span><span style="color: #98C379">"&lt;YOUR CERN EMAIL&gt;"</span>
+git<span style="color: #ABB2BF"> </span>config<span style="color: #ABB2BF"> </span>--global<span style="color: #ABB2BF"> </span>user.name<span style="color: #ABB2BF"> </span><span style="color: #98C379">"&lt;YOUR CERN USERNAME&gt;"</span>
+</code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>Optionally (but recommended), configure which text editor git should be using for any text operations:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>git<span style="color: #ABB2BF"> </span>config<span style="color: #ABB2BF"> </span>--global<span style="color: #ABB2BF"> </span>core.editor<span style="color: #ABB2BF"> </span><span style="color: #98C379">"vim"</span>
+</code></pre></div>
+</div>
+<h2 id="pre-commit-hooks">Pre-commit Hooks<a class="headerlink" href="#pre-commit-hooks" title="Permanent link">#</a></h2>
+<p>Pre-commit hooks are a convenience tool for developers to get feedback earlier. The CTA repository provides a number of pre-commit hooks:</p>
+<ul>
+<li>secret detection</li>
+<li>C++ formatting</li>
+<li>Pythong formatting and linting</li>
+</ul>
+<p>To use pre-commit hooks, you must have installed the <a href="https://pre-commit.com/">pre-commit tool</a>:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>pip<span style="color: #ABB2BF"> </span>install<span style="color: #ABB2BF"> </span>pre-commit
+</code></pre></div>
+<p>Then the pre-commit hooks in the repository can be enabled by navigating to the root of the repository and executing:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>pre-commit<span style="color: #ABB2BF"> </span>install
+</code></pre></div>
+<p>The first time the hooks run might take a bit longer as the hooks will need to be installed.</p>
+<p>Before every commit, the hooks specified in <code>.pre-commit-config.yaml</code> will be automatically triggered.
+Depending on the hook, it might simply fail a check (e.g. secret detection), or it might format files for you automatically (e.g. <code>clang-format</code>).</p>
+<p>When hooks format things automatically, you have to explicitly stage the changes (<code>git add</code>) and commit again. After a hook failure, you can check with <code>git diff</code> to see if the hook made any changes.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>If you want to temporarily deactivate all pre-commit checks run <code>git commit --no-verify</code> or <code>SKIP=&lt;hook_id&gt;,... git commit</code> to specify a list of hooks to skip.
+While this is not recommended, it is still safe to do so because all pre-commit checks are also performed in CI. It is simply less convenient to fix it afterwards.</p>
+</div>
+<h3 id="detect-secrets-hook">Detect-secrets hook<a class="headerlink" href="#detect-secrets-hook" title="Permanent link">#</a></h3>
+<p>This hook detects if any secrets would be added by referring to the <code>.secrets.baseline</code> file.</p>
+<p>False positives may cause this pre-commit hook to fail. The best way to deal with such and error is the following:</p>
+<ol>
+<li>
+<p>Run the <code>detect-secrets</code> tool through the hook:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>pre-commit<span style="color: #ABB2BF"> </span>run<span style="color: #ABB2BF"> </span>detect-secrets<span style="color: #ABB2BF"> </span>scan<span style="color: #ABB2BF"> </span>--baseline<span style="color: #ABB2BF"> </span>.secrets.baseline
+</code></pre></div>
+</li>
+<li>
+<p>Add <code>.secret-baseline</code> file to the commit.</p>
+</li>
+</ol>
+<p>For more information you can check the official <a href="https://github.com/Yelp/detect-secrets/blob/master/README.md">documentation</a></p>
+<h2 id="installing-the-kubernetes-environment">Installing the Kubernetes Environment<a class="headerlink" href="#installing-the-kubernetes-environment" title="Permanent link">#</a></h2>
+<p>Follow the link below to set up a virtual environment to run CTA in.</p>
+<div class="grid cards">
+<ul>
+<li>
+<p><span class="twemoji lg middle"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m10.204 14.35.007.01-.999 2.413a5.17 5.17 0 0 1-2.075-2.597l2.578-.437.004.005a.44.44 0 0 1 .484.606zm-.833-2.129a.44.44 0 0 0 .173-.756l.002-.011L7.585 9.7a5.14 5.14 0 0 0-.73 3.255l2.514-.725zm1.145-1.98a.44.44 0 0 0 .699-.337l.01-.005.15-2.62a5.14 5.14 0 0 0-3.01 1.442l2.147 1.523zm.76 2.75.723.349.722-.347.18-.78-.5-.623h-.804l-.5.623.179.779zm1.5-3.095a.44.44 0 0 0 .7.336l.008.003 2.134-1.513a5.2 5.2 0 0 0-2.992-1.442l.148 2.615zm10.876 5.97-5.773 7.181a1.6 1.6 0 0 1-1.248.594l-9.261.003a1.6 1.6 0 0 1-1.247-.596l-5.776-7.18a1.58 1.58 0 0 1-.307-1.34L2.1 5.573c.108-.47.425-.864.863-1.073L11.305.513a1.6 1.6 0 0 1 1.385 0l8.345 3.985c.438.209.755.604.863 1.073l2.062 8.955c.108.47-.005.963-.308 1.34m-3.289-2.057c-.042-.01-.103-.026-.145-.034-.174-.033-.315-.025-.479-.038-.35-.037-.638-.067-.895-.148-.105-.04-.18-.165-.216-.216l-.201-.059a6.5 6.5 0 0 0-.105-2.332 6.5 6.5 0 0 0-.936-2.163c.052-.047.15-.133.177-.159.008-.09.001-.183.094-.282.197-.185.444-.338.743-.522.142-.084.273-.137.415-.242.032-.024.076-.062.11-.089.24-.191.295-.52.123-.736s-.506-.236-.745-.045c-.034.027-.08.062-.111.088-.134.116-.217.23-.33.35-.246.25-.45.458-.673.609-.097.056-.239.037-.303.033l-.19.135a6.55 6.55 0 0 0-4.146-2.003l-.012-.223c-.065-.062-.143-.115-.163-.25-.022-.268.015-.557.057-.905.023-.163.061-.298.068-.475.001-.04-.001-.099-.001-.142 0-.306-.224-.555-.5-.555-.275 0-.499.249-.499.555l.001.014c0 .041-.002.092 0 .128.006.177.044.312.067.475.042.348.078.637.056.906a.55.55 0 0 1-.162.258l-.012.211a6.42 6.42 0 0 0-4.166 2.003l-.18-.128c-.09.012-.18.04-.297-.029-.223-.15-.427-.358-.673-.608-.113-.12-.195-.234-.329-.349l-.111-.088a.6.6 0 0 0-.348-.132.48.48 0 0 0-.398.176c-.172.216-.117.546.123.737l.007.005.104.083c.142.105.272.159.414.242.299.185.546.338.743.522.076.082.09.226.1.288l.16.143a6.46 6.46 0 0 0-1.02 4.506l-.208.06c-.055.072-.133.184-.215.217-.257.081-.546.11-.895.147-.164.014-.305.006-.48.039-.037.007-.09.02-.133.03l-.004.002-.007.002c-.295.071-.484.342-.423.608.061.267.349.429.645.365l.007-.001.01-.003.129-.029c.17-.046.294-.113.448-.172.33-.118.604-.217.87-.256.112-.009.23.069.288.101l.217-.037a6.5 6.5 0 0 0 2.88 3.596l-.09.218c.033.084.069.199.044.282-.097.252-.263.517-.452.813-.091.136-.185.242-.268.399-.02.037-.045.095-.064.134-.128.275-.034.591.213.71.248.12.556-.007.69-.282v-.002c.02-.039.046-.09.062-.127.07-.162.094-.301.144-.458.132-.332.205-.68.387-.897.05-.06.13-.082.215-.105l.113-.205a6.45 6.45 0 0 0 4.609.012l.106.192c.086.028.18.042.256.155.136.232.229.507.342.84.05.156.074.295.145.457.016.037.043.09.062.129.133.276.442.402.69.282.247-.118.341-.435.213-.71-.02-.039-.045-.096-.065-.134-.083-.156-.177-.261-.268-.398-.19-.296-.346-.541-.443-.793-.04-.13.007-.21.038-.294-.018-.022-.059-.144-.083-.202a6.5 6.5 0 0 0 2.88-3.622c.064.01.176.03.213.038.075-.05.144-.114.28-.104.266.039.54.138.87.256.154.06.277.128.448.173.036.01.088.019.13.028l.009.003.007.001c.297.064.584-.098.645-.365.06-.266-.128-.537-.423-.608M16.4 9.701l-1.95 1.746v.005a.44.44 0 0 0 .173.757l.003.01 2.526.728a5.2 5.2 0 0 0-.108-1.674A5.2 5.2 0 0 0 16.4 9.7zm-4.013 5.325a.44.44 0 0 0-.404-.232.44.44 0 0 0-.372.233h-.002l-1.268 2.292a5.16 5.16 0 0 0 3.326.003l-1.27-2.296zm1.888-1.293a.44.44 0 0 0-.27.036.44.44 0 0 0-.214.572l-.003.004 1.01 2.438a5.15 5.15 0 0 0 2.081-2.615l-2.6-.44z"/></svg></span> <a href="https://gitlab.cern.ch/cta/ci/cta-ci-node-setup"><strong>CTA CI Node Setup</strong></a></p>
+<hr />
+<p>Find instructions on how to set up a CI Kubernetes environment for CTA.</p>
+<p><a href="https://gitlab.cern.ch/cta/ci/cta-ci-node-setup"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.75.75 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0"/></svg></span> https://gitlab.cern.ch/cta/ci/cta-ci-node-setup</a></p>
+</li>
+</ul>
+</div>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>For building your own RPMs/Docker images, you don't need this Kubernetes environment. <code>cta-dev</code> supports Podman &amp; Docker up until the <code>deploy</code> stage.</p>
+</div>
+<h3 id="testing-kubernetes">Testing Kubernetes<a class="headerlink" href="#testing-kubernetes" title="Permanent link">#</a></h3>
+<p>Kubernetes is automatically started at boot time for user <code>cirunner</code>. While logged in as the <code>cirunner</code>, you should now be able to run <code>kubectl</code> commands.</p>
+<div class="admonition example">
+<p class="admonition-title">Example</p>
+<p>Running <code>kubectl get namespaces</code> should output something along the lines of:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>default           Active   2m16s
+kube-node-lease   Active   2m16s
+kube-public       Active   2m16s
+kube-system       Active   2m16s
+</code></pre></div>
+</div>
+<h3 id="using-ssh-keys-on-the-vm">Using ssh Keys on the VM<a class="headerlink" href="#using-ssh-keys-on-the-vm" title="Permanent link">#</a></h3>
+<p>During development it is convenient to be able to use ssh keys from the host machine on the VM. For example to execute git related actions.
+To do this, start by adding the ssh key you want to use on the VM to the ssh agent:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>ssh-add<span style="color: #ABB2BF"> </span>&lt;your<span style="color: #ABB2BF"> </span>ssh<span style="color: #ABB2BF"> </span>key&gt;<span style="color: #ABB2BF"> </span><span style="color: #7F848E"># e.g. ssh-add ~/.ssh/id_rsa</span>
+</code></pre></div>
+<p>After doing this, you can ssh into the VM with the <code>-A</code> flag enabled and you should be able to use this key:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>ssh<span style="color: #ABB2BF"> </span>-A<span style="color: #ABB2BF"> </span>cirunner@&lt;yourvm&gt;
+</code></pre></div>
+<h2 id="containerised-compilation-and-deployment">Containerised Compilation and Deployment<a class="headerlink" href="#containerised-compilation-and-deployment" title="Permanent link">#</a></h2>
+<p>To start, ssh into the machine as <code>cirunner</code> and navigate to a directory of your choice to clone the CTA repo. In this example, we will be using <code>/home/cirunner/</code>:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>ssh<span style="color: #ABB2BF"> </span>-A<span style="color: #ABB2BF"> </span>cirunner@&lt;yourvm&gt;
+git<span style="color: #ABB2BF"> </span>clone<span style="color: #ABB2BF"> </span>ssh://git@gitlab.cern.ch:7999/cta/CTA.git
+<span style="color: #E5C07B">cd</span><span style="color: #ABB2BF"> </span>CTA
+git<span style="color: #ABB2BF"> </span>submodule<span style="color: #ABB2BF"> </span>update<span style="color: #ABB2BF"> </span>--init<span style="color: #ABB2BF"> </span>--recursive
+<span style="color: #7F848E"># Install pre-commit recommended</span>
+</code></pre></div>
+<p>You should now have a fully initialized repository on the VM.</p>
+<p>To compile and deploy CTA on the local Kubernetes cluster, execute the following script:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code><span style="color: #E5C07B">cd</span><span style="color: #ABB2BF"> </span>ci/
+./cta-dev.sh<span style="color: #ABB2BF"> </span>install<span style="color: #ABB2BF"> </span><span style="color: #7F848E"># This will allow you to use `cta-dev` from anywhere and set up the required environment for the system tests</span>
+cta-dev<span style="color: #ABB2BF"> </span>up
+</code></pre></div>
+<p>This will take quite a few minutes (especially the first time), but after this script has finished, you should see a number of pods running in the <code>dev</code> namespace:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>NAME<span style="color: #ABB2BF">                                </span>READY<span style="color: #ABB2BF">   </span>STATUS<span style="color: #ABB2BF">      </span>RESTARTS<span style="color: #ABB2BF">   </span>AGE
+auth-configure-keycloak-job-59fms<span style="color: #ABB2BF">   </span><span style="color: #D19A66">0</span>/1<span style="color: #ABB2BF">     </span>Completed<span style="color: #ABB2BF">   </span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">          </span>66s
+auth-generate-secrets-job-8whln<span style="color: #ABB2BF">     </span><span style="color: #D19A66">0</span>/1<span style="color: #ABB2BF">     </span>Completed<span style="color: #ABB2BF">   </span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">          </span>84s
+auth-kdc<span style="color: #ABB2BF">                            </span><span style="color: #D19A66">1</span>/1<span style="color: #ABB2BF">     </span>Running<span style="color: #ABB2BF">     </span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">          </span>84s
+auth-keycloak<span style="color: #ABB2BF">                       </span><span style="color: #D19A66">1</span>/1<span style="color: #ABB2BF">     </span>Running<span style="color: #ABB2BF">     </span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">          </span>84s
+cta-catalogue-postgres-db<span style="color: #ABB2BF">           </span><span style="color: #D19A66">1</span>/1<span style="color: #ABB2BF">     </span>Running<span style="color: #ABB2BF">     </span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">          </span>84s
+cta-catalogue-reset-job-b5c4w<span style="color: #ABB2BF">       </span><span style="color: #D19A66">0</span>/1<span style="color: #ABB2BF">     </span>Completed<span style="color: #ABB2BF">   </span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">          </span>76s
+cta-cli-0<span style="color: #ABB2BF">                           </span><span style="color: #D19A66">1</span>/1<span style="color: #ABB2BF">     </span>Running<span style="color: #ABB2BF">     </span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">          </span>47s
+cta-client-0<span style="color: #ABB2BF">                        </span><span style="color: #D19A66">1</span>/1<span style="color: #ABB2BF">     </span>Running<span style="color: #ABB2BF">     </span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">          </span>47s
+cta-frontend-0<span style="color: #ABB2BF">                      </span><span style="color: #D19A66">1</span>/1<span style="color: #ABB2BF">     </span>Running<span style="color: #ABB2BF">     </span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">          </span>47s
+cta-maintd-d6767b99-2grbr<span style="color: #ABB2BF">           </span><span style="color: #D19A66">1</span>/1<span style="color: #ABB2BF">     </span>Running<span style="color: #ABB2BF">     </span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">          </span>47s
+cta-maintd-d6767b99-lr6mm<span style="color: #ABB2BF">           </span><span style="color: #D19A66">1</span>/1<span style="color: #ABB2BF">     </span>Running<span style="color: #ABB2BF">     </span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">          </span>47s
+cta-scheduler-reset-job-c5d45<span style="color: #ABB2BF">       </span><span style="color: #D19A66">0</span>/1<span style="color: #ABB2BF">     </span>Completed<span style="color: #ABB2BF">   </span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">          </span>84s
+cta-tpsrv01-0<span style="color: #ABB2BF">                       </span><span style="color: #D19A66">2</span>/2<span style="color: #ABB2BF">     </span>Running<span style="color: #ABB2BF">     </span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">          </span>47s
+cta-tpsrv02-0<span style="color: #ABB2BF">                       </span><span style="color: #D19A66">2</span>/2<span style="color: #ABB2BF">     </span>Running<span style="color: #ABB2BF">     </span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">          </span>47s
+eos-fst-0<span style="color: #ABB2BF">                           </span><span style="color: #D19A66">1</span>/1<span style="color: #ABB2BF">     </span>Running<span style="color: #ABB2BF">     </span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">          </span>47s
+eos-mgm-0<span style="color: #ABB2BF">                           </span><span style="color: #D19A66">1</span>/1<span style="color: #ABB2BF">     </span>Running<span style="color: #ABB2BF">     </span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">          </span>47s
+eos-qdb-0<span style="color: #ABB2BF">                           </span><span style="color: #D19A66">1</span>/1<span style="color: #ABB2BF">     </span>Running<span style="color: #ABB2BF">     </span><span style="color: #D19A66">0</span><span style="color: #ABB2BF">          </span>47s
+</code></pre></div>
+<p>That's it; you have a working dev environment now. <code>cta-dev</code> is the main tool for local development. For more information, run <code>cta-dev --help</code> and have a look at <a href="../cta-dev/">the cta-dev page</a>.</p>
+<h2 id="simple-workflow">Simple workflow<a class="headerlink" href="#simple-workflow" title="Permanent link">#</a></h2>
+<p>The above will spawn a very barebones setup with an empty Catalogue and no proper EOS configuration. This is of course not very interesting to play around with, so let’s populate our system with some data. To do this, we only want to run the setup part of the system tests:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>cta-dev test setup
+</code></pre></div>
+<p>Now Let's familiarise ourselves with the different pods and the archival workflow.
+The <code>cta-cli-0</code> pod can be used to execute <code>cta-admin</code> commands. Start by opening a shell in this pod:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>kubectl<span style="color: #ABB2BF"> </span><span style="color: #E5C07B">exec</span><span style="color: #ABB2BF"> </span>-it<span style="color: #ABB2BF"> </span>-n<span style="color: #ABB2BF"> </span>dev<span style="color: #ABB2BF"> </span>cta-cli-0<span style="color: #ABB2BF"> </span>--<span style="color: #ABB2BF"> </span>bash
+</code></pre></div>
+<p>To see the version that we are running on:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>cta-admin<span style="color: #ABB2BF"> </span>version
+</code></pre></div>
+<p>At this point, <strong>you should have a look at the <a href="../walkthrough/">Introductory Walkthrough</a></strong>, which will make you familiar with the main workflows in CTA, as well as the most important commands in <code>cta-admin</code>.</p>
+<h3 id="more-tests">More tests<a class="headerlink" href="#more-tests" title="Permanent link">#</a></h3>
+<p>If you want to do a more elaborate test, you can run one of the system tests such as <code>ci/system_tests/tests/client_test.py</code>. Luckily, <code>cta-dev</code> can run these tests for you without having to manually invoke <code>pytest</code>:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>cta-dev<span style="color: #ABB2BF"> </span>deploy<span style="color: #ABB2BF"> </span><span style="color: #7F848E"># Just to ensure we start fresh. Alternatively, add the --teardown-first flag to the test command</span>
+cta-dev<span style="color: #ABB2BF"> </span><span style="color: #E5C07B">test</span><span style="color: #ABB2BF"> </span>client
+</code></pre></div>
+<p>Note that this may take about 10 minutes to complete.</p>
+<hr />
+<h2 id="cheat-sheet-a-quick-summary-of-how-to-work-with-pods">Cheat Sheet: A quick summary of how to work with pods<a class="headerlink" href="#cheat-sheet-a-quick-summary-of-how-to-work-with-pods" title="Permanent link">#</a></h2>
+<p>To see all the pods in a namespace (e.g. <code>dev</code>), you can use:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>kubectl<span style="color: #ABB2BF"> </span>get<span style="color: #ABB2BF"> </span>pods<span style="color: #ABB2BF"> </span>-n<span style="color: #ABB2BF"> </span>dev
+</code></pre></div>
+<p>In general, to open a shell on any desired <code>&lt;pod&gt;</code>, you can execute the following:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>kubectl<span style="color: #ABB2BF"> </span><span style="color: #E5C07B">exec</span><span style="color: #ABB2BF"> </span>-it<span style="color: #ABB2BF"> </span>-n<span style="color: #ABB2BF"> </span>dev<span style="color: #ABB2BF"> </span>&lt;pod&gt;<span style="color: #ABB2BF"> </span>--<span style="color: #ABB2BF"> </span>bash
+</code></pre></div>
+<p>Some pods have multiple containers in them. To specify which container to open the shell in, add the <code>-c</code> flag:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>kubectl<span style="color: #ABB2BF"> </span><span style="color: #E5C07B">exec</span><span style="color: #ABB2BF"> </span>-it<span style="color: #ABB2BF"> </span>-n<span style="color: #ABB2BF"> </span>dev<span style="color: #ABB2BF"> </span>&lt;pod&gt;<span style="color: #ABB2BF"> </span>-c<span style="color: #ABB2BF"> </span>&lt;container&gt;<span style="color: #ABB2BF"> </span>--<span style="color: #ABB2BF"> </span>bash
+</code></pre></div>
+<p>To execute a command directly without opening a dedicated shell (e.g running <code>cta-admin version</code>), you can do the following:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>kubectl<span style="color: #ABB2BF"> </span><span style="color: #E5C07B">exec</span><span style="color: #ABB2BF"> </span>-it<span style="color: #ABB2BF"> </span>-n<span style="color: #ABB2BF"> </span>dev<span style="color: #ABB2BF"> </span>cta-cli-0<span style="color: #ABB2BF"> </span>--<span style="color: #ABB2BF"> </span>cta-admin<span style="color: #ABB2BF"> </span>version
+</code></pre></div>
+<p>Most pods will log directly to <code>stdout/stderr</code>. To see this, use the <code>kubectl logs</code> command:</p>
+<div class="highlight" style="background: #282C34"><pre style="line-height: 125%;"><span></span><code>kubectl<span style="color: #ABB2BF"> </span>logs<span style="color: #ABB2BF"> </span>&lt;pod&gt;<span style="color: #ABB2BF"> </span><span style="color: #56B6C2">[</span>-c<span style="color: #ABB2BF"> </span>&lt;container&gt;<span style="color: #56B6C2">]</span><span style="color: #ABB2BF"> </span>-n<span style="color: #ABB2BF"> </span>dev
+</code></pre></div>
+<p>Some of the process produce multiple log files (e.g. the XRootD Frontend or the EOS pods). You can find all of these logs in <code>/var/log</code> in the corresponding container.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 CERN
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://gitlab.cern.ch/cta/CTA/-/blob/main/CHANGELOG.md" target="_blank" rel="noopener" title="gitlab.cern.ch" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 11.11V5a2 2 0 0 0-2-2h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14a2 2 0 0 0 2 2h6.11c1.26 1.24 2.98 2 4.89 2 3.87 0 7-3.13 7-7 0-1.91-.76-3.63-2-4.89M12 3c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1M6 7h12v2H6zm3.08 10H6v-2h3.08c-.05.33-.08.66-.08 1s.03.67.08 1M6 13v-2h5.11c-.61.57-1.07 1.25-1.43 2zm10 8c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5m.5-4.75 2.86 1.69-.75 1.22L15 17v-5h1.5z"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://gitlab.cern.ch/cta/CTA" target="_blank" rel="noopener" title="gitlab.cern.ch" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="m504 204.6-.7-1.8L433.6 21c-1.4-3.6-3.9-6.6-7.2-8.6-2.4-1.6-5.1-2.5-8-2.8s-5.7.1-8.4 1.1-5.1 2.7-7.1 4.8c-1.9 2.1-3.3 4.7-4.1 7.4l-47 144H161.3l-47.1-144c-.8-2.8-2.2-5.3-4.1-7.4-2-2.1-4.4-3.7-7.1-4.8-2.6-1-5.5-1.4-8.4-1.1s-5.6 1.2-8 2.8c-3.2 2-5.8 5.1-7.2 8.6L9.8 202.8l-.8 1.8c-10 26.2-11.3 55-3.5 82 7.7 26.9 24 50.7 46.4 67.6l.3.2.6.4 106 79.5c38.5 29.1 66.7 50.3 84.6 63.9 3.7 1.9 8.3 4.3 13 4.3s9.3-2.4 13-4.3c17.9-13.5 46.1-34.9 84.6-63.9l106.7-79.9.3-.3c22.4-16.9 38.7-40.6 45.6-67.5 8.6-27 7.4-55.8-2.6-82"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://cta-community.web.cern.ch" target="_blank" rel="noopener" title="cta-community.web.cern.ch" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M225.9 32C103.3 32 0 130.5 0 252.1 0 256 .1 480 .1 480l225.8-.2c122.7 0 222.1-102.3 222.1-223.9S348.6 32 225.9 32M224 384c-19.4 0-37.9-4.3-54.4-12.1L88.5 392l22.9-75c-9.8-18.1-15.4-38.9-15.4-61 0-70.7 57.3-128 128-128s128 57.3 128 128-57.3 128-128 128"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["content.action.repo", "content.code.copy", "content.code.select", "navigation.instant", "navigation.instant.progress", "navigation.instant.prefetch", "navigation.path", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.sections", "navigation.prune", "announce.dismiss"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "provider": "mike"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>

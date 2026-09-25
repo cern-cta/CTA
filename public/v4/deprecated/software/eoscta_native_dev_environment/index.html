@@ -1,0 +1,4647 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="EOSCTA Documentation">
+      
+      
+        <meta name="author" content="CERN Tape Archive Team">
+      
+      
+        <link rel="canonical" href="https://eoscta.docs.cern.ch/v4/deprecated/software/eoscta_native_dev_environment/">
+      
+      
+        <link rel="prev" href="../../cta/Questions/">
+      
+      
+        <link rel="next" href="../coding/">
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.25">
+    
+    
+      
+        <title>Create a native EOSCTA development environment - EOSCTA Docs</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.6543a935.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+    
+    
+      <link rel="stylesheet" href="../../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#create-a-native-eoscta-development-environment" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="EOSCTA Docs" class="md-header__button md-logo" aria-label="EOSCTA Docs" data-md-component="logo">
+      
+  <img src="../../../assets/favicon.ico" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            EOSCTA Docs
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Create a native EOSCTA development environment
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9h-1.9M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69m-9.15 3.96h2.3L12 9l-1.15 3.65Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="custom" data-md-color-accent="light-blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="custom" data-md-color-accent="light-blue"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://gitlab.cern.ch/cta/eoscta-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitLab
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../overview/introduction/" class="md-tabs__link">
+          
+  
+  Overview
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../dev/introduction/" class="md-tabs__link">
+          
+  
+  Development
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../../ops/introduction/" class="md-tabs__link">
+          
+  
+  Operations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../glossary/" class="md-tabs__link">
+        
+  
+    
+  
+  Glossary
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../cta/Constraints/" class="md-tabs__link">
+          
+  
+  ⚠️ Deprecated
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="EOSCTA Docs" class="md-nav__button md-logo" aria-label="EOSCTA Docs" data-md-component="logo">
+      
+  <img src="../../../assets/favicon.ico" alt="logo">
+
+    </a>
+    EOSCTA Docs
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://gitlab.cern.ch/cta/eoscta-docs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitLab
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Home
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../../overview/introduction/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Overview
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../../dev/introduction/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Development
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../../ops/introduction/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Operations
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../glossary/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Glossary
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    ⚠️ Deprecated
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            ⚠️ Deprecated
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_1" id="__nav_6_1_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    CTA Design
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_1">
+            <span class="md-nav__icon md-icon"></span>
+            CTA Design
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cta/Constraints/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Design Constraints
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cta/Questions/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Questions and Answers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Software Development
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            Software Development
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Create a native EOSCTA development environment
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Create a native EOSCTA development environment
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Introduction
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compile-and-install-eos-from-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compile and install EOS from source
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compile-and-install-cta-from-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compile and install CTA from source
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#install-and-configure-mhvtl" class="md-nav__link">
+    <span class="md-ellipsis">
+      Install and configure mhVTL
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configure-cta" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure CTA
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configure CTA">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configure-the-ceph-objectstore" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure the CEPH objectstore
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-the-cta-catalogue" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure the CTA Catalogue
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-the-cta-frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure the CTA Frontend
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configure the CTA Frontend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-the-kerberos-keytab-file-used-by-the-cta-frontend-to-authenticate-clients" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create the Kerberos keytab file used by the CTA Frontend to authenticate clients
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-sss-keys-so-that-the-frontend-can-talk-to-the-local-eos-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create SSS keys so that the Frontend can talk to the local EOS instance
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-the-cta-frontend-xrootdconf-configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create the cta-frontend-xrootd.conf configuration file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-the-cta-admin-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure the cta-admin command
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#add-an-admin-user-to-cta-to-allow-you-to-execute-cta-admin-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Add an admin user to CTA to allow you to execute cta-admin commands
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-the-cta-frontend-systemd-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure the cta-frontend systemd service
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#boot-the-cta-frontend-and-test-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      Boot the cta-frontend and test it
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-the-tapeserver-cta-taped-daemon" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure the tapeserver (cta-taped daemon)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configure the tapeserver (cta-taped daemon)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configure-cta-rmcd" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure cta-rmcd
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-the-etcctatpconfig-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create the /etc/cta/TPCONFIG file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-the-cta-taped-configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create the cta-taped configuration file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-the-log-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create the log file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-the-sss-key-that-will-be-used-by-the-tapeserver-to-communicate-with-eos" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create the sss key that will be used by the tapeserver to communicate with EOS
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-systemd-cta-taped-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure systemd cta-taped service
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#start-the-cta-taped-daemon-and-test-that-it-is-running" class="md-nav__link">
+    <span class="md-ellipsis">
+      Start the cta-taped daemon and test that it is running
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prepare-the-cta-test-environment-cta-admin-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prepare the CTA test environment (cta-admin commands)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configure-eos-to-run-with-cta" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure EOS to run with CTA
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configure EOS to run with CTA">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set-the-cta-user-as-sudo" class="md-nav__link">
+    <span class="md-ellipsis">
+      Set the cta user as sudo
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-a-tape-directory-on-your-eos-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create a tape directory on your EOS instance
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Create a tape directory on your EOS instance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set-the-acl-on-the-newly-created-tape-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      Set the ACL on the newly created tape directory
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set-the-correct-extended-attributes-on-the-tape-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      Set the correct extended attributes on the tape directory
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#link-the-tape-directory-to-the-workflow-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      Link the tape directory to the workflow directory
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edit-the-eoskeytab-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Edit the eos.keytab file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enable-the-tape-functionality-in-the-mgm-configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enable the tape functionality in the MGM configuration file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enable-the-workflow-engine-wfe-for-the-default-eos-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enable the Workflow Engine (WFE) for the default EOS space
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enable-file-archived-garbage-collector" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enable file archived garbage collector
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-the-tape-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create the tape space
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#archive-files-onto-tape" class="md-nav__link">
+    <span class="md-ellipsis">
+      Archive files onto tape
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#retrieve-a-file-from-tape" class="md-nav__link">
+    <span class="md-ellipsis">
+      Retrieve a file from tape
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#if-everything-is-working-save-all-the-configuration-files-and-the-keytab-files-in-a-specific-folder-in-your-home-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      If everything is working, save all the configuration files and the keytab files in a specific folder in your home directory
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#log-files-to-look-at-to-troubleshoot-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Log files to look at to troubleshoot errors
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coding Conventions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cta/git_workflow/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Git Workflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cta/tag_cta/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tagging a new CTA release
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_3" id="__nav_6_3_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Deployment Guide
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_3">
+            <span class="md-nav__icon md-icon"></span>
+            Deployment Guide
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../admin/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/buildcta/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Build CTA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../install/install/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Native server installation
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../gitlab/alma9_runner/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Containerised installation
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../gitlab/orchestration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CTA Continuous Integration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../eoscta_upgrade_eos_ci/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Updating the EOS version used by CTA in the CI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/install_public_rpms/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Public RPMs installation instructions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/configure_multi_tapelibs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configure multiple tape libraries in CTA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_4" id="__nav_6_4_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    File Lifecycle
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_4">
+            <span class="md-nav__icon md-icon"></span>
+            File Lifecycle
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Intro/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Checksum/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Checksums
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Archive/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Archival
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Retrieve/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Retrieval
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Delete/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Deletion
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Repack/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Repack
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Reconciliation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reconciliation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Zero-length-files/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Zero-length files
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Recycle_bin/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Recycle-bin
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/Restoring/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Restoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/garbage_collection/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Garbage Collection
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/ChangeStorageClass/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Change Storage Class
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/NamespaceInjection/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS Namespace Injection
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lifecycle/MoveFilesToInstance/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Move to Instance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_5" id="__nav_6_5_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Database
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_5">
+            <span class="md-nav__icon md-icon"></span>
+            Database
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../database/protecting_the_production_db/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Protecting the Production DB
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../database/how_to_drop_an_oracle_database_account_from_the_inside/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    How to drop an Oracle database account
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_6" id="__nav_6_6_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    CTA Catalogue Schema
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_6">
+            <span class="md-nav__icon md-icon"></span>
+            CTA Catalogue Schema
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../catalogue/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../catalogue/updating_the_schema/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Updating the schema
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../catalogue/upgrading_the_schema/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Upgrading the schema
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../catalogue/tools/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Tools
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_7" id="__nav_6_7_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    CTA statistics
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_7">
+            <span class="md-nav__icon md-icon"></span>
+            CTA statistics
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../statistics/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../statistics/cta-statistics-update/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    The cta-statistics-update tool
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../statistics/cta-statistics-save/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    The cta-statistics-save tool
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_8" id="__nav_6_8_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Queues and Scheduling
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_8">
+            <span class="md-nav__icon md-icon"></span>
+            Queues and Scheduling
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../scheduling/cta-scheduling/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    How CTA mount scheduling works
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../queues/failed_requests/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Failed Requests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../repack/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Repack Lifecycle
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rucio/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Rucio Integration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_9" id="__nav_6_9_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Authentication and Security
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_9">
+            <span class="md-nav__icon md-icon"></span>
+            Authentication and Security
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../install/authentication/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Authentication
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cta/Security/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Security
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_10" id="__nav_6_10_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    RAO
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_10">
+            <span class="md-nav__icon md-icon"></span>
+            RAO
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rao/configuration/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Configuration of RAO in CTA
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lto/reports/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LTO Reports
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lto/lto/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    LTO Tapes
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lto/scsi/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    SCSI Commands
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../lto/experiments/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    RAO for LTO Experiments
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_11" id="__nav_6_11_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    Tape Infrastructure
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_11">
+            <span class="md-nav__icon md-icon"></span>
+            Tape Infrastructure
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../drives/dedications/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Drives
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../libraries/spectralogic/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Libraries
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../tape/disabled_tape/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    Tapes
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_12" id="__nav_6_12_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    EOS
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_12">
+            <span class="md-nav__icon md-icon"></span>
+            EOS
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos/Protocol/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS-CTA Protocol
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos_converters_and_fids/eos_converters_and_fids/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS converters and file identifiers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos_failure_statistics/eos_failure_statistics/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS failure statistics
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos_operations_procedures/eos_operations_procedures/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS operations procedures
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos_disk_file_repairs/eos_disk_file_repairs/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS disk file repairs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../rate_limiter/introduction/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    EOS rate limiter
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../space_vs_layout/space_vs_layout/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS spaces versus disk storage layouts
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tape_replicas/tape_replicas/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS tape replicas
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos_disk_layout_cgi/eos_disk_layout_cgi/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOS disk layout CGI
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../failure_modes/introduction/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    EOSCTA failure modes
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="https://codimd.web.cern.ch/VSU_DFN_SXaVtZuYkjILdA" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    EOSCTALICE instance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+      
+    
+    
+      
+        
+        
+      
+    
+    <li class="md-nav__item md-nav__item--pruned md-nav__item--nested">
+      
+        
+  
+  
+    <a href="../../fst_gc/introduction/" class="md-nav__link">
+      
+  
+  <span class="md-ellipsis">
+    FST garbage collector
+  </span>
+  
+
+      
+        <span class="md-nav__icon md-icon"></span>
+      
+    </a>
+  
+
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../eos_ns_master/eos_ns_master/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    The EOS namespace is the master
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tape_rest_api/tape_rest_api/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Tape REST API
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+      
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_13" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_13" id="__nav_6_13_label" tabindex="">
+            
+  
+  <span class="md-ellipsis">
+    CASTOR
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_13">
+            <span class="md-nav__icon md-icon"></span>
+            CASTOR
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../castor/castor_tape_scheduling_responsibilities/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    CASTOR tape scheduling responsibilities
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      Introduction
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compile-and-install-eos-from-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compile and install EOS from source
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compile-and-install-cta-from-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compile and install CTA from source
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#install-and-configure-mhvtl" class="md-nav__link">
+    <span class="md-ellipsis">
+      Install and configure mhVTL
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configure-cta" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure CTA
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configure CTA">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configure-the-ceph-objectstore" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure the CEPH objectstore
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-the-cta-catalogue" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure the CTA Catalogue
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-the-cta-frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure the CTA Frontend
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configure the CTA Frontend">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-the-kerberos-keytab-file-used-by-the-cta-frontend-to-authenticate-clients" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create the Kerberos keytab file used by the CTA Frontend to authenticate clients
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-sss-keys-so-that-the-frontend-can-talk-to-the-local-eos-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create SSS keys so that the Frontend can talk to the local EOS instance
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-the-cta-frontend-xrootdconf-configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create the cta-frontend-xrootd.conf configuration file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-the-cta-admin-command" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure the cta-admin command
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#add-an-admin-user-to-cta-to-allow-you-to-execute-cta-admin-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Add an admin user to CTA to allow you to execute cta-admin commands
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-the-cta-frontend-systemd-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure the cta-frontend systemd service
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#boot-the-cta-frontend-and-test-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      Boot the cta-frontend and test it
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-the-tapeserver-cta-taped-daemon" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure the tapeserver (cta-taped daemon)
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configure the tapeserver (cta-taped daemon)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configure-cta-rmcd" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure cta-rmcd
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-the-etcctatpconfig-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create the /etc/cta/TPCONFIG file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-the-cta-taped-configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create the cta-taped configuration file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-the-log-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create the log file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-the-sss-key-that-will-be-used-by-the-tapeserver-to-communicate-with-eos" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create the sss key that will be used by the tapeserver to communicate with EOS
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-systemd-cta-taped-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure systemd cta-taped service
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#start-the-cta-taped-daemon-and-test-that-it-is-running" class="md-nav__link">
+    <span class="md-ellipsis">
+      Start the cta-taped daemon and test that it is running
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#prepare-the-cta-test-environment-cta-admin-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Prepare the CTA test environment (cta-admin commands)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configure-eos-to-run-with-cta" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configure EOS to run with CTA
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configure EOS to run with CTA">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set-the-cta-user-as-sudo" class="md-nav__link">
+    <span class="md-ellipsis">
+      Set the cta user as sudo
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-a-tape-directory-on-your-eos-instance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create a tape directory on your EOS instance
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Create a tape directory on your EOS instance">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set-the-acl-on-the-newly-created-tape-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      Set the ACL on the newly created tape directory
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#set-the-correct-extended-attributes-on-the-tape-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      Set the correct extended attributes on the tape directory
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#link-the-tape-directory-to-the-workflow-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      Link the tape directory to the workflow directory
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edit-the-eoskeytab-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Edit the eos.keytab file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enable-the-tape-functionality-in-the-mgm-configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enable the tape functionality in the MGM configuration file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enable-the-workflow-engine-wfe-for-the-default-eos-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enable the Workflow Engine (WFE) for the default EOS space
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#enable-file-archived-garbage-collector" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enable file archived garbage collector
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-the-tape-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      Create the tape space
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#archive-files-onto-tape" class="md-nav__link">
+    <span class="md-ellipsis">
+      Archive files onto tape
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#retrieve-a-file-from-tape" class="md-nav__link">
+    <span class="md-ellipsis">
+      Retrieve a file from tape
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#if-everything-is-working-save-all-the-configuration-files-and-the-keytab-files-in-a-specific-folder-in-your-home-directory" class="md-nav__link">
+    <span class="md-ellipsis">
+      If everything is working, save all the configuration files and the keytab files in a specific folder in your home directory
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#log-files-to-look-at-to-troubleshoot-errors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Log files to look at to troubleshoot errors
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+<div class="admonition warning">
+<p class="admonition-title">Deprecated</p>
+<p>This page is deprecated and may contain information that is no longer up to date.</p>
+</div>
+<h1 id="create-a-native-eoscta-development-environment">Create a native EOSCTA development environment<a class="headerlink" href="#create-a-native-eoscta-development-environment" title="Permanent link">&para;</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">&para;</a></h2>
+<p>This document describes how to set up a complete EOSCTA development environment from scratch. This is a complex procedure,
+but it is a useful exercise for new <abbr title="CERN Tape Archive">CTA</abbr> developers, to gain an overview of all the EOSCTA components and how they
+interact.</p>
+<p>The procedure is based on the <a href="../../install/install/">native server installation</a> and also by looking at how the CI works.
+If you encounter any errors or omissions, please update the documentation accordingly.</p>
+<p>The following steps will be performed:</p>
+<ul>
+<li>Compile and install <abbr title="EOS Open Storage">EOS</abbr> from source</li>
+<li>Compile and install <abbr title="CERN Tape Archive">CTA</abbr> from source</li>
+<li>Install and configure mhVTL (Virtual Tape Library), which simulates the tape hardware (library, drives and tapes).</li>
+<li>Wire the <abbr title="EOS Open Storage">EOS</abbr> instance to the <abbr title="CERN Tape Archive">CTA</abbr> software</li>
+<li>Archive and Retrieve some files to check everything works</li>
+</ul>
+<h2 id="compile-and-install-eos-from-source">Compile and install <abbr title="EOS Open Storage">EOS</abbr> from source<a class="headerlink" href="#compile-and-install-eos-from-source" title="Permanent link">&para;</a></h2>
+<p>Follow <a href="https://eos-docs.web.cern.ch/develop.html#source-code">these instructions</a>.</p>
+<p>You should be able to have a running <abbr title="EOS Open Storage">EOS</abbr> instance after this tutorial.</p>
+<p><strong>Note:</strong> You may get a protobuf error during cmake generation, similar to this:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>-- Found protoc: /bin/protoc3
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>-- Found Protobuf3: /opt/eos/include/protobuf3
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>CMake Warning at /usr/share/cmake3/Modules/FindProtobuf.cmake:500 (message):
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  Protobuf compiler version 3.3.1 doesn&#39;t match library version 3.5.1
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>Call Stack (most recent call first):
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>  cmake/FindProtobuf3.cmake:64 (find_package)
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  cmake/EosFindLibs.cmake:71 (find_package)
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  CMakeLists.txt:95 (include)
+</span></code></pre></div>
+<p>If this is the case, you need to pass cmake the correct protobuf path. Add the following flag to the cmake command:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>-DPROTOBUF_ROOT=/opt/eos
+</span></code></pre></div>
+<h2 id="compile-and-install-cta-from-source">Compile and install <abbr title="CERN Tape Archive">CTA</abbr> from source<a class="headerlink" href="#compile-and-install-cta-from-source" title="Permanent link">&para;</a></h2>
+<p>Follow the instructions here: <a href="../../install/buildcta/">Building <abbr title="CERN Tape Archive">CTA</abbr></a> but instead of doing the last part (Install), just type:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>make<span class="w"> </span>install
+</span></code></pre></div>
+<p>Make sure that you're using the OS native compiler and not one from a software collection devtoolset defined during the <abbr title="EOS Open Storage">EOS</abbr> build.</p>
+<p>In order to check the installation, you should be able to run</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>cta-unitTests
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>[==========] Running 885 tests from 76 test cases.
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>[----------] Global test environment set-up.
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>[----------] 13 tests from RAOTest
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>[ RUN      ] RAOTest.InterpolationFilePositionEstimatorWrap0Test
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>[       OK ] RAOTest.InterpolationFilePositionEstimatorWrap0Test (1 ms)
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>[ RUN      ] RAOTest.InterpolationFilePositionEstimatorWrap1Test
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>[       OK ] RAOTest.InterpolationFilePositionEstimatorWrap1Test (0 ms)
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>[ RUN      ] RAOTest.InterpolationFilePositionEstimatorThrowsExceptionIfBlockIdGreaterThanLastEOWP
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>[       OK ] RAOTest.InterpolationFilePositionEstimatorThrowsExceptionIfBlockIdGreaterThanLastEOWP (52 ms)
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>[ RUN      ] RAOTest.RAOHelpersImproveLastEOWPIfPossible
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>[       OK ] RAOTest.RAOHelpersImproveLastEOWPIfPossible (0 ms)
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>[ RUN      ] RAOTest.RAOHelpersDetermineBand
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>[       OK ] RAOTest.RAOHelpersDetermineBand (0 ms)
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>[ RUN      ] RAOTest.RAOHelpersDetermineLandingZone
+</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>[       OK ] RAOTest.RAOHelpersDetermineLandingZone (0 ms)
+</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>[ RUN      ] RAOTest.RAOHelpersDoesWrapChange
+</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>[       OK ] RAOTest.RAOHelpersDoesWrapChange (0 ms)
+</span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>[ RUN      ] RAOTest.RAOHelpersDoesBandChange
+</span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>[...]
+</span></code></pre></div>
+<h2 id="install-and-configure-mhvtl">Install and configure mhVTL<a class="headerlink" href="#install-and-configure-mhvtl" title="Permanent link">&para;</a></h2>
+<p>Follow the instructions here: <a href="../../install/mhvtl/">Install the Virtual Tape Library (mhVTL)</a>.</p>
+<h2 id="configure-cta">Configure <abbr title="CERN Tape Archive">CTA</abbr><a class="headerlink" href="#configure-cta" title="Permanent link">&para;</a></h2>
+<h3 id="configure-the-ceph-objectstore">Configure the CEPH objectstore<a class="headerlink" href="#configure-the-ceph-objectstore" title="Permanent link">&para;</a></h3>
+<p>Follow the instructions here: <a href="../../install/configuration/#configuration-for-a-production-system">Configuration for a production system</a></p>
+<h3 id="configure-the-cta-catalogue">Configure the <abbr title="CERN Tape Archive">CTA</abbr> Catalogue<a class="headerlink" href="#configure-the-cta-catalogue" title="Permanent link">&para;</a></h3>
+<p>Follow the instructions here: <a href="../../install/configuration/#configure-the-catalogue">Configuration the Catalogue</a></p>
+<h3 id="configure-the-cta-frontend">Configure the <abbr title="CERN Tape Archive">CTA</abbr> Frontend<a class="headerlink" href="#configure-the-cta-frontend" title="Permanent link">&para;</a></h3>
+<h4 id="create-the-kerberos-keytab-file-used-by-the-cta-frontend-to-authenticate-clients">Create the Kerberos keytab file used by the <abbr title="CERN Tape Archive">CTA</abbr> Frontend to authenticate clients<a class="headerlink" href="#create-the-kerberos-keytab-file-used-by-the-cta-frontend-to-authenticate-clients" title="Permanent link">&para;</a></h4>
+<p>First, create the <abbr title="CERN Tape Archive">CTA</abbr> user (the frontend and the tapeserver will be launched as if they were the <abbr title="CERN Tape Archive">CTA</abbr> user)</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>useradd<span class="w"> </span>cta<span class="w"> </span>-g<span class="w"> </span>tape
+</span></code></pre></div>
+<p>If you do not have any <code>krb5.keytab</code> file in the <code>/etc/</code> directory, the following instructions have to be followed in order to create it:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">cd</span><span class="w"> </span>/etc/cta
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>cern-get-keytab<span class="w"> </span>--service<span class="w"> </span>cta<span class="w"> </span>--force
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>cp<span class="w"> </span>krb5.keytab<span class="w"> </span>cta-frontend.krb5.keytab
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>chown<span class="w"> </span>cta:tape<span class="w"> </span>cta-frontend.krb5.keytab
+</span></code></pre></div>
+<p>You can check the content of this file by using the following command:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">echo</span><span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;read_kt cta-frontend.krb5.keytab</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="s2">list</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="s2">quit&quot;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>ktutil
+</span></code></pre></div>
+<h4 id="create-sss-keys-so-that-the-frontend-can-talk-to-the-local-eos-instance">Create <abbr title="Simple Shared Secret">SSS</abbr> keys so that the Frontend can talk to the local <abbr title="EOS Open Storage">EOS</abbr> instance<a class="headerlink" href="#create-sss-keys-so-that-the-frontend-can-talk-to-the-local-eos-instance" title="Permanent link">&para;</a></h4>
+<figure>
+    <img src="../../install/cta_krb5_sss_keys.png">
+    <figcaption style="text-align:center;">Authentication Mechanisms in CTA</figcaption>
+</figure>
+
+<p>The <abbr title="EOS Open Storage">EOS</abbr> instance name will be used as the user name in the sss keys that will be created. As you previously installed <abbr title="EOS Open Storage">EOS</abbr>, you should be able to see the <abbr title="EOS Open Storage">EOS</abbr> instance name that you have setup by typing:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>grep<span class="w"> </span>EOS_INSTANCE_NAME<span class="w"> </span>/etc/sysconfig/eos_env
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nv">EOS_INSTANCE_NAME</span><span class="o">=</span>eosdev
+</span></code></pre></div>
+<p>Create the sss key that will be used by the <abbr title="CERN Tape Archive">CTA</abbr> Frontend to allow the communication between it and <abbr title="EOS Open Storage">EOS</abbr>:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>/etc/cta
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="c1">#k = keyname, u=eosdev(EOS_INSTANCE_NAME), g=cta(group)</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>$<span class="w">  </span>xrdsssadmin<span class="w"> </span>-k<span class="w"> </span>cta_eosdev<span class="w"> </span>-u<span class="w"> </span>eosdev<span class="w"> </span>-g<span class="w"> </span>cta<span class="w"> </span>add<span class="w"> </span>ctafrontend_server_sss.keytab
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>xrdsssadmin:<span class="w"> </span>Keyfile<span class="w"> </span><span class="s1">&#39;ctafrontend_server_sss.keytab&#39;</span><span class="w"> </span>does<span class="w"> </span>not<span class="w"> </span>exist.<span class="w"> </span>Create<span class="w"> </span>it?<span class="w"> </span><span class="o">(</span>y<span class="w"> </span><span class="p">|</span><span class="w"> </span>n<span class="o">)</span>:<span class="w"> </span>y
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>xrdsssadmin:<span class="w"> </span><span class="m">1</span><span class="w"> </span>key<span class="w"> </span>out<span class="w"> </span>of<span class="w"> </span><span class="m">1</span><span class="w"> </span>kept<span class="w"> </span><span class="o">(</span><span class="m">0</span><span class="w"> </span>expired<span class="o">)</span>.
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="c1"># As the frontend will be launched under the cta user, change the owner of the sss keytab file </span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>$<span class="w"> </span>chown<span class="w"> </span>cta<span class="w"> </span>ctafrontend_server_sss.keytab
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>$<span class="w"> </span>chmod<span class="w"> </span><span class="m">600</span><span class="w"> </span>ctafrontend_server_sss.keytab
+</span></code></pre></div>
+<p>Your sss keytab file should look like this:</p>
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>cat<span class="w"> </span>ctafrontend_server_sss.keytab
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="m">0</span><span class="w"> </span>u:eosdev<span class="w"> </span>g:cta<span class="w"> </span>n:cta_eosdev<span class="w"> </span>N:XXXXX<span class="w"> </span>c:XXXXX<span class="w"> </span>e:0<span class="w"> </span>f:0<span class="w"> </span>k:XXXXX
+</span></code></pre></div>
+<h4 id="create-the-cta-frontend-xrootdconf-configuration-file">Create the <code>cta-frontend-xrootd.conf</code> configuration file<a class="headerlink" href="#create-the-cta-frontend-xrootdconf-configuration-file" title="Permanent link">&para;</a></h4>
+<p>Create the file <code>/etc/cta/cta-frontend-xrootd.conf</code> and put the following information in it:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>#
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a># CTA options
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>#
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a># CTA ObjectStore options
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>cta.objectstore.backendpath rados://OBJECTSTORE_ID@OBJECTSTORE_POOL:OBJECTSTORE_NAMESPACE
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>
+</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a># CTA Scheduler DB options
+</span><span id="__span-10-9"><a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>cta.schedulerdb.numberofthreads 500
+</span><span id="__span-10-10"><a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>
+</span><span id="__span-10-11"><a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a># CTA Catalogue options
+</span><span id="__span-10-12"><a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>cta.catalogue.numberofconnections 10
+</span><span id="__span-10-13"><a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>
+</span><span id="__span-10-14"><a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a># Maximum file size (in GB) that the CTA Frontend will accept for archiving
+</span><span id="__span-10-15"><a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>cta.archivefile.max_size_gb 1000
+</span><span id="__span-10-16"><a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>
+</span><span id="__span-10-17"><a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a># CTA Frontend log URL
+</span><span id="__span-10-18"><a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>cta.log.url file:/var/log/cta/cta-frontend.log
+</span><span id="__span-10-19"><a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>
+</span><span id="__span-10-20"><a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a># CTA Logger log level
+</span><span id="__span-10-21"><a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a># Valid log levels are EMERG, ALERT, CRIT, ERR, WARNING, NOTICE (==USERERR), INFO, DEBUG
+</span><span id="__span-10-22"><a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a># cta.log.level DEBUG
+</span><span id="__span-10-23"><a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a>
+</span><span id="__span-10-24"><a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a># CTA XRootD SSI Protobuf log level
+</span><span id="__span-10-25"><a id="__codelineno-10-25" name="__codelineno-10-25" href="#__codelineno-10-25"></a># cta.log.ssi debug protobuf
+</span><span id="__span-10-26"><a id="__codelineno-10-26" name="__codelineno-10-26" href="#__codelineno-10-26"></a>cta.log.ssi warning
+</span><span id="__span-10-27"><a id="__codelineno-10-27" name="__codelineno-10-27" href="#__codelineno-10-27"></a>
+</span><span id="__span-10-28"><a id="__codelineno-10-28" name="__codelineno-10-28" href="#__codelineno-10-28"></a># CTA Repack buffer URL
+</span><span id="__span-10-29"><a id="__codelineno-10-29" name="__codelineno-10-29" href="#__codelineno-10-29"></a># cta.repack.repack_buffer_url root://ctaeos//eos/ctaeos/repack
+</span><span id="__span-10-30"><a id="__codelineno-10-30" name="__codelineno-10-30" href="#__codelineno-10-30"></a>
+</span><span id="__span-10-31"><a id="__codelineno-10-31" name="__codelineno-10-31" href="#__codelineno-10-31"></a># Keytab containing gRPC endpoints and tokens for each disk instance
+</span><span id="__span-10-32"><a id="__codelineno-10-32" name="__codelineno-10-32" href="#__codelineno-10-32"></a>#cta.ns.config /etc/cta/eos.grpc.keytab
+</span><span id="__span-10-33"><a id="__codelineno-10-33" name="__codelineno-10-33" href="#__codelineno-10-33"></a>
+</span><span id="__span-10-34"><a id="__codelineno-10-34" name="__codelineno-10-34" href="#__codelineno-10-34"></a>#
+</span><span id="__span-10-35"><a id="__codelineno-10-35" name="__codelineno-10-35" href="#__codelineno-10-35"></a># XRootD/SSI options
+</span><span id="__span-10-36"><a id="__codelineno-10-36" name="__codelineno-10-36" href="#__codelineno-10-36"></a>#
+</span><span id="__span-10-37"><a id="__codelineno-10-37" name="__codelineno-10-37" href="#__codelineno-10-37"></a>
+</span><span id="__span-10-38"><a id="__codelineno-10-38" name="__codelineno-10-38" href="#__codelineno-10-38"></a># Enable SSI debug logging
+</span><span id="__span-10-39"><a id="__codelineno-10-39" name="__codelineno-10-39" href="#__codelineno-10-39"></a>#ssi.trace debug
+</span><span id="__span-10-40"><a id="__codelineno-10-40" name="__codelineno-10-40" href="#__codelineno-10-40"></a>
+</span><span id="__span-10-41"><a id="__codelineno-10-41" name="__codelineno-10-41" href="#__codelineno-10-41"></a># Load the CTA SSI plugin
+</span><span id="__span-10-42"><a id="__codelineno-10-42" name="__codelineno-10-42" href="#__codelineno-10-42"></a>xrootd.fslib -2 libXrdSsi.so
+</span><span id="__span-10-43"><a id="__codelineno-10-43" name="__codelineno-10-43" href="#__codelineno-10-43"></a>
+</span><span id="__span-10-44"><a id="__codelineno-10-44" name="__codelineno-10-44" href="#__codelineno-10-44"></a># Load the SSI module
+</span><span id="__span-10-45"><a id="__codelineno-10-45" name="__codelineno-10-45" href="#__codelineno-10-45"></a>ssi.svclib libXrdSsiCta.so
+</span><span id="__span-10-46"><a id="__codelineno-10-46" name="__codelineno-10-46" href="#__codelineno-10-46"></a>
+</span><span id="__span-10-47"><a id="__codelineno-10-47" name="__codelineno-10-47" href="#__codelineno-10-47"></a># Use the security module
+</span><span id="__span-10-48"><a id="__codelineno-10-48" name="__codelineno-10-48" href="#__codelineno-10-48"></a>xrootd.seclib libXrdSec.so
+</span><span id="__span-10-49"><a id="__codelineno-10-49" name="__codelineno-10-49" href="#__codelineno-10-49"></a>
+</span><span id="__span-10-50"><a id="__codelineno-10-50" name="__codelineno-10-50" href="#__codelineno-10-50"></a># Security protocol specification
+</span><span id="__span-10-51"><a id="__codelineno-10-51" name="__codelineno-10-51" href="#__codelineno-10-51"></a>#
+</span><span id="__span-10-52"><a id="__codelineno-10-52" name="__codelineno-10-52" href="#__codelineno-10-52"></a># Note: the XRootD process needs to be able to read the keytab file
+</span><span id="__span-10-53"><a id="__codelineno-10-53" name="__codelineno-10-53" href="#__codelineno-10-53"></a>sec.protocol krb5 /etc/cta/cta-frontend.krb5.keytab host/&lt;your_dev_machine&gt;.cern.ch@CERN.CH
+</span><span id="__span-10-54"><a id="__codelineno-10-54" name="__codelineno-10-54" href="#__codelineno-10-54"></a>sec.protocol sss -s /etc/ctafrontend_server_sss.keytab
+</span><span id="__span-10-55"><a id="__codelineno-10-55" name="__codelineno-10-55" href="#__codelineno-10-55"></a>
+</span><span id="__span-10-56"><a id="__codelineno-10-56" name="__codelineno-10-56" href="#__codelineno-10-56"></a># Only Kerberos 5 and sss are allowed
+</span><span id="__span-10-57"><a id="__codelineno-10-57" name="__codelineno-10-57" href="#__codelineno-10-57"></a>sec.protbind * only sss krb5
+</span><span id="__span-10-58"><a id="__codelineno-10-58" name="__codelineno-10-58" href="#__codelineno-10-58"></a># sec.protbind * only sss
+</span><span id="__span-10-59"><a id="__codelineno-10-59" name="__codelineno-10-59" href="#__codelineno-10-59"></a>
+</span><span id="__span-10-60"><a id="__codelineno-10-60" name="__codelineno-10-60" href="#__codelineno-10-60"></a># Turn off asynchronous I/O
+</span><span id="__span-10-61"><a id="__codelineno-10-61" name="__codelineno-10-61" href="#__codelineno-10-61"></a>xrootd.async off
+</span><span id="__span-10-62"><a id="__codelineno-10-62" name="__codelineno-10-62" href="#__codelineno-10-62"></a>
+</span><span id="__span-10-63"><a id="__codelineno-10-63" name="__codelineno-10-63" href="#__codelineno-10-63"></a># Use a port other than 1094, already used by EOS xroot server
+</span><span id="__span-10-64"><a id="__codelineno-10-64" name="__codelineno-10-64" href="#__codelineno-10-64"></a>xrd.port 10955
+</span><span id="__span-10-65"><a id="__codelineno-10-65" name="__codelineno-10-65" href="#__codelineno-10-65"></a>
+</span><span id="__span-10-66"><a id="__codelineno-10-66" name="__codelineno-10-66" href="#__codelineno-10-66"></a>xrd.sched avlt 512 mint 768 maxt 4096 idle 300
+</span><span id="__span-10-67"><a id="__codelineno-10-67" name="__codelineno-10-67" href="#__codelineno-10-67"></a>
+</span><span id="__span-10-68"><a id="__codelineno-10-68" name="__codelineno-10-68" href="#__codelineno-10-68"></a>
+</span><span id="__span-10-69"><a id="__codelineno-10-69" name="__codelineno-10-69" href="#__codelineno-10-69"></a># Export the SSI resource
+</span><span id="__span-10-70"><a id="__codelineno-10-70" name="__codelineno-10-70" href="#__codelineno-10-70"></a>all.export /ctafrontend nolock r/w
+</span></code></pre></div>
+<p>Replace the <code>cta.objectstore.backendpath</code> and the <code>sec.protocol krb5</code> values with the ones you have.</p>
+<p>Also, create log file where the frontend will log what it is doing:</p>
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>touch<span class="w"> </span>/var/log/cta/cta-frontend-xrootd.log
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>chmod<span class="w"> </span>a+w<span class="w"> </span>/var/log/cta/cta-frontend-xrootd.log
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>chown<span class="w"> </span>cta<span class="w"> </span>/var/log/cta
+</span></code></pre></div>
+<h4 id="configure-the-cta-admin-command">Configure the cta-admin command<a class="headerlink" href="#configure-the-cta-admin-command" title="Permanent link">&para;</a></h4>
+<p>Edit the file located in <code>/etc/cta/cta-cli.conf</code>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a># The CTA frontend address in the form &lt;FQDN&gt;:&lt;TCPPort&gt;
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>cta.endpoint &lt;your_dev_machine&gt;.cern.ch:10955
+</span></code></pre></div>
+<p>Be careful to have the same FQDN:TCPPort as the ones you configured above in the <code>/etc/cta/cta-frontend-xrootd.conf</code> file.</p>
+<h4 id="add-an-admin-user-to-cta-to-allow-you-to-execute-cta-admin-commands">Add an admin user to <abbr title="CERN Tape Archive">CTA</abbr> to allow you to execute cta-admin commands<a class="headerlink" href="#add-an-admin-user-to-cta-to-allow-you-to-execute-cta-admin-commands" title="Permanent link">&para;</a></h4>
+<p>A command-line tool has been developed to allow this. Just run it by giving your user name with the <code>-u</code> parameter. These instructions assume kerberos authentication here, so use your kerberos username.</p>
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>cta-catalogue-admin-user-create<span class="w"> </span>/etc/cta/cta-catalogue.conf<span class="w"> </span>-u<span class="w"> </span>your_username<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;Administrative User&quot;</span>
+</span></code></pre></div>
+<h4 id="configure-the-cta-frontend-systemd-service">Configure the cta-frontend systemd service<a class="headerlink" href="#configure-the-cta-frontend-systemd-service" title="Permanent link">&para;</a></h4>
+<p>Create the file <code>/etc/systemd/system/cta-frontend.service</code> and put the following content:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>[Unit]
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>Description=CTA frontend plugin for the XRoot deamon
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>After=network-online.target
+</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>
+</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>[Service]
+</span><span id="__span-14-6"><a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>ExecStart=/usr/bin/xrootd -l /var/log/cta-frontend-xrootd.log -c /etc/cta/cta-frontend-xrootd.conf -k fifo -n cta
+</span><span id="__span-14-7"><a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>User=cta
+</span><span id="__span-14-8"><a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>Type=simple
+</span><span id="__span-14-9"><a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>Restart=always
+</span><span id="__span-14-10"><a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>RestartSec=10
+</span><span id="__span-14-11"><a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>StartLimitInterval=0
+</span><span id="__span-14-12"><a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>StartLimitBurst=0
+</span><span id="__span-14-13"><a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>OOMScoreAdjust=-1000
+</span><span id="__span-14-14"><a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>LimitCORE=infinity
+</span><span id="__span-14-15"><a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>LimitNOFILE=65536
+</span><span id="__span-14-16"><a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>
+</span><span id="__span-14-17"><a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a>[Install]
+</span><span id="__span-14-18"><a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a>WantedBy=default.target
+</span></code></pre></div>
+<h4 id="boot-the-cta-frontend-and-test-it">Boot the cta-frontend and test it<a class="headerlink" href="#boot-the-cta-frontend-and-test-it" title="Permanent link">&para;</a></h4>
+<p>In order to start the cta-frontend, run</p>
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>systemctl<span class="w"> </span>daemon-reload
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>cta-frontend
+</span><span id="__span-15-3"><a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>systemctl<span class="w"> </span>restart<span class="w"> </span>cta-frontend
+</span></code></pre></div>
+<p>Check that the cta-frontend runs by typing:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>systemctl status cta-frontend
+</span><span id="__span-16-2"><a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>● cta-frontend.service - CTA frontend plugin for the XRoot deamon
+</span><span id="__span-16-3"><a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>   Loaded: loaded (/etc/systemd/system/cta-frontend.service; disabled; vendor preset: disabled)
+</span><span id="__span-16-4"><a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>   Active: active (running) since Tue 2021-03-30 18:13:43 CEST; 1min 39s ago
+</span><span id="__span-16-5"><a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a> Main PID: 7367 (xrootd)
+</span><span id="__span-16-6"><a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a>    Tasks: 801
+</span><span id="__span-16-7"><a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a>   Memory: 45.6M
+</span><span id="__span-16-8"><a id="__codelineno-16-8" name="__codelineno-16-8" href="#__codelineno-16-8"></a>   CGroup: /system.slice/cta-frontend.service
+</span><span id="__span-16-9"><a id="__codelineno-16-9" name="__codelineno-16-9" href="#__codelineno-16-9"></a>           └─7367 /usr/bin/xrootd -l /var/log/cta-frontend-xrootd.log -c /etc/cta/cta-frontend-xrootd.conf -k fifo -n cta
+</span><span id="__span-16-10"><a id="__codelineno-16-10" name="__codelineno-16-10" href="#__codelineno-16-10"></a>
+</span><span id="__span-16-11"><a id="__codelineno-16-11" name="__codelineno-16-11" href="#__codelineno-16-11"></a>Mar 30 18:13:43 eos-ccaffy-dev01.cern.ch systemd[1]: Started CTA frontend plugin for the XRoot deamon.
+</span></code></pre></div>
+<p>You should now be able to run the command <code>cta-admin version</code>.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>cta-admin version
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>CTA Admin Client xrd-ssi-protobuf CTA Frontend Server xrd-ssi-protobuf Catalogue schema              DB connection string 
+</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>      0-1                    v0.0          0-1                    v0.0              4.0 oracle:cta_dev04/******@castorint
+</span></code></pre></div>
+<p>If this is not the case, make sure you have <code>kinit</code>. Also, you can check the logs located in <code>/var/log/cta-frontend-xrootd.log</code> and in <code>/etc/cta/cta-frontend-xrootd.conf</code> to spot any eventual problem.</p>
+<h3 id="configure-the-tapeserver-cta-taped-daemon">Configure the tapeserver (cta-taped daemon)<a class="headerlink" href="#configure-the-tapeserver-cta-taped-daemon" title="Permanent link">&para;</a></h3>
+<h4 id="configure-cta-rmcd">Configure cta-rmcd<a class="headerlink" href="#configure-cta-rmcd" title="Permanent link">&para;</a></h4>
+<p>Edit the <code>/etc/sysconfig/cta-rmcd</code> file:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a># Arguments for the rmcd server daemon
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>#   -smc_ldr       is the picker device as defined in /dev.
+</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>#   -f             keep process in the foreground, do not fork.
+</span><span id="__span-18-4"><a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>#CTA_RMCD_OPTIONS=&quot;smc_ldr&quot;
+</span><span id="__span-18-5"><a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>DAEMON_COREFILE_LIMIT=unlimited
+</span><span id="__span-18-6"><a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a>RUN_RMCD=yes
+</span><span id="__span-18-7"><a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>CTA_RMCD_OPTIONS=/dev/smc
+</span></code></pre></div>
+<p>Edit the <code>/etc/systemd/system/cta-rmcd.service</code> file:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>[Unit]
+</span><span id="__span-19-2"><a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>Description=CERN Tape Archive (CTA) rmcd daemon
+</span><span id="__span-19-3"><a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a>After=syslog.target network-online.target
+</span><span id="__span-19-4"><a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>
+</span><span id="__span-19-5"><a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a>[Service]
+</span><span id="__span-19-6"><a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>User=cta
+</span><span id="__span-19-7"><a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>EnvironmentFile=-/etc/sysconfig/cta-rmcd
+</span><span id="__span-19-8"><a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a>ExecStart=/usr/bin/cta-rmcd ${CTA_RMCD_OPTIONS}
+</span><span id="__span-19-9"><a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>LimitCORE=infinity
+</span><span id="__span-19-10"><a id="__codelineno-19-10" name="__codelineno-19-10" href="#__codelineno-19-10"></a>Type=forking
+</span><span id="__span-19-11"><a id="__codelineno-19-11" name="__codelineno-19-11" href="#__codelineno-19-11"></a>Restart=no
+</span><span id="__span-19-12"><a id="__codelineno-19-12" name="__codelineno-19-12" href="#__codelineno-19-12"></a>
+</span><span id="__span-19-13"><a id="__codelineno-19-13" name="__codelineno-19-13" href="#__codelineno-19-13"></a>[Install]
+</span><span id="__span-19-14"><a id="__codelineno-19-14" name="__codelineno-19-14" href="#__codelineno-19-14"></a>WantedBy=default.target
+</span></code></pre></div>
+<p>Start the cta-rmcd daemon:</p>
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-20-1"><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>systemctl<span class="w"> </span>daemon-reload
+</span><span id="__span-20-2"><a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>cta-rmcd
+</span><span id="__span-20-3"><a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a>systemctl<span class="w"> </span>restart<span class="w"> </span>cta-rmcd
+</span></code></pre></div>
+<h4 id="create-the-etcctatpconfig-file">Create the /etc/cta/TPCONFIG file<a class="headerlink" href="#create-the-etcctatpconfig-file" title="Permanent link">&para;</a></h4>
+<p>Define the tape drive(s) that will be used by the <code>cta-taped</code> daemon in the /etc/cta/TPCONFIG file:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-21-1"><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>vi /etc/cta/TPCONFIG
+</span><span id="__span-21-2"><a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>VDSTK1 VLSTK /dev/nst0 smc0
+</span></code></pre></div>
+<p>Here we configure only one drive.</p>
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>chmod<span class="w"> </span>a+r<span class="w"> </span>/etc/cta/TPCONFIG
+</span></code></pre></div>
+<h4 id="create-the-cta-taped-configuration-file">Create the cta-taped configuration file<a class="headerlink" href="#create-the-cta-taped-configuration-file" title="Permanent link">&para;</a></h4>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>vi /etc/cta/cta-taped.conf
+</span><span id="__span-23-2"><a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>taped BufferSizeBytes 262144
+</span><span id="__span-23-3"><a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>taped BufferCount 200
+</span><span id="__span-23-4"><a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>taped MountCriteria 2000000, 100
+</span><span id="__span-23-5"><a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>taped UseEncryption no
+</span><span id="__span-23-6"><a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>ObjectStore BackendPath rados://OBJECTSTORE_ID@OBJECTSTORE_POOL:OBJECTSTORE_NAMESPACE
+</span></code></pre></div>
+<h4 id="create-the-log-file">Create the log file<a class="headerlink" href="#create-the-log-file" title="Permanent link">&para;</a></h4>
+<p>Make sure to create the file that will be used by the tapeserver daemon to log what it is doing:</p>
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a>touch<span class="w"> </span>/var/log/cta/cta-taped.log
+</span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>chmod<span class="w"> </span>a+w<span class="w"> </span>/var/log/cta/cta-taped.log
+</span></code></pre></div>
+<h4 id="create-the-sss-key-that-will-be-used-by-the-tapeserver-to-communicate-with-eos">Create the sss key that will be used by the tapeserver to communicate with <abbr title="EOS Open Storage">EOS</abbr><a class="headerlink" href="#create-the-sss-key-that-will-be-used-by-the-tapeserver-to-communicate-with-eos" title="Permanent link">&para;</a></h4>
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="nb">cd</span><span class="w"> </span>/etc/cta
+</span><span id="__span-25-2"><a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>xrdsssadmin<span class="w"> </span>-k<span class="w"> </span>cta-taped<span class="w"> </span>-u<span class="w"> </span>cta<span class="w"> </span>-g<span class="w"> </span>cta<span class="w"> </span>add<span class="w"> </span>ctafrontend_client_sss.keytab
+</span><span id="__span-25-3"><a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>chmod<span class="w"> </span><span class="m">600</span><span class="w"> </span>ctafrontend_client_sss.keytab
+</span><span id="__span-25-4"><a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>chown<span class="w"> </span>cta:tape<span class="w"> </span>ctafrontend_client_sss.keytab
+</span></code></pre></div>
+<h4 id="configure-systemd-cta-taped-service">Configure systemd cta-taped service<a class="headerlink" href="#configure-systemd-cta-taped-service" title="Permanent link">&para;</a></h4>
+<p>Edit the file <code>/etc/sysconfig/cta-taped</code>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-26-1"><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a># Arguments for the tape server daemon
+</span><span id="__span-26-2"><a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>#   -f             keep process in the foreground, do not fork
+</span><span id="__span-26-3"><a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>#   -h             display help and exit
+</span><span id="__span-26-4"><a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>#   -c             config file location (cta.conf)
+</span><span id="__span-26-5"><a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>#
+</span><span id="__span-26-6"><a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a># CTA_TAPED_OPTIONS=&quot;--foreground --log-to-file=/var/log/cta/cta-taped.log&quot;
+</span><span id="__span-26-7"><a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>
+</span><span id="__span-26-8"><a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>
+</span><span id="__span-26-9"><a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a># Environment variables to configue the libXrdCl.so linked with cta-taped
+</span><span id="__span-26-10"><a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a>#
+</span><span id="__span-26-11"><a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a># These two variables set the authentication mechanism to Simple Shared Secret
+</span><span id="__span-26-12"><a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a># (SSS) and set the SSS key to be that of the tape server
+</span><span id="__span-26-13"><a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a>XrdSecPROTOCOL=sss
+</span><span id="__span-26-14"><a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a>XrdSecSSSKT=/etc/cta/ctafrontend_client_sss.keytab
+</span></code></pre></div>
+<p>Edit the file <code>/etc/systemd/system/cta-taped.service</code>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-27-1"><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>[Unit]
+</span><span id="__span-27-2"><a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>Description=CERN Tape Archive (CTA) tape server daemon
+</span><span id="__span-27-3"><a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>After=syslog.target network-online.target
+</span><span id="__span-27-4"><a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>
+</span><span id="__span-27-5"><a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>[Service]
+</span><span id="__span-27-6"><a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>EnvironmentFile=/etc/sysconfig/cta-taped
+</span><span id="__span-27-7"><a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a>ExecStart=/usr/bin/cta-taped --log-to-file=/var/log/cta/cta-taped.log
+</span><span id="__span-27-8"><a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a>LimitCORE=infinity
+</span><span id="__span-27-9"><a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a>OOMScoreAdjust=-1000
+</span><span id="__span-27-10"><a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a>Type=forking
+</span><span id="__span-27-11"><a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a>Restart=no
+</span><span id="__span-27-12"><a id="__codelineno-27-12" name="__codelineno-27-12" href="#__codelineno-27-12"></a>
+</span><span id="__span-27-13"><a id="__codelineno-27-13" name="__codelineno-27-13" href="#__codelineno-27-13"></a>[Install]
+</span><span id="__span-27-14"><a id="__codelineno-27-14" name="__codelineno-27-14" href="#__codelineno-27-14"></a>WantedBy=default.target
+</span></code></pre></div>
+<h4 id="start-the-cta-taped-daemon-and-test-that-it-is-running">Start the cta-taped daemon and test that it is running<a class="headerlink" href="#start-the-cta-taped-daemon-and-test-that-it-is-running" title="Permanent link">&para;</a></h4>
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-28-1"><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a>systemctl<span class="w"> </span>daemon-reload
+</span><span id="__span-28-2"><a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>cta-taped
+</span><span id="__span-28-3"><a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a>systemctl<span class="w"> </span>restart<span class="w"> </span>cta-taped
+</span></code></pre></div>
+<p>Verify that the cta-taped daemon is running by typing:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-29-1"><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>systemctl status cta-taped
+</span><span id="__span-29-2"><a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>● cta-taped.service - CERN Tape Archive (CTA) tape server daemon
+</span><span id="__span-29-3"><a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a>   Loaded: loaded (/etc/systemd/system/cta-taped.service; disabled; vendor preset: disabled)
+</span><span id="__span-29-4"><a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a>   Active: active (running) since Wed 2021-03-31 08:52:44 CEST; 18min ago
+</span><span id="__span-29-5"><a id="__codelineno-29-5" name="__codelineno-29-5" href="#__codelineno-29-5"></a>  Process: 3702 ExecStart=/usr/bin/cta-taped --log-to-file=/var/log/cta/cta-taped.log (code=exited, status=0/SUCCESS)
+</span><span id="__span-29-6"><a id="__codelineno-29-6" name="__codelineno-29-6" href="#__codelineno-29-6"></a> Main PID: 3703 (cta-tpd-master)
+</span><span id="__span-29-7"><a id="__codelineno-29-7" name="__codelineno-29-7" href="#__codelineno-29-7"></a>    Tasks: 75
+</span><span id="__span-29-8"><a id="__codelineno-29-8" name="__codelineno-29-8" href="#__codelineno-29-8"></a>   Memory: 34.6M
+</span><span id="__span-29-9"><a id="__codelineno-29-9" name="__codelineno-29-9" href="#__codelineno-29-9"></a>   CGroup: /system.slice/cta-taped.service
+</span><span id="__span-29-10"><a id="__codelineno-29-10" name="__codelineno-29-10" href="#__codelineno-29-10"></a>           ├─3703 /usr/bin/cta-taped --log-to-file=/var/log/cta/cta-taped.log...
+</span><span id="__span-29-11"><a id="__codelineno-29-11" name="__codelineno-29-11" href="#__codelineno-29-11"></a>           ├─3704 /usr/bin/cta-taped --log-to-file=/var/log/cta/cta-taped.log...
+</span><span id="__span-29-12"><a id="__codelineno-29-12" name="__codelineno-29-12" href="#__codelineno-29-12"></a>           └─3705 /usr/bin/cta-taped --log-to-file=/var/log/cta/cta-taped.log...
+</span><span id="__span-29-13"><a id="__codelineno-29-13" name="__codelineno-29-13" href="#__codelineno-29-13"></a>
+</span><span id="__span-29-14"><a id="__codelineno-29-14" name="__codelineno-29-14" href="#__codelineno-29-14"></a>Mar 31 08:52:44 eos-ccaffy-dev01.cern.ch systemd[1]: Starting CERN Tape Archi...
+</span><span id="__span-29-15"><a id="__codelineno-29-15" name="__codelineno-29-15" href="#__codelineno-29-15"></a>Mar 31 08:52:44 eos-ccaffy-dev01.cern.ch systemd[1]: Started CERN Tape Archiv...
+</span><span id="__span-29-16"><a id="__codelineno-29-16" name="__codelineno-29-16" href="#__codelineno-29-16"></a>Hint: Some lines were ellipsized, use -l to show in full.
+</span></code></pre></div>
+<p>Verify the drive registered itself by typing:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-30-1"><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a>cta-admin dr ls
+</span><span id="__span-30-2"><a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>library  drive             host desired request status since vid tapepool vo files data MB/s session priority activity age reason                                             
+</span><span id="__span-30-3"><a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a>  VLSTK VDSTK1 eos-ccaffy-dev01    Down       -   Down  1206   -        -  -     -    -    -       -        0        -   5 [cta-taped] INFO Setting the drive down at da[...]
+</span></code></pre></div>
+<p>If the <code>cta-taped</code> daemon did not start, you can look at the logs in the <code>/var/log/cta/cta-taped.log</code>.</p>
+<h3 id="prepare-the-cta-test-environment-cta-admin-commands">Prepare the <abbr title="CERN Tape Archive">CTA</abbr> test environment (<code>cta-admin</code> commands)<a class="headerlink" href="#prepare-the-cta-test-environment-cta-admin-commands" title="Permanent link">&para;</a></h3>
+<p>You can put the following code to a script file and run it:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-31-1"><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a>LOGICAL_LIBRARY_NAME=VLSTK
+</span><span id="__span-31-2"><a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>cta-admin logicallibrary add \
+</span><span id="__span-31-3"><a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a>      --name $LOGICAL_LIBRARY_NAME \
+</span><span id="__span-31-4"><a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a>      --comment &quot;ctasystest library mapped to drive VDSTK1&quot;
+</span><span id="__span-31-5"><a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a>
+</span><span id="__span-31-6"><a id="__codelineno-31-6" name="__codelineno-31-6" href="#__codelineno-31-6"></a>VO_NAME=&quot;vo&quot;
+</span><span id="__span-31-7"><a id="__codelineno-31-7" name="__codelineno-31-7" href="#__codelineno-31-7"></a>cta-admin virtualorganization add  \
+</span><span id="__span-31-8"><a id="__codelineno-31-8" name="__codelineno-31-8" href="#__codelineno-31-8"></a>  --vo $VO_NAME                    \
+</span><span id="__span-31-9"><a id="__codelineno-31-9" name="__codelineno-31-9" href="#__codelineno-31-9"></a>  --readmaxdrives 1                \
+</span><span id="__span-31-10"><a id="__codelineno-31-10" name="__codelineno-31-10" href="#__codelineno-31-10"></a>  --writemaxdrives 1               \
+</span><span id="__span-31-11"><a id="__codelineno-31-11" name="__codelineno-31-11" href="#__codelineno-31-11"></a>  --comment &quot;vo&quot;      
+</span><span id="__span-31-12"><a id="__codelineno-31-12" name="__codelineno-31-12" href="#__codelineno-31-12"></a>
+</span><span id="__span-31-13"><a id="__codelineno-31-13" name="__codelineno-31-13" href="#__codelineno-31-13"></a>TAPE_POOL_NAME=&quot;ctasystest&quot;                                                             
+</span><span id="__span-31-14"><a id="__codelineno-31-14" name="__codelineno-31-14" href="#__codelineno-31-14"></a>cta-admin tapepool add       \
+</span><span id="__span-31-15"><a id="__codelineno-31-15" name="__codelineno-31-15" href="#__codelineno-31-15"></a>  --name $TAPE_POOL_NAME     \
+</span><span id="__span-31-16"><a id="__codelineno-31-16" name="__codelineno-31-16" href="#__codelineno-31-16"></a>  --vo $VO_NAME              \
+</span><span id="__span-31-17"><a id="__codelineno-31-17" name="__codelineno-31-17" href="#__codelineno-31-17"></a>  --partialtapesnumber 5     \
+</span><span id="__span-31-18"><a id="__codelineno-31-18" name="__codelineno-31-18" href="#__codelineno-31-18"></a>  --encrypted false          \
+</span><span id="__span-31-19"><a id="__codelineno-31-19" name="__codelineno-31-19" href="#__codelineno-31-19"></a>  --comment &quot;ctasystest&quot;
+</span><span id="__span-31-20"><a id="__codelineno-31-20" name="__codelineno-31-20" href="#__codelineno-31-20"></a># add the media types of the tapes in production
+</span><span id="__span-31-21"><a id="__codelineno-31-21" name="__codelineno-31-21" href="#__codelineno-31-21"></a>cta-admin mediatype add \
+</span><span id="__span-31-22"><a id="__codelineno-31-22" name="__codelineno-31-22" href="#__codelineno-31-22"></a>  --name T10K500G  \
+</span><span id="__span-31-23"><a id="__codelineno-31-23" name="__codelineno-31-23" href="#__codelineno-31-23"></a>  --capacity 500000000000 \
+</span><span id="__span-31-24"><a id="__codelineno-31-24" name="__codelineno-31-24" href="#__codelineno-31-24"></a>  --primarydensitycode 74 \
+</span><span id="__span-31-25"><a id="__codelineno-31-25" name="__codelineno-31-25" href="#__codelineno-31-25"></a>  --cartridge &quot;T10000&quot; \
+</span><span id="__span-31-26"><a id="__codelineno-31-26" name="__codelineno-31-26" href="#__codelineno-31-26"></a>  --comment &quot;Oracle T10000 cartridge formated at 500 GB (for developers only)&quot;
+</span><span id="__span-31-27"><a id="__codelineno-31-27" name="__codelineno-31-27" href="#__codelineno-31-27"></a>cta-admin mediatype add \
+</span><span id="__span-31-28"><a id="__codelineno-31-28" name="__codelineno-31-28" href="#__codelineno-31-28"></a>    --name 3592JC7T \
+</span><span id="__span-31-29"><a id="__codelineno-31-29" name="__codelineno-31-29" href="#__codelineno-31-29"></a>    --capacity 7000000000000 \
+</span><span id="__span-31-30"><a id="__codelineno-31-30" name="__codelineno-31-30" href="#__codelineno-31-30"></a>    --primarydensitycode 84 \
+</span><span id="__span-31-31"><a id="__codelineno-31-31" name="__codelineno-31-31" href="#__codelineno-31-31"></a>    --cartridge &quot;3592JC&quot; \
+</span><span id="__span-31-32"><a id="__codelineno-31-32" name="__codelineno-31-32" href="#__codelineno-31-32"></a>    --comment &quot;IBM 3592JC cartridge formated at 7 TB&quot;
+</span><span id="__span-31-33"><a id="__codelineno-31-33" name="__codelineno-31-33" href="#__codelineno-31-33"></a>cta-admin mediatype add \
+</span><span id="__span-31-34"><a id="__codelineno-31-34" name="__codelineno-31-34" href="#__codelineno-31-34"></a>    --name 3592JD15T \
+</span><span id="__span-31-35"><a id="__codelineno-31-35" name="__codelineno-31-35" href="#__codelineno-31-35"></a>    --capacity 15000000000000 \
+</span><span id="__span-31-36"><a id="__codelineno-31-36" name="__codelineno-31-36" href="#__codelineno-31-36"></a>    --primarydensitycode 85 \
+</span><span id="__span-31-37"><a id="__codelineno-31-37" name="__codelineno-31-37" href="#__codelineno-31-37"></a>    --cartridge &quot;3592JD&quot; \
+</span><span id="__span-31-38"><a id="__codelineno-31-38" name="__codelineno-31-38" href="#__codelineno-31-38"></a>    --comment &quot;IBM 3592JD cartridge formated at 15 TB&quot;
+</span><span id="__span-31-39"><a id="__codelineno-31-39" name="__codelineno-31-39" href="#__codelineno-31-39"></a>cta-admin mediatype add \
+</span><span id="__span-31-40"><a id="__codelineno-31-40" name="__codelineno-31-40" href="#__codelineno-31-40"></a>    --name 3592JE20T \
+</span><span id="__span-31-41"><a id="__codelineno-31-41" name="__codelineno-31-41" href="#__codelineno-31-41"></a>    --capacity 20000000000000 \
+</span><span id="__span-31-42"><a id="__codelineno-31-42" name="__codelineno-31-42" href="#__codelineno-31-42"></a>    --primarydensitycode 87 \
+</span><span id="__span-31-43"><a id="__codelineno-31-43" name="__codelineno-31-43" href="#__codelineno-31-43"></a>    --cartridge &quot;3592JE&quot; \
+</span><span id="__span-31-44"><a id="__codelineno-31-44" name="__codelineno-31-44" href="#__codelineno-31-44"></a>    --comment &quot;IBM 3592JE cartridge formated at 20 TB&quot;
+</span><span id="__span-31-45"><a id="__codelineno-31-45" name="__codelineno-31-45" href="#__codelineno-31-45"></a>cta-admin mediatype add \
+</span><span id="__span-31-46"><a id="__codelineno-31-46" name="__codelineno-31-46" href="#__codelineno-31-46"></a>  --name LTO7M \
+</span><span id="__span-31-47"><a id="__codelineno-31-47" name="__codelineno-31-47" href="#__codelineno-31-47"></a>  --capacity 9000000000000 \
+</span><span id="__span-31-48"><a id="__codelineno-31-48" name="__codelineno-31-48" href="#__codelineno-31-48"></a>  --primarydensitycode 93 \
+</span><span id="__span-31-49"><a id="__codelineno-31-49" name="__codelineno-31-49" href="#__codelineno-31-49"></a>  --cartridge &quot;LTO-7&quot; \
+</span><span id="__span-31-50"><a id="__codelineno-31-50" name="__codelineno-31-50" href="#__codelineno-31-50"></a>  --comment &quot;LTO-7 M8 cartridge formated at 9 TB&quot;
+</span><span id="__span-31-51"><a id="__codelineno-31-51" name="__codelineno-31-51" href="#__codelineno-31-51"></a>cta-admin mediatype add \
+</span><span id="__span-31-52"><a id="__codelineno-31-52" name="__codelineno-31-52" href="#__codelineno-31-52"></a>  --name LTO8 \
+</span><span id="__span-31-53"><a id="__codelineno-31-53" name="__codelineno-31-53" href="#__codelineno-31-53"></a>  --capacity 12000000000000 \
+</span><span id="__span-31-54"><a id="__codelineno-31-54" name="__codelineno-31-54" href="#__codelineno-31-54"></a>  --primarydensitycode 94 \
+</span><span id="__span-31-55"><a id="__codelineno-31-55" name="__codelineno-31-55" href="#__codelineno-31-55"></a>  --cartridge &quot;LTO-8&quot; \
+</span><span id="__span-31-56"><a id="__codelineno-31-56" name="__codelineno-31-56" href="#__codelineno-31-56"></a>  --comment &quot;LTO-8 cartridge formated at 12 TB&quot;
+</span><span id="__span-31-57"><a id="__codelineno-31-57" name="__codelineno-31-57" href="#__codelineno-31-57"></a># add all tapes
+</span><span id="__span-31-58"><a id="__codelineno-31-58" name="__codelineno-31-58" href="#__codelineno-31-58"></a>TAPES=(V01001 V01002 V01003 V01004 V01005 V01006 V01007)
+</span><span id="__span-31-59"><a id="__codelineno-31-59" name="__codelineno-31-59" href="#__codelineno-31-59"></a>for ((i=0; i&lt;${#TAPES[@]}; i++)); do
+</span><span id="__span-31-60"><a id="__codelineno-31-60" name="__codelineno-31-60" href="#__codelineno-31-60"></a>  VID=${TAPES[${i}]}
+</span><span id="__span-31-61"><a id="__codelineno-31-61" name="__codelineno-31-61" href="#__codelineno-31-61"></a>  cta-admin tape add     \
+</span><span id="__span-31-62"><a id="__codelineno-31-62" name="__codelineno-31-62" href="#__codelineno-31-62"></a>    --mediatype &quot;T10K500G&quot;                  \
+</span><span id="__span-31-63"><a id="__codelineno-31-63" name="__codelineno-31-63" href="#__codelineno-31-63"></a>    --vendor vendor                         \
+</span><span id="__span-31-64"><a id="__codelineno-31-64" name="__codelineno-31-64" href="#__codelineno-31-64"></a>    --logicallibrary $LOGICAL_LIBRARY_NAME  \
+</span><span id="__span-31-65"><a id="__codelineno-31-65" name="__codelineno-31-65" href="#__codelineno-31-65"></a>    --tapepool ctasystest                   \
+</span><span id="__span-31-66"><a id="__codelineno-31-66" name="__codelineno-31-66" href="#__codelineno-31-66"></a>    --comment &quot;ctasystest&quot;                  \
+</span><span id="__span-31-67"><a id="__codelineno-31-67" name="__codelineno-31-67" href="#__codelineno-31-67"></a>    --vid ${VID}                            \
+</span><span id="__span-31-68"><a id="__codelineno-31-68" name="__codelineno-31-68" href="#__codelineno-31-68"></a>    --full false                            \
+</span><span id="__span-31-69"><a id="__codelineno-31-69" name="__codelineno-31-69" href="#__codelineno-31-69"></a>    --comment &quot;ctasystest&quot;
+</span><span id="__span-31-70"><a id="__codelineno-31-70" name="__codelineno-31-70" href="#__codelineno-31-70"></a>done
+</span><span id="__span-31-71"><a id="__codelineno-31-71" name="__codelineno-31-71" href="#__codelineno-31-71"></a>STORAGE_CLASS_NAME=&quot;ctaStorageClass&quot;
+</span><span id="__span-31-72"><a id="__codelineno-31-72" name="__codelineno-31-72" href="#__codelineno-31-72"></a>cta-admin storageclass add   \
+</span><span id="__span-31-73"><a id="__codelineno-31-73" name="__codelineno-31-73" href="#__codelineno-31-73"></a>  --name $STORAGE_CLASS_NAME                \
+</span><span id="__span-31-74"><a id="__codelineno-31-74" name="__codelineno-31-74" href="#__codelineno-31-74"></a>  --numberofcopies 1                        \
+</span><span id="__span-31-75"><a id="__codelineno-31-75" name="__codelineno-31-75" href="#__codelineno-31-75"></a>  --vo $VO_NAME                             \
+</span><span id="__span-31-76"><a id="__codelineno-31-76" name="__codelineno-31-76" href="#__codelineno-31-76"></a>  --comment &quot;ctasystest&quot;
+</span><span id="__span-31-77"><a id="__codelineno-31-77" name="__codelineno-31-77" href="#__codelineno-31-77"></a>cta-admin archiveroute add   \
+</span><span id="__span-31-78"><a id="__codelineno-31-78" name="__codelineno-31-78" href="#__codelineno-31-78"></a>  --storageclass $STORAGE_CLASS_NAME        \
+</span><span id="__span-31-79"><a id="__codelineno-31-79" name="__codelineno-31-79" href="#__codelineno-31-79"></a>  --copynb 1                                \
+</span><span id="__span-31-80"><a id="__codelineno-31-80" name="__codelineno-31-80" href="#__codelineno-31-80"></a>  --tapepool $TAPE_POOL_NAME                \
+</span><span id="__span-31-81"><a id="__codelineno-31-81" name="__codelineno-31-81" href="#__codelineno-31-81"></a>  --comment &quot;ctasystest&quot;
+</span><span id="__span-31-82"><a id="__codelineno-31-82" name="__codelineno-31-82" href="#__codelineno-31-82"></a>
+</span><span id="__span-31-83"><a id="__codelineno-31-83" name="__codelineno-31-83" href="#__codelineno-31-83"></a>MOUNT_POLICY_NAME=&quot;ctasystest&quot;
+</span><span id="__span-31-84"><a id="__codelineno-31-84" name="__codelineno-31-84" href="#__codelineno-31-84"></a>cta-admin mountpolicy add    \
+</span><span id="__span-31-85"><a id="__codelineno-31-85" name="__codelineno-31-85" href="#__codelineno-31-85"></a>  --name $MOUNT_POLICY_NAME                 \
+</span><span id="__span-31-86"><a id="__codelineno-31-86" name="__codelineno-31-86" href="#__codelineno-31-86"></a>  --archivepriority 1                       \
+</span><span id="__span-31-87"><a id="__codelineno-31-87" name="__codelineno-31-87" href="#__codelineno-31-87"></a>  --minarchiverequestage 1                  \
+</span><span id="__span-31-88"><a id="__codelineno-31-88" name="__codelineno-31-88" href="#__codelineno-31-88"></a>  --retrievepriority 1                      \
+</span><span id="__span-31-89"><a id="__codelineno-31-89" name="__codelineno-31-89" href="#__codelineno-31-89"></a>  --minretrieverequestage 1                 \
+</span><span id="__span-31-90"><a id="__codelineno-31-90" name="__codelineno-31-90" href="#__codelineno-31-90"></a>  --comment &quot;ctasystest&quot;
+</span><span id="__span-31-91"><a id="__codelineno-31-91" name="__codelineno-31-91" href="#__codelineno-31-91"></a>
+</span><span id="__span-31-92"><a id="__codelineno-31-92" name="__codelineno-31-92" href="#__codelineno-31-92"></a>RMR_NAME=&quot;username&quot;
+</span><span id="__span-31-93"><a id="__codelineno-31-93" name="__codelineno-31-93" href="#__codelineno-31-93"></a>EOS_INSTANCE=&quot;eosdev&quot;
+</span><span id="__span-31-94"><a id="__codelineno-31-94" name="__codelineno-31-94" href="#__codelineno-31-94"></a>cta-admin requestermountrule add --instance $EOS_INSTANCE --name $RMR_NAME --mountpolicy $MOUNT_POLICY_NAME --comment &quot;ctasystest&quot;
+</span><span id="__span-31-95"><a id="__codelineno-31-95" name="__codelineno-31-95" href="#__codelineno-31-95"></a>###
+</span><span id="__span-31-96"><a id="__codelineno-31-96" name="__codelineno-31-96" href="#__codelineno-31-96"></a>echo &quot;Labeling tapes:&quot;
+</span><span id="__span-31-97"><a id="__codelineno-31-97" name="__codelineno-31-97" href="#__codelineno-31-97"></a># add all tapes
+</span><span id="__span-31-98"><a id="__codelineno-31-98" name="__codelineno-31-98" href="#__codelineno-31-98"></a>for ((i=0; i&lt;${#TAPES[@]}; i++)); do
+</span><span id="__span-31-99"><a id="__codelineno-31-99" name="__codelineno-31-99" href="#__codelineno-31-99"></a>  VID=${TAPES[${i}]}
+</span><span id="__span-31-100"><a id="__codelineno-31-100" name="__codelineno-31-100" href="#__codelineno-31-100"></a>  echo &quot;  cta-tape-label --vid ${VID}&quot;
+</span><span id="__span-31-101"><a id="__codelineno-31-101" name="__codelineno-31-101" href="#__codelineno-31-101"></a>  sudo cta-tape-label --vid ${VID} 
+</span><span id="__span-31-102"><a id="__codelineno-31-102" name="__codelineno-31-102" href="#__codelineno-31-102"></a>  if [ $? -ne 0 ]; then
+</span><span id="__span-31-103"><a id="__codelineno-31-103" name="__codelineno-31-103" href="#__codelineno-31-103"></a>    echo &quot;ERROR: failed to label the tape ${VID}&quot;
+</span><span id="__span-31-104"><a id="__codelineno-31-104" name="__codelineno-31-104" href="#__codelineno-31-104"></a>    exit 1
+</span><span id="__span-31-105"><a id="__codelineno-31-105" name="__codelineno-31-105" href="#__codelineno-31-105"></a>  fi
+</span><span id="__span-31-106"><a id="__codelineno-31-106" name="__codelineno-31-106" href="#__codelineno-31-106"></a>done
+</span></code></pre></div>
+<h2 id="configure-eos-to-run-with-cta">Configure <abbr title="EOS Open Storage">EOS</abbr> to run with <abbr title="CERN Tape Archive">CTA</abbr><a class="headerlink" href="#configure-eos-to-run-with-cta" title="Permanent link">&para;</a></h2>
+<p>Now that <abbr title="EOS Open Storage">EOS</abbr>, the <abbr title="CERN Tape Archive">CTA</abbr> Frontend and the tapeserver are running, we have to configure our <abbr title="EOS Open Storage">EOS</abbr> instance to communicate with <abbr title="CERN Tape Archive">CTA</abbr>.</p>
+<h3 id="set-the-cta-user-as-sudo">Set the cta user as sudo<a class="headerlink" href="#set-the-cta-user-as-sudo" title="Permanent link">&para;</a></h3>
+<p>The username specified in the <abbr title="Simple Shared Secret">SSS</abbr> key shared between the <abbr title="EOS Open Storage">EOS</abbr> <abbr title="EOS Metadata Manager">MGM</abbr> and <abbr title="CERN Tape Archive">CTA</abbr> Tape Server must be configured as an <abbr title="EOS Open Storage">EOS</abbr> superuser:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-32-1"><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a>EOS Console [root://localhost] |/eos/username/&gt; vid set membership cta +sudo
+</span><span id="__span-32-2"><a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>success: set vid [  eos.rgid=0 eos.ruid=0 mgm.cmd=vid mgm.subcmd=set mgm.vid.cmd=membership mgm.vid.key=cta:root mgm.vid.source.uid=cta mgm.vid.target.sudo=true ]
+</span></code></pre></div>
+<h3 id="create-a-tape-directory-on-your-eos-instance">Create a tape directory on your <abbr title="EOS Open Storage">EOS</abbr> instance<a class="headerlink" href="#create-a-tape-directory-on-your-eos-instance" title="Permanent link">&para;</a></h3>
+<p>This directory will be the one used to archive files onto tape and retrieve files from them.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-33-1"><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a>EOS Console [root://localhost] |/eos/username/&gt; mkdir tape
+</span><span id="__span-33-2"><a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>EOS Console [root://localhost] |/eos/username/&gt;
+</span></code></pre></div>
+<h4 id="set-the-acl-on-the-newly-created-tape-directory">Set the ACL on the newly created tape directory<a class="headerlink" href="#set-the-acl-on-the-newly-created-tape-directory" title="Permanent link">&para;</a></h4>
+<p>We have to authorize ourselves and the cta-taped daemon (here uid=99) to write to this directory. We also need to authorize ourserlves to <code>prepare</code> files (retrieve them from tape).</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-34-1"><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a>EOS Console [root://localhost] |/eos/username/&gt; whoami
+</span><span id="__span-34-2"><a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>Virtual Identity: uid=12345 (0,99,12345) gid=2763 (99,2763) [authz:krb5] sudo* host=localhost domain=localdomain
+</span><span id="__span-34-3"><a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>EOS Console [root://localhost] |/eos/username/&gt; attr set sys.acl=u:12345:rwx+dp,u:99:rwx+dp,z:!u,u:0:+u .
+</span></code></pre></div>
+<h4 id="set-the-correct-extended-attributes-on-the-tape-directory">Set the correct extended attributes on the tape directory<a class="headerlink" href="#set-the-correct-extended-attributes-on-the-tape-directory" title="Permanent link">&para;</a></h4>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-35-1"><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a>sudo eos attr set sys.workflow.sync::create.default=&quot;proto&quot; /eos/username/tape
+</span><span id="__span-35-2"><a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a>sudo eos attr set sys.workflow.sync::closew.default=&quot;proto&quot; /eos/username/tape
+</span><span id="__span-35-3"><a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a>sudo eos attr set sys.workflow.sync::archived.default=&quot;proto&quot; /eos/username/tape
+</span><span id="__span-35-4"><a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a>sudo eos attr set sys.workflow.sync::archive_failed.default=&quot;proto&quot; /eos/username/tape
+</span><span id="__span-35-5"><a id="__codelineno-35-5" name="__codelineno-35-5" href="#__codelineno-35-5"></a>sudo eos attr set sys.workflow.sync::prepare.default=&quot;proto&quot; /eos/username/tape
+</span><span id="__span-35-6"><a id="__codelineno-35-6" name="__codelineno-35-6" href="#__codelineno-35-6"></a>sudo eos attr set sys.workflow.sync::abort_prepare.default=&quot;proto&quot; /eos/username/tape
+</span><span id="__span-35-7"><a id="__codelineno-35-7" name="__codelineno-35-7" href="#__codelineno-35-7"></a>sudo eos attr set sys.workflow.sync::evict_prepare.default=&quot;proto&quot; /eos/username/tape
+</span><span id="__span-35-8"><a id="__codelineno-35-8" name="__codelineno-35-8" href="#__codelineno-35-8"></a>sudo eos attr set sys.workflow.sync::closew.retrieve_written=&quot;proto&quot; /eos/username/tape
+</span><span id="__span-35-9"><a id="__codelineno-35-9" name="__codelineno-35-9" href="#__codelineno-35-9"></a>sudo eos attr set sys.workflow.sync::retrieve_failed.default=&quot;proto&quot; /eos/username/tape
+</span><span id="__span-35-10"><a id="__codelineno-35-10" name="__codelineno-35-10" href="#__codelineno-35-10"></a>sudo eos attr set sys.workflow.sync::delete.default=&quot;proto&quot; /eos/username/tape
+</span><span id="__span-35-11"><a id="__codelineno-35-11" name="__codelineno-35-11" href="#__codelineno-35-11"></a>sudo eos attr set sys.archive.storage_class=ctaStorageClass /eos/username/tape
+</span><span id="__span-35-12"><a id="__codelineno-35-12" name="__codelineno-35-12" href="#__codelineno-35-12"></a>sudo eos attr set sys.forced.layout=replica /eos/username/tape
+</span><span id="__span-35-13"><a id="__codelineno-35-13" name="__codelineno-35-13" href="#__codelineno-35-13"></a>sudo eos attr set sys.forced.nstripes=1 /eos/username/tape
+</span></code></pre></div>
+<p>You should see the following attributes on your tape directory:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-36-1"><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a>eos attr ls /eos/username/tape
+</span><span id="__span-36-2"><a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a>sys.acl=&quot;u:12345:rwx+dp,u:99:rwx+dp,z:!u,u:0:+u&quot;
+</span><span id="__span-36-3"><a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a>sys.archive.storage_class=&quot;ctaStorageClass&quot;
+</span><span id="__span-36-4"><a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a>sys.attr.link=&quot;/eos/dev/proc/workflow/&quot;
+</span><span id="__span-36-5"><a id="__codelineno-36-5" name="__codelineno-36-5" href="#__codelineno-36-5"></a>sys.eos.btime=&quot;1615202872.649464979&quot;
+</span><span id="__span-36-6"><a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a>sys.forced.checksum=&quot;adler&quot;
+</span><span id="__span-36-7"><a id="__codelineno-36-7" name="__codelineno-36-7" href="#__codelineno-36-7"></a>sys.forced.layout=&quot;&quot;replica&quot;
+</span><span id="__span-36-8"><a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a>sys.forced.nstripes=&quot;1&quot;
+</span><span id="__span-36-9"><a id="__codelineno-36-9" name="__codelineno-36-9" href="#__codelineno-36-9"></a>sys.workflow.sync::abort_prepare.default=&quot;proto&quot;
+</span><span id="__span-36-10"><a id="__codelineno-36-10" name="__codelineno-36-10" href="#__codelineno-36-10"></a>sys.workflow.sync::archive_failed.default=&quot;proto&quot;
+</span><span id="__span-36-11"><a id="__codelineno-36-11" name="__codelineno-36-11" href="#__codelineno-36-11"></a>sys.workflow.sync::archived.default=&quot;proto&quot;
+</span><span id="__span-36-12"><a id="__codelineno-36-12" name="__codelineno-36-12" href="#__codelineno-36-12"></a>sys.workflow.sync::closew.default=&quot;proto&quot;
+</span><span id="__span-36-13"><a id="__codelineno-36-13" name="__codelineno-36-13" href="#__codelineno-36-13"></a>sys.workflow.sync::closew.retrieve_written=&quot;proto&quot;
+</span><span id="__span-36-14"><a id="__codelineno-36-14" name="__codelineno-36-14" href="#__codelineno-36-14"></a>sys.workflow.sync::create.default=&quot;proto&quot;
+</span><span id="__span-36-15"><a id="__codelineno-36-15" name="__codelineno-36-15" href="#__codelineno-36-15"></a>sys.workflow.sync::delete.default=&quot;proto&quot;
+</span><span id="__span-36-16"><a id="__codelineno-36-16" name="__codelineno-36-16" href="#__codelineno-36-16"></a>sys.workflow.sync::evict_prepare.default=&quot;proto&quot;
+</span><span id="__span-36-17"><a id="__codelineno-36-17" name="__codelineno-36-17" href="#__codelineno-36-17"></a>sys.workflow.sync::prepare.default=&quot;proto&quot;
+</span><span id="__span-36-18"><a id="__codelineno-36-18" name="__codelineno-36-18" href="#__codelineno-36-18"></a>sys.workflow.sync::retrieve_failed.default=&quot;proto&quot;
+</span></code></pre></div>
+<h4 id="link-the-tape-directory-to-the-workflow-directory">Link the tape directory to the workflow directory<a class="headerlink" href="#link-the-tape-directory-to-the-workflow-directory" title="Permanent link">&para;</a></h4>
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-37-1"><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a>eos<span class="w"> </span>mkdir<span class="w"> </span>-p<span class="w"> </span>/eos/dev/proc/workflow
+</span><span id="__span-37-2"><a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>eos<span class="w"> </span>attr<span class="w"> </span>link<span class="w"> </span>/eos/dev/proc/workflow<span class="w"> </span>/eos/username/tape
+</span></code></pre></div>
+<h3 id="edit-the-eoskeytab-file">Edit the eos.keytab file<a class="headerlink" href="#edit-the-eoskeytab-file" title="Permanent link">&para;</a></h3>
+<p>Edit the <code>/etc/eos.keytab</code> file so that you add the two sss keys created (<code>cta-taped</code> and the <code>eos_ctaeosdev</code>) ones.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-38-1"><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a>sudo vi /etc/eos.keytab
+</span><span id="__span-38-2"><a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a>0 u:daemon g:daemon n:eosdev N:XXXX c:XXXX e:0 f:0 k:XXXXX
+</span><span id="__span-38-3"><a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a>0 u:cta g:cta n:cta-taped N:XXXX c:XXXX e:0 f:0 k:XXXX
+</span><span id="__span-38-4"><a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a>0 u:eosdev g:cta n:cta_eosdev N:XXXX c:XXXX e:0 f:0 k:XXXX
+</span></code></pre></div>
+<h3 id="enable-the-tape-functionality-in-the-mgm-configuration-file">Enable the tape functionality in the <abbr title="EOS Metadata Manager">MGM</abbr> configuration file<a class="headerlink" href="#enable-the-tape-functionality-in-the-mgm-configuration-file" title="Permanent link">&para;</a></h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-39-1"><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a>vi /etc/xrd.cf.mgm
+</span><span id="__span-39-2"><a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>#####################################################################################
+</span><span id="__span-39-3"><a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a># IMPORTANT MAKE SURE YOU HAVE the -2 otherwise you will not be able to query prepare
+</span><span id="__span-39-4"><a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a>xrootd.fslib -2 libXrdEosMgm.so
+</span><span id="__span-39-5"><a id="__codelineno-39-5" name="__codelineno-39-5" href="#__codelineno-39-5"></a>
+</span><span id="__span-39-6"><a id="__codelineno-39-6" name="__codelineno-39-6" href="#__codelineno-39-6"></a>#-------------------------------------------------------------------------------
+</span><span id="__span-39-7"><a id="__codelineno-39-7" name="__codelineno-39-7" href="#__codelineno-39-7"></a># Confguration parameters for tape
+</span><span id="__span-39-8"><a id="__codelineno-39-8" name="__codelineno-39-8" href="#__codelineno-39-8"></a>#-------------------------------------------------------------------------------
+</span><span id="__span-39-9"><a id="__codelineno-39-9" name="__codelineno-39-9" href="#__codelineno-39-9"></a>
+</span><span id="__span-39-10"><a id="__codelineno-39-10" name="__codelineno-39-10" href="#__codelineno-39-10"></a>mgmofs.tapeenabled true
+</span><span id="__span-39-11"><a id="__codelineno-39-11" name="__codelineno-39-11" href="#__codelineno-39-11"></a>mgmofs.prepare.dest.space default
+</span><span id="__span-39-12"><a id="__codelineno-39-12" name="__codelineno-39-12" href="#__codelineno-39-12"></a>mgmofs.protowfendpoint  localhost:10955
+</span><span id="__span-39-13"><a id="__codelineno-39-13" name="__codelineno-39-13" href="#__codelineno-39-13"></a>mgmofs.protowfresource  /ctafrontend
+</span></code></pre></div>
+<p><strong>NOTE:</strong> Make sure to have <code>-2</code> in <code>xrootd.fslib -2 libXrdEosMgm.so</code>, to be able to run query prepare and evict.</p>
+<p>Also, verify the following parameters are configured in the correct way. Kerberos can be enabled here if desired (see commented lines)</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-40-1"><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a>###########################################################
+</span><span id="__span-40-2"><a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a>sec.protocol krb5 host/&lt;hostname&gt;.cern.ch@CERN.CH
+</span><span id="__span-40-3"><a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a>sec.protbind * only krb5 sss unix
+</span><span id="__span-40-4"><a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a>sec.protbind localhost krb5 unix sss
+</span><span id="__span-40-5"><a id="__codelineno-40-5" name="__codelineno-40-5" href="#__codelineno-40-5"></a>sec.protbind localhost.localdomain krb5 unix sss
+</span><span id="__span-40-6"><a id="__codelineno-40-6" name="__codelineno-40-6" href="#__codelineno-40-6"></a>###########################################################
+</span></code></pre></div>
+<p>Restart the <abbr title="EOS Metadata Manager">MGM</abbr></p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-41-1"><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a>sudo systemctl restart eos@mgm
+</span></code></pre></div>
+<p>Configure each of your FSTs to communicate with the <abbr title="CERN Tape Archive">CTA</abbr> frontend, adding the following to each of <code>/etc/xrd.cf.fst*</code></p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-42-1"><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a>fstofs.protowfendpoint  localhost:10955
+</span><span id="__span-42-2"><a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a>fstofs.protowfresource  /ctafrontend
+</span></code></pre></div>
+<p>Restart the all the FSTs, e.g.</p>
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-43-1"><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a>sudo<span class="w"> </span>systemctl<span class="w"> </span>restart<span class="w"> </span>eos@fst1
+</span></code></pre></div>
+<h3 id="enable-the-workflow-engine-wfe-for-the-default-eos-space">Enable the Workflow Engine (<abbr title="Workflow Engine">WFE</abbr>) for the default <abbr title="EOS Open Storage">EOS</abbr> space<a class="headerlink" href="#enable-the-workflow-engine-wfe-for-the-default-eos-space" title="Permanent link">&para;</a></h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-44-1"><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a># eos space config default space.wfe=on
+</span><span id="__span-44-2"><a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a># eos space set default on
+</span><span id="__span-44-3"><a id="__codelineno-44-3" name="__codelineno-44-3" href="#__codelineno-44-3"></a># eos node set yourdevbox.cern.ch on
+</span><span id="__span-44-4"><a id="__codelineno-44-4" name="__codelineno-44-4" href="#__codelineno-44-4"></a># eos space config default space.wfe.ntx=200
+</span></code></pre></div>
+<h3 id="enable-file-archived-garbage-collector">Enable file archived garbage collector<a class="headerlink" href="#enable-file-archived-garbage-collector" title="Permanent link">&para;</a></h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-45-1"><a id="__codelineno-45-1" name="__codelineno-45-1" href="#__codelineno-45-1"></a># eos space config default space.filearchivedgc=on
+</span></code></pre></div>
+<h3 id="create-the-tape-space">Create the tape space<a class="headerlink" href="#create-the-tape-space" title="Permanent link">&para;</a></h3>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-46-1"><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a>eos space define tape
+</span><span id="__span-46-2"><a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a>eos fs add -m 65535 tape localhost:1234 /does_not_exist tape
+</span></code></pre></div>
+<p>You should see the following:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-47-1"><a id="__codelineno-47-1" name="__codelineno-47-1" href="#__codelineno-47-1"></a>eos space ls
+</span><span id="__span-47-2"><a id="__codelineno-47-2" name="__codelineno-47-2" href="#__codelineno-47-2"></a>┌──────────┬────────────────┬────────────┬────────────┬──────┬─────────┬───────────────┬──────────────┬─────────────┬─────────────┬──────┬──────────┬───────────┬───────────┬──────┬────────┬───────────┬──────┬────────┬───────────┐
+</span><span id="__span-47-3"><a id="__codelineno-47-3" name="__codelineno-47-3" href="#__codelineno-47-3"></a>│type      │            name│   groupsize│    groupmod│ N(fs)│ N(fs-rw)│ sum(usedbytes)│ sum(capacity)│ capacity(rw)│ nom.capacity│ quota│ balancing│  threshold│  converter│   ntx│  active│        wfe│   ntx│  active│ intergroup│
+</span><span id="__span-47-4"><a id="__codelineno-47-4" name="__codelineno-47-4" href="#__codelineno-47-4"></a>└──────────┴────────────────┴────────────┴────────────┴──────┴─────────┴───────────────┴──────────────┴─────────────┴─────────────┴──────┴──────────┴───────────┴───────────┴──────┴────────┴───────────┴──────┴────────┴───────────┘
+</span><span id="__span-47-5"><a id="__codelineno-47-5" name="__codelineno-47-5" href="#__codelineno-47-5"></a> spaceview           default            1            8      8         8       415.76 GB        1.37 TB       1.37 TB           0 B    off        off          20         off      2        0          on    200        0         off 
+</span><span id="__span-47-6"><a id="__codelineno-47-6" name="__codelineno-47-6" href="#__codelineno-47-6"></a> spaceview              tape            0           24      1         0             0 B            0 B           0 B           0 B    off        off          20         off      2        0         off      1        0         off 
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-48-1"><a id="__codelineno-48-1" name="__codelineno-48-1" href="#__codelineno-48-1"></a>fs ls
+</span><span id="__span-48-2"><a id="__codelineno-48-2" name="__codelineno-48-2" href="#__codelineno-48-2"></a>┌────────────────────────┬────┬──────┬────────────────────────────────┬────────────────┬────────────────┬────────────┬──────────────┬────────────┬────────┬────────────────┐
+</span><span id="__span-48-3"><a id="__codelineno-48-3" name="__codelineno-48-3" href="#__codelineno-48-3"></a>│host                    │port│    id│                            path│      schedgroup│          geotag│        boot│  configstatus│       drain│  active│          health│
+</span><span id="__span-48-4"><a id="__codelineno-48-4" name="__codelineno-48-4" href="#__codelineno-48-4"></a>└────────────────────────┴────┴──────┴────────────────────────────────┴────────────────┴────────────────┴────────────┴──────────────┴────────────┴────────┴────────────────┘
+</span><span id="__span-48-5"><a id="__codelineno-48-5" name="__codelineno-48-5" href="#__codelineno-48-5"></a> yourdevbox.cern.ch 2001      1                       /fst/data1        default.0           schedgroup       booted             rw      nodrain   online              N/A  
+</span><span id="__span-48-6"><a id="__codelineno-48-6" name="__codelineno-48-6" href="#__codelineno-48-6"></a> -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+</span><span id="__span-48-7"><a id="__codelineno-48-7" name="__codelineno-48-7" href="#__codelineno-48-7"></a> localhost                1234  65535                  /does_not_exist           tape.0                                          off      nodrain  offline                 
+</span></code></pre></div>
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-49-1"><a id="__codelineno-49-1" name="__codelineno-49-1" href="#__codelineno-49-1"></a>eos<span class="w"> </span>vid<span class="w"> </span><span class="nb">set</span><span class="w"> </span>membership<span class="w"> </span><span class="k">$(</span>id<span class="w"> </span>-u<span class="w"> </span>daemon<span class="k">)</span><span class="w"> </span>+sudo<span class="w"> </span>
+</span></code></pre></div>
+<h2 id="archive-files-onto-tape">Archive files onto tape<a class="headerlink" href="#archive-files-onto-tape" title="Permanent link">&para;</a></h2>
+<p>Once everything is configured you can try to archive files onto tape.
+On your devbox, create a test file with some content in it:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-50-1"><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a>vi test.txt
+</span><span id="__span-50-2"><a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a>This is a test
+</span></code></pre></div>
+<p>Now, we will use the <code>xrdcp</code> command to archive it onto tape: we basically will upload this test.txt file on the <code>/eos/username/tape</code> directory to trigger the OPEN and CLOSEW workflows.</p>
+<p>First, put the drive down so that we can see if the file is queued:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-51-1"><a id="__codelineno-51-1" name="__codelineno-51-1" href="#__codelineno-51-1"></a>cta-admin dr down VDSTK1 --reason &quot;Drive put down for test&quot;
+</span><span id="__span-51-2"><a id="__codelineno-51-2" name="__codelineno-51-2" href="#__codelineno-51-2"></a>cta-admin dr ls
+</span><span id="__span-51-3"><a id="__codelineno-51-3" name="__codelineno-51-3" href="#__codelineno-51-3"></a>library  drive             host desired request status since vid tapepool vo files data MB/s session priority activity age reason                  
+</span><span id="__span-51-4"><a id="__codelineno-51-4" name="__codelineno-51-4" href="#__codelineno-51-4"></a>  VLSTK VDSTK1       yourdevbox    Down       -   Free    97   -        -  -     -    -    -       -        0        -   5 Drive put down for test 
+</span></code></pre></div>
+<p>Upload the file to the <code>tape</code> directory:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-52-1"><a id="__codelineno-52-1" name="__codelineno-52-1" href="#__codelineno-52-1"></a>kinit
+</span><span id="__span-52-2"><a id="__codelineno-52-2" name="__codelineno-52-2" href="#__codelineno-52-2"></a>
+</span><span id="__span-52-3"><a id="__codelineno-52-3" name="__codelineno-52-3" href="#__codelineno-52-3"></a>xrdcp test.txt root://localhost//eos/username/tape
+</span><span id="__span-52-4"><a id="__codelineno-52-4" name="__codelineno-52-4" href="#__codelineno-52-4"></a>[9B/9B][100%][==================================================][9B/s]
+</span></code></pre></div>
+<p>Now verify the file is queued for archival:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-53-1"><a id="__codelineno-53-1" name="__codelineno-53-1" href="#__codelineno-53-1"></a>eosdev@eos-ccaffy-dev01 ~ $ cta-admin sq
+</span><span id="__span-53-2"><a id="__codelineno-53-2" name="__codelineno-53-2" href="#__codelineno-53-2"></a>          type   tapepool vo logical library vid files queued data queued oldest age priority min age read max drives write max drives cur. mounts cur. files cur. data MB/s tapes capacity files on tapes data on tapes full tapes writable tapes 
+</span><span id="__span-53-3"><a id="__codelineno-53-3" name="__codelineno-53-3" href="#__codelineno-53-3"></a>ArchiveForUser ctasystest vo               -   -            1           9          4        1       1               1                1           0          0         0    0           3.5T              5            45          0              7
+</span></code></pre></div>
+<p>Put the drive up again:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-54-1"><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a>cta-admin dr up VDSTK1
+</span></code></pre></div>
+<p>The file should be archived:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-55-1"><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a>EOS Console [root://localhost] |/eos/ccaffy/tape/&gt; ls -y
+</span><span id="__span-55-2"><a id="__codelineno-55-2" name="__codelineno-55-2" href="#__codelineno-55-2"></a>d0::t1   -rw-r--r--   1 username   group                  9 Apr  1 14:53 test.txt
+</span></code></pre></div>
+<h2 id="retrieve-a-file-from-tape">Retrieve a file from tape<a class="headerlink" href="#retrieve-a-file-from-tape" title="Permanent link">&para;</a></h2>
+<p>Put the drive down to see if the <code>Retrieve</code> request will be queued:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-56-1"><a id="__codelineno-56-1" name="__codelineno-56-1" href="#__codelineno-56-1"></a>cta-admin dr down VDSTK1 --reason &quot;Test retrieval&quot;
+</span><span id="__span-56-2"><a id="__codelineno-56-2" name="__codelineno-56-2" href="#__codelineno-56-2"></a>Drive VDSTK1: set Down.
+</span><span id="__span-56-3"><a id="__codelineno-56-3" name="__codelineno-56-3" href="#__codelineno-56-3"></a>cta-admin dr ls
+</span><span id="__span-56-4"><a id="__codelineno-56-4" name="__codelineno-56-4" href="#__codelineno-56-4"></a>library  drive             host desired request status since vid tapepool vo files data MB/s session priority activity age reason         
+</span><span id="__span-56-5"><a id="__codelineno-56-5" name="__codelineno-56-5" href="#__codelineno-56-5"></a>  VLSTK VDSTK1       yourdevbox    Down       -   Down     3   -        -  -     -    -    -       -        0        -   3 Test retrieval
+</span></code></pre></div>
+<p>Then retrieve the file we previously archived:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-57-1"><a id="__codelineno-57-1" name="__codelineno-57-1" href="#__codelineno-57-1"></a>kinit
+</span><span id="__span-57-2"><a id="__codelineno-57-2" name="__codelineno-57-2" href="#__codelineno-57-2"></a>xrdfs root://localhost prepare -s /eos/ccaffy/tape/test.txt
+</span><span id="__span-57-3"><a id="__codelineno-57-3" name="__codelineno-57-3" href="#__codelineno-57-3"></a>0446bcb97f32:17fb95cd.606476aa:8
+</span></code></pre></div>
+<p>The file should be queued for retrieve.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-58-1"><a id="__codelineno-58-1" name="__codelineno-58-1" href="#__codelineno-58-1"></a>cta-admin sq
+</span><span id="__span-58-2"><a id="__codelineno-58-2" name="__codelineno-58-2" href="#__codelineno-58-2"></a>    type   tapepool vo logical library    vid files queued data queued oldest age priority min age read max drives write max drives cur. mounts cur. files cur. data MB/s tapes capacity files on tapes data on tapes full tapes writable tapes 
+</span><span id="__span-58-3"><a id="__codelineno-58-3" name="__codelineno-58-3" href="#__codelineno-58-3"></a>Retrieve ctasystest vo           VLSTK V01001            1           9         10        1       1               1                1           0          0         0    0         500.0G              6            54          0              1
+</span></code></pre></div>
+<p>Now let's put the drive back up:</p>
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-59-1"><a id="__codelineno-59-1" name="__codelineno-59-1" href="#__codelineno-59-1"></a>cta-admin<span class="w"> </span>dr<span class="w"> </span>up<span class="w"> </span>VDSTK1
+</span></code></pre></div>
+<p>The file should be retrieved (d1::t1):</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-60-1"><a id="__codelineno-60-1" name="__codelineno-60-1" href="#__codelineno-60-1"></a>eos ls -y /eos/ccaffy/tape
+</span><span id="__span-60-2"><a id="__codelineno-60-2" name="__codelineno-60-2" href="#__codelineno-60-2"></a>d1::t1   -rw-r--r--   2 ccaffy   it                  9 Apr  1 14:53 test.txt
+</span></code></pre></div>
+<h2 id="if-everything-is-working-save-all-the-configuration-files-and-the-keytab-files-in-a-specific-folder-in-your-home-directory">If everything is working, save all the configuration files and the keytab files in a specific folder in your home directory<a class="headerlink" href="#if-everything-is-working-save-all-the-configuration-files-and-the-keytab-files-in-a-specific-folder-in-your-home-directory" title="Permanent link">&para;</a></h2>
+<div class="language-sh highlight"><pre><span></span><code><span id="__span-61-1"><a id="__codelineno-61-1" name="__codelineno-61-1" href="#__codelineno-61-1"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>~/cta-config-files
+</span><span id="__span-61-2"><a id="__codelineno-61-2" name="__codelineno-61-2" href="#__codelineno-61-2"></a>sudo<span class="w"> </span>cp<span class="w"> </span>-p<span class="w"> </span>/etc/cta/*<span class="w"> </span>~/cta-config-files
+</span><span id="__span-61-3"><a id="__codelineno-61-3" name="__codelineno-61-3" href="#__codelineno-61-3"></a>
+</span><span id="__span-61-4"><a id="__codelineno-61-4" name="__codelineno-61-4" href="#__codelineno-61-4"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>~/eos-config-files
+</span><span id="__span-61-5"><a id="__codelineno-61-5" name="__codelineno-61-5" href="#__codelineno-61-5"></a>sudo<span class="w"> </span>cp<span class="w"> </span>-p<span class="w"> </span>/etc/xrd.cf.*<span class="w"> </span>~/eos-config-files
+</span><span id="__span-61-6"><a id="__codelineno-61-6" name="__codelineno-61-6" href="#__codelineno-61-6"></a>
+</span><span id="__span-61-7"><a id="__codelineno-61-7" name="__codelineno-61-7" href="#__codelineno-61-7"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>~/keytabs
+</span><span id="__span-61-8"><a id="__codelineno-61-8" name="__codelineno-61-8" href="#__codelineno-61-8"></a>sudo<span class="w"> </span>cp<span class="w"> </span>-p<span class="w"> </span>/etc/*.keytab<span class="w"> </span>~/keytabs
+</span><span id="__span-61-9"><a id="__codelineno-61-9" name="__codelineno-61-9" href="#__codelineno-61-9"></a>
+</span><span id="__span-61-10"><a id="__codelineno-61-10" name="__codelineno-61-10" href="#__codelineno-61-10"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>~/sysconfig-files
+</span><span id="__span-61-11"><a id="__codelineno-61-11" name="__codelineno-61-11" href="#__codelineno-61-11"></a>sudo<span class="w"> </span>cp<span class="w"> </span>-p<span class="w"> </span>/etc/sysconfig/cta-*<span class="w"> </span>~/sysconfig-files
+</span><span id="__span-61-12"><a id="__codelineno-61-12" name="__codelineno-61-12" href="#__codelineno-61-12"></a>sudo<span class="w"> </span>cp<span class="w"> </span>-p<span class="w"> </span>/etc/sysconfig/eos*<span class="w"> </span>~/sysconfig-files
+</span><span id="__span-61-13"><a id="__codelineno-61-13" name="__codelineno-61-13" href="#__codelineno-61-13"></a>
+</span><span id="__span-61-14"><a id="__codelineno-61-14" name="__codelineno-61-14" href="#__codelineno-61-14"></a>mkdir<span class="w"> </span>-p<span class="w"> </span>systemd-system-config-files
+</span><span id="__span-61-15"><a id="__codelineno-61-15" name="__codelineno-61-15" href="#__codelineno-61-15"></a>sudo<span class="w"> </span>cp<span class="w"> </span>-p<span class="w"> </span>/etc/systemd/system/cta-*<span class="w"> </span>systemd-system-config-files
+</span></code></pre></div>
+<p>This will allow to give back the configuration files and keytabs that would be overriden by the <code>make install</code> command.</p>
+<h2 id="log-files-to-look-at-to-troubleshoot-errors">Log files to look at to troubleshoot errors<a class="headerlink" href="#log-files-to-look-at-to-troubleshoot-errors" title="Permanent link">&para;</a></h2>
+<p>Look at the different log files:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-62-1"><a id="__codelineno-62-1" name="__codelineno-62-1" href="#__codelineno-62-1"></a># CTA logs
+</span><span id="__span-62-2"><a id="__codelineno-62-2" name="__codelineno-62-2" href="#__codelineno-62-2"></a>/var/log/cta/cta-frontend.log
+</span><span id="__span-62-3"><a id="__codelineno-62-3" name="__codelineno-62-3" href="#__codelineno-62-3"></a>/var/log/cta/cta-taped.log
+</span><span id="__span-62-4"><a id="__codelineno-62-4" name="__codelineno-62-4" href="#__codelineno-62-4"></a>/var/log/cta/cta-frontend-xrootd.log
+</span><span id="__span-62-5"><a id="__codelineno-62-5" name="__codelineno-62-5" href="#__codelineno-62-5"></a>
+</span><span id="__span-62-6"><a id="__codelineno-62-6" name="__codelineno-62-6" href="#__codelineno-62-6"></a># EOS logs
+</span><span id="__span-62-7"><a id="__codelineno-62-7" name="__codelineno-62-7" href="#__codelineno-62-7"></a>/var/log/eos/mgm/xrdlog.mgm
+</span><span id="__span-62-8"><a id="__codelineno-62-8" name="__codelineno-62-8" href="#__codelineno-62-8"></a>/var/log/eos/fst*/xrdlog.fst* # depends on the FST you are interested in
+</span></code></pre></div>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1-2.1-2M12.5 7v5.2l4 2.4-1 1L11 13V7h1.5M11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2v1.8Z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">May 17, 2024</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3h-2Z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date">July 25, 2023</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12Z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../../cta/Questions/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Questions and Answers">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Questions and Answers
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../coding/" class="md-footer__link md-footer__link--next" aria-label="Next: Coding Conventions">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Coding Conventions
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    <script id="__config" type="application/json">{"base": "../../..", "features": ["content.code.copy", "navigation.expand", "navigation.instant", "navigation.instant.progress", "navigation.instant.prefetch", "navigation.path", "navigation.prune", "navigation.sections", "navigation.tabs", "navigation.top", "navigation.footer", "toc.follow"], "search": "../../../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"alias": true, "provider": "mike"}}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.081f42fc.min.js"></script>
+      
+    
+  </body>
+</html>

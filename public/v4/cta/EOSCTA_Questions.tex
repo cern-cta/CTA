@@ -1,0 +1,246 @@
+\newcommand{\resolved}{{\color{cern@blue}[RESOLVED]}}
+\chapter{Questions and Issues}
+\label{questions_and_issues}
+
+\section{Success and Failure for Archive Messages}
+
+\textit{Results of a discussion between Jozsef, Giuseppe and Eric about the success and failure behaviour for archive requests:}
+
+The current behaviour in CASTOR is that the file remains to be migrated until all copies have been successfully
+migrated. Failed migration jobs get deleted, so the file cannot be \texttt{stager\_rm}ed or garbage collected
+before an operator intervenes.
+
+We think a similar behaviour should be implemented in EOSCTA:
+
+\begin{itemize}
+   \item The file will be opened to garbage collection when all copies are successfully archived to tape.
+      CTA will not report success before that (this is already the case).
+   \item When a failure occurs (after exhausting retries), CTA will report the error to EOS, with a new
+      error-reporting URL (to be implemented). The job will then be placed in a failed job queue to be
+      handled by operators.
+   \item EOS will keep track of and expose to the user only the latest error (we have potentially one
+      per tape copy, and if operator decides to retry the job entirely, the error could be reported again).
+   \item EOS will clear the errors when receiving a success.
+\end{itemize}
+
+\section{Immutable files}
+
+The files with an archive on tape should be immutable in EOS (raw data use case), or a delayed archive mechanism
+should be devised for mutable files (CERNBox archive use case).
+
+Immutability of a file is guaranteed by adding \texttt{u!} to the EOS ACL.
+
+Currently we do not enforce this on the CTA Frontend side, we just assume EOS is taking care of it.
+
+If we decide it's useful for CTA to check immutability of archived files, we could send the ACL across with the xattrs.
+This is not sent at the moment, because all system and user attributes are filtered out.
+
+\section{When can files be deleted?}
+
+Disk copies cannot be deleted before they are archived on tape (pinning).
+
+The full file could still be deleted, potentially leading to issues to be handled in the tape archive session.
+
+\section{What should be the protocol for fast reconciliation?}
+
+The workflow will both trigger the synchronous archive queuing and post a second delayed workflow job that will
+check and re-issue the request if needed (in case the request gets lost in CTA). This event-driven reconciliation acts
+as a fast reconciliation. The criteria to check the file status will be the EOS side status which CTA reports
+asynchronously to EOS (see~\S\ref{dataSerialization}).
+
+\section{When a file has multiple tape copies, when are notifications are sent to EOS?}
+
+EOS will need to represent and handle part the tape status of the files. This includes the fact that the file should be
+on tape, the name of the CTA storage class, and the mutually exclusive statuses indicated by CTA: not on tape, partially
+on tape, fully on tape.	The report from CTA will use the ``tape replica'' message (see~\S\ref{dataSerialization}).
+
+For CASTOR, there is an additional constraint that the disk copy cannot be deleted until all tape copies have been
+successfully written. The above scheme keeps track of the number of tape copies written and it will be up to the
+EOS developers to ensure that this constraint is observed.
+
+In CASTOR, the following notifications are sent during archiving a file with $n$ tape copies:
+\begin{itemize}
+   \item On successful write of the first tape copy, the \textbf{m-bit} is set. This indicates to the experiment that
+      they can safely delete their copy of the data.
+   \item On successful write of the $n^{th}$ tape copy, the \textbf{CAN\_BE\_MIGR} status is set in the database. This
+      indicates that the file can be deleted from CASTOR's staging area.
+\end{itemize}
+
+For CTA, at what point(s) should we notify EOS that a file has been archived?
+\begin{itemize}
+   \item After the first copy is archived?
+   \item After each copy is archived?
+   \item After the $n^{th}$ copy is archived?
+\end{itemize}
+
+\gitlab{228}{Test archving files with \texttt{num\_copies} $gt 1$}
+
+\section{Should the CTA catalogue methods prepareForNewFile() and prepareToRetrieveFile() detect repeated requests from
+EOS instances?}
+
+EOS does not keep track of requests which have been issued. We have said that CTA should implement idempotent retrieve queuing.
+
+What are the consequences if we do not implement idempotent retrieve queuing?
+
+What about archives and deletes?
+
+\subsection{If so how should the catalogue communicate such ``duplicate'' requests to the caller (Scheduler\slash cta-frontend plugin)?}
+
+The CTA Frontend calls the Scheduler which calls the Catalogue.
+There are several possible schemes for handling duplicate jobs:
+\begin{enumerate}
+   \item If duplicates are rare, perhaps they don't need to be explicitly handled
+   \item When a retrieve job is submitted, the Scheduler could check in the Catalogue for duplicates 
+   \item When a retrieve job completes, the Tape Server could notify the Scheduler, which could then check for and
+      drop any duplicate jobs in its queue.
+\end{enumerate}
+
+Reporting of retrieve status could set an \texttt{xattr}. Then the user would be able to monitor status which could
+reduce duplicate requests.
+
+Failed archivals or other CTA errors could also be logged as an \texttt{xattr}.
+
+\subsection{If the CTA catalogue keeps an index of ongoing archive and retrieve requests, what will be the new
+protocol additions (EOS, cta-frontend and cta-taped) required to guarantee that ``never completed'' requests are removed
+from the catalogue?}
+
+Such a protocol addition could be something as simple as a timeout.
+                     
+% \section{How do we deal with the fact that the current C++ code of the EOS/CTA interface that needs to be compiled on
+% the EOS side on SLC6 will not compile because it uses std::future?}
+%
+% Please could you take on the responsibility of addressing the EOS/CTA interface issues described by these questions.
+% You do NOT need to do any work towards these issues before the next Wednesday meeting.  These issues need to be
+% vetted by the whole team during the meeting.  What's left is then under your responsibility.
+% I am sending you these questions in order to start the process of concretely describing the scope of your EOS/CTA
+% interface work. More issues are described within the EOS/CTA interface document of Eric.
+% 
+% If and only if there is time during the next tape developments meeting, we should try to vet the above questions and
+% decide on the most appropriate place to have them written up, in  other words do they become gitlab issues or do they
+% get added to the EOS/CTA interface document?  If we don’t have time during the meeting then those interested can have
+% a separate meeting sometime later.
+
+
+\section{CTA Failure}
+
+What is the mechanism for restarting a failed archive request (in the case that EOS accepts the request and CTA fails
+subsequently)?
+
+If CTA is unavailable or unable to perform an archive operation, should EOS refuse the archive request and report failure
+to the User?
+
+What is the retry policy?
+
+\section{File life cycle}
+
+Full life cycle of files in EOS with copies on tape should be determined (they inherit their tape properties
+from the directory, but what happens when the file gets moved or the directory properties changed?).
+
+\section{Storage Classes}
+
+The list of valid storage classes needs to be synchronized between EOS and CTA. EOS should not allow a power user to
+label a directory with an invalid storage class. CTA should not delete or invalidate a storage class that is being used
+by EOS.
+
+\section{Request Queue}
+
+Chaining of archive and retrieve requests to retrieve requests.
+
+Execution of retrieve requests as disk to disk copy if possible.
+
+%Catalogue will also keep track of requests for each files (archive and retrieve) so that queueing can be made idempotent.
+
+\section{Catalogue}
+
+Catalogue files could hold the necessary info to recreate the archive request if needed.
+
+\section{Questions administrators need to be able to answer}
+
+The \texttt{cta-admin} command should be include functions to allow administrators to answer the following questions:
+
+\begin{itemize}
+\item Why is data not going to tape?
+\item Why is data not coming out of tapes?
+\item Which user is responsible for system overload?
+\end{itemize}
+
+\section{Return value \resolved}
+
+Notification return structure for synchronous workflows contains the following:
+\begin{itemize}
+   \item Success code (\texttt{RSP\_SUCCESS})
+   \item A list of extended attributes to set (\textit{e.g.}, set the ``CTA archive ID'' \texttt{xattr} of the EOS file being queued for archival)
+   \item Failure code (\texttt{RSP\_ERR\_PROTOBUF}, \texttt{RSP\_ERR\_CTA} or \texttt{RSP\_ERR\_USER})
+   \item Failure message which can be logged by EOS or communicated to the end user (\textit{e.g.}, ``Cannot open file for writing because there is no route to tape'')
+\end{itemize}
+
+\begin{lstlisting}
+message Response {
+  enum ResponseType {
+    RSP_INVALID             = 0;    //< Response type was not set
+    RSP_SUCCESS             = 1;    //< Request is valid and was accepted for processing
+    RSP_ERR_PROTOBUF        = 2;    //< Framework error caused by Google Protocol Buffers layer
+    RSP_ERR_CTA             = 3;    //< Server error reported by CTA Frontend
+    RSP_ERR_USER            = 4;    //< User request is invalid
+  }
+  ResponseType type         = 1;    //< Encode the type of this response
+  map<string, string> xattr = 2;    //< xattribute map
+  string message_txt        = 3;    //< Optional response message text
+}
+\end{lstlisting}
+
+\section{Will EOS instance names within the CTA catalogue be ``long'' or ``short''? \resolved}
+
+\textit{We all agreed to use ``long'' EOS instance names within CTA and specifically the CTA catalogue. An example of a
+long EOS instance name is ``eosdev'' with its corresponding short instance name being ``dev''.}
+\begin{flushright}
+--- Minutes from today's tape developments meeting, Wed 22 Nov 2017
+\end{flushright}
+
+This implies that there will be a separate instance name for each VO (``eosatlas'', ``eoscms'', \textit{etc.}) and a
+unique SSS key for each instance name.
+
+\section{Do we want the EOS namespace to store CTA archive IDs or not? \resolved}
+
+\begin{description}
+   \item[If no:] we are allowing that the EOS file ID uniquely identifies the file. We must maintain a one-to-one mapping
+      from EOS ID to CTA archive ID on our side. This also implies that the file is immutable.
+   \item[If yes:] we must generate the CTA archive ID and return it to EOS. There must be a guarantee that EOS has attached
+      the archive ID to the file (probably as an xattr but that's up to the EOS team), i.e. \textbf{the EOS end-user must
+      never see an EOS file with a tape replica but without an archive ID}. EOS must provide the CTA archive ID as the
+      key to all requests. 
+\end{description}
+
+\subsection*{Solution}
+
+Archive IDs will be allocated by CTA when a file is created. The Archive ID will be stored in the EOS
+namespace as an extended attribute of the file. EOS must use the archive ID to archive, retrieve or delete files.
+
+Archive IDs are not file IDs, \textit{i.e.} the archive ID identifies the version of the file that was archived. In the
+case of Physics data, the files should be immutable so in practice there is one Archive ID per file.
+
+In the backup use case, if we allowed mutable files, we would need a mechanism to track archived file versions. On the
+EOS side, changes to files are versioned, so each time a file is updated, the Archive ID should also be updated.
+Old versions of the file would maintain a link to their archive copy via the versioned extended attributes. But in this
+case we probably also need a way to mark archive copies of redundant versions of files for deletion.
+
+\subsection*{Design notes from Steve}
+
+\textit{One of the reasons I wanted an archive ID in the EOS namespace was that I wanted to have one primary key for the CTA
+file catalogue and I wanted it to be the CTA archive ID. Therefore I expected that retrieve and delete requests issued
+by EOS would use that key.}
+
+\textit{This ``primary key'' requirement is blown apart by the requirement of the CTA catalogue to
+identify duplicate archive requests.  The CTA archive ID represents an ``archive request'' and not an individual EOS file.
+Today, 5 requests from EOS to archive the same EOS file will result in 5 unique CTA archive IDs. Making the CTA catalogue
+detect 4 of these requests as duplicate means adding a ``second'' primary key composed of the EOS instance name and the EOS
+file ID. It also adds the necessity to make sure that archive requests complete in the event of failure, so that retries
+from EOS will eventually be accepted and not forever refused as duplicate requests.  It goes without saying that dropping
+the CTA archive ID from EOS also means using the EOS instance name and EOS file ID as primary key for retrieve and delete
+requests from EOS.}
+
+\textit{The requirement for a ``second'' primary key may be inevitable for reasons other than (idempotent) archive, retrieve and
+delete requests from EOS.  CTA tape operators will want to drill down into the CTA catalogue for individual end user files
+when data has been lost or something has ``gone wrong''.  The question here is, should it be a ``primary key'' as in no
+duplicate values or should it just be an index for efficient lookup?}
+
