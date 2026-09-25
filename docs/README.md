@@ -25,7 +25,9 @@ mkdocs build --strict --config-file docs/mkdocs.yml
 
 MkDocs Material builds the site, including manpages and example configurations from the current checkout.
 Dependencies are maintained in `requirements.txt`; generated files go into `build/docs/`.
-CI builds relevant changes and tags, and publishes only in tag pipelines.
+CI builds relevant changes and tags, and publishes only in tag pipelines. Publishing happens to the protected `gl-pages` branch.
+Publication uses `CI_JOB_TOKEN`; repository pushes must be enabled for job tokens, and the triggering user must be allowed to push to `gl-pages` (maintainer or higher).
+Generally speaking, this `gl-pages` branch should never be updated manually.
 
 Mike stores the versioned site on `gl-pages`: `v6.12.0.0-1` updates `6.12`, and `latest` points to the highest published series.
 Older releases cannot overwrite newer documentation; prerelease and variant tags do not publish. CI helpers live in [`ci/docs/`](../ci/docs/).

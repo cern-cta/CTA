@@ -226,11 +226,10 @@ publish-docs:
     - !reference [.merge-train-guard, before_script]
     - source ci/docs/prepare-environment.sh
   script:
-    - test -n "$DOCS_PUBLISH_TOKEN"
+    - test -n "$CI_JOB_TOKEN"
     - git config user.name "$GITLAB_USER_NAME"
     - git config user.email "$GITLAB_USER_EMAIL"
-    - git remote set-url origin "${CI_SERVER_URL}/${CI_PROJECT_PATH}.git"
-    - export GIT_ASKPASS="$CI_PROJECT_DIR/ci/docs/git-askpass.sh"
+    - git remote set-url origin "$CI_REPOSITORY_URL"
     - python ci/docs/publish.py --tag "$CI_COMMIT_TAG"
   resource_group: cta-docs-publication
   artifacts:
