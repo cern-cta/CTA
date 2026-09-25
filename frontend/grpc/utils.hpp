@@ -9,9 +9,9 @@
 
 namespace cta::frontend::grpc::utils {
 
-/**
- * Load the content of the file into a string
+/*
+ * Validate the format of a JWT
  */
-void read(const std::string& strPath, std::string& strValu);
+bool isJwtFormatValid(const std::string& token);
 
 }  // namespace cta::frontend::grpc::utils

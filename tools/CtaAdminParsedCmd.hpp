@@ -30,8 +30,8 @@ public:
   //! Throw an exception with usage help
   void throwUsage(const std::string& error_txt = "") const;
 
-  //! Returns user config path if specified, if not looks in $HOME/.cta, then in /etc/cta
-  const std::string getConfigFilePath() const;
+  //! Returns user config path (see implementation for the paths which are looked up)
+  std::string getConfigFilePath() const;
 
   const cta::xrd::Request& getRequest() const { return m_request; }
 

@@ -8,6 +8,7 @@
 #include "AsyncClient.hpp"
 #include "ClientNegotiationRequestHandler.hpp"
 #include "callback_api/CtaAdminClientReadReactor.hpp"
+#include "common/exception/UserError.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
@@ -20,12 +21,8 @@
 
 namespace cta::admin {
 
-void CtaAdminGrpcCmd::setupJwtAuthenticatedAdminCall(grpc::ClientContext& context,
-                                                     const std::string& token_path) const {
-  // read the token from the path
-  std::string token_contents = cta::utils::readSingleLineConfigFile(token_path);
-
-  context.AddMetadata("authorization", "Bearer " + token_contents);
+void CtaAdminGrpcCmd::setupJwtAuthenticatedAdminCall(grpc::ClientContext& context, const std::string& token) const {
+  context.AddMetadata("authorization", "Bearer " + token);
 }
 
 void CtaAdminGrpcCmd::setupKrb5AuthenticatedAdminCall(std::shared_ptr<grpc::Channel> spChannelNegotiation,
@@ -65,8 +62,8 @@ void CtaAdminGrpcCmd::setupKrb5AuthenticatedAdminCall(std::shared_ptr<grpc::Chan
 }
 
 // Implement the send() method here, by wrapping the Admin rpc call
-void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string& config_file) const {
-  cta::common::Config config(config_file);
+void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string& configFile) const {
+  cta::common::Config config(configFile);
   const auto& request = parsedCmd.getRequest();
   // Validate the Protocol Buffer
   try {
@@ -80,21 +77,21 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string
   grpc::ClientContext context;
   grpc::Status status;
   std::shared_ptr<grpc::ChannelCredentials> credentials;
-  grpc::SslCredentialsOptions ssl_options;
+  grpc::SslCredentialsOptions sslOptions;
 
   auto endpoint = config.getOptionValueStr("cta.endpoint");
   if (!endpoint.has_value()) {
-    std::cout << "Configuration error: cta.endpoint missing from " + config_file << std::endl;
-    throw std::runtime_error("Configuration error: cta.endpoint missing from " + config_file);
+    std::cout << "Configuration error: cta.endpoint missing from " + configFile << std::endl;
+    throw std::runtime_error("Configuration error: cta.endpoint missing from " + configFile);
   }
 
   if (auto caCert = config.getOptionValueStr("grpc.tls.chain_cert_path"); caCert) {
     std::string caCertContents = cta::utils::readFileAsString(caCert.value());
-    ssl_options.pem_root_certs = caCertContents;
+    sslOptions.pem_root_certs = caCertContents;
   } else {
-    ssl_options.pem_root_certs = "";
+    sslOptions.pem_root_certs = "";
   }
-  credentials = grpc::SslCredentials(ssl_options);
+  credentials = grpc::SslCredentials(sslOptions);
 
   // gRPC stream server
   const std::string GRPC_SERVER = endpoint.value();
@@ -105,33 +102,50 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string
   cta::log::LogContext lc(log);
 
   // Determine authentication method: env variable overrides config, default to krb5
-  std::string auth_method;
-  if (const char* auth_method_env = std::getenv("CTA_ADMIN_GRPC_AUTH_METHOD"); auth_method_env != nullptr) {
+  std::string authMethod;
+  if (std::string authMethodEnv = cta::utils::getEnv("CTA_ADMIN_GRPC_AUTH_METHOD"); !authMethodEnv.empty()) {
     // Environment variable takes precedence
-    auth_method = auth_method_env;
+    authMethod = authMethodEnv;
   } else {
     // Check config file, default to krb5 if not specified
-    auth_method = config.getOptionValueStr("grpc.cta_admin_auth_method").value_or("");
-    if (auth_method.empty()) {
+    authMethod = config.getOptionValueStr("grpc.cta_admin_auth_method").value_or("");
+    if (authMethod.empty()) {
       lc.log(cta::log::DEBUG,
-             "Authentication method not specified either in config or with environment variable "
+             "Authentication method not specified either in config or through environment variable "
              "CTA_ADMIN_GRPC_AUTH_METHOD, using Kerberos to authenticate!");
-      auth_method = "krb5";
+      authMethod = "krb5";
     }
   }
 
   // Validate and process the authentication method
-  if (auth_method == "jwt") {
-    // Read JWT token path from config, with default fallback
-    std::string token_path = config.getOptionValueStr("grpc.jwt_token_path").value_or("");
-    if (token_path.empty()) {
-      throw cta::exception::UserError("jwt authentication specified but no token provided");
+  if (authMethod == "jwt") {
+    // Resolve JWT token content:
+    // 1. `CTA_JWT_TOKEN` env var
+    // 2. `grpc.jwt_token_path` config option
+    std::string token;
+
+    if (std::string jwtTokenEnv = cta::utils::getEnv("CTA_JWT_TOKEN"); !jwtTokenEnv.empty()) {
+      // get rid of possible newlines at the end
+      token = cta::utils::trimString(jwtTokenEnv);
+    } else {
+      std::string tokenPath = config.getOptionValueStr("grpc.jwt_token_path").value_or("");
+      if (tokenPath.empty()) {
+        throw cta::exception::UserError("JWT authentication specified but no token provided. "
+                                        "Set CTA_JWT_TOKEN or configure grpc.jwt_token_path");
+      }
+      token = cta::utils::readSingleLineConfigFile(tokenPath);
     }
-    setupJwtAuthenticatedAdminCall(context, token_path);
-  } else if (auth_method == "krb5") {
+
+    // check format of JWT, raise exception if not valid
+    if (!cta::frontend::grpc::utils::isJwtFormatValid(token)) {
+      throw cta::exception::UserError("JWT is not well-formed");
+    }
+
+    setupJwtAuthenticatedAdminCall(context, token);
+  } else if (authMethod == "krb5") {
     setupKrb5AuthenticatedAdminCall(spChannel, context, log);
   } else {
-    throw cta::exception::UserError("Unrecognized authentication method '" + auth_method + "' specified");
+    throw cta::exception::UserError("Unrecognized authentication method '" + authMethod + "' specified");
   }
 
   if (!isStreamCmd(request.admincmd())) {
@@ -209,11 +223,11 @@ int main(int argc, const char** argv) {
     // Parse the command line arguments
     CtaAdminParsedCmd parsedCmd(argc, argv);
     // get the grpc endpoint from the config? but for now, use
-    std::string config_file = parsedCmd.getConfigFilePath();
+    std::string configFile = parsedCmd.getConfigFilePath();
 
     CtaAdminGrpcCmd cmd;
     // Send the protocol buffer
-    cmd.send(parsedCmd, config_file);
+    cmd.send(parsedCmd, configFile);
 
     // Delete all global objects allocated by libprotobuf
     google::protobuf::ShutdownProtobufLibrary();
