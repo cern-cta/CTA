@@ -1,8 +1,8 @@
 version = 1
 
-# All files in assets/
+# Project branding assets
 [[annotations]]
-path = "assets/*"
+path = ["docs/content/assets/images/cta-logo.png", "docs/content/assets/images/cern-logo.png", "docs/content/assets/images/cern-logo.png.license"]
 SPDX-FileCopyrightText = "2025 CERN"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 

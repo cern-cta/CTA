@@ -1,3 +1,7 @@
+---
+title: Monitoring metrics
+---
+
 # CTA Metrics
 
 CTA can publish metrics in the [OTLP](https://opentelemetry.io/docs/specs/otlp/) format. **This feature is disabled by default** and has to be explicitly configured.

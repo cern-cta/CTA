@@ -1,3 +1,7 @@
+---
+title: Conventions introduction
+---
+
 # Conventions
 
 This part of the documentation defines common rules and guidelines for developers on the CTA project. It covers source and CI conventions as well as the packaging and service-integration contract exposed to deployments.

@@ -63,4 +63,4 @@ cache/
 *.orig
 
 # Ignore repo related files
-assets/
+docs/content/assets/

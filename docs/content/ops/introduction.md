@@ -1,3 +1,7 @@
+---
+title: Operations introduction
+---
+
 # Operations
 
 CTA is packaged and distributed as a public release, free from CERN-specific dependencies, together with a set of operations tools.

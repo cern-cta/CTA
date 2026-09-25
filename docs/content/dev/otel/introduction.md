@@ -1,3 +1,7 @@
+---
+title: OpenTelemetry introduction
+---
+
 # OpenTelemetry Introduction
 
 !!! warning

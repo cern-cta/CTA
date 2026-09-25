@@ -6,7 +6,7 @@
 <br />
 <div align="center">
   <a href="https://gitlab.cern.ch/cta/CTA/">
-    <img src="assets/cta-logo.png" alt="Logo">
+    <img src="docs/content/assets/images/cta-logo.png" alt="Logo">
   </a>
 <h3 align="center" style="padding-top: 0">CTA</h3>
   <p align="center">
@@ -76,6 +76,6 @@ ___
 
 <div align="center">
   <a href="https://home.cern/">
-    <img src="assets/cern-logo.png" alt="CERN Logo" width="128" height="128">
+    <img src="docs/content/assets/images/cern-logo.png" alt="CERN Logo" width="128" height="128">
   </a>
 </div>

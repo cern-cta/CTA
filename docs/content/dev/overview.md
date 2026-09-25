@@ -1,3 +1,7 @@
+---
+title: Development overview
+---
+
 # Getting Started
 
 This section provides comprehensive guides, references, and best practices to help with the development of CTA. Before making any contributions to CTA, please carefully read through the contributing instructions linked below.

@@ -1,3 +1,7 @@
+---
+title: CTA technical overview
+---
+
 # CTA Overview
 
 The CERN Tape Archive (CTA) is a software system designed to store scientific data at exabyte scale. CTA can refer 

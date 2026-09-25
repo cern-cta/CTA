@@ -1,3 +1,7 @@
+---
+title: File lifecycle overview
+---
+
 # File lifecycle on CTA
 
 This section describes the CTA workflows (archival, retrieval and deletion of files).

@@ -25,6 +25,17 @@ mkdocs build --strict --config-file docs/mkdocs.yml
 
 MkDocs Material builds the site, including manpages and example configurations from the current checkout.
 Dependencies are maintained in `requirements.txt`; generated files go into `build/docs/`.
+
+Shared branding images and favicons live in `content/assets/images/`; the repository README also uses these assets. Keep `overrides/` for templates.
+
+The theme in `content/stylesheets/extra.css` follows the main CTA website's colors and theme.
+
+Pages with ambiguous navigation labels use an explicit `title` in their Markdown
+front matter for browser tabs. Keep the short navigation labels in `mkdocs.yml`.
+The header override keeps the Documentation identity visible while scrolling.
+The footer override uses a local CERN logo and compact resource links consistent
+with the project website, retaining the Material credit and omitting a self-link.
+
 CI builds relevant changes and tags, and publishes only in tag pipelines. Publishing happens to the protected `gl-pages` branch.
 Publication uses `CI_JOB_TOKEN`; repository pushes must be enabled for job tokens, and the triggering user must be allowed to push to `gl-pages` (maintainer or higher).
 Generally speaking, this `gl-pages` branch should never be updated manually.

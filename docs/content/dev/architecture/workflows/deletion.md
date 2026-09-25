@@ -1,3 +1,7 @@
+---
+title: Deletion and garbage collection architecture
+---
+
 !!! warning "Deprecated"
     This page is deprecated and may contain information that is no longer up to date.
 

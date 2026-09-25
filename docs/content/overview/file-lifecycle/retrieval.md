@@ -1,3 +1,7 @@
+---
+title: File retrieval
+---
+
 # Retrieval
 
 To recall files from tape to disk, a **PREPARE** request is sent to EOSCTA. Most large experiments (such as ATLAS, CMS and LHCb) use FTS, which sends bulk **PREPARE** requests with 100's of files at a time.

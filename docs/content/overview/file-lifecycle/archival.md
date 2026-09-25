@@ -1,3 +1,7 @@
+---
+title: File archival
+---
+
 # Archival
 
 On the EOS side of EOSCTA side, files are created in the namespace by a **CREATE** workflow event and then archived to tape following a **CLOSEW** (CLOSE Write) workflow event.

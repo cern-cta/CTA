@@ -1,3 +1,7 @@
+---
+title: Deployment recommendations
+---
+
 # Recommendations & Tips
 
 Below are a few recommendations and best-practices for deploying CTA.

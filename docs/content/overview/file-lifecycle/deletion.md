@@ -1,3 +1,7 @@
+---
+title: File deletion
+---
+
 # Deletion
 
 File deletion and recovering strategies. \
