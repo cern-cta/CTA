@@ -124,6 +124,7 @@ body { -webkit-font-smoothing: antialiased; }
 .md-typeset .grid.cards > ul > li {
   border: 1px solid var(--cta-border);
   border-radius: var(--cta-radius);
+  background: var(--cta-surface);
   padding: 1.2rem;
   box-shadow: none;
   transition: border-color .15s ease, background-color .15s ease;
@@ -131,7 +132,6 @@ body { -webkit-font-smoothing: antialiased; }
 .md-typeset .grid.cards > ul > li:hover,
 .md-typeset .grid.cards > ul > li:focus-within {
   border-color: var(--cta-brand);
-  background: var(--cta-surface);
   box-shadow: none;
 }
 .md-typeset .grid.cards hr { margin-block: .8rem; }
