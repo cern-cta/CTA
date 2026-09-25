@@ -18,19 +18,20 @@ Select the documentation version matching your deployment.
 
 ## Getting started
 
-Use the guides below to get oriented quickly.
+Choose a starting point below.
 
 <div class="grid cards" markdown>
 
--   :material-information-outline:{ .lg .middle } [__Overview__](overview/introduction.md)
+-   :material-information-outline:{ .lg .middle } [__Understanding CTA__](overview/introduction.md)
 
     ---
 
-    Learn about CTA concepts, architecture, and terminology.
+    Learn about CTA concepts, architecture, file lifecycle, and terminology.
 
     [:octicons-arrow-right-24: CTA overview](overview/introduction.md)
+    · [Glossary](glossary.md)
 
--   :material-server:{ .lg .middle } [__Operations__](ops/introduction.md)
+-   :material-server:{ .lg .middle } [__Running CTA__](ops/introduction.md)
 
     ---
 
@@ -38,36 +39,35 @@ Use the guides below to get oriented quickly.
 
     [:octicons-arrow-right-24: Operations guide](ops/introduction.md)
 
+    [Installation](ops/deployment/installation.md) · [Upgrading CTA](ops/procedures/upgrading-cta.md)
+
 </div>
 
 <div class="grid cards" markdown>
 
--   :material-code-tags:{ .lg .middle } [__Development__](dev/overview.md)
+-   :material-code-tags:{ .lg .middle } [__Developing CTA__](dev/overview.md)
 
     ---
 
-    Build from source, run tests, and contribute changes.
+    Set up a development environment, build from source, run tests, and contribute changes.
 
     [:octicons-arrow-right-24: Developer guide](dev/overview.md)
+    · [Conventions](conventions/introduction.md)
 
--   :material-ruler:{ .lg .middle } [__Conventions__](conventions/introduction.md)
+-   :material-forum:{ .lg .middle } [__Getting help__](https://cta-community.web.cern.ch/)
 
     ---
 
-    Find coding standards, packaging conventions, and CI practices for CTA.
+    Ask questions about operating and developing CTA, or report a bug.
 
-    [:octicons-arrow-right-24: Conventions guide](conventions/introduction.md)
+    [:octicons-arrow-right-24: Community forum](https://cta-community.web.cern.ch/)
+    · [Issue tracker](https://gitlab.cern.ch/cta/CTA/-/issues)
 </div>
-
-For package selection and setup, see the [installation guide](ops/deployment/installation.md).
-For an existing deployment, see the [CTA upgrade guide](ops/procedures/upgrading-cta.md).
 
 ## Project resources
 
 - [Main CTA website](https://cta.web.cern.ch/) — Project background, presentations, and publications.
-- [Community forum](https://cta-community.web.cern.ch/) — Questions and discussions about operating and developing CTA.
 - [Source code](https://gitlab.cern.ch/cta/CTA) — Browse the repository and contribute.
-- [Issue tracker](https://gitlab.cern.ch/cta/CTA/-/issues) — Report bugs and track development work.
 - [Release notes](https://gitlab.cern.ch/cta/CTA/-/blob/main/CHANGELOG.md) — Features, fixes, and changes in each release.
 
 !!! tip "Looking for something specific?"

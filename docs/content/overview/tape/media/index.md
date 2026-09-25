@@ -1,3 +1,7 @@
+---
+title: Tape media overview
+---
+
 # Tape Media
 
 *Tape media* refers to the magnetic tape data storage device itself, which in the present generation of tape technology takes the shape of a *cartridge* filled with a magnetic tape band on which the data is written.

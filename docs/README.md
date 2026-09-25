@@ -34,6 +34,11 @@ and `slate` palettes provide light and dark modes, including syntax highlighting
 and diagrams. Keep palette overrides at the top of that stylesheet and component
 styles below them. No external fonts or website images are required.
 
+Pages with ambiguous navigation labels use an explicit `title` in their Markdown
+front matter for browser tabs. Keep the short navigation labels in `mkdocs.yml`.
+The header override keeps the Documentation identity visible while scrolling;
+the 404 override supplies a distinct tab title.
+
 CI builds relevant changes and tags, and publishes only in tag pipelines. Publishing happens to the protected `gl-pages` branch.
 Publication uses `CI_JOB_TOKEN`; repository pushes must be enabled for job tokens, and the triggering user must be allowed to push to `gl-pages` (maintainer or higher).
 Generally speaking, this `gl-pages` branch should never be updated manually.

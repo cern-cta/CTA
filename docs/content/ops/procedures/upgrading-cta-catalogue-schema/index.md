@@ -1,3 +1,7 @@
+---
+title: Upgrading the CTA catalogue schema
+---
+
 # Upgrading CTA Catalogue schema
 
 ## Automated procedure [recommended]

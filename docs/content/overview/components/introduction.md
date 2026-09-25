@@ -1,3 +1,7 @@
+---
+title: CTA component overview
+---
+
 # Component Overview
 
 The CTA system consists of the following components:

@@ -75,6 +75,12 @@ body { -webkit-font-smoothing: antialiased; }
   border-bottom: 1px solid #ffffff24;
 }
 .md-header__title { font-weight: 700; letter-spacing: -0.018em; }
+/* Keep the site identity visible when Material switches to the page topic. */
+.md-header__title .md-header__topic:first-child { opacity: 1; transform: none; }
+.md-header__title .md-header__topic + .md-header__topic { display: none; }
+@media (max-width: 44.984375em) {
+  .md-header .md-header__title { margin-inline: .2rem; font-size: .75rem; }
+}
 .md-header__button.md-logo img { width: auto; height: 1.8rem; }
 .md-nav__button.md-logo img { width: auto; height: 2rem; }
 .md-header .md-source { padding-inline: .5rem; }

@@ -1,3 +1,7 @@
+---
+title: Developing catalogue schema changes
+---
+
 !!! info "WIP"
     This page is still work in progress.
 

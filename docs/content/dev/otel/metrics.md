@@ -1,3 +1,7 @@
+---
+title: OpenTelemetry metrics
+---
+
 # OpenTelemetry Metrics in CTA
 
 In CTA, we use OpenTelemetry to produce [Metrics](https://opentelemetry.io/docs/concepts/signals/metrics/) that allow us to gain valuable insights into the availability and performance of the system. Metrics are measurements captured at runtime that are produced by [instruments](https://opentelemetry.io/docs/concepts/instrumentation/). The moment of capturing a measurement is known as a metric event, which consists not only of the measurement itself, but also the time at which it was captured and associated metadata[^1]. This associated metadata comes in the form of attributes, similar to how a log entry has additional context besides just the message.

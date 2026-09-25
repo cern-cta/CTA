@@ -1,3 +1,7 @@
+---
+title: CI orchestration
+---
+
 # CTA Orchestration
 
 This page details the architecture and decisions behind the containerized deployment of CTA that we use in CI.

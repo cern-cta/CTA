@@ -1,3 +1,7 @@
+---
+title: Tape repacking overview
+---
+
 # Repack
 
 Repacking a tape is very useful for operators who want to migrate data from one tape to another, to repair a tape, or to add missing dual-copies to several files.
