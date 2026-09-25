@@ -75,7 +75,8 @@ body { -webkit-font-smoothing: antialiased; }
   border-bottom: 1px solid #ffffff24;
 }
 .md-header__title { font-weight: 700; letter-spacing: -0.018em; }
-.md-header__button.md-logo img { width: 1.6rem; height: 1.6rem; }
+.md-header__button.md-logo img { width: auto; height: 1.8rem; }
+.md-nav__button.md-logo img { width: auto; height: 2rem; }
 .md-header .md-source { padding-inline: .5rem; }
 .md-header a:hover, .md-header button:hover { color: #ff8c4d; }
 .md-tabs { background: transparent; border-bottom: 1px solid #ffffff24; }

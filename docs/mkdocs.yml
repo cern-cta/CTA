@@ -59,7 +59,7 @@ plugins:
 theme:
   name: material
   custom_dir: overrides
-  logo: assets/images/favicon.ico
+  logo: cta-logo.png
   icon:
     admonition:
       terminal: octicons/command-palette-16
