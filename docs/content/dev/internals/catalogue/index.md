@@ -11,7 +11,9 @@ The following section describes the process of making changes to the CTA catalog
 
 ## Catalogue Description
 
-The following sections describe the purpose of each catalogue table which you can see in the schema drawing available for download as a generated artifact for every commit to the CTA main branch [here](https://gitlab.cern.ch/cta/cta-catalogue-schema/-/artifacts).
+The diagram shows the catalogue tables and their relationships. The sections below describe selected tables.
+
+![CTA Catalogue schema](db-schema.svg)
 
 ### Mount Rule Tables
 
@@ -24,8 +26,6 @@ There are 3 mount rule tables defined:
 The Scheduler code checks these 3 tables for each archive/retrieve request at queueing time by the CTA-Frontend. The purpose is to find a matching mount rule row(s) and resolve the appropriate mount policy. `mount_policy_name` is a column referencing the Mount Policy table.
 
 ### Mount Policy Table
-
-The schema can be found via [to-be-added-link]().
 
 This table stores named mount policies which are matched with each archive/retrieve request at queueing time via the Mount Rule tables. They are one of the key parameters determining if the Scheduler shall schedule a mount.
 

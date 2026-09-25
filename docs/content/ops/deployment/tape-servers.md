@@ -2,6 +2,8 @@
 
 See [Tape Server Concepts](../../concepts/tape/servers.md) for the role of a tape server.
 
+Use [Stable Drive Identities and udev Rules](udev-rules.md) to configure persistent drive paths before configuring tape-daemon instances.
+
 ## Configuring a tape server
 
 ### Configuring correct fibre channel topology of the Emulex HBA
@@ -100,6 +102,22 @@ Document device discovery, logical-library and drive configuration, and catalogu
 ### Validate and enable
 
 Document read/write validation and the checks required before enabling production traffic.
+
+### Identify library drive addresses
+
+Library-control tools identify a drive by its *ordinal*, an index distinct from the drive name in CTA. Its relationship to the physical element address depends on the library.
+For example, the IBM mapping illustrated below uses `elementAddress - 257`; Spectra Logic configurations may use `partitionDriveNumber - 1`. These mappings should be checked against the library configuration.
+
+Use `cta-smc` to inspect drive ordinals and element addresses:
+
+```bash
+    # [root@tpsrvXXX ~]# cta-smc -q D
+    # Drive Ordinal   Element Addr.     Status     Vid
+    #             0             257       free
+    #             1             258       free
+    #             2             259       free
+    #             3             260       free
+```
 
 ### Multiple libraries and media changers
 

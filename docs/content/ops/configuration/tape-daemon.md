@@ -4,6 +4,8 @@ Configure `cta-taped` for each tape drive. See [Tape Server Setup](../deployment
 
 ## Drive and library mapping
 
+Use [stable drive paths](../deployment/udev-rules.md) rather than numbered `/dev/nstX` paths in production configurations.
+
 !!! info "Documentation outline"
     Document drive identities, device paths, logical libraries, media-changer connectivity, and the relationship to TPCONFIG.
 

@@ -25,14 +25,7 @@ See [Hardware Installation](../deployment/tape-servers.md#commissioning-hardware
 
 ## Labeling a tape
 
-!!! danger
-    Labeling a tape is a destructive action which *overwrites* any data on said tape. Never label a tape with data on it. There is no way to recover the data, apart from having the vendor attempt a recovery.
-
-Before a tape can be written to by CTA, it must have the CTA format applied by *labeling* the tape.
-The labeling procedure applies the CTA tape format, and specifically the VOL1 descriptor containing the tape's VID, to the beginning of the tape.
-This VID field is used to verify that the tape's content is what one expected, based on the VID printed on the physical cartridge.
-Individual tapes may be labeled using the `cta-tape-label` command line tool.
-However, we strongly recommend using the wrapper command [cta-ops-admin tape label](../tools/cta-ops-admin.md), which supports bulk-labeling a number of tapes sequentially, and performs safety checks before doing destructive actions.
+See [Media Initialisation](media-initialisation.md) for preparing, registering, and labelling media before use.
 
 ## Startup probing and stuck media
 

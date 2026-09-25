@@ -1,13 +1,17 @@
 # Scheduler
 
-The scheduler coordinates archive, retrieve, and repack work across CTA services. It provides the queues and scheduling decisions used by tape daemons to select and execute tape work.
+The scheduler coordinates archive, retrieve, and repack work across CTA services.
 
-## Shared backend
+## Responsibilities
 
-The scheduler relies on a data store for requests, queues, and coordination state. CTA has objectstore and PostgreSQL scheduler backends. This work state is separate from the catalogue's persistent record of tape copies and resources.
+It tracks queued requests and combines catalogue policies with resource availability to select eligible work and determine which tapes to mount. Tape daemons perform the actual transfers. See [Scheduling](../data-management/scheduling.md) for batching, priorities, and mount selection.
 
 ## Relationships with services
 
-The Workflow API queues requests, tape daemons select and process work, and the Maintenance Daemon handles reporting and backend maintenance. Administrative tools inspect or manage scheduler state through the Admin API.
+The Workflow API queues requests, tape daemons select and process work through the scheduler, and the Maintenance Daemon handles reporting and background maintenance. Operators inspect and manage scheduler state through the Admin API.
 
-See [Scheduling](../data-management/scheduling.md) for batching, mount selection, and policies. [Scheduler Configuration](../../ops/configuration/scheduler.md) covers deployment; [Scheduling and Queues](../../ops/administration/requests.md) covers operator procedures.
+## Backends
+
+CTA supports objectstore and PostgreSQL scheduler backends. They persist requests, queues, and coordination state so work survives service restarts. This state is separate from the [Catalogue](catalogue.md), even when both use PostgreSQL.
+
+See [Scheduler Configuration](../../ops/configuration/scheduler.md) for setup and [Scheduling and Queues](../../ops/administration/requests.md) for operator procedures.
