@@ -143,6 +143,7 @@ class PublicationTests(unittest.TestCase):
         previous = self.command("git", "ls-remote", "origin", "gl-pages").stdout
         result = self.command(sys.executable, str(self.publisher), "--tag", "v6.12.0.0-1", check=False)
         self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Snippet at path 'missing-file.md' could not be found", result.stdout)
         self.assertEqual(previous, self.command("git", "ls-remote", "origin", "gl-pages").stdout)
 
 

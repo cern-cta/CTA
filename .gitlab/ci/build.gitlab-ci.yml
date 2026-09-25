@@ -260,19 +260,13 @@ build-docs:
       changes:
         - docs/**/*
         - ci/docs/**/*
-        - '**/*.1cta.md'
-        - tools/cta-admin.1cta.md.in
+        - '**/*.1cta.md*'
+        - '**/*requirements.txt'
+        - '**/*.example.*'
         - tools/compile_man_md.py
         - tools/CtaAdminCmdParser.hpp
-        - frontend/grpc/cta-frontend.example.conf
-        - taped/daemon/cta-taped.example.conf
-        - maintd/cta-maintd.example.toml
-        - mediachanger/rmcd/cta-rmcd.example.toml
-        - lib/telemetry/cta-otel.example.yaml
         - .gitlab-ci.yml
-        - .gitlab/ci/build.gitlab-ci.yml
-        - .gitlab/ci/release.gitlab-ci.yml
-        - .gitlab/ci/build-image.gitlab-ci.yml
+        - '.gitlab/ci/*.gitlab-ci.yml'
         - ci/docker/pipeline/default.Dockerfile
   image: $IMAGE_DEFAULT
   variables:
