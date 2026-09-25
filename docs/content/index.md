@@ -69,7 +69,4 @@ Choose a starting point below.
 - [Source code](https://gitlab.cern.ch/cta/CTA) — Browse the repository and contribute.
 - [Release notes](https://gitlab.cern.ch/cta/CTA/-/blob/main/CHANGELOG.md) — Features, fixes, and changes in each release.
 
-!!! tip "Looking for something specific?"
-    Use the search bar at the top. It covers the entire CTA documentation.
-
 </div>

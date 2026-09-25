@@ -105,13 +105,6 @@ extra:
   version:
     provider: mike
     alias: true
-  social:
-    - icon: material/clipboard-text-clock
-      link: https://gitlab.cern.ch/cta/CTA/-/blob/main/CHANGELOG.md
-    - icon: fontawesome/brands/gitlab
-      link: https://gitlab.cern.ch/cta/CTA
-    - icon: fontawesome/brands/discourse
-      link: https://cta-community.web.cern.ch
 
 copyright: Copyright &copy; 2026 CERN
 

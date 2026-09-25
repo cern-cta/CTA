@@ -171,6 +171,24 @@ body { -webkit-font-smoothing: antialiased; }
 }
 
 .md-footer { border-top: 1px solid #ffffff24; }
+.cta-footer { background: #14181b; color: #b4c0c6; }
+.cta-footer__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem 1.2rem;
+  padding: 1rem .6rem;
+}
+.cta-footer__cern { display: flex; align-items: center; gap: 1.2rem; }
+.cta-footer__cern > a { flex-shrink: 0; padding: .4rem; }
+.cta-footer__cern img { display: block; width: 4rem; height: auto; }
+.cta-footer .md-copyright { color: #b4c0c6; }
+.cta-footer .md-copyright__highlight { color: inherit; }
+.cta-footer__links { display: flex; flex-wrap: wrap; gap: .6rem 1rem; }
+.cta-footer__links a { font-size: .736rem; }
+.cta-footer a { color: #b4c0c6; text-decoration: none; }
+.cta-footer a:hover { color: #fff; text-decoration: underline; }
 :focus-visible { outline: 2px solid var(--cta-brand); outline-offset: 3px; }
 
 /* Existing page utilities; home-page copy and imagery are managed separately. */
