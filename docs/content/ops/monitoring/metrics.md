@@ -254,3 +254,13 @@ Restart cta-frontend after applying the changes.
 If metrics are correctly enabled, you should begin to see metric data arriving at your collector within a few seconds.
 
 ---
+
+## Example configuration
+
+???+ example "cta-otel.example.yaml"
+
+    ```yaml
+    --8<--
+    lib/telemetry/cta-otel.example.yaml
+    --8<--
+    ```
