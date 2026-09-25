@@ -11,60 +11,10 @@ hide:
 <div class="spacer-xl"></div>
 # <span class="landing-title">CERN Tape Archive Documentation</span>
 
-The **CERN Tape Archive (CTA)** is CERN’s open-source system for long-term tape data storage. The software is designed as a stable and scalable system that can reliably ingest and store the massive amounts of data the LHC produces.
-CTA integrates with disk buffer systems such as [EOS](https://eos-web.web.cern.ch/eos-web/) and [dCache](https://www.dcache.org/). At CERN, CTA + EOS form the archival solution for LHC Run-3 and beyond.
+Technical documentation for understanding, deploying, operating and developing **CERN Tape Archive (CTA)**.
+CTA manages tape storage alongside a disk system such as [EOS](https://eos.web.cern.ch/) or [dCache](https://www.dcache.org/).
 
-<div class="grid cards" markdown>
-
--   :material-web:{ .lg .middle } [__Main CTA Website__](https://cta.web.cern.ch/)
-
-    ---
-
-    Explore CTA’s role at CERN, browse presentations, and read publications.
-
-    [:octicons-arrow-right-24: Visit website](https://cta.web.cern.ch/)
-
--   :material-forum:{ .lg .middle } [__Community Forum__](https://cta-community.web.cern.ch/)
-
-    ---
-
-    Ask questions, share practices, and discuss operations and development.
-
-    [:octicons-arrow-right-24: Visit forum](https://cta-community.web.cern.ch/)
-
--   :material-tag:{ .lg .middle } [__CTA Release Notes__](https://gitlab.cern.ch/cta/CTA/-/blob/main/CHANGELOG.md)
-
-    ---
-
-    See what changed in each version: Features, fixes, and migration notes by version.
-
-    [:octicons-arrow-right-24: View changelog](https://gitlab.cern.ch/cta/CTA/-/blob/main/CHANGELOG.md)
-
--   :material-package-variant:{ .lg .middle } [__RPM Packages__](https://cta-public-repo.web.cern.ch/stable/cta-5/el9/cta/x86_64/)
-
-    ---
-
-    Install a stable release of CTA from the official RPM repository.
-
-    [:octicons-arrow-right-24: Browse RPM repo](https://cta-public-repo.web.cern.ch/stable/cta-5/el9/cta/x86_64/)
-
--   :material-gitlab:{ .lg .middle } [__Source Code__](https://gitlab.cern.ch/cta/CTA)
-
-    ---
-
-    Explore the repository, browse branches, and contribute.
-
-    [:octicons-arrow-right-24: CTA repository](https://gitlab.cern.ch/cta/CTA)
-
--   :material-bug:{ .lg .middle } [__Development Tickets__](https://gitlab.cern.ch/cta/CTA/issues)
-
-    ---
-
-    Report bugs, track issues, and follow ongoing engineering work.
-
-    [:octicons-arrow-right-24: Open issues](https://gitlab.cern.ch/cta/CTA/issues)
-
-</div>
+Select the documentation version matching your deployment.
 
 ## Getting started
 
@@ -104,10 +54,21 @@ Use the guides below to get oriented quickly.
 
     ---
 
-    Find semantic conventions, coding standards, and CI practices for CTA.
+    Find coding standards, packaging conventions, and CI practices for CTA.
 
     [:octicons-arrow-right-24: Conventions guide](conventions/introduction.md)
 </div>
+
+For package selection and setup, see the [installation guide](ops/deployment/installation.md).
+For an existing deployment, see the [CTA upgrade guide](ops/procedures/upgrading-cta.md).
+
+## Project resources
+
+- [Main CTA website](https://cta.web.cern.ch/) — Project background, presentations, and publications.
+- [Community forum](https://cta-community.web.cern.ch/) — Questions and discussions about operating and developing CTA.
+- [Source code](https://gitlab.cern.ch/cta/CTA) — Browse the repository and contribute.
+- [Issue tracker](https://gitlab.cern.ch/cta/CTA/-/issues) — Report bugs and track development work.
+- [Release notes](https://gitlab.cern.ch/cta/CTA/-/blob/main/CHANGELOG.md) — Features, fixes, and changes in each release.
 
 !!! tip "Looking for something specific?"
     Use the search bar at the top. It covers the entire CTA documentation.
