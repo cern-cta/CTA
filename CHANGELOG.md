@@ -1,3 +1,9 @@
+## 5.11.23.0-1 (2026-09-25)
+
+### New Features
+
+- [frontend] Add user configuration improvements for cta-admin-grpc (cta/CTA!1635)
+
 ## 5.11.22.0-1 (2026-09-04)
 
 ### New Features
