@@ -219,8 +219,19 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "none")
     # This is important for e.g. the caching directories in the gitlab CI
     "/[.]"
     "${CMAKE_BINARY_DIR}/"
-    "/ci/system_tests"
-    "/ci/orchestration"
+    # CI workflows are not needed to build packages. Keep ci/project-json and
+    # ci/docker/cta: configuration and cta-release consume files from them.
+    # This is something to be refined in the future so that we can just ignore ci/ entirely.
+    "${CMAKE_SOURCE_DIR}/ci/build/"
+    "${CMAKE_SOURCE_DIR}/ci/checks/"
+    "${CMAKE_SOURCE_DIR}/ci/danger/"
+    "${CMAKE_SOURCE_DIR}/ci/docker/pipeline/"
+    "${CMAKE_SOURCE_DIR}/ci/docs/"
+    "${CMAKE_SOURCE_DIR}/ci/orchestration/"
+    "${CMAKE_SOURCE_DIR}/ci/release/"
+    "${CMAKE_SOURCE_DIR}/ci/sbom/"
+    "${CMAKE_SOURCE_DIR}/ci/system_tests/"
+    "${CMAKE_SOURCE_DIR}/ci/utils/"
     "/build/"
     "/pod_logs/"
     "/test_logs/"
