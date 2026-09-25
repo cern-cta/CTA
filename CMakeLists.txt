@@ -222,15 +222,23 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "none")
     "/ci/system_tests"
     "/ci/orchestration"
     "/build/"
-    # Keep excluding build directories created by the superseded packaging scripts
+    "/pod_logs/"
+    "/test_logs/"
+    "${CMAKE_SOURCE_DIR}/tmp/"
+    "[.]core$"
+    # Python caches and non-hidden virtual environments
+    "/__pycache__/"
+    "[.]py[co]$"
+    "/(venv|env)/"
+    # Local logs, temporary files, backups, and editor swap files
+    "[.](log|tmp|bak|swp|swo|swn|swm|swd)$"
+    # The documentation site is not needed to build packages.
+    "${CMAKE_SOURCE_DIR}/docs/"
+    # Keep excluding directories from previous versions in case they were not cleaned up
     "/build_srpm/"
     "/build_rpm/"
     "/image_rpms/"
-    "/pod_logs/"
-    "/test_logs/"
-    "/tmp/"
-    "[.]core$"
-    "/docs/content/assets/")
+    "/assets/")
   include(CPack)
 
   if(CTA_PACKAGE_FORMAT STREQUAL "rpm")
