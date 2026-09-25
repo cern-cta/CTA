@@ -67,6 +67,10 @@ body { -webkit-font-smoothing: antialiased; }
 
 /* A compact, dark masthead keeps the CTA identity visible in both modes. */
 .md-header {
+  background-color: var(--md-primary-fg-color);
+  background-image:
+    radial-gradient(120% 140% at 88% 0%, rgb(243 104 30 / 14%) 0%, transparent 55%),
+    linear-gradient(180deg, #1b2126 0%, #14181b 100%);
   box-shadow: 0 2px 6px rgb(0 0 0 / 16%);
   border-bottom: 1px solid #ffffff24;
 }
@@ -74,7 +78,7 @@ body { -webkit-font-smoothing: antialiased; }
 .md-header__button.md-logo img { width: 1.6rem; height: 1.6rem; }
 .md-header .md-source { padding-inline: .5rem; }
 .md-header a:hover, .md-header button:hover { color: #ff8c4d; }
-.md-tabs { border-bottom: 1px solid #ffffff24; }
+.md-tabs { background: transparent; border-bottom: 1px solid #ffffff24; }
 .md-tabs__link { margin-top: 0; padding-block: .7rem; opacity: 1; color: #b4c0c6; }
 .md-tabs__item--active .md-tabs__link { color: #f2f5f6; box-shadow: inset 0 -2px var(--cta-brand); }
 .md-tabs__link:hover { color: #ff8c4d; }
