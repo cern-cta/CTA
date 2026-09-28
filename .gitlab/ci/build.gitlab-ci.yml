@@ -244,27 +244,6 @@ reset-ccache:
   cache:
     - *ccache
 
-# Documentation export
-export-docs:
-  stage: build
-  needs:
-    - job: check-merge-train-duplicate
-      optional: true
-  rules:
-    - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "schedule"
-  script:
-    - echo "Exporting man pages (Markdown)"
-    - mkdir docs
-    - /usr/bin/find . -path ./docs -prune -o -name '*cta.md' -exec cp {} docs/ \;
-  artifacts:
-    when: always
-    expire_in: 30 days
-    paths:
-      - docs/
-
-# Documentation is independent of CTA compilation and consumes this checkout only.
 build-docs:
   stage: build
   needs:
