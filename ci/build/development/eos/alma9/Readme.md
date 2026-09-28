@@ -1,7 +1,3 @@
-# EOS development-container helpers
-
-This page describes the local image-preparation and container-start scripts in this directory. For building EOS and testing it with CTA, follow [EOS Environment Setup](../../../../../docs/content/dev/guides/integrations/eos/environment-setup.md).
-
 ### How to use
 
 #### 1. Build the docker image
@@ -12,7 +8,7 @@ This script will build the docker image that can be used for EOS development:
 ./prepare_eosdev_image.sh [<eos_version>]
 ```
 The `<eos_version>` is the version of EOS to get the dependencies from. It can be a commit, branch or a tag. \
-If not defined, `<eos_version>` will default to `master`. However, for EOS development, it's recommended to use a tagged commit instead of `master` (to work from a reproducible source revision).
+If not defined, `<eos_version>` will default to `master`. However, for EOS development, it's recommended to use a tagged commit instead of `master` (it's guaranteed to be more stable).
 
 #### 2. Run the docker image
 
@@ -23,7 +19,7 @@ podman images
 
 To launch one of them (detached), proceed with:
 ```bash
-./start_eosdev.sh [-p <port>] [-v <mount>] <image>
+./start_ctadev.sh [-p <port>] [-v <mount>] <image>
 ```
 
 The `<port>` parameter can be used to forward port `<port>` on the localhost to port `22` on the container. This can be used by ssh clients to access the container through a network. \
@@ -53,3 +49,45 @@ With this completed, accessing the container is simple:
 # Access the container on host <hostname> and port <port>
 ssh -p <port> root@<hostname>
 ```
+
+#### 3. Build EOS
+
+Once inside the container, building EOS is simple!
+```bash
+git clone https://gitlab.cern.ch/dss/eos.git
+cd eos/
+git submodule update --init --recursive
+mkdir ../eos_build
+cd ../eos_build
+cmake3 ../eos
+make -j 4
+```
+
+To validate that CTA was build correctly, run the unit tests inside `eos_build`:
+```bash
+# We need to set the EOS libraries path, unless we have installed them
+cd eos_build
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$(pwd)/common:$(pwd)/mq
+# Run the tests
+cd unit_tests/
+./eos-unit-tests
+```
+
+##### 3.1. Build EOS RPMs
+
+Building the RPMs follows a similar procedure:
+```bash
+mkdir eos_rpm
+cd eos_rpm
+cmake3 ../eos
+make rpm
+```
+
+In order to make the RPMs available to the host dev machine, copy them to the `shared` directory (mounted volume):
+```bash
+cp eos_rpm/RPMS/x86_64/* /root/shared/
+```
+
+#### 4. Other notes
+
+For EOS development it's best to modify the files in the same development development environment where they are build (ie. do both changes and build inside the container). Developing on a local machine, and synching the files to be built on a remote host will probably lead to build issues.

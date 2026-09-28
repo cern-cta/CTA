@@ -302,6 +302,10 @@ type-check-python:
     - changes:
         - "**/*.py"
         - ".gitlab-ci.yml"  # For changes in the image
+        - ".gitlab/ci/lint.gitlab-ci.yml"
+        - "pyrightconfig.json"
+        - "ci/system_tests/requirements.txt"
+        - "docs/requirements.txt"
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
@@ -319,4 +323,5 @@ type-check-python:
     # so not one top-level "install all dependencies" is available
     - uv pip install --system -r ci/system_tests/requirements.txt
     - uv pip install --system pyjwt cryptography
+    - uv pip install --system -r docs/requirements.txt
     - pyright .
