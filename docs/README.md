@@ -71,3 +71,18 @@ Keep the shared part of each page independent of the disk system. Put system-spe
 Documentation describes the selected CTA release. Remove historical feature-introduction qualifiers and comparisons with older CTA releases. Retain dependency compatibility requirements, schema migration examples, protocol/format versions, and literal package/configuration identifiers where they affect meaning. Release history stays in the root changelog.
 
 New skeleton pages use a **Documentation outline** notice and describe the intended coverage of each section. They do not claim that procedures are complete. Existing deprecated material moved between sections retains its review warning until the content pass validates it. The old developer buffer-cleanup URL is retained as a pointer to its Operations page.
+
+## Diagram colors
+
+Mermaid colors are configured centrally with the `--md-mermaid-*` variables in
+`content/stylesheets/extra.css`. Use the existing mode-aware palette variables
+for readable text, connectors, and surfaces in both light and dark mode. Material
+renders diagrams inside a shadow root, so ordinary CSS selectors cannot style
+the generated SVG from the page stylesheet. Prefer these inherited variables
+over hard-coded colors in individual diagrams; explicit Mermaid `classDef` or
+`style` colors can override the shared palette.
+
+`hooks.py` supplies `signalColor: currentColor` for sequence diagrams without
+explicit front matter. This works around Material's arrowhead selectors not
+matching Mermaid 11's prefixed marker IDs. The `.mermaid` host inherits the shared
+edge color, so arrowheads update immediately when the color mode changes.

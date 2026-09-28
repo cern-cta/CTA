@@ -57,6 +57,26 @@ flowchart TB
 - [Catalogue](catalogue.md): stores persistent metadata for files, tapes, libraries, and policies.
 - [Scheduler](scheduler.md): queues archive and retrieve work and coordinates its assignment to tape drives.
 
+## Catalogue and scheduler topology
+
+A CTA deployment normally has **one logical catalogue**, shared by its services, and **one or more scheduler backends**. A catalogue may use database replication or high-availability infrastructure without becoming several independent catalogues: it remains the common view of files, tape copies, resources, and policies.
+
+Each scheduler backend holds its own requests, queues, and coordination state. A typical reason to use two is to separate normal archival and retrieval from repack. Both use the same catalogue, but a request queued in one backend is not automatically visible in the other. Adding service instances connected to an existing backend is different from creating another independent scheduler backend.
+
+Services connect directly to the catalogue and the scheduler backend they serve; they do not send all database access through an API service.
+
+| Service | Catalogue connection | Scheduler connection |
+| --- | --- | --- |
+| **Workflow API** | Validates file metadata and policies against the shared catalogue. | Queues disk-system requests in its configured backend. |
+| **Admin API** | Reads and changes shared catalogue resources and policies. | Inspects and manages work in its configured backend. Operators use the corresponding endpoint for that backend's requests. |
+| **Tape Daemon** | Reads tape and file metadata and records successful writes. | Selects work and updates job state in its configured backend. A drive serves one scheduler backend at a time. |
+| **Maintenance Daemon** | Uses shared metadata for background processing. | Processes reports, repack, and maintenance for its configured backend. Each backend needs the appropriate maintenance routines. |
+| **Media Changer Daemon** | No direct connection. | No direct connection; tape daemons ask it to operate the library robotics. |
+
+For example, a separate repack backend has an Admin API endpoint, Maintenance Daemon processing, and tape daemons assigned to it. The Workflow API continues submitting ordinary requests to the normal-workload backend. This separates scheduler workloads, but the catalogue and any shared disk or tape infrastructure remain common resources.
+
+The architecture diagram above shows component roles, not the number of service instances or backends. See [Scheduler Configuration](../../ops/configuration/scheduler.md#isolate-repack-with-separate-scheduler-backends) for the operational setup.
+
 ## Integration and access boundaries
 
 The [Disk Buffer](disk-buffer.md) manages the client-facing namespace and disk replicas. [Authentication](authentication.md) explains access boundaries between the disk system, CTA services, and operators.

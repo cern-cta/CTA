@@ -138,6 +138,49 @@ During the expansion algorithm loop, `cta-taped` will detect that 10 files are a
 It will then create 10 Retrieve requests with the status **ToReportToRepackForSuccess** and queue them in the **RetrieveQueueToReportToRepackForSuccess**.
 These 10 Retrieve requests will then be transformed into archive sub-requests and the repack process will continue.
 
+## Recovering from partial failures
+
+A failed repack does not undo successful destination writes. Recovery must start from the current catalogue state, rather than assuming that all files are still active on the source tape. See [Completion and partial failures](../../concepts/data-management/repack.md#completion-and-partial-failures).
+
+### 1. Record the outcome and preserve recovery data
+
+Before removing the repack request, save its status, error details, destination tape information, and submission settings: mode, buffer URL, mount policy, and any file-selection limits. Use `cta-admin repack ls` and `cta-admin repack err`; see the [command reference](../tools/cta-admin.md) for filtering options.
+
+Keep the source tape and repack-buffer files available while assessing recovery. Do not reclaim or relabel the source tape, or clear the buffer, merely because the request has reached a terminal state. If work is still running, establish whether it should finish or be cancelled before planning a replacement request.
+
+### 2. Identify and correct the failure
+
+Distinguish the stage that failed:
+
+| Stage | Checks before retrying |
+| --- | --- |
+| Expansion | Storage classes and archive routes, repack VO configuration, buffer accessibility, and file-selection settings. |
+| Retrieval | Source tape and drive errors, buffer capacity and write access, and whether affected files can be recovered separately. |
+| Archival | Destination routes, writable tapes and drive availability, and whether the buffered source files remain readable. |
+| Result processing | Maintenance Daemon logs and pending repack reports; a completed transfer may still be awaiting processing. |
+
+Correct the underlying problem before submitting more work. For unreadable source files recovered by other means, use the [Tape Repair](#tape-repair) procedure.
+
+### 3. Determine which files still need work
+
+Compare the saved request results with active tape-copy records in the catalogue. Check both the original source and the reported destination tapes.
+
+For a move, successfully replaced copies are now active on destination tapes; copies whose replacement failed normally remain active on the source. A new repack of that source selects its current active files, rather than replaying the original request.
+
+For add-copies work, inspect the required copy numbers as well as locations. In particular, a combined move-and-add request can move the source copy successfully while failing to create an additional copy. That file is then absent from a fresh selection of the original source tape, so simply repeating the original request would miss the outstanding work. Plan add-copies requests using the tapes that now hold those files, with suitable selection limits.
+
+### 4. Remove the old request and submit the remaining work
+
+Once the diagnostics are saved and outstanding activity is accounted for, remove the old request using the [cancellation procedure](#repack-cancellation), then submit a new request following [Submitting a Repack Request](#submitting-a-repack-request). Removing a request does not roll back copies already recorded in the catalogue.
+
+Choose the mode and source tapes from the assessment above. Recheck routes and storage classes: a new expansion uses the current configuration. If reusing the buffer, retain only files whose identity and integrity have been established; follow the tape-repair naming requirements for supplied files.
+
+### 5. Verify before reclaiming or cleaning up
+
+Check that the replacement requests have finished successfully and that the affected files have all required active copies. If the goal was to empty the original source tape, verify that no active copies remain there; a successful add-copies request alone does not establish this.
+
+Only then proceed with buffer cleanup and, where appropriate, [tape reclamation](tapes-and-drives.md#verify-and-reclaim-tapes). Reclamation removes recycle-bin recovery metadata, and relabelling makes the old tape records inaccessible to normal reads.
+
 ## Other functionalities
 
 Other repack-related functionalities are described here.

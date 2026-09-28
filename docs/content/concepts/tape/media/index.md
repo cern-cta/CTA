@@ -70,10 +70,9 @@ These allow CTA adopters to use their existing tapes, without having to re-write
 
 ## Tape Media and CTA
 
-In CTA the state and metadata of each tape cartridge is individually tracked.
-Tapes are organized into Tape Pools, indicating the ownership of the tape and the data on it.
-The tape pool system is structured that a tape can belong to at most one VO at a time.
-Shared ownership of one tape between multiple VOs is not supported.
+CTA tracks the state and metadata of each tape cartridge individually. Each tape belongs to one **tape pool**, a group of tapes used for data placement. Each pool belongs to a **virtual organisation (VO)**, which represents an administrative owner such as an experiment or project. A tape therefore belongs to one VO through its pool; shared ownership between VOs is not supported.
+
+These ownership and placement relationships are explained in [Storage Model](../../data-management/storage-model.md#disk-instances-and-virtual-organisations).
 
 ### Media properties
 
@@ -88,7 +87,7 @@ Some notable of the latter are:
 * **mediaType:** The cartridge format and generation, such as `LTO9`
 * **logicalLibrary:** The assigned Logical Library
 * **tapepool:** The Tape Pool the cartridge belongs to
-* **vo:** The VO that owns the data on this media
+* **vo:** The virtual organisation associated with the tape pool
 * **encryptionKeyName:** The identifier for the key used to encrypt this media, if applicable
 * **full:** Whether or not the tape is considered to be full, i.e. whether it can no longer be written to
 * **nbMasterFiles:** The number of non-deleted files on this tape

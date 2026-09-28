@@ -156,3 +156,70 @@ query_period_secs = 310 ; Delay in seconds between free space queries to the loc
 main_loop_period_secs = 300 ; Period in seconds of the main loop of the cta-fst-gcd daemon
 xrdsecssskt = /etc/eos.keytab ; Path to simple shared secret to authenticate with EOS MGM
 ```
+
+## Garbage-collection workflows
+
+It's not possible to fully rely on the clients for the file *eviction*. Files can slowly (or quickly) accumulate on the disk buffer for various reasons such as: misbehaving clients, failing retrieve workflows, namespace corruption, etc...
+
+Therefore, it's important to back each EOSCTA instance with a proper garbage collection system. It will be responsible for clearing old disk replicas when they were not properly *evicted*.
+
+In addition, it should guarantee that each FST always has some free space available. **This is a requirement for maximum archive/retrieve throughput.**
+
+### FST garbage collection
+
+There is one FST Garbage Collector (FST GC) for each FST. \
+It's responsible for keeping track of all the free space and files on that FST, and for *evicting* the oldest files whenever the free space available falls under a threshold.
+
+This eviction should only remove the disk replica from the FST that the GC is monitoring. Any other copies should stay.
+
+```mermaid
+sequenceDiagram
+    participant GC as FST GC 1
+    participant MGM as EOS MGM
+    participant FST_1 as EOS FST 1
+    participant FST_2 as EOS FST 2
+    rect rgba(255,255,255,0.1)
+    activate GC
+    GC ->> FST_1: Track free disk<br/>space and old files
+    deactivate GC
+    end
+    Note right of FST_2: Any other FST<br/>should not be affected<br/>by FST GC 1
+    rect rgba(255,255,255,0.1)
+    activate GC
+    GC ->> MGM: evict replica of<br/>selected files on FST 1<br/>(PREPARE_EVICT)
+    MGM ->> MGM: Check if file<br/>can be evicted
+    opt
+    MGM ->> FST_1: evict
+    FST_1 -->> MGM: ack
+    end
+    MGM -->> GC: ack
+    end
+    deactivate GC
+```
+
+The FST Garbage Collector (GC) requests eviction of selected disk replicas through EOS.
+
+### MGM garbage collection
+
+There is also another type of Garbage Collector running on each MGM. It has access to all *reads* and *writes* to EOS, as well as the EOS namespace, which allows it to keep a LRU (Least Recently Used) list of all files.
+
+If the total available space goes under a threshold, it can trigger the *eviction* of the oldest files on the disk buffer.
+
+!!! note "Historical HA guidance"
+    The former workflow guide warned that MGM garbage collection required reads and writes to pass through one active MGM, and preferred FST garbage collection for that reason. This deployment-specific claim has not been verified for current EOS releases; check the behaviour of the deployed EOS version before relying on it.
+
+```mermaid
+sequenceDiagram
+    participant MGM as EOS MGM
+    participant FST_1 as EOS FST 1
+    participant FST_2 as EOS FST 2
+    rect rgba(255,255,255,0.1)
+    MGM ->> MGM: Keep track of free<br/>buffer space and<br/>LRU files
+    opt if free space goes under a treshold
+    MGM ->> FST_1: evict
+    FST_1 -->> MGM: ack
+    MGM ->> FST_2: evict
+    FST_2 -->> MGM: ack
+    end
+    end
+```

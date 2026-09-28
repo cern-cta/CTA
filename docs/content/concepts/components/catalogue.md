@@ -1,6 +1,6 @@
 # CTA Catalogue
 
-The catalogue records CTA's tape copies, resources, and storage policies.
+The catalogue records CTA's tape copies, resources, and storage policies. A deployment normally shares one logical catalogue across its services, including services using different scheduler backends; see [Catalogue and scheduler topology](index.md#catalogue-and-scheduler-topology).
 
 ## Responsibilities
 

@@ -16,7 +16,7 @@ Document any initialisation required by the media generation and drive, how to r
 ## Labeling a tape
 
 !!! danger
-    Labeling a tape is a destructive action which *overwrites* any data on said tape. Never label a tape with data on it. There is no way to recover the data, apart from having the vendor attempt a recovery.
+    Labelling a tape is destructive: it writes new labels at the beginning and establishes a new logical end of data (EOD). Old records beyond that point are no longer accessible through normal tape reads, even if their bytes have not all been physically overwritten. Never label a tape containing data that must be preserved. Labelling is not a full-media secure erase.
 
 Before a tape can be written to by CTA, it must have the CTA format applied by *labeling* the tape.
 The labeling procedure applies the CTA tape format, and specifically the VOL1 descriptor containing the tape's VID, to the beginning of the tape.

@@ -1,57 +1,39 @@
 ---
-title: File lifecycle overview
+title: File Workflows
 ---
 
-# File Lifecycle Overview
+# File Workflows
 
-This section describes the CTA workflows (archival, retrieval and deletion of files).
+CTA's file workflows register files, create tape copies, retrieve them to disk, and remove them from the active catalogue. The disk system owns the namespace and disk replicas; CTA manages tape copies and the work needed to read or write them.
 
-File archival and retrieval is triggered by **Workflow Events** sent from the disk buffer system to the frontend.
-EOS and dCache are equipped with the necessary support and in principle it can be hooked into other disk systems.
+A typical file is registered, archived, and later retrieved when needed. Its disk replica can be removed and recreated without changing its tape copies. Deleting the file from CTA is a separate operation from evicting a disk replica.
 
-## Workflow Events
+## Workflow events
 
-CTA supports the following Workflow Events:
+The disk system submits these events to the [Workflow API](../components/workflow-api.md). Both EOS and dCache integrations use the event names below. The names reflect events and requests in the file's lifecycle on disk; the corresponding CTA operations describe what CTA does in response.
 
-* **CREATE:** Triggered when a file is copied into the disk buffer. The **CREATE** event is triggered on the creation 
-  of the namespace entry, before the first data byte is transferred. CTA performs some basic checks (storage class
-  exists and maps to a valid archive route) and synchronously returns a unique Archive File ID that should be used for 
-  all further operations on this file.
-* **CLOSEW:** Close Write, triggered when the last data byte is written to the disk buffer. This event tells CTA that
-  the file is ready for archival, creating an archive request and adding it to the queue specified by the archive route.
-* **PREPARE:** Creates a retrieve request and adds it to the retrieve queue for the tape where the file is stored.
-* **ABORT_PREPARE:** Cancels a retrieve request.
-* **DELETE:** Mark the file as deleted in the CTA Catalogue and copy its metadata to the Recycle Bin. If the file has 
-  not yet been archived, cancel the archive request.
+For example, `CREATE` means that a file has been created in the disk namespace, before its contents have been written. `CLOSEW` means **close after writing**: the file is fully written and ready to be archived.
 
-## Workflows
+| Event | CTA operation | Meaning in CTA |
+| --- | --- | --- |
+| `CREATE` | **Registration** | Validates the storage class and archive routes and allocates an archive file ID for subsequent requests. No file data is transferred. |
+| `CLOSEW` | **Archival** | Queues the required tape copies once the file is ready in the disk buffer. Each copy is queued for its destination tape pool. |
+| `PREPARE` | **Retrieval** | Requests that the file be made available on disk. CTA queues a read from a tape holding a copy of the file, with the disk buffer as the destination. |
+| `ABORT_PREPARE` | **Retrieval cancellation** | Requests cancellation of a previously submitted retrieval. It does not delete the tape copy. |
+| `DELETE` | **Deletion** | Removes the file's active catalogue metadata, retaining tape-copy metadata in the recycle bin where applicable, and cancels pending archival work. It does not physically erase the bytes on tape. |
 
-- [Archival](archival.md)
-- [Retrieval](retrieval.md)
-- [Deletion](deletion.md)
-- [Repack](repack.md)
-- [Recycle Bin](recycle-bin.md)
+## Acceptance and completion
 
-## Disk buffer integrations
+Registration returns an archive file ID synchronously. Acceptance of an archival or retrieval request means the work has been queued, not that its data transfer has finished. [Scheduling](scheduling.md) determines when a tape daemon can serve it.
 
-### EOS
+After the transfer, completion or failure reaches the disk system through the integration's reporting or transfer-completion mechanism. The disk system then updates its own state. See [Disk Buffer](../components/disk-buffer.md) for this division of responsibilities.
 
-EOS supports several other workflow events that are not supported by CTA (OPENR, CLOSER, OPENW). Read operations are 
-not supported as clients cannot read directly from tape (files must first be transferred to disk). Open for write
-(OPENW) is not supported as files on tape are immutable.
+## Individual workflows
 
-#### Archive Workflow
+- [Archival](archival.md): writing the required tape copies and recording their locations.
+- [Retrieval](retrieval.md): restoring a tape copy to the disk buffer for access by clients.
+- [Deletion](deletion.md): removing active catalogue entries, distinct from removing disk replicas.
+- [Repack](repack.md): an operator-initiated workflow that moves tape copies to new tapes, for example when retiring media.
+- [Recycle Bin](recycle-bin.md): metadata retained after deletion to support recovery while the data remains on tape.
 
-![EOSCTA Archive Workflow](archive_workflow.svg "EOSCTA Archive Workflow")
-
-[Details of Archive Workflow](archival.md)
-
-#### Retrieve Workflow
-
-![EOSCTA Retrieve Workflow](retrieve_workflow.svg "EOSCTA Retrieve Workflow")
-
-[Details of Retrieve Workflow](retrieval.md)
-
-#### Delete Workflow
-
-[Details of Delete Workflow](deletion.md)
+The individual workflow pages describe integration-specific behaviour under the relevant disk-system headings.

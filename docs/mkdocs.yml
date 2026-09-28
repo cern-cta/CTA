@@ -158,7 +158,7 @@ nav:
       - 'Data Management':
           - 'Storage Model': concepts/data-management/storage-model.md
           - 'Scheduling': concepts/data-management/scheduling.md
-          - 'Overview of File Workflows': concepts/data-management/index.md
+          - 'File Workflows': concepts/data-management/index.md
           - 'Archival': concepts/data-management/archival.md
           - 'Retrieval': concepts/data-management/retrieval.md
           - 'Deletion': concepts/data-management/deletion.md

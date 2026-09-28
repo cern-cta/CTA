@@ -63,6 +63,37 @@
   --md-footer-fg-color--lighter: #8b979e;
 }
 
+/* Mermaid uses a shadow root: configure its inherited variables here instead
+ * of targeting generated SVG elements. Keep connectors separate from the dark
+ * masthead color, and use the mode-aware CTA accent for diagram borders.
+ */
+[data-md-color-scheme] {
+  --md-mermaid-edge-color: var(--md-default-fg-color--light);
+  --md-mermaid-node-bg-color: var(--cta-surface);
+  --md-mermaid-node-fg-color: var(--md-accent-fg-color);
+  --md-mermaid-label-bg-color: var(--md-default-bg-color);
+  --md-mermaid-label-fg-color: var(--md-default-fg-color);
+  --md-mermaid-sequence-actor-bg-color: var(--cta-surface);
+  --md-mermaid-sequence-actor-fg-color: var(--md-default-fg-color);
+  --md-mermaid-sequence-actor-border-color: var(--md-accent-fg-color);
+  --md-mermaid-sequence-actor-line-color: var(--md-default-fg-color--lighter);
+  --md-mermaid-sequence-message-line-color: var(--md-mermaid-edge-color);
+  --md-mermaid-sequence-message-fg-color: var(--md-default-fg-color);
+  --md-mermaid-sequence-note-bg-color: var(--cta-surface);
+  --md-mermaid-sequence-note-fg-color: var(--md-default-fg-color);
+  --md-mermaid-sequence-note-border-color: var(--md-accent-fg-color);
+  --md-mermaid-sequence-label-bg-color: var(--cta-surface);
+  --md-mermaid-sequence-label-fg-color: var(--md-default-fg-color);
+  --md-mermaid-sequence-loop-bg-color: var(--cta-surface);
+  --md-mermaid-sequence-loop-fg-color: var(--md-default-fg-color);
+  --md-mermaid-sequence-loop-border-color: var(--md-accent-fg-color);
+  --md-mermaid-sequence-number-bg-color: var(--md-default-fg-color);
+  --md-mermaid-sequence-number-fg-color: var(--md-default-bg-color);
+}
+
+/* Sequence markers use currentColor via the compatibility default in hooks.py. */
+.md-typeset .mermaid { color: var(--md-mermaid-edge-color); }
+
 body { -webkit-font-smoothing: antialiased; }
 
 /* A compact, dark masthead keeps the CTA identity visible in both modes. */

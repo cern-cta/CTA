@@ -4,133 +4,46 @@ title: File deletion
 
 # Deletion
 
-Removing a disk replica is distinct from deleting a file from CTA. Disk-copy eviction is handled by the disk system. A delete request to CTA removes the active file metadata and retains recovery metadata in the [recycle bin](recycle-bin.md); the bytes remain on tape until reclamation.
+Deleting a file from CTA removes its active catalogue metadata, so its tape copies are no longer available for normal retrieval. Metadata for the removed copies is retained in the [Recycle Bin](recycle-bin.md). The deletion does not overwrite the file's bytes on tape.
 
-## EOS
+## Deletion, eviction, and reclamation
 
-### Different *delete* scenarios
+These operations affect different parts of the storage system:
 
-Files can be affected by deletion under various scenarios:
+| Operation | What changes | What remains |
+| --- | --- | --- |
+| **Disk-replica eviction** | The disk system removes a disk replica. | The namespace entry and tape copies remain; the file can be retrieved again. |
+| **File deletion** | The disk system removes the namespace entry and requests removal of CTA's active file metadata. | Tape-copy metadata is retained in CTA's recycle bin, and the bytes remain on tape. |
+| **Tape reclamation** | CTA removes a tape's recycle-bin entries and resets its catalogue counters to allow reuse, once reclamation conditions are met. | Reclamation itself changes catalogue metadata. Relabelling or writing from the beginning establishes a new end of data, making old records beyond it inaccessible to normal reads even if physical remnants remain. |
 
-- User-triggered disk copy removal
-- Garbage collection disk copy removal
-- Full deletion of files (both disk and tape copy removal)
+Deleting individual files does not immediately free usable space on tape. To reuse a tape that still contains wanted files, those copies must first be moved elsewhere, typically through [Repack](repack.md). See [Tape Lifecycle](../tape/lifecycle.md) for reclamation conditions.
 
-#### User-triggered disk copy removal
+## Deletion workflow
 
-Previous experience has shown that it's not easy or even possible to implement an exact "garbage collection" policy required by experiments when it comes to evicting (deleting disk copies of) files safely stored on tape.
+1. **Submit the deletion (`DELETE`).** The disk system notifies the [Workflow API](../components/workflow-api.md) that the file is being deleted. Namespace removal remains the disk system's responsibility.
+2. **Handle pending archival.** CTA cancels pending archive work when the request identifies it. Deletion can overlap with transfers already in progress, so the integration must also handle failures of subsequent data or metadata operations.
+3. **Remove active catalogue entries.** CTA retains the recorded tape-copy metadata in the recycle bin and removes the active tape-file and archive-file records. A file that has not yet produced a recorded tape copy has no such copy to recover.
 
-In order to provide the experiments with a high-bandwidth interface for reading/writing files from/to tape, the preferred EOSCTA configuration is to have a small but very fast disk buffer where the files will be temporarily staged (using SSDs).
+After deletion, recovery requires restoring metadata before the copy can be retrieved normally. Deletion is therefore different from retrieval cancellation (`ABORT_PREPARE`), which leaves the active tape-copy records intact.
 
-Each large experiment has its own EOSCTA disk buffer. In order to prevent the buffer from quickly getting full, the experiments must explicitly request the disk copy to be removed once the file is no longer needed in the buffer. This is done with the *evict* command.
+## Consistency and recovery
 
-The *evict* command will only work if there is a copy of the file on tape (meaning that it has been archived). This protects experiments from unintentional loss of data.
+The disk namespace and CTA catalogue are separate systems. A failure between their updates can leave one side referring to a file that the other no longer considers active. Such discrepancies need investigation and reconciliation; deletion does not guarantee automatic repair across both systems.
 
-```mermaid
-sequenceDiagram
-    participant Client as Client
-    participant MGM as EOS MGM
-    participant FST_1 as EOS FST 1
-    participant FST_2 as EOS FST 2
-    rect rgba(255,255,255,0.1)
-    activate Client
-    Client ->> MGM: evict (PREPARE_EVICT)
-    loop for each file
-    MGM ->> MGM: Check if file<br/>can be evicted
-    Note right of MGM: If possible,<br/>evict all disk<br/>replicas of<br/>a file
-    opt
-    MGM ->> FST_1: evict
-    FST_1 -->> MGM: ack
-    MGM ->> FST_2: evict
-    FST_2 -->> MGM: ack
-    end
-    end
-    MGM -->> Client: ack
-    end
-    deactivate Client
-```
+Restoring CTA metadata alone does not recreate the disk namespace entry or a disk replica. The [Recycle Bin](recycle-bin.md#recovery-boundary) explains what must remain available for recovery and how tape reclamation ends that recovery path.
 
-***Note:** The example above shows a file with 2 disk replicas. Other replication modes are also supported.*
+## EOS example
 
-#### Garbage collection of disk copies
+### Evicting disk replicas
 
-It's not possible to fully rely on the clients for the file *eviction*. Files can slowly (or quickly) accumulate on the disk buffer for various reasons such as: misbehaving clients, failing retrieve workflows, namespace corruption, etc...
+EOS eviction removes disk data while preserving the namespace entry and tape copies. Explicit client eviction and background garbage collection both serve this purpose; neither is a CTA `DELETE` request. EOS checks whether a replica is eligible for eviction, including whether its data is safely archived and whether it is still needed.
 
-Therefore, it's important to back each EOSCTA instance with a proper garbage collection system. It will be responsible for clearing old disk replicas when they were not properly *evicted*.
+See [Retrieval](retrieval.md#shared-requests-and-disk-replica-retention) for shared client requests and [EOS Buffer Cleanup](../../ops/integrations/eos/buffer-cleanup.md) for the garbage-collection mechanisms and operational settings.
 
-In addition, it should guarantee that each FST always has some free space available. **This is a requirement for maximum archive/retrieve throughput.**
+### Deleting the file
 
-##### FST garbage collection
+Removing the file from the EOS namespace, for example with `eos rm`, also triggers a deletion request to CTA. The integration must avoid leaving EOS advertising a valid tape copy after its active CTA record has been removed.
 
-There is one FST Garbage Collector (FST GC) for each FST. \
-It's responsible for keeping track of all the free space and files on that FST, and for *evicting* the oldest files whenever the free space available falls under a threshold.
+If EOS removes its namespace reference but CTA deletion fails, tape data and catalogue records can remain without a corresponding EOS file. This inconsistency must be logged and reconciled; it should not be described as an automatic future cleanup. See [Metadata Consistency & Recovery](../../ops/integrations/eos/metadata-recovery.md).
 
-This eviction should only remove the tape replica from the FST that the GC is monitoring. Any other copies should stay.
-
-```mermaid
-sequenceDiagram
-    participant GC as FST GC 1
-    participant MGM as EOS MGM
-    participant FST_1 as EOS FST 1
-    participant FST_2 as EOS FST 2
-    rect rgba(255,255,255,0.1)
-    activate GC
-    GC ->> FST_1: Track free disk<br/>space and old files
-    deactivate GC
-    end
-    Note right of FST_2: Any other FST<br/>should not be affected<br/>by FST GC 1
-    rect rgba(255,255,255,0.1)
-    activate GC
-    GC ->> MGM: evict replica of<br/>selected files on FST 1<br/>(PREPARE_EVICT)
-    MGM ->> MGM: Check if file<br/>can be evicted
-    opt
-    MGM ->> FST_1: evict
-    FST_1 -->> MGM: ack
-    end
-    MGM -->> GC: ack
-    end
-    deactivate GC
-```
-
-The FST Garbage Collector (GC) uses the *evict* command (replacing old *stagerrm* command) that it wants a file to
-be removed.
-
-##### MGM garbage collection
-
-There is also another type of Garbage Collector running on each MGM. It has access to all *reads* and *writes* to EOS, as well as the EOS namespace, which allows it to keep a LRU (Least Recently Used) list of all files.
-
-If the total available space goes under a threshold, it can trigger the *eviction* of the oldest files on the disk buffer.
-
-!!! warning
-    The MGM GC does not work with true High Availability (HA) MGM mode. If more than one MGM is used on a EOSCTA instance, both read and writes need to be redirected to the active MGM node for the MGM GC to work. This makes it preferable to use the FST GC instead of the MGM GC.
-
-```mermaid
-sequenceDiagram
-    participant MGM as EOS MGM
-    participant FST_1 as EOS FST 1
-    participant FST_2 as EOS FST 2
-    rect rgba(255,255,255,0.1)
-    MGM ->> MGM: Keep track of free<br/>buffer space and<br/>LRU files
-    opt if free space goes under a treshold
-    MGM ->> FST_1: evict
-    FST_1 -->> MGM: ack
-    MGM ->> FST_2: evict
-    FST_2 -->> MGM: ack
-    end
-    end
-```
-
-#### Complete deletion of files
-
-There is no need to report a failure to delete the file in CTA while the deletion proceeds in EOS, so synchronous and asynchronous implementations are equivalent. \
-The complete deletion of files from EOS can raise several race conditions (delete while archiving, delete while retrieving), but all should be resolved by failure of data or metadata operations initiated from CTA to EOS, plus slow reconciliation. \
-The deletion of the file can be represented by a notification message from EOS to CTA (as any file operations can).
-
-##### Deletion order
-
-When a user wants to definitely delete a file, he will use the *rm* command plus the path of the file. \
-In response to the end user’s *rm* command the EOS MGM must first remove the tape location of a file from the EOS namespace before asking CTA to delete the actual tape file(s). It must also ignore any failure reported by CTA (but still log them as a failure).
-
-If these two steps were reversed and if removing the tape location of a file from the EOS namespace failed after a successful deletion of the CTA tape file(s) then the end user would have a false sense of security that their tape file(s) still existed. This would be considered data loss.
-
-The proper solution is to allow EOS to delete a file from its namespace even if CTA fails to delete the actual tape files. This will only result in temporary dark tape data which is not a critical problem. CTA can asynchronously reconcile its tape file catalogue with the EOS namespace at a later point in time.
+EOS namespace recovery and CTA recycle-bin restoration are separate operations. The coordinated procedure belongs under [Recycle Bin and File Recovery](../../ops/administration/file-recovery.md).

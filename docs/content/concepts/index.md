@@ -35,10 +35,10 @@ The **disk system** owns the client-facing namespace, including paths and filena
 
 CTA was designed for high archival throughput to handle the enormous volumes of data produced by the LHC experiments. This requirement shapes its emphasis on sustained transfers and efficient use of tape hardware, alongside control over competing workloads and visibility into the system's behaviour.
 
-- **Use drive time for useful work.** Keep available drives serving eligible requests, and batch transfers to amortise the cost of mounting and positioning tapes. The aim is sustained data transfer with minimal idle time and unnecessary tape movement.
-- **Keep tape streaming.** CTA is designed to archive at the tape drive’s native transfer rate, provided the disk buffer and network can sustain that throughput. A fast buffer decouples tape writes from individual client transfers, keeping drives supplied with data. During retrieval, the disk buffer and network must likewise absorb data fast enough to keep the drives streaming.
-- **Balance throughput and waiting time.** Larger batches improve efficiency, but waiting to form them delays requests. CTA's scheduling policies are highly configurable, allowing operators to tune this balance and prioritise competing workloads while aiming to prevent eligible work from being indefinitely starved.
-- **Be observable.** Request and resource state, logs, and metrics give operators the information they need to understand system behaviour, tune performance, and identify and investigate issues.
+- **Hardware efficiency.** Keep available drives serving eligible requests, and batch transfers to amortise the cost of mounting and positioning tapes. The aim is sustained data transfer with minimal idle time and unnecessary tape movement.
+- **Sustained throughput.** CTA is designed to archive at the tape drive’s native transfer rate, provided the disk buffer and network can sustain that throughput. A fast buffer decouples tape writes from individual client transfers, keeping drives supplied with data. During retrieval, the disk buffer and network must likewise absorb data fast enough to keep the drives streaming.
+- **Configurability.** Larger batches improve efficiency, but waiting to form them delays requests. CTA's scheduling policies are highly configurable, allowing operators to tune this balance..
+- **Observability.** Request and resource state, logs, and metrics give operators the information they need to understand system behaviour, tune performance, and identify and investigate issues.
 
 ## Explore the concepts
 

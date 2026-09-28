@@ -4,104 +4,85 @@ title: File archival
 
 # Archival
 
-The disk system submits an archive request when a file is ready for tape. CTA validates the storage class, queues the work, transfers the data to tape, records the tape copy, and reports the result to the disk system. Namespace updates and disk-copy retention are responsibilities of the disk system.
+Archival creates the tape copies required by a file's storage class. The file must first be fully written and available in the disk buffer. CTA reads its data, writes the copies to tape, records their locations in the catalogue, and reports the result to the disk system. The disk system remains responsible for the namespace and disk-replica retention.
 
-## EOS
+## Archival workflow
 
-On the EOS side of EOSCTA side, files are created in the namespace by a **CREATE** workflow event and then archived to tape following a **CLOSEW** (CLOSE Write) workflow event.
+1. **Register the file (`CREATE`).** The disk system contacts the [Workflow API](../components/workflow-api.md) to validate the storage class and archive routes and obtain an archive file ID. Registration does not transfer data to tape.
+2. **Submit the archive request (`CLOSEW`).** Once writing to disk finishes, the disk system supplies the information needed to archive the file, including its identity, size, checksum, and disk location.
+3. **Queue the required copies.** The storage class specifies the number of copies, and archive routes select a destination tape pool for each. Copies are queued for pools, not individual tapes; see [Storage Model](storage-model.md).
+4. **Write and record each copy.** When [scheduling](scheduling.md) allocates a suitable tape and drive, the tape daemon reads the file from disk and writes it to tape. Successful copies are recorded in the catalogue with their tape locations.
+5. **Report the result.** Once the required copies are complete, a success report is queued. The [Maintenance Daemon](../components/maintenance-daemon.md) delivers the report to the disk system, which updates its own state and applies its disk-replica retention policy.
 
-It is important to note that the EOS instance in EOSCTA is a temporary staging area for files on their way to/from tape. When the file is successfully archived, the disk buffer copy will be automatically deleted.
+The file's contents must remain unchanged and readable in the disk buffer while CTA still needs them. Multiple tape copies can be written at different times; completing one copy does not necessarily complete the archive request.
 
-Likewise, if archiving fails before the archive request is queued, the file will be deleted from the EOS disk buffer, and an error will be reported to the client. It is expected that the client will attempt to re-send the file in this case. See below for more details on how different errors are handled.
+## Completion and failures
+
+Acceptance of the archive request confirms that work has been queued, not that the file is safely stored on tape. Transfer completion and delivery of the completion report are also separate stages: the disk system may still be awaiting notification after the tape copies have been written.
+
+Validation failures can be returned when the request is submitted. Failures during later transfers are asynchronous. CTA retries failed work according to its retry handling; if the request ultimately fails, it queues a failure report for the disk system. If sending the completion report fails, CTA makes it available for another reporting attempt, up to a retry limit. This retries the report, not the tape write.
+
+The disk system must retain the source data until archival succeeds, or until an explicit failure-handling decision is made. An unsuccessful archive request must not be treated as permission to evict the only remaining copy. The integration determines how failures are exposed to clients and operators.
+
+File size and checksum checks protect the transfer; see [Data Integrity](data-integrity.md) for checksum responsibilities and empty-file handling.
+
+## EOS example
+
+EOS implements this workflow using its namespace manager (**MGM**) and disk storage servers (**FSTs**). A client first creates the namespace entry, then writes data to an FST. EOS sends `CREATE` to register the file with CTA and `CLOSEW` once the write is complete to request archival.
+
+These API exchanges are synchronous, but the tape transfer happens asynchronously after the archive request has been accepted. After successful archival is reported, EOS can evict the disk replica according to its configured retention policy.
 
 ### Archive workflow
 
-The figure below shows the sequence of a client writing a file to EOS. The storage class is checked on **CREATE** and a synchronous archive request is queued on **CLOSEW**.
+The diagram shows the successful path. Scheduler coordination and catalogue updates are summarised to keep the focus on EOS interactions.
 
 ```mermaid
 sequenceDiagram
-    participant Client as Client
-    participant FST as EOS FST
+    participant Client
     participant MGM as EOS MGM
-    participant FE as CTA Frontend
-    participant TS as CTA tape daemon
-    rect rgba(255,255,255,0.1)
-    activate Client
-    Client ->> MGM: open (CREATE)
-    MGM ->> FE: check storageClass (CREATE)
-    FE -->> MGM: ack
-    MGM -->> Client: redirect to FST
-    end
-    rect rgba(255,255,255,0.1)
-    Client ->> FST: open
-    activate FST
-    FST -->> Client: ack
-    Note right of FST: Write file to<br/>disk buffer<br/>on FST
-    Client ->> FST: write
-    Client ->> FST: ...
-    Client ->> FST: close (CLOSEW)
-    deactivate FST
-    FST ->> MGM: commit
-    MGM ->> FE: notification (CLOSEW)
-    Note right of FE: Create<br/>and enqueue<br/>archive request
-    FE  -->> MGM: reply
-    MGM -->> FST: ack
-    FST -->> Client: ack
-    deactivate Client
-    end
-    rect rgba(255,255,255,0.1)
-    activate TS
-    Note right of TS: Tape session pops<br/>archive request(s)<br/>from queue and<br/>writes file(s)<br/>to tape
-    TS ->> MGM: open
-    MGM -->> TS: redirect
-    TS ->> FST: open
-    activate FST
-    TS ->> FST: read
-    TS ->> FST: ...
-    TS ->> FST: close
-    deactivate FST
-    TS ->> MGM: tapereplica
-    MGM ->> MGM: Evict disk copy
-    MGM -->> TS: ack
-    deactivate TS
-    end
+    participant FST as EOS FST
+    participant API as CTA Workflow API
+    participant TD as CTA Tape Daemon
+    participant MD as CTA Maintenance Daemon
+
+    Client ->> MGM: Create file
+    MGM ->> API: CREATE (register file)
+    API -->> MGM: Archive file ID
+    MGM -->> Client: Redirect to FST
+    Client ->> FST: Write file and close
+    FST ->> MGM: Commit completed write
+    MGM ->> API: CLOSEW (request archival)
+    API -->> MGM: Request accepted
+    MGM -->> FST: Acknowledge
+    FST -->> Client: Write complete
+
+    Note over TD: Later: scheduled tape mount
+    TD ->> MGM: Open source file for reading
+    MGM -->> TD: Redirect to FST
+    TD ->> FST: Read file
+    FST -->> TD: File data
+    Note over TD: Write tape copies and record them in catalogue
+    Note over TD,MD: Success report queued when required copies are complete
+    MD ->> MGM: Report archival success
+    MGM ->> MGM: Update tape-copy status
+    MGM -->> MD: Report request succeeds
+    Note over MGM: Disk replica may be evicted according to retention policy
 ```
 
-#### EOS events handled by the CTA Frontend
+### EOS events not handled by the Workflow API
 
-- **CREATE**: Validate Storage Class, allocate Archive ID
-- **CLOSEW**: Archive the file to tape
+EOS generates `OPENW` when an existing file is opened for writing. CTA does not handle this event: archived file contents are immutable, and modifying the disk file would not update its tape copies. EOS must prevent such modifications for tape-backed files; see [EOS Configuration](../../ops/integrations/eos/configuration.md) for the immutability ACL settings.
 
-The EOS-CTA events are synchronous. \
-If CTA fails during either event, no archive request is queued. The file will be deleted from the EOS buffer and an error reported to the client.
+EOS read events such as `OPENR` and `CLOSER` are also not tape-transfer requests. Clients read an available disk replica; retrieving a missing replica from tape requires a separate `PREPARE` request, described under [Retrieval](retrieval.md).
 
-For more details on error handling, see How failures are handled before and after the Archive Request is queued.
+### Failure handling in EOS
 
-#### EOS events not handled by the CTA Frontend
+#### Before the archive request is queued
 
-- **OPENW**: We do not handle OPENW events, because files on tape are immutable
+Failures during registration or submission are reported synchronously through the client write workflow. In the EOS workflow described here, a failed `CREATE` removes the newly created namespace entry. If the disk write fails, `CLOSEW` is not sent; failures during the write or processing of `CLOSEW` trigger cleanup of the unsuccessful disk write. The client receives an error and can retry the upload.
 
-Despite EOS generating an OPENW event when an already-existing file is opened for writing, CTA does not allow file modifications. \
-Therefore, the OPENW workflow is not supported by CTA. \
-This should be enforced by system administrators by adding an immutable flag (!u) to the ACL of tape-backed directories in EOS, or as a rule.
+#### After the archive request is queued
 
-#### How failures are handled before and after the archive request is queued
+A later archival failure cannot be returned through the already completed client write. Clients must check the file's archival status to discover such failures.
 
-##### 1. Before queueing the archive request
-
-Up until the point where the archive request is queued, failures are **synchronous** and are reported immediately to the client. \
-The file will be deleted from the EOS disk cache, to ensure that the disk buffer does not fill up with failed transfers and to allow the client to retry.
-
-If there is a failure during **CREATE**, no file is written and the MGM will delete the file metadata from the EOS namespace. If there is a failure while writing the file to the EOS disk buffer, the FST will delete the file and the **CLOSEW** event will not be executed. The FST will also delete the file if there is a failure during the processing of the **CLOSEW** event in the CTA Frontend.
-
-##### 2. After queueing the archive request
-
-After the request has been queued, failures in the archival process are **asynchronous**. The client must poll the status of the file to determine if an error has occurred.
-
-If there is a failure on the CTA side (ex: can't authenticate to EOS or read the file, can't mount a tape, tape write error, etc.), the CTA tape daemon will retry to write the file to tape several times (usually three times per mount session, over two separate mounts). \
-If all these attempts fail, the CTA tape daemon will call back EOS with the **archive failed** workflow event, to report the failure. \
-When EOS receives the **archive failed** event, the MGM updates the file metadata with the error message, in the extended attributes. The file is left in the disk cache to allow an operator to investigate and possibly resubmit the archive request manually.
-
-## Integrity and empty files
-
-See [Data Integrity](data-integrity.md) for the planned coverage of checksums and zero-length files, including the separate EOS policy.
+For example, CTA may fail to read the file from EOS or write it to tape. If retries are exhausted, the Maintenance Daemon reports the archival failure to EOS. The MGM records the error in the file's extended attributes, and the disk replica is retained so an operator can investigate and, where appropriate, resubmit the archive request.

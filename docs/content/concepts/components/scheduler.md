@@ -12,6 +12,6 @@ The Workflow API queues requests, tape daemons select and process work through t
 
 ## Backends
 
-CTA supports objectstore and PostgreSQL scheduler backends. They persist requests, queues, and coordination state so work survives service restarts. This state is separate from the [Catalogue](catalogue.md), even when both use PostgreSQL.
+CTA supports objectstore and PostgreSQL scheduler backends. They persist requests, queues, and coordination state so work survives service restarts. This state is separate from the [Catalogue](catalogue.md), even when both use PostgreSQL. A deployment can use independent scheduler backends sharing one catalogue, for example to separate repack from ordinary archival and retrieval. Each backend has its own queued work and associated service connections; see [Catalogue and scheduler topology](index.md#catalogue-and-scheduler-topology).
 
 See [Scheduler Configuration](../../ops/configuration/scheduler.md) for setup and [Scheduling and Queues](../../ops/administration/requests.md) for operator procedures.
