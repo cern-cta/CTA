@@ -1,6 +1,6 @@
 # Tape Lifecycle
 
-CTA records each tape and its state in the [Catalogue](../components/catalogue.md). State changes are managed through the [Admin Frontend](../components/admin-api.md); operator procedures belong under [Tapes, Drives, and Libraries](../../ops/run-and-maintain/administration/tapes-and-drives.md).
+CTA records each tape and its state in the [Catalogue](../components/catalogue.md). State changes are managed through the [Admin Frontend](../components/admin-frontend.md); operator procedures belong under [Tapes, Drives, and Libraries](../../ops/run-and-maintain/administration/tapes-and-drives.md).
 
 A tape's state controls which kinds of work it may serve. It is separate from properties such as whether the tape is full, and from the availability of its drives and library. An `ACTIVE` tape can therefore remain readable after it becomes full, while no longer being eligible for further archival.
 
@@ -40,7 +40,10 @@ Archive requests are queued according to storage classes and archive routes to t
 
 Transitions to `REPACKING`, `BROKEN`, or `EXPORTED` can require existing retrieval queues to be cleaned before the destination state takes effect. CTA uses `REPACKING_PENDING`, `BROKEN_PENDING`, and `EXPORTED_PENDING` for this intermediate work. These states are internal and cannot be selected directly by an operator; unrelated state changes are rejected while a transition is pending.
 
-Cleanup handles affected requests, including reassignment to another eligible tape copy or failure reporting where appropriate. With the objectstore scheduler, the [Maintenance Daemon](../components/maintenance-daemon.md#scheduler-recovery-and-cleanup) performs this work asynchronously. With the PostgreSQL scheduler, cleanup and completion of the pending transition are invoked through the state-change path.
+Cleanup behavior depends on the scheduler backend:
+
+- **Objectstore:** the [Maintenance Daemon](../components/maintenance-daemon.md#scheduler-recovery-and-cleanup) asynchronously reassigns affected retrievals to another eligible tape copy or queues failure reporting where appropriate.
+- **PostgreSQL:** the state-change path removes affected pending retrieval jobs and queues failure reporting for jobs with an error-report URL. This cleanup does not reassign jobs to alternate tape copies; it also completes the pending transition.
 
 Not every transition requires cleanup: for example, resuming from `REPACKING_DISABLED` to `REPACKING` is direct.
 

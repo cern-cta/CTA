@@ -1,12 +1,12 @@
 # CTA Tape Daemon
 
-The CTA tape daemon (`cta-taped`) runs on a tape server and transfers data between the disk buffer and a tape drive. Each daemon controls one drive. Its main process forks a **drive process** to perform a data transfer session.
+The **tape daemon** (`cta-taped`) runs on a [Tape Server](../tape/servers.md) and controls one drive. It selects work through the scheduler, transfers data between disk and tape, checks file integrity, and records successful tape copies and resource state in the catalogue.
 
-## Drive Process
+It asks the [Media Changer Daemon](media-changer-daemon.md) to move cartridges. See [Data Integrity](../data-management/data-integrity.md) for transfer checks.
 
-A data transfer session includes waiting for scheduled work, mounting a tape, transferring data, and unmounting the tape. The drive process periodically reports its state to the catalogue.
+## Tape Sessions
 
-When the session ends, the drive process exits and the parent process creates a new one. Errors can also end a session; depending on the error, the parent may shut down the daemon.
+A tape session waits for eligible work, mounts a cartridge, transfers files in batches, and unloads and dismounts the cartridge. The daemon reports its activity so operators can distinguish waiting, transfer and cleanup.
 
 ### Drive States
 

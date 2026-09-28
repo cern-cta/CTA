@@ -29,7 +29,7 @@ The disk system controls when a received replica becomes available to clients an
 The whole-file checksum and logical block protection (LBP) cover different units:
 
 - **File checksum:** Adler-32 describes the complete file contents and is stored in the catalogue. It allows CTA to compare a later read with the expected file data.
-- **Logical block protection:** tapes labelled with CRC32C LBP carry additional protection bytes for each block. CTA automatically enables the corresponding drive protection when reading or writing those tapes. These bytes are checked separately and removed before the block contents are passed back to the file reader.
+- **Logical block protection:** tapes labelled with CRC32C LBP carry additional protection bytes for each block. Protection depends on the tape session’s `useLbp` setting as well as the tape label. With LBP enabled, CTA enables CRC32C drive protection for these tapes. With LBP disabled, reads proceed without drive LBP checking, while writes to CRC32C-labelled tapes are rejected.
 
 LBP protection bytes are not part of the original file payload and are not included in its logical size. LBP complements the whole-file checksum and the drive's internal media protection; it does not replace either. See [CTA Tape Format: Checksums](../tape/media/format.md#checksums) for the on-tape representation.
 

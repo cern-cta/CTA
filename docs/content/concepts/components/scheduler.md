@@ -1,17 +1,26 @@
 # Scheduler
 
-The scheduler coordinates archive, retrieve, and repack work across CTA services.
+The **scheduler** is the logic CTA services use to queue work and allocate tape mounts. Its **backend** persists requests, queues and coordination state.
 
 ## Responsibilities
 
-It tracks queued requests and combines catalogue policies with resource availability to select eligible work and determine which tapes to mount. Tape daemons perform the actual transfers. See [Scheduling](../data-management/scheduling.md) for batching, priorities, and mount selection.
+The scheduler combines queued archive, retrieve and repack work with catalogue policies and resource availability to select eligible mounts. Tape daemons then perform the transfers.
+
+See [Scheduling](../data-management/scheduling.md) for batching, priorities and the distinction between eligibility and immediate service.
 
 ## Relationships with services
 
-The Workflow Frontend queues requests, tape daemons select and process work through the scheduler, and the maintenance daemon handles reporting and background maintenance. Operators inspect and manage scheduler state through the Admin Frontend.
+| Service | Uses the scheduler to… |
+| --- | --- |
+| Workflow Frontend | Submit file requests. |
+| Admin Frontend | Inspect and manage work. |
+| Tape daemon | Claim mounts and jobs, and update their outcomes. |
+| Maintenance daemon | Process reports, advance repack work and clean up backend state. |
 
 ## Backends
 
-CTA supports objectstore and PostgreSQL scheduler backends. They persist requests, queues, and coordination state so work survives service restarts. This state is separate from the [Catalogue](catalogue.md), even when both use PostgreSQL. A deployment can use independent scheduler backends sharing one catalogue, for example to separate repack from ordinary archival and retrieval. Each backend has its own queued work and associated service connections; see [Catalogue and scheduler topology](index.md#catalogue-and-scheduler-topology).
+CTA has objectstore and PostgreSQL scheduler backends. The PostgreSQL scheduler is intended to replace the objectstore backend in the future. Both persist queued work across service restarts; this state is separate from the [Catalogue](catalogue.md), even when both use PostgreSQL.
 
-See [Scheduler Configuration](../../ops/deploy-and-configure/configuration/scheduler.md) for setup and [Scheduling and Queues](../../ops/run-and-maintain/administration/requests.md) for operator procedures.
+Backend implementations do not necessarily expose identical inspection and administrative capabilities. Consult the documentation for the deployed release and the [PostgreSQL scheduler overview](../../dev/internals/components/scheduler/postgresql.md) when assessing that backend; do not infer feature parity from the shared scheduler interface.
+
+Independent backends can share a catalogue, for example to separate repack from client workloads. Each retains its own work and service connections; see [Catalogue and scheduler topology](index.md#catalogue-and-scheduler-topology). Operational guidance belongs in [Scheduler Configuration](../../ops/deploy-and-configure/configuration/scheduler.md) and [Scheduling and Queues](../../ops/run-and-maintain/administration/requests.md).

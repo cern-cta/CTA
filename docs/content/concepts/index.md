@@ -4,11 +4,13 @@ title: CTA Concepts
 
 # CTA Concepts
 
-The [CERN Tape Archive (CTA)](https://cta.web.cern.ch/) is software for managing tape storage at exabyte scale. It schedules archival and retrieval, manages tape hardware, and tracks the files stored on tape. A separate disk system provides the file namespace, disk buffer, and client-facing interface.
+The [CERN Tape Archive (CTA)](https://cta.web.cern.ch/) is software for managing tape storage at exabyte scale. It manages tape copies, schedules archival and retrieval, and controls tape hardware. A separate **disk system** provides the file namespace, disk buffer, and client-facing interface.
+
+CTA was developed at CERN, where the name also refers to the deployed tape service. [EOS](https://eos-docs.web.cern.ch/) and [dCache](https://www.dcache.org/) are examples of disk systems integrated with CTA; the core responsibilities described here are independent of the chosen disk system.
 
 This section introduces how CTA works and the terminology used throughout the documentation. For deployment and operating procedures, use [Operations](../ops/index.md). For implementation and contribution guides, use [Development](../dev/index.md).
 
-CTA was developed at CERN, where the name also refers to the deployed tape service. [EOS](https://eos-docs.web.cern.ch/) and [dCache](https://www.dcache.org/) are examples of disk systems integrated with CTA; the core responsibilities described here are independent of the chosen disk system.
+New to CTA? Read [Components](components/index.md) → [Storage Model](data-management/storage-model.md) → [File Workflows](data-management/index.md) → [Scheduling](data-management/scheduling.md), then [Tape Infrastructure](tape/media/index.md). Use the [Glossary](glossary.md) for unfamiliar terms.
 
 ## From disk to tape and back
 
@@ -39,10 +41,3 @@ CTA was designed for high archival throughput to handle the enormous volumes of 
 - **Sustained throughput.** CTA is designed to archive at the tape drive’s native transfer rate, provided the disk buffer and network can sustain that throughput. A fast buffer decouples tape writes from individual client transfers, keeping drives supplied with data. During retrieval, the disk buffer and network must likewise absorb data fast enough to keep the drives streaming.
 - **Configurability.** Larger batches improve efficiency, but waiting to form them delays requests. CTA's scheduling policies are highly configurable, allowing operators to tune this balance.
 - **Observability.** Request and resource state, logs, and metrics give operators the information they need to understand system behaviour, tune performance, and identify and investigate issues.
-
-## Explore the concepts
-
-- [Components](components/index.md) shows the architecture, request and data paths, and the roles of the APIs, daemons, catalogue, scheduler, and disk buffer.
-- [Tape Infrastructure](tape/media/index.md) introduces tape media; continue with [drives](tape/drives.md), [libraries](tape/libraries.md), and [tape servers](tape/servers.md) to understand the hardware roles.
-- Data Management covers [storage policies](data-management/storage-model.md), [file workflows](data-management/index.md), and [scheduling](data-management/scheduling.md).
-- [Authentication](components/authentication.md) explains identities and access boundaries. Use the [Glossary](glossary.md) to look up unfamiliar terms.

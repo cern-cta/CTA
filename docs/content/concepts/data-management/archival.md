@@ -8,7 +8,9 @@ Archival creates the tape copies required by a file's storage class. The file mu
 
 ## Archival workflow
 
-1. **Register the file (`CREATE`).** The disk system contacts the [Workflow Frontend](../components/workflow-api.md) to validate the storage class and archive routes and obtain an archive file ID. Registration does not transfer data to tape.
+The steps below describe non-empty files. Permitted [zero-length submissions](data-integrity.md#zero-length-files) return success at `CLOSEW` without queueing a tape write, creating a tape copy or producing the usual transfer-completion report. Configuration can instead reject empty files.
+
+1. **Register the file (`CREATE`).** The disk system contacts the [Workflow Frontend](../components/workflow-frontend.md) to validate the storage class and archive routes and obtain an archive file ID. Registration does not transfer data to tape.
 2. **Submit the archive request (`CLOSEW`).** Once writing to disk finishes, the disk system supplies the information needed to archive the file, including its identity, size, checksum, and disk location.
 3. **Queue the required copies.** The storage class specifies the number of copies, and archive routes select a destination tape pool for each. Copies are queued for pools, not individual tapes; see [Storage Model](storage-model.md).
 4. **Write and record each copy.** When [scheduling](scheduling.md) allocates a suitable tape and drive, the tape daemon reads the file from disk and writes it to tape. Successful copies are recorded in the catalogue with their tape locations.
@@ -18,7 +20,7 @@ The file's contents must remain unchanged and readable in the disk buffer while 
 
 ## Completion and failures
 
-Acceptance of the archive request confirms that work has been queued, not that the file is safely stored on tape. Transfer completion and delivery of the completion report are also separate stages: the disk system may still be awaiting notification after the tape copies have been written.
+For a non-empty file, acceptance of the archive request confirms that work has been queued, not that the file is safely stored on tape. Transfer completion and delivery of the completion report are also separate stages: the disk system may still be awaiting notification after the tape copies have been written.
 
 Validation failures can be returned when the request is submitted. Failures during later transfers are asynchronous. CTA retries failed work according to its retry handling; if the request ultimately fails, it queues a failure report for the disk system. If sending the completion report fails, CTA makes it available for another reporting attempt, up to a retry limit. This retries the report, not the tape write.
 
@@ -34,7 +36,7 @@ These API exchanges are synchronous, but the tape transfer happens asynchronousl
 
 ### Archive workflow
 
-The diagram shows the successful path. Scheduler coordination and catalogue updates are summarised to keep the focus on EOS interactions.
+The diagram shows the successful path for a non-empty file. Scheduler coordination and catalogue updates are summarised to keep the focus on EOS interactions.
 
 ```mermaid
 sequenceDiagram

@@ -1,41 +1,30 @@
 # Authentication
 
-CTA supports multiple authentication methods: SSS (Simple Shared Secret), Kerberos, JWT (JSON Web Token), and mTLS (mutual TLS).
-CTA distinguishes three authentication boundaries:
+CTA authenticates the services and operators using its interfaces. **Authentication** establishes an identity; **authorization** determines whether that identity may perform the requested operation.
 
-- The authentication between the disk buffer and the CTA frontend. The disk buffer will send workflow events to the frontend and needs to be authenticated in order to do so.
-- The authentication between the tape daemons and the disk buffer. The tape daemons need to be able to read and write data directly through the disk buffer.
-- The authentication of users interacting with CTA via the `cta-admin` tool.
+The interfaces below cover workflow requests, operator commands and disk transfers. They are not a complete inventory of deployment trust boundaries: catalogue, scheduler and library-control connections also need appropriate access controls.
 
 ## Authentication Methods by Interface
 
-### Service APIs
-The APIs have separate authentication boundaries:
+The identity and credentials depend on the interface. A credential accepted on one connection does not automatically authorize the others.
 
-- [Workflow Frontend](workflow-api.md): supports JWT and mTLS authentication for workflow events
-(see [WFE Authentication Configuration](../../ops/deploy-and-configure/configuration/authentication.md#mtls-authentication-wfe-only)).
-- [Admin Frontend](admin-api.md): supports JWT and Kerberos authentication for `cta-admin` commands
-(see [Admin Authentication Configuration](../../ops/deploy-and-configure/configuration/authentication.md#kerberos-admin-api)).
+### Service APIs
+
+| Interface | Identity | Authentication methods |
+| --- | --- | --- |
+| [Workflow Frontend](workflow-frontend.md) | The registered disk instance submitting workflow events. | JSON Web Token (**JWT**) or mutual TLS (**mTLS**); each Workflow Frontend enables exactly one. |
+| [Admin Frontend](admin-frontend.md) | The operator making administrative requests. | JWT and/or Kerberos; the identity must also be an authorized catalogue admin user. |
+
+For workflow JWTs, the subject identifies the disk instance. With mTLS, the frontend maps the client's certificate identity to a disk instance. See [Authentication Configuration](../../ops/deploy-and-configure/configuration/authentication.md) for identity mapping and credential setup.
 
 ### Tape Daemon
-The tape daemon reads and writes file data through the disk system's data-transfer interface. The credentials for this connection are separate from frontend workflow and admin credentials.
+
+The tape daemon needs permission to read archive sources and write retrieve destinations through the disk system's data interface. These credentials are separate from frontend credentials.
+
+The mechanism depends on the integration; see [EOS Configuration](../../ops/deploy-and-configure/integrations/eos/configuration.md) or [dCache Integration](../../ops/deploy-and-configure/integrations/dcache.md).
 
 #### EOS
 
-The EOS integration uses SSS authentication for tape-daemon data transfers. See [EOS Configuration](../../ops/deploy-and-configure/integrations/eos/configuration.md).
+The tape daemon reads and writes EOS replicas through XRootD using **Simple Shared Secret (SSS)** authentication. These credentials are separate from those EOS uses to submit workflow requests to the [Workflow Frontend](#service-apis).
 
-The diagram shows the three independent connections in the EOS integration. Arrows point from the component initiating the connection to the service authenticating it.
-
-```mermaid
-flowchart LR
-    eosWorkflow["EOS<br/>Workflow requests"]
-    workflow["CTA Workflow Frontend"]
-    adminClient["Operator<br/>cta-admin"]
-    admin["CTA Admin Frontend"]
-    taped["CTA tape daemon"]
-    eosData["EOS<br/>File transfers"]
-
-    eosWorkflow -->|"gRPC · JWT or mTLS"| workflow
-    adminClient -->|"gRPC · JWT or Kerberos"| admin
-    taped -->|"XRootD · SSS"| eosData
-```
+See [EOS Configuration](../../ops/deploy-and-configure/integrations/eos/configuration.md) for credential setup.

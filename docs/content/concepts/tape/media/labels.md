@@ -59,7 +59,7 @@ In particular, CTA writes `CTA` as VOL1's owner, `3` as its label-standard level
 | 12-37 | 26     | spaces  |  Reserved                                                           |
 | 38-51 | 14     | owner   |  Usually spaces                                                     |
 | 52-79 | 28     | space   |  Reserved                                                           |
-| 80    |  1     | 1       |  Always 1 for ANSI, ASCII 31 hex <br> Usually 3 for DEC VMS volumes |
+| 80    |  1     | 1       |  Label-standard level; this historical example uses `1` (ASCII 0x31), while CTA writes `3` |
 
 ### HDR1, EOF1 or EOV1 label
 
@@ -84,16 +84,7 @@ The date form includes a century code, `c`, which is blank for 1900–1999 and `
 
 ### HDR2, EOF2 or EOV2 label
 
-| Bytes | Length | Example | Significance to user                 |
-| ----: | -----: | ------: | ------------------------------------ |
-| 1-3   | 3      | HDR     | Header label (EOF or EOV possible).  |
-| 4     | 1      | 2       | Header label number, 2.              |
-| 5     | 1      | U       | Record format. F, U or V (IBM only). |
-| 6-10  | 5      | 32000   | Block length in bytes (maximum).     |
-| 11-15 | 5      | 32000   | Record length in bytes (maximum).    |
-| 16-80 | 65     | spaces  |                                      |
-| 16    | 1      | 5       | Recording density (IBM). 0-5.        |
-| 35-36 | 2      | P       | Compressed data follows (3490 etc.). |
+These labels describe record format, block length and record length. Fields beyond the common prefix depend on the format: IBM-specific density or compression fields must not be interpreted as CTA fields. See [CTA Tape Format](format.md) for the layouts CTA writes.
 
 ### HDRn, EOFn or EOVn label
 
@@ -188,45 +179,4 @@ These codes help distinguish ASCII from EBCDIC labels when examining a tape dump
 
 ## Historical extensions
 
-The following UHL2–4 and UTL2–4 layouts were proposed for CASTOR. They are preserved for historical interpretation and are not labels written in the CTA format. Other tape formats may use the same label names with different layouts.
-
-??? info "Proposed user-label layouts"
-
-    ### UHL2 and UTL2
-
-    | Bytes | Length | Example              | Significance to user             |
-    | ----: | -----: | -------------------: | -------------------------------- |
-    | 1-3   | 3      | UHL                  | User Header label (UTL possible) |
-    | 4     | 1      | 2                    | Header label number              |
-    | 5-24  | 20     | 00000000000000376975 | Bit file ID (64 bits)            |
-    | 25-34 | 10     | CASTORNS1            | Name Server hostname             |
-    | 35-38 | 4      | 0644                 | Absolute mode                    |
-    | 39-48 | 10     | 0000000395           | Uid                              |
-    | 49-58 | 10     | 0000001028           | Gid                              |
-    | 59-78 | 20     | 00000000010031553895 | File size in bytes (64 bits)     |
-
-    ### UHL3 and UTL3
-
-    | Bytes | Length | Example             | Significance to user                              |
-    | ----: | -----: | ------------------: | ------------------------------------------------- |
-    | 1-3   | 3      | UHL                 | User Header label (UTL possible)                  |
-    | 4     | 1      | 3                   | Header label number                               |
-    | 5-18  | 14     |                     | User name                                         |
-    | 19-26 | 8      |                     | Experiment/Project name                           |
-    | 27-28 | 2      |                     | Checksum algorithm (AD for adler32, CS for cksum) |
-    | 29-38 | 10     |                     | File checksum (32 bits)                           |
-    | 39-57 | 20     | 2001/04/04 08:51:30 | Last modification (UTC)                           |
-
-    ### UHL4 and UTL4
-
-    | Bytes | Length | Example              | Significance to user                              |
-    | ----: | -----: | -------------------: | ------------------------------------------------- |
-    | 1-3   | 3      | UHL                  | User Header label (UTL possible)                  |
-    | 4     | 1      | 4                    | Header label number                               |
-    | 5-9   | 5      | 00001                | Copy number                                       |
-    | 10-14 | 5      | 00001                | Segment number                                    |
-    | 15-34 | 20     | 00000000010031553895 | Segment size in bytes (64 bits)                   |
-    | 35-36 | 2      |                      | Checksum algorithm (AD for adler32, CS for cksum) |
-    | 37-46 | 10     |                      | Segment checksum (32 bits)                        |
-    | 47-65 | 20     | 2001/04/04 08:51:30  | Tape write timestamp (UTC)                        |
-    | 66-75 | 10     | 0000002342           | Number of blocks                                  |
+Historical CASTOR proposals included UHL2–4 and UTL2–4 extensions. CTA does not write them. The inherited tables contain inconsistent timestamp ranges and lengths, so they are omitted here; interpreting such media requires the originating system’s verified specification. Use [CTA Tape Format](format.md) for current CTA layouts.

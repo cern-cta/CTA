@@ -1,13 +1,13 @@
 # CTA Maintenance Daemon
 
-The maintenance daemon (`cta-maintd`) advances background work through the scheduler without using a tape drive directly.
+The **maintenance daemon** (`cta-maintd`) processes disk-system reports, coordinates repack, and runs scheduler recovery and cleanup routines. It participates in normal request processing without directly operating a tape drive.
 
-!!! note "A legacy name"
+!!! note "A note on naming"
     “Maintenance” is a legacy name: the daemon also reports archive and retrieve results to the disk system as part of normal request processing. It is required for those workflows to progress, not just for occasional housekeeping.
 
 ## Reporting to the disk system
 
-The daemon collects pending completion and failure reports from the scheduler and sends them to the [Disk Buffer](disk-buffer.md). The scheduler tracks reporting outcomes and handles retries when notification fails.
+The daemon collects pending completion and failure reports from the scheduler and sends them to the [disk system](disk-system.md). The scheduler tracks reporting outcomes and handles retries when notification fails.
 
 File transfer and reporting are separate steps. Tape daemons can finish transfers while their reports remain queued; if reporting is not running, the disk system may still be waiting for the outcome.
 

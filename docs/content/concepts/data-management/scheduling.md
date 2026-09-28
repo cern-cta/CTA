@@ -56,7 +56,7 @@ A high priority cannot override these constraints. See [Tape Lifecycle](../tape/
 3. The daemon mounts the selected tape, obtains batches of jobs, and transfers data between tape and the disk buffer. Successful writes are recorded in the catalogue.
 4. Transfer outcomes enter the reporting workflow. The **maintenance daemon** processes the corresponding reports to the disk system so it can complete its side of the operation.
 
-Queueing, transferring, and reporting are distinct stages. A completed tape transfer can still be awaiting notification to the disk system; see [Disk Buffer](../components/disk-buffer.md) for its role in completing archival and retrieval.
+Queueing, transferring, and reporting are distinct stages. A completed tape transfer can still be awaiting notification to the disk system; see [Disk System](../components/disk-system.md) for its role in completing archival and retrieval.
 
 ## Ordering within a retrieval batch
 

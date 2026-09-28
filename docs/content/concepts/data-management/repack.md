@@ -29,7 +29,7 @@ The routes select **pools**, not cartridges. The scheduler chooses eligible writ
 
 ## Repack workflow
 
-1. **Submit the request.** An operator requests repack of a source tape through the [Admin Frontend](../components/admin-api.md), selecting the mode and repack buffer.
+1. **Submit the request.** An operator requests repack of a source tape through the [Admin Frontend](../components/admin-frontend.md), selecting the mode and repack buffer.
 2. **Expand into per-file work.** The [Maintenance Daemon](../components/maintenance-daemon.md) uses the catalogue to identify the source tape's active files and the copies to move or add, then queues the necessary retrieval work.
 3. **Read into the repack buffer.** Tape daemons read the source files into temporary disk storage. Retrieval jobs target the source tape.
 4. **Queue and write destination copies.** The maintenance daemon processes successful retrieval results and advances the files to archival. Tape daemons read the buffered files and write the required copies to destination tapes, recording them in the catalogue. Archival jobs target destination tape pools.

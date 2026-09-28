@@ -47,41 +47,34 @@ flowchart TB
 
 ## Services
 
-- [Workflow Frontend](workflow-api.md): accepts archive, retrieve, and delete requests from the disk system.
-- [Admin Frontend](admin-api.md): serves operator commands, including those from `cta-admin`.
-- [Tape Daemon](tape-daemon.md) (`cta-taped`): selects and executes tape work and transfers files between tape and disk.
-- [Maintenance Daemon](maintenance-daemon.md) (`cta-maintd`): runs background reporting, repack, and scheduler maintenance routines.
-- [Media Changer Daemon](media-changer-daemon.md) (`cta-rmcd`): provides access to tape-library robotics.
+| Component | Role |
+| --- | --- |
+| [Workflow Frontend](workflow-frontend.md) | Accepts disk-system registration, archive, retrieve, cancellation and deletion requests. |
+| [Admin Frontend](admin-frontend.md) | Accepts operator queries and resource-management commands. |
+| [Tape Daemon](tape-daemon.md) | Controls one drive and transfers files between tape and disk. |
+| [Maintenance Daemon](maintenance-daemon.md) | Sends queued reports, advances repack and recovers or cleans up scheduler work. |
+| [Media Changer Daemon](media-changer-daemon.md) | Handles cartridge movements through library robotics. |
 
 ## Databases and backends
 
-- [Catalogue](catalogue.md): stores persistent metadata for files, tapes, libraries, and policies.
-- [Scheduler](scheduler.md): queues archive and retrieve work and coordinates its assignment to tape drives.
+- [Catalogue](catalogue.md): stores **non-transient metadata** describing archived files, tape copies, resources and policies. These records remain necessary after individual transfers finish.
+- [Scheduler](scheduler.md): stores **transient work state**, including requests, queues and job progress, and coordinates work across tape drives. This state is needed while work is pending or in progress, including reporting and cleanup.
+
+Transient does not mean held only in memory: the scheduler backend persists work across service restarts. Losing that backend's stored state means losing the work it tracks, even if the catalogue and recorded tape copies remain intact.
 
 ## Catalogue and scheduler topology
 
-A CTA deployment normally has **one logical catalogue**, shared by its services, and **one or more scheduler backends**. A catalogue may use database replication or high-availability infrastructure without becoming several independent catalogues: it remains the common view of files, tape copies, resources, and policies.
-
-Each scheduler backend holds its own requests, queues, and coordination state. A typical reason to use two is to separate normal archival and retrieval from repack. Both use the same catalogue, but a request queued in one backend is not automatically visible in the other. Adding service instances connected to an existing backend is different from creating another independent scheduler backend.
+A CTA deployment normally has **one logical catalogue**, shared by its services, and **one or more scheduler backends**. Each scheduler backend holds its own requests, queues, and coordination state. A typical reason to use two is to separate normal archival and retrieval from repack. Both use the same catalogue, but a request queued in one backend is not automatically visible in the other.
 
 Services connect directly to the catalogue and the scheduler backend they serve; they do not send all database access through an API service.
-
-| Service | Catalogue connection | Scheduler connection |
-| --- | --- | --- |
-| **Workflow Frontend** | Validates file metadata and policies against the shared catalogue. | Queues disk-system requests in its configured backend. |
-| **Admin Frontend** | Reads and changes shared catalogue resources and policies. | Inspects and manages work in its configured backend. Operators use the corresponding endpoint for that backend's requests. |
-| **Tape Daemon** | Reads tape and file metadata and records successful writes. | Selects work and updates job state in its configured backend. A drive serves one scheduler backend at a time. |
-| **Maintenance Daemon** | Uses shared metadata for background processing. | Processes reports, repack, and maintenance for its configured backend. Each backend needs the appropriate maintenance routines. |
-| **Media Changer Daemon** | No direct connection. | No direct connection; tape daemons ask it to operate the library robotics. |
-
-For example, a separate repack backend has an Admin Frontend endpoint, maintenance daemon processing, and tape daemons assigned to it. The Workflow Frontend continues submitting ordinary requests to the normal-workload backend. This separates scheduler workloads, but the catalogue and any shared disk or tape infrastructure remain common resources.
-
-The architecture diagram above shows component roles, not the number of service instances or backends. See [Scheduler Configuration](../../ops/deploy-and-configure/configuration/scheduler.md#isolate-repack-with-separate-scheduler-backends) for the operational setup.
+For example, a separate repack scheduler has an Admin Frontend endpoint, maintenance daemon processing, and tape daemons assigned to it. The Workflow Frontend continues submitting ordinary requests to the normal-workload backend. This separates scheduler workloads, but the catalogue and any shared disk or tape infrastructure remain common resources.
 
 ## Integration and access boundaries
 
-The [Disk Buffer](disk-buffer.md) manages the client-facing namespace and disk replicas. [Authentication](authentication.md) explains access boundaries between the disk system, CTA services, and operators.
+The [Disk System](disk-system.md) manages the client-facing namespace and disk replicas. [Authentication](authentication.md) explains access boundaries between the disk system, CTA services, and operators.
 
 ## Service placement
 
-Tape services require access to the corresponding hardware, with one tape-daemon process per drive. The APIs and maintenance service can be placed separately. See [Deployment Planning](../../ops/deploy-and-configure/deployment/planning.md) for availability, network, and placement decisions, and [Disk Buffer Integration](../../ops/deploy-and-configure/integrations/index.md) for system-specific setup.
+A tape server hosts one tape daemon instance per drive and needs connectivity to the disk system, backend stores and media changer. The tape daemons and remote media changer daemons run on tape servers, while frontends and maintenance daemons can run separately from the tape hardware.
+
+Use [Deployment Planning](../../ops/deploy-and-configure/deployment/planning.md) for placement and availability decisions and [Disk Buffer Integration](../../ops/deploy-and-configure/integrations/index.md) for integration requirements.

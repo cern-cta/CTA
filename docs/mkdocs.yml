@@ -123,17 +123,17 @@ nav:
           - 'Authentication': concepts/components/authentication.md
           # Describe API and daemon roles; exclude config files, startup commands, and implementation walkthroughs.
           - 'Services':
-              - 'Workflow Frontend': concepts/components/workflow-api.md
-              - 'Admin Frontend': concepts/components/admin-api.md
+              - 'Workflow Frontend': concepts/components/workflow-frontend.md
+              - 'Admin Frontend': concepts/components/admin-frontend.md
               - 'Tape Daemon': concepts/components/tape-daemon.md
-              - 'Maintenance Daemon': concepts/components/maintenance-daemon.md
               - 'Media Changer Daemon': concepts/components/media-changer-daemon.md
+              - 'Maintenance Daemon': concepts/components/maintenance-daemon.md
           # Explain persistent metadata versus scheduled work; provisioning and schemas belong elsewhere.
           - 'Databases & Backends':
               - 'Catalogue': concepts/components/catalogue.md
               - 'Scheduler': concepts/components/scheduler.md
           # Explain external namespace and disk-copy responsibilities; vendor setup belongs in Disk Buffer Integration.
-          - 'Disk Buffer': concepts/components/disk-buffer.md
+          - 'Disk System': concepts/components/disk-system.md
       # Explain placement, scheduling, and file workflows; policy changes and recovery recipes belong in Operations.
       - 'Data Management':
           - 'Storage Model': concepts/data-management/storage-model.md
@@ -189,8 +189,8 @@ nav:
               - 'Authentication': ops/deploy-and-configure/configuration/authentication.md
               # Configure each API or daemon; service lifecycle actions belong in Administration.
               - 'Services':
-                  - 'Workflow Frontend': ops/deploy-and-configure/configuration/workflow-api.md
-                  - 'Admin Frontend': ops/deploy-and-configure/configuration/admin-api.md
+                  - 'Workflow Frontend': ops/deploy-and-configure/configuration/workflow-frontend.md
+                  - 'Admin Frontend': ops/deploy-and-configure/configuration/admin-frontend.md
                   - 'Tape Daemon': ops/deploy-and-configure/configuration/tape-daemon.md
                   - 'Maintenance Daemon': ops/deploy-and-configure/configuration/maintenance-daemon.md
                   - 'Media Changer Daemon': ops/deploy-and-configure/configuration/media-changer-daemon.md
@@ -414,8 +414,8 @@ nav:
                   - 'Workflow Integration': dev/internals/components/scheduler/workflow.md
                   - 'Opportunistic Batching': dev/internals/components/scheduler/opportunistic-batching.md
                   - 'Garbage Collection Routines': dev/internals/components/scheduler/garbage-collection.md
-              - 'Workflow Frontend': dev/internals/components/workflow-api.md
-              - 'Admin Frontend': dev/internals/components/admin-api.md
+              - 'Workflow Frontend': dev/internals/components/workflow-frontend.md
+              - 'Admin Frontend': dev/internals/components/admin-frontend.md
               - 'Tape Daemon': dev/internals/components/tape-daemon.md
               - 'Maintenance Daemon': dev/internals/components/maintenance-daemon.md
               - 'Media Changer Daemon': dev/internals/components/media-changer-daemon.md

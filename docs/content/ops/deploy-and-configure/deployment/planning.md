@@ -16,7 +16,7 @@ TODO: Document redundancy and dependencies for frontend, catalogue, scheduler, a
 
 ## Disk buffer requirements
 
-Use the shared [Disk Buffer Concepts](../../../concepts/components/disk-buffer.md) and the selected [integration guide](../integrations/index.md).
+Use the shared [Disk System Concepts](../../../concepts/components/disk-system.md) and the selected [integration guide](../integrations/index.md).
 
 ## CTA Services without Hardware Constraints
 

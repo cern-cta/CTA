@@ -1,6 +1,6 @@
 # CTA Catalogue
 
-The catalogue records CTA's tape copies, resources, and storage policies. A deployment normally shares one logical catalogue across its services, including services using different scheduler backends; see [Catalogue and scheduler topology](index.md#catalogue-and-scheduler-topology).
+The **catalogue** is CTA's persistent record of tape copies, resources and policies. Services normally share one logical catalogue, even when they use separate scheduler backends; see [Catalogue and scheduler topology](index.md#catalogue-and-scheduler-topology).
 
 ## Responsibilities
 
@@ -10,7 +10,12 @@ The catalogue stores metadata, not file contents or the disk system's namespace.
 
 ## Relationships with services
 
-The Workflow Frontend uses catalogue metadata to validate requests, while the Admin Frontend provides access to resource and policy configuration. Tape daemons record tape copies and update resource state; the maintenance daemon uses catalogue information for its background work.
+| Service | Uses the catalogue to… |
+| --- | --- |
+| Workflow Frontend | Validate file identities and policies. |
+| Admin Frontend | Inspect and manage resources and policies. |
+| Tape daemon | Locate copies, record successful writes and update drive/tape state. |
+| Maintenance daemon | Obtain metadata needed for reporting, repack and background work. |
 
 ## Database backends
 

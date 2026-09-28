@@ -26,19 +26,16 @@ Both of these are supported by CTA.
 
 ### Identifiers: VID/VOLSER
 
-A tape cartridge is identified by a 6-character ( `[A-Z0-9]{6}` ) *Volume IDentifier (VID)*, or *VOLSER (VOLume SERial)*, - the barcode of the cartridge.
+CTA identifies a tape cartridge by its six-character (`[A-Z0-9]{6}`) **volume identifier (VID)**, also called its **volume serial number (VOLSER)**. This is distinct from the full physical barcode: an LTO barcode includes a media identifier after the six-character volume ID. See [Oracle’s cartridge-label guidance](https://docs.oracle.com/cd/E35103_06/en/E24606/html/loading-cartridges.htm).
 The VID of each cartridge must be unique across the CTA catalogue, including cartridges in different libraries.
 
 Usually, a range of VIDs is specified by the administrator at the time of media purchase and printed on stickers that are put on the cartridges by the supplier.
 There is no particular rule as to which range is assigned to which kind of cartridges.
-The only consideration that has to be taken into account is when a physical library is partitioned.
-In that case (for example for IBM tape libraries) a VOLSER range has to be defined in the library GUI.
-It separates the cartridges between logical libraries.
+Partitioning rules depend on the library model and configuration. Some libraries use VOLSER ranges to assign cartridges to partitions; follow the vendor’s guidance and keep the resulting placement consistent with CTA’s logical-library assignments.
 
 !!! tip
     The assignment of VOLSER ranges may optionally be used by administrators to convey information by convention, such as a dedicated range for cartridges used for testing only, or to indicate media generation at a glance.
     For instance, tapes in the range I9XXXX could be assigned to LTO9 tapes inside of an IBM library, making these easy for operators to identify.
-
 
 ## Tape Format
 
@@ -97,13 +94,10 @@ Some notable of the latter are:
 !!! note
     Some CTA operations don't trigger immediate counter and metadata updates. This includes fields such as  `nbMasterFiles` and `nbMasterBytes`. Use the [cta-statistics-update](../../../ops/tools/cta-statistics-update.md) tool to refresh these.
 
-
-
 ### Lifecycle
 
 A tape cartridge is first registered in the catalogue with an existing tape pool and logical library, then labelled by an operator.
-Depending on the media generation, if the cartridge has not been pre-initialised, this initial labelling procedure is accompanied by an initialisation process which calibrates the media to the library's local environmental conditions.
-Be aware that this process may take as much as 50 minutes per cartridge.
+Some media require a separate drive-level optimization on first load. This is distinct from writing CTA labels. For LTO-9 L9/LZ media, optimization calibrates the cartridge for data placement and can take up to two hours; timing depends on the media and drive. See [IBM’s media optimization guidance](https://www.ibm.com/docs/en/ts4300-tape-library?topic=features-media-optimization).
 
 Once labelled and initialised, the tape can be used when its state and other scheduling conditions allow it. Its tape-pool assignment can be changed separately if required. See [Media Initialisation](../../../ops/run-and-maintain/administration/media-initialisation.md) for the operator workflow.
 

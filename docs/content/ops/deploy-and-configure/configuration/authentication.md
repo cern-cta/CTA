@@ -95,7 +95,7 @@ This allows a single logical disk instance (`disk-instance`) to be represented b
 
 ## Kerberos (Admin Frontend) {#kerberos-admin-api}
 
-Configure the frontend service principal and keytab, and obtain a ticket for the configured realm using `kinit`. Configure the admin client as described in [Admin Frontend client configuration](admin-api.md#client-side-configuration).
+Configure the frontend service principal and keytab, and obtain a ticket for the configured realm using `kinit`. Configure the admin client as described in [Admin Frontend client configuration](admin-frontend.md#client-side-configuration).
 
 ## Disk transfers
 
