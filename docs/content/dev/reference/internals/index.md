@@ -1,4 +1,4 @@
-# Internals
+# Implementation Internals
 
 This section is for developers working on CTA components: understanding their design, changing their behaviour, and validating those changes. Maintainers use the same technical guidance when reviewing changes; release and project-administration procedures live under [For Maintainers](../../contributing/maintainers/index.md).
 

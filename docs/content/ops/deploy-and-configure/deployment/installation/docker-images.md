@@ -5,6 +5,8 @@ CTA publishes Docker images. This page is the operator entry point for deploying
 !!! info "Documentation outline"
     Image locations, tag selection, and deployment examples will be documented here.
 
+To build your own packages or service images from source, follow [Building Images & Packages](../../../../dev/reference/tools-and-environment/building-images-and-packages.md).
+
 ## Select an image
 
 Document the published registry, service images, release tags, architectures, and selecting a fixed image version or digest.

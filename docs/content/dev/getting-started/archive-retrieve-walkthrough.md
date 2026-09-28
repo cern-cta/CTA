@@ -1,6 +1,6 @@
-# CTA Introductory Walkthrough
+# Archive & Retrieve Walkthrough
 
-## EOS
+## Using EOS
 
 This page uses EOS as the disk system in a development environment. Its commands and namespace policies are specific to EOS.
 
@@ -16,7 +16,7 @@ In this walkthrough we will go over some of the common workflows in CTA, step by
 !!! warning "Test setup needed"
 
     You will need the Kubernetes-based development environment to follow this guide.
-    You will also need to run `cta-dev test setup`. Refer to the [setup guide](../../../getting-started/environment-setup.md) for more information.
+    You will also need to run `cta-dev test setup`. Refer to the [setup guide](environment-setup.md) for more information.
 
 We will be operating on the `cli` (`cta-cli-0`) and `client` (`cta-client-0`) pods. The former will be used for direct requests to the CTA frontend, through `cta-admin`,
 while the latter is configured to communicate with the EOS buffer. You can access them using `kubectl exec -it -n dev <pod_name> -- bash`.
@@ -237,7 +237,7 @@ The "repack" operation moves all files away from a particular tape. This can be 
 * **replace** a broken tape;
 * upgrade to a **newer generation** of tape media.
 
-More information about the repack workflow can be found [here](../../../../concepts/tape/media/index.md#repack).
+More information about the repack workflow can be found [here](../../concepts/tape/media/index.md#repack).
 
 In this example, we will simulate the first scenario (optimizing tape space). Let's have a look at the occupancy of our first tape:
 

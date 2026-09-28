@@ -11,6 +11,8 @@ Describe workflow requests, identities, file metadata, transfer endpoints, callb
 
 ## EOS
 
+For an introduction to CTA workflows using EOS, follow the [archive and retrieve walkthrough](../../getting-started/archive-retrieve-walkthrough.md).
+
 See [Developing with EOS](eos/environment-setup.md) and the EOS subsections of the archive, retrieve, and delete workflow pages.
 
 ## dCache

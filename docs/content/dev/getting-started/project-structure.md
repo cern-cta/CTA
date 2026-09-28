@@ -45,7 +45,7 @@ This reorganization is not yet complete. The map below describes where code live
 | `docs/content/` | Documentation pages, grouped into `concepts/`, `ops/`, and `dev/`. |
 | `docs/mkdocs.yml` | Site navigation and build configuration. |
 
-Use [Development Workflow](../reference/tools/development-workflow.md), [Testing CTA](../reference/testing/index.md), and [Documentation Changes](../contributing/documentation.md) for task-specific guidance.
+Use [cta-dev Reference](../reference/tools-and-environment/cta-dev.md), [Testing CTA](../reference/testing/index.md), and [Documentation Changes](../contributing/documentation.md) for task-specific guidance.
 
 ## Submodules and generated files
 

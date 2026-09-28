@@ -307,6 +307,7 @@ nav:
           - 'Prerequisites & Access': dev/getting-started/prerequisites.md
           - 'Project Structure': dev/getting-started/project-structure.md
           - 'Environment Setup': dev/getting-started/environment-setup.md
+          - 'Archive & Retrieve Walkthrough': dev/getting-started/archive-retrieve-walkthrough.md
           - 'Your First Change': dev/getting-started/first-change.md
       # Explain proposing, submitting, and reviewing changes; specialized stewardship comes last.
       - 'Contributing':
@@ -326,25 +327,24 @@ nav:
               - 'Repository Administration': dev/contributing/maintainers/repository-administration.md
       # Task guides, conventions, and implementation reference; read according to the change being made.
       - 'Technical Reference':
-          # Build, run, and debug development instances; production deployment belongs in Operations.
-          - 'Development Tools & Workflows':
-              - 'Development Workflow (cta-dev)': dev/reference/tools/development-workflow.md
-              - 'Building Images & Packages': dev/reference/tools/building-images-and-packages.md
-              - 'Virtual Tape Library': dev/reference/tools/virtual-tape-library.md
-              - 'Pre-commit Hooks': dev/reference/tools/pre-commit.md
-              - 'Working with Development Pods': dev/reference/tools/development-pods.md
-              - 'Debugging': dev/reference/tools/debugging.md
+          - 'Overview': dev/reference/index.md
+          # Tool reference, environment structure, hardware emulation, inspection, and diagnosis.
+          - 'Development Tools & Environment':
+              - 'cta-dev Reference': dev/reference/tools-and-environment/cta-dev.md
+              - 'Development & Test Environment': dev/reference/tools-and-environment/environment.md
+              - 'Virtual Tape Library': dev/reference/tools-and-environment/virtual-tape-library.md
+              - 'Working with Development Pods': dev/reference/tools-and-environment/development-pods.md
+              - 'Debugging': dev/reference/tools-and-environment/debugging.md
+              - 'Pre-commit Hooks': dev/reference/tools-and-environment/pre-commit.md
+              - 'Building Images & Packages': dev/reference/tools-and-environment/building-images-and-packages.md
           # Select, write, and run tests before learning pipeline mechanics; CI administration belongs to maintainers.
           - 'Testing & CI':
               - 'Testing CTA': dev/reference/testing/index.md
               - 'Unit Tests': dev/reference/testing/unit-tests.md
-              - 'System & Integration Tests': dev/reference/testing/system-and-integration-tests.md
-              - 'Test Environments': dev/reference/testing/test-environments.md
+              - 'System Tests': dev/reference/testing/system-tests.md
+              - 'Stress Tests': dev/reference/testing/stress-tests.md
               - 'CI Overview': dev/reference/testing/ci/index.md
               - 'CI Pipelines': dev/reference/testing/ci/pipelines.md
-              - 'Performance & Stress Tests':
-                  - 'Overview': dev/reference/testing/stress-tests/index.md
-                  - 'Scheduler Reporting': dev/reference/testing/stress-tests/scheduler-reporting.md
           # Define rules for code, packaging, and CI changes; task walkthroughs belong in the guides above.
           - 'Conventions':
               - 'Overview': dev/reference/conventions/index.md
@@ -358,12 +358,11 @@ nav:
               - 'RPM Packaging': dev/reference/conventions/rpm-packaging.md
               - 'Versioning': dev/reference/conventions/versioning.md
               # Specify how CI jobs, images, and orchestration are written; running them belongs in Testing & CI.
-              - 'CI Conventions':
-                  - 'GitLab CI': dev/reference/conventions/ci/gitlab.md
-                  - 'Container Images': dev/reference/conventions/ci/container-images.md
-                  - 'Orchestration': dev/reference/conventions/ci/orchestration.md
+              - 'GitLab CI': dev/reference/conventions/gitlab.md
+              - 'Container Images': dev/reference/conventions/container-images.md
+              - 'Helm & Orchestration': dev/reference/conventions/orchestration.md
           # Explain implementation and data structures; system roles belong in Concepts.
-          - 'Internals':
+          - 'Implementation Internals':
               - 'Overview': dev/reference/internals/index.md
               - 'Interfaces & Protocols': dev/reference/internals/interfaces.md
               - 'Workflow Frontend': dev/reference/internals/workflow-api.md
@@ -414,7 +413,6 @@ nav:
               # Describe EOS development environments and integration flows; production procedures stay in Operations > EOS.
               - 'EOS':
                   - 'Developing EOS': dev/reference/integrations/eos/environment-setup.md
-                  - 'Archive & Retrieve Walkthrough': dev/reference/integrations/eos/walkthrough.md
               - 'dCache': dev/reference/integrations/dcache.md
           # Produce and test telemetry; collection and alerting belong in Operations.
           - 'Instrumentation':

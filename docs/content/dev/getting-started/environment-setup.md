@@ -43,7 +43,7 @@ After installation succeeds, restart your shell, ensure `~/.local/bin` is on `PA
 cta-dev --help
 ```
 
-See [First-time setup](../reference/tools/development-workflow.md#first-time-setup) for installer details.
+See [Installation and worktree selection](../reference/tools-and-environment/cta-dev.md#installation-and-worktree-selection) for installer details.
 
 ## Build and deploy
 
@@ -53,7 +53,7 @@ Build CTA packages and images, then deploy the development instance in the `dev`
 cta-dev up --namespace dev
 ```
 
-This walkthrough uses the default EOS deployment. For dCache or other deployment options, see [cta-dev deployment variants](../reference/tools/development-workflow.md#common-workflows).
+This walkthrough uses the default EOS deployment. For dCache or other deployment options, see [cta-dev deployment variants](../reference/tools-and-environment/cta-dev.md#deployment-options).
 
 !!! note "Redeploying an instance"
 
@@ -65,7 +65,7 @@ Inspect the deployed pods:
 kubectl get pods -n dev
 ```
 
-Service pods should become ready, with all their containers counted in the `READY` column. Setup jobs can show `Completed`. For pods that remain pending or fail to start, use the commands in [Working with Development Pods](../reference/tools/development-pods.md) to inspect their logs.
+Service pods should become ready, with all their containers counted in the `READY` column. Setup jobs can show `Completed`. For pods that remain pending or fail to start, use the commands in [Working with Development Pods](../reference/tools-and-environment/development-pods.md) to inspect their logs.
 
 ## Initialize and verify the deployment
 
@@ -85,6 +85,6 @@ The command should return version information without an error. This verifies ad
 
 ## Next: archive and retrieve a file
 
-Before making your first code change, follow the [EOS archive and retrieve walkthrough](../reference/integrations/eos/walkthrough.md) using the instance you just prepared. It introduces the basic CTA workflows and administrative commands by taking you through archiving a file to tape and retrieving it to disk.
+Before making your first code change, follow the [EOS archive and retrieve walkthrough](archive-retrieve-walkthrough.md) using the instance you just prepared. It introduces the basic CTA workflows and administrative commands by taking you through archiving a file to tape and retrieving it to disk.
 
-Working through these steps gives you a practical foundation for understanding the code and tests. Afterwards, continue with [Your First Change](first-change.md). For further validation of your environment, see [Running system tests](../reference/tools/development-workflow.md#system-tests).
+Working through these steps gives you a practical foundation for understanding the code and tests. Afterwards, continue with [Your First Change](first-change.md). For further validation of your environment, see [Running system tests](../reference/testing/system-tests.md).

@@ -1,6 +1,6 @@
 # Your First Change
 
-Use this guide to take a small change from your checkout to review. Before changing service code, complete [Environment Setup](environment-setup.md) and the [EOS archive and retrieve walkthrough](../reference/integrations/eos/walkthrough.md). For documentation-only changes, a local checkout is sufficient.
+Use this guide to take a small change from your checkout to review. Before changing service code, complete [Environment Setup](environment-setup.md) and the [EOS archive and retrieve walkthrough](archive-retrieve-walkthrough.md). For documentation-only changes, a local checkout is sufficient.
 
 ## Choose a focused change
 
@@ -39,7 +39,7 @@ cta-dev all client
 
 This rebuilds packages and images, replaces the deployment in `dev`, and runs the full client suite with setup, verification, and teardown. It resets the development catalogue and scheduler; expect the data and fixtures from the introductory walkthrough to be replaced.
 
-For selecting another suite or running specific tests, see [System tests with cta-dev](../reference/tools/development-workflow.md#system-tests). For backend choices or manual testing, see [Development Workflow](../reference/tools/development-workflow.md#common-workflows). Investigate failures before submitting the change, using [Debugging](../reference/tools/debugging.md) and [Working with Development Pods](../reference/tools/development-pods.md) as needed.
+For selecting another suite or running specific tests, see [System tests with cta-dev](../reference/testing/system-tests.md). For backend choices or manual testing, see [cta-dev deployment options](../reference/tools-and-environment/cta-dev.md#deployment-options). Investigate failures before submitting the change, using [Debugging](../reference/tools-and-environment/debugging.md) and [Working with Development Pods](../reference/tools-and-environment/development-pods.md) as needed.
 
 ### Documentation changes
 

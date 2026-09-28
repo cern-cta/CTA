@@ -10,7 +10,7 @@ This section is for people changing CTA, its tooling and documentation, or devel
 
 CTA's core services are written primarily in C++. The wider CTA tooling also uses Python and Rust, with some tools maintained in separate repositories. Development and Continuous Integration (CI) scripts use Bash and Python.
 
-CMake configures the C++ build, and RPM spec files define how the software is packaged. Development builds use containers; Kubernetes and Helm deploy CTA and its dependencies for development and system testing. See [Building Images & Packages](reference/tools/building-images-and-packages.md) and [Testing CTA](reference/testing/index.md) for details.
+CMake configures the C++ build, and RPM spec files define how the software is packaged. Development builds use containers; Kubernetes and Helm deploy CTA and its dependencies for development and system testing. See [Building Images & Packages](reference/tools-and-environment/building-images-and-packages.md) and [Testing CTA](reference/testing/index.md) for details.
 
 ## Find Your Way
 
@@ -18,7 +18,7 @@ The navigation has three groups:
 
 - **Getting Started** introduces the repository and the path to a first change. Begin with [Prerequisites & Access](getting-started/prerequisites.md).
 - **Contributing** covers proposing, submitting, and reviewing changes. Start with the [Contributing overview](contributing/index.md); release and infrastructure procedures are under [For Maintainers](contributing/maintainers/index.md).
-- **Technical Reference** covers [development tools](reference/tools/development-workflow.md), [testing and CI](reference/testing/index.md), [conventions](reference/conventions/index.md), [internals](reference/internals/index.md), [disk-buffer integrations](reference/integrations/index.md), and [instrumentation](reference/instrumentation/index.md). Consult these pages as needed for your task.
+- **[Technical Reference](reference/index.md)** covers [development tools and environment](reference/tools-and-environment/cta-dev.md), [testing and CI](reference/testing/index.md), [conventions](reference/conventions/index.md), [internals](reference/internals/index.md), [disk-buffer integrations](reference/integrations/index.md), and [instrumentation](reference/instrumentation/index.md). Consult these pages as needed for your task.
 
 ## Recommended Reading Order
 
@@ -26,7 +26,7 @@ The navigation has three groups:
 2. Check [Prerequisites & Access](getting-started/prerequisites.md).
 3. Explore the [Project Structure](getting-started/project-structure.md).
 4. Complete [Environment Setup](getting-started/environment-setup.md).
-5. Work through the [EOS archive and retrieve walkthrough](reference/integrations/eos/walkthrough.md) to learn the basic workflows using your development instance.
+5. Work through the [EOS archive and retrieve walkthrough](getting-started/archive-retrieve-walkthrough.md) to learn the basic workflows using your development instance.
 6. Follow [Your First Change](getting-started/first-change.md), consulting the relevant [Coding Conventions](reference/conventions/coding/general.md).
 7. Use [Testing CTA](reference/testing/index.md) to choose and run tests.
 8. Follow the [contribution guide](contributing/index.md) for your GitLab or GitHub route.

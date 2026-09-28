@@ -1,25 +1,12 @@
 # Contributing to CTA
 
-We follow a **trunk-based development** workflow: all changes go into the `main` branch via Merge Requests (MRs).
-Direct pushes to `main` are not allowed.
+Contributions to CTA are welcome. Before starting, discuss your proposed work on the [community forum](https://cta-community.web.cern.ch/) or email [cta-support@cern.ch](mailto:cta-support@cern.ch) to agree on the scope and contribution route.
 
 ## Contribution routes
 
-Contributions are welcome. Post on the [community forum](https://cta-community.web.cern.ch/) or email [cta-support@cern.ch](mailto:cta-support@cern.ch) first to discuss your proposed contribution.
+- **CERN GitLab is the primary route.** Development, CI, review, and merging take place there. Direct developer access requires a CERN computing account and CTA project permissions. See [Prerequisites & Access](https://cta.docs.cern.ch/latest/dev/getting-started/prerequisites/) and [Contributing through CERN GitLab](https://cta.docs.cern.ch/latest/dev/contributing/gitlab/).
+- **GitHub is available for tasks agreed with the team in advance**, for contributors without CERN developer access. Before starting work or opening a pull request, confirm that a maintainer is available to handle the GitLab handoff. Review and synchronization require manual work and happen as maintainer time permits. See [Contributing through GitHub](https://cta.docs.cern.ch/latest/dev/contributing/github/).
 
-- **CERN GitLab:** Direct developer access requires a CERN computing account and project permissions. See [Prerequisites & Access](https://cta.docs.cern.ch/latest/dev/getting-started/prerequisites/) and the [CERN GitLab contribution guide](https://cta.docs.cern.ch/latest/dev/contributing/gitlab/).
-- **GitHub:** Contributors without CERN developer access can fork the [GitHub mirror](https://github.com/cern-cta/CTA) and open a pull request. A maintainer imports reviewed changes into GitLab for CI and merging. Follow [Contributing through GitHub](https://cta.docs.cern.ch/latest/dev/contributing/github/).
+## Get started
 
-## Full Guidelines
-
-All contributors **must** follow the contribution workflow and guidelines described in the [Developer Documentation](https://cta.docs.cern.ch/latest/dev/) before starting work.
-Merge Requests that do not follow the documented workflow, coding conventions, and review process may be rejected.
-
-The Developer Documentation includes:
-
-- Environment setup
-- Issues and development tracking process
-- Branching and merge request process
-- Coding conventions
-- Continuous Integration
-- Further details on the implementation of CTA
+Read the [Contributing overview](https://cta.docs.cern.ch/latest/dev/contributing/) for contribution guidelines, or follow [Your First Change](https://cta.docs.cern.ch/latest/dev/getting-started/first-change/) for the path from a checkout to review. Detailed workflow, testing, and maintenance procedures are maintained in the documentation.

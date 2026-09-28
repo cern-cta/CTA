@@ -7,6 +7,8 @@ Choose how to install CTA services after reviewing [Deployment Planning](../plan
 | RPM packages | [Install and manage RPM packages](rpm-packages.md). |
 | Docker images | [Deploy published images](docker-images.md); the operator procedure is being documented. |
 
+To build your own packages or service images from source, follow [Building Images & Packages](../../../../dev/reference/tools-and-environment/building-images-and-packages.md).
+
 ## After installation
 
 Supply and validate [service configuration](../../configuration/service-runtime.md), configure the selected [disk-system integration](../../integrations/index.md), and follow [Initialisation and Verification](../initialisation.md). These steps are shared across installation methods.

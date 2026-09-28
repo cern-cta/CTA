@@ -2,7 +2,7 @@
 title: CI orchestration conventions
 ---
 
-# Orchestration Conventions
+# Helm & Orchestration Conventions
 
 All conventions below apply to any usage of Kubernetes and/or Helm.
 

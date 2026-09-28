@@ -10,7 +10,7 @@ Below you can find the DAG of the default pipeline running in CTA:
 
 !!!info
 
-    Before doing any development work on the (GitLab) CI, please read through [conventions](../../conventions/ci/gitlab.md)
+    Before doing any development work on the (GitLab) CI, please read through [conventions](../../conventions/gitlab.md)
 
 ## Pipeline types
 
@@ -141,4 +141,4 @@ For local investigation, the repository also provides a helper that downloads an
 
 The helper requires GitLab API authentication and prompts for a token when needed. By default, it extracts artifacts under `tmp/ci-job-artifacts/<job-id>/`; use `--help` for options.
 
-Use the collected evidence to reproduce the failure with the relevant [local test suite](../../tools/development-workflow.md#system-tests) or [debugging environment](../../tools/development-workflow.md#build-a-debugging-environment). If the failure appears unrelated to your change, discuss it with the team rather than repeatedly retrying without investigating.
+Use the collected evidence to reproduce the failure with the relevant [local test suite](../system-tests.md) or [debugging workflow](../../tools-and-environment/debugging.md). If the failure appears unrelated to your change, discuss it with the team rather than repeatedly retrying without investigating.
