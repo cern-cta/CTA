@@ -142,6 +142,12 @@ body { -webkit-font-smoothing: antialiased; }
 .md-nav__link { border-radius: 4px; }
 .md-nav__link:hover { color: var(--md-typeset-a-color); }
 .md-nav__link--active { font-weight: 700; }
+/* Indent section contents on desktop; keep top-level tabs and mobile intact. */
+@media (min-width: 76.25em) {
+  .md-nav--primary .md-nav__item--nested > .md-nav:not([data-md-level="1"]) > .md-nav__list {
+    margin-inline-start: .5rem;
+  }
+}
 .md-nav--secondary { border-left: 1px solid var(--cta-border); }
 .md-nav--secondary .md-nav__title { color: var(--md-default-fg-color--light); }
 
