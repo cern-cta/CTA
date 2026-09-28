@@ -51,7 +51,7 @@ Choose a starting point below.
     Set up a development environment, build from source, run tests, and contribute changes.
 
     [Developer guide](dev/index.md)
-    · [Conventions](dev/reference/conventions/index.md)
+    · [Conventions](dev/guides/conventions/index.md)
 
 -   :material-forum:{ .lg .middle } [__Getting help__](https://cta-community.web.cern.ch/)
 

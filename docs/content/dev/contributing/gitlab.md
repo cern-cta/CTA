@@ -25,7 +25,7 @@ Apply the issue’s relevant labels to the MR. Danger requires exactly one `type
 
 Check the MR’s pipeline results and automated comments. Address failed jobs and required corrections; explain intentional warnings and discuss failures that appear unrelated to your change with the team.
 
-For an explanation of the jobs, see [CI Overview](../reference/testing/ci/index.md) and [CI Pipelines](../reference/testing/ci/pipelines.md). Start debugging a failed job with its log, then use available artifacts for test reports and diagnostic logs. See [Investigating CI failures](../reference/testing/ci/pipelines.md#investigating-ci-failures).
+For an explanation of the jobs, see [CI Overview](../guides/testing/ci/index.md) and [CI Pipelines](../guides/testing/ci/pipelines.md). Start debugging a failed job with its log, then use available artifacts for test reports and diagnostic logs. See [Investigating CI failures](../guides/testing/ci/pipelines.md#investigating-ci-failures).
 
 ## Request and respond to review
 

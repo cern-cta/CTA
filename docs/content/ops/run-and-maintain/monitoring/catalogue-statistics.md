@@ -1,3 +1,7 @@
+!!! info "Documentation incomplete"
+
+    This page contains TODOs for unfinished documentation. Address the marked items before removing this notice.
+
 # Catalogue Statistics
 
 CTA provides commands to refresh cached tape statistics and export catalogue statistics for monitoring.
@@ -12,7 +16,4 @@ CTA provides commands to refresh cached tape statistics and export catalogue sta
 
 ## Scheduling and interpretation
 
-!!! info "Documentation outline"
-    Detailed procedures and examples will be completed during the content review.
-
-Document refresh/export ordering, credentials, cadence, failure alerts, and the JSON fields. Explain data freshness and distinguish catalogue accounting from physical tape usage and live scheduler metrics.
+TODO: Document refresh/export ordering, credentials, cadence, failure alerts, and the JSON fields. Explain data freshness and distinguish catalogue accounting from physical tape usage and live scheduler metrics.

@@ -43,7 +43,13 @@ When writing:
 - Link to shared explanations instead of repeating them.
 - Describe how to use the software in the documentation’s selected release series (see [When changes appear online](#when-changes-appear-online)). Avoid historical notes such as “Feature X was introduced in CTA 5.11”; the changelog records those changes. Include version information when it affects the instructions, such as a minimum supported EOS version or an intermediate CTA release required during an upgrade.
 - Label EOS- or dCache-specific instructions clearly; keep shared guidance independent of the disk system.
-- Mark unfinished material with TODO text or a **Documentation outline** notice, and retain review warnings until the content has been validated.
+- Mark unfinished material with explicit TODOs and add the standard **Documentation incomplete** notice at the top of the page, after any YAML frontmatter. Remove the notice once all TODOs are resolved; retain separate review warnings until the content has been validated.
+
+    ```markdown
+    !!! info "Documentation incomplete"
+
+        This page contains TODOs for unfinished documentation. Address the marked items before removing this notice.
+    ```
 
 ## README or documentation page?
 

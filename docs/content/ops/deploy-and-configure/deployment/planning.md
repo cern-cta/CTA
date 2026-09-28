@@ -1,17 +1,18 @@
+!!! info "Documentation incomplete"
+
+    This page contains TODOs for unfinished documentation. Address the marked items before removing this notice.
+
 # Deployment Planning
 
 Plan the CTA services, databases, tape hardware, and disk-system integration as separate parts of the deployment.
 
-!!! info "Documentation outline"
-    The sections below reserve space for the detailed documentation to be added.
-
 ## Prerequisites and topology
 
-Document supported deployment prerequisites, service placement, network paths, and resource sizing.
+TODO: Document supported deployment prerequisites, service placement, network paths, and resource sizing.
 
 ## Availability and failure domains
 
-Document redundancy and dependencies for frontend, catalogue, scheduler, and tape services.
+TODO: Document redundancy and dependencies for frontend, catalogue, scheduler, and tape services.
 
 ## Disk buffer requirements
 

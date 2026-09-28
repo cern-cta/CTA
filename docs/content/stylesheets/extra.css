@@ -175,6 +175,11 @@ body { -webkit-font-smoothing: antialiased; }
 .md-nav__link--active { font-weight: 700; }
 /* Indent section contents on desktop; keep top-level tabs and mobile intact. */
 @media (min-width: 76.25em) {
+  /* The active top-level section is already identified by the navigation tabs.
+     Keep its label on mobile, where it controls the nested navigation drawer. */
+  .md-nav--primary > .md-nav__list > .md-nav__item--section.md-nav__item--nested > .md-nav__link {
+    display: none;
+  }
   .md-nav--primary .md-nav__item--nested > .md-nav:not([data-md-level="1"]) > .md-nav__list {
     margin-inline-start: .5rem;
   }

@@ -1,15 +1,18 @@
+!!! info "Documentation incomplete"
+
+    This page contains TODOs for unfinished documentation. Address the marked items before removing this notice.
+
 # EOS Configuration
 
 This page is specific to the EOS integration. Configure the [Workflow Frontend](../../configuration/workflow-api.md) and [Admin Frontend](../../configuration/admin-api.md) and [authentication](../../configuration/authentication.md) separately.
 
 ## Workflow connection
 
-!!! info "Documentation outline"
-    Document the EOS workflow endpoint, credentials, directory policies, and a verification procedure for the integration here.
+TODO: Document the EOS workflow endpoint, credentials, directory policies, and a verification procedure for the integration here.
 
 ## Data-transfer authentication
 
-Document SSS credentials shared by EOS and the tape daemons, permissions, and key rotation here.
+TODO: Document SSS credentials shared by EOS and the tape daemons, permissions, and key rotation here.
 
 ## Historical configuration notes
 

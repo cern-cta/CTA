@@ -45,8 +45,8 @@ tag and registry are command-line options only.
 
 ## Useful links
 
-- `cta-dev` docs and use cases: https://cta.docs.cern.ch/latest/dev/reference/tools-and-environment/cta-dev/
-- CI overview, including explanations of the GitLab CI: https://cta.docs.cern.ch/latest/dev/reference/testing/ci/
+- `cta-dev` docs and use cases: https://cta.docs.cern.ch/latest/dev/guides/tools-and-environment/cta-dev/
+- CI overview, including explanations of the GitLab CI: https://cta.docs.cern.ch/latest/dev/guides/testing/ci/
 
 ## Log Utilities
 

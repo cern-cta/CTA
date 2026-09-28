@@ -302,7 +302,7 @@ nav:
   # Orient contributors, explain contribution procedures, then provide technical reference.
   - 'Development':
       - 'Introduction': dev/index.md
-      # Follow this sequence for first-time orientation; ongoing tool usage belongs in Technical Reference.
+      # Follow this sequence for first-time orientation; ongoing tool usage belongs in Development Guides.
       - 'Getting Started':
           - 'Prerequisites & Access': dev/getting-started/prerequisites.md
           - 'Project Structure': dev/getting-started/project-structure.md
@@ -323,102 +323,106 @@ nav:
               # Coordinate and publish schema releases; authoring and testing migrations belongs in Schema Development.
               - 'Catalogue Schema Releases': dev/contributing/maintainers/catalogue-schema-releases.md
               - 'Documentation Site': dev/contributing/maintainers/documentation-site.md
+              - 'CTA Dependencies': dev/contributing/maintainers/dependencies.md
               - 'CI Maintenance': dev/contributing/maintainers/ci-maintenance.md
               - 'Repository Administration': dev/contributing/maintainers/repository-administration.md
       # Task guides, conventions, and implementation reference; read according to the change being made.
-      - 'Technical Reference':
-          - 'Overview': dev/reference/index.md
+      - 'Development Guides':
+          - 'Overview': dev/guides/index.md
           # Tool reference, environment structure, hardware emulation, inspection, and diagnosis.
           - 'Development Tools & Environment':
-              - 'cta-dev Reference': dev/reference/tools-and-environment/cta-dev.md
-              - 'Development & Test Environment': dev/reference/tools-and-environment/environment.md
-              - 'Virtual Tape Library': dev/reference/tools-and-environment/virtual-tape-library.md
-              - 'Working with Development Pods': dev/reference/tools-and-environment/development-pods.md
-              - 'Debugging': dev/reference/tools-and-environment/debugging.md
-              - 'Pre-commit Hooks': dev/reference/tools-and-environment/pre-commit.md
-              - 'Building Images & Packages': dev/reference/tools-and-environment/building-images-and-packages.md
+              - 'cta-dev Reference': dev/guides/tools-and-environment/cta-dev.md
+              - 'Development & Test Environment': dev/guides/tools-and-environment/environment.md
+              - 'Virtual Tape Library': dev/guides/tools-and-environment/virtual-tape-library.md
+              - 'Working with Development Pods': dev/guides/tools-and-environment/development-pods.md
+              - 'Debugging': dev/guides/tools-and-environment/debugging.md
+              - 'Pre-commit Hooks': dev/guides/tools-and-environment/pre-commit.md
+              - 'Building Images & Packages': dev/guides/tools-and-environment/building-images-and-packages.md
           # Select, write, and run tests before learning pipeline mechanics; CI administration belongs to maintainers.
           - 'Testing & CI':
-              - 'Testing CTA': dev/reference/testing/index.md
-              - 'Unit Tests': dev/reference/testing/unit-tests.md
-              - 'System Tests': dev/reference/testing/system-tests.md
-              - 'Stress Tests': dev/reference/testing/stress-tests.md
-              - 'CI Overview': dev/reference/testing/ci/index.md
-              - 'CI Pipelines': dev/reference/testing/ci/pipelines.md
+              - 'Testing CTA': dev/guides/testing/index.md
+              - 'Unit Tests': dev/guides/testing/unit-tests.md
+              - 'System Tests': dev/guides/testing/system-tests.md
+              - 'Stress Tests': dev/guides/testing/stress-tests.md
+              - 'CI Overview': dev/guides/testing/ci/index.md
+              - 'CI Pipelines': dev/guides/testing/ci/pipelines.md
           # Define rules for code, packaging, and CI changes; task walkthroughs belong in the guides above.
           - 'Conventions':
-              - 'Overview': dev/reference/conventions/index.md
+              - 'Overview': dev/guides/conventions/index.md
               # Specify source style and language rules; avoid general language tutorials or implementation descriptions.
               - 'Coding Conventions':
-                  - 'General': dev/reference/conventions/coding/general.md
-                  - 'C++': dev/reference/conventions/coding/cpp.md
-                  - 'Python': dev/reference/conventions/coding/python.md
-                  - 'Bash': dev/reference/conventions/coding/bash.md
-                  - 'Copyright': dev/reference/conventions/coding/copyright.md
-              - 'RPM Packaging': dev/reference/conventions/rpm-packaging.md
-              - 'Versioning': dev/reference/conventions/versioning.md
+                  - 'General': dev/guides/conventions/coding/general.md
+                  - 'C++': dev/guides/conventions/coding/cpp.md
+                  - 'Python': dev/guides/conventions/coding/python.md
+                  - 'Bash': dev/guides/conventions/coding/bash.md
+                  - 'Copyright': dev/guides/conventions/coding/copyright.md
+              - 'RPM Packaging': dev/guides/conventions/rpm-packaging.md
+              - 'Versioning': dev/guides/conventions/versioning.md
               # Specify how CI jobs, images, and orchestration are written; running them belongs in Testing & CI.
-              - 'GitLab CI': dev/reference/conventions/gitlab.md
-              - 'Container Images': dev/reference/conventions/container-images.md
-              - 'Helm & Orchestration': dev/reference/conventions/orchestration.md
-          # Explain implementation and data structures; system roles belong in Concepts.
-          - 'Implementation Internals':
-              - 'Overview': dev/reference/internals/index.md
-              - 'Interfaces & Protocols': dev/reference/internals/interfaces.md
-              - 'Workflow Frontend': dev/reference/internals/workflow-api.md
-              - 'Admin Frontend': dev/reference/internals/admin-api.md
-              # Explain catalogue implementation and schema changes; database operation belongs in Operations.
-              - 'Catalogue':
-                  - 'Overview': dev/reference/internals/catalogue/index.md
-                  # Create and test compatible schema changes and migrations; publishing belongs in For Maintainers.
-                  - 'Schema Development':
-                      - 'Overview': dev/reference/internals/catalogue/schema-development/index.md
-                      - 'New Schema Version': dev/reference/internals/catalogue/schema-development/new-version.md
-                      - 'Naming': dev/reference/internals/catalogue/schema-development/naming.md
-                      - 'Compatible Changes': dev/reference/internals/catalogue/schema-development/compatible-changes.md
-                      - 'Incompatible Changes': dev/reference/internals/catalogue/schema-development/incompatible-changes.md
-                      - 'Migration Scripts': dev/reference/internals/catalogue/schema-development/migration-scripts.md
-                      - 'Testing Migrations': dev/reference/internals/catalogue/schema-development/testing.md
-              # Explain backend storage, coordination, and algorithms; scheduling principles belong in Concepts.
-              - 'Scheduler':
-                  - 'Overview': dev/reference/internals/scheduler/index.md
-                  # Explain objects, ownership, locking, and cleanup; repair commands belong in Operations.
-                  - 'Objectstore Backend': dev/reference/internals/scheduler/objectstore.md
-                  # Explain SQL schema and backend routines; build/test setup belongs in Getting Started or Testing & CI.
-                  - 'PostgreSQL Backend':
-                      - 'Overview': dev/reference/internals/scheduler/postgresql/index.md
-                      - 'Backend Schema': dev/reference/internals/scheduler/postgresql/schema.md
-                      - 'Workflow Integration': dev/reference/internals/scheduler/postgresql/workflow.md
-                      - 'Opportunistic Batching': dev/reference/internals/scheduler/postgresql/opportunistic-batching.md
-                      - 'Garbage Collection Routines': dev/reference/internals/scheduler/postgresql/garbage-collection.md
-              # Explain transfer, drive interaction, and RAO implementation; hardware operation belongs in Operations.
-              - 'Tape Daemon':
-                  - 'Overview': dev/reference/internals/tape-daemon/index.md
-                  - 'Recommended Access Order': dev/reference/internals/tape-daemon/rao.md
-              - 'Maintenance Daemon': dev/reference/internals/maintenance-daemon.md
-              - 'Media Changer Daemon': dev/reference/internals/media-changer-daemon.md
-              # Trace requests through code and state changes; lifecycle explanations belong in Concepts.
-              - 'Workflow Implementation':
-                  - 'Overview': dev/reference/internals/workflows/index.md
-                  - 'Archival': dev/reference/internals/workflows/archival.md
-                  - 'Retrieval': dev/reference/internals/workflows/retrieval.md
-                  - 'Scheduling': dev/reference/internals/workflows/scheduling.md
-                  - 'Deletion': dev/reference/internals/workflows/deletion.md
-                  - 'Repack': dev/reference/internals/workflows/repack.md
-                  - 'Recycle Bin': dev/reference/internals/workflows/recycle-bin.md
-              - 'Shared Libraries': dev/reference/internals/shared-libraries.md
+              - 'GitLab CI': dev/guides/conventions/gitlab.md
+              - 'Container Images': dev/guides/conventions/container-images.md
+              - 'Helm & Orchestration': dev/guides/conventions/orchestration.md
           # Explain adapter development; deployed-system setup belongs in Operations.
           - 'Disk Buffer Integrations':
-              - 'Overview': dev/reference/integrations/index.md
-              - 'Developing with EOS': dev/reference/integrations/eos/environment-setup.md
-              - 'Developing with dCache': dev/reference/integrations/dcache.md
+              - 'Overview': dev/guides/integrations/index.md
+              - 'EOS':
+                  - 'Developing with EOS': dev/guides/integrations/eos/environment-setup.md
+                  - 'Archive Integration': dev/guides/integrations/eos/archival.md
+                  - 'Retrieve Integration': dev/guides/integrations/eos/retrieval.md
+                  - 'Deletion Integration': dev/guides/integrations/eos/deletion.md
+              - 'Developing with dCache': dev/guides/integrations/dcache.md
           # Produce and test telemetry; collection and alerting belong in Operations.
           - 'Instrumentation':
-              - 'Overview': dev/reference/instrumentation/index.md
-              - 'Logging': dev/reference/instrumentation/logging.md
-              - 'Metrics': dev/reference/instrumentation/metrics.md
-              - 'Readiness & Liveness': dev/reference/instrumentation/health-checks.md
-              - 'Telemetry Semantic Conventions': dev/reference/instrumentation/semantic-conventions.md
-              - 'Testing': dev/reference/instrumentation/testing.md
+              - 'Overview': dev/guides/instrumentation/index.md
+              - 'Logging': dev/guides/instrumentation/logging.md
+              - 'Metrics': dev/guides/instrumentation/metrics.md
+              - 'Metrics Conventions': dev/guides/instrumentation/semantic-conventions.md
+              - 'Testing Metrics': dev/guides/instrumentation/testing.md
+              - 'Language Guides':
+                  - 'C++': dev/guides/instrumentation/cpp.md
+      # Explain implementation and data structures; system roles belong in Concepts.
+      - 'Implementation Internals':
+          - 'Overview': dev/internals/index.md
+          - 'Interfaces & Protocols': dev/internals/interfaces.md
+          # Trace requests through code and state changes; lifecycle explanations belong in Concepts.
+          - 'Workflow Implementation':
+              - 'Overview': dev/internals/workflows/index.md
+              - 'Archival': dev/internals/workflows/archival.md
+              - 'Retrieval': dev/internals/workflows/retrieval.md
+              - 'Scheduling': dev/internals/workflows/scheduling.md
+              - 'Deletion': dev/internals/workflows/deletion.md
+              - 'Repack': dev/internals/workflows/repack.md
+              - 'Recycle Bin': dev/internals/workflows/recycle-bin.md
+          - 'Components':
+              # Explain catalogue implementation and schema changes; database operation belongs in Operations.
+              - 'Catalogue':
+                  - 'Overview': dev/internals/components/catalogue/index.md
+                  # Create and test compatible schema changes and migrations; publishing belongs in For Maintainers.
+                  - 'Schema Development': dev/internals/components/catalogue/schema-development.md
+                  - 'Compatible Changes': dev/internals/components/catalogue/compatible-changes.md
+                  - 'Incompatible Changes': dev/internals/components/catalogue/incompatible-changes.md
+                  - 'New Schema Version': dev/internals/components/catalogue/new-version.md
+                  - 'Naming': dev/internals/components/catalogue/naming.md
+                  - 'Migration Scripts': dev/internals/components/catalogue/migration-scripts.md
+                  - 'Testing Migrations': dev/internals/components/catalogue/testing.md
+              # Explain backend storage, coordination, and algorithms; scheduling principles belong in Concepts.
+              - 'Scheduler':
+                  - 'Overview': dev/internals/components/scheduler/index.md
+                  # Explain SQL schema and backend routines; build/test setup belongs in Getting Started or Testing & CI.
+                  - 'PostgreSQL Scheduler': dev/internals/components/scheduler/postgresql.md
+                  - 'Backend Schema': dev/internals/components/scheduler/schema.md
+                  - 'Workflow Integration': dev/internals/components/scheduler/workflow.md
+                  - 'Opportunistic Batching': dev/internals/components/scheduler/opportunistic-batching.md
+                  - 'Garbage Collection Routines': dev/internals/components/scheduler/garbage-collection.md
+              - 'Workflow Frontend': dev/internals/components/workflow-api.md
+              - 'Admin Frontend': dev/internals/components/admin-api.md
+              - 'Tape Daemon': dev/internals/components/tape-daemon.md
+              - 'Maintenance Daemon': dev/internals/components/maintenance-daemon.md
+              - 'Media Changer Daemon': dev/internals/components/media-changer-daemon.md
+          - 'Shared Libraries':
+              - 'Overview': dev/internals/shared-libraries.md
+              - 'Service Runtime': dev/internals/service-runtime.md
+              - 'Telemetry Internals': dev/internals/telemetry.md
+              - 'Readiness & Liveness': dev/internals/health-checks.md
   # Render the release history from CHANGELOG.md; upgrade instructions belong in Operations > Upgrades.
   - 'Changelog': changelog.md

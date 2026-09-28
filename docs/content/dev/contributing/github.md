@@ -12,7 +12,7 @@ GitLab remains the authoritative repository for CI, final approval, and merging.
 
 1. Fork the GitHub mirror into your own GitHub account and follow [Prerequisites & Access](../getting-started/prerequisites.md#github-fork) to prepare your checkout.
 2. Create a feature branch in your fork based on the mirror’s `main` branch.
-3. Make your changes, following the [coding conventions](../reference/conventions/coding/general.md). Include relevant tests, documentation, and [changelog information](changelog.md).
+3. Make your changes, following the [coding conventions](../guides/conventions/coding/general.md). Include relevant tests, documentation, and [changelog information](changelog.md).
 4. Open a pull request against `cern-cta/CTA:main`. Describe the problem and what changes for the user or developer. Link any related discussion or issue.
 
 ## Review and CI

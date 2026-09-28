@@ -1,17 +1,18 @@
+!!! info "Documentation incomplete"
+
+    This page contains TODOs for unfinished documentation. Address the marked items before removing this notice.
+
 # Maintenance Daemon Configuration
 
 Configure background reporting, repack, and scheduler cleanup. See [Maintenance Daemon Concepts](../../../concepts/components/maintenance-daemon.md).
 
-!!! info "Documentation outline"
-    The sections below reserve space for the detailed documentation to be added.
-
 ## Routine selection and placement
 
-Document the required routines for each scheduler backend and how to avoid gaps or unintended duplication.
+TODO: Document the required routines for each scheduler backend and how to avoid gaps or unintended duplication.
 
 ## Intervals and batch sizes
 
-Document configuration and operational checks for reporting and repack throughput.
+TODO: Document configuration and operational checks for reporting and repack throughput.
 
 ## Configuration reference
 

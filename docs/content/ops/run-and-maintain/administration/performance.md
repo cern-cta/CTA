@@ -1,21 +1,22 @@
+!!! info "Documentation incomplete"
+
+    This page contains TODOs for unfinished documentation. Address the marked items before removing this notice.
+
 # Performance and Capacity
 
 Operator guidance for sizing and tuning CTA.
 
-!!! info "Documentation outline"
-    The sections below reserve space for the detailed documentation to be added.
-
 ## Measure the bottleneck
 
-Document throughput, queue age, mount utilisation, and disk-transfer measurements.
+TODO: Document throughput, queue age, mount utilisation, and disk-transfer measurements.
 
 ## Tune CTA
 
-Document drive allocation, scheduling policies, buffers, and reporting batch sizes.
+TODO: Document drive allocation, scheduling policies, buffers, and reporting batch sizes.
 
 ## Disk buffer capacity
 
-Document how disk capacity and transfer rates constrain tape activity; put system-specific tuning under the corresponding integration.
+TODO: Document how disk capacity and transfer rates constrain tape activity; put system-specific tuning under the corresponding integration.
 
 ## Retrieval ordering and disk-buffer tuning
 

@@ -15,7 +15,7 @@ Prepare your branch through the appropriate contribution route:
 
 ## Make the change
 
-Use [Project Structure](project-structure.md) to locate the component and its nearby tests. Read the relevant [coding conventions](../reference/conventions/coding/general.md), then make the smallest change that addresses the task.
+Use [Project Structure](project-structure.md) to locate the component and its nearby tests. Read the relevant [coding conventions](../guides/conventions/coding/general.md), then make the smallest change that addresses the task.
 
 For a bug fix, add or update a test that reproduces the failure and verifies the corrected behaviour. Update documentation when the change affects how CTA is configured or used.
 
@@ -39,7 +39,7 @@ cta-dev all client
 
 This rebuilds packages and images, replaces the deployment in `dev`, and runs the full client suite with setup, verification, and teardown. It resets the development catalogue and scheduler; expect the data and fixtures from the introductory walkthrough to be replaced.
 
-For selecting another suite or running specific tests, see [System tests with cta-dev](../reference/testing/system-tests.md). For backend choices or manual testing, see [cta-dev deployment options](../reference/tools-and-environment/cta-dev.md#deployment-options). Investigate failures before submitting the change, using [Debugging](../reference/tools-and-environment/debugging.md) and [Working with Development Pods](../reference/tools-and-environment/development-pods.md) as needed.
+For selecting another suite or running specific tests, see [System tests with cta-dev](../guides/testing/system-tests.md). For backend choices or manual testing, see [cta-dev deployment options](../guides/tools-and-environment/cta-dev.md#deployment-options). Investigate failures before submitting the change, using [Debugging](../guides/tools-and-environment/debugging.md) and [Working with Development Pods](../guides/tools-and-environment/development-pods.md) as needed.
 
 ### Documentation changes
 

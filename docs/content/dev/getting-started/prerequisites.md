@@ -24,7 +24,7 @@ Choose the environment based on what you need to do:
 | Task | Where to work |
 | --- | --- |
 | Edit documentation, inspect the source, or prepare changes without building CTA | Use a local checkout on your workstation. A development VM is not needed. For documentation previews, follow [Documentation Changes](../contributing/documentation.md). |
-| Build CTA RPMs or container images without running a deployment | Use a machine with a working Podman installation and the [build requirements](../reference/tools-and-environment/building-images-and-packages.md#requirements). Kubernetes is not needed for these build stages. If you do not have a suitable machine, use the development VM. |
+| Build CTA RPMs or container images without running a deployment | Use a machine with a working Podman installation and the [build requirements](../guides/tools-and-environment/building-images-and-packages.md#requirements). Kubernetes is not needed for these build stages. If you do not have a suitable machine, use the development VM. |
 | Run CTA, exercise archive/retrieve workflows, or run system tests | Follow [Environment Setup](environment-setup.md) to prepare the AlmaLinux 9 development VM with Kubernetes and virtual tape hardware. If you already have a machine prepared with the CTA development-node setup, use that instead. |
 
 For a first code change that you want to build and test against a running CTA instance, use the development VM. Prepare it before cloning, then return here from that machine. You do not need a separate checkout on your workstation first.
@@ -91,7 +91,7 @@ Keep this Python environment available: the installed Git hook uses it when you 
 
 The repository's `.pre-commit-config.yaml` defines the checks. The first run may take longer while hook environments are installed. Some checks report failures; others automatically format files. After a hook changes files, inspect the diff, stage the intended changes again, and retry the commit.
 
-For hook troubleshooting, see [Pre-commit Hooks](../reference/tools-and-environment/pre-commit.md).
+For hook troubleshooting, see [Pre-commit Hooks](../guides/tools-and-environment/pre-commit.md).
 
 ## Continue with environment setup
 

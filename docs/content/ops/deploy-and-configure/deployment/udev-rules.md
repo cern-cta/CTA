@@ -1,9 +1,12 @@
+!!! info "Documentation incomplete"
+
+    This page contains TODOs for unfinished documentation. Address the marked items before removing this notice.
+
 # Stable Drive Identities and udev Rules
 
 Configure persistent device paths so tape daemons address the intended drives after reboots or changes in device discovery order. See [Tape Servers](../../../concepts/tape/servers.md) for the distinction between rewinding and non-rewinding devices.
 
-!!! info "Documentation outline"
-    The sections below define the workflow; hardware-specific commands and rule examples will be added during the content review.
+TODO: The sections below define the workflow; hardware-specific commands and rule examples will be added during the content review.
 
 ## Identify each physical drive
 
@@ -21,7 +24,7 @@ Use the persistent paths in the [Tape Daemon Configuration](../configuration/tap
 
 ## Verify before enabling work
 
-Document how to apply rules safely, confirm each symlink's target and permissions, and verify that the mapping survives a reboot or device rediscovery. Confirm that library mounts address the same drive as the configured data device before enabling production traffic.
+TODO: Document how to apply rules safely, confirm each symlink's target and permissions, and verify that the mapping survives a reboot or device rediscovery. Confirm that library mounts address the same drive as the configured data device before enabling production traffic.
 
 ## Drive replacement
 

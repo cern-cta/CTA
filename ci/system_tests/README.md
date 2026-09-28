@@ -2,7 +2,7 @@
 
 This directory contains the Python system tests for deployed CTA instances.
 
-For setup, running tests, lifecycle behaviour, and writing new tests, see [System Tests](https://cta.docs.cern.ch/latest/dev/reference/testing/system-tests/) ([documentation source](../../docs/content/dev/reference/testing/system-tests.md)).
+For setup, running tests, lifecycle behaviour, and writing new tests, see [System Tests](https://cta.docs.cern.ch/latest/dev/guides/testing/system-tests/) ([documentation source](../../docs/content/dev/guides/testing/system-tests.md)).
 
 ## Directory structure
 

@@ -1,17 +1,18 @@
+!!! info "Documentation incomplete"
+
+    This page contains TODOs for unfinished documentation. Address the marked items before removing this notice.
+
 # Catalogue Configuration
 
 Configure the persistent CTA metadata database. See [Catalogue Concepts](../../../concepts/components/catalogue.md).
 
-!!! info "Documentation outline"
-    The sections below reserve space for the detailed documentation to be added.
-
 ## PostgreSQL
 
-Document database provisioning, connectivity, credentials, and service configuration.
+TODO: Document database provisioning, connectivity, credentials, and service configuration.
 
 ## Oracle
 
-Document database provisioning, connectivity, credentials, and service configuration.
+TODO: Document database provisioning, connectivity, credentials, and service configuration.
 
 ## Schema verification
 

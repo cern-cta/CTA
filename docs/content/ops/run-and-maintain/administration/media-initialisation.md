@@ -1,17 +1,20 @@
+!!! info "Documentation incomplete"
+
+    This page contains TODOs for unfinished documentation. Address the marked items before removing this notice.
+
 # Media Initialisation
 
 Prepare new tape media for use by CTA. For the underlying concepts, see [Tape Media](../../../concepts/tape/media/index.md).
 
-!!! info "Documentation outline"
-    The workflow below will be expanded with detailed steps and validation checks.
+TODO: The workflow below will be expanded with detailed steps and validation checks.
 
 ## Prerequisites and registration
 
-Document checking cartridge identity and compatibility, confirming that no data must be preserved, and registering the tape with the appropriate media type, logical library, and tape pool.
+TODO: Document checking cartridge identity and compatibility, confirming that no data must be preserved, and registering the tape with the appropriate media type, logical library, and tape pool.
 
 ## Media preparation
 
-Document any initialisation required by the media generation and drive, how to recognise its progress, and when the cartridge is ready for labelling.
+TODO: Document any initialisation required by the media generation and drive, how to recognise its progress, and when the cartridge is ready for labelling.
 
 ## Labeling a tape
 
@@ -26,4 +29,4 @@ However, we strongly recommend using the wrapper command [cta-ops-admin tape lab
 
 ## Verify and release for use
 
-Document verification of the recorded VID and catalogue entry, checks for preparation or labelling failures, and the criteria for making the tape available for archival.
+TODO: Document verification of the recorded VID and catalogue entry, checks for preparation or labelling failures, and the criteria for making the tape available for archival.

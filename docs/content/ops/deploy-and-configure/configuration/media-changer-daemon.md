@@ -1,11 +1,14 @@
+!!! info "Documentation incomplete"
+
+    This page contains TODOs for unfinished documentation. Address the marked items before removing this notice.
+
 # Media Changer Daemon Configuration
 
 Configure `cta-rmcd`, the service controlling tape-library media moves. See [Media Changer Concepts](../../../concepts/components/media-changer-daemon.md).
 
 ## Library device and control endpoint
 
-!!! info "Documentation outline"
-    Document device discovery, permissions, the RMC endpoint, and the tape daemons that use it. Include mappings for deployments with multiple libraries.
+TODO: Document device discovery, permissions, the RMC endpoint, and the tape daemons that use it. Include mappings for deployments with multiple libraries.
 
 ## Service runtime
 

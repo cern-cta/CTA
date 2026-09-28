@@ -1,3 +1,7 @@
+!!! info "Documentation incomplete"
+
+    This page contains TODOs for unfinished documentation. Address the marked items before removing this notice.
+
 # Tape Server Setup
 
 See [Tape Server Concepts](../../../concepts/tape/servers.md) for the role of a tape server.
@@ -88,20 +92,17 @@ Once this is done, reboot the tape server and it should now be able to see the c
 
 Commission tape servers, drives, and libraries for CTA.
 
-!!! info "Documentation outline"
-    The sections below reserve space for the detailed documentation to be added.
-
 ### Prepare the hardware
 
-Document prerequisites and checks before connecting hardware. See [Tape Server Setup](tape-servers.md).
+TODO: Document prerequisites and checks before connecting hardware. See [Tape Server Setup](tape-servers.md).
 
 ### Register and configure
 
-Document device discovery, logical-library and drive configuration, and catalogue registration.
+TODO: Document device discovery, logical-library and drive configuration, and catalogue registration.
 
 ### Validate and enable
 
-Document read/write validation and the checks required before enabling production traffic.
+TODO: Document read/write validation and the checks required before enabling production traffic.
 
 ### Identify library drive addresses
 
@@ -121,8 +122,8 @@ Use `cta-smc` to inspect drive ordinals and element addresses:
 
 ### Multiple libraries and media changers
 
-Document the mapping from each library control path through the media changer to CTA logical libraries and drive entries in TPCONFIG. Include drive ordinals, device discovery, and validation that mounts address the intended library. See the [media-changer option reference](../../tools/service-manuals/cta-rmcd.md).
+TODO: Document the mapping from each library control path through the media changer to CTA logical libraries and drive entries in TPCONFIG. Include drive ordinals, device discovery, and validation that mounts address the intended library. See the [media-changer option reference](../../tools/service-manuals/cta-rmcd.md).
 
 ### Retrieval ordering
 
-Include [RAO prerequisites and verification](../configuration/tape-daemon.md#recommended-access-order) when commissioning new drives and media types.
+TODO: Include [RAO prerequisites and verification](../configuration/tape-daemon.md#recommended-access-order) when commissioning new drives and media types.

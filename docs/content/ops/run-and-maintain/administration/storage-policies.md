@@ -1,21 +1,22 @@
+!!! info "Documentation incomplete"
+
+    This page contains TODOs for unfinished documentation. Address the marked items before removing this notice.
+
 # Storage Policies
 
 Create and maintain the objects described in [Storage Model and Policies](../../../concepts/data-management/storage-model.md).
 
-!!! info "Documentation outline"
-    The sections below reserve space for the detailed documentation to be added.
-
 ## Disk instances and virtual organisations
 
-Document registration, ownership, and operational limits.
+TODO: Document registration, ownership, and operational limits.
 
 ## Tape pools, storage classes, and archive routes
 
-Document initial policy setup and changes to placement or copy count.
+TODO: Document initial policy setup and changes to placement or copy count.
 
 ## Mount policies and requester rules
 
-Document scheduling policy assignment and validation.
+TODO: Document scheduling policy assignment and validation.
 
 ## Coordinating disk-system metadata
 

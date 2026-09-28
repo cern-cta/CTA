@@ -2,7 +2,7 @@
 
 Catalogue schemas are released from the separate `cta-catalogue-schema` repository, included in CTA at `catalogue/cta-catalogue-schema`. Validate the candidate schema commit with CTA before tagging it. Tag that reviewed and tested commit, then reference its tag in the final CTA release. The CTA `release` tool does not create schema tags.
 
-For authoring schema changes and migrations, see [Schema Development](../../reference/internals/catalogue/schema-development/index.md).
+For authoring schema changes and migrations, see [Schema Development](../../internals/components/catalogue/schema-development.md).
 
 ## Review and coordinate
 
@@ -53,13 +53,13 @@ Update `project.json`: set `catalogueVersion` to the new schema version and list
 
 Keep support for the old schema in the bridge release. Remove it only in a later, separately reviewed CTA change once the supported upgrade path no longer requires it; tagging the new schema is not a reason to remove compatibility.
 
-A transition CTA release provides a tested bridge between the old and new schemas. Listing both versions declares compatibility; the code must actually work with both. Some incompatible changes also require an intermediate schema that retains old structures while introducing their replacements. See [Transition versions](../../reference/internals/catalogue/schema-development/incompatible-changes.md#transition-versions) for the development approach, and record the required deployment order in the release issue.
+A transition CTA release provides a tested bridge between the old and new schemas. Listing both versions declares compatibility; the code must actually work with both. Some incompatible changes also require an intermediate schema that retains old structures while introducing their replacements. See [Transition versions](../../internals/components/catalogue/incompatible-changes.md#transition-versions) for the development approach, and record the required deployment order in the release issue.
 
 The CTA integration MR must include both the submodule pointer and `project.json` changes. Submit them together through the normal [GitLab contribution workflow](../gitlab.md). Include a [changelog entry](../changelog.md) explaining the schema upgrade and any operator action. Keep the CTA schema release focused on schema integration and necessary compatibility changes.
 
 ## Verify and release CTA
 
-Review the [migration validation results](../../reference/internals/catalogue/schema-development/testing.md) for the final schema and CTA revisions before merging and publishing. Confirm the intended upgrade paths were exercised, including cases outside the automated test’s coverage. See also [validation against a production database clone](../../reference/internals/catalogue/schema-development/testing.md#validation-against-a-production-database-clone).
+Review the [migration validation results](../../internals/components/catalogue/testing.md) for the final schema and CTA revisions before merging and publishing. Confirm the intended upgrade paths were exercised, including cases outside the automated test’s coverage. See also [validation against a production database clone](../../internals/components/catalogue/testing.md#validation-against-a-production-database-clone).
 
 Follow [Release Procedure](releases.md) to publish the accompanying CTA version. Verify that the published CTA artifacts and the selected updater image/configuration use the reviewed schema revision and migration scripts.
 

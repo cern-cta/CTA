@@ -1,21 +1,22 @@
+!!! info "Documentation incomplete"
+
+    This page contains TODOs for unfinished documentation. Address the marked items before removing this notice.
+
 # Scheduler Configuration
 
 Configure the scheduler backend used by the CTA services. See [Scheduler Concepts](../../../concepts/components/scheduler.md).
 
-!!! info "Documentation outline"
-    The sections below reserve space for the detailed documentation to be added.
-
 ## Objectstore backend
 
-Document provisioning, connection configuration, access permissions, and verification.
+TODO: Document provisioning, connection configuration, access permissions, and verification.
 
 ## PostgreSQL backend
 
-Document provisioning, schema initialisation, connection configuration, and verification.
+TODO: Document provisioning, schema initialisation, connection configuration, and verification.
 
 ## Maintenance and reporting
 
-Document the routines required by each backend and how to check that they are running. See [Maintenance Daemon Configuration](maintenance-daemon.md).
+TODO: Document the routines required by each backend and how to check that they are running. See [Maintenance Daemon Configuration](maintenance-daemon.md).
 
 ## Isolate repack with separate scheduler backends
 

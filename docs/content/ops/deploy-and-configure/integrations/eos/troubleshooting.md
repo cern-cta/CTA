@@ -1,9 +1,10 @@
+!!! info "Documentation incomplete"
+
+    This page contains TODOs for unfinished documentation. Address the marked items before removing this notice.
+
 # Troubleshooting and Repair
 
 Diagnose EOS disk-replica and transfer failures before selecting a recovery procedure.
-
-!!! info "Documentation outline"
-    Detailed procedures and examples will be completed during the content review.
 
 ## Collect evidence
 
@@ -15,7 +16,7 @@ Distinguish temporary unavailability from lost replicas. Document supported repa
 
 ## Size and checksum mismatches
 
-Cover wrong sizes, truncated replicas, and checksum failures. Establish which copy is trustworthy before repair; link to [Data Integrity](../../../../concepts/data-management/data-integrity.md).
+TODO: Cover wrong sizes, truncated replicas, and checksum failures. Establish which copy is trustworthy before repair; link to [Data Integrity](../../../../concepts/data-management/data-integrity.md).
 
 ## Verify recovery
 

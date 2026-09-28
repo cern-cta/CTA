@@ -1,3 +1,7 @@
+!!! info "Documentation incomplete"
+
+    This page contains TODOs for unfinished documentation. Address the marked items before removing this notice.
+
 # Recycle Bin and File Recovery
 
 See [Recycle Bin Concepts](../../concepts/data-management/recycle-bin.md) for the recovery boundary. CTA metadata recovery and disk-system namespace recovery must be treated separately.
@@ -7,8 +11,7 @@ See [Recycle Bin Concepts](../../concepts/data-management/recycle-bin.md) for th
 
 ## Recovery procedure
 
-!!! info "Documentation outline"
-    Document selecting recovery candidates, checking tape availability, restoring CTA metadata, restoring disk-system metadata, and verifying the result here.
+TODO: Document selecting recovery candidates, checking tape availability, restoring CTA metadata, restoring disk-system metadata, and verifying the result here.
 
 ## EOS
 

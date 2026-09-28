@@ -8,7 +8,8 @@ Use these procedures when coordinating releases or maintaining project infrastru
 | Prepare, validate, and publish CTA releases or backports | [Release Procedure](releases.md) |
 | Coordinate and publish a catalogue schema release | [Catalogue Schema Releases](catalogue-schema-releases.md) |
 | Maintain or publish the documentation site | [Documentation Site](documentation-site.md) |
+| Add or update packages in cta-dependencies and adopt them in CTA | [CTA Dependencies](dependencies.md) |
 | Maintain CI images, schedules, runners, and credentials | [CI Maintenance](ci-maintenance.md) |
 | Manage access, repository settings, templates, bots, and mirroring | [Repository Administration](repository-administration.md) |
 
-For ordinary changes, use [Contributing](../index.md), [Testing CTA](../../reference/testing/index.md), and [Schema Development](../../reference/internals/catalogue/schema-development/index.md). Maintainers review the resulting validation evidence before release.
+For ordinary changes, use [Contributing](../index.md), [Testing CTA](../../guides/testing/index.md), and [Schema Development](../../internals/components/catalogue/schema-development.md). Maintainers review the resulting validation evidence before release.

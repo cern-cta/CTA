@@ -1,3 +1,7 @@
+!!! info "Documentation incomplete"
+
+    This page contains TODOs for unfinished documentation. Address the marked items before removing this notice.
+
 # Tape Daemon Configuration
 
 Configure `cta-taped` for each tape drive. See [Tape Server Setup](../deployment/tape-servers.md) for host and hardware preparation.
@@ -6,14 +10,11 @@ Configure `cta-taped` for each tape drive. See [Tape Server Setup](../deployment
 
 Use [stable drive paths](../deployment/udev-rules.md) rather than numbered `/dev/nstX` paths in production configurations.
 
-!!! info "Documentation outline"
-    Document drive identities, device paths, logical libraries, media-changer connectivity, and the relationship to TPCONFIG.
+TODO: Document drive identities, device paths, logical libraries, media-changer connectivity, and the relationship to TPCONFIG.
 
 ## Catalogue, scheduler, and transfers
 
-!!! info "Documentation outline"
-    Document connections to the [catalogue](catalogue.md) and [scheduler backend](scheduler.md), transfer settings, and resource limits. Keep disk-system-specific settings in the integration guides.
-
+TODO: Document connections to the [catalogue](catalogue.md) and [scheduler backend](scheduler.md), transfer settings, and resource limits. Keep disk-system-specific settings in the integration guides.
 
 ## Example configuration
 
@@ -41,10 +42,7 @@ For software RAO, `linear` and `random` provide comparison baselines; `sltf` is 
 
 The RAO manager logs `executedRAOAlgorithm` after successful ordering. It falls back to linear ordering if algorithm creation or execution throws an exception. Check the accompanying warning and configured algorithm, options, media geometry, and drive capability before treating fallback as expected operation.
 
-!!! info "Documentation outline"
-    Detailed procedures and examples will be completed during the content review.
-
-Add a commissioning checklist, representative success/fallback logs, and a controlled comparison of positioning time and retrieval throughput. Explain which changes require service restart and how to restore the previous configuration.
+TODO: Add a commissioning checklist, representative success/fallback logs, and a controlled comparison of positioning time and retrieval throughput. Explain which changes require service restart and how to restore the previous configuration.
 
 ## Command reference
 

@@ -1,17 +1,18 @@
+!!! info "Documentation incomplete"
+
+    This page contains TODOs for unfinished documentation. Address the marked items before removing this notice.
+
 # Health Checks and Alerts
 
 Operator checks that complement [Logging](logging.md) and [Metrics](metrics.md).
 
-!!! info "Documentation outline"
-    The sections below reserve space for the detailed documentation to be added.
-
 ## Service and database health
 
-Document checks for frontends, tape daemons, maintenance routines, catalogue, and scheduler.
+TODO: Document checks for frontends, tape daemons, maintenance routines, catalogue, and scheduler.
 
 ## Tape activity and request progress
 
-Document signals for stalled requests, repeated mount failures, and capacity problems.
+TODO: Document signals for stalled requests, repeated mount failures, and capacity problems.
 
 ## Disk-system health
 

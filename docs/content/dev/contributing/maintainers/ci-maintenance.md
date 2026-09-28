@@ -1,6 +1,6 @@
 # CI Maintenance
 
-Procedures for maintaining CI infrastructure. For pipeline usage, logs, and test development, see [Testing and CI](../../reference/testing/ci/index.md).
+Procedures for maintaining CI infrastructure. For pipeline usage, logs, and test development, see [Testing and CI](../../guides/testing/ci/index.md).
 
 ## Weekly pipeline-image updates
 
@@ -14,7 +14,7 @@ To start a refresh manually, run a pipeline with `pipeline-type` set to `UPDATE_
 
 ### Add or update an image dependency
 
-Use this procedure when a CI job needs a new tool or a change to an existing image dependency. See [GitLab CI Conventions](../../reference/conventions/gitlab.md#execution-images-and-scripts) for deciding between image-build and runtime installation.
+Use this procedure when a CI job needs a new tool or a change to an existing image dependency. If the package itself must first be added or updated in `cta-dependencies`, follow [CTA Dependencies](dependencies.md). See [GitLab CI Conventions](../../guides/conventions/gitlab.md#execution-images-and-scripts) for deciding between image-build and runtime installation.
 
 1. On a feature branch, update the Dockerfile for the image used by the affected job. Shared images live in `ci/docker/pipeline/`; platform-specific build and test images use `ci/docker/cta/<platform>/build.Dockerfile` and `test.Dockerfile`. Keep shared images platform-independent and put any dependency-specific explanation beside the installation command.
 2. Push the branch and start a pipeline on it with `pipeline-type` set to `UPDATE_PIPELINE_IMAGES`. This builds and publishes a new, versioned image set from your changed Dockerfiles. Check that all image builds succeed.
