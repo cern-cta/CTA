@@ -1,6 +1,6 @@
 # Component Overview
 
-CTA services coordinate tape storage through shared catalogue and scheduler backends. The disk system provides client access, the file namespace, and disk storage; operators access CTA through the Admin API.
+CTA services coordinate tape storage through shared catalogue and scheduler backends. The disk system provides client access, the file namespace, and disk storage; operators access CTA through the Admin Frontend.
 
 ## Architecture
 
@@ -12,8 +12,8 @@ flowchart TB
     operator["Operator<br/>cta-admin"]
 
     subgraph CTA["CTA"]
-        workflow["Workflow API<br/>Archive / retrieve requests"]
-        admin["Admin API<br/>Queries / configuration"]
+        workflow["Workflow Frontend<br/>Archive / retrieve requests"]
+        admin["Admin Frontend<br/>Queries / configuration"]
         subgraph stores["Catalogue and scheduler"]
             catalogue[("Catalogue<br/>Policies · File and tape metadata")]
             scheduler[("Scheduler<br/>Requests · Queues · Job state")]
@@ -47,8 +47,8 @@ flowchart TB
 
 ## Services
 
-- [Workflow API](workflow-api.md): accepts archive, retrieve, and delete requests from the disk system.
-- [Admin API](admin-api.md): serves operator commands, including those from `cta-admin`.
+- [Workflow Frontend](workflow-api.md): accepts archive, retrieve, and delete requests from the disk system.
+- [Admin Frontend](admin-api.md): serves operator commands, including those from `cta-admin`.
 - [Tape Daemon](tape-daemon.md) (`cta-taped`): selects and executes tape work and transfers files between tape and disk.
 - [Maintenance Daemon](maintenance-daemon.md) (`cta-maintd`): runs background reporting, repack, and scheduler maintenance routines.
 - [Media Changer Daemon](media-changer-daemon.md) (`cta-rmcd`): provides access to tape-library robotics.
@@ -68,13 +68,13 @@ Services connect directly to the catalogue and the scheduler backend they serve;
 
 | Service | Catalogue connection | Scheduler connection |
 | --- | --- | --- |
-| **Workflow API** | Validates file metadata and policies against the shared catalogue. | Queues disk-system requests in its configured backend. |
-| **Admin API** | Reads and changes shared catalogue resources and policies. | Inspects and manages work in its configured backend. Operators use the corresponding endpoint for that backend's requests. |
+| **Workflow Frontend** | Validates file metadata and policies against the shared catalogue. | Queues disk-system requests in its configured backend. |
+| **Admin Frontend** | Reads and changes shared catalogue resources and policies. | Inspects and manages work in its configured backend. Operators use the corresponding endpoint for that backend's requests. |
 | **Tape Daemon** | Reads tape and file metadata and records successful writes. | Selects work and updates job state in its configured backend. A drive serves one scheduler backend at a time. |
 | **Maintenance Daemon** | Uses shared metadata for background processing. | Processes reports, repack, and maintenance for its configured backend. Each backend needs the appropriate maintenance routines. |
 | **Media Changer Daemon** | No direct connection. | No direct connection; tape daemons ask it to operate the library robotics. |
 
-For example, a separate repack backend has an Admin API endpoint, maintenance daemon processing, and tape daemons assigned to it. The Workflow API continues submitting ordinary requests to the normal-workload backend. This separates scheduler workloads, but the catalogue and any shared disk or tape infrastructure remain common resources.
+For example, a separate repack backend has an Admin Frontend endpoint, maintenance daemon processing, and tape daemons assigned to it. The Workflow Frontend continues submitting ordinary requests to the normal-workload backend. This separates scheduler workloads, but the catalogue and any shared disk or tape infrastructure remain common resources.
 
 The architecture diagram above shows component roles, not the number of service instances or backends. See [Scheduler Configuration](../../ops/configuration/scheduler.md#isolate-repack-with-separate-scheduler-backends) for the operational setup.
 

@@ -11,7 +11,7 @@ CTA validates the request, creates archive jobs, transfers file data, and report
 
 ## CTA implementation
 
-See [Workflow API Internals](../workflow-api.md) and [Scheduling Workflow](scheduling.md). This section will describe the disk-independent request path and failure handling.
+See [Workflow Frontend Internals](../workflow-api.md) and [Scheduling Workflow](scheduling.md). This section will describe the disk-independent request path and failure handling.
 
 ## EOS
 

@@ -1,10 +1,10 @@
-# Admin API Configuration
+# Admin Frontend Configuration {#admin-api-configuration}
 
 Configure the API used by operators and administrative tools, including `cta-admin`.
 
 ## Service configuration
 
-The Admin API is configured via `cta-frontend.conf`.
+The Admin Frontend is configured via `cta-frontend.conf`.
 
 ```ini
 # Operation mode: this node serves admin commands

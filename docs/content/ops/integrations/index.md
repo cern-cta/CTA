@@ -4,7 +4,7 @@ CTA manages tape copies, tape hardware, and tape scheduling. The disk system man
 
 ## Shared setup
 
-Configure the [Workflow API](../configuration/workflow-api.md) and [Admin API](../configuration/admin-api.md), [authentication](../configuration/authentication.md), and [disk-instance and storage policies](../administration/storage-policies.md). See [Disk Buffer Concepts](../../concepts/components/disk-buffer.md) for the responsibility boundary.
+Configure the [Workflow Frontend](../configuration/workflow-api.md) and [Admin Frontend](../configuration/admin-api.md), [authentication](../configuration/authentication.md), and [disk-instance and storage policies](../administration/storage-policies.md). See [Disk Buffer Concepts](../../concepts/components/disk-buffer.md) for the responsibility boundary.
 
 ## EOS
 

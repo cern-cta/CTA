@@ -8,7 +8,7 @@ It tracks queued requests and combines catalogue policies with resource availabi
 
 ## Relationships with services
 
-The Workflow API queues requests, tape daemons select and process work through the scheduler, and the maintenance daemon handles reporting and background maintenance. Operators inspect and manage scheduler state through the Admin API.
+The Workflow Frontend queues requests, tape daemons select and process work through the scheduler, and the maintenance daemon handles reporting and background maintenance. Operators inspect and manage scheduler state through the Admin Frontend.
 
 ## Backends
 

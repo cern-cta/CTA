@@ -1,6 +1,6 @@
-# Workflow API
+# Workflow Frontend {#workflow-api}
 
-The Workflow API connects the disk system to CTA. It accepts workflow requests over gRPC, while the disk system provides the client-facing namespace and interface.
+The Workflow Frontend connects the disk system to CTA. It accepts workflow requests over gRPC, while the disk system provides the client-facing namespace and interface.
 
 ## Responsibilities
 
@@ -10,6 +10,6 @@ Acceptance of an archive or retrieve request means it has been queued, not that 
 
 ## Relationships with other components
 
-The [Catalogue](catalogue.md) records file identities, tape copies, and policies; the [Scheduler](scheduler.md) coordinates pending work. Operator commands use the separate [Admin API](admin-api.md).
+The [Catalogue](catalogue.md) records file identities, tape copies, and policies; the [Scheduler](scheduler.md) coordinates pending work. Operator commands use the separate [Admin Frontend](admin-api.md).
 
-Workflow requests have their own [authentication boundary](authentication.md). See [Workflow API Configuration](../../ops/configuration/workflow-api.md) for settings and examples.
+Workflow requests have their own [authentication boundary](authentication.md). See [Workflow Frontend Configuration](../../ops/configuration/workflow-api.md) for settings and examples.

@@ -1,6 +1,6 @@
-# Admin API
+# Admin Frontend {#admin-api}
 
-The Admin API serves operator commands from `cta-admin` and other administrative tools. It provides access to CTA resource management and operational state independently of disk-system workflow requests.
+The Admin Frontend serves operator commands from `cta-admin` and other administrative tools. It provides access to CTA resource management and operational state independently of disk-system workflow requests.
 
 ## Responsibilities
 
@@ -10,6 +10,6 @@ The API provides the administrative interface rather than performing tape transf
 
 ## Relationships with other components
 
-The [Catalogue](catalogue.md) holds resource and policy records, while the [Scheduler](scheduler.md) tracks queued work. The [Workflow API](workflow-api.md) handles the disk system's archive, retrieve, and delete requests separately.
+The [Catalogue](catalogue.md) holds resource and policy records, while the [Scheduler](scheduler.md) tracks queued work. The [Workflow Frontend](workflow-api.md) handles the disk system's archive, retrieve, and delete requests separately.
 
-Administrative access has its own [authentication boundary](authentication.md). See [Admin API Configuration](../../ops/configuration/admin-api.md) for settings and [cta-admin](../../ops/tools/cta-admin.md) for command reference.
+Administrative access has its own [authentication boundary](authentication.md). See [Admin Frontend Configuration](../../ops/configuration/admin-api.md) for settings and [cta-admin](../../ops/tools/cta-admin.md) for command reference.

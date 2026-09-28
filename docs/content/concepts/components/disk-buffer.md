@@ -1,10 +1,10 @@
 # Disk Buffer
 
-During archival, files are copied into the disk buffer, triggering an archival request to be sent to the [Workflow API](workflow-api.md).
+During archival, files are copied into the disk buffer, triggering an archival request to be sent to the [Workflow Frontend](workflow-api.md).
 Eventually (minutes to hours later), this request will be processed by a tape daemon, which reads the file from
 the disk buffer and writes it to tape. Once successful archival has been reported back to the disk system, it can evict the disk replica according to its retention policy while preserving the namespace entry.
 
-To read a file back from tape, a retrieve request is sent to the Workflow API. When the request is processed by a tape
+To read a file back from tape, a retrieve request is sent to the Workflow Frontend. When the request is processed by a tape
 daemon, the file is read from tape and written into a new file replica on the disk buffer (using the same metadata entry
 created during archival).
 
@@ -17,7 +17,7 @@ Requests can carry reporting URLs for completion and failure notifications. The 
 - **Archival:** a success report lets the disk system record that the required tape copies have been created. The disk system remains responsible for deciding when to evict its disk replica.
 - **Retrieval:** the disk system must learn when the disk replica is ready, or when retrieval has failed, so it can update the waiting request. Depending on the integration, successful completion may be detected through the data-transfer operation itself or through an explicit report.
 
-The reporting protocol and how a notification updates the namespace are integration-specific. These callbacks are distinct from the workflow events that the disk system sends to the Workflow API.
+The reporting protocol and how a notification updates the namespace are integration-specific. These callbacks are distinct from the workflow events that the disk system sends to the Workflow Frontend.
 
 ## Integration requirements
 
@@ -25,7 +25,7 @@ CTA was designed to be agnostic to the disk buffer technology. Disk systems shou
 to integrate with CTA:
 
 * The disk system must have a mechanism to trigger and send [Workflow Events](../data-management/index.md) to
-  the Workflow API.
+  the Workflow Frontend.
 * The integration must provide a way to receive completion and failure results and associate them with the corresponding files or requests.
 * The disk buffer needs to provide high throughput and low contention, in order to supply data to tape drives at a
   constant rate. Starving tape drives can trigger dismounting of tapes, which has a serious negative impact on system

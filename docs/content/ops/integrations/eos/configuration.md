@@ -1,6 +1,6 @@
 # EOS Configuration
 
-This page is specific to the EOS integration. Configure the [Workflow API](../../configuration/workflow-api.md) and [Admin API](../../configuration/admin-api.md) and [authentication](../../configuration/authentication.md) separately.
+This page is specific to the EOS integration. Configure the [Workflow Frontend](../../configuration/workflow-api.md) and [Admin Frontend](../../configuration/admin-api.md) and [authentication](../../configuration/authentication.md) separately.
 
 ## Workflow connection
 

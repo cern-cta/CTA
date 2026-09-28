@@ -1,6 +1,6 @@
 # Tape Lifecycle
 
-CTA records each tape and its state in the [Catalogue](../components/catalogue.md). State changes are managed through the [Admin API](../components/admin-api.md); operator procedures belong under [Tapes, Drives, and Libraries](../../ops/administration/tapes-and-drives.md).
+CTA records each tape and its state in the [Catalogue](../components/catalogue.md). State changes are managed through the [Admin Frontend](../components/admin-api.md); operator procedures belong under [Tapes, Drives, and Libraries](../../ops/administration/tapes-and-drives.md).
 
 A tape's state controls which kinds of work it may serve. It is separate from properties such as whether the tape is full, and from the availability of its drives and library. An `ACTIVE` tape can therefore remain readable after it becomes full, while no longer being eligible for further archival.
 
@@ -48,4 +48,4 @@ Not every transition requires cleanup: for example, resuming from `REPACKING_DIS
 
 A repack request requires the source tape to be in `REPACKING` or `REPACKING_DISABLED`. While a repack request exists, the tape cannot leave those two states. `REPACKING_DISABLED` can only be entered from `REPACKING`.
 
-The Admin API's operating mode also restricts permitted state transitions. Normal-operation and repack-only deployments do not accept the same transitions; a permitted tape-state change must be submitted to an API instance whose operating mode allows it.
+The Admin Frontend's operating mode also restricts permitted state transitions. Normal-operation and repack-only deployments do not accept the same transitions; a permitted tape-state change must be submitted to an API instance whose operating mode allows it.

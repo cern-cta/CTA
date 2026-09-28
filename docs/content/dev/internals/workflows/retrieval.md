@@ -11,7 +11,7 @@ CTA queues retrieve jobs, schedules tape reads, and transfers data into the dest
 
 ## CTA implementation
 
-See [Workflow API Internals](../workflow-api.md) and [Scheduling Workflow](scheduling.md). This section will describe the disk-independent request path and failure handling.
+See [Workflow Frontend Internals](../workflow-api.md) and [Scheduling Workflow](scheduling.md). This section will describe the disk-independent request path and failure handling.
 
 ## EOS
 

@@ -1,6 +1,6 @@
-# Workflow API Internals
+# Workflow Frontend Internals {#workflow-api-internals}
 
-Request dispatch for disk-system workflows. Operator settings belong in [Workflow API Configuration](../../ops/configuration/workflow-api.md).
+Request dispatch for disk-system workflows. Operator settings belong in [Workflow Frontend Configuration](../../ops/configuration/workflow-api.md).
 
 ## Workflow request dispatch
 
@@ -52,4 +52,4 @@ mTLS relies on the gRPC TLS stack and standard X.509 certificate infrastructure.
 
 The APIs currently share frontend code and dependencies. This separation follows their responsibilities; it does not imply that the implementation split is complete.
 
-See [Admin API Internals](admin-api.md) for administrative commands.
+See [Admin Frontend Internals](admin-api.md) for administrative commands.

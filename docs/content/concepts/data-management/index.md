@@ -10,7 +10,7 @@ A typical file is registered, archived, and later retrieved when needed. Its dis
 
 ## Workflow events
 
-The disk system submits these events to the [Workflow API](../components/workflow-api.md). Both EOS and dCache integrations use the event names below. The names reflect events and requests in the file's lifecycle on disk; the corresponding CTA operations describe what CTA does in response.
+The disk system submits these events to the [Workflow Frontend](../components/workflow-api.md). Both EOS and dCache integrations use the event names below. The names reflect events and requests in the file's lifecycle on disk; the corresponding CTA operations describe what CTA does in response.
 
 For example, `CREATE` means that a file has been created in the disk namespace, before its contents have been written. `CLOSEW` means **close after writing**: the file is fully written and ready to be archived.
 

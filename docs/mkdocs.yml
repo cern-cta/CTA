@@ -123,8 +123,8 @@ nav:
           - 'Authentication': concepts/components/authentication.md
           # Describe API and daemon roles; exclude config files, startup commands, and implementation walkthroughs.
           - 'Services':
-              - 'Workflow API': concepts/components/workflow-api.md
-              - 'Admin API': concepts/components/admin-api.md
+              - 'Workflow Frontend': concepts/components/workflow-api.md
+              - 'Admin Frontend': concepts/components/admin-api.md
               - 'Tape Daemon': concepts/components/tape-daemon.md
               - 'Maintenance Daemon': concepts/components/maintenance-daemon.md
               - 'Media Changer Daemon': concepts/components/media-changer-daemon.md
@@ -188,8 +188,8 @@ nav:
           - 'Authentication': ops/configuration/authentication.md
           # Configure each API or daemon; service lifecycle actions belong in Administration.
           - 'Services':
-              - 'Workflow API': ops/configuration/workflow-api.md
-              - 'Admin API': ops/configuration/admin-api.md
+              - 'Workflow Frontend': ops/configuration/workflow-api.md
+              - 'Admin Frontend': ops/configuration/admin-api.md
               - 'Tape Daemon': ops/configuration/tape-daemon.md
               - 'Maintenance Daemon': ops/configuration/maintenance-daemon.md
               - 'Media Changer Daemon': ops/configuration/media-changer-daemon.md
@@ -344,8 +344,8 @@ nav:
       # Explain code, data structures, and implementation flows; system roles belong in Concepts.
       - 'Internals':
           - 'Interfaces & Protocols': dev/internals/interfaces.md
-          - 'Workflow API': dev/internals/workflow-api.md
-          - 'Admin API': dev/internals/admin-api.md
+          - 'Workflow Frontend': dev/internals/workflow-api.md
+          - 'Admin Frontend': dev/internals/admin-api.md
           # Explain catalogue implementation and schema changes; database operation belongs in Operations.
           - 'Catalogue':
               - 'Overview': dev/internals/catalogue/index.md

@@ -5,7 +5,7 @@ Configure credentials for each [CTA interface](../../concepts/components/authent
 ## JWT Authentication
 
 
-Both the WFE and Admin API frontends support JWT (JSON Web Token) authentication, using JWKS (JSON Web Key Set) for public key validation.
+Both the Workflow Frontend and Admin Frontend support JWT (JSON Web Token) authentication, using JWKS (JSON Web Key Set) for public key validation.
 The client should attach the JWT token to the gRPC call credentials. In general, client authentication is expected to work as follows:
 
 1. **Obtain JWT Token**: Get a valid JWT token from your identity provider
@@ -93,9 +93,9 @@ disk-instance = ["disk.example.ch", "disk.example"]
 This allows a single logical disk instance (`disk-instance`) to be represented by certificates with different CNs.
 
 
-## Kerberos (Admin API)
+## Kerberos (Admin Frontend) {#kerberos-admin-api}
 
-Configure the frontend service principal and keytab, and obtain a ticket for the configured realm using `kinit`. Configure the admin client as described in [Admin API client configuration](admin-api.md#client-side-configuration).
+Configure the frontend service principal and keytab, and obtain a ticket for the configured realm using `kinit`. Configure the admin client as described in [Admin Frontend client configuration](admin-api.md#client-side-configuration).
 
 ## Disk transfers
 

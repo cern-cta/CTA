@@ -20,7 +20,7 @@ Deleting individual files does not immediately free usable space on tape. To reu
 
 ## Deletion workflow
 
-1. **Submit the deletion (`DELETE`).** The disk system notifies the [Workflow API](../components/workflow-api.md) that the file is being deleted. Namespace removal remains the disk system's responsibility.
+1. **Submit the deletion (`DELETE`).** The disk system notifies the [Workflow Frontend](../components/workflow-api.md) that the file is being deleted. Namespace removal remains the disk system's responsibility.
 2. **Handle pending archival.** CTA cancels pending archive work when the request identifies it. Deletion can overlap with transfers already in progress, so the integration must also handle failures of subsequent data or metadata operations.
 3. **Remove active catalogue entries.** CTA retains the recorded tape-copy metadata in the recycle bin and removes the active tape-file and archive-file records. A file that has not yet produced a recorded tape copy has no such copy to recover.
 

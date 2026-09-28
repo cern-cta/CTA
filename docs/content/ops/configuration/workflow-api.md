@@ -1,10 +1,10 @@
-# Workflow API Configuration
+# Workflow Frontend Configuration {#workflow-api-configuration}
 
 Configure the API that receives archive, retrieve, and delete workflow requests from the disk system.
 
 ## Service configuration
 
-The Workflow API is configured via `cta-frontend.conf`.
+The Workflow Frontend is configured via `cta-frontend.conf`.
 
 ```ini
 # Operation mode: this node is the Workflow Engine (WFE)

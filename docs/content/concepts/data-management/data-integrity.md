@@ -43,6 +43,6 @@ Detection is separate from recovery. A failed check does not automatically repai
 
 ## Zero-length files
 
-Empty files receive special treatment at archive submission (`CLOSEW`). The Workflow API can be configured to reject them, with exemptions for specified VOs. When they are permitted, it returns success without queueing a tape write. The scheduler itself rejects zero-length archive jobs.
+Empty files receive special treatment at archive submission (`CLOSEW`). The Workflow Frontend can be configured to reject them, with exemptions for specified VOs. When they are permitted, it returns success without queueing a tape write. The scheduler itself rejects zero-length archive jobs.
 
 An accepted empty-file submission therefore does not create a tape copy or produce the usual tape-transfer completion workflow. Allocation of an archive file ID during registration is not evidence that a copy exists. The disk-system integration must handle the empty file's namespace representation and availability without relying on a later tape retrieval.

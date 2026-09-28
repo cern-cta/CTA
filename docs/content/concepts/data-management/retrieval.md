@@ -8,7 +8,7 @@ Retrieval copies a file from tape into the disk buffer so that clients can acces
 
 ## Retrieval workflow
 
-1. **Request retrieval (`PREPARE`).** The disk system asks the [Workflow API](../components/workflow-api.md) to retrieve a file and supplies a destination in its buffer. If a usable disk replica is already available, the disk system can serve it without requesting a tape read.
+1. **Request retrieval (`PREPARE`).** The disk system asks the [Workflow Frontend](../components/workflow-api.md) to retrieve a file and supplies a destination in its buffer. If a usable disk replica is already available, the disk system can serve it without requesting a tape read.
 2. **Select a copy and queue the read.** CTA uses the catalogue to find a suitable tape copy. The request is queued for that specific tape, not its tape pool. Requests for files on the same tape can share a mount.
 3. **Schedule and transfer.** When a suitable drive is available and the scheduling criteria are met, a tape daemon mounts the tape, reads the requested files, and writes them to the disk buffer. [Recommended Access Order](../tape/rao.md) can reduce positioning time within a batch; see [Scheduling](scheduling.md) for mount selection and [Data Integrity](data-integrity.md) for verification.
 4. **Make the disk replica available.** The disk system learns that the transfer has completed, updates its state, and makes the replica available to waiting clients. Clients read from disk, not directly from the tape drive.
@@ -57,7 +57,7 @@ sequenceDiagram
     participant Client
     participant MGM as EOS MGM
     participant FST as EOS FST
-    participant API as CTA Workflow API
+    participant API as CTA Workflow Frontend
     participant TD as CTA Tape Daemon
     participant MD as CTA Maintenance Daemon
 

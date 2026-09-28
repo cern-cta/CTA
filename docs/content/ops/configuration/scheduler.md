@@ -25,7 +25,7 @@ Separating User and Repack sheduler backends allows to completely isolate these 
 Separating User and Repack requires:
 
 - separate resources for another scheduler backend for repack
-- 1 dedicated Admin API (`cta-frontend-admin`) endpoint to allow operators to submit repack requests
+- 1 dedicated Admin Frontend (`cta-frontend-admin`) endpoint to allow operators to submit repack requests
 - moving some tape drives from user scheduler to repack scheduler when repack is needed
 
 !!! tip

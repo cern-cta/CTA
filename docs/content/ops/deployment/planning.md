@@ -27,12 +27,12 @@ have no such constraints and can be run anywhere.
 The CTA frontend runs as two separate services:
 
  * the **Workflow Engine (WFE) Frontend**; and
- * the **Admin API**.
+ * the **Admin Frontend**.
 
 They both run the same software, only with different configuration files. This allows for greater flexibility in the software and
 authentication architecture and prevents the load introduced by admin commands from interfering with the processing of workflow events.
 
-It is advised to run at least 2 Admin API Frontend endpoints:
+It is advised to run at least 2 Admin Frontend endpoints:
 
 - one as an endpoint for **operators, operations monitoring systems and tape servers** with configured `cta-admin` CLI;
 - another one that serves as **test/debug process**: used to debug crashing admin commands, deploy and test the next version of the Admin

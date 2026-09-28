@@ -51,7 +51,7 @@ A high priority cannot override these constraints. See [Tape Lifecycle](../tape/
 
 ## Scheduler workflow
 
-1. The **Workflow API** validates the request using catalogue metadata and queues the work in the scheduler backend.
+1. The **Workflow Frontend** validates the request using catalogue metadata and queues the work in the scheduler backend.
 2. An available **tape daemon** asks the scheduler for work. The scheduler coordinates mount allocation so that concurrent daemons do not claim the same tape.
 3. The daemon mounts the selected tape, obtains batches of jobs, and transfers data between tape and the disk buffer. Successful writes are recorded in the catalogue.
 4. Transfer outcomes enter the reporting workflow. The **maintenance daemon** processes the corresponding reports to the disk system so it can complete its side of the operation.

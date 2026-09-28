@@ -12,9 +12,9 @@ CTA distinguishes three authentication boundaries:
 ### Service APIs
 The APIs have separate authentication boundaries:
 
-- [Workflow API](workflow-api.md): supports JWT and mTLS authentication for workflow events
+- [Workflow Frontend](workflow-api.md): supports JWT and mTLS authentication for workflow events
 (see [WFE Authentication Configuration](../../ops/configuration/authentication.md#mtls-authentication-wfe-only)).
-- [Admin API](admin-api.md): supports JWT and Kerberos authentication for `cta-admin` commands
+- [Admin Frontend](admin-api.md): supports JWT and Kerberos authentication for `cta-admin` commands
 (see [Admin Authentication Configuration](../../ops/configuration/authentication.md#kerberos-admin-api)).
 
 ### Tape Daemon
@@ -29,9 +29,9 @@ The diagram shows the three independent connections in the EOS integration. Arro
 ```mermaid
 flowchart LR
     eosWorkflow["EOS<br/>Workflow requests"]
-    workflow["CTA Workflow API"]
+    workflow["CTA Workflow Frontend"]
     adminClient["Operator<br/>cta-admin"]
-    admin["CTA Admin API"]
+    admin["CTA Admin Frontend"]
     taped["CTA tape daemon"]
     eosData["EOS<br/>File transfers"]
 
