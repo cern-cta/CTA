@@ -15,7 +15,7 @@
     <a href="https://cta.docs.cern.ch/"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://cta.docs.cern.ch/latest/overview/introduction/">CTA Overview</a>
+    <a href="docs/content/concepts/index.md">CTA Overview</a>
     ·
     <a href="https://cta.web.cern.ch/">CTA Website</a>
     ·
@@ -36,26 +36,15 @@ CTA is:
 - Scalable, for small and large installations
 - Self-hostable, on-premise
 
-CTA is designed to operate on physical tape infrastructure and is used in combination with a disk buffer system such as [EOS](https://eos-web.web.cern.ch/eos-web/) or [dCache](https://www.dcache.org/). For development purposes it is also possible to run a containerized setup of the CTA components. For this, you can have a look at the [Development documentation](https://cta.docs.cern.ch/latest/dev/).
+CTA is designed to operate on physical tape infrastructure and is used in combination with a disk buffer system such as [EOS](https://eos-web.web.cern.ch/eos-web/) or [dCache](https://www.dcache.org/). For development purposes it is also possible to run a containerized setup of the CTA components. For this, you can have a look at the [Development documentation](docs/content/dev/index.md).
 
 ## Contributing
 
-Contributions are welcome. Start with the [Contributing guide](https://cta.docs.cern.ch/latest/dev/contributing/) to discuss your proposal and choose the CERN GitLab or GitHub route. For checkout setup and the local development workflow, see [Getting Started](https://cta.docs.cern.ch/latest/dev/getting-started/prerequisites/).
+Contributions are welcome. Start with the [Contributing guide](docs/content/dev/contributing/index.md) to discuss your proposal and choose the CERN GitLab or GitHub route. For checkout setup and the local development workflow, see [Getting Started](docs/content/dev/getting-started/prerequisites.md).
 
 ## License
 
-CTA is licensed under [GPL Version 3](https://gitlab.cern.ch/cta/CTA/-/blob/main/COPYING?ref_type=heads) and uses [SPDX](https://spdx.dev) identifiers for machine-readable licensing information.
-All files must therefore include an SPDX header at the top of the file:
-
-```text
-SPDX-FileCopyrightText: <year of creation> CERN
-SPDX-License-Identifier: GPL-3.0-or-later
-```
-
-External contributors are encouraged to add their own `SPDX-FileCopyrightText` line for new files or significant contributions. Files may therefore contain multiple copyright lines.
-
-All files must include an SPDX license identifier indicating GPL-3.0-or-later. License compliance is checked using REUSE.
-
+CTA is licensed under the GNU GPL version 3 or later; see [COPYING](COPYING). For source-file notices, third-party licenses, and REUSE checks, follow the [copyright conventions](docs/content/dev/guides/conventions/coding/copyright.md).
 
 > This program is free software, distributed under the terms of the GNU General Public Licence version 3 (GPL Version 3), copied verbatim in the file [COPYING](COPYING). You can redistribute it and/or modify it under the terms of the GPL Version 3, or (at your option) any later version.
 >

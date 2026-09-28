@@ -19,34 +19,10 @@ This directory contains all the files necessary for development and automation w
 * `cta-dev.sh`: The main script used for development: builds the project, the corresponding Docker image and deploys a local CTA test instance. See `./cta-dev.sh --help`.
 * `ci-download-artifacts.sh`: Downloads and extracts the artifacts of a single GitLab pipeline job.
 
-### CTA development versions
-
-`cta-dev` uses one identifier for CTA packages and container images:
-`--cta-version <version>-<suffix>`, which defaults to `6-dev`. The part before the
-first hyphen becomes the RPM version and accepts numbers and dots; the part after
-it becomes the RPM release and accepts lowercase letters, numbers, dots, and
-hyphens. CMake historically exposes the suffix as `VCS_VERSION`. `cta-dev` splits
-the identifier and passes the two parts separately to the underlying build
-scripts, which is also how the CI invokes them.
-
-The CTA version is also the tag of the container images built from those RPMs, so
-`build`, `images`, `up`, `debug`, and `all` take `--cta-version` only.
-
-`deploy` additionally accepts `--cta-image-tag` to deploy images that were built
-elsewhere, for example a CI image tag such as `5426528gitf4d8f0eb`. It cannot be
-combined with `--cta-version`, which selects a locally built version instead.
-Because such a tag normally refers to an image that is not on the local machine,
-`--cta-image-tag` also switches the image registry from `localhost` to the CI
-registry; override that with `--cta-image-registry`.
-
-Configure the default CTA version with `--cta-version`, or copy
-`.cta-dev.env.example` to `.cta-dev.env` and set `CTA_DEV_CTA_VERSION`. The image
-tag and registry are command-line options only.
-
 ## Useful links
 
-- `cta-dev` docs and use cases: https://cta.docs.cern.ch/latest/dev/guides/tools-and-environment/cta-dev/
-- CI overview, including explanations of the GitLab CI: https://cta.docs.cern.ch/latest/dev/guides/testing/ci/
+- [cta-dev reference](../docs/content/dev/guides/tools-and-environment/cta-dev.md): commands and use cases.
+- [CI overview](../docs/content/dev/guides/testing/ci/index.md): how GitLab CI fits into development.
 
 ## Log Utilities
 

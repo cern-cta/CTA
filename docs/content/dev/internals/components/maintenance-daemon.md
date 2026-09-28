@@ -80,7 +80,15 @@ end
 classDef hidden display: none;
 ```
 
-The sleep interval can be configured in the config file.
+`maintd/RoutineRunner.cpp` runs enabled routines sequentially, then sleeps for `routines.cycle_sleep_interval_secs`. To use different cycle intervals, run separate instances with different subsets of routines enabled. See [maintenance-daemon configuration](../../../ops/deploy-and-configure/configuration/maintenance-daemon.md).
+
+`maintd/RoutineRunnerFactory.cpp` selects routines for the configured scheduler backend; implementations live in `maintd/routines/`:
+
+- Both backends use disk reporting and repack expansion/reporting routines.
+- The objectstore backend uses agent garbage collection and queue cleanup.
+- The PostgreSQL backend requeues work belonging to inactive mounts, resumes interrupted reporting, and removes expired failed jobs and tracking entries. See [PostgreSQL maintenance](scheduler/garbage-collection.md).
+
+Keep the exact routine selection and retention settings in the factory and configuration definitions rather than duplicating that inventory here.
 
 In addition to the main thread, the `maintd` process also spawns a dedicated SignalReactor thread whose job it is to capture incoming signals (e.g. `SIGTERM`, `SIGHUP`) and execute the function associated with said signal. This ensures that the logic for dealing with signals is not spread out through all of the code.
 

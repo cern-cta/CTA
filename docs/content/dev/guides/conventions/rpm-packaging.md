@@ -14,6 +14,7 @@ The packaging sources are:
 ### Configuration and documentation
 
 - Packaged example files such as `/etc/cta/*.example.*` MUST NOT be marked `%config(noreplace)`. They are vendor documentation and SHOULD be replaced on upgrade so that they describe the installed software version.
+- Packages MUST NOT copy an example automatically to the live configuration path. Operators or configuration management must supply deployment-specific values and validate the live file with `--config-strict --config-check` before starting the service.
 - Working, administrator-owned configuration MUST remain distinct from packaged examples. Package scriptlets MUST NOT automatically restore obsolete `.rpmsave` files.
 - `COPYING` MUST be installed with `%license`, not as ordinary documentation.
 - The generated `CHANGELOG.md` MUST be packaged with `cta-runtime`. A manually maintained RPM `%changelog` section MUST NOT duplicate the project changelog.
@@ -62,6 +63,7 @@ Systemd SHOULD be a weak runtime dependency for service packages and MUST NOT be
 Logrotate policies for CTA services MUST:
 
 - use rename-based rotation rather than copying and truncating an open log;
+- use `delaycompress` so compression cannot race with writes before the reopen signal is processed;
 - create the replacement active log with the correct CTA user, group, and mode;
 - send `SIGHUP` to the main process of the affected default unit and all loaded template instances; in CTA this reopens logs without reloading configuration;
 - tolerate the absence of an active default unit or template instance;

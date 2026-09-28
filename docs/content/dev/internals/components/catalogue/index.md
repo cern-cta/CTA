@@ -48,6 +48,16 @@ Each row corresponds to a mount policy defined by the following 5 values which a
 | retrieve_priority | Unsigned int | The priority of RetrieveRequests. If this number is high, the Retrieval priority will be high |
 | retrieve_min_request_age (in seconds) | Unsigned int | The minimum age of the queued Retrieve Request to trigger a mount |. Example : if this value is set to 1, the user will have 1 drive for retrieval and one drive for archival within the same tapepool. |
 
-## Implementation and extension
+## Implementation layers
 
-TODO: Describe catalogue interfaces, backend selection, connection and transaction handling, and the steps and tests for adding a catalogue operation.
+The catalogue separates persistence into three layers so most logic is shared across database backends:
+
+- **Catalogue interfaces and implementations:** `catalogue/Catalogue.hpp` exposes the catalogue operations through component interfaces. `catalogue/rdbms/` contains shared relational implementations, with backend-specific code for Oracle, PostgreSQL, and SQLite. `InMemoryCatalogue` uses SQLite for unit tests.
+- **Database access:** `rdbms/` hides differences between database client APIs. `ConnPool` manages connections, `ConnAndStmts` retains a connection and its prepared statements, and `Conn`, `Stmt`, and `Rset` expose connections, statements, and results. Backend wrappers live in `rdbms/wrapper/` and manage the underlying database resources.
+- **Schema:** the `catalogue/cta-catalogue-schema/` submodule owns schema SQL and migrations. Common SQL is combined with database-specific headers and trailers. Follow [Schema Development](schema-development.md) when changing it.
+
+Keep persistence logic in the common implementation where possible, isolating SQL and transaction differences in backend-specific code. Avoid coupling catalogue operations to one database's procedural language.
+
+## Extending the implementation
+
+TODO: Explain backend selection, transaction boundaries, and the steps and tests for adding a catalogue operation.
