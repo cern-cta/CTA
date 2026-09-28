@@ -1,53 +1,38 @@
 # C++ Conventions
 
-## Files & Organization
+Follow [General Coding Conventions](general.md). The C++ standard is selected in `project.json`; formatting is defined by `.clang-format` and applied through [Pre-commit Hooks](../../tools-and-environment/pre-commit.md).
 
-- Each header file MUST begin with `#pragma once` to prevent multiple inclusion.
-- Header files MUST use the `.hpp` extension; implementation files MUST use the `.cpp` extension.
-- Project headers MUST be included with `""` and external/system headers with `<>`.
-- Project headers MUST be referenced using full paths from the project root (not relative paths).
-- Declarations in headers and definitions in source files MUST be placed inside the correct project namespace.
-- When defining namespaced entities in a source file, the surrounding `namespace {}` clauses MUST be present.
+## Files and namespaces
 
-## Classes
+- Headers MUST use `.hpp` and implementation files `.cpp` for new code. Prefer one class per file, allowing small, closely related types to stay together.
+- Headers MUST use `#pragma once` before includes and declarations; copyright comments may precede it. Headers SHOULD include what they need rather than rely on transitive includes.
+- Include project headers with quotes and paths from the project root; use angle brackets for external and system headers.
+- Place declarations and definitions in the appropriate project namespace. Use enclosing namespace blocks for definitions in source files.
+- `using namespace` directives MUST NOT appear at namespace scope in headers or at global scope in implementation files. Keep any use local and limited.
+- Avoid namespace-scope `using` declarations in headers that expose unrelated names to consumers. Class-scope declarations, such as exposing base-class overloads, are permitted.
 
-- Constructors that can be called with a single argument MUST be marked `explicit`.
-- When overriding virtual methods, the `override` keyword MUST be used.
-- Base class destructors intended for polymorphic use MUST be `virtual`.
-- Prefer the [Rule of Zero](https://en.cppreference.com/w/cpp/language/rule_of_three#Rule_of_zero). If manual resource management is required, the [Rule of Five](https://en.cppreference.com/w/cpp/language/rule_of_three.html#Rule_of_five) MUST be followed.
-- Data members SHOULD NOT be public. Public data members MAY be used for simple data holder structs.
+## Classes and resource ownership
 
-## Methods
+- Prefer values and standard containers for ownership. Use RAII for resources that require cleanup.
+- Prefer `std::unique_ptr` for dynamically allocated objects with a single owner. Use `std::shared_ptr` only when ownership is actually shared; raw pointers and references should express non-owning access.
+- Constructors callable with one argument MUST be `explicit` unless an implicit conversion is intentional and justified.
+- Overridden virtual methods MUST use `override`.
+- Base-class destructors SHOULD be public and virtual when deletion through the base is supported, or protected and non-virtual when it is prohibited.
+- Prefer the Rule of Zero. When defining custom destruction, copy, or move behaviour, explicitly consider all special member functions and default or delete them as appropriate.
+- Keep class data private, except for simple data-holder structs. Avoid getters and setters that expose implementation details without a useful interface.
+- Do not rely on virtual dispatch to derived-class overrides during construction or destruction.
 
-- Methods that do not modify observable object state MUST be marked `const`.
-- Parameter passing:
-    - Cheap-to-move or small types MAY be passed by value (and moved as needed).
-    - Expensive-to-copy types SHOULD be passed by `const&`.
+## Functions and initialization
 
-## General
-
-- RAII MUST be used for resource management.
-- Owning raw pointers MUST NOT be used. Ownership MUST be expressed via `std::unique_ptr` or `std::shared_ptr`.
-- Magic numbers MUST NOT appear in code. Use `constexpr`, `enum class`, or named constants instead.
-- Macros SHOULD NOT be used except where unavoidable for conditional compilation or platform-specific concerns.
-- `using namespace` directives MUST NOT appear in header files.
-- `using namespace` directives MUST NOT appear at global scope in implementation files.
-- `using namespace` MAY be used inside a limited local scope (e.g., inside a function) when it improves readability without risking namespace pollution.
-- `using` declarations (e.g., `using std::string;`) MAY be used in implementation files but MUST NOT appear in header files.
-- Virtual methods MUST NOT be called in constructors or destructors.
-- Variables SHOULD be defined and initialized in declaration order.
+- Mark methods `const` when they do not modify observable object state.
+- Pass inexpensive-to-copy inputs by value and expensive read-only inputs by `const&`. For ownership-taking parameters, use a value or an appropriate ownership type and move where needed; being cheap to move alone does not make a read-only argument cheap to pass by value.
+- Initialize objects when declaring them. Initialize class members in the order of their declarations.
+- Prefer named constants for values whose meaning is not obvious. Ordinary literals do not need names solely to avoid appearing in code.
+- Prefer typed language features such as `constexpr`, inline functions, and templates over macros where practical. Keep necessary platform and conditional-compilation macros focused.
 
 ## Documentation
 
-- Each class SHOULD have a top-level Doxygen comment describing its purpose and usage.
-- Each method SHOULD have a Doxygen comment describing its functionality.
-- Use Doxygen Javadoc style for all class and method comments.
-- Names of classes, methods, parameters, and variables SHOULD be descriptive and unambiguous.
+- Document class purpose and non-obvious public contracts, including ownership, errors, and thread-safety expectations where relevant.
+- Use Doxygen Javadoc-style comments for API documentation. Do not add comments that merely restate trivial methods or parameter names.
 
-!!! tip
-
-    - Prefer static polymorphism (templates) over dynamic polymorphism when appropriate and when code size/compile times remain acceptable.
-    - Avoid exposing unnecessary getters and setters; add them when invariants or encapsulation require it.
-    - Use forward declarations to reduce dependencies and compilation time where possible.
-    - Prefer `constexpr`, `inline`, or templates instead of macros.
-    - Prefer brace initialization (`{}`) for consistency and to avoid narrowing.
+For broader guidance, see the [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines).

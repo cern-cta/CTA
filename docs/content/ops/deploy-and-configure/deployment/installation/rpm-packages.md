@@ -121,11 +121,11 @@ rpm -qf /usr/lib/systemd/system/cta-maintd.service
 
 RPM records documentation and licenses separately from ordinary package files. Query the installed package rather than relying on a version-dependent directory name:
 
-On the supported Enterprise Linux platform, the generated changelog is normally available as `/usr/share/doc/cta-common/CHANGELOG.md`, while a package's license is normally `/usr/share/licenses/<package>/COPYING` (for example, `/usr/share/licenses/cta-maintd/COPYING`). RPM queries are authoritative if the distribution changes these paths.
+On the supported Enterprise Linux platform, the generated changelog is normally available as `/usr/share/doc/cta-runtime/CHANGELOG.md`, while a package's license is normally `/usr/share/licenses/<package>/COPYING` (for example, `/usr/share/licenses/cta-maintd/COPYING`). RPM queries are authoritative if the distribution changes these paths.
 
 ```shell
-# CHANGELOG.md is provided by cta-common.
-rpm -qd cta-common
+# CHANGELOG.md is provided by cta-runtime.
+rpm -qd cta-runtime
 
 # COPYING is packaged with every CTA RPM.
 rpm -qL cta-maintd
@@ -151,7 +151,7 @@ getcap /usr/bin/cta-tape-label      # Inspect packaged executable capabilities
 
 Files named `*.example.*` illustrate supported configuration. They are not protected local configuration and an upgrade may replace them with newer examples. Copy or render the required values into a working configuration file without the `.example` component, following the relevant [CTA configuration documentation](../../configuration/service-runtime.md#component-examples).
 
-CTA service packages deliberately do not start or enable services when first installed. This prevents an unconfigured daemon from starting with example, incomplete, or site-inappropriate settings. After supplying and validating working configuration, the administrator explicitly enables and starts the required instance. For example:
+CTA service packages do not start services when first installed. Initial enablement follows the host’s [systemd preset policy](https://systemd.io/PRESET/); check it before rebooting an unconfigured host. After supplying and validating working configuration, the administrator explicitly enables and starts the required instance. For example:
 
 ```shell
 systemctl enable --now cta-maintd.service
@@ -164,7 +164,7 @@ Unit names and required configuration differ between services. Check the files i
 
 | RPM operation | Service behavior | Administrator responsibility |
 | --- | --- | --- |
-| Initial installation | The service is neither enabled nor started. | Supply working configuration, validate it, and then explicitly enable or start the service. |
+| Initial installation | The service is not started; enablement follows the host’s preset policy. | Supply working configuration, validate it, and then explicitly enable or start the service. |
 | Upgrade | The enabled or disabled state is preserved. A service is restarted only if it was running before the upgrade. | Follow the operational upgrade procedure and verify the restarted service. An inactive service remains inactive. |
 | Removal | The service is stopped and disabled. | Confirm that removal is intended and preserve any site-owned configuration that is still needed. |
 

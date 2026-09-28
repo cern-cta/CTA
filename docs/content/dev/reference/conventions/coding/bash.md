@@ -1,30 +1,24 @@
 # Bash Conventions
 
-- Scripts SHOULD accept input via command-line flags rather than environment variables.
-    - If environment variables are supported, their presence MUST be explicitly validated.
-- For each input flag, a script MUST provide a long-form version (e.g., `--image-tag`).
-    - A short-form version (e.g., `-t`) MAY be provided when applicable.
-- Each script that takes input MUST provide a `usage()` function or equivalent help output accessible via `--help`.
-- Scripts MUST begin with a shebang.
-    - The form `#!/bin/bash` is RECOMMENDED.
-- Scripts MUST validate the presence and correctness of required input arguments.
-- Scripts SHOULD follow the single-responsibility principle.
-    - Scripts SHOULD be kept short and task-specific.
-    - If a script is performing multiple tasks, it is RECOMMENDED to split it into smaller scripts and call them from a wrapper script.
-- Scripts MUST NOT assume anything about their execution context.
-    - This includes assumptions about the working directory (`pwd`), environment variables, or shell options.
-- Scripts MUST return meaningful exit codes:
-    - `0` on success.
-    - Non-zero on failure.
-- Scripts SHOULD handle errors predictably:
-    - Exit with a non-zero status code.
-    - Provide descriptive error messages.
-    - Distinguish between stdout (normal output) and stderr (errors/logging).
-- Scripts SHOULD use `set -euo pipefail` (or an equivalent explicit error-handling strategy).
-- Scripts SHOULD clean up temporary files.
-    - It is RECOMMENDED to enforce cleanup using `trap` to handle script exit.
+Follow [General Coding Conventions](general.md). Prefer short, focused scripts; move complex control flow into a more suitable language when it becomes difficult to maintain in Bash.
 
-!!! tip
+## Inputs and execution context
 
-    - Use tools like [ShellCheck](https://www.shellcheck.net/) to catch potential bugs and improve script quality.
-    - Prefer referencing script-relative paths using `$(dirname "${BASH_SOURCE[0]}")` to avoid reliance on the current working directory.
+- Executable scripts MUST begin with a shebang; `#!/bin/bash` is recommended. Files intended only to be sourced need not be executable.
+- Prefer command-line flags for explicit user inputs. Provide long-form flags, with optional short forms where useful.
+- Scripts accepting input MUST provide help through `--help`, which exits successfully, and validate required arguments before performing work.
+- Document and validate required commands, environment variables, and working-directory assumptions. Optional environment variables may have documented defaults.
+- Resolve repository-owned files relative to the script where practical, using `BASH_SOURCE[0]`, rather than relying on the caller's working directory.
+
+## Commands and error handling
+
+- Quote variable expansions unless splitting or globbing is intentional. Use arrays to preserve command arguments; avoid `eval` and assembling executable commands as strings.
+- Return zero on success and non-zero on failure. Send diagnostics to stderr and keep stdout suitable for the command's intended output.
+- Prefer `set -euo pipefail` or an explicit error-handling strategy. These options do not replace handling expected failures or checking commands whose status would otherwise be ignored.
+- Use securely created temporary files and clean them up, normally with an exit trap. Cleanup should preserve the original failure status where appropriate.
+- Explain non-obvious shell behaviour beside the command rather than relying on readers to infer it.
+
+## Validation
+
+- Check changed scripts with [ShellCheck](https://www.shellcheck.net/). The `lint-bash` CI job runs it; it is not currently part of the pre-commit configuration.
+- Exercise relevant success and failure paths, including missing or invalid arguments and cleanup after a failure.

@@ -1,34 +1,23 @@
 # General Coding Conventions
 
-Further details can be found in the relevant sections:
+Apply these shared conventions alongside the relevant language guidance:
 
 - [C++ Conventions](cpp.md)
 - [Python Conventions](python.md)
 - [Bash Conventions](bash.md)
-- [Copyright Conventions](copyright.md)
+- [Copyright](copyright.md)
 
-## Structure
+## Structure and readability
 
-- In object-oriented languages, one class SHOULD be defined per file.
-    - Multiple classes MAY be defined in the same file if they are sufficiently small and tightly coupled, and if this improves readability and maintainability.
-- Related classes and files SHOULD be grouped into directories for discoverability.
-- Classes and functions SHOULD follow the single-responsibility principle.
-- Functions SHOULD be short and focused.
+- Code SHOULD prioritize clarity over cleverness or brevity. Use descriptive names and keep functions focused on a clear responsibility.
+- Group related code into discoverable modules and directories. Prefer composition where inheritance adds no useful abstraction.
+- Keep variable scope small and avoid unnecessary nesting.
+- Follow the repository's formatter and linter configuration. Use [Pre-commit Hooks](../../tools-and-environment/pre-commit.md) rather than maintaining formatting rules manually.
+- Document non-obvious decisions, assumptions, and interface contracts. Avoid comments that merely repeat the code.
 
-## Behavior
+## Behaviour and ownership
 
-- Functions SHOULD avoid side effects where practical.
-- Global mutable state SHOULD be avoided.
-    - Global objects that represent process-wide services (e.g., telemetry instruments, logging sinks, registries) MAY be used when justified and well-documented.
-    - Any global object MUST have a clear ownership model, a defined initialization order, and documented thread-safety guarantees.
-- Code SHOULD prioritize clarity and readability over cleverness or brevity.
-- Exceptions SHOULD be handled locally or propagated meaningfully with additional context.
-- Variable scope SHOULD be minimized.
-- Excessive nesting SHOULD be avoided.
-
-!!! tip
-
-    - Prefer composition over inheritance for flexibility and reusability.
-    - Avoid premature optimization; prioritize clarity and maintainability first.
-    - Document the *why* of code decisions when they are not obvious.
-    - Strive for self-documenting code; use comments to clarify intent or to explain non-trivial algorithms.
+- Make side effects explicit, particularly I/O, changes to shared state, and resource ownership.
+- Avoid global mutable state. Justified process-wide services MUST have clear ownership, initialization, and thread-safety expectations.
+- Catch exceptions when the code can recover, translate them at an interface boundary, or add useful context. Otherwise, allow them to propagate. Avoid logging the same failure at every layer.
+- Prefer clear implementations before optimizing. Base performance changes on measurements and preserve the relevant correctness guarantees.

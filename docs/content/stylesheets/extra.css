@@ -9,6 +9,11 @@
   --md-code-font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
     "Liberation Mono", monospace;
   --cta-brand: #f3681e;
+  /* Shared dark surfaces match eoscta-web, including the fixed masthead/footer. */
+  --cta-dark: #0d1117;
+  --cta-dark-raised: #161b22;
+  --cta-dark-sunken: #010409;
+  --cta-dark-border: #30363d;
   --cta-radius: 10px;
   --cta-radius-sm: 6px;
 }
@@ -32,32 +37,35 @@
 
 [data-md-color-scheme="slate"] {
   color-scheme: dark;
-  --cta-surface: #1a2024;
-  --cta-border: #2a3237;
+  --cta-surface: var(--cta-dark-raised);
+  --cta-border: var(--cta-dark-border);
   --cta-heading: #eef1f3;
-  --md-default-bg-color: #14181b;
+  --md-default-bg-color: var(--cta-dark);
+  --md-default-bg-color--light: #0d1117b3;
+  --md-default-bg-color--lighter: #0d11174d;
+  --md-default-bg-color--lightest: #0d11171f;
   --md-default-fg-color: #eef1f3;
   --md-default-fg-color--light: #b0bcc2;
   --md-default-fg-color--lighter: #8b979e;
-  --md-default-fg-color--lightest: #2a3237;
+  --md-default-fg-color--lightest: var(--cta-dark-border);
   --md-typeset-a-color: #ff8c4d;
   --md-accent-fg-color: #ff8c4d;
   --md-accent-fg-color--transparent: #f3681e1a;
-  --md-code-bg-color: #1a2024;
+  --md-code-bg-color: var(--cta-dark-raised);
   --md-code-fg-color: #eef1f3;
 }
 
 [data-md-color-scheme] {
   --md-typeset-color: var(--md-default-fg-color);
-  --md-primary-fg-color: #14181b;
-  --md-primary-fg-color--light: #1b2126;
-  --md-primary-fg-color--dark: #101416;
+  --md-primary-fg-color: var(--cta-dark);
+  --md-primary-fg-color--light: var(--cta-dark-raised);
+  --md-primary-fg-color--dark: var(--cta-dark-sunken);
   --md-primary-bg-color: #f2f5f6;
   --md-primary-bg-color--light: #b4c0c6;
   --md-admonition-bg-color: var(--cta-surface);
   --md-admonition-fg-color: var(--md-default-fg-color);
-  --md-footer-bg-color: #14181b;
-  --md-footer-bg-color--dark: #101416;
+  --md-footer-bg-color: var(--cta-dark);
+  --md-footer-bg-color--dark: var(--cta-dark-sunken);
   --md-footer-fg-color: #f2f5f6;
   --md-footer-fg-color--light: #b4c0c6;
   --md-footer-fg-color--lighter: #8b979e;
@@ -101,9 +109,9 @@ body { -webkit-font-smoothing: antialiased; }
   background-color: var(--md-primary-fg-color);
   background-image:
     radial-gradient(120% 140% at 88% 0%, rgb(243 104 30 / 14%) 0%, transparent 55%),
-    linear-gradient(180deg, #1b2126 0%, #14181b 100%);
+    linear-gradient(180deg, var(--cta-dark-raised) 0%, var(--cta-dark) 100%);
   box-shadow: 0 2px 6px rgb(0 0 0 / 16%);
-  border-bottom: 1px solid #ffffff24;
+  border-bottom: 1px solid var(--cta-dark-border);
 }
 .md-header__title { font-weight: 700; letter-spacing: -0.018em; }
 /* Keep the site identity visible when Material switches to the page topic. */
@@ -116,11 +124,11 @@ body { -webkit-font-smoothing: antialiased; }
 .md-nav__button.md-logo img { width: auto; height: 2rem; }
 .md-header .md-source { padding-inline: .5rem; }
 .md-header a:hover, .md-header button:hover { color: #ff8c4d; }
-.md-tabs { background: transparent; border-bottom: 1px solid #ffffff24; }
+.md-tabs { background: transparent; border-bottom: 1px solid var(--cta-dark-border); }
 .md-tabs__link { margin-top: 0; padding-block: .7rem; opacity: 1; color: #b4c0c6; }
 .md-tabs__item--active .md-tabs__link { color: #f2f5f6; box-shadow: inset 0 -2px var(--cta-brand); }
 .md-tabs__link:hover { color: #ff8c4d; }
-.md-search__form { border-radius: var(--cta-radius-sm); background: #ffffff12; }
+.md-search__form { border-radius: var(--cta-radius-sm); background: var(--cta-dark-raised); }
 .md-search__input::placeholder { color: #b4c0c6; }
 
 .md-typeset { line-height: 1.65; }
@@ -230,8 +238,8 @@ body { -webkit-font-smoothing: antialiased; }
   mask-image: var(--md-admonition-icon--terminal);
 }
 
-.md-footer { border-top: 1px solid #ffffff24; }
-.cta-footer { background: #14181b; color: #b4c0c6; }
+.md-footer { border-top: 1px solid var(--cta-dark-border); }
+.cta-footer { background: var(--md-footer-bg-color); color: #b4c0c6; }
 .cta-footer__inner {
   display: flex;
   flex-wrap: wrap;

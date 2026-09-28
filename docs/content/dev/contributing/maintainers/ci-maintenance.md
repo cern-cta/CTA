@@ -12,6 +12,18 @@ Check that the `UPDATE_PIPELINE_IMAGES` pipeline has built the full image set, t
 
 To start a refresh manually, run a pipeline with `pipeline-type` set to `UPDATE_PIPELINE_IMAGES`. On the default branch, `update-pipeline-image-version` opens the MR automatically after the image builds; on other branches, start that job manually.
 
+### Add or update an image dependency
+
+Use this procedure when a CI job needs a new tool or a change to an existing image dependency. See [GitLab CI Conventions](../../reference/conventions/gitlab.md#execution-images-and-scripts) for deciding between image-build and runtime installation.
+
+1. On a feature branch, update the Dockerfile for the image used by the affected job. Shared images live in `ci/docker/pipeline/`; platform-specific build and test images use `ci/docker/cta/<platform>/build.Dockerfile` and `test.Dockerfile`. Keep shared images platform-independent and put any dependency-specific explanation beside the installation command.
+2. Push the branch and start a pipeline on it with `pipeline-type` set to `UPDATE_PIPELINE_IMAGES`. This builds and publishes a new, versioned image set from your changed Dockerfiles. Check that all image builds succeed.
+3. Start the manual `update-pipeline-image-version` job. It opens a version-update MR targeting your feature branch. Review and merge that MR into the feature branch to adopt the new `PIPELINE_IMAGE_VERSION` there.
+4. Run normal validation on the updated feature branch and check that the affected jobs succeed using the new images. Add any job changes that depend on the new tool after adopting the image version.
+5. Submit the feature branch through the normal review and merge workflow. Include both the Dockerfile changes and the image-version update so the default branch adopts the tested images.
+
+Changing a Dockerfile alone does not update the pinned images used by ordinary pipelines. If you revise the Dockerfile again, repeat the image build and version update before validating it.
+
 ## Scheduled pipelines
 
 Agree with the team which pipelines should run on a schedule and how often. Create or edit those schedules in GitLab’s pipeline schedules; their target branch, timing, and inputs are visible there and do not need a separate inventory.
