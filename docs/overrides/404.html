@@ -5,5 +5,16 @@
   <title>Page not found - {{ config.site_name }}</title>
 {% endblock %}
 {% block content %}
-  <h1>404 - Page not found</h1>
+  <section class="cta-not-found" aria-labelledby="not-found-title">
+    <h1 id="not-found-title">404 - Page not found</h1>
+    <p class="cta-not-found__message">We couldn’t retrieve the page you’re looking for.<br>
+      The link may be out of date, or the address may have a typo.</p>
+    <div class="cta-not-found__actions">
+      <a class="md-button" href="{{ '' | url }}">Back to documentation</a>
+    </div>
+    <p class="cta-not-found__hint">Try the search above, or browse
+      <a href="{{ 'concepts/' | url }}">Concepts</a>,
+      <a href="{{ 'ops/' | url }}">Operations</a>, or
+      <a href="{{ 'dev/' | url }}">Development</a>.</p>
+  </section>
 {% endblock %}

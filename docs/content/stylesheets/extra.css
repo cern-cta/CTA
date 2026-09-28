@@ -104,6 +104,14 @@
 
 body { -webkit-font-smoothing: antialiased; }
 
+/* Keep the cool dark-to-slate transition visible across a single viewport. */
+body[data-md-color-scheme="slate"] {
+  --cta-dark-gradient: linear-gradient(135deg, var(--cta-dark) 0%, #10151c 50%, #131a23 100%);
+  background-image: var(--cta-dark-gradient);
+  background-attachment: fixed;
+}
+
+
 /* A compact, dark masthead keeps the CTA identity visible in both modes. */
 .md-header {
   background-color: var(--md-primary-fg-color);
@@ -281,4 +289,26 @@ body { -webkit-font-smoothing: antialiased; }
 }
 @media print {
   .md-typeset h1, .md-typeset h2, .md-typeset h3, .md-typeset h4 { color: #15191c; }
+}
+
+/* Missing-page layout and recovery links. */
+.cta-not-found {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: clamp(1rem, 4vw, 3rem) 0;
+  text-align: center;
+}
+.md-typeset .cta-not-found h1 { margin: .5rem 0 1rem; font-size: clamp(1.6rem, 4vw, 2.3rem); }
+.cta-not-found__message { color: var(--md-default-fg-color--light); }
+.cta-not-found__actions { margin: 1.5rem 0; }
+.md-typeset .cta-not-found__hint { color: var(--md-default-fg-color--light); font-size: .8rem; }
+
+.md-typeset .cta-not-found .md-button {
+  background: var(--cta-surface);
+  border-color: var(--md-accent-fg-color);
+  color: var(--md-default-fg-color);
+}
+.md-typeset .cta-not-found .md-button:is(:hover, :focus-visible) {
+  background: var(--md-accent-fg-color--transparent);
+  box-shadow: inset 0 0 0 1px var(--md-accent-fg-color);
 }
