@@ -85,4 +85,4 @@ Failures during registration or submission are reported synchronously through th
 
 A later archival failure cannot be returned through the already completed client write. Clients must check the file's archival status to discover such failures.
 
-For example, CTA may fail to read the file from EOS or write it to tape. If retries are exhausted, the Maintenance Daemon reports the archival failure to EOS. The MGM records the error in the file's extended attributes, and the disk replica is retained so an operator can investigate and, where appropriate, resubmit the archive request.
+For example, CTA may fail to read the file from EOS or write it to tape. If retries are exhausted, the maintenance daemon reports the archival failure to EOS. The MGM records the error in the file's extended attributes, and the disk replica is retained so an operator can investigate and, where appropriate, resubmit the archive request.

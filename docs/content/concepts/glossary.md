@@ -1,6 +1,5 @@
 ---
 hide:
-  - navigation
   - toc
 ---
 
@@ -17,8 +16,8 @@ hide:
 **Archive** (verb) {#archive}
 : Write a file to tape. See also: [Retrieve](#retrieve).
 
-**Archive ID** {#archive-id}
-: Identifier for the archived file version; files are treated as immutable, so each file has one Archive ID.
+**Archive file ID** {#archive-id}
+: CTA-assigned identifier for an immutable archive file, shared by all its tape copies. See [Storage Model](data-management/storage-model.md#files-and-tape-copies).
 
 **Archive metadata** {#archive-metadata}
 : Optional `JSON` provided at archive time to supply colocation hints.
@@ -32,19 +31,19 @@ hide:
 : Predecessor to CTA at CERN.
 
 **Catalogue** {#catalogue}
-: Relational database holding the tape file namespace, permanent system data configuration, and state changes.
+: Relational database holding metadata for tape copies, resources, and storage policies. The disk system owns the file namespace. See [Catalogue](components/catalogue.md).
 
 **Ceph** {#ceph}
-: Open-source distributed storage used as one of the Scheduler backends in CTA.
+: Open-source distributed storage used as one of the scheduler backends in CTA.
 
-**CTA Frontend** {#cta-frontend}
+**CTA frontend** {#cta-frontend}
 : Component that handles workflow events from the disk buffer and requests from `cta-admin`.
 
 **CTA instance** {#cta-instance}
 : A deployment of CTA.
 
 **`cta-admin`** {#cta-admin}
-: Administrative CLI used by operators; issues requests to the CTA Frontend.
+: Administrative CLI used by operators; issues requests to the CTA frontend.
 
 **`cta-rmcd`** {#cta-rmcd}
 : Remote media changer daemon process on tape servers that interacts with the media changer to mount/unmount tapes.
@@ -66,7 +65,7 @@ hide:
 : A deployment of EOS.
 
 **Evict** (verb) {#evict}
-: Ask for immediate removal of disk copy (could be same as release). See also: [Release](#release) and [Stage](#stage)
+: Remove a disk replica while preserving the namespace entry and tape copies. See also: [Release](#release) and [Stage](#stage).
 
 ### F
 
@@ -86,10 +85,10 @@ hide:
 ### L
 
 **Liquibase** {#liquibase}
-: Database-independent change-management library used for CTA Catalogue schema migrations.
+: Database-independent change-management library used for CTA catalogue schema migrations.
 
 **Logical library** {#logical-library}
-: Partition of a physical tape library (by library and drive type) that controls which drives can mount which tapes; disabling a logical library blocks new mounts on its drives.
+: Administrative grouping of tapes and compatible drives used for mount selection. It need not correspond one-to-one to a hardware partition. Disabling it blocks new mounts on its drives. See [Logical libraries](tape/libraries.md#logical-libraries).
 
 ### M
 
@@ -100,10 +99,10 @@ hide:
 : Virtual tape library used in CI. See <https://github.com/markh794/mhvtl>.
 
 **Mount policy** {#mount-policy}
-: Named set of parameters (e.g., priority, minimum request age) per transfer type used by the Scheduler to decide queue eligibility and trigger mounts.
+: Named set of parameters (e.g., priority, minimum request age) per transfer type used by the scheduler to decide queue eligibility and trigger mounts.
 
 **Mount rule** {#mount-rule}
-: Tuple of disk-instance, requester (user/group), mount-policy name, and activity regex that selects a specific mount policy.
+: Rule associating a requester or requester group within a disk instance with a mount policy. Requester-activity rules additionally match an activity regular expression for retrieval. See [Mount policies and requesters](data-management/storage-model.md#mount-policies-and-requesters).
 
 **mTLS** {#mtls}
 : "Mutual TLS", a security protocol that ensures both the client and server authenticate each other using digital certificates during a secure connection.
@@ -122,7 +121,7 @@ hide:
 : Deployment automation engine. See <https://www.puppet.com/>.
 
 **Protobuf** {#protobuf}
-: Mechanism for serializing structured data. See <https://github.com/protocolbuffers/protobuf>.
+: Mechanism for serialising structured data. See <https://github.com/protocolbuffers/protobuf>.
 
 ### R
 
@@ -133,7 +132,7 @@ hide:
 : CTA API layer for a relational database (PostgreSQL) when used as the `SchedulerDB`.
 
 **Release** (verb) {#release}
-: Indicate that files previously staged are no longer required to have a disk copy. See also: [Stage](#stage) and [Evict](#evict)
+: Indicate that files previously staged are no longer required to have a disk copy. See also: [Stage](#stage) and [Evict](#evict).
 
 **Repack** {#repack}
 : Copying/moving data between tapes for media refresh, replication, or migration to newer generations.
@@ -165,7 +164,7 @@ hide:
 : Simple Shared Secret used for authentication.
 
 **Stage** (verb) {#stage}
-: Request that a disk copy is made available for a file on tape. See also: [Release](#release) and [Evict](#evict)
+: Request that a disk copy is made available for a file on tape. See also: [Release](#release) and [Evict](#evict).
 
 ### T
 
@@ -198,8 +197,8 @@ hide:
 
 ### V
 
-**Virtual Organization** {#virtual-organization}
-: Grouping of users by experiment/project; used for quotas (e.g., dedicated drives) and aggregated usage statistics.
+**Virtual organisation** {#virtual-organization}
+: Administrative owner of storage classes and tape pools, associated with a disk instance. Its drive limits cap concurrent reads and writes; they do not reserve dedicated drives. See [Storage Model](data-management/storage-model.md#disk-instances-and-virtual-organisations).
 
 ### X
 
@@ -207,4 +206,4 @@ hide:
 : High-performance, scalable data access. See <https://xrootd.github.io/>.
 
 **XRootD SSI** {#xrootd-ssi}
-: XRootD plugin enabling SSS authentication; used by the CTA Frontend and being phased out in favor of gRPC.
+: XRootD Scalable Service Interface, a framework for request/response services. SSI and SSS authentication are separate concepts. CTA service APIs use gRPC; tape-daemon transfers use XRootD file operations in the EOS integration. See [Authentication](components/authentication.md).

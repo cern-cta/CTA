@@ -60,7 +60,7 @@ HDR1 and HDR2 are normally found together at the beginning of a dataset.
 | Bytes | Length | Offset | Content |
 | ----- | ------ | ------ | ------- |
 |   0-3 |     4  |   0x00 | Header label: the characters “HDR1 or EOF1” |
-|  4-20 |    17  |   0x04 | File identifier: hexadecimal CTA archive file ID (CASTOR file ID on legacy tapes), aligned to the left. In case of prelabeled tape ‘PRELABEL’ is used instead of file ID. |
+|  4-20 |    17  |   0x04 | File identifier: hexadecimal CTA archive file ID (CASTOR file ID on legacy tapes), aligned to the left. In case of prelabelled tape ‘PRELABEL’ is used instead of file ID. |
 | 21-26 |     6  |   0x15 | The volume serial number of the tape. |
 | 27-30 |     4  |   0x1B | File section number: CTA writes `0001`. |
 | 31-34 |     4  |   0x1F | File sequence number modulo 10000, zero-padded. UHL1 carries the full sequence number. |
@@ -138,7 +138,7 @@ HDR1 and HDR2 are normally found together at the beginning of a dataset.
 | 34-41 |      8 |   0x22 | Site : a part of the domain name uppercase. |
 | 42-51 |     10 |   0x2A | Tape mover host name uppercase without domain name. |
 | 52-59 |      8 |   0x34 | Drive manufacturer. |
-| 60-67 |      8 |   0x3C | Drive model (first 8 bytes from the field PRODUCT IDENTIFICATION in the SCSI INQUIRY replay). |
+| 60-67 |      8 |   0x3C | Drive model (first 8 bytes from the field PRODUCT IDENTIFICATION in the SCSI INQUIRY reply). |
 | 68-79 |     12 |   0x44 | Drive serial number |
 
 ### Examples
@@ -169,11 +169,11 @@ The format for UTL1 is the same as UHL1 (see above).
 
 ## Checksums
 
-When a file is written to tape, an [Adler32](http://www.zlib.net/manual.html#Checksum) checksum is computed on the file.
-The file checksum is checked against the expected checksum and stored in the Catalogue, not in the CTA label records.
+When a file is written to tape, an [Adler-32](http://www.zlib.net/manual.html#Checksum) checksum is computed on the file.
+The file checksum is checked against the expected checksum and stored in the catalogue, not in the CTA label records.
 
 Logical block protection (LBP) is separate from the file checksum. When CRC32C LBP is enabled, CTA's drive interface appends a four-byte CRC32C value to each block before passing it to the drive. On reading, the interface verifies the protection value and removes those four bytes before returning the block contents.
 
-These protection bytes are additional to the block's contents, not part of the original file payload or the label fields. They protect individual blocks; the Adler-32 checksum in the Catalogue covers the file as a whole. For example, a protected 80-byte label is passed to the drive with four additional LBP bytes, while CTA's label reader receives the original 80 bytes.
+These protection bytes are additional to the block's contents, not part of the original file payload or the label fields. They protect individual blocks; the Adler-32 checksum in the catalogue covers the file as a whole. For example, a protected 80-byte label is passed to the drive with four additional LBP bytes, while CTA's label reader receives the original 80 bytes.
 
 The LBP method is recorded in VOL1. The read/write sessions support CRC32C or no LBP; they reject the Reed–Solomon method.

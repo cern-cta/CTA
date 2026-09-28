@@ -32,16 +32,16 @@ The routes select **pools**, not cartridges. The scheduler chooses eligible writ
 1. **Submit the request.** An operator requests repack of a source tape through the [Admin API](../components/admin-api.md), selecting the mode and repack buffer.
 2. **Expand into per-file work.** The [Maintenance Daemon](../components/maintenance-daemon.md) uses the catalogue to identify the source tape's active files and the copies to move or add, then queues the necessary retrieval work.
 3. **Read into the repack buffer.** Tape daemons read the source files into temporary disk storage. Retrieval jobs target the source tape.
-4. **Queue and write destination copies.** The Maintenance Daemon processes successful retrieval results and advances the files to archival. Tape daemons read the buffered files and write the required copies to destination tapes, recording them in the catalogue. Archival jobs target destination tape pools.
-5. **Track completion.** The Maintenance Daemon processes the archival results and updates the repack's progress and final status.
+4. **Queue and write destination copies.** The maintenance daemon processes successful retrieval results and advances the files to archival. Tape daemons read the buffered files and write the required copies to destination tapes, recording them in the catalogue. Archival jobs target destination tape pools.
+5. **Track completion.** The maintenance daemon processes the archival results and updates the repack's progress and final status.
 
-Tape daemons use the same read and write machinery as ordinary retrieval and archival. Jobs retain their repack identity for accounting and result handling, while the Maintenance Daemon coordinates the overall repack workflow.
+Tape daemons use the same read and write machinery as ordinary retrieval and archival. Jobs retain their repack identity for accounting and result handling, while the maintenance daemon coordinates the overall repack workflow.
 
 The **repack buffer** stages data between the read and write phases. It need not be the client-facing disk buffer, but must be accessible to the daemons involved and retain each file while its destination writes still need it. Repack results are processed internally to advance the workflow, rather than as ordinary client retrieval requests.
 
 ### Expansion: turning a tape request into file jobs
 
-The initial request identifies a source tape and the intended operation. **Expansion** turns that tape-level request into the individual file jobs needed to perform it. The Maintenance Daemon promotes pending requests for expansion within the configured limit, then uses the scheduler to:
+The initial request identifies a source tape and the intended operation. **Expansion** turns that tape-level request into the individual file jobs needed to perform it. The maintenance daemon promotes pending requests for expansion within the configured limit, then uses the scheduler to:
 
 - Read the source tape's active file entries from the catalogue, applying any selection limits on the request.
 - Determine which copy numbers must be replaced or added for each file, and check that the required storage classes and destination routes exist. In add-copies mode, files that already have the required copies need no work.
@@ -52,9 +52,9 @@ Expansion prepares and queues work; it does not read the tape itself. Missing ro
 
 ### Advancing files through the workflow
 
-A separate Maintenance Daemon routine processes batches of repack results. A successful retrieval makes that file eligible for its destination writes: the routine advances it to archival work for the planned copy numbers. One read into the buffer can thus supply several destination copies, without waiting for every file on the source tape to be retrieved.
+A separate maintenance daemon routine processes batches of repack results. A successful retrieval makes that file eligible for its destination writes: the routine advances it to archival work for the planned copy numbers. One read into the buffer can thus supply several destination copies, without waiting for every file on the source tape to be retrieved.
 
-Archival results update the repack's successful or failed copy counts; retrieval failures are also accounted for. Once expansion and the resulting work have finished, these outcomes determine the final repack status. Tape daemons perform the data transfers, while the Maintenance Daemon connects the stages and records their progress. If result processing is delayed, a file can already be present in the buffer while its destination writes are still waiting to be queued.
+Archival results update the repack's successful or failed copy counts; retrieval failures are also accounted for. Once expansion and the resulting work have finished, these outcomes determine the final repack status. Tape daemons perform the data transfers, while the maintenance daemon connects the stages and records their progress. If result processing is delayed, a file can already be present in the buffer while its destination writes are still waiting to be queued.
 
 The diagram shows the successful path for a file; different files can progress through these stages at different times. Scheduling and catalogue updates are summarised.
 

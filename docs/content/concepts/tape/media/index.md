@@ -12,7 +12,7 @@ A cartridge is stored inside of a tape library, and read/written by a tape drive
 Generally, it contains about 1km worth of 12.65mm wide magnetic tape band.
 
 Data is written on this tape in a *boustrophedon* manner:
-Bits are written on to a set of parallel *tracks*, which are organized in *wraps* spanning from one end of the tape to the other.
+Bits are written on to a set of parallel *tracks*, which are organised in *wraps* spanning from one end of the tape to the other.
 Where one wrap ends, another begins, going in the opposite direction.
 
 ## Cartridge Formats
@@ -52,9 +52,9 @@ Note that the CTA format is *not* self-describing, meaning that one has to take 
 
 The [CTA Tape Format](format.md) page gives a detailed description of what the CTA format looks like on tape.
 
-### Labeling a tape
+### Labelling a tape
 
-Labeling writes the tape format and volume identifier so CTA can verify the medium it has mounted. This is a destructive procedure and should not be done on tapes with active data. The operator procedure for this is documented under [Media Initialisation](../../../ops/administration/media-initialisation.md).
+Labelling writes the tape format and volume identifier so CTA can verify the medium it has mounted. This is a destructive procedure and should not be done on tapes with active data. The operator procedure for this is documented under [Media Initialisation](../../../ops/administration/media-initialisation.md).
 
 ### Read-only formats
 
@@ -81,35 +81,35 @@ Besides the VID, CTA keeps track of a number of properties associated to each ta
 !!! tip
     Use the `--json` flag to view additional fields
 
-Some of these are for record keeping purposes, while others impact the behavior of CTA.
+Some of these are for record keeping purposes, while others impact the behaviour of CTA.
 Some notable of the latter are:
 
 * **mediaType:** The cartridge format and generation, such as `LTO9`
-* **logicalLibrary:** The assigned Logical Library
-* **tapepool:** The Tape Pool the cartridge belongs to
+* **logicalLibrary:** The assigned logical library
+* **tapepool:** The tape pool the cartridge belongs to
 * **vo:** The virtual organisation associated with the tape pool
 * **encryptionKeyName:** The identifier for the key used to encrypt this media, if applicable
 * **full:** Whether or not the tape is considered to be full, i.e. whether it can no longer be written to
 * **nbMasterFiles:** The number of non-deleted files on this tape
 * **nbMasterBytes:** Data volume corresponding to the nbMasterFiles count
-* **state:** The present operation state of the tape, see below
+* **state:** The present operational state of the tape, see below
 
 !!! note
-    Some CTA operations don't trigger immediate counter and metadata updates. This includes fields such as  `nbMasterfiles` and `nbMasterBytes`. Use the [cta-statistics-update](../../../ops/tools/cta-statistics-update.md) tool to refresh these.
+    Some CTA operations don't trigger immediate counter and metadata updates. This includes fields such as  `nbMasterFiles` and `nbMasterBytes`. Use the [cta-statistics-update](../../../ops/tools/cta-statistics-update.md) tool to refresh these.
 
 
 
-### Life Cycle
+### Lifecycle
 
-A tape cartridge starts its stay in CTA by being added to the catalogue, and then being labeled by an operator.
-Depending on the media generation, if the cartridge has not been pre-initialized, this initial labeling procedure is accompanied by an initialization process which calibrates the media to the library's local environmental conditions.
+A tape cartridge is first registered in the catalogue with an existing tape pool and logical library, then labelled by an operator.
+Depending on the media generation, if the cartridge has not been pre-initialised, this initial labelling procedure is accompanied by an initialisation process which calibrates the media to the library's local environmental conditions.
 Be aware that this process may take as much as 50 minutes per cartridge.
 
-Once labeled and initialized, the tape can be assigned to an appropriate Tape Pool for use. See [Media Initialisation](../../../ops/administration/media-initialisation.md) for the operator workflow.
+Once labelled and initialised, the tape can be used when its state and other scheduling conditions allow it. Its tape-pool assignment can be changed separately if required. See [Media Initialisation](../../../ops/administration/media-initialisation.md) for the operator workflow.
 
 In CTA, each tape cartridge has a *state*, which determines what actions may be performed on it.
-A tape may for instance be 'ACTIVE', indicating that it can be read from and written to, or `DISABLED`, such that neither reads nor writes may be performed.
-A detailed description of each media state is given in [the Tape Lifecycle page](../lifecycle.md)
+An `ACTIVE` tape is eligible for reads and, when writable and not full, writes. A `DISABLED` tape cannot be mounted, although normal retrieval requests can still queue for it.
+A detailed description of each media state is given in [the Tape Lifecycle page](../lifecycle.md).
 
 #### Repack
 

@@ -1,6 +1,6 @@
 # Tape Servers
 
-A *Tape Server* is a computer connected to at least one tape drive and running the `cta-taped` daemon.
+A *tape server* is a computer connected to at least one tape drive and running the `cta-taped` daemon.
 The tape daemon selects archive/retrieve work through the scheduler and transfers file data between the disk system and the drive, buffering it in memory.
 A server may host several drives, with a separate tape-daemon instance for each drive. The disk buffer is a separate component; normal tape transfers do not require staging files on the tape server's local disks.
 

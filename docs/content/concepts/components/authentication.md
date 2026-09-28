@@ -1,10 +1,10 @@
 # Authentication
 
-Globally, CTA supports multiple authentication methods: SSS (Simple Shared Secret), Kerberos, JWT (JSON Web Token), and mTLS (mutual TLS).
-In CTA we distinguish between three different categories of authentication:
+CTA supports multiple authentication methods: SSS (Simple Shared Secret), Kerberos, JWT (JSON Web Token), and mTLS (mutual TLS).
+CTA distinguishes three authentication boundaries:
 
 - The authentication between the disk buffer and the CTA frontend. The disk buffer will send workflow events to the frontend and needs to be authenticated in order to do so.
-- The authentication between the tape daemons and the disk buffer. The tape daemons need to be able to read/write data from/to the Disk buffer directly.
+- The authentication between the tape daemons and the disk buffer. The tape daemons need to be able to read and write data directly through the disk buffer.
 - The authentication of users interacting with CTA via the `cta-admin` tool.
 
 ## Authentication Methods by Interface
@@ -24,23 +24,18 @@ The tape daemon reads and writes file data through the disk system's data-transf
 
 The EOS integration uses SSS authentication for tape-daemon data transfers. See [EOS Configuration](../../ops/integrations/eos/configuration.md).
 
-The following diagram shows the EOS integration:
+The diagram shows the three independent connections in the EOS integration. Arrows point from the component initiating the connection to the service authenticating it.
 
 ```mermaid
-flowchart TB
-    subgraph DISK BUFFER
-        disk["EOS Disk Buffer"]
-    end
-    subgraph CLI
-        ctacli["CTA Admin Client"]
-    end
-    subgraph CTA
-        wfe-frontend["CTA WFE Frontend"]
-        admin-frontend["CTA Admin API Frontend"]
-        taped["CTA Tape Daemon"]
-    end
+flowchart LR
+    eosWorkflow["EOS<br/>Workflow requests"]
+    workflow["CTA Workflow API"]
+    adminClient["Operator<br/>cta-admin"]
+    admin["CTA Admin API"]
+    taped["CTA tape daemon"]
+    eosData["EOS<br/>File transfers"]
 
-    disk -- gRPC (JWT / mTLS) --> wfe-frontend
-    taped -- XRootD SSI (SSS) --> disk
-    ctacli -- gRPC (JWT / KRB5) --> admin-frontend
+    eosWorkflow -->|"gRPC · JWT or mTLS"| workflow
+    adminClient -->|"gRPC · JWT or Kerberos"| admin
+    taped -->|"XRootD · SSS"| eosData
 ```

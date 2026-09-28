@@ -33,6 +33,7 @@ flowchart TB
     workflow <-->|Metadata / requests| stores
     admin <-->|Metadata / requests| stores
     maintd <--> stores
+    maintd <-->|Completion / failure reports| disk
     stores <-->|Mount selection / state updates| taped
     taped <-->|Mount / unmount| rmcd
     taped <==>|Tape data| drives
@@ -73,7 +74,7 @@ Services connect directly to the catalogue and the scheduler backend they serve;
 | **Maintenance Daemon** | Uses shared metadata for background processing. | Processes reports, repack, and maintenance for its configured backend. Each backend needs the appropriate maintenance routines. |
 | **Media Changer Daemon** | No direct connection. | No direct connection; tape daemons ask it to operate the library robotics. |
 
-For example, a separate repack backend has an Admin API endpoint, Maintenance Daemon processing, and tape daemons assigned to it. The Workflow API continues submitting ordinary requests to the normal-workload backend. This separates scheduler workloads, but the catalogue and any shared disk or tape infrastructure remain common resources.
+For example, a separate repack backend has an Admin API endpoint, maintenance daemon processing, and tape daemons assigned to it. The Workflow API continues submitting ordinary requests to the normal-workload backend. This separates scheduler workloads, but the catalogue and any shared disk or tape infrastructure remain common resources.
 
 The architecture diagram above shows component roles, not the number of service instances or backends. See [Scheduler Configuration](../../ops/configuration/scheduler.md#isolate-repack-with-separate-scheduler-backends) for the operational setup.
 

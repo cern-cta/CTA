@@ -10,7 +10,7 @@ The catalogue stores metadata, not file contents or the disk system's namespace.
 
 ## Relationships with services
 
-The Workflow API uses catalogue metadata to validate requests, while the Admin API provides access to resource and policy configuration. Tape daemons record tape copies and update resource state; the Maintenance Daemon uses catalogue information for its background work.
+The Workflow API uses catalogue metadata to validate requests, while the Admin API provides access to resource and policy configuration. Tape daemons record tape copies and update resource state; the maintenance daemon uses catalogue information for its background work.
 
 ## Database backends
 

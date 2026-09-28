@@ -116,7 +116,6 @@ nav:
   # Explain CTA roles, terminology, and behaviour; commands belong in Operations, code in Development.
   - 'Concepts':
       - 'Introduction': concepts/index.md
-      - 'Glossary': concepts/glossary.md
       # Explain component responsibilities and connections; deployment settings belong in Operations.
       - 'Components':
           - 'Overview': concepts/components/index.md
@@ -135,15 +134,23 @@ nav:
               - 'Scheduler': concepts/components/scheduler.md
           # Explain external namespace and disk-copy responsibilities; vendor setup belongs in Disk Buffer Integration.
           - 'Disk Buffer': concepts/components/disk-buffer.md
+      # Explain placement, scheduling, and file workflows; policy changes and recovery recipes belong in Operations.
+      - 'Data Management':
+          - 'Storage Model': concepts/data-management/storage-model.md
+          - 'File Workflows': concepts/data-management/index.md
+          - 'Archival': concepts/data-management/archival.md
+          - 'Retrieval': concepts/data-management/retrieval.md
+          - 'Scheduling': concepts/data-management/scheduling.md
+          - 'Deletion': concepts/data-management/deletion.md
+          - 'Repack': concepts/data-management/repack.md
+          - 'Recycle Bin': concepts/data-management/recycle-bin.md
+          - 'Data Integrity': concepts/data-management/data-integrity.md
       # Explain media, hardware roles, tape states, formats, and positioning behaviour.
       # Host/device setup belongs in Operations > Installation & Deployment; labelling, mounts,
       # state changes, replacement, and recovery procedures belong in Operations > Administration.
       - 'Tape Infrastructure':
-          # Explain media properties and recorded structures; labelling and verification commands belong in Operations.
-          - 'Tape Media':
-              - 'Overview': concepts/tape/media/index.md
-              - 'Tape Labels': concepts/tape/media/labels.md
-              - 'CTA Tape Format': concepts/tape/media/format.md
+          # Introduce media properties; labelling and verification commands belong in Operations.
+          - 'Tape Media': concepts/tape/media/index.md
           # Explain drive capabilities and their role; device discovery and tuning belong in Operations.
           - 'Tape Drives': concepts/tape/drives.md
           # Explain robotics, slots, and physical/logical libraries; registration and media moves belong in Operations.
@@ -154,17 +161,11 @@ nav:
           - 'Tape Lifecycle': concepts/tape/lifecycle.md
           # Explain retrieval ordering and tape geometry; enablement belongs in Configuration, algorithms in Development.
           - 'Recommended Access Order': concepts/tape/rao.md
-      # Explain placement, scheduling, and file workflows; policy changes and recovery recipes belong in Operations.
-      - 'Data Management':
-          - 'Storage Model': concepts/data-management/storage-model.md
-          - 'Scheduling': concepts/data-management/scheduling.md
-          - 'File Workflows': concepts/data-management/index.md
-          - 'Archival': concepts/data-management/archival.md
-          - 'Retrieval': concepts/data-management/retrieval.md
-          - 'Deletion': concepts/data-management/deletion.md
-          - 'Repack': concepts/data-management/repack.md
-          - 'Recycle Bin': concepts/data-management/recycle-bin.md
-          - 'Data Integrity': concepts/data-management/data-integrity.md
+          # Keep recorded structures and label reference details after the hardware introduction.
+          - 'Tape Formats':
+              - 'Tape Labels': concepts/tape/media/labels.md
+              - 'CTA Tape Format': concepts/tape/media/format.md
+      - 'Glossary': concepts/glossary.md
   # Help operators deploy and run CTA; keep conceptual background and implementation details in their own sections.
   - 'Operations':
       - 'Introduction': ops/index.md
