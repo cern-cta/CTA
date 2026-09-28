@@ -47,12 +47,12 @@ def on_page_markdown(markdown: str, config: MkDocsConfig, **kwargs: Any) -> str:
     """Load whole-page manuals without exposing their Pandoc metadata as text."""
     # Strip manual metadata before inclusion so fields such as the date and
     # manual section do not appear as page text.
-    match = re.fullmatch(r'\s*--8<--\s*\n([^\n]+\.1cta\.md)\s*\n--8<--\s*', markdown)
+    match = re.fullmatch(r"\s*--8<--\s*\n([^\n]+\.1cta\.md)\s*\n--8<--\s*", markdown)
     if not match:
         return markdown
     root = Path(config.config_file_path).resolve().parent.parent
     manual = (root / match.group(1).strip()).read_text(encoding="utf-8")
-    return re.sub(r'\A---\r?\n.*?\r?\n---(?:\r?\n|\Z)', '', manual, count=1, flags=re.DOTALL)
+    return re.sub(r"\A---\r?\n.*?\r?\n---(?:\r?\n|\Z)", "", manual, count=1, flags=re.DOTALL)
 
 
 def on_page_content(html: str, page: Page, **kwargs: Any) -> str:
@@ -61,12 +61,13 @@ def on_page_content(html: str, page: Page, **kwargs: Any) -> str:
     # Apply the shared arrow color here to keep sequence diagrams readable.
     html = re.sub(
         r'(<pre class="mermaid"><code>)(\s*sequenceDiagram\b)',
-        r'\1---\nconfig:\n  themeVariables:\n    signalColor: currentColor\n---\n\2',
+        r"\1---\nconfig:\n  themeVariables:\n    signalColor: currentColor\n---\n\2",
         html,
     )
     # Hide repeated category headings from the sidebar to make releases easier
     # to find; the headings remain visible in the page itself.
     if page.file.src_uri == "changelog.md":
+
         def prune(items: list[AnchorLink]) -> None:
             for item in items:
                 if item.level >= 2:
