@@ -1,18 +1,9 @@
-# Developing the dCache Integration
+# Developing with dCache
 
-Outline for developers working on the dCache adapter and its tests.
+!!! note "Developer documentation incomplete"
 
-!!! info "Documentation outline"
-    The sections below reserve space for the detailed documentation to be added.
+    Contributions from developers actively working with dCache and CTA are welcome, particularly a validated development setup, an explanation of the integration components, and guidance for running integration tests.
 
-## Adapter architecture
+The development tooling supports selecting a dCache-backed test deployment; see [cta-dev Reference](../tools-and-environment/cta-dev.md#dcache). The missing guidance here concerns developing and validating that integration, not its availability.
 
-Document the mapping between dCache requests and the CTA workflow interface.
-
-## Development environment
-
-Document building the adapter and deploying it alongside CTA.
-
-## Integration tests
-
-Document fixtures, request lifecycle tests, and failure reporting. See [Testing CTA](../testing/index.md).
+Operational setup belongs in [dCache Integration](../../../ops/deploy-and-configure/integrations/dcache.md).

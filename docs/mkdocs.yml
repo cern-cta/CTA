@@ -410,10 +410,8 @@ nav:
           # Explain adapter development; deployed-system setup belongs in Operations.
           - 'Disk Buffer Integrations':
               - 'Overview': dev/reference/integrations/index.md
-              # Describe EOS development environments and integration flows; production procedures stay in Operations > EOS.
-              - 'EOS':
-                  - 'Developing EOS': dev/reference/integrations/eos/environment-setup.md
-              - 'dCache': dev/reference/integrations/dcache.md
+              - 'Developing with EOS': dev/reference/integrations/eos/environment-setup.md
+              - 'Developing with dCache': dev/reference/integrations/dcache.md
           # Produce and test telemetry; collection and alerting belong in Operations.
           - 'Instrumentation':
               - 'Overview': dev/reference/instrumentation/index.md
