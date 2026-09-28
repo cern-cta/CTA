@@ -12,4 +12,4 @@ The API provides the administrative interface rather than performing tape transf
 
 The [Catalogue](catalogue.md) holds resource and policy records, while the [Scheduler](scheduler.md) tracks queued work. The [Workflow Frontend](workflow-api.md) handles the disk system's archive, retrieve, and delete requests separately.
 
-Administrative access has its own [authentication boundary](authentication.md). See [Admin Frontend Configuration](../../ops/configuration/admin-api.md) for settings and [cta-admin](../../ops/tools/cta-admin.md) for command reference.
+Administrative access has its own [authentication boundary](authentication.md). See [Admin Frontend Configuration](../../ops/deploy-and-configure/configuration/admin-api.md) for settings and [cta-admin](../../ops/tools/cta-admin.md) for command reference.

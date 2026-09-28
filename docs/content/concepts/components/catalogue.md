@@ -14,6 +14,6 @@ The Workflow Frontend uses catalogue metadata to validate requests, while the Ad
 
 ## Database backends
 
-The catalogue uses a relational database, with Oracle and PostgreSQL backends. See [Catalogue Configuration](../../ops/configuration/catalogue.md) for setup, [Catalogue Upgrades](../../ops/upgrades/catalogue-schema/index.md) for schema migration, and the [developer reference](../../dev/internals/catalogue/index.md#catalogue-description) for the database schema.
+The catalogue uses a relational database, with Oracle and PostgreSQL backends. See [Catalogue Configuration](../../ops/deploy-and-configure/configuration/catalogue.md) for setup, [Catalogue Upgrades](../../ops/run-and-maintain/upgrades/catalogue-schema/index.md) for schema migration, and the [developer reference](../../dev/reference/internals/catalogue/index.md#catalogue-description) for the database schema.
 
-[Open catalogue schema ↗](../../dev/internals/catalogue/db-schema.svg){ .md-button target="_blank" rel="noopener" title="Open the catalogue schema in a new tab" }
+[Open catalogue schema ↗](../../dev/reference/internals/catalogue/db-schema.svg){ .md-button target="_blank" rel="noopener" title="Open the catalogue schema in a new tab" }

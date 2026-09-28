@@ -47,4 +47,4 @@ Placement and scheduling are separate decisions. A **mount policy** supplies arc
 
 **Requester rules** associate users or groups within a disk instance with mount policies. Retrieval can also use activity-specific rules to distinguish workloads from the same requester. These policies operate alongside VO drive limits, batching criteria, and resource availability; they do not guarantee an immediate mount or a fixed completion time.
 
-See [Scheduling](scheduling.md) for how queued work is selected, and [Storage Policies](../../ops/administration/storage-policies.md) for operator procedures to create and maintain these objects.
+See [Scheduling](scheduling.md) for how queued work is selected, and [Storage Policies](../../ops/run-and-maintain/administration/storage-policies.md) for operator procedures to create and maintain these objects.

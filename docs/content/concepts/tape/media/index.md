@@ -54,7 +54,7 @@ The [CTA Tape Format](format.md) page gives a detailed description of what the C
 
 ### Labelling a tape
 
-Labelling writes the tape format and volume identifier so CTA can verify the medium it has mounted. This is a destructive procedure and should not be done on tapes with active data. The operator procedure for this is documented under [Media Initialisation](../../../ops/administration/media-initialisation.md).
+Labelling writes the tape format and volume identifier so CTA can verify the medium it has mounted. This is a destructive procedure and should not be done on tapes with active data. The operator procedure for this is documented under [Media Initialisation](../../../ops/run-and-maintain/administration/media-initialisation.md).
 
 ### Read-only formats
 
@@ -105,7 +105,7 @@ A tape cartridge is first registered in the catalogue with an existing tape pool
 Depending on the media generation, if the cartridge has not been pre-initialised, this initial labelling procedure is accompanied by an initialisation process which calibrates the media to the library's local environmental conditions.
 Be aware that this process may take as much as 50 minutes per cartridge.
 
-Once labelled and initialised, the tape can be used when its state and other scheduling conditions allow it. Its tape-pool assignment can be changed separately if required. See [Media Initialisation](../../../ops/administration/media-initialisation.md) for the operator workflow.
+Once labelled and initialised, the tape can be used when its state and other scheduling conditions allow it. Its tape-pool assignment can be changed separately if required. See [Media Initialisation](../../../ops/run-and-maintain/administration/media-initialisation.md) for the operator workflow.
 
 In CTA, each tape cartridge has a *state*, which determines what actions may be performed on it.
 An `ACTIVE` tape is eligible for reads and, when writable and not full, writes. A `DISABLED` tape cannot be mounted, although normal retrieval requests can still queue for it.
@@ -123,7 +123,7 @@ Additionally, as tape media technology evolves, the per-cartridge density tends 
 Combined with CTA's most common use case of indefinite data storage for physics, and the need for the infrastructure to stay on supported hardware, this creates an incentive to periodically move data from old media generations to new ones.
 
 The combination of these three make up the Repack use case, that is, the copying/moving of data from one tape to another.
-CTA has a dedicated [repack workflow](../../data-management/repack.md). Operator commands are documented under [Repacking Tapes](../../../ops/administration/repack.md).
+CTA has a dedicated [repack workflow](../../data-management/repack.md). Operator commands are documented under [Repacking Tapes](../../../ops/run-and-maintain/administration/repack.md).
 For larger repack batches, [a dedicated operator utility](../../../ops/tools/repack-automation.md) is provided to manage the repacks at a higher level.
 
 After a successful repack that moves all active tape copies off the source tape, it no longer holds active file copies in the catalogue. Repacking does not physically erase the data on the source tape; reclaiming it for reuse is a separate operation.

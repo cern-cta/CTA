@@ -1,91 +1,69 @@
+# Changelog Entries
 
-# Writing Changelog Entries
+The changelog tells users what changed between releases. It lives in the repository’s `CHANGELOG.md` and is published as [Changelog](../../changelog.md).
 
-The changelog can be found in `CHANGELOG.md` in the root of the CTA repository. It is used to convey relevant changes in CTA for a given release to the user.
-It is also published in the documentation as [Release Notes](../../release-notes.md).
-Changelog entries are automatically generated based on the contents of the commit that will be merged before every release.
+The **`changelog: required` MR label** tells reviewers that an entry is needed. The **`Changelog:` trailer on the final squash commit** controls its inclusion and category during generation. The label alone does not generate an entry.
 
-## What warrants a changelog entry
+## When an entry is needed
 
-- Any user-facing change should have a changelog entry. Examples:
-    - Feature additions/changes
-    - Most bug fixes
-    - Changes in the config file structure or commandline interface of the various CTA packages
-    - Name changes to a CTA package
-- Any developer-facing change should **not** have a changelog entry. Examples:
-    - Changes to the CI
-    - Update to README files
-    - Updates to the tests
-    - Refactorings
-- If a feature is introduced and then fixed or changed **within** the same release, the fix/change should **not** have a changelog entry.
+Include an entry for user-visible changes: new features, bug fixes, configuration or command-line changes, package changes, deprecations, and performance or security improvements.
 
-Remember, the changelog is for users to understand what changed in the software between releases.
-For a full overview of what changed, developers can always look at the commit history.
+Changes affecting only development, such as test updates, CI maintenance, or internal refactoring, normally do not need an entry. Judge the effect on users rather than the files changed: a refactoring that also fixes user-visible behaviour still warrants an entry.
 
-## Writing good changelog entries
+Avoid separate entries for intermediate fixes to a feature that has not yet been released. The changelog should describe the final behaviour of that feature.
 
-Changelog entries should:
+## Prepare the entry
 
-- start with a verb in the imperative mood. If in doubt, just think: "this commit will `<commit-title>`" Some examples:
-    - **Good**: [rmcd] Fix smc request handling always hitting 5s timeout
-    - **Good**: [scheduler] Update scheduler to handle multiple frontend connections
-    - **Bad**: Fixed issue where logs were not written correctly `-> past tense, not imperative`
-    - **Bad**: Retry logic for repack implemented `-> noun phrase, not imperative`
-    - **Bad**: Fixes retry logic `-> third person, not imperative`
-    - **Bad**: Adding new support for something `-> gerund, not imperative`
-- be concise and descriptive. Examples:
-    - **Good**: [taped] Add support for log rotation on CTA tape daemons
-    - **Good**: [Misc] Bump EOS version to 5.8.2
-    - **Bad**: Logging improvements `-> vague`
-    - **Bad**: Miscellaneous bug fixes and improvements `-> meaningless`
-    - **Bad**: Fix queueing issues `-> not descriptive about what issue is being solved`
-- focus on the end-result instead of the implementation
-    - **Good**: [frontend] Fill xrd::cta::response field in case of grpc error
-    - **Good**: [taped] Fix taped core dumping due to logging concurrent modifications
-    - **Bad**: Refactored the repack manager class to add a new retry field `-> too many implementation details`
-    - **Bad**: Updated variable names for consistency `-> unless it affects behavior, not user-relevant`
-    - **Bad**: Used a try-catch block in logwriter.cpp `-> talks about how, not what or why`
-- not have unnecessary capitalization
-- not contain spelling errors
-- not start with `Resolve "`
+1. Add **`changelog: required`** to the MR when an entry is needed.
+2. Write the MR title as the intended commit summary and changelog text.
+3. When merging, check the final squash-commit message in GitLab. Replace the template’s category alternatives with exactly one supported trailer, such as `Changelog: fix`. If no entry is needed, remove the entire `Changelog:` line.
 
-> Note that some of the above examples could be a bit more descriptive. However, try to keep the entries/commit summaries under 72 characters in length.
+For the title:
 
-It is typically useful to know the scope of the commit. As such, adding a prefix is recommended if suitable. Currently, we have the following (non-exhaustive) list of prefixes:
+- Start with a scope prefix accepted by Danger, then an imperative verb such as “Add”, “Fix”, or “Remove”. Danger reports the current accepted prefixes.
+- Describe the user-visible outcome rather than the implementation details.
+- Keep it concise; aim for 72 characters or fewer. GitLab’s changelog uses the commit title, which can be truncated for long commit subjects. The 72-character recommendation leaves room for the MR reference appended by the squash template.
 
-- `[CI] My commit message`
-- `[Misc] My commit message`
-- `[Tools] My commit message`
-- `[catalogue] My commit message`
-- `[frontend] My commit message`
-- `[scheduler] My commit message`
-- `[taped] My commit message`
-- `[rmcd] My commit message`
+GitLab’s [changelog documentation](https://docs.gitlab.com/user/project/changelogs/) identifies the entry title as the commit title. Its [commit implementation](https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/models/commit.rb) truncates subjects of 100 characters or more to a shorter title ending in `...`. Keep the final squash-commit subject, including its MR reference, below that threshold.
 
-For changes that are mechanical, stylistic, or span multiple components (e.g., formatting, logging adjustments, or comment changes), use the `[Misc]` prefix. If a change is logically scoped to one component, prefer using the relevant prefix. Split commits when that improves clarity.
+Describe the outcome users care about. Supporting work such as updating tests, documentation, or internal helpers normally does not belong in the title: it is part of delivering the change.
 
-## How to generate a changelog entry
+| Avoid | Prefer | Why |
+| --- | --- | --- |
+| `[Tools] Add storage-class filtering and update system tests` | `[Tools] Add storage-class filtering to archive file listings` | Name the capability and where it applies; test updates are supporting work. |
+| `[taped] Improve error handling` | `[taped] Fix crash when reopening log files` | Identify the observable problem being fixed. |
+| `[scheduler] Fixed incorrect mount selection` | `[scheduler] Fix incorrect mount selection` | Use the imperative mood after the scope prefix. |
+| `[frontend] Add a null check in the request handler` | `[frontend] Fix crash on malformed requests` | Describe the effect rather than the implementation technique. |
 
-Changelog entries are generated automatically right before the release of a new CTA version. A changelog entry is generated for every commit containing a `Changelog: ` trailer.
-By default, you will see the following squash commit template in the GitLab UI of merge requests:
+These are illustrative titles. If a change affects only tests or documentation, name that work in the MR title, but normally omit the changelog trailer.
 
-```txt
-%{title} (%{reference})
+A completed squash-commit message might look like this, using illustrative MR and issue numbers:
 
-%{issues}
+```text
+[taped] Fix crash when reopening log files (cta/CTA!1234)
 
-Changelog: addition/fix/change/deprecation/removal/security/performance/other -- remove this line if no changelog entry required
+Closes #1234
+
+Changelog: fix
 ```
 
-The last line is what determines if and where your commit ends up in the changelog. The following options are available:
+Keep the MR reference and relevant issue links from GitLab’s template. The title conventions also apply to MRs that do not need a changelog entry; omit the trailer for those changes. For [GitHub contributions](github.md), the maintainer handling the GitLab merge prepares the final commit metadata.
 
-- `addition`: for any new features added
-- `fix`: for any bug fixes
-- `change`: for any features that changed in functionality
-- `deprecation`: for any changes that deprecated (but did not remove) functionality
-- `removal`: for any changes that removed functionality
-- `security`: for any serious security fixes/changes
-- `performance`: for any changes improving performance but not changing functionality
-- `other`: for any changes that do not fall in the categories above
+## Categories
 
-As described above, not every commit should end up in the changelog. If your commit should not end up in the changelog, simply remove the last line; ensure that the `Changelog: ` trailer is not present.
+Use one of the values configured in `.gitlab/changelog_config.yml`:
+
+| Value | Use for |
+| --- | --- |
+| `addition` | New features or capabilities. |
+| `fix` | Bug fixes. |
+| `change` | Changes to existing behaviour. |
+| `deprecation` | Features marked for future removal. |
+| `removal` | Removed features or interfaces. |
+| `security` | Security fixes or improvements. |
+| `performance` | Performance improvements. |
+| `other` | User-visible changes that do not fit another category. |
+
+Deprecation and removal happen at different stages: use `deprecation` when a feature remains available but users should stop relying on it and migrate to an alternative. Use `removal` when the feature is actually removed. A deprecation entry should identify the alternative and, if known, the planned removal release; the later removal needs its own entry.
+
+Ordinary contributions prepare the commit metadata rather than editing `CHANGELOG.md` directly. During release preparation, the tooling generates a draft from commit trailers and maintainers review it before publication. See [Release Procedure](maintainers/releases.md) for that workflow.

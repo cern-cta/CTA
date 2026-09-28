@@ -8,4 +8,4 @@ cta-statistics-update /path/to/catalogue-connection.conf
 
 The positional argument supplies the catalogue database connection file. `--help` (`-h`) displays usage. The command reports the number of tapes updated and elapsed time.
 
-See [Catalogue Statistics](../monitoring/catalogue-statistics.md) for scheduling and exporting the results.
+See [Catalogue Statistics](../run-and-maintain/monitoring/catalogue-statistics.md) for scheduling and exporting the results.

@@ -14,8 +14,6 @@
 
 *[CASTOR]: CERN Advanced STORage manager
 
-*[CERN]: European Organization for Nuclear Research
-
 *[CI]: Continuous Integration
 
 *[CLI]: Command-Line Interface
@@ -23,8 +21,6 @@
 *[CPU]: Central Processing Unit
 
 *[CRC32C]: 32-bit Cyclic Redundancy Check using the Castagnoli polynomial
-
-*[CTA]: CERN Tape Archive
 
 *[DAQ]: Data Acquisition System
 

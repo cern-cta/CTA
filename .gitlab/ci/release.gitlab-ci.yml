@@ -203,16 +203,12 @@ publish-images-public:
     matrix:
       - TARGET_NAME: *cta-image-targets
 
-# Follow the existing release-job dependencies without an additional success marker.
+# Publish validated documentation independently of RPM and image publication.
 publish-docs:
   interruptible: false
   stage: release
   needs:
     - job: build-docs
-      artifacts: false
-    - job: internal-release-cta
-      artifacts: false
-    - job: publish-images-private
       artifacts: false
   rules:
     - if: '$PIPELINE_TYPE != "DEFAULT" || $CI_PIPELINE_SOURCE == "parent_pipeline"'

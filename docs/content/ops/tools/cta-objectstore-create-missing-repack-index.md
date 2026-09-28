@@ -12,4 +12,4 @@ cta-objectstore-create-missing-repack-index [objectstoreURL]
 
 Without a URL, the command reads `/etc/cta/cta-scheduler.conf`.
 
-See [Scheduler Configuration](../configuration/scheduler.md) for backend setup.
+See [Scheduler Configuration](../deploy-and-configure/configuration/scheduler.md) for backend setup.

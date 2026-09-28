@@ -12,4 +12,4 @@ cta-objectstore-collect-orphaned-object [objectstoreURL catalogueLoginFile] obje
 
 With only an object name, the command reads `/etc/cta/cta-scheduler.conf` and `/etc/cta/cta-catalogue.conf`.
 
-See [Scheduler Configuration](../configuration/scheduler.md) for backend setup.
+See [Scheduler Configuration](../deploy-and-configure/configuration/scheduler.md) for backend setup.

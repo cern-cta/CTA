@@ -38,7 +38,7 @@ Choose a starting point below.
     Install, configure, monitor, and upgrade a CTA deployment.
 
     [Operations guide](ops/index.md) ·
-    [Installation](ops/deployment/installation/index.md) · [Upgrading CTA](ops/upgrades/cta.md)
+    [Installation](ops/deploy-and-configure/deployment/installation/index.md) · [Upgrading CTA](ops/run-and-maintain/upgrades/cta.md)
 
 </div>
 
@@ -51,7 +51,7 @@ Choose a starting point below.
     Set up a development environment, build from source, run tests, and contribute changes.
 
     [Developer guide](dev/index.md)
-    · [Conventions](dev/conventions/index.md)
+    · [Conventions](dev/reference/conventions/index.md)
 
 -   :material-forum:{ .lg .middle } [__Getting help__](https://cta-community.web.cern.ch/)
 
@@ -67,6 +67,6 @@ Choose a starting point below.
 
 - [Main CTA website](https://cta.web.cern.ch/) — Project background, presentations, and publications.
 - [Source code](https://gitlab.cern.ch/cta/CTA) — Browse the repository and contribute.
-- [Release notes](release-notes.md) — Features, fixes, and changes in each release.
+- [Changelog](changelog.md) — Features, fixes, and changes in each release.
 
 </div>

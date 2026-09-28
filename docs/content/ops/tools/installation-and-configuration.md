@@ -1,8 +1,8 @@
 # Tool Installation and Shared Configuration
 
-Operator tools are grouped by task in Tools & Reference, regardless of which package supplies them. Commands built in the CTA source tree are installed with the corresponding [CTA packages or images](../deployment/installation/index.md). Python tools such as `cta-ops-admin` and ATRESYS are distributed from [cta-operations-utilities](https://gitlab.cern.ch/cta/cta-operations-utilities).
+Operator tools are grouped by task in Tools & Reference, regardless of which package supplies them. Commands built in the CTA source tree are installed with the corresponding [CTA packages or images](../deploy-and-configure/deployment/installation/index.md). Python tools such as `cta-ops-admin` and ATRESYS are distributed from [cta-operations-utilities](https://gitlab.cern.ch/cta/cta-operations-utilities).
 
-The installation steps below apply to that Python distribution. Select a released tag compatible with the deployed CTA version and follow each tool's requirements. EOS-specific tools are documented under [EOS integration](../integrations/eos/tools.md).
+The installation steps below apply to that Python distribution. Select a released tag compatible with the deployed CTA version and follow each tool's requirements. EOS-specific tools are documented under [EOS integration](../deploy-and-configure/integrations/eos/tools.md).
 
 ## Installation
 

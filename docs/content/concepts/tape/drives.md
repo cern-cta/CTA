@@ -36,7 +36,7 @@ Drive counters distinguish bytes received from the host from bytes written to ta
 
 ### Encryption
 
-Supported drives can encrypt data as it is written to tape and decrypt it during reads. CTA records the tape's encryption key name in the catalogue; an external key-management integration supplies the key material to the tape daemon, which configures the drive. Reading encrypted media requires access to the corresponding key. See [encryption setup](../../ops/deployment/tape-servers.md#set-up-encryption) for operational guidance.
+Supported drives can encrypt data as it is written to tape and decrypt it during reads. CTA records the tape's encryption key name in the catalogue; an external key-management integration supplies the key material to the tape daemon, which configures the drive. Reading encrypted media requires access to the corresponding key. See [encryption setup](../../ops/deploy-and-configure/deployment/tape-servers.md#set-up-encryption) for operational guidance.
 
 ### Logical block protection (LBP)
 
@@ -44,12 +44,12 @@ LBP checks the integrity of individual blocks exchanged between CTA and the driv
 
 ### Recommended Access Order (RAO)
 
-A capable drive can recommend an order for reading a batch of files that reduces tape positioning time. CTA also provides software ordering, so RAO is not exclusively a hardware feature. See [Recommended Access Order](rao.md) for the concepts and [RAO configuration](../../ops/configuration/tape-daemon.md#recommended-access-order) for setup.
+A capable drive can recommend an order for reading a batch of files that reduces tape positioning time. CTA also provides software ordering, so RAO is not exclusively a hardware feature. See [Recommended Access Order](rao.md) for the concepts and [RAO configuration](../../ops/deploy-and-configure/configuration/tape-daemon.md#recommended-access-order) for setup.
 
 ### TapeAlert and drive statistics
 
 TapeAlert flags report conditions such as media problems and cleaning requirements. Drive and volume counters provide additional information for investigating errors and performance; the available statistics depend on the hardware.
 
-The tape daemon reads and logs TapeAlert flags and supported drive and volume statistics. It also aborts a write session if its initial alert check finds conditions classified as critical for writing. See [Logging](../../ops/monitoring/logging.md) for collecting and interpreting CTA logs, and [Tapes, Drives, and Libraries](../../ops/administration/tapes-and-drives.md) for operator intervention.
+The tape daemon reads and logs TapeAlert flags and supported drive and volume statistics. It also aborts a write session if its initial alert check finds conditions classified as critical for writing. See [Logging](../../ops/run-and-maintain/monitoring/logging.md) for collecting and interpreting CTA logs, and [Tapes, Drives, and Libraries](../../ops/run-and-maintain/administration/tapes-and-drives.md) for operator intervention.
 
-See [Tape Server Setup](../../ops/deployment/tape-servers.md) for device mappings and configuration, and [Tapes, Drives, and Libraries](../../ops/administration/tapes-and-drives.md) for registration and administration.
+See [Tape Server Setup](../../ops/deploy-and-configure/deployment/tape-servers.md) for device mappings and configuration, and [Tapes, Drives, and Libraries](../../ops/run-and-maintain/administration/tapes-and-drives.md) for registration and administration.

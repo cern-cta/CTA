@@ -14,4 +14,4 @@ The connection file identifies the scheduler database. `-h` / `--help` prints us
 
 `-v` / `--version` selects the scheduler schema version to create.
 
-See [Scheduler Configuration](../configuration/scheduler.md) for backend setup.
+See [Scheduler Configuration](../deploy-and-configure/configuration/scheduler.md) for backend setup.

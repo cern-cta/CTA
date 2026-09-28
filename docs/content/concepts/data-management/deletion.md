@@ -38,12 +38,12 @@ Restoring CTA metadata alone does not recreate the disk namespace entry or a dis
 
 EOS eviction removes disk data while preserving the namespace entry and tape copies. Explicit client eviction and background garbage collection both serve this purpose; neither is a CTA `DELETE` request. EOS checks whether a replica is eligible for eviction, including whether its data is safely archived and whether it is still needed.
 
-See [Retrieval](retrieval.md#shared-requests-and-disk-replica-retention) for shared client requests and [EOS Buffer Cleanup](../../ops/integrations/eos/buffer-cleanup.md) for the garbage-collection mechanisms and operational settings.
+See [Retrieval](retrieval.md#shared-requests-and-disk-replica-retention) for shared client requests and [EOS Buffer Cleanup](../../ops/deploy-and-configure/integrations/eos/buffer-cleanup.md) for the garbage-collection mechanisms and operational settings.
 
 ### Deleting the file
 
 Removing the file from the EOS namespace, for example with `eos rm`, also triggers a deletion request to CTA. The integration must avoid leaving EOS advertising a valid tape copy after its active CTA record has been removed.
 
-If EOS removes its namespace reference but CTA deletion fails, tape data and catalogue records can remain without a corresponding EOS file. This inconsistency must be logged and reconciled; it should not be described as an automatic future cleanup. See [Metadata Consistency & Recovery](../../ops/integrations/eos/metadata-recovery.md).
+If EOS removes its namespace reference but CTA deletion fails, tape data and catalogue records can remain without a corresponding EOS file. This inconsistency must be logged and reconciled; it should not be described as an automatic future cleanup. See [Metadata Consistency & Recovery](../../ops/deploy-and-configure/integrations/eos/metadata-recovery.md).
 
-EOS namespace recovery and CTA recycle-bin restoration are separate operations. The coordinated procedure belongs under [Recycle Bin and File Recovery](../../ops/administration/file-recovery.md).
+EOS namespace recovery and CTA recycle-bin restoration are separate operations. The coordinated procedure belongs under [Recycle Bin and File Recovery](../../ops/troubleshooting-and-recovery/file-recovery.md).

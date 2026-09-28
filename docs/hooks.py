@@ -66,7 +66,7 @@ def on_page_content(html: str, page: Page, **kwargs: Any) -> str:
     )
     # Hide repeated category headings from the sidebar to make releases easier
     # to find; the headings remain visible in the page itself.
-    if page.file.src_uri == "release-notes.md":
+    if page.file.src_uri == "changelog.md":
         def prune(items: list[AnchorLink]) -> None:
             for item in items:
                 if item.level >= 2:

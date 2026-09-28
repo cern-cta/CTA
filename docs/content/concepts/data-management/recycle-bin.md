@@ -20,7 +20,7 @@ Recovery requires both the retained metadata and the corresponding readable tape
 
 If the disk namespace entry was also deleted, it must be restored or recreated and its identity coordinated with CTA. Restoring CTA's catalogue alone does not restore the client's path, permissions, or disk replica. Conversely, a disk-system recycle bin does not by itself restore CTA's tape-copy records.
 
-The recycle bin is therefore a recovery mechanism, not a substitute for catalogue backups or additional tape copies. See [Recycle Bin and File Recovery](../../ops/administration/file-recovery.md) for operator procedures, including EOS namespace coordination.
+The recycle bin is therefore a recovery mechanism, not a substitute for catalogue backups or additional tape copies. See [Recycle Bin and File Recovery](../../ops/troubleshooting-and-recovery/file-recovery.md) for operator procedures, including EOS namespace coordination.
 
 ## Reclamation and reuse
 
@@ -28,6 +28,6 @@ Reclaiming a tape deletes its recycle-bin entries and resets its catalogue count
 
 After reclamation, those copies can no longer be restored through the recycle bin. Reclamation itself is a catalogue operation, but preparing a tape for reuse commonly also involves relabelling it. Writing new labels at the beginning of the tape establishes a new logical end of data (EOD), so the old records beyond it are no longer accessible through normal tape reads. This does not require physically overwriting all of the previous data.
 
-The distinction is between physical remnants and readable records: bytes that may remain on the medium after relabelling do not constitute recoverable CTA copies. Relabelling is destructive, even though it is not a full-media secure erase. See [Media Initialisation](../../ops/administration/media-initialisation.md) for the labelling workflow.
+The distinction is between physical remnants and readable records: bytes that may remain on the medium after relabelling do not constitute recoverable CTA copies. Relabelling is destructive, even though it is not a full-media secure erase. See [Media Initialisation](../../ops/run-and-maintain/administration/media-initialisation.md) for the labelling workflow.
 
 See [Deletion](deletion.md) for the distinction between file deletion, disk-replica eviction, and tape reclamation, and [Repack](repack.md) for replacing active copies before a tape is reused.

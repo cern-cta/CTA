@@ -25,4 +25,4 @@ For the objectstore backend, queue cleanup also supports tape-state transitions:
 
 The daemon uses the [Scheduler](scheduler.md) to claim and advance background work, the [Catalogue](catalogue.md) for metadata, and the disk system's reporting interface for notifications. Its routines run periodically, with the enabled set depending on the backend and deployment.
 
-See [Maintenance Daemon Configuration](../../ops/configuration/maintenance-daemon.md) for routine selection and settings.
+See [Maintenance Daemon Configuration](../../ops/deploy-and-configure/configuration/maintenance-daemon.md) for routine selection and settings.

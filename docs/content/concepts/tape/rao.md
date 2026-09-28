@@ -11,7 +11,7 @@ Tape is written in wraps that run along its length in alternating directions. Fi
 
 Hardware RAO asks a capable drive to recommend the retrieval order. CTA supplies the batch of files, receives the drive's ordering, and uses it to schedule the reads within that batch. The drive can use its knowledge of the tape layout and positioning behaviour to optimise the order.
 
-Hardware RAO is the preferred option when supported by the drive. Check the installed drive's capabilities and the [RAO configuration guidance](../../ops/configuration/tape-daemon.md#recommended-access-order) when commissioning it.
+Hardware RAO is the preferred option when supported by the drive. Check the installed drive's capabilities and the [RAO configuration guidance](../../ops/deploy-and-configure/configuration/tape-daemon.md#recommended-access-order) when commissioning it.
 
 ## Software RAO
 
@@ -30,4 +30,4 @@ For the algorithm and performance background, see the presentation [LTO performa
 
 ## Related guides
 
-Operators can find prerequisites, configuration, and diagnosis in [RAO configuration](../../ops/configuration/tape-daemon.md#recommended-access-order). The [retrieval lifecycle](../data-management/retrieval.md) explains the surrounding workflow.
+Operators can find prerequisites, configuration, and diagnosis in [RAO configuration](../../ops/deploy-and-configure/configuration/tape-daemon.md#recommended-access-order). The [retrieval lifecycle](../data-management/retrieval.md) explains the surrounding workflow.

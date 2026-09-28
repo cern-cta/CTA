@@ -1,244 +1,90 @@
 # Environment Setup
 
-This document describes building CTA from source and running a development instance in a standalone AlmaLinux 9 VM. The disk system is a separate deployment choice; the EOS example below uses the default development setup.
+This walkthrough prepares a full CTA development instance on an AlmaLinux 9 VM, using Kubernetes, virtual tape hardware, and an EOS disk buffer. If you only need to edit files or build packages, see [Choose where to work](prerequisites.md#choose-where-to-work). Repository access, cloning, Git configuration, and hooks are covered in [Prerequisites & Access](prerequisites.md).
 
-## Initial setup
+## Prepare the development machine
 
-Before you start your development. Git should be configured to use your CERN email and username using the following commands:
+Follow the [CTA CI Node Setup instructions](https://gitlab.cern.ch/cta/ci/cta-ci-node-setup) to prepare the AlmaLinux 9 VM, including the `cirunner` account, container tools, Kubernetes, and virtual tape hardware. The `cta-dev install` step below checks that the machine has the prerequisites needed for development.
 
-```bash
-git config --global user.email "<YOUR CERN EMAIL>"
-git config --global user.name "<YOUR CERN USERNAME>"
-```
+### Connect to the VM
 
-!!! tip
-
-    Optionally (but recommended), configure which text editor git should be using for any text operations:
-
-    ```sh
-    git config --global core.editor "vim"
-    ```
-
-## Pre-commit Hooks
-
-Pre-commit hooks are a convenience tool for developers to get feedback earlier. The CTA repository provides a number of pre-commit hooks:
-
-- secret detection
-- C++ formatting
-- Pythong formatting and linting
-
-To use pre-commit hooks, you must have installed the [pre-commit tool](https://pre-commit.com/):
+From your workstation, connect to the development account:
 
 ```sh
-pip install pre-commit
+ssh cirunner@<yourvm>
 ```
 
-Then the pre-commit hooks in the repository can be enabled by navigating to the root of the repository and executing:
+If you use SSH for Git access and keep the repository key on your workstation, you can instead load it into your local SSH agent and forward the agent when connecting:
 
 ```sh
-pre-commit install
-```
-
-The first time the hooks run might take a bit longer as the hooks will need to be installed.
-
-Before every commit, the hooks specified in `.pre-commit-config.yaml` will be automatically triggered.
-Depending on the hook, it might simply fail a check (e.g. secret detection), or it might format files for you automatically (e.g. `clang-format`).
-
-When hooks format things automatically, you have to explicitly stage the changes (`git add`) and commit again. After a hook failure, you can check with `git diff` to see if the hook made any changes.
-
-!!! tip
-
-    If you want to temporarily deactivate all pre-commit checks run `git commit --no-verify` or `SKIP=<hook_id>,... git commit` to specify a list of hooks to skip.
-    While this is not recommended, it is still safe to do so because all pre-commit checks are also performed in CI. It is simply less convenient to fix it afterwards.
-
-### Detect-secrets hook
-
-This hook detects if any secrets would be added by referring to the `.secrets.baseline` file.
-
-False positives may cause this pre-commit hook to fail. The best way to deal with such and error is the following:
-
-1. Run the `detect-secrets` tool through the hook:
-
-    ```sh
-    pre-commit run detect-secrets scan --baseline .secrets.baseline
-    ```
-
-2. Add `.secret-baseline` file to the commit.
-
-For more information you can check the official [documentation](https://github.com/Yelp/detect-secrets/blob/master/README.md)
-
-## Installing the Kubernetes Environment
-
-Follow the link below to set up a virtual environment to run CTA in.
-
-<div class="grid cards" markdown>
-
--   :simple-kubernetes:{ .lg .middle } [__CTA CI Node Setup__](https://gitlab.cern.ch/cta/ci/cta-ci-node-setup)
-
-    ---
-
-    Find instructions on how to set up a CI Kubernetes environment for CTA.
-
-    [:octicons-arrow-right-24: https://gitlab.cern.ch/cta/ci/cta-ci-node-setup](https://gitlab.cern.ch/cta/ci/cta-ci-node-setup)
-
-</div>
-
-!!! tip
-
-    For building your own RPMs/Docker images, you don't need this Kubernetes environment. `cta-dev` supports Podman & Docker up until the `deploy` stage.
-
-### Testing Kubernetes
-
-Kubernetes is automatically started at boot time for user `cirunner`. While logged in as the `cirunner`, you should now be able to run `kubectl` commands.
-
-!!! example
-
-    Running `kubectl get namespaces` should output something along the lines of:
-
-    ```text
-    default           Active   2m16s
-    kube-node-lease   Active   2m16s
-    kube-public       Active   2m16s
-    kube-system       Active   2m16s
-    ```
-
-
-### Using ssh Keys on the VM
-
-During development it is convenient to be able to use ssh keys from the host machine on the VM. For example to execute git related actions.
-To do this, start by adding the ssh key you want to use on the VM to the ssh agent:
-
-```sh
-ssh-add <your ssh key> # e.g. ssh-add ~/.ssh/id_rsa
-```
-
-After doing this, you can ssh into the VM with the `-A` flag enabled and you should be able to use this key:
-
-```sh
+ssh-add <path-to-your-ssh-key>
 ssh -A cirunner@<yourvm>
 ```
 
-## Containerised Compilation and Deployment
+Agent forwarding is optional; it is not needed for the GitHub HTTPS clone route. See [Repository authentication](prerequisites.md#repository-authentication) for Git access setup.
 
-To start, ssh into the machine as `cirunner` and navigate to a directory of your choice to clone the CTA repo. In this example, we will be using `/home/cirunner/`:
+## Prepare your checkout
 
-```sh
-ssh -A cirunner@<yourvm>
-git clone ssh://git@gitlab.cern.ch:7999/cta/CTA.git
-cd CTA
-git submodule update --init --recursive
-# Install pre-commit recommended
-```
+On the development machine, follow [Clone the repository](prerequisites.md#clone-the-repository), [Configure Git](prerequisites.md#configure-git), and [Enable pre-commit](prerequisites.md#enable-pre-commit). If the checkout is already prepared on this machine, use it directly.
 
-You should now have a fully initialized repository on the VM.
+Run the remaining commands from the repository root on the development machine.
 
-To compile and deploy CTA on the local Kubernetes cluster, execute the following script:
+## Install cta-dev
 
 ```sh
-cd ci/
-./cta-dev.sh install # This will allow you to use `cta-dev` from anywhere and set up the required environment for the system tests
-cta-dev up
+./ci/cta-dev.sh install
 ```
 
-### EOS
+The installer checks the development prerequisites and sets up the `cta-dev` command and the system-test Python environment. If it reports missing tools or configuration, resolve the reported issues and rerun it before continuing.
 
-The default EOS deployment produces pods such as the following in the `dev` namespace:
+After installation succeeds, restart your shell, ensure `~/.local/bin` is on `PATH`, and check the command is available:
 
 ```sh
-NAME                                READY   STATUS      RESTARTS   AGE
-auth-configure-keycloak-job-59fms   0/1     Completed   0          66s
-auth-generate-secrets-job-8whln     0/1     Completed   0          84s
-auth-kdc                            1/1     Running     0          84s
-auth-keycloak                       1/1     Running     0          84s
-cta-catalogue-postgres-db           1/1     Running     0          84s
-cta-catalogue-reset-job-b5c4w       0/1     Completed   0          76s
-cta-cli-0                           1/1     Running     0          47s
-cta-client-0                        1/1     Running     0          47s
-cta-frontend-0                      1/1     Running     0          47s
-cta-maintd-d6767b99-2grbr           1/1     Running     0          47s
-cta-maintd-d6767b99-lr6mm           1/1     Running     0          47s
-cta-scheduler-reset-job-c5d45       0/1     Completed   0          84s
-cta-tpsrv01-0                       2/2     Running     0          47s
-cta-tpsrv02-0                       2/2     Running     0          47s
-eos-fst-0                           1/1     Running     0          47s
-eos-mgm-0                           1/1     Running     0          47s
-eos-qdb-0                           1/1     Running     0          47s
+cta-dev --help
 ```
 
-### dCache
+See [First-time setup](../reference/tools/development-workflow.md#first-time-setup) for installer details.
 
-For the dCache deployment option, see [cta-dev deployment variants](development-workflow.md#common-workflows) and the [integration outline](../integrations/dcache.md).
+## Build and deploy
 
-You now have a development environment. `cta-dev` is the main tool for local development. For more information, run `cta-dev --help` and have a look at [the cta-dev page](development-workflow.md).
-
-## Simple workflow
-
-### EOS
-
-The above will spawn a very barebones setup with an empty Catalogue and no proper EOS configuration. This is of course not very interesting to play around with, so let’s populate our system with some data. To do this, we only want to run the setup part of the system tests:
-
-```
-cta-dev test setup
-```
-
-Now Let's familiarise ourselves with the different pods and the archival workflow.
-The `cta-cli-0` pod can be used to execute `cta-admin` commands. Start by opening a shell in this pod:
-
-```shell
-kubectl exec -it -n dev cta-cli-0 -- bash
-```
-
-To see the version that we are running on:
-
-```shell
-cta-admin version
-```
-
-At this point, **you should have a look at the [Introductory Walkthrough](../integrations/eos/walkthrough.md)**, which will make you familiar with the main workflows in CTA, as well as the most important commands in `cta-admin`.
-
-
-### Additional tests with EOS
-
-If you want to do a more elaborate test, you can run one of the system tests such as `ci/system_tests/tests/client_test.py`. Luckily, `cta-dev` can run these tests for you without having to manually invoke `pytest`:
+Build CTA packages and images, then deploy the development instance in the `dev` namespace:
 
 ```sh
-cta-dev deploy # Just to ensure we start fresh. Alternatively, add the --teardown-first flag to the test command
-cta-dev test client
+cta-dev up --namespace dev
 ```
 
-Note that this may take about 10 minutes to complete.
-___
+This walkthrough uses the default EOS deployment. For dCache or other deployment options, see [cta-dev deployment variants](../reference/tools/development-workflow.md#common-workflows).
 
-## Cheat Sheet: A quick summary of how to work with pods
+!!! note "Redeploying an instance"
 
-To see all the pods in a namespace (e.g. `dev`), you can use:
+    Running `cta-dev up` again replaces the existing managed development deployment in the selected namespace and resets its catalogue and scheduler. Use it when you intend to rebuild and recreate the instance.
 
-```shell
+Inspect the deployed pods:
+
+```sh
 kubectl get pods -n dev
 ```
 
-In general, to open a shell on any desired `<pod>`, you can execute the following:
+Service pods should become ready, with all their containers counted in the `READY` column. Setup jobs can show `Completed`. For pods that remain pending or fail to start, use the commands in [Working with Development Pods](../reference/tools/development-pods.md) to inspect their logs.
 
-```shell
-kubectl exec -it -n dev <pod> -- bash
+## Initialize and verify the deployment
+
+Prepare the system-test fixtures, including catalogue resources, virtual tape setup, and EOS configuration:
+
+```sh
+cta-dev test --namespace dev setup
 ```
 
-Some pods have multiple containers in them. To specify which container to open the shell in, add the `-c` flag:
+Check that the administrative client can communicate with CTA:
 
-```shell
-kubectl exec -it -n dev <pod> -c <container> -- bash
-```
-
-To execute a command directly without opening a dedicated shell (e.g running `cta-admin version`), you can do the following:
-
-```shell
+```sh
 kubectl exec -it -n dev cta-cli-0 -- cta-admin version
 ```
 
-Most pods will log directly to `stdout/stderr`. To see this, use the `kubectl logs` command:
+The command should return version information without an error. This verifies administrative communication with the initialized instance.
 
-```shell
-kubectl logs <pod> [-c <container>] -n dev
-```
+## Next: archive and retrieve a file
 
-Some of the process produce multiple log files (e.g. the XRootD Frontend or the EOS pods). You can find all of these logs in `/var/log` in the corresponding container.
+Before making your first code change, follow the [EOS archive and retrieve walkthrough](../reference/integrations/eos/walkthrough.md) using the instance you just prepared. It introduces the basic CTA workflows and administrative commands by taking you through archiving a file to tape and retrieving it to disk.
+
+Working through these steps gives you a practical foundation for understanding the code and tests. Afterwards, continue with [Your First Change](first-change.md). For further validation of your environment, see [Running system tests](../reference/tools/development-workflow.md#system-tests).

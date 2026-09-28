@@ -4,48 +4,36 @@ title: Development overview
 
 # Development
 
-This section is for people changing CTA or developing disk-system integrations. It covers source code, interfaces, tests, and contribution rules. Release coordination and project infrastructure are covered separately in [For Maintainers](maintainers/index.md). To run an existing deployment, use [Operations](../ops/index.md).
-
-Start with [Development Setup](getting-started/environment-setup.md), [Interfaces and Protocols](internals/interfaces.md), and [Testing CTA](testing/index.md). System-specific adapter work belongs under [Disk Buffer Integrations](integrations/index.md).
-
-This section provides comprehensive guides, references, and best practices to help with the development of CTA. Before making any contributions to CTA, please carefully read through the contributing instructions linked below.
-
-## How to Contribute
-
-For our version control management practice we use trunk-based development. This means we have a single `main` branch where we frequently merge small features, bug fixes and maintenance updates. It is important that changes are kept small and focussed.
-The branch `main` is protected. It is therefore not possible to directly push new commits. The only way to add changes is with a _Merge Request_ (MR).
-
-1. Request access to work on the CTA repository (contact us)
-2. [Set up a development environment](getting-started/environment-setup.md)
-3. [Choose or create an issue](contributing/issues.md) to work on
-4. [Create a branch](contributing/branches.md) on the CTA repository
-5. Make your changes on this branch (see [Coding Conventions](conventions/coding/general.md))
-6. [Open a merge request](contributing/merge-requests.md) from your branch into `main`
-7. Ensure all necessary checks pass and assign/request a reviewer
-8. Wait for your work to be reviewed and eventually merged
+This section is for people changing CTA, its tooling and documentation, or developing disk-system integrations. It covers source code, interfaces, tests, and contribution procedures. To install or run an existing deployment, use [Operations](../ops/index.md).
 
 ## CTA Technologies
 
-CTA is written primarily in C++. It uses CMake or the build system in combination with a [SPEC file](https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/packaging_and_distributing_software/packaging-software_packaging-and-distributing-software#assembly_what-a-spec-file-is_packaging-software) to generate the binaries/RPMs.
+CTA's core services are written primarily in C++. The wider CTA tooling also uses Python and Rust, with some tools maintained in separate repositories. Development and Continuous Integration (CI) scripts use Bash and Python.
 
-For testing/development purposes, a combination of Kubernetes and Helm is used for spawning CTA in containers. Many of the Continuous Integration (CI) scripts are written in Bash or Python.
+CMake configures the C++ build, and RPM spec files define how the software is packaged. Development builds use containers; Kubernetes and Helm deploy CTA and its dependencies for development and system testing. See [Building Images & Packages](reference/tools/building-images-and-packages.md) and [Testing CTA](reference/testing/index.md) for details.
 
-- To learn more about the Continuous Integration setup used for CTA, see the `Testing & CI` section.
-- To read more about architecture of CTA, see the `Internals` section.
+## Find Your Way
 
-## Licensing
+The navigation has three groups:
 
-CTA is licensed under [GPL Version 3](https://gitlab.cern.ch/cta/CTA/-/blob/main/COPYING?ref_type=heads) and uses [SPDX](https://spdx.dev) identifiers for machine-readable licensing information.
-All files must therefore include an SPDX header at the top of the file:
+- **Getting Started** introduces the repository and the path to a first change. Begin with [Prerequisites & Access](getting-started/prerequisites.md).
+- **Contributing** covers proposing, submitting, and reviewing changes. Start with the [Contributing overview](contributing/index.md); release and infrastructure procedures are under [For Maintainers](contributing/maintainers/index.md).
+- **Technical Reference** covers [development tools](reference/tools/development-workflow.md), [testing and CI](reference/testing/index.md), [conventions](reference/conventions/index.md), [internals](reference/internals/index.md), [disk-buffer integrations](reference/integrations/index.md), and [instrumentation](reference/instrumentation/index.md). Consult these pages as needed for your task.
 
-```text
-SPDX-FileCopyrightText: <year of creation> CERN
-SPDX-License-Identifier: GPL-3.0-or-later
-```
+## Recommended Reading Order
 
-External contributors are encouraged to add their own `SPDX-FileCopyrightText` line for new files or significant contributions. Files may therefore contain multiple copyright lines.
+1. Read the [Concepts introduction](../concepts/index.md), [component overview](../concepts/components/index.md), and [file workflows](../concepts/data-management/index.md) for background.
+2. Check [Prerequisites & Access](getting-started/prerequisites.md).
+3. Explore the [Project Structure](getting-started/project-structure.md).
+4. Complete [Environment Setup](getting-started/environment-setup.md).
+5. Work through the [EOS archive and retrieve walkthrough](reference/integrations/eos/walkthrough.md) to learn the basic workflows using your development instance.
+6. Follow [Your First Change](getting-started/first-change.md), consulting the relevant [Coding Conventions](reference/conventions/coding/general.md).
+7. Use [Testing CTA](reference/testing/index.md) to choose and run tests.
+8. Follow the [contribution guide](contributing/index.md) for your GitLab or GitHub route.
 
-All files must include an SPDX license identifier indicating GPL-3.0-or-later. License compliance is checked using REUSE.
+## How to Contribute
+
+Keep changes small and focused. The [Contributing overview](contributing/index.md) explains how to discuss your proposal and choose between CERN GitLab and GitHub. See [Copyright conventions](reference/conventions/coding/copyright.md) for copyright and license metadata requirements.
 
 ## Useful Links
 

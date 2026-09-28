@@ -12,4 +12,4 @@ cta-scheduler-schema-drop databaseConnectionFile [options]
 
 The connection file identifies the scheduler database. `-h` / `--help` prints usage.
 
-See [Scheduler Configuration](../configuration/scheduler.md) for backend setup.
+See [Scheduler Configuration](../deploy-and-configure/configuration/scheduler.md) for backend setup.

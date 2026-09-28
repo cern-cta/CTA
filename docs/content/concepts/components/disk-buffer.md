@@ -31,7 +31,7 @@ to integrate with CTA:
   constant rate. Starving tape drives can trigger dismounting of tapes, which has a serious negative impact on system
   performance. This normally means using fast SSDs.
 
-The sections below describe disk-system integrations separately from the core CTA responsibilities. Operational setup belongs under [Disk Buffer Integration](../../ops/integrations/index.md).
+The sections below describe disk-system integrations separately from the core CTA responsibilities. Operational setup belongs under [Disk Buffer Integration](../../ops/deploy-and-configure/integrations/index.md).
 
 ## EOS
 

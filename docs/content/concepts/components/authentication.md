@@ -13,16 +13,16 @@ CTA distinguishes three authentication boundaries:
 The APIs have separate authentication boundaries:
 
 - [Workflow Frontend](workflow-api.md): supports JWT and mTLS authentication for workflow events
-(see [WFE Authentication Configuration](../../ops/configuration/authentication.md#mtls-authentication-wfe-only)).
+(see [WFE Authentication Configuration](../../ops/deploy-and-configure/configuration/authentication.md#mtls-authentication-wfe-only)).
 - [Admin Frontend](admin-api.md): supports JWT and Kerberos authentication for `cta-admin` commands
-(see [Admin Authentication Configuration](../../ops/configuration/authentication.md#kerberos-admin-api)).
+(see [Admin Authentication Configuration](../../ops/deploy-and-configure/configuration/authentication.md#kerberos-admin-api)).
 
 ### Tape Daemon
 The tape daemon reads and writes file data through the disk system's data-transfer interface. The credentials for this connection are separate from frontend workflow and admin credentials.
 
 #### EOS
 
-The EOS integration uses SSS authentication for tape-daemon data transfers. See [EOS Configuration](../../ops/integrations/eos/configuration.md).
+The EOS integration uses SSS authentication for tape-daemon data transfers. See [EOS Configuration](../../ops/deploy-and-configure/integrations/eos/configuration.md).
 
 The diagram shows the three independent connections in the EOS integration. Arrows point from the component initiating the connection to the service authenticating it.
 

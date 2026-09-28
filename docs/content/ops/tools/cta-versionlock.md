@@ -19,4 +19,4 @@ Use `--help` for options and paths. The default files are `/etc/yum/pluginconf.d
 | `remove` | Remove CTA's locks; this does not restore the previous host file. |
 | `check-installed` | Check installed packages against the host's locks. |
 
-See [RPM installation](../deployment/installation/rpm-packages.md#installation) for the deployment workflow.
+See [RPM installation](../deploy-and-configure/deployment/installation/rpm-packages.md#installation) for the deployment workflow.

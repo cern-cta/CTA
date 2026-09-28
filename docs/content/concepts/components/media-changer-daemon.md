@@ -12,4 +12,4 @@ This separates cartridge movement from data transfer: the tape daemon reads and 
 
 Tape daemons contact the media changer through its RMC interface. Administrative clients such as `cta-smc` also use this interface to inspect the library and request media movements. The daemon needs access to the library's media-changer device to issue the SCSI commands that operate the robotics. The library and drive mapping must identify the physical drive involved in each mount.
 
-See [Tape Libraries](../tape/libraries.md) for the hardware concepts and [Media Changer Daemon Configuration](../../ops/configuration/media-changer-daemon.md) for device access, endpoint settings, and configuration examples.
+See [Tape Libraries](../tape/libraries.md) for the hardware concepts and [Media Changer Daemon Configuration](../../ops/deploy-and-configure/configuration/media-changer-daemon.md) for device access, endpoint settings, and configuration examples.

@@ -8,4 +8,4 @@ cta-statistics-save --catalogueconf /path/to/catalogue-connection.conf > statist
 
 `--catalogueconf` (`-c`) supplies the catalogue database connection file. `--help` (`-h`) displays usage. Diagnostics are written to standard error.
 
-See [Catalogue Statistics](../monitoring/catalogue-statistics.md) for the refresh/export workflow.
+See [Catalogue Statistics](../run-and-maintain/monitoring/catalogue-statistics.md) for the refresh/export workflow.

@@ -37,7 +37,7 @@ The library tracks the physical locations of cartridges. CTA's catalogue tracks 
 
 A physical-library record is optional in CTA. It groups logical libraries for administration and records information about the hardware, such as slot counts. These catalogue values should not be confused with an automatically discovered, live hardware inventory.
 
-Associating logical libraries with a physical-library record also allows the corresponding resources to be disabled together for maintenance. See [Tapes, Drives, and Libraries](../../ops/administration/tapes-and-drives.md) for registration and state changes.
+Associating logical libraries with a physical-library record also allows the corresponding resources to be disabled together for maintenance. See [Tapes, Drives, and Libraries](../../ops/run-and-maintain/administration/tapes-and-drives.md) for registration and state changes.
 
 ### Logical libraries
 

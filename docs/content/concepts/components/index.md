@@ -76,7 +76,7 @@ Services connect directly to the catalogue and the scheduler backend they serve;
 
 For example, a separate repack backend has an Admin Frontend endpoint, maintenance daemon processing, and tape daemons assigned to it. The Workflow Frontend continues submitting ordinary requests to the normal-workload backend. This separates scheduler workloads, but the catalogue and any shared disk or tape infrastructure remain common resources.
 
-The architecture diagram above shows component roles, not the number of service instances or backends. See [Scheduler Configuration](../../ops/configuration/scheduler.md#isolate-repack-with-separate-scheduler-backends) for the operational setup.
+The architecture diagram above shows component roles, not the number of service instances or backends. See [Scheduler Configuration](../../ops/deploy-and-configure/configuration/scheduler.md#isolate-repack-with-separate-scheduler-backends) for the operational setup.
 
 ## Integration and access boundaries
 
@@ -84,4 +84,4 @@ The [Disk Buffer](disk-buffer.md) manages the client-facing namespace and disk r
 
 ## Service placement
 
-Tape services require access to the corresponding hardware, with one tape-daemon process per drive. The APIs and maintenance service can be placed separately. See [Deployment Planning](../../ops/deployment/planning.md) for availability, network, and placement decisions, and [Disk Buffer Integration](../../ops/integrations/index.md) for system-specific setup.
+Tape services require access to the corresponding hardware, with one tape-daemon process per drive. The APIs and maintenance service can be placed separately. See [Deployment Planning](../../ops/deploy-and-configure/deployment/planning.md) for availability, network, and placement decisions, and [Disk Buffer Integration](../../ops/deploy-and-configure/integrations/index.md) for system-specific setup.

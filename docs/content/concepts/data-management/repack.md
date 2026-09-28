@@ -83,7 +83,7 @@ sequenceDiagram
     MD ->> S: Process results and update repack status
 ```
 
-Both phases consume tape-drive capacity and disk bandwidth. Repack uses its designated VO's resource limits and competes for hardware with other work; see [Scheduling](scheduling.md) and [Repacking Tapes](../../ops/administration/repack.md) for policy and setup.
+Both phases consume tape-drive capacity and disk bandwidth. Repack uses its designated VO's resource limits and competes for hardware with other work; see [Scheduling](scheduling.md) and [Repacking Tapes](../../ops/run-and-maintain/administration/repack.md) for policy and setup.
 
 ## Completion and partial failures
 
@@ -91,13 +91,13 @@ Repack progresses per file, not as one atomic operation over the whole tape. Suc
 
 A completed request means its selected work succeeded. It does not by itself make the source tape reclaimable: add-copies mode retains source copies, and a request that processes only part of a tape leaves other active copies behind. Operators must check the remaining active copies and reclamation conditions separately.
 
-See [Recovering from partial failures](../../ops/administration/repack.md#recovering-from-partial-failures) for assessing completed work and planning a retry.
+See [Recovering from partial failures](../../ops/run-and-maintain/administration/repack.md#recovering-from-partial-failures) for assessing completed work and planning a retry.
 
 ## Using recovered files
 
 If files have been recovered outside the normal tape-read workflow, an operator can place them in the repack buffer for CTA to write onto destination tapes. This is often called **tape repair**, but it recovers file copies rather than repairing the cartridge itself.
 
-The supplied files must correspond to the existing catalogue entries and satisfy the normal integrity checks. This is an alternative source of file data within repack, not a separate placement mode. Buffer naming requirements and submission options belong in the [Tape Repair procedure](../../ops/administration/repack.md#tape-repair).
+The supplied files must correspond to the existing catalogue entries and satisfy the normal integrity checks. This is an alternative source of file data within repack, not a separate placement mode. Buffer naming requirements and submission options belong in the [Tape Repair procedure](../../ops/run-and-maintain/administration/repack.md#tape-repair).
 
 ## Source copies and reclamation
 
@@ -105,4 +105,4 @@ When a replacement copy is recorded, the previous copy's metadata moves to the [
 
 Repack does not erase the source tape. Once no active copies remain, reclamation is a separate operator action subject to the [Tape Lifecycle](../tape/lifecycle.md) conditions. Reclamation removes recycle-bin entries; subsequent relabelling establishes a new end of data and makes old records beyond it inaccessible to normal reads. See [Reclamation and reuse](recycle-bin.md#reclamation-and-reuse) for the recovery boundary.
 
-See [Repacking Tapes](../../ops/administration/repack.md) for prerequisites, commands, status checks, and cancellation, and [Media Initialisation](../../ops/administration/media-initialisation.md) for labelling.
+See [Repacking Tapes](../../ops/run-and-maintain/administration/repack.md) for prerequisites, commands, status checks, and cancellation, and [Media Initialisation](../../ops/run-and-maintain/administration/media-initialisation.md) for labelling.

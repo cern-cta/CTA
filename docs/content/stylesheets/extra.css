@@ -138,6 +138,29 @@ body { -webkit-font-smoothing: antialiased; }
   text-decoration-thickness: 1px;
 }
 .md-typeset .cta-home a:not(.md-button) { text-decoration: none; }
+/* External text links in page content only. Keep the origin exclusions in sync
+ * with site_url in mkdocs.yml. Material also makes preview links absolute;
+ * exclude the standard preview addresses. Delimiters avoid lookalike hosts.
+ * Empty alternative text keeps the indicator decorative for assistive technology.
+ */
+.md-content .md-typeset a:is([href^="https://" i], [href^="http://" i], [href^="//"]):not(
+  [href="https://cta.docs.cern.ch" i],
+  [href^="https://cta.docs.cern.ch/" i],
+  [href^="https://cta.docs.cern.ch?" i],
+  [href^="https://cta.docs.cern.ch#" i],
+  [href="//cta.docs.cern.ch" i],
+  [href^="//cta.docs.cern.ch/" i],
+  [href^="//cta.docs.cern.ch?" i],
+  [href^="//cta.docs.cern.ch#" i],
+  [href^="http://127.0.0.1:8000/" i],
+  [href^="http://localhost:8000/" i],
+  .md-icon, .md-content__button, :has(img, svg, .twemoji, .md-icon)
+)::after {
+  /* Keep the arrow with the final word without preventing long links wrapping. */
+  content: "\2060\00a0↗" / "";
+  font-size: .85em;
+}
+
 .md-typeset hr { border-color: var(--cta-border); }
 .md-nav__link { border-radius: 4px; }
 .md-nav__link:hover { color: var(--md-typeset-a-color); }

@@ -12,4 +12,4 @@ cta-objectstore-initialize [objectstoreURL]
 
 Without a URL, the command creates a VFS backend and prints its location. This differs from commands that read the default scheduler configuration.
 
-See [Scheduler Configuration](../configuration/scheduler.md) for backend setup.
+See [Scheduler Configuration](../deploy-and-configure/configuration/scheduler.md) for backend setup.

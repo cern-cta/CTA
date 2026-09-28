@@ -12,4 +12,4 @@ Acceptance of an archive or retrieve request means it has been queued, not that 
 
 The [Catalogue](catalogue.md) records file identities, tape copies, and policies; the [Scheduler](scheduler.md) coordinates pending work. Operator commands use the separate [Admin Frontend](admin-api.md).
 
-Workflow requests have their own [authentication boundary](authentication.md). See [Workflow Frontend Configuration](../../ops/configuration/workflow-api.md) for settings and examples.
+Workflow requests have their own [authentication boundary](authentication.md). See [Workflow Frontend Configuration](../../ops/deploy-and-configure/configuration/workflow-api.md) for settings and examples.

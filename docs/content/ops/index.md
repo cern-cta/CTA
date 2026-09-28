@@ -6,18 +6,18 @@ title: Operations introduction
 
 This section is for people installing, configuring, running, and maintaining CTA. It covers core CTA services and their integration with a separately managed disk system. Development documentation is not a prerequisite for operating CTA.
 
-## Start a deployment
+## Deploy & Configure
 
-Begin with [Deployment Planning](deployment/planning.md), [Installation](deployment/installation/index.md), and [Initialisation and Verification](deployment/initialisation.md). [Concepts](../concepts/index.md) explains the shared terminology and architecture.
+Begin with [Deployment Planning](deploy-and-configure/deployment/planning.md), [Installation](deploy-and-configure/deployment/installation/index.md), and [Initialisation and Verification](deploy-and-configure/deployment/initialisation.md). Use [Service Runtime](deploy-and-configure/configuration/service-runtime.md) for configuration and choose the relevant [Disk Buffer Integration](deploy-and-configure/integrations/index.md). EOS-specific instructions do not apply automatically to other disk systems. [Concepts](../concepts/index.md) explains the shared terminology and architecture.
 
-## Run and maintain CTA
+## Run & Maintain
 
-Use [Administration](administration/index.md), [Monitoring](monitoring/health-and-alerts.md), [Upgrading CTA](upgrades/cta.md), [Backup and Recovery](administration/backup-and-recovery.md), and [Troubleshooting](administration/troubleshooting.md).
+Use [Administration](run-and-maintain/administration/index.md) for routine tasks, [Monitoring](run-and-maintain/monitoring/health-and-alerts.md) to assess service health, and [Upgrading CTA](run-and-maintain/upgrades/cta.md) for upgrades.
 
-## Connect a disk system
+## Troubleshooting & Recovery
 
-Choose the relevant [Disk Buffer Integration](integrations/index.md). EOS-specific instructions do not apply automatically to other disk systems.
+Start with [Troubleshooting](troubleshooting-and-recovery/troubleshooting.md). Use [Backup & Recovery](troubleshooting-and-recovery/backup-and-recovery.md) to restore deployment state or [Recycle Bin & File Recovery](troubleshooting-and-recovery/file-recovery.md) to recover files. Disk-system-specific procedures remain in [EOS Troubleshooting & Repair](deploy-and-configure/integrations/eos/troubleshooting.md), [EOS Metadata Consistency & Recovery](deploy-and-configure/integrations/eos/metadata-recovery.md), and the [dCache integration guide](deploy-and-configure/integrations/dcache.md).
 
-## Reference and help
+## Tools & Reference
 
-See [cta-admin](tools/cta-admin.md), [example configurations](configuration/service-runtime.md#component-examples), and the [Community Forum](https://cta-community.web.cern.ch).
+Use the [Tool Index](tools/index.md) to find command and service references. See also [example configurations](deploy-and-configure/configuration/service-runtime.md#component-examples) and the [Community Forum](https://cta-community.web.cern.ch).

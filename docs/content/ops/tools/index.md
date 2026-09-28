@@ -1,6 +1,6 @@
 # Tool Index
 
-Choose a tool by task. Follow the linked reference for syntax, prerequisites, and options. End-to-end procedures belong in [Administration](../administration/index.md); see [Installation and Shared Configuration](installation-and-configuration.md) for tool installation.
+Choose a tool by task. Follow the linked reference for syntax, prerequisites, and options. End-to-end procedures belong in [Administration](../run-and-maintain/administration/index.md); see [Installation and Shared Configuration](installation-and-configuration.md) for tool installation.
 
 Schema deletion and scheduler repair/reset commands modify or remove state. Their inclusion here does not make them routine inspection commands. Scheduler tools depend on the backend selected when CTA was built.
 
@@ -69,4 +69,4 @@ Schema deletion and scheduler repair/reset commands modify or remove state. Thei
 
 ## Disk-system tools
 
-See [EOS Operator Utilities](../integrations/eos/tools.md) for tools specific to EOS metadata and integration.
+See [EOS Operator Utilities](../deploy-and-configure/integrations/eos/tools.md) for tools specific to EOS metadata and integration.

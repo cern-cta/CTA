@@ -65,5 +65,5 @@ After a tape has been selected, [Recommended Access Order (RAO)](../tape/rao.md)
 ## Related guides
 
 - [Scheduler component](../components/scheduler.md): responsibilities and backend choices.
-- [Scheduling and Queues](../../ops/administration/requests.md): operator inspection and intervention procedures.
-- [Storage Policies](../../ops/administration/storage-policies.md): managing mount policies and requester rules.
+- [Scheduling and Queues](../../ops/run-and-maintain/administration/requests.md): operator inspection and intervention procedures.
+- [Storage Policies](../../ops/run-and-maintain/administration/storage-policies.md): managing mount policies and requester rules.

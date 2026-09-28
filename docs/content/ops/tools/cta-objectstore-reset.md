@@ -12,4 +12,4 @@ cta-objectstore-reset objectstoreURL
 
 The URL is required. Reset does not initialise a replacement scheduler store.
 
-See [Scheduler Configuration](../configuration/scheduler.md) for backend setup.
+See [Scheduler Configuration](../deploy-and-configure/configuration/scheduler.md) for backend setup.

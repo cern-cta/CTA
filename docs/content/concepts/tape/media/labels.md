@@ -9,7 +9,7 @@ Tape labels are records written on the tape that identify the volume and describ
 
 [ISO/IEC 1001:2012 — File structure and labelling of magnetic tapes for information interchange](https://www.iso.org/standard/60220.html) describes the general structure and labelling standard. The historical reference also uses the ANSI X3.27 designation. [IBM's label documentation](https://www.ibm.com/docs/en/zos/3.2.0?topic=labels-label-definitions-organization) explains the IBM label families. These are background references, not complete specifications of the CTA format.
 
-For the layout written by CTA, see [CTA Tape Format](format.md). For preparing and labelling cartridges, see [Media Initialisation](../../../ops/administration/media-initialisation.md).
+For the layout written by CTA, see [CTA Tape Format](format.md). For preparing and labelling cartridges, see [Media Initialisation](../../../ops/run-and-maintain/administration/media-initialisation.md).
 
 ## Tape terminology
 
