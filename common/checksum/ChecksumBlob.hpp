@@ -156,6 +156,11 @@ public:
   void validate(const ChecksumBlob& blob) const;
 
   /*!
+   * Check every checksum shared with the other blob, throw if none are shared or a shared value is different
+   */
+  void validateCommonChecksums(const ChecksumBlob& blob) const;
+
+  /*!
    * Returns true if the checksum is in the blob and that it has the value expected
    */
   bool contains(ChecksumType type, const std::string& value) const {

@@ -86,6 +86,28 @@ void ChecksumBlob::validate(const ChecksumBlob& blob) const {
   }
 }
 
+void ChecksumBlob::validateCommonChecksums(const ChecksumBlob& blob) const {
+  bool foundCommonType = false;
+
+  for (const auto& checksum : m_cs) {
+    const auto type = checksum.first;
+    // Both blobs may contain NONE, but that doesn't mean the file contents match
+    if (type == NONE) {
+      continue;
+    }
+
+    const auto it = blob.m_cs.find(type);
+    if (it != blob.m_cs.end()) {
+      foundCommonType = true;
+      validate(type, it->second);
+    }
+  }
+
+  if (!foundCommonType) {
+    throw exception::ChecksumTypeMismatch("No common checksum type to validate");
+  }
+}
+
 std::string ChecksumBlob::HexToByteArray(std::string hexString) {
   std::string bytearray;
 
