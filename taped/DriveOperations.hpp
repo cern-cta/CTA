@@ -15,6 +15,9 @@
 #include <utility>
 
 namespace cta {
+namespace log {
+class LogContext;
+}
 class IScheduler;
 class TapeMount;
 }  // namespace cta
@@ -39,6 +42,11 @@ public:
 
   /** Retire backend ownership after all mounts and jobs are destroyed; PostgreSQL needs no reset. */
   virtual void resetScheduler() = 0;
+
+  /** Publish desired-down from the stop callback without accessing the replaceable scheduler.
+   * Must support concurrent controller operations; preserve reported state and existing reason/comment.
+   */
+  virtual void requestDriveDown(log::LogContext& lc) = 0;
 
   /**
    * @brief Read the existing catalogue entry, or return std::nullopt when the drive is absent.

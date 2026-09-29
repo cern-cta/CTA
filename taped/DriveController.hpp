@@ -35,7 +35,7 @@ public:
   DriveController(const TapedConfig& config, log::Logger& log, DriveOperations& operations);
 
   /**
-   * @brief Request a stop between controller operations; active sessions and sleeps are not interrupted.
+   * @brief Request exit and publish desired-down after registration; active sessions and sleeps are not interrupted.
    */
   void stop();
 

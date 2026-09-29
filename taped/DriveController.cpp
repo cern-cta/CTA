@@ -31,7 +31,24 @@ DriveController::DriveController(const TapedConfig& config, log::Logger& log, Dr
       m_operations(operations) {}
 
 void DriveController::stop() {
-  m_stopSource.request_stop();
+  // Always retain the exit request, even if catalogue publication fails.
+  // Before registration completes, run() is responsible for publishing down on exit.
+  if (!m_stopSource.request_stop() || !m_registered.load()) {
+    return;
+  }
+
+  // The signal-reactor thread must not share the controller's scoped log parameters.
+  log::LogContext lc(m_lc.logger());
+  try {
+    m_operations.requestDriveDown(lc);
+  } catch (const std::exception& ex) {
+    log::ScopedParamContainer params(lc);
+    const auto* ctaException = dynamic_cast<const exception::Exception*>(&ex);
+    params.add(semconv::log::exceptionMessage, ctaException ? ctaException->getMessageValue() : ex.what());
+    lc.log(log::ERR, "Failed to request drive down while stopping. Controller exit is still requested.");
+  } catch (...) {
+    lc.log(log::ERR, "Unknown failure requesting drive down while stopping. Controller exit is still requested.");
+  }
 }
 
 bool DriveController::isLive() const {
@@ -251,7 +268,9 @@ TapeSessionResult DriveController::runTapeSession(TapeMount& tapeMount) {
       m_lc.log(log::ERR, "Tape session failed with an unknown exception. Attempting drive recovery.");
     }
 
-    // Down relinquishes hardware ownership, including when stopping after a failed session.
+    // TODO: distinguish stop-induced desired-down from relinquished hardware ownership.
+    // A session that throws after stop() publishes desired-down currently skips recovery cleanup.
+    // Resolve this ownership distinction when adding session interruption.
     return {.driveReusable =
               m_operations.scheduler().getDesiredDriveState(m_driveInfo.driveName, m_lc).up && onDownToUpTransition(),
             .successful = false};

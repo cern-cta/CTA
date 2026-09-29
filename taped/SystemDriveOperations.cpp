@@ -9,6 +9,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
+#include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/utils/ScopeExit.hpp"
@@ -85,6 +86,14 @@ public:
 #else
     // PostgreSQL recovers inactive mounts without retiring a process agent.
 #endif
+  }
+
+  void requestDriveDown(log::LogContext& lc) override {
+    // The catalogue outlives the controller and supports concurrent connections.
+    // Do not access m_scheduler or the main thread's log context from the stop callback.
+    common::dataStructures::DesiredDriveState desired;
+    desired.up = false;
+    TapeDrivesCatalogueState(*m_catalogue).setDesiredDriveState(m_driveInfo.driveName, desired, lc);
   }
 
   /**
