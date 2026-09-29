@@ -6,9 +6,9 @@
 #pragma once
 
 #include "DriveCleaner.hpp"
+#include "VolumeInfo.hpp"
 
 #include <exception>
-#include <functional>
 #include <optional>
 
 namespace cta::tape::daemon {
@@ -28,23 +28,16 @@ public:
     bool driveReusable() const noexcept { return result && result->driveReusable(); }
   };
 
-  enum class AccessMode { ReadOnly, ReadWrite };
-
-  using Mount = std::function<void()>;
-  using Cleanup = std::function<DriveCleaner::CleanupResult()>;
-
-  // All borrowed objects, including outcome and callback captures, must outlive the guard.
+  // All borrowed objects, including outcome, tracker, and reporter captures, must outlive the guard.
   MountedTape(mediachanger::MediaChangerFacade& mediaChanger,
-              const std::string& vid,
-              const mediachanger::LibrarySlot& slot,
-              AccessMode accessMode,
-              DriveCleaner& cleaner,
+              const VolumeInfo& volume,
               drive::DriveInterface& drive,
+              catalogue::Catalogue& catalogue,
+              uint32_t tapeLoadTimeout,
               DriveCleaner::DriveStatusReporter reportStatus,
               Outcome& outcome,
-              log::LogContext& lc);
-  // The mount callback runs synchronously during construction; cleanup is retained for scope exit.
-  MountedTape(Mount mount, Cleanup cleanup, Outcome& outcome, log::LogContext& lc);
+              log::LogContext& lc,
+              TapeSessionTracker& tracker);
   ~MountedTape() noexcept;
 
   MountedTape(const MountedTape&) = delete;
@@ -57,7 +50,9 @@ public:
   const Outcome& cleanup() noexcept;
 
 private:
-  Cleanup m_cleanup;
+  DriveCleaner m_cleaner;
+  drive::DriveInterface& m_drive;
+  DriveCleaner::DriveStatusReporter m_reportStatus;
   Outcome& m_outcome;
   log::LogContext& m_lc;
   bool m_finished = false;

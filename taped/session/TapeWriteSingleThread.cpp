@@ -48,9 +48,9 @@ cta::tape::daemon::TapeWriteSingleThread::TapeWriteSingleThread(cta::tape::drive
       m_catalogue(catalogue) {}
 
 //------------------------------------------------------------------------------
-//TapeCleaning::~TapeCleaning()
+//TapeThreadFinalizer::~TapeThreadFinalizer()
 //------------------------------------------------------------------------------
-cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
+cta::tape::daemon::TapeWriteSingleThread::TapeThreadFinalizer::~TapeThreadFinalizer() {
   using common::dataStructures::DriveStatus;
   // Status publication must not interrupt physical cleanup.
   auto reportStatusSafely = [&](DriveStatus status, const std::optional<std::string>& reason = std::nullopt) {
@@ -62,11 +62,6 @@ cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
       } catch (...) {}
     }
   };
-  // In contrast to regular drive cleaning, drive status reports go through the reportPacker
-  auto reportStatus = [&](DriveStatus status) {
-    m_this.m_reportPacker.reportDriveStatus(status, std::nullopt, m_this.m_logContext);
-  };
-
   m_this.m_tracker.reportState(session::TapeSessionState::Finalizing);
   reportStatusSafely(DriveStatus::CleaningUp);
   try {
@@ -88,37 +83,30 @@ cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
 
   std::string cleanupError;
 
-  // Borrow the existing drive; DriveCleaner owns only the physical cleanup protocol.
-  try {
-    DriveCleaner cleaner(m_this.m_mediaChanger,
-                         m_this.m_logContext.logger(),
-                         m_this.m_drive.info,
-                         m_this.m_volInfo.vid,
-                         true,
-                         m_this.m_tapeLoadTimeout,
-                         m_this.m_catalogue,
-                         m_this.m_tracker);
-    const auto result = cleaner.cleanDrive(m_this.m_drive, reportStatus);
-    if (!result.driveReusable()) {
-      cleanupError = result.errorMessage;
-      m_this.m_driveReusable = false;
+  if (m_mountedTape) {
+    m_mountedTape->cleanup();
+  }
+
+  // A failed mount constructor already cleaned and recorded its outcome.
+  // No outcome means the thread failed before attempting a mount.
+  if (m_outcome.result || m_outcome.exception) {
+    m_this.m_driveReusable = m_outcome.driveReusable();
+    if (!m_this.m_driveReusable) {
       m_this.m_tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedCleanup);
-      try {
-        m_this.m_logContext.log(log::ERR, result.errorMessage);
-      } catch (...) {}
+      if (m_outcome.exception) {
+        try {
+          std::rethrow_exception(m_outcome.exception);
+        } catch (const cta::exception::Exception& ex) {
+          cleanupError = ex.getMessageValue();
+        } catch (const std::exception& ex) {
+          cleanupError = ex.what();
+        } catch (...) {
+          cleanupError = "Unknown exception during drive cleanup";
+        }
+      } else {
+        cleanupError = m_outcome.result->errorMessage;
+      }
     }
-  } catch (const cta::exception::Exception& ex) {
-    cleanupError = ex.getMessageValue();
-    m_this.m_driveReusable = false;
-    m_this.m_tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedCleanup);
-  } catch (const std::exception& ex) {
-    cleanupError = ex.what();
-    m_this.m_driveReusable = false;
-    m_this.m_tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedCleanup);
-  } catch (...) {
-    cleanupError = "Unknown exception during drive cleanup";
-    m_this.m_driveReusable = false;
-    m_this.m_tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedCleanup);
   }
 
   m_timer.reset();
@@ -338,10 +326,11 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
       // Log and notify
       m_logContext.log(cta::log::INFO, "Starting tape write thread");
 
-      // The tape will be loaded
-      // it has to be unloaded, unmounted at all cost -> RAII
-      // will also take care of the TapeSessionReporter
-      TapeCleaning cleaner(*this, timer);
+      // The cleanup outcome outlives both the finalizer and mounted cartridge.
+      MountedTape::Outcome cleanupOutcome;
+      std::optional<MountedTape> mountedTape;
+      TapeThreadFinalizer finalizer(*this, timer, mountedTape, cleanupOutcome);
+
       // Before anything, the tape should be mounted
       m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Mounting, std::nullopt, m_logContext);
 
@@ -353,8 +342,19 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
       params.add("capacityInBytes", m_archiveMount.getCapacityInBytes());
       m_logContext.log(cta::log::INFO, "Tape session started for write");
       m_tracker.reportState(cta::tape::session::TapeSessionState::Mounting);
-      measureSetupTime(&TapeSetupStats::initialMountTime, [&] { mountTapeReadWrite(); });
-      currentErrorToCount = TapeSessionFailure::TapeLoad;
+      m_loadingAttempted = true;
+      mountedTape.emplace(
+        m_mediaChanger,
+        m_volInfo,
+        m_drive,
+        m_catalogue,
+        m_tapeLoadTimeout,
+        [&](common::dataStructures::DriveStatus status) {
+          m_reportPacker.reportDriveStatus(status, std::nullopt, m_logContext);
+        },
+        cleanupOutcome,
+        m_logContext,
+        m_tracker);
       m_tracker.reportState(cta::tape::session::TapeSessionState::Loading);
       measureSetupTime(&TapeSetupStats::tapeLoadTime, [&] { waitForDrive(); });
       m_tracker.reportState(cta::tape::session::TapeSessionState::Preparing);

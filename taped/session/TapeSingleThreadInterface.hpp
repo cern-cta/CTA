@@ -95,60 +95,6 @@ protected:
   uint32_t m_tapeLoadTimeout;
 
   /**
-   * Try to mount the tape for read-only access, get an exception if it fails
-   */
-  void mountTapeReadOnly() {
-    cta::log::ScopedParamContainer scoped(m_logContext);
-    const auto librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_drive.info.rawLibrarySlot);
-    scoped.add("drive_Slot", librarySlot.str());
-    try {
-      cta::utils::Timer timer;
-      m_loadingAttempted = true;
-      m_mediaChanger.mountTapeReadOnly(m_volInfo.vid, librarySlot);
-      const std::string modeAsString = "R";
-      scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
-      cta::telemetry::metrics::ctaTapedMountDuration->Record(
-        std::lround(timer.secs()),
-        {
-          {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead}
-      },
-        opentelemetry::context::RuntimeContext::GetCurrent());
-      m_logContext.log(cta::log::INFO, "Tape mounted for read-only access");
-    } catch (cta::exception::Exception& ex) {
-      scoped.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
-      m_logContext.log(cta::log::ERR, "Failed to mount the tape for read-only access");
-      throw;
-    }
-  }
-
-  /**
-   * Try to mount the tape for read/write access, get an exception if it fails
-   */
-  void mountTapeReadWrite() {
-    cta::log::ScopedParamContainer scoped(m_logContext);
-    const auto librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_drive.info.rawLibrarySlot);
-    scoped.add("drive_Slot", librarySlot.str());
-    try {
-      cta::utils::Timer timer;
-      m_loadingAttempted = true;
-      m_mediaChanger.mountTapeReadWrite(m_volInfo.vid, librarySlot);
-      const std::string modeAsString = "RW";
-      scoped.add("MCMountTime", timer.secs()).add("mode", modeAsString);
-      cta::telemetry::metrics::ctaTapedMountDuration->Record(
-        std::lround(timer.secs()),
-        {
-          {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kWrite}
-      },
-        opentelemetry::context::RuntimeContext::GetCurrent());
-      m_logContext.log(cta::log::INFO, "Tape mounted for read/write access");
-    } catch (cta::exception::Exception& ex) {
-      scoped.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
-      m_logContext.log(cta::log::ERR, "Failed to mount the tape for read/write access");
-      throw;
-    }
-  }
-
-  /**
    * After mounting the tape, the drive will say it has no tape inside,
    * because there was no tape the first time it was opened...
    * That function will wait a certain amount of time for the drive

@@ -5,45 +5,81 @@
 
 #include "MountedTape.hpp"
 
-#include <stdexcept>
+#include "TapeSessionTracker.hpp"
+#include "common/semconv/Attributes.hpp"
+#include "common/utils/Timer.hpp"
+#include "mediachanger/LibrarySlotParser.hpp"
+#include "telemetry/metrics/TapedMetrics.hpp"
+
+#include <cmath>
+#include <opentelemetry/context/runtime_context.h>
 #include <utility>
 
 namespace cta::tape::daemon {
 
 MountedTape::MountedTape(mediachanger::MediaChangerFacade& mediaChanger,
-                         const std::string& vid,
-                         const mediachanger::LibrarySlot& slot,
-                         AccessMode accessMode,
-                         DriveCleaner& cleaner,
+                         const VolumeInfo& volume,
                          drive::DriveInterface& drive,
+                         catalogue::Catalogue& catalogue,
+                         uint32_t tapeLoadTimeout,
                          DriveCleaner::DriveStatusReporter reportStatus,
                          Outcome& outcome,
-                         log::LogContext& lc)
-    : MountedTape(
-        [&] {
-          if (accessMode == AccessMode::ReadOnly) {
-            mediaChanger.mountTapeReadOnly(vid, slot);
-          } else {
-            mediaChanger.mountTapeReadWrite(vid, slot);
-          }
-        },
-        [&cleaner, &drive, reportStatus = std::move(reportStatus)] { return cleaner.cleanDrive(drive, reportStatus); },
-        outcome,
-        lc) {}
-
-MountedTape::MountedTape(Mount mount, Cleanup cleanup, Outcome& outcome, log::LogContext& lc)
-    : m_cleanup(std::move(cleanup)),
+                         log::LogContext& lc,
+                         TapeSessionTracker& tracker)
+    : m_cleaner(mediaChanger, lc.logger(), drive.info, volume.vid, true, tapeLoadTimeout, catalogue, tracker),
+      m_drive(drive),
+      m_reportStatus(std::move(reportStatus)),
       m_outcome(outcome),
       m_lc(lc) {
-  if (!mount || !m_cleanup) {
-    throw std::invalid_argument("MountedTape requires mount and cleanup operations");
-  }
   m_outcome = Outcome {};
+  const bool readOnly = volume.mountType == common::dataStructures::MountType::Retrieve;
+  const auto slot = mediachanger::LibrarySlotParser::parse(drive.info.rawLibrarySlot);
   try {
-    mount();
+    log::ScopedParamContainer params(m_lc);
+    params.add("drive_Slot", slot.str());
+    utils::Timer timer;
+    try {
+      if (readOnly) {
+        mediaChanger.mountTapeReadOnly(volume.vid, slot);
+      } else {
+        mediaChanger.mountTapeReadWrite(volume.vid, slot);
+      }
+    } catch (...) {
+      // Record mount time before recovery, without replacing the original mount exception.
+      const double mountTime = timer.secs();
+      try {
+        tracker.addTapeSetupStats({.initialMountTime = mountTime});
+      } catch (...) {}
+      try {
+        try {
+          throw;
+        } catch (const cta::exception::Exception& ex) {
+          params.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
+        } catch (const std::exception& ex) {
+          params.add(cta::semconv::log::exceptionMessage, ex.what());
+        } catch (...) {
+          params.add(cta::semconv::log::exceptionMessage, "Non-standard exception");
+        }
+        m_lc.log(log::ERR,
+                 readOnly ? "Failed to mount the tape for read-only access" :
+                            "Failed to mount the tape for read/write access");
+      } catch (...) {}
+      throw;
+    }
+    const double mountTime = timer.secs();
+    tracker.addTapeSetupStats({.initialMountTime = mountTime});
+    params.add("MCMountTime", mountTime).add("mode", readOnly ? "R" : "RW");
+    telemetry::metrics::ctaTapedMountDuration->Record(
+      std::lround(mountTime),
+      {
+        {semconv::attr::kCtaIoDirection,
+         readOnly ? semconv::attr::CtaIoDirectionValues::kRead : semconv::attr::CtaIoDirectionValues::kWrite}
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
+    m_lc.log(log::INFO, readOnly ? "Tape mounted for read-only access" : "Tape mounted for read/write access");
   } catch (...) {
     // Construction failed, so the destructor cannot clean up a partially mounted cartridge.
-    this->cleanup();
+    cleanup();
     throw;
   }
 }
@@ -59,7 +95,7 @@ const MountedTape::Outcome& MountedTape::cleanup() noexcept {
   m_finished = true;
 
   try {
-    m_outcome.result = m_cleanup();
+    m_outcome.result = m_cleaner.cleanDrive(m_drive, m_reportStatus);
   } catch (...) {
     m_outcome.exception = std::current_exception();
   }
