@@ -73,7 +73,7 @@ sequenceDiagram
 
 ### EOS events not handled by the Workflow Frontend {#eos-events-not-handled-by-the-workflow-api}
 
-EOS generates `OPENW` when an existing file is opened for writing. CTA does not handle this event: archived file contents are immutable, and modifying the disk file would not update its tape copies. EOS must prevent such modifications for tape-backed files; see [EOS Configuration](../../ops/deploy-and-configure/integrations/eos/configuration.md) for the immutability ACL settings.
+EOS generates `OPENW` when an existing file is opened for writing. CTA does not handle this event: archived file contents are immutable, and modifying the disk file would not update its tape copies. EOS must prevent such modifications for tape-backed files; see [EOS Configuration](../../ops/deploy-and-configure/integrations/eos.md#configuration) for the immutability ACL settings.
 
 EOS read events such as `OPENR` and `CLOSER` are also not tape-transfer requests. Clients read an available disk replica; retrieving a missing replica from tape requires a separate `PREPARE` request, described under [Retrieval](retrieval.md).
 

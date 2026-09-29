@@ -14,12 +14,19 @@ CMake configures the C++ build, and RPM spec files define how the software is pa
 
 ## Find Your Way
 
-The navigation has four groups:
-
-- **Getting Started** introduces the repository and the path to a first change. Begin with [Prerequisites & Access](getting-started/prerequisites.md).
-- **Contributing** covers proposing, submitting, and reviewing changes. Start with the [Contributing overview](contributing/index.md); release and infrastructure procedures are under [For Maintainers](contributing/maintainers/index.md).
-- **[Development Guides](guides/index.md)** covers [development tools and environment](guides/tools-and-environment/cta-dev.md), [testing and CI](guides/testing/index.md), [conventions](guides/conventions/index.md), [disk-buffer integrations](guides/integrations/index.md), and [instrumentation](guides/instrumentation/index.md). Consult these pages as needed for your task.
-- **[Implementation Internals](internals/index.md)** explains interface contracts, workflow implementation, component design, and shared libraries.
+| I want to… | Start here |
+| --- | --- |
+| Start developing CTA | [Prerequisites & Access](getting-started/prerequisites.md) |
+| Find my way around the repository | [Project Structure](getting-started/project-structure.md) |
+| Set up a development environment | [Environment Setup](getting-started/environment-setup.md) |
+| Make my first change | [Your First Change](getting-started/first-change.md) |
+| Propose, submit, or review a change | [Contributing](contributing/index.md) |
+| Build, test, or debug CTA | [Development Guides](guides/index.md) |
+| Follow development conventions | [Conventions](guides/conventions/index.md) |
+| Develop a disk-system integration | [Disk System Integrations](guides/integrations/index.md) |
+| Add logs or metrics | [Instrumentation](guides/instrumentation/index.md) |
+| Understand interfaces, workflows, or component implementation | [Implementation Internals](internals/index.md) |
+| Manage releases or development infrastructure | [For Maintainers](contributing/maintainers/index.md) |
 
 ## Recommended Reading Order
 

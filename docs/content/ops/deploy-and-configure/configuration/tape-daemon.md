@@ -44,6 +44,10 @@ The RAO manager logs `executedRAOAlgorithm` after successful ordering. It falls 
 
 TODO: Add a commissioning checklist, representative success/fallback logs, and a controlled comparison of positioning time and retrieval throughput. Explain which changes require service restart and how to restore the previous configuration.
 
+## Set up encryption
+
+TODO: Document the key-management integration, tape encryption key names, tape-daemon settings, and verification before using encrypted media. See [Tape Drive Concepts](../../../concepts/tape/drives.md) for the encryption model.
+
 ## Command reference
 
 See the [cta-taped manual](../../tools/service-manuals/cta-taped.md) for the complete option reference.

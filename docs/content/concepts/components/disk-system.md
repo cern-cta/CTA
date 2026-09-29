@@ -4,7 +4,7 @@ The **disk system** owns the client-facing namespace, manages disk replicas and 
 
 ## Disk buffer
 
-The **disk buffer** is the storage area holding files awaiting archival or retrieved from tape.
+The **disk buffer** is the storage area holding files awaiting archival or retrieved from tape. It is provided by the disk system; the terms are not interchangeable.
 
 During archival, files are copied into the disk buffer, triggering an archival request to be sent to the [Workflow Frontend](workflow-frontend.md).
 Eventually (minutes to hours later), this request will be processed by a tape daemon, which reads the file from
@@ -29,7 +29,7 @@ The reporting protocol and how a notification updates the namespace are integrat
 
 ## Integration requirements
 
-CTA was designed to be agnostic to the disk buffer technology.
+CTA was designed to be agnostic to the disk system technology.
 
 An integration must provide:
 
@@ -39,13 +39,13 @@ An integration must provide:
 - An unchanged, readable archive source until CTA no longer needs it, and sufficient buffer capacity for retrieved data.
 - Disk and network throughput sufficient for the combined active drives. Storage technology should be chosen for the workload.
 
-See [Disk Buffer Integration](../../ops/deploy-and-configure/integrations/index.md) for system-specific setup.
+See [Disk System Integration](../../ops/deploy-and-configure/integrations/index.md) for system-specific setup.
 
 ## EOS
 
 [EOS](https://eos-docs.web.cern.ch/diopside/architecture/index.html) provides a namespace manager (**MGM**) and file storage servers (**FSTs**). CTA reads and writes EOS replicas and reports workflow outcomes to EOS.
 
-See [Archival](../data-management/archival.md#eos-example), [Retrieval](../data-management/retrieval.md#eos-example), and [EOS Integration](../../ops/deploy-and-configure/integrations/eos/configuration.md).
+See [Archival](../data-management/archival.md#eos-example), [Retrieval](../data-management/retrieval.md#eos-example), and [EOS Integration](../../ops/deploy-and-configure/integrations/eos.md#configuration).
 
 ## dCache
 

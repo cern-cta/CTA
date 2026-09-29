@@ -69,4 +69,8 @@ Schema deletion and scheduler repair/reset commands modify or remove state. Thei
 
 ## Disk-system tools
 
-See [EOS Operator Utilities](../deploy-and-configure/integrations/eos/tools.md) for tools specific to EOS metadata and integration.
+See [EOS Operator Utilities](cta-ops-eos.md) for tools specific to EOS metadata and integration.
+
+## Disk-system reference
+
+See [EOS File Attributes](eos-file-attributes.md) for workflow fields, identifiers, errors, and timestamps.

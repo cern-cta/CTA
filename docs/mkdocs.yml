@@ -132,7 +132,7 @@ nav:
           - 'Databases & Backends':
               - 'Catalogue': concepts/components/catalogue.md
               - 'Scheduler': concepts/components/scheduler.md
-          # Explain external namespace and disk-copy responsibilities; vendor setup belongs in Disk Buffer Integration.
+          # Explain external namespace and disk-copy responsibilities; vendor setup belongs in Disk System Integration.
           - 'Disk System': concepts/components/disk-system.md
       # Explain placement, scheduling, and file workflows; policy changes and recovery recipes belong in Operations.
       - 'Data Management':
@@ -198,20 +198,11 @@ nav:
               - 'Databases & Backends':
                   - 'Catalogue': ops/deploy-and-configure/configuration/catalogue.md
                   - 'Scheduler': ops/deploy-and-configure/configuration/scheduler.md
-          # Keep disk-system-specific setup and operations here; core CTA guides must not assume EOS or dCache.
-          - 'Disk Buffer Integration':
+          # Configure and commission disk-system integrations; operation, recovery, and reference live in their task sections.
+          - 'Disk System Integration':
               - 'Introduction': ops/deploy-and-configure/integrations/index.md
-              # Document EOS integration, namespace, replicas, and repair; link to shared CTA procedures.
-              - 'EOS':
-                  - 'Installation': ops/deploy-and-configure/integrations/eos/installation.md
-                  - 'Configuration': ops/deploy-and-configure/integrations/eos/configuration.md
-                  - 'Tape REST API': ops/deploy-and-configure/integrations/eos/tape-rest-api.md
-                  - 'File Attributes': ops/deploy-and-configure/integrations/eos/file-attributes.md
-                  - 'Performance & Disk Layout': ops/deploy-and-configure/integrations/eos/performance.md
-                  - 'Buffer Cleanup': ops/deploy-and-configure/integrations/eos/buffer-cleanup.md
-                  - 'Operator Utilities': ops/deploy-and-configure/integrations/eos/tools.md
-                  - 'Troubleshooting & Repair': ops/deploy-and-configure/integrations/eos/troubleshooting.md
-                  - 'Metadata Consistency & Recovery': ops/deploy-and-configure/integrations/eos/metadata-recovery.md
+              # Install and configure EOS; link to its administration, troubleshooting, and reference pages.
+              - 'EOS': ops/deploy-and-configure/integrations/eos.md
               - 'dCache': ops/deploy-and-configure/integrations/dcache.md
       - 'Run & Maintain':
           # Manage running services, resources, and requests; explain actions and checks, not component internals.
@@ -225,8 +216,11 @@ nav:
               - 'Storage Policies': ops/run-and-maintain/administration/storage-policies.md
               - 'Scheduling & Queues': ops/run-and-maintain/administration/requests.md
               - 'Repacking Tapes': ops/run-and-maintain/administration/repack.md
-              # Measure and tune core CTA throughput and capacity; disk-system tuning stays in its integration guide.
+              # Measure and tune CTA throughput and capacity; keep EOS-specific administration together below.
               - 'Performance & Capacity': ops/run-and-maintain/administration/performance.md
+              - 'EOS':
+                  - 'Performance & Disk Layout': ops/run-and-maintain/administration/eos/performance.md
+                  - 'Buffer Cleanup': ops/run-and-maintain/administration/eos/buffer-cleanup.md
           # Collect and interpret health, logs, metrics, and statistics; intervention belongs in Administration.
           - 'Monitoring':
               - 'Health Checks & Alerts': ops/run-and-maintain/monitoring/health-and-alerts.md
@@ -242,13 +236,13 @@ nav:
                   - 'Automated procedure': ops/run-and-maintain/upgrades/catalogue-schema/automated.md
                   - 'Manual procedure': ops/run-and-maintain/upgrades/catalogue-schema/manual.md
               - 'Scheduler Schema Upgrades': ops/run-and-maintain/upgrades/scheduler-schema.md
-              - 'Upgrading EOS': ops/run-and-maintain/upgrades/eos.md
-      # Diagnose failures and restore service or data; disk-system-specific remedies stay in their integration guides.
-      - 'Troubleshooting & Recovery':
-          - 'Troubleshooting': ops/troubleshooting-and-recovery/troubleshooting.md
-          # Protect and restore deployment state; individual deleted-file recovery has its own guide.
-          - 'Backup & Recovery': ops/troubleshooting-and-recovery/backup-and-recovery.md
-          - 'Recycle Bin & File Recovery': ops/troubleshooting-and-recovery/file-recovery.md
+              - 'Upgrading Disk System': ops/run-and-maintain/upgrades/disk-system.md
+      # Diagnose failures and restore service or data, including disk-system-specific remedies.
+      - 'Troubleshooting':
+          - 'Troubleshooting': ops/troubleshooting/troubleshooting.md
+          - 'Failed & Stuck Requests': ops/troubleshooting/failed-requests.md
+          # Recover deleted-file metadata.
+          - 'Recycle Bin & File Recovery': ops/troubleshooting/file-recovery.md
       # Provide command lookup, syntax, and tool-specific usage; link to end-to-end operational procedures.
       - 'Tools & Reference':
           - 'Tool Index': ops/tools/index.md
@@ -293,6 +287,10 @@ nav:
               - 'cta-objectstore-list': ops/tools/cta-objectstore-list.md
               - 'cta-objectstore-reset': ops/tools/cta-objectstore-reset.md
               - 'cta-objectstore-dump-object': ops/tools/cta-objectstore-dump-object.md
+          - 'Disk-system Tools':
+              - 'cta-ops-eos': ops/tools/cta-ops-eos.md
+          - 'Disk-system Reference':
+              - 'EOS File Attributes': ops/tools/eos-file-attributes.md
           # Include source-backed daemon option references; configuration guides own examples and setup advice.
           - 'Service Manuals':
               - 'cta-frontend': ops/tools/service-manuals/cta-frontend.md
@@ -363,7 +361,7 @@ nav:
               - 'Container Images': dev/guides/conventions/container-images.md
               - 'Helm & Orchestration': dev/guides/conventions/orchestration.md
           # Explain adapter development; deployed-system setup belongs in Operations.
-          - 'Disk Buffer Integrations':
+          - 'Disk System Integrations':
               - 'Overview': dev/guides/integrations/index.md
               - 'EOS':
                   - 'Developing with EOS': dev/guides/integrations/eos/environment-setup.md

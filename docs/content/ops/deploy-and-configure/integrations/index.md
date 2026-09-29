@@ -1,4 +1,4 @@
-# Disk Buffer Integration
+# Disk System Integration
 
 CTA manages tape copies, tape hardware, and tape scheduling. The disk system manages the client-facing namespace, disk replicas, and client requests. Install and configure these systems separately, then verify their integration.
 
@@ -8,17 +8,21 @@ Configure the [Workflow Frontend](../configuration/workflow-frontend.md) and [Ad
 
 ## EOS
 
-- [Installation](eos/installation.md)
-- [Configuration](eos/configuration.md)
-- [File Attributes](eos/file-attributes.md)
-- [Metadata Consistency and Recovery](eos/metadata-recovery.md)
-- [Tape REST API](eos/tape-rest-api.md)
-- [Troubleshooting and Repair](eos/troubleshooting.md)
-- [Performance and Disk Layout](eos/performance.md)
-- [Buffer Cleanup](eos/buffer-cleanup.md)
-- [Upgrades](../../run-and-maintain/upgrades/eos.md)
-- [Operator Utilities](eos/tools.md)
+| Task | Start here |
+| --- | --- |
+| Setup: install EOS | [Installation](eos.md#installation) |
+| Setup: connect EOS to CTA | [Configuration](eos.md#configuration) |
+| Operation: tune layout and throughput | [Performance & Disk Layout](../../run-and-maintain/administration/eos/performance.md) |
+| Operation: manage buffer space | [Buffer Cleanup](../../run-and-maintain/administration/eos/buffer-cleanup.md) |
+| Operation: upgrade EOS | [Upgrading Disk System: EOS](../../run-and-maintain/upgrades/disk-system.md#eos) |
+| Reference: inspect workflow metadata | [EOS File Attributes](../../tools/eos-file-attributes.md) |
+| Reference: use EOS operator commands | [cta-ops-eos](../../tools/cta-ops-eos.md) |
 
 ## dCache
 
-The [dCache Integration](dcache.md) page reserves the corresponding operator documentation. Its presence is an outline, not a claim that deployment instructions are complete.
+Use [dCache Integration](dcache.md) for upstream documentation and CTA plugin references. Contributions to the CTA-specific dCache guidance are welcome.
+
+| Task | Start here |
+| --- | --- |
+| Find installation, configuration, and administration guidance | [dCache Integration](dcache.md) |
+| Upgrade dCache | [Upgrading Disk System: dCache](../../run-and-maintain/upgrades/disk-system.md#dcache) |

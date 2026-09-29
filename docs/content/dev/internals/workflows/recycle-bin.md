@@ -22,7 +22,7 @@ In addition to the **tape file** fields and the **archive file** fields, the fol
 
 ## State changes
 
-Deletion and repack remove active tape-file entries while retaining recovery metadata. Operator examples are under [Recycle Bin and File Recovery](../../../ops/troubleshooting-and-recovery/file-recovery.md).
+Deletion and repack remove active tape-file entries while retaining recovery metadata. Operator examples are under [Recycle Bin and File Recovery](../../../ops/troubleshooting/file-recovery.md).
 
 ## EOS
 

@@ -229,3 +229,5 @@ bash: cta-admin --json re ls | jq
     }
 ]
 ```
+
+For automated repack management, see [cta-ops-repack (ATRESYS)](../../tools/repack-automation.md).

@@ -77,4 +77,4 @@ The [Disk System](disk-system.md) manages the client-facing namespace and disk r
 
 A tape server hosts one tape daemon instance per drive and needs connectivity to the disk system, backend stores and media changer. The tape daemons and remote media changer daemons run on tape servers, while frontends and maintenance daemons can run separately from the tape hardware.
 
-Use [Deployment Planning](../../ops/deploy-and-configure/deployment/planning.md) for placement and availability decisions and [Disk Buffer Integration](../../ops/deploy-and-configure/integrations/index.md) for integration requirements.
+Use [Deployment Planning](../../ops/deploy-and-configure/deployment/planning.md) for placement and availability decisions and [Disk System Integration](../../ops/deploy-and-configure/integrations/index.md) for integration requirements.

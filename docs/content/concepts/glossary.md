@@ -66,6 +66,9 @@ Use these definitions to distinguish file identities, copies, requests and compo
 **Disk replica** {#disk-replica}
 : A file's data stored on disk, separate from its namespace entry and tape copies. See [File Workflows](data-management/index.md).
 
+**Disk system** {#disk-system}
+: The system, such as EOS or dCache, that manages the namespace, disk replicas, client access, and workflow requests to CTA. It provides the disk buffer used for transfers. See [Disk System](components/disk-system.md).
+
 ### E
 
 **EOS** {#eos}

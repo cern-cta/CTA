@@ -21,10 +21,10 @@ For workflow JWTs, the subject identifies the disk instance. With mTLS, the fron
 
 The tape daemon needs permission to read archive sources and write retrieve destinations through the disk system's data interface. These credentials are separate from frontend credentials.
 
-The mechanism depends on the integration; see [EOS Configuration](../../ops/deploy-and-configure/integrations/eos/configuration.md) or [dCache Integration](../../ops/deploy-and-configure/integrations/dcache.md).
+The mechanism depends on the integration; see [EOS Configuration](../../ops/deploy-and-configure/integrations/eos.md#configuration) or [dCache Integration](../../ops/deploy-and-configure/integrations/dcache.md).
 
 #### EOS
 
 The tape daemon reads and writes EOS replicas through XRootD using **Simple Shared Secret (SSS)** authentication. These credentials are separate from those EOS uses to submit workflow requests to the [Workflow Frontend](#service-apis).
 
-See [EOS Configuration](../../ops/deploy-and-configure/integrations/eos/configuration.md) for credential setup.
+See [EOS Configuration](../../ops/deploy-and-configure/integrations/eos.md#configuration) for credential setup.

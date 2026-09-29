@@ -14,7 +14,7 @@ TODO: Document supported deployment prerequisites, service placement, network pa
 
 TODO: Document redundancy and dependencies for frontend, catalogue, scheduler, and tape services.
 
-## Disk buffer requirements
+## Disk system requirements
 
 Use the shared [Disk System Concepts](../../../concepts/components/disk-system.md) and the selected [integration guide](../integrations/index.md).
 

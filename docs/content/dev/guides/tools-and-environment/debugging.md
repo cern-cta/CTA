@@ -28,7 +28,7 @@ Replace `<pod>` with a name from `kubectl get pods`. For `<container>`, use a co
 
 Read the affected container's logs around the time of the failure. If it restarted, also check the previous container's logs using `--previous`; see [Read logs](development-pods.md#read-logs).
 
-Look for the first error and follow the request across the services involved, using request identifiers, file IDs, and timestamps where available. Check dependency logs when an error points to the catalogue, scheduler, or disk buffer. Some processes also write files under `/var/log`; check their configured log locations.
+Look for the first error and follow the request across the services involved, using request identifiers, file IDs, and timestamps where available. Check dependency logs when an error points to the catalogue, scheduler, or disk system. Some processes also write files under `/var/log`; check their configured log locations.
 
 For CI failures, download the available logs and diagnostic artifacts before reproducing locally. See [Investigating CI failures](../testing/ci/pipelines.md#investigating-ci-failures).
 

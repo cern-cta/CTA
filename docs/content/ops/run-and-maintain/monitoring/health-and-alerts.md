@@ -16,7 +16,7 @@ TODO: Document signals for stalled requests, repeated mount failures, and capaci
 
 ## Disk-system health
 
-Keep disk-system-specific checks under its integration guide and document the CTA-facing symptoms here.
+Document integration health checks and CTA-facing symptoms here; use [Troubleshooting](../../troubleshooting/troubleshooting.md) when investigating failures.
 
 ## Health Probing
 

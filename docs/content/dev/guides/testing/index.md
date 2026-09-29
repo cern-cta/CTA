@@ -10,4 +10,4 @@ Choose tests according to the change you are making. Production health checks be
 | Understand how changes are validated | [CI Overview](ci/index.md) |
 | Run a CI pipeline or investigate a failed job | [CI Pipelines](ci/pipelines.md) |
 
-For a practical introduction to the workflows being tested, follow the [archive and retrieve walkthrough](../../getting-started/archive-retrieve-walkthrough.md). Disk-system-specific development is covered under [Disk Buffer Integrations](../integrations/index.md).
+For a practical introduction to the workflows being tested, follow the [archive and retrieve walkthrough](../../getting-started/archive-retrieve-walkthrough.md). Disk-system-specific development is covered under [Disk System Integrations](../integrations/index.md).

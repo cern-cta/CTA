@@ -20,4 +20,4 @@ TODO: Document how CTA reads and writes disk-buffer data and handles transfer fa
 
 ## Compatibility
 
-TODO: Document interface compatibility and integration tests; disk-specific mappings belong under [Disk Buffer Integrations](../guides/integrations/index.md).
+TODO: Document interface compatibility and integration tests; disk-specific mappings belong under [Disk System Integrations](../guides/integrations/index.md).

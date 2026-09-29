@@ -36,7 +36,7 @@ Drive counters distinguish bytes received from the host from bytes written to ta
 
 ### Encryption
 
-Supported drives can encrypt data as it is written to tape and decrypt it during reads. CTA records the tape's encryption key name in the catalogue; an external key-management integration supplies the key material to the tape daemon, which configures the drive. Reading encrypted media requires access to the corresponding key. See [encryption setup](../../ops/deploy-and-configure/deployment/tape-servers.md#set-up-encryption) for operational guidance.
+Supported drives can encrypt data as it is written to tape and decrypt it during reads. CTA records the tape's encryption key name in the catalogue; an external key-management integration supplies the key material to the tape daemon, which configures the drive. Reading encrypted media requires access to the corresponding key. See [encryption setup](../../ops/deploy-and-configure/configuration/tape-daemon.md#set-up-encryption) for operational guidance.
 
 ### Logical block protection (LBP)
 

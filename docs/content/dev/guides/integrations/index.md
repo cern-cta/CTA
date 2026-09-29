@@ -1,4 +1,4 @@
-# Disk Buffer Integrations
+# Disk System Integrations
 
 This section is for developers changing or testing how a disk system interacts with CTA. It covers selecting a development image and validating integration changes; production configuration belongs in Operations.
 
@@ -8,4 +8,4 @@ This section is for developers changing or testing how a disk system interacts w
 - See [Developing the dCache Integration](dcache.md) for the available deployment entry point and documentation status.
 - Use [Interfaces and Protocols](../../internals/interfaces.md) for shared interface contracts and [System Tests](../testing/system-tests.md) for test execution and authoring.
 
-For deployed-system configuration, see [EOS](../../../ops/deploy-and-configure/integrations/eos/installation.md) or [dCache](../../../ops/deploy-and-configure/integrations/dcache.md) in Operations.
+For deployed-system configuration, see [EOS](../../../ops/deploy-and-configure/integrations/eos.md#installation) or [dCache](../../../ops/deploy-and-configure/integrations/dcache.md) in Operations.

@@ -1,8 +1,17 @@
-# Upgrading EOS *tape* instance
+# Upgrading Disk System
 
-## CTA specific guidelines
+Coordinate disk-system upgrades with CTA activity. Use the section for your deployment; compatibility requirements and upgrade procedures differ between EOS and dCache.
 
-### Mix and match tested versions
+- [EOS](#eos)
+- [dCache](#dcache)
+
+## EOS
+
+The following guidance applies to an EOS tape-buffer instance.
+
+### CTA specific guidelines
+
+#### Mix and match tested versions
 
 !!! danger
     CTA software is only tested in CTA Continuous Integration against a few specific EOS versions. CTA workflow can break if mixing any EOS software against any CTA version.
@@ -15,7 +24,7 @@ Install `cta-release` for the selected CTA release to obtain its dependency vers
     Rollout a specific EOS version to all your EOS tape buffer instances starting with a test instance, followed by less critical EOS tape buffer instances (repack, backup,...).
     Managing a limited set of EOS software version allows to limit the complexity of the EOS CTA service operation.
 
-### Stop corresponding tape activity
+#### Stop corresponding tape activity
 
 CTA tape backend and EOS are working together via synchronous protobuf messages.
 
@@ -30,9 +39,9 @@ This is likely to affect the critical EOS <-> CTA synchronous communication work
 - Retrieving files that cannot be retrieved by end user anymore:
   - `cta-taped` cannot write recalled files to EOS buffer and cannot report staging failure or cleanup EOS attributes to EOS
 
-For all these reasons it is **strongly advised to stop all tape activity tied the the upgrading EOS instance**.
+For all these reasons it is **strongly advised to stop all tape activity tied to the EOS instance being upgraded**.
 
-#### Identify and stop affected VO tape activity
+##### Identify and stop affected VO tape activity
 
 1. Identify CTA Virtual Organizations *VO*s affected by the CTA diskinstance upgrade running `cta-admin vo ls`
 2. Prevent any new tape activity for the affected VOs by setting their `read-max-drives` and `write-max-drives` at 0
@@ -41,7 +50,7 @@ For all these reasons it is **strongly advised to stop all tape activity tied th
 !!! warning
     Do not forget to write down all vo *read-max-drives* and *write-max-drives* values as you will have to configure these back after the EOS upgrade
 
-## Upgrading EOS software
+### Upgrading EOS software
 
 Upgrading EOS software stack is outside of the scope of this documentation.
 Indeed upgrading EOS software can be tricky when breaking changes are introduced.
@@ -54,6 +63,12 @@ For example:
 
 Upgrading EOS is best documented on the [EOS documentation site](https://eos-docs.web.cern.ch/). Additional information can be found on [EOS community website](https://eos-community.web.cern.ch/).
 
-## Resume CTA Tape activity
+### Resume CTA Tape activity
 
 Reconfigure affected VOs with their previous `read-max-drives` and `write-max-drives` values.
+
+## dCache
+
+Use the release notes and upgrade guides linked from the [dCache documentation](https://www.dcache.org/documentation/) for the versions involved. The [dCache release guidance](https://www.dcache.org/release/#upgrading) explains which intermediate release notes to review.
+
+Check the [CTA plugin requirements](https://github.com/dCache/dcache-cta#readme) when selecting versions. CTA-specific upgrade coordination is not yet documented here; contributions based on deployment experience are welcome through the [dCache Integration documentation](../../deploy-and-configure/integrations/dcache.md).

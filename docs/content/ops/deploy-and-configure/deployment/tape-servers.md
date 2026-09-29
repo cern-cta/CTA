@@ -81,20 +81,13 @@ Reset adapter port to activate new firmware parameter setting.
 
 Once this is done, reboot the tape server and it should now be able to see the connected tape drives.
 
-## Common tasks
-
-### Mounting and Unmounting a tape
-
-
-### Set up encryption
-
 ## Commissioning hardware
 
 Commission tape servers, drives, and libraries for CTA.
 
 ### Prepare the hardware
 
-TODO: Document prerequisites and checks before connecting hardware. See [Tape Server Setup](tape-servers.md).
+TODO: Document prerequisites and checks before connecting hardware.
 
 ### Register and configure
 
@@ -127,3 +120,5 @@ TODO: Document the mapping from each library control path through the media chan
 ### Retrieval ordering
 
 TODO: Include [RAO prerequisites and verification](../configuration/tape-daemon.md#recommended-access-order) when commissioning new drives and media types.
+
+For ongoing maintenance, see [Hardware Replacement](../../run-and-maintain/administration/tapes-and-drives.md#hardware-replacement) and [mounting and unmounting tapes](../../run-and-maintain/administration/tapes-and-drives.md#mounting-and-unmounting-a-tape). Configure encryption through [Tape Daemon Configuration](../configuration/tape-daemon.md#set-up-encryption).

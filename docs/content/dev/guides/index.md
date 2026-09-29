@@ -13,7 +13,7 @@ Use these guides for the task at hand. For your first development environment, s
 | Follow code, packaging, or CI conventions | [Conventions](conventions/index.md) |
 | Understand request processing and component implementation | [Implementation Internals](../internals/index.md) |
 | Change the catalogue schema | [Schema Development](../internals/components/catalogue/schema-development.md) |
-| Develop an EOS or dCache integration | [Disk Buffer Integrations](integrations/index.md) |
+| Develop an EOS or dCache integration | [Disk System Integrations](integrations/index.md) |
 | Add or test logs and metrics | [Instrumentation](instrumentation/index.md) |
 
 Contribution and release procedures belong under [Contributing](../contributing/index.md); site deployment and administration belong under [Operations](../../ops/index.md).

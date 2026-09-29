@@ -16,13 +16,15 @@ TODO: Document drive enable/disable and tape-state transitions. See [Tape Lifecy
 
 ## Verify and reclaim tapes
 
-TODO: Document verification, reclamation prerequisites, and validation of the result.
+TODO: Document verification, reclamation prerequisites, and validation of the result. See [Tape Verification](../../tools/tape-verification.md) for verification-tool configuration and usage.
+
+## Mounting and Unmounting a tape
+
+TODO: Document prerequisites, mounting and unmounting commands, and checks before returning the drive to service. See [cta-smc](../../tools/cta-smc.md) for command syntax.
 
 ## Hardware maintenance
 
-See [Hardware Replacement](tapes-and-drives.md#hardware-replacement) for draining, replacing, and returning hardware to service.
-
-See [Hardware Installation](../../deploy-and-configure/deployment/tape-servers.md#commissioning-hardware) and [Hardware Replacement](tapes-and-drives.md#hardware-replacement).
+For new hardware, see [Hardware Installation](../../deploy-and-configure/deployment/tape-servers.md#commissioning-hardware). For existing hardware, follow [Hardware Replacement](#hardware-replacement) below.
 
 ## Labeling a tape
 

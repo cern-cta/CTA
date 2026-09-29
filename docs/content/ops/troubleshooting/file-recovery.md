@@ -15,8 +15,6 @@ TODO: Document selecting recovery candidates, checking tape availability, restor
 
 ## EOS
 
-The [EOS metadata consistency and recovery guide](../deploy-and-configure/integrations/eos/metadata-recovery.md) reserves the recovery scenarios for missing namespace entries and retained entries with unchanged or changed file IDs.
-
 ### When a user deletes a file with `eos rm`
 
 When a user submits an `eos rm` command on a file, the file is inserted in the recycle-bin. Example:

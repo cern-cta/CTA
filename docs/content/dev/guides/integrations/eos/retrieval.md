@@ -116,7 +116,7 @@ In addition, it initializes the attribute `sys.retrieve.evict_counter` to the nu
 CTA may be unable to retrieve the file, due to an error mounting or reading the tape or an error writing to the disk buffer.
 
 In either case, the tape daemon will retry three times per mount session. If all three attempts fail, the file is requeued for
-a second mount. If the file cannot be retrieved after two mount sessions (six attempts in total), the recall is failed and reported to the disk buffer:
+a second mount. If the file cannot be retrieved after two mount sessions (six attempts in total), the recall is failed and reported to the disk system:
 
 1. Record the error in `sys.retrieve.error`
 1. Clear the list of pending retrieve requests in `sys.retrieve.req_id`

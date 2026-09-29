@@ -20,7 +20,7 @@ Recovery requires both the retained metadata and the corresponding readable tape
 
 If the disk namespace entry was also deleted, it must be restored or recreated and its identity coordinated with CTA. Restoring CTA's catalogue alone does not restore the client's path, permissions, or disk replica. Conversely, a disk-system recycle bin does not by itself restore CTA's tape-copy records.
 
-The recycle bin is therefore a recovery mechanism, not a substitute for catalogue backups or additional tape copies. See [Recycle Bin and File Recovery](../../ops/troubleshooting-and-recovery/file-recovery.md) for operator procedures, including EOS namespace coordination.
+The recycle bin is therefore a recovery mechanism, not a substitute for catalogue backups or additional tape copies. See [Recycle Bin and File Recovery](../../ops/troubleshooting/file-recovery.md) for operator procedures, including EOS namespace coordination.
 
 ## Reclamation and reuse
 

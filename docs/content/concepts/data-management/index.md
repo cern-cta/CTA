@@ -22,7 +22,7 @@ For example, `CREATE` means that a file has been created in the disk namespace, 
 | `ABORT_PREPARE` | Requests cancellation of retrieval; leaves the tape copy intact. |
 | `DELETE` | Removes active archive metadata, retains recorded copy metadata in the recycle bin, and handles identified pending archive work. It does not erase tape bytes. |
 
-See [Disk Buffer Integration](../../ops/deploy-and-configure/integrations/index.md) for the supported integration and protocol requirements.
+See [Disk System Integration](../../ops/deploy-and-configure/integrations/index.md) for the supported integration and protocol requirements.
 
 ## Acceptance and completion
 

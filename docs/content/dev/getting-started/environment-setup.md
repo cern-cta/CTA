@@ -1,6 +1,6 @@
 # Environment Setup
 
-This walkthrough prepares a full CTA development instance on an AlmaLinux 9 VM, using Kubernetes, virtual tape hardware, and an EOS disk buffer. If you only need to edit files or build packages, see [Choose where to work](prerequisites.md#choose-where-to-work). Repository access, cloning, Git configuration, and hooks are covered in [Prerequisites & Access](prerequisites.md).
+This walkthrough prepares a full CTA development instance on an AlmaLinux 9 VM, using Kubernetes, virtual tape hardware, and an EOS disk system. If you only need to edit files or build packages, see [Choose where to work](prerequisites.md#choose-where-to-work). Repository access, cloning, Git configuration, and hooks are covered in [Prerequisites & Access](prerequisites.md).
 
 ## Prepare the development machine
 

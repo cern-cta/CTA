@@ -4,7 +4,7 @@
 
 # CTA Maintenance Daemon (`cta-maintd`)
 
-The maintenance daemon primarily interacts with the SchedulerDB to perform scheduling operations that do not require the involvement of a tape drive. These include reporting requests back to the disk buffer, converting repack requests into the individual retrieve and archive jobs required, and garbage collecting dead agents. The maintenance daemon consists of a set of routines, each of which performs a specific task. The maintenance daemon ensures these routines are run periodically.
+The maintenance daemon primarily interacts with the SchedulerDB to perform scheduling operations that do not require the involvement of a tape drive. These include reporting requests back to the disk system, converting repack requests into the individual retrieve and archive jobs required, and garbage collecting dead agents. The maintenance daemon consists of a set of routines, each of which performs a specific task. The maintenance daemon ensures these routines are run periodically.
 
 ## Routine execution and signal handling
 

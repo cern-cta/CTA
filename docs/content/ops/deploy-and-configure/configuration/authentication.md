@@ -1,6 +1,6 @@
 # Authentication Configuration
 
-Configure credentials for each [CTA interface](../../../concepts/components/authentication.md). Disk-system configuration belongs to the corresponding [disk buffer integration](../integrations/index.md).
+Configure credentials for each [CTA interface](../../../concepts/components/authentication.md). Disk-system configuration belongs to the corresponding [disk system integration](../integrations/index.md).
 
 ## JWT Authentication
 
@@ -103,4 +103,4 @@ The tape daemon needs credentials accepted by the selected disk system.
 
 ### EOS
 
-Document SSS key distribution and rotation here; see [EOS Configuration](../integrations/eos/configuration.md).
+Document SSS key distribution and rotation here; see [EOS Configuration](../integrations/eos.md#configuration).

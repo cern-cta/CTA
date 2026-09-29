@@ -2,9 +2,9 @@
 
     This page contains TODOs for unfinished documentation. Address the marked items before removing this notice.
 
-# Performance and Disk Layout
+# EOS Performance and Disk Layout
 
-EOS-specific layout and transfer policies for the CTA disk buffer. See also [CTA performance and capacity](../../../run-and-maintain/administration/performance.md).
+EOS-specific layout and transfer policies for the CTA disk buffer. See also [CTA performance and capacity](../performance.md).
 
 ## Spaces, layouts, and tape replicas
 

@@ -41,7 +41,7 @@ Because `cta-verify-file` submits requests to the Frontend, it requires a valid 
 ### 3. Client Configuration
 Configure the CLI configuration file (typically `/etc/cta/cta-cli.conf`) on the node running the verification scripts. The `eos.instance` must match the key identifier defined in step 2 to avoid "Instance name does not match key identifier" errors.
 
-The `eos.*` names below are literal configuration keys used by this client, not instructions to deploy an EOS disk buffer.
+The `eos.*` names below are literal configuration keys used by this client, not instructions to deploy an EOS disk system.
 
 **Example `/etc/cta/cta-cli.conf`:**
 ```conf

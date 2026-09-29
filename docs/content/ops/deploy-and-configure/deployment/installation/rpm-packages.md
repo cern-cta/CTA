@@ -64,7 +64,7 @@ By default, CTA only comes with Postgres support for the catalogue. To enable Or
 Choose the appropriate packages, as needed.
 
 ```shell
-dnf install cta-frontend # For the disk buffer + admin commands
+dnf install cta-frontend # For disk-system workflow requests and admin commands
 dnf install cta-maintd # For executing various routines necessary for the correct working of CTA
 dnf install cta-taped # For the drive. Must be on a server connected to tape drives
 dnf install cta-rmcd # For the mediachanger. Must be on every server where a cta-taped process is running

@@ -41,6 +41,7 @@ Keep diagram files beside their pages. For Mermaid diagrams, use the default the
 When writing:
 
 - Link to shared explanations instead of repeating them.
+- Use **disk system** for EOS/dCache services, namespace ownership, integration, and workflow reporting. Use **disk buffer** for the storage holding archive sources and retrieve destinations, including capacity, cleanup, and data transfers. See [Disk System](../../concepts/components/disk-system.md).
 - Describe how to use the software in the documentation’s selected release series (see [When changes appear online](#when-changes-appear-online)). Avoid historical notes such as “Feature X was introduced in CTA 5.11”; the changelog records those changes. Include version information when it affects the instructions, such as a minimum supported EOS version or an intermediate CTA release required during an upgrade.
 - Label EOS- or dCache-specific instructions clearly; keep shared guidance independent of the disk system.
 - Mark unfinished material with explicit TODOs and add the standard **Documentation incomplete** notice at the top of the page, after any YAML frontmatter. Remove the notice once all TODOs are resolved; retain separate review warnings until the content has been validated.

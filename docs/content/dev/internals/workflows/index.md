@@ -4,7 +4,7 @@
 
 # Workflow Implementation
 
-These pages trace requests through CTA code and persistent state. For user-visible behaviour, start with [Concepts](../../../concepts/index.md); disk-system protocols belong in [Disk Buffer Integrations](../../guides/integrations/index.md).
+These pages trace requests through CTA code and persistent state. For user-visible behaviour, start with [Concepts](../../../concepts/index.md); disk-system protocols belong in [Disk System Integrations](../../guides/integrations/index.md).
 
 A typical archive or retrieve request enters through the workflow frontend, uses catalogue metadata, becomes scheduler work, is executed by the tape daemon, and is reported back to the disk system. Backend-specific queues and ownership mechanisms are described under [Scheduler](../components/scheduler/index.md).
 

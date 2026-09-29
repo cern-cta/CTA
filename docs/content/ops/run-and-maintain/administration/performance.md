@@ -16,8 +16,8 @@ TODO: Document drive allocation, scheduling policies, buffers, and reporting bat
 
 ## Disk buffer capacity
 
-TODO: Document how disk capacity and transfer rates constrain tape activity; put system-specific tuning under the corresponding integration.
+TODO: Document how disk capacity and transfer rates constrain tape activity; link system-specific tuning from this section.
 
 ## Retrieval ordering and disk-buffer tuning
 
-Use [RAO configuration](../../deploy-and-configure/configuration/tape-daemon.md#recommended-access-order) for tape positioning and [EOS performance and disk layout](../../deploy-and-configure/integrations/eos/performance.md) for EOS-specific limits and buffer policies.
+Use [RAO configuration](../../deploy-and-configure/configuration/tape-daemon.md#recommended-access-order) for tape positioning and [EOS performance and disk layout](eos/performance.md) for EOS-specific limits and buffer policies.

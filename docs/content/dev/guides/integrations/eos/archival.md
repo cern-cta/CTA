@@ -63,7 +63,7 @@ in EOS, or as a rule.
 
 #### 1. Configure EOS for tape-backed operation
 
-Operator configuration is documented under [EOS Configuration](../../../../ops/deploy-and-configure/integrations/eos/configuration.md).
+Operator configuration is documented under [EOS Configuration](../../../../ops/deploy-and-configure/integrations/eos.md#configuration).
 
 #### 2. CREATE Workflow Event
 
@@ -76,7 +76,7 @@ The XRootD copy call is handled by the MGM OFS plugin method `XrdMgmOfsFile::ope
 `WFE::Job::DoIt()`.
 
 If the extended attribute `sys.workflow.sync::create.default="proto"` has been defined on the directory
-(see [EOS Configuration](../../../../ops/deploy-and-configure/integrations/eos/configuration.md#b-create-extended-attributes-on-destination-directory)), then the event handler is called:
+(see [EOS Configuration](../../../../ops/deploy-and-configure/integrations/eos.md#b-create-extended-attributes-on-destination-directory)), then the event handler is called:
 
 ```
 else if (gOFS->mTapeEnabled && method == "proto") {

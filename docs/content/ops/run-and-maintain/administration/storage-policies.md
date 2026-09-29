@@ -20,4 +20,12 @@ TODO: Document scheduling policy assignment and validation.
 
 ## Coordinating disk-system metadata
 
-Keep CTA policy changes distinct from disk-system namespace changes. The [EOS metadata guide](../../deploy-and-configure/integrations/eos/metadata-recovery.md#storage-class-changes) covers coordinating storage-class changes and any required copy migration.
+Keep CTA policy changes distinct from disk-system namespace changes.
+
+### EOS storage-class changes
+
+Coordinate EOS metadata, CTA storage classes, and any required repack or copy-count changes. See [cta-ops-eos](../../tools/cta-ops-eos.md#cta-ops-change-storageclass) for the tool-specific procedure.
+
+### EOS disk-instance migration
+
+TODO: Document supported moves between disk instances, including identity mappings and permissions. Verify tool availability before adding commands.

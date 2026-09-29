@@ -28,4 +28,4 @@ TODO: Include setting and checking `IS_PRODUCTION` in the commissioning checklis
 
 ## Acceptance checks and handover
 
-TODO: Document the expected results for archive, retrieve, and copy verification, failure investigation, monitoring readiness, and the resources created during commissioning. Keep the EOS-specific setup in [EOS Configuration](../integrations/eos/configuration.md).
+TODO: Document the expected results for archive, retrieve, and copy verification, failure investigation, monitoring readiness, and the resources created during commissioning. Keep the EOS-specific setup in [EOS Configuration](../integrations/eos.md#configuration).

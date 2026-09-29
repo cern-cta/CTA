@@ -2,26 +2,41 @@
 
     This page contains TODOs for unfinished documentation. Address the marked items before removing this notice.
 
-# EOS Configuration
+# EOS Integration
 
-This page is specific to the EOS integration. Configure the [Workflow Frontend](../../configuration/workflow-frontend.md) and [Admin Frontend](../../configuration/admin-frontend.md) and [authentication](../../configuration/authentication.md) separately.
+This page is specific to the EOS integration. Configure the [Workflow Frontend](../configuration/workflow-frontend.md) and [Admin Frontend](../configuration/admin-frontend.md) and [authentication](../configuration/authentication.md) separately.
 
-## Workflow connection
+## Installation
+
+Install EOS packages only on the hosts that need the EOS server or client. Core CTA installation is documented [separately](../deployment/installation/index.md).
+
+The `cta-release` package supplies repository definitions and dependency locks for the corresponding release. Select the EOS packages appropriate to each host:
+
+```shell
+dnf install eos-server
+dnf install eos-client
+```
+
+EOS dependencies and compatibility must be checked for the chosen deployment.
+
+## Configuration
+
+### Workflow connection
 
 TODO: Document the EOS workflow endpoint, credentials, directory policies, and a verification procedure for the integration here.
 
-## Data-transfer authentication
+### Data-transfer authentication
 
 TODO: Document SSS credentials shared by EOS and the tape daemons, permissions, and key rotation here.
 
-## Historical configuration notes
+### Historical configuration notes
 
 !!! warning "Needs content review"
     The following material was moved from the deprecated archival workflow page. It describes the SSI integration and must be checked against the selected EOS/CTA deployment before use.
 
-### 1. Configure EOS for tape-backed operation
+#### 1. Configure EOS for tape-backed operation
 
-#### A. Enable tape features
+##### A. Enable tape features
 
 Tape-related features including the "proto" workflow event handlers are disabled by default. To enable these features, set `tapeenabled` to true.
 
@@ -54,7 +69,7 @@ fstofs.protowfendpoint ctafrontend:10955
 fstofs.protowfresource /ctafrontend
 ```
 
-#### B. Create extended attributes on destination directory
+##### B. Create extended attributes on destination directory
 
 ```
 # eos attr ls /eos/ctaatlas/archive
@@ -85,9 +100,8 @@ they are immutable and may not be appended to or modified.
 `sys.cta.storage_class` must be set to a valid CTA storage class with a defined archive route. This is inherited by
 newly-created files and validated during the **CREATE** workflow event.
 
-## Related configuration and procedures
+### Related configuration and procedures
 
-- [Tape REST API](tape-rest-api.md)
-- [Performance and disk layout](performance.md)
-- [Metadata consistency and recovery](metadata-recovery.md)
-- [Troubleshooting and repair](troubleshooting.md)
+- [Performance and disk layout](../../run-and-maintain/administration/eos/performance.md)
+
+For garbage-collector configuration and ongoing buffer management, see [EOS Buffer Cleanup](../../run-and-maintain/administration/eos/buffer-cleanup.md). For file metadata fields, see [EOS File Attributes](../../tools/eos-file-attributes.md).
