@@ -1,38 +1,24 @@
-# Semantic Conventions
+# Semantic conventions
 
-This directory contains a set of constants for attribute names used in CTA.
-All semantic conventions follow those established by OpenTelemetry where possible. OpenTelemetry has been designed such that its concepts and naming work for many different systems.
+Shared constants for CTA instrumentation. Defining the keys here keeps emitted names stable across telemetry SDK upgrades and makes them available to components that do not use the SDK directly.
 
-- These constants MUST follow the conventions as detailed here: <https://opentelemetry.io/docs/specs/semconv/general/naming/>.
-- See <https://opentelemetry.io/docs/specs/semconv/> for existing semantic conventions.
+Use the [semantic conventions](../../docs/content/dev/guides/instrumentation/semantic-conventions.md) for names and values, the [C++ instrumentation guide](../../docs/content/dev/guides/instrumentation/cpp.md) for their use, and the [logging conventions](../../docs/content/dev/guides/instrumentation/logging.md) for log-schema compatibility.
 
-While the telemetry SDK exposes some of these values, this could potentially cause name changes when the SDK is upgraded. As such, we explicitly define the keys we use to ensure consistency.
-Additionally, this allows us to have this set of constants in a single place and it also makes sense for components not using telemetry.
+## Attribute naming quick reference
 
-## Variable naming
+Keep shared definitions in `Attributes.hpp` rather than repeating string literals in callers. Reuse OpenTelemetry names where applicable.
 
-The constants in this directory can define both the name of the keys AND names of the possible values.
+| Definition | Naming rule | Example |
+| --- | --- | --- |
+| Attribute key | Prefix with `k` and convert the dotted key to CamelCase. | `service.instance.id` → `kServiceInstanceId` |
+| Attribute value | Prefix with `k` and convert the value to CamelCase. | `archive` → `kArchive` |
+| Value namespace | Convert the attribute key to CamelCase and append `Values`. | `cta.transfer.direction` → `CtaTransferDirectionValues` |
 
-### Attribute Keys
+Value constants must live in the namespace for their attribute key. For example:
 
-The variable names for attribute keys MUST be the same as their values with the following modifications:
+```cpp
+cta::semconv::attr::kCtaTransferDirection                 // "cta.transfer.direction"
+cta::semconv::attr::CtaTransferDirectionValues::kArchive  // "archive"
+```
 
-- Prefixed with a "k"
-- CamelCasing instead of the dot separator
-
-For example, a constant value of `service.instance.id` should be exposed by a variable called `kServiceInstanceId`.
-
-### Attribute Values
-
-The variable names for attribute values MUST be the same as their values with the following modifications:
-
-- Prefixed with a "k"
-- CamelCasing instead of the dot separator
-
-In addition, values MUST live in a separate namespace specific to the attribute key that they are for.
-The namespace name MUST be the attribute key expressed using CamelCasing, appended by `Values`.
-
-For example, the attribute key `cta.transfer.direction` might have as a possible value `archive`.
-
-- The attribute key variable would be `cta::semconv::attr::kCtaIoDirection`.
-- The attribute value variable would be `cta::semconv::attr:CtaTransferDirectionValues::kArchive`
+These rules apply to attribute constants in `Attributes.hpp`. For the existing log-field naming in `Logging.hpp`, follow the linked logging conventions.

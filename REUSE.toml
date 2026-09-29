@@ -39,7 +39,7 @@ path = [
     ".git-blame-ignore-revs",
     ".cppcheck-suppressions.txt",
     ".secrets.baseline",
-    "catalogue/cta_catalogue_class_diagram.png",
+    "docs/content/dev/internals/components/catalogue/cta_catalogue_class_diagram.png",
     "catalogue/rdbms_classes.pdf",
     "catalogue/rdbms_classes.pptx",
     "rdbms/cta_rdbms_class_diagram.svg",

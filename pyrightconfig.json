@@ -1,7 +1,5 @@
 {
   "typeCheckingMode": "strict",
-  "venvPath": ".",
-  "venv": ".venv",
   "extraPaths": [
     "ci/release/src"
   ],

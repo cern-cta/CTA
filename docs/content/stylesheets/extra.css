@@ -9,6 +9,11 @@
   --md-code-font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
     "Liberation Mono", monospace;
   --cta-brand: #f3681e;
+  /* Shared dark surfaces match eoscta-web, including the fixed masthead/footer. */
+  --cta-dark: #0d1117;
+  --cta-dark-raised: #161b22;
+  --cta-dark-sunken: #010409;
+  --cta-dark-border: #30363d;
   --cta-radius: 10px;
   --cta-radius-sm: 6px;
 }
@@ -32,47 +37,89 @@
 
 [data-md-color-scheme="slate"] {
   color-scheme: dark;
-  --cta-surface: #1a2024;
-  --cta-border: #2a3237;
+  --cta-surface: var(--cta-dark-raised);
+  --cta-border: var(--cta-dark-border);
   --cta-heading: #eef1f3;
-  --md-default-bg-color: #14181b;
+  --md-default-bg-color: var(--cta-dark);
+  --md-default-bg-color--light: #0d1117b3;
+  --md-default-bg-color--lighter: #0d11174d;
+  --md-default-bg-color--lightest: #0d11171f;
   --md-default-fg-color: #eef1f3;
   --md-default-fg-color--light: #b0bcc2;
   --md-default-fg-color--lighter: #8b979e;
-  --md-default-fg-color--lightest: #2a3237;
+  --md-default-fg-color--lightest: var(--cta-dark-border);
   --md-typeset-a-color: #ff8c4d;
   --md-accent-fg-color: #ff8c4d;
   --md-accent-fg-color--transparent: #f3681e1a;
-  --md-code-bg-color: #1a2024;
+  --md-code-bg-color: var(--cta-dark-raised);
   --md-code-fg-color: #eef1f3;
 }
 
 [data-md-color-scheme] {
   --md-typeset-color: var(--md-default-fg-color);
-  --md-primary-fg-color: #14181b;
-  --md-primary-fg-color--light: #1b2126;
-  --md-primary-fg-color--dark: #101416;
+  --md-primary-fg-color: var(--cta-dark);
+  --md-primary-fg-color--light: var(--cta-dark-raised);
+  --md-primary-fg-color--dark: var(--cta-dark-sunken);
   --md-primary-bg-color: #f2f5f6;
   --md-primary-bg-color--light: #b4c0c6;
   --md-admonition-bg-color: var(--cta-surface);
   --md-admonition-fg-color: var(--md-default-fg-color);
-  --md-footer-bg-color: #14181b;
-  --md-footer-bg-color--dark: #101416;
+  --md-footer-bg-color: var(--cta-dark);
+  --md-footer-bg-color--dark: var(--cta-dark-sunken);
   --md-footer-fg-color: #f2f5f6;
   --md-footer-fg-color--light: #b4c0c6;
   --md-footer-fg-color--lighter: #8b979e;
 }
 
+/* Mermaid uses a shadow root: configure its inherited variables here instead
+ * of targeting generated SVG elements. Keep connectors separate from the dark
+ * masthead color, and use the mode-aware CTA accent for diagram borders.
+ */
+[data-md-color-scheme] {
+  --md-mermaid-edge-color: var(--md-default-fg-color--light);
+  --md-mermaid-node-bg-color: var(--cta-surface);
+  --md-mermaid-node-fg-color: var(--md-accent-fg-color);
+  --md-mermaid-label-bg-color: var(--md-default-bg-color);
+  --md-mermaid-label-fg-color: var(--md-default-fg-color);
+  --md-mermaid-sequence-actor-bg-color: var(--cta-surface);
+  --md-mermaid-sequence-actor-fg-color: var(--md-default-fg-color);
+  --md-mermaid-sequence-actor-border-color: var(--md-accent-fg-color);
+  --md-mermaid-sequence-actor-line-color: var(--md-default-fg-color--lighter);
+  --md-mermaid-sequence-message-line-color: var(--md-mermaid-edge-color);
+  --md-mermaid-sequence-message-fg-color: var(--md-default-fg-color);
+  --md-mermaid-sequence-note-bg-color: var(--cta-surface);
+  --md-mermaid-sequence-note-fg-color: var(--md-default-fg-color);
+  --md-mermaid-sequence-note-border-color: var(--md-accent-fg-color);
+  --md-mermaid-sequence-label-bg-color: var(--cta-surface);
+  --md-mermaid-sequence-label-fg-color: var(--md-default-fg-color);
+  --md-mermaid-sequence-loop-bg-color: var(--cta-surface);
+  --md-mermaid-sequence-loop-fg-color: var(--md-default-fg-color);
+  --md-mermaid-sequence-loop-border-color: var(--md-accent-fg-color);
+  --md-mermaid-sequence-number-bg-color: var(--md-default-fg-color);
+  --md-mermaid-sequence-number-fg-color: var(--md-default-bg-color);
+}
+
+/* Sequence markers use currentColor via the compatibility default in hooks.py. */
+.md-typeset .mermaid { color: var(--md-mermaid-edge-color); }
+
 body { -webkit-font-smoothing: antialiased; }
+
+/* Keep the cool dark-to-slate transition visible across a single viewport. */
+body[data-md-color-scheme="slate"] {
+  --cta-dark-gradient: linear-gradient(135deg, var(--cta-dark) 0%, #10151c 50%, #131a23 100%);
+  background-image: var(--cta-dark-gradient);
+  background-attachment: fixed;
+}
+
 
 /* A compact, dark masthead keeps the CTA identity visible in both modes. */
 .md-header {
   background-color: var(--md-primary-fg-color);
   background-image:
     radial-gradient(120% 140% at 88% 0%, rgb(243 104 30 / 14%) 0%, transparent 55%),
-    linear-gradient(180deg, #1b2126 0%, #14181b 100%);
+    linear-gradient(180deg, var(--cta-dark-raised) 0%, var(--cta-dark) 100%);
   box-shadow: 0 2px 6px rgb(0 0 0 / 16%);
-  border-bottom: 1px solid #ffffff24;
+  border-bottom: 1px solid var(--cta-dark-border);
 }
 .md-header__title { font-weight: 700; letter-spacing: -0.018em; }
 /* Keep the site identity visible when Material switches to the page topic. */
@@ -85,11 +132,11 @@ body { -webkit-font-smoothing: antialiased; }
 .md-nav__button.md-logo img { width: auto; height: 2rem; }
 .md-header .md-source { padding-inline: .5rem; }
 .md-header a:hover, .md-header button:hover { color: #ff8c4d; }
-.md-tabs { background: transparent; border-bottom: 1px solid #ffffff24; }
+.md-tabs { background: transparent; border-bottom: 1px solid var(--cta-dark-border); }
 .md-tabs__link { margin-top: 0; padding-block: .7rem; opacity: 1; color: #b4c0c6; }
 .md-tabs__item--active .md-tabs__link { color: #f2f5f6; box-shadow: inset 0 -2px var(--cta-brand); }
 .md-tabs__link:hover { color: #ff8c4d; }
-.md-search__form { border-radius: var(--cta-radius-sm); background: #ffffff12; }
+.md-search__form { border-radius: var(--cta-radius-sm); background: var(--cta-dark-raised); }
 .md-search__input::placeholder { color: #b4c0c6; }
 
 .md-typeset { line-height: 1.65; }
@@ -107,10 +154,44 @@ body { -webkit-font-smoothing: antialiased; }
   text-decoration-thickness: 1px;
 }
 .md-typeset .cta-home a:not(.md-button) { text-decoration: none; }
+/* External text links in page content only. Keep the origin exclusions in sync
+ * with site_url in mkdocs.yml. Material also makes preview links absolute;
+ * exclude the standard preview addresses. Delimiters avoid lookalike hosts.
+ * Empty alternative text keeps the indicator decorative for assistive technology.
+ */
+.md-content .md-typeset a:is([href^="https://" i], [href^="http://" i], [href^="//"]):not(
+  [href="https://cta.docs.cern.ch" i],
+  [href^="https://cta.docs.cern.ch/" i],
+  [href^="https://cta.docs.cern.ch?" i],
+  [href^="https://cta.docs.cern.ch#" i],
+  [href="//cta.docs.cern.ch" i],
+  [href^="//cta.docs.cern.ch/" i],
+  [href^="//cta.docs.cern.ch?" i],
+  [href^="//cta.docs.cern.ch#" i],
+  [href^="http://127.0.0.1:8000/" i],
+  [href^="http://localhost:8000/" i],
+  .md-icon, .md-content__button, :has(img, svg, .twemoji, .md-icon)
+)::after {
+  /* Keep the arrow with the final word without preventing long links wrapping. */
+  content: "\2060\00a0↗" / "";
+  font-size: .85em;
+}
+
 .md-typeset hr { border-color: var(--cta-border); }
 .md-nav__link { border-radius: 4px; }
 .md-nav__link:hover { color: var(--md-typeset-a-color); }
 .md-nav__link--active { font-weight: 700; }
+/* Indent section contents on desktop; keep top-level tabs and mobile intact. */
+@media (min-width: 76.25em) {
+  /* The active top-level section is already identified by the navigation tabs.
+     Keep its label on mobile, where it controls the nested navigation drawer. */
+  .md-nav--primary > .md-nav__list > .md-nav__item--section.md-nav__item--nested > .md-nav__link {
+    display: none;
+  }
+  .md-nav--primary .md-nav__item--nested > .md-nav:not([data-md-level="1"]) > .md-nav__list {
+    margin-inline-start: .5rem;
+  }
+}
 .md-nav--secondary { border-left: 1px solid var(--cta-border); }
 .md-nav--secondary .md-nav__title { color: var(--md-default-fg-color--light); }
 
@@ -170,8 +251,8 @@ body { -webkit-font-smoothing: antialiased; }
   mask-image: var(--md-admonition-icon--terminal);
 }
 
-.md-footer { border-top: 1px solid #ffffff24; }
-.cta-footer { background: #14181b; color: #b4c0c6; }
+.md-footer { border-top: 1px solid var(--cta-dark-border); }
+.cta-footer { background: var(--md-footer-bg-color); color: #b4c0c6; }
 .cta-footer__inner {
   display: flex;
   flex-wrap: wrap;
@@ -208,4 +289,26 @@ body { -webkit-font-smoothing: antialiased; }
 }
 @media print {
   .md-typeset h1, .md-typeset h2, .md-typeset h3, .md-typeset h4 { color: #15191c; }
+}
+
+/* Missing-page layout and recovery links. */
+.cta-not-found {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: clamp(1rem, 4vw, 3rem) 0;
+  text-align: center;
+}
+.md-typeset .cta-not-found h1 { margin: .5rem 0 1rem; font-size: clamp(1.6rem, 4vw, 2.3rem); }
+.cta-not-found__message { color: var(--md-default-fg-color--light); }
+.cta-not-found__actions { margin: 1.5rem 0; }
+.md-typeset .cta-not-found__hint { color: var(--md-default-fg-color--light); font-size: .8rem; }
+
+.md-typeset .cta-not-found .md-button {
+  background: var(--cta-surface);
+  border-color: var(--md-accent-fg-color);
+  color: var(--md-default-fg-color);
+}
+.md-typeset .cta-not-found .md-button:is(:hover, :focus-visible) {
+  background: var(--md-accent-fg-color--transparent);
+  box-shadow: inset 0 0 0 1px var(--md-accent-fg-color);
 }

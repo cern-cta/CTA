@@ -1,10 +1,5 @@
-# gRPC frontend for  CTA
+# gRPC frontend
 
-gRPC based frontend for disk storage systems. This is thin layer that only populates
+The gRPC frontend exposes CTA operations to disk storage systems and delegates work to the catalogue and scheduler.
 
-## Configuration
-
-The  _cta-frontend-grpc_ interface requires only connection to the CTA catalog
-and the scheduler. Those configurations are taken from `/etc/cta/cta-catalogue.conf` and
-`/etc/cta/cta.conf`. The TPC port number used to accept storage system requests is specified
-in `/etc/sysconfig/cta-frontend-grpc` and defaults to `50051`.
+See [Workflow Frontend internals](../../docs/content/dev/internals/components/workflow-frontend.md) for component context and [Workflow Frontend configuration](../../docs/content/ops/deploy-and-configure/configuration/workflow-frontend.md) for deployment settings. Protocol definitions and generated interfaces are described under [protobuf](../../lib/protobuf/README.md).

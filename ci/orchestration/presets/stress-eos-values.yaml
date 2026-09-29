@@ -3,6 +3,7 @@
 
 mgm:
   xrd:
+    # Connect stress traffic to the CTA workflow frontend using the deployment credentials.
     extraConfig: |
       xrootd.chksum  adler32
       mgmofs.archivedir /var/eos/archive
@@ -22,7 +23,7 @@ mgm:
       mgmofs.jwttokenpath /etc/cta/ctaeos.jwt
       # END
 
-  # Generate the self-signed certificates for http
+  # Prepare certificates and trust material for authenticated TLS communication in the test instance.
   initContainer: &init-container
     enabled: true
     script: |
@@ -47,6 +48,7 @@ mgm:
         mountPath: /etc/grpc-certs-client/ctaeos-self-signed.key.pem
         subPath: ctaeos-self-signed.key.pem
 
+  # Share credentials and retain core dumps for post-run investigation.
   extraVolumes: &extra-volumes
     volumeMounts:
       # varlog-tmp is the location where core dumps will end up
@@ -77,10 +79,12 @@ mgm:
           secretName: ctaeos-self-signed-key-pem
 
 fst:
+  # Start FST replicas together to reduce setup time.
   podManagementPolicy: Parallel
 
   persistence:
     enabled: true
+    # Reduce disk latency so host storage is less likely to limit measured throughput.
     storageClass: "fast-ssd"
     annotations: {}
     accessModes:
@@ -88,8 +92,9 @@ fst:
     size: 40Gi
 
   xrd:
-    # Increasing 2x the thread pool size w.r.t. the minimal default 256.
+    # Increase FST concurrency to serve many simultaneous small-file requests.
     sched: "mint 16 maxt 512 idle 64"
+    # Connect stress traffic to the CTA workflow frontend using the deployment credentials.
     extraConfig: |
       xrootd.redirect {{ include "utils.mgm_address" . }}:1094 chksum
       fstofs.wfendpoint grpcs://cta-frontend-wfe:10956
@@ -111,6 +116,7 @@ fst:
 qdb:
   persistence:
     enabled: true
+    # Reduce disk latency so host storage is less likely to limit measured throughput.
     storageClass: "fast-ssd"
     annotations: {}
     accessModes:

@@ -1,49 +1,153 @@
-*[VO]: Virtual Organization
-
-*[VID]: Volume ID, the indentifier of a particular tape
-
-*[DI]: Disk Instance
-
-*[TGC]: Tape Garbage Collector
-
-*[GC]: Garbage Collector
+*[ACL]: Access Control List
 
 *[AF]: Archive File
 
-*[MGM]: EOS metadata server
+*[ANSI]: American National Standards Institute
 
-*[FST]: File Storage server
+*[API]: Application Programming Interface
 
-*[FTS]: File Transfer Service
+*[ASCII]: American Standard Code for Information Interchange
 
-*[MQ]: Message broker for asynchronous messaging
+*[ATRESYS]: Automated Tape REpacking SYStem
 
-*[LRU]: Least Recently Used
+*[AUL]: ANSI tape format with user labels, inherited from CASTOR
+
+*[CASTOR]: CERN Advanced STORage manager
+
+*[CI]: Continuous Integration
+
+*[CLI]: Command-Line Interface
+
+*[CPU]: Central Processing Unit
+
+*[CRC32C]: 32-bit Cyclic Redundancy Check using the Castagnoli polynomial
 
 *[DAQ]: Data Acquisition System
 
-*[RPM]: RPM Package Manager
+*[DB]: Database
+
+*[DEC]: Digital Equipment Corporation
+
+*[DI]: Disk Instance
+
+*[EBCDIC]: Extended Binary Coded Decimal Interchange Code
+
+*[EOD]: End of Data
+
+*[EOF]: End of File
+
+*[EOS]: EOS Open Storage, a disk storage system developed at CERN
+
+*[EOV]: End of Volume
+
+*[FST]: File Storage server
+
+*[FSTs]: File Storage servers
+
+*[FTS]: File Transfer Service
+
+*[GC]: Garbage Collector
+
+*[gRPC]: RPC framework used by the CTA service APIs
+
+*[GUI]: Graphical User Interface
+
+*[HDR]: Header label
+
+*[HTTP]: Hypertext Transfer Protocol
+
+*[I/O]: Input/Output
+
+*[IBM]: International Business Machines
+
+*[ID]: Identifier
+
+*[ISO/IEC]: International Organization for Standardization / International Electrotechnical Commission
+
+*[JSON]: JavaScript Object Notation
+
+*[JWKS]: JSON Web Key Set
+
+*[JWT]: JSON Web Token
+
+*[KDC]: Key Distribution Center
+
+*[KRB5]: Kerberos version 5
+
+*[LBP]: Logical Block Protection
+
+*[LHC]: Large Hadron Collider
+
+*[LRU]: Least Recently Used
+
+*[LTFS]: Linear Tape File System
+
+*[LTO]: Linear Tape-Open
 
 *[MGM]: EOS Metadata Manager
 
-*[SLA]: Service Level Agreement
+*[MQ]: Message broker for asynchronous messaging
 
-*[SSS]: Simple Shared Secret
+*[mTLS]: Mutual Transport Layer Security
+
+*[OSM]: Open Storage Manager
+
+*[RAO]: Recommended Access Order
+
+*[REST]: Representational State Transfer
+
+*[RMC]: Remote Media Changer
 
 *[RMCD]: Remote Media Changer Daemon
 
-*[VFS]: Virtual File System
+*[RPC]: Remote Procedure Call
 
-*[KDC]: Key Distribution Center
+*[RPM]: RPM Package Manager
+
+*[SCSI]: Small Computer System Interface
+
+*[SLA]: Service Level Agreement
+
+*[SLTF]: Shortest Locate Time First
+
+*[SSD]: Solid-State Drive
+
+*[SSDs]: Solid-State Drives
+
+*[SSI]: Scalable Service Interface
+
+*[SSS]: Simple Shared Secret
 
 *[TAS]: Tape Alerting System
 
 *[TDMS]: Tape Drive Monitoring System
 
+*[TGC]: Tape Garbage Collector
+
+*[TLS]: Transport Layer Security
+
+*[TM]: Tape Mark
+
 *[tpsvr]: tape server
 
+*[UHL]: User Header Label
+
+*[UTC]: Coordinated Universal Time
+
+*[UTL]: User Trailer Label
+
+*[VFS]: Virtual File System
+
+*[VID]: Volume identifier, identifying a particular tape
+
+*[VMS]: Virtual Memory System
+
+*[VO]: Virtual Organisation
+
+*[VOLSER]: Volume Serial Number
+
+*[VOs]: Virtual Organisations
+
+*[VSN]: Volume Serial Number
+
 *[WFE]: Workflow Engine
-
-*[JWT]: JSON Web Token
-
-*[JWKS]: JSON Web Key Set

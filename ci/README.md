@@ -19,34 +19,10 @@ This directory contains all the files necessary for development and automation w
 * `cta-dev.sh`: The main script used for development: builds the project, the corresponding Docker image and deploys a local CTA test instance. See `./cta-dev.sh --help`.
 * `ci-download-artifacts.sh`: Downloads and extracts the artifacts of a single GitLab pipeline job.
 
-### CTA development versions
-
-`cta-dev` uses one identifier for CTA packages and container images:
-`--cta-version <version>-<suffix>`, which defaults to `6-dev`. The part before the
-first hyphen becomes the RPM version and accepts numbers and dots; the part after
-it becomes the RPM release and accepts lowercase letters, numbers, dots, and
-hyphens. CMake historically exposes the suffix as `VCS_VERSION`. `cta-dev` splits
-the identifier and passes the two parts separately to the underlying build
-scripts, which is also how the CI invokes them.
-
-The CTA version is also the tag of the container images built from those RPMs, so
-`build`, `images`, `up`, `debug`, and `all` take `--cta-version` only.
-
-`deploy` additionally accepts `--cta-image-tag` to deploy images that were built
-elsewhere, for example a CI image tag such as `5426528gitf4d8f0eb`. It cannot be
-combined with `--cta-version`, which selects a locally built version instead.
-Because such a tag normally refers to an image that is not on the local machine,
-`--cta-image-tag` also switches the image registry from `localhost` to the CI
-registry; override that with `--cta-image-registry`.
-
-Configure the default CTA version with `--cta-version`, or copy
-`.cta-dev.env.example` to `.cta-dev.env` and set `CTA_DEV_CTA_VERSION`. The image
-tag and registry are command-line options only.
-
 ## Useful links
 
-- `cta-dev` docs and use cases: https://cta.docs.cern.ch/latest/dev/getting-started/cta-dev/
-- CI overview, including explanations of the GitLab CI: https://cta.docs.cern.ch/latest/dev/ci/overview/
+- [cta-dev reference](../docs/content/dev/guides/tools-and-environment/cta-dev.md): commands and use cases.
+- [CI overview](../docs/content/dev/guides/testing/ci/index.md): how GitLab CI fits into development.
 
 ## Log Utilities
 
@@ -55,68 +31,11 @@ To get more user-friendly output in the various bash scripts, you can source `ut
 
 ## Release CLI
 
-The release workflow is exposed as a Python command in `ci/release`. Add it to your `PATH` for the current shell:
+`release/` contains the release command and CI publication helpers. From the repository root:
 
 ```bash
 export PATH="$PWD/ci/release:$PATH"
 release --help
 ```
 
-Every command requires an explicit, unsuffixed release version such as `v6.12.0.0-1`.
-Prepare the changelog from `main` with:
-
-```bash
-release changelog v6.12.0.0-1
-```
-
-The command validates and synchronizes the selected target branch, generates changes since the previous numeric CTA release, and opens the proposed changelog in the editor selected by Git (`GIT_EDITOR`, `core.editor`, `VISUAL`, or `EDITOR`).
-
-Review and merge the printed changelog merge request, then tag the release:
-
-```bash
-release tag v6.12.0.0-1
-```
-
-The tag command finds the unique merged changelog MR and tags its merge or squash commit after verifying that the commit is reachable from the selected target branch.
-It validates release metadata and the commit pipeline, opens Git's editor for a shared annotated-tag description, verifies that the complete selected tag family is absent locally and remotely, and asks for final confirmation.
-The tags are pushed atomically.
-
-By default, `changelog`, `tag`, and `status` use `main` as the target branch.
-For another release branch, pass the same `--target-branch` to every command:
-
-```bash
-release changelog v6.12.0.0-1 --target-branch maintenance
-release status v6.12.0.0-1 --target-branch maintenance
-release tag v6.12.0.0-1 --target-branch maintenance
-```
-
-Use `status` to inspect the release issue, changelog MR, release commit, pipeline, and tags without making changes:
-
-```bash
-release status v6.12.0.0-1
-```
-
-By default, a final release publishes the base tag and the `pgsched`, `pgcat`, and `pgall` variants.
-Use one or more `--suffix` options to publish only selected variants without the base tag:
-
-```bash
-release tag v6.12.0.0-1 --suffix pgsched --suffix pgcat
-```
-
-Use `--release-candidate` to select the next unused RC number automatically.
-The selected RC or final tag family must be completely new; the command fails if any member already exists locally or remotely.
-
-```bash
-release tag v6.12.0.0-1 --release-candidate
-```
-
-If release metadata is incomplete or the release commit does not have a successful push pipeline, `tag` displays the current state and asks whether to continue.
-This approval is separate from the final publication confirmation.
-Use `--yes` with `tag` to accept its confirmations in unattended use.
-
-Place the global `--dry-run` option before the command to perform validation and display planned decisions without editing files or making local or remote mutations:
-
-```bash
-release --dry-run changelog v6.12.0.0-1
-release --dry-run tag v6.12.0.0-1
-```
+See the [Release Procedure](../docs/content/dev/contributing/maintainers/releases.md) for changelog preparation, tagging, validation, and publication.

@@ -20,3 +20,5 @@ The RMC code was substantially reorganised in August 2025. It was converted from
 C to C++, reformatted with clang and reorganised into a new directory structure.
 To view the history of the software prior to 2025, see:
 https://gitlab.cern.ch/cta/CTA-old/-/tree/master/mediachanger/castorrmc
+
+See [Media Changer Daemon internals](../docs/content/dev/internals/components/media-changer-daemon.md) and [Operations configuration](../docs/content/ops/deploy-and-configure/configuration/media-changer-daemon.md).
