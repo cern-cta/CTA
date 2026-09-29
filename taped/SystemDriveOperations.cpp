@@ -39,17 +39,20 @@ namespace {
 class SystemDriveOperations final : public DriveOperations {
 public:
   /**
-   * @brief Initialize catalogue, scheduler and media changer access for a borrowed drive identity.
+   * @brief Initialize catalogue, scheduler and media changer access for the configured drive.
    *
-   * The configuration, logger and drive identity must outlive this object; setup failures propagate.
+   * The configuration and logger must outlive this object; setup failures propagate.
    *
    * @param config Daemon configuration; borrowed configuration must outlive the owning object.
    * @param log Logger used for diagnostics; it must outlive objects retaining a reference to it.
-   * @param driveInfo Drive identity and device paths; retained references must remain valid for the object lifetime.
    */
-  SystemDriveOperations(const TapedConfig& config, log::Logger& log, const common::dataStructures::DriveInfo& driveInfo)
+  SystemDriveOperations(const TapedConfig& config, log::Logger& log)
       : m_config(config),
-        m_driveInfo(driveInfo),
+        m_driveInfo(config.drive.name,
+                    utils::getShortHostname(),
+                    config.drive.logical_library_name,
+                    config.drive.device,
+                    config.drive.control_path),
         m_lc(log),
         m_mediaChanger(mediachanger::RmcProxy(config.rmcd.host,
                                               config.rmcd.port,
@@ -227,7 +230,7 @@ private:
   // Use atomic shared_ptr access for compatibility with the EL9 standard library.
   std::shared_ptr<const TapeSessionTracker> m_activeTracker {nullptr};
   const TapedConfig& m_config;
-  const common::dataStructures::DriveInfo& m_driveInfo;
+  const common::dataStructures::DriveInfo m_driveInfo;
   log::LogContext m_lc;
   mediachanger::MediaChangerFacade m_mediaChanger;
   System::realWrapper m_sysWrapper;
@@ -239,10 +242,8 @@ private:
 
 }  // namespace
 
-std::unique_ptr<DriveOperations> makeSystemDriveOperations(const TapedConfig& config,
-                                                           log::Logger& log,
-                                                           const common::dataStructures::DriveInfo& driveInfo) {
-  return std::make_unique<SystemDriveOperations>(config, log, driveInfo);
+std::unique_ptr<DriveOperations> makeSystemDriveOperations(const TapedConfig& config, log::Logger& log) {
+  return std::make_unique<SystemDriveOperations>(config, log);
 }
 
 }  // namespace cta::tape::daemon

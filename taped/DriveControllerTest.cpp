@@ -12,6 +12,7 @@
 #include "runtime/config/parsing/TomlParser.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/TapeMount.hpp"
+#include "session/TapeSessionWorkerTeardownIncomplete.hpp"
 
 #include <functional>
 #include <gmock/gmock.h>
@@ -204,27 +205,45 @@ protected:
     config.mounts.idle_scheduling_interval_secs = 7;
     config.mounts.logical_library_poll_interval_secs = 17;
     controller = std::make_unique<DriveController>(config, logger, operations);
-    // Iteration tests start from an already prepared drive; registration re-arms cleaning.
-    controller->m_cleanBeforeScheduling = false;
+    previousDrive.emplace();
+    previousDrive->driveStatus = DriveStatus::Up;
   }
 
   bool liveAt(Clock::time_point now) const { return controller->isLive(now); }
 
   void waitForLibrary() { controller->waitForLogicalLibrary(); }
 
-  void iteration() { controller->runIteration(); }
+  TapeSessionResult iterationResult;
 
-  int shutdown() { return controller->shutdownDrive(); }
+  bool iteration() {
+    iterationResult = controller->runIteration();
+    return iterationResult.driveReusable;
+  }
+
+  int shutdown() {
+    // Exercise shutdown through the controller's normal exit path.
+    controller->stop();
+    return controller->run();
+  }
 
   bool registerDrive() { return controller->registerDrive(false); }
 
   void waitForUp() { controller->waitUntilDriveIsRequestedUp(); }
 
-  bool prepare() { return controller->prepareDriveForScheduling(); }
+  bool prepare() {
+    controller->waitUntilDriveIsRequestedUp();
+    return controller->onDownToUpTransition();
+  }
 
-  void requireCleaning() { controller->m_cleanBeforeScheduling = true; }
-
-  void markPrepared() { controller->m_cleanBeforeScheduling = false; }
+  void expectTransition() {
+    testing::InSequence sequence;
+    DesiredDriveState up;
+    up.up = true;
+    EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
+    EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _));
+    EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
+    EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _));
+  }
 
   TapeMount* liveMount() { return m_liveMount; }
 
@@ -281,7 +300,6 @@ TEST_F(DriveControllerTest, StartupRecoveryPreservesKnownVidAcrossStatusPublicat
       // Unknown and Shutdown do not establish that cleanup completed either.
       const bool recover = desiredUp;
       const auto previousCleanings = cleanings;
-      const auto previousProbes = probes;
       EXPECT_CALL(scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
       if (!recover) {
         DesiredDriveState desired;
@@ -325,7 +343,7 @@ TEST_F(DriveControllerTest, StartupRecoveryPreservesKnownVidAcrossStatusPublicat
         EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
         EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Throw(std::runtime_error("end wait")));
         EXPECT_THROW(prepare(), std::runtime_error);
-        EXPECT_EQ(previousProbes, probes);
+        EXPECT_EQ(0, probes);
         EXPECT_EQ(previousCleanings, cleanings);
         EXPECT_EQ(0, transfers);
         EXPECT_EQ(0, schedules);
@@ -345,7 +363,6 @@ TEST_F(DriveControllerTest, RecoveryStatusPublicationFailureDoesNotTouchHardware
   EXPECT_CALL(scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _))
     .WillOnce(Throw(std::runtime_error("publication failed")));
-  expectShutdown();
   EXPECT_EQ(1, controller->run());
   EXPECT_FALSE(controller->isReady());
   EXPECT_EQ(0, cleanings);
@@ -378,12 +395,12 @@ TEST_F(DriveControllerTest, OperatorDownBeforeRecoveryDefersCleaning) {
   clean = [&] {
     EXPECT_EQ("V00001", cleanedVid);
     EXPECT_EQ(1, sleeps.size());
-    EXPECT_EQ(1, probes);
+    EXPECT_EQ(0, probes);
     return true;
   };
-  iteration();
+  prepare();
   EXPECT_EQ(1, cleanings);
-  EXPECT_EQ(1, schedules);
+  EXPECT_EQ(0, schedules);
 }
 
 // Verify a down request during cleanup prevents scheduling.
@@ -409,9 +426,9 @@ TEST_F(DriveControllerTest, RecoveryRespectsOperatorDownDuringCleaning) {
     state.reason = "Operator maintenance";
     return true;
   };
-  iteration();
+  prepare();
   EXPECT_EQ(1, cleanings);
-  EXPECT_EQ(1, probes);
+  EXPECT_EQ(0, probes);
   EXPECT_EQ(0, schedules);
   EXPECT_FALSE(state.up);
   EXPECT_EQ("Operator maintenance", state.reason);
@@ -419,7 +436,6 @@ TEST_F(DriveControllerTest, RecoveryRespectsOperatorDownDuringCleaning) {
 
 // Verify failed cleanup preserves its reason and requires another up request before retrying.
 TEST_F(DriveControllerTest, CleaningFailureRequiresAnotherUpRequestAndPreservesReason) {
-  requireCleaning();
   DesiredDriveState up;
   up.up = true;
   DesiredDriveState failed;
@@ -435,9 +451,9 @@ TEST_F(DriveControllerTest, CleaningFailureRequiresAnotherUpRequestAndPreservesR
       EXPECT_FALSE(state.reason.has_value());
     }));
   clean = [] { return false; };
-  iteration();
+  prepare();
   EXPECT_EQ(1, cleanings);
-  EXPECT_EQ(1, probes);
+  EXPECT_EQ(0, probes);
   EXPECT_EQ(0, schedules);
 
   // No new hardware access while down. An explicit up retries cleaning with no stale VID.
@@ -449,20 +465,19 @@ TEST_F(DriveControllerTest, CleaningFailureRequiresAnotherUpRequestAndPreservesR
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _));
   clean = [&] {
     EXPECT_EQ(1, sleeps.size());
-    EXPECT_EQ(2, probes);
+    EXPECT_EQ(0, probes);
     return true;
   };
-  iteration();
+  prepare();
   EXPECT_EQ(2, cleanings);
   EXPECT_FALSE(cleanedVid.has_value());
-  EXPECT_EQ(1, schedules);
+  EXPECT_EQ(0, schedules);
 }
 
 // Verify failed cleanup retains available exception details and keeps the drive down.
 TEST_F(DriveControllerTest, CleaningExceptionsKeepDriveDown) {
   for (const int failure : {0, 1, 2, 3}) {
     SCOPED_TRACE(failure);
-    requireCleaning();
     DesiredDriveState up;
     up.up = true;
     testing::InSequence sequence;
@@ -491,8 +506,8 @@ TEST_F(DriveControllerTest, CleaningExceptionsKeepDriveDown) {
       }
       throw std::runtime_error("cleaner failed");
     };
-    iteration();
-    EXPECT_EQ(failure + 1, probes);
+    prepare();
+    EXPECT_EQ(0, probes);
     EXPECT_EQ(0, schedules);
     ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&scheduler));
   }
@@ -500,97 +515,45 @@ TEST_F(DriveControllerTest, CleaningExceptionsKeepDriveDown) {
 
 // Verify one up transition cleans once before scheduling and ordinary retries do not clean again.
 TEST_F(DriveControllerTest, UpTransitionCleansOnlyOnceBeforeScheduling) {
-  requireCleaning();
-  DesiredDriveState up;
-  up.up = true;
   testing::InSequence sequence;
-  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
-  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _));
-  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
-  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _));
-  clean = [&] {
-    EXPECT_EQ(1, probes);
-    EXPECT_EQ(0, schedules);
-    return true;
-  };
-  iteration();
-  EXPECT_EQ(1, cleanings);
-  EXPECT_FALSE(cleanedVid.has_value());
+  expectTransition();
+  ASSERT_TRUE(prepare());
   expectPreparation();
-  iteration();
+  EXPECT_TRUE(iteration());
+  expectPreparation();
+  EXPECT_TRUE(iteration());
   EXPECT_EQ(1, cleanings);
-  EXPECT_EQ(2, probes);
+  EXPECT_EQ(0, probes);
   EXPECT_EQ(2, schedules);
-  EXPECT_THAT(logger.getLog(), testing::Not(testing::HasSubstr("Tape found in drive")));
 }
 
-// Unexpected media is diagnostic only; cleanup can still make the drive usable.
-TEST_F(DriveControllerTest, TapeBeforePreparationWarnsAndContinuesWithCleanup) {
-  testing::InSequence sequence;
-  requireCleaning();
+// Transition cleanup establishes readiness without a separate diagnostic probe.
+TEST_F(DriveControllerTest, TransitionCleansWithoutDiagnosticProbe) {
   empty = false;
   clean = [&] {
-    EXPECT_EQ(1, probes);
-    EXPECT_THAT(logger.getLog(), testing::HasSubstr("LVL=\"WARN\""));
-    EXPECT_THAT(logger.getLog(),
-                testing::HasSubstr("Tape found in drive while preparing to bring it up. Attempting drive cleanup."));
     empty = true;
     return true;
   };
-  DesiredDriveState up;
-  up.up = true;
-  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
-  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _));
-  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
-  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _));
-  iteration();
+  expectTransition();
+  EXPECT_TRUE(prepare());
+  EXPECT_TRUE(empty);
   EXPECT_EQ(1, cleanings);
-  EXPECT_EQ(1, probes);
-  EXPECT_EQ(1, schedules);
-
-  const auto preparationLog = logger.getLog();
-  expectPreparation();
-  iteration();
-  EXPECT_EQ(1, cleanings);
-  EXPECT_EQ(2, probes);
-  EXPECT_THAT(logger.getLog().substr(preparationLog.size()), testing::Not(testing::HasSubstr("Tape found in drive")));
+  EXPECT_EQ(0, probes);
 }
 
-// Neither returned probe errors nor exceptions should block the existing recovery path.
-TEST_F(DriveControllerTest, DiagnosticProbeFailuresDoNotPreventCleanup) {
-  testing::InSequence sequence;
-  for (const int failure : {0, 1, 2}) {
-    SCOPED_TRACE(failure);
-    requireCleaning();
-    empty = false;
-    probeError = "Probe failed";
-    probe = [failure] {
-      if (failure == 1) {
-        throw std::runtime_error("Probe failed");
-      }
-      if (failure == 2) {
-        throw 42;
-      }
-    };
-    clean = [&] {
-      empty = true;
-      probeError.reset();
-      probe = {};
-      return true;
-    };
-    DesiredDriveState up;
-    up.up = true;
-    EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
-    EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _));
-    EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
-    EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _));
-    iteration();
-    EXPECT_EQ(failure + 1, cleanings);
-    EXPECT_EQ(failure + 1, schedules);
-    EXPECT_EQ(failure + 1, probes);
-    EXPECT_THAT(logger.getLog(), testing::Not(testing::HasSubstr("Tape found in drive")));
-    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&scheduler));
+// Reusable sessions preserve the empty-drive guarantee.
+TEST_F(DriveControllerTest, ReusableSessionsNeedNoProbeOrAdditionalCleaning) {
+  probe = [] { ADD_FAILURE() << "Controller must not probe the drive"; };
+  expectTransition();
+  ASSERT_TRUE(prepare());
+  supplyMount();
+  for (int i = 0; i < 2; ++i) {
+    expectPreparation();
+    EXPECT_TRUE(iteration());
   }
+  EXPECT_EQ(1, cleanings);
+  EXPECT_EQ(2, transfers);
+  EXPECT_EQ(0, probes);
 }
 
 // If the drive name is owned by another host or logical library, registration fails.
@@ -682,33 +645,24 @@ TEST_F(DriveControllerTest, RegistrationReplacesAbsentAndCleanShutdownReasonsWit
   }
 }
 
-// If the desired-state lookup finds no drive entry, the controller registers the missing drive as down.
-TEST_F(DriveControllerTest, MissingDriveIsRegisteredDownUntilOperatorUp) {
-  DesiredDriveState up;
-  up.up = true;
-  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _))
-    .WillOnce(Throw(Scheduler::NoSuchDrive("missing")))
-    .WillOnce(Throw(Scheduler::NoSuchDrive("missing")))
-    .WillOnce(Return(up));
-  EXPECT_CALL(scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
-  EXPECT_CALL(scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _))
-    .WillOnce(Invoke([](const auto&, const DesiredDriveState& desired, const auto&, const auto&, const auto&, auto&) {
-      EXPECT_FALSE(desired.up);
-      EXPECT_EQ(formatDriveDownReason(DriveDownReason::Startup), desired.reason);
-    }));
-  EXPECT_CALL(scheduler, reportSchedulerBackendName("drive", _));
-  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
-  waitForUp();
+// A deleted catalogue entry is left for the next daemon run to recreate.
+TEST_F(DriveControllerTest, MissingDriveEndsRunWithoutRegistrationOrDownPublication) {
+  testing::InSequence sequence;
+  expectRunStartup();
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Throw(Scheduler::NoSuchDrive("missing")));
+
+  EXPECT_EQ(1, controller->run());
+  EXPECT_FALSE(controller->isReady());
   EXPECT_EQ(0, probes);
+  EXPECT_EQ(0, cleanings);
   EXPECT_EQ(0, schedules);
-  EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.drive_state_poll_interval_secs));
+  EXPECT_TRUE(sleeps.empty());
+  EXPECT_THAT(logger.getLog(), testing::HasSubstr("Drive is missing from the catalogue. Exiting."));
 }
 
-// If a missing drive cannot be registered because of a conflict, desired-state lookup fails.
-TEST_F(DriveControllerTest, MissingDriveRegistrationConflictPropagates) {
+TEST_F(DriveControllerTest, MissingDrivePropagatesFromWaitForUp) {
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Throw(Scheduler::NoSuchDrive("missing")));
-  EXPECT_CALL(scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(false));
-  EXPECT_THROW(waitForUp(), exception::Exception);
+  EXPECT_THROW(waitForUp(), Scheduler::NoSuchDrive);
 }
 
 // If publishing the drive registration fails, run should end with a failure result.
@@ -724,7 +678,6 @@ TEST_F(DriveControllerTest, RegistrationPublicationFailureAbortsStartupBeforeLib
   EXPECT_CALL(scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _))
     .WillOnce(Throw(std::runtime_error("registration publication failed")));
 
-  expectShutdown();
   EXPECT_EQ(1, controller->run());
   EXPECT_FALSE(controller->isReady());
   EXPECT_EQ(0, libraryChecks);
@@ -746,7 +699,6 @@ TEST_F(DriveControllerTest, SchedulerBackendPublicationFailureAbortsStartupBefor
   EXPECT_CALL(scheduler, reportSchedulerBackendName("drive", _))
     .WillOnce(Throw(std::runtime_error("backend publication failed")));
 
-  expectShutdown();
   EXPECT_EQ(1, controller->run());
   EXPECT_FALSE(controller->isReady());
   EXPECT_EQ(0, libraryChecks);
@@ -810,8 +762,8 @@ TEST_F(DriveControllerTest, LogicalLibraryDatabaseFailureEndsStartupWithoutSched
   EXPECT_EQ(0, schedules);
 }
 
-// Controlled exits must not depend on reaching readiness.
-TEST_F(DriveControllerTest, UnknownStartupFailuresPublishDownAfterIdentityValidation) {
+// Only failures after successful registration publish down on exit.
+TEST_F(DriveControllerTest, UnknownStartupFailuresPublishDownOnlyAfterRegistration) {
   for (const bool duringRegistration : {false, true}) {
     SCOPED_TRACE(duringRegistration);
     testing::InSequence sequence;
@@ -824,7 +776,9 @@ TEST_F(DriveControllerTest, UnknownStartupFailuresPublishDownAfterIdentityValida
       EXPECT_CALL(scheduler, reportSchedulerBackendName("drive", _));
       libraryExists = []() -> bool { throw 42; };
     }
-    expectShutdown();
+    if (!duringRegistration) {
+      expectShutdown();
+    }
     EXPECT_EQ(1, controller->run());
     EXPECT_FALSE(controller->isReady());
     EXPECT_EQ(0, probes);
@@ -862,7 +816,6 @@ TEST_F(DriveControllerTest, DownWaitingAndExitNeverTouchHardware) {
 }
 
 TEST_F(DriveControllerTest, CleaningTransitionPublicationPrecedesAllHardwareAccess) {
-  requireCleaning();
   DesiredDriveState up;
   up.up = true;
   bool preparing = false;
@@ -881,41 +834,36 @@ TEST_F(DriveControllerTest, CleaningTransitionPublicationPrecedesAllHardwareAcce
   };
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _));
-  iteration();
-  EXPECT_EQ(1, probes);
+  prepare();
+  EXPECT_EQ(0, probes);
   EXPECT_EQ(1, cleanings);
 }
 
 // The catalogue can acknowledge a session's down request before the controller observes it.
 TEST_F(DriveControllerTest, ReportedDownWithNewUpRequestRequiresCleaning) {
-  previousDrive.emplace();
   previousDrive->driveStatus = DriveStatus::Down;
   previousDrive->desiredUp = true;
+  previousDrive->currentVid = "V00001";
   DesiredDriveState up;
   up.up = true;
-  testing::InSequence sequence;
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
-  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _));
-  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
-  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _));
-  clean = [&] {
-    EXPECT_EQ(0, schedules);
-    return true;
-  };
-  iteration();
-  EXPECT_EQ(1, stateReads);
+  EXPECT_FALSE(iteration());
+  EXPECT_EQ(0, schedules);
+  EXPECT_EQ(0, cleanings);
+  EXPECT_EQ(0, probes);
+  expectTransition();
+  ASSERT_TRUE(prepare());
+  EXPECT_EQ("V00001", cleanedVid);
   EXPECT_EQ(1, cleanings);
-  EXPECT_EQ(1, schedules);
 }
 
 TEST_F(DriveControllerTest, FailedPreparationTransitionDoesNotTouchHardware) {
-  requireCleaning();
   DesiredDriveState up;
   up.up = true;
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _))
     .WillOnce(Throw(std::runtime_error("publication failed")));
-  EXPECT_THROW(iteration(), std::runtime_error);
+  EXPECT_THROW(prepare(), std::runtime_error);
   EXPECT_EQ(0, probes);
   EXPECT_EQ(0, cleanings);
   EXPECT_EQ(0, schedules);
@@ -933,7 +881,7 @@ TEST_F(DriveControllerTest, DesiredStateDatabaseFailurePropagates) {
 }
 
 // If the desired state remains down, the controller refreshes its reported status and waits.
-TEST_F(DriveControllerTest, DownDriveWaitsForOperatorUpBeforeProbing) {
+TEST_F(DriveControllerTest, DownDriveWaitsForOperatorUpBeforeCleaning) {
   testing::InSequence sequence;
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
@@ -943,58 +891,66 @@ TEST_F(DriveControllerTest, DownDriveWaitsForOperatorUpBeforeProbing) {
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _));
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _));
-  iteration();
-  EXPECT_EQ(1, probes);
-  EXPECT_EQ(1, schedules);
-  EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.drive_state_poll_interval_secs, 7));
+  prepare();
+  EXPECT_EQ(0, probes);
+  EXPECT_EQ(0, schedules);
+  EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.drive_state_poll_interval_secs));
 }
 
-// If publishing Up fails after a successful probe, the controller must not schedule work.
-TEST_F(DriveControllerTest, UpPublicationFailureAfterProbePreventsScheduling) {
+// If publishing Up fails before scheduling, the controller must not schedule work.
+TEST_F(DriveControllerTest, UpPublicationFailurePreventsScheduling) {
   DesiredDriveState up;
   up.up = true;
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _))
     .WillOnce(Throw(std::runtime_error("publication failed")));
   EXPECT_THROW(iteration(), std::runtime_error);
-  EXPECT_EQ(1, probes);
+  EXPECT_EQ(0, probes);
   EXPECT_EQ(0, schedules);
 }
 
-// If the probe finds retained media, the controller requests down for operator inspection.
-TEST_F(DriveControllerTest, RetainedTapeRequestsDownWithoutCleaningOrScheduling) {
-  empty = false;
-  unsigned int cleanAttempts = 0;
-  clean = [&] {
-    ++cleanAttempts;
-    return true;
-  };
-  expectPreparation();
-  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
-  EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
-    .WillOnce(Invoke([](const auto&, const DesiredDriveState& state, auto&) {
-      EXPECT_FALSE(state.up);
-      EXPECT_EQ(formatDriveDownReason(DriveDownReason::TapeDetected), state.reason);
+// A down request ends the current up period.
+TEST_F(DriveControllerTest, DownWaitingDoesNotCaptureCatalogueVid) {
+  testing::InSequence sequence;
+  previousDrive->currentVid = "STALE";
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _))
+    .WillOnce(Invoke([&](const auto&, auto, auto, auto&) {
+      EXPECT_EQ(0, stateReads);
+      EXPECT_EQ(0, cleanings);
+      EXPECT_EQ(0, probes);
+      previousDrive->currentVid.reset();
     }));
-
-  iteration();
-  EXPECT_EQ(0, cleanAttempts);
-  EXPECT_EQ(1, probes);
-  EXPECT_EQ(0, schedules);
+  expectTransition();
+  ASSERT_TRUE(prepare());
+  EXPECT_FALSE(cleanedVid.has_value());
+  EXPECT_EQ(1, cleanings);
+  EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.drive_state_poll_interval_secs));
 }
 
-// If the drive probe fails, the controller publishes the probe failure as the down reason.
-TEST_F(DriveControllerTest, ProbeFailurePublishesItsReasonAndPreventsScheduling) {
-  empty = false;
-  probeError = "Cannot open drive";
-  expectPreparation();
-  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
-  EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
-    .WillOnce(Invoke([this](const auto&, const DesiredDriveState& state, auto&) {
-      EXPECT_FALSE(state.up);
-      EXPECT_EQ(formatDriveDownReason(DriveDownReason::DriveProbeFailed, *probeError), state.reason);
-    }));
-  iteration();
+TEST_F(DriveControllerTest, DesiredDownEndsUpPeriodWithoutHardwareAccess) {
+  previousDrive->currentVid = "STALE";
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
+  EXPECT_FALSE(iteration());
+  EXPECT_EQ(0, cleanings);
+  EXPECT_EQ(0, schedules);
+  EXPECT_EQ(0, probes);
+
+  // A stale catalogue VID from the down transition must not become recovery state.
+  previousDrive->currentVid.reset();
+  expectTransition();
+  ASSERT_TRUE(prepare());
+  EXPECT_FALSE(cleanedVid.has_value());
+}
+
+// A missing catalogue record prevents further scheduling.
+TEST_F(DriveControllerTest, MissingCatalogueEntryEndsScheduling) {
+  DesiredDriveState up;
+  up.up = true;
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
+  previousDrive.reset();
+  EXPECT_THROW(iteration(), Scheduler::NoSuchDrive);
+  EXPECT_EQ(0, cleanings);
   EXPECT_EQ(0, schedules);
 }
 
@@ -1004,57 +960,52 @@ TEST_F(DriveControllerTest, IdleMountWaitsAndRechecksDriveBeforeRetry) {
   iteration();
   expectPreparation();
   iteration();
-  EXPECT_EQ(2, probes);
+  EXPECT_EQ(0, probes);
   EXPECT_EQ(2, schedules);
   EXPECT_EQ(0, transfers);
-  EXPECT_THAT(
-    sleeps,
-    testing::ElementsAre(config.mounts.idle_scheduling_interval_secs, config.mounts.idle_scheduling_interval_secs));
+  EXPECT_FALSE(iterationResult.successful);
+  EXPECT_TRUE(sleeps.empty());
 }
 
-// Scheduling resumes with cleaning and a fresh probe after an operator down/up request.
-TEST_F(DriveControllerTest, OperatorDownUpRequiresCleaningAndAnotherProbe) {
+// Each observed down/up period requires one new cleanup.
+TEST_F(DriveControllerTest, OperatorDownUpStartsAnotherCleanedUpPeriod) {
+  testing::InSequence sequence;
+  expectRunStartup();
+  expectTransition();
   expectPreparation();
-  iteration();
-
-  {
-    testing::InSequence sequence;
-    EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
-    EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
-    DesiredDriveState up;
-    up.up = true;
-    EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
-    EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _));
-    expectPreparation();
-  }
-  iteration();
-
-  EXPECT_EQ(1, cleanings);
-  EXPECT_EQ(2, probes);
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
+  expectTransition();
+  expectPreparation();
+  expectShutdown();
+  onSleep = [&] {
+    if (schedules == 2) {
+      controller->stop();
+    }
+  };
+  EXPECT_EQ(0, controller->run());
+  EXPECT_EQ(2, cleanings);
   EXPECT_EQ(2, schedules);
-  EXPECT_THAT(sleeps,
-              testing::ElementsAre(config.mounts.idle_scheduling_interval_secs,
-                                   config.mounts.drive_state_poll_interval_secs,
-                                   config.mounts.idle_scheduling_interval_secs));
+  EXPECT_EQ(0, probes);
 }
 
 // If mount scheduling times out, the controller waits and allows a later iteration.
 TEST_F(DriveControllerTest, SchedulingTimeoutWaitsAndAllowsAnotherIteration) {
-  onSleep = [&] { EXPECT_EQ(1, schedulerResets); };
   schedule = []() -> std::unique_ptr<TapeMount> { throw exception::TimeoutException("timeout"); };
   expectPreparation();
   EXPECT_NO_THROW(iteration());
   schedule = {};
   expectPreparation();
   iteration();
-  EXPECT_EQ(2, probes);
+  EXPECT_EQ(0, probes);
   EXPECT_EQ(2, schedules);
-  EXPECT_THAT(sleeps, testing::ElementsAre(7, 7));
+  EXPECT_FALSE(iterationResult.successful);
+  EXPECT_TRUE(sleeps.empty());
 }
 
 // Database failures during scheduling use the ordinary retry delay.
 TEST_F(DriveControllerTest, SchedulingDatabaseFailureWaitsAndAllowsAnotherIteration) {
-  onSleep = [&] { EXPECT_EQ(1, schedulerResets); };
   schedule = []() -> std::unique_ptr<TapeMount> { throw exception::LostDatabaseConnection("database unavailable"); };
   expectPreparation();
   EXPECT_CALL(scheduler, ping(_)).Times(0);
@@ -1066,16 +1017,14 @@ TEST_F(DriveControllerTest, SchedulingDatabaseFailureWaitsAndAllowsAnotherIterat
   schedule = {};
   expectPreparation();
   iteration();
-  EXPECT_EQ(2, probes);
+  EXPECT_EQ(0, probes);
   EXPECT_EQ(2, schedules);
-  EXPECT_THAT(
-    sleeps,
-    testing::ElementsAre(config.mounts.idle_scheduling_interval_secs, config.mounts.idle_scheduling_interval_secs));
+  EXPECT_FALSE(iterationResult.successful);
+  EXPECT_TRUE(sleeps.empty());
 }
 
 // Unexpected scheduling failures are logged and retried after the idle delay without cleaning.
 TEST_F(DriveControllerTest, UnexpectedSchedulingFailureWaitsAndAllowsAnotherIteration) {
-  onSleep = [&] { EXPECT_EQ(1, schedulerResets); };
   schedule = []() -> std::unique_ptr<TapeMount> { throw std::runtime_error("unexpected scheduler failure"); };
   unsigned int cleanAttempts = 0;
   clean = [&] {
@@ -1090,18 +1039,18 @@ TEST_F(DriveControllerTest, UnexpectedSchedulingFailureWaitsAndAllowsAnotherIter
   EXPECT_EQ(nullptr, liveMount());
   EXPECT_EQ(0, cleanAttempts);
   EXPECT_EQ(0, transfers);
-  EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.idle_scheduling_interval_secs));
+  EXPECT_TRUE(sleeps.empty());
 
   supplyMount();
   expectPreparation();
   EXPECT_NO_THROW(iteration());
-  EXPECT_EQ(2, probes);
+  EXPECT_EQ(0, probes);
   EXPECT_EQ(2, schedules);
   EXPECT_EQ(1, transfers);
   EXPECT_EQ(1, destroyed);
   EXPECT_EQ(nullptr, liveMount());
   EXPECT_EQ(0, cleanAttempts);
-  EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.idle_scheduling_interval_secs));
+  EXPECT_TRUE(sleeps.empty());
 }
 
 // Scheduling without work does not start a TapeSession.
@@ -1116,31 +1065,93 @@ TEST_F(DriveControllerTest, IdleDriveDoesNotStartATapeSession) {
 }
 
 TEST_F(DriveControllerTest, SchedulerRetiredAfterMountDestructionAndBeforeDelay) {
-  for (const bool successful : {true, false}) {
-    supplyMount();
-    transfer = [successful](TapeMount&) {
-      TapeSessionResult result;
-      result.successful = successful;
-      return result;
-    };
-    const auto previousResets = schedulerResets;
-    const auto previousDestroyed = destroyed;
-    onSchedulerReset = [&] { EXPECT_EQ(previousDestroyed + 1, destroyed); };
-    onSleep = [&] { EXPECT_EQ(previousResets + 1, schedulerResets); };
-    expectPreparation();
-    iteration();
-    EXPECT_EQ(previousResets + 1, schedulerResets);
-  }
+  testing::InSequence sequence;
+  expectRunStartup();
+  expectTransition();
+  expectPreparation();
+  expectPreparation();
+  expectShutdown();
+  supplyMount();
+  transfer = [&](TapeMount&) { return TapeSessionResult {.successful = transfers == 1}; };
+  onSchedulerReset = [&] { EXPECT_EQ(transfers, destroyed); };
+  onSleep = [&] {
+    EXPECT_EQ(2, schedulerResets);
+    EXPECT_EQ(2, destroyed);
+    controller->stop();
+  };
+  EXPECT_EQ(0, controller->run());
+  EXPECT_EQ(2, schedulerResets);
+  EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.idle_scheduling_interval_secs));
 }
 
-TEST_F(DriveControllerTest, SchedulerResetFailurePropagatesWithoutRetrySleep) {
-  supplyMount();
-  onSchedulerReset = [] { throw std::runtime_error("scheduler replacement failed"); };
+TEST_F(DriveControllerTest, IdlePollResetsBeforeRetryDelay) {
+  testing::InSequence sequence;
+  expectRunStartup();
+  expectTransition();
   expectPreparation();
-  EXPECT_THROW(iteration(), std::runtime_error);
-  EXPECT_EQ(1, destroyed);
+  expectShutdown();
+  onSleep = [&] {
+    EXPECT_EQ(1, schedulerResets);
+    controller->stop();
+  };
+  EXPECT_EQ(0, controller->run());
+  EXPECT_EQ(1, schedulerResets);
+  EXPECT_EQ(0, transfers);
+}
+
+TEST_F(DriveControllerTest, UnusableSessionResetsBeforeLeavingUpPeriod) {
+  testing::InSequence sequence;
+  expectRunStartup();
+  expectTransition();
+  expectPreparation();
+  expectShutdown();  // The session result requests down.
+  expectShutdown();  // The stop request then shuts down the controller.
+  supplyMount();
+  transfer = [&](TapeMount&) {
+    controller->stop();
+    return TapeSessionResult {.driveReusable = false};
+  };
+  onSchedulerReset = [&] { EXPECT_EQ(1, destroyed); };
+  EXPECT_EQ(0, controller->run());
   EXPECT_EQ(1, schedulerResets);
   EXPECT_TRUE(sleeps.empty());
+}
+
+TEST_F(DriveControllerTest, IdlePollResetFailureExitsWithoutRetrySleep) {
+  testing::InSequence sequence;
+  expectRunStartup();
+  expectTransition();
+  expectPreparation();
+  expectShutdown();
+  onSchedulerReset = [] { throw std::runtime_error("scheduler replacement failed"); };
+  EXPECT_EQ(1, controller->run());
+  EXPECT_EQ(1, schedules);
+  EXPECT_EQ(0, transfers);
+  EXPECT_EQ(1, schedulerResets);
+  EXPECT_TRUE(sleeps.empty());
+}
+
+TEST_F(DriveControllerTest, SchedulingFailureResetFailurePropagatesWithoutRetrySleep) {
+  for (const bool timeout : {false, true}) {
+    SCOPED_TRACE(timeout);
+    testing::InSequence sequence;
+    expectRunStartup();
+    expectTransition();
+    expectPreparation();
+    expectShutdown();
+    schedule = [timeout]() -> std::unique_ptr<TapeMount> {
+      if (timeout) {
+        throw exception::TimeoutException("timeout");
+      }
+      throw std::runtime_error("scheduling failed");
+    };
+    onSchedulerReset = [] { throw std::runtime_error("scheduler replacement failed"); };
+    EXPECT_EQ(1, controller->run());
+    EXPECT_EQ(0, transfers);
+    EXPECT_TRUE(sleeps.empty());
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&scheduler));
+  }
+  EXPECT_EQ(2, schedulerResets);
 }
 
 TEST_F(DriveControllerTest, SchedulerResetFailurePublishesDownAndExits) {
@@ -1150,6 +1161,7 @@ TEST_F(DriveControllerTest, SchedulerResetFailurePublishesDownAndExits) {
   up.up = true;
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _));
+  expectPreparation();
   expectPreparation();
   supplyMount();
   onSchedulerReset = [] { throw std::runtime_error("scheduler replacement failed"); };
@@ -1196,7 +1208,7 @@ TEST_F(DriveControllerTest, SuccessiveSessionsReceiveTheirOwnMount) {
   iteration();
 
   EXPECT_EQ(2, transfers);
-  EXPECT_EQ(2, probes);
+  EXPECT_EQ(0, probes);
   EXPECT_EQ(2, destroyed);
   EXPECT_EQ(nullptr, liveMount());
 }
@@ -1218,7 +1230,8 @@ TEST_F(DriveControllerTest, HandledSessionFailureRetriesWithoutCleaning) {
   EXPECT_NO_THROW(iteration());
   EXPECT_EQ(1, destroyed);
   EXPECT_EQ(nullptr, liveMount());
-  EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.idle_scheduling_interval_secs));
+  EXPECT_FALSE(iterationResult.successful);
+  EXPECT_TRUE(sleeps.empty());
 }
 
 // File failures and informational events are paced using the same final outcome as the session log.
@@ -1241,25 +1254,18 @@ TEST_F(DriveControllerTest, SessionOutcomeDeterminesSchedulingDelay) {
     sleeps.clear();
     expectPreparation();
     iteration();
-    if (fileFailed) {
-      EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.idle_scheduling_interval_secs));
-    } else {
-      EXPECT_TRUE(sleeps.empty());
-    }
+    EXPECT_EQ(!fileFailed, iterationResult.successful);
+    EXPECT_TRUE(sleeps.empty());
   }
 }
 
-// Escaping session exceptions are fatal, including database disconnections.
-TEST_F(DriveControllerTest, EscapingSessionExceptionsExitWithoutRetrying) {
+// Exceptions with completed worker teardown can recover through controller cleanup.
+TEST_F(DriveControllerTest, SessionExceptionsCleanAndPermitRetry) {
   for (const auto failure : {"standard", "database", "unknown"}) {
     SCOPED_TRACE(failure);
     testing::InSequence sequence;
-    expectRunStartup();
-    DesiredDriveState up;
-    up.up = true;
-    EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
-    EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _));
     expectPreparation();
+    expectTransition();  // Recovery checks up intent before claiming the drive.
     supplyMount();
     transfer = [failure](TapeMount&) -> TapeSessionResult {
       if (std::string(failure) == "database") {
@@ -1270,39 +1276,182 @@ TEST_F(DriveControllerTest, EscapingSessionExceptionsExitWithoutRetrying) {
       }
       throw 42;
     };
-    const auto previousTransfers = transfers;
-    const auto previousSchedules = schedules;
-    const auto previousDestroyed = destroyed;
-    unsigned int cleanAttempts = 0;
+    previousDrive->currentVid = "STALE";
+    const auto oldDestroyed = destroyed;
     clean = [&] {
-      ++cleanAttempts;
-      EXPECT_EQ(nullptr, liveMount());
-      EXPECT_EQ(previousDestroyed, destroyed);
+      EXPECT_NE(nullptr, liveMount());
+      EXPECT_EQ(oldDestroyed, destroyed);
+      EXPECT_EQ("V00001", cleanedVid);
       return true;
     };
-    EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
-    EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
-    EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
-      .WillOnce(Invoke([](const auto&, const DesiredDriveState& state, auto&) {
-        EXPECT_FALSE(state.up);
-        EXPECT_EQ(formatDriveDownReason(DriveDownReason::Shutdown), state.reason);
-      }));
-
-    EXPECT_EQ(1, controller->run());
-    EXPECT_FALSE(controller->isReady());
-    EXPECT_EQ(1, cleanAttempts);
-    EXPECT_EQ(previousTransfers + 1, transfers);
-    EXPECT_EQ(previousSchedules + 1, schedules);
+    EXPECT_TRUE(iteration());
+    EXPECT_EQ(oldDestroyed + 1, destroyed);
+    EXPECT_EQ(nullptr, liveMount());
+    EXPECT_FALSE(iterationResult.successful);
     EXPECT_TRUE(sleeps.empty());
-    EXPECT_EQ(0, schedulerResets);
     ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&scheduler));
   }
+  EXPECT_EQ(3, cleanings);
+  EXPECT_EQ(0, schedulerResets);
+}
+
+// Recovery must return to the inner scheduling loop, not repeat transition cleanup.
+TEST_F(DriveControllerTest, RecoveredSessionSchedulesAgainWithoutAnotherTransition) {
+  testing::InSequence sequence;
+  expectRunStartup();
+  expectTransition();
+  expectPreparation();
+  expectTransition();
+  expectPreparation();
+  expectShutdown();
+  supplyMount();
+  transfer = [&](TapeMount&) -> TapeSessionResult {
+    if (transfers == 1) {
+      throw std::runtime_error("session failed");
+    }
+    controller->stop();
+    return {};
+  };
+  EXPECT_EQ(0, controller->run());
+  EXPECT_EQ(2, transfers);
+  EXPECT_EQ(2, cleanings);  // Startup and exception recovery only.
+  EXPECT_EQ(2, destroyed);
+  EXPECT_EQ(2, schedulerResets);
+  EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.idle_scheduling_interval_secs));
+}
+
+TEST_F(DriveControllerTest, MissingDriveBeforeCleanupDoesNotTouchHardware) {
+  DesiredDriveState up;
+  up.up = true;
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
+  previousDrive.reset();
+  EXPECT_THROW(prepare(), Scheduler::NoSuchDrive);
+  EXPECT_EQ(0, cleanings);
+}
+
+TEST_F(DriveControllerTest, SessionRecoveryFailureEndsUpPeriod) {
+  for (const int failure : {0, 1, 2}) {
+    SCOPED_TRACE(failure);
+    testing::InSequence sequence;
+    expectPreparation();
+    DesiredDriveState up;
+    up.up = true;
+    EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
+    EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _));
+    DesiredDriveState down;
+    down.reason = "Specific ejection failure";
+    EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(down));
+    EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
+    EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
+      .WillOnce(Invoke([](const auto&, const DesiredDriveState& desired, auto&) {
+        EXPECT_FALSE(desired.up);
+        EXPECT_FALSE(desired.reason);
+      }));
+    supplyMount();
+    transfer = [](TapeMount&) -> TapeSessionResult { throw 42; };
+    clean = [failure]() -> bool {
+      if (failure == 1) {
+        throw std::runtime_error("cleaner failed");
+      }
+      if (failure == 2) {
+        throw 43;
+      }
+      return false;
+    };
+    EXPECT_FALSE(iteration());
+    EXPECT_TRUE(sleeps.empty());
+    EXPECT_EQ(nullptr, liveMount());
+    EXPECT_EQ(failure + 1, cleanings);
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&scheduler));
+  }
+}
+
+TEST_F(DriveControllerTest, SessionExceptionWhileDownDefersCleanupAndPreservesVid) {
+  testing::InSequence sequence;
+  expectPreparation();
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
+  supplyMount();
+  transfer = [](TapeMount&) -> TapeSessionResult { throw std::runtime_error("session failed"); };
+  EXPECT_FALSE(iteration());
+  EXPECT_EQ(0, cleanings);
+  EXPECT_TRUE(sleeps.empty());
+  EXPECT_EQ(1, destroyed);
+  previousDrive->currentVid = "STALE";
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _))
+    .WillOnce(Invoke([&](const auto&, auto, auto, auto&) { previousDrive->currentVid.reset(); }));
+  expectTransition();
+  ASSERT_TRUE(prepare());
+  EXPECT_EQ("V00001", cleanedVid);
+}
+
+TEST_F(DriveControllerTest, OperatorDownDuringSessionRecoveryPreventsRetry) {
+  testing::InSequence sequence;
+  expectPreparation();
+  DesiredDriveState up;
+  up.up = true;
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _));
+  DesiredDriveState down;
+  down.reason = "Operator maintenance";
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(down));
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
+  supplyMount();
+  transfer = [](TapeMount&) -> TapeSessionResult { throw 42; };
+  EXPECT_FALSE(iteration());
+  EXPECT_EQ(1, cleanings);
+  EXPECT_EQ(1, schedules);
+  EXPECT_TRUE(sleeps.empty());
+}
+
+TEST_F(DriveControllerTest, StopDuringFailedSessionStillRecoversWithoutRetry) {
+  testing::InSequence sequence;
+  expectRunStartup();
+  expectTransition();
+  expectPreparation();
+  expectTransition();
+  expectShutdown();
+  supplyMount();
+  transfer = [&](TapeMount&) -> TapeSessionResult {
+    controller->stop();
+    throw std::runtime_error("session failed while stopping");
+  };
+  EXPECT_EQ(0, controller->run());
+  EXPECT_EQ(2, cleanings);
+  EXPECT_EQ(1, schedules);
+  EXPECT_EQ(1, destroyed);
+  EXPECT_TRUE(sleeps.empty());
+}
+
+TEST_F(DriveControllerTest, IncompleteWorkerTeardownPreservesOriginalException) {
+  expectPreparation();
+  supplyMount();
+  transfer = [](TapeMount&) -> TapeSessionResult {
+    try {
+      throw std::runtime_error("worker start failed");
+    } catch (...) {
+      std::throw_with_nested(TapeSessionWorkerTeardownIncomplete());
+    }
+  };
+  try {
+    iteration();
+    FAIL() << "Expected fatal worker teardown failure";
+  } catch (const TapeSessionWorkerTeardownIncomplete& ex) {
+    try {
+      std::rethrow_if_nested(ex);
+      FAIL() << "Expected original worker failure";
+    } catch (const std::runtime_error& cause) {
+      EXPECT_STREQ("worker start failed", cause.what());
+    }
+  }
+  EXPECT_EQ(0, cleanings);
+  EXPECT_EQ(0, schedulerResets);
+  EXPECT_EQ(1, destroyed);
 }
 
 // If a transfer reports an unusable drive with a specific reason, the controller requests it down.
 TEST_F(DriveControllerTest, UnusableDriveRequestsDownAndPreservesSpecificReason) {
   bool downPublished = false;
-  onSchedulerReset = [&] { EXPECT_TRUE(downPublished); };
   supplyMount();
   transfer = [](TapeMount&) {
     TapeSessionResult result;
@@ -1323,7 +1472,8 @@ TEST_F(DriveControllerTest, UnusableDriveRequestsDownAndPreservesSpecificReason)
     }));
   iteration();
   EXPECT_EQ(1, destroyed);
-  EXPECT_EQ(1, schedulerResets);
+  EXPECT_EQ(0, schedulerResets);
+  EXPECT_TRUE(downPublished);
   EXPECT_TRUE(sleeps.empty());
 
   // Recover using the session VID even after its mount has been destroyed.
@@ -1333,15 +1483,14 @@ TEST_F(DriveControllerTest, UnusableDriveRequestsDownAndPreservesSpecificReason)
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).Times(2).WillRepeatedly(Return(up));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _));
-  iteration();
+  ASSERT_TRUE(prepare());
   EXPECT_EQ("V00001", cleanedVid);
 
   // Successful ejection must not carry that VID into an unrelated cleanup.
-  requireCleaning();
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).Times(2).WillRepeatedly(Return(up));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Up, _));
-  iteration();
+  ASSERT_TRUE(prepare());
   EXPECT_FALSE(cleanedVid.has_value());
 }
 
@@ -1402,14 +1551,15 @@ TEST_F(DriveControllerTest, UnusableSessionThenDownWaitAndShutdownNeverAccessHar
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
   EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _));
   iteration();
-  EXPECT_EQ(1, probes);
+  EXPECT_EQ(0, probes);
   EXPECT_EQ(1, transfers);
   EXPECT_EQ(0, cleanings);
 
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(failed));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Throw(std::runtime_error("end wait")));
-  EXPECT_THROW(iteration(), std::runtime_error);
+  EXPECT_THROW(waitForUp(), std::runtime_error);
+  expectRunStartup();
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(failed));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
   EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
@@ -1418,7 +1568,7 @@ TEST_F(DriveControllerTest, UnusableSessionThenDownWaitAndShutdownNeverAccessHar
       EXPECT_FALSE(desired.reason);
     }));
   EXPECT_EQ(0, shutdown());
-  EXPECT_EQ(1, probes);
+  EXPECT_EQ(0, probes);
   EXPECT_EQ(1, schedules);
   EXPECT_EQ(1, transfers);
   EXPECT_EQ(0, cleanings);
@@ -1485,46 +1635,32 @@ TEST_F(DriveControllerTest, IterationExceptionPublishesDownWithoutCleaning) {
   EXPECT_THAT(logger.getLog(), testing::HasSubstr("Drive controller failed. Publishing down state before exit."));
 }
 
-// An unknown transfer exception unwinds the active mount before publishing down.
-TEST_F(DriveControllerTest, UnknownIterationExceptionReleasesMountWithoutFinalCleaning) {
+// Incomplete worker teardown is fatal and cannot be repaired by controller cleanup.
+TEST_F(DriveControllerTest, IncompleteWorkerTeardownExitsWithoutRecovery) {
   testing::InSequence sequence;
   expectRunStartup();
-  DesiredDriveState up;
-  up.up = true;
-  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(up));
-  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _));
+  expectTransition();
   expectPreparation();
+  expectShutdown();
   supplyMount();
-  transfer = [](TapeMount&) -> TapeSessionResult { throw 42; };
-  unsigned int cleanAttempts = 0;
-  clean = [&] {
-    ++cleanAttempts;
-    EXPECT_EQ(nullptr, liveMount());
-    EXPECT_EQ(0, destroyed);
-    return true;
+  transfer = [](TapeMount&) -> TapeSessionResult {
+    try {
+      throw 42;
+    } catch (...) {
+      std::throw_with_nested(TapeSessionWorkerTeardownIncomplete());
+    }
   };
-  DesiredDriveState state;
-  state.reason = "Operator intervention";
-  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(state));
-  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
-  EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
-    .WillOnce(Invoke([&](const auto&, const DesiredDriveState& desired, auto&) {
-      EXPECT_EQ(1, cleanAttempts);
-      EXPECT_FALSE(desired.up);
-      EXPECT_FALSE(desired.reason);
-    }));
-
   EXPECT_EQ(1, controller->run());
-  EXPECT_FALSE(controller->isReady());
-  EXPECT_EQ(1, cleanAttempts);
-  EXPECT_EQ(1, transfers);
+  EXPECT_EQ(1, cleanings);  // Only the initial transition; no recovery with live workers.
   EXPECT_EQ(1, destroyed);
-  EXPECT_EQ(nullptr, liveMount());
-  EXPECT_THAT(logger.getLog(), testing::HasSubstr("Drive controller failed with an unknown exception"));
+  EXPECT_EQ(0, schedulerResets);
+  EXPECT_EQ(1, transfers);
 }
 
 // Shutdown publishes down without invoking the cleaner.
 TEST_F(DriveControllerTest, ShutdownPublishesDownWithoutCleaning) {
+  testing::InSequence sequence;
+  expectRunStartup();
   clean = [] {
     ADD_FAILURE() << "Shutdown must not clean the drive";
     return false;
@@ -1542,6 +1678,8 @@ TEST_F(DriveControllerTest, ShutdownPublishesDownWithoutCleaning) {
 
 // A reported-state publication failure must not prevent the desired-state publication.
 TEST_F(DriveControllerTest, ShutdownAttemptsBothDownPublicationsAfterFailure) {
+  testing::InSequence sequence;
+  expectRunStartup();
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _))
     .WillOnce(Throw(std::runtime_error("reported state failed")));
@@ -1552,6 +1690,8 @@ TEST_F(DriveControllerTest, ShutdownAttemptsBothDownPublicationsAfterFailure) {
 
 // A desired-state publication failure makes shutdown return failure.
 TEST_F(DriveControllerTest, ShutdownPublicationFailureReturnsNonzero) {
+  testing::InSequence sequence;
+  expectRunStartup();
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
   EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _)).WillOnce(Throw(std::runtime_error("publication failed")));
@@ -1564,6 +1704,7 @@ TEST_F(DriveControllerTest, ShutdownContainsUnknownFailuresAndAttemptsBothPublic
   for (const bool failReported : {false, true}) {
     for (const bool failDesired : {false, true}) {
       testing::InSequence sequence;
+      expectRunStartup();
       EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
       EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _))
         .WillOnce(Invoke([&](const auto&, auto, auto, auto&) {
@@ -1591,6 +1732,8 @@ TEST_F(DriveControllerTest, ShutdownReplacesStartupAndCleanReasonsButPreservesOp
                                                       formatDriveDownReason(DriveDownReason::Shutdown),
                                                       "Operator intervention"}) {
     SCOPED_TRACE(reason);
+    testing::InSequence sequence;
+    expectRunStartup();
     DesiredDriveState state;
     state.reason = reason;
     EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(state));
@@ -1643,11 +1786,7 @@ TEST_F(DriveControllerTest, StopWhileWaitingForUpExitsWithoutHardwareAccess) {
 TEST_F(DriveControllerTest, StopDuringIdleSleepPublishesDownAndExits) {
   testing::InSequence sequence;
   expectRunStartup();
-  // Startup normally arms cleaning; isolate stopping after an idle scheduling iteration.
-  libraryExists = [&] {
-    markPrepared();
-    return true;
-  };
+  expectTransition();
   expectPreparation();
   expectShutdown();
   onSleep = [&] { controller->stop(); };
@@ -1661,10 +1800,7 @@ TEST_F(DriveControllerTest, StopDuringIdleSleepPublishesDownAndExits) {
 TEST_F(DriveControllerTest, StopDuringSessionAllowsCompletionBeforeShutdown) {
   testing::InSequence sequence;
   expectRunStartup();
-  libraryExists = [&] {
-    markPrepared();
-    return true;
-  };
+  expectTransition();
   expectPreparation();
   expectShutdown();
   supplyMount();

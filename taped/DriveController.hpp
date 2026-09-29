@@ -24,17 +24,7 @@ namespace cta::tape::daemon {
 class DriveController final {
 public:
   /**
-   * @brief Create a controller with system operations for the configured drive.
-   *
-   * The configuration and logger must outlive the controller.
-   *
-   * @param config Daemon configuration; borrowed configuration must outlive the owning object.
-   * @param log Logger used for diagnostics; it must outlive objects retaining a reference to it.
-   */
-  DriveController(const TapedConfig& config, log::Logger& log);
-
-  /**
-   * @brief Create a controller using borrowed operations. Useful for unit tests.
+   * @brief Create a controller using caller-owned operations.
    *
    * The configuration, logger and operations must outlive the controller.
    *
@@ -45,11 +35,6 @@ public:
   DriveController(const TapedConfig& config, log::Logger& log, DriveOperations& operations);
 
   /**
-   * @brief Release owned operations before the drive identity they reference.
-   */
-  ~DriveController();
-
-  /**
    * @brief Request a stop between controller operations; active sessions and sleeps are not interrupted.
    */
   void stop();
@@ -57,7 +42,7 @@ public:
   /**
    * @brief Register the drive, wait for its library and run scheduling iterations.
    *
-   * Startup failures exit without touching hardware and attempt down publication after identity validation.
+   * Registration failures exit without shutdown publication or hardware access.
    * Exceptions escaping the scheduling loop trigger down-state publication without touching tape hardware.
    *
    * @return A nonzero exit code on startup, iteration or shutdown failure.
@@ -81,7 +66,7 @@ public:
 private:
   friend class DriveControllerTest;
 
-  // An explicit evaluation time keeps timeout-boundary tests deterministic.
+  // invoked by isLive(); exists to make unit testing easier
   bool isLive(std::chrono::steady_clock::time_point now) const;
 
   std::stop_source m_stopSource;
@@ -89,30 +74,31 @@ private:
   // Read by the health-server thread; registration publishes readiness last.
   std::atomic<bool> m_registered {false};
 
-  // Set before registration mutates the catalogue; independent of readiness.
-  bool m_identityValidated = false;
-
   const TapedConfig& m_config;
   const common::dataStructures::DriveInfo m_driveInfo;
   log::LogContext m_lc;
 
-  // Destroy the owned operations before the drive information it borrows.
-  std::unique_ptr<DriveOperations> m_ownedOperations;
   DriveOperations& m_operations;
-
-  // Arm once per observed down period, explicit controller down, or registration.
-  bool m_cleanBeforeScheduling = true;
 
   // Preserve the cartridge identity across status publications that clear currentVid.
   std::optional<std::string> m_cleanupVid;
 
   /**
-   * @brief Prepare the drive, acquire and execute a mount, and apply recovery decisions.
+   * @brief Run one scheduling attempt within an already prepared up period.
    *
-   * Wait before retrying idle or recoverable scheduling failures.
-   * Unrecoverable failures propagate to run().
+   * Return a reusable outcome to continue the up period; unsuccessful outcomes request a retry delay.
+   * The caller resets the scheduler and applies the delay after the mount has been destroyed.
+   * Fatal failures propagate to run().
    */
-  void runIteration();
+  TapeSessionResult runIteration();
+
+  /**
+   * @brief Execute a session and recover from exceptions once its workers have stopped.
+   *
+   * The caller keeps the mount and scheduler alive through recovery.
+   * @return Session or recovery outcome; incomplete worker teardown remains fatal.
+   */
+  TapeSessionResult runTapeSession(TapeMount& tapeMount);
 
   /**
    * @brief Register a fresh drive or retain an interrupted drive for recovery.
@@ -132,7 +118,7 @@ private:
   /**
    * @brief Poll operator intent, keeping a waiting drive reported down.
    *
-   * Register a missing drive as down and arm cleanup for the next up request.
+   * Missing drives propagate to run() and are left for the next daemon run.
    */
   void waitUntilDriveIsRequestedUp();
 
@@ -149,25 +135,12 @@ private:
                     bool preserveExistingReason = false);
 
   /**
-   * @brief Wait for up intent, probe once and clean when needed before advertising an idle drive.
+   * @brief Claim the drive, clean with the preserved VID, then recheck operator intent.
    *
-   * @return False when cleaning or probing prevents scheduling.
-   */
-  bool prepareDriveForScheduling();
-
-  /**
-   * @brief Clean with the last known VID, then recheck operator intent.
-   *
+   * Called on entry to an up period or after a session exception with completed worker teardown.
    * @return False if cleaning fails or the operator has requested down.
    */
-  bool cleanBeforeScheduling();
-
-  /**
-   * @brief Publish down without touching tape hardware, preserving an existing failure reason.
-   *
-   * @return Zero on success, or a nonzero exit code when publication fails.
-   */
-  int shutdownDrive();
+  bool onDownToUpTransition();
 };
 
 }  // namespace cta::tape::daemon

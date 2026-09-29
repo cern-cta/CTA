@@ -11,6 +11,7 @@
 
 #include <atomic>
 #include <map>
+#include <memory>
 #include <vector>
 
 namespace cta::tape::daemon {
@@ -23,7 +24,7 @@ public:
   TapedApp() = default;
 
   /**
-   * @brief Destroy the controller before shutting down the Protocol Buffers library.
+   * @brief Destroy the controller and operations before shutting down the Protocol Buffers library.
    */
   ~TapedApp();
 
@@ -72,6 +73,8 @@ public:
   bool isReady() const;
 
 private:
+  // Operations outlive the controller that borrows them.
+  std::unique_ptr<DriveOperations> m_driveOperations;
   std::unique_ptr<DriveController> m_driveController = nullptr;
   // Health callbacks run concurrently with controller construction.
   std::atomic<DriveController*> m_publishedController {nullptr};

@@ -13,6 +13,7 @@ namespace cta::tape::daemon {
 struct TapeSessionResult {
   /**
    * @brief Whether the drive is still usable after the tape session.
+   * True permits scheduling without another probe: the session left the drive empty and reusable.
    * False means the drive must remain down, for example after a cleanup failure.
    */
   bool driveReusable = true;
