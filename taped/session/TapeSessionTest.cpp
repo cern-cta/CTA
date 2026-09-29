@@ -971,6 +971,15 @@ public:
         EXPECT_TRUE(tracker.hasFailures());
       }
     }
+    if (workerStarts) {
+      // MountedTape owns one physical cleanup even when transfer or cleanup fails.
+      EXPECT_EQ(1, countLogMessages(logger.getLog(), "Cleaner dismounted tape"));
+      EXPECT_EQ(0, countLogMessages(logger.getLog(), "Cleaner found no tape in the drive; nothing to do"));
+      const auto mountMessage = std::is_same_v<Mount, FailingTransferRetrieveMount> ?
+                                  "Dummy mount for read-only access" :
+                                  "Dummy mount for read/write access";
+      EXPECT_EQ(1, countLogMessages(logger.getLog(), mountMessage));
+    }
     if (cleanupFails) {
       ASSERT_TRUE(mount.downReason);
       EXPECT_THAT(*mount.downReason, testing::HasSubstr("[cta-taped] ERROR Drive cleanup failed: "));
@@ -2093,6 +2102,13 @@ TEST_P(TapeSessionTest, TapeSessionGooddayRecall) {
   EXPECT_FALSE(tracker.progress().fileBeingMoved);
   EXPECT_TRUE(tracker.activeDiskFiles().empty());
   EXPECT_EQ(1, countLogMessages(logger.getLog(), "Tape session finished"));
+  EXPECT_EQ(1, countLogMessages(logger.getLog(), "Cleaner dismounted tape"));
+  EXPECT_EQ(0, countLogMessages(logger.getLog(), "Cleaner found no tape in the drive; nothing to do"));
+  EXPECT_EQ(1,
+            countLogMessages(logger.getLog(),
+                             tracker.type() == cta::tape::session::SessionType::Retrieve ?
+                               "Tape mounted for read-only access" :
+                               "Tape mounted for read/write access"));
   EXPECT_NE(std::string::npos, logger.getLog().find("filesCount=\"10\""));
   EXPECT_NE(std::string::npos, logger.getLog().find("dataVolume=\"10000\""));
 
@@ -4297,6 +4313,13 @@ TEST_P(TapeSessionTest, TapeSessionGooddayMigration) {
   EXPECT_FALSE(tracker.progress().fileBeingMoved);
   EXPECT_TRUE(tracker.activeDiskFiles().empty());
   EXPECT_EQ(1, countLogMessages(logger.getLog(), "Tape session finished"));
+  EXPECT_EQ(1, countLogMessages(logger.getLog(), "Cleaner dismounted tape"));
+  EXPECT_EQ(0, countLogMessages(logger.getLog(), "Cleaner found no tape in the drive; nothing to do"));
+  EXPECT_EQ(1,
+            countLogMessages(logger.getLog(),
+                             tracker.type() == cta::tape::session::SessionType::Retrieve ?
+                               "Tape mounted for read-only access" :
+                               "Tape mounted for read/write access"));
   EXPECT_NE(std::string::npos, logger.getLog().find("filesCount=\"10\""));
   EXPECT_NE(std::string::npos, logger.getLog().find("dataVolume=\"10000\""));
   std::string logToCheck = logger.getLog();

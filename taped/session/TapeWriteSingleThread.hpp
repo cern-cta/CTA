@@ -6,6 +6,7 @@
 #pragma once
 
 #include "MigrationReportPacker.hpp"
+#include "MountedTape.hpp"
 #include "TapeSessionTracker.hpp"
 #include "TapeSingleThreadInterface.hpp"
 #include "TapeWriteTask.hpp"
@@ -75,16 +76,25 @@ public:
   void setlastFseq(uint64_t lastFseq);
 
 private:
-  // RAII class for cleaning tape stuff
-  class TapeCleaning {
+  // Finalize worker reporting around the mounted cartridge cleanup.
+  class TapeThreadFinalizer {
     TapeWriteSingleThread& m_this;
     // As we are living in the single thread of tape, we can borrow the timer
     cta::utils::Timer& m_timer;
+    std::optional<MountedTape>& m_mountedTape;
+    const MountedTape::Outcome& m_outcome;
 
   public:
-    TapeCleaning(TapeWriteSingleThread& parent, cta::utils::Timer& timer) : m_this(parent), m_timer(timer) {}
+    TapeThreadFinalizer(TapeWriteSingleThread& parent,
+                        cta::utils::Timer& timer,
+                        std::optional<MountedTape>& mountedTape,
+                        const MountedTape::Outcome& outcome)
+        : m_this(parent),
+          m_timer(timer),
+          m_mountedTape(mountedTape),
+          m_outcome(outcome) {}
 
-    ~TapeCleaning();
+    ~TapeThreadFinalizer();
   };
 
   /**

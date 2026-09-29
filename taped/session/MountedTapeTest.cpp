@@ -7,8 +7,6 @@
 
 #include "TapeSessionTracker.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
-#include "common/log/StringLogger.hpp"
-#include "mediachanger/LibrarySlotParser.hpp"
 #include "mediachanger/RmcProxy.hpp"
 #include "taped/drive/FakeDrive.hpp"
 
@@ -23,247 +21,160 @@ static_assert(!std::is_copy_constructible_v<MountedTape>);
 static_assert(!std::is_move_constructible_v<MountedTape>);
 static_assert(std::is_nothrow_destructible_v<MountedTape>);
 
-TEST(MountedTapeTest, UsesBorrowedCleanerAndDrive) {
-  log::StringLogger logger("host", "MountedTapeTest", log::DEBUG);
-  catalogue::DummyCatalogue catalogue;
-  mediachanger::RmcProxy proxy;
-  mediachanger::MediaChangerFacade changer(proxy, logger);
-  TapeSessionTracker tracker;
-  common::dataStructures::DriveInfo driveInfo;
-  drive::FakeDrive drive(5000, drive::FakeDrive::OnFlush);
-  drive.setTapeInPlace(false);
-  DriveCleaner cleaner(changer, logger, driveInfo, "", false, 0, catalogue, tracker);
-  for (const auto mode : {MountedTape::AccessMode::ReadOnly, MountedTape::AccessMode::ReadWrite}) {
-    logger.clearLog();
-    drive.enableCRC32CLogicalBlockProtectionReadWrite();
-    log::StringLogger cleanupLogger("host", "MountedTapeTest", log::DEBUG);
-    log::LogContext lc(cleanupLogger);
-    MountedTape::Outcome outcome;
-    {
-      MountedTape tape(
-        changer,
-        "TAPE01",
-        mediachanger::LibrarySlotParser::parse("dummy"),
-        mode,
-        cleaner,
-        drive,
-        [](auto) {},
-        outcome,
-        lc);
-      EXPECT_NE(std::string::npos,
-                logger.getLog().find(mode == MountedTape::AccessMode::ReadOnly ? "Dummy mount for read-only access" :
-                                                                                 "Dummy mount for read/write access"));
-      EXPECT_NE(std::string::npos, logger.getLog().find("TAPE01"));
+// Observe the concrete robot and cleaner operations, including timing before cleanup.
+class MountLogger : public log::Logger {
+public:
+  MountLogger() : Logger("host", "MountedTapeTest", log::DEBUG) {}
+
+  void refresh() override {}
+
+  unsigned mounts = 0;
+  unsigned cleanups = 0;
+  std::string messages;
+  TapeSessionTracker* tracker = nullptr;
+  std::optional<double> mountTimeBeforeCleanup;
+
+protected:
+  void writeMsgToUnderlyingLoggingSystem(std::string_view, std::string_view body) override {
+    messages += body;
+    if (body.find("Dummy mount for") != std::string_view::npos) {
+      ++mounts;
     }
+    if (body.find("Cleaner found no tape") != std::string_view::npos
+        || body.find("Cleaner waiting for drive") != std::string_view::npos) {
+      ++cleanups;
+      mountTimeBeforeCleanup = tracker->stats().setup.initialMountTime;
+    }
+  }
+};
+
+class MountedTapeTest : public testing::Test {
+protected:
+  MountLogger logger;
+  log::LogContext lc {logger};
+  catalogue::DummyCatalogue catalogue;
+  mediachanger::RmcProxy proxy {"localhost", 0, 1, 1};
+  mediachanger::MediaChangerFacade changer {proxy, logger};
+  TapeSessionTracker tracker;
+  common::dataStructures::DriveInfo driveInfo {"drive", "host", "library", "device", "dummy"};
+  drive::FakeDrive drive {5000, drive::FakeDrive::OnFlush};
+  VolumeInfo volume {};
+  MountedTape::Outcome outcome;
+
+  void SetUp() override {
+    logger.tracker = &tracker;
+    drive.info = driveInfo;
+    volume.mountType = common::dataStructures::MountType::Retrieve;
+    drive.setTapeInPlace(false);
+    drive.enableCRC32CLogicalBlockProtectionReadWrite();
+  }
+};
+
+TEST_F(MountedTapeTest, MountsBothAccessModesAndCleansOnScopeExit) {
+  for (const auto mode : {common::dataStructures::MountType::Retrieve,
+                          common::dataStructures::MountType::ArchiveForUser,
+                          common::dataStructures::MountType::ArchiveForRepack}) {
+    volume.mountType = mode;
+    volume.vid = "TAPE01";
+    logger.messages.clear();
+    const auto mountsBefore = logger.mounts;
+    const auto cleanupsBefore = logger.cleanups;
+    {
+      MountedTape tape(changer, volume, drive, catalogue, 0, [](auto) {}, outcome, lc, tracker);
+      EXPECT_EQ(mountsBefore + 1, logger.mounts);
+      EXPECT_EQ(cleanupsBefore, logger.cleanups);
+      EXPECT_FALSE(outcome.driveReusable());
+      EXPECT_NE(std::string::npos,
+                logger.messages.find(mode == common::dataStructures::MountType::Retrieve ?
+                                       "Tape mounted for read-only access" :
+                                       "Tape mounted for read/write access"));
+      EXPECT_NE(std::string::npos, logger.messages.find("MCMountTime"));
+    }
+    EXPECT_EQ(cleanupsBefore + 1, logger.cleanups);
     EXPECT_TRUE(outcome.driveReusable());
     EXPECT_EQ(drive::lbpToUse::disabled, drive.getLbpToUse());
   }
 }
 
-TEST(MountedTapeTest, CleansOnScopeExit) {
-  log::StringLogger cleanupLogger("host", "MountedTapeTest", log::DEBUG);
-  log::LogContext lc(cleanupLogger);
-  MountedTape::Outcome outcome;
-  size_t calls = 0;
+TEST_F(MountedTapeTest, ExplicitCleanupIsNotRepeatedByDestructor) {
   {
-    MountedTape tape([] {},
-                     [&] {
-                       ++calls;
-                       return DriveCleaner::CleanupResult {};
-                     },
-                     outcome,
-                     lc);
-    EXPECT_FALSE(outcome.driveReusable());
-    EXPECT_EQ(0, calls);
-  }
-  EXPECT_EQ(1, calls);
-  EXPECT_TRUE(outcome.driveReusable());
-}
-
-TEST(MountedTapeTest, ExplicitCleanupIsNotRepeatedByDestructor) {
-  log::StringLogger cleanupLogger("host", "MountedTapeTest", log::DEBUG);
-  log::LogContext lc(cleanupLogger);
-  MountedTape::Outcome outcome;
-  size_t calls = 0;
-  {
-    MountedTape tape([] {},
-                     [&] {
-                       ++calls;
-                       return DriveCleaner::CleanupResult {};
-                     },
-                     outcome,
-                     lc);
+    MountedTape tape(changer, volume, drive, catalogue, 0, [](auto) {}, outcome, lc, tracker);
     EXPECT_TRUE(tape.cleanup().driveReusable());
-    EXPECT_TRUE(tape.cleanup().driveReusable());
+    tape.cleanup();
   }
-  EXPECT_EQ(1, calls);
+  EXPECT_EQ(1, logger.cleanups);
 }
 
-TEST(MountedTapeTest, RecordsAndLogsCleanupFailureWithoutRetry) {
-  log::StringLogger cleanupLogger("host", "MountedTapeTest", log::DEBUG);
-  log::LogContext lc(cleanupLogger);
-  MountedTape::Outcome outcome;
-  size_t calls = 0;
+TEST_F(MountedTapeTest, FailedCleanupIsLoggedAndNeverRetried) {
+  drive.setFailurePoint(drive::FakeDrive::FailurePoint::DisableLogicalBlockProtection);
   {
-    MountedTape tape([] {},
-                     [&] {
-                       if (++calls == 1) {
-                         return DriveCleaner::CleanupResult {.ejectFailed = true, .errorMessage = "stuck"};
-                       }
-                       return DriveCleaner::CleanupResult {};
-                     },
-                     outcome,
-                     lc);
-  }
-  EXPECT_EQ(1, calls);
-  EXPECT_FALSE(outcome.driveReusable());
-  EXPECT_NE(std::string::npos, cleanupLogger.getLog().find("stuck"));
-  EXPECT_EQ(nullptr, outcome.exception);
-  ASSERT_TRUE(outcome.result);
-  EXPECT_EQ("stuck", outcome.result->errorMessage);
-}
-
-TEST(MountedTapeTest, FailedCleanupIsNotRepeatedByDestructor) {
-  size_t calls = 0;
-  log::StringLogger cleanupLogger("host", "MountedTapeTest", log::DEBUG);
-  log::LogContext lc(cleanupLogger);
-  MountedTape::Outcome outcome;
-  {
-    MountedTape tape([] {},
-                     [&] {
-                       ++calls;
-                       return DriveCleaner::CleanupResult {.configurationResetFailed = true,
-                                                           .errorMessage = "reset failed"};
-                     },
-                     outcome,
-                     lc);
+    MountedTape tape(changer, volume, drive, catalogue, 0, [](auto) {}, outcome, lc, tracker);
     EXPECT_FALSE(tape.cleanup().driveReusable());
     tape.cleanup();
   }
-  EXPECT_EQ(1, calls);
+  EXPECT_EQ(1, logger.cleanups);
   ASSERT_TRUE(outcome.result);
-  EXPECT_EQ("reset failed", outcome.result->errorMessage);
-  EXPECT_FALSE(outcome.driveReusable());
+  EXPECT_TRUE(outcome.result->configurationResetFailed);
+  EXPECT_NE(std::string::npos, logger.messages.find("Mounted tape cleanup failed"));
 }
 
-TEST(MountedTapeTest, RecordsAndLogsStandardExceptionWithoutRetry) {
-  log::StringLogger cleanupLogger("host", "MountedTapeTest", log::DEBUG);
-  log::LogContext lc(cleanupLogger);
-  MountedTape::Outcome outcome;
-  size_t calls = 0;
-  {
-    MountedTape tape([] {},
-                     [&] {
-                       if (++calls == 1) {
-                         throw std::runtime_error("cleanup failed");
-                       }
-                       return DriveCleaner::CleanupResult {};
-                     },
-                     outcome,
-                     lc);
-  }
-  EXPECT_FALSE(outcome.driveReusable());
-  EXPECT_EQ(1, calls);
-  ASSERT_NE(nullptr, outcome.exception);
-  EXPECT_THROW(std::rethrow_exception(outcome.exception), std::runtime_error);
-  EXPECT_NE(std::string::npos, cleanupLogger.getLog().find("cleanup failed"));
-}
-
-TEST(MountedTapeTest, ContainsNonstandardExceptionsDuringUnwinding) {
-  log::StringLogger cleanupLogger("host", "MountedTapeTest", log::DEBUG);
-  log::LogContext lc(cleanupLogger);
-  MountedTape::Outcome outcome;
-  try {
-    MountedTape tape([] {}, []() -> DriveCleaner::CleanupResult { throw 42; }, outcome, lc);
-    throw std::runtime_error("session failed");
-  } catch (const std::runtime_error& ex) {
-    EXPECT_STREQ("session failed", ex.what());
-  }
-  EXPECT_FALSE(outcome.driveReusable());
-  ASSERT_NE(nullptr, outcome.exception);
-  EXPECT_THROW(std::rethrow_exception(outcome.exception), int);
-  EXPECT_NE(std::string::npos, cleanupLogger.getLog().find("Non-standard exception"));
-}
-
-TEST(MountedTapeTest, MountsBeforeReturningFromConstructor) {
-  log::StringLogger cleanupLogger("host", "MountedTapeTest", log::DEBUG);
-  log::LogContext lc(cleanupLogger);
-  MountedTape::Outcome outcome;
-  bool mounted = false;
-  {
-    MountedTape tape([&] { mounted = true; },
-                     [&] {
-                       EXPECT_TRUE(mounted);
-                       mounted = false;
-                       return DriveCleaner::CleanupResult {};
-                     },
-                     outcome,
-                     lc);
-    EXPECT_TRUE(mounted);
-  }
-  EXPECT_FALSE(mounted);
-}
-
-TEST(MountedTapeTest, CleansPartialMountAndRethrowsOriginalFailure) {
-  log::StringLogger cleanupLogger("host", "MountedTapeTest", log::DEBUG);
-  log::LogContext lc(cleanupLogger);
-  MountedTape::Outcome outcome;
-  size_t calls = 0;
-  try {
-    MountedTape tape([] { throw std::runtime_error("mount failed"); },
-                     [&] {
-                       ++calls;
-                       return DriveCleaner::CleanupResult {};
-                     },
-                     outcome,
-                     lc);
-    FAIL() << "Mount failure must escape construction";
-  } catch (const std::runtime_error& ex) {
-    EXPECT_STREQ("mount failed", ex.what());
-  }
-  EXPECT_EQ(1, calls);
+TEST_F(MountedTapeTest, MountFailureCleansOnceAndRetainsMountOnlyTiming) {
+  drive.info.rawLibrarySlot = "smc0";
+  EXPECT_THROW((MountedTape {changer, volume, drive, catalogue, 0, [](auto) {}, outcome, lc, tracker}),
+               cta::exception::Exception);
+  EXPECT_EQ(1, logger.cleanups);
   EXPECT_TRUE(outcome.driveReusable());
+  ASSERT_TRUE(logger.mountTimeBeforeCleanup);
+  EXPECT_GT(*logger.mountTimeBeforeCleanup, 0);
+  EXPECT_EQ(*logger.mountTimeBeforeCleanup, tracker.stats().setup.initialMountTime);
 }
 
-TEST(MountedTapeTest, CleanupExceptionsDoNotReplaceMountFailure) {
-  log::StringLogger cleanupLogger("host", "MountedTapeTest", log::DEBUG);
-  log::LogContext lc(cleanupLogger);
-  MountedTape::Outcome outcome;
-  try {
-    MountedTape tape([] { throw 42; },
-                     []() -> DriveCleaner::CleanupResult { throw std::runtime_error("cleanup failed"); },
-                     outcome,
-                     lc);
-    FAIL() << "Mount failure must escape construction";
-  } catch (int failure) {
-    EXPECT_EQ(42, failure);
-  }
+TEST_F(MountedTapeTest, CleanupFailureDoesNotReplaceMountFailure) {
+  drive.setFailurePoint(drive::FakeDrive::FailurePoint::DisableLogicalBlockProtection);
+  drive.info.rawLibrarySlot = "smc0";
+  EXPECT_THROW((MountedTape {changer, volume, drive, catalogue, 0, [](auto) {}, outcome, lc, tracker}),
+               cta::exception::Exception);
+  EXPECT_EQ(1, logger.cleanups);
   EXPECT_FALSE(outcome.driveReusable());
-  ASSERT_NE(nullptr, outcome.exception);
-  EXPECT_THROW(std::rethrow_exception(outcome.exception), std::runtime_error);
+  ASSERT_TRUE(outcome.result);
+  EXPECT_TRUE(outcome.result->configurationResetFailed);
 }
 
-TEST(MountedTapeTest, RejectsEmptyMountWithoutCleaning) {
-  log::StringLogger cleanupLogger("host", "MountedTapeTest", log::DEBUG);
-  log::LogContext lc(cleanupLogger);
-  MountedTape::Outcome outcome;
-  size_t calls = 0;
-  EXPECT_THROW((MountedTape {MountedTape::Mount {},
-                             [&] {
-                               ++calls;
-                               return DriveCleaner::CleanupResult {};
-                             },
-                             outcome,
-                             lc}),
-               std::invalid_argument);
-  EXPECT_EQ(0, calls);
+TEST_F(MountedTapeTest, CleanupFailureDoesNotInterruptUnwinding) {
+  drive.setFailurePoint(drive::FakeDrive::FailurePoint::DisableLogicalBlockProtection);
+  try {
+    MountedTape tape(changer, volume, drive, catalogue, 0, [](auto) {}, outcome, lc, tracker);
+    throw std::logic_error("transfer failed");
+  } catch (const std::logic_error& ex) {
+    EXPECT_STREQ("transfer failed", ex.what());
+  }
+  EXPECT_EQ(1, logger.cleanups);
+  EXPECT_FALSE(outcome.driveReusable());
+  ASSERT_TRUE(outcome.result);
 }
 
-TEST(MountedTapeTest, RejectsEmptyCleanup) {
-  log::StringLogger cleanupLogger("host", "MountedTapeTest", log::DEBUG);
-  log::LogContext lc(cleanupLogger);
-  MountedTape::Outcome outcome;
-  EXPECT_THROW((MountedTape {[] {}, MountedTape::Cleanup {}, outcome, lc}), std::invalid_argument);
+TEST_F(MountedTapeTest, ReporterFailureDoesNotPreventPhysicalCleanup) {
+  drive.setTapeInPlace(true);
+  unsigned reports = 0;
+  {
+    MountedTape tape(
+      changer,
+      volume,
+      drive,
+      catalogue,
+      0,
+      [&](auto) {
+        ++reports;
+        throw std::runtime_error("report failed");
+      },
+      outcome,
+      lc,
+      tracker);
+  }
+  EXPECT_GT(reports, 0);
+  EXPECT_TRUE(outcome.driveReusable());
+  EXPECT_FALSE(drive.hasTapeInPlace());
+  EXPECT_GT(tracker.failureStats().at(TapeSessionFailure::Reporting), 0);
 }
 
 }  // namespace
