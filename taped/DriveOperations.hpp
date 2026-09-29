@@ -71,7 +71,8 @@ public:
   /**
    * @brief Execute a borrowed mount and return the recovery decisions for the controller.
    *
-   * @param mount Mount kept alive by the caller until the session returns.
+   * Ordinary exceptions allow controller-side cleanup; TapeSessionWorkerTeardownIncomplete is fatal.
+   * @param mount Mount kept alive by the caller through session execution and recovery.
    * @return Drive usability and backend-recovery or retry-delay decisions from the session.
    */
   virtual TapeSessionResult runTapeSession(TapeMount& mount) = 0;

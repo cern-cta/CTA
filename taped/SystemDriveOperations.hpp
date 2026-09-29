@@ -8,10 +8,6 @@
 #include "DriveOperations.hpp"
 
 namespace cta {
-namespace common::dataStructures {
-class DriveInfo;
-}
-
 namespace log {
 class Logger;
 }
@@ -23,16 +19,13 @@ class TapedConfig;
 /**
  * @brief Build catalogue, scheduler and hardware operations for a drive.
  *
- * The configuration, logger and drive identity must outlive the returned operations.
+ * The configuration and logger must outlive the returned operations.
  * Initialization failures propagate to the caller.
  *
  * @param config Daemon configuration; borrowed configuration must outlive the owning object.
  * @param log Logger used for diagnostics; it must outlive objects retaining a reference to it.
- * @param driveInfo Drive identity and device paths; retained references must remain valid for the object lifetime.
  * @return Owned system operations for the configured drive.
  */
-std::unique_ptr<DriveOperations> makeSystemDriveOperations(const TapedConfig& config,
-                                                           log::Logger& log,
-                                                           const common::dataStructures::DriveInfo& driveInfo);
+std::unique_ptr<DriveOperations> makeSystemDriveOperations(const TapedConfig& config, log::Logger& log);
 
 }  // namespace cta::tape::daemon

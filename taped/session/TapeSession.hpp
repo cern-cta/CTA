@@ -7,6 +7,7 @@
 
 #include "TapeSessionResult.hpp"
 #include "TapeSessionTracker.hpp"
+#include "TapeSessionWorkerTeardownIncomplete.hpp"
 #include "TapeSingleThreadInterface.hpp"
 #include "common/dataStructures/DriveDownReason.hpp"
 #include "common/log/LogContext.hpp"
@@ -54,7 +55,8 @@ public:
    * @brief Mount, transfer, unload and dismount the tape, returning the session outcomes.
    *
    * Recoverable operational failures return recovery decisions after local cleanup.
-   * Unrecoverable failures propagate; partial worker startup/termination recovery is not yet supported.
+   * Ordinary escaping exceptions permit controller-side cleanup before reuse.
+   * TapeSessionWorkerTeardownIncomplete prohibits reuse; worker lifecycle repair remains deferred.
    * May produce an empty mount, in which case hardware remains untouched.
    *
    * @return Drive usability and backend-recovery or retry-delay decisions for the controller.

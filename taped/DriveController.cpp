@@ -5,7 +5,6 @@
 
 #include "DriveController.hpp"
 
-#include "SystemDriveOperations.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/TimeoutException.hpp"
 #include "common/semconv/Logging.hpp"
@@ -13,42 +12,13 @@
 #include "common/utils/utils.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/TapeMount.hpp"
+#include "session/TapeSessionWorkerTeardownIncomplete.hpp"
 
 #include <algorithm>
 #include <exception>
 #include <optional>
 
 namespace cta::tape::daemon {
-
-namespace {
-/**
- * @brief Log a drive-lifecycle exception, using the CTA message when available.
- *
- * @param lc Log context for diagnostics.
- * @param message Context describing the failed drive operation.
- * @param ex Exception whose diagnostic is written to the log.
- */
-void logDriveFailure(log::LogContext& lc, const char* message, const std::exception& ex) {
-  log::ScopedParamContainer params(lc);
-  if (const auto* ctaException = dynamic_cast<const exception::Exception*>(&ex)) {
-    params.add(semconv::log::exceptionMessage, ctaException->getMessageValue());
-  } else {
-    params.add(semconv::log::exceptionMessage, ex.what());
-  }
-  lc.log(log::ERR, message);
-}
-}  // namespace
-
-DriveController::DriveController(const TapedConfig& config, log::Logger& log)
-    : m_config(config),
-      m_driveInfo(config.drive.name,
-                  utils::getShortHostname(),
-                  config.drive.logical_library_name,
-                  config.drive.device,
-                  config.drive.control_path),
-      m_lc(log),
-      m_ownedOperations(makeSystemDriveOperations(config, log, m_driveInfo)),
-      m_operations(*m_ownedOperations) {}
 
 DriveController::DriveController(const TapedConfig& config, log::Logger& log, DriveOperations& operations)
     : m_config(config),
@@ -59,8 +29,6 @@ DriveController::DriveController(const TapedConfig& config, log::Logger& log, Dr
                   config.drive.control_path),
       m_lc(log),
       m_operations(operations) {}
-
-DriveController::~DriveController() = default;
 
 void DriveController::stop() {
   m_stopSource.request_stop();
@@ -79,6 +47,8 @@ bool DriveController::isLive(std::chrono::steady_clock::time_point now) const {
   auto lastActivity = snapshot->stateEnteredAt;
   uint32_t timeoutSecs;
   using enum cta::tape::session::TapeSessionState;
+  // We are only allowed to spend a certain amount of time in each state
+  // If we spend longer, it means we are stuck and isLive() should return false
   switch (*snapshot->state) {
     case Mounting:
       timeoutSecs = m_config.mounts.mount_timeout_secs;
@@ -110,47 +80,125 @@ bool DriveController::isLive(std::chrono::steady_clock::time_point now) const {
 }
 
 bool DriveController::isReady() const {
+  // Taped is considered ready when the drive has been registered in the catalogue
+  // One could argue that the logical library should also exist for it to be ready
+  // But that currently presents problems with our system tests, where the
+  // logical libraries are only created after the deployment is complete
+  // (which requires all services to be ready)
+  // Potentially something to improve in the future
   return m_registered.load();
 }
 
 int DriveController::run() {
-  bool failed = false;
   try {
     if (!registerDrive(false)) {
       return 1;
     }
+  } catch (const std::exception& ex) {
+    log::ScopedParamContainer params(m_lc);
+    const auto* ctaException = dynamic_cast<const exception::Exception*>(&ex);
+    params.add(semconv::log::exceptionMessage, ctaException ? ctaException->getMessageValue() : ex.what());
+    m_lc.log(log::ERR, "Drive registration failed. Exiting.");
+    return 1;
+  } catch (...) {
+    m_lc.log(log::ERR, "Drive registration failed with an unknown exception. Exiting.");
+    return 1;
+  }
 
+  bool failed = false;
+  try {
     // An absent logical library can appear later, so wait before scheduling.
     // Scheduling can deal with a missing logical library just fine; this is just to reduce
     // the number of (transient) errors at startup
     waitForLogicalLibrary();
     // TODO (separate MR): graceful shutdown of active sessions and blocking operations.
     while (!m_stopSource.stop_requested()) {
-      runIteration();
+      waitUntilDriveIsRequestedUp();
+      if (m_stopSource.stop_requested()) {
+        break;
+      }
+      // Execute whatever we need on a Down -> Up transition
+      if (!onDownToUpTransition()) {
+        continue;
+      }
+      // The main loop while we are Up
+      while (!m_stopSource.stop_requested()) {
+        const auto result = runIteration();
+        // This reset is only necessary for the objectstore; once this is removed we can just stick with a single
+        // scheduler init similar to the catalogue.
+        // The reason is that we need a new agent for every TapeSession to ensure correct garbage collection in the event of failures
+        m_operations.resetScheduler();
+        if (!result.driveReusable) {
+          break;
+        }
+        // Don't sleep after successful sessions: that's just wasted time
+        if (!result.successful && !m_stopSource.stop_requested()) {
+          // TODO (separate MR): graceful shutdown should interrupt sleep.
+          m_operations.sleep(m_config.mounts.idle_scheduling_interval_secs);
+        }
+      }
     }
+  } catch (const Scheduler::NoSuchDrive& ex) {
+    // A later daemon run will register the drive from scratch.
+    m_registered.store(false);
+    log::ScopedParamContainer params(m_lc);
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
+    m_lc.log(log::ERR, "Drive is missing from the catalogue. Exiting.");
+    return 1;
   } catch (const std::exception& ex) {
-    logDriveFailure(m_lc, "Drive controller failed. Publishing down state before exit.", ex);
+    log::ScopedParamContainer params(m_lc);
+    const auto* ctaException = dynamic_cast<const exception::Exception*>(&ex);
+    params.add(semconv::log::exceptionMessage, ctaException ? ctaException->getMessageValue() : ex.what());
+    m_lc.log(log::ERR, "Drive controller failed. Publishing down state before exit.");
     failed = true;
   } catch (...) {
     m_lc.log(log::ERR, "Drive controller failed with an unknown exception. Publishing down state before exit.");
     failed = true;
   }
 
+  // Don't do drive cleanup here: a Down drive may be in use for other purposes
+  // Either a tape is not loaded and we don't need to do cleanup anyway,
+  // or a tape was loaded, in which case runIteration will have tried to clean it already
+  try {
+    putDriveDown(common::dataStructures::DriveDownReason::Shutdown, {}, true);
+  } catch (...) {
+    // The helper logged each failure and attempted both down-state publications.
+    failed = true;
+  }
+  // Don't remove our entry from the catalogue, but ensure the service is no longer ready
   m_registered.store(false);
-  // A partial registration still needs down publication, but never modify another drive's identity.
-  const int shutdownResult = m_identityValidated ? shutdownDrive() : 0;
-  return failed ? 1 : shutdownResult;
+  return failed ? 1 : 0;
 }
 
-void DriveController::runIteration() {
-  // Ensure among other things that the drive is Up before we proceed
-  if (!prepareDriveForScheduling() || m_stopSource.stop_requested()) {
-    return;
+// This method has the following invariant:
+// - There is no tape in the drive when it enters this method
+// - There is no tape in the drive when it returns a reusable outcome
+// - There may be a tape in the drive when it returns a non-reusable outcome
+TapeSessionResult DriveController::runIteration() {
+  if (m_stopSource.stop_requested()) {
+    return {.driveReusable = false};
   }
+  auto& scheduler = m_operations.scheduler();
+  const auto desired = scheduler.getDesiredDriveState(m_driveInfo.driveName, m_lc);
+  const auto reported = m_operations.getDriveState();
+  if (!reported) {
+    throw Scheduler::NoSuchDrive("Drive disappeared before scheduling");
+  }
+  // Check if we should go down
+  if (!desired.up || reported->driveStatus == common::dataStructures::DriveStatus::Down) {
+    // We goin downnn
+    // Given the invariants above, no need to clean the drive here
+    return {.driveReusable = false};
+  }
+  // Report that we are Up without a mount
+  scheduler.reportDriveStatus(m_driveInfo,
+                              common::dataStructures::MountType::NoMount,
+                              common::dataStructures::DriveStatus::Up,
+                              m_lc);
 
   std::unique_ptr<TapeMount> tapeMount;
 
-  // Acquire work; a scheduling timeout is recoverable by waiting and trying again.
+  // Try to get a mount. A scheduling timeout is recoverable by waiting and trying again.
   utils::Timer t;
   try {
     tapeMount = m_operations.getNextMount();
@@ -160,34 +208,62 @@ void DriveController::runIteration() {
       .add("scheduleMountTimeoutSecs", m_config.mounts.get_next_mount_timeout_secs)
       .add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(log::WARNING, "Scheduling timed out; waiting before retrying.");
-    m_operations.resetScheduler();
+  } catch (const Scheduler::NoSuchDrive&) {
+    throw;
   } catch (const std::exception& ex) {
-    // No transfer has started; retry through normal drive preparation after the idle delay.
-    logDriveFailure(m_lc, "Scheduling failed unexpectedly; waiting before retrying.", ex);
-    m_operations.resetScheduler();
+    // No transfer has started; retry within this up period after the idle delay.
+    log::ScopedParamContainer params(m_lc);
+    const auto* ctaException = dynamic_cast<const exception::Exception*>(&ex);
+    params.add(semconv::log::exceptionMessage, ctaException ? ctaException->getMessageValue() : ex.what());
+    m_lc.log(log::ERR, "Scheduling failed unexpectedly; waiting before retrying.");
   }
 
-  // Wait before retrying when no mount was found or scheduling failed without acquiring one.
-  if (tapeMount == nullptr) {
-    // TODO (separate MR): graceful shutdown should interrupt sleep
-    m_operations.sleep(m_config.mounts.idle_scheduling_interval_secs);
-    return;
+  // Do another quick check to see if we should stop before committing to a tape session
+  // Later on, the tape session internals will also react appropriately
+  if (m_stopSource.stop_requested()) {
+    return {.driveReusable = false};
   }
 
-  // TapeSession handles recoverable failures; escaping exceptions are fatal and reach run().
-  const auto transferResult = m_operations.runTapeSession(*tapeMount);
+  // Idle polls and scheduling errors both request the ordinary retry delay.
+  // The mount is destroyed before the caller resets the scheduler.
+  return tapeMount ? runTapeSession(*tapeMount) : TapeSessionResult {.successful = false};
+}
+
+TapeSessionResult DriveController::runTapeSession(TapeMount& tapeMount) {
+  m_cleanupVid = tapeMount.getVid();
+  TapeSessionResult transferResult;
+  try {
+    // Run a tape session
+    transferResult = m_operations.runTapeSession(tapeMount);
+  } catch (const TapeSessionWorkerTeardownIncomplete&) {
+    // Cleanup cannot establish safe reuse while a worker may still access the drive.
+    throw;
+  } catch (...) {
+    // Log the original failure before recovery, without attaching its parameters to cleanup logs.
+    try {
+      throw;
+    } catch (const std::exception& ex) {
+      log::ScopedParamContainer params(m_lc);
+      const auto* ctaException = dynamic_cast<const exception::Exception*>(&ex);
+      params.add(semconv::log::exceptionMessage, ctaException ? ctaException->getMessageValue() : ex.what());
+      m_lc.log(log::ERR, "Tape session failed. Attempting drive recovery.");
+    } catch (...) {
+      m_lc.log(log::ERR, "Tape session failed with an unknown exception. Attempting drive recovery.");
+    }
+
+    // Down relinquishes hardware ownership, including when stopping after a failed session.
+    return {.driveReusable =
+              m_operations.scheduler().getDesiredDriveState(m_driveInfo.driveName, m_lc).up && onDownToUpTransition(),
+            .successful = false};
+  }
 
   if (!transferResult.driveReusable) {
-    m_cleanupVid = tapeMount->getVid();
     // Preserve specific session or operator reasons. Publication failures propagate.
     putDriveDown(common::dataStructures::DriveDownReason::SessionLeftDriveUnusable, {}, true);
+  } else {
+    m_cleanupVid.reset();
   }
-  // Release every borrower before retiring the agent, including before any retry delay.
-  tapeMount.reset();
-  m_operations.resetScheduler();
-  if (!transferResult.successful && transferResult.driveReusable) {
-    m_operations.sleep(m_config.mounts.idle_scheduling_interval_secs);
-  }
+  return transferResult;
 }
 
 void DriveController::waitForLogicalLibrary() {
@@ -219,30 +295,14 @@ void DriveController::waitUntilDriveIsRequestedUp() {
   bool waitingLogged = false;
 
   while (!m_stopSource.stop_requested()) {
-    common::dataStructures::DesiredDriveState desiredState;
-    try {
-      desiredState = scheduler.getDesiredDriveState(m_driveInfo.driveName, m_lc);
-    } catch (const Scheduler::NoSuchDrive&) {
-      m_lc.log(log::WARNING, "Drive is missing from the catalogue. Attempting to register it as down.");
-      if (!registerDrive(false)) {
-        throw exception::Exception("Failed to register the missing drive");
-      }
-      m_lc.log(log::INFO, "Missing drive registered as down. Waiting for an operator up request.");
-    }
+    const auto desiredState = scheduler.getDesiredDriveState(m_driveInfo.driveName, m_lc);
 
     if (desiredState.up) {
       if (waitingLogged) {
-        m_lc.log(log::INFO, "Desired drive state is up. Proceeding with drive probing.");
+        m_lc.log(log::INFO, "Desired drive state is up. Proceeding with drive preparation.");
       }
       return;
     }
-
-    // An operator may use the drive while it is down. Clean again on the next up request.
-    if (!m_cleanBeforeScheduling) {
-      const auto reported = m_operations.getDriveState();
-      m_cleanupVid = reported ? reported->currentVid : std::nullopt;
-    }
-    m_cleanBeforeScheduling = true;
 
     if (!waitingLogged) {
       m_lc.log(log::INFO, "Waiting for the desired drive state to become up.");
@@ -262,7 +322,6 @@ void DriveController::waitUntilDriveIsRequestedUp() {
 void DriveController::putDriveDown(common::dataStructures::DriveDownReason reason,
                                    std::string_view detail,
                                    bool preserveExistingReason) {
-  m_cleanBeforeScheduling = true;
   auto& scheduler = m_operations.scheduler();
   common::dataStructures::DesiredDriveState driveState;
   driveState.reason = common::dataStructures::formatDriveDownReason(reason, detail);
@@ -275,7 +334,10 @@ void DriveController::putDriveDown(common::dataStructures::DriveDownReason reaso
     try {
       std::rethrow_exception(std::current_exception());
     } catch (const std::exception& ex) {
-      logDriveFailure(m_lc, message, ex);
+      log::ScopedParamContainer params(m_lc);
+      const auto* ctaException = dynamic_cast<const exception::Exception*>(&ex);
+      params.add(semconv::log::exceptionMessage, ctaException ? ctaException->getMessageValue() : ex.what());
+      m_lc.log(log::ERR, message);
     } catch (...) {
       m_lc.log(log::ERR, message);
     }
@@ -327,7 +389,6 @@ void DriveController::putDriveDown(common::dataStructures::DriveDownReason reaso
 
 bool DriveController::registerDrive(bool putUpIfPossible) {
   m_registered.store(false);
-  m_identityValidated = false;
   auto& scheduler = m_operations.scheduler();
   m_lc.log(log::INFO, "Registering the drive in the catalogue.");
   if (!scheduler.checkDriveCanBeCreated(m_driveInfo, m_lc)) {
@@ -335,8 +396,6 @@ bool DriveController::registerDrive(bool putUpIfPossible) {
     return false;
   }
 
-  m_identityValidated = true;
-  m_cleanBeforeScheduling = true;
   // Registration normally replaces the catalogue record, so capture recovery context first.
   const auto previous = m_operations.getDriveState();
   m_cleanupVid = previous ? previous->currentVid : std::nullopt;
@@ -388,77 +447,21 @@ bool DriveController::registerDrive(bool putUpIfPossible) {
   return true;
 }
 
-bool DriveController::prepareDriveForScheduling() {
+bool DriveController::onDownToUpTransition() {
   auto& scheduler = m_operations.scheduler();
-
-  // A drive must be up before we can schedule.
-  waitUntilDriveIsRequestedUp();
-  // Cancellation must not turn a down-state wait into permission to access hardware.
-  if (m_stopSource.stop_requested()) {
-    return false;
-  }
-
   const auto reported = m_operations.getDriveState();
-  if (reported && reported->currentVid && !reported->currentVid->empty()) {
+  if (!reported) {
+    throw Scheduler::NoSuchDrive("Drive disappeared before cleanup");
+  }
+  // A failed session's captured VID takes precedence over a stale catalogue snapshot.
+  if (!m_cleanupVid && reported->currentVid && !reported->currentVid->empty()) {
     m_cleanupVid = reported->currentVid;
   }
-  if (!m_cleanBeforeScheduling) {
-    // Session publication can become Down before a new up request, without the loop observing desired Down.
-    m_cleanBeforeScheduling = reported && reported->driveStatus == common::dataStructures::DriveStatus::Down;
-  }
-
-  if (m_cleanBeforeScheduling) {
-    // Mark the up transition before probing or cleaning; Down relinquishes hardware ownership.
-    scheduler.reportDriveStatus(m_driveInfo,
-                                common::dataStructures::MountType::NoMount,
-                                common::dataStructures::DriveStatus::CleaningUp,
-                                m_lc);
-  }
-
-  // Probe once, before cleanup can remove unexpected media.
-  m_lc.log(log::DEBUG, "Checking whether the drive is empty.");
-  bool empty = false;
-  std::optional<std::string> probeError;
-  try {
-    const auto result = m_operations.probeDrive();
-    empty = result.first;
-    probeError = result.second;
-  } catch (...) {
-    if (!m_cleanBeforeScheduling) {
-      throw;
-    }
-    m_lc.log(log::WARNING, "Drive probe failed before preparation. Attempting drive cleanup.");
-    probeError = "Drive probe failed before preparation";
-  }
-
-  if (m_cleanBeforeScheduling) {
-    if (!empty && !probeError) {
-      m_lc.log(log::WARNING, "Tape found in drive while preparing to bring it up. Attempting drive cleanup.");
-    }
-    // Successful cleanup establishes readiness even when the diagnostic probe failed.
-    if (!cleanBeforeScheduling()) {
-      return false;
-    }
-  } else if (!empty) {
-    // Without cleanup, a non-empty or failed probe requires another operator up request.
-    m_lc.log(log::WARNING, "Drive probe did not confirm an empty drive. Requesting the drive down.");
-    putDriveDown(probeError ? common::dataStructures::DriveDownReason::DriveProbeFailed :
-                              common::dataStructures::DriveDownReason::TapeDetected,
-                 probeError.value_or(""));
-    return false;
-  }
-  m_lc.log(log::DEBUG, "Drive is ready. Proceeding with scheduling.");
-
-  // Advertise an idle drive with no active mount before asking the scheduler for work.
+  // Claim hardware ownership before cleanup; reported Down permits operator access.
   scheduler.reportDriveStatus(m_driveInfo,
                               common::dataStructures::MountType::NoMount,
-                              common::dataStructures::DriveStatus::Up,
+                              common::dataStructures::DriveStatus::CleaningUp,
                               m_lc);
-
-  return true;
-}
-
-bool DriveController::cleanBeforeScheduling() {
   m_lc.log(log::INFO, "Cleaning drive before allowing scheduling.");
   bool cleaned = false;
   std::string cleanupError;
@@ -466,10 +469,14 @@ bool DriveController::cleanBeforeScheduling() {
     cleaned = m_operations.clean(m_cleanupVid, true);
   } catch (const cta::exception::Exception& ex) {
     cleanupError = ex.getMessageValue();
-    logDriveFailure(m_lc, "Drive recovery cleaning failed.", ex);
+    log::ScopedParamContainer params(m_lc);
+    params.add(semconv::log::exceptionMessage, cleanupError);
+    m_lc.log(log::ERR, "Drive recovery cleaning failed.");
   } catch (const std::exception& ex) {
     cleanupError = ex.what();
-    logDriveFailure(m_lc, "Drive recovery cleaning failed.", ex);
+    log::ScopedParamContainer params(m_lc);
+    params.add(semconv::log::exceptionMessage, cleanupError);
+    m_lc.log(log::ERR, "Drive recovery cleaning failed.");
   } catch (...) {
     cleanupError = "Unknown exception during drive cleanup";
     m_lc.log(log::ERR, "Drive recovery cleaning failed with an unknown exception.");
@@ -484,29 +491,19 @@ bool DriveController::cleanBeforeScheduling() {
 
   // Cleaning takes time; an operator may have withdrawn the up request while it ran.
   // Never publish desired-up here. The catalogue also gates reported Up on current desired state.
-  m_cleanBeforeScheduling = !m_operations.scheduler().getDesiredDriveState(m_driveInfo.driveName, m_lc).up;
-  if (m_cleanBeforeScheduling) {
+  if (!scheduler.getDesiredDriveState(m_driveInfo.driveName, m_lc).up) {
     // Cleanup is complete. Honour the operator's down request without replacing its reason.
     m_operations.scheduler().reportDriveStatus(m_driveInfo,
                                                common::dataStructures::MountType::NoMount,
                                                common::dataStructures::DriveStatus::Down,
                                                m_lc);
+    return false;
   }
-  return !m_cleanBeforeScheduling;
-}
-
-int DriveController::shutdownDrive() {
-  int exitCode = 0;
-
-  // Sessions own tape cleanup; a down drive may be in use by an operator.
-  try {
-    putDriveDown(common::dataStructures::DriveDownReason::Shutdown, {}, true);
-  } catch (...) {
-    // The helper has logged each failure and attempted both down-state publications.
-    exitCode = 1;
-  }
-
-  return exitCode;
+  scheduler.reportDriveStatus(m_driveInfo,
+                              common::dataStructures::MountType::NoMount,
+                              common::dataStructures::DriveStatus::Up,
+                              m_lc);
+  return true;
 }
 
 }  // namespace cta::tape::daemon

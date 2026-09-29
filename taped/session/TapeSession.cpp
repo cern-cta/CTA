@@ -222,12 +222,12 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
         throw std::logic_error("Unsupported tape mount type");
     }
   } catch (...) {
-    m_tapeSessionTracker->recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
     // Partial startup and unexpected worker termination still require a separate lifecycle repair.
     // The reporter guard is not a worker shutdown mechanism; do not claim a finished session here.
     if (state.workersRunning) {
-      throw;
+      std::throw_with_nested(TapeSessionWorkerTeardownIncomplete());
     }
+    m_tapeSessionTracker->recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
     recordFailure(std::current_exception(), fatalFailure, lc);
   }
 
