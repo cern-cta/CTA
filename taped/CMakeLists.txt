@@ -16,6 +16,7 @@ target_link_libraries(ctatapedutils PUBLIC ctaruntime)
 add_library(ctataped
   TapedApp.cpp
   DriveController.cpp
+  DriveSession.cpp
   SystemDriveOperations.cpp
 )
 
@@ -28,7 +29,7 @@ target_link_libraries(ctataped
   ${PROTOBUF3_LIBRARIES}
 )
 
-add_library(ctatapedunittests SHARED DriveControllerTest.cpp)
+add_library(ctatapedunittests SHARED DriveControllerTest.cpp DriveSessionTest.cpp)
 set_property(TARGET ctatapedunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedunittests PROPERTY VERSION "${CTA_LIBVERSION}")
 target_link_libraries(ctatapedunittests PRIVATE ctataped gtest gmock)

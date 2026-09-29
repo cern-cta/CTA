@@ -5,12 +5,18 @@
 
 #pragma once
 
+#include "common/dataStructures/DriveDownReason.hpp"
+#include "common/dataStructures/DriveStatus.hpp"
+#include "common/dataStructures/MountType.hpp"
+
 #include <string>
+#include <string_view>
 
 namespace cta {
 
 namespace common::dataStructures {
 struct DriveInfo;
+struct SecurityIdentity;
 class DesiredDriveState;
 }  // namespace common::dataStructures
 
@@ -21,6 +27,13 @@ class LogContext;
 class IScheduler {
 public:
   virtual ~IScheduler() = default;
+
+  // Publish reported and desired Down, preserving an existing specific operator or failure reason.
+  // Attempt both publications even after a failure, then rethrow the first exception.
+  void putDriveDown(const common::dataStructures::DriveInfo& driveInfo,
+                    common::dataStructures::DriveDownReason reason,
+                    log::LogContext& lc,
+                    std::string_view detail = {});
 
   virtual void ping(log::LogContext& lc) = 0;
 
