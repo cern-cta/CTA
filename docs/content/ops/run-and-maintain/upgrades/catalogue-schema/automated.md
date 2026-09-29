@@ -37,7 +37,7 @@ eed62e9a05255991660aef71ef84d5161a10ecf5fa32d66b3d3221c26b381bba
 
 A few requirements must be met before running the container:
 
-- Mount `cta-catalogue.conf` in the directory `/shared/etc_cta` (see example in the [CTA repository](https://gitlab.cern.ch/cta/CTA/-/blob/main/catalogue/cta-catalogue.conf.example)).
+- Mount `cta-catalogue.conf` in the directory `/shared/etc_cta` (see the [catalogue configuration example](../../../deploy-and-configure/configuration/catalogue.md#example-configuration)).
 - Mount the *yum* repos to download the CTA RPMs in the directory `/shared/etc_yum.repos.d`.
 
 ### Procedure

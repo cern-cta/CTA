@@ -1,6 +1,6 @@
-<!-- Keep the title created by the release tool: `Release v6.X.Y.Z-R`. CI uses it to find this issue. -->
+<!-- Ensure the title of this ticket is the name of the release. E.g. `v6.X.Y.Z-R` -->
 
-* See [Releasing a new version of CTA](https://cta.docs.cern.ch/latest/dev/contributing/maintainers/releases/)
+* See [Releasing a new version of CTA](https://cta.docs.cern.ch/latest/dev/procedures/releases/)
 
 ## Release Requirements
 
@@ -18,9 +18,10 @@
 
 ## Release Checklist
 
-- [ ] Release pipeline test results reviewed
-- [ ] Stress-test result reviewed (see the automatic CI job note)
-    - [ ] Stress-test dashboard linked with timeframe
+- [ ] Stress test run
+    - [ ] Stress test screenshot added
+    - [ ] Stress test job linked
+    - [ ] Stress test dashboard linked with timeframe
 - [ ] Changelog updated
 - [ ] Tag created
 - [ ] RPMs present in `unstable` repository
@@ -32,9 +33,9 @@ Once all steps have been completed, this issue can be closed.
 
 <!-- Use the dashboard at https://monit-grafana.cern.ch/goto/dfrahun8hqolcb?orgId=165 -->
 
-Additional stress-test evidence, if needed:
+Screenshot of the stress test results:
 
-Dashboard link and timeframe (CI posts the `stress-test` job result in the comments):
+Link to the CI `stress-test` job:
 
 <!-- If everything goes well for the stress test, create the Deployment ticket in the Operations repo. Otherwise, iterate in the comments to solve any problems. -->
 
