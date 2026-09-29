@@ -34,7 +34,7 @@ Once all steps have been completed, this issue can be closed.
 
 Additional stress-test evidence, if needed:
 
-Dashboard link and timeframe (CI posts the `stress-test-python` job result in the comments):
+Dashboard link and timeframe (CI posts the `stress-test` job result in the comments):
 
 <!-- If everything goes well for the stress test, create the Deployment ticket in the Operations repo. Otherwise, iterate in the comments to solve any problems. -->
 

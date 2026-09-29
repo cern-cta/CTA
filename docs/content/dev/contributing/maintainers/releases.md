@@ -81,7 +81,7 @@ Use `release tag --help` for other options. `--yes` skips confirmations, includi
 
 ## Review CI results
 
-Tag pipelines automatically build the release and run the configured unit and system tests, including tests that are normally manual on branches. The `stress-test-python` job also runs automatically in default tag pipelines, except for `pgcat` and `pgall` variants, where it remains manual. Run it explicitly for those variants when needed for release validation.
+Tag pipelines automatically build the release and run the configured unit and system tests, including tests that are normally manual on branches. The `stress-test` job also runs automatically in default tag pipelines, except for `pgcat` and `pgall` variants, where it remains manual. Run it explicitly for those variants when needed for release validation.
 
 Check the actual test results before publishing: **the stress test allows failure, so a successful overall pipeline does not establish that it passed**. Check catalogue migration results when the release introduces a schema upgrade. For logs and artifacts, see [Testing and CI](../../guides/testing/ci/index.md).
 

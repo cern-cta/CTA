@@ -42,7 +42,7 @@ Runner provisioning and host configuration are documented in [Tape Operations: C
     bash ci/checks/check_runner_healthy.sh
     ```
 
-4. Fix any failed checks, then resume the runner in GitLab. Open its job list and follow the next system-test job it picks up. If none is queued, retry `test-client` from a recent successful pipeline; for the stress runner, start `stress-test-python`.
+4. Fix any failed checks, then resume the runner in GitLab. Open its job list and follow the next system-test job it picks up. If none is queued, retry `test-client` from a recent successful pipeline; for the stress runner, start `stress-test`.
 5. Check the runner identity shown on the job page or at the start of its log, and confirm the job succeeds. A retry may be assigned to another eligible runner; in that case, follow a job actually assigned to the maintained runner. If it fails because of the maintenance, pause the runner again and resolve the problem.
 
 ## Credentials and service accounts

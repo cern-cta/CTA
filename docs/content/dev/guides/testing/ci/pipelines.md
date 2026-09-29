@@ -60,7 +60,7 @@ Follow downstream pipeline links when additional configurations are tested there
 | --- | --- |
 | `danger-review` | Read the MR feedback and address contribution-metadata and documentation findings. See [Contributing through CERN GitLab](../../../contributing/gitlab.md). |
 | `test-catalogue-schema-update` | Review migration results when changing catalogue schemas or migrations. See [Testing Migrations](../../../internals/components/catalogue/testing.md). |
-| `stress-test-python` | Assess sustained workload behaviour and performance using [Stress Tests](../stress-tests.md). |
+| `stress-test` | Assess sustained workload behaviour and performance using [Stress Tests](../stress-tests.md). |
 | `build-cta-rpms-no-ccache` / `reset-ccache` | If you suspect a compilation-cache problem, compare the no-ccache build where available. The manual `reset-ccache` job clears the MR branch's cache; retry the affected build afterwards. |
 
 For publication jobs and release validation, follow [Release Procedure](../../../contributing/maintainers/releases.md). When modifying jobs, keep their rationale beside the YAML and follow [GitLab CI Conventions](../../conventions/gitlab.md).
