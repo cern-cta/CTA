@@ -15,7 +15,7 @@
     <a href="https://cta.docs.cern.ch/"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="docs/content/concepts/index.md">CTA Overview</a>
+    <a href="https://cta.docs.cern.ch/latest/overview/introduction/">CTA Overview</a>
     ·
     <a href="https://cta.web.cern.ch/">CTA Website</a>
     ·
@@ -36,15 +36,35 @@ CTA is:
 - Scalable, for small and large installations
 - Self-hostable, on-premise
 
-CTA is designed to operate on physical tape infrastructure and is used in combination with a disk buffer system such as [EOS](https://eos-web.web.cern.ch/eos-web/) or [dCache](https://www.dcache.org/). For development purposes it is also possible to run a containerized setup of the CTA components. For this, you can have a look at the [Development documentation](docs/content/dev/index.md).
+CTA is designed to operate on physical tape infrastructure and is used in combination with a disk buffer system such as [EOS](https://eos-web.web.cern.ch/eos-web/) or [dCache](https://www.dcache.org/). For development purposes it is also possible to run a containerized setup of the CTA components. For this, you can have a look at the [Development documentation](https://cta.docs.cern.ch/latest/dev/overview/).
 
 ## Contributing
 
-Contributions are welcome. Start with the [Contributing guide](docs/content/dev/contributing/index.md) to discuss your proposal and choose the CERN GitLab or GitHub route. For checkout setup and the local development workflow, see [Getting Started](docs/content/dev/getting-started/prerequisites.md).
+1. Request access to work on the CTA repository or create a fork.
+2. [Set up a development environment](https://cta.docs.cern.ch/latest/dev/getting-started/setup/).
+3. [Choose or create an issue](https://cta.docs.cern.ch/latest/dev/contributing/issues/) to work on.
+4. [Create a branch](https://cta.docs.cern.ch/latest/dev/contributing/branches/) on the CTA repository.
+5. Make your changes on this branch (see [Coding Conventions](https://cta.docs.cern.ch/latest/conventions/coding/general/)).
+6. [Open a merge request](https://cta.docs.cern.ch/latest/dev/contributing/merge-requests/) from your branch into `main`.
+7. Ensure all necessary checks pass and assign/request a reviewer.
+8. Wait for your work to be reviewed and eventually merged.
+
+For more details, see the [Developer Documentation](https://cta.docs.cern.ch/latest/dev/overview/).
 
 ## License
 
-CTA is licensed under the GNU GPL version 3 or later; see [COPYING](COPYING). For source-file notices, third-party licenses, and REUSE checks, follow the [copyright conventions](docs/content/dev/guides/conventions/coding/copyright.md).
+CTA is licensed under [GPL Version 3](https://gitlab.cern.ch/cta/CTA/-/blob/main/COPYING?ref_type=heads) and uses [SPDX](https://spdx.dev) identifiers for machine-readable licensing information.
+All files must therefore include an SPDX header at the top of the file:
+
+```text
+SPDX-FileCopyrightText: <year of creation> CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+```
+
+External contributors are encouraged to add their own `SPDX-FileCopyrightText` line for new files or significant contributions. Files may therefore contain multiple copyright lines.
+
+All files must include an SPDX license identifier indicating GPL-3.0-or-later. License compliance is checked using REUSE.
+
 
 > This program is free software, distributed under the terms of the GNU General Public Licence version 3 (GPL Version 3), copied verbatim in the file [COPYING](COPYING). You can redistribute it and/or modify it under the terms of the GPL Version 3, or (at your option) any later version.
 >

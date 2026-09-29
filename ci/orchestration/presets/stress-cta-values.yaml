@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 global:
-  # Keep crash evidence in a pod volume for stress-run investigation; copy it before deleting the pod.
+  # Keep crash evidence in a pod volume for stress-run investigation
   extraVolumes:
     volumes:
       - name: coredumps

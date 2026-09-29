@@ -304,8 +304,7 @@ type-check-python:
         - ".gitlab-ci.yml"  # For changes in the image
         - ".gitlab/ci/lint.gitlab-ci.yml"
         - "pyrightconfig.json"
-        - "ci/system_tests/requirements.txt"
-        - "docs/requirements.txt"
+        - "**/requirements.txt"
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
