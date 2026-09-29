@@ -14,10 +14,8 @@
 #include <atomic>
 #include <chrono>
 #include <memory>
-#include <optional>
 #include <stop_token>
 #include <string>
-#include <string_view>
 
 namespace cta::tape::daemon {
 
@@ -40,7 +38,7 @@ public:
   void stop();
 
   /**
-   * @brief Register the drive, wait for its library and run scheduling iterations.
+   * @brief Register the drive, wait for its library and run successive drive sessions.
    *
    * Registration failures exit without shutdown publication or hardware access.
    * Exceptions escaping the scheduling loop trigger down-state publication without touching tape hardware.
@@ -80,26 +78,6 @@ private:
 
   DriveOperations& m_operations;
 
-  // Preserve the cartridge identity across status publications that clear currentVid.
-  std::optional<std::string> m_cleanupVid;
-
-  /**
-   * @brief Run one scheduling attempt within an already prepared up period.
-   *
-   * Return a reusable outcome to continue the up period; unsuccessful outcomes request a retry delay.
-   * The caller resets the scheduler and applies the delay after the mount has been destroyed.
-   * Fatal failures propagate to run().
-   */
-  TapeSessionResult runIteration();
-
-  /**
-   * @brief Execute a session and recover from exceptions once its workers have stopped.
-   *
-   * The caller keeps the mount and scheduler alive through recovery.
-   * @return Session or recovery outcome; incomplete worker teardown remains fatal.
-   */
-  TapeSessionResult runTapeSession(TapeMount& tapeMount);
-
   /**
    * @brief Register a fresh drive or retain an interrupted drive for recovery.
    *
@@ -121,26 +99,6 @@ private:
    * Missing drives propagate to run() and are left for the next daemon run.
    */
   void waitUntilDriveIsRequestedUp();
-
-  /**
-   * @brief Publish reported and desired down states, attempting both even if one fails.
-   *
-   * @param reason Reason category for putting the drive down.
-   * @param detail Additional text included in the formatted reason.
-   * @param preserveExistingReason Keep an existing operator or failure reason when possible.
-   * @throws std::exception The first failed read or publication, after other publications are attempted.
-   */
-  void putDriveDown(common::dataStructures::DriveDownReason reason,
-                    std::string_view detail = {},
-                    bool preserveExistingReason = false);
-
-  /**
-   * @brief Claim the drive, clean with the preserved VID, then recheck operator intent.
-   *
-   * Called on entry to an up period or after a session exception with completed worker teardown.
-   * @return False if cleaning fails or the operator has requested down.
-   */
-  bool onDownToUpTransition();
 };
 
 }  // namespace cta::tape::daemon
