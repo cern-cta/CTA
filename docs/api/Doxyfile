@@ -1,0 +1,31 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Run from the repository root, as docs/hooks.py does.
+PROJECT_NAME           = "CTA C++ API"
+OUTPUT_DIRECTORY       = build/docs/generated/api/cpp
+HTML_OUTPUT            = .
+INPUT                  = catalogue common disk frontend lib maintd mediachanger objectstore rdbms scheduler taped tools version.hpp
+RECURSIVE              = YES
+FILE_PATTERNS          = *.h *.hh *.hpp *.c *.cc *.cpp *.cxx
+EXCLUDE                = common/jwt-cpp catalogue/cta-catalogue-schema lib/protobuf/external
+EXCLUDE_PATTERNS       = */tests/* */test/* */*Test* */*Mock* */mock/* */mocks/* */third_party/* */external/*
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+CASE_SENSE_NAMES       = NO
+FULL_PATH_NAMES        = YES
+STRIP_FROM_PATH        = .
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+GENERATE_HTML          = YES
+GENERATE_TREEVIEW      = YES
+SEARCHENGINE           = YES
+SERVER_BASED_SEARCH    = NO
+GENERATE_LATEX         = NO
+HAVE_DOT               = NO
+QUIET                  = YES
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = NO
+WARN_AS_ERROR          = NO
+HTML_FOOTER            = build/docs/generated/api/footer.html

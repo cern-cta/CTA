@@ -21,6 +21,27 @@ Restart `mkdocs serve` after changing hooks; live reload does not reload the Pyt
 
 Mermaid colors are configured in `content/stylesheets/extra.css`. Prefer the default theme colors and check diagrams in both light and dark mode after styling changes.
 
+## Generated API reference
+
+The API Reference page links to native generator output inside each published version:
+`api/cpp/` contains Doxygen HTML. It has its own search and navigation; symbols are not
+indexed by MkDocs search. The return link stays within the selected release series.
+
+`hooks.py` runs `docs/api/Doxyfile` from the repository root before every build,
+including local preview and `mike deploy`. It replaces `build/docs/generated/api/cpp/`
+and copies the complete HTML tree into the configured site directory after MkDocs builds.
+Generated files must not be committed. Missing Doxygen, generation failures, and missing
+output fail the build; existing Doxygen documentation warnings are reported but are not fatal.
+
+The shared pipeline image includes Doxygen. Rebuild that image before using these hooks
+in CI. C++ source changes trigger `build-docs`, and local preview watches the source inputs.
+
+Future generators should produce self-contained HTML trees under
+`build/docs/generated/api/<language>/`. Add their build step and language to the post-build
+copy list, then add a landing-page link. Reserve `api/python/` and `api/rust/` for those
+outputs, preserving each generator's assets and internal links. No separate publication
+workflow is needed: all outputs are versioned together by `mike`.
+
 ## Publishing
 
 `publish-docs` runs automatically for protected canonical release tags after `build-docs` succeeds. It runs independently of RPM and image publication, so documentation may appear before the software is published. Prerelease and variant tags do not publish documentation.

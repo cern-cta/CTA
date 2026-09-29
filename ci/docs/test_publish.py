@@ -20,6 +20,7 @@ from typing import Any
 from typing_extensions import override
 
 from publish import publication_decision, release_key
+from api_fixture import prepare_api_fixture
 
 
 class VersionTests(unittest.TestCase):
@@ -144,6 +145,35 @@ class PublicationTests(unittest.TestCase):
         result = self.command(sys.executable, str(self.publisher), "--tag", "v6.12.0.0-1", check=False)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("Snippet at path 'missing-file.md' could not be found", result.stdout)
+        self.assertEqual(previous, self.command("git", "ls-remote", "origin", "gl-pages").stdout)
+
+    def test_api_publication_and_generation_failure(self):
+        prepare_api_fixture(self.repo)
+        with (self.repo / "docs/mkdocs.yml").open("a") as stream:
+            stream.write("hooks:\n  - hooks.py\n")
+        self.command("git", "add", ".")
+        self.command("git", "commit", "--message", "Add generated API reference")
+        output, _ = self.deploy("v6.9.1-1")
+        original = (output / "6.9/api/cpp/class_widget.html").read_bytes()
+        (self.repo / "common/Widget.hpp").write_text("class Replacement {};\n")
+        self.command("git", "add", "common")
+        self.command("git", "commit", "--message", "Change API")
+        output, _ = self.deploy("v6.12.0.0-1")
+        self.assertEqual((output / "6.9/api/cpp/class_widget.html").read_bytes(), original)
+        self.assertTrue((output / "6.12/api/cpp/class_replacement.html").is_file())
+        self.assertFalse((output / "6.12/api/cpp/class_widget.html").exists())
+        self.assertTrue((output / "6.12/api/cpp/search/search.js").is_file())
+
+        # Doxygen errors must leave the published branch untouched.
+        with (self.repo / "docs/api/Doxyfile").open("a") as stream:
+            stream.write("\nHTML_HEADER = missing-header.html\n")
+        self.command("git", "add", "docs")
+        self.command("git", "commit", "--message", "Break API generation")
+        self.command("git", "tag", "v6.12.1.0-1")
+        previous = self.command("git", "ls-remote", "origin", "gl-pages").stdout
+        result = self.command(sys.executable, str(self.publisher), "--tag", "v6.12.1.0-1", check=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("C++ API generation failed", result.stdout)
         self.assertEqual(previous, self.command("git", "ls-remote", "origin", "gl-pages").stdout)
 
 

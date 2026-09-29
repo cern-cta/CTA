@@ -8,13 +8,21 @@ strict: true
 watch:
   - ../CHANGELOG.md
   - includes
+  - api
+  - ../common
+  - ../disk
+  - ../frontend/common
+  - ../lib
+  - ../objectstore
+  - ../rdbms
+  - ../scheduler
+  - ../version.hpp
   - ../tools
   - ../catalogue
   - ../frontend/grpc
   - ../taped
   - ../maintd
-  - ../mediachanger/rmcd
-  - ../lib/telemetry
+  - ../mediachanger
 
 site_name: CTA Documentation
 site_description: Operator and developer documentation for the CERN Tape Archive (CTA) system
@@ -300,6 +308,7 @@ nav:
   # Orient contributors, explain contribution procedures, then provide technical reference.
   - 'Development':
       - 'Introduction': dev/index.md
+      - 'API Reference': dev/api/index.md
       # Follow this sequence for first-time orientation; ongoing tool usage belongs in Development Guides.
       - 'Getting Started':
           - 'Prerequisites & Access': dev/getting-started/prerequisites.md

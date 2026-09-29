@@ -10,6 +10,9 @@ The Changelog page includes the repository’s `CHANGELOG.md`. For ordinary cont
 
 ## Preview locally
 
+Install Doxygen first (`brew install doxygen` on macOS or `dnf install doxygen` on AlmaLinux).
+The preview generates the C++ API reference directly from source; compiling CTA is not required.
+
 From the repository root:
 
 ```bash
