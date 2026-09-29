@@ -5,6 +5,7 @@ find_package(ZLIB REQUIRED)
 
 set(CTATAPEDSESSION_LIBRARY_SRCS
   DriveCleaner.cpp
+  MountedTape.cpp
   DiskReadThreadPool.cpp
   DiskReadTask.cpp
   DiskWriteTask.cpp
@@ -43,6 +44,7 @@ target_link_libraries(ctatapedsession
 
 add_library(ctatapedsessionunittests SHARED
   DriveCleanerTest.cpp
+  MountedTapeTest.cpp
   TapeSessionTest.cpp
   DiskReadTaskTest.cpp
   DiskWriteTaskTest.cpp

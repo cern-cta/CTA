@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <stdexcept>
+#include <thread>
 #include <vector>
 
 namespace cta::tape::daemon {
@@ -112,6 +113,8 @@ protected:
   unsigned int probes = 0;
   unsigned int schedules = 0;
   unsigned int schedulerResets = 0;
+  unsigned int downRequests = 0;
+  std::function<void()> onDownRequest;
   std::function<void()> onSchedulerReset;
   unsigned int transfers = 0;
   unsigned int destroyed = 0;
@@ -148,6 +151,16 @@ protected:
       ++fixture.schedulerResets;
       if (fixture.onSchedulerReset) {
         fixture.onSchedulerReset();
+      }
+    }
+
+    void requestDriveDown(log::LogContext&) override {
+      ++fixture.downRequests;
+      if (fixture.previousDrive) {
+        fixture.previousDrive->desiredUp = false;
+      }
+      if (fixture.onDownRequest) {
+        fixture.onDownRequest();
       }
     }
 
@@ -1404,12 +1417,12 @@ TEST_F(DriveControllerTest, OperatorDownDuringSessionRecoveryPreventsRetry) {
   EXPECT_TRUE(sleeps.empty());
 }
 
-TEST_F(DriveControllerTest, StopDuringFailedSessionStillRecoversWithoutRetry) {
+TEST_F(DriveControllerTest, StopDuringFailedSessionCurrentlyDefersCleanup) {
   testing::InSequence sequence;
   expectRunStartup();
   expectTransition();
   expectPreparation();
-  expectTransition();
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
   expectShutdown();
   supplyMount();
   transfer = [&](TapeMount&) -> TapeSessionResult {
@@ -1417,7 +1430,8 @@ TEST_F(DriveControllerTest, StopDuringFailedSessionStillRecoversWithoutRetry) {
     throw std::runtime_error("session failed while stopping");
   };
   EXPECT_EQ(0, controller->run());
-  EXPECT_EQ(2, cleanings);
+  EXPECT_EQ(1, cleanings);  // TODO: recovery is skipped once stop publishes desired-down.
+  EXPECT_EQ(1, downRequests);
   EXPECT_EQ(1, schedules);
   EXPECT_EQ(1, destroyed);
   EXPECT_TRUE(sleeps.empty());
@@ -1750,6 +1764,71 @@ TEST_F(DriveControllerTest, ShutdownReplacesStartupAndCleanReasonsButPreservesOp
     EXPECT_EQ(0, shutdown());
     ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&scheduler));
   }
+}
+
+TEST_F(DriveControllerTest, StopBeforeRegistrationDoesNotPublishDesiredDown) {
+  controller->stop();
+  EXPECT_EQ(0, downRequests);
+  EXPECT_FALSE(iteration());
+  EXPECT_EQ(0, schedules);
+}
+
+TEST_F(DriveControllerTest, StopPublishesDesiredDownOnceWithoutTouchingHardware) {
+  expectRunStartup();
+  ASSERT_TRUE(registerDrive());
+  previousDrive->desiredUp = true;
+  previousDrive->driveStatus = DriveStatus::Transferring;
+  controller->stop();
+  controller->stop();
+  EXPECT_EQ(1, downRequests);
+  EXPECT_FALSE(previousDrive->desiredUp);
+  EXPECT_EQ(DriveStatus::Transferring, previousDrive->driveStatus);
+  EXPECT_FALSE(iteration());
+  EXPECT_EQ(0, cleanings);
+  EXPECT_EQ(0, probes);
+}
+
+TEST_F(DriveControllerTest, StopPublicationFailureStillExits) {
+  for (const bool unknown : {false, true}) {
+    SCOPED_TRACE(unknown);
+    controller = std::make_unique<DriveController>(config, logger, operations);
+    testing::InSequence sequence;
+    expectRunStartup();
+    expectShutdown();
+    onDownRequest = [unknown] {
+      if (unknown) {
+        throw 42;
+      }
+      throw std::runtime_error("catalogue unavailable");
+    };
+    libraryExists = [&] {
+      EXPECT_NO_THROW(controller->stop());
+      return true;
+    };
+    EXPECT_EQ(0, controller->run());
+    EXPECT_FALSE(controller->isReady());
+    EXPECT_EQ(0, schedules);
+    EXPECT_EQ(0, cleanings);
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&scheduler));
+  }
+  EXPECT_EQ(2, downRequests);
+}
+
+TEST_F(DriveControllerTest, StopCanPublishDesiredDownDuringSchedulerReset) {
+  testing::InSequence sequence;
+  expectRunStartup();
+  expectTransition();
+  expectPreparation();
+  expectShutdown();
+  onSchedulerReset = [&] {
+    // Exercise the stop callback on another thread while the scheduler is being replaced.
+    std::thread stopping([&] { controller->stop(); });
+    stopping.join();
+    EXPECT_EQ(1, downRequests);
+  };
+  EXPECT_EQ(0, controller->run());
+  EXPECT_EQ(1, schedulerResets);
+  EXPECT_TRUE(sleeps.empty());
 }
 
 TEST_F(DriveControllerTest, StopWhileWaitingForLibraryExitsWithoutHardwareAccess) {
