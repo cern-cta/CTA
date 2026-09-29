@@ -89,6 +89,35 @@ TEST_F(cta_ChecksumBlobTest, checksum_types) {
   ASSERT_EQ(checksumBlob.size(), 0);
 }
 
+TEST_F(cta_ChecksumBlobTest, validateCommonChecksums) {
+  using namespace cta::checksum;
+  using namespace cta::exception;
+
+  ChecksumBlob eos;
+  eos.insert(ADLER32, "1234");
+  eos.insert(MD5, "1234567890123456");
+
+  ChecksumBlob tape;
+  tape.insert(ADLER32, "1234");
+
+  // An extra EOS checksum is allowed when the shared checksum matches.
+  EXPECT_NO_THROW(eos.validateCommonChecksums(tape));
+
+  // A shared checksum with a different value must fail.
+  tape.insert(ADLER32, "5678");
+  EXPECT_THROW(eos.validateCommonChecksums(tape), ChecksumValueMismatch);
+
+  // Nonempty blobs with no shared checksum must fail.
+  ChecksumBlob noCommonType;
+  noCommonType.insert(CRC32, "1234");
+  EXPECT_THROW(eos.validateCommonChecksums(noCommonType), ChecksumTypeMismatch);
+
+  // NONE must not count as a shared checksum.
+  ChecksumBlob onlyNone;
+  onlyNone.insert(NONE, "");
+  EXPECT_THROW(onlyNone.validateCommonChecksums(onlyNone), ChecksumTypeMismatch);
+}
+
 TEST_F(cta_ChecksumBlobTest, hex_to_byte_array) {
   using namespace cta::checksum;
 

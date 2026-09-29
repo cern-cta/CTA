@@ -70,10 +70,7 @@ void cta::ArchiveJob::validate() {
   if (archiveFile.checksumBlob.empty() || tapeFile.checksumBlob.empty()) {
     throw ChecksumNotSet("In cta::ArchiveJob::validate(): checksums not set");
   }
-  // Compare CTA's calculated ADLER32 with EOS's value, if EOS supplied one.
-  if (archiveFile.checksumBlob.getMap().count(cta::checksum::ADLER32) != 0) {
-    archiveFile.checksumBlob.validate(cta::checksum::ADLER32, tapeFile.checksumBlob.at(cta::checksum::ADLER32));
-  }
+  archiveFile.checksumBlob.validateCommonChecksums(tapeFile.checksumBlob);
 }
 
 //------------------------------------------------------------------------------
