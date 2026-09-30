@@ -115,7 +115,9 @@ TapeSessionResult DriveSession::runIteration(std::stop_token stopToken) {
   if (!reported) {
     throw Scheduler::NoSuchDrive("Drive disappeared before scheduling");
   }
-  // Check if we should go down
+  // TODO: track the end of hardware ownership explicitly instead of inferring it from catalogue status.
+  // Keep the reported-Down check until then: desired UP may arrive before this loop observes desired DOWN.
+  // That case must start a new drive session with preparation, rather than resume this one.
   if (!desired.up || reported->driveStatus == common::dataStructures::DriveStatus::Down) {
     // Given the invariants above, no need to clean the drive here
     return {.driveReusable = false};
