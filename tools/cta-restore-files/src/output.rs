@@ -1,28 +1,15 @@
 // SPDX-FileCopyrightText: 2026 CERN
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-//! Incremental rendering of recycle-bin listings.
+//! Rendering of recycle-bin listings to stdout.
 use std::{borrow::Cow, io::IsTerminal};
 
-use cta_lib::ResponseError;
-use cta_protobuf::cta::{admin::RecycleTapeFileLsItem, xrd::data::Data};
+use cta_client::types::File;
 use serde_json::json;
-use tokio_stream::{Stream, StreamExt};
-
-/// How a listing should be presented.
-#[derive(Debug)]
-pub enum OutputFormat {
-    /// Do not print anything; return the items to the caller instead.
-    None,
-    /// Print one JSON object per item and line.
-    Json,
-    /// Print a human-readable table.
-    Table,
-}
 
 /// A simple line-buffered table printer for streaming rows to stdout
 ///
-/// `N` is the number of columns, fixed at compile time so that rows are checked
+/// `N` is the number of columns, fixed at compile time
 pub struct TablePrinter<const N: usize> {
     widths: [usize; N],
     color: bool,
@@ -105,15 +92,8 @@ fn paint(color: bool, code: &str, s: &str) -> String {
     }
 }
 
-/// Streams the recycle-bin items of `iter` to stdout as a table.
-///
-/// # Errors
-///
-/// Fails on a stream error, or if the stream yields an item that is not a
-/// recycle tape file record.
-pub async fn output_as_table<I: Stream<Item = Result<Data, ResponseError>> + Unpin>(
-    iter: &mut I,
-) -> anyhow::Result<()> {
+/// Renders the recycle-bin items of `iter` to stdout as a table.
+pub fn output_as_table(iter: &Vec<File>) {
     let table = TablePrinter::new([
         ("archive_file_id", 16),
         ("disk_file_id", 0),
@@ -124,80 +104,44 @@ pub async fn output_as_table<I: Stream<Item = Result<Data, ResponseError>> + Unp
         ("copy_nb", 0),
     ]);
 
-    while let Some(res) = iter.next().await {
-        match res {
-            Ok(Data::RtflsItem(item)) => {
-                log::info!("{item:#?}");
-                table.print_row([
-                    Cow::Owned(item.archive_file_id.to_string()),
-                    Cow::Borrowed(&item.disk_file_id),
-                    Cow::Borrowed(&item.disk_file_id_when_deleted),
-                    Cow::Borrowed(&item.disk_instance),
-                    Cow::Borrowed(&item.vid),
-                    Cow::Borrowed(&item.disk_file_path),
-                    Cow::Owned(item.copy_nb.to_string()),
-                ]);
-            }
-            Ok(d) => anyhow::bail!("Unexpected item: {d:#?}"),
-            Err(e) => anyhow::bail!("Error: {e:#?}"),
-        }
+    for item in iter {
+        log::info!("{item:#?}");
+        table.print_row([
+            Cow::Owned(item.archive_file.id.to_string()),
+            Cow::Borrowed(&item.disk_file.id),
+            Cow::Borrowed(
+                item.disk_file
+                    .id_when_deleted
+                    .as_ref()
+                    .unwrap_or(&"-".into()),
+            ),
+            Cow::Borrowed(&item.disk_file.instance),
+            Cow::Borrowed(&item.tape_file.vid),
+            Cow::Borrowed(&item.disk_file.path),
+            Cow::Owned(item.tape_file.copy_nb.to_string()),
+        ]);
     }
 
     table.close();
-    Ok(())
 }
 
 /// Converts a `RecycleTapeFileLsItem` to JSON, ensuring all fields are serialized.
 /// This function documents the expected schema and catches schema drift at
 /// compile time if new fields are added to the proto.
-fn item_to_json(item: &RecycleTapeFileLsItem) -> serde_json::Value {
-    let checksum_json: Vec<_> = item
-        .checksum
-        .iter()
-        .map(|c| json!({ "type": c.r#type, "value": c.value }))
-        .collect();
-
+fn item_to_json(item: &File) -> serde_json::Value {
     json!({
-        "vid": item.vid,
-        "fseq": item.fseq,
-        "block_id": item.block_id,
-        "copy_nb": item.copy_nb,
-        "tape_file_creation_time": item.tape_file_creation_time,
-        "archive_file_id": item.archive_file_id,
-        "disk_instance": item.disk_instance,
-        "disk_file_id": item.disk_file_id,
-        "disk_file_id_when_deleted": item.disk_file_id_when_deleted,
-        "disk_file_uid": item.disk_file_uid,
-        "disk_file_gid": item.disk_file_gid,
-        "size_in_bytes": item.size_in_bytes,
-        "checksum": checksum_json,
-        "storage_class": item.storage_class,
-        "archive_file_creation_time": item.archive_file_creation_time,
-        "reconciliation_time": item.reconciliation_time,
-        "collocation_hint": item.collocation_hint,
-        "disk_file_path": item.disk_file_path,
-        "reason_log": item.reason_log,
-        "recycle_log_time": item.recycle_log_time,
-        "virtual_organization": item.virtual_organization,
-        "instance_name": item.instance_name,
+        "archive_file": item.archive_file,
+        "tape_file": item.tape_file,
+        "disk_file": item.disk_file
     })
 }
 
-/// Streams items from the server and outputs each as a line of JSON.
+/// Prints each item of `files` as a line of JSON.
 /// Each line is a complete JSON object representing one deleted file record.
-pub async fn output_as_json<I: Stream<Item = Result<Data, ResponseError>> + Unpin>(
-    iter: &mut I,
-) -> anyhow::Result<()> {
-    while let Some(res) = iter.next().await {
-        match res {
-            Ok(Data::RtflsItem(item)) => {
-                log::info!("{item:#?}");
-                let json = item_to_json(&item);
-                println!("{json}");
-            }
-            Ok(d) => anyhow::bail!("Unexpected item: {d:#?}"),
-            Err(e) => anyhow::bail!("Error: {e:#?}"),
-        }
+pub fn output_as_json(files: &Vec<File>) {
+    for file in files {
+        log::info!("{file:#?}");
+        let json = item_to_json(file);
+        println!("{json}");
     }
-    Ok(())
 }

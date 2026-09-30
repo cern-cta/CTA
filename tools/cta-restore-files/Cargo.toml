@@ -19,9 +19,10 @@
   workspace = true
 
 [dependencies]
-  cta-lib      = { workspace = true }
+  cern-st-grpc = { workspace = true }
+  cta-client   = { workspace = true }
+  eos-client   = { workspace = true }
   eos-protobuf = { workspace = true }
-  cta-protobuf = { workspace = true }
 
   tokio        = { workspace = true, features = ["macros", "rt-multi-thread", "fs"] }
   thiserror    = { workspace = true }
@@ -30,5 +31,4 @@
   url          = { workspace = true }
   log          = { workspace = true }
   env_logger   = { workspace = true }
-  tokio-stream = { workspace = true }
   serde_json   = { workspace = true }

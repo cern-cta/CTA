@@ -18,6 +18,3 @@ building:
 ```bash
 git submodule update --init --recursive
 ```
-
-Prefer the higher-level wrappers in [`cta-lib`](https://gitlab.cern.ch/cta/CTA/-/blob/main/lib/rust/cta-lib-rs/README.md), which
-handle channel setup, authentication and response streaming.

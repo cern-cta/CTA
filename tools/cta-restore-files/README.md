@@ -14,10 +14,10 @@ recycle bin. This tool lists those entries and can restore them, which involves
 two steps per file:
 
 1. recreate the entry in the EOS namespace if it is gone — containers,
-   checksum, extended attributes (`sys.archive.file_id`, `eos.btime`) and a tape
-   replica location (`eos::restore_deleted_file`);
+   checksum, extended attributes (`sys.archive.file_id`, `sys.eos.btime`) and a
+   tape replica location (`restore_deleted_file`);
 2. restore the tape file copy in the CTA catalogue, pointing it at the
-   (possibly new) disk file id (`cta::CtaEndpoint::restore_deleted_file_copy`).
+   (possibly new) disk file id (`CtaGrpcClient::restore_deleted_file_copy`).
 
 ## Usage
 

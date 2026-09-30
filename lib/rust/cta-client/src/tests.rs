@@ -1,113 +1,17 @@
 // SPDX-FileCopyrightText: 2026 CERN
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::convert::Infallible;
-
-use bytes::{BufMut, Bytes, BytesMut};
+use cern_st_grpc::test_utils::{corrupt_streaming_response, streaming_response};
 use cta_protobuf::cta::{
     admin::RecycleTapeFileLsItem,
-    xrd::{Data as XrdData, Response as XrdResponse},
+    xrd::{
+        Data as XrdData, Response as XrdResponse, StreamResponse, data::Data,
+        response::ResponseType, stream_response::Contents,
+    },
 };
-use eos_protobuf::eos::rpc::MdResponse;
-use http_body::Frame;
-use http_body_util::StreamBody;
 use tokio_stream::StreamExt;
-use tonic::{
-    Status, Streaming,
-    codec::{Codec, Decoder},
-    codegen::http::{HeaderMap, HeaderValue, StatusCode},
-};
-use tonic_prost::ProstCodec;
 
-use super::*;
-
-// Helpers to build gRPC response streams without a server, for unit tests.
-//
-// A [`Streaming<T>`] is constructed directly from a [`http_body::Body`]
-// through [`Streaming::new_response`], and we simply hand-roll the gRPC wire
-// format:
-//
-// * every message is length-delimited by a 5-byte prefix (1 byte compression
-//   flag + 4 bytes big-endian length);
-// * the body ends with a trailer frame carrying `grpc-status: 0`, which tonic
-//   requires to consider the stream properly terminated.
-//
-// This keeps the stream adapters testable at unit-test speed, with no
-// sockets, ports or spawned servers involved.
-
-/// Wraps `payload` in a gRPC length-delimited frame.
-fn frame(payload: &[u8]) -> Bytes {
-    let mut buf = BytesMut::with_capacity(payload.len() + 5);
-    buf.put_u8(0); // not compressed
-    buf.put_u32(payload.len() as u32); // big-endian length
-    buf.put_slice(payload);
-    buf.freeze()
-}
-
-/// Encodes `messages` into a single gRPC body.
-fn body_of<T: prost::Message>(messages: &[T]) -> Bytes {
-    let mut buf = BytesMut::new();
-    for message in messages {
-        buf.put_slice(&frame(&message.encode_to_vec()));
-    }
-    buf.freeze()
-}
-
-/// Wraps raw gRPC frames into a body terminated by a successful trailer, as a
-/// real server would send it.
-fn grpc_body(data: Bytes) -> StreamBody<tokio_stream::Iter<GrpcFrames>> {
-    let mut trailers = HeaderMap::new();
-    trailers.insert("grpc-status", HeaderValue::from_static("0"));
-
-    StreamBody::new(tokio_stream::iter(vec![
-        Ok(Frame::data(data)),
-        Ok(Frame::trailers(trailers)),
-    ]))
-}
-
-/// The frame sequence of a canned gRPC body.
-type GrpcFrames = std::vec::IntoIter<Result<Frame<Bytes>, Infallible>>;
-
-/// Builds a decoder for `T` using the same prost codec the generated clients use.
-fn decoder_for<T>() -> impl Decoder<Item = T, Error = Status> + Send + 'static
-where
-    T: prost::Message + Default + 'static,
-{
-    ProstCodec::<T, T>::default().decoder()
-}
-
-/// Builds a response stream that yields `messages`, as if a server had sent
-/// them.
-pub(crate) fn streaming_response<T>(messages: &[T]) -> Streaming<T>
-where
-    T: prost::Message + Default + 'static,
-{
-    streaming_response_from_bytes(body_of(messages))
-}
-
-/// Builds a response stream from raw frames, for tests that need malformed
-/// or hand-crafted input.
-pub(crate) fn streaming_response_from_bytes<T>(body: Bytes) -> Streaming<T>
-where
-    T: prost::Message + Default + 'static,
-{
-    Streaming::new_response(
-        decoder_for::<T>(),
-        grpc_body(body),
-        StatusCode::OK,
-        None,
-        None,
-    )
-}
-
-/// Builds a response stream whose single frame does not decode as `T`.
-pub(crate) fn corrupt_streaming_response<T>() -> Streaming<T>
-where
-    T: prost::Message + Default + 'static,
-{
-    // Field number 1 with wire type 6, which does not exist.
-    streaming_response_from_bytes(frame(&[0x0e, 0xff, 0xff]))
-}
+use crate::{errors::Error, stream::StreamResponseExt, types::hex_to_byte_array};
 
 /// A `StreamResponse` carrying just a header with the given response type.
 fn header(r#type: ResponseType) -> StreamResponse {
@@ -175,7 +79,7 @@ async fn cta_stream_reports_a_failing_header_as_an_error() {
         .expect("stream should yield an item");
 
     match first {
-        Err(ResponseError::CtaStreamError(t)) => assert_eq!(t, ResponseType::RspErrUser),
+        Err(Error::UnexpectedResponseType(t)) => assert_eq!(t, ResponseType::RspErrUser),
         other => panic!("expected a CtaStreamError, got {other:#?}"),
     }
 }
@@ -205,7 +109,7 @@ async fn cta_stream_of_an_empty_body_is_an_error() {
     let first = response.stream_response().next().await;
 
     match first {
-        Some(Err(ResponseError::CtaStreamError(ResponseType::RspErrUser))) => {
+        Some(Err(Error::UnexpectedResponseType(ResponseType::RspErrUser))) => {
             // Correct: error for missing header
         }
         other => panic!("expected CtaStreamError for missing header, got {other:#?}"),
@@ -223,7 +127,7 @@ async fn cta_stream_maps_a_decoding_failure_to_a_grpc_error() {
         .expect("stream should yield an item");
 
     assert!(
-        matches!(first, Err(ResponseError::GrpcError(_))),
+        matches!(first, Err(Error::Rpc(_))),
         "expected a GrpcError, got {first:#?}"
     );
 }
@@ -242,7 +146,7 @@ async fn cta_stream_rejects_data_before_header() {
         .expect("stream should yield an item");
 
     match first {
-        Err(ResponseError::CtaStreamError(ResponseType::RspErrUser)) => {
+        Err(Error::UnexpectedResponseType(ResponseType::RspErrUser)) => {
             // Correct: error for data before header
         }
         other => panic!("expected CtaStreamError for data before header, got {other:#?}"),
@@ -266,7 +170,7 @@ async fn cta_stream_rejects_multiple_headers() {
         .expect("stream should yield an item");
 
     match second {
-        Err(ResponseError::CtaStreamError(ResponseType::RspErrUser)) => {
+        Err(Error::UnexpectedResponseType(ResponseType::RspErrUser)) => {
             // Correct: error for duplicate header
         }
         other => panic!("expected CtaStreamError for duplicate header, got {other:#?}"),
@@ -295,43 +199,56 @@ async fn cta_stream_with_valid_sequence_yields_all_data() {
     );
 }
 
-#[tokio::test]
-async fn eos_stream_yields_every_response_in_order() {
-    let responses = [
-        MdResponse {
-            r#type: 0,
-            ..Default::default()
-        },
-        MdResponse {
-            r#type: 1,
-            ..Default::default()
-        },
-    ];
-    let response = streaming_response(&responses);
-
-    let items: Vec<_> = response
-        .collect::<Result<Vec<_>, _>>()
-        .await
-        .expect("stream should succeed");
-
-    assert_eq!(items, responses);
+#[test]
+fn decodes_plain_hex() {
+    assert_eq!(hex_to_byte_array("1a2b").unwrap(), [0x1a, 0x2b]);
+    assert_eq!(hex_to_byte_array("00").unwrap(), [0x00]);
+    assert_eq!(hex_to_byte_array("ff").unwrap(), [0xff]);
 }
 
-#[tokio::test]
-async fn eos_stream_propagates_a_decoding_failure() {
-    let mut response = corrupt_streaming_response::<MdResponse>();
+#[test]
+fn accepts_both_prefix_spellings() {
+    assert_eq!(hex_to_byte_array("0x1a2b").unwrap(), [0x1a, 0x2b]);
+    assert_eq!(hex_to_byte_array("0X1a2b").unwrap(), [0x1a, 0x2b]);
+}
 
-    let first: Option<Result<MdResponse, Status>> = response.next().await;
+#[test]
+fn left_pads_an_odd_number_of_digits() {
+    assert_eq!(hex_to_byte_array("0x1a2").unwrap(), [0x01, 0xa2]);
+    assert_eq!(hex_to_byte_array("f").unwrap(), [0x0f]);
+    assert_eq!(hex_to_byte_array("abcde").unwrap(), [0x0a, 0xbc, 0xde]);
+}
 
-    assert!(
-        matches!(first, Some(Err(_))),
-        "expected a Status error, got {first:#?}"
+#[test]
+fn is_case_insensitive() {
+    assert_eq!(
+        hex_to_byte_array("DEADBEEF").unwrap(),
+        hex_to_byte_array("deadbeef").unwrap()
     );
 }
 
-#[tokio::test]
-async fn eos_stream_of_an_empty_body_terminates_immediately() {
-    let mut response = streaming_response_from_bytes::<MdResponse>(bytes::Bytes::new());
+#[test]
+fn decodes_an_empty_input_to_no_bytes() {
+    assert!(hex_to_byte_array("").unwrap().is_empty());
+    assert!(hex_to_byte_array("0x").unwrap().is_empty());
+}
 
-    assert!(response.next().await.is_none());
+#[test]
+fn rejects_non_hexadecimal_digits() {
+    assert!(hex_to_byte_array("12zz").is_err());
+    assert!(hex_to_byte_array("hello").is_err());
+    assert!(hex_to_byte_array("12 34").is_err());
+}
+
+/// Multi-byte characters used to be chunked on byte boundaries, which fed
+/// invalid UTF-8 into `str::from_utf8().unwrap()` and panicked instead of
+/// returning an error.
+#[test]
+fn rejects_multi_byte_characters_without_panicking() {
+    for input in ["€", "0x€", "ä", "12€34", "aä", "🦀"] {
+        assert!(
+            hex_to_byte_array(input).is_err(),
+            "{input:?} should be rejected"
+        );
+    }
 }

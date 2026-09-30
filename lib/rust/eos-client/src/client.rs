@@ -13,7 +13,8 @@
 //!
 //! ```no_run
 //! # use std::collections::HashMap;
-//! # use cta_lib::{eos::EosEndpointMap, rpc::EndpointConfig};
+//! # use eos_client::EosEndpointMap;
+//! # use cern_st_grpc::EndpointConfig;
 //! # async fn example(configs: HashMap<String, EndpointConfig>) -> Result<(), Box<dyn std::error::Error>> {
 //! let mut endpoints = EosEndpointMap::from(configs);
 //! let exists = endpoints
@@ -23,8 +24,11 @@
 //! # }
 //! ```
 
-use std::{collections::HashMap, num::ParseIntError, path::PathBuf, sync::LazyLock};
+use std::{collections::HashMap, path::PathBuf, sync::LazyLock};
 
+use cern_st_grpc::{
+    AuthorizationInterceptor, EndpointConfig, Error as RpcError, JwtAuth, utils::system_time_now,
+};
 use eos_protobuf::eos::rpc::{
     ContainerInsertRequest, ContainerMdProto, FileInsertRequest, FileMdProto, InsertReply, MdId,
     MdRequest, MdResponse, NsStatRequest, Time, Type, eos_client::EosClient,
@@ -33,18 +37,7 @@ use nix::sys::stat::Mode;
 use tokio_stream::StreamExt;
 use tonic::{service::interceptor::InterceptedService, transport::Channel};
 
-use crate::rpc::{self, AuthorizationInterceptor, EndpointConfig};
-
-/// The EOS API requires us to send the token as a GRPC protobuf field, rather
-/// than the more standard request header. This helper macro makes it less verbose.
-macro_rules! with_auth_key_from {
-    ($auth:expr, $req:ident { $($field:ident: $value:expr),*$(,)? }) => {
-        $req {
-            authkey: String::from_utf8_lossy(&($auth.token)).to_string(),
-            $($field: $value,)*
-        }
-    };
-}
+use crate::{errors::Error, with_auth_key_from};
 
 /// Permission bits applied to namespace entries created by this crate:
 /// `rwx` for the owner, `rw` for group and others
@@ -54,60 +47,12 @@ pub static DEFAULT_FILE_MODE: LazyLock<Mode> = LazyLock::new(|| {
         !(Mode::S_ISUID | Mode::S_ISGID | Mode::S_ISVTX)
 });
 
-/// An Error coming from the EOS API client
-#[derive(thiserror::Error, Debug)]
-pub enum Error {
-    /// No endpoint is registered for the requested disk instance in the
-    /// [`EosEndpointMap`].
-    #[error("Disk instance '{0}' not found")]
-    DiskInstanceNotFound(String),
-    /// The connection to the EOS endpoint could not be established.
-    #[error("gRPC Connection Error: {0}")]
-    Rpc(rpc::Error),
-    /// EOS returned an error status for the call.
-    #[error("gRPC Status Error: {0}")]
-    Tonic(tonic::Status),
-    /// A numeric identifier could not be parsed from its string form.
-    #[error("Error parsing '{0}': {1}")]
-    ParseInt(String, ParseIntError),
-    /// The disk file id is not usable (EOS reserves the value `0`).
-    #[error("Invalid disk file id: {0}")]
-    InvalidDiskFileId(u64),
-    /// EOS answered successfully but with a payload that violates the
-    /// expectations of the caller (missing metadata, too many results, …).
-    #[error("Unexpected return value: {0}")]
-    UnexpectedReturnValue(String),
-    /// No namespace entry exists for the queried identifier.
-    #[error("Not found: {0:?}")]
-    NotFound(MdId),
-    /// Walking up the parent chain reached the namespace root, so there is no
-    /// parent container left to create.
-    #[error("Root container reached")]
-    RootContainerReached,
-    /// Invalid file/container path
-    #[error("Invalid path: {0}")]
-    InvalidPath(String),
-}
-
-/// Auth function to get the system time as seconds since the epoch. Start of 1970 UTC
-/// is the standard in every supported system.
-///
-/// # Panics
-///
-/// Panics if the system clock is set before the UNIX epoch.
-pub fn system_time_now() -> u64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .expect("Current time is lower than UNIX_EPOCH")
-        .as_secs()
-}
-
 /// This struct encapsulates an EOS GRPC client, abstracting out details such as authentication
 /// and streaming.
 #[derive(Debug)]
 pub struct EosGrpcClient {
-    _inner: EosClient<InterceptedService<Channel, rpc::AuthorizationInterceptor>>,
-    authentication: rpc::JwtAuth,
+    inner: EosClient<InterceptedService<Channel, AuthorizationInterceptor>>,
+    authentication: JwtAuth,
 }
 
 impl EosGrpcClient {
@@ -117,14 +62,14 @@ impl EosGrpcClient {
     ///
     /// Propagates the connection errors of [`EndpointConfig::build_channel`]
     /// and the token errors of [`AuthorizationInterceptor::new`].
-    pub async fn new(config: &EndpointConfig) -> Result<Self, rpc::Error> {
+    pub async fn new(config: &EndpointConfig) -> Result<Self, RpcError> {
         let channel = config.build_channel().await?;
         let client = EosClient::new(InterceptedService::new(
             channel,
             AuthorizationInterceptor::new(config.authentication.clone())?,
         ));
         Ok(Self {
-            _inner: client,
+            inner: client,
             authentication: config.authentication.clone(),
         })
     }
@@ -142,7 +87,7 @@ impl EosGrpcClient {
         log::debug!("Retrieving EOS metadata for file {id:?}");
 
         let response_stream = self
-            ._inner
+            .inner
             .md(with_auth_key_from!(
                 self.authentication,
                 MdRequest {
@@ -152,14 +97,10 @@ impl EosGrpcClient {
                     selection: None,
                 }
             ))
-            .await
-            .map_err(Error::Tonic)?
+            .await?
             .into_inner();
 
-        let res = response_stream
-            .collect::<Result<Vec<_>, _>>()
-            .await
-            .map_err(Error::Tonic)?;
+        let res = response_stream.collect::<Result<Vec<_>, _>>().await?;
 
         match res.len() {
             0 => Err(Error::NotFound(id)),
@@ -179,11 +120,19 @@ impl EosGrpcClient {
     pub async fn get_file_metadata(&mut self, id: MdId) -> Result<FileMdProto, Error> {
         let md_resp = self.get_metadata(Type::File, id.clone()).await?;
         match md_resp.fmd {
-            Some(fmd) => {
+            Some(mut fmd) => {
                 if fmd.id == 0 {
                     // Important: EOS responds with id 0 when the item doesn't exist
                     Err(Error::NotFound(id))
                 } else {
+                    // TODO: Remove this once EOS fixes its behaviour
+                    // see https://its.cern.ch/jira/browse/EOS-6652
+                    #[expect(deprecated)]
+                    if let Some(ref cs) = fmd.checksum
+                        && fmd.checksums.is_empty()
+                    {
+                        fmd.checksums = vec![cs.clone()];
+                    }
                     Ok(fmd)
                 }
             }
@@ -317,7 +266,7 @@ impl EosGrpcClient {
             .insert("sys.archive.storage_class".into(), storage_class.into());
 
         let res = self
-            ._inner
+            .inner
             .container_insert(with_auth_key_from!(
                 self.authentication,
                 ContainerInsertRequest {
@@ -325,8 +274,7 @@ impl EosGrpcClient {
                     inherit_md: true,
                 }
             ))
-            .await
-            .map_err(Error::Tonic)?;
+            .await?;
 
         let reply = res.into_inner();
 
@@ -436,10 +384,9 @@ impl EosGrpcClient {
     /// Returns [`Error::Tonic`] if the `ns_stat` call fails.
     pub async fn get_current_ids(&mut self) -> Result<(u64, u64), Error> {
         let res = self
-            ._inner
+            .inner
             .ns_stat(with_auth_key_from!(self.authentication, NsStatRequest {}))
-            .await
-            .map_err(Error::Tonic)?;
+            .await?;
 
         let res = res.into_inner();
 
@@ -456,15 +403,14 @@ impl EosGrpcClient {
     /// Returns [`Error::Tonic`] if the `file_insert` call fails.
     pub async fn insert_files(&mut self, files: &[FileMdProto]) -> Result<InsertReply, Error> {
         let resp = self
-            ._inner
+            .inner
             .file_insert(with_auth_key_from!(
                 self.authentication,
                 FileInsertRequest {
                     files: files.to_vec()
                 }
             ))
-            .await
-            .map_err(Error::Tonic)?;
+            .await?;
         Ok(resp.into_inner())
     }
 }
@@ -530,127 +476,5 @@ impl EosEndpointMap {
 impl From<HashMap<String, EndpointConfig>> for EosEndpointMap {
     fn from(endpoint_map: HashMap<String, EndpointConfig>) -> Self {
         EosEndpointMap { endpoint_map }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use url::Url;
-
-    use super::*;
-    use crate::rpc::JwtAuth;
-
-    fn endpoint_config() -> EndpointConfig {
-        EndpointConfig::new(
-            Url::parse("http://127.0.0.1:1").expect("test endpoint should parse"),
-            JwtAuth::new(b"token".to_vec()),
-            None,
-            None,
-        )
-    }
-
-    fn endpoint_map(instances: &[&str]) -> EosEndpointMap {
-        EosEndpointMap::from(
-            instances
-                .iter()
-                .map(|name| ((*name).to_string(), endpoint_config()))
-                .collect::<HashMap<_, _>>(),
-        )
-    }
-
-    fn file_id(id: u64) -> MdId {
-        MdId {
-            r#type: Type::File.into(),
-            id,
-            path: Vec::new(),
-            ino: 0,
-        }
-    }
-
-    #[test]
-    fn default_file_mode_grants_the_expected_permissions() {
-        let mode = *DEFAULT_FILE_MODE;
-
-        for granted in [
-            Mode::S_IRUSR,
-            Mode::S_IWUSR,
-            Mode::S_IXUSR,
-            Mode::S_IRGRP,
-            Mode::S_IWGRP,
-            Mode::S_IROTH,
-            Mode::S_IWOTH,
-        ] {
-            assert!(mode.contains(granted), "{granted:?} should be set");
-        }
-
-        // EOS does not follow POSIX semantics for these, so they must be clear.
-        for cleared in [Mode::S_ISUID, Mode::S_ISGID, Mode::S_ISVTX] {
-            assert!(!mode.intersects(cleared), "{cleared:?} should be cleared");
-        }
-
-        assert_eq!(mode.bits(), 0o766, "rwxrw-rw-");
-    }
-
-    #[test]
-    fn system_time_now_returns_a_plausible_unix_timestamp() {
-        let now = system_time_now();
-
-        // 2026-01-01T00:00:00Z; the clock of a machine running CTA is past that.
-        assert!(now > 1_767_225_600, "{now} should be a recent timestamp");
-    }
-
-    #[test]
-    fn auth_key_macro_fills_in_the_token() {
-        let auth = JwtAuth::new(b"a.token.value".to_vec());
-
-        let request = with_auth_key_from!(
-            auth,
-            MdRequest {
-                r#type: Type::File.into(),
-                id: Some(file_id(42)),
-                role: None,
-                selection: None,
-            }
-        );
-
-        assert_eq!(request.authkey, "a.token.value");
-        assert_eq!(request.id.expect("id should be set").id, 42);
-    }
-
-    #[tokio::test]
-    async fn get_client_returns_disk_instance_not_found_for_an_unknown_instance() {
-        let mut map = endpoint_map(&["eosctatape"]);
-
-        match map.get_client("does-not-exist").await {
-            Err(Error::DiskInstanceNotFound(instance)) => assert_eq!(instance, "does-not-exist"),
-            other => panic!("expected DiskInstanceNotFound, got {other:?}"),
-        }
-    }
-
-    #[tokio::test]
-    async fn proxy_methods_report_unknown_disk_instance() {
-        let mut map = endpoint_map(&["eosctatape"]);
-
-        let error = map
-            .get_current_ids("does-not-exist")
-            .await
-            .expect_err("unknown disk instance should be an error");
-
-        assert!(matches!(error, Error::DiskInstanceNotFound(ref i) if i == "does-not-exist"));
-    }
-
-    #[tokio::test]
-    async fn connection_failure_returns_rpc_error() {
-        let mut map = endpoint_map(&["eosctatape"]);
-
-        let error = map
-            .get_current_ids("eosctatape")
-            .await
-            .expect_err("unreachable endpoint should error");
-
-        assert!(
-            matches!(error, Error::Rpc(_)),
-            "expected Rpc error, got {error:?}"
-        );
     }
 }

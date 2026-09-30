@@ -1,0 +1,33 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[package]
+  name                    = "cern-st-grpc"
+  version.workspace       = true
+  edition.workspace       = true
+  authors.workspace       = true
+  license.workspace       = true
+  repository.workspace    = true
+  homepage.workspace      = true
+  documentation.workspace = true
+  keywords.workspace      = true
+  categories.workspace    = true
+  publish.workspace       = true
+
+[dependencies]
+  bytes          = { workspace = true }
+  http-body      = { workspace = true }
+  http-body-util = { workspace = true }
+  log            = { workspace = true }
+  prost          = { workspace = true }
+  thiserror      = { workspace = true }
+  tokio-stream   = { workspace = true }
+  tonic          = { workspace = true, features = ["tls-ring"] }
+  tonic-prost    = { workspace = true }
+  url            = { workspace = true }
+
+[dev-dependencies]
+  tokio = { workspace = true, features = ["macros", "rt"] }
+
+[lints]
+  workspace = true

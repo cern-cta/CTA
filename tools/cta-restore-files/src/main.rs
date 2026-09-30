@@ -5,110 +5,49 @@
 #![warn(missing_docs)]
 
 mod cli;
-mod cta;
+mod cmd;
 mod eos;
 mod output;
 mod parse;
 
-use std::process::exit;
-
+use cern_st_grpc::{EndpointConfig, JwtAuth, validate_scheme};
 use clap::Parser;
-use cta_lib::{
-    eos::EosEndpointMap,
-    rpc::{self, EndpointConfig, JwtAuth},
-};
-use cta_protobuf::cta::admin::RecycleTapeFileLsItem;
-
-use crate::{cli::Cli, eos::restore_deleted_file, output::OutputFormat};
+use eos_client::EosEndpointMap;
 
 /// Dispatches the parsed subcommand.
 async fn run_commands(
     config: EndpointConfig,
-    args: Cli,
+    args: cli::Cli,
     mut endpoint_map: EosEndpointMap,
 ) -> anyhow::Result<()> {
-    let client = cta::CtaEndpoint { config };
-
     match args.command {
         cli::Command::List {
             json,
             common_options: common,
-        } => {
-            client
-                .list_deleted_files(
-                    if json {
-                        OutputFormat::Json
-                    } else {
-                        OutputFormat::Table
-                    },
-                    common.vid,
-                    common.disk_instance,
-                    common.archive_file_id,
-                    common.copy_number,
-                    common.file_ids,
-                )
-                .await?;
-        }
+        } => cmd::list_command(&config, common, json).await,
         cli::Command::Restore(common) => {
-            // unwrap: it's OK because OutputFormat::None implies a Some(...) return value
-            let deleted_files = client
-                .list_deleted_files(
-                    OutputFormat::None,
-                    common.vid,
-                    common.disk_instance,
-                    common.archive_file_id,
-                    common.copy_number,
-                    common.file_ids,
-                )
-                .await?
-                .unwrap();
-
-            for mut file in deleted_files {
-                let RecycleTapeFileLsItem {
-                    disk_instance,
-                    disk_file_id,
-                    ..
-                } = &file;
-                let does_file_exist = endpoint_map
-                    .check_file_exists_by_disk_id(disk_instance, disk_file_id)
-                    .await?;
-
-                if !does_file_exist {
-                    log::info!(
-                        "Restoring file '{disk_file_id}', which doesn't exist in EOS anymore"
-                    );
-                    let mut client = endpoint_map.get_client(disk_instance).await?;
-                    let new_disk_file_id = restore_deleted_file(&mut client, &file).await?;
-                    file.disk_file_id = new_disk_file_id.to_string();
-                }
-
-                client.restore_deleted_file_copy(&file).await?;
-
-                // TODO: sanity check
-            }
+            cmd::restore_command(&config, &mut endpoint_map, common).await
         }
-    };
-
-    Ok(())
+    }
 }
 
-/// Entry point: parses the command line, builds the CTA and EOS endpoint
-/// configuration and runs the requested subcommand.
-///
-/// Exits with status 1 on a usage error (unsupported endpoint scheme,
-/// unreadable keytab) or when the subcommand fails.
 #[tokio::main]
-async fn main() {
-    // Initialize logging
-    env_logger::init();
-
+async fn main() -> anyhow::Result<()> {
     let args = cli::Cli::parse();
 
-    if let Err(e) = rpc::validate_scheme(&args.cta_frontend_endpoint) {
+    // Initialize logging. Take RUST_LOG, otherwise CLI option.
+    env_logger::Builder::from_env(
+        env_logger::Env::default().default_filter_or(args.log_level.to_string()),
+    )
+    .init();
+
+    // Validate frontend endpoint scheme
+    if let Err(e) = validate_scheme(&args.cta_frontend_endpoint) {
         eprintln!("Invalid CTA frontend endpoint: {e}");
         std::process::exit(1);
     }
 
+    // get JWT token from file
     let jwt_token = tokio::fs::read(&args.jwt_token_file)
         .await
         .unwrap_or_else(|e| {
@@ -119,13 +58,15 @@ async fn main() {
             std::process::exit(1);
         });
 
+    // build the actual endpoint config
     let cta_config = EndpointConfig::new(
         args.cta_frontend_endpoint.clone(),
-        JwtAuth::new(jwt_token),
+        JwtAuth::new(jwt_token)?,
         args.ca_cert_bundle.as_ref().map(|v| v.into()),
         args.alternative_cta_hostname.clone(),
     );
 
+    // build the EOS endpoint map
     let endpoint_map = parse::set_namespace_map(
         cta_config.ca_cert_bundle.clone(),
         &args.namespace_keytab_file.to_string_lossy(),
@@ -140,7 +81,8 @@ async fn main() {
         Err(e) => {
             eprintln!("{e}");
             log::error!("{e:?}");
-            exit(1);
+            std::process::exit(1);
         }
     }
+    Ok(())
 }
