@@ -165,50 +165,6 @@ Then all configuration of OpenTelemetry is done through `/etc/cta/cta-otel.yaml`
     --8<--
     ```
 
-### `cta-taped`
-
-!!! warning
-
-    `cta-taped` does not support the declarative OpenTelemetry configuration yet. As such, it must be configured directly through its config file. Before telemetry is taken out of experimental, this will be updated.
-
-To enable OTLP metrics publishing in `cta-taped`, set the following options in its configuration file:
-
-???+ "cta-taped.example.conf"
-
-    ```ini
-    # Telemetry is an experimental feature and must be explicitly enabled before it can be used.
-    # Note that this flag alone is not sufficient to start producing telemetry.
-    experimental telemetryEnabled true
-
-    # Used to control cardinality.
-    # If set to false, each restart of a process will generate a new unique ID for the `service.instance.id`.
-    # If set to true, `service.instance.id` remains constant across restarts.
-    # As cta-taped forks, setting this to false will result in high cardinality metrics,
-    # due to drive sessions starting new processes.
-    telemetry retainInstanceIdOnRestart true
-
-    # Metrics backend to use. Possible options are NOOP, OTLP_HTTP, OTLP_GRPC, STDOUT, FILE
-    # Default is NOOP, meaning no metrics are collected/exported
-    telemetry metricsBackend OTLP_GRPC
-
-    # Amount of time in milliseconds between exports
-    telemetry metricsExportInterval 15000
-
-    # Timeout for a single export
-    telemetry metricsExportTimeout 3000
-
-    # Service location of the OTLP collector in case the OTLP backend is used
-    telemetry metricsOtlpEndpoint endpoint:port
-
-    # Basic authentication: configured both username and passwordFile Adds the header "authorization: Basic <base64(username:password)>"
-    # Username to use for setting up basic auth for push metrics over HTTP
-    telemetry metricsOtlpAuthBasicUsername username
-    # File location containing the password (not base64 encoded) to set up basic auth for push metrics over HTTP
-    telemetry metricsOtlpAuthBasicPasswordFile /path/to/password/file
-    ```
-
-After updating the configuration, restart cta-taped for the changes to take effect.
-
 ### `cta-frontend`
 
 !!! warning
