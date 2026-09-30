@@ -47,12 +47,12 @@ void RdbmsStorageClassCatalogue::createStorageClass(const common::dataStructures
 
   auto conn = m_connPool->getConn();
   if (RdbmsCatalogueUtils::storageClassExists(conn, storageClass.name)) {
-    throw exception::UserError(std::string("Cannot create storage class : ") + storageClass.name
+    throw exception::UserError(std::string("Cannot create storage class ") + storageClass.name
                                + " because it already exists");
   }
   if (!RdbmsCatalogueUtils::virtualOrganizationExists(conn, vo)) {
-    throw exception::UserError(std::string("Cannot create storage class : ") + storageClass.name
-                               + " because the vo : " + vo + " does not exist");
+    throw exception::UserError(std::string("Cannot create storage class ") + storageClass.name + " because the vo " + vo
+                               + " does not exist");
   }
   const uint64_t storageClassId = getNextStorageClassId(conn);
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -275,7 +275,7 @@ common::dataStructures::StorageClass RdbmsStorageClassCatalogue::getStorageClass
   auto rset = stmt.executeQuery();
   rset.next();
   if (rset.isEmpty()) {
-    throw exception::UserError(std::string("Cannot get storage class : ") + name + " because it does not exist");
+    throw exception::UserError(std::string("Cannot get storage class ") + name + " because it does not exist");
   }
   common::dataStructures::StorageClass storageClass;
 
@@ -317,7 +317,7 @@ void RdbmsStorageClassCatalogue::modifyStorageClassNbCopies(const common::dataSt
   stmt.executeNonQuery();
 
   if (0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify storage class : ") + name + " because it does not exist");
+    throw exception::UserError(std::string("Cannot modify storage class ") + name + " because it does not exist");
   }
 }
 
@@ -346,7 +346,7 @@ void RdbmsStorageClassCatalogue::modifyStorageClassComment(const common::dataStr
   stmt.executeNonQuery();
 
   if (0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify storage class : ") + name + " because it does not exist");
+    throw exception::UserError(std::string("Cannot modify storage class ") + name + " because it does not exist");
   }
 }
 
@@ -365,11 +365,11 @@ void RdbmsStorageClassCatalogue::modifyStorageClassVo(const common::dataStructur
   )SQL";
   auto conn = m_connPool->getConn();
   if (vo.empty()) {
-    throw UserSpecifiedAnEmptyStringVo(std::string("Cannot modify the vo of the storage class : ") + name
+    throw UserSpecifiedAnEmptyStringVo(std::string("Cannot modify the vo of the storage class ") + name
                                        + " because the vo is an empty string");
   }
   if (!RdbmsCatalogueUtils::virtualOrganizationExists(conn, vo)) {
-    throw exception::UserError(std::string("Cannot modify storage class : ") + name + " because the vo " + vo
+    throw exception::UserError(std::string("Cannot modify storage class ") + name + " because the vo " + vo
                                + " does not exist");
   }
   auto stmt = conn.createStmt(sql);
@@ -381,7 +381,7 @@ void RdbmsStorageClassCatalogue::modifyStorageClassVo(const common::dataStructur
   stmt.executeNonQuery();
 
   if (0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify storage class : ") + name + " because it does not exist");
+    throw exception::UserError(std::string("Cannot modify storage class ") + name + " because it does not exist");
   }
 }
 
@@ -412,7 +412,7 @@ void RdbmsStorageClassCatalogue::modifyStorageClassName(const common::dataStruct
   stmt.executeNonQuery();
 
   if (0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify storage class : ") + currentName
+    throw exception::UserError(std::string("Cannot modify storage class ") + currentName
                                + " because it does not exist");
   }
 }
