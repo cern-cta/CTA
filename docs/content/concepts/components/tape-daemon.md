@@ -143,7 +143,7 @@ Shutdown relies on tape session completion to release an active cartridge mount;
 The division of responsibility is explained under [Cleanup guarantees](#cleanup-guarantees).
 For fatal failures and abrupt termination, see [Failure scenarios](#failure-scenarios).
 
-### Drive-session lifetime
+### Drive session lifetime
 
 **Contract:** Establish that the drive is empty and reusable before scheduling tape sessions.
 The drive session owns access to the drive hardware throughout its lifetime, including idle periods between tape sessions.
@@ -171,13 +171,13 @@ Failures can also end a drive session; those cases are covered under [Failure sc
 Completing a tape session or having no eligible work does not end the drive session.
 
 1. Stop starting further tape sessions.
-2. Relinquish access to the drive hardware. Tape-session completion has already handled normal cartridge cleanup; no additional physical cleanup is performed on drive-session exit.
+2. Relinquish access to the drive hardware. Tape session completion has already handled normal cartridge cleanup; no additional physical cleanup is performed on drive session exit.
 3. Report `Down`. Ending the drive session does not itself change the desired state.
 
 If desired UP remains set, the daemon may start a new drive session after the previous one ends.
 The new session must clean the drive again before scheduling, including after a daemon restart.
 
-### Tape-session lifetime
+### Tape session lifetime
 
 **Contract:** Begin with scheduled work for one cartridge and an empty, reusable drive supplied by the enclosing drive session.
 Own the physical cartridge mount and attempt to leave the drive empty and reusable on completion.
@@ -289,45 +289,90 @@ The response to a failure depends on whether the daemon can still establish safe
 A failed transfer does not automatically require desired DOWN; an unusable drive does.
 The table describes operational failure categories rather than every possible error.
 
+**Operator action** marks recovery steps that require intervention, such as correcting configuration, addressing a hardware problem, or requesting desired UP.
+Where recovery is conditional, the marker applies only to that branch.
+Daemon restarts may be performed by service supervision; a restart alone is not marked as manual intervention.
+
 | Scenario | Daemon behavior | How work can resume |
 | --- | --- | --- |
-| **The configured drive name belongs to another host or logical library** | Rejects registration and exits without accessing hardware or changing the existing drive's state. | Correct the conflicting configuration or catalogue registration, then restart the daemon. |
-| **Registration fails, for example because the catalogue is unavailable** | Exits before starting a drive session. It does not attempt shutdown state publication or hardware cleanup; registration updates already made may remain. | Resolve the registration problem and restart. Startup checks the catalogue state again. |
-| **The configured logical library does not exist** | Waits for the library entry without starting drive sessions or accessing hardware. Absence alone is not fatal. | Create the library entry; the running daemon can then continue startup. |
+| **The configured drive name belongs to another host or logical library** | Rejects registration and exits without accessing hardware or changing the existing drive's state. | **Operator action:** Correct the conflicting configuration or catalogue registration, then restart the daemon. |
+| **Registration fails, for example because the catalogue is unavailable** | Exits before starting a drive session. It does not attempt shutdown state publication or hardware cleanup; registration updates already made may remain. | Restart once the registration problem is resolved. Startup checks the catalogue state again. |
+| **The configured logical library does not exist** | Waits for the library entry without starting drive sessions or accessing hardware. Absence alone is not fatal. | **Operator action:** Create the library entry; the running daemon can then continue startup. |
 | **The drive's catalogue entry disappears** | Exits without recreating the entry during that run. | A later daemon run registers the drive again and applies the startup policy. |
-| **The drive cannot be opened, reset, or emptied at the start of a drive session** | Sets desired DOWN and reports `Down`, preserving a specific failure reason. Does not schedule tape sessions. | Resolve the underlying problem and request desired UP. A new drive session attempts drive cleanup again. |
+| **The drive cannot be opened, reset, or emptied at the start of a drive session** | Sets desired DOWN and reports `Down`, preserving a specific failure reason. Does not schedule tape sessions. | **Operator action:** Resolve the underlying problem and request desired UP. A new drive session attempts drive cleanup again. |
 | **A recoverable scheduling error or timeout occurs** | Waits and retries within the current drive session, without repeating the initial drive cleanup. | Scheduling continues when the scheduler can supply work. No operator state change is required. |
-| **A tape session cannot access the drive or returns an unusable-drive outcome** | Sets desired DOWN and reports `Down`, recording or preserving the failure reason. | Resolve the problem and request desired UP. |
+| **A tape session cannot access the drive or returns an unusable-drive outcome** | Sets desired DOWN and reports `Down`, recording or preserving the failure reason. | **Operator action:** Resolve the problem and request desired UP. |
 | **Mounting or transferring fails, but cleanup leaves the drive reusable** | Completes cleanup and reports the failed work. The drive session can continue if desired UP remains set. | Further work can be scheduled. Recovery of failed file-transfer jobs is separate from recovery of the drive. |
-| **An unexpected tape-session failure occurs after its workers have stopped** | If desired UP remains set, attempts recovery cleanup before further scheduling. If desired DOWN is already set, defers that cleanup. | Successful recovery with continued desired UP permits scheduling to resume. Otherwise, a later request for desired UP starts a new drive session with drive cleanup. |
-| **Cleanup fails, including a stuck cartridge** | Sets desired DOWN and reports `Down`; no further tape sessions are scheduled. A cartridge may remain loaded. | Address the hardware or cleanup problem, then request desired UP. The daemon does not repeatedly retry cleanup while waiting with desired DOWN. |
-| **Session activity cannot be confirmed stopped** | Does not attempt recovery cleanup that could conflict with ongoing hardware access. The failure ends the daemon run, which attempts to set desired DOWN and report `Down`. | The old process must end before a replacement takes control. Restart the daemon and request desired UP if desired DOWN was recorded; drive cleanup is required. |
-| **Another fatal runtime failure ends the daemon run** | Attempts to set desired DOWN and report `Down`, then exits. Exit itself adds no physical cleanup. | Resolve the failure and restart. If desired DOWN was recorded, an explicit request for desired UP is currently needed before drive cleanup. |
-| **A state publication fails** | Logs the failure; the catalogue may retain an older desired state, reported state, or reason. When taking the drive down, failure of one publication does not prevent attempting the other. | Restore catalogue access and assess the daemon and hardware before resuming work. Do not interpret a stale reported state as proof that an operation completed. |
+| **An unexpected tape session failure occurs after its workers have stopped** | If desired UP remains set, attempts recovery cleanup before further scheduling. If desired DOWN is already set, defers that cleanup. | Successful recovery with continued desired UP permits scheduling to resume. **Operator action if desired DOWN is set:** Resolve any remaining problem and request desired UP to start a new drive session with drive cleanup. |
+| **Cleanup fails, including a stuck cartridge** | Sets desired DOWN and reports `Down`; no further tape sessions are scheduled. A cartridge may remain loaded. | **Operator action:** Address the hardware or cleanup problem, then request desired UP. |
+| **The daemon cannot confirm that a failed tape session has finished using the drive** | An error while starting transfer workers or waiting for them to finish prevents the daemon from confirming that all drive access has stopped. The daemon skips recovery cleanup to prevent unloading or unmounting from overlapping with operations such as reading or writing, and exits after attempting to set desired DOWN and report `Down`, with the down reason `Session did not stop safely` (see [Down reasons](#down-reasons)). | The old process must end before a replacement takes control. Restart the daemon; drive cleanup is required. **Operator action if desired DOWN was recorded:** Request desired UP. |
 | **The process crashes or is abruptly terminated before shutdown runs** | Cannot finish cleanup or publish shutdown state. It leaves the last successfully recorded desired state unchanged, which is normally desired UP during an active drive session. The reported activity may be stale and a cartridge may remain loaded. | Restart the daemon. Existing desired UP permits drive cleanup on restart without a new operator request, as described below. |
+
+When the daemon cannot confirm that the failed tape session has stopped using the drive, recovery cleanup is unsafe.
+Unloading the drive or unmounting the cartridge could overlap with a worker still reading, writing, positioning the tape, or performing its own cleanup.
+The daemon must first confirm that all such access has stopped before it can safely attempt recovery cleanup.
 
 Whenever a failure requests desired DOWN, an existing specific operator or failure reason is preserved where possible.
 
+### Tape session failures and counters
+
+Throughout a tape session, the daemon counts failed operations by category, such as disk reads, tape writes, cleanup, and reporting.
+It separately tracks informational events, such as reaching the end of a tape, and hardware tape alerts.
+These records describe what happened during the session and determine its overall outcome.
+
+A completed session is considered unsuccessful if any failure counter is nonzero, including failures during cleanup or final reporting.
+Informational events and tape alerts alone do not make it unsuccessful.
+Successfully transferring some files or subsequently cleaning the drive does not erase an earlier failure.
+
+Session success and drive reusability are separate: a failed session can leave an empty, reusable drive and allow further scheduling, while unsafe reuse requires the drive to stop accepting work.
+For the corresponding log fields and how to interpret the final session summary, see [Tape session logging](../../ops/run-and-maintain/monitoring/logging.md#tape-session-logging).
+
+#### Failure counters
+
+These counters identify the operation that failed, rather than counting failed files or independently identifying root causes.
+One file can encounter several failures, such as a transfer error followed by a reporting error.
+Propagating an already classified error between workers does not by itself require another failure count.
+
+| Failure category | What is tracked |
+| --- | --- |
+| Reading from disk | Opening or reading an archive source file failed. |
+| Checking source size | The source size differs from the expected size, either at the initial check or while reading. |
+| Writing to disk | Opening, writing, or closing a retrieval destination failed. |
+| Mounting and loading | Mounting the cartridge or waiting for the drive to load it failed. |
+| Checking tape suitability | A tape-alert check, writeability check, or label check prevented tape access. |
+| Configuring the drive | Enabling or clearing encryption, or disabling logical block protection, failed. |
+| Positioning and file sequence | Positioning for tape access failed, or the write file sequence was inconsistent. |
+| Reading tape | Reading a file from tape failed. |
+| Writing tape | Writing a file's header, data, or trailer, or flushing the drive's internal write buffer, failed. |
+| Skipping an archive file | A file was not archived. This counts as a failure even if the session continues with other files. |
+| Physical cleanup | Unloading, returning the cartridge to the library, or another cleanup operation failed. |
+| Reporting | Recording or publishing session activity, transfer outcomes, completion, or statistics failed. This can make a session unsuccessful even after data transfer and cleanup succeeded. |
+| Supplying work and coordinating workers | Supplying transfer tasks or signalling a worker failed. |
+| Otherwise unclassified failures | A session or file operation failed without a more specific recorded classification. |
+
+#### Informational events and tape alerts
+
+The following events do not by themselves make a session fail.
+A session that transfers no files can therefore finish successfully if no failure was recorded.
+
+| Tracked event | Meaning |
+| --- | --- |
+| Disk-space reservation test failure; disk-space reservation failure | The disk-space reservation test or reservation did not succeed, preventing the associated retrieval work from proceeding. |
+| No retrieval files; no archival files; empty mount | No work was available for the session or mount. |
+| Tape full | The tape reached capacity. This is recorded once per session, rather than counting every subsequent observation. |
+
+Tape alerts are counted separately by alert code.
+Recording an alert alone does not mark the session as failed.
+If an alert check rejects an operation, the corresponding operation failure is also recorded and makes the session unsuccessful.
+
 ### Recovery after a crash
 
-An abrupt crash does not run the orderly shutdown sequence that sets desired DOWN.
-If desired UP was recorded before the crash, it therefore remains set unless another actor changes it.
-This preserves permission to recover on restart; it does not prove that the drive is empty or usable.
+An abrupt crash cannot publish shutdown state, so the last recorded desired state remains unchanged unless another actor changes it.
+Once the old process has ended, restarting the daemon follows the normal [startup behavior](#daemon-lifetime): existing desired UP permits a new [drive session](#drive-session-lifetime), including cleanup before scheduling; existing desired DOWN leaves the daemon waiting without hardware access.
+Preserving desired UP does not depend on the automatic-UP policy, because the request already exists.
 
-Once the old process has ended and the daemon is restarted, the daemon performs the following recovery steps automatically:
-
-1. It validates the existing drive registration and preserves its recorded desired UP.
-2. It starts a new drive session to clean the drive before scheduling any tape sessions.
-3. It removes any cartridge left in the drive and resets drive configuration as necessary, without assuming that the catalogue correctly identifies the cartridge physically present.
-4. It rechecks desired state after cleanup and resumes scheduling only if cleanup succeeded and desired UP is still set.
-
-If drive cleanup fails, the daemon sets desired DOWN and reports `Down`, requiring intervention and another request for desired UP.
-If desired DOWN was already recorded before the crash, or was set while the daemon was stopped, restart preserves it and waits without accessing hardware.
-This recovery path does not depend on automatically setting desired UP at startup: it preserves a request that already existed.
-
-A crash is distinct from a handled fatal failure: the latter still executes an exit path that attempts to set desired DOWN.
-Likewise, a service stop or restart that delivers a normal shutdown request can record desired DOWN before the process exits.
-Crash recovery restores the drive's usability; it does not by itself establish that interrupted file transfers completed successfully.
+A handled fatal failure or orderly shutdown can instead record desired DOWN before exiting, requiring a new request for desired UP.
+Recovering the drive does not establish that interrupted file transfers completed successfully.
 
 ## Down reasons
 
@@ -336,15 +381,16 @@ The reason accompanies the desired state, so it can be recorded while the daemon
 It can describe an operator's intent, such as maintenance, or a condition detected by the daemon.
 
 Reasons set by the tape daemon identify their source with `[cta-taped]`, followed by a severity and a message.
-Failure reasons can also include details about the underlying problem.
+The table lists the base messages; the recorded down reason may also include details about the underlying problem, such as the error encountered while opening the drive or unloading a cartridge.
 
-| Daemon reason | Meaning |
+| Base daemon reason (may include additional details) | Meaning |
 | --- | --- |
 | `[cta-taped] INFO Startup` | The daemon has registered desired DOWN and reported `Down`. It has not started a Drive Session and is waiting for desired UP. |
 | `[cta-taped] INFO Shutdown` | The daemon is exiting and sets desired DOWN. This is the normal reason on a clean exit when no specific down reason needs to be preserved. |
 | `[cta-taped] ERROR Session drive access failed` | The daemon could not discover, locate, or open the drive for a tape session. |
 | `[cta-taped] ERROR Drive cleanup failed` | Drive cleanup could not establish that the drive was reusable. Additional details can identify an access, configuration, or cartridge-removal failure. |
 | `[cta-taped] ERROR Session left drive unusable` | A tape session left the drive unusable and no more specific existing reason was available. |
+| `[cta-taped] ERROR Session did not stop safely` | The daemon could not confirm that tape session access to the drive had stopped. |
 
 An existing operator or failure reason is preserved instead of being replaced by startup or shutdown messages.
 With automatic UP disabled, a previous clean-shutdown reason is replaced by the startup reason when the daemon starts again.
@@ -381,7 +427,7 @@ flowchart TB
     subgraph daemon["Tape daemon"]
         reader1["Disk worker 1<br/>Read file A"]
         reader2["Disk worker 2<br/>Read file B"]
-        memory("Shared daemon memory buffers<br/>Reusable RAM blocks")
+        memory("Shared memory buffers<br/>Reusable RAM blocks")
         writer["Tape worker<br/>Ordered tape writes"]
         reader1 --> memory
         reader2 --> memory
@@ -416,7 +462,7 @@ flowchart TB
     drive("Tape drive hardware<br/>Read buffering")
     subgraph daemon["Tape daemon"]
         reader["Tape worker<br/>Tape reads"]
-        memory("Shared daemon memory buffers<br/>Reusable RAM blocks")
+        memory("Shared memory buffers<br/>Reusable RAM blocks")
         writer1["Disk worker 1<br/>Write file A"]
         writer2["Disk worker 2<br/>Write file B"]
         reader --> memory

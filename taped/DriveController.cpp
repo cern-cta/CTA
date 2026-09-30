@@ -153,6 +153,9 @@ int DriveController::run() {
     failed = true;
   }
 
+  // TODO: give TapeSessionWorkerTeardownIncomplete a specific down reason instead of Shutdown.
+  // State that the session did not stop safely and ongoing drive access cannot be ruled out.
+  // Preserve any existing specific operator or failure reason.
   // Don't do drive cleanup here: a Down drive may be in use for other purposes
   // Tape sessions and drive-session recovery own physical cleanup.
   try {
