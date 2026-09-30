@@ -134,7 +134,7 @@ The available fields and their interpretation depend on the drive model and supp
 Fields prefixed with `mount` describe the current mount, while `lifetime` fields describe cumulative history and must not be treated as errors newly introduced by this session.
 Efficiency fields ending in `Prct` are percentages reported or derived from the drive's quality indicators, not the daemon's measured transfer throughput.
 
-Collecting a nonzero hardware error or retry count does not itself mark the tape session as failed or set desired DOWN.
+Collecting a nonzero hardware error or retry count does not itself mark the tape session as failed or set desired `Down`.
 The session's recorded operation failures determine its outcome; corrected hardware errors can coexist with a successful session.
 These statistics are collected before physical cleanup and therefore do not describe the outcome of the subsequent unload or unmount.
 
