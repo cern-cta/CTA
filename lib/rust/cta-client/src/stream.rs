@@ -1,64 +1,7 @@
 // SPDX-FileCopyrightText: 2026 CERN
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-//! High-level client library for the CTA and EOS gRPC interfaces.
-//!
-//! This crate sits on top of the generated protobuf/gRPC bindings in
-//! [`cta_protobuf`] and [`eos_protobuf`] and provides a thin layer to
-//! tools using it.
-//!
-//! * [`rpc`] — endpoint configuration ([`rpc::EndpointConfig`]), TLS channel
-//!   construction and JWT authentication
-//! * [`cta`] — client for the CTA frontend ([`cta::CtaGrpcClient`]), available
-//!   in a unary and a streaming flavour.
-//! * [`eos`] — a client for the EOS namespace gRPC API
-//!   ([`eos::EosGrpcClient`]) plus a per-disk-instance endpoint registry
-//!   ([`eos::EosEndpointMap`]).
-//!
-//! # Example
-//!
-//! Listing the contents of the CTA tape-file recycle bin:
-//!
-//! ```no_run
-//! use cta_lib::{
-//!     StreamResponseExt,
-//!     cta::CtaGrpcClient,
-//!     rpc::{EndpointConfig, JwtAuth},
-//! };
-//! use cta_protobuf::cta::admin::{AdminCmd, admin_cmd};
-//! use tokio_stream::StreamExt;
-//!
-//! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-//! let config = EndpointConfig::new(
-//!     "https://cta-frontend.example.org:50051".parse()?,
-//!     JwtAuth::new(std::fs::read("/etc/cta/token.jwt")?),
-//!     None,
-//!     None,
-//! );
-//!
-//! let mut client = CtaGrpcClient::new_streaming(&config).await?;
-//!
-//! let mut cmd = AdminCmd::default();
-//! cmd.set_cmd(admin_cmd::Cmd::Recycletapefile);
-//! cmd.set_subcmd(admin_cmd::SubCmd::SubcmdLs);
-//!
-//! let mut response_stream = client.admin_cmd(cmd).await?;
-//! let mut items = response_stream.stream_response();
-//! while let Some(item) = items.next().await {
-//!     println!("{:#?}", item?);
-//! }
-//! # Ok(())
-//! # }
-//! ```
-
-#![warn(missing_docs)]
-
-pub mod cta;
-pub mod eos;
-pub mod rpc;
-
-#[cfg(test)]
-mod tests;
+//! Streaming helpers
 
 use std::{
     pin::Pin,
@@ -69,19 +12,9 @@ use cta_protobuf::cta::xrd::{
     StreamResponse, data::Data, response::ResponseType, stream_response::Contents,
 };
 use tokio_stream::Stream;
-use tonic::{Status, Streaming};
+use tonic::Streaming;
 
-/// An error observed while consuming a CTA response stream.
-#[derive(Debug, thiserror::Error)]
-pub enum ResponseError {
-    /// The underlying gRPC call or stream failed.
-    #[error("gRPC Error: {0:#?}")]
-    GrpcError(Status),
-    /// The CTA frontend answered with a stream header that reports a failure,
-    /// i.e. anything other than [`ResponseType::RspSuccess`].
-    #[error("CTA Stream Error: {0:#?}")]
-    CtaStreamError(ResponseType),
-}
+use crate::errors::Error as CtaError;
 
 /// An iter which goes over a stream of response contents and produces the individual results.
 ///
@@ -97,13 +30,14 @@ pub enum ResponseError {
 /// - Any data frames *must* follow the header
 /// - A second header is a protocol violation
 /// - A stream that ends without a header is an error
+#[must_use]
 pub struct CtaResponseIter<'t> {
     pub(crate) response: &'t mut Streaming<StreamResponse>,
     header_seen: bool,
 }
 
 impl<'t> Stream for CtaResponseIter<'t> {
-    type Item = Result<Data, ResponseError>;
+    type Item = Result<Data, CtaError>;
 
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         let this = self.get_mut();
@@ -114,14 +48,14 @@ impl<'t> Stream for CtaResponseIter<'t> {
                 }))) => match contents {
                     Contents::Header(header) => {
                         if this.header_seen {
-                            return Poll::Ready(Some(Err(ResponseError::CtaStreamError(
+                            return Poll::Ready(Some(Err(CtaError::UnexpectedResponseType(
                                 ResponseType::RspErrUser,
                             ))));
                         }
                         this.header_seen = true;
 
                         if header.r#type() != ResponseType::RspSuccess {
-                            return Poll::Ready(Some(Err(ResponseError::CtaStreamError(
+                            return Poll::Ready(Some(Err(CtaError::UnexpectedResponseType(
                                 header.r#type(),
                             ))));
                         }
@@ -129,7 +63,7 @@ impl<'t> Stream for CtaResponseIter<'t> {
                     }
                     Contents::Data(data) => {
                         if !this.header_seen {
-                            return Poll::Ready(Some(Err(ResponseError::CtaStreamError(
+                            return Poll::Ready(Some(Err(CtaError::UnexpectedResponseType(
                                 ResponseType::RspErrUser,
                             ))));
                         }
@@ -142,7 +76,7 @@ impl<'t> Stream for CtaResponseIter<'t> {
                 },
                 Poll::Ready(Some(Ok(StreamResponse { contents: None }))) => {
                     if !this.header_seen {
-                        return Poll::Ready(Some(Err(ResponseError::CtaStreamError(
+                        return Poll::Ready(Some(Err(CtaError::UnexpectedResponseType(
                             ResponseType::RspErrUser,
                         ))));
                     }
@@ -150,11 +84,11 @@ impl<'t> Stream for CtaResponseIter<'t> {
                     return Poll::Ready(None);
                 }
                 Poll::Ready(Some(Err(e))) => {
-                    return Poll::Ready(Some(Err(ResponseError::GrpcError(e))));
+                    return Poll::Ready(Some(Err(CtaError::Rpc(e.into()))));
                 }
                 Poll::Ready(None) => {
                     if !this.header_seen {
-                        return Poll::Ready(Some(Err(ResponseError::CtaStreamError(
+                        return Poll::Ready(Some(Err(CtaError::UnexpectedResponseType(
                             ResponseType::RspErrUser,
                         ))));
                     }
@@ -173,7 +107,8 @@ impl<'t> Stream for CtaResponseIter<'t> {
 ///
 /// | Stream type | Adapter | Item |
 /// | ----------- | ------- | ---- |
-/// | `Streaming<StreamResponse>` | [`CtaResponseIter`] | `Result<Data, ResponseError>` |
+/// | `Streaming<StreamResponse>` | [`CtaResponseIter`] | `Result<Data, crate::errors::Error>` |
+#[must_use]
 pub trait StreamResponseExt<'t, T> {
     /// Borrows the stream and wraps it in the matching adapter.
     fn stream_response(&'t mut self) -> T

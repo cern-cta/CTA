@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 //! Build script: generates the Rust bindings for the CTA frontend protobuf/gRPC
-//! interface.
+//! interface. See the crate documentation in `src/lib.rs` for details.
 
 use std::path::PathBuf;
 

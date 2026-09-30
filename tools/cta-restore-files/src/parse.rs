@@ -10,10 +10,8 @@ use std::{
     path::PathBuf,
 };
 
-use cta_lib::{
-    eos::EosEndpointMap,
-    rpc::{self, EndpointConfig, JwtAuth},
-};
+use cern_st_grpc::{EndpointConfig, JwtAuth};
+use eos_client::EosEndpointMap;
 use url::Url;
 
 /// Errors raised while reading the namespace keytab file.
@@ -34,6 +32,9 @@ pub enum KeytabError {
     /// The endpoint URL uses a scheme other than `http` or `https`.
     #[error("Unrecognized scheme: {0}. Use either 'http' or 'https'")]
     InvalidScheme(String),
+    /// The token on a keytab line is not valid UTF-8.
+    #[error("Invalid JWT")]
+    InvalidJwt(String),
 }
 
 impl From<io::Error> for KeytabError {
@@ -92,16 +93,17 @@ pub fn set_namespace_map(
                     line: raw_line.clone(),
                 })?;
 
-                rpc::validate_scheme(&endpoint_url)
+                cern_st_grpc::validate_scheme(&endpoint_url)
                     .map_err(|_| KeytabError::InvalidScheme(endpoint_url.scheme().to_string()))?;
 
                 endpoint_map.insert(
                     d.to_string(),
                     EndpointConfig::new(
                         endpoint_url,
-                        JwtAuth::new(t.as_bytes().into()),
+                        JwtAuth::new(t.as_bytes().into())
+                            .map_err(|_| KeytabError::InvalidJwt(t.into()))?,
                         ca_cert_bundle.clone(),
-                        host.map(|h| h.into()),
+                        host.map(String::from),
                     ),
                 );
             }

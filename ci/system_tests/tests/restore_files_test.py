@@ -51,7 +51,7 @@ class RestoreFilesTool:
     connection_options: str
 
     def _command(self, selection: str, subcommand: str) -> str:
-        return f"cta-restore-files {self.connection_options} {selection} {subcommand}"
+        return f"cta-restore-files {self.connection_options} {subcommand} {selection}"
 
     def list(self, selection: str) -> list[dict[str, Any]]:
         """Return the matching recycle-bin entries, parsed from JSON Lines."""
@@ -63,8 +63,7 @@ class RestoreFilesTool:
         return self.host.exec_with_output(self._command(selection, "list"))
 
     def restore(self, selection: str) -> None:
-        # RUST_LOG surfaces the per-file progress in the test output on failure
-        self.host.exec(f"RUST_LOG=info {self._command(selection, 'restore')}")
+        self.host.exec(self._command(selection, "restore"), capture_output=True)
 
 
 def _wait_for_namespace_entry(
@@ -210,16 +209,16 @@ def test_list_reports_the_deleted_file(
 
     for selection in selections:
         entries = restore_files_tool.list(selection)
-        matching = [entry for entry in entries if entry["archive_file_id"] == deleted_file.archive_file_id]
+        matching = [entry for entry in entries if entry["archive_file"]["id"] == deleted_file.archive_file_id]
         assert len(matching) == 1, f"Expected exactly one recycle-bin entry for '{selection}'"
         entry = matching[0]
-        assert entry["vid"] == deleted_file.vid
-        assert entry["copy_nb"] == deleted_file.copy_nb
-        assert entry["disk_instance"] == disk_instance_name
-        assert entry["disk_file_id"] == deleted_file.disk_file_id
-        assert entry["disk_file_path"] == str(deleted_file.path)
-        assert entry["size_in_bytes"] == deleted_file.size_in_bytes
-        assert entry["checksum"][0]["value"] == deleted_file.checksum
+        assert entry["tape_file"]["vid"] == deleted_file.vid
+        assert entry["tape_file"]["copy_nb"] == deleted_file.copy_nb
+        assert entry["disk_file"]["instance"] == disk_instance_name
+        assert entry["disk_file"]["id"] == deleted_file.disk_file_id
+        assert entry["disk_file"]["path"] == str(deleted_file.path)
+        assert entry["archive_file"]["size"] == deleted_file.size_in_bytes
+        assert entry["archive_file"]["checksums"][0]["value"] == list(bytes.fromhex(deleted_file.checksum))
 
     # The table output is the default, so make sure it renders the entry as well
     assert deleted_file.vid in restore_files_tool.list_table(f"--archive-file-id {deleted_file.archive_file_id}")

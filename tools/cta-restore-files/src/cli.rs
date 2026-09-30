@@ -83,6 +83,9 @@ pub(crate) struct Cli {
     #[command(subcommand)]
     pub(crate) command: Command,
 
+    #[arg(long, short, default_value = "INFO")]
+    pub(crate) log_level: log::LevelFilter,
+
     /// gRPC endpoint of the CTA admin frontend service
     #[arg(long)]
     pub(crate) cta_frontend_endpoint: Url,

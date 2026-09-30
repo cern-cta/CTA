@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 [package]
-  name                    = "cta-lib"
-  description             = "High-level client library for the CTA frontend and EOS namespace gRPC APIs"
+  name                    = "cta-client"
+  description             = "High-level client library for the CTA frontend gRPC API"
   version.workspace       = true
   edition.workspace       = true
   authors.workspace       = true
@@ -19,17 +19,18 @@
   workspace = true
 
 [dependencies]
+  bon          = { workspace = true }
+  cern-st-grpc = { workspace = true }
+  chrono       = { workspace = true, features = ["serde"] }
   cta-protobuf = { workspace = true }
-  eos-protobuf = { workspace = true }
   tonic        = { workspace = true, features = ["tls-native-roots", "tls-ring"] }
   tokio-stream = { workspace = true }
   thiserror    = { workspace = true }
   log          = { workspace = true }
-  nix          = { workspace = true, features = ["fs"] }
+  serde        = { workspace = true, features = ["derive"] }
   url          = { workspace = true }
+  strum        = { workspace = true, features = ["derive"] }
 
-# Only needed by `src/test_support.rs`, which builds gRPC responses without a
-# server (see that module for why no third-party mock harness is used).
 [dev-dependencies]
   tokio          = { workspace = true, features = ["macros", "rt"] }
   prost          = { workspace = true }
