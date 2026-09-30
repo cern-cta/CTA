@@ -20,7 +20,7 @@ Each drive has a name in the catalogue and is associated with a [Tape Server](se
 
 The CTA drive name identifies the resource for scheduling and administration. The library drive address identifies where the robot must load a cartridge, while the device path identifies the drive to the tape server. These identifiers must refer to the same physical drive.
 
-The operator's desired drive state controls whether it should be available for work. The daemon's reported state describes its current activity, such as mounting, transferring, or unloading. These are distinct: a request to take a drive down does not mean its current session has already ended. See [Desired state and reported activity](../components/tape-daemon.md#desired-state-and-reported-activity).
+The operator's desired drive state controls whether it should be available for work. The daemon's reported state describes its current activity, such as mounting, transferring, or unloading. These are distinct: a request to take a drive down does not mean its current session has already ended. See [Drive state and hardware access](../components/tape-daemon.md#drive-state-and-hardware-access).
 
 ## Drive features
 
