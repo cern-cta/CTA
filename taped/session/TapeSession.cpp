@@ -222,7 +222,7 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
         throw std::logic_error("Unsupported tape mount type");
     }
   } catch (...) {
-    // Partial startup and unexpected worker termination still require a separate lifecycle repair.
+    // Partial startup and unexpected worker termination need RAII and stop semantics in the graceful shutdown MR.
     // The reporter guard is not a worker shutdown mechanism; do not claim a finished session here.
     if (state.workersRunning) {
       std::throw_with_nested(TapeSessionWorkerTeardownIncomplete());
@@ -389,7 +389,8 @@ void cta::tape::daemon::TapeSession::executeRead(cta::log::LogContext& logContex
       reportPacker.startThreads();
       taskInjector.startThreads();
       state.completionOwned = false;
-      // TODO: join every started worker if a later start or wait throws, before finalizing the mount.
+      // TODO (graceful shutdown MR): use RAII and stop semantics to stop and join
+      // every started worker before destroying shared resources.
       // This thread is now going to be idle until the system unwinds at the end of the session
       // All client notifications are done by the report packer, including the end of session
       taskInjector.waitThreads();
@@ -507,7 +508,8 @@ void cta::tape::daemon::TapeSession::executeWrite(cta::log::LogContext& logConte
       reportPacker.startThreads();
       taskInjector.startThreads();
       state.completionOwned = false;
-      // TODO: join every started worker if a later start or wait throws, before finalizing the mount.
+      // TODO (graceful shutdown MR): use RAII and stop semantics to stop and join
+      // every started worker before destroying shared resources.
       // Synchronise with end of threads
       taskInjector.waitThreads();
       writeSingleThread.waitThreads();
