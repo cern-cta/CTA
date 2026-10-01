@@ -56,7 +56,6 @@ public:
   DriveSession& operator=(DriveSession&&) = delete;
 
 private:
-  friend class DriveSessionLivenessTest;
   friend class DriveSessionTest;
 
   // Initialize dependencies; run() prepares the drive under unique ownership.

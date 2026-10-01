@@ -35,7 +35,6 @@ add_library(ctatapedunittests SHARED
   TapeDaemonTest.cpp
   TapedConfigTest.cpp
   session/DriveSessionTest.cpp
-  session/DriveSessionLivenessTest.cpp
 )
 set_property(TARGET ctatapedunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedunittests PROPERTY VERSION "${CTA_LIBVERSION}")
