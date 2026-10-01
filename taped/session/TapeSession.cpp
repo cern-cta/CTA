@@ -5,15 +5,7 @@
 
 #include "TapeSession.hpp"
 
-#include "DiskReadThreadPool.hpp"
-#include "DiskWriteThreadPool.hpp"
-#include "EmptyDriveProbe.hpp"
-#include "MigrationTaskInjector.hpp"
-#include "RecallReportPacker.hpp"
-#include "RecallTaskInjector.hpp"
-#include "TapeReadSingleThread.hpp"
 #include "TapeSessionReporter.hpp"
-#include "TapeWriteSingleThread.hpp"
 #include "common/dataStructures/ArchiveDismountPolicy.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
 #include "common/exception/Exception.hpp"
@@ -26,9 +18,17 @@
 #include "common/utils/ScopeExit.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "taped/drive/DriveInterface.hpp"
+#include "taped/drive/EmptyDriveProbe.hpp"
 #include "taped/rao/RAOParams.hpp"
 #include "taped/scsi/Device.hpp"
 #include "taped/session/VolumeInfo.hpp"
+#include "taped/session/archive/DiskReadThreadPool.hpp"
+#include "taped/session/archive/MigrationTaskInjector.hpp"
+#include "taped/session/archive/TapeWriteSingleThread.hpp"
+#include "taped/session/retrieve/DiskWriteThreadPool.hpp"
+#include "taped/session/retrieve/RecallReportPacker.hpp"
+#include "taped/session/retrieve/RecallTaskInjector.hpp"
+#include "taped/session/retrieve/TapeReadSingleThread.hpp"
 #include "telemetry/metrics/TapedMetrics.hpp"
 
 #include <chrono>

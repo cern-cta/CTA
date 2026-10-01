@@ -23,12 +23,12 @@
 #include "scheduler/RetrieveJob.hpp"
 #include "taped/TapedConfig.hpp"
 #include "taped/TapedUtils.hpp"
+#include "taped/drive/EncryptionControl.hpp"
 #include "taped/file/FileReaderFactory.hpp"
 #include "taped/file/ReadSession.hpp"
 #include "taped/file/ReadSessionFactory.hpp"
 #include "taped/file/Structures.hpp"
-#include "taped/session/EncryptionControl.hpp"
-#include "taped/session/Payload.hpp"
+#include "taped/session/pipeline/Payload.hpp"
 
 namespace cta::tape::readtp {
 

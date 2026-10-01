@@ -5,7 +5,7 @@
 
 #include "TapeSessionTracker.hpp"
 
-#include "MemBlock.hpp"
+#include "taped/session/pipeline/MemBlock.hpp"
 
 #include <atomic>
 #include <gtest/gtest.h>

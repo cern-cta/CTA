@@ -16,9 +16,9 @@ target_link_libraries(ctatapedutils PUBLIC ctaruntime)
 add_library(ctataped
   TapedApp.cpp
   TapeDaemon.cpp
-  DriveSession.cpp
-  DriveStatePublication.cpp
-  HardwareOwnership.cpp
+  session/DriveSession.cpp
+  session/DriveStatePublication.cpp
+  drive/HardwareOwnership.cpp
   SchedulerContext.cpp
 )
 
@@ -31,7 +31,12 @@ target_link_libraries(ctataped
   ${PROTOBUF3_LIBRARIES}
 )
 
-add_library(ctatapedunittests SHARED TapeDaemonTest.cpp DriveSessionTest.cpp DriveSessionLivenessTest.cpp TapedConfigTest.cpp)
+add_library(ctatapedunittests SHARED
+  TapeDaemonTest.cpp
+  TapedConfigTest.cpp
+  session/DriveSessionTest.cpp
+  session/DriveSessionLivenessTest.cpp
+)
 set_property(TARGET ctatapedunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedunittests PROPERTY VERSION "${CTA_LIBVERSION}")
 target_link_libraries(ctatapedunittests PRIVATE ctataped gtest gmock)
