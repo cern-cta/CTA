@@ -10,6 +10,7 @@
 #include "common/semconv/Logging.hpp"
 #include "common/utils/utils.hpp"
 #include "scheduler/Scheduler.hpp"
+#include "session/TapeSessionWorkerTeardownIncomplete.hpp"
 
 #include <algorithm>
 #include <exception>
@@ -120,6 +121,7 @@ int DriveController::run() {
   }
 
   bool failed = false;
+  auto exitReason = common::dataStructures::DriveDownReason::Shutdown;
   try {
     // An absent logical library can appear later, so wait before scheduling.
     // Scheduling can deal with a missing logical library just fine; this is just to reduce
@@ -142,6 +144,12 @@ int DriveController::run() {
     params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(log::ERR, "Drive is missing from the catalogue. Exiting.");
     return 1;
+  } catch (const TapeSessionWorkerTeardownIncomplete& ex) {
+    log::ScopedParamContainer params(m_lc);
+    params.add(semconv::log::exceptionMessage, ex.what());
+    m_lc.log(log::ERR, "Tape session did not stop safely. Publishing down state before exit.");
+    exitReason = common::dataStructures::DriveDownReason::SessionDidNotStopSafely;
+    failed = true;
   } catch (const std::exception& ex) {
     log::ScopedParamContainer params(m_lc);
     const auto* ctaException = dynamic_cast<const exception::Exception*>(&ex);
@@ -153,13 +161,11 @@ int DriveController::run() {
     failed = true;
   }
 
-  // TODO: give TapeSessionWorkerTeardownIncomplete a specific down reason instead of Shutdown.
-  // State that the session did not stop safely and ongoing drive access cannot be ruled out.
   // Preserve any existing specific operator or failure reason.
   // Don't do drive cleanup here: a Down drive may be in use for other purposes
   // Tape sessions and drive-session recovery own physical cleanup.
   try {
-    m_operations.scheduler().putDriveDown(m_driveInfo, common::dataStructures::DriveDownReason::Shutdown, m_lc);
+    m_operations.scheduler().putDriveDown(m_driveInfo, exitReason, m_lc);
   } catch (...) {
     // The helper logged each failure and attempted both down-state publications.
     failed = true;

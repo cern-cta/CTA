@@ -8,6 +8,7 @@
 #include "DiskReadTask.hpp"
 #include "DiskReadThreadPool.hpp"
 #include "MigrationMemoryManager.hpp"
+#include "TapeSessionTracker.hpp"
 #include "TapeWriteSingleThread.hpp"
 #include "TapeWriteTask.hpp"
 #include "common/dataStructures/ArchiveDismountPolicy.hpp"
@@ -35,6 +36,7 @@ public:
    * @param maxFiles maximal number of files we may request to the client at once
    * @param byteSizeThreshold maximal number of cumulated byte
    * we may request to the client. at once
+   * @param tracker Shared session failure accounting.
    * @param lc log context, copied because of the threading mechanism
    */
   MigrationTaskInjector(MigrationMemoryManager& mm,
@@ -44,6 +46,7 @@ public:
                         uint64_t maxFiles,
                         uint64_t byteSizeThreshold,
                         const cta::common::dataStructures::ArchiveDismountPolicy& unmountPolicy,
+                        TapeSessionTracker& tracker,
                         const cta::log::LogContext& lc);
 
   /**
@@ -237,6 +240,9 @@ private:
    * Unmount policy controlling dismounts caused by low backlog to efficiently use the drive
    */
   const cta::common::dataStructures::ArchiveDismountPolicy& m_unmountPolicy;
+
+  /// Shared failure accounting, including asynchronous job-fetch failures.
+  TapeSessionTracker& m_tracker;
 
   /**
    * utility member to log some pieces of information

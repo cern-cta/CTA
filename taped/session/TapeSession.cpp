@@ -475,6 +475,7 @@ void cta::tape::daemon::TapeSession::executeWrite(cta::log::LogContext& logConte
                                        m_transfersConfig.archive.fetch_max_files,
                                        m_transfersConfig.archive.fetch_max_bytes,
                                        archiveDismountPolicy,
+                                       *m_tapeSessionTracker,
                                        logContext);
     writeSingleThread.setTaskInjector(&taskInjector);
     cta::utils::Timer timer;

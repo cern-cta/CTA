@@ -754,7 +754,13 @@ TEST_F(DriveControllerTest, IncompleteWorkerTeardownExitsWithoutRecovery) {
   expectTransition();
   expectSchedulingAttempt();
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
-  expectShutdown();
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
+  EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
+    .WillOnce(Invoke([](const auto&, const DesiredDriveState& state, auto&) {
+      EXPECT_FALSE(state.up);
+      EXPECT_EQ(formatDriveDownReason(DriveDownReason::SessionDidNotStopSafely), state.reason);
+    }));
   supplyMount();
   transfer = [](TapeMount&) -> TapeSessionResult {
     try {
@@ -768,6 +774,32 @@ TEST_F(DriveControllerTest, IncompleteWorkerTeardownExitsWithoutRecovery) {
   EXPECT_EQ(1, destroyed);
   EXPECT_EQ(0, schedulerResets);
   EXPECT_EQ(1, transfers);
+  EXPECT_FALSE(controller->isReady());
+}
+
+TEST_F(DriveControllerTest, IncompleteWorkerTeardownPreservesExistingReason) {
+  testing::InSequence sequence;
+  expectRunStartup();
+  expectTransition();
+  expectSchedulingAttempt();
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
+  DesiredDriveState state;
+  state.reason = "Operator intervention";
+  EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(state));
+  EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
+  EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _))
+    .WillOnce(Invoke([](const auto&, const DesiredDriveState& desired, auto&) {
+      EXPECT_FALSE(desired.up);
+      // An absent reason leaves the existing catalogue reason intact.
+      EXPECT_FALSE(desired.reason);
+    }));
+  supplyMount();
+  transfer = [](TapeMount&) -> TapeSessionResult { throw TapeSessionWorkerTeardownIncomplete(); };
+
+  EXPECT_EQ(1, controller->run());
+  EXPECT_EQ(1, cleanings);
+  EXPECT_EQ(0, schedulerResets);
+  EXPECT_FALSE(controller->isReady());
 }
 
 // Shutdown publishes down without invoking the cleaner.
