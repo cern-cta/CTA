@@ -8,7 +8,7 @@
 namespace cta::tape::daemon {
 
 /**
- * @brief Decisions needed by DriveController after a tape session returns.
+ * @brief Outcomes used by DriveSession for recovery and scheduling after a tape session returns.
  */
 struct TapeSessionResult {
   /**

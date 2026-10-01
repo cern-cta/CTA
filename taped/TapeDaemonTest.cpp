@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "DriveController.hpp"
+#include "TapeDaemon.hpp"
 
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/TimeoutException.hpp"
@@ -99,14 +99,14 @@ public:
 };
 }  // namespace
 
-class DriveControllerTest : public testing::Test {
+class TapeDaemonTest : public testing::Test {
 protected:
   using Clock = TapeSessionTracker::Clock;
   std::shared_ptr<const TapeSessionTracker> activeTracker {nullptr};
   TapedConfig config;
-  log::StringLogger logger {"host", "DriveControllerTest", log::DEBUG};
+  log::StringLogger logger {"host", "TapeDaemonTest", log::DEBUG};
   testing::StrictMock<MockDriveScheduler> scheduler;
-  std::unique_ptr<DriveController> controller;
+  std::unique_ptr<TapeDaemon> daemon;
   unsigned int probes = 0;
   unsigned int schedules = 0;
   unsigned int schedulerResets = 0;
@@ -130,7 +130,7 @@ protected:
 
   class FakeDriveOperations final : public DriveOperations {
   public:
-    explicit FakeDriveOperations(DriveControllerTest& fixture) : fixture(fixture) {}
+    explicit FakeDriveOperations(TapeDaemonTest& fixture) : fixture(fixture) {}
 
     std::optional<TapeSessionLivenessSnapshot> tapeSessionLiveness() const override {
       const auto tracker = std::atomic_load(&fixture.activeTracker);
@@ -170,7 +170,7 @@ protected:
     std::pair<bool, std::optional<std::string>> probeDrive() override {
       ++fixture.probes;
       EXPECT_EQ(nullptr, fixture.liveMount());
-      ADD_FAILURE() << "Controller and drive sessions must not probe hardware";
+      ADD_FAILURE() << "Daemon and drive sessions must not probe hardware";
       return {true, std::nullopt};
     }
 
@@ -195,7 +195,7 @@ protected:
     // Record a requested delay, throwing after excessive waits to prevent runaway tests.
     void sleep(unsigned int seconds) override {
       if (fixture.sleeps.size() >= 10) {
-        throw std::runtime_error("Unexpected repeated controller wait");
+        throw std::runtime_error("Unexpected repeated daemon wait");
       }
       fixture.sleeps.push_back(seconds);
       if (fixture.onSleep) {
@@ -204,31 +204,31 @@ protected:
     }
 
   private:
-    DriveControllerTest& fixture;
+    TapeDaemonTest& fixture;
   } operations {*this};
 
   void SetUp() override {
     config.drive.name = "drive";
     config.mounts.idle_scheduling_interval_secs = 7;
     config.mounts.logical_library_poll_interval_secs = 17;
-    controller = std::make_unique<DriveController>(config, logger, operations);
+    daemon = std::make_unique<TapeDaemon>(config, logger, operations);
     previousDrive.emplace();
     previousDrive->driveStatus = DriveStatus::Up;
   }
 
-  bool liveAt(Clock::time_point now) const { return controller->isLive(now); }
+  bool liveAt(Clock::time_point now) const { return daemon->isLive(now); }
 
-  void waitForLibrary() { controller->waitForLogicalLibrary(); }
+  void waitForLibrary() { daemon->waitForLogicalLibrary(); }
 
   int shutdown() {
-    // Exercise shutdown through the controller's normal exit path.
-    controller->stop();
-    return controller->run();
+    // Exercise shutdown through the daemon's normal exit path.
+    daemon->stop();
+    return daemon->run();
   }
 
-  bool registerDrive() { return controller->registerDrive(false); }
+  bool registerDrive() { return daemon->registerDrive(false); }
 
-  void waitForUp() { controller->waitUntilDriveIsRequestedUp(); }
+  void waitForUp() { daemon->waitUntilDriveIsRequestedUp(); }
 
   void expectTransition(bool afterWaiting = true) {
     testing::InSequence sequence;
@@ -281,7 +281,7 @@ protected:
   }
 };
 
-TEST_F(DriveControllerTest, RecoveryStatusPublicationFailureDoesNotTouchHardware) {
+TEST_F(TapeDaemonTest, RecoveryStatusPublicationFailureDoesNotTouchHardware) {
   testing::InSequence sequence;
   previousDrive.emplace();
   previousDrive->driveStatus = DriveStatus::Transferring;
@@ -289,23 +289,23 @@ TEST_F(DriveControllerTest, RecoveryStatusPublicationFailureDoesNotTouchHardware
   EXPECT_CALL(scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _))
     .WillOnce(Throw(std::runtime_error("publication failed")));
-  EXPECT_EQ(1, controller->run());
-  EXPECT_FALSE(controller->isReady());
+  EXPECT_EQ(1, daemon->run());
+  EXPECT_FALSE(daemon->isReady());
   EXPECT_EQ(0, cleanings);
   EXPECT_EQ(0, probes);
   EXPECT_EQ(0, schedules);
 }
 
 // Verify an operator down request delays cleanup until a subsequent up request.
-TEST_F(DriveControllerTest, RegistrationConflictStopsStartup) {
+TEST_F(TapeDaemonTest, RegistrationConflictStopsStartup) {
   EXPECT_CALL(scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(false));
-  EXPECT_EQ(1, controller->run());
-  EXPECT_FALSE(controller->isReady());
+  EXPECT_EQ(1, daemon->run());
+  EXPECT_FALSE(daemon->isReady());
   EXPECT_EQ(0, schedules);
 }
 
 // If the drive already has an operator reason and comment, registration preserves both.
-TEST_F(DriveControllerTest, RegistrationPreservesOperatorReasonAndComment) {
+TEST_F(TapeDaemonTest, RegistrationPreservesOperatorReasonAndComment) {
   DesiredDriveState state;
   state.up = false;
   state.reason = "Operator intervention";
@@ -323,29 +323,29 @@ TEST_F(DriveControllerTest, RegistrationPreservesOperatorReasonAndComment) {
 }
 
 // Preserve an up request that arrived after the initial catalogue snapshot.
-TEST_F(DriveControllerTest, RegistrationPreservesNewUpRequestAndPublishesReadinessLast) {
+TEST_F(TapeDaemonTest, RegistrationPreservesNewUpRequestAndPublishesReadinessLast) {
   DesiredDriveState state;
   state.up = true;
   state.reason = "Setting drive up";
   state.comment = "Operator comment";
-  EXPECT_FALSE(controller->isReady());
+  EXPECT_FALSE(daemon->isReady());
   EXPECT_CALL(scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(state));
   EXPECT_CALL(scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _))
     .WillOnce(Invoke([&](const auto&, const DesiredDriveState& desired, const auto&, const auto&, const auto&, auto&) {
-      EXPECT_FALSE(controller->isReady());
+      EXPECT_FALSE(daemon->isReady());
       EXPECT_TRUE(desired.up);
       EXPECT_EQ(state.reason, desired.reason);
       EXPECT_EQ(state.comment, desired.comment);
     }));
   EXPECT_CALL(scheduler, reportSchedulerBackendName("drive", _)).WillOnce(Invoke([&](const auto&, auto&) {
-    EXPECT_FALSE(controller->isReady());
+    EXPECT_FALSE(daemon->isReady());
   }));
   EXPECT_TRUE(registerDrive());
-  EXPECT_TRUE(controller->isReady());
+  EXPECT_TRUE(daemon->isReady());
 }
 
-TEST_F(DriveControllerTest, RegistrationReplacesAbsentAndCleanShutdownReasonsWithStartup) {
+TEST_F(TapeDaemonTest, RegistrationReplacesAbsentAndCleanShutdownReasonsWithStartup) {
   // Check both states that should receive a fresh startup reason.
   for (const auto& reason :
        std::vector<std::optional<std::string>> {std::nullopt, formatDriveDownReason(DriveDownReason::Shutdown)}) {
@@ -371,13 +371,13 @@ TEST_F(DriveControllerTest, RegistrationReplacesAbsentAndCleanShutdownReasonsWit
 }
 
 // A deleted catalogue entry is left for the next daemon run to recreate.
-TEST_F(DriveControllerTest, MissingDriveEndsRunWithoutRegistrationOrDownPublication) {
+TEST_F(TapeDaemonTest, MissingDriveEndsRunWithoutRegistrationOrDownPublication) {
   testing::InSequence sequence;
   expectRunStartup();
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Throw(Scheduler::NoSuchDrive("missing")));
 
-  EXPECT_EQ(1, controller->run());
-  EXPECT_FALSE(controller->isReady());
+  EXPECT_EQ(1, daemon->run());
+  EXPECT_FALSE(daemon->isReady());
   EXPECT_EQ(0, probes);
   EXPECT_EQ(0, cleanings);
   EXPECT_EQ(0, schedules);
@@ -385,13 +385,13 @@ TEST_F(DriveControllerTest, MissingDriveEndsRunWithoutRegistrationOrDownPublicat
   EXPECT_THAT(logger.getLog(), testing::HasSubstr("Drive is missing from the catalogue. Exiting."));
 }
 
-TEST_F(DriveControllerTest, MissingDrivePropagatesFromWaitForUp) {
+TEST_F(TapeDaemonTest, MissingDrivePropagatesFromWaitForUp) {
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Throw(Scheduler::NoSuchDrive("missing")));
   EXPECT_THROW(waitForUp(), Scheduler::NoSuchDrive);
 }
 
 // If publishing the drive registration fails, run should end with a failure result.
-TEST_F(DriveControllerTest, RegistrationPublicationFailureAbortsStartupBeforeLibraryOrScheduling) {
+TEST_F(TapeDaemonTest, RegistrationPublicationFailureAbortsStartupBeforeLibraryOrScheduling) {
   testing::InSequence sequence;
   unsigned int libraryChecks = 0;
   libraryExists = [&] {
@@ -403,15 +403,15 @@ TEST_F(DriveControllerTest, RegistrationPublicationFailureAbortsStartupBeforeLib
   EXPECT_CALL(scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _))
     .WillOnce(Throw(std::runtime_error("registration publication failed")));
 
-  EXPECT_EQ(1, controller->run());
-  EXPECT_FALSE(controller->isReady());
+  EXPECT_EQ(1, daemon->run());
+  EXPECT_FALSE(daemon->isReady());
   EXPECT_EQ(0, libraryChecks);
   EXPECT_EQ(0, probes);
   EXPECT_EQ(0, schedules);
 }
 
 // If publishing the scheduler backend name fails, run should end with a failure result.
-TEST_F(DriveControllerTest, SchedulerBackendPublicationFailureAbortsStartupBeforeLibraryOrScheduling) {
+TEST_F(TapeDaemonTest, SchedulerBackendPublicationFailureAbortsStartupBeforeLibraryOrScheduling) {
   testing::InSequence sequence;
   unsigned int libraryChecks = 0;
   libraryExists = [&] {
@@ -424,15 +424,15 @@ TEST_F(DriveControllerTest, SchedulerBackendPublicationFailureAbortsStartupBefor
   EXPECT_CALL(scheduler, reportSchedulerBackendName("drive", _))
     .WillOnce(Throw(std::runtime_error("backend publication failed")));
 
-  EXPECT_EQ(1, controller->run());
-  EXPECT_FALSE(controller->isReady());
+  EXPECT_EQ(1, daemon->run());
+  EXPECT_FALSE(daemon->isReady());
   EXPECT_EQ(0, libraryChecks);
   EXPECT_EQ(0, probes);
   EXPECT_EQ(0, schedules);
 }
 
 // If registration loses its database connection, run should end with a failure result.
-TEST_F(DriveControllerTest, StartupDatabaseFailureAbortsBeforeLibraryOrScheduling) {
+TEST_F(TapeDaemonTest, StartupDatabaseFailureAbortsBeforeLibraryOrScheduling) {
   clean = [] {
     ADD_FAILURE() << "Startup failure must not touch tape hardware";
     return true;
@@ -445,15 +445,15 @@ TEST_F(DriveControllerTest, StartupDatabaseFailureAbortsBeforeLibraryOrSchedulin
   EXPECT_CALL(scheduler, checkDriveCanBeCreated(_, _))
     .WillOnce(Throw(exception::LostDatabaseConnection("objectstore unavailable")));
 
-  EXPECT_EQ(1, controller->run());
-  EXPECT_FALSE(controller->isReady());
+  EXPECT_EQ(1, daemon->run());
+  EXPECT_FALSE(daemon->isReady());
   EXPECT_EQ(0, libraryChecks);
   EXPECT_EQ(0, probes);
   EXPECT_EQ(0, schedules);
 }
 
 // If the configured logical library is absent, startup waits for it to appear.
-TEST_F(DriveControllerTest, MissingLogicalLibraryWaitsUntilAvailable) {
+TEST_F(TapeDaemonTest, MissingLogicalLibraryWaitsUntilAvailable) {
   unsigned int checks = 0;
   libraryExists = [&] { return ++checks == 3; };
   waitForLibrary();
@@ -465,14 +465,14 @@ TEST_F(DriveControllerTest, MissingLogicalLibraryWaitsUntilAvailable) {
 }
 
 // If the logical-library lookup loses its database connection, startup propagates the error.
-TEST_F(DriveControllerTest, LogicalLibraryDatabaseFailurePropagatesWithoutWaiting) {
+TEST_F(TapeDaemonTest, LogicalLibraryDatabaseFailurePropagatesWithoutWaiting) {
   libraryExists = []() -> bool { throw exception::LostDatabaseConnection("database unavailable"); };
   EXPECT_THROW(waitForLibrary(), exception::LostDatabaseConnection);
   EXPECT_TRUE(sleeps.empty());
 }
 
 // If the logical-library lookup loses its database connection, run should end with a failure result.
-TEST_F(DriveControllerTest, LogicalLibraryDatabaseFailureEndsStartupWithoutScheduling) {
+TEST_F(TapeDaemonTest, LogicalLibraryDatabaseFailureEndsStartupWithoutScheduling) {
   testing::InSequence sequence;
   libraryExists = []() -> bool { throw exception::LostDatabaseConnection("objectstore unavailable"); };
   EXPECT_CALL(scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
@@ -481,14 +481,14 @@ TEST_F(DriveControllerTest, LogicalLibraryDatabaseFailureEndsStartupWithoutSched
   EXPECT_CALL(scheduler, reportSchedulerBackendName("drive", _));
 
   expectShutdown();
-  EXPECT_EQ(1, controller->run());
-  EXPECT_FALSE(controller->isReady());
+  EXPECT_EQ(1, daemon->run());
+  EXPECT_FALSE(daemon->isReady());
   EXPECT_EQ(0, probes);
   EXPECT_EQ(0, schedules);
 }
 
 // Only failures after successful registration publish down on exit.
-TEST_F(DriveControllerTest, UnknownStartupFailuresPublishDownOnlyAfterRegistration) {
+TEST_F(TapeDaemonTest, UnknownStartupFailuresPublishDownOnlyAfterRegistration) {
   for (const bool duringRegistration : {false, true}) {
     SCOPED_TRACE(duringRegistration);
     testing::InSequence sequence;
@@ -504,8 +504,8 @@ TEST_F(DriveControllerTest, UnknownStartupFailuresPublishDownOnlyAfterRegistrati
     if (!duringRegistration) {
       expectShutdown();
     }
-    EXPECT_EQ(1, controller->run());
-    EXPECT_FALSE(controller->isReady());
+    EXPECT_EQ(1, daemon->run());
+    EXPECT_FALSE(daemon->isReady());
     EXPECT_EQ(0, probes);
     EXPECT_EQ(0, cleanings);
     EXPECT_EQ(0, transfers);
@@ -513,16 +513,16 @@ TEST_F(DriveControllerTest, UnknownStartupFailuresPublishDownOnlyAfterRegistrati
   }
 }
 
-TEST_F(DriveControllerTest, UnknownOwnershipFailureDoesNotPublishOrTouchHardware) {
+TEST_F(TapeDaemonTest, UnknownOwnershipFailureDoesNotPublishOrTouchHardware) {
   EXPECT_CALL(scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Throw(42));
-  EXPECT_EQ(1, controller->run());
-  EXPECT_FALSE(controller->isReady());
+  EXPECT_EQ(1, daemon->run());
+  EXPECT_FALSE(daemon->isReady());
   EXPECT_EQ(0, probes);
   EXPECT_EQ(0, cleanings);
   EXPECT_EQ(0, transfers);
 }
 
-TEST_F(DriveControllerTest, DownWaitingAndExitNeverTouchHardware) {
+TEST_F(TapeDaemonTest, DownWaitingAndExitNeverTouchHardware) {
   testing::InSequence sequence;
   expectRunStartup();
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
@@ -531,8 +531,8 @@ TEST_F(DriveControllerTest, DownWaitingAndExitNeverTouchHardware) {
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Throw(std::runtime_error("database unavailable")));
   expectShutdown();
-  EXPECT_EQ(1, controller->run());
-  EXPECT_FALSE(controller->isReady());
+  EXPECT_EQ(1, daemon->run());
+  EXPECT_FALSE(daemon->isReady());
   EXPECT_EQ(0, probes);
   EXPECT_EQ(0, cleanings);
   EXPECT_EQ(0, schedules);
@@ -540,7 +540,7 @@ TEST_F(DriveControllerTest, DownWaitingAndExitNeverTouchHardware) {
   EXPECT_EQ(2, sleeps.size());
 }
 
-TEST_F(DriveControllerTest, OperatorDownUpStartsAnotherCleanedUpPeriod) {
+TEST_F(TapeDaemonTest, OperatorDownUpStartsAnotherCleanedUpPeriod) {
   testing::InSequence sequence;
   expectRunStartup();
   expectTransition();
@@ -555,16 +555,16 @@ TEST_F(DriveControllerTest, OperatorDownUpStartsAnotherCleanedUpPeriod) {
   expectShutdown();
   onSleep = [&] {
     if (schedules == 2) {
-      controller->stop();
+      daemon->stop();
     }
   };
-  EXPECT_EQ(0, controller->run());
+  EXPECT_EQ(0, daemon->run());
   EXPECT_EQ(2, cleanings);
   EXPECT_EQ(2, schedules);
   EXPECT_EQ(0, probes);
 }
 
-TEST_F(DriveControllerTest, SchedulerRetiredAfterMountDestructionAndBeforeDelay) {
+TEST_F(TapeDaemonTest, SchedulerRetiredAfterMountDestructionAndBeforeDelay) {
   testing::InSequence sequence;
   expectRunStartup();
   expectTransition();
@@ -578,14 +578,14 @@ TEST_F(DriveControllerTest, SchedulerRetiredAfterMountDestructionAndBeforeDelay)
   onSleep = [&] {
     EXPECT_EQ(2, schedulerResets);
     EXPECT_EQ(2, destroyed);
-    controller->stop();
+    daemon->stop();
   };
-  EXPECT_EQ(0, controller->run());
+  EXPECT_EQ(0, daemon->run());
   EXPECT_EQ(2, schedulerResets);
   EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.idle_scheduling_interval_secs));
 }
 
-TEST_F(DriveControllerTest, IdlePollResetsBeforeRetryDelay) {
+TEST_F(TapeDaemonTest, IdlePollResetsBeforeRetryDelay) {
   testing::InSequence sequence;
   expectRunStartup();
   expectTransition();
@@ -594,33 +594,33 @@ TEST_F(DriveControllerTest, IdlePollResetsBeforeRetryDelay) {
   expectShutdown();
   onSleep = [&] {
     EXPECT_EQ(1, schedulerResets);
-    controller->stop();
+    daemon->stop();
   };
-  EXPECT_EQ(0, controller->run());
+  EXPECT_EQ(0, daemon->run());
   EXPECT_EQ(1, schedulerResets);
   EXPECT_EQ(0, transfers);
 }
 
-TEST_F(DriveControllerTest, UnusableSessionResetsBeforeLeavingUpPeriod) {
+TEST_F(TapeDaemonTest, UnusableSessionResetsBeforeLeavingUpPeriod) {
   testing::InSequence sequence;
   expectRunStartup();
   expectTransition();
   expectSchedulingAttempt();
   expectShutdown();  // The session result requests down.
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
-  expectShutdown();  // The stop request then shuts down the controller.
+  expectShutdown();  // The stop request then shuts down the daemon.
   supplyMount();
   transfer = [&](TapeMount&) {
-    controller->stop();
+    daemon->stop();
     return TapeSessionResult {.driveReusable = false};
   };
   onSchedulerReset = [&] { EXPECT_EQ(1, destroyed); };
-  EXPECT_EQ(0, controller->run());
+  EXPECT_EQ(0, daemon->run());
   EXPECT_EQ(1, schedulerResets);
   EXPECT_TRUE(sleeps.empty());
 }
 
-TEST_F(DriveControllerTest, IdlePollResetFailureExitsWithoutRetrySleep) {
+TEST_F(TapeDaemonTest, IdlePollResetFailureExitsWithoutRetrySleep) {
   testing::InSequence sequence;
   expectRunStartup();
   expectTransition();
@@ -628,14 +628,14 @@ TEST_F(DriveControllerTest, IdlePollResetFailureExitsWithoutRetrySleep) {
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
   expectShutdown();
   onSchedulerReset = [] { throw std::runtime_error("scheduler replacement failed"); };
-  EXPECT_EQ(1, controller->run());
+  EXPECT_EQ(1, daemon->run());
   EXPECT_EQ(1, schedules);
   EXPECT_EQ(0, transfers);
   EXPECT_EQ(1, schedulerResets);
   EXPECT_TRUE(sleeps.empty());
 }
 
-TEST_F(DriveControllerTest, SchedulingFailureResetFailurePropagatesWithoutRetrySleep) {
+TEST_F(TapeDaemonTest, SchedulingFailureResetFailurePropagatesWithoutRetrySleep) {
   for (const bool timeout : {false, true}) {
     SCOPED_TRACE(timeout);
     testing::InSequence sequence;
@@ -651,7 +651,7 @@ TEST_F(DriveControllerTest, SchedulingFailureResetFailurePropagatesWithoutRetryS
       throw std::runtime_error("scheduling failed");
     };
     onSchedulerReset = [] { throw std::runtime_error("scheduler replacement failed"); };
-    EXPECT_EQ(1, controller->run());
+    EXPECT_EQ(1, daemon->run());
     EXPECT_EQ(0, transfers);
     EXPECT_TRUE(sleeps.empty());
     ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&scheduler));
@@ -659,7 +659,7 @@ TEST_F(DriveControllerTest, SchedulingFailureResetFailurePropagatesWithoutRetryS
   EXPECT_EQ(2, schedulerResets);
 }
 
-TEST_F(DriveControllerTest, SchedulerResetFailurePublishesDownAndExits) {
+TEST_F(TapeDaemonTest, SchedulerResetFailurePublishesDownAndExits) {
   testing::InSequence sequence;
   expectRunStartup();
   expectTransition();
@@ -671,14 +671,14 @@ TEST_F(DriveControllerTest, SchedulerResetFailurePublishesDownAndExits) {
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
   EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _));
 
-  EXPECT_EQ(1, controller->run());
+  EXPECT_EQ(1, daemon->run());
   EXPECT_EQ(1, schedulerResets);
   EXPECT_EQ(1, destroyed);
-  EXPECT_FALSE(controller->isReady());
+  EXPECT_FALSE(daemon->isReady());
   EXPECT_TRUE(sleeps.empty());
 }
 
-TEST_F(DriveControllerTest, RecoveredSessionSchedulesAgainWithoutAnotherTransition) {
+TEST_F(TapeDaemonTest, RecoveredSessionSchedulesAgainWithoutAnotherTransition) {
   testing::InSequence sequence;
   expectRunStartup();
   expectTransition();
@@ -692,10 +692,10 @@ TEST_F(DriveControllerTest, RecoveredSessionSchedulesAgainWithoutAnotherTransiti
     if (transfers == 1) {
       throw std::runtime_error("session failed");
     }
-    controller->stop();
+    daemon->stop();
     return {};
   };
-  EXPECT_EQ(0, controller->run());
+  EXPECT_EQ(0, daemon->run());
   EXPECT_EQ(2, transfers);
   EXPECT_EQ(2, cleanings);  // Startup and exception recovery only.
   EXPECT_EQ(2, destroyed);
@@ -703,7 +703,7 @@ TEST_F(DriveControllerTest, RecoveredSessionSchedulesAgainWithoutAnotherTransiti
   EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.idle_scheduling_interval_secs));
 }
 
-TEST_F(DriveControllerTest, StopDuringFailedSessionCurrentlyDefersCleanup) {
+TEST_F(TapeDaemonTest, StopDuringFailedSessionCurrentlyDefersCleanup) {
   testing::InSequence sequence;
   expectRunStartup();
   expectTransition();
@@ -713,10 +713,10 @@ TEST_F(DriveControllerTest, StopDuringFailedSessionCurrentlyDefersCleanup) {
   expectShutdown();
   supplyMount();
   transfer = [&](TapeMount&) -> TapeSessionResult {
-    controller->stop();
+    daemon->stop();
     throw std::runtime_error("session failed while stopping");
   };
-  EXPECT_EQ(0, controller->run());
+  EXPECT_EQ(0, daemon->run());
   EXPECT_EQ(1, cleanings);  // TODO: recovery is skipped once stop publishes desired-down.
   EXPECT_EQ(1, downRequests);
   EXPECT_EQ(1, schedules);
@@ -724,7 +724,7 @@ TEST_F(DriveControllerTest, StopDuringFailedSessionCurrentlyDefersCleanup) {
   EXPECT_TRUE(sleeps.empty());
 }
 
-TEST_F(DriveControllerTest, IterationExceptionPublishesDownWithoutCleaning) {
+TEST_F(TapeDaemonTest, IterationExceptionPublishesDownWithoutCleaning) {
   testing::InSequence sequence;
   expectRunStartup();
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Throw(std::runtime_error("iteration failed")));
@@ -740,15 +740,15 @@ TEST_F(DriveControllerTest, IterationExceptionPublishesDownWithoutCleaning) {
       EXPECT_EQ(formatDriveDownReason(DriveDownReason::Shutdown), state.reason);
     }));
 
-  EXPECT_EQ(1, controller->run());
-  EXPECT_FALSE(controller->isReady());
+  EXPECT_EQ(1, daemon->run());
+  EXPECT_FALSE(daemon->isReady());
   EXPECT_EQ(0, cleanings);
   EXPECT_EQ(0, probes);
-  EXPECT_THAT(logger.getLog(), testing::HasSubstr("Drive controller failed. Publishing down state before exit."));
+  EXPECT_THAT(logger.getLog(), testing::HasSubstr("Tape daemon failed. Publishing down state before exit."));
 }
 
-// Incomplete worker teardown is fatal and cannot be repaired by controller cleanup.
-TEST_F(DriveControllerTest, IncompleteWorkerTeardownExitsWithoutRecovery) {
+// Incomplete worker teardown is fatal and cannot be repaired by daemon cleanup.
+TEST_F(TapeDaemonTest, IncompleteWorkerTeardownExitsWithoutRecovery) {
   testing::InSequence sequence;
   expectRunStartup();
   expectTransition();
@@ -769,15 +769,15 @@ TEST_F(DriveControllerTest, IncompleteWorkerTeardownExitsWithoutRecovery) {
       std::throw_with_nested(TapeSessionWorkerTeardownIncomplete());
     }
   };
-  EXPECT_EQ(1, controller->run());
+  EXPECT_EQ(1, daemon->run());
   EXPECT_EQ(1, cleanings);  // Only the initial transition; no recovery with live workers.
   EXPECT_EQ(1, destroyed);
   EXPECT_EQ(0, schedulerResets);
   EXPECT_EQ(1, transfers);
-  EXPECT_FALSE(controller->isReady());
+  EXPECT_FALSE(daemon->isReady());
 }
 
-TEST_F(DriveControllerTest, IncompleteWorkerTeardownPreservesExistingReason) {
+TEST_F(TapeDaemonTest, IncompleteWorkerTeardownPreservesExistingReason) {
   testing::InSequence sequence;
   expectRunStartup();
   expectTransition();
@@ -796,14 +796,14 @@ TEST_F(DriveControllerTest, IncompleteWorkerTeardownPreservesExistingReason) {
   supplyMount();
   transfer = [](TapeMount&) -> TapeSessionResult { throw TapeSessionWorkerTeardownIncomplete(); };
 
-  EXPECT_EQ(1, controller->run());
+  EXPECT_EQ(1, daemon->run());
   EXPECT_EQ(1, cleanings);
   EXPECT_EQ(0, schedulerResets);
-  EXPECT_FALSE(controller->isReady());
+  EXPECT_FALSE(daemon->isReady());
 }
 
 // Shutdown publishes down without invoking the cleaner.
-TEST_F(DriveControllerTest, ShutdownPublishesDownWithoutCleaning) {
+TEST_F(TapeDaemonTest, ShutdownPublishesDownWithoutCleaning) {
   testing::InSequence sequence;
   expectRunStartup();
   clean = [] {
@@ -822,7 +822,7 @@ TEST_F(DriveControllerTest, ShutdownPublishesDownWithoutCleaning) {
 }
 
 // A reported-state publication failure must not prevent the desired-state publication.
-TEST_F(DriveControllerTest, ShutdownAttemptsBothDownPublicationsAfterFailure) {
+TEST_F(TapeDaemonTest, ShutdownAttemptsBothDownPublicationsAfterFailure) {
   testing::InSequence sequence;
   expectRunStartup();
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
@@ -834,7 +834,7 @@ TEST_F(DriveControllerTest, ShutdownAttemptsBothDownPublicationsAfterFailure) {
 }
 
 // A desired-state publication failure makes shutdown return failure.
-TEST_F(DriveControllerTest, ShutdownPublicationFailureReturnsNonzero) {
+TEST_F(TapeDaemonTest, ShutdownPublicationFailureReturnsNonzero) {
   testing::InSequence sequence;
   expectRunStartup();
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
@@ -845,7 +845,7 @@ TEST_F(DriveControllerTest, ShutdownPublicationFailureReturnsNonzero) {
 }
 
 // Unknown publication failures follow the same best-effort exit policy as standard exceptions.
-TEST_F(DriveControllerTest, ShutdownContainsUnknownFailuresAndAttemptsBothPublications) {
+TEST_F(TapeDaemonTest, ShutdownContainsUnknownFailuresAndAttemptsBothPublications) {
   for (const bool failReported : {false, true}) {
     for (const bool failDesired : {false, true}) {
       testing::InSequence sequence;
@@ -871,7 +871,7 @@ TEST_F(DriveControllerTest, ShutdownContainsUnknownFailuresAndAttemptsBothPublic
 }
 
 // If shutdown finds no active failure reason, it publishes a clean-shutdown reason.
-TEST_F(DriveControllerTest, ShutdownReplacesStartupAndCleanReasonsButPreservesOperatorReason) {
+TEST_F(TapeDaemonTest, ShutdownReplacesStartupAndCleanReasonsButPreservesOperatorReason) {
   for (const auto& reason : std::vector<std::string> {"",
                                                       formatDriveDownReason(DriveDownReason::Startup),
                                                       formatDriveDownReason(DriveDownReason::Shutdown),
@@ -897,19 +897,19 @@ TEST_F(DriveControllerTest, ShutdownReplacesStartupAndCleanReasonsButPreservesOp
   }
 }
 
-TEST_F(DriveControllerTest, StopBeforeRegistrationDoesNotPublishDesiredDown) {
-  controller->stop();
+TEST_F(TapeDaemonTest, StopBeforeRegistrationDoesNotPublishDesiredDown) {
+  daemon->stop();
   EXPECT_EQ(0, downRequests);
   EXPECT_EQ(0, schedules);
 }
 
-TEST_F(DriveControllerTest, StopPublishesDesiredDownOnceWithoutTouchingHardware) {
+TEST_F(TapeDaemonTest, StopPublishesDesiredDownOnceWithoutTouchingHardware) {
   expectRunStartup();
   ASSERT_TRUE(registerDrive());
   previousDrive->desiredUp = true;
   previousDrive->driveStatus = DriveStatus::Transferring;
-  controller->stop();
-  controller->stop();
+  daemon->stop();
+  daemon->stop();
   EXPECT_EQ(1, downRequests);
   EXPECT_FALSE(previousDrive->desiredUp);
   EXPECT_EQ(DriveStatus::Transferring, previousDrive->driveStatus);
@@ -917,10 +917,10 @@ TEST_F(DriveControllerTest, StopPublishesDesiredDownOnceWithoutTouchingHardware)
   EXPECT_EQ(0, probes);
 }
 
-TEST_F(DriveControllerTest, StopPublicationFailureStillExits) {
+TEST_F(TapeDaemonTest, StopPublicationFailureStillExits) {
   for (const bool unknown : {false, true}) {
     SCOPED_TRACE(unknown);
-    controller = std::make_unique<DriveController>(config, logger, operations);
+    daemon = std::make_unique<TapeDaemon>(config, logger, operations);
     testing::InSequence sequence;
     expectRunStartup();
     expectShutdown();
@@ -931,11 +931,11 @@ TEST_F(DriveControllerTest, StopPublicationFailureStillExits) {
       throw std::runtime_error("catalogue unavailable");
     };
     libraryExists = [&] {
-      EXPECT_NO_THROW(controller->stop());
+      EXPECT_NO_THROW(daemon->stop());
       return true;
     };
-    EXPECT_EQ(0, controller->run());
-    EXPECT_FALSE(controller->isReady());
+    EXPECT_EQ(0, daemon->run());
+    EXPECT_FALSE(daemon->isReady());
     EXPECT_EQ(0, schedules);
     EXPECT_EQ(0, cleanings);
     ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&scheduler));
@@ -943,7 +943,7 @@ TEST_F(DriveControllerTest, StopPublicationFailureStillExits) {
   EXPECT_EQ(2, downRequests);
 }
 
-TEST_F(DriveControllerTest, StopCanPublishDesiredDownDuringSchedulerReset) {
+TEST_F(TapeDaemonTest, StopCanPublishDesiredDownDuringSchedulerReset) {
   testing::InSequence sequence;
   expectRunStartup();
   expectTransition();
@@ -952,62 +952,62 @@ TEST_F(DriveControllerTest, StopCanPublishDesiredDownDuringSchedulerReset) {
   expectShutdown();
   onSchedulerReset = [&] {
     // Exercise the stop callback on another thread while the scheduler is being replaced.
-    std::thread stopping([&] { controller->stop(); });
+    std::thread stopping([&] { daemon->stop(); });
     stopping.join();
     EXPECT_EQ(1, downRequests);
   };
-  EXPECT_EQ(0, controller->run());
+  EXPECT_EQ(0, daemon->run());
   EXPECT_EQ(1, schedulerResets);
   EXPECT_TRUE(sleeps.empty());
 }
 
-TEST_F(DriveControllerTest, StopWhileWaitingForLibraryExitsWithoutHardwareAccess) {
+TEST_F(TapeDaemonTest, StopWhileWaitingForLibraryExitsWithoutHardwareAccess) {
   testing::InSequence sequence;
   expectRunStartup();
   expectShutdown();
   libraryExists = [] { return false; };
-  onSleep = [&] { controller->stop(); };
+  onSleep = [&] { daemon->stop(); };
 
-  EXPECT_EQ(0, controller->run());
-  EXPECT_FALSE(controller->isReady());
+  EXPECT_EQ(0, daemon->run());
+  EXPECT_FALSE(daemon->isReady());
   EXPECT_EQ(0, probes);
   EXPECT_EQ(0, cleanings);
   EXPECT_EQ(0, schedules);
   EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.logical_library_poll_interval_secs));
 }
 
-TEST_F(DriveControllerTest, StopWhileWaitingForUpExitsWithoutHardwareAccess) {
+TEST_F(TapeDaemonTest, StopWhileWaitingForUpExitsWithoutHardwareAccess) {
   testing::InSequence sequence;
   expectRunStartup();
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
   expectShutdown();
-  onSleep = [&] { controller->stop(); };
+  onSleep = [&] { daemon->stop(); };
 
-  EXPECT_EQ(0, controller->run());
-  EXPECT_FALSE(controller->isReady());
+  EXPECT_EQ(0, daemon->run());
+  EXPECT_FALSE(daemon->isReady());
   EXPECT_EQ(0, probes);
   EXPECT_EQ(0, cleanings);
   EXPECT_EQ(0, schedules);
   EXPECT_THAT(sleeps, testing::ElementsAre(config.mounts.drive_state_poll_interval_secs));
 }
 
-TEST_F(DriveControllerTest, StopDuringIdleSleepPublishesDownAndExits) {
+TEST_F(TapeDaemonTest, StopDuringIdleSleepPublishesDownAndExits) {
   testing::InSequence sequence;
   expectRunStartup();
   expectTransition();
   expectSchedulingAttempt();
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
   expectShutdown();
-  onSleep = [&] { controller->stop(); };
+  onSleep = [&] { daemon->stop(); };
 
-  EXPECT_EQ(0, controller->run());
+  EXPECT_EQ(0, daemon->run());
   EXPECT_EQ(1, schedules);
   EXPECT_EQ(0, transfers);
-  EXPECT_FALSE(controller->isReady());
+  EXPECT_FALSE(daemon->isReady());
 }
 
-TEST_F(DriveControllerTest, StopDuringSessionAllowsCompletionBeforeShutdown) {
+TEST_F(TapeDaemonTest, StopDuringSessionAllowsCompletionBeforeShutdown) {
   testing::InSequence sequence;
   expectRunStartup();
   expectTransition();
@@ -1017,24 +1017,24 @@ TEST_F(DriveControllerTest, StopDuringSessionAllowsCompletionBeforeShutdown) {
   supplyMount();
   bool completed = false;
   transfer = [&](TapeMount&) {
-    controller->stop();
+    daemon->stop();
     EXPECT_NE(nullptr, liveMount());
     completed = true;
     return TapeSessionResult {};
   };
 
-  EXPECT_EQ(0, controller->run());
+  EXPECT_EQ(0, daemon->run());
   EXPECT_TRUE(completed);
   EXPECT_EQ(1, transfers);
   EXPECT_EQ(1, destroyed);
-  EXPECT_FALSE(controller->isReady());
+  EXPECT_FALSE(daemon->isReady());
 }
 
-TEST_F(DriveControllerTest, StopStillReturnsFailureWhenShutdownPublicationFails) {
+TEST_F(TapeDaemonTest, StopStillReturnsFailureWhenShutdownPublicationFails) {
   testing::InSequence sequence;
   expectRunStartup();
   libraryExists = [&] {
-    controller->stop();
+    daemon->stop();
     return true;
   };
   EXPECT_CALL(scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
@@ -1042,12 +1042,12 @@ TEST_F(DriveControllerTest, StopStillReturnsFailureWhenShutdownPublicationFails)
     .WillOnce(Throw(std::runtime_error("publication failed")));
   EXPECT_CALL(scheduler, setDesiredDriveState("drive", _, _));
 
-  EXPECT_EQ(1, controller->run());
-  EXPECT_FALSE(controller->isReady());
+  EXPECT_EQ(1, daemon->run());
+  EXPECT_FALSE(daemon->isReady());
   EXPECT_EQ(0, probes);
 }
 
-TEST_F(DriveControllerTest, LivenessUsesEachStateTimeoutAtItsBoundary) {
+TEST_F(TapeDaemonTest, LivenessUsesEachStateTimeoutAtItsBoundary) {
   using enum cta::tape::session::TapeSessionState;
   using namespace std::chrono_literals;
   config.mounts.mount_timeout_secs = 11;
@@ -1091,7 +1091,7 @@ TEST_F(DriveControllerTest, LivenessUsesEachStateTimeoutAtItsBoundary) {
   EXPECT_EQ(0, stateReads);
 }
 
-TEST_F(DriveControllerTest, TransferProgressRefreshesOnlyInactivityAndNewSessionResetsIt) {
+TEST_F(TapeDaemonTest, TransferProgressRefreshesOnlyInactivityAndNewSessionResetsIt) {
   using enum cta::tape::session::TapeSessionState;
   using namespace std::chrono_literals;
   const auto start = Clock::time_point {} + 100s;
@@ -1114,7 +1114,7 @@ TEST_F(DriveControllerTest, TransferProgressRefreshesOnlyInactivityAndNewSession
   EXPECT_FALSE(liveAt(start + 40s));
 }
 
-TEST_F(DriveControllerTest, ActiveTrackerIsOwnedAndClearedOnReturnAndException) {
+TEST_F(TapeDaemonTest, ActiveTrackerIsOwnedAndClearedOnReturnAndException) {
   using namespace std::chrono_literals;
   const auto start = Clock::time_point {} + 100s;
   config.mounts.mount_timeout_secs = 1;
@@ -1146,7 +1146,7 @@ TEST_F(DriveControllerTest, ActiveTrackerIsOwnedAndClearedOnReturnAndException) 
   }
 }
 
-TEST_F(DriveControllerTest, UnloadTimeoutDefaultsAndValidation) {
+TEST_F(TapeDaemonTest, UnloadTimeoutDefaultsAndValidation) {
   EXPECT_EQ(900, config.mounts.tape_unload_timeout_secs);
   EXPECT_TRUE(config.mounts.validate().ok());
   config.mounts.tape_unload_timeout_secs = 0;
@@ -1156,7 +1156,7 @@ TEST_F(DriveControllerTest, UnloadTimeoutDefaultsAndValidation) {
   EXPECT_TRUE(config.mounts.validate().ok());
 }
 
-TEST_F(DriveControllerTest, StartupRecoveryDoesNotTrustCatalogueVid) {
+TEST_F(TapeDaemonTest, StartupRecoveryDoesNotTrustCatalogueVid) {
   testing::InSequence sequence;
   previousDrive->desiredUp = true;
   previousDrive->driveStatus = DriveStatus::Transferring;
@@ -1169,14 +1169,14 @@ TEST_F(DriveControllerTest, StartupRecoveryDoesNotTrustCatalogueVid) {
   expectSchedulingAttempt();
   EXPECT_CALL(scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
   expectShutdown();
-  onSleep = [&] { controller->stop(); };
-  EXPECT_EQ(0, controller->run());
+  onSleep = [&] { daemon->stop(); };
+  EXPECT_EQ(0, daemon->run());
   EXPECT_FALSE(cleanedVid);
   EXPECT_EQ(1, cleanings);
   EXPECT_EQ(1, schedules);
 }
 
-TEST_F(DriveControllerTest, FailedDriveSessionPreparationWaitsForAnotherUpRequest) {
+TEST_F(TapeDaemonTest, FailedDriveSessionPreparationWaitsForAnotherUpRequest) {
   testing::InSequence sequence;
   expectRunStartup();
   DesiredDriveState up;
@@ -1194,16 +1194,16 @@ TEST_F(DriveControllerTest, FailedDriveSessionPreparationWaitsForAnotherUpReques
   clean = [&] { return cleanings > 1; };
   onSleep = [&] {
     if (schedules) {
-      controller->stop();
+      daemon->stop();
     }
   };
-  EXPECT_EQ(0, controller->run());
+  EXPECT_EQ(0, daemon->run());
   EXPECT_EQ(2, cleanings);
   EXPECT_EQ(1, schedules);
   EXPECT_EQ(2, sleeps.size());
 }
 
-TEST_F(DriveControllerTest, ReportedDownWithPendingUpStartsAnotherDriveSession) {
+TEST_F(TapeDaemonTest, ReportedDownWithPendingUpStartsAnotherDriveSession) {
   testing::InSequence sequence;
   expectRunStartup();
   expectTransition();
@@ -1224,10 +1224,10 @@ TEST_F(DriveControllerTest, ReportedDownWithPendingUpStartsAnotherDriveSession) 
     if (schedules == 1) {
       previousDrive->driveStatus = DriveStatus::Down;
     } else {
-      controller->stop();
+      daemon->stop();
     }
   };
-  EXPECT_EQ(0, controller->run());
+  EXPECT_EQ(0, daemon->run());
   EXPECT_EQ(2, cleanings);
   EXPECT_EQ(2, schedules);
 }

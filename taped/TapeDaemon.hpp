@@ -19,18 +19,20 @@
 
 namespace cta::tape::daemon {
 
-class DriveController final {
+// Owns the daemon lifecycle: registration, waiting, successive DriveSessions, and shutdown.
+// Each DriveSession is scoped to one iteration of run() and ends before the next begins.
+class TapeDaemon final {
 public:
   /**
-   * @brief Create a controller using caller-owned operations.
+   * @brief Create a daemon using caller-owned operations.
    *
-   * The configuration, logger and operations must outlive the controller.
+   * The configuration, logger and operations must outlive the daemon.
    *
    * @param config Daemon configuration; borrowed configuration must outlive the owning object.
    * @param log Logger used for diagnostics; it must outlive objects retaining a reference to it.
-   * @param operations Borrowed external operations that must outlive the controller.
+   * @param operations Borrowed external operations that must outlive the daemon.
    */
-  DriveController(const TapedConfig& config, log::Logger& log, DriveOperations& operations);
+  TapeDaemon(const TapedConfig& config, log::Logger& log, DriveOperations& operations);
 
   /**
    * @brief Request exit and publish desired-down after registration; active sessions and sleeps are not interrupted.
@@ -48,9 +50,9 @@ public:
   int run();
 
   /**
-   * @brief Return the controller liveness result.
+   * @brief Return the daemon liveness result.
    *
-   * @return True when the application or controller considers itself live.
+   * @return True when the application or daemon considers itself live.
    */
   bool isLive() const;
 
@@ -62,7 +64,7 @@ public:
   bool isReady() const;
 
 private:
-  friend class DriveControllerTest;
+  friend class TapeDaemonTest;
 
   // invoked by isLive(); exists to make unit testing easier
   bool isLive(std::chrono::steady_clock::time_point now) const;

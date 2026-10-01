@@ -55,7 +55,7 @@ DriveSession::DriveSession(const TapedConfig& config, log::Logger& log, DriveOpe
 }
 
 DriveSession::~DriveSession() noexcept {
-  // TODO: review desired-down publication on DriveSession shutdown versus controller shutdown.
+  // TODO: review desired-down publication on DriveSession shutdown versus daemon shutdown.
   // For now, preserve operator intent here so a new up request can start another session.
   // Future session-owned resources (such as a SCSI reservation) must be released here, before reporting Down.
   release();

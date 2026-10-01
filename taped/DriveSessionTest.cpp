@@ -149,7 +149,7 @@ protected:
     }
 
     bool logicalLibraryExists() override {
-      ADD_FAILURE() << "Library waiting belongs to controller";
+      ADD_FAILURE() << "Library waiting belongs to TapeDaemon";
       return true;
     }
 

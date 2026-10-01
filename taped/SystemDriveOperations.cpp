@@ -89,7 +89,7 @@ public:
   }
 
   void requestDriveDown(log::LogContext& lc) override {
-    // The catalogue outlives the controller and supports concurrent connections.
+    // The catalogue outlives the daemon and supports concurrent connections.
     // Do not access m_scheduler or the main thread's log context from the stop callback.
     common::dataStructures::DesiredDriveState desired;
     desired.up = false;
@@ -145,10 +145,10 @@ public:
   }
 
   /**
-   * @brief Execute a borrowed mount and return the recovery decisions for the controller.
+   * @brief Construct and run TapeSession synchronously within the enclosing DriveSession lifetime.
    *
-   * @param mount Mount kept alive by the caller until the session returns.
-   * @return Drive usability and backend-recovery or retry-delay decisions from the session.
+   * @param mount Scheduler assignment kept alive by DriveSession until execution and recovery finish.
+   * @return Drive reusability and session success for DriveSession recovery and scheduling decisions.
    */
   TapeSessionResult runTapeSession(TapeMount& mount) override {
     TapeSession session(m_lc.logger(),
