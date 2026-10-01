@@ -26,12 +26,13 @@
 namespace cta::tape::daemon {
 
 /**
- * @brief Encapsulates a single tape session (mount -> transfer -> unmount).
+ * @brief Runs one scheduler assignment within a DriveSession (mount -> transfer -> unmount).
+ * Physical cartridge ownership is held by MountedTape inside the transfer pipeline.
  */
 class TapeSession {
 public:
   /**
-   * @brief Create a session for a given tape mount.
+   * @brief Create a session for a scheduler TapeMount assignment; execute() starts the work.
    *
    * @param log Logger that must outlive the session.
    * @param sysWrapper System-call wrapper that must outlive the session.
@@ -55,11 +56,11 @@ public:
    * @brief Mount, transfer, unload and dismount the tape, returning the session outcomes.
    *
    * Recoverable operational failures return recovery decisions after local cleanup.
-   * Ordinary escaping exceptions permit controller-side cleanup before reuse.
+   * Ordinary escaping exceptions permit DriveSession recovery cleanup before reuse.
    * TapeSessionWorkerTeardownIncomplete prohibits reuse; worker lifecycle repair remains deferred.
-   * May produce an empty mount, in which case hardware remains untouched.
+   * May complete an empty assignment without physically mounting a cartridge.
    *
-   * @return Drive usability and backend-recovery or retry-delay decisions for the controller.
+   * @return Drive reusability and session success for DriveSession recovery and scheduling decisions.
    */
   TapeSessionResult execute();
 

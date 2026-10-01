@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "DriveController.hpp"
+#include "TapeDaemon.hpp"
 
 #include "DriveSession.hpp"
 #include "common/exception/Exception.hpp"
@@ -18,7 +18,7 @@
 
 namespace cta::tape::daemon {
 
-DriveController::DriveController(const TapedConfig& config, log::Logger& log, DriveOperations& operations)
+TapeDaemon::TapeDaemon(const TapedConfig& config, log::Logger& log, DriveOperations& operations)
     : m_config(config),
       m_driveInfo(config.drive.name,
                   utils::getShortHostname(),
@@ -28,14 +28,14 @@ DriveController::DriveController(const TapedConfig& config, log::Logger& log, Dr
       m_lc(log),
       m_operations(operations) {}
 
-void DriveController::stop() {
+void TapeDaemon::stop() {
   // Always retain the exit request, even if catalogue publication fails.
   // Before registration completes, run() is responsible for publishing down on exit.
   if (!m_stopSource.request_stop() || !m_registered.load()) {
     return;
   }
 
-  // The signal-reactor thread must not share the controller's scoped log parameters.
+  // The signal-reactor thread must not share the daemon's scoped log parameters.
   log::LogContext lc(m_lc.logger());
   try {
     m_operations.requestDriveDown(lc);
@@ -43,17 +43,17 @@ void DriveController::stop() {
     log::ScopedParamContainer params(lc);
     const auto* ctaException = dynamic_cast<const exception::Exception*>(&ex);
     params.add(semconv::log::exceptionMessage, ctaException ? ctaException->getMessageValue() : ex.what());
-    lc.log(log::ERR, "Failed to request drive down while stopping. Controller exit is still requested.");
+    lc.log(log::ERR, "Failed to request drive down while stopping. Daemon exit is still requested.");
   } catch (...) {
-    lc.log(log::ERR, "Unknown failure requesting drive down while stopping. Controller exit is still requested.");
+    lc.log(log::ERR, "Unknown failure requesting drive down while stopping. Daemon exit is still requested.");
   }
 }
 
-bool DriveController::isLive() const {
+bool TapeDaemon::isLive() const {
   return isLive(std::chrono::steady_clock::now());
 }
 
-bool DriveController::isLive(std::chrono::steady_clock::time_point now) const {
+bool TapeDaemon::isLive(std::chrono::steady_clock::time_point now) const {
   const auto snapshot = m_operations.tapeSessionLiveness();
   if (!snapshot || !snapshot->state) {
     return true;
@@ -94,7 +94,7 @@ bool DriveController::isLive(std::chrono::steady_clock::time_point now) const {
   return now - lastActivity < std::chrono::seconds(timeoutSecs);
 }
 
-bool DriveController::isReady() const {
+bool TapeDaemon::isReady() const {
   // Taped is considered ready when the drive has been registered in the catalogue
   // One could argue that the logical library should also exist for it to be ready
   // But that currently presents problems with our system tests, where the
@@ -104,7 +104,7 @@ bool DriveController::isReady() const {
   return m_registered.load();
 }
 
-int DriveController::run() {
+int TapeDaemon::run() {
   try {
     if (!registerDrive(false)) {
       return 1;
@@ -154,10 +154,10 @@ int DriveController::run() {
     log::ScopedParamContainer params(m_lc);
     const auto* ctaException = dynamic_cast<const exception::Exception*>(&ex);
     params.add(semconv::log::exceptionMessage, ctaException ? ctaException->getMessageValue() : ex.what());
-    m_lc.log(log::ERR, "Drive controller failed. Publishing down state before exit.");
+    m_lc.log(log::ERR, "Tape daemon failed. Publishing down state before exit.");
     failed = true;
   } catch (...) {
-    m_lc.log(log::ERR, "Drive controller failed with an unknown exception. Publishing down state before exit.");
+    m_lc.log(log::ERR, "Tape daemon failed with an unknown exception. Publishing down state before exit.");
     failed = true;
   }
 
@@ -175,7 +175,7 @@ int DriveController::run() {
   return failed ? 1 : 0;
 }
 
-void DriveController::waitForLogicalLibrary() {
+void TapeDaemon::waitForLogicalLibrary() {
   bool waitingLogged = false;
   while (!m_stopSource.stop_requested()) {
     const bool exists = m_operations.logicalLibraryExists();
@@ -199,7 +199,7 @@ void DriveController::waitForLogicalLibrary() {
   }
 }
 
-void DriveController::waitUntilDriveIsRequestedUp() {
+void TapeDaemon::waitUntilDriveIsRequestedUp() {
   auto& scheduler = m_operations.scheduler();
   bool waitingLogged = false;
 
@@ -228,7 +228,7 @@ void DriveController::waitUntilDriveIsRequestedUp() {
   }
 }
 
-bool DriveController::registerDrive(bool putUpIfPossible) {
+bool TapeDaemon::registerDrive(bool putUpIfPossible) {
   m_registered.store(false);
   auto& scheduler = m_operations.scheduler();
   m_lc.log(log::INFO, "Registering the drive in the catalogue.");

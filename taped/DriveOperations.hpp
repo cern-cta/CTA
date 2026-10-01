@@ -24,8 +24,8 @@ class TapeMount;
 
 namespace cta::tape::daemon {
 
-// External operations needed by the drive lifecycle.
-// This is mostly there so that we can nicely implement the unit tests for the DriveController
+// External operations used by TapeDaemon and DriveSession.
+// Keeps catalogue, scheduler, and hardware access replaceable for tests; callers own lifecycle decisions.
 class DriveOperations {
 public:
   /**
@@ -44,7 +44,7 @@ public:
   virtual void resetScheduler() = 0;
 
   /** Publish desired-down from the stop callback without accessing the replaceable scheduler.
-   * Must support concurrent controller operations; preserve reported state and existing reason/comment.
+   * Must support concurrent daemon operations; preserve reported state and existing reason/comment.
    */
   virtual void requestDriveDown(log::LogContext& lc) = 0;
 
@@ -70,18 +70,19 @@ public:
   virtual std::pair<bool, std::optional<std::string>> probeDrive() = 0;
 
   /**
-   * @brief Acquire the next scheduled mount, or return nullptr when no work is available.
+   * @brief Acquire the next scheduler assignment, or return nullptr when no work is available.
    *
-   * @return Owned mount to execute, or nullptr when no work is available.
+   * @return Owned TapeMount assignment; acquiring it does not physically mount a cartridge.
    */
   virtual std::unique_ptr<TapeMount> getNextMount() = 0;
 
   /**
-   * @brief Execute a borrowed mount and return the recovery decisions for the controller.
+   * @brief Run a tape session synchronously for a borrowed scheduler assignment.
    *
-   * Ordinary exceptions allow controller-side cleanup; TapeSessionWorkerTeardownIncomplete is fatal.
-   * @param mount Mount kept alive by the caller through session execution and recovery.
-   * @return Drive usability and backend-recovery or retry-delay decisions from the session.
+   * The production adapter constructs and runs TapeSession within the enclosing DriveSession lifetime.
+   * Ordinary exceptions allow DriveSession recovery cleanup; TapeSessionWorkerTeardownIncomplete is fatal.
+   * @param mount TapeMount assignment kept alive by DriveSession through execution and recovery.
+   * @return Drive reusability and session success, used by DriveSession to decide recovery and scheduling.
    */
   virtual TapeSessionResult runTapeSession(TapeMount& mount) = 0;
 

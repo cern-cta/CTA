@@ -13,7 +13,8 @@
 
 namespace cta::tape::daemon {
 
-/** Mounts a cartridge and owns its cleanup, including a partially failed mount.
+/** Owns the physical cartridge mount and cleanup within a TapeSession, including a partially failed mount.
+ * A scheduler TapeMount is a work assignment; this guard owns the physical mount.
  * Destroy only after all drive users have stopped.
  * Mount failures trigger cleanup before the original exception is rethrown.
  * This guard does not coordinate workers or publish the final drive status.

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "DriveController.hpp"
+#include "TapeDaemon.hpp"
 #include "TapedConfig.hpp"
 #include "common/log/LogContext.hpp"
 
@@ -16,29 +16,30 @@
 
 namespace cta::tape::daemon {
 
+// Runtime adapter: constructs TapeDaemon and its dependencies and forwards stop and health callbacks.
 class TapedApp final {
 public:
   /**
-   * @brief Create an application without starting a drive controller.
+   * @brief Create an application without starting a tape daemon.
    */
   TapedApp() = default;
 
   /**
-   * @brief Destroy the controller and operations before shutting down the Protocol Buffers library.
+   * @brief Destroy the daemon and operations before shutting down the Protocol Buffers library.
    */
   ~TapedApp();
 
   /**
-   * @brief Request controller exit after its current operation or tape session.
+   * @brief Request daemon exit after its current operation or tape session.
    */
   void stop();
 
   /**
-   * @brief Enable core dumping where possible, create the controller and run it.
+   * @brief Enable core dumping where possible, create the daemon and run it.
    *
    * @param config Daemon configuration; borrowed configuration must outlive the owning object.
    * @param log Logger used for diagnostics; it must outlive objects retaining a reference to it.
-   * @return The controller exit code; initialization exceptions propagate to the runtime.
+   * @return The daemon exit code; initialization exceptions propagate to the runtime.
    */
   int run(const TapedConfig& config, cta::log::Logger& log);
 
@@ -61,23 +62,23 @@ public:
   /**
    * @brief Return whether taped is alive (stuck) or not.
    *
-   * @return True when the application or controller considers itself live.
+   * @return True when the application or daemon considers itself live.
    */
   bool isLive() const;
 
   /**
    * @brief Return whether taped is ready to do work or not.
    *
-   * @return True when the application or controller considers itself ready.
+   * @return True when the application or daemon considers itself ready.
    */
   bool isReady() const;
 
 private:
-  // Operations outlive the controller that borrows them.
+  // Operations outlive the daemon that borrows them.
   std::unique_ptr<DriveOperations> m_driveOperations;
-  std::unique_ptr<DriveController> m_driveController = nullptr;
-  // Health callbacks run concurrently with controller construction.
-  std::atomic<DriveController*> m_publishedController {nullptr};
+  std::unique_ptr<TapeDaemon> m_tapeDaemon = nullptr;
+  // Health callbacks run concurrently with daemon construction.
+  std::atomic<TapeDaemon*> m_publishedDaemon {nullptr};
 };
 
 }  // namespace cta::tape::daemon

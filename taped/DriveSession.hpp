@@ -18,10 +18,11 @@
 
 namespace cta::tape::daemon {
 
-// One period of daemon ownership, containing zero or more tape sessions.
+// One period of hardware ownership within TapeDaemon, containing zero or more tape sessions.
 class DriveSession final {
 public:
   // All dependencies must outlive the session.
+  // Performs initial drive preparation before returning a session ready to run.
   // Returns null if cleanup fails or the up request is withdrawn; other failures propagate.
   static std::unique_ptr<DriveSession> create(const TapedConfig& config, log::Logger& log, DriveOperations& operations);
 
