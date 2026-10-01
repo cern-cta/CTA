@@ -50,6 +50,11 @@ def on_pre_build(config: MkDocsConfig) -> None:
     log.info("Generating Rust docs...")
     # Generate the Rust docs
     cargo_bin = shutil.which("cargo")
+
+    if not cargo_bin:
+        log.warning("Cargo not found: something is wrong with the environment")
+        sys.exit(1)
+
     subprocess.run(  # noqa: S603 - cmd built from cargo bin and known inputs
         [cargo_bin, "doc", "-q", "--no-deps", "--workspace"],
         cwd=root,
