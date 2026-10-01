@@ -106,8 +106,10 @@ struct MountsConfig final {
   uint32_t tape_load_timeout_secs = 300;
   uint32_t tape_unload_timeout_secs = 900;
   uint32_t unmount_timeout_secs = 900;
+  uint32_t preparing_timeout_secs = 900;
+  uint32_t finalizing_timeout_secs = 900;
 
-  static constexpr std::size_t memberCount() { return 10; }
+  static constexpr std::size_t memberCount() { return 12; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
@@ -137,6 +139,12 @@ struct MountsConfig final {
     }
     if (tape_unload_timeout_secs == 0) {
       result.addError("tape_unload_timeout_secs", "must be greater than zero");
+    }
+    if (preparing_timeout_secs == 0) {
+      result.addError("preparing_timeout_secs", "must be greater than zero");
+    }
+    if (finalizing_timeout_secs == 0) {
+      result.addError("finalizing_timeout_secs", "must be greater than zero");
     }
     if (unmount_timeout_secs == 0) {
       result.addError("unmount_timeout_secs", "must be greater than zero");

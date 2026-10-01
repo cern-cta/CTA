@@ -20,7 +20,7 @@ enum class TapeSessionState : uint32_t {
   Unloading,       ///< Asking the drive to unload the tape, including rewind.
   Unmounting,      ///< Asking the media changer to remove the tape from the drive.
   DrainingToDisk,  ///< Retrieval disk delivery remains active; the drive is still unavailable.
-  Finished         ///< The session owner has joined all transfer and job-reporting workers.
+  Finished         ///< The session owner has joined all workers and completed the final reporting attempt.
 };
 /** TapeSession state to string. */
 std::string toString(TapeSessionState state);

@@ -5,23 +5,15 @@
 
 #pragma once
 
-namespace cta::common::dataStructures {
-struct DriveInfo;
-}
-
 namespace cta::log {
 class LogContext;
 }
 
 namespace cta::tape::daemon {
-class SchedulerContext;
-
-// Owns hardware access and its release publication for one session lifetime.
+// Owns hardware access for one session lifetime; callers publish lifecycle state.
 class HardwareOwnership final {
 public:
-  HardwareOwnership(const common::dataStructures::DriveInfo& driveInfo,
-                    log::LogContext& lc,
-                    SchedulerContext& schedulerContext) noexcept;
+  explicit HardwareOwnership(log::LogContext& lc) noexcept;
   ~HardwareOwnership() noexcept;
 
   HardwareOwnership(const HardwareOwnership&) = delete;
@@ -30,17 +22,18 @@ public:
   HardwareOwnership& operator=(HardwareOwnership&&) = delete;
 
   void acquire();
-  bool ownsHardware() const noexcept;
-  // Explicit release propagates failures; destruction retries as a fallback.
-  void release();
+  // Unsafe ownership is retained but cannot permit further hardware access.
+  bool canUseHardware() const noexcept;
+  // Return false if worker teardown is unsafe; otherwise release or confirm prior release.
+  // Failures propagate; destruction retries as a fallback.
+  bool release();
   void markUnsafe() noexcept;
 
 private:
-  enum class State { Unacquired, Owned, ReleasePending, Released, Unsafe };
+  enum class State { Unacquired, Owned, Released, Unsafe };
   State m_state = State::Unacquired;
-  const common::dataStructures::DriveInfo& m_driveInfo;
+  bool m_unsafeReleaseLogged = false;
   log::LogContext& m_lc;
-  SchedulerContext& m_schedulerContext;
 };
 
 }  // namespace cta::tape::daemon

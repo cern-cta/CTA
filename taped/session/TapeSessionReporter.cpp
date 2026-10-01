@@ -199,8 +199,10 @@ void TapeSessionReporter::reportNow() {
 }
 
 void TapeSessionReporter::reportSessionFinished() {
-  // Stopping the reporter alone does not establish that transfer workers have stopped.
-  if (m_tracker.state() != cta::tape::session::TapeSessionState::Finished) {
+  // The owner must join all workers before calling; Finalizing alone does not prove termination.
+  const auto state = m_tracker.state();
+  using enum cta::tape::session::TapeSessionState;
+  if (state != Finalizing && state != Finished) {
     return;
   }
 
@@ -264,16 +266,17 @@ void TapeSessionReporter::logStats(bool sessionFinished, const TapeSessionStats&
   params.add("driveTransferSpeedMBps",
              totalTime ? (tapeStats.dataVolume + tapeStats.headerVolume) / 1000.0 / 1000.0 / totalTime : 0.0);
   const auto state = m_tracker.state();
-  if (state) {
+  if (sessionFinished) {
+    // The final event describes completion while health readers still observe Finalizing.
+    params.add("sessionState", "Finished");
+  } else if (state) {
     params.add("sessionState", cta::tape::session::toString(*state));
   } else {
     params.add("sessionState", std::nullopt);
   }
   params.add("sessionType", cta::tape::session::toString(m_tracker.type()));
   const auto assessment = m_tracker.outcomeSnapshot();
-  params.add("status",
-             !sessionFinished || !assessment.finished ? "in_progress" :
-                                                        (assessment.hasFailures ? "failure" : "success"));
+  params.add("status", !sessionFinished ? "in_progress" : (assessment.hasFailures ? "failure" : "success"));
   params.add("mountAttempted", m_tracker.mountAttempted() ? 1 : 0);
   params.add("tapeVid", mount.getVid());
   params.add("mountType", cta::common::dataStructures::toCamelCaseString(mount.getMountType()));

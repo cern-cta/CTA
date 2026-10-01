@@ -5,11 +5,14 @@
 
 #include "common/log/LogContext.hpp"
 
+#include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
+#include "common/log/ExceptionLogging.hpp"
 #include "common/log/StringLogger.hpp"
 
 #include <gtest/gtest.h>
 #include <regex>
+#include <stdexcept>
 
 using namespace cta::log;
 
@@ -187,5 +190,45 @@ TEST(cta_log_LogContextTest, logMessageEscaping) {
   std::regex regex_pattern(
     R"(^\{"epoch_time":\d+\.\d+,"local_time":"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+\d{4}","cta_version":"[^"]+","log_schema_version":"\d+\.\d+\.\d+","hostname":"dummy\\"","program":"cta_log_LogContextTest_escaped\\"","source_location":"[^:]+:\d+","log_level":"INFO","pid":\d+,"tid":\d+,"message":"Split message\\n by newline","dummy_static\\"":"value_why\\"","valid_\\"key":"Valid \\n out"\}\n$)");
   EXPECT_TRUE(std::regex_match(sl.getLog(), regex_pattern));
+}
+}  // namespace unitTests
+
+namespace unitTests {
+TEST(cta_log_ExceptionLoggingTest, PreservesExceptionAndCallerContext) {
+  StringLogger logger("host", "exception-test", DEBUG);
+  logger.setLogFormat("json");
+  LogContext lc(logger);
+  lc.push(Param("drive", "drive1"));
+  try {
+    throw cta::exception::Exception("CTA failure");
+  } catch (...) {
+    const auto line = __LINE__ + 1;
+    logCurrentExceptionNoThrow(lc, "Cleanup failed", WARNING);
+    EXPECT_NE(std::string::npos, logger.getLog().find("CTA failure"));
+    EXPECT_NE(std::string::npos, logger.getLog().find("LogContextTest.cpp:" + std::to_string(line)));
+    EXPECT_EQ(1U, lc.size());
+    EXPECT_THROW(throw;, cta::exception::Exception);
+  }
+}
+
+TEST(cta_log_ExceptionLoggingTest, HandlesStandardUnknownAndAbsentExceptions) {
+  StringLogger logger("host", "exception-test", DEBUG);
+  LogContext lc(logger);
+  try {
+    throw std::runtime_error("Standard failure");
+  } catch (...) {
+    EXPECT_NO_THROW(logCurrentExceptionNoThrow(lc, "Standard"));
+  }
+  try {
+    throw 42;
+  } catch (...) {
+    EXPECT_NO_THROW(logCurrentExceptionNoThrow(lc, "Unknown"));
+    EXPECT_THROW(throw;, int);
+  }
+  EXPECT_NO_THROW(logCurrentExceptionNoThrow(lc, "Absent"));
+  EXPECT_NE(std::string::npos, logger.getLog().find("Standard failure"));
+  EXPECT_NE(std::string::npos, logger.getLog().find("Unknown exception"));
+  EXPECT_NE(std::string::npos, logger.getLog().find("No active exception"));
+  EXPECT_EQ(0U, lc.size());
 }
 }  // namespace unitTests
