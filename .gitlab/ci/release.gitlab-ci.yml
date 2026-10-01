@@ -240,7 +240,6 @@ publish-docs:
   stage: release
   needs:
     - job: build-docs
-      artifacts: false
   rules:
     - if: '$PIPELINE_TYPE != "DEFAULT" || $CI_PIPELINE_SOURCE == "parent_pipeline"'
       when: never
