@@ -22,7 +22,8 @@ TEST(DriveDownReasonTest, FormatsSeverityAndDetails) {
     {DriveDownReason::DriveProbeFailed,         log::ERR,  "[cta-taped] ERROR Drive probe failed"         },
     {DriveDownReason::SessionDriveAccessFailed, log::ERR,  "[cta-taped] ERROR Session drive access failed"},
     {DriveDownReason::DriveCleanupFailed,       log::ERR,  "[cta-taped] ERROR Drive cleanup failed"       },
-    {DriveDownReason::SessionLeftDriveUnusable, log::ERR,  "[cta-taped] ERROR Session left drive unusable"}
+    {DriveDownReason::SessionLeftDriveUnusable, log::ERR,  "[cta-taped] ERROR Session left drive unusable"},
+    {DriveDownReason::SessionDidNotStopSafely,  log::ERR,  "[cta-taped] ERROR Session did not stop safely"}
   };
 
   for (const auto& testCase : cases) {
@@ -51,5 +52,6 @@ TEST(DriveDownReasonTest, DoesNotClassifyOtherReasonsAsCleanShutdown) {
   EXPECT_FALSE(isCleanDriveShutdownReason("[cta-taped] INFO Shutdown: operator detail"));
   EXPECT_FALSE(isCleanDriveShutdownReason(formatDriveDownReason(DriveDownReason::Startup)));
   EXPECT_FALSE(isCleanDriveShutdownReason(formatDriveDownReason(DriveDownReason::DriveCleanupFailed)));
+  EXPECT_FALSE(isCleanDriveShutdownReason(formatDriveDownReason(DriveDownReason::SessionDidNotStopSafely)));
 }
 }  // namespace cta::common::dataStructures

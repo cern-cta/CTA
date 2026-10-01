@@ -28,7 +28,9 @@ enum class DriveDownReason {
   /// Cleanup could not establish a reusable drive, including failures to access it, reset it, or eject a tape.
   DriveCleanupFailed,
   /// Fallback for an unusable session drive when no existing specific failure or operator reason is retained.
-  SessionLeftDriveUnusable
+  SessionLeftDriveUnusable,
+  /// A failed tape session could not confirm that its workers stopped accessing the drive.
+  SessionDidNotStopSafely
 };
 
 /**

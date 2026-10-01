@@ -24,6 +24,7 @@ MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager& mm,
                                              uint64_t maxFiles,
                                              uint64_t byteSizeThreshold,
                                              const cta::common::dataStructures::ArchiveDismountPolicy& unmountPolicy,
+                                             TapeSessionTracker& tracker,
                                              const cta::log::LogContext& lc)
     : m_thread(*this),
       m_memManager(mm),
@@ -33,6 +34,7 @@ MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager& mm,
       m_maxFiles(maxFiles),
       m_maxBytes(byteSizeThreshold),
       m_unmountPolicy(unmountPolicy),
+      m_tracker(tracker),
       m_lc(lc) {}
 
 //------------------------------------------------------------------------------
@@ -385,6 +387,7 @@ void MigrationTaskInjector::WorkerThread::run() {
     m_parent.signalEndDataMovement();
   } catch (const cta::exception::Exception& ex) {
     //we end up there because we could not talk to the client
+    m_parent.m_tracker.recordFailure(TapeSessionFailure::TaskInjection);
 
     cta::log::ScopedParamContainer container(m_parent.m_lc);
     container.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
