@@ -57,9 +57,10 @@ public:
   void reportNow();
 
   /**
-   * @brief Synchronously publish final statistics and outcome if the tracker state is Finished.
+   * @brief Synchronously publish final statistics and outcome while Finalizing (or already Finished).
    *
-   * The session owner calls this once after joining the reporting thread, or if it was never started.
+   * The session owner calls this once after all transfer workers and the periodic reporter have stopped.
+   * The owner establishes Finished after this call, keeping publication subject to the finalization timeout.
    */
   void reportSessionFinished();
 

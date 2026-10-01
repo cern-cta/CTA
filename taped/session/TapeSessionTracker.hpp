@@ -227,7 +227,7 @@ public:
     return m_type;
   }
 
-  /** Snapshot completion and persistent failures together; only finished sessions have a final log status. */
+  /** Snapshot terminal state and persistent failures together. */
   TapeSessionOutcomeSnapshot outcomeSnapshot() const {
     std::lock_guard lock(m_mutex);
     return {m_state == cta::tape::session::TapeSessionState::Finished,

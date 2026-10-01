@@ -254,7 +254,6 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
   }
 
   reporterScope.finish();
-  m_tapeSessionTracker->reportState(cta::tape::session::TapeSessionState::Finished);
   // Final reporting belongs to the session even if startup never reached the periodic reporter.
   try {
     reporter.reportSessionFinished();
@@ -267,6 +266,8 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
     m_tapeSessionTracker->recordFailure(TapeSessionFailure::Reporting);
     lc.log(cta::log::WARNING, "Failed to send final tape session statistics");
   }
+  // Keep final publication within the liveness budget until it completes or fails.
+  m_tapeSessionTracker->reportState(cta::tape::session::TapeSessionState::Finished);
   // Final reporting can turn an otherwise successful session into a failure.
   state.result.successful = !m_tapeSessionTracker->hasFailures();
   if (fatalFailure) {

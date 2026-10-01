@@ -32,16 +32,16 @@ class SchedulerContext;
 class DriveSession final {
 public:
   // Borrowed dependencies must outlive the session; hardware access objects are session-owned.
-  // Performs initial drive preparation before returning a session ready to run.
-  // Returns null if cleanup fails or the up request is withdrawn; other failures propagate.
+  // Constructs dependencies without accessing the drive; run() performs initial preparation.
   static std::unique_ptr<DriveSession>
   create(const TapedConfig& config, log::Logger& log, SchedulerContext& schedulerContext);
 
-  // Run once, until ownership ends or stop is requested. Active transfers are not interrupted.
+  // Prepare and run once, until ownership ends or stop is requested. Active transfers are not interrupted.
+  // Preparation failure or a withdrawn up request ends the session without scheduling; other failures propagate.
   void run(std::stop_token stopToken);
   ~DriveSession() noexcept;
 
-  // Safe for concurrent health queries; idle periods have no active tape session.
+  // Safe for concurrent health queries; preparation, recovery, and transfers publish their trackers.
   bool isLive() const;
 
   DriveSession(const DriveSession&) = delete;
@@ -50,7 +50,9 @@ public:
   DriveSession& operator=(DriveSession&&) = delete;
 
 private:
-  // Initialize dependencies; create() prepares the drive under unique ownership.
+  friend class DriveSessionLivenessTest;
+
+  // Initialize dependencies; run() prepares the drive under unique ownership.
   DriveSession(const TapedConfig& config, log::Logger& log, SchedulerContext& schedulerContext);
 
   TapeSessionResult runIteration(std::stop_token stopToken);
@@ -58,6 +60,8 @@ private:
   // Shared by initial preparation and recovery within an existing ownership period.
   // Preparation uses an unknown VID; only immediate tape-session recovery supplies one.
   bool cleanDrive(const std::optional<std::string>& vid = std::nullopt);
+  // Release hardware before terminal publication; destruction retries failed publication.
+  void releaseAndReportDown();
   void requestDown(common::dataStructures::DriveDownReason reason, std::string_view detail = "");
   void requestDownNoThrow(common::dataStructures::DriveDownReason reason, std::string_view detail) noexcept;
 
@@ -68,8 +72,10 @@ private:
   // Hardware access is scoped to this ownership period, including preparation and recovery.
   mediachanger::MediaChangerFacade m_mediaChanger;
   System::realWrapper m_sysWrapper;
-  // Atomically published by the run thread; health readers retain their own shared reference.
+  // Active cleanup or transfer tracker; health readers retain their own atomically loaded shared reference.
   std::shared_ptr<const TapeSessionTracker> m_activeTracker;
+  // Tracks terminal publication only; hardware ownership is managed independently.
+  bool m_downReported = false;
   // Destroy first, while its borrowed dependencies and hardware access objects are still alive.
   HardwareOwnership m_hardwareOwnership;
 };

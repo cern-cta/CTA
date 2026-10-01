@@ -31,7 +31,7 @@ target_link_libraries(ctataped
   ${PROTOBUF3_LIBRARIES}
 )
 
-add_library(ctatapedunittests SHARED TapeDaemonTest.cpp DriveSessionTest.cpp)
+add_library(ctatapedunittests SHARED TapeDaemonTest.cpp DriveSessionTest.cpp DriveSessionLivenessTest.cpp TapedConfigTest.cpp)
 set_property(TARGET ctatapedunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedunittests PROPERTY VERSION "${CTA_LIBVERSION}")
 target_link_libraries(ctatapedunittests PRIVATE ctataped gtest gmock)

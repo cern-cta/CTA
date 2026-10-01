@@ -75,6 +75,7 @@ set (COMMON_LIB_SRC_FILES
   exception/InvalidConfigEntry.cpp
   exception/NoPortInRange.cpp
   json/object/JSONCObject.cpp
+  log/ExceptionLogging.cpp
   log/FileLogger.cpp
   log/LogContext.cpp
   log/Logger.cpp

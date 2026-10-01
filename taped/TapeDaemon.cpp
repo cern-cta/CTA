@@ -109,10 +109,6 @@ int TapeDaemon::run() {
         break;
       }
       auto session = DriveSession::create(m_config, m_lc.logger(), *m_schedulerContext);
-      if (!session) {
-        continue;
-      }
-
       // Unpublish before destroying the session, including before an outer catch handles failure.
       const utils::ScopeExit clearActiveSession([this] {
         std::lock_guard lock(m_sessionMutex);

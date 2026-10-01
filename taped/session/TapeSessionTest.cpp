@@ -293,11 +293,16 @@ public:
   void setTapeSessionStats(const TapeTransferStats& stats) override {
     ++statsReports;
     lastReportedStats = stats;
+    if (observedTracker) {
+      lastPublicationState = observedTracker->state();
+    }
   }
 
   std::optional<std::string> downReason;
   unsigned int statsReports = 0;
   TapeTransferStats lastReportedStats;
+  const TapeSessionTracker* observedTracker = nullptr;
+  std::optional<cta::tape::session::TapeSessionState> lastPublicationState;
 
   unsigned int archiveFetchAttempts() const {
     if constexpr (std::is_same_v<Base, cta::MockArchiveMount>) {
@@ -950,6 +955,7 @@ public:
     std::optional<TapeSessionResult> result;
     TapeSession session(logger, system, info, changer, mount, config, 1, scheduler);
     const auto& tracker = session.tracker();
+    mount.observedTracker = &tracker;
     EXPECT_FALSE(tracker.state().has_value());
     EXPECT_EQ(&mount, tracker.mount());
     // Operational failures return recovery decisions; fatal failures retain their original type.
@@ -999,6 +1005,7 @@ public:
     if (!startupFails || point == TransferFailurePoint::StartingStatus) {
       EXPECT_EQ(1, countLogMessages(logger.getLog(), "Tape session finished"));
     }
+    EXPECT_EQ(cta::tape::session::TapeSessionState::Finalizing, mount.lastPublicationState);
     if (!startupFails) {
       const auto expectedType = std::is_same_v<Mount, FailingTransferRetrieveMount> ?
                                   cta::tape::session::SessionType::Retrieve :

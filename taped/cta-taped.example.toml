@@ -119,6 +119,11 @@
   # If omitted, 900 is used.
   unmount_timeout_secs = 900
 
+  # Maximum time in Preparing or Finalizing before liveness becomes unhealthy.
+  # Each must be positive and defaults to 900 seconds.
+  preparing_timeout_secs = 900
+  finalizing_timeout_secs = 900
+
 
 # Controls resources and inactivity limits shared by archive and retrieve data-transfer sessions.
 [transfers]

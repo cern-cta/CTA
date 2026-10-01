@@ -193,6 +193,17 @@ unmount_timeout_secs *(default: 900)*
 
 :   Maximum time in Unmounting before liveness becomes unhealthy.
 
+preparing_timeout_secs *(default: 900)*
+
+:   Maximum time in Preparing before liveness becomes unhealthy, for transfers and drive cleanup.
+Must be positive and nonzero.
+
+finalizing_timeout_secs *(default: 900)*
+
+:   Maximum time in Finalizing before liveness becomes unhealthy, including final statistics publication.
+Must be positive and nonzero.
+These timeouts affect health reporting only; they do not cancel operations or release hardware.
+
 ## [transfers]
 
 buffer_count *(default: 5000)*
