@@ -16,7 +16,17 @@ SchedulerContext::SchedulerContext(const TapedConfig& config, catalogue::Catalog
   initialise();
 }
 
+SchedulerContext::SchedulerContext(const TapedConfig& config, log::Logger& log, Scheduler& scheduler)
+    : m_config(config),
+      m_catalogue(scheduler.getCatalogue()),
+      m_lc(log),
+      m_scheduler(&scheduler) {}
+
 void SchedulerContext::retire() {
+  // External owners manage their own backend lifetime.
+  if (!m_ownedScheduler) {
+    return;
+  }
 #ifndef CTA_PGSCHED
   // Nonempty object-store agents remain available for garbage collection.
   initialise();
@@ -53,7 +63,8 @@ void SchedulerContext::initialise() {
   // Publish only a fully constructed replacement. Locals destroy the old context in reverse order.
   m_schedDbInit.swap(schedDbInit);
   m_schedDb.swap(schedDb);
-  m_scheduler.swap(scheduler);
+  m_ownedScheduler.swap(scheduler);
+  m_scheduler = m_ownedScheduler.get();
   m_lc.log(log::INFO, "Scheduler initialised successfully");
 }
 

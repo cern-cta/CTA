@@ -32,7 +32,8 @@ void requestDriveDown(catalogue::Catalogue& catalogue,
     desired.reason = current->reasonUpDown;
   }
 
-  // TODO: make desired-state updates atomic; a concurrent operator change can be overwritten here.
+  // One limitation: the desired-state update is not atomic, so if we're really unlucky, we could
+  // overwrite a concurrent operator change here. Relatively harmless though
   TapeDrivesCatalogueState(catalogue).setDesiredDriveState(driveName, desired, lc);
 }
 

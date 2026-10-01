@@ -25,6 +25,9 @@ mounts:
   tapeLoadTimeoutSecs: 300
   tapeUnloadTimeoutSecs: 900 # Liveness timeout only; does not interrupt unloading
   unmountTimeoutSecs: 900
+  # Liveness timeouts for session preparation and finalization.
+  preparingTimeoutSecs: 900
+  finalizingTimeoutSecs: 900
 
 rmcd:
   host: "cta-rmcd" # Override with localhost if using host networking

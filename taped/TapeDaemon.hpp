@@ -36,6 +36,12 @@ public:
    */
   TapeDaemon(const TapedConfig& config, log::Logger& log);
 
+  // Borrowed dependencies must outlive the daemon. The context must use this catalogue.
+  TapeDaemon(const TapedConfig& config,
+             log::Logger& log,
+             catalogue::Catalogue& catalogue,
+             SchedulerContext& schedulerContext);
+
   /**
    * @brief Request exit and publish desired-down after registration; active sessions and sleeps are not interrupted.
    */
@@ -84,8 +90,10 @@ private:
   log::LogContext m_lc;
 
   // The scheduler and its backend are destroyed before their catalogue.
-  std::unique_ptr<catalogue::Catalogue> m_catalogue;
-  std::unique_ptr<SchedulerContext> m_schedulerContext;
+  std::unique_ptr<catalogue::Catalogue> m_ownedCatalogue;
+  std::unique_ptr<SchedulerContext> m_ownedSchedulerContext;
+  catalogue::Catalogue* m_catalogue = nullptr;
+  SchedulerContext* m_schedulerContext = nullptr;
   // Borrows the run-thread-owned session only while holding the mutex.
   mutable std::mutex m_sessionMutex;
   // non-owning pointer so that liveness checks can check liveness of the drive session

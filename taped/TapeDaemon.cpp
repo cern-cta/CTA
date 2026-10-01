@@ -39,11 +39,27 @@ TapeDaemon::TapeDaemon(const TapedConfig& config, log::Logger& log)
   const uint64_t nbArchiveFileListingConns = 1;
   auto catalogueFactory =
     catalogue::CatalogueFactoryFactory::create(m_lc.logger(), catalogueLogin, nbConns, nbArchiveFileListingConns);
-  m_catalogue = catalogueFactory->create();
+  m_ownedCatalogue = catalogueFactory->create();
+  m_catalogue = m_ownedCatalogue.get();
 
   m_lc.log(log::INFO, "Catalogue initialised successfully");
-  m_schedulerContext = std::make_unique<SchedulerContext>(m_config, *m_catalogue, log);
+  m_ownedSchedulerContext = std::make_unique<SchedulerContext>(m_config, *m_catalogue, log);
+  m_schedulerContext = m_ownedSchedulerContext.get();
 }
+
+TapeDaemon::TapeDaemon(const TapedConfig& config,
+                       log::Logger& log,
+                       catalogue::Catalogue& catalogue,
+                       SchedulerContext& schedulerContext)
+    : m_config(config),
+      m_driveInfo(config.drive.name,
+                  utils::getShortHostname(),
+                  config.drive.logical_library_name,
+                  config.drive.device,
+                  config.drive.control_path),
+      m_lc(log),
+      m_catalogue(&catalogue),
+      m_schedulerContext(&schedulerContext) {}
 
 void TapeDaemon::stop() {
   // Always retain the exit request, even if catalogue publication fails.

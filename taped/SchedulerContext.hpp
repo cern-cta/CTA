@@ -19,11 +19,14 @@
 
 namespace cta::tape::daemon {
 
-// Owns a scheduler and its backend together, in dependency-safe destruction order.
+// Owns a scheduler and its backend together, or borrows an externally managed scheduler.
 // The catalogue, configuration, and logger must outlive this context.
 class SchedulerContext final {
 public:
   SchedulerContext(const TapedConfig& config, catalogue::Catalogue& catalogue, log::Logger& log);
+
+  // The supplied scheduler and its backend must outlive the context. retire() leaves them untouched.
+  SchedulerContext(const TapedConfig& config, log::Logger& log, Scheduler& scheduler);
 
   // References are valid only until retire() replaces the object-store backend.
   Scheduler& scheduler() { return *m_scheduler; }
@@ -40,7 +43,8 @@ private:
   log::LogContext m_lc;
   std::unique_ptr<SchedulerDBInit_t> m_schedDbInit;
   std::unique_ptr<SchedulerDB_t> m_schedDb;
-  std::unique_ptr<Scheduler> m_scheduler;
+  std::unique_ptr<Scheduler> m_ownedScheduler;
+  Scheduler* m_scheduler = nullptr;
 };
 
 }  // namespace cta::tape::daemon
