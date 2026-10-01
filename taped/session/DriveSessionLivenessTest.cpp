@@ -7,15 +7,11 @@
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "common/log/StringLogger.hpp"
 #include "taped/SchedulerContext.hpp"
-#include "tests/TempFile.hpp"
+#include "taped/SchedulerTestUtils.hpp"
 
 #include <functional>
 #include <gtest/gtest.h>
 #include <stdexcept>
-
-#ifndef CTA_PGSCHED
-#include "objectstore/BackendVFS.hpp"
-#include "objectstore/RootEntry.hpp"
 
 namespace cta::tape::daemon {
 namespace {
@@ -43,25 +39,24 @@ class DriveSessionLivenessTest : public testing::Test {
 protected:
   TapedConfig config;
   log::StringLogger logger {"host", "cleanup-liveness", log::DEBUG};
-  CleanupCatalogue catalogue;
-  objectstore::BackendVFS backend;
-  unitTests::TempFile schedulerConfig;
+  std::unique_ptr<catalogue::Catalogue> catalogue = std::make_unique<CleanupCatalogue>();
+  std::unique_ptr<SchedulerDatabase> db;
+  std::unique_ptr<Scheduler> scheduler;
   std::unique_ptr<SchedulerContext> schedulerContext;
   std::unique_ptr<DriveSession> session;
 
+  ObservedDriveState& driveState() { return static_cast<CleanupCatalogue&>(*catalogue).driveState(); }
+
   void SetUp() override {
-    objectstore::RootEntry root(backend);
-    root.initialize();
-    root.insert();
     config.drive.name = "drive";
-    schedulerConfig.stringFill(backend.getParams()->toURL());
-    config.scheduler.config_file = schedulerConfig.path();
-    schedulerContext = std::make_unique<SchedulerContext>(config, catalogue, logger);
+    db = testingUtils::createSchedulerDatabase(catalogue);
+    scheduler = std::make_unique<Scheduler>(*catalogue, *db, "test");
+    schedulerContext = std::make_unique<SchedulerContext>(config, logger, *scheduler);
     session = DriveSession::create(config, logger, *schedulerContext);
   }
 
   void TearDown() override {
-    catalogue.driveState().onRead = {};
+    driveState().onRead = {};
     session.reset();
   }
 
@@ -101,7 +96,7 @@ protected:
 TEST_F(DriveSessionLivenessTest, PreparationIsVisibleAndClearedOnNormalExit) {
   EXPECT_FALSE(activeTracker());
   unsigned int observed = 0;
-  catalogue.driveState().onRead = [&] {
+  driveState().onRead = [&] {
     if (activeTracker()) {
       ++observed;
       checkCleanupStates();
@@ -116,7 +111,7 @@ TEST_F(DriveSessionLivenessTest, PreparationIsVisibleAndClearedOnNormalExit) {
 }
 
 TEST_F(DriveSessionLivenessTest, PreparationExceptionClearsTracker) {
-  catalogue.driveState().onRead = [&] {
+  driveState().onRead = [&] {
     if (activeTracker()) {
       checkCleanupStates();
       throw std::runtime_error("catalogue unavailable");
@@ -128,7 +123,7 @@ TEST_F(DriveSessionLivenessTest, PreparationExceptionClearsTracker) {
 }
 
 TEST_F(DriveSessionLivenessTest, RecoveryExceptionClearsTrackerAndRetainsOwnership) {
-  catalogue.driveState().onRead = [&] {
+  driveState().onRead = [&] {
     checkCleanupStates();
     throw std::runtime_error("catalogue unavailable");
   };
@@ -177,5 +172,69 @@ TEST_F(DriveSessionLivenessTest, ConfiguredPhaseTimeoutsDoNotResetOnRepeatedStat
   }
 }
 
+TEST_F(DriveSessionLivenessTest, EachTransferPhaseUsesItsConfiguredTimeout) {
+  using namespace std::chrono_literals;
+  using enum cta::tape::session::TapeSessionState;
+  config.mounts.mount_timeout_secs = 11;
+  config.mounts.tape_load_timeout_secs = 12;
+  config.mounts.tape_unload_timeout_secs = 13;
+  config.mounts.unmount_timeout_secs = 14;
+  config.transfers.no_block_move_timeout_secs = 15;
+  config.transfers.retrieve.drain_to_disk_timeout_secs = 16;
+  const std::pair<cta::tape::session::TapeSessionState, unsigned int> cases[] {
+    {Mounting,       11},
+    {Loading,        12},
+    {Unloading,      13},
+    {Unmounting,     14},
+    {Transferring,   15},
+    {DrainingToDisk, 16}
+  };
+  const auto now = TapeSessionTracker::Clock::now();
+  for (const auto& [state, seconds] : cases) {
+    SCOPED_TRACE(static_cast<int>(state));
+    for (const bool expired : {false, true}) {
+      auto tracker = std::make_shared<TapeSessionTracker>();
+      const auto enteredAt = now - std::chrono::seconds(seconds) + (expired ? -1s : 5s);
+      tracker->beginTapeSession(enteredAt);
+      tracker->reportState(state, enteredAt);
+      publish(tracker);
+      EXPECT_EQ(!expired, session->isLive());
+      // Neither repeated state publication nor statistics reporting is block movement.
+      tracker->reportState(state, now);
+      tracker->updateTapeTransferStats({.dataVolume = 100});
+      EXPECT_EQ(!expired, session->isLive());
+    }
+  }
+  auto tracker = std::make_shared<TapeSessionTracker>();
+  publish(tracker);
+  EXPECT_TRUE(session->isLive());
+  tracker->reportState(Finished, now - 24h);
+  EXPECT_TRUE(session->isLive());
+}
+
+TEST_F(DriveSessionLivenessTest, BlockMovementRefreshesTransferLivenessAndNewSessionResetsIt) {
+  using namespace std::chrono_literals;
+  using enum cta::tape::session::TapeSessionState;
+  config.transfers.no_block_move_timeout_secs = 10;
+  config.mounts.tape_unload_timeout_secs = 10;
+  const auto now = TapeSessionTracker::Clock::now();
+  auto tracker = std::make_shared<TapeSessionTracker>();
+  publish(tracker);
+  tracker->beginTapeSession(now - 30s);
+  tracker->notifyBlockMovement(1, now - 25s);
+  tracker->reportState(Transferring, now - 20s);
+  EXPECT_FALSE(session->isLive());
+  tracker->notifyBlockMovement(1, now);
+  EXPECT_TRUE(session->isLive());
+  tracker->reportState(Unloading, now - 20s);
+  EXPECT_FALSE(session->isLive());
+  // Starting a new session clears the previous session's block-movement timestamp.
+  tracker->beginTapeSession(now - 20s);
+  tracker->reportState(Transferring, now - 20s);
+  EXPECT_FALSE(session->isLive());
+  tracker->beginTapeSession(now);
+  tracker->reportState(Transferring, now);
+  EXPECT_TRUE(session->isLive());
+}
+
 }  // namespace cta::tape::daemon
-#endif

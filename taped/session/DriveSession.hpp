@@ -36,6 +36,12 @@ public:
   static std::unique_ptr<DriveSession>
   create(const TapedConfig& config, log::Logger& log, SchedulerContext& schedulerContext);
 
+  // The supplied system wrapper must outlive the session.
+  static std::unique_ptr<DriveSession> create(const TapedConfig& config,
+                                              log::Logger& log,
+                                              SchedulerContext& schedulerContext,
+                                              System::virtualWrapper& sysWrapper);
+
   // Prepare and run once, until ownership ends or stop is requested. Active transfers are not interrupted.
   // Preparation failure or a withdrawn up request ends the session without scheduling; other failures propagate.
   void run(std::stop_token stopToken);
@@ -51,9 +57,13 @@ public:
 
 private:
   friend class DriveSessionLivenessTest;
+  friend class DriveSessionTest;
 
   // Initialize dependencies; run() prepares the drive under unique ownership.
-  DriveSession(const TapedConfig& config, log::Logger& log, SchedulerContext& schedulerContext);
+  DriveSession(const TapedConfig& config,
+               log::Logger& log,
+               SchedulerContext& schedulerContext,
+               System::virtualWrapper* sysWrapper = nullptr);
 
   TapeSessionResult runIteration(std::stop_token stopToken);
   TapeSessionResult runTapeSession(TapeMount& tapeMount);
@@ -71,7 +81,8 @@ private:
   SchedulerContext& m_schedulerContext;
   // Hardware access is scoped to this ownership period, including preparation and recovery.
   mediachanger::MediaChangerFacade m_mediaChanger;
-  System::realWrapper m_sysWrapper;
+  System::realWrapper m_realSysWrapper;
+  System::virtualWrapper& m_sysWrapper;
   // Active cleanup or transfer tracker; health readers retain their own atomically loaded shared reference.
   std::shared_ptr<const TapeSessionTracker> m_activeTracker;
   // Tracks terminal publication only; hardware ownership is managed independently.

@@ -36,4 +36,16 @@ TEST(TapedConfigTest, PreparationAndFinalizationTimeoutOverrides) {
   EXPECT_EQ(30, config.preparing_timeout_secs);
   EXPECT_EQ(60, config.finalizing_timeout_secs);
 }
+
+TEST(TapedConfigTest, UnloadTimeoutDefaultsAndValidation) {
+  TapedConfig config;
+  EXPECT_EQ(900, config.mounts.tape_unload_timeout_secs);
+  EXPECT_TRUE(config.mounts.validate().ok());
+  config.mounts.tape_unload_timeout_secs = 0;
+  EXPECT_FALSE(config.mounts.validate().ok());
+  EXPECT_NE(std::string::npos, config.mounts.validate().what().find("tape_unload_timeout_secs"));
+  config.mounts.tape_unload_timeout_secs = 1;
+  EXPECT_TRUE(config.mounts.validate().ok());
+}
+
 }  // namespace cta::tape::daemon

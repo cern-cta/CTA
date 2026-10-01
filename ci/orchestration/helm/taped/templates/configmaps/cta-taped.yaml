@@ -70,6 +70,8 @@ data:
       tape_load_timeout_secs = {{ $.Values.mounts.tapeLoadTimeoutSecs }}
       tape_unload_timeout_secs = {{ $.Values.mounts.tapeUnloadTimeoutSecs }}
       unmount_timeout_secs = {{ $.Values.mounts.unmountTimeoutSecs }}
+      preparing_timeout_secs = {{ $.Values.mounts.preparingTimeoutSecs }}
+      finalizing_timeout_secs = {{ $.Values.mounts.finalizingTimeoutSecs }}
 
     [rmcd]
       host = {{ $.Values.rmcd.host | quote }}

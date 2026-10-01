@@ -33,7 +33,17 @@ DriveSession::create(const TapedConfig& config, log::Logger& log, SchedulerConte
   return std::unique_ptr<DriveSession>(new DriveSession(config, log, schedulerContext));
 }
 
-DriveSession::DriveSession(const TapedConfig& config, log::Logger& log, SchedulerContext& schedulerContext)
+std::unique_ptr<DriveSession> DriveSession::create(const TapedConfig& config,
+                                                   log::Logger& log,
+                                                   SchedulerContext& schedulerContext,
+                                                   System::virtualWrapper& sysWrapper) {
+  return std::unique_ptr<DriveSession>(new DriveSession(config, log, schedulerContext, &sysWrapper));
+}
+
+DriveSession::DriveSession(const TapedConfig& config,
+                           log::Logger& log,
+                           SchedulerContext& schedulerContext,
+                           System::virtualWrapper* sysWrapper)
     : m_config(config),
       m_driveInfo(config.drive.name,
                   utils::getShortHostname(),
@@ -47,6 +57,7 @@ DriveSession::DriveSession(const TapedConfig& config, log::Logger& log, Schedule
                                             config.rmcd.request_timeout_secs,
                                             config.rmcd.request_attempts),
                      log),
+      m_sysWrapper(sysWrapper ? *sysWrapper : m_realSysWrapper),
       m_hardwareOwnership(m_lc) {
   m_lc.push(log::Param("tapeDrive", m_driveInfo.driveName));
 }
