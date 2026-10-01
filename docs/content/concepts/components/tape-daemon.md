@@ -66,6 +66,12 @@ A change to desired `Down` can arrive during an active tape session, which can f
 Until then, the transition requested by desired `Down` is pending and the daemon may still be using the hardware to finish the active session and clean up.
 While waiting with reported `Down`, the daemon does not access the hardware.
 Desired `Up` authorises a new drive session and its initial cleanup.
+Reporting activity does not modify desired state: an old drive session's final reported `Down` preserves a newer request for desired `Up`.
+
+The daemon owns startup and shutdown intent.
+The drive session alone reports the end of its hardware ownership, after its tape sessions and cleanup have finished.
+Tape sessions and cleanup helpers report progress and return their failure outcomes to the drive session; they do not independently report terminal `Down`.
+When no drive session owns the hardware, the daemon maintains reported `Down`.
 
 ### Reported state
 
@@ -101,6 +107,7 @@ The table lists the base messages; the recorded down reason may also include det
 | `[cta-taped] ERROR Drive cleanup failed` | Drive cleanup could not establish that the drive was reusable. Additional details can identify an access, configuration, or cartridge-removal failure. |
 | `[cta-taped] ERROR Session left drive unusable` | A tape session left the drive unusable and no more specific existing reason was available. |
 | `[cta-taped] ERROR Session did not stop safely` | The daemon could not confirm that tape session access to the drive had stopped. |
+| `[cta-taped] ERROR Unexpected failure` | An unexpected fatal daemon or drive-session failure prevented continuation. This is not a clean shutdown. |
 
 An existing operator or failure reason is preserved instead of being replaced by startup or shutdown messages.
 With automatic desired `Up` disabled, a previous clean-shutdown reason is replaced by the startup reason when the daemon starts again.
@@ -328,12 +335,15 @@ Daemon restarts may be performed by service supervision; a restart alone is not 
 | **A recoverable scheduling error or timeout occurs** | Waits and retries within the current drive session, without repeating the initial drive cleanup. | Scheduling continues when the scheduler can supply work. No operator state change is required. |
 | **A tape session cannot access the drive or leaves it unusable** | Sets desired `Down` and reports `Down`, recording or preserving the failure reason. | **Operator action:** Resolve the problem and request desired `Up`. |
 | **Mounting or transferring fails, but cleanup leaves the drive reusable** | Completes cleanup and reports the failed work. The drive session can continue if desired `Up` remains set. | Further work can be scheduled. Recovery of failed file-transfer jobs is separate from recovery of the drive. |
-| **An unexpected tape session failure occurs after its transfer threads have stopped** | If desired `Up` remains set, attempts recovery cleanup before further scheduling. If desired `Down` is already set, defers that cleanup. | Successful recovery with continued desired `Up` permits scheduling to resume. **Operator action if desired `Down` is set:** Resolve any remaining problem and request desired `Up` to start a new drive session with drive cleanup. |
+| **An unexpected tape session failure occurs after its transfer threads have stopped** | Attempts recovery cleanup while the drive session still owns the hardware, including when desired `Down` has been requested. | Successful recovery with continued desired `Up` permits scheduling to resume. If desired `Down` is observed, the drive session ends after cleanup. |
 | **Cleanup fails, including a stuck cartridge** | Sets desired `Down` and reports `Down`; no further tape sessions are scheduled. A cartridge may remain loaded. | **Operator action:** Address the hardware or cleanup problem, then request desired `Up`. |
-| **The daemon cannot confirm that a failed tape session has finished using the drive** | After an error starting or stopping its transfer threads, the daemon cannot confirm that drive access has stopped. It skips recovery cleanup to avoid overlapping unload or unmount with reads or writes. It attempts to set desired `Down` and report `Down` with the reason `Session did not stop safely`, then exits (see [Down reasons](#down-reasons)). | The old process must end before a replacement takes control. Restart the daemon; drive cleanup is required. **Operator action if desired `Down` was recorded:** Request desired `Up`. |
+| **The daemon cannot confirm that a failed tape session has finished using the drive** | After an error starting or stopping its transfer threads, the daemon cannot confirm that drive access has stopped. It skips recovery cleanup to avoid overlapping unload or unmount with reads or writes. It requests desired `Down` with the reason `Session did not stop safely`, but does not report hardware release while worker termination remains uncertain, then exits (see [Down reasons](#down-reasons)). | The old process must end before a replacement takes control. Restart the daemon; drive cleanup is required. **Operator action if desired `Down` was recorded:** Request desired `Up`. |
 | **The process crashes or is abruptly terminated before shutdown runs** | Cannot finish cleanup or publish shutdown state. It leaves the last successfully recorded desired state unchanged, which is normally desired `Up` during an active drive session. The reported state may be stale and a cartridge may remain loaded. | Restart the daemon. Existing desired `Up` permits drive cleanup on restart without a new operator request, as described below. |
 
-Whenever a failure requests desired `Down`, an existing specific operator or failure reason is preserved where possible.
+Whenever a failure or shutdown requests desired `Down`, taped reads the current desired state and preserves an observed specific Down reason.
+This read and update are not atomic: a concurrent operator change can be overwritten.
+Atomic desired-state updates remain deferred.
+Reported activity and final release do not overwrite desired state or its reason.
 
 ### Recovery after a crash
 

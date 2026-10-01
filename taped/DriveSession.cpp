@@ -5,36 +5,46 @@
 
 #include "DriveSession.hpp"
 
+#include "DriveStatePublication.hpp"
+#include "SchedulerContext.hpp"
+#include "catalogue/Catalogue.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/TimeoutException.hpp"
 #include "common/semconv/Logging.hpp"
+#include "common/utils/ScopeExit.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/TapeMount.hpp"
+#include "session/DriveCleaner.hpp"
+#include "session/TapeSession.hpp"
 #include "session/TapeSessionWorkerTeardownIncomplete.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <exception>
 #include <optional>
+#include <unistd.h>
 
 namespace cta::tape::daemon {
 
-namespace {
-// Expected preparation outcome, caught only by create().
-struct PreparationDeclined {};
-}  // namespace
-
 std::unique_ptr<DriveSession>
-DriveSession::create(const TapedConfig& config, log::Logger& log, DriveOperations& operations) {
+DriveSession::create(const TapedConfig& config, log::Logger& log, SchedulerContext& schedulerContext) {
+  auto session = std::unique_ptr<DriveSession>(new DriveSession(config, log, schedulerContext));
   try {
-    return std::unique_ptr<DriveSession>(new DriveSession(config, log, operations));
-  } catch (const PreparationDeclined&) {
-    return nullptr;
+    if (!session->cleanDrive()) {
+      session->m_hardwareOwnership.release();
+      return nullptr;
+    }
+  } catch (...) {
+    // Destruction releases the session without replacing the preparation failure.
+    session->requestDownNoThrow(common::dataStructures::DriveDownReason::UnexpectedFailure, "Drive preparation failed");
+    throw;
   }
+  return session;
 }
 
-DriveSession::DriveSession(const TapedConfig& config, log::Logger& log, DriveOperations& operations)
+DriveSession::DriveSession(const TapedConfig& config, log::Logger& log, SchedulerContext& schedulerContext)
     : m_config(config),
       m_driveInfo(config.drive.name,
                   utils::getShortHostname(),
@@ -42,62 +52,98 @@ DriveSession::DriveSession(const TapedConfig& config, log::Logger& log, DriveOpe
                   config.drive.device,
                   config.drive.control_path),
       m_lc(log),
-      m_operations(operations) {
-  try {
-    if (!cleanDrive()) {
-      throw PreparationDeclined {};
-    }
-  } catch (...) {
-    // A failed constructor has no destructor; leave reported state down without masking the failure.
-    release();
-    throw;
-  }
+      m_schedulerContext(schedulerContext),
+      m_mediaChanger(mediachanger::RmcProxy(config.rmcd.host,
+                                            config.rmcd.port,
+                                            config.rmcd.request_timeout_secs,
+                                            config.rmcd.request_attempts),
+                     log),
+      m_hardwareOwnership(m_driveInfo, m_lc, m_schedulerContext) {}
+
+DriveSession::~DriveSession() noexcept = default;
+
+void DriveSession::requestDown(common::dataStructures::DriveDownReason reason, std::string_view detail) {
+  requestDriveDown(m_schedulerContext.scheduler().getCatalogue(), m_driveInfo.driveName, reason, m_lc, detail);
 }
 
-DriveSession::~DriveSession() noexcept {
-  // TODO: review desired-down publication on DriveSession shutdown versus daemon shutdown.
-  // For now, preserve operator intent here so a new up request can start another session.
-  // Future session-owned resources (such as a SCSI reservation) must be released here, before reporting Down.
-  release();
-}
-
-void DriveSession::release() noexcept {
+void DriveSession::requestDownNoThrow(common::dataStructures::DriveDownReason reason,
+                                      std::string_view detail) noexcept {
   try {
-    if (m_operations.getDriveState()) {
-      m_operations.scheduler().reportDriveStatus(m_driveInfo,
-                                                 common::dataStructures::MountType::NoMount,
-                                                 common::dataStructures::DriveStatus::Down,
-                                                 m_lc);
-    }
+    requestDown(reason, detail);
   } catch (...) {
-    // Destruction and constructor rollback must preserve the original exception, even if logging fails.
     try {
-      try {
-        throw;
-      } catch (const std::exception& ex) {
-        log::ScopedParamContainer params(m_lc);
-        const auto* ctaException = dynamic_cast<const exception::Exception*>(&ex);
-        params.add(semconv::log::exceptionMessage, ctaException ? ctaException->getMessageValue() : ex.what());
-        m_lc.log(log::ERR, "Failed to publish Down while releasing drive session.");
-      } catch (...) {
-        m_lc.log(log::ERR, "Unknown failure publishing Down while releasing drive session.");
-      }
+      m_lc.log(log::ERR, "Failed to request desired Down while handling a drive-session failure.");
     } catch (...) {}
   }
 }
 
+bool DriveSession::isLive() const {
+  const auto now = std::chrono::steady_clock::now();
+  const auto tracker = std::atomic_load(&m_activeTracker);
+  if (!tracker) {
+    return true;
+  }
+  const auto snapshot = tracker->livenessSnapshot();
+  if (!snapshot.state) {
+    return true;
+  }
+
+  auto lastActivity = snapshot.stateEnteredAt;
+  uint32_t timeoutSecs;
+  using enum cta::tape::session::TapeSessionState;
+  // We are only allowed to spend a certain amount of time in each state
+  // If we spend longer, it means we are stuck and isLive() should return false
+  switch (*snapshot.state) {
+    case Mounting:
+      timeoutSecs = m_config.mounts.mount_timeout_secs;
+      break;
+    case Loading:
+      timeoutSecs = m_config.mounts.tape_load_timeout_secs;
+      break;
+    case Unloading:
+      timeoutSecs = m_config.mounts.tape_unload_timeout_secs;
+      break;
+    case Unmounting:
+      timeoutSecs = m_config.mounts.unmount_timeout_secs;
+      break;
+    case Transferring:
+      timeoutSecs = m_config.transfers.no_block_move_timeout_secs;
+      lastActivity = std::max(lastActivity, snapshot.lastBlockMovement);
+      break;
+    case DrainingToDisk:
+      timeoutSecs = m_config.transfers.retrieve.drain_to_disk_timeout_secs;
+      break;
+    case Preparing:
+    case Finalizing:
+    case Finished:
+      return true;
+    default:
+      return true;
+  }
+  return now - lastActivity < std::chrono::seconds(timeoutSecs);
+}
+
 void DriveSession::run(std::stop_token stopToken) {
-  while (!stopToken.stop_requested()) {
-    const auto result = runIteration(stopToken);
-    // The mount has been destroyed; object-store agents can now be retired safely.
-    m_operations.resetScheduler();
-    if (!result.driveReusable) {
-      return;
+  try {
+    while (m_hardwareOwnership.ownsHardware() && !stopToken.stop_requested()) {
+      const auto result = runIteration(stopToken);
+      if (!result.driveReusable) {
+        break;
+      }
+      if (!result.successful && !stopToken.stop_requested()) {
+        // TODO (separate MR): interrupt sleeps and active transfers during graceful shutdown.
+        ::sleep(m_config.mounts.idle_scheduling_interval_secs);
+      }
     }
-    if (!result.successful && !stopToken.stop_requested()) {
-      // TODO (separate MR): interrupt sleeps and active transfers during graceful shutdown.
-      m_operations.sleep(m_config.mounts.idle_scheduling_interval_secs);
-    }
+    m_hardwareOwnership.release();
+  } catch (const TapeSessionWorkerTeardownIncomplete& ex) {
+    // The daemon must exit without announcing that hardware access has stopped.
+    m_hardwareOwnership.markUnsafe();
+    requestDownNoThrow(common::dataStructures::DriveDownReason::SessionDidNotStopSafely, ex.what());
+    throw;
+  } catch (...) {
+    requestDownNoThrow(common::dataStructures::DriveDownReason::UnexpectedFailure, "Drive session failed");
+    throw;
   }
 }
 
@@ -109,16 +155,9 @@ TapeSessionResult DriveSession::runIteration(std::stop_token stopToken) {
   if (stopToken.stop_requested()) {
     return {.driveReusable = false};
   }
-  auto& scheduler = m_operations.scheduler();
+  auto& scheduler = m_schedulerContext.scheduler();
   const auto desired = scheduler.getDesiredDriveState(m_driveInfo.driveName, m_lc);
-  const auto reported = m_operations.getDriveState();
-  if (!reported) {
-    throw Scheduler::NoSuchDrive("Drive disappeared before scheduling");
-  }
-  // TODO: track the end of hardware ownership explicitly instead of inferring it from catalogue status.
-  // Keep the reported-Down check until then: desired UP may arrive before this loop observes desired DOWN.
-  // That case must start a new drive session with preparation, rather than resume this one.
-  if (!desired.up || reported->driveStatus == common::dataStructures::DriveStatus::Down) {
+  if (!desired.up) {
     // Given the invariants above, no need to clean the drive here
     return {.driveReusable = false};
   }
@@ -133,7 +172,13 @@ TapeSessionResult DriveSession::runIteration(std::stop_token stopToken) {
   // Try to get a mount. A scheduling timeout is recoverable by waiting and trying again.
   utils::Timer t;
   try {
-    tapeMount = m_operations.getNextMount();
+    // The dry run avoids constructing an assignment when no work is eligible.
+    if (scheduler.getNextMountDryRun(m_driveInfo.logicalLibrary, m_driveInfo.driveName, m_lc)) {
+      tapeMount = scheduler.getNextMount(m_driveInfo.logicalLibrary,
+                                         m_driveInfo.driveName,
+                                         m_lc,
+                                         static_cast<uint64_t>(m_config.mounts.get_next_mount_timeout_secs) * 1000000);
+    }
   } catch (const exception::TimeoutException& ex) {
     log::ScopedParamContainer params(m_lc);
     params.add("totalScheduleMountTime", t.secs())
@@ -157,69 +202,90 @@ TapeSessionResult DriveSession::runIteration(std::stop_token stopToken) {
   }
 
   // Idle polls and scheduling errors both request the ordinary retry delay.
-  // The mount is destroyed before the caller resets the scheduler.
-  return tapeMount ? runTapeSession(*tapeMount) : TapeSessionResult {.successful = false};
+  if (!tapeMount) {
+    return {.successful = false};
+  }
+
+  const auto result = runTapeSession(*tapeMount);
+  // Destroy the mount before retiring the scheduler resources it borrows.
+  // This is only necessary in the objectstore
+  tapeMount.reset();
+  m_schedulerContext.retire();
+  return result;
 }
 
 TapeSessionResult DriveSession::runTapeSession(TapeMount& tapeMount) {
   const auto vid = tapeMount.getVid();
-  TapeSessionResult transferResult;
+  std::optional<TapeSessionResult> transferResult;
   try {
-    // Run a tape session
-    transferResult = m_operations.runTapeSession(tapeMount);
+    TapeSession session(m_lc.logger(),
+                        m_sysWrapper,
+                        m_driveInfo,
+                        m_mediaChanger,
+                        tapeMount,
+                        m_config.transfers,
+                        m_config.mounts.tape_load_timeout_secs,
+                        m_schedulerContext.scheduler());
+    // Health readers retain the tracker without extending the borrowed mount's lifetime.
+    std::atomic_store<const TapeSessionTracker>(&m_activeTracker, session.sharedTracker());
+    const utils::ScopeExit clearActiveTracker(
+      [this] { std::atomic_store<const TapeSessionTracker>(&m_activeTracker, nullptr); });
+    transferResult = session.execute();
   } catch (const TapeSessionWorkerTeardownIncomplete&) {
     // Cleanup cannot establish safe reuse while a worker may still access the drive.
     throw;
+  } catch (const exception::Exception& ex) {
+    log::ScopedParamContainer params(m_lc);
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
+    m_lc.log(log::ERR, "Tape session failed. Attempting drive recovery.");
+  } catch (const std::exception& ex) {
+    log::ScopedParamContainer params(m_lc);
+    params.add(semconv::log::exceptionMessage, ex.what());
+    m_lc.log(log::ERR, "Tape session failed. Attempting drive recovery.");
   } catch (...) {
-    // Log the original failure before recovery, without attaching its parameters to cleanup logs.
-    try {
-      throw;
-    } catch (const std::exception& ex) {
-      log::ScopedParamContainer params(m_lc);
-      const auto* ctaException = dynamic_cast<const exception::Exception*>(&ex);
-      params.add(semconv::log::exceptionMessage, ctaException ? ctaException->getMessageValue() : ex.what());
-      m_lc.log(log::ERR, "Tape session failed. Attempting drive recovery.");
-    } catch (...) {
-      m_lc.log(log::ERR, "Tape session failed with an unknown exception. Attempting drive recovery.");
-    }
+    m_lc.log(log::ERR, "Tape session failed with an unknown exception. Attempting drive recovery.");
+  }
 
-    // TODO: distinguish stop-induced desired-down from relinquished hardware ownership.
-    // A session that throws after stop() publishes desired-down currently skips recovery cleanup.
-    // Resolve this ownership distinction when adding session interruption.
+  if (!transferResult) {
+    // The session and its diagnostic log parameters are gone before recovery starts.
+    // Desired Down requests stopping work; ownership is retained until release().
     return {.driveReusable = cleanDrive(vid), .successful = false};
   }
 
-  if (!transferResult.driveReusable) {
+  if (!transferResult->driveReusable) {
     // Preserve specific session or operator reasons. Publication failures propagate.
-    m_operations.scheduler().putDriveDown(m_driveInfo,
-                                          common::dataStructures::DriveDownReason::SessionLeftDriveUnusable,
-                                          m_lc);
+    requestDown(transferResult->downReason.value_or(common::dataStructures::DriveDownReason::SessionLeftDriveUnusable),
+                transferResult->downDetail);
   }
-  return transferResult;
+  return *transferResult;
 }
 
 bool DriveSession::cleanDrive(const std::optional<std::string>& vid) {
-  auto& scheduler = m_operations.scheduler();
-  // Desired Down relinquishes hardware access, including recovery after a failed tape session.
-  if (!scheduler.getDesiredDriveState(m_driveInfo.driveName, m_lc).up) {
+  auto& scheduler = m_schedulerContext.scheduler();
+  // A new ownership period needs permission; recovery retains access until explicit release.
+  if (!m_hardwareOwnership.ownsHardware() && !scheduler.getDesiredDriveState(m_driveInfo.driveName, m_lc).up) {
     return false;
   }
-  const auto reported = m_operations.getDriveState();
+  const auto reported = scheduler.getCatalogue().DriveState()->getTapeDrive(m_driveInfo.driveName);
   if (!reported) {
     throw Scheduler::NoSuchDrive("Drive disappeared before cleanup");
   }
-  // The catalogue VID may be stale after external operations while Down.
-  // Only a mount from this ownership period supplies a known recovery VID.
-  // Claim hardware ownership before cleanup; reported Down permits operator access.
-  scheduler.reportDriveStatus(m_driveInfo,
-                              common::dataStructures::MountType::NoMount,
-                              common::dataStructures::DriveStatus::CleaningUp,
-                              m_lc);
+  m_hardwareOwnership.acquire();
   m_lc.log(log::INFO, "Cleaning drive before allowing scheduling.");
   bool cleaned = false;
   std::string cleanupError;
   try {
-    cleaned = m_operations.clean(vid, true);
+    TapeSessionTracker tracker;
+    DriveCleaner cleaner(m_mediaChanger,
+                         m_lc.logger(),
+                         m_driveInfo,
+                         vid.value_or(""),
+                         true,
+                         m_config.mounts.tape_load_timeout_secs,
+                         scheduler.getCatalogue(),
+                         tracker);
+    cleaned = cleaner.execute(m_sysWrapper);
+    cleanupError = cleaner.errorMessage();
   } catch (const cta::exception::Exception& ex) {
     cleanupError = ex.getMessageValue();
     log::ScopedParamContainer params(m_lc);
@@ -236,21 +302,14 @@ bool DriveSession::cleanDrive(const std::optional<std::string>& vid) {
   }
 
   if (!cleaned) {
-    scheduler.putDriveDown(m_driveInfo,
-                           common::dataStructures::DriveDownReason::DriveCleanupFailed,
-                           m_lc,
-                           cleanupError);
+    requestDown(common::dataStructures::DriveDownReason::DriveCleanupFailed, cleanupError);
     return false;
   }
 
   // Cleaning takes time; an operator may have withdrawn the up request while it ran.
-  // Never publish desired-up here. The catalogue also gates reported Up on current desired state.
+  // Never publish desired-up here; a withdrawn request ends this ownership period.
   if (!scheduler.getDesiredDriveState(m_driveInfo.driveName, m_lc).up) {
-    // Cleanup is complete. Honour the operator's down request without replacing its reason.
-    m_operations.scheduler().reportDriveStatus(m_driveInfo,
-                                               common::dataStructures::MountType::NoMount,
-                                               common::dataStructures::DriveStatus::Down,
-                                               m_lc);
+    // The caller releases ownership and reports Down without overwriting newer operator intent.
     return false;
   }
   scheduler.reportDriveStatus(m_driveInfo,

@@ -5,7 +5,6 @@
 
 #include "TapedApp.hpp"
 
-#include "SystemDriveOperations.hpp"
 #include "TapedUtils.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/semconv/Attributes.hpp"
@@ -19,7 +18,6 @@ namespace cta::tape::daemon {
 
 TapedApp::~TapedApp() {
   m_tapeDaemon.reset();
-  m_driveOperations.reset();
   google::protobuf::ShutdownProtobufLibrary();
 }
 
@@ -58,8 +56,7 @@ int TapedApp::run(const TapedConfig& config, cta::log::Logger& log) {
   telemetry::metrics::ScopedTapedStateMetrics stateMetrics;
 
   // Run the main part of taped
-  m_driveOperations = makeSystemDriveOperations(config, log);
-  m_tapeDaemon = std::make_unique<TapeDaemon>(config, log, *m_driveOperations);
+  m_tapeDaemon = std::make_unique<TapeDaemon>(config, log);
   m_publishedDaemon.store(m_tapeDaemon.get());
   return m_tapeDaemon->run();
 }

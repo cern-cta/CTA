@@ -84,7 +84,9 @@ void DummyDriveStateCatalogue::setDesiredTapeDriveState(const std::string&,
                                                         const common::dataStructures::DesiredDriveState& desiredState) {
   m_tapeDriveStatus.desiredUp = desiredState.up;
   m_tapeDriveStatus.desiredForceDown = desiredState.forceDown;
-  m_tapeDriveStatus.reasonUpDown = desiredState.reason;
+  if (desiredState.reason) {
+    m_tapeDriveStatus.reasonUpDown = desiredState.reason;
+  }
 }
 
 void DummyDriveStateCatalogue::setDesiredTapeDriveStateComment(const std::string& tapeDriveName,
@@ -108,7 +110,15 @@ void DummyDriveStateCatalogue::updateTapeDriveStatistics(
 bool DummyDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDrive& tapeDrive) {
   const bool changed =
     m_tapeDriveStatus.driveName != tapeDrive.driveName || m_tapeDriveStatus.driveStatus != tapeDrive.driveStatus;
+  const auto desiredUp = m_tapeDriveStatus.desiredUp;
+  const auto forceDown = m_tapeDriveStatus.desiredForceDown;
+  const auto reason = m_tapeDriveStatus.reasonUpDown;
   m_tapeDriveStatus = tapeDrive;
+  m_tapeDriveStatus.desiredUp = desiredUp;
+  m_tapeDriveStatus.desiredForceDown = forceDown;
+  if (!tapeDrive.reasonUpDown) {
+    m_tapeDriveStatus.reasonUpDown = reason;
+  }
   return changed;
 }
 

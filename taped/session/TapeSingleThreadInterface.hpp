@@ -65,6 +65,7 @@ protected:
 
   /** Whether the tape thread permits the drive to be reused. */
   bool m_driveReusable = true;
+  std::string m_cleanupError;
 
   /** Session statistics */
   TapeTransferStats m_stats;
@@ -188,6 +189,9 @@ protected:
 
 public:
   bool isDriveReusable() const { return m_driveReusable; }
+
+  // Read after joining the tape thread.
+  const std::string& cleanupError() const { return m_cleanupError; }
 
   // Read after joining the tape thread.
   bool loadingAttempted() const { return m_loadingAttempted; }

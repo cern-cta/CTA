@@ -849,19 +849,13 @@ bool RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
       START_START_TIME = :START_START_TIME,
     )SQL";
   }
-  if (tapeDrive.driveStatus == common::dataStructures::DriveStatus::Down) {
-    sql += R"SQL(
-      DESIRED_UP = :DESIRED_UP,
-      DESIRED_FORCE_DOWN = :DESIRED_FORCE_DOWN,
-    )SQL";
-  }
   // If the drive is a state incompatible with space reservation, make sure there is none:
   if (tapeDrive.driveStatus == common::dataStructures::DriveStatus::Up) {
     sql += R"SQL(
       DISK_SYSTEM_NAME = NULL,
       RESERVED_BYTES = NULL,
       RESERVATION_SESSION_ID = NULL,
-      DRIVE_STATUS = CASE WHEN DESIRED_UP = '0' THEN 'DOWN' ELSE 'UP' END,
+      DRIVE_STATUS = 'UP',
     )SQL";
   } else {
     sql += "DRIVE_STATUS = '" + driveStatusStr + "',";
@@ -952,10 +946,6 @@ bool RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
   }
   if (tapeDrive.driveStatus == common::dataStructures::DriveStatus::Starting) {
     setOptionalTime(":START_START_TIME", tapeDrive.startStartTime);
-  }
-  if (tapeDrive.driveStatus == common::dataStructures::DriveStatus::Down) {
-    stmt.bindBool(":DESIRED_UP", tapeDrive.desiredUp);
-    stmt.bindBool(":DESIRED_FORCE_DOWN", tapeDrive.desiredForceDown);
   }
   bindOptionalStringIfSet(":REASON_UP_DOWN", tapeDrive.reasonUpDown);
   bindOptionalStringIfSet(":CURRENT_VID", tapeDrive.currentVid);

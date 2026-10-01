@@ -16,7 +16,7 @@
 
 namespace cta::tape::daemon {
 
-// Runtime adapter: constructs TapeDaemon and its dependencies and forwards stop and health callbacks.
+// Runtime adapter: constructs TapeDaemon and forwards stop and health callbacks.
 class TapedApp final {
 public:
   /**
@@ -25,7 +25,7 @@ public:
   TapedApp() = default;
 
   /**
-   * @brief Destroy the daemon and operations before shutting down the Protocol Buffers library.
+   * @brief Destroy the daemon and its dependencies before shutting down the Protocol Buffers library.
    */
   ~TapedApp();
 
@@ -74,8 +74,6 @@ public:
   bool isReady() const;
 
 private:
-  // Operations outlive the daemon that borrows them.
-  std::unique_ptr<DriveOperations> m_driveOperations;
   std::unique_ptr<TapeDaemon> m_tapeDaemon = nullptr;
   // Health callbacks run concurrently with daemon construction.
   std::atomic<TapeDaemon*> m_publishedDaemon {nullptr};
