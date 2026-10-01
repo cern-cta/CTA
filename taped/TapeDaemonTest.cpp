@@ -5,7 +5,6 @@
 
 #include "TapeDaemon.hpp"
 
-#include "SchedulerTestUtils.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "catalogue/dummy/DummyLogicalLibraryCatalogue.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
@@ -14,6 +13,13 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <stdexcept>
+
+#ifdef CTA_PGSCHED
+#include "scheduler/rdbms/RelationalDBTestFactory.hpp"
+#else
+#include "objectstore/BackendVFS.hpp"
+#include "scheduler/OStoreDB/OStoreDBFactory.hpp"
+#endif
 
 namespace cta::tape::daemon {
 namespace {
@@ -92,7 +98,11 @@ protected:
   void SetUp() override {
     config.drive.name = "drive";
     config.drive.logical_library_name = "library";
-    db = testingUtils::createSchedulerDatabase(catalogue);
+#ifdef CTA_PGSCHED
+    db = RelationalDBTestFactory().create(catalogue);
+#else
+    db = OStoreDBFactory<objectstore::BackendVFS>().create(catalogue);
+#endif
     scheduler = std::make_unique<testing::StrictMock<MockDriveScheduler>>(*catalogue, *db, "test");
     // Fail unexpected polls immediately instead of entering the production wait loop.
     ON_CALL(*scheduler, getDesiredDriveState(_, _))
