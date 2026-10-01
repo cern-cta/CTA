@@ -1056,6 +1056,17 @@ public:
       }
     }
     if constexpr (std::is_same_v<Mount, FailingTransferRetrieveMount>) {
+      const auto noFilesEvents =
+        tracker.outcomeSnapshot().events[static_cast<size_t>(TapeSessionEvent::NoFilesToRecall)];
+      if (point == TransferFailurePoint::None) {
+        EXPECT_EQ(1, noFilesEvents);
+        EXPECT_EQ(0, mount.mountedAttempts);
+        EXPECT_EQ(0, countLogMessages(logger.getLog(), "Dummy mount for read-only access"));
+      } else if (point == TransferFailurePoint::ReservationDenied || point == TransferFailurePoint::FetchCta
+                 || point == TransferFailurePoint::FetchStandard || point == TransferFailurePoint::FetchDatabase) {
+        // Failed fetches and unavailable disk space do not mean the scheduler supplied no jobs.
+        EXPECT_EQ(0, noFilesEvents);
+      }
       if (mount.needsJob()) {
         EXPECT_EQ(1, mount.jobDestructions.load());
         EXPECT_EQ(1, mount.reservationAttempts);
