@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "EncryptionControl.hpp"
 #include "TapeSessionStats.hpp"
 #include "TapeSessionTracker.hpp"
 #include "VolumeInfo.hpp"
@@ -22,6 +21,7 @@
 #include "mediachanger/LibrarySlotParser.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "taped/drive/DriveInterface.hpp"
+#include "taped/drive/EncryptionControl.hpp"
 #include "telemetry/metrics/TapedMetrics.hpp"
 
 #include <opentelemetry/context/runtime_context.h>

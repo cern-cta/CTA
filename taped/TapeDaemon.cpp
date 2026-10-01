@@ -5,8 +5,6 @@
 
 #include "TapeDaemon.hpp"
 
-#include "DriveSession.hpp"
-#include "DriveStatePublication.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
@@ -17,6 +15,8 @@
 #include "rdbms/Login.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "session/TapeSessionWorkerTeardownIncomplete.hpp"
+#include "taped/session/DriveSession.hpp"
+#include "taped/session/DriveStatePublication.hpp"
 
 #include <algorithm>
 #include <exception>

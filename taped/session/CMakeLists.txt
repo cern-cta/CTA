@@ -4,28 +4,33 @@
 find_package(ZLIB REQUIRED)
 
 set(CTATAPEDSESSION_LIBRARY_SRCS
-  DriveCleaner.cpp
-  MountedTape.cpp
-  DiskReadThreadPool.cpp
-  DiskReadTask.cpp
-  DiskWriteTask.cpp
-  DiskWriteThreadPool.cpp
-  EmptyDriveProbe.cpp
-  EncryptionControl.cpp
-  TapeSessionReporter.cpp
-  MigrationMemoryManager.cpp
-  MigrationReportPacker.cpp
-  MigrationTaskInjector.cpp
   TapeSession.cpp
-  RecallMemoryManager.cpp
-  RecallTaskInjector.cpp
-  RecallReportPacker.cpp
-  TapeReadSingleThread.cpp
-  TapeWriteSingleThread.cpp
-  TapeWriteTask.cpp
-  TransferTaskTracker.cpp
+  TapeSessionReporter.cpp
   TapeSessionState.cpp
-  SessionType.cpp)
+  SessionType.cpp
+
+  # These operations depend on session tracking and retain their existing library membership.
+  ../drive/DriveCleaner.cpp
+  ../drive/EmptyDriveProbe.cpp
+  ../drive/EncryptionControl.cpp
+  ../drive/MountedTape.cpp
+
+  archive/DiskReadTask.cpp
+  archive/DiskReadThreadPool.cpp
+  archive/MigrationMemoryManager.cpp
+  archive/MigrationReportPacker.cpp
+  archive/MigrationTaskInjector.cpp
+  archive/TapeWriteSingleThread.cpp
+  archive/TapeWriteTask.cpp
+
+  retrieve/DiskWriteTask.cpp
+  retrieve/DiskWriteThreadPool.cpp
+  retrieve/RecallMemoryManager.cpp
+  retrieve/RecallReportPacker.cpp
+  retrieve/RecallTaskInjector.cpp
+  retrieve/TapeReadSingleThread.cpp
+
+  pipeline/TransferTaskTracker.cpp)
 
 add_library(ctatapedsession
   ${CTATAPEDSESSION_LIBRARY_SRCS})
@@ -43,17 +48,20 @@ target_link_libraries(ctatapedsession
   ZLIB::ZLIB)
 
 add_library(ctatapedsessionunittests SHARED
-  DriveCleanerTest.cpp
-  MountedTapeTest.cpp
   TapeSessionTest.cpp
-  DiskReadTaskTest.cpp
-  DiskWriteTaskTest.cpp
-  DiskWriteThreadPoolTest.cpp
-  MigrationReportPackerTest.cpp
-  RecallReportPackerTest.cpp
-  RecallTaskInjectorTest.cpp
   TapeSessionReporterTest.cpp
   TapeSessionTrackerTest.cpp
+
+  ../drive/DriveCleanerTest.cpp
+  ../drive/MountedTapeTest.cpp
+
+  archive/DiskReadTaskTest.cpp
+  archive/MigrationReportPackerTest.cpp
+
+  retrieve/DiskWriteTaskTest.cpp
+  retrieve/DiskWriteThreadPoolTest.cpp
+  retrieve/RecallReportPackerTest.cpp
+  retrieve/RecallTaskInjectorTest.cpp
 )
 set_property(TARGET ctatapedsessionunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedsessionunittests PROPERTY   VERSION "${CTA_LIBVERSION}")

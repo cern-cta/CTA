@@ -1,0 +1,152 @@
+/*
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+#pragma once
+
+#include "RecallReportPacker.hpp"
+#include "TapeReadTask.hpp"
+#include "common/process/threading/BlockingQueue.hpp"
+#include "common/process/threading/Thread.hpp"
+#include "common/utils/Timer.hpp"
+#include "taped/drive/DriveInterface.hpp"
+#include "taped/drive/MountedTape.hpp"
+#include "taped/session/TapeSessionTracker.hpp"
+#include "taped/session/TapeSingleThreadInterface.hpp"
+#include "taped/session/VolumeInfo.hpp"
+
+#include <iostream>
+#include <memory>
+#include <stdio.h>
+
+namespace cta::tape::daemon {
+
+class RecallTaskInjector;
+
+/**
+ * This class will execute the different tape read tasks.
+ *
+ */
+class TapeReadSingleThread : public TapeSingleThreadInterface<TapeReadTask> {
+public:
+  /**
+   * Constructor
+   */
+  TapeReadSingleThread(cta::tape::drive::DriveInterface& drive,
+                       cta::mediachanger::MediaChangerFacade& mediaChanger,
+                       TapeSessionTracker& tracker,
+                       const VolumeInfo& volInfo,
+                       uint64_t maxFilesRequest,
+                       const cta::log::LogContext& logContext,
+                       RecallReportPacker& reportPacker,
+                       const bool useLbp,
+                       const bool useRAO,
+                       const bool useEncryption,
+                       const std::string& externalEncryptionKeyScript,
+                       const cta::RetrieveMount& retrieveMount,
+                       const uint32_t tapeLoadTimeout,
+                       cta::catalogue::Catalogue& catalogue);
+
+  /**
+   * @brief Attach the task injector and start the tape reader.
+   *
+   * The injector supplies more work and coordinates recall startup and completion.
+   * It is attached here because its construction requires the tape reader to exist first.
+   *
+   * @param injector Borrowed task injector; must remain alive until the tape reader has been joined.
+   */
+  void startThreads(RecallTaskInjector& injector);
+
+private:
+  // Finalize worker reporting around the mounted cartridge cleanup.
+  class TapeThreadFinalizer {
+    TapeReadSingleThread& m_this;
+    // As we are living in the single thread of tape, we can borrow the timer
+    cta::utils::Timer& m_timer;
+    std::optional<MountedTape>& m_mountedTape;
+    const MountedTape::Outcome& m_outcome;
+
+  public:
+    TapeThreadFinalizer(TapeReadSingleThread& parent,
+                        cta::utils::Timer& timer,
+                        std::optional<MountedTape>& mountedTape,
+                        const MountedTape::Outcome& outcome)
+        : m_this(parent),
+          m_timer(timer),
+          m_mountedTape(mountedTape),
+          m_outcome(outcome) {}
+
+    ~TapeThreadFinalizer();
+  };
+
+  /**
+   * Pop a task from its tasks and if there is not enough tasks left, it will
+   * ask the task injector for more
+   * @return m_tasks.pop();
+   */
+  TapeReadTask* popAndRequestMoreJobs();
+
+  /**
+   * Try to open an tapeFile::ReadSession, if it fails, we got an exception.
+   * Return an std::unique_ptr will ensure the callee will have the ownership
+   * of the object through unique_ptr's copy constructor
+   * @return
+   */
+  std::unique_ptr<cta::tape::tapeFile::ReadSession> openReadSession();
+
+  /**
+   * This function is from Thread, it is the function that will do all the job
+   */
+  void run() override;
+
+  /**
+   * Log m_stats parameters into m_logContext with msg at the given level
+   */
+  void logWithStat(int level, const std::string& msg, cta::log::ScopedParamContainer& params);
+
+  /**
+   * Number of files a single request to the client might give us.
+   * Used in the loop-back function to ask the task injector to request more job
+   */
+  const uint64_t m_maxFilesRequest;
+
+  ///a pointer to task injector, thus we can ask him for more tasks
+  RecallTaskInjector* m_taskInjector {};
+
+  /// Reference to the RecallReportPacker, used to update tape/drive state during recall
+  RecallReportPacker& m_reportPacker;
+
+  /**
+   * The boolean variable describing to use on not to use Logical
+   * Block Protection.
+   */
+  const bool m_useLbp;
+
+  /**
+   * The boolean variable describing to use on not to use Recommended
+   * Access Order
+   */
+  bool m_useRAO;
+
+  /**
+   * The retrieve mount object to get the VO, the tape pool and the density of the tape
+   * on which we are reading
+   */
+  const cta::RetrieveMount& m_retrieveMount;
+
+  /**
+   * Reference to the catalogue. It is only used in EncryptionControl to modify tape information
+   */
+  cta::catalogue::Catalogue& m_catalogue;
+
+  void countTapeAlert(uint16_t tapeAlertCode) override { m_tracker.incrementTapeAlert(tapeAlertCode); }
+
+protected:
+  /**
+   * Logs SCSI metrics for read session.
+   */
+  void logSCSIMetrics() override;
+};  // class TapeReadSingleThread
+
+}  // namespace cta::tape::daemon
