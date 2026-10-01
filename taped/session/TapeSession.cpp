@@ -414,6 +414,9 @@ void cta::tape::daemon::TapeSession::executeRead(cta::log::LogContext& logContex
       }
       m_tapeSessionTracker->setMountAttempted(false);
       m_tapeSessionTracker->updateTapeTransferStats({});
+      if (noFilesToRecall) {
+        m_tapeSessionTracker->recordEvent(TapeSessionEvent::NoFilesToRecall);
+      }
       if (fetchResult && !reservationResult) {
         m_tapeSessionTracker->recordEvent(TapeSessionEvent::DiskSpaceReservationTestFailure);
       }
