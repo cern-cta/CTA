@@ -14,6 +14,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 //------------------------------------------------------------------------------
 // Constructor for TapeWriteSingleThread
@@ -111,10 +112,8 @@ cta::tape::daemon::TapeWriteSingleThread::TapeThreadFinalizer::~TapeThreadFinali
 
   m_timer.reset();
   if (!m_this.m_driveReusable) {
-    reportStatusSafely(
-      DriveStatus::Down,
-      common::dataStructures::formatDriveDownReason(common::dataStructures::DriveDownReason::DriveCleanupFailed,
-                                                    cleanupError));
+    // The enclosing DriveSession publishes terminal Down after all workers have stopped.
+    m_this.m_cleanupError = std::move(cleanupError);
   } else {
     reportStatusSafely(DriveStatus::Up);
   }

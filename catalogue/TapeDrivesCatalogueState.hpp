@@ -94,7 +94,7 @@ private:
                                                        const common::dataStructures::DriveStatus& status,
                                                        const common::dataStructures::SecurityIdentity& identity) const;
   void setDriveDown(common::dataStructures::TapeDrive& driveState, const ReportDriveStatusInputs& inputs) const;
-  void setDriveUpOrMaybeDown(common::dataStructures::TapeDrive& driveState, const ReportDriveStatusInputs& input) const;
+  void setDriveUp(common::dataStructures::TapeDrive& driveState, const ReportDriveStatusInputs& input) const;
   void setDriveProbing(common::dataStructures::TapeDrive& driveState, const ReportDriveStatusInputs& inputs) const;
   void setDriveStarting(common::dataStructures::TapeDrive& driveState, const ReportDriveStatusInputs& inputs) const;
   void setDriveMounting(common::dataStructures::TapeDrive& driveState, const ReportDriveStatusInputs& inputs) const;

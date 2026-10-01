@@ -30,7 +30,9 @@ enum class DriveDownReason {
   /// Fallback for an unusable session drive when no existing specific failure or operator reason is retained.
   SessionLeftDriveUnusable,
   /// A failed tape session could not confirm that its workers stopped accessing the drive.
-  SessionDidNotStopSafely
+  SessionDidNotStopSafely,
+  /// An unexpected fatal lifecycle failure ended the daemon or drive session.
+  UnexpectedFailure
 };
 
 /**

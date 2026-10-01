@@ -5,6 +5,11 @@
 
 #pragma once
 
+#include "common/dataStructures/DriveDownReason.hpp"
+
+#include <optional>
+#include <string>
+
 namespace cta::tape::daemon {
 
 /**
@@ -22,6 +27,10 @@ struct TapeSessionResult {
    * @brief True if the completed session has no recorded failures, including final reporting failures.
    */
   bool successful = true;
+
+  // DriveSession publishes this reason when the result requires ending ownership.
+  std::optional<common::dataStructures::DriveDownReason> downReason = std::nullopt;
+  std::string downDetail {};
 };
 
 }  // namespace cta::tape::daemon

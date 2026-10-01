@@ -52,7 +52,7 @@ public:
                TapeSessionTracker& tracker);
 
   /**
-   * @brief Open and clean the drive, publishing down-state decisions for recorded failures.
+   * @brief Open and clean the drive; the caller owns terminal state publication.
    *
    * If ejection fails, attempt to disable the tape when its VID is known.
    *
@@ -60,6 +60,8 @@ public:
    * @return True when cleanup permits drive reuse; false when the drive must remain down.
    */
   bool execute(System::virtualWrapper& sysWrapper);
+
+  const std::string& errorMessage() const { return m_errorMessage; }
 
   /**
    * @brief Record drive-configuration reset and tape-ejection failures.
@@ -99,6 +101,7 @@ public:
   CleanupResult cleanDrive(drive::DriveInterface& drive, const DriveStatusReporter& reportStatus);
 
 private:
+  std::string m_errorMessage;
   TapeSessionTracker& m_tracker;
   cta::mediachanger::MediaChangerFacade& m_mediachanger;
   cta::log::LogContext m_lc;
@@ -188,13 +191,6 @@ private:
    * @param vid Volume identifier, or an empty string to bypass the robot cartridge-name check.
    */
   void dismountTape(const std::string& vid);
-
-  /**
-   * @brief Put the drive down if the cleaner failed.
-   *
-   * @param errorMsg Cleanup failure details to include in diagnostics and the down or disabled reason.
-   */
-  void setDriveDownAfterCleanerFailed(const std::string& errorMsg) noexcept;
 
   /**
    * @brief Prevent a stuck tape from being scheduled.

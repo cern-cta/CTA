@@ -17,7 +17,9 @@ add_library(ctataped
   TapedApp.cpp
   TapeDaemon.cpp
   DriveSession.cpp
-  SystemDriveOperations.cpp
+  DriveStatePublication.cpp
+  HardwareOwnership.cpp
+  SchedulerContext.cpp
 )
 
 target_link_libraries(ctataped

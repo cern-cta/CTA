@@ -100,6 +100,7 @@ cta::tape::daemon::DriveCleaner::DriveCleaner(cta::mediachanger::MediaChangerFac
 //------------------------------------------------------------------------------
 bool cta::tape::daemon::DriveCleaner::execute(System::virtualWrapper& sysWrapper) {
   CleanupTiming timing(m_tracker, &TapeCleanupStats::cleanupTime);
+  m_errorMessage.clear();
   std::string errorMessage;
   bool ejectFailed = false;
   const DriveStatusReporter reportStatus = [&](auto status) {
@@ -153,45 +154,9 @@ bool cta::tape::daemon::DriveCleaner::execute(System::virtualWrapper& sysWrapper
     // Gitlab ticket reference : https://gitlab.cern.ch/cta/CTA/issues/224
     disableTapeAfterFailedEject(errorMessage);
   }
-  setDriveDownAfterCleanerFailed(errorMessage);
+  m_errorMessage = errorMessage;
 
   return false;
-}
-
-void cta::tape::daemon::DriveCleaner::setDriveDownAfterCleanerFailed(const std::string& errorMsg) noexcept {
-  try {
-    cta::log::ScopedParamContainer params(m_lc);
-    params.add(cta::semconv::log::exceptionMessage, errorMsg);
-    m_lc.log(cta::log::ERR, "Cleaner failed; the drive is going down");
-  } catch (...) {}
-
-  try {
-    TapeDrivesCatalogueState(m_catalogue)
-      .reportDriveStatus(m_driveInfo,
-                         cta::common::dataStructures::MountType::NoMount,
-                         cta::common::dataStructures::DriveStatus::Down,
-                         std::time(nullptr),
-                         m_lc);
-  } catch (...) {
-    try {
-      m_lc.log(cta::log::ERR, "Cleaner failed to publish reported-down state: " + currentExceptionMessage());
-    } catch (...) {}
-  }
-  try {
-    cta::common::dataStructures::DesiredDriveState driveState;
-    driveState.up = false;
-    driveState.forceDown = false;
-    driveState.reason = cta::common::dataStructures::formatDriveDownReason(
-      cta::common::dataStructures::DriveDownReason::DriveCleanupFailed,
-      errorMsg);
-    TapeDrivesCatalogueState(m_catalogue).setDesiredDriveState(m_driveInfo.driveName, driveState, m_lc);
-  } catch (...) {
-    try {
-      cta::log::ScopedParamContainer params(m_lc);
-      params.add(cta::semconv::log::exceptionMessage, currentExceptionMessage());
-      m_lc.log(cta::log::ERR, "Cleaner failed to put the drive down");
-    } catch (...) {}
-  }
 }
 
 void cta::tape::daemon::DriveCleaner::disableTapeAfterFailedEject(const std::string& errorMsg) noexcept {

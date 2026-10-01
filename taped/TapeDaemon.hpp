@@ -5,34 +5,36 @@
 
 #pragma once
 
-#include "DriveOperations.hpp"
+#include "SchedulerContext.hpp"
 #include "TapedConfig.hpp"
+#include "catalogue/Catalogue.hpp"
 #include "common/dataStructures/DriveDownReason.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
 #include "common/log/LogContext.hpp"
 
 #include <atomic>
-#include <chrono>
 #include <memory>
+#include <mutex>
 #include <stop_token>
 #include <string>
+#include <string_view>
 
 namespace cta::tape::daemon {
+class DriveSession;
 
 // Owns the daemon lifecycle: registration, waiting, successive DriveSessions, and shutdown.
 // Each DriveSession is scoped to one iteration of run() and ends before the next begins.
 class TapeDaemon final {
 public:
   /**
-   * @brief Create a daemon using caller-owned operations.
+   * @brief Create a daemon and initialize its catalogue and scheduler dependencies.
    *
-   * The configuration, logger and operations must outlive the daemon.
+   * The configuration and logger must outlive the daemon.
    *
    * @param config Daemon configuration; borrowed configuration must outlive the owning object.
    * @param log Logger used for diagnostics; it must outlive objects retaining a reference to it.
-   * @param operations Borrowed external operations that must outlive the daemon.
    */
-  TapeDaemon(const TapedConfig& config, log::Logger& log, DriveOperations& operations);
+  TapeDaemon(const TapedConfig& config, log::Logger& log);
 
   /**
    * @brief Request exit and publish desired-down after registration; active sessions and sleeps are not interrupted.
@@ -66,8 +68,11 @@ public:
 private:
   friend class TapeDaemonTest;
 
-  // invoked by isLive(); exists to make unit testing easier
-  bool isLive(std::chrono::steady_clock::time_point now) const;
+  enum class ExitCause { Normal, RegistrationFailure, MissingDrive, UnexpectedFailure, UnsafeWorkerTeardown };
+  enum class DownPublication { None, DesiredOnly, DesiredAndReported };
+
+  // Log the exit and publish only the state owned by the daemon; never access tape hardware.
+  int shutdown(ExitCause cause, DownPublication publication, std::string_view diagnostic = "");
 
   std::stop_source m_stopSource;
 
@@ -78,7 +83,13 @@ private:
   const common::dataStructures::DriveInfo m_driveInfo;
   log::LogContext m_lc;
 
-  DriveOperations& m_operations;
+  // The scheduler and its backend are destroyed before their catalogue.
+  std::unique_ptr<catalogue::Catalogue> m_catalogue;
+  std::unique_ptr<SchedulerContext> m_schedulerContext;
+  // Borrows the run-thread-owned session only while holding the mutex.
+  mutable std::mutex m_sessionMutex;
+  // non-owning pointer so that liveness checks can check liveness of the drive session
+  DriveSession* m_activeDriveSession = nullptr;
 
   /**
    * @brief Register a fresh drive or retain an interrupted drive for recovery.

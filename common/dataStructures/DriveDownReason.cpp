@@ -33,6 +33,8 @@ ReasonDescription describe(DriveDownReason reason) {
       return {log::ERR, "Drive cleanup failed"};
     case DriveDownReason::SessionLeftDriveUnusable:
       return {log::ERR, "Session left drive unusable"};
+    case DriveDownReason::UnexpectedFailure:
+      return {log::ERR, "Unexpected failure"};
     case DriveDownReason::SessionDidNotStopSafely:
       return {log::ERR, "Session did not stop safely"};
   }

@@ -140,7 +140,6 @@ struct cta::tape::daemon::TapeSession::ExecutionState {
   bool completionOwned = true;
   bool workersRunning = false;
   bool driveOpened = false;
-  std::optional<std::string> downReason;
 };
 
 //------------------------------------------------------------------------------
@@ -252,21 +251,6 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
                                       lc);
       });
     }
-  }
-  if (state.downReason) {
-    finalize([&] {
-      m_scheduler.reportDriveStatus(m_driveInfo,
-                                    cta::common::dataStructures::MountType::NoMount,
-                                    cta::common::dataStructures::DriveStatus::Down,
-                                    lc);
-    });
-    finalize([&] {
-      cta::common::dataStructures::DesiredDriveState desired;
-      desired.up = false;
-      desired.forceDown = false;
-      desired.reason = *state.downReason;
-      m_scheduler.setDesiredDriveState(m_driveInfo.driveName, desired, lc);
-    });
   }
 
   reporterScope.finish();
@@ -399,6 +383,10 @@ void cta::tape::daemon::TapeSession::executeRead(cta::log::LogContext& logContex
       reportPacker.waitThread();
       state.workersRunning = false;
       state.result.driveReusable = readSingleThread.isDriveReusable();
+      if (!state.result.driveReusable) {
+        state.result.downReason = common::dataStructures::DriveDownReason::DriveCleanupFailed;
+        state.result.downDetail = readSingleThread.cleanupError();
+      }
       // If disk delivery finished last, return the drive from DrainingToDisk to Up.
       if (state.result.driveReusable
           && m_scheduler.getDriveStatus(m_driveInfo.driveName, &logContext)
@@ -519,6 +507,10 @@ void cta::tape::daemon::TapeSession::executeWrite(cta::log::LogContext& logConte
       state.workersRunning = false;
 
       state.result.driveReusable = writeSingleThread.isDriveReusable();
+      if (!state.result.driveReusable) {
+        state.result.downReason = common::dataStructures::DriveDownReason::DriveCleanupFailed;
+        state.result.downDetail = writeSingleThread.cleanupError();
+      }
       return;
     } else {
       if (!noFilesToMigrate) {
@@ -565,9 +557,11 @@ cta::tape::daemon::TapeSession::findDrive(cta::log::LogContext& logContext, Exec
     } catch (...) {
       detail += "Unknown exception";
     }
-    state.downReason = common::dataStructures::formatDriveDownReason(reason, detail);
+    state.result.downReason = reason;
+    state.result.downDetail = detail;
     state.result.driveReusable = false;
-    logContext.log(common::dataStructures::driveDownReasonSeverity(reason), *state.downReason);
+    logContext.log(common::dataStructures::driveDownReasonSeverity(reason),
+                   common::dataStructures::formatDriveDownReason(reason, detail));
     throw;
   }
 }

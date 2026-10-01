@@ -142,7 +142,7 @@ void TapeDrivesCatalogueState::updateDriveStatus(const common::dataStructures::D
       setDriveDown(driveState, inputs);
       break;
     case common::dataStructures::DriveStatus::Up:
-      setDriveUpOrMaybeDown(driveState, inputs);
+      setDriveUp(driveState, inputs);
       break;
     case common::dataStructures::DriveStatus::Probing:
       setDriveProbing(driveState, inputs);
@@ -209,8 +209,6 @@ void TapeDrivesCatalogueState::setDriveDown(common::dataStructures::TapeDrive& d
   driveState.mountType = common::dataStructures::MountType::NoMount;
   driveState.nextMountType = common::dataStructures::MountType::NoMount;
   driveState.driveStatus = common::dataStructures::DriveStatus::Down;
-  driveState.desiredUp = false;
-  driveState.desiredForceDown = false;
   driveState.currentVid = "";
   driveState.currentTapePool = "";
   driveState.currentVo = "";
@@ -220,10 +218,8 @@ void TapeDrivesCatalogueState::setDriveDown(common::dataStructures::TapeDrive& d
   }
 }
 
-void TapeDrivesCatalogueState::setDriveUpOrMaybeDown(common::dataStructures::TapeDrive& driveState,
-                                                     const ReportDriveStatusInputs& inputs) const {
-  // Decide whether we should be up or down
-  auto targetStatus = common::dataStructures::DriveStatus::Up;
+void TapeDrivesCatalogueState::setDriveUp(common::dataStructures::TapeDrive& driveState,
+                                          const ReportDriveStatusInputs& inputs) const {
   // If we are changing state, then all should be reset.
   driveState.sessionId = std::nullopt;
   driveState.bytesTransferedInSession = std::nullopt;
@@ -241,7 +237,7 @@ void TapeDrivesCatalogueState::setDriveUpOrMaybeDown(common::dataStructures::Tap
   driveState.shutdownTime = std::nullopt;
   driveState.lastModificationLog = common::dataStructures::EntryLog("NO_USER", driveState.host, inputs.reportTime);
   driveState.mountType = common::dataStructures::MountType::NoMount;
-  driveState.driveStatus = targetStatus;
+  driveState.driveStatus = common::dataStructures::DriveStatus::Up;
   driveState.currentVid = "";
   driveState.currentTapePool = "";
   driveState.currentVo = "";

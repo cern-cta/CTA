@@ -12,8 +12,7 @@ namespace cta::common::dataStructures {
 
 /**
  * Structure describing the instructions to the drive from operators.
- * The values are reset to all false when the drive goes down (including
- * at startup).
+ * Reported activity does not change these instructions.
  */
 class DesiredDriveState {
 public:
