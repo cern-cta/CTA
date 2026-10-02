@@ -1037,16 +1037,18 @@ public:
                                   "Dummy mount for read/write access";
       EXPECT_EQ(1, countLogMessages(logger.getLog(), mountMessage));
     }
+    // DriveSession owns terminal publication; TapeSession returns the reason and detail.
+    EXPECT_EQ(0, scheduler.downAttempts);
+    EXPECT_EQ(0, scheduler.desiredDownAttempts);
+    EXPECT_FALSE(mount.downReason);
     if (cleanupFails) {
-      ASSERT_TRUE(mount.downReason);
-      EXPECT_THAT(*mount.downReason, testing::HasSubstr("[cta-taped] ERROR Drive cleanup failed: "));
-      EXPECT_THAT(*mount.downReason, testing::HasSubstr("Failed to disable logical block protection"));
+      ASSERT_TRUE(result);
+      EXPECT_EQ(cta::common::dataStructures::DriveDownReason::DriveCleanupFailed, result->downReason);
+      EXPECT_THAT(result->downDetail, testing::HasSubstr("Failed to disable logical block protection"));
     }
     if (discoveryFails || openFails) {
-      EXPECT_EQ(1, scheduler.downAttempts);
-      EXPECT_EQ(1, scheduler.desiredDownAttempts);
-      ASSERT_TRUE(scheduler.downReason);
-      EXPECT_THAT(*scheduler.downReason, testing::HasSubstr("[cta-taped] ERROR Session drive access failed: "));
+      ASSERT_TRUE(result);
+      EXPECT_EQ(cta::common::dataStructures::DriveDownReason::SessionDriveAccessFailed, result->downReason);
       std::string_view stage = "Configured drive lookup failed: Could not stat path";
       if (openFails) {
         stage = "Drive opening failed: injected drive open failure";
@@ -1055,7 +1057,7 @@ public:
       } else if (point == TransferFailurePoint::MissingDrive) {
         stage = "Configured drive lookup failed: Could not find tape device";
       }
-      EXPECT_THAT(*scheduler.downReason, testing::HasSubstr(std::string(stage)));
+      EXPECT_THAT(result->downDetail, testing::HasSubstr(std::string(stage)));
     } else if (!startupFails) {
       EXPECT_EQ(1, driveDestructions);
       if (!workerStarts) {
@@ -1577,10 +1579,10 @@ TEST_P(TapeSessionTest, ArchiveCompleteStandardFailureCleansUp) {
 }
 
 /*
- * If archive drive-down publication fails during open, cleanup still runs.
- * The session must not leave the mount or workers active.
+ * An archive drive-open failure returns its reason without publishing terminal Down.
+ * The mount and workers are finalized even when the publication endpoint is unavailable.
  */
-TEST_P(TapeSessionTest, ArchiveReportDownFailureCleansUp) {
+TEST_P(TapeSessionTest, ArchiveDriveAccessFailureDoesNotPublishDown) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
     {
@@ -1592,10 +1594,10 @@ TEST_P(TapeSessionTest, ArchiveReportDownFailureCleansUp) {
 }
 
 /*
- * If requesting archive drive down fails during open, cleanup still runs.
- * The session must not leave the mount or workers active.
+ * An archive drive-open failure leaves the desired-state request to DriveSession.
+ * An unavailable desired-state endpoint must not prevent mount and worker finalization.
  */
-TEST_P(TapeSessionTest, ArchiveDesiredDownFailureCleansUp) {
+TEST_P(TapeSessionTest, ArchiveDriveAccessFailureDoesNotRequestDesiredDown) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
     {
@@ -1727,10 +1729,10 @@ TEST_P(TapeSessionTest, RetrieveCompleteStandardFailureCleansUp) {
 }
 
 /*
- * If retrieve drive-down publication fails during open, cleanup still runs.
- * The session must not leave the mount or workers active.
+ * A retrieve drive-open failure returns its reason without publishing terminal Down.
+ * The mount and workers are finalized even when the publication endpoint is unavailable.
  */
-TEST_P(TapeSessionTest, RetrieveReportDownFailureCleansUp) {
+TEST_P(TapeSessionTest, RetrieveDriveAccessFailureDoesNotPublishDown) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
     {
@@ -1742,10 +1744,10 @@ TEST_P(TapeSessionTest, RetrieveReportDownFailureCleansUp) {
 }
 
 /*
- * If requesting retrieve drive down fails during open, cleanup still runs.
- * The session must not leave the mount or workers active.
+ * A retrieve drive-open failure leaves the desired-state request to DriveSession.
+ * An unavailable desired-state endpoint must not prevent mount and worker finalization.
  */
-TEST_P(TapeSessionTest, RetrieveDesiredDownFailureCleansUp) {
+TEST_P(TapeSessionTest, RetrieveDriveAccessFailureDoesNotRequestDesiredDown) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
     {
