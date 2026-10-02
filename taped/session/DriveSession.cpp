@@ -7,7 +7,6 @@
 
 #include "DriveStatePublication.hpp"
 #include "TapeSession.hpp"
-#include "TapeSessionWorkerTeardownIncomplete.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/TimeoutException.hpp"
@@ -72,9 +71,10 @@ DriveSession::~DriveSession() noexcept {
 
 void DriveSession::releaseAndReportDown() {
   // Ensure we don't report Down multiple times
-  if (m_downPublicationComplete || !m_driveReservation.release()) {
+  if (m_downPublicationComplete) {
     return;
   }
+  m_driveReservation.release();
   auto& scheduler = m_schedulerContext.scheduler();
   if (scheduler.getCatalogue().DriveState()->getTapeDrive(m_driveInfo.driveName)) {
     scheduler.reportDriveStatus(m_driveInfo,
@@ -180,11 +180,6 @@ void DriveSession::run(std::stop_token stopToken) {
       m_lc.log(log::INFO, "Drive session ending.");
     }
     releaseAndReportDown();
-  } catch (const TapeSessionWorkerTeardownIncomplete& ex) {
-    // The daemon must exit without announcing that hardware access has stopped.
-    m_driveReservation.markUnsafe();
-    requestDownNoThrow(common::dataStructures::DriveDownReason::SessionDidNotStopSafely, ex.what());
-    throw;
   } catch (...) {
     requestDownNoThrow(common::dataStructures::DriveDownReason::UnexpectedFailure, "Drive session failed");
     throw;
@@ -284,9 +279,6 @@ TapeSessionResult DriveSession::runTapeSession(TapeMount& tapeMount) {
     const utils::ScopeExit clearActiveTracker(
       [this] { std::atomic_store<const TapeSessionTracker>(&m_activeTracker, nullptr); });
     transferResult = session.execute();
-  } catch (const TapeSessionWorkerTeardownIncomplete&) {
-    // Cleanup cannot establish safe reuse while a worker may still access the drive.
-    throw;
   } catch (const exception::Exception& ex) {
     log::ScopedParamContainer params(m_lc);
     params.add(semconv::log::exceptionMessage, ex.getMessageValue());

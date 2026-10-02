@@ -123,10 +123,8 @@ protected:
 
   bool stopRequested() { return daemon->m_stopSource.stop_requested(); }
 
-  int shutdown(bool unsafe = false) {
-    return daemon->shutdown(unsafe ? TapeDaemon::ExitCause::UnsafeWorkerTeardown : TapeDaemon::ExitCause::Normal,
-                            unsafe ? TapeDaemon::DownPublication::DesiredOnly :
-                                     TapeDaemon::DownPublication::DesiredAndReported);
+  int shutdown() {
+    return daemon->shutdown(TapeDaemon::ExitCause::Normal, TapeDaemon::DownPublication::DesiredAndReported);
   }
 
   void expectRunStartup() {
@@ -147,6 +145,22 @@ TEST_F(TapeDaemonTest, RecoveryStatusPublicationFailureDoesNotTouchHardware) {
     .WillOnce(Throw(std::runtime_error("publication failed")));
   EXPECT_EQ(1, daemon->run());
   EXPECT_FALSE(daemon->isReady());
+}
+
+TEST_F(TapeDaemonTest, RestartPreservesDesiredUpAndPreparesInterruptedDrive) {
+  previousDrive->desiredUp = true;
+  previousDrive->driveStatus = DriveStatus::Transferring;
+  previousDrive->reasonUpDown = "Operator requested Up";
+  testing::InSequence sequence;
+  EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
+  EXPECT_CALL(driveState(), setDesiredTapeDriveState(_, _)).Times(0);
+  EXPECT_CALL(*scheduler, createTapeDriveStatus(_, _, _, _, _, _)).Times(0);
+  EXPECT_CALL(*scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _));
+  EXPECT_CALL(*scheduler, reportSchedulerBackendName("drive", _));
+  EXPECT_TRUE(registerDrive());
+  EXPECT_TRUE(daemon->isReady());
+  EXPECT_TRUE(previousDrive->desiredUp);
+  EXPECT_EQ("Operator requested Up", previousDrive->reasonUpDown);
 }
 
 TEST_F(TapeDaemonTest, RegistrationConflictStopsStartup) {
@@ -283,16 +297,6 @@ TEST_F(TapeDaemonTest, StopRetainsExitRequestWhenPublicationFails) {
   EXPECT_TRUE(stopRequested());
   // Repeated stop requests do not repeat publication.
   EXPECT_NO_THROW(daemon->stop());
-}
-
-TEST_F(TapeDaemonTest, UnsafeShutdownRequestsDownWithoutReportingHardwareRelease) {
-  EXPECT_CALL(driveState(), setDesiredTapeDriveState("drive", _))
-    .WillOnce(Invoke([](const auto&, const DesiredDriveState& desired) {
-      EXPECT_FALSE(desired.up);
-      EXPECT_EQ(formatDriveDownReason(DriveDownReason::SessionDidNotStopSafely), desired.reason);
-    }));
-  EXPECT_CALL(*scheduler, reportDriveStatus(_, _, _, _)).Times(0);
-  EXPECT_EQ(1, shutdown(true));
 }
 
 TEST_F(TapeDaemonTest, ShutdownStillReportsDownWhenDesiredPublicationFails) {

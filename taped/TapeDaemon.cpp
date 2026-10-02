@@ -11,7 +11,6 @@
 #include "common/utils/ScopeExit.hpp"
 #include "common/utils/utils.hpp"
 #include "scheduler/Scheduler.hpp"
-#include "session/TapeSessionWorkerTeardownIncomplete.hpp"
 #include "taped/session/DriveSession.hpp"
 #include "taped/session/DriveStatePublication.hpp"
 
@@ -113,8 +112,6 @@ int TapeDaemon::run() {
     }
   } catch (const Scheduler::NoSuchDrive& ex) {
     return shutdown(ExitCause::MissingDrive, DownPublication::None, ex.getMessageValue());
-  } catch (const TapeSessionWorkerTeardownIncomplete& ex) {
-    return shutdown(ExitCause::UnsafeWorkerTeardown, DownPublication::DesiredOnly, ex.what());
   } catch (const exception::Exception& ex) {
     return shutdown(ExitCause::UnexpectedFailure, DownPublication::DesiredAndReported, ex.getMessageValue());
   } catch (const std::exception& ex) {
@@ -145,10 +142,6 @@ int TapeDaemon::shutdown(ExitCause cause, DownPublication publication, std::stri
     case ExitCause::UnexpectedFailure:
       reason = DriveDownReason::UnexpectedFailure;
       message = "Tape daemon failed. Requesting Down before exit.";
-      break;
-    case ExitCause::UnsafeWorkerTeardown:
-      reason = DriveDownReason::SessionDidNotStopSafely;
-      message = "Tape session did not stop safely. Requesting Down without reporting hardware release.";
       break;
   }
   {

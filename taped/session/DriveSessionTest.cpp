@@ -159,8 +159,6 @@ protected:
     session->m_driveReservation.acquire();
     return session->cleanDrive("V00001");
   }
-
-  void markUnsafe() { session->m_driveReservation.markUnsafe(); }
 };
 
 TEST_F(DriveSessionTest, ConstructionDefersPreparationUntilRun) {
@@ -317,14 +315,6 @@ TEST_F(DriveSessionTest, DestructorContainsPublicationFailure) {
   driveState().onReport = [](DriveStatus) { throw std::runtime_error("unavailable"); };
   EXPECT_NO_THROW(session.reset());
   EXPECT_THAT(logger.getLog(), testing::HasSubstr("Failed to release drive session or publish Down"));
-}
-
-TEST_F(DriveSessionTest, UnsafeOwnershipPreventsTerminalPublication) {
-  ASSERT_TRUE(clean());
-  markUnsafe();
-  driveState().reports.clear();
-  session.reset();
-  EXPECT_TRUE(driveState().reports.empty());
 }
 
 TEST_F(DriveSessionTest, PreparationIsVisibleAndClearedOnNormalExit) {

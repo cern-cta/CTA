@@ -11,9 +11,7 @@ class TapeSessionTracker;
 
 /// @brief Indicates that TapeSessionTracker::recordFailure() has already counted a failure.
 ///
-/// Callers pass this value with a failed job to the report packer, which checks that it came from the same tracker.
-/// The report packer reports the job failure without counting it again.
-/// This value identifies the tracker, not a specific job or failure.
+/// Prevents recounting failures.
 class RecordedFailure {
 public:
   /// Return whether this receipt was issued by the supplied tracker.

@@ -48,6 +48,8 @@ target_link_libraries(ctatapedsession
   ZLIB::ZLIB)
 
 add_library(ctatapedsessionunittests SHARED
+  ScopedTapeSessionReporterTest.cpp
+  WorkerFailureHandlingTest.cpp
   TapeSessionTest.cpp
   TapeSessionReporterTest.cpp
   TapeSessionTrackerTest.cpp

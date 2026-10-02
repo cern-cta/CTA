@@ -1229,6 +1229,8 @@ TEST_P(TapeSessionTest, ArchiveAsyncFetchFailureDrainsAndMarksSessionUnsuccessfu
         config.archive.flush_max_files = 1;
         config.archive.flush_max_bytes = 1024;
         config.encryption.enabled = false;
+        // Keep this transfer test independent of external key scripts and catalogue encryption settings.
+        config.encryption.external_key_script.clear();
         config.no_block_move_timeout_secs = 600;
         TapeSession session(logger, system, info, changer, mount, config, 1, getScheduler());
 

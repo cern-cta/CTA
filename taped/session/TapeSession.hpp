@@ -7,7 +7,6 @@
 
 #include "TapeSessionResult.hpp"
 #include "TapeSessionTracker.hpp"
-#include "TapeSessionWorkerTeardownIncomplete.hpp"
 #include "TapeSingleThreadInterface.hpp"
 #include "common/dataStructures/DriveDownReason.hpp"
 #include "common/log/LogContext.hpp"
@@ -51,7 +50,7 @@ public:
   /// @brief Run one assignment through transfer, cleanup and final reporting.
   ///
   /// Empty assignments may complete without mounting a tape. Ordinary escaping failures permit caller recovery.
-  /// @throws TapeSessionWorkerTeardownIncomplete If workers may still access the drive; recovery is unsafe.
+  /// Exits the process immediately if worker termination cannot be established.
   /// @return Independent session-success and drive-reuse outcomes.
   TapeSessionResult execute();
 
@@ -91,14 +90,14 @@ private:
   ///
   /// @param logContext Session logging context.
   /// @param retrieveMount Borrowed mount supplying retrieval jobs.
-  /// @param state Track worker startup, completion ownership and recovery decisions.
+  /// @param state Track completion ownership and recovery decisions.
   void executeRead(cta::log::LogContext& logContext, cta::RetrieveMount& retrieveMount, ExecutionState& state);
 
   /// @brief Build and run the disk-to-tape pipeline, or finalize a mount with no archive work.
   ///
   /// @param logContext Session logging context.
   /// @param archiveMount Borrowed mount supplying archive jobs.
-  /// @param state Track worker startup, completion ownership and recovery decisions.
+  /// @param state Track completion ownership and recovery decisions.
   void executeWrite(cta::log::LogContext& logContext, cta::ArchiveMount& archiveMount, ExecutionState& state);
 
   cta::mediachanger::MediaChangerFacade& m_mediaChanger;
