@@ -126,7 +126,7 @@ protected:
 
   TapeDrive reported() { return driveState().getTapeDrive("drive").value(); }
 
-  bool canUseHardware() { return session->m_hardwareOwnership.canUseHardware(); }
+  bool canUseHardware() { return session->m_driveReservation.canUseHardware(); }
 
   bool clean(const std::optional<std::string>& vid = std::nullopt) { return session->cleanDrive(vid); }
 
@@ -156,11 +156,11 @@ protected:
   }
 
   bool recover() {
-    session->m_hardwareOwnership.acquire();
+    session->m_driveReservation.acquire();
     return session->cleanDrive("V00001");
   }
 
-  void markUnsafe() { session->m_hardwareOwnership.markUnsafe(); }
+  void markUnsafe() { session->m_driveReservation.markUnsafe(); }
 };
 
 TEST_F(DriveSessionTest, ConstructionDefersPreparationUntilRun) {

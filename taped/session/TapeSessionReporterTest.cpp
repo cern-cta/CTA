@@ -64,8 +64,7 @@ TEST(TapeSessionReporterTest, ReportsTrackerContentsOnDemand) {
   cta::log::LogContext lc(log);
   ReportingTapeMount mount;
   TapeSessionTracker tracker;
-  tracker.setMount(&mount);
-  TapeSessionReporter reporter(tracker, lc, 1s, 1s);
+  TapeSessionReporter reporter(tracker, mount, lc, 1s, 1s);
 
   tracker.notifyBlockMovement(25);
   tracker.recordFailure(TapeSessionFailure::DiskRead);
@@ -87,7 +86,6 @@ TEST(TapeSessionReporterTest, ReportsSplitStatsWithExistingFieldNamesAndCalculat
   cta::log::LogContext lc(log);
   ReportingTapeMount mount;
   TapeSessionTracker tracker;
-  tracker.setMount(&mount);
   tracker.updateTapeSetupStats(
     {.mountTime = 1, .initialMountTime = 2, .tapeLoadTime = 3, .encryptionControlTime = 5, .positionTime = 6});
   tracker.updateTapeTransferStats({.positionTime = 7, .readWriteTime = 4, .dataVolume = 10000000, .filesCount = 2});
@@ -101,7 +99,7 @@ TEST(TapeSessionReporterTest, ReportsSplitStatsWithExistingFieldNamesAndCalculat
                                .labelReadTime = 1,
                                .encryptionControlTime = 3});
   tracker.setTotalTime(10);
-  TapeSessionReporter reporter(tracker, lc, 1s, 1s);
+  TapeSessionReporter reporter(tracker, mount, lc, 1s, 1s);
 
   reporter.reportNow();
 
@@ -147,9 +145,8 @@ TEST(TapeSessionReporterTest, PeriodicReportingStopsBeforeExplicitFinalReport) {
   cta::log::LogContext lc(log);
   ReportingTapeMount mount;
   TapeSessionTracker tracker;
-  tracker.setMount(&mount);
   tracker.updateTapeTransferStats({.dataVolume = 42, .filesCount = 1});
-  TapeSessionReporter reporter(tracker, lc, 5ms, 1s);
+  TapeSessionReporter reporter(tracker, mount, lc, 5ms, 1s);
 
   reporter.startThreads();
   const auto deadline = std::chrono::steady_clock::now() + 2s;
@@ -183,8 +180,7 @@ TEST(TapeSessionReporterTest, DerivesMountMetadataAndReportsFailureWithoutStarti
   cta::log::LogContext lc(log);
   ReportingTapeMount mount;
   TapeSessionTracker tracker;
-  tracker.setMount(&mount);
-  TapeSessionReporter reporter(tracker, lc, 1s, 1s);
+  TapeSessionReporter reporter(tracker, mount, lc, 1s, 1s);
 
   tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
   tracker.setMountAttempted(false);
@@ -204,8 +200,7 @@ TEST(TapeSessionReporterTest, ReportsOnlyActiveDiskFilesWithLegacyParameterNames
   cta::log::LogContext lc(log);
   ReportingTapeMount mount;
   TapeSessionTracker tracker;
-  tracker.setMount(&mount);
-  TapeSessionReporter reporter(tracker, lc, 1s, 1s);
+  TapeSessionReporter reporter(tracker, mount, lc, 1s, 1s);
 
   tracker.notifyDiskFileOpened(1, 1234, "file:///closed");
   tracker.notifyDiskFileOpened(2, 5678, "file:///active");
@@ -228,8 +223,7 @@ TEST(TapeSessionReporterTest, ReportsAStuckFile) {
   cta::log::LogContext lc(log);
   ReportingTapeMount mount;
   TapeSessionTracker tracker;
-  tracker.setMount(&mount);
-  TapeSessionReporter reporter(tracker, lc, 5ms, 5ms);
+  TapeSessionReporter reporter(tracker, mount, lc, 5ms, 5ms);
 
   tracker.notifyBeginNewJob(1234, 42);
   reporter.startThreads();
@@ -247,8 +241,7 @@ TEST(TapeSessionReporterTest, MovementAndCompletionStopStuckFileWarnings) {
   cta::log::LogContext lc(log);
   ReportingTapeMount mount;
   TapeSessionTracker tracker;
-  tracker.setMount(&mount);
-  TapeSessionReporter reporter(tracker, lc, 5ms, 20ms);
+  TapeSessionReporter reporter(tracker, mount, lc, 5ms, 20ms);
 
   tracker.notifyBeginNewJob(1234, 42);
   reporter.startThreads();
@@ -274,10 +267,9 @@ TEST(TapeSessionReporterTest, StoppingReporterDoesNotClaimTransferCompletion) {
   cta::log::LogContext lc(log);
   ReportingTapeMount mount;
   TapeSessionTracker tracker;
-  tracker.setMount(&mount);
   tracker.beginTapeSession();
   tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
-  TapeSessionReporter reporter(tracker, lc, 1s, 1s);
+  TapeSessionReporter reporter(tracker, mount, lc, 1s, 1s);
   reporter.startThreads();
   reporter.finish();
   reporter.waitThreads();
@@ -300,10 +292,9 @@ TEST(TapeSessionReporterTest, FinalPublicationFailureOverridesSuccessfulOutcome)
   log.setLogFormat("json");
   cta::log::LogContext lc(log);
   TapeSessionTracker tracker;
-  tracker.setMount(&mount);
   tracker.beginTapeSession();
   tracker.reportState(cta::tape::session::TapeSessionState::Finalizing);
-  TapeSessionReporter reporter(tracker, lc, 1s, 1s);
+  TapeSessionReporter reporter(tracker, mount, lc, 1s, 1s);
   reporter.startThreads();
   reporter.finish();
   reporter.waitThreads();
@@ -325,11 +316,10 @@ TEST(TapeSessionReporterTest, SuccessfulEmptyMountHasAFinalSuccessOutcome) {
   cta::log::LogContext lc(log);
   ReportingTapeMount mount;
   TapeSessionTracker tracker;
-  tracker.setMount(&mount);
   tracker.beginTapeSession();
   tracker.recordEvent(TapeSessionEvent::EmptyMount);
   tracker.reportState(cta::tape::session::TapeSessionState::Finalizing);
-  TapeSessionReporter reporter(tracker, lc, 1s, 1s);
+  TapeSessionReporter reporter(tracker, mount, lc, 1s, 1s);
   reporter.startThreads();
   reporter.finish();
   reporter.waitThreads();
@@ -347,12 +337,11 @@ TEST(TapeSessionReporterTest, OutcomeIsOnlyReportedAtCompletion) {
     cta::log::LogContext lc(log);
     ReportingTapeMount mount;
     TapeSessionTracker tracker;
-    tracker.setMount(&mount);
     tracker.beginTapeSession();
     if (failed) {
       tracker.recordFailure(TapeSessionFailure::DiskWrite);
     }
-    TapeSessionReporter reporter(tracker, lc, 1s, 1s);
+    TapeSessionReporter reporter(tracker, mount, lc, 1s, 1s);
     reporter.reportNow();
     const auto periodic = log.getLog();
     EXPECT_NE(std::string::npos, periodic.find("\"status\":\"in_progress\""));
@@ -376,7 +365,6 @@ TEST(TapeSessionReporterTest, InformationalEventsAndAlertsKeepLegacyFieldsWithou
   cta::log::LogContext lc(log);
   ReportingTapeMount mount;
   TapeSessionTracker tracker;
-  tracker.setMount(&mount);
   tracker.beginTapeSession();
   tracker.recordEvent(TapeSessionEvent::TapeFilledUp);
   tracker.recordEvent(TapeSessionEvent::TapeFilledUp);
@@ -384,7 +372,7 @@ TEST(TapeSessionReporterTest, InformationalEventsAndAlertsKeepLegacyFieldsWithou
   tracker.recordEvent(TapeSessionEvent::DiskSpaceReservationTestFailure);
   tracker.incrementTapeAlert(0x01);
   tracker.reportState(cta::tape::session::TapeSessionState::Finalizing);
-  TapeSessionReporter reporter(tracker, lc, 1s, 1s);
+  TapeSessionReporter reporter(tracker, mount, lc, 1s, 1s);
   reporter.startThreads();
   reporter.finish();
   reporter.waitThreads();

@@ -120,10 +120,12 @@ const char* eventName(TapeSessionEvent event) {
 }  // namespace
 
 TapeSessionReporter::TapeSessionReporter(TapeSessionTracker& tracker,
+                                         cta::TapeMount& mount,
                                          const cta::log::LogContext& lc,
                                          std::chrono::milliseconds reportPeriod,
                                          std::chrono::milliseconds stuckPeriod)
     : m_tracker(tracker),
+      m_mount(mount),
       m_lc(lc),
       m_reportPeriod(std::max(reportPeriod, std::chrono::milliseconds(1))),
       m_stuckPeriod(std::max(stuckPeriod, std::chrono::milliseconds(1))) {
@@ -195,7 +197,7 @@ void TapeSessionReporter::reportStuckFileIfNeeded() {
 void TapeSessionReporter::reportNow() {
   const auto stats = m_tracker.stats();
   logStats(false, stats);
-  m_tracker.mount()->setTapeSessionStats(stats.tape);
+  m_mount.setTapeSessionStats(stats.tape);
 }
 
 void TapeSessionReporter::reportSessionFinished() {
@@ -208,7 +210,7 @@ void TapeSessionReporter::reportSessionFinished() {
 
   const auto stats = m_tracker.stats();
   try {
-    m_tracker.mount()->setTapeSessionStats(stats.tape);
+    m_mount.setTapeSessionStats(stats.tape);
   } catch (...) {
     m_tracker.recordFailure(TapeSessionFailure::Reporting);
     m_lc.log(cta::log::WARNING, "Failed to publish final tape session statistics");
@@ -218,7 +220,7 @@ void TapeSessionReporter::reportSessionFinished() {
 }
 
 void TapeSessionReporter::logStats(bool sessionFinished, const TapeSessionStats& stats) {
-  const auto& mount = *m_tracker.mount();
+  const auto& mount = m_mount;
   const auto& setupStats = stats.setup;
   const auto& tapeStats = stats.tape;
   const auto& diskStats = stats.disk;

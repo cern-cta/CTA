@@ -160,9 +160,7 @@ cta::tape::daemon::TapeSession::TapeSession(cta::log::Logger& log,
       m_tapeLoadTimeoutSecs(tapeLoadTimeoutSecs),
       m_driveInfo(driveInfo),
       m_mediaChanger(mc),
-      m_scheduler(scheduler) {
-  m_tapeSessionTracker->setMount(&m_tapeMount);
-}
+      m_scheduler(scheduler) {}
 
 //------------------------------------------------------------------------------
 //TapeSession::execute
@@ -180,6 +178,7 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
   ExecutionState state;
   std::exception_ptr fatalFailure;
   TapeSessionReporter reporter(*m_tapeSessionTracker,
+                               m_tapeMount,
                                lc,
                                std::chrono::seconds(m_transfersConfig.stats_report_interval_secs),
                                std::chrono::seconds(m_transfersConfig.no_block_move_timeout_secs));

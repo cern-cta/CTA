@@ -5,16 +5,33 @@
 
 #include "TapedApp.hpp"
 
-#include "TapedUtils.hpp"
-#include "common/exception/Exception.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/utils/utils.hpp"
 #include "telemetry/metrics/TapedMetrics.hpp"
 
+#include <cerrno>
 #include <google/protobuf/stubs/common.h>
+#include <string>
 #include <sys/prctl.h>
+#include <system_error>
 
 namespace cta::tape::daemon {
+
+namespace {
+
+std::string constructProcessName(const std::string& driveName, log::LogContext& lc) {
+  // Linux allows 15 name bytes; reserve six for the "taped-" prefix.
+  constexpr std::size_t maxShortNameLength = 9;
+  const auto pos = driveName.find_last_of('-');
+  auto shortName = pos == std::string::npos ? driveName : driveName.substr(pos + 1);
+  if (shortName.size() > maxShortNameLength) {
+    lc.log(log::WARNING, "Short drive name '" + shortName + "' exceeds 9 bytes; truncating process name");
+    shortName.resize(maxShortNameLength);
+  }
+  return "taped-" + shortName;
+}
+
+}  // namespace
 
 TapedApp::~TapedApp() {
   m_tapeDaemon.reset();
@@ -43,7 +60,14 @@ std::map<std::string, std::string> TapedApp::getStaticTelemetryAttributes(const 
 
 int TapedApp::run(const TapedConfig& config, cta::log::Logger& log) {
   log::LogContext lc(log);
-  // TODO: we should still set a recognisable process name
+  const auto processName = constructProcessName(config.drive.name, lc);
+  if (::prctl(PR_SET_NAME, processName.c_str(), 0UL, 0UL, 0UL) == -1) {
+    const int error = errno;
+    log::ScopedParamContainer params(lc);
+    params.add("processName", processName)
+      .add("errorMessage", std::error_code(error, std::generic_category()).message());
+    lc.log(log::WARNING, "Failed to set process name");
+  }
 
   // Linux may mark the process non-dumpable when messing with capabilities in certain cases. To be safe, we explicitly enable it.
   // See https://man7.org/linux/man-pages/man2/pr_set_dumpable.2const.html

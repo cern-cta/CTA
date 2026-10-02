@@ -341,7 +341,6 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
       params.add("capacityInBytes", m_archiveMount.getCapacityInBytes());
       m_logContext.log(cta::log::INFO, "Tape session started for write");
       m_tracker.reportState(cta::tape::session::TapeSessionState::Mounting);
-      m_loadingAttempted = true;
       mountedTape.emplace(
         m_mediaChanger,
         m_volInfo,

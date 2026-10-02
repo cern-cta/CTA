@@ -11,15 +11,15 @@ class LogContext;
 
 namespace cta::tape::daemon {
 // Owns hardware access for one session lifetime; callers publish lifecycle state.
-class HardwareOwnership final {
+class DriveReservation final {
 public:
-  explicit HardwareOwnership(log::LogContext& lc) noexcept;
-  ~HardwareOwnership() noexcept;
+  explicit DriveReservation(log::LogContext& lc) noexcept;
+  ~DriveReservation() noexcept;
 
-  HardwareOwnership(const HardwareOwnership&) = delete;
-  HardwareOwnership& operator=(const HardwareOwnership&) = delete;
-  HardwareOwnership(HardwareOwnership&&) = delete;
-  HardwareOwnership& operator=(HardwareOwnership&&) = delete;
+  DriveReservation(const DriveReservation&) = delete;
+  DriveReservation& operator=(const DriveReservation&) = delete;
+  DriveReservation(DriveReservation&&) = delete;
+  DriveReservation& operator=(DriveReservation&&) = delete;
 
   void acquire();
   // Unsafe ownership is retained but cannot permit further hardware access.
