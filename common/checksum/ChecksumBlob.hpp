@@ -128,6 +128,18 @@ public:
   size_t size() const { return m_cs.size(); }
 
   /*!
+   * Return true if the blob has a checksum type other than NONE
+   */
+  bool hasChecksums() const {
+    for (const auto& checksum : m_cs) {
+      if (checksum.first != NONE) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /*!
    * Get a const reference to the implementation (for conversion to protobuf)
    */
   const std::map<ChecksumType, std::string>& getMap() const { return m_cs; }
