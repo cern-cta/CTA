@@ -118,6 +118,21 @@ TEST_F(cta_ChecksumBlobTest, validateCommonChecksums) {
   EXPECT_THROW(onlyNone.validateCommonChecksums(onlyNone), ChecksumTypeMismatch);
 }
 
+TEST_F(cta_ChecksumBlobTest, hasChecksums) {
+  using namespace cta::checksum;
+
+  ChecksumBlob empty;
+  EXPECT_FALSE(empty.hasChecksums());
+
+  ChecksumBlob onlyNone;
+  onlyNone.insert(NONE, "");
+  EXPECT_FALSE(onlyNone.hasChecksums());
+
+  ChecksumBlob adler;
+  adler.insert(ADLER32, "1234");
+  EXPECT_TRUE(adler.hasChecksums());
+}
+
 TEST_F(cta_ChecksumBlobTest, hex_to_byte_array) {
   using namespace cta::checksum;
 

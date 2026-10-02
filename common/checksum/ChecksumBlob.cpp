@@ -89,22 +89,27 @@ void ChecksumBlob::validate(const ChecksumBlob& blob) const {
 void ChecksumBlob::validateCommonChecksums(const ChecksumBlob& blob) const {
   bool foundCommonType = false;
 
-  for (const auto& checksum : m_cs) {
-    const auto type = checksum.first;
-    // Both blobs may contain NONE, but that doesn't mean the file contents match
+  for (const auto& [type, value] : m_cs) {
+    // both blobs may contain NONE
+    // but that doesn't mean the file contents match
     if (type == NONE) {
       continue;
     }
 
-    const auto it = blob.m_cs.find(type);
-    if (it != blob.m_cs.end()) {
-      foundCommonType = true;
-      validate(type, it->second);
+    const auto otherChecksum = blob.m_cs.find(type);
+    if (otherChecksum == blob.m_cs.end()) {
+      continue;
+    }
+
+    foundCommonType = true;
+    if (value != otherChecksum->second) {
+      throw exception::ChecksumValueMismatch("Checksum value expected=0x" + ByteArrayToHex(value) + " actual=0x"
+                                             + ByteArrayToHex(otherChecksum->second));
     }
   }
 
   if (!foundCommonType) {
-    throw exception::ChecksumTypeMismatch("No common checksum type to validate");
+    throw exception::ChecksumTypeMismatch("No common checksum type found between archive and tape files");
   }
 }
 
