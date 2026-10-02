@@ -290,18 +290,21 @@ protected:
     }
     cta::tape::daemon::DriveCleaner
       cleaner(mediaChanger, m_sessionLog, info, vid, wait, 0, catalogue ? *catalogue : *m_catalogue, m_tracker);
-    return cleaner.execute(m_systemWrapper);
+    const bool reusable = cleaner.execute(m_systemWrapper);
+    m_cleanupError = cleaner.errorMessage();
+    return reusable;
   }
 
-  void assertDriveDown() {
+  void assertFailureReturnedWithoutPublishingDown() {
+    // The owning DriveSession publishes Down after releasing hardware ownership.
+    ASSERT_FALSE(m_cleanupError.empty());
     cta::log::LogContext lc(m_sessionLog);
     const auto desired = m_scheduler->getDesiredDriveState(m_driveInfo.driveName, lc);
-    ASSERT_FALSE(desired.up);
-    ASSERT_TRUE(desired.reason);
-    ASSERT_NE(std::string::npos, desired.reason->find("[cta-taped] ERROR Drive cleanup failed: "));
+    ASSERT_TRUE(desired.up);
+    ASSERT_FALSE(desired.reason);
     const auto drive = m_catalogue->DriveState()->getTapeDrive(m_driveInfo.driveName);
     ASSERT_TRUE(drive);
-    ASSERT_EQ(cta::common::dataStructures::DriveStatus::Down, drive->driveStatus);
+    ASSERT_NE(cta::common::dataStructures::DriveStatus::Down, drive->driveStatus);
   }
 
   void setTapeState(Tape::State state) {
@@ -320,7 +323,8 @@ protected:
     const bool resetFailed = failurePoint != cta::tape::drive::FakeDrive::FailurePoint::Rewind;
     ASSERT_EQ(!resetFailed, cleaner.execute(m_systemWrapper));
     cta::log::LogContext logContext(m_sessionLog);
-    ASSERT_EQ(!resetFailed, m_scheduler->getDesiredDriveState(m_driveInfo.driveName, logContext).up);
+    ASSERT_TRUE(m_scheduler->getDesiredDriveState(m_driveInfo.driveName, logContext).up);
+    ASSERT_EQ(!resetFailed, cleaner.errorMessage().empty());
     ASSERT_EQ(cta::common::dataStructures::Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
     ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner unloaded tape"));
     ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
@@ -337,6 +341,7 @@ protected:
                 + stats.labelReadTime + stats.unloadTime + stats.unmountTime);
   }
 
+  std::string m_cleanupError;
   cta::tape::daemon::TapeSessionTracker m_tracker;
   cta::log::DummyLogger m_dummyLog {"dummy", "dummy"};
   cta::log::StringLogger m_sessionLog {"dummy", "tapedUnitTest", cta::log::DEBUG};
@@ -510,7 +515,7 @@ TEST_P(DriveCleanerTest, DismountsTapeAfterUnloadFailure) {
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
 }
 
-TEST_P(DriveCleanerTest, DisablesTapeAndPutsDriveDownWhenBothDismountAttemptsFail) {
+TEST_P(DriveCleanerTest, DisablesTapeAndRejectsReuseWhenBothDismountAttemptsFail) {
   constexpr uint16_t unavailableRmcPort = 0;
   constexpr uint32_t networkTimeout = 1;
   constexpr uint32_t maxRequestAttempts = 1;
@@ -537,11 +542,12 @@ TEST_P(DriveCleanerTest, DisablesTapeAndPutsDriveDownWhenBothDismountAttemptsFai
 
   cta::log::LogContext logContext(m_sessionLog);
   const auto desiredDriveState = m_scheduler->getDesiredDriveState(driveInfo.driveName, logContext);
-  ASSERT_FALSE(desiredDriveState.up);
+  ASSERT_TRUE(desiredDriveState.up);
+  EXPECT_THAT(cleaner.errorMessage(), testing::HasSubstr("Failed to dismount tape"));
 
   const auto tapeDrive = m_catalogue->DriveState()->getTapeDrive(driveInfo.driveName);
   ASSERT_TRUE(tapeDrive.has_value());
-  ASSERT_EQ(cta::common::dataStructures::DriveStatus::Down, tapeDrive->driveStatus);
+  ASSERT_EQ(cta::common::dataStructures::DriveStatus::Unmounting, tapeDrive->driveStatus);
 }
 
 TEST_P(DriveCleanerTest, AcceptsEmptyDriveWithoutDismounting) {
@@ -588,7 +594,7 @@ TEST_P(DriveCleanerTest, MediaDetectionFailureRetainsReadinessWaitAndEjects) {
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
 }
 
-TEST_P(DriveCleanerTest, PutsEmptyDriveDownAfterConfigurationResetFailure) {
+TEST_P(DriveCleanerTest, RejectsEmptyDriveReuseAfterConfigurationResetFailure) {
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mediaChanger(rmcProxy, m_changerLog);
   auto* drive = installDrive(false);
@@ -600,7 +606,8 @@ TEST_P(DriveCleanerTest, PutsEmptyDriveDownAfterConfigurationResetFailure) {
   ASSERT_EQ(0, m_tracker.stats().cleanup.readinessWaitTime);
   ASSERT_EQ(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
   cta::log::LogContext logContext(m_sessionLog);
-  ASSERT_FALSE(m_scheduler->getDesiredDriveState(m_driveInfo.driveName, logContext).up);
+  ASSERT_TRUE(m_scheduler->getDesiredDriveState(m_driveInfo.driveName, logContext).up);
+  EXPECT_THAT(cleaner.errorMessage(), testing::HasSubstr("Failed to disable logical block protection"));
   ASSERT_EQ(cta::common::dataStructures::Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
 }
 
@@ -615,18 +622,15 @@ TEST_P(DriveCleanerTest, EjectsTapeWithUnknownVid) {
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
 }
 
-TEST_P(DriveCleanerTest, DriveOpenFailureStillDismountsAndKeepsDriveDown) {
+TEST_P(DriveCleanerTest, DriveOpenFailureStillDismountsAndRejectsReuse) {
   // Device discovery succeeds; drive construction fails before ownership is established.
   EXPECT_CALL(m_systemWrapper, getDriveByPath("/dev/nst0"))
     .WillOnce(testing::Throw(std::runtime_error("drive open failed")));
   ASSERT_FALSE(runCleaner(m_vid));
-  assertDriveDown();
+  assertFailureReturnedWithoutPublishingDown();
   ASSERT_EQ(Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
-  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("drive could not be opened"));
-  cta::log::LogContext lc(m_sessionLog);
-  const auto state = m_scheduler->getDesiredDriveState(m_driveInfo.driveName, lc);
-  ASSERT_TRUE(state.reason);
-  EXPECT_THAT(*state.reason, testing::HasSubstr("drive open failed"));
+  EXPECT_THAT(m_cleanupError, testing::HasSubstr("drive could not be opened"));
+  EXPECT_THAT(m_cleanupError, testing::HasSubstr("drive open failed"));
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find(R"(dismountVid="")"));
   ASSERT_EQ(0, m_tracker.failureStats().count(TapeSessionFailure::TapeDismount));
 }
@@ -634,19 +638,19 @@ TEST_P(DriveCleanerTest, DriveOpenFailureStillDismountsAndKeepsDriveDown) {
 TEST_P(DriveCleanerTest, DriveDiscoveryFailureStillAttemptsDismount) {
   m_systemWrapper.fake.m_stats.erase(m_driveInfo.devFilename);
   ASSERT_FALSE(runCleaner(m_vid));
-  assertDriveDown();
+  assertFailureReturnedWithoutPublishingDown();
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
   ASSERT_EQ(Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
 }
 
-TEST_P(DriveCleanerTest, DriveOpenAndDismountFailureDisableTapeAndKeepDriveDown) {
+TEST_P(DriveCleanerTest, DriveOpenAndDismountFailureDisableTapeAndRejectReuse) {
   EXPECT_CALL(m_systemWrapper, getDriveByPath("/dev/nst0"))
     .WillOnce(testing::Throw(cta::exception::Exception("drive open failed")));
   ASSERT_FALSE(runCleaner(m_vid, true));
-  assertDriveDown();
+  assertFailureReturnedWithoutPublishingDown();
   ASSERT_EQ(Tape::DISABLED, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
   ASSERT_EQ(1, m_tracker.failureStats().at(TapeSessionFailure::TapeDismount));
-  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("failed to dismount the tape"));
+  EXPECT_THAT(m_cleanupError, testing::HasSubstr("failed to dismount the tape"));
 }
 
 TEST_P(DriveCleanerTest, ReadinessFailureDoesNotPreventResetsAndEject) {
@@ -673,7 +677,7 @@ TEST_P(DriveCleanerTest, CombinedResetFailuresStillEjectAndRecordBothErrors) {
   drive->setFailurePoint(FailurePoint::ClearEncryptionKey);
   drive->setFailurePoint(FailurePoint::DisableLogicalBlockProtection);
   ASSERT_FALSE(runCleaner(m_vid));
-  assertDriveDown();
+  assertFailureReturnedWithoutPublishingDown();
   ASSERT_EQ(1, m_tracker.failureStats().at(TapeSessionFailure::TapeEncryptionDisable));
   ASSERT_EQ(1, m_tracker.failureStats().at(TapeSessionFailure::TapeLbpDisable));
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
@@ -686,7 +690,7 @@ TEST_P(DriveCleanerTest, CombinedResetUnloadAndDismountFailuresRecordAllErrors) 
   drive->setFailurePoint(FailurePoint::DisableLogicalBlockProtection);
   drive->setFailurePoint(FailurePoint::UnloadTape);
   ASSERT_FALSE(runCleaner(m_vid, true));
-  assertDriveDown();
+  assertFailureReturnedWithoutPublishingDown();
   ASSERT_EQ(1, m_tracker.failureStats().at(TapeSessionFailure::TapeEncryptionDisable));
   ASSERT_EQ(1, m_tracker.failureStats().at(TapeSessionFailure::TapeLbpDisable));
   ASSERT_EQ(1, m_tracker.failureStats().at(TapeSessionFailure::TapeUnload));
@@ -699,7 +703,7 @@ TEST_P(DriveCleanerTest, FailedEjectDisablesRepackingTape) {
   setTapeState(Tape::REPACKING);
   ASSERT_FALSE(runCleaner(m_vid, true));
   ASSERT_EQ(Tape::REPACKING_DISABLED, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
-  assertDriveDown();
+  assertFailureReturnedWithoutPublishingDown();
 }
 
 TEST_P(DriveCleanerTest, FailedEjectPreservesStatesThatCannotBeDisabledAutomatically) {
@@ -717,7 +721,7 @@ TEST_P(DriveCleanerTest, FailedEjectPreservesStatesThatCannotBeDisabledAutomatic
     const auto tape = m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid);
     ASSERT_EQ(state, tape.state);
     ASSERT_EQ("Test setup", tape.stateReason);
-    assertDriveDown();
+    assertFailureReturnedWithoutPublishingDown();
   }
 }
 
@@ -728,10 +732,10 @@ TEST_P(DriveCleanerTest, FailedEjectWithoutVidDoesNotDisableAnyTape) {
   ASSERT_EQ(Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
   ASSERT_NE(std::string::npos,
             m_sessionLog.getLog().find("cannot disable tape after failed eject because its VID is unknown"));
-  assertDriveDown();
+  assertFailureReturnedWithoutPublishingDown();
 }
 
-TEST_P(DriveCleanerTest, TapeLookupFailureDoesNotPreventDriveDownPublication) {
+TEST_P(DriveCleanerTest, TapeLookupFailureDoesNotPreventCleanupFailureResult) {
   installDrive();
   CleanerCatalogue catalogue(*m_catalogue);
   catalogue.failures().lookupFailure = std::make_exception_ptr(std::runtime_error("tape lookup failed"));
@@ -739,10 +743,10 @@ TEST_P(DriveCleanerTest, TapeLookupFailureDoesNotPreventDriveDownPublication) {
   ASSERT_EQ(0, catalogue.failures().modifications);
   ASSERT_EQ(Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("tape lookup failed"));
-  assertDriveDown();
+  assertFailureReturnedWithoutPublishingDown();
 }
 
-TEST_P(DriveCleanerTest, TapeStateModificationFailureDoesNotPreventDriveDownPublication) {
+TEST_P(DriveCleanerTest, TapeStateModificationFailureDoesNotPreventCleanupFailureResult) {
   installDrive();
   CleanerCatalogue catalogue(*m_catalogue);
   catalogue.failures().modificationFailure = std::make_exception_ptr(cta::exception::Exception("state update failed"));
@@ -750,7 +754,7 @@ TEST_P(DriveCleanerTest, TapeStateModificationFailureDoesNotPreventDriveDownPubl
   ASSERT_EQ(1, catalogue.failures().modifications);
   ASSERT_EQ(Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("state update failed"));
-  assertDriveDown();
+  assertFailureReturnedWithoutPublishingDown();
 }
 
 TEST_P(DriveCleanerTest, LabelFormatLookupFailureStillEjectsWithProvidedVid) {
@@ -763,30 +767,21 @@ TEST_P(DriveCleanerTest, LabelFormatLookupFailureStillEjectsWithProvidedVid) {
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find(R"(dismountVid="TSTVID")"));
 }
 
-TEST_P(DriveCleanerTest, DesiredStatePublicationFailureIsContainedAfterReportedDown) {
+TEST_P(DriveCleanerTest, FailedCleanupDoesNotPublishTerminalOrDesiredState) {
   installDrive(false)->setFailurePoint(FailurePoint::ClearEncryptionKey);
   CleanerCatalogue catalogue(*m_catalogue);
   auto& failures = catalogue.driveFailures();
   failures.desiredFailure = std::make_exception_ptr(std::runtime_error("desired publication failed"));
-  ASSERT_FALSE(runCleaner(m_vid, false, false, &catalogue));
-  ASSERT_EQ(1, failures.reportedCalls);
-  ASSERT_EQ(1, failures.desiredCalls);
-  ASSERT_EQ(cta::common::dataStructures::DriveStatus::Down,
-            m_catalogue->DriveState()->getTapeDrive(m_driveInfo.driveName)->driveStatus);
-  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("desired publication failed"));
-}
+  failures.reportedFailure = std::make_exception_ptr(std::runtime_error("reported publication failed"));
 
-TEST_P(DriveCleanerTest, ReportedStatePublicationFailureIsContained) {
-  installDrive(false)->setFailurePoint(FailurePoint::ClearEncryptionKey);
-  CleanerCatalogue catalogue(*m_catalogue);
-  auto& failures = catalogue.driveFailures();
-  failures.reportedFailure = std::make_exception_ptr(cta::exception::Exception("reported publication failed"));
   ASSERT_FALSE(runCleaner(m_vid, false, false, &catalogue));
-  ASSERT_EQ(1, failures.reportedCalls);
-  ASSERT_EQ(1, failures.desiredCalls);
-  cta::log::LogContext lc(m_sessionLog);
-  ASSERT_FALSE(m_scheduler->getDesiredDriveState(m_driveInfo.driveName, lc).up);
-  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("reported publication failed"));
+  EXPECT_THAT(m_cleanupError, testing::HasSubstr("Failed to clear encryption key"));
+  // An empty drive needs no progress reports, and terminal publication belongs to DriveSession.
+  EXPECT_EQ(0, failures.reportedCalls);
+  EXPECT_EQ(0, failures.desiredCalls);
+  assertFailureReturnedWithoutPublishingDown();
+  EXPECT_EQ(cta::common::dataStructures::DriveStatus::Up,
+            m_catalogue->DriveState()->getTapeDrive(m_driveInfo.driveName)->driveStatus);
 }
 
 TEST_P(DriveCleanerTest, TapeAlertsAreCountedAndLoggedAfterSuccessfulCleanup) {
@@ -829,7 +824,7 @@ TEST_P(DriveCleanerTest, TracksSuccessAndFailure) {
   installDrive()->setFailurePoint(FailurePoint::ClearEncryptionKey);
   ASSERT_FALSE(runCleaner(m_vid, true));
   ASSERT_EQ(Tape::DISABLED, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
-  assertDriveDown();
+  assertFailureReturnedWithoutPublishingDown();
 }
 
 TEST_P(DriveCleanerTest, BorrowedCleanupReportsProgressBeforeHardwareOperations) {

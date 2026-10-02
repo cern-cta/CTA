@@ -31,6 +31,7 @@ public:
   bool missing = false;
   std::function<void()> onRead;
   std::function<void(DriveStatus)> onReport;
+  std::function<void(const DesiredDriveState&)> onDesired;
   std::vector<DriveStatus> reports;
 
   std::optional<TapeDrive> getTapeDrive(const std::string& name) const override {
@@ -38,6 +39,13 @@ public:
       onRead();
     }
     return missing ? std::nullopt : DummyDriveStateCatalogue::getTapeDrive(name);
+  }
+
+  void setDesiredTapeDriveState(const std::string& name, const DesiredDriveState& state) override {
+    if (onDesired) {
+      onDesired(state);
+    }
+    DummyDriveStateCatalogue::setDesiredTapeDriveState(name, state);
   }
 
   bool updateTapeDriveStatus(const TapeDrive& drive) override {
@@ -99,6 +107,7 @@ protected:
   void TearDown() override {
     driveState().onRead = {};
     driveState().onReport = {};
+    driveState().onDesired = {};
     session.reset();
   }
 
@@ -212,6 +221,52 @@ TEST_F(DriveSessionTest, FailedPreparationRequestsDownAndReleasesOwnership) {
   EXPECT_EQ(DriveStatus::Down, reported().driveStatus);
   EXPECT_FALSE(canUseHardware());
   EXPECT_TRUE(session->isLive());
+}
+
+TEST_F(DriveSessionTest, CleanupDesiredStatePublicationFailurePropagatesUntilOwnershipIsReleased) {
+  auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
+  drive->setFailurePoint(drive::FakeDrive::FailurePoint::ClearEncryptionKey);
+  unsigned int desiredAttempts = 0;
+  driveState().onDesired = [&](const DesiredDriveState& desired) {
+    ++desiredAttempts;
+    EXPECT_FALSE(desired.up);
+    EXPECT_TRUE(canUseHardware());
+    throw std::runtime_error("desired publication failed");
+  };
+
+  EXPECT_THROW(session->run(stop.get_token()), std::runtime_error);
+  EXPECT_GT(desiredAttempts, 0);
+  EXPECT_TRUE(canUseHardware());
+  EXPECT_TRUE(reported().desiredUp);
+  EXPECT_EQ(DriveStatus::CleaningUp, reported().driveStatus);
+  EXPECT_FALSE(activeTracker());
+
+  // A failed request does not acknowledge release; teardown publishes Down after releasing ownership.
+  session.reset();
+  EXPECT_EQ(DriveStatus::Down, reported().driveStatus);
+  EXPECT_TRUE(reported().desiredUp);
+}
+
+TEST_F(DriveSessionTest, CleanupReportedDownFailurePropagatesAfterOwnershipIsReleased) {
+  auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
+  drive->setFailurePoint(drive::FakeDrive::FailurePoint::ClearEncryptionKey);
+  unsigned int downAttempts = 0;
+  driveState().onReport = [&](DriveStatus status) {
+    if (status == DriveStatus::Down) {
+      ++downAttempts;
+      EXPECT_FALSE(canUseHardware());
+      throw std::runtime_error("reported publication failed");
+    }
+  };
+
+  EXPECT_THROW(session->run(stop.get_token()), std::runtime_error);
+  EXPECT_EQ(1, downAttempts);
+  EXPECT_FALSE(canUseHardware());
+  EXPECT_FALSE(reported().desiredUp);
+  EXPECT_EQ(DriveStatus::CleaningUp, reported().driveStatus);
+  ASSERT_TRUE(reported().reasonUpDown);
+  EXPECT_THAT(*reported().reasonUpDown, testing::HasSubstr("Failed to clear encryption key"));
+  EXPECT_FALSE(activeTracker());
 }
 
 TEST_F(DriveSessionTest, MissingDrivePropagatesWithoutHardwareAccess) {

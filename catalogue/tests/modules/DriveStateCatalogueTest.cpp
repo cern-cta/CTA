@@ -140,12 +140,12 @@ TEST_P(cta_catalogue_DriveStateTest, CleaningUpPreservesOperatorReasonAndVid) {
   EXPECT_FALSE(stored->desiredUp);
   EXPECT_EQ(down.reason, stored->reasonUpDown);
 
-  // Even when the drive reports up, the desired state and reason should still be there
+  // Reported activity stays independent of the pending operator request.
   state.reportDriveStatus(info, MountType::NoMount, DriveStatus::Up, time(nullptr), lc);
   stored = m_catalogue->DriveState()->getTapeDrive(drive.driveName);
   ASSERT_TRUE(stored);
   EXPECT_FALSE(stored->desiredUp);
-  EXPECT_EQ(DriveStatus::Down, stored->driveStatus);
+  EXPECT_EQ(DriveStatus::Up, stored->driveStatus);
   EXPECT_EQ(down.reason, stored->reasonUpDown);
 
   // Persistent catalogues retain drive rows between tests.
@@ -743,7 +743,9 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusUpButDesiredIsDown) {
   }
   const auto storedTapeDrive = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_TRUE(static_cast<bool>(storedTapeDrive));
-  ASSERT_EQ(storedTapeDrive.value().driveStatus, cta::common::dataStructures::DriveStatus::Down);
+  // An Up report must not acknowledge the pending Down request on behalf of the drive session.
+  ASSERT_EQ(storedTapeDrive.value().driveStatus, cta::common::dataStructures::DriveStatus::Up);
+  ASSERT_FALSE(storedTapeDrive.value().desiredUp);
   ASSERT_EQ(storedTapeDrive.value().reasonUpDown.value(), inputs.reason);
 
   m_catalogue->DriveState()->deleteTapeDrive(tapeDrive.driveName);
