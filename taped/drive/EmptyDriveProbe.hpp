@@ -18,69 +18,42 @@
 
 namespace cta::tape::daemon {
 
-/**
-   * Class responsible for probing a tape drive to see if it empty and
-   * accessible.
-   */
+/// Probe whether a tape drive can be opened and has no cartridge present.
 class EmptyDriveProbe {
 public:
-  /**
-     * Constructor
-     *
-     * @param log Object representing the API to the CTA logging system.
-     * @param driveInfo Information of the tape drive to be probed.
-     * @param sysWrapper Object representing the operating system.
-     */
+  /// @brief Copy the drive identity and borrow the logger and system wrapper for the probe lifetime.
+  ///
+  /// @param log Object representing the API to the CTA logging system.
+  /// @param driveInfo Information of the tape drive to be probed.
+  /// @param sysWrapper Object representing the operating system.
   EmptyDriveProbe(cta::log::Logger& log,
                   const cta::common::dataStructures::DriveInfo& driveInfo,
                   System::virtualWrapper& sysWrapper);
 
-  /**
-     * Probes the tape drive to determine whether it is empty and accessible.
-     *
-     * @return True if the drive is empty and accessible.
-     */
+  /// @brief Open the drive and check for cartridge presence, recording and logging probe exceptions.
+  ///
+  /// @return True only if the probe succeeds and no cartridge is present.
   bool driveIsEmpty() noexcept;
 
-  /**
-     * Returns the eventual probe error message
-     */
+  /// Return the most recently recorded probe failure, or no value if no failure has been recorded.
   std::optional<std::string> getProbeErrorMsg();
 
 private:
-  /**
-     * The logging object
-     */
   cta::log::Logger& m_log;
 
-  /**
-     * The information of the tape drive to be probed.
-     */
   const cta::common::dataStructures::DriveInfo m_driveInfo;
 
-  /**
-     * The system wrapper used to find the device and instantiate the drive object
-     */
   System::virtualWrapper& m_sysWrapper;
 
-  /**
-     * Probes the tape drive to determine whether it is empty and accessible.
-     *
-     * @return True if the drive is empty and accessible.
-     */
+  /// @brief Open the drive and check cartridge presence, allowing discovery and device errors to propagate.
+  ///
+  /// @return True only if the drive is accessible and no cartridge is present.
   bool exceptionThrowingDriveIsEmpty();
 
-  /**
-     * Creates and returns the object that represents the tape drive to be
-     * probed.
-     *
-     * @return The tape drive.
-     */
+  /// Discover and open an owned drive object using the borrowed system wrapper; propagate discovery or open errors.
   std::unique_ptr<drive::DriveInterface> createDrive();
 
-  /**
-     * Eventual error message if we could not check whether the drive is empty or not
-     */
+  /// Eventual error message if we could not check whether the drive is empty or not.
   std::optional<std::string> m_probeErrorMsg;
 
 };  // class EmptyDriveProbe

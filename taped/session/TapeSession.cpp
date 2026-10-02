@@ -47,26 +47,18 @@ constexpr const char* c_raoLtoAlgorithmOptions = "cost_heuristic_name:cta";
 // The reporter has no pipeline dependencies: stopping it only wakes its own wait loop.
 class ScopedReporter {
 public:
-  /**
-   * @brief Borrow a reporter without starting its thread.
-   *
-   * @param reporter Borrowed reporter whose thread is managed by this guard.
-   */
+  /// @brief Borrow a reporter without starting its thread.
+  ///
+  /// @param reporter Borrowed reporter whose thread is managed by this guard.
   explicit ScopedReporter(cta::tape::daemon::TapeSessionReporter& reporter) : m_reporter(reporter) {}
 
-  /**
-   * @brief Disallow copying the owner of a reporter thread.
-   */
+  /// Disallow copying the owner of a reporter thread.
   ScopedReporter(const ScopedReporter&) = delete;
 
-  /**
-   * @brief Disallow assigning ownership of a reporter thread.
-   */
+  /// Disallow assigning ownership of a reporter thread.
   ScopedReporter& operator=(const ScopedReporter&) = delete;
 
-  /**
-   * @brief Stop and join a started reporter; terminate if joining fails to protect borrowed session state.
-   */
+  /// Stop and join a started reporter; terminate if joining fails to protect borrowed session state.
   ~ScopedReporter() noexcept {
     if (m_started) {
       try {
@@ -78,17 +70,13 @@ public:
     }
   }
 
-  /**
-   * @brief Start reporting and record that this guard must join the thread.
-   */
+  /// Start reporting and record that this guard must join the thread.
   void start() {
     m_reporter.startThreads();
     m_started = true;
   }
 
-  /**
-   * @brief Request shutdown and join the reporter if it was started.
-   */
+  /// Request shutdown and join the reporter if it was started.
   void finish() {
     if (!m_started) {
       return;
@@ -103,15 +91,13 @@ private:
   bool m_started = false;
 };
 
-/**
- * @brief Log an operation failure and preserve the first fatal failure for later propagation.
- *
- * Logging failures are contained so remaining finalization operations can still run.
- *
- * @param failure Exception captured from the failed session operation.
- * @param fatalFailure First fatal exception retained for propagation after finalization.
- * @param lc Log context for diagnostics.
- */
+/// @brief Log an operation failure and preserve the first fatal failure for later propagation.
+///
+/// Logging failures are contained so remaining finalization operations can still run.
+///
+/// @param failure Exception captured from the failed session operation.
+/// @param fatalFailure First fatal exception retained for propagation after finalization.
+/// @param lc Log context for diagnostics.
 void recordFailure(std::exception_ptr failure, std::exception_ptr& fatalFailure, cta::log::LogContext& lc) {
   const char* message = "Unrecoverable tape session failure";
   try {

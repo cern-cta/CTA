@@ -135,13 +135,17 @@ const std::string& EncryptionControl::getScriptPath() const {
 };
 
 namespace {
+/// Release a JSON-C object when its owning smart pointer is destroyed.
 struct JsonObjectDeleter {
+  /// Drop the owned JSON object reference.
   void operator()(json_object* jo) const { json_object_put(jo); }
 };
 }  // namespace
 
 namespace {
+/// Release a JSON-C parser when its owning smart pointer is destroyed.
 struct JsonTokenerDeleter {
+  /// Free the owned JSON parser state.
   void operator()(json_tokener* jt) const { json_tokener_free(jt); }
 };
 }  // namespace

@@ -93,9 +93,7 @@ const uint32_t DISK_FILE_SOME_GROUP = 9754;
 
 namespace {
 
-/**
- * This structure is used to parameterize scheduler tests.
- */
+/// This structure is used to parameterize scheduler tests.
 struct TapeSessionTestParam {
   cta::SchedulerDatabaseFactory& dbFactory;
 
@@ -527,10 +525,8 @@ size_t transferTestThreadCount() {
   return count;
 }
 
-/**
- * The data transfer test is a parameterized test.  It takes a pair of name server
- * and scheduler database factories as a parameter.
- */
+/// The data transfer test is a parameterized test.  It takes a pair of name server
+/// and scheduler database factories as a parameter.
 class TapeSessionTest : public ::testing::TestWithParam<TapeSessionTestParam> {
 public:
   TapeSessionTest() : m_dummyLog("dummy", "dummy") {}
@@ -838,11 +834,9 @@ public:
     catalogue.DriveState()->createTapeDrive(tapeDrive);
   }
 
-  /**
-   * Returns the map of Fseqs given by RAO from a string containing CTA logs
-   * @param log the string containing the CTA logs
-   * @return the map that gives for each RAO call, the associated ordered Fseqs according to the RAO algorithm result
-   */
+  /// Returns the map of Fseqs given by RAO from a string containing CTA logs
+  /// @param log the string containing the CTA logs
+  /// @return the map that gives for each RAO call, the associated ordered Fseqs according to the RAO algorithm result
   std::map<size_t, std::vector<std::string>> getRAOFseqs(const std::string& log) {
     std::map<size_t, std::vector<std::string>> ret;
     size_t i = 0;
@@ -1159,13 +1153,11 @@ protected:
   const std::string s_mediaType = "LTO7M";
   const std::string s_vendor = "TestVendor";
   //TempFile m_tempSqliteFile;
-  /**
-   * Temporary directory created with mkdtemp that will be used to contain the
-   * destination remote files of the tests that need to create them.
-   *
-   * Please note that a new temporary directory is created and deleted for each
-   * test by the Setup() and TearDown() methods.
-   */
+  /// Temporary directory created with mkdtemp that will be used to contain the
+  /// destination remote files of the tests that need to create them.
+  ///
+  /// Please note that a new temporary directory is created and deleted for each
+  /// test by the Setup() and TearDown() methods.
   char m_tmpDir[100];
 
 };  // class TapeSessionTest

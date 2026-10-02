@@ -19,23 +19,35 @@
 
 namespace cta::tape::daemon {
 
-// Owns a scheduler and its backend together, or borrows an externally managed scheduler.
-// The catalogue, configuration, and logger must outlive this context.
+/// @brief Own a scheduler and backend, or borrow an externally managed scheduler.
+///
+/// The configuration, catalogue and logger must outlive this context.
 class SchedulerContext final {
 public:
+  /// @brief Construct a scheduler and its backend using the supplied configuration.
+  ///
+  /// The configuration, catalogue and logger are borrowed.
   SchedulerContext(const TapedConfig& config, catalogue::Catalogue& catalogue, log::Logger& log);
 
-  // The supplied scheduler and its backend must outlive the context. reinitialise() leaves them untouched.
+  /// @brief Borrow a scheduler and its catalogue without taking ownership.
+  ///
+  /// The supplied dependencies and backend must outlive this context.
   SchedulerContext(const TapedConfig& config, log::Logger& log, Scheduler& scheduler);
 
-  // References are valid only until reinitialise() replaces the object-store backend.
+  /// @brief Return the active scheduler.
+  ///
+  /// The reference is invalidated when renewObjectStoreAgent() replaces an owned object-store backend.
   Scheduler& scheduler() { return *m_scheduler; }
 
-  // Call only after all borrowed mounts and jobs have been destroyed.
-  // PostgreSQL has no per-agent ownership to reinitialise.
-  void reinitialise();
+  /// @brief Replace an owned object-store scheduler and backend with a fresh agent.
+  ///
+  /// Does nothing for PostgreSQL or a borrowed scheduler.
+  void renewObjectStoreAgent();
 
 private:
+  /// @brief Construct a complete scheduler/backend pair before replacing the current pair.
+  ///
+  /// Construction failures propagate without replacing the existing pair.
   void initialise();
 
   const TapedConfig& m_config;
@@ -44,6 +56,7 @@ private:
   std::unique_ptr<SchedulerDBInit_t> m_schedDbInit;
   std::unique_ptr<SchedulerDB_t> m_schedDb;
   std::unique_ptr<Scheduler> m_ownedScheduler;
+  /// Non-owning access to either m_ownedScheduler or the externally supplied scheduler.
   Scheduler* m_scheduler = nullptr;
 };
 

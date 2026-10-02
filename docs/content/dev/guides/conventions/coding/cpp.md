@@ -33,6 +33,14 @@ Follow [General Coding Conventions](general.md). The C++ standard is selected in
 ## Documentation
 
 - Document class purpose and non-obvious public contracts, including ownership, errors, and thread-safety expectations where relevant.
-- Use Doxygen Javadoc-style comments for API documentation. Do not add comments that merely restate trivial methods or parameter names.
+- Use `///` comments for Doxygen API documentation, with `///<` for trailing member documentation.
+- Omit `@brief` for single-line documentation comments; use it to mark the summary in multiline documentation blocks.
+  Keep blank lines within a documentation block prefixed with `///`.
+- Do not add comments that merely restate trivial methods or parameter names.
+- End documentation comments with a full stop.
+- Public and private methods in the header files should be documented.
+- For member variables, only add a documentation comment if it's worth explaining why it's there.
+- In the documentation comments, keep it clear and concise. Maintaining the comments should not be more work than maintaining the implementation.
+- Tests don't need documentation-style comments.
 
 For broader guidance, see the [C++ Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines).

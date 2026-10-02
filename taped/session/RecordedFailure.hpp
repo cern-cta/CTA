@@ -9,16 +9,23 @@ namespace cta::tape::daemon {
 
 class TapeSessionTracker;
 
-/** Receipt for a failure already counted by a tracker; producers pass it with the failed file. */
+/// @brief Indicates that TapeSessionTracker::recordFailure() has already counted a failure.
+///
+/// Callers pass this value with a failed job to the report packer, which checks that it came from the same tracker.
+/// The report packer reports the job failure without counting it again.
+/// This value identifies the tracker, not a specific job or failure.
 class RecordedFailure {
 public:
+  /// Return whether this receipt was issued by the supplied tracker.
   bool belongsTo(const TapeSessionTracker& tracker) const { return m_tracker == &tracker; }
 
 private:
   friend class TapeSessionTracker;
 
+  /// Create a receipt for a failure already counted by the issuing tracker.
   explicit RecordedFailure(const TapeSessionTracker& tracker) : m_tracker(&tracker) {}
 
+  /// Non-owning identity used to validate receipts; never dereferenced.
   const TapeSessionTracker* m_tracker;
 };
 

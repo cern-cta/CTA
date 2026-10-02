@@ -28,72 +28,111 @@ class TapeMount;
 namespace cta::tape::daemon {
 class SchedulerContext;
 
-// One period of hardware ownership within TapeDaemon, containing zero or more tape sessions.
+/// Manage one drive reservation across preparation, tape sessions and recovery.
 class DriveSession final {
 public:
-  // Borrowed dependencies must outlive the session; hardware access objects are session-owned.
-  // Constructs dependencies without accessing the drive; run() performs initial preparation.
+  /// @brief Create a session using the real system-call wrapper, without accessing hardware.
+  ///
+  /// Configuration, logger and scheduler context must outlive the session; run() performs preparation.
   static std::unique_ptr<DriveSession>
   create(const TapedConfig& config, log::Logger& log, SchedulerContext& schedulerContext);
 
-  // The supplied system wrapper must outlive the session.
+  /// @brief Create a session with a borrowed system-call wrapper, without accessing hardware.
+  ///
+  /// All supplied dependencies must outlive the session; run() performs preparation.
   static std::unique_ptr<DriveSession> create(const TapedConfig& config,
                                               log::Logger& log,
                                               SchedulerContext& schedulerContext,
                                               System::virtualWrapper& sysWrapper);
 
-  // Prepare and run once, until ownership ends or stop is requested. Active transfers are not interrupted.
-  // Preparation failure or a withdrawn up request ends the session without scheduling; other failures propagate.
+  /// @brief Prepare the drive and schedule tape sessions until stop or reservation release.
+  ///
+  /// Call once. Active transfers are not interrupted by the stop token.
+  /// Preparation failure or withdrawn up intent ends the session; unexpected failures propagate.
   void run(std::stop_token stopToken);
+
+  /// Attempt reservation release and Down publication, logging failures without throwing.
   ~DriveSession() noexcept;
 
-  // Safe for concurrent health queries; preparation, recovery, and transfers publish their trackers.
+  /// @brief Return whether the active preparation, recovery or transfer is within its liveness deadline.
+  ///
+  /// Safe for concurrent health queries; returns true when no tracker is active.
   bool isLive() const;
 
+  /// Prevent copying a drive reservation.
   DriveSession(const DriveSession&) = delete;
+
+  /// Prevent replacing a drive reservation by copying.
   DriveSession& operator=(const DriveSession&) = delete;
+
+  /// Keep the session at a stable address for health readers.
   DriveSession(DriveSession&&) = delete;
+
+  /// Prevent moving a session observed by health readers.
   DriveSession& operator=(DriveSession&&) = delete;
 
 private:
   friend class DriveSessionTest;
 
-  // Initialize dependencies; run() prepares the drive under unique ownership.
+  /// @brief Initialize borrowed dependencies and owned hardware helpers without preparing the drive.
+  ///
+  /// A null sysWrapper selects the session-owned real wrapper.
   DriveSession(const TapedConfig& config,
                log::Logger& log,
                SchedulerContext& schedulerContext,
                System::virtualWrapper* sysWrapper = nullptr);
 
+  /// Scheduling decision after one iteration.
   enum class IterationAction { Continue, RetryAfterDelay, EndOwnership };
 
+  /// Scheduling decision with a diagnostic when ending the reservation.
   struct IterationResult {
     IterationAction action;
     std::string endReason;
   };
 
+  /// @brief Poll operator intent, obtain work and translate a tape-session outcome into a loop decision.
+  ///
+  /// Idle polls and recoverable scheduling failures request a retry delay.
+  /// @pre The drive is empty and reserved by this session.
   IterationResult runIteration(std::stop_token stopToken);
+
+  /// @brief Execute an assignment and attempt drive recovery after ordinary escaping failures.
+  ///
+  /// Unsafe worker teardown propagates without recovery; unusable results request desired Down.
   TapeSessionResult runTapeSession(TapeMount& tapeMount);
-  // Shared by initial preparation and recovery within an existing ownership period.
-  // Preparation uses an unknown VID; only immediate tape-session recovery supplies one.
+
+  /// @brief Clean the drive for initial preparation or recovery, returning whether scheduling may continue.
+  ///
+  /// Only recovery supplies a known VID. Operator Down intent prevents further scheduling.
   bool cleanDrive(const std::optional<std::string>& vid = std::nullopt);
-  // Release hardware before terminal publication; destruction retries failed publication.
+
+  /// @brief Release the reservation before reporting Down; retain failed publication for a later retry.
+  ///
+  /// Unsafe worker teardown prevents release and Down publication.
   void releaseAndReportDown();
+
+  /// @brief Request desired Down while preserving an observed specific reason.
+  ///
+  /// Publication failures propagate; this does not release the reservation.
   void requestDown(common::dataStructures::DriveDownReason reason, std::string_view detail = "");
+
+  /// Request desired Down, logging publication failures without throwing.
   void requestDownNoThrow(common::dataStructures::DriveDownReason reason, std::string_view detail) noexcept;
 
   const TapedConfig& m_config;
   const common::dataStructures::DriveInfo m_driveInfo;
   log::LogContext m_lc;
   SchedulerContext& m_schedulerContext;
-  // Hardware access is scoped to this ownership period, including preparation and recovery.
+  /// Hardware access is scoped to this ownership period, including preparation and recovery.
   mediachanger::MediaChangerFacade m_mediaChanger;
   System::realWrapper m_realSysWrapper;
   System::virtualWrapper& m_sysWrapper;
-  // Active cleanup or transfer tracker; health readers retain their own atomically loaded shared reference.
+  /// Active cleanup or transfer tracker; health readers retain their own atomically loaded shared reference.
   std::shared_ptr<const TapeSessionTracker> m_activeTracker;
-  // Tracks terminal publication only; hardware ownership is managed independently.
-  bool m_downReported = false;
-  // Destroy first, while its borrowed dependencies and hardware access objects are still alive.
+  /// Tracks terminal publication only; hardware ownership is managed independently.
+  bool m_downPublicationComplete = false;
+  /// Destroy first, while its borrowed dependencies and hardware access objects are still alive.
   DriveReservation m_driveReservation;
 };
 

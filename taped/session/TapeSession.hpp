@@ -25,24 +25,20 @@
 
 namespace cta::tape::daemon {
 
-/**
- * @brief Runs one scheduler assignment within a DriveSession (mount -> transfer -> unmount).
- * Physical cartridge ownership is held by MountedTape inside the transfer pipeline.
- */
+/// @brief Runs one scheduler assignment within a DriveSession (mount -> transfer -> unmount).
+/// Physical cartridge ownership is held by MountedTape inside the transfer pipeline.
 class TapeSession {
 public:
-  /**
-   * @brief Create a session for a scheduler TapeMount assignment; execute() starts the work.
-   *
-   * @param log Logger that must outlive the session.
-   * @param sysWrapper System-call wrapper that must outlive the session.
-   * @param driveInfo Drive identity copied into the session.
-   * @param mc Borrowed media changer used by tape operations.
-   * @param tapeMount Mount kept alive by the caller until session execution and reporting finish.
-   * @param transfersConfig Transfer settings copied into the session.
-   * @param tapeLoadTimeoutSecs Maximum time in seconds allowed for tape loading.
-   * @param scheduler Borrowed scheduler used for catalogue access and drive-state publication.
-   */
+  /// @brief Create a session for a scheduler TapeMount assignment; execute() starts the work.
+  ///
+  /// @param log Logger that must outlive the session.
+  /// @param sysWrapper System-call wrapper that must outlive the session.
+  /// @param driveInfo Drive identity copied into the session.
+  /// @param mc Borrowed media changer used by tape operations.
+  /// @param tapeMount Mount kept alive by the caller until session execution and reporting finish.
+  /// @param transfersConfig Transfer settings copied into the session.
+  /// @param tapeLoadTimeoutSecs Maximum time in seconds allowed for tape loading.
+  /// @param scheduler Borrowed scheduler used for catalogue access and drive-state publication.
   TapeSession(cta::log::Logger& log,
               System::virtualWrapper& sysWrapper,
               const cta::common::dataStructures::DriveInfo& driveInfo,
@@ -52,44 +48,29 @@ public:
               uint32_t tapeLoadTimeoutSecs,
               cta::Scheduler& scheduler);
 
-  /**
-   * @brief Mount, transfer, unload and dismount the tape, returning the session outcomes.
-   *
-   * Recoverable operational failures return recovery decisions after local cleanup.
-   * Ordinary escaping exceptions permit DriveSession recovery cleanup before reuse.
-   * TapeSessionWorkerTeardownIncomplete prohibits reuse; worker lifecycle repair remains deferred.
-   * May complete an empty assignment without physically mounting a cartridge.
-   *
-   * @return Drive reusability and session success for DriveSession recovery and scheduling decisions.
-   */
+  /// @brief Run one assignment through transfer, cleanup and final reporting.
+  ///
+  /// Empty assignments may complete without mounting a tape. Ordinary escaping failures permit caller recovery.
+  /// @throws TapeSessionWorkerTeardownIncomplete If workers may still access the drive; recovery is unsafe.
+  /// @return Independent session-success and drive-reuse outcomes.
   TapeSessionResult execute();
 
-  /**
-   * @brief Return read-only tracking state valid for the lifetime of this session.
-   *
-   * @return Read-only reference to the tracker, valid for this session lifetime.
-   */
+  /// Return read-only tracking state, valid for this session's lifetime.
   const TapeSessionTracker& tracker() const { return *m_tapeSessionTracker; }
 
-  /** Share tracking state with health readers; the borrowed mount is still session-scoped. */
+  /// Share read-only tracking state that can outlive the session for concurrent health queries.
   std::shared_ptr<const TapeSessionTracker> sharedTracker() const { return m_tapeSessionTracker; }
 
-  /**
-   * @brief Return the volume identifier captured during execute(), or an empty string before it is known.
-   *
-   * @return Volume identifier, empty until the session has obtained it from its mount.
-   */
+  /// Return the VID captured by execute(), or an empty string before metadata is loaded.
   const std::string& getVid() const { return m_volInfo.vid; }
 
-  /**
-   * @brief Destructor.
-   */
+  /// Release session-owned data; execute() is responsible for worker teardown.
   ~TapeSession() noexcept = default;
 
 private:
   struct ExecutionState;
 
-  // Owned tracking state outlives the workers and reporter created by execute().
+  /// Owned tracking state outlives the workers and reporter created by execute().
   std::shared_ptr<TapeSessionTracker> m_tapeSessionTracker = std::make_shared<TapeSessionTracker>();
   cta::log::Logger& m_log;
   cta::TapeMount& m_tapeMount;
@@ -99,42 +80,29 @@ private:
   const uint32_t m_tapeLoadTimeoutSecs;
   const cta::common::dataStructures::DriveInfo m_driveInfo;
 
-  /**
-   * @brief Discover and open the configured drive, recording a down decision before propagating failures.
-   *
-   * @param logContext Log context for session diagnostics.
-   * @param state Execution state updated with drive-open and failure decisions.
-   * @return Owned, opened drive interface initialized with the session drive identity.
-   */
+  /// @brief Discover and open the configured drive, recording a down decision before propagating failures.
+  ///
+  /// @param logContext Log context for session diagnostics.
+  /// @param state Execution state updated with drive-open and failure decisions.
+  /// @return Owned, opened drive interface initialized with the session drive identity.
   std::unique_ptr<cta::tape::drive::DriveInterface> findDrive(cta::log::LogContext& logContext, ExecutionState& state);
 
-  /**
-   * @brief Build and run the tape-to-disk pipeline, or finalize an empty or rejected retrieval mount.
-   *
-   * @param logContext Session logging context.
-   * @param retrieveMount Borrowed mount supplying retrieval jobs.
-   * @param state Track worker startup, completion ownership and recovery decisions.
-   */
+  /// @brief Build and run the tape-to-disk pipeline, or finalize an empty or rejected retrieval mount.
+  ///
+  /// @param logContext Session logging context.
+  /// @param retrieveMount Borrowed mount supplying retrieval jobs.
+  /// @param state Track worker startup, completion ownership and recovery decisions.
   void executeRead(cta::log::LogContext& logContext, cta::RetrieveMount& retrieveMount, ExecutionState& state);
 
-  /**
-   * @brief Build and run the disk-to-tape pipeline, or finalize a mount with no archive work.
-   *
-   * @param logContext Session logging context.
-   * @param archiveMount Borrowed mount supplying archive jobs.
-   * @param state Track worker startup, completion ownership and recovery decisions.
-   */
+  /// @brief Build and run the disk-to-tape pipeline, or finalize a mount with no archive work.
+  ///
+  /// @param logContext Session logging context.
+  /// @param archiveMount Borrowed mount supplying archive jobs.
+  /// @param state Track worker startup, completion ownership and recovery decisions.
   void executeWrite(cta::log::LogContext& logContext, cta::ArchiveMount& archiveMount, ExecutionState& state);
 
-  /**
-   * @brief Reference to the MediaChangerFacade, allowing the mounting of the tape
-   * by the library. It will be used exclusively by the tape thread.
-   */
   cta::mediachanger::MediaChangerFacade& m_mediaChanger;
 
-  /**
-   * @brief The scheduler, i.e. the local interface to the Objectstore DB
-   */
   cta::Scheduler& m_scheduler;
 };
 

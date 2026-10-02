@@ -445,6 +445,27 @@ TEST(TapeSessionTrackerTest, NewFailureReasonsDoNotChangeRecallCompletionProtoco
   }
 }
 
+TEST(TapeSessionTrackerTest, RecallDiagnosticsReflectRecordedDataAndReset) {
+  TapeSessionTracker tracker;
+  EXPECT_FALSE(tracker.recallCompletionHasDiagnostics());
+
+  tracker.recordFailure(TapeSessionFailure::UnexpectedSession);
+  tracker.recordFailure(TapeSessionFailure::DiskRead);
+  EXPECT_TRUE(tracker.recallCompletionHasDiagnostics());
+  tracker.beginTapeSession();
+  EXPECT_FALSE(tracker.recallCompletionHasDiagnostics());
+
+  tracker.recordEvent(TapeSessionEvent::NoFilesToRecall);
+  EXPECT_TRUE(tracker.recallCompletionHasDiagnostics());
+  tracker.beginTapeSession();
+  EXPECT_FALSE(tracker.recallCompletionHasDiagnostics());
+
+  tracker.incrementTapeAlert(0x01);
+  EXPECT_TRUE(tracker.recallCompletionHasDiagnostics());
+  tracker.beginTapeSession();
+  EXPECT_FALSE(tracker.recallCompletionHasDiagnostics());
+}
+
 TEST(TapeSessionTrackerTest, FailedBlocksCarryReceiptsAndClearThemWhenReused) {
   static_assert(!std::is_default_constructible_v<RecordedFailure>);
   TapeSessionTracker tracker;

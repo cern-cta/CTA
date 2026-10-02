@@ -17,12 +17,10 @@ namespace cta::tape::daemon {
 
 namespace {
 
-/**
- * @brief Map a session error to its log-field name, with a fallback for unknown values.
- *
- * @param error Session error category to count or name.
- * @return Log-field name for the error, or Error_unknown for an unrecognized value.
- */
+/// @brief Map a session error to its log-field name, with a fallback for unknown values.
+///
+/// @param error Session error category to count or name.
+/// @return Log-field name for the error, or Error_unknown for an unrecognized value.
 const char* errorName(TapeSessionFailure error) {
   switch (error) {
     case TapeSessionFailure::DiskOpenForWrite:

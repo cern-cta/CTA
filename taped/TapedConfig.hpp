@@ -14,6 +14,7 @@
 
 namespace cta::tape::daemon {
 
+/// Drive identity and device paths.
 struct DriveConfig final {
   std::string name = "";
   std::string device = "";
@@ -40,6 +41,7 @@ struct DriveConfig final {
   }
 };
 
+/// Media-changer connection and retry settings.
 struct RmcdConfig final {
   std::string host = "localhost";
   uint16_t port = 5014;
@@ -66,6 +68,7 @@ struct RmcdConfig final {
   }
 };
 
+/// Thresholds for detecting and recovering from archive underfill.
 struct ArchiveUnderfillConfig final {
   uint64_t watch_period_secs = 300;
   uint64_t minimum_samples = 3;
@@ -95,6 +98,7 @@ struct ArchiveUnderfillConfig final {
   }
 };
 
+/// Scheduling intervals and drive-phase timeouts.
 struct MountsConfig final {
   uint64_t minimum_queued_bytes = 500000000000;
   uint64_t minimum_queued_files = 10000;
@@ -153,6 +157,7 @@ struct MountsConfig final {
   }
 };
 
+/// Archive batching, flushing and underfill settings.
 struct ArchiveTransferConfig final {
   uint64_t fetch_max_bytes = 100000000000;
   uint64_t fetch_max_files = 5000;
@@ -181,6 +186,7 @@ struct ArchiveTransferConfig final {
   }
 };
 
+/// Tape encryption and external key-script settings.
 struct EncryptionConfig final {
   bool enabled = true;
   std::string external_key_script = "/usr/local/bin/cta-get-encryption-key.sh";
@@ -196,6 +202,7 @@ struct EncryptionConfig final {
   }
 };
 
+/// Recommended access order settings for retrieval.
 struct RaoConfig final {
   bool enabled = true;
   std::string lto_algorithm = "sltf";
@@ -212,6 +219,7 @@ struct RaoConfig final {
   }
 };
 
+/// Retrieval batching, disk delivery and access-order settings.
 struct RetrieveTransferConfig final {
   uint64_t fetch_max_bytes = 100000000000;
   uint64_t fetch_max_files = 5000;
@@ -237,6 +245,7 @@ struct RetrieveTransferConfig final {
   }
 };
 
+/// Shared pipeline resources and direction-specific transfer settings.
 struct TransfersConfig final {
   uint32_t buffer_count = 5000;
   uint32_t buffer_size_bytes = 5000000;
@@ -273,6 +282,7 @@ struct TransfersConfig final {
   }
 };
 
+/// Configuration consumed by the taped runtime and daemon.
 struct TapedConfig final {
   cta::runtime::CatalogueConfig catalogue;
   cta::runtime::SchedulerConfig scheduler;

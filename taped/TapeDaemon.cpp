@@ -5,14 +5,11 @@
 
 #include "TapeDaemon.hpp"
 
-#include "catalogue/CatalogueFactory.hpp"
-#include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/semconv/Logging.hpp"
 #include "common/utils/ScopeExit.hpp"
 #include "common/utils/utils.hpp"
-#include "rdbms/Login.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "session/TapeSessionWorkerTeardownIncomplete.hpp"
 #include "taped/session/DriveSession.hpp"
@@ -20,32 +17,11 @@
 
 #include <algorithm>
 #include <exception>
+#include <memory>
 #include <optional>
 #include <unistd.h>
 
 namespace cta::tape::daemon {
-
-TapeDaemon::TapeDaemon(const TapedConfig& config, log::Logger& log)
-    : m_config(config),
-      m_driveInfo(config.drive.name,
-                  utils::getShortHostname(),
-                  config.drive.logical_library_name,
-                  config.drive.device,
-                  config.drive.control_path),
-      m_lc(log) {
-  m_lc.log(log::INFO, "Initialising Catalogue");
-  const rdbms::Login catalogueLogin = rdbms::Login::parseFile(m_config.catalogue.config_file);
-  const uint64_t nbConns = 1;
-  const uint64_t nbArchiveFileListingConns = 1;
-  auto catalogueFactory =
-    catalogue::CatalogueFactoryFactory::create(m_lc.logger(), catalogueLogin, nbConns, nbArchiveFileListingConns);
-  m_ownedCatalogue = catalogueFactory->create();
-  m_catalogue = m_ownedCatalogue.get();
-
-  m_lc.log(log::INFO, "Catalogue initialised successfully");
-  m_ownedSchedulerContext = std::make_unique<SchedulerContext>(m_config, *m_catalogue, log);
-  m_schedulerContext = m_ownedSchedulerContext.get();
-}
 
 TapeDaemon::TapeDaemon(const TapedConfig& config,
                        log::Logger& log,
@@ -58,8 +34,8 @@ TapeDaemon::TapeDaemon(const TapedConfig& config,
                   config.drive.device,
                   config.drive.control_path),
       m_lc(log),
-      m_catalogue(&catalogue),
-      m_schedulerContext(&schedulerContext) {}
+      m_catalogue(catalogue),
+      m_schedulerContext(schedulerContext) {}
 
 void TapeDaemon::stop() {
   // Always retain the exit request, even if catalogue publication fails.
@@ -72,7 +48,7 @@ void TapeDaemon::stop() {
   log::LogContext lc(m_lc.logger());
   try {
     // Use the stable catalogue directly; the run thread may be replacing the scheduler.
-    requestDriveDown(*m_catalogue, m_driveInfo.driveName, common::dataStructures::DriveDownReason::Shutdown, lc);
+    requestDriveDown(m_catalogue, m_driveInfo.driveName, common::dataStructures::DriveDownReason::Shutdown, lc);
   } catch (const std::exception& ex) {
     log::ScopedParamContainer params(lc);
     const auto* ctaException = dynamic_cast<const exception::Exception*>(&ex);
@@ -123,7 +99,7 @@ int TapeDaemon::run() {
       if (m_stopSource.stop_requested()) {
         break;
       }
-      auto session = DriveSession::create(m_config, m_lc.logger(), *m_schedulerContext);
+      auto session = DriveSession::create(m_config, m_lc.logger(), m_schedulerContext);
       // Unpublish before destroying the session, including before an outer catch handles failure.
       const utils::ScopeExit clearActiveSession([this] {
         std::lock_guard lock(m_sessionMutex);
@@ -190,17 +166,17 @@ int TapeDaemon::shutdown(ExitCause cause, DownPublication publication, std::stri
 
   // Preserve specific reasons. Physical cleanup and session release belong to DriveSession.
   try {
-    requestDriveDown(*m_catalogue, m_driveInfo.driveName, reason, m_lc);
+    requestDriveDown(m_catalogue, m_driveInfo.driveName, reason, m_lc);
   } catch (...) {
     m_lc.log(log::ERR, "Failed to request desired Down before daemon exit.");
     exitCode = 1;
   }
   if (publication == DownPublication::DesiredAndReported) {
     try {
-      m_schedulerContext->scheduler().reportDriveStatus(m_driveInfo,
-                                                        common::dataStructures::MountType::NoMount,
-                                                        common::dataStructures::DriveStatus::Down,
-                                                        m_lc);
+      m_schedulerContext.scheduler().reportDriveStatus(m_driveInfo,
+                                                       common::dataStructures::MountType::NoMount,
+                                                       common::dataStructures::DriveStatus::Down,
+                                                       m_lc);
     } catch (...) {
       m_lc.log(log::ERR, "Failed to report Down before daemon exit.");
       exitCode = 1;
@@ -212,7 +188,7 @@ int TapeDaemon::shutdown(ExitCause cause, DownPublication publication, std::stri
 void TapeDaemon::waitForLogicalLibrary() {
   bool waitingLogged = false;
   while (!m_stopSource.stop_requested()) {
-    const auto libraries = m_catalogue->LogicalLibrary()->getLogicalLibraries();
+    const auto libraries = m_catalogue.LogicalLibrary()->getLogicalLibraries();
     const bool exists = std::any_of(libraries.begin(), libraries.end(), [this](const auto& library) {
       return library.name == m_driveInfo.logicalLibrary;
     });
@@ -236,7 +212,7 @@ void TapeDaemon::waitForLogicalLibrary() {
 }
 
 void TapeDaemon::waitUntilDriveIsRequestedUp() {
-  auto& scheduler = m_schedulerContext->scheduler();
+  auto& scheduler = m_schedulerContext.scheduler();
   bool waitingLogged = false;
 
   while (!m_stopSource.stop_requested()) {
@@ -265,14 +241,14 @@ void TapeDaemon::waitUntilDriveIsRequestedUp() {
 
 bool TapeDaemon::registerDrive(bool putUpIfPossible) {
   m_registered.store(false);
-  auto& scheduler = m_schedulerContext->scheduler();
+  auto& scheduler = m_schedulerContext.scheduler();
   m_lc.log(log::INFO, "Registering the drive in the catalogue.");
   if (!scheduler.checkDriveCanBeCreated(m_driveInfo, m_lc)) {
     return false;
   }
 
   // Preserve an interrupted drive entry and its operator intent.
-  const auto previous = m_catalogue->DriveState()->getTapeDrive(m_driveInfo.driveName);
+  const auto previous = m_catalogue.DriveState()->getTapeDrive(m_driveInfo.driveName);
   // Desired Up survives crashes and also represents an operator's pending up request.
   if (previous && previous->desiredUp) {
     // Keep the existing entry and operator intent. CleaningUp does not change desired-up.

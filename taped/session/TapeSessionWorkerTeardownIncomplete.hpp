@@ -9,10 +9,12 @@
 
 namespace cta::tape::daemon {
 
-// Fatal to TapeDaemon: physical cleanup cannot prove that workers have stopped using the drive.
-// Throw with std::throw_with_nested to retain the original startup or join failure.
+/// @brief Signal that worker termination is unproven and the drive must not be reused.
+///
+/// Throw with std::throw_with_nested to preserve the underlying failure.
 class TapeSessionWorkerTeardownIncomplete : public std::runtime_error {
 public:
+  /// Construct the fatal teardown diagnostic.
   TapeSessionWorkerTeardownIncomplete() : std::runtime_error("Tape session worker teardown is incomplete") {}
 };
 

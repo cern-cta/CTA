@@ -12,23 +12,17 @@
 
 namespace cta::tape::daemon {
 
-/**
- * @brief Outcomes used by DriveSession for recovery and scheduling after a tape session returns.
- */
+/// Outcomes used by DriveSession for recovery and scheduling after a tape session returns.
 struct TapeSessionResult {
-  /**
-   * @brief Whether the drive is still usable after the tape session.
-   * True permits scheduling without another probe: the session left the drive empty and reusable.
-   * False means the drive must remain down, for example after a cleanup failure.
-   */
+  /// @brief Whether the drive is still usable after the tape session.
+  /// True permits scheduling without another probe: the session left the drive empty and reusable.
+  /// False means the drive must remain down, for example after a cleanup failure.
   bool driveReusable = true;
 
-  /**
-   * @brief True if the completed session has no recorded failures, including final reporting failures.
-   */
+  /// True if the completed session has no recorded failures, including final reporting failures.
   bool successful = true;
 
-  // DriveSession publishes this reason when the result requires ending ownership.
+  /// Published by DriveSession when the outcome requires ending the reservation.
   std::optional<common::dataStructures::DriveDownReason> downReason = std::nullopt;
   std::string downDetail {};
 };
