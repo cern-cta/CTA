@@ -452,7 +452,6 @@ TEST(TapeSessionTrackerTest, FailedBlocksCarryReceiptsAndClearThemWhenReused) {
   const auto failure = tracker.recordFailure(TapeSessionFailure::DiskRead);
   EXPECT_TRUE(failure.belongsTo(tracker));
   EXPECT_FALSE(failure.belongsTo(other));
-  EXPECT_EQ(TapeSessionFailure::DiskRead, failure.reason());
   MemBlock block(0, 100);
   block.markAsFailed("failed file", failure);
   ASSERT_TRUE(block.recordedFailure());

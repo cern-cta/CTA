@@ -22,7 +22,7 @@ SchedulerContext::SchedulerContext(const TapedConfig& config, log::Logger& log, 
       m_lc(log),
       m_scheduler(&scheduler) {}
 
-void SchedulerContext::retire() {
+void SchedulerContext::reinitialise() {
   // External owners manage their own backend lifetime.
   if (!m_ownedScheduler) {
     return;

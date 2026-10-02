@@ -957,7 +957,6 @@ public:
     const auto& tracker = session.tracker();
     mount.observedTracker = &tracker;
     EXPECT_FALSE(tracker.state().has_value());
-    EXPECT_EQ(&mount, tracker.mount());
     // Operational failures return recovery decisions; fatal failures retain their original type.
     if (point == TransferFailurePoint::MetadataAllocation) {
       EXPECT_THROW(session.execute(), std::bad_alloc);
@@ -1000,7 +999,6 @@ public:
       threadsAfter = transferTestThreadCount();
     }
     EXPECT_EQ(threadsBefore, threadsAfter) << "Thread count did not return to baseline within one second";
-    EXPECT_EQ(&mount, tracker.mount());
     // Starting-status failures occur before the reporter starts, but still complete the session.
     if (!startupFails || point == TransferFailurePoint::StartingStatus) {
       EXPECT_EQ(1, countLogMessages(logger.getLog(), "Tape session finished"));

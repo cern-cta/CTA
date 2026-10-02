@@ -61,8 +61,6 @@ protected:
 
   VolumeInfo m_volInfo;
 
-  bool m_loadingAttempted = false;
-
   /** Whether the tape thread permits the drive to be reused. */
   bool m_driveReusable = true;
   std::string m_cleanupError;
@@ -192,9 +190,6 @@ public:
 
   // Read after joining the tape thread.
   const std::string& cleanupError() const { return m_cleanupError; }
-
-  // Read after joining the tape thread.
-  bool loadingAttempted() const { return m_loadingAttempted; }
 
   /**
    * Push into the class a sentinel value to trigger to end the the thread.

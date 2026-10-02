@@ -12,7 +12,7 @@
 #include "common/log/LogContext.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "taped/TapedConfig.hpp"
-#include "taped/drive/HardwareOwnership.hpp"
+#include "taped/drive/DriveReservation.hpp"
 #include "taped/system/Wrapper.hpp"
 
 #include <memory>
@@ -64,7 +64,14 @@ private:
                SchedulerContext& schedulerContext,
                System::virtualWrapper* sysWrapper = nullptr);
 
-  TapeSessionResult runIteration(std::stop_token stopToken);
+  enum class IterationAction { Continue, RetryAfterDelay, EndOwnership };
+
+  struct IterationResult {
+    IterationAction action;
+    std::string endReason;
+  };
+
+  IterationResult runIteration(std::stop_token stopToken);
   TapeSessionResult runTapeSession(TapeMount& tapeMount);
   // Shared by initial preparation and recovery within an existing ownership period.
   // Preparation uses an unknown VID; only immediate tape-session recovery supplies one.
@@ -87,7 +94,7 @@ private:
   // Tracks terminal publication only; hardware ownership is managed independently.
   bool m_downReported = false;
   // Destroy first, while its borrowed dependencies and hardware access objects are still alive.
-  HardwareOwnership m_hardwareOwnership;
+  DriveReservation m_driveReservation;
 };
 
 }  // namespace cta::tape::daemon

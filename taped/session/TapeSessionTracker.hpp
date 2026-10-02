@@ -6,7 +6,6 @@
 #pragma once
 
 #include "RecordedFailure.hpp"
-#include "scheduler/TapeMount.hpp"
 #include "taped/session/SessionType.hpp"
 #include "taped/session/TapeSessionState.hpp"
 #include "taped/session/TapeSessionStats.hpp"
@@ -121,27 +120,7 @@ public:
   using Clock = std::chrono::steady_clock;
 
   /**
-   * @brief Attach a borrowed mount; the owner must keep it alive while workers or the reporter use it.
-   *
-   * @param mount Borrowed scheduler mount; the caller must keep it alive while it is used.
-   */
-  void setMount(cta::TapeMount* mount) {
-    std::lock_guard lock(m_mutex);
-    m_mount = mount;
-  }
-
-  /**
-   * @brief Return the borrowed mount pointer; the caller must ensure its lifetime.
-   *
-   * @return Borrowed mount pointer currently attached to the tracker, possibly nullptr.
-   */
-  cta::TapeMount* mount() const {
-    std::lock_guard lock(m_mutex);
-    return m_mount;
-  }
-
-  /**
-   * @brief Reset progress, statistics and completion flags for a new session, retaining the attached mount.
+   * @brief Reset progress, statistics and completion flags for a new session.
    *
    * Only the session owner may begin a session; subsequent state changes do not reset its data.
    */
@@ -272,7 +251,7 @@ public:
   RecordedFailure recordFailure(TapeSessionFailure failure) {
     std::lock_guard lock(m_mutex);
     recordFailureLocked(failure);
-    return RecordedFailure(*this, failure);
+    return RecordedFailure(*this);
   }
 
   /** Propagated errors need a fallback reason only when no operation has classified a failure. */
@@ -515,7 +494,7 @@ public:
     return {m_fileId, m_fSeq, m_fileBeingMoved, m_fileStartTime, m_bytesMoved, m_lastBlockMovement};
   }
 
-  /** Return phase and progress timestamps together without accessing the borrowed mount. */
+  /** Return phase and progress timestamps together. */
   TapeSessionLivenessSnapshot livenessSnapshot() const {
     std::lock_guard lock(m_mutex);
     return {m_state, m_stateEnteredAt, m_lastBlockMovement};
@@ -609,7 +588,6 @@ private:
   }
 
   mutable std::mutex m_mutex;
-  cta::TapeMount* m_mount = nullptr;
 
   std::optional<cta::tape::session::TapeSessionState> m_state;
   Clock::time_point m_stateEnteredAt;

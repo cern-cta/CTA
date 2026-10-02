@@ -58,7 +58,7 @@ DriveSession::DriveSession(const TapedConfig& config,
                                             config.rmcd.request_attempts),
                      log),
       m_sysWrapper(sysWrapper ? *sysWrapper : m_realSysWrapper),
-      m_hardwareOwnership(m_lc) {
+      m_driveReservation(m_lc) {
   m_lc.push(log::Param("tapeDrive", m_driveInfo.driveName));
 }
 
@@ -71,7 +71,7 @@ DriveSession::~DriveSession() noexcept {
 }
 
 void DriveSession::releaseAndReportDown() {
-  if (m_downReported || !m_hardwareOwnership.release()) {
+  if (m_downReported || !m_driveReservation.release()) {
     return;
   }
   auto& scheduler = m_schedulerContext.scheduler();
@@ -163,13 +163,13 @@ void DriveSession::run(std::stop_token stopToken) {
 
   try {
     std::string endReason = "Stop requested";
-    while (m_hardwareOwnership.canUseHardware() && !stopToken.stop_requested()) {
+    while (m_driveReservation.canUseHardware() && !stopToken.stop_requested()) {
       const auto result = runIteration(stopToken);
-      if (!result.driveReusable) {
-        endReason = result.downDetail.empty() ? "Tape session left the drive unusable" : result.downDetail;
+      if (result.action == IterationAction::EndOwnership) {
+        endReason = result.endReason;
         break;
       }
-      if (!result.successful && !stopToken.stop_requested()) {
+      if (result.action == IterationAction::RetryAfterDelay && !stopToken.stop_requested()) {
         ::sleep(m_config.mounts.idle_scheduling_interval_secs);
       }
     }
@@ -181,7 +181,7 @@ void DriveSession::run(std::stop_token stopToken) {
     releaseAndReportDown();
   } catch (const TapeSessionWorkerTeardownIncomplete& ex) {
     // The daemon must exit without announcing that hardware access has stopped.
-    m_hardwareOwnership.markUnsafe();
+    m_driveReservation.markUnsafe();
     requestDownNoThrow(common::dataStructures::DriveDownReason::SessionDidNotStopSafely, ex.what());
     throw;
   } catch (...) {
@@ -192,17 +192,17 @@ void DriveSession::run(std::stop_token stopToken) {
 
 // This method has the following invariant:
 // - There is no tape in the drive when it enters this method
-// - There is no tape in the drive when it returns a reusable outcome
-// - There may be a tape in the drive when it returns a non-reusable outcome
-TapeSessionResult DriveSession::runIteration(std::stop_token stopToken) {
+// - Continue and RetryAfterDelay leave the drive empty and reusable
+// - EndOwnership may leave a tape in the drive after a failed cleanup
+DriveSession::IterationResult DriveSession::runIteration(std::stop_token stopToken) {
   if (stopToken.stop_requested()) {
-    return {.driveReusable = false, .downDetail = "Stop requested"};
+    return {IterationAction::EndOwnership, "Stop requested"};
   }
   auto& scheduler = m_schedulerContext.scheduler();
   const auto desired = scheduler.getDesiredDriveState(m_driveInfo.driveName, m_lc);
   if (!desired.up) {
     // Given the invariants above, no need to clean the drive here
-    return {.driveReusable = false, .downDetail = "Desired drive state is Down"};
+    return {IterationAction::EndOwnership, "Desired drive state is Down"};
   }
   // Report that we are Up without a mount
   scheduler.reportDriveStatus(m_driveInfo,
@@ -241,20 +241,27 @@ TapeSessionResult DriveSession::runIteration(std::stop_token stopToken) {
   // Do another quick check to see if we should stop before committing to a tape session
   // Later on, the tape session internals will also react appropriately
   if (stopToken.stop_requested()) {
-    return {.driveReusable = false, .downDetail = "Stop requested"};
+    return {IterationAction::EndOwnership, "Stop requested"};
   }
 
   // Idle polls and scheduling errors both request the ordinary retry delay.
   if (!tapeMount) {
-    return {.successful = false};
+    return {IterationAction::RetryAfterDelay, {}};
   }
 
   const auto result = runTapeSession(*tapeMount);
   // Destroy the mount before retiring the scheduler resources it borrows.
-  // This is only necessary in the objectstore
+  // This is only necessary in the objectstore as we want a new agent
+  // Otherwise we miss out on garbage collection
   tapeMount.reset();
-  m_schedulerContext.retire();
-  return result;
+  m_schedulerContext.reinitialise();
+
+  // Translate tape-session outcomes into scheduling decisions only after releasing the mount.
+  if (!result.driveReusable) {
+    return {IterationAction::EndOwnership,
+            result.downDetail.empty() ? "Tape session left the drive unusable" : result.downDetail};
+  }
+  return {result.successful ? IterationAction::Continue : IterationAction::RetryAfterDelay, {}};
 }
 
 TapeSessionResult DriveSession::runTapeSession(TapeMount& tapeMount) {
@@ -314,7 +321,7 @@ bool DriveSession::cleanDrive(const std::optional<std::string>& vid) {
     [this] { std::atomic_store<const TapeSessionTracker>(&m_activeTracker, nullptr); });
 
   auto& scheduler = m_schedulerContext.scheduler();
-  const bool recovering = m_hardwareOwnership.canUseHardware();
+  const bool recovering = m_driveReservation.canUseHardware();
   log::ScopedParamContainer cleanupParams(m_lc);
   cleanupParams.add("cleanupPhase", recovering ? "recovery" : "preparation");
   // A new ownership period needs permission; recovery retains access until explicit release.
@@ -330,7 +337,7 @@ bool DriveSession::cleanDrive(const std::optional<std::string>& vid) {
                               common::dataStructures::MountType::NoMount,
                               common::dataStructures::DriveStatus::CleaningUp,
                               m_lc);
-  m_hardwareOwnership.acquire();
+  m_driveReservation.acquire();
   m_lc.log(log::INFO,
            recovering ? "Cleaning drive for tape-session recovery." : "Cleaning drive for initial preparation.");
   bool cleaned = false;

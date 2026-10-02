@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include "common/log/LogContext.hpp"
-
 #include <optional>
 #include <string>
 #include <vector>
@@ -21,19 +19,6 @@ namespace cta::taped::utils {
  * @return Matching configuration paths sorted lexically.
  */
 std::vector<std::string> getTapedConfigPaths();
-
-/**
- * @brief Construct a process name from the final drive-name component and a postfix.
- *
- * Truncate the drive component to eight characters and the postfix to six, logging truncation.
- * An empty postfix returns the shortened drive name alone.
- *
- * @param driveName Drive name used to select its configuration or construct its process name.
- * @param postfix Process-role suffix, truncated to six characters.
- * @param lc Log context for diagnostics.
- * @return Shortened drive name, optionally followed by a hyphen and shortened postfix.
- */
-std::string constructProcessName(const std::string& driveName, const std::string& postfix, cta::log::LogContext& lc);
 
 /**
  * @brief Find the named drive configuration, or the first matching configuration when no drive is given.

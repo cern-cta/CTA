@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "HardwareOwnership.hpp"
+#include "DriveReservation.hpp"
 
 #include "common/log/ExceptionLogging.hpp"
 #include "common/log/LogContext.hpp"
@@ -12,9 +12,9 @@
 
 namespace cta::tape::daemon {
 
-HardwareOwnership::HardwareOwnership(log::LogContext& lc) noexcept : m_lc(lc) {}
+DriveReservation::DriveReservation(log::LogContext& lc) noexcept : m_lc(lc) {}
 
-HardwareOwnership::~HardwareOwnership() noexcept {
+DriveReservation::~DriveReservation() noexcept {
   try {
     release();
   } catch (...) {
@@ -22,7 +22,7 @@ HardwareOwnership::~HardwareOwnership() noexcept {
   }
 }
 
-void HardwareOwnership::acquire() {
+void DriveReservation::acquire() {
   if (m_state != State::Unacquired && m_state != State::Owned) {
     throw std::logic_error("Cannot reacquire ended or unsafe drive-session ownership");
   }
@@ -34,11 +34,11 @@ void HardwareOwnership::acquire() {
   }
 }
 
-bool HardwareOwnership::canUseHardware() const noexcept {
+bool DriveReservation::canUseHardware() const noexcept {
   return m_state == State::Owned;
 }
 
-bool HardwareOwnership::release() {
+bool DriveReservation::release() {
   if (m_state == State::Unsafe) {
     // Both enclosing-session teardown and this destructor can attempt release.
     if (!m_unsafeReleaseLogged) {
@@ -58,7 +58,7 @@ bool HardwareOwnership::release() {
   return true;
 }
 
-void HardwareOwnership::markUnsafe() noexcept {
+void DriveReservation::markUnsafe() noexcept {
   // Worker RAII and stop semantics must establish termination before a future reservation can be released.
   m_state = State::Unsafe;
 }

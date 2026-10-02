@@ -25,15 +25,15 @@ class SchedulerContext final {
 public:
   SchedulerContext(const TapedConfig& config, catalogue::Catalogue& catalogue, log::Logger& log);
 
-  // The supplied scheduler and its backend must outlive the context. retire() leaves them untouched.
+  // The supplied scheduler and its backend must outlive the context. reinitialise() leaves them untouched.
   SchedulerContext(const TapedConfig& config, log::Logger& log, Scheduler& scheduler);
 
-  // References are valid only until retire() replaces the object-store backend.
+  // References are valid only until reinitialise() replaces the object-store backend.
   Scheduler& scheduler() { return *m_scheduler; }
 
   // Call only after all borrowed mounts and jobs have been destroyed.
-  // PostgreSQL has no per-agent ownership to retire.
-  void retire();
+  // PostgreSQL has no per-agent ownership to reinitialise.
+  void reinitialise();
 
 private:
   void initialise();

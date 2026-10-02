@@ -20,16 +20,18 @@ namespace cta::tape::daemon {
 class TapeSessionReporter : private cta::threading::Thread {
 public:
   /**
-   * @brief Create a periodic reporter using a borrowed tracker and its attached mount.
+   * @brief Create a periodic reporter using a borrowed tracker and mount.
    *
    * The tracker and mount must outlive reporting and the worker thread must be joined before destruction.
    *
    * @param tracker Session state and statistics to publish.
+   * @param mount Borrowed scheduler mount used for metadata and statistics publication.
    * @param lc Log context copied for reporter output.
    * @param reportPeriod Interval between reports, clamped to at least one millisecond.
    * @param stuckPeriod Block-inactivity threshold and minimum interval between warnings, clamped to one millisecond.
    */
   TapeSessionReporter(TapeSessionTracker& tracker,
+                      cta::TapeMount& mount,
                       const cta::log::LogContext& lc,
                       std::chrono::milliseconds reportPeriod,
                       std::chrono::milliseconds stuckPeriod);
@@ -66,6 +68,7 @@ public:
 
 private:
   TapeSessionTracker& m_tracker;
+  cta::TapeMount& m_mount;
   cta::log::LogContext m_lc;
   const std::chrono::milliseconds m_reportPeriod;
   const std::chrono::milliseconds m_stuckPeriod;
