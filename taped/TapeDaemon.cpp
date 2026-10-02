@@ -118,7 +118,6 @@ int TapeDaemon::run() {
   try {
     // An absent logical library can appear later; wait to avoid transient scheduling errors.
     waitForLogicalLibrary();
-    // TODO (separate MR): graceful shutdown of active sessions and blocking operations.
     while (!m_stopSource.stop_requested()) {
       waitUntilDriveIsRequestedUp();
       if (m_stopSource.stop_requested()) {
@@ -232,7 +231,6 @@ void TapeDaemon::waitForLogicalLibrary() {
     }
 
     // Database failures propagate; only an absent library is retried here.
-    // TODO (separate MR): graceful shutdown should interrupt sleep
     ::sleep(m_config.mounts.logical_library_poll_interval_secs);
   }
 }
@@ -261,7 +259,6 @@ void TapeDaemon::waitUntilDriveIsRequestedUp() {
                                 common::dataStructures::MountType::NoMount,
                                 common::dataStructures::DriveStatus::Down,
                                 m_lc);
-    // TODO (separate MR): graceful shutdown should interrupt sleep
     ::sleep(m_config.mounts.drive_state_poll_interval_secs);
   }
 }

@@ -52,39 +52,39 @@ public:
                TapeSessionTracker& tracker);
 
   /**
-   * @brief Open and clean the drive; the caller owns terminal state publication.
-   *
-   * If ejection fails, attempt to disable the tape when its VID is known.
-   *
-   * @param sysWrapper System-call wrapper used to discover and open the drive.
-   * @return True when cleanup permits drive reuse; false when the drive must remain down.
-   */
-  bool execute(System::virtualWrapper& sysWrapper);
-
-  const std::string& errorMessage() const { return m_errorMessage; }
-
-  /**
-   * @brief Record drive-configuration reset and tape-ejection failures.
+   * @brief Record drive-open, configuration-reset and tape-ejection failures.
    *
    * An already-empty drive has no eject failure; configuration-reset failures still prevent reuse.
    */
   struct CleanupResult {
+    bool driveOpenFailed = false;
     bool configurationResetFailed = false;
     bool ejectFailed = false;
     std::string errorMessage;
 
-    // TODO: Revisit whether unload, encryption or LBP errors should force the drive down.
     /**
      * @brief Check whether the recorded cleanup failures permit drive reuse.
      *
      * An already-empty drive needs no eject operation and does not set ejectFailed.
      *
-     * @return True if neither configurationResetFailed nor ejectFailed is set.
+     * @return True if no drive-open, configuration-reset or eject failure is set.
      */
-    bool driveReusable() const { return !configurationResetFailed && !ejectFailed; }
+    bool driveReusable() const { return !driveOpenFailed && !configurationResetFailed && !ejectFailed; }
   };
 
   using DriveStatusReporter = std::function<void(common::dataStructures::DriveStatus)>;
+
+  /**
+   * @brief Open a drive and delegate cleanup to the borrowed-drive overload.
+   *
+   * If opening fails, still attempt robotic dismount and return a non-reusable result.
+   * Read and clear tape alerts after delegated cleanup; the caller owns terminal state publication.
+   *
+   * @param sysWrapper System-call wrapper used to discover and open the drive.
+   * @param reportStatus Synchronous callback for publishing cleanup progress.
+   * @return Independent failure flags and diagnostic text.
+   */
+  CleanupResult cleanDrive(System::virtualWrapper& sysWrapper, const DriveStatusReporter& reportStatus);
 
   /**
    * @brief Clean a drive, delegating progress publication to the caller.
@@ -101,7 +101,6 @@ public:
   CleanupResult cleanDrive(drive::DriveInterface& drive, const DriveStatusReporter& reportStatus);
 
 private:
-  std::string m_errorMessage;
   TapeSessionTracker& m_tracker;
   cta::mediachanger::MediaChangerFacade& m_mediachanger;
   cta::log::LogContext m_lc;
@@ -110,6 +109,9 @@ private:
   const bool m_waitMediaInDrive;
   const uint32_t m_tapeLoadTimeout;
   cta::catalogue::Catalogue& m_catalogue;
+
+  // Apply the shared failed-eject policy and finish cleanup tracking.
+  void finishCleanup(const CleanupResult& result);
 
   /**
    * @brief Reset drive configuration and attempt tape ejection, retaining independent cleanup failures.

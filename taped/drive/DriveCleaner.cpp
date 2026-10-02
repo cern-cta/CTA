@@ -6,7 +6,6 @@
 #include "DriveCleaner.hpp"
 
 #include "catalogue/Catalogue.hpp"
-#include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/dataStructures/DesiredDriveState.hpp"
 #include "common/dataStructures/DriveDownReason.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
@@ -96,67 +95,54 @@ cta::tape::daemon::DriveCleaner::DriveCleaner(cta::mediachanger::MediaChangerFac
 }
 
 //------------------------------------------------------------------------------
-// execute
+// cleanDrive (opens and owns the drive)
 //------------------------------------------------------------------------------
-bool cta::tape::daemon::DriveCleaner::execute(System::virtualWrapper& sysWrapper) {
-  CleanupTiming timing(m_tracker, &TapeCleanupStats::cleanupTime);
-  m_errorMessage.clear();
-  std::string errorMessage;
-  bool ejectFailed = false;
-  const DriveStatusReporter reportStatus = [&](auto status) {
-    TapeDrivesCatalogueState(m_catalogue)
-      .reportDriveStatus(m_driveInfo, common::dataStructures::MountType::NoMount, status, std::time(nullptr), m_lc);
-  };
-
-  // First open the drive. If that is impossible, the robot can still return the cartridge
-  // because we don't need the drive for that
-  std::unique_ptr<drive::DriveInterface> drivePtr;
+auto cta::tape::daemon::DriveCleaner::cleanDrive(System::virtualWrapper& sysWrapper,
+                                                 const DriveStatusReporter& reportStatus) -> CleanupResult {
+  std::unique_ptr<drive::DriveInterface> drive;
   std::optional<std::string> driveError;
-  try {
-    drivePtr = createDrive(sysWrapper);
-  } catch (...) {
-    driveError = currentExceptionMessage();
+  {
+    // Account for acquisition separately so delegated cleanup is timed only once.
+    CleanupTiming timing(m_tracker, &TapeCleanupStats::cleanupTime);
+    try {
+      drive = createDrive(sysWrapper);
+    } catch (...) {
+      driveError = currentExceptionMessage();
+    }
   }
 
-  if (driveError) {
-    try {
-      reportProgress(common::dataStructures::DriveStatus::Unmounting, reportStatus);
-      dismountTape("");
-      // The tape was safely dismounted, but a drive that could not be opened must not be marked up
-      errorMessage = "Tape was dismounted, but the drive could not be opened and must remain down: " + *driveError;
-    } catch (...) {
-      errorMessage = "Failed to create the drive (" + *driveError + ") and failed to dismount the tape ("
-                     + currentExceptionMessage() + ")";
-      ejectFailed = true;
-    }
-    m_tracker.reportState(session::TapeSessionState::Finalizing);
-  } else {
-    drive::DriveInterface& drive = *drivePtr;
-    const auto result = cleanDriveImpl(drive, reportStatus);
-    m_tracker.reportState(session::TapeSessionState::Finalizing);
-    errorMessage = result.errorMessage;
-    ejectFailed = result.ejectFailed;
-
-    // Read and clear tape alerts whether cleaning succeeded or failed
-    logAndClearTapeAlerts(drive);
+  if (!driveError) {
+    auto result = cleanDrive(*drive, reportStatus);
+    CleanupTiming timing(m_tracker, &TapeCleanupStats::cleanupTime);
+    logAndClearTapeAlerts(*drive);
     if (result.driveReusable()) {
       m_lc.log(cta::log::INFO, "Cleaner completed successfully");
-      return true;
     }
+    return result;
   }
 
-  // Reaching this point means the cleaner failed
-  // TODO: this is wrong; we now have ejection handling in two places
-
-  if (ejectFailed) {
-    // As we failed to eject, we set the tape as disabled so that it will not be mounted for future retrieves
-    // otherwise, we will go in an infinite loop of mounting with errors.
-    // Gitlab ticket reference : https://gitlab.cern.ch/cta/CTA/issues/224
-    disableTapeAfterFailedEject(errorMessage);
+  // The robot can return the cartridge even when the drive cannot be opened.
+  CleanupTiming timing(m_tracker, &TapeCleanupStats::cleanupTime);
+  CleanupResult result;
+  result.driveOpenFailed = true;
+  try {
+    reportProgress(common::dataStructures::DriveStatus::Unmounting, reportStatus);
+    dismountTape("");
+    result.errorMessage = "Tape was dismounted, but the drive could not be opened and must remain down: " + *driveError;
+  } catch (...) {
+    result.errorMessage = "Failed to create the drive (" + *driveError + ") and failed to dismount the tape ("
+                          + currentExceptionMessage() + ")";
+    result.ejectFailed = true;
   }
-  m_errorMessage = errorMessage;
+  finishCleanup(result);
+  return result;
+}
 
-  return false;
+void cta::tape::daemon::DriveCleaner::finishCleanup(const CleanupResult& result) {
+  if (result.ejectFailed) {
+    disableTapeAfterFailedEject(result.errorMessage);
+  }
+  m_tracker.reportState(session::TapeSessionState::Finalizing);
 }
 
 void cta::tape::daemon::DriveCleaner::disableTapeAfterFailedEject(const std::string& errorMsg) noexcept {
@@ -207,11 +193,7 @@ auto cta::tape::daemon::DriveCleaner::cleanDrive(drive::DriveInterface& drive, c
   CleanupTiming timing(m_tracker, &TapeCleanupStats::cleanupTime);
   try {
     auto result = cleanDriveImpl(drive, reportStatus);
-    // Session cleanup knows the mounted VID and must also disable a stuck tape.
-    if (result.ejectFailed) {
-      disableTapeAfterFailedEject(result.errorMessage);
-    }
-    m_tracker.reportState(session::TapeSessionState::Finalizing);
+    finishCleanup(result);
     return result;
   } catch (...) {
     m_tracker.reportState(session::TapeSessionState::Finalizing);
