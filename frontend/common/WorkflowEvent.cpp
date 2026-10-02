@@ -214,8 +214,12 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
     }
   }
 
+  // reject a CLOSEW event that contains no checksums
   common::dataStructures::ArchiveRequest request;
   checksum::ProtobufToChecksumBlob(m_event.file().csb(), request.checksumBlob);
+  if (!request.checksumBlob.hasChecksums()) {
+    throw exception::UserError("CLOSEW: file has no checksums, archive request rejected");
+  }
   request.diskFileInfo.owner_uid = m_event.file().owner().uid();
   request.diskFileInfo.gid = m_event.file().owner().gid();
   request.diskFileInfo.path = m_event.file().lpath();
