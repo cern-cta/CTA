@@ -5,8 +5,11 @@
 
 #include "TapedApp.hpp"
 
+#include "catalogue/CatalogueFactory.hpp"
+#include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/utils/utils.hpp"
+#include "rdbms/Login.hpp"
 #include "telemetry/metrics/TapedMetrics.hpp"
 
 #include <cerrno>
@@ -35,6 +38,8 @@ std::string constructProcessName(const std::string& driveName, log::LogContext& 
 
 TapedApp::~TapedApp() {
   m_tapeDaemon.reset();
+  m_schedulerContext.reset();
+  m_catalogue.reset();
   google::protobuf::ShutdownProtobufLibrary();
 }
 
@@ -79,8 +84,18 @@ int TapedApp::run(const TapedConfig& config, cta::log::Logger& log) {
   // Observe drive state while taped runs; the runtime has already initialized telemetry.
   telemetry::metrics::ScopedTapedStateMetrics stateMetrics;
 
-  // Run the main part of taped
-  m_tapeDaemon = std::make_unique<TapeDaemon>(config, log);
+  lc.log(log::INFO, "Initialising Catalogue");
+  const rdbms::Login catalogueLogin = rdbms::Login::parseFile(config.catalogue.config_file);
+  const uint64_t nbConns = 1;
+  const uint64_t nbArchiveFileListingConns = 1;
+  auto catalogueFactory =
+    catalogue::CatalogueFactoryFactory::create(log, catalogueLogin, nbConns, nbArchiveFileListingConns);
+  m_catalogue = catalogueFactory->create();
+  lc.log(log::INFO, "Catalogue initialised successfully");
+
+  m_schedulerContext = std::make_unique<SchedulerContext>(config, *m_catalogue, log);
+  m_tapeDaemon = std::make_unique<TapeDaemon>(config, log, *m_catalogue, *m_schedulerContext);
+  // Publish only after the daemon and all its dependencies have been constructed.
   m_publishedDaemon.store(m_tapeDaemon.get());
   return m_tapeDaemon->run();
 }

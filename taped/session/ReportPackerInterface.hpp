@@ -13,34 +13,32 @@
 namespace cta::tape::daemon {
 
 namespace detail {
-//nameholder
+/// Retrieval report-packer tag.
 struct Recall {};
 
+/// Archive report-packer tag.
 struct Migration {};
 
-// Enum describing the type of client. Some clients need batched reports,
-// some prefer reports file by file
+/// Select batched or per-file client reporting.
 enum ReportBatching { ReportInBulk, ReportByFile };
 }  // namespace detail
 
-/**
- * Utility class that should be inherited privately/protectedly
- * the type PlaceHolder is either detail::Recall or detail::Migration
- */
+/// @brief Shared logging and batching support for archive and retrieval report packers.
+/// @tparam PlaceHolder Client tag: detail::Recall or detail::Migration.
 template<class PlaceHolder>
 class ReportPackerInterface {
 protected:
+  /// Destroy the shared report-packer support.
   virtual ~ReportPackerInterface() = default;
 
+  /// Copy the logging context and borrow a tracker that outlives the report worker.
   ReportPackerInterface(const cta::log::LogContext& lc, TapeSessionTracker& tracker)
       : m_lc(lc),
         m_tapeSessionTracker(tracker) {}
 
-  /**
-   * Log a set of files independently of the success/failure
-   * @param c The set of files to log
-   * @param msg The message to be append at the end.
-   */
+  /// @brief Log identifiers for each file in a report batch.
+  /// @param c Container of file-report pointers.
+  /// @param msg Message accompanying each file.
   template<class C>
   void logReport(const C& c, const std::string& msg) {
     using cta::log::LogContext;
@@ -55,11 +53,9 @@ protected:
     }
   }
 
-  /**
-   * Log a set of files independently of the success/failure
-   * @param c The set of files to log
-   * @param msg The message to be append at the end.
-   */
+  /// @brief Log identifiers and error text for each file in a report batch.
+  /// @param c Container of file-report pointers.
+  /// @param msg Message accompanying each file.
   template<class C>
   void logReportWithError(const C& c, const std::string& msg) {
     using cta::log::LogContext;
@@ -75,25 +71,19 @@ protected:
     }
   }
 
-  /**
-   * The  log context, copied due to threads
-   */
+  /// Private copy keeps worker log parameters separate from the caller's context.
   cta::log::LogContext m_lc;
 
-  /**
-   * Define how we should report to the client (by file/in bulk).
-   */
   enum detail::ReportBatching m_reportBatching = detail::ReportInBulk;
 
 public:
-  /**
-   * Turn off the packing of the reports by the report packer.
-   * This is used for recalls driven by read_tp.
-   */
+  /// @brief Select per-file reporting, as required by cta-readtp.
+  ///
+  /// Call before starting the report worker.
   virtual void disableBulk() { m_reportBatching = detail::ReportByFile; }
 
 protected:
-  // The session owner keeps the tracker alive until report workers have joined.
+  /// Borrowed; the session owner keeps the tracker alive until report workers have joined.
   TapeSessionTracker& m_tapeSessionTracker;
 };
 

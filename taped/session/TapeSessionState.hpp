@@ -10,7 +10,7 @@
 
 namespace cta::tape::session {
 
-/** Progress of one TapeSession, independently of its outcome and drive status. */
+/// Progress of one TapeSession, independently of its outcome and drive status.
 enum class TapeSessionState : uint32_t {
   Preparing,       ///< Preparing jobs, workers, and tape access outside the explicit tape operations.
   Mounting,        ///< Asking the media changer to mount the tape.
@@ -22,7 +22,7 @@ enum class TapeSessionState : uint32_t {
   DrainingToDisk,  ///< Retrieval disk delivery remains active; the drive is still unavailable.
   Finished         ///< The session owner has joined all workers and completed the final reporting attempt.
 };
-/** TapeSession state to string. */
+/// Return the display name of a tape-session phase.
 std::string toString(TapeSessionState state);
 
 }  // namespace cta::tape::session

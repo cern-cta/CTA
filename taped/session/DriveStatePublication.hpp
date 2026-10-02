@@ -20,7 +20,14 @@ class LogContext;
 
 namespace cta::tape::daemon {
 
-// Request desired Down, preserving an observed specific Down reason without reporting hardware release.
+/// @brief Request desired Down, preserving an observed specific Down reason.
+///
+/// Does not report hardware release. Catalogue failures propagate.
+/// @param catalogue Catalogue containing the drive.
+/// @param driveName Drive to update.
+/// @param reason Reason used unless an existing specific reason is preserved.
+/// @param lc Logging context for publication.
+/// @param detail Optional diagnostic appended to the reason.
 void requestDriveDown(catalogue::Catalogue& catalogue,
                       const std::string& driveName,
                       common::dataStructures::DriveDownReason reason,

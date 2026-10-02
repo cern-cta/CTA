@@ -13,23 +13,27 @@
 
 namespace cta::tape::daemon {
 
-/** Owns the physical cartridge mount and cleanup within a TapeSession, including a partially failed mount.
- * A scheduler TapeMount is a work assignment; this guard owns the physical mount.
- * Destroy only after all drive users have stopped.
- * Mount failures trigger cleanup before the original exception is rethrown.
- * This guard does not coordinate workers or publish the final drive status.
- */
+/// @brief Owns the physical cartridge mount and cleanup within a TapeSession, including a partially failed mount.
+/// A scheduler TapeMount is a work assignment; this guard owns the physical mount.
+/// Destroy only after all drive users have stopped.
+/// Mount failures trigger cleanup before the original exception is rethrown.
+/// This guard does not coordinate workers or publish the final drive status.
 class MountedTape {
 public:
-  // Keep this outside the guard's scope to inspect the final cleanup outcome.
+  /// Cleanup result retained by the caller beyond the guard lifetime.
   struct Outcome {
-    std::optional<DriveCleaner::CleanupResult> result;
-    std::exception_ptr exception;
+    std::optional<DriveCleaner::CleanupResult> result;  ///< Absent until cleanup returns normally.
+    std::exception_ptr exception;  ///< Preserves a cleanup exception without throwing from the guard.
 
+    /// Require a completed cleanup result whose failure flags permit drive reuse.
     bool driveReusable() const noexcept { return result && result->driveReusable(); }
   };
 
-  // All borrowed objects, including outcome, tracker, and reporter captures, must outlive the guard.
+  /// @brief Mount the cartridge in the volume's access mode and arrange cleanup on scope exit.
+  ///
+  /// All borrowed objects, including outcome, tracker and reporter captures, must outlive the guard.
+  /// Reset outcome before mounting; failed mount attempts trigger cleanup before rethrowing.
+  /// @param tapeLoadTimeout Maximum media-readiness wait during cleanup, in seconds.
   MountedTape(mediachanger::MediaChangerFacade& mediaChanger,
               const VolumeInfo& volume,
               drive::DriveInterface& drive,
@@ -39,15 +43,26 @@ public:
               Outcome& outcome,
               log::LogContext& lc,
               TapeSessionTracker& tracker);
+
+  /// Attempt cleanup once after all drive users have stopped, retaining failures in the borrowed outcome.
   ~MountedTape() noexcept;
 
+  /// Copying is prohibited to keep cleanup responsibility unique.
   MountedTape(const MountedTape&) = delete;
+
+  /// Copy assignment is prohibited to keep cleanup responsibility unique.
   MountedTape& operator=(const MountedTape&) = delete;
+
+  /// Moving is prohibited to keep the guard bound to its session lifetime.
   MountedTape(MountedTape&&) = delete;
+
+  /// Move assignment is prohibited to keep the guard bound to its session lifetime.
   MountedTape& operator=(MountedTape&&) = delete;
 
-  // Finish early when the outcome is needed before scope exit. Repeated calls do nothing.
-  // Cleanup is attempted once; failures are logged and retained in the outcome.
+  /// @brief Finish early when the outcome is needed before scope exit; repeated calls return the same outcome.
+  ///
+  /// Cleanup is attempted once; failures are logged and retained in the borrowed outcome.
+  /// The caller must stop all drive users before cleanup.
   const Outcome& cleanup() noexcept;
 
 private:

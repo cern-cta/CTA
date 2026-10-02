@@ -17,78 +17,67 @@
 
 namespace cta::tape::daemon {
 
-/**
- * A class allowing the enabling and disabling of tape encryption via a script
- * provided by the operators. This script has the responsibility of providing
- * the encryption key to the tape drive.
- */
+/// @brief Configure tape encryption using an operator-provided key-management script.
+///
+/// The script supplies key material; this controller applies it to the drive and records new tape key names.
 class EncryptionControl {
 public:
+  /// Key-management result containing key material and the script diagnostic message.
   struct EncryptionStatus {
     bool on;
-    std::string keyName;  // encryption key identifier
-    std::string key;      // encryption key
-    std::string stdout;
+    std::string keyName;  ///< Key identifier recorded in the catalogue.
+    std::string key;      ///< Key material passed to the drive; must not be logged.
+    std::string stdout;   ///< Parsed message field, rather than the complete script output.
   };
 
-  /** @param scriptPath The path to the operator provided script for acquiring the key */
+  /// @brief Configure whether encryption is required and where to obtain tape keys.
+  /// @param useEncryption Whether a missing key-management script is an error when enabling encryption.
+  /// @param scriptPath Absolute script path, or an empty string when no script is configured.
+  /// @throws cta::exception::Exception If a nonempty script path is not absolute.
   explicit EncryptionControl(const bool useEncryption, const std::string& scriptPath);
-  /**
-   * Will call the encryption script provided by the operators to acquire the encryption key and then enable the
-   * encryption if necessary.
-   * @param m_drive The drive object on which the encryption is to be enabled.
-   * @param volInfo The volume info used by encryption script: VID, tape pool name, encryption ID
-   * @param catalogue Catalogue instance to modify tape encryption key
-   * @param isWriteSession if true, set encryption key when writing to the new tape.
-   * @return {true, keyName, key, stdout} if the encryption has been set, {false, "", "", stdout} otherwise.
-   */
+
+  /// @brief Obtain key material when required, then enable or clear drive encryption.
+  ///
+  /// For a new encrypted write, record the key name in the catalogue before installing the key.
+  /// If assigning a key to a nonempty tape is rejected, disable the tape and propagate the error.
+  /// Script execution, JSON parsing, catalogue and drive failures propagate to the caller.
+  /// @param m_drive Borrowed drive on which to apply encryption settings.
+  /// @param volInfo Tape identity, pool and existing encryption key name.
+  /// @param catalogue Catalogue used to read pool policy and update the tape key name.
+  /// @param isWriteSession Whether a new tape key name may be assigned for writing.
+  /// @return Encryption state, key name, key material and the script diagnostic message.
   EncryptionStatus enable(cta::tape::drive::DriveInterface& m_drive,
                           cta::tape::daemon::VolumeInfo& volInfo,
                           cta::catalogue::Catalogue& catalogue,
                           bool isWriteSession = false);
 
-  /**
-   * Wrapper function to clear the encryption parameters from the drive - essentially meaning disabling the encryption.
-   * @param m_drive The drive object on which the encryption is to be disabled.
-   * @return true if encryption parameters cleared, false otherwise.
-   */
+  /// @brief Clear encryption parameters from the borrowed drive, propagating drive failures.
+  /// @return True if supported encryption parameters were cleared; false if encryption is unsupported.
   bool disable(cta::tape::drive::DriveInterface& m_drive) const;
 
-  /**
-   * Get script path
-   * @return The script path.
-   */
+  /// Return the configured script path as a reference valid for the controller lifetime.
   const std::string& getScriptPath() const;
 
 private:
   const std::string c_defaultUserNameUpdate = "cta-taped";
-  bool m_useEncryption;  // Wether encryption must be enabled for the tape
+  bool m_useEncryption;  ///< Require a key-management script when encryption is configured.
 
-  std::string m_path;  // Path to the key management script file
+  std::string m_path;  ///< Absolute key-management script path; empty when no script is configured.
 
-  /**
-   * Parse the JSON output of the key management script and translate information into Encryption Status struct.
-   * Expected to find keys key_id, encryption_key, message and the respective values as JSON strings.
-   * @param input The JSON input to parse
-   * @return {true, keyName, key, stdout} if the encryption has been set, {false, "", "", stdout} otherwise.
-   */
+  /// @brief Parse key_name, encryption_key and message string fields from the script JSON output.
+  ///
+  /// Encryption is enabled in the result only when both key fields are nonempty.
+  /// @throws cta::exception::Exception If parsing fails or any required field is missing.
   EncryptionStatus parse_json_script_output(const std::string& input);
 
-  /**
-   * Flatten all levels of a JSON object into a map of strings. When parsing nested JSON objects, it uses the key
-   * of the object as prefix.
-   * @param prefix Prefix for the keys of the map
-   * @param jobj The JSON-C object which is flattened
-   * @return A map of strings to strings representing the flattened hierarchy of the JSON input.
-   */
+  /// @brief Collect JSON string values, prefixing nested fields with their immediate enclosing object key.
+  ///
+  /// Non-string leaf values are ignored; the borrowed JSON object is not modified.
+  /// @param prefix Prefix applied to string fields at this level.
+  /// @param jobj JSON object whose fields are traversed recursively.
   std::map<std::string, std::string> flatten_json_object_to_map(const std::string& prefix, json_object* jobj);
 
-  /**
-   * Flattens the arguments list of strings to a single string.
-   * @param args The arguments list
-   * @param delimiter The delimiter between the different arguments
-   * @return A string representation of the arguments passed.
-   */
+  /// Join script arguments with the delimiter for diagnostics; return an empty string for no arguments.
   std::string argsToString(std::list<std::string> args, const std::string& delimiter) const;
 };
 

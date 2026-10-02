@@ -10,6 +10,7 @@
 #include "taped/session/TapeSessionState.hpp"
 #include "taped/session/TapeSessionStats.hpp"
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <cstddef>
@@ -22,6 +23,7 @@
 
 namespace cta::tape::daemon {
 
+/// Counted failures that affect session success.
 enum class TapeSessionFailure {
   DiskOpenForWrite,
   DiskWrite,
@@ -59,7 +61,7 @@ enum class TapeSessionFailure {
   Count
 };
 
-// Normal stopping conditions are diagnostics, not session failures.
+/// Informational stopping conditions independent of session success.
 enum class TapeSessionEvent {
   DiskSpaceReservationTestFailure,
   DiskSpaceReservationFailure,
@@ -76,6 +78,7 @@ using TapeSessionEventCounts = std::array<uint32_t, static_cast<size_t>(TapeSess
 
 using TapeAlertStats = std::map<uint16_t, uint32_t>;
 
+/// Consistent snapshot of completion and diagnostics.
 struct TapeSessionOutcomeSnapshot {
   // Derived from session state; failure presence is meaningful before completion too.
   bool finished;
@@ -85,6 +88,7 @@ struct TapeSessionOutcomeSnapshot {
   TapeAlertStats tapeAlerts;
 };
 
+/// Identity and opening time of an active disk file.
 struct DiskFileProgress {
   uint64_t fileId = 0;
   std::string path;
@@ -93,6 +97,7 @@ struct DiskFileProgress {
 
 using ActiveDiskFiles = std::map<uint32_t, DiskFileProgress>;
 
+/// Snapshot of active tape-file and block-transfer progress.
 struct TapeSessionProgress {
   uint64_t fileId = 0;
   uint64_t fSeq = 0;
@@ -102,35 +107,29 @@ struct TapeSessionProgress {
   std::chrono::steady_clock::time_point lastBlockMovement;
 };
 
-// A consistent, mount-independent view for health checks.
+/// Consistent phase and activity timestamps for health checks.
 struct TapeSessionLivenessSnapshot {
   std::optional<cta::tape::session::TapeSessionState> state;
   std::chrono::steady_clock::time_point stateEnteredAt;
   std::chrono::steady_clock::time_point lastBlockMovement;
 };
 
-/**
- * @brief Track session state, statistics and progress shared by workers and the reporter.
- *
- * This class is only responsible for keeping track of the state; the TapeSessionReporter is responsible for
- * reporting said state.
- */
+/// @brief Synchronize session progress, counters and statistics shared by workers and the reporter.
+///
+/// Each accessor returns a snapshot; separate accessor calls need not describe the same instant.
 class TapeSessionTracker {
 public:
   using Clock = std::chrono::steady_clock;
 
-  /**
-   * @brief Reset progress, statistics and completion flags for a new session.
-   *
-   * Only the session owner may begin a session; subsequent state changes do not reset its data.
-   */
+  /// @brief Reset tracking data and enter Preparing at now.
+  ///
+  /// Only the session owner may reset the tracker. The mount-attempt flag resets to true;
+  /// call setMountAttempted(false) for an assignment that has not attempted mounting.
   void beginTapeSession(Clock::time_point now = Clock::now()) {
     std::lock_guard lock(m_mutex);
     m_stats = {};
     m_failureCounts.fill(0);
     m_eventCounts.fill(0);
-    m_hasFailures = false;
-    m_recallCompletionHasDiagnostics = false;
     m_tapeAlertStats.clear();
     m_activeDiskFiles.clear();
     m_mountAttempted = true;
@@ -148,120 +147,124 @@ public:
     m_type = cta::tape::session::SessionType::Undetermined;
   }
 
-  /**
-   * @brief Set the session phase without resetting progress or statistics.
-   *
-   * @param state Session phase to record without resetting other tracking data.
-   */
+  /// @brief Set the phase without resetting progress; repeated reports preserve its entry time.
+  /// @param state Phase to record.
+  /// @param now Entry time used only when the phase changes.
   void reportState(cta::tape::session::TapeSessionState state, Clock::time_point now = Clock::now()) {
     std::lock_guard lock(m_mutex);
     setStateLocked(state, now);
   }
 
-  /**
-   * @brief Return the current phase, or std::nullopt before any phase has been established.
-   *
-   * @return Current phase, or std::nullopt if no phase has been established.
-   */
+  /// Return the current phase, or std::nullopt before any phase is recorded.
   std::optional<cta::tape::session::TapeSessionState> state() const {
     std::lock_guard lock(m_mutex);
     return m_state;
   }
 
-  /**
-   * @brief Set the session operation type used for reporting and retrieval completion.
-   *
-   * @param type Session operation type used for reporting and retrieval completion.
-   */
+  /// Set the operation type used for reporting and retrieval completion.
   void setType(cta::tape::session::SessionType type) {
     std::lock_guard lock(m_mutex);
     m_type = type;
   }
 
-  /**
-   * @brief Mark tape work complete and atomically update the retrieval draining or finalizing phase.
-   */
+  /// Mark tape work complete and update the retrieval phase using now.
   void notifyTapeDone(Clock::time_point now = Clock::now()) {
     std::lock_guard lock(m_mutex);
     m_tapeDone = true;
     updateRetrievalCompletionState(now);
   }
 
-  /**
-   * @brief Mark disk work complete and atomically update the retrieval phase when tape work is done.
-   */
+  /// Mark disk work complete and update the retrieval phase using now if tape work is done.
   void notifyDiskDone(Clock::time_point now = Clock::now()) {
     std::lock_guard lock(m_mutex);
     m_diskDone = true;
     updateRetrievalCompletionState(now);
   }
 
-  /**
-   * @brief Return the current session operation type.
-   *
-   * @return Current session operation type.
-   */
+  /// Return the recorded operation type, initially Undetermined.
   cta::tape::session::SessionType type() const {
     std::lock_guard lock(m_mutex);
     return m_type;
   }
 
-  /** Snapshot terminal state and persistent failures together. */
+  /// Snapshot completion, failures, events and tape alerts together.
   TapeSessionOutcomeSnapshot outcomeSnapshot() const {
     std::lock_guard lock(m_mutex);
     return {m_state == cta::tape::session::TapeSessionState::Finished,
-            m_hasFailures,
+            hasFailuresLocked(),
             m_failureCounts,
             m_eventCounts,
             m_tapeAlertStats};
   }
 
+  /// Return whether any session failure has been recorded since reset.
   bool hasFailures() const {
     std::lock_guard lock(m_mutex);
-    return m_hasFailures;
+    return hasFailuresLocked();
   }
 
-  /** Preserve recall's existing end-report selection, including informational diagnostics and alerts. */
+  /// @brief Return whether recall should use its diagnostic end-report protocol.
+  ///
+  /// Includes events and tape alerts; this is distinct from session failure.
   bool recallCompletionHasDiagnostics() const {
     std::lock_guard lock(m_mutex);
-    return m_recallCompletionHasDiagnostics;
+    if (!m_tapeAlertStats.empty()) {
+      return true;
+    }
+    for (const auto count : m_eventCounts) {
+      if (count != 0) {
+        return true;
+      }
+    }
+    for (size_t i = 0; i < m_failureCounts.size(); ++i) {
+      if (m_failureCounts[i] == 0) {
+        continue;
+      }
+      // Propagation-only failures do not change the legacy recall end-report protocol.
+      switch (static_cast<TapeSessionFailure>(i)) {
+        case TapeSessionFailure::UnexpectedSession:
+        case TapeSessionFailure::TaskInjection:
+        case TapeSessionFailure::WorkerSignalling:
+        case TapeSessionFailure::UnexpectedCleanup:
+        case TapeSessionFailure::UnclassifiedFile:
+          break;
+        default:
+          return true;
+      }
+    }
+    return false;
   }
 
-  /**
-   * @brief Record whether the session attempted a physical tape mount.
-   *
-   * @param attempted Whether a physical mount was attempted.
-   */
+  /// Record whether the assignment is attempting a physical tape mount.
   void setMountAttempted(bool attempted) {
     std::lock_guard lock(m_mutex);
     m_mountAttempted = attempted;
   }
 
-  /**
-   * @brief Return whether the session attempted a physical tape mount.
-   *
-   * @return True if a physical mount attempt is recorded.
-   */
+  /// Return the recorded mount-attempt flag; true by default and after reset.
   bool mountAttempted() const {
     std::lock_guard lock(m_mutex);
     return m_mountAttempted;
   }
 
-  /** Count the owning operation's failure and return a receipt for propagation, without choosing recovery. */
+  /// Count a classified failure and return a receipt for propagation without recounting it.
   RecordedFailure recordFailure(TapeSessionFailure failure) {
     std::lock_guard lock(m_mutex);
     recordFailureLocked(failure);
     return RecordedFailure(*this);
   }
 
-  /** Propagated errors need a fallback reason only when no operation has classified a failure. */
+  /// Count the supplied fallback failure only if no session failure has been recorded.
   void recordFailureIfNone(TapeSessionFailure failure) {
     std::lock_guard lock(m_mutex);
-    if (!m_hasFailures) {
+    if (!hasFailuresLocked()) {
       recordFailureLocked(failure);
     }
   }
 
+  /// @brief Count an informational event and mark recall diagnostics.
+  ///
+  /// TapeFilledUp is recorded at most once per session.
   void recordEvent(TapeSessionEvent event) {
     std::lock_guard lock(m_mutex);
     auto& count = m_eventCounts.at(static_cast<size_t>(event));
@@ -270,158 +273,97 @@ public:
     } else {
       ++count;
     }
-    m_recallCompletionHasDiagnostics = true;
   }
 
-  /**
-   * @brief Increment the occurrence count for a tape alert code.
-   *
-   * @param tapeAlertCode Tape alert code whose occurrence count is incremented.
-   */
+  /// Count a tape-alert code and mark recall diagnostics.
   void incrementTapeAlert(uint16_t tapeAlertCode) {
     std::lock_guard lock(m_mutex);
     ++m_tapeAlertStats[tapeAlertCode];
-    m_recallCompletionHasDiagnostics = true;
   }
 
-  /**
-   * @brief Replace the tape setup statistics with the supplied snapshot.
-   *
-   * @param stats Statistics to store or accumulate.
-   */
+  /// Replace setup statistics with the supplied snapshot.
   void updateTapeSetupStats(const TapeSetupStats& stats) {
     std::lock_guard lock(m_mutex);
     m_stats.setup = stats;
   }
 
-  /**
-   * @brief Accumulate the supplied tape setup statistics.
-   *
-   * @param stats Statistics to store or accumulate.
-   */
+  /// Accumulate setup statistics.
   void addTapeSetupStats(const TapeSetupStats& stats) {
     std::lock_guard lock(m_mutex);
     m_stats.setup.add(stats);
   }
 
-  /**
-   * @brief Replace the tape transfer statistics with the supplied snapshot.
-   *
-   * @param stats Statistics to store or accumulate.
-   */
+  /// Replace tape-transfer statistics with the supplied snapshot.
   void updateTapeTransferStats(const TapeTransferStats& stats) {
     std::lock_guard lock(m_mutex);
     m_stats.tape = stats;
   }
 
-  /**
-   * @brief Accumulate the supplied tape transfer statistics.
-   *
-   * @param stats Statistics to store or accumulate.
-   */
+  /// Accumulate tape-transfer statistics.
   void addTapeTransferStats(const TapeTransferStats& stats) {
     std::lock_guard lock(m_mutex);
     m_stats.tape.add(stats);
   }
 
-  /**
-   * @brief Replace the disk transfer statistics with the supplied snapshot.
-   *
-   * @param stats Statistics to store or accumulate.
-   */
+  /// Replace disk statistics, including delivery time, with the supplied snapshot.
   void updateDiskTransferStats(const DiskTransferStats& stats) {
     std::lock_guard lock(m_mutex);
     m_stats.disk = stats;
   }
 
-  /**
-   * @brief Accumulate the supplied disk transfer statistics.
-   *
-   * @param stats Statistics to store or accumulate.
-   */
+  /// Accumulate disk reporting wait time without changing delivery time.
   void addDiskTransferStats(const DiskTransferStats& stats) {
     std::lock_guard lock(m_mutex);
     m_stats.disk.add(stats);
   }
 
-  /**
-   * @brief Replace the cleanup statistics with the supplied snapshot.
-   *
-   * @param stats Statistics to store or accumulate.
-   */
+  /// Replace cleanup statistics with the supplied snapshot.
   void updateTapeCleanupStats(const TapeCleanupStats& stats) {
     std::lock_guard lock(m_mutex);
     m_stats.cleanup = stats;
   }
 
-  /**
-   * @brief Accumulate the supplied cleanup statistics.
-   *
-   * @param stats Statistics to store or accumulate.
-   */
+  /// Accumulate cleanup statistics, including retry durations.
   void addTapeCleanupStats(const TapeCleanupStats& stats) {
     std::lock_guard lock(m_mutex);
     m_stats.cleanup.add(stats);
   }
 
-  /**
-   * @brief Set the total session time in seconds.
-   *
-   * @param totalTime Total session duration in seconds.
-   */
+  /// Set the reported tape-worker elapsed time in seconds.
   void setTotalTime(double totalTime) {
     std::lock_guard lock(m_mutex);
     m_stats.totalTime = totalTime;
   }
 
-  /**
-   * @brief Set the disk delivery time in seconds.
-   *
-   * @param deliveryTime Disk delivery duration in seconds.
-   */
+  /// Set the elapsed time through disk delivery in seconds.
   void setDiskDeliveryTime(double deliveryTime) {
     std::lock_guard lock(m_mutex);
     m_stats.disk.deliveryTime = deliveryTime;
   }
 
-  /**
-   * @brief Record the active file and opening time for a disk worker, replacing its previous entry.
-   *
-   * @param threadId Identifier of the disk worker owning the active-file entry.
-   * @param fileId Archive-file identifier of the file being processed.
-   * @param path Disk path of the active file, moved into the tracker.
-   */
+  /// @brief Record an active file and its opening time for a disk worker, replacing its previous entry.
+  /// @param threadId Disk worker identifier.
+  /// @param fileId Archive-file identifier.
+  /// @param path Disk path, moved into the tracker.
   void notifyDiskFileOpened(uint32_t threadId, uint64_t fileId, std::string path) {
     std::lock_guard lock(m_mutex);
     m_activeDiskFiles.insert_or_assign(threadId,
                                        DiskFileProgress {fileId, std::move(path), std::chrono::steady_clock::now()});
   }
 
-  /**
-   * @brief Remove the active-file entry for the specified disk worker.
-   *
-   * @param threadId Identifier of the disk worker owning the active-file entry.
-   */
+  /// Remove the active-file entry for the specified disk worker.
   void notifyDiskFileClosed(uint32_t threadId) {
     std::lock_guard lock(m_mutex);
     m_activeDiskFiles.erase(threadId);
   }
 
-  /**
-   * @brief Return a snapshot of files currently open in disk workers.
-   *
-   * @return Snapshot of active disk files indexed by worker ID.
-   */
+  /// Return a snapshot of active disk files indexed by worker identifier.
   ActiveDiskFiles activeDiskFiles() const {
     std::lock_guard lock(m_mutex);
     return m_activeDiskFiles;
   }
 
-  /**
-   * @brief Return a snapshot of the session failure counters.
-   *
-   * @return Snapshot of session failure counts.
-   */
+  /// Return nonzero failure counters indexed by failure category.
   TapeSessionFailureStats failureStats() const {
     std::lock_guard lock(m_mutex);
     TapeSessionFailureStats result;
@@ -433,88 +375,56 @@ public:
     return result;
   }
 
-  /**
-   * @brief Return a snapshot of the tape alert counters.
-   *
-   * @return Snapshot of tape alert counts.
-   */
+  /// Return a snapshot of tape-alert counts.
   TapeAlertStats tapeAlertStats() const {
     std::lock_guard lock(m_mutex);
     return m_tapeAlertStats;
   }
 
-  /**
-   * @brief Return a snapshot of the accumulated session statistics.
-   *
-   * @return Snapshot of the session statistics.
-   */
+  /// Return one consistent snapshot of all session statistics.
   TapeSessionStats stats() const {
     std::lock_guard lock(m_mutex);
     return m_stats;
   }
 
-  /**
-   * @brief Add transferred bytes and refresh the last tape-block activity timestamp.
-   *
-   * @param bytes Additional transferred bytes to accumulate.
-   */
+  /// Accumulate moved bytes and record now as the latest tape-block activity time.
   void notifyBlockMovement(uint64_t bytes, Clock::time_point now = Clock::now()) {
     std::lock_guard lock(m_mutex);
     m_bytesMoved += bytes;
     m_lastBlockMovement = now;
   }
 
-  /**
-   * @brief Return the cumulative bytes recorded through block-movement notifications.
-   *
-   * @return Cumulative transferred bytes recorded since the session began.
-   */
+  /// Return bytes accumulated through block-movement notifications since reset.
   uint64_t bytesMoved() const {
     std::lock_guard lock(m_mutex);
     return m_bytesMoved;
   }
 
-  /**
-   * @brief Return the last block-movement timestamp, or a default timestamp when none was recorded.
-   *
-   * @return Most recent block-movement timestamp, or a default timestamp if none was recorded.
-   */
+  /// Return the last block-movement time, or a default time point if none was recorded.
   std::chrono::steady_clock::time_point lastBlockMovement() const {
     std::lock_guard lock(m_mutex);
     return m_lastBlockMovement;
   }
 
-  /**
-   * @brief Return one consistent snapshot of the current tape file and block-movement progress.
-   *
-   * @return Consistent snapshot of the active tape file and block-movement progress.
-   */
+  /// Snapshot the active tape file and block-movement progress together.
   TapeSessionProgress progress() const {
     std::lock_guard lock(m_mutex);
     return {m_fileId, m_fSeq, m_fileBeingMoved, m_fileStartTime, m_bytesMoved, m_lastBlockMovement};
   }
 
-  /** Return phase and progress timestamps together. */
+  /// Snapshot the phase, its entry time and last block-movement time together.
   TapeSessionLivenessSnapshot livenessSnapshot() const {
     std::lock_guard lock(m_mutex);
     return {m_state, m_stateEnteredAt, m_lastBlockMovement};
   }
 
-  /**
-   * @brief Return the time recorded when the session began.
-   *
-   * @return Session start timestamp, or a default timestamp before a session begins.
-   */
+  /// Return the time recorded by beginTapeSession(), or a default time point before it is called.
   std::chrono::steady_clock::time_point sessionStartTime() const {
     std::lock_guard lock(m_mutex);
     return m_sessionStartTime;
   }
 
-  /**
-   * @brief Return time since the session began, or zero before beginTapeSession().
-   *
-   * @return Elapsed session duration, or zero before beginTapeSession().
-   */
+  /// Return elapsed time since beginTapeSession(), or zero before it is called.
   std::chrono::steady_clock::duration sessionElapsedTime() const {
     std::lock_guard lock(m_mutex);
     if (m_sessionStartTime == std::chrono::steady_clock::time_point {}) {
@@ -523,12 +433,7 @@ public:
     return std::chrono::steady_clock::now() - m_sessionStartTime;
   }
 
-  /**
-   * @brief Record the active archive-file ID, tape sequence number and file start time.
-   *
-   * @param fileId Archive-file identifier of the file being processed.
-   * @param fSeq Tape file sequence number of the active job.
-   */
+  /// Record the active archive-file ID, tape sequence number and current start time.
   void notifyBeginNewJob(uint64_t fileId, uint64_t fSeq) {
     std::lock_guard lock(m_mutex);
     m_fileId = fileId;
@@ -537,9 +442,7 @@ public:
     m_fileStartTime = std::chrono::steady_clock::now();
   }
 
-  /**
-   * @brief Notify the tracker we have finished operating on the current file.
-   */
+  /// Clear the active tape-file identity and start time without resetting block progress.
   void fileFinished() {
     std::lock_guard lock(m_mutex);
     m_fileBeingMoved = false;
@@ -549,23 +452,18 @@ public:
   }
 
 private:
-  void recordFailureLocked(TapeSessionFailure failure) {
-    ++m_failureCounts.at(static_cast<size_t>(failure));
-    m_hasFailures = true;
-    // Newly classified propagation failures must not change the legacy recall end-report protocol.
-    switch (failure) {
-      case TapeSessionFailure::UnexpectedSession:
-      case TapeSessionFailure::TaskInjection:
-      case TapeSessionFailure::WorkerSignalling:
-      case TapeSessionFailure::UnexpectedCleanup:
-      case TapeSessionFailure::UnclassifiedFile:
-        break;
-      default:
-        m_recallCompletionHasDiagnostics = true;
-    }
+  /// @brief Return whether any failure counter is nonzero.
+  /// @pre The caller holds m_mutex.
+  bool hasFailuresLocked() const {
+    return std::any_of(m_failureCounts.begin(), m_failureCounts.end(), [](auto count) { return count != 0; });
   }
 
-  // The caller holds m_mutex. Repeated reports must not postpone the phase deadline.
+  /// @brief Increment the supplied failure counter.
+  /// @pre The caller holds m_mutex.
+  void recordFailureLocked(TapeSessionFailure failure) { ++m_failureCounts.at(static_cast<size_t>(failure)); }
+
+  /// @brief Change the phase and entry time only when the phase differs.
+  /// @pre The caller holds m_mutex.
   void setStateLocked(cta::tape::session::TapeSessionState state, Clock::time_point now) {
     if (m_state != state) {
       m_state = state;
@@ -573,12 +471,10 @@ private:
     }
   }
 
-  /**
-   * @brief Advance retrieval to draining or finalizing once tape work has completed.
-   *
-   * @pre The caller holds m_mutex.
-   * Only the session owner may establish Finished; this method preserves that state.
-   */
+  /// @brief Advance retrieval to draining or finalizing once tape work is complete.
+  ///
+  /// Preserves Finished, which is established by the session owner.
+  /// @pre The caller holds m_mutex.
   void updateRetrievalCompletionState(Clock::time_point now) {
     using cta::tape::session::TapeSessionState;
     if (m_type == cta::tape::session::SessionType::Retrieve && m_tapeDone && m_state
@@ -594,8 +490,6 @@ private:
   bool m_tapeDone = false;
   bool m_diskDone = false;
   cta::tape::session::SessionType m_type = cta::tape::session::SessionType::Undetermined;
-  bool m_hasFailures = false;
-  bool m_recallCompletionHasDiagnostics = false;
   bool m_mountAttempted = true;
 
   uint64_t m_fileId = 0;

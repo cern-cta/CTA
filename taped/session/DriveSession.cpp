@@ -71,7 +71,8 @@ DriveSession::~DriveSession() noexcept {
 }
 
 void DriveSession::releaseAndReportDown() {
-  if (m_downReported || !m_driveReservation.release()) {
+  // Ensure we don't report Down multiple times
+  if (m_downPublicationComplete || !m_driveReservation.release()) {
     return;
   }
   auto& scheduler = m_schedulerContext.scheduler();
@@ -81,7 +82,7 @@ void DriveSession::releaseAndReportDown() {
                                 common::dataStructures::DriveStatus::Down,
                                 m_lc);
   }
-  m_downReported = true;
+  m_downPublicationComplete = true;
 }
 
 void DriveSession::requestDown(common::dataStructures::DriveDownReason reason, std::string_view detail) {
@@ -254,7 +255,7 @@ DriveSession::IterationResult DriveSession::runIteration(std::stop_token stopTok
   // This is only necessary in the objectstore as we want a new agent
   // Otherwise we miss out on garbage collection
   tapeMount.reset();
-  m_schedulerContext.reinitialise();
+  m_schedulerContext.renewObjectStoreAgent();
 
   // Translate tape-session outcomes into scheduling decisions only after releasing the mount.
   if (!result.driveReusable) {

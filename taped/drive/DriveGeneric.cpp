@@ -139,10 +139,6 @@ void drive::DriveLTO::clearCompressionStats() {
   SCSI::ExceptionLauncher(sgh, "SCSI error in clearCompressionStats:");
 }
 
-/**
- * Information about the drive. The vendor id is used in the user labels of the files.
- * @return    The deviceInfo structure with the information about the drive.
- */
 drive::deviceInfo drive::DriveGeneric::getDeviceInfo() {
   SCSI::Structures::inquiryCDB_t cdb;
   SCSI::Structures::inquiryData_t inquiryData;
@@ -235,18 +231,10 @@ void drive::DriveMHVTL::queryRAO(std::list<SCSI::Structures::RAO::blockLims>& fi
   //something could be implemented for testing...
 }
 
-/**
- * Generic SCSI path, used for passing to external scripts.
- * @return    Path to the generic SCSI device file.
- */
 std::string drive::DriveGeneric::getGenericSCSIPath() {
   return m_SCSIInfo.sg_dev;
 }
 
-/**
- * Information about the serial number of the drive.
- * @return   Right-aligned ASCII data for the vendor-assigned serial number.
- */
 std::string drive::DriveGeneric::getSerialNumber() {
   SCSI::Structures::inquiryCDB_t cdb;
   SCSI::Structures::inquiryUnitSerialNumberData_t inquirySerialData;
@@ -272,13 +260,6 @@ std::string drive::DriveGeneric::getSerialNumber() {
   return serialNumber;
 }
 
-/**
- * Position to logical object identifier (i.e. block address).
- * This function is blocking: the immediate bit is not set.
- * The device server will not return status until the locate operation
- * has completed.
- * @param blockId The blockId, represented in local endianness.
- */
 void drive::DriveGeneric::positionToLogicalObject(uint32_t blockId) {
   SCSI::Structures::locate10CDB_t cdb;
   SCSI::Structures::senseData_t<255> senseBuff;
@@ -296,12 +277,6 @@ void drive::DriveGeneric::positionToLogicalObject(uint32_t blockId) {
   SCSI::ExceptionLauncher(sgh, "SCSI error in positionToLogicalObject:");
 }
 
-/**
- * Return logical position of the drive. This is the address of the next object
- * to read or write.
- * @return positionInfo class. This contains the logical position, plus information
- * on the dirty data still in the write buffer.
- */
 drive::positionInfo drive::DriveGeneric::getPositionInfo() {
   SCSI::Structures::readPositionCDB_t cdb;
   SCSI::Structures::readPositionDataShortForm_t positionData;
@@ -341,11 +316,6 @@ drive::positionInfo drive::DriveGeneric::getPositionInfo() {
   return posInfo;
 }
 
-/**
- * Return physical position of the drive.
- *
- * @return physicalPositionInfo class. This contains the wrap and linear position (LPOS).
- */
 drive::physicalPositionInfo drive::DriveGeneric::getPhysicalPositionInfo() {
   SCSI::Structures::requestSenseCDB_t cdb;
   SCSI::Structures::requestSenseData_t requestSenseData;
@@ -372,22 +342,11 @@ drive::physicalPositionInfo drive::DriveGeneric::getPhysicalPositionInfo() {
   return posInfo;
 }
 
-/**
-* Returns all the end of wrap positions of the mounted tape
-*
-* @return a vector of endOfWrapsPositions.
-*/
 std::vector<drive::endOfWrapPosition> drive::DriveGeneric::getEndOfWrapPositions() {
   throw cta::exception::Exception(
     "In drive::DriveGeneric::getEndOfWrapPositions(), the drive does not support REOWP SCSI command.");
 }
 
-/**
- * Get tape alert information from the drive. There is a quite long list of possible tape alerts.
- * They are described in SSC-4, section 4.2.20: TapeAlert application client interface.
- * Section is 4.2.17 in SSC-3. This version gives a list of numerical codes.
- * @return list of tape alerts codes.
- */
 std::vector<uint16_t> drive::DriveGeneric::getTapeAlertCodes() {
   /* return vector */
   std::vector<uint16_t> ret;
@@ -421,9 +380,6 @@ std::vector<uint16_t> drive::DriveGeneric::getTapeAlertCodes() {
   return ret;
 }
 
-/**
- * Translate  tape alert codes into strings.
- */
 std::vector<std::string> drive::DriveGeneric::getTapeAlerts(const std::vector<uint16_t>& tacs) {
   /* return vector */
   std::vector<std::string> ret;
@@ -434,9 +390,6 @@ std::vector<std::string> drive::DriveGeneric::getTapeAlerts(const std::vector<ui
   return ret;
 }
 
-/**
- * Translate tape alert codes into compact strings.
- */
 std::vector<std::string> drive::DriveGeneric::getTapeAlertsCompact(const std::vector<uint16_t>& tacs) {
   /* return vector */
   std::vector<std::string> ret;
@@ -459,19 +412,6 @@ bool drive::DriveGeneric::tapeAlertsCriticalForWrite(const std::vector<uint16_t>
   return false;
 }
 
-/**
- * Set the tape density and compression.
- * We use MODE SENSE/SELECT Device Configuration (10h) mode page.
- * As soon as there is no definition in SPC-4 or SSC-3 it depends on the
- * drives documentation.
- *
- * @param densityCode  The tape specific density code.
- *                     If it is 0 (default) than we use the density code
- *                     detected by the drive itself means no changes.
- *
- * @param compression  The boolean variable to enable or disable compression
- *                     on the drive for the tape. By default it is enabled.
- */
 void drive::DriveGeneric::setDensityAndCompression(bool compression, unsigned char densityCode) {
   SCSI::Structures::modeSenseDeviceConfiguration_t devConfig;
   {  // get info from the drive
@@ -956,10 +896,6 @@ void drive::DriveGeneric::queryRAO(std::list<SCSI::Structures::RAO::blockLims>& 
   receiveRAO(files);
 }
 
-/**
- * Function that checks if a tape is blank (contains no records)
- * @return true if tape is blank, false otherwise
- */
 bool drive::DriveGeneric::isTapeBlank() {
   struct mtop mtCmd1 = {};
   mtCmd1.mt_op = MTREW;
@@ -985,12 +921,6 @@ bool drive::DriveGeneric::isTapeBlank() {
   return false;
 }
 
-/**
- * Set the buffer write switch in the st driver. This is directly matching a configuration
- * parameter in CASTOR, so this function has to be public and usable by a higher level
- * layer, unless the parameter turns out to be disused.
- * @param bufWrite: value of the buffer write switch
- */
 void drive::DriveGeneric::setSTBufferWrite(bool bufWrite) {
   struct mtop m_mtCmd = {};
   m_mtCmd.mt_op = MTSETDRVBUFFER;
@@ -999,14 +929,6 @@ void drive::DriveGeneric::setSTBufferWrite(bool bufWrite) {
                                           "Failed ST ioctl (MTSETDRVBUFFER) in DriveGeneric::setSTBufferWrite");
 }
 
-/**
- * Jump to end of recorded media. This will use setSTFastMTEOM() to disable MT_ST_FAST_MTEOM.
- * (See TapeServer's handbook for details). This is used to rebuild the MIR (StorageTek)
- * or tape directory (IBM).
- * Tape directory rebuild is described only for IBM but currently applied to
- * all tape drives.
- * TODO: synchronous? Timeout?
- */
 void drive::DriveGeneric::spaceToEOM(void) {
   setSTFastMTEOM(false);
   struct mtop m_mtCmd = {};
@@ -1016,12 +938,6 @@ void drive::DriveGeneric::spaceToEOM(void) {
                                           "Failed ST ioctl (MTEOM) in DriveGeneric::spaceToEOM");
 }
 
-/**
- * Set the MTFastEOM option of the ST driver. This function is used only internally in
- * mounttape (in CAStor), so it could be a private function, not visible to
- * the higher levels of the software (TODO: protected?).
- * @param fastMTEOM the option switch.
- */
 void drive::DriveGeneric::setSTFastMTEOM(bool fastMTEOM) {
   struct mtop m_mtCmd = {};
   m_mtCmd.mt_op = MTSETDRVBUFFER;
@@ -1030,10 +946,6 @@ void drive::DriveGeneric::setSTFastMTEOM(bool fastMTEOM) {
                                           "Failed ST ioctl (MTSETDRVBUFFER) in DriveGeneric::setSTFastMTEOM");
 }
 
-/**
- * Jump to end of data. EOM in ST driver jargon, end of data (which is more accurate)
- * in SCSI terminology). This uses the fast setting (not to be used for MIR rebuild)
- */
 void drive::DriveGeneric::fastSpaceToEOM(void) {
   setSTFastMTEOM(true);
   struct mtop m_mtCmd = {};
@@ -1043,9 +955,6 @@ void drive::DriveGeneric::fastSpaceToEOM(void) {
                                           "Failed ST ioctl (MTEOM) in DriveGeneric::fastSpaceToEOM");
 }
 
-/**
- * Rewind tape.
- */
 void drive::DriveGeneric::rewind(void) {
   struct mtop m_mtCmd = {};
   m_mtCmd.mt_op = MTREW;
@@ -1054,10 +963,6 @@ void drive::DriveGeneric::rewind(void) {
                                           "Failed ST ioctl (MTREW) in DriveGeneric::rewind");
 }
 
-/**
- * Space count file marks backwards.
- * @param count
- */
 void drive::DriveGeneric::spaceFileMarksBackwards(size_t count) {
   size_t tobeskipped = count;
   struct mtop m_mtCmd = {};
@@ -1071,10 +976,6 @@ void drive::DriveGeneric::spaceFileMarksBackwards(size_t count) {
   }
 }
 
-/**
- * Space count file marks forward.
- * @param count
- */
 void drive::DriveGeneric::spaceFileMarksForward(size_t count) {
   size_t tobeskipped = count;
   struct mtop m_mtCmd = {};
@@ -1088,9 +989,6 @@ void drive::DriveGeneric::spaceFileMarksForward(size_t count) {
   }
 }
 
-/**
- * Unload the tape.
- */
 void drive::DriveGeneric::unloadTape(void) {
   struct mtop m_mtCmd = {};
   m_mtCmd.mt_op = MTUNLOAD;
@@ -1099,10 +997,6 @@ void drive::DriveGeneric::unloadTape(void) {
                                           "Failed ST ioctl (MTUNLOAD) in DriveGeneric::unloadTape");
 }
 
-/**
- * Synch call to the tape drive. This function will not return before the
- * data in the drive's buffer is actually committed to the medium.
- */
 void drive::DriveGeneric::flush(void) {
   struct mtop m_mtCmd = {};
   m_mtCmd.mt_op =
@@ -1114,11 +1008,6 @@ void drive::DriveGeneric::flush(void) {
                                           "Failed ST ioctl (MTWEOF) in DriveGeneric::flush");
 }
 
-/**
- * Write count file marks. The function does not return before the file marks
- * are committed to medium.
- * @param count
- */
 void drive::DriveGeneric::writeSyncFileMarks(size_t count) {
   struct mtop m_mtCmd = {};
   m_mtCmd.mt_op = MTWEOF;
@@ -1127,11 +1016,6 @@ void drive::DriveGeneric::writeSyncFileMarks(size_t count) {
                                           "Failed ST ioctl (MTWEOF) in DriveGeneric::writeSyncFileMarks");
 }
 
-/**
- * Write count file marks asynchronously. The file marks are just added to the drive's
- * buffer and the function return immediately.
- * @param count
- */
 void drive::DriveGeneric::writeImmediateFileMarks(size_t count) {
   struct mtop m_mtCmd = {};
   m_mtCmd.mt_op = MTWEOFI;  //Undocumented in "man st" needs the mtio_add.hh header file (see above)
@@ -1140,11 +1024,6 @@ void drive::DriveGeneric::writeImmediateFileMarks(size_t count) {
                                           "Failed ST ioctl (MTWEOFI) in DriveGeneric::writeImmediateFileMarks");
 }
 
-/**
- * Write a data block to tape.
- * @param data pointer the the data block
- * @param count size of the data block
- */
 void drive::DriveGeneric::writeBlock(const void* data, size_t count) {
   switch (m_lbpToUse) {
     case lbpToUse::crc32cReadWrite: {
@@ -1176,12 +1055,6 @@ void drive::DriveGeneric::writeBlock(const void* data, size_t count) {
   }
 }
 
-/**
- * Read a data block from tape.
- * @param data pointer the the data block
- * @param count size of the data block
- * @return the actual size of read data
- */
 ssize_t drive::DriveGeneric::readBlock(void* data, size_t count) {
   switch (m_lbpToUse) {
     case lbpToUse::crc32cReadWrite:
@@ -1223,12 +1096,6 @@ ssize_t drive::DriveGeneric::readBlock(void* data, size_t count) {
   }
 }
 
-/**
- * Read a data block from tape. Throw an exception if the read block is not
- * the exact size of the buffer.
- * @param data pointer the the data block
- * @param count size of the data block
- */
 void drive::DriveGeneric::readExactBlock(void* data, size_t count, const std::string& context) {
   switch (m_lbpToUse) {
     case lbpToUse::crc32cReadWrite:
@@ -1298,10 +1165,6 @@ void drive::DriveGeneric::readExactBlock(void* data, size_t count, const std::st
   }
 }
 
-/**
- * Read over a file mark. Throw an exception we do not read one.
- * @return the actual size of read data
- */
 void drive::DriveGeneric::readFileMark(const std::string& context) {
   char buff[4];  // We need to try and read at least a small amount of data
                  // due to a bug in mhvtl
