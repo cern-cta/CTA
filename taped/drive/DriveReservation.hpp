@@ -35,27 +35,21 @@ public:
   DriveReservation& operator=(DriveReservation&&) = delete;
 
   /// @brief Acquire logical ownership, or keep it if already owned.
-  /// @throws std::logic_error If ownership was released or marked unsafe.
+  /// @throws std::logic_error If ownership was released.
   void acquire();
 
-  /// Permit hardware access only while ownership is acquired and has not been marked unsafe.
+  /// Permit hardware access only while ownership is acquired.
   bool canUseHardware() const noexcept;
 
   /// @brief Release logical ownership, or confirm that it was already released.
   ///
-  /// Unsafe ownership is retained because workers may still access the drive.
   /// Release failures propagate; destruction retries as a fallback.
-  /// @return False if worker teardown is unsafe; true otherwise.
-  bool release();
-
-  /// Permanently prohibit further hardware access and release when worker termination cannot be established.
-  void markUnsafe() noexcept;
+  void release();
 
 private:
-  /// Session ownership transitions; released and unsafe states cannot be reacquired.
-  enum class State { Unacquired, Owned, Released, Unsafe };
+  /// Session ownership transitions; released states cannot be reacquired.
+  enum class State { Unacquired, Owned, Released };
   State m_state = State::Unacquired;
-  bool m_unsafeReleaseLogged = false;  ///< Suppress duplicate warnings from explicit and destructor release attempts.
   log::LogContext& m_lc;
 };
 

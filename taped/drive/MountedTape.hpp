@@ -17,7 +17,6 @@ namespace cta::tape::daemon {
 /// A scheduler TapeMount is a work assignment; this guard owns the physical mount.
 /// Destroy only after all drive users have stopped.
 /// Mount failures trigger cleanup before the original exception is rethrown.
-/// This guard does not coordinate workers or publish the final drive status.
 class MountedTape {
 public:
   /// Cleanup result retained by the caller beyond the guard lifetime.

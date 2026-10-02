@@ -54,10 +54,10 @@ private:
   friend class TapeDaemonTest;
 
   /// Reason for ending the daemon run.
-  enum class ExitCause { Normal, RegistrationFailure, MissingDrive, UnexpectedFailure, UnsafeWorkerTeardown };
+  enum class ExitCause { Normal, RegistrationFailure, MissingDrive, UnexpectedFailure };
 
   /// Drive-state publication permitted during shutdown.
-  enum class DownPublication { None, DesiredOnly, DesiredAndReported };
+  enum class DownPublication { None, DesiredAndReported };
 
   /// @brief Log the exit cause and publish the requested Down state without accessing hardware.
   ///

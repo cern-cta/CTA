@@ -17,7 +17,8 @@
 
 namespace cta::tape::daemon {
 
-/// Publish tracker statistics and mount metadata, with periodic inactivity warnings.
+/// Publish tracker statistics and mount metadata.
+/// Periodic reporting while active.
 class TapeSessionReporter : private cta::threading::Thread {
 public:
   /// @brief Create a periodic reporter using a borrowed tracker and mount.

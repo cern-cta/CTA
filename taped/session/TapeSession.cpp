@@ -5,7 +5,9 @@
 
 #include "TapeSession.hpp"
 
+#include "ScopedTapeSessionReporter.hpp"
 #include "TapeSessionReporter.hpp"
+#include "WorkerFailureHandling.hpp"
 #include "common/dataStructures/ArchiveDismountPolicy.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
 #include "common/exception/Exception.hpp"
@@ -44,53 +46,6 @@ constexpr bool c_useLbp = true;
 constexpr uint16_t c_xrootTimeout = 0;
 constexpr const char* c_raoLtoAlgorithmOptions = "cost_heuristic_name:cta";
 
-// The reporter has no pipeline dependencies: stopping it only wakes its own wait loop.
-class ScopedReporter {
-public:
-  /// @brief Borrow a reporter without starting its thread.
-  ///
-  /// @param reporter Borrowed reporter whose thread is managed by this guard.
-  explicit ScopedReporter(cta::tape::daemon::TapeSessionReporter& reporter) : m_reporter(reporter) {}
-
-  /// Disallow copying the owner of a reporter thread.
-  ScopedReporter(const ScopedReporter&) = delete;
-
-  /// Disallow assigning ownership of a reporter thread.
-  ScopedReporter& operator=(const ScopedReporter&) = delete;
-
-  /// Stop and join a started reporter; terminate if joining fails to protect borrowed session state.
-  ~ScopedReporter() noexcept {
-    if (m_started) {
-      try {
-        finish();
-      } catch (...) {
-        // Never destroy a reporter that may still reference the session's stack.
-        std::terminate();
-      }
-    }
-  }
-
-  /// Start reporting and record that this guard must join the thread.
-  void start() {
-    m_reporter.startThreads();
-    m_started = true;
-  }
-
-  /// Request shutdown and join the reporter if it was started.
-  void finish() {
-    if (!m_started) {
-      return;
-    }
-    m_reporter.finish();
-    m_reporter.waitThreads();
-    m_started = false;
-  }
-
-private:
-  cta::tape::daemon::TapeSessionReporter& m_reporter;
-  bool m_started = false;
-};
-
 /// @brief Log an operation failure and preserve the first fatal failure for later propagation.
 ///
 /// Logging failures are contained so remaining finalization operations can still run.
@@ -124,7 +79,6 @@ void recordFailure(std::exception_ptr failure, std::exception_ptr& fatalFailure,
 struct cta::tape::daemon::TapeSession::ExecutionState {
   TapeSessionResult result;
   bool completionOwned = true;
-  bool workersRunning = false;
   bool driveOpened = false;
 };
 
@@ -168,7 +122,7 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
                                lc,
                                std::chrono::seconds(m_transfersConfig.stats_report_interval_secs),
                                std::chrono::seconds(m_transfersConfig.no_block_move_timeout_secs));
-  ScopedReporter reporterScope(reporter);
+  ScopedTapeSessionReporter reporterScope(reporter, lc);
 
   try {
     m_volInfo.vid = m_tapeMount.getVid();
@@ -206,11 +160,6 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
         throw std::logic_error("Unsupported tape mount type");
     }
   } catch (...) {
-    // Partial startup and unexpected worker termination need RAII and stop semantics in the graceful shutdown MR.
-    // The reporter guard is not a worker shutdown mechanism; do not claim a finished session here.
-    if (state.workersRunning) {
-      std::throw_with_nested(TapeSessionWorkerTeardownIncomplete());
-    }
     m_tapeSessionTracker->recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
     recordFailure(std::current_exception(), fatalFailure, lc);
   }
@@ -353,21 +302,20 @@ void cta::tape::daemon::TapeSession::executeRead(cta::log::LogContext& logContex
       // We got something to recall. Time to start the machinery
       readSingleThread.setWaitForInstructionsTime(timer.secs());
       m_tapeSessionTracker->setMountAttempted(true);
-      state.workersRunning = true;
-      readSingleThread.startThreads(taskInjector);
-      threadPool.startThreads();
-      reportPacker.startThreads();
-      taskInjector.startThreads();
-      state.completionOwned = false;
-      // TODO (graceful shutdown MR): use RAII and stop semantics to stop and join
-      // every started worker before destroying shared resources.
-      // This thread is now going to be idle until the system unwinds at the end of the session
-      // All client notifications are done by the report packer, including the end of session
-      taskInjector.waitThreads();
-      threadPool.waitThreads();
-      readSingleThread.waitThreads();
-      reportPacker.waitThread();
-      state.workersRunning = false;
+      // Do not unwind pipeline resources unless every worker has joined successfully.
+      runOrExitOnWorkerFailure(logContext, [&] {
+        readSingleThread.startThreads(taskInjector);
+        threadPool.startThreads();
+        reportPacker.startThreads();
+        taskInjector.startThreads();
+        state.completionOwned = false;
+        // This thread is now going to be idle until the system unwinds at the end of the session
+        // All client notifications are done by the report packer, including the end of session
+        taskInjector.waitThreads();
+        threadPool.waitThreads();
+        readSingleThread.waitThreads();
+        reportPacker.waitThread();
+      });
       state.result.driveReusable = readSingleThread.isDriveReusable();
       if (!state.result.driveReusable) {
         state.result.downReason = common::dataStructures::DriveDownReason::DriveCleanupFailed;
@@ -474,23 +422,22 @@ void cta::tape::daemon::TapeSession::executeWrite(cta::log::LogContext& logConte
 
       // We have something to do: start the session by starting all the threads.
       m_tapeSessionTracker->setMountAttempted(true);
-      state.workersRunning = true;
-      memoryManager.startThreads();
-      threadPool.startThreads(taskInjector);
-      writeSingleThread.setWaitForInstructionsTime(timer.secs());
-      writeSingleThread.startThreads();
-      reportPacker.startThreads();
-      taskInjector.startThreads();
-      state.completionOwned = false;
-      // TODO (graceful shutdown MR): use RAII and stop semantics to stop and join
-      // every started worker before destroying shared resources.
-      // Synchronise with end of threads
-      taskInjector.waitThreads();
-      writeSingleThread.waitThreads();
-      threadPool.waitThreads();
-      memoryManager.waitThreads();
-      reportPacker.waitThread();
-      state.workersRunning = false;
+      // Do not unwind pipeline resources unless every worker has joined successfully.
+      runOrExitOnWorkerFailure(logContext, [&] {
+        memoryManager.startThreads();
+        threadPool.startThreads(taskInjector);
+        writeSingleThread.setWaitForInstructionsTime(timer.secs());
+        writeSingleThread.startThreads();
+        reportPacker.startThreads();
+        taskInjector.startThreads();
+        state.completionOwned = false;
+        // Synchronise with end of threads
+        taskInjector.waitThreads();
+        writeSingleThread.waitThreads();
+        threadPool.waitThreads();
+        memoryManager.waitThreads();
+        reportPacker.waitThread();
+      });
 
       state.result.driveReusable = writeSingleThread.isDriveReusable();
       if (!state.result.driveReusable) {
