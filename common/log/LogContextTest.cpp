@@ -5,14 +5,11 @@
 
 #include "common/log/LogContext.hpp"
 
-#include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
-#include "common/log/ExceptionLogging.hpp"
 #include "common/log/StringLogger.hpp"
 
 #include <gtest/gtest.h>
 #include <regex>
-#include <stdexcept>
 
 using namespace cta::log;
 

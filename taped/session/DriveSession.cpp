@@ -170,7 +170,6 @@ void DriveSession::run(std::stop_token stopToken) {
         break;
       }
       if (!result.successful && !stopToken.stop_requested()) {
-        // TODO (separate MR): interrupt sleeps and active transfers during graceful shutdown.
         ::sleep(m_config.mounts.idle_scheduling_interval_secs);
       }
     }
@@ -345,8 +344,11 @@ bool DriveSession::cleanDrive(const std::optional<std::string>& vid) {
                          m_config.mounts.tape_load_timeout_secs,
                          scheduler.getCatalogue(),
                          *tracker);
-    cleaned = cleaner.execute(m_sysWrapper);
-    cleanupError = cleaner.errorMessage();
+    const auto result = cleaner.cleanDrive(m_sysWrapper, [&](auto status) {
+      scheduler.reportDriveStatus(m_driveInfo, common::dataStructures::MountType::NoMount, status, m_lc);
+    });
+    cleaned = result.driveReusable();
+    cleanupError = result.errorMessage;
   } catch (const cta::exception::Exception& ex) {
     cleanupError = ex.getMessageValue();
   } catch (const std::exception& ex) {
