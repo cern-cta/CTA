@@ -81,14 +81,14 @@ std::vector<std::string>
 RelationalDB::queueArchive(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
                            log::LogContext& lc) {
   std::vector<std::unique_ptr<schedulerdb::postgres::ArchiveJobQueueRow>> rowsToInsert;
-  std::vector<uint32_t> groupIds;
   auto sqlconn = m_connPool.getConn();
-  lc.log(log::DEBUG, "In RelationalDB::queueArchive(): 1.");
   uint64_t totalJobCount = 0;
   for (auto& j : batch) {
     totalJobCount += j.copyToPoolMap.size();
   }
   rowsToInsert.reserve(totalJobCount);
+  std::vector<uint32_t> groupIds;
+  groupIds.reserve(totalJobCount);
   for (size_t i = 0; i < batch.size(); ++i) {
     auto& item = batch[i];
 
@@ -108,7 +108,6 @@ RelationalDB::queueArchive(std::vector<cta::common::dataStructures::ArchiveInser
     aFile.storageClass = item.request.storageClass;
     aReq.setArchiveFile(aFile);
 
-    utils::Timer timeSetters;
     aReq.setMountPolicy(item.mountPolicy);
     aReq.setArchiveReportURL(item.request.archiveReportURL);
     aReq.setArchiveErrorReportURL(item.request.archiveErrorReportURL);
@@ -117,9 +116,17 @@ RelationalDB::queueArchive(std::vector<cta::common::dataStructures::ArchiveInser
     aReq.setEntryLog(item.request.creationLog);
     auto archiveRequestId = 0;  //bogus, will be assigned by DB insert itself
                                 // cta::schedulerdb::postgres::ArchiveJobQueueRow::getNextArchiveRequestID(sqlconn);
-    int count_jobs = 0;
+    // Should be unreachable: stage 1 (Scheduler::resolveArchiveInsertCriteria()) resolves
+    // copyToPoolMap via the catalogue, which throws a UserError of its own if a storage class has
+    // no routes, before the item is ever enqueued into a batch. This is an invariant check on that
+    // guarantee, not a per-request user error -- unlike OStoreDB::queueArchive() (where the same
+    // exception type fails only the one request), throwing here fails the whole batch via
+    // resolveArchiveBatch()'s catch block, since this loop runs once per item while building rows
+    // for all of them.
+    if (item.copyToPoolMap.empty()) {
+      throw schedulerdb::ArchiveRequestHasNoCopies("In RelationalDB::queueArchive: the archive request has no copies");
+    }
     for (auto& [key, value] : item.copyToPoolMap) {
-      count_jobs++;
       aReq.addJob(key,
                   value,
                   schedulerdb::ArchiveRequest::RETRIES_WITHIN_MOUNT,
@@ -128,17 +135,12 @@ RelationalDB::queueArchive(std::vector<cta::common::dataStructures::ArchiveInser
                   archiveRequestId);
     }
 
-    if (count_jobs == 0) {
-      throw schedulerdb::ArchiveRequestHasNoCopies("In RelationalDB::queueArchive: the archive request has no copies");
-    }
-
     std::vector<std::unique_ptr<schedulerdb::postgres::ArchiveJobQueueRow>> areqrows = aReq.returnRowsToInsert();
     for (size_t j = 0; j < areqrows.size(); ++j) {
       rowsToInsert.emplace_back(std::move(areqrows[j]));
       groupIds.emplace_back(i);
     }
   }
-  lc.log(log::DEBUG, "In RelationalDB::queueArchive(): 3.");
   uint64_t nrows = schedulerdb::postgres::ArchiveJobQueueRow::insertRequestBatch(sqlconn, rowsToInsert, groupIds);
   log::ScopedParamContainer params(lc);
   params.add("nrows", nrows);
