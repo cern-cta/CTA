@@ -20,15 +20,18 @@
 
 [dependencies]
   cern-st-grpc = { workspace = true }
-  cta-client   = { workspace = true }
   eos-client   = { workspace = true }
   eos-protobuf = { workspace = true }
 
-  tokio        = { workspace = true, features = ["macros", "rt-multi-thread", "fs"] }
-  thiserror    = { workspace = true }
-  anyhow       = { workspace = true }
-  clap         = { workspace = true, features = ["env", "derive"] }
-  url          = { workspace = true }
-  log          = { workspace = true }
-  env_logger   = { workspace = true }
-  serde_json   = { workspace = true }
+  anyhow        = { workspace = true }
+  clap          = { workspace = true, features = ["env", "derive"] }
+  clap_complete = { workspace = true }
+  clap_mangen   = { workspace = true }
+  cta-client    = { workspace = true }
+  env_logger    = { workspace = true }
+  log           = { workspace = true }
+  serde_json    = { workspace = true }
+  thiserror     = { workspace = true }
+  tokio         = { workspace = true, features = ["macros", "rt-multi-thread", "fs"] }
+  tokio-stream  = { workspace = true }
+  url           = { workspace = true }

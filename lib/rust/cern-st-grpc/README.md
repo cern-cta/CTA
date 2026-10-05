@@ -1,8 +1,3 @@
-<!--
-SPDX-FileCopyrightText: 2026 CERN
-SPDX-License-Identifier: GPL-3.0-or-later
--->
-
 # cern-st-grpc
 
 Transport-level gRPC plumbing shared by the Rust clients of

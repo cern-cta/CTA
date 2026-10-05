@@ -4,8 +4,10 @@
 //! Rendering of recycle-bin listings to stdout.
 use std::{borrow::Cow, io::IsTerminal};
 
-use cta_client::types::File;
+use cta_client::{errors::Error, types::File};
 use serde_json::json;
+use tokio::pin;
+use tokio_stream::{Stream, StreamExt};
 
 /// A simple line-buffered table printer for streaming rows to stdout
 ///
@@ -93,7 +95,9 @@ fn paint(color: bool, code: &str, s: &str) -> String {
 }
 
 /// Renders the recycle-bin items of `iter` to stdout as a table.
-pub fn output_as_table(iter: &Vec<File>) {
+pub async fn output_as_table(
+    stream: impl Stream<Item = Result<File, Error>>,
+) -> anyhow::Result<()> {
     let table = TablePrinter::new([
         ("archive_file_id", 16),
         ("disk_file_id", 0),
@@ -104,7 +108,10 @@ pub fn output_as_table(iter: &Vec<File>) {
         ("copy_nb", 0),
     ]);
 
-    for item in iter {
+    pin!(stream);
+
+    while let Some(item) = stream.next().await {
+        let item = item?;
         log::info!("{item:#?}");
         table.print_row([
             Cow::Owned(item.archive_file.id.to_string()),
@@ -123,6 +130,7 @@ pub fn output_as_table(iter: &Vec<File>) {
     }
 
     table.close();
+    Ok(())
 }
 
 /// Converts a `RecycleTapeFileLsItem` to JSON, ensuring all fields are serialized.
@@ -138,10 +146,14 @@ fn item_to_json(item: &File) -> serde_json::Value {
 
 /// Prints each item of `files` as a line of JSON.
 /// Each line is a complete JSON object representing one deleted file record.
-pub fn output_as_json(files: &Vec<File>) {
-    for file in files {
+pub async fn output_as_json(stream: impl Stream<Item = Result<File, Error>>) -> anyhow::Result<()> {
+    pin!(stream);
+
+    while let Some(file) = stream.next().await {
+        let file = file?;
         log::info!("{file:#?}");
-        let json = item_to_json(file);
+        let json = item_to_json(&file);
         println!("{json}");
     }
+    Ok(())
 }

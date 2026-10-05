@@ -1,8 +1,3 @@
-<!--
-SPDX-FileCopyrightText: 2026 CERN
-SPDX-License-Identifier: GPL-3.0-or-later
--->
-
 # CTA Rust Libraries
 
 The library crates of the CTA Rust workspace. The command-line tools live under

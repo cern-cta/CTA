@@ -87,6 +87,18 @@ cmake3 -G "@CMAKE_GENERATOR@" .. \
   -DENABLE_ADDRESS_SANITIZER:BOOL=@ENABLE_ADDRESS_SANITIZER@
 cmake --build . --parallel @JOBS_COUNT@
 
+# Generate shell completions and man page for cta-restore-files
+
+# Create a symlink to be able to run the the "env" part
+# of the multicall binary
+ln -sf cta-restore-files cta-restore-files-env
+
+./cta-restore-files-env gen-completion bash
+./cta-restore-files-env gen-completion zsh
+./cta-restore-files-env gen-completion fish
+mkdir -p cta-man-pages
+./cta-restore-files-env gen-man-pages cta-man-pages
+
 %install
 %{__rm} -rf %{buildroot}
 
@@ -94,6 +106,26 @@ cd build
 DESTDIR=%{buildroot} \
   EXPORTMAN=%{buildroot}%{_mandir} \
   cmake --build . --target install --parallel @JOBS_COUNT@
+
+# Install generated completions
+mkdir -p %{buildroot}%{_datadir}/bash-completion/completions
+install -p -m 644 cta-restore-files.bash \
+    %{buildroot}%{_datadir}/bash-completion/completions/cta-restore-files
+
+mkdir -p %{buildroot}%{_datadir}/zsh/site-functions
+install -p -m 644 cta-restore-files.zsh \
+    %{buildroot}%{_datadir}/zsh/site-functions/_cta-restore-files
+
+mkdir -p %{buildroot}%{_datadir}/fish/vendor_completions.d
+install -p -m 644 cta-restore-files.fish \
+    %{buildroot}%{_datadir}/fish/vendor_completions.d/cta-restore-files.fish
+
+# Install generated man pages
+mkdir -p %{buildroot}%{_mandir}/man1
+install -p -m 644 cta-man-pages/* %{buildroot}%{_mandir}/man1/
+
+# Create the entry point for cta-restore-files-env
+ln -sf cta-restore-files %{buildroot}%{_bindir}/cta-restore-files-env
 
 %if !@PACKAGE_BUILD_TEST_PACKAGES@
 # CMake installs test files even when the cta-tests package is disabled.
@@ -513,12 +545,11 @@ Provides CTA's Rust-based CLI tools
 %files -n cta-tools-rs
 %license COPYING
 %{_bindir}/cta-restore-files
-
-
-# =========================================================================
-#  Packaging
-# =========================================================================
-
+%{_bindir}/cta-restore-files-env
+%{_datadir}/bash-completion/completions/cta-restore-files
+%{_datadir}/zsh/site-functions/_cta-restore-files
+%{_datadir}/fish/vendor_completions.d/cta-restore-files.fish
+%{_mandir}/*/cta-restore-files*
 %package -n cta-release
 Summary: CERN Tape Archive repository configuration
 Requires: python3-dnf-plugin-versionlock

@@ -90,6 +90,14 @@ RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
 # hadolint ignore=DL3022
 COPY --from=repo-builder /rpms/.rpm-hash /tmp/cta-rpm-hash
 
+RUN cat <<'EOF' >> /etc/bashrc
+
+# load auto-completion for cta-* commands
+if [ -f /usr/share/bash-completion/completions/cta-* ]; then
+    source /usr/share/bash-completion/completions/cta-*
+fi
+EOF
+
 # =========================================================================
 #  SERVICE cta-taped
 # =========================================================================

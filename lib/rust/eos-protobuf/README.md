@@ -1,8 +1,3 @@
-<!--
-SPDX-FileCopyrightText: 2026 CERN
-SPDX-License-Identifier: GPL-3.0-or-later
--->
-
 # eos-protobuf
 
 Generated Rust protobuf/gRPC bindings for the EOS interface, used by

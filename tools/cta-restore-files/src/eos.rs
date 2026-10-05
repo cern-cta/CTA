@@ -44,31 +44,27 @@ const DEFAULT_FILE_LAYOUT: u32 = 0x2 /* Adler */ |
 /// Fails if the record does not carry exactly one ADLER32 checksum, if its
 /// path has no parent container, or if any of the EOS calls fail.
 pub async fn restore_deleted_file(eos: &mut EosGrpcClient, file: &File) -> Result<u64> {
-    // let's do some check on the checksums, so that we can quit early if
-    // they're not ok.
-
-    // we assume there is a single checksum which is Adler32
-    let cs = match file.archive_file.checksums.as_slice() {
-        [checksum] => checksum,
-        [] => return Err(anyhow!("File '{}' has no checksums", file.disk_file.path)),
-        many => {
+    // we need to find the ADLER32 checksum in the list of checksums, as this is what EOS expects.
+    let cs = match file
+        .archive_file
+        .checksums
+        .iter()
+        .find(|cs| cs.r#type == ChecksumType::Adler32)
+    {
+        Some(cs) => cs.clone(),
+        None => {
             return Err(anyhow!(
-                "File '{}' has {} checksums, expected exactly one",
-                file.disk_file.path,
-                many.len()
+                "File '{}' has no ADLER32 checksum",
+                file.disk_file.path
             ));
         }
     };
-    // Only ADLER32 checksums are supported
-    match cs.r#type {
-        ChecksumType::Adler32 => { /* ok */ }
-        other => {
-            return Err(Error::UnexpectedReturnValue(format!(
-                "Unsupported checksum type: {other:?}"
-            ))
-            .into());
-        }
-    }
+
+    // create the corresponding EOS checksum
+    let checksum = Checksum {
+        r#type: "ADLER32".to_string(),
+        value: cs.value.clone(),
+    };
 
     // print the EOS ids for information
     let (cur_container_id, cur_file_id) = eos.get_current_ids().await?;
@@ -138,11 +134,7 @@ pub async fn restore_deleted_file(eos: &mut EosGrpcClient, file: &File) -> Resul
         ..Default::default()
     };
 
-    let checksum = Checksum {
-        r#type: "ADLER32".to_string(),
-        value: cs.value.clone(),
-    };
-    // TODO: remove this once the EOS protobuf API is fixed
+    // TODO: remove this once the EOS protobuf API is fixed.
     #[expect(deprecated)]
     {
         new_file.checksum = Some(checksum.clone());

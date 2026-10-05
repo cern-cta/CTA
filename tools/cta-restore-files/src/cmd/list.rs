@@ -5,13 +5,13 @@ use cern_st_grpc::EndpointConfig;
 use cta_client::{client::CtaGrpcClient, types::FileSelector};
 
 use crate::{
-    cli::CommandOptions,
+    cli::CommonOptions,
     output::{output_as_json, output_as_table},
 };
 
 pub(crate) async fn command(
     config: &EndpointConfig,
-    options: CommandOptions,
+    options: CommonOptions,
     json: bool,
 ) -> anyhow::Result<()> {
     let mut client = CtaGrpcClient::new_streaming(config).await?;
@@ -36,10 +36,10 @@ pub(crate) async fn command(
     // Process stream based on output format (collection vs rendering)
     if json {
         // Stream items to JSON output
-        output_as_json(&files);
+        output_as_json(files).await?;
     } else {
         // Stream items to table output
-        output_as_table(&files);
+        output_as_table(files).await?;
     }
     Ok(())
 }

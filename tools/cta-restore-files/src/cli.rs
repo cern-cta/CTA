@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 CERN
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-//! Command line interface of `cta-restore-files`.
+//! Command line interface of cta-restore-files.
 //!
 //! [`Cli`] holds the global options (connection, credentials and the filters
 //! that select the recycle-bin entries to act on) and the [`Command`] to run.
@@ -36,7 +36,10 @@ pub const CLAP_STYLING: Styles = Styles::styled()
         .required(true)
         .args(["disk_instance", "archive_file_id", "file-id", "vid", "copy_number"])
 ))]
-pub(crate) struct CommandOptions {
+pub(crate) struct CommonOptions {
+    #[arg(long, short)]
+    pub(crate) log_level: Option<log::LevelFilter>,
+
     /// The disk instance to recover from
     #[arg(long)]
     pub(crate) disk_instance: Option<String>,
@@ -58,10 +61,44 @@ pub(crate) struct CommandOptions {
     pub(crate) copy_number: Option<u64>,
 }
 
+#[derive(Debug, Args)]
+pub(crate) struct ConfigOptions {
+    /// gRPC endpoint of the CTA admin frontend service
+    #[arg(long, env)]
+    pub(crate) cta_frontend_endpoint: Url,
+
+    /// Path to JWT token file for authentication
+    #[arg(long, env)]
+    pub(crate) jwt_token_file: PathBuf,
+
+    /// Path to alternative CA certificate file for TLS connections
+    #[arg(long, env)]
+    pub(crate) ca_cert_bundle: Option<PathBuf>,
+
+    /// Alternative CTA server hostname for TLS
+    #[arg(long, env)]
+    pub(crate) alternative_cta_hostname: Option<String>,
+
+    /// Path to the namespace keytab file
+    #[arg(long, env, default_value = "namespace.keytab")]
+    pub(crate) namespace_keytab_file: PathBuf,
+}
+
+/// `cta-restore-files`: restore deleted tape files from the CTA catalogue and EOS storage
+#[derive(Args)]
+#[command(flatten_help = true)]
+pub(crate) struct FilesCli {
+    #[command(flatten)]
+    pub(crate) config: ConfigOptions,
+
+    #[command(subcommand)]
+    pub(crate) command: FilesCommand,
+}
+
 /// The subcommand to execute.
 #[derive(Subcommand)]
 #[command(flatten_help = true)]
-pub(crate) enum Command {
+pub(crate) enum FilesCommand {
     /// List the deleted tape files matching the selection options.
     List {
         /// Show results as JSON
@@ -69,40 +106,34 @@ pub(crate) enum Command {
         json: bool,
 
         #[command(flatten)]
-        common_options: CommandOptions,
+        common_options: CommonOptions,
     },
     /// Restore the deleted tape files matching the selection options
-    Restore(CommandOptions),
+    Restore(CommonOptions),
 }
 
-/// Parsed command line arguments.
-#[derive(Parser)]
-#[command(styles = CLAP_STYLING)]
-pub(crate) struct Cli {
-    /// The operation to perform.
+/// `cta-restore-files-env`: helper command for generating documentation and completion scripts.
+#[derive(Args)]
+pub(crate) struct EnvCli {
     #[command(subcommand)]
-    pub(crate) command: Command,
+    pub(crate) command: EnvCommand,
+}
 
-    #[arg(long, short, default_value = "INFO")]
-    pub(crate) log_level: log::LevelFilter,
+#[derive(Subcommand)]
+pub(crate) enum EnvCommand {
+    /// Generate man pages for the CLI
+    GenManPages { out_dir: PathBuf },
+    /// Generate shell completion scripts for the CLI
+    GenCompletion { shell: clap_complete::Shell },
+}
 
-    /// gRPC endpoint of the CTA admin frontend service
-    #[arg(long)]
-    pub(crate) cta_frontend_endpoint: Url,
+#[derive(Parser)]
+#[command(multicall = true)]
+#[command(styles = CLAP_STYLING)]
+pub(crate) enum Cli {
+    #[command(name = "cta-restore-files")]
+    Commands(Box<FilesCli>),
 
-    /// Path to JWT token file for authentication
-    #[arg(long)]
-    pub(crate) jwt_token_file: PathBuf,
-
-    /// Path to alternative CA certificate file for TLS connections
-    #[arg(long)]
-    pub(crate) ca_cert_bundle: Option<PathBuf>,
-
-    /// Alternative CTA server hostname for TLS
-    #[arg(long)]
-    pub(crate) alternative_cta_hostname: Option<String>,
-
-    /// Path to the namespace keytab file
-    #[arg(long, default_value = "namespace.keytab")]
-    pub(crate) namespace_keytab_file: PathBuf,
+    #[command(name = "cta-restore-files-env")]
+    Env(EnvCli),
 }

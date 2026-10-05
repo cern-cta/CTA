@@ -20,10 +20,9 @@ from typing import Any
 import pytest
 
 from system_tests.helpers.hosts import CtaCliHost, EosClientHost, EosMgmHost
+from system_tests.helpers.hosts.disk.eos_constants import EOS_GRPC_PORT
 from system_tests.helpers.utils.timeout import Timeout
 
-# The EOS MGM serves the gRPC namespace API without TLS on this port
-EOS_GRPC_PORT = 50051
 # The namespace keytab maps the gRPC key to this EOS user, which must be allowed to
 # create namespace entries. The MGM setup gives daemon (uid/gid 2) sudo membership.
 EOS_GRPC_UID = 2

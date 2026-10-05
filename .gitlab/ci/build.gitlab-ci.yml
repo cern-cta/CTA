@@ -110,9 +110,8 @@ build-cta-rpms:
         BUILD_OPTIONS+=" --extra-telemetry"
       fi
     - |
-      SBOM_OPTIONS=""
       if [[ "$ENABLE_SBOM_GENERATION" == "true" ]]; then
-        SBOM_OPTIONS="--sbom-path ${CI_PROJECT_DIR}/sboms"
+        BUILD_OPTIONS+=" --sbom-path ${CI_PROJECT_DIR}/sboms"
       fi
     - ./ci/build/build_packages.sh all --build-dir build
                                       --build-generator "$[[ inputs.build-generator ]]"
@@ -125,7 +124,6 @@ build-cta-rpms:
                                       --jobs "$(nproc)"
                                       --skip-unit-tests
                                       ${BUILD_OPTIONS}
-                                      ${SBOM_OPTIONS}
   after_script:
     - if [[ "$ENABLE_CCACHE" == "true" ]]; then ccache --show-stats --verbose; fi
   artifacts:
@@ -252,44 +250,3 @@ build-docs:
     paths:
       - build/docs/site/
     expire_in: 7 days
-
-# set up a review app for the merge request. it will be
-# automatically stopped when the MR is closed or merged
-deploy-mr-review-app:
-  stage: build
-  needs:
-    - job: check-merge-train-duplicate
-      optional: true
-    - job: build-docs
-  rules:
-    # only run on merge requests
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-  variables:
-    DOCS_SITE_NAME: "cta.docs.cern.ch"
-  script:
-    - echo "Pages accessible through https://${DOCS_SITE_NAME}/review-mr-${CI_MERGE_REQUEST_IID}"
-  pages:
-    path_prefix: "review-mr-$CI_MERGE_REQUEST_IID"
-    expire_in: 1 week
-    publish: build/docs/site
-  environment:
-    name: "review/$CI_MERGE_REQUEST_IID"
-    url: "https://${DOCS_SITE_NAME}/review-mr-${CI_MERGE_REQUEST_IID}"
-    on_stop: stop-mr-review-app
-    auto_stop_in: 1 week
-
-stop-mr-review-app:
-  stage: build
-  rules:
-    - if: '$PIPELINE_TYPE != "DEFAULT" || $CI_PIPELINE_SOURCE == "parent_pipeline"'
-      when: never
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      when: manual
-      allow_failure: true
-  variables:
-    GIT_STRATEGY: none
-  script:
-    - echo "Stopping review app"
-  environment:
-    name: "review/$CI_MERGE_REQUEST_IID"
-    action: stop

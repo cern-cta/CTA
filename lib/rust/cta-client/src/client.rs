@@ -27,7 +27,7 @@ use cta_protobuf::cta::{
         response::ResponseType,
     },
 };
-use tokio_stream::StreamExt;
+use tokio_stream::{Stream, StreamExt};
 use tonic::{service::interceptor::InterceptedService, transport::Channel};
 
 use crate::{
@@ -44,12 +44,12 @@ pub struct CtaGrpcClient<C> {
 }
 
 /// The generated unary client
-pub type UnaryClientType = CtaRpcClient<InterceptedService<Channel, AuthorizationInterceptor>>;
+pub type SyncClientType = CtaRpcClient<InterceptedService<Channel, AuthorizationInterceptor>>;
 /// The generated streaming client
 pub type StreamingClientType =
     CtaRpcStreamClient<InterceptedService<Channel, AuthorizationInterceptor>>;
 
-impl CtaGrpcClient<UnaryClientType> {
+impl CtaGrpcClient<SyncClientType> {
     /// Connects to the unary admin service described by `config`.
     ///
     /// # Errors
@@ -216,7 +216,7 @@ impl CtaGrpcClient<StreamingClientType> {
     pub async fn list_deleted_files(
         &mut self,
         file_selector: FileSelector,
-    ) -> Result<Vec<File>, Error> {
+    ) -> Result<impl Stream<Item = Result<File, Error>> + use<>, Error> {
         let cmd = admin_cmd! (
             Recycletapefile.SubcmdLs {
                 Vid: str? => file_selector.vid,
@@ -227,19 +227,15 @@ impl CtaGrpcClient<StreamingClientType> {
         });
 
         // Execute command and get stream
-        let mut response_stream = self.raw_admin_cmd(cmd).await?;
+        let response_stream = self.raw_admin_cmd(cmd).await?;
 
-        response_stream
-            .stream_response()
+        Ok(response_stream
+            .into_stream_response()
             .map(|item| match item {
-                Ok(data) => match data {
-                    Data::RtflsItem(ls_item) => Ok(ls_item.into()),
-                    _ => Err(Error::UnexpectedStreamData(Box::new(data))),
-                },
+                Ok(Data::RtflsItem(ls_item)) => Ok(ls_item.into()),
+                Ok(other) => Err(Error::UnexpectedStreamData(Box::new(other))),
                 Err(e) => Err(e),
-            })
-            .collect()
-            .await
+            }))
     }
 }
 

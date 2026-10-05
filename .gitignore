@@ -70,7 +70,7 @@ venv/
 .env/
 .venv/
 env/
-Pipfile.lockcta-restore-files/Cargo.lock
+Pipfile.lock
 
 
 # Pytest

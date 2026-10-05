@@ -10,8 +10,9 @@ use cta_client::{
 };
 use eos_client::EosEndpointMap;
 use eos_protobuf::eos::rpc::{MdId, Type};
+use tokio_stream::StreamExt;
 
-use crate::{cli::CommandOptions, eos::restore_deleted_file};
+use crate::{cli::CommonOptions, eos::restore_deleted_file};
 
 async fn do_sanity_check(
     streaming_client: &mut CtaGrpcClient<StreamingClientType>,
@@ -109,10 +110,10 @@ async fn do_sanity_check(
 pub(crate) async fn command(
     config: &EndpointConfig,
     endpoint_map: &mut EosEndpointMap,
-    common: CommandOptions,
+    common: CommonOptions,
 ) -> anyhow::Result<()> {
     let mut streaming_client = CtaGrpcClient::new_streaming(config).await?;
-    let deleted_files = streaming_client
+    let mut deleted_files = streaming_client
         .list_deleted_files(
             FileSelector::builder()
                 .maybe_vid(common.vid)
@@ -124,7 +125,8 @@ pub(crate) async fn command(
         )
         .await?;
 
-    for mut file in deleted_files {
+    while let Some(file) = deleted_files.next().await {
+        let mut file = file?;
         let File {
             disk_file:
                 DiskFile {
@@ -134,6 +136,7 @@ pub(crate) async fn command(
                 },
             ..
         } = file;
+
         let does_file_exist = endpoint_map
             .check_file_exists_by_disk_id(disk_instance, old_disk_file_id)
             .await?;
@@ -152,8 +155,6 @@ pub(crate) async fn command(
 
         do_sanity_check(&mut streaming_client, endpoint_map, file).await?;
         println!("Sanity check OK.");
-
-        // check
     }
     Ok(())
 }

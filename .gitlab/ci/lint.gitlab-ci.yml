@@ -21,6 +21,7 @@ lint-cpp:
         - "**/*.cpp"
         - "**/*.hpp"
         - ".gitlab-ci.yml"  # For changes in the image
+        - ".gitlab/ci/lint.gitlab-ci.yml"
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
@@ -63,6 +64,7 @@ lint-bash:
     - changes:
         - "**/*.sh"
         - ".gitlab-ci.yml"  # For changes in the image
+        - ".gitlab/ci/lint.gitlab-ci.yml"
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
@@ -93,6 +95,7 @@ lint-python:
     - changes:
         - "**/*.py"
         - ".gitlab-ci.yml"  # For changes in the image
+        - ".gitlab/ci/lint.gitlab-ci.yml"
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
@@ -122,6 +125,7 @@ lint-rust:
     - changes:
         - "**/*.rs"
         - ".gitlab-ci.yml"  # For changes in the image
+        - ".gitlab/ci/lint.gitlab-ci.yml"
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
@@ -178,6 +182,7 @@ deny-rust:
         - "**/Cargo.lock"
         - "**/deny.toml"
         - ".gitlab-ci.yml"
+        - ".gitlab/ci/lint.gitlab-ci.yml"
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
@@ -204,6 +209,7 @@ machete-rust:
         - "**/Cargo.toml"
         - "**/*.rs"
         - ".gitlab-ci.yml"
+        - ".gitlab/ci/lint.gitlab-ci.yml"
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
@@ -232,6 +238,8 @@ lint-yaml:
         - "**/*.yml"
         - "ci/checks/check_gitlab_ci_before_script_guard.py"
         - "ci/checks/test_check_gitlab_ci_before_script_guard.py"
+        - ".gitlab-ci.yml"
+        - ".gitlab/ci/lint.gitlab-ci.yml"
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
@@ -292,6 +300,7 @@ lint-dockerfile:
       when: always
     - changes:
         - "ci/docker/cta/$[[ inputs.platform ]]/prod.Dockerfile"
+        - ".gitlab-ci.yml"
         - ".gitlab/ci/lint.gitlab-ci.yml"
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -362,6 +371,7 @@ format-cpp:
         - "**/*.hpp"
         - "**/*.json"
         - ".gitlab-ci.yml"  # For changes in the image
+        - ".gitlab/ci/lint.gitlab-ci.yml"
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
@@ -386,6 +396,7 @@ format-python:
     - changes:
         - "**/*.py"
         - ".gitlab-ci.yml"  # For changes in the image
+        - ".gitlab/ci/lint.gitlab-ci.yml"
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
@@ -408,6 +419,7 @@ format-rust:
     - changes:
         - "**/*.rs"
         - ".gitlab-ci.yml"  # For changes in the image
+        - ".gitlab/ci/lint.gitlab-ci.yml"
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always

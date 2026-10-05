@@ -1,8 +1,3 @@
-<!--
-SPDX-FileCopyrightText: 2026 CERN
-SPDX-License-Identifier: GPL-3.0-or-later
--->
-
 # cta-restore-files
 
 Command-line tool to restore deleted tape files in the
@@ -25,19 +20,19 @@ two steps per file:
 cta-restore-files --cta-frontend-endpoint https://cta-frontend.example.org:50051 \
                   --jwt-token-file /etc/cta/token.jwt \
                   --namespace-keytab-file namespace.keytab \
-                  --vid V01001 \
-                  list [--json]
+                  list [--json] \
+                  --vid V01001
 
-cta-restore-files ... --archive-file-id 4294967296 restore
+cta-restore-files ... restore --archive-file-id 4294967296
 ```
 
 `list` prints the matching recycle-bin entries as a table, or as JSON Lines with
-`--json`. `restore` restores every matching entry. The selection flags
-(`--vid`, `--disk-instance`, `--archive-file-id`, `--copy-number`, `--file-id`)
-are passed to the CTA frontend as filters of the `recycletapefile ls` admin
-command; run `cta-restore-files --help` for the complete list.
+`--json`. `restore` restores every matching entry.
 
-Logging is configured through `RUST_LOG`, e.g. `RUST_LOG=debug`.
+The selection flags (`--vid`, `--disk-instance`, `--archive-file-id`, `--copy-number`, `--file-id`)
+can be used to select a set of files present in the catalogue.
+
+Logging can be configured through the CLI or `RUST_LOG`, e.g. `RUST_LOG=debug`.
 
 ## Namespace keytab
 
@@ -48,6 +43,6 @@ The EOS endpoints are read from a namespace keytab file, one entry per line:
 ```
 
 `#` starts a comment and blank lines are ignored. `<endpoint>` must use the
-`http` or `https` scheme; the optional fourth field is the hostname to validate
+`http` or `https` scheme. The optional fourth field is the hostname to validate
 the server's TLS certificate against. The file contains credentials - keep it
 readable only by its owner and out of version control.
