@@ -681,8 +681,8 @@ void RdbmsArchiveFileCatalogue::modifyArchiveFileStorageClassId(const std::list<
   auto conn = m_connPool->getConn();
   if (!RdbmsCatalogueUtils::storageClassExists(conn, newStorageClassName)) {
     exception::UserError ue;
-    ue.getMessage() << "Cannot modify archive files because storage class "
-                    << ":" << newStorageClassName << " does not exist";
+    ue.getMessage() << "Cannot modify archive files because storage class '" << newStorageClassName
+                    << "' does not exist";
     throw ue;
   }
 
