@@ -76,7 +76,7 @@ std::vector<std::unique_ptr<postgres::ArchiveJobQueueRow>> ArchiveRequest::retur
     }
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer params(m_lc);
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(log::ERR, "In ArchiveRequest::returnRowsToInsert(): failed to create rows from request.");
     throw;
   }
