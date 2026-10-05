@@ -89,7 +89,7 @@ public:
 
   // The following queueing is used for opportunistic batching of incomung user archive requests
   std::vector<std::string> queueArchive(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
-                                        log::LogContext& lc);
+                                        log::LogContext& lc) override;
 
   /*
    * Unless otherwise specified, all of the methods that follow are currently just throwing an exception
