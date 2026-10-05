@@ -2595,7 +2595,7 @@ void RelationalDB::resubmitInactiveReporting(uint64_t deletionAge, uint64_t batc
              "In RelationalDB::resubmitInactiveReporting(): Reactivated reports for reporting to disk successfully.");
     } catch (exception::Exception& ex) {
       log::ScopedParamContainer(lc)
-        .add("exceptionMessage", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::ERR,
              "In RelationalDB::resubmitInactiveReporting(): Failed to reactivated reports for reporting to disk.");
       txn.abort();
