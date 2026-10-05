@@ -6,7 +6,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "lib/telemetry/include/telemetry/metrics/SchedulerInstruments.hpp"
+#include "lib/telemetry/include/telemetry/metrics/SchedulerMetrics.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "scheduler/OpportunisticQueueBatcher.hpp"
