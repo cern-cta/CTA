@@ -7,6 +7,7 @@
 
 #include "common/log/LogContext.hpp"
 
+#include <algorithm>
 #include <common/exception/ChecksumBlobSizeMismatch.hpp>
 #include <common/exception/ChecksumTypeMismatch.hpp>
 #include <common/exception/ChecksumValueMismatch.hpp>
@@ -131,12 +132,7 @@ public:
    * Return true if the blob has a checksum type other than NONE
    */
   bool hasChecksums() const {
-    for (const auto& checksum : m_cs) {
-      if (checksum.first != NONE) {
-        return true;
-      }
-    }
-    return false;
+    return std::ranges::any_of(m_cs, [](const auto& checksum) { return checksum.first != NONE; });
   }
 
   /*!
