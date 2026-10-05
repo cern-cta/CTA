@@ -161,7 +161,7 @@ void failWholeBatch(std::vector<ItemType>& items,
                     CountPerItemFn&& countPerItem) {
   log::ScopedParamContainer(lc)
     .add("batchSize", items.size())
-    .add("exceptionMessage", exceptionMessage)
+    .add(semconv::log::exceptionMessage, exceptionMessage)
     .log(log::WARNING, logMsg);
   for (auto& item : items) {
     item.promise.set_exception(std::current_exception());
