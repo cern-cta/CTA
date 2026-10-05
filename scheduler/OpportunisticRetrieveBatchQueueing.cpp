@@ -6,7 +6,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "lib/telemetry/include/telemetry/metrics/SchedulerInstruments.hpp"
+#include "lib/telemetry/include/telemetry/metrics/SchedulerMetrics.hpp"
 #include "common/utils/Timer.hpp"
 #include "scheduler/OpportunisticQueueBatcher.hpp"
 #include "scheduler/Scheduler.hpp"
