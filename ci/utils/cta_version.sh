@@ -13,6 +13,29 @@ read_cta_release_family() {
   printf '%s\n' "$family"
 }
 
+# Require a complete build version without normalizing or rewriting the input.
+validate_cta_version() {
+  local version="$1"
+  local platform_pattern='(el[0-9]+|(debian|ubuntu)[0-9]+([.][0-9]+)*)'
+
+  if [[ ! "$version" =~ [.]${platform_pattern}$ ]]; then
+    echo "Invalid CTA version: $1; expected a terminal platform suffix, such as .el9." >&2
+    return 1
+  fi
+  version="${version%."${BASH_REMATCH[1]}"}"
+
+  case "${version##*.}" in
+    pgsched | pgcat | pgall) version="${version%.*}" ;;
+  esac
+
+  # Reserved labels may appear only in the suffixes removed above.
+  if [[ ! "$version" =~ ^[0-9]+([.][0-9]+)*-[a-z0-9]+([.][a-z0-9]+)*$ ]] \
+      || [[ "$version" =~ [.-](pgsched|pgcat|pgall|${platform_pattern})([.]|$) ]]; then
+    echo "Invalid CTA version: $1; expected version-release[.variant].platform with no misplaced or repeated labels." >&2
+    return 1
+  fi
+}
+
 # Resolve a software version using the actual build variant and platform.
 resolve_cta_version() {
   local version="${1#v}"
@@ -33,9 +56,6 @@ resolve_cta_version() {
   # Accept an already resolved version without adding its suffixes again.
   if [[ "$version" == *."$platform" ]]; then
     version="${version%."$platform"}"
-  elif [[ "$version" =~ \.el[0-9]+$ ]]; then
-    echo "CTA version platform does not match ${platform}: $1" >&2
-    return 1
   fi
 
   case "${version##*.}" in
@@ -49,12 +69,7 @@ resolve_cta_version() {
       ;;
   esac
 
-  # Variant and platform labels belong only at the end of the resolved version.
-  if [[ ! "$version" =~ ^[0-9]+(\.[0-9]+)*-[a-z0-9]+([.][a-z0-9]+)*$ ]] \
-      || [[ "$version" =~ \.(pgsched|pgcat|pgall|el[0-9]+)(\.|$) ]]; then
-    echo "Invalid CTA version: $1; expected exactly one separating hyphen, as in 6-dev or 6.12.0.0-1." >&2
-    return 1
-  fi
-
-  printf '%s%s.%s\n' "$version" "${variant:+.${variant}}" "$platform"
+  version="${version}${variant:+.${variant}}.${platform}"
+  validate_cta_version "$version" || return 1
+  printf '%s\n' "$version"
 }

@@ -219,9 +219,6 @@ configure_build() {
   [[ "$skip_unit_tests" == true ]] && run_unit_tests=false
 
   local cmake_options=(
-    # Discard cached inputs from the former split-version interface.
-    -U CTA_RELEASE
-    -U VCS_VERSION
     -D "CTA_PACKAGE_MODE:STRING=${package_mode}"
     -D "CTA_BUILD_TEST_PACKAGES:BOOL=$(cmake_bool "$build_test_packages")"
     -D "CTA_BUILD_DEBUG_PACKAGES:BOOL=$(cmake_bool "$build_debug_packages")"

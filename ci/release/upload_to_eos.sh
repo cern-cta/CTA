@@ -13,6 +13,7 @@
 set -Eeuo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/cta_version.sh"
 
 usage() {
   echo
@@ -137,10 +138,13 @@ upload_to_eos() {
     exit 1
   fi
 
-  if [[ -n "${cta_version}" ]] \
-      && [[ ! "$cta_version" =~ ^[0-9]+(\.[0-9]+)*-[a-z0-9]+([.][a-z0-9]+)*\.el[0-9]+$ ]]; then
-    log_error "ERROR: --cta-version must include the platform, omit the leading v, and contain exactly one separating hyphen."
-    exit 1
+  if [[ -n "$cta_version" ]]; then
+    validate_cta_version "$cta_version" || exit 1
+    # Publication currently supports enterprise Linux RPM repositories only.
+    if [[ ! "$cta_version" =~ [.]el[0-9]+$ ]]; then
+      log_error "--cta-version must use an enterprise Linux platform suffix, such as .el9."
+      exit 1
+    fi
   fi
 
   # Source directory names are discarded to prevent accidental nested repository layouts.

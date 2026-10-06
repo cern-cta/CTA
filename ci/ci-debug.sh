@@ -22,6 +22,7 @@ script_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 readonly script_dir
 
 source "${script_dir}/utils/log_utils.sh"
+source "${script_dir}/utils/cta_version.sh"
 
 # =========================================================================
 #  Globals
@@ -374,7 +375,7 @@ ensure_debug_image() {
   job_trace=$(gitlab_api GET "/projects/${PROJECT_ID}/jobs/${debug_image_job_id}/trace")
   resolved_version=$(sed -nE 's/.*CTA version: ([0-9][a-z0-9.-]*).*/\1/p' <<< "$job_trace" | sort -u)
   if [[ -n "$resolved_version" ]]; then
-    [[ "$resolved_version" =~ ^[0-9]+(\.[0-9]+)*-[a-z0-9]+([.-][a-z0-9]+)*$ ]] \
+    validate_cta_version "$resolved_version" \
       || die "Debug image job reported an invalid or ambiguous CTA version."
     debug_image_name="${IMAGE_REPOSITORY}:${resolved_version}"
   fi

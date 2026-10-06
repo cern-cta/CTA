@@ -91,14 +91,6 @@ namespace_deletion_log=""
 
 source "${script_dir}/utils/log_utils.sh"
 
-# Check whether a CTA version is accepted by the package backends.
-cta_version_is_valid() {
-  [[ "$1" =~ ^[0-9]+(\.[0-9]+)*-[a-z0-9]+([.][a-z0-9]+)*$ ]]
-}
-
-# Validated in both the environment file and the command line.
-readonly cta_version_format_hint="must be <version>-<suffix>, where <version> contains only numbers and dots and <suffix> only lowercase letters, numbers, and dots, with exactly one separating hyphen (for example 6-dev)"
-
 # Check whether an explicit container image tag has a valid format.
 cta_image_tag_is_valid() {
   [[ "$1" =~ ^[A-Za-z0-9_][A-Za-z0-9._-]{0,127}$ ]]
@@ -168,8 +160,6 @@ load_cta_dev_env() {
         cmake_build_type=$value
         ;;
       CTA_DEV_CTA_VERSION)
-        cta_version_is_valid "$value" || \
-          die "Invalid value for ${key} in ${env_file}:${line_number}: ${cta_version_format_hint}."
         cta_version=$value
         ;;
       CTA_DEV_NAMESPACE)
@@ -653,8 +643,6 @@ parse_options() {
     unsupported_argument "--cta-version and --cta-image-tag cannot be combined: the CTA version already determines the image tag. Pass --cta-version to deploy a locally built version, or --cta-image-tag to deploy an image built elsewhere."
   fi
 
-  cta_version_is_valid "$cta_version" || \
-    unsupported_argument "--cta-version is \"$cta_version\" but ${cta_version_format_hint}."
   cta_version=$(resolve_cta_version "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
 
   if [[ $cta_image_tag_provided == true ]]; then

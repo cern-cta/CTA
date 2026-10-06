@@ -73,7 +73,7 @@ class VersionTest(unittest.TestCase):
     def test_malformed_version_includes_expected_format_and_example(self) -> None:
         with pytest.raises(VersionError) as error:
             CTAVersion.parse("6.12.0-1", require_base=True)
-        assert "v6.<major>.<minor>.<patch>-<package>" in str(error.value)
+        assert "v<family>.<major>.<minor>.<patch>-<package>" in str(error.value)
         assert "v6.12.0.0-1" in str(error.value)
 
     def test_variants_are_deduplicated_and_canonically_ordered(self) -> None:

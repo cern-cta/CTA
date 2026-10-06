@@ -6,6 +6,7 @@
 set -e
 
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/cta_version.sh"
 
 usage() {
   echo
@@ -74,8 +75,10 @@ check_package_available() {
     usage
   fi
 
-  if [[ ! "$version" =~ ^[0-9]+(\.[0-9]+)*-[a-z0-9]+([.][a-z0-9]+)*\.el[0-9]+$ ]]; then
-    log_error "--version must include the platform, omit the leading v, and contain exactly one separating hyphen."
+  validate_cta_version "$version" || exit 1
+  # Publication currently supports enterprise Linux RPM repositories only.
+  if [[ ! "$version" =~ [.]el[0-9]+$ ]]; then
+    log_error "--version must use an enterprise Linux platform suffix, such as .el9."
     exit 1
   fi
 

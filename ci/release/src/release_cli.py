@@ -19,7 +19,7 @@ from confirmation import ConfirmationError, ask_yes_no
 from cta_version import VersionError
 from git_repo import GitError, discover_repository_root
 from gitlab_api import GitLabAPI, GitLabAPIError
-from release_config import ReleaseConfig, validate_release_family
+from release_config import ReleaseConfig
 from release_context import ReleaseContext, ReleaseWorkflowError
 
 # Default token file shared by various CTA CI scripts that need to make use of the GitLab API
@@ -108,8 +108,6 @@ Run "release COMMAND --help" for complete changelog, tag, and status scenarios.
 Global options such as --dry-run must precede COMMAND.""",
     )
 
-    argument_parser.set_defaults(require_current_family=False)
-
     # Global arguments
     argument_parser.add_argument("--dry-run", action="store_true", help="print planned mutations without making them")
 
@@ -129,8 +127,6 @@ def main(argv: list[str] | None = None) -> int:
     try:
         repository_root = discover_repository_root()
         release_config = ReleaseConfig()
-        if parsed_arguments.require_current_family:
-            validate_release_family(repository_root, parsed_arguments.version)
         gitlab_api = create_authenticated_api(release_config, parsed_arguments.dry_run)
         release_context = ReleaseContext(
             repository_root,

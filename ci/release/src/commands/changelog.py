@@ -16,6 +16,7 @@ from urllib.parse import quote
 from commands import SubparserRegistry
 from confirmation import confirm
 from cta_version import CTAVersion, previous_release
+from release_config import validate_release_family
 from release_context import ReleaseContext, ReleaseWorkflowError, info
 
 CHANGELOG_CATEGORIES = {
@@ -79,7 +80,7 @@ without opening an editor or changing GitLab.""",
         default="main",
         help="branch to prepare and merge the changelog into (default: main)",
     )
-    parser.set_defaults(execute=run_from_arguments, require_current_family=True)
+    parser.set_defaults(execute=run_from_arguments)
 
 
 def run_from_arguments(context: ReleaseContext, parsed_arguments: argparse.Namespace) -> None:
@@ -390,6 +391,8 @@ def run(context: ReleaseContext, version_text: str, target_branch: str = "main")
         context.config.remote,
         fetch=not context.dry_run,
     )
+    validate_release_family(context.git, changelog_commit, version_text)
+
     info("Checking GitLab authentication")
     user_id = authenticated_user_id(context.api.authenticate())
 
