@@ -68,13 +68,17 @@ chmod 0644 $SECRETS_DIR/ca.key.pem
 chmod 0644 $SECRETS_DIR/server-admin.key.pem
 chmod 0644 $SECRETS_DIR/server-wfe.key.pem
 
+# Generate a keypair for signing JWT tokens
+openssl genrsa -passout pass:1234 -des3 -out $SECRETS_DIR/jwt.key.pem 4096
+openssl rsa -passin pass:1234 -in $SECRETS_DIR/jwt.key.pem -out $SECRETS_DIR/jwt.key.pem
+openssl rsa -in $SECRETS_DIR/jwt.key.pem -pubout -out $SECRETS_DIR/jwt.pub.pem
+
 # Generate JWT tokens for all subjects, along with the JWKS file.
-# A single `server-admin` keypair signs all tokens; the two audiences
-# (`cta-admin` / `cta-wfe`) are used to distinguish the frontends.
+# audiences (`cta-admin` / `cta-wfe`) are used to distinguish the frontends.
 python3 /scripts/generate_jwt.py \
   --output-dir "$SECRETS_DIR" \
-  --pub "$SECRETS_DIR/server-admin.pub.pem" \
-  --key "$SECRETS_DIR/server-admin.key.pem" \
+  --pub "$SECRETS_DIR/jwt.pub.pem" \
+  --key "$SECRETS_DIR/jwt.key.pem" \
   --jwks jwks.json \
   --issuer cta \
   --audience cta-admin \
@@ -83,8 +87,8 @@ python3 /scripts/generate_jwt.py \
 
 python3 /scripts/generate_jwt.py \
   --output-dir "$SECRETS_DIR" \
-  --pub "$SECRETS_DIR/server-admin.pub.pem" \
-  --key "$SECRETS_DIR/server-admin.key.pem" \
+  --pub "$SECRETS_DIR/jwt.pub.pem" \
+  --key "$SECRETS_DIR/jwt.key.pem" \
   --issuer cta \
   --audience cta-wfe \
   --sub ctaeos \

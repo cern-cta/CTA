@@ -126,12 +126,14 @@ spec:
         - name: frontend-config
           mountPath: /etc/cta/cta-frontend-grpc.toml
           subPath: cta-frontend-grpc.toml
+        {{- if eq .Values.conf.auth.method "jwt" }}
         - name: jwks-json
           mountPath: /etc/cta/jwks.json
           subPath: jwks.json
         - name: jwks-revoke-list-toml
           mountPath: {{ $jwtRevokeListPath }}
           subPath: {{ base $jwtRevokeListPath }}
+        {{- end }}
         - name: grpc-server-crt
           mountPath: /etc/grpc-certs/cert
         - name: grpc-server-key
@@ -165,9 +167,6 @@ spec:
       - name: catalogue-config
         configMap:
           name: cta-catalogue-conf
-      - name: jwks-json
-        secret:
-          secretName: jwks-json
       - name: scheduler-config
         configMap:
           name: cta-scheduler-conf
@@ -184,9 +183,14 @@ spec:
       - name: frontend-config
         configMap:
           name: cta-frontend-wfe-conf
+      {{- if eq .Values.conf.auth.method "jwt" }}
+      - name: jwks-json
+        secret:
+          secretName: jwks-json
       - name: jwks-revoke-list-toml
         configMap:
           name: cta-frontend-wfe-conf
+      {{- end }}
       - name: grpc-server-crt
         secret:
           secretName: server-wfe-crt-pem
