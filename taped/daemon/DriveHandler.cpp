@@ -1048,15 +1048,9 @@ std::shared_ptr<cta::IScheduler> DriveHandler::createScheduler(const std::string
   m_sched_db->setStatisticsCacheConfig(statisticsCacheConfig);
 
   m_lc.log(log::DEBUG, "In DriveHandler::createScheduler(): will create scheduler.");
-  // taped has no opportunistic_batching_* config (it's a frontend-only concept, see
-  // FrontendService::FrontendService()): disable it explicitly and pass through its own fallback
-  // defaults for the window/max batch size, since they're otherwise unused.
   return std::make_shared<Scheduler>(*m_catalogue,
                                      *m_sched_db,
                                      m_tapedConfig.schedulerBackendName.value(),
-                                     /*enableOpportunisticBatching=*/false,
-                                     /*opportunisticBatchingWindowMs=*/10,
-                                     /*opportunisticBatchingMaxBatchSize=*/1000,
                                      minFilesToWarrantAMount,
                                      minBytesToWarrantAMount);
 }

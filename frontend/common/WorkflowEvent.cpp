@@ -23,6 +23,9 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
       m_cliIdentity(clientIdentity),
       m_catalogue(frontendService.getCatalogue()),
       m_scheduler(frontendService.getScheduler()),
+#ifdef CTA_PGSCHED
+      m_batchingLayer(&frontendService.getBatchingLayer()),
+#endif
       m_lc(frontendService.getLogContext()),
       m_verificationMountPolicy(frontendService.getVerificationMountPolicy()),
       m_zeroLengthFilesDisallowed(frontendService.getDisallowZeroLengthFiles()),
@@ -263,7 +266,11 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
   if (request.fileSize > 0) {
     // Queue the request
     std::string archiveRequestAddr =
+#ifdef CTA_PGSCHED
+      m_batchingLayer->queueArchiveWithGivenId(archiveFileId, m_cliIdentity.username, request, m_lc);
+#else
       m_scheduler.queueArchiveWithGivenId(archiveFileId, m_cliIdentity.username, request, m_lc);
+#endif
     logMessage += "queued file for archive.";
     params.add("schedulerTime", t.secs());
     params.add("archiveRequestId", archiveRequestAddr);
@@ -345,7 +352,12 @@ void WorkflowEvent::processPREPARE(xrd::Response& response) {
   utils::Timer t;
 
   // Queue the request
-  std::string retrieveReqId = m_scheduler.queueRetrieve(m_cliIdentity.username, request, m_lc);
+  std::string retrieveReqId =
+#ifdef CTA_PGSCHED
+    m_batchingLayer->queueRetrieve(m_cliIdentity.username, request, m_lc);
+#else
+    m_scheduler.queueRetrieve(m_cliIdentity.username, request, m_lc);
+#endif
 
   // Create a log entry
   log::ScopedParamContainer params(m_lc);
