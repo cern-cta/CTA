@@ -424,4 +424,4 @@ nav:
               - 'Readiness & Liveness': dev/internals/health-checks.md
   # Render the release history from CHANGELOG.md; upgrade instructions belong in Operations > Upgrades.
   - 'Changelog': changelog.md
-  - 'Technical Reference': dev/internals/technical-reference.md
+  - 'Reference': dev/internals/reference.md

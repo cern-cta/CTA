@@ -5,7 +5,6 @@
 
 from pathlib import Path
 import logging
-import os
 import re
 import shutil
 import subprocess
@@ -59,11 +58,6 @@ def on_pre_build(config: MkDocsConfig) -> None:
         [cargo_bin, "doc", "-q", "--no-deps", "--workspace"],
         cwd=root,
         check=True,
-        env={
-            **os.environ,
-            # see https://github.com/rust-lang/cargo/issues/8229
-            "RUSTDOCFLAGS": "--enable-index-page -Zunstable-options",
-        },
     )
     output_dir = root / "build/docs/generated/api/rust"
     output_dir.parent.mkdir(parents=True, exist_ok=True)

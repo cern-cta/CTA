@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 //! Command line interface of cta-eos-restore-files.
-//!
-//! [`Cli`] holds the global options (connection, credentials and the filters
-//! that select the recycle-bin entries to act on) and the [`Command`] to run.
 
 use std::path::PathBuf;
 

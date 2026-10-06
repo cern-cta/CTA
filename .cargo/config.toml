@@ -3,4 +3,13 @@
 
 # Set a cooldown period of 14 days for dependencies
 [registry]
-global-min-publish-age = "14 days"
+  global-min-publish-age = "14 days"
+
+[build]
+  # see https://github.com/rust-lang/cargo/issues/8229
+  rustdocflags = [
+    "--enable-index-page",
+    "-Zunstable-options",
+    "--html-before-content",
+    "docs/rust/header.html",
+  ]
