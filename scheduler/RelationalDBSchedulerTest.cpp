@@ -44,6 +44,7 @@
 #include <utility>
 
 #ifdef CTA_PGSCHED
+#include "scheduler/FrontendBatchingLayer.hpp"
 #include "scheduler/rdbms/RelationalDBTestFactory.hpp"
 #endif
 
@@ -178,17 +179,9 @@ public:
     auto sdb = std::move(factory.create(m_catalogue));
     // We don't check the specific type of the SchedulerDatabase as we intend to ge generic
     m_db = std::move(sdb);
-    // Explicit about every argument, including the opportunistic-batching ones: a positional call
-    // with trailing arguments omitted silently absorbs any new parameter Scheduler's constructor
-    // gains. Here that's not just latent risk — CTA_PGSCHED is defined for this build, so an
-    // absorbed parameter can actually flip enableOpportunisticBatching to true, switching every
-    // test in this suite onto the batching code path instead of the file-by-file one they assume.
     m_scheduler = std::make_unique<Scheduler>(*m_catalogue,
                                               *m_db,
                                               "schedulerBackendName",
-                                              /*enableOpportunisticBatching=*/false,
-                                              /*opportunisticBatchingWindowMs=*/50,
-                                              /*opportunisticBatchingMaxBatchSize=*/1000,
                                               s_minFilesToWarrantAMount,
                                               s_minBytesToWarrantAMount);
   }
@@ -473,12 +466,11 @@ TEST_P(SchedulerTest, opportunisticBatchingQueuesConcurrentArchiveRequests) {
   auto& catalogue = getCatalogue();
   auto& db = getSchedulerDB();
 
-  Scheduler batchingScheduler(catalogue,
-                              db,
-                              "schedulerBackendName",
-                              /*enableOpportunisticBatching=*/true,
-                              /*opportunisticBatchingWindowMs=*/200,
-                              /*opportunisticBatchingMaxBatchSize=*/1000);
+  Scheduler batchingScheduler(catalogue, db, "schedulerBackendName");
+  FrontendBatchingLayer batchingLayer(batchingScheduler,
+                                      /*enableOpportunisticBatching=*/true,
+                                      /*opportunisticBatchingWindowMs=*/200,
+                                      /*opportunisticBatchingMaxBatchSize=*/1000);
 
   // A StringLogger (rather than DummyLogger) lets us confirm below that requests were genuinely
   // batched together (batchSize > 1 in at least one resolveArchiveBatch() round), not merely routed
@@ -516,7 +508,7 @@ TEST_P(SchedulerTest, opportunisticBatchingQueuesConcurrentArchiveRequests) {
     try {
       const uint64_t archiveFileId =
         batchingScheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
-      results[i] = batchingScheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
+      results[i] = batchingLayer.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
     } catch (...) {
       errors[i] = std::current_exception();
     }
@@ -563,12 +555,11 @@ TEST_P(SchedulerTest, opportunisticBatchingIsolatesAPerItemArchiveFailure) {
   auto& catalogue = getCatalogue();
   auto& db = getSchedulerDB();
 
-  Scheduler batchingScheduler(catalogue,
-                              db,
-                              "schedulerBackendName",
-                              /*enableOpportunisticBatching=*/true,
-                              /*opportunisticBatchingWindowMs=*/200,
-                              /*opportunisticBatchingMaxBatchSize=*/1000);
+  Scheduler batchingScheduler(catalogue, db, "schedulerBackendName");
+  FrontendBatchingLayer batchingLayer(batchingScheduler,
+                                      /*enableOpportunisticBatching=*/true,
+                                      /*opportunisticBatchingWindowMs=*/200,
+                                      /*opportunisticBatchingMaxBatchSize=*/1000);
 
   log::DummyLogger dl("", "");
   constexpr int nbRequests = 5;
@@ -608,12 +599,12 @@ TEST_P(SchedulerTest, opportunisticBatchingIsolatesAPerItemArchiveFailure) {
         // inside resolveArchiveBatch()'s own getArchiveFileQueueCriteria() call. An arbitrary,
         // unused-elsewhere id is enough to exercise that stage 1 check specifically.
         request.storageClass = "NoSuchStorageClass";
-        results[i] = batchingScheduler.queueArchiveWithGivenId(1000000 + i, s_diskInstance, request, lc);
+        results[i] = batchingLayer.queueArchiveWithGivenId(1000000 + i, s_diskInstance, request, lc);
       } else {
         request.storageClass = s_storageClassName;
         const uint64_t archiveFileId =
           batchingScheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
-        results[i] = batchingScheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
+        results[i] = batchingLayer.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
       }
     } catch (...) {
       errors[i] = std::current_exception();
@@ -986,13 +977,12 @@ TEST_P(SchedulerTest, opportunisticBatchingQueuesConcurrentRetrieveRequests) {
   }
 
   // All nbFiles are now on tape. Fire nbFiles concurrent retrieve requests, one per file, through a
-  // second Scheduler with opportunistic batching enabled.
-  Scheduler batchingScheduler(catalogue,
-                              db,
-                              "schedulerBackendName",
-                              /*enableOpportunisticBatching=*/true,
-                              /*opportunisticBatchingWindowMs=*/200,
-                              /*opportunisticBatchingMaxBatchSize=*/1000);
+  // FrontendBatchingLayer with opportunistic batching enabled.
+  Scheduler batchingScheduler(catalogue, db, "schedulerBackendName");
+  FrontendBatchingLayer batchingLayer(batchingScheduler,
+                                      /*enableOpportunisticBatching=*/true,
+                                      /*opportunisticBatchingWindowMs=*/200,
+                                      /*opportunisticBatchingMaxBatchSize=*/1000);
 
   std::vector<std::string> results(nbFiles);
   std::vector<std::exception_ptr> errors(nbFiles);
@@ -1016,7 +1006,7 @@ TEST_P(SchedulerTest, opportunisticBatchingQueuesConcurrentRetrieveRequests) {
     request.requester.group = "userGroup";
 
     try {
-      results[i] = batchingScheduler.queueRetrieve(s_diskInstance, request, threadLc);
+      results[i] = batchingLayer.queueRetrieve(s_diskInstance, request, threadLc);
     } catch (...) {
       errors[i] = std::current_exception();
     }
@@ -1152,16 +1142,15 @@ TEST_P(SchedulerTest, opportunisticBatchingIsolatesAPerItemRetrieveFailure) {
   }
 
   // All nbFiles are now on tape. Fire nbFiles concurrent retrieve requests, one per file, through a
-  // second Scheduler with opportunistic batching enabled. badRequestIndex uses an archive file ID
+  // FrontendBatchingLayer with opportunistic batching enabled. badRequestIndex uses an archive file ID
   // that was never archived, exercising resolveRetrieveBatch()'s stage 1 isolation (same pattern as
   // opportunisticBatchingIsolatesAPerItemArchiveFailure): that one request must fail on its own
   // without affecting the others sharing its batch.
-  Scheduler batchingScheduler(catalogue,
-                              db,
-                              "schedulerBackendName",
-                              /*enableOpportunisticBatching=*/true,
-                              /*opportunisticBatchingWindowMs=*/200,
-                              /*opportunisticBatchingMaxBatchSize=*/1000);
+  Scheduler batchingScheduler(catalogue, db, "schedulerBackendName");
+  FrontendBatchingLayer batchingLayer(batchingScheduler,
+                                      /*enableOpportunisticBatching=*/true,
+                                      /*opportunisticBatchingWindowMs=*/200,
+                                      /*opportunisticBatchingMaxBatchSize=*/1000);
 
   // A StringLogger lets us confirm below that the bad request shared a genuine multi-item batch with
   // the good ones, rather than isolation only ever being exercised one request at a time.
@@ -1188,7 +1177,7 @@ TEST_P(SchedulerTest, opportunisticBatchingIsolatesAPerItemRetrieveFailure) {
     request.requester.group = "userGroup";
 
     try {
-      results[i] = batchingScheduler.queueRetrieve(s_diskInstance, request, threadLc);
+      results[i] = batchingLayer.queueRetrieve(s_diskInstance, request, threadLc);
     } catch (...) {
       errors[i] = std::current_exception();
     }

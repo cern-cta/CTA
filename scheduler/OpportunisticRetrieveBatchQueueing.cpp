@@ -9,7 +9,7 @@
 #include "common/utils/Timer.hpp"
 #include "lib/telemetry/include/telemetry/metrics/SchedulerMetrics.hpp"
 #include "scheduler/OpportunisticQueueBatcher.hpp"
-#include "scheduler/Scheduler.hpp"
+#include "scheduler/FrontendBatchingLayer.hpp"
 
 #include <future>
 #include <mutex>
@@ -21,7 +21,7 @@ namespace cta {
 // resolveRetrieveInsertCriteria
 //------------------------------------------------------------------------------
 cta::common::dataStructures::RetrieveFileQueueCriteria
-Scheduler::resolveRetrieveInsertCriteria(const std::string& instanceName,
+FrontendBatchingLayer::resolveRetrieveInsertCriteria(const std::string& instanceName,
                                          const cta::common::dataStructures::RetrieveRequest& request,
                                          std::optional<std::string>& diskSystemName,
                                          log::LogContext& lc) {
@@ -39,7 +39,7 @@ Scheduler::resolveRetrieveInsertCriteria(const std::string& instanceName,
     criteria.archiveFile.tapeFiles.removeAllVidsExcept(*request.vid);
     if (criteria.archiveFile.tapeFiles.empty()) {
       exception::UserError ex;
-      ex.getMessage() << "In Scheduler::resolveRetrieveInsertCriteria(): VID " << *request.vid
+      ex.getMessage() << "In FrontendBatchingLayer::resolveRetrieveInsertCriteria(): VID " << *request.vid
                       << " does not contain a tape copy of file with archive file ID " << request.archiveFileID;
       throw ex;
     }
@@ -59,7 +59,7 @@ Scheduler::resolveRetrieveInsertCriteria(const std::string& instanceName,
 //------------------------------------------------------------------------------
 // getCachedDiskSystemList
 //------------------------------------------------------------------------------
-disk::DiskSystemList Scheduler::getCachedDiskSystemList() {
+disk::DiskSystemList FrontendBatchingLayer::getCachedDiskSystemList() {
   const auto now = std::chrono::steady_clock::now();
 
   // Same single-flight coalescing pattern as resolveArchiveInsertCriteria()'s cache, just simpler:
@@ -109,7 +109,7 @@ disk::DiskSystemList Scheduler::getCachedDiskSystemList() {
 //------------------------------------------------------------------------------
 // resolveRetrieveBatch
 //------------------------------------------------------------------------------
-void Scheduler::resolveRetrieveBatch(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
+void FrontendBatchingLayer::resolveRetrieveBatch(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
                                      log::LogContext& lc) {
   cta::utils::Timer batchTimer;
   uint64_t failedItems = 0;
@@ -118,11 +118,11 @@ void Scheduler::resolveRetrieveBatch(std::vector<cta::common::dataStructures::Re
   // catalogue lookup and disk-system-name resolution) now runs in resolveRetrieveInsertCriteria(),
   // on each caller's own thread, before the item is even enqueued -- see that method's own comment
   // for why. A request whose lookup failed never reached here at all, having already thrown directly
-  // from Scheduler::queueRetrieve(). So this is stage 2 only: one bulk insert for the whole batch.
+  // from FrontendBatchingLayer::queueRetrieve(). So this is stage 2 only: one bulk insert for the whole batch.
   size_t successfulItems = 0;
   if (!batch.empty()) {
     static const char* const failMsg =
-      "In Scheduler::resolveRetrieveBatch(): bulk retrieve insert failed, failing this batch";
+      "In FrontendBatchingLayer::resolveRetrieveBatch(): bulk retrieve insert failed, failing this batch";
     // A retrieve request is always exactly one job (one copy read), unlike archive requests, which
     // can fan out into several — so failure here is always counted as 1 per item.
     auto oneJobPerItem = [](const cta::common::dataStructures::RetrieveInsertQueueItem&) -> uint64_t { return 1; };
@@ -179,13 +179,13 @@ void Scheduler::resolveRetrieveBatch(std::vector<cta::common::dataStructures::Re
     .add("batchSize", batch.size())
     .add("successfulItems", successfulItems)
     .add("failedItems", batch.size() - successfulItems)
-    .log(log::INFO, "In Scheduler::resolveRetrieveBatch(): processed a batch of retrieve requests.");
+    .log(log::INFO, "In FrontendBatchingLayer::resolveRetrieveBatch(): processed a batch of retrieve requests.");
 }
 
 //------------------------------------------------------------------------------
 // logQueuedRetrieveItems
 //------------------------------------------------------------------------------
-void Scheduler::logQueuedRetrieveItems(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
+void FrontendBatchingLayer::logQueuedRetrieveItems(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
                                        log::LogContext& lc) {
   // Per-item audit log, mirroring the file-by-file path's own "Queued retrieve request" INFO line
   // (same fields), run only for items resolveRetrieveBatch() actually queued, after followers have
@@ -239,7 +239,7 @@ void Scheduler::logQueuedRetrieveItems(std::vector<cta::common::dataStructures::
     if (item.request.activity) {
       spc.add("activity", item.request.activity.value());
     }
-    lc.log(log::INFO, "In Scheduler::logQueuedRetrieveItems(): Queued retrieve request");
+    lc.log(log::INFO, "In FrontendBatchingLayer::logQueuedRetrieveItems(): Queued retrieve request");
   }
 }
 
