@@ -22,7 +22,6 @@ script_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 readonly script_dir
 
 source "${script_dir}/utils/log_utils.sh"
-source "${script_dir}/utils/cta_version.sh"
 
 # =========================================================================
 #  Globals
@@ -247,7 +246,7 @@ query_pipeline() {
 
   pipeline_short_sha="${pipeline_sha:0:8}"
 
-  # Retain the historical tag as a fallback for jobs without resolved-version output.
+  # Retain the historical tag as a fallback for pipelines without version metadata.
   image_tag="${pipeline}git${pipeline_short_sha}"
 
   debug_image_name="${IMAGE_REPOSITORY}:${image_tag}"
@@ -331,6 +330,31 @@ wait_for_job() {
 
 }
 
+# The image job records the exact reference it pushed.
+resolve_debug_image_name() {
+  local response status image_ref
+  response=$(gitlab_api GET "/projects/${PROJECT_ID}/jobs/${debug_image_job_id}/artifacts/image-ref.txt" \
+    --location --no-fail --write-out '\n%{http_code}') \
+    || die "Could not download the debug image reference."
+  status="${response##*$'\n'}"
+  image_ref="${response%$'\n'*}"
+  image_ref="${image_ref%$'\n'}"
+
+  case "$status" in
+    200) ;;
+    404)
+      log_warn "Image reference artifact unavailable; using historical tag ${debug_image_name}."
+      return
+      ;;
+    *) die "Could not download the debug image reference (HTTP ${status})." ;;
+  esac
+
+  # Accept a single tagged reference from the expected debug-image repository.
+  [[ "$image_ref" == "${IMAGE_REPOSITORY}:"* && "${image_ref#"${IMAGE_REPOSITORY}:"}" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]] \
+    || die "Invalid debug image reference artifact."
+  debug_image_name="$image_ref"
+}
+
 ensure_debug_image() {
 
   log_task "Checking debug image..."
@@ -370,15 +394,7 @@ ensure_debug_image() {
 
   esac
 
-  # New pipelines print the resolved version; historical pipelines used the raw build ID.
-  local job_trace resolved_version
-  job_trace=$(gitlab_api GET "/projects/${PROJECT_ID}/jobs/${debug_image_job_id}/trace")
-  resolved_version=$(sed -nE 's/.*CTA version: ([0-9][a-z0-9.-]*).*/\1/p' <<< "$job_trace" | sort -u)
-  if [[ -n "$resolved_version" ]]; then
-    validate_cta_version "$resolved_version" \
-      || die "Debug image job reported an invalid or ambiguous CTA version."
-    debug_image_name="${IMAGE_REPOSITORY}:${resolved_version}"
-  fi
+  resolve_debug_image_name
 
   log_task "Pulling debug image ${debug_image_name}..."
 
@@ -543,4 +559,6 @@ main() {
   launch_debug_container
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi

@@ -6,7 +6,6 @@
 set -e
 
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/../utils/cta_version.sh"
 
 usage() {
   echo
@@ -44,7 +43,7 @@ usage() {
   echo "      --skip-cmake                        Skip configuration for a standalone binary build."
   echo
   echo "The host platform and native package format are detected automatically."
-  echo "Missing variant and platform suffixes are added to --cta-version from the build configuration."
+  echo "--cta-version is passed unchanged to CMake as a version-release string."
   echo "Currently, only the enterprise Linux backend is implemented."
   echo
 }
@@ -332,7 +331,6 @@ install_build_dependencies() {
 SECONDS=0
 cd "$project_root"
 detect_package_backend
-cta_version=$(resolve_cta_version "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
 log_task "Building CTA ${cta_version}"
 build_dir="${build_root}/${platform}"
 prepare_build_directory

@@ -4,36 +4,9 @@ Version conventions for CTA software, catalogue schemas, and published documenta
 
 ## Software and package versions
 
-Git release tags use `v<family>.<major>.<minor>.<patch>-<package>[.rcN][.<variant>]` and do not include the platform.
-`project.json` defines the release family as a positive integer string in `releaseFamily` (currently `"6"`).
-New release requests must match that family; historical tags remain readable.
-Builds remove the leading `v` and append the platform once.
-For example, `v6.12.0.0-1.pgall` produces `6.12.0.0-1.pgall.el9` on enterprise Linux 9.
+!!! note "Versioning policy under revision"
 
-The full build version is used by software version output, logs, RPM version-release fields, source archives, container tags and SBOM component metadata.
-CMake accepts it as one `CTA_VERSION`; RPM packaging splits it internally at the single hyphen.
-Exactly one hyphen is permitted: release components use dots, so `6-dev.example` is valid but `6-dev-example` is rejected.
-CMake validates the variant immediately before the platform against `CTA_USE_PGSCHED` and `CTA_WITH_ORACLE`, rejecting missing, conflicting, duplicated or misplaced variant labels without rewriting the supplied version.
-
-| Variant suffix | Scheduler | Oracle support |
-| --- | --- | --- |
-| None | Objectstore | Enabled |
-| `.pgsched` | PostgreSQL | Enabled |
-| `.pgcat` | Objectstore | Disabled |
-| `.pgall` | PostgreSQL | Disabled |
-
-GitLab development builds use `<family>-<pipeline-id>git<short-sha>[.<variant>].<platform>`.
-The `.pre` job `prepare-cta-version` reads the family and resolves the primary pipeline version.
-Its 30-day dotenv report provides `CTA_RELEASE_FAMILY`, `CTA_VERSION_BASE` and `CTA_VERSION` directly to consumers through explicit artifact dependencies.
-The auxiliary PostgreSQL package build resolves its own variant from `CTA_VERSION_BASE`; it does not change the primary pipeline version.
-Preparation is skipped when testing an existing image or refreshing CI tooling images.
-Child pipelines use their own pipeline IDs.
-GitHub analysis builds use the GitHub run ID and the first eight commit SHA characters in the same format.
-Local builds default to `<family>-dev` from `project.json`, resolved using the local configuration; the default configuration produces `6-dev.pgcat.el9`.
-
-Existing images supplied through the custom-image-tag input are used verbatim, including historical tag formats.
-CI tooling images and dependency versions have independent naming conventions.
-See the [Release Procedure](../../contributing/maintainers/releases.md) for creating and publishing releases.
+    The software and package versioning policy is undergoing revision. Follow the current [Release Procedure](../../contributing/maintainers/releases.md) and release tooling when preparing a release; the finalized conventions will be documented here.
 
 ## Catalogue schema versions
 

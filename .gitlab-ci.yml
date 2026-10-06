@@ -203,7 +203,7 @@ variables:
   TAG_PGCAT_REGEX: '/(^|\.)pgcat($|\.)/'  # Postgres catalogue (no Oracle)
   TAG_PGALL_REGEX: '/(^|\.)pgall($|\.)/'  # Postgres scheduler + Postgres catalogue
 
-  # Raw development identity used by prepare-cta-version.
+  # Build and runtime defaults
   CTA_BUILD_ID: "${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}"
   ENABLE_SBOM_GENERATION: "$[[ inputs.enable-sbom-generation ]]"
   SCHEDULER_TYPE: "$[[ inputs.scheduler-type ]]"

@@ -186,8 +186,7 @@ Global options:
       --scheduler-type <type>        Scheduler backend [objectstore, pgsched].
       --enable-oracle-support        Build packages and images with Oracle support.
       --cta-version <version>        CTA version as <version>-<suffix>, defaults to '$cta_version'.
-                                     Variant and platform suffixes are added from the build settings.
-                                     The resolved version is also the CTA image tag.
+                                     Used unchanged for package versions and the CTA image tag.
       --use-public-repos             Force public package repositories. By default, CERN internal
                                      repos are used when they are reachable.
 EOF
@@ -643,8 +642,6 @@ parse_options() {
     unsupported_argument "--cta-version and --cta-image-tag cannot be combined: the CTA version already determines the image tag. Pass --cta-version to deploy a locally built version, or --cta-image-tag to deploy an image built elsewhere."
   fi
 
-  cta_version=$(resolve_cta_version "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
-
   if [[ $cta_image_tag_provided == true ]]; then
     cta_image_tag_is_valid "$cta_image_tag" || \
       unsupported_argument "--cta-image-tag is \"$cta_image_tag\" but may contain only letters, numbers, dots, underscores, and hyphens, must not start with a dot or hyphen, and may be at most 128 characters long."
@@ -1087,29 +1084,6 @@ load_cta_images_into_kubernetes() {
   fi
 }
 
-# Check the actual RPM metadata so independently invoked build and images commands cannot drift.
-validate_image_packages() {
-  local package_dir="$1"
-  local package package_version
-  local package_count=0
-
-  command -v rpm >/dev/null 2>&1 || die "Building local images requires rpm to validate package versions. Install rpm and retry."
-  [[ -d "$package_dir" ]] || die "Package directory $package_dir does not exist. Run cta-dev build with the same version and scheduler/Oracle options first."
-
-  for package in "$package_dir"/cta-*.rpm; do
-    [[ -f "$package" ]] || continue
-    package_count=$((package_count + 1))
-    if ! package_version=$(rpm -qp --queryformat '%{VERSION}-%{RELEASE}' "$package"); then
-      die "Cannot read RPM metadata from $package. Rebuild packages before building images."
-    fi
-    if [[ "$package_version" != "$cta_version" ]]; then
-      die "RPM ${package##*/} has version '$package_version'; expected '$cta_version'. Run cta-dev build with the same version and scheduler/Oracle options before building images."
-    fi
-  done
-
-  (( package_count > 0 )) || die "No CTA RPMs found in $package_dir. Run cta-dev build with the same version and scheduler/Oracle options first."
-}
-
 # Build CTA service images from local packages and load them into available local Kubernetes runtimes.
 images_cta() {
   # Constants
@@ -1118,7 +1092,6 @@ images_cta() {
   local -r package_source="build/${platform}/${binary_package_directory}" # relative to project root
 
   print_header "BUILDING CONTAINER IMAGES"
-  validate_image_packages "${project_root}/${package_source}"
   detect_internal_repos
 
   # Build

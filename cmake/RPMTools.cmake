@@ -21,7 +21,8 @@ function(rpmtools_add_rpm_targets rpm_name spec_file package_mode)
     message(FATAL_ERROR "RPM packaging was requested, but rpmbuild was not found")
   endif()
 
-  # RPM metadata requires separate fields; callers still supply one full version.
+  # For RPM metadata we still need to parts, so we separate at the hyphen
+  # Version should already have been verified to not contain multiple hyphens
   string(REGEX MATCH "^([^-]+)-(.+)$" _cta_rpm_version_match "${CTA_VERSION}")
   set(CTA_RPM_VERSION "${CMAKE_MATCH_1}")
   set(CTA_RPM_RELEASE "${CMAKE_MATCH_2}")

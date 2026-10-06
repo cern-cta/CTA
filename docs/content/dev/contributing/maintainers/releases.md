@@ -23,7 +23,7 @@ v<xrootd>.<major>.<minor>.<patch>-<package>
 
 | Field | When it changes |
 | --- | --- |
-| `xrootd` | Release family associated with XRootD; new releases must match `releaseFamily` in `project.json`. |
+| `xrootd` | XRootD version; the tool currently accepts `6`. |
 | `major` | A new catalogue schema is introduced. |
 | `minor` | A regular release without a new catalogue schema. |
 | `patch` | Fixes are backported to an older release. |
@@ -88,13 +88,6 @@ Check the actual test results before publishing: **the stress test allows failur
 The stress-test and publication jobs post status notes with job links on the release issue. Review these notes and add any remaining validation evidence, such as the stress-test dashboard and timeframe. If a note is missing, inspect the job directly; issue reporting is best-effort.
 
 ## Publish packages and images
-
-Software and artifact versions omit the Git tag's leading `v` and include the build platform.
-For example, tag `v6.12.0.0-1.pgall` produces software version and image tag `6.12.0.0-1.pgall.el9`, and RPMs such as `cta-taped-6.12.0.0-1.pgall.el9.x86_64.rpm`.
-The image-build jobs push these tags to the private registry before release promotion.
-The private publication job retains its existing gate but republishes the same image reference; public publication copies it under the same version.
-The RPM publication helpers take the full version including platform and match it exactly.
-Publication jobs depend directly on `prepare-cta-version` for the full version and release family; this metadata is retained for 30 days.
 
 After validating the release, trigger `internal-release-cta` in each tag pipeline being published. **This also starts public `unstable` RPM publication and private image publication automatically** once their dependencies succeed; it is not an internal-only publication step. These jobs do not enforce completion of all release tests, so check those first.
 

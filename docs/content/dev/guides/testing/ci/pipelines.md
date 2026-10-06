@@ -10,13 +10,6 @@ Pipeline types select the workflow, such as normal validation, dependency regres
 
 Jobs use explicit `needs` dependencies so independent work can run in parallel once its prerequisites are ready. Shared runners and resources still limit concurrency, particularly for system and stress tests. Longer or specialized checks may be manual or scheduled to keep routine feedback timely.
 
-CTA image tags match the full software version, for example `6-123456gitabcdef12.pgall.el9` for a development build or `6.12.0.0-1.pgall.el9` for a release.
-The `.pre` job `prepare-cta-version` reads `releaseFamily` from `project.json` and resolves the pipeline version from the tag or build ID and effective configuration.
-Package, image, system-test, SBOM and release jobs depend directly on its 30-day dotenv report, without forwarding metadata through intermediate jobs.
-Each child pipeline prepares its own version; auxiliary scheduler builds resolve their override from the prepared base.
-Existing-image and CI-tooling-image-refresh pipelines skip version preparation.
-See [Versioning](../../conventions/versioning.md) for the variant conventions.
-
 CI jobs use pinned execution images so package updates do not silently change the environment of an existing pipeline definition. Updating those images is a separate [maintenance workflow](../../../contributing/maintainers/ci-maintenance.md#weekly-pipeline-image-updates).
 
 ## Choose and run a pipeline
@@ -102,8 +95,7 @@ From the repository root, use `ci-debug` to open an interactive debug container 
 ./ci/ci-debug.sh <pipeline-id-or-url>
 ```
 
-The script downloads artifacts from failed system-test jobs and mounts them under `/artifacts` in the pipeline's debug image.
-It reads the resolved version from the debug-image job log; historical jobs without that version line use the original pipeline-ID image tag. It starts the pipeline's manual debug-image build if needed. Add `--job <job-name>` to select a specific system-test job; for a child pipeline, supply that child's pipeline ID or URL.
+The script downloads artifacts from failed system-test jobs and mounts them under `/artifacts` in the pipeline's debug image. It starts the pipeline's manual debug-image build if needed. Add `--job <job-name>` to select a specific system-test job; for a child pipeline, supply that child's pipeline ID or URL.
 
 It requires Podman, `curl`, `jq`, and `unzip`, and prompts for GitLab API authentication (a token with the `api` scope) and container-registry login when needed. The pipeline must provide the debug-image job and retain the relevant artifacts.
 
