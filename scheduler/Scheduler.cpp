@@ -48,46 +48,14 @@ namespace cta {
 Scheduler::Scheduler(catalogue::Catalogue& catalogue,
                      SchedulerDatabase& db,
                      const std::string& schedulerBackendName,
-                     [[maybe_unused]] const bool enableOpportunisticBatching,
-                     [[maybe_unused]] const uint64_t opportunisticBatchingWindowMs,
-                     [[maybe_unused]] const uint64_t opportunisticBatchingMaxBatchSize,
                      const uint64_t minFilesToWarrantAMount,
                      const uint64_t minBytesToWarrantAMount)
     : m_catalogue(catalogue),
       m_db(db),
       m_schedulerBackendName(schedulerBackendName),
       m_minFilesToWarrantAMount(minFilesToWarrantAMount),
-      m_minBytesToWarrantAMount(minBytesToWarrantAMount)
-#ifdef CTA_PGSCHED
-      ,
-      m_enableOpportunisticBatching(enableOpportunisticBatching),
-      m_opportunisticBatchingWindow(opportunisticBatchingWindowMs),
-      m_opportunisticBatchingMaxBatchSize(opportunisticBatchingMaxBatchSize)
-#endif
-{
+      m_minBytesToWarrantAMount(minBytesToWarrantAMount) {
   m_tapeDrivesState = std::make_unique<TapeDrivesCatalogueState>(m_catalogue);
-#ifdef CTA_PGSCHED
-  m_archiveBatcher =
-    std::make_unique<OpportunisticQueueBatcher<common::dataStructures::ArchiveInsertQueueItem, std::string>>(
-      m_opportunisticBatchingWindow,
-      m_opportunisticBatchingMaxBatchSize,
-      [this](std::vector<common::dataStructures::ArchiveInsertQueueItem>& batch, log::LogContext& lc) {
-        resolveArchiveBatch(batch, lc);
-      },
-      [this](std::vector<common::dataStructures::ArchiveInsertQueueItem>& batch, log::LogContext& lc) {
-        logQueuedArchiveItems(batch, lc);
-      });
-  m_retrieveBatcher =
-    std::make_unique<OpportunisticQueueBatcher<common::dataStructures::RetrieveInsertQueueItem, std::string>>(
-      m_opportunisticBatchingWindow,
-      m_opportunisticBatchingMaxBatchSize,
-      [this](std::vector<common::dataStructures::RetrieveInsertQueueItem>& batch, log::LogContext& lc) {
-        resolveRetrieveBatch(batch, lc);
-      },
-      [this](std::vector<common::dataStructures::RetrieveInsertQueueItem>& batch, log::LogContext& lc) {
-        logQueuedRetrieveItems(batch, lc);
-      });
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -175,31 +143,7 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
       + request.diskFileInfo.path);
   }
 
-#ifdef CTA_PGSCHED
-  if (m_enableOpportunisticBatching) {
-    // Stage 1 (catalogue lookup) runs here, on this caller's own thread, before the item is
-    // enqueued — not inside resolveArchiveBatch() on the single leader thread — so concurrent
-    // callers' catalogue lookups run in parallel with each other instead of being serialized one at
-    // a time inside the batch's critical round-latency window. Throws directly (never enqueuing)
-    // on failure, same observable per-request isolation as before, just resolved earlier.
-    auto criteria = resolveArchiveInsertCriteria(instanceName, request.storageClass, request.requester, lc);
-
-    // m_archiveBatcher handles the leader/follower coordination, the window+cap wait, and releasing
-    // followers as soon as resolveArchiveBatch() has settled every promise in the batch — before the
-    // slower logQueuedArchiveItems() runs, so no follower waits on it. See OpportunisticQueueBatcher.hpp.
-    return m_archiveBatcher->enqueueAndWait(
-      cta::common::dataStructures::ArchiveInsertQueueItem {archiveFileId,
-                                                           instanceName,
-                                                           request,
-                                                           std::move(criteria.copyToPoolMap),
-                                                           std::move(criteria.mountPolicy),
-                                                           std::promise<std::string>()},
-      lc);
-  }
-#endif
-
-  // File-by-file scheme: used for the objectstore scheduler always, and for CTA_PGSCHED builds when
-  // opportunistic batching is disabled via cta.schedulerdb.opportunistic_batching_enabled.
+  // File-by-file scheme (objectstore always; pgsched when batching is disabled in FrontendBatchingLayer).
   const auto queueCriteria =
     m_catalogue.ArchiveFile()->getArchiveFileQueueCriteria(instanceName, request.storageClass, request.requester);
   auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
@@ -261,34 +205,6 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
   using utils::midEllipsis;
   using utils::postEllipsis;
   utils::Timer t;
-
-#ifdef CTA_PGSCHED
-  if (m_enableOpportunisticBatching) {
-    // Stage 1 (catalogue lookup and disk-system-name resolution) runs here, on this caller's own
-    // thread, before the item is enqueued — not inside resolveRetrieveBatch() on the single leader
-    // thread — so concurrent callers' catalogue lookups run in parallel with each other instead of
-    // being serialized one at a time inside the batch's critical round-latency window. Throws
-    // directly (never enqueuing) on failure, same observable per-request isolation as before.
-    std::optional<std::string> diskSystemName;
-    auto criteria = resolveRetrieveInsertCriteria(instanceName, request, diskSystemName, lc);
-
-    // m_retrieveBatcher handles the leader/follower coordination, the window+cap wait, and releasing
-    // followers as soon as resolveRetrieveBatch() has settled every promise in the batch — before the
-    // slower logQueuedRetrieveItems() runs, so no follower waits on it. See OpportunisticQueueBatcher.hpp.
-    // Unlike queueArchiveWithGivenId(), request is copied into the item rather than referenced: the
-    // only caller-visible mutation the file-by-file path below makes to it (appendFileSizeToDstURL())
-    // is consumed entirely inside the DB insert, not read back by Scheduler::queueRetrieve()'s own
-    // caller afterwards, so a copy costs nothing observable.
-    return m_retrieveBatcher->enqueueAndWait(
-      cta::common::dataStructures::RetrieveInsertQueueItem {instanceName,
-                                                            request,
-                                                            std::move(criteria),
-                                                            std::move(diskSystemName),
-                                                            {},
-                                                            std::promise<std::string>()},
-      lc);
-  }
-#endif
 
   // Get the queue criteria
   common::dataStructures::RetrieveFileQueueCriteria queueCriteria;
@@ -3438,6 +3354,10 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
 
 cta::catalogue::Catalogue& Scheduler::getCatalogue() {
   return m_catalogue;
+}
+
+SchedulerDatabase& Scheduler::getDb() {
+  return m_db;
 }
 
 }  // namespace cta

@@ -34,6 +34,7 @@ set (CTA_SCHEDULER_OS_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
 include_directories (${CMAKE_BINARY_DIR}/scheduler)
 
 set (CTA_SCHEDULER_PG_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
+  FrontendBatchingLayer.cpp
   OpportunisticArchiveBatchQueueing.cpp
   OpportunisticRetrieveBatchQueueing.cpp
   rdbms/RelationalDB.cpp

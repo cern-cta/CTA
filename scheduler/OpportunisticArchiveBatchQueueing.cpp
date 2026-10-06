@@ -10,7 +10,7 @@
 #include "common/utils/utils.hpp"
 #include "lib/telemetry/include/telemetry/metrics/SchedulerMetrics.hpp"
 #include "scheduler/OpportunisticQueueBatcher.hpp"
-#include "scheduler/Scheduler.hpp"
+#include "scheduler/FrontendBatchingLayer.hpp"
 
 #include <future>
 #include <mutex>
@@ -23,7 +23,7 @@ namespace cta {
 // resolveArchiveInsertCriteria
 //------------------------------------------------------------------------------
 cta::common::dataStructures::ArchiveInsertQueueCriteria
-Scheduler::resolveArchiveInsertCriteria(const std::string& instanceName,
+FrontendBatchingLayer::resolveArchiveInsertCriteria(const std::string& instanceName,
                                         const std::string& storageClass,
                                         const cta::common::dataStructures::RequesterIdentity& requester,
                                         log::LogContext& lc) {
@@ -106,7 +106,7 @@ Scheduler::resolveArchiveInsertCriteria(const std::string& instanceName,
 //------------------------------------------------------------------------------
 // resolveArchiveBatch
 //------------------------------------------------------------------------------
-void Scheduler::resolveArchiveBatch(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
+void FrontendBatchingLayer::resolveArchiveBatch(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
                                     log::LogContext& lc) {
   cta::utils::Timer batchTimer;
   uint64_t successfulJobs = 0;
@@ -118,7 +118,7 @@ void Scheduler::resolveArchiveBatch(std::vector<cta::common::dataStructures::Arc
   // request whose lookup failed never reached here at all, having already thrown directly from
   // queueArchiveWithGivenId(). So this is stage 2 only: one bulk insert for the whole batch.
   static const char* const failMsg =
-    "In Scheduler::resolveArchiveBatch(): bulk archive insert failed, failing this batch";
+    "In FrontendBatchingLayer::resolveArchiveBatch(): bulk archive insert failed, failing this batch";
   auto jobsPerItem = [](const cta::common::dataStructures::ArchiveInsertQueueItem& item) -> uint64_t {
     return item.copyToPoolMap.size();
   };
@@ -186,13 +186,13 @@ void Scheduler::resolveArchiveBatch(std::vector<cta::common::dataStructures::Arc
     .add("failedItems", batch.size() - successfulItems)
     .add("successfulJobs", successfulJobs)
     .add("failedJobs", failedJobs)
-    .log(log::INFO, "In Scheduler::resolveArchiveBatch(): processed a batch of archive requests.");
+    .log(log::INFO, "In FrontendBatchingLayer::resolveArchiveBatch(): processed a batch of archive requests.");
 }
 
 //------------------------------------------------------------------------------
 // logQueuedArchiveItems
 //------------------------------------------------------------------------------
-void Scheduler::logQueuedArchiveItems(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
+void FrontendBatchingLayer::logQueuedArchiveItems(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
                                       log::LogContext& lc) {
   // Per-item audit log, mirroring the file-by-file path's own "Queued archive request" INFO line
   // (same fields), run only for items resolveArchiveBatch() actually queued, after followers have
@@ -231,7 +231,7 @@ void Scheduler::logQueuedArchiveItems(std::vector<cta::common::dataStructures::A
       .add("srcURL", midEllipsis(item.request.srcURL, 50, 15))
       .add("batchSize", batch.size());
     item.request.checksumBlob.addFirstChecksumToLog(spc);
-    lc.log(log::INFO, "In Scheduler::logQueuedArchiveItems(): Queued archive request");
+    lc.log(log::INFO, "In FrontendBatchingLayer::logQueuedArchiveItems(): Queued archive request");
   }
 }
 

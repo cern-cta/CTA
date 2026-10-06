@@ -57,6 +57,9 @@ private:
   common::dataStructures::SecurityIdentity m_cliIdentity;  //!< Client identity: username, host, authentication
   catalogue::Catalogue& m_catalogue;                       //!< Reference to CTA Catalogue
   cta::Scheduler& m_scheduler;                             //!< Reference to CTA Scheduler
+#ifdef CTA_PGSCHED
+  cta::FrontendBatchingLayer* m_batchingLayer;             //!< Opportunistic-batching layer for archive/retrieve queueing (pgsched only; null when unavailable)
+#endif
   log::LogContext m_lc;                                    //!< CTA Log Context
   std::string m_verificationMountPolicy;                   //!< Verification mount policy
 

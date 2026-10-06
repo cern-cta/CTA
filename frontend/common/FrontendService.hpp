@@ -14,6 +14,7 @@
 #include <memory>
 #include <stdexcept>
 #ifdef CTA_PGSCHED
+#include "scheduler/FrontendBatchingLayer.hpp"
 #include "scheduler/rdbms/RelationalDBInit.hpp"
 #else
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
@@ -105,6 +106,14 @@ public:
    * Get a reference to the Scheduler
    */
   cta::Scheduler& getScheduler() const { return *m_scheduler; }
+
+#ifdef CTA_PGSCHED
+  /*!
+   * Get a reference to the opportunistic-batching layer that sits in front of the Scheduler
+   * for archive/retrieve queueing. Only present in pgsched builds.
+   */
+  cta::FrontendBatchingLayer& getBatchingLayer() const { return *m_batchingLayer; }
+#endif
 
   /**
    * Getting the configured scheduler backend name
@@ -202,6 +211,9 @@ private:
   std::unique_ptr<SchedulerDBInit_t>            m_scheddbInit;                  //!< Persistent initialiser object for Scheduler DB
   std::unique_ptr<cta::SchedulerDB_t>           m_scheddb;                      //!< Scheduler DB for persistent objects (queues and requests)
   std::unique_ptr<cta::Scheduler>               m_scheduler;                    //!< The scheduler
+#ifdef CTA_PGSCHED
+  std::unique_ptr<cta::FrontendBatchingLayer>   m_batchingLayer;                //!< Opportunistic-batching front-end for archive/retrieve queueing (pgsched only)
+#endif
   OperationMode                                 m_operationMode;                //!< Which operation mode (wfe / admin_*) is being used
   std::optional<uint64_t>                       m_tapeCacheMaxAgeSecs;          //!< Option to override the tape cache timeout value in the scheduler DB
   std::optional<uint64_t>                       m_retrieveQueueCacheMaxAgeSecs; //!< Option to override the retrieve queue timeout value in the scheduler DB
