@@ -42,6 +42,8 @@ ci_image_registry=$(jq -r .dev.ctaImageRegistry "${project_root}/project.json")
 readonly ci_image_registry
 
 # Global
+source "${script_dir}/utils/cta_version.sh"
+CTA_RELEASE_FAMILY=$(read_cta_release_family "${project_root}/project.json")
 platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
 scheduler_type="objectstore"
 oracle_support="false"
@@ -49,9 +51,7 @@ enable_internal_repos=true
 internal_repos_forced_public=false
 namespace="dev"
 # A single <version>-<suffix> string used by the package build and as the image tag.
-cta_version="6-dev"
-cta_version_base=""
-cta_version_suffix=""
+cta_version="${CTA_RELEASE_FAMILY}-dev"
 cta_image_tag=""
 
 # Build
@@ -93,11 +93,11 @@ source "${script_dir}/utils/log_utils.sh"
 
 # Check whether a CTA version is accepted by the package backends.
 cta_version_is_valid() {
-  [[ "$1" =~ ^[0-9][0-9.]*-[a-z0-9][a-z0-9.-]*$ ]]
+  [[ "$1" =~ ^[0-9]+(\.[0-9]+)*-[a-z0-9]+([.][a-z0-9]+)*$ ]]
 }
 
 # Validated in both the environment file and the command line.
-readonly cta_version_format_hint="must be <version>-<suffix>, where <version> contains only numbers and dots and <suffix> only lowercase letters, numbers, dots, and hyphens (for example 6-dev)"
+readonly cta_version_format_hint="must be <version>-<suffix>, where <version> contains only numbers and dots and <suffix> only lowercase letters, numbers, and dots, with exactly one separating hyphen (for example 6-dev)"
 
 # Check whether an explicit container image tag has a valid format.
 cta_image_tag_is_valid() {
@@ -196,7 +196,8 @@ Global options:
       --scheduler-type <type>        Scheduler backend [objectstore, pgsched].
       --enable-oracle-support        Build packages and images with Oracle support.
       --cta-version <version>        CTA version as <version>-<suffix>, defaults to '$cta_version'.
-                                     It is also the CTA image tag.
+                                     Variant and platform suffixes are added from the build settings.
+                                     The resolved version is also the CTA image tag.
       --use-public-repos             Force public package repositories. By default, CERN internal
                                      repos are used when they are reachable.
 EOF
@@ -654,9 +655,7 @@ parse_options() {
 
   cta_version_is_valid "$cta_version" || \
     unsupported_argument "--cta-version is \"$cta_version\" but ${cta_version_format_hint}."
-  # Only the part before the first hyphen may contain digits and dots, so this split is unambiguous.
-  cta_version_base="${cta_version%%-*}"
-  cta_version_suffix="${cta_version#*-}"
+  cta_version=$(resolve_cta_version "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
 
   if [[ $cta_image_tag_provided == true ]]; then
     cta_image_tag_is_valid "$cta_image_tag" || \
@@ -783,8 +782,7 @@ create_build_configuration() {
     --argjson skipUnitTests "$skip_unit_tests" \
     --argjson enableAddressSanitizer "$enable_address_sanitizer" \
     --argjson extraTelemetry "$extra_telemetry" \
-    --arg ctaVersion "$cta_version_base" \
-    --arg ctaVersionSuffix "$cta_version_suffix" \
+    --arg ctaVersion "$cta_version" \
     --arg xrootdSsiVersion "$xrootd_ssi_version" \
     --argjson jobs "$num_jobs" \
     --argjson internalRepos "$enable_internal_repos" \
@@ -792,7 +790,7 @@ create_build_configuration() {
       buildGenerator: $buildGenerator, cmakeBuildType: $cmakeBuildType,
       enableCcache: $enableCcache, buildTestPackages: $buildTestPackages, buildDebugPackages: ($skipDebugPackages | not),
       runUnitTests: ($skipUnitTests | not), enableAddressSanitizer: $enableAddressSanitizer,
-      extraTelemetry: $extraTelemetry, ctaVersion: $ctaVersion, ctaVersionSuffix: $ctaVersionSuffix,
+      extraTelemetry: $extraTelemetry, ctaVersion: $ctaVersion,
       xrootdSsiVersion: $xrootdSsiVersion, jobs: $jobs, internalRepos: $internalRepos}'
 }
 
@@ -908,7 +906,6 @@ build_cta() {
         runUnitTests) log_warn "Unit test setting changed: ${old_value} -> ${new_value}" ;;
         enableAddressSanitizer) log_warn "AddressSanitizer setting changed: ${old_value} -> ${new_value}" ;;
         ctaVersion) log_warn "CTA version changed: ${old_value} -> ${new_value}" ;;
-        ctaVersionSuffix) log_warn "CTA version suffix changed: ${old_value} -> ${new_value}" ;;
         xrootdSsiVersion) log_warn "XRootD SSI interface version changed: ${old_value} -> ${new_value}" ;;
         jobs) log_warn "CMake job count changed: ${old_value} -> ${new_value}" ;;
         internalRepos)
@@ -919,7 +916,7 @@ build_cta() {
     done < <(jq -r --argjson desired "$build_configuration_json" '
       ["schedulerType", "oracleSupport", "buildGenerator", "platform", "cmakeBuildType",
        "enableCcache", "buildTestPackages", "buildDebugPackages", "runUnitTests", "enableAddressSanitizer",
-       "ctaVersion", "ctaVersionSuffix", "xrootdSsiVersion", "jobs", "internalRepos"][] as $field
+       "ctaVersion", "xrootdSsiVersion", "jobs", "internalRepos"][] as $field
       | select(.[$field] != $desired[$field])
       | [$field, (.[$field] | tostring), ($desired[$field] | tostring)]
       | @tsv' <<<"$previous_configuration_json")
@@ -1055,8 +1052,7 @@ build_cta() {
     --build-dir "${mount_basedir}/build" \
     --build-generator "${build_generator}" \
     --create-build-dir \
-    --cta-version "${cta_version_base}" \
-    --cta-version-suffix "${cta_version_suffix}" \
+    --cta-version "${cta_version}" \
     --xrootd-ssi-version "${xrootd_ssi_version}" \
     --scheduler-type "${scheduler_type}" \
     --oracle-support "${oracle_support}" \
@@ -1103,6 +1099,29 @@ load_cta_images_into_kubernetes() {
   fi
 }
 
+# Check the actual RPM metadata so independently invoked build and images commands cannot drift.
+validate_image_packages() {
+  local package_dir="$1"
+  local package package_version
+  local package_count=0
+
+  command -v rpm >/dev/null 2>&1 || die "Building local images requires rpm to validate package versions. Install rpm and retry."
+  [[ -d "$package_dir" ]] || die "Package directory $package_dir does not exist. Run cta-dev build with the same version and scheduler/Oracle options first."
+
+  for package in "$package_dir"/cta-*.rpm; do
+    [[ -f "$package" ]] || continue
+    package_count=$((package_count + 1))
+    if ! package_version=$(rpm -qp --queryformat '%{VERSION}-%{RELEASE}' "$package"); then
+      die "Cannot read RPM metadata from $package. Rebuild packages before building images."
+    fi
+    if [[ "$package_version" != "$cta_version" ]]; then
+      die "RPM ${package##*/} has version '$package_version'; expected '$cta_version'. Run cta-dev build with the same version and scheduler/Oracle options before building images."
+    fi
+  done
+
+  (( package_count > 0 )) || die "No CTA RPMs found in $package_dir. Run cta-dev build with the same version and scheduler/Oracle options first."
+}
+
 # Build CTA service images from local packages and load them into available local Kubernetes runtimes.
 images_cta() {
   # Constants
@@ -1111,6 +1130,7 @@ images_cta() {
   local -r package_source="build/${platform}/${binary_package_directory}" # relative to project root
 
   print_header "BUILDING CONTAINER IMAGES"
+  validate_image_packages "${project_root}/${package_source}"
   detect_internal_repos
 
   # Build

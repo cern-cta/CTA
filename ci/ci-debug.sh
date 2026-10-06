@@ -246,7 +246,7 @@ query_pipeline() {
 
   pipeline_short_sha="${pipeline_sha:0:8}"
 
-  # This image tag construction must match whatever we do in CI
+  # Retain the historical tag as a fallback for jobs without resolved-version output.
   image_tag="${pipeline}git${pipeline_short_sha}"
 
   debug_image_name="${IMAGE_REPOSITORY}:${image_tag}"
@@ -254,7 +254,6 @@ query_pipeline() {
   pipeline_web_url="$(jq -r '.web_url' <<< "${response}")"
 
   echo "Pipeline SHA : ${pipeline_sha}"
-  echo "Debug image  : ${debug_image_name}"
 
 }
 
@@ -370,7 +369,17 @@ ensure_debug_image() {
 
   esac
 
-  log_task "Pulling debug image..."
+  # New pipelines print the resolved version; historical pipelines used the raw build ID.
+  local job_trace resolved_version
+  job_trace=$(gitlab_api GET "/projects/${PROJECT_ID}/jobs/${debug_image_job_id}/trace")
+  resolved_version=$(sed -nE 's/.*CTA version: ([0-9][a-z0-9.-]*).*/\1/p' <<< "$job_trace" | sort -u)
+  if [[ -n "$resolved_version" ]]; then
+    [[ "$resolved_version" =~ ^[0-9]+(\.[0-9]+)*-[a-z0-9]+([.-][a-z0-9]+)*$ ]] \
+      || die "Debug image job reported an invalid or ambiguous CTA version."
+    debug_image_name="${IMAGE_REPOSITORY}:${resolved_version}"
+  fi
+
+  log_task "Pulling debug image ${debug_image_name}..."
 
   podman pull "${debug_image_name}"
 

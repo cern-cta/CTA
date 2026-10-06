@@ -5,8 +5,35 @@
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass
+from pathlib import Path
+
+from cta_version import CTAVersion, VersionError
+
+
+def read_release_family(root: Path) -> str:
+    """Read the release policy independently of historical tag parsing."""
+    project_file = root / "project.json"
+    try:
+        project = json.loads(project_file.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        raise VersionError(f"Could not read releaseFamily from {project_file}: {error}") from error
+    family = project.get("releaseFamily") if isinstance(project, dict) else None
+    if not isinstance(family, str) or re.fullmatch(r"[1-9]\d*", family, flags=re.ASCII) is None:
+        raise VersionError(f"Invalid or missing releaseFamily in {project_file}; expected a positive integer string")
+    return family
+
+
+def validate_release_family(root: Path, version: str) -> None:
+    """Require a new release to belong to the configured family."""
+    release_version = CTAVersion.parse(version, require_base=True)
+    release_family = read_release_family(root)
+    if str(release_version.xrootd) != release_family:
+        raise VersionError(
+            f"Release {release_version.text} does not match releaseFamily {release_family!r} in project.json"
+        )
 
 
 @dataclass(frozen=True)

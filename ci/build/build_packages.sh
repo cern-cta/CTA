@@ -6,6 +6,7 @@
 set -e
 
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/cta_version.sh"
 
 usage() {
   echo
@@ -17,8 +18,7 @@ usage() {
   echo "  --build-dir <directory>                 Build root. The detected platform is appended to it."
   echo "  --build-generator <generator>           CMake generator, normally Ninja or Unix Makefiles."
   echo "  --scheduler-type <type>                 Scheduler type: objectstore or pgsched."
-  echo "  --cta-version <version>                 CTA version, containing numbers and dots only."
-  echo "  --cta-version-suffix <suffix>           CTA version suffix passed to CMake as VCS_VERSION."
+  echo "  --cta-version <version>                 CTA version, e.g. 6-dev or 6.12.0.0-1.pgall.el9."
   echo "  --cmake-build-type <type>               Release, Debug, RelWithDebInfo, or MinSizeRel."
   echo
   echo "Required for binary and all:"
@@ -44,6 +44,7 @@ usage() {
   echo "      --skip-cmake                        Skip configuration for a standalone binary build."
   echo
   echo "The host platform and native package format are detected automatically."
+  echo "Missing variant and platform suffixes are added to --cta-version from the build configuration."
   echo "Currently, only the enterprise Linux backend is implemented."
   echo
 }
@@ -66,7 +67,6 @@ esac
 build_root=""
 build_generator=""
 cta_version=""
-cta_version_suffix=""
 scheduler_type=""
 cmake_build_type=""
 xrootd_ssi_version=""
@@ -89,7 +89,7 @@ skip_cmake=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --build-dir | --build-generator | --scheduler-type | --cta-version | --cta-version-suffix | \
+    --build-dir | --build-generator | --scheduler-type | --cta-version | \
       --cmake-build-type | --xrootd-ssi-version | --source-package-dir | -j | --jobs | --oracle-support)
       [[ $# -gt 1 ]] || error_usage "$1 requires an argument"
       option="$1"
@@ -101,7 +101,6 @@ while [[ $# -gt 0 ]]; do
         --build-generator) build_generator="$value" ;;
         --scheduler-type) scheduler_type="$value" ;;
         --cta-version) cta_version="$value" ;;
-        --cta-version-suffix) cta_version_suffix="$value" ;;
         --cmake-build-type) cmake_build_type="$value" ;;
         --xrootd-ssi-version) xrootd_ssi_version="$value" ;;
         --source-package-dir) source_package_dir=$(realpath -m "$value") ;;
@@ -136,17 +135,12 @@ done
 [[ -n "$build_generator" ]] || die_usage "Missing mandatory argument --build-generator"
 [[ -n "$scheduler_type" ]] || die_usage "Missing mandatory argument --scheduler-type"
 [[ -n "$cta_version" ]] || die_usage "Missing mandatory argument --cta-version"
-[[ -n "$cta_version_suffix" ]] || die_usage "Missing mandatory argument --cta-version-suffix"
 [[ -n "$cmake_build_type" ]] || die_usage "Missing mandatory argument --cmake-build-type"
 [[ "$build_root" != "/" && "$build_root" != "$project_root" ]] \
   || die_usage "--build-dir must not be the filesystem or project root"
 
 [[ "$scheduler_type" == "objectstore" || "$scheduler_type" == "pgsched" ]] \
   || die_usage "--scheduler-type must be objectstore or pgsched"
-[[ "$cta_version" =~ ^[0-9.]+$ ]] \
-  || die_usage "--cta-version may contain only numbers and dots"
-[[ "$cta_version_suffix" =~ ^[a-z0-9.-]+$ ]] \
-  || die_usage "--cta-version-suffix may contain only lowercase letters, numbers, dots, and hyphens"
 [[ "$cmake_build_type" =~ ^(Release|Debug|RelWithDebInfo|MinSizeRel)$ ]] \
   || die_usage "--cmake-build-type must be Release, Debug, RelWithDebInfo, or MinSizeRel"
 [[ "$num_jobs" =~ ^[1-9][0-9]*$ ]] || die_usage "--jobs must be a positive integer"
@@ -225,12 +219,14 @@ configure_build() {
   [[ "$skip_unit_tests" == true ]] && run_unit_tests=false
 
   local cmake_options=(
+    # Discard cached inputs from the former split-version interface.
+    -U CTA_RELEASE
+    -U VCS_VERSION
     -D "CTA_PACKAGE_MODE:STRING=${package_mode}"
     -D "CTA_BUILD_TEST_PACKAGES:BOOL=$(cmake_bool "$build_test_packages")"
     -D "CTA_BUILD_DEBUG_PACKAGES:BOOL=$(cmake_bool "$build_debug_packages")"
     -D "CTA_RUN_UNIT_TESTS:BOOL=$(cmake_bool "$run_unit_tests")"
     -D "CTA_VERSION:STRING=${cta_version}"
-    -D "VCS_VERSION=${cta_version_suffix}"
     -D "CMAKE_BUILD_TYPE=${cmake_build_type}"
     -D "CTA_WITH_ORACLE:BOOL=$(cmake_bool "$oracle_support")"
     -D "CTA_USE_EXTRA_TELEMETRY:BOOL=$(cmake_bool "$extra_telemetry")"
@@ -290,6 +286,17 @@ build_source_packages() {
 }
 
 build_binary_packages() {
+  # Only clear this build's binary output; source RPMs and build trees remain reusable.
+  case "$package_format" in
+    rpm)
+      local rpm_output_dir="${build_dir:?Missing build directory}/RPM/RPMS"
+      log_task "Cleaning binary package output ${rpm_output_dir}..."
+      rm -rf -- "$rpm_output_dir"
+      mkdir -p -- "$rpm_output_dir"
+      ;;
+    *) die "No binary-package cleanup is implemented for package format $package_format." ;;
+  esac
+
   build_target "$(binary_package_target)"
 }
 
@@ -328,6 +335,8 @@ install_build_dependencies() {
 SECONDS=0
 cd "$project_root"
 detect_package_backend
+cta_version=$(resolve_cta_version "$cta_version" "$platform" "$scheduler_type" "$oracle_support")
+log_task "Building CTA ${cta_version}"
 build_dir="${build_root}/${platform}"
 prepare_build_directory
 

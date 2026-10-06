@@ -21,6 +21,11 @@ function(rpmtools_add_rpm_targets rpm_name spec_file package_mode)
     message(FATAL_ERROR "RPM packaging was requested, but rpmbuild was not found")
   endif()
 
+  # RPM metadata requires separate fields; callers still supply one full version.
+  string(REGEX MATCH "^([^-]+)-(.+)$" _cta_rpm_version_match "${CTA_VERSION}")
+  set(CTA_RPM_VERSION "${CMAKE_MATCH_1}")
+  set(CTA_RPM_RELEASE "${CMAKE_MATCH_2}")
+
   set(rpm_root "${CMAKE_BINARY_DIR}/RPM")
   foreach(directory IN ITEMS tmp BUILD RPMS SOURCES SPECS SRPMS)
     file(MAKE_DIRECTORY "${rpm_root}/${directory}")
@@ -55,7 +60,6 @@ function(rpmtools_add_rpm_targets rpm_name spec_file package_mode)
       "--define=_topdir ${rpm_root}"
       "--define=_source_filedigest_algorithm md5"
       "--define=_binary_filedigest_algorithm md5"
-      "--define=neutralpackage 1"
       --nodeps
       "--buildroot=${rpm_root}/tmp"
       "${rpm_root}/SPECS/${spec_name}"

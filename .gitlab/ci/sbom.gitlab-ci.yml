@@ -3,7 +3,7 @@
 
 .sbom-rules:
   rules:
-    - if: '$CUSTOM_CTA_IMAGE_TAG != ""'
+    - if: '$CUSTOM_CTA_IMAGE_TAG != "" || $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
     - if: '$ENABLE_SBOM_GENERATION == "true"'
       when: on_success
@@ -13,6 +13,8 @@ enrich-sboms-cern-info:
   extends: .sbom-rules
   stage: sbom
   needs:
+    - job: prepare-cta-version
+      artifacts: true
     - job: check-merge-train-duplicate
       optional: true
     - job: build-cta-images
@@ -21,6 +23,8 @@ enrich-sboms-cern-info:
         matrix:
           - TARGET_NAME: ['$[[ matrix.TARGET_NAME ]]']
   image: $IMAGE_SBOM_HELPER
+  before_script:
+    - !reference [.merge-train-guard, before_script]
   script:
     - mkdir -p sboms
     - |
@@ -44,7 +48,7 @@ enrich-sboms-cern-info:
         --in "sboms-output/${input}" \
         --out "$output" \
         --component-name "$TARGET_NAME" \
-        --component-version "$CTA_BUILD_ID" \
+        --component-version "${CTA_VERSION:?Missing prepared CTA_VERSION}" \
         --author-name "$GITLAB_USER_NAME" \
         --author-email "$GITLAB_USER_EMAIL" \
         --project-url "$CI_PROJECT_URL"

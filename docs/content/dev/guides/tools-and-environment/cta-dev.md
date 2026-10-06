@@ -62,15 +62,17 @@ cp ci/.cta-dev.env.example ci/.cta-dev.env
 | `CTA_DEV_PLATFORM` | A platform defined in `project.json` |
 | `CTA_DEV_BUILD_GENERATOR` | `Ninja` or `Unix Makefiles` |
 | `CTA_DEV_CMAKE_BUILD_TYPE` | `Release`, `Debug`, `RelWithDebInfo`, or `MinSizeRel` |
-| `CTA_DEV_CTA_VERSION` | `<version>-<suffix>`, for example `6-dev` |
+| `CTA_DEV_CTA_VERSION` | Base or full version, for example `6-dev` or `6-dev.pgcat.el9`; missing variant/platform suffixes follow the build settings |
 | `CTA_DEV_NAMESPACE` | Kubernetes namespace |
 
 Command-line options override `ci/.cta-dev.env`, which overrides the built-in defaults. The file belongs to the worktree selected by the command symlink.
 
 ### Custom versions and image tags
 
-Most development builds should use the default version and tag (`6-dev`). When a distinct version is needed, pass the
-complete value with `--cta-version`. For example, this sets package version `6`, release suffix `local-test`, and image tag `6-local-test`:
+Most development builds should use the default base version (`<releaseFamily>-dev`, currently `6-dev`), read from `project.json`.
+The scheduler, Oracle support and platform settings determine the full version used in packages, binaries and image tags; the default settings resolve to `6-dev.pgcat.el9`.
+When a distinct version is needed, pass it with `--cta-version`.
+For example, with the default build settings, this sets package version `6`, release `local-test.pgcat.el9`, and image tag `6-local-test.pgcat.el9`:
 
 ```bash
 cta-dev up --cta-version 6-local-test
@@ -78,8 +80,12 @@ cta-dev up --cta-version 6-local-test
 
 This labels the build from your checkout; it does not select a Git tag or change the source revision.
 
-Use `<version>-<suffix>`: the version contains numbers and dots; the suffix contains lowercase letters, numbers, dots, and hyphens. When running `build`, `images`, and `deploy` separately, pass the
-same version to every stage.
+Use `<version>-<suffix>`: the version contains numbers and dots; the suffix contains lowercase letters, numbers, dots, and hyphens.
+An explicit variant or platform suffix must match the build settings.
+When running `build`, `images`, and `deploy` separately, pass the same version to every stage.
+Local image builds require the host `rpm` command and check that every CTA RPM in the package directory matches the resolved version before building images.
+If packages are missing or their version differs, rerun `cta-dev build` with the same version and scheduler/Oracle options.
+Binary package builds clear their dedicated RPM output directory before rebuilding, keeping the image context limited to the current build.
 
 ## Build options
 
@@ -90,7 +96,7 @@ The default build uses the objectstore scheduler and disables Oracle catalogue s
 | `--scheduler-type pgsched` | Select the PostgreSQL scheduler. |
 | `--enable-oracle-support` | Include Oracle support; requires access to the Oracle dependencies. Do not publish images containing Oracle RPMs publicly. |
 | `--platform <platform>` | Select a supported target from `project.json`. |
-| `--cta-version <version>` | Set the package version and image tag; the default is `6-dev`. |
+| `--cta-version <version>` | Set the base or full version; the default `6-dev` resolves to `6-dev.pgcat.el9` with default build settings. |
 | `--enable-unit-tests` | Run unit tests during the package build. |
 | `--cmake-build-type Debug` | Select a debug build. |
 | `--enable-address-sanitizer` | Build with AddressSanitizer. |

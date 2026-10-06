@@ -5,7 +5,7 @@
 #  Build configuration
 # =========================================================================
 
-%define ctaRelease @CTA_RELEASE@
+%define ctaRelease @CTA_RPM_RELEASE@
 
 %define usePgsched @PACKAGE_USE_PGSCHED@
 %define occiSupport @PACKAGE_WITH_ORACLE@
@@ -18,13 +18,6 @@
 %define radosVersionConstraint @RADOS_VERSION_CONSTRAINT@
 %define gtestDevelVersionConstraint @GTEST_VERSION_CONSTRAINT@
 %define opentelemetryCppVersionConstraint @OPENTELEMETRY_CPP_VERSION_CONSTRAINT@
-
-# Omit the distribution suffix from source RPMs when requested.
-%if 0%{?neutralpackage:1} > 0
-%define mydist %{nil}
-%else
-%define mydist %{?dist}
-%endif
 
 %if !@PACKAGE_BUILD_DEBUG_PACKAGES@
 %define debug_package %{nil}
@@ -43,8 +36,8 @@
 
 Name: cta
 Summary: @PROJECT_SUMMARY@
-Version: @CTA_VERSION@
-Release: %{ctaRelease}%{mydist}
+Version: @CTA_RPM_VERSION@
+Release: %{ctaRelease}
 Source0: %{name}-%{version}-%{ctaRelease}.tar.zst
 Source1: cta.conf
 URL: https://gitlab.cern.ch/cta/CTA
@@ -79,7 +72,7 @@ cmake3 -G "@CMAKE_GENERATOR@" .. \
   -DCMAKE_BUILD_TYPE:STRING=@CMAKE_BUILD_TYPE@ \
   -DCMAKE_INSTALL_PREFIX:PATH=/usr \
   -DCTA_SYSTEMD_UNIT_DIR:PATH=lib/systemd/system \
-  -DCTA_VERSION:STRING=%{version} \
+  -DCTA_VERSION:STRING=%{version}-%{ctaRelease} \
   -DXROOTD_SSI_PROTOBUF_INTERFACE_VERSION:STRING=@XROOTD_SSI_PROTOBUF_INTERFACE_VERSION@ \
   -DENABLE_CCACHE:BOOL=@ENABLE_CCACHE@ \
   -DCTA_PACKAGE_MODE:STRING=none \
@@ -87,7 +80,6 @@ cmake3 -G "@CMAKE_GENERATOR@" .. \
   -DCTA_BUILD_DEBUG_PACKAGES:BOOL=@CTA_BUILD_DEBUG_PACKAGES@ \
   -DCTA_BUILD_TEST_PACKAGES:BOOL=@CTA_BUILD_TEST_PACKAGES@ \
   -DJOBS_COUNT:STRING=@JOBS_COUNT@ \
-  -DVCS_VERSION=%{ctaRelease} \
   -DCTA_USE_PGSCHED:BOOL=@CTA_USE_PGSCHED@ \
   -DCTA_USE_EXTRA_TELEMETRY:BOOL=@CTA_USE_EXTRA_TELEMETRY@ \
   -DCTA_WITH_ORACLE:BOOL=@CTA_WITH_ORACLE@ \

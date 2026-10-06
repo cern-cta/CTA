@@ -33,9 +33,12 @@ class VersionTest(unittest.TestCase):
         assert version.variant is None
 
     def test_rejects_invalid_versions(self) -> None:
-        for value in ("6.10.11.0-1", "v4.10.11.0-1", "v6.1.2-3", "v6.1.2.3-4.rc-1"):
+        for value in ("6.10.11.0-1", "v0.10.11.0-1", "v6.1.2-3", "v6.1.2.3-4.rc-1"):
             with self.subTest(value=value), pytest.raises(VersionError):
                 CTAVersion.parse(value)
+
+    def test_parses_historical_release_family(self) -> None:
+        assert CTAVersion.parse("v4.10.11.0-1").xrootd == 4
 
     def test_suffix_does_not_change_numeric_core(self) -> None:
         assert CTAVersion.parse("v6.10.11.0-1").core == CTAVersion.parse("v6.10.11.0-1.rc1").core

@@ -20,6 +20,8 @@ spec:
 build-cta-rpms:
   stage: build
   needs:
+    - job: prepare-cta-version
+      artifacts: true
     - job: check-merge-train-duplicate
       optional: true
     - job: modify-project-json
@@ -80,16 +82,7 @@ build-cta-rpms:
     CCACHE_MAXSIZE: "2G"
   before_script:
     - !reference [.merge-train-guard, before_script]
-  # TODO: make CTA_VERSION and CTA_VERSION_SUFFIX one variable, then we can just either build_id or commit_tag everywhere easily (including the images)
-    - |
-      if [[ -z "${CI_COMMIT_TAG}" ]]; then
-        export CTA_VERSION=$CTA_MAJOR_VERSION
-        export CTA_VERSION_SUFFIX=$CTA_BUILD_ID
-      else
-        export CTA_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '[v-]' '{print $2}')
-        export CTA_VERSION_SUFFIX=$(echo ${CI_COMMIT_TAG} | awk -F '-' '{if(NF>1) print $2; else print 0}')
-      fi
-    - echo "Building package CTA_VERSION=${CTA_VERSION} - CTA_VERSION_SUFFIX=${CTA_VERSION_SUFFIX}"
+    - 'echo "CTA version: ${CTA_VERSION:?Missing prepared CTA_VERSION}"'
     - git -C "$XRD_SSI_PATH" fetch --tags
     - export XRD_SSI_VERSION=$(git --git-dir=$XRD_SSI_PATH/.git --work-tree=$XRD_SSI_PATH describe --tags --abbrev=0)
     - |
@@ -119,8 +112,7 @@ build-cta-rpms:
     - ./ci/build/build_packages.sh all --build-dir build
                                       --build-generator "$[[ inputs.build-generator ]]"
                                       --create-build-dir
-                                      --cta-version ${CTA_VERSION}
-                                      --cta-version-suffix ${CTA_VERSION_SUFFIX}
+                                      --cta-version "${CTA_VERSION}"
                                       --xrootd-ssi-version ${XRD_SSI_VERSION}
                                       --scheduler-type ${SCHEDULER_TYPE}
                                       --oracle-support ${ENABLE_ORACLE_SUPPORT}
@@ -188,6 +180,13 @@ build-cta-rpms-pgsched:
     # so this will always run, even if the pipeline type was already postgres
     SCHEDULER_TYPE: "pgsched"
     ENABLE_CCACHE: "false"
+  before_script:
+    - !reference [.merge-train-guard, before_script]
+    # This compilation check deliberately differs from the primary pipeline variant.
+    - source ci/utils/cta_version.sh
+    - CTA_VERSION=$(resolve_cta_version "${CTA_VERSION_BASE:?Missing prepared CTA_VERSION_BASE}" "$[[ inputs.platform ]]" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
+    - export CTA_VERSION
+    - !reference [build-cta-rpms, before_script]
   # Disable artifacts
   artifacts:
     paths: []
@@ -200,6 +199,8 @@ build-cta-rpms-debug:
   extends:
     - build-cta-rpms
   rules:
+    - if: '$CUSTOM_CTA_IMAGE_TAG != "" || $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
+      when: never
     - if: $CI_COMMIT_TAG
       when: never
     # Debug builds are not really expected to break when the RelWithDebInfo build passes, so only run this in main

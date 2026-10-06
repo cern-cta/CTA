@@ -21,6 +21,10 @@ jobs:
     container:
       image: almalinux:9
 
+    defaults:
+      run:
+        shell: bash
+
     env:
       SCHEDULER_TYPE: objectstore
       ENABLE_ORACLE_SUPPORT: "TRUE"
@@ -44,53 +48,57 @@ jobs:
       - name: Install CTA dependencies
         run: |
           echo "MAKEFLAGS=-j$(nproc)" >> $GITHUB_ENV
-          export CMAKE_OPTIONS
-          export CTA_BUILD_ID=${GITHUB_RUN_ID}git${GITHUB_SHA:0:8}
+          CTA_BUILD_ID="${GITHUB_RUN_ID}git${GITHUB_SHA:0:8}"
           PLATFORM=$(jq -r .dev.defaultPlatform project.json)
           echo "PLATFORM=${PLATFORM}" >> "$GITHUB_ENV"
           cp -f ci/docker/cta/${PLATFORM}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
-          ./ci/project-json/generate_versionlock.py --platform ${PLATFORM} > /etc/yum/pluginconf.d/versionlock.list
+          ./ci/project-json/generate_versionlock.py --platform "${PLATFORM}" > /etc/yum/pluginconf.d/versionlock.list
+          source ci/utils/cta_version.sh
+          CTA_RELEASE_FAMILY=$(read_cta_release_family project.json)
+          version_input="${CTA_RELEASE_FAMILY}-${CTA_BUILD_ID}"
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            export TAG_VERSION=$(echo ${GITHUB_REF_NAME} | sed -e 's/^.*v//;s/-.*$//')
-            export TAG_RELEASE=$(echo ${GITHUB_REF_NAME} | sed -e 's/^.*v[^-]*-//')
-            echo "Exporting TAG_VERSION=${TAG_VERSION} - TAG_RELEASE=${TAG_RELEASE}"
+            version_input="$GITHUB_REF_NAME"
+            # Release tags determine the scheduler and Oracle configuration.
+            SCHEDULER_TYPE=objectstore
+            ENABLE_ORACLE_SUPPORT=true
+            case "${GITHUB_REF_NAME##*.}" in
+              pgsched) SCHEDULER_TYPE=pgsched ;;
+              pgcat) ENABLE_ORACLE_SUPPORT=false ;;
+              pgall) SCHEDULER_TYPE=pgsched; ENABLE_ORACLE_SUPPORT=false ;;
+            esac
           fi
-          CTA_VERSION=$(echo ${TAG_VERSION} | cut -d. -f1)
-          if [[ ${SCHEDULER_TYPE} != "objectstore" ]]; then
-            echo "Using specified scheduler database type $SCHEDULER_TYPE"
-            sched_opt="-DCTA_USE_$(echo ${SCHEDULER_TYPE} | tr '[:lower:]' '[:upper:]'):Bool=true"
-            sched_version=$(echo ${SCHEDULER_TYPE} | cut -c 1-3)
-            CTA_VERSION="${CTA_VERSION}${sched_version}"
-            CMAKE_OPTIONS+="-DSKIP_UNIT_TESTS:STRING=1 ${sched_opt} "
-          fi
-          if [[ ${ENABLE_ORACLE_SUPPORT} == "FALSE" ]]; then
-            echo "Disabling Oracle Support"
-            CMAKE_OPTIONS+="-DDISABLE_ORACLE_SUPPORT:BOOL=ON"
-          fi
-          git config --global --add safe.directory $(pwd)
-          git submodule update --init --recursive
-          mkdir -p build/${PLATFORM}
-          cd build/${PLATFORM}
-          echo "CMAKE_OPTIONS=${CMAKE_OPTIONS}" >> "$GITHUB_ENV"
+          CTA_VERSION=$(resolve_cta_version "$version_input" "$PLATFORM" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
+          CTA_USE_PGSCHED=OFF
+          [[ "$SCHEDULER_TYPE" == "pgsched" ]] && CTA_USE_PGSCHED=ON
+          CTA_WITH_ORACLE=OFF
+          [[ "${ENABLE_ORACLE_SUPPORT,,}" == "true" ]] && CTA_WITH_ORACLE=ON
           echo "CTA_VERSION=${CTA_VERSION}" >> "$GITHUB_ENV"
-          echo "CTA_BUILD_ID=${CTA_BUILD_ID}" >> "$GITHUB_ENV"
-          cmake -DCTA_PACKAGE_MODE:STRING=source -DCTA_VERSION:STRING=${CTA_VERSION} -DVCS_VERSION=${CTA_BUILD_ID} ${CMAKE_OPTIONS} ..
-          make cta_srpm
+          echo "CTA_USE_PGSCHED=${CTA_USE_PGSCHED}" >> "$GITHUB_ENV"
+          echo "CTA_WITH_ORACLE=${CTA_WITH_ORACLE}" >> "$GITHUB_ENV"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git submodule update --init --recursive
+          cmake -S . -B "build/${PLATFORM}" \
+            -DCTA_PACKAGE_MODE:STRING=source \
+            -DCTA_VERSION:STRING="${CTA_VERSION}" \
+            -DCTA_USE_PGSCHED:BOOL="${CTA_USE_PGSCHED}" \
+            -DCTA_WITH_ORACLE:BOOL="${CTA_WITH_ORACLE}" \
+            -DCTA_RUN_UNIT_TESTS:BOOL=OFF
+          cmake --build "build/${PLATFORM}" --target cta_srpm
 
       - name: Run build-wrapper
         run: |
-          cd lib/protobuf/external/xrootd-ssi-protobuf-interface && XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git describe --tags --abbrev=0) && cd ../../../..
+          XROOTD_SSI_PROTOBUF_INTERFACE_VERSION=$(git -C lib/protobuf/external/xrootd-ssi-protobuf-interface describe --tags --abbrev=0)
           dnf config-manager --set-enabled crb
           dnf builddep --nogpgcheck -y build/${PLATFORM}/RPM/SRPMS/*
-          cd build/${PLATFORM}
-          cmake \
+          cmake -S . -B "build/${PLATFORM}" \
             -DCTA_PACKAGE_MODE:STRING=binary \
-            -DCTA_VERSION:STRING=${CTA_VERSION} \
-            -DXROOTD_SSI_PROTOBUF_INTERFACE_VERSION:STRING=${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION} \
-            -DVCS_VERSION=${CTA_BUILD_ID} \
-            ${CMAKE_OPTIONS} \
-            ..
-          build-wrapper-linux-x86-64 --out-dir ../${{ env.BUILD_WRAPPER_OUT_DIR }} make
+            -DCTA_VERSION:STRING="${CTA_VERSION}" \
+            -DXROOTD_SSI_PROTOBUF_INTERFACE_VERSION:STRING="${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}" \
+            -DCTA_USE_PGSCHED:BOOL="${CTA_USE_PGSCHED}" \
+            -DCTA_WITH_ORACLE:BOOL="${CTA_WITH_ORACLE}" \
+            -DCTA_RUN_UNIT_TESTS:BOOL=OFF
+          build-wrapper-linux-x86-64 --out-dir "$GITHUB_WORKSPACE/${BUILD_WRAPPER_OUT_DIR}" \
+            cmake --build "build/${PLATFORM}" --parallel "$(nproc)"
 
       - name: Run sonar-scanner
         uses: SonarSource/sonarqube-scan-action@v7

@@ -100,7 +100,7 @@ opening an editor, creating tags, pushing refs, or changing GitLab.""",
         default=[],
         help="create only this PostgreSQL variant; may be repeated",
     )
-    parser.set_defaults(execute=run_from_arguments)
+    parser.set_defaults(execute=run_from_arguments, require_current_family=True)
 
 
 def run_from_arguments(context: ReleaseContext, parsed_arguments: argparse.Namespace) -> None:

@@ -26,6 +26,35 @@ check-merge-train-duplicate:
     reports:
       dotenv: merge-train.env
 
+# The family is immutable pipeline metadata; regression overrides only change dependencies.
+prepare-cta-version:
+  stage: .pre
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+  rules:
+    - if: '$CUSTOM_CTA_IMAGE_TAG != "" || $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
+      when: never
+    - when: on_success
+  image: $IMAGE_DEFAULT
+  variables:
+    GIT_SUBMODULE_STRATEGY: none
+  before_script:
+    - !reference [.merge-train-guard, before_script]
+  script:
+    - source ci/utils/cta_version.sh
+    - CTA_RELEASE_FAMILY=$(read_cta_release_family project.json)
+    - CTA_VERSION_BASE="${CI_COMMIT_TAG:-${CTA_RELEASE_FAMILY}-${CTA_BUILD_ID}}"
+    - CTA_VERSION=$(resolve_cta_version "$CTA_VERSION_BASE" "$[[ inputs.platform ]]" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
+    - |
+      printf 'CTA_RELEASE_FAMILY=%s\nCTA_VERSION_BASE=%s\nCTA_VERSION=%s\n' \
+        "$CTA_RELEASE_FAMILY" "$CTA_VERSION_BASE" "$CTA_VERSION" > cta-version.env
+      echo "CTA version: ${CTA_VERSION}"
+  artifacts:
+    expire_in: 30 days
+    reports:
+      dotenv: cta-version.env
+
 modify-project-json:
   stage: .pre
   rules:

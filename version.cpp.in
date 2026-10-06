@@ -6,7 +6,7 @@
 #include "version.hpp"
 
 // Populated by CMake configure_file
-const char CTA_VERSION[] = "@CTA_VERSION@-@CTA_RELEASE@";
+const char CTA_VERSION[] = "@CTA_VERSION@";
 
 const int CTA_CATALOGUE_SCHEMA_VERSION_MAJOR = @CTA_CATALOGUE_SCHEMA_VERSION_MAJOR@;
 const int CTA_CATALOGUE_SCHEMA_VERSION_MINOR = @CTA_CATALOGUE_SCHEMA_VERSION_MINOR@;

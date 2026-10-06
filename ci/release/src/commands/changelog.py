@@ -79,7 +79,7 @@ without opening an editor or changing GitLab.""",
         default="main",
         help="branch to prepare and merge the changelog into (default: main)",
     )
-    parser.set_defaults(execute=run_from_arguments)
+    parser.set_defaults(execute=run_from_arguments, require_current_family=True)
 
 
 def run_from_arguments(context: ReleaseContext, parsed_arguments: argparse.Namespace) -> None:
