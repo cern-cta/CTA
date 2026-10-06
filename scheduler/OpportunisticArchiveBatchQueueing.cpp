@@ -4,6 +4,7 @@
  */
 
 #include "catalogue/Catalogue.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/utils/Timer.hpp"
