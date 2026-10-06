@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-"""System tests for cta-restore-files.
+"""System tests for cta-eos-restore-files.
 
 The tool lists and restores the entries of the CTA tape file recycle bin. A restore
 recreates the file in the EOS namespace (through the EOS gRPC API, authorized by the
@@ -44,13 +44,13 @@ class DeletedFile:
 
 @dataclass(frozen=True)
 class RestoreFilesTool:
-    """Runs cta-restore-files on a host with a fixed set of connection options."""
+    """Runs cta-eos-restore-files on a host with a fixed set of connection options."""
 
     host: CtaCliHost
     connection_options: str
 
     def _command(self, selection: str, subcommand: str) -> str:
-        return f"cta-restore-files {self.connection_options} {subcommand} {selection}"
+        return f"cta-eos-restore-files {self.connection_options} {subcommand} {selection}"
 
     def list(self, selection: str) -> list[dict[str, Any]]:
         """Return the matching recycle-bin entries, parsed from JSON Lines."""
@@ -96,7 +96,7 @@ def restore_files_tool(
     eos_mgm: EosMgmHost,
     disk_instance_name: str,
 ) -> Iterator[RestoreFilesTool]:
-    """Provide a ready-to-use cta-restore-files, including EOS gRPC authorization.
+    """Provide a ready-to-use cta-eos-restore-files, including EOS gRPC authorization.
 
     Restoring a file that is gone from the namespace requires the EOS gRPC API, which
     is only reachable with a mapped gRPC key from an authorized gateway. Both are set
@@ -111,10 +111,10 @@ def restore_files_tool(
     client_address = cta_cli.exec_with_output(
         "grep -w \"$(cat /etc/hostname)\" /etc/hosts | awk '{print $1}' | head -1"
     )
-    assert client_address, "Failed to determine the address of the cta-restore-files host"
+    assert client_address, "Failed to determine the address of the cta-eos-restore-files host"
 
     grpc_key = uuid.uuid4().hex
-    keytab_file = Path(f"/tmp/cta-restore-files-namespace-{uuid.uuid4().hex}.keytab")
+    keytab_file = Path(f"/tmp/cta-eos-restore-files-namespace-{uuid.uuid4().hex}.keytab")
     keytab_entry = f"{disk_instance_name} http://{disk_instance_name}:{EOS_GRPC_PORT} {grpc_key}\n"
 
     eos_mgm.exec(f"eos -r 0 0 vid set map -grpc key:{grpc_key} vuid:{EOS_GRPC_UID} vgid:{EOS_GRPC_GID}")

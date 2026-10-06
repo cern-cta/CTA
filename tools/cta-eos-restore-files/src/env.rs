@@ -9,7 +9,7 @@ use clap::CommandFactory;
 use clap_complete::{Shell, generate};
 use clap_mangen::Man;
 
-const NAME: &str = "cta-restore-files";
+const NAME: &str = env!("CARGO_PKG_NAME");
 
 fn render_page(
     cmd: &clap::Command,
@@ -32,10 +32,10 @@ pub(crate) fn gen_man_pages(out_dir: &std::path::Path) -> anyhow::Result<()> {
 
     fs::create_dir_all(out_dir)?;
 
-    // Top-level page: cta-restore-files.1
+    // Top-level page: cta-eos-restore-files.1
     render_page(&applet, NAME, out_dir)?;
 
-    // One page per subcommand: cta-restore-files-list.1, cta-restore-files-restore.1, ...
+    // One page per subcommand
     for sub in applet.get_subcommands() {
         let full_name = format!("{NAME}-{}", sub.get_name());
         let page = sub

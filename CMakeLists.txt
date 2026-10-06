@@ -209,7 +209,7 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "source")
   corrosion_import_crate(MANIFEST_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Cargo.toml" LOCKED)
 
   # Rust-based tools
-  set(CTA_RUST_TOOLS cta-restore-files)
+  set(CTA_RUST_TOOLS cta-eos-restore-files)
 
   foreach(tool IN LISTS CTA_RUST_TOOLS)
     install(PROGRAMS $<TARGET_FILE:${tool}> DESTINATION ${CMAKE_INSTALL_BINDIR})

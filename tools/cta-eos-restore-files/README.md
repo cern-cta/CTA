@@ -1,4 +1,4 @@
-# cta-restore-files
+# cta-eos-restore-files
 
 Command-line tool to restore deleted tape files in the
 [CTA](https://gitlab.cern.ch/cta/CTA) catalogue and in the EOS namespace.
@@ -17,13 +17,13 @@ two steps per file:
 ## Usage
 
 ```bash
-cta-restore-files --cta-frontend-endpoint https://cta-frontend.example.org:50051 \
+cta-eos-restore-files --cta-frontend-endpoint https://cta-frontend.example.org:50051 \
                   --jwt-token-file /etc/cta/token.jwt \
                   --namespace-keytab-file namespace.keytab \
                   list [--json] \
                   --vid V01001
 
-cta-restore-files ... restore --archive-file-id 4294967296
+cta-eos-restore-files ... restore --archive-file-id 4294967296
 ```
 
 `list` prints the matching recycle-bin entries as a table, or as JSON Lines with

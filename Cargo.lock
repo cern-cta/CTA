@@ -353,17 +353,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cta-protobuf"
-version = "0.1.0"
-dependencies = [
- "prost",
- "tonic",
- "tonic-prost",
- "tonic-prost-build",
-]
-
-[[package]]
-name = "cta-restore-files"
+name = "cta-eos-restore-files"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -381,6 +371,16 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "url",
+]
+
+[[package]]
+name = "cta-protobuf"
+version = "0.1.0"
+dependencies = [
+ "prost",
+ "tonic",
+ "tonic-prost",
+ "tonic-prost-build",
 ]
 
 [[package]]

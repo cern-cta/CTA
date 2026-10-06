@@ -105,7 +105,7 @@ pub trait StreamResponseExt: Sized {
     /// Borrows the stream and wraps it in the adapter.
     fn stream_response(&mut self) -> CtaResponseIter<&mut Self>;
 
-    /// Takes ownership of the stream; the result has no borrow and can be returned.
+    /// Takes ownership of the stream
     fn into_stream_response(self) -> CtaResponseIter<Self>;
 }
 

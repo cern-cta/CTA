@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 CERN
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-//! Command line interface of cta-restore-files.
+//! Command line interface of cta-eos-restore-files.
 //!
 //! [`Cli`] holds the global options (connection, credentials and the filters
 //! that select the recycle-bin entries to act on) and the [`Command`] to run.
@@ -84,7 +84,7 @@ pub(crate) struct ConfigOptions {
     pub(crate) namespace_keytab_file: PathBuf,
 }
 
-/// `cta-restore-files`: restore deleted tape files from the CTA catalogue and EOS storage
+/// `cta-eos-restore-files`: restore deleted tape files from the CTA catalogue and EOS storage
 #[derive(Args)]
 #[command(flatten_help = true)]
 pub(crate) struct FilesCli {
@@ -112,7 +112,7 @@ pub(crate) enum FilesCommand {
     Restore(CommonOptions),
 }
 
-/// `cta-restore-files-env`: helper command for generating documentation and completion scripts.
+/// `cta-eos-restore-files-env`: helper command for generating documentation and completion scripts.
 #[derive(Args)]
 pub(crate) struct EnvCli {
     #[command(subcommand)]
@@ -131,9 +131,9 @@ pub(crate) enum EnvCommand {
 #[command(multicall = true)]
 #[command(styles = CLAP_STYLING)]
 pub(crate) enum Cli {
-    #[command(name = "cta-restore-files")]
+    #[command(name = "cta-eos-restore-files")]
     Commands(Box<FilesCli>),
 
-    #[command(name = "cta-restore-files-env")]
+    #[command(name = "cta-eos-restore-files-env")]
     Env(EnvCli),
 }

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 [package]
-  name                    = "cta-restore-files"
+  name                    = "cta-eos-restore-files"
   description             = "Command-line tool to restore deleted tape files in the CTA catalogue and the EOS namespace"
   version.workspace       = true
   edition.workspace       = true

@@ -8,7 +8,7 @@
     "lib/rust/*",
 
     # tools
-    "tools/cta-restore-files",
+    "tools/cta-eos-restore-files",
   ]
 
   # Metadata inherited by every member via `field.workspace = true`.
@@ -32,9 +32,9 @@
   [workspace.dependencies]
     # internal
     cern-st-grpc = { path = "lib/rust/cern-st-grpc" }
-    cta-client      = { path = "lib/rust/cta-client" }
+    cta-client   = { path = "lib/rust/cta-client" }
     cta-protobuf = { path = "lib/rust/cta-protobuf" }
-    eos-client = { path = "lib/rust/eos-client" }
+    eos-client   = { path = "lib/rust/eos-client" }
     eos-protobuf = { path = "lib/rust/eos-protobuf" }
     # gRPC / protobuf
     prost             = "^0.14"
@@ -49,20 +49,20 @@
     http-body      = "^1"
     http-body-util = "^0.1"
     # error handling, logging, misc
-    anyhow     = "^1.0"
-    bon        = "^3.10"
-    chrono     = "^0.4"
-    clap       = "^4.6"
+    anyhow        = "^1.0"
+    bon           = "^3.10"
+    chrono        = "^0.4"
+    clap          = "^4.6"
     clap_complete = "^4.6"
     clap_mangen   = { version = "^0.3", features = ["env"] }
-    env_logger = "^0.11"
-    log        = "^0.4"
-    nix        = "^0.31"
-    serde      = "^1.0"
-    serde_json = "^1.0"
-    strum      = "^0.28"
-    thiserror  = "^2.0"
-    url        = "^2.5"
+    env_logger    = "^0.11"
+    log           = "^0.4"
+    nix           = "^0.31"
+    serde         = "^1.0"
+    serde_json    = "^1.0"
+    strum         = "^0.28"
+    thiserror     = "^2.0"
+    url           = "^2.5"
 
   # Lint policy for the whole workspace. Members opt in with
   # `[lints] workspace = true`.
