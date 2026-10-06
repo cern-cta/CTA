@@ -45,7 +45,7 @@ spec:
     if [[ -n "$[[ inputs.custom-cta-image-tag ]]" ]]; then
       IMAGE_TAG="$[[ inputs.custom-cta-image-tag ]]"
     else
-      IMAGE_TAG="${CTA_VERSION:?Missing prepared CTA_VERSION}"
+      IMAGE_TAG="${CTA_VERSION:?Missing CTA_VERSION}"
     fi
   # Export all variables here so that it is clear which ones are available
   - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG CTA_VALUES_CHAIN EXTRA_SPAWN_ARGS

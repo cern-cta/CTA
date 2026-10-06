@@ -1,21 +1,13 @@
 # SPDX-FileCopyrightText: 2022 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Callers supply one version-release string; CI applies its own naming conventions.
-if(DEFINED CTA_RELEASE OR DEFINED VCS_VERSION)
-  message(FATAL_ERROR
-    "CTA_RELEASE and VCS_VERSION are no longer supported. "
-    "Pass -DCTA_VERSION=<version>-<release> "
-    "and remove the obsolete variables from the CMake cache.")
-endif()
-
 set(CTA_VERSION "" CACHE STRING "CTA version-release")
 
 # RPM fields allow alphanumerics and . _ + ~ ^, with one hyphen separating the fields.
 if(NOT CTA_VERSION MATCHES "^[A-Za-z0-9._+~^]+-[A-Za-z0-9._+~^]+$")
   message(FATAL_ERROR
     "CTA_VERSION must contain two nonempty RPM fields separated by exactly one hyphen, "
-    "using only letters, numbers, '.', '_', '+', '~', or '^'; for example alice-experiment or 6-dev.")
+    "using only letters, numbers, '.', '_', '+', '~', or '^'; for example 6-dev.")
 endif()
 
 set(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION "v0.0" CACHE STRING

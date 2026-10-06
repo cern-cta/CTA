@@ -48,7 +48,7 @@ enrich-sboms-cern-info:
         --in "sboms-output/${input}" \
         --out "$output" \
         --component-name "$TARGET_NAME" \
-        --component-version "${CTA_VERSION:?Missing prepared CTA_VERSION}" \
+        --component-version "${CTA_VERSION:?Missing CTA_VERSION}" \
         --author-name "$GITLAB_USER_NAME" \
         --author-email "$GITLAB_USER_EMAIL" \
         --project-url "$CI_PROJECT_URL"

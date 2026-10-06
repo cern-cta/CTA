@@ -71,10 +71,10 @@ Command-line options override `ci/.cta-dev.env`, which overrides the built-in de
 
 Most development builds should use the default version and tag (`6-dev`).
 When a distinct version is needed, pass the complete value with `--cta-version`.
-For example, this sets package version `alice`, package release `experiment`, and image tag `alice-experiment`:
+For example, this sets package version `6`, package release `local.test`, and image tag `6-local.test`:
 
 ```bash
-cta-dev up --cta-version alice-experiment
+cta-dev up --cta-version 6-local.test
 ```
 
 This labels the build from your checkout; it does not select a Git tag or change the source revision.

@@ -6,14 +6,13 @@
 set -e
 
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/../utils/cta_version.sh"
 
 usage() {
   echo
   echo "Usage: $0 --repository-url <repo> --package <package> --version <version>"
   echo
   echo "Checks an exact package version-release in a given (dnf/yum) repo."
-  echo "Use the full version including platform, without v (e.g. 6.12.0.0-1.pgall.el9)."
+  echo "Use the exact RPM version-release (e.g. 6.12.0.0-1.pgall.el9)."
   echo
   exit 1
 }
@@ -73,13 +72,6 @@ check_package_available() {
   if [[ -z "${version}" ]]; then
     echo "Failure: Missing mandatory argument --version"
     usage
-  fi
-
-  validate_cta_version "$version" || exit 1
-  # Publication currently supports enterprise Linux RPM repositories only.
-  if [[ ! "$version" =~ [.]el[0-9]+$ ]]; then
-    log_error "--version must use an enterprise Linux platform suffix, such as .el9."
-    exit 1
   fi
 
   echo "Checking whether $package version $version is available in the following repo:"

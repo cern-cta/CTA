@@ -43,7 +43,6 @@ usage() {
   echo "      --skip-cmake                        Skip configuration for a standalone binary build."
   echo
   echo "The host platform and native package format are detected automatically."
-  echo "--cta-version is passed unchanged to CMake as a version-release string."
   echo "Currently, only the enterprise Linux backend is implemented."
   echo
 }

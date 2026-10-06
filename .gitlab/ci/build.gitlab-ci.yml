@@ -82,7 +82,7 @@ build-cta-rpms:
     CCACHE_MAXSIZE: "2G"
   before_script:
     - !reference [.merge-train-guard, before_script]
-    - 'echo "CTA version: ${CTA_VERSION:?Missing prepared CTA_VERSION}"'
+    - 'echo "CTA version: ${CTA_VERSION:?Missing CTA_VERSION}"'
     - git -C "$XRD_SSI_PATH" fetch --tags
     - export XRD_SSI_VERSION=$(git --git-dir=$XRD_SSI_PATH/.git --work-tree=$XRD_SSI_PATH describe --tags --abbrev=0)
     - |
@@ -184,7 +184,7 @@ build-cta-rpms-pgsched:
     - !reference [.merge-train-guard, before_script]
     # This compilation check deliberately differs from the primary pipeline variant.
     - source ci/utils/cta_version.sh
-    - CTA_VERSION=$(resolve_cta_version "${CTA_VERSION_BASE:?Missing prepared CTA_VERSION_BASE}" "$[[ inputs.platform ]]" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
+    - CTA_VERSION=$(resolve_cta_version "${CTA_VERSION_BASE:?Missing CTA_VERSION_BASE}" "$[[ inputs.platform ]]" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
     - export CTA_VERSION
     - !reference [build-cta-rpms, before_script]
   # Disable artifacts

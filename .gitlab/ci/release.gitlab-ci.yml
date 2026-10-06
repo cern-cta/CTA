@@ -30,7 +30,7 @@ internal-release-cta:
       ./ci/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                     --local-source-dir build/$[[ inputs.platform ]]/RPM/RPMS/x86_64
                                     --eos-target-dir /eos/user/c/ctareg/www/cta-repo/RPMS/x86_64
-                                    --cta-version "${CTA_VERSION:?Missing prepared CTA_VERSION}"
+                                    --cta-version "${CTA_VERSION:?Missing CTA_VERSION}"
   after_script:
     - |
       case "$CI_JOB_STATUS" in
@@ -55,13 +55,13 @@ internal-release-cta:
   before_script:
     - !reference [.merge-train-guard, before_script]
   script:
-    - REPOSITORY_PATH="${RELEASE_CHANNEL}/cta-${CTA_RELEASE_FAMILY:?Missing prepared CTA_RELEASE_FAMILY}/$[[ inputs.platform ]]/cta/x86_64"
+    - REPOSITORY_PATH="${RELEASE_CHANNEL}/cta-${CTA_RELEASE_FAMILY:?Missing CTA_RELEASE_FAMILY}/$[[ inputs.platform ]]/cta/x86_64"
     - echo "Publishing CTA version ${CTA_VERSION} to the ${RELEASE_CHANNEL} CTA repository"
     - EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD}
       ./ci/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                     --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
                                     --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/${REPOSITORY_PATH}
-                                    --cta-version "${CTA_VERSION:?Missing prepared CTA_VERSION}"
+                                    --cta-version "${CTA_VERSION:?Missing CTA_VERSION}"
     - REPO_URL="https://cta-public-repo.web.cern.ch/${REPOSITORY_PATH}"
     - ./ci/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "${CTA_VERSION}"
   after_script:
@@ -158,8 +158,8 @@ public-release-cta-stable:
         --password-stdin
         "$DEST_REGISTRY"
   script:
-    - SRC_IMAGE="${DOCKER_IMAGE_REGISTRY}/${DOCKER_PRIVATE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_VERSION:?Missing prepared CTA_VERSION}"
-    - DST_IMAGE="${DEST_REGISTRY}/${DEST_IMAGE_PREFIX}/${TARGET_NAME}:${CTA_VERSION:?Missing prepared CTA_VERSION}"
+    - SRC_IMAGE="${DOCKER_IMAGE_REGISTRY}/${DOCKER_PRIVATE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_VERSION:?Missing CTA_VERSION}"
+    - DST_IMAGE="${DEST_REGISTRY}/${DEST_IMAGE_PREFIX}/${TARGET_NAME}:${CTA_VERSION:?Missing CTA_VERSION}"
     - echo "Publishing ${SRC_IMAGE} -> ${DST_IMAGE}"
     - buildah pull --authfile "$SOURCE_REGISTRY_AUTH_FILE" "$SRC_IMAGE"
     - |
