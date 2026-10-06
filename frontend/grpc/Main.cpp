@@ -9,6 +9,7 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "catalogue/SchemaVersion.hpp"
+#include "common/OperationModeMethodFilter.hpp"
 #include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/log/Logger.hpp"
@@ -220,6 +221,10 @@ int main(const int argc, char* const* const argv) {
   tlsOptions.watch_root_certs();
   tlsOptions.watch_identity_key_cert_pairs();
   creds = TlsServerCredentials(tlsOptions);
+
+  // Reject the RPC methods which do not belong to this frontend's operation mode before they reach any handler
+  creds->SetAuthMetadataProcessor(
+    std::make_shared<cta::frontend::grpc::common::OperationModeMethodFilter>(frontendService->getOperationMode()));
 
   // enable health checking, needed by CI
   grpc::EnableDefaultHealthCheckService(true);
