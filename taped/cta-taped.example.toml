@@ -31,6 +31,28 @@
   # This value is required and has no useful default.
   logical_library_name = "example-library"
 
+  # Automatically eject any cartridge in the drive when the drive transitions from Down to Up.
+  # When false, only empty drives are allowed to go Up. The drive will put itself Down if it finds a cartridge 
+  # in the drive, requiring an operator to eject the cartridge and put the drive Up again.
+  # If omitted, false is used.
+  clean_on_up = false
+
+# These options select which drives may start automatically when cta-taped starts.
+# They inspect the desired state saved in the catalogue.
+[drive.startup]
+  # When the desired state is Up, preserve it and attempt to bring the drive Up.
+  # This can resume operation after a crash or honour an Up request made before startup.
+  # When false, set the drive Down and require a new operator Up request.
+  # Recovering a drive containing a cartridge also requires drive.clean_on_up = true.
+  # If omitted, false is used.
+  recover_existing_up = false
+
+  # When the desired state is Down, attempt to bring the drive Up after a clean shutdown, or if it is 
+  # Down without a recorded reason. Also applies to newly registered drives.
+  # Drives marked Down by operators or failures remain Down.
+  # If omitted, false is used.
+  auto_up = false
+
 
 [catalogue]
   # Path to the CTA Catalogue configuration file. The file contains a single connection string that

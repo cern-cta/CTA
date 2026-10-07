@@ -17,6 +17,8 @@ namespace cta::common::dataStructures {
 enum class DriveDownReason {
   /// The daemon is starting and the drive is not yet ready for scheduling.
   Startup,
+  /// Startup requires a fresh operator Up request because automatic recovery is disabled.
+  StartupRecoveryDisabled,
   /// The daemon is shutting down normally.
   Shutdown,
   /// A readiness probe found a tape in the drive without automatic cleanup enabled.
@@ -38,7 +40,7 @@ enum class DriveDownReason {
 /**
  * @brief Get the logging severity for a drive-down reason.
  * @param reason Reason category to classify.
- * @return INFO for startup/shutdown and ERR for failures.
+ * @return INFO for startup, disabled startup recovery and shutdown; ERR for failures.
  * @throws std::invalid_argument If the reason is unknown.
  */
 int driveDownReasonSeverity(DriveDownReason reason);

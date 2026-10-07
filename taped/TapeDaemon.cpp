@@ -78,7 +78,7 @@ bool TapeDaemon::isReady() const {
 int TapeDaemon::run() {
   const utils::ScopeExit clearReadiness([this] { m_registered.store(false); });
   try {
-    if (!registerDrive(false)) {
+    if (!registerDrive()) {
       return shutdown(ExitCause::RegistrationFailure,
                       DownPublication::None,
                       "Drive name belongs to a different host or logical library");
@@ -233,7 +233,7 @@ void TapeDaemon::waitUntilDriveIsRequestedUp() {
   }
 }
 
-bool TapeDaemon::registerDrive(bool putUpIfPossible) {
+bool TapeDaemon::registerDrive() {
   m_registered.store(false);
   auto& scheduler = m_schedulerContext.scheduler();
   m_lc.log(log::INFO, "Registering the drive in the catalogue.");
@@ -245,13 +245,29 @@ bool TapeDaemon::registerDrive(bool putUpIfPossible) {
   const auto previous = m_catalogue.DriveState()->getTapeDrive(m_driveInfo.driveName);
   // Desired Up survives crashes and also represents an operator's pending up request.
   if (previous && previous->desiredUp) {
+    if (!m_config.drive.startup.recover_existing_up) {
+      // Keep the interrupted entry and its metadata while requiring fresh operator intent.
+      TapeDrivesCatalogueState(m_catalogue)
+        .requestDriveDown(m_driveInfo.driveName,
+                          common::dataStructures::DriveDownReason::StartupRecoveryDisabled,
+                          m_lc);
+      scheduler.reportDriveStatus(m_driveInfo,
+                                  common::dataStructures::MountType::NoMount,
+                                  common::dataStructures::DriveStatus::Down,
+                                  m_lc);
+      scheduler.reportSchedulerBackendName(m_driveInfo.driveName, m_lc);
+      m_lc.log(log::INFO, "Startup recovery disabled by drive.startup.recover_existing_up; operator Up required.");
+      m_registered.store(true);
+      return true;
+    }
+
     // Keep the existing entry and operator intent. Starting does not change desired-up.
     scheduler.reportDriveStatus(m_driveInfo,
                                 common::dataStructures::MountType::NoMount,
                                 common::dataStructures::DriveStatus::Starting,
                                 m_lc);
     scheduler.reportSchedulerBackendName(m_driveInfo.driveName, m_lc);
-    m_lc.log(log::INFO, "Registered interrupted drive for recovery before scheduling.");
+    m_lc.log(log::INFO, "Startup recovery enabled by drive.startup.recover_existing_up; drive preparation required.");
     m_registered.store(true);
     return true;
   }
@@ -271,7 +287,10 @@ bool TapeDaemon::registerDrive(bool putUpIfPossible) {
   } else if (!currentDesiredDriveState.reason || currentDesiredDriveState.reason->empty()
              || common::dataStructures::isCleanDriveShutdownReason(*currentDesiredDriveState.reason)) {
     driveState.reason = common::dataStructures::formatDriveDownReason(common::dataStructures::DriveDownReason::Startup);
-    driveState.up = putUpIfPossible;
+    driveState.up = m_config.drive.startup.auto_up;
+    m_lc.log(log::INFO,
+             driveState.up ? "Automatic Up requested by drive.startup.auto_up; drive preparation required." :
+                             "Automatic Up disabled by drive.startup.auto_up; operator Up required.");
   } else {
     driveState.reason = currentDesiredDriveState.reason;
   }

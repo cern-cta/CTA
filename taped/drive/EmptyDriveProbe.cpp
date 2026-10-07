@@ -5,81 +5,34 @@
 
 #include "EmptyDriveProbe.hpp"
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-cta::tape::daemon::EmptyDriveProbe::EmptyDriveProbe(cta::log::Logger& log,
-                                                    const cta::common::dataStructures::DriveInfo& driveInfo,
-                                                    System::virtualWrapper& sysWrapper)
-    : m_log(log),
-      m_driveInfo(driveInfo),
-      m_sysWrapper(sysWrapper) {}
+#include "DriveInterface.hpp"
+#include "common/exception/Exception.hpp"
+#include "taped/scsi/Device.hpp"
 
-//------------------------------------------------------------------------------
-// driveIsEmpty()
-//------------------------------------------------------------------------------
-bool cta::tape::daemon::EmptyDriveProbe::driveIsEmpty() noexcept {
-  std::string errorMessage;
+#include <exception>
 
+namespace cta::tape::daemon {
+
+EmptyDriveProbeResult probeEmptyDrive(const common::dataStructures::DriveInfo& driveInfo,
+                                      System::virtualWrapper& sysWrapper) {
+  using Status = EmptyDriveProbeResult::Status;
   try {
-    return exceptionThrowingDriveIsEmpty();
-  } catch (cta::exception::Exception& ex) {
-    errorMessage = ex.getMessage().str();
-  } catch (std::exception& se) {
-    errorMessage = se.what();
+    SCSI::DeviceVector devices(sysWrapper);
+    const auto device = devices.findBySymlink(driveInfo.devFilename);
+    auto drive = drive::createDrive(device, sysWrapper);
+    if (!drive) {
+      return {Status::Failed, "Failed to instantiate drive object"};
+    }
+
+    // Only inspect presence: even an empty drive must retain its current configuration.
+    return {drive->hasTapeInPlace() ? Status::CartridgePresent : Status::Empty, {}};
+  } catch (const cta::exception::Exception& ex) {
+    return {Status::Failed, ex.getMessageValue()};
+  } catch (const std::exception& ex) {
+    return {Status::Failed, ex.what()};
   } catch (...) {
-    errorMessage = "Caught an unknown exception";
-  }
-
-  m_probeErrorMsg = std::string("EmptyDriveProbe: ") + errorMessage;
-  // Reaching this point means the probe failed and an exception was thrown
-  std::vector<cta::log::Param> params = {cta::log::Param("tapeDrive", m_driveInfo.driveName),
-                                         cta::log::Param(cta::semconv::log::exceptionMessage, errorMessage)};
-  m_log(cta::log::ERR, "Probe failed", params);
-  return false;
-}
-
-//------------------------------------------------------------------------------
-// getProbeErrorMsg()
-//------------------------------------------------------------------------------
-std::optional<std::string> cta::tape::daemon::EmptyDriveProbe::getProbeErrorMsg() {
-  return m_probeErrorMsg;
-}
-
-//------------------------------------------------------------------------------
-// exceptionThrowingDriveIsEmpty
-//------------------------------------------------------------------------------
-bool cta::tape::daemon::EmptyDriveProbe::exceptionThrowingDriveIsEmpty() {
-  std::vector<cta::log::Param> params;
-  params.emplace_back("tapeDrive", m_driveInfo.driveName);
-
-  std::unique_ptr<drive::DriveInterface> drivePtr = createDrive();
-  drive::DriveInterface& drive = *drivePtr.get();
-
-  if (drive.hasTapeInPlace()) {
-    m_log(cta::log::INFO, "Probe found tape drive with a tape inside", params);
-    return false;
-  } else {
-    m_log(cta::log::INFO, "Probe found tape drive is empty", params);
-    return true;
+    return {Status::Failed, "Unknown exception while probing drive"};
   }
 }
 
-//------------------------------------------------------------------------------
-// createDrive
-//------------------------------------------------------------------------------
-std::unique_ptr<cta::tape::drive::DriveInterface> cta::tape::daemon::EmptyDriveProbe::createDrive() {
-  SCSI::DeviceVector dv(m_sysWrapper);
-  SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveInfo.devFilename);
-
-  // Instantiate the drive object
-  std::unique_ptr<cta::tape::drive::DriveInterface> drive(drive::createDrive(driveInfo, m_sysWrapper));
-
-  if (nullptr == drive.get()) {
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to instantiate drive object";
-    throw ex;
-  }
-
-  return drive;
-}
+}  // namespace cta::tape::daemon

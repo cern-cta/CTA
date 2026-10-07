@@ -146,7 +146,7 @@ protected:
 
   bool canUseHardware() { return session->m_driveReservation.canUseHardware(); }
 
-  bool clean(const std::optional<std::string>& vid = std::nullopt) { return session->cleanDrive(vid); }
+  bool prepare(const std::optional<std::string>& vid = std::nullopt) { return session->prepareDrive(vid); }
 
   std::shared_ptr<const TapeSessionTracker> activeTracker() { return std::atomic_load(&session->m_activeTracker); }
 
@@ -175,7 +175,7 @@ protected:
 
   bool recover() {
     session->m_driveReservation.acquire();
-    return session->cleanDrive("V00001");
+    return session->prepareDrive("V00001");
   }
 };
 
@@ -351,6 +351,55 @@ TEST_F(DriveSessionTest, ConstructionDefersPreparationUntilRun) {
   EXPECT_TRUE(session->isLive());
 }
 
+TEST_F(DriveSessionTest, EmptyProbeDoesNotResetDriveConfiguration) {
+  auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
+  drive->setFailurePoint(drive::FakeDrive::FailurePoint::ClearEncryptionKey);
+  drive->setFailurePoint(drive::FakeDrive::FailurePoint::DisableLogicalBlockProtection);
+  EXPECT_TRUE(prepare());
+  EXPECT_EQ(DriveStatus::Up, reported().driveStatus);
+}
+
+TEST_F(DriveSessionTest, LoadedDriveRequiresCleanOnUpEvenWithStartupRecoveryEnabled) {
+  config.drive.startup.recover_existing_up = true;
+  config.drive.startup.auto_up = true;
+  auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
+  drive->setTapeInPlace(true);
+  session->run(stop.get_token());
+  EXPECT_FALSE(reported().desiredUp);
+  EXPECT_EQ(DriveStatus::Down, reported().driveStatus);
+  ASSERT_TRUE(reported().reasonUpDown);
+  EXPECT_EQ(formatDriveDownReason(DriveDownReason::TapeDetected), reported().reasonUpDown);
+  EXPECT_THAT(driveState().reports, testing::Not(testing::Contains(DriveStatus::Up)));
+  EXPECT_FALSE(canUseHardware());
+}
+
+TEST_F(DriveSessionTest, LoadedDriveCanBePreparedWhenCleanOnUpIsEnabled) {
+  config.drive.clean_on_up = true;
+  auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
+  drive->setTapeInPlace(true);
+  EXPECT_TRUE(prepare());
+  EXPECT_EQ(DriveStatus::Up, reported().driveStatus);
+  EXPECT_TRUE(reported().desiredUp);
+}
+
+TEST_F(DriveSessionTest, ProbeFailureReturnsDownWithoutRecovery) {
+  auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
+  drive->setFailurePoint(drive::FakeDrive::FailurePoint::HasTapeInPlace);
+  session->run(stop.get_token());
+  EXPECT_FALSE(reported().desiredUp);
+  EXPECT_EQ(DriveStatus::Down, reported().driveStatus);
+  ASSERT_TRUE(reported().reasonUpDown);
+  EXPECT_THAT(*reported().reasonUpDown, testing::HasSubstr("Drive probe failed"));
+  EXPECT_FALSE(canUseHardware());
+}
+
+TEST_F(DriveSessionTest, ActiveRecoveryStillCleansLoadedDriveWithCleanOnUpDisabled) {
+  auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
+  drive->setTapeInPlace(true);
+  EXPECT_TRUE(recover());
+  EXPECT_EQ(DriveStatus::Up, reported().driveStatus);
+}
+
 TEST_F(DriveSessionTest, CleanupOwnerFinalizesSuccessfulPreparationAndFailedRecovery) {
   std::shared_ptr<const TapeSessionTracker> completedTracker;
   driveState().onReport = [&](DriveStatus status) {
@@ -360,7 +409,7 @@ TEST_F(DriveSessionTest, CleanupOwnerFinalizesSuccessfulPreparationAndFailedReco
       EXPECT_EQ(cta::tape::session::TapeSessionState::Preparing, completedTracker->state());
     }
   };
-  ASSERT_TRUE(clean());
+  ASSERT_TRUE(prepare());
   ASSERT_TRUE(completedTracker);
   EXPECT_EQ(cta::tape::session::TapeSessionState::Finalizing, completedTracker->state());
   EXPECT_FALSE(activeTracker());
@@ -403,19 +452,44 @@ TEST_F(DriveSessionTest, DownDuringPreparationPreventsUpPublication) {
   EXPECT_EQ(DriveStatus::Down, reported().driveStatus);
 }
 
+TEST_F(DriveSessionTest, DownBeforeProbeReleasesDrivePreventsUpPublication) {
+  class DownOnReleaseDrive final : public drive::FakeDrive {
+  public:
+    explicit DownOnReleaseDrive(std::function<void()> onRelease)
+        : FakeDrive(5000, OnFlush),
+          m_onRelease(std::move(onRelease)) {
+      setTapeInPlace(false);
+    }
+
+    ~DownOnReleaseDrive() override { m_onRelease(); }
+
+  private:
+    std::function<void()> m_onRelease;
+  };
+
+  delete system.m_pathToDrive.at("/dev/nst0");
+  system.m_pathToDrive["/dev/nst0"] = new DownOnReleaseDrive([&] { requestUp(false, "Maintenance"); });
+  session->run(stop.get_token());
+  EXPECT_THAT(driveState().reports, testing::Not(testing::Contains(DriveStatus::Up)));
+  EXPECT_EQ("Maintenance", reported().reasonUpDown);
+  EXPECT_EQ(DriveStatus::Down, reported().driveStatus);
+  EXPECT_FALSE(canUseHardware());
+}
+
 TEST_F(DriveSessionTest, FailedPreparationRequestsDownAndReleasesOwnership) {
-  // A device discovery failure exercises the real cleaner's failure handling.
+  // A device discovery failure exercises the real probe's failure handling.
   system.m_stats.erase(config.drive.device);
   session->run(stop.get_token());
   EXPECT_FALSE(reported().desiredUp);
   ASSERT_TRUE(reported().reasonUpDown);
-  EXPECT_THAT(*reported().reasonUpDown, testing::HasSubstr("Drive cleanup failed"));
+  EXPECT_THAT(*reported().reasonUpDown, testing::HasSubstr("Drive probe failed"));
   EXPECT_EQ(DriveStatus::Down, reported().driveStatus);
   EXPECT_FALSE(canUseHardware());
   EXPECT_TRUE(session->isLive());
 }
 
 TEST_F(DriveSessionTest, CleanupDesiredStatePublicationFailurePropagatesUntilOwnershipIsReleased) {
+  config.drive.clean_on_up = true;
   auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
   drive->setFailurePoint(drive::FakeDrive::FailurePoint::ClearEncryptionKey);
   unsigned int desiredAttempts = 0;
@@ -440,6 +514,7 @@ TEST_F(DriveSessionTest, CleanupDesiredStatePublicationFailurePropagatesUntilOwn
 }
 
 TEST_F(DriveSessionTest, CleanupReportedDownFailurePropagatesAfterOwnershipIsReleased) {
+  config.drive.clean_on_up = true;
   auto* drive = static_cast<drive::FakeDrive*>(system.m_pathToDrive.at("/dev/nst0"));
   drive->setFailurePoint(drive::FakeDrive::FailurePoint::ClearEncryptionKey);
   unsigned int downAttempts = 0;
@@ -483,11 +558,11 @@ TEST_F(DriveSessionTest, PreparationPublicationFailurePreservesExceptionAndClear
 }
 
 TEST_F(DriveSessionTest, RecoveryCleansEvenAfterOperatorRequestsDown) {
-  ASSERT_TRUE(clean());
+  ASSERT_TRUE(prepare());
   ASSERT_TRUE(canUseHardware());
   installEmptyDrive();
   requestUp(false, "Maintenance");
-  EXPECT_FALSE(clean("V00001"));
+  EXPECT_FALSE(prepare("V00001"));
   EXPECT_FALSE(system.m_pathToDrive.contains("/dev/nst0"));
   EXPECT_TRUE(canUseHardware());
   session.reset();
@@ -496,7 +571,7 @@ TEST_F(DriveSessionTest, RecoveryCleansEvenAfterOperatorRequestsDown) {
 }
 
 TEST_F(DriveSessionTest, DestructorReleasesAndPreservesPendingUpRequest) {
-  ASSERT_TRUE(clean());
+  ASSERT_TRUE(prepare());
   requestUp(true, "Pending operator request");
   session.reset();
   EXPECT_EQ(DriveStatus::Down, reported().driveStatus);
@@ -505,7 +580,7 @@ TEST_F(DriveSessionTest, DestructorReleasesAndPreservesPendingUpRequest) {
 }
 
 TEST_F(DriveSessionTest, DestructorContainsPublicationFailure) {
-  ASSERT_TRUE(clean());
+  ASSERT_TRUE(prepare());
   driveState().onReport = [](DriveStatus) { throw std::runtime_error("unavailable"); };
   EXPECT_NO_THROW(session.reset());
   EXPECT_THAT(logger.getLog(), testing::HasSubstr("Failed to release drive session or publish Down"));
