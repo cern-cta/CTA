@@ -774,9 +774,14 @@ VALUES )SQL";
         sql += ",";
       }
     }
+    // MATERIALIZED forces this CTE to be evaluated exactly once: nextval() is volatile, and without
+    // it the planner could inline the CTE into the outer INSERT, calling nextval() once per output
+    // row instead of once per distinct request_group_id. That would give each copy of a multi-copy
+    // archive request a different ARCHIVE_REQUEST_ID, silently breaking updateMultiCopyJobSuccess
+    // and moveJobToFailedQueueTable, which both key on it.
     sql += R"SQL(
     ),
-      request_ids AS (
+      request_ids AS MATERIALIZED (
         SELECT
           request_group_id,
         nextval('archive_request_id_seq') AS archive_request_id
