@@ -528,10 +528,10 @@ public:
     params.add("diskSystemName", diskSystemName.value_or(""));
   }
 
-  static void
+  static uint64_t
   insertBatch(rdbms::Conn& conn, const std::vector<std::unique_ptr<RetrieveJobQueueRow>>& rows, bool isRepack) {
     if (rows.empty()) {
-      return;
+      return 0;
     }
 
     // detect optional columns
@@ -779,6 +779,7 @@ public:
     }
     conn.setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbInsertRetrieve);
     stmt.executeNonQuery();
+    return stmt.getNbAffectedRows();
   }
 
   /**
