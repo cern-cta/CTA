@@ -352,6 +352,7 @@ nav:
                   - 'General': dev/guides/conventions/coding/general.md
                   - 'C++': dev/guides/conventions/coding/cpp.md
                   - 'Python': dev/guides/conventions/coding/python.md
+                  - 'Rust': dev/guides/conventions/coding/rust.md
                   - 'Bash': dev/guides/conventions/coding/bash.md
                   - 'Copyright': dev/guides/conventions/coding/copyright.md
               - 'RPM Packaging': dev/guides/conventions/rpm-packaging.md

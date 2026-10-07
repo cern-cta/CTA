@@ -71,7 +71,7 @@ impl From<RecycleTapeFileConversionError> for Error {
     }
 }
 
-/// Error returned when a [`TapeFileLsItem`] cannot be converted to a [`File`]
+/// Error returned when a [`cta_protobuf::cta::admin::TapeFileLsItem`] cannot be converted to a [`crate::types::File`]
 /// because a required protobuf sub-message is absent.
 #[derive(Debug, thiserror::Error)]
 #[error("TapeFileLsItem missing field: {0}")]

@@ -104,7 +104,8 @@ archive id copy no    vid fseq block id instance disk fxid  size checksum type c
 
 For EOS-backed instances, use `cta-eos-restore-files`. It lists the recycle-bin entries and restores each file in both places that need it: the EOS namespace and the CTA catalogue. It replaces restoring the two sides by hand.
 
-1. **Select the candidates.** List the matching recycle-bin entries with `cta-eos-restore-files ... list` (see the [tool reference](#cta-eos-restore-files-reference)). Equivalent information is available from `cta-admin recycletf ls --vid <VID>` or `--fxid <FXID>`;
+1. **Select the candidates.** List the matching recycle-bin entries with `cta-eos-restore-files ... list`. Equivalent information is
+available from `cta-admin recycletf ls --vid <VID>` or `--fxid <FXID>`;
 2. **Check tape availability.** Recovery needs readable tape data. Make sure the tape holding the selected copies has not been reclaimed (reclaiming a tape permanently removes its entries from the recycle-bin) or relabelled;
 3. **Restore.** Run `cta-eos-restore-files ... restore` with the same selection flags. For each file, the tool:
     1. recreates the entry in the EOS namespace if it no longer exists (containers, checksum, the `sys.archive.file_id` and `sys.eos.btime` extended attributes and a tape replica location);
