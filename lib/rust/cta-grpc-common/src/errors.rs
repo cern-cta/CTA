@@ -29,7 +29,8 @@ pub enum Error {
     UnsupportedScheme(String),
 }
 
-/// The endpoint URL schemes [`EndpointConfig::build_channel`] can connect to
+/// The endpoint URL schemes [`EndpointConfig::build_channel`](crate::EndpointConfig::build_channel)
+/// can connect to
 pub const SUPPORTED_SCHEMES: [&str; 2] = ["http", "https"];
 
 /// Checks that `endpoint` carries a scheme this crate can connect to.
