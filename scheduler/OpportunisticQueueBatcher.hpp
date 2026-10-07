@@ -59,7 +59,9 @@ public:
     std::vector<ItemType> drainedBatch;
     {
       std::lock_guard<std::mutex> lk(m_mutex);
-      if (m_stopped) return;
+      if (m_stopped) {
+        return;
+      }
       m_stopped = true;
       drainedBatch.swap(m_pendingBatch);
     }
