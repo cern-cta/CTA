@@ -86,7 +86,7 @@ class CTAVersion:
                     f"do not append {suffix!r} manually.{suffix_hint}"
                 )
 
-            expected = "v<family>.<major>.<minor>.<patch>-<package>"
+            expected = "v<major>.N.N.N-<package>"
             example = "v6.12.0.0-1"
             if not require_base:
                 expected += "[.rcN][.pgsched|.pgcat|.pgall]"

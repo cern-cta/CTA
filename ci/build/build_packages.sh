@@ -281,7 +281,7 @@ build_source_packages() {
 }
 
 build_binary_packages() {
-  # Only clear this build's binary output; source RPMs and build trees remain reusable.
+  # Clear old RPMs so that they don't accumulate if the version string changes
   case "$package_format" in
     rpm)
       local rpm_output_dir="${build_dir:?Missing build directory}/RPM/RPMS"

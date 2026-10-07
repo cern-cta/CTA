@@ -13,26 +13,26 @@ from cta_version import CTAVersion, VersionError
 from git_repo import Git, GitError
 
 
-def read_release_family(git: Git, revision: str) -> str:
+def read_major_version(git: Git, revision: str) -> str:
     """Read release policy from the selected commit, ignoring the working tree."""
     project_file = f"{revision}:project.json"
     try:
         project = json.loads(git.run(["show", project_file]))
     except (GitError, ValueError) as error:
-        raise VersionError(f"Could not read releaseFamily from {project_file}: {error}") from error
-    family = project.get("releaseFamily") if isinstance(project, dict) else None
-    if not isinstance(family, str) or re.fullmatch(r"[1-9]\d*", family, flags=re.ASCII) is None:
-        raise VersionError(f"Invalid or missing releaseFamily in {project_file}; expected a positive integer string")
-    return family
+        raise VersionError(f"Could not read majorVersion from {project_file}: {error}") from error
+    major_version = project.get("majorVersion") if isinstance(project, dict) else None
+    if not isinstance(major_version, str) or re.fullmatch(r"[1-9]\d*", major_version, flags=re.ASCII) is None:
+        raise VersionError(f"Invalid or missing majorVersion in {project_file}; expected a positive integer string")
+    return major_version
 
 
-def validate_release_family(git: Git, revision: str, version: str) -> None:
-    """Require a new release to belong to the configured family."""
+def validate_major_version(git: Git, revision: str, version: str) -> None:
+    """Require a new release to belong to the configured major version."""
     release_version = CTAVersion.parse(version, require_base=True)
-    release_family = read_release_family(git, revision)
-    if str(release_version.xrootd) != release_family:
+    major_version = read_major_version(git, revision)
+    if str(release_version.xrootd) != major_version:
         raise VersionError(
-            f"Release {release_version.text} does not match releaseFamily {release_family!r} in {revision}:project.json"
+            f"Release {release_version.text} does not match majorVersion {major_version!r} in {revision}:project.json"
         )
 
 

@@ -64,7 +64,7 @@ spec:
     - |
       check_oracle_packages_for_public_image() {
         local image_ref="$1"
-        local private_prefix="${DOCKER_IMAGE_REGISTRY}/${DOCKER_PRIVATE_REGISTRY_PREFIX}/"
+        local private_prefix="${DOCKER_IMAGE_REGISTRY}/${DOCKER_PIPELINE_REGISTRY_PREFIX}/"
         local allowed_prefix
         for allowed_prefix in "$private_prefix" $ORACLE_PACKAGE_REGISTRY_WHITELIST; do
           if [[ "$image_ref" == "$allowed_prefix"* ]]; then
@@ -115,11 +115,11 @@ spec:
     DOCKERFILE: ci/docker/cta/$[[ inputs.platform ]]/prod.Dockerfile
     EXTRA_BUILD_ARGS: ""
     SBOM_RAW_PATH: ${CI_PROJECT_DIR}/sboms/raw/${TARGET_NAME}.cdx.json
-    DEST_REGISTRY_PASSWORD: $DOCKER_PRIVATE_LOGIN_PASSWORD
-    DEST_REGISTRY_USERNAME: $DOCKER_PRIVATE_LOGIN_USERNAME
+    DEST_REGISTRY_PASSWORD: $DOCKER_PIPELINE_LOGIN_PASSWORD
+    DEST_REGISTRY_USERNAME: $DOCKER_PIPELINE_LOGIN_USERNAME
   script:
     - 'echo "CTA version: ${CTA_VERSION:?Missing CTA_VERSION}"'
-    - IMAGE_REF="${DOCKER_IMAGE_REGISTRY}/${DOCKER_PRIVATE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_VERSION}"
+    - IMAGE_REF="${DOCKER_IMAGE_REGISTRY}/${DOCKER_PIPELINE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_VERSION}"
     - echo "Building ${TARGET_NAME}"
     - cd "$(dirname "${DOCKERFILE}")"
     - DOCKERFILE_NAME="$(basename "${DOCKERFILE}")"

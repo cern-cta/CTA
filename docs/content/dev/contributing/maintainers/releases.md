@@ -89,6 +89,20 @@ The stress-test and publication jobs post status notes with job links on the rel
 
 ## Publish packages and images
 
+Pipeline images are built in `gitlab-registry.cern.ch/cta/ctageneric`, configured by `DOCKER_PIPELINE_REGISTRY_PREFIX`.
+Private publication copies these images to `gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry`, configured by `DOCKER_RELEASE_REGISTRY_PREFIX`, preserving each image name and `CTA_VERSION` tag.
+Public publication continues to use `cta/public_registry`.
+
+Configure dedicated GitLab CI secrets `DOCKER_RELEASE_LOGIN_USERNAME` and `DOCKER_RELEASE_LOGIN_PASSWORD` with push access to the operations registry.
+Their environment scope and protected-variable settings must allow the intended branch pipelines to access them.
+Pipeline registry credentials remain `DOCKER_PIPELINE_LOGIN_USERNAME/PASSWORD`, backed by `DOCKER_LOGIN_USERNAME/PASSWORD`.
+
+In non-tag default pipelines, `publish-images-private` is an optional manual job for each image, available after its image build succeeds.
+For another branch, start a default pipeline from GitLab's **Run pipeline** page and trigger the desired publication jobs; MR pipelines also expose them.
+The debug image may need its manual build triggered first.
+Branch publication uses the existing pipeline version, does not publish RPMs, and does not post release notes.
+Existing-image runs, tooling-image refreshes, and merge trains do not expose operations publication.
+
 After validating the release, trigger `internal-release-cta` in each tag pipeline being published. **This also starts public `unstable` RPM publication and private image publication automatically** once their dependencies succeed; it is not an internal-only publication step. These jobs do not enforce completion of all release tests, so check those first.
 
 | Job | Publication |

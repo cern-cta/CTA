@@ -43,7 +43,7 @@ readonly ci_image_registry
 
 # Global
 source "${script_dir}/utils/cta_version.sh"
-CTA_RELEASE_FAMILY=$(read_cta_release_family "${project_root}/project.json")
+CTA_MAJOR_VERSION=$(read_cta_major_version "${project_root}/project.json")
 platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
 scheduler_type="objectstore"
 oracle_support="false"
@@ -51,7 +51,7 @@ enable_internal_repos=true
 internal_repos_forced_public=false
 namespace="dev"
 # A single <version>-<suffix> string used by the package build and as the image tag.
-cta_version="${CTA_RELEASE_FAMILY}-dev"
+cta_version="${CTA_MAJOR_VERSION}-dev"
 cta_image_tag=""
 
 # Build

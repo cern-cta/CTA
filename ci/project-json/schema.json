@@ -4,7 +4,7 @@
   "type": "object",
   "required": [
     "name",
-    "releaseFamily",
+    "majorVersion",
     "description",
     "summary",
     "license",
@@ -19,8 +19,8 @@
       "type": "string",
       "minLength": 1
     },
-    "releaseFamily": {
-      "description": "Release family used for build-version defaults and new releases.",
+    "majorVersion": {
+      "description": "Major version used for build-version defaults and new releases.",
       "type": "string",
       "pattern": "^[1-9][0-9]*$"
     },

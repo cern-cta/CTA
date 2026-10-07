@@ -37,7 +37,7 @@ class TagCommandTest(unittest.TestCase):
         with (
             patch.object(self.context.git, "validate_target_branch"),
             patch.object(self.context.git, "resolve_remote_branch", return_value="newer-tip"),
-            patch.object(self.context.git, "run", return_value='{"releaseFamily": "6"}') as git_run,
+            patch.object(self.context.git, "run", return_value='{"majorVersion": "6"}') as git_run,
             patch.object(self.context.git, "is_ancestor", return_value=True) as is_ancestor,
             patch.object(
                 tag,
@@ -79,7 +79,7 @@ class TagCommandTest(unittest.TestCase):
                 "inspect_release_context",
                 return_value=({"iid": 1}, {"state": "merged"}, "merge-commit", []),
             ),
-            patch.object(self.context.git, "run", return_value='{"releaseFamily": "6"}') as git_run,
+            patch.object(self.context.git, "run", return_value='{"majorVersion": "6"}') as git_run,
             patch.object(self.context.git, "is_ancestor", return_value=True),
             patch.object(self.context, "find_pipeline", return_value=pipeline),
             patch("confirmation.sys.stdin.isatty", return_value=True),

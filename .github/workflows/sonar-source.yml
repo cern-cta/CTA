@@ -54,8 +54,8 @@ jobs:
           cp -f ci/docker/cta/${PLATFORM}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
           ./ci/project-json/generate_versionlock.py --platform "${PLATFORM}" > /etc/yum/pluginconf.d/versionlock.list
           source ci/utils/cta_version.sh
-          CTA_RELEASE_FAMILY=$(read_cta_release_family project.json)
-          version_input="${CTA_RELEASE_FAMILY}-${CTA_BUILD_ID}"
+          CTA_MAJOR_VERSION=$(read_cta_major_version project.json)
+          version_input="${CTA_MAJOR_VERSION}-${CTA_BUILD_ID}"
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             version_input="$GITHUB_REF_NAME"
             # Release tags determine the scheduler and Oracle configuration.

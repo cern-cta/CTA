@@ -3,14 +3,14 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Read the release family without accepting JSON numbers or silently using a fallback.
-read_cta_release_family() {
-  local family
-  if ! family=$(jq -er '.releaseFamily | select(type == "string") | select(test("^[1-9][0-9]*$"))' "$1"); then
-    echo "Invalid or missing releaseFamily in $1; expected a positive integer string." >&2
+# Read the major version without accepting JSON numbers or silently using a fallback.
+read_cta_major_version() {
+  local major_version
+  if ! major_version=$(jq -er '.majorVersion | select(type == "string") | select(test("^[1-9][0-9]*$"))' "$1"); then
+    echo "Invalid or missing majorVersion in $1; expected a positive integer string." >&2
     return 1
   fi
-  printf '%s\n' "$family"
+  printf '%s\n' "$major_version"
 }
 
 # Require a complete build version without normalizing or rewriting the input.

@@ -26,7 +26,7 @@ check-merge-train-duplicate:
     reports:
       dotenv: merge-train.env
 
-# The family is immutable pipeline metadata; regression overrides only change dependencies.
+# The major version is immutable pipeline metadata; regression overrides only change dependencies.
 prepare-cta-version:
   stage: .pre
   needs:
@@ -43,12 +43,13 @@ prepare-cta-version:
     - !reference [.merge-train-guard, before_script]
   script:
     - source ci/utils/cta_version.sh
-    - CTA_RELEASE_FAMILY=$(read_cta_release_family project.json)
-    - CTA_VERSION_BASE="${CI_COMMIT_TAG:-${CTA_RELEASE_FAMILY}-${CTA_BUILD_ID}}"
+    - CTA_MAJOR_VERSION=$(read_cta_major_version project.json)
+    - CTA_VERSION_BASE="${CI_COMMIT_TAG:-${CTA_MAJOR_VERSION}-${CTA_BUILD_ID}}"
+    # The resolve function works correctly even if the commit tag already contains suffixes
     - CTA_VERSION=$(resolve_cta_version "$CTA_VERSION_BASE" "$[[ inputs.platform ]]" "$SCHEDULER_TYPE" "$ENABLE_ORACLE_SUPPORT")
     - |
-      printf 'CTA_RELEASE_FAMILY=%s\nCTA_VERSION_BASE=%s\nCTA_VERSION=%s\n' \
-        "$CTA_RELEASE_FAMILY" "$CTA_VERSION_BASE" "$CTA_VERSION" > cta-version.env
+      printf 'CTA_MAJOR_VERSION=%s\nCTA_VERSION_BASE=%s\nCTA_VERSION=%s\n' \
+        "$CTA_MAJOR_VERSION" "$CTA_VERSION_BASE" "$CTA_VERSION" > cta-version.env
       echo "CTA version: ${CTA_VERSION}"
   artifacts:
     expire_in: 30 days

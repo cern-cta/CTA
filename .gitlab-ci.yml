@@ -213,10 +213,12 @@ variables:
 
   # Registry publishing configuration and credentials
   DOCKER_IMAGE_REGISTRY: "gitlab-registry.cern.ch"
-  DOCKER_PRIVATE_REGISTRY_PREFIX: "cta/ctageneric"
+  DOCKER_PIPELINE_REGISTRY_PREFIX: "cta/ctageneric"
+  DOCKER_RELEASE_REGISTRY_PREFIX: "cta/eoscta-operations/registry/container_registry"
+  # DOCKER_RELEASE_LOGIN_USERNAME/PASSWORD are dedicated GitLab CI secrets.
   DOCKER_PUBLIC_REGISTRY_PREFIX: "cta/public_registry"
-  DOCKER_PRIVATE_LOGIN_USERNAME: $DOCKER_LOGIN_USERNAME
-  DOCKER_PRIVATE_LOGIN_PASSWORD: $DOCKER_LOGIN_PASSWORD
+  DOCKER_PIPELINE_LOGIN_USERNAME: $DOCKER_LOGIN_USERNAME
+  DOCKER_PIPELINE_LOGIN_PASSWORD: $DOCKER_LOGIN_PASSWORD
   DOCKER_PUBLIC_LOGIN_USERNAME: "nonempty"  # Tokens don't require a username, but GitLab requires a non-empty value for this variable to be set
   DOCKER_PUBLIC_LOGIN_PASSWORD: $REGISTRYTOKEN_publicpush
 

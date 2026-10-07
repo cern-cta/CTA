@@ -24,7 +24,7 @@ from cta_version import (
     select_release_candidate,
 )
 from gitlab_api import GitLabAPIError
-from release_config import validate_release_family
+from release_config import validate_major_version
 from release_context import ReleaseContext, ReleaseWorkflowError, info
 
 
@@ -267,7 +267,7 @@ def _validate_release_metadata(
             f"Release commit {target_commit} is not reachable from {context.config.remote}/{target_branch}"
         )
 
-    validate_release_family(context.git, target_commit, version_text)
+    validate_major_version(context.git, target_commit, version_text)
 
     if warnings:
         confirm(
