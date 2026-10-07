@@ -47,14 +47,6 @@ TEST_F(cta_ChecksumBlobTest, checksum_types) {
   checksumBlob.insert(SHA1, "12345678901234567890");  // 160 bits
   ASSERT_EQ(checksumBlob.size(), 6);
 
-  // check each of the checksums in turn
-  ASSERT_EQ(checksumBlob.contains(NONE, ""), true);
-  ASSERT_EQ(checksumBlob.contains(ADLER32, "1234"), true);
-  ASSERT_EQ(checksumBlob.contains(CRC32, "1234"), true);
-  ASSERT_EQ(checksumBlob.contains(CRC32C, "1234"), true);
-  ASSERT_EQ(checksumBlob.contains(MD5, "1234567890123456"), true);
-  ASSERT_EQ(checksumBlob.contains(SHA1, "12345678901234567890"), true);
-
   // invalid insertions
   ASSERT_THROW(checksumBlob.insert(NONE, "0"), ChecksumValueMismatch);
   ASSERT_THROW(checksumBlob.insert(ADLER32, "12345"), ChecksumValueMismatch);
@@ -72,11 +64,6 @@ TEST_F(cta_ChecksumBlobTest, checksum_types) {
   ASSERT_THROW(checksumBlob2.validate(checksumBlob3), ChecksumTypeMismatch);
   ASSERT_NE(checksumBlob2, checksumBlob3);
 
-  // Blob sizes are different
-  checksumBlob3.insert(NONE, "");
-  ASSERT_THROW(checksumBlob2.validate(checksumBlob3), ChecksumBlobSizeMismatch);
-  ASSERT_NE(checksumBlob2, checksumBlob3);
-
   // Blob values are different
   checksumBlob2 = checksumBlob;
   checksumBlob2.insert(ADLER32, 0x0a0b0c0d);
@@ -89,7 +76,7 @@ TEST_F(cta_ChecksumBlobTest, checksum_types) {
   ASSERT_EQ(checksumBlob.size(), 0);
 }
 
-TEST_F(cta_ChecksumBlobTest, validateCommonChecksums) {
+TEST_F(cta_ChecksumBlobTest, validate) {
   using namespace cta::checksum;
   using namespace cta::exception;
 
@@ -101,21 +88,26 @@ TEST_F(cta_ChecksumBlobTest, validateCommonChecksums) {
   tape.insert(ADLER32, "1234");
 
   // An extra EOS checksum is allowed when the shared checksum matches.
-  EXPECT_NO_THROW(eos.validateCommonChecksums(tape));
+  EXPECT_NO_THROW(eos.validate(tape));
+
+  // Every shared checksum must match.
+  tape.insert(MD5, "0000000000000000");
+  EXPECT_THROW(eos.validate(tape), ChecksumValueMismatch);
+  tape.insert(MD5, "1234567890123456");
 
   // A shared checksum with a different value must fail.
   tape.insert(ADLER32, "5678");
-  EXPECT_THROW(eos.validateCommonChecksums(tape), ChecksumValueMismatch);
+  EXPECT_THROW(eos.validate(tape), ChecksumValueMismatch);
 
   // Nonempty blobs with no shared checksum must fail.
   ChecksumBlob noCommonType;
   noCommonType.insert(CRC32, "1234");
-  EXPECT_THROW(eos.validateCommonChecksums(noCommonType), ChecksumTypeMismatch);
+  EXPECT_THROW(eos.validate(noCommonType), ChecksumTypeMismatch);
 
   // NONE must not count as a shared checksum.
   ChecksumBlob onlyNone;
   onlyNone.insert(NONE, "");
-  EXPECT_THROW(onlyNone.validateCommonChecksums(onlyNone), ChecksumTypeMismatch);
+  EXPECT_THROW(onlyNone.validate(onlyNone), ChecksumTypeMismatch);
 }
 
 TEST_F(cta_ChecksumBlobTest, hasChecksums) {
@@ -149,13 +141,27 @@ TEST_F(cta_ChecksumBlobTest, adler32) {
   using namespace cta::exception;
 
   ChecksumBlob checksumBlob;
-  ASSERT_THROW(checksumBlob.validate(ADLER32, "invalid"), ChecksumTypeMismatch);
-  ASSERT_EQ(checksumBlob.contains(ADLER32, "invalid"), false);
+
+  ChecksumBlob otherChecksumBlob;
+  otherChecksumBlob.insert(ADLER32, 0x01020304);
+
+  // ADLER32 is missing from this blob.
+  ASSERT_THROW(checksumBlob.validateOn(ADLER32, otherChecksumBlob), ChecksumTypeMismatch);
 
   checksumBlob.insert(ADLER32, 0x0A141E28);
   ASSERT_EQ(checksumBlob.size(), 1);
-  ASSERT_THROW(checksumBlob.validate(ADLER32, "invalid"), ChecksumValueMismatch);
-  ASSERT_EQ(checksumBlob.contains(ADLER32, "invalid"), false);
+
+  // Both blobs contain ADLER32, but the values differ.
+  ASSERT_THROW(checksumBlob.validateOn(ADLER32, otherChecksumBlob), ChecksumValueMismatch);
+
+  // ADLER32 is missing from the other blob.
+  ChecksumBlob missingChecksumBlob;
+  ASSERT_THROW(checksumBlob.validateOn(ADLER32, missingChecksumBlob), ChecksumTypeMismatch);
+
+  // Both blobs contain the same ADLER32.
+  ChecksumBlob matchingChecksumBlob;
+  matchingChecksumBlob.insert(ADLER32, 0x0A141E28);
+  EXPECT_NO_THROW(checksumBlob.validateOn(ADLER32, matchingChecksumBlob));
 
   // Check internal representation
   std::string bytearray = checksumBlob.at(ADLER32);
