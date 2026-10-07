@@ -79,7 +79,6 @@ void recordFailure(std::exception_ptr failure, std::exception_ptr& fatalFailure,
 struct cta::tape::daemon::TapeSession::ExecutionState {
   TapeSessionResult result;
   bool completionOwned = true;
-  bool driveOpened = false;
 };
 
 //------------------------------------------------------------------------------
@@ -93,7 +92,13 @@ cta::tape::daemon::TapeSession::TapeSession(cta::log::Logger& log,
                                             const TransfersConfig& transfersConfig,
                                             uint32_t tapeLoadTimeoutSecs,
                                             cta::Scheduler& scheduler)
-    : m_log(log),
+    : m_tapeSessionTracker(std::make_shared<TapeSessionTracker>([&tapeMount](session::TapeSessionState state) {
+        if (const auto status = TapeSessionReporter::driveStatusForSessionState(state)) {
+          // The scheduler mount preserves VID, pool, VO and mount ID on every publication.
+          tapeMount.setDriveStatus(*status);
+        }
+      })),
+      m_log(log),
       m_tapeMount(tapeMount),
       m_sysWrapper(sysWrapper),
       m_transfersConfig(transfersConfig),
@@ -133,7 +138,6 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
     m_volInfo.labelFormat = m_tapeMount.getLabelFormat();
     m_volInfo.encryptionKeyName = m_tapeMount.getEncryptionKeyName();
     m_volInfo.tapePool = m_tapeMount.getPoolName();
-    m_tapeMount.setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
     params.add("tapeVid", m_volInfo.vid)
       .add("mountId", m_volInfo.mountId)
       .add("vo", m_tapeMount.getVo())
@@ -177,14 +181,6 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
   if (state.completionOwned) {
     state.completionOwned = false;
     finalize([&] { m_tapeMount.complete(); });
-    if (state.driveOpened) {
-      finalize([&] {
-        m_scheduler.reportDriveStatus(m_driveInfo,
-                                      cta::common::dataStructures::MountType::NoMount,
-                                      cta::common::dataStructures::DriveStatus::Up,
-                                      lc);
-      });
-    }
   }
 
   reporterScope.finish();
@@ -320,15 +316,6 @@ void cta::tape::daemon::TapeSession::executeRead(cta::log::LogContext& logContex
       if (!state.result.driveReusable) {
         state.result.downReason = common::dataStructures::DriveDownReason::DriveCleanupFailed;
         state.result.downDetail = readSingleThread.cleanupError();
-      }
-      // If disk delivery finished last, return the drive from DrainingToDisk to Up.
-      if (state.result.driveReusable
-          && m_scheduler.getDriveStatus(m_driveInfo.driveName, &logContext)
-               == cta::common::dataStructures::DriveStatus::DrainingToDisk) {
-        m_scheduler.reportDriveStatus(m_driveInfo,
-                                      cta::common::dataStructures::MountType::NoMount,
-                                      cta::common::dataStructures::DriveStatus::Up,
-                                      logContext);
       }
       return;
     } else {
@@ -475,7 +462,6 @@ cta::tape::daemon::TapeSession::findDrive(cta::log::LogContext& logContext, Exec
       throw cta::exception::Exception("Drive creation returned no drive");
     }
     drive->info = m_driveInfo;
-    state.driveOpened = true;
     return drive;
   } catch (...) {
     // Record the operation stage and cause before propagating the original exception.

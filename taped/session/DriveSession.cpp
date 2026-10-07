@@ -7,6 +7,7 @@
 
 #include "DriveStatePublication.hpp"
 #include "TapeSession.hpp"
+#include "TapeSessionReporter.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/TimeoutException.hpp"
@@ -247,16 +248,24 @@ DriveSession::IterationResult DriveSession::runIteration(std::stop_token stopTok
 
   const auto result = runTapeSession(*tapeMount);
   // Destroy the mount before retiring the scheduler resources it borrows.
-  // This is only necessary in the objectstore as we want a new agent
-  // Otherwise we miss out on garbage collection
   tapeMount.reset();
-  m_schedulerContext.renewObjectStoreAgent();
 
   // Translate tape-session outcomes into scheduling decisions only after releasing the mount.
   if (!result.driveReusable) {
     return {IterationAction::EndOwnership,
             result.downDetail.empty() ? "Tape session left the drive unusable" : result.downDetail};
   }
+  if (stopToken.stop_requested() || !scheduler.getDesiredDriveState(m_driveInfo.driveName, m_lc).up) {
+    return {IterationAction::EndOwnership, "Stop requested or desired drive state is Down"};
+  }
+  // All session workers and synchronous phase publications have finished before making the drive available.
+  scheduler.reportDriveStatus(m_driveInfo,
+                              common::dataStructures::MountType::NoMount,
+                              common::dataStructures::DriveStatus::Up,
+                              m_lc);
+  // Retire the object-store agent for garbage collection only when continuing.
+  // Renewal invalidates the scheduler reference; do not access it after this point.
+  m_schedulerContext.renewObjectStoreAgent();
   return {result.successful ? IterationAction::Continue : IterationAction::RetryAfterDelay, {}};
 }
 
@@ -307,13 +316,20 @@ TapeSessionResult DriveSession::runTapeSession(TapeMount& tapeMount) {
 }
 
 bool DriveSession::cleanDrive(const std::optional<std::string>& vid) {
-  auto tracker = std::make_shared<TapeSessionTracker>();
+  auto& scheduler = m_schedulerContext.scheduler();
+  auto tracker = std::make_shared<TapeSessionTracker>(
+    [&scheduler, driveInfo = m_driveInfo, lc = log::LogContext(m_lc)](session::TapeSessionState state) mutable {
+      const auto status = TapeSessionReporter::driveStatusForSessionState(state);
+      // Starting is published explicitly below, where failure must prevent hardware acquisition.
+      if (status && *status != common::dataStructures::DriveStatus::Starting) {
+        scheduler.reportDriveStatus(driveInfo, common::dataStructures::MountType::NoMount, *status, lc);
+      }
+    });
   tracker->reportState(cta::tape::session::TapeSessionState::Preparing);
   std::atomic_store<const TapeSessionTracker>(&m_activeTracker, tracker);
   const utils::ScopeExit clearActiveTracker(
     [this] { std::atomic_store<const TapeSessionTracker>(&m_activeTracker, nullptr); });
 
-  auto& scheduler = m_schedulerContext.scheduler();
   const bool recovering = m_driveReservation.canUseHardware();
   log::ScopedParamContainer cleanupParams(m_lc);
   cleanupParams.add("cleanupPhase", recovering ? "recovery" : "preparation");
@@ -328,7 +344,7 @@ bool DriveSession::cleanDrive(const std::optional<std::string>& vid) {
   // Publish preparation before acquiring hardware access; recovery retains existing ownership.
   scheduler.reportDriveStatus(m_driveInfo,
                               common::dataStructures::MountType::NoMount,
-                              common::dataStructures::DriveStatus::CleaningUp,
+                              common::dataStructures::DriveStatus::Starting,
                               m_lc);
   m_driveReservation.acquire();
   m_lc.log(log::INFO,
@@ -344,9 +360,7 @@ bool DriveSession::cleanDrive(const std::optional<std::string>& vid) {
                          m_config.mounts.tape_load_timeout_secs,
                          scheduler.getCatalogue(),
                          *tracker);
-    const auto result = cleaner.cleanDrive(m_sysWrapper, [&](auto status) {
-      scheduler.reportDriveStatus(m_driveInfo, common::dataStructures::MountType::NoMount, status, m_lc);
-    });
+    const auto result = cleaner.cleanDrive(m_sysWrapper);
     cleaned = result.driveReusable();
     cleanupError = result.errorMessage;
   } catch (const cta::exception::Exception& ex) {
@@ -356,6 +370,8 @@ bool DriveSession::cleanDrive(const std::optional<std::string>& vid) {
   } catch (...) {
     cleanupError = "Unknown exception during drive cleanup";
   }
+  // Hardware cleanup has ended; only outcome reporting remains.
+  tracker->reportState(cta::tape::session::TapeSessionState::Finalizing);
 
   if (!cleaned) {
     log::ScopedParamContainer params(m_lc);

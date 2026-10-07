@@ -22,13 +22,11 @@ MountedTape::MountedTape(mediachanger::MediaChangerFacade& mediaChanger,
                          drive::DriveInterface& drive,
                          catalogue::Catalogue& catalogue,
                          uint32_t tapeLoadTimeout,
-                         DriveCleaner::DriveStatusReporter reportStatus,
                          Outcome& outcome,
                          log::LogContext& lc,
                          TapeSessionTracker& tracker)
     : m_cleaner(mediaChanger, lc.logger(), drive.info, volume.vid, true, tapeLoadTimeout, catalogue, tracker),
       m_drive(drive),
-      m_reportStatus(std::move(reportStatus)),
       m_outcome(outcome),
       m_lc(lc) {
   m_outcome = Outcome {};
@@ -95,7 +93,7 @@ const MountedTape::Outcome& MountedTape::cleanup() noexcept {
   m_finished = true;
 
   try {
-    m_outcome.result = m_cleaner.cleanDrive(m_drive, m_reportStatus);
+    m_outcome.result = m_cleaner.cleanDrive(m_drive);
   } catch (...) {
     m_outcome.exception = std::current_exception();
   }

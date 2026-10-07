@@ -244,10 +244,10 @@ bool TapeDaemon::registerDrive(bool putUpIfPossible) {
   const auto previous = m_catalogue.DriveState()->getTapeDrive(m_driveInfo.driveName);
   // Desired Up survives crashes and also represents an operator's pending up request.
   if (previous && previous->desiredUp) {
-    // Keep the existing entry and operator intent. CleaningUp does not change desired-up.
+    // Keep the existing entry and operator intent. Starting does not change desired-up.
     scheduler.reportDriveStatus(m_driveInfo,
                                 common::dataStructures::MountType::NoMount,
-                                common::dataStructures::DriveStatus::CleaningUp,
+                                common::dataStructures::DriveStatus::Starting,
                                 m_lc);
     scheduler.reportSchedulerBackendName(m_driveInfo.driveName, m_lc);
     m_lc.log(log::INFO, "Registered interrupted drive for recovery before scheduling.");

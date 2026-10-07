@@ -38,7 +38,7 @@ add_library(ctatapedunittests SHARED
 )
 set_property(TARGET ctatapedunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedunittests PROPERTY VERSION "${CTA_LIBVERSION}")
-target_link_libraries(ctatapedunittests PRIVATE ctataped gtest gmock)
+target_link_libraries(ctatapedunittests PRIVATE ctataped gtest gmock cta-unit-test-helper)
 install(TARGETS ctatapedunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 add_executable (cta-taped cta-taped.cpp)

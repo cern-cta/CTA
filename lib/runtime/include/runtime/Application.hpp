@@ -223,7 +223,7 @@ public:
     }
 
     auto config = runtime::loadFromToml<TConfig>(configFilePath, cliOptions.configStrict);
-    // Even initialization callbacks can retain config references; destroy the app before config on every exit.
+    // Ensure that anything that may use the config is destroyed before destroying the config
     const utils::ScopeExit telemetryCleanup([this] { cleanupTelemetry(); });
     const utils::ScopeExit appCleanup([this] { m_app.reset(); });
     if (cliOptions.configCheck) {
@@ -272,15 +272,10 @@ public:
         m_logPtr->refresh();
       }
     });
+    // Both the signal and health server must outlive the app run
+    // Note that they live outside of safeRunWithLog so that it is not destructed before we output a (potential) FATAL message.
     auto signalReactor = m_signalReactorBuilder.build(*m_logPtr);
-
-    // The health server must exist at this level as it needs to be in-scope for as long as the main app runs.
-    // If not, it would immediately be destroyed after initHealthServer finished.
-    // Note that healthServer lives outside of safeRunWithLog so that it is not destructed before we output a (potential) FATAL message.
     std::unique_ptr<HealthServer> healthServer;
-    // Reverse destruction order joins health/signal callbacks, destroys the app, then cleans up telemetry.
-    // safeRunWithLog reports failures before any of these guards are destroyed.
-    signalReactor.start();
 
     return safeRunWithLog(*m_logPtr, [this, &cliOptions, &config, &healthServer]() {
       cta::log::Logger& log = *m_logPtr;
@@ -290,6 +285,7 @@ public:
             {cta::semconv::log::eventName, cta::semconv::log::EventNameValues::kProgramStarting}
       });
 
+      signalReactor.start();
       // We dynamically add/init the relevant parts depending on what is in the config type.
       if constexpr (HasHealthServerConfig<TConfig>) {
         static_assert(HasReadinessFunction<TApp> && HasLivenessFunction<TApp>,
@@ -487,6 +483,9 @@ private:
 
   ArgParser<TOpts> m_argParser;
   // The actual application class
+  // We construct it immediately, but making it optional allows us to control when it is destroyed
+  // One possible future improvement could be to have this simply be a local variable in run
+  // However, in that case, the way that the signal callbacks are registered would need to be revised
   std::optional<TApp> m_app {std::in_place};
 
   SignalReactorBuilder m_signalReactorBuilder;

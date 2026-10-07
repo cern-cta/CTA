@@ -70,7 +70,7 @@ private:
   struct ExecutionState;
 
   /// Owned tracking state outlives the workers and reporter created by execute().
-  std::shared_ptr<TapeSessionTracker> m_tapeSessionTracker = std::make_shared<TapeSessionTracker>();
+  std::shared_ptr<TapeSessionTracker> m_tapeSessionTracker;
   cta::log::Logger& m_log;
   cta::TapeMount& m_tapeMount;
   VolumeInfo m_volInfo {};

@@ -82,7 +82,7 @@ private:
 
   /// @brief Register a fresh drive or retain an interrupted drive for recovery.
   ///
-  /// Reported non-down state with desired-up intent triggers CleaningUp without recreating the entry.
+  /// Reported non-down state with desired-up intent triggers Starting without recreating the entry.
   ///
   /// @param putUpIfPossible Allow ordinary registration to request up when no failure reason prevents it.
   /// @return False for an ownership conflict; catalogue failures propagate.

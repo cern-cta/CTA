@@ -60,19 +60,6 @@ void cta::tape::daemon::TapeReadSingleThread::startThreads(RecallTaskInjector& i
 //TapeThreadFinalizer::~TapeThreadFinalizer()
 //------------------------------------------------------------------------------
 cta::tape::daemon::TapeReadSingleThread::TapeThreadFinalizer::~TapeThreadFinalizer() {
-  using common::dataStructures::DriveStatus;
-  // Status publication must not interrupt physical cleanup.
-  auto reportStatusSafely = [&](DriveStatus status, const std::optional<std::string>& reason = std::nullopt) {
-    try {
-      m_this.m_reportPacker.reportDriveStatus(status, reason, m_this.m_logContext);
-    } catch (...) {
-      try {
-        m_this.m_tracker.recordFailure(TapeSessionFailure::Reporting);
-      } catch (...) {}
-    }
-  };
-  m_this.m_tracker.reportState(session::TapeSessionState::Finalizing);
-  reportStatusSafely(DriveStatus::CleaningUp);
   try {
     m_this.m_taskInjector->finish();
   } catch (...) {
@@ -122,11 +109,8 @@ cta::tape::daemon::TapeReadSingleThread::TapeThreadFinalizer::~TapeThreadFinaliz
   if (!m_this.m_driveReusable) {
     // The enclosing DriveSession publishes terminal Down after all workers have stopped.
     m_this.m_cleanupError = std::move(cleanupError);
-  } else {
-    reportStatusSafely(m_this.m_reportPacker.allThreadsDone() ? DriveStatus::Up : DriveStatus::DrainingToDisk);
   }
   m_this.m_tracker.addDiskTransferStats({.waitReportingTime = m_timer.secs(utils::Timer::resetCounter)});
-  m_this.m_tracker.reportState(session::TapeSessionState::Finalizing);
 }
 
 //------------------------------------------------------------------------------
@@ -249,7 +233,6 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
       TapeThreadFinalizer finalizer(*this, timer, mountedTape, cleanupOutcome);
 
       // Before anything, the tape should be mounted
-      m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Mounting, std::nullopt, m_logContext);
 
       std::ostringstream ossLabelFormat;
       ossLabelFormat << std::showbase << std::internal << std::setfill('0') << std::hex << std::setw(4)
@@ -266,21 +249,16 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
 
       currentErrorToCount = TapeSessionFailure::TapeLoad;
       m_tracker.reportState(cta::tape::session::TapeSessionState::Mounting);
-      mountedTape.emplace(
-        m_mediaChanger,
-        m_volInfo,
-        m_drive,
-        m_catalogue,
-        m_tapeLoadTimeout,
-        [&](common::dataStructures::DriveStatus status) {
-          m_reportPacker.reportDriveStatus(status, std::nullopt, m_logContext);
-        },
-        cleanupOutcome,
-        m_logContext,
-        m_tracker);
+      mountedTape.emplace(m_mediaChanger,
+                          m_volInfo,
+                          m_drive,
+                          m_catalogue,
+                          m_tapeLoadTimeout,
+                          cleanupOutcome,
+                          m_logContext,
+                          m_tracker);
       m_tracker.reportState(cta::tape::session::TapeSessionState::Loading);
       measureSetupTime(&TapeSetupStats::tapeLoadTime, [&] { waitForDrive(); });
-      m_tracker.reportState(cta::tape::session::TapeSessionState::Preparing);
       const double tapeLoadTime = m_tracker.stats().setup.tapeLoadTime;
       currentErrorToCount = TapeSessionFailure::CheckingTapeAlert;
       logTapeAlerts();
@@ -367,9 +345,6 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
       // From now on, the tasks will identify problems when executed.
       countCurrentError = false;
       std::unique_ptr<TapeReadTask> task;
-      m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::Transferring,
-                                       std::nullopt,
-                                       m_logContext);
 
       m_tracker.reportState(cta::tape::session::TapeSessionState::Transferring);
       while (true) {
