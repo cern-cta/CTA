@@ -369,6 +369,7 @@ include:
       enable-valgrind: $[[ inputs.enable-valgrind ]]
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
+      use-stress-drives: $[[ inputs.use-stress-drives ]]
   - local: .gitlab/ci/validate.gitlab-ci.yml
     rules:
       - if: '"$[[ inputs.pipeline-type ]]" != "UPDATE_PIPELINE_IMAGES"'
