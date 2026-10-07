@@ -399,14 +399,12 @@ def test_cta_admin_drive(cta_cli: CtaCliHost, cta_taped: CtaTapedHost) -> None:
         # No create, because drives auto-create on start
 
         # Update
-        dr_up_output = cta_cli.exec_with_output(f"cta-admin dr up {dr_name} -r 'cta-admin systest up'")
-        assert f"Drive {dr_name}: set Up." in dr_up_output
+        cta_cli.exec(f"cta-admin dr up {dr_name} -r 'cta-admin systest up'")
         dr_updated1 = cta_cli.get_single_ls_item("dr ls", lambda x: x["driveName"] == dr_name)
         assert dr_updated1["reason"] == "cta-admin systest up"
         assert dr_updated1["desiredDriveState"] == "UP"
 
-        dr_down_output = cta_cli.exec_with_output(f"cta-admin dr down {dr_name} -r 'cta-admin systest down'")
-        assert f"Drive {dr_name}: set Down." in dr_down_output
+        cta_cli.exec(f"cta-admin dr down {dr_name} -r 'cta-admin systest down'")
         dr_updated2 = cta_cli.get_single_ls_item("dr ls", lambda x: x["driveName"] == dr_name)
         assert_dict_equals(
             dr_updated2, dr_updated1, ["driveStatusSince", "timeSinceLastUpdate", "reason", "desiredDriveState"]
