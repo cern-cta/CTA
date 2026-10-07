@@ -54,39 +54,24 @@ void ChecksumBlob::insert(ChecksumType type, uint32_t value) {
   }
 }
 
-void ChecksumBlob::validate(ChecksumType type, const std::string& value) const {
-  auto cs = m_cs.find(type);
-  if (cs == m_cs.end()) {
-    throw exception::ChecksumTypeMismatch("Checksum type " + ChecksumTypeName.at(type) + " not found");
+void ChecksumBlob::validateOn(ChecksumType type, const ChecksumBlob& blob) const {
+  const auto otherChecksum = blob.m_cs.find(type);
+  if (otherChecksum == blob.m_cs.end()) {
+    throw exception::ChecksumTypeMismatch(ChecksumTypeName.at(type) + " checksum not found in other blob");
   }
-  if (cs->second != value) {
-    throw exception::ChecksumValueMismatch("Checksum value expected=0x" + ByteArrayToHex(value) + " actual=0x"
-                                           + ByteArrayToHex(cs->second));
+
+  const auto thisChecksum = m_cs.find(type);
+  if (thisChecksum == m_cs.end()) {
+    throw exception::ChecksumTypeMismatch(ChecksumTypeName.at(type) + " checksum not found in this blob");
+  }
+
+  if (thisChecksum->second != otherChecksum->second) {
+    throw exception::ChecksumValueMismatch("Checksum value expected=0x" + ByteArrayToHex(thisChecksum->second)
+                                           + " actual=0x" + ByteArrayToHex(otherChecksum->second));
   }
 }
 
 void ChecksumBlob::validate(const ChecksumBlob& blob) const {
-  if (m_cs.size() != blob.m_cs.size()) {
-    throw exception::ChecksumBlobSizeMismatch("Checksum blob size does not match. expected="
-                                              + std::to_string(m_cs.size())
-                                              + " actual=" + std::to_string(blob.m_cs.size()));
-  }
-
-  auto it1 = m_cs.begin();
-  auto it2 = blob.m_cs.begin();
-  for (; it1 != m_cs.end(); ++it1, ++it2) {
-    if (it1->first != it2->first) {
-      throw exception::ChecksumTypeMismatch("Checksum type expected=" + ChecksumTypeName.at(it1->first)
-                                            + " actual=" + ChecksumTypeName.at(it2->first));
-    }
-    if (it1->second != it2->second) {
-      throw exception::ChecksumValueMismatch("Checksum value expected=0x" + ByteArrayToHex(it1->second) + " actual=0x"
-                                             + ByteArrayToHex(it2->second));
-    }
-  }
-}
-
-void ChecksumBlob::validateCommonChecksums(const ChecksumBlob& blob) const {
   bool foundCommonType = false;
 
   for (const auto& [type, value] : m_cs) {

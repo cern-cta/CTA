@@ -460,7 +460,7 @@ void ReadtpCmd::readTapeFile(cta::tape::drive::DriveInterface& drive,
   payload->write(wf);
   auto cb = cta::checksum::ChecksumBlob(cta::checksum::ChecksumType::ADLER32, checksum_adler32);
 
-  archiveFile.checksumBlob.validate(cb);  //exception thrown if checksums differ
+  archiveFile.checksumBlob.validateOn(cta::checksum::ChecksumType::ADLER32, cb);  //exception thrown if checksums differ
 
   params.emplace_back("checksumType", "ADLER32");
   std::stringstream sstream;

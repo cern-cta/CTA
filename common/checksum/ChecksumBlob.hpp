@@ -8,7 +8,6 @@
 #include "common/log/LogContext.hpp"
 
 #include <algorithm>
-#include <common/exception/ChecksumBlobSizeMismatch.hpp>
 #include <common/exception/ChecksumTypeMismatch.hpp>
 #include <common/exception/ChecksumValueMismatch.hpp>
 #include <map>
@@ -154,49 +153,21 @@ public:
   }
 
   /*!
-   * Check that a single checksum is in the blob and that it has the value expected, throw an exception if not
+   * Check one checksums type in both blobs
+   * Throw an exception if it is missing or different
    */
-  void validate(ChecksumType type, const std::string& value) const;
+  void validateOn(ChecksumType type, const ChecksumBlob& blob) const;
 
   /*!
-   * Check all the checksums in the blob match, throw an exception if they don't
+   * Check every checksum shared between the two blobs
+   * Throw an exception if none are shared or a shared value is different
    */
   void validate(const ChecksumBlob& blob) const;
 
   /*!
-   * Check every checksum shared with the other blob, throw if none are shared or a shared value is different
-   */
-  void validateCommonChecksums(const ChecksumBlob& blob) const;
-
-  /*!
-   * Returns true if the checksum is in the blob and that it has the value expected
-   */
-  bool contains(ChecksumType type, const std::string& value) const {
-    try {
-      validate(type, value);
-    } catch (exception::ChecksumTypeMismatch&) {
-      return false;
-    } catch (exception::ChecksumValueMismatch&) {
-      return false;
-    }
-    return true;
-  }
-
-  /*!
    * Returns true if all the checksums in the blob match
    */
-  bool operator==(const ChecksumBlob& blob) const {
-    try {
-      validate(blob);
-    } catch (exception::ChecksumBlobSizeMismatch&) {
-      return false;
-    } catch (exception::ChecksumTypeMismatch&) {
-      return false;
-    } catch (exception::ChecksumValueMismatch&) {
-      return false;
-    }
-    return true;
-  }
+  bool operator==(const ChecksumBlob& blob) const { return m_cs == blob.m_cs; }
 
   /**
    * Adds the first checksum of the list of checksums
