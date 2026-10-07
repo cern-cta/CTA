@@ -59,7 +59,9 @@ def test_add_media_types(cta_cli: CtaCliHost) -> None:
 
 
 def test_register_logical_libraries_in_catalogue(env: TestEnv, cta_cli: CtaCliHost) -> None:
-    logical_library_names_in_use = {taped.logical_library_name for taped in env.cta_taped}
+    # Stress-mode tapeds use a virtual library registered by setup_stress_drives_test.py.
+    real_tapeds = [t for t in env.cta_taped if not t.is_stress_mode]
+    logical_library_names_in_use = {taped.logical_library_name for taped in real_tapeds}
     print("Using logical libraries:")
     for logical_library_name in logical_library_names_in_use:
         print(f"  - {logical_library_name}")
@@ -157,7 +159,8 @@ def test_reset_tapes(env: TestEnv) -> None:
 
 def test_reset_drive_devices(env: TestEnv) -> None:
     for taped in env.cta_taped:
-        taped.exec(f"sudo sg_turs {taped.drive_device} 2>&1 > /dev/null || true")
+        if not taped.is_stress_mode:
+          taped.exec(f"sudo sg_turs {taped.drive_device} 2>&1 > /dev/null || true")
 
 
 def test_label_tapes(env: TestEnv) -> None:

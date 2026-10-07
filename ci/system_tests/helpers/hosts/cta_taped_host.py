@@ -27,7 +27,7 @@ class CtaTapedHost(RemoteHost):
     @cached_property
     def drive_device(self) -> str:
         device: str = self.exec_with_output("printenv DRIVE_DEVICE")
-        if not device.startswith("/dev/"):
+        if not device.startswith("/dev/") and "://" not in device:
             device = "/dev/" + device
         return device
 
@@ -60,3 +60,20 @@ class CtaTapedHost(RemoteHost):
 
     def label_tape(self, tape: str) -> None:
         self.exec(f"cta-tape-label --vid {tape} --force")
+
+    @cached_property
+    def is_stress_mode(self) -> bool:
+        """True when this taped pod is configured with StressMode = yes (no real SCSI hardware)."""
+        device = self.exec_with_output("printenv DRIVE_DEVICE")
+        return device == "stress://"
+
+    def setup_stress_tmpfs(self, base_dir: str) -> None:
+        """Create the shared tmpfs directory layout required by StressDrive and
+        NullMediaChangerFacade.  Safe to call from multiple pods simultaneously
+        because mkdir -p is idempotent.
+
+        Layout created:
+          <base_dir>/tapes/   -- one subdirectory per VID, created on first archive
+          <base_dir>/drives/  -- one symlink per drive, managed by NullMediaChangerFacade
+        """
+        self.exec(f"mkdir -p {base_dir}/tapes {base_dir}/drives")

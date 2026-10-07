@@ -59,3 +59,35 @@
       timeout_to_put_drives_up_sec = 3600
       # how often to count number of files when prequeueing
       check_interval_sec = 300
+
+    # -----------------------------------------------------------------------
+    # Virtual stress-drive mode (no mhvtl, no real SCSI hardware).
+    # These settings are used by setup_stress_drives_test.py to prepare the
+    # CTA catalogue and the shared tmpfs tape library.
+    # They must be consistent with the drive list in the Helm preset
+    # stress-stressdrives-pgsched-values.yaml.
+    # -----------------------------------------------------------------------
+    [tests.stress.drives]
+
+      # Number of virtual tapes to register in the CTA catalogue.
+      # Should be >= the number of drives so the scheduler can keep all drives busy.
+      num_tapes = 20
+
+      # VID prefix: tapes are named <vid_prefix><4-digit index>, e.g. ST0001..ST0020.
+      # Must be at most 2 characters so that the full VID fits in the 6-character
+      # ANSI tape label VSN field (VOL1).  HeaderChecker::checkVOL1() compares the
+      # label VSN to the catalogue VID and throws if they differ.
+      # Must be unique across all tape pools in the catalogue.
+      vid_prefix = "ST"
+
+      # Logical library name that stress drives and tapes are registered under.
+      # Must match logicalLibraryName in the Helm preset drives list.
+      logical_library = "stress-lib"
+
+      # Shared tmpfs root directory mounted into every taped pod via hostPath.
+      # The setup test creates tapes/ and drives/ subdirectories here.
+      base_dir = "/dev/shm/cta-stress"
+
+      # Simulated tape capacity in bytes reported to the CTA catalogue.
+      # With 16-byte files this is never actually approached.
+      tape_capacity_bytes = 1099511627776  # 1 TB
