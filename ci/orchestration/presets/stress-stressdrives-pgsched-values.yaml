@@ -79,23 +79,6 @@ taped:
       - name: stress-tmpfs
         mountPath: /dev/shm/cta-stress
 
-  # Virtual drives: each entry produces one taped StatefulSet pod.
-  # DriveDevice = "stress://" triggers StressDrive creation in DataTransferSession::findDrive().
-  # DriveControlPath is unused in stress mode but must be present for the template.
-  drives:
-    - name: "STRESS0000"
-      device: "stress://"
-      logicalLibraryName: "stress-lib"
-      controlPath: "smc0"
-    - name: "STRESS0001"
-      device: "stress://"
-      logicalLibraryName: "stress-lib"
-      controlPath: "smc0"
-    - name: "STRESS0002"
-      device: "stress://"
-      logicalLibraryName: "stress-lib"
-      controlPath: "smc0"
-    - name: "STRESS0003"
-      device: "stress://"
-      logicalLibraryName: "stress-lib"
-      controlPath: "smc0"
+  # Drive list is generated dynamically by create_instance.sh --no-hardware-drives
+  # based on the --max-drives argument (default 20, named STRESS0000..STRESS{N-1}).
+  # Do not define drives here; the generated values file is merged after this preset.

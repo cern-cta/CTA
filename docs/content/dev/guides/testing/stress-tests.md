@@ -86,7 +86,7 @@ The overlay:
 
     For multi-node deployments, replace the `hostPath` volume with a `ReadWriteMany` PersistentVolumeClaim (NFS, CephFS, etc.) and remove the affinity rule from the overlay.
 
-- Defines the virtual drives (`STRESS0000`…`STRESSnnnn`). Add or remove entries to scale the drive count; each entry produces one `taped` StatefulSet pod.
+- Generates the virtual drive list (`STRESS0000`…`STRESS{N-1}`) dynamically via `--max-drives N` passed to `create_instance.sh`. The CI default is 20 drives. Each drive produces one `taped` StatefulSet pod.
 
 ### Catalogue setup
 

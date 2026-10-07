@@ -37,6 +37,8 @@ spec:
       type: boolean
     use-stress-drives:
       type: boolean
+    num-stress-drives:
+      type: number
 ---
 
 .trigger-child-pipeline:
@@ -76,6 +78,7 @@ spec:
           enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
           keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
           use-stress-drives: $[[ inputs.use-stress-drives ]]
+          num-stress-drives: $[[ inputs.num-stress-drives ]]
     strategy: mirror
 
 trigger-postgres-scheduler-pipeline:

@@ -100,6 +100,8 @@ def test_setup_stress_tmpfs(env: TestEnv, stress_base_dir: str) -> None:
     idempotent.
     """
     stress_pods = _stress_tapeds(env)
+    if not stress_pods:
+        pytest.skip("No stress-mode taped pods found; skipping stress-drive tmpfs setup")
     with ThreadPoolExecutor(max_workers=len(stress_pods)) as pool:
         futures = [pool.submit(pod.setup_stress_tmpfs, stress_base_dir) for pod in stress_pods]
         for f in futures:
