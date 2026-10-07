@@ -24,6 +24,7 @@ fn render_page(
 
 pub(crate) fn gen_man_pages(out_dir: &std::path::Path) -> anyhow::Result<()> {
     let cli = crate::cli::Cli::command();
+    // The CLI is defined with the main subcommand at build time, so this cannot fail.
     let applet = cli
         .find_subcommand(NAME)
         .unwrap()
@@ -50,6 +51,7 @@ pub(crate) fn gen_man_pages(out_dir: &std::path::Path) -> anyhow::Result<()> {
 
 pub(crate) fn gen_completion(shell: clap_complete::Shell) -> anyhow::Result<()> {
     let mut cli = crate::cli::Cli::command();
+    // The CLI is defined with the main subcommand at build time, so this cannot fail.
     let cmd = cli.find_subcommand_mut(NAME).unwrap();
     let file_name = match shell {
         Shell::Bash => format!("{NAME}.bash"),

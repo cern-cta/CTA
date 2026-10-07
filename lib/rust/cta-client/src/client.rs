@@ -32,7 +32,7 @@ use tonic::{service::interceptor::InterceptedService, transport::Channel};
 
 use crate::{
     admin_cmd,
-    errors::Error,
+    errors::{Error, TapeFileLsItemConversionError},
     stream::StreamResponseExt,
     types::{File, FileSelector},
 };
@@ -193,7 +193,14 @@ impl CtaGrpcClient<StreamingClientType> {
                 match stream.next().await {
                     Some(Ok(next)) => Err(Error::UnexpectedStreamData(Box::new(next))),
                     Some(Err(e)) => Err(e),
-                    None => Ok(ls_item.try_into()?),
+                    None => {
+                        let file = File::try_from(ls_item).map_err(
+                            |e: TapeFileLsItemConversionError| {
+                                Error::InvalidResponse(e.to_string())
+                            },
+                        )?;
+                        Ok(file)
+                    }
                 }
             }
             Some(Ok(data)) => Err(Error::UnexpectedStreamData(Box::new(data))),
@@ -211,8 +218,9 @@ impl CtaGrpcClient<StreamingClientType> {
     /// # Errors
     ///
     /// Fails if the connection cannot be established, if the frontend reports
-    /// an error for the command, or if the stream contains an unexpected item
-    /// type.
+    /// an error for the command, if the stream contains an unexpected item
+    /// type, or if the protobuf response data is malformed (e.g., invalid
+    /// timestamps or checksums).
     pub async fn list_deleted_files(
         &mut self,
         file_selector: FileSelector,
@@ -232,7 +240,9 @@ impl CtaGrpcClient<StreamingClientType> {
         Ok(response_stream
             .into_stream_response()
             .map(|item| match item {
-                Ok(Data::RtflsItem(ls_item)) => Ok(ls_item.into()),
+                Ok(Data::RtflsItem(ls_item)) => {
+                    File::try_from(ls_item).map_err(|e| Error::InvalidResponse(e.to_string()))
+                }
                 Ok(other) => Err(Error::UnexpectedStreamData(Box::new(other))),
                 Err(e) => Err(e),
             }))

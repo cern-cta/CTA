@@ -13,7 +13,10 @@ use cta_protobuf::cta::admin::{RecycleTapeFileLsItem, TapeFileLsItem};
 use serde::Serialize;
 use strum::Display;
 
-use super::errors::Error;
+use crate::errors::{
+    ArchiveFileConversionError, ChecksumTypeError, RecycleTapeFileConversionError,
+    TapeFileLsItemConversionError,
+};
 
 /// An error returned by [`hex_to_byte_array`] when the input string cannot be decoded.
 #[derive(Debug, thiserror::Error)]
@@ -65,17 +68,6 @@ pub fn hex_to_byte_array(hex_string: &str) -> Result<Vec<u8>, HexDecodeError> {
     }
 
     Ok(bytes)
-}
-
-/// An error type for the conversion of checksum types. Useful to convert between EOS and CTA.
-#[derive(Debug, thiserror::Error)]
-pub enum ChecksumTypeError<T> {
-    /// Error parsing a checksum name string
-    #[error("Error parsing string '{0}'")]
-    Parse(String),
-    /// Error converting from a source checksum value
-    #[error("Source checksum value not supported: {0:?}")]
-    UnknownType(T),
 }
 
 impl TryInto<ChecksumType> for cta_protobuf::cta::common::checksum_blob::checksum::Type {
@@ -199,6 +191,12 @@ pub struct FileSelector {
 #[derive(Debug, Clone, Serialize)]
 pub struct Owner(/* uid: */ pub u32, /* gid: */ pub u32);
 
+impl From<cta_protobuf::cta::common::OwnerId> for Owner {
+    fn from(value: cta_protobuf::cta::common::OwnerId) -> Self {
+        Owner(value.uid, value.gid)
+    }
+}
+
 /// A disk file as known to the CTA catalogue.
 #[derive(Debug, Clone, Serialize)]
 pub struct DiskFile {
@@ -212,12 +210,6 @@ pub struct DiskFile {
     pub id_when_deleted: Option<String>,
     /// The file owner (user/group), if known
     pub owner: Option<Owner>,
-}
-
-impl From<cta_protobuf::cta::common::OwnerId> for Owner {
-    fn from(value: cta_protobuf::cta::common::OwnerId) -> Self {
-        Owner(value.uid, value.gid)
-    }
 }
 
 impl From<cta_protobuf::cta::admin::tape_file_ls_item::DiskFile> for DiskFile {
@@ -271,21 +263,30 @@ pub struct ArchiveFile {
     pub checksums: Vec<Checksum>,
 }
 
-impl From<cta_protobuf::cta::admin::tape_file_ls_item::ArchiveFile> for ArchiveFile {
-    fn from(val: cta_protobuf::cta::admin::tape_file_ls_item::ArchiveFile) -> Self {
-        ArchiveFile {
+impl TryFrom<cta_protobuf::cta::admin::tape_file_ls_item::ArchiveFile> for ArchiveFile {
+    type Error = ArchiveFileConversionError;
+
+    fn try_from(
+        val: cta_protobuf::cta::admin::tape_file_ls_item::ArchiveFile,
+    ) -> Result<Self, Self::Error> {
+        let creation_time = DateTime::from_timestamp_secs(val.creation_time as i64).ok_or(
+            ArchiveFileConversionError::InvalidTimestamp(val.creation_time as i64),
+        )?;
+
+        let checksums = val
+            .checksum
+            .iter()
+            .map(Checksum::try_from)
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| ArchiveFileConversionError::ChecksumConversion(e.to_string()))?;
+
+        Ok(ArchiveFile {
             id: val.archive_id,
             storage_class: val.storage_class,
-            creation_time: DateTime::from_timestamp_secs(val.creation_time as i64)
-                .expect("Timestamp should be parseable"),
+            creation_time,
             size: val.size,
-            checksums: val
-                .checksum
-                .iter()
-                .map(Checksum::try_from)
-                .collect::<Result<Vec<_>, _>>()
-                .expect("Checksum should be convertible"),
-        }
+            checksums,
+        })
     }
 }
 
@@ -302,21 +303,29 @@ pub struct File {
     pub virtual_org: Option<String>,
 }
 
-impl From<RecycleTapeFileLsItem> for File {
-    fn from(val: RecycleTapeFileLsItem) -> Self {
-        File {
+impl TryFrom<RecycleTapeFileLsItem> for File {
+    type Error = RecycleTapeFileConversionError;
+
+    fn try_from(val: RecycleTapeFileLsItem) -> Result<Self, Self::Error> {
+        let creation_time = DateTime::from_timestamp_secs(val.archive_file_creation_time as i64)
+            .ok_or(RecycleTapeFileConversionError::InvalidTimestamp(
+                val.archive_file_creation_time as i64,
+            ))?;
+
+        let checksums = val
+            .checksum
+            .iter()
+            .map(Checksum::try_from)
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| RecycleTapeFileConversionError::ChecksumConversion(e.to_string()))?;
+
+        Ok(File {
             archive_file: ArchiveFile {
                 id: val.archive_file_id,
                 storage_class: val.storage_class,
-                creation_time: DateTime::from_timestamp_secs(val.archive_file_creation_time as i64)
-                    .expect("Timestamp should be valid"),
+                creation_time,
                 size: val.size_in_bytes,
-                checksums: val
-                    .checksum
-                    .iter()
-                    .map(Checksum::try_from)
-                    .collect::<Result<Vec<_>, _>>()
-                    .expect("Checksum should be convertible"),
+                checksums,
             },
             tape_file: TapeFile {
                 vid: val.vid,
@@ -332,15 +341,9 @@ impl From<RecycleTapeFileLsItem> for File {
                 path: val.disk_file_path,
             },
             virtual_org: Some(val.virtual_organization),
-        }
+        })
     }
 }
-
-/// Error returned when a [`TapeFileLsItem`] cannot be converted to a [`File`]
-/// because a required protobuf sub-message is absent.
-#[derive(Debug, thiserror::Error)]
-#[error("TapeFileLsItem missing field: {0}")]
-pub struct TapeFileLsItemConversionError(String);
 
 impl TryFrom<TapeFileLsItem> for File {
     type Error = TapeFileLsItemConversionError;
@@ -350,7 +353,10 @@ impl TryFrom<TapeFileLsItem> for File {
             archive_file: val
                 .af
                 .ok_or_else(|| TapeFileLsItemConversionError("archive_file".into()))?
-                .into(),
+                .try_into()
+                .map_err(|e: ArchiveFileConversionError| {
+                    TapeFileLsItemConversionError(format!("archive_file: {}", e))
+                })?,
             tape_file: val
                 .tf
                 .ok_or_else(|| TapeFileLsItemConversionError("tape_file".into()))?
@@ -361,11 +367,5 @@ impl TryFrom<TapeFileLsItem> for File {
                 .into(),
             virtual_org: None,
         })
-    }
-}
-
-impl From<crate::types::TapeFileLsItemConversionError> for Error {
-    fn from(e: crate::types::TapeFileLsItemConversionError) -> Self {
-        Error::InvalidResponse(e.to_string())
     }
 }

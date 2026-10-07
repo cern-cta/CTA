@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 CERN
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#![forbid(unsafe_code)]
+
 //! High-level client library for the CTA frontend gRPC interface.
 //!
 //! This crate sits on top of the generated protobuf/gRPC bindings in

@@ -44,7 +44,7 @@
 macro_rules! admin_cmd {
     // Entry point
     ($cmd:ident . $sub_cmd:ident { $($fields:tt)* }) => {{
-        #[allow(unused_imports)]
+        #[allow(unused_imports, reason = "macro expansion is data-dependent")]
         use cta_protobuf::cta::admin::{
             AdminCmd, OptionString, OptionUInt64, OptionStrList,
             option_string::Key as StringKeys,
@@ -52,7 +52,7 @@ macro_rules! admin_cmd {
             option_str_list::Key as StrListKeys,
             admin_cmd
         };
-        #[allow(unused_mut)]
+        #[allow(unused_mut, reason = "macro expansion is data-dependent")]
         let mut cmd = AdminCmd {
             cmd: admin_cmd::Cmd::$cmd.into(),
             subcmd: admin_cmd::SubCmd::$sub_cmd.into(),

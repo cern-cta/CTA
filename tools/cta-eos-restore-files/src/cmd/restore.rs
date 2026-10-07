@@ -3,10 +3,12 @@
 
 use std::collections::HashMap;
 
+use anyhow::Context;
 use cern_st_grpc::EndpointConfig;
 use cta_client::{
     client::{CtaGrpcClient, StreamingClientType},
-    types::{Checksum, ChecksumType, ChecksumTypeError, DiskFile, File, FileSelector},
+    errors::ChecksumTypeError,
+    types::{Checksum, ChecksumType, DiskFile, File, FileSelector},
 };
 use eos_client::EosEndpointMap;
 use eos_protobuf::eos::rpc::{MdId, Type};
@@ -67,12 +69,19 @@ async fn do_sanity_check(
         .checksums
         .into_iter()
         .map(|c| {
-            let ty = ChecksumType::try_from_eos(c.r#type).expect("Checksum type should be valid");
+            let checksum_type_str = c.r#type.clone();
+            let ty = ChecksumType::try_from_eos(c.r#type).map_err(|e| {
+                anyhow::anyhow!(
+                    "Can't parse EOS checksum type '{}': {}",
+                    checksum_type_str,
+                    e
+                )
+            })?;
             Ok((ty, Checksum::new(ty, c.value)))
         })
         .collect();
 
-    let eos_checksums = eos_checksums?;
+    let eos_checksums = eos_checksums.context("Failed to parse EOS checksums from metadata")?;
 
     let cta_checksums: HashMap<ChecksumType, Checksum> = file
         .archive_file

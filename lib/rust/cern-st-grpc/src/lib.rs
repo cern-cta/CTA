@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 CERN
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#![forbid(unsafe_code)]
+
 //! Transport-level gRPC plumbing shared by the CTA and EOS clients:
 //! endpoint configuration, JWT authentication and TLS.
 

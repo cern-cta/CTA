@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 CERN
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+#![forbid(unsafe_code)]
 #![doc = include_str!("../README.md")]
 
 /// Bindings for the `eos.*` protobuf packages.
