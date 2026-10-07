@@ -3,11 +3,11 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Read the major version without accepting JSON numbers or silently using a fallback.
+# Read the positive integer major version from project.json.
 read_cta_major_version() {
   local major_version
-  if ! major_version=$(jq -er '.majorVersion | select(type == "string") | select(test("^[1-9][0-9]*$"))' "$1"); then
-    echo "Invalid or missing majorVersion in $1; expected a positive integer string." >&2
+  if ! major_version=$(jq -er '.majorVersion | numbers | select(. > 0 and . == floor)' "$1"); then
+    echo "Invalid or missing majorVersion in $1; expected a positive integer." >&2
     return 1
   fi
   printf '%s\n' "$major_version"

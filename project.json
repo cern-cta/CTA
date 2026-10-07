@@ -1,6 +1,6 @@
 {
   "name": "CTA",
-  "majorVersion": "6",
+  "majorVersion": 6,
   "summary": "CERN Tape Archive",
   "description":
     "The CERN Tape Archive (CTA) is the open-source archival storage system for the custodial copy of all physics data at CERN.",

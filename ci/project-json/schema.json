@@ -21,8 +21,8 @@
     },
     "majorVersion": {
       "description": "Major version used for build-version defaults and new releases.",
-      "type": "string",
-      "pattern": "^[1-9][0-9]*$"
+      "type": "integer",
+      "minimum": 1
     },
     "summary": {
       "type": "string",

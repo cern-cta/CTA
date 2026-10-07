@@ -93,21 +93,14 @@ EOF
   # Read repository metadata once and compare whole package/version fields.
   local available_packages
   if ! available_packages=$(dnf -q --repo=temp-repo --setopt=reposdir="$tempdir" \
-      --refresh list --available --showduplicates "$package"); then
+      --refresh repoquery --available --archlist=x86_64 --qf '%{name} %{version}-%{release}' "$package"); then
     log_error "Failed to query repository for package '$package'."
     exit 1
   fi
   echo "Available versions for package $package:"
   printf '%s\n' "$available_packages"
 
-  if awk -v package="$package" -v version="$version" '
-      $1 == package ".x86_64" {
-        actual = $2
-        sub(/^[0-9]+:/, "", actual)
-        if (actual == version) found = 1
-      }
-      END { exit !found }
-    ' <<< "$available_packages"; then
+  if grep -Fxq -- "$package $version" <<< "$available_packages"; then
     echo "Package '$package' with version '$version' is available in the provided repository."
     exit 0
   else

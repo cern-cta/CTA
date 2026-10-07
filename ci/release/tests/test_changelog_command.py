@@ -152,7 +152,7 @@ class ChangelogCommandTest(unittest.TestCase):
         self.api.authenticate.return_value = {"username": "release-manager"}
         with (
             patch.object(self.context.git, "validate_repository", return_value="abc123"),
-            patch.object(self.context.git, "run", return_value='{"majorVersion": "6"}') as git_run,
+            patch.object(self.context.git, "run", return_value='{"majorVersion": 6}') as git_run,
             pytest.raises(ReleaseWorkflowError, match="no valid numeric ID"),
         ):
             changelog.run(self.context, "v6.12.0.0-1")

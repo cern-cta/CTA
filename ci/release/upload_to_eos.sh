@@ -13,7 +13,6 @@
 set -Eeuo pipefail
 
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/../utils/cta_version.sh"
 
 usage() {
   echo
@@ -27,7 +26,7 @@ usage() {
   echo "  --local-source-dir <dir>         :    Local directory that will be uploaded to the provided --eos-target-dir."
   echo "  --eos-source-dir   <dir>         :    EOS directory that will be copied to the provided --eos-target-dir. Must be used with --cta-version."
   echo "  --eos-target-dir   <dir>         :    Final EOS repository directory where RPMs will be uploaded."
-  echo "  --cta-version      <cta_version> :    Full CTA version including platform, without v (e.g. 6.12.0.0-1.pgall.el9)."
+  echo "  --cta-version      <cta_version> :    Exact RPM version-release (e.g. 6.12.0.0-1.pgall.el9)."
   echo
   exit 1
 }
@@ -138,15 +137,6 @@ upload_to_eos() {
     exit 1
   fi
 
-  if [[ -n "$cta_version" ]]; then
-    validate_cta_version "$cta_version" || exit 1
-    # Publication currently supports enterprise Linux RPM repositories only.
-    if [[ ! "$cta_version" =~ [.]el[0-9]+$ ]]; then
-      log_error "--cta-version must use an enterprise Linux platform suffix, such as .el9."
-      exit 1
-    fi
-  fi
-
   # Source directory names are discarded to prevent accidental nested repository layouts.
   repository_dir="${eos_target_dir}"
 
@@ -184,22 +174,19 @@ upload_to_eos() {
 
     # Compare the literal version-release and architecture, not a version substring.
     while IFS= read -r rpm_path; do
-      case "${rpm_path##*/}" in
-        cta-*-"${cta_version}".x86_64.rpm) rpm_paths+=("$rpm_path") ;;
-      esac
+      if [[ "${rpm_path##*/}" == cta-*-"${cta_version}".x86_64.rpm ]]; then
+        rpm_paths+=("$rpm_path")
+      fi
     done <<< "$source_listing"
   fi
 
   # Local CI artifacts must also belong to the requested build before any are uploaded.
   if [[ -n "$local_source_dir" && -n "$cta_version" ]]; then
     for rpm_path in "${rpm_paths[@]}"; do
-      case "${rpm_path##*/}" in
-        cta-*-"${cta_version}".x86_64.rpm) ;;
-        *)
-          log_error "ERROR: RPM does not match CTA ${cta_version}: ${rpm_path}"
-          exit 1
-          ;;
-      esac
+      if [[ "${rpm_path##*/}" != cta-*-"${cta_version}".x86_64.rpm ]]; then
+        log_error "ERROR: RPM does not match CTA ${cta_version}: ${rpm_path}"
+        exit 1
+      fi
     done
   fi
 

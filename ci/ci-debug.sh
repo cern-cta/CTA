@@ -330,7 +330,7 @@ wait_for_job() {
 
 }
 
-# The image job records the exact reference it pushed.
+# The image jobs publish a image-ref.txt artifact. From this artifact we can easily understand the image ref that was pushed
 resolve_debug_image_name() {
   local response status image_ref
   response=$(gitlab_api GET "/projects/${PROJECT_ID}/jobs/${debug_image_job_id}/artifacts/image-ref.txt" \
