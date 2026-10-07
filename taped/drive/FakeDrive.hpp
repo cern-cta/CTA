@@ -66,7 +66,7 @@ public:
   std::string getDriveFirmwareVersion() final;
   deviceInfo getDeviceInfo() final;
   std::string getGenericSCSIPath() final;
-  std::string getSerialNumber() final;
+  std::string getSerialNumber() override;
   void positionToLogicalObject(uint32_t blockId) final;
   positionInfo getPositionInfo() final;
   physicalPositionInfo getPhysicalPositionInfo() final;
@@ -75,11 +75,11 @@ public:
   std::vector<std::string> getTapeAlerts(const std::vector<uint16_t>&) final;
   std::vector<std::string> getTapeAlertsCompact(const std::vector<uint16_t>&) final;
   bool tapeAlertsCriticalForWrite(const std::vector<uint16_t>& codes) final;
-  void setDensityAndCompression(bool compression = true, unsigned char densityCode = 0) final;
+  void setDensityAndCompression(bool compression = true, unsigned char densityCode = 0) override;
   void enableCRC32CLogicalBlockProtectionReadOnly() final;
   void enableCRC32CLogicalBlockProtectionReadWrite() final;
   void disableLogicalBlockProtection() final;
-  drive::LBPInfo getLBPInfo() final;
+  drive::LBPInfo getLBPInfo() override;
   void setLogicalBlockProtection(const unsigned char method,
                                  unsigned char methodLength,
                                  const bool enableLPBforRead,
@@ -87,14 +87,14 @@ public:
   void setEncryptionKey(const std::string& encryption_key) final;
   bool clearEncryptionKey() final;
   bool isEncryptionCapEnabled() final;
-  driveStatus getDriveStatus() final;
-  void setSTBufferWrite(bool bufWrite) final;
+  driveStatus getDriveStatus() override;
+  void setSTBufferWrite(bool bufWrite) override;
   void fastSpaceToEOM(void) final;
   void rewind(void) final;
   void spaceToEOM(void) final;
   void spaceFileMarksBackwards(size_t count) final;
   void spaceFileMarksForward(size_t count) final;
-  void unloadTape(void) final;
+  void unloadTape(void) override;
   void flush(void) final;
   void writeSyncFileMarks(size_t count) final;
   void writeImmediateFileMarks(size_t count) final;
@@ -102,7 +102,7 @@ public:
   ssize_t readBlock(void* data, size_t count) final;
   void readExactBlock(void* data, size_t count, const std::string& context) final;
   void readFileMark(const std::string& context) final;
-  void waitUntilReady(const uint32_t timeoutSecond) final;
+  void waitUntilReady(const uint32_t timeoutSecond) override;
   bool isWriteProtected() final;
   bool isAtBOT() final;
   bool isAtEOD() final;
