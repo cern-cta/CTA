@@ -153,6 +153,19 @@ spec:
       description: "pgsched only: opportunistically batch concurrent queueing requests into a single bulk DB insert instead of queueing them one at a time."
       type: boolean
       default: false
+
+    use-stress-drives:
+      description: |-
+        Run the stress test with virtual StressDrives instead of mhvtl tape hardware.
+
+        Deploys the stress-stressdrives-pgsched-values.yaml overlay: drives are
+        pure in-process software objects backed by a shared tmpfs directory, so
+        no SCSI devices, kernel modules, or rmcd are needed.
+
+        Requires the stress node to be labelled beforehand:
+          kubectl label node <name> cta-stress-node=true
+      type: boolean
+      default: false
 ---
 
 stages:
@@ -406,6 +419,7 @@ include:
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
       enable-opportunistic-batching: $[[ inputs.enable-opportunistic-batching ]]
+      use-stress-drives: $[[ inputs.use-stress-drives ]]
   - local: .gitlab/ci/sbom.gitlab-ci.yml
     rules:
       - if: '"$[[ inputs.platform ]]" == "debian13"'

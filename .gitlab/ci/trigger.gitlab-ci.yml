@@ -38,6 +38,8 @@ spec:
       type: boolean
     keep-stress-test-namespace:
       type: boolean
+    use-stress-drives:
+      type: boolean
 ---
 
 .trigger-child-pipeline:
@@ -75,6 +77,7 @@ spec:
           workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
           enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
           keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
+          use-stress-drives: $[[ inputs.use-stress-drives ]]
     strategy: mirror
 
 # Only EL9 pgsched with Oracle is automatic on tags; other variants are optional.
