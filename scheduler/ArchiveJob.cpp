@@ -70,7 +70,7 @@ void cta::ArchiveJob::validate() {
   if (archiveFile.checksumBlob.empty() || tapeFile.checksumBlob.empty()) {
     throw ChecksumNotSet("In cta::ArchiveJob::validate(): checksums not set");
   }
-  archiveFile.checksumBlob.validateCommonChecksums(tapeFile.checksumBlob);
+  archiveFile.checksumBlob.validate(tapeFile.checksumBlob);
 }
 
 //------------------------------------------------------------------------------

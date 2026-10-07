@@ -135,7 +135,7 @@ public:
         // If we reached the end of the file, validate the checksum (throws an exception on bad checksum)
         if (!stillReading) {
           tapeReadChecksum.insert(cta::checksum::ADLER32, checksum_adler32);
-          m_retrieveJob->archiveFile.checksumBlob.validate(tapeReadChecksum);
+          m_retrieveJob->archiveFile.checksumBlob.validateOn(cta::checksum::ADLER32, tapeReadChecksum);
         }
         // Pass the block to the disk write task
         m_fifo.pushDataBlock(mb);
