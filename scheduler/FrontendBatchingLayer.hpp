@@ -26,6 +26,7 @@ namespace cta {
 namespace catalogue {
 class Catalogue;
 }
+
 namespace log {
 class LogContext;
 }

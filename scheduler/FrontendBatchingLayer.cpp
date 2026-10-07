@@ -4,8 +4,9 @@
  */
 
 #include "scheduler/FrontendBatchingLayer.hpp"
-#include "scheduler/Scheduler.hpp"
+
 #include "common/exception/UserError.hpp"
+#include "scheduler/Scheduler.hpp"
 
 namespace cta {
 
@@ -47,14 +48,14 @@ FrontendBatchingLayer::FrontendBatchingLayer(Scheduler& scheduler,
 //------------------------------------------------------------------------------
 // queueArchiveWithGivenId
 //------------------------------------------------------------------------------
-std::string FrontendBatchingLayer::queueArchiveWithGivenId(
-    const uint64_t archiveFileId,
-    const std::string& instanceName,
-    const cta::common::dataStructures::ArchiveRequest& request,
-    log::LogContext& lc) {
+std::string FrontendBatchingLayer::queueArchiveWithGivenId(const uint64_t archiveFileId,
+                                                           const std::string& instanceName,
+                                                           const cta::common::dataStructures::ArchiveRequest& request,
+                                                           log::LogContext& lc) {
   if (!request.fileSize) {
     throw cta::exception::UserError(
-      std::string("In FrontendBatchingLayer::queueArchiveWithGivenId(): Rejecting archive request for zero-length file: ")
+      std::string(
+        "In FrontendBatchingLayer::queueArchiveWithGivenId(): Rejecting archive request for zero-length file: ")
       + request.diskFileInfo.path);
   }
 
