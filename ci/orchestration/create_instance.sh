@@ -34,6 +34,7 @@ usage() {
   echo "      --local-telemetry:              Spawns an OpenTelemetry and Collector and Prometheus scraper. Changes the default cta-config to presets/dev-cta-telemetry-values.yaml"
   echo "      --publish-telemetry:            Publishes telemetry to a pre-configured central observability backend. See presets/ci-cta-telemetry-values.yaml"
   echo "      --extra-cta-values:             Extra verbatim values for the CTA chart. These will override any previous values from files."
+  echo "      --no-hardware-drives:           Skip mhvtl/SCSI drive detection entirely.  Use this when --cta-config already defines drives (e.g. stress-drive mode)."
   exit 1
 }
 
@@ -46,6 +47,25 @@ check_deploy_commands() {
     fi
   done
   (( errors == 0 )) || die "Deployment requirements are not satisfied."
+}
+
+generate_stress_drive_values() {
+  log_task "Generating stress drive configuration (${max_drives} drives)..."
+  taped_config=$(mktemp "/tmp/${namespace}-taped-stress-XXXXXX-values.yaml")
+  {
+    echo "taped:"
+    echo "  drives:"
+    for i in $(seq 0 $((max_drives - 1))); do
+      printf "    - name: \"STRESS%04d\"\n" "$i"
+      printf "      device: \"stress://\"\n"
+      printf "      logicalLibraryName: \"stress-lib\"\n"
+      printf "      controlPath: \"smc0\"\n"
+    done
+  } > "$taped_config"
+  echo "Content of stress drive values file $taped_config:"
+  echo
+  cat "$taped_config"
+  echo
 }
 
 # This should all go once we have auto-discovery and auto-scaling of hardware resources
@@ -159,6 +179,7 @@ create_instance() {
   local_telemetry=false
   publish_telemetry=false
   one_logical_library=false
+  no_hardware_drives=false
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -225,6 +246,7 @@ create_instance() {
         shift ;;
       --publish-telemetry) publish_telemetry=true ;;
       --one-logical-library) one_logical_library=true ;;
+      --no-hardware-drives) no_hardware_drives=true ;;
       *)
         die_usage "Unsupported argument: $1"
         ;;
@@ -269,8 +291,13 @@ create_instance() {
     die "Another CTA release was found. Currently, installing multiple CTA releases on the same machine is not supported."
   fi
 
-  # Determine the library config to use
-  if [[ -z "${tapeservers_config}" ]]; then
+  # Determine the library config to use.
+  taped_config=""
+  rmcd_config=""
+  if [[ "${no_hardware_drives}" == "true" ]]; then
+    # Stress-drive mode: generate drive list from --max-drives; no rmcd config needed.
+    generate_stress_drive_values
+  else
     generate_tape_values_files
   fi
 
@@ -400,6 +427,12 @@ create_instance() {
   if [[ "$extra_cta_values" ]]; then
     extra_cta_chart_flags+=" ${extra_cta_values} "
   fi
+  if [[ -n "${taped_config}" ]]; then
+    extra_cta_chart_flags+=" -f ${taped_config}"
+  fi
+  if [[ -n "${rmcd_config}" ]]; then
+    extra_cta_chart_flags+=" -f ${rmcd_config}"
+  fi
 
 
   log_run helm upgrade --install cta helm/cta \
@@ -408,8 +441,6 @@ create_instance() {
                                 --set global.image.registry="${cta_image_registry}" \
                                 --set global.image.tag="${cta_image_tag}" \
                                 --set-file global.configuration.scheduler="${scheduler_config}" \
-                                -f "${taped_config}" \
-                                -f "${rmcd_config}" \
                                 --wait --timeout "${chart_install_timeout}"m ${extra_cta_chart_flags}
   log_success "Deployed CTA in namespace ${namespace}."
 

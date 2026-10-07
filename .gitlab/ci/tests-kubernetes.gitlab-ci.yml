@@ -15,6 +15,8 @@ spec:
       type: boolean
     use-stress-drives:
       type: boolean
+    num-stress-drives:
+      type: number
 ---
 
 # All of the below tests use only the docker image generated in the build:image stage.
@@ -397,6 +399,8 @@ stress-test:
       # Requires the stress node to be labelled: kubectl label node <name> cta-stress-node=true
       if $[[ inputs.use-stress-drives ]]; then
         STRESS_CTA_VALUES_CHAIN="${STRESS_CTA_VALUES_CHAIN},presets/stress-stressdrives-pgsched-values.yaml"
+        # Skip mhvtl hardware detection; generate drives STRESS0000..STRESS{N-1}.
+        EXTRA_SPAWN_ARGS+=" --no-hardware-drives --max-drives $[[ inputs.num-stress-drives ]]"
       fi
     # Set up stress test
     - cd ci/orchestration/
