@@ -243,6 +243,18 @@ delete_instance() {
   rm -f /tmp/${namespace}-rmcd-*-values.yaml
   rm -f /tmp/${namespace}-taped-*-values.yaml
 
+  # Remove the cta-stress-node=true label if create_instance.sh applied it automatically.
+  # The node name is stored in a temp file; if absent the label was set manually and is left intact.
+  local stress_node_file="/tmp/${namespace}-stress-node.txt"
+  if [[ -f "${stress_node_file}" ]]; then
+    local stress_node
+    stress_node=$(cat "${stress_node_file}")
+    log_task "Removing cta-stress-node=true label from node ${stress_node}..."
+    kubectl label node "${stress_node}" cta-stress-node- 2>/dev/null \
+      || log_warn "Could not remove cta-stress-node label from ${stress_node}; remove it manually with: kubectl label node ${stress_node} cta-stress-node-"
+    rm -f "${stress_node_file}"
+  fi
+
   # Delete the actual namespace
   log_task "Deleting CTA instance ${namespace}..."
   kubectl delete pods,jobs,deployments,statefulsets,pvc --all -n "${namespace}" --now --wait=false >/dev/null
