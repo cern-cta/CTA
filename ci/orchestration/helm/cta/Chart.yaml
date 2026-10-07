@@ -27,6 +27,7 @@ dependencies:
   - name: rmcd
     repository: "file://../rmcd"
     version: 0.2.0
+    condition: rmcd.enabled
   - name: maintd
     repository: "file://../maintd"
     version: 0.2.0
