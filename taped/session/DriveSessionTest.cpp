@@ -5,6 +5,7 @@
 
 #include "DriveSession.hpp"
 
+#include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "common/log/StringLogger.hpp"
 #include "taped/SchedulerContext.hpp"
@@ -462,7 +463,7 @@ TEST_F(DriveSessionTest, CleanupReportedDownFailurePropagatesAfterOwnershipIsRel
 
 TEST_F(DriveSessionTest, MissingDrivePropagatesWithoutHardwareAccess) {
   driveState().missing = true;
-  EXPECT_THROW(session->run(stop.get_token()), Scheduler::NoSuchDrive);
+  EXPECT_THROW(session->run(stop.get_token()), TapeDrivesCatalogueState::NoSuchDrive);
   EXPECT_TRUE(system.m_pathToDrive.contains("/dev/nst0"));
   EXPECT_TRUE(driveState().reports.empty());
   EXPECT_TRUE(session->isLive());

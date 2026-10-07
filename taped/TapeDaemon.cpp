@@ -5,6 +5,7 @@
 
 #include "TapeDaemon.hpp"
 
+#include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/semconv/Logging.hpp"
@@ -12,7 +13,6 @@
 #include "common/utils/utils.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "taped/session/DriveSession.hpp"
-#include "taped/session/DriveStatePublication.hpp"
 
 #include <algorithm>
 #include <exception>
@@ -47,7 +47,8 @@ void TapeDaemon::stop() {
   log::LogContext lc(m_lc.logger());
   try {
     // Use the stable catalogue directly; the run thread may be replacing the scheduler.
-    requestDriveDown(m_catalogue, m_driveInfo.driveName, common::dataStructures::DriveDownReason::Shutdown, lc);
+    TapeDrivesCatalogueState(m_catalogue)
+      .requestDriveDown(m_driveInfo.driveName, common::dataStructures::DriveDownReason::Shutdown, lc);
   } catch (const std::exception& ex) {
     log::ScopedParamContainer params(lc);
     const auto* ctaException = dynamic_cast<const exception::Exception*>(&ex);
@@ -110,7 +111,7 @@ int TapeDaemon::run() {
       }
       session->run(m_stopSource.get_token());
     }
-  } catch (const Scheduler::NoSuchDrive& ex) {
+  } catch (const TapeDrivesCatalogueState::NoSuchDrive& ex) {
     return shutdown(ExitCause::MissingDrive, DownPublication::None, ex.getMessageValue());
   } catch (const exception::Exception& ex) {
     return shutdown(ExitCause::UnexpectedFailure, DownPublication::DesiredAndReported, ex.getMessageValue());
@@ -159,7 +160,7 @@ int TapeDaemon::shutdown(ExitCause cause, DownPublication publication, std::stri
 
   // Preserve specific reasons. Physical cleanup and session release belong to DriveSession.
   try {
-    requestDriveDown(m_catalogue, m_driveInfo.driveName, reason, m_lc);
+    TapeDrivesCatalogueState(m_catalogue).requestDriveDown(m_driveInfo.driveName, reason, m_lc);
   } catch (...) {
     m_lc.log(log::ERR, "Failed to request desired Down before daemon exit.");
     exitCode = 1;
@@ -258,7 +259,7 @@ bool TapeDaemon::registerDrive(bool putUpIfPossible) {
   common::dataStructures::DesiredDriveState currentDesiredDriveState;
   try {
     currentDesiredDriveState = scheduler.getDesiredDriveState(m_driveInfo.driveName, m_lc);
-  } catch (const Scheduler::NoSuchDrive&) {
+  } catch (const TapeDrivesCatalogueState::NoSuchDrive&) {
     m_lc.log(log::INFO, "Drive has no existing catalogue entry. Creating one.");
   }
 

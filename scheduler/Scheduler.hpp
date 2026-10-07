@@ -197,7 +197,6 @@ public:
   enum class OperatingMode { ALL, USER, REPACK };
 
   /*============== Drive state management ====================================*/
-  CTA_GENERATE_EXCEPTION_CLASS(NoSuchDrive);
 
   /**
    * Gets the desired drive state from object store. Used by the tape drive, when scheduling.

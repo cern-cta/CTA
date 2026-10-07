@@ -7,7 +7,6 @@ include_directories (${CMAKE_CURRENT_SOURCE_DIR}
 add_subdirectory(rdbms/schema)
 
 set (CTA_SCHEDULER_SRC_FILES
-  IScheduler.cpp
   ArchiveJob.cpp
   ArchiveMount.cpp
   LabelMount.cpp
@@ -96,8 +95,6 @@ else()
     RelationalDBSchedulerTest.cpp
     rdbms/RelationalDBTest.cpp)
 endif()
-
-target_sources(ctaschedulerunittests PRIVATE ISchedulerTest.cpp)
 
 target_link_libraries (ctaschedulerunittests ctascheduler)
 

@@ -20,6 +20,7 @@
 #include <gtest/gtest.h>
 #include <list>
 #include <string>
+#include <vector>
 
 namespace unitTests {
 
@@ -104,6 +105,62 @@ void cta_catalogue_DriveStateTest::SetUp() {
 
 void cta_catalogue_DriveStateTest::TearDown() {
   m_catalogue.reset();
+}
+
+// A request stops future work without claiming that the active session has ended.
+TEST_P(cta_catalogue_DriveStateTest, RequestDownPreservesReasonsAndReportedSession) {
+  using namespace cta::common::dataStructures;
+  const std::vector<std::optional<std::string>> reasons {
+    std::nullopt,
+    "",
+    formatDriveDownReason(DriveDownReason::Startup),
+    formatDriveDownReason(DriveDownReason::Shutdown),
+    "Operator maintenance",
+    formatDriveDownReason(DriveDownReason::SessionDriveAccessFailed)};
+  cta::TapeDrivesCatalogueState state(*m_catalogue);
+  cta::log::LogContext lc(m_dummyLog);
+
+  for (const bool up : {false, true}) {
+    for (size_t i = 0; i < reasons.size(); ++i) {
+      SCOPED_TRACE(up);
+      SCOPED_TRACE(reasons[i].value_or("absent"));
+      auto drive = getTapeDriveWithAllElements("request-down");
+      drive.desiredUp = up;
+      drive.reasonUpDown = reasons[i];
+      drive.driveStatus = DriveStatus::Transferring;
+      drive.mountType = MountType::Retrieve;
+      drive.sessionId = 42;
+      m_catalogue->DriveState()->createTapeDrive(drive);
+      const auto before = m_catalogue->DriveState()->getTapeDrive(drive.driveName);
+      ASSERT_TRUE(before);
+
+      state.requestDriveDown(drive.driveName, DriveDownReason::DriveCleanupFailed, lc, "detail");
+
+      const auto stored = m_catalogue->DriveState()->getTapeDrive(drive.driveName);
+      ASSERT_TRUE(stored);
+      EXPECT_FALSE(stored->desiredUp);
+      EXPECT_FALSE(stored->desiredForceDown);
+      EXPECT_EQ(!up && i >= 4 ? reasons[i] : formatDriveDownReason(DriveDownReason::DriveCleanupFailed, "detail"),
+                stored->reasonUpDown);
+      EXPECT_EQ(before->driveStatus, stored->driveStatus);
+      EXPECT_EQ(before->mountType, stored->mountType);
+      EXPECT_EQ(before->sessionId, stored->sessionId);
+      EXPECT_EQ(before->sessionStartTime, stored->sessionStartTime);
+      EXPECT_EQ(before->transferStartTime, stored->transferStartTime);
+      EXPECT_EQ(before->currentVid, stored->currentVid);
+      EXPECT_EQ(before->currentTapePool, stored->currentTapePool);
+      EXPECT_EQ(before->currentVo, stored->currentVo);
+      EXPECT_EQ(before->userComment, stored->userComment);
+      m_catalogue->DriveState()->deleteTapeDrive(drive.driveName);
+    }
+  }
+}
+
+TEST_P(cta_catalogue_DriveStateTest, RequestDownRejectsMissingDrive) {
+  cta::TapeDrivesCatalogueState state(*m_catalogue);
+  cta::log::LogContext lc(m_dummyLog);
+  EXPECT_THROW(state.requestDriveDown("missing", cta::common::dataStructures::DriveDownReason::Shutdown, lc),
+               cta::TapeDrivesCatalogueState::NoSuchDrive);
 }
 
 // Recovery reports must preserve operator reason, including a down request during startup or cleaning.
