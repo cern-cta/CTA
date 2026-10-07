@@ -334,4 +334,79 @@ TEST_F(OpportunisticQueueBatcherTest, failWholeBatchSetsExceptionOnEveryItemAndC
   }
 }
 
+TEST_F(OpportunisticQueueBatcherTest, stopMakesNewCallersThrow) {
+  using namespace cta;
+  log::LogContext lc(m_dummyLog);
+
+  OpportunisticQueueBatcher<TestItem, int> batcher(100ms, 1000, [](std::vector<TestItem>& batch, log::LogContext&) {
+    for (auto& item : batch) {
+      item.promise.set_value(item.value);
+    }
+  });
+
+  batcher.stop();
+
+  TestItem item;
+  item.value = 1;
+  ASSERT_THROW(batcher.enqueueAndWait(std::move(item), lc), std::runtime_error);
+}
+
+TEST_F(OpportunisticQueueBatcherTest, stopUnblocksParkedWaiters) {
+  using namespace cta;
+
+  // 10-second window and large cap: neither thread will complete naturally within the test's timescale.
+  OpportunisticQueueBatcher<TestItem, int> batcher(10s, 1000, [](std::vector<TestItem>& batch, log::LogContext&) {
+    for (auto& item : batch) {
+      item.promise.set_value(item.value);
+    }
+  });
+
+  std::exception_ptr leaderError;
+  std::exception_ptr followerError;
+
+  // Thread 1: becomes leader and parks inside the window wait.
+  std::thread leaderThread([&] {
+    log::LogContext lc(m_dummyLog);
+    TestItem item;
+    item.value = 1;
+    try {
+      batcher.enqueueAndWait(std::move(item), lc);
+    } catch (...) {
+      leaderError = std::current_exception();
+    }
+  });
+
+  // Give the leader time to enter the window wait before submitting the follower.
+  std::this_thread::sleep_for(50ms);
+
+  // Thread 2: finds a leader already in progress and parks in the election loop.
+  std::thread followerThread([&] {
+    log::LogContext lc(m_dummyLog);
+    TestItem item;
+    item.value = 2;
+    try {
+      batcher.enqueueAndWait(std::move(item), lc);
+    } catch (...) {
+      followerError = std::current_exception();
+    }
+  });
+
+  // Give the follower time to park on the cv before stopping the batcher.
+  std::this_thread::sleep_for(50ms);
+
+  const auto stopStart = std::chrono::steady_clock::now();
+  batcher.stop();
+  leaderThread.join();
+  followerThread.join();
+
+  // stop() must have exited the leader's 10-second window early — both threads should unblock well
+  // within 1 second.
+  ASSERT_LT(std::chrono::steady_clock::now() - stopStart, 1s);
+
+  ASSERT_TRUE(leaderError != nullptr);
+  ASSERT_THROW(std::rethrow_exception(leaderError), std::runtime_error);
+  ASSERT_TRUE(followerError != nullptr);
+  ASSERT_THROW(std::rethrow_exception(followerError), std::runtime_error);
+}
+
 }  // namespace unitTests

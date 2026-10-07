@@ -25,6 +25,12 @@ namespace cta {
  * resolveBatch returns; only then does the optional, slower `afterRelease` run (audit logging,
  * metrics), so no follower ever waits on work done for someone else's batch.
  *
+ * Shutdown: call stop() (or destroy the batcher) to unblock any threads parked inside
+ * enqueueAndWait(). Items still queued in m_pendingBatch at that point receive a
+ * std::runtime_error("batcher stopped") exception; items already taken into an active batch by a
+ * leader are resolved normally by that leader. After stop(), any new call to enqueueAndWait()
+ * throws immediately. The destructor calls stop() automatically.
+ *
  * ItemType must have a public member `std::promise<ResultType> promise`.
  */
 template<typename ItemType, typename ResultType>
@@ -42,11 +48,39 @@ public:
         m_resolveBatch(std::move(resolveBatch)),
         m_afterRelease(std::move(afterRelease)) {}
 
+  ~OpportunisticQueueBatcher() { stop(); }
+
+  // Drains any items still waiting in m_pendingBatch (failing their promises with
+  // std::runtime_error("batcher stopped")), wakes all threads parked in enqueueAndWait(), and
+  // prevents new items from being accepted. Items already taken into an active batch by a leader are
+  // resolved normally by that leader. Safe to call multiple times; called automatically by the
+  // destructor.
+  void stop() {
+    std::vector<ItemType> drainedBatch;
+    {
+      std::lock_guard<std::mutex> lk(m_mutex);
+      if (m_stopped) return;
+      m_stopped = true;
+      drainedBatch.swap(m_pendingBatch);
+    }
+    auto ex = std::make_exception_ptr(std::runtime_error("batcher stopped"));
+    for (auto& item : drainedBatch) {
+      try {
+        item.promise.set_exception(ex);
+      } catch (const std::future_error&) {}  // already resolved; ignore
+    }
+    m_cv.notify_all();
+  }
+
   // Submits item, blocks until its own result is ready (as leader or follower), and returns it (or
-  // rethrows whatever exception resolveBatch set on its promise).
+  // rethrows whatever exception resolveBatch set on its promise). Throws std::runtime_error if the
+  // batcher has been stopped.
   ResultType enqueueAndWait(ItemType&& item, log::LogContext& lc) {
     std::future<ResultType> future;
     std::unique_lock<std::mutex> lock(m_mutex);
+    if (m_stopped) {
+      throw std::runtime_error("batcher stopped");
+    }
     m_pendingBatch.push_back(std::move(item));
     future = m_pendingBatch.back().promise.get_future();
 
@@ -87,7 +121,7 @@ public:
     // above, by a wakeup meant for someone else on this shared cv, or spuriously — so stealing the
     // batch right after is always safe here too.
     std::vector<ItemType> batch;
-    m_cv.wait_for(lock, m_window, [this] { return m_pendingBatch.size() >= m_maxBatchSize; });
+    m_cv.wait_for(lock, m_window, [this] { return m_pendingBatch.size() >= m_maxBatchSize || m_stopped; });
     batch.swap(m_pendingBatch);
     lock.unlock();
 
@@ -134,6 +168,7 @@ private:
 
   std::mutex m_mutex;
   std::condition_variable m_cv;
+  bool m_stopped = false;
   bool m_leaderInProgress = false;
   std::vector<ItemType> m_pendingBatch;
 };
