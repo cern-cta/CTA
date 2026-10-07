@@ -216,6 +216,26 @@ struct TapedConfiguration {
                                                                   "Compile time default"};
 
   //----------------------------------------------------------------------------
+  // Stress-test mode (scale testing without real SCSI hardware or mhvtl)
+  //
+  // Register drives in the CTA catalogue with DeviceFilePath = "stress://" and
+  // set StressMode = yes to bypass SCSI device scanning.  All drives sharing
+  // the same StressBaseDir can exchange virtual tapes by VID.
+  //----------------------------------------------------------------------------
+
+  /** Enables StressDrive and NullMediaChangerFacade in place of real hardware. */
+  cta::SourcedParameter<bool> stressMode {"taped", "StressMode", false, "Compile time default"};
+
+  /** Root of the tmpfs tape library shared across drives (e.g. /dev/shm/cta-stress). */
+  cta::SourcedParameter<std::string> stressBaseDir {"taped",
+                                                    "StressBaseDir",
+                                                    "/dev/shm/cta-stress",
+                                                    "Compile time default"};
+
+  /** Milliseconds to sleep in waitUntilReady() to simulate tape-load latency. */
+  cta::SourcedParameter<uint32_t> stressMountDelayMs {"taped", "StressMountDelayMs", 0, "Compile time default"};
+
+  //----------------------------------------------------------------------------
   // RMC Connection Options
   //----------------------------------------------------------------------------
   cta::SourcedParameter<std::string> rmcHost {"taped", "RmcHost", "localhost", "Compile time default"};

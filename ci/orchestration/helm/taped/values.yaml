@@ -22,6 +22,12 @@ conf:
     externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
     rmcHost: "cta-rmcd" # override with localhost if using hostnetwork
     schedulerNumberOfConnections: 3
+    # Stress-test mode: set to true to bypass real SCSI hardware and mhvtl.
+    # Drives must be registered in the CTA catalogue with DriveDevice = "stress://".
+    # All taped pods must share stressBaseDir (use a hostPath volume in Kubernetes).
+    stressMode: false
+    stressBaseDir: "/dev/shm/cta-stress"
+    stressMountDelayMs: 0
   telemetry:
     enabled: false
     retainInstanceIdOnRestart: false

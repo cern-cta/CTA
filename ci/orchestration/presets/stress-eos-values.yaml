@@ -89,7 +89,13 @@ fst:
     annotations: {}
     accessModes:
       - ReadWriteOnce
-    size: 40Gi
+    # EOS stores each file as a separate filesystem object on the FST.  With a
+    # 4 KB minimum block size on the underlying ext4 filesystem, a 16-byte file
+    # still consumes 4 KB on disk.  At 10 M files that is ~40 GB of data blocks
+    # alone; EOS FST overhead (checksum sidecars, inodes, directory entries)
+    # adds another ~25–30%, bringing the peak to ~55 GB.  The retrieve phase
+    # then refills the FST to the same level.  100 Gi provides safe headroom.
+    size: 100Gi
 
   xrd:
     # Increase FST concurrency to serve many simultaneous small-file requests.

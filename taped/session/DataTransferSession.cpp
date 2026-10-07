@@ -27,6 +27,7 @@
 #include "common/semconv/Attributes.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "taped/drive/DriveInterface.hpp"
+#include "taped/drive/StressDrive.hpp"
 #include "taped/rao/RAOParams.hpp"
 #include "taped/scsi/Device.hpp"
 #include "taped/session/VolumeInfo.hpp"
@@ -617,6 +618,23 @@ cta::tape::daemon::DataTransferSession::executeLabel([[maybe_unused]] cta::log::
  */
 cta::tape::drive::DriveInterface* cta::tape::daemon::DataTransferSession::findDrive(cta::log::LogContext& logContext,
                                                                                     cta::TapeMount* mount) {
+  // Stress-test mode: bypass SCSI device scanning entirely and return a
+  // StressDrive backed by files under the configured tmpfs base directory.
+  // Drives must be registered in the catalogue with devFilename = "stress://".
+  if (m_dataTransferConfig.stressMode) {
+    try {
+      auto drive = std::make_unique<cta::tape::drive::StressDrive>(
+        m_driveInfo.driveName,
+        m_dataTransferConfig.stressBaseDir,
+        m_dataTransferConfig.stressMountDelayMs);
+      drive->info = m_driveInfo;
+      return drive.release();
+    } catch (cta::exception::Exception& ex) {
+      putDriveDown("Failed to create stress drive", mount, logContext);
+      return nullptr;
+    }
+  }
+
   // Find the drive in the system's SCSI devices
   cta::tape::SCSI::DeviceVector dv(m_sysWrapper);
   cta::tape::SCSI::DeviceInfo driveInfo;

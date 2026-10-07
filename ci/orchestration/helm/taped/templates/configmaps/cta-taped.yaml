@@ -39,8 +39,15 @@ data:
     {{- end }}
     taped externalFreeDiskSpaceScript {{ $.Values.conf.taped.externalFreeDiskSpaceScript }}
 
-    # Rmcd
+    # Rmcd (not contacted in stress mode, but the key must still be present)
     taped RmcHost {{ $.Values.conf.taped.rmcHost }}
+    {{- if $.Values.conf.taped.stressMode }}
+
+    # Stress-test mode: virtual drives backed by tmpfs, no real SCSI hardware needed.
+    taped StressMode yes
+    taped StressBaseDir {{ $.Values.conf.taped.stressBaseDir }}
+    taped StressMountDelayMs {{ $.Values.conf.taped.stressMountDelayMs }}
+    {{- end }}
 
     # Telemetry
     experimental telemetryEnabled {{ $.Values.conf.telemetry.enabled }}

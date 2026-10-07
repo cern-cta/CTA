@@ -128,6 +128,31 @@ struct DataTransferConfig {
    * Timeout after which the tape server stops trying to get the next mount
    */
   time_t wdGetNextMountMaxSecs = 900;
+
+  //----------------------------------------------------------------------------
+  // Stress-test mode (scale testing without real SCSI hardware or mhvtl)
+  //----------------------------------------------------------------------------
+
+  /**
+   * When true, DataTransferSession::findDrive() bypasses SCSI device scanning
+   * and returns a StressDrive backed by files in stressBaseDir.  The drive
+   * must be registered in the CTA catalogue with devFilename = "stress://".
+   */
+  bool stressMode = false;
+
+  /**
+   * Root of the stress-test tmpfs tree shared across all drives and taped
+   * instances on this host (e.g. /dev/shm/cta-stress).  Only used when
+   * stressMode = true.
+   */
+  std::string stressBaseDir;
+
+  /**
+   * Milliseconds to sleep in StressDrive::waitUntilReady() to simulate
+   * realistic tape-load latency.  0 disables the delay.  Only used when
+   * stressMode = true.
+   */
+  uint32_t stressMountDelayMs = 0;
 };
 
 }  // namespace cta::tape::daemon

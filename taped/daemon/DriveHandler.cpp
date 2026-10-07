@@ -6,6 +6,8 @@
 #include "DriveHandler.hpp"
 
 #include "DriveHandlerProxy.hpp"
+#include "mediachanger/MediaChangerFacade.hpp"
+#include "mediachanger/RmcProxy.hpp"
 #include "DriveHandlerStateReporter.hpp"
 #include "TapedProxy.hpp"
 #include "catalogue/Catalogue.hpp"
@@ -22,6 +24,7 @@
 #include "telemetry/TelemetryInit.hpp"
 
 #include <chrono>
+#include <optional>
 #include <set>
 #include <signal.h>
 #include <sys/prctl.h>
@@ -1085,13 +1088,28 @@ DriveHandler::executeDataTransferSession(IScheduler* scheduler, tape::daemon::Ta
   dataTransferConfig.wdIdleSessionTimer = m_tapedConfig.wdIdleSessionTimer.value();
   dataTransferConfig.wdGetNextMountMaxSecs = m_tapedConfig.wdGetNextMountMaxSecs.value();
   dataTransferConfig.wdNoBlockMoveMaxSecs = m_tapedConfig.wdNoBlockMoveMaxSecs.value();
+  dataTransferConfig.stressMode = m_tapedConfig.stressMode.value();
+  dataTransferConfig.stressBaseDir = m_tapedConfig.stressBaseDir.value();
+  dataTransferConfig.stressMountDelayMs = m_tapedConfig.stressMountDelayMs.value();
 
-  // Mounting management.
+  // Mounting management: use a no-op, tmpfs-symlink-based facade in stress
+  // mode so that no rmcd connection is needed.
+  const bool stressMode = m_tapedConfig.stressMode.value();
   cta::mediachanger::RmcProxy rmcProxy(m_tapedConfig.rmcHost.value(),
                                        m_tapedConfig.rmcPort.value(),
                                        m_tapedConfig.rmcNetTimeout.value(),
                                        m_tapedConfig.rmcRequestAttempts.value());
-  cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, m_lc.logger());
+  // std::optional::emplace constructs in place, avoiding any copy or move of
+  // MediaChangerFacade (which may not be movable due to RmcProxy internals).
+  std::optional<cta::mediachanger::MediaChangerFacade> mediaChangerOpt;
+  if (stressMode) {
+    mediaChangerOpt.emplace(m_driveInfo.driveName,
+                            m_tapedConfig.stressBaseDir.value(),
+                            m_lc.logger());
+  } else {
+    mediaChangerOpt.emplace(rmcProxy, m_lc.logger());
+  }
+  cta::mediachanger::MediaChangerFacade& mediaChangerFacade = mediaChangerOpt.value();
   cta::tape::System::realWrapper sWrapper;
 
   const auto dataTransferSession =

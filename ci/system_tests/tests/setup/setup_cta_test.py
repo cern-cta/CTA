@@ -56,7 +56,9 @@ def test_populate_catalogue(
 
 
 def test_register_logical_libraries_in_catalogue(env: TestEnv, cta_cli: CtaCliHost) -> None:
-    logical_library_names_in_use = {taped.logical_library_name for taped in env.cta_taped}
+    # Stress-mode tapeds use a virtual library registered by setup_stress_drives_test.py.
+    real_tapeds = [t for t in env.cta_taped if not t.is_stress_mode]
+    logical_library_names_in_use = {taped.logical_library_name for taped in real_tapeds}
     print("Using logical libraries:")
     for logical_library_name in logical_library_names_in_use:
         print(f"  - {logical_library_name}")
@@ -107,8 +109,10 @@ def test_reset_tapes(env: TestEnv) -> None:
 
 
 def test_reset_drive_devices(env: TestEnv) -> None:
+    # Stress-mode tapeds have no SCSI device; sg_turs would fail on "stress://".
     for ctataped in env.cta_taped:
-        ctataped.exec(f"sudo sg_turs {ctataped.drive_device} 2>&1 > /dev/null || true")
+        if not ctataped.is_stress_mode:
+            ctataped.exec(f"sudo sg_turs {ctataped.drive_device} 2>&1 > /dev/null || true")
 
 
 def test_label_tapes(env: TestEnv) -> None:
