@@ -1363,7 +1363,8 @@ void Scheduler::sortAndGetTapesForMountInfo(
       tapepoolVoNameMap[tapepool] = vo.name;
       voNameVoMap[vo.name] = vo;
     } catch (cta::exception::Exception& ex) {
-      // Abort if the VO lookup fails; its drive allocation limits are required for scheduling.
+      //The VO of this tapepool does not exist, abort the scheduling as we need it to know the number of allocated drives
+      //the VO is allowed to use
       ex.getMessage() << " Aborting scheduling." << std::endl;
       throw;
     }

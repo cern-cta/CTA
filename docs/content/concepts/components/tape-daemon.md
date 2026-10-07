@@ -11,7 +11,7 @@ flowchart LR
     before["Waiting<br/>No hardware access"]
 
     subgraph drive["Drive session · owns drive hardware"]
-        clean["Clean<br/>drive"]
+        clean["Clean<br/>drive?"]
         tape1["Tape session 1<br/>Owns cartridge mount<br/>Mount → Transfer → Unmount"]
         idle["Idle<br/>Drive empty"]
         tape2["Tape session 2<br/>Owns cartridge mount<br/>Mount → Transfer → Unmount"]
@@ -26,6 +26,7 @@ flowchart LR
 A **drive session** is a period during which the daemon owns access to the drive hardware.
 One daemon run can contain several drive sessions, separated by periods when the daemon does not use the hardware (e.g. to allow for maintenance).
 A drive session can contain zero or more tape sessions, including idle time while waiting for work.
+At the start of the drive session, the daemon may clean the drive if configured to do so. If not, a cartridge in the drive will prevent the drive session from starting.
 
 Within a drive session, a **tape session** owns the physical mount of one cartridge in that drive.
 It is responsible for mounting the cartridge, transferring its scheduled files, and unmounting it when finished.
@@ -43,11 +44,10 @@ Operators need to control when the daemon may use the hardware, for example to r
 Hardware faults can also make a drive unusable: a cartridge may become stuck, or the drive may fail to load, unload, or transfer data.
 When the drive cannot safely continue, it must stop accepting new work and relinquish hardware control until it can be made usable again.
 
-Operators and the daemon therefore need a way to request that the drive stop accepting work, and operators need to know when the daemon has relinquished the hardware.
-Desired and reported state distinguish that request from the resulting activity.
+Operators therefore need a way to request that the drive stop accepting work, and operators need to know when the daemon has relinquished the hardware. Desired and reported state distinguish that request from the resulting activity.
 
 The **desired state** is either `Up` or `Down`, while the **reported state** describes the daemon's current activity.
-Operators can set the desired state, and the daemon also sets it as part of startup, shutdown, or failure handling.
+Operators can set the desired state, and the daemon can set the desired state `Down` as part of startup, shutdown, or failure handling.
 
 ### Desired state
 
@@ -55,7 +55,7 @@ The desired state has two values:
 
 | Desired state | Meaning |
 | --- | --- |
-| `Up` | Permits the daemon to clean and use the drive for scheduled work. |
+| `Up` | Permits the daemon to use the drive for scheduled work. |
 | `Down` | Requests the daemon to stop scheduling and relinquish ownership of the drive hardware. |
 
 Desired and reported state need not match immediately.
@@ -81,13 +81,12 @@ The table uses the display labels for states reported during normal operation.
 | Reported state | Meaning |
 | --- | --- |
 | `Free` | The drive is available for scheduled work. |
-| `Start` | Work has been assigned and a tape session is starting. |
+| `Start` | A mount candidate has been found and a tape session is starting. |
 | `Mount` | The cartridge is being mounted and prepared for transfer. |
 | `Transfer` | Files are being read from or written to tape. |
 | `Unload` | The tape is being unloaded within the drive before the cartridge can be removed. |
 | `Unmount` | The cartridge is being removed from the drive and returned to the library. |
 | `DrainToDisk` | Tape reading and unmounting have finished, but buffered retrieval data is still being written to disk. |
-| `CleanUp` | The daemon is cleaning the drive, including removing any remaining cartridge and resetting drive configuration. |
 | `Down` | The daemon has relinquished hardware ownership and is not scheduling work. |
 
 ### Down reasons
@@ -132,7 +131,7 @@ Once the drive is reported `Down` and the daemon is waiting, it must not access 
 
 #### On startup
 
-1. Register the configured drive name, which uniquely identifies its catalogue entry. Create an entry if none exists; for an existing entry, require its host and logical library to match the daemon configuration.
+1. Register the configured drive name, which identifies its catalogue entry. Create an entry if none exists; for an existing entry, require its host and logical library to match the daemon configuration.
 2. Decide whether to request desired `Up` automatically, using the catalogue state found before registration as described below.
 3. Wait for the configured logical library to exist before starting drive sessions. Scheduling requires this entry, but the catalogue allows a drive to reference a library that does not yet exist.
 
@@ -144,7 +143,7 @@ In certain cases, the daemon can safely put itself `Up` when starting. This is b
 
 | State found before registration | Startup decision |
 | --- | --- |
-| Existing desired `Up` | Preserve desired `Up`. |
+| Existing desired `Up` | Preserve desired `Up`, subject to configuration. |
 | No existing drive entry | Eligible for automatic desired `Up`, subject to configuration. |
 | Existing desired `Down` with a clean-shutdown reason | Eligible for automatic desired `Up`, subject to configuration. |
 | Existing desired `Down` with an operator or failure reason | Preserve desired `Down` and its reason. |
@@ -260,17 +259,6 @@ For mount, transfer, or cleanup failures, see [Failure scenarios](#failure-scena
 ### Operator-requested transitions
 
 Desired `Down` is checked at scheduling boundaries; it does not currently interrupt an active tape session.
-The following table describes normal completion after the request; failures are covered under [Failure scenarios](#failure-scenarios).
-
-| Reported state when desired `Down` is set | Daemon behavior |
-| --- | --- |
-| `Free` | Stops scheduling, reports `Down`, and waits for desired `Up`. |
-| `Start`, `Mount`, `Transfer` | Does not interrupt the active tape session. It finishes the session and cleanup before reporting `Down`. |
-| `Unload`, `Unmount` | Finishes cleanup, then reports `Down` without starting another tape session. |
-| `DrainToDisk` | Finishes writing buffered retrieval data before ending the session and reporting `Down`. |
-| `CleanUp` | Finishes cleanup already in progress, then observes desired `Down` and reports `Down`. |
-| `Down` | Continues waiting without accessing hardware. |
-
 Changes to desired `Down` are not observed instantaneously. A request therefore does not itself establish that hardware ownership has been relinquished; operators must wait for reported `Down`.
 
 Unlike setting desired `Down` alone, stopping the daemon also ends the daemon run.
