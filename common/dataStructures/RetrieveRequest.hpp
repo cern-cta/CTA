@@ -68,7 +68,7 @@ struct RetrieveInsertQueueItem {
   cta::common::dataStructures::RetrieveRequest request;
   cta::common::dataStructures::RetrieveFileQueueCriteria criteria;
   std::optional<std::string> diskSystemName;
-  std::string selectedVid;
+  std::string selectedVid = {};
 
   // Resolves to the request ID (a placeholder "bogus" string, like ArchiveInsertQueueItem's promise
   // — see ArchiveRequest::getIdStr()'s own comment), which is all Scheduler::queueRetrieve() itself
