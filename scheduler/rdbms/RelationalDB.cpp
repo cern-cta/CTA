@@ -672,8 +672,7 @@ RelationalDB::queueRetrieve(std::vector<cta::common::dataStructures::RetrieveIns
     rowsToInsert.emplace_back(rReq.makeJobRow());
   }
 
-  uint64_t nrows =
-    schedulerdb::postgres::RetrieveJobQueueRow::insertBatch(sqlconn, rowsToInsert, /*isRepack=*/false);
+  uint64_t nrows = schedulerdb::postgres::RetrieveJobQueueRow::insertBatch(sqlconn, rowsToInsert, /*isRepack=*/false);
 
   if (nrows != rowsToInsert.size()) {
     // Do NOT throw: INSERT already committed (implicit autocommit — same reasoning as queueArchive's
