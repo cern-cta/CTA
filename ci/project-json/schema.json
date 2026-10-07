@@ -4,6 +4,7 @@
   "type": "object",
   "required": [
     "name",
+    "majorVersion",
     "description",
     "summary",
     "license",
@@ -17,6 +18,11 @@
     "name": {
       "type": "string",
       "minLength": 1
+    },
+    "majorVersion": {
+      "description": "Major version used for build-version defaults and new releases.",
+      "type": "integer",
+      "minimum": 1
     },
     "summary": {
       "type": "string",

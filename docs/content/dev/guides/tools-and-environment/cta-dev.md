@@ -69,17 +69,19 @@ Command-line options override `ci/.cta-dev.env`, which overrides the built-in de
 
 ### Custom versions and image tags
 
-Most development builds should use the default version and tag (`6-dev`). When a distinct version is needed, pass the
-complete value with `--cta-version`. For example, this sets package version `6`, release suffix `local-test`, and image tag `6-local-test`:
+Most development builds should use the default version and tag (`6-dev`).
+When a distinct version is needed, pass the complete value with `--cta-version`.
+For example, this sets package version `6`, package release `local.test`, and image tag `6-local.test`:
 
 ```bash
-cta-dev up --cta-version 6-local-test
+cta-dev up --cta-version 6-local.test
 ```
 
 This labels the build from your checkout; it does not select a Git tag or change the source revision.
-
-Use `<version>-<suffix>`: the version contains numbers and dots; the suffix contains lowercase letters, numbers, dots, and hyphens. When running `build`, `images`, and `deploy` separately, pass the
-same version to every stage.
+The value is used unchanged, without adding variant or platform suffixes.
+Use `<version>-<release>` with exactly one separating hyphen and two nonempty fields containing letters, numbers, `.`, `_`, `+`, `~`, or `^`.
+CI and release tooling enforce their naming conventions separately.
+When running `build`, `images`, and `deploy` separately, pass the same version to every stage.
 
 ## Build options
 

@@ -11,7 +11,8 @@ usage() {
   echo
   echo "Usage: $0 --repository-url <repo> --package <package> --version <version>"
   echo
-  echo "Checks whether a package of a given version is available in a given (dnf/yum) repo."
+  echo "Checks an exact package version-release in a given (dnf/yum) repo."
+  echo "Use the exact RPM version-release (e.g. 6.12.0.0-1.pgall.el9)."
   echo
   exit 1
 }
@@ -73,8 +74,6 @@ check_package_available() {
     usage
   fi
 
-  version=${version#v}
-
   echo "Checking whether $package version $version is available in the following repo:"
   echo "    $repository"
 
@@ -91,11 +90,17 @@ enabled=1
 gpgcheck=0
 EOF
 
-  # Check version available using dnf
+  # Read repository metadata once and compare whole package/version fields.
+  local available_packages
+  if ! available_packages=$(dnf -q --repo=temp-repo --setopt=reposdir="$tempdir" \
+      --refresh repoquery --available --archlist=x86_64 --qf '%{name} %{version}-%{release}' "$package"); then
+    log_error "Failed to query repository for package '$package'."
+    exit 1
+  fi
   echo "Available versions for package $package:"
-  dnf --repo=temp-repo --setopt=reposdir="$tempdir" list --showduplicates "$package"
+  printf '%s\n' "$available_packages"
 
-  if dnf --repo=temp-repo --setopt=reposdir="$tempdir" list --showduplicates "$package" | grep -q "$version"; then
+  if grep -Fxq -- "$package $version" <<< "$available_packages"; then
     echo "Package '$package' with version '$version' is available in the provided repository."
     exit 0
   else

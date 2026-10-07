@@ -14,18 +14,23 @@ spec:
 internal-release-cta:
   stage: release
   needs:
+    - job: prepare-cta-version
+      artifacts: true
     - build-cta-rpms
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
       allow_failure: true
   image: $IMAGE_RELEASE
+  before_script:
+    - !reference [.merge-train-guard, before_script]
   script:
     - echo "Publishing to internal CTA repository"
     - EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD}
       ./ci/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                     --local-source-dir build/$[[ inputs.platform ]]/RPM/RPMS/x86_64
                                     --eos-target-dir /eos/user/c/ctareg/www/cta-repo/RPMS/x86_64
+                                    --cta-version "${CTA_VERSION:?Missing CTA_VERSION}"
   after_script:
     - |
       case "$CI_JOB_STATUS" in
@@ -39,22 +44,26 @@ internal-release-cta:
 .public-release-cta:
   stage: release
   needs:
+    - job: prepare-cta-version
+      artifacts: true
     - internal-release-cta
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
       allow_failure: true
   image: $IMAGE_RELEASE
+  before_script:
+    - !reference [.merge-train-guard, before_script]
   script:
-    - REPOSITORY_PATH="${RELEASE_CHANNEL}/cta-${CTA_MAJOR_VERSION}/$[[ inputs.platform ]]/cta/x86_64"
-    - echo "Publishing CTA version ${CI_COMMIT_TAG} to the ${RELEASE_CHANNEL} CTA repository"
+    - REPOSITORY_PATH="${RELEASE_CHANNEL}/cta-${CTA_MAJOR_VERSION:?Missing CTA_MAJOR_VERSION}/$[[ inputs.platform ]]/cta/x86_64"
+    - echo "Publishing CTA version ${CTA_VERSION} to the ${RELEASE_CHANNEL} CTA repository"
     - EOS_ACCOUNT_PASSWORD=${DOCKER_LOGIN_PASSWORD}
       ./ci/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
                                     --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
                                     --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/${REPOSITORY_PATH}
-                                    --cta-version ${CI_COMMIT_TAG}
+                                    --cta-version "${CTA_VERSION:?Missing CTA_VERSION}"
     - REPO_URL="https://cta-public-repo.web.cern.ch/${REPOSITORY_PATH}"
-    - ./ci/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "${CI_COMMIT_TAG}"
+    - ./ci/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "${CTA_VERSION}"
   after_script:
     - |
       case "$CI_JOB_STATUS" in
@@ -81,6 +90,8 @@ public-release-cta-testing:
 public-release-cta-stable:
   extends: .public-release-cta
   needs:
+    - job: prepare-cta-version
+      artifacts: true
     - internal-release-cta
     # Anything in stable must also be in unstable
     - public-release-cta-unstable
@@ -103,6 +114,8 @@ public-release-cta-stable:
 .publish-image:
   stage: release
   needs:
+    - job: prepare-cta-version
+      artifacts: true
     - job: internal-release-cta
     - job: build-cta-images
       parallel:
@@ -118,12 +131,12 @@ public-release-cta-stable:
     DEST_REGISTRY_AUTH_FILE: "${CI_PROJECT_DIR}/.buildah-destination-auth.json"
     DEST_REGISTRY_PASSWORD: ""
     DEST_REGISTRY_USERNAME: ""
-    SRC_IMAGE: ${DOCKER_IMAGE_REGISTRY}/${DOCKER_PRIVATE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_BUILD_ID}
     SOURCE_REGISTRY_AUTH_FILE: "${CI_PROJECT_DIR}/.buildah-source-auth.json"
     SOURCE_REGISTRY_PASSWORD: ""
     SOURCE_REGISTRY_USERNAME: ""
     GIT_SUBMODULE_STRATEGY: none
   before_script:
+    - !reference [.merge-train-guard, before_script]
     - |
       if [[ -z "$SOURCE_REGISTRY_USERNAME" || -z "$SOURCE_REGISTRY_PASSWORD" ]]; then
         echo "Source registry credentials are not configured"
@@ -145,7 +158,8 @@ public-release-cta-stable:
         --password-stdin
         "$DEST_REGISTRY"
   script:
-    - DST_IMAGE="${DEST_REGISTRY}/${DEST_IMAGE_PREFIX}/${TARGET_NAME}:${CI_COMMIT_TAG}.$[[ inputs.platform ]]"
+    - SRC_IMAGE="${DOCKER_IMAGE_REGISTRY}/${DOCKER_PIPELINE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_VERSION:?Missing CTA_VERSION}"
+    - DST_IMAGE="${DEST_REGISTRY}/${DEST_IMAGE_PREFIX}/${TARGET_NAME}:${CTA_VERSION:?Missing CTA_VERSION}"
     - echo "Publishing ${SRC_IMAGE} -> ${DST_IMAGE}"
     - buildah pull --authfile "$SOURCE_REGISTRY_AUTH_FILE" "$SRC_IMAGE"
     - buildah tag "$SRC_IMAGE" "$DST_IMAGE"
@@ -153,6 +167,7 @@ public-release-cta-stable:
   after_script:
     - rm -f "$SOURCE_REGISTRY_AUTH_FILE" "$DEST_REGISTRY_AUTH_FILE"
     - |
+      if [[ -z "${CI_COMMIT_TAG:-}" ]]; then exit 0; fi
       case "$CI_JOB_STATUS" in
         success) NOTE="✅ [${CI_JOB_NAME}](${CI_JOB_URL}) published ${TARGET_NAME} to ${DEST_REGISTRY}/${DEST_IMAGE_PREFIX}." ;;
         failed) NOTE="❌ [${CI_JOB_NAME}](${CI_JOB_URL}) failed to publish ${TARGET_NAME} to ${DEST_REGISTRY}/${DEST_IMAGE_PREFIX}." ;;
@@ -162,15 +177,31 @@ public-release-cta-stable:
 
 publish-images-private:
   extends: .publish-image
+  needs:
+    - job: prepare-cta-version
+      artifacts: true
+    - job: internal-release-cta
+      optional: true  # Present on tags; branch publication does not publish RPMs.
+    - job: build-cta-images
+      parallel:
+        matrix:
+          - TARGET_NAME: ['$[[ matrix.TARGET_NAME ]]']
+  rules:
+    - if: '$CUSTOM_CTA_IMAGE_TAG != "" || $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
+      when: never
+    - if: $CI_COMMIT_TAG
+      when: on_success
+    - when: manual
+      allow_failure: true
   variables:
     DEST_REGISTRY: $DOCKER_IMAGE_REGISTRY
-    DEST_IMAGE_PREFIX: $DOCKER_PRIVATE_REGISTRY_PREFIX
+    DEST_IMAGE_PREFIX: $DOCKER_RELEASE_REGISTRY_PREFIX
 
-    SOURCE_REGISTRY_USERNAME: $DOCKER_PRIVATE_LOGIN_USERNAME
-    SOURCE_REGISTRY_PASSWORD: $DOCKER_PRIVATE_LOGIN_PASSWORD
+    SOURCE_REGISTRY_USERNAME: $DOCKER_PIPELINE_LOGIN_USERNAME
+    SOURCE_REGISTRY_PASSWORD: $DOCKER_PIPELINE_LOGIN_PASSWORD
 
-    DEST_REGISTRY_USERNAME: $DOCKER_PRIVATE_LOGIN_USERNAME
-    DEST_REGISTRY_PASSWORD: $DOCKER_PRIVATE_LOGIN_PASSWORD
+    DEST_REGISTRY_USERNAME: $DOCKER_RELEASE_LOGIN_USERNAME
+    DEST_REGISTRY_PASSWORD: $DOCKER_RELEASE_LOGIN_PASSWORD
   parallel:
     matrix:
       - TARGET_NAME: *cta-image-targets
@@ -187,8 +218,8 @@ publish-images-public:
     DEST_REGISTRY: $DOCKER_IMAGE_REGISTRY
     DEST_IMAGE_PREFIX: $DOCKER_PUBLIC_REGISTRY_PREFIX
 
-    SOURCE_REGISTRY_USERNAME: $DOCKER_PRIVATE_LOGIN_USERNAME
-    SOURCE_REGISTRY_PASSWORD: $DOCKER_PRIVATE_LOGIN_PASSWORD
+    SOURCE_REGISTRY_USERNAME: $DOCKER_PIPELINE_LOGIN_USERNAME
+    SOURCE_REGISTRY_PASSWORD: $DOCKER_PIPELINE_LOGIN_PASSWORD
 
     DEST_REGISTRY_USERNAME: $DOCKER_PUBLIC_LOGIN_USERNAME
     DEST_REGISTRY_PASSWORD: $DOCKER_PUBLIC_LOGIN_PASSWORD

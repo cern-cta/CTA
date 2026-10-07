@@ -45,7 +45,7 @@ spec:
     if [[ -n "$[[ inputs.custom-cta-image-tag ]]" ]]; then
       IMAGE_TAG="$[[ inputs.custom-cta-image-tag ]]"
     else
-      IMAGE_TAG=${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
+      IMAGE_TAG="${CTA_VERSION:?Missing CTA_VERSION}"
     fi
   # Export all variables here so that it is clear which ones are available
   - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG CTA_VALUES_CHAIN EXTRA_SPAWN_ARGS
@@ -53,6 +53,9 @@ spec:
 
 .kubernetes-test:
   needs:
+    - job: prepare-cta-version
+      artifacts: true
+      optional: true  # Existing-image pipelines do not prepare a build version.
     - job: check-merge-train-duplicate
       optional: true
     - job: modify-project-json
@@ -117,6 +120,9 @@ spec:
 # Once we have migrated everything to python, the above .kubernetes-test can be removed
 .kubernetes-test-python:
   needs:
+    - job: prepare-cta-version
+      artifacts: true
+      optional: true  # Existing-image pipelines do not prepare a build version.
     - job: check-merge-train-duplicate
       optional: true
     - job: modify-project-json
@@ -335,6 +341,9 @@ stress-test:
   timeout: 12 hours
   stage: system-test
   needs:
+    - job: prepare-cta-version
+      artifacts: true
+      optional: true  # Existing-image pipelines do not prepare a build version.
     - job: check-merge-train-duplicate
       optional: true
     - job: modify-project-json

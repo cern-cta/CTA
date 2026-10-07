@@ -11,13 +11,13 @@ from contextlib import suppress
 from dataclasses import dataclass, field
 from enum import Enum
 
-BASE_RE = re.compile(r"^v(6)\.(\d+)\.(\d+)\.(\d+)-(\d+)$")
+BASE_RE = re.compile(r"^v([1-9]\d*)\.(\d+)\.(\d+)\.(\d+)-(\d+)$")
 TAG_RE = re.compile(
-    r"^v(6)\.(\d+)\.(\d+)\.(\d+)-(\d+)"
+    r"^v([1-9]\d*)\.(\d+)\.(\d+)\.(\d+)-(\d+)"
     r"(?:\.rc([1-9]\d*))?(?:\.(pgsched|pgcat|pgall))?$"
 )
-HISTORICAL_RE = re.compile(r"^v(6)\.(\d+)\.(\d+)\.(\d+)-(\d+)(?:\..+)?$")
-SUFFIXED_BASE_RE = re.compile(r"^(v6\.\d+\.\d+\.\d+-\d+)(\..+)$")
+HISTORICAL_RE = re.compile(r"^v([1-9]\d*)\.(\d+)\.(\d+)\.(\d+)-(\d+)(?:\..+)?$")
+SUFFIXED_BASE_RE = re.compile(r"^(v[1-9]\d*\.\d+\.\d+\.\d+-\d+)(\..+)$")
 
 
 class VersionError(RuntimeError):
@@ -86,7 +86,7 @@ class CTAVersion:
                     f"do not append {suffix!r} manually.{suffix_hint}"
                 )
 
-            expected = "v6.<major>.<minor>.<patch>-<package>"
+            expected = "v<major>.N.N.N-<package>"
             example = "v6.12.0.0-1"
             if not require_base:
                 expected += "[.rcN][.pgsched|.pgcat|.pgall]"

@@ -42,6 +42,8 @@ ci_image_registry=$(jq -r .dev.ctaImageRegistry "${project_root}/project.json")
 readonly ci_image_registry
 
 # Global
+source "${script_dir}/utils/cta_version.sh"
+CTA_MAJOR_VERSION=$(read_cta_major_version "${project_root}/project.json")
 platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
 scheduler_type="objectstore"
 oracle_support="false"
@@ -49,9 +51,7 @@ enable_internal_repos=true
 internal_repos_forced_public=false
 namespace="dev"
 # A single <version>-<suffix> string used by the package build and as the image tag.
-cta_version="6-dev"
-cta_version_base=""
-cta_version_suffix=""
+cta_version="${CTA_MAJOR_VERSION}-dev"
 cta_image_tag=""
 
 # Build
@@ -90,14 +90,6 @@ namespace_deletion_pid=""
 namespace_deletion_log=""
 
 source "${script_dir}/utils/log_utils.sh"
-
-# Check whether a CTA version is accepted by the package backends.
-cta_version_is_valid() {
-  [[ "$1" =~ ^[0-9][0-9.]*-[a-z0-9][a-z0-9.-]*$ ]]
-}
-
-# Validated in both the environment file and the command line.
-readonly cta_version_format_hint="must be <version>-<suffix>, where <version> contains only numbers and dots and <suffix> only lowercase letters, numbers, dots, and hyphens (for example 6-dev)"
 
 # Check whether an explicit container image tag has a valid format.
 cta_image_tag_is_valid() {
@@ -168,8 +160,6 @@ load_cta_dev_env() {
         cmake_build_type=$value
         ;;
       CTA_DEV_CTA_VERSION)
-        cta_version_is_valid "$value" || \
-          die "Invalid value for ${key} in ${env_file}:${line_number}: ${cta_version_format_hint}."
         cta_version=$value
         ;;
       CTA_DEV_NAMESPACE)
@@ -196,7 +186,7 @@ Global options:
       --scheduler-type <type>        Scheduler backend [objectstore, pgsched].
       --enable-oracle-support        Build packages and images with Oracle support.
       --cta-version <version>        CTA version as <version>-<suffix>, defaults to '$cta_version'.
-                                     It is also the CTA image tag.
+                                     Used unchanged for package versions and the CTA image tag.
       --use-public-repos             Force public package repositories. By default, CERN internal
                                      repos are used when they are reachable.
 EOF
@@ -652,12 +642,6 @@ parse_options() {
     unsupported_argument "--cta-version and --cta-image-tag cannot be combined: the CTA version already determines the image tag. Pass --cta-version to deploy a locally built version, or --cta-image-tag to deploy an image built elsewhere."
   fi
 
-  cta_version_is_valid "$cta_version" || \
-    unsupported_argument "--cta-version is \"$cta_version\" but ${cta_version_format_hint}."
-  # Only the part before the first hyphen may contain digits and dots, so this split is unambiguous.
-  cta_version_base="${cta_version%%-*}"
-  cta_version_suffix="${cta_version#*-}"
-
   if [[ $cta_image_tag_provided == true ]]; then
     cta_image_tag_is_valid "$cta_image_tag" || \
       unsupported_argument "--cta-image-tag is \"$cta_image_tag\" but may contain only letters, numbers, dots, underscores, and hyphens, must not start with a dot or hyphen, and may be at most 128 characters long."
@@ -783,8 +767,7 @@ create_build_configuration() {
     --argjson skipUnitTests "$skip_unit_tests" \
     --argjson enableAddressSanitizer "$enable_address_sanitizer" \
     --argjson extraTelemetry "$extra_telemetry" \
-    --arg ctaVersion "$cta_version_base" \
-    --arg ctaVersionSuffix "$cta_version_suffix" \
+    --arg ctaVersion "$cta_version" \
     --arg xrootdSsiVersion "$xrootd_ssi_version" \
     --argjson jobs "$num_jobs" \
     --argjson internalRepos "$enable_internal_repos" \
@@ -792,7 +775,7 @@ create_build_configuration() {
       buildGenerator: $buildGenerator, cmakeBuildType: $cmakeBuildType,
       enableCcache: $enableCcache, buildTestPackages: $buildTestPackages, buildDebugPackages: ($skipDebugPackages | not),
       runUnitTests: ($skipUnitTests | not), enableAddressSanitizer: $enableAddressSanitizer,
-      extraTelemetry: $extraTelemetry, ctaVersion: $ctaVersion, ctaVersionSuffix: $ctaVersionSuffix,
+      extraTelemetry: $extraTelemetry, ctaVersion: $ctaVersion,
       xrootdSsiVersion: $xrootdSsiVersion, jobs: $jobs, internalRepos: $internalRepos}'
 }
 
@@ -908,7 +891,6 @@ build_cta() {
         runUnitTests) log_warn "Unit test setting changed: ${old_value} -> ${new_value}" ;;
         enableAddressSanitizer) log_warn "AddressSanitizer setting changed: ${old_value} -> ${new_value}" ;;
         ctaVersion) log_warn "CTA version changed: ${old_value} -> ${new_value}" ;;
-        ctaVersionSuffix) log_warn "CTA version suffix changed: ${old_value} -> ${new_value}" ;;
         xrootdSsiVersion) log_warn "XRootD SSI interface version changed: ${old_value} -> ${new_value}" ;;
         jobs) log_warn "CMake job count changed: ${old_value} -> ${new_value}" ;;
         internalRepos)
@@ -919,7 +901,7 @@ build_cta() {
     done < <(jq -r --argjson desired "$build_configuration_json" '
       ["schedulerType", "oracleSupport", "buildGenerator", "platform", "cmakeBuildType",
        "enableCcache", "buildTestPackages", "buildDebugPackages", "runUnitTests", "enableAddressSanitizer",
-       "ctaVersion", "ctaVersionSuffix", "xrootdSsiVersion", "jobs", "internalRepos"][] as $field
+       "ctaVersion", "xrootdSsiVersion", "jobs", "internalRepos"][] as $field
       | select(.[$field] != $desired[$field])
       | [$field, (.[$field] | tostring), ($desired[$field] | tostring)]
       | @tsv' <<<"$previous_configuration_json")
@@ -1055,8 +1037,7 @@ build_cta() {
     --build-dir "${mount_basedir}/build" \
     --build-generator "${build_generator}" \
     --create-build-dir \
-    --cta-version "${cta_version_base}" \
-    --cta-version-suffix "${cta_version_suffix}" \
+    --cta-version "${cta_version}" \
     --xrootd-ssi-version "${xrootd_ssi_version}" \
     --scheduler-type "${scheduler_type}" \
     --oracle-support "${oracle_support}" \

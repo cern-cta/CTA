@@ -211,7 +211,7 @@ endif()
 # -----------------------------------------------------------------------------
 if(NOT CTA_PACKAGE_MODE STREQUAL "none")
   set(CPACK_SOURCE_PACKAGE_FILE_NAME
-   "${PROJECT_NAME}-${CTA_VERSION}-${CTA_RELEASE}")
+   "${PROJECT_NAME}-${CTA_VERSION}")
   # Note that not ignoring build folders within the repository here will cause cpack to take longer and longer
   # as it is trying to pack the build directory as well
   set(CPACK_SOURCE_IGNORE_FILES
@@ -274,7 +274,7 @@ if(CTA_SHOW_CONFIGURATION_SUMMARY)
   message(STATUS "CTA configuration summary")
   message(STATUS "---------------------------------------------")
   message(STATUS "Project")
-  message(STATUS "CTA_VERSION: ${CTA_VERSION}-${CTA_RELEASE}")
+  message(STATUS "CTA_VERSION: ${CTA_VERSION}")
   message(STATUS "CTA_LIBVERSION: ${CTA_LIBVERSION} (SOVERSION ${CTA_SOVERSION})")
   message(STATUS "SUPPORTED_CATALOGUE_VERSIONS: ${SUPPORTED_CTA_CATALOGUE_SCHEMA_VERSIONS_JOINED}")
   message(STATUS "")

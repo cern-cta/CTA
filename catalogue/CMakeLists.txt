@@ -112,7 +112,7 @@ set_property(TARGET ctacatalogue PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_compile_definitions(ctacatalogue PRIVATE
   CTA_ABI_SOVERSION="${CTA_SOVERSION}"
-  VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+  VERSION_API="${CTA_VERSION}")
 
 install (TARGETS ctacatalogue DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
@@ -145,7 +145,7 @@ if(CTA_WITH_ORACLE)
   set_property(TARGET ctacatalogueocci PROPERTY SOVERSION "${CTA_SOVERSION}")
   set_property(TARGET ctacatalogueocci PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-  target_compile_definitions(ctacatalogueocci PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+  target_compile_definitions(ctacatalogueocci PRIVATE VERSION_API="${CTA_VERSION}")
 
   target_link_libraries (ctacatalogueocci
     ctardbmsocci ctacatalogue
@@ -175,7 +175,7 @@ add_library (ctacataloguesqlite SHARED
 set_property(TARGET ctacataloguesqlite PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacataloguesqlite PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_compile_definitions(ctacataloguesqlite PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+target_compile_definitions(ctacataloguesqlite PRIVATE VERSION_API="${CTA_VERSION}")
 
 target_link_libraries (ctacataloguesqlite ctardbmssqlite ctacatalogue)
 
@@ -192,7 +192,7 @@ add_library (ctacatalogueinmemory SHARED
 set_property(TARGET ctacatalogueinmemory PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacatalogueinmemory PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_compile_definitions(ctacatalogueinmemory PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+target_compile_definitions(ctacatalogueinmemory PRIVATE VERSION_API="${CTA_VERSION}")
 target_link_libraries (ctacatalogueinmemory ctacataloguesqlite)
 
 install(TARGETS ctacatalogueinmemory DESTINATION ${CMAKE_INSTALL_LIBDIR})
@@ -218,7 +218,7 @@ add_library (ctacataloguepostgres SHARED
 set_property(TARGET ctacataloguepostgres PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacataloguepostgres PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_compile_definitions(ctacataloguepostgres PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+target_compile_definitions(ctacataloguepostgres PRIVATE VERSION_API="${CTA_VERSION}")
 
 target_link_libraries (ctacataloguepostgres
   ctardbmspostgres ctacatalogue
