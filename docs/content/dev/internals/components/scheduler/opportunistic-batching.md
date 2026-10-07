@@ -47,7 +47,7 @@ isolation, exactly as it would under the file-by-file scheme.
 | Key | Default | Meaning |
 |---|---|---|
 | `opportunistic_batching_enabled` | `false` | Enables batching for archive and retrieve queueing. |
-| `opportunistic_batching_window_ms` | `50` | Max time a batch's leader waits for concurrent requests to join before inserting. |
+| `opportunistic_batching_window_ms` | `10` | Max time a batch's leader waits for concurrent requests to join before inserting. |
 | `opportunistic_batching_max_batch_size` | `1000` | Safety ceiling on requests per batch; real workloads should rarely reach it — the window normally ends a batch first. |
 
 A longer window trades added per-request latency for bigger, more efficient batches; a shorter one
@@ -56,16 +56,52 @@ cap-based early exit ends the wait long before the window elapses — so the win
 latency during quieter periods, when there's little to batch with anyway, rather than shaping
 throughput under real load.
 
+## Component layout
+
+`FrontendBatchingLayer` sits between the frontend service and `Scheduler`, intercepting only the two
+queueing calls (`queueArchiveWithGivenId()` and `queueRetrieve()`). Every other `Scheduler` call
+passes through unchanged.
+
+```mermaid
+flowchart LR
+    FS["Frontend\nService"]
+    FBL["FrontendBatchingLayer"]
+    AB["OpportunisticQueueBatcher\n(archive)"]
+    RB["OpportunisticQueueBatcher\n(retrieve)"]
+    SC["Scheduler"]
+    RDB["SchedulerDatabase\n(PostgreSQL)"]
+
+    FS -->|"queueArchiveWithGivenId\nqueueRetrieve\nall other calls"| FBL
+    FBL -->|"pass-through\n(all other calls)"| SC
+    FBL -->|"batching"| AB
+    FBL -->|"batching"| RB
+    AB -->|"resolveArchiveBatch()"| SC
+    RB -->|"resolveRetrieveBatch()"| SC
+    SC --> RDB
+
+    %% ===== Styles =====
+    classDef action fill:#3498db,color:#ffffff,stroke:#333,stroke-width:1px;
+    class FBL,AB,RB,SC,RDB action;
+```
+
+### Future direction
+
+This thread-catching batching model would not be necessary once CTA becomes agnostic to the disk
+buffer in use (EOS, dCache, or any other). Batching at the request level could then be solved using
+message queues or XRootD's existing request-bunching features, avoiding the need to catch and hold
+caller threads inside the scheduler frontend. These are large changes impacting many communities
+and will take time to plan and deploy.
+
 ## Stage 1: per-caller catalogue resolution
 
-For archive, `Scheduler::resolveArchiveInsertCriteria()` resolves the request's `copyToPoolMap`/
-`mountPolicy` via the catalogue's `getArchiveFileQueueCriteria()`, backed by a cache keyed on
-`(instanceName, storageClass, requesterName, requesterGroup)` — several concurrent requests sharing
-a storage class and requester reuse the same lookup. For retrieve, `Scheduler::
-resolveRetrieveInsertCriteria()` resolves the request's `RetrieveFileQueueCriteria` via
-`prepareToRetrieveFile()`, which is inherently per-request (keyed on `archiveFileID`, essentially
-unique every time, so not cached), plus a disk-system-name resolution against a separately cached,
-single, globally-shared disk system list (`getCachedDiskSystemList()`).
+For archive, `FrontendBatchingLayer::resolveArchiveInsertCriteria()` resolves the request's
+`copyToPoolMap`/`mountPolicy` via the catalogue's `getArchiveFileQueueCriteria()`, backed by a cache
+keyed on `(instanceName, storageClass, requesterName, requesterGroup)` — several concurrent requests
+sharing a storage class and requester reuse the same lookup. For retrieve,
+`FrontendBatchingLayer::resolveRetrieveInsertCriteria()` resolves the request's
+`RetrieveFileQueueCriteria` via `prepareToRetrieveFile()`, which is inherently per-request (keyed on
+`archiveFileID`, essentially unique every time, so not cached), plus a disk-system-name resolution
+against a separately cached, single, globally-shared disk system list (`getCachedDiskSystemList()`).
 
 Both run entirely on the calling thread, before `enqueueAndWait()` is ever called. That's what lets
 concurrent requests' catalogue work run in parallel instead of serialized one at a time inside a
@@ -96,10 +132,10 @@ the same key while that fetch is still in flight just waits on the future and re
 ## Stage 2: the bulk insert
 
 Once a batch's leader has waited out its window (or the cap is reached), it steals the accumulated
-batch and hands it to `Scheduler::resolveArchiveBatch()` or `resolveRetrieveBatch()`. By this point
-every item already carries its resolved criteria from stage 1, so this is purely the DB-facing half
-of queueing: one call to `RelationalDB::queueArchive(batch, lc)` or `queueRetrieve(batch, lc)`, each
-building a single bulk `INSERT` for the whole batch (`ArchiveJobQueueRow::insertRequestBatch()` /
+batch and hands it to `FrontendBatchingLayer::resolveArchiveBatch()` or `resolveRetrieveBatch()`.
+By this point every item already carries its resolved criteria from stage 1, so this is purely the
+DB-facing half of queueing: one call to `RelationalDB::queueArchive(batch, lc)` or
+`queueRetrieve(batch, lc)`, each building a single bulk `INSERT` for the whole batch (`ArchiveJobQueueRow::insertRequestBatch()` /
 `RetrieveJobQueueRow::insertBatch()`) rather than one `INSERT` per item.
 
 - On success, every item's promise is resolved with its own result and marked `queued`.
