@@ -672,10 +672,20 @@ RelationalDB::queueRetrieve(std::vector<cta::common::dataStructures::RetrieveIns
     rowsToInsert.emplace_back(rReq.makeJobRow());
   }
 
-  schedulerdb::postgres::RetrieveJobQueueRow::insertBatch(sqlconn, rowsToInsert, /*isRepack=*/false);
+  uint64_t nrows =
+    schedulerdb::postgres::RetrieveJobQueueRow::insertBatch(sqlconn, rowsToInsert, /*isRepack=*/false);
+
+  if (nrows != rowsToInsert.size()) {
+    // Do NOT throw: INSERT already committed (implicit autocommit — same reasoning as queueArchive's
+    // bulk overload). Throwing here would fail all clients for rows already in the queue.
+    log::ScopedParamContainer(lc)
+      .add("nrows", nrows)
+      .add("inputRowCount", rowsToInsert.size())
+      .log(log::ERR, "In RelationalDB::queueRetrieve(): enqueued unexpected number of retrieve jobs !");
+  }
 
   log::ScopedParamContainer(lc)
-    .add("nrows", rowsToInsert.size())
+    .add("nrows", nrows)
     .add("totalTime", timeTotal.secs())
     .log(log::INFO, "In RelationalDB::queueRetrieve(): Finished enqueueing batch.");
 
@@ -683,7 +693,7 @@ RelationalDB::queueRetrieve(std::vector<cta::common::dataStructures::RetrieveIns
   // the dbClientOperationDuration/dbClientResponseReturnedRows telemetry set up by insertBatch()'s
   // own conn.setDbQuerySummary() call is never emitted, even though the transaction itself still
   // lands via the connection pool's own implicit, untelemetered commit on return.
-  sqlconn.setRowCountForTelemetry(rowsToInsert.size());
+  sqlconn.setRowCountForTelemetry(nrows);
   sqlconn.commit();
 
   // Same placeholder convention as queueArchive()'s bulk overload: getIdStr() always returns
