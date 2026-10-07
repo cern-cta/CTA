@@ -55,6 +55,7 @@ add_library(ctatapedsessionunittests SHARED
   TapeSessionTrackerTest.cpp
 
   ../drive/DriveCleanerTest.cpp
+  ../drive/EmptyDriveProbeTest.cpp
   ../drive/MountedTapeTest.cpp
 
   archive/DiskReadTaskTest.cpp

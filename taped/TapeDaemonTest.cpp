@@ -116,7 +116,7 @@ protected:
     ON_CALL(driveState(), getTapeDrive("drive")).WillByDefault(Invoke([this] { return previousDrive; }));
   }
 
-  bool registerDrive() { return daemon->registerDrive(false); }
+  bool registerDrive() { return daemon->registerDrive(); }
 
   void waitForUp() { daemon->waitUntilDriveIsRequestedUp(); }
 
@@ -137,6 +137,7 @@ protected:
 };
 
 TEST_F(TapeDaemonTest, RecoveryStatusPublicationFailureDoesNotTouchHardware) {
+  config.drive.startup.recover_existing_up = true;
   testing::InSequence sequence;
   previousDrive.emplace();
   previousDrive->driveStatus = DriveStatus::Transferring;
@@ -149,6 +150,7 @@ TEST_F(TapeDaemonTest, RecoveryStatusPublicationFailureDoesNotTouchHardware) {
 }
 
 TEST_F(TapeDaemonTest, RestartPreservesDesiredUpAndPreparesInterruptedDrive) {
+  config.drive.startup.recover_existing_up = true;
   previousDrive->desiredUp = true;
   previousDrive->driveStatus = DriveStatus::Transferring;
   previousDrive->reasonUpDown = "Operator requested Up";
@@ -162,6 +164,81 @@ TEST_F(TapeDaemonTest, RestartPreservesDesiredUpAndPreparesInterruptedDrive) {
   EXPECT_TRUE(daemon->isReady());
   EXPECT_TRUE(previousDrive->desiredUp);
   EXPECT_EQ("Operator requested Up", previousDrive->reasonUpDown);
+}
+
+TEST_F(TapeDaemonTest, DisabledRecoveryPreservesEntryAndDoesNotFallThroughToAutoUp) {
+  config.drive.startup.auto_up = true;
+  previousDrive->desiredUp = true;
+  previousDrive->driveStatus = DriveStatus::Transferring;
+  previousDrive->userComment = "Inspect drive";
+  EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
+  EXPECT_CALL(*scheduler, createTapeDriveStatus(_, _, _, _, _, _)).Times(0);
+  EXPECT_CALL(driveState(), setDesiredTapeDriveState("drive", _))
+    .WillOnce(Invoke([&](const auto&, const DesiredDriveState& desired) {
+      EXPECT_FALSE(desired.up);
+      EXPECT_FALSE(desired.comment);
+      ASSERT_TRUE(desired.reason);
+      EXPECT_EQ(formatDriveDownReason(DriveDownReason::StartupRecoveryDisabled), desired.reason);
+      previousDrive->desiredUp = desired.up;
+    }));
+  EXPECT_CALL(*scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
+  EXPECT_CALL(*scheduler, reportSchedulerBackendName("drive", _));
+  EXPECT_TRUE(registerDrive());
+  EXPECT_FALSE(previousDrive->desiredUp);
+  EXPECT_EQ("Inspect drive", previousDrive->userComment);
+}
+
+TEST_F(TapeDaemonTest, StartupAutoUpOnlyAcceptsEligibleDownReasons) {
+  for (const bool autoUp : {false, true}) {
+    config.drive.startup.auto_up = autoUp;
+    for (const auto& reason :
+         std::vector<std::optional<std::string>> {std::nullopt,
+                                                  "",
+                                                  formatDriveDownReason(DriveDownReason::Shutdown),
+                                                  "Maintenance",
+                                                  formatDriveDownReason(DriveDownReason::DriveCleanupFailed),
+                                                  formatDriveDownReason(DriveDownReason::Startup),
+                                                  formatDriveDownReason(DriveDownReason::StartupRecoveryDisabled)}) {
+      SCOPED_TRACE(reason.value_or("absent"));
+      SCOPED_TRACE(autoUp);
+      DesiredDriveState state;
+      state.reason = reason;
+      state.comment = "Operator comment";
+      const bool eligible = !reason || reason->empty() || isCleanDriveShutdownReason(*reason);
+      EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
+      EXPECT_CALL(*scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(state));
+      EXPECT_CALL(*scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _))
+        .WillOnce(
+          Invoke([&](const auto&, const DesiredDriveState& desired, const auto&, const auto&, const auto&, auto&) {
+            EXPECT_EQ(autoUp && eligible, desired.up);
+            EXPECT_EQ(state.comment, desired.comment);
+            if (!eligible) {
+              EXPECT_EQ(reason, desired.reason);
+            }
+          }));
+      EXPECT_CALL(*scheduler, reportSchedulerBackendName("drive", _));
+      EXPECT_TRUE(registerDrive());
+      ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(scheduler.get()));
+    }
+  }
+}
+
+TEST_F(TapeDaemonTest, NewDriveUsesStartupAutoUp) {
+  previousDrive.reset();
+  for (const bool autoUp : {false, true}) {
+    config.drive.startup.auto_up = autoUp;
+    EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
+    EXPECT_CALL(*scheduler, getDesiredDriveState("drive", _))
+      .WillOnce(Throw(TapeDrivesCatalogueState::NoSuchDrive("missing")));
+    EXPECT_CALL(*scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _))
+      .WillOnce(
+        Invoke([&](const auto&, const DesiredDriveState& desired, const auto&, const auto&, const auto&, auto&) {
+          EXPECT_EQ(autoUp, desired.up);
+        }));
+    EXPECT_CALL(*scheduler, reportSchedulerBackendName("drive", _));
+    EXPECT_TRUE(registerDrive());
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(scheduler.get()));
+  }
 }
 
 TEST_F(TapeDaemonTest, RegistrationConflictStopsStartup) {

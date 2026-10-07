@@ -21,6 +21,8 @@ ReasonDescription describe(DriveDownReason reason) {
   switch (reason) {
     case DriveDownReason::Startup:
       return {log::INFO, "Startup"};
+    case DriveDownReason::StartupRecoveryDisabled:
+      return {log::INFO, "Automatic startup recovery disabled; operator Up required"};
     case DriveDownReason::Shutdown:
       return {log::INFO, "Shutdown"};
     case DriveDownReason::TapeDetected:

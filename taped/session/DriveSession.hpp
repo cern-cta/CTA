@@ -102,10 +102,11 @@ private:
   /// Unsafe worker teardown propagates without recovery; unusable results request desired Down.
   TapeSessionResult runTapeSession(TapeMount& tapeMount);
 
-  /// @brief Clean the drive for initial preparation or recovery, returning whether scheduling may continue.
+  /// @brief Probe or clean the drive for preparation, returning whether scheduling may continue.
   ///
+  /// Initial preparation follows clean_on_up; active-session recovery always cleans.
   /// Only recovery supplies a known VID. Operator Down intent prevents further scheduling.
-  bool cleanDrive(const std::optional<std::string>& vid = std::nullopt);
+  bool prepareDrive(const std::optional<std::string>& vid = std::nullopt);
 
   /// @brief Release the reservation before reporting Down; retain failed publication for a later retry.
   ///

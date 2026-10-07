@@ -14,14 +14,27 @@
 
 namespace cta::tape::daemon {
 
-/// Drive identity and device paths.
+/// Opt-in automatic startup of existing and newly registered drives.
+struct DriveStartupConfig final {
+  bool recover_existing_up = false;
+  bool auto_up = false;
+
+  static constexpr std::size_t memberCount() { return 2; }
+
+  cta::runtime::ValidationResult validate() const { return {}; }
+};
+
+/// Drive identity, device paths and preparation policy.
 struct DriveConfig final {
   std::string name = "";
   std::string device = "";
   std::string control_path = "";
   std::string logical_library_name = "";
 
-  static constexpr std::size_t memberCount() { return 4; }
+  bool clean_on_up = false;
+  DriveStartupConfig startup;
+
+  static constexpr std::size_t memberCount() { return 6; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
@@ -37,6 +50,7 @@ struct DriveConfig final {
     if (logical_library_name.empty()) {
       result.addError("logical_library_name", "cannot be empty");
     }
+    result.merge("startup", startup.validate());
     return result;
   }
 };

@@ -20,6 +20,7 @@
 #include "scheduler/TapeMount.hpp"
 #include "taped/SchedulerContext.hpp"
 #include "taped/drive/DriveCleaner.hpp"
+#include "taped/drive/EmptyDriveProbe.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -154,7 +155,7 @@ void DriveSession::run(std::stop_token stopToken) {
   // The daemon publishes this session before preparation so health readers can observe cleanup.
   if (!stopToken.stop_requested()) {
     try {
-      if (!cleanDrive()) {
+      if (!prepareDrive()) {
         releaseAndReportDown();
         return;
       }
@@ -304,7 +305,7 @@ TapeSessionResult DriveSession::runTapeSession(TapeMount& tapeMount) {
   if (!transferResult) {
     // The session and its diagnostic log parameters are gone before recovery starts.
     // Desired Down requests stopping work; ownership is retained until releaseAndReportDown().
-    const bool reusable = cleanDrive(vid);
+    const bool reusable = prepareDrive(vid);
     return {.driveReusable = reusable, .successful = false, .downDetail = "Recovery did not permit further scheduling"};
   }
 
@@ -316,7 +317,7 @@ TapeSessionResult DriveSession::runTapeSession(TapeMount& tapeMount) {
   return *transferResult;
 }
 
-bool DriveSession::cleanDrive(const std::optional<std::string>& vid) {
+bool DriveSession::prepareDrive(const std::optional<std::string>& vid) {
   auto& scheduler = m_schedulerContext.scheduler();
   auto tracker = std::make_shared<TapeSessionTracker>(
     [&scheduler, driveInfo = m_driveInfo, lc = log::LogContext(m_lc)](session::TapeSessionState state) mutable {
@@ -340,7 +341,7 @@ bool DriveSession::cleanDrive(const std::optional<std::string>& vid) {
   }
   const auto reported = scheduler.getCatalogue().DriveState()->getTapeDrive(m_driveInfo.driveName);
   if (!reported) {
-    throw TapeDrivesCatalogueState::NoSuchDrive("Drive disappeared before cleanup");
+    throw TapeDrivesCatalogueState::NoSuchDrive("Drive disappeared before preparation");
   }
   // Publish preparation before acquiring hardware access; recovery retains existing ownership.
   scheduler.reportDriveStatus(m_driveInfo,
@@ -348,45 +349,56 @@ bool DriveSession::cleanDrive(const std::optional<std::string>& vid) {
                               common::dataStructures::DriveStatus::Starting,
                               m_lc);
   m_driveReservation.acquire();
-  m_lc.log(log::INFO,
-           recovering ? "Cleaning drive for tape-session recovery." : "Cleaning drive for initial preparation.");
-  bool cleaned = false;
-  std::string cleanupError;
+  const bool clean = recovering || m_config.drive.clean_on_up;
+  m_lc.log(log::INFO, clean ? "Cleaning drive for preparation or recovery." : "Probing drive before going Up.");
+  bool prepared = false;
+  std::string preparationError;
+  auto downReason = clean ? common::dataStructures::DriveDownReason::DriveCleanupFailed :
+                            common::dataStructures::DriveDownReason::DriveProbeFailed;
   try {
-    DriveCleaner cleaner(m_mediaChanger,
-                         m_lc.logger(),
-                         m_driveInfo,
-                         vid.value_or(""),
-                         true,
-                         m_config.mounts.tape_load_timeout_secs,
-                         scheduler.getCatalogue(),
-                         *tracker);
-    const auto result = cleaner.cleanDrive(m_sysWrapper);
-    cleaned = result.driveReusable();
-    cleanupError = result.errorMessage;
+    if (clean) {
+      DriveCleaner cleaner(m_mediaChanger,
+                           m_lc.logger(),
+                           m_driveInfo,
+                           vid.value_or(""),
+                           true,
+                           m_config.mounts.tape_load_timeout_secs,
+                           scheduler.getCatalogue(),
+                           *tracker);
+      const auto result = cleaner.cleanDrive(m_sysWrapper);
+      prepared = result.driveReusable();
+      preparationError = result.errorMessage;
+    } else {
+      const auto result = probeEmptyDrive(m_driveInfo, m_sysWrapper);
+      prepared = result.status == EmptyDriveProbeResult::Status::Empty;
+      preparationError = result.errorMessage;
+      if (result.status == EmptyDriveProbeResult::Status::CartridgePresent) {
+        downReason = common::dataStructures::DriveDownReason::TapeDetected;
+      }
+    }
   } catch (const cta::exception::Exception& ex) {
-    cleanupError = ex.getMessageValue();
+    preparationError = ex.getMessageValue();
   } catch (const std::exception& ex) {
-    cleanupError = ex.what();
+    preparationError = ex.what();
   } catch (...) {
-    cleanupError = "Unknown exception during drive cleanup";
+    preparationError = "Unknown exception during drive preparation";
   }
-  // Hardware cleanup has ended; only outcome reporting remains.
+  // Hardware preparation has ended; only outcome reporting remains.
   tracker->reportState(cta::tape::session::TapeSessionState::Finalizing);
 
-  if (!cleaned) {
+  if (!prepared) {
     log::ScopedParamContainer params(m_lc);
-    params.add(semconv::log::exceptionMessage, cleanupError);
-    m_lc.log(log::ERR, "Drive cleanup failed; ending drive session.");
-    requestDown(common::dataStructures::DriveDownReason::DriveCleanupFailed, cleanupError);
+    params.add(semconv::log::exceptionMessage, preparationError);
+    m_lc.log(log::ERR, "Drive preparation or cleanup failed; ending drive session.");
+    requestDown(downReason, preparationError);
     return false;
   }
 
-  // Cleaning takes time; an operator may have withdrawn the up request while it ran.
+  // Preparation takes time; an operator may have withdrawn the up request while it ran.
   // Never publish desired-up here; a withdrawn request ends this ownership period.
   if (!scheduler.getDesiredDriveState(m_driveInfo.driveName, m_lc).up) {
     // The caller releases ownership and reports Down without overwriting newer operator intent.
-    m_lc.log(log::INFO, "Desired drive state became Down during cleanup; ending drive session.");
+    m_lc.log(log::INFO, "Desired drive state became Down during preparation; ending drive session.");
     return false;
   }
   scheduler.reportDriveStatus(m_driveInfo,

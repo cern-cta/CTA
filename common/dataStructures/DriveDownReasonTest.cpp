@@ -16,6 +16,9 @@ TEST(DriveDownReasonTest, FormatsSeverityAndDetails) {
     int severity;
     const char* formatted;
   } cases[] = {
+    {DriveDownReason::StartupRecoveryDisabled,
+     log::INFO,
+     "[cta-taped] INFO Automatic startup recovery disabled; operator Up required"                         },
     {DriveDownReason::Startup,                  log::INFO, "[cta-taped] INFO Startup"                     },
     {DriveDownReason::Shutdown,                 log::INFO, "[cta-taped] INFO Shutdown"                    },
     {DriveDownReason::TapeDetected,             log::ERR,  "[cta-taped] ERROR Tape detected in drive"     },
@@ -51,6 +54,7 @@ TEST(DriveDownReasonTest, DoesNotClassifyOtherReasonsAsCleanShutdown) {
   EXPECT_FALSE(isCleanDriveShutdownReason("Operator requested maintenance"));
   EXPECT_FALSE(isCleanDriveShutdownReason("[cta-taped] INFO Shutdown: operator detail"));
   EXPECT_FALSE(isCleanDriveShutdownReason(formatDriveDownReason(DriveDownReason::Startup)));
+  EXPECT_FALSE(isCleanDriveShutdownReason(formatDriveDownReason(DriveDownReason::StartupRecoveryDisabled)));
   EXPECT_FALSE(isCleanDriveShutdownReason(formatDriveDownReason(DriveDownReason::DriveCleanupFailed)));
   EXPECT_FALSE(isCleanDriveShutdownReason(formatDriveDownReason(DriveDownReason::SessionDidNotStopSafely)));
 }

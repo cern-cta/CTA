@@ -20,7 +20,6 @@
 #include "common/utils/ScopeExit.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "taped/drive/DriveInterface.hpp"
-#include "taped/drive/EmptyDriveProbe.hpp"
 #include "taped/rao/RAOParams.hpp"
 #include "taped/scsi/Device.hpp"
 #include "taped/session/VolumeInfo.hpp"

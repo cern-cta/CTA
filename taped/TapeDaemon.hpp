@@ -82,11 +82,10 @@ private:
 
   /// @brief Register a fresh drive or retain an interrupted drive for recovery.
   ///
-  /// Reported non-down state with desired-up intent triggers Starting without recreating the entry.
+  /// Startup policy determines whether saved desired-up is retained or fresh operator intent is required.
   ///
-  /// @param putUpIfPossible Allow ordinary registration to request up when no failure reason prevents it.
   /// @return False for an ownership conflict; catalogue failures propagate.
-  bool registerDrive(bool putUpIfPossible);
+  bool registerDrive();
 
   /// Poll until the configured logical library exists; database failures propagate.
   void waitForLogicalLibrary();
