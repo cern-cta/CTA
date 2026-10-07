@@ -71,13 +71,12 @@ std::string FrontendBatchingLayer::queueArchiveWithGivenId(const uint64_t archiv
     // followers as soon as resolveArchiveBatch() has settled every promise in the batch — before the
     // slower logQueuedArchiveItems() runs, so no follower waits on it. See OpportunisticQueueBatcher.hpp.
     return m_archiveBatcher->enqueueAndWait(
-      cta::common::dataStructures::ArchiveInsertQueueItem {
-          .archiveFileId = archiveFileId,
-          .instanceName  = instanceName,
-          .request       = request,
-          .copyToPoolMap = std::move(criteria.copyToPoolMap),
-          .mountPolicy   = std::move(criteria.mountPolicy),
-          .promise       = std::promise<std::string>()},
+      cta::common::dataStructures::ArchiveInsertQueueItem {.archiveFileId = archiveFileId,
+                                                           .instanceName = instanceName,
+                                                           .request = request,
+                                                           .copyToPoolMap = std::move(criteria.copyToPoolMap),
+                                                           .mountPolicy = std::move(criteria.mountPolicy),
+                                                           .promise = std::promise<std::string>()},
       lc);
   }
 
@@ -107,12 +106,11 @@ std::string FrontendBatchingLayer::queueRetrieve(const std::string& instanceName
     // is consumed entirely inside the DB insert, not read back by the caller afterwards, so a copy
     // costs nothing observable.
     return m_retrieveBatcher->enqueueAndWait(
-      cta::common::dataStructures::RetrieveInsertQueueItem {
-          .instanceName   = instanceName,
-          .request        = request,
-          .criteria       = std::move(criteria),
-          .diskSystemName = std::move(diskSystemName),
-          .promise        = std::promise<std::string>()},
+      cta::common::dataStructures::RetrieveInsertQueueItem {.instanceName = instanceName,
+                                                            .request = request,
+                                                            .criteria = std::move(criteria),
+                                                            .diskSystemName = std::move(diskSystemName),
+                                                            .promise = std::promise<std::string>()},
       lc);
   }
 
