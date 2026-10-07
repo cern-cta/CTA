@@ -106,8 +106,8 @@ spec:
       when: never
     - if: '$PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
-      # Debug is manual by default as it's quite large. However, build automatically for tags
-    - if: '$TARGET_NAME == "cta-debug" && $CI_COMMIT_TAG == null'
+      # Debug is manual for merge requests as it's quite large. However, build automatically in other cases
+    - if: '$TARGET_NAME == "cta-debug" && $CI_PIPELINE_SOURCE == "merge_request_event"'
       when: manual
       allow_failure: true
     - when: on_success
