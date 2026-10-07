@@ -2884,7 +2884,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
       rrp.setDiskDone();
       rrp.setTapeDone();
 
-      rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
+      retrieveMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
 
       rrp.reportEndOfSession(lc);
       rrp.waitThread();
@@ -3573,7 +3573,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
     rrp.setDiskDone();
     rrp.setTapeDone();
 
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
+    retrieveMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
 
     rrp.reportEndOfSession(lc);
     rrp.waitThread();
@@ -3796,7 +3796,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
     rrp.setDiskDone();
     rrp.setTapeDone();
 
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
+    retrieveMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
 
     rrp.reportEndOfSession(lc);
     rrp.waitThread();
@@ -4063,7 +4063,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
     rrp.setDiskDone();
     rrp.setTapeDone();
 
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
+    retrieveMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
 
     rrp.reportEndOfSession(lc);
     rrp.waitThread();
@@ -5434,7 +5434,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
     rrp.setDiskDone();
     rrp.setTapeDone();
 
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
+    retrieveMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
 
     rrp.reportEndOfSession(lc);
     rrp.waitThread();
@@ -5913,7 +5913,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies) {
     rrp.setDiskDone();
     rrp.setTapeDone();
 
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
+    retrieveMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
 
     rrp.reportEndOfSession(lc);
     rrp.waitThread();
@@ -6215,7 +6215,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
       rrp.setDiskDone();
       rrp.setTapeDone();
 
-      rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
+      retrieveMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
 
       rrp.reportEndOfSession(lc);
       rrp.waitThread();
@@ -7373,7 +7373,7 @@ TEST_P(SchedulerTest, retrieveArchiveRepackQueueMaxDrivesVoInFlightChangeSchedul
 
     rrp.setDiskDone();
     rrp.setTapeDone();
-    rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
+    retrieveMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting);
     rrp.reportEndOfSession(lc);
     rrp.waitThread();
   }

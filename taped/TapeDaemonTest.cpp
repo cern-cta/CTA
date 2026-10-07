@@ -141,7 +141,7 @@ TEST_F(TapeDaemonTest, RecoveryStatusPublicationFailureDoesNotTouchHardware) {
   previousDrive->driveStatus = DriveStatus::Transferring;
   previousDrive->desiredUp = true;
   EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
-  EXPECT_CALL(*scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _))
+  EXPECT_CALL(*scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Starting, _))
     .WillOnce(Throw(std::runtime_error("publication failed")));
   EXPECT_EQ(1, daemon->run());
   EXPECT_FALSE(daemon->isReady());
@@ -155,7 +155,7 @@ TEST_F(TapeDaemonTest, RestartPreservesDesiredUpAndPreparesInterruptedDrive) {
   EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
   EXPECT_CALL(driveState(), setDesiredTapeDriveState(_, _)).Times(0);
   EXPECT_CALL(*scheduler, createTapeDriveStatus(_, _, _, _, _, _)).Times(0);
-  EXPECT_CALL(*scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::CleaningUp, _));
+  EXPECT_CALL(*scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Starting, _));
   EXPECT_CALL(*scheduler, reportSchedulerBackendName("drive", _));
   EXPECT_TRUE(registerDrive());
   EXPECT_TRUE(daemon->isReady());

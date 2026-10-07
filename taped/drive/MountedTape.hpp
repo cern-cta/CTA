@@ -30,7 +30,7 @@ public:
 
   /// @brief Mount the cartridge in the volume's access mode and arrange cleanup on scope exit.
   ///
-  /// All borrowed objects, including outcome, tracker and reporter captures, must outlive the guard.
+  /// All borrowed objects, including outcome and tracker, must outlive the guard.
   /// Reset outcome before mounting; failed mount attempts trigger cleanup before rethrowing.
   /// @param tapeLoadTimeout Maximum media-readiness wait during cleanup, in seconds.
   MountedTape(mediachanger::MediaChangerFacade& mediaChanger,
@@ -38,7 +38,6 @@ public:
               drive::DriveInterface& drive,
               catalogue::Catalogue& catalogue,
               uint32_t tapeLoadTimeout,
-              DriveCleaner::DriveStatusReporter reportStatus,
               Outcome& outcome,
               log::LogContext& lc,
               TapeSessionTracker& tracker);
@@ -67,7 +66,6 @@ public:
 private:
   DriveCleaner m_cleaner;
   drive::DriveInterface& m_drive;
-  DriveCleaner::DriveStatusReporter m_reportStatus;
   Outcome& m_outcome;
   log::LogContext& m_lc;
   bool m_finished = false;

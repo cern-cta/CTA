@@ -80,7 +80,7 @@ TEST_F(MountedTapeTest, MountsBothAccessModesAndCleansOnScopeExit) {
     const auto mountsBefore = logger.mounts;
     const auto cleanupsBefore = logger.cleanups;
     {
-      MountedTape tape(changer, volume, drive, catalogue, 0, [](auto) {}, outcome, lc, tracker);
+      MountedTape tape(changer, volume, drive, catalogue, 0, outcome, lc, tracker);
       EXPECT_EQ(mountsBefore + 1, logger.mounts);
       EXPECT_EQ(cleanupsBefore, logger.cleanups);
       EXPECT_FALSE(outcome.driveReusable());
@@ -98,7 +98,7 @@ TEST_F(MountedTapeTest, MountsBothAccessModesAndCleansOnScopeExit) {
 
 TEST_F(MountedTapeTest, ExplicitCleanupIsNotRepeatedByDestructor) {
   {
-    MountedTape tape(changer, volume, drive, catalogue, 0, [](auto) {}, outcome, lc, tracker);
+    MountedTape tape(changer, volume, drive, catalogue, 0, outcome, lc, tracker);
     EXPECT_TRUE(tape.cleanup().driveReusable());
     tape.cleanup();
   }
@@ -108,7 +108,7 @@ TEST_F(MountedTapeTest, ExplicitCleanupIsNotRepeatedByDestructor) {
 TEST_F(MountedTapeTest, FailedCleanupIsLoggedAndNeverRetried) {
   drive.setFailurePoint(drive::FakeDrive::FailurePoint::DisableLogicalBlockProtection);
   {
-    MountedTape tape(changer, volume, drive, catalogue, 0, [](auto) {}, outcome, lc, tracker);
+    MountedTape tape(changer, volume, drive, catalogue, 0, outcome, lc, tracker);
     EXPECT_FALSE(tape.cleanup().driveReusable());
     tape.cleanup();
   }
@@ -120,8 +120,7 @@ TEST_F(MountedTapeTest, FailedCleanupIsLoggedAndNeverRetried) {
 
 TEST_F(MountedTapeTest, MountFailureCleansOnceAndRetainsMountOnlyTiming) {
   drive.info.rawLibrarySlot = "smc0";
-  EXPECT_THROW((MountedTape {changer, volume, drive, catalogue, 0, [](auto) {}, outcome, lc, tracker}),
-               cta::exception::Exception);
+  EXPECT_THROW((MountedTape {changer, volume, drive, catalogue, 0, outcome, lc, tracker}), cta::exception::Exception);
   EXPECT_EQ(1, logger.cleanups);
   EXPECT_TRUE(outcome.driveReusable());
   ASSERT_TRUE(logger.mountTimeBeforeCleanup);
@@ -132,8 +131,7 @@ TEST_F(MountedTapeTest, MountFailureCleansOnceAndRetainsMountOnlyTiming) {
 TEST_F(MountedTapeTest, CleanupFailureDoesNotReplaceMountFailure) {
   drive.setFailurePoint(drive::FakeDrive::FailurePoint::DisableLogicalBlockProtection);
   drive.info.rawLibrarySlot = "smc0";
-  EXPECT_THROW((MountedTape {changer, volume, drive, catalogue, 0, [](auto) {}, outcome, lc, tracker}),
-               cta::exception::Exception);
+  EXPECT_THROW((MountedTape {changer, volume, drive, catalogue, 0, outcome, lc, tracker}), cta::exception::Exception);
   EXPECT_EQ(1, logger.cleanups);
   EXPECT_FALSE(outcome.driveReusable());
   ASSERT_TRUE(outcome.result);
@@ -143,7 +141,7 @@ TEST_F(MountedTapeTest, CleanupFailureDoesNotReplaceMountFailure) {
 TEST_F(MountedTapeTest, CleanupFailureDoesNotInterruptUnwinding) {
   drive.setFailurePoint(drive::FakeDrive::FailurePoint::DisableLogicalBlockProtection);
   try {
-    MountedTape tape(changer, volume, drive, catalogue, 0, [](auto) {}, outcome, lc, tracker);
+    MountedTape tape(changer, volume, drive, catalogue, 0, outcome, lc, tracker);
     throw std::logic_error("transfer failed");
   } catch (const std::logic_error& ex) {
     EXPECT_STREQ("transfer failed", ex.what());
@@ -156,25 +154,16 @@ TEST_F(MountedTapeTest, CleanupFailureDoesNotInterruptUnwinding) {
 TEST_F(MountedTapeTest, ReporterFailureDoesNotPreventPhysicalCleanup) {
   drive.setTapeInPlace(true);
   unsigned reports = 0;
-  {
-    MountedTape tape(
-      changer,
-      volume,
-      drive,
-      catalogue,
-      0,
-      [&](auto) {
-        ++reports;
-        throw std::runtime_error("report failed");
-      },
-      outcome,
-      lc,
-      tracker);
-  }
+  TapeSessionTracker reportingTracker([&](auto) {
+    ++reports;
+    throw std::runtime_error("report failed");
+  });
+  logger.tracker = &reportingTracker;
+  { MountedTape tape(changer, volume, drive, catalogue, 0, outcome, lc, reportingTracker); }
   EXPECT_GT(reports, 0);
   EXPECT_TRUE(outcome.driveReusable());
   EXPECT_FALSE(drive.hasTapeInPlace());
-  EXPECT_GT(tracker.failureStats().at(TapeSessionFailure::Reporting), 0);
+  EXPECT_GT(reportingTracker.failureStats().at(TapeSessionFailure::Reporting), 0);
 }
 
 }  // namespace

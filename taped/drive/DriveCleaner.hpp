@@ -7,12 +7,10 @@
 
 #include "DriveInterface.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
-#include "common/dataStructures/DriveStatus.hpp"
 #include "common/log/LogContext.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "taped/scsi/Device.hpp"
 
-#include <functional>
 #include <memory>
 #include <optional>
 #include <string>
@@ -64,20 +62,16 @@ public:
     bool driveReusable() const { return !driveOpenFailed && !configurationResetFailed && !ejectFailed; }
   };
 
-  /// Synchronous cleanup-progress callback; its captures must remain valid throughout cleanup.
-  using DriveStatusReporter = std::function<void(common::dataStructures::DriveStatus)>;
-
   /// @brief Open a drive and delegate cleanup to the borrowed-drive overload.
   ///
   /// If opening fails, still attempt robotic dismount and return a non-reusable result.
   /// Read and clear tape alerts after delegated cleanup; the caller owns terminal state publication.
   ///
   /// @param sysWrapper System-call wrapper used to discover and open the drive.
-  /// @param reportStatus Synchronous callback for publishing cleanup progress.
   /// @return Independent failure flags and diagnostic text.
-  CleanupResult cleanDrive(System::virtualWrapper& sysWrapper, const DriveStatusReporter& reportStatus);
+  CleanupResult cleanDrive(System::virtualWrapper& sysWrapper);
 
-  /// @brief Clean a drive, delegating progress publication to the caller.
+  /// @brief Clean a drive, reporting progress through the tracker.
   ///
   /// Disable a known tape after failed ejection; the caller owns the final drive-down decision.
   /// The caller is responsible for handling the returned failure flags.
@@ -85,9 +79,8 @@ public:
   /// Progress is reported synchronously; callback failures are counted without interrupting cleanup.
   ///
   /// @param drive Borrowed drive on which to perform the operation.
-  /// @param reportStatus Synchronous callback for publishing cleanup progress; callback failures do not stop cleanup.
   /// @return Configuration-reset and eject failure flags, with diagnostic text when available.
-  CleanupResult cleanDrive(drive::DriveInterface& drive, const DriveStatusReporter& reportStatus);
+  CleanupResult cleanDrive(drive::DriveInterface& drive);
 
 private:
   TapeSessionTracker& m_tracker;
@@ -99,7 +92,7 @@ private:
   const uint32_t m_tapeLoadTimeout;
   cta::catalogue::Catalogue& m_catalogue;
 
-  /// Apply the shared failed-eject policy and finish cleanup tracking.
+  /// Apply the shared failed-eject policy; the session owner establishes finalization.
   void finishCleanup(const CleanupResult& result);
 
   /// @brief Reset drive configuration and attempt tape ejection, retaining independent cleanup failures.
@@ -107,17 +100,8 @@ private:
   /// Readiness waits and label reads are best effort; eject is attempted despite reset or unload errors.
   ///
   /// @param drive Borrowed drive on which to perform the operation.
-  /// @param reportStatus Synchronous callback for publishing cleanup progress; callback failures do not stop cleanup.
   /// @return Configuration-reset and eject failure flags, with diagnostic text when available.
-  CleanupResult cleanDriveImpl(drive::DriveInterface& drive, const DriveStatusReporter& reportStatus);
-
-  /// @brief Update the tracker phase and publish cleanup progress.
-  ///
-  /// Count callback failures as reporting errors without interrupting hardware cleanup.
-  ///
-  /// @param status Reported drive status to publish.
-  /// @param reportStatus Synchronous callback for publishing cleanup progress; callback failures do not stop cleanup.
-  void reportProgress(common::dataStructures::DriveStatus status, const DriveStatusReporter& reportStatus);
+  CleanupResult cleanDriveImpl(drive::DriveInterface& drive);
 
   /// @brief Read and log outstanding tape alerts, clearing them on the drive and suppressing failures.
   ///

@@ -15,6 +15,32 @@
 
 namespace cta::tape::daemon {
 
+std::optional<common::dataStructures::DriveStatus>
+TapeSessionReporter::driveStatusForSessionState(session::TapeSessionState state) {
+  using common::dataStructures::DriveStatus;
+  using enum session::TapeSessionState;
+  switch (state) {
+    case Preparing:
+      return DriveStatus::Starting;
+    case Mounting:
+      return DriveStatus::Mounting;
+    case Transferring:
+      return DriveStatus::Transferring;
+    case Unloading:
+      return DriveStatus::Unloading;
+    case Unmounting:
+      return DriveStatus::Unmounting;
+    case DrainingToDisk:
+      return DriveStatus::DrainingToDisk;
+    // These phases remain local until the catalogue has corresponding states.
+    case Loading:
+    case Finalizing:
+    case Finished:
+      return std::nullopt;
+  }
+  return std::nullopt;
+}
+
 namespace {
 
 /// @brief Map a session error to its log-field name, with a fallback for unknown values.

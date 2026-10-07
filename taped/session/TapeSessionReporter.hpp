@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "common/dataStructures/DriveStatus.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Param.hpp"
 #include "common/process/threading/Thread.hpp"
@@ -14,13 +15,17 @@
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
+#include <optional>
 
 namespace cta::tape::daemon {
 
-/// Publish tracker statistics and mount metadata.
-/// Periodic reporting while active.
+/// Define catalogue phase mapping and publish tracker statistics and mount metadata.
+/// Phase callbacks publish synchronously on transitions; only statistics reporting is periodic.
 class TapeSessionReporter : private cta::threading::Thread {
 public:
+  /// Map a session phase for synchronous publication; local-only phases return no catalogue status.
+  static std::optional<common::dataStructures::DriveStatus> driveStatusForSessionState(session::TapeSessionState state);
+
   /// @brief Create a periodic reporter using a borrowed tracker and mount.
   ///
   /// The tracker and mount must outlive reporting and the worker thread must be joined before destruction.

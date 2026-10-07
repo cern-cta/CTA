@@ -16,6 +16,7 @@
 #include <stdexcept>
 #include <string_view>
 #include <thread>
+#include <vector>
 
 namespace cta::tape::daemon {
 
@@ -63,14 +64,18 @@ TEST(TapeSessionReporterTest, ReportsTrackerContentsOnDemand) {
   log.setLogFormat("json");
   cta::log::LogContext lc(log);
   ReportingTapeMount mount;
-  TapeSessionTracker tracker;
+  unsigned phaseReports = 0;
+  TapeSessionTracker tracker([&](auto) { ++phaseReports; });
   TapeSessionReporter reporter(tracker, mount, lc, 1s, 1s);
 
   tracker.notifyBlockMovement(25);
   tracker.recordFailure(TapeSessionFailure::DiskRead);
   tracker.reportState(cta::tape::session::TapeSessionState::Transferring);
 
+  EXPECT_EQ(1, phaseReports);
   reporter.reportNow();
+  reporter.reportNow();
+  EXPECT_EQ(1, phaseReports);
 
   EXPECT_NE(std::string::npos, log.getLog().find("Tape session statistics"));
   EXPECT_NE(std::string::npos, log.getLog().find("Error_diskRead"));
@@ -383,6 +388,63 @@ TEST(TapeSessionReporterTest, InformationalEventsAndAlertsKeepLegacyFieldsWithou
   EXPECT_NE(std::string::npos, output.find("Info_diskSpaceReservationFailure"));
   EXPECT_NE(std::string::npos, output.find("Info_diskSpaceReservationTestFailure"));
   EXPECT_EQ(1, tracker.outcomeSnapshot().tapeAlerts.at(0x01));
+}
+
+TEST(TapeSessionReporterTest, MapsOnlyPublishablePhases) {
+  using enum session::TapeSessionState;
+  using common::dataStructures::DriveStatus;
+  std::vector<DriveStatus> statuses;
+  TapeSessionTracker tracker([&](auto state) {
+    if (const auto status = TapeSessionReporter::driveStatusForSessionState(state)) {
+      statuses.push_back(*status);
+    }
+  });
+  tracker.beginTapeSession();
+  for (const auto phase :
+       {Mounting, Loading, Transferring, Unloading, Unmounting, DrainingToDisk, Finalizing, Finished}) {
+    tracker.reportState(phase);
+  }
+  EXPECT_EQ((std::vector {DriveStatus::Starting,
+                          DriveStatus::Mounting,
+                          DriveStatus::Transferring,
+                          DriveStatus::Unloading,
+                          DriveStatus::Unmounting,
+                          DriveStatus::DrainingToDisk}),
+            statuses);
+}
+
+TEST(TapeSessionReporterTest, LoadingUpdatesLocalStateWithoutPublication) {
+  using enum session::TapeSessionState;
+  unsigned publications = 0;
+  TapeSessionTracker tracker([&](auto state) {
+    if (TapeSessionReporter::driveStatusForSessionState(state)) {
+      ++publications;
+    }
+  });
+  const auto start = TapeSessionTracker::Clock::time_point {};
+  tracker.reportState(Mounting, start);
+  tracker.reportState(Loading, start + 1s);
+  EXPECT_EQ(1, publications);
+  EXPECT_EQ(Loading, tracker.state());
+  EXPECT_EQ(start + 1s, tracker.livenessSnapshot().stateEnteredAt);
+}
+
+TEST(TapeSessionReporterTest, LoadingDoesNotRetryFailedMountingPublication) {
+  using enum session::TapeSessionState;
+  unsigned attempts = 0;
+  TapeSessionTracker tracker([&](auto state) {
+    if (TapeSessionReporter::driveStatusForSessionState(state) && ++attempts == 1) {
+      throw std::runtime_error("catalogue unavailable");
+    }
+  });
+  tracker.reportState(Mounting);
+  tracker.reportState(Loading);
+  EXPECT_EQ(Loading, tracker.state());
+  EXPECT_EQ(1, attempts);
+  tracker.reportState(Transferring);
+  EXPECT_EQ(Transferring, tracker.state());
+  EXPECT_EQ(2, attempts);
+  EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::Reporting));
 }
 
 }  // namespace cta::tape::daemon

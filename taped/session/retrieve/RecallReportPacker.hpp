@@ -65,23 +65,12 @@ public:
   virtual void reportEndOfSessionWithErrors(const std::string& msg, cta::log::LogContext& lc);
 
   /**
-   * Report the drive state and set it in the central drive register. This
-   * function is to be used by the tape thread when running.
-   * @param state the new drive state.
-   * @param reason the comment to a change.
-   * @param lc log context provided by the calling thread.
-   */
-  virtual void reportDriveStatus(cta::common::dataStructures::DriveStatus status,
-                                 const std::optional<std::string>& reason,
-                                 cta::log::LogContext& lc);
-
-  /**
    * Flag disk thread as done.
    */
   virtual void setDiskDone();
 
   /**
-   * Flag tape thread as done. Set the drive status to draining if needed.
+   * Flag tape thread as done.
    */
   virtual void setTapeDone();
 
@@ -149,20 +138,6 @@ private:
           m_failedRetrieveJob(std::move(failedRetrieveJob)) {}
 
     void execute(RecallReportPacker& reportPacker) override;
-  };
-
-  class ReportDriveStatus : public Report {
-    cta::common::dataStructures::DriveStatus m_status;
-    std::optional<std::string> m_reason;
-
-  public:
-    ReportDriveStatus(cta::common::dataStructures::DriveStatus status, std::optional<std::string> reason)
-        : m_status(status),
-          m_reason(std::move(reason)) {}
-
-    void execute(RecallReportPacker& reportPacker) override;
-
-    bool goingToEnd() override;
   };
 
   class ReportEndofSession : public Report {

@@ -73,8 +73,6 @@ TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerNominal) {
   rrp.reportCompletedJob(std::move(job1), lc);
   rrp.reportCompletedJob(std::move(job2), lc);
 
-  rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
-
   rrp.setTapeDone();
   rrp.setDiskDone();
   rrp.reportEndOfSession(lc);
@@ -129,8 +127,6 @@ TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerBadBadEnd) {
   rrpTracker.recordFailure(cta::tape::daemon::TapeSessionFailure::DiskRead);
   const auto failure = rrpTracker.recordFailure(cta::tape::daemon::TapeSessionFailure::UnclassifiedFile);
   rrp.reportFailedJob(std::move(job3), ex, lc, failure);
-
-  rrp.reportDriveStatus(cta::common::dataStructures::DriveStatus::Unmounting, std::nullopt, lc);
 
   rrp.setTapeDone();
   rrp.setDiskDone();

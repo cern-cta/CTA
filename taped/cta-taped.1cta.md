@@ -34,7 +34,7 @@ At startup, desired Down keeps the drive Down; desired Up is preserved and autho
 This allows recovery after a crash without discarding a pending operator up request.
 A drive without a catalogue entry starts Down.
 
-Preparation publishes CleaningUp before accessing hardware and checks desired state again after cleaning.
+Preparation publishes Starting before accessing hardware and checks desired state again after cleaning.
 An operator down request during preparation or an active session is honoured after hardware cleanup finishes.
 Reported Down marks the end of hardware activity; a subsequent up request authorizes another preparation attempt.
 Ordinary session completion and handled failures eject the cartridge when the drive and robot permit it.

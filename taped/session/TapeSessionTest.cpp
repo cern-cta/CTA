@@ -884,9 +884,8 @@ public:
     mount.repack = repack;
     const bool fatal = point == TransferFailurePoint::MetadataAllocation || point == TransferFailurePoint::MetadataLogic
                        || point == TransferFailurePoint::MetadataUnknown;
-    const bool startupFails = fatal || point == TransferFailurePoint::Metadata
-                              || point == TransferFailurePoint::MetadataDatabase
-                              || point == TransferFailurePoint::StartingStatus;
+    const bool startupFails =
+      fatal || point == TransferFailurePoint::Metadata || point == TransferFailurePoint::MetadataDatabase;
     const bool workerStarts =
       point == TransferFailurePoint::TapeMountedCta || point == TransferFailurePoint::TapeMountedStandard
       || point == TransferFailurePoint::TapeMountedAndUnload || point == TransferFailurePoint::TapeMountedAndComplete;
@@ -970,7 +969,8 @@ public:
       EXPECT_TRUE(result.has_value());
       EXPECT_EQ(cta::tape::session::TapeSessionState::Finished, tracker.state());
     }
-    EXPECT_EQ(point != TransferFailurePoint::None && point != TransferFailurePoint::ReservationDenied,
+    EXPECT_EQ(point != TransferFailurePoint::None && point != TransferFailurePoint::ReservationDenied
+                && point != TransferFailurePoint::ReportUp,
               tracker.outcomeSnapshot().hasFailures);
     if (startupFails) {
       EXPECT_FALSE(tracker.mountAttempted());
@@ -993,8 +993,8 @@ public:
       threadsAfter = transferTestThreadCount();
     }
     EXPECT_EQ(threadsBefore, threadsAfter) << "Thread count did not return to baseline within one second";
-    // Starting-status failures occur before the reporter starts, but still complete the session.
-    if (!startupFails || point == TransferFailurePoint::StartingStatus) {
+    // Publication failures no longer interrupt session startup.
+    if (!startupFails) {
       EXPECT_EQ(1, countLogMessages(logger.getLog(), "Tape session finished"));
     }
     EXPECT_EQ(cta::tape::session::TapeSessionState::Finalizing, mount.lastPublicationState);
@@ -1053,7 +1053,7 @@ public:
     } else if (!startupFails) {
       EXPECT_EQ(1, driveDestructions);
       if (!workerStarts) {
-        EXPECT_EQ(1, scheduler.upAttempts);
+        EXPECT_EQ(0, scheduler.upAttempts);
       }
     }
     if constexpr (std::is_same_v<Mount, FailingTransferRetrieveMount>) {
@@ -1601,10 +1601,10 @@ TEST_P(TapeSessionTest, ArchiveDriveAccessFailureDoesNotRequestDesiredDown) {
 }
 
 /*
- * If archive drive-up publication fails, the session still finalizes the mount.
+ * Archive completion leaves drive-up publication to the enclosing drive session.
  * The failure must not leave a worker running.
  */
-TEST_P(TapeSessionTest, ArchiveReportUpFailureCleansUp) {
+TEST_P(TapeSessionTest, ArchiveLeavesUpPublicationToDriveSession) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
     {
@@ -1751,10 +1751,10 @@ TEST_P(TapeSessionTest, RetrieveDriveAccessFailureDoesNotRequestDesiredDown) {
 }
 
 /*
- * If retrieve drive-up publication fails, the session still finalizes the mount.
+ * Retrieve completion leaves drive-up publication to the enclosing drive session.
  * The failure must not leave a worker running.
  */
-TEST_P(TapeSessionTest, RetrieveReportUpFailureCleansUp) {
+TEST_P(TapeSessionTest, RetrieveLeavesUpPublicationToDriveSession) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
     {
@@ -2007,7 +2007,9 @@ void checkTransferTimingLogs(const std::string& output, const std::string& fileM
     const double expected = value("checksumingTime") + value("readWriteTime") + value("flushTime")
                             + value("waitDataTime") + value("waitFreeMemoryTime") + value("waitInstructionsTime")
                             + value("waitReportingTime");
-    EXPECT_GT(value("waitReportingTime"), 0);
+    // A fast report can complete within the timer's resolution.
+    EXPECT_NE(std::string::npos, line.find(" waitReportingTime=\""));
+    EXPECT_GE(value("waitReportingTime"), 0);
     // Text logs round each floating-point field independently.
     EXPECT_NEAR(expected, value("transferTime"), expected * 0.00001);
     files += file;

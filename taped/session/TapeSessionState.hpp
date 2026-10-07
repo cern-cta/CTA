@@ -11,12 +11,15 @@
 namespace cta::tape::session {
 
 /// Progress of one TapeSession, independently of its outcome and drive status.
+/// Callers must enter each phase at most once per session; phases may be skipped.
+/// Repeating the current phase is harmless, but returning to a previous phase is invalid.
+/// The tracker suppresses consecutive duplicates; it does not enforce transition order.
 enum class TapeSessionState : uint32_t {
-  Preparing,       ///< Preparing jobs, workers, and tape access outside the explicit tape operations.
+  Preparing,       ///< Initial preparation of jobs, workers, and tape access before mounting.
   Mounting,        ///< Asking the media changer to mount the tape.
-  Loading,         ///< Waiting for the mounted tape to become ready in the drive.
+  Loading,         ///< Waiting for media readiness and completing post-load setup before transfer.
   Transferring,    ///< Processing tape transfer tasks.
-  Finalizing,      ///< Cleaning up and completing outstanding reporting outside the explicit tape operations.
+  Finalizing,      ///< Completing worker and reporting teardown after hardware work and disk delivery end.
   Unloading,       ///< Asking the drive to unload the tape, including rewind.
   Unmounting,      ///< Asking the media changer to remove the tape from the drive.
   DrainingToDisk,  ///< Retrieval disk delivery remains active; the drive is still unavailable.

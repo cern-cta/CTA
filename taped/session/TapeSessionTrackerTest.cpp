@@ -8,9 +8,12 @@
 #include "taped/session/pipeline/MemBlock.hpp"
 
 #include <atomic>
+#include <future>
 #include <gtest/gtest.h>
+#include <stdexcept>
 #include <thread>
 #include <type_traits>
+#include <vector>
 
 namespace cta::tape::daemon {
 
@@ -359,7 +362,7 @@ TEST(TapeSessionTrackerTest, RetrievalCompletionTracksEitherWorkerOrderAndFailur
         tracker.notifyDiskDone();
         EXPECT_EQ(TapeSessionState::Transferring, tracker.state());
       }
-      tracker.reportState(TapeSessionState::Finalizing);
+      tracker.reportState(TapeSessionState::Unmounting);
       if (failed) {
         tracker.recordFailure(TapeSessionFailure::TapeUnload);
         tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
@@ -544,6 +547,114 @@ TEST(TapeSessionTrackerTest, LivenessTimesCompletionTransitionsAndSessionReset) 
     EXPECT_EQ(TapeSessionTracker::Clock::time_point {}, snapshot.lastBlockMovement);
     tracker.beginTapeSession(start + 10s);
     EXPECT_EQ(start + 10s, tracker.livenessSnapshot().stateEnteredAt);
+  }
+}
+
+TEST(TapeSessionTrackerTest, PublishesCommittedTransitionsOnceAndPreservesEntryTime) {
+  using enum session::TapeSessionState;
+  std::vector<session::TapeSessionState> reported;
+  TapeSessionTracker tracker([&](auto state) {
+    EXPECT_EQ(state, tracker.state());
+    reported.push_back(state);
+  });
+  const auto start = TapeSessionTracker::Clock::time_point {};
+  tracker.beginTapeSession(start);
+  tracker.reportState(Preparing, start + std::chrono::seconds(1));
+  EXPECT_EQ(start, tracker.livenessSnapshot().stateEnteredAt);
+  tracker.reportState(Mounting, start + std::chrono::seconds(2));
+  EXPECT_EQ((std::vector {Preparing, Mounting}), reported);
+}
+
+TEST(TapeSessionTrackerTest, PublicationFailuresRetainStateAndAllowFurtherTransitions) {
+  using enum session::TapeSessionState;
+  TapeSessionTracker tracker([](auto) { throw 42; });
+  tracker.beginTapeSession();
+  EXPECT_EQ(Preparing, tracker.state());
+  tracker.reportState(Unloading);
+  tracker.reportState(Unloading);
+  tracker.reportState(Unmounting);
+  EXPECT_EQ(Unmounting, tracker.state());
+  EXPECT_EQ(3, tracker.failureStats().at(TapeSessionFailure::Reporting));
+}
+
+TEST(TapeSessionTrackerTest, SlowPublicationAllowsSnapshotsAndSerializesConcurrentTransitions) {
+  using enum session::TapeSessionState;
+  using namespace std::chrono_literals;
+  std::promise<void> entered;
+  std::promise<void> release;
+  auto released = release.get_future().share();
+  std::vector<session::TapeSessionState> reported;
+  TapeSessionTracker tracker([&](auto state) {
+    if (state == Unloading) {
+      entered.set_value();
+      released.wait();
+    }
+    reported.push_back(state);
+  });
+  std::thread first([&] { tracker.reportState(Unloading); });
+  entered.get_future().wait();
+  auto snapshot = std::async(std::launch::async, [&] { return tracker.livenessSnapshot(); });
+  const auto ready = snapshot.wait_for(1s);
+  EXPECT_EQ(std::future_status::ready, ready);
+  std::thread second([&] { tracker.reportState(Unmounting); });
+  // Always release and join, including when snapshot accessibility regresses.
+  release.set_value();
+  first.join();
+  second.join();
+  if (ready == std::future_status::ready) {
+    EXPECT_EQ(Unloading, snapshot.get().state);
+  }
+  EXPECT_EQ((std::vector {Unloading, Unmounting}), reported);
+}
+
+TEST(TapeSessionTrackerTest, RetrievalCompletionPublishesDerivedPhasesInEitherWorkerOrder) {
+  using enum session::TapeSessionState;
+  for (const bool diskFirst : {false, true}) {
+    std::vector<session::TapeSessionState> reported;
+    TapeSessionTracker tracker([&](auto state) { reported.push_back(state); });
+    tracker.beginTapeSession();
+    tracker.setType(session::SessionType::Retrieve);
+    tracker.reportState(Unmounting);
+    if (diskFirst) {
+      tracker.notifyDiskDone();
+      tracker.notifyTapeDone();
+      EXPECT_EQ((std::vector {Preparing, Unmounting, Finalizing}), reported);
+    } else {
+      tracker.notifyTapeDone();
+      tracker.notifyDiskDone();
+      EXPECT_EQ((std::vector {Preparing, Unmounting, DrainingToDisk, Finalizing}), reported);
+    }
+    const auto finalizingAt = tracker.livenessSnapshot().stateEnteredAt;
+    // The owner repeats finalization after joining workers without restarting its budget.
+    tracker.reportState(Finalizing, finalizingAt + std::chrono::seconds(1));
+    EXPECT_EQ(finalizingAt, tracker.livenessSnapshot().stateEnteredAt);
+    EXPECT_EQ(1, std::count(reported.begin(), reported.end(), Finalizing));
+    tracker.reportState(Finished);
+    tracker.notifyTapeDone();
+    tracker.notifyDiskDone();
+    EXPECT_EQ(Finished, reported.back());
+  }
+}
+
+TEST(TapeSessionTrackerTest, OwnerFinalizesArchiveAndEmptySessionsOnce) {
+  using enum session::TapeSessionState;
+  for (const bool empty : {false, true}) {
+    std::vector<session::TapeSessionState> phases;
+    TapeSessionTracker tracker([&](auto state) { phases.push_back(state); });
+    tracker.beginTapeSession();
+    tracker.setType(session::SessionType::Archive);
+    if (!empty) {
+      tracker.reportState(Transferring);
+      tracker.reportState(Unloading);
+      tracker.reportState(Unmounting);
+    }
+    tracker.reportState(Finalizing);
+    const auto enteredAt = tracker.livenessSnapshot().stateEnteredAt;
+    tracker.reportState(Finalizing, enteredAt + std::chrono::seconds(1));
+    EXPECT_EQ(enteredAt, tracker.livenessSnapshot().stateEnteredAt);
+    tracker.reportState(Finished);
+    EXPECT_EQ(1, std::count(phases.begin(), phases.end(), Finalizing));
+    EXPECT_EQ(Finalizing, phases[phases.size() - 2]);
   }
 }
 

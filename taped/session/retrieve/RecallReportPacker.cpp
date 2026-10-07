@@ -82,19 +82,6 @@ void RecallReportPacker::reportEndOfSession(cta::log::LogContext& lc) {
 }
 
 //------------------------------------------------------------------------------
-//reportDriveStatus
-//------------------------------------------------------------------------------
-void RecallReportPacker::reportDriveStatus(cta::common::dataStructures::DriveStatus status,
-                                           const std::optional<std::string>& reason,
-                                           cta::log::LogContext& lc) {
-  cta::log::ScopedParamContainer params(lc);
-  params.add("type", "ReportDriveStatus").add("Status", cta::common::dataStructures::toString(status));
-  lc.log(cta::log::DEBUG, "In RecallReportPacker::reportDriveStatus(), pushing a report.");
-  cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(new ReportDriveStatus(status, reason));
-}
-
-//------------------------------------------------------------------------------
 //reportEndOfSessionWithErrors
 //------------------------------------------------------------------------------
 void RecallReportPacker::reportEndOfSessionWithErrors(const std::string& msg, cta::log::LogContext& lc) {
@@ -140,23 +127,6 @@ void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& reportP
 //------------------------------------------------------------------------------
 bool RecallReportPacker::ReportEndofSession::goingToEnd() {
   return true;
-}
-
-//------------------------------------------------------------------------------
-//ReportDriveStatus::execute
-//------------------------------------------------------------------------------
-void RecallReportPacker::ReportDriveStatus::execute(RecallReportPacker& parent) {
-  cta::log::ScopedParamContainer params(parent.m_lc);
-  params.add("status", cta::common::dataStructures::toString(m_status));
-  parent.m_lc.log(cta::log::DEBUG, "In RecallReportPacker::ReportDriveStatus::execute(): reporting drive status.");
-  parent.m_retrieveMount->setDriveStatus(m_status, m_reason);
-}
-
-//------------------------------------------------------------------------------
-//ReportDriveStatus::goingToEnd
-//------------------------------------------------------------------------------
-bool RecallReportPacker::ReportDriveStatus::goingToEnd() {
-  return false;
 }
 
 //------------------------------------------------------------------------------
@@ -339,16 +309,13 @@ void RecallReportPacker::WorkerThread::run() {
   // Cross check that the queue is indeed empty.
   while (m_parent.m_fifo.size()) {
     // There is at least one extra report we missed.
-    // The drive status reports are not a problem though.
     cta::log::ScopedParamContainer spc(m_parent.m_lc);
     std::unique_ptr<Report> missedReport(m_parent.m_fifo.pop());
     spc.add("ReportType", typeid(*missedReport).name());
     if (missedReport->goingToEnd()) {
       spc.add("goingToEnd", "true");
     }
-    if (typeid(*missedReport) != typeid(RecallReportPacker::ReportDriveStatus)) {
-      m_parent.m_lc.log(cta::log::ERR, "Popping missed report (memory leak)");
-    }
+    m_parent.m_lc.log(cta::log::ERR, "Popping missed report (memory leak)");
   }
   m_parent.m_lc.log(cta::log::DEBUG, "Finishing RecallReportPacker thread");
 }

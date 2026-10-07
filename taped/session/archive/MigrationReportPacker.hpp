@@ -87,17 +87,6 @@ public:
   virtual void reportLastBatchError(const cta::exception::Exception& ex, cta::log::LogContext& lc);
 
   /**
-   * Report the drive state and set it in the central drive register. This
-   * function is to be used by the tape thread when running.
-   * @param state the new drive state.
-   * @param reason the comment to a change.
-   * @param lc log context provided by the calling thread.
-   */
-  virtual void reportDriveStatus(cta::common::dataStructures::DriveStatus status,
-                                 const std::optional<std::string>& reason,
-                                 cta::log::LogContext& lc);
-
-  /**
    * Create into the MigrationReportPacker a report for the nominal end of session
    * @param lc log context provided by the calling thread.
    */
@@ -167,18 +156,6 @@ private:
                             "In MigrationReportPacker::ReportTestGoingToEnd::execute(): Reporting session complete.");
       reportPacker.m_archiveMount->complete();
     }
-  };
-
-  class ReportDriveStatus : public Report {
-    cta::common::dataStructures::DriveStatus m_status;
-    std::optional<std::string> m_reason;
-
-  public:
-    ReportDriveStatus(cta::common::dataStructures::DriveStatus status, std::optional<std::string> reason)
-        : m_status(status),
-          m_reason(std::move(reason)) {}
-
-    void execute(MigrationReportPacker& reportPacker) override;
   };
 
   class ReportFlush : public Report {
