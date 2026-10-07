@@ -16,7 +16,7 @@ pub enum Error {
     DiskInstanceNotFound(String),
     /// The connection to the EOS endpoint could not be established.
     #[error("gRPC Connection Error: {0}")]
-    Rpc(cern_st_grpc::Error),
+    Rpc(cta_grpc_common::Error),
     /// EOS returned an error status for the call.
     #[error("gRPC Status Error: {0}")]
     Tonic(#[from] tonic::Status),

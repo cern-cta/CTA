@@ -20,7 +20,7 @@
 
 [dependencies]
   bon          = { workspace = true }
-  cern-st-grpc = { workspace = true }
+  cta-grpc-common = { workspace = true }
   chrono       = { workspace = true, features = ["serde"] }
   cta-protobuf = { workspace = true }
   tonic        = { workspace = true, features = ["tls-native-roots", "tls-ring"] }

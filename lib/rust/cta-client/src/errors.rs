@@ -3,7 +3,7 @@
 
 //! Error types raised by the CTA client
 
-use cern_st_grpc::Error as RpcError;
+use cta_grpc_common::Error as RpcError;
 use cta_protobuf::cta::xrd::{data::Data, response::ResponseType};
 
 /// An error happening at the level of a [`crate::client::CtaGrpcClient`]

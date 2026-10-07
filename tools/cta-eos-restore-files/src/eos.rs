@@ -11,8 +11,8 @@
 use std::{os::unix::ffi::OsStringExt, path::PathBuf};
 
 use anyhow::{Result, anyhow};
-use cern_st_grpc::utils::system_time_now;
 use cta_client::types::{ChecksumType, File, Owner};
+use cta_grpc_common::utils::system_time_now;
 use eos_client::{DEFAULT_FILE_MODE, EosGrpcClient, Error};
 use eos_protobuf::eos::rpc::{Checksum, FileMdProto, Time};
 

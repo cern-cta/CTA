@@ -4,12 +4,12 @@
 use std::collections::HashMap;
 
 use anyhow::Context;
-use cern_st_grpc::EndpointConfig;
 use cta_client::{
     client::{CtaGrpcClient, StreamingClientType},
     errors::ChecksumTypeError,
     types::{Checksum, ChecksumType, DiskFile, File, FileSelector},
 };
+use cta_grpc_common::EndpointConfig;
 use eos_client::EosEndpointMap;
 use eos_protobuf::eos::rpc::{MdId, Type};
 use tokio_stream::StreamExt;

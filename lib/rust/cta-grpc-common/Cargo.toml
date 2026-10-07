@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 [package]
-  name                    = "cern-st-grpc"
+  name                    = "cta-grpc-common"
   version.workspace       = true
   edition.workspace       = true
   authors.workspace       = true

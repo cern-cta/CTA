@@ -13,8 +13,8 @@ mod eos;
 mod output;
 mod parse;
 
-use cern_st_grpc::{EndpointConfig, JwtAuth, validate_scheme};
 use clap::Parser;
+use cta_grpc_common::{EndpointConfig, JwtAuth, validate_scheme};
 
 use crate::cli::FilesCli;
 

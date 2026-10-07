@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 CERN
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use cern_st_grpc::EndpointConfig;
 use cta_client::{client::CtaGrpcClient, types::FileSelector};
+use cta_grpc_common::EndpointConfig;
 
 use crate::{
     cli::CommonOptions,

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 CERN
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use cern_st_grpc::test_utils::{corrupt_streaming_response, streaming_response};
+use cta_grpc_common::test_utils::{corrupt_streaming_response, streaming_response};
 use cta_protobuf::cta::{
     admin::RecycleTapeFileLsItem,
     xrd::{

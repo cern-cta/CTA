@@ -9,8 +9,10 @@
 mod errors;
 mod rpc;
 pub mod test_utils;
+
 #[cfg(test)]
 mod tests;
+
 pub mod utils;
 
 pub use errors::{Error, validate_scheme};

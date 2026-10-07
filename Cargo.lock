@@ -206,23 +206,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cern-st-grpc"
-version = "0.1.0"
-dependencies = [
- "bytes",
- "http-body",
- "http-body-util",
- "log",
- "prost",
- "thiserror",
- "tokio",
- "tokio-stream",
- "tonic",
- "tonic-prost",
- "url",
-]
-
-[[package]]
 name = "cfg-if"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -335,8 +318,8 @@ version = "0.1.0"
 dependencies = [
  "bon",
  "bytes",
- "cern-st-grpc",
  "chrono",
+ "cta-grpc-common",
  "cta-protobuf",
  "http-body",
  "http-body-util",
@@ -357,11 +340,11 @@ name = "cta-eos-restore-files"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "cern-st-grpc",
  "clap",
  "clap_complete",
  "clap_mangen",
  "cta-client",
+ "cta-grpc-common",
  "env_logger",
  "eos-client",
  "eos-protobuf",
@@ -370,6 +353,23 @@ dependencies = [
  "thiserror",
  "tokio",
  "tokio-stream",
+ "url",
+]
+
+[[package]]
+name = "cta-grpc-common"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "http-body",
+ "http-body-util",
+ "log",
+ "prost",
+ "thiserror",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "tonic-prost",
  "url",
 ]
 
@@ -493,7 +493,7 @@ name = "eos-client"
 version = "0.1.0"
 dependencies = [
  "bytes",
- "cern-st-grpc",
+ "cta-grpc-common",
  "eos-protobuf",
  "log",
  "nix",

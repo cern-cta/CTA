@@ -31,11 +31,11 @@
   # Single source of truth for dependency versions across the workspace.
   [workspace.dependencies]
     # internal
-    cern-st-grpc = { path = "lib/rust/cern-st-grpc" }
-    cta-client   = { path = "lib/rust/cta-client" }
-    cta-protobuf = { path = "lib/rust/cta-protobuf" }
-    eos-client   = { path = "lib/rust/eos-client" }
-    eos-protobuf = { path = "lib/rust/eos-protobuf" }
+    cta-client      = { path = "lib/rust/cta-client" }
+    cta-grpc-common = { path = "lib/rust/cta-grpc-common" }
+    cta-protobuf    = { path = "lib/rust/cta-protobuf" }
+    eos-client      = { path = "lib/rust/eos-client" }
+    eos-protobuf    = { path = "lib/rust/eos-protobuf" }
     # gRPC / protobuf
     prost             = "^0.14"
     tonic             = "^0.14"

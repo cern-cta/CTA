@@ -14,7 +14,7 @@
 //! ```no_run
 //! # use std::collections::HashMap;
 //! # use eos_client::EosEndpointMap;
-//! # use cern_st_grpc::EndpointConfig;
+//! # use cta_grpc_common::EndpointConfig;
 //! # async fn example(configs: HashMap<String, EndpointConfig>) -> Result<(), Box<dyn std::error::Error>> {
 //! let mut endpoints = EosEndpointMap::from(configs);
 //! let exists = endpoints
@@ -26,7 +26,7 @@
 
 use std::{collections::HashMap, path::PathBuf, sync::LazyLock};
 
-use cern_st_grpc::{
+use cta_grpc_common::{
     AuthorizationInterceptor, EndpointConfig, Error as RpcError, JwtAuth, utils::system_time_now,
 };
 use eos_protobuf::eos::rpc::{

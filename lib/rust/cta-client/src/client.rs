@@ -10,7 +10,7 @@
 //!
 //! ```no_run
 //! # use cta_client::client::CtaGrpcClient;
-//! # use cern_st_grpc::EndpointConfig;
+//! # use cta_grpc_common::EndpointConfig;
 //! # async fn example(config: EndpointConfig) -> Result<(), Box<dyn std::error::Error>> {
 //! let unary = CtaGrpcClient::new_unary(&config).await?;
 //! let streaming = CtaGrpcClient::new_streaming(&config).await?;
@@ -18,7 +18,7 @@
 //! # }
 //! ```
 
-use cern_st_grpc::{AuthorizationInterceptor, EndpointConfig, Error as RpcError};
+use cta_grpc_common::{AuthorizationInterceptor, EndpointConfig, Error as RpcError};
 use cta_protobuf::cta::{
     admin::AdminCmd,
     xrd::{
@@ -251,7 +251,7 @@ impl CtaGrpcClient<StreamingClientType> {
 
 #[cfg(test)]
 mod tests {
-    use cern_st_grpc::JwtAuth;
+    use cta_grpc_common::JwtAuth;
     use url::Url;
 
     use super::*;

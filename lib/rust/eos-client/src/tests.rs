@@ -4,7 +4,7 @@
 use std::collections::HashMap;
 
 use bytes::Bytes;
-use cern_st_grpc::{
+use cta_grpc_common::{
     EndpointConfig, JwtAuth,
     test_utils::{corrupt_streaming_response, streaming_response, streaming_response_from_bytes},
     utils::system_time_now,

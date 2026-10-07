@@ -1,4 +1,4 @@
-# cern-st-grpc
+# cta-grpc-common
 
 Transport-level gRPC plumbing shared by the Rust clients of
 [CTA](https://gitlab.cern.ch/cta/CTA).

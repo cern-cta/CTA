@@ -27,7 +27,7 @@
 //!     client::CtaGrpcClient,
 //!     stream::StreamResponseExt,
 //! };
-//! use cern_st_grpc::{EndpointConfig, JwtAuth};
+//! use cta_grpc_common::{EndpointConfig, JwtAuth};
 //! use cta_protobuf::cta::admin::AdminCmd;
 //! use tokio_stream::StreamExt;
 //!

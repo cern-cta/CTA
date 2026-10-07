@@ -10,7 +10,7 @@ use std::{
     path::PathBuf,
 };
 
-use cern_st_grpc::{EndpointConfig, JwtAuth};
+use cta_grpc_common::{EndpointConfig, JwtAuth};
 use eos_client::EosEndpointMap;
 use url::Url;
 
@@ -93,7 +93,7 @@ pub fn set_namespace_map(
                     line: raw_line.clone(),
                 })?;
 
-                cern_st_grpc::validate_scheme(&endpoint_url)
+                cta_grpc_common::validate_scheme(&endpoint_url)
                     .map_err(|_| KeytabError::InvalidScheme(endpoint_url.scheme().to_string()))?;
 
                 endpoint_map.insert(

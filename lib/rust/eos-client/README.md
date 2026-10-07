@@ -6,7 +6,7 @@ Client library for the EOS namespace gRPC API, used by
 It wraps the generated bindings of
 [`eos-protobuf`](https://gitlab.cern.ch/cta/CTA/-/blob/main/lib/rust/eos-protobuf/README.md)
 and builds on the transport plumbing of
-[`cern-st-grpc`](https://gitlab.cern.ch/cta/CTA/-/blob/main/lib/rust/cern-st-grpc/README.md).
+[`cta-grpc-common`](https://gitlab.cern.ch/cta/CTA/-/blob/main/lib/rust/cta-grpc-common/README.md).
 
 `EosGrpcClient` covers the subset of the EOS RPC service that CTA needs.
 
