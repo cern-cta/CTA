@@ -50,3 +50,8 @@ global:
   securityContext:
     allowPrivilegeEscalation: False
     privileged: False
+
+# Set to false to skip the rmcd StatefulSet (e.g. in stress-drive mode where
+# no tape library hardware is present and taped never contacts rmcd).
+rmcd:
+  enabled: true
