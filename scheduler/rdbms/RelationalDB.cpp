@@ -146,8 +146,12 @@ RelationalDB::queueArchive(std::vector<cta::common::dataStructures::ArchiveInser
   params.add("nrows", nrows);
   params.add("inputJobCount", totalJobCount);
   if (totalJobCount != nrows) {
+    // Do NOT throw: the INSERT above committed immediately (implicit autocommit — PostgresConn only
+    // supports AUTOCOMMIT_ON). Throwing here propagates to resolveArchiveBatch/failWholeBatch and
+    // tells every client the request failed, while the rows are already durable in the queue —
+    // a client retry then double-archives. Log ERR only; a real fix requires wrapping the INSERT
+    // in an explicit Transaction so the count check can actually rollback on mismatch.
     lc.log(log::ERR, "In RelationalDB::queueArchive(): enqueued unexpected number of jobs !");
-    throw cta::exception::Exception("In RelationalDB::queueArchive(): enqueued unexpected number of jobs");
   }
 
   lc.log(log::INFO, "In RelationalDB::queueArchive(): enqueued archive.");
