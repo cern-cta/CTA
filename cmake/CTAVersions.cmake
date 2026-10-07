@@ -3,10 +3,11 @@
 
 set(CTA_VERSION "" CACHE STRING "CTA version-release")
 
-# RPM fields allow alphanumerics and . _ + ~ ^, with one hyphen separating the fields.
+# For e.g. RPMs we need to distinguish between the version and the release.
+# For that reason, we require there to be at least one hyphen in the version string.
 if(NOT CTA_VERSION MATCHES "^[A-Za-z0-9._+~^]+-[A-Za-z0-9._+~^]+$")
   message(FATAL_ERROR
-    "CTA_VERSION must contain two nonempty RPM fields separated by exactly one hyphen, "
+    "CTA_VERSION must contain two nonempty parts separated by exactly one hyphen, "
     "using only letters, numbers, '.', '_', '+', '~', or '^'; for example 6-dev.")
 endif()
 
