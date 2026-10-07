@@ -4,14 +4,14 @@
  */
 
 #include "catalogue/Catalogue.hpp"
-#include "scheduler/SchedulerDatabase.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "lib/telemetry/include/telemetry/metrics/SchedulerMetrics.hpp"
-#include "scheduler/OpportunisticQueueBatcher.hpp"
 #include "scheduler/FrontendBatchingLayer.hpp"
+#include "scheduler/OpportunisticQueueBatcher.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
 
 #include <future>
 #include <mutex>
@@ -25,9 +25,9 @@ namespace cta {
 //------------------------------------------------------------------------------
 cta::common::dataStructures::ArchiveInsertQueueCriteria
 FrontendBatchingLayer::resolveArchiveInsertCriteria(const std::string& instanceName,
-                                        const std::string& storageClass,
-                                        const cta::common::dataStructures::RequesterIdentity& requester,
-                                        log::LogContext& lc) {
+                                                    const std::string& storageClass,
+                                                    const cta::common::dataStructures::RequesterIdentity& requester,
+                                                    log::LogContext& lc) {
   cta::common::dataStructures::ArchiveInsertQueueCriteriaKey k {instanceName,
                                                                 storageClass,
                                                                 requester.name,
@@ -108,7 +108,7 @@ FrontendBatchingLayer::resolveArchiveInsertCriteria(const std::string& instanceN
 // resolveArchiveBatch
 //------------------------------------------------------------------------------
 void FrontendBatchingLayer::resolveArchiveBatch(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
-                                    log::LogContext& lc) {
+                                                log::LogContext& lc) {
   cta::utils::Timer batchTimer;
   uint64_t successfulJobs = 0;
   uint64_t failedJobs = 0;
@@ -193,8 +193,9 @@ void FrontendBatchingLayer::resolveArchiveBatch(std::vector<cta::common::dataStr
 //------------------------------------------------------------------------------
 // logQueuedArchiveItems
 //------------------------------------------------------------------------------
-void FrontendBatchingLayer::logQueuedArchiveItems(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
-                                      log::LogContext& lc) {
+void FrontendBatchingLayer::logQueuedArchiveItems(
+  std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
+  log::LogContext& lc) {
   // Per-item audit log, mirroring the file-by-file path's own "Queued archive request" INFO line
   // (same fields), run only for items resolveArchiveBatch() actually queued, after followers have
   // already been released and don't wait on it. catalogueTime/schedulerDbTime don't apply here
