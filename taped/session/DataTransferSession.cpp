@@ -128,15 +128,21 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
                                     cta::common::dataStructures::MountType::NoMount,
                                     cta::common::dataStructures::DriveStatus::Probing,
                                     lc);
-      cta::tape::daemon::EmptyDriveProbe emptyDriveProbe(m_log, m_driveInfo, m_sysWrapper);
       lc.log(cta::log::INFO, "Transition from down to up detected. Will check if a tape is in the drive.");
-      if (!emptyDriveProbe.driveIsEmpty()) {
-        std::string errorMsg = "A tape was detected in the drive. Putting the drive down.";
-        errorMsg += emptyDriveProbe.getProbeErrorMsg().value_or("");
-        putDriveDown(errorMsg, nullptr, lc);
-        continue;
+      if (m_dataTransferConfig.stressMode) {
+        // Stress drives have no SCSI device; the slot is always empty at startup.
+        // Skip the hardware probe entirely — production behaviour is unchanged.
+        lc.log(cta::log::INFO, "Stress-drive mode: skipping hardware empty-drive probe.");
       } else {
-        lc.log(cta::log::INFO, "No tape detected in the drive. Proceeding with scheduling.");
+        cta::tape::daemon::EmptyDriveProbe emptyDriveProbe(m_log, m_driveInfo, m_sysWrapper);
+        if (!emptyDriveProbe.driveIsEmpty()) {
+          std::string errorMsg = "A tape was detected in the drive. Putting the drive down.";
+          errorMsg += emptyDriveProbe.getProbeErrorMsg().value_or("");
+          putDriveDown(errorMsg, nullptr, lc);
+          continue;
+        } else {
+          lc.log(cta::log::INFO, "No tape detected in the drive. Proceeding with scheduling.");
+        }
       }
     }
     // 2b) Get initial mount information

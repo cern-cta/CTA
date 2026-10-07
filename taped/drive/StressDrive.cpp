@@ -28,7 +28,12 @@ StressDrive::StressDrive(std::string driveName, std::filesystem::path baseDir, u
     : FakeDrive(std::numeric_limits<uint64_t>::max()),
       m_driveName(std::move(driveName)),
       m_baseDir(std::move(baseDir)),
-      m_mountDelayMs(mountDelayMs) {}
+      m_mountDelayMs(mountDelayMs) {
+  // FakeDrive defaults m_tapeInPlace to true (for unit-test convenience), but
+  // a StressDrive starts with an empty slot: no tape is loaded until the media
+  // changer mounts one and waitUntilReady() is called.
+  setTapeInPlace(false);
+}
 
 void StressDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
   if (m_mountDelayMs > 0) {
@@ -100,6 +105,10 @@ void StressDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
     block.remainingSpaceAfter = m_tapeCapacity - sizeof(vol1);
     m_tape.push_back(std::move(block));
   }
+
+  // Tape is now in the drive; reflect this so hasTapeInPlace() returns true
+  // and getDriveStatus() reports the correct state to taped.
+  setTapeInPlace(true);
 }
 
 void StressDrive::unloadTape() {
