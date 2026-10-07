@@ -5,6 +5,7 @@
 
 #include "TapeDaemon.hpp"
 
+#include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "catalogue/dummy/DummyLogicalLibraryCatalogue.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
@@ -234,8 +235,9 @@ TEST_F(TapeDaemonTest, RegistrationReplacesAbsentAndCleanShutdownReasonsWithStar
 }
 
 TEST_F(TapeDaemonTest, MissingDrivePropagatesFromWaitForUp) {
-  EXPECT_CALL(*scheduler, getDesiredDriveState("drive", _)).WillOnce(Throw(Scheduler::NoSuchDrive("missing")));
-  EXPECT_THROW(waitForUp(), Scheduler::NoSuchDrive);
+  EXPECT_CALL(*scheduler, getDesiredDriveState("drive", _))
+    .WillOnce(Throw(TapeDrivesCatalogueState::NoSuchDrive("missing")));
+  EXPECT_THROW(waitForUp(), TapeDrivesCatalogueState::NoSuchDrive);
 }
 
 TEST_F(TapeDaemonTest, RegistrationFailureDoesNotPublishShutdown) {
@@ -312,7 +314,8 @@ TEST_F(TapeDaemonTest, MissingDriveEndsRunWithoutShutdownPublication) {
   logicalLibrary.name = "library";
   EXPECT_CALL(library(), getLogicalLibraries())
     .WillOnce(Return(std::vector<common::dataStructures::LogicalLibrary> {logicalLibrary}));
-  EXPECT_CALL(*scheduler, getDesiredDriveState("drive", _)).WillOnce(Throw(Scheduler::NoSuchDrive("missing")));
+  EXPECT_CALL(*scheduler, getDesiredDriveState("drive", _))
+    .WillOnce(Throw(TapeDrivesCatalogueState::NoSuchDrive("missing")));
   EXPECT_CALL(driveState(), setDesiredTapeDriveState(_, _)).Times(0);
   EXPECT_EQ(1, daemon->run());
   EXPECT_FALSE(daemon->isReady());

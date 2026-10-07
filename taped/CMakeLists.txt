@@ -17,7 +17,6 @@ add_library(ctataped
   TapedApp.cpp
   TapeDaemon.cpp
   session/DriveSession.cpp
-  session/DriveStatePublication.cpp
   drive/DriveReservation.cpp
   SchedulerContext.cpp
 )

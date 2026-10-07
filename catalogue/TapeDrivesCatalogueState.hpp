@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "common/dataStructures/DriveDownReason.hpp"
 #include "common/dataStructures/DriveStatus.hpp"
 #include "common/dataStructures/MountType.hpp"
 #include "common/exception/UserError.hpp"
@@ -12,6 +13,7 @@
 #include <limits>
 #include <optional>
 #include <string>
+#include <string_view>
 
 namespace cta {
 
@@ -62,14 +64,25 @@ public:
                              const common::dataStructures::SecurityIdentity& identity,
                              log::LogContext& lc) const;
   CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistsException);
+  CTA_GENERATE_EXCEPTION_CLASS(NoSuchDrive);
   void checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo& driveInfo) const;
   void removeDrive(const std::string& drive, log::LogContext& lc) const;
   void setDesiredDriveState(const std::string& drive,
                             const common::dataStructures::DesiredDriveState& desiredState,
                             log::LogContext& lc) const;
+
+  // Preserves specific existing Down reasons; catalogue failures propagate to the caller.
+  void requestDriveDown(const std::string& driveName,
+                        common::dataStructures::DriveDownReason reason,
+                        log::LogContext& lc,
+                        std::string_view detail = {}) const;
+
   void updateDriveStatistics(const common::dataStructures::DriveInfo& driveInfo,
                              const ReportDriveStatsInputs& inputs,
                              log::LogContext& lc) const;
+
+  // Reporting Down asserts that the session has ended and hardware ownership has been released.
+  // The catalogue clears session information on that transition.
   void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
                          cta::common::dataStructures::MountType mountType,
                          common::dataStructures::DriveStatus status,

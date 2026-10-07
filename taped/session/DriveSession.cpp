@@ -5,10 +5,10 @@
 
 #include "DriveSession.hpp"
 
-#include "DriveStatePublication.hpp"
 #include "TapeSession.hpp"
 #include "TapeSessionReporter.hpp"
 #include "catalogue/Catalogue.hpp"
+#include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/TimeoutException.hpp"
 #include "common/log/ExceptionLogging.hpp"
@@ -87,7 +87,8 @@ void DriveSession::releaseAndReportDown() {
 }
 
 void DriveSession::requestDown(common::dataStructures::DriveDownReason reason, std::string_view detail) {
-  requestDriveDown(m_schedulerContext.scheduler().getCatalogue(), m_driveInfo.driveName, reason, m_lc, detail);
+  TapeDrivesCatalogueState(m_schedulerContext.scheduler().getCatalogue())
+    .requestDriveDown(m_driveInfo.driveName, reason, m_lc, detail);
 }
 
 void DriveSession::requestDownNoThrow(common::dataStructures::DriveDownReason reason,
@@ -225,7 +226,7 @@ DriveSession::IterationResult DriveSession::runIteration(std::stop_token stopTok
       .add("scheduleMountTimeoutSecs", m_config.mounts.get_next_mount_timeout_secs)
       .add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(log::WARNING, "Scheduling timed out; waiting before retrying.");
-  } catch (const Scheduler::NoSuchDrive&) {
+  } catch (const TapeDrivesCatalogueState::NoSuchDrive&) {
     throw;
   } catch (const std::exception& ex) {
     // No transfer has started; retry within this up period after the idle delay.
@@ -339,7 +340,7 @@ bool DriveSession::cleanDrive(const std::optional<std::string>& vid) {
   }
   const auto reported = scheduler.getCatalogue().DriveState()->getTapeDrive(m_driveInfo.driveName);
   if (!reported) {
-    throw Scheduler::NoSuchDrive("Drive disappeared before cleanup");
+    throw TapeDrivesCatalogueState::NoSuchDrive("Drive disappeared before cleanup");
   }
   // Publish preparation before acquiring hardware access; recovery retains existing ownership.
   scheduler.reportDriveStatus(m_driveInfo,

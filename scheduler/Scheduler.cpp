@@ -992,6 +992,8 @@ void Scheduler::RepackReportBatch::report(log::LogContext& lc) {
   }
 }
 
+// TODO: there are bunch of drive-related methods here that have no business being in the scheduler
+// To be removed in a separate MR...
 //------------------------------------------------------------------------------
 // getDesiredDriveState
 //------------------------------------------------------------------------------
@@ -1000,7 +1002,7 @@ common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const 
   utils::Timer t;
   const auto optionalDriveState = m_catalogue.DriveState()->getTapeDrive(driveName);
   if (!optionalDriveState.has_value()) {
-    throw NoSuchDrive("In Scheduler::getDesiredDriveState(): no such drive");
+    throw TapeDrivesCatalogueState::NoSuchDrive("In Scheduler::getDesiredDriveState(): no such drive: " + driveName);
   }
   const auto& driveState = optionalDriveState.value();
 

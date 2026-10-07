@@ -277,7 +277,7 @@ public:
     auto signalReactor = m_signalReactorBuilder.build(*m_logPtr);
     std::unique_ptr<HealthServer> healthServer;
 
-    return safeRunWithLog(*m_logPtr, [this, &cliOptions, &config, &healthServer]() {
+    return safeRunWithLog(*m_logPtr, [this, &cliOptions, &config, &healthServer, &signalReactor]() {
       cta::log::Logger& log = *m_logPtr;
       log(log::INFO,
           "Starting " + m_appName,

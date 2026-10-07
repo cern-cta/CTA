@@ -86,6 +86,34 @@ void TapeDrivesCatalogueState::setDesiredDriveState(const std::string& drive,
   }
 }
 
+void TapeDrivesCatalogueState::requestDriveDown(const std::string& driveName,
+                                                common::dataStructures::DriveDownReason reason,
+                                                log::LogContext& lc,
+                                                std::string_view detail) const {
+  using namespace common::dataStructures;
+  const auto current = m_catalogue.DriveState()->getTapeDrive(driveName);
+  if (!current) {
+    throw NoSuchDrive("Cannot request Down for missing drive: " + driveName);
+  }
+
+  DesiredDriveState desired;
+  desired.reason = formatDriveDownReason(reason, detail);
+  if (!current->desiredUp && current->reasonUpDown
+      && !current->reasonUpDown->empty()
+      // For better diagnostics, allow overwriting startup/shutdown reason
+      && *current->reasonUpDown != formatDriveDownReason(DriveDownReason::Startup)
+      && *current->reasonUpDown != formatDriveDownReason(DriveDownReason::Shutdown)) {
+    // Omit the update so a newer reason is not overwritten with the observed value.
+    desired.reason.reset();
+  }
+
+  // Note that there is a very small change for a race condition here as the lookup for the reason
+  // and the update are not one atomic operation
+  // However, this would only happen if the operator happens to change the reason as this method is called
+  // and the only result is that the reason the operator put in is not preserved; not the end of the world
+  setDesiredDriveState(driveName, desired, lc);
+}
+
 void TapeDrivesCatalogueState::updateDriveStatistics(const common::dataStructures::DriveInfo& driveInfo,
                                                      const ReportDriveStatsInputs& inputs,
                                                      [[maybe_unused]] log::LogContext& lc) const {
