@@ -82,3 +82,9 @@ taped:
   # Drive list is generated dynamically by create_instance.sh --no-hardware-drives
   # based on the --max-drives argument (default 20, named STRESS0000..STRESS{N-1}).
   # Do not define drives here; the generated values file is merged after this preset.
+
+# No tape library hardware present: disable rmcd entirely.
+# taped in stress mode never contacts rmcd; deploying it would fail because
+# /dev/smc does not exist on a node without mhvtl.
+rmcd:
+  enabled: false

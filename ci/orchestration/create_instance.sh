@@ -49,6 +49,26 @@ check_deploy_commands() {
   (( errors == 0 )) || die "Deployment requirements are not satisfied."
 }
 
+label_stress_node() {
+  # If the user already labelled a node manually, respect that and skip.
+  local already_labelled
+  already_labelled=$(kubectl get nodes -l cta-stress-node=true \
+    -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+  if [[ -n "${already_labelled}" ]]; then
+    log_task "Node ${already_labelled} already has cta-stress-node=true; skipping auto-labelling."
+    return
+  fi
+  # Pick the first available node.
+  local node
+  node=$(kubectl get nodes --no-headers -o custom-columns=':metadata.name' | head -1)
+  [[ -n "${node}" ]] || die "No Kubernetes nodes found to label for stress-drive scheduling."
+  log_task "Labelling node ${node} with cta-stress-node=true for stress-drive pod scheduling..."
+  kubectl label node "${node}" cta-stress-node=true
+  # Record the node so delete_instance.sh can remove the label on cleanup.
+  echo "${node}" > "/tmp/${namespace}-stress-node.txt"
+  log_success "Node ${node} labelled."
+}
+
 generate_stress_drive_values() {
   log_task "Generating stress drive configuration (${max_drives} drives)..."
   taped_config=$(mktemp "/tmp/${namespace}-taped-stress-XXXXXX-values.yaml")
@@ -296,6 +316,7 @@ create_instance() {
   rmcd_config=""
   if [[ "${no_hardware_drives}" == "true" ]]; then
     # Stress-drive mode: generate drive list from --max-drives; no rmcd config needed.
+    label_stress_node
     generate_stress_drive_values
   else
     generate_tape_values_files

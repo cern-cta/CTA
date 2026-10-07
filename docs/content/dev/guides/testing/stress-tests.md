@@ -78,11 +78,9 @@ The overlay:
 
 - Sets `StressMode = yes` in every `taped` pod's configuration, bypassing SCSI device scanning and `rmcd` calls.
 - Mounts the host's `/dev/shm/cta-stress` into every pod via a `hostPath` volume so all pods share one in-memory tape library.
-- Adds a **node affinity rule** (`cta-stress-node=true`) that forces all stress-drive pods onto the same Kubernetes node. This is required because `hostPath` volumes are node-local: pods on different nodes would each see an independent copy of the directory and could not exchange tape state. Label one CI node before deploying:
+- Adds a **node affinity rule** (`cta-stress-node=true`) that forces all stress-drive pods onto the same Kubernetes node. This is required because `hostPath` volumes are node-local: pods on different nodes would each see an independent copy of the directory and could not exchange tape state.
 
-    ```bash
-    kubectl label node <node-name> cta-stress-node=true
-    ```
+    `create_instance.sh --no-hardware-drives` labels the node automatically: if no node already carries `cta-stress-node=true` it picks the first available node, applies the label, and records the node name in `/tmp/<namespace>-stress-node.txt`. `delete_instance.sh` reads that file on teardown and removes the label so the node is left clean. If you label a node yourself before deploying, `create_instance.sh` skips auto-labelling and `delete_instance.sh` leaves your label intact.
 
     For multi-node deployments, replace the `hostPath` volume with a `ReadWriteMany` PersistentVolumeClaim (NFS, CephFS, etc.) and remove the affinity rule from the overlay.
 
