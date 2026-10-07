@@ -13,6 +13,8 @@ spec:
       type: boolean
     keep-stress-test-namespace:
       type: boolean
+    use-stress-drives:
+      type: boolean
 ---
 
 # All of the below tests use only the docker image generated in the build:image stage.
@@ -386,6 +388,15 @@ stress-test:
         STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-pgsched-values.yaml"
       else
         STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-values.yaml"
+      fi
+    - |
+      # Virtual stress-drive mode: no mhvtl or SCSI hardware needed.
+      # The overlay adds StressMode, the hostPath tmpfs volume, and the node
+      # affinity rule.  setup_stress_drives_test.py registers the virtual tape
+      # library in the catalogue automatically when --setup is passed to pytest.
+      # Requires the stress node to be labelled: kubectl label node <name> cta-stress-node=true
+      if $[[ inputs.use-stress-drives ]]; then
+        STRESS_CTA_VALUES_CHAIN="${STRESS_CTA_VALUES_CHAIN},presets/stress-stressdrives-pgsched-values.yaml"
       fi
     # Set up stress test
     - cd ci/orchestration/

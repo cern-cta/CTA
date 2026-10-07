@@ -35,6 +35,8 @@ spec:
       type: boolean
     keep-stress-test-namespace:
       type: boolean
+    use-stress-drives:
+      type: boolean
 ---
 
 .trigger-child-pipeline:
@@ -73,6 +75,7 @@ spec:
           enable-valgrind: $[[ inputs.enable-valgrind ]]
           enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
           keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
+          use-stress-drives: $[[ inputs.use-stress-drives ]]
     strategy: mirror
 
 trigger-postgres-scheduler-pipeline:

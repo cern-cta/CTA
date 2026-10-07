@@ -19,7 +19,9 @@ namespace cta::tape::drive {
  * Fake drive class used for unit testing
  */
 class FakeDrive : public DriveInterface {
-private:
+protected:
+  // One logical record on the simulated tape: either a data block (data non-empty)
+  // or a file mark (data == "").
   struct tapeBlock {
     std::string data;
     uint64_t remainingSpaceAfter;
@@ -28,6 +30,8 @@ private:
   std::vector<tapeBlock> m_tape;
   uint32_t m_currentPosition = 0;
   uint64_t m_tapeCapacity;
+
+private:
   int m_beginOfCompressStats = 0;
   uint64_t getRemaingSpace(uint32_t currentPosition);
 

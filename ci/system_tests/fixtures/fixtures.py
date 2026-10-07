@@ -268,3 +268,33 @@ def cta_cli(env: TestEnv) -> CtaCliHost:
 @pytest.fixture(scope="session")
 def disk_instance_name(disk_instance: DiskInstanceHost) -> str:
     return disk_instance.instance_name
+
+
+# =========================================================================
+#  Stress-drive fixtures
+# =========================================================================
+
+
+@pytest.fixture(scope="session")
+def stress_num_tapes(test_config: TestConfig) -> int:
+    return test_config["tests"]["stress"]["drives"]["num_tapes"]
+
+
+@pytest.fixture(scope="session")
+def stress_vid_prefix(test_config: TestConfig) -> str:
+    return test_config["tests"]["stress"]["drives"]["vid_prefix"]
+
+
+@pytest.fixture(scope="session")
+def stress_logical_library(test_config: TestConfig) -> str:
+    return test_config["tests"]["stress"]["drives"]["logical_library"]
+
+
+@pytest.fixture(scope="session")
+def stress_base_dir(test_config: TestConfig) -> str:
+    return test_config["tests"]["stress"]["drives"]["base_dir"]
+
+
+@pytest.fixture(scope="session")
+def stress_tape_capacity_bytes(test_config: TestConfig) -> int:
+    return test_config["tests"]["stress"]["drives"]["tape_capacity_bytes"]
