@@ -4,13 +4,13 @@
  */
 
 #include "catalogue/Catalogue.hpp"
-#include "scheduler/SchedulerDatabase.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/utils/Timer.hpp"
 #include "lib/telemetry/include/telemetry/metrics/SchedulerMetrics.hpp"
-#include "scheduler/OpportunisticQueueBatcher.hpp"
 #include "scheduler/FrontendBatchingLayer.hpp"
+#include "scheduler/OpportunisticQueueBatcher.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
 
 #include <future>
 #include <mutex>
@@ -23,9 +23,9 @@ namespace cta {
 //------------------------------------------------------------------------------
 cta::common::dataStructures::RetrieveFileQueueCriteria
 FrontendBatchingLayer::resolveRetrieveInsertCriteria(const std::string& instanceName,
-                                         const cta::common::dataStructures::RetrieveRequest& request,
-                                         std::optional<std::string>& diskSystemName,
-                                         log::LogContext& lc) {
+                                                     const cta::common::dataStructures::RetrieveRequest& request,
+                                                     std::optional<std::string>& diskSystemName,
+                                                     log::LogContext& lc) {
   auto criteria = m_catalogue.TapeFile()->prepareToRetrieveFile(instanceName,
                                                                 request.archiveFileID,
                                                                 request.requester,
@@ -110,8 +110,9 @@ disk::DiskSystemList FrontendBatchingLayer::getCachedDiskSystemList() {
 //------------------------------------------------------------------------------
 // resolveRetrieveBatch
 //------------------------------------------------------------------------------
-void FrontendBatchingLayer::resolveRetrieveBatch(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
-                                     log::LogContext& lc) {
+void FrontendBatchingLayer::resolveRetrieveBatch(
+  std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
+  log::LogContext& lc) {
   cta::utils::Timer batchTimer;
   uint64_t failedItems = 0;
 
@@ -186,8 +187,9 @@ void FrontendBatchingLayer::resolveRetrieveBatch(std::vector<cta::common::dataSt
 //------------------------------------------------------------------------------
 // logQueuedRetrieveItems
 //------------------------------------------------------------------------------
-void FrontendBatchingLayer::logQueuedRetrieveItems(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
-                                       log::LogContext& lc) {
+void FrontendBatchingLayer::logQueuedRetrieveItems(
+  std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
+  log::LogContext& lc) {
   // Per-item audit log, mirroring the file-by-file path's own "Queued retrieve request" INFO line
   // (same fields), run only for items resolveRetrieveBatch() actually queued, after followers have
   // already been released and don't wait on it. catalogueTime/schedulerDbTime don't apply here (that

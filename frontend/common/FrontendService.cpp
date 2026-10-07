@@ -360,9 +360,7 @@ FrontendService::FrontendService(const std::string& configFilename,
   m_scheddb->initConfig(osThreadPoolSize, osThreadStackSize);
 
   // Initialise the Scheduler
-  m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue,
-                                                 *m_scheddb,
-                                                 m_schedulerBackendName);
+  m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, m_schedulerBackendName);
 
 #ifdef CTA_PGSCHED
   // Read and log opportunistic-batching config, then wire up the batching layer in front of the
@@ -398,9 +396,9 @@ FrontendService::FrontendService(const std::string& configFilename,
     log(log::INFO, "Configuration entry", params);
   }
   m_batchingLayer = std::make_unique<cta::FrontendBatchingLayer>(*m_scheduler,
-                                                                  opportunisticBatchingEnabled,
-                                                                  opportunisticBatchingWindowMs,
-                                                                  opportunisticBatchingMaxBatchSize);
+                                                                 opportunisticBatchingEnabled,
+                                                                 opportunisticBatchingWindowMs,
+                                                                 opportunisticBatchingMaxBatchSize);
 #endif
 
   // Initialise the Frontend
