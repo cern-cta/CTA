@@ -166,6 +166,14 @@ spec:
           kubectl label node <name> cta-stress-node=true
       type: boolean
       default: false
+
+    num-stress-drives:
+      description: |-
+        Number of virtual stress drives to deploy when use-stress-drives is true.
+        Drives are named STRESS0000…STRESS{N-1}; each produces one taped pod.
+        Has no effect when use-stress-drives is false.
+      type: number
+      default: 20
 ---
 
 stages:
@@ -367,6 +375,7 @@ include:
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
       use-stress-drives: $[[ inputs.use-stress-drives ]]
+      num-stress-drives: $[[ inputs.num-stress-drives ]]
   - local: .gitlab/ci/validate.gitlab-ci.yml
     rules:
       - if: '$CI_COMMIT_TAG && $CI_PIPELINE_SOURCE == "parent_pipeline"'
@@ -421,6 +430,7 @@ include:
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
       enable-opportunistic-batching: $[[ inputs.enable-opportunistic-batching ]]
       use-stress-drives: $[[ inputs.use-stress-drives ]]
+      num-stress-drives: $[[ inputs.num-stress-drives ]]
   - local: .gitlab/ci/sbom.gitlab-ci.yml
     rules:
       - if: '"$[[ inputs.platform ]]" == "debian13"'

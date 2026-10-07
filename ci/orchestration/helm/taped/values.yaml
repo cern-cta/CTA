@@ -61,7 +61,7 @@ keytab:
 #     device: "/dev/nst0"
 #     logicalLibraryName: lib2
 #     controlPath smc1
-drives: {}
+drives: []
 
 securityContext:
   privileged: true # To get access to /dev/
