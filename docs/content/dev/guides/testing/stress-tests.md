@@ -64,6 +64,26 @@ The full lifecycle per archive or retrieve session:
 
 Because `stressBaseDir` is on `tmpfs` (`/dev/shm`), all tape I/O stays in RAM and no physical tape drives, SCSI devices, or `rmcd` are contacted.
 
+!!! note "Why `tapes/{VID}/` is empty during active archiving"
+    While a tape is actively mounted, its directory exists but contains no `tape.bin` file:
+
+    ```
+    $ ls -lh /dev/shm/cta-stress/tapes/ST0001/
+    total 0
+    ```
+
+    This is expected. The entire tape block stream lives in the `StressDrive` in-memory block vector (`m_tape`) from step 3 onwards. `tape.bin` is only written by `unloadTape()` at the **end** of the session (step 5), via an atomic write-to-tmp-then-rename to prevent corruption if `/dev/shm` fills mid-write.
+
+    The CTA catalogue marks files as "archived" during the write session — before `unloadTape()` is called — so the catalogue can report successful archiving while `tapes/ST0001/` still shows `total 0`. Both observations are correct and reflect different parts of the same session.
+
+    `tape.bin` appears only after the drive is dismounted. To observe it:
+
+    ```bash
+    watch -n1 'ls -lh /dev/shm/cta-stress/tapes/ST0001/'
+    ```
+
+    If `tape.bin` is still absent after all drives have gone idle for several minutes, that indicates `unloadTape()` was not called (session aborted before dismount) or `saveTape()` threw an exception — check the `taped` pod logs.
+
 ### Deployment
 
 The stress-drive overlay is `ci/orchestration/presets/stress-stressdrives-pgsched-values.yaml`. Combine it with the base stress preset:

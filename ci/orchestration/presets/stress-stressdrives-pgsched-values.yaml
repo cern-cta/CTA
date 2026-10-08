@@ -40,6 +40,12 @@ taped:
       bufferCount: 10000
       logMask: "WARNING"
       schedulerNumberOfConnections: 3
+      # Fetch 100k files per advisory-lock trip.  StressDrive processes files at
+      # memory speed so the default 4k-file batch causes constant lock churn that
+      # throttles frontend queueing.  A larger batch amortises lock overhead across
+      # more work.
+      archiveFetchBytesFiles: "80000000000 100000"
+      retrieveFetchBytesFiles: "80000000000 100000"
 
   # Node affinity: all stress-drive pods MUST land on the same Kubernetes node.
   #
