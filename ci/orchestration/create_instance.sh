@@ -56,6 +56,9 @@ label_stress_node() {
     -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
   if [[ -n "${already_labelled}" ]]; then
     log_task "Node ${already_labelled} already has cta-stress-node=true; skipping auto-labelling."
+    # Always record the node name — needed by mount_stress_tmpfs and delete_instance.sh
+    # regardless of whether this run or a previous one applied the label.
+    echo "${already_labelled}" > "/tmp/${namespace}-stress-node.txt"
     return
   fi
   # Pick the first available node.
@@ -69,75 +72,53 @@ label_stress_node() {
   log_success "Node ${node} labelled."
 }
 
-# Mount a dedicated tmpfs for the StressDrive shared tape library.
+# Verify that the dedicated stress-drive tmpfs has been mounted on the host.
 #
-# Called only in stress-drive mode (--no-hardware-drives).  All taped pods
-# share tape state via a hostPath volume pointing at this directory; the mount
-# must therefore be created on the host machine before any pod starts.
-# Because the CI stress runner IS the Kubernetes node, a plain mount(8) call
-# from this script suffices — no Kubernetes Jobs or pod-level tricks needed.
+# ─── MANUAL PREREQUISITE ────────────────────────────────────────────────────
 #
-# The mount is always fresh: any previous mount is torn down first so stale
-# tape state from a prior run cannot affect the new test.
+# This script does not mount the tmpfs itself because it does not run as root.
+# A system administrator MUST run the following command on the stress node AS
+# ROOT before deploying the stress-drive test, and once again after a reboot:
 #
-# Mount options:
-#   size=20g
-#       10 M files × ~656 B/file across 20 tapes ≈ 6.6 GB data; ×2 for the
-#       atomic save (tape.bin and tape.bin.tmp coexist during every dismount)
-#       ≈ 13 GB; 20 GB cap gives comfortable headroom.
-#   nr_inodes=4096
-#       Only ~100 inodes are needed (20 tape dirs + 20 symlinks + a handful
-#       of parent dirs).  An explicit cap prevents the kernel from
-#       auto-sizing the inode table to RAM/4096, wasting ~8 MB on metadata
-#       for a filesystem we intentionally keep small.
-#   noatime
-#       Skip in-memory atime updates on tape.bin reads.
-#   huge=within_size
-#       Allocate 2 MB transparent huge pages for files whose logical size
-#       already exceeds 2 MB (tape.bin files reach this threshold after a few
-#       thousand files are archived per tape).  Fewer, larger pages reduce TLB
-#       pressure during the sequential serialise/deserialise pass at each
-#       mount/dismount and cut latency at scale.  Tiny inodes (symlinks, empty
-#       dirs) never trigger this path.  Falls back silently when THP is
-#       unavailable on the kernel.
+#   mount -t tmpfs \
+#     -o size=20g,nr_inodes=4096,noatime,huge=within_size \
+#     tmpfs /dev/shm/cta-stress
+#
+#   # If the kernel does not support huge=within_size, omit that option:
+#   mount -t tmpfs -o size=20g,nr_inodes=4096,noatime tmpfs /dev/shm/cta-stress
+#
+#   chmod 1777 /dev/shm/cta-stress
+#
+# To make the mount survive reboots add a line to /etc/fstab on the node:
+#   tmpfs  /dev/shm/cta-stress  tmpfs  size=20g,nr_inodes=4096,noatime,huge=within_size  0  0
+#
+# To tear down after the test (also as root):
+#   umount /dev/shm/cta-stress
+#
+# Mount option rationale:
+#   size=20g          10 M files × ~656 B/file across 20 tapes ≈ 6.6 GB data;
+#                     × 2 for atomic save (tape.bin + tape.bin.tmp coexist on
+#                     every dismount) ≈ 13 GB; 20 GB cap gives headroom.
+#   nr_inodes=4096    ~100 inodes needed; explicit cap prevents the kernel from
+#                     auto-sizing the table to RAM/4096 (~8 MB wasted metadata).
+#   noatime           Skip in-memory atime updates on tape.bin reads.
+#   huge=within_size  Use 2 MB transparent huge pages for tape.bin files once
+#                     they exceed 2 MB, reducing TLB pressure on the sequential
+#                     serialise/deserialise pass at each mount/dismount.
+#
+# ────────────────────────────────────────────────────────────────────────────
 mount_stress_tmpfs() {
   local base_dir="/dev/shm/cta-stress"
 
-  # Verify sufficient free RAM before allocating.  tmpfs is lazily allocated
-  # (size= is a cap, not a reservation), but written pages compete with all
-  # other system memory.  Peak usage is ~13 GB; require 15 GB headroom.
-  local avail_kb needed_kb
-  avail_kb=$(awk '/^MemAvailable:/ { print $2 }' /proc/meminfo)
-  needed_kb=$(( 15 * 1024 * 1024 ))
-  (( avail_kb >= needed_kb )) \
-    || die "Insufficient free RAM for stress tmpfs:" \
-           "${avail_kb} kB available, ${needed_kb} kB (15 GB) required." \
-           "Free memory before retrying."
-
-  # Unmount any existing mount first — always start from a clean slate.
-  if mountpoint -q "${base_dir}" 2>/dev/null; then
-    log_task "Unmounting existing tmpfs at ${base_dir}..."
-    umount "${base_dir}" \
-      || die "Cannot unmount ${base_dir}; a process may still have it open." \
-             "Check with: lsof +D ${base_dir}"
+  if ! mountpoint -q "${base_dir}" 2>/dev/null; then
+    die "Stress-drive tmpfs is not mounted at ${base_dir}." \
+        "Run the following as root on the stress node before deploying:" \
+        "  mount -t tmpfs -o size=20g,nr_inodes=4096,noatime,huge=within_size tmpfs ${base_dir}" \
+        "  chmod 1777 ${base_dir}" \
+        "See the comment above mount_stress_tmpfs() in create_instance.sh for full details."
   fi
 
-  mkdir -p "${base_dir}"
-
-  # Try with transparent huge pages; fall back if the kernel does not support
-  # huge= as a tmpfs mount option.
-  if mount -t tmpfs \
-       -o "size=20g,nr_inodes=4096,noatime,huge=within_size" \
-       tmpfs "${base_dir}" 2>/dev/null; then
-    log_success "Mounted tmpfs at ${base_dir} (size=20g, huge=within_size)."
-  else
-    mount -t tmpfs -o "size=20g,nr_inodes=4096,noatime" tmpfs "${base_dir}" \
-      || die "Failed to mount tmpfs at ${base_dir}."
-    log_warn "huge=within_size not supported on this kernel; mounted without transparent huge pages."
-    log_success "Mounted tmpfs at ${base_dir} (size=20g)."
-  fi
-
-  chmod 1777 "${base_dir}"
+  log_success "Stress-drive tmpfs is mounted at ${base_dir}."
 }
 
 generate_stress_drive_values() {
