@@ -36,6 +36,14 @@ StressDrive::StressDrive(std::string driveName, std::filesystem::path baseDir, u
 }
 
 void StressDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
+  // TapeCleaning::~TapeCleaning() calls waitUntilReady() after the write
+  // session to prepare for dismount.  Guard against that re-entry: if a tape
+  // is already loaded (m_currentTapeDir is set), the drive is already ready
+  // and reloading from disk would discard in-memory data not yet saved.
+  if (!m_currentTapeDir.empty()) {
+    return;
+  }
+
   if (m_mountDelayMs > 0) {
     std::this_thread::sleep_for(std::chrono::milliseconds(m_mountDelayMs));
   }
