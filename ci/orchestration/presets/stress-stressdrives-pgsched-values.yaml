@@ -65,10 +65,13 @@ taped:
                       - "true"
       # Run as root before the main container starts to create the shared
       # tapes/ and drives/ subdirectories with world-writable sticky-bit
-      # permissions.  The hostPath volume is created by Kubernetes as
-      # root:root 0755; without this step the taped user (uid 1000) cannot
-      # create those subdirectories and MediaChangerFacade throws a
-      # filesystem_error that crashes the pod.
+      # permissions.
+      #
+      # The tmpfs itself is mounted on the host by create_instance.sh
+      # (mount_stress_tmpfs) before any pod starts, so it is already present
+      # and correctly sized when this init container runs.  This container
+      # only needs to create the two subdirectories that StressDrive and
+      # NullMediaChangerFacade expect; mkdir -p is idempotent on restarts.
       initContainers:
         - name: stress-dir-init
           image: registry.cern.ch/docker.io/almalinux/9-minimal:9.7
@@ -80,7 +83,7 @@ taped:
             - -c
             - |
               mkdir -p /dev/shm/cta-stress/drives /dev/shm/cta-stress/tapes
-              chmod 1777 /dev/shm/cta-stress /dev/shm/cta-stress/drives /dev/shm/cta-stress/tapes
+              chmod 1777 /dev/shm/cta-stress/drives /dev/shm/cta-stress/tapes
           volumeMounts:
             - name: stress-tmpfs
               mountPath: /dev/shm/cta-stress
