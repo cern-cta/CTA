@@ -256,16 +256,15 @@ delete_instance() {
   kubectl delete pods,jobs,deployments,statefulsets,pvc --all -n "${namespace}" --now --wait=false >/dev/null
   kubectl delete namespace "${namespace}" --wait=true >/dev/null
 
-  # Unmount the stress-drive tmpfs now that all pods are gone.
-  # Only done in stress-drive mode (stress_node is set) to leave other stress
-  # test configurations (mhvtl-based) completely unaffected.
+  # The stress-drive tmpfs at /dev/shm/cta-stress must be unmounted manually
+  # by a system administrator on the stress node after the test completes:
+  #
+  #   umount /dev/shm/cta-stress
+  #
+  # This script does not unmount it because it does not run as root.
   if [[ -n "${stress_node}" ]]; then
-    local base_dir="/dev/shm/cta-stress"
-    if mountpoint -q "${base_dir}" 2>/dev/null; then
-      log_task "Unmounting stress-drive tmpfs at ${base_dir}..."
-      umount "${base_dir}" \
-        || log_warn "Could not unmount ${base_dir}; unmount manually: umount ${base_dir}"
-    fi
+    log_warn "Stress-drive tmpfs at /dev/shm/cta-stress on node ${stress_node} was NOT unmounted." \
+             "Run as root on that node: umount /dev/shm/cta-stress"
   fi
 
   # Remove the cta-stress-node=true label if create_instance.sh applied it automatically.
