@@ -99,7 +99,7 @@ private:
   static constexpr uint32_t k_magic = 0x43544150;   // 'CTAP'
   static constexpr uint32_t k_version = 1;
 
-  // Serialise m_tape to m_currentTapeDir/tape.bin.
+  // Serialise m_tape to m_currentTapeDir/tape.bin via an atomic tmp+rename.
   void saveTape() const;
 
   // Deserialise tape.bin from tapeDir into m_tape.  Clears m_tape first;
