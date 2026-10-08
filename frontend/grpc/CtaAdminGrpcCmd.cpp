@@ -168,6 +168,9 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string
           throw std::runtime_error(status.error_message());
       }
     }
+    if (!response.message_txt().empty()) {
+      std::cout << response.message_txt();
+    }
   } else {
     // insecure channel credentials won't work anymore, need TLS
     std::unique_ptr<cta::xrd::CtaRpcStream::Stub> client_stub = cta::xrd::CtaRpcStream::NewStub(spChannel);
