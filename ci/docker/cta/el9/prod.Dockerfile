@@ -90,14 +90,6 @@ RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
 # hadolint ignore=DL3022
 COPY --from=repo-builder /rpms/.rpm-hash /tmp/cta-rpm-hash
 
-RUN cat <<'EOF' >> /etc/bashrc
-
-# load auto-completion for cta-* commands
-if [ -f /usr/share/bash-completion/completions/cta-* ]; then
-    source /usr/share/bash-completion/completions/cta-*
-fi
-EOF
-
 # =========================================================================
 #  SERVICE cta-taped
 # =========================================================================
@@ -189,6 +181,14 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     /usr/local/bin/build-service.sh "cta-admin cta-catalogue-utils cta-scheduler-utils cta-tools-rs \
       krb5-workstation cta-test-immutable-file eos-client xrootd-client \
       python3-xrootd epel-release bc"
+
+RUN cat <<'EOF' >> /etc/bashrc
+
+# load auto-completion for cta-* commands
+if [ -f /usr/share/bash-completion/completions/cta-* ]; then
+    source /usr/share/bash-completion/completions/cta-*
+fi
+EOF
 
 ENTRYPOINT ["/bin/bash"]
 
