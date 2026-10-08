@@ -4,6 +4,7 @@ Apply these shared conventions alongside the relevant language guidance:
 
 - [C++ Conventions](cpp.md)
 - [Python Conventions](python.md)
+- [Rust Conventions](rust.md)
 - [Bash Conventions](bash.md)
 - [Copyright](copyright.md)
 

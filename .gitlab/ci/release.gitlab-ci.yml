@@ -240,7 +240,6 @@ publish-docs:
   stage: release
   needs:
     - job: build-docs
-      artifacts: false
   rules:
     - if: '$PIPELINE_TYPE != "DEFAULT" || $CI_PIPELINE_SOURCE == "parent_pipeline"'
       when: never
@@ -266,3 +265,50 @@ publish-docs:
   pages:
     publish: build/docs/public
     expire_in: never
+
+
+# =========================================================================
+#  Deploy Review App
+# =========================================================================
+
+# set up a review app for the merge request. it will be
+# automatically stopped when the MR is closed or merged
+deploy-mr-review-app:
+  stage: release
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+    - job: build-docs
+  rules:
+    # only run on merge requests
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    # don't run on merge trains
+    - if: '$CI_MERGE_REQUEST_EVENT_TYPE == "merge_train"'
+      when: never
+  variables:
+    DOCS_SITE_NAME: "cta.docs.cern.ch"
+  script:
+    - echo "Pages accessible through https://${DOCS_SITE_NAME}/review-mr-${CI_MERGE_REQUEST_IID}"
+  pages:
+    path_prefix: "review-mr-$CI_MERGE_REQUEST_IID"
+    expire_in: 1 week
+    publish: build/docs/site
+  environment:
+    name: "review/$CI_MERGE_REQUEST_IID"
+    url: "https://${DOCS_SITE_NAME}/review-mr-${CI_MERGE_REQUEST_IID}"
+    on_stop: stop-mr-review-app
+    auto_stop_in: 1 week
+
+stop-mr-review-app:
+  stage: release
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: manual
+      allow_failure: true
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - echo "Stopping review app"
+  environment:
+    name: "review/$CI_MERGE_REQUEST_IID"
+    action: stop

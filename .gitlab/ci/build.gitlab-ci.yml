@@ -109,6 +109,10 @@ build-cta-rpms:
       if $[[ inputs.compile-with-extra-telemetry ]]; then
         BUILD_OPTIONS+=" --extra-telemetry"
       fi
+    - |
+      if [[ "$ENABLE_SBOM_GENERATION" == "true" ]]; then
+        BUILD_OPTIONS+=" --sbom-path ${CI_PROJECT_DIR}/sboms"
+      fi
     - ./ci/build/build_packages.sh all --build-dir build
                                       --build-generator "$[[ inputs.build-generator ]]"
                                       --create-build-dir
@@ -126,6 +130,10 @@ build-cta-rpms:
     expire_in: 30 days
     paths:
       - ${BUILD_PATH}
+      - sboms
+    reports:
+      cyclonedx:
+        - sboms/*.cdx.json
 
   cache:
     - &dnf-cache
@@ -229,20 +237,9 @@ build-docs:
     - if: $CI_COMMIT_TAG
     - if: '$CI_PIPELINE_SOURCE == "web"'
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" || ($CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH)'
-      changes:
-        - docs/**/*
-        - ci/docs/**/*
-        - '**/*.1cta.md*'
-        - '**/*requirements.txt'
-        - '**/*.example.*'
-        - tools/compile_man_md.py
-        - tools/CtaAdminCmdParser.hpp
-        - .gitlab-ci.yml
-        - '.gitlab/ci/*.gitlab-ci.yml'
-        - ci/docker/pipeline/default.Dockerfile
-  image: $IMAGE_DEFAULT
+  image: $IMAGE_LINT
   variables:
-    GIT_SUBMODULE_STRATEGY: none
+    GIT_SUBMODULE_STRATEGY: "recursive"
   before_script:
     - !reference [.merge-train-guard, before_script]
     - source ci/docs/prepare-environment.sh

@@ -352,6 +352,7 @@ nav:
                   - 'General': dev/guides/conventions/coding/general.md
                   - 'C++': dev/guides/conventions/coding/cpp.md
                   - 'Python': dev/guides/conventions/coding/python.md
+                  - 'Rust': dev/guides/conventions/coding/rust.md
                   - 'Bash': dev/guides/conventions/coding/bash.md
                   - 'Copyright': dev/guides/conventions/coding/copyright.md
               - 'RPM Packaging': dev/guides/conventions/rpm-packaging.md
@@ -424,3 +425,4 @@ nav:
               - 'Readiness & Liveness': dev/internals/health-checks.md
   # Render the release history from CHANGELOG.md; upgrade instructions belong in Operations > Upgrades.
   - 'Changelog': changelog.md
+  - 'Reference': dev/internals/reference.md

@@ -4,7 +4,9 @@
 """Resolve repository inputs and generate the cta-admin manpage without compiling CTA."""
 
 from pathlib import Path
+import logging
 import re
+import shutil
 import subprocess
 import sys
 
@@ -12,6 +14,8 @@ from typing import Any, Protocol
 
 from mkdocs.structure.pages import Page
 from mkdocs.structure.toc import AnchorLink
+
+log = logging.getLogger("mkdocs.hooks")
 
 
 class MkDocsConfig(Protocol):
@@ -41,6 +45,41 @@ def on_pre_build(config: MkDocsConfig) -> None:
         cwd=root / "tools",
         check=True,
     )
+
+    log.info("Generating Rust docs...")
+    # Generate the Rust docs
+    cargo_bin = shutil.which("cargo")
+
+    if not cargo_bin:
+        log.warning("Cargo not found: something is wrong with the environment")
+        sys.exit(1)
+
+    subprocess.run(  # noqa: S603 - cmd built from cargo bin and known inputs
+        [cargo_bin, "doc", "-q", "--no-deps", "--workspace"],
+        cwd=root,
+        check=True,
+    )
+    output_dir = root / "build/docs/generated/api/rust"
+    output_dir.parent.mkdir(parents=True, exist_ok=True)
+    # remove the old dir
+    if output_dir.exists():
+        log.debug("Removing old Rust docs at %s", output_dir)
+        shutil.rmtree(output_dir)
+    shutil.move(root / "target/doc", output_dir)
+    log.info("Rust docs generated at %s", output_dir)
+
+
+def on_post_build(config: MkDocsConfig) -> None:
+    root = Path(config.config_file_path).resolve().parent.parent
+    source = root / "build/docs/generated/api/rust"
+
+    site_dir = Path(config["site_dir"])
+    destination = site_dir / "api/rust"
+    log.debug("Moving generated Rust docs to %s", destination)
+    if destination.exists():
+        shutil.rmtree(destination)
+    shutil.move(source, destination)
+    log.info("Rust docs published to %s", destination)
 
 
 def on_page_markdown(markdown: str, config: MkDocsConfig, **kwargs: Any) -> str:

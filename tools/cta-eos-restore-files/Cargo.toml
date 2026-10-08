@@ -1,0 +1,37 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[package]
+  name                    = "cta-eos-restore-files"
+  description             = "Command-line tool to restore deleted tape files in the CTA catalogue and the EOS namespace"
+  version.workspace       = true
+  edition.workspace       = true
+  authors.workspace       = true
+  license.workspace       = true
+  repository.workspace    = true
+  homepage.workspace      = true
+  documentation.workspace = true
+  keywords.workspace      = true
+  categories.workspace    = true
+  publish.workspace       = true
+
+[lints]
+  workspace = true
+
+[dependencies]
+  cta-grpc-common = { workspace = true }
+  eos-client      = { workspace = true }
+  eos-protobuf    = { workspace = true }
+
+  anyhow        = { workspace = true }
+  clap          = { workspace = true, features = ["env", "derive"] }
+  clap_complete = { workspace = true }
+  clap_mangen   = { workspace = true }
+  cta-client    = { workspace = true }
+  env_logger    = { workspace = true }
+  log           = { workspace = true }
+  serde_json    = { workspace = true }
+  thiserror     = { workspace = true }
+  tokio         = { workspace = true, features = ["macros", "rt-multi-thread", "fs"] }
+  tokio-stream  = { workspace = true }
+  url           = { workspace = true }
