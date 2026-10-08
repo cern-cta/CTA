@@ -8,8 +8,8 @@ shared tmpfs directory used by StressDrive.  Must be run after
 setup_cta_test.py (catalogue and admin users must already exist).
 
 Applies only to deployments that include at least one taped pod configured
-with DriveDevice = "stress://".  The test is automatically skipped when no
-stress-mode drives are present.
+with DriveDevice = "stress://".  The entire module is skipped automatically
+when no stress-mode drives are present.
 """
 
 from concurrent.futures import ThreadPoolExecutor
@@ -36,14 +36,26 @@ def _vid(prefix: str, index: int) -> str:
 
 
 # =========================================================================
-#  Setup tests
+#  Module-level skip guard
 # =========================================================================
 
 
-def test_skip_if_no_stress_drives(env: TestEnv) -> None:
-    """Skip the entire module when no stress-mode taped pods are present."""
+@pytest.fixture(autouse=True)
+def skip_if_no_stress_drives(env: TestEnv) -> None:
+    """Skip every test in this module when no stress-mode taped pods are present.
+
+    Using an autouse fixture is the correct pytest pattern for a module-wide
+    runtime skip: a plain pytest.skip() call inside a test function only skips
+    that one test, allowing later tests to run and register catalogue entries
+    (tapes, media types) that pollute the catalogue for non-stress deployments.
+    """
     if not _stress_tapeds(env):
         pytest.skip("No stress-mode taped pods found; skipping stress-drive setup")
+
+
+# =========================================================================
+#  Setup tests
+# =========================================================================
 
 
 def test_register_stress_media_type(cta_cli: CtaCliHost, stress_tape_capacity_bytes: int) -> None:
@@ -100,8 +112,6 @@ def test_setup_stress_tmpfs(env: TestEnv, stress_base_dir: str) -> None:
     idempotent.
     """
     stress_pods = _stress_tapeds(env)
-    if not stress_pods:
-        pytest.skip("No stress-mode taped pods found; skipping stress-drive tmpfs setup")
     with ThreadPoolExecutor(max_workers=len(stress_pods)) as pool:
         futures = [pool.submit(pod.setup_stress_tmpfs, stress_base_dir) for pod in stress_pods]
         for f in futures:
@@ -110,11 +120,7 @@ def test_setup_stress_tmpfs(env: TestEnv, stress_base_dir: str) -> None:
 
 def test_set_stress_drives_up(cta_cli: CtaCliHost, env: TestEnv) -> None:
     """Bring all stress drives up so the scheduler can dispatch work to them."""
-    stress_pods = _stress_tapeds(env)
-    if not stress_pods:
-        return
-
-    for pod in stress_pods:
+    for pod in _stress_tapeds(env):
         drive_name = pod.drive_name
         print(f"Bringing stress drive {drive_name} up")
         cta_cli.exec(f"cta-admin drive up {drive_name} --reason 'stress-drive setup'")
