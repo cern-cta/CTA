@@ -658,7 +658,7 @@ VALUES )SQL";
      * @return  result set of job IDs
      */
   static rdbms::Rset
-  flagReportingJobsByStatus(Transaction& txn, std::list<ArchiveJobStatus> statusList, uint64_t limit);
+  flagReportingJobsByStatus(Transaction& txn, uint64_t limit);
 
   /**
    * Assign a mount ID and VID to a selection of rows
