@@ -64,9 +64,80 @@ label_stress_node() {
   [[ -n "${node}" ]] || die "No Kubernetes nodes found to label for stress-drive scheduling."
   log_task "Labelling node ${node} with cta-stress-node=true for stress-drive pod scheduling..."
   kubectl label node "${node}" cta-stress-node=true
-  # Record the node so delete_instance.sh can remove the label on cleanup.
+  # Record the node so delete_instance.sh can remove the label and unmount the tmpfs on cleanup.
   echo "${node}" > "/tmp/${namespace}-stress-node.txt"
   log_success "Node ${node} labelled."
+}
+
+# Mount a dedicated tmpfs for the StressDrive shared tape library.
+#
+# Called only in stress-drive mode (--no-hardware-drives).  All taped pods
+# share tape state via a hostPath volume pointing at this directory; the mount
+# must therefore be created on the host machine before any pod starts.
+# Because the CI stress runner IS the Kubernetes node, a plain mount(8) call
+# from this script suffices — no Kubernetes Jobs or pod-level tricks needed.
+#
+# The mount is always fresh: any previous mount is torn down first so stale
+# tape state from a prior run cannot affect the new test.
+#
+# Mount options:
+#   size=20g
+#       10 M files × ~656 B/file across 20 tapes ≈ 6.6 GB data; ×2 for the
+#       atomic save (tape.bin and tape.bin.tmp coexist during every dismount)
+#       ≈ 13 GB; 20 GB cap gives comfortable headroom.
+#   nr_inodes=4096
+#       Only ~100 inodes are needed (20 tape dirs + 20 symlinks + a handful
+#       of parent dirs).  An explicit cap prevents the kernel from
+#       auto-sizing the inode table to RAM/4096, wasting ~8 MB on metadata
+#       for a filesystem we intentionally keep small.
+#   noatime
+#       Skip in-memory atime updates on tape.bin reads.
+#   huge=within_size
+#       Allocate 2 MB transparent huge pages for files whose logical size
+#       already exceeds 2 MB (tape.bin files reach this threshold after a few
+#       thousand files are archived per tape).  Fewer, larger pages reduce TLB
+#       pressure during the sequential serialise/deserialise pass at each
+#       mount/dismount and cut latency at scale.  Tiny inodes (symlinks, empty
+#       dirs) never trigger this path.  Falls back silently when THP is
+#       unavailable on the kernel.
+mount_stress_tmpfs() {
+  local base_dir="/dev/shm/cta-stress"
+
+  # Verify sufficient free RAM before allocating.  tmpfs is lazily allocated
+  # (size= is a cap, not a reservation), but written pages compete with all
+  # other system memory.  Peak usage is ~13 GB; require 15 GB headroom.
+  local avail_kb needed_kb
+  avail_kb=$(awk '/^MemAvailable:/ { print $2 }' /proc/meminfo)
+  needed_kb=$(( 15 * 1024 * 1024 ))
+  (( avail_kb >= needed_kb )) \
+    || die "Insufficient free RAM for stress tmpfs:" \
+           "${avail_kb} kB available, ${needed_kb} kB (15 GB) required." \
+           "Free memory before retrying."
+
+  # Unmount any existing mount first — always start from a clean slate.
+  if mountpoint -q "${base_dir}" 2>/dev/null; then
+    log_task "Unmounting existing tmpfs at ${base_dir}..."
+    umount "${base_dir}" \
+      || die "Cannot unmount ${base_dir}; a process may still have it open." \
+             "Check with: lsof +D ${base_dir}"
+  fi
+
+  mkdir -p "${base_dir}"
+
+  # Try with transparent huge pages; fall back if the kernel does not support
+  # huge= as a tmpfs mount option.
+  if mount -t tmpfs \
+       -o "size=20g,nr_inodes=4096,noatime,huge=within_size" \
+       tmpfs "${base_dir}" 2>/dev/null; then
+    log_success "Mounted tmpfs at ${base_dir} (size=20g, huge=within_size)."
+  else
+    mount -t tmpfs -o "size=20g,nr_inodes=4096,noatime" tmpfs "${base_dir}" \
+      || die "Failed to mount tmpfs at ${base_dir}."
+    log_warn "huge=within_size not supported on this kernel; mounted without transparent huge pages."
+    log_success "Mounted tmpfs at ${base_dir} (size=20g)."
+  fi
+
+  chmod 1777 "${base_dir}"
 }
 
 generate_stress_drive_values() {
@@ -317,6 +388,7 @@ create_instance() {
   if [[ "${no_hardware_drives}" == "true" ]]; then
     # Stress-drive mode: generate drive list from --max-drives; no rmcd config needed.
     label_stress_node
+    mount_stress_tmpfs
     generate_stress_drive_values
   else
     generate_tape_values_files

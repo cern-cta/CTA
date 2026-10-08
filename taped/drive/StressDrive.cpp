@@ -121,35 +121,46 @@ void StressDrive::unloadTape() {
 
 void StressDrive::saveTape() const {
   const auto tapePath = m_currentTapeDir / "tape.bin";
-  std::ofstream f(tapePath, std::ios::binary | std::ios::trunc);
-  if (!f) {
-    throw cta::exception::Exception(
-      "StressDrive::saveTape: cannot open " + tapePath.string() + " for writing");
-  }
+  const auto tmpPath  = m_currentTapeDir / "tape.bin.tmp";
 
-  const auto write32 = [&](uint32_t v) {
-    f.write(reinterpret_cast<const char*>(&v), sizeof(v));
-  };
-  const auto write64 = [&](uint64_t v) {
-    f.write(reinterpret_cast<const char*>(&v), sizeof(v));
-  };
-
-  write32(k_magic);
-  write32(k_version);
-
-  for (const auto& block : m_tape) {
-    const uint64_t sz = block.data.size();
-    write64(sz);
-    if (sz > 0) {
-      f.write(block.data.data(), static_cast<std::streamsize>(sz));
+  // Write to a temp file first so that a failed write (e.g. /dev/shm full)
+  // never corrupts the existing tape.bin.  rename() is atomic on Linux when
+  // source and destination are on the same filesystem.
+  {
+    std::ofstream f(tmpPath, std::ios::binary | std::ios::trunc);
+    if (!f) {
+      throw cta::exception::Exception(
+        "StressDrive::saveTape: cannot open " + tmpPath.string() + " for writing");
     }
-    write64(block.remainingSpaceAfter);
+
+    const auto write32 = [&](uint32_t v) {
+      f.write(reinterpret_cast<const char*>(&v), sizeof(v));
+    };
+    const auto write64 = [&](uint64_t v) {
+      f.write(reinterpret_cast<const char*>(&v), sizeof(v));
+    };
+
+    write32(k_magic);
+    write32(k_version);
+
+    for (const auto& block : m_tape) {
+      const uint64_t sz = block.data.size();
+      write64(sz);
+      if (sz > 0) {
+        f.write(block.data.data(), static_cast<std::streamsize>(sz));
+      }
+      write64(block.remainingSpaceAfter);
+    }
+
+    if (!f) {
+      std::filesystem::remove(tmpPath);
+      throw cta::exception::Exception(
+        "StressDrive::saveTape: I/O error writing " + tmpPath.string() +
+        " (disk full? check /dev/shm space)");
+    }
   }
 
-  if (!f) {
-    throw cta::exception::Exception(
-      "StressDrive::saveTape: I/O error writing " + tapePath.string());
-  }
+  std::filesystem::rename(tmpPath, tapePath);
 }
 
 void StressDrive::loadTape(const std::filesystem::path& tapeDir) {
