@@ -309,7 +309,7 @@ build_rust_sbom() {
   log_task "Building Rust CycloneDX BOMs..."
   cargo cyclonedx --format json
 
-  cp "lib/rust/**/*.cdx.json" "tools/cta-restore-files/*.cdx.json" "$dest_dir"/
+  cp lib/rust/*/*.cdx.json tools/*/*.cdx.json "$dest_dir"/
   log_success "Rust BOMs copied to ${dest_dir}"
 }
 
