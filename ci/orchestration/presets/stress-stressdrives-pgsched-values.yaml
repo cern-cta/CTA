@@ -32,20 +32,34 @@ taped:
       # Activate the virtual-drive code path.
       stressMode: true
       stressBaseDir: "/dev/shm/cta-stress"
-      # Set to a non-zero value to simulate realistic mount latency (ms).
-      stressMountDelayMs: 0
+      # Simulates realistic tape-load latency (2 s).
+      stressMountDelayMs: 2000
 
       # Performance tuning inherited from the standard stress preset; override
       # here if the stress-drive workload needs different values.
       bufferCount: 10000
       logMask: "WARNING"
       schedulerNumberOfConnections: 3
-      # Fetch 100k files per advisory-lock trip.  StressDrive processes files at
-      # memory speed so the default 4k-file batch causes constant lock churn that
-      # throttles frontend queueing.  A larger batch amortises lock overhead across
-      # more work.
-      archiveFetchBytesFiles: "80000000000 100000"
-      retrieveFetchBytesFiles: "80000000000 100000"
+
+      # Fetch up to 100k files per advisory-lock trip.  StressDrive processes
+      # files at memory speed so the default 4k-file batch causes constant lock
+      # churn during the initial burst; a larger batch amortises lock overhead.
+      archiveFetchBytesFiles: "80000000000, 100000"
+      retrieveFetchBytesFiles: "80000000000, 100000"
+
+      # Disable underfill-driven dismounting for stress tests.
+      #
+      # In production, ArchiveDismountPolicy frees a drive whose queue is
+      # persistently below the fill threshold — a sign the tape pool is
+      # over-provisioned for the current load.  In stress tests the bottleneck
+      # is the frontend queueing rate (~200 Hz), not the drive (8 kHz), so
+      # drives will always appear "underfilled" once the initial burst drains.
+      # Setting startThreshold=0 keeps drives mounted and processing the
+      # continuous trickle without cycling through unnecessary dismounts.
+      # Normal end-of-session (empty queue + lastCall) is unaffected.
+      #
+      # Format: "watchPeriodSecs, minSamples, startThreshold%, recoveryThreshold%"
+      archiveDismountPolicy: "0, 0, 0, 0"
 
   # Node affinity: all stress-drive pods MUST land on the same Kubernetes node.
   #
