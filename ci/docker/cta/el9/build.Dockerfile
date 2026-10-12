@@ -10,7 +10,7 @@ ARG SCCACHE_VERSION="=0.12.0"
 
 RUN dnf install -y epel-release almalinux-release-devel git python3-dnf-plugin-versionlock && \
     dnf install -y gcc gcc-c++ cmake3 rpm-build dnf-utils make ninja-build \
-        ccache systemd-devel clang-tools-extra libasan corrosion && \
+        systemd-devel clang-tools-extra libasan corrosion && \
     dnf clean all --enablerepo=\*
 
 # Install rustup and nightly toolchain

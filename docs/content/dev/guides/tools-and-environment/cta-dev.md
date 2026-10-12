@@ -96,9 +96,15 @@ The default build uses the objectstore scheduler and disables Oracle catalogue s
 | `--enable-unit-tests` | Run unit tests during the package build. |
 | `--cmake-build-type Debug` | Select a debug build. |
 | `--enable-address-sanitizer` | Build with AddressSanitizer. |
-| `--disable-ccache` | Bypass the compilation cache. |
+| `--disable-sccache` | Bypass the compilation cache. |
 
 Keep platform, scheduler, Oracle support, and version choices consistent between stages. Unit-test, CMake, sanitizer, and cache options apply to `build` and combined commands such as `up` and `all`. Run `cta-dev <command> --help` for the complete option list.
+
+Compiler caching now uses sccache for C, C++, and Rust.
+Use `--disable-sccache` to disable it in `cta-dev`, `--enable-sccache` to enable it in `build_packages.sh`, or `-DENABLE_SCCACHE=ON` for direct CMake builds.
+The previous cache option names are no longer accepted.
+Run `cta-dev build --reset` to recreate an existing development build container with an image that includes sccache.
+CI must also rebuild its build image before running the migrated jobs.
 
 `cta-dev` automatically selects package repositories, using CERN internal repositories when configured and reachable and public repositories otherwise. Use `--use-public-repos` to override this selection.
 

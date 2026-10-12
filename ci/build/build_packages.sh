@@ -35,7 +35,7 @@ usage() {
   echo "      --install-source-packages           Install dependencies from --source-package-dir."
   echo "      --skip-dependency-install           With all, do not install source-package dependencies."
   echo "      --enable-internal-repos             Enable internal package repositories."
-  echo "      --enable-ccache                     Enable ccache."
+  echo "      --enable-sccache                    Enable sccache."
   echo "      --enable-address-sanitizer          Enable AddressSanitizer."
   echo "      --skip-debug-packages               Do not build native debug packages."
   echo "      --skip-test-packages                Compile tests but do not package them."
@@ -79,7 +79,7 @@ extra_telemetry=false
 install_source_packages=false
 skip_dependency_install=false
 use_internal_repos=false
-enable_ccache=false
+enable_sccache=false
 enable_address_sanitizer=false
 skip_test_packages=false
 skip_debug_packages=false
@@ -122,7 +122,7 @@ while [[ $# -gt 0 ]]; do
     --install-source-packages) install_source_packages=true; shift ;;
     --skip-dependency-install) skip_dependency_install=true; shift ;;
     --enable-internal-repos) use_internal_repos=true; shift ;;
-    --enable-ccache) enable_ccache=true; shift ;;
+    --enable-sccache) enable_sccache=true; shift ;;
     --enable-address-sanitizer) enable_address_sanitizer=true; shift ;;
     --skip-test-packages) skip_test_packages=true; shift ;;
     --skip-debug-packages) skip_debug_packages=true; shift ;;
@@ -239,7 +239,7 @@ configure_build() {
   if [[ "$package_mode" == "binary" ]]; then
     cmake_options+=(
       -D "CTA_SHOW_CONFIGURATION_SUMMARY:BOOL=OFF"
-      -D "ENABLE_CCACHE:BOOL=$(cmake_bool "$enable_ccache")"
+      -D "ENABLE_SCCACHE:BOOL=$(cmake_bool "$enable_sccache")"
       -D "ENABLE_ADDRESS_SANITIZER:BOOL=$(cmake_bool "$enable_address_sanitizer")"
     )
   fi

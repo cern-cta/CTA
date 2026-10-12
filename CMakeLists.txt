@@ -25,7 +25,7 @@ set(CTA_USE_EXTRA_TELEMETRY FALSE CACHE BOOL
   "Build with telemetry instrumentation for postgres performance measurements")
 option(CTA_WITH_ORACLE "Build with Oracle catalogue support" ON)
 option(ENABLE_ADDRESS_SANITIZER "Build with AddressSanitizer" OFF)
-option(ENABLE_CCACHE "Use ccache for compilation" OFF)
+option(ENABLE_SCCACHE "Use sccache for compilation" OFF)
 option(CTA_ENABLE_TEST_STDOUT_LOGGING "Enable stdout logging in tests" OFF)
 option(CTA_SHOW_CONFIGURATION_SUMMARY "Show the configuration summary" ON)
 set(CTA_PACKAGE_MODE "binary" CACHE STRING
@@ -104,10 +104,17 @@ endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-if(ENABLE_CCACHE)
-  find_program(CTA_CCACHE_EXECUTABLE NAMES ccache REQUIRED)
-  set(CMAKE_C_COMPILER_LAUNCHER "${CTA_CCACHE_EXECUTABLE}")
-  set(CMAKE_CXX_COMPILER_LAUNCHER "${CTA_CCACHE_EXECUTABLE}")
+if(ENABLE_SCCACHE)
+  find_program(CTA_SCCACHE_EXECUTABLE NAMES sccache REQUIRED)
+  set(CMAKE_C_COMPILER_LAUNCHER "${CTA_SCCACHE_EXECUTABLE}")
+  set(CMAKE_CXX_COMPILER_LAUNCHER "${CTA_SCCACHE_EXECUTABLE}")
+elseif(CTA_SCCACHE_EXECUTABLE)
+  # Clear only CTA's launcher when reconfiguring an existing build without caching.
+  foreach(language C CXX)
+    if(CMAKE_${language}_COMPILER_LAUNCHER STREQUAL CTA_SCCACHE_EXECUTABLE)
+      set(CMAKE_${language}_COMPILER_LAUNCHER "")
+    endif()
+  endforeach()
 endif()
 
 add_compile_options(
@@ -206,7 +213,18 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "source")
   add_subdirectory(tests)
 
   # Rust crates
-  corrosion_import_crate(MANIFEST_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Cargo.toml" LOCKED)
+  corrosion_import_crate(MANIFEST_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Cargo.toml" LOCKED
+    IMPORTED_CRATES CTA_RUST_CRATES)
+
+  # Apply the same cache policy to Rust builds and tests, including local builds.
+  set(CTA_RUST_BUILD_ENV "RUSTC_WRAPPER=" "RUSTC_WORKSPACE_WRAPPER=")
+  if(ENABLE_SCCACHE)
+    set(CTA_RUST_BUILD_ENV
+      "RUSTC_WRAPPER=${CTA_SCCACHE_EXECUTABLE}" "RUSTC_WORKSPACE_WRAPPER=" "CARGO_INCREMENTAL=0")
+  endif()
+  foreach(crate IN LISTS CTA_RUST_CRATES)
+    corrosion_set_env_vars(${crate} ${CTA_RUST_BUILD_ENV})
+  endforeach()
 
   # Rust-based tools
   set(CTA_RUST_TOOLS cta-eos-restore-files)
@@ -217,7 +235,7 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "source")
 
   # Corrosion can't handle tests
   add_custom_target(cta-rust-tests
-    COMMAND ${CMAKE_COMMAND} -E env
+    COMMAND ${CMAKE_COMMAND} -E env ${CTA_RUST_BUILD_ENV}
       cargo test --locked --workspace
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     COMMENT "Running Rust unit tests with cargo"
@@ -310,7 +328,7 @@ if(CTA_SHOW_CONFIGURATION_SUMMARY)
   message(STATUS "JOBS_COUNT: ${JOBS_COUNT}")
   message(STATUS "CTA_CONFIGURATION_MODE: ${CTA_CONFIGURATION_MODE}")
   message(STATUS "ENABLE_ADDRESS_SANITIZER: ${ENABLE_ADDRESS_SANITIZER}")
-  message(STATUS "ENABLE_CCACHE: ${ENABLE_CCACHE}")
+  message(STATUS "ENABLE_SCCACHE: ${ENABLE_SCCACHE}")
   message(STATUS "")
   message(STATUS "Features")
   message(STATUS "CTA_USE_PGSCHED: ${CTA_USE_PGSCHED}")

@@ -14,8 +14,16 @@ RUN mkdir -p shared;
 RUN set -ex; \
     dnf -y update; \
     dnf -y install epel-release almalinux-release-devel; \
-    dnf -y install git vim rsync cmake3 dnf-utils ccache openssh-server; \
+    dnf -y install git vim rsync cmake3 dnf-utils openssh-server; \
     dnf -y group install "Development Tools";
+
+# Use the portable release binary without requiring Rust in the development image.
+ARG SCCACHE_VERSION=0.12.0
+RUN curl -fsSL "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VERSION}/sccache-v${SCCACHE_VERSION}-$(uname -m)-unknown-linux-musl.tar.gz" \
+      -o /tmp/sccache.tar.gz && \
+    tar -xzf /tmp/sccache.tar.gz -C /tmp && \
+    install -m 0755 /tmp/sccache-v${SCCACHE_VERSION}-$(uname -m)-unknown-linux-musl/sccache /usr/local/bin/sccache && \
+    rm -rf /tmp/sccache.tar.gz /tmp/sccache-v${SCCACHE_VERSION}-$(uname -m)-unknown-linux-musl
 
 RUN set -ex; \
     git clone https://gitlab.cern.ch/dss/eos.git eos; \

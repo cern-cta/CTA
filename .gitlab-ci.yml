@@ -208,7 +208,7 @@ variables:
   ENABLE_SBOM_GENERATION: "$[[ inputs.enable-sbom-generation ]]"
   SCHEDULER_TYPE: "$[[ inputs.scheduler-type ]]"
   ENABLE_ORACLE_SUPPORT: "$[[ inputs.enable-oracle-support ]]"
-  ENABLE_CCACHE: "false"
+  ENABLE_SCCACHE: "false"
   BUILD_CACHE_POLICY: "pull"
 
   # Registry publishing configuration and credentials
@@ -305,7 +305,7 @@ workflow:
         paths:
           - '**/*'
       variables:
-        ENABLE_CCACHE: "true"
+        ENABLE_SCCACHE: "true"
         BUILD_CACHE_POLICY: "pull-push"
         CACHE_BRANCH: '$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME'
         GTEST_OUTPUT: "xml:$GTEST_REPORT_FILE"
@@ -314,7 +314,7 @@ workflow:
       auto_cancel:
         on_new_commit: none
       variables:
-        ENABLE_CCACHE: "true"
+        ENABLE_SCCACHE: "true"
         BUILD_CACHE_POLICY: "push"  # Ensure clean build and we only rebuild the cache for push events to prevent other pipeline types from screwing with it
         CACHE_BRANCH: '$CI_COMMIT_BRANCH'
         ENABLE_SBOM_GENERATION: "true"
