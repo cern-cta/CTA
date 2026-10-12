@@ -76,6 +76,7 @@ build-cta-rpms:
     DNF_CACHE_DIR: "$CI_PROJECT_DIR/.dnf_cache"
     # Keep downloaded Rust dependencies inside the cacheable project directory.
     CARGO_HOME: "$CI_PROJECT_DIR/.cargo"
+    CTA_RUST_CACHE_DIR: "$CI_PROJECT_DIR/.rust-cache"
     # Will only be used if ccache is enabled
     CCACHE_BASEDIR: "/builds/cta"
     CCACHE_NOHASHDIR: "true"
@@ -163,7 +164,7 @@ build-cta-rpms:
         - .cargo/registry/cache/
         - .cargo/git/db/
         # Compiled dependencies and Rust artifacts produced through Corrosion.
-        - build/$[[ inputs.platform ]]/cargo/build/
+        - .rust-cache/
 
 # These build jobs are not (and ideally should not) be used further down the pipeline; just compilation checks
 # All builds below disable ccache as they are not on the critical path and may pollute it.
