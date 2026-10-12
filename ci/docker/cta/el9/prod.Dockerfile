@@ -17,6 +17,18 @@
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest AS cern-ca
 
 # =========================================================================
+# GRPC HEALTH PROBE
+# =========================================================================
+# hadolint ignore=DL3007
+FROM docker.io/almalinux/9-minimal:latest AS grpc-health-probe
+
+# Download once for frontend readiness checks and tools-image diagnostics.
+RUN curl -fL \
+    https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.59/grpc_health_probe-linux-amd64 \
+    -o /grpc-health-probe && \
+    chmod 0755 /grpc-health-probe
+
+# =========================================================================
 # 1. REPO BUILDER
 # Used to feed the RPMs to the other stages
 # =========================================================================
@@ -150,6 +162,8 @@ CMD ["/usr/bin/cta-maintd", "--config-strict", "--config", "/etc/cta/cta-maintd.
 # Once we split the RPMs, we should explicitly build the workflow-api and admin-api images here
 FROM base AS cta-frontend
 
+COPY --from=grpc-health-probe /grpc-health-probe /usr/local/bin/grpc-health-probe
+
 ARG ENABLE_INTERNAL_REPOS
 ARG ENABLE_ORACLE_SUPPORT
 
@@ -166,6 +180,8 @@ CMD ["/usr/bin/cta-frontend-grpc"]
 #  TOOLS cta-tools
 # =========================================================================
 FROM base AS cta-tools
+
+COPY --from=grpc-health-probe /grpc-health-probe /usr/local/bin/grpc-health-probe
 
 ARG ENABLE_INTERNAL_REPOS
 ARG ENABLE_ORACLE_SUPPORT
