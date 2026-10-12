@@ -136,7 +136,6 @@ build-cta-rpms:
                                       --skip-unit-tests
                                       ${BUILD_OPTIONS}
   after_script:
-    - sccache --show-stats
     - sccache --stop-server
     - if [[ "$ENABLE_CCACHE" == "true" ]]; then ccache --show-stats --verbose; fi
   artifacts:
