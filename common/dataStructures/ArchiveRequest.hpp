@@ -43,17 +43,45 @@ struct ArchiveRequest {
 
 };  // struct ArchiveRequest
 
+/**
+ * One archive request in flight through the opportunistic batching pipeline.
+ *
+ * Lifecycle: a caller thread constructs the item, resolves the catalogue criteria
+ * (stage 1) on its own thread, then hands it to OpportunisticQueueBatcher via
+ * enqueueAndWait().  The leader thread collects a batch and calls
+ * FrontendBatchingLayer::resolveArchiveBatch() (stage 2), which performs a single
+ * bulk DB insert and settles every promise.  The caller thread wakes up, reads the
+ * result from the future, and returns.
+ */
 struct ArchiveInsertQueueItem {
+  /** CTA archive file ID, allocated by the catalogue before this item is created. */
   uint64_t archiveFileId;
+
+  /** Disk-system instance name (e.g. EOS instance) the file originates from. */
   std::string instanceName;
+
+  /** Full set of file-level metadata supplied by the client (storage class, checksums,
+   *  source URL, report URLs, requester identity, …). */
   cta::common::dataStructures::ArchiveRequest request;
+
+  /** Map from tape-copy number to tape-pool name, resolved from the catalogue in
+   *  stage 1.  Each entry produces one scheduler-DB archive job row in stage 2.
+   *  Size == number of tape copies required by the storage class. */
   std::map<uint32_t, std::string> copyToPoolMap;
+
+  /** Mount policy resolved from the catalogue in stage 1; governs scheduling
+   *  priority and age-based mount triggers for this request. */
   common::dataStructures::MountPolicy mountPolicy;
 
+  /** Settled by the leader thread in stage 2 with the request's scheduler-DB
+   *  address on success, or with an exception on failure.  The caller thread
+   *  blocks on the corresponding future until the batch is committed. */
   std::promise<std::string> promise;
-  // Set once promise is resolved with set_value(); left false on set_exception(). copyToPoolMap
-  // alone can't tell success from failure here, since a failure after stage 1 (queueing itself
-  // failed, not the criteria lookup) still has it populated.
+
+  /** True once promise.set_value() has been called (i.e. the DB insert succeeded).
+   *  Left false when promise.set_exception() is used instead.  copyToPoolMap alone
+   *  cannot distinguish the two states: a stage-2 failure still has it populated
+   *  from the earlier stage-1 lookup. */
   bool queued = false;
 };
 
