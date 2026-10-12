@@ -52,14 +52,15 @@ public:
     bool driveOpenFailed = false;
     bool configurationResetFailed = false;
     bool ejectFailed = false;
+    bool unexpectedFailure = false;  ///< Cleanup threw before returning a result.
     std::string errorMessage;
 
     /// @brief Check whether the recorded cleanup failures permit drive reuse.
     ///
     /// An already-empty drive needs no eject operation and does not set ejectFailed.
     ///
-    /// @return True if no drive-open, configuration-reset or eject failure is set.
-    bool driveReusable() const { return !driveOpenFailed && !configurationResetFailed && !ejectFailed; }
+    /// @return True if no cleanup failure is set.
+    bool driveReusable() const { return !driveOpenFailed && !configurationResetFailed && !ejectFailed && !unexpectedFailure; }
   };
 
   /// @brief Open a drive and delegate cleanup to the borrowed-drive overload.

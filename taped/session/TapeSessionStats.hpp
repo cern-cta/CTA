@@ -11,30 +11,31 @@ namespace cta::tape::daemon {
 
 /// Statistics for transferring data to or from tape.
 struct TapeTransferStats {
-  /// Accumulated positioning time, in seconds.
+  /// Accumulated tape positioning time during transfer, in seconds.
   double positionTime = 0;
 
-  /// Accumulated time spent computing checksums
+  /// Accumulated time spent computing checksums, in seconds.
   double checksumingTime = 0;
 
-  /// Accumulated time spent reading and writing data with the drive (for both data and headers).
+  /// Accumulated drive read/write time for payload and headers, in seconds.
   double readWriteTime = 0;
 
-  /// Accumulated time spent flushing
+  /// Accumulated time spent flushing tape writes, in seconds.
   double flushTime = 0;
 
-  /// Accumulated time spent waiting for data blocks.
+  /// Accumulated time spent waiting for data blocks, in seconds.
   double waitDataTime = 0;
 
-  /// Accumulated time spent waiting for free memory.
+  /// Accumulated time spent waiting for free memory, in seconds.
   double waitFreeMemoryTime = 0;
 
-  /// Accumulated time spent by the tape thread waiting for a task.
+  /// Accumulated time spent by the tape thread waiting for a task, in seconds.
   double waitInstructionsTime = 0;
 
   /// @brief Return transfer duration in seconds, including the supplied reporting wait.
   ///
   /// Excludes loading, tape positioning and cleanup.
+  /// @param waitReportingTime Accumulated reporting wait time, in seconds.
   double transferTime(double waitReportingTime) const {
     return checksumingTime + readWriteTime + flushTime + waitDataTime + waitFreeMemoryTime + waitInstructionsTime
            + waitReportingTime;
@@ -43,31 +44,33 @@ struct TapeTransferStats {
   /// Accumulated data volume (actual payload), in bytes.
   uint64_t dataVolume = 0;
 
-  /// Accumulated space used by file headers.
+  /// Accumulated file header and trailer volume, in bytes.
   uint64_t headerVolume = 0;
 
-  /// Count of files actually transferred in the session.
+  /// Number of files actually transferred in the session, in files.
   uint64_t filesCount = 0;
 
-  /// Count of files coming from repack retrieve request transferred in the session.
+  /// Number of files transferred for repack retrieve requests, in files.
   uint64_t repackFilesCount = 0;
 
-  /// Count of files coming from user retrieve request transferred in the session.
+  /// Number of files transferred for user retrieve requests, in files.
   uint64_t userFilesCount = 0;
 
-  /// Count of files coming from verify-only retrieve requests in the session.
+  /// Number of files processed for verify-only retrieve requests, in files.
   uint64_t verifiedFilesCount = 0;
 
-  /// Count of bytes coming from repack retrieve request transferred in the session.
+  /// Payload transferred for repack retrieve requests, in bytes.
   uint64_t repackBytesCount = 0;
 
-  /// Count of bytes coming from user retrieve request transferred in the session.
+  /// Payload transferred for user retrieve requests, in bytes.
   uint64_t userBytesCount = 0;
 
-  /// Count of bytes coming from verify-only retrieve requests in the session.
+  /// Payload processed for verify-only retrieve requests, in bytes.
   uint64_t verifiedBytesCount = 0;
 
+  /// File header volume: three 80-byte records, in bytes per file.
   static const uint64_t headerVolumePerFile = 3 * 80;
+  /// File trailer volume: three 80-byte records, in bytes per file.
   static const uint64_t trailerVolumePerFile = 3 * 80;
 
   /// Accumulate all transfer counters and durations from another statistics block.
@@ -95,6 +98,7 @@ struct TapeTransferStats {
 struct DiskTransferStats {
   /// Wall-clock delivery duration in seconds; not summed across workers.
   double deliveryTime = 0;
+  /// Accumulated reporting wait time across contributing workers, in seconds.
   double waitReportingTime = 0;
 
   /// Accumulate reporting wait time, leaving wall-clock delivery time unchanged.
@@ -105,6 +109,7 @@ struct DiskTransferStats {
 };
 
 /// Statistics for restoring the drive and returning the cartridge to the library.
+/// Durations accumulate across attempts; individual operations overlap the total cleanup time.
 struct TapeCleanupStats {
   /// Unload time, in seconds.
   double unloadTime = 0;
@@ -144,6 +149,7 @@ struct TapeCleanupStats {
 };
 
 /// Statistics for loading and preparing a tape for transfer.
+/// Durations accumulate across contributions; component timings may overlap the mounting interval.
 struct TapeSetupStats {
   /// Elapsed mounting interval, including loading and initial drive checks, in seconds.
   double mountTime = 0;
@@ -172,9 +178,13 @@ struct TapeSetupStats {
 
 /// Independent components of one tape session, captured together by the tracker.
 struct TapeSessionStats {
+  /// Mounting and preparation durations, in seconds.
   TapeSetupStats setup;
+  /// Tape transfer durations (seconds), volumes (bytes) and file counts.
   TapeTransferStats tape;
+  /// Disk delivery and reporting wait durations, in seconds.
   DiskTransferStats disk;
+  /// Drive cleanup durations, in seconds, accumulated across cleanup attempts.
   TapeCleanupStats cleanup;
 
   /// Reported tape-worker elapsed time in seconds; disk delivery may finish later.

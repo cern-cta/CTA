@@ -11,7 +11,7 @@ namespace cta::tape::session {
 
 std::string toString(TapeSessionState state) {
   switch (state) {
-    case TapeSessionState::Preparing:
+    case TapeSessionState::Preparing: // TODO: rename Preparing to Starting for drive state consistency?
       return "Preparing";
     case TapeSessionState::Mounting:
       return "Mounting";

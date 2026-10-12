@@ -5,6 +5,7 @@
 
 #include "MountedTape.hpp"
 
+#include "common/exception/Exception.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/utils/Timer.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
@@ -22,14 +23,14 @@ MountedTape::MountedTape(mediachanger::MediaChangerFacade& mediaChanger,
                          drive::DriveInterface& drive,
                          catalogue::Catalogue& catalogue,
                          uint32_t tapeLoadTimeout,
-                         Outcome& outcome,
+                         std::optional<DriveCleaner::CleanupResult>& cleanupResult,
                          log::LogContext& lc,
                          TapeSessionTracker& tracker)
     : m_cleaner(mediaChanger, lc.logger(), drive.info, volume.vid, true, tapeLoadTimeout, catalogue, tracker),
       m_drive(drive),
-      m_outcome(outcome),
+      m_cleanupResult(cleanupResult),
       m_lc(lc) {
-  m_outcome = Outcome {};
+  m_cleanupResult.reset();
   const bool readOnly = volume.mountType == common::dataStructures::MountType::Retrieve;
   const auto slot = mediachanger::LibrarySlotParser::parse(drive.info.rawLibrarySlot);
   try {
@@ -86,38 +87,32 @@ MountedTape::~MountedTape() noexcept {
   cleanup();
 }
 
-const MountedTape::Outcome& MountedTape::cleanup() noexcept {
+const DriveCleaner::CleanupResult& MountedTape::cleanup() noexcept {
   if (m_finished) {
-    return m_outcome;
+    return *m_cleanupResult;
   }
   m_finished = true;
+  m_cleanupResult.emplace();
 
   try {
-    m_outcome.result = m_cleaner.cleanDrive(m_drive);
+    *m_cleanupResult = m_cleaner.cleanDrive(m_drive);
   } catch (...) {
-    m_outcome.exception = std::current_exception();
+    m_cleanupResult->unexpectedFailure = true;
+    try {
+      m_cleanupResult->errorMessage = cta::exception::currentExceptionMessage();
+    } catch (...) {}
   }
-  if (m_outcome.driveReusable()) {
-    return m_outcome;
+  if (m_cleanupResult->driveReusable()) {
+    return *m_cleanupResult;
   }
 
   // Logging must not interrupt stack unwinding.
   try {
     log::ScopedParamContainer params(m_lc);
-    if (m_outcome.exception) {
-      try {
-        std::rethrow_exception(m_outcome.exception);
-      } catch (const std::exception& ex) {
-        params.add("exceptionMessage", ex.what());
-      } catch (...) {
-        params.add("exceptionMessage", "Non-standard exception");
-      }
-    } else {
-      params.add("errorMessage", m_outcome.result->errorMessage);
-    }
+    params.add("errorMessage", m_cleanupResult->errorMessage);
     m_lc.log(log::ERR, "Mounted tape cleanup failed");
   } catch (...) {}
-  return m_outcome;
+  return *m_cleanupResult;
 }
 
 }  // namespace cta::tape::daemon

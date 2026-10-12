@@ -13,6 +13,7 @@
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <exception>
 #include <stdexcept>
 
 #ifdef CTA_PGSCHED
@@ -125,12 +126,11 @@ protected:
   bool stopRequested() { return daemon->m_stopSource.stop_requested(); }
 
   int shutdown() {
-    return daemon->shutdown(TapeDaemon::ExitCause::Normal, TapeDaemon::DownPublication::DesiredAndReported);
+    return daemon->shutdown(TapeDaemon::ExitCause::Normal, true);
   }
 
   void expectRunStartup() {
     EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
-    EXPECT_CALL(*scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
     EXPECT_CALL(*scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _));
     EXPECT_CALL(*scheduler, reportSchedulerBackendName("drive", _));
   }
@@ -206,7 +206,8 @@ TEST_F(TapeDaemonTest, StartupAutoUpOnlyAcceptsEligibleDownReasons) {
       state.comment = "Operator comment";
       const bool eligible = !reason || reason->empty() || isCleanDriveShutdownReason(*reason);
       EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
-      EXPECT_CALL(*scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(state));
+      previousDrive->reasonUpDown = state.reason;
+      previousDrive->userComment = state.comment;
       EXPECT_CALL(*scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _))
         .WillOnce(
           Invoke([&](const auto&, const DesiredDriveState& desired, const auto&, const auto&, const auto&, auto&) {
@@ -228,8 +229,6 @@ TEST_F(TapeDaemonTest, NewDriveUsesStartupAutoUp) {
   for (const bool autoUp : {false, true}) {
     config.drive.startup.auto_up = autoUp;
     EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
-    EXPECT_CALL(*scheduler, getDesiredDriveState("drive", _))
-      .WillOnce(Throw(TapeDrivesCatalogueState::NoSuchDrive("missing")));
     EXPECT_CALL(*scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _))
       .WillOnce(
         Invoke([&](const auto&, const DesiredDriveState& desired, const auto&, const auto&, const auto&, auto&) {
@@ -253,7 +252,8 @@ TEST_F(TapeDaemonTest, RegistrationPreservesOperatorReasonAndComment) {
   state.reason = "Operator intervention";
   state.comment = "Inspect drive";
   EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
-  EXPECT_CALL(*scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(state));
+  previousDrive->reasonUpDown = state.reason;
+  previousDrive->userComment = state.comment;
   EXPECT_CALL(*scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _))
     .WillOnce(Invoke([&](const auto&, const DesiredDriveState& desired, const auto&, const auto&, const auto&, auto&) {
       EXPECT_FALSE(desired.up);
@@ -264,18 +264,18 @@ TEST_F(TapeDaemonTest, RegistrationPreservesOperatorReasonAndComment) {
   EXPECT_TRUE(registerDrive());
 }
 
-TEST_F(TapeDaemonTest, RegistrationPreservesNewUpRequestAndPublishesReadinessLast) {
+TEST_F(TapeDaemonTest, RegistrationPublishesReadinessLast) {
   DesiredDriveState state;
-  state.up = true;
-  state.reason = "Setting drive up";
+  state.reason = "Maintenance";
   state.comment = "Operator comment";
   EXPECT_FALSE(daemon->isReady());
   EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
-  EXPECT_CALL(*scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(state));
+  previousDrive->reasonUpDown = state.reason;
+  previousDrive->userComment = state.comment;
   EXPECT_CALL(*scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _))
     .WillOnce(Invoke([&](const auto&, const DesiredDriveState& desired, const auto&, const auto&, const auto&, auto&) {
       EXPECT_FALSE(daemon->isReady());
-      EXPECT_TRUE(desired.up);
+      EXPECT_FALSE(desired.up);
       EXPECT_EQ(state.reason, desired.reason);
       EXPECT_EQ(state.comment, desired.comment);
     }));
@@ -296,7 +296,8 @@ TEST_F(TapeDaemonTest, RegistrationReplacesAbsentAndCleanShutdownReasonsWithStar
 
     // Capture the state published to the catalogue during registration.
     EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
-    EXPECT_CALL(*scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(state));
+    previousDrive->reasonUpDown = state.reason;
+    previousDrive->userComment = state.comment;
     EXPECT_CALL(*scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _))
       .WillOnce(Invoke([](const auto&, const DesiredDriveState& desired, const auto&, const auto&, const auto&, auto&) {
         EXPECT_FALSE(desired.up);
@@ -318,16 +319,23 @@ TEST_F(TapeDaemonTest, MissingDrivePropagatesFromWaitForUp) {
 }
 
 TEST_F(TapeDaemonTest, RegistrationFailureDoesNotPublishShutdown) {
-  EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Throw(std::runtime_error("unavailable")));
-  EXPECT_CALL(driveState(), setDesiredTapeDriveState(_, _)).Times(0);
-  EXPECT_EQ(1, daemon->run());
-  EXPECT_FALSE(daemon->isReady());
-  EXPECT_TRUE(daemon->isLive());
+  for (const auto& failure : {std::make_exception_ptr(exception::Exception("unavailable")),
+                              std::make_exception_ptr(std::runtime_error("unavailable")),
+                              std::make_exception_ptr(42)}) {
+    EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _))
+      .WillOnce(Invoke([&](const auto&, auto&) -> bool { std::rethrow_exception(failure); }));
+    EXPECT_CALL(driveState(), setDesiredTapeDriveState(_, _)).Times(0);
+    EXPECT_CALL(*scheduler, reportDriveStatus(_, _, _, _)).Times(0);
+    EXPECT_EQ(1, daemon->run());
+    EXPECT_FALSE(daemon->isReady());
+    EXPECT_TRUE(daemon->isLive());
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(scheduler.get()));
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&driveState()));
+  }
 }
 
 TEST_F(TapeDaemonTest, BackendPublicationFailureDoesNotEstablishReadiness) {
   EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
-  EXPECT_CALL(*scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(DesiredDriveState {}));
   EXPECT_CALL(*scheduler, createTapeDriveStatus(_, _, _, _, _, _));
   EXPECT_CALL(*scheduler, reportSchedulerBackendName("drive", _)).WillOnce(Throw(std::runtime_error("backend")));
   EXPECT_EQ(1, daemon->run());

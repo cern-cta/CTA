@@ -28,7 +28,9 @@ class TapeMount;
 namespace cta::tape::daemon {
 class SchedulerContext;
 
-/// Manage one drive reservation across preparation, tape sessions and recovery.
+/// Runs one or more tape session with possible idle periods in between.
+/// Hardware may be touched at any point during a drive session.
+/// Putting the drive down will exit the drive session.
 class DriveSession final {
 public:
   /// @brief Create a session using the real system-call wrapper, without accessing hardware.
@@ -45,16 +47,16 @@ public:
                                               SchedulerContext& schedulerContext,
                                               System::virtualWrapper& sysWrapper);
 
-  /// @brief Prepare the drive and schedule tape sessions until stop or reservation release.
+  /// @brief Clean the drive and schedule tape sessions until stop or reservation release.
   ///
-  /// Call once. Active transfers are not interrupted by the stop token.
-  /// Preparation failure or withdrawn up intent ends the session; unexpected failures propagate.
+  /// Call once. 
+  /// Preparation failure or putting the drive Down ends the session; unexpected failures propagate.
   void run(std::stop_token stopToken);
 
-  /// Attempt reservation release and Down publication, logging failures without throwing.
+  /// Attempt reservation release and Down publication.
   ~DriveSession() noexcept;
 
-  /// @brief Return whether the active preparation, recovery or transfer is within its liveness deadline.
+  /// @brief Return whether the active cleaning, recovery or transfer is within its liveness deadline.
   ///
   /// Safe for concurrent health queries; returns true when no tracker is active.
   bool isLive() const;
@@ -83,6 +85,7 @@ private:
                System::virtualWrapper* sysWrapper = nullptr);
 
   /// Scheduling decision after one iteration.
+  /// Could be a boolean, but we don't want to wait after a successful session.
   enum class IterationAction { Continue, RetryAfterDelay, EndOwnership };
 
   /// Scheduling decision with a diagnostic when ending the reservation.

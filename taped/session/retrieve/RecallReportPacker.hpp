@@ -17,7 +17,7 @@
 
 namespace cta::tape::daemon {
 
-class RecallReportPacker : public ReportPackerInterface<detail::Recall> {
+class RecallReportPacker : public ReportPackerInterface {
 public:
   /**
    * Constructor

@@ -27,7 +27,7 @@ namespace cta::tape::daemon {
 MigrationReportPacker::MigrationReportPacker(cta::ArchiveMount* archiveMount,
                                              const cta::log::LogContext& lc,
                                              TapeSessionTracker& tracker)
-    : ReportPackerInterface<detail::Migration>(lc, tracker),
+    : ReportPackerInterface(lc, tracker),
       m_workerThread(*this),
       m_archiveMount(archiveMount) {}
 

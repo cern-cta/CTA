@@ -21,7 +21,7 @@
 namespace cta::tape::daemon {
 class DriveSession;
 
-/// Register one drive, run successive drive sessions and publish shutdown state.
+/// The daemon responsible for running drive sessions.
 class TapeDaemon final {
 public:
   /// @brief Create a daemon with borrowed dependencies that must outlive it.
@@ -32,12 +32,12 @@ public:
              catalogue::Catalogue& catalogue,
              SchedulerContext& schedulerContext);
 
-  /// Request exit and publish desired-down after registration; active sessions and sleeps are not interrupted.
+  /// Request exit and publish desired-down after registration.
   void stop();
 
   /// @brief Register the drive, wait for its library and run successive drive sessions.
   ///
-  /// @return Zero on normal exit, nonzero on startup, iteration or shutdown failure.
+  /// @return Zero on normal exit, nonzero on failures.
   int run();
 
   /// @brief Return the active drive session's liveness, or true while no session is active.
@@ -56,14 +56,12 @@ private:
   /// Reason for ending the daemon run.
   enum class ExitCause { Normal, RegistrationFailure, MissingDrive, UnexpectedFailure };
 
-  /// Drive-state publication permitted during shutdown.
-  enum class DownPublication { None, DesiredAndReported };
-
   /// @brief Log the exit cause and publish the requested Down state without accessing hardware.
   ///
   /// @return Zero for normal shutdown, nonzero for an exit or publication failure.
-  int shutdown(ExitCause cause, DownPublication publication, std::string_view diagnostic = "");
+  int shutdown(ExitCause cause, bool putDriveDown, std::string_view exceptionMsg = "");
 
+  /// @brief  Used to quit the daemon.
   std::stop_source m_stopSource;
 
   /// Ensures the health-server thread can detect readiness.
@@ -75,9 +73,9 @@ private:
 
   catalogue::Catalogue& m_catalogue;
   SchedulerContext& m_schedulerContext;
-  /// Prevents health queries from racing with active-session destruction.
+  /// Prevents health queries from racing with any active drive session destruction.
   mutable std::mutex m_sessionMutex;
-  /// Non-owning; m_sessionMutex protects access while the run thread owns the session.
+  /// Non-owning; m_sessionMutex protects access while the run thread owns the drive session.
   DriveSession* m_activeDriveSession = nullptr;
 
   /// @brief Register a fresh drive or retain an interrupted drive for recovery.

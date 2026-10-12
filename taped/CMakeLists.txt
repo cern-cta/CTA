@@ -32,7 +32,6 @@ target_link_libraries(ctataped
 
 add_library(ctatapedunittests SHARED
   TapeDaemonTest.cpp
-  TapedConfigTest.cpp
   session/DriveSessionTest.cpp
 )
 set_property(TARGET ctatapedunittests PROPERTY SOVERSION "${CTA_SOVERSION}")

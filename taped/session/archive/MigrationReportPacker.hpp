@@ -17,7 +17,7 @@
 
 namespace cta::tape::daemon {
 
-class MigrationReportPacker : public ReportPackerInterface<detail::Migration> {
+class MigrationReportPacker : public ReportPackerInterface {
 public:
   /**
    * @param tracker Session tracker, which must outlive the report worker.

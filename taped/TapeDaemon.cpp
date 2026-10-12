@@ -37,41 +37,38 @@ TapeDaemon::TapeDaemon(const TapedConfig& config,
       m_schedulerContext(schedulerContext) {}
 
 void TapeDaemon::stop() {
-  // Always retain the exit request, even if catalogue publication fails.
-  // Before registration completes, run() is responsible for publishing down on exit.
   if (!m_stopSource.request_stop() || !m_registered.load()) {
     return;
   }
 
-  // The signal-reactor thread must not share the daemon's scoped log parameters.
+  // We are alling this from a different thread. LogContext is not thread-safe, hence the copy.
   log::LogContext lc(m_lc.logger());
   try {
-    // Use the stable catalogue directly; the run thread may be replacing the scheduler.
     TapeDrivesCatalogueState(m_catalogue)
       .requestDriveDown(m_driveInfo.driveName, common::dataStructures::DriveDownReason::Shutdown, lc);
   } catch (const std::exception& ex) {
     log::ScopedParamContainer params(lc);
     const auto* ctaException = dynamic_cast<const exception::Exception*>(&ex);
     params.add(semconv::log::exceptionMessage, ctaException ? ctaException->getMessageValue() : ex.what());
-    lc.log(log::ERR, "Failed to request drive down while stopping. Daemon exit is still requested.");
+    lc.log(log::ERR, "Failed to request drive down while stopping.");
   } catch (...) {
-    lc.log(log::ERR, "Unknown failure requesting drive down while stopping. Daemon exit is still requested.");
+    lc.log(log::ERR, "Unknown failure requesting drive down while stopping.");
   }
 }
 
 bool TapeDaemon::isLive() const {
-  // Keep the borrowed session alive throughout delegation, without delaying its destruction onto a health thread.
+  // Lock to ensure we are not accessing the session while it's being destructed.
   std::lock_guard lock(m_sessionMutex);
   return !m_activeDriveSession || m_activeDriveSession->isLive();
 }
 
 bool TapeDaemon::isReady() const {
-  // Taped is considered ready when the drive has been registered in the catalogue
-  // One could argue that the logical library should also exist for it to be ready
+  // Taped is considered ready when the drive has been registered in the catalogue.
+  // One could argue that the logical library should also exist for it to be ready.
   // But that currently presents problems with our system tests, where the
   // logical libraries are only created after the deployment is complete
-  // (which requires all services to be ready)
-  // Potentially something to improve in the future
+  // (which requires all services to be ready).
+  // Potentially something to improve in the future...
   return m_registered.load();
 }
 
@@ -80,21 +77,22 @@ int TapeDaemon::run() {
   try {
     if (!registerDrive()) {
       return shutdown(ExitCause::RegistrationFailure,
-                      DownPublication::None,
+                      false,
                       "Drive name belongs to a different host or logical library");
     }
   } catch (const exception::Exception& ex) {
-    return shutdown(ExitCause::RegistrationFailure, DownPublication::None, ex.getMessageValue());
+    return shutdown(ExitCause::RegistrationFailure, false, ex.getMessageValue());
   } catch (const std::exception& ex) {
-    return shutdown(ExitCause::RegistrationFailure, DownPublication::None, ex.what());
+    return shutdown(ExitCause::RegistrationFailure, false, ex.what());
   } catch (...) {
-    return shutdown(ExitCause::RegistrationFailure, DownPublication::None, "Unknown exception");
+    return shutdown(ExitCause::RegistrationFailure, false, "Unknown exception");
   }
 
   try {
     // An absent logical library can appear later; wait to avoid transient scheduling errors.
     waitForLogicalLibrary();
     while (!m_stopSource.stop_requested()) {
+      // Only spawn drive sessions when we're Up
       waitUntilDriveIsRequestedUp();
       if (m_stopSource.stop_requested()) {
         break;
@@ -109,22 +107,23 @@ int TapeDaemon::run() {
         std::lock_guard lock(m_sessionMutex);
         m_activeDriveSession = session.get();
       }
+      // No need to lock around run.
       session->run(m_stopSource.get_token());
     }
   } catch (const TapeDrivesCatalogueState::NoSuchDrive& ex) {
-    return shutdown(ExitCause::MissingDrive, DownPublication::None, ex.getMessageValue());
+    return shutdown(ExitCause::MissingDrive, false, ex.getMessageValue());
   } catch (const exception::Exception& ex) {
-    return shutdown(ExitCause::UnexpectedFailure, DownPublication::DesiredAndReported, ex.getMessageValue());
+    return shutdown(ExitCause::UnexpectedFailure, true, ex.getMessageValue());
   } catch (const std::exception& ex) {
-    return shutdown(ExitCause::UnexpectedFailure, DownPublication::DesiredAndReported, ex.what());
+    return shutdown(ExitCause::UnexpectedFailure, true, ex.what());
   } catch (...) {
-    return shutdown(ExitCause::UnexpectedFailure, DownPublication::DesiredAndReported, "Unknown exception");
+    return shutdown(ExitCause::UnexpectedFailure, true, "Unknown exception");
   }
 
-  return shutdown(ExitCause::Normal, DownPublication::DesiredAndReported);
+  return shutdown(ExitCause::Normal, true);
 }
 
-int TapeDaemon::shutdown(ExitCause cause, DownPublication publication, std::string_view diagnostic) {
+int TapeDaemon::shutdown(ExitCause cause, bool putDriveDown, std::string_view exceptionMsg) {
   using common::dataStructures::DriveDownReason;
   auto reason = DriveDownReason::Shutdown;
   int exitCode = cause == ExitCause::Normal ? 0 : 1;
@@ -146,15 +145,14 @@ int TapeDaemon::shutdown(ExitCause cause, DownPublication publication, std::stri
       break;
   }
   {
-    // Keep the original diagnostic out of subsequent publication-failure logs.
     log::ScopedParamContainer params(m_lc);
-    if (!diagnostic.empty()) {
-      params.add(semconv::log::exceptionMessage, std::string(diagnostic));
+    if (!exceptionMsg.empty()) {
+      params.add(semconv::log::exceptionMessage, std::string(exceptionMsg));
     }
     m_lc.log(cause == ExitCause::Normal ? log::INFO : log::ERR, message);
   }
 
-  if (publication == DownPublication::None) {
+  if (putDriveDown == false) {
     return exitCode;
   }
 
@@ -165,16 +163,14 @@ int TapeDaemon::shutdown(ExitCause cause, DownPublication publication, std::stri
     m_lc.log(log::ERR, "Failed to request desired Down before daemon exit.");
     exitCode = 1;
   }
-  if (publication == DownPublication::DesiredAndReported) {
-    try {
-      m_schedulerContext.scheduler().reportDriveStatus(m_driveInfo,
-                                                       common::dataStructures::MountType::NoMount,
-                                                       common::dataStructures::DriveStatus::Down,
-                                                       m_lc);
-    } catch (...) {
-      m_lc.log(log::ERR, "Failed to report Down before daemon exit.");
-      exitCode = 1;
-    }
+  try {
+    m_schedulerContext.scheduler().reportDriveStatus(m_driveInfo,
+                                                      common::dataStructures::MountType::NoMount,
+                                                      common::dataStructures::DriveStatus::Down,
+                                                      m_lc);
+  } catch (...) {
+    m_lc.log(log::ERR, "Failed to report Down before daemon exit.");
+    exitCode = 1;
   }
   return exitCode;
 }
@@ -219,6 +215,7 @@ void TapeDaemon::waitUntilDriveIsRequestedUp() {
       return;
     }
 
+    // Prevent too many repeating log messages
     if (!waitingLogged) {
       m_lc.log(log::INFO, "Waiting for the desired drive state to become up.");
       waitingLogged = true;
@@ -241,12 +238,11 @@ bool TapeDaemon::registerDrive() {
     return false;
   }
 
-  // Preserve an interrupted drive entry and its operator intent.
   const auto previous = m_catalogue.DriveState()->getTapeDrive(m_driveInfo.driveName);
-  // Desired Up survives crashes and also represents an operator's pending up request.
+  // A crash may leave the drive in desired Up. This allows it to recover.
   if (previous && previous->desiredUp) {
+    m_lc.log(log::INFO, "Desired Up detected on startup.");
     if (!m_config.drive.startup.recover_existing_up) {
-      // Keep the interrupted entry and its metadata while requiring fresh operator intent.
       TapeDrivesCatalogueState(m_catalogue)
         .requestDriveDown(m_driveInfo.driveName,
                           common::dataStructures::DriveDownReason::StartupRecoveryDisabled,
@@ -256,7 +252,7 @@ bool TapeDaemon::registerDrive() {
                                   common::dataStructures::DriveStatus::Down,
                                   m_lc);
       scheduler.reportSchedulerBackendName(m_driveInfo.driveName, m_lc);
-      m_lc.log(log::INFO, "Startup recovery disabled by drive.startup.recover_existing_up; operator Up required.");
+      m_lc.log(log::INFO, "Startup recovery disabled; operator Up required.");
       m_registered.store(true);
       return true;
     }
@@ -267,32 +263,26 @@ bool TapeDaemon::registerDrive() {
                                 common::dataStructures::DriveStatus::Starting,
                                 m_lc);
     scheduler.reportSchedulerBackendName(m_driveInfo.driveName, m_lc);
-    m_lc.log(log::INFO, "Startup recovery enabled by drive.startup.recover_existing_up; drive preparation required.");
+    m_lc.log(log::INFO, "Startup recovery enabled. Preserving desired Up.");
     m_registered.store(true);
     return true;
   }
 
-  common::dataStructures::DesiredDriveState currentDesiredDriveState;
-  try {
-    currentDesiredDriveState = scheduler.getDesiredDriveState(m_driveInfo.driveName, m_lc);
-  } catch (const TapeDrivesCatalogueState::NoSuchDrive&) {
+  common::dataStructures::DesiredDriveState driveState;
+  if (previous) {
+    driveState.reason = previous->reasonUpDown;
+    driveState.comment = previous->userComment;
+  } else {
     m_lc.log(log::INFO, "Drive has no existing catalogue entry. Creating one.");
   }
 
-  common::dataStructures::DesiredDriveState driveState;
-  driveState.comment = currentDesiredDriveState.comment;
-  // An up request may have arrived since the initial snapshot; preserve that intent too.
-  if (currentDesiredDriveState.up) {
-    driveState = currentDesiredDriveState;
-  } else if (!currentDesiredDriveState.reason || currentDesiredDriveState.reason->empty()
-             || common::dataStructures::isCleanDriveShutdownReason(*currentDesiredDriveState.reason)) {
+  if (!driveState.reason || driveState.reason->empty()
+      || common::dataStructures::isCleanDriveShutdownReason(*driveState.reason)) {
     driveState.reason = common::dataStructures::formatDriveDownReason(common::dataStructures::DriveDownReason::Startup);
     driveState.up = m_config.drive.startup.auto_up;
     m_lc.log(log::INFO,
              driveState.up ? "Automatic Up requested by drive.startup.auto_up; drive preparation required." :
                              "Automatic Up disabled by drive.startup.auto_up; operator Up required.");
-  } else {
-    driveState.reason = currentDesiredDriveState.reason;
   }
 
   common::dataStructures::SecurityIdentity securityIdentity;

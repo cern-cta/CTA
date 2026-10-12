@@ -24,7 +24,7 @@ public:
   /// Create an application without starting a tape daemon.
   TapedApp() = default;
 
-  /// Destroy the daemon and its dependencies before shutting down the Protocol Buffers library.
+  /// Destroy the daemon.
   ~TapedApp();
 
   /// Request exit from a published daemon.

@@ -20,6 +20,7 @@
 namespace cta::tape::daemon {
 
 /// @brief Own a scheduler and backend, or borrow an externally managed scheduler.
+/// Mostly there because the scheduler interface is messy (consists of many different objects).
 ///
 /// The configuration, catalogue and logger must outlive this context.
 class SchedulerContext final {

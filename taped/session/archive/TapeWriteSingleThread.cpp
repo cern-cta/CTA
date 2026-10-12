@@ -75,25 +75,13 @@ cta::tape::daemon::TapeWriteSingleThread::TapeThreadFinalizer::~TapeThreadFinali
     m_mountedTape->cleanup();
   }
 
-  // A failed mount constructor already cleaned and recorded its outcome.
-  // No outcome means the thread failed before attempting a mount.
-  if (m_outcome.result || m_outcome.exception) {
-    m_this.m_driveReusable = m_outcome.driveReusable();
+  // A failed mount constructor already cleaned and recorded its result.
+  // No result means the thread failed before attempting a mount.
+  if (m_cleanupResult) {
+    m_this.m_driveReusable = m_cleanupResult->driveReusable();
     if (!m_this.m_driveReusable) {
       m_this.m_tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedCleanup);
-      if (m_outcome.exception) {
-        try {
-          std::rethrow_exception(m_outcome.exception);
-        } catch (const cta::exception::Exception& ex) {
-          cleanupError = ex.getMessageValue();
-        } catch (const std::exception& ex) {
-          cleanupError = ex.what();
-        } catch (...) {
-          cleanupError = "Unknown exception during drive cleanup";
-        }
-      } else {
-        cleanupError = m_outcome.result->errorMessage;
-      }
+      cleanupError = m_cleanupResult->errorMessage;
     }
   }
 
@@ -310,9 +298,9 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
       m_logContext.log(cta::log::INFO, "Starting tape write thread");
 
       // The cleanup outcome outlives both the finalizer and mounted cartridge.
-      MountedTape::Outcome cleanupOutcome;
+      std::optional<DriveCleaner::CleanupResult> cleanupResult;
       std::optional<MountedTape> mountedTape;
-      TapeThreadFinalizer finalizer(*this, timer, mountedTape, cleanupOutcome);
+      TapeThreadFinalizer finalizer(*this, timer, mountedTape, cleanupResult);
 
       // Before anything, the tape should be mounted
 
@@ -329,7 +317,7 @@ void cta::tape::daemon::TapeWriteSingleThread::run() {
                           m_drive,
                           m_catalogue,
                           m_tapeLoadTimeout,
-                          cleanupOutcome,
+                          cleanupResult,
                           m_logContext,
                           m_tracker);
       m_tracker.reportState(cta::tape::session::TapeSessionState::Loading);

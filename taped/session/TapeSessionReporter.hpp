@@ -19,8 +19,9 @@
 
 namespace cta::tape::daemon {
 
-/// Define catalogue phase mapping and publish tracker statistics and mount metadata.
-/// Phase callbacks publish synchronously on transitions; only statistics reporting is periodic.
+/// Responsible for producing periodically logging stats of the tape session.
+/// Also responsible for the tape session finished message.
+/// Note that the sole responsibility of this class is reporting; not tracking state.
 class TapeSessionReporter : private cta::threading::Thread {
 public:
   /// Map a session phase for synchronous publication; local-only phases return no catalogue status.

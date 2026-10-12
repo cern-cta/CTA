@@ -14,9 +14,10 @@
 namespace cta::tape::daemon {
 
 /// In some cases if we cannot shutdown workers cleanly, we cannot guarantee that they are not
-/// still touched the tape hardware, in which cleaning the drive is unsafe.
+/// still touching the tape hardware, in which cleaning the drive is unsafe.
 /// This function exits without unwinding the stacks (preventing cleaning).
-/// The drive is then correctly and safely cleaned/recovered through its normal startup cleanup.
+/// The drive is then correctly and safely cleaned/recovered through its normal startup cleanup if configured.
+/// Should only happen in very exceptional situations.
 template<typename Operation>
 void runOrExitOnWorkerFailure(log::LogContext& lc, Operation&& operation) noexcept {
   try {

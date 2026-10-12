@@ -9,6 +9,7 @@
 #include "common/dataStructures/DesiredDriveState.hpp"
 #include "common/dataStructures/DriveDownReason.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
+#include "common/exception/Exception.hpp"
 #include "common/process/ProcessCap.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
@@ -47,22 +48,6 @@ private:
   cta::utils::Timer m_timer;
 };
 
-/// @brief Extract a diagnostic from the exception currently being handled.
-///
-/// @pre Called from an active exception handler.
-/// @return CTA or standard exception diagnostic, or a fallback for unknown exceptions.
-std::string currentExceptionMessage() {
-  try {
-    throw;
-  } catch (const cta::exception::Exception& ex) {
-    return ex.getMessageValue();
-  } catch (const std::exception& ex) {
-    return ex.what();
-  } catch (...) {
-    return "Caught an unknown exception";
-  }
-}
-
 }  // namespace
 
 //------------------------------------------------------------------------------
@@ -100,7 +85,7 @@ auto cta::tape::daemon::DriveCleaner::cleanDrive(System::virtualWrapper& sysWrap
     try {
       drive = createDrive(sysWrapper);
     } catch (...) {
-      driveError = currentExceptionMessage();
+      driveError = cta::exception::currentExceptionMessage();
     }
   }
 
@@ -124,7 +109,7 @@ auto cta::tape::daemon::DriveCleaner::cleanDrive(System::virtualWrapper& sysWrap
     result.errorMessage = "Tape was dismounted, but the drive could not be opened and must remain down: " + *driveError;
   } catch (...) {
     result.errorMessage = "Failed to create the drive (" + *driveError + ") and failed to dismount the tape ("
-                          + currentExceptionMessage() + ")";
+                          + cta::exception::currentExceptionMessage() + ")";
     result.ejectFailed = true;
   }
   finishCleanup(result);
@@ -172,7 +157,7 @@ void cta::tape::daemon::DriveCleaner::disableTapeAfterFailedEject(const std::str
     params.add("newTapeState", Tape::stateToString(*disabledState));
     m_lc.log(cta::log::WARNING, "Cleaner disabled tape after failed eject");
   } catch (...) {
-    params.add(cta::semconv::log::exceptionMessage, currentExceptionMessage());
+    params.add(cta::semconv::log::exceptionMessage, cta::exception::currentExceptionMessage());
     m_lc.log(cta::log::ERR, "Cleaner failed to disable tape after failed eject");
   }
 }
@@ -195,7 +180,7 @@ auto cta::tape::daemon::DriveCleaner::cleanDriveImpl(drive::DriveInterface& driv
     if (!result.errorMessage.empty()) {
       result.errorMessage += "; ";
     }
-    result.errorMessage += operation + ": " + currentExceptionMessage();
+    result.errorMessage += operation + ": " + cta::exception::currentExceptionMessage();
     cta::log::ScopedParamContainer params(m_lc);
     params.add(cta::semconv::log::exceptionMessage, result.errorMessage);
     m_lc.log(cta::log::WARNING, "Cleaner failed to reset drive configuration; continuing with tape eject");
@@ -208,7 +193,7 @@ auto cta::tape::daemon::DriveCleaner::cleanDriveImpl(drive::DriveInterface& driv
       mayContainMedia = drive.hasTapeInPlace();
     } catch (...) {
       cta::log::ScopedParamContainer params(m_lc);
-      params.add(cta::semconv::log::exceptionMessage, currentExceptionMessage());
+      params.add(cta::semconv::log::exceptionMessage, cta::exception::currentExceptionMessage());
       m_lc.log(cta::log::WARNING, "Cleaner could not detect media before readiness wait; retaining the wait");
     }
     if (mayContainMedia) {
@@ -240,7 +225,7 @@ auto cta::tape::daemon::DriveCleaner::cleanDriveImpl(drive::DriveInterface& driv
     }
   } catch (...) {
     cta::log::ScopedParamContainer params(m_lc);
-    params.add(cta::semconv::log::exceptionMessage, currentExceptionMessage());
+    params.add(cta::semconv::log::exceptionMessage, cta::exception::currentExceptionMessage());
     m_lc.log(cta::log::WARNING, "Cleaner could not determine whether the drive contains a tape");
   }
 
@@ -250,7 +235,7 @@ auto cta::tape::daemon::DriveCleaner::cleanDriveImpl(drive::DriveInterface& driv
     volumeLabel = readVolumeLabel(drive);
   } catch (...) {
     cta::log::ScopedParamContainer params(m_lc);
-    params.add(cta::semconv::log::exceptionMessage, currentExceptionMessage());
+    params.add(cta::semconv::log::exceptionMessage, cta::exception::currentExceptionMessage());
     m_lc.log(cta::log::WARNING,
              "Cleaner failed to prepare the drive or read the volume label; continuing with the provided VID");
   }
@@ -260,7 +245,7 @@ auto cta::tape::daemon::DriveCleaner::cleanDriveImpl(drive::DriveInterface& driv
     unloadTape(drive);
   } catch (...) {
     cta::log::ScopedParamContainer params(m_lc);
-    params.add(cta::semconv::log::exceptionMessage, currentExceptionMessage());
+    params.add(cta::semconv::log::exceptionMessage, cta::exception::currentExceptionMessage());
     m_lc.log(cta::log::WARNING, "Cleaner unload command failed; attempting robotic dismount");
   }
   std::string dismountVid = m_vid;
@@ -281,7 +266,7 @@ auto cta::tape::daemon::DriveCleaner::cleanDriveImpl(drive::DriveInterface& driv
     } catch (...) {
       cta::log::ScopedParamContainer params(m_lc);
       params.add("dismountVid", dismountVid);
-      params.add(cta::semconv::log::exceptionMessage, currentExceptionMessage());
+      params.add(cta::semconv::log::exceptionMessage, cta::exception::currentExceptionMessage());
       m_lc.log(cta::log::WARNING,
                "Cleaner failed to dismount tape with VID; retrying with an empty VID to bypass the robot's "
                "cartridge-name consistency check");
@@ -297,7 +282,7 @@ auto cta::tape::daemon::DriveCleaner::cleanDriveImpl(drive::DriveInterface& driv
     if (!result.errorMessage.empty()) {
       result.errorMessage += "; ";
     }
-    result.errorMessage += "Failed to dismount tape: " + currentExceptionMessage();
+    result.errorMessage += "Failed to dismount tape: " + cta::exception::currentExceptionMessage();
   }
   return result;
 }
@@ -369,7 +354,7 @@ void cta::tape::daemon::DriveCleaner::waitForMediaToBeReady(drive::DriveInterfac
     drive.waitUntilReady(m_tapeLoadTimeout);
     m_lc.log(cta::log::DEBUG, "Cleaner detected that the drive is ready");
   } catch (...) {
-    params.add(cta::semconv::log::exceptionMessage, currentExceptionMessage());
+    params.add(cta::semconv::log::exceptionMessage, cta::exception::currentExceptionMessage());
     m_lc.log(cta::log::DEBUG,
              "Cleaner caught a non-fatal exception while waiting for"
              " drive to become ready");

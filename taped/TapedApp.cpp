@@ -81,7 +81,7 @@ int TapedApp::run(const TapedConfig& config, cta::log::Logger& log) {
     log(log::WARNING, "Failed to set the dumpable attribute. Core dumps may not be produced");
   }
 
-  // Observe drive state while taped runs; the runtime has already initialized telemetry.
+  // Initialises async gauge to monitor mount type and drive status
   telemetry::metrics::ScopedTapedStateMetrics stateMetrics;
 
   lc.log(log::INFO, "Initialising Catalogue");

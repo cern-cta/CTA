@@ -82,17 +82,17 @@ private:
     // As we are living in the single thread of tape, we can borrow the timer
     cta::utils::Timer& m_timer;
     std::optional<MountedTape>& m_mountedTape;
-    const MountedTape::Outcome& m_outcome;
+    const std::optional<DriveCleaner::CleanupResult>& m_cleanupResult;
 
   public:
     TapeThreadFinalizer(TapeWriteSingleThread& parent,
                         cta::utils::Timer& timer,
                         std::optional<MountedTape>& mountedTape,
-                        const MountedTape::Outcome& outcome)
+                        const std::optional<DriveCleaner::CleanupResult>& cleanupResult)
         : m_this(parent),
           m_timer(timer),
           m_mountedTape(mountedTape),
-          m_outcome(outcome) {}
+          m_cleanupResult(cleanupResult) {}
 
     ~TapeThreadFinalizer();
   };

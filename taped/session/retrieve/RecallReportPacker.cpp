@@ -25,7 +25,7 @@ namespace cta::tape::daemon {
 RecallReportPacker::RecallReportPacker(cta::RetrieveMount* retrieveMount,
                                        cta::log::LogContext& lc,
                                        TapeSessionTracker& tracker)
-    : ReportPackerInterface<detail::Recall>(lc, tracker),
+    : ReportPackerInterface(lc, tracker),
       m_workerThread(*this),
       m_retrieveMount(retrieveMount) {}
 

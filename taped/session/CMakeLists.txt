@@ -7,6 +7,7 @@ set(CTATAPEDSESSION_LIBRARY_SRCS
   TapeSession.cpp
   TapeSessionReporter.cpp
   TapeSessionState.cpp
+  TapeSessionTracker.cpp
   SessionType.cpp
 
   # These operations depend on session tracking and retain their existing library membership.

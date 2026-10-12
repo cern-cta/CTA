@@ -3,6 +3,141 @@
 The **tape daemon** (`cta-taped`) runs on a [Tape Server](../tape/servers.md) and controls a single tape drive.
 It obtains scheduled work, transfers files between disk and tape, and coordinates cartridge movements with the [Media Changer Daemon](media-changer-daemon.md).
 
+```mermaid
+flowchart TB
+
+
+config["read config file"]
+cat["Initialise catalogue"]
+sched["Initialise scheduler"]
+
+subgraph dr["drive registration"]
+    direction TB
+    existsQ(["Does the drive name exist in the catalogue?"])
+    alreadyExists(["Is the host and logical library name the same?"])
+    doesntExist["Register the drive in the catalogue"]
+    misconfigdrive["Exit 1. Check drive configuration"]
+
+    currentDesiredState(["What is the current desired state?"])
+    desiredUp["Process may have crashed (a clean exit always leaves the drive down)"]
+    desiredDown(["Is the reason empty or `[cta-taped] INFO shutdown?`"])
+    recoverUp(["Is `drive.startup.recover_up = true`?"])
+    autoUp(["Is `drive.startup.auto_up = true`?"])
+    driveStaysDown["Drive stays down with the existing reason"]
+    registerUp["Register drive as desired/reported Up"]
+    registerDown["Register drive as desired/reported Down"]
+
+    existsQ -- No --> doesntExist
+    existsQ -- Yes --> alreadyExists
+    alreadyExists -- No --> misconfigdrive
+    alreadyExists -- Yes --> currentDesiredState
+    doesntExist --> currentDesiredState
+    currentDesiredState -- Up --> desiredUp
+    currentDesiredState -- Down --> desiredDown
+    desiredUp --> recoverUp
+    desiredDown -- Yes --> autoUp
+    desiredDown -- No --> driveStaysDown
+    autoUp -- Yes --> registerUp
+    recoverUp -- Yes --> registerUp
+    autoUp -- No --> registerDown
+    recoverUp -- No --> registerDown
+end
+
+config --> cat
+cat --> sched
+sched --> dr
+
+llwait["Wait for configured logical library to appear in the catalogue"]
+amiup(["Is the desired state Up?"])
+sleep["Sleep for `mounts.drive_state_poll_interval_secs`"]
+reportup["Report drive as Up"]
+rundrivesession["Run drive session"]
+
+dr --> llwait
+llwait --> amiup
+amiup -- Yes --> reportup
+amiup -- No --> sleep
+sleep --> amiup
+reportup --> rundrivesession
+
+dsexiteddrdown(["Did the drive session finish because the operator put the drive Down?"])
+dsexitedcleanly(["Did the drive session finish with a recoverable error?"])
+putdrivedown(["Put the drive Down with the relevant error (preserving existing reason if present)"])
+
+rundrivesession --> dsexiteddrdown
+dsexiteddrdown -- Yes --> amiup
+dsexiteddrdown -- No --> dsexitedcleanly
+dsexitedcleanly -- Yes --> amiup
+dsexitedcleanly -- No --> putdrivedown
+putdrivedown --> exit
+```
+
+Drive session
+
+```mermaid
+flowchart TB
+
+
+
+
+
+Start --> dp
+
+subgraph dp["Drive preparation"]
+
+
+reserveDrive["Attempt drive reservation"]
+cleandrive["Attempt to eject cartridge"]
+isdriveempty(["Is the drive empty?"])
+config(["Is `drive.clean_on_up = true`?"])
+
+reserveDrive -- Success --> isdriveempty
+
+config -- Yes --> cleandrive
+isdriveempty -- No --> config
+
+
+end
+config -- No --> Exit
+cleandrive -- Success --> findmount
+reserveDrive -- Failed --> Exit
+isdriveempty -- Yes --> findmount
+cleandrive -- Failed --> Exit
+
+
+
+
+sleep["Sleep for `mounts.idle_scheduling_interval_secs`"]
+findmount["Find mount candidate"]
+candidatefound(["Mount candidate found?"])
+
+subgraph Exit
+releaseDrive["Release drive reservation"]
+reportdown["Report Down"]
+exit["Exit drive session"]
+end
+
+findmount --> candidatefound
+candidatefound -- Yes --> runtapesession
+candidatefound -- No --> sleep
+releaseDrive --> reportdown
+reportdown --> exit
+
+sleep --> findmount
+
+runtapesession["Run tape session"]
+tapesessionfinished["Tape session finished"]
+drivereusable(["Is the drive still usable (cleaner didn't fail)"])
+
+runtapesession --> tapesessionfinished
+tapesessionfinished --> drivereusable
+drivereusable -- Yes --> findmount
+drivereusable -- No --> Exit
+
+
+
+```
+
 ## Sessions and ownership
 
 ```mermaid
@@ -36,7 +171,6 @@ A tape session's lifecycle has three phases:
 - **Mount:** move the cartridge into the drive and prepare it for reading or writing.
 - **Transfer:** read files from tape to disk, or write files from disk to tape. One mounted cartridge can serve many files.
 - **Unmount:** unload the tape and return the cartridge to the library, leaving the drive empty and ready for reuse.
-
 
 ## Drive state and hardware access
 

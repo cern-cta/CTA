@@ -48,4 +48,16 @@ void Exception::setWhat(std::string_view what) {
   getMessage() << what;
 }
 
+std::string currentExceptionMessage() {
+  try {
+    throw;
+  } catch (const cta::exception::Exception& ex) {
+    return ex.getMessageValue();
+  } catch (const std::exception& ex) {
+    return ex.what();
+  } catch (...) {
+    return "Caught an unknown exception";
+  }
+}
+
 }  // namespace cta::exception
