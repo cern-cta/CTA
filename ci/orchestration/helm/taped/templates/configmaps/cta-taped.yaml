@@ -19,6 +19,9 @@ data:
     taped BufferSizeBytes {{ $.Values.conf.taped.bufferSizeBytes }}
     taped BufferCount {{ $.Values.conf.taped.bufferCount }}
     taped MountCriteria {{ $.Values.conf.taped.mountCriteria }}
+    taped ArchiveFetchBytesFiles {{ $.Values.conf.taped.archiveFetchBytesFiles }}
+    taped RetrieveFetchBytesFiles {{ $.Values.conf.taped.retrieveFetchBytesFiles }}
+    taped ArchiveDismountPolicy {{ $.Values.conf.taped.archiveDismountPolicy }}
     taped WatchdogIdleSessionTimer {{ $.Values.conf.taped.watchdogIdleSessionTimer }}
     taped UseEncryption {{ $.Values.conf.taped.useEncryption }}
     taped DriveName {{ .name }}

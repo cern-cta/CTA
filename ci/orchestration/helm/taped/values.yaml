@@ -11,6 +11,9 @@ conf:
     bufferSizeBytes: 262144
     bufferCount: 200
     mountCriteria: "2000000, 100"
+    archiveFetchBytesFiles: "80000000000, 4000"
+    retrieveFetchBytesFiles: "80000000000, 4000"
+    archiveDismountPolicy: "300, 3, 40, 60"
     watchdogIdleSessionTimer: 1  # Make tape servers more responsive, thus improving CI test speed
     logMask: "INFO"
     useEncryption: "no"
