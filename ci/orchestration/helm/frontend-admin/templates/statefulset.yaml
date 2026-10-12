@@ -37,8 +37,8 @@ spec:
         runAsUser: 1000 # cta
         runAsGroup: 33 # tape
         fsGroup: 33 # tape
-      initContainers:
       {{- if has "kerberos" .Values.conf.auth.methods }}
+      initContainers:
       - name: init1-get-krb5-keytab
         image: {{ include "ctafrontend.image" . }}
         imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
@@ -55,18 +55,6 @@ spec:
         - name: cta-frontend-krb5-keytab
           mountPath: /tmp/ctafrontend_keytab/output
       {{- end }}
-      - name: init2-download-grpc-health-probe
-        image: {{ include "common.images.busybox" . }}
-        command: ["sh", "-c"]
-        args:
-          - |
-            mkdir -p /grpc-health-probe && \
-            wget -qO/grpc-health-probe/grpc-health-probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.13/grpc_health_probe-linux-amd64 && \
-            chmod +x /grpc-health-probe/grpc-health-probe
-        volumeMounts:
-          - name: grpc-health-probe-bin
-            mountPath: /grpc-health-probe
-            subPath: grpc-health-probe
       containers:
       - name: cta-frontend
         image: {{ include "ctafrontend.image" . }}
@@ -77,7 +65,7 @@ spec:
         readinessProbe:
           exec:
             command:
-              - /grpc-health-probe/grpc-health-probe
+              - /usr/local/bin/grpc-health-probe
               - -addr=localhost:{{ .Values.port }}
               - -tls
               - -tls-ca-cert={{ .Values.conf.tls.caCert }}
@@ -159,9 +147,6 @@ spec:
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
         {{- end }}
-        - name: grpc-health-probe-bin
-          mountPath: /grpc-health-probe
-          subPath: grpc-health-probe
         {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
         - name: otlp-basic-auth-pwd
           mountPath: /etc/cta/otlp-basic-auth-pwd.conf
@@ -216,8 +201,6 @@ spec:
         configMap:
           name: {{ .Values.global.kerberos.clientConfig.configMap }}
       {{- end }}
-      - name: grpc-health-probe-bin
-        emptyDir: {}
       {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
       - name: otlp-basic-auth-pwd
         secret:

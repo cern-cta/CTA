@@ -37,19 +37,6 @@ spec:
         runAsUser: 1000 # cta
         runAsGroup: 33 # tape
         fsGroup: 33 # tape
-      initContainers:
-      - name: init1-download-grpc-health-probe
-        image: {{ include "common.images.busybox" . }}
-        command: ["sh", "-c"]
-        args:
-          - |
-            mkdir -p /grpc-health-probe && \
-            wget -qO/grpc-health-probe/grpc-health-probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.13/grpc_health_probe-linux-amd64 && \
-            chmod +x /grpc-health-probe/grpc-health-probe
-        volumeMounts:
-          - name: grpc-health-probe-bin
-            mountPath: /grpc-health-probe
-            subPath: grpc-health-probe
       containers:
       - name: cta-frontend
         image: {{ include "ctafrontend.image" . }}
@@ -60,7 +47,7 @@ spec:
         readinessProbe:
           exec:
             command:
-              - /grpc-health-probe/grpc-health-probe
+              - /usr/local/bin/grpc-health-probe
               - -addr=localhost:{{ .Values.port }}
               - -tls
               - -tls-ca-cert=/etc/grpc-certs/ca/ca.crt.pem
@@ -146,9 +133,6 @@ spec:
           mountPath: /etc/grpc-certs/client/ctaeos-self-signed.key.pem
           subPath: ctaeos-self-signed.key.pem
         {{- end }}
-        - name: grpc-health-probe-bin
-          mountPath: /grpc-health-probe
-          subPath: grpc-health-probe
         {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
         - name: otlp-basic-auth-pwd
           mountPath: /etc/cta/otlp-basic-auth-pwd.conf
@@ -204,8 +188,6 @@ spec:
         secret:
           secretName: ctaeos-self-signed-key-pem
       {{- end }}
-      - name: grpc-health-probe-bin
-        emptyDir: {}
       {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
       - name: otlp-basic-auth-pwd
         secret:
