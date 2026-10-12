@@ -6,6 +6,7 @@
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 
 ARG CARGO_CYCLONEDX_VERSION="=0.5.9"
+ARG SCCACHE_VERSION="=0.12.0"
 
 RUN dnf install -y epel-release almalinux-release-devel git python3-dnf-plugin-versionlock && \
     dnf install -y gcc gcc-c++ cmake3 rpm-build dnf-utils make ninja-build \
@@ -22,3 +23,6 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 
 # Add cargo-cyclonedx, so that we can generate SBOMs
 RUN cargo install cargo-cyclonedx@${CARGO_CYCLONEDX_VERSION}
+
+# For speeding up Cargo builds
+RUN cargo install sccache@${SCCACHE_VERSION} --locked --no-default-features

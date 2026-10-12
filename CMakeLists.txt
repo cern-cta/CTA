@@ -205,16 +205,6 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "source")
   add_subdirectory(tools)
   add_subdirectory(tests)
 
-  # Allow CI to reuse Cargo artifacts across packaging build directories.
-  if(DEFINED ENV{CTA_RUST_CACHE_DIR} AND NOT "$ENV{CTA_RUST_CACHE_DIR}" STREQUAL "")
-    file(MAKE_DIRECTORY "$ENV{CTA_RUST_CACHE_DIR}")
-    file(CREATE_LINK
-      "$ENV{CTA_RUST_CACHE_DIR}"
-      "${CMAKE_CURRENT_BINARY_DIR}/cargo"
-      SYMBOLIC
-    )
-  endif()
-
   # Rust crates
   corrosion_import_crate(MANIFEST_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Cargo.toml" LOCKED)
 
