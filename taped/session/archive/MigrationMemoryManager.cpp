@@ -5,9 +5,12 @@
 
 #include "MigrationMemoryManager.hpp"
 
+#include "common/utils/ScopeExit.hpp"
 #include "taped/session/pipeline/DataPipeline.hpp"
 #include "taped/session/pipeline/MemBlock.hpp"
 #include "telemetry/metrics/TapedMetrics.hpp"
+
+#include <memory>
 
 namespace cta::tape::daemon {
 
@@ -49,14 +52,33 @@ MigrationMemoryManager::MigrationMemoryManager(const uint32_t numberOfBlocks,
                                                const cta::log::LogContext& lc)
     : m_blockCapacity(blockSize),
       m_lc(lc) {
+  bool constructed = false;
+  bool usageCallbackRegistered = false;
+  // Constructor failure skips our destructor; the raw-pointer queue does not free its blocks.
+  const utils::ScopeExit rollback([&] {
+    if (constructed) {
+      return;
+    }
+    if (usageCallbackRegistered) {
+      cta::telemetry::metrics::ctaTapedBufferUsage->RemoveCallback(ObserveMigrationMemoryUsage, this);
+    }
+    // No workers exist yet; reclaim blocks when construction fails.
+    while (m_freeBlocks.size() != 0) {
+      delete m_freeBlocks.pop();
+    }
+  });
   for (uint32_t i = 0; i < numberOfBlocks; i++) {
-    m_freeBlocks.push(new MemBlock(i, m_blockCapacity));
+    auto block = std::make_unique<MemBlock>(i, m_blockCapacity);
+    m_freeBlocks.push(block.get());
+    block.release();
     m_totalNumberOfBlocks++;
     m_totalMemoryAllocated += m_blockCapacity;
   }
   m_lc.log(cta::log::INFO, "MigrationMemoryManager: all blocks have been created");
   cta::telemetry::metrics::ctaTapedBufferUsage->AddCallback(ObserveMigrationMemoryUsage, this);
+  usageCallbackRegistered = true;
   cta::telemetry::metrics::ctaTapedBufferLimit->AddCallback(ObserveMigrationMemoryLimit, this);
+  constructed = true;
 }
 
 //------------------------------------------------------------------------------
