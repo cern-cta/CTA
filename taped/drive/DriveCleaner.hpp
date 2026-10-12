@@ -32,7 +32,8 @@ public:
   /// @param log Object representing the API to the CTA logging system.
   /// @param driveInfo Identity and device paths of the tape drive to clean.
   /// @param vid Mounted tape identifier when known; otherwise an empty string.
-  /// @param waitMediaInDrive Whether to wait for media readiness before cleaning.
+  /// @param waitMediaInDrive Whether to wait for media readiness before checking presence; use true when a mount
+  /// may have occurred. A cached empty indication does not skip the requested wait.
   /// @param waitMediaInDriveTimeout Maximum wait for media readiness, in seconds.
   /// @param catalogue Borrowed catalogue used for drive and tape state updates.
   /// @param tracker Borrowed tracker, which must outlive this cleaner.

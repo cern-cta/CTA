@@ -8,6 +8,7 @@
 #include "tests/Argv.hpp"
 #include "tests/TempFile.hpp"
 
+#include <cerrno>
 #include <chrono>
 #include <fstream>
 #include <functional>
@@ -16,6 +17,7 @@
 #include <iterator>
 #include <stdexcept>
 #include <thread>
+#include <unistd.h>
 
 namespace unitTests {
 
@@ -81,6 +83,47 @@ format = "json"
     return app.run(args.count, args.data());
   });
   ASSERT_EQ(rc, EXIT_SUCCESS);
+}
+
+TEST(ApplicationDeathTest, BrokenPipeReturnsErrorWithoutTerminating) {
+  class BrokenPipeApp {
+  public:
+    void stop() {}
+
+    int run(const MinimalTestConfig&, cta::log::Logger&) {
+      int fds[2];
+      if (::pipe(fds) != 0) {
+        return 2;
+      }
+      ::close(fds[0]);
+      const auto written = ::write(fds[1], "x", 1);
+      const auto error = errno;
+      ::close(fds[1]);
+      return written == -1 && error == EPIPE ? EXIT_SUCCESS : EXIT_FAILURE;
+    }
+  };
+
+  TempFile config("[logging]\nlevel = 'WARNING'\nformat = 'json'\n", ".toml");
+  using App = cta::runtime::Application<BrokenPipeApp, MinimalTestConfig, cta::runtime::CommonCliOptions>;
+  ASSERT_EXIT(
+    {
+      struct sigaction action {};
+      action.sa_handler = SIG_DFL;
+      sigset_t signals;
+      if (::sigemptyset(&action.sa_mask) != 0 || ::sigaction(SIGPIPE, &action, nullptr) != 0
+          || ::sigemptyset(&signals) != 0 || ::sigaddset(&signals, SIGPIPE) != 0
+          || ::pthread_sigmask(SIG_UNBLOCK, &signals, nullptr) != 0) {
+        ::_exit(3);
+      }
+      const int rc = cta::runtime::safeRun([&] {
+        Argv args({"cta-test", "--config", config.path()});
+        App app("cta-test", "");
+        return app.run(args.count, args.data());
+      });
+      ::_exit(rc);
+    },
+    testing::ExitedWithCode(EXIT_SUCCESS),
+    "");
 }
 
 TEST(Application, RootConfigValidationIsExercisedDuringConfigCheck) {
@@ -260,12 +303,15 @@ level = "WARNING"
   ASSERT_EQ(rc, EXIT_FAILURE);
 }
 
-TEST(Application, AppHandlesSigTerm) {
+class ApplicationShutdownSignalTest : public testing::TestWithParam<int> {};
+
+TEST_P(ApplicationShutdownSignalTest, RequestsOrderlyShutdown) {
   using namespace cta;
 
-  // Application must start before any unblocked threads exist. Block SIGTERM before creating the sender so it inherits
+  // Application must start before any unblocked threads exist. Block the signal before creating the sender so it inherits
   // the correct mask, leaving the SignalReactor as the only thread that consumes the process-directed signal.
-  SignalMaskGuard signalMaskGuard(SIGTERM);
+  const int shutdownSignal = GetParam();
+  SignalMaskGuard signalMaskGuard(shutdownSignal);
 
   // Global so that we can wait for this later on
   static std::atomic<bool> stoppableTestApprunning = false;
@@ -301,7 +347,7 @@ format = "json"
   std::jthread signalSender([&]() {
     try {
       cta::utils::waitForCondition([&]() { return stoppableTestApprunning == true; }, 2000, 10);
-      signalResult = ::kill(::getpid(), SIGTERM);
+      signalResult = ::kill(::getpid(), shutdownSignal);
     } catch (...) {
       signalResult = -1;
     }
@@ -313,6 +359,8 @@ format = "json"
   EXPECT_EQ(0, signalResult);
   EXPECT_EQ(EXIT_SUCCESS, rc);
 }
+
+INSTANTIATE_TEST_SUITE_P(Application, ApplicationShutdownSignalTest, testing::Values(SIGTERM, SIGINT));
 
 // These applications retain configuration and logging references until destruction.
 struct LifecycleConfig {

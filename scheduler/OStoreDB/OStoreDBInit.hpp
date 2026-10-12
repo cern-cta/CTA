@@ -56,7 +56,10 @@ private:
    * before the AgentHeartbeatThread has been started.
    */
   struct AgentHeartbeatThreadDeleter {
-    void operator()(objectstore::AgentHeartbeatThread* aht) const { aht->stopAndWaitThread(); }
+    void operator()(objectstore::AgentHeartbeatThread* aht) const {
+      aht->stopAndWaitThread();
+      delete aht;
+    }
   };
 
   using UniquePtrAgentHeartbeatThread = std::unique_ptr<objectstore::AgentHeartbeatThread, AgentHeartbeatThreadDeleter>;

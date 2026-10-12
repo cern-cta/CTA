@@ -260,6 +260,9 @@ public:
     // We need to start the reactor builder here as we may want to register custom signals.
     // It is also for that reason that we don't build the actual SignalReactor just yet.
     m_signalReactorBuilder.addSignalFunction(SIGTERM, [this]() { m_app->stop(); });
+    m_signalReactorBuilder.addSignalFunction(SIGINT, [this]() { m_app->stop(); });
+    // Block SIGPIPE before spawning workers so broken writes return errors instead of terminating the process.
+    m_signalReactorBuilder.addSignalFunction(SIGPIPE, []() {});
     // Both SIGHUP and SIGUSR1 trigger a refresh of the log file descriptor
     // Eventually SIGUSR1 will be deprecated
     m_signalReactorBuilder.addSignalFunction(SIGHUP, [this]() {
