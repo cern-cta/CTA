@@ -3,109 +3,6 @@
 The **tape daemon** (`cta-taped`) runs on a [Tape Server](../tape/servers.md) and controls a single tape drive.
 It obtains scheduled work, transfers files between disk and tape, and coordinates cartridge movements with the [Media Changer Daemon](media-changer-daemon.md).
 
-```mermaid
-flowchart TB
-    config["Read config file"]
-    cat["Initialise catalogue"]
-    sched["Initialise scheduler"]
-    config --> cat --> sched
-
-    subgraph registration["Drive registration"]
-        existsQ{"Does the drive name exist?"}
-        matchesQ{"Do the host and logical library match?"}
-        previousUpQ{"Is the existing desired state Up?"}
-        recoverQ{"Is drive.startup.recover_existing_up = true?"}
-        reasonQ{"Is the reason empty or a clean shutdown?"}
-        autoUpQ{"Is drive.startup.auto_up = true?"}
-        desiredUp["Desired Up"]
-        desiredDown["Desired Down<br/>Record startup reason"]
-        preserveDown["Keep desired Down and existing reason"]
-        registered["Complete drive registration"]
-
-        existsQ -- No --> autoUpQ
-        existsQ -- Yes --> matchesQ
-        matchesQ -- Yes --> previousUpQ
-        previousUpQ -- Yes --> recoverQ
-        previousUpQ -- No --> reasonQ
-        recoverQ -- Yes --> desiredUp
-        recoverQ -- No --> desiredDown
-        reasonQ -- Yes --> autoUpQ
-        reasonQ -- No --> preserveDown
-        autoUpQ -- Yes --> desiredUp
-        autoUpQ -- No --> desiredDown
-        desiredUp --> registered
-        desiredDown --> registered
-        preserveDown --> registered
-    end
-
-    sched --> existsQ
-    matchesQ -- No --> invalid["Exit 1<br/>Check drive configuration"]
-    registered --> libraryWait["Wait for configured logical library to exist"]
-    libraryWait --> desiredUpQ{"Is desired state Up?"}
-    desiredUpQ -- No --> wait["Report Down and sleep for<br/>mounts.drive_state_poll_interval_secs"]
-    wait --> desiredUpQ
-    desiredUpQ -- Yes --> driveSession["Run drive session<br/>Prepare drive before reporting Up"]
-    driveSession -- Session ends; daemon keeps running --> desiredUpQ
-```
-
-Drive session
-
-```mermaid
-flowchart TB
-    start{"Desired Up and no stop request?"}
-
-    subgraph preparation["Drive preparation"]
-        acquire["Report Starting<br/>Acquire hardware ownership"]
-        cleanQ{"Is drive.clean_on_up = true?"}
-        clean["Clean drive<br/>Reset configuration and remove any cartridge"]
-        probe["Probe for an empty drive"]
-        preparedQ{"Preparation successful?"}
-
-        acquire --> cleanQ
-        cleanQ -- Yes --> clean
-        cleanQ -- No --> probe
-        clean --> preparedQ
-        probe --> preparedQ
-    end
-
-    start -- Yes --> acquire
-    start -- No --> reportDown
-    preparedQ -- No --> requestDown
-    preparedQ -- Yes --> continueQ
-
-    continueQ{"Desired Up and no stop request?"}
-    findMount["Report Up<br/>Find mount candidate"]
-    candidateQ{"Mount candidate found?"}
-    sleep["Sleep for mounts.idle_scheduling_interval_secs"]
-    tapeSession["Run tape session"]
-    reusableQ{"Is the drive reusable?"}
-    keepRunningQ{"Desired Up and no stop request?"}
-    successfulQ{"Tape session successful?"}
-
-    continueQ -- No --> release
-    continueQ -- Yes --> findMount
-    findMount --> candidateQ
-    candidateQ -- No / scheduling error --> sleep
-    sleep --> continueQ
-    candidateQ -- Yes --> tapeSession
-    tapeSession --> reusableQ
-    reusableQ -- No --> requestDown
-    reusableQ -- Yes --> keepRunningQ
-    keepRunningQ -- No --> release
-    keepRunningQ -- Yes --> successfulQ
-    successfulQ -- Yes --> continueQ
-    successfulQ -- No --> sleep
-
-    subgraph ending["End drive session"]
-        requestDown["Request desired Down with failure reason<br/>Preserve a specific existing Down reason"]
-        requestDown --> release
-        release["Release hardware ownership"]
-        reportDown["Report Down"]
-        done["Return to daemon"]
-        release --> reportDown --> done
-    end
-```
-
 ## Sessions and ownership
 
 ```mermaid
@@ -161,19 +58,20 @@ The desired state has two values:
 | `Down` | Requests the daemon to stop scheduling and relinquish ownership of the drive hardware. |
 
 Desired and reported state need not match immediately.
-Before scheduling begins in a new drive session, the daemon cleans the drive: it removes any remaining cartridge and resets drive configuration as necessary.
-Setting desired `Up` permits this hardware access; scheduling begins only after cleanup establishes that the drive is empty and reusable.
+Before scheduling begins in a new drive session, the daemon prepares the drive as configured: it either cleans the drive or probes for emptiness.
+Setting desired `Up` permits this hardware access; scheduling begins only after preparation succeeds.
 A change to desired `Down` can arrive during an active tape session, which can finish its transfer and cleanup before the daemon relinquishes ownership.
 **Hardware ownership is relinquished only when the drive is reported `Down`.**
 Until then, the transition requested by desired `Down` is pending and the daemon may still be using the hardware to finish the active session and clean up.
 While waiting with reported `Down`, the daemon does not access the hardware.
-Desired `Up` authorises a new drive session and its initial cleanup.
+Desired `Up` authorises a new drive session and its initial preparation.
 Reporting activity does not modify desired state: an old drive session's final reported `Down` preserves a newer request for desired `Up`.
 
 The daemon owns startup and shutdown intent.
 The drive session alone reports the end of its hardware ownership, after its tape sessions and cleanup have finished.
 Tape sessions and cleanup helpers report progress and return their failure outcomes to the drive session; they do not independently report terminal `Down`.
-When no drive session owns the hardware, the daemon maintains reported `Down`.
+While waiting for desired `Up`, the daemon maintains reported `Down`.
+During startup recovery of an existing desired `Up`, registration reports `Starting` before hardware acquisition; this can persist while waiting for the logical library to exist.
 
 ### Reported state
 
@@ -183,12 +81,12 @@ The table uses the display labels for states reported during normal operation.
 | Reported state | Meaning |
 | --- | --- |
 | `Free` | The drive is available for scheduled work. |
-| `Start` | A mount candidate has been found and a tape session is starting. |
+| `Start` | The daemon is recovering an existing desired `Up`, preparing the drive, or starting a tape session. |
 | `Mount` | The cartridge is being mounted and prepared for transfer. |
 | `Transfer` | Files are being read from or written to tape. |
 | `Unload` | The tape is being unloaded within the drive before the cartridge can be removed. |
 | `Unmount` | The cartridge is being removed from the drive and returned to the library. |
-| `DrainToDisk` | Tape reading and unmounting have finished, but buffered retrieval data is still being written to disk. |
+| `DrainToDisk` | Tape-side processing and cleanup attempts have finished, but retrieval disk workers are still active. This does not guarantee successful cartridge removal. |
 | `Down` | The daemon has relinquished hardware ownership and is not scheduling work. |
 
 ### Down reasons
@@ -208,17 +106,20 @@ The table lists identifiers and base messages (timestamps omitted); the recorded
 
 | Base `Down` reason | Meaning |
 | --- | --- |
-| `[cta-taped:startup] INFO Startup` | The daemon has registered desired `Down` and reported `Down`. It has not started a drive session and is waiting for desired `Up`. |
+| `[cta-taped:startup] INFO Startup` | Registration records this reason for a new drive or an existing desired-Down drive with an empty or clean-shutdown reason. Reported state is `Down`; desired state follows the automatic startup policy. |
+| `[cta-taped:startup-recovery-disabled] INFO Automatic startup recovery disabled; operator Up required` | An existing desired `Up` was changed to `Down` because startup recovery is disabled. |
 | `[cta-taped:shutdown] INFO Shutdown` | The daemon is exiting and sets desired `Down`. This is the normal reason on a clean exit when no specific down reason needs to be preserved. |
+| `[cta-taped:tape-detected] ERROR Tape detected in drive` | Initial preparation found a cartridge while initial cleanup was disabled. |
+| `[cta-taped:drive-probe-failed] ERROR Drive probe failed` | Initial preparation could not discover, open, or probe the drive to establish emptiness. |
 | `[cta-taped:session-drive-access-failed] ERROR Session drive access failed` | The daemon could not discover, locate, or open the drive for a tape session. |
 | `[cta-taped:drive-cleanup-failed] ERROR Drive cleanup failed` | Drive cleanup could not establish that the drive was reusable. Additional details can identify an access, configuration, or cartridge-removal failure. |
 | `[cta-taped:session-left-drive-unusable] ERROR Session left drive unusable` | A tape session left the drive unusable and no more specific existing reason was available. |
-| `[cta-taped:session-did-not-stop-safely] ERROR Session did not stop safely` | The daemon could not confirm that tape session access to the drive had stopped. |
 | `[cta-taped:unexpected-failure] ERROR Unexpected failure` | An unexpected fatal daemon or drive-session failure prevented continuation. This is not a clean shutdown. |
 
 An existing operator or failure reason is preserved instead of being replaced by startup or shutdown messages.
 With automatic desired `Up` disabled, a previous clean-shutdown reason is replaced by the startup reason when the daemon starts again.
-The intended configurable policy is described under [Daemon lifetime](#daemon-lifetime).
+The configurable policy is described under [Daemon lifetime](#daemon-lifetime).
+The `session-did-not-stop-safely` identifier remains defined, but the current unsafe-worker failure path exits immediately without publishing it or changing drive state.
 
 !!! info "TODO: Revisit down reasons"
 
@@ -236,6 +137,51 @@ Finishing a tape session need not end the drive session, and ending a drive sess
 
 The daemon runs drive sessions sequentially: each drive session must end before the next can begin.
 Once the drive is reported `Down` and the daemon is waiting, it must not access the drive hardware until desired `Up` authorises a new drive session.
+
+```mermaid
+flowchart TB
+    config["Read config file"]
+    cat["Initialise catalogue"]
+    sched["Initialise scheduler"]
+    config --> cat --> sched
+
+    subgraph registration["Drive registration"]
+        existsQ{"Does the drive name exist?"}
+        matchesQ{"Do the host and logical library match?"}
+        previousUpQ{"Is the existing desired state Up?"}
+        recoverQ{"Is startup recovery enabled?"}
+        reasonQ{"Is the reason empty or a clean shutdown?"}
+        autoUpQ{"Is automatic startup enabled?"}
+        desiredUp["Desired Up"]
+        desiredDown["Desired Down<br/>Record startup reason"]
+        preserveDown["Keep desired Down and existing reason"]
+        registered["Complete drive registration"]
+
+        existsQ -- No --> autoUpQ
+        existsQ -- Yes --> matchesQ
+        matchesQ -- Yes --> previousUpQ
+        previousUpQ -- Yes --> recoverQ
+        previousUpQ -- No --> reasonQ
+        recoverQ -- Yes --> desiredUp
+        recoverQ -- No --> desiredDown
+        reasonQ -- Yes --> autoUpQ
+        reasonQ -- No --> preserveDown
+        autoUpQ -- Yes --> desiredUp
+        autoUpQ -- No --> desiredDown
+        desiredUp --> registered
+        desiredDown --> registered
+        preserveDown --> registered
+    end
+
+    sched --> existsQ
+    matchesQ -- No --> invalid["Exit 1<br/>Check drive configuration"]
+    registered --> libraryWait["Wait for configured logical library to exist"]
+    libraryWait --> desiredUpQ{"Is desired state Up?"}
+    desiredUpQ -- No --> wait["Report Down and sleep for<br/>mounts.drive_state_poll_interval_secs"]
+    wait --> desiredUpQ
+    desiredUpQ -- Yes --> driveSession["Run drive session<br/>Prepare drive before reporting Up"]
+    driveSession -- Session ends; daemon keeps running --> desiredUpQ
+```
 
 #### On startup
 
@@ -256,12 +202,14 @@ In certain cases, the daemon can safely put itself `Up` when starting. This is b
 | Existing desired `Down` with a clean-shutdown reason | Eligible for automatic desired `Up`, subject to configuration. |
 | Existing desired `Down` with an operator or failure reason | Preserve desired `Down` and its reason. |
 
-When automatic desired `Up` is disabled, eligible drives remain desired `Down` and are reported `Down` with the startup reason, waiting for an explicit request for desired `Up`.
+Startup recovery (`drive.startup.recover_existing_up`) and automatic startup (`drive.startup.auto_up`) are both disabled by default.
+An existing desired `Up` is preserved only when recovery is enabled; otherwise it becomes desired `Down` with the `startup-recovery-disabled` reason, regardless of the automatic startup policy.
+For new drives and eligible desired-Down entries, the automatic startup policy selects the initial desired state; registration reports `Down` and records the startup reason.
 
-!!! note "Desired `Up` still requires cleanup"
+!!! note "Desired `Up` still requires preparation"
 
-    Eligibility permits the daemon to attempt cleanup; it does not establish that the hardware is empty or reusable.
-    Every drive session starts with [drive cleanup](#cleaning-the-drive-at-the-start-of-a-drive-session), whether desired `Up` was preserved, set automatically, or requested later by an operator.
+    Eligibility permits hardware access; it does not establish that the hardware is empty or reusable.
+    Every drive session starts with [drive preparation](#cleaning-the-drive-at-the-start-of-a-drive-session), using cleanup or an emptiness probe as configured.
 
 #### While running
 
@@ -296,14 +244,70 @@ A drive session establishes that the drive is empty and reusable before scheduli
 The drive session owns access to the drive hardware throughout its lifetime, including idle periods between tape sessions.
 It runs tape sessions sequentially and permits another only after safe reuse has been established.
 
+```mermaid
+flowchart TB
+    start{"Desired Up and no stop request?"}
+
+    subgraph preparation["Drive preparation"]
+        acquire["Report Starting<br/>Acquire hardware ownership"]
+        cleanQ{"Is initial cleanup enabled?"}
+        clean["Clean drive<br/>Reset configuration and remove any cartridge"]
+        probe["Probe for an empty drive"]
+        preparedQ{"Preparation successful?"}
+
+        acquire --> cleanQ
+        cleanQ -- Yes --> clean
+        cleanQ -- No --> probe
+        clean --> preparedQ
+        probe --> preparedQ
+    end
+
+    start -- Yes --> acquire
+    start -- No --> reportDown
+    preparedQ -- No --> requestDown
+    preparedQ -- Yes --> continueQ
+
+    continueQ{"Desired Up and no stop request?"}
+    findMount["Report Up<br/>Find mount candidate"]
+    candidateQ{"Mount candidate found?"}
+    sleep["Sleep for mounts.idle_scheduling_interval_secs"]
+    tapeSession["Run tape session"]
+    reusableQ{"Is the drive reusable?"}
+    keepRunningQ{"Desired Up and no stop request?"}
+    successfulQ{"Tape session successful?"}
+
+    continueQ -- No --> release
+    continueQ -- Yes --> findMount
+    findMount --> candidateQ
+    candidateQ -- No / scheduling error --> sleep
+    sleep --> continueQ
+    candidateQ -- Yes --> tapeSession
+    tapeSession --> reusableQ
+    reusableQ -- No --> requestDown
+    reusableQ -- Yes --> keepRunningQ
+    keepRunningQ -- No --> release
+    keepRunningQ -- Yes --> successfulQ
+    successfulQ -- Yes --> continueQ
+    successfulQ -- No --> sleep
+
+    subgraph ending["End drive session"]
+        requestDown["Request desired Down with failure reason<br/>Preserve a specific existing Down reason"]
+        requestDown --> release
+        release["Release hardware ownership"]
+        reportDown["Report Down"]
+        done["Return to daemon"]
+        release --> reportDown --> done
+    end
+```
+
 #### On entry
 
 1. Check that the drive still has desired `Up` before accessing hardware.
-2. Clean the drive: remove any remaining cartridge and reset drive configuration as necessary.
-3. Recheck desired state after successful cleanup. Begin scheduling only if desired `Up` is still set.
+2. Prepare the drive. With initial cleanup enabled, remove any remaining cartridge and reset drive configuration as necessary. Otherwise, probe for emptiness without modifying configuration; a cartridge or probe failure prevents scheduling.
+3. Recheck desired state after successful preparation. Begin scheduling only if desired `Up` is still set.
 
 If desired `Down` is set during drive cleanup, cleanup already in progress finishes, but scheduling does not begin.
-For failures during drive cleanup, see [Failure scenarios](#failure-scenarios).
+For failures during drive preparation, see [Failure scenarios](#failure-scenarios).
 
 !!! info "TODO: SCSI reservations"
 
@@ -313,7 +317,7 @@ For failures during drive cleanup, see [Failure scenarios](#failure-scenarios).
 #### While active
 
 The drive session retains ownership of the hardware across tape sessions and idle waits.
-Successful tape sessions and idle scheduling attempts do not repeat the initial drive cleanup.
+Successful tape sessions and idle scheduling attempts do not repeat the initial drive preparation.
 Work selection is described in [Scheduling](../data-management/scheduling.md).
 
 #### On exit
@@ -327,7 +331,7 @@ Completing a tape session or having no eligible work does not end the drive sess
 3. Report `Down`. Ending the drive session does not itself change the desired state.
 
 If desired `Up` remains set, the daemon may start a new drive session after the previous one ends.
-The new session must clean the drive again before scheduling, including after a daemon restart.
+The new session must prepare the drive again as configured before scheduling, including after a daemon restart.
 
 ### Tape session lifetime
 
@@ -382,9 +386,12 @@ Responsibility for establishing this depends on which ownership period is beginn
 At the start of a drive session, the daemon cannot assume the drive is empty.
 A cartridge may remain from an interrupted daemon run or from hardware operations performed outside a drive session.
 
-The daemon therefore performs [drive cleanup on entry](#drive-session-lifetime).
-It removes any remaining cartridge and resets drive configuration as necessary, even if the daemon did not mount that cartridge and does not know its identity.
-This access is permitted by desired `Up`: the daemon is taking ownership of the drive hardware and establishing that it can be used.
+The daemon therefore performs [drive preparation on entry](#drive-session-lifetime).
+With initial cleanup enabled (`drive.clean_on_up`), it removes any remaining cartridge and resets drive configuration as necessary, even if the daemon did not mount that cartridge and does not know its identity.
+By default, initial cleanup is disabled: preparation only probes for emptiness and leaves configuration unchanged.
+A cartridge or a failed probe requests desired `Down` and ends the drive session without scheduling.
+Desired `Up` permits this preparation access.
+Recovery cleanup after an unexpected tape-session exception within an existing drive session runs regardless of the initial cleanup policy.
 
 ### Completing a tape session
 
@@ -395,16 +402,17 @@ The drive session retains hardware ownership between tape sessions; it does not 
 ### Ending a drive session or shutting down
 
 On normal completion of the last tape session, its cartridge has already been unmounted.
-If no tape session ran, initial drive cleanup has already established that the drive is empty.
+If preparation succeeded but no tape session ran, the initial cleanup or probe has already established that the drive is empty.
 Neither ending the drive session nor shutting down the daemon therefore needs another physical cleanup.
 
 This also matters when the daemon is stopped while the drive is already reported `Down`.
 Hardware ownership has been relinquished, and a cartridge may have been loaded by another operation.
-Shutdown must not access the hardware to remove it; removing it requires a new request for desired `Up` and cleanup in a new drive session.
+Shutdown must not access the hardware to remove it; daemon cleanup requires a new request for desired `Up` and initial cleanup enabled for the new drive session.
 
 **Reported `Down` does not mean empty.**
 If normal cleanup cannot complete, the daemon must not assume that the cartridge was removed.
-Recovery or deferred cleanup is covered under [Failure scenarios](#failure-scenarios); cleanup at the start of the next drive session establishes whether the drive can safely be reused.
+Recovery or deferred cleanup is covered under [Failure scenarios](#failure-scenarios); preparation at the start of the next drive session establishes whether scheduling can resume.
+With initial cleanup disabled, a remaining cartridge must be removed before the emptiness probe can succeed.
 
 ## Failure handling and recovery
 
@@ -427,14 +435,14 @@ Daemon restarts may be performed by service supervision; a restart alone is not 
 | **Registration fails, for example because the catalogue is unavailable** | Exits before starting a drive session. It does not attempt shutdown state publication or hardware cleanup; registration updates already made may remain. | Restart once the registration problem is resolved. Startup checks the catalogue state again. |
 | **The configured logical library does not exist** | Waits for the library entry without starting drive sessions or accessing hardware. Absence alone is not fatal. | **Operator action:** Create the library entry; the running daemon can then continue startup. |
 | **The drive's catalogue entry disappears** | Exits without recreating the entry during that run. | A later daemon run registers the drive again and applies the startup policy. |
-| **The drive cannot be opened, reset, or emptied at the start of a drive session** | Sets desired `Down` and reports `Down`, preserving a specific failure reason. Does not schedule tape sessions. | **Operator action:** Resolve the underlying problem and request desired `Up`. A new drive session attempts drive cleanup again. |
-| **A recoverable scheduling error or timeout occurs** | Waits and retries within the current drive session, without repeating the initial drive cleanup. | Scheduling continues when the scheduler can supply work. No operator state change is required. |
+| **The drive cannot be opened, reset, or emptied at the start of a drive session** | Sets desired `Down` and reports `Down`, preserving a specific failure reason. Does not schedule tape sessions. | **Operator action:** Resolve the underlying problem and request desired `Up`. A new drive session retries preparation as configured. |
+| **A recoverable scheduling error or timeout occurs** | Waits and retries within the current drive session, without repeating the initial drive preparation. | Scheduling continues when the scheduler can supply work. No operator state change is required. |
 | **A tape session cannot access the drive or leaves it unusable** | Sets desired `Down` and reports `Down`, recording or preserving the failure reason. | **Operator action:** Resolve the problem and request desired `Up`. |
 | **Mounting or transferring fails, but cleanup leaves the drive reusable** | Completes cleanup and reports the failed work. The drive session can continue if desired `Up` remains set. | Further work can be scheduled. Recovery of failed file-transfer jobs is separate from recovery of the drive. |
-| **An unexpected tape session failure occurs after its transfer threads have stopped** | Attempts recovery cleanup while the drive session still owns the hardware, including when desired `Down` has been requested. | Successful recovery with continued desired `Up` permits scheduling to resume. If desired `Down` is observed, the drive session ends after cleanup. |
+| **An unexpected tape session failure occurs after its transfer threads have stopped** | Attempts recovery cleanup while the drive session still owns the hardware, including when desired `Down` has been requested and regardless of the initial cleanup policy. | Successful recovery with continued desired `Up` permits scheduling to resume. If desired `Down` is observed, the drive session ends after cleanup. |
 | **Cleanup fails, including a stuck cartridge** | Sets desired `Down` and reports `Down`; no further tape sessions are scheduled. A cartridge may remain loaded. | **Operator action:** Address the hardware or cleanup problem, then request desired `Up`. |
-| **The daemon cannot confirm that a failed tape session has finished using the drive** | After an error starting or stopping its transfer threads, the daemon cannot confirm that drive access has stopped. It skips recovery cleanup to avoid overlapping unload or unmount with reads or writes. It requests desired `Down` with the reason `Session did not stop safely`, but does not report hardware release while worker termination remains uncertain, then exits (see [Down reasons](#down-reasons)). | The old process must end before a replacement takes control. Restart the daemon; drive cleanup is required. **Operator action if desired `Down` was recorded:** Request desired `Up`. |
-| **The process crashes or is abruptly terminated before shutdown runs** | Cannot finish cleanup or publish shutdown state. It leaves the last successfully recorded desired state unchanged, which is normally desired `Up` during an active drive session. The reported state may be stale and a cartridge may remain loaded. | Restart the daemon. Existing desired `Up` permits drive cleanup on restart without a new operator request, as described below. |
+| **An exception escapes worker startup or joining** | Logs the failure and exits immediately without unwinding, recovery cleanup, or publishing desired/reported drive state. Worker termination is treated as uncertain; the last recorded state remains and a cartridge may be loaded. | The old process must end before a replacement takes control. Restart using the [crash-recovery policy](#recovery-after-a-crash); preparation follows the configured cleanup policy. |
+| **The process crashes or is abruptly terminated before shutdown runs** | Cannot finish cleanup or publish shutdown state. It leaves the last successfully recorded desired state unchanged, which is normally desired `Up` during an active drive session. The reported state may be stale and a cartridge may remain loaded. | Restart the daemon. Resuming an existing desired `Up` requires startup recovery to be enabled; preparation follows the configured cleanup policy, as described below. |
 
 Whenever a failure or shutdown requests desired `Down`, taped reads the current desired state and preserves an observed specific Down reason.
 This read and update are not atomic: a concurrent operator change can be overwritten.
@@ -444,10 +452,17 @@ Reported activity and final release do not overwrite desired state or its reason
 ### Recovery after a crash
 
 An abrupt crash cannot publish shutdown state, so the last recorded desired state remains unchanged unless another actor changes it.
-Once the old process has ended, restarting the daemon follows the normal [startup behavior](#daemon-lifetime): existing desired `Up` permits a new [drive session](#drive-session-lifetime), including cleanup before scheduling; existing desired `Down` leaves the daemon waiting without hardware access.
-Preserving desired `Up` does not depend on the policy for automatically requesting desired `Up`, because the request already exists.
+Once the old process has ended, restarting the daemon follows the normal [startup behavior](#daemon-lifetime).
+An existing desired `Up` is preserved only when startup recovery is enabled; otherwise startup requests desired `Down` with the `startup-recovery-disabled` reason and waits for an operator request.
+This recovery decision takes precedence over the automatic startup policy.
+An existing desired `Down` with an absent, empty, or clean-shutdown reason can become desired `Up` when automatic startup is enabled; other Down reasons are preserved.
+Both startup policies are disabled by default.
 
-A handled fatal failure or orderly shutdown can instead record desired `Down` before exiting, requiring a new request for desired `Up`.
+Every new drive session prepares the drive as configured; initial cleanup is disabled by default.
+With cleanup disabled, any remaining cartridge must be removed before the probe can succeed.
+
+A handled fatal failure or orderly shutdown can instead record desired `Down` before exiting.
+A specific failure reason requires an operator request for desired `Up`; a clean-shutdown reason allows the daemon to request desired `Up` automatically, if configured to do so.
 Recovering the drive does not establish that interrupted file transfers completed successfully.
 
 ### Tape session failures and counters
@@ -588,4 +603,5 @@ flowchart TB
 The tape thread can finish reading all required data before the disk threads finish writing it.
 The cartridge can then be unmounted while the disk threads continue consuming data already held in the daemon's memory buffers.
 This is the activity reported as `DrainToDisk`: it concerns the disk side of retrieval, not flushing the tape drive's write buffer.
+The state can also follow failed tape cleanup, so it does not prove that the cartridge was removed.
 The tape session finishes only after the outstanding disk work and reporting have also completed.
