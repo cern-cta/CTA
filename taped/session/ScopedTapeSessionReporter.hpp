@@ -5,10 +5,7 @@
 
 #pragma once
 
-#include "common/log/ExceptionLogging.hpp"
-
-#include <cstdlib>
-#include <exception>
+#include "WorkerFailureHandling.hpp"
 
 namespace cta::tape::daemon {
 
@@ -59,13 +56,9 @@ public:
 private:
   /// Preserve borrowed session state when reporter termination cannot be established.
   [[noreturn]] void exitOnReporterFailure() noexcept {
-    // Logger entry points are noexcept; diagnostic failures must also bypass cleanup.
-    std::set_terminate([] { std::_Exit(EXIT_FAILURE); });
-    log::logCurrentExceptionNoThrow(
+    exitOnUnsafeWorkerFailure(
       m_lc,
-      "Reporter termination could not be established. Exiting immediately to protect borrowed session state.",
-      log::CRIT);
-    std::_Exit(EXIT_FAILURE);
+      "Reporter termination could not be established. Exiting immediately to protect borrowed session state.");
   }
 
   Reporter& m_reporter;

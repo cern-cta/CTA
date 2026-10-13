@@ -20,6 +20,7 @@ add_library(ctatapedutils
 target_link_libraries(ctatapedutils PUBLIC ctaruntime)
 
 add_library(ctataped
+  DriveStartupPolicy.cpp
   TapedApp.cpp
   TapeDaemon.cpp
 )
@@ -36,6 +37,7 @@ target_link_libraries(ctataped
 )
 
 add_library(ctatapedunittests SHARED
+  DriveStartupPolicyTest.cpp
   TapeDaemonTest.cpp
 )
 set_property(TARGET ctatapedunittests PROPERTY SOVERSION "${CTA_SOVERSION}")

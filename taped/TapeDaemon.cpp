@@ -5,9 +5,11 @@
 
 #include "TapeDaemon.hpp"
 
+#include "DriveStartupPolicy.hpp"
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/log/ExceptionLogging.hpp"
 #include "common/semconv/Logging.hpp"
 #include "common/utils/ScopeExit.hpp"
 #include "common/utils/utils.hpp"
@@ -45,13 +47,8 @@ void TapeDaemon::stop() {
   try {
     TapeDrivesCatalogueState(m_catalogue)
       .requestDriveDown(m_driveInfo.driveName, common::dataStructures::DriveDownReason::Shutdown, lc);
-  } catch (const std::exception& ex) {
-    log::ScopedParamContainer params(lc);
-    const auto* ctaException = dynamic_cast<const exception::Exception*>(&ex);
-    params.add(semconv::log::exceptionMessage, ctaException ? ctaException->getMessageValue() : ex.what());
-    lc.log(log::ERR, "Failed to request drive down while stopping.");
   } catch (...) {
-    lc.log(log::ERR, "Unknown failure requesting drive down while stopping.");
+    log::logCurrentExceptionNoThrow(lc, "Failed to request drive down while stopping.");
   }
 }
 
@@ -79,12 +76,8 @@ int TapeDaemon::run() {
                       false,
                       "Drive name belongs to a different host or logical library");
     }
-  } catch (const exception::Exception& ex) {
-    return shutdown(ExitCause::RegistrationFailure, false, ex.getMessageValue());
-  } catch (const std::exception& ex) {
-    return shutdown(ExitCause::RegistrationFailure, false, ex.what());
   } catch (...) {
-    return shutdown(ExitCause::RegistrationFailure, false, "Unknown exception");
+    return shutdown(ExitCause::RegistrationFailure, false, exception::currentExceptionMessage());
   }
 
   try {
@@ -111,12 +104,8 @@ int TapeDaemon::run() {
     }
   } catch (const TapeDrivesCatalogueState::NoSuchDrive& ex) {
     return shutdown(ExitCause::MissingDrive, false, ex.getMessageValue());
-  } catch (const exception::Exception& ex) {
-    return shutdown(ExitCause::UnexpectedFailure, true, ex.getMessageValue());
-  } catch (const std::exception& ex) {
-    return shutdown(ExitCause::UnexpectedFailure, true, ex.what());
   } catch (...) {
-    return shutdown(ExitCause::UnexpectedFailure, true, "Unknown exception");
+    return shutdown(ExitCause::UnexpectedFailure, true, exception::currentExceptionMessage());
   }
 
   return shutdown(ExitCause::Normal, true);
@@ -244,63 +233,39 @@ bool TapeDaemon::registerDrive() {
   }
 
   const auto previous = m_catalogue.DriveState()->getTapeDrive(m_driveInfo.driveName);
-  // A crash may leave the drive in desired Up. This allows it to recover.
-  if (previous && previous->desiredUp) {
-    m_lc.log(log::INFO, "Desired Up detected on startup.");
-    if (!m_config.drive.startup.recover_existing_up) {
-      TapeDrivesCatalogueState(m_catalogue)
-        .requestDriveDown(m_driveInfo.driveName,
-                          common::dataStructures::DriveDownReason::StartupRecoveryDisabled,
-                          m_lc);
-      driveStateCatalogue.reportDriveStatus(m_driveInfo,
-                                            common::dataStructures::MountType::NoMount,
-                                            common::dataStructures::DriveStatus::Down,
-                                            m_lc);
-      driveStateCatalogue.reportSchedulerBackendName(m_driveInfo.driveName, m_config.scheduler.backend_name, m_lc);
-      m_lc.log(log::INFO, "Startup recovery disabled; operator Up required.");
-      m_registered.store(true);
-      return true;
+  const auto decision = decideDriveStartup(m_config.drive.startup, previous);
+  using namespace common::dataStructures;
+  using Action = DriveStartupDecision::Action;
+  std::string message;
+
+  switch (decision.action) {
+    case Action::RecoverExistingUp:
+      // Preserve operator intent while drive preparation establishes readiness for tape work.
+      driveStateCatalogue.reportDriveStatus(m_driveInfo, MountType::NoMount, DriveStatus::Starting, m_lc);
+      message = "Startup recovery enabled. Preserving desired Up.";
+      break;
+    case Action::RequireOperatorUp:
+      driveStateCatalogue.requestDriveDown(m_driveInfo.driveName, DriveDownReason::StartupRecoveryDisabled, m_lc);
+      driveStateCatalogue.reportDriveStatus(m_driveInfo, MountType::NoMount, DriveStatus::Down, m_lc);
+      message = "Startup recovery disabled; operator Up required.";
+      break;
+    case Action::Register: {
+      const SecurityIdentity securityIdentity;
+      driveStateCatalogue.createTapeDriveStatus(m_driveInfo,
+                                                decision.desiredState,
+                                                MountType::NoMount,
+                                                DriveStatus::Down,
+                                                securityIdentity,
+                                                m_lc);
+      message = "Drive registered with reported status down and desired state "
+                + std::string(decision.desiredState.up ? "up." : "down.");
+      break;
     }
-
-    // Keep the existing entry and operator intent. Starting does not change desired-up.
-    driveStateCatalogue.reportDriveStatus(m_driveInfo,
-                                          common::dataStructures::MountType::NoMount,
-                                          common::dataStructures::DriveStatus::Starting,
-                                          m_lc);
-    driveStateCatalogue.reportSchedulerBackendName(m_driveInfo.driveName, m_config.scheduler.backend_name, m_lc);
-    m_lc.log(log::INFO, "Startup recovery enabled. Preserving desired Up.");
-    m_registered.store(true);
-    return true;
   }
 
-  common::dataStructures::DesiredDriveState driveState;
-  if (previous) {
-    driveState.reason = previous->reasonUpDown;
-    driveState.comment = previous->userComment;
-  } else {
-    m_lc.log(log::INFO, "Drive has no existing catalogue entry. Creating one.");
-  }
-
-  if (!driveState.reason || driveState.reason->empty()
-      || common::dataStructures::isCleanDriveShutdownReason(*driveState.reason)) {
-    driveState.reason = common::dataStructures::formatDriveDownReason(common::dataStructures::DriveDownReason::Startup);
-    driveState.up = m_config.drive.startup.auto_up;
-    m_lc.log(log::INFO,
-             driveState.up ? "Automatic Up requested by drive.startup.auto_up; drive preparation required." :
-                             "Automatic Up disabled by drive.startup.auto_up; operator Up required.");
-  }
-
-  common::dataStructures::SecurityIdentity securityIdentity;
-  driveStateCatalogue.createTapeDriveStatus(m_driveInfo,
-                                            driveState,
-                                            common::dataStructures::MountType::NoMount,
-                                            common::dataStructures::DriveStatus::Down,
-                                            securityIdentity,
-                                            m_lc);
+  // Readiness is published only after registration and backend publication both succeed.
   driveStateCatalogue.reportSchedulerBackendName(m_driveInfo.driveName, m_config.scheduler.backend_name, m_lc);
-  m_lc.log(log::INFO,
-           "Drive registered with reported status down and desired state "
-             + std::string(driveState.up ? "up." : "down."));
+  m_lc.log(log::INFO, message);
   m_registered.store(true);
   return true;
 }

@@ -9,9 +9,18 @@
 
 #include <cstdlib>
 #include <exception>
+#include <string_view>
 #include <utility>
 
 namespace cta::tape::daemon {
+
+/// Log the active exception and exit without unwinding when worker termination is uncertain.
+[[noreturn]] inline void exitOnUnsafeWorkerFailure(log::LogContext& lc, std::string_view message) noexcept {
+  // Even a failure inside a noexcept logger must bypass hardware cleanup and borrowed-state destruction.
+  std::set_terminate([] { std::_Exit(EXIT_FAILURE); });
+  log::logCurrentExceptionNoThrow(lc, message, log::CRIT);
+  std::_Exit(EXIT_FAILURE);
+}
 
 /// In some cases if we cannot shutdown workers cleanly, we cannot guarantee that they are not
 /// still touching the tape hardware, in which cleaning the drive is unsafe.
@@ -25,14 +34,9 @@ void runOrExitOnWorkerFailure(log::LogContext& lc, Operation&& operation) noexce
   } catch (...) {
     // TODO (graceful shutdown MR): distinguish stopped-worker errors from uncertain termination;
     // currently any escaping startup/join exception forces a restart.
-    // The logger has noexcept entry points; even a diagnostic failure must use the same immediate exit.
-    std::set_terminate([] { std::_Exit(EXIT_FAILURE); });
-    log::logCurrentExceptionNoThrow(lc,
-                                    "Tape session worker termination could not be established. Exiting immediately; "
-                                    "drive recovery is required on restart.",
-                                    log::CRIT);
-    // Preserve desired state and bypass destructors, exit handlers, and drive cleanup.
-    std::_Exit(EXIT_FAILURE);
+    exitOnUnsafeWorkerFailure(lc,
+                              "Tape session worker termination could not be established. Exiting immediately; "
+                              "drive recovery is required on restart.");
   }
 }
 

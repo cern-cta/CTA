@@ -6,6 +6,7 @@
 #include "MountedTape.hpp"
 
 #include "common/exception/Exception.hpp"
+#include "common/log/ExceptionLogging.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/utils/Timer.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
@@ -49,20 +50,9 @@ MountedTape::MountedTape(mediachanger::MediaChangerFacade& mediaChanger,
       try {
         tracker.addTapeSetupStats({.initialMountTime = mountTime});
       } catch (...) {}
-      try {
-        try {
-          throw;
-        } catch (const cta::exception::Exception& ex) {
-          params.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
-        } catch (const std::exception& ex) {
-          params.add(cta::semconv::log::exceptionMessage, ex.what());
-        } catch (...) {
-          params.add(cta::semconv::log::exceptionMessage, "Non-standard exception");
-        }
-        m_lc.log(log::ERR,
-                 readOnly ? "Failed to mount the tape for read-only access" :
-                            "Failed to mount the tape for read/write access");
-      } catch (...) {}
+      log::logCurrentExceptionNoThrow(m_lc,
+                                      readOnly ? "Failed to mount the tape for read-only access" :
+                                                 "Failed to mount the tape for read/write access");
       throw;
     }
     const double mountTime = timer.secs();

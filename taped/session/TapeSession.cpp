@@ -466,15 +466,7 @@ cta::tape::daemon::TapeSession::findDrive(cta::log::LogContext& logContext, Exec
     // Record the operation stage and cause before propagating the original exception.
     std::string detail(stage);
     detail += ": ";
-    try {
-      throw;
-    } catch (const cta::exception::Exception& ex) {
-      detail += ex.getMessageValue();
-    } catch (const std::exception& ex) {
-      detail += ex.what();
-    } catch (...) {
-      detail += "Unknown exception";
-    }
+    detail += cta::exception::currentExceptionMessage();
     state.result.downReason = reason;
     state.result.downDetail = detail;
     state.result.driveReusable = false;

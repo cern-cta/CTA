@@ -217,12 +217,9 @@ DriveSession::IterationResult DriveSession::runIteration(std::stop_token stopTok
     m_lc.log(log::WARNING, "Scheduling timed out; waiting before retrying.");
   } catch (const TapeDrivesCatalogueState::NoSuchDrive&) {
     throw;
-  } catch (const std::exception& ex) {
+  } catch (const std::exception&) {
     // No transfer has started; retry within this up period after the idle delay.
-    log::ScopedParamContainer params(m_lc);
-    const auto* ctaException = dynamic_cast<const exception::Exception*>(&ex);
-    params.add(semconv::log::exceptionMessage, ctaException ? ctaException->getMessageValue() : ex.what());
-    m_lc.log(log::ERR, "Scheduling failed unexpectedly; waiting before retrying.");
+    log::logCurrentExceptionNoThrow(m_lc, "Scheduling failed unexpectedly; waiting before retrying.");
   }
 
   // Do another quick check to see if we should stop before committing to a tape session
@@ -283,16 +280,8 @@ TapeSessionResult DriveSession::runTapeSession(TapeMount& tapeMount) {
       [this] { std::atomic_store<const TapeSessionTracker>(&m_activeTracker, nullptr); });
     // Run the session
     transferResult = session.execute();
-  } catch (const exception::Exception& ex) {
-    log::ScopedParamContainer params(m_lc);
-    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
-    m_lc.log(log::ERR, "Tape session failed. Attempting drive cleaning.");
-  } catch (const std::exception& ex) {
-    log::ScopedParamContainer params(m_lc);
-    params.add(semconv::log::exceptionMessage, ex.what());
-    m_lc.log(log::ERR, "Tape session failed. Attempting drive cleaning.");
   } catch (...) {
-    m_lc.log(log::ERR, "Tape session failed with an unknown exception. Attempting drive cleaning.");
+    log::logCurrentExceptionNoThrow(m_lc, "Tape session failed. Attempting drive cleaning.");
   }
 
   if (!transferResult) {
@@ -368,12 +357,8 @@ bool DriveSession::prepareDrive(const std::optional<std::string>& vid) {
         downReason = common::dataStructures::DriveDownReason::TapeDetected;
       }
     }
-  } catch (const cta::exception::Exception& ex) {
-    preparationError = ex.getMessageValue();
-  } catch (const std::exception& ex) {
-    preparationError = ex.what();
   } catch (...) {
-    preparationError = "Unknown exception during drive preparation";
+    preparationError = exception::currentExceptionMessage();
   }
   // Hardware preparation has ended; only outcome reporting remains.
   tracker->reportState(cta::tape::session::TapeSessionState::Finalizing);
