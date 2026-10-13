@@ -11,7 +11,8 @@
 namespace cta::tape::daemon {
 
 DriveStartupDecision decideDriveStartup(const DriveStartupConfig& config,
-                                        const std::optional<common::dataStructures::TapeDrive>& previous) {
+                                        const std::optional<common::dataStructures::TapeDrive>& previous,
+                                        std::time_t recordedAt) {
   using namespace common::dataStructures;
   using Action = DriveStartupDecision::Action;
 
@@ -27,8 +28,9 @@ DriveStartupDecision decideDriveStartup(const DriveStartupConfig& config,
     desired.comment = previous->userComment;
   }
 
-  if (!desired.reason || desired.reason->empty() || isCleanDriveShutdownReason(*desired.reason)) {
-    desired.reason = formatDriveDownReason(DriveDownReason::Startup);
+  if (!desired.reason || desired.reason->empty()
+      || classifyPersistedDriveReason(*desired.reason) == PersistedDriveReasonKind::CleanShutdown) {
+    desired.reason = formatDriveDownReason(DriveDownReason::Startup, {}, recordedAt);
     desired.up = config.auto_up;
   }
   return decision;

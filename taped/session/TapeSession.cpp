@@ -77,7 +77,9 @@ void recordFailure(std::exception_ptr failure, std::exception_ptr& fatalFailure,
 // Local to one execute() call; transfer reporting takes over completion after startup.
 struct cta::tape::daemon::TapeSession::ExecutionState {
   TapeSessionResult result;
-  bool completionOwned = true;
+  // The pipeline completes the mount once started.
+  // The tape thread handles unmounting so the next mount can start as soon as tape work finishes.
+  bool completionDelegated = false;
 };
 
 //------------------------------------------------------------------------------
@@ -177,8 +179,7 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
     }
   };
   m_tapeSessionTracker->reportState(cta::tape::session::TapeSessionState::Finalizing);
-  if (state.completionOwned) {
-    state.completionOwned = false;
+  if (!state.completionDelegated) {
     finalize([&] { m_tapeMount.complete(); });
   }
 
@@ -303,7 +304,7 @@ void cta::tape::daemon::TapeSession::executeRead(cta::log::LogContext& logContex
         threadPool.startThreads();
         reportPacker.startThreads();
         taskInjector.startThreads();
-        state.completionOwned = false;
+        state.completionDelegated = true;
         // This thread is now going to be idle until the system unwinds at the end of the session
         // All client notifications are done by the report packer, including the end of session
         taskInjector.waitThreads();
@@ -416,7 +417,7 @@ void cta::tape::daemon::TapeSession::executeWrite(cta::log::LogContext& logConte
         writeSingleThread.startThreads();
         reportPacker.startThreads();
         taskInjector.startThreads();
-        state.completionOwned = false;
+        state.completionDelegated = true;
         // Synchronise with end of threads
         taskInjector.waitThreads();
         writeSingleThread.waitThreads();

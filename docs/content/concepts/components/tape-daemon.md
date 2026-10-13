@@ -229,18 +229,24 @@ When desired `Down` is set, the **down reason** records why the drive is unavail
 The reason accompanies the desired state, so it can be recorded while the daemon is still finishing the transition to reported `Down`.
 It can describe an operator's intent, such as maintenance, or a condition detected by the daemon.
 
-Reasons set by the tape daemon identify their source with `[cta-taped]`, followed by a severity and a message.
-The table lists the base messages; the recorded down reason may also include details about the underlying problem, such as the error encountered while opening the drive or unloading a cartridge.
+Reasons set by the tape daemon use `[cta-taped:<code>]`, followed by a local timestamp without a timezone suffix, severity and message.
+For example: `[cta-taped:shutdown] 2026-10-13T14:25:30 INFO Shutdown: SIGTERM received`.
+Only the closed prefix is matched; the remaining text is not parsed.
+The unversioned code is a persisted compatibility identifier; startup and reason-preservation policies match it independently of the timestamp, display wording and details.
+`shutdown` identifies a clean shutdown even when details are present; conditions requiring inspection must use a different code.
+For an already desired-Down drive, unknown identifiers and operator text are preserved and do not enable automatic startup.
+Preserving an existing reason also preserves its original timestamp; a new timestamp is generated only when recording a replacement reason.
+The table lists identifiers and base messages (timestamps omitted); the recorded down reason may also include details about the underlying problem, such as the error encountered while opening the drive or unloading a cartridge.
 
 | Base `Down` reason | Meaning |
 | --- | --- |
-| `[cta-taped] INFO Startup` | The daemon has registered desired `Down` and reported `Down`. It has not started a drive session and is waiting for desired `Up`. |
-| `[cta-taped] INFO Shutdown` | The daemon is exiting and sets desired `Down`. This is the normal reason on a clean exit when no specific down reason needs to be preserved. |
-| `[cta-taped] ERROR Session drive access failed` | The daemon could not discover, locate, or open the drive for a tape session. |
-| `[cta-taped] ERROR Drive cleanup failed` | Drive cleanup could not establish that the drive was reusable. Additional details can identify an access, configuration, or cartridge-removal failure. |
-| `[cta-taped] ERROR Session left drive unusable` | A tape session left the drive unusable and no more specific existing reason was available. |
-| `[cta-taped] ERROR Session did not stop safely` | The daemon could not confirm that tape session access to the drive had stopped. |
-| `[cta-taped] ERROR Unexpected failure` | An unexpected fatal daemon or drive-session failure prevented continuation. This is not a clean shutdown. |
+| `[cta-taped:startup] INFO Startup` | The daemon has registered desired `Down` and reported `Down`. It has not started a drive session and is waiting for desired `Up`. |
+| `[cta-taped:shutdown] INFO Shutdown` | The daemon is exiting and sets desired `Down`. This is the normal reason on a clean exit when no specific down reason needs to be preserved. |
+| `[cta-taped:session-drive-access-failed] ERROR Session drive access failed` | The daemon could not discover, locate, or open the drive for a tape session. |
+| `[cta-taped:drive-cleanup-failed] ERROR Drive cleanup failed` | Drive cleanup could not establish that the drive was reusable. Additional details can identify an access, configuration, or cartridge-removal failure. |
+| `[cta-taped:session-left-drive-unusable] ERROR Session left drive unusable` | A tape session left the drive unusable and no more specific existing reason was available. |
+| `[cta-taped:session-did-not-stop-safely] ERROR Session did not stop safely` | The daemon could not confirm that tape session access to the drive had stopped. |
+| `[cta-taped:unexpected-failure] ERROR Unexpected failure` | An unexpected fatal daemon or drive-session failure prevented continuation. This is not a clean shutdown. |
 
 An existing operator or failure reason is preserved instead of being replaced by startup or shutdown messages.
 With automatic desired `Up` disabled, a previous clean-shutdown reason is replaced by the startup reason when the daemon starts again.

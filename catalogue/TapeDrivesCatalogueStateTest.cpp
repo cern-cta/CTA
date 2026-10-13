@@ -106,4 +106,44 @@ TEST_F(TapeDrivesCatalogueStateTest, PublicationFailurePropagates) {
   EXPECT_THROW(state.requestDriveDown("drive", DriveDownReason::Shutdown, lc), std::runtime_error);
 }
 
+TEST_F(TapeDrivesCatalogueStateTest, DownReasonPrefixControlsReplacement) {
+  struct Case {
+    const char* reason;
+    bool replace;
+  };
+
+  const Case cases[] {
+    {"[cta-taped] INFO Startup",                                               false},
+    {"[cta-taped] INFO Shutdown",                                              false},
+    {"[cta-taped:startup] 2020-01-01T00:00:00Z Changed wording",               true },
+    {"[cta-taped:shutdown] 2020-01-01T00:00:00Z Changed wording: SIGTERM",     true },
+    {"[cta-taped] INFO Shutdown: inspect drive",                               false},
+    {"[cta-taped:drive-cleanup-failed] 2020-01-01T00:00:00Z ERROR Stuck tape", false},
+    {"[cta-taped:future-code] 2020-01-01T00:00:00Z INFO Shutdown",             false},
+    {"[cta-taped:shutdown] arbitrary display text",                            true },
+    {"Operator maintenance",                                                   false}
+  };
+  for (const auto& test : cases) {
+    SCOPED_TRACE(test.reason);
+    TapeDrive drive;
+    drive.desiredUp = false;
+    drive.reasonUpDown = test.reason;
+    EXPECT_CALL(catalogue.driveState(), getTapeDrive("drive")).WillOnce(Return(drive));
+    EXPECT_CALL(catalogue.driveState(), setDesiredTapeDriveState("drive", _))
+      .WillOnce(Invoke([&](const auto&, const DesiredDriveState& desired) {
+        EXPECT_FALSE(desired.up);
+        if (test.replace) {
+          ASSERT_TRUE(desired.reason);
+          EXPECT_TRUE(desired.reason->starts_with("[cta-taped:drive-cleanup-failed] "));
+          EXPECT_TRUE(desired.reason->ends_with(" ERROR Drive cleanup failed: detail"));
+        } else {
+          // Omitting the field preserves both the original text and its recording timestamp.
+          EXPECT_FALSE(desired.reason);
+        }
+      }));
+    state.requestDriveDown("drive", DriveDownReason::DriveCleanupFailed, lc, "detail");
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&catalogue.driveState()));
+  }
+}
+
 }  // namespace cta

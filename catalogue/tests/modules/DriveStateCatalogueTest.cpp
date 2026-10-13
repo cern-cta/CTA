@@ -140,8 +140,13 @@ TEST_P(cta_catalogue_DriveStateTest, RequestDownPreservesReasonsAndReportedSessi
       ASSERT_TRUE(stored);
       EXPECT_FALSE(stored->desiredUp);
       EXPECT_FALSE(stored->desiredForceDown);
-      EXPECT_EQ(!up && i >= 4 ? reasons[i] : formatDriveDownReason(DriveDownReason::DriveCleanupFailed, "detail"),
-                stored->reasonUpDown);
+      if (!up && i >= 4) {
+        EXPECT_EQ(reasons[i], stored->reasonUpDown);
+      } else {
+        ASSERT_TRUE(stored->reasonUpDown);
+        EXPECT_TRUE(stored->reasonUpDown->starts_with("[cta-taped:drive-cleanup-failed] "));
+        EXPECT_TRUE(stored->reasonUpDown->ends_with(" ERROR Drive cleanup failed: detail"));
+      }
       EXPECT_EQ(before->driveStatus, stored->driveStatus);
       EXPECT_EQ(before->mountType, stored->mountType);
       EXPECT_EQ(before->sessionId, stored->sessionId);

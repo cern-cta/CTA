@@ -7,22 +7,29 @@
 #include "common/log/Logger.hpp"
 
 #include <gtest/gtest.h>
+#include <iomanip>
+#include <sstream>
 #include <stdexcept>
-#include <string_view>
 #include <tuple>
 
 namespace cta::common::dataStructures {
-TEST(DriveDownReasonTest, FormatsSeverityAndDetails) {
-  for (const auto& [reason, severity, prefix] : {
-         std::tuple {DriveDownReason::Startup,            log::INFO, "[cta-taped] INFO " },
-         std::tuple {DriveDownReason::DriveCleanupFailed, log::ERR,  "[cta-taped] ERROR "}
+TEST(DriveDownReasonTest, FormatsStableCodeLocalTimestampSeverityAndDetails) {
+  const std::time_t recordedAt = 0;
+  std::tm localTime {};
+  ASSERT_NE(nullptr, ::localtime_r(&recordedAt, &localTime));
+  std::ostringstream timestamp;
+  timestamp << std::put_time(&localTime, "%FT%T");
+
+  for (const auto& [reason, severity, prefix, message] : {
+         std::tuple {DriveDownReason::Startup,            log::INFO, "[cta-taped:startup] ", " INFO Startup"              },
+         std::tuple {DriveDownReason::DriveCleanupFailed,
+                     log::ERR,
+                     "[cta-taped:drive-cleanup-failed] ",                                    " ERROR Drive cleanup failed"}
   }) {
-    SCOPED_TRACE(static_cast<int>(reason));
-    const auto formatted = formatDriveDownReason(reason);
+    const auto expected = prefix + timestamp.str() + message;
     EXPECT_EQ(severity, driveDownReasonSeverity(reason));
-    EXPECT_TRUE(formatted.starts_with(prefix));
-    EXPECT_GT(formatted.size(), std::string_view(prefix).size());
-    EXPECT_EQ(formatted + ": device unavailable", formatDriveDownReason(reason, "device unavailable"));
+    EXPECT_EQ(expected, formatDriveDownReason(reason, {}, recordedAt));
+    EXPECT_EQ(expected + ": device unavailable", formatDriveDownReason(reason, "device unavailable", recordedAt));
   }
 }
 
@@ -32,18 +39,36 @@ TEST(DriveDownReasonTest, RejectsUnknownReasons) {
   EXPECT_THROW(formatDriveDownReason(unknownReason), std::invalid_argument);
 }
 
-TEST(DriveDownReasonTest, RecognizesCanonicalShutdownReason) {
-  EXPECT_TRUE(isCleanDriveShutdownReason("[cta-taped] INFO Shutdown"));
-  EXPECT_TRUE(isCleanDriveShutdownReason(formatDriveDownReason(DriveDownReason::Shutdown)));
+TEST(DriveDownReasonTest, ClassifiesIdentifiersIndependentlyOfDisplayTextAndTime) {
+  using Kind = PersistedDriveReasonKind;
+  EXPECT_EQ(Kind::Startup, classifyPersistedDriveReason("[cta-taped:startup] 2026-10-13T14:25:30Z New wording"));
+  EXPECT_EQ(Kind::CleanShutdown,
+            classifyPersistedDriveReason("[cta-taped:shutdown] 2024-02-29T23:59:59Z INFO Changed wording: SIGTERM"));
+  EXPECT_EQ(Kind::CleanShutdown,
+            classifyPersistedDriveReason(formatDriveDownReason(DriveDownReason::Shutdown, "SIGTERM", 0)));
+  EXPECT_EQ(Kind::Other, classifyPersistedDriveReason(formatDriveDownReason(DriveDownReason::StartupRecoveryDisabled)));
+  EXPECT_EQ(Kind::Other, classifyPersistedDriveReason(formatDriveDownReason(DriveDownReason::DriveCleanupFailed)));
 }
 
-TEST(DriveDownReasonTest, DoesNotClassifyOtherReasonsAsCleanShutdown) {
-  EXPECT_FALSE(isCleanDriveShutdownReason(""));
-  EXPECT_FALSE(isCleanDriveShutdownReason("Operator requested maintenance"));
-  EXPECT_FALSE(isCleanDriveShutdownReason("[cta-taped] INFO Shutdown: operator detail"));
-  EXPECT_FALSE(isCleanDriveShutdownReason(formatDriveDownReason(DriveDownReason::Startup)));
-  EXPECT_FALSE(isCleanDriveShutdownReason(formatDriveDownReason(DriveDownReason::StartupRecoveryDisabled)));
-  EXPECT_FALSE(isCleanDriveShutdownReason(formatDriveDownReason(DriveDownReason::DriveCleanupFailed)));
-  EXPECT_FALSE(isCleanDriveShutdownReason(formatDriveDownReason(DriveDownReason::SessionDidNotStopSafely)));
+TEST(DriveDownReasonTest, ClassifiesPrefixWithoutRequiringDisplayText) {
+  EXPECT_EQ(PersistedDriveReasonKind::Startup, classifyPersistedDriveReason("[cta-taped:startup]"));
+  EXPECT_EQ(PersistedDriveReasonKind::CleanShutdown, classifyPersistedDriveReason("[cta-taped:shutdown]"));
+  EXPECT_EQ(PersistedDriveReasonKind::CleanShutdown,
+            classifyPersistedDriveReason("[cta-taped:shutdown] arbitrary display text"));
+}
+
+TEST(DriveDownReasonTest, UnrecognizedPrefixesRemainOperatorControlled) {
+  for (const auto reason : {"",
+                            "Operator requested maintenance",
+                            "[cta-taped] INFO Startup",
+                            "[cta-taped] INFO Shutdown",
+                            "[cta-taped:future-code] INFO Shutdown",
+                            "[cta-taped:v1:shutdown] INFO Shutdown",
+                            "[cta-taped:shutdown-extra] INFO Shutdown",
+                            "[cta-taped:shutdown",
+                            "prefix [cta-taped:shutdown]"}) {
+    SCOPED_TRACE(reason);
+    EXPECT_EQ(PersistedDriveReasonKind::Other, classifyPersistedDriveReason(reason));
+  }
 }
 }  // namespace cta::common::dataStructures

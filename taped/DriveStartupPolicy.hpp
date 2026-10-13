@@ -8,6 +8,7 @@
 #include "common/dataStructures/DesiredDriveState.hpp"
 #include "common/dataStructures/TapeDrive.hpp"
 
+#include <ctime>
 #include <optional>
 
 namespace cta::tape::daemon {
@@ -24,7 +25,9 @@ struct DriveStartupDecision {
 
 /// Decide whether to register a drive or preserve an existing Up request for recovery.
 /// Existing Down reasons and comments are retained unless the reason permits automatic startup.
+/// recordedAt timestamps any newly created startup reason; preserved reasons keep their original timestamp.
 DriveStartupDecision decideDriveStartup(const DriveStartupConfig& config,
-                                        const std::optional<common::dataStructures::TapeDrive>& previous);
+                                        const std::optional<common::dataStructures::TapeDrive>& previous,
+                                        std::time_t recordedAt = std::time(nullptr));
 
 }  // namespace cta::tape::daemon

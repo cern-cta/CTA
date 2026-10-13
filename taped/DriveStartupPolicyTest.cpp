@@ -6,6 +6,7 @@
 #include "DriveStartupPolicy.hpp"
 
 #include "TapedConfig.hpp"
+#include "common/dataStructures/DriveDownReason.hpp"
 
 #include <array>
 #include <gtest/gtest.h>
@@ -22,12 +23,13 @@ TEST(DriveStartupPolicyTest, NewDriveUsesAutoUpRegardlessOfRecoverySetting) {
       SCOPED_TRACE(recover);
       SCOPED_TRACE(autoUp);
       const DriveStartupConfig config {.recover_existing_up = recover, .auto_up = autoUp};
-      const auto decision = decideDriveStartup(config, std::nullopt);
+      const auto decision = decideDriveStartup(config, std::nullopt, 0);
 
       EXPECT_EQ(Action::Register, decision.action);
       EXPECT_EQ(autoUp, decision.desiredState.up);
       EXPECT_FALSE(decision.desiredState.forceDown);
-      EXPECT_EQ("[cta-taped] INFO Startup", decision.desiredState.reason);
+      EXPECT_EQ(common::dataStructures::formatDriveDownReason(common::dataStructures::DriveDownReason::Startup, {}, 0),
+                decision.desiredState.reason);
       EXPECT_FALSE(decision.desiredState.comment);
     }
   }
@@ -63,10 +65,16 @@ TEST(DriveStartupPolicyTest, ExistingDownPreservesSpecificReasonsAndComments) {
     std::array<bool, 2> expectedUp;
   };
 
+  const auto startupReason =
+    common::dataStructures::formatDriveDownReason(common::dataStructures::DriveDownReason::Startup, {}, 0);
   const Case cases[] {
-    {std::nullopt,                                                                 "[cta-taped] INFO Startup",                 {false, true} },
-    {"",                                                                           "[cta-taped] INFO Startup",                 {false, true} },
-    {"[cta-taped] INFO Shutdown",                                                  "[cta-taped] INFO Startup",                 {false, true} },
+    {"[cta-taped:shutdown] 2026-10-13T14:25:30Z INFO Shutdown: SIGTERM",           startupReason,                              {false, true} },
+    {"[cta-taped:startup] 2026-10-13T14:25:30Z INFO Startup",
+     "[cta-taped:startup] 2026-10-13T14:25:30Z INFO Startup",                                                                  {false, false}},
+    {"[cta-taped:shutdown] arbitrary display text",                                startupReason,                              {false, true} },
+    {std::nullopt,                                                                 startupReason,                              {false, true} },
+    {"",                                                                           startupReason,                              {false, true} },
+    {"[cta-taped] INFO Shutdown",                                                  "[cta-taped] INFO Shutdown",                {false, false}},
     {"Maintenance",                                                                "Maintenance",                              {false, false}},
     {"[cta-taped] ERR Drive cleanup failed",                                       "[cta-taped] ERR Drive cleanup failed",     {false, false}},
     {"[cta-taped] INFO Startup",                                                   "[cta-taped] INFO Startup",                 {false, false}},
@@ -86,7 +94,7 @@ TEST(DriveStartupPolicyTest, ExistingDownPreservesSpecificReasonsAndComments) {
         previous->reasonUpDown = test.reason;
         previous->userComment = "Operator comment";
         const DriveStartupConfig config {.recover_existing_up = recover, .auto_up = autoUp != 0};
-        const auto decision = decideDriveStartup(config, previous);
+        const auto decision = decideDriveStartup(config, previous, 0);
 
         EXPECT_EQ(Action::Register, decision.action);
         EXPECT_EQ(test.expectedUp[autoUp], decision.desiredState.up);

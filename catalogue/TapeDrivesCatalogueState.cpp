@@ -154,14 +154,14 @@ void TapeDrivesCatalogueState::requestDriveDown(const std::string& driveName,
   }
 
   DesiredDriveState desired;
-  desired.reason = formatDriveDownReason(reason, detail);
   if (!current->desiredUp && current->reasonUpDown
       && !current->reasonUpDown->empty()
       // For better diagnostics, allow overwriting startup/shutdown reason
-      && *current->reasonUpDown != formatDriveDownReason(DriveDownReason::Startup)
-      && *current->reasonUpDown != formatDriveDownReason(DriveDownReason::Shutdown)) {
+      && classifyPersistedDriveReason(*current->reasonUpDown) == PersistedDriveReasonKind::Other) {
     // Omit the update so a newer reason is not overwritten with the observed value.
     desired.reason.reset();
+  } else {
+    desired.reason = formatDriveDownReason(reason, detail);
   }
 
   // Note that there is a very small change for a race condition here as the lookup for the reason

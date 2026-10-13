@@ -211,7 +211,10 @@ TEST_F(TapeDaemonTest, DisabledRecoveryPreservesEntryAndDoesNotFallThroughToAuto
       EXPECT_FALSE(desired.up);
       EXPECT_FALSE(desired.comment);
       ASSERT_TRUE(desired.reason);
-      EXPECT_EQ(formatDriveDownReason(DriveDownReason::StartupRecoveryDisabled), desired.reason);
+      EXPECT_THAT(
+        desired.reason,
+        testing::Optional(testing::MatchesRegex(
+          R"(\[cta-taped:startup-recovery-disabled\] [0-9T:-]+ INFO Automatic startup recovery disabled; operator Up required)")));
       previousDrive->desiredUp = desired.up;
     }));
   EXPECT_CALL(driveState(),
@@ -237,7 +240,8 @@ TEST_F(TapeDaemonTest, NewDrivePublishesAutomaticUpDecision) {
     EXPECT_EQ(MountType::NoMount, published.mountType);
     EXPECT_EQ(DriveStatus::Down, published.driveStatus);
     EXPECT_TRUE(published.desiredUp);
-    EXPECT_EQ(formatDriveDownReason(DriveDownReason::Startup), published.reasonUpDown);
+    EXPECT_THAT(published.reasonUpDown,
+                testing::Optional(testing::MatchesRegex(R"(\[cta-taped:startup\] [0-9T:-]+ INFO Startup)")));
   }));
   EXPECT_CALL(driveConfig(),
               createTapeDriveConfig("drive",

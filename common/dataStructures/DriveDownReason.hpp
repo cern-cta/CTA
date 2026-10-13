@@ -4,6 +4,7 @@
  */
 #pragma once
 
+#include <ctime>
 #include <string>
 #include <string_view>
 
@@ -49,16 +50,19 @@ int driveDownReasonSeverity(DriveDownReason reason);
  * @brief Format a drive-down reason with optional failure details.
  * @param reason Reason category to format.
  * @param detail Additional text appended when nonempty.
- * @return A string in the form @c "[cta-taped] <severity> <message>", with @c ": <detail>" appended when provided.
+ * @param recordedAt Time the reason was recorded, rendered in local time without a timezone suffix.
+ * @throws std::runtime_error If the timestamp cannot be formatted.
+ * @return "[cta-taped:<code>] <local timestamp> <severity> <message>", followed by optional details.
  * @throws std::invalid_argument If the reason is unknown.
  */
-std::string formatDriveDownReason(DriveDownReason reason, std::string_view detail = {});
+std::string formatDriveDownReason(DriveDownReason reason,
+                                  std::string_view detail = {},
+                                  std::time_t recordedAt = std::time(nullptr));
 
-/**
- * @brief Check whether a formatted reason represents a clean shutdown.
- * @param reason Formatted drive-down reason to inspect.
- * @return True only for the formatted Shutdown reason without details.
- */
-bool isCleanDriveShutdownReason(std::string_view reason);
+/// Policy meaning of a persisted reason; unknown or operator-written reasons remain Other.
+enum class PersistedDriveReasonKind { Startup, CleanShutdown, Other };
+
+/// Classify by stable prefix only; timestamps, display messages and details are not parsed.
+PersistedDriveReasonKind classifyPersistedDriveReason(std::string_view reason);
 
 }  // namespace cta::common::dataStructures
