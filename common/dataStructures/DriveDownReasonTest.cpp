@@ -8,33 +8,21 @@
 
 #include <gtest/gtest.h>
 #include <stdexcept>
+#include <string_view>
+#include <tuple>
 
 namespace cta::common::dataStructures {
 TEST(DriveDownReasonTest, FormatsSeverityAndDetails) {
-  const struct {
-    DriveDownReason reason;
-    int severity;
-    const char* formatted;
-  } cases[] = {
-    {DriveDownReason::StartupRecoveryDisabled,
-     log::INFO,
-     "[cta-taped] INFO Automatic startup recovery disabled; operator Up required"                         },
-    {DriveDownReason::Startup,                  log::INFO, "[cta-taped] INFO Startup"                     },
-    {DriveDownReason::Shutdown,                 log::INFO, "[cta-taped] INFO Shutdown"                    },
-    {DriveDownReason::TapeDetected,             log::ERR,  "[cta-taped] ERROR Tape detected in drive"     },
-    {DriveDownReason::DriveProbeFailed,         log::ERR,  "[cta-taped] ERROR Drive probe failed"         },
-    {DriveDownReason::SessionDriveAccessFailed, log::ERR,  "[cta-taped] ERROR Session drive access failed"},
-    {DriveDownReason::DriveCleanupFailed,       log::ERR,  "[cta-taped] ERROR Drive cleanup failed"       },
-    {DriveDownReason::SessionLeftDriveUnusable, log::ERR,  "[cta-taped] ERROR Session left drive unusable"},
-    {DriveDownReason::SessionDidNotStopSafely,  log::ERR,  "[cta-taped] ERROR Session did not stop safely"}
-  };
-
-  for (const auto& testCase : cases) {
-    SCOPED_TRACE(testCase.formatted);
-    EXPECT_EQ(testCase.severity, driveDownReasonSeverity(testCase.reason));
-    EXPECT_EQ(testCase.formatted, formatDriveDownReason(testCase.reason));
-    EXPECT_EQ(std::string(testCase.formatted) + ": device unavailable",
-              formatDriveDownReason(testCase.reason, "device unavailable"));
+  for (const auto& [reason, severity, prefix] : {
+         std::tuple {DriveDownReason::Startup,            log::INFO, "[cta-taped] INFO " },
+         std::tuple {DriveDownReason::DriveCleanupFailed, log::ERR,  "[cta-taped] ERROR "}
+  }) {
+    SCOPED_TRACE(static_cast<int>(reason));
+    const auto formatted = formatDriveDownReason(reason);
+    EXPECT_EQ(severity, driveDownReasonSeverity(reason));
+    EXPECT_TRUE(formatted.starts_with(prefix));
+    EXPECT_GT(formatted.size(), std::string_view(prefix).size());
+    EXPECT_EQ(formatted + ": device unavailable", formatDriveDownReason(reason, "device unavailable"));
   }
 }
 

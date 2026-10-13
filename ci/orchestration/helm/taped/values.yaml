@@ -9,6 +9,13 @@ image:
 logging:
   level: "INFO"
 
+drive:
+  # Match the drive cleaning and startup defaults in cta-taped.example.toml.
+  cleanOnUp: false
+  startup:
+    recoverExistingUp: false
+    autoUp: false
+
 scheduler:
   tapeCacheMaxAgeSecs: 1
   retrieveQueueCacheMaxAgeSecs: 1

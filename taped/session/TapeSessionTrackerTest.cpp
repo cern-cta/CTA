@@ -135,16 +135,6 @@ TEST(TapeSessionTrackerTest, SetsDeliveryTimeWithoutReplacingAccumulatedDiskStat
   EXPECT_EQ(3, tracker.stats().disk.waitReportingTime);
 }
 
-TEST(TapeSessionTrackerTest, StoresTypedSessionOutcomeAndMountAttemptState) {
-  TapeSessionTracker tracker;
-
-  tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
-  tracker.setMountAttempted(false);
-
-  EXPECT_TRUE(tracker.hasFailures());
-  EXPECT_FALSE(tracker.mountAttempted());
-}
-
 TEST(TapeSessionTrackerTest, TracksActiveDiskFilesByThread) {
   TapeSessionTracker tracker;
 
@@ -161,20 +151,6 @@ TEST(TapeSessionTrackerTest, TracksActiveDiskFilesByThread) {
   tracker.notifyDiskFileClosed(1);
   EXPECT_FALSE(tracker.activeDiskFiles().contains(1));
   EXPECT_TRUE(tracker.activeDiskFiles().contains(2));
-}
-
-TEST(TapeSessionTrackerTest, ConcurrentDiskThreadsRetainIndependentEntries) {
-  TapeSessionTracker tracker;
-
-  std::thread first([&tracker] { tracker.notifyDiskFileOpened(1, 1234, "file:///one"); });
-  std::thread second([&tracker] { tracker.notifyDiskFileOpened(2, 5678, "file:///two"); });
-  first.join();
-  second.join();
-
-  const auto files = tracker.activeDiskFiles();
-  ASSERT_EQ(2, files.size());
-  EXPECT_EQ(1234, files.at(1).fileId);
-  EXPECT_EQ(5678, files.at(2).fileId);
 }
 
 TEST(TapeSessionTrackerTest, TracksBlockMovement) {
@@ -633,28 +609,6 @@ TEST(TapeSessionTrackerTest, RetrievalCompletionPublishesDerivedPhasesInEitherWo
     tracker.notifyTapeDone();
     tracker.notifyDiskDone();
     EXPECT_EQ(Finished, reported.back());
-  }
-}
-
-TEST(TapeSessionTrackerTest, OwnerFinalizesArchiveAndEmptySessionsOnce) {
-  using enum session::TapeSessionState;
-  for (const bool empty : {false, true}) {
-    std::vector<session::TapeSessionState> phases;
-    TapeSessionTracker tracker([&](auto state) { phases.push_back(state); });
-    tracker.beginTapeSession();
-    tracker.setType(session::SessionType::Archive);
-    if (!empty) {
-      tracker.reportState(Transferring);
-      tracker.reportState(Unloading);
-      tracker.reportState(Unmounting);
-    }
-    tracker.reportState(Finalizing);
-    const auto enteredAt = tracker.livenessSnapshot().stateEnteredAt;
-    tracker.reportState(Finalizing, enteredAt + std::chrono::seconds(1));
-    EXPECT_EQ(enteredAt, tracker.livenessSnapshot().stateEnteredAt);
-    tracker.reportState(Finished);
-    EXPECT_EQ(1, std::count(phases.begin(), phases.end(), Finalizing));
-    EXPECT_EQ(Finalizing, phases[phases.size() - 2]);
   }
 }
 

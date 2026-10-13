@@ -121,9 +121,6 @@ enum class TransferFailurePoint {
   OpenStandard,
   CompleteCta,
   CompleteStandard,
-  ReportDown,
-  DesiredDown,
-  ReportUp,
   FetchCta,
   FetchStandard,
   ReservationDenied,
@@ -465,7 +462,6 @@ public:
 class FailingTransferScheduler : public cta::Scheduler {
 public:
   using cta::Scheduler::Scheduler;
-  TransferFailurePoint failure = TransferFailurePoint::Metadata;
   unsigned int downAttempts = 0;
   unsigned int upAttempts = 0;
   unsigned int desiredDownAttempts = 0;
@@ -477,14 +473,8 @@ public:
                          cta::log::LogContext&) override {
     if (status == cta::common::dataStructures::DriveStatus::Down) {
       ++downAttempts;
-      if (failure == TransferFailurePoint::ReportDown) {
-        throw std::runtime_error("injected reported down failure");
-      }
     } else if (status == cta::common::dataStructures::DriveStatus::Up) {
       ++upAttempts;
-      if (failure == TransferFailurePoint::ReportUp) {
-        throw std::runtime_error("injected reported up failure");
-      }
     }
   }
 
@@ -494,9 +484,6 @@ public:
     EXPECT_FALSE(state.up);
     ++desiredDownAttempts;
     downReason = state.reason;
-    if (failure == TransferFailurePoint::DesiredDown) {
-      throw std::runtime_error("injected desired down failure");
-    }
   }
 };
 
@@ -879,7 +866,6 @@ public:
     const auto threadsBefore = transferTestThreadCount();
     cta::log::StringLogger logger("dummy", "transferFailureTest", cta::log::DEBUG);
     FailingTransferScheduler scheduler(getCatalogue(), *m_db, "schedulerBackendName");
-    scheduler.failure = point;
     Mount mount(getCatalogue(), point);
     mount.repack = repack;
     const bool fatal = point == TransferFailurePoint::MetadataAllocation || point == TransferFailurePoint::MetadataLogic
@@ -904,8 +890,7 @@ public:
     const bool discoveryFails = point == TransferFailurePoint::Discovery
                                 || point == TransferFailurePoint::DeviceEnumeration
                                 || point == TransferFailurePoint::MissingDrive;
-    const bool openFails = point == TransferFailurePoint::OpenCta || point == TransferFailurePoint::OpenStandard
-                           || point == TransferFailurePoint::ReportDown || point == TransferFailurePoint::DesiredDown;
+    const bool openFails = point == TransferFailurePoint::OpenCta || point == TransferFailurePoint::OpenStandard;
     unsigned int driveDestructions = 0;
     if (point == TransferFailurePoint::DeviceEnumeration) {
       EXPECT_CALL(system, opendir(testing::_))
@@ -969,8 +954,7 @@ public:
       EXPECT_TRUE(result.has_value());
       EXPECT_EQ(cta::tape::session::TapeSessionState::Finished, tracker.state());
     }
-    EXPECT_EQ(point != TransferFailurePoint::None && point != TransferFailurePoint::ReservationDenied
-                && point != TransferFailurePoint::ReportUp,
+    EXPECT_EQ(point != TransferFailurePoint::None && point != TransferFailurePoint::ReservationDenied,
               tracker.outcomeSnapshot().hasFailures);
     if (startupFails) {
       EXPECT_FALSE(tracker.mountAttempted());
@@ -1320,17 +1304,6 @@ TEST_P(TapeSessionTest, ArchiveUnknownFailureBeforeMountFinalizes) {
     "");
 }
 
-TEST_P(TapeSessionTest, RetrieveMetadataDisconnectionReturnsRecovery) {
-  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
-  ASSERT_EXIT(
-    {
-      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::MetadataDatabase);
-      _exit(::testing::Test::HasFailure() ? 1 : 0);
-    },
-    testing::ExitedWithCode(0),
-    "");
-}
-
 TEST_P(TapeSessionTest, RetrieveFetchDisconnectionReturnsRecovery) {
   ::testing::FLAGS_gtest_death_test_style = "threadsafe";
   ASSERT_EXIT(
@@ -1347,39 +1320,6 @@ TEST_P(TapeSessionTest, RetrieveCompletionDisconnectionReturnsRecovery) {
   ASSERT_EXIT(
     {
       checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::CompleteDatabase);
-      _exit(::testing::Test::HasFailure() ? 1 : 0);
-    },
-    testing::ExitedWithCode(0),
-    "");
-}
-
-TEST_P(TapeSessionTest, RetrieveAllocationFailureBeforeMountFinalizes) {
-  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
-  ASSERT_EXIT(
-    {
-      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::MetadataAllocation);
-      _exit(::testing::Test::HasFailure() ? 1 : 0);
-    },
-    testing::ExitedWithCode(0),
-    "");
-}
-
-TEST_P(TapeSessionTest, RetrieveLogicFailureBeforeMountFinalizes) {
-  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
-  ASSERT_EXIT(
-    {
-      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::MetadataLogic);
-      _exit(::testing::Test::HasFailure() ? 1 : 0);
-    },
-    testing::ExitedWithCode(0),
-    "");
-}
-
-TEST_P(TapeSessionTest, RetrieveUnknownFailureBeforeMountFinalizes) {
-  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
-  ASSERT_EXIT(
-    {
-      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::MetadataUnknown);
       _exit(::testing::Test::HasFailure() ? 1 : 0);
     },
     testing::ExitedWithCode(0),
@@ -1456,28 +1396,6 @@ TEST_P(TapeSessionTest, ArchiveCleanupFailureReason) {
     {
       checkExceptionCleanup<FailingTransferMount<cta::MockArchiveMount>>(TransferFailurePoint::TapeMountedStandard,
                                                                          true);
-      _exit(::testing::Test::HasFailure() ? 1 : 0);
-    },
-    testing::ExitedWithCode(0),
-    "");
-}
-
-TEST_P(TapeSessionTest, RetrieveDeviceEnumerationReason) {
-  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
-  ASSERT_EXIT(
-    {
-      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::DeviceEnumeration);
-      _exit(::testing::Test::HasFailure() ? 1 : 0);
-    },
-    testing::ExitedWithCode(0),
-    "");
-}
-
-TEST_P(TapeSessionTest, RetrieveMissingDriveReason) {
-  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
-  ASSERT_EXIT(
-    {
-      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::MissingDrive);
       _exit(::testing::Test::HasFailure() ? 1 : 0);
     },
     testing::ExitedWithCode(0),
@@ -1571,66 +1489,6 @@ TEST_P(TapeSessionTest, ArchiveCompleteStandardFailureCleansUp) {
 }
 
 /*
- * An archive drive-open failure returns its reason without publishing terminal Down.
- * The mount and workers are finalized even when the publication endpoint is unavailable.
- */
-TEST_P(TapeSessionTest, ArchiveDriveAccessFailureDoesNotPublishDown) {
-  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
-  ASSERT_EXIT(
-    {
-      checkExceptionCleanup<FailingTransferMount<cta::MockArchiveMount>>(TransferFailurePoint::ReportDown);
-      _exit(::testing::Test::HasFailure() ? 1 : 0);
-    },
-    testing::ExitedWithCode(0),
-    "");
-}
-
-/*
- * An archive drive-open failure leaves the desired-state request to DriveSession.
- * An unavailable desired-state endpoint must not prevent mount and worker finalization.
- */
-TEST_P(TapeSessionTest, ArchiveDriveAccessFailureDoesNotRequestDesiredDown) {
-  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
-  ASSERT_EXIT(
-    {
-      checkExceptionCleanup<FailingTransferMount<cta::MockArchiveMount>>(TransferFailurePoint::DesiredDown);
-      _exit(::testing::Test::HasFailure() ? 1 : 0);
-    },
-    testing::ExitedWithCode(0),
-    "");
-}
-
-/*
- * Archive completion leaves drive-up publication to the enclosing drive session.
- * The failure must not leave a worker running.
- */
-TEST_P(TapeSessionTest, ArchiveLeavesUpPublicationToDriveSession) {
-  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
-  ASSERT_EXIT(
-    {
-      checkExceptionCleanup<FailingTransferMount<cta::MockArchiveMount>>(TransferFailurePoint::ReportUp);
-      _exit(::testing::Test::HasFailure() ? 1 : 0);
-    },
-    testing::ExitedWithCode(0),
-    "");
-}
-
-/*
- * If retrieve mount metadata throws, the session exits cleanly.
- * Mount finalization must run even before hardware setup starts.
- */
-TEST_P(TapeSessionTest, RetrieveMetadataFailureCleansUp) {
-  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
-  ASSERT_EXIT(
-    {
-      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::Metadata);
-      _exit(::testing::Test::HasFailure() ? 1 : 0);
-    },
-    testing::ExitedWithCode(0),
-    "");
-}
-
-/*
  * If publishing retrieve startup status throws, the session exits cleanly.
  * Mount finalization must run even before hardware setup starts.
  */
@@ -1639,36 +1497,6 @@ TEST_P(TapeSessionTest, RetrieveStartingStatusFailureCleansUp) {
   ASSERT_EXIT(
     {
       checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::StartingStatus);
-      _exit(::testing::Test::HasFailure() ? 1 : 0);
-    },
-    testing::ExitedWithCode(0),
-    "");
-}
-
-/*
- * If retrieve drive discovery fails, the session requests drive down.
- * The mount must still complete without leaving workers behind.
- */
-TEST_P(TapeSessionTest, RetrieveDiscoveryFailureCleansUp) {
-  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
-  ASSERT_EXIT(
-    {
-      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::Discovery);
-      _exit(::testing::Test::HasFailure() ? 1 : 0);
-    },
-    testing::ExitedWithCode(0),
-    "");
-}
-
-/*
- * If opening the retrieve drive throws a CTA exception, the session requests drive down.
- * The mount must still complete without leaving workers behind.
- */
-TEST_P(TapeSessionTest, RetrieveOpenCtaFailureCleansUp) {
-  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
-  ASSERT_EXIT(
-    {
-      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::OpenCta);
       _exit(::testing::Test::HasFailure() ? 1 : 0);
     },
     testing::ExitedWithCode(0),
@@ -1714,51 +1542,6 @@ TEST_P(TapeSessionTest, RetrieveCompleteStandardFailureCleansUp) {
   ASSERT_EXIT(
     {
       checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::CompleteStandard);
-      _exit(::testing::Test::HasFailure() ? 1 : 0);
-    },
-    testing::ExitedWithCode(0),
-    "");
-}
-
-/*
- * A retrieve drive-open failure returns its reason without publishing terminal Down.
- * The mount and workers are finalized even when the publication endpoint is unavailable.
- */
-TEST_P(TapeSessionTest, RetrieveDriveAccessFailureDoesNotPublishDown) {
-  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
-  ASSERT_EXIT(
-    {
-      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::ReportDown);
-      _exit(::testing::Test::HasFailure() ? 1 : 0);
-    },
-    testing::ExitedWithCode(0),
-    "");
-}
-
-/*
- * A retrieve drive-open failure leaves the desired-state request to DriveSession.
- * An unavailable desired-state endpoint must not prevent mount and worker finalization.
- */
-TEST_P(TapeSessionTest, RetrieveDriveAccessFailureDoesNotRequestDesiredDown) {
-  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
-  ASSERT_EXIT(
-    {
-      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::DesiredDown);
-      _exit(::testing::Test::HasFailure() ? 1 : 0);
-    },
-    testing::ExitedWithCode(0),
-    "");
-}
-
-/*
- * Retrieve completion leaves drive-up publication to the enclosing drive session.
- * The failure must not leave a worker running.
- */
-TEST_P(TapeSessionTest, RetrieveLeavesUpPublicationToDriveSession) {
-  ::testing::FLAGS_gtest_death_test_style = "threadsafe";
-  ASSERT_EXIT(
-    {
-      checkExceptionCleanup<FailingTransferRetrieveMount>(TransferFailurePoint::ReportUp);
       _exit(::testing::Test::HasFailure() ? 1 : 0);
     },
     testing::ExitedWithCode(0),

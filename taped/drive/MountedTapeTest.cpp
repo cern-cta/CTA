@@ -111,11 +111,16 @@ TEST_F(MountedTapeTest, FailedCleanupIsLoggedAndNeverRetried) {
   {
     MountedTape tape(changer, volume, drive, catalogue, 0, outcome, lc, tracker);
     EXPECT_FALSE(tape.cleanup().driveReusable());
-    tape.cleanup();
+
+    // A retry would now succeed; cleanup must preserve the original failure.
+    drive.clearFailurePoints();
+    EXPECT_TRUE(tape.cleanup().configurationResetFailed);
+    EXPECT_FALSE(tape.cleanup().driveReusable());
   }
   EXPECT_EQ(1, logger.cleanups);
   ASSERT_TRUE(outcome);
   EXPECT_TRUE(outcome->configurationResetFailed);
+  EXPECT_FALSE(outcome->driveReusable());
   EXPECT_NE(std::string::npos, logger.messages.find("Mounted tape cleanup failed"));
 }
 
@@ -151,31 +156,6 @@ TEST_F(MountedTapeTest, CleanupFailureDoesNotInterruptUnwinding) {
   EXPECT_EQ(1, logger.cleanups);
   EXPECT_FALSE(outcome && outcome->driveReusable());
   ASSERT_TRUE(outcome);
-}
-
-TEST_F(MountedTapeTest, MultipleCleanupFailuresAreRetainedWithoutRetryDuringUnwinding) {
-  drive.setFailurePoint(drive::FakeDrive::FailurePoint::ClearEncryptionKey);
-  drive.setFailurePoint(drive::FakeDrive::FailurePoint::DisableLogicalBlockProtection);
-  try {
-    MountedTape tape(changer, volume, drive, catalogue, 0, outcome, lc, tracker);
-    const auto& result = tape.cleanup();
-    EXPECT_TRUE(result.configurationResetFailed);
-    EXPECT_FALSE(result.driveReusable());
-    EXPECT_NE(std::string::npos, result.errorMessage.find("Failed to clear encryption key"));
-    EXPECT_NE(std::string::npos, result.errorMessage.find("Failed to disable logical block protection"));
-
-    // A retry would now succeed, but the original failed result must remain intact.
-    drive.clearFailurePoints();
-    EXPECT_EQ(&result, &tape.cleanup());
-    EXPECT_TRUE(result.configurationResetFailed);
-    throw std::logic_error("transfer failed");
-  } catch (const std::logic_error& ex) {
-    EXPECT_STREQ("transfer failed", ex.what());
-  }
-  ASSERT_TRUE(outcome);
-  EXPECT_TRUE(outcome->configurationResetFailed);
-  EXPECT_FALSE(outcome->driveReusable());
-  EXPECT_EQ(1, logger.cleanups);
 }
 
 TEST_F(MountedTapeTest, ReporterFailureDoesNotPreventPhysicalCleanup) {

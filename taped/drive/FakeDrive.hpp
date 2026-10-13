@@ -6,7 +6,6 @@
 
 #include "DriveInterface.hpp"
 
-#include <chrono>
 #include <limits>
 #include <list>
 #include <map>
@@ -16,7 +15,7 @@
 
 namespace cta::tape::drive {
 
-/// @brief In-memory tape records with configurable capacity, operation delays and injected failures.
+/// @brief In-memory tape records with configurable capacity and injected failures.
 ///
 /// Intended for tests; no hardware is accessed and some hardware-only operations are unsupported.
 /// Callers must serialize access to tape contents and failure configuration.
@@ -40,7 +39,7 @@ public:
   /// Select whether capacity exhaustion is reported while writing or deferred until flush.
   enum FailureMoment { OnWrite, OnFlush };
 
-  /// Operations that support independently configured failures and delays.
+  /// Operations that support independently configured failures.
   enum class FailurePoint {
     ClearEncryptionKey,
     Rewind,
@@ -54,7 +53,6 @@ public:
 private:
   const enum FailureMoment m_failureMoment;
   std::set<FailurePoint> m_failurePoints;
-  std::map<FailurePoint, std::chrono::microseconds> m_operationDelays;
   std::vector<uint16_t> m_tapeAlertCodes;
   bool m_tapeOverflow = false;
   bool m_failToMount;
@@ -124,10 +122,10 @@ public:
   /// Return three fixed wrap boundaries for positioning tests.
   std::vector<endOfWrapPosition> getEndOfWrapPositions() final;
 
-  /// Return configured TapeAlert codes after applying the configured delay or failure.
+  /// Return configured TapeAlert codes after applying failure injection.
   std::vector<uint16_t> getTapeAlertCodes() final;
 
-  /// Format synthetic alert messages after applying the configured delay or failure.
+  /// Format synthetic alert messages after applying failure injection.
   std::vector<std::string> getTapeAlerts(const std::vector<uint16_t>&) final;
 
   /// Return an empty list; compact alert messages are not simulated.
@@ -145,7 +143,7 @@ public:
   /// Select read/write CRC32C mode without computing checksums.
   void enableCRC32CLogicalBlockProtectionReadWrite() final;
 
-  /// Select disabled protection after applying the configured delay or failure.
+  /// Select disabled protection after applying failure injection.
   void disableLogicalBlockProtection() final;
 
   /// Throw cta::exception::NotImplementedException; this hardware operation is not simulated.
@@ -160,7 +158,7 @@ public:
   /// Throw cta::exception::Exception because key installation is not simulated.
   void setEncryptionKey(const std::string& encryption_key) final;
 
-  /// Apply the configured delay or failure, then return false because encryption is unsupported.
+  /// Apply failure injection, then return false because encryption is unsupported.
   bool clearEncryptionKey() final;
 
   /// Always return false; encryption is not simulated.
@@ -175,7 +173,7 @@ public:
   /// Position on the last stored record; requires a nonempty simulated tape.
   void fastSpaceToEOM(void) final;
 
-  /// Reset the record position to zero after applying the configured delay or failure.
+  /// Reset the record position to zero after applying failure injection.
   void rewind(void) final;
 
   /// Position on the last stored record; requires a nonempty simulated tape.
@@ -187,7 +185,7 @@ public:
   /// Move forwards across the requested number of file marks, towards the end of data.
   void spaceFileMarksForward(size_t count) final;
 
-  /// Mark the cartridge absent after applying the configured delay or failure; retain stored records.
+  /// Mark the cartridge absent after applying failure injection; retain stored records.
   void unloadTape(void) final;
 
   /// Raise an ENOSPC error for deferred capacity exhaustion; otherwise do nothing.
@@ -229,7 +227,7 @@ public:
   /// Return the protection mode selected for the software read/write path.
   lbpToUse getLbpToUse() final;
 
-  /// Return the configured cartridge-presence state after applying the configured delay or failure.
+  /// Return the configured cartridge-presence state after applying failure injection.
   bool hasTapeInPlace() final;
 
   /// Return fixed simulated limits of 30 segments and a maximum segment size of 30000.
@@ -244,20 +242,17 @@ public:
   /// Set simulated cartridge presence independently of stored tape contents.
   void setTapeInPlace(bool tapeInPlace);
 
-  /// Enable or disable failure injection for an operation without changing its configured delay.
+  /// Enable or disable failure injection for an operation.
   void setFailurePoint(FailurePoint failurePoint, bool enabled = true);
 
-  /// Clear injected operation failures while retaining configured delays and capacity behavior.
+  /// Clear injected operation failures while retaining capacity behavior.
   void clearFailurePoints();
 
   /// Replace the codes returned by subsequent TapeAlert queries.
   void setTapeAlertCodes(std::vector<uint16_t> codes);
 
-  /// Delay the selected operation by the supplied duration, including when it is configured to fail.
-  void setOperationDelay(FailurePoint operation, std::chrono::microseconds delay);
-
 private:
-  /// Apply the configured operation delay, then throw if failure injection is enabled.
+  /// Throw if failure injection is enabled for the operation.
   void throwIfFailurePoint(FailurePoint failurePoint) const;
   uint32_t m_blockIdPositioningCount = 0;
 };

@@ -391,6 +391,7 @@ TEST_F(DriveSessionTest, ProbeFailureReturnsDownWithoutRecovery) {
   ASSERT_TRUE(reported().reasonUpDown);
   EXPECT_THAT(*reported().reasonUpDown, testing::HasSubstr("Drive probe failed"));
   EXPECT_FALSE(canUseHardware());
+  EXPECT_TRUE(session->isLive());
 }
 
 TEST_F(DriveSessionTest, ActiveRecoveryStillCleansLoadedDriveWithCleanOnUpDisabled) {
@@ -474,18 +475,6 @@ TEST_F(DriveSessionTest, DownBeforeProbeReleasesDrivePreventsUpPublication) {
   EXPECT_EQ("Maintenance", reported().reasonUpDown);
   EXPECT_EQ(DriveStatus::Down, reported().driveStatus);
   EXPECT_FALSE(canUseHardware());
-}
-
-TEST_F(DriveSessionTest, FailedPreparationRequestsDownAndReleasesOwnership) {
-  // A device discovery failure exercises the real probe's failure handling.
-  system.m_stats.erase(config.drive.device);
-  session->run(stop.get_token());
-  EXPECT_FALSE(reported().desiredUp);
-  ASSERT_TRUE(reported().reasonUpDown);
-  EXPECT_THAT(*reported().reasonUpDown, testing::HasSubstr("Drive probe failed"));
-  EXPECT_EQ(DriveStatus::Down, reported().driveStatus);
-  EXPECT_FALSE(canUseHardware());
-  EXPECT_TRUE(session->isLive());
 }
 
 TEST_F(DriveSessionTest, CleanupDesiredStatePublicationFailurePropagatesUntilOwnershipIsReleased) {
@@ -628,24 +617,6 @@ TEST_F(DriveSessionTest, RecoveryExceptionClearsTrackerAndRetainsOwnership) {
   EXPECT_TRUE(canUseHardware());
 }
 
-TEST_F(DriveSessionTest, TransferStateTimeoutsAndIdleLivenessRemainUnchanged) {
-  using namespace std::chrono_literals;
-  using enum cta::tape::session::TapeSessionState;
-  auto tracker = std::make_shared<TapeSessionTracker>();
-  publish(tracker);
-  const auto now = TapeSessionTracker::Clock::now();
-  tracker->beginTapeSession(now);
-  tracker->reportState(Unloading, now - std::chrono::seconds(config.mounts.tape_unload_timeout_secs) - 1s);
-  EXPECT_FALSE(session->isLive());
-  tracker->reportState(Loading, now);
-  tracker->reportState(Unloading, now);
-  EXPECT_TRUE(session->isLive());
-  tracker->reportState(Finalizing, now - 24h);
-  EXPECT_FALSE(session->isLive());
-  publish(nullptr);
-  EXPECT_TRUE(session->isLive());
-}
-
 TEST_F(DriveSessionTest, ConfiguredPhaseTimeoutsDoNotResetOnRepeatedStateReports) {
   using namespace std::chrono_literals;
   using enum cta::tape::session::TapeSessionState;
@@ -704,6 +675,8 @@ TEST_F(DriveSessionTest, EachTransferPhaseUsesItsConfiguredTimeout) {
   publish(tracker);
   EXPECT_TRUE(session->isLive());
   tracker->reportState(Finished, now - 24h);
+  EXPECT_TRUE(session->isLive());
+  publish(nullptr);
   EXPECT_TRUE(session->isLive());
 }
 

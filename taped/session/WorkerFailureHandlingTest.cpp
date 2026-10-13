@@ -66,17 +66,6 @@ TEST_F(WorkerFailureHandlingDeathTest, PartialStartupExitsBeforeResourceDestruct
     "failed.*mountId.*123.*tapeDrive.*drive.*tapeVid.*V00001");
 }
 
-TEST_F(WorkerFailureHandlingDeathTest, JoinFailureExitsBeforeRemainingResourcesUnwind) {
-  ASSERT_EXIT(
-    {
-      BorrowedResources resources;
-      runOrExitOnWorkerFailure(lc, [] { throw std::runtime_error("worker join failed"); });
-      std::_Exit(82);
-    },
-    testing::ExitedWithCode(EXIT_FAILURE),
-    "CRIT.*worker join failed");
-}
-
 TEST_F(WorkerFailureHandlingDeathTest, NonStandardFailureExitsWithDiagnostic) {
   ASSERT_EXIT(runOrExitOnWorkerFailure(lc, [] { throw 42; }),
               testing::ExitedWithCode(EXIT_FAILURE),

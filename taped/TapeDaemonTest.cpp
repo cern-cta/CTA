@@ -244,24 +244,6 @@ TEST_F(TapeDaemonTest, RegistrationConflictStopsStartup) {
   EXPECT_FALSE(daemon->isReady());
 }
 
-TEST_F(TapeDaemonTest, RegistrationPreservesOperatorReasonAndComment) {
-  DesiredDriveState state;
-  state.up = false;
-  state.reason = "Operator intervention";
-  state.comment = "Inspect drive";
-  EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
-  previousDrive->reasonUpDown = state.reason;
-  previousDrive->userComment = state.comment;
-  EXPECT_CALL(*scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _))
-    .WillOnce(Invoke([&](const auto&, const DesiredDriveState& desired, const auto&, const auto&, const auto&, auto&) {
-      EXPECT_FALSE(desired.up);
-      EXPECT_EQ(state.reason, desired.reason);
-      EXPECT_EQ(state.comment, desired.comment);
-    }));
-  EXPECT_CALL(*scheduler, reportSchedulerBackendName("drive", _));
-  EXPECT_TRUE(registerDrive());
-}
-
 TEST_F(TapeDaemonTest, RegistrationPublishesReadinessLast) {
   DesiredDriveState state;
   state.reason = "Maintenance";

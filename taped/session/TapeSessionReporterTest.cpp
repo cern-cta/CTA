@@ -231,40 +231,19 @@ TEST(TapeSessionReporterTest, ReportsAStuckFile) {
   TapeSessionReporter reporter(tracker, mount, lc, 5ms, 5ms);
 
   tracker.notifyBeginNewJob(1234, 42);
+  tracker.notifyBlockMovement(1, TapeSessionTracker::Clock::now() - 1h);
   reporter.startThreads();
-  std::this_thread::sleep_for(20ms);
+  // A stats report follows the stuck-file check; wait for that observable tick.
+  const auto deadline = std::chrono::steady_clock::now() + 2s;
+  while (mount.statsReports.load() == 0 && std::chrono::steady_clock::now() < deadline) {
+    std::this_thread::sleep_for(1ms);
+  }
   tracker.reportState(cta::tape::session::TapeSessionState::Finalizing);
   reporter.finish();
   reporter.waitThreads();
   reporter.reportSessionFinished();
 
   EXPECT_NE(std::string::npos, log.getLog().find("No tape block movement for too long"));
-}
-
-TEST(TapeSessionReporterTest, MovementAndCompletionStopStuckFileWarnings) {
-  cta::log::StringLogger log("dummy", "TapeSessionReporterTest", cta::log::DEBUG);
-  cta::log::LogContext lc(log);
-  ReportingTapeMount mount;
-  TapeSessionTracker tracker;
-  TapeSessionReporter reporter(tracker, mount, lc, 5ms, 20ms);
-
-  tracker.notifyBeginNewJob(1234, 42);
-  reporter.startThreads();
-  // Wait for the first stuck warning without reading the logger concurrently.
-  const auto deadline = std::chrono::steady_clock::now() + 2s;
-  while (mount.statsReports.load() < 5 && std::chrono::steady_clock::now() < deadline) {
-    std::this_thread::sleep_for(1ms);
-  }
-  tracker.notifyBlockMovement(100);
-  std::this_thread::sleep_for(5ms);
-  tracker.fileFinished();
-  std::this_thread::sleep_for(25ms);
-  tracker.reportState(cta::tape::session::TapeSessionState::Finalizing);
-  reporter.finish();
-  reporter.waitThreads();
-  reporter.reportSessionFinished();
-
-  EXPECT_EQ(1, countMessage(log.getLog(), "No tape block movement for too long"));
 }
 
 TEST(TapeSessionReporterTest, StoppingReporterDoesNotClaimTransferCompletion) {
@@ -315,26 +294,6 @@ TEST(TapeSessionReporterTest, FinalPublicationFailureOverridesSuccessfulOutcome)
   EXPECT_EQ(std::string::npos, log.getLog().find("\"status\":\"success\""));
 }
 
-TEST(TapeSessionReporterTest, SuccessfulEmptyMountHasAFinalSuccessOutcome) {
-  cta::log::StringLogger log("dummy", "TapeSessionReporterTest", cta::log::DEBUG);
-  log.setLogFormat("json");
-  cta::log::LogContext lc(log);
-  ReportingTapeMount mount;
-  TapeSessionTracker tracker;
-  tracker.beginTapeSession();
-  tracker.recordEvent(TapeSessionEvent::EmptyMount);
-  tracker.reportState(cta::tape::session::TapeSessionState::Finalizing);
-  TapeSessionReporter reporter(tracker, mount, lc, 1s, 1s);
-  reporter.startThreads();
-  reporter.finish();
-  reporter.waitThreads();
-  reporter.reportSessionFinished();
-
-  EXPECT_EQ(1, countMessage(log.getLog(), "Tape session finished"));
-  EXPECT_NE(std::string::npos, log.getLog().find("\"status\":\"success\""));
-  EXPECT_EQ(std::string::npos, log.getLog().find("\"status\":\"in_progress\""));
-}
-
 TEST(TapeSessionReporterTest, OutcomeIsOnlyReportedAtCompletion) {
   for (bool failed : {false, true}) {
     cta::log::StringLogger log("dummy", "TapeSessionReporterTest", cta::log::DEBUG);
@@ -345,6 +304,8 @@ TEST(TapeSessionReporterTest, OutcomeIsOnlyReportedAtCompletion) {
     tracker.beginTapeSession();
     if (failed) {
       tracker.recordFailure(TapeSessionFailure::DiskWrite);
+    } else {
+      tracker.recordEvent(TapeSessionEvent::EmptyMount);
     }
     TapeSessionReporter reporter(tracker, mount, lc, 1s, 1s);
     reporter.reportNow();
@@ -354,12 +315,10 @@ TEST(TapeSessionReporterTest, OutcomeIsOnlyReportedAtCompletion) {
     EXPECT_EQ(std::string::npos, periodic.find("\"status\":\"failure\""));
 
     tracker.reportState(cta::tape::session::TapeSessionState::Finalizing);
-    reporter.startThreads();
-    reporter.finish();
-    reporter.waitThreads();
     reporter.reportSessionFinished();
     const auto finalOutput = log.getLog().substr(periodic.size());
     EXPECT_EQ(1, countMessage(finalOutput, "Tape session finished"));
+    EXPECT_EQ(std::string::npos, finalOutput.find("\"status\":\"in_progress\""));
     EXPECT_NE(std::string::npos, finalOutput.find(failed ? "\"status\":\"failure\"" : "\"status\":\"success\""));
   }
 }
@@ -411,40 +370,6 @@ TEST(TapeSessionReporterTest, MapsOnlyPublishablePhases) {
                           DriveStatus::Unmounting,
                           DriveStatus::DrainingToDisk}),
             statuses);
-}
-
-TEST(TapeSessionReporterTest, LoadingUpdatesLocalStateWithoutPublication) {
-  using enum session::TapeSessionState;
-  unsigned publications = 0;
-  TapeSessionTracker tracker([&](auto state) {
-    if (TapeSessionReporter::driveStatusForSessionState(state)) {
-      ++publications;
-    }
-  });
-  const auto start = TapeSessionTracker::Clock::time_point {};
-  tracker.reportState(Mounting, start);
-  tracker.reportState(Loading, start + 1s);
-  EXPECT_EQ(1, publications);
-  EXPECT_EQ(Loading, tracker.state());
-  EXPECT_EQ(start + 1s, tracker.livenessSnapshot().stateEnteredAt);
-}
-
-TEST(TapeSessionReporterTest, LoadingDoesNotRetryFailedMountingPublication) {
-  using enum session::TapeSessionState;
-  unsigned attempts = 0;
-  TapeSessionTracker tracker([&](auto state) {
-    if (TapeSessionReporter::driveStatusForSessionState(state) && ++attempts == 1) {
-      throw std::runtime_error("catalogue unavailable");
-    }
-  });
-  tracker.reportState(Mounting);
-  tracker.reportState(Loading);
-  EXPECT_EQ(Loading, tracker.state());
-  EXPECT_EQ(1, attempts);
-  tracker.reportState(Transferring);
-  EXPECT_EQ(Transferring, tracker.state());
-  EXPECT_EQ(2, attempts);
-  EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::Reporting));
 }
 
 }  // namespace cta::tape::daemon

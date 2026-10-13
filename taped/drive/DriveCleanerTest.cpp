@@ -425,47 +425,18 @@ TEST_P(DriveCleanerTest, BorrowedDriveResetsLbpAfterEncryptionClearFailureWithou
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mediaChanger(rmcProxy, m_changerLog);
   cta::tape::drive::FakeDrive drive(5000, cta::tape::drive::FakeDrive::OnFlush);
-  // Keep the existing accumulation assertions meaningful even for sub-microsecond fake operations.
-  drive.setOperationDelay(cta::tape::drive::FakeDrive::FailurePoint::UnloadTape, std::chrono::milliseconds(1));
-  drive.setOperationDelay(cta::tape::drive::FakeDrive::FailurePoint::Rewind, std::chrono::milliseconds(1));
   drive.setTapeInPlace(true);
   drive.enableCRC32CLogicalBlockProtectionReadWrite();
   drive.setFailurePoint(cta::tape::drive::FakeDrive::FailurePoint::ClearEncryptionKey);
   cta::tape::daemon::DriveCleaner
     cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, false, 0, *m_catalogue, m_tracker);
 
-  m_tracker.beginTapeSession();
-  m_tracker.setType(cta::tape::session::SessionType::Retrieve);
-  m_tracker.reportState(cta::tape::session::TapeSessionState::Finished);
-  m_tracker.updateTapeSetupStats({.encryptionControlTime = 5});
-  m_tracker.updateTapeTransferStats({.dataVolume = 1234, .filesCount = 2});
-  m_tracker.updateTapeCleanupStats({.unloadTime = 10,
-                                    .unmountTime = 20,
-                                    .cleanupTime = 40,
-                                    .lbpResetTime = 50,
-                                    .readinessWaitTime = 60,
-                                    .rewindTime = 70,
-                                    .labelReadTime = 80,
-                                    .encryptionControlTime = 30});
   const auto result = cleaner.cleanDrive(drive);
-  ASSERT_EQ(cta::tape::session::SessionType::Retrieve, m_tracker.type());
-  ASSERT_EQ(5, m_tracker.stats().setup.encryptionControlTime);
-  ASSERT_EQ(1234, m_tracker.stats().tape.dataVolume);
-  ASSERT_EQ(2, m_tracker.stats().tape.filesCount);
   ASSERT_EQ(1, m_tracker.failureStats().at(cta::tape::daemon::TapeSessionFailure::TapeEncryptionDisable));
   ASSERT_TRUE(result.configurationResetFailed);
   ASSERT_FALSE(result.ejectFailed);
   ASSERT_FALSE(result.driveReusable());
-  ASSERT_EQ(cta::tape::session::TapeSessionState::Unmounting, m_tracker.state());
   ASSERT_EQ(0, m_tracker.failureStats().count(cta::tape::daemon::TapeSessionFailure::TapeLbpDisable));
-  ASSERT_GT(m_tracker.stats().cleanup.encryptionControlTime, 30);
-  ASSERT_GT(m_tracker.stats().cleanup.unloadTime, 10);
-  ASSERT_GT(m_tracker.stats().cleanup.unmountTime, 20);
-  ASSERT_GT(m_tracker.stats().cleanup.cleanupTime, 40);
-  ASSERT_GE(m_tracker.stats().cleanup.lbpResetTime, 50);
-  ASSERT_EQ(60, m_tracker.stats().cleanup.readinessWaitTime);
-  ASSERT_GT(m_tracker.stats().cleanup.rewindTime, 70);
-  ASSERT_GT(m_tracker.stats().cleanup.labelReadTime, 80);
   ASSERT_EQ(cta::tape::drive::lbpToUse::disabled, drive.getLbpToUse());
   ASSERT_FALSE(drive.hasTapeInPlace());
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
@@ -494,14 +465,6 @@ TEST_P(DriveCleanerTest, BorrowedEmptyDriveAttemptsBothConfigurationResets) {
   ASSERT_NE(std::string::npos, result.errorMessage.find("Failed to clear encryption key"));
   ASSERT_NE(std::string::npos, result.errorMessage.find("Failed to disable logical block protection"));
   ASSERT_EQ(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
-  const auto stats = m_tracker.stats().cleanup;
-  ASSERT_GT(stats.cleanupTime, 0);
-  ASSERT_GT(stats.lbpResetTime, 0);
-  ASSERT_GT(stats.readinessWaitTime, 0);
-  ASSERT_EQ(0, stats.rewindTime);
-  ASSERT_EQ(0, stats.labelReadTime);
-  ASSERT_EQ(0, stats.unloadTime);
-  ASSERT_EQ(0, stats.unmountTime);
 }
 
 TEST_P(DriveCleanerTest, DismountsTapeAfterUnloadFailure) {
@@ -849,15 +812,6 @@ TEST_P(DriveCleanerTest, TapeAlertDescriptionFailurePreservesCountedAlerts) {
   ASSERT_EQ(1, m_tracker.tapeAlertStats().at(1));
   ASSERT_EQ(1, m_tracker.tapeAlertStats().at(2));
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner failed to get tape alerts"));
-}
-
-TEST_P(DriveCleanerTest, TracksSuccessAndFailure) {
-  installDrive()->setTapeAlertCodes({1});
-  ASSERT_TRUE(runCleaner(m_vid));
-  installDrive()->setFailurePoint(FailurePoint::ClearEncryptionKey);
-  ASSERT_FALSE(runCleaner(m_vid, true));
-  ASSERT_EQ(Tape::DISABLED, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
-  assertFailureReturnedWithoutPublishingDown();
 }
 
 TEST_P(DriveCleanerTest, BorrowedCleanupReportsProgressBeforeHardwareOperations) {

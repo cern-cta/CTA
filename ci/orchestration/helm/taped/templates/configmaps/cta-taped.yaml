@@ -58,6 +58,11 @@ data:
       device = {{ .device | quote }}
       control_path = {{ .controlPath | quote }}
       logical_library_name = {{ .logicalLibraryName | quote }}
+      clean_on_up = {{ $.Values.drive.cleanOnUp }}
+
+    [drive.startup]
+      recover_existing_up = {{ $.Values.drive.startup.recoverExistingUp }}
+      auto_up = {{ $.Values.drive.startup.autoUp }}
 
     [mounts]
       minimum_queued_bytes = {{ int64 $.Values.mounts.minimumQueuedBytes }}
