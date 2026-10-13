@@ -106,6 +106,16 @@ install(
   DESTINATION
     ${CMAKE_INSTALL_BINDIR})
 
+# Define dynamic-analysis options before expanding the runner templates.
+set(VALGRIND valgrind)
+set(VALGRIND_OPTS --leak-check=full --demangle=yes --gen-suppressions=all --error-exitcode=1 --max-threads=1000)
+set(VALGRIND_OPTS_W_SUPPR ${VALGRIND_OPTS} --suppressions=${CMAKE_CURRENT_BINARY_DIR}/valgrind.suppr)
+string (REPLACE ";" " " VALGRIND_OPTS_STR "${VALGRIND_OPTS}")
+
+set(HELGRIND_OPTS -v --demangle=yes --gen-suppressions=all --num-callers=25 --conflict-cache-size=10000000 --error-exitcode=1  --sim-hints=no-nptl-pthread-stackcache --max-threads=1000)
+set(HELGRIND_OPTS_W_SUPPR ${HELGRIND_OPTS} --suppressions=${CMAKE_CURRENT_BINARY_DIR}/helgrind.suppr)
+string (REPLACE ";" " " HELGRIND_OPTS_STR "${HELGRIND_OPTS}")
+
 configure_file(cta-unit-tests-valgrind.sh.in ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-valgrind.sh)
 configure_file(parallelTestsMakefile.in ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile @ONLY)
 configure_file(parallelTestsMakefile.local.in ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile.local @ONLY)
@@ -125,14 +135,6 @@ endif ()
 # Test runner and dynamic-analysis targets.
 configure_file(valgrind.suppr valgrind.suppr COPYONLY)
 configure_file(helgrind.suppr helgrind.suppr COPYONLY)
-set(VALGRIND valgrind)
-set(VALGRIND_OPTS --leak-check=full --demangle=yes --gen-suppressions=all --error-exitcode=1 --max-threads=1000)
-set(VALGRIND_OPTS_W_SUPPR ${VALGRIND_OPTS} --suppressions=${CMAKE_CURRENT_BINARY_DIR}/valgrind.suppr)
-string (REPLACE ";" " " VALGRIND_OPTS_STR "${VALGRIND_OPTS}")
-
-set(HELGRIND_OPTS -v --demangle=yes --gen-suppressions=all --num-callers=25 --conflict-cache-size=10000000 --error-exitcode=1  --sim-hints=no-nptl-pthread-stackcache --max-threads=1000)
-set(HELGRIND_OPTS_W_SUPPR ${HELGRIND_OPTS} --suppressions=${CMAKE_CURRENT_BINARY_DIR}/helgrind.suppr)
-string (REPLACE ";" " " HELGRIND_OPTS_STR "${HELGRIND_OPTS}")
 
 
 add_custom_target(cta-unit-tests-full
