@@ -9,6 +9,7 @@
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "catalogue/MediaType.hpp"
+#include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "catalogue/dummy/DummyDriveStateCatalogue.hpp"
 #include "catalogue/dummy/DummyTapeCatalogue.hpp"
@@ -303,7 +304,7 @@ protected:
     // The owning DriveSession publishes Down after releasing hardware ownership.
     ASSERT_FALSE(m_cleanupError.empty());
     cta::log::LogContext lc(m_sessionLog);
-    const auto desired = m_scheduler->getDesiredDriveState(m_driveInfo.driveName, lc);
+    const auto desired = cta::TapeDrivesCatalogueState(*m_catalogue).getDesiredDriveState(m_driveInfo.driveName);
     ASSERT_TRUE(desired.up);
     ASSERT_FALSE(desired.reason);
     const auto drive = m_catalogue->DriveState()->getTapeDrive(m_driveInfo.driveName);
@@ -328,7 +329,7 @@ protected:
     const auto result = cleaner.cleanDrive(m_systemWrapper);
     ASSERT_EQ(!resetFailed, result.driveReusable());
     cta::log::LogContext logContext(m_sessionLog);
-    ASSERT_TRUE(m_scheduler->getDesiredDriveState(m_driveInfo.driveName, logContext).up);
+    ASSERT_TRUE(cta::TapeDrivesCatalogueState(*m_catalogue).getDesiredDriveState(m_driveInfo.driveName).up);
     ASSERT_EQ(!resetFailed, result.errorMessage.empty());
     ASSERT_EQ(cta::common::dataStructures::Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
     ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner unloaded tape"));
@@ -388,7 +389,7 @@ TEST_P(DriveCleanerTest, EjectsBlankTape) {
   ASSERT_EQ(std::string::npos, m_changerLog.getLog().find("Dummy dismount", firstDismount + 1));
 
   cta::log::LogContext logContext(m_sessionLog);
-  const auto driveState = m_scheduler->getDesiredDriveState(m_driveInfo.driveName, logContext);
+  const auto driveState = cta::TapeDrivesCatalogueState(*m_catalogue).getDesiredDriveState(m_driveInfo.driveName);
   ASSERT_TRUE(driveState.up);
 }
 
@@ -441,7 +442,7 @@ TEST_P(DriveCleanerTest, BorrowedDriveResetsLbpAfterEncryptionClearFailureWithou
   ASSERT_FALSE(drive.hasTapeInPlace());
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
   cta::log::LogContext logContext(m_sessionLog);
-  ASSERT_TRUE(m_scheduler->getDesiredDriveState(m_driveInfo.driveName, logContext).up);
+  ASSERT_TRUE(cta::TapeDrivesCatalogueState(*m_catalogue).getDesiredDriveState(m_driveInfo.driveName).up);
 }
 
 TEST_P(DriveCleanerTest, BorrowedEmptyDriveAttemptsBothConfigurationResets) {
@@ -458,7 +459,7 @@ TEST_P(DriveCleanerTest, BorrowedEmptyDriveAttemptsBothConfigurationResets) {
   ASSERT_TRUE(result.configurationResetFailed);
   ASSERT_FALSE(result.ejectFailed);
   ASSERT_FALSE(result.driveReusable());
-  EXPECT_FALSE(m_tracker.state().has_value());
+  EXPECT_EQ(cta::tape::session::TapeSessionState::Unloading, m_tracker.state());
   ASSERT_EQ(cta::tape::session::SessionType::Undetermined, m_tracker.type());
   ASSERT_EQ(1, m_tracker.failureStats().at(cta::tape::daemon::TapeSessionFailure::TapeEncryptionDisable));
   ASSERT_EQ(1, m_tracker.failureStats().at(cta::tape::daemon::TapeSessionFailure::TapeLbpDisable));
@@ -474,7 +475,13 @@ TEST_P(DriveCleanerTest, DismountsTapeAfterUnloadFailure) {
   auto* drive = installDrive();
   drive->setFailurePoint(cta::tape::drive::FakeDrive::FailurePoint::UnloadTape);
   std::vector<cta::tape::session::TapeSessionState> phases;
-  cta::tape::daemon::TapeSessionTracker tracker([&](auto state) { phases.push_back(state); });
+  cta::tape::daemon::TapeSessionTracker tracker([&](auto state) {
+    phases.push_back(state);
+    if (state == cta::tape::session::TapeSessionState::Unloading) {
+      // Publication must precede acquisition, which consumes the fake drive handle.
+      EXPECT_TRUE(m_systemWrapper.fake.m_pathToDrive.contains("/dev/nst0"));
+    }
+  });
   cta::tape::daemon::DriveCleaner
     cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, false, 0, *m_catalogue, tracker);
 
@@ -508,7 +515,8 @@ TEST_P(DriveCleanerTest, DisablesTapeAndRejectsReuseWhenBothDismountAttemptsFail
       unmountEnteredAt = reportingTracker.livenessSnapshot().stateEnteredAt;
     }
     if (const auto status = cta::tape::daemon::TapeSessionReporter::driveStatusForSessionState(state)) {
-      m_scheduler->reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, *status, logContext);
+      cta::TapeDrivesCatalogueState(*m_catalogue)
+        .reportDriveStatus(driveInfo, cta::common::dataStructures::MountType::NoMount, *status, logContext);
     }
   });
   cta::tape::daemon::DriveCleaner
@@ -530,7 +538,7 @@ TEST_P(DriveCleanerTest, DisablesTapeAndRejectsReuseWhenBothDismountAttemptsFail
   const auto tape = m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid);
   ASSERT_EQ(Tape::DISABLED, tape.state);
 
-  const auto desiredDriveState = m_scheduler->getDesiredDriveState(driveInfo.driveName, logContext);
+  const auto desiredDriveState = cta::TapeDrivesCatalogueState(*m_catalogue).getDesiredDriveState(driveInfo.driveName);
   ASSERT_TRUE(desiredDriveState.up);
   EXPECT_THAT(result.errorMessage, testing::HasSubstr("Failed to dismount tape"));
 
@@ -597,7 +605,7 @@ TEST_P(DriveCleanerTest, RejectsEmptyDriveReuseAfterConfigurationResetFailure) {
   ASSERT_GT(m_tracker.stats().cleanup.readinessWaitTime, 0);
   ASSERT_EQ(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
   cta::log::LogContext logContext(m_sessionLog);
-  ASSERT_TRUE(m_scheduler->getDesiredDriveState(m_driveInfo.driveName, logContext).up);
+  ASSERT_TRUE(cta::TapeDrivesCatalogueState(*m_catalogue).getDesiredDriveState(m_driveInfo.driveName).up);
   EXPECT_THAT(result.errorMessage, testing::HasSubstr("Failed to disable logical block protection"));
   ASSERT_EQ(cta::common::dataStructures::Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
 }
@@ -820,8 +828,19 @@ TEST_P(DriveCleanerTest, BorrowedCleanupReportsProgressBeforeHardwareOperations)
   cta::mediachanger::RmcProxy proxy;
   cta::mediachanger::MediaChangerFacade changer(proxy, m_changerLog);
   cta::tape::drive::FakeDrive drive;
+  drive.enableCRC32CLogicalBlockProtectionReadWrite();
+  const auto initialLbp = drive.getLbpToUse();
+  using Clock = cta::tape::daemon::TapeSessionTracker::Clock;
+  const auto cleanupStarted = Clock::now();
   std::vector<DriveStatus> statuses;
   cta::tape::daemon::TapeSessionTracker reportingTracker([&](auto state) {
+    if (state == TapeSessionState::Loading) {
+      return;
+    }
+    if (state == TapeSessionState::Unloading) {
+      EXPECT_GE(reportingTracker.livenessSnapshot().stateEnteredAt, cleanupStarted);
+      EXPECT_EQ(initialLbp, drive.getLbpToUse());
+    }
     if (const auto status = cta::tape::daemon::TapeSessionReporter::driveStatusForSessionState(state)) {
       statuses.push_back(*status);
       EXPECT_EQ(state, reportingTracker.state());
@@ -830,6 +849,8 @@ TEST_P(DriveCleanerTest, BorrowedCleanupReportsProgressBeforeHardwareOperations)
   });
   cta::tape::daemon::DriveCleaner
     cleaner(changer, m_sessionLog, m_driveInfo, m_vid, false, 0, *m_catalogue, reportingTracker);
+  // Simulate cleanup after a loading timeout without waiting in the test.
+  reportingTracker.reportState(TapeSessionState::Loading, cleanupStarted - std::chrono::hours(1));
   const auto result = cleaner.cleanDrive(drive);
   EXPECT_TRUE(result.driveReusable());
   EXPECT_EQ((std::vector {DriveStatus::Unloading, DriveStatus::Unmounting}), statuses);
@@ -890,7 +911,7 @@ TEST_P(DriveCleanerTest, BorrowedFailedEjectDisablesTapeWithoutPublishingDown) {
   ASSERT_NE(std::string::npos, result.errorMessage.find("Failed to dismount tape"));
   ASSERT_EQ(Tape::DISABLED, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
   cta::log::LogContext lc(m_sessionLog);
-  ASSERT_TRUE(m_scheduler->getDesiredDriveState(m_driveInfo.driveName, lc).up);
+  ASSERT_TRUE(cta::TapeDrivesCatalogueState(*m_catalogue).getDesiredDriveState(m_driveInfo.driveName).up);
   ASSERT_EQ(cta::common::dataStructures::DriveStatus::Up,
             m_catalogue->DriveState()->getTapeDrive(m_driveInfo.driveName)->driveStatus);
 }

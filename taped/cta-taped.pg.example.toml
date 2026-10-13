@@ -127,15 +127,16 @@
   logical_library_poll_interval_secs = 5
 
   # Maximum time in Mounting before liveness becomes unhealthy.
-  # If omitted, 600 is used.
-  mount_timeout_secs = 600
+  # If omitted, 900 is used.
+  mount_timeout_secs = 900
 
   # Maximum time in Loading before liveness becomes unhealthy.
   # Also limits the existing physical drive readiness wait, whose failure starts cleanup.
-  # If omitted, 300 is used.
-  tape_load_timeout_secs = 300
+  # If omitted, 900 is used.
+  tape_load_timeout_secs = 900
 
   # Maximum time in Unloading before liveness becomes unhealthy. Must be positive.
+  # Covers drive acquisition, readiness waiting, configuration reset, rewind, label reading and unload.
   # If omitted, 900 is used.
   tape_unload_timeout_secs = 900
 
@@ -243,8 +244,8 @@
     drain_to_disk_timeout_secs = 1800
 
     # Path to the operator-provided executable that reports free space in the retrieve destination.
-    # Leave empty to disable disk-space backpressure. 
-    # For EOS, install cta-eosdf and set this path to "/usr/bin/cta-eosdf.sh".
+    # Leave empty to disable disk-space backpressure. If cta-eosdf is installed, set this path to
+    # "/usr/bin/cta-eosdf.sh".
     # If omitted, an empty path is used.
     external_free_disk_space_script = ""
 

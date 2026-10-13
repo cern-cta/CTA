@@ -8,6 +8,7 @@
 #include "TapeSessionResult.hpp"
 #include "TapeSessionTracker.hpp"
 #include "TapeSingleThreadInterface.hpp"
+#include "catalogue/Catalogue.hpp"
 #include "common/dataStructures/DriveDownReason.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
@@ -15,7 +16,6 @@
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/LabelMount.hpp"
 #include "scheduler/RetrieveMount.hpp"
-#include "scheduler/Scheduler.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "taped/TapedConfig.hpp"
 #include "taped/system/Wrapper.hpp"
@@ -37,7 +37,7 @@ public:
   /// @param tapeMount Mount kept alive by the caller until session execution and reporting finish.
   /// @param transfersConfig Transfer settings copied into the session.
   /// @param tapeLoadTimeoutSecs Maximum time in seconds allowed for tape loading.
-  /// @param scheduler Borrowed scheduler used for catalogue access and drive-state publication.
+  /// @param catalogue Borrowed catalogue used by tape operations.
   TapeSession(cta::log::Logger& log,
               System::virtualWrapper& sysWrapper,
               const cta::common::dataStructures::DriveInfo& driveInfo,
@@ -45,7 +45,7 @@ public:
               cta::TapeMount& tapeMount,
               const TransfersConfig& transfersConfig,
               uint32_t tapeLoadTimeoutSecs,
-              cta::Scheduler& scheduler);
+              cta::catalogue::Catalogue& catalogue);
 
   /// @brief Run one assignment through transfer, cleanup and final reporting.
   ///
@@ -102,7 +102,7 @@ private:
 
   cta::mediachanger::MediaChangerFacade& m_mediaChanger;
 
-  cta::Scheduler& m_scheduler;
+  cta::catalogue::Catalogue& m_catalogue;
 };
 
 }  // namespace cta::tape::daemon

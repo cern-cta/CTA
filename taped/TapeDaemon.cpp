@@ -11,7 +11,6 @@
 #include "common/semconv/Logging.hpp"
 #include "common/utils/ScopeExit.hpp"
 #include "common/utils/utils.hpp"
-#include "scheduler/Scheduler.hpp"
 #include "taped/session/DriveSession.hpp"
 
 #include <algorithm>
@@ -164,10 +163,11 @@ int TapeDaemon::shutdown(ExitCause cause, bool putDriveDown, std::string_view ex
     exitCode = 1;
   }
   try {
-    m_schedulerContext.scheduler().reportDriveStatus(m_driveInfo,
-                                                     common::dataStructures::MountType::NoMount,
-                                                     common::dataStructures::DriveStatus::Down,
-                                                     m_lc);
+    TapeDrivesCatalogueState(m_catalogue)
+      .reportDriveStatus(m_driveInfo,
+                         common::dataStructures::MountType::NoMount,
+                         common::dataStructures::DriveStatus::Down,
+                         m_lc);
   } catch (...) {
     m_lc.log(log::ERR, "Failed to report Down before daemon exit.");
     exitCode = 1;
@@ -202,11 +202,11 @@ void TapeDaemon::waitForLogicalLibrary() {
 }
 
 void TapeDaemon::waitUntilDriveIsRequestedUp() {
-  auto& scheduler = m_schedulerContext.scheduler();
+  TapeDrivesCatalogueState driveStateCatalogue(m_catalogue);
   bool waitingLogged = false;
 
   while (!m_stopSource.stop_requested()) {
-    const auto desiredState = scheduler.getDesiredDriveState(m_driveInfo.driveName, m_lc);
+    const auto desiredState = driveStateCatalogue.getDesiredDriveState(m_driveInfo.driveName);
 
     if (desiredState.up) {
       if (waitingLogged) {
@@ -222,19 +222,24 @@ void TapeDaemon::waitUntilDriveIsRequestedUp() {
     }
 
     // Keep the catalogue timestamp fresh so a waiting drive is not shown as stale.
-    scheduler.reportDriveStatus(m_driveInfo,
-                                common::dataStructures::MountType::NoMount,
-                                common::dataStructures::DriveStatus::Down,
-                                m_lc);
+    driveStateCatalogue.reportDriveStatus(m_driveInfo,
+                                          common::dataStructures::MountType::NoMount,
+                                          common::dataStructures::DriveStatus::Down,
+                                          m_lc);
     ::sleep(m_config.mounts.drive_state_poll_interval_secs);
   }
 }
 
 bool TapeDaemon::registerDrive() {
   m_registered.store(false);
-  auto& scheduler = m_schedulerContext.scheduler();
+  TapeDrivesCatalogueState driveStateCatalogue(m_catalogue);
   m_lc.log(log::INFO, "Registering the drive in the catalogue.");
-  if (!scheduler.checkDriveCanBeCreated(m_driveInfo, m_lc)) {
+  try {
+    driveStateCatalogue.checkDriveCanBeCreated(m_driveInfo);
+  } catch (const TapeDrivesCatalogueState::DriveAlreadyExistsException& ex) {
+    log::ScopedParamContainer params(m_lc);
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
+    m_lc.log(log::CRIT, "Drive name belongs to a different host or logical library.");
     return false;
   }
 
@@ -247,22 +252,22 @@ bool TapeDaemon::registerDrive() {
         .requestDriveDown(m_driveInfo.driveName,
                           common::dataStructures::DriveDownReason::StartupRecoveryDisabled,
                           m_lc);
-      scheduler.reportDriveStatus(m_driveInfo,
-                                  common::dataStructures::MountType::NoMount,
-                                  common::dataStructures::DriveStatus::Down,
-                                  m_lc);
-      scheduler.reportSchedulerBackendName(m_driveInfo.driveName, m_lc);
+      driveStateCatalogue.reportDriveStatus(m_driveInfo,
+                                            common::dataStructures::MountType::NoMount,
+                                            common::dataStructures::DriveStatus::Down,
+                                            m_lc);
+      driveStateCatalogue.reportSchedulerBackendName(m_driveInfo.driveName, m_config.scheduler.backend_name, m_lc);
       m_lc.log(log::INFO, "Startup recovery disabled; operator Up required.");
       m_registered.store(true);
       return true;
     }
 
     // Keep the existing entry and operator intent. Starting does not change desired-up.
-    scheduler.reportDriveStatus(m_driveInfo,
-                                common::dataStructures::MountType::NoMount,
-                                common::dataStructures::DriveStatus::Starting,
-                                m_lc);
-    scheduler.reportSchedulerBackendName(m_driveInfo.driveName, m_lc);
+    driveStateCatalogue.reportDriveStatus(m_driveInfo,
+                                          common::dataStructures::MountType::NoMount,
+                                          common::dataStructures::DriveStatus::Starting,
+                                          m_lc);
+    driveStateCatalogue.reportSchedulerBackendName(m_driveInfo.driveName, m_config.scheduler.backend_name, m_lc);
     m_lc.log(log::INFO, "Startup recovery enabled. Preserving desired Up.");
     m_registered.store(true);
     return true;
@@ -286,13 +291,13 @@ bool TapeDaemon::registerDrive() {
   }
 
   common::dataStructures::SecurityIdentity securityIdentity;
-  scheduler.createTapeDriveStatus(m_driveInfo,
-                                  driveState,
-                                  common::dataStructures::MountType::NoMount,
-                                  common::dataStructures::DriveStatus::Down,
-                                  securityIdentity,
-                                  m_lc);
-  scheduler.reportSchedulerBackendName(m_driveInfo.driveName, m_lc);
+  driveStateCatalogue.createTapeDriveStatus(m_driveInfo,
+                                            driveState,
+                                            common::dataStructures::MountType::NoMount,
+                                            common::dataStructures::DriveStatus::Down,
+                                            securityIdentity,
+                                            m_lc);
+  driveStateCatalogue.reportSchedulerBackendName(m_driveInfo.driveName, m_config.scheduler.backend_name, m_lc);
   m_lc.log(log::INFO,
            "Drive registered with reported status down and desired state "
              + std::string(driveState.up ? "up." : "down."));

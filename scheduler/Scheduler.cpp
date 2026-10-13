@@ -998,20 +998,8 @@ void Scheduler::RepackReportBatch::report(log::LogContext& lc) {
 // getDesiredDriveState
 //------------------------------------------------------------------------------
 common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const std::string& driveName,
-                                                                          log::LogContext& lc) {
-  utils::Timer t;
-  const auto optionalDriveState = m_catalogue.DriveState()->getTapeDrive(driveName);
-  if (!optionalDriveState.has_value()) {
-    throw TapeDrivesCatalogueState::NoSuchDrive("In Scheduler::getDesiredDriveState(): no such drive: " + driveName);
-  }
-  const auto& driveState = optionalDriveState.value();
-
-  common::dataStructures::DesiredDriveState desiredDriveState;
-  desiredDriveState.up = driveState.desiredUp;
-  desiredDriveState.forceDown = driveState.desiredForceDown;
-  desiredDriveState.reason = driveState.reasonUpDown;
-  desiredDriveState.comment = driveState.userComment;
-  return desiredDriveState;
+                                                                          log::LogContext&) {
+  return m_tapeDrivesState->getDesiredDriveState(driveName);
 }
 
 //------------------------------------------------------------------------------
@@ -1054,28 +1042,7 @@ void Scheduler::removeDrive(const std::string& driveName, log::LogContext& lc) c
 // reportSchedulerBackendName
 //------------------------------------------------------------------------------
 void Scheduler::reportSchedulerBackendName(const std::string& driveName, log::LogContext& lc) {
-  utils::Timer t;
-  // Temporary for backward compatibility. Should be removed in the next catalogue upgrade as it should be a dedicated column
-  // in the drive state table
-  constexpr const char* schedulerBackendNameKey = "SchedulerBackendName";
-  auto driveConfig = m_catalogue.DriveConfig()->getTapeDriveConfig(driveName, schedulerBackendNameKey);
-  if (driveConfig) {
-    m_catalogue.DriveConfig()->modifyTapeDriveConfig(driveName,
-                                                     "general",
-                                                     schedulerBackendNameKey,
-                                                     m_schedulerBackendName,
-                                                     "TOML config file");
-  } else {
-    m_catalogue.DriveConfig()->createTapeDriveConfig(driveName,
-                                                     "general",
-                                                     schedulerBackendNameKey,
-                                                     m_schedulerBackendName,
-                                                     "TOML config file");
-  }
-  auto schedulerDbTime = t.secs();
-  log::ScopedParamContainer spc(lc);
-  spc.add("drive", driveName).add("schedulerDbTime", schedulerDbTime);
-  lc.log(log::INFO, "Successfully reported the scheduler backend name of drive in the catalogue.");
+  m_tapeDrivesState->reportSchedulerBackendName(driveName, m_schedulerBackendName, lc);
 }
 
 //------------------------------------------------------------------------------

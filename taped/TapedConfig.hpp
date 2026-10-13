@@ -120,8 +120,8 @@ struct MountsConfig final {
   uint32_t idle_scheduling_interval_secs = 10;
   uint32_t drive_state_poll_interval_secs = 5;
   uint32_t logical_library_poll_interval_secs = 5;
-  uint32_t mount_timeout_secs = 600;
-  uint32_t tape_load_timeout_secs = 300;
+  uint32_t mount_timeout_secs = 900;
+  uint32_t tape_load_timeout_secs = 900;
   uint32_t tape_unload_timeout_secs = 900;
   uint32_t unmount_timeout_secs = 900;
   uint32_t preparing_timeout_secs = 900;

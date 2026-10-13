@@ -282,7 +282,11 @@ TEST_P(ScheduledDriveSessionTest, CompletesBeforeRenewingOwnedScheduler) {
   bool sessionStarted = false;
   unsigned postSessionUp = 0;
   driveState().onReport = [&](DriveStatus status) {
-    EXPECT_EQ(previousScheduler, &ownedContext.scheduler());
+    if (status == DriveStatus::Up && sessionStarted) {
+      EXPECT_NE(previousScheduler, &ownedContext.scheduler());
+    } else {
+      EXPECT_EQ(previousScheduler, &ownedContext.scheduler());
+    }
     if (status == DriveStatus::Starting) {
       sessionStarted = true;
       completedTracker = activeTracker(*ownedSession);
@@ -315,9 +319,17 @@ TEST_P(ScheduledDriveSessionTest, CompletesBeforeRenewingOwnedScheduler) {
   }
   EXPECT_TRUE(sessionStarted) << logger.getLog();
   const bool continuing = GetParam() == CompletionOutcome::Success || GetParam() == CompletionOutcome::TransferFailure;
-  EXPECT_EQ(continuing, previousScheduler != &ownedContext.scheduler());
+  EXPECT_NE(previousScheduler, &ownedContext.scheduler());
   EXPECT_EQ(continuing || GetParam() == CompletionOutcome::UpFailure ? 1 : 0, postSessionUp);
   EXPECT_FALSE(activeTracker(*ownedSession));
+
+  // Terminal Down still reaches the catalogue after scheduler replacement.
+  driveState().onReport = [&](DriveStatus status) {
+    EXPECT_EQ(DriveStatus::Down, status);
+    EXPECT_NE(previousScheduler, &ownedContext.scheduler());
+  };
+  ownedSession.reset();
+  EXPECT_EQ(DriveStatus::Down, reported().driveStatus);
   driveState().onReport = {};
 }
 
@@ -493,7 +505,7 @@ TEST_F(DriveSessionTest, CleanupDesiredStatePublicationFailurePropagatesUntilOwn
   EXPECT_GT(desiredAttempts, 0);
   EXPECT_TRUE(canUseHardware());
   EXPECT_TRUE(reported().desiredUp);
-  EXPECT_EQ(DriveStatus::Starting, reported().driveStatus);
+  EXPECT_EQ(DriveStatus::Unloading, reported().driveStatus);
   EXPECT_FALSE(activeTracker());
 
   // A failed request does not acknowledge release; teardown publishes Down after releasing ownership.
@@ -519,7 +531,7 @@ TEST_F(DriveSessionTest, CleanupReportedDownFailurePropagatesAfterOwnershipIsRel
   EXPECT_EQ(1, downAttempts);
   EXPECT_FALSE(canUseHardware());
   EXPECT_FALSE(reported().desiredUp);
-  EXPECT_EQ(DriveStatus::Starting, reported().driveStatus);
+  EXPECT_EQ(DriveStatus::Unloading, reported().driveStatus);
   ASSERT_TRUE(reported().reasonUpDown);
   EXPECT_THAT(*reported().reasonUpDown, testing::HasSubstr("Failed to clear encryption key"));
   EXPECT_FALSE(activeTracker());

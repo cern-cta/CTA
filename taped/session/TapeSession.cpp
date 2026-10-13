@@ -90,7 +90,7 @@ cta::tape::daemon::TapeSession::TapeSession(cta::log::Logger& log,
                                             cta::TapeMount& tapeMount,
                                             const TransfersConfig& transfersConfig,
                                             uint32_t tapeLoadTimeoutSecs,
-                                            cta::Scheduler& scheduler)
+                                            cta::catalogue::Catalogue& catalogue)
     : m_tapeSessionTracker(std::make_shared<TapeSessionTracker>([&tapeMount](session::TapeSessionState state) {
         if (const auto status = TapeSessionReporter::driveStatusForSessionState(state)) {
           // The scheduler mount preserves VID, pool, VO and mount ID on every publication.
@@ -104,7 +104,7 @@ cta::tape::daemon::TapeSession::TapeSession(cta::log::Logger& log,
       m_tapeLoadTimeoutSecs(tapeLoadTimeoutSecs),
       m_driveInfo(driveInfo),
       m_mediaChanger(mc),
-      m_scheduler(scheduler) {}
+      m_catalogue(catalogue) {}
 
 //------------------------------------------------------------------------------
 //TapeSession::execute
@@ -238,7 +238,7 @@ void cta::tape::daemon::TapeSession::executeRead(cta::log::LogContext& logContex
                                           m_transfersConfig.encryption.external_key_script,
                                           retrieveMount,
                                           m_tapeLoadTimeoutSecs,
-                                          m_scheduler.getCatalogue());
+                                          m_catalogue);
 
     DiskWriteThreadPool threadPool(m_transfersConfig.disk_io_threads,
                                    reportPacker,
@@ -277,7 +277,7 @@ void cta::tape::daemon::TapeSession::executeRead(cta::log::LogContext& logContex
                                                 m_transfersConfig.retrieve.rao.lto_algorithm,
                                                 c_raoLtoAlgorithmOptions,
                                                 m_volInfo.vid);
-        taskInjector.initRAO(raoDataConfig, &m_scheduler.getCatalogue());
+        taskInjector.initRAO(raoDataConfig, &m_catalogue);
       }
     }
     bool noFilesToRecall = false;
@@ -365,7 +365,7 @@ void cta::tape::daemon::TapeSession::executeWrite(cta::log::LogContext& logConte
                                             m_transfersConfig.encryption.external_key_script,
                                             archiveMount,
                                             m_tapeLoadTimeoutSecs,
-                                            m_scheduler.getCatalogue());
+                                            m_catalogue);
 
     DiskReadThreadPool threadPool(m_transfersConfig.disk_io_threads,
                                   m_transfersConfig.archive.fetch_max_files,

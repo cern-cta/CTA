@@ -67,6 +67,10 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchDrive);
   void checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo& driveInfo) const;
   void removeDrive(const std::string& drive, log::LogContext& lc) const;
+  /// Read operator intent, throwing NoSuchDrive when the catalogue entry is absent.
+  common::dataStructures::DesiredDriveState getDesiredDriveState(const std::string& driveName) const;
+  void
+  reportSchedulerBackendName(const std::string& driveName, const std::string& backendName, log::LogContext& lc) const;
   void setDesiredDriveState(const std::string& drive,
                             const common::dataStructures::DesiredDriveState& desiredState,
                             log::LogContext& lc) const;
@@ -80,6 +84,12 @@ public:
   void updateDriveStatistics(const common::dataStructures::DriveInfo& driveInfo,
                              const ReportDriveStatsInputs& inputs,
                              log::LogContext& lc) const;
+
+  /// Publish a drive transition using the current time.
+  void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
+                         common::dataStructures::MountType mountType,
+                         common::dataStructures::DriveStatus status,
+                         log::LogContext& lc) const;
 
   // Reporting Down asserts that the session has ended and hardware ownership has been released.
   // The catalogue clears session information on that transition.

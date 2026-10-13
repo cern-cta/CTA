@@ -53,6 +53,7 @@ DriveSession::DriveSession(const TapedConfig& config,
                   config.drive.control_path),
       m_lc(log),
       m_schedulerContext(schedulerContext),
+      m_driveState(schedulerContext.catalogue()),
       m_mediaChanger(mediachanger::RmcProxy(config.rmcd.host,
                                             config.rmcd.port,
                                             config.rmcd.request_timeout_secs,
@@ -78,18 +79,16 @@ void DriveSession::releaseAndReportDown() {
   }
   // Release the hardware first
   m_driveReservation.release();
-  auto& scheduler = m_schedulerContext.scheduler();
   // Only report: either the operator already put Desired Down or the daemon itself requested Desired Down.
-  scheduler.reportDriveStatus(m_driveInfo,
-                              common::dataStructures::MountType::NoMount,
-                              common::dataStructures::DriveStatus::Down,
-                              m_lc);
+  m_driveState.reportDriveStatus(m_driveInfo,
+                                 common::dataStructures::MountType::NoMount,
+                                 common::dataStructures::DriveStatus::Down,
+                                 m_lc);
   m_downPublicationComplete = true;
 }
 
 void DriveSession::requestDown(common::dataStructures::DriveDownReason reason, std::string_view detail) {
-  TapeDrivesCatalogueState(m_schedulerContext.scheduler().getCatalogue())
-    .requestDriveDown(m_driveInfo.driveName, reason, m_lc, detail);
+  m_driveState.requestDriveDown(m_driveInfo.driveName, reason, m_lc, detail);
 }
 
 void DriveSession::requestDownNoThrow(common::dataStructures::DriveDownReason reason,
@@ -198,22 +197,22 @@ DriveSession::IterationResult DriveSession::runIteration(std::stop_token stopTok
   if (stopToken.stop_requested()) {
     return {IterationAction::EndOwnership, "Stop requested"};
   }
-  auto& scheduler = m_schedulerContext.scheduler();
-  const auto desired = scheduler.getDesiredDriveState(m_driveInfo.driveName, m_lc);
+  const auto desired = m_driveState.getDesiredDriveState(m_driveInfo.driveName);
   if (!desired.up) {
     return {IterationAction::EndOwnership, "Desired drive state is Down"};
   }
   // Report that we are Up without a mount
-  scheduler.reportDriveStatus(m_driveInfo,
-                              common::dataStructures::MountType::NoMount,
-                              common::dataStructures::DriveStatus::Up,
-                              m_lc);
+  m_driveState.reportDriveStatus(m_driveInfo,
+                                 common::dataStructures::MountType::NoMount,
+                                 common::dataStructures::DriveStatus::Up,
+                                 m_lc);
 
   std::unique_ptr<TapeMount> mountCandidate;
 
   // Try to get a mount candidate. A scheduling timeout is recoverable by waiting and trying again.
   utils::Timer t;
   try {
+    auto& scheduler = m_schedulerContext.scheduler();
     // The dry run avoids constructing an assignment when no work is eligible.
     if (scheduler.getNextMountDryRun(m_driveInfo.logicalLibrary, m_driveInfo.driveName, m_lc)) {
       mountCandidate =
@@ -254,23 +253,22 @@ DriveSession::IterationResult DriveSession::runIteration(std::stop_token stopTok
   // At this point the tape session is over and the drive has already been cleaned.
   // Destroy the mount before retiring the scheduler resources it borrows.
   mountCandidate.reset();
+  // Retire abandoned jobs even when the drive session ends; catalogue access remains valid.
+  m_schedulerContext.renewObjectStoreAgent();
 
   // Can happen if the cartridge got stuck and we could not clean the drive.
   if (!result.driveReusable) {
     return {IterationAction::EndOwnership,
             result.downDetail.empty() ? "Tape session left the drive unusable" : result.downDetail};
   }
-  if (stopToken.stop_requested() || !scheduler.getDesiredDriveState(m_driveInfo.driveName, m_lc).up) {
+  if (stopToken.stop_requested() || !m_driveState.getDesiredDriveState(m_driveInfo.driveName).up) {
     return {IterationAction::EndOwnership, "Stop requested or desired drive state is Down"};
   }
   // All session workers and synchronous phase publications have finished before making the drive available.
-  scheduler.reportDriveStatus(m_driveInfo,
-                              common::dataStructures::MountType::NoMount,
-                              common::dataStructures::DriveStatus::Up,
-                              m_lc);
-  // Retire the object-store agent for garbage collection only when continuing..
-  // Renewal invalidates the scheduler reference; do not access it after this point.
-  m_schedulerContext.renewObjectStoreAgent();
+  m_driveState.reportDriveStatus(m_driveInfo,
+                                 common::dataStructures::MountType::NoMount,
+                                 common::dataStructures::DriveStatus::Up,
+                                 m_lc);
   // Don't add the delay when we are successful: there may be more work to do and we don't want
   // to sleep unnecessarily.
   return {result.successful ? IterationAction::Continue : IterationAction::RetryAfterDelay, {}};
@@ -289,7 +287,7 @@ TapeSessionResult DriveSession::runTapeSession(TapeMount& tapeMount) {
                         tapeMount,
                         m_config.transfers,
                         m_config.mounts.tape_load_timeout_secs,
-                        m_schedulerContext.scheduler());
+                        m_schedulerContext.catalogue());
     // Store a shared ptr to the session tracker for the liveness probe.
     std::atomic_store<const TapeSessionTracker>(&m_activeTracker, session.sharedTracker());
     // Ensure we clean this shared ptr reference again when the session finishes
@@ -327,13 +325,12 @@ TapeSessionResult DriveSession::runTapeSession(TapeMount& tapeMount) {
 }
 
 bool DriveSession::prepareDrive(const std::optional<std::string>& vid) {
-  auto& scheduler = m_schedulerContext.scheduler();
   // Track preparation for liveness; phase publication runs synchronously on this thread.
-  auto tracker = std::make_shared<TapeSessionTracker>([this, &scheduler](session::TapeSessionState state) {
+  auto tracker = std::make_shared<TapeSessionTracker>([this](session::TapeSessionState state) {
     const auto status = TapeSessionReporter::driveStatusForSessionState(state);
     // Starting is published explicitly below, where failure must prevent hardware acquisition.
     if (status && *status != common::dataStructures::DriveStatus::Starting) {
-      scheduler.reportDriveStatus(m_driveInfo, common::dataStructures::MountType::NoMount, *status, m_lc);
+      m_driveState.reportDriveStatus(m_driveInfo, common::dataStructures::MountType::NoMount, *status, m_lc);
     }
   });
   tracker->reportState(cta::tape::session::TapeSessionState::Preparing);
@@ -346,14 +343,14 @@ bool DriveSession::prepareDrive(const std::optional<std::string>& vid) {
   cleanupParams.add("cleanupPhase", recovering ? "recovery" : "preparation");
   // Only exit early if we haven't touched the hardware yet.
   // If we did; we need to continue with probing/cleaning first.
-  if (!recovering && !scheduler.getDesiredDriveState(m_driveInfo.driveName, m_lc).up) {
+  if (!recovering && !m_driveState.getDesiredDriveState(m_driveInfo.driveName).up) {
     return false;
   }
   // Publish preparation before acquiring hardware access.
-  scheduler.reportDriveStatus(m_driveInfo,
-                              common::dataStructures::MountType::NoMount,
-                              common::dataStructures::DriveStatus::Starting,
-                              m_lc);
+  m_driveState.reportDriveStatus(m_driveInfo,
+                                 common::dataStructures::MountType::NoMount,
+                                 common::dataStructures::DriveStatus::Starting,
+                                 m_lc);
   m_driveReservation.acquire();
   const bool clean = recovering || m_config.drive.clean_on_up;
   m_lc.log(log::INFO, clean ? "Cleaning drive for preparation or recovery." : "Probing drive before going Up.");
@@ -370,7 +367,7 @@ bool DriveSession::prepareDrive(const std::optional<std::string>& vid) {
                            vid.value_or(""),
                            true,
                            m_config.mounts.tape_load_timeout_secs,
-                           scheduler.getCatalogue(),
+                           m_schedulerContext.catalogue(),
                            *tracker);
       const auto result = cleaner.cleanDrive(m_sysWrapper);
       prepared = result.driveReusable();
@@ -403,15 +400,15 @@ bool DriveSession::prepareDrive(const std::optional<std::string>& vid) {
 
   // Preparation takes time; an operator may have withdrawn the up request while it ran.
   // Never publish desired-up here; a withdrawn request ends this ownership period.
-  if (!scheduler.getDesiredDriveState(m_driveInfo.driveName, m_lc).up) {
+  if (!m_driveState.getDesiredDriveState(m_driveInfo.driveName).up) {
     // The caller releases ownership and reports Down.
     m_lc.log(log::INFO, "Desired drive state became Down during preparation; ending drive session.");
     return false;
   }
-  scheduler.reportDriveStatus(m_driveInfo,
-                              common::dataStructures::MountType::NoMount,
-                              common::dataStructures::DriveStatus::Up,
-                              m_lc);
+  m_driveState.reportDriveStatus(m_driveInfo,
+                                 common::dataStructures::MountType::NoMount,
+                                 common::dataStructures::DriveStatus::Up,
+                                 m_lc);
   return true;
 }
 

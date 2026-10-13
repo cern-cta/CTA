@@ -7,6 +7,7 @@
 
 #include "TapeSessionResult.hpp"
 #include "TapeSessionTracker.hpp"
+#include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/dataStructures/DriveDownReason.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
 #include "common/log/LogContext.hpp"
@@ -128,6 +129,7 @@ private:
   const common::dataStructures::DriveInfo m_driveInfo;
   log::LogContext m_lc;
   SchedulerContext& m_schedulerContext;
+  TapeDrivesCatalogueState m_driveState;
   /// Hardware access is scoped to this ownership period, including preparation and recovery.
   mediachanger::MediaChangerFacade m_mediaChanger;
   System::realWrapper m_realSysWrapper;

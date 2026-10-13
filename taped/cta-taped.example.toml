@@ -125,15 +125,16 @@
   logical_library_poll_interval_secs = 5
 
   # Maximum time in Mounting before liveness becomes unhealthy.
-  # If omitted, 600 is used.
-  mount_timeout_secs = 600
+  # If omitted, 900 is used.
+  mount_timeout_secs = 900
 
   # Maximum time in Loading before liveness becomes unhealthy.
   # Also limits the existing physical drive readiness wait, whose failure starts cleanup.
-  # If omitted, 300 is used.
-  tape_load_timeout_secs = 300
+  # If omitted, 900 is used.
+  tape_load_timeout_secs = 900
 
   # Maximum time in Unloading before liveness becomes unhealthy. Must be positive.
+  # Covers drive acquisition, readiness waiting, configuration reset, rewind, label reading and unload.
   # If omitted, 900 is used.
   tape_unload_timeout_secs = 900
 

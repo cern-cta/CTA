@@ -40,6 +40,9 @@ public:
   /// The reference is invalidated when renewObjectStoreAgent() replaces an owned object-store backend.
   Scheduler& scheduler() { return *m_scheduler; }
 
+  /// The borrowed catalogue remains valid across scheduler renewal.
+  catalogue::Catalogue& catalogue() { return m_catalogue; }
+
   /// @brief Replace an owned object-store scheduler and backend with a fresh agent.
   ///
   /// Does nothing for PostgreSQL or a borrowed scheduler.

@@ -77,6 +77,8 @@ cta::tape::daemon::DriveCleaner::DriveCleaner(cta::mediachanger::MediaChangerFac
 // cleanDrive (opens and owns the drive)
 //------------------------------------------------------------------------------
 auto cta::tape::daemon::DriveCleaner::cleanDrive(System::virtualWrapper& sysWrapper) -> CleanupResult {
+  // Cleanup gets its own deadline before drive discovery or acquisition can block.
+  m_tracker.reportState(session::TapeSessionState::Unloading);
   std::unique_ptr<drive::DriveInterface> drive;
   std::optional<std::string> driveError;
   {
@@ -166,6 +168,8 @@ void cta::tape::daemon::DriveCleaner::disableTapeAfterFailedEject(const std::str
 // cleanDrive
 //------------------------------------------------------------------------------
 auto cta::tape::daemon::DriveCleaner::cleanDrive(drive::DriveInterface& drive) -> CleanupResult {
+  // Include readiness, configuration reset and rewind in the unloading budget.
+  m_tracker.reportState(session::TapeSessionState::Unloading);
   CleanupTiming timing(m_tracker, &TapeCleanupStats::cleanupTime);
   auto result = cleanDriveImpl(drive);
   finishCleanup(result);
@@ -232,7 +236,6 @@ auto cta::tape::daemon::DriveCleaner::cleanDriveImpl(drive::DriveInterface& driv
   }
 
   try {
-    m_tracker.reportState(session::TapeSessionState::Unloading);
     unloadTape(drive);
   } catch (...) {
     cta::log::ScopedParamContainer params(m_lc);

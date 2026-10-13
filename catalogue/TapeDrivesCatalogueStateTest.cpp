@@ -45,6 +45,38 @@ protected:
   log::LogContext lc {logger};
 };
 
+TEST_F(TapeDrivesCatalogueStateTest, DesiredStatePreservesAllOperatorFields) {
+  TapeDrive drive;
+  drive.desiredUp = true;
+  drive.desiredForceDown = true;
+  drive.reasonUpDown = "Operator request";
+  drive.userComment = "Inspect drive";
+  EXPECT_CALL(catalogue.driveState(), getTapeDrive("drive")).WillOnce(Return(drive));
+
+  const auto desired = state.getDesiredDriveState("drive");
+  EXPECT_EQ(drive.desiredUp, desired.up);
+  EXPECT_EQ(drive.desiredForceDown, desired.forceDown);
+  EXPECT_EQ(drive.reasonUpDown, desired.reason);
+  EXPECT_EQ(drive.userComment, desired.comment);
+}
+
+TEST_F(TapeDrivesCatalogueStateTest, MissingDesiredStateThrows) {
+  EXPECT_CALL(catalogue.driveState(), getTapeDrive("drive")).WillOnce(Return(std::nullopt));
+  EXPECT_THROW(state.getDesiredDriveState("drive"), TapeDrivesCatalogueState::NoSuchDrive);
+}
+
+TEST_F(TapeDrivesCatalogueStateTest, BackendNameIsCreatedThenUpdated) {
+  state.reportSchedulerBackendName("drive", "first", lc);
+  state.reportSchedulerBackendName("drive", "replacement", lc);
+
+  const auto configs = catalogue.DriveConfig()->getTapeDriveConfigs();
+  ASSERT_EQ(1, configs.size());
+  EXPECT_EQ("drive", configs.front().tapeDriveName);
+  EXPECT_EQ("SchedulerBackendName", configs.front().keyName);
+  EXPECT_EQ("replacement", configs.front().value);
+  EXPECT_EQ("TOML config file", configs.front().source);
+}
+
 TEST_F(TapeDrivesCatalogueStateTest, PreservedReasonIsOmittedFromUpdate) {
   TapeDrive drive;
   drive.desiredUp = false;

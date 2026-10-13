@@ -7,9 +7,11 @@
 
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
+#include "catalogue/dummy/DummyDriveConfigCatalogue.hpp"
 #include "catalogue/dummy/DummyLogicalLibraryCatalogue.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/log/StringLogger.hpp"
+#include "common/utils/utils.hpp"
 
 #include <exception>
 #include <gmock/gmock.h>
@@ -62,6 +64,16 @@ class MockDriveState : public catalogue::DummyDriveStateCatalogue {
 public:
   MOCK_METHOD(std::optional<TapeDrive>, getTapeDrive, (const std::string&), (const, override));
   MOCK_METHOD(void, setDesiredTapeDriveState, (const std::string&, const DesiredDriveState&), (override));
+  MOCK_METHOD(void, createTapeDrive, (const TapeDrive&), (override));
+  MOCK_METHOD(bool, updateTapeDriveStatus, (const TapeDrive&), (override));
+};
+
+class MockDriveConfig : public catalogue::DummyDriveConfigCatalogue {
+public:
+  MOCK_METHOD(void,
+              createTapeDriveConfig,
+              (const std::string&, const std::string&, const std::string&, const std::string&, const std::string&),
+              (override));
 };
 
 class MockLogicalLibrary : public catalogue::DummyLogicalLibraryCatalogue {
@@ -72,13 +84,16 @@ public:
 class DaemonCatalogue : public catalogue::DummyCatalogue {
 public:
   DaemonCatalogue() {
-    m_driveState = std::make_unique<testing::NiceMock<MockDriveState>>();
+    m_driveState = std::make_unique<testing::StrictMock<MockDriveState>>();
+    m_driveConfig = std::make_unique<testing::StrictMock<MockDriveConfig>>();
     m_logicalLibrary = std::make_unique<testing::StrictMock<MockLogicalLibrary>>();
   }
 
   MockDriveState& driveState() { return static_cast<MockDriveState&>(*m_driveState); }
 
   MockLogicalLibrary& library() { return static_cast<MockLogicalLibrary&>(*m_logicalLibrary); }
+
+  MockDriveConfig& driveConfig() { return static_cast<MockDriveConfig&>(*m_driveConfig); }
 };
 }  // namespace
 
@@ -97,6 +112,8 @@ protected:
 
   MockLogicalLibrary& library() { return static_cast<DaemonCatalogue&>(*catalogue).library(); }
 
+  MockDriveConfig& driveConfig() { return static_cast<DaemonCatalogue&>(*catalogue).driveConfig(); }
+
   void SetUp() override {
     config.drive.name = "drive";
     config.drive.logical_library_name = "library";
@@ -106,15 +123,19 @@ protected:
     db = OStoreDBFactory<objectstore::BackendVFS>().create(catalogue);
 #endif
     scheduler = std::make_unique<testing::StrictMock<MockDriveScheduler>>(*catalogue, *db, "test");
-    // Fail unexpected polls immediately instead of entering the production wait loop.
-    ON_CALL(*scheduler, getDesiredDriveState(_, _))
-      .WillByDefault(Throw(std::logic_error("Unexpected drive-state poll")));
+    // Fail unexpected library polls instead of entering the production wait loop.
     ON_CALL(library(), getLogicalLibraries()).WillByDefault(Throw(std::logic_error("Unexpected library poll")));
     context = std::make_unique<SchedulerContext>(config, logger, *scheduler);
     daemon = std::make_unique<TapeDaemon>(config, logger, *catalogue, *context);
+    previousDrive->host = utils::getShortHostname();
+    previousDrive->logicalLibrary = config.drive.logical_library_name;
     previousDrive->desiredUp = false;
     previousDrive->driveStatus = DriveStatus::Down;
-    ON_CALL(driveState(), getTapeDrive("drive")).WillByDefault(Invoke([this] { return previousDrive; }));
+    allowDriveReads();
+  }
+
+  void allowDriveReads() {
+    EXPECT_CALL(driveState(), getTapeDrive("drive")).WillRepeatedly(Invoke([this] { return previousDrive; }));
   }
 
   bool registerDrive() { return daemon->registerDrive(); }
@@ -128,20 +149,27 @@ protected:
   int shutdown() { return daemon->shutdown(TapeDaemon::ExitCause::Normal, true); }
 
   void expectRunStartup() {
-    EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
-    EXPECT_CALL(*scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _));
-    EXPECT_CALL(*scheduler, reportSchedulerBackendName("drive", _));
+    EXPECT_CALL(driveState(),
+                createTapeDrive(testing::AllOf(testing::Field(&TapeDrive::mountType, MountType::NoMount),
+                                               testing::Field(&TapeDrive::driveStatus, DriveStatus::Down))));
+    EXPECT_CALL(driveConfig(),
+                createTapeDriveConfig("drive",
+                                      "general",
+                                      "SchedulerBackendName",
+                                      config.scheduler.backend_name,
+                                      "TOML config file"));
   }
 };
 
 TEST_F(TapeDaemonTest, RecoveryStatusPublicationFailureDoesNotTouchHardware) {
   config.drive.startup.recover_existing_up = true;
   testing::InSequence sequence;
-  previousDrive.emplace();
   previousDrive->driveStatus = DriveStatus::Transferring;
   previousDrive->desiredUp = true;
-  EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
-  EXPECT_CALL(*scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Starting, _))
+
+  EXPECT_CALL(driveState(),
+              updateTapeDriveStatus(testing::AllOf(testing::Field(&TapeDrive::mountType, MountType::NoMount),
+                                                   testing::Field(&TapeDrive::driveStatus, DriveStatus::Starting))))
     .WillOnce(Throw(std::runtime_error("publication failed")));
   EXPECT_EQ(1, daemon->run());
   EXPECT_FALSE(daemon->isReady());
@@ -153,11 +181,18 @@ TEST_F(TapeDaemonTest, RestartPreservesDesiredUpAndPreparesInterruptedDrive) {
   previousDrive->driveStatus = DriveStatus::Transferring;
   previousDrive->reasonUpDown = "Operator requested Up";
   testing::InSequence sequence;
-  EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
+
   EXPECT_CALL(driveState(), setDesiredTapeDriveState(_, _)).Times(0);
-  EXPECT_CALL(*scheduler, createTapeDriveStatus(_, _, _, _, _, _)).Times(0);
-  EXPECT_CALL(*scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Starting, _));
-  EXPECT_CALL(*scheduler, reportSchedulerBackendName("drive", _));
+  EXPECT_CALL(driveState(), createTapeDrive(_)).Times(0);
+  EXPECT_CALL(driveState(),
+              updateTapeDriveStatus(testing::AllOf(testing::Field(&TapeDrive::mountType, MountType::NoMount),
+                                                   testing::Field(&TapeDrive::driveStatus, DriveStatus::Starting))));
+  EXPECT_CALL(driveConfig(),
+              createTapeDriveConfig("drive",
+                                    "general",
+                                    "SchedulerBackendName",
+                                    config.scheduler.backend_name,
+                                    "TOML config file"));
   EXPECT_TRUE(registerDrive());
   EXPECT_TRUE(daemon->isReady());
   EXPECT_TRUE(previousDrive->desiredUp);
@@ -169,8 +204,8 @@ TEST_F(TapeDaemonTest, DisabledRecoveryPreservesEntryAndDoesNotFallThroughToAuto
   previousDrive->desiredUp = true;
   previousDrive->driveStatus = DriveStatus::Transferring;
   previousDrive->userComment = "Inspect drive";
-  EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
-  EXPECT_CALL(*scheduler, createTapeDriveStatus(_, _, _, _, _, _)).Times(0);
+
+  EXPECT_CALL(driveState(), createTapeDrive(_)).Times(0);
   EXPECT_CALL(driveState(), setDesiredTapeDriveState("drive", _))
     .WillOnce(Invoke([&](const auto&, const DesiredDriveState& desired) {
       EXPECT_FALSE(desired.up);
@@ -179,8 +214,15 @@ TEST_F(TapeDaemonTest, DisabledRecoveryPreservesEntryAndDoesNotFallThroughToAuto
       EXPECT_EQ(formatDriveDownReason(DriveDownReason::StartupRecoveryDisabled), desired.reason);
       previousDrive->desiredUp = desired.up;
     }));
-  EXPECT_CALL(*scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
-  EXPECT_CALL(*scheduler, reportSchedulerBackendName("drive", _));
+  EXPECT_CALL(driveState(),
+              updateTapeDriveStatus(testing::AllOf(testing::Field(&TapeDrive::mountType, MountType::NoMount),
+                                                   testing::Field(&TapeDrive::driveStatus, DriveStatus::Down))));
+  EXPECT_CALL(driveConfig(),
+              createTapeDriveConfig("drive",
+                                    "general",
+                                    "SchedulerBackendName",
+                                    config.scheduler.backend_name,
+                                    "TOML config file"));
   EXPECT_TRUE(registerDrive());
   EXPECT_FALSE(previousDrive->desiredUp);
   EXPECT_EQ("Inspect drive", previousDrive->userComment);
@@ -203,21 +245,30 @@ TEST_F(TapeDaemonTest, StartupAutoUpOnlyAcceptsEligibleDownReasons) {
       state.reason = reason;
       state.comment = "Operator comment";
       const bool eligible = !reason || reason->empty() || isCleanDriveShutdownReason(*reason);
-      EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
+
       previousDrive->reasonUpDown = state.reason;
       previousDrive->userComment = state.comment;
-      EXPECT_CALL(*scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _))
-        .WillOnce(
-          Invoke([&](const auto&, const DesiredDriveState& desired, const auto&, const auto&, const auto&, auto&) {
-            EXPECT_EQ(autoUp && eligible, desired.up);
-            EXPECT_EQ(state.comment, desired.comment);
-            if (!eligible) {
-              EXPECT_EQ(reason, desired.reason);
-            }
-          }));
-      EXPECT_CALL(*scheduler, reportSchedulerBackendName("drive", _));
+      EXPECT_CALL(driveState(),
+                  createTapeDrive(testing::AllOf(testing::Field(&TapeDrive::mountType, MountType::NoMount),
+                                                 testing::Field(&TapeDrive::driveStatus, DriveStatus::Down))))
+        .WillOnce(Invoke([&](const TapeDrive& published) {
+          EXPECT_EQ(autoUp && eligible, published.desiredUp);
+          EXPECT_EQ(state.comment, published.userComment);
+          if (!eligible) {
+            EXPECT_EQ(reason, published.reasonUpDown);
+          }
+        }));
+      EXPECT_CALL(driveConfig(),
+                  createTapeDriveConfig("drive",
+                                        "general",
+                                        "SchedulerBackendName",
+                                        config.scheduler.backend_name,
+                                        "TOML config file"));
       EXPECT_TRUE(registerDrive());
       ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(scheduler.get()));
+      ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&driveState()));
+      allowDriveReads();
+      ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&driveConfig()));
     }
   }
 }
@@ -226,20 +277,28 @@ TEST_F(TapeDaemonTest, NewDriveUsesStartupAutoUp) {
   previousDrive.reset();
   for (const bool autoUp : {false, true}) {
     config.drive.startup.auto_up = autoUp;
-    EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
-    EXPECT_CALL(*scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _))
-      .WillOnce(
-        Invoke([&](const auto&, const DesiredDriveState& desired, const auto&, const auto&, const auto&, auto&) {
-          EXPECT_EQ(autoUp, desired.up);
-        }));
-    EXPECT_CALL(*scheduler, reportSchedulerBackendName("drive", _));
+
+    EXPECT_CALL(driveState(),
+                createTapeDrive(testing::AllOf(testing::Field(&TapeDrive::mountType, MountType::NoMount),
+                                               testing::Field(&TapeDrive::driveStatus, DriveStatus::Down))))
+      .WillOnce(Invoke([&](const TapeDrive& published) { EXPECT_EQ(autoUp, published.desiredUp); }));
+    EXPECT_CALL(driveConfig(),
+                createTapeDriveConfig("drive",
+                                      "general",
+                                      "SchedulerBackendName",
+                                      config.scheduler.backend_name,
+                                      "TOML config file"));
     EXPECT_TRUE(registerDrive());
     ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(scheduler.get()));
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&driveState()));
+    allowDriveReads();
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&driveConfig()));
   }
 }
 
 TEST_F(TapeDaemonTest, RegistrationConflictStopsStartup) {
-  EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(false));
+  previousDrive->host = "another-host";
+  EXPECT_CALL(driveState(), createTapeDrive(_)).Times(0);
   EXPECT_EQ(1, daemon->run());
   EXPECT_FALSE(daemon->isReady());
 }
@@ -249,19 +308,26 @@ TEST_F(TapeDaemonTest, RegistrationPublishesReadinessLast) {
   state.reason = "Maintenance";
   state.comment = "Operator comment";
   EXPECT_FALSE(daemon->isReady());
-  EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
+
   previousDrive->reasonUpDown = state.reason;
   previousDrive->userComment = state.comment;
-  EXPECT_CALL(*scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _))
-    .WillOnce(Invoke([&](const auto&, const DesiredDriveState& desired, const auto&, const auto&, const auto&, auto&) {
+  EXPECT_CALL(driveState(),
+              createTapeDrive(testing::AllOf(testing::Field(&TapeDrive::mountType, MountType::NoMount),
+                                             testing::Field(&TapeDrive::driveStatus, DriveStatus::Down))))
+    .WillOnce(Invoke([&](const TapeDrive& published) {
       EXPECT_FALSE(daemon->isReady());
-      EXPECT_FALSE(desired.up);
-      EXPECT_EQ(state.reason, desired.reason);
-      EXPECT_EQ(state.comment, desired.comment);
+      EXPECT_FALSE(published.desiredUp);
+      EXPECT_EQ(state.reason, published.reasonUpDown);
+      EXPECT_EQ(state.comment, published.userComment);
     }));
-  EXPECT_CALL(*scheduler, reportSchedulerBackendName("drive", _)).WillOnce(Invoke([&](const auto&, auto&) {
-    EXPECT_FALSE(daemon->isReady());
-  }));
+  EXPECT_CALL(driveConfig(),
+              createTapeDriveConfig("drive",
+                                    "general",
+                                    "SchedulerBackendName",
+                                    config.scheduler.backend_name,
+                                    "TOML config file"))
+    .WillOnce(Invoke(
+      [&](const auto&, const auto&, const auto&, const auto&, const auto&) { EXPECT_FALSE(daemon->isReady()); }));
   EXPECT_TRUE(registerDrive());
   EXPECT_TRUE(daemon->isReady());
 }
@@ -275,26 +341,35 @@ TEST_F(TapeDaemonTest, RegistrationReplacesAbsentAndCleanShutdownReasonsWithStar
     state.reason = reason;
 
     // Capture the state published to the catalogue during registration.
-    EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
+
     previousDrive->reasonUpDown = state.reason;
     previousDrive->userComment = state.comment;
-    EXPECT_CALL(*scheduler, createTapeDriveStatus(_, _, MountType::NoMount, DriveStatus::Down, _, _))
-      .WillOnce(Invoke([](const auto&, const DesiredDriveState& desired, const auto&, const auto&, const auto&, auto&) {
-        EXPECT_FALSE(desired.up);
-        EXPECT_EQ(formatDriveDownReason(DriveDownReason::Startup), desired.reason);
+    EXPECT_CALL(driveState(),
+                createTapeDrive(testing::AllOf(testing::Field(&TapeDrive::mountType, MountType::NoMount),
+                                               testing::Field(&TapeDrive::driveStatus, DriveStatus::Down))))
+      .WillOnce(Invoke([](const TapeDrive& published) {
+        EXPECT_FALSE(published.desiredUp);
+        EXPECT_EQ(formatDriveDownReason(DriveDownReason::Startup), published.reasonUpDown);
       }));
-    EXPECT_CALL(*scheduler, reportSchedulerBackendName("drive", _));
+    EXPECT_CALL(driveConfig(),
+                createTapeDriveConfig("drive",
+                                      "general",
+                                      "SchedulerBackendName",
+                                      config.scheduler.backend_name,
+                                      "TOML config file"));
 
     EXPECT_TRUE(registerDrive());
 
     // Remove this case's expectations before setting up the next reason.
     ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(scheduler.get()));
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&driveState()));
+    allowDriveReads();
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&driveConfig()));
   }
 }
 
 TEST_F(TapeDaemonTest, MissingDrivePropagatesFromWaitForUp) {
-  EXPECT_CALL(*scheduler, getDesiredDriveState("drive", _))
-    .WillOnce(Throw(TapeDrivesCatalogueState::NoSuchDrive("missing")));
+  EXPECT_CALL(driveState(), getTapeDrive("drive")).WillOnce(Return(std::nullopt));
   EXPECT_THROW(waitForUp(), TapeDrivesCatalogueState::NoSuchDrive);
 }
 
@@ -302,23 +377,30 @@ TEST_F(TapeDaemonTest, RegistrationFailureDoesNotPublishShutdown) {
   for (const auto& failure : {std::make_exception_ptr(exception::Exception("unavailable")),
                               std::make_exception_ptr(std::runtime_error("unavailable")),
                               std::make_exception_ptr(42)}) {
-    EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Invoke([&](const auto&, auto&) -> bool {
+    EXPECT_CALL(driveState(), getTapeDrive("drive")).WillOnce(Invoke([&](const auto&) -> std::optional<TapeDrive> {
       std::rethrow_exception(failure);
     }));
     EXPECT_CALL(driveState(), setDesiredTapeDriveState(_, _)).Times(0);
-    EXPECT_CALL(*scheduler, reportDriveStatus(_, _, _, _)).Times(0);
+    EXPECT_CALL(driveState(), updateTapeDriveStatus(_)).Times(0);
     EXPECT_EQ(1, daemon->run());
     EXPECT_FALSE(daemon->isReady());
     EXPECT_TRUE(daemon->isLive());
     ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(scheduler.get()));
     ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&driveState()));
+    allowDriveReads();
+    ASSERT_TRUE(testing::Mock::VerifyAndClearExpectations(&driveConfig()));
   }
 }
 
 TEST_F(TapeDaemonTest, BackendPublicationFailureDoesNotEstablishReadiness) {
-  EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
-  EXPECT_CALL(*scheduler, createTapeDriveStatus(_, _, _, _, _, _));
-  EXPECT_CALL(*scheduler, reportSchedulerBackendName("drive", _)).WillOnce(Throw(std::runtime_error("backend")));
+  EXPECT_CALL(driveState(), createTapeDrive(_));
+  EXPECT_CALL(driveConfig(),
+              createTapeDriveConfig("drive",
+                                    "general",
+                                    "SchedulerBackendName",
+                                    config.scheduler.backend_name,
+                                    "TOML config file"))
+    .WillOnce(Throw(std::runtime_error("backend")));
   EXPECT_EQ(1, daemon->run());
   EXPECT_FALSE(daemon->isReady());
 }
@@ -329,9 +411,8 @@ TEST_F(TapeDaemonTest, ExistingLibraryAndDesiredUpReturnWithoutWaiting) {
   EXPECT_CALL(library(), getLogicalLibraries())
     .WillOnce(Return(std::vector<common::dataStructures::LogicalLibrary> {logicalLibrary}));
   waitForLibrary();
-  DesiredDriveState desired;
-  desired.up = true;
-  EXPECT_CALL(*scheduler, getDesiredDriveState("drive", _)).WillOnce(Return(desired));
+  previousDrive->desiredUp = true;
+  EXPECT_CALL(driveState(), getTapeDrive("drive")).WillOnce(Return(previousDrive));
   waitForUp();
 }
 
@@ -339,7 +420,9 @@ TEST_F(TapeDaemonTest, LibraryFailureAfterRegistrationPublishesDownAndClearsRead
   expectRunStartup();
   EXPECT_CALL(library(), getLogicalLibraries()).WillOnce(Throw(std::runtime_error("library unavailable")));
   EXPECT_CALL(driveState(), setDesiredTapeDriveState("drive", _));
-  EXPECT_CALL(*scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
+  EXPECT_CALL(driveState(),
+              updateTapeDriveStatus(testing::AllOf(testing::Field(&TapeDrive::mountType, MountType::NoMount),
+                                                   testing::Field(&TapeDrive::driveStatus, DriveStatus::Down))));
   EXPECT_EQ(1, daemon->run());
   EXPECT_FALSE(daemon->isReady());
   EXPECT_TRUE(daemon->isLive());
@@ -352,7 +435,9 @@ TEST_F(TapeDaemonTest, StopBeforeRegistrationSkipsWaitingAndExitsNormally) {
   EXPECT_TRUE(stopRequested());
   expectRunStartup();
   EXPECT_CALL(driveState(), setDesiredTapeDriveState("drive", _));
-  EXPECT_CALL(*scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
+  EXPECT_CALL(driveState(),
+              updateTapeDriveStatus(testing::AllOf(testing::Field(&TapeDrive::mountType, MountType::NoMount),
+                                                   testing::Field(&TapeDrive::driveStatus, DriveStatus::Down))));
   EXPECT_EQ(0, daemon->run());
   EXPECT_FALSE(daemon->isReady());
 }
@@ -369,7 +454,9 @@ TEST_F(TapeDaemonTest, StopRetainsExitRequestWhenPublicationFails) {
 
 TEST_F(TapeDaemonTest, ShutdownStillReportsDownWhenDesiredPublicationFails) {
   EXPECT_CALL(driveState(), setDesiredTapeDriveState("drive", _)).WillOnce(Throw(std::runtime_error("unavailable")));
-  EXPECT_CALL(*scheduler, reportDriveStatus(_, MountType::NoMount, DriveStatus::Down, _));
+  EXPECT_CALL(driveState(),
+              updateTapeDriveStatus(testing::AllOf(testing::Field(&TapeDrive::mountType, MountType::NoMount),
+                                                   testing::Field(&TapeDrive::driveStatus, DriveStatus::Down))));
   EXPECT_EQ(1, shutdown());
 }
 
@@ -378,10 +465,10 @@ TEST_F(TapeDaemonTest, MissingDriveEndsRunWithoutShutdownPublication) {
   expectRunStartup();
   common::dataStructures::LogicalLibrary logicalLibrary;
   logicalLibrary.name = "library";
-  EXPECT_CALL(library(), getLogicalLibraries())
-    .WillOnce(Return(std::vector<common::dataStructures::LogicalLibrary> {logicalLibrary}));
-  EXPECT_CALL(*scheduler, getDesiredDriveState("drive", _))
-    .WillOnce(Throw(TapeDrivesCatalogueState::NoSuchDrive("missing")));
+  EXPECT_CALL(library(), getLogicalLibraries()).WillOnce(Invoke([&] {
+    previousDrive.reset();
+    return std::vector<common::dataStructures::LogicalLibrary> {logicalLibrary};
+  }));
   EXPECT_CALL(driveState(), setDesiredTapeDriveState(_, _)).Times(0);
   EXPECT_EQ(1, daemon->run());
   EXPECT_FALSE(daemon->isReady());

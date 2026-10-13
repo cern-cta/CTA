@@ -13,6 +13,7 @@
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "catalogue/MediaType.hpp"
 #include "catalogue/OracleCatalogueSchema.hpp"
+#include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "catalogue/TapeItemWrittenPointer.hpp"
 #include "catalogue/rdbms/oracle/OracleCatalogue.hpp"
 #include "common/dataStructures/DiskInstance.hpp"
@@ -459,34 +460,6 @@ public:
   }
 };
 
-class FailingTransferScheduler : public cta::Scheduler {
-public:
-  using cta::Scheduler::Scheduler;
-  unsigned int downAttempts = 0;
-  unsigned int upAttempts = 0;
-  unsigned int desiredDownAttempts = 0;
-  std::optional<std::string> downReason;
-
-  void reportDriveStatus(const cta::common::dataStructures::DriveInfo&,
-                         cta::common::dataStructures::MountType,
-                         cta::common::dataStructures::DriveStatus status,
-                         cta::log::LogContext&) override {
-    if (status == cta::common::dataStructures::DriveStatus::Down) {
-      ++downAttempts;
-    } else if (status == cta::common::dataStructures::DriveStatus::Up) {
-      ++upAttempts;
-    }
-  }
-
-  void setDesiredDriveState(const std::string&,
-                            const cta::common::dataStructures::DesiredDriveState& state,
-                            cta::log::LogContext&) override {
-    EXPECT_FALSE(state.up);
-    ++desiredDownAttempts;
-    downReason = state.reason;
-  }
-};
-
 class TransferDriveWithDestructionCounter : public cta::tape::drive::FakeDrive {
 public:
   explicit TransferDriveWithDestructionCounter(unsigned int& counter) : m_counter(counter) {}
@@ -865,7 +838,6 @@ public:
     alarm(5);
     const auto threadsBefore = transferTestThreadCount();
     cta::log::StringLogger logger("dummy", "transferFailureTest", cta::log::DEBUG);
-    FailingTransferScheduler scheduler(getCatalogue(), *m_db, "schedulerBackendName");
     Mount mount(getCatalogue(), point);
     mount.repack = repack;
     const bool fatal = point == TransferFailurePoint::MetadataAllocation || point == TransferFailurePoint::MetadataLogic
@@ -931,7 +903,7 @@ public:
     cta::mediachanger::RmcProxy proxy;
     cta::mediachanger::MediaChangerFacade changer(proxy, logger);
     std::optional<TapeSessionResult> result;
-    TapeSession session(logger, system, info, changer, mount, config, 1, scheduler);
+    TapeSession session(logger, system, info, changer, mount, config, 1, getCatalogue());
     const auto& tracker = session.tracker();
     mount.observedTracker = &tracker;
     EXPECT_FALSE(tracker.state().has_value());
@@ -1014,8 +986,6 @@ public:
       EXPECT_EQ(1, countLogMessages(logger.getLog(), mountMessage));
     }
     // DriveSession owns terminal publication; TapeSession returns the reason and detail.
-    EXPECT_EQ(0, scheduler.downAttempts);
-    EXPECT_EQ(0, scheduler.desiredDownAttempts);
     EXPECT_FALSE(mount.downReason);
     if (cleanupFails) {
       ASSERT_TRUE(result);
@@ -1036,9 +1006,6 @@ public:
       EXPECT_THAT(result->downDetail, testing::HasSubstr(std::string(stage)));
     } else if (!startupFails) {
       EXPECT_EQ(1, driveDestructions);
-      if (!workerStarts) {
-        EXPECT_EQ(0, scheduler.upAttempts);
-      }
     }
     if constexpr (std::is_same_v<Mount, FailingTransferRetrieveMount>) {
       const auto noFilesEvents =
@@ -1216,7 +1183,7 @@ TEST_P(TapeSessionTest, ArchiveAsyncFetchFailureDrainsAndMarksSessionUnsuccessfu
         // Keep this transfer test independent of external key scripts and catalogue encryption settings.
         config.encryption.external_key_script.clear();
         config.no_block_move_timeout_secs = 600;
-        TapeSession session(logger, system, info, changer, mount, config, 1, getScheduler());
+        TapeSession session(logger, system, info, changer, mount, config, 1, getCatalogue());
 
         const auto result = session.execute();
         EXPECT_FALSE(result.successful);
@@ -1952,14 +1919,14 @@ TEST_P(TapeSessionTest, TapeSessionGooddayRecall) {
                                                    "/dev/tape_T10D6116",
                                                    "dummy");
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo,
-                              cta::common::dataStructures::MountType::NoMount,
-                              cta::common::dataStructures::DriveStatus::Down,
-                              logContext);
+  cta::TapeDrivesCatalogueState(catalogue).reportDriveStatus(driveInfo,
+                                                             cta::common::dataStructures::MountType::NoMount,
+                                                             cta::common::dataStructures::DriveStatus::Down,
+                                                             logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
+  cta::TapeDrivesCatalogueState(catalogue).setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 7) Create the data transfer session
   TransfersConfig dataTransferConf;
@@ -1995,7 +1962,7 @@ TEST_P(TapeSessionTest, TapeSessionGooddayRecall) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   cta::tape::daemon::TapeSession
-    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
   // 8) Run the data transfer session
   sess.execute();
 
@@ -2237,14 +2204,14 @@ TEST_P(TapeSessionTest, TapeSessionWrongChecksumRecall) {
                                                    "/dev/tape_T10D6116",
                                                    "dummy");
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo,
-                              cta::common::dataStructures::MountType::NoMount,
-                              cta::common::dataStructures::DriveStatus::Down,
-                              logContext);
+  cta::TapeDrivesCatalogueState(catalogue).reportDriveStatus(driveInfo,
+                                                             cta::common::dataStructures::MountType::NoMount,
+                                                             cta::common::dataStructures::DriveStatus::Down,
+                                                             logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
+  cta::TapeDrivesCatalogueState(catalogue).setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 7) Create the data transfer session
   TransfersConfig dataTransferConf;
@@ -2280,7 +2247,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongChecksumRecall) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   cta::tape::daemon::TapeSession
-    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
 
   // 8) Run the data transfer session
   const auto result = sess.execute();
@@ -2537,14 +2504,14 @@ TEST_P(TapeSessionTest, TapeSessionWrongRecall) {
                                                    "/dev/tape_T10D6116",
                                                    "dummy");
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo,
-                              cta::common::dataStructures::MountType::NoMount,
-                              cta::common::dataStructures::DriveStatus::Down,
-                              logContext);
+  cta::TapeDrivesCatalogueState(catalogue).reportDriveStatus(driveInfo,
+                                                             cta::common::dataStructures::MountType::NoMount,
+                                                             cta::common::dataStructures::DriveStatus::Down,
+                                                             logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
+  cta::TapeDrivesCatalogueState(catalogue).setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 7) Create the data transfer session
   TransfersConfig dataTransferConf;
@@ -2579,7 +2546,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongRecall) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
-  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
+  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -2780,14 +2747,14 @@ TEST_P(TapeSessionTest, TapeSessionRAORecall) {
                                                    "/dev/tape_T10D6116",
                                                    "dummy");
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo,
-                              cta::common::dataStructures::MountType::NoMount,
-                              cta::common::dataStructures::DriveStatus::Down,
-                              logContext);
+  cta::TapeDrivesCatalogueState(catalogue).reportDriveStatus(driveInfo,
+                                                             cta::common::dataStructures::MountType::NoMount,
+                                                             cta::common::dataStructures::DriveStatus::Down,
+                                                             logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
+  cta::TapeDrivesCatalogueState(catalogue).setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 7) Create the data transfer session
   TransfersConfig dataTransferConf;
@@ -2824,7 +2791,7 @@ TEST_P(TapeSessionTest, TapeSessionRAORecall) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   cta::tape::daemon::TapeSession
-    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -3029,14 +2996,14 @@ TEST_P(TapeSessionTest, TapeSessionRAORecallLinearAlgorithm) {
                                                    "/dev/tape_T10D6116",
                                                    "dummy");
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo,
-                              cta::common::dataStructures::MountType::NoMount,
-                              cta::common::dataStructures::DriveStatus::Down,
-                              logContext);
+  cta::TapeDrivesCatalogueState(catalogue).reportDriveStatus(driveInfo,
+                                                             cta::common::dataStructures::MountType::NoMount,
+                                                             cta::common::dataStructures::DriveStatus::Down,
+                                                             logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
+  cta::TapeDrivesCatalogueState(catalogue).setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 7) Create the data transfer session
   TransfersConfig dataTransferConf;
@@ -3074,7 +3041,7 @@ TEST_P(TapeSessionTest, TapeSessionRAORecallLinearAlgorithm) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   cta::tape::daemon::TapeSession
-    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -3279,14 +3246,14 @@ TEST_P(TapeSessionTest, TapeSessionRAORecallRAOAlgoDoesNotExistShouldApplyLinear
                                                    "/dev/tape_T10D6116",
                                                    "dummy");
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo,
-                              cta::common::dataStructures::MountType::NoMount,
-                              cta::common::dataStructures::DriveStatus::Down,
-                              logContext);
+  cta::TapeDrivesCatalogueState(catalogue).reportDriveStatus(driveInfo,
+                                                             cta::common::dataStructures::MountType::NoMount,
+                                                             cta::common::dataStructures::DriveStatus::Down,
+                                                             logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
+  cta::TapeDrivesCatalogueState(catalogue).setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 7) Create the data transfer session
   TransfersConfig dataTransferConf;
@@ -3325,7 +3292,7 @@ TEST_P(TapeSessionTest, TapeSessionRAORecallRAOAlgoDoesNotExistShouldApplyLinear
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   cta::tape::daemon::TapeSession
-    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -3534,14 +3501,14 @@ TEST_P(TapeSessionTest, TapeSessionRAORecallSLTFRAOAlgorithm) {
                                                    "/dev/tape_T10D6116",
                                                    "dummy");
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo,
-                              cta::common::dataStructures::MountType::NoMount,
-                              cta::common::dataStructures::DriveStatus::Down,
-                              logContext);
+  cta::TapeDrivesCatalogueState(catalogue).reportDriveStatus(driveInfo,
+                                                             cta::common::dataStructures::MountType::NoMount,
+                                                             cta::common::dataStructures::DriveStatus::Down,
+                                                             logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
+  cta::TapeDrivesCatalogueState(catalogue).setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 7) Create the data transfer session
   TransfersConfig dataTransferConf;
@@ -3579,7 +3546,7 @@ TEST_P(TapeSessionTest, TapeSessionRAORecallSLTFRAOAlgorithm) {
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
   cta::tape::daemon::TapeSession
-    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
+    sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -3780,14 +3747,14 @@ TEST_P(TapeSessionTest, TapeSessionNoSuchDrive) {
                                                    "/dev/noSuchDrive",
                                                    "dummy");
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo,
-                              cta::common::dataStructures::MountType::NoMount,
-                              cta::common::dataStructures::DriveStatus::Down,
-                              logContext);
+  cta::TapeDrivesCatalogueState(catalogue).reportDriveStatus(driveInfo,
+                                                             cta::common::dataStructures::MountType::NoMount,
+                                                             cta::common::dataStructures::DriveStatus::Down,
+                                                             logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
+  cta::TapeDrivesCatalogueState(catalogue).setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 8) Create the data transfer session
   TransfersConfig dataTransferConf;
@@ -3819,7 +3786,7 @@ TEST_P(TapeSessionTest, TapeSessionNoSuchDrive) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
-  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
+  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
   ASSERT_NE(std::string::npos, logger.getLog().find("Session drive access failed: Configured drive lookup failed"));
@@ -3969,14 +3936,14 @@ TEST_P(TapeSessionTest, TapeSessionFailtoMount) {
                                                    "/dev/tape_T10D6116",
                                                    "dummy");
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo,
-                              cta::common::dataStructures::MountType::NoMount,
-                              cta::common::dataStructures::DriveStatus::Down,
-                              logContext);
+  cta::TapeDrivesCatalogueState(catalogue).reportDriveStatus(driveInfo,
+                                                             cta::common::dataStructures::MountType::NoMount,
+                                                             cta::common::dataStructures::DriveStatus::Down,
+                                                             logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
+  cta::TapeDrivesCatalogueState(catalogue).setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // 8) Create the data transfer session
   TransfersConfig dataTransferConf;
@@ -4011,7 +3978,7 @@ TEST_P(TapeSessionTest, TapeSessionFailtoMount) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
-  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
+  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
   ASSERT_NE(std::string::npos, logger.getLog().find("Failed to mount the tape"));
@@ -4165,14 +4132,14 @@ TEST_P(TapeSessionTest, TapeSessionGooddayMigration) {
                                                    "/dev/tape_T10D6116",
                                                    "dummy");
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo,
-                              cta::common::dataStructures::MountType::NoMount,
-                              cta::common::dataStructures::DriveStatus::Down,
-                              logContext);
+  cta::TapeDrivesCatalogueState(catalogue).reportDriveStatus(driveInfo,
+                                                             cta::common::dataStructures::MountType::NoMount,
+                                                             cta::common::dataStructures::DriveStatus::Down,
+                                                             logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
+  cta::TapeDrivesCatalogueState(catalogue).setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create the data transfer session
   TransfersConfig dataTransferConf;
@@ -4209,7 +4176,7 @@ TEST_P(TapeSessionTest, TapeSessionGooddayMigration) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
-  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
+  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
   sess.execute();
   const auto& tracker = sess.tracker();
   EXPECT_EQ(cta::tape::session::SessionType::Archive, tracker.type());
@@ -4396,14 +4363,14 @@ TEST_P(TapeSessionTest, TapeSessionWrongFileSizeMigration) {
                                                    "/dev/tape_T10D6116",
                                                    "dummy");
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo,
-                              cta::common::dataStructures::MountType::NoMount,
-                              cta::common::dataStructures::DriveStatus::Down,
-                              logContext);
+  cta::TapeDrivesCatalogueState(catalogue).reportDriveStatus(driveInfo,
+                                                             cta::common::dataStructures::MountType::NoMount,
+                                                             cta::common::dataStructures::DriveStatus::Down,
+                                                             logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
+  cta::TapeDrivesCatalogueState(catalogue).setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create the data transfer session
   TransfersConfig dataTransferConf;
@@ -4440,7 +4407,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongFileSizeMigration) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
-  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
+  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
   const auto result = sess.execute();
   EXPECT_TRUE(sess.tracker().outcomeSnapshot().hasFailures);
   EXPECT_FALSE(result.successful);
@@ -4622,14 +4589,14 @@ TEST_P(TapeSessionTest, TapeSessionWrongChecksumMigration) {
                                                    "/dev/tape_T10D6116",
                                                    "dummy");
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo,
-                              cta::common::dataStructures::MountType::NoMount,
-                              cta::common::dataStructures::DriveStatus::Down,
-                              logContext);
+  cta::TapeDrivesCatalogueState(catalogue).reportDriveStatus(driveInfo,
+                                                             cta::common::dataStructures::MountType::NoMount,
+                                                             cta::common::dataStructures::DriveStatus::Down,
+                                                             logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
+  cta::TapeDrivesCatalogueState(catalogue).setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create the data transfer session
   TransfersConfig dataTransferConf;
@@ -4666,7 +4633,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongChecksumMigration) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
-  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
+  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
   const auto result = sess.execute();
   EXPECT_TRUE(sess.tracker().outcomeSnapshot().hasFailures);
   EXPECT_FALSE(result.successful);
@@ -4850,14 +4817,14 @@ TEST_P(TapeSessionTest, TapeSessionWrongFilesizeInMiddleOfBatchMigration) {
                                                    "/dev/tape_T10D6116",
                                                    "dummy");
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo,
-                              cta::common::dataStructures::MountType::NoMount,
-                              cta::common::dataStructures::DriveStatus::Down,
-                              logContext);
+  cta::TapeDrivesCatalogueState(catalogue).reportDriveStatus(driveInfo,
+                                                             cta::common::dataStructures::MountType::NoMount,
+                                                             cta::common::dataStructures::DriveStatus::Down,
+                                                             logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
+  cta::TapeDrivesCatalogueState(catalogue).setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create the data transfer session
   TransfersConfig dataTransferConf;
@@ -4894,7 +4861,7 @@ TEST_P(TapeSessionTest, TapeSessionWrongFilesizeInMiddleOfBatchMigration) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
-  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
+  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
   const auto result = sess.execute();
   EXPECT_TRUE(sess.tracker().outcomeSnapshot().hasFailures);
   EXPECT_FALSE(result.successful);
@@ -5075,14 +5042,14 @@ TEST_P(TapeSessionTest, TapeSessionMissingFilesMigration) {
                                                    "/dev/tape_T10D6116",
                                                    "dummy");
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo,
-                              cta::common::dataStructures::MountType::NoMount,
-                              cta::common::dataStructures::DriveStatus::Down,
-                              logContext);
+  cta::TapeDrivesCatalogueState(catalogue).reportDriveStatus(driveInfo,
+                                                             cta::common::dataStructures::MountType::NoMount,
+                                                             cta::common::dataStructures::DriveStatus::Down,
+                                                             logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
+  cta::TapeDrivesCatalogueState(catalogue).setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create the data transfer session
   TransfersConfig dataTransferConf;
@@ -5121,7 +5088,7 @@ TEST_P(TapeSessionTest, TapeSessionMissingFilesMigration) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
-  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
+  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";
@@ -5299,14 +5266,14 @@ TEST_P(TapeSessionTest, TapeSessionTapeFullMigration) {
                                                    "/dev/tape_T10D6116",
                                                    "dummy");
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo,
-                              cta::common::dataStructures::MountType::NoMount,
-                              cta::common::dataStructures::DriveStatus::Down,
-                              logContext);
+  cta::TapeDrivesCatalogueState(catalogue).reportDriveStatus(driveInfo,
+                                                             cta::common::dataStructures::MountType::NoMount,
+                                                             cta::common::dataStructures::DriveStatus::Down,
+                                                             logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
+  cta::TapeDrivesCatalogueState(catalogue).setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create the data transfer session
   TransfersConfig dataTransferConf;
@@ -5343,7 +5310,7 @@ TEST_P(TapeSessionTest, TapeSessionTapeFullMigration) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
-  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
+  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";
@@ -5543,14 +5510,14 @@ TEST_P(TapeSessionTest, TapeSessionTapeFullOnFlushMigration) {
                                                    "/dev/tape_T10D6116",
                                                    "dummy");
   // We need to create the drive in the registry before being able to put it up.
-  scheduler.reportDriveStatus(driveInfo,
-                              cta::common::dataStructures::MountType::NoMount,
-                              cta::common::dataStructures::DriveStatus::Down,
-                              logContext);
+  cta::TapeDrivesCatalogueState(catalogue).reportDriveStatus(driveInfo,
+                                                             cta::common::dataStructures::MountType::NoMount,
+                                                             cta::common::dataStructures::DriveStatus::Down,
+                                                             logContext);
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(driveInfo.driveName, driveState, logContext);
+  cta::TapeDrivesCatalogueState(catalogue).setDesiredDriveState(driveInfo.driveName, driveState, logContext);
 
   // Create the data transfer session
   TransfersConfig dataTransferConf;
@@ -5587,7 +5554,7 @@ TEST_P(TapeSessionTest, TapeSessionTapeFullOnFlushMigration) {
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
   auto tapeMount = scheduler.getNextMount(driveInfo.logicalLibrary, driveInfo.driveName, logContext);
   ASSERT_NE(nullptr, tapeMount) << logger.getLog();
-  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, scheduler);
+  TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";
