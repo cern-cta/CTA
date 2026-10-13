@@ -216,10 +216,11 @@ DriveSession::IterationResult DriveSession::runIteration(std::stop_token stopTok
   try {
     // The dry run avoids constructing an assignment when no work is eligible.
     if (scheduler.getNextMountDryRun(m_driveInfo.logicalLibrary, m_driveInfo.driveName, m_lc)) {
-      mountCandidate = scheduler.getNextMount(m_driveInfo.logicalLibrary,
-                                         m_driveInfo.driveName,
-                                         m_lc,
-                                         static_cast<uint64_t>(m_config.mounts.get_next_mount_timeout_secs) * 1000000);
+      mountCandidate =
+        scheduler.getNextMount(m_driveInfo.logicalLibrary,
+                               m_driveInfo.driveName,
+                               m_lc,
+                               static_cast<uint64_t>(m_config.mounts.get_next_mount_timeout_secs) * 1000000);
     }
   } catch (const exception::TimeoutException& ex) {
     log::ScopedParamContainer params(m_lc);
@@ -312,7 +313,9 @@ TapeSessionResult DriveSession::runTapeSession(TapeMount& tapeMount) {
     // Failed before we even got a transfer result.
     // Cleanup may not be necessary, but it's the only way we can establish whether the drive is safe.
     const bool reusable = prepareDrive(vid);
-    return {.driveReusable = reusable, .successful = false, .downDetail = "Drive cleaning did not permit further scheduling"};
+    return {.driveReusable = reusable,
+            .successful = false,
+            .downDetail = "Drive cleaning did not permit further scheduling"};
   }
 
   if (!transferResult->driveReusable) {

@@ -49,7 +49,7 @@ public:
 
   /// @brief Clean the drive and schedule tape sessions until stop or reservation release.
   ///
-  /// Call once. 
+  /// Call once.
   /// Preparation failure or putting the drive Down ends the session; unexpected failures propagate.
   void run(std::stop_token stopToken);
 

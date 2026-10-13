@@ -28,8 +28,6 @@ public:
 
   void refresh() override {}
 
-  bool failLogging = false;
-  unsigned failedLogAttempts = 0;
   unsigned mounts = 0;
   unsigned cleanups = 0;
   std::string messages;
@@ -38,16 +36,12 @@ public:
 
 protected:
   void writeMsgToUnderlyingLoggingSystem(std::string_view, std::string_view body) override {
-    if (failLogging) {
-      ++failedLogAttempts;
-      throw std::runtime_error("cleanup logging failed");
-    }
     messages += body;
     if (body.find("Dummy mount for") != std::string_view::npos) {
       ++mounts;
     }
-    if (body.find("Cleaner found no tape") != std::string_view::npos
-        || body.find("Cleaner waiting for drive") != std::string_view::npos) {
+    // MountedTape requests one readiness wait per cleanup, including when the drive is empty.
+    if (body.find("Cleaner waiting for drive") != std::string_view::npos) {
       ++cleanups;
       mountTimeBeforeCleanup = tracker->stats().setup.initialMountTime;
     }
@@ -159,25 +153,29 @@ TEST_F(MountedTapeTest, CleanupFailureDoesNotInterruptUnwinding) {
   ASSERT_TRUE(outcome);
 }
 
-TEST_F(MountedTapeTest, UnexpectedCleanupExceptionIsRetainedWithoutInterruptingUnwinding) {
-  unsigned attemptsAfterCleanup = 0;
+TEST_F(MountedTapeTest, MultipleCleanupFailuresAreRetainedWithoutRetryDuringUnwinding) {
+  drive.setFailurePoint(drive::FakeDrive::FailurePoint::ClearEncryptionKey);
+  drive.setFailurePoint(drive::FakeDrive::FailurePoint::DisableLogicalBlockProtection);
   try {
     MountedTape tape(changer, volume, drive, catalogue, 0, outcome, lc, tracker);
-    logger.failLogging = true;
     const auto& result = tape.cleanup();
-    EXPECT_TRUE(result.unexpectedFailure);
+    EXPECT_TRUE(result.configurationResetFailed);
     EXPECT_FALSE(result.driveReusable());
-    EXPECT_EQ("cleanup logging failed", result.errorMessage);
+    EXPECT_NE(std::string::npos, result.errorMessage.find("Failed to clear encryption key"));
+    EXPECT_NE(std::string::npos, result.errorMessage.find("Failed to disable logical block protection"));
+
+    // A retry would now succeed, but the original failed result must remain intact.
+    drive.clearFailurePoints();
     EXPECT_EQ(&result, &tape.cleanup());
-    attemptsAfterCleanup = logger.failedLogAttempts;
+    EXPECT_TRUE(result.configurationResetFailed);
     throw std::logic_error("transfer failed");
   } catch (const std::logic_error& ex) {
     EXPECT_STREQ("transfer failed", ex.what());
   }
-  logger.failLogging = false;
   ASSERT_TRUE(outcome);
-  EXPECT_TRUE(outcome->unexpectedFailure);
-  EXPECT_EQ(attemptsAfterCleanup, logger.failedLogAttempts);
+  EXPECT_TRUE(outcome->configurationResetFailed);
+  EXPECT_FALSE(outcome->driveReusable());
+  EXPECT_EQ(1, logger.cleanups);
 }
 
 TEST_F(MountedTapeTest, ReporterFailureDoesNotPreventPhysicalCleanup) {

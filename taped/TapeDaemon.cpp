@@ -165,9 +165,9 @@ int TapeDaemon::shutdown(ExitCause cause, bool putDriveDown, std::string_view ex
   }
   try {
     m_schedulerContext.scheduler().reportDriveStatus(m_driveInfo,
-                                                      common::dataStructures::MountType::NoMount,
-                                                      common::dataStructures::DriveStatus::Down,
-                                                      m_lc);
+                                                     common::dataStructures::MountType::NoMount,
+                                                     common::dataStructures::DriveStatus::Down,
+                                                     m_lc);
   } catch (...) {
     m_lc.log(log::ERR, "Failed to report Down before daemon exit.");
     exitCode = 1;

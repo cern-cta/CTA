@@ -615,7 +615,8 @@ TEST_P(DriveCleanerTest, OccupiedDriveWaitsForReadinessBeforeEjecting) {
 TEST_P(DriveCleanerTest, MediaDetectionFailureRetainsReadinessWaitAndEjects) {
   installDrive()->setFailurePoint(FailurePoint::HasTapeInPlace);
   ASSERT_TRUE(runCleaner(m_vid, false, true));
-  ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner could not determine whether the drive contains a tape"));
+  ASSERT_NE(std::string::npos,
+            m_sessionLog.getLog().find("Cleaner could not determine whether the drive contains a tape"));
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner detected that the drive is ready"));
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
 }

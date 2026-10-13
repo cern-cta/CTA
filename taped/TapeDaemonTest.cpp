@@ -11,9 +11,9 @@
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/log/StringLogger.hpp"
 
+#include <exception>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <exception>
 #include <stdexcept>
 
 #ifdef CTA_PGSCHED
@@ -125,9 +125,7 @@ protected:
 
   bool stopRequested() { return daemon->m_stopSource.stop_requested(); }
 
-  int shutdown() {
-    return daemon->shutdown(TapeDaemon::ExitCause::Normal, true);
-  }
+  int shutdown() { return daemon->shutdown(TapeDaemon::ExitCause::Normal, true); }
 
   void expectRunStartup() {
     EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(true));
@@ -322,8 +320,9 @@ TEST_F(TapeDaemonTest, RegistrationFailureDoesNotPublishShutdown) {
   for (const auto& failure : {std::make_exception_ptr(exception::Exception("unavailable")),
                               std::make_exception_ptr(std::runtime_error("unavailable")),
                               std::make_exception_ptr(42)}) {
-    EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _))
-      .WillOnce(Invoke([&](const auto&, auto&) -> bool { std::rethrow_exception(failure); }));
+    EXPECT_CALL(*scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Invoke([&](const auto&, auto&) -> bool {
+      std::rethrow_exception(failure);
+    }));
     EXPECT_CALL(driveState(), setDesiredTapeDriveState(_, _)).Times(0);
     EXPECT_CALL(*scheduler, reportDriveStatus(_, _, _, _)).Times(0);
     EXPECT_EQ(1, daemon->run());

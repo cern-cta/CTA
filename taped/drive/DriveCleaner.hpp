@@ -61,7 +61,9 @@ public:
     /// An already-empty drive needs no eject operation and does not set ejectFailed.
     ///
     /// @return True if no cleanup failure is set.
-    bool driveReusable() const { return !driveOpenFailed && !configurationResetFailed && !ejectFailed && !unexpectedFailure; }
+    bool driveReusable() const {
+      return !driveOpenFailed && !configurationResetFailed && !ejectFailed && !unexpectedFailure;
+    }
   };
 
   /// @brief Open a drive and delegate cleanup to the borrowed-drive overload.

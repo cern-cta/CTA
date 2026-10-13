@@ -317,7 +317,9 @@ bool TapeSessionTracker::hasFailuresLocked() const {
   return std::any_of(m_failureCounts.begin(), m_failureCounts.end(), [](auto count) { return count != 0; });
 }
 
-void TapeSessionTracker::recordFailureLocked(TapeSessionFailure failure) { ++m_failureCounts.at(static_cast<size_t>(failure)); }
+void TapeSessionTracker::recordFailureLocked(TapeSessionFailure failure) {
+  ++m_failureCounts.at(static_cast<size_t>(failure));
+}
 
 bool TapeSessionTracker::setStateLocked(cta::tape::session::TapeSessionState state, Clock::time_point now) {
   if (m_state != state) {
@@ -328,7 +330,8 @@ bool TapeSessionTracker::setStateLocked(cta::tape::session::TapeSessionState sta
   return false;
 }
 
-std::optional<cta::tape::session::TapeSessionState> TapeSessionTracker::updateRetrievalCompletionState(Clock::time_point now) {
+std::optional<cta::tape::session::TapeSessionState>
+TapeSessionTracker::updateRetrievalCompletionState(Clock::time_point now) {
   using cta::tape::session::TapeSessionState;
   if (m_type == cta::tape::session::SessionType::Retrieve && m_tapeDone && m_state
       && m_state != TapeSessionState::Finished) {

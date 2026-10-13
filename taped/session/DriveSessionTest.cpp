@@ -154,12 +154,12 @@ protected:
     std::atomic_store<const TapeSessionTracker>(&session->m_activeTracker, tracker);
   }
 
-  void checkCleanupStates() {
+  void checkCleanupStates(cta::tape::session::TapeSessionState expectedState) {
     using namespace std::chrono_literals;
     using enum cta::tape::session::TapeSessionState;
     const auto tracker = std::const_pointer_cast<TapeSessionTracker>(activeTracker());
     ASSERT_TRUE(tracker);
-    EXPECT_EQ(Preparing, tracker->livenessSnapshot().state);
+    EXPECT_EQ(expectedState, tracker->livenessSnapshot().state);
     EXPECT_TRUE(session->isLive());
     const auto now = TapeSessionTracker::Clock::now();
     tracker->reportState(Unloading, now - std::chrono::seconds(config.mounts.tape_unload_timeout_secs) - 1s);
@@ -593,7 +593,7 @@ TEST_F(DriveSessionTest, PreparationIsVisibleAndClearedOnNormalExit) {
   driveState().onRead = [&] {
     if (activeTracker()) {
       ++observed;
-      checkCleanupStates();
+      checkCleanupStates(cta::tape::session::TapeSessionState::Preparing);
     }
   };
   // Desired Down returns normally before hardware access, then releases and reports Down.
@@ -607,7 +607,7 @@ TEST_F(DriveSessionTest, PreparationIsVisibleAndClearedOnNormalExit) {
 TEST_F(DriveSessionTest, PreparationExceptionClearsTracker) {
   driveState().onRead = [&] {
     if (activeTracker()) {
-      checkCleanupStates();
+      checkCleanupStates(cta::tape::session::TapeSessionState::Preparing);
       throw std::runtime_error("catalogue unavailable");
     }
   };
@@ -618,7 +618,8 @@ TEST_F(DriveSessionTest, PreparationExceptionClearsTracker) {
 
 TEST_F(DriveSessionTest, RecoveryExceptionClearsTrackerAndRetainsOwnership) {
   driveState().onRead = [&] {
-    checkCleanupStates();
+    // Recovery reads the desired state after hardware cleanup has entered final reporting.
+    checkCleanupStates(cta::tape::session::TapeSessionState::Finalizing);
     throw std::runtime_error("catalogue unavailable");
   };
   EXPECT_THROW(recover(), std::runtime_error);
