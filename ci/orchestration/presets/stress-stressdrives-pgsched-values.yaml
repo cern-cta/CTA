@@ -59,7 +59,10 @@ taped:
       # Normal end-of-session (empty queue + lastCall) is unaffected.
       #
       # Format: "watchPeriodSecs, minSamples, startThreshold%, recoveryThreshold%"
-      archiveDismountPolicy: "0, 0, 0, 0"
+      # startThreshold=0 → effectiveFillRatio >= 0.0 is always true → underfill period
+      # never starts → dismounting disabled.  recoveryThreshold=1 satisfies the
+      # validator constraint (startThreshold < recoveryThreshold).
+      archiveDismountPolicy: "300, 3, 0, 1"
 
   # Node affinity: all stress-drive pods MUST land on the same Kubernetes node.
   #

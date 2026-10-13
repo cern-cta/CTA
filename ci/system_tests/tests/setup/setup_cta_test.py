@@ -134,11 +134,16 @@ def test_label_tapes(env: TestEnv) -> None:
             f.result()
 
 
-def test_set_all_drives_up(cta_cli: CtaCliHost) -> None:
-    # For real drives taped is already running long before setup. For stress-mode
-    # deployments there are no rmcd pods, so test_label_tapes does nothing and
-    # provides no implicit synchronisation — taped may still be registering its
-    # drives when we get here.  Poll until at least one drive appears.
+def test_set_all_drives_up(env: TestEnv, cta_cli: CtaCliHost) -> None:
+    # Stress-only deployments have no real SCSI drives: their virtual drives are
+    # registered and brought up by setup_stress_drives_test.py which runs after
+    # this file.  Skip here to avoid a spurious 60-second timeout.
+    real_tapeds = [t for t in env.cta_taped if not t.is_stress_mode]
+    if not real_tapeds:
+        return
+
+    # For real drives taped is already running long before setup. test_label_tapes
+    # provides implicit synchronisation, but poll briefly to absorb any startup lag.
     timeout_secs = 60
     deadline = time.monotonic() + timeout_secs
     while cta_cli.exec_with_output("cta-admin --json drive ls") == "[]":

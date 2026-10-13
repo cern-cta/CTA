@@ -12,6 +12,8 @@ with DriveDevice = "stress://".  The entire module is skipped automatically
 when no stress-mode drives are present.
 """
 
+import json
+import time
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
@@ -120,7 +122,26 @@ def test_setup_stress_tmpfs(env: TestEnv, stress_base_dir: str) -> None:
 
 def test_set_stress_drives_up(cta_cli: CtaCliHost, env: TestEnv) -> None:
     """Bring all stress drives up so the scheduler can dispatch work to them."""
-    for pod in _stress_tapeds(env):
+    stress_pods = _stress_tapeds(env)
+    expected_drives = {pod.drive_name for pod in stress_pods}
+
+    # Wait for every stress drive to register itself in the scheduler DB.
+    # taped registers drives on startup; the pod may still be initialising
+    # when this test runs, so poll until all expected drives appear.
+    timeout_secs = 120
+    deadline = time.monotonic() + timeout_secs
+    while True:
+        registered = {d["driveName"] for d in json.loads(cta_cli.exec_with_output("cta-admin --json drive ls"))}
+        missing = expected_drives - registered
+        if not missing:
+            break
+        if time.monotonic() >= deadline:
+            raise AssertionError(
+                f"Stress drives not registered in CTA after {timeout_secs} s. Missing: {sorted(missing)}"
+            )
+        time.sleep(2)
+
+    for pod in stress_pods:
         drive_name = pod.drive_name
         print(f"Bringing stress drive {drive_name} up")
         cta_cli.exec(f"cta-admin drive up {drive_name} --reason 'stress-drive setup'")
