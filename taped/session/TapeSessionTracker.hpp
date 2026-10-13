@@ -114,14 +114,16 @@ struct TapeSessionLivenessSnapshot {
 
 /// @brief Synchronize session progress, counters and statistics shared by workers and the reporter.
 ///
+/// Phase changes are published synchronously in transition order after committing local state.
 /// Each accessor returns a snapshot; separate accessor calls need not describe the same instant.
 class TapeSessionTracker {
 public:
   using Clock = std::chrono::steady_clock;
-  using StateReporter = std::function<void(cta::tape::session::TapeSessionState)>;
+  using StatePublisher = std::function<void(cta::tape::session::TapeSessionState)>;
 
-  /// The synchronous reporter must not re-enter transitions; its dependencies must outlive all transitions.
-  explicit TapeSessionTracker(StateReporter reporter = {});
+  /// Snapshots remain accessible during publication; the publisher must not re-enter transitions.
+  /// Its dependencies must outlive all transitions; publication exceptions are contained and counted as Reporting failures.
+  explicit TapeSessionTracker(StatePublisher publisher = {});
 
   /// @brief Reset tracking data and enter Preparing at now.
   ///
@@ -130,6 +132,7 @@ public:
   void beginTapeSession(Clock::time_point now = Clock::now());
 
   /// @brief Set the phase without resetting progress; repeated reports preserve its entry time.
+  /// Repeated states neither republish nor retry failed publication.
   /// @param state Phase to record.
   /// @param now Entry time used only when the phase changes.
   void reportState(cta::tape::session::TapeSessionState state, Clock::time_point now = Clock::now());
@@ -155,11 +158,6 @@ public:
   /// Return whether any session failure has been recorded since reset.
   bool hasFailures() const;
 
-  /// @brief Return whether recall should use its diagnostic end-report protocol.
-  ///
-  /// Includes events and tape alerts; this is distinct from session failure.
-  bool recallCompletionHasDiagnostics() const;
-
   /// Record whether the assignment is attempting a physical tape mount.
   void setMountAttempted(bool attempted);
 
@@ -172,12 +170,12 @@ public:
   /// Count the supplied fallback failure only if no session failure has been recorded.
   void recordFailureIfNone(TapeSessionFailure failure);
 
-  /// @brief Count an informational event and mark recall diagnostics.
+  /// @brief Count an informational event.
   ///
   /// TapeFilledUp is recorded at most once per session.
   void recordEvent(TapeSessionEvent event);
 
-  /// Count a tape-alert code and mark recall diagnostics.
+  /// Count a tape-alert code.
   void incrementTapeAlert(uint16_t tapeAlertCode);
 
   /// Replace setup statistics with the supplied snapshot.
@@ -268,10 +266,10 @@ private:
   /// @pre The caller holds m_mutex.
   std::optional<cta::tape::session::TapeSessionState> updateRetrievalCompletionState(Clock::time_point now);
 
-  /// Publish after committing local progress; catalogue failures must not interrupt hardware cleanup.
+  /// Publish committed state, containing exceptions so hardware cleanup can continue.
   void publishState(cta::tape::session::TapeSessionState state);
 
-  const StateReporter m_stateReporter;
+  const StatePublisher m_statePublisher;
   std::mutex m_transitionMutex;
   mutable std::mutex m_mutex;
 

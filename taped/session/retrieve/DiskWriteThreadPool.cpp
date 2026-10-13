@@ -171,15 +171,7 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
     // In the last Thread alive, report end of session
     // Otherwise end of session will be reported in the tape thread
     if (m_parentThreadPool.m_reporter.allThreadsDone()) {
-      if (m_parentThreadPool.m_failedWriteCount == 0) {
-        m_parentThreadPool.m_reporter.reportEndOfSession(m_lc);
-        m_parentThreadPool.logWithStat(cta::log::INFO,
-                                       "As last exiting DiskWriteWorkerThread, reported a successful end of session");
-      } else {
-        m_parentThreadPool.m_reporter.reportEndOfSessionWithErrors("End of recall session with error(s)", m_lc);
-        m_parentThreadPool.logWithStat(cta::log::INFO,
-                                       "As last exiting DiskWriteWorkerThread, reported an end of session with errors");
-      }
+      m_parentThreadPool.m_reporter.reportEndOfSessionFromOutcome(m_parentThreadPool.m_tracker.outcomeSnapshot(), m_lc);
     }
     const double deliveryTime = m_parentThreadPool.m_totalTime.secs();
     m_parentThreadPool.m_tracker.setDiskDeliveryTime(deliveryTime);

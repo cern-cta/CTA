@@ -198,14 +198,7 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
 
     if (m_reportPacker.allThreadsDone()) {
       // If disk threads finished before (for example, due to write error), report end of session
-      if (!m_tracker.recallCompletionHasDiagnostics()) {
-        m_reportPacker.reportEndOfSession(m_logContext);
-        m_logContext.log(
-          cta::log::INFO,
-          "Both DiskWriteWorkerThread and TapeReadSingleThread existed, reported a successful end of session");
-      } else {
-        m_reportPacker.reportEndOfSessionWithErrors("End of recall session with error(s)", m_logContext);
-      }
+      m_reportPacker.reportEndOfSessionFromOutcome(m_tracker.outcomeSnapshot(), m_logContext);
     }
   };
 
@@ -373,14 +366,7 @@ void cta::tape::daemon::TapeReadSingleThread::run() {
 
     if (m_reportPacker.allThreadsDone()) {
       // If disk threads finished before (for example, due to write error), report end of session
-      if (!m_tracker.recallCompletionHasDiagnostics()) {
-        m_reportPacker.reportEndOfSession(m_logContext);
-        m_logContext.log(
-          cta::log::INFO,
-          "Both DiskWriteWorkerThread and TapeReadSingleThread existed, reported a successful end of session");
-      } else {
-        m_reportPacker.reportEndOfSessionWithErrors("End of recall session with error(s)", m_logContext);
-      }
+      m_reportPacker.reportEndOfSessionFromOutcome(m_tracker.outcomeSnapshot(), m_logContext);
     }
   } catch (const cta::exception::Exception& ex) {
     handleFailure(ex.getMessageValue());

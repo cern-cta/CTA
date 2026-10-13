@@ -44,6 +44,65 @@ private:
   int& failuresRef;
 };
 
+// Observe protocol selection without starting the report worker.
+class MockCompletionReportPacker : public cta::tape::daemon::RecallReportPacker {
+public:
+  using RecallReportPacker::RecallReportPacker;
+  MOCK_METHOD(void, reportEndOfSession, (cta::log::LogContext&), (override));
+  MOCK_METHOD(void, reportEndOfSessionWithErrors, (const std::string&, cta::log::LogContext&), (override));
+};
+
+TEST_F(cta_tape_daemon_RecallReportPackerTest, SelectsCompletionProtocolFromOutcome) {
+  using namespace cta::tape::daemon;
+  cta::catalogue::DummyCatalogue catalogue;
+  cta::MockRetrieveMount mount(catalogue);
+  cta::log::StringLogger log("dummy", "completionPolicy", cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+  TapeSessionTracker tracker;
+  MockCompletionReportPacker packer(&mount, lc, tracker);
+
+  const auto check = [&](bool diagnostics) {
+    EXPECT_CALL(packer, reportEndOfSession(_)).Times(diagnostics ? 0 : 1);
+    EXPECT_CALL(packer, reportEndOfSessionWithErrors("End of recall session with error(s)", _))
+      .Times(diagnostics ? 1 : 0);
+    packer.reportEndOfSessionFromOutcome(tracker.outcomeSnapshot(), lc);
+    EXPECT_TRUE(testing::Mock::VerifyAndClearExpectations(&packer));
+  };
+
+  check(false);
+  for (size_t i = 0; i < static_cast<size_t>(TapeSessionFailure::Count); ++i) {
+    SCOPED_TRACE(i);
+    tracker.beginTapeSession();
+    const auto failure = static_cast<TapeSessionFailure>(i);
+    tracker.recordFailure(failure);
+    const bool propagationOnly =
+      failure == TapeSessionFailure::UnexpectedSession || failure == TapeSessionFailure::TaskInjection
+      || failure == TapeSessionFailure::WorkerSignalling || failure == TapeSessionFailure::UnexpectedCleanup
+      || failure == TapeSessionFailure::UnclassifiedFile;
+    check(!propagationOnly);
+  }
+
+  for (size_t i = 0; i < static_cast<size_t>(TapeSessionEvent::Count); ++i) {
+    SCOPED_TRACE(i);
+    tracker.beginTapeSession();
+    tracker.recordEvent(static_cast<TapeSessionEvent>(i));
+    EXPECT_FALSE(tracker.hasFailures());
+    check(true);
+  }
+
+  tracker.beginTapeSession();
+  tracker.incrementTapeAlert(0x01);
+  EXPECT_FALSE(tracker.hasFailures());
+  check(true);
+
+  tracker.beginTapeSession();
+  tracker.recordFailure(TapeSessionFailure::UnexpectedSession);
+  tracker.recordFailure(TapeSessionFailure::DiskRead);
+  check(true);
+  tracker.beginTapeSession();
+  check(false);
+}
+
 TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerNominal) {
   auto catalogue = cta::catalogue::DummyCatalogue();
   cta::MockRetrieveMount retrieveMount(catalogue);

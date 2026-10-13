@@ -225,7 +225,6 @@ TEST(TapeSessionTrackerTest, CountsTapeAlertsByCode) {
   EXPECT_EQ(2, tapeAlerts.at(0x01));
   EXPECT_EQ(1, tapeAlerts.at(0x32));
   EXPECT_FALSE(tracker.hasFailures());
-  EXPECT_TRUE(tracker.recallCompletionHasDiagnostics());
 }
 
 TEST(TapeSessionTrackerTest, BeginningTransferResetsDataAndTransitionsPreserveIt) {
@@ -381,7 +380,6 @@ TEST(TapeSessionTrackerTest, EveryInformationalEventLeavesOutcomeSuccessful) {
     EXPECT_TRUE(snapshot.finished);
     EXPECT_FALSE(snapshot.hasFailures);
     EXPECT_EQ(i == static_cast<size_t>(TapeSessionEvent::TapeFilledUp) ? 1 : 2, snapshot.events[i]);
-    EXPECT_TRUE(tracker.recallCompletionHasDiagnostics());
   }
 }
 
@@ -403,47 +401,12 @@ TEST(TapeSessionTrackerTest, AlertsAndOperationalAlertFailuresAreDistinct) {
   tracker.beginTapeSession();
   tracker.incrementTapeAlert(0x01);
   EXPECT_FALSE(tracker.hasFailures());
-  EXPECT_TRUE(tracker.recallCompletionHasDiagnostics());
   // An existing critical-alert check rejecting an operation records a real failure.
   tracker.recordFailure(TapeSessionFailure::CheckingTapeAlert);
   tracker.reportState(cta::tape::session::TapeSessionState::Finished);
   const auto snapshot = tracker.outcomeSnapshot();
   EXPECT_TRUE(snapshot.hasFailures);
   EXPECT_EQ(1, snapshot.tapeAlerts.at(0x01));
-}
-
-TEST(TapeSessionTrackerTest, NewFailureReasonsDoNotChangeRecallCompletionProtocol) {
-  for (auto reason : {TapeSessionFailure::UnexpectedSession,
-                      TapeSessionFailure::TaskInjection,
-                      TapeSessionFailure::WorkerSignalling,
-                      TapeSessionFailure::UnexpectedCleanup,
-                      TapeSessionFailure::UnclassifiedFile}) {
-    TapeSessionTracker tracker;
-    tracker.recordFailure(reason);
-    EXPECT_TRUE(tracker.hasFailures());
-    EXPECT_FALSE(tracker.recallCompletionHasDiagnostics());
-  }
-}
-
-TEST(TapeSessionTrackerTest, RecallDiagnosticsReflectRecordedDataAndReset) {
-  TapeSessionTracker tracker;
-  EXPECT_FALSE(tracker.recallCompletionHasDiagnostics());
-
-  tracker.recordFailure(TapeSessionFailure::UnexpectedSession);
-  tracker.recordFailure(TapeSessionFailure::DiskRead);
-  EXPECT_TRUE(tracker.recallCompletionHasDiagnostics());
-  tracker.beginTapeSession();
-  EXPECT_FALSE(tracker.recallCompletionHasDiagnostics());
-
-  tracker.recordEvent(TapeSessionEvent::NoFilesToRecall);
-  EXPECT_TRUE(tracker.recallCompletionHasDiagnostics());
-  tracker.beginTapeSession();
-  EXPECT_FALSE(tracker.recallCompletionHasDiagnostics());
-
-  tracker.incrementTapeAlert(0x01);
-  EXPECT_TRUE(tracker.recallCompletionHasDiagnostics());
-  tracker.beginTapeSession();
-  EXPECT_FALSE(tracker.recallCompletionHasDiagnostics());
 }
 
 TEST(TapeSessionTrackerTest, FailedBlocksCarryReceiptsAndClearThemWhenReused) {

@@ -10,7 +10,7 @@
 
 namespace cta::tape::daemon {
 
-TapeSessionTracker::TapeSessionTracker(StateReporter reporter) : m_stateReporter(std::move(reporter)) {}
+TapeSessionTracker::TapeSessionTracker(StatePublisher publisher) : m_statePublisher(std::move(publisher)) {}
 
 void TapeSessionTracker::beginTapeSession(Clock::time_point now) {
   std::lock_guard transitionLock(m_transitionMutex);
@@ -102,35 +102,6 @@ TapeSessionOutcomeSnapshot TapeSessionTracker::outcomeSnapshot() const {
 bool TapeSessionTracker::hasFailures() const {
   std::lock_guard lock(m_mutex);
   return hasFailuresLocked();
-}
-
-bool TapeSessionTracker::recallCompletionHasDiagnostics() const {
-  std::lock_guard lock(m_mutex);
-  if (!m_tapeAlertStats.empty()) {
-    return true;
-  }
-  for (const auto count : m_eventCounts) {
-    if (count != 0) {
-      return true;
-    }
-  }
-  for (size_t i = 0; i < m_failureCounts.size(); ++i) {
-    if (m_failureCounts[i] == 0) {
-      continue;
-    }
-    // Propagation-only failures do not change the legacy recall end-report protocol.
-    switch (static_cast<TapeSessionFailure>(i)) {
-      case TapeSessionFailure::UnexpectedSession:
-      case TapeSessionFailure::TaskInjection:
-      case TapeSessionFailure::WorkerSignalling:
-      case TapeSessionFailure::UnexpectedCleanup:
-      case TapeSessionFailure::UnclassifiedFile:
-        break;
-      default:
-        return true;
-    }
-  }
-  return false;
 }
 
 void TapeSessionTracker::setMountAttempted(bool attempted) {
@@ -324,8 +295,8 @@ TapeSessionTracker::updateRetrievalCompletionState(Clock::time_point now) {
 
 void TapeSessionTracker::publishState(cta::tape::session::TapeSessionState state) {
   try {
-    if (m_stateReporter) {
-      m_stateReporter(state);
+    if (m_statePublisher) {
+      m_statePublisher(state);
     }
   } catch (...) {
     recordFailure(TapeSessionFailure::Reporting);

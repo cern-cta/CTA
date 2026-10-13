@@ -18,6 +18,37 @@ using cta::log::LogContext;
 using cta::log::Param;
 
 namespace cta::tape::daemon {
+namespace {
+// Recall protocol diagnostics differ from whether the session failed.
+bool recallCompletionHasDiagnostics(const TapeSessionOutcomeSnapshot& outcome) {
+  if (!outcome.tapeAlerts.empty()) {
+    return true;
+  }
+  for (const auto count : outcome.events) {
+    if (count != 0) {
+      return true;
+    }
+  }
+  for (size_t i = 0; i < outcome.failures.size(); ++i) {
+    if (outcome.failures[i] == 0) {
+      continue;
+    }
+    // Propagation-only failures do not change the legacy recall end-report protocol.
+    switch (static_cast<TapeSessionFailure>(i)) {
+      case TapeSessionFailure::UnexpectedSession:
+      case TapeSessionFailure::TaskInjection:
+      case TapeSessionFailure::WorkerSignalling:
+      case TapeSessionFailure::UnexpectedCleanup:
+      case TapeSessionFailure::UnclassifiedFile:
+        break;
+      default:
+        return true;
+    }
+  }
+  return false;
+}
+
+}  // namespace
 
 //------------------------------------------------------------------------------
 //Constructor
@@ -67,6 +98,15 @@ void RecallReportPacker::reportFailedJob(std::unique_ptr<cta::RetrieveJob> faile
   lc.log(cta::log::DEBUG, "In RecallReportPacker::reportFailedJob(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(rep.release());
+}
+
+void RecallReportPacker::reportEndOfSessionFromOutcome(const TapeSessionOutcomeSnapshot& outcome,
+                                                       cta::log::LogContext& lc) {
+  if (recallCompletionHasDiagnostics(outcome)) {
+    reportEndOfSessionWithErrors("End of recall session with error(s)", lc);
+  } else {
+    reportEndOfSession(lc);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -324,7 +364,7 @@ void RecallReportPacker::WorkerThread::run() {
 //completionHasDiagnostics()
 //------------------------------------------------------------------------------
 bool RecallReportPacker::completionHasDiagnostics() {
-  return m_failedJobReported || m_tapeSessionTracker.recallCompletionHasDiagnostics();
+  return m_failedJobReported || recallCompletionHasDiagnostics(m_tapeSessionTracker.outcomeSnapshot());
 }
 
 //------------------------------------------------------------------------------

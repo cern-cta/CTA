@@ -50,6 +50,9 @@ public:
                                cta::log::LogContext& lc,
                                RecordedFailure recordedFailure);
 
+  /// Choose the recall end-report protocol from recorded facts, independently of session success.
+  void reportEndOfSessionFromOutcome(const TapeSessionOutcomeSnapshot& outcome, cta::log::LogContext& lc);
+
   /**
    * Create into the RecallReportPacker a report for the nominal end of session
    * @param lc log context provided by the calling thread.
