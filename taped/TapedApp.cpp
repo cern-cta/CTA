@@ -22,6 +22,7 @@ namespace cta::tape::daemon {
 
 namespace {
 
+/// Build a Linux process name from the last drive-name component, logging any truncation.
 std::string constructProcessName(const std::string& driveName, log::LogContext& lc) {
   // Linux allows 15 name bytes; reserve six for the "taped-" prefix.
   constexpr std::size_t maxShortNameLength = 9;
@@ -74,7 +75,7 @@ int TapedApp::run(const TapedConfig& config, cta::log::Logger& log) {
     lc.log(log::WARNING, "Failed to set process name");
   }
 
-  // Linux may mark the process non-dumpable when messing with capabilities in certain cases. To be safe, we explicitly enable it.
+  // Capability changes may disable core dumps; restore dumpability for diagnostics.
   // See https://man7.org/linux/man-pages/man2/pr_set_dumpable.2const.html
   cta::utils::setDumpableProcessAttribute(true);
   if (!cta::utils::getDumpableProcessAttribute()) {

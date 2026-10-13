@@ -9,15 +9,12 @@
 
 namespace cta::tape::daemon {
 
-/// Stop and join the reporting thread before the session state it references is destroyed.
+/// @brief Stop and join the reporting thread before the session state it references is destroyed.
 /// Exit the process if safe reporter shutdown cannot be established.
 template<typename Reporter>
 class ScopedTapeSessionReporter {
 public:
-  /// @brief Borrow a reporter without starting its thread.
-  ///
-  /// @param reporter Borrowed reporter whose thread is managed by this guard.
-  /// @param lc Session context retained for fatal diagnostics.
+  /// Borrow a reporter and diagnostic context that outlive this guard; do not start reporting yet.
   ScopedTapeSessionReporter(Reporter& reporter, log::LogContext& lc) : m_reporter(reporter), m_lc(lc) {}
 
   /// Disallow copying the owner of a reporter thread.
@@ -29,7 +26,9 @@ public:
   /// Stop and join before borrowed state is destroyed; exit immediately if termination is unproven.
   ~ScopedTapeSessionReporter() noexcept { finish(); }
 
-  /// Start reporting and record that this guard must join the thread.
+  /// @brief Start reporting and arrange for this guard to join the thread.
+  ///
+  /// Call once; a startup exception exits the process without unwinding.
   void start() {
     try {
       m_reporter.startThreads();
@@ -39,7 +38,9 @@ public:
     m_started = true;
   }
 
-  /// Request shutdown and join the reporter if it was started.
+  /// @brief Stop and join the reporter if started; subsequent calls do nothing.
+  ///
+  /// Shutdown failure exits the process without unwinding.
   void finish() noexcept {
     if (!m_started) {
       return;

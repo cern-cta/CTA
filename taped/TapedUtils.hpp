@@ -11,25 +11,19 @@
 
 namespace cta::taped::utils {
 
-/// @brief List matching cta-taped TOML files in /etc/cta/ in alphabetical order.
+/// @brief Return matching cta-taped TOML paths in /etc/cta/ in lexical order.
 ///
 /// Exclude cta-taped.example.toml; filesystem errors propagate.
-///
-/// @return Matching configuration paths sorted lexically.
 std::vector<std::string> getTapedConfigPaths();
 
-/// @brief Find the named drive configuration, or the first matching configuration when no drive is given.
+/// @brief Return `/etc/cta/cta-taped-<driveName>.toml`, or the first sorted match when no drive name is given.
 ///
-/// @param driveName Optional drive name; std::nullopt selects the first matching configuration.
-/// @return Existing configuration path for the requested drive, or the first matching path.
-/// @throws cta::exception::Exception If the requested file or any matching configuration is absent.
+/// Throw if the requested path does not exist or no configuration matches; filesystem errors propagate.
 std::string getFirstTapedConfigPath(const std::optional<std::string>& driveName);
 
-/// @brief Load the first matching configuration and return its configured drive name.
+/// @brief Load the first sorted configuration and return its drive name.
 ///
-/// Missing configuration and parsing failures propagate.
-///
-/// @return Drive name loaded from the first matching configuration.
+/// Missing configuration, parsing and validation failures propagate.
 std::string getFirstDriveName();
 
 }  // namespace cta::taped::utils

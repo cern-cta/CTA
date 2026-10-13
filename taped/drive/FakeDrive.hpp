@@ -230,7 +230,7 @@ public:
   /// Return the configured cartridge-presence state after applying failure injection.
   bool hasTapeInPlace() final;
 
-  /// Return fixed simulated limits of 30 segments and a maximum segment size of 30000.
+  /// Return fixed RAO limits for tests.
   cta::tape::SCSI::Structures::RAO::udsLimits getLimitUDS() override;
 
   /// Reverse the supplied file list to simulate reordering; maxSupported is ignored.

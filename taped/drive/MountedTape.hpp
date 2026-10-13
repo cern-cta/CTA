@@ -45,10 +45,10 @@ public:
   /// Move assignment is prohibited to keep the guard bound to its session lifetime.
   MountedTape& operator=(MountedTape&&) = delete;
 
-  /// @brief Finish early when the cleanup result is needed before scope exit; repeated calls return the same cleanup result.
+  /// @brief Clean up once and return the retained result; failures are logged and recorded.
   ///
-  /// Cleanup is attempted once; failures are logged and retained in the borrowed cleanup result.
-  /// The caller must stop all drive users before cleanup.
+  /// Repeated calls return the same result.
+  /// @pre All drive users have stopped.
   const DriveCleaner::CleanupResult& cleanup() noexcept;
 
 private:

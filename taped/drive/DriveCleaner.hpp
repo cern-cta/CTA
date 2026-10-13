@@ -23,20 +23,17 @@ namespace cta::tape::daemon {
 
 class TapeSessionTracker;
 
-/// Class responsible for cleaning up a tape drive left in a (possibly) dirty state.
+/// @brief Reset drive configuration and return a possibly stranded cartridge to the library.
+///
+/// Call only after all other drive users have stopped; the caller publishes the final drive status.
 class DriveCleaner {
 public:
-  /// @brief Create a cleaner using borrowed media changer, catalogue and tracker objects.
+  /// @brief Create a cleaner; media changer, logger, catalogue and tracker must outlive it.
   ///
-  /// @param mc Object representing the media changer.
-  /// @param log Object representing the API to the CTA logging system.
-  /// @param driveInfo Identity and device paths of the tape drive to clean.
-  /// @param vid Mounted tape identifier when known; otherwise an empty string.
-  /// @param waitMediaInDrive Whether to wait for media readiness before checking presence; use true when a mount
-  /// may have occurred. A cached empty indication does not skip the requested wait.
-  /// @param waitMediaInDriveTimeout Maximum wait for media readiness, in seconds.
-  /// @param catalogue Borrowed catalogue used for drive and tape state updates.
-  /// @param tracker Borrowed tracker, which must outlive this cleaner.
+  /// Drive identity and VID are copied; an empty VID means the mounted tape is unknown.
+  /// @param waitMediaInDrive Wait for readiness before checking presence, even if cached status says empty.
+  /// Use true when a mount may have occurred.
+  /// @param waitMediaInDriveTimeout Readiness timeout in seconds.
   DriveCleaner(cta::mediachanger::MediaChangerFacade& mc,
                cta::log::Logger& log,
                const cta::common::dataStructures::DriveInfo& driveInfo,
@@ -56,34 +53,21 @@ public:
     bool unexpectedFailure = false;  ///< Cleanup threw before returning a result.
     std::string errorMessage;
 
-    /// @brief Check whether the recorded cleanup failures permit drive reuse.
-    ///
-    /// An already-empty drive needs no eject operation and does not set ejectFailed.
-    ///
-    /// @return True if no cleanup failure is set.
+    /// Return true only if no cleanup failure flag is set.
     bool driveReusable() const {
       return !driveOpenFailed && !configurationResetFailed && !ejectFailed && !unexpectedFailure;
     }
   };
 
-  /// @brief Open a drive and delegate cleanup to the borrowed-drive overload.
+  /// @brief Open and clean the drive, then read and clear its tape alerts.
   ///
-  /// If opening fails, still attempt robotic dismount and return a non-reusable result.
-  /// Read and clear tape alerts after delegated cleanup; the caller owns terminal state publication.
-  ///
-  /// @param sysWrapper System-call wrapper used to discover and open the drive.
-  /// @return Independent failure flags and diagnostic text.
+  /// If opening fails, attempt robotic dismount but return a non-reusable result.
   CleanupResult cleanDrive(System::virtualWrapper& sysWrapper);
 
-  /// @brief Clean a drive, reporting progress through the tracker.
+  /// @brief Clean a borrowed drive and return independent configuration-reset and eject failures.
   ///
-  /// Disable a known tape after failed ejection; the caller owns the final drive-down decision.
-  /// The caller is responsible for handling the returned failure flags.
-  /// A successful eject does not imply that the drive configuration was reset successfully.
-  /// Progress is reported synchronously; callback failures are counted without interrupting cleanup.
-  ///
-  /// @param drive Borrowed drive on which to perform the operation.
-  /// @return Configuration-reset and eject failure flags, with diagnostic text when available.
+  /// Attempt to disable a known tape after failed ejection.
+  /// Publish progress synchronously through the tracker; callback failures are counted without stopping cleanup.
   CleanupResult cleanDrive(drive::DriveInterface& drive);
 
 private:
@@ -96,62 +80,45 @@ private:
   const uint32_t m_tapeLoadTimeout;
   cta::catalogue::Catalogue& m_catalogue;
 
-  /// Apply the shared failed-eject policy; the session owner establishes finalization.
+  /// Attempt to disable a known tape when the result reports failed ejection.
   void finishCleanup(const CleanupResult& result);
 
-  /// @brief Reset drive configuration and attempt tape ejection, retaining independent cleanup failures.
+  /// @brief Reset configuration and eject the tape, retaining independent failures.
   ///
-  /// Readiness waits and label reads are best effort; eject is attempted despite reset or unload errors.
-  ///
-  /// @param drive Borrowed drive on which to perform the operation.
-  /// @return Configuration-reset and eject failure flags, with diagnostic text when available.
+  /// Readiness waits and label reads are best effort; attempt robotic dismount despite reset or unload errors.
   CleanupResult cleanDriveImpl(drive::DriveInterface& drive);
 
-  /// @brief Read and log outstanding tape alerts, clearing them on the drive and suppressing failures.
-  ///
-  /// @param drive The tape drive.
+  /// Read, count and log tape alerts, clearing them on hardware; log and suppress query failures.
   void logAndClearTapeAlerts(drive::DriveInterface& drive) noexcept;
 
-  /// @brief Reads the volume label when its format can be determined.
+  /// @brief Read the label using the catalogue format for the known VID.
   ///
-  /// @param drive The tape drive.
-  /// @return The VSN from the label, or std::nullopt if no VID was provided to determine the label format.
+  /// Return std::nullopt if the VID is unknown; blank tapes and label or catalogue errors throw.
   std::optional<std::string> readVolumeLabel(drive::DriveInterface& drive);
 
-  /// @brief Creates and returns the object that represents the tape drive to be cleaned.
-  ///
-  /// @param sysWrapper System-call wrapper used to discover and open the drive.
-  /// @return The tape drive.
+  /// Discover and open the configured drive; return ownership or propagate an error.
   std::unique_ptr<drive::DriveInterface> createDrive(System::virtualWrapper& sysWrapper);
 
-  /// @brief Waits for the specified drive to be ready, logging and ignoring readiness failures.
-  ///
-  /// @param drive The tape drive.
+  /// Wait for readiness within the configured timeout, logging and ignoring failures.
   void waitForMediaToBeReady(drive::DriveInterface& drive);
 
-  /// @brief Rewinds the specified tape drive.
-  ///
-  /// @param drive The tape drive.
+  /// Time and log the rewind operation; drive failures propagate.
   void rewindDrive(drive::DriveInterface& drive);
 
-  /// @brief Reject a blank tape that contains no records, including no volume label.
-  ///
-  /// @param drive The tape drive.
+  /// Throw if the tape is blank, including when it has no volume label.
   void checkTapeContainsData(drive::DriveInterface& drive);
 
-  /// @brief Unloads a tape from the drive.
-  ///
-  /// @param drive Drive on which to perform the operation.
+  /// Time and log unloading, counting drive failures before propagating them.
   void unloadTape(drive::DriveInterface& drive);
 
-  /// @brief Dismounts the specified tape.
+  /// @brief Time robotic dismount, counting failures before propagating them.
   ///
-  /// @param vid Volume identifier, or an empty string to bypass the robot cartridge-name check.
+  /// An empty VID bypasses the robot cartridge-name check.
   void dismountTape(const std::string& vid);
 
-  /// @brief Prevent a stuck tape from being scheduled.
+  /// @brief Attempt to disable a known active or repacking tape, logging catalogue failures.
   ///
-  /// @param errorMsg Cleanup failure details to include in diagnostics and the down or disabled reason.
+  /// Include errorMsg in the tape-state reason; leave other tape states unchanged.
   void disableTapeAfterFailedEject(const std::string& errorMsg) noexcept;
 
 };  // class DriveCleaner

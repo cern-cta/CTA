@@ -50,9 +50,6 @@ private:
 
 }  // namespace
 
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
 cta::tape::daemon::DriveCleaner::DriveCleaner(cta::mediachanger::MediaChangerFacade& mc,
                                               cta::log::Logger& log,
                                               const cta::common::dataStructures::DriveInfo& driveInfo,
@@ -73,9 +70,6 @@ cta::tape::daemon::DriveCleaner::DriveCleaner(cta::mediachanger::MediaChangerFac
   m_lc.push(cta::log::Param("tapeDrive", m_driveInfo.driveName));
 }
 
-//------------------------------------------------------------------------------
-// cleanDrive (opens and owns the drive)
-//------------------------------------------------------------------------------
 auto cta::tape::daemon::DriveCleaner::cleanDrive(System::virtualWrapper& sysWrapper) -> CleanupResult {
   // Cleanup gets its own deadline before drive discovery or acquisition can block.
   m_tracker.reportState(session::TapeSessionState::Unloading);
@@ -164,9 +158,6 @@ void cta::tape::daemon::DriveCleaner::disableTapeAfterFailedEject(const std::str
   }
 }
 
-//------------------------------------------------------------------------------
-// cleanDrive
-//------------------------------------------------------------------------------
 auto cta::tape::daemon::DriveCleaner::cleanDrive(drive::DriveInterface& drive) -> CleanupResult {
   // Include readiness, configuration reset and rewind in the unloading budget.
   m_tracker.reportState(session::TapeSessionState::Unloading);
@@ -281,9 +272,6 @@ auto cta::tape::daemon::DriveCleaner::cleanDriveImpl(drive::DriveInterface& driv
   return result;
 }
 
-//------------------------------------------------------------------------------
-// logAndClearTapeAlerts
-//------------------------------------------------------------------------------
 void cta::tape::daemon::DriveCleaner::logAndClearTapeAlerts(drive::DriveInterface& drive) noexcept {
   std::string errorMessage;
   try {
@@ -315,9 +303,6 @@ void cta::tape::daemon::DriveCleaner::logAndClearTapeAlerts(drive::DriveInterfac
   m_lc.log(cta::log::WARNING, "Cleaner failed to get tape alerts from the drive");
 }
 
-//------------------------------------------------------------------------------
-// createDrive
-//------------------------------------------------------------------------------
 std::unique_ptr<cta::tape::drive::DriveInterface>
 cta::tape::daemon::DriveCleaner::createDrive(System::virtualWrapper& sysWrapper) {
   SCSI::DeviceVector dv(sysWrapper);
@@ -335,9 +320,6 @@ cta::tape::daemon::DriveCleaner::createDrive(System::virtualWrapper& sysWrapper)
   return drive;
 }
 
-//------------------------------------------------------------------------------
-// waitUntilDriveIsReady
-//------------------------------------------------------------------------------
 void cta::tape::daemon::DriveCleaner::waitForMediaToBeReady(drive::DriveInterface& drive) {
   CleanupTiming timing(m_tracker, &TapeCleanupStats::readinessWaitTime);
   cta::log::ScopedParamContainer params(m_lc);
@@ -355,9 +337,6 @@ void cta::tape::daemon::DriveCleaner::waitForMediaToBeReady(drive::DriveInterfac
   }
 }
 
-//------------------------------------------------------------------------------
-// rewindDrive
-//------------------------------------------------------------------------------
 void cta::tape::daemon::DriveCleaner::rewindDrive(drive::DriveInterface& drive) {
   CleanupTiming timing(m_tracker, &TapeCleanupStats::rewindTime);
   m_lc.log(cta::log::DEBUG, "Cleaner rewinding tape");
@@ -365,9 +344,6 @@ void cta::tape::daemon::DriveCleaner::rewindDrive(drive::DriveInterface& drive) 
   m_lc.log(cta::log::DEBUG, "Cleaner rewound tape");
 }
 
-//------------------------------------------------------------------------------
-// checkTapeContainsData
-//------------------------------------------------------------------------------
 void cta::tape::daemon::DriveCleaner::checkTapeContainsData(drive::DriveInterface& drive) {
   m_lc.log(cta::log::DEBUG, "Cleaner checking whether the tape contains data");
   if (drive.isTapeBlank()) {
@@ -378,9 +354,6 @@ void cta::tape::daemon::DriveCleaner::checkTapeContainsData(drive::DriveInterfac
   m_lc.log(cta::log::DEBUG, "Cleaner detected that the tape contains data");
 }
 
-//------------------------------------------------------------------------------
-// readVolumeLabel
-//------------------------------------------------------------------------------
 std::optional<std::string> cta::tape::daemon::DriveCleaner::readVolumeLabel(drive::DriveInterface& drive) {
   CleanupTiming timing(m_tracker, &TapeCleanupStats::labelReadTime);
   cta::log::ScopedParamContainer params(m_lc);
@@ -401,9 +374,6 @@ std::optional<std::string> cta::tape::daemon::DriveCleaner::readVolumeLabel(driv
   return volumeLabelVSN;
 }
 
-//------------------------------------------------------------------------------
-// unloadTape
-//------------------------------------------------------------------------------
 void cta::tape::daemon::DriveCleaner::unloadTape(drive::DriveInterface& drive) {
   m_lc.log(cta::log::DEBUG, "Cleaner unloading tape");
   cta::utils::Timer timer;
@@ -418,9 +388,6 @@ void cta::tape::daemon::DriveCleaner::unloadTape(drive::DriveInterface& drive) {
   m_lc.log(cta::log::DEBUG, "Cleaner unloaded tape");
 }
 
-//------------------------------------------------------------------------------
-// dismountTape
-//------------------------------------------------------------------------------
 void cta::tape::daemon::DriveCleaner::dismountTape(const std::string& vid) {
   const auto librarySlot = cta::mediachanger::LibrarySlotParser::parse(m_driveInfo.rawLibrarySlot);
   cta::log::ScopedParamContainer params(m_lc);

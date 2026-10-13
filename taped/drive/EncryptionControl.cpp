@@ -15,9 +15,6 @@
 
 namespace cta::tape::daemon {
 
-//------------------------------------------------------------------------------
-// Constructor
-//------------------------------------------------------------------------------
 EncryptionControl::EncryptionControl(bool useEncryption, const std::string& scriptPath)
     : m_useEncryption(useEncryption),
       m_path(scriptPath) {
@@ -27,9 +24,6 @@ EncryptionControl::EncryptionControl(bool useEncryption, const std::string& scri
   }
 }
 
-//------------------------------------------------------------------------------
-// enable
-//------------------------------------------------------------------------------
 auto EncryptionControl::enable(cta::tape::drive::DriveInterface& m_drive,
                                cta::tape::daemon::VolumeInfo& volInfo,
                                cta::catalogue::Catalogue& catalogue,
@@ -123,9 +117,6 @@ auto EncryptionControl::enable(cta::tape::drive::DriveInterface& m_drive,
   return encStatus;
 }
 
-//------------------------------------------------------------------------------
-// disable
-//------------------------------------------------------------------------------
 bool EncryptionControl::disable(cta::tape::drive::DriveInterface& m_drive) const {
   return m_drive.clearEncryptionKey();
 }
@@ -150,9 +141,6 @@ struct JsonTokenerDeleter {
 };
 }  // namespace
 
-//------------------------------------------------------------------------------
-// JSON Parsing
-//------------------------------------------------------------------------------
 EncryptionControl::EncryptionStatus EncryptionControl::parse_json_script_output(const std::string& input) {
   EncryptionStatus encryption_status;
 

@@ -43,10 +43,7 @@ TapeSessionReporter::driveStatusForSessionState(session::TapeSessionState state)
 
 namespace {
 
-/// @brief Map a session error to its log-field name, with a fallback for unknown values.
-///
-/// @param error Session error category to count or name.
-/// @return Log-field name for the error, or Error_unknown for an unrecognized value.
+/// Return the failure log-field name, falling back to Error_unknown.
 const char* errorName(TapeSessionFailure error) {
   switch (error) {
     case TapeSessionFailure::DiskOpenForWrite:
@@ -121,6 +118,7 @@ const char* errorName(TapeSessionFailure error) {
   return "Error_unknown";
 }
 
+/// Return the informational event log-field name, falling back to Info_unknown.
 const char* eventName(TapeSessionEvent event) {
   switch (event) {
     case TapeSessionEvent::DiskSpaceReservationTestFailure:

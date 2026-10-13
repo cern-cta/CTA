@@ -12,12 +12,6 @@
 #include <memory>
 
 namespace {
-/*
- * Prints and compares the current position with the expected one. Returns on
- * success (expected value is the same as the actual value), or else fails the
- * assertion and exits.
- * @param expected_position expected position
- */
 void print_and_assert_position(cta::tape::drive::DriveInterface& drive, int expected_position) {
   int curPos = (int) drive.getPositionInfo().currentPosition;
   std::cout << "CurrentPosition: " << curPos << " (Expected: " << expected_position << ")" << std::endl;
@@ -25,12 +19,6 @@ void print_and_assert_position(cta::tape::drive::DriveInterface& drive, int expe
   return;
 }
 
-/*
- * Prints and compares the current data read with the expected one. Returns on
- * success (expected value is the same as the actual value), or else fails the
- * assertion and exits.
- * @param expected_data expected data
- */
 void print_and_assert_data(const char* expected_data, const char* actual_data) {
   std::cout << "Data Read: " << actual_data << " (Expected: " << expected_data << ")" << std::endl;
   assert(0 == strcmp(expected_data, actual_data));
@@ -56,7 +44,6 @@ int main() {
         // drive for example incompatible media installed.
 
         try {
-          /// Gets generic device info for the drive object.
           cta::tape::drive::deviceInfo devInfo;
           devInfo = drive->getDeviceInfo();
           std::cout << "-- INFO --------------------------------------" << std::endl
@@ -74,7 +61,6 @@ int main() {
         }
 
         try {
-          /// Checks if the drive ready to use the tape installed loaded into it.
           drive->waitUntilReady(5);
         } catch (cta::exception::Exception& ne) {
           std::string temp = ne.getMessage().str();
@@ -131,8 +117,7 @@ int main() {
         }
 
         try {
-          /// Trying to get compression from the drive-> Read or write should be
-          /// done before to have something in the data fields.
+          // Query counters after I/O so the drive has traffic to report.
           cta::tape::drive::compressionStats comp = drive->getCompression();
           std::cout << "-- INFO --------------------------------------" << std::endl
                     << "  fromHost : " << comp.fromHost << std::endl

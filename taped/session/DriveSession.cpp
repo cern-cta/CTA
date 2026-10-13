@@ -177,10 +177,6 @@ void DriveSession::run(std::stop_token stopToken) {
   }
 }
 
-// This method has the following invariants:
-// - There is no tape in the drive when it enters this method
-// - Continue and RetryAfterDelay leave the drive empty and reusable
-// - EndOwnership may leave a tape in the drive only after a failed cleanup
 DriveSession::IterationResult DriveSession::runIteration(std::stop_token stopToken) {
   if (stopToken.stop_requested()) {
     return {IterationAction::EndOwnership, "Stop requested"};
@@ -222,8 +218,7 @@ DriveSession::IterationResult DriveSession::runIteration(std::stop_token stopTok
     log::logCurrentExceptionNoThrow(m_lc, "Scheduling failed unexpectedly; waiting before retrying.");
   }
 
-  // Do another quick check to see if we should stop before committing to a tape session
-  // Later on, the tape session internals will also react appropriately
+  // Recheck shutdown after scheduling, before committing to a tape session.
   if (stopToken.stop_requested()) {
     return {IterationAction::EndOwnership, "Stop requested"};
   }
@@ -235,7 +230,6 @@ DriveSession::IterationResult DriveSession::runIteration(std::stop_token stopTok
 
   // The tape is not yet mounted; this happens in the tape session.
   const auto result = runTapeSession(*mountCandidate);
-  // At this point the tape session is over and the drive has already been cleaned.
   // Destroy the mount before retiring the scheduler resources it borrows.
   mountCandidate.reset();
   // Retire abandoned jobs even when the drive session ends; catalogue access remains valid.

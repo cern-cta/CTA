@@ -21,7 +21,10 @@
 namespace cta::tape::daemon {
 class DriveSession;
 
-/// The daemon responsible for running drive sessions.
+/// @brief Register a drive and run sessions when it is requested Up.
+///
+/// The desired state requests whether the drive should run; the reported status describes its current activity.
+/// Operators and the daemon can request Down. The drive session finishes active work before reporting Down.
 class TapeDaemon final {
 public:
   /// @brief Create a daemon with borrowed dependencies that must outlive it.
@@ -32,7 +35,9 @@ public:
              catalogue::Catalogue& catalogue,
              SchedulerContext& schedulerContext);
 
-  /// Request exit and publish desired-down after registration.
+  /// @brief Request exit and, if registered, request the drive Down in the catalogue.
+  ///
+  /// Safe to call concurrently with run(); catalogue update failures are logged.
   void stop();
 
   /// @brief Register the drive, wait for its library and run successive drive sessions.
@@ -56,12 +61,12 @@ private:
   /// Reason for ending the daemon run.
   enum class ExitCause { Normal, RegistrationFailure, MissingDrive, UnexpectedFailure };
 
-  /// @brief Log the exit cause and publish the requested Down state without accessing hardware.
+  /// @brief Log the exit cause and, if putDriveDown is true, request and report Down in the catalogue.
   ///
   /// @return Zero for normal shutdown, nonzero for an exit or publication failure.
   int shutdown(ExitCause cause, bool putDriveDown, std::string_view exceptionMsg = "");
 
-  /// @brief  Used to quit the daemon.
+  /// Coordinates shutdown requests with the run thread.
   std::stop_source m_stopSource;
 
   /// Ensures the health-server thread can detect readiness.
@@ -80,17 +85,17 @@ private:
 
   /// @brief Register a fresh drive or retain an interrupted drive for recovery.
   ///
-  /// Startup policy determines whether saved desired-up is retained or fresh operator intent is required.
+  /// Startup policy determines whether to retain an existing Up request or require the operator to request Up again.
   ///
-  /// @return False for an ownership conflict; catalogue failures propagate.
+  /// @return False if the drive name belongs to another host or logical library; catalogue failures throw.
   bool registerDrive();
 
   /// Poll until the configured logical library exists; database failures propagate.
   void waitForLogicalLibrary();
 
-  /// @brief Poll operator intent, keeping a waiting drive reported down.
+  /// @brief Wait for the desired state to become Up, reporting Down while waiting.
   ///
-  /// Missing drives propagate to run() and are left for the next daemon run.
+  /// If the catalogue entry disappears, throw so run() exits; the next daemon start registers the drive again.
   void waitUntilDriveIsRequestedUp();
 };
 

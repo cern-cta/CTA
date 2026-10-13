@@ -114,15 +114,18 @@ struct TapeSessionLivenessSnapshot {
 
 /// @brief Synchronize session progress, counters and statistics shared by workers and the reporter.
 ///
-/// Phase changes are published synchronously in transition order after committing local state.
+/// Store each phase change before calling the optional notification callback on the calling thread.
+/// Serialize phase changes so callbacks run in transition order.
 /// Each accessor returns a snapshot; separate accessor calls need not describe the same instant.
 class TapeSessionTracker {
 public:
   using Clock = std::chrono::steady_clock;
   using StatePublisher = std::function<void(cta::tape::session::TapeSessionState)>;
 
-  /// Snapshots remain accessible during publication; the publisher must not re-enter transitions.
-  /// Its dependencies must outlive all transitions; publication exceptions are contained and counted as Reporting failures.
+  /// @brief Create an empty tracker with an optional callback for phase changes.
+  ///
+  /// The callback may read snapshots but must not call methods that change or reset the phase.
+  /// Objects used by the callback must outlive all phase changes; callback exceptions count as Reporting failures.
   explicit TapeSessionTracker(StatePublisher publisher = {});
 
   /// @brief Reset tracking data and enter Preparing at now.
@@ -208,10 +211,9 @@ public:
   /// Set the elapsed time through disk delivery in seconds.
   void setDiskDeliveryTime(double deliveryTime);
 
-  /// @brief Record an active file and its opening time for a disk worker, replacing its previous entry.
-  /// @param threadId Disk worker identifier.
-  /// @param fileId Archive-file identifier.
-  /// @param path Disk path, moved into the tracker.
+  /// @brief Record a disk worker's active file and opening time, replacing its previous entry.
+  ///
+  /// The path is moved into the tracker.
   void notifyDiskFileOpened(uint32_t threadId, uint64_t fileId, std::string path);
 
   /// Remove the active-file entry for the specified disk worker.
@@ -256,7 +258,7 @@ private:
   /// @pre The caller holds m_mutex.
   void recordFailureLocked(TapeSessionFailure failure);
 
-  /// @brief Change the phase and entry time only when the phase differs.
+  /// @brief Change the phase and entry time, returning true only when the phase differs.
   /// @pre The caller holds m_mutex.
   bool setStateLocked(cta::tape::session::TapeSessionState state, Clock::time_point now);
 
@@ -266,7 +268,8 @@ private:
   /// @pre The caller holds m_mutex.
   std::optional<cta::tape::session::TapeSessionState> updateRetrievalCompletionState(Clock::time_point now);
 
-  /// Publish committed state, containing exceptions so hardware cleanup can continue.
+  /// @brief Publish committed state, counting callback exceptions as Reporting failures.
+  /// @pre The caller holds m_transitionMutex and has released m_mutex.
   void publishState(cta::tape::session::TapeSessionState state);
 
   const StatePublisher m_statePublisher;

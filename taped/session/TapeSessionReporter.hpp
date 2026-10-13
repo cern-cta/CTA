@@ -19,23 +19,17 @@
 
 namespace cta::tape::daemon {
 
-/// Responsible for producing periodically logging stats of the tape session.
-/// Also responsible for the tape session finished message.
-/// Note that the sole responsibility of this class is reporting; not tracking state.
+/// Publish periodic statistics, inactivity warnings and the final session outcome from a borrowed tracker.
 class TapeSessionReporter : private cta::threading::Thread {
 public:
   /// Map a session phase for synchronous publication; local-only phases return no catalogue status.
   static std::optional<common::dataStructures::DriveStatus> driveStatusForSessionState(session::TapeSessionState state);
 
-  /// @brief Create a periodic reporter using a borrowed tracker and mount.
+  /// @brief Create a periodic reporter without starting its thread.
   ///
-  /// The tracker and mount must outlive reporting and the worker thread must be joined before destruction.
-  ///
-  /// @param tracker Session state and statistics to publish.
-  /// @param mount Borrowed scheduler mount used for metadata and statistics publication.
-  /// @param lc Log context copied for reporter output.
-  /// @param reportPeriod Interval between reports, clamped to at least one millisecond.
-  /// @param stuckPeriod Block-inactivity threshold and minimum interval between warnings, clamped to one millisecond.
+  /// Tracker, mount and logger must outlive reporting; join the worker before destruction.
+  /// Both periods are clamped to at least one millisecond.
+  /// @param stuckPeriod Block-inactivity threshold and minimum interval between warnings.
   TapeSessionReporter(TapeSessionTracker& tracker,
                       cta::TapeMount& mount,
                       const cta::log::LogContext& lc,
@@ -85,10 +79,9 @@ private:
   /// Warn about an active tape file with no recent block movement, limiting repeated warnings.
   void reportStuckFileIfNeeded();
 
-  /// @brief Log a statistics snapshot with current mount metadata, progress and error counters.
+  /// @brief Log a statistics snapshot with mount metadata, progress and error counters.
   ///
-  /// @param sessionFinished Select a final outcome event instead of an in-progress statistics log.
-  /// @param stats Statistics snapshot to include in the log.
+  /// Use sessionFinished to select the final outcome event.
   void logStats(bool sessionFinished, const TapeSessionStats& stats);
 };
 

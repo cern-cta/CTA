@@ -20,7 +20,7 @@ struct EmptyDriveProbeResult {
   std::string errorMessage;
 };
 
-/// Discover and open the drive, check cartridge presence, and release the handle.
+/// @brief Discover and open the drive, check cartridge presence, and release the handle.
 /// Device failures are returned as diagnostics; no cleanup or robotic fallback is attempted.
 EmptyDriveProbeResult probeEmptyDrive(const common::dataStructures::DriveInfo& driveInfo,
                                       System::virtualWrapper& sysWrapper);

@@ -10,13 +10,13 @@ class LogContext;
 }
 
 namespace cta::tape::daemon {
-/// @brief Track hardware-access ownership for one session lifetime; callers publish lifecycle state.
+/// @brief Track whether a drive session may access the hardware.
 ///
-/// Currently tracks logical ownership only; no SCSI reservation is issued.
-/// Callers must serialize state changes and establish worker termination before release.
+/// This is an in-process ownership flag, not a SCSI reservation or a lock against other processes.
+/// The caller updates catalogue status, prevents concurrent state changes and stops all workers before release.
 class DriveReservation final {
 public:
-  /// Start unacquired, borrowing a log context that must outlive this guard.
+  /// Start without drive ownership; the supplied log context must outlive this guard.
   explicit DriveReservation(log::LogContext& lc) noexcept;
 
   /// Attempt release and log any exception without interrupting stack unwinding.
@@ -38,12 +38,10 @@ public:
   /// @throws std::logic_error If ownership was released.
   void acquire();
 
-  /// Permit hardware access only while ownership is acquired.
+  /// Return whether this session currently owns hardware access.
   bool canUseHardware() const noexcept;
 
-  /// @brief Release logical ownership, or confirm that it was already released.
-  ///
-  /// Release failures propagate; destruction retries as a fallback.
+  /// End logical ownership, including when never acquired; repeated calls do nothing.
   void release();
 
 private:

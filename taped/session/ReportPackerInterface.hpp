@@ -12,7 +12,7 @@
 
 namespace cta::tape::daemon {
 
-/// @brief Shared logging and batching support for archive and retrieval report packers.
+/// Shared logging and batching support for archive and retrieval report packers.
 class ReportPackerInterface {
 protected:
   /// Destroy the shared report-packer support.
@@ -23,9 +23,7 @@ protected:
       : m_lc(lc),
         m_tapeSessionTracker(tracker) {}
 
-  /// @brief Log identifiers for each file in a report batch.
-  /// @param c Container of file-report pointers.
-  /// @param msg Message accompanying each file.
+  /// Log identifiers for each file-report pointer in c, using msg as the log message.
   template<class C>
   void logReport(const C& c, const std::string& msg) {
     using cta::log::LogContext;
@@ -40,9 +38,7 @@ protected:
     }
   }
 
-  /// @brief Log identifiers and error text for each file in a report batch.
-  /// @param c Container of file-report pointers.
-  /// @param msg Message accompanying each file.
+  /// Log identifiers and error text for each file-report pointer in c, using msg as the log message.
   template<class C>
   void logReportWithError(const C& c, const std::string& msg) {
     using cta::log::LogContext;

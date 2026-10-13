@@ -17,22 +17,25 @@
 
 #include <memory>
 
+// Keeps scheduler construction and backend lifetimes in one place.
+// Revisit this wrapper when the object-store backend is removed.
+
 namespace cta::tape::daemon {
 
-/// @brief Own a scheduler and backend, or borrow an externally managed scheduler.
-/// Mostly there because the scheduler interface is messy (consists of many different objects).
+/// @brief Manage the scheduler and the database objects it depends on.
 ///
+/// Either create and own these objects or use a scheduler owned by the caller.
 /// The configuration, catalogue and logger must outlive this context.
 class SchedulerContext final {
 public:
   /// @brief Construct a scheduler and its backend using the supplied configuration.
   ///
-  /// The configuration, catalogue and logger are borrowed.
+  /// The caller retains ownership of the configuration, catalogue and logger.
   SchedulerContext(const TapedConfig& config, catalogue::Catalogue& catalogue, log::Logger& log);
 
   /// @brief Borrow a scheduler and its catalogue without taking ownership.
   ///
-  /// The supplied dependencies and backend must outlive this context.
+  /// The configuration, logger, scheduler, its catalogue and its backend must outlive this context.
   SchedulerContext(const TapedConfig& config, log::Logger& log, Scheduler& scheduler);
 
   /// @brief Return the active scheduler.
@@ -43,15 +46,16 @@ public:
   /// The borrowed catalogue remains valid across scheduler renewal.
   catalogue::Catalogue& catalogue() { return m_catalogue; }
 
-  /// @brief Replace an owned object-store scheduler and backend with a fresh agent.
+  /// @brief Recreate the owned object-store scheduler and backend with a new job-ownership agent.
   ///
-  /// Does nothing for PostgreSQL or a borrowed scheduler.
+  /// Leave the old agent available for garbage collection to recover abandoned jobs.
+  /// Does nothing for PostgreSQL or a scheduler owned by the caller.
   void renewObjectStoreAgent();
 
 private:
   /// @brief Construct a complete scheduler/backend pair before replacing the current pair.
   ///
-  /// Construction failures propagate without replacing the existing pair.
+  /// If construction throws, keep the existing scheduler and backend.
   void initialise();
 
   const TapedConfig& m_config;

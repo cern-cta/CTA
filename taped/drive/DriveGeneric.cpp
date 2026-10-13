@@ -369,9 +369,7 @@ std::vector<uint16_t> drive::DriveGeneric::getTapeAlertCodes() {
   cta::exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
                                           "Failed SG_IO ioctl in DriveGeneric::getTapeAlerts");
   SCSI::ExceptionLauncher(sgh, "SCSI error in getTapeAlerts:");
-  /* Return the ACTIVE tape alerts (this is indicated by "flag" (see
-   * SSC-4: 8.2.3 TapeAlert log page). As they are simply used for logging;
-   * return strings. */
+  // Return only codes whose TapeAlert flag is active (SSC-4, TapeAlert log page).
   for (size_t i = 0; i < tal.parameterNumber(); i++) {
     if (tal.parameters[i].flag) {
       ret.push_back(SCSI::Structures::toU16(tal.parameters[i].parameterCode));
@@ -400,9 +398,6 @@ std::vector<std::string> drive::DriveGeneric::getTapeAlertsCompact(const std::ve
   return ret;
 }
 
-//------------------------------------------------------------------------------
-// tapeAlertsCriticalForWrite
-//------------------------------------------------------------------------------
 bool drive::DriveGeneric::tapeAlertsCriticalForWrite(const std::vector<uint16_t>& codes) {
   for (std::vector<uint16_t>::const_iterator code = codes.begin(); code != codes.end(); ++code) {
     if (SCSI::isTapeAlertCriticalForWrite(*code)) {
@@ -463,9 +458,6 @@ void drive::DriveGeneric::setDensityAndCompression(bool compression, unsigned ch
   }
 }
 
-//------------------------------------------------------------------------------
-// setLogicalBlockProtection
-//------------------------------------------------------------------------------
 void drive::DriveGeneric::setLogicalBlockProtection(const unsigned char method,
                                                     const unsigned char methodLength,
                                                     const bool enableLBPforRead,
@@ -528,9 +520,6 @@ void drive::DriveGeneric::setLogicalBlockProtection(const unsigned char method,
   }
 }
 
-//------------------------------------------------------------------------------
-// enableCRC32CLogicalBlockProtectionReadOnly
-//------------------------------------------------------------------------------
 void drive::DriveGeneric::enableCRC32CLogicalBlockProtectionReadOnly() {
   m_lbpToUse = lbpToUse::crc32cReadOnly;
   setLogicalBlockProtection(SCSI::logicBlockProtectionMethod::CRC32C,
@@ -539,9 +528,6 @@ void drive::DriveGeneric::enableCRC32CLogicalBlockProtectionReadOnly() {
                             false);
 }
 
-//------------------------------------------------------------------------------
-// enableCRC32CLogicalBlockProtectionReadWrite
-//------------------------------------------------------------------------------
 void drive::DriveGeneric::enableCRC32CLogicalBlockProtectionReadWrite() {
   m_lbpToUse = lbpToUse::crc32cReadWrite;
   setLogicalBlockProtection(SCSI::logicBlockProtectionMethod::CRC32C,
@@ -550,17 +536,11 @@ void drive::DriveGeneric::enableCRC32CLogicalBlockProtectionReadWrite() {
                             true);
 }
 
-//------------------------------------------------------------------------------
-// disableLogicalBlockProtection
-//------------------------------------------------------------------------------
 void drive::DriveGeneric::disableLogicalBlockProtection() {
   m_lbpToUse = lbpToUse::disabled;
   setLogicalBlockProtection(0, 0, false, false);
 }
 
-//------------------------------------------------------------------------------
-// getLBPInfo
-//------------------------------------------------------------------------------
 drive::LBPInfo drive::DriveGeneric::getLBPInfo() {
   SCSI::Structures::modeSenseControlDataProtection_t controlDataProtection;
   drive::LBPInfo LBPdata;
@@ -592,9 +572,6 @@ drive::LBPInfo drive::DriveGeneric::getLBPInfo() {
   return LBPdata;
 }
 
-//------------------------------------------------------------------------------
-// Encryption interface
-//------------------------------------------------------------------------------
 void drive::DriveGeneric::setEncryptionKey(const std::string& encryption_key) {
   if (!isEncryptionCapEnabled()) {
     throw cta::exception::Exception("In DriveGeneric::setEncryptionKey: Tried to enable encryption on drive "
@@ -620,10 +597,7 @@ void drive::DriveGeneric::setEncryptionKey(const std::string& encryption_key) {
     sps.algorithmIndex = 0x01;
     sps.keyFormat = SCSI::encryption::keyFormatTypes::keyFormatNormal;
     std::copy(encryption_key.begin(), encryption_key.end(), sps.keyData);
-    /*
-     * This means that if the key given is smaller, it's right padded with zeros.
-     * If the key given is bigger, we the first 256-bit are used.
-     */
+    // The caller must limit the key to 32 bytes; the zero-initialized buffer pads shorter keys.
 
     cdb.securityProtocol = SCSI::encryption::spoutSecurityProtocolPages::tapeDataEncryption;
     SCSI::Structures::setU16(cdb.securityProtocolSpecific,
@@ -999,10 +973,8 @@ void drive::DriveGeneric::unloadTape(void) {
 
 void drive::DriveGeneric::flush(void) {
   struct mtop m_mtCmd = {};
-  m_mtCmd.mt_op =
-    MTWEOF;  //Not using MTNOP because it doesn't do what it claims (see st source code) so here we put "write sync file marks" with count set to 0.
-  // The following text is a quote from the SCSI Stream commands manual (SSC-3):
-  // NOTE 25 Upon completion of any buffered write operation, the application client may issue a WRITE FILEMARKS(16) command with the IMMED bit set to zero and the FILEMARK COUNT field set to zero to perform a synchronize operation (see 4.2.10).
+  // Zero synchronous file marks flush buffered writes; MTNOP does not synchronize the tape driver.
+  m_mtCmd.mt_op = MTWEOF;
   m_mtCmd.mt_count = 0;
   cta::exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd),
                                           "Failed ST ioctl (MTWEOF) in DriveGeneric::flush");
@@ -1018,7 +990,7 @@ void drive::DriveGeneric::writeSyncFileMarks(size_t count) {
 
 void drive::DriveGeneric::writeImmediateFileMarks(size_t count) {
   struct mtop m_mtCmd = {};
-  m_mtCmd.mt_op = MTWEOFI;  //Undocumented in "man st" needs the mtio_add.hh header file (see above)
+  m_mtCmd.mt_op = MTWEOFI;  // mtio_add.hpp supplies this code when system headers omit it.
   m_mtCmd.mt_count = (int) count;
   cta::exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd),
                                           "Failed ST ioctl (MTWEOFI) in DriveGeneric::writeImmediateFileMarks");
@@ -1405,7 +1377,7 @@ std::vector<cta::tape::drive::endOfWrapPosition> drive::DriveLTO::getEndOfWrapPo
     auto wrapDescriptor = data.wrapDescriptor[i];
     position.wrapNumber = SCSI::Structures::toU16(wrapDescriptor.wrapNumber);
     position.partition = SCSI::Structures::toU16(wrapDescriptor.partition);
-    //blockId returned is 6*8 = 48 bytes, so we need to store it into a uint64_t
+    // The 48-bit logical object identifier needs a 64-bit destination.
     position.blockId = SCSI::Structures::toU64(wrapDescriptor.logicalObjectIdentifier);
     ret.push_back(position);
   }
@@ -1465,9 +1437,6 @@ drive::compressionStats drive::DriveIBM3592::getCompression() {
   return driveCompressionStats;
 }
 
-//------------------------------------------------------------------------------
-// pre-emptive evaluation statistics (SCSI Statistics)
-//------------------------------------------------------------------------------
 std::map<std::string, uint64_t> drive::DriveGeneric::getTapeWriteErrors() {
   // No available data
   return std::map<std::string, uint64_t>();
@@ -2767,9 +2736,6 @@ std::map<std::string, uint32_t> cta::tape::drive::DriveMHVTL::getVolumeStats() {
   return std::map<std::string, uint32_t>();
 }
 
-//------------------------------------------------------------------------------
-// testUnitReady
-//------------------------------------------------------------------------------
 void drive::DriveGeneric::testUnitReady() const {
   SCSI::Structures::testUnitReadyCDB_t cdb;
 
@@ -2787,9 +2753,6 @@ void drive::DriveGeneric::testUnitReady() const {
   SCSI::ExceptionLauncher(sgh, "SCSI error in testUnitReady:");
 }
 
-//------------------------------------------------------------------------------
-// waitUntilReady
-//------------------------------------------------------------------------------
 void drive::DriveGeneric::waitUntilReady(const uint32_t timeoutSecond) {
   waitTestUnitReady(timeoutSecond);
 

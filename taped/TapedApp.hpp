@@ -18,22 +18,23 @@
 
 namespace cta::tape::daemon {
 
-/// Entrypoint for cta-taped.
+/// @brief Own the tape daemon and its runtime dependencies.
+///
+/// Run once; stop and health callbacks may run concurrently with run(), but must end before destruction.
 class TapedApp final {
 public:
   /// Create an application without starting a tape daemon.
   TapedApp() = default;
 
-  /// Destroy the daemon.
+  /// Destroy the daemon and its dependencies, then shut down the Protobuf library.
   ~TapedApp();
 
   /// Request exit from a published daemon.
   void stop();
 
-  /// @brief Set the process name, enable core dumps where possible, construct and run the daemon.
+  /// @brief Initialize and run the daemon, returning its exit code.
   ///
-  /// Configuration and logger must outlive the application.
-  /// @return Daemon exit code; initialization exceptions propagate to the runtime.
+  /// Configuration and logger must outlive the application; initialization exceptions propagate to the runtime.
   int run(const TapedConfig& config, cta::log::Logger& log);
 
   /// Return the configured drive and logical library as static log attributes.

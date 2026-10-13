@@ -10,7 +10,7 @@
 
 namespace cta::tape::session {
 
-/// Progress of one TapeSession, independently of its outcome and drive status.
+/// @brief Progress of one TapeSession, independently of its outcome and drive status.
 /// Callers must enter each phase at most once per session; phases may be skipped.
 /// Repeating the current phase is harmless, but returning to a previous phase is invalid.
 /// The tracker suppresses consecutive duplicates; it does not enforce transition order.
@@ -25,7 +25,7 @@ enum class TapeSessionState : uint32_t {
   DrainingToDisk,  ///< Retrieval disk delivery remains active; the drive is still unavailable.
   Finished         ///< The session owner has joined all workers and completed the final reporting attempt.
 };
-/// Return the display name of a tape-session phase.
+/// Return the phase name, or UnknownState with the numeric value for an unrecognized state.
 std::string toString(TapeSessionState state);
 
 }  // namespace cta::tape::session

@@ -29,9 +29,9 @@ class TapeMount;
 namespace cta::tape::daemon {
 class SchedulerContext;
 
-/// Runs one or more tape session with possible idle periods in between.
-/// Hardware may be touched at any point during a drive session.
-/// Putting the drive down will exit the drive session.
+/// @brief Run tape sessions and idle polling during one period of drive ownership.
+///
+/// Prepare hardware before scheduling; stop or operator Down ends the session after active tape work finishes.
 class DriveSession final {
 public:
   /// @brief Initialize a session without accessing hardware; run() performs preparation.
@@ -43,16 +43,16 @@ public:
                SchedulerContext& schedulerContext,
                System::virtualWrapper* sysWrapper = nullptr);
 
-  /// @brief Clean the drive and schedule tape sessions until stop or reservation release.
+  /// @brief Prepare the drive and schedule tape sessions until stop or reservation release.
   ///
   /// Call once.
-  /// Preparation failure or putting the drive Down ends the session; unexpected failures propagate.
+  /// Preparation failure or operator Down ends the session; unexpected failures propagate.
   void run(std::stop_token stopToken);
 
-  /// Attempt reservation release and Down publication.
+  /// Attempt to release drive ownership and report Down in the catalogue.
   ~DriveSession() noexcept;
 
-  /// @brief Return whether the active cleaning, recovery or transfer is within its liveness deadline.
+  /// @brief Return whether the current operation is still within its configured timeout.
   ///
   /// Safe for concurrent health queries; returns true when no tracker is active.
   bool isLive() const;
@@ -72,8 +72,7 @@ public:
 private:
   friend class DriveSessionTest;
 
-  /// Scheduling decision after one iteration.
-  /// Could be a boolean, but we don't want to wait after a successful session.
+  /// Choose immediate scheduling, a retry delay, or release of drive ownership.
   enum class IterationAction { Continue, RetryAfterDelay, EndOwnership };
 
   /// Scheduling decision with a diagnostic when ending the reservation.
@@ -82,34 +81,36 @@ private:
     std::string endReason;
   };
 
-  /// @brief Poll operator intent, obtain work and translate a tape-session outcome into a loop decision.
+  /// @brief Check the desired drive state, obtain work and decide whether to continue, wait or stop.
   ///
-  /// Idle polls and recoverable scheduling failures request a retry delay.
+  /// Continue and RetryAfterDelay leave the drive empty and reusable.
+  /// EndOwnership may leave a cartridge after failed cleanup.
   /// @pre The drive is empty and reserved by this session.
   IterationResult runIteration(std::stop_token stopToken);
 
-  /// @brief Execute an assignment and attempt drive recovery after ordinary escaping failures.
+  /// @brief Execute an assignment and attempt drive cleanup if the session throws.
   ///
-  /// Unsafe worker teardown propagates without recovery; unusable results request desired Down.
+  /// Request Down if the drive cannot be reused.
+  /// If worker termination cannot be established, the process exits without recovery or unwinding.
   TapeSessionResult runTapeSession(TapeMount& tapeMount);
 
   /// @brief Probe or clean the drive for preparation, returning whether scheduling may continue.
   ///
   /// Initial preparation follows clean_on_up; active-session recovery always cleans.
-  /// Only recovery supplies a known VID. Operator Down intent prevents further scheduling.
+  /// Only recovery supplies a known tape volume identifier (VID). A Down request prevents further scheduling.
   bool prepareDrive(const std::optional<std::string>& vid = std::nullopt);
 
-  /// @brief Release the reservation before reporting Down; retain failed publication for a later retry.
+  /// @brief Release drive ownership, then report Down; retry a failed catalogue update on the next call.
   ///
-  /// Unsafe worker teardown prevents release and Down publication.
+  /// Call only after all drive users have stopped.
   void releaseAndReportDown();
 
-  /// @brief Request desired Down while preserving an observed specific reason.
+  /// @brief Request Down without overwriting an existing, more specific reason.
   ///
-  /// Publication failures propagate; this does not release the reservation.
+  /// Catalogue update failures throw; this does not release drive ownership.
   void requestDown(common::dataStructures::DriveDownReason reason, std::string_view detail = "");
 
-  /// Request desired Down, logging publication failures without throwing.
+  /// Request Down, logging catalogue update failures without throwing.
   void requestDownNoThrow(common::dataStructures::DriveDownReason reason, std::string_view detail) noexcept;
 
   const TapedConfig& m_config;
@@ -123,7 +124,7 @@ private:
   System::virtualWrapper& m_sysWrapper;
   /// Active cleanup or transfer tracker; health readers retain their own atomically loaded shared reference.
   std::shared_ptr<const TapeSessionTracker> m_activeTracker;
-  /// Tracks terminal publication only; hardware ownership is managed independently.
+  /// Prevents duplicate Down reports after a successful catalogue update.
   bool m_downPublicationComplete = false;
   /// Destroy first, while its borrowed dependencies and hardware access objects are still alive.
   DriveReservation m_driveReservation;

@@ -42,7 +42,7 @@ void TapeDaemon::stop() {
     return;
   }
 
-  // We are alling this from a different thread. LogContext is not thread-safe, hence the copy.
+  // stop() can run on another thread; use a separate context because LogContext is not thread-safe.
   log::LogContext lc(m_lc.logger());
   try {
     TapeDrivesCatalogueState(m_catalogue)
@@ -59,12 +59,7 @@ bool TapeDaemon::isLive() const {
 }
 
 bool TapeDaemon::isReady() const {
-  // Taped is considered ready when the drive has been registered in the catalogue.
-  // One could argue that the logical library should also exist for it to be ready.
-  // But that currently presents problems with our system tests, where the
-  // logical libraries are only created after the deployment is complete
-  // (which requires all services to be ready).
-  // Potentially something to improve in the future...
+  // Readiness cannot require a logical library: system tests create it after services become ready.
   return m_registered.load();
 }
 

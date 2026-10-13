@@ -23,9 +23,11 @@ struct DriveStartupDecision {
   common::dataStructures::DesiredDriveState desiredState {};
 };
 
-/// Decide whether to register a drive or preserve an existing Up request for recovery.
-/// Existing Down reasons and comments are retained unless the reason permits automatic startup.
-/// recordedAt timestamps any newly created startup reason; preserved reasons keep their original timestamp.
+/// @brief Decide whether to register the drive, resume an existing Up request or require a new operator request.
+///
+/// An existing Up request takes precedence over auto_up; resume it only when recover_existing_up is enabled.
+/// For registration, retain comments and Down reasons other than an empty reason or a clean-shutdown reason.
+/// Use recordedAt for any new startup reason; retained reasons keep their original timestamp.
 DriveStartupDecision decideDriveStartup(const DriveStartupConfig& config,
                                         const std::optional<common::dataStructures::TapeDrive>& previous,
                                         std::time_t recordedAt = std::time(nullptr));

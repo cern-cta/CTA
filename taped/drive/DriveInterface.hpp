@@ -53,23 +53,15 @@ public:
   uint32_t dirtyBytesCount;
 };
 
-/// @brief Physical position info.
+/// @brief Physical wrap and longitudinal position returned by getPhysicalPositionInfo().
 ///
-/// Returns the wrap (physical track) and LPOS (longitudinal
-/// position relative to the start of the wrap). If the wrap value is 0xFF,
-/// then the logical wrap number exceeds 254 and no further
-/// information is available. Otherwise, the physical direction
-/// can be detected from the lsb of the wrap.
-///
-/// Returned by DriveInterface::getPhysicalPositionInfo().
+/// A wrap of 0xFF means the logical wrap exceeds 254 and direction cannot be decoded.
 class physicalPositionInfo {
 public:
   uint8_t wrap;
-  uint32_t lpos;
+  uint32_t lpos;  ///< Longitudinal position relative to the start of the wrap.
 
-  /// @brief FORWARD means the current direction is away from the
-  /// physical beginning of tape. BACKWARD means the current
-  /// direction is towards the physical beginning of tape.
+  /// Travel away from (FORWARD) or towards (BACKWARD) the physical beginning of tape.
   enum Direction_t { FORWARD, BACKWARD };
 
   /// Decode the travel direction from wrap parity; meaningful only when wrap is not 0xFF.
@@ -236,7 +228,10 @@ public:
                                          const bool enableLPBforRead,
                                          const bool enableLBBforWrite) = 0;
 
-  /// Install key material for encrypted writes and reads; fail if encryption cannot be enabled.
+  /// @brief Install encryption key material; unsupported encryption raises an exception.
+  ///
+  /// Hardware drives clear encryption for an empty key and zero-pad shorter keys.
+  /// @pre The key contains at most 32 bytes.
   virtual void setEncryptionKey(const std::string& encryption_key) = 0;
 
   /// @brief Clear the drive encryption parameters.
@@ -252,13 +247,13 @@ public:
   /// Enable or disable buffered writes in the Linux tape driver.
   virtual void setSTBufferWrite(bool bufWrite) = 0;
 
-  /// Seek to the end of recorded data with fast positioning disabled to rebuild the tape directory.
+  /// Seek to the end of recorded data with fast positioning enabled.
   virtual void fastSpaceToEOM(void) = 0;
 
   /// Rewind the loaded tape to its beginning.
   virtual void rewind(void) = 0;
 
-  /// Seek to the end of recorded data using fast positioning.
+  /// Seek to the end of recorded data with fast positioning disabled.
   virtual void spaceToEOM(void) = 0;
 
   /// Move backwards across the requested number of file marks, towards the beginning of tape.
@@ -330,7 +325,6 @@ public:
   /// @param maxSupported Maximum number of segments to submit, obtained from getLimitUDS().
   virtual void queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int maxSupported) = 0;
 
-  /// The information of the tape drive.
   cta::common::dataStructures::DriveInfo info;
 };
 

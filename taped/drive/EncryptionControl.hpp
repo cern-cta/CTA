@@ -39,13 +39,9 @@ public:
   /// @brief Obtain key material when required, then enable or clear drive encryption.
   ///
   /// For a new encrypted write, record the key name in the catalogue before installing the key.
-  /// If assigning a key to a nonempty tape is rejected, disable the tape and propagate the error.
+  /// If assigning a key to a nonempty tape is rejected, attempt to disable it and propagate the error.
   /// Script execution, JSON parsing, catalogue and drive failures propagate to the caller.
-  /// @param m_drive Borrowed drive on which to apply encryption settings.
-  /// @param volInfo Tape identity, pool and existing encryption key name.
-  /// @param catalogue Catalogue used to read pool policy and update the tape key name.
-  /// @param isWriteSession Whether a new tape key name may be assigned for writing.
-  /// @return Encryption state, key name, key material and the script diagnostic message.
+  /// The returned status includes secret key material and must not be logged in full.
   EncryptionStatus enable(cta::tape::drive::DriveInterface& m_drive,
                           cta::tape::daemon::VolumeInfo& volInfo,
                           cta::catalogue::Catalogue& catalogue,
@@ -73,8 +69,6 @@ private:
   /// @brief Collect JSON string values, prefixing nested fields with their immediate enclosing object key.
   ///
   /// Non-string leaf values are ignored; the borrowed JSON object is not modified.
-  /// @param prefix Prefix applied to string fields at this level.
-  /// @param jobj JSON object whose fields are traversed recursively.
   std::map<std::string, std::string> flatten_json_object_to_map(const std::string& prefix, json_object* jobj);
 
   /// Join script arguments with the delimiter for diagnostics; return an empty string for no arguments.

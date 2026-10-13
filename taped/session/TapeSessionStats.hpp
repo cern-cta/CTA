@@ -108,7 +108,7 @@ struct DiskTransferStats {
   }
 };
 
-/// Statistics for restoring the drive and returning the cartridge to the library.
+/// @brief Statistics for restoring the drive and returning the cartridge to the library.
 /// Durations accumulate across attempts; individual operations overlap the total cleanup time.
 struct TapeCleanupStats {
   /// Unload time, in seconds.
@@ -148,7 +148,7 @@ struct TapeCleanupStats {
   }
 };
 
-/// Statistics for loading and preparing a tape for transfer.
+/// @brief Statistics for loading and preparing a tape for transfer.
 /// Durations accumulate across contributions; component timings may overlap the mounting interval.
 struct TapeSetupStats {
   /// Elapsed mounting interval, including loading and initial drive checks, in seconds.

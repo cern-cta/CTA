@@ -24,20 +24,15 @@
 
 namespace cta::tape::daemon {
 
-/// @brief Runs one scheduler assignment within a DriveSession (mount -> transfer -> unmount).
-/// Physical cartridge ownership is held by MountedTape inside the transfer pipeline.
+/// @brief Run one archive or retrieval assignment: mount the tape, transfer files, then unmount it.
+///
+/// DriveSession schedules the assignment; MountedTape ensures cartridge cleanup, including after failures.
 class TapeSession {
 public:
-  /// @brief Create a session for a scheduler TapeMount assignment; execute() starts the work.
+  /// @brief Create a session for a scheduler assignment; execute() starts the work.
   ///
-  /// @param log Logger that must outlive the session.
-  /// @param sysWrapper System-call wrapper that must outlive the session.
-  /// @param driveInfo Drive identity copied into the session.
-  /// @param mc Borrowed media changer used by tape operations.
-  /// @param tapeMount Mount kept alive by the caller until session execution and reporting finish.
-  /// @param transfersConfig Transfer settings copied into the session.
-  /// @param tapeLoadTimeoutSecs Maximum time in seconds allowed for tape loading.
-  /// @param catalogue Borrowed catalogue used by tape operations.
+  /// Logger, system wrapper, media changer, mount and catalogue must outlive the session.
+  /// Drive identity and transfer settings are copied; tapeLoadTimeoutSecs is the readiness timeout in seconds.
   TapeSession(cta::log::Logger& log,
               System::virtualWrapper& sysWrapper,
               const cta::common::dataStructures::DriveInfo& driveInfo,
@@ -49,9 +44,9 @@ public:
 
   /// @brief Run one assignment through transfer, cleanup and final reporting.
   ///
-  /// Empty assignments may complete without mounting a tape. Ordinary escaping failures permit caller recovery.
-  /// Exits the process immediately if worker termination cannot be established.
-  /// @return Independent session-success and drive-reuse outcomes.
+  /// Assignments with no work may finish without mounting a tape. The caller can attempt recovery if this throws.
+  /// Exit the process immediately if workers cannot be confirmed stopped, avoiding unsafe cleanup.
+  /// @return Whether the assignment succeeded and, separately, whether the drive can accept more work.
   TapeSessionResult execute();
 
   /// Return read-only tracking state, valid for this session's lifetime.
@@ -79,25 +74,21 @@ private:
   const uint32_t m_tapeLoadTimeoutSecs;
   const cta::common::dataStructures::DriveInfo m_driveInfo;
 
-  /// @brief Discover and open the configured drive, recording a down decision before propagating failures.
+  /// @brief Discover and open the drive, recording a down decision in state before propagating failures.
   ///
-  /// @param logContext Log context for session diagnostics.
-  /// @param state Execution state updated with drive-open and failure decisions.
-  /// @return Owned, opened drive interface initialized with the session drive identity.
+  /// Return an owned drive initialized with the session drive identity.
   std::unique_ptr<cta::tape::drive::DriveInterface> findDrive(cta::log::LogContext& logContext, ExecutionState& state);
 
-  /// @brief Build and run the tape-to-disk pipeline, or finalize an empty or rejected retrieval mount.
+  /// @brief Run the tape-to-disk pipeline if jobs and disk space are available.
   ///
-  /// @param logContext Session logging context.
-  /// @param retrieveMount Borrowed mount supplying retrieval jobs.
-  /// @param state Track completion ownership and recovery decisions.
+  /// Record whether the pipeline completes the scheduler mount and whether the drive can be reused.
+  /// execute() completes empty or rejected mounts.
   void executeRead(cta::log::LogContext& logContext, cta::RetrieveMount& retrieveMount, ExecutionState& state);
 
-  /// @brief Build and run the disk-to-tape pipeline, or finalize a mount with no archive work.
+  /// @brief Run the disk-to-tape pipeline if archive jobs are available.
   ///
-  /// @param logContext Session logging context.
-  /// @param archiveMount Borrowed mount supplying archive jobs.
-  /// @param state Track completion ownership and recovery decisions.
+  /// Record whether the pipeline completes the scheduler mount and whether the drive can be reused.
+  /// execute() completes empty mounts.
   void executeWrite(cta::log::LogContext& logContext, cta::ArchiveMount& archiveMount, ExecutionState& state);
 
   cta::mediachanger::MediaChangerFacade& m_mediaChanger;

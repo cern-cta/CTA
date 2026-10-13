@@ -177,13 +177,13 @@ public:
   /// Enable or disable buffered writes in the Linux tape driver.
   void setSTBufferWrite(bool bufWrite) override;
 
-  /// Seek to the end of recorded data with fast positioning disabled to rebuild the tape directory.
+  /// Seek to the end of recorded data with fast positioning enabled.
   void fastSpaceToEOM(void) override;
 
   /// Rewind the loaded tape to its beginning.
   void rewind(void) override;
 
-  /// Seek to the end of recorded data using fast positioning.
+  /// Seek to the end of recorded data with fast positioning disabled.
   void spaceToEOM(void) override;
 
   /// Move backwards across the requested number of file marks, towards the beginning of tape.
@@ -249,24 +249,25 @@ public:
   /// Return the drive protection method, checksum length and read/write protection flags.
   LBPInfo getLBPInfo() override;
 
-  /// @brief Install AES-256 key material using SECURITY PROTOCOL OUT.
-  /// Keys shorter than 32 bytes are zero-padded; longer keys are truncated.
-  /// Existing encryption parameters are replaced; unsupported encryption raises an exception.
+  /// @brief Install AES-256 key material, or clear encryption for an empty key.
+  ///
+  /// Short keys are zero-padded; unsupported encryption raises an exception.
+  /// @pre The key contains at most 32 bytes; its length is not checked.
   void setEncryptionKey(const std::string& encryption_key) override;
 
   /// @brief Clear the drive encryption parameters.
   /// @return True if encryption is supported and the clearing command succeeds; false if unsupported.
   bool clearEncryptionKey() override;
 
-  /// Check whether the vendor-specific encryption capability is enabled.
+  /// Return false by default; vendor subclasses query the encryption capability.
   bool isEncryptionCapEnabled() override;
 
   /// Query the maximum number and size of user data segments supported for recommended access order (RAO).
   SCSI::Structures::RAO::udsLimits getLimitUDS() override;
 
-  /// @brief Replace the supplied file ranges with the drive-recommended access order.
-  /// @param files File identifiers and logical block ranges, replaced with the returned ordering.
-  /// @param maxSupported Maximum number of segments to submit, obtained from getLimitUDS().
+  /// @brief Replace files with the drive-recommended ordering of the first maxSupported ranges.
+  ///
+  /// Ranges beyond that limit are not submitted and are absent from the result.
   void queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int maxSupported) override;
 
 protected:
@@ -313,7 +314,7 @@ public:
     cta::tape::SCSI::Structures::zeroStruct(&m_compressionStatsBase);
   }
 
-  /// Return byte counters for host and tape traffic; reset behavior depends on the drive model.
+  /// Return host and tape byte counters relative to the last saved reset baseline.
   compressionStats getCompression() override;
 
   /// Save the current counters as the baseline for subsequent compression statistics.
@@ -416,7 +417,7 @@ public:
   /// Return byte counters for host and tape traffic; reset behavior depends on the drive model.
   compressionStats getCompression() override;
 
-  /// Reset the compression counters or establish a new baseline for subsequent queries.
+  /// Reset the drive's compression counters through SCSI LOG SELECT.
   void clearCompressionStats() override;
 
   /// Return all wrap boundaries reported by the READ END OF WRAP POSITION command.
@@ -444,7 +445,7 @@ public:
   /// Return byte counters for host and tape traffic; reset behavior depends on the drive model.
   compressionStats getCompression() override;
 
-  /// Reset the compression counters or establish a new baseline for subsequent queries.
+  /// Reset the drive's compression counters through SCSI LOG SELECT.
   void clearCompressionStats() override;
 
   /// Return named write-error counters supplied by the drive; unsupported metrics may be absent.

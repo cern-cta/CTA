@@ -9,9 +9,7 @@ namespace cta::tape::daemon {
 
 class TapeSessionTracker;
 
-/// @brief Indicates that TapeSessionTracker::recordFailure() has already counted a failure.
-///
-/// Prevents recounting failures.
+/// Receipt identifying the tracker that already counted a failure, so callers can avoid recounting it.
 class RecordedFailure {
 public:
   /// Return whether this receipt was issued by the supplied tracker.

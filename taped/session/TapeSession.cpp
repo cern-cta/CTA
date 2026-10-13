@@ -45,13 +45,9 @@ constexpr bool c_useLbp = true;
 constexpr uint16_t c_xrootTimeout = 0;
 constexpr const char* c_raoLtoAlgorithmOptions = "cost_heuristic_name:cta";
 
-/// @brief Log an operation failure and preserve the first fatal failure for later propagation.
+/// @brief Log the failure and retain the first exception outside CTA Exception and std::runtime_error for rethrow.
 ///
-/// Logging failures are contained so remaining finalization operations can still run.
-///
-/// @param failure Exception captured from the failed session operation.
-/// @param fatalFailure First fatal exception retained for propagation after finalization.
-/// @param lc Log context for diagnostics.
+/// Contain logging failures so finalization can continue.
 void recordFailure(std::exception_ptr failure, std::exception_ptr& fatalFailure, cta::log::LogContext& lc) {
   const char* message = "Unrecoverable tape session failure";
   try {
@@ -78,13 +74,10 @@ void recordFailure(std::exception_ptr failure, std::exception_ptr& fatalFailure,
 struct cta::tape::daemon::TapeSession::ExecutionState {
   TapeSessionResult result;
   // The pipeline completes the mount once started.
-  // The tape thread handles unmounting so the next mount can start as soon as tape work finishes.
+  // The tape thread handles unmounting; drive reuse also waits for disk delivery and reporting.
   bool completionDelegated = false;
 };
 
-//------------------------------------------------------------------------------
-//Constructor
-//------------------------------------------------------------------------------
 cta::tape::daemon::TapeSession::TapeSession(cta::log::Logger& log,
                                             System::virtualWrapper& sysWrapper,
                                             const cta::common::dataStructures::DriveInfo& driveInfo,
@@ -108,9 +101,6 @@ cta::tape::daemon::TapeSession::TapeSession(cta::log::Logger& log,
       m_mediaChanger(mc),
       m_catalogue(catalogue) {}
 
-//------------------------------------------------------------------------------
-//TapeSession::execute
-//------------------------------------------------------------------------------
 cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
   cta::telemetry::metrics::setMountType(cta::common::dataStructures::MountType::NoMount);
   // Clear the active mount after session finalization and worker shutdown.
@@ -206,9 +196,6 @@ cta::tape::daemon::TapeSessionResult cta::tape::daemon::TapeSession::execute() {
   return state.result;
 }
 
-//------------------------------------------------------------------------------
-//TapeSession::executeRead
-//------------------------------------------------------------------------------
 void cta::tape::daemon::TapeSession::executeRead(cta::log::LogContext& logContext,
                                                  cta::RetrieveMount& retrieveMount,
                                                  ExecutionState& state) {
@@ -336,9 +323,6 @@ void cta::tape::daemon::TapeSession::executeRead(cta::log::LogContext& logContex
   }
 }
 
-//------------------------------------------------------------------------------
-//TapeSession::executeWrite
-//------------------------------------------------------------------------------
 void cta::tape::daemon::TapeSession::executeWrite(cta::log::LogContext& logContext,
                                                   cta::ArchiveMount& archiveMount,
                                                   ExecutionState& state) {
@@ -445,9 +429,6 @@ void cta::tape::daemon::TapeSession::executeWrite(cta::log::LogContext& logConte
   }
 }
 
-//------------------------------------------------------------------------------
-//TapeSession::findDrive
-//------------------------------------------------------------------------------
 std::unique_ptr<cta::tape::drive::DriveInterface>
 cta::tape::daemon::TapeSession::findDrive(cta::log::LogContext& logContext, ExecutionState& state) {
   constexpr auto reason = common::dataStructures::DriveDownReason::SessionDriveAccessFailed;

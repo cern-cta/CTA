@@ -109,14 +109,12 @@ protected:
       return false;
     }
     size_t alertNumber = 0;
-    // Log tape alerts in the logs.
     std::vector<std::string> tapeAlerts = m_drive.getTapeAlerts(tapeAlertCodes);
     for (const auto& ta : tapeAlerts) {
       cta::log::ScopedParamContainer params(m_logContext);
       params.add("tapeAlert", ta).add("tapeAlertNumber", alertNumber++).add("tapeAlertCount", tapeAlerts.size());
       m_logContext.log(cta::log::WARNING, "Tape alert detected");
     }
-    // Add tape alerts in the tape log parameters
     for (const auto tapeAlertCode : tapeAlertCodes) {
       countTapeAlert(tapeAlertCode);
     }
@@ -128,7 +126,7 @@ protected:
 
   /// Log a metrics heading, or an unavailable message when the metric count is zero.
   void logSCSIStats(const std::string& logTitle, size_t metricsHashLength) {
-    if (metricsHashLength == 0) {  // skip logging entirely if hash is empty.
+    if (metricsHashLength == 0) {
       m_logContext.log(cta::log::INFO, "SCSI Statistics could not be acquired from drive");
       return;
     }
@@ -185,14 +183,10 @@ public:
   virtual cta::tape::drive::DriveInterface* getDriveReference() { return &m_drive; }
 
   /// @brief Initialize a tape worker without starting it.
-  /// @param drive Borrowed tape drive.
-  /// @param mc Borrowed media changer.
-  /// @param tracker Borrowed session tracker.
-  /// @param volInfo Volume metadata copied into the worker.
-  /// @param lc Logging context copied for worker use.
-  /// @param useEncryption Whether tape encryption is enabled.
-  /// @param externalEncryptionKeyScript Path to the encryption-key script.
-  /// @param tapeLoadTimeout Drive-readiness timeout in seconds.
+  ///
+  /// Borrow drive, media changer and tracker; copy volume metadata and log context.
+  /// The logger must also outlive the worker; tapeLoadTimeout is the readiness timeout in seconds.
+  /// A nonempty encryption script path must be absolute.
   TapeSingleThreadInterface(cta::tape::drive::DriveInterface& drive,
                             cta::mediachanger::MediaChangerFacade& mc,
                             TapeSessionTracker& tracker,

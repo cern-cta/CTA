@@ -766,8 +766,7 @@ TEST(cta_tape_drive_Drive, getDriveStats) {
 }
 
 TEST(cta_tape_drive_Drive, getTapeAlerts) {
-  /// "Local function" allowing the test to be run twice (for SLC5 and then for
-  /// SLC6).
+  // Exercise both SLC5 and SLC6 device layouts.
   struct {
     void operator()(cta::tape::System::mockWrapper& sysWrapper) {
       /* We expect the following calls: */
