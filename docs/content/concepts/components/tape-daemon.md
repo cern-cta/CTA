@@ -5,137 +5,105 @@ It obtains scheduled work, transfers files between disk and tape, and coordinate
 
 ```mermaid
 flowchart TB
+    config["Read config file"]
+    cat["Initialise catalogue"]
+    sched["Initialise scheduler"]
+    config --> cat --> sched
 
+    subgraph registration["Drive registration"]
+        existsQ{"Does the drive name exist?"}
+        matchesQ{"Do the host and logical library match?"}
+        previousUpQ{"Is the existing desired state Up?"}
+        recoverQ{"Is drive.startup.recover_existing_up = true?"}
+        reasonQ{"Is the reason empty or a clean shutdown?"}
+        autoUpQ{"Is drive.startup.auto_up = true?"}
+        desiredUp["Desired Up"]
+        desiredDown["Desired Down<br/>Record startup reason"]
+        preserveDown["Keep desired Down and existing reason"]
+        registered["Complete drive registration"]
 
-config["read config file"]
-cat["Initialise catalogue"]
-sched["Initialise scheduler"]
+        existsQ -- No --> autoUpQ
+        existsQ -- Yes --> matchesQ
+        matchesQ -- Yes --> previousUpQ
+        previousUpQ -- Yes --> recoverQ
+        previousUpQ -- No --> reasonQ
+        recoverQ -- Yes --> desiredUp
+        recoverQ -- No --> desiredDown
+        reasonQ -- Yes --> autoUpQ
+        reasonQ -- No --> preserveDown
+        autoUpQ -- Yes --> desiredUp
+        autoUpQ -- No --> desiredDown
+        desiredUp --> registered
+        desiredDown --> registered
+        preserveDown --> registered
+    end
 
-subgraph dr["drive registration"]
-    direction TB
-    existsQ(["Does the drive name exist in the catalogue?"])
-    alreadyExists(["Is the host and logical library name the same?"])
-    doesntExist["Register the drive in the catalogue"]
-    misconfigdrive["Exit 1. Check drive configuration"]
-
-    currentDesiredState(["What is the current desired state?"])
-    desiredUp["Process may have crashed (a clean exit always leaves the drive down)"]
-    desiredDown(["Is the reason empty or `[cta-taped] INFO shutdown?`"])
-    recoverUp(["Is `drive.startup.recover_up = true`?"])
-    autoUp(["Is `drive.startup.auto_up = true`?"])
-    driveStaysDown["Drive stays down with the existing reason"]
-    registerUp["Register drive as desired/reported Up"]
-    registerDown["Register drive as desired/reported Down"]
-
-    existsQ -- No --> doesntExist
-    existsQ -- Yes --> alreadyExists
-    alreadyExists -- No --> misconfigdrive
-    alreadyExists -- Yes --> currentDesiredState
-    doesntExist --> currentDesiredState
-    currentDesiredState -- Up --> desiredUp
-    currentDesiredState -- Down --> desiredDown
-    desiredUp --> recoverUp
-    desiredDown -- Yes --> autoUp
-    desiredDown -- No --> driveStaysDown
-    autoUp -- Yes --> registerUp
-    recoverUp -- Yes --> registerUp
-    autoUp -- No --> registerDown
-    recoverUp -- No --> registerDown
-end
-
-config --> cat
-cat --> sched
-sched --> dr
-
-llwait["Wait for configured logical library to appear in the catalogue"]
-amiup(["Is the desired state Up?"])
-sleep["Sleep for `mounts.drive_state_poll_interval_secs`"]
-reportup["Report drive as Up"]
-rundrivesession["Run drive session"]
-
-dr --> llwait
-llwait --> amiup
-amiup -- Yes --> reportup
-amiup -- No --> sleep
-sleep --> amiup
-reportup --> rundrivesession
-
-dsexiteddrdown(["Did the drive session finish because the operator put the drive Down?"])
-dsexitedcleanly(["Did the drive session finish with a recoverable error?"])
-putdrivedown(["Put the drive Down with the relevant error (preserving existing reason if present)"])
-
-rundrivesession --> dsexiteddrdown
-dsexiteddrdown -- Yes --> amiup
-dsexiteddrdown -- No --> dsexitedcleanly
-dsexitedcleanly -- Yes --> amiup
-dsexitedcleanly -- No --> putdrivedown
-putdrivedown --> exit
+    sched --> existsQ
+    matchesQ -- No --> invalid["Exit 1<br/>Check drive configuration"]
+    registered --> libraryWait["Wait for configured logical library to exist"]
+    libraryWait --> desiredUpQ{"Is desired state Up?"}
+    desiredUpQ -- No --> wait["Report Down and sleep for<br/>mounts.drive_state_poll_interval_secs"]
+    wait --> desiredUpQ
+    desiredUpQ -- Yes --> driveSession["Run drive session<br/>Prepare drive before reporting Up"]
+    driveSession -- Session ends; daemon keeps running --> desiredUpQ
 ```
 
 Drive session
 
 ```mermaid
 flowchart TB
+    start{"Desired Up and no stop request?"}
 
+    subgraph preparation["Drive preparation"]
+        acquire["Report Starting<br/>Acquire hardware ownership"]
+        cleanQ{"Is drive.clean_on_up = true?"}
+        clean["Clean drive<br/>Reset configuration and remove any cartridge"]
+        probe["Probe for an empty drive"]
+        preparedQ{"Preparation successful?"}
 
+        acquire --> cleanQ
+        cleanQ -- Yes --> clean
+        cleanQ -- No --> probe
+        clean --> preparedQ
+        probe --> preparedQ
+    end
 
+    start -- Yes --> acquire
+    start -- No --> reportDown
+    preparedQ -- No --> requestDown
+    preparedQ -- Yes --> continueQ
 
+    continueQ{"Desired Up and no stop request?"}
+    findMount["Report Up<br/>Find mount candidate"]
+    candidateQ{"Mount candidate found?"}
+    sleep["Sleep for mounts.idle_scheduling_interval_secs"]
+    tapeSession["Run tape session"]
+    reusableQ{"Is the drive reusable?"}
+    keepRunningQ{"Desired Up and no stop request?"}
+    successfulQ{"Tape session successful?"}
 
-Start --> dp
+    continueQ -- No --> release
+    continueQ -- Yes --> findMount
+    findMount --> candidateQ
+    candidateQ -- No / scheduling error --> sleep
+    sleep --> continueQ
+    candidateQ -- Yes --> tapeSession
+    tapeSession --> reusableQ
+    reusableQ -- No --> requestDown
+    reusableQ -- Yes --> keepRunningQ
+    keepRunningQ -- No --> release
+    keepRunningQ -- Yes --> successfulQ
+    successfulQ -- Yes --> continueQ
+    successfulQ -- No --> sleep
 
-subgraph dp["Drive preparation"]
-
-
-reserveDrive["Attempt drive reservation"]
-cleandrive["Attempt to eject cartridge"]
-isdriveempty(["Is the drive empty?"])
-config(["Is `drive.clean_on_up = true`?"])
-
-reserveDrive -- Success --> isdriveempty
-
-config -- Yes --> cleandrive
-isdriveempty -- No --> config
-
-
-end
-config -- No --> Exit
-cleandrive -- Success --> findmount
-reserveDrive -- Failed --> Exit
-isdriveempty -- Yes --> findmount
-cleandrive -- Failed --> Exit
-
-
-
-
-sleep["Sleep for `mounts.idle_scheduling_interval_secs`"]
-findmount["Find mount candidate"]
-candidatefound(["Mount candidate found?"])
-
-subgraph Exit
-releaseDrive["Release drive reservation"]
-reportdown["Report Down"]
-exit["Exit drive session"]
-end
-
-findmount --> candidatefound
-candidatefound -- Yes --> runtapesession
-candidatefound -- No --> sleep
-releaseDrive --> reportdown
-reportdown --> exit
-
-sleep --> findmount
-
-runtapesession["Run tape session"]
-tapesessionfinished["Tape session finished"]
-drivereusable(["Is the drive still usable (cleaner didn't fail)"])
-
-runtapesession --> tapesessionfinished
-tapesessionfinished --> drivereusable
-drivereusable -- Yes --> findmount
-drivereusable -- No --> Exit
-
-
-
+    subgraph ending["End drive session"]
+        requestDown["Request desired Down with failure reason<br/>Preserve a specific existing Down reason"]
+        requestDown --> release
+        release["Release hardware ownership"]
+        reportDown["Report Down"]
+        done["Return to daemon"]
+        release --> reportDown --> done
+    end
 ```
 
 ## Sessions and ownership
