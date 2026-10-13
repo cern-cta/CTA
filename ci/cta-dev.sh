@@ -58,7 +58,7 @@ cta_image_tag=""
 build_container_restarted=false
 reset=false
 clean_build_dirs=false
-enable_ccache=true
+enable_sccache=true
 skip_debug_packages=true
 skip_unit_tests=true
 force_install=false
@@ -263,7 +263,7 @@ Options:
                                     ["Unix Makefiles", "Ninja"].
       --cmake-build-type <type>     Release, Debug, RelWithDebInfo,
                                     or MinSizeRel.
-      --disable-ccache              Disable ccache.
+      --disable-sccache             Disable sccache.
       --enable-unit-tests           Run compiled unit tests without packaging them.
       --enable-address-sanitizer    Enable AddressSanitizer.
       --force-install               Force source package installation.
@@ -515,9 +515,9 @@ parse_options() {
         require_command "$1" "$command" build up debug all
         clean_build_dirs=true
         ;;
-      --disable-ccache)
+      --disable-sccache)
         require_command "$1" "$command" build up debug all
-        enable_ccache=false
+        enable_sccache=false
         ;;
       --enable-unit-tests)
         require_command "$1" "$command" build up debug all
@@ -761,7 +761,7 @@ create_build_configuration() {
     --argjson oracleSupport "$oracle_support" \
     --arg buildGenerator "$build_generator" \
     --arg cmakeBuildType "$cmake_build_type" \
-    --argjson enableCcache "$enable_ccache" \
+    --argjson enableSccache "$enable_sccache" \
     --argjson buildTestPackages "$enable_debug_image" \
     --argjson skipDebugPackages "$skip_debug_packages" \
     --argjson skipUnitTests "$skip_unit_tests" \
@@ -773,7 +773,7 @@ create_build_configuration() {
     --argjson internalRepos "$enable_internal_repos" \
     '{platform: $platform, schedulerType: $schedulerType, oracleSupport: $oracleSupport,
       buildGenerator: $buildGenerator, cmakeBuildType: $cmakeBuildType,
-      enableCcache: $enableCcache, buildTestPackages: $buildTestPackages, buildDebugPackages: ($skipDebugPackages | not),
+      enableSccache: $enableSccache, buildTestPackages: $buildTestPackages, buildDebugPackages: ($skipDebugPackages | not),
       runUnitTests: ($skipUnitTests | not), enableAddressSanitizer: $enableAddressSanitizer,
       extraTelemetry: $extraTelemetry, ctaVersion: $ctaVersion,
       xrootdSsiVersion: $xrootdSsiVersion, jobs: $jobs, internalRepos: $internalRepos}'
@@ -885,7 +885,7 @@ build_cta() {
           automatic_clean_build_dirs=true
           ;;
         cmakeBuildType) log_warn "CMake build type changed: ${old_value} -> ${new_value}" ;;
-        enableCcache) log_warn "Ccache setting changed: ${old_value} -> ${new_value}" ;;
+        enableSccache) log_warn "Sccache setting changed: ${old_value} -> ${new_value}" ;;
         buildTestPackages) log_warn "Test package setting changed: ${old_value} -> ${new_value}" ;;
         buildDebugPackages) log_warn "Debug package setting changed: ${old_value} -> ${new_value}" ;;
         runUnitTests) log_warn "Unit test setting changed: ${old_value} -> ${new_value}" ;;
@@ -900,7 +900,7 @@ build_cta() {
       esac
     done < <(jq -r --argjson desired "$build_configuration_json" '
       ["schedulerType", "oracleSupport", "buildGenerator", "platform", "cmakeBuildType",
-       "enableCcache", "buildTestPackages", "buildDebugPackages", "runUnitTests", "enableAddressSanitizer",
+       "enableSccache", "buildTestPackages", "buildDebugPackages", "runUnitTests", "enableAddressSanitizer",
        "ctaVersion", "xrootdSsiVersion", "jobs", "internalRepos"][] as $field
       | select(.[$field] != $desired[$field])
       | [$field, (.[$field] | tostring), ($desired[$field] | tostring)]
@@ -1016,7 +1016,7 @@ build_cta() {
   [[ $enable_debug_image == false ]] && build_package_flags+=(--skip-test-packages)
   [[ $skip_unit_tests == true ]] && build_package_flags+=(--skip-unit-tests)
   [[ $skip_debug_packages == true ]] && build_package_flags+=(--skip-debug-packages)
-  [[ $enable_ccache == true ]] && build_package_flags+=(--enable-ccache)
+  [[ $enable_sccache == true ]] && build_package_flags+=(--enable-sccache)
   [[ $enable_internal_repos == true ]] && build_package_flags+=(--enable-internal-repos)
   [[ $enable_address_sanitizer == true ]] && build_package_flags+=(--enable-address-sanitizer)
   [[ $extra_telemetry == true ]] && build_package_flags+=(--extra-telemetry)

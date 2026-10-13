@@ -96,7 +96,7 @@ The default build uses the objectstore scheduler and disables Oracle catalogue s
 | `--enable-unit-tests` | Run unit tests during the package build. |
 | `--cmake-build-type Debug` | Select a debug build. |
 | `--enable-address-sanitizer` | Build with AddressSanitizer. |
-| `--disable-ccache` | Bypass the compilation cache. |
+| `--disable-sccache` | Bypass the compilation cache. |
 
 Keep platform, scheduler, Oracle support, and version choices consistent between stages. Unit-test, CMake, sanitizer, and cache options apply to `build` and combined commands such as `up` and `all`. Run `cta-dev <command> --help` for the complete option list.
 

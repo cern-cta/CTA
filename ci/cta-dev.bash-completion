@@ -30,7 +30,7 @@ _ctadev() {
     local build_opts="
         --reset
         --clean-build-dirs
-        --disable-ccache
+        --disable-sccache
         --enable-unit-tests
         --force-install
         --enable-address-sanitizer
