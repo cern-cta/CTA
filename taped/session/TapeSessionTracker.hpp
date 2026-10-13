@@ -71,7 +71,6 @@ enum class TapeSessionEvent {
   Count
 };
 
-using TapeSessionFailureStats = std::map<TapeSessionFailure, uint32_t>;
 using TapeSessionFailureCounts = std::array<uint32_t, static_cast<size_t>(TapeSessionFailure::Count)>;
 using TapeSessionEventCounts = std::array<uint32_t, static_cast<size_t>(TapeSessionEvent::Count)>;
 
@@ -223,12 +222,6 @@ public:
   /// Return a snapshot of active disk files indexed by worker identifier.
   ActiveDiskFiles activeDiskFiles() const;
 
-  /// Return nonzero failure counters indexed by failure category.
-  TapeSessionFailureStats failureStats() const;
-
-  /// Return a snapshot of tape-alert counts.
-  TapeAlertStats tapeAlertStats() const;
-
   /// Return one consistent snapshot of all session statistics.
   TapeSessionStats stats() const;
 
@@ -237,9 +230,6 @@ public:
 
   /// Return bytes accumulated through block-movement notifications since reset.
   uint64_t bytesMoved() const;
-
-  /// Return the last block-movement time, or a default time point if none was recorded.
-  std::chrono::steady_clock::time_point lastBlockMovement() const;
 
   /// Snapshot the active tape file and block-movement progress together.
   TapeSessionProgress progress() const;

@@ -287,7 +287,7 @@ TEST(TapeSessionReporterTest, FinalPublicationFailureOverridesSuccessfulOutcome)
   EXPECT_EQ(cta::tape::session::TapeSessionState::Finalizing, tracker.state());
   EXPECT_EQ(1U, mount.statsReports.load());
   EXPECT_TRUE(tracker.outcomeSnapshot().hasFailures);
-  EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::Reporting));
+  EXPECT_EQ(1, tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::Reporting)]);
   EXPECT_EQ(1, countMessage(log.getLog(), "Tape session finished"));
   EXPECT_NE(std::string::npos, log.getLog().find("\"sessionState\":\"Finished\""));
   EXPECT_NE(std::string::npos, log.getLog().find("\"status\":\"failure\""));

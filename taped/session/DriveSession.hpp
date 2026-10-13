@@ -34,19 +34,14 @@ class SchedulerContext;
 /// Putting the drive down will exit the drive session.
 class DriveSession final {
 public:
-  /// @brief Create a session using the real system-call wrapper, without accessing hardware.
+  /// @brief Initialize a session without accessing hardware; run() performs preparation.
   ///
-  /// Configuration, logger and scheduler context must outlive the session; run() performs preparation.
-  static std::unique_ptr<DriveSession>
-  create(const TapedConfig& config, log::Logger& log, SchedulerContext& schedulerContext);
-
-  /// @brief Create a session with a borrowed system-call wrapper, without accessing hardware.
-  ///
-  /// All supplied dependencies must outlive the session; run() performs preparation.
-  static std::unique_ptr<DriveSession> create(const TapedConfig& config,
-                                              log::Logger& log,
-                                              SchedulerContext& schedulerContext,
-                                              System::virtualWrapper& sysWrapper);
+  /// Configuration, logger, scheduler context and any supplied wrapper must outlive the session.
+  /// A null sysWrapper selects the session-owned real wrapper.
+  DriveSession(const TapedConfig& config,
+               log::Logger& log,
+               SchedulerContext& schedulerContext,
+               System::virtualWrapper* sysWrapper = nullptr);
 
   /// @brief Clean the drive and schedule tape sessions until stop or reservation release.
   ///
@@ -76,14 +71,6 @@ public:
 
 private:
   friend class DriveSessionTest;
-
-  /// @brief Initialize borrowed dependencies and owned hardware helpers without preparing the drive.
-  ///
-  /// A null sysWrapper selects the session-owned real wrapper.
-  DriveSession(const TapedConfig& config,
-               log::Logger& log,
-               SchedulerContext& schedulerContext,
-               System::virtualWrapper* sysWrapper = nullptr);
 
   /// Scheduling decision after one iteration.
   /// Could be a boolean, but we don't want to wait after a successful session.

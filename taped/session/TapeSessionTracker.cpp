@@ -237,22 +237,6 @@ ActiveDiskFiles TapeSessionTracker::activeDiskFiles() const {
   return m_activeDiskFiles;
 }
 
-TapeSessionFailureStats TapeSessionTracker::failureStats() const {
-  std::lock_guard lock(m_mutex);
-  TapeSessionFailureStats result;
-  for (size_t i = 0; i < m_failureCounts.size(); ++i) {
-    if (m_failureCounts[i]) {
-      result.emplace(static_cast<TapeSessionFailure>(i), m_failureCounts[i]);
-    }
-  }
-  return result;
-}
-
-TapeAlertStats TapeSessionTracker::tapeAlertStats() const {
-  std::lock_guard lock(m_mutex);
-  return m_tapeAlertStats;
-}
-
 TapeSessionStats TapeSessionTracker::stats() const {
   std::lock_guard lock(m_mutex);
   return m_stats;
@@ -267,11 +251,6 @@ void TapeSessionTracker::notifyBlockMovement(uint64_t bytes, Clock::time_point n
 uint64_t TapeSessionTracker::bytesMoved() const {
   std::lock_guard lock(m_mutex);
   return m_bytesMoved;
-}
-
-std::chrono::steady_clock::time_point TapeSessionTracker::lastBlockMovement() const {
-  std::lock_guard lock(m_mutex);
-  return m_lastBlockMovement;
 }
 
 TapeSessionProgress TapeSessionTracker::progress() const {

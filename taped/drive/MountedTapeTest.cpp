@@ -171,7 +171,7 @@ TEST_F(MountedTapeTest, ReporterFailureDoesNotPreventPhysicalCleanup) {
   ASSERT_TRUE(outcome);
   EXPECT_TRUE(outcome->driveReusable());
   EXPECT_FALSE(drive.hasTapeInPlace());
-  EXPECT_GT(reportingTracker.failureStats().at(TapeSessionFailure::Reporting), 0);
+  EXPECT_GT(reportingTracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::Reporting)], 0);
 }
 
 }  // namespace

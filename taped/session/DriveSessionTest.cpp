@@ -108,7 +108,7 @@ protected:
     driveState().updateTapeDriveStatus(drive);
     requestUp(true);
     driveState().reports.clear();
-    session = DriveSession::create(config, logger, *context, system);
+    session = std::make_unique<DriveSession>(config, logger, *context, &system);
   }
 
   void TearDown() override {
@@ -276,7 +276,7 @@ TEST_P(ScheduledDriveSessionTest, CompletesBeforeRenewingOwnedScheduler) {
   configFile.stringFill(backend.getParams()->toURL() + "\n");
   config.scheduler.config_file = configFile.path();
   SchedulerContext ownedContext(config, *catalogue, logger);
-  auto ownedSession = DriveSession::create(config, logger, ownedContext, system);
+  auto ownedSession = std::make_unique<DriveSession>(config, logger, ownedContext, &system);
   const auto* previousScheduler = &ownedContext.scheduler();
   std::shared_ptr<const TapeSessionTracker> completedTracker;
   bool sessionStarted = false;

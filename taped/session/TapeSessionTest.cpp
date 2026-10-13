@@ -1037,7 +1037,7 @@ public:
         EXPECT_EQ(1, mount.mountedAttempts);
         EXPECT_NE(std::string::npos, logger.getLog().find("injected mounted publication failure"));
         if (point == TransferFailurePoint::TapeMountedAndUnload) {
-          EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::TapeUnload));
+          EXPECT_EQ(1, tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::TapeUnload)]);
         } else {
           EXPECT_NE(std::string::npos, logger.getLog().find("Cleaner dismounted tape"));
         }
@@ -1059,7 +1059,7 @@ public:
         EXPECT_EQ(1, mount.mountedAttempts);
         EXPECT_NE(std::string::npos, logger.getLog().find("injected mounted publication failure"));
         if (point == TransferFailurePoint::TapeMountedAndUnload) {
-          EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::TapeUnload));
+          EXPECT_EQ(1, tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::TapeUnload)]);
         } else {
           EXPECT_NE(std::string::npos, logger.getLog().find("Cleaner dismounted tape"));
         }
@@ -1188,9 +1188,9 @@ TEST_P(TapeSessionTest, ArchiveAsyncFetchFailureDrainsAndMarksSessionUnsuccessfu
         const auto result = session.execute();
         EXPECT_FALSE(result.successful);
         EXPECT_TRUE(result.driveReusable);
-        const auto failures = session.tracker().failureStats();
-        EXPECT_EQ(1, failures.size());
-        EXPECT_EQ(1, failures.at(TapeSessionFailure::TaskInjection));
+        TapeSessionFailureCounts expectedFailures {};
+        expectedFailures[static_cast<size_t>(TapeSessionFailure::TaskInjection)] = 1;
+        EXPECT_EQ(expectedFailures, session.tracker().outcomeSnapshot().failures);
         EXPECT_EQ(2, mount.archiveFetchAttempts());
         EXPECT_EQ(1, mount.reportedJobs);
         EXPECT_EQ(1, mount.archiveJobDestructions());

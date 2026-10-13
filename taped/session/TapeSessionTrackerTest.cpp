@@ -155,23 +155,23 @@ TEST(TapeSessionTrackerTest, TracksActiveDiskFilesByThread) {
 
 TEST(TapeSessionTrackerTest, TracksBlockMovement) {
   TapeSessionTracker tracker;
-  const auto initialMovement = tracker.lastBlockMovement();
+  const auto initialMovement = tracker.livenessSnapshot().lastBlockMovement;
 
   tracker.notifyBeginNewJob(1234, 42);
   tracker.notifyBlockMovement(10);
-  const auto firstMovement = tracker.lastBlockMovement();
+  const auto firstMovement = tracker.livenessSnapshot().lastBlockMovement;
   tracker.notifyBlockMovement(15);
 
   const auto progress = tracker.progress();
   EXPECT_EQ(25, tracker.bytesMoved());
   EXPECT_GT(firstMovement, initialMovement);
-  EXPECT_GE(tracker.lastBlockMovement(), firstMovement);
+  EXPECT_GE(tracker.livenessSnapshot().lastBlockMovement, firstMovement);
   EXPECT_EQ(1234, progress.fileId);
   EXPECT_EQ(42, progress.fSeq);
   EXPECT_TRUE(progress.fileBeingMoved);
   EXPECT_NE(std::chrono::steady_clock::time_point {}, progress.fileStartTime);
   EXPECT_EQ(25, progress.bytesMoved);
-  EXPECT_EQ(tracker.lastBlockMovement(), progress.lastBlockMovement);
+  EXPECT_EQ(tracker.livenessSnapshot().lastBlockMovement, progress.lastBlockMovement);
 
   tracker.fileFinished();
   const auto finishedProgress = tracker.progress();
@@ -205,13 +205,13 @@ TEST(TapeSessionTrackerTest, FailuresPersistUntilTheNextSession) {
   tracker.recordFailure(TapeSessionFailure::Reporting);
   tracker.recordEvent(TapeSessionEvent::EmptyMount);
   EXPECT_TRUE(tracker.hasFailures());
-  EXPECT_EQ(2, tracker.failureStats().at(TapeSessionFailure::Reporting));
+  EXPECT_EQ(2, tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::Reporting)]);
   EXPECT_FALSE(tracker.outcomeSnapshot().finished);
   tracker.reportState(cta::tape::session::TapeSessionState::Finished);
   EXPECT_TRUE(tracker.outcomeSnapshot().hasFailures);
   tracker.beginTapeSession();
   EXPECT_FALSE(tracker.hasFailures());
-  EXPECT_TRUE(tracker.failureStats().empty());
+  EXPECT_FALSE(tracker.outcomeSnapshot().hasFailures);
 }
 
 TEST(TapeSessionTrackerTest, CountsTapeAlertsByCode) {
@@ -221,7 +221,7 @@ TEST(TapeSessionTrackerTest, CountsTapeAlertsByCode) {
   tracker.incrementTapeAlert(0x01);
   tracker.incrementTapeAlert(0x32);
 
-  const auto tapeAlerts = tracker.tapeAlertStats();
+  const auto tapeAlerts = tracker.outcomeSnapshot().tapeAlerts;
   EXPECT_EQ(2, tapeAlerts.at(0x01));
   EXPECT_EQ(1, tapeAlerts.at(0x32));
   EXPECT_FALSE(tracker.hasFailures());
@@ -256,9 +256,9 @@ TEST(TapeSessionTrackerTest, BeginningTransferResetsDataAndTransitionsPreserveIt
   EXPECT_EQ(0, tracker.stats().cleanup.cleanupTime);
   EXPECT_EQ(0, tracker.stats().totalTime);
   EXPECT_FALSE(tracker.hasFailures());
-  EXPECT_TRUE(tracker.tapeAlertStats().empty());
+  EXPECT_TRUE(tracker.outcomeSnapshot().tapeAlerts.empty());
   EXPECT_EQ(0, tracker.bytesMoved());
-  EXPECT_EQ(std::chrono::steady_clock::time_point {}, tracker.lastBlockMovement());
+  EXPECT_EQ(std::chrono::steady_clock::time_point {}, tracker.livenessSnapshot().lastBlockMovement);
   EXPECT_TRUE(tracker.activeDiskFiles().empty());
   EXPECT_FALSE(tracker.outcomeSnapshot().finished);
   EXPECT_TRUE(tracker.mountAttempted());
@@ -291,7 +291,7 @@ TEST(TapeSessionTrackerTest, BeginningTransferResetsDataAndTransitionsPreserveIt
     EXPECT_EQ(4, tracker.stats().cleanup.cleanupTime);
     EXPECT_EQ(5, tracker.stats().totalTime);
     EXPECT_TRUE(tracker.hasFailures());
-    EXPECT_EQ(1, tracker.tapeAlertStats().at(0x01));
+    EXPECT_EQ(1, tracker.outcomeSnapshot().tapeAlerts.at(0x01));
     EXPECT_EQ(100, tracker.bytesMoved());
     EXPECT_EQ(sessionStartTime, tracker.sessionStartTime());
     EXPECT_EQ(cta::tape::session::SessionType::Retrieve, tracker.type());
@@ -389,12 +389,13 @@ TEST(TapeSessionTrackerTest, PropagationDoesNotDuplicateClassifiedFailures) {
   TapeSessionTracker tracker;
   tracker.recordFailure(TapeSessionFailure::DiskRead);
   tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
-  EXPECT_EQ(1, tracker.failureStats().size());
-  EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::DiskRead));
+  TapeSessionFailureCounts expectedFailures {};
+  expectedFailures[static_cast<size_t>(TapeSessionFailure::DiskRead)] = 1;
+  EXPECT_EQ(expectedFailures, tracker.outcomeSnapshot().failures);
   tracker.beginTapeSession();
   tracker.recordFailureIfNone(TapeSessionFailure::UnexpectedSession);
   EXPECT_TRUE(tracker.hasFailures());
-  EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::UnexpectedSession));
+  EXPECT_EQ(1, tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::UnexpectedSession)]);
 }
 
 TEST(TapeSessionTrackerTest, AlertsAndOperationalAlertFailuresAreDistinct) {
@@ -465,7 +466,7 @@ TEST(TapeSessionTrackerTest, FailedBlocksCarryReceiptsAndClearThemWhenReused) {
   block.markAsFailed("failed file", failure);
   block.markAsVerifyOnly();
   EXPECT_FALSE(block.recordedFailure());
-  EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::DiskRead));
+  EXPECT_EQ(1, tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::DiskRead)]);
 }
 
 TEST(TapeSessionTrackerTest, ConcurrentRecordingProducesConsistentOutcomeSnapshots) {
@@ -484,7 +485,7 @@ TEST(TapeSessionTrackerTest, ConcurrentRecordingProducesConsistentOutcomeSnapsho
   std::thread second(record);
   first.join();
   second.join();
-  EXPECT_EQ(200, tracker.failureStats().at(TapeSessionFailure::DiskWrite));
+  EXPECT_EQ(200, tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::DiskWrite)]);
   EXPECT_EQ(1, tracker.outcomeSnapshot().events[static_cast<size_t>(TapeSessionEvent::TapeFilledUp)]);
 }
 
@@ -550,7 +551,7 @@ TEST(TapeSessionTrackerTest, PublicationFailuresRetainStateAndAllowFurtherTransi
   tracker.reportState(Unloading);
   tracker.reportState(Unmounting);
   EXPECT_EQ(Unmounting, tracker.state());
-  EXPECT_EQ(3, tracker.failureStats().at(TapeSessionFailure::Reporting));
+  EXPECT_EQ(3, tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::Reporting)]);
 }
 
 TEST(TapeSessionTrackerTest, SlowPublicationAllowsSnapshotsAndSerializesConcurrentTransitions) {

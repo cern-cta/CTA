@@ -433,11 +433,15 @@ TEST_P(DriveCleanerTest, BorrowedDriveResetsLbpAfterEncryptionClearFailureWithou
     cleaner(mediaChanger, m_sessionLog, m_driveInfo, m_vid, false, 0, *m_catalogue, m_tracker);
 
   const auto result = cleaner.cleanDrive(drive);
-  ASSERT_EQ(1, m_tracker.failureStats().at(cta::tape::daemon::TapeSessionFailure::TapeEncryptionDisable));
+  ASSERT_EQ(1,
+            m_tracker.outcomeSnapshot()
+              .failures[static_cast<size_t>(cta::tape::daemon::TapeSessionFailure::TapeEncryptionDisable)]);
   ASSERT_TRUE(result.configurationResetFailed);
   ASSERT_FALSE(result.ejectFailed);
   ASSERT_FALSE(result.driveReusable());
-  ASSERT_EQ(0, m_tracker.failureStats().count(cta::tape::daemon::TapeSessionFailure::TapeLbpDisable));
+  ASSERT_EQ(
+    0,
+    m_tracker.outcomeSnapshot().failures[static_cast<size_t>(cta::tape::daemon::TapeSessionFailure::TapeLbpDisable)]);
   ASSERT_EQ(cta::tape::drive::lbpToUse::disabled, drive.getLbpToUse());
   ASSERT_FALSE(drive.hasTapeInPlace());
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
@@ -461,8 +465,12 @@ TEST_P(DriveCleanerTest, BorrowedEmptyDriveAttemptsBothConfigurationResets) {
   ASSERT_FALSE(result.driveReusable());
   EXPECT_EQ(cta::tape::session::TapeSessionState::Unloading, m_tracker.state());
   ASSERT_EQ(cta::tape::session::SessionType::Undetermined, m_tracker.type());
-  ASSERT_EQ(1, m_tracker.failureStats().at(cta::tape::daemon::TapeSessionFailure::TapeEncryptionDisable));
-  ASSERT_EQ(1, m_tracker.failureStats().at(cta::tape::daemon::TapeSessionFailure::TapeLbpDisable));
+  ASSERT_EQ(1,
+            m_tracker.outcomeSnapshot()
+              .failures[static_cast<size_t>(cta::tape::daemon::TapeSessionFailure::TapeEncryptionDisable)]);
+  ASSERT_EQ(
+    1,
+    m_tracker.outcomeSnapshot().failures[static_cast<size_t>(cta::tape::daemon::TapeSessionFailure::TapeLbpDisable)]);
   ASSERT_NE(std::string::npos, result.errorMessage.find("Failed to clear encryption key"));
   ASSERT_NE(std::string::npos, result.errorMessage.find("Failed to disable logical block protection"));
   ASSERT_EQ(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
@@ -489,7 +497,8 @@ TEST_P(DriveCleanerTest, DismountsTapeAfterUnloadFailure) {
   EXPECT_EQ(
     (std::vector {cta::tape::session::TapeSessionState::Unloading, cta::tape::session::TapeSessionState::Unmounting}),
     phases);
-  ASSERT_EQ(1, tracker.failureStats().at(cta::tape::daemon::TapeSessionFailure::TapeUnload));
+  ASSERT_EQ(1,
+            tracker.outcomeSnapshot().failures[static_cast<size_t>(cta::tape::daemon::TapeSessionFailure::TapeUnload)]);
   ASSERT_EQ(cta::tape::session::TapeSessionState::Unmounting, tracker.state());
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner unload command failed"));
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
@@ -528,7 +537,9 @@ TEST_P(DriveCleanerTest, DisablesTapeAndRejectsReuseWhenBothDismountAttemptsFail
     (std::vector {cta::tape::session::TapeSessionState::Unloading, cta::tape::session::TapeSessionState::Unmounting}),
     phases);
   EXPECT_EQ(unmountEnteredAt, reportingTracker.livenessSnapshot().stateEnteredAt);
-  ASSERT_EQ(2, reportingTracker.failureStats().at(cta::tape::daemon::TapeSessionFailure::TapeDismount));
+  ASSERT_EQ(2,
+            reportingTracker.outcomeSnapshot()
+              .failures[static_cast<size_t>(cta::tape::daemon::TapeSessionFailure::TapeDismount)]);
   ASSERT_EQ(cta::tape::session::SessionType::Undetermined, reportingTracker.type());
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner failed to dismount tape with VID"));
   ASSERT_NE(std::string::npos,
@@ -634,7 +645,7 @@ TEST_P(DriveCleanerTest, DriveOpenFailureStillDismountsAndRejectsReuse) {
   EXPECT_THAT(m_cleanupError, testing::HasSubstr("drive could not be opened"));
   EXPECT_THAT(m_cleanupError, testing::HasSubstr("drive open failed"));
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find(R"(dismountVid="")"));
-  ASSERT_EQ(0, m_tracker.failureStats().count(TapeSessionFailure::TapeDismount));
+  ASSERT_EQ(0, m_tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::TapeDismount)]);
 }
 
 TEST_P(DriveCleanerTest, DriveDiscoveryFailureStillAttemptsDismount) {
@@ -651,7 +662,7 @@ TEST_P(DriveCleanerTest, DriveOpenAndDismountFailureDisableTapeAndRejectReuse) {
   ASSERT_FALSE(runCleaner(m_vid, true));
   assertFailureReturnedWithoutPublishingDown();
   ASSERT_EQ(Tape::DISABLED, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
-  ASSERT_EQ(1, m_tracker.failureStats().at(TapeSessionFailure::TapeDismount));
+  ASSERT_EQ(1, m_tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::TapeDismount)]);
   ASSERT_TRUE(m_cleanupResult.driveOpenFailed);
   ASSERT_TRUE(m_cleanupResult.ejectFailed);
   EXPECT_THAT(m_cleanupError, testing::HasSubstr("failed to dismount the tape"));
@@ -665,7 +676,7 @@ TEST_P(DriveCleanerTest, ReadinessFailureDoesNotPreventResetsAndEject) {
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("non-fatal exception while waiting"));
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner unloaded tape"));
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
-  ASSERT_EQ(0, m_tracker.failureStats().count(TapeSessionFailure::TapeLbpDisable));
+  ASSERT_EQ(0, m_tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::TapeLbpDisable)]);
 }
 
 TEST_P(DriveCleanerTest, MediaPresenceFailureStillAttemptsEject) {
@@ -682,8 +693,8 @@ TEST_P(DriveCleanerTest, CombinedResetFailuresStillEjectAndRecordBothErrors) {
   drive->setFailurePoint(FailurePoint::DisableLogicalBlockProtection);
   ASSERT_FALSE(runCleaner(m_vid));
   assertFailureReturnedWithoutPublishingDown();
-  ASSERT_EQ(1, m_tracker.failureStats().at(TapeSessionFailure::TapeEncryptionDisable));
-  ASSERT_EQ(1, m_tracker.failureStats().at(TapeSessionFailure::TapeLbpDisable));
+  ASSERT_EQ(1, m_tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::TapeEncryptionDisable)]);
+  ASSERT_EQ(1, m_tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::TapeLbpDisable)]);
   ASSERT_NE(std::string::npos, m_changerLog.getLog().find("Dummy dismount"));
   ASSERT_EQ(Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
 }
@@ -695,10 +706,10 @@ TEST_P(DriveCleanerTest, CombinedResetUnloadAndDismountFailuresRecordAllErrors) 
   drive->setFailurePoint(FailurePoint::UnloadTape);
   ASSERT_FALSE(runCleaner(m_vid, true));
   assertFailureReturnedWithoutPublishingDown();
-  ASSERT_EQ(1, m_tracker.failureStats().at(TapeSessionFailure::TapeEncryptionDisable));
-  ASSERT_EQ(1, m_tracker.failureStats().at(TapeSessionFailure::TapeLbpDisable));
-  ASSERT_EQ(1, m_tracker.failureStats().at(TapeSessionFailure::TapeUnload));
-  ASSERT_EQ(2, m_tracker.failureStats().at(TapeSessionFailure::TapeDismount));
+  ASSERT_EQ(1, m_tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::TapeEncryptionDisable)]);
+  ASSERT_EQ(1, m_tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::TapeLbpDisable)]);
+  ASSERT_EQ(1, m_tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::TapeUnload)]);
+  ASSERT_EQ(2, m_tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::TapeDismount)]);
   ASSERT_EQ(Tape::DISABLED, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
 }
 
@@ -732,7 +743,7 @@ TEST_P(DriveCleanerTest, FailedEjectPreservesStatesThatCannotBeDisabledAutomatic
 TEST_P(DriveCleanerTest, FailedEjectWithoutVidDoesNotDisableAnyTape) {
   installDrive();
   ASSERT_FALSE(runCleaner("", true));
-  ASSERT_EQ(1, m_tracker.failureStats().at(TapeSessionFailure::TapeDismount));
+  ASSERT_EQ(1, m_tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::TapeDismount)]);
   ASSERT_EQ(Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
   ASSERT_NE(std::string::npos,
             m_sessionLog.getLog().find("cannot disable tape after failed eject because its VID is unknown"));
@@ -791,8 +802,8 @@ TEST_P(DriveCleanerTest, FailedCleanupDoesNotPublishTerminalOrDesiredState) {
 TEST_P(DriveCleanerTest, TapeAlertsAreCountedAndLoggedAfterSuccessfulCleanup) {
   installDrive()->setTapeAlertCodes({1, 2, 1});
   ASSERT_TRUE(runCleaner(m_vid));
-  ASSERT_EQ(2, m_tracker.tapeAlertStats().at(1));
-  ASSERT_EQ(1, m_tracker.tapeAlertStats().at(2));
+  ASSERT_EQ(2, m_tracker.outcomeSnapshot().tapeAlerts.at(1));
+  ASSERT_EQ(1, m_tracker.outcomeSnapshot().tapeAlerts.at(2));
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Fake tape alert 1"));
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Fake tape alert 2"));
 }
@@ -802,7 +813,7 @@ TEST_P(DriveCleanerTest, TapeAlertsAreReportedAfterFailedCleanup) {
   drive->setTapeAlertCodes({1});
   drive->setFailurePoint(FailurePoint::ClearEncryptionKey);
   ASSERT_FALSE(runCleaner(m_vid));
-  ASSERT_EQ(1, m_tracker.tapeAlertStats().at(1));
+  ASSERT_EQ(1, m_tracker.outcomeSnapshot().tapeAlerts.at(1));
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Fake tape alert 1"));
 }
 
@@ -817,8 +828,8 @@ TEST_P(DriveCleanerTest, TapeAlertDescriptionFailurePreservesCountedAlerts) {
   drive->setTapeAlertCodes({1, 2});
   drive->setFailurePoint(FailurePoint::TapeAlerts);
   ASSERT_TRUE(runCleaner(m_vid));
-  ASSERT_EQ(1, m_tracker.tapeAlertStats().at(1));
-  ASSERT_EQ(1, m_tracker.tapeAlertStats().at(2));
+  ASSERT_EQ(1, m_tracker.outcomeSnapshot().tapeAlerts.at(1));
+  ASSERT_EQ(1, m_tracker.outcomeSnapshot().tapeAlerts.at(2));
   ASSERT_NE(std::string::npos, m_sessionLog.getLog().find("Cleaner failed to get tape alerts"));
 }
 
@@ -878,7 +889,7 @@ TEST_P(DriveCleanerTest, ProgressPublicationFailuresDoNotPreventEject) {
   EXPECT_TRUE(result.driveReusable());
   EXPECT_FALSE(drive.hasTapeInPlace());
   EXPECT_EQ(2, calls);
-  EXPECT_EQ(2, reportingTracker.failureStats().at(TapeSessionFailure::Reporting));
+  EXPECT_EQ(2, reportingTracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::Reporting)]);
   EXPECT_TRUE(reportingTracker.hasFailures());
 }
 
@@ -926,7 +937,7 @@ TEST_P(DriveCleanerTest, DismountRetriesWithEmptyVidAfterCartridgeNameFailure) {
   cta::tape::daemon::DriveCleaner cleaner(changer, m_sessionLog, info, m_vid, false, 0, *m_catalogue, m_tracker);
   ASSERT_TRUE(cleaner.cleanDrive(m_systemWrapper).driveReusable());
   ASSERT_EQ((std::vector<std::string> {m_vid, ""}), robot.requests());
-  ASSERT_EQ(1, m_tracker.failureStats().at(TapeSessionFailure::TapeDismount));
+  ASSERT_EQ(1, m_tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::TapeDismount)]);
   ASSERT_EQ(Tape::ACTIVE, m_catalogue->Tape()->getTapesByVid(m_vid).at(m_vid).state);
 }
 

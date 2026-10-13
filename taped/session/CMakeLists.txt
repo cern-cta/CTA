@@ -3,18 +3,18 @@
 
 find_package(ZLIB REQUIRED)
 
-set(CTATAPEDSESSION_LIBRARY_SRCS
-  TapeSession.cpp
-  TapeSessionReporter.cpp
+# Tracking is shared with drive cleanup; keeping it separate avoids a drive/session library cycle.
+add_library(ctatapedsessionstate
   TapeSessionState.cpp
   TapeSessionTracker.cpp
   SessionType.cpp
+)
+target_link_libraries(ctatapedsessionstate PUBLIC ctacommon)
 
-  # These operations depend on session tracking and retain their existing library membership.
-  ../drive/DriveCleaner.cpp
-  ../drive/EmptyDriveProbe.cpp
-  ../drive/EncryptionControl.cpp
-  ../drive/MountedTape.cpp
+add_library(ctatapedsession
+  DriveSession.cpp
+  TapeSession.cpp
+  TapeSessionReporter.cpp
 
   archive/DiskReadTask.cpp
   archive/DiskReadThreadPool.cpp
@@ -31,14 +31,14 @@ set(CTATAPEDSESSION_LIBRARY_SRCS
   retrieve/RecallTaskInjector.cpp
   retrieve/TapeReadSingleThread.cpp
 
-  pipeline/TransferTaskTracker.cpp)
-
-add_library(ctatapedsession
-  ${CTATAPEDSESSION_LIBRARY_SRCS})
+  pipeline/TransferTaskTracker.cpp
+)
 
 target_link_libraries(ctatapedsession
   ctacommon
   ctaruntime
+  ctatapedscheduler
+  ctatapedsessionstate
   ctascheduler
   ctacatalogue
   ctamediachanger
@@ -49,15 +49,12 @@ target_link_libraries(ctatapedsession
   ZLIB::ZLIB)
 
 add_library(ctatapedsessionunittests SHARED
+  DriveSessionTest.cpp
   ScopedTapeSessionReporterTest.cpp
   WorkerFailureHandlingTest.cpp
   TapeSessionTest.cpp
   TapeSessionReporterTest.cpp
   TapeSessionTrackerTest.cpp
-
-  ../drive/DriveCleanerTest.cpp
-  ../drive/EmptyDriveProbeTest.cpp
-  ../drive/MountedTapeTest.cpp
 
   archive/DiskReadTaskTest.cpp
   archive/MigrationReportPackerTest.cpp
@@ -69,7 +66,7 @@ add_library(ctatapedsessionunittests SHARED
 )
 set_property(TARGET ctatapedsessionunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedsessionunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
-target_link_libraries(ctatapedsessionunittests PRIVATE ctatapedsession)
+target_link_libraries(ctatapedsessionunittests PRIVATE ctatapedsession gtest gmock cta-unit-test-helper)
 if (NOT CTA_USE_PGSCHED)
   target_link_libraries(ctatapedsessionunittests PRIVATE ctaobjectstore)
 endif()

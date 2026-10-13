@@ -1,12 +1,18 @@
 # SPDX-FileCopyrightText: 2021 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-add_subdirectory (scsi)
-add_subdirectory (drive)
-add_subdirectory (system)
-add_subdirectory (file)
-add_subdirectory (session)
-add_subdirectory (rao)
+# Scheduler ownership is shared by the daemon and drive sessions, without depending on either.
+add_library(ctatapedscheduler
+  SchedulerContext.cpp
+)
+target_link_libraries(ctatapedscheduler PUBLIC ctacommon ctaruntime ctascheduler)
+
+add_subdirectory(scsi)
+add_subdirectory(system)
+add_subdirectory(file)
+add_subdirectory(rao)
+add_subdirectory(drive)
+add_subdirectory(session)
 
 add_library(ctatapedutils
   TapedUtils.cpp
@@ -16,23 +22,21 @@ target_link_libraries(ctatapedutils PUBLIC ctaruntime)
 add_library(ctataped
   TapedApp.cpp
   TapeDaemon.cpp
-  session/DriveSession.cpp
-  drive/DriveReservation.cpp
-  SchedulerContext.cpp
 )
 
+# Application wiring only; session and hardware implementations belong to their own targets.
 target_link_libraries(ctataped
-	ctacommon
+  ctacommon
   ctaruntime
-	ctatapedsession
-	ctatelemetrytaped
-	ctatapedutils
+  ctatapedscheduler
+  ctatapedsession
+  ctatelemetrytaped
+  ctatapedutils
   ${PROTOBUF3_LIBRARIES}
 )
 
 add_library(ctatapedunittests SHARED
   TapeDaemonTest.cpp
-  session/DriveSessionTest.cpp
 )
 set_property(TARGET ctatapedunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedunittests PROPERTY VERSION "${CTA_LIBVERSION}")

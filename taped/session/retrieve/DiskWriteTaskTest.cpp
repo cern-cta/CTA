@@ -186,8 +186,8 @@ TEST(cta_tape_daemon, DiskWriteTaskFailedBlock) {
   t.execute(report, lc, fileFactory, tracker, 0);
   ASSERT_EQ(1, report.failedJobs);
   // An unrelated error recorded while preparing later blocks must not suppress this file's mismatch.
-  EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::TapeReadData));
-  EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::UnclassifiedFile));
+  EXPECT_EQ(1, tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::TapeReadData)]);
+  EXPECT_EQ(1, tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::UnclassifiedFile)]);
 }
 
 TEST(cta_tape_daemon, UpstreamFailureIsNotCountedAgain) {
@@ -217,9 +217,9 @@ TEST(cta_tape_daemon, UpstreamFailureIsNotCountedAgain) {
 
   EXPECT_FALSE(task.execute(report, lc, factory, tracker, 0));
   EXPECT_EQ(1, report.failedJobs);
-  EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::TapeReadData));
-  EXPECT_EQ(1, tracker.failureStats().at(TapeSessionFailure::DiskRead));
-  EXPECT_EQ(0, tracker.failureStats().count(TapeSessionFailure::UnclassifiedFile));
+  EXPECT_EQ(1, tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::TapeReadData)]);
+  EXPECT_EQ(1, tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::DiskRead)]);
+  EXPECT_EQ(0, tracker.outcomeSnapshot().failures[static_cast<size_t>(TapeSessionFailure::UnclassifiedFile)]);
 }
 
 }  // namespace unitTests

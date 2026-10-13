@@ -312,8 +312,12 @@ TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerFailure) 
   mrp.reportTestGoingToEnd(lc);
   mrp.waitThread();
   EXPECT_TRUE(mrpTracker.hasFailures());
-  EXPECT_EQ(1, mrpTracker.failureStats().at(cta::tape::daemon::TapeSessionFailure::UnclassifiedFile));
-  EXPECT_EQ(1, mrpTracker.failureStats().at(cta::tape::daemon::TapeSessionFailure::DiskRead));
+  EXPECT_EQ(1,
+            mrpTracker.outcomeSnapshot()
+              .failures[static_cast<size_t>(cta::tape::daemon::TapeSessionFailure::UnclassifiedFile)]);
+  EXPECT_EQ(
+    1,
+    mrpTracker.outcomeSnapshot().failures[static_cast<size_t>(cta::tape::daemon::TapeSessionFailure::DiskRead)]);
 
   std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find(error_msg));

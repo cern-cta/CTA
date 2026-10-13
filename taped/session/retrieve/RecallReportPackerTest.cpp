@@ -133,8 +133,12 @@ TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerBadBadEnd) {
   rrp.reportEndOfSession(lc);
   rrp.waitThread();
   EXPECT_TRUE(rrpTracker.hasFailures());
-  EXPECT_EQ(1, rrpTracker.failureStats().at(cta::tape::daemon::TapeSessionFailure::UnclassifiedFile));
-  EXPECT_EQ(1, rrpTracker.failureStats().at(cta::tape::daemon::TapeSessionFailure::DiskRead));
+  EXPECT_EQ(1,
+            rrpTracker.outcomeSnapshot()
+              .failures[static_cast<size_t>(cta::tape::daemon::TapeSessionFailure::UnclassifiedFile)]);
+  EXPECT_EQ(
+    1,
+    rrpTracker.outcomeSnapshot().failures[static_cast<size_t>(cta::tape::daemon::TapeSessionFailure::DiskRead)]);
 
   const std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find(error_msg));

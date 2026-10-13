@@ -29,18 +29,6 @@
 #include <unistd.h>
 
 namespace cta::tape::daemon {
-std::unique_ptr<DriveSession>
-DriveSession::create(const TapedConfig& config, log::Logger& log, SchedulerContext& schedulerContext) {
-  return std::unique_ptr<DriveSession>(new DriveSession(config, log, schedulerContext));
-}
-
-std::unique_ptr<DriveSession> DriveSession::create(const TapedConfig& config,
-                                                   log::Logger& log,
-                                                   SchedulerContext& schedulerContext,
-                                                   System::virtualWrapper& sysWrapper) {
-  return std::unique_ptr<DriveSession>(new DriveSession(config, log, schedulerContext, &sysWrapper));
-}
-
 DriveSession::DriveSession(const TapedConfig& config,
                            log::Logger& log,
                            SchedulerContext& schedulerContext,
