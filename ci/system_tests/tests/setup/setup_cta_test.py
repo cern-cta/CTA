@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
+import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -134,5 +135,14 @@ def test_label_tapes(env: TestEnv) -> None:
 
 
 def test_set_all_drives_up(cta_cli: CtaCliHost) -> None:
-    assert cta_cli.exec_with_output("cta-admin --json drive ls") != "[]", "No drives found in CTA"
+    # For real drives taped is already running long before setup. For stress-mode
+    # deployments there are no rmcd pods, so test_label_tapes does nothing and
+    # provides no implicit synchronisation — taped may still be registering its
+    # drives when we get here.  Poll until at least one drive appears.
+    timeout_secs = 60
+    deadline = time.monotonic() + timeout_secs
+    while cta_cli.exec_with_output("cta-admin --json drive ls") == "[]":
+        if time.monotonic() >= deadline:
+            raise AssertionError(f"No drives found in CTA after {timeout_secs} s")
+        time.sleep(2)
     cta_cli.set_all_drives_up()
