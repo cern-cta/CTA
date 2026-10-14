@@ -650,16 +650,6 @@ Provides command-line tools for testing tapes written in external formats.
 %{_bindir}/cta-test-osm-reader
 %{_bindir}/cta-test-enstore-large-reader
 
-%package -n cta-test-immutable-file
-Summary: CERN Tape Archive immutable file test tool
-Requires: cta-lib-common = %{version}-%{release}
-Requires: xrootd-client-libs %{xrootdVersionConstraint}
-%description -n cta-test-immutable-file
-Provides a command-line tool for testing immutable files with CTA.
-%files -n cta-test-immutable-file
-%license COPYING
-%{_bindir}/cta-test-immutable-file
-
 # =========================================================================
 #  Development
 # =========================================================================

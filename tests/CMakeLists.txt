@@ -86,23 +86,12 @@ target_link_libraries(cta-integration-tests
   gtest
   pthread)
 
-add_executable(cta-test-immutable-file
-  ImmutableFileTest.cpp
-  ImmutableFileTestMain.cpp
-  ImmutableFileTestCmdLineArgs.cpp)
-
-set_property (TARGET cta-test-immutable-file APPEND PROPERTY INCLUDE_DIRECTORIES "/usr/include/xrootd")
-
-target_link_libraries(cta-test-immutable-file
-  ctacommon XrdCl)
-
 install(
   TARGETS
     cta-unit-tests-rdbms
     cta-unit-tests
     cta-unit-tests-multiprocess
     cta-integration-tests
-    cta-test-immutable-file
   DESTINATION
     ${CMAKE_INSTALL_BINDIR})
 
