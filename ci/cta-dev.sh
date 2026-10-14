@@ -1195,6 +1195,16 @@ deploy_cta() {
     --reset-catalogue \
     --reset-scheduler \
     "${extra_spawn_options[@]}"
+
+  if [[ $local_telemetry == true ]]; then
+    # Prometheus is exposed through a local port-forward, not a public endpoint.
+    echo
+    echo "Local telemetry dashboard (Prometheus): http://localhost:9090/query"
+    echo "Start port forwarding in another terminal:"
+    echo "  kubectl --namespace ${namespace} port-forward svc/prometheus-server 9090:80"
+    echo "If running on a remote development machine, also run on your workstation:"
+    echo "  ssh -N -L 9090:localhost:9090 <user>@<dev-machine>"
+  fi
 }
 
 # Select and run a system test in the installed Python environment.
