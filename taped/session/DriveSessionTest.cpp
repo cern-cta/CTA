@@ -380,9 +380,8 @@ TEST_F(DriveSessionTest, LoadedDriveRequiresCleanOnUpEvenWithStartupRecoveryEnab
   EXPECT_FALSE(reported().desiredUp);
   EXPECT_EQ(DriveStatus::Down, reported().driveStatus);
   ASSERT_TRUE(reported().reasonUpDown);
-  EXPECT_THAT(
-    reported().reasonUpDown,
-    testing::Optional(testing::MatchesRegex(R"(\[cta-taped:tape-detected\] [0-9T:-]+ ERROR Tape detected in drive)")));
+  EXPECT_THAT(reported().reasonUpDown,
+              testing::Optional(testing::MatchesRegex(R"(\[cta-taped\] Tape detected in drive)")));
   EXPECT_THAT(driveState().reports, testing::Not(testing::Contains(DriveStatus::Up)));
   EXPECT_FALSE(canUseHardware());
 }

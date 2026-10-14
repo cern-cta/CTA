@@ -95,50 +95,23 @@ When desired `Down` is set, the **down reason** records why the drive is unavail
 The reason accompanies the desired state, so it can be recorded while the daemon is still finishing the transition to reported `Down`.
 It can describe an operator's intent, such as maintenance, or a condition detected by the daemon.
 
-!!! note "Intended format — pending implementation"
+Optional details may be appended to these reasons to describe the underlying problem.
 
-    The format below is the intended persisted-reason format.
-    The current implementation still writes a reason-specific marker, timestamp, severity and message; adopting the shorter format requires a separate code change.
-
-Reasons use `[cta-taped]`, followed by a local timestamp without a timezone suffix, a readable message and optional details.
-Only startup and clean shutdown add a policy marker: `[cta-taped:startup]` or `[cta-taped:shutdown]`.
-These markers replace the base message; optional details follow the timestamp after a colon.
-Severity is omitted from the persisted reason.
-
-```text
-[cta-taped:startup] 2026-10-13T14:25:30
-[cta-taped:shutdown] 2026-10-13T14:25:30: SIGTERM received
-[cta-taped] 2026-10-13T14:25:30 Drive cleanup failed: Cartridge could not be removed
-```
-
-Policy interpretation matches only the two exact closed prefixes `[cta-taped:startup]` and `[cta-taped:shutdown]` at the start of the reason.
-The timestamp, message and details are not parsed.
-The startup marker identifies a replaceable startup reason; the shutdown marker identifies a clean shutdown eligible for automatic startup as configured.
-Conditions requiring inspection use the ordinary `[cta-taped]` prefix and a readable message.
-For an already desired-Down drive, nonempty ordinary reasons, unknown markers and operator text retain the existing preservation behavior and do not enable automatic startup.
-Preserving an existing reason also preserves its original timestamp; a new timestamp is generated only when recording a replacement reason.
-The table shows base reasons with timestamps omitted; optional details can describe the underlying problem.
-
-| Base `Down` reason | Meaning |
+| Reason | When produced |
 | --- | --- |
-| `[cta-taped:startup]` | Registration records this reason for a new drive or an existing desired-Down drive with an empty or clean-shutdown reason. Reported state is `Down`; desired state follows the automatic startup policy. |
-| `[cta-taped] Automatic startup recovery disabled; operator Up required` | An existing desired `Up` was changed to `Down` because startup recovery is disabled. |
-| `[cta-taped:shutdown]` | The daemon is exiting and sets desired `Down`. This is the normal reason on a clean exit when no specific down reason needs to be preserved. |
-| `[cta-taped] Tape detected in drive` | Initial preparation found a cartridge while initial cleanup was disabled. |
-| `[cta-taped] Drive probe failed` | Initial preparation could not discover, open, or probe the drive to establish emptiness. |
-| `[cta-taped] Session drive access failed` | The daemon could not discover, locate, or open the drive for a tape session. |
-| `[cta-taped] Drive cleanup failed` | Drive cleanup could not establish that the drive was reusable. Additional details can identify an access, configuration, or cartridge-removal failure. |
-| `[cta-taped] Session left drive unusable` | A tape session left the drive unusable and no more specific existing reason was available. |
-| `[cta-taped] Unexpected failure` | An unexpected fatal daemon or drive-session failure prevented continuation. This is not a clean shutdown. |
+| `[cta-taped] Daemon started` | Daemon started and put itself Down at startup. |
+| `[cta-taped] Daemon shutting down` | The daemon receives a stop request or exits normally, and no existing operator or failure reason needs to be preserved. |
+| `[cta-taped] Tape detected in drive` | During the Down-to-Up transition, the drive probe found a tape. Drive cleaning on Up (`drive.clean_on_up`) was disabled, so the daemon did not attempt to remove it. |
+| `[cta-taped] Drive probe failed` | During the Down-to-Up transition with drive cleaning disabled (`drive.clean_on_up`), discovering, opening, or probing the drive fails before the daemon can confirm it is empty. |
+| `[cta-taped] Drive access failed` | The daemon could not discover, locate, or open the drive for a tape session. |
+| `[cta-taped] Drive cleanup failed` | Drive cleanup fails. For example, the daemon cannot access or reset the drive, unload the tape, or return it to the library. |
+| `[cta-taped] Drive reuse unsafe` | A tape session ends without confirming that another tape can safely be mounted, but no specific access or cleanup failure is available to report. This is a fallback; known drive-access and cleanup failures produce the corresponding reasons above. |
+| `[cta-taped] Unexpected failure` | An unexpected fatal error in the daemon or drive session prevents the daemon from running further tape sessions and causes it to exit. This is not a clean shutdown. |
 
 An existing operator or failure reason is preserved instead of being replaced by startup or shutdown messages.
 With automatic desired `Up` disabled, a previous clean-shutdown reason is replaced by the startup reason when the daemon starts again.
 The configurable policy is described under [Daemon lifetime](#daemon-lifetime).
 The current unsafe-worker failure path exits immediately without publishing a reason or changing drive state.
-
-!!! info "TODO: Revisit down reasons"
-
-    Instead of relying only on extra details, make those failures specific down reasons. To be investigated.
 
 ## From startup to shutdown
 
@@ -218,7 +191,7 @@ In certain cases, the daemon can safely put itself `Up` when starting. This is b
 | Existing desired `Down` with an operator or failure reason | Preserve desired `Down` and its reason. |
 
 Startup recovery (`drive.startup.recover_existing_up`) and automatic startup (`drive.startup.auto_up`) are both disabled by default.
-An existing desired `Up` is preserved only when recovery is enabled; otherwise it becomes desired `Down` with the reason “Automatic startup recovery disabled; operator Up required”, regardless of the automatic startup policy.
+An existing desired `Up` is preserved only when recovery is enabled; otherwise it becomes desired `Down` with the reason “Daemon started: desired Up detected, but startup recovery is disabled”, regardless of the automatic startup policy.
 For new drives and eligible desired-Down entries, the automatic startup policy selects the initial desired state; registration reports `Down` and records the startup reason.
 
 !!! note "Desired `Up` still requires preparation"
@@ -468,7 +441,7 @@ Reported activity and final release do not overwrite desired state or its reason
 
 An abrupt crash cannot publish shutdown state, so the last recorded desired state remains unchanged unless another actor changes it.
 Once the old process has ended, restarting the daemon follows the normal [startup behavior](#daemon-lifetime).
-An existing desired `Up` is preserved only when startup recovery is enabled; otherwise startup requests desired `Down` with the reason “Automatic startup recovery disabled; operator Up required” and waits for an operator request.
+An existing desired `Up` is preserved only when startup recovery is enabled; otherwise startup requests desired `Down` with the reason “Daemon started: desired Up detected, but startup recovery is disabled” and waits for an operator request.
 This recovery decision takes precedence over the automatic startup policy.
 An existing desired `Down` with an absent, empty, or clean-shutdown reason can become desired `Up` when automatic startup is enabled; other Down reasons are preserved.
 Both startup policies are disabled by default.

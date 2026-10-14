@@ -3782,7 +3782,7 @@ TEST_P(TapeSessionTest, TapeSessionNoSuchDrive) {
   TapeSession sess(logger, mockSys, driveInfo, mc, *tapeMount, dataTransferConf, tapeLoadTimeoutSecs, catalogue);
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
-  ASSERT_NE(std::string::npos, logger.getLog().find("Session drive access failed: Configured drive lookup failed"));
+  ASSERT_NE(std::string::npos, logger.getLog().find("Drive access failed: Configured drive lookup failed"));
 }
 
 /*

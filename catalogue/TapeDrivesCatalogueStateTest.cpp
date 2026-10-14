@@ -106,22 +106,23 @@ TEST_F(TapeDrivesCatalogueStateTest, PublicationFailurePropagates) {
   EXPECT_THROW(state.requestDriveDown("drive", DriveDownReason::Shutdown, lc), std::runtime_error);
 }
 
-TEST_F(TapeDrivesCatalogueStateTest, DownReasonPrefixControlsReplacement) {
+TEST_F(TapeDrivesCatalogueStateTest, DownReasonMessageControlsReplacement) {
   struct Case {
     const char* reason;
     bool replace;
   };
 
   const Case cases[] {
-    {"[cta-taped] INFO Startup",                                               false},
-    {"[cta-taped] INFO Shutdown",                                              false},
-    {"[cta-taped:startup] 2020-01-01T00:00:00Z Changed wording",               true },
-    {"[cta-taped:shutdown] 2020-01-01T00:00:00Z Changed wording: SIGTERM",     true },
-    {"[cta-taped] INFO Shutdown: inspect drive",                               false},
-    {"[cta-taped:drive-cleanup-failed] 2020-01-01T00:00:00Z ERROR Stuck tape", false},
-    {"[cta-taped:future-code] 2020-01-01T00:00:00Z INFO Shutdown",             false},
-    {"[cta-taped:shutdown] arbitrary display text",                            true },
-    {"Operator maintenance",                                                   false}
+    {"[cta-taped] INFO Startup",                                                          false},
+    {"[cta-taped] INFO Shutdown",                                                         false},
+    {"[cta-taped] Daemon started",                                                        true },
+    {"[cta-taped] Daemon shutting down: SIGTERM",                                         true },
+    {"[cta-taped] INFO Shutdown: inspect drive",                                          false},
+    {"[cta-taped:drive-cleanup-failed] 2020-01-01T00:00:00Z ERROR Stuck tape",            false},
+    {"[cta-taped:future-code] 2020-01-01T00:00:00Z INFO Shutdown",                        false},
+    {"[cta-taped] Daemon shutting down",                                                  true },
+    {"[cta-taped] Daemon started: desired Up detected, but startup recovery is disabled", false},
+    {"Operator maintenance",                                                              false}
   };
   for (const auto& test : cases) {
     SCOPED_TRACE(test.reason);
@@ -134,10 +135,9 @@ TEST_F(TapeDrivesCatalogueStateTest, DownReasonPrefixControlsReplacement) {
         EXPECT_FALSE(desired.up);
         if (test.replace) {
           ASSERT_TRUE(desired.reason);
-          EXPECT_TRUE(desired.reason->starts_with("[cta-taped:drive-cleanup-failed] "));
-          EXPECT_TRUE(desired.reason->ends_with(" ERROR Drive cleanup failed: detail"));
+          EXPECT_EQ("[cta-taped] Drive cleanup failed: detail", *desired.reason);
         } else {
-          // Omitting the field preserves both the original text and its recording timestamp.
+          // Omitting the field preserves the original text.
           EXPECT_FALSE(desired.reason);
         }
       }));

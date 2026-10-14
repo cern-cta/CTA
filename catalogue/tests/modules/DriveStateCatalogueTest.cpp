@@ -144,8 +144,7 @@ TEST_P(cta_catalogue_DriveStateTest, RequestDownPreservesReasonsAndReportedSessi
         EXPECT_EQ(reasons[i], stored->reasonUpDown);
       } else {
         ASSERT_TRUE(stored->reasonUpDown);
-        EXPECT_TRUE(stored->reasonUpDown->starts_with("[cta-taped:drive-cleanup-failed] "));
-        EXPECT_TRUE(stored->reasonUpDown->ends_with(" ERROR Drive cleanup failed: detail"));
+        EXPECT_EQ("[cta-taped] Drive cleanup failed: detail", *stored->reasonUpDown);
       }
       EXPECT_EQ(before->driveStatus, stored->driveStatus);
       EXPECT_EQ(before->mountType, stored->mountType);
