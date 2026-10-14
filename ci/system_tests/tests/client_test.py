@@ -18,6 +18,7 @@ from _pytest.fixtures import SubRequest
 import fastjsonschema
 import pytest
 
+from system_tests.helpers.connections.remote_connection import ExecResult
 from system_tests.helpers.hosts import (
     EOS_TAPE_FILESYSTEM_ID,
     CtaCliHost,
@@ -947,7 +948,12 @@ def _assert_prepare_response(response: dict[str, Any], path: Path, *, requested:
     assert path_response["path_exists"] is True
     assert path_response["requested"] is requested
     assert path_response["has_reqid"] is has_reqid
-    assert bool(path_response["error_text"]) is not requested
+    error_text = path_response["error_text"]
+    assert isinstance(error_text, str)
+    if requested:
+        assert error_text == ""
+    else:
+        assert error_text != ""
 
 
 def _wait_for_cancelled_prepare(
@@ -959,24 +965,26 @@ def _wait_for_cancelled_prepare(
         if _response_for_path(response, path)["requested"] is False:
             return response
         if time.monotonic() >= deadline:
-            return response
+            raise TimeoutError(
+                f"PREPARE {request_id} for {path} was not cancelled within 90 seconds. Last response: {response}"
+            )
         time.sleep(1)
 
 
 def _prepare_after_queue_cache_expiry(
     eos_client: EosClientHost,
     disk_instance_name: str,
-    path: Path,
+    paths: list[Path],
     cleanup_paths: RetrieveQueueCleanupPaths,
-) -> str:
-    # Tape-state selection uses a frontend cache with a ten-second maximum age. Waiting relative to the previous
-    # PREPARE avoids selecting a tape using the states cached by the preceding parametrized case.
+) -> ExecResult:
+    # CI configures both frontend cache ages to one second; the retrieve-queue cache's code default is ten seconds.
+    # Keep a conservative eleven-second gap between PREPARE calls to also cover that default.
     if cleanup_paths.last_prepare_time is not None:
         cache_expiry_time = cleanup_paths.last_prepare_time + 11
         time.sleep(max(0, cache_expiry_time - time.monotonic()))
-    prepare = eos_client.prepare_files(disk_instance_name, [path])
+    prepare = eos_client.prepare_files(disk_instance_name, paths)
     cleanup_paths.last_prepare_time = time.monotonic()
-    return prepare.stdout.strip()
+    return prepare
 
 
 # =========================================================================
@@ -1038,13 +1046,24 @@ class TestRetrieveQueueCleanup:
         tapes = retrieve_queue_cleanup_paths.tapes[2]
         path = retrieve_queue_cleanup_paths.files[2]
         _set_tape_states(cta_cli, tapes, list(states))
-        request_id = _prepare_after_queue_cache_expiry(
-            eos_client, disk_instance_name, path, retrieve_queue_cleanup_paths
+        prepare = _prepare_after_queue_cache_expiry(
+            eos_client, disk_instance_name, [path], retrieve_queue_cleanup_paths
         )
+        assert prepare.success, prepare.stderr
+        request_id = prepare.stdout.strip()
+        assert request_id, "PREPARE succeeded without a request ID"
+        if selected_queue is None:
+            # EOS accepts PREPARE but exposes CTA's tape-unavailability error through QUERY PREPARE.
+            response = eos_client.query_prepare(disk_instance_name, request_id, [path])
+            _assert_prepare_response(response, path, requested=False, has_reqid=False)
+            path_response = _response_for_path(response, path)
+            assert "temporarily unavailable" in path_response["error_text"], path_response
 
         cta_cli.wait_for_queue_file_counts({vid: int(index == selected_queue) for index, vid in enumerate(tapes)})
 
-        eos_client.abort_prepare(disk_instance_name, request_id, [path])
+        if selected_queue is not None:
+            abort = eos_client.abort_prepare(disk_instance_name, request_id, [path])
+            assert abort.success, abort.stderr
         _trigger_retrieve_queue_cleanup(cta_cli, tapes)
 
     @pytest.mark.parametrize(
@@ -1073,9 +1092,12 @@ class TestRetrieveQueueCleanup:
         path = retrieve_queue_cleanup_paths.files[0]
         vid = retrieve_queue_cleanup_paths.tapes[0][0]
         cta_cli.transition_tape_state(vid, start_state)
-        request_id = _prepare_after_queue_cache_expiry(
-            eos_client, disk_instance_name, path, retrieve_queue_cleanup_paths
+        prepare = _prepare_after_queue_cache_expiry(
+            eos_client, disk_instance_name, [path], retrieve_queue_cleanup_paths
         )
+        assert prepare.success, prepare.stderr
+        request_id = prepare.stdout.strip()
+        assert request_id, "PREPARE succeeded without a request ID"
         _assert_prepare_response(
             eos_client.query_prepare(disk_instance_name, request_id, [path]),
             path,
@@ -1092,7 +1114,8 @@ class TestRetrieveQueueCleanup:
         _assert_prepare_response(response, path, requested=queue_preserved, has_reqid=queue_preserved)
         cta_cli.wait_for_queue_file_counts({vid: int(queue_preserved)})
 
-        eos_client.abort_prepare(disk_instance_name, request_id, [path])
+        abort = eos_client.abort_prepare(disk_instance_name, request_id, [path])
+        assert abort.success, abort.stderr
         _trigger_retrieve_queue_cleanup(cta_cli, [vid])
 
     @pytest.mark.parametrize(
@@ -1117,9 +1140,12 @@ class TestRetrieveQueueCleanup:
         path = retrieve_queue_cleanup_paths.files[1]
         tapes = retrieve_queue_cleanup_paths.tapes[1]
         _set_tape_states(cta_cli, tapes, list(start_states))
-        request_id = _prepare_after_queue_cache_expiry(
-            eos_client, disk_instance_name, path, retrieve_queue_cleanup_paths
+        prepare = _prepare_after_queue_cache_expiry(
+            eos_client, disk_instance_name, [path], retrieve_queue_cleanup_paths
         )
+        assert prepare.success, prepare.stderr
+        request_id = prepare.stdout.strip()
+        assert request_id, "PREPARE succeeded without a request ID"
         _assert_prepare_response(
             eos_client.query_prepare(disk_instance_name, request_id, [path]),
             path,
@@ -1137,8 +1163,93 @@ class TestRetrieveQueueCleanup:
             _assert_prepare_response(response, path, requested=False, has_reqid=False)
         cta_cli.wait_for_queue_file_counts({vid: int(index == end_queue) for index, vid in enumerate(tapes)})
 
-        eos_client.abort_prepare(disk_instance_name, request_id, [path])
+        abort = eos_client.abort_prepare(disk_instance_name, request_id, [path])
+        assert abort.success, abort.stderr
         _trigger_retrieve_queue_cleanup(cta_cli, tapes)
+
+    def test_multi_file_prepare_failure_does_not_affect_other_file(
+        self,
+        eos_client: EosClientHost,
+        cta_cli: CtaCliHost,
+        disk_instance_name: str,
+        retrieve_queue_cleanup_paths: RetrieveQueueCleanupPaths,
+    ) -> None:
+        single_copy_path, two_copy_path = retrieve_queue_cleanup_paths.files[:2]
+        paths = [single_copy_path, two_copy_path]
+        tapes = retrieve_queue_cleanup_paths.tapes[1]
+        unavailable_vid, available_vid = tapes
+        request_id = ""
+
+        try:
+            # The first file has no eligible copy; the second can still use its other tape.
+            _set_tape_states(cta_cli, tapes, ["REPACKING", "ACTIVE"])
+            prepare = _prepare_after_queue_cache_expiry(
+                eos_client, disk_instance_name, paths, retrieve_queue_cleanup_paths
+            )
+            assert prepare.success, prepare.stderr
+            request_id = prepare.stdout.strip()
+            assert request_id, "PREPARE succeeded without a request ID"
+
+            response = eos_client.query_prepare(disk_instance_name, request_id, paths)
+            _assert_prepare_response(response, single_copy_path, requested=False, has_reqid=False)
+            failed_response = _response_for_path(response, single_copy_path)
+            assert "temporarily unavailable" in failed_response["error_text"], failed_response
+            _assert_prepare_response(response, two_copy_path, requested=True, has_reqid=True)
+            cta_cli.wait_for_queue_file_counts({unavailable_vid: 0, available_vid: 1})
+        finally:
+            try:
+                if request_id:
+                    # Only the accepted file has a request to abort.
+                    abort = eos_client.abort_prepare(disk_instance_name, request_id, [two_copy_path])
+                    assert abort.success, abort.stderr
+            finally:
+                _trigger_retrieve_queue_cleanup(cta_cli, tapes)
+
+    def test_multi_file_cancellation_does_not_affect_other_file(
+        self,
+        eos_client: EosClientHost,
+        cta_cli: CtaCliHost,
+        disk_instance_name: str,
+        retrieve_queue_cleanup_paths: RetrieveQueueCleanupPaths,
+    ) -> None:
+        single_copy_path, two_copy_path = retrieve_queue_cleanup_paths.files[:2]
+        paths = [single_copy_path, two_copy_path]
+        tapes = retrieve_queue_cleanup_paths.tapes[1]
+        source_vid, fallback_vid = tapes
+        request_id = ""
+
+        try:
+            # Prefer the shared ACTIVE tape for both files over the second file's DISABLED copy.
+            _set_tape_states(cta_cli, tapes, ["ACTIVE", "DISABLED"])
+            prepare = _prepare_after_queue_cache_expiry(
+                eos_client, disk_instance_name, paths, retrieve_queue_cleanup_paths
+            )
+            assert prepare.success, prepare.stderr
+            request_id = prepare.stdout.strip()
+            assert request_id, "PREPARE succeeded without a request ID"
+
+            response = eos_client.query_prepare(disk_instance_name, request_id, paths)
+            for path in paths:
+                _assert_prepare_response(response, path, requested=True, has_reqid=True)
+            cta_cli.wait_for_queue_file_counts({source_vid: 2, fallback_vid: 0})
+
+            # Enable the fallback before removing the shared tape from retrieval eligibility.
+            cta_cli.transition_tape_state(fallback_vid, "ACTIVE")
+            cta_cli.transition_tape_state(source_vid, "REPACKING")
+            _wait_for_cancelled_prepare(eos_client, disk_instance_name, request_id, single_copy_path)
+            cta_cli.wait_for_queue_file_counts({source_vid: 0, fallback_vid: 1})
+
+            # Query both paths under the original request ID to verify their independent outcomes.
+            response = eos_client.query_prepare(disk_instance_name, request_id, paths)
+            _assert_prepare_response(response, single_copy_path, requested=False, has_reqid=False)
+            _assert_prepare_response(response, two_copy_path, requested=True, has_reqid=True)
+        finally:
+            try:
+                if request_id:
+                    abort = eos_client.abort_prepare(disk_instance_name, request_id, paths)
+                    assert abort.success, abort.stderr
+            finally:
+                _trigger_retrieve_queue_cleanup(cta_cli, tapes)
 
 
 # Tests for correct runtime behaviour w.r.t. logs, config files, etc
