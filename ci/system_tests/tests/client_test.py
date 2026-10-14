@@ -760,10 +760,14 @@ class TestEosEvict:
                 eos_client.exec(f"{eos_admin} fs rm {fsid}", throw_on_failure=False)
 
 
-def test_eos_immutable_file(eos_client: EosClientHost, eos_mgm: EosMgmHost, test_dir: Path) -> None:
-    eos_client.exec(
-        f". /tmp/client_env && echo yes | cta-test-immutable-file root://{eos_mgm.instance_name}/{test_dir}/immutable_file"
-    )
+def test_eos_immutable_file(
+    eos_client: EosClientHost, disk_instance_name: str, test_dir: Path, remote_scripts_dir: Path
+) -> None:
+    script = Path("/tmp/xrootd_immutable_file.py")
+    eos_client.copy_to(remote_scripts_dir / "eos_client" / script.name, script)
+    file_url = f"root://{disk_instance_name}/{test_dir}/immutable_file_{uuid.uuid4().hex}"
+    # Use the regular EOS writer's existing credentials without depending on client_setup.sh.
+    eos_client.exec(f"KRB5CCNAME=/tmp/user1/krb5cc_0 XrdSecPROTOCOL=krb5 python3 {script} {shlex.quote(file_url)}")
 
 
 def test_eos_timestamps_correctness(eos_client: EosClientHost, disk_instance_name: str, test_dir: Path) -> None:
