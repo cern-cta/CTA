@@ -1,0 +1,5 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Upstream chart overrides belong under dcache; integration settings are in the dev preset.
+dcache: {}

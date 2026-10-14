@@ -1,50 +1,52 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+# Values for the upstream dCache dependency.
 dcache:
-  plugins:
-    cta:
+  dcache:
+    plugins:
+      cta:
+        enabled: true
+        endpoint: "cta-frontend-wfe:10956"
+        user: dcacheuser
+        group: dcacheusers
+        instance: dcache
+        useTls: mtls
+        caChain: /etc/grpc-certs/ca.crt.pem
+        tlsCert: /etc/grpc-certs/dcache.crt.pem
+        tlsKey: /etc/grpc-certs/dcache.key.pem
+
+    pools:
+      - a
+
+    hsm:
       enabled: true
-      endpoint: "cta-frontend-wfe:10956"
-      user: dcacheuser
-      group: dcacheusers
-      instance: dcache
-      useTls: mtls
-      caChain: /etc/grpc-certs/ca.crt.pem
-      tlsCert: /etc/grpc-certs/dcache.crt.pem
-      tlsKey: /etc/grpc-certs/dcache.key.pem
 
-  pools:
-    - a
+  services:
+    srm:
+      enabled: false
 
-  hsm:
-    enabled: true
+  extraVolumeMounts:
+    - name: grpc-ca
+      mountPath: /etc/grpc-certs/ca.crt.pem
+      subPath: ca.crt.pem
+      readOnly: true
+    - name: dcache-client-crt
+      mountPath: /etc/grpc-certs/dcache.crt.pem
+      subPath: dcache-self-signed.crt.pem
+      readOnly: true
+    - name: dcache-client-key
+      mountPath: /etc/grpc-certs/dcache.key.pem
+      subPath: dcache-self-signed.key.pem
+      readOnly: true
 
-services:
-  srm:
-    enabled: false
-
-extraVolumeMounts:
-  - name: grpc-ca
-    mountPath: /etc/grpc-certs/ca.crt.pem
-    subPath: ca.crt.pem
-    readOnly: true
-  - name: dcache-client-crt
-    mountPath: /etc/grpc-certs/dcache.crt.pem
-    subPath: dcache-self-signed.crt.pem
-    readOnly: true
-  - name: dcache-client-key
-    mountPath: /etc/grpc-certs/dcache.key.pem
-    subPath: dcache-self-signed.key.pem
-    readOnly: true
-
-extraVolumes:
-  - name: grpc-ca
-    secret:
-      secretName: ca-crt-pem
-  - name: dcache-client-crt
-    secret:
-      secretName: dcache-self-signed-crt-pem
-  - name: dcache-client-key
-    secret:
-      secretName: dcache-self-signed-key-pem
+  extraVolumes:
+    - name: grpc-ca
+      secret:
+        secretName: ca-crt-pem
+    - name: dcache-client-crt
+      secret:
+        secretName: dcache-self-signed-crt-pem
+    - name: dcache-client-key
+      secret:
+        secretName: dcache-self-signed-key-pem

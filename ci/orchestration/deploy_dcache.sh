@@ -35,9 +35,6 @@ check_helm_installed() {
 }
 
 deploy() {
-  project_json_path="../../project.json"
-  dcache_chart_version=$(jq -r .dev.dCacheChartVersion ${project_json_path})
-
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -70,34 +67,26 @@ deploy() {
   fi
 
 
-  helm_flags=""
+  helm_flags=()
   if [[ -n "$dcache_image_repository" ]]; then
     dcache_image_registry="${dcache_image_repository%%/*}"
     dcache_image_name="${dcache_image_repository#*/}"
-    helm_flags+=" --set image.registry=${dcache_image_registry} --set image.repository=${dcache_image_name}"
+    helm_flags+=(--set-string "dcache.image.registry=${dcache_image_registry}"
+                 --set-string "dcache.image.repository=${dcache_image_name}")
   fi
   if [[ -n "$dcache_image_tag" ]]; then
-    helm_flags+=" --set image.tag=${dcache_image_tag}"
+    helm_flags+=(--set-string "dcache.image.tag=${dcache_image_tag}")
   fi
   if [[ -n "$dcache_config" ]]; then
-    helm_flags+=" --values ${dcache_config}"
+    helm_flags+=(--values "$dcache_config")
   fi
 
-  helm repo add dcache https://gitlab.desy.de/api/v4/projects/7648/packages/helm/test
-  helm repo update
-  log_run kubectl -n ${namespace} apply -f manifests/dcache-pg-deployment.yaml
-  log_run kubectl -n ${namespace} apply -f manifests/dcache-zookeeper-deployment.yaml
-  log_run kubectl -n ${namespace} apply -f manifests/dcache-kafka-deployment.yaml
-  # Wait for controller-created pods and allow time for uncached image pulls.
-  kubectl -n ${namespace} rollout status statefulset/postgres --timeout=5m
-  kubectl -n ${namespace} rollout status statefulset/zookeeper --timeout=5m
-  kubectl -n ${namespace} rollout status statefulset/kafka --timeout=5m
-  kubectl -n ${namespace} exec kafka-0 -- /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic billing
-  log_run helm install -n ${namespace} store dcache/dcache --version ${dcache_chart_version} \
-                                       --replace --wait --timeout 5m0s \
-                                       --set dcache.hsm.enabled=true \
-                                       --values presets/dev-dcache-values.yaml \
-                                       ${helm_flags}
+  log_run helm dependency build helm/dcache
+  log_run helm upgrade --install store helm/dcache \
+                     --namespace "$namespace" \
+                     --wait --timeout 10m \
+                     --values presets/dev-dcache-values.yaml \
+                     "${helm_flags[@]}"
 }
 
 check_helm_installed

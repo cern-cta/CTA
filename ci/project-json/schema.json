@@ -55,7 +55,6 @@
         "eosImageTag",
         "eosImageRepository",
         "ctaImageRegistry",
-        "dCacheChartVersion",
         "dCacheImageRepository",
         "dCacheImageTag",
         "defaultPlatform"
@@ -97,11 +96,6 @@
         },
         "ctaImageRegistry": {
           "description": "CTA image registry to use in CI.",
-          "type": "string",
-          "minLength": 1
-        },
-        "dCacheChartVersion": {
-          "description": "Version of the dCache Helm chart to use in CI.",
           "type": "string",
           "minLength": 1
         },

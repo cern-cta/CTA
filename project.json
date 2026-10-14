@@ -17,7 +17,6 @@
     "eosImageRepository": "gitlab-registry.cern.ch/dss/eos/eos-ci",
     "eosImageTag": "5.3.36.el9",
     "eosServerChartVersion": "0.10.6",
-    "dCacheChartVersion": "0.1.0",
     "dCacheImageRepository": "gitlab.desy.de:5555/dcache/dcache",
     "dCacheImageTag": "cta-2fe4facc"
   },
