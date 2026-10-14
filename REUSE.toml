@@ -18,12 +18,6 @@ path = "**/*.md"
 SPDX-FileCopyrightText = "2025 CERN"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
-# Test-related files
-[[annotations]]
-path = "ci/orchestration/tests/error_whitelists/*.txt"
-SPDX-FileCopyrightText = "2025 CERN"
-SPDX-License-Identifier = "GPL-3.0-or-later"
-
 # Python requirements files
 [[annotations]]
 path = "**/requirements.txt"
