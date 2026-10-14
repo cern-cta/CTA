@@ -53,6 +53,7 @@ class PrepareTestPaths:
 class RetrieveQueueCleanupPaths:
     files: list[Path]
     tapes: list[list[str]]
+    queue_cache_max_age_secs: int
     last_prepare_time: Optional[float] = None
 
 
@@ -129,6 +130,7 @@ def prepare_test_paths(
 
 @pytest.fixture(scope="class")
 def retrieve_queue_cleanup_paths(
+    env: TestEnv,
     eos_mgm: EosMgmHost,
     eos_client: EosClientHost,
     cta_cli: CtaCliHost,
@@ -136,6 +138,7 @@ def retrieve_queue_cleanup_paths(
     test_dir: Path,
     cta_storage_class: str,
 ) -> RetrieveQueueCleanupPaths:
+    queue_cache_max_age_secs = 1  # Must match the cache settings for the dev deployment
     copy_count = 3
     tapes = cta_cli.list_writable_tapes()
     assert len(tapes) >= copy_count
@@ -160,10 +163,20 @@ def retrieve_queue_cleanup_paths(
         files.append(copy_dir / f"copy{index}_{uuid.uuid4()}")
 
     cta_cli.set_all_drives_up()
+
+    # Submit every file before waiting so compatible archive jobs can share tape sessions.
     for file_path in files:
-        eos_client.archive_file(disk_instance_name, file_path, Path("/etc/group"), wait_timeout_secs=90)
+        eos_client.archive_file(disk_instance_name, file_path, Path("/etc/group"), wait=False)
+
+    # Preserve archival and eviction checks for each file before stopping the drives.
+    for file_path in files:
+        eos_client.wait_for_file_archival(disk_instance_name, file_path, wait_timeout_secs=90)
+        eos_client.wait_for_file_eviction(disk_instance_name, file_path, wait_timeout_secs=90)
+
     cta_cli.set_all_drives_down()
-    return RetrieveQueueCleanupPaths(files, [tape_vids[:count] for count in range(1, copy_count + 1)])
+    return RetrieveQueueCleanupPaths(
+        files, [tape_vids[:count] for count in range(1, copy_count + 1)], queue_cache_max_age_secs
+    )
 
 
 # =========================================================================
@@ -361,15 +374,10 @@ def test_abort_prepare(
     cta_cli.set_all_drives_up(wait=False)
     cta_cli.wait_for_queue_to_empty(wait_timeout_secs=20)
 
-    # Ensure that the files were not actually retrieved on EOS
-    retrieved_file = eos_client.exec(
-        f"eos root://{shlex.quote(disk_instance_name)} find -f {shlex.quote(str(archive_directory))} | "
-        f"xargs -r -P {client_params.process_count} -I{{}} "
-        f"eos root://{shlex.quote(disk_instance_name)} ls -y '{{}}' | "
-        "grep -qE '^d[1-9][0-9]*::t1'",
-        throw_on_failure=False,
-    )
-    assert not retrieved_file.success, "Some files were retrieved despite cancellation"
+    # Check the entire directory in one query, including the expected file count.
+    total, remaining = eos_client.file_eviction_counts(disk_instance_name, archive_directory)
+    assert total == len(requests), "File count changed after cancellation"
+    assert remaining == 0, "Some files are not fully evicted after cancellation"
 
 
 def test_multiple_retrieve(
@@ -981,10 +989,9 @@ def _prepare_after_queue_cache_expiry(
     paths: list[Path],
     cleanup_paths: RetrieveQueueCleanupPaths,
 ) -> ExecResult:
-    # CI configures both frontend cache ages to one second; the retrieve-queue cache's code default is ten seconds.
-    # Keep a conservative eleven-second gap between PREPARE calls to also cover that default.
-    if cleanup_paths.last_prepare_time is not None:
-        cache_expiry_time = cleanup_paths.last_prepare_time + 11
+    # Allow one extra second for the cache's whole-second timestamps; a zero age disables caching.
+    if cleanup_paths.last_prepare_time is not None and cleanup_paths.queue_cache_max_age_secs > 0:
+        cache_expiry_time = cleanup_paths.last_prepare_time + cleanup_paths.queue_cache_max_age_secs + 1
         time.sleep(max(0, cache_expiry_time - time.monotonic()))
     prepare = eos_client.prepare_files(disk_instance_name, paths)
     cleanup_paths.last_prepare_time = time.monotonic()
