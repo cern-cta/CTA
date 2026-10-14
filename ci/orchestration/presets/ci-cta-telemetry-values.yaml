@@ -38,7 +38,7 @@ taped:
               username: it_sd_tab_ci
               passwordSecret: monit-it-sd-tab-ci-pwd
 
-maintd:
+maintd: &runtimeTelemetry
   extraEnv:
     - name: OTEL_EXPORTER_CREDENTIALS
       valueFrom:
@@ -74,3 +74,5 @@ maintd:
                 encoding: protobuf
                 temporality_preference: cumulative
                 default_histogram_aggregation: explicit_bucket_histogram
+
+rmcd: *runtimeTelemetry

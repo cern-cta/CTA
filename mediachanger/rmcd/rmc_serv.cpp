@@ -6,6 +6,8 @@
 #include "rmc_serv.hpp"
 
 #include "common/log/LogContext.hpp"
+#include "common/semconv/Attributes.hpp"
+#include "common/utils/Timer.hpp"
 #include "mediachanger/librmc/Cdomainname.hpp"
 #include "mediachanger/librmc/Cnetdb.hpp"
 #include "mediachanger/librmc/getconfent.hpp"
@@ -17,10 +19,14 @@
 #include "rmc_procreq.hpp"
 #include "rmc_sendrep.hpp"
 #include "rmc_smcsubr.hpp"
+#include "telemetry/metrics/RmcdMetrics.hpp"
+
+#include <opentelemetry/context/runtime_context.h>
 
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <map>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <poll.h>
@@ -329,6 +335,27 @@ rmc_getreq(cta::log::LogContext& lc, const int s, int* const req_type, char* con
   }
 }
 
+static const char* rmc_request_name(const int req_type) {
+  switch (req_type) {
+    case RMC_MOUNT:
+      return "RMC_MOUNT";
+    case RMC_UNMOUNT:
+      return "RMC_UNMOUNT";
+    case RMC_EXPORT:
+      return "RMC_EXPORT";
+    case RMC_IMPORT:
+      return "RMC_IMPORT";
+    case RMC_GETGEOM:
+      return "RMC_GETGEOM";
+    case RMC_READELEM:
+      return "RMC_READELEM";
+    case RMC_FINDCART:
+      return "RMC_FINDCART";
+    default:
+      return "_OTHER";
+  }
+}
+
 static void rmc_procreq(cta::log::LogContext& lc,
                         const int rpfd,
                         const int req_type,
@@ -336,7 +363,16 @@ static void rmc_procreq(cta::log::LogContext& lc,
                         char* const clienthost) {
   struct rmc_srv_rqst_context rqst_context = {g_localhost, rpfd, req_data, clienthost};
 
+  cta::utils::Timer timer;
   const int handlerRc = rmc_dispatchRqstHandler(lc, req_type, &rqst_context);
+  const double duration = timer.secs();
+  std::map<std::string, std::string> attributes = {{cta::semconv::attr::kRpcMethod, rmc_request_name(req_type)}};
+  if (handlerRc != 0) {
+    // Record the final RMC status, not intermediate errors from successful retries.
+    attributes.emplace(cta::semconv::attr::kErrorType, std::to_string(handlerRc));
+  }
+  cta::telemetry::metrics::ctaRmcdRequestDuration->Record(
+    duration, attributes, opentelemetry::context::RuntimeContext::GetCurrent());
 
   if (ERMCUNREC == handlerRc) {
     rmc_sendrep(lc, rpfd, MSG_ERR, RMC03, req_type);

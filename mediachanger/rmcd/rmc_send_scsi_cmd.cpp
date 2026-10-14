@@ -5,17 +5,24 @@
 
 #include "rmc_send_scsi_cmd.hpp"
 
+#include "common/semconv/Attributes.hpp"
+#include "common/utils/Timer.hpp"
 #include "mediachanger/librmc/serrno.hpp"
 #include "scsictl.hpp"
+#include "telemetry/metrics/RmcdMetrics.hpp"
+
+#include <opentelemetry/context/runtime_context.h>
 
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/version.h>
+#include <map>
 #include <scsi/sg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -137,18 +144,18 @@ static void find_sgpath(char* const sgpath, const int maj, const int min) {
   return;
 }
 
-int rmc_send_scsi_cmd(const int tapefd,
-                      const char* const path,
-                      const int do_not_open,
-                      const unsigned char* const cdb,
-                      const int cdblen,
-                      unsigned char* const buffer,
-                      const int buflen,
-                      char* const sense,
-                      const int senselen,
-                      const int flags,
-                      int* const nb_sense_ret,
-                      const char** const msgaddr) {
+static int rmc_send_scsi_cmd_impl(const int tapefd,
+                                const char* const path,
+                                const int do_not_open,
+                                const unsigned char* const cdb,
+                                const int cdblen,
+                                unsigned char* const buffer,
+                                const int buflen,
+                                char* const sense,
+                                const int senselen,
+                                const int flags,
+                                int* const nb_sense_ret,
+                                const char** const msgaddr) {
   /* The timeout used when sending SCSI commands through the sg driver is in */
   /* milliseconds and should equal that used by the st driver which on the   */
   /* 28/01/2014 is 900 seconds and therefore 900000 milliseconds             */
@@ -354,4 +361,73 @@ int rmc_send_scsi_cmd(const int tapefd,
     memcpy(buffer, sg_buffer + sizeof(struct sg_header), n);
   }
   return (flags & SCSI_IN) ? n : buflen - resid;
+}
+
+static const char* scsi_command_name(const unsigned char opcode) {
+  switch (opcode) {
+    case 0x12:
+      return "INQUIRY";
+    case 0x1A:
+      return "MODE_SENSE";
+    case 0xA5:
+      return "MOVE_MEDIUM";
+    case 0xB5:
+      return "REQUEST_VOLUME_ELEMENT_ADDRESS";
+    case 0xB6:
+      return "SEND_VOLUME_TAG";
+    case 0xB8:
+      return "READ_ELEMENT_STATUS";
+    default:
+      return "_OTHER";
+  }
+}
+
+static const char* scsi_error_type(const int rc) {
+  switch (rc) {
+    case RMC_SEND_SCSI_ERR_OPEN:
+      return "device_setup_failed";
+    case RMC_SEND_SCSI_ERR_IOCTL:
+      return "device_io_failed";
+    case RMC_SEND_SCSI_ERR_CAM:
+      return "cam_error";
+    case RMC_SEND_SCSI_ERR_SCSI:
+      return "scsi_error";
+    case RMC_SEND_SCSI_ERR_NOTSUP:
+      return "not_supported";
+    default:
+      return "_OTHER";
+  }
+}
+
+int rmc_send_scsi_cmd(const int tapefd,
+                      const char* const path,
+                      const int do_not_open,
+                      const unsigned char* const cdb,
+                      const int cdblen,
+                      unsigned char* const buffer,
+                      const int buflen,
+                      char* const sense,
+                      const int senselen,
+                      const int flags,
+                      int* const nb_sense_ret,
+                      const char** const msgaddr) {
+  cta::utils::Timer timer;
+  const int rc = rmc_send_scsi_cmd_impl(
+    tapefd, path, do_not_open, cdb, cdblen, buffer, buflen, sense, senselen, flags, nb_sense_ret, msgaddr);
+  // Instrumentation must not change the error state observed by the caller.
+  const int savedErrno = errno;
+  const int savedSerrno = serrno;
+  const double duration = timer.secs();
+  std::map<std::string, std::string> attributes = {
+    {cta::semconv::attr::kCtaRmcdScsiCommandName, cdblen > 0 ? scsi_command_name(cdb[0]) : "_OTHER"}
+  };
+  // Successful commands may return a positive byte count.
+  if (rc < 0) {
+    attributes.emplace(cta::semconv::attr::kErrorType, scsi_error_type(rc));
+  }
+  cta::telemetry::metrics::ctaRmcdScsiCommandDuration->Record(
+    duration, attributes, opentelemetry::context::RuntimeContext::GetCurrent());
+  serrno = savedSerrno;
+  errno = savedErrno;
+  return rc;
 }

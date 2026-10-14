@@ -152,4 +152,17 @@ static constexpr const char* kMetricCtaMaintdRoutineDuration = "cta.maintd.routi
 static constexpr const char* descrCtaMaintdRoutineDuration = "Duration to execute a routine of the given type";
 static constexpr const char* unitCtaMaintdRoutineDuration = "ms";
 
+// -------------------- RMCD --------------------
+
+static constexpr const char* kMetricCtaRmcdRequestDuration = "cta.rmcd.request.duration";
+static constexpr const char* descrCtaRmcdRequestDuration =
+  "Duration to execute an RMC request handler, including internal retries "
+  "but excluding request reading and final status sending";
+static constexpr const char* unitCtaRmcdRequestDuration = "s";
+
+static constexpr const char* kMetricCtaRmcdScsiCommandDuration = "cta.rmcd.scsi.command.duration";
+static constexpr const char* descrCtaRmcdScsiCommandDuration =
+  "Duration of a SCSI command attempt, including device setup but excluding sleeps between attempts";
+static constexpr const char* unitCtaRmcdScsiCommandDuration = "s";
+
 }  // namespace cta::semconv::metrics

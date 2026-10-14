@@ -103,6 +103,22 @@ format *(default: json)*
 
 :   Optional key-value pairs added to all log lines, typically used for monitoring and instance identification.
 
+## [telemetry]
+
+config_file
+
+:   Path to the OpenTelemetry SDK declarative configuration file.
+If omitted or empty, telemetry is disabled.
+
+on_init_failure *(default: warn)*
+
+:   Behaviour if telemetry initialisation fails.
+Possible values:
+- warn
+- fatal
+
+Telemetry is experimental and disabled by default unless explicitly enabled under **[experimental]**.
+
 ## [health_server]
 
 enabled *(default: false)*
@@ -128,11 +144,21 @@ The health server exposes:
 * /health/ready
 * /health/live
 
+## [experimental]
+
+telemetry_enabled *(default: false)*
+
+:   Enables experimental telemetry support.
+
 # FILES
 
 */etc/cta/cta-rmcd.toml*
 
 :   Default configuration file.
+
+*/etc/cta/cta-otel.yaml*
+
+:   OpenTelemetry declarative configuration file. Used only if telemetry is enabled and a config_file is specified under the [telemetry] section.
 
 */usr/share/doc/cta/cta-rmcd.example.toml*
 
