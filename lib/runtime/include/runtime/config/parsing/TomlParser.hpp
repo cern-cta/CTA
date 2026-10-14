@@ -7,6 +7,7 @@
 
 #include "ParseResult.hpp"
 #include "Reflection.hpp"
+#include "common/config/Config.hpp"
 #include "common/exception/UserError.hpp"
 
 #include <algorithm>
@@ -70,9 +71,15 @@ template<class T>
 concept TomlValueConvertible =
   requires(toml::node_view<const toml::node> nv) { nv.template value<std::remove_cvref_t<T>>(); };
 
+/**
+ * Types parsed from a TOML string through a cta::common::FromString specialization (typically enums)
+ */
+template<class T>
+concept FromStringParsable = cta::common::HasFromString<std::remove_cvref_t<T>>;
+
 template<class T>
 concept ScalarLike = TomlValueConvertible<T> && !StdOptional<T> && !reflection::Reflectable<T> && !StdVector<T>
-                     && !MapStringKey<T> && !StdChronoTimePoint<T>;
+                     && !MapStringKey<T> && !StdChronoTimePoint<T> && !FromStringParsable<T>;
 
 // Forward declarations (needed because we have some recursive calls)
 
@@ -89,6 +96,9 @@ template<MapStringKey T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict);
 
 template<ScalarLike T>
+ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict);
+
+template<FromStringParsable T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict);
 
 template<reflection::Reflectable T>
@@ -206,6 +216,26 @@ ParseResult parseNode(T& out,
       return ParseResult::error("Field '" + std::string(fieldName) + "' is outside the supported range.");
     }
     return ParseResult::error("Field '" + std::string(fieldName) + "' has an invalid value or type.");
+  }
+  out = std::move(*val);
+  return ParseResult::success();
+}
+
+/**
+ * Parse a TOML string into a type providing a cta::common::FromString specialization.
+ */
+template<FromStringParsable T>
+ParseResult parseNode(T& out,
+                      std::string_view fieldName,
+                      toml::node_view<const toml::node> node,
+                      [[maybe_unused]] const bool strict) {
+  const auto* str = node.as_string();
+  if (!str) {
+    return ParseResult::error("Field '" + std::string(fieldName) + "' must be a string.");
+  }
+  auto val = cta::common::FromString<std::remove_cvref_t<T>>::tryFrom(str->get());
+  if (!val) {
+    return ParseResult::error("Field '" + std::string(fieldName) + "' has an unsupported value '" + str->get() + "'.");
   }
   out = std::move(*val);
   return ParseResult::success();
