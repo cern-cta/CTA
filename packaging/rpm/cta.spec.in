@@ -63,7 +63,11 @@ CERN Tape Archive (CTA) is a scalable tape storage system for archival data.
 # =========================================================================
 
 %prep
-%autosetup -D -n %{name}-%{version}-%{ctaRelease}
+# Keep compiler paths stable across package versions so sccache can reuse objects.
+# Preserve existing build outputs for incremental local builds.
+%setup -q -D -c -T -n %{name}
+tar --extract --file "%{SOURCE0}" --strip-components=1
+%autopatch -p0
 
 %build
 mkdir -p build
