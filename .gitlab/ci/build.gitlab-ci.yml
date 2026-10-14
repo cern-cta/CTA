@@ -29,36 +29,10 @@ build-cta-rpms:
   rules:
     - if: '$CUSTOM_CTA_IMAGE_TAG != "" || $PIPELINE_TYPE == "UPDATE_PIPELINE_IMAGES"'
       when: never
-    # Automatically build only when source, build configuration, or CI inputs change.
+    # Build for any non-documentation change, including new source directories (GitLab 19.2+).
+    # Match each path independently so mixed documentation/code changes still build.
     - changes:
-        # Top-level files relevant for builds
-        - .dockerignore
-        - .gitlab-ci.yml
-        - .gitmodules
-        - CMakeLists.txt
-        - project.json
-        - version.hpp.in
-        # Build, packaging, and CI inputs
-        - cmake/**/*
-        - packaging/**/*
-        - ci/**/*
-        - .gitlab/**/*
-        # Target source layout
-        - app/**/*
-        - lib/**/*
-        - tools/**/*
-        - tests/**/*
-        # Legacy source directories: remove entries as their contents move to app/, lib/, or tools/
-        - catalogue/**/*
-        - common/**/*
-        - disk/**/*
-        - frontend/**/*
-        - maintd/**/*
-        - mediachanger/**/*
-        - objectstore/**/*
-        - rdbms/**/*
-        - scheduler/**/*
-        - taped/**/*
+        regexp: '(?m)\A(?!docs/|ci/docs/|.*\.(?i:md|markdown)\z)'
       when: on_success
     # Keep the build available manually for MRs without matching changes.
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
