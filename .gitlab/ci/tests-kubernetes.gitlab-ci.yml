@@ -50,8 +50,7 @@ spec:
   # Export all variables here so that it is clear which ones are available
   - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG CTA_VALUES_CHAIN EXTRA_SPAWN_ARGS
 
-# Once we have migrated everything to python, the above .kubernetes-test can be removed
-.kubernetes-test-python:
+.kubernetes-test:
   needs:
     - job: prepare-cta-version
       artifacts: true
@@ -157,14 +156,14 @@ spec:
 
 test-client:
   extends:
-    - .kubernetes-test-python
+    - .kubernetes-test
   stage: system-test
   variables:
     PYTESTS: "tests/tape_rest_api_test.py tests/client_test.py"
 
 test-client-gfal2:
   extends:
-    - .kubernetes-test-python
+    - .kubernetes-test
   stage: system-test
   variables:
     PYTESTS: "tests/client_gfal_test.py"
@@ -173,20 +172,20 @@ test-client-gfal2:
 
 test-repack:
   extends:
-    - .kubernetes-test-python
+    - .kubernetes-test
   stage: system-test
   variables:
     PYTESTS: "tests/repack_test.py"
 
 test-cta-tools:
   extends:
-    - .kubernetes-test-python
+    - .kubernetes-test
   stage: system-test
   rules:
     # Currently we only test cta-admin here, so this is not really doing anything with the disk side
     - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH" || $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
       when: never
-    - !reference [.kubernetes-test-python, rules]
+    - !reference [.kubernetes-test, rules]
   variables:
     PYTESTS: "tests/cta_admin_test.py tests/tape_tools_test.py tests/eos_restore_files_test.py"
     # We want to test cta-admin's behaviour on repack requests; not the actual repack itself
@@ -211,14 +210,14 @@ test-cta-tools:
 
 test-catalogue-schema-update:
   extends:
-    - .kubernetes-test-python
+    - .kubernetes-test
   stage: system-test
   rules:
     - !reference [.manual-rules, rules]
   variables:
     PYTESTS: "tests/catalogue_schema_update_test.py"
   before_script:
-    - !reference [.kubernetes-test-python, before_script]
+    - !reference [.kubernetes-test, before_script]
     - |
       if [[ "$(jq '.supportedCatalogueVersions | length' project.json)" -lt 2 ]]; then
         echo "We are not currently in a catalogue release. No update to test."
@@ -241,7 +240,7 @@ test-catalogue-schema-update:
 
 test-external-tape-formats:
   extends:
-    - .kubernetes-test-python
+    - .kubernetes-test
   stage: system-test
   rules:
     - !reference [.manual-rules, rules]
@@ -250,7 +249,7 @@ test-external-tape-formats:
 
 test-dcache:
   extends:
-    - .kubernetes-test-python
+    - .kubernetes-test
   stage: system-test
   rules:
     - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH" || $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'

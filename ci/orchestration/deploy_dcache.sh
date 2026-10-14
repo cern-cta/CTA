@@ -88,16 +88,16 @@ deploy() {
   log_run kubectl -n ${namespace} apply -f manifests/dcache-pg-deployment.yaml
   log_run kubectl -n ${namespace} apply -f manifests/dcache-zookeeper-deployment.yaml
   log_run kubectl -n ${namespace} apply -f manifests/dcache-kafka-deployment.yaml
-  kubectl -n ${namespace} wait --for=condition=Ready pod/postgres-0
-  kubectl -n ${namespace} wait --for=condition=Ready pod/zookeeper-0
-  kubectl -n ${namespace} wait --for=condition=Ready pod/kafka-0
+  # Wait for controller-created pods and allow time for uncached image pulls.
+  kubectl -n ${namespace} rollout status statefulset/postgres --timeout=5m
+  kubectl -n ${namespace} rollout status statefulset/zookeeper --timeout=5m
+  kubectl -n ${namespace} rollout status statefulset/kafka --timeout=5m
   kubectl -n ${namespace} exec kafka-0 -- /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --create --topic billing
   log_run helm install -n ${namespace} store dcache/dcache --version ${dcache_chart_version} \
                                        --replace --wait --timeout 5m0s \
                                        --set dcache.hsm.enabled=true \
                                        --values presets/dev-dcache-values.yaml \
-                                       ${helm_flags} \
-                                       --set-string dcache.plugins.cta.useTls=mtls
+                                       ${helm_flags}
 }
 
 check_helm_installed

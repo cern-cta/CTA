@@ -29,8 +29,9 @@ class DCacheClientHost(DiskClientHost):
 
     def _namespace_info(self, path: Path, *, throw_on_failure: bool = True) -> dict[str, object]:
         url = shlex.quote(f"https://{self.endpoint}:3881/api/v1/namespace/{self._remote_path(path)}?locality=true")
+        # Bound each poll so an unresponsive door cannot block the wait loop indefinitely.
         output = self.exec_with_output(
-            f"curl -ksS -u {shlex.quote(DCACHE_ADMIN_AUTH)} {url}",
+            f"curl -ksS --connect-timeout 5 --max-time 10 -u {shlex.quote(DCACHE_ADMIN_AUTH)} {url}",
             throw_on_failure=throw_on_failure,
         )
         return json.loads(output) if output else {}
@@ -51,7 +52,10 @@ class DCacheClientHost(DiskClientHost):
         destination = shlex.quote(f"https://{self.endpoint}:8083/{self._remote_path(destination_path)}")
         source = shlex.quote(str(source_path))
         print(f"Uploading {source_path} to dCache path {destination_path}")
-        self.exec(f"curl -kfsS -u {shlex.quote(DCACHE_ADMIN_AUTH)} --upload-file {source} {destination}")
+        self.exec(
+            f"curl -kfsS --connect-timeout 5 --max-time 120 -u {shlex.quote(DCACHE_ADMIN_AUTH)} "
+            f"--upload-file {source} {destination}"
+        )
         print(f"Upload completed; namespace info: {json.dumps(self._namespace_info(destination_path), indent=2)}")
         if wait:
             self.wait_for_file_archival(disk_instance_name, destination_path, wait_timeout_secs=wait_timeout_secs)
@@ -77,7 +81,7 @@ class DCacheClientHost(DiskClientHost):
         del user
         url = shlex.quote(f"https://{self.endpoint}:8083/{self._remote_path(path)}")
         print(f"Deleting dCache file {path}")
-        self.exec(f"curl -kfsS -u {shlex.quote(DCACHE_ADMIN_AUTH)} -X DELETE {url}")
+        self.exec(f"curl -kfsS --connect-timeout 5 --max-time 10 -u {shlex.quote(DCACHE_ADMIN_AUTH)} -X DELETE {url}")
         print(f"Delete request completed for {path}")
 
     def wait_for_file_deletion(self, path: Path, *, wait_timeout_secs: int = 20) -> None:

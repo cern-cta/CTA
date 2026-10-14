@@ -49,7 +49,8 @@ class DCacheHost(DiskInstanceHost):
             url = shlex.quote(f"{self.webdav_url}/{remote_path}")
             print(f"Creating dCache directory {path}")
             status = self.exec_with_output(
-                f"curl -ksS -u {shlex.quote(DCACHE_ADMIN_AUTH)} -X MKCOL -o /dev/null -w '%{{http_code}}' {url}"
+                f"curl -ksS --connect-timeout 5 --max-time 10 -u {shlex.quote(DCACHE_ADMIN_AUTH)} "
+                f"-X MKCOL -o /dev/null -w '%{{http_code}}' {url}"
             )
             if status not in ("201", "405"):
                 raise RuntimeError(f"Failed to create dCache directory {path}: HTTP status {status}")

@@ -155,7 +155,8 @@ class TestEnv:
                 namespace, "app.kubernetes.io/name=dcache", "dcache-door"
             ),
             scheduler_postgres_conns=TestEnv.get_k8s_connections_by_selector(
-                namespace, "app.kubernetes.io/name=cta-scheduler-postgres-db", "cta-scheduler-postgres"),
+                namespace, "app.kubernetes.io/name=cta-scheduler-postgres-db", "cta-scheduler-postgres"
+            ),
         )
 
     @staticmethod
@@ -212,8 +213,10 @@ class TestEnv:
             cta_taped_conns=create_connections(connection_config, "cta_taped"),
             eos_client_conns=create_connections(connection_config, "eos_client"),
             eos_mgm_conns=create_connections(connection_config, "eos_mgm"),
-            dcache_client_conns=create_connections(connection_config, "dcache_client"),
-            dcache_conns=create_connections(connection_config, "dcache"),
+            dcache_client_conns=(
+                create_connections(connection_config, "dcache_client") if "dcache_client" in connection_config else []
+            ),
+            dcache_conns=create_connections(connection_config, "dcache") if "dcache" in connection_config else [],
             scheduler_postgres_conns=(
                 create_connections(connection_config, "scheduler_postgres")
                 if "scheduler_postgres" in connection_config
