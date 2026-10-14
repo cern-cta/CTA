@@ -96,16 +96,6 @@ Resource attributes describe the entity that produced the telemetry (service/pro
 | `le`                           | Histogram bucket upper bound (“less than or equal”), in the exported metric’s unit.                                    |
 | `lock.type`                    | Type of lock being acquired in the object store or internal resource (e.g., `read`, `write`).          |
 | `state`                        | Operational or lifecycle state represented by the metric (e.g., `active`, `queued`, `failed`).         |
-
-#### RMCD error labels
-
-Both rmcd histograms omit `error.type` on success and use a bounded set of values on failure.
-The request histogram records the final handler status after internal retries.
-Known RMC statuses (`ERMCNACT`, `ERMCRBTERR`, `ERMCUNREC`, `ERMCSLOWR`, `ERMCFASTR`, `ERMCDFORCE`, `ERMCDDOWN`, `ERMCOMSGN`, `ERMCOMSGS`, `ERMCOMSGR`, and `ERMCUNLOAD`) and the busy-error forms `EBUSY` and `ERMCRBTERR + EBUSY` retain their decimal numeric strings.
-All other request error codes map to `_OTHER`, limiting this attribute to 14 possible values.
-The SCSI histogram uses `device_setup_failed`, `device_io_failed`, `cam_error`, `scsi_error`, `not_supported`, or `_OTHER` for each failed attempt.
-Unknown request types and SCSI commands also map to `_OTHER` in their operation attributes.
-
 ---
 
 ## Prerequisites
@@ -133,10 +123,6 @@ The following services support publishing metrics:
 - `cta-rmcd`
 - `cta-taped`
 - `cta-frontend`
-
-!!! info
-
-    `cta-maintd` and `cta-rmcd` use TOML service configuration and OpenTelemetry declarative YAML configuration. The frontend and taped use their existing service-specific configuration formats; their migration is tracked in [this GitLab Epic](http://gitlab.cern.ch/groups/cta/-/epics/32).
 
 Once metrics publishing is enabled and the OpenTelemetry Collector is receiving data:
 
