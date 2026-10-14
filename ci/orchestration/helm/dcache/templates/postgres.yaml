@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+# TODO: to be removed at some point once we have consolidated all the postgres databases in CI
+
 #
 # postgresql environment
 #
