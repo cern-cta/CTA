@@ -8,27 +8,24 @@ import time
 
 from typing_extensions import override
 
-from system_tests.helpers.connections.remote_connection import RemoteConnection
 from .disk_client_host import DiskClientHost
+from .dcache_constants import DCACHE_ADMIN_AUTH, DCACHE_REST_PORT, DCACHE_WEBDAV_PORT
 from system_tests.helpers.utils.timeout import Timeout
-
-DCACHE_ADMIN_AUTH = "admin:dickerelch"
 
 
 class DCacheClientHost(DiskClientHost):
     """A client which accesses dCache through its WebDAV and REST doors."""
 
-    # TODO: dcache should be addressable by its disk instance name
-    def __init__(self, conn: RemoteConnection, endpoint: str = "store-door-svc") -> None:
-        super().__init__(conn)
-        self.endpoint: str = endpoint
-
     @staticmethod
     def _remote_path(path: Path) -> str:
         return str(path).lstrip("/")
 
-    def _namespace_info(self, path: Path, *, throw_on_failure: bool = True) -> dict[str, object]:
-        url = shlex.quote(f"https://{self.endpoint}:3881/api/v1/namespace/{self._remote_path(path)}?locality=true")
+    def _namespace_info(
+        self, disk_instance_name: str, path: Path, *, throw_on_failure: bool = True
+    ) -> dict[str, object]:
+        url = shlex.quote(
+            f"https://{disk_instance_name}:{DCACHE_REST_PORT}/api/v1/namespace/{self._remote_path(path)}?locality=true"
+        )
         # Bound each poll so an unresponsive door cannot block the wait loop indefinitely.
         output = self.exec_with_output(
             f"curl -ksS --connect-timeout 5 --max-time 10 -u {shlex.quote(DCACHE_ADMIN_AUTH)} {url}",
@@ -49,46 +46,49 @@ class DCacheClientHost(DiskClientHost):
         wait_timeout_secs: int = 20,
     ) -> None:
         del user
-        destination = shlex.quote(f"https://{self.endpoint}:8083/{self._remote_path(destination_path)}")
+        destination = shlex.quote(
+            f"https://{disk_instance_name}:{DCACHE_WEBDAV_PORT}/{self._remote_path(destination_path)}"
+        )
         source = shlex.quote(str(source_path))
         print(f"Uploading {source_path} to dCache path {destination_path}")
         self.exec(
             f"curl -kfsS --connect-timeout 5 --max-time 120 -u {shlex.quote(DCACHE_ADMIN_AUTH)} "
             f"--upload-file {source} {destination}"
         )
-        print(f"Upload completed; namespace info: {json.dumps(self._namespace_info(destination_path), indent=2)}")
+        info = self._namespace_info(disk_instance_name, destination_path)
+        print(f"Upload completed; namespace info: {json.dumps(info, indent=2)}")
         if wait:
             self.wait_for_file_archival(disk_instance_name, destination_path, wait_timeout_secs=wait_timeout_secs)
 
     @override
     def is_file_on_tape_only(self, disk_instance_name: str, path: Path) -> bool:
-        return self._namespace_info(path).get("fileLocality") == "NEARLINE"
+        return self._namespace_info(disk_instance_name, path).get("fileLocality") == "NEARLINE"
 
     @override
     def is_file_on_tape(self, disk_instance_name: str, path: Path) -> bool:
-        return self._namespace_info(path).get("fileLocality") in ("NEARLINE", "ONLINE_AND_NEARLINE")
+        return self._namespace_info(disk_instance_name, path).get("fileLocality") in ("NEARLINE", "ONLINE_AND_NEARLINE")
 
     @override
     def is_file_on_disk(self, disk_instance_name: str, path: Path) -> bool:
-        return self._namespace_info(path).get("fileLocality") in ("ONLINE", "ONLINE_AND_NEARLINE")
+        return self._namespace_info(disk_instance_name, path).get("fileLocality") in ("ONLINE", "ONLINE_AND_NEARLINE")
 
     @override
     def is_file_on_disk_only(self, disk_instance_name: str, path: Path) -> bool:
-        return self._namespace_info(path).get("fileLocality") == "ONLINE"
+        return self._namespace_info(disk_instance_name, path).get("fileLocality") == "ONLINE"
 
     @override
     def delete_file(self, disk_instance_name: str, path: Path, *, user: str = "poweruser1") -> None:
         del user
-        url = shlex.quote(f"https://{self.endpoint}:8083/{self._remote_path(path)}")
+        url = shlex.quote(f"https://{disk_instance_name}:{DCACHE_WEBDAV_PORT}/{self._remote_path(path)}")
         print(f"Deleting dCache file {path}")
         self.exec(f"curl -kfsS --connect-timeout 5 --max-time 10 -u {shlex.quote(DCACHE_ADMIN_AUTH)} -X DELETE {url}")
         print(f"Delete request completed for {path}")
 
-    def wait_for_file_deletion(self, path: Path, *, wait_timeout_secs: int = 20) -> None:
+    def wait_for_file_deletion(self, disk_instance_name: str, path: Path, *, wait_timeout_secs: int = 20) -> None:
         print(f"Waiting up to {wait_timeout_secs} seconds for dCache to remove {path}")
         with Timeout(wait_timeout_secs) as timeout:
             while not timeout.expired:
-                response = self._namespace_info(path, throw_on_failure=False)
+                response = self._namespace_info(disk_instance_name, path, throw_on_failure=False)
                 # dCache versions can encode the status as either a number or a string.
                 if str(response.get("status")) == "404" and response.get("title") == "Not Found":
                     print(f"dCache file {path} was removed")
@@ -99,4 +99,4 @@ class DCacheClientHost(DiskClientHost):
     @override
     def file_info(self, disk_instance_name: str, path: Path, *, json_output: bool = False) -> str:
         del json_output
-        return json.dumps(self._namespace_info(path), indent=2)
+        return json.dumps(self._namespace_info(disk_instance_name, path), indent=2)

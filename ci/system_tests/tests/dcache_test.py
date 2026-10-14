@@ -21,4 +21,4 @@ def test_archive_and_delete(dcache_client: DCacheClientHost, dcache: DCacheHost,
 
     print(f"Archive confirmed; deleting {path}")
     dcache_client.delete_file(dcache.instance_name, path)
-    dcache_client.wait_for_file_deletion(path)
+    dcache_client.wait_for_file_deletion(dcache.instance_name, path)

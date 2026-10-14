@@ -2,13 +2,19 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import shlex
-from functools import cached_property
 from pathlib import Path
 
 from typing_extensions import override
 
 from system_tests.helpers.connections.remote_connection import RemoteConnection
-from .dcache_client_host import DCACHE_ADMIN_AUTH
+from .dcache_constants import (
+    DCACHE_ADMIN_AUTH,
+    DCACHE_ARCHIVE_GROUP,
+    DCACHE_BASE_DIR,
+    DCACHE_INSTANCE_NAME,
+    DCACHE_STORAGE_CLASS,
+    DCACHE_WEBDAV_PORT,
+)
 from .disk_instance_host import DiskInstanceHost
 
 
@@ -16,26 +22,25 @@ class DCacheHost(DiskInstanceHost):
     def __init__(self, conn: RemoteConnection) -> None:
         super().__init__(conn)
 
-    @cached_property
+    @property
     def instance_name(self) -> str:
-        return "dcache"
+        return DCACHE_INSTANCE_NAME
 
-    @cached_property
+    @property
     def base_dir_path(self) -> Path:
-        return Path("/data")
+        return DCACHE_BASE_DIR
 
-    @cached_property
+    @property
     def archive_group(self) -> str:
-        return "dcacheusers"
+        return DCACHE_ARCHIVE_GROUP
 
-    @cached_property
+    @property
     def storage_class(self) -> str:
-        # dCache's default store and storage group are emitted to CTA in this form.
-        return "test:tape@cta"
+        return DCACHE_STORAGE_CLASS
 
-    @cached_property
+    @property
     def webdav_url(self) -> str:
-        return "https://localhost:8083"
+        return f"https://localhost:{DCACHE_WEBDAV_PORT}"
 
     @override
     def mkdir(self, directory: Path, parent: bool = True) -> None:

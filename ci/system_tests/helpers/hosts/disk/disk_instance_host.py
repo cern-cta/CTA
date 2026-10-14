@@ -3,7 +3,6 @@
 
 import time
 from collections import deque
-from functools import cached_property
 from pathlib import Path
 
 
@@ -11,19 +10,19 @@ from system_tests.helpers.hosts.remote_host import RemoteHost
 
 
 class DiskInstanceHost(RemoteHost):
-    @cached_property
+    @property
     def instance_name(self) -> str: ...
 
-    @cached_property
+    @property
     def base_dir_path(self) -> Path: ...
 
-    @cached_property
+    @property
     def archive_group(self) -> str: ...
 
-    @cached_property
+    @property
     def storage_class(self) -> str: ...
 
-    @cached_property
+    @property
     def webdav_url(self) -> str: ...
 
     def mkdir(self, directory: Path, parent: bool = True) -> None: ...

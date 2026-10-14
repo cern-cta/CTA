@@ -11,6 +11,7 @@ from typing_extensions import override
 
 from system_tests.helpers.connections.remote_connection import RemoteConnection
 from .disk_instance_host import DiskInstanceHost
+from .eos_constants import EOS_ARCHIVE_GROUP, EOS_STORAGE_CLASS, EOS_WEBDAV_PORT
 
 
 class EosMgmHost(DiskInstanceHost):
@@ -25,17 +26,17 @@ class EosMgmHost(DiskInstanceHost):
     def base_dir_path(self) -> Path:
         return Path("/eos") / self.instance_name
 
-    @cached_property
+    @property
     def archive_group(self) -> str:
-        return "eosusers"
+        return EOS_ARCHIVE_GROUP
 
-    @cached_property
+    @property
     def storage_class(self) -> str:
-        return "cta_storage_class"
+        return EOS_STORAGE_CLASS
 
     @cached_property
     def webdav_url(self) -> str:
-        return f"https://{self.instance_name}:8443"
+        return f"https://{self.instance_name}:{EOS_WEBDAV_PORT}"
 
     @cached_property
     def eos_version(self) -> Version:
