@@ -19,7 +19,7 @@
     "eosServerChartVersion": "0.10.6",
     "dCacheChartVersion": "0.1.0",
     "dCacheImageRepository": "gitlab.desy.de:5555/dcache/dcache",
-    "dCacheImageTag": "cta-5fe03553"
+    "dCacheImageTag": "cta-2fe4facc"
   },
   "packageGroups": {
     "group-ceph": [

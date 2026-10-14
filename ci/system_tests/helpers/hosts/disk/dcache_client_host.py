@@ -85,7 +85,8 @@ class DCacheClientHost(DiskClientHost):
         with Timeout(wait_timeout_secs) as timeout:
             while not timeout.expired:
                 response = self._namespace_info(path, throw_on_failure=False)
-                if response.get("status") == 404 and response.get("title") == "Not Found":
+                # dCache versions can encode the status as either a number or a string.
+                if str(response.get("status")) == "404" and response.get("title") == "Not Found":
                     print(f"dCache file {path} was removed")
                     return
                 time.sleep(0.1)
