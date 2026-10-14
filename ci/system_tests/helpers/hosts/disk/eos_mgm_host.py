@@ -10,28 +10,43 @@ from packaging.version import Version
 from typing_extensions import override
 
 from system_tests.helpers.connections.remote_connection import RemoteConnection
-from .disk_instance_host import DiskInstanceHost, DiskInstanceImplementation
+from .disk_instance_host import DiskInstanceHost
+from .eos_constants import EOS_ARCHIVE_GROUP, EOS_STORAGE_CLASS, EOS_WEBDAV_PORT
 
 
 class EosMgmHost(DiskInstanceHost):
     def __init__(self, conn: RemoteConnection) -> None:
         super().__init__(conn)
 
-    @cached_property
-    def implementation(self) -> DiskInstanceImplementation:
-        return DiskInstanceImplementation.EOS
-
-    @cached_property
+    @property
+    @override
     def instance_name(self) -> str:
+        return self._instance_name
+
+    # Cache the remote lookup behind the shared property interface.
+    @cached_property
+    def _instance_name(self) -> str:
         return self.exec_with_output("eos --json version | jq -r '.version[0].EOS_INSTANCE'")
 
-    @cached_property
+    @property
+    @override
     def base_dir_path(self) -> Path:
         return Path("/eos") / self.instance_name
 
-    @cached_property
+    @property
+    @override
+    def archive_group(self) -> str:
+        return EOS_ARCHIVE_GROUP
+
+    @property
+    @override
+    def storage_class(self) -> str:
+        return EOS_STORAGE_CLASS
+
+    @property
+    @override
     def webdav_url(self) -> str:
-        return f"https://{self.instance_name}:8443"
+        return f"https://{self.instance_name}:{EOS_WEBDAV_PORT}"
 
     @cached_property
     def eos_version(self) -> Version:

@@ -20,8 +20,9 @@ usage() {
   echo "options:"
   echo "  -h, --help:                             Shows help output."
   echo "  -n, --namespace <namespace>:            Specify the Kubernetes namespace."
-  echo "  -i, --dcache-image-tag <tag>:           The EOS Docker image tag."
-  echo "      --dcache-config <file>:             Values file to use for the dCache chart. Defaults to presets/dev-dcache-values.yaml."
+  echo "  -r, --dcache-image-repository <repo>:   The dCache Docker image repository."
+  echo "  -i, --dcache-image-tag <tag>:           The DCache Docker image tag."
+  echo "      --dcache-config <file>:             Optional values file overriding the dCache chart defaults."
   echo
   exit 1
 }
@@ -34,15 +35,15 @@ check_helm_installed() {
 }
 
 deploy() {
-  project_json_path="../../project.json"
-  dcache_chart_version=$(jq -r .dev.dCacheChartVersion ${project_json_path})
-
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
       -h | --help) usage ;;
       -n|--namespace)
         namespace="$2"
+        shift ;;
+      -r|--dcache-image-repository)
+        dcache_image_repository="$2"
         shift ;;
       -i|--dcache-image-tag)
         dcache_image_tag="$2"
@@ -66,35 +67,25 @@ deploy() {
   fi
 
 
-  helm_flags=""
+  helm_flags=()
+  if [[ -n "$dcache_image_repository" ]]; then
+    dcache_image_registry="${dcache_image_repository%%/*}"
+    dcache_image_name="${dcache_image_repository#*/}"
+    helm_flags+=(--set-string "dcache.image.registry=${dcache_image_registry}"
+                 --set-string "dcache.image.repository=${dcache_image_name}")
+  fi
   if [[ -n "$dcache_image_tag" ]]; then
-    helm_flags+=" --set image.tag=${dcache_image_tag}"
+    helm_flags+=(--set-string "dcache.image.tag=${dcache_image_tag}")
   fi
   if [[ -n "$dcache_config" ]]; then
-    helm_flags+=" --values ${dcache_config}"
+    helm_flags+=(--values "$dcache_config")
   fi
 
-  helm repo add bitnami https://charts.bitnami.com/bitnami
-  helm repo add dcache https://gitlab.desy.de/api/v4/projects/7648/packages/helm/test
-  helm repo update
-  log_run helm install -n ${namespace} chimera bitnami/postgresql \
-                                       --replace --wait --timeout 10m0s \
-                                       --set auth.username=dcache \
-                                       --set auth.password=let-me-in \
-                                       --set auth.database=chimera \
-                                       --version 12.12.10
-  log_run helm install -n ${namespace} cells bitnami/zookeeper \
-                                       --replace --wait --timeout 10m0s
-  log_run helm install -n ${namespace} billing bitnami/kafka \
-                                       --replace --wait --timeout 10m0s \
-                                       --set externalZookeeper.servers=cells-zookeeper \
-                                       --set kraft.enabled=false \
-                                       --version 23.0.7
-  log_run helm install -n ${namespace} store dcache/dcache --version ${dcache_chart_version} \
-                                       --replace --wait --timeout 10m0s \
-                                       --set dcache.hsm.enabled=true \
-                                       --values presets/dev-dcache-values.yaml \
-                                       ${helm_flags}
+  log_run helm dependency build helm/dcache
+  log_run helm upgrade --install store helm/dcache \
+                     --namespace "$namespace" \
+                     --wait --timeout 10m \
+                     "${helm_flags[@]}"
 }
 
 check_helm_installed

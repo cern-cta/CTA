@@ -50,75 +50,7 @@ spec:
   # Export all variables here so that it is clear which ones are available
   - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG CTA_VALUES_CHAIN EXTRA_SPAWN_ARGS
 
-
 .kubernetes-test:
-  needs:
-    - job: prepare-cta-version
-      artifacts: true
-      optional: true  # Existing-image pipelines do not prepare a build version.
-    - job: check-merge-train-duplicate
-      optional: true
-    - job: modify-project-json
-      optional: true
-    # Image jobs are optional because we may want run with existing docker images
-    - job: build-cta-images
-      optional: true
-      parallel:
-        matrix:
-          - TARGET_NAME: *cta-system-test-image-targets
-  rules:
-    - when: on_success
-  variables:
-    TEST_SCRIPT:
-    # Passed to the run_systemtest.sh script verbatim
-    EXTRA_RUN_ARGS: ""
-    # Passed to the create_instance.sh script verbatim
-    EXTRA_SPAWN_ARGS: ""
-    # Passed to the test script verbatim
-    EXTRA_TEST_ARGS: ""
-  before_script:
-    - !reference [.merge-train-guard, before_script]
-    - bash ./ci/checks/check_runner_healthy.sh
-    - *setup-k8s-test-variables
-  script:
-    - EXTRA_SPAWN_ARGS="--cta-config ${CTA_VALUES_CHAIN} --eos-config presets/eos/auth-$[[ inputs.workflow-api-authentication ]].yaml ${EXTRA_SPAWN_ARGS}"
-    # Keep the namespace name under 64 characters;
-    # Otherwise the eos mgm fqdn becomes too long and things start failing
-    - NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_JOB_ID}"
-    # Set up the additional arguments array to pass to the run_systemtest.sh script
-    - extra_args=($EXTRA_ARGS)
-    - if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
-    - if [[ -n "${EXTRA_TEST_ARGS}" ]];  then extra_args+=(--test-options "${EXTRA_TEST_ARGS}"); fi
-    # Run test
-    - cd ci/orchestration/
-    - ./run_systemtest.sh --namespace ${NAMESPACE}
-                          --cta-image-tag ${IMAGE_TAG}
-                          --cleanup-namespaces
-                          --keep-namespace
-                          --catalogue-config ${CATALOGUE_CONFIG}
-                          --scheduler-config ${SCHEDULER_CONFIG}
-                          --test-script ${TEST_SCRIPT}
-                          "${extra_args[@]}"
-                          ${EXTRA_RUN_ARGS}
-  after_script:
-    # Repeat the namespace declaration here as the after_script does not have access to previously exported variables
-    - NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_JOB_ID}"
-    # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
-    - cd ci/orchestration/
-    - ./delete_instance.sh --namespace ${NAMESPACE}
-                           --collect-logs "${CI_PROJECT_DIR}/test_logs/${NAMESPACE}/pods"
-                           --force-delete-cluster-resources
-  tags:  # Used to indicate that these jobs should run on our own runners
-    - kubernetes
-    - mhvtl
-  artifacts:
-    when: always
-    expire_in: 30 days
-    paths:
-      - test_logs
-
-# Once we have migrated everything to python, the above .kubernetes-test can be removed
-.kubernetes-test-python:
   needs:
     - job: prepare-cta-version
       artifacts: true
@@ -224,14 +156,14 @@ spec:
 
 test-client:
   extends:
-    - .kubernetes-test-python
+    - .kubernetes-test
   stage: system-test
   variables:
     PYTESTS: "tests/tape_rest_api_test.py tests/client_test.py"
 
 test-client-gfal2:
   extends:
-    - .kubernetes-test-python
+    - .kubernetes-test
   stage: system-test
   variables:
     PYTESTS: "tests/client_gfal_test.py"
@@ -240,20 +172,20 @@ test-client-gfal2:
 
 test-repack:
   extends:
-    - .kubernetes-test-python
+    - .kubernetes-test
   stage: system-test
   variables:
     PYTESTS: "tests/repack_test.py"
 
 test-cta-tools:
   extends:
-    - .kubernetes-test-python
+    - .kubernetes-test
   stage: system-test
   rules:
     # Currently we only test cta-admin here, so this is not really doing anything with the disk side
     - if: '$PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH" || $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"'
       when: never
-    - !reference [.kubernetes-test-python, rules]
+    - !reference [.kubernetes-test, rules]
   variables:
     PYTESTS: "tests/cta_admin_test.py tests/tape_tools_test.py tests/eos_restore_files_test.py"
     # We want to test cta-admin's behaviour on repack requests; not the actual repack itself
@@ -278,14 +210,14 @@ test-cta-tools:
 
 test-catalogue-schema-update:
   extends:
-    - .kubernetes-test-python
+    - .kubernetes-test
   stage: system-test
   rules:
     - !reference [.manual-rules, rules]
   variables:
     PYTESTS: "tests/catalogue_schema_update_test.py"
   before_script:
-    - !reference [.kubernetes-test-python, before_script]
+    - !reference [.kubernetes-test, before_script]
     - |
       if [[ "$(jq '.supportedCatalogueVersions | length' project.json)" -lt 2 ]]; then
         echo "We are not currently in a catalogue release. No update to test."
@@ -308,14 +240,14 @@ test-catalogue-schema-update:
 
 test-external-tape-formats:
   extends:
-    - .kubernetes-test-python
+    - .kubernetes-test
   stage: system-test
   rules:
     - !reference [.manual-rules, rules]
   variables:
     PYTESTS: "tests/external_tape_formats_test.py"
 
-test-regression-dCache:
+test-dcache:
   extends:
     - .kubernetes-test
   stage: system-test
@@ -327,9 +259,8 @@ test-regression-dCache:
     - if: '"$[[ inputs.enable-dcache-tests ]]" == "true"'
       when: on_success
   variables:
-    TEST_SCRIPT: "tests/test_regression_dCache.sh"
-    EXTRA_RUN_ARGS: "--test-timeout 2400 --skip-preflight"
-    EXTRA_SPAWN_ARGS: "--cta-config presets/dev-cta-grpc-values.yaml --dcache-enabled true --eos-enabled false"
+    PYTESTS: "tests/dcache_test.py"
+    EXTRA_SPAWN_ARGS: "--dcache-enabled true --eos-enabled false"
 
 # =========================================================================
 #  Stress Test
