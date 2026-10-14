@@ -16,7 +16,7 @@ Use [Service Runtime](service-runtime.md) for shared runtime settings and [Healt
 
 ## Telemetry
 
-For supported rmcd metrics and instructions to enable publishing, see [Monitoring metrics](../../run-and-maintain/monitoring/metrics.md#cta-rmcd).
+For supported rmcd metrics and instructions to enable publishing, see [Monitoring metrics](../../run-and-maintain/monitoring/metrics.md#declarative-configuration).
 Telemetry is experimental and disabled by default.
 
 ## Example configuration

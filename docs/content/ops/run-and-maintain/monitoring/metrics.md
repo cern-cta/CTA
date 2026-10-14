@@ -154,56 +154,31 @@ Once metrics publishing is enabled and the OpenTelemetry Collector is receiving 
     db_client_operation_duration_count
     ```
 
-### `cta-maintd`
+### Declarative configuration
 
-The maintenance daemon uses the OpenTelemetry declarative configuration format. This provides superior flexibility and robustness in comparison to implementing every option in the configuration of the service itself. To enable telemetry, set the following options:
-
-```toml
-[telemetry]
-  # Path to the declarative config file to initialise the OpenTelemetry SDK.
-  # If omitted or an empty string, telemetry will be disabled.
-  config_file = "/etc/cta/cta-otel.yaml"
-
-[experimental]
-  # false by default
-  telemetry_enabled = true
-```
-
-Then all configuration of OpenTelemetry is done through `/etc/cta/cta-otel.yaml`. There are various examples online of how to configure as it, but it is recommended to follow the bundled example file.
-
-???+ example "cta-otel.example.yaml"
-
-    ```yaml
-    --8<--
-    lib/telemetry/cta-otel.example.yaml
-    --8<--
-    ```
-
-### `cta-rmcd`
-
-The media changer daemon uses the OpenTelemetry declarative configuration format.
-Set the following options in `/etc/cta/cta-rmcd.toml`:
+`cta-maintd` and `cta-rmcd` use the same OpenTelemetry declarative configuration.
+Set the following options in each service's TOML configuration file:
 
 ```toml
 [telemetry]
   config_file = "/etc/cta/cta-otel.yaml"
-  # Log a warning and continue if initialization fails; use "fatal" to abort startup instead.
-  on_init_failure = "warn"
 
 [experimental]
   telemetry_enabled = true
 ```
 
 Both the experimental flag and a nonempty `telemetry.config_file` are required.
-Start with the bundled YAML in [Example configuration](#example-configuration), set `disabled: false`, and configure the metric reader's OTLP endpoint and authentication for your collector.
-The bundled example contains placeholder authentication; replace it or remove it if your collector does not require authentication.
-Set `service.namespace` for your deployment and retain `resource.attributes_list: "${CTA_OTEL_RESOURCE_ATTRIBUTES}"` to include the runtime's service and host identity.
-The runtime supplies `service.name=cta-rmcd` and generates a new `service.instance.id` on each startup, which creates new series after restarts when the backend preserves that identity.
+Initialization failures log a warning by default; set `telemetry.on_init_failure = "fatal"` to abort startup instead.
 
-Restart `cta-rmcd` after applying the configuration.
-After RMC requests are handled, check the collector for `cta.rmcd.request.duration` and, when SCSI commands are attempted, `cta.rmcd.scsi.command.duration`.
-Both durations are recorded in seconds, so configure histogram boundaries accordingly.
-See [Media Changer Daemon Configuration](../../deploy-and-configure/configuration/media-changer-daemon.md) for the complete service configuration.
+Configure `/etc/cta/cta-otel.yaml` using the bundled [example configuration](#example-configuration):
+
+- Set `disabled: false`.
+- Set the metric reader's OTLP endpoint and replace or remove the placeholder authentication.
+- Set `service.namespace` for your deployment and retain `resource.attributes_list: "${CTA_OTEL_RESOURCE_ATTRIBUTES}"` to include the runtime's service and host identity.
+
+The runtime generates a new `service.instance.id` on each startup, which creates new series after restarts when the backend preserves that identity.
+Restart the service after applying the configuration and check that metrics arrive after the service processes work.
+Configure histogram boundaries in each metric's unit, as listed in [Supported Metrics](#supported-metrics).
 
 ### `cta-taped`
 
