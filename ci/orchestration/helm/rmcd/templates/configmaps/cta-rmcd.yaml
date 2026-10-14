@@ -18,6 +18,10 @@ data:
       [logging.attributes]
         instance = {{ .Release.Namespace | quote }}
 
+    [telemetry]
+      config_file = "/etc/cta/cta-otel.yaml"
+      on_init_failure = "fatal"
+
     [health_server]
       enabled = true
       host = "0.0.0.0"
@@ -30,3 +34,6 @@ data:
     [rmc_server]
       port = {{ .Values.server.port }}
       listen_scope = {{ .Values.listenScope | quote }}
+
+    [experimental]
+      telemetry_enabled = true

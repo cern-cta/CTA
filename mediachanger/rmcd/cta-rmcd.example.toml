@@ -48,6 +48,20 @@
     instance = "production"
 
 
+# Note that telemetry is experimental and disabled by default.
+# To make use of this experimental feature, ensure telemetry is enabled under [experimental].
+[telemetry]
+  # Path to the declarative config file to initialise the OpenTelemetry SDK.
+  # If omitted or an empty string, telemetry will be disabled.
+  config_file = "/etc/cta/cta-otel.yaml"
+  # Controls how the application reacts if telemetry initialization fails.
+  # Possible values:
+  #   "warn": log a warning and continue startup without telemetry.
+  #   "fatal": treat the failure as an error and abort startup.
+  # If omitted, "warn" is used
+  on_init_failure = "warn"
+
+
 # Configuration for a health server. The health server, if enabled, will expose the following endpoints:
 # - host:port/health/ready
 # - host:port/health/live
@@ -70,3 +84,9 @@
   # Note that if use_unix_domain_socket is enabled, the service  MUST be started --runtime-dir <runtime-dir> flag.
   # If omitted, false is used.
   use_unix_domain_socket = false
+
+[experimental]
+  # Enables experimental OpenTelemetry support configured by [telemetry]. Experimental features may
+  # change incompatibly and should be evaluated before production use.
+  # If omitted, false is used.
+  telemetry_enabled = false

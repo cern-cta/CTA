@@ -322,6 +322,7 @@ Provides shared libraries and instrumentation for CTA telemetry.
 %{_libdir}/libctatelemetrymaintd.so.*
 %{_libdir}/libctatelemetryobjectstore.so.*
 %{_libdir}/libctatelemetryrdbms.so.*
+%{_libdir}/libctatelemetryrmcd.so.*
 %{_libdir}/libctatelemetryscheduler.so.*
 %{_libdir}/libctatelemetrytaped.so.*
 %doc %{_docdir}/cta/cta-otel.example.yaml
@@ -684,6 +685,7 @@ Provides unversioned linker names for developing applications with CTA shared li
 %{_libdir}/libctatelemetrymaintd.so
 %{_libdir}/libctatelemetryobjectstore.so
 %{_libdir}/libctatelemetryrdbms.so
+%{_libdir}/libctatelemetryrmcd.so
 %{_libdir}/libctatelemetryscheduler.so
 %{_libdir}/libctatelemetrytaped.so
 %{_libdir}/libctaruntime.so

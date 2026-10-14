@@ -46,17 +46,20 @@ struct RmcServerConfig final {
 
 struct RmcdConfig final {
   cta::runtime::LoggingConfig logging;
-  // cta::runtime::TelemetryConfig telemetry; // No telemetry for rmcd (yet?)
+  cta::runtime::TelemetryConfig telemetry;
   cta::runtime::HealthServerConfig health_server;
+  cta::runtime::ExperimentalConfig experimental;
   MediaChangerConfig media_changer;
   RmcServerConfig rmc_server;
 
-  static constexpr std::size_t memberCount() { return 4; }
+  static constexpr std::size_t memberCount() { return 6; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
     result.merge("logging", logging.validate());
+    result.merge("telemetry", telemetry.validate());
     result.merge("health_server", health_server.validate());
+    result.merge("experimental", experimental.validate());
     result.merge("media_changer", media_changer.validate());
     result.merge("rmc_server", rmc_server.validate());
     return result;
