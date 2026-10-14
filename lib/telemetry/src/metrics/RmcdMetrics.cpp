@@ -23,13 +23,13 @@ void initInstruments() {
 
   cta::telemetry::metrics::ctaRmcdRequestDuration =
     meter->CreateDoubleHistogram(cta::semconv::metrics::kMetricCtaRmcdRequestDuration,
-                                  cta::semconv::metrics::descrCtaRmcdRequestDuration,
-                                  cta::semconv::metrics::unitCtaRmcdRequestDuration);
+                                 cta::semconv::metrics::descrCtaRmcdRequestDuration,
+                                 cta::semconv::metrics::unitCtaRmcdRequestDuration);
 
   cta::telemetry::metrics::ctaRmcdScsiCommandDuration =
     meter->CreateDoubleHistogram(cta::semconv::metrics::kMetricCtaRmcdScsiCommandDuration,
-                                  cta::semconv::metrics::descrCtaRmcdScsiCommandDuration,
-                                  cta::semconv::metrics::unitCtaRmcdScsiCommandDuration);
+                                 cta::semconv::metrics::descrCtaRmcdScsiCommandDuration,
+                                 cta::semconv::metrics::unitCtaRmcdScsiCommandDuration);
 }
 
 // Register and run this init function at start time

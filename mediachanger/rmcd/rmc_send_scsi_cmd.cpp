@@ -11,13 +11,12 @@
 #include "scsictl.hpp"
 #include "telemetry/metrics/RmcdMetrics.hpp"
 
-#include <opentelemetry/context/runtime_context.h>
-
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <linux/version.h>
 #include <map>
+#include <opentelemetry/context/runtime_context.h>
 #include <scsi/sg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -145,17 +144,17 @@ static void find_sgpath(char* const sgpath, const int maj, const int min) {
 }
 
 static int rmc_send_scsi_cmd_impl(const int tapefd,
-                                const char* const path,
-                                const int do_not_open,
-                                const unsigned char* const cdb,
-                                const int cdblen,
-                                unsigned char* const buffer,
-                                const int buflen,
-                                char* const sense,
-                                const int senselen,
-                                const int flags,
-                                int* const nb_sense_ret,
-                                const char** const msgaddr) {
+                                  const char* const path,
+                                  const int do_not_open,
+                                  const unsigned char* const cdb,
+                                  const int cdblen,
+                                  unsigned char* const buffer,
+                                  const int buflen,
+                                  char* const sense,
+                                  const int senselen,
+                                  const int flags,
+                                  int* const nb_sense_ret,
+                                  const char** const msgaddr) {
   /* The timeout used when sending SCSI commands through the sg driver is in */
   /* milliseconds and should equal that used by the st driver which on the   */
   /* 28/01/2014 is 900 seconds and therefore 900000 milliseconds             */
@@ -412,8 +411,18 @@ int rmc_send_scsi_cmd(const int tapefd,
                       int* const nb_sense_ret,
                       const char** const msgaddr) {
   cta::utils::Timer timer;
-  const int rc = rmc_send_scsi_cmd_impl(
-    tapefd, path, do_not_open, cdb, cdblen, buffer, buflen, sense, senselen, flags, nb_sense_ret, msgaddr);
+  const int rc = rmc_send_scsi_cmd_impl(tapefd,
+                                        path,
+                                        do_not_open,
+                                        cdb,
+                                        cdblen,
+                                        buffer,
+                                        buflen,
+                                        sense,
+                                        senselen,
+                                        flags,
+                                        nb_sense_ret,
+                                        msgaddr);
   // Instrumentation must not change the error state observed by the caller.
   const int savedErrno = errno;
   const int savedSerrno = serrno;
@@ -425,8 +434,9 @@ int rmc_send_scsi_cmd(const int tapefd,
   if (rc < 0) {
     attributes.emplace(cta::semconv::attr::kErrorType, scsi_error_type(rc));
   }
-  cta::telemetry::metrics::ctaRmcdScsiCommandDuration->Record(
-    duration, attributes, opentelemetry::context::RuntimeContext::GetCurrent());
+  cta::telemetry::metrics::ctaRmcdScsiCommandDuration->Record(duration,
+                                                              attributes,
+                                                              opentelemetry::context::RuntimeContext::GetCurrent());
   serrno = savedSerrno;
   errno = savedErrno;
   return rc;

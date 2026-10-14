@@ -57,6 +57,8 @@ Resource attributes describe the entity that produced the telemetry (service/pro
 | `cta.taped.mount.type`                  | UpDownCounter | 1    | Number of drive sessions with the given mount type.                                         | `cta.taped.mount.type`                                              |
 | `cta.taped.drive.status`                | UpDownCounter | 1    | Number of drives in a given state.                                                          | `cta.taped.drive.state`                                             |
 | `cta.maintd.routine.duration`           | Histogram     | ms   | Duration to execute a routine of the given type.                                            | `cta.routine.name`                                                  |
+| `cta.rmcd.request.duration` | Histogram | s | Duration of an RMC request handler, including internal retries. | `rpc.method` <br> (`error.type`) |
+| `cta.rmcd.scsi.command.duration` | Histogram | s | Duration of one SCSI command attempt, including device setup, recorded for each successful or failed attempt. | `cta.rmcd.scsi.command.name` <br> (`error.type`) |
 
 ### Resource Attributes
 
@@ -88,10 +90,21 @@ Resource attributes describe the entity that produced the telemetry (service/pro
 | `db.namespace`                 | Database namespace (schema or logical grouping).                                                       |
 | `db.system.name`               | Name of the database system (e.g., `postgresql`, `oracle`).                                            |
 | `event.name`                   | Name of the event being tracked (e.g., frontend or scheduler event).                                   |
+| `rpc.method` | RMC request type: `RMC_MOUNT`, `RMC_UNMOUNT`, `RMC_EXPORT`, `RMC_IMPORT`, `RMC_GETGEOM`, `RMC_READELEM`, `RMC_FINDCART`, or `_OTHER`. |
+| `cta.rmcd.scsi.command.name` | SCSI command: `INQUIRY`, `MODE_SENSE`, `MOVE_MEDIUM`, `REQUEST_VOLUME_ELEMENT_ADDRESS`, `SEND_VOLUME_TAG`, `READ_ELEMENT_STATUS`, or `_OTHER`. |
 | `error.type`                   | Classification of an error that occurred (e.g., `network`, `timeout`, `permission_denied`).            |
-| `le`                           | Histogram bucket upper bound (“less than or equal” duration in ms).                                    |
+| `le`                           | Histogram bucket upper bound (“less than or equal”), in the exported metric’s unit.                                    |
 | `lock.type`                    | Type of lock being acquired in the object store or internal resource (e.g., `read`, `write`).          |
 | `state`                        | Operational or lifecycle state represented by the metric (e.g., `active`, `queued`, `failed`).         |
+
+#### RMCD error labels
+
+Both rmcd histograms omit `error.type` on success and use a bounded set of values on failure.
+The request histogram records the final handler status after internal retries.
+Known RMC statuses (`ERMCNACT`, `ERMCRBTERR`, `ERMCUNREC`, `ERMCSLOWR`, `ERMCFASTR`, `ERMCDFORCE`, `ERMCDDOWN`, `ERMCOMSGN`, `ERMCOMSGS`, `ERMCOMSGR`, and `ERMCUNLOAD`) and the busy-error forms `EBUSY` and `ERMCRBTERR + EBUSY` retain their decimal numeric strings.
+All other request error codes map to `_OTHER`, limiting this attribute to 14 possible values.
+The SCSI histogram uses `device_setup_failed`, `device_io_failed`, `cam_error`, `scsi_error`, `not_supported`, or `_OTHER` for each failed attempt.
+Unknown request types and SCSI commands also map to `_OTHER` in their operation attributes.
 
 ---
 
@@ -114,15 +127,16 @@ The collector can then export metrics to a time-series database such as Promethe
 CTA services expose metrics publishing as a configurable option.
 To enable OTLP metrics, set the appropriate configuration parameter in each service’s configuration file.
 
-At the time of writing, three services support publishing metrics:
+The following services support publishing metrics:
 
 - `cta-maintd`
+- `cta-rmcd`
 - `cta-taped`
 - `cta-frontend`
 
 !!! info
 
-    At the time of writing, all three of these have different configuration formats, which makes telemetry tedious to configure. Only `cta-maintd` currently supports the target configuration format (both for the service itself and for telemetry). The migration of the config formats for the frontend and taped will happen in the next few months, see [this GitLab Epic](http://gitlab.cern.ch/groups/cta/-/epics/32).
+    `cta-maintd` and `cta-rmcd` use TOML service configuration and OpenTelemetry declarative YAML configuration. The frontend and taped use their existing service-specific configuration formats; their migration is tracked in [this GitLab Epic](http://gitlab.cern.ch/groups/cta/-/epics/32).
 
 Once metrics publishing is enabled and the OpenTelemetry Collector is receiving data:
 
@@ -159,11 +173,37 @@ Then all configuration of OpenTelemetry is done through `/etc/cta/cta-otel.yaml`
 
 ???+ example "cta-otel.example.yaml"
 
-    ```toml
+    ```yaml
     --8<--
     lib/telemetry/cta-otel.example.yaml
     --8<--
     ```
+
+### `cta-rmcd`
+
+The media changer daemon uses the OpenTelemetry declarative configuration format.
+Set the following options in `/etc/cta/cta-rmcd.toml`:
+
+```toml
+[telemetry]
+  config_file = "/etc/cta/cta-otel.yaml"
+  # Log a warning and continue if initialization fails; use "fatal" to abort startup instead.
+  on_init_failure = "warn"
+
+[experimental]
+  telemetry_enabled = true
+```
+
+Both the experimental flag and a nonempty `telemetry.config_file` are required.
+Start with the bundled YAML in [Example configuration](#example-configuration), set `disabled: false`, and configure the metric reader's OTLP endpoint and authentication for your collector.
+The bundled example contains placeholder authentication; replace it or remove it if your collector does not require authentication.
+Set `service.namespace` for your deployment and retain `resource.attributes_list: "${CTA_OTEL_RESOURCE_ATTRIBUTES}"` to include the runtime's service and host identity.
+The runtime supplies `service.name=cta-rmcd` and generates a new `service.instance.id` on each startup, which creates new series after restarts when the backend preserves that identity.
+
+Restart `cta-rmcd` after applying the configuration.
+After RMC requests are handled, check the collector for `cta.rmcd.request.duration` and, when SCSI commands are attempted, `cta.rmcd.scsi.command.duration`.
+Both durations are recorded in seconds, so configure histogram boundaries accordingly.
+See [Media Changer Daemon Configuration](../../deploy-and-configure/configuration/media-changer-daemon.md) for the complete service configuration.
 
 ### `cta-taped`
 
