@@ -23,22 +23,27 @@ class DCacheHost(DiskInstanceHost):
         super().__init__(conn)
 
     @property
+    @override
     def instance_name(self) -> str:
         return DCACHE_INSTANCE_NAME
 
     @property
+    @override
     def base_dir_path(self) -> Path:
         return DCACHE_BASE_DIR
 
     @property
+    @override
     def archive_group(self) -> str:
         return DCACHE_ARCHIVE_GROUP
 
     @property
+    @override
     def storage_class(self) -> str:
         return DCACHE_STORAGE_CLASS
 
     @property
+    @override
     def webdav_url(self) -> str:
         return f"https://localhost:{DCACHE_WEBDAV_PORT}"
 

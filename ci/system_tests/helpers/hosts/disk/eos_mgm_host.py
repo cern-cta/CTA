@@ -18,23 +18,33 @@ class EosMgmHost(DiskInstanceHost):
     def __init__(self, conn: RemoteConnection) -> None:
         super().__init__(conn)
 
-    @cached_property
+    @property
+    @override
     def instance_name(self) -> str:
+        return self._instance_name
+
+    # Cache the remote lookup behind the shared property interface.
+    @cached_property
+    def _instance_name(self) -> str:
         return self.exec_with_output("eos --json version | jq -r '.version[0].EOS_INSTANCE'")
 
-    @cached_property
+    @property
+    @override
     def base_dir_path(self) -> Path:
         return Path("/eos") / self.instance_name
 
     @property
+    @override
     def archive_group(self) -> str:
         return EOS_ARCHIVE_GROUP
 
     @property
+    @override
     def storage_class(self) -> str:
         return EOS_STORAGE_CLASS
 
-    @cached_property
+    @property
+    @override
     def webdav_url(self) -> str:
         return f"https://{self.instance_name}:{EOS_WEBDAV_PORT}"
 
