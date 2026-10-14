@@ -153,7 +153,6 @@ create_instance() {
   # dCache
   dcache_image_repository=$(jq -r .dev.dCacheImageRepository ${project_json_path})
   dcache_image_tag=$(jq -r .dev.dCacheImageTag ${project_json_path})
-  dcache_config=presets/dev-dcache-values.yaml
   dcache_enabled=false
   # CTA chart timeout
   chart_install_timeout=5
@@ -379,7 +378,6 @@ create_instance() {
 
   if [[ $dcache_enabled == "true" ]]; then
     ./deploy_dcache.sh --namespace "${namespace}" \
-                       --dcache-config "${dcache_config}" \
                        --dcache-image-repository "${dcache_image_repository}" \
                        --dcache-image-tag "${dcache_image_tag}" &
     dcache_pid=$!

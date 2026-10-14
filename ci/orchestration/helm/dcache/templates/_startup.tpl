@@ -20,25 +20,6 @@ Keep init-host-certs last: the caller appends its certificate volume mount to th
                 echo "Waiting for the dCache database"
                 sleep 2
               done
-        - name: wait-for-zookeeper
-          image: busybox:1.37
-          command: [sh, -ec]
-          args:
-            - |
-              until nc -z -w 5 cells-zookeeper 2181; do
-                echo "Waiting for ZooKeeper"
-                sleep 2
-              done
-        - name: prepare-billing-topic
-          image: apache/kafka:3.9.1
-          command: [sh, -ec]
-          args:
-            - |
-              until /opt/kafka/bin/kafka-topics.sh --bootstrap-server billing-kafka:9092 \
-                --create --if-not-exists --topic billing --partitions 1 --replication-factor 1; do
-                echo "Waiting for the Kafka billing topic"
-                sleep 2
-              done
         - name: init-host-certs
           image: docker.io/dcache/ci-init-cert:1.2
           securityContext:

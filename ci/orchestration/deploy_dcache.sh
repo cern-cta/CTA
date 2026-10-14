@@ -22,7 +22,7 @@ usage() {
   echo "  -n, --namespace <namespace>:            Specify the Kubernetes namespace."
   echo "  -r, --dcache-image-repository <repo>:   The dCache Docker image repository."
   echo "  -i, --dcache-image-tag <tag>:           The DCache Docker image tag."
-  echo "      --dcache-config <file>:             Values file to use for the dCache chart. Defaults to presets/dev-dcache-values.yaml."
+  echo "      --dcache-config <file>:             Optional values file overriding the dCache chart defaults."
   echo
   exit 1
 }
@@ -85,7 +85,6 @@ deploy() {
   log_run helm upgrade --install store helm/dcache \
                      --namespace "$namespace" \
                      --wait --timeout 10m \
-                     --values presets/dev-dcache-values.yaml \
                      "${helm_flags[@]}"
 }
 
