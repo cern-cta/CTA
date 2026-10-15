@@ -115,7 +115,7 @@ def restore_files_tool(
 
     grpc_key = uuid.uuid4().hex
     keytab_file = Path(f"/tmp/cta-eos-restore-files-namespace-{uuid.uuid4().hex}.keytab")
-    keytab_entry = f"{disk_instance_name} http://{disk_instance_name}:{EOS_GRPC_PORT} {grpc_key}\n"
+    keytab_entry = f"{disk_instance_name} https://{disk_instance_name}:{EOS_GRPC_PORT} {grpc_key}\n"
 
     eos_mgm.exec(f"eos -r 0 0 vid set map -grpc key:{grpc_key} vuid:{EOS_GRPC_UID} vgid:{EOS_GRPC_GID}")
     eos_mgm.exec(f"eos -r 0 0 vid add gateway {shlex.quote(client_address)} grpc")
