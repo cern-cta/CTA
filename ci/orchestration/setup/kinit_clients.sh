@@ -44,12 +44,15 @@ if [[ -z "$NAMESPACE" ]]; then
   exit 1
 fi
 
-CLIENT_POD="cta-client-0"
 CTA_CLI_POD="cta-cli-0"
 
-# Set up kerberos
-echo "Running kinit for ${CTA_CLI_POD} and ${CLIENT_POD}"
+# CTA admin credentials are independent of the selected disk backend.
 kubectl --namespace "${NAMESPACE}" exec ${CTA_CLI_POD} -c cta-cli -- kinit -kt /root/ctaadmin1.keytab ctaadmin1@${KRB5_REALM}
 kubectl --namespace "${NAMESPACE}" exec ${CTA_CLI_POD} -c cta-cli -- klist
-kubectl --namespace "${NAMESPACE}" exec ${CLIENT_POD} -c client -- kinit -kt /root/user1.keytab user1@${KRB5_REALM}
-kubectl --namespace "${NAMESPACE}" exec ${CLIENT_POD} -c client -- klist
+
+# Only EOS clients use Kerberos; dCache clients use HTTP authentication.
+for client_pod in $(kubectl --namespace "${NAMESPACE}" get pods \
+  -l app.kubernetes.io/component=eos-client -o jsonpath='{.items[*].metadata.name}'); do
+  kubectl --namespace "${NAMESPACE}" exec "${client_pod}" -c client -- kinit -kt /root/user1.keytab user1@${KRB5_REALM}
+  kubectl --namespace "${NAMESPACE}" exec "${client_pod}" -c client -- klist
+done

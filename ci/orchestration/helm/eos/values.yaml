@@ -108,3 +108,28 @@ server:
 
     probes:
       liveness: false
+
+# The disk client belongs to this backend, independently of the CTA tools image.
+client:
+  enabled: true
+  replicas: 1
+  image:
+    # Empty repository/tag inherit server.global, including deployment CLI overrides.
+    repository: ""
+    tag: ""
+    pullPolicy: IfNotPresent
+    pullSecrets: []
+  users:
+    - user1
+    - eosadmin1
+    - poweruser1
+    - ctaadmin2
+  resources: {}
+  securityContext:
+    allowPrivilegeEscalation: false
+  pod:
+    extraSpec:
+      terminationGracePeriodSeconds: 1
+  extraEnv: []
+  extraVolumes: []
+  extraVolumeMounts: []

@@ -1,0 +1,127 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+{{- if .Values.client.enabled }}
+{{- $name := printf "%s-client" .Release.Name }}
+{{- $client := .Values.client }}
+{{- $image := printf "%s:%s" (default .Values.server.global.repository $client.image.repository) (required "Set server.global.tag or client.image.tag" (default .Values.server.global.tag $client.image.tag)) }}
+{{- $kerberos := .Values.server.mgm.kerberos }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    app.kubernetes.io/name: client
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: eos-client
+    app.kubernetes.io/part-of: eos
+spec:
+  # Avoid overlapping old and new clients while the init container refreshes Kerberos keys.
+  strategy:
+    type: Recreate
+  replicas: {{ $client.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: client
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: eos-client
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: client
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: eos-client
+        app.kubernetes.io/part-of: eos
+    spec:
+      automountServiceAccountToken: false
+      {{- with $client.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with $client.pod.extraSpec }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+      initContainers:
+      - name: init1-get-krb5-keytabs
+        image: {{ $image | quote }}
+        imagePullPolicy: {{ $client.image.pullPolicy }}
+        command: ["/bin/bash", "-ec"]
+        args:
+        - |
+          # Keep each user's keytab on a separate shared volume.
+          sukadmin() { printf '%s\n' {{ $kerberos.adminPrinc.password | squote }} | kadmin -r {{ $kerberos.defaultRealm | upper | quote }} -p {{ printf "%s/admin" $kerberos.adminPrinc.name | quote }} "$@"; }
+          {{- range $client.users }}
+          sukadmin addprinc -randkey {{ . | quote }}
+          sukadmin ktadd -k /root/{{ . }}_keytab/output/{{ . }}.keytab {{ . | quote }}
+          {{- end }}
+        volumeMounts:
+        - name: krb5-conf
+          mountPath: /etc/krb5.conf
+          subPath: krb5.conf
+        {{- range $client.users }}
+        - name: {{ . }}-keytab
+          mountPath: /root/{{ . }}_keytab/output
+        {{- end }}
+      containers:
+      - name: client
+        image: {{ $image | quote }}
+        imagePullPolicy: {{ $client.image.pullPolicy }}
+        stdin: true
+        # Exit promptly on pod deletion while keeping the client available for kubectl exec.
+        command: ["/bin/sh", "-c", "trap : TERM INT; sleep infinity & wait"]
+        securityContext:
+          {{- toYaml $client.securityContext | nindent 10 }}
+        {{- with $client.resources }}
+        resources:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        env:
+        - name: MY_NAME
+          value: {{ $name }}
+        - name: MY_NAMESPACE
+          value: {{ .Release.Namespace | quote }}
+        - name: INSTANCE_NAME
+          value: {{ .Release.Namespace | quote }}
+        - name: TERM
+          value: xterm
+        {{- with $client.extraEnv }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        volumeMounts:
+        - name: xrootd-client-conf
+          mountPath: /etc/xrootd/client.conf
+          subPath: client.conf
+        - name: krb5-conf
+          mountPath: /etc/krb5.conf
+          subPath: krb5.conf
+        {{- range $client.users }}
+        - name: {{ . }}-keytab
+          mountPath: /root/{{ . }}.keytab
+          subPath: {{ . }}.keytab
+        {{- end }}
+        {{- with $client.extraVolumeMounts }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      volumes:
+      - name: xrootd-client-conf
+        configMap:
+          name: {{ $name }}-xrootd
+      - name: krb5-conf
+        configMap:
+          name: {{ $kerberos.clientConfig.configMap }}
+      {{- range $client.users }}
+      - name: {{ . }}-keytab
+        emptyDir: {}
+      {{- end }}
+      {{- with $client.extraVolumes }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}-xrootd
+data:
+  client.conf: |-
+    XrdSecPROTOCOL=krb5,unix
+{{- end }}

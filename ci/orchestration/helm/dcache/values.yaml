@@ -60,3 +60,23 @@ dcache:
     - name: dcache-client-key
       secret:
         secretName: dcache-self-signed-key-pem
+
+# The disk client belongs to this backend, independently of the CTA tools image.
+client:
+  enabled: true
+  replicas: 1
+  image:
+    # Reuse the CERN AlmaLinux base image used by the CI build and test images.
+    repository: gitlab-registry.cern.ch/linuxsupport/alma9-base
+    tag: latest
+    pullPolicy: IfNotPresent
+    pullSecrets: []
+  resources: {}
+  securityContext:
+    allowPrivilegeEscalation: false
+  pod:
+    extraSpec:
+      terminationGracePeriodSeconds: 1
+  extraEnv: []
+  extraVolumes: []
+  extraVolumeMounts: []

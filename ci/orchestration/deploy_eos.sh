@@ -87,7 +87,8 @@ deploy() {
     helm_flags+=(--set-string "server.global.tag=${eos_image_tag}")
   fi
 
-  log_run helm dependency build helm/eos
+  # The pinned OCI dependency does not need HTTP repository index refreshes.
+  log_run helm dependency build helm/eos --skip-refresh
   log_run helm upgrade --install eos helm/eos \
                       --namespace "$namespace" \
                       --wait --timeout 5m \
