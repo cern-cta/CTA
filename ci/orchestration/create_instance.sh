@@ -22,7 +22,6 @@ usage() {
   echo "  -O, --reset-scheduler:              Reset scheduler content during initialization phase. Defaults to false."
   echo "  -D, --reset-catalogue:              Reset catalogue content during initialization phase. Defaults to false."
   echo "      --max-drives <n>:               If no tapeservers-config is provided, this will specifiy how many drives to use in the deployment."
-  echo "      --no-setup:                     Skip the setup scripts for EOS and tape resets."
   echo "      --eos-image-tag <tag>:          Docker image tag for the EOS chart."
   echo "      --eos-image-repository <repo>:  Docker image for EOS chart. Should be the full image name, e.g. \"gitlab-registry.cern.ch/dss/eos/eos-ci\"."
   echo "      --eos-config <file>:            Values file to use for the EOS chart."
@@ -136,7 +135,6 @@ create_instance() {
   # default should not make user loose data if he forgot the option
   reset_catalogue=false
   reset_scheduler=false
-  setup_enabled=true
   cta_image_registry=$(jq -r .dev.ctaImageRegistry ${project_json_path})
   max_drives=2
   # EOS related
@@ -184,7 +182,6 @@ create_instance() {
         shift ;;
       -O|--reset-scheduler) reset_scheduler=true ;;
       -D|--reset-catalogue) reset_catalogue=true ;;
-      --no-setup) setup_enabled=false ;;
       --local-telemetry) local_telemetry=true ;;
       --eos-config)
         eos_config="$2"
@@ -365,8 +362,7 @@ create_instance() {
     ./deploy_eos.sh --namespace "${namespace}" \
                     --eos-config "${eos_config}" \
                     --eos-image-repository "${eos_image_repository}" \
-                    --eos-image-tag "${eos_image_tag}" \
-                    --setup-enabled "${setup_enabled}" &
+                    --eos-image-tag "${eos_image_tag}" &
     eos_pid=$!
   fi
 
@@ -421,11 +417,6 @@ create_instance() {
   fi
   if [[ $dcache_enabled == "true" ]]; then
     wait $dcache_pid || exit 1
-  fi
-
-  if [[ "$setup_enabled" == "true" ]]; then
-    ./setup/reset_tapes.sh -n "${namespace}"
-    ./setup/kinit_clients.sh -n "${namespace}"
   fi
 
   echo

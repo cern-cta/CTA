@@ -131,12 +131,7 @@ upgrade_instance() {
 
 }
 
-setup_system() {
-  ./setup/init_kerberos.sh -n ${namespace}
-}
-
 check_helm_installed
 upgrade_instance "$@"
-setup_system
 echo "CTA instance in ${namespace} successfully upgraded:"
 kubectl --namespace ${namespace} get pods
