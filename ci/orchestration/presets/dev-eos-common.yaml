@@ -72,6 +72,11 @@ mgm:
   extraEnv:
     EOS_USE_MQ_ON_QDB: "1"
     EOS_HA_REDIRECT_READS: "1"
+    # Serve namespace gRPC over TLS using the existing CI certificate and key authentication.
+    EOS_MGM_GRPC_SSL_CERT: "/etc/grid-security/certificates/ctaeos-self-signed.crt.pem"
+    EOS_MGM_GRPC_SSL_KEY: "/etc/grid-security/certificates/ctaeos-self-signed.key.pem"
+    EOS_MGM_GRPC_SSL_CA: "/etc/grid-security/certificates/ca.crt.pem"
+    EOS_MGM_GRPC_DONT_REQUEST_CLIENT_CERTIFICATE: "1"
     SCITOKEN_CONFIG_TLS_CA_FILE: "/etc/grid-security/certificates/ca.crt.pem"
     # For some reason EOS is on another time zone, so set this to CET
     TZ: "CET"
