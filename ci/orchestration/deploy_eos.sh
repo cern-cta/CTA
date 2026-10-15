@@ -41,8 +41,6 @@ check_helm_installed() {
 }
 
 deploy() {
-  project_json_path="../../project.json"
-  eos_server_chart_version=$(jq -r .dev.eosServerChartVersion ${project_json_path})
   setup_enabled=true
   eos_config="presets/eos/auth-jwt.yaml"
 
@@ -81,22 +79,19 @@ deploy() {
   fi
 
 
-  helm_flags=""
+  helm_flags=(--values "$eos_config")
   if [[ -n "$eos_image_repository" ]]; then
-    helm_flags+=" --set global.repository=${eos_image_repository}"
+    helm_flags+=(--set-string "server.global.repository=${eos_image_repository}")
   fi
   if [[ -n "$eos_image_tag" ]]; then
-    helm_flags+=" --set global.tag=${eos_image_tag}"
-  fi
-  if [[ -n "$eos_image_tag" ]]; then
-    helm_flags+=" --values presets/dev-eos-common.yaml --values ${eos_config}"
+    helm_flags+=(--set-string "server.global.tag=${eos_image_tag}")
   fi
 
-  log_run helm upgrade --install eos oci://registry.cern.ch/eos/charts/server --version ${eos_server_chart_version} \
-                      --namespace ${namespace} \
+  log_run helm dependency build helm/eos
+  log_run helm upgrade --install eos helm/eos \
+                      --namespace "$namespace" \
                       --wait --timeout 5m \
-                      --reuse-values \
-                      ${helm_flags}
+                      "${helm_flags[@]}"
 
   if [[ "$setup_enabled" == "true" ]]; then
     EOS_MGM_POD=eos-mgm-0

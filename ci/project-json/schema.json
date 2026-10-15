@@ -51,7 +51,6 @@
       "required": [
         "cppVersion",
         "defaultBuildType",
-        "eosServerChartVersion",
         "eosImageTag",
         "eosImageRepository",
         "ctaImageRegistry",
@@ -78,11 +77,6 @@
             "RelWithDebInfo",
             "MinSizeRel"
           ]
-        },
-        "eosServerChartVersion": {
-          "description": "Version of the EOS server Helm chart to use in CI.",
-          "type": "string",
-          "minLength": 1
         },
         "eosImageRepository": {
           "description": "EOS image repository to use in CI.",

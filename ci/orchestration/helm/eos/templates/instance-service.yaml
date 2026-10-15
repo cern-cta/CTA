@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Ensure the MGM is addressable by its instance name.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "mgm.instancename" .Subcharts.server | quote }}
+spec:
+  type: ExternalName
+  externalName: {{ include "utils.mgm_address" .Subcharts.server | quote }}
