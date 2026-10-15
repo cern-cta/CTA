@@ -1,124 +1,126 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-mgm:
-  xrd:
-    # Connect stress traffic to the CTA workflow frontend using the deployment credentials.
-    extraConfig: |
-      xrootd.chksum  adler32
-      mgmofs.archivedir /var/eos/archive
-      mgmofs.prepare.dest.space default
-      mgmofs.tapeenabled true
-      mgmofs.wfendpoint grpcs://cta-frontend-wfe:10956
-      mgmofs.wfjwttokenpath /etc/cta/ctaeos.jwt
-      tpc.trace  all
-      tpc.header2cgi  ArchiveMetadata archivemetadata
-      taperestapi.sitename  cern-tape-archive-{{ include "mgm.instancename" . }}
+# Values for the upstream EOS server dependency.
+server:
+  mgm:
+    xrd:
+      # Connect stress traffic to the CTA workflow frontend using the deployment credentials.
+      extraConfig: |
+        xrootd.chksum  adler32
+        mgmofs.archivedir /var/eos/archive
+        mgmofs.prepare.dest.space default
+        mgmofs.tapeenabled true
+        mgmofs.wfendpoint grpcs://cta-frontend-wfe:10956
+        mgmofs.wfjwttokenpath /etc/cta/ctaeos.jwt
+        tpc.trace  all
+        tpc.header2cgi  ArchiveMetadata archivemetadata
+        taperestapi.sitename  cern-tape-archive-{{ include "mgm.instancename" . }}
 
-      # TODO: remove this once the EOS PR gets merged
-      mgmofs.protowfusegrpc true
-      mgmofs.protowfusegrpctls true
-      mgmofs.protowfendpoint cta-frontend-wfe:10956
-      mgmofs.protowfresource /ctafrontend
-      mgmofs.jwttokenpath /etc/cta/ctaeos.jwt
-      # END
+        # TODO: remove this once the EOS PR gets merged
+        mgmofs.protowfusegrpc true
+        mgmofs.protowfusegrpctls true
+        mgmofs.protowfendpoint cta-frontend-wfe:10956
+        mgmofs.protowfresource /ctafrontend
+        mgmofs.jwttokenpath /etc/cta/ctaeos.jwt
+        # END
 
-  # Prepare certificates and trust material for authenticated TLS communication in the test instance.
-  initContainer: &init-container
-    enabled: true
-    script: |
-      #!/usr/bin/bash
-      /mkcert-ssl.sh
-      chown -R daemon:daemon /etc/grid-security/certificates
-      cp /etc/grpc-certs/ca.crt.pem /etc/grid-security/certificates
-      cp /etc/grpc-certs-client/ctaeos-self-signed.crt.pem /etc/grid-security/certificates/
-      cp /etc/grpc-certs-client/ctaeos-self-signed.key.pem /etc/grid-security/certificates/
-      chmod 0600 /etc/grid-security/certificates/ctaeos-self-signed.key.pem
-      chown daemon:daemon /etc/grid-security/certificates/ctaeos-self-signed.{key,crt}.pem
+    # Prepare certificates and trust material for authenticated TLS communication in the test instance.
+    initContainer: &init-container
+      enabled: true
+      script: |
+        #!/usr/bin/bash
+        /mkcert-ssl.sh
+        chown -R daemon:daemon /etc/grid-security/certificates
+        cp /etc/grpc-certs/ca.crt.pem /etc/grid-security/certificates
+        cp /etc/grpc-certs-client/ctaeos-self-signed.crt.pem /etc/grid-security/certificates/
+        cp /etc/grpc-certs-client/ctaeos-self-signed.key.pem /etc/grid-security/certificates/
+        chmod 0600 /etc/grid-security/certificates/ctaeos-self-signed.key.pem
+        chown daemon:daemon /etc/grid-security/certificates/ctaeos-self-signed.{key,crt}.pem
 
-    volumeMounts:
-      - name: grid-security
-        mountPath: /etc/grid-security
-      - name: grpc-certs
-        mountPath: /etc/grpc-certs
-      - name: ctaeos-self-signed-crt
-        mountPath: /etc/grpc-certs-client/ctaeos-self-signed.crt.pem
-        subPath: ctaeos-self-signed.crt.pem
-      - name: ctaeos-self-signed-key
-        mountPath: /etc/grpc-certs-client/ctaeos-self-signed.key.pem
-        subPath: ctaeos-self-signed.key.pem
+      volumeMounts:
+        - name: grid-security
+          mountPath: /etc/grid-security
+        - name: grpc-certs
+          mountPath: /etc/grpc-certs
+        - name: ctaeos-self-signed-crt
+          mountPath: /etc/grpc-certs-client/ctaeos-self-signed.crt.pem
+          subPath: ctaeos-self-signed.crt.pem
+        - name: ctaeos-self-signed-key
+          mountPath: /etc/grpc-certs-client/ctaeos-self-signed.key.pem
+          subPath: ctaeos-self-signed.key.pem
 
-  # Share credentials and retain core dumps for post-run investigation.
-  extraVolumes: &extra-volumes
-    volumeMounts:
-      # varlog-tmp is the location where core dumps will end up
-      - name: varlog-tmp
-        mountPath: /var/log/tmp
-      - name: grid-security
-        mountPath: /etc/grid-security
-        readOnly: true
-      - name: ctaeos-jwt
-        mountPath: /etc/cta
-        readOnly: true
-    volumes:
-      - name: varlog-tmp
-        emptyDir: {}
-      - name: grid-security
-        emptyDir: {}
-      - name: grpc-certs
-        secret:
-          secretName: ca-crt-pem
-      - name: ctaeos-jwt
-        secret:
-          secretName: ctaeos-jwt
-      - name: ctaeos-self-signed-crt
-        secret:
-          secretName: ctaeos-self-signed-crt-pem
-      - name: ctaeos-self-signed-key
-        secret:
-          secretName: ctaeos-self-signed-key-pem
+    # Share credentials and retain core dumps for post-run investigation.
+    extraVolumes: &extra-volumes
+      volumeMounts:
+        # varlog-tmp is the location where core dumps will end up
+        - name: varlog-tmp
+          mountPath: /var/log/tmp
+        - name: grid-security
+          mountPath: /etc/grid-security
+          readOnly: true
+        - name: ctaeos-jwt
+          mountPath: /etc/cta
+          readOnly: true
+      volumes:
+        - name: varlog-tmp
+          emptyDir: {}
+        - name: grid-security
+          emptyDir: {}
+        - name: grpc-certs
+          secret:
+            secretName: ca-crt-pem
+        - name: ctaeos-jwt
+          secret:
+            secretName: ctaeos-jwt
+        - name: ctaeos-self-signed-crt
+          secret:
+            secretName: ctaeos-self-signed-crt-pem
+        - name: ctaeos-self-signed-key
+          secret:
+            secretName: ctaeos-self-signed-key-pem
 
-fst:
-  # Start FST replicas together to reduce setup time.
-  podManagementPolicy: Parallel
+  fst:
+    # Start FST replicas together to reduce setup time.
+    podManagementPolicy: Parallel
 
-  persistence:
-    enabled: true
-    # Reduce disk latency so host storage is less likely to limit measured throughput.
-    storageClass: "fast-ssd"
-    annotations: {}
-    accessModes:
-      - ReadWriteOnce
-    size: 40Gi
+    persistence:
+      enabled: true
+      # Reduce disk latency so host storage is less likely to limit measured throughput.
+      storageClass: "fast-ssd"
+      annotations: {}
+      accessModes:
+        - ReadWriteOnce
+      size: 40Gi
 
-  xrd:
-    # Increase FST concurrency to serve many simultaneous small-file requests.
-    sched: "mint 16 maxt 512 idle 64"
-    # Connect stress traffic to the CTA workflow frontend using the deployment credentials.
-    extraConfig: |
-      xrootd.redirect {{ include "utils.mgm_address" . }}:1094 chksum
-      fstofs.wfendpoint grpcs://cta-frontend-wfe:10956
-      fstofs.filemd_handler  attr
-      fstofs.wfjwttokenpath /etc/cta/ctaeos.jwt
-      tpc.trace  all
+    xrd:
+      # Increase FST concurrency to serve many simultaneous small-file requests.
+      sched: "mint 16 maxt 512 idle 64"
+      # Connect stress traffic to the CTA workflow frontend using the deployment credentials.
+      extraConfig: |
+        xrootd.redirect {{ include "utils.mgm_address" . }}:1094 chksum
+        fstofs.wfendpoint grpcs://cta-frontend-wfe:10956
+        fstofs.filemd_handler  attr
+        fstofs.wfjwttokenpath /etc/cta/ctaeos.jwt
+        tpc.trace  all
 
-      # TODO: remove this once the EOS PR gets merged
-      fstofs.protowfusegrpc true
-      fstofs.protowfusegrpctls true
-      fstofs.protowfendpoint cta-frontend-wfe:10956
-      fstofs.protowfresource /ctafrontend
-      fstofs.jwttokenpath /etc/cta/ctaeos.jwt
-      # END
+        # TODO: remove this once the EOS PR gets merged
+        fstofs.protowfusegrpc true
+        fstofs.protowfusegrpctls true
+        fstofs.protowfendpoint cta-frontend-wfe:10956
+        fstofs.protowfresource /ctafrontend
+        fstofs.jwttokenpath /etc/cta/ctaeos.jwt
+        # END
 
-  initContainer: *init-container
-  extraVolumes: *extra-volumes
+    initContainer: *init-container
+    extraVolumes: *extra-volumes
 
-qdb:
-  persistence:
-    enabled: true
-    # Reduce disk latency so host storage is less likely to limit measured throughput.
-    storageClass: "fast-ssd"
-    annotations: {}
-    accessModes:
-      - ReadWriteOnce
-    size: 40Gi
+  qdb:
+    persistence:
+      enabled: true
+      # Reduce disk latency so host storage is less likely to limit measured throughput.
+      storageClass: "fast-ssd"
+      annotations: {}
+      accessModes:
+        - ReadWriteOnce
+      size: 40Gi
