@@ -15,27 +15,58 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Use the same base image as the GitLab CI for building
+  # We grab the tag from .gitlab-ci.yml
+  build-image:
+    name: Resolve GitLab build image
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Read shared image version and platform
+        id: image
+        shell: python
+        run: |
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          config = Path('.gitlab-ci.yml').read_text()
+          versions = re.findall(r'^  PIPELINE_IMAGE_VERSION: "([^"]+)"$', config, re.MULTILINE)
+          if len(versions) != 1:
+              raise SystemExit('Expected exactly one PIPELINE_IMAGE_VERSION in .gitlab-ci.yml')
+          platform = json.loads(Path('project.json').read_text())['dev']['defaultPlatform']
+          image = f'gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:{versions[0]}.{platform}'
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              print(f'image={image}', file=output)
+
   build:
     name: Sonar Source Analysis
+    needs: build-image
     runs-on: ubuntu-latest
     container:
-      image: almalinux:9
+      # Use the image we just found
+      image: ${{ needs.build-image.outputs.image }}
 
     defaults:
       run:
         shell: bash
 
     env:
+      # GitHub overrides HOME; use the toolchain installed in the build image.
+      CARGO_HOME: /root/.cargo
+      RUSTUP_HOME: /root/.rustup
       SCHEDULER_TYPE: objectstore
       ENABLE_ORACLE_SUPPORT: "TRUE"
       BUILD_WRAPPER_OUT_DIR: build_wrapper_output_directory  # Directory where build-wrapper output will be placed
 
     steps:
-      - name: Install dependencies
+      - name: Install analysis dependencies
         run: |
-          dnf -y update
-          dnf -y install epel-release almalinux-release-devel python3-dnf-plugin-versionlock jq
-          dnf -y --enablerepo=crb install git gcc gcc-c++ cmake3 make rpm-build dnf-utils unzip nodejs ninja-build
+          dnf -y install jq unzip nodejs
+          echo "$CARGO_HOME/bin" >> "$GITHUB_PATH"
 
       - name: Download CTA
         uses: actions/checkout@v6
