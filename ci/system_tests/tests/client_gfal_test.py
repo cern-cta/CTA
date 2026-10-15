@@ -154,7 +154,7 @@ def _delete_gfal(eos_client: EosClientHost, instance: str, batch: GfalBatch, par
 
 
 def test_setup_client_gfal_xrootd(eos_client: EosClientHost) -> None:
-    eos_client.exec("microdnf install -y python3-gfal2-util gfal2-plugin-xrootd")
+    eos_client.exec("dnf install -y python3-gfal2-util gfal2-plugin-xrootd")
 
 
 def test_archive_gfal_xrootd(
