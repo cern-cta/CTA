@@ -226,14 +226,11 @@ struct TapedConfiguration {
   /** Enables StressDrive and NullMediaChangerFacade in place of real hardware. */
   cta::SourcedParameter<bool> stressMode {"taped", "StressMode", false, "Compile time default"};
 
-  /** Root of the tmpfs tape library shared across drives (e.g. /dev/shm/cta-stress). */
+  /** Root of the shared volume tape library (e.g. /dev/shm/cta-stress). */
   cta::SourcedParameter<std::string> stressBaseDir {"taped",
                                                     "StressBaseDir",
                                                     "/dev/shm/cta-stress",
                                                     "Compile time default"};
-
-  /** Milliseconds to sleep in waitUntilReady() to simulate tape-load latency. */
-  cta::SourcedParameter<uint32_t> stressMountDelayMs {"taped", "StressMountDelayMs", 0, "Compile time default"};
 
   //----------------------------------------------------------------------------
   // RMC Connection Options

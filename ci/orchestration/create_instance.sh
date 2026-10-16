@@ -34,7 +34,7 @@ usage() {
   echo "      --local-telemetry:              Spawns an OpenTelemetry and Collector and Prometheus scraper. Changes the default cta-config to presets/dev-cta-telemetry-values.yaml"
   echo "      --publish-telemetry:            Publishes telemetry to a pre-configured central observability backend. See presets/ci-cta-telemetry-values.yaml"
   echo "      --extra-cta-values:             Extra verbatim values for the CTA chart. These will override any previous values from files."
-  echo "      --no-hardware-drives:           Skip mhvtl/SCSI drive detection entirely.  Use this when --cta-config already defines drives (e.g. stress-drive mode)."
+  echo "      --no-hardware-drives:           Use virtual stress drives instead of mhvtl/SCSI hardware.  Deploys the fake-tape-library chart and generates a drive list from --max-drives."
   exit 1
 }
 
@@ -49,76 +49,12 @@ check_deploy_commands() {
   (( errors == 0 )) || die "Deployment requirements are not satisfied."
 }
 
-label_stress_node() {
-  # If the user already labelled a node manually, respect that and skip.
-  local already_labelled
-  already_labelled=$(kubectl get nodes -l cta-stress-node=true \
-    -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
-  if [[ -n "${already_labelled}" ]]; then
-    log_task "Node ${already_labelled} already has cta-stress-node=true; skipping auto-labelling."
-    # Always record the node name — needed by mount_stress_tmpfs and delete_instance.sh
-    # regardless of whether this run or a previous one applied the label.
-    echo "${already_labelled}" > "/tmp/${namespace}-stress-node.txt"
-    return
-  fi
-  # Pick the first available node.
-  local node
-  node=$(kubectl get nodes --no-headers -o custom-columns=':metadata.name' | head -1)
-  [[ -n "${node}" ]] || die "No Kubernetes nodes found to label for stress-drive scheduling."
-  log_task "Labelling node ${node} with cta-stress-node=true for stress-drive pod scheduling..."
-  kubectl label node "${node}" cta-stress-node=true
-  # Record the node so delete_instance.sh can remove the label and unmount the tmpfs on cleanup.
-  echo "${node}" > "/tmp/${namespace}-stress-node.txt"
-  log_success "Node ${node} labelled."
-}
-
-# Verify that the dedicated stress-drive tmpfs has been mounted on the host.
-#
-# ─── MANUAL PREREQUISITE ────────────────────────────────────────────────────
-#
-# This script does not mount the tmpfs itself because it does not run as root.
-# A system administrator MUST run the following command on the stress node AS
-# ROOT before deploying the stress-drive test, and once again after a reboot:
-#
-#   mount -t tmpfs \
-#     -o size=20g,nr_inodes=4096,noatime,huge=within_size \
-#     tmpfs /dev/shm/cta-stress
-#
-#   # If the kernel does not support huge=within_size, omit that option:
-#   mount -t tmpfs -o size=20g,nr_inodes=4096,noatime tmpfs /dev/shm/cta-stress
-#
-#   chmod 1777 /dev/shm/cta-stress
-#
-# To make the mount survive reboots add a line to /etc/fstab on the node:
-#   tmpfs  /dev/shm/cta-stress  tmpfs  size=20g,nr_inodes=4096,noatime,huge=within_size  0  0
-#
-# To tear down after the test (also as root):
-#   umount /dev/shm/cta-stress
-#
-# Mount option rationale:
-#   size=20g          10 M files × ~656 B/file across 20 tapes ≈ 6.6 GB data;
-#                     × 2 for atomic save (tape.bin + tape.bin.tmp coexist on
-#                     every dismount) ≈ 13 GB; 20 GB cap gives headroom.
-#   nr_inodes=4096    ~100 inodes needed; explicit cap prevents the kernel from
-#                     auto-sizing the table to RAM/4096 (~8 MB wasted metadata).
-#   noatime           Skip in-memory atime updates on tape.bin reads.
-#   huge=within_size  Use 2 MB transparent huge pages for tape.bin files once
-#                     they exceed 2 MB, reducing TLB pressure on the sequential
-#                     serialise/deserialise pass at each mount/dismount.
-#
-# ────────────────────────────────────────────────────────────────────────────
-mount_stress_tmpfs() {
-  local base_dir="/dev/shm/cta-stress"
-
-  if ! mountpoint -q "${base_dir}" 2>/dev/null; then
-    die "Stress-drive tmpfs is not mounted at ${base_dir}." \
-        "Run the following as root on the stress node before deploying:" \
-        "  mount -t tmpfs -o size=20g,nr_inodes=4096,noatime,huge=within_size tmpfs ${base_dir}" \
-        "  chmod 1777 ${base_dir}" \
-        "See the comment above mount_stress_tmpfs() in create_instance.sh for full details."
-  fi
-
-  log_success "Stress-drive tmpfs is mounted at ${base_dir}."
+deploy_fake_tape_library() {
+  log_task "Deploying fake-tape-library chart (PVC + directory layout + library.conf)..."
+  helm upgrade --install fake-tape-library helm/fake-tape-library \
+    --namespace "${namespace}" \
+    --wait --wait-for-jobs --timeout 2m
+  log_success "fake-tape-library chart deployed."
 }
 
 generate_stress_drive_values() {
@@ -362,9 +298,8 @@ create_instance() {
   taped_config=""
   rmcd_config=""
   if [[ "${no_hardware_drives}" == "true" ]]; then
-    # Stress-drive mode: generate drive list from --max-drives; no rmcd config needed.
-    label_stress_node
-    mount_stress_tmpfs
+    # Stress-drive mode: deploy the fake-tape-library PVC, then generate the drive list.
+    deploy_fake_tape_library
     generate_stress_drive_values
   else
     generate_tape_values_files

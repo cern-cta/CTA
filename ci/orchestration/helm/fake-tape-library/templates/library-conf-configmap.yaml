@@ -1,0 +1,22 @@
+{{- /*
+SPDX-FileCopyrightText: 2026 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-library-conf
+data:
+  library.toml: |
+    [library]
+    name             = {{ .Values.library.name | quote }}
+    changerTimeoutMs = {{ .Values.library.changerTimeoutMs }}
+    {{- range .Values.library.mediaTypes }}
+
+    [[library.mediaTypes]]
+    name          = {{ .name | quote }}
+    capacityBytes = {{ .capacityBytes }}
+    vidPrefix     = {{ .vidPrefix | quote }}
+    mountDelayMs  = {{ .mountDelayMs }}
+    count         = {{ .count }}
+    {{- end }}

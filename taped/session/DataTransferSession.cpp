@@ -630,8 +630,8 @@ cta::tape::drive::DriveInterface* cta::tape::daemon::DataTransferSession::findDr
     try {
       auto drive = std::make_unique<cta::tape::drive::StressDrive>(
         m_driveInfo.driveName,
-        m_dataTransferConfig.stressBaseDir,
-        m_dataTransferConfig.stressMountDelayMs);
+        m_driveInfo.logicalLibrary,
+        m_dataTransferConfig.stressBaseDir);
       drive->info = m_driveInfo;
       return drive.release();
     } catch (cta::exception::Exception& ex) {
