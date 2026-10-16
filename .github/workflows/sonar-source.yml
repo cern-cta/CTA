@@ -7,9 +7,6 @@ on:
   schedule:
     # Every day at 3 am
     - cron: '0 3 * * *'
-  push:
-    branches:
-      - main
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
@@ -138,5 +135,6 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
+            "-Dsonar.qualitygate.wait=true"
             "-Dsonar.branch.name=${{ github.ref_name }}"
             "-Dsonar.cfamily.compile-commands=${{ env.BUILD_WRAPPER_OUT_DIR }}/compile_commands.json"
