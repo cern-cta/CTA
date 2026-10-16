@@ -6,8 +6,8 @@
 #
 # This chart creates:
 #   1. A PersistentVolumeClaim to hold the virtual tape library on disk.
-#   2. A library.conf file (via ConfigMap) that StressDrive reads at runtime.
-#   3. A pre-population Job that writes library.conf and creates the required
+#   2. A library.toml file (via ConfigMap) that StressDrive reads at runtime.
+#   3. A pre-population Job that writes library.toml and creates the required
 #      directory layout inside the PVC.
 #
 # After this chart is deployed, mount the PVC in every taped pod via the
@@ -18,7 +18,7 @@
 # Consistency requirements
 # ------------------------
 # This file is the single source of truth for the virtual library.
-# setup_stress_drives_test.py reads library.conf directly from the taped pod
+# setup_stress_drives_test.py reads library.toml directly from the taped pod
 # and derives all catalogue registration parameters from it — no manual sync
 # with test_params.toml is required.  The only manual consistency constraint is:
 #   library.name  ↔  logicalLibraryName in the generated taped drive list
@@ -54,7 +54,7 @@ library:
   changerTimeoutMs: 30000
 
   # Media type definitions.  Each entry maps to a block of mediatype lines in
-  # library.conf.  Multiple entries are supported (one per media type).
+  # library.toml.  Multiple entries are supported (one per media type).
   # setup_stress_drives_test.py reads all entries and registers them in the
   # CTA catalogue automatically — no manual updates needed.
   mediaTypes:
