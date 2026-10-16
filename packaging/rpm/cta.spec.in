@@ -79,7 +79,7 @@ cmake3 -G "@CMAKE_GENERATOR@" .. \
   -DCTA_VERSION:STRING=%{version}-%{ctaRelease} \
   -DXROOTD_SSI_PROTOBUF_INTERFACE_VERSION:STRING=@XROOTD_SSI_PROTOBUF_INTERFACE_VERSION@ \
   -DENABLE_SCCACHE:BOOL=@ENABLE_SCCACHE@ \
-  -DCTA_PACKAGE_MODE:STRING=none \
+  -DCTA_BUILD_MODE:STRING=compile \
   -DCTA_RUN_UNIT_TESTS:BOOL=@CTA_RUN_UNIT_TESTS@ \
   -DCTA_BUILD_DEBUG_PACKAGES:BOOL=@CTA_BUILD_DEBUG_PACKAGES@ \
   -DCTA_BUILD_TEST_PACKAGES:BOOL=@CTA_BUILD_TEST_PACKAGES@ \
@@ -106,10 +106,11 @@ mkdir -p cta-man-pages
 %install
 %{__rm} -rf %{buildroot}
 
+# The build stage already compiled everything; install directly without running Ninja or Make again.
 cd build
 DESTDIR=%{buildroot} \
   EXPORTMAN=%{buildroot}%{_mandir} \
-  cmake --build . --target install --parallel @JOBS_COUNT@
+  cmake --install .
 
 # Install generated completions
 mkdir -p %{buildroot}%{_datadir}/bash-completion/completions

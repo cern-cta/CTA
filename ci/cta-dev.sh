@@ -1027,11 +1027,13 @@ build_cta() {
   [[ $enable_internal_repos == true ]] && build_package_flags+=(--enable-internal-repos)
   [[ $enable_address_sanitizer == true ]] && build_package_flags+=(--enable-address-sanitizer)
   [[ $extra_telemetry == true ]] && build_package_flags+=(--extra-telemetry)
+  # Refresh older outer caches once to select packaging without compiling CTA.
   if [[ $state_matches_configuration == true \
       && $previous_build_successful == true \
       && $rebuild_source_packages == false \
       && -f "${project_root}/build/${platform}/CMakeCache.txt" \
-      && $clean_build_dirs == false ]]; then
+      && $clean_build_dirs == false ]] \
+      && grep -qx 'CTA_BUILD_MODE:STRING=binary-package' "${project_root}/build/${platform}/CMakeCache.txt"; then
     build_package_flags+=(--skip-cmake)
   fi
 

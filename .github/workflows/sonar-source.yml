@@ -7,9 +7,6 @@ on:
   schedule:
     # Every day at 3 am
     - cron: '0 3 * * *'
-  push:
-    branches:
-      - main
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
@@ -109,7 +106,7 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git submodule update --init --recursive
           cmake -S . -B "build/${PLATFORM}" \
-            -DCTA_PACKAGE_MODE:STRING=source \
+            -DCTA_BUILD_MODE:STRING=source-package \
             -DCTA_VERSION:STRING="${CTA_VERSION}" \
             -DCTA_USE_PGSCHED:BOOL="${CTA_USE_PGSCHED}" \
             -DCTA_WITH_ORACLE:BOOL="${CTA_WITH_ORACLE}" \
@@ -122,7 +119,7 @@ jobs:
           dnf config-manager --set-enabled crb
           dnf builddep --nogpgcheck -y build/${PLATFORM}/RPM/SRPMS/*
           cmake -S . -B "build/${PLATFORM}" \
-            -DCTA_PACKAGE_MODE:STRING=binary \
+            -DCTA_BUILD_MODE:STRING=compile \
             -DCTA_VERSION:STRING="${CTA_VERSION}" \
             -DXROOTD_SSI_PROTOBUF_INTERFACE_VERSION:STRING="${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}" \
             -DCTA_USE_PGSCHED:BOOL="${CTA_USE_PGSCHED}" \
@@ -138,5 +135,6 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
+            "-Dsonar.qualitygate.wait=true"
             "-Dsonar.branch.name=${{ github.ref_name }}"
             "-Dsonar.cfamily.compile-commands=${{ env.BUILD_WRAPPER_OUT_DIR }}/compile_commands.json"

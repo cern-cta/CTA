@@ -221,7 +221,7 @@ configure_build() {
   [[ "$skip_unit_tests" == true ]] && run_unit_tests=false
 
   local cmake_options=(
-    -D "CTA_PACKAGE_MODE:STRING=${package_mode}"
+    -D "CTA_BUILD_MODE:STRING=${package_mode}-package"
     -D "CTA_BUILD_TEST_PACKAGES:BOOL=$(cmake_bool "$build_test_packages")"
     -D "CTA_BUILD_DEBUG_PACKAGES:BOOL=$(cmake_bool "$build_debug_packages")"
     -D "CTA_RUN_UNIT_TESTS:BOOL=$(cmake_bool "$run_unit_tests")"
@@ -366,6 +366,8 @@ case "$command" in
     else
       [[ -f "$build_dir/CMakeCache.txt" ]] \
         || die "Cannot skip CMake: $build_dir/CMakeCache.txt does not exist."
+      grep -qx 'CTA_BUILD_MODE:STRING=binary-package' "$build_dir/CMakeCache.txt" \
+        || die "Cannot skip CMake: configure this directory in binary-package mode first."
       log_warn "Skipping CMake configuration."
     fi
     build_binary_packages

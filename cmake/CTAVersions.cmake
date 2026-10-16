@@ -29,19 +29,21 @@ set(CTA_SOMAJOR ${CTA_SOVERSION})
 set(CTA_SOMINOR 1)
 set(CTA_SOPATCH 0)
 
-configure_file(
-  ${PROJECT_SOURCE_DIR}/version.cpp.in
-  ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
-  @ONLY
-)
+if(CTA_BUILD_MODE STREQUAL "compile")
+  configure_file(
+    ${PROJECT_SOURCE_DIR}/version.cpp.in
+    ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
+    @ONLY
+  )
 
-# Create a library target for versioning so that we can link against it where needed instead of manually adding the cpp file everywhere
-add_library(ctaversioninfo STATIC
-  ${PROJECT_SOURCE_DIR}/version.hpp
-  ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
-)
+  # Share generated version information between compiled targets.
+  add_library(ctaversioninfo STATIC
+    ${PROJECT_SOURCE_DIR}/version.hpp
+    ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
+  )
 
-target_include_directories(ctaversioninfo PUBLIC ${PROJECT_SOURCE_DIR})
+  target_include_directories(ctaversioninfo PUBLIC ${PROJECT_SOURCE_DIR})
+endif()
 
 # Shared library versioning
 set(CTA_LIBVERSION ${CTA_SOMAJOR}.${CTA_SOMINOR}.${CTA_SOPATCH})

@@ -4,7 +4,7 @@
 # Creates source and binary RPM targets using CPack for the source archive and
 # rpmbuild for package generation. Tool discovery is intentionally deferred
 # until this function is called so non-packaging builds do not require rpmbuild.
-function(rpmtools_add_rpm_targets rpm_name spec_file package_mode)
+function(rpmtools_add_rpm_targets rpm_name spec_file build_mode)
   if(NOT UNIX)
     message(FATAL_ERROR "RPM packaging is only supported on Unix systems")
   endif()
@@ -50,7 +50,7 @@ function(rpmtools_add_rpm_targets rpm_name spec_file package_mode)
   message(STATUS "RPM package builder: ${RPMTOOLS_RPMBUILD_EXECUTABLE}")
   message(STATUS "RPM build root: ${rpm_root}")
 
-  # Source packaging is available in both source and binary modes.
+  # Both package modes expose the source-package target.
   add_custom_target("${rpm_name}_srpm"
     COMMAND "${CMAKE_CPACK_COMMAND}" -G TZST --config CPackSourceConfig.cmake
     COMMAND "${CMAKE_COMMAND}" -E copy
@@ -66,7 +66,7 @@ function(rpmtools_add_rpm_targets rpm_name spec_file package_mode)
       "${rpm_root}/SPECS/${spec_name}"
     VERBATIM)
 
-  if(package_mode STREQUAL "binary")
+  if(build_mode STREQUAL "binary-package")
     add_custom_target("${rpm_name}_rpm"
       COMMAND "${CMAKE_CPACK_COMMAND}" -G TZST --config CPackSourceConfig.cmake
       COMMAND "${CMAKE_COMMAND}" -E copy
