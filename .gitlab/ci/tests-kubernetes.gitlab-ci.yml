@@ -339,10 +339,9 @@ stress-test:
       fi
     - |
       # Virtual stress-drive mode: no mhvtl or SCSI hardware needed.
-      # The overlay adds StressMode, the hostPath tmpfs volume, and the node
-      # affinity rule.  setup_stress_drives_test.py registers the virtual tape
-      # library in the catalogue automatically when --setup is passed to pytest.
-      # Requires the stress node to be labelled: kubectl label node <name> cta-stress-node=true
+      # --no-hardware-drives deploys the fake-tape-library PVC chart and generates
+      # N virtual drives (STRESS0000..STRESS{N-1}) backed by VID.tape files on the PVC.
+      # No node labelling, hostPath volumes, or tmpfs pre-mounting is required.
       if $[[ inputs.use-stress-drives ]]; then
         STRESS_CTA_VALUES_CHAIN="${STRESS_CTA_VALUES_CHAIN},presets/stress-stressdrives-pgsched-values.yaml"
         # Skip mhvtl hardware detection; generate drives STRESS0000..STRESS{N-1}.
