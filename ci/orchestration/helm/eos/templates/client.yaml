@@ -4,7 +4,9 @@
 {{- if .Values.client.enabled }}
 {{- $name := printf "%s-client" .Release.Name }}
 {{- $client := .Values.client }}
-{{- $image := printf "%s:%s" (default .Values.server.global.repository $client.image.repository) (required "Set server.global.tag or client.image.tag" (default .Values.server.global.tag $client.image.tag)) }}
+{{/* TODO: Restore the configured image tag on the next EOS release; EOS 5.5.4 has a client issue. */}}
+{{/* {{- $image := printf "%s:%s" (default .Values.server.global.repository $client.image.repository) (required "Set server.global.tag or client.image.tag" (default .Values.server.global.tag $client.image.tag)) }} */}}
+{{- $image := printf "%s:5.3.36.el9" (default .Values.server.global.repository $client.image.repository) }}
 {{- $kerberos := .Values.server.mgm.kerberos }}
 apiVersion: apps/v1
 kind: Deployment
