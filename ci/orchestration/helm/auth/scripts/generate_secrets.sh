@@ -60,45 +60,58 @@ generate_signed_cert() {
   rm -f $csr
 }
 
-# Generate server certs for the WFE and admin frontends
-generate_signed_cert server-admin cta-frontend-admin
-generate_signed_cert server-wfe cta-frontend-wfe
+# Keep JWT key generation and its dependent token generation in one worker.
+generate_jwt_secrets() {
+  # Generate a keypair for signing JWT tokens
+  openssl genrsa -passout pass:1234 -des3 -out $SECRETS_DIR/jwt.key.pem 4096
+  openssl rsa -passin pass:1234 -in $SECRETS_DIR/jwt.key.pem -out $SECRETS_DIR/jwt.key.pem
+  openssl rsa -in $SECRETS_DIR/jwt.key.pem -pubout -out $SECRETS_DIR/jwt.pub.pem
+
+  # Generate JWT tokens for all subjects, along with the JWKS file.
+  # audiences (`cta-admin` / `cta-wfe`) are used to distinguish the frontends.
+  python3 /scripts/generate_jwt.py \
+    --output-dir "$SECRETS_DIR" \
+    --pub "$SECRETS_DIR/jwt.pub.pem" \
+    --key "$SECRETS_DIR/jwt.key.pem" \
+    --jwks jwks.json \
+    --issuer cta \
+    --audience cta-admin \
+    --sub ctaadmin1 \
+    --gen 0
+
+  python3 /scripts/generate_jwt.py \
+    --output-dir "$SECRETS_DIR" \
+    --pub "$SECRETS_DIR/jwt.pub.pem" \
+    --key "$SECRETS_DIR/jwt.key.pem" \
+    --issuer cta \
+    --audience cta-wfe \
+    --sub ctaeos \
+    --gen 0
+}
+
+# Each worker writes separate files and only reads the completed CA key/certificate.
+# Do this in parallel to speed up the secret generation
+generation_pids=()
+generate_signed_cert server-admin cta-frontend-admin &
+generation_pids+=("$!")
+generate_signed_cert server-wfe cta-frontend-wfe &
+generation_pids+=("$!")
+generate_signed_cert ctaeos-self-signed eos-mgm.biglab localhost ctaeos &
+generation_pids+=("$!")
+generate_signed_cert dcache-self-signed dcache &
+generation_pids+=("$!")
+generate_jwt_secrets &
+generation_pids+=("$!")
+
+# With set -e, a failed worker stops the script before any secrets are uploaded.
+for pid in "${generation_pids[@]}"; do
+  wait "$pid"
+done
 
 chmod 0644 $SECRETS_DIR/ca.key.pem
 chmod 0644 $SECRETS_DIR/server-admin.key.pem
 chmod 0644 $SECRETS_DIR/server-wfe.key.pem
 
-# Generate a keypair for signing JWT tokens
-openssl genrsa -passout pass:1234 -des3 -out $SECRETS_DIR/jwt.key.pem 4096
-openssl rsa -passin pass:1234 -in $SECRETS_DIR/jwt.key.pem -out $SECRETS_DIR/jwt.key.pem
-openssl rsa -in $SECRETS_DIR/jwt.key.pem -pubout -out $SECRETS_DIR/jwt.pub.pem
-
-# Generate JWT tokens for all subjects, along with the JWKS file.
-# audiences (`cta-admin` / `cta-wfe`) are used to distinguish the frontends.
-python3 /scripts/generate_jwt.py \
-  --output-dir "$SECRETS_DIR" \
-  --pub "$SECRETS_DIR/jwt.pub.pem" \
-  --key "$SECRETS_DIR/jwt.key.pem" \
-  --jwks jwks.json \
-  --issuer cta \
-  --audience cta-admin \
-  --sub ctaadmin1 \
-  --gen 0
-
-python3 /scripts/generate_jwt.py \
-  --output-dir "$SECRETS_DIR" \
-  --pub "$SECRETS_DIR/jwt.pub.pem" \
-  --key "$SECRETS_DIR/jwt.key.pem" \
-  --issuer cta \
-  --audience cta-wfe \
-  --sub ctaeos \
-  --gen 0
-
-# generate cert for ctaeos (to be used with mTLS)
-generate_signed_cert ctaeos-self-signed eos-mgm.biglab localhost ctaeos
-
-# Generate a client certificate for the dCache CTA nearline-storage driver.
-generate_signed_cert dcache-self-signed dcache
 # --- Generate K8s secrets for all of these --- #
 
 python3 /scripts/create_k8s_secrets.py \
