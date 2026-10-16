@@ -37,104 +37,119 @@ Use the configuration and `ci/system_tests/tests/stress_test.py` from the tested
 
 ## Virtual stress-drive mode
 
-The standard stress test requires `mhvtl` virtual tape hardware and a dedicated CI runner with the matching kernel modules and library setup. Virtual stress-drive mode removes that dependency: drives are pure in-process software objects backed by a shared `tmpfs` directory, so the full stress workload — archive, retrieve, tape mount and dismount — runs on any Kubernetes cluster without any tape hardware or kernel modules.
+The standard stress test requires `mhvtl` virtual tape hardware and a dedicated CI runner with the matching kernel modules and library setup. Virtual stress-drive mode removes that dependency: drives are pure in-process software objects backed by a shared PersistentVolumeClaim (PVC), so the full stress workload — archive, retrieve, tape mount and dismount — runs on any Kubernetes cluster without any tape hardware or kernel modules.
 
 ### How it works
 
-`StressDrive` is a subclass of `FakeDrive` that persists tape content to a file (`tape.bin`) under a shared directory instead of keeping it only in memory. This allows multiple drives — in the same `taped` process or in different pods — to exchange tapes exactly as a real tape library does.
+`StressDrive` is a subclass of `FakeDrive` that persists tape content to a `.tape` file on a shared PVC between mount/dismount cycles. `MediaChangerFacade` in stress mode simulates a single-arm tape robot that serialises all tape movements through a `changer/` directory, mirroring the single-robot-arm behaviour seen in production libraries.
 
-The shared directory layout under `stressBaseDir` (default `/dev/shm/cta-stress`):
+The shared directory layout under `stressBaseDir` (default `/cta-stress-lib`, mounted from the `cta-fake-tape-library` PVC):
 
 ```
-tapes/{VID}/tape.bin    — serialised tape block stream; written on dismount,
-                          read on mount; absent means a fresh blank tape
-drives/{driveName}      — symlink → ../../tapes/{VID}/
-                          created by the media changer on mount,
-                          removed on dismount
+config/<lib>/library.toml              — library and media-type configuration
+contents/<lib>/slots/VID.tape          — tape at rest (empty file = blank tape)
+contents/<lib>/changer/VID.tape        — tape in transit (robot holds it)
+contents/<lib>/changer/.lock           — robot-busy flag (O_CREAT|O_EXCL, POSIX atomic)
+contents/<lib>/drives/<drv>/           — empty = no tape loaded
+contents/<lib>/drives/<drv>/VID.tape   — tape mounted in this drive
 ```
 
 The full lifecycle per archive or retrieve session:
 
-1. The media changer (`MediaChangerFacade` in stress mode) creates `tapes/{VID}/` and symlinks `drives/{driveName} → ../../tapes/{VID}/`.
+1. `MediaChangerFacade::mountTapeReadWrite(vid)` acquires the single changer lock (`changer/.lock` via `O_CREAT|O_EXCL`) and atomically renames `slots/VID.tape → changer/VID.tape → drives/<drv>/VID.tape`, then releases the lock.
 2. `DataTransferSession::findDrive()` detects `DriveDevice = stress://` and instantiates a `StressDrive`.
-3. `StressDrive::waitUntilReady()` resolves the symlink to locate the tape directory, loads `tape.bin` into the in-memory block vector, and synthesises an ANSI VOL1 label if the tape is blank.
-4. The transfer session runs entirely in memory via the inherited `FakeDrive` block I/O — no filesystem access during data transfer.
-5. `StressDrive::unloadTape()` serialises the block vector back to `tape.bin`, then clears the in-memory state.
-6. The media changer removes the symlink.
+3. `StressDrive::waitUntilReady()` scans `drives/<drv>/` for the mounted `*.tape` file, derives the VID from its filename stem, looks up the tape capacity from `library.toml`, then loads the binary block stream into the in-memory block vector (`m_tape`). An empty file (blank tape) synthesises an ANSI VOL1 label.
+4. The transfer session runs entirely in memory via the inherited `FakeDrive` block I/O — no filesystem I/O during the data transfer itself.
+5. `StressDrive::unloadTape()` serialises `m_tape` back to the `*.tape` file via an atomic tmp-rename, then clears the in-memory state.
+6. `MediaChangerFacade::dismountTape(vid)` acquires the changer lock and atomically renames `drives/<drv>/VID.tape → changer/VID.tape → slots/VID.tape`.
 
-Because `stressBaseDir` is on `tmpfs` (`/dev/shm`), all tape I/O stays in RAM and no physical tape drives, SCSI devices, or `rmcd` are contacted.
+The changer lock ensures that only one tape is ever in transit at a time across all drives and all `taped` pods sharing the PVC — exactly as a real tape library serialises robot-arm movements.
 
-!!! note "Why `tapes/{VID}/` is empty during active archiving"
-    While a tape is actively mounted, its directory exists but contains no `tape.bin` file:
+!!! note "Why `drives/<drv>/VID.tape` is empty during active archiving"
+    While a tape is actively mounted, the `*.tape` file in the drive directory exists but its on-disk content may lag behind the in-memory state: `saveTape()` only runs inside `unloadTape()` at the **end** of the session. The CTA catalogue marks files as "archived" during the write session — before `unloadTape()` is called — so the catalogue can report successful archiving while the on-disk file still shows its pre-session size. Both are correct and reflect different stages of the same session.
 
-    ```
-    $ ls -lh /dev/shm/cta-stress/tapes/ST0001/
-    total 0
-    ```
+    `VID.tape` is updated atomically (write to `VID.tape.tmp`, then rename) at dismount. If it is absent from `slots/` after all drives have gone idle for several minutes, `unloadTape()` was not called (session aborted) or `saveTape()` threw — check the `taped` pod logs.
 
-    This is expected. The entire tape block stream lives in the `StressDrive` in-memory block vector (`m_tape`) from step 3 onwards. `tape.bin` is only written by `unloadTape()` at the **end** of the session (step 5), via an atomic write-to-tmp-then-rename to prevent corruption if `/dev/shm` fills mid-write.
+### Library configuration (`library.toml`)
 
-    The CTA catalogue marks files as "archived" during the write session — before `unloadTape()` is called — so the catalogue can report successful archiving while `tapes/ST0001/` still shows `total 0`. Both observations are correct and reflect different parts of the same session.
+All virtual-library parameters live in a single TOML file that is the **single source of truth** — no manual duplication into `test_params.toml` is required:
 
-    `tape.bin` appears only after the drive is dismounted. To observe it:
+```toml
+[library]
+name             = "stress-lib"
+changerTimeoutMs = 30000
 
-    ```bash
-    watch -n1 'ls -lh /dev/shm/cta-stress/tapes/ST0001/'
-    ```
+[[library.mediaTypes]]
+name          = "STRESS30M"
+capacityBytes = 31457280   # 30 MiB per tape
+vidPrefix     = "ST"
+mountDelayMs  = 2000       # simulated mechanical load latency
+count         = 100        # 100 virtual tapes: ST0001..ST0100
+```
 
-    If `tape.bin` is still absent after all drives have gone idle for several minutes, that indicates `unloadTape()` was not called (session aborted before dismount) or `saveTape()` threw an exception — check the `taped` pod logs.
+The file is written by the `fake-tape-library` Helm chart (rendered from `values.yaml` into a ConfigMap, then copied to the PVC by a pre-populate Job). `StressDrive` reads it at construction to obtain per-media-type `capacityBytes` and `mountDelayMs` via longest-prefix VID matching. `MediaChangerFacade` reads `changerTimeoutMs` from the same file.
+
+The `setup_stress_drives_test.py` Python test reads the file from the mounted PVC via `CtaTapedHost.read_stress_library_conf()` (which parses it with `tomllib`) to obtain the media type names, capacities, VID prefixes, and tape counts. No separate `test_params.toml` entries are needed.
+
+!!! warning "VID length limit"
+    `vidPrefix` must be at most 2 characters so that the full VID fits in the 6-character ANSI tape label VSN field. `HeaderChecker::checkVOL1()` compares the label VSN to the catalogue VID; a longer prefix causes every archive and retrieve session to fail.
 
 ### Deployment
 
-The stress-drive overlay is `ci/orchestration/presets/stress-stressdrives-pgsched-values.yaml`. Combine it with the base stress preset:
+Before deploying CTA, install the `fake-tape-library` chart to create the PVC and pre-populate it:
 
 ```bash
-helm upgrade --install cta . \
+helm upgrade --install fake-tape-library ci/orchestration/helm/fake-tape-library/ \
+  --namespace <your-namespace> --wait --wait-for-jobs
+```
+
+Then deploy CTA with the stress-drive overlay:
+
+```bash
+helm upgrade --install cta ci/orchestration/helm/cta/ \
   -f presets/stress-cta-pgsched-values.yaml \
   -f presets/stress-stressdrives-pgsched-values.yaml
 ```
 
+`create_instance.sh --no-hardware-drives` runs both steps automatically. No node labelling, `hostPath` volumes, or tmpfs pre-mounting is required.
+
 The overlay:
 
 - Sets `StressMode = yes` in every `taped` pod's configuration, bypassing SCSI device scanning and `rmcd` calls.
-- Mounts the host's `/dev/shm/cta-stress` into every pod via a `hostPath` volume so all pods share one in-memory tape library.
-- Adds a **node affinity rule** (`cta-stress-node=true`) that forces all stress-drive pods onto the same Kubernetes node. This is required because `hostPath` volumes are node-local: pods on different nodes would each see an independent copy of the directory and could not exchange tape state.
-
-    `create_instance.sh --no-hardware-drives` labels the node automatically: if no node already carries `cta-stress-node=true` it picks the first available node, applies the label, and records the node name in `/tmp/<namespace>-stress-node.txt`. `delete_instance.sh` reads that file on teardown and removes the label so the node is left clean. If you label a node yourself before deploying, `create_instance.sh` skips auto-labelling and `delete_instance.sh` leaves your label intact.
-
-    For multi-node deployments, replace the `hostPath` volume with a `ReadWriteMany` PersistentVolumeClaim (NFS, CephFS, etc.) and remove the affinity rule from the overlay.
-
+- Mounts the `cta-fake-tape-library` PVC into every `taped` pod at `/cta-stress-lib`, so all pods share one tape library regardless of which node they run on.
+- Disables `rmcd` entirely (`rmcd.enabled: false`) — `taped` in stress mode never contacts it.
 - Generates the virtual drive list (`STRESS0000`…`STRESS{N-1}`) dynamically via `--max-drives N` passed to `create_instance.sh`. The CI default is 20 drives. Each drive produces one `taped` StatefulSet pod.
+
+For multi-node clusters, use a `ReadWriteMany` storage class in the `fake-tape-library` chart values (default is `ReadWriteOnce`, suitable for single-node clusters such as `kind` or `k3s`).
 
 ### Catalogue setup
 
 Run the stress-drive setup test after the standard CTA catalogue setup:
 
 ```bash
-cta-dev test setup          # standard catalogue setup
-cta-dev test --setup stress-drives setup   # virtual tape library setup
+cta-dev test setup                            # standard catalogue setup
+cta-dev test --setup stress-drives setup      # virtual tape library setup
 ```
 
-`setup_stress_drives_test.py` registers the `STRESS1T` media type, the stress logical library, all virtual tape VIDs (generated from `vid_prefix` and `num_tapes` in `test_params.toml`), and calls `mkdir -p` on every taped pod to initialise the `tapes/` and `drives/` subdirectories. It is automatically skipped when no stress-mode pods are present, so it is safe to include in a general setup run.
+`setup_stress_drives_test.py` reads `library.toml` from the pod, then registers every declared media type, the stress logical library, and all virtual tape VIDs (`ST0001`…`ST0100` by default). It is automatically skipped when no stress-mode pods are present, so it is safe to include in a general setup run.
 
 ### Configuration reference
 
-All stress-drive parameters are set in two places that must be kept consistent:
+All stress-drive parameters are set in one place — `library.toml` in the `fake-tape-library` chart values — with one exception (`stressMode`/`stressBaseDir` which activates the code path in `taped`):
 
-| Parameter | Helm value (`conf.taped.*`) | `test_params.toml` key (`[tests.stress.drives]`) | Default |
-| --- | --- | --- | --- |
-| Activate stress mode | `stressMode` | — | `false` |
-| Shared tmpfs root | `stressBaseDir` | `base_dir` | `/dev/shm/cta-stress` |
-| Simulated mount latency | `stressMountDelayMs` | — | `0` ms |
-| Number of virtual tapes | — | `num_tapes` | `20` |
-| VID prefix | — | `vid_prefix` | `STRS` |
-| Logical library name | — | `logical_library` | `stress-lib` |
-| Tape capacity (bytes) | — | `tape_capacity_bytes` | `1 TiB` |
+| Parameter | Where to set it | Default |
+| --- | --- | --- |
+| Activate stress mode | `taped.conf.taped.stressMode` (Helm overlay) | `false` |
+| Shared PVC mount path | `taped.conf.taped.stressBaseDir` (Helm overlay) | `/cta-stress-lib` |
+| Logical library name | `library.name` in `library.toml` | `stress-lib` |
+| Changer lock timeout | `library.changerTimeoutMs` in `library.toml` | `30000` ms |
+| Media type name | `[[library.mediaTypes]].name` | `STRESS30M` |
+| Tape capacity | `[[library.mediaTypes]].capacityBytes` | `31457280` (30 MiB) |
+| VID prefix | `[[library.mediaTypes]].vidPrefix` | `ST` |
+| Simulated mount latency | `[[library.mediaTypes]].mountDelayMs` | `2000` ms |
+| Number of virtual tapes | `[[library.mediaTypes]].count` | `100` |
 
-The logical library name and drive names in the Helm overlay must match the values in `test_params.toml`. VIDs are formatted as `{vid_prefix}{index:04d}`, e.g. `ST0001`…`ST0020`.
-
-!!! warning "VID length limit"
-    `vid_prefix` must be at most 2 characters so that the full VID fits in the 6-character ANSI tape label VSN field. `HeaderChecker::checkVOL1()` compares the label VSN to the catalogue VID; a longer prefix causes every archive and retrieve session to fail.
+Multiple media types in the same library are supported by adding more `[[library.mediaTypes]]` blocks.
 
 ## Monitor and evaluate
 

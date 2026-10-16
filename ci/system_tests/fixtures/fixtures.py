@@ -310,26 +310,7 @@ def disk_instance_name(disk_instance: DiskInstanceHost) -> str:
 # =========================================================================
 
 
-@pytest.fixture(scope="session")
-def stress_num_tapes(test_config: TestConfig) -> int:
-    return test_config["tests"]["stress"]["drives"]["num_tapes"]
-
-
-@pytest.fixture(scope="session")
-def stress_vid_prefix(test_config: TestConfig) -> str:
-    return test_config["tests"]["stress"]["drives"]["vid_prefix"]
-
-
-@pytest.fixture(scope="session")
-def stress_logical_library(test_config: TestConfig) -> str:
-    return test_config["tests"]["stress"]["drives"]["logical_library"]
-
-
-@pytest.fixture(scope="session")
-def stress_base_dir(test_config: TestConfig) -> str:
-    return test_config["tests"]["stress"]["drives"]["base_dir"]
-
-
-@pytest.fixture(scope="session")
-def stress_tape_capacity_bytes(test_config: TestConfig) -> int:
-    return test_config["tests"]["stress"]["drives"]["tape_capacity_bytes"]
+# stress_num_tapes, stress_vid_prefix, stress_logical_library, and
+# stress_tape_capacity_bytes have been removed.  All virtual-library
+# configuration is now read directly from library.conf on the taped pod
+# by setup_stress_drives_test.py via CtaTapedHost.read_stress_library_conf().

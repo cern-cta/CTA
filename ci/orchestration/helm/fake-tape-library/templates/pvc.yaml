@@ -1,0 +1,21 @@
+{{- /*
+SPDX-FileCopyrightText: 2026 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.pvc.name }}
+spec:
+  accessModes:
+    {{- range .Values.pvc.accessModes }}
+    - {{ . | quote }}
+    {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.pvc.size | quote }}
+  {{- if eq "-" .Values.pvc.storageClass }}
+  storageClassName: ""
+  {{- else if .Values.pvc.storageClass }}
+  storageClassName: {{ .Values.pvc.storageClass | quote }}
+  {{- end }}

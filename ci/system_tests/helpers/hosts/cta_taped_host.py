@@ -1,12 +1,37 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import sys
+from dataclasses import dataclass, field
 from functools import cached_property
 from pathlib import Path
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 from system_tests.helpers.connections.remote_connection import RemoteConnection
 
 from .remote_host import RemoteHost
+
+
+@dataclass
+class MediaTypeConf:
+    """Properties of one media type as declared in library.toml."""
+    name: str
+    capacity_bytes: int
+    vid_prefix: str
+    mount_delay_ms: int
+    count: int
+
+
+@dataclass
+class StressLibraryConf:
+    """Parsed contents of a stress-drive library.toml file."""
+    name: str
+    changer_timeout_ms: int
+    media_types: list[MediaTypeConf] = field(default_factory=list)
 
 
 class CtaTapedHost(RemoteHost):
@@ -68,13 +93,33 @@ class CtaTapedHost(RemoteHost):
         device = self.exec_with_output("printenv DRIVE_DEVICE")
         return device == "stress://"
 
-    def setup_stress_tmpfs(self, base_dir: str) -> None:
-        """Create the shared tmpfs directory layout required by StressDrive and
-        NullMediaChangerFacade.  Safe to call from multiple pods simultaneously
-        because mkdir -p is idempotent.
+    @cached_property
+    def stress_base_dir(self) -> Path:
+        """Root of the shared fake-tape-library volume (value of StressBaseDir in cta-taped.conf)."""
+        raw = self.exec_with_output(
+            "awk '$1==\"taped\" && $2==\"StressBaseDir\" {print $3}' /etc/cta/cta-taped.conf"
+        )
+        return Path(raw)
 
-        Layout created:
-          <base_dir>/tapes/   -- one subdirectory per VID, created on first archive
-          <base_dir>/drives/  -- one symlink per drive, managed by NullMediaChangerFacade
-        """
-        self.exec(f"mkdir -p {base_dir}/tapes {base_dir}/drives")
+    def read_stress_library_conf(self) -> StressLibraryConf:
+        """Read and parse the library.toml from the shared volume mounted in this pod."""
+        conf_path = self.stress_base_dir / "config" / self.logical_library_name / "library.toml"
+        raw = self.exec_with_output(f"cat '{conf_path}'")
+        data = tomllib.loads(raw)
+        lib = data["library"]
+        media_types = [
+            MediaTypeConf(
+                name=mt["name"],
+                capacity_bytes=mt["capacityBytes"],
+                vid_prefix=mt["vidPrefix"],
+                mount_delay_ms=mt.get("mountDelayMs", 0),
+                count=mt["count"],
+            )
+            for mt in lib.get("mediaTypes", [])
+        ]
+        return StressLibraryConf(
+            name=lib["name"],
+            changer_timeout_ms=lib.get("changerTimeoutMs", 30_000),
+            media_types=media_types,
+        )
+

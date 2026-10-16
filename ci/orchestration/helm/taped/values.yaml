@@ -30,7 +30,6 @@ conf:
     # All taped pods must share stressBaseDir (use a hostPath volume in Kubernetes).
     stressMode: false
     stressBaseDir: "/dev/shm/cta-stress"
-    stressMountDelayMs: 0
   telemetry:
     enabled: false
     retainInstanceIdOnRestart: false

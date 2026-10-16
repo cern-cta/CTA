@@ -1090,7 +1090,6 @@ DriveHandler::executeDataTransferSession(IScheduler* scheduler, tape::daemon::Ta
   dataTransferConfig.wdNoBlockMoveMaxSecs = m_tapedConfig.wdNoBlockMoveMaxSecs.value();
   dataTransferConfig.stressMode = m_tapedConfig.stressMode.value();
   dataTransferConfig.stressBaseDir = m_tapedConfig.stressBaseDir.value();
-  dataTransferConfig.stressMountDelayMs = m_tapedConfig.stressMountDelayMs.value();
 
   // Mounting management: use a no-op, tmpfs-symlink-based facade in stress
   // mode so that no rmcd connection is needed.
@@ -1104,6 +1103,7 @@ DriveHandler::executeDataTransferSession(IScheduler* scheduler, tape::daemon::Ta
   std::optional<cta::mediachanger::MediaChangerFacade> mediaChangerOpt;
   if (stressMode) {
     mediaChangerOpt.emplace(m_driveInfo.driveName,
+                            m_driveInfo.logicalLibrary,
                             m_tapedConfig.stressBaseDir.value(),
                             m_lc.logger());
   } else {
