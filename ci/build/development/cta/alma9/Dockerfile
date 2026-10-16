@@ -26,7 +26,7 @@ RUN set -ex; \
 RUN set -ex; \
     mkdir -p build/el9; \
     cd build/el9; \
-    cmake3 -DCTA_PACKAGE_MODE:STRING=source ../cta; \
+    cmake3 -DCTA_BUILD_MODE:STRING=source-package ../cta; \
     make cta_srpm;
 
 RUN set -ex; \

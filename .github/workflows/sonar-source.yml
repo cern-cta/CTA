@@ -106,7 +106,7 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git submodule update --init --recursive
           cmake -S . -B "build/${PLATFORM}" \
-            -DCTA_PACKAGE_MODE:STRING=source \
+            -DCTA_BUILD_MODE:STRING=source-package \
             -DCTA_VERSION:STRING="${CTA_VERSION}" \
             -DCTA_USE_PGSCHED:BOOL="${CTA_USE_PGSCHED}" \
             -DCTA_WITH_ORACLE:BOOL="${CTA_WITH_ORACLE}" \
@@ -119,7 +119,7 @@ jobs:
           dnf config-manager --set-enabled crb
           dnf builddep --nogpgcheck -y build/${PLATFORM}/RPM/SRPMS/*
           cmake -S . -B "build/${PLATFORM}" \
-            -DCTA_PACKAGE_MODE:STRING=binary \
+            -DCTA_BUILD_MODE:STRING=compile \
             -DCTA_VERSION:STRING="${CTA_VERSION}" \
             -DXROOTD_SSI_PROTOBUF_INTERFACE_VERSION:STRING="${XROOTD_SSI_PROTOBUF_INTERFACE_VERSION}" \
             -DCTA_USE_PGSCHED:BOOL="${CTA_USE_PGSCHED}" \
