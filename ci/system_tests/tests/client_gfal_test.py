@@ -3,8 +3,11 @@
 
 
 import json
+import re
+import shlex
+import uuid
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
@@ -36,81 +39,201 @@ def gfal_params(test_config: TestConfig) -> GfalParams:
     )
 
 
+@dataclass
+class GfalBatch:
+    protocol: str
+    directory: Path
+    endpoint: str
+    writer_auth: str = field(repr=False)
+    power_auth: str = field(repr=False)
+
+
+@pytest.fixture(scope="module")
+def gfal_xrootd(test_dir: Path, disk_instance_name: str) -> GfalBatch:
+    auth = "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5"
+    return GfalBatch("root", test_dir / "gfal_xrootd", f"root://{disk_instance_name}", auth, auth)
+
+
+@pytest.fixture(scope="module")
+def gfal_https(eos_client: EosClientHost, test_dir: Path, disk_instance_name: str) -> GfalBatch:
+    writer = eos_client.generate_token(disk_instance_name, owner="user1", group="eosusers", permission="rwx")
+    power = eos_client.generate_token(disk_instance_name, owner="poweruser1", group="powerusers", permission="prwx")
+    return GfalBatch(
+        "https",
+        test_dir / "gfal_https",
+        f"https://{disk_instance_name}:8443",
+        f"BEARER_TOKEN={shlex.quote(writer)}",
+        f"BEARER_TOKEN={shlex.quote(power)}",
+    )
+
+
+def _run_gfal_batch(eos_client: EosClientHost, batch: GfalBatch, params: GfalParams, operation: str) -> None:
+    if params.file_count < 1 or params.process_count < 1:
+        raise ValueError("GFAL file count and parallelism must be positive")
+    started = time.monotonic()
+    print(
+        f"{operation}: {params.file_count} files in {batch.directory} via {batch.protocol}, "
+        f"{params.process_count} workers as poweruser1",
+        flush=True,
+    )
+    prefix = shlex.quote(f"{batch.endpoint}/{batch.directory}/0/file_")
+    worker = f'{batch.power_auth} {operation} {prefix}"$1"'
+    eos_client.exec(
+        f"set -o pipefail; seq 0 {params.file_count - 1} | "
+        f"xargs -P {params.process_count} -n 1 sh -c {shlex.quote(worker)} _"
+    )
+    print(f"{operation}: all commands succeeded in {time.monotonic() - started:.1f}s", flush=True)
+
+
+def _check_evicted(
+    eos_client: EosClientHost, instance: str, batch: GfalBatch, params: GfalParams, timeout: int
+) -> None:
+    eos_client.wait_for_directory_eviction(instance, batch.directory, wait_timeout_secs=timeout)
+    total, remaining = eos_client.file_eviction_counts(instance, batch.directory)
+    assert total == params.file_count, f"Expected {params.file_count} files in {batch.directory}, found {total}"
+    assert remaining == 0, f"{remaining} files are not on tape only in {batch.directory}"
+    print(f"{batch.protocol}: {total}/{params.file_count} files archived and fully evicted", flush=True)
+
+
+def _retrieve_gfal(eos_client: EosClientHost, instance: str, batch: GfalBatch, params: GfalParams) -> None:
+    _run_gfal_batch(eos_client, batch, params, "gfal-bringonline")
+    timeout = 40 + params.file_count // 5
+    started = time.monotonic()
+    previous = -1
+    last_report = started - 10
+    while time.monotonic() - started < timeout:
+        listing = eos_client.exec_with_output(
+            f"eos {shlex.quote(f'root://{instance}')} ls -y {shlex.quote(str(batch.directory / '0'))}"
+        )
+        # Require a disk replica and a tape replica for every expected file.
+        count = sum(bool(re.match(r"^d[1-9][0-9]*::t1\b", line)) for line in listing.splitlines())
+        now = time.monotonic()
+        if count != previous or now - last_report >= 10:
+            print(
+                f"{batch.protocol}: {count}/{params.file_count} retrieved after {now - started:.1f}s "
+                f"(timeout {timeout}s)",
+                flush=True,
+            )
+            previous, last_report = count, now
+        if count == params.file_count:
+            return
+        time.sleep(1)
+    raise TimeoutError(f"{batch.protocol}: only {previous}/{params.file_count} files retrieved in {batch.directory}")
+
+
+def _evict_gfal(eos_client: EosClientHost, instance: str, batch: GfalBatch, params: GfalParams) -> None:
+    _run_gfal_batch(eos_client, batch, params, "gfal-evict")
+    _check_evicted(eos_client, instance, batch, params, 20)
+
+
+def _delete_gfal(eos_client: EosClientHost, instance: str, batch: GfalBatch, params: GfalParams) -> None:
+    # HTTPS deletion uses user1; XRootD deletion uses poweruser1, matching the original tests.
+    print(f"Deleting {params.file_count} files recursively from {batch.directory} via {batch.protocol}", flush=True)
+    timeout = 5 + params.file_count // 9
+    deadline = time.monotonic() + timeout
+    # Bound the command itself, including a forced kill if GFAL ignores termination.
+    eos_client.exec(
+        f"{batch.writer_auth} timeout --kill-after=5s {timeout}s "
+        f"gfal-rm -r {shlex.quote(f'{batch.endpoint}/{batch.directory}')}"
+    )
+    # List the surviving parent so an unrelated command failure cannot masquerade as successful deletion.
+    while time.monotonic() < deadline:
+        entries = eos_client.exec_with_output(
+            f"eos {shlex.quote(f'root://{instance}')} ls {shlex.quote(str(batch.directory.parent))}"
+        ).splitlines()
+        if batch.directory.name not in [entry.rstrip("/") for entry in entries]:
+            print(f"{batch.protocol}: batch directory and all files deleted", flush=True)
+            return
+        time.sleep(1)
+    raise TimeoutError(f"GFAL deletion did not remove {batch.directory}")
+
+
 # =========================================================================
 #  Tests
 # =========================================================================
 
-# For now only the "glue" has been migrated to Python. All the scripts invoked in the tests below still need to be
-# migrated at a later point in time
 
-
-def test_setup_client_gfal_xrootd(
-    eos_client: EosClientHost, test_dir: Path, gfal_params: GfalParams, remote_scripts_dir: Path
-) -> None:
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "client_setup.sh", Path("/tmp"), permissions="+x")
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "client_helper.sh", Path("/tmp"), permissions="+x")
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "cli_calls.sh", Path("/tmp"), permissions="+x")
+def test_setup_client_gfal_xrootd(eos_client: EosClientHost) -> None:
     eos_client.exec("microdnf install -y python3-gfal2-util gfal2-plugin-xrootd")
-    eos_client.exec(
-        f"/tmp/client_setup.sh -n {gfal_params.file_count} -s {gfal_params.file_size_kb} -p "
-        f"{gfal_params.process_count} -d {test_dir} -r -c gfal2 -Z root"
-    )
 
 
 def test_archive_gfal_xrootd(
-    eos_client: EosClientHost, disk_instance_name: str, test_dir: Path, remote_scripts_dir: Path
+    eos_client: EosClientHost, disk_instance_name: str, gfal_params: GfalParams, gfal_xrootd: GfalBatch
 ) -> None:
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_archive.sh", Path("/tmp"), permissions="+x")
-    eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
-    eos_client.wait_for_directory_eviction(disk_instance_name, test_dir)
-
-
-def test_retrieve_gfal_xrootd(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_retrieve.sh", Path("/tmp"), permissions="+x")
-    eos_client.exec(". /tmp/client_env && /tmp/test_retrieve.sh")
-
-
-def test_evict_gfal_xrootd(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_evict.sh", Path("/tmp"), permissions="+x")
-    eos_client.exec(". /tmp/client_env && /tmp/test_evict.sh")
-
-
-def test_delete_gfal_xrootd(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_delete.sh", Path("/tmp"), permissions="+x")
-    eos_client.exec(". /tmp/client_env && /tmp/test_delete.sh")
-
-
-def test_setup_client_gfal_https(eos_client: EosClientHost, test_dir: Path, gfal_params: GfalParams) -> None:
-    eos_client.exec("microdnf install -y  gfal2-plugin-http")
-    eos_client.exec(
-        f"/tmp/client_setup.sh -n {gfal_params.file_count} -s {gfal_params.file_size_kb} -p "
-        f"{gfal_params.process_count} -d {test_dir} -r -c gfal2 -Z https"
+    # GFAL/root has always used xrdcp for archival; GFAL coverage starts at bringonline.
+    eos_client.generate_and_archive_files(
+        disk_instance_name,
+        gfal_xrootd.directory,
+        file_count=gfal_params.file_count,
+        file_size_kb=gfal_params.file_size_kb,
+        parallelism=gfal_params.process_count,
     )
-    # Enable insecure certs for gfal2
+
+
+def test_retrieve_gfal_xrootd(
+    eos_client: EosClientHost, disk_instance_name: str, gfal_params: GfalParams, gfal_xrootd: GfalBatch
+) -> None:
+    _retrieve_gfal(eos_client, disk_instance_name, gfal_xrootd, gfal_params)
+
+
+def test_evict_gfal_xrootd(
+    eos_client: EosClientHost, disk_instance_name: str, gfal_params: GfalParams, gfal_xrootd: GfalBatch
+) -> None:
+    _evict_gfal(eos_client, disk_instance_name, gfal_xrootd, gfal_params)
+
+
+def test_delete_gfal_xrootd(
+    eos_client: EosClientHost, disk_instance_name: str, gfal_params: GfalParams, gfal_xrootd: GfalBatch
+) -> None:
+    _delete_gfal(eos_client, disk_instance_name, gfal_xrootd, gfal_params)
+
+
+def test_setup_client_gfal_https(eos_client: EosClientHost) -> None:
+    eos_client.exec("microdnf install -y python3-gfal2-util gfal2-plugin-http")
     eos_client.exec("sed -i 's/INSECURE=false/INSECURE=true/g' /etc/gfal2.d/http_plugin.conf")
 
 
 def test_archive_gfal_https(
-    eos_client: EosClientHost, disk_instance_name: str, test_dir: Path, remote_scripts_dir: Path
+    eos_client: EosClientHost, disk_instance_name: str, gfal_params: GfalParams, gfal_https: GfalBatch
 ) -> None:
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_archive.sh", Path("/tmp"), permissions="+x")
-    eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
-    eos_client.wait_for_directory_eviction(disk_instance_name, test_dir)
+    if gfal_params.file_count < 1 or gfal_params.process_count < 1:
+        raise ValueError("GFAL file count and parallelism must be positive")
+    batch = gfal_https
+    source = Path(f"/tmp/gfal_archive_{uuid.uuid4().hex}")
+    # Preserve the original HTTPS workload: a shared 15 KiB zero-filled source, independent of configured file size.
+    print(f"Archiving {gfal_params.file_count} files of 15 KiB via HTTPS to {batch.directory} as user1", flush=True)
+    eos_client.exec(f"eos root://{disk_instance_name} mkdir -p {shlex.quote(str(batch.directory / '0'))}")
+    started = time.monotonic()
+    try:
+        eos_client.exec(f"dd if=/dev/zero of={source} bs=1K count=15 status=none")
+        prefix = shlex.quote(f"{batch.endpoint}/{batch.directory}/0/file_")
+        worker = f'{batch.writer_auth} gfal-copy {source} {prefix}"$1"'
+        eos_client.exec(
+            f"set -o pipefail; seq 0 {gfal_params.file_count - 1} | "
+            f"xargs -P {gfal_params.process_count} -n 1 sh -c {shlex.quote(worker)} _"
+        )
+    finally:
+        eos_client.exec(f"rm -f {source}", throw_on_failure=False)
+    print(f"HTTPS copies completed in {time.monotonic() - started:.1f}s; waiting for tape archival", flush=True)
+    _check_evicted(eos_client, disk_instance_name, batch, gfal_params, 4 * (40 + gfal_params.file_count // 5))
 
 
-def test_retrieve_gfal_https(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_retrieve.sh", Path("/tmp"), permissions="+x")
-    eos_client.exec(". /tmp/client_env && /tmp/test_retrieve.sh")
+def test_retrieve_gfal_https(
+    eos_client: EosClientHost, disk_instance_name: str, gfal_params: GfalParams, gfal_https: GfalBatch
+) -> None:
+    _retrieve_gfal(eos_client, disk_instance_name, gfal_https, gfal_params)
 
 
-def test_evict_gfal_https(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_evict.sh", Path("/tmp"), permissions="+x")
-    eos_client.exec(". /tmp/client_env && /tmp/test_evict.sh")
+def test_evict_gfal_https(
+    eos_client: EosClientHost, disk_instance_name: str, gfal_params: GfalParams, gfal_https: GfalBatch
+) -> None:
+    _evict_gfal(eos_client, disk_instance_name, gfal_https, gfal_params)
 
 
-def test_delete_gfal_https(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_delete.sh", Path("/tmp"), permissions="+x")
-    eos_client.exec(". /tmp/client_env && /tmp/test_delete.sh")
+def test_delete_gfal_https(
+    eos_client: EosClientHost, disk_instance_name: str, gfal_params: GfalParams, gfal_https: GfalBatch
+) -> None:
+    _delete_gfal(eos_client, disk_instance_name, gfal_https, gfal_params)
 
 
 def test_gfal_activity_ends_up_in_eos_report(
@@ -136,14 +259,8 @@ def test_gfal_activity_ends_up_in_eos_report(
     )
     print(f"Site name: {site_name}")
 
-    # Get token
-    token_timeout = 604800
-    now = int(time.time())
-    later = now + token_timeout
-    token_eospower1 = eos_client.exec_with_output(
-        f". /tmp/client_env && eosadmin_eos root://{disk_instance_name} token --tree --path "
-        f"'/eos/ctaeos/://:/api/' --expires \"{later}\" --owner poweruser1 --group powerusers "
-        f"--permission prwx"
+    token_eospower1 = eos_client.generate_token(
+        disk_instance_name, owner="poweruser1", group="powerusers", permission="prwx"
     )
 
     # Generate metadata string with correct site name

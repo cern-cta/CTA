@@ -320,12 +320,6 @@ def _submit_repack_request(
 # =========================================================================
 
 
-def test_setup_client(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "client_setup.sh", Path("/tmp"), permissions="+x")
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "client_helper.sh", Path("/tmp"), permissions="+x")
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "cli_calls.sh", Path("/tmp"), permissions="+x")
-
-
 def test_create_repack_vo(cta_cli: CtaCliHost, repack_vo_name: str, disk_instance_name: str) -> None:
     cta_cli.exec(
         f"cta-admin virtualorganization add --vo {repack_vo_name} --readmaxdrives 1 "
@@ -352,17 +346,17 @@ def test_set_single_drive_up(cta_cli: CtaCliHost, cta_taped: CtaTapedHost) -> No
 
 def test_archive_1_file(
     eos_client: EosClientHost,
-    remote_scripts_dir: Path,
+    disk_instance_name: str,
     repack_params: RepackParams,
     test_dir: Path,
 ) -> None:
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_archive.sh", Path("/tmp"), permissions="+x")
-    file_count = 1
-    eos_client.exec(
-        f"/tmp/client_setup.sh -n {file_count} -s {repack_params.file_size_kb} -p "
-        f"{repack_params.process_count} -d {test_dir} -A"
+    eos_client.generate_and_archive_files(
+        disk_instance_name,
+        test_dir / "archive_1",
+        file_count=1,
+        file_size_kb=repack_params.file_size_kb,
+        parallelism=repack_params.process_count,
     )
-    eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
 
 
 def test_repack_move_only_with_backpressure(
@@ -458,13 +452,19 @@ def test_repack_non_repacking_tape(
     cta_cli.reclaim_tape(vid_to_repack)
 
 
-def test_archive_1000_files(eos_client: EosClientHost, repack_params: RepackParams, test_dir: Path) -> None:
-    file_count = 1000
-    eos_client.exec(
-        f"/tmp/client_setup.sh -n {file_count} -s {repack_params.file_size_kb} -p "
-        f"{repack_params.process_count} -d {test_dir} -A"
+def test_archive_1000_files(
+    eos_client: EosClientHost,
+    disk_instance_name: str,
+    repack_params: RepackParams,
+    test_dir: Path,
+) -> None:
+    eos_client.generate_and_archive_files(
+        disk_instance_name,
+        test_dir / "archive_1000",
+        file_count=1000,
+        file_size_kb=repack_params.file_size_kb,
+        parallelism=repack_params.process_count,
     )
-    eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
 
 
 def test_repack_move_only_subset_of_files(
@@ -519,15 +519,17 @@ def test_repack_move_only_subset_of_files(
 # Why 1152? No one knows...
 def test_archive_1152_files(
     eos_client: EosClientHost,
+    disk_instance_name: str,
     repack_params: RepackParams,
     test_dir: Path,
 ) -> None:
-    file_count = 1152
-    eos_client.exec(
-        f"/tmp/client_setup.sh -n {file_count} -s {repack_params.file_size_kb} -p "
-        f"{repack_params.process_count} -d {test_dir} -A"
+    eos_client.generate_and_archive_files(
+        disk_instance_name,
+        test_dir / "archive_1152",
+        file_count=1152,
+        file_size_kb=repack_params.file_size_kb,
+        parallelism=repack_params.process_count,
     )
-    eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
 
 
 def test_repack_move_only(

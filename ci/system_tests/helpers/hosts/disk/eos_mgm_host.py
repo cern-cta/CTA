@@ -3,6 +3,8 @@
 
 import datetime
 import json
+import re
+import shlex
 from functools import cached_property
 from pathlib import Path
 
@@ -119,7 +121,8 @@ class EosMgmHost(DiskInstanceHost):
 
     @override
     def num_files_on_disk_only(self, directory: Path) -> int:
-        return int(self.exec_with_output(f'eos ls {directory} -y | grep "d1::t0" | wc -l'))
+        listing = self.exec_with_output(f"eos ls {shlex.quote(str(directory))} -y")
+        return sum(bool(re.match(r"^d[1-9][0-9]*::t0\b", line)) for line in listing.splitlines())
 
     def get_report_file_path(self) -> Path:
         now = datetime.datetime.now()

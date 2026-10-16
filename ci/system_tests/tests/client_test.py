@@ -100,11 +100,18 @@ def _run_eosdf_test(eos_client: EosClientHost, cta_cli: CtaCliHost, disk_instanc
 @pytest.fixture(scope="module")
 def client_params(test_config: SystemTestConfig) -> ClientParams:
     client_config = test_config["tests"]["client"]
+    assert client_config["file_count"] > 0, "At least one file is required for the archive workflow"
     return ClientParams(
         file_count=client_config["file_count"],
         file_size_kb=client_config["file_size_kb"],
         process_count=client_config["process_count"],
     )
+
+
+@pytest.fixture(scope="module")
+def archive_directory(test_dir: Path) -> Path:
+    # Keep one shared archive directory for archive, retrieve, evict, and abort tests.
+    return test_dir / "archive"
 
 
 @pytest.fixture(scope="class")
@@ -182,22 +189,6 @@ def retrieve_queue_cleanup_paths(
 # =========================================================================
 #  Tests
 # =========================================================================
-
-# Some scripts probably deserve to be their own test module instead of cramming everything in this file
-
-
-def test_setup_client(
-    eos_client: EosClientHost, client_params: ClientParams, test_dir: Path, remote_scripts_dir: Path
-) -> None:
-    # Install the shared client scripts before generating the archive/retrieve test data
-    # This should eventually be removed once all those scripts have been migrated to python
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "client_setup.sh", Path("/tmp"), permissions="+x")
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "client_helper.sh", Path("/tmp"), permissions="+x")
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "cli_calls.sh", Path("/tmp"), permissions="+x")
-    eos_client.exec(
-        f"/tmp/client_setup.sh -n {client_params.file_count} -s {client_params.file_size_kb} -p "
-        f"{client_params.process_count} -d {test_dir} -r -c xrd"
-    )
 
 
 ###
@@ -314,23 +305,83 @@ def test_simple_archive_retrieve(
     eos_client.delete_file(disk_instance_name, file_path)
 
 
-def test_archive(eos_client: EosClientHost, disk_instance_name: str, test_dir: Path, remote_scripts_dir: Path) -> None:
-    # Run a bulk archive
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_archive.sh", Path("/tmp"), permissions="+x")
-    eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
-    eos_client.wait_for_directory_eviction(disk_instance_name, test_dir)
+def test_archive(
+    eos_client: EosClientHost,
+    disk_instance_name: str,
+    client_params: ClientParams,
+    archive_directory: Path,
+) -> None:
+    eos_client.generate_and_archive_files(
+        disk_instance_name,
+        archive_directory,
+        file_count=client_params.file_count,
+        file_size_kb=client_params.file_size_kb,
+        parallelism=client_params.process_count,
+    )
 
 
-def test_retrieve(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
-    # Recall the files created by test_archive
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_retrieve.sh", Path("/tmp"), permissions="+x")
-    eos_client.exec(". /tmp/client_env && /tmp/test_retrieve.sh")
+def test_retrieve(
+    eos_client: EosClientHost,
+    disk_instance_name: str,
+    client_params: ClientParams,
+    archive_directory: Path,
+) -> None:
+    started = time.monotonic()
+    print(
+        f"Retrieving {client_params.file_count} files from {disk_instance_name}:{archive_directory} as poweruser1; "
+        f"activity=T0Reprocess, workers={client_params.process_count}, "
+        f"timeout={40 + client_params.file_count // 5}s",
+        flush=True,
+    )
+    # Recall the complete archive batch using the same activity as the former script.
+    requests = eos_client.retrieve_directory(
+        disk_instance_name,
+        archive_directory,
+        activity="T0Reprocess",
+        parallelism=client_params.process_count,
+        wait_timeout_secs=40 + client_params.file_count // 5,
+    )
+    print(f"Retrieve request IDs and paths are recorded in {requests.remote_manifest}")
+    assert len(requests) == client_params.file_count, "Not all archived files were submitted for retrieval"
+    print(
+        f"Retrieve complete: {len(requests)}/{client_params.file_count} files on disk "
+        f"in {time.monotonic() - started:.1f}s"
+    )
 
 
-def test_evict(eos_client: EosClientHost, remote_scripts_dir: Path) -> None:
-    # Evict the recalled files from test_retrieve
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_evict.sh", Path("/tmp"), permissions="+x")
-    eos_client.exec(". /tmp/client_env && /tmp/test_evict.sh")
+def test_evict(
+    eos_client: EosClientHost,
+    client_params: ClientParams,
+    disk_instance_name: str,
+    archive_directory: Path,
+) -> None:
+    started = time.monotonic()
+    print(
+        f"Evicting {client_params.file_count} files from {disk_instance_name}:{archive_directory} as poweruser1 "
+        "using PREPARE -e, batches of 40, and 10 workers",
+        flush=True,
+    )
+    # Exercise user PREPARE eviction, retaining the original batches of 40 and ten workers.
+    # Generate the known paths remotely to avoid one Kubernetes exec connection per batch.
+    prefix = shlex.quote(str(archive_directory / "0" / "file_"))
+    worker = (
+        "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
+        f'xrdfs {shlex.quote(disk_instance_name)} prepare -e "$@"'
+    )
+    eos_client.exec(
+        f"set -o pipefail; seq 0 {client_params.file_count - 1} | "
+        f"awk -v prefix={prefix} '{{print prefix $0}}' | "
+        f"xargs -d '\n' -r -n 40 -P 10 sh -c {shlex.quote(worker)} _"
+    )
+
+    print("All eviction requests submitted; waiting up to 20s for disk deletions to finish", flush=True)
+    eos_client.wait_for_directory_eviction(disk_instance_name, archive_directory)
+    total, remaining = eos_client.file_eviction_counts(disk_instance_name, archive_directory)
+    assert total == client_params.file_count, "File count changed during eviction"
+    assert remaining == 0, "Some retrieved files are not fully evicted"
+    print(
+        f"Eviction complete: {total}/{client_params.file_count} files on tape only in {time.monotonic() - started:.1f}s"
+    )
 
 
 def test_abort_prepare(
@@ -338,14 +389,10 @@ def test_abort_prepare(
     cta_cli: CtaCliHost,
     client_params: ClientParams,
     disk_instance_name: str,
-    test_dir: Path,
+    archive_directory: Path,
 ) -> None:
-    # This test assumes the archive directory contains only files that have been evicted from disk. This works because
-    # test_archive and test_evict run first.
-    # Once those scripts are migrated, this test should use a dedicated directory.
-    archive_directories = eos_client.exec_with_output(f"eos root://{disk_instance_name} ls '{test_dir}'").splitlines()
-    assert len(archive_directories) == 1, f"Expected one archive directory below {test_dir}: {archive_directories}"
-    archive_directory = test_dir / archive_directories[0]
+    print(f"Testing PREPARE cancellation for {disk_instance_name}:{archive_directory}; stopping drives", flush=True)
+    # Reuse the batch archived and evicted by the preceding tests.
     # Set all drives down to ensure requests stay in the queue and can be aborted
     cta_cli.wait_for_drives_to_stop_transferring()
     cta_cli.set_all_drives_down()
@@ -360,12 +407,14 @@ def test_abort_prepare(
     )
     assert requests, f"No archived files found below {archive_directory}"
 
+    print(f"Submitted {len(requests)} requests; manifest: {requests.remote_manifest}; queue timeout: 20s", flush=True)
     # Wait for them to queue
     deadline = time.monotonic() + 20
     while cta_cli.retrieve_queue_file_count() != len(requests) and time.monotonic() < deadline:
         time.sleep(1)
     assert cta_cli.retrieve_queue_file_count() == len(requests), "Not all retrieve requests were queued"
 
+    print(f"All {len(requests)} requests queued; aborting with {client_params.process_count} workers", flush=True)
     # Abort every queued PREPARE request
     eos_client.abort_files(disk_instance_name, requests, parallelism=client_params.process_count)
 
@@ -378,16 +427,77 @@ def test_abort_prepare(
     total, remaining = eos_client.file_eviction_counts(disk_instance_name, archive_directory)
     assert total == len(requests), "File count changed after cancellation"
     assert remaining == 0, "Some files are not fully evicted after cancellation"
+    print(f"Cancellation complete: queue drained and {total}/{len(requests)} files remain on tape only")
 
 
 def test_multiple_retrieve(
-    cta_cli: CtaCliHost, eos_client: EosClientHost, test_dir: Path, remote_scripts_dir: Path
+    cta_cli: CtaCliHost, eos_client: EosClientHost, disk_instance_name: str, test_dir: Path
 ) -> None:
-    # Restore the drives before doing concurrent retrieve
-    # Assumes test_evict ran before this as this is the directory it's operating on
     cta_cli.set_all_drives_up()
-    eos_client.copy_to(remote_scripts_dir / "eos_client" / "test_multiple_retrieve.sh", Path("/tmp"), permissions="+x")
-    eos_client.exec(f". /tmp/client_env && /tmp/test_multiple_retrieve.sh {test_dir}")
+    paths = [test_dir / f"multiple_retrieve_{index}" for index in range(4)]
+    print(f"Testing shared recall for {len(paths)} files on {disk_instance_name}: {paths}", flush=True)
+
+    def assert_counter(expected: int) -> None:
+        for path in paths:
+            # Exercise the XRootD attribute interface as well as the counter semantics.
+            output = eos_client.exec_with_output(
+                "KRB5CCNAME=/tmp/poweruser1/krb5cc_0 XrdSecPROTOCOL=krb5 "
+                f"xrdfs {shlex.quote(disk_instance_name)} xattr {shlex.quote(str(path))} "
+                "get sys.retrieve.evict_counter"
+            )
+            match = re.search(r"(?m)^\s*sys\.retrieve\.evict_counter=[\"']?(\d+)[\"']?\s*$", output)
+            assert match is not None, f"{path}: invalid XRootD eviction counter response: {output!r}"
+            counter = int(match[1])
+            print(f"{path}: eviction counter={counter}, expected={expected}", flush=True)
+            assert counter == expected, f"{path}: expected eviction counter {expected}, got {counter}"
+
+    # Create independent files and ensure retrieval starts with tape-only replicas.
+    for path in paths:
+        eos_client.archive_file(disk_instance_name, path, Path("/etc/group"), wait=False)
+    for path in paths:
+        eos_client.wait_for_file_archival(disk_instance_name, path, wait_timeout_secs=90)
+    eos_client.wait_for_files_eviction(disk_instance_name, paths, wait_timeout_secs=90)
+
+    print("Files archived and evicted; stopping drives to queue two staging requests per file", flush=True)
+    # Keep both initial requests pending so this exercises shared recall, not two on-disk requests.
+    cta_cli.wait_for_drives_to_stop_transferring()
+    try:
+        cta_cli.set_all_drives_down()
+        for request_number in range(1, 3):
+            result = eos_client.prepare_files(disk_instance_name, paths)
+            assert result.success, result.stderr
+            print(f"Queued stage request {request_number}/2: {result.stdout.strip()}", flush=True)
+    finally:
+        print("Restoring drives so the shared recall can complete (timeout: 90s per file)", flush=True)
+        cta_cli.set_all_drives_up(wait=False)
+    eos_client.wait_for_files_retrieval(disk_instance_name, paths, wait_timeout_secs=90)
+    assert_counter(2)
+
+    print("All files recalled; submitting two additional staging requests while files are on disk", flush=True)
+    # Further requests for files already on disk must increment the same counter.
+    for request_number in range(1, 3):
+        result = eos_client.prepare_files(disk_instance_name, paths)
+        assert result.success, result.stderr
+        print(f"On-disk stage request {request_number}/2: {result.stdout.strip()}", flush=True)
+
+    # Each PREPARE eviction releases one user; only the last may remove the disk replicas.
+    for expected_counter in range(4, 0, -1):
+        assert_counter(expected_counter)
+        for path in paths:
+            assert eos_client.is_file_on_disk(disk_instance_name, path), f"{path} was evicted prematurely"
+            assert eos_client.is_file_on_tape(disk_instance_name, path), f"{path} lost its tape replica"
+        print(
+            f"All replicas still on disk; evicting to reduce counters {expected_counter} -> {expected_counter - 1}",
+            flush=True,
+        )
+        result = eos_client.evict_prepare(disk_instance_name, paths)
+        assert result.success, result.stderr
+
+    eos_client.wait_for_files_eviction(disk_instance_name, paths, wait_timeout_secs=90)
+    print(f"Final eviction complete; deleting {len(paths)} test files", flush=True)
+    eos_client.delete_files(disk_instance_name, paths)
+
+    print("Multiple-retrieve checks and cleanup complete")
 
 
 class TestPrepare:
