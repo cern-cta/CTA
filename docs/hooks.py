@@ -40,7 +40,8 @@ def on_pre_build(config: MkDocsConfig) -> None:
     root = Path(config.config_file_path).resolve().parent.parent
     output = root / "build/docs/generated/cta-admin.1cta.md"
     output.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.run(  # noqa: S603 - Fixed generator from this checkout, with no shell.
+    # Fixed generator from this checkout, with no shell.
+    subprocess.run(  # noqa: S603
         [sys.executable, "compile_man_md.py", "cta-admin.1cta.md.in", str(output)],
         cwd=root / "tools",
         check=True,

@@ -77,7 +77,8 @@ def _run_gfal_batch(eos_client: EosClientHost, batch: GfalBatch, params: GfalPar
         flush=True,
     )
     prefix = shlex.quote(f"{batch.endpoint}/{batch.directory}/0/file_")
-    worker = f'{batch.power_auth} {operation} {prefix}"$1"'
+    # Suppress per-file results and staging tokens; keep stderr and exit status.
+    worker = f'{batch.power_auth} {operation} {prefix}"$1" >/dev/null'
     eos_client.exec(
         f"set -o pipefail; seq 0 {params.file_count - 1} | "
         f"xargs -P {params.process_count} -n 1 sh -c {shlex.quote(worker)} _"
@@ -134,7 +135,7 @@ def _delete_gfal(eos_client: EosClientHost, instance: str, batch: GfalBatch, par
     # Bound the command itself, including a forced kill if GFAL ignores termination.
     eos_client.exec(
         f"{batch.writer_auth} timeout --kill-after=5s {timeout}s "
-        f"gfal-rm -r {shlex.quote(f'{batch.endpoint}/{batch.directory}')}"
+        f"gfal-rm -r {shlex.quote(f'{batch.endpoint}/{batch.directory}')} >/dev/null"
     )
     # List the surviving parent so an unrelated command failure cannot masquerade as successful deletion.
     while time.monotonic() < deadline:
@@ -207,7 +208,7 @@ def test_archive_gfal_https(
     try:
         eos_client.exec(f"dd if=/dev/zero of={source} bs=1K count=15 status=none")
         prefix = shlex.quote(f"{batch.endpoint}/{batch.directory}/0/file_")
-        worker = f'{batch.writer_auth} gfal-copy {source} {prefix}"$1"'
+        worker = f'{batch.writer_auth} gfal-copy {source} {prefix}"$1" >/dev/null'
         eos_client.exec(
             f"set -o pipefail; seq 0 {gfal_params.file_count - 1} | "
             f"xargs -P {gfal_params.process_count} -n 1 sh -c {shlex.quote(worker)} _"
@@ -269,12 +270,13 @@ def test_gfal_activity_ends_up_in_eos_report(
 
     # Bring online with valid activity
     eos_client.exec(
-        f"BEARER_TOKEN={token_eospower1} gfal-bringonline --staging-metadata '{valid_metadata}' davs://{disk_instance_name}:8443/{valid_instance_file}"
+        f"BEARER_TOKEN={token_eospower1} gfal-bringonline --staging-metadata '{valid_metadata}' "
+        f"davs://{disk_instance_name}:8443/{valid_instance_file} >/dev/null"
     )
 
     # Evict
     eos_client.exec(
-        f"BEARER_TOKEN={token_eospower1} gfal-evict https://{disk_instance_name}:8443/{valid_instance_file}"
+        f"BEARER_TOKEN={token_eospower1} gfal-evict https://{disk_instance_name}:8443/{valid_instance_file} >/dev/null"
     )
 
     # Bring online for different instance: No activity should be logged in xrdmgm.log or eosreport
@@ -282,12 +284,14 @@ def test_gfal_activity_ends_up_in_eos_report(
     print(f"Invalid metadata created: {invalid_metadata}")
 
     eos_client.exec(
-        f"BEARER_TOKEN={token_eospower1} gfal-bringonline --staging-metadata '{invalid_metadata}' davs://{disk_instance_name}:8443/{invalid_instance_file}"
+        f"BEARER_TOKEN={token_eospower1} gfal-bringonline --staging-metadata '{invalid_metadata}' "
+        f"davs://{disk_instance_name}:8443/{invalid_instance_file} >/dev/null"
     )
 
     # Evict the retrieved file
     eos_client.exec(
-        f"BEARER_TOKEN={token_eospower1} gfal-evict https://{disk_instance_name}:8443/{invalid_instance_file}"
+        f"BEARER_TOKEN={token_eospower1} gfal-evict "
+        f"https://{disk_instance_name}:8443/{invalid_instance_file} >/dev/null"
     )
 
     report_file = eos_mgm.get_report_file_path()
