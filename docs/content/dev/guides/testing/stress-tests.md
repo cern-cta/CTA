@@ -96,29 +96,44 @@ The `setup_stress_drives_test.py` Python test reads the file from the mounted PV
 
 ### Deployment
 
-Before deploying CTA, install the `fake-tape-library` chart to create the PVC and pre-populate it:
+Use `create_instance.sh --no-hardware-drives` — it deploys the `fake-tape-library` chart (PVC + prepopulate Job) and then the CTA chart in one step. No node labelling, `hostPath` volumes, or tmpfs pre-mounting is required.
+
+Full example with the PostgreSQL scheduler (the combination used by the CI `stress-test` job):
 
 ```bash
-helm upgrade --install fake-tape-library ci/orchestration/helm/fake-tape-library/ \
-  --namespace <your-namespace> --wait --wait-for-jobs
+cd ci/orchestration/
+./create_instance.sh \
+  --namespace stress-<id> \
+  --cta-image-tag <image-tag> \
+  --cta-config presets/stress-cta-pgsched-values.yaml,presets/stress-stressdrives-pgsched-values.yaml \
+  --eos-config presets/stress-eos-values.yaml \
+  --catalogue-config presets/dev-catalogue-postgres-values.yaml \
+  --scheduler-config /opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml \
+  --no-hardware-drives \
+  --max-drives 20
 ```
 
-Then deploy CTA with the stress-drive overlay:
+`--max-drives N` controls how many virtual drives are created (`STRESS0000`…`STRESS{N-1}`); each drive produces one `taped` StatefulSet pod. The CI default is 20.
 
-```bash
-helm upgrade --install cta ci/orchestration/helm/cta/ \
-  -f presets/stress-cta-pgsched-values.yaml \
-  -f presets/stress-stressdrives-pgsched-values.yaml
-```
+??? note "Manual helm commands (for reference)"
+    If you need to deploy the two steps separately:
 
-`create_instance.sh --no-hardware-drives` runs both steps automatically. No node labelling, `hostPath` volumes, or tmpfs pre-mounting is required.
+    ```bash
+    # Step 1 — create PVC and pre-populate tape files
+    helm upgrade --install fake-tape-library ci/orchestration/helm/fake-tape-library/ \
+      --namespace <your-namespace> --wait --wait-for-jobs
 
-The overlay:
+    # Step 2 — deploy CTA with the stress-drive overlay
+    helm upgrade --install cta ci/orchestration/helm/cta/ \
+      -f presets/stress-cta-pgsched-values.yaml \
+      -f presets/stress-stressdrives-pgsched-values.yaml
+    ```
+
+The `stress-stressdrives-pgsched-values.yaml` overlay:
 
 - Sets `StressMode = yes` in every `taped` pod's configuration, bypassing SCSI device scanning and `rmcd` calls.
 - Mounts the `cta-fake-tape-library` PVC into every `taped` pod at `/cta-stress-lib`, so all pods share one tape library regardless of which node they run on.
 - Disables `rmcd` entirely (`rmcd.enabled: false`) — `taped` in stress mode never contacts it.
-- Generates the virtual drive list (`STRESS0000`…`STRESS{N-1}`) dynamically via `--max-drives N` passed to `create_instance.sh`. The CI default is 20 drives. Each drive produces one `taped` StatefulSet pod.
 
 For multi-node clusters, use a `ReadWriteMany` storage class in the `fake-tape-library` chart values (default is `ReadWriteOnce`, suitable for single-node clusters such as `kind` or `k3s`).
 
