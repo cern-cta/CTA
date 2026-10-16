@@ -99,7 +99,6 @@ spec:
     - ./create_instance.sh --namespace ${NAMESPACE}
                            --reset-catalogue
                            --reset-scheduler
-                           --no-setup
                            --cta-image-tag ${IMAGE_TAG}
                            --cta-config ${CTA_VALUES_CHAIN}
                            --eos-config presets/eos/auth-$[[ inputs.workflow-api-authentication ]].yaml
@@ -325,7 +324,6 @@ stress-test:
     - ./create_instance.sh --namespace ${NAMESPACE}
                            --reset-catalogue
                            --reset-scheduler
-                           --no-setup
                            --publish-telemetry
                            --cta-image-tag ${IMAGE_TAG}
                            --cta-config ${STRESS_CTA_VALUES_CHAIN}

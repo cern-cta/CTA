@@ -83,7 +83,7 @@ catalogue_config="presets/dev-catalogue-postgres-values.yaml"
 scheduler_config=""
 cta_config=""
 eos_config=""
-extra_spawn_options=(--no-setup)
+extra_spawn_options=()
 
 stage_names=()
 stage_durations=()

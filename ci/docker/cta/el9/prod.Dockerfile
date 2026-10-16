@@ -186,17 +186,11 @@ COPY --from=grpc-health-probe /grpc-health-probe /usr/local/bin/grpc-health-prob
 ARG ENABLE_INTERNAL_REPOS
 ARG ENABLE_ORACLE_SUPPORT
 
-# One reason why this image is huge:
-# - eos-client: for now necessary as the system tests still assume the CTA and EOS rpms in one pod.
-#   Once this assumption is removed from the system tests, we can migrate the client pod to use the
-#   official EOS image and we don't need it here anymore
-# Keep EPEL configured after cleanup so client tests can install their GFAL dependencies.
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools \
     /usr/local/bin/build-service.sh "cta-admin cta-catalogue-utils cta-scheduler-utils cta-tools-rs \
-      krb5-workstation eos-client xrootd-client \
-      python3-xrootd epel-release bc"
+      krb5-workstation bc"
 
 RUN cat <<'EOF' >> /etc/bashrc
 

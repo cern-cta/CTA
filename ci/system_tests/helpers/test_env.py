@@ -123,9 +123,6 @@ class TestEnv:
         except ApiException as e:
             raise RuntimeError(f"Failed to query namespace {namespace}: {e}") from e
         return TestEnv(
-            # Our "cta-client" should actually be an eos-client. However, the current bash test suite mixes these
-            # concepts
-            # Something to be changed once we move them over....
             cta_cli_conns=TestEnv.get_k8s_connections_by_selector(
                 namespace, "app.kubernetes.io/component=cli", "cta-cli"
             ),
@@ -145,11 +142,11 @@ class TestEnv:
                 namespace, "app.kubernetes.io/component=taped", "cta-taped"
             ),
             eos_client_conns=TestEnv.get_k8s_connections_by_selector(
-                namespace, "app.kubernetes.io/component=client", "client"
+                namespace, "app.kubernetes.io/component=eos-client", "client"
             ),
             eos_mgm_conns=TestEnv.get_k8s_connections_by_selector(namespace, "app.kubernetes.io/name=mgm", "mgm"),
             dcache_client_conns=TestEnv.get_k8s_connections_by_selector(
-                namespace, "app.kubernetes.io/component=client", "client"
+                namespace, "app.kubernetes.io/component=dcache-client", "client"
             ),
             dcache_conns=TestEnv.get_k8s_connections_by_selector(
                 namespace, "app.kubernetes.io/name=dcache", "dcache-door"
@@ -168,7 +165,7 @@ class TestEnv:
         eos_client:
           - k8s:
               namespace: dev
-              selector: app.kubernetes.io/component=client
+              selector: app.kubernetes.io/component=eos-client
               container: client
         cta_taped:
           - ssh:

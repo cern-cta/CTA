@@ -5,7 +5,7 @@ secrets:
   image: registry.cern.ch/docker.io/python:3.12-slim
 
 kerberos:
-  image: registry.cern.ch/docker.io/almalinux/9-minimal:9.7
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base:9.7
   defaultRealm: TEST.CTA
   adminPrinc:
     name: root
