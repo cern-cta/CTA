@@ -130,6 +130,9 @@ client:
   pod:
     extraSpec:
       terminationGracePeriodSeconds: 1
-  extraEnv: []
+  extraEnv:
+    # Expose the Python bindings bundled with the EL9 EOS image.
+    - name: PYTHONPATH
+      value: /opt/eos/xrootd/lib64/python3.9/site-packages
   extraVolumes: []
   extraVolumeMounts: []

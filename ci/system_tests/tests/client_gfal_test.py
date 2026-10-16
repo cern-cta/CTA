@@ -189,7 +189,7 @@ def test_delete_gfal_xrootd(
 
 
 def test_setup_client_gfal_https(eos_client: EosClientHost) -> None:
-    eos_client.exec("microdnf install -y python3-gfal2-util gfal2-plugin-http")
+    eos_client.exec("dnf install -y python3-gfal2-util gfal2-plugin-http")
     eos_client.exec("sed -i 's/INSECURE=false/INSECURE=true/g' /etc/gfal2.d/http_plugin.conf")
 
 
