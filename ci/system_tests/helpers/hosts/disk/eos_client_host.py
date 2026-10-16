@@ -128,6 +128,51 @@ class EosClientHost(DiskClientHost):
         except ValueError:
             return 0
 
+    def generate_and_archive_files(
+        self,
+        disk_instance_name: str,
+        directory: Path,
+        *,
+        file_count: int,
+        file_size_kb: int,
+        parallelism: int = 1,
+    ) -> None:
+        """Create directory/0/file_<index> and wait for the entire batch to be on tape only.
+
+        The directory must be dedicated to this batch. Files remain available for subsequent tests.
+        """
+        if file_count < 1 or file_size_kb < 1 or parallelism < 1:
+            raise ValueError("File count, file size, and parallelism must all be positive")
+        started = time.monotonic()
+        print(
+            f"Archiving {file_count} files of {file_size_kb} KiB to "
+            f"{disk_instance_name}:{directory} as user1 using {parallelism} workers",
+            flush=True,
+        )
+        self.exec(f"eos root://{disk_instance_name} mkdir -p {shlex.quote(str(directory / '0'))}")
+
+        # Run parallel workers in the pod: concurrent Kubernetes exec calls share mutable API client state.
+        # Generate distinct contents for every file and propagate both generation and copy failures.
+        worker = (
+            f"dd if=/dev/urandom bs=1K count={file_size_kb} status=none | "
+            "KRB5CCNAME=/tmp/user1/krb5cc_0 xrdcp - "
+            f'{shlex.quote(f"root://{disk_instance_name}/{directory}/0/file_")}"$1"'
+        )
+        self.exec(
+            f"set -o pipefail; seq 0 {file_count - 1} | "
+            f"xargs -P {parallelism} -n 1 bash -o pipefail -c {shlex.quote(worker)} _"
+        )
+
+        print(f"All {file_count} disk copies completed in {time.monotonic() - started:.1f}s", flush=True)
+        # Tape-only locations with no pending unlinks establish both archival and eviction.
+        timeout = 4 * (40 + file_count // 5)
+        print(f"Waiting up to {timeout}s for archival and automatic eviction", flush=True)
+        self.wait_for_directory_eviction(disk_instance_name, directory, wait_timeout_secs=timeout)
+        total, remaining = self.file_eviction_counts(disk_instance_name, directory)
+        assert total == file_count, "File count changed during archival"
+        assert remaining == 0, "Some archived files are not fully evicted"
+        print(f"Archive complete: {total}/{file_count} files on tape only in {time.monotonic() - started:.1f}s")
+
     @override
     def archive_file(
         self,
@@ -201,27 +246,51 @@ class EosClientHost(DiskClientHost):
             )
         return requests
 
-    def _wait_for_manifest_retrieval(
+    def _wait_for_directory_retrieval(
         self,
         disk_instance_name: str,
+        directory: Path,
         remote_manifest: Path,
         expected_files: int,
         *,
-        parallelism: int,
         wait_timeout_secs: int,
     ) -> None:
         print(f"Waiting for retrieval of {expected_files} files...")
-        deadline = time.monotonic() + wait_timeout_secs
+        # Read the requested paths once; unrelated files must not hide missing or unretrieved files.
+        manifest_paths = self.exec_with_output(f"cut -f 2 {shlex.quote(str(remote_manifest))}").splitlines()
+        expected_paths = set(manifest_paths)
+        if len(manifest_paths) != expected_files or len(expected_paths) != expected_files:
+            raise ValueError(f"Invalid retrieval manifest {remote_manifest}: expected {expected_files} unique paths")
+        started = time.monotonic()
+        deadline = started + wait_timeout_secs
+        last_report = started - 10
+        previous_count = -1
         while time.monotonic() < deadline:
-            on_disk = self.exec_with_output(
-                f"cut -f 2 {shlex.quote(str(remote_manifest))} | "
-                f"xargs -r -P {parallelism} -I{{}} eos root://{shlex.quote(disk_instance_name)} ls -y '{{}}' | "
-                "grep -cE '^d[1-9][0-9]*::t1' || true"
+            listing = self.exec_with_output(
+                f"eos {shlex.quote(f'root://{disk_instance_name}')} find -f --fs {shlex.quote(str(directory))}"
             )
-            if int(on_disk) == expected_files:
+            retrieved = set()
+            for line in listing.splitlines():
+                match = re.fullmatch(r"(.+) fsid=([0-9]+(?:,[0-9]+)*)?\s*", line)
+                if match is None:
+                    raise ValueError(f"Invalid EOS filesystem listing entry: {line!r}")
+                locations = {int(fsid) for fsid in match[2].split(",")} if match[2] else set()
+                if EOS_TAPE_FILESYSTEM_ID in locations and locations - {0, EOS_TAPE_FILESYSTEM_ID}:
+                    retrieved.add(match[1])
+            count = len(expected_paths & retrieved)
+            now = time.monotonic()
+            if count != previous_count or now - last_report >= 10:
+                print(
+                    f"Retrieved {count}/{expected_files} files after {now - started:.1f}s "
+                    f"(timeout: {wait_timeout_secs}s; manifest: {remote_manifest})",
+                    flush=True,
+                )
+                previous_count = count
+                last_report = now
+            if count == expected_files:
                 print("Files retrieved")
                 return
-            time.sleep(0.1)
+            time.sleep(0.5)
         raise TimeoutError(f"Failed to retrieve all files within timeout of {wait_timeout_secs} seconds")
 
     @override
@@ -236,9 +305,8 @@ class EosClientHost(DiskClientHost):
         activity: Optional[str] = None,
         parallelism: int = 1,
     ) -> PrepareRequests:
-        """Retrieve every file below a directory without transferring the path list through Python."""
-        # Keep the potentially large request-id/path mapping in the pod. Python only needs the number of requests and
-        # the manifest location; abort_files() can stream the manifest without hitting the process argument-size limit.
+        """Retrieve every file below a directory, checking completion with bulk namespace queries."""
+        # Keep request IDs in a remote manifest so abort_files() can stream them without hitting argument-size limits.
         remote_manifest = Path(f"/tmp/cta-prepare-requests-{uuid.uuid4().hex}")
         requests = self._retrieve_from_path_stream(
             disk_instance_name,
@@ -249,11 +317,11 @@ class EosClientHost(DiskClientHost):
             remote_manifest=remote_manifest,
         )
         if wait:
-            self._wait_for_manifest_retrieval(
+            self._wait_for_directory_retrieval(
                 disk_instance_name,
+                directory,
                 remote_manifest,
                 len(requests),
-                parallelism=parallelism,
                 wait_timeout_secs=wait_timeout_secs,
             )
         return requests
@@ -522,11 +590,17 @@ class EosClientHost(DiskClientHost):
 
     @override
     def is_file_on_disk(self, disk_instance_name: str, path: Path) -> bool:
-        return int(self.exec_with_output(f'eos root://{disk_instance_name} ls {path} -y | grep "d1::" | wc -l')) == 1
+        listing = self.exec_with_output(
+            f"eos {shlex.quote(f'root://{disk_instance_name}')} ls {shlex.quote(str(path))} -y"
+        )
+        return any(re.match(r"^d[1-9][0-9]*::", line) for line in listing.splitlines())
 
     @override
     def is_file_on_disk_only(self, disk_instance_name: str, path: Path) -> bool:
-        return int(self.exec_with_output(f'eos root://{disk_instance_name} ls {path} -y | grep "d1::t0" | wc -l')) == 1
+        listing = self.exec_with_output(
+            f"eos {shlex.quote(f'root://{disk_instance_name}')} ls {shlex.quote(str(path))} -y"
+        )
+        return any(re.match(r"^d[1-9][0-9]*::t0\b", line) for line in listing.splitlines())
 
     def file_eviction_counts(self, disk_instance_name: str, path: Path) -> tuple[int, int]:
         """Return total files and files with incomplete eviction using one recursive EOS query."""
@@ -553,15 +627,23 @@ class EosClientHost(DiskClientHost):
     ) -> None:
         print(f"Waiting for eviction of files in {directory}...")
         previous_remaining: Optional[int] = None
+        started = time.monotonic()
+        last_report = started - 10
         with Timeout(wait_timeout_secs) as timeout:
             while not timeout.expired:
-                _, remaining = self.file_eviction_counts(disk_instance_name, directory)
+                total, remaining = self.file_eviction_counts(disk_instance_name, directory)
                 if remaining == 0:
                     print(f"All files in {directory} evicted")
                     return
-                if remaining != previous_remaining:
-                    print(f"Waiting for {remaining} files in {directory} to finish eviction")
+                now = time.monotonic()
+                if remaining != previous_remaining or now - last_report >= 10:
+                    print(
+                        f"{total - remaining}/{total} files on tape only with disk deletions complete in {directory}; "
+                        f"{remaining} pending after {now - started:.1f}s (timeout: {wait_timeout_secs}s)",
+                        flush=True,
+                    )
                     previous_remaining = remaining
+                    last_report = now
                 time.sleep(1)
 
         raise TimeoutError(
