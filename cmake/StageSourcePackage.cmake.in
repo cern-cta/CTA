@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# CPack normally enumerates the source tree before applying its ignore patterns.
+# Large build/cache directories therefore slow packaging even when excluded.
+# This source-package staging hook uses file(COPY) to prune excluded subtrees instead.
+
+# A trailing slash matches descendants but not the directory itself.
+# Match both so file(COPY) can skip the directory without traversing it.
+set(source_exclusions)
+foreach(pattern IN LISTS CPACK_SOURCE_IGNORE_FILES)
+  string(REGEX REPLACE "/$" "(/|$)" pattern "${pattern}")
+  list(APPEND source_exclusions REGEX "${pattern}" EXCLUDE)
+endforeach()
+
+# CPack supplies a fresh staging directory; preserve source permissions and timestamps.
+file(COPY "@CMAKE_SOURCE_DIR@/"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}"
+  ${source_exclusions})

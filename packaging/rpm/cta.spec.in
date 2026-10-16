@@ -106,10 +106,11 @@ mkdir -p cta-man-pages
 %install
 %{__rm} -rf %{buildroot}
 
+# The build stage already compiled everything; install directly without running Ninja or Make again.
 cd build
 DESTDIR=%{buildroot} \
   EXPORTMAN=%{buildroot}%{_mandir} \
-  cmake --build . --target install --parallel @JOBS_COUNT@
+  cmake --install .
 
 # Install generated completions
 mkdir -p %{buildroot}%{_datadir}/bash-completion/completions

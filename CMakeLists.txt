@@ -250,8 +250,7 @@ endif()
 if(NOT CTA_PACKAGE_MODE STREQUAL "none")
   set(CPACK_SOURCE_PACKAGE_FILE_NAME
    "${PROJECT_NAME}-${CTA_VERSION}")
-  # Note that not ignoring build folders within the repository here will cause cpack to take longer and longer
-  # as it is trying to pack the build directory as well
+  # Source staging prunes these paths before descending into excluded directories.
   set(CPACK_SOURCE_IGNORE_FILES
     # Ignore any file or directory starting with a dot
     # This is important for e.g. the caching directories in the gitlab CI
@@ -289,7 +288,13 @@ if(NOT CTA_PACKAGE_MODE STREQUAL "none")
     "/image_rpms/"
     "/assets/"
     "/([^/]+/)*target/")
+  # Use CMake's recursive copy instead of CPack's whole-tree enumeration.
+  set(CPACK_SOURCE_INSTALLED_DIRECTORIES "")
+  configure_file(cmake/StageSourcePackage.cmake.in StageSourcePackage.cmake @ONLY)
   include(CPack)
+  # Register the staging hook only for source archives, not binary CPack installs.
+  file(APPEND "${CPACK_SOURCE_OUTPUT_CONFIG_FILE}"
+    "\nset(CPACK_INSTALL_SCRIPTS \"${CMAKE_CURRENT_BINARY_DIR}/StageSourcePackage.cmake\")\n")
 
   if(CTA_PACKAGE_FORMAT STREQUAL "rpm")
     include(cmake/RPMTools.cmake)
