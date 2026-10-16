@@ -114,10 +114,14 @@ spec:
   variables:
     DOCKERFILE: ci/docker/cta/$[[ inputs.platform ]]/prod.Dockerfile
     EXTRA_BUILD_ARGS: ""
+    # Keep package cache mounts inside the project so GitLab can preserve them.
+    BUILDAH_TMPDIR: "${CI_PROJECT_DIR}/.buildah-tmp"
     SBOM_RAW_PATH: ${CI_PROJECT_DIR}/sboms/raw/${TARGET_NAME}.cdx.json
     DEST_REGISTRY_PASSWORD: $DOCKER_PIPELINE_LOGIN_PASSWORD
     DEST_REGISTRY_USERNAME: $DOCKER_PIPELINE_LOGIN_USERNAME
   script:
+    - mkdir -p "$BUILDAH_TMPDIR"
+    - export TMPDIR="$BUILDAH_TMPDIR"
     - 'echo "CTA version: ${CTA_VERSION:?Missing CTA_VERSION}"'
     - IMAGE_REF="${DOCKER_IMAGE_REGISTRY}/${DOCKER_PIPELINE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_VERSION}"
     - echo "Building ${TARGET_NAME}"
@@ -134,6 +138,7 @@ spec:
     - PACKAGE_CONTEXT="${CI_PROJECT_DIR}/build/$[[ inputs.platform ]]/${PACKAGE_DIRECTORY}"
     - |
       BUILDAH_ARGS=(
+        --jobs=4
         --target "${TARGET_NAME}"
         --file "${DOCKERFILE_NAME}"
         --tag "${IMAGE_REF}"
@@ -166,6 +171,15 @@ spec:
     paths:
       - image-ref.txt
       - sboms/raw/*.cdx.json
+  cache:
+    # Reuse downloads across pipelines without tying the cache to rebuilt CTA RPMs.
+    key: "image-packages-$[[ inputs.platform ]]-${TARGET_NAME}-${CI_COMMIT_REF_SLUG}"
+    fallback_keys:
+      - "image-packages-$[[ inputs.platform ]]-${TARGET_NAME}-${CI_DEFAULT_BRANCH}"
+    policy: pull-push
+    paths:
+      # Cache package mounts only, not temporary images or the overlay storage database.
+      - .buildah-tmp/buildah-cache-*/
 
 build-cta-images:
   extends: .build-cta-image
