@@ -50,7 +50,7 @@ check_deploy_commands() {
 }
 
 deploy_fake_tape_library() {
-  log_task "Deploying fake-tape-library chart (PVC + directory layout + library.conf)..."
+  log_task "Deploying fake-tape-library chart (PVC + directory layout + library.toml)..."
   helm upgrade --install fake-tape-library helm/fake-tape-library \
     --namespace "${namespace}" \
     --wait --wait-for-jobs --timeout 2m

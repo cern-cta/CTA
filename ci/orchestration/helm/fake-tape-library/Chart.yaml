@@ -5,11 +5,11 @@ apiVersion: v2
 name: fake-tape-library
 version: 0.1.0
 description: >
-  Pre-populates a PersistentVolume with the directory layout and library.conf
+  Pre-populates a PersistentVolume with the directory layout and library.toml
   required by StressDrive (the CTA virtual tape drive for scale testing).
 
   Deploy this chart once before the taped chart.  taped pods mount the same
   PVC via extraVolumes and read the library configuration from
-  config/<library.name>/library.conf at runtime.
+  config/<library.name>/library.toml at runtime.
 type: application
 appVersion: "1.0.0"
