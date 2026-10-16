@@ -294,12 +294,11 @@ create_instance() {
     die "Another CTA release was found. Currently, installing multiple CTA releases on the same machine is not supported."
   fi
 
-  # Determine the library config to use.
+  # Determine the library config to use (drive values only; the fake-tape-library
+  # chart itself is deployed after the namespace is created, see below).
   taped_config=""
   rmcd_config=""
   if [[ "${no_hardware_drives}" == "true" ]]; then
-    # Stress-drive mode: deploy the fake-tape-library PVC, then generate the drive list.
-    deploy_fake_tape_library
     generate_stress_drive_values
   else
     generate_tape_values_files
@@ -339,6 +338,11 @@ create_instance() {
   log_task "Creating namespace ${namespace}..."
   kubectl create namespace "${namespace}"
   kubectl label namespace "$namespace" "app.kubernetes.io/managed-by=cta-create-instance"
+
+  # Deploy the fake-tape-library chart now that the namespace exists.
+  if [[ "${no_hardware_drives}" == "true" ]]; then
+    deploy_fake_tape_library
+  fi
   log_task "Copying secrets into namespace ${namespace}..."
   for secret_name in ${secrets}; do
     # If the secret exists...
