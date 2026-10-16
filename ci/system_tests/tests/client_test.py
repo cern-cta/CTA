@@ -644,11 +644,15 @@ class TestPrepare:
                     disk_instance_name,
                     prepare_test_paths.tape_file.parent / "prepare_multi",
                     append_uid=True,
-                    wait_timeout_secs=90,
+                    wait=False,
                 )
                 for _ in range(3)
             ]
         )
+        # Submit all copies before waiting so the files can share archive sessions.
+        for path in tape_files[1:]:
+            eos_client.wait_for_file_archival(disk_instance_name, path, wait_timeout_secs=90)
+            eos_client.wait_for_file_eviction(disk_instance_name, path, wait_timeout_secs=90)
         cta_cli.set_all_drives_down()
         forbidden_files = [prepare_test_paths.no_prepare_dir / str(uuid.uuid4()) for _ in range(4)]
         missing_files = [prepare_test_paths.missing_dir / str(uuid.uuid4()) for _ in range(4)]
@@ -1062,7 +1066,9 @@ def _trigger_retrieve_queue_cleanup(cta_cli: CtaCliHost, tapes: list[str]) -> No
             cta_cli.modify_tape_state(vid, state, reason="Trigger cleanup", wait=False)
         for vid in unique_tapes:
             cta_cli.wait_for_tape_state(vid, state)
-        time.sleep(1)
+        if state == "BROKEN":
+            # Confirm queues are drained before making the tapes available for retrieval again.
+            cta_cli.wait_for_queue_file_counts(dict.fromkeys(unique_tapes, 0))
 
 
 def _assert_prepare_response(response: dict[str, Any], path: Path, *, requested: bool, has_reqid: bool) -> None:

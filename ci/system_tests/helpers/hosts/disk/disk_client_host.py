@@ -195,9 +195,12 @@ class DiskClientHost(RemoteHost):
 
     def wait_for_file_eviction(self, disk_instance_name: str, path: Path, wait_timeout_secs: int = 20) -> None:
         print(f"Waiting for eviction of {path}...")
+        poll_interval = 0.1
         with Timeout(wait_timeout_secs) as t:
             while not self.is_file_eviction_complete(disk_instance_name, path) and not t.expired:
-                time.sleep(0.1)
+                # Keep fast completions responsive, then avoid repeated remote execs during slow FST deletion.
+                time.sleep(poll_interval)
+                poll_interval = min(poll_interval * 2, 1.0)
             if t.expired:
                 print(self.file_info(disk_instance_name, path))
                 raise TimeoutError(f"Failed to evict file within timeout of {wait_timeout_secs} seconds")

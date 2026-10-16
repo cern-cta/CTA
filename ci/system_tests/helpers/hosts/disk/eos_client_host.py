@@ -246,27 +246,38 @@ class EosClientHost(DiskClientHost):
             )
         return requests
 
-    def _wait_for_manifest_retrieval(
+    def _wait_for_directory_retrieval(
         self,
         disk_instance_name: str,
+        directory: Path,
         remote_manifest: Path,
         expected_files: int,
         *,
-        parallelism: int,
         wait_timeout_secs: int,
     ) -> None:
         print(f"Waiting for retrieval of {expected_files} files...")
+        # Read the requested paths once; unrelated files must not hide missing or unretrieved files.
+        manifest_paths = self.exec_with_output(f"cut -f 2 {shlex.quote(str(remote_manifest))}").splitlines()
+        expected_paths = set(manifest_paths)
+        if len(manifest_paths) != expected_files or len(expected_paths) != expected_files:
+            raise ValueError(f"Invalid retrieval manifest {remote_manifest}: expected {expected_files} unique paths")
         started = time.monotonic()
         deadline = started + wait_timeout_secs
         last_report = started - 10
         previous_count = -1
         while time.monotonic() < deadline:
-            on_disk = self.exec_with_output(
-                f"cut -f 2 {shlex.quote(str(remote_manifest))} | "
-                f"xargs -r -P {parallelism} -I{{}} eos root://{shlex.quote(disk_instance_name)} ls -y '{{}}' | "
-                "grep -cE '^d[1-9][0-9]*::t1' || true"
+            listing = self.exec_with_output(
+                f"eos {shlex.quote(f'root://{disk_instance_name}')} find -f --fs {shlex.quote(str(directory))}"
             )
-            count = int(on_disk)
+            retrieved = set()
+            for line in listing.splitlines():
+                match = re.fullmatch(r"(.+) fsid=([0-9]+(?:,[0-9]+)*)?\s*", line)
+                if match is None:
+                    raise ValueError(f"Invalid EOS filesystem listing entry: {line!r}")
+                locations = {int(fsid) for fsid in match[2].split(",")} if match[2] else set()
+                if EOS_TAPE_FILESYSTEM_ID in locations and locations - {0, EOS_TAPE_FILESYSTEM_ID}:
+                    retrieved.add(match[1])
+            count = len(expected_paths & retrieved)
             now = time.monotonic()
             if count != previous_count or now - last_report >= 10:
                 print(
@@ -279,7 +290,7 @@ class EosClientHost(DiskClientHost):
             if count == expected_files:
                 print("Files retrieved")
                 return
-            time.sleep(0.1)
+            time.sleep(0.5)
         raise TimeoutError(f"Failed to retrieve all files within timeout of {wait_timeout_secs} seconds")
 
     @override
@@ -294,9 +305,8 @@ class EosClientHost(DiskClientHost):
         activity: Optional[str] = None,
         parallelism: int = 1,
     ) -> PrepareRequests:
-        """Retrieve every file below a directory without transferring the path list through Python."""
-        # Keep the potentially large request-id/path mapping in the pod. Python only needs the number of requests and
-        # the manifest location; abort_files() can stream the manifest without hitting the process argument-size limit.
+        """Retrieve every file below a directory, checking completion with bulk namespace queries."""
+        # Keep request IDs in a remote manifest so abort_files() can stream them without hitting argument-size limits.
         remote_manifest = Path(f"/tmp/cta-prepare-requests-{uuid.uuid4().hex}")
         requests = self._retrieve_from_path_stream(
             disk_instance_name,
@@ -307,11 +317,11 @@ class EosClientHost(DiskClientHost):
             remote_manifest=remote_manifest,
         )
         if wait:
-            self._wait_for_manifest_retrieval(
+            self._wait_for_directory_retrieval(
                 disk_instance_name,
+                directory,
                 remote_manifest,
                 len(requests),
-                parallelism=parallelism,
                 wait_timeout_secs=wait_timeout_secs,
             )
         return requests
