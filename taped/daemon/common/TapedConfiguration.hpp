@@ -226,10 +226,10 @@ struct TapedConfiguration {
   /** Enables StressDrive and NullMediaChangerFacade in place of real hardware. */
   cta::SourcedParameter<bool> stressMode {"taped", "StressMode", false, "Compile time default"};
 
-  /** Root of the shared volume tape library (e.g. /dev/shm/cta-stress). */
+  /** Root of the shared volume tape library (PVC mount path, e.g. /cta-stress-lib). */
   cta::SourcedParameter<std::string> stressBaseDir {"taped",
                                                     "StressBaseDir",
-                                                    "/dev/shm/cta-stress",
+                                                    "/cta-stress-lib",
                                                     "Compile time default"};
 
   //----------------------------------------------------------------------------
