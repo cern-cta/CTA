@@ -243,37 +243,10 @@ delete_instance() {
   rm -f /tmp/${namespace}-rmcd-*-values.yaml
   rm -f /tmp/${namespace}-taped-*-values.yaml
 
-  # Read the stress node name now (before the temp file is removed below) so
-  # the unmount step can use it after pods are gone.  The file is only written
-  # by create_instance.sh when --no-hardware-drives (stress-drive mode) was
-  # active; its absence means a non-stress-drive deployment — no tmpfs to clean up.
-  local stress_node_file="/tmp/${namespace}-stress-node.txt"
-  local stress_node=""
-  [[ -f "${stress_node_file}" ]] && stress_node=$(cat "${stress_node_file}")
-
   # Delete the actual namespace (waits until all pods are terminated).
   log_task "Deleting CTA instance ${namespace}..."
   kubectl delete pods,jobs,deployments,statefulsets,pvc --all -n "${namespace}" --now --wait=false >/dev/null
   kubectl delete namespace "${namespace}" --wait=true >/dev/null
-
-  # The stress-drive tmpfs at /dev/shm/cta-stress must be unmounted manually
-  # by a system administrator on the stress node after the test completes:
-  #
-  #   umount /dev/shm/cta-stress
-  #
-  # This script does not unmount it because it does not run as root.
-  if [[ -n "${stress_node}" ]]; then
-    log_warn "Stress-drive tmpfs at /dev/shm/cta-stress on node ${stress_node} was NOT unmounted." \
-             "Run as root on that node: umount /dev/shm/cta-stress"
-  fi
-
-  # Remove the cta-stress-node=true label if create_instance.sh applied it automatically.
-  if [[ -n "${stress_node}" ]]; then
-    log_task "Removing cta-stress-node=true label from node ${stress_node}..."
-    kubectl label node "${stress_node}" cta-stress-node- 2>/dev/null \
-      || log_warn "Could not remove cta-stress-node label from ${stress_node}; remove it manually with: kubectl label node ${stress_node} cta-stress-node-"
-    rm -f "${stress_node_file}"
-  fi
 
   # Reclaim any PVs
   if [[ "$wipe_pvs" = true ]]; then

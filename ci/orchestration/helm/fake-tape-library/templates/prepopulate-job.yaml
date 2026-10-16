@@ -1,0 +1,90 @@
+{{- /*
+SPDX-FileCopyrightText: 2026 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+# Pre-populates the PVC with the directory layout, library.conf, and blank
+# tape files required by StressDrive.  The Job is idempotent: mkdir -p, cp,
+# and "touch if absent" are all safe to re-run on an already-populated volume.
+#
+# Layout created under the PVC root:
+#   config/<library.name>/library.conf      — StressDrive configuration
+#   contents/<library.name>/slots/          — VID.tape files (blank = never written)
+#   contents/<library.name>/changer/        — tape in transit; .lock = robot busy
+#   contents/<library.name>/drives/         — per-drive subdirs created by taped
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-prepopulate
+  annotations:
+    # Re-run this Job whenever the chart is upgraded (values may have changed).
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: prepopulate
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              LIB={{ .Values.library.name | quote }}
+              mkdir -p /data/config/${LIB}
+              mkdir -p /data/contents/${LIB}/slots
+              mkdir -p /data/contents/${LIB}/changer
+              mkdir -p /data/contents/${LIB}/drives
+              cp /config/library.toml /data/config/${LIB}/library.toml
+
+              # Create blank (empty) tape files in slots/ for every VID defined
+              # in library.toml.  An empty .tape file means "never written"; the
+              # StressDrive synthesises a VOL1 label on first archive.
+              # awk parses the TOML array-of-tables format:
+              #   [[library.mediaTypes]] ... vidPrefix = "ST" ... count = 100
+              # It collects prefix and count per section, prints one VID per
+              # line.  The loop creates the file only if absent, so re-runs on
+              # an upgraded chart never truncate already-written tapes.
+              awk '
+                /\[\[library\.mediaTypes\]\]/ {
+                  if (prefix != "" && n > 0)
+                    for (i = 1; i <= n; i++) printf "%s%04d\n", prefix, i
+                  prefix = ""; n = 0
+                }
+                /vidPrefix[[:space:]]*=/ {
+                  gsub(/^[^"]*"/, ""); gsub(/".*$/, ""); prefix = $0
+                }
+                /^[[:space:]]*count[[:space:]]*=/ {
+                  gsub(/[^0-9]/, ""); n = $0 + 0
+                }
+                END {
+                  if (prefix != "" && n > 0)
+                    for (i = 1; i <= n; i++) printf "%s%04d\n", prefix, i
+                }
+              ' "/data/config/${LIB}/library.toml" | while read -r vid; do
+                slot="/data/contents/${LIB}/slots/${vid}.tape"
+                [ -f "${slot}" ] || touch "${slot}"
+              done
+
+              echo "Fake tape library pre-population complete."
+              echo "  config/${LIB}/library.toml"
+              echo "  contents/${LIB}/slots/  ($(ls /data/contents/${LIB}/slots/ | wc -l) tape files)"
+              echo "  contents/${LIB}/changer/"
+              echo "  contents/${LIB}/drives/"
+
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: library-conf
+              mountPath: /config
+              readOnly: true
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ .Values.pvc.name }}
+        - name: library-conf
+          configMap:
+            name: {{ .Release.Name }}-library-conf

@@ -1,0 +1,111 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Configuration for a single fake (in-memory/on-disk) tape library used by
+# StressDrive scale tests.
+#
+# This chart creates:
+#   1. A PersistentVolumeClaim to hold the virtual tape library on disk.
+#   2. A library.conf file (via ConfigMap) that StressDrive reads at runtime.
+#   3. A pre-population Job that writes library.conf and creates the required
+#      directory layout inside the PVC.
+#
+# After this chart is deployed, mount the PVC in every taped pod via the
+# taped chart's extraVolumes / extraVolumeMounts values, and set:
+#   taped.conf.taped.stressMode:    true
+#   taped.conf.taped.stressBaseDir: <mountPath>   # must match volumeMount.mountPath
+#
+# Consistency requirements
+# ------------------------
+# This file is the single source of truth for the virtual library.
+# setup_stress_drives_test.py reads library.conf directly from the taped pod
+# and derives all catalogue registration parameters from it — no manual sync
+# with test_params.toml is required.  The only manual consistency constraint is:
+#   library.name  ↔  logicalLibraryName in the generated taped drive list
+#   (create_instance.sh --no-hardware-drives uses "stress-lib" by default).
+# mediaTypes[].count must be >= the number of drives (--max-drives) so every
+# drive can be kept busy simultaneously.
+#
+# Extendability: multiple libraries
+# ----------------------------------
+# This chart currently supports a single logical library (one library: block).
+# To add a second library with a different drive set:
+#   - Change library: to libraries: [...] (array of library objects)
+#   - Update the ConfigMap and Job templates to iterate over the array
+#   - Each taped pod in a different library would still share the same PVC
+#     because each library lives under a separate contents/<lib>/ subtree;
+#     changer/ directories are per-library so there is no cross-library
+#     lock contention.
+#   - Register each library's drives and tapes in the CTA catalogue with the
+#     corresponding logicalLibraryName.
+
+# ---------------------------------------------------------------------------
+# Library configuration
+# ---------------------------------------------------------------------------
+library:
+  # Name of the logical library — must match the logicalLibraryName used when
+  # registering drives and tapes in the CTA catalogue, and the hardcoded value
+  # in generate_stress_drive_values() in create_instance.sh.
+  name: stress-lib
+
+  # Maximum milliseconds to wait for the single changer robot to become free.
+  # If another mount/dismount holds the robot lock longer than this, the
+  # waiting drive throws.  Increase for very slow storage backends.
+  changerTimeoutMs: 30000
+
+  # Media type definitions.  Each entry maps to a block of mediatype lines in
+  # library.conf.  Multiple entries are supported (one per media type).
+  # setup_stress_drives_test.py reads all entries and registers them in the
+  # CTA catalogue automatically — no manual updates needed.
+  mediaTypes:
+    - name: STRESS30M
+      # Capacity enforced by StressDrive: ENOSPC is signalled once the tape's
+      # in-memory block stream reaches this size.  Small tapes cause frequent
+      # tape switches, exercising the full mount/dismount/remount cycle.
+      capacityBytes: 31457280   # 30 MiB
+      # VID prefix used to derive the media type from a VID at mount time
+      # (longest-prefix match).  Keep <= 2 chars so VIDs fit the 6-char ANSI
+      # tape label VSN field (e.g. ST + 4-digit index = ST0001..ST0100).
+      vidPrefix: ST
+      # Milliseconds to sleep in StressDrive::waitUntilReady() after the
+      # changer delivers the tape, simulating mechanical tape-load latency.
+      # Configurable per media type to reflect different physical tape speeds.
+      mountDelayMs: 2000
+      # Number of virtual tapes pre-created in slots/ by the Job.
+      # Must be >= the number of drives (--max-drives) so every drive can be
+      # kept busy simultaneously.  setup_stress_drives_test.py registers
+      # exactly this many tapes in the CTA catalogue.
+      count: 100
+
+# ---------------------------------------------------------------------------
+# PersistentVolumeClaim
+# ---------------------------------------------------------------------------
+pvc:
+  # Name referenced by taped extraVolumes and the pre-population Job.
+  name: cta-fake-tape-library
+
+  # Storage class for the PVC.
+  #   ""   — use the cluster's default storage class (works with rancher
+  #           local-path-provisioner, kind, k3s, etc. on a single node)
+  #   "-"  — disable storageClassName (bind to a manually created PV)
+  #   any  — explicit storage class name
+  #
+  # Note: ReadWriteOnce is sufficient for single-node clusters (all pods on
+  # the same node share the volume).  For multi-node clusters, use a
+  # ReadWriteMany storage class (NFS, CephFS, …) and update accessModes.
+  storageClass: ""
+
+  # Worst-case disk usage: 100 tapes × 30 MiB = ~3 GiB.  10 Gi gives ample
+  # headroom for the tmp files written during atomic tape saves.
+  size: 10Gi
+
+  accessModes:
+    - ReadWriteOnce
+
+# ---------------------------------------------------------------------------
+# Pre-population Job image
+# ---------------------------------------------------------------------------
+image:
+  repository: registry.cern.ch/docker.io/almalinux/9-minimal
+  tag: "9.7"
+  pullPolicy: IfNotPresent

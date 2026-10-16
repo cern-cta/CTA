@@ -9,11 +9,13 @@
 
 #include <cstring>
 #include <fstream>
+#include <map>
 #include <thread>
+#include <toml++/toml.hpp>
 
 namespace cta::tape::drive {
 
-// Binary format for tape.bin:
+// Binary format for .tape files:
 //
 //   [uint32_t magic   ]  -- k_magic, sanity check
 //   [uint32_t version ]  -- k_version
@@ -23,51 +25,69 @@ namespace cta::tape::drive {
 //     [uint64_t remainingSpaceAfter]
 //
 // The format is little-endian on all platforms where CTA runs (x86-64).
+// An empty file (size 0) means a blank (never-archived) tape.
 
-StressDrive::StressDrive(std::string driveName, std::filesystem::path baseDir, uint32_t mountDelayMs)
+StressDrive::StressDrive(std::string driveName, std::string logicalLibraryName, std::filesystem::path baseDir)
     : FakeDrive(std::numeric_limits<uint64_t>::max()),
       m_driveName(std::move(driveName)),
-      m_baseDir(std::move(baseDir)),
-      m_mountDelayMs(mountDelayMs) {
+      m_logicalLibrary(std::move(logicalLibraryName)),
+      m_baseDir(std::move(baseDir)) {
   // FakeDrive defaults m_tapeInPlace to true (for unit-test convenience), but
   // a StressDrive starts with an empty slot: no tape is loaded until the media
   // changer mounts one and waitUntilReady() is called.
   setTapeInPlace(false);
+  parseLibraryConf();
 }
 
 void StressDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
   // TapeCleaning::~TapeCleaning() calls waitUntilReady() after the write
   // session to prepare for dismount.  Guard against that re-entry: if a tape
-  // is already loaded (m_currentTapeDir is set), the drive is already ready
+  // is already loaded (m_currentTapePath is set), the drive is already ready
   // and reloading from disk would discard in-memory data not yet saved.
-  if (!m_currentTapeDir.empty()) {
+  if (!m_currentTapePath.empty()) {
     return;
   }
 
-  if (m_mountDelayMs > 0) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(m_mountDelayMs));
-  }
+  const auto driveDir = m_baseDir / "contents" / m_logicalLibrary / "drives" / m_driveName;
 
-  const auto symlinkPath = m_baseDir / "drives" / m_driveName;
-  if (!std::filesystem::is_symlink(symlinkPath)) {
+  // Scan the drive directory for exactly one *.tape file.
+  std::filesystem::path tapeFile;
+  for (const auto& entry : std::filesystem::directory_iterator(driveDir)) {
+    if (entry.path().extension() == ".tape") {
+      if (!tapeFile.empty()) {
+        throw cta::exception::Exception(
+          "StressDrive::waitUntilReady: multiple .tape files in " + driveDir.string() +
+          " — only one tape can be mounted at a time");
+      }
+      tapeFile = entry.path();
+    }
+  }
+  if (tapeFile.empty()) {
     throw cta::exception::Exception(
       "StressDrive::waitUntilReady: no tape mounted on drive \"" + m_driveName +
-      "\" — symlink " + symlinkPath.string() + " not found; "
-      "NullMediaChangerFacade::mountTape* must be called before waitUntilReady");
+      "\" — no *.tape file found in " + driveDir.string() +
+      "; MediaChangerFacade::mountTape* must be called before waitUntilReady");
   }
 
-  // read_symlink returns the raw target stored in the symlink, which may be a
-  // relative path.  canonical() resolves it against the symlink's parent dir.
-  const auto tapeDir =
-    std::filesystem::canonical(m_baseDir / "drives" / m_driveName);
-  loadTape(tapeDir);
-  m_currentTapeDir = tapeDir;
+  const std::string vid = tapeFile.stem().string();
+
+  // Look up per-media-type properties from the VID prefix.
+  const MediaTypeInfo info = infoForVid(vid);
+
+  // Simulate mechanical tape-load latency (configurable per media type).
+  if (info.mountDelayMs > 0) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(info.mountDelayMs));
+  }
+
+  m_tapeCapacity = info.capacityBytes;
+
+  loadTape(tapeFile);
+  m_currentTapePath = tapeFile;
   m_currentPosition = 0;
 
   // Synthesize a VOL1 label on first use of a blank tape so that
-  // WriteSession does not reject it as blank.  The VID is derived from
-  // the tape directory name (e.g. /dev/shm/cta-stress/tapes/STRS0001 →
-  // "STRS0001").
+  // WriteSession does not reject it as blank.  The VID is derived from the
+  // .tape filename stem (e.g. /…/drives/STRESS0000/ST0001.tape → "ST0001").
   //
   // We reproduce the 80-byte ANSI label inline rather than including
   // taped/file/Structures.hpp, which would add a ctatapedfile link
@@ -104,7 +124,6 @@ void StressDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
     std::memcpy(vol1.lbpMethod, "00", 2);
     vol1.lblStandard[0] = '3';
 
-    const std::string vid = m_currentTapeDir.filename().string();
     const size_t vidLen = std::min(vid.size(), sizeof(vol1.vsn));
     std::memcpy(vol1.vsn, vid.data(), vidLen);
 
@@ -114,26 +133,20 @@ void StressDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
     m_tape.push_back(std::move(block));
   }
 
-  // Tape is now in the drive; reflect this so hasTapeInPlace() returns true
-  // and getDriveStatus() reports the correct state to taped.
   setTapeInPlace(true);
 }
 
 void StressDrive::unloadTape() {
-  if (!m_currentTapeDir.empty()) {
+  if (!m_currentTapePath.empty()) {
     saveTape();
-    m_currentTapeDir.clear();
+    m_currentTapePath.clear();
   }
   FakeDrive::unloadTape();
 }
 
 void StressDrive::saveTape() const {
-  const auto tapePath = m_currentTapeDir / "tape.bin";
-  const auto tmpPath  = m_currentTapeDir / "tape.bin.tmp";
+  const auto tmpPath = std::filesystem::path(m_currentTapePath.string() + ".tmp");
 
-  // Write to a temp file first so that a failed write (e.g. /dev/shm full)
-  // never corrupts the existing tape.bin.  rename() is atomic on Linux when
-  // source and destination are on the same filesystem.
   {
     std::ofstream f(tmpPath, std::ios::binary | std::ios::trunc);
     if (!f) {
@@ -164,19 +177,19 @@ void StressDrive::saveTape() const {
       std::filesystem::remove(tmpPath);
       throw cta::exception::Exception(
         "StressDrive::saveTape: I/O error writing " + tmpPath.string() +
-        " (disk full? check /dev/shm space)");
+        " (disk full? check shared volume space)");
     }
   }
 
-  std::filesystem::rename(tmpPath, tapePath);
+  std::filesystem::rename(tmpPath, m_currentTapePath);
 }
 
-void StressDrive::loadTape(const std::filesystem::path& tapeDir) {
+void StressDrive::loadTape(const std::filesystem::path& tapePath) {
   m_tape.clear();
 
-  const auto tapePath = tapeDir / "tape.bin";
-  if (!std::filesystem::exists(tapePath)) {
-    // Blank tape: no prior archive sessions on this VID.
+  if (std::filesystem::file_size(tapePath) == 0) {
+    // Empty file = blank tape (never archived).  Leave m_tape empty so that
+    // waitUntilReady() synthesises the VOL1 label.
     return;
   }
 
@@ -219,7 +232,6 @@ void StressDrive::loadTape(const std::filesystem::path& tapeDir) {
       block.data.resize(sz);
       f.read(block.data.data(), static_cast<std::streamsize>(sz));
     }
-    // sz == 0: file mark (empty data string), no data bytes to read
     read64(block.remainingSpaceAfter);
     if (!f) {
       throw cta::exception::Exception(
@@ -227,6 +239,46 @@ void StressDrive::loadTape(const std::filesystem::path& tapeDir) {
     }
     m_tape.push_back(std::move(block));
   }
+}
+
+void StressDrive::parseLibraryConf() {
+  const auto confPath = m_baseDir / "config" / m_logicalLibrary / "library.toml";
+
+  toml::table tbl;
+  try {
+    tbl = toml::parse_file(confPath.string());
+  } catch (const toml::parse_error& e) {
+    throw cta::exception::Exception(
+      "StressDrive: failed to parse " + confPath.string() + ": " +
+      std::string(e.description()));
+  }
+
+  const auto* mediaTypes = tbl["library"]["mediaTypes"].as_array();
+  if (!mediaTypes) return;
+
+  for (const auto& entry : *mediaTypes) {
+    const auto* mt = entry.as_table();
+    if (!mt) continue;
+    const auto prefix = (*mt)["vidPrefix"].value<std::string>();
+    if (!prefix) continue;
+    MediaTypeInfo info;
+    if (auto cap   = (*mt)["capacityBytes"].value<uint64_t>()) info.capacityBytes = *cap;
+    if (auto delay = (*mt)["mountDelayMs"].value<int64_t>())   info.mountDelayMs  = static_cast<uint32_t>(*delay);
+    m_mediaTypes[*prefix] = info;
+  }
+}
+
+StressDrive::MediaTypeInfo StressDrive::infoForVid(const std::string& vid) const {
+  // Longest-prefix match so overlapping prefixes (e.g. "S" and "ST") resolve correctly.
+  std::string bestPrefix;
+  MediaTypeInfo best;
+  for (const auto& [prefix, info] : m_mediaTypes) {
+    if (vid.rfind(prefix, 0) == 0 && prefix.size() > bestPrefix.size()) {
+      bestPrefix = prefix;
+      best       = info;
+    }
+  }
+  return best;
 }
 
 cta::tape::drive::driveStatus StressDrive::getDriveStatus() {

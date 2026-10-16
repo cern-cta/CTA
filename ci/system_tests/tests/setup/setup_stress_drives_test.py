@@ -3,22 +3,25 @@
 
 """Setup test for stress-drive mode.
 
-Registers the virtual tape library in the CTA catalogue and prepares the
-shared tmpfs directory used by StressDrive.  Must be run after
+Registers the virtual tape library in the CTA catalogue.  Must be run after
 setup_cta_test.py (catalogue and admin users must already exist).
 
 Applies only to deployments that include at least one taped pod configured
 with DriveDevice = "stress://".  The entire module is skipped automatically
 when no stress-mode drives are present.
+
+Library configuration (media types, tape counts, VID prefixes, capacities) is
+read directly from library.toml on the mounted shared volume, so no manual
+duplication into test_params.toml is required.
 """
 
 import json
 import time
-from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
 from system_tests.helpers.hosts import CtaCliHost, CtaTapedHost
+from system_tests.helpers.hosts.cta_taped_host import StressLibraryConf
 from system_tests.helpers.test_env import TestEnv
 
 
@@ -56,68 +59,72 @@ def skip_if_no_stress_drives(env: TestEnv) -> None:
 
 
 # =========================================================================
+#  Library config fixture
+# =========================================================================
+
+
+@pytest.fixture(scope="session")
+def stress_library_conf(env: TestEnv) -> StressLibraryConf:
+    """Read the library config from library.toml on the first stress-mode taped pod.
+
+    This is the single source of truth for media types, tape counts, VID
+    prefixes, capacities, and the logical library name — no duplication into
+    test_params.toml is required or expected.
+    """
+    return _stress_tapeds(env)[0].read_stress_library_conf()
+
+
+# =========================================================================
 #  Setup tests
 # =========================================================================
 
 
-def test_register_stress_media_type(cta_cli: CtaCliHost, stress_tape_capacity_bytes: int) -> None:
-    """Register the STRESS1T media type used for all virtual stress tapes."""
-    cta_cli.exec(
-        f"cta-admin mediatype add"
-        f" --name STRESS1T"
-        f" --capacity {stress_tape_capacity_bytes}"
-        f" --cartridge STRESS"
-        f" --comment 'Virtual stress-test tape'"
-    )
+def test_register_stress_media_types(
+    cta_cli: CtaCliHost,
+    stress_library_conf: StressLibraryConf,
+) -> None:
+    """Register every media type declared in library.toml."""
+    for mt in stress_library_conf.media_types:
+        cta_cli.exec(
+            f"cta-admin mediatype add"
+            f" --name {mt.name}"
+            f" --capacity {mt.capacity_bytes}"
+            f" --cartridge STRESS"
+            f" --comment 'Virtual stress-test tape'"
+        )
 
 
 def test_register_stress_logical_library(
     cta_cli: CtaCliHost,
-    stress_logical_library: str,
+    stress_library_conf: StressLibraryConf,
 ) -> None:
     """Register the logical library that all stress drives and tapes belong to."""
     cta_cli.exec(
         f"cta-admin logicallibrary add"
-        f" --name {stress_logical_library}"
+        f" --name {stress_library_conf.name}"
         f" --comment 'Virtual logical library for stress drives'"
     )
 
 
 def test_add_stress_tapes(
     cta_cli: CtaCliHost,
-    stress_num_tapes: int,
-    stress_vid_prefix: str,
-    stress_logical_library: str,
+    stress_library_conf: StressLibraryConf,
 ) -> None:
     """Register all virtual tapes in the CTA catalogue."""
-    for i in range(1, stress_num_tapes + 1):
-        vid = _vid(stress_vid_prefix, i)
-        cta_cli.exec(
-            f"cta-admin tape add"
-            f" --mediatype STRESS1T"
-            f" --purchaseorder stress-order"
-            f" --vendor stress-vendor"
-            f" --logicallibrary {stress_logical_library}"
-            f" --tapepool ctasystest"
-            f" --vid {vid}"
-            f" --full false"
-            f" --comment 'Virtual stress tape'"
-        )
-
-
-def test_setup_stress_tmpfs(env: TestEnv, stress_base_dir: str) -> None:
-    """Create tapes/ and drives/ subdirectories on every stress-mode taped pod.
-
-    All CI taped pods are assumed to run on the same Kubernetes node and share
-    the same hostPath volume, so calling mkdir -p from any one of them is
-    sufficient.  We call it from all of them for resilience; mkdir -p is
-    idempotent.
-    """
-    stress_pods = _stress_tapeds(env)
-    with ThreadPoolExecutor(max_workers=len(stress_pods)) as pool:
-        futures = [pool.submit(pod.setup_stress_tmpfs, stress_base_dir) for pod in stress_pods]
-        for f in futures:
-            f.result()
+    for mt in stress_library_conf.media_types:
+        for i in range(1, mt.count + 1):
+            vid = _vid(mt.vid_prefix, i)
+            cta_cli.exec(
+                f"cta-admin tape add"
+                f" --mediatype {mt.name}"
+                f" --purchaseorder stress-order"
+                f" --vendor stress-vendor"
+                f" --logicallibrary {stress_library_conf.name}"
+                f" --tapepool ctasystest"
+                f" --vid {vid}"
+                f" --full false"
+                f" --comment 'Virtual stress tape'"
+            )
 
 
 def test_set_stress_drives_up(cta_cli: CtaCliHost, env: TestEnv) -> None:
