@@ -38,7 +38,7 @@ def api_get(*path_segments: str, query: dict[str, str | int] | None = None) -> t
             with urllib.request.urlopen(request, timeout=15) as response:  # noqa: S310
                 headers = {key.lower(): value for key, value in response.headers.items()}
                 return json.load(response), headers, authentication
-        except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError, json.JSONDecodeError) as error:
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as error:
             last_error = error
     raise RuntimeError(f"GitLab API request failed: {last_error}")
 

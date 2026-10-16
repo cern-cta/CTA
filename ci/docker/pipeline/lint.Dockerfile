@@ -13,7 +13,7 @@ ARG CARGO_LLVM_COV_VERSION="=0.9.1"
 RUN dnf install -y epel-release && \
     dnf install -y git git-clang-format patch python3 python3-pip wget which \
         podman bat shellcheck yamllint g++ pcre-devel make protobuf-compiler && \
-    python3 -m pip install -U uv && \
+    python3 -m pip install --only-binary :all: -U uv && \
     uv pip install --exclude-newer "14 days" --no-cache-dir -U --system --only-binary :all: \
         cppcheck_codequality jsonschema black ruff detect-secrets pyright[nodejs] && \
     dnf clean all --enablerepo=\* && \

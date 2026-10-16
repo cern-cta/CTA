@@ -23,7 +23,7 @@ FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest AS cern-ca
 FROM docker.io/almalinux/9-minimal:latest AS grpc-health-probe
 
 # Download once for frontend readiness checks and tools-image diagnostics.
-RUN curl -fL \
+RUN curl -fL --proto "=https" --proto-redir "=https" \
     https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.59/grpc_health_probe-linux-amd64 \
     -o /grpc-health-probe && \
     chmod 0755 /grpc-health-probe
@@ -83,7 +83,8 @@ RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
     printf '%s\n' '[main]' 'keepcache=True' 'tsflags=nodocs' 'install_weak_deps=False' > /etc/dnf/dnf.conf && \
     # Add the CERN root CAs to the system trust store before accessing package repositories
     update-ca-trust && \
-    # Some basic utils (tar for kubectl cp, jq for many of the tests and convenience, procps-ng for some other utilities used in tests)
+    # Basic utilities: tar for kubectl cp, jq for tests and convenience,
+    # and procps-ng for process utilities used in tests.
     # Requiring sudo is not ideal, but we need an update of the tests to be able to do without it.
     # Anyway, by setting allowPrivilegeEscalation: false in Kubernetes, sudo is unusable anyway
     microdnf install -y tar jq sudo procps-ng && \

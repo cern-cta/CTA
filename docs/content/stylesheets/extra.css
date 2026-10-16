@@ -69,13 +69,11 @@
   --md-footer-fg-color: #f2f5f6;
   --md-footer-fg-color--light: #b4c0c6;
   --md-footer-fg-color--lighter: #8b979e;
-}
 
-/* Mermaid uses a shadow root: configure its inherited variables here instead
- * of targeting generated SVG elements. Keep connectors separate from the dark
- * masthead color, and use the mode-aware CTA accent for diagram borders.
- */
-[data-md-color-scheme] {
+  /* Mermaid uses a shadow root: configure its inherited variables here instead
+   * of targeting generated SVG elements. Keep connectors separate from the dark
+   * masthead color, and use the mode-aware CTA accent for diagram borders.
+   */
   --md-mermaid-edge-color: var(--md-default-fg-color--light);
   --md-mermaid-node-bg-color: var(--cta-surface);
   --md-mermaid-node-fg-color: var(--md-accent-fg-color);
