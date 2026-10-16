@@ -60,7 +60,7 @@ deploy_fake_tape_library() {
   fi
   helm upgrade --install fake-tape-library helm/fake-tape-library \
     --namespace "${namespace}" \
-    --wait --wait-for-jobs --timeout 2m \
+    --wait --wait-for-jobs --timeout 5m \
     ${storage_class_flag}
   log_success "fake-tape-library chart deployed."
 }
