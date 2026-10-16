@@ -51,9 +51,17 @@ check_deploy_commands() {
 
 deploy_fake_tape_library() {
   log_task "Deploying fake-tape-library chart (PVC + directory layout + library.toml)..."
+  local storage_class_flag=""
+  if kubectl get sc fast-ssd >/dev/null 2>&1; then
+    echo "  fast-ssd StorageClass found — PVC will use SSD-backed storage."
+    storage_class_flag="--set pvc.storageClass=fast-ssd"
+  else
+    echo "  fast-ssd StorageClass not found — using cluster default StorageClass."
+  fi
   helm upgrade --install fake-tape-library helm/fake-tape-library \
     --namespace "${namespace}" \
-    --wait --wait-for-jobs --timeout 2m
+    --wait --wait-for-jobs --timeout 2m \
+    ${storage_class_flag}
   log_success "fake-tape-library chart deployed."
 }
 
