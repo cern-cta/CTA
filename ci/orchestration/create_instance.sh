@@ -51,17 +51,29 @@ check_deploy_commands() {
 
 deploy_fake_tape_library() {
   log_task "Deploying fake-tape-library chart (PVC + directory layout + library.toml)..."
-  local storage_class_flag=""
+  local -a extra_flags=()
   if kubectl get sc fast-ssd >/dev/null 2>&1; then
-    echo "  fast-ssd StorageClass found — PVC will use SSD-backed storage."
-    storage_class_flag="--set pvc.storageClass=fast-ssd"
+    # fast-ssd uses WaitForFirstConsumer with static (no-provisioner) PVs.
+    # Specifying volumeName bypasses WaitForFirstConsumer and binds the PVC
+    # immediately on creation, so the prepopulate Job pod can start without delay.
+    # On teardown, reclaim_released_pvs in delete_instance.sh catches the PV
+    # (Released, claimRef.namespace matches, not local-path) and reclaims it.
+    local pv_name
+    pv_name=$(kubectl get pv -o json \
+      | jq -r '[.items[] | select(.spec.storageClassName=="fast-ssd" and .status.phase=="Available")] | first | .metadata.name // empty')
+    if [[ -n "${pv_name}" ]]; then
+      echo "  fast-ssd StorageClass found — binding PVC directly to ${pv_name} (bypasses WaitForFirstConsumer)."
+      extra_flags=("--set" "pvc.storageClass=fast-ssd" "--set" "pvc.volumeName=${pv_name}")
+    else
+      echo "  fast-ssd StorageClass found but no Available PVs — using cluster default StorageClass."
+    fi
   else
     echo "  fast-ssd StorageClass not found — using cluster default StorageClass."
   fi
   helm upgrade --install fake-tape-library helm/fake-tape-library \
     --namespace "${namespace}" \
     --wait --wait-for-jobs --timeout 5m \
-    ${storage_class_flag}
+    "${extra_flags[@]}"
   log_success "fake-tape-library chart deployed."
 }
 
