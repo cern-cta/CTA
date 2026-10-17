@@ -95,6 +95,11 @@ pvc:
   # ReadWriteMany storage class (NFS, CephFS, …) and update accessModes.
   storageClass: ""
 
+  # Optional: bind directly to a named PV, bypassing WaitForFirstConsumer.
+  # Set by create_instance.sh when fast-ssd is available to avoid the
+  # scheduler delay that causes the prepopulate Job to time out.
+  volumeName: ""
+
   # Worst-case disk usage: 100 tapes × 30 MiB = ~3 GiB.  10 Gi gives ample
   # headroom for the tmp files written during atomic tape saves.
   size: 10Gi
