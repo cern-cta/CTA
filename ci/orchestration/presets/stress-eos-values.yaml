@@ -80,10 +80,10 @@ server:
           secret:
             secretName: ctaeos-self-signed-key-pem
 
-fst:
-  replicaCount: 10
-  # Start FST replicas together to reduce setup time.
-  podManagementPolicy: Parallel
+  fst:
+    replicaCount: 10
+    # Start FST replicas together to reduce setup time.
+    podManagementPolicy: Parallel
 
     persistence:
       enabled: true
