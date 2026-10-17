@@ -81,7 +81,10 @@ deploy() {
     helm_flags+=(--values "$dcache_config")
   fi
 
-  log_run helm dependency build helm/dcache
+  # Dependency update can take a few seconds to do a quick check to see if we can skip it
+  if ! helm dependency list helm/dcache | grep -q '[[:space:]]ok[[:space:]]*$'; then
+    log_run helm dependency update helm/dcache
+  fi
   log_run helm upgrade --install store helm/dcache \
                      --namespace "$namespace" \
                      --wait --timeout 10m \

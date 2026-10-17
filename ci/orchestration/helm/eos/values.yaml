@@ -108,6 +108,8 @@ server:
 
     probes:
       liveness: false
+      # Avoid delaying MGM startup; increase this on hosts running many CI instances.
+      readinessPeriodSeconds: 1
 
 # The disk client belongs to this backend, independently of the CTA tools image.
 client:

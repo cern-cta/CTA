@@ -116,6 +116,10 @@ server:
     extraVolumes: *extra-volumes
 
   qdb:
+    probes:
+      # Keep readiness checks infrequent during throughput measurements.
+      readinessPeriodSeconds: 10
+
     persistence:
       enabled: true
       # Reduce disk latency so host storage is less likely to limit measured throughput.
