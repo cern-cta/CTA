@@ -2,12 +2,12 @@
 SPDX-FileCopyrightText: 2026 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
-# Pre-populates the PVC with the directory layout, library.conf, and blank
+# Pre-populates the PVC with the directory layout, library.toml, and blank
 # tape files required by StressDrive.  The Job is idempotent: mkdir -p, cp,
 # and "touch if absent" are all safe to re-run on an already-populated volume.
 #
 # Layout created under the PVC root:
-#   config/<library.name>/library.conf      — StressDrive configuration
+#   config/<library.name>/library.toml      — StressDrive configuration
 #   contents/<library.name>/slots/          — VID.tape files (blank = never written)
 #   contents/<library.name>/changer/        — tape in transit; .lock = robot busy
 #   contents/<library.name>/drives/         — per-drive subdirs created by taped

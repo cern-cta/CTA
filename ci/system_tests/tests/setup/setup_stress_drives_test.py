@@ -71,7 +71,10 @@ def stress_library_conf(env: TestEnv) -> StressLibraryConf:
     prefixes, capacities, and the logical library name — no duplication into
     test_params.toml is required or expected.
     """
-    return _stress_tapeds(env)[0].read_stress_library_conf()
+    tapeds = _stress_tapeds(env)
+    if not tapeds:
+        pytest.skip("No stress-mode taped pods found")
+    return tapeds[0].read_stress_library_conf()
 
 
 # =========================================================================
