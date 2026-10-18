@@ -19,9 +19,12 @@
 
   [tests.stress]
 
-    # For the actual stress test we currently have 40 directories with 50.000 files each
-    # mhvtl is mounted in-memory, so we keep the file size small and easily compressible (unique string + zero padding)
-    num_dirs          = 40
+    # 200 directories × 50,000 files = 10 M files total.
+    # 50 k files/dir is the EOS-safe upper limit for namespace performance.
+    # File size is kept at 16 bytes; the effective tape footprint is ~470 bytes/file
+    # (data block + per-file tape header overhead), giving ~4.7 GB total on tape for the
+    # full 10 M run — trivially small on the fast-ssd PVC backing the fake tape library.
+    num_dirs          = 200
     num_files_per_dir = 50000
     # file size in bytes
     file_size = 16
@@ -43,11 +46,14 @@
       # If true, put drives down before archiving and only put them up after num_files_to_put_drives_up files are created.
       # This prevents drives from outpacing the queueing capabilities of EOS.
       enabled                    = true
-      num_files_to_put_drives_up = 1000000
-      # timeout in seconds
-      timeout_to_put_drives_up_sec = 3600
-      # how often to count number of files when prequeueing
-      check_interval_sec = 300
+      # Pre-queue 9 M files before bringing drives up so the scheduler has a
+      # large backlog to keep all drives busy from the first mount.
+      # The last 1 M files are queued while drives are already processing.
+      num_files_to_put_drives_up = 9000000
+      # Timeout: 9 M files at 1 kHz EOS queueing rate = 9 000 s; +25 % margin = 11 250 s.
+      timeout_to_put_drives_up_sec = 11250
+      # Check every 2 min so drives come up promptly once the threshold is crossed.
+      check_interval_sec = 120
 
     # -----------------------------------------------------------------------
     # Virtual stress-drive mode (no mhvtl, no real SCSI hardware).
@@ -60,7 +66,8 @@
 
       # Number of virtual tapes to register in the CTA catalogue.
       # Should be >= the number of drives so the scheduler can keep all drives busy.
-      num_tapes = 20
+      # Must be consistent with mediaTypes[].count in fake-tape-library/values.yaml.
+      num_tapes = 30
 
       # VID prefix: tapes are named <vid_prefix><4-digit index>, e.g. ST0001..ST0020.
       # Must be at most 2 characters so that the full VID fits in the 6-character

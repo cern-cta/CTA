@@ -58,24 +58,27 @@ library:
   # setup_stress_drives_test.py reads all entries and registers them in the
   # CTA catalogue automatically — no manual updates needed.
   mediaTypes:
-    - name: STRESS30M
+    - name: STRESS150MB
       # Capacity enforced by StressDrive: ENOSPC is signalled once the tape's
-      # in-memory block stream reaches this size.  Small tapes cause frequent
-      # tape switches, exercising the full mount/dismount/remount cycle.
-      capacityBytes: 31457280   # 30 MiB
+      # block stream reaches this size.
+      # Sizing rationale: observed ~470 bytes effective tape footprint per 16-byte file.
+      # At 762 files/sec/drive, 30 MB filled in ~1 min causing excessive remount overhead.
+      # 150 MB holds ~320 k files, giving ~7 min per tape session — a much better ratio
+      # against the 2-second mount delay.  With 10 drives each handling 1 M files
+      # (10 M / 10 drives), each drive uses ~3-4 tape switches for the full run.
+      capacityBytes: 150000000   # 150 MB
       # VID prefix used to derive the media type from a VID at mount time
       # (longest-prefix match).  Keep <= 2 chars so VIDs fit the 6-char ANSI
-      # tape label VSN field (e.g. ST + 4-digit index = ST0001..ST0100).
+      # tape label VSN field (e.g. ST + 4-digit index = ST0001..ST0060).
       vidPrefix: ST
       # Milliseconds to sleep in StressDrive::waitUntilReady() after the
       # changer delivers the tape, simulating mechanical tape-load latency.
-      # Configurable per media type to reflect different physical tape speeds.
       mountDelayMs: 2000
       # Number of virtual tapes pre-created in slots/ by the Job.
-      # Must be >= the number of drives (--max-drives) so every drive can be
-      # kept busy simultaneously.  setup_stress_drives_test.py registers
-      # exactly this many tapes in the CTA catalogue.
-      count: 100
+      # 60 tapes × 150 MB = 9 GB on the fast-ssd PVC — trivially small.
+      # Supports up to 20 drives with ~3 tapes each; 60 gives ample headroom.
+      # Must be >= the number of drives (--max-drives).
+      count: 60
 
 # ---------------------------------------------------------------------------
 # PersistentVolumeClaim
@@ -100,9 +103,9 @@ pvc:
   # scheduler delay that causes the prepopulate Job to time out.
   volumeName: ""
 
-  # Worst-case disk usage: 100 tapes × 30 MiB = ~3 GiB.  10 Gi gives ample
+  # Worst-case disk usage: 60 tapes × 150 MB = ~9 GB.  50 Gi gives generous
   # headroom for the tmp files written during atomic tape saves.
-  size: 10Gi
+  size: 50Gi
 
   accessModes:
     - ReadWriteOnce
