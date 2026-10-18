@@ -54,11 +54,12 @@ taped:
       # 10 drives → 20, 20 drives → 40; see connection budget in stress-cta-pgsched-values.yaml.
       schedulerNumberOfConnections: 2
 
-      # Fetch up to 100k files per advisory-lock trip.  StressDrive processes
-      # files at memory speed so the default 4k-file batch causes constant lock
-      # churn during the initial burst; a larger batch amortises lock overhead.
-      archiveFetchBytesFiles: "80000000000, 100000"
-      retrieveFetchBytesFiles: "80000000000, 100000"
+      # Batch sized to fit the tape capacity: 150 MB / ~470 bytes/file ≈ 320 k files/tape.
+      # 40 k batch → ~8 full batches per tape with only ~0–5 k files left over at ENOSPC,
+      # minimising the DB requeue churn at tape boundaries.  Still 10× the 4 k default
+      # so advisory-lock overhead during the initial burst remains well amortised.
+      archiveFetchBytesFiles: "80000000000, 40000"
+      retrieveFetchBytesFiles: "80000000000, 40000"
 
       # Disable underfill-driven dismounting for stress tests.
       #
