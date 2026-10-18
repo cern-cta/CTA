@@ -53,6 +53,16 @@ public:
                         uint64_t opportunisticBatchingMaxBatchSize);
 
   /**
+   * Stops both batchers (fails any queued items with "batcher stopped", unblocks parked waiters).
+   * Must be called after all gRPC handler threads have returned (i.e. after server->Wait()), before
+   * this object is destroyed.
+   */
+  void stop() {
+    if (m_archiveBatcher) m_archiveBatcher->stop();
+    if (m_retrieveBatcher) m_retrieveBatcher->stop();
+  }
+
+  /**
    * Queue an archive request, batching it with concurrent callers when
    * opportunistic batching is enabled. Falls through to Scheduler::queueArchiveWithGivenId()
    * when batching is disabled.
