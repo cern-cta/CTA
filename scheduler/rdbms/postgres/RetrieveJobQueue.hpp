@@ -880,17 +880,18 @@ public:
                             std::optional<std::list<std::string>> jobIDs = std::nullopt);
 
   /**
-  * @brief This method will check if RETRIEVE_ERROR_REPORT_URL column is not NULL and not empty
-  * if the URL exists, it will move all the jobs of this VID from RETRIEVE_PENDING_QUEUE
-  * to RETRIEVE_ACTIVE_QUEUE and set the status to RJS_ToReportToUserForFailure
-  * In case the RETRIEVE_ERROR_REPORT_URL does not exist, it will directly delete these job
-  * rows assuming reporting is not required
+  * @brief Remove all pending retrieve jobs for the given VID from RETRIEVE_PENDING_QUEUE.
+  * Jobs that have an alternate copy (ALTERNATE_VIDS) are re-queued to RETRIEVE_PENDING_QUEUE
+  * with the next available copy's VID/FSEQ/BLOCK_ID/COPY_NB (same rotation as requeueJobToMount).
+  * Jobs with no valid alternate and a non-empty RETRIEVE_ERROR_REPORT_URL are moved to
+  * RETRIEVE_ACTIVE_QUEUE with status RJS_ToReportToUserForFailure.
+  * Jobs with no valid alternate and no error URL are silently discarded.
   *
   * @param txn                  Transaction to use for this query
-  * @param vid                  tape VID to requeue
-  * @return                     Number of updated rows
+  * @param vid                  tape VID whose pending jobs should be cleaned up
+  * @return                     {requeuedToAlternateVid, movedJobsForReporting}
   */
-  static uint64_t handlePendingRetrieveJobsAfterTapeStateChange(Transaction& txn, std::string vid);
+  static std::pair<uint64_t, uint64_t> handlePendingRetrieveJobsAfterTapeStateChange(Transaction& txn, std::string vid);
 
   /**
   * Move from RETRIEVE_ACTIVE_QUEUE to RETRIEVE_PENDING_QUEUE

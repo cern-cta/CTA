@@ -946,145 +946,296 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
   return stmt.executeQuery();
 }
 
-uint64_t RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Transaction& txn, std::string vid) {
+std::pair<uint64_t, uint64_t>
+RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Transaction& txn, std::string vid) {
   std::string sql = R"SQL(
-    WITH MOVED_ROWS AS (
+    WITH DELETED AS (
       DELETE FROM RETRIEVE_PENDING_QUEUE
       WHERE VID = :VID
       RETURNING *
     ),
-    TO_MOVE AS (
-        SELECT * FROM MOVED_ROWS
-        WHERE RETRIEVE_ERROR_REPORT_URL IS NOT NULL
-          AND RETRIEVE_ERROR_REPORT_URL <> ''
-    )
-    INSERT INTO RETRIEVE_ACTIVE_QUEUE (
-      JOB_ID,
-      RETRIEVE_REQUEST_ID,
-      REQUEST_JOB_COUNT,
-      TAPE_POOL,
-      MOUNT_POLICY,
-      PRIORITY,
-      MIN_RETRIEVE_REQUEST_AGE,
-      ARCHIVE_FILE_ID,
-      SIZE_IN_BYTES,
-      COPY_NB,
-      START_TIME,
-      CHECKSUMBLOB,
-      FSEQ,
-      BLOCK_ID,
-      CREATION_TIME,
-      DISK_INSTANCE,
-      DISK_FILE_ID,
-      DISK_FILE_OWNER_UID,
-      DISK_FILE_GID,
-      DISK_FILE_PATH,
-      RETRIEVE_REPORT_URL,
-      RETRIEVE_ERROR_REPORT_URL,
-      REQUESTER_NAME,
-      REQUESTER_GROUP,
-      DST_URL,
-      STORAGE_CLASS,
-      MAX_TOTAL_RETRIES,
-      MAX_RETRIES_WITHIN_MOUNT,
-      TOTAL_REPORT_RETRIES,
-      MAX_REPORT_RETRIES,
-      VID,
-      ALTERNATE_FSEQS,
-      ALTERNATE_BLOCK_IDS,
-      ALTERNATE_VIDS,
-      ALTERNATE_COPY_NBS,
-      DRIVE,
-      HOST,
-      LOGICAL_LIBRARY,
-      ACTIVITY,
-      SRR_USERNAME,
-      SRR_HOST,
-      SRR_TIME,
-      SRR_MOUNT_POLICY,
-      SRR_ACTIVITY,
-      LIFECYCLE_CREATION_TIME,
-      LIFECYCLE_FIRST_SELECTED_TIME,
-      LIFECYCLE_COMPLETED_TIME,
-      DISK_SYSTEM_NAME,
-      FAILURE_LOG,
-      RETRIES_WITHIN_MOUNT,
-      TOTAL_RETRIES,
-      LAST_MOUNT_WITH_FAILURE,
-      STATUS,
-      MOUNT_ID
+    ALTS AS (
+      SELECT
+        D.JOB_ID,
+        trim(v.val)            AS NEW_VID,
+        trim(f.val)::BIGINT    AS NEW_FSEQ,
+        trim(b.val)::BIGINT    AS NEW_BLOCK_ID,
+        trim(c.val)::SMALLINT  AS NEW_COPY_NB,
+        v.ord
+      FROM DELETED D,
+           LATERAL unnest(string_to_array(D.ALTERNATE_VIDS,      ',')) WITH ORDINALITY AS v(val, ord),
+           LATERAL unnest(string_to_array(D.ALTERNATE_FSEQS,     ',')) WITH ORDINALITY AS f(val, ord),
+           LATERAL unnest(string_to_array(D.ALTERNATE_BLOCK_IDS, ',')) WITH ORDINALITY AS b(val, ord),
+           LATERAL unnest(string_to_array(D.ALTERNATE_COPY_NBS,  ',')) WITH ORDINALITY AS c(val, ord)
+      WHERE v.ord = f.ord AND v.ord = b.ord AND v.ord = c.ord
+        AND trim(v.val) <> :VID
+    ),
+    BEST_ALT AS (
+      SELECT DISTINCT ON (JOB_ID) * FROM ALTS ORDER BY JOB_ID, ord
+    ),
+    REQUEUED AS (
+      INSERT INTO RETRIEVE_PENDING_QUEUE (
+        JOB_ID,
+        RETRIEVE_REQUEST_ID,
+        REQUEST_JOB_COUNT,
+        TAPE_POOL,
+        MOUNT_POLICY,
+        PRIORITY,
+        MIN_RETRIEVE_REQUEST_AGE,
+        ARCHIVE_FILE_ID,
+        SIZE_IN_BYTES,
+        COPY_NB,
+        START_TIME,
+        CHECKSUMBLOB,
+        FSEQ,
+        BLOCK_ID,
+        CREATION_TIME,
+        DISK_INSTANCE,
+        DISK_FILE_ID,
+        DISK_FILE_OWNER_UID,
+        DISK_FILE_GID,
+        DISK_FILE_PATH,
+        RETRIEVE_REPORT_URL,
+        RETRIEVE_ERROR_REPORT_URL,
+        REQUESTER_NAME,
+        REQUESTER_GROUP,
+        DST_URL,
+        STORAGE_CLASS,
+        MAX_TOTAL_RETRIES,
+        MAX_RETRIES_WITHIN_MOUNT,
+        TOTAL_REPORT_RETRIES,
+        MAX_REPORT_RETRIES,
+        VID,
+        ALTERNATE_FSEQS,
+        ALTERNATE_BLOCK_IDS,
+        ALTERNATE_VIDS,
+        ALTERNATE_COPY_NBS,
+        DRIVE,
+        HOST,
+        LOGICAL_LIBRARY,
+        ACTIVITY,
+        SRR_USERNAME,
+        SRR_HOST,
+        SRR_TIME,
+        SRR_MOUNT_POLICY,
+        SRR_ACTIVITY,
+        LIFECYCLE_CREATION_TIME,
+        LIFECYCLE_FIRST_SELECTED_TIME,
+        LIFECYCLE_COMPLETED_TIME,
+        DISK_SYSTEM_NAME,
+        FAILURE_LOG,
+        RETRIES_WITHIN_MOUNT,
+        TOTAL_RETRIES,
+        LAST_MOUNT_WITH_FAILURE,
+        STATUS,
+        MOUNT_ID,
+        IS_VERIFY_ONLY
+      )
+      SELECT
+        D.JOB_ID,
+        D.RETRIEVE_REQUEST_ID,
+        D.REQUEST_JOB_COUNT,
+        D.TAPE_POOL,
+        D.MOUNT_POLICY,
+        D.PRIORITY,
+        D.MIN_RETRIEVE_REQUEST_AGE,
+        D.ARCHIVE_FILE_ID,
+        D.SIZE_IN_BYTES,
+        BA.NEW_COPY_NB,
+        D.START_TIME,
+        D.CHECKSUMBLOB,
+        BA.NEW_FSEQ,
+        BA.NEW_BLOCK_ID,
+        D.CREATION_TIME,
+        D.DISK_INSTANCE,
+        D.DISK_FILE_ID,
+        D.DISK_FILE_OWNER_UID,
+        D.DISK_FILE_GID,
+        D.DISK_FILE_PATH,
+        D.RETRIEVE_REPORT_URL,
+        D.RETRIEVE_ERROR_REPORT_URL,
+        D.REQUESTER_NAME,
+        D.REQUESTER_GROUP,
+        D.DST_URL,
+        D.STORAGE_CLASS,
+        D.MAX_TOTAL_RETRIES,
+        D.MAX_RETRIES_WITHIN_MOUNT,
+        D.TOTAL_REPORT_RETRIES,
+        D.MAX_REPORT_RETRIES,
+        BA.NEW_VID,
+        D.ALTERNATE_FSEQS,
+        D.ALTERNATE_BLOCK_IDS,
+        D.ALTERNATE_VIDS,
+        D.ALTERNATE_COPY_NBS,
+        'NONE',
+        'NONE',
+        'NONE',
+        D.ACTIVITY,
+        D.SRR_USERNAME,
+        D.SRR_HOST,
+        D.SRR_TIME,
+        D.SRR_MOUNT_POLICY,
+        D.SRR_ACTIVITY,
+        D.LIFECYCLE_CREATION_TIME,
+        D.LIFECYCLE_FIRST_SELECTED_TIME,
+        D.LIFECYCLE_COMPLETED_TIME,
+        D.DISK_SYSTEM_NAME,
+        D.FAILURE_LOG || :REQUEUE_LOG,
+        0,
+        D.TOTAL_RETRIES,
+        D.LAST_MOUNT_WITH_FAILURE,
+        :RJS_TO_TRANSFER,
+        NULL,
+        D.IS_VERIFY_ONLY
+      FROM BEST_ALT BA
+      JOIN DELETED D ON D.JOB_ID = BA.JOB_ID
+      RETURNING JOB_ID
+    ),
+    TO_REPORT AS (
+      SELECT * FROM DELETED D
+      WHERE NOT EXISTS (SELECT 1 FROM REQUEUED R WHERE R.JOB_ID = D.JOB_ID)
+        AND D.RETRIEVE_ERROR_REPORT_URL IS NOT NULL
+        AND D.RETRIEVE_ERROR_REPORT_URL <> ''
+    ),
+    REPORTED AS (
+      INSERT INTO RETRIEVE_ACTIVE_QUEUE (
+        JOB_ID,
+        RETRIEVE_REQUEST_ID,
+        REQUEST_JOB_COUNT,
+        TAPE_POOL,
+        MOUNT_POLICY,
+        PRIORITY,
+        MIN_RETRIEVE_REQUEST_AGE,
+        ARCHIVE_FILE_ID,
+        SIZE_IN_BYTES,
+        COPY_NB,
+        START_TIME,
+        CHECKSUMBLOB,
+        FSEQ,
+        BLOCK_ID,
+        CREATION_TIME,
+        DISK_INSTANCE,
+        DISK_FILE_ID,
+        DISK_FILE_OWNER_UID,
+        DISK_FILE_GID,
+        DISK_FILE_PATH,
+        RETRIEVE_REPORT_URL,
+        RETRIEVE_ERROR_REPORT_URL,
+        REQUESTER_NAME,
+        REQUESTER_GROUP,
+        DST_URL,
+        STORAGE_CLASS,
+        MAX_TOTAL_RETRIES,
+        MAX_RETRIES_WITHIN_MOUNT,
+        TOTAL_REPORT_RETRIES,
+        MAX_REPORT_RETRIES,
+        VID,
+        ALTERNATE_FSEQS,
+        ALTERNATE_BLOCK_IDS,
+        ALTERNATE_VIDS,
+        ALTERNATE_COPY_NBS,
+        DRIVE,
+        HOST,
+        LOGICAL_LIBRARY,
+        ACTIVITY,
+        SRR_USERNAME,
+        SRR_HOST,
+        SRR_TIME,
+        SRR_MOUNT_POLICY,
+        SRR_ACTIVITY,
+        LIFECYCLE_CREATION_TIME,
+        LIFECYCLE_FIRST_SELECTED_TIME,
+        LIFECYCLE_COMPLETED_TIME,
+        DISK_SYSTEM_NAME,
+        FAILURE_LOG,
+        RETRIES_WITHIN_MOUNT,
+        TOTAL_RETRIES,
+        LAST_MOUNT_WITH_FAILURE,
+        STATUS,
+        MOUNT_ID,
+        IS_VERIFY_ONLY
+      )
+      SELECT
+        M.JOB_ID,
+        M.RETRIEVE_REQUEST_ID,
+        M.REQUEST_JOB_COUNT,
+        :TAPE_POOL AS TAPE_POOL,
+        M.MOUNT_POLICY,
+        M.PRIORITY,
+        M.MIN_RETRIEVE_REQUEST_AGE,
+        M.ARCHIVE_FILE_ID,
+        M.SIZE_IN_BYTES,
+        M.COPY_NB,
+        M.START_TIME,
+        M.CHECKSUMBLOB,
+        M.FSEQ,
+        M.BLOCK_ID,
+        M.CREATION_TIME,
+        M.DISK_INSTANCE,
+        M.DISK_FILE_ID,
+        M.DISK_FILE_OWNER_UID,
+        M.DISK_FILE_GID,
+        M.DISK_FILE_PATH,
+        M.RETRIEVE_REPORT_URL,
+        M.RETRIEVE_ERROR_REPORT_URL,
+        M.REQUESTER_NAME,
+        M.REQUESTER_GROUP,
+        M.DST_URL,
+        M.STORAGE_CLASS,
+        M.MAX_TOTAL_RETRIES,
+        M.MAX_RETRIES_WITHIN_MOUNT,
+        M.TOTAL_REPORT_RETRIES,
+        M.MAX_REPORT_RETRIES,
+        M.VID,
+        M.ALTERNATE_FSEQS,
+        M.ALTERNATE_BLOCK_IDS,
+        M.ALTERNATE_VIDS,
+        M.ALTERNATE_COPY_NBS,
+        :DRIVE AS DRIVE,
+        :HOST AS HOST,
+        :LOGICAL_LIBRARY AS LOGICAL_LIBRARY,
+        M.ACTIVITY,
+        M.SRR_USERNAME,
+        M.SRR_HOST,
+        M.SRR_TIME,
+        M.SRR_MOUNT_POLICY,
+        M.SRR_ACTIVITY,
+        M.LIFECYCLE_CREATION_TIME,
+        M.LIFECYCLE_FIRST_SELECTED_TIME,
+        M.LIFECYCLE_COMPLETED_TIME,
+        M.DISK_SYSTEM_NAME,
+        M.FAILURE_LOG || :FAILURE_LOG AS FAILURE_LOG,
+        M.RETRIES_WITHIN_MOUNT,
+        M.TOTAL_RETRIES,
+        M.LAST_MOUNT_WITH_FAILURE,
+        :STATUS AS STATUS,
+        NULL AS MOUNT_ID,
+        M.IS_VERIFY_ONLY
+      FROM TO_REPORT M
+      RETURNING JOB_ID
     )
     SELECT
-      M.JOB_ID,
-      M.RETRIEVE_REQUEST_ID,
-      M.REQUEST_JOB_COUNT,
-      :TAPE_POOL AS TAPE_POOL,
-      M.MOUNT_POLICY,
-      M.PRIORITY,
-      M.MIN_RETRIEVE_REQUEST_AGE,
-      M.ARCHIVE_FILE_ID,
-      M.SIZE_IN_BYTES,
-      M.COPY_NB,
-      M.START_TIME,
-      M.CHECKSUMBLOB,
-      M.FSEQ,
-      M.BLOCK_ID,
-      M.CREATION_TIME,
-      M.DISK_INSTANCE,
-      M.DISK_FILE_ID,
-      M.DISK_FILE_OWNER_UID,
-      M.DISK_FILE_GID,
-      M.DISK_FILE_PATH,
-      M.RETRIEVE_REPORT_URL,
-      M.RETRIEVE_ERROR_REPORT_URL,
-      M.REQUESTER_NAME,
-      M.REQUESTER_GROUP,
-      M.DST_URL,
-      M.STORAGE_CLASS,
-      M.MAX_TOTAL_RETRIES,
-      M.MAX_RETRIES_WITHIN_MOUNT,
-      M.TOTAL_REPORT_RETRIES,
-      M.MAX_REPORT_RETRIES,
-      M.VID,
-      M.ALTERNATE_FSEQS,
-      M.ALTERNATE_BLOCK_IDS,
-      M.ALTERNATE_VIDS,
-      M.ALTERNATE_COPY_NBS,
-      :DRIVE AS DRIVE,
-      :HOST AS HOST,
-      :LOGICAL_LIBRARY AS LOGICAL_LIBRARY,
-      M.ACTIVITY,
-      M.SRR_USERNAME,
-      M.SRR_HOST,
-      M.SRR_TIME,
-      M.SRR_MOUNT_POLICY,
-      M.SRR_ACTIVITY,
-      M.LIFECYCLE_CREATION_TIME,
-      M.LIFECYCLE_FIRST_SELECTED_TIME,
-      M.LIFECYCLE_COMPLETED_TIME,
-      M.DISK_SYSTEM_NAME,
-      M.FAILURE_LOG || :FAILURE_LOG AS FAILURE_LOG,
-      M.RETRIES_WITHIN_MOUNT AS RETRIES_WITHIN_MOUNT,
-      M.TOTAL_RETRIES AS TOTAL_RETRIES,
-      M.LAST_MOUNT_WITH_FAILURE,
-      :STATUS AS STATUS,
-      NULL AS MOUNT_ID
-    FROM TO_MOVE M
+      (SELECT COUNT(*) FROM REQUEUED) AS REQUEUED_COUNT,
+      (SELECT COUNT(*) FROM REPORTED) AS REPORTED_COUNT
   )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
+  stmt.bindString(":VID", vid);
+  stmt.bindString(":REQUEUE_LOG", "TAPE_STATE_CHANGE_REQUEUED_TO_ALTERNATE_VID;");
+  stmt.bindString(":RJS_TO_TRANSFER", to_string(RetrieveJobStatus::RJS_ToTransfer));
+  stmt.bindString(":TAPE_POOL", "NONE");
   stmt.bindString(":DRIVE", "NONE");
   stmt.bindString(":HOST", "NONE");
   stmt.bindString(":LOGICAL_LIBRARY", "NONE");
-  stmt.bindString(":TAPE_POOL", "NONE");
-  stmt.bindString(":VID", vid);
   stmt.bindString(":STATUS", to_string(RetrieveJobStatus::RJS_ToReportToUserForFailure));
-  stmt.bindString(":FAILURE_LOG", "TAPE_STATE_CHANGE_JOBS_TO_REPORT_FOR_FAILURE");
+  stmt.bindString(":FAILURE_LOG", "TAPE_STATE_CHANGE_NO_ALTERNATE_VID_REPORT_FOR_FAILURE;");
   txn.getConn().setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbMoveRetrievePendingToActiveAsFailed);
-  stmt.executeNonQuery();
-  auto nrows = stmt.getNbAffectedRows();
-  txn.setRowCountForTelemetry(nrows);
-  return nrows;
+  auto rset = stmt.executeQuery();
+  rset.next();
+  uint64_t requeued = rset.columnUint64("REQUEUED_COUNT");
+  uint64_t reported = rset.columnUint64("REPORTED_COUNT");
+  txn.setRowCountForTelemetry(requeued + reported);
+  return {requeued, reported};
 }
 
 uint64_t RetrieveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {

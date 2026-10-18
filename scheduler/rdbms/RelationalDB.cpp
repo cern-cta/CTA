@@ -1892,15 +1892,16 @@ std::list<SchedulerDatabase::RetrieveQueueCleanupInfo> RelationalDB::getRetrieve
 void RelationalDB::cleanRetrieveQueueForVid(const std::string& vid, log::LogContext& lc) {
   schedulerdb::Transaction txn(m_connPool, lc);
   try {
-    uint64_t movedJobsForReporting =
+    auto [requeuedToAlternateVid, movedJobsForReporting] =
       schedulerdb::postgres::RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(txn, vid);
     log::ScopedParamContainer(lc)
       .add("VID", vid)
+      .add("requeuedToAlternateVid", requeuedToAlternateVid)
       .add("movedJobsForReporting", movedJobsForReporting)
       .log(log::INFO,
-           "In RelationalDB::cleanRetrieveQueueForVid(): removed all retrieve jobs of the specified VID from the "
-           "pending queue. If error report URL was available, it moved jobs to the reporting workflow.");
-    txn.setRowCountForTelemetry(movedJobsForReporting);
+           "In RelationalDB::cleanRetrieveQueueForVid(): redirected pending retrieve jobs after tape state change. "
+           "Jobs with alternates re-queued to next copy; jobs without alternates moved to failure reporting.");
+    txn.setRowCountForTelemetry(requeuedToAlternateVid + movedJobsForReporting);
     txn.commit();
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
