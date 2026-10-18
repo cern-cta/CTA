@@ -286,6 +286,8 @@ async def test_request_files_for_retrieve(
     else:
         cta_cli.set_all_drives_up()
 
+    total_file_count = stress_params.num_dirs * stress_params.num_files_per_dir
+
     timer_start = time.time()
     retrieve_future = eos_client.retrieve_async(
         eos_host=mgm_ip,
@@ -298,24 +300,16 @@ async def test_request_files_for_retrieve(
     drives_up = not stress_params.prequeue.enabled
     stop_monitoring = asyncio.Event()
 
-    total_file_count = 0
-    for i in range(stress_params.num_dirs):
-        dir_path = archive_directory / str(i)
-        total_file_count += eos_mgm.num_files_on_tape_only(dir_path)
-
     async def monitor_retrieve_and_put_drives_up() -> None:
-        """Monitor tape-only file count and put drives up when threshold reached (for prequeue mode)."""
+        """Monitor CTA retrieve queue depth and put drives up when threshold reached (for prequeue mode)."""
         nonlocal drives_up
         while not stop_monitoring.is_set():
-            total_tape_only = 0
-            for i in range(stress_params.num_dirs):
-                dir_path = archive_directory / str(i)
-                total_tape_only += eos_mgm.num_files_on_tape_only(dir_path)
+            queued = cta_cli.retrieve_queue_file_count()
 
-            print(f"\t[retrieve monitor] {total_tape_only} files still on tape only", flush=True)
+            print(f"\t[retrieve monitor] {queued}/{total_file_count} retrieve requests queued in CTA", flush=True)
 
             if not drives_up:
-                if total_tape_only >= stress_params.prequeue.num_files_to_put_drives_up:
+                if queued >= stress_params.prequeue.num_files_to_put_drives_up:
                     print(
                         (
                             f"\tThreshold ({stress_params.prequeue.num_files_to_put_drives_up}) reached — putting "
