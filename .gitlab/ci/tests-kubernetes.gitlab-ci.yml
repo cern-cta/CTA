@@ -43,10 +43,11 @@ spec:
       SCHEDULER_CONFIG=presets/dev-scheduler-postgres-values.yaml
     fi
   - | # Which catalogue config to use
+    # Use ${VAR:-default} so a value set via GitLab UI "Rerun job with modified values" is preserved.
     if $ENABLE_ORACLE_SUPPORT; then
-      CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
+      CATALOGUE_CONFIG="${CATALOGUE_CONFIG:-/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml}"
     else
-      CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml
+      CATALOGUE_CONFIG="${CATALOGUE_CONFIG:-presets/dev-catalogue-postgres-values.yaml}"
     fi
   - | # Opportunistic batching overlay (pgsched only)
     if [[ "$SCHEDULER_TYPE" == "pgsched" ]] && $[[ inputs.enable-opportunistic-batching ]]; then
@@ -331,6 +332,10 @@ stress-test:
     - |
       if [[ "$SCHEDULER_TYPE" == "pgsched" ]]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
+        # Default pgsched stress to the external DBOD postgres (higher max_connections).
+        # Only override the generic dev-postgres default; preserve any value set via the GitLab UI.
+        [[ "$CATALOGUE_CONFIG" == "presets/dev-catalogue-postgres-values.yaml" ]] && \
+          CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-postgres-repack-values.yaml
         EXTRA_PYTEST_ARGS+=" --test-config config/test_pgsched_params.toml"
         EXTRA_SPAWN_ARGS+=" --one-logical-library"
         STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-pgsched-values.yaml"
