@@ -6,6 +6,7 @@
 
 #include "common/log/LogContext.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <condition_variable>
 #include <functional>
@@ -124,7 +125,16 @@ public:
     // batch right after is always safe here too.
     std::vector<ItemType> batch;
     m_cv.wait_for(lock, m_window, [this] { return m_pendingBatch.size() >= m_maxBatchSize || m_stopped; });
-    batch.swap(m_pendingBatch);
+    if (m_pendingBatch.size() <= m_maxBatchSize) {
+      // Common path: all accumulated items fit within the cap — O(1) swap.
+      batch.swap(m_pendingBatch);
+    } else {
+      // Overflow path: more items queued than the cap allows; take exactly m_maxBatchSize from the
+      // front and leave the rest for the next leader. O(n) but only reached under sustained overload.
+      batch.assign(std::make_move_iterator(m_pendingBatch.begin()),
+                   std::make_move_iterator(m_pendingBatch.begin() + m_maxBatchSize));
+      m_pendingBatch.erase(m_pendingBatch.begin(), m_pendingBatch.begin() + m_maxBatchSize);
+    }
     lock.unlock();
 
     try {
