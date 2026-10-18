@@ -187,7 +187,6 @@ private:
   bool m_stopped = false;
   bool m_leaderInProgress = false;
   std::vector<ItemType> m_pendingBatch;
-
 };
 
 /**

@@ -106,6 +106,7 @@ void Helpers::warmRetrieveQueueStatisticsCache(const std::set<std::string, std::
     uint64_t bytes;
     uint64_t priority;
   };
+
   std::map<std::string, FetchedStats, std::less<>> fetched;
   auto summaryRows = cta::schedulerdb::postgres::RetrieveJobSummaryRow::selectVids(missingOrStale, conn);
   while (summaryRows.next()) {

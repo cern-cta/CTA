@@ -58,8 +58,12 @@ public:
    * this object is destroyed.
    */
   void stop() {
-    if (m_archiveBatcher) m_archiveBatcher->stop();
-    if (m_retrieveBatcher) m_retrieveBatcher->stop();
+    if (m_archiveBatcher) {
+      m_archiveBatcher->stop();
+    }
+    if (m_retrieveBatcher) {
+      m_retrieveBatcher->stop();
+    }
   }
 
   /**
