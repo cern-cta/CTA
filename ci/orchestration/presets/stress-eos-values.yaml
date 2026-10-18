@@ -128,4 +128,6 @@ server:
       annotations: {}
       accessModes:
         - ReadWriteOnce
-      size: 40Gi
+      # 10 M file entries at ~2 KB metadata each ≈ 20 GB; 100 Gi gives comfortable
+      # headroom for QuarkDB WAL and compaction during the stress run.
+      size: 100Gi

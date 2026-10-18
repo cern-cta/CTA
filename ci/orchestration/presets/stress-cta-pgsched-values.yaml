@@ -23,8 +23,14 @@ frontend-admin:
 frontend-wfe:
   conf:
     catalogue:
-      # Allow concurrent requests without a small catalogue connection pool limiting throughput.
+      # At ~2 kHz queueing rate and ~2 ms/lookup, ~4 connections suffice; 50 gives headroom.
       numberOfConnections: 50
+    schedulerdb:
+      # Each WFE workflow event holds a schedulerdb connection for the archive INSERT (~5 ms).
+      # With 3 connections: throughput cap = 3 / 0.005 = ~600 files/sec — the observed 762 Hz
+      # ceiling.  With 10 FSTs and 2-4 kHz expected: need 10-20 connections.
+      # 15 connections → ~3 kHz cap; see connection budget below.
+      numberOfConnections: 15
     logger:
       # Reduce per-request logging overhead during sustained load.
       logLevel: "WARNING"
@@ -40,6 +46,27 @@ frontend-wfe:
       # burst producing one unreasonably large bulk INSERT rather than shaping normal throughput.
       opportunisticBatchingMaxBatchSize: 1000
 
+# ---------------------------------------------------------------------------
+# PostgreSQL scheduler DB connection budget (max 150 connections)
+# ---------------------------------------------------------------------------
+# schedulerNumberOfConnections in taped is a PER-DRIVE pool: each DriveHandler
+# creates its own SchedulerDBInit.  Budget for taped = drives × conn/drive.
+# ---------------------------------------------------------------------------
+# Pod                              replicas  conn/pod  subtotal
+# frontend-wfe (schedulerdb)            1       15        15
+# frontend-admin (schedulerdb)          1        3         3
+# maintd diskReportArchive              4        3        12
+# maintd diskReportRetrieve             4        3        12
+# maintd repackExpand                   1        3         3
+# maintd repackReport                   1        3         3
+# taped  10 drives × 2 conn/drive                        20
+# taped  20 drives × 2 conn/drive                        40
+# ---------------------------------------------------------------------------
+# Total (10 drives):                                      68   (budget: 150)
+# Total (20 drives):                                      88   (budget: 150)
+# max drives at budget: (150 - 48 fixed) / 2 = 51
+# ---------------------------------------------------------------------------
+
 taped:
   conf:
     taped:
@@ -47,7 +74,7 @@ taped:
       bufferCount: 10000
       # Avoid verbose tape-operation logs dominating the small-file workload.
       logMask: "WARNING"
-      # Bound per-tape-daemon database concurrency; total connections scale with the drive count.
+      # Overridden to 2 by stress-stressdrives-pgsched-values.yaml (applied after this file).
       schedulerNumberOfConnections: 3
 
 maintd:
@@ -59,23 +86,20 @@ maintd:
     # should match the corresponding names in the maintd conf file
     # So diskReportArchive:softTimeout will map to cta.routines.disk_report_archive.soft_timeout
     # To disable a routine, set replicas to 0
-    # Parallel reporters and larger batches keep archive completion reporting from backing up.
+    # Sizing rationale: with 1 FST and 1 drive reporting runs at ~762 files/sec (during
+    # archival) and ~1.4 kHz (reporting-only phase).  With 10 FSTs the EOS throughput
+    # scales to ~7.6 kHz.  4 reporters × 10 k batch gives ~8 k files/sec from the
+    # reporter side, matching the EOS capacity.  At 7.6 kHz, 10 M files take ~22 min
+    # for the reporting phase.
     diskReportArchive:
-      replicas: 2
-      # Poll frequently to drain completed work; batch size and worker count are not a rate guarantee.
+      replicas: 4
       sleepIntervalSecs: 5
-      # Amortize database and reporting overhead across many small files.
-      batchSize: 4000
-      # Bound a reporting pass so workers can return to other queued work.
+      batchSize: 10000
       softTimeoutSecs: 30
-    # Apply the same reporting capacity to completed retrievals.
     diskReportRetrieve:
-      replicas: 2
-      # Poll frequently to drain completed work; batch size and worker count are not a rate guarantee.
+      replicas: 4
       sleepIntervalSecs: 5
-      # Amortize database and reporting overhead across many small files.
-      batchSize: 4000
-      # Bound a reporting pass so workers can return to other queued work.
+      batchSize: 10000
       softTimeoutSecs: 30
     # Keep repack expansion bounded rather than adding many concurrent requests.
     repackExpand:

@@ -49,7 +49,10 @@ taped:
       # here if the stress-drive workload needs different values.
       bufferCount: 10000
       logMask: "WARNING"
-      schedulerNumberOfConnections: 3
+      # This is a per-drive pool: each DriveHandler creates its own SchedulerDBInit
+      # with this many connections.  With N drives: N × 2 connections consumed.
+      # 10 drives → 20, 20 drives → 40; see connection budget in stress-cta-pgsched-values.yaml.
+      schedulerNumberOfConnections: 2
 
       # Fetch up to 100k files per advisory-lock trip.  StressDrive processes
       # files at memory speed so the default 4k-file batch causes constant lock
