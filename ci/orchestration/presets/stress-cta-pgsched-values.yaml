@@ -46,6 +46,22 @@ frontend-wfe:
       opportunisticBatchingMaxBatchSize: 1000
 
 # ---------------------------------------------------------------------------
+# PostgreSQL catalogue DB connection budget (max_connections on target postgres)
+# catalogue connections: nbConns is hardcoded to 1 in taped and maintd.
+# ---------------------------------------------------------------------------
+# Pod                              replicas  conn/pod  subtotal
+# frontend-admin (catalogue)            1       10        10
+# frontend-wfe   (catalogue)            1       10        10
+# maintd diskReportArchive              4        1         4
+# maintd diskReportRetrieve             4        1         4
+# maintd repackExpand                   1        1         1
+# maintd repackReport                   1        1         1
+# taped  50 drives × 1 conn/drive                        50
+# ---------------------------------------------------------------------------
+# Total (50 drives):                                      80
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
 # PostgreSQL scheduler DB connection budget (max 150 connections)
 # ---------------------------------------------------------------------------
 # schedulerNumberOfConnections in taped is a PER-DRIVE pool: each DriveHandler
