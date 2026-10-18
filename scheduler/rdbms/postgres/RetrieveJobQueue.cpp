@@ -968,7 +968,7 @@ RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Transaction& 
            LATERAL unnest(string_to_array(D.ALTERNATE_BLOCK_IDS, ',')) WITH ORDINALITY AS b(val, ord),
            LATERAL unnest(string_to_array(D.ALTERNATE_COPY_NBS,  ',')) WITH ORDINALITY AS c(val, ord)
       WHERE v.ord = f.ord AND v.ord = b.ord AND v.ord = c.ord
-        AND trim(v.val) <> :VID
+        AND trim(v.val) <> D.VID
     ),
     BEST_ALT AS (
       SELECT DISTINCT ON (JOB_ID) * FROM ALTS ORDER BY JOB_ID, ord
