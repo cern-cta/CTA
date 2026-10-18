@@ -768,10 +768,10 @@ public:
                       static_cast<uint64_t>(row.lifecycleTimings_completed_time));
 
       if (hasDiskSystemName) {
-        stmt.bindString(":DISK_SYSTEM_NAME" + std::to_string(i), row.diskSystemName.value());
+        stmt.bindString(":DISK_SYSTEM_NAME" + std::to_string(i), row.diskSystemName);
       }
       if (hasActivity) {
-        stmt.bindString(":ACTIVITY" + std::to_string(i), row.activity.value());
+        stmt.bindString(":ACTIVITY" + std::to_string(i), row.activity);
       }
       if (hasSrrActivity) {
         stmt.bindString(":SRR_ACTIVITY" + std::to_string(i), row.srrActivity);
