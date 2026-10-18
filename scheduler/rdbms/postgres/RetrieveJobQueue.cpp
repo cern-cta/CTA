@@ -946,8 +946,8 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
   return stmt.executeQuery();
 }
 
-std::pair<uint64_t, uint64_t>
-RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Transaction& txn, std::string vid) {
+std::pair<uint64_t, uint64_t> RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Transaction& txn,
+                                                                                                 std::string vid) {
   std::string sql = R"SQL(
     WITH DELETED AS (
       DELETE FROM RETRIEVE_PENDING_QUEUE
