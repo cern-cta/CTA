@@ -14,8 +14,8 @@ global:
 frontend-admin:
   conf:
     catalogue:
-      # Allow concurrent requests without a small catalogue connection pool limiting throughput.
-      numberOfConnections: 50
+      # Admin/repack commands are low-frequency; 10 connections is ample.
+      numberOfConnections: 10
     logger:
       # Reduce per-request logging overhead during sustained load.
       logLevel: "WARNING"
@@ -23,8 +23,7 @@ frontend-admin:
 frontend-wfe:
   conf:
     catalogue:
-      # At ~2 kHz queueing rate and ~2 ms/lookup, ~4 connections suffice; 50 gives headroom.
-      numberOfConnections: 50
+      numberOfConnections: 10
     schedulerdb:
       # Each WFE workflow event holds a schedulerdb connection for the archive INSERT (~5 ms).
       # With 3 connections: throughput cap = 3 / 0.005 = ~600 files/sec — the observed 762 Hz
