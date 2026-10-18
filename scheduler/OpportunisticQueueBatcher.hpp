@@ -7,6 +7,7 @@
 #include "common/log/LogContext.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <functional>
@@ -26,11 +27,15 @@ namespace cta {
  * resolveBatch returns; only then does the optional, slower `afterRelease` run (audit logging,
  * metrics), so no follower ever waits on work done for someone else's batch.
  *
- * Shutdown: call stop() (or destroy the batcher) to unblock any threads parked inside
- * enqueueAndWait(). Items still queued in m_pendingBatch at that point receive a
- * std::runtime_error("batcher stopped") exception; items already taken into an active batch by a
- * leader are resolved normally by that leader. After stop(), any new call to enqueueAndWait()
- * throws immediately. The destructor calls stop() automatically.
+ * Shutdown: call stop() to unblock any threads parked inside enqueueAndWait(). Items still queued
+ * in m_pendingBatch at that point receive a std::runtime_error("batcher stopped") exception; items
+ * already taken into an active batch by a leader are resolved normally by that leader. After
+ * stop(), any new call to enqueueAndWait() throws immediately.
+ *
+ * Destruction: the destructor calls stop() then waits for all threads currently inside
+ * enqueueAndWait() to return before releasing any member state. It is therefore safe to destroy
+ * the batcher from any thread once stop() has been called (or without calling it first — the
+ * destructor handles both). No external join of caller threads is required before destruction.
  *
  * ItemType must have a public member `std::promise<ResultType> promise`.
  */
@@ -49,13 +54,21 @@ public:
         m_resolveBatch(std::move(resolveBatch)),
         m_afterRelease(std::move(afterRelease)) {}
 
-  ~OpportunisticQueueBatcher() { stop(); }
+  ~OpportunisticQueueBatcher() {
+    stop();
+    // Wait for every thread currently inside enqueueAndWait() to return before releasing member
+    // state. m_drainMutex is separate from m_mutex: follower threads exit holding m_mutex, so the
+    // drain wait must not hold m_mutex (deadlock). Lock order is always m_mutex → m_drainMutex;
+    // the destructor acquires m_drainMutex only after stop() has released m_mutex.
+    std::unique_lock<std::mutex> drainLk(m_drainMutex);
+    m_drainCv.wait(drainLk, [this] { return m_activeCallers.load() == 0; });
+  }
 
   // Drains any items still waiting in m_pendingBatch (failing their promises with
   // std::runtime_error("batcher stopped")), wakes all threads parked in enqueueAndWait(), and
   // prevents new items from being accepted. Items already taken into an active batch by a leader are
-  // resolved normally by that leader. Safe to call multiple times; called automatically by the
-  // destructor.
+  // resolved normally by that leader. Does NOT wait for active leaders to finish — the destructor
+  // does. Safe to call multiple times.
   void stop() {
     std::vector<ItemType> drainedBatch;
     {
@@ -84,6 +97,19 @@ public:
     if (m_stopped) {
       throw std::runtime_error("batcher stopped");
     }
+    ++m_activeCallers;
+    // Decrement m_activeCallers on every exit path and notify the destructor if we were the last.
+    // Acquiring m_drainMutex is safe here: lock order is m_mutex → m_drainMutex, and the destructor
+    // acquires m_drainMutex only after releasing m_mutex (via stop()), so there is no cycle.
+    struct ActiveGuard {
+      OpportunisticQueueBatcher& self;
+      ~ActiveGuard() {
+        if (--self.m_activeCallers == 0) {
+          std::lock_guard<std::mutex> lk(self.m_drainMutex);
+          self.m_drainCv.notify_one();
+        }
+      }
+    } guard{*this};
     m_pendingBatch.push_back(std::move(item));
     future = m_pendingBatch.back().promise.get_future();
 
@@ -183,6 +209,13 @@ private:
   bool m_stopped = false;
   bool m_leaderInProgress = false;
   std::vector<ItemType> m_pendingBatch;
+
+  // Drain tracking: counts threads currently inside enqueueAndWait(). The destructor waits on
+  // m_drainCv until this reaches zero. Kept separate from m_mutex because follower threads exit
+  // holding m_mutex — the drain notify must use a different mutex to avoid deadlock.
+  std::atomic<size_t> m_activeCallers{0};
+  std::mutex m_drainMutex;
+  std::condition_variable m_drainCv;
 };
 
 /**
