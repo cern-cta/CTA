@@ -22,10 +22,14 @@ namespace cta::grpc_server::auth {
 void JwtAuthManager::startCacheRefresh(std::chrono::seconds interval, log::Logger& logger) {
   m_cacheRefreshThread.emplace([this, interval, &logger](std::stop_token stop) {
     log::LogContext threadLc(logger);
-    threadLc.log(log::INFO, "Detached JWKS cache refresh thread started");
+    threadLc.log(log::INFO, "JWKS cache refresh thread started");
 
     std::mutex mutex;
     std::condition_variable_any cv;
+    // this mutex is only used for the sake of the API, as the actual check is done
+    // within the conditional variable/stop token
+    //
+    // cppcheck-suppress localMutex
     std::unique_lock lock(mutex);
     while (true) {
       // Returns early (with the predicate true) as soon as a stop is requested
@@ -37,7 +41,7 @@ void JwtAuthManager::startCacheRefresh(std::chrono::seconds interval, log::Logge
       threadLc.log(log::INFO, "Updating the JWKS cache");
       updateCache(now);
     }
-    threadLc.log(log::INFO, "Detached JWKS cache refresh thread ended");
+    threadLc.log(log::INFO, "JWKS cache refresh thread ended");
   });
 }
 
