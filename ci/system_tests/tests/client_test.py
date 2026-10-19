@@ -1251,6 +1251,10 @@ class TestRetrieveQueueCleanup:
             (("ACTIVE", "DISABLED"), 0, ("REPACKING", "ACTIVE"), 1),
             (("DISABLED", "ACTIVE"), 1, ("DISABLED", "BROKEN"), 0),
             (("ACTIVE", "BROKEN"), 0, ("REPACKING", "BROKEN"), None),
+            # Both tapes end BROKEN: job must fail immediately, not get stuck on the broken alternate.
+            (("ACTIVE", "BROKEN"), 0, ("BROKEN", "BROKEN"), None),
+            # Active tape breaks while the only alternate is DISABLED: must fall back to DISABLED.
+            (("ACTIVE", "DISABLED"), 0, ("BROKEN", "DISABLED"), 1),
         ],
     )
     def test_two_copy_queue_state_change(
@@ -1293,6 +1297,85 @@ class TestRetrieveQueueCleanup:
         abort = eos_client.abort_prepare(disk_instance_name, request_id, [path])
         assert abort.success, abort.stderr
         _trigger_retrieve_queue_cleanup(cta_cli, tapes)
+
+    def test_three_copy_requeue_prefers_active_over_disabled(
+        self,
+        eos_client: EosClientHost,
+        cta_cli: CtaCliHost,
+        disk_instance_name: str,
+        retrieve_queue_cleanup_paths: RetrieveQueueCleanupPaths,
+    ) -> None:
+        """Verify that when re-routing after a tape break, an ACTIVE alternate is chosen over a DISABLED one.
+
+        When a file has copies on two ACTIVE tapes and one DISABLED tape, breaking the
+        tape holding the queued job must route it to the other ACTIVE copy — not the
+        DISABLED one — regardless of copy-number ordering.
+
+        Setup: three-copy file with tape_0=ACTIVE (copy 1), tape_1=DISABLED (copy 2),
+        tape_2=ACTIVE (copy 3).  Both ACTIVE tapes are candidates from the start so the
+        routing-statistics cache already knows tape_2 is ACTIVE before the break; this
+        avoids a stale-cache false-negative where an earlier BROKEN state for tape_2
+        would persist in memory during the cleanup decision.
+        """
+        path = retrieve_queue_cleanup_paths.files[2]
+        tape_0, tape_1, tape_2 = retrieve_queue_cleanup_paths.tapes[2]
+        request_id = ""
+
+        try:
+            # tape_0 (copy 1) and tape_2 (copy 3) are ACTIVE; tape_1 (copy 2) is DISABLED.
+            # The routing may land the job on either ACTIVE tape — we detect it dynamically.
+            _set_tape_states(cta_cli, [tape_0, tape_1, tape_2], ["ACTIVE", "DISABLED", "ACTIVE"])
+            prepare = _prepare_after_queue_cache_expiry(
+                eos_client, disk_instance_name, [path], retrieve_queue_cleanup_paths
+            )
+            assert prepare.success, prepare.stderr
+            request_id = prepare.stdout.strip()
+            assert request_id, "PREPARE succeeded without a request ID"
+            _assert_prepare_response(
+                eos_client.query_prepare(disk_instance_name, request_id, [path]),
+                path,
+                requested=True,
+                has_reqid=True,
+            )
+
+            # Detect which ACTIVE tape received the job; tape_1 (DISABLED) must never win.
+            initial_tape: Optional[str] = None
+            other_active: Optional[str] = None
+            deadline = time.monotonic() + 30
+            while time.monotonic() < deadline:
+                queues = json.loads(cta_cli.exec_with_output("cta-admin --json showqueues"))
+                counts = {
+                    t: sum(int(q["queuedFiles"]) for q in queues if q["vid"] == t) for t in (tape_0, tape_1, tape_2)
+                }
+                assert counts[tape_1] == 0, f"Initial PREPARE incorrectly routed to DISABLED tape {tape_1}"
+                if counts[tape_0] == 1 and counts[tape_2] == 0:
+                    initial_tape, other_active = tape_0, tape_2
+                    break
+                if counts[tape_0] == 0 and counts[tape_2] == 1:
+                    initial_tape, other_active = tape_2, tape_0
+                    break
+                time.sleep(1)
+            assert initial_tape is not None, "Job did not appear on an ACTIVE tape within 30 seconds"
+            assert other_active is not None
+
+            # Break the tape that holds the job; the re-routing must pick the other
+            # ACTIVE tape (other_active), not tape_1 (DISABLED).
+            cta_cli.transition_tape_state(initial_tape, "BROKEN")
+
+            expected_counts = {tape_0: 0, tape_1: 0, tape_2: 0}
+            expected_counts[other_active] = 1
+            cta_cli.wait_for_queue_file_counts(expected_counts)
+            _assert_prepare_response(
+                eos_client.query_prepare(disk_instance_name, request_id, [path]),
+                path,
+                requested=True,
+                has_reqid=True,
+            )
+        finally:
+            if request_id:
+                abort = eos_client.abort_prepare(disk_instance_name, request_id, [path])
+                assert abort.success, abort.stderr
+            _trigger_retrieve_queue_cleanup(cta_cli, [tape_0, tape_1, tape_2])
 
     def test_multi_file_prepare_failure_does_not_affect_other_file(
         self,

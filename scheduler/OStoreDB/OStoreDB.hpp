@@ -445,7 +445,11 @@ public:
   std::list<RetrieveQueueCleanupInfo> getRetrieveQueuesCleanupInfo(log::LogContext& logContext) override;
   void setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log::LogContext& logContext) override;
 
-  void cleanRetrieveQueueForVid(const std::string& vid, log::LogContext& logContext) override {
+  /** Not implemented for the objectstore backend — re-routing is handled directly in queueRetrieve. */
+  void cleanRetrieveQueueForVid(const std::string& vid,
+                                const std::set<std::string>& activeVids,
+                                const std::set<std::string>& disabledVids,
+                                log::LogContext& logContext) override {
     throw cta::exception::Exception("Not supported for OStoreDB implementation.");
   };
 

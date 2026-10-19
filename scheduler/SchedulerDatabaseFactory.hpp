@@ -151,8 +151,12 @@ public:
     m_SchedDB->setRetrieveQueueCleanupFlag(vid, val, lc);
   }
 
-  void cleanRetrieveQueueForVid(const std::string& vid, log::LogContext& lc) override {
-    m_SchedDB->cleanRetrieveQueueForVid(vid, lc);
+  /** Delegates to the underlying SchedulerDatabase implementation. */
+  void cleanRetrieveQueueForVid(const std::string& vid,
+                                const std::set<std::string>& activeVids,
+                                const std::set<std::string>& disabledVids,
+                                log::LogContext& lc) override {
+    m_SchedDB->cleanRetrieveQueueForVid(vid, activeVids, disabledVids, lc);
   }
 
   std::list<std::unique_ptr<RetrieveJob>> getNextRetrieveJobsToReportBatch(uint64_t filesRequested,

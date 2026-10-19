@@ -332,6 +332,48 @@ public:
     std::optional<std::string> assignedAgent;
   };
 
+  // ---------------------------------------------------------------------------
+  // Retrieve VID selection and tape-state-change cleanup — design notes
+  //
+  // The target VID for a retrieve job is chosen at *enqueue* time, not at mount
+  // time.  Both backends call Helpers::selectBestRetrieveQueue() /
+  // selectBestVid4Retrieve() inside queueRetrieve(), which picks the best
+  // available tape from the catalogue at that moment and stores the chosen VID
+  // with the job.
+  //
+  // This means that if a tape transitions to BROKEN/EXPORTED/REPACKING after
+  // jobs have already been queued to it, the jobs must be actively re-routed.
+  // The two backends diverge significantly in how they handle this:
+  //
+  //  pgsched (RelationalDB / cleanRetrieveQueueForVid):
+  //    Proactive bulk re-routing.  Scheduler::modifyTapeState() calls
+  //    cleanRetrieveQueueForVid() synchronously, which runs a single atomic
+  //    SQL transaction that re-queues every pending job for the affected VID to
+  //    the best available alternate copy (ACTIVE preferred, DISABLED fallback),
+  //    or moves jobs with no usable alternate to failure reporting.
+  //
+  //  objectstore (OStoreDB / QueueCleanup):
+  //    Lazy per-job re-routing.  A cleanup flag is set on the objectstore queue;
+  //    a background process (QueueCleanup) later calls
+  //    decideRetrieveRequestDestination() *per job* when a mount fails or a job
+  //    is popped for an unavailable tape.  There is no bulk proactive step.
+  //
+  // The mount scheduler (Scheduler::sortAndGetTapesForMountInfo) filters out
+  // tapes that are not ACTIVE or REPACKING before presenting mount candidates,
+  // so jobs on broken tapes are invisible to the drive scheduler regardless of
+  // whether they have been re-routed yet.  The cleanup step is still necessary
+  // to actually move the jobs so they become visible again under a new VID.
+  //
+  // Known limitation: if the alternate tape to which a job is re-queued
+  // subsequently also breaks, no second cleanup trigger fires automatically.
+  // Jobs in that situation accumulate silently until one of the tapes becomes
+  // available again or an operator intervenes.
+  //
+  // Future direction: moving VID selection to mount time (lazy selection) would
+  // eliminate the need for reactive cleanup entirely, but requires non-trivial
+  // changes to the scheduler's mount-decision logic.
+  // ---------------------------------------------------------------------------
+
   /**
    * Get the retrieve queue cleanup status.
    * @param vidsToConsider list of vids to considers. If empty, all vids will be considered.
@@ -339,7 +381,23 @@ public:
    */
   virtual std::list<RetrieveQueueCleanupInfo> getRetrieveQueuesCleanupInfo(log::LogContext& logContext) = 0;
   virtual void setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log::LogContext& logContext) = 0;
-  virtual void cleanRetrieveQueueForVid(const std::string& vid, log::LogContext& logContext) = 0;
+  /**
+   * Re-route or discard all pending retrieve jobs queued for the given tape VID.
+   * Jobs with an alternate copy on an ACTIVE tape are re-queued there; jobs with
+   * only a DISABLED alternate are re-queued there as a fallback.  Jobs with no
+   * usable alternate are moved to the active queue for failure reporting via their
+   * RETRIEVE_ERROR_REPORT_URL.  Jobs with no usable alternate AND no
+   * RETRIEVE_ERROR_REPORT_URL are silently deleted (no alternate copy is reachable
+   * and no failure destination was configured).
+   * @param vid          VID of the tape whose pending jobs should be processed.
+   * @param activeVids   VIDs of ACTIVE tapes — preferred re-routing targets.
+   * @param disabledVids VIDs of DISABLED tapes — used only when no ACTIVE alternate exists.
+   * @param logContext   Logging context.
+   */
+  virtual void cleanRetrieveQueueForVid(const std::string& vid,
+                                        const std::set<std::string>& activeVids,
+                                        const std::set<std::string>& disabledVids,
+                                        log::LogContext& logContext) = 0;
 
   /**
    * A representation of an existing retrieve queue. This is a (simpler) relative

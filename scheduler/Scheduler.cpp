@@ -2709,6 +2709,20 @@ std::vector<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAn
   return ret;
 }
 
+std::pair<std::set<std::string>, std::set<std::string>> Scheduler::buildRetrieveCapableVids() const {
+  catalogue::TapeSearchCriteria criteria;
+  std::set<std::string> activeVids, disabledVids;
+  criteria.state = common::dataStructures::Tape::ACTIVE;
+  for (const auto& t : m_catalogue.Tape()->getTapes(criteria)) {
+    activeVids.insert(t.vid);
+  }
+  criteria.state = common::dataStructures::Tape::DISABLED;
+  for (const auto& t : m_catalogue.Tape()->getTapes(criteria)) {
+    disabledVids.insert(t.vid);
+  }
+  return {activeVids, disabledVids};
+}
+
 void Scheduler::updateTapeStateFromPending(const std::string& queueVid, cta::log::LogContext& logContext) {
   cta::common::dataStructures::Tape tapeDataRefreshed;
   cta::common::dataStructures::SecurityIdentity admin;
@@ -2885,7 +2899,8 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
 #ifndef CTA_PGSCHED
         m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
 #else
-        m_db.cleanRetrieveQueueForVid(vid, logContext);
+        auto [activeVids, disabledVids] = buildRetrieveCapableVids();
+        m_db.cleanRetrieveQueueForVid(vid, activeVids, disabledVids, logContext);
         updateTapeStateFromPending(vid, logContext);
 #endif
       }
@@ -2908,8 +2923,9 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
 
         m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
 #else
-        // PGSCHED TO-DO wee need to check the REPACKING RETRIEVE TABLE not the RETRIEVE TABLE HERE !!!
-        m_db.cleanRetrieveQueueForVid(vid, logContext);
+        // PGSCHED TO-DO: also handle REPACK_RETRIEVE_PENDING_QUEUE for repack jobs on this tape
+        auto [activeVids, disabledVids] = buildRetrieveCapableVids();
+        m_db.cleanRetrieveQueueForVid(vid, activeVids, disabledVids, logContext);
         updateTapeStateFromPending(vid, logContext);
 #endif
       }
@@ -2934,7 +2950,8 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
 #ifndef CTA_PGSCHED
         m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
 #else
-        m_db.cleanRetrieveQueueForVid(vid, logContext);
+        auto [activeVids, disabledVids] = buildRetrieveCapableVids();
+        m_db.cleanRetrieveQueueForVid(vid, activeVids, disabledVids, logContext);
         updateTapeStateFromPending(vid, logContext);
 #endif
       }
