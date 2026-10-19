@@ -58,10 +58,11 @@ def stress_params(test_config: TestConfig, request: pytest.FixtureRequest) -> St
     cli_total = request.config.getoption("--stress-total-files")
     total_files = int(cli_total) if cli_total is not None else toml_total
 
-    # Scale prequeue thresholds proportionally when total_files is overridden.
-    scale = total_files / toml_total if toml_total else 1.0
-    num_files_to_put_drives_up = int(prequeue_config["num_files_to_put_drives_up"] * scale)
-    timeout_to_put_drives_up_sec = int(prequeue_config["timeout_to_put_drives_up_sec"] * scale)
+    prequeue_fraction = prequeue_config["prequeue_fraction"]
+    eos_queue_rate_hz = prequeue_config["eos_queue_rate_hz"]
+    timeout_margin_factor = prequeue_config["timeout_margin_factor"]
+    num_files_to_put_drives_up = int(total_files * prequeue_fraction)
+    timeout_to_put_drives_up_sec = int(num_files_to_put_drives_up / eos_queue_rate_hz * timeout_margin_factor)
 
     return StressParams(
         total_files=total_files,

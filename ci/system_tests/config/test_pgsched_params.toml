@@ -44,15 +44,23 @@
 
     [tests.stress.prequeue]
 
-      # If true, put drives down before archiving and only put them up after num_files_to_put_drives_up files are created.
-      # This prevents drives from outpacing the queueing capabilities of EOS.
-      enabled                    = true
-      # Pre-queue 9 M files before bringing drives up so the scheduler has a
-      # large backlog to keep all drives busy from the first mount.
-      # The last 1 M files are queued while drives are already processing.
-      num_files_to_put_drives_up = 9000000
-      # Timeout: 9 M files at 1 kHz EOS queueing rate = 9 000 s; +25 % margin = 11 250 s.
-      timeout_to_put_drives_up_sec = 11250
+      # If true, put drives down before archiving and only put them up after
+      # prequeue_fraction × total_files files are created.  This gives the
+      # scheduler a large backlog before the first tape mount so all drives
+      # stay busy from the start.
+      enabled = true
+
+      # Fraction of total_files that must be queued before drives come up.
+      # 0.9 → 9 M of 10 M files queued before drives start, last 1 M queued
+      # while drives are already transferring.
+      prequeue_fraction = 0.9
+
+      # Expected EOS archive-queue throughput used to derive the drive-up
+      # timeout: timeout = (prequeue_fraction × total_files / eos_queue_rate_hz)
+      #                    × timeout_margin_factor
+      eos_queue_rate_hz    = 1000
+      timeout_margin_factor = 1.2
+
       # Check every 2 min so drives come up promptly once the threshold is crossed.
       check_interval_sec = 120
 
