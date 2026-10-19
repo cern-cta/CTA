@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "JwtAuthManager.hpp"
+#include "grpc-server/auth/jwt/JwtAuthManager.hpp"
 
-#include "common/auth/jwt/RevokeList.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/utils/utils.hpp"
+#include "grpc-server/auth/jwt/RevokeList.hpp"
 #include "jwt-cpp/jwt.h"
 #include "runtime/config/ConfigLoader.hpp"
 
@@ -17,7 +17,7 @@
 #include <mutex>
 #include <stop_token>
 
-namespace cta::auth {
+namespace cta::grpc_server::auth {
 
 void JwtAuthManager::startCacheRefresh(std::chrono::seconds interval, log::Logger& logger) {
   m_cacheRefreshThread.emplace([this, interval, &logger](std::stop_token stop) {
@@ -200,4 +200,4 @@ std::set<std::string, std::less<>> JwtAuthManager::loadRevokedJtis(const std::st
   return revokedJtis;
 }
 
-}  // namespace cta::auth
+}  // namespace cta::grpc_server::auth

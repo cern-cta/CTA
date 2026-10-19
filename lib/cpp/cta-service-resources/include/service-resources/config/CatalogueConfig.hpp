@@ -10,10 +10,10 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace cta::grpc_server {
+namespace cta::service_resources {
 
 /**
- * @brief gRPC server-specific catalogue options.
+ * @brief Service-specific catalogue options.
  *
  * Complements cta::runtime::CatalogueConfig (runtime/config/CommonConfig.hpp), which holds the catalogue location.
  */
@@ -31,4 +31,4 @@ struct CatalogueConfig final {
   }
 };
 
-}  // namespace cta::grpc_server
+}  // namespace cta::service_resources

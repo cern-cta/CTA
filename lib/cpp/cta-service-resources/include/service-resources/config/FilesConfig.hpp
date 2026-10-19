@@ -10,7 +10,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace cta::grpc_server {
+namespace cta::service_resources {
 
 /**
  * @brief Options related to how the frontend handles tape file copies and the recycle log.
@@ -25,4 +25,4 @@ struct FilesConfig final {
   cta::runtime::ValidationResult validate() const { return {}; }
 };
 
-}  // namespace cta::grpc_server
+}  // namespace cta::service_resources

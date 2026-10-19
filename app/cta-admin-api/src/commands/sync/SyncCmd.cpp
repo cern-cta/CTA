@@ -14,24 +14,24 @@
 
 namespace cta::admin_api::commands::sync {
 
-SyncCmd::SyncCmd(const grpc_server::ServiceContext& serviceContext,
+SyncCmd::SyncCmd(const service_resources::ServiceResources& serviceResources,
                  const admin_api::AdminApiConfig& config,
                  const common::dataStructures::SecurityIdentity& clientIdentity,
                  const admin::AdminCmd& adminCmd)
     : m_adminCmd(adminCmd),
       m_options(adminCmd),
-      m_lc(serviceContext.getLogContext()),
+      m_lc(serviceResources.getLogContext()),
       m_cliIdentity(clientIdentity),
-      m_context {serviceContext.getCatalogue(),
-                 serviceContext.getScheduler(),
+      m_context {serviceResources.getCatalogue(),
+                 serviceResources.getScheduler(),
                  m_lc,
                  m_cliIdentity,
-                 serviceContext.getScheduler().getSchedulerBackendName(),
+                 serviceResources.getScheduler().getSchedulerBackendName(),
                  config.admin.mode,
                  config.archive.max_file_size_gb * 1000 * 1000 * 1000,
                  config.repack.buffer_url,
                  config.repack.max_files_to_select,
-                 serviceContext.getRecycleLogQuarantineSecs()} {
+                 serviceResources.getRecycleLogQuarantineSecs()} {
   m_lc.push({"user", m_cliIdentity.username});
 
   m_context.scheduler.authorizeAdmin(m_cliIdentity, m_lc);

@@ -5,10 +5,10 @@
 
 #pragma once
 
-#include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/LogContext.hpp"
 #include "grpc-server/auth/Authentication.hpp"
+#include "grpc-server/auth/jwt/JwtAuthManager.hpp"
 #include "rpc/auth/kerberos/TokenStore.hpp"
 
 #include <functional>
@@ -34,7 +34,7 @@ public:
    * @param krbTokenStore   Kerberos token store, empty if Kerberos auth is disabled
    * @param ourInstance     Instance name to use for the SecurityIdentity
    */
-  RequestAuthenticator(std::shared_ptr<cta::auth::JwtAuthManager> jwtAuthManager,
+  RequestAuthenticator(std::shared_ptr<cta::grpc_server::auth::JwtAuthManager> jwtAuthManager,
                        std::optional<std::reference_wrapper<kerberos::TokenStore>> krbTokenStore,
                        std::string ourInstance);
 
@@ -48,12 +48,13 @@ public:
    *         fails validation
    */
   std::pair<::grpc::Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
-  authenticate(const grpc_server::GrpcMetadata& clientMetadata,
+  authenticate(const grpc_server::auth::GrpcMetadata& clientMetadata,
                const std::string& clientHost,
                cta::log::LogContext& lc) const;
 
 private:
-  std::shared_ptr<cta::auth::JwtAuthManager> m_jwtAuthManager;  //!< Shared JWK cache, nullptr if JWT is disabled
+  std::shared_ptr<cta::grpc_server::auth::JwtAuthManager>
+    m_jwtAuthManager;  //!< Shared JWK cache, nullptr if JWT is disabled
   std::optional<std::reference_wrapper<kerberos::TokenStore>> m_krbTokenStore;  //!< empty if Kerberos is disabled
   std::string m_ourInstance;  //!< Instance name used for the SecurityIdentity
 };

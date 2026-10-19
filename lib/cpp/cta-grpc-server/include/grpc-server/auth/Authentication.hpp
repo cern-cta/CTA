@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/LogContext.hpp"
+#include "grpc-server/auth/jwt/JwtAuthManager.hpp"
 
 #include <grpcpp/grpcpp.h>
 #include <map>
@@ -15,7 +15,7 @@
 #include <set>
 #include <string>
 
-namespace cta::grpc_server {
+namespace cta::grpc_server::auth {
 
 /** @brief Client metadata of a gRPC call, as returned by ServerContext::client_metadata() */
 using GrpcMetadata = std::multimap<::grpc::string_ref, ::grpc::string_ref>;
@@ -50,9 +50,9 @@ authenticateMtls(::grpc::ServerContext* context,
  */
 std::pair<::grpc::Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
 authenticateJwt(const GrpcMetadata& client_metadata,
-                cta::auth::JwtAuthManager& jwtAuthManager,
+                JwtAuthManager& jwtAuthManager,
                 const std::string& ourInstance,
                 const std::string& clientHost,
                 cta::log::LogContext& lc);
 
-}  // namespace cta::grpc_server
+}  // namespace cta::grpc_server::auth

@@ -218,6 +218,8 @@ Requires: cta-lib-catalogue = %{version}-%{release}
 # Explicitly require grpc and protobuf to avoid clashes with EOS-provided variants.
 Requires: grpc
 Requires: protobuf
+# Together with cta-workflow-api, replaces cta-frontend-grpc
+Obsoletes: cta-frontend-grpc < %{version}-%{release}
 %description -n cta-admin-api
 Provides the admin gRPC API serving the administration commands of CTA.
 %files -n cta-admin-api
@@ -249,6 +251,8 @@ Requires: cta-lib-catalogue = %{version}-%{release}
 # Explicitly require grpc and protobuf to avoid clashes with EOS-provided variants.
 Requires: grpc
 Requires: protobuf
+# Together with cta-admin-api, replaces cta-frontend-grpc
+Obsoletes: cta-frontend-grpc < %{version}-%{release}
 %description -n cta-workflow-api
 Provides the workflow gRPC API handling EOS archive, retrieve and delete requests for CTA.
 %files -n cta-workflow-api
@@ -632,6 +636,10 @@ Provides CTA unit and integration tests.
 %{_libdir}/libctadaemonunittests.so*
 %{_libdir}/libctamediachangerunittests.so*
 %{_libdir}/libctamaintdunittests.so*
+%{_libdir}/libcta-grpc-server-unit-tests.so*
+%{_libdir}/libcta-service-resources-unit-tests.so*
+%{_libdir}/libcta-admin-api-unit-tests.so*
+%{_libdir}/libcta-workflow-api-unit-tests.so*
 %{_libdir}/libctadiskunittests.so*
 %{_libdir}/libctatapelabelunittests.so*
 %{_libdir}/libctatapedraounittests.so*

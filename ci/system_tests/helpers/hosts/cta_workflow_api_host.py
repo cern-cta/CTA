@@ -14,4 +14,4 @@ class CtaWorkflowApiHost(RemoteHost):
 
     @cached_property
     def log_file_path(self) -> Path:
-        return Path("/var") / "log" / "cta" / "cta-frontend.log"
+        return Path("/var") / "log" / "cta" / "cta-workflow-api.log"

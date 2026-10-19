@@ -7,11 +7,11 @@
 
 #include "WorkflowEvent.hpp"
 #include "catalogue/Catalogue.hpp"
-#include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/LogLevel.hpp"
 #include "grpc-server/PbException.hpp"
 #include "grpc-server/auth/Authentication.hpp"
+#include "grpc-server/auth/jwt/JwtAuthManager.hpp"
 #include "protobuf/common/ChecksumBlobSerDeser.hpp"
 
 #include <optional>
@@ -30,17 +30,17 @@ CtaRpcWfeImpl::validateRequestAuthMetadata(::grpc::ServerContext* context,
   // config validation guarantees that exactly one of mTLS or JWT is enabled
   if (usesMtls()) {
     std::string clientHost = request->notification().wf().instance().name();
-    return cta::grpc_server::authenticateMtls(context,
-                                              clientHost,
-                                              m_config.instance.name,
-                                              getMtlsCertIdentitiesForInstance(clientHost),
-                                              lc);
+    return cta::grpc_server::auth::authenticateMtls(context,
+                                                    clientHost,
+                                                    m_config.instance.name,
+                                                    getMtlsCertIdentitiesForInstance(clientHost),
+                                                    lc);
   }
-  return cta::grpc_server::authenticateJwt(context->client_metadata(),
-                                           *m_jwtAuthManager,
-                                           m_config.instance.name,
-                                           context->peer(),
-                                           lc);
+  return cta::grpc_server::auth::authenticateJwt(context->client_metadata(),
+                                                 *m_jwtAuthManager,
+                                                 m_config.instance.name,
+                                                 context->peer(),
+                                                 lc);
 }
 
 Status CtaRpcWfeImpl::processGrpcRequest(const cta::xrd::Request* request,
@@ -48,7 +48,7 @@ Status CtaRpcWfeImpl::processGrpcRequest(const cta::xrd::Request* request,
                                          cta::log::LogContext& lc,
                                          const SecurityIdentity& clientIdentity) const {
   try {
-    cta::frontend::WorkflowEvent wfe(m_serviceContext,
+    cta::frontend::WorkflowEvent wfe(m_serviceResources,
                                      m_config,
                                      clientIdentity,
 #ifdef CTA_PGSCHED
@@ -108,7 +108,7 @@ Status CtaRpcWfeImpl::handleWorkflowEvent(::grpc::ServerContext* context,
                                           const char* requestName,
                                           cta::eos::Workflow_EventType expectedEvent,
                                           const RequestCheck& check) const {
-  cta::log::LogContext lc(m_serviceContext.getLogContext());
+  cta::log::LogContext lc(m_serviceResources.getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
   sp.add("remoteHost", context->peer());
@@ -240,13 +240,13 @@ std::set<std::string, std::less<>> CtaRpcWfeImpl::getMtlsCertIdentitiesForInstan
   return identities;
 }
 
-CtaRpcWfeImpl::CtaRpcWfeImpl(grpc_server::ServiceContext& serviceContext,
+CtaRpcWfeImpl::CtaRpcWfeImpl(service_resources::ServiceResources& serviceResources,
                              const WorkflowApiConfig& config,
 #ifdef CTA_PGSCHED
                              FrontendBatchingLayer& batchingLayer,
 #endif
-                             std::shared_ptr<auth::JwtAuthManager> jwtAuthManager)
-    : m_serviceContext(serviceContext),
+                             std::shared_ptr<grpc_server::auth::JwtAuthManager> jwtAuthManager)
+    : m_serviceResources(serviceResources),
       m_config(config),
 #ifdef CTA_PGSCHED
       m_batchingLayer(batchingLayer),

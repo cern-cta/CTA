@@ -5,9 +5,10 @@
 
 #include "AdminApiApp.hpp"
 #include "AdminApiConfig.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "runtime/Application.hpp"
 
-const std::string APP_NAME = "cta-admin-api;";
+const std::string APP_NAME = cta::semconv::attr::ServiceNameValues::kCtaAdminApi;
 const std::string DESCRIPTION = R"""(
 Admin API - a gRPC service providing the admin commands of the CTA frontend
 )""";

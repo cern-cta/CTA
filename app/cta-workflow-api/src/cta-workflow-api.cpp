@@ -5,9 +5,10 @@
 
 #include "WorkflowApiApp.hpp"
 #include "WorkflowApiConfig.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "runtime/Application.hpp"
 
-const std::string APP_NAME = "cta-workflow-api;";
+const std::string APP_NAME = cta::semconv::attr::ServiceNameValues::kCtaWorkflowApi;
 const std::string DESCRIPTION = R"""(
 Workflow API - a gRPC service receiving the archive/retrieve workflow events of the CTA frontend
   )""";

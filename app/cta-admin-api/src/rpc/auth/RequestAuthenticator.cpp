@@ -78,7 +78,7 @@ AuthResult validateNegotiateHeader(const std::string& authHeader,
 
 }  // namespace
 
-RequestAuthenticator::RequestAuthenticator(std::shared_ptr<cta::auth::JwtAuthManager> jwtAuthManager,
+RequestAuthenticator::RequestAuthenticator(std::shared_ptr<cta::grpc_server::auth::JwtAuthManager> jwtAuthManager,
                                            std::optional<std::reference_wrapper<kerberos::TokenStore>> krbTokenStore,
                                            std::string ourInstance)
     : m_jwtAuthManager(std::move(jwtAuthManager)),
@@ -86,7 +86,7 @@ RequestAuthenticator::RequestAuthenticator(std::shared_ptr<cta::auth::JwtAuthMan
       m_ourInstance(std::move(ourInstance)) {}
 
 std::pair<Status, std::optional<SecurityIdentity>>
-RequestAuthenticator::authenticate(const grpc_server::GrpcMetadata& clientMetadata,
+RequestAuthenticator::authenticate(const grpc_server::auth::GrpcMetadata& clientMetadata,
                                    const std::string& clientHost,
                                    cta::log::LogContext& lc) const {
   auto it = clientMetadata.find("authorization");
@@ -101,7 +101,7 @@ RequestAuthenticator::authenticate(const grpc_server::GrpcMetadata& clientMetada
     if (!m_jwtAuthManager) {
       return {Status(StatusCode::UNAUTHENTICATED, "Token authentication disabled on the CTA Frontend"), std::nullopt};
     }
-    return grpc_server::authenticateJwt(clientMetadata, *m_jwtAuthManager, m_ourInstance, clientHost, lc);
+    return grpc_server::auth::authenticateJwt(clientMetadata, *m_jwtAuthManager, m_ourInstance, clientHost, lc);
   }
 
   if (authHeader.starts_with("Negotiate")) {

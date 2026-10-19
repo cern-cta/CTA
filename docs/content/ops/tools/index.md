@@ -62,7 +62,8 @@ Schema deletion and scheduler repair/reset commands modify or remove state. Thei
 
 | Tool | Purpose |
 | --- | --- |
-| [cta-frontend](service-manuals/cta-frontend.md) | Command and option reference for the current shared API implementation. |
+| [cta-admin-api](service-manuals/cta-admin-api.md) | Command and option reference for the admin API. |
+| [cta-workflow-api](service-manuals/cta-workflow-api.md) | Command and option reference for the workflow API. |
 | [cta-taped](service-manuals/cta-taped.md) | Command and option reference for the tape daemon. |
 | [cta-maintd](service-manuals/cta-maintd.md) | Command and option reference for the maintenance daemon. |
 | [cta-rmcd](service-manuals/cta-rmcd.md) | Command and option reference for the media changer daemon. |

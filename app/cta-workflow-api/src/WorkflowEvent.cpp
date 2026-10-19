@@ -29,6 +29,10 @@ void checkIsNotEmptyString(const std::string& value, const std::string& name) {
   }
 }
 
+}  // namespace
+
+namespace proto_notifications {
+
 /*!
  * Validate and extract the identity of the user who triggered the event
  */
@@ -90,9 +94,13 @@ std::optional<std::string> getRequestId(const eos::Notification& event, const st
   return std::nullopt;
 }
 
-}  // namespace
+}  // namespace proto_notifications
 
-WorkflowEvent::WorkflowEvent(const grpc_server::ServiceContext& serviceContext,
+using proto_notifications::getArchiveFileId;
+using proto_notifications::getRequester;
+using proto_notifications::getRequestId;
+
+WorkflowEvent::WorkflowEvent(const service_resources::ServiceResources& serviceResources,
                              const workflow_api::WorkflowApiConfig& config,
                              const common::dataStructures::SecurityIdentity& clientIdentity,
 #ifdef CTA_PGSCHED
@@ -101,12 +109,12 @@ WorkflowEvent::WorkflowEvent(const grpc_server::ServiceContext& serviceContext,
                              const eos::Notification& event)
     : m_event(event),
       m_cliIdentity(clientIdentity),
-      m_catalogue(serviceContext.getCatalogue()),
-      m_scheduler(serviceContext.getScheduler()),
+      m_catalogue(serviceResources.getCatalogue()),
+      m_scheduler(serviceResources.getScheduler()),
 #ifdef CTA_PGSCHED
       m_batchingLayer(&batchingLayer),
 #endif
-      m_lc(serviceContext.getLogContext()),
+      m_lc(serviceResources.getLogContext()),
       m_verificationMountPolicy(config.verification.mount_policy),
       m_zeroLengthFilesDisallowed(config.archive.zero_length_files_forbidden),
       m_zeroLengthFilesDisallowedExceptions {config.archive.zero_length_vo_exceptions.begin(),

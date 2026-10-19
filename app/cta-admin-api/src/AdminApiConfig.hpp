@@ -7,13 +7,13 @@
 
 #include "AdminCmdMode.hpp"
 #include "grpc-server/config/AuthConfig.hpp"
-#include "grpc-server/config/CatalogueConfig.hpp"
-#include "grpc-server/config/FilesConfig.hpp"
 #include "grpc-server/config/InstanceConfig.hpp"
 #include "grpc-server/config/ListenerConfig.hpp"
-#include "grpc-server/config/SchedulerConfig.hpp"
 #include "grpc-server/config/VerificationConfig.hpp"
 #include "runtime/config/CommonConfig.hpp"
+#include "service-resources/config/CatalogueConfig.hpp"
+#include "service-resources/config/FilesConfig.hpp"
+#include "service-resources/config/SchedulerConfig.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -80,10 +80,10 @@ struct AdminApiConfig final {
   cta::runtime::TelemetryConfig telemetry;
   cta::runtime::ExperimentalConfig experimental;
 
-  cta::grpc_server::CatalogueConfig frontend_catalogue;
-  cta::grpc_server::FilesConfig files;
+  cta::service_resources::CatalogueConfig frontend_catalogue;
+  cta::service_resources::FilesConfig files;
 #ifndef CTA_PGSCHED
-  cta::grpc_server::SchedulerConfig frontend_scheduler;
+  cta::service_resources::SchedulerConfig frontend_scheduler;
 #endif
 
   cta::grpc_server::ListenerConfig grpc;

@@ -6,17 +6,17 @@
 #include "rpc/CtaRpcStreamImpl.hpp"
 
 #include "commands/stream/StreamFactory.hpp"
-#include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "grpc-server/PbException.hpp"
+#include "grpc-server/auth/jwt/JwtAuthManager.hpp"
 #include "grpc-server/server/RequestTracker.hpp"
-#include "grpc-server/server/ServiceContext.hpp"
 #include "rpc/reactors/CtaAdminServerWriteReactor.hpp"
 #include "rpc/reactors/DefaultWriteReactor.hpp"
+#include "service-resources/ServiceResources.hpp"
 
 #include <grpcpp/grpcpp.h>
 #include <memory>
@@ -28,16 +28,16 @@
 
 namespace cta::admin_api::rpc {
 
-CtaRpcStreamImpl::CtaRpcStreamImpl(const cta::grpc_server::ServiceContext& serviceContext,
+CtaRpcStreamImpl::CtaRpcStreamImpl(const cta::service_resources::ServiceResources& serviceResources,
                                    const cta::admin_api::AdminApiConfig& config,
                                    RequestAuthenticator authenticator)
-    : m_lc(serviceContext.getLogger()),
-      m_catalogue(serviceContext.getCatalogue()),
-      m_scheduler(serviceContext.getScheduler()),
+    : m_lc(serviceResources.getLogger()),
+      m_catalogue(serviceResources.getCatalogue()),
+      m_scheduler(serviceResources.getScheduler()),
       m_instanceName(config.instance.name),
-      m_schedDb(serviceContext.getSchedDb()),
-      m_catalogueConnString(serviceContext.getCatalogueConnString()),
-      m_missingFileCopiesMinAgeSecs(serviceContext.getMissingFileCopiesMinAgeSecs()),
+      m_schedDb(serviceResources.getSchedDb()),
+      m_catalogueConnString(serviceResources.getCatalogueConnString()),
+      m_missingFileCopiesMinAgeSecs(serviceResources.getMissingFileCopiesMinAgeSecs()),
       m_adminCommandMode(config.admin.mode),
       m_authenticator(std::move(authenticator)) {}
 

@@ -293,7 +293,8 @@ nav:
               - 'EOS File Attributes': ops/tools/eos-file-attributes.md
           # Include source-backed daemon option references; configuration guides own examples and setup advice.
           - 'Service Manuals':
-              - 'cta-frontend': ops/tools/service-manuals/cta-frontend.md
+              - 'cta-admin-api': ops/tools/service-manuals/cta-admin-api.md
+              - 'cta-workflow-api': ops/tools/service-manuals/cta-workflow-api.md
               - 'cta-taped': ops/tools/service-manuals/cta-taped.md
               - 'cta-maintd': ops/tools/service-manuals/cta-maintd.md
               - 'cta-rmcd': ops/tools/service-manuals/cta-rmcd.md

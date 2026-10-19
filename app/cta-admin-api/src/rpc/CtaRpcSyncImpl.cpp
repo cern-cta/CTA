@@ -17,16 +17,16 @@ namespace {
 constexpr const char* CLIENT_IDENTITY_NOT_SET_ERROR = "clientIdentity not set in gRPC authentication";
 }  // namespace
 
-CtaRpcSyncImpl::CtaRpcSyncImpl(grpc_server::ServiceContext& serviceContext,
+CtaRpcSyncImpl::CtaRpcSyncImpl(service_resources::ServiceResources& serviceResources,
                                const AdminApiConfig& config,
                                RequestAuthenticator authenticator)
-    : m_serviceContext(serviceContext),
+    : m_serviceResources(serviceResources),
       m_config(config),
       m_authenticator(std::move(authenticator)) {}
 
 ::grpc::Status
 CtaRpcSyncImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
-  cta::log::LogContext lc(m_serviceContext.getLogContext());
+  cta::log::LogContext lc(m_serviceResources.getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
   // Retrieve metadata from the incoming request
@@ -47,7 +47,7 @@ CtaRpcSyncImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* r
   lc.log(cta::log::DEBUG, "CTA-Admin non-streaming command");
   // process the admin command
   try {
-    cta::admin_api::commands::sync::SyncCmd syncCmd(m_serviceContext,
+    cta::admin_api::commands::sync::SyncCmd syncCmd(m_serviceResources,
                                                     m_config,
                                                     clientIdentity.value(),
                                                     request->admincmd());

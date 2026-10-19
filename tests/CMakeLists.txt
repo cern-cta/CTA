@@ -20,6 +20,7 @@ set (CTA_UNIT_TEST_LIBS
   ctamediachangerunittests
   ctamaintdunittests
   cta-grpc-server-unit-tests
+  cta-service-resources-unit-tests
   cta-admin-api-unit-tests
   cta-workflow-api-unit-tests
   ctainmemorycatalogueunittests
@@ -79,6 +80,7 @@ add_library(cta-unit-test-helper
   TempFile.cpp TempDirectory.cpp)
 target_link_libraries(ctaruntimeunittests PRIVATE cta-unit-test-helper)
 target_link_libraries(ctacommonunittests cta-unit-test-helper)
+target_link_libraries(cta-grpc-server-unit-tests cta-unit-test-helper)
 
 add_executable(cta-integration-tests
   integration_tests.cpp)

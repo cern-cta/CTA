@@ -7,8 +7,8 @@
 
 #include "AdminApiConfig.hpp"
 #include "common/log/Logger.hpp"
-#include "grpc-server/server/ServiceContext.hpp"
 #include "rpc/auth/RequestAuthenticator.hpp"
+#include "service-resources/ServiceResources.hpp"
 
 #include <memory>
 
@@ -25,7 +25,7 @@ namespace cta::admin_api::rpc {
  */
 class CtaRpcSyncImpl final : public cta::xrd::CtaRpc::Service {
 public:
-  CtaRpcSyncImpl(grpc_server::ServiceContext& serviceContext,
+  CtaRpcSyncImpl(service_resources::ServiceResources& serviceResources,
                  const AdminApiConfig& config,
                  RequestAuthenticator authenticator);
 
@@ -33,7 +33,7 @@ public:
   Admin(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) final;
 
 private:
-  grpc_server::ServiceContext& m_serviceContext;
+  service_resources::ServiceResources& m_serviceResources;
   const AdminApiConfig& m_config;
   RequestAuthenticator m_authenticator;
 };

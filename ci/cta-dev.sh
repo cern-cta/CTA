@@ -1113,7 +1113,7 @@ build_cta() {
 load_cta_images_into_kubernetes() {
   [[ $cta_image_registry == "$local_image_registry" ]] || return 0
 
-  local targets=(cta-taped cta-maintd cta-rmcd cta-frontend cta-tools)
+  local targets=(cta-taped cta-maintd cta-rmcd cta-admin-api cta-workflow-api cta-tools)
   [[ $enable_debug_image == true ]] && targets+=(cta-debug)
 
   local runtime target

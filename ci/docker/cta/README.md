@@ -18,7 +18,8 @@ The CTA container images are multi-stage images. The Dockerfile defines several 
 - `cta-taped`
 - `cta-rmcd`
 - `cta-maintd`
-- `cta-frontend`
+- `cta-admin-api`
+- `cta-workflow-api`
 - `cta-tools`
 
 The build requires a directory containing the CTA RPMs.
@@ -87,7 +88,8 @@ Repeat the build with a different `--target` for the other images:
 ```bash
 --target cta-rmcd
 --target cta-maintd
---target cta-frontend
+--target cta-admin-api
+--target cta-workflow-api
 --target cta-tools
 ```
 
