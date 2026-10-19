@@ -400,9 +400,6 @@ include:
       keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
       use-stress-drives: $[[ inputs.use-stress-drives ]]
       num-stress-drives: $[[ inputs.num-stress-drives ]]
-      num-stress-files: $[[ inputs.num-stress-files ]]
-      stress-prequeue-enabled: $[[ inputs.stress-prequeue-enabled ]]
-      stress-prequeue-fraction: $[[ inputs.stress-prequeue-fraction ]]
   - local: .gitlab/ci/validate.gitlab-ci.yml
     rules:
       - if: '$CI_COMMIT_TAG && $CI_PIPELINE_SOURCE == "parent_pipeline"'
