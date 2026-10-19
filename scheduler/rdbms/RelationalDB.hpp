@@ -158,7 +158,8 @@ public:
    * @param vid         The volume identifier for which pending retrieve jobs should be processed.
    * @param logContext  The logging context for recording operation details.
    */
-  void cleanRetrieveQueueForVid(const std::string& vid, const std::set<std::string>& activeVids,
+  void cleanRetrieveQueueForVid(const std::string& vid,
+                                const std::set<std::string>& activeVids,
                                 const std::set<std::string>& disabledVids,
                                 log::LogContext& logContext) override;
 

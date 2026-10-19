@@ -893,9 +893,11 @@ public:
   * @param disabledVids         VIDs of DISABLED tapes — used only when no ACTIVE alternate exists
   * @return                     {requeuedToAlternateVid, movedJobsForReporting}
   */
-  static std::pair<uint64_t, uint64_t> handlePendingRetrieveJobsAfterTapeStateChange(
-    Transaction& txn, std::string vid,
-    const std::set<std::string>& activeVids, const std::set<std::string>& disabledVids);
+  static std::pair<uint64_t, uint64_t>
+  handlePendingRetrieveJobsAfterTapeStateChange(Transaction& txn,
+                                                std::string vid,
+                                                const std::set<std::string>& activeVids,
+                                                const std::set<std::string>& disabledVids);
 
   /**
   * Move from RETRIEVE_ACTIVE_QUEUE to RETRIEVE_PENDING_QUEUE

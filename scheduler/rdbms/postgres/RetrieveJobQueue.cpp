@@ -946,9 +946,11 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
   return stmt.executeQuery();
 }
 
-std::pair<uint64_t, uint64_t> RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(
-  Transaction& txn, std::string vid,
-  const std::set<std::string>& activeVids, const std::set<std::string>& disabledVids) {
+std::pair<uint64_t, uint64_t>
+RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Transaction& txn,
+                                                                   std::string vid,
+                                                                   const std::set<std::string>& activeVids,
+                                                                   const std::set<std::string>& disabledVids) {
   // Build PostgreSQL array literals from the two VID sets so the ALTS CTE can:
   //   1. Filter out alternates on non-retrieve-capable tapes (BROKEN, EXPORTED, REPACKING, …)
   //   2. Prefer ACTIVE over DISABLED when choosing the best alternate (state_priority 0 vs 1)
@@ -957,13 +959,15 @@ std::pair<uint64_t, uint64_t> RetrieveJobQueueRow::handlePendingRetrieveJobsAfte
     std::string arr = "ARRAY[";
     bool first = true;
     for (const auto& v : vids) {
-      if (!first) arr += ",";
+      if (!first) {
+        arr += ",";
+      }
       arr += "'" + v + "'";
       first = false;
     }
     return arr + "]::TEXT[]";
   };
-  const std::string activeArray   = buildArray(activeVids);
+  const std::string activeArray = buildArray(activeVids);
   const std::string disabledArray = buildArray(disabledVids);
 
   std::string sql =
@@ -982,14 +986,16 @@ std::pair<uint64_t, uint64_t> RetrieveJobQueueRow::handlePendingRetrieveJobsAfte
         trim(c.val)::SMALLINT  AS NEW_COPY_NB,
         v.ord,
         -- 0 = ACTIVE (preferred), 1 = DISABLED (fallback); mirrors selectBestRetrieveQueue priority
-        CASE WHEN trim(v.val) = ANY()SQL" + activeArray + R"SQL() THEN 0 ELSE 1 END AS state_priority
+        CASE WHEN trim(v.val) = ANY()SQL"
+    + activeArray + R"SQL() THEN 0 ELSE 1 END AS state_priority
       FROM DELETED D,
            LATERAL unnest(string_to_array(D.ALTERNATE_VIDS,      ',')) WITH ORDINALITY AS v(val, ord),
            LATERAL unnest(string_to_array(D.ALTERNATE_FSEQS,     ',')) WITH ORDINALITY AS f(val, ord),
            LATERAL unnest(string_to_array(D.ALTERNATE_BLOCK_IDS, ',')) WITH ORDINALITY AS b(val, ord),
            LATERAL unnest(string_to_array(D.ALTERNATE_COPY_NBS,  ',')) WITH ORDINALITY AS c(val, ord)
       WHERE v.ord = f.ord AND v.ord = b.ord AND v.ord = c.ord
-        AND (trim(v.val) = ANY()SQL" + activeArray + R"SQL() OR trim(v.val) = ANY()SQL" + disabledArray + R"SQL())
+        AND (trim(v.val) = ANY()SQL"
+    + activeArray + R"SQL() OR trim(v.val) = ANY()SQL" + disabledArray + R"SQL())
     ),
     BEST_ALT AS (
       SELECT DISTINCT ON (JOB_ID) * FROM ALTS ORDER BY JOB_ID, state_priority, ord

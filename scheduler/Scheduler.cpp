@@ -2713,9 +2713,13 @@ std::pair<std::set<std::string>, std::set<std::string>> Scheduler::buildRetrieve
   catalogue::TapeSearchCriteria criteria;
   std::set<std::string> activeVids, disabledVids;
   criteria.state = common::dataStructures::Tape::ACTIVE;
-  for (const auto& t : m_catalogue.Tape()->getTapes(criteria)) activeVids.insert(t.vid);
+  for (const auto& t : m_catalogue.Tape()->getTapes(criteria)) {
+    activeVids.insert(t.vid);
+  }
   criteria.state = common::dataStructures::Tape::DISABLED;
-  for (const auto& t : m_catalogue.Tape()->getTapes(criteria)) disabledVids.insert(t.vid);
+  for (const auto& t : m_catalogue.Tape()->getTapes(criteria)) {
+    disabledVids.insert(t.vid);
+  }
   return {activeVids, disabledVids};
 }
 

@@ -1889,12 +1889,16 @@ std::list<SchedulerDatabase::RetrieveQueueCleanupInfo> RelationalDB::getRetrieve
   throw cta::exception::NotImplementedException();
 }
 
-void RelationalDB::cleanRetrieveQueueForVid(const std::string& vid, const std::set<std::string>& activeVids,
-                                            const std::set<std::string>& disabledVids, log::LogContext& lc) {
+void RelationalDB::cleanRetrieveQueueForVid(const std::string& vid,
+                                            const std::set<std::string>& activeVids,
+                                            const std::set<std::string>& disabledVids,
+                                            log::LogContext& lc) {
   schedulerdb::Transaction txn(m_connPool, lc);
   try {
     auto [requeuedToAlternateVid, movedJobsForReporting] =
-      schedulerdb::postgres::RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(txn, vid, activeVids,
+      schedulerdb::postgres::RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(txn,
+                                                                                                vid,
+                                                                                                activeVids,
                                                                                                 disabledVids);
     log::ScopedParamContainer(lc)
       .add("VID", vid)

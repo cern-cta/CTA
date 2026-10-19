@@ -151,7 +151,8 @@ public:
     m_SchedDB->setRetrieveQueueCleanupFlag(vid, val, lc);
   }
 
-  void cleanRetrieveQueueForVid(const std::string& vid, const std::set<std::string>& activeVids,
+  void cleanRetrieveQueueForVid(const std::string& vid,
+                                const std::set<std::string>& activeVids,
                                 const std::set<std::string>& disabledVids,
                                 log::LogContext& lc) override {
     m_SchedDB->cleanRetrieveQueueForVid(vid, activeVids, disabledVids, lc);
