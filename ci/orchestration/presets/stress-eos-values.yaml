@@ -81,7 +81,7 @@ server:
             secretName: ctaeos-self-signed-key-pem
 
   fst:
-    replicaCount: 5
+    replicaCount: 4
     # Start FST replicas together to reduce setup time.
     podManagementPolicy: Parallel
 
@@ -95,7 +95,7 @@ server:
       size: 100Gi
 
     xrd:
-      # 5 FSTs × 256 max threads = 1280 total — ample for stress throughput while
+      # 4 FSTs × 256 max threads = 1024 total — ample for stress throughput while
       # reducing per-FST memory footprint and concurrency-bug exposure vs maxt 512.
       sched: "mint 16 maxt 256 idle 64"
       # Connect stress traffic to the CTA workflow frontend using the deployment credentials.

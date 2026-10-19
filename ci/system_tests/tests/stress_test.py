@@ -3,8 +3,9 @@
 
 import asyncio
 import contextlib
+import math
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import pytest
@@ -25,7 +26,7 @@ class PrequeueParams:
 # Most likely we will need to specify a directory and file pre/postfix here
 @dataclass
 class StressParams:
-    num_dirs: int
+    total_files: int
     num_files_per_dir: int
     # File size in bytes
     file_size: int
@@ -37,24 +38,33 @@ class StressParams:
     max_no_progress_intervals: int
     max_acceptable_loss_percent: float
     prequeue: PrequeueParams
+    # Derived — set in __post_init__
+    num_dirs: int = field(init=False)
 
     def __post_init__(self) -> None:
-        # 50k directories and 100k files are the limits eos find applies
-        # when truncating the results
-        # we do not use EOS find so we do not hit this restriction, but we constrain
-        # the inputs similarly all the same
-        if self.num_dirs > 50000:
-            raise ValueError(f"num_dirs too high: {self.num_dirs}, max allowed value is 50000")
         if self.num_files_per_dir > 100000:
             raise ValueError(f"num_files_per_dir too high: {self.num_files_per_dir}, max allowed value is 100000")
+        self.num_dirs = math.ceil(self.total_files / self.num_files_per_dir)
+        if self.num_dirs > 50000:
+            raise ValueError(f"num_dirs derived as {self.num_dirs} exceeds the max allowed value of 50000")
 
 
 @pytest.fixture(scope="module")
-def stress_params(test_config: TestConfig) -> StressParams:
+def stress_params(test_config: TestConfig, request: pytest.FixtureRequest) -> StressParams:
     stress_config = test_config["tests"]["stress"]
     prequeue_config = stress_config["prequeue"]
+
+    toml_total = stress_config["total_files"]
+    cli_total = request.config.getoption("--stress-total-files")
+    total_files = int(cli_total) if cli_total is not None else toml_total
+
+    # Scale prequeue thresholds proportionally when total_files is overridden.
+    scale = total_files / toml_total if toml_total else 1.0
+    num_files_to_put_drives_up = int(prequeue_config["num_files_to_put_drives_up"] * scale)
+    timeout_to_put_drives_up_sec = int(prequeue_config["timeout_to_put_drives_up_sec"] * scale)
+
     return StressParams(
-        num_dirs=stress_config["num_dirs"],
+        total_files=total_files,
         num_files_per_dir=stress_config["num_files_per_dir"],
         file_size=stress_config["file_size"],
         io_threads=stress_config["io_threads"],
@@ -66,8 +76,8 @@ def stress_params(test_config: TestConfig) -> StressParams:
         max_acceptable_loss_percent=stress_config["max_acceptable_loss_percent"],
         prequeue=PrequeueParams(
             enabled=prequeue_config["enabled"],
-            num_files_to_put_drives_up=prequeue_config["num_files_to_put_drives_up"],
-            timeout_to_put_drives_up_sec=prequeue_config["timeout_to_put_drives_up_sec"],
+            num_files_to_put_drives_up=num_files_to_put_drives_up,
+            timeout_to_put_drives_up_sec=timeout_to_put_drives_up_sec,
             check_interval_sec=prequeue_config["check_interval_sec"],
         ),
     )

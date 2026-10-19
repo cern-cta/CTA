@@ -19,12 +19,13 @@
 
   [tests.stress]
 
-    # 200 directories × 50,000 files = 10 M files total.
-    # 50 k files/dir is the EOS-safe upper limit for namespace performance.
+    # Total number of files to archive.  num_dirs is derived automatically as
+    # ceil(total_files / num_files_per_dir) so it stays within the EOS-safe 50 k
+    # files/dir limit.  Override at CI trigger time via the num-stress-files input.
     # File size is kept at 16 bytes; the effective tape footprint is ~470 bytes/file
     # (data block + per-file tape header overhead), giving ~4.7 GB total on tape for the
     # full 10 M run — trivially small on the fast-ssd PVC backing the fake tape library.
-    num_dirs          = 200
+    total_files       = 10000000
     num_files_per_dir = 50000
     # file size in bytes
     file_size = 16
