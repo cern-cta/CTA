@@ -30,9 +30,11 @@
 
   [tests.stress]
 
-    # For the actual stress test we currently have 40 directories with 50.000 files each
-    # mhvtl is mounted in-memory, so we keep the file size small and easily compressible (unique string + zero padding)
-    num_dirs          = 40
+    # Total number of files to archive. num_dirs is derived automatically as
+    # ceil(total_files / num_files_per_dir) so it stays within the EOS-safe 50 k
+    # files/dir limit.  Override at CI trigger time via the num-stress-files input.
+    # mhvtl is mounted in-memory, so we keep the file size small and easily compressible.
+    total_files       = 2000000
     num_files_per_dir = 50000
     # file size in bytes
     file_size = 16

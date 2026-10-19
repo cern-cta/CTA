@@ -58,6 +58,12 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         default=Path("config/test_params.toml"),
         help="Path to the config file containing all test parameters",
     )
+    parser.addoption(
+        "--stress-total-files",
+        type=int,
+        default=None,
+        help="Override the total number of files for the stress test (num_dirs is derived automatically)",
+    )
 
 
 # =========================================================================
