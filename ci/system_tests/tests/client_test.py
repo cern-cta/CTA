@@ -1345,12 +1345,9 @@ class TestRetrieveQueueCleanup:
             while time.monotonic() < deadline:
                 queues = json.loads(cta_cli.exec_with_output("cta-admin --json showqueues"))
                 counts = {
-                    t: sum(int(q["queuedFiles"]) for q in queues if q["vid"] == t)
-                    for t in (tape_0, tape_1, tape_2)
+                    t: sum(int(q["queuedFiles"]) for q in queues if q["vid"] == t) for t in (tape_0, tape_1, tape_2)
                 }
-                assert counts[tape_1] == 0, (
-                    f"Initial PREPARE incorrectly routed to DISABLED tape {tape_1}"
-                )
+                assert counts[tape_1] == 0, f"Initial PREPARE incorrectly routed to DISABLED tape {tape_1}"
                 if counts[tape_0] == 1 and counts[tape_2] == 0:
                     initial_tape, other_active = tape_0, tape_2
                     break
