@@ -53,13 +53,19 @@
 
     [tests.stress.prequeue]
 
-      # If true, put drives down before archiving and only put them up after num_files_to_put_drives_up files are created.
-      # This prevents drives from outpacing the queueing capabilities of EOS.
-      enabled                    = false
-      num_files_to_put_drives_up = 1000000
-      # timeout in seconds
-      timeout_to_put_drives_up_sec = 3600
-      # how often to count number of files when prequeueing
+      # If true, put drives down before archiving and only put them up after
+      # prequeue_fraction × total_files files are created.
+      enabled = false
+
+      # Fraction of total_files that must be queued before drives come up.
+      prequeue_fraction = 0.9
+
+      # Expected EOS archive-queue throughput used to derive the drive-up
+      # timeout: timeout = (prequeue_fraction × total_files / eos_queue_rate_hz)
+      #                    × timeout_margin_factor
+      eos_queue_rate_hz     = 1000
+      timeout_margin_factor = 1.2
+
       check_interval_sec = 300
 
     # Virtual stress-drive mode configuration (media types, VID prefixes,
