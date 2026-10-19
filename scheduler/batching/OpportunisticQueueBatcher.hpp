@@ -51,7 +51,11 @@ public:
       : m_window(window),
         m_maxBatchSize(maxBatchSize),
         m_resolveBatch(std::move(resolveBatch)),
-        m_afterRelease(std::move(afterRelease)) {}
+        m_afterRelease(std::move(afterRelease)) {
+    if (maxBatchSize == 0) {
+      throw std::invalid_argument("OpportunisticQueueBatcher: maxBatchSize must be > 0");
+    }
+  }
 
   ~OpportunisticQueueBatcher() { stop(); }
 

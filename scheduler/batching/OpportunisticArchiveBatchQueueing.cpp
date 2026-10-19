@@ -9,9 +9,9 @@
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "lib/telemetry/include/telemetry/metrics/SchedulerMetrics.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/batching/FrontendBatchingLayer.hpp"
 #include "scheduler/batching/OpportunisticQueueBatcher.hpp"
-#include "scheduler/SchedulerDatabase.hpp"
 
 #include <future>
 #include <mutex>
