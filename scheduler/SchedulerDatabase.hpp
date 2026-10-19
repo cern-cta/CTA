@@ -339,7 +339,9 @@ public:
    */
   virtual std::list<RetrieveQueueCleanupInfo> getRetrieveQueuesCleanupInfo(log::LogContext& logContext) = 0;
   virtual void setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log::LogContext& logContext) = 0;
-  virtual void cleanRetrieveQueueForVid(const std::string& vid, log::LogContext& logContext) = 0;
+  virtual void cleanRetrieveQueueForVid(const std::string& vid, const std::set<std::string>& activeVids,
+                                        const std::set<std::string>& disabledVids,
+                                        log::LogContext& logContext) = 0;
 
   /**
    * A representation of an existing retrieve queue. This is a (simpler) relative

@@ -158,7 +158,9 @@ public:
    * @param vid         The volume identifier for which pending retrieve jobs should be processed.
    * @param logContext  The logging context for recording operation details.
    */
-  void cleanRetrieveQueueForVid(const std::string& vid, log::LogContext& logContext) override;
+  void cleanRetrieveQueueForVid(const std::string& vid, const std::set<std::string>& activeVids,
+                                const std::set<std::string>& disabledVids,
+                                log::LogContext& logContext) override;
 
   std::list<RetrieveQueueStatistics>
   getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,

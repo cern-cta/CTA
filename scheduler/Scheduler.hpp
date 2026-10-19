@@ -468,6 +468,13 @@ public:
   void updateTapeStateFromPending(const std::string& queueVid, cta::log::LogContext& logContext);
 
   /**
+   * Returns {activeVids, disabledVids} queried live from the catalogue.
+   * Used to filter and prioritise re-routing targets when a tape state changes:
+   * ACTIVE tapes are preferred; DISABLED tapes are the fallback.
+   */
+  std::pair<std::set<std::string>, std::set<std::string>> buildRetrieveCapableVids() const;
+
+  /**
   * Modify the state of the specified tape. Intermediate states may be temporarily applied
   * until the final desired state is achieved.
   * @param admin, the person or the system who modified the state of the tape
