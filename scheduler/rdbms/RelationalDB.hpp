@@ -143,20 +143,13 @@ public:
   };
 
   /**
-   * Cleans up retrieve jobs for the specified Tape VID in the scheduler database.
-   *
-   * This method checks the `RETRIEVE_ERROR_REPORT_URL` column for each job in the
-   * `RETRIEVE_PENDING_QUEUE` associated with the given VID.
-   *
-   * - If the `RETRIEVE_ERROR_REPORT_URL` is **not NULL and not empty**, the job is moved to the
-   *   `RETRIEVE_ACTIVE_QUEUE` with its status updated to `RJS_ToReportToUserForFailure`,
-   *   indicating that a failure report should be sent to the user.
-   *
-   * - If the `RETRIEVE_ERROR_REPORT_URL` is **NULL or empty**, the job is considered to not require
-   *   reporting and is **deleted** from the `RETRIEVE_PENDING_QUEUE`.
-   *
-   * @param vid         The volume identifier for which pending retrieve jobs should be processed.
-   * @param logContext  The logging context for recording operation details.
+   * Re-route or discard all pending retrieve jobs for the given tape VID.
+   * Delegates to handlePendingRetrieveJobsAfterTapeStateChange inside a scheduler DB transaction.
+   * Jobs with no usable alternate AND no RETRIEVE_ERROR_REPORT_URL are silently deleted.
+   * @param vid          VID of the tape whose pending jobs should be processed.
+   * @param activeVids   VIDs of ACTIVE tapes — preferred re-routing targets.
+   * @param disabledVids VIDs of DISABLED tapes — used only when no ACTIVE alternate exists.
+   * @param logContext   Logging context.
    */
   void cleanRetrieveQueueForVid(const std::string& vid,
                                 const std::set<std::string>& activeVids,

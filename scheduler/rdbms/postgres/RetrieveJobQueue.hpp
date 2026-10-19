@@ -885,7 +885,8 @@ public:
   * with the next available copy's VID/FSEQ/BLOCK_ID/COPY_NB (same rotation as requeueJobToMount).
   * Jobs with no valid alternate and a non-empty RETRIEVE_ERROR_REPORT_URL are moved to
   * RETRIEVE_ACTIVE_QUEUE with status RJS_ToReportToUserForFailure.
-  * Jobs with no valid alternate and no error URL are silently discarded.
+  * Jobs with no valid alternate and no RETRIEVE_ERROR_REPORT_URL are silently deleted
+  * (no alternate copy is reachable and no failure destination was configured).
   *
   * @param txn                  Transaction to use for this query
   * @param vid                  tape VID whose pending jobs should be cleaned up

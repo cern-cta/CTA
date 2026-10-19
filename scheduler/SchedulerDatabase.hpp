@@ -339,6 +339,19 @@ public:
    */
   virtual std::list<RetrieveQueueCleanupInfo> getRetrieveQueuesCleanupInfo(log::LogContext& logContext) = 0;
   virtual void setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log::LogContext& logContext) = 0;
+  /**
+   * Re-route or discard all pending retrieve jobs queued for the given tape VID.
+   * Jobs with an alternate copy on an ACTIVE tape are re-queued there; jobs with
+   * only a DISABLED alternate are re-queued there as a fallback.  Jobs with no
+   * usable alternate are moved to the active queue for failure reporting via their
+   * RETRIEVE_ERROR_REPORT_URL.  Jobs with no usable alternate AND no
+   * RETRIEVE_ERROR_REPORT_URL are silently deleted (no alternate copy is reachable
+   * and no failure destination was configured).
+   * @param vid          VID of the tape whose pending jobs should be processed.
+   * @param activeVids   VIDs of ACTIVE tapes — preferred re-routing targets.
+   * @param disabledVids VIDs of DISABLED tapes — used only when no ACTIVE alternate exists.
+   * @param logContext   Logging context.
+   */
   virtual void cleanRetrieveQueueForVid(const std::string& vid,
                                         const std::set<std::string>& activeVids,
                                         const std::set<std::string>& disabledVids,
