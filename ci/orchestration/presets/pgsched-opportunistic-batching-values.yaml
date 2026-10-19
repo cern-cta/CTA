@@ -9,4 +9,5 @@
 frontend-wfe:
   conf:
     schedulerdb:
-      opportunisticBatchingEnabled: true
+      opportunisticBatching:
+        enabled: true

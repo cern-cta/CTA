@@ -14,10 +14,70 @@ metadata:
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
 data:
-  cta-frontend-grpc.toml: |-
+  cta-workflow-api.toml: |-
+    [instance]
+      name = {{ .Release.Namespace | quote }}
+
+    [catalogue]
+      config_file = "/etc/cta/cta-catalogue.conf"
+
+    [frontend_catalogue]
+      number_of_connections = {{ .Values.conf.catalogue.numberOfConnections | int }}
+
+    [files]
+      # Minimum age of missing tape file copies before they are reported
+      missing_file_copies_min_age_secs = {{ .Values.conf.catalogue.missingFileCopiesMinAgeSecs | int }}
+      # Recycle-log quarantine period before a tape can be reclaimed
+      recycle_log_quarantine_secs = {{ .Values.conf.catalogue.recycleLogQuarantineSecs | int }}
+
+    [scheduler]
+      backend_name = {{ $schedulerConfig.backend | quote }}
+      config_file = "/etc/cta/cta-scheduler.conf"
+      tape_cache_max_age_secs = {{ .Values.conf.schedulerdb.tapeCacheMaxAgeSecs | int }}
+      retrieve_queue_cache_max_age_secs = {{ .Values.conf.schedulerdb.retrieveQueueCacheMaxAgeSecs | int }}
+      # Only used by the PostgreSQL scheduler backend
+      number_of_connections = {{ .Values.conf.schedulerdb.numberOfConnections | int }}
+
+    # Only used by the objectstore scheduler backend
+    [frontend_scheduler]
+      number_of_threads = {{ .Values.conf.schedulerdb.numberOfThreads | int }}
+      thread_stack_size_mb = {{ .Values.conf.schedulerdb.threadStackSizeMb | int }}
+
+    # Only used by the PostgreSQL scheduler backend: batch concurrent archive/retrieve requests
+    # into a single bulk DB insert instead of queueing them one at a time
+    [opportunistic_batching]
+      enabled = {{ .Values.conf.schedulerdb.opportunisticBatching.enabled }}
+      window_ms = {{ .Values.conf.schedulerdb.opportunisticBatching.windowMs | int }}
+      max_batch_size = {{ .Values.conf.schedulerdb.opportunisticBatching.maxBatchSize | int }}
+
+    [archive]
+      max_file_size_gb = {{ .Values.conf.frontend.archiveFileMaxSizeGb | int }}
+      zero_length_files_forbidden = {{ .Values.conf.frontend.zeroLengthFilesForbidden }}
+      {{- $exceptions := list }}
+      {{- range (splitList "," (toString .Values.conf.frontend.zeroLengthFilesForbiddenVoExceptionList)) }}
+      {{- if trim . }}{{ $exceptions = append $exceptions (trim .) }}{{ end }}
+      {{- end }}
+      zero_length_vo_exceptions = {{ $exceptions | toJson }}
+
+    [verification]
+      mount_policy = "verification"
+
+    [logging]
+      level = {{ .Values.conf.logger.logLevel | quote }}
+      format = {{ .Values.conf.logger.logFormat | quote }}
+
+    [experimental]
+      telemetry_enabled = {{ .Values.conf.telemetry.enabled }}
+    {{- if .Values.conf.telemetry.enabled }}
+
+    [telemetry]
+      # Declarative OpenTelemetry SDK configuration. Must be provided separately (see lib/telemetry/cta-otel.example.yaml).
+      config_file = "/etc/cta/cta-otel.yaml"
+    {{- end }}
+
     [grpc]
-      port = {{ .Values.port }}
-      number_of_threads = {{ .Values.conf.numberOfThreads }}
+      port = {{ .Values.port | int }}
+      number_of_threads = {{ .Values.conf.numberOfThreads | int }}
 
     [grpc.tls]
       server_key_path = {{ .Values.conf.tls.serverKey | quote }}
@@ -43,101 +103,6 @@ data:
       {{- range $instance, $hosts := .Values.conf.auth.config.mtls.aliases }}
         {{ $instance }} = {{ $hosts | toJson }}
       {{- end }}
-    {{- end }}
-
-  cta-frontend.conf: |-
-    #
-    # CTA options
-    #
-
-    cta.instance_name {{ .Release.Namespace }}
-
-    # Operation Mode - this is the Workflow Engine (WFE) node
-    cta.operation_mode wfe
-
-    # CTA ObjectStore options
-    cta.objectstore.backendpath {{ include "global.schedulerUrl" . }}
-
-    # CTA Scheduler DB options
-    cta.schedulerdb.scheduler_backend_name {{ $schedulerConfig.backend }}
-    cta.schedulerdb.numberofthreads {{ .Values.conf.schedulerdb.numberOfThreads }}
-    cta.schedulerdb.threadstacksize_mb {{ .Values.conf.schedulerdb.threadStackSizeMb }}
-
-    # CTA Scheduler DB options - Cache timeout options (decreased for tests)
-    cta.schedulerdb.tape_cache_max_age_secs {{ .Values.conf.schedulerdb.tapeCacheMaxAgeSecs }}
-    cta.schedulerdb.retrieve_queue_cache_max_age_secs {{ .Values.conf.schedulerdb.retrieveQueueCacheMaxAgeSecs }}
-
-    # CTA Scheduler DB - number of connection in the pool
-    cta.schedulerdb.numberofconnections {{ .Values.conf.schedulerdb.numberOfConnections }}
-
-    # CTA Scheduler DB - opportunistically batch concurrent archive requests into a single bulk
-    # DB insert instead of queueing them one at a time. Only takes effect with the postgres
-    # scheduler; ignored by the objectstore scheduler.
-    cta.schedulerdb.opportunistic_batching_enabled {{ .Values.conf.schedulerdb.opportunisticBatchingEnabled }}
-    cta.schedulerdb.opportunistic_batching_window_ms {{ .Values.conf.schedulerdb.opportunisticBatchingWindowMs }}
-    cta.schedulerdb.opportunistic_batching_max_batch_size {{ .Values.conf.schedulerdb.opportunisticBatchingMaxBatchSize }}
-
-    # CTA Catalogue options
-    cta.catalogue.numberofconnections {{ .Values.conf.catalogue.numberOfConnections }}
-
-    # Missing tape file copies minimum age.
-    # Set it to prevent false flagging of multi-copy files in the process of being archived tapes.
-    # Default 24 hours
-    cta.catalogue.missing_file_copies_min_age_secs {{ .Values.conf.catalogue.missingFileCopiesMinAgeSecs }}
-
-    # Recycle-log quarantine period before a tape can be reclaimed.
-    # Default 31 days
-    cta.catalogue.recycle_log_quarantine_secs {{ .Values.conf.catalogue.recycleLogQuarantineSecs }}
-
-    # Maximum file size (in GB) that the CTA Frontend will accept for archiving
-    cta.archivefile.max_size_gb {{ .Values.conf.frontend.archiveFileMaxSizeGb }}
-
-    # Disallow 0-length files
-    cta.archivefile.zero_length_files_forbidden {{ .Values.conf.frontend.zeroLengthFilesForbidden }}
-
-    # Tapepools exempted from this check (if enabled)
-    cta.archivefile.zero_length_files_forbidden_vo_exception_list {{ .Values.conf.frontend.zeroLengthFilesForbiddenVoExceptionList }}
-
-    # CTA Frontend log URL
-    cta.log.url file:/var/log/cta/cta-frontend.log
-
-    # CTA Logger log level
-    # Valid log levels are EMERG, ALERT, CRIT, ERR, WARNING, NOTICE (==USERERR), INFO, DEBUG
-    cta.log.level {{ .Values.conf.logger.logLevel }}
-
-    # CTA Logger log format
-    # Valid formats are default, json
-    cta.log.format {{ .Values.conf.logger.logFormat }}
-    cta.log.log_header true
-
-    # CTA Repack buffer URL
-    # cta.repack.repack_buffer_url {{ .Values.conf.frontend.repackBufferUrl }}
-
-    # CTA Verification Mount Policy
-    cta.verification.mount_policy verification
-
-    # Telemetry
-    cta.experimental.telemetry.enabled {{ .Values.conf.telemetry.enabled }}
-
-    cta.telemetry.retain_instance_id_on_restart {{ .Values.conf.telemetry.retainInstanceIdOnRestart }}
-    cta.telemetry.metrics.backend {{ .Values.conf.telemetry.metrics.backend }}
-    {{- if .Values.conf.telemetry.metrics.exportInterval }}
-    cta.telemetry.metrics.export.interval {{ .Values.conf.telemetry.metrics.exportInterval }}
-    {{- end }}
-    {{- if .Values.conf.telemetry.metrics.exportTimeout }}
-    cta.telemetry.metrics.export.timeout {{ .Values.conf.telemetry.metrics.exportTimeout }}
-    {{- end }}
-    {{- if .Values.conf.telemetry.metrics.otlp.endpoint }}
-    cta.telemetry.metrics.otlp.endpoint {{ .Values.conf.telemetry.metrics.otlp.endpoint }}
-    {{- end }}
-    {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.username }}
-    cta.telemetry.metrics.otlp.auth.basic.username {{ $.Values.conf.telemetry.metrics.otlp.auth.basic.username }}
-    {{- end }}
-    {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
-    cta.telemetry.metrics.otlp.auth.basic.password_file /etc/cta/otlp-basic-auth-pwd.conf
-    {{- end }}
-    {{- if .Values.conf.telemetry.metrics.file.endpoint }}
-    cta.telemetry.metrics.file.endpoint {{ .Values.conf.telemetry.metrics.file.endpoint }}
     {{- end }}
 
   {{ base $jwtRevokeListPath }}: |-

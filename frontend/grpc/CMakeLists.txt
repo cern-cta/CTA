@@ -5,37 +5,6 @@
 
 include_directories(${CMAKE_BINARY_DIR}/lib/protobuf ${PROTOBUF3_INCLUDE_DIRS})
 
-# include stuff from the callback api here because we need to serve the streaming commands by registering their service class impl
-add_executable(cta-frontend-grpc
-  Main.cpp
-  ${PROJECT_SOURCE_DIR}/tools/CtaAdminCmdParser.cpp
-  FrontendGrpcService.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/grpc/common/GrpcAuthUtils.cpp
-  ${PROJECT_SOURCE_DIR}/frontend/grpc/common/GrpcConfig.cpp
-  callback_api/CtaAdminServerWriteReactor.cpp
-  NegotiationService.cpp
-  ServerNegotiationRequestHandler.cpp
-  TokenStorage.cpp
-  utils.cpp)
-if(CTA_USE_PGSCHED)
-  target_link_libraries(cta-frontend-grpc
-    gRPC::grpc++_reflection
-    ctafrontendcommon ctascheduler ctacommon ctacatalogue ctagrpc ctaprotobufconversions ctaauth gssapi_krb5)
-else()
-  target_link_libraries(cta-frontend-grpc
-    gRPC::grpc++_reflection
-    ctafrontendcommon ctascheduler ctacommon ctaobjectstore ctacatalogue ctagrpc ctaprotobufconversions ctaauth gssapi_krb5)
-endif()
-
-add_manpage(cta-frontend-grpc)
-
-install (TARGETS cta-frontend-grpc DESTINATION ${CMAKE_INSTALL_BINDIR})
-install (FILES cta-frontend-grpc.sysconfig
-  DESTINATION ${CTA_SERVICE_ENV_DIR}
-  RENAME cta-frontend-grpc)
-install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-frontend-grpc.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
-install (FILES cta-frontend.example.conf cta-frontend-grpc.example.toml jwt-revoke-list.example.toml DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/cta-frontend-grpc/examples)
-
 ##
 ## cta-admin
 ##
@@ -52,6 +21,7 @@ add_executable(cta-admin
 )
 
 target_link_libraries(cta-admin
+  cta-grpc-server-config
   ctacommon
   stdc++fs
   ctatapedaemoncommon

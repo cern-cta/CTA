@@ -130,6 +130,15 @@ uint64_t toUint64(std::string_view str) {
   return value;
 }
 
+std::optional<uint64_t> tryToUint64(std::string_view str) {
+  uint64_t value;
+  const char* const end = str.data() + str.size();
+  if (auto [ptr, ec] = std::from_chars(str.data(), end, value); ec != std::errc() || ptr != end) {
+    return std::nullopt;
+  }
+  return value;
+}
+
 double toDouble(std::string_view str) {
   if (str.empty()) {
     throw exception::Exception("Failed to convert empty string to double: An empty string is not a valid number");

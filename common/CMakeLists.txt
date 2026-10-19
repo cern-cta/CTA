@@ -142,6 +142,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   auth/jwt/JwtValidationTest.cpp
   checksum/ChecksumBlobTest.cpp
   checksum/CRCTest.cpp
+  config/ConfigGetOptionValueUIntTests.cpp
   config/ConfigurationFileTests.cpp
   config/SourcedParameterTests.cpp
   dataStructures/ArchiveFileTest.cpp

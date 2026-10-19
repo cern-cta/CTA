@@ -8,7 +8,7 @@ kind: ConfigMap
 metadata:
   name: cta-frontend-wfe-scripts
 data:
-  ctafrontend-grpc.sh: |
-    {{ .Files.Get "scripts/ctafrontend-grpc.sh" | nindent 4 }}
+  cta-workflow-api.sh: |
+    {{ .Files.Get "scripts/cta-workflow-api.sh" | nindent 4 }}
   pre_run.sh: {{ .Values.preRun.script | toYaml | nindent 4 }}
   post_run.sh: {{ .Values.postRun.script | toYaml | nindent 4 }}

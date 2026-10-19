@@ -206,8 +206,8 @@ Provides the daemon that performs background maintenance tasks for CTA.
 %postun -n cta-maintd
 %systemd_postun_with_restart cta-maintd.service
 
-%package -n cta-frontend-grpc
-Summary: CERN Tape Archive gRPC frontend
+%package -n cta-admin-api
+Summary: CERN Tape Archive admin gRPC API
 Recommends: logrotate
 Recommends: systemd
 %{?systemd_ordering}
@@ -218,26 +218,55 @@ Requires: cta-lib-catalogue = %{version}-%{release}
 # Explicitly require grpc and protobuf to avoid clashes with EOS-provided variants.
 Requires: grpc
 Requires: protobuf
-%description -n cta-frontend-grpc
-Provides the gRPC frontend for admin and workflow commands to CTA.
-%files -n cta-frontend-grpc
+%description -n cta-admin-api
+Provides the admin gRPC API serving the administration commands of CTA.
+%files -n cta-admin-api
 %license COPYING
-%{_bindir}/cta-frontend-grpc
-%{_unitdir}/cta-frontend-grpc.service
-%config(noreplace) %{_sysconfdir}/sysconfig/cta-frontend-grpc
-%doc %{_docdir}/cta-frontend-grpc/examples/cta-frontend.example.conf
-%doc %{_docdir}/cta-frontend-grpc/examples/cta-frontend-grpc.example.toml
-%doc %{_docdir}/cta-frontend-grpc/examples/jwt-revoke-list.example.toml
-%{_mandir}/man1/cta-frontend-grpc.1*
+%{_bindir}/cta-admin-api
+%{_unitdir}/cta-admin-api.service
+%doc %{_docdir}/cta-admin-api/examples/cta-admin-api.example.toml
+%doc %{_docdir}/cta-admin-api/examples/jwt-revoke-list.example.toml
+%{_mandir}/man1/cta-admin-api.1*
 
-%post -n cta-frontend-grpc
-%systemd_post cta-frontend-grpc.service
+%post -n cta-admin-api
+%systemd_post cta-admin-api.service
 
-%preun -n cta-frontend-grpc
-%systemd_preun cta-frontend-grpc.service
+%preun -n cta-admin-api
+%systemd_preun cta-admin-api.service
 
-%postun -n cta-frontend-grpc
-%systemd_postun_with_restart cta-frontend-grpc.service
+%postun -n cta-admin-api
+%systemd_postun_with_restart cta-admin-api.service
+
+%package -n cta-workflow-api
+Summary: CERN Tape Archive workflow gRPC API
+Recommends: logrotate
+Recommends: systemd
+%{?systemd_ordering}
+Requires: cta-lib-runtime = %{version}-%{release}
+Requires: cta-runtime = %{version}-%{release}
+Requires: cta-lib-scheduler = %{version}-%{release}
+Requires: cta-lib-catalogue = %{version}-%{release}
+# Explicitly require grpc and protobuf to avoid clashes with EOS-provided variants.
+Requires: grpc
+Requires: protobuf
+%description -n cta-workflow-api
+Provides the workflow gRPC API handling EOS archive, retrieve and delete requests for CTA.
+%files -n cta-workflow-api
+%license COPYING
+%{_bindir}/cta-workflow-api
+%{_unitdir}/cta-workflow-api.service
+%doc %{_docdir}/cta-workflow-api/examples/cta-workflow-api.example.toml
+%doc %{_docdir}/cta-workflow-api/examples/jwt-revoke-list.example.toml
+%{_mandir}/man1/cta-workflow-api.1*
+
+%post -n cta-workflow-api
+%systemd_post cta-workflow-api.service
+
+%preun -n cta-workflow-api
+%systemd_preun cta-workflow-api.service
+
+%postun -n cta-workflow-api
+%systemd_postun_with_restart cta-workflow-api.service
 
 %package -n cta-rmcd
 Summary: CERN Tape Archive Remote Media Changer daemon
@@ -583,7 +612,6 @@ Provides CTA unit and integration tests.
 %{_libdir}/libctaruntimeunittests.so*
 %{_libdir}/libctaprotobufunittests.so*
 %{_libdir}/libctatapedaemoncommonunittests.so*
-%{_libdir}/libctafrontendcommonconfigunittests.so*
 %{_libdir}/libctadbconfigcatalogueunittests.so*
 %{_libdir}/libctadbconfigconnunittests.so*
 %{_libdir}/libctadbconfigstmtunittests.so*

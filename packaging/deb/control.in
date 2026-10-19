@@ -10,7 +10,7 @@ Rules-Requires-Root: no
 Package: cta
 Section: metapackages
 Architecture: amd64
-Depends: ${misc:Depends}, cta-taped (= ${binary:Version}), cta-maintd (= ${binary:Version}), cta-frontend-grpc (= ${binary:Version}), cta-rmcd (= ${binary:Version}), cta-tools (= ${binary:Version})
+Depends: ${misc:Depends}, cta-taped (= ${binary:Version}), cta-maintd (= ${binary:Version}), cta-admin-api (= ${binary:Version}), cta-workflow-api (= ${binary:Version}), cta-rmcd (= ${binary:Version}), cta-tools (= ${binary:Version})
 Description: CERN Tape Archive services and tools
  Convenience package installing all CTA services and administrative tools.
 
@@ -75,12 +75,19 @@ Recommends: systemd, logrotate
 Description: CERN Tape Archive maintenance daemon
  Provides the maintenance daemon and its service configuration.
 
-Package: cta-frontend-grpc
+Package: cta-admin-api
 Architecture: amd64
 Depends: ${shlibs:Depends}, ${misc:Depends}, cta-runtime (= ${binary:Version}), libcta@CTA_SOVERSION@ (= ${binary:Version}), cta-lib-catalogue (= ${binary:Version}), cta-lib-scheduler (= ${binary:Version}), cta-lib-telemetry (= ${binary:Version})
 Recommends: systemd, logrotate
-Description: CERN Tape Archive gRPC frontend
- Provides the gRPC frontend and its service configuration.
+Description: CERN Tape Archive admin gRPC API
+ Provides the admin gRPC API serving the administration commands of CTA.
+
+Package: cta-workflow-api
+Architecture: amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}, cta-runtime (= ${binary:Version}), libcta@CTA_SOVERSION@ (= ${binary:Version}), cta-lib-catalogue (= ${binary:Version}), cta-lib-scheduler (= ${binary:Version}), cta-lib-telemetry (= ${binary:Version})
+Recommends: systemd, logrotate
+Description: CERN Tape Archive workflow gRPC API
+ Provides the workflow gRPC API handling EOS archive, retrieve and delete requests for CTA.
 
 Package: cta-rmcd
 Architecture: amd64

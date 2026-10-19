@@ -9,7 +9,7 @@ install(FILES ../lib/runtime/cta-logging.schema.json
   DESTINATION ${CMAKE_INSTALL_DATADIR}/cta
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
-foreach(service cta-frontend-grpc cta-maintd cta-rmcd cta-taped)
+foreach(service cta-admin-api cta-workflow-api cta-maintd cta-rmcd cta-taped)
   set(unit_source "${CMAKE_CURRENT_SOURCE_DIR}/systemd/${service}.service")
   # Regenerate the installed unit when its source changes.
   set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${unit_source}")
@@ -19,7 +19,7 @@ foreach(service cta-frontend-grpc cta-maintd cta-rmcd cta-taped)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${service}.service" DESTINATION ${CTA_SYSTEMD_UNIT_DIR})
 endforeach()
 
-# cta-frontend-grpc does not come with a logrotate file yet
+# cta-admin-api and cta-workflow-api do not come with a logrotate file yet
 install(FILES logrotate/cta-maintd.logrotate
   DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/logrotate.d
   RENAME cta-maintd)

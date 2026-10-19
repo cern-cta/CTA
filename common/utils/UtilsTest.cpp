@@ -568,13 +568,33 @@ TEST_F(cta_UtilsTest, toUint64_empty_string) {
 TEST_F(cta_UtilsTest, toUint64_minus_one) {
   using namespace cta;
 
-  ASSERT_EQ((uint64_t) 18446744073709551615UL, utils::toUint64("18446744073709551615"));
+  ASSERT_THROW(utils::toUint64("-1"), exception::Exception);
 }
 
 TEST_F(cta_UtilsTest, toUint64_not_a_number) {
   using namespace cta;
 
   ASSERT_THROW(utils::toUint64("one"), exception::Exception);
+}
+
+TEST_F(cta_UtilsTest, tryToUint64) {
+  using namespace cta;
+
+  ASSERT_EQ(std::optional<uint64_t>(12345), utils::tryToUint64("12345"));
+  ASSERT_EQ(std::optional<uint64_t>(0), utils::tryToUint64("0"));
+  ASSERT_EQ(std::optional<uint64_t>(18446744073709551615ULL), utils::tryToUint64("18446744073709551615"));
+}
+
+TEST_F(cta_UtilsTest, tryToUint64_invalid) {
+  using namespace cta;
+
+  ASSERT_FALSE(utils::tryToUint64(""));
+  ASSERT_FALSE(utils::tryToUint64("18446744073709551616"));
+  ASSERT_FALSE(utils::tryToUint64("-1"));
+  ASSERT_FALSE(utils::tryToUint64("one"));
+  ASSERT_FALSE(utils::tryToUint64("123abc"));
+  ASSERT_FALSE(utils::tryToUint64(" 1"));
+  ASSERT_FALSE(utils::tryToUint64("1 "));
 }
 
 TEST_F(cta_UtilsTest, isValidDecimal) {

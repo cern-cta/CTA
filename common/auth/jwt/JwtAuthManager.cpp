@@ -7,13 +7,39 @@
 
 #include "common/auth/jwt/RevokeList.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/log/LogContext.hpp"
 #include "common/utils/utils.hpp"
 #include "jwt-cpp/jwt.h"
 #include "runtime/config/ConfigLoader.hpp"
 
 #include <chrono>
+#include <condition_variable>
+#include <mutex>
+#include <stop_token>
 
 namespace cta::auth {
+
+void JwtAuthManager::startCacheRefresh(std::chrono::seconds interval, log::Logger& logger) {
+  m_cacheRefreshThread.emplace([this, interval, &logger](std::stop_token stop) {
+    log::LogContext threadLc(logger);
+    threadLc.log(log::INFO, "Detached JWKS cache refresh thread started");
+
+    std::mutex mutex;
+    std::condition_variable_any cv;
+    std::unique_lock lock(mutex);
+    while (true) {
+      // Returns early (with the predicate true) as soon as a stop is requested
+      cv.wait_for(lock, stop, interval, [&stop] { return stop.stop_requested(); });
+      if (stop.stop_requested()) {
+        break;
+      }
+      time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+      threadLc.log(log::INFO, "Updating the JWKS cache");
+      updateCache(now);
+    }
+    threadLc.log(log::INFO, "Detached JWKS cache refresh thread ended");
+  });
+}
 
 TokenValidationResult JwtAuthManager::validateJwt(const std::string& encodedJwt, log::Logger& logger) {
   /* The validation is done in the following order:

@@ -1,0 +1,115 @@
+/*
+ * SPDX-FileCopyrightText: 2026 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+#include "WorkflowApiApp.hpp"
+
+#include "CtaRpcWfeImpl.hpp"
+#include "common/auth/jwt/JwksFetcher.hpp"
+#include "common/auth/jwt/JwtAuthManager.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/log/LogLevel.hpp"
+#include "grpc-server/server/ServerBuilderHelper.hpp"
+#include "grpc-server/server/ServiceContext.hpp"
+#include "scheduler/batching/FrontendBatchingLayer.hpp"
+
+#include <chrono>
+
+namespace cta::workflow_api {
+
+void WorkflowApiApp::stop() {
+  {
+    std::lock_guard lock(m_mutex);
+    m_stopRequested = true;
+  }
+  m_stopCv.notify_all();
+}
+
+int WorkflowApiApp::run(const WorkflowApiConfig& config, cta::log::Logger& log) {
+  cta::log::LogContext lc(log);
+  lc.log(cta::log::INFO, "Starting cta-workflow-api");
+
+  // Catalogue, Scheduler DB and Scheduler
+  grpc_server::ServiceContext serviceContext(config.catalogue,
+                                             config.scheduler,
+                                             config.frontend_catalogue,
+                                             config.files,
+#ifndef CTA_PGSCHED
+                                             config.frontend_scheduler,
+#endif
+                                             log);
+
+#ifdef CTA_PGSCHED
+  // Opportunistic batching of archive/retrieve queueing, in front of the Scheduler
+  const auto& batching = config.opportunistic_batching;
+  FrontendBatchingLayer batchingLayer(serviceContext.getScheduler(),
+                                      batching.enabled,
+                                      batching.window_ms,
+                                      batching.max_batch_size);
+  {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("enabled", batching.enabled)
+      .add("windowMs", batching.window_ms)
+      .add("maxBatchSize", batching.max_batch_size);
+    lc.log(cta::log::INFO, "Opportunistic batching configured");
+  }
+#endif
+
+  // JWT authentication: the JWKS cache is refreshed in the background by the manager itself
+  std::shared_ptr<auth::JwtAuthManager> jwtAuthManager;
+  if (config.auth.jwt.has_value() && config.auth.jwt->enabled) {
+    const auto& jwt = *config.auth.jwt;
+    jwtAuthManager =
+      std::make_shared<auth::JwtAuthManager>(std::make_unique<auth::CurlJwksFetcher>(jwt.jwks_total_timeout),
+                                             jwt.jwks_uri,
+                                             jwt.pub_key_timeout,
+                                             jwt.expected_issuer,
+                                             jwt.expected_audience,
+                                             jwt.min_generation,
+                                             jwt.revoke_list_path,
+                                             log);
+    jwtAuthManager->startCacheRefresh(std::chrono::seconds(jwt.cache_refresh_interval), log);
+    lc.log(cta::log::INFO, "JWT authentication enabled");
+  }
+
+  // mTLS: the clients present a certificate which is checked against the configured aliases
+  const bool useMtls = config.auth.mtls.has_value() && config.auth.mtls->enabled;
+  if (useMtls) {
+    lc.log(cta::log::INFO, "Using mutual TLS to authenticate WFE client requests");
+  }
+
+  // Create the gRPC service
+  CtaRpcWfeImpl wfeService(serviceContext,
+                           config,
+#ifdef CTA_PGSCHED
+                           batchingLayer,
+#endif
+                           jwtAuthManager);
+
+  // Build the gRPC server and register the service
+  grpc_server::ServerBuilderHelper serverBuilderHelper(config.grpc, useMtls, nullptr, lc);
+  auto& serverBuilder = serverBuilderHelper.builder();
+  serverBuilder.RegisterService(&wfeService);
+
+  // Start the gRPC server and block waiting for a stop signal
+  auto server = serverBuilderHelper.buildAndStart();
+  lc.log(cta::log::INFO, "Listening on socket address: " + serverBuilderHelper.serverAddress());
+
+  {
+    std::unique_lock lock(m_mutex);
+    m_stopCv.wait(lock, [this] { return m_stopRequested; });
+  }
+
+  lc.log(cta::log::INFO, "Stopping cta-workflow-api");
+  server->Shutdown();
+  server->Wait();
+  // server->Wait() returns only after every in-flight RPC handler has exited: stop the batchers now so their
+  // destructors run with no threads inside enqueueAndWait()
+#ifdef CTA_PGSCHED
+  batchingLayer.stop();
+#endif
+  return 0;
+}
+
+}  // namespace cta::workflow_api

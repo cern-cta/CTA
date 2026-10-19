@@ -157,11 +157,9 @@ USER cta
 CMD ["/usr/bin/cta-maintd", "--config-strict", "--config", "/etc/cta/cta-maintd.toml", "--runtime-dir", "/run/cta"]
 
 # =========================================================================
-#  SERVICE cta-frontend
+#  SERVICE cta-admin-api
 # =========================================================================
-
-# Once we split the RPMs, we should explicitly build the workflow-api and admin-api images here
-FROM base AS cta-frontend
+FROM base AS cta-admin-api
 
 COPY --from=grpc-health-probe /grpc-health-probe /usr/local/bin/grpc-health-probe
 
@@ -169,13 +167,30 @@ ARG ENABLE_INTERNAL_REPOS
 ARG ENABLE_ORACLE_SUPPORT
 
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
-    --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-frontend \
-    --mount=type=cache,target=/var/cache/yum,id=yum-cta-frontend \
-    # Remove the catalogue utils once the tests have been updated. For now, only the admin-api requires it
-    /usr/local/bin/build-service.sh "cta-frontend-grpc cta-catalogue-utils krb5-workstation"
+    --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-admin-api \
+    --mount=type=cache,target=/var/cache/yum,id=yum-cta-admin-api \
+    /usr/local/bin/build-service.sh "cta-admin-api cta-catalogue-utils krb5-workstation"
 
 USER cta
-CMD ["/usr/bin/cta-frontend-grpc"]
+CMD ["/usr/bin/cta-admin-api"]
+
+# =========================================================================
+#  SERVICE cta-workflow-api
+# =========================================================================
+FROM base AS cta-workflow-api
+
+COPY --from=grpc-health-probe /grpc-health-probe /usr/local/bin/grpc-health-probe
+
+ARG ENABLE_INTERNAL_REPOS
+ARG ENABLE_ORACLE_SUPPORT
+
+RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
+    --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-workflow-api \
+    --mount=type=cache,target=/var/cache/yum,id=yum-cta-workflow-api \
+    /usr/local/bin/build-service.sh "cta-workflow-api"
+
+USER cta
+CMD ["/usr/bin/cta-workflow-api"]
 
 # =========================================================================
 #  TOOLS cta-tools

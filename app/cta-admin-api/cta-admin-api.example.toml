@@ -1,0 +1,272 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+####################################################################################################
+#
+# CTA Admin API Service Configuration
+#
+####################################################################################################
+
+# This is an example, not a ready-to-run configuration. Copy it to your config dir, replace all
+# deployment-specific values, and validate it before starting the service.
+
+# Catalogue-related options
+[catalogue]
+  # Path to the CTA Catalogue configuration file. The file contains a single connection string that
+  # specifies how to connect to the Catalogue DB.
+  # Examples:
+  #   postgresql:postgresql://username:password@hostname/database
+  #   oracle:username/password@database
+  # See /usr/share/doc/cta/cta-catalogue.example.conf for further details.
+  # This setting is required.
+  config_file = "/etc/cta/cta-catalogue.conf"
+
+[frontend_catalogue]
+  # Number of connections in the catalogue connection pool. Must be greater than zero.
+  # Default: 10
+  # (integer, optional)
+  number_of_connections = 10
+
+
+[files]
+  # Minimum age of missing tape file copies before they are reported. Set it to prevent
+  # false flagging of multi-copy files which are still in the process of being archived.
+  # If omitted, 0 is used. A typical value is 86400 (24 hours).
+  # (time in seconds, optional)
+  missing_file_copies_min_age_secs = 86400
+
+  # Minimum quarantine period, in seconds, that a tape must spend in the recycle log before it can be
+  # reclaimed. Default: 2678400 (31 days)
+  # (time in seconds, optional)
+  recycle_log_quarantine_secs = 2678400
+
+
+[scheduler]
+  # Unique name used to identify this scheduler backend in logs and scheduler resources. It can be structured as:
+  # `[ceph|postgres][User|Repack]:`
+  # (string, optional)
+  backend_name = "cephUser"
+
+  # Path to the CTA Scheduler backend configuration file. The file contains a single connection string that
+  # specifies how to connect to the scheduler backend.
+  # Examples:
+  #   rados://user@pool:namespace
+  #   file:///path/to/objectstore
+  # See /usr/share/doc/cta/cta-scheduler.example.conf for further details.
+  # This setting is required.
+  # (file path, REQUIRED)
+  config_file = "/etc/cta/cta-scheduler.conf"
+
+  # Maximum age of cached tape statistics used when deciding whether work warrants a mount.
+  # Lower values reflect scheduler changes sooner but increase backend queries. Must be greater than zero.
+  # Default: 600
+  # (time in seconds, optional)
+  tape_cache_max_age_secs = 600
+
+  # Maximum age of cached retrieve-queue statistics. Lower values reflect newly queued
+  # retrieves sooner but increase backend queries. Must be greater than zero. Default: 10
+  # (integer, optional)
+  retrieve_queue_cache_max_age_secs = 10
+
+
+# Object store-specific scheduler options
+[frontend_scheduler]
+
+  # These will be removed once the objectstore scheduler is decommissioned.
+
+  # Size of the scheduler DB thread pool. Must be greater than zero.
+  # (integer, REQUIRED)
+  number_of_threads = 500
+
+  # Stack size, in MB, of each scheduler DB thread. Must be greater than zero.
+  # If omitted, the OS's default will be used.
+  # (integer, optional)
+  thread_stack_size_mb = 1
+
+
+[instance]
+  # Name of the CTA instance. Used to validate authentication (JWT, Kerberos, mTLS) and as the telemetry
+  # service namespace. Replaces the legacy cta.instance_name option. Must not be empty.
+  # (string, REQUIRED)
+  name = "CI_local"
+
+
+[admin]
+  # Role of this server with respect to repacks. It is meant to match the scheduler DB it is connected to,
+  # when the user and repack requests are served from separate scheduler DBs:
+  #   "all"        - no restriction (default)
+  #   "no_repack"  - for the user scheduler DB: all the repack commands ("repack add", "repack rm",
+  #                  "repack err" and "repack ls") are rejected, and tape state changes ("tape ch --state")
+  #                  follow the rules of a user-only scheduler DB.
+  #   "repack"     - for the repack scheduler DB: all commands available, and tape state changes follow the
+  #                  rules of a repack-only scheduler DB.
+  # (string, optional)
+  mode = "all"
+
+
+[archive]
+  # Default maximum size of an archived file, in GB, applied when a virtual organisation is added without an
+  # explicit maximum. Must match the value used by the workflow API. 0 means no limit.
+  # (integer, optional)
+  max_file_size_gb = 0
+
+
+[repack]
+  # URL of the buffer used by repack requests. Cannot be empty when provided.
+  # If omitted, repack requests which require a buffer cannot be created.
+  # (uri, optional)
+  buffer_url = "root://ctaeos//eos/ctaeos/repack"
+
+  # Maximum number of files to select when expanding a repack request. Must be greater than zero.
+  # If omitted, it defaults to the scheduler's own value.
+  # (integer, optional)
+  max_files_to_select = 100
+
+
+[verification]
+  # Name of the mount policy used for verification requests.
+  # If omitted, an empty string is used.
+  # (string, optional)
+  mount_policy = "verification"
+
+
+[logging]
+  # Minimum severity written to the log. Messages below this level are masked. Valid values are EMERG,
+  # ALERT, CRIT, ERR, WARNING, NOTICE (USERERR), INFO, and DEBUG. More verbose levels increase log volume.
+  # If omitted, INFO is used.
+  # (string, optional)
+  level = "INFO"
+
+  # Log format. Possible values are "json" and "kv" (key-value).
+  # If omitted, json is used.
+  # (string, optional)
+  format = "json"
+
+  # The following key-value pairs are arbitrarily named and added to all log lines.
+  # They have no other side-effects and can be used for log filtering. e.g.
+  #
+  [logging.attributes]
+    instance = "CI_local"
+    sched_backend = "vfsCI"
+
+
+[experimental]
+  # Enables experimental OpenTelemetry support configured by [telemetry]. Experimental features may
+  # change incompatibly and should be evaluated before production use. Disabled by default.
+  # (boolean, optional)
+  telemetry_enabled = false
+
+
+# Note that telemetry is experimental and disabled by default.
+# To make use of this experimental feature, ensure `telemetry` is enabled under `[experimental]`.
+[telemetry]
+  # Path to the declarative config file to initialise the OpenTelemetry SDK.
+  # (file path, REQUIRED)
+  config_file = "/etc/cta/cta-otel.yaml"
+
+  # Controls how the application reacts if telemetry initialization fails.
+  # Possible values:
+  #   "warn": log a warning and continue startup without telemetry.
+  #   "fatal": treat the failure as an error and abort startup.
+  # If omitted, "warn" is used.
+  # (string, optional)
+  on_init_failure = "warn"
+
+
+# General gRPC server configuration options
+[grpc]
+  # TCP port the gRPC server listens on. Defaults to 50051.
+  # (integer, optional)
+  port = 50051
+
+  # Maximum number of worker threads used by the gRPC server.
+  # If omitted, the server chooses a default based on the available CPU cores.
+  # (integer, optional)
+  number_of_threads = 32
+
+  [grpc.tls]
+    # Filesystem path to the server private key (PEM).
+    # (file path, REQUIRED)
+    server_key_path = "/path/to/your/private-key.pem"
+    # Filesystem path to the server certificate (PEM).
+    # (file path, REQUIRED)
+    server_cert_path = "/path/to/your/certificate.pem"
+    # Optional CA chain file (PEM) forming the full certificate chain presented to clients.
+    # Useful for debugging/testing.
+    # (file path, optional)
+    chain_cert_path = "/etc/cta/ca-chain.pem"
+
+
+#############################################
+# Authentication
+#############################################
+#
+# At least one of JWT or Kerberos must be enabled.
+#
+# JWT (JSON Web Token) authentication.
+[auth.jwt]
+  # Enable/disable JWT-based authentication. When `false`, this block is ignored and JWT
+  # auth will not be used.
+  # (boolean)
+  enabled = false
+
+  # URI to the JWKS document that contains public keys used to verify JWT signatures.
+  # Supported schemes: `file://` and `https://`.
+  # Examples:
+  #   file:///etc/cta/jwks.json
+  #   https://example.com/.well-known/jwks.json
+  #
+  # (uri, REQUIRED if enabled)
+  jwks_uri = "file:///etc/cta/jwks.json"
+
+  # The expected `iss` (issuer) claim value present in incoming JWTs. Tokens with a different
+  # `iss` will be rejected.
+  # (string, REQUIRED if enabled)
+  expected_issuer = "cta"
+
+  # The expected `aud` (audience) claim value. Use a unique audience per service to avoid
+  # token reuse across components.
+  # (string, REQUIRED if enabled)
+  expected_audience = "cta-admin-api"
+
+  # Minimum token generation (`gen` claim) accepted. Tokens with a lower `gen` are rejected.
+  # Use to mass-invalidate old tokens. Default: 0.
+  # (integer, optional)
+  min_generation = 0
+
+  # How often (TTL) the JWKS cache is refreshed by fetching the JWKS URI. Default: 600
+  # (10 minutes). Set lower when key rotation is frequent.
+  # (time in seconds, optional)
+  cache_refresh_interval = 600
+
+  # TTL for an individual cached public key. Use a non-zero value to force periodic re-validation
+  # of keys if you rotate them. Default: 0 (never expires).
+  # (time in seconds, optional)
+  pub_key_timeout = 0
+
+  # HTTP/network timeout when fetching the JWKS file. Default: 60. Lower values make the service
+  # fail faster on unreachable endpoints.
+  # (time in seconds, optional)
+  jwks_total_timeout = 60
+
+  # Path to a TOML file containing a list of revoked tokens (by `jti`). If present, the frontend
+  # will consult this list in addition to signature checks. Useful for immediate token revocation
+  # without changing key material.
+  # (file path, optional)
+  revoke_list_path = "/etc/cta/jwt-revoke-list.toml"
+
+
+# Kerberos authentication
+[auth.kerberos]
+  # Enables Kerberos authentication. When `false`, this block is ignored and Kerberos auth will not be used.
+  # (boolean)
+  enabled = true
+
+  # Filesystem path to the Kerberos keytab file containing the service principal keys used to
+  # validate incoming tickets.
+  # (file path, REQUIRED if enabled)
+  keytab_path = "/path/to/file.keytab"
+
+  # Kerberos service principal accepted by the frontend, e.g. "service/instance@REALM".
+  # (string, REQUIRED if enabled)
+  service_principal = "service/instance@REALM"
