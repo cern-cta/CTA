@@ -1307,20 +1307,24 @@ class TestRetrieveQueueCleanup:
     ) -> None:
         """Verify that when re-routing after a tape break, an ACTIVE alternate is chosen over a DISABLED one.
 
-        Even if the DISABLED copy has a lower copy number, the ACTIVE copy must win.
-        Setup: three-copy file with tape_0=ACTIVE, tape_1=DISABLED, tape_2=BROKEN.
-        Only tape_0 is ACTIVE so the initial PREPARE lands there deterministically.
-        After breaking tape_0 and making tape_2 ACTIVE, the re-routing must pick
-        tape_2 (ACTIVE, state_priority=0) over tape_1 (DISABLED, state_priority=1)
-        regardless of copy-number ordering.
+        When a file has copies on two ACTIVE tapes and one DISABLED tape, breaking the
+        tape holding the queued job must route it to the other ACTIVE copy — not the
+        DISABLED one — regardless of copy-number ordering.
+
+        Setup: three-copy file with tape_0=ACTIVE (copy 1), tape_1=DISABLED (copy 2),
+        tape_2=ACTIVE (copy 3).  Both ACTIVE tapes are candidates from the start so the
+        routing-statistics cache already knows tape_2 is ACTIVE before the break; this
+        avoids a stale-cache false-negative where an earlier BROKEN state for tape_2
+        would persist in memory during the cleanup decision.
         """
         path = retrieve_queue_cleanup_paths.files[2]
         tape_0, tape_1, tape_2 = retrieve_queue_cleanup_paths.tapes[2]
         request_id = ""
 
         try:
-            # Only tape_0 is ACTIVE, so the initial queue placement is deterministic.
-            _set_tape_states(cta_cli, [tape_0, tape_1, tape_2], ["ACTIVE", "DISABLED", "BROKEN"])
+            # tape_0 (copy 1) and tape_2 (copy 3) are ACTIVE; tape_1 (copy 2) is DISABLED.
+            # The routing may land the job on either ACTIVE tape — we detect it dynamically.
+            _set_tape_states(cta_cli, [tape_0, tape_1, tape_2], ["ACTIVE", "DISABLED", "ACTIVE"])
             prepare = _prepare_after_queue_cache_expiry(
                 eos_client, disk_instance_name, [path], retrieve_queue_cleanup_paths
             )
@@ -1333,15 +1337,37 @@ class TestRetrieveQueueCleanup:
                 requested=True,
                 has_reqid=True,
             )
-            cta_cli.wait_for_queue_file_counts({tape_0: 1, tape_1: 0, tape_2: 0})
 
-            # Make tape_2 ACTIVE before breaking tape_0 so the cleanup has both DISABLED and
-            # ACTIVE alternates to choose from; ACTIVE must win.
-            cta_cli.transition_tape_state(tape_2, "ACTIVE")
-            cta_cli.transition_tape_state(tape_0, "BROKEN")
+            # Detect which ACTIVE tape received the job; tape_1 (DISABLED) must never win.
+            initial_tape: Optional[str] = None
+            other_active: Optional[str] = None
+            deadline = time.monotonic() + 30
+            while time.monotonic() < deadline:
+                queues = json.loads(cta_cli.exec_with_output("cta-admin --json showqueues"))
+                counts = {
+                    t: sum(int(q["queuedFiles"]) for q in queues if q["vid"] == t)
+                    for t in (tape_0, tape_1, tape_2)
+                }
+                assert counts[tape_1] == 0, (
+                    f"Initial PREPARE incorrectly routed to DISABLED tape {tape_1}"
+                )
+                if counts[tape_0] == 1 and counts[tape_2] == 0:
+                    initial_tape, other_active = tape_0, tape_2
+                    break
+                if counts[tape_0] == 0 and counts[tape_2] == 1:
+                    initial_tape, other_active = tape_2, tape_0
+                    break
+                time.sleep(1)
+            assert initial_tape is not None, "Job did not appear on an ACTIVE tape within 30 seconds"
+            assert other_active is not None
 
-            # The job must land on tape_2 (ACTIVE), not tape_1 (DISABLED).
-            cta_cli.wait_for_queue_file_counts({tape_0: 0, tape_1: 0, tape_2: 1})
+            # Break the tape that holds the job; the re-routing must pick the other
+            # ACTIVE tape (other_active), not tape_1 (DISABLED).
+            cta_cli.transition_tape_state(initial_tape, "BROKEN")
+
+            expected_counts = {tape_0: 0, tape_1: 0, tape_2: 0}
+            expected_counts[other_active] = 1
+            cta_cli.wait_for_queue_file_counts(expected_counts)
             _assert_prepare_response(
                 eos_client.query_prepare(disk_instance_name, request_id, [path]),
                 path,
