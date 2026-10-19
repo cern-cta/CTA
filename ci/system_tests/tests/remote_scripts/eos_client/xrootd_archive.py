@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import multiprocessing as mp
 import os
+import threading
 import time
 from multiprocessing.queues import JoinableQueue
 from typing import Any
@@ -178,8 +179,22 @@ def main() -> None:
     for _ in range(args.num_procs):
         work_q.put(None)
 
+    # Print progress every 120 s so the Kubernetes exec websocket receives data
+    # and does not get cut by the API-server / LB TCP idle timeout (~2 h).
+    _stop_heartbeat = threading.Event()
+
+    def _heartbeat() -> None:
+        while not _stop_heartbeat.wait(120):
+            print(f"xrootd_archive: running... {time.time() - before:.0f}s elapsed", flush=True)
+
+    hb_thread = threading.Thread(target=_heartbeat, daemon=True)
+    hb_thread.start()
+
     # Wait for completion
     work_q.join()
+    _stop_heartbeat.set()
+    hb_thread.join()
+
     elapsed = time.time() - before
     rate = total_file_count / max(elapsed, 0.001)
 

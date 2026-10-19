@@ -27,8 +27,8 @@ frontend-wfe:
     schedulerdb:
       # Each WFE workflow event holds a schedulerdb connection for the archive INSERT (~5 ms).
       # With 3 connections: throughput cap = 3 / 0.005 = ~600 files/sec — the observed 762 Hz
-      # ceiling.  With 10 FSTs and 2-4 kHz expected: need 10-20 connections.
-      # 15 connections → ~3 kHz cap; see connection budget below.
+      # ceiling.  With 5 FSTs and 1-2 kHz expected: 15 connections → ~3 kHz cap gives
+      # ample headroom; see connection budget below.
       numberOfConnections: 15
     logger:
       # Reduce per-request logging overhead during sustained load.
@@ -56,9 +56,9 @@ frontend-wfe:
 # maintd diskReportRetrieve             4        1         4
 # maintd repackExpand                   1        1         1
 # maintd repackReport                   1        1         1
-# taped  50 drives × 1 conn/drive                        50
+# taped  20 drives × 1 conn/drive                        20
 # ---------------------------------------------------------------------------
-# Total (50 drives):                                      80
+# Total (20 drives):                                      50
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
@@ -102,9 +102,9 @@ maintd:
     # So diskReportArchive:softTimeout will map to cta.routines.disk_report_archive.soft_timeout
     # To disable a routine, set replicas to 0
     # Sizing rationale: with 1 FST and 1 drive reporting runs at ~762 files/sec (during
-    # archival) and ~1.4 kHz (reporting-only phase).  With 10 FSTs the EOS throughput
-    # scales to ~7.6 kHz.  4 reporters × 10 k batch gives ~8 k files/sec from the
-    # reporter side, matching the EOS capacity.  At 7.6 kHz, 10 M files take ~22 min
+    # archival) and ~1.4 kHz (reporting-only phase).  With 5 FSTs the EOS throughput
+    # scales to ~3.8 kHz.  4 reporters × 10 k batch gives ~8 k files/sec from the
+    # reporter side, well above the EOS capacity.  At 3.8 kHz, 10 M files take ~44 min
     # for the reporting phase.
     diskReportArchive:
       replicas: 4
