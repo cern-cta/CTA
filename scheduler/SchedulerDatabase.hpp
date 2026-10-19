@@ -332,6 +332,48 @@ public:
     std::optional<std::string> assignedAgent;
   };
 
+  // ---------------------------------------------------------------------------
+  // Retrieve VID selection and tape-state-change cleanup — design notes
+  //
+  // The target VID for a retrieve job is chosen at *enqueue* time, not at mount
+  // time.  Both backends call Helpers::selectBestRetrieveQueue() /
+  // selectBestVid4Retrieve() inside queueRetrieve(), which picks the best
+  // available tape from the catalogue at that moment and stores the chosen VID
+  // with the job.
+  //
+  // This means that if a tape transitions to BROKEN/EXPORTED/REPACKING after
+  // jobs have already been queued to it, the jobs must be actively re-routed.
+  // The two backends diverge significantly in how they handle this:
+  //
+  //  pgsched (RelationalDB / cleanRetrieveQueueForVid):
+  //    Proactive bulk re-routing.  Scheduler::modifyTapeState() calls
+  //    cleanRetrieveQueueForVid() synchronously, which runs a single atomic
+  //    SQL transaction that re-queues every pending job for the affected VID to
+  //    the best available alternate copy (ACTIVE preferred, DISABLED fallback),
+  //    or moves jobs with no usable alternate to failure reporting.
+  //
+  //  objectstore (OStoreDB / QueueCleanup):
+  //    Lazy per-job re-routing.  A cleanup flag is set on the objectstore queue;
+  //    a background process (QueueCleanup) later calls
+  //    decideRetrieveRequestDestination() *per job* when a mount fails or a job
+  //    is popped for an unavailable tape.  There is no bulk proactive step.
+  //
+  // The mount scheduler (Scheduler::sortAndGetTapesForMountInfo) filters out
+  // tapes that are not ACTIVE or REPACKING before presenting mount candidates,
+  // so jobs on broken tapes are invisible to the drive scheduler regardless of
+  // whether they have been re-routed yet.  The cleanup step is still necessary
+  // to actually move the jobs so they become visible again under a new VID.
+  //
+  // Known limitation: if the alternate tape to which a job is re-queued
+  // subsequently also breaks, no second cleanup trigger fires automatically.
+  // Jobs in that situation accumulate silently until one of the tapes becomes
+  // available again or an operator intervenes.
+  //
+  // Future direction: moving VID selection to mount time (lazy selection) would
+  // eliminate the need for reactive cleanup entirely, but requires non-trivial
+  // changes to the scheduler's mount-decision logic.
+  // ---------------------------------------------------------------------------
+
   /**
    * Get the retrieve queue cleanup status.
    * @param vidsToConsider list of vids to considers. If empty, all vids will be considered.
