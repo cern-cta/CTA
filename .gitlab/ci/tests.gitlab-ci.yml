@@ -313,7 +313,8 @@ test-cta-rpm-install:
     - dnf install --nogpgcheck -y cta-admin
                                   cta-catalogue-utils
                                   cta-scheduler-utils
-                                  cta-frontend-grpc
+                                  cta-admin-api
+                                  cta-workflow-api
                                   cta-maintd
                                   cta-taped
                                   cta-tape-label

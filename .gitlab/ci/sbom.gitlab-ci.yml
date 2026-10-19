@@ -58,7 +58,7 @@ enrich-sboms-cern-info:
       - sboms/${TARGET_NAME}.cdx.json
   parallel:
     matrix:
-      - TARGET_NAME: [cta-taped, cta-rmcd, cta-maintd, cta-frontend, cta-tools]
+      - TARGET_NAME: [cta-taped, cta-rmcd, cta-maintd, cta-admin-api, cta-workflow-api, cta-tools]
 
 score-sboms:
   extends: .sbom-rules
@@ -111,4 +111,4 @@ score-sboms:
         - sboms/${TARGET_NAME}.cdx.json
   parallel:
     matrix:
-      - TARGET_NAME: [cta-taped, cta-rmcd, cta-maintd, cta-frontend, cta-tools]
+      - TARGET_NAME: [cta-taped, cta-rmcd, cta-maintd, cta-admin-api, cta-workflow-api, cta-tools]

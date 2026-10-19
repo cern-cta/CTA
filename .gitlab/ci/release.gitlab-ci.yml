@@ -107,7 +107,8 @@ public-release-cta-stable:
   - cta-taped
   - cta-rmcd
   - cta-maintd
-  - cta-frontend
+  - cta-admin-api
+  - cta-workflow-api
   - cta-tools
   - cta-debug
 

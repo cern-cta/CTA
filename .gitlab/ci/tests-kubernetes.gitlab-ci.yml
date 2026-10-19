@@ -26,7 +26,8 @@ spec:
   - cta-taped
   - cta-rmcd
   - cta-maintd
-  - cta-frontend
+  - cta-admin-api
+  - cta-workflow-api
   - cta-tools
 
 .setup-k8s-test-variables: &setup-k8s-test-variables
