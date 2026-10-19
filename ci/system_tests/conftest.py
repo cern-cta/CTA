@@ -64,6 +64,18 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         default=None,
         help="Override the total number of files for the stress test (num_dirs is derived automatically)",
     )
+    parser.addoption(
+        "--stress-prequeue-enabled",
+        type=lambda v: v.lower() in ("1", "true", "yes"),
+        default=None,
+        help="Override prequeue.enabled in the stress test config (true/false)",
+    )
+    parser.addoption(
+        "--stress-prequeue-fraction",
+        type=float,
+        default=None,
+        help="Override prequeue.prequeue_fraction in the stress test config (e.g. 0.9)",
+    )
 
 
 # =========================================================================

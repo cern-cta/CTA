@@ -58,7 +58,12 @@ def stress_params(test_config: TestConfig, request: pytest.FixtureRequest) -> St
     cli_total = request.config.getoption("--stress-total-files")
     total_files = int(cli_total) if cli_total is not None else toml_total
 
-    prequeue_fraction = prequeue_config["prequeue_fraction"]
+    cli_prequeue_enabled = request.config.getoption("--stress-prequeue-enabled")
+    prequeue_enabled = cli_prequeue_enabled if cli_prequeue_enabled is not None else prequeue_config["enabled"]
+
+    cli_prequeue_fraction = request.config.getoption("--stress-prequeue-fraction")
+    prequeue_fraction = cli_prequeue_fraction if cli_prequeue_fraction is not None else prequeue_config["prequeue_fraction"]
+
     eos_queue_rate_hz = prequeue_config["eos_queue_rate_hz"]
     timeout_margin_factor = prequeue_config["timeout_margin_factor"]
     num_files_to_put_drives_up = int(total_files * prequeue_fraction)
@@ -76,7 +81,7 @@ def stress_params(test_config: TestConfig, request: pytest.FixtureRequest) -> St
         max_no_progress_intervals=stress_config["max_no_progress_intervals"],
         max_acceptable_loss_percent=stress_config["max_acceptable_loss_percent"],
         prequeue=PrequeueParams(
-            enabled=prequeue_config["enabled"],
+            enabled=prequeue_enabled,
             num_files_to_put_drives_up=num_files_to_put_drives_up,
             timeout_to_put_drives_up_sec=timeout_to_put_drives_up_sec,
             check_interval_sec=prequeue_config["check_interval_sec"],

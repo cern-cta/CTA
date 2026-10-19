@@ -23,6 +23,12 @@ spec:
     num-stress-files:
       type: number
       default: 10000000
+    stress-prequeue-enabled:
+      type: boolean
+      default: true
+    stress-prequeue-fraction:
+      type: number
+      default: 0.9
 ---
 
 # All of the below tests use only the docker image generated in the build:image stage.
@@ -336,7 +342,11 @@ stress-test:
       else
         STRESS_CTA_VALUES_CHAIN="${CTA_VALUES_CHAIN},presets/stress-cta-values.yaml"
       fi
-      EXTRA_PYTEST_ARGS+=" --stress-total-files $[[ inputs.num-stress-files ]]"
+      # CI variables (STRESS_TOTAL_FILES, STRESS_PREQUEUE_ENABLED, STRESS_PREQUEUE_FRACTION)
+      # override the pipeline inputs when re-running the job manually with custom values.
+      EXTRA_PYTEST_ARGS+=" --stress-total-files ${STRESS_TOTAL_FILES:-$[[ inputs.num-stress-files ]]}"
+      EXTRA_PYTEST_ARGS+=" --stress-prequeue-enabled ${STRESS_PREQUEUE_ENABLED:-$[[ inputs.stress-prequeue-enabled ]]}"
+      EXTRA_PYTEST_ARGS+=" --stress-prequeue-fraction ${STRESS_PREQUEUE_FRACTION:-$[[ inputs.stress-prequeue-fraction ]]}"
     - |
       # Virtual stress-drive mode: no mhvtl or SCSI hardware needed.
       # --no-hardware-drives deploys the fake-tape-library PVC chart and generates
