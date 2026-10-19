@@ -103,18 +103,19 @@ maintd:
     # To disable a routine, set replicas to 0
     # Sizing rationale: with 1 FST and 1 drive reporting runs at ~762 files/sec (during
     # archival) and ~1.4 kHz (reporting-only phase).  With 5 FSTs the EOS throughput
-    # scales to ~3.8 kHz.  4 reporters × 10 k batch gives ~8 k files/sec from the
+    # scales to ~3.8 kHz.  4 reporters × 20 k batch gives ~16 k files/sec from the
     # reporter side, well above the EOS capacity.  At 3.8 kHz, 10 M files take ~44 min
-    # for the reporting phase.
+    # for the reporting phase.  The 20 k batch (up from 10 k) halves DB round-trips
+    # while staying within the 30 s softTimeoutSecs (20 k / 3.8 kHz ≈ 5 s/batch).
     diskReportArchive:
       replicas: 4
       sleepIntervalSecs: 5
-      batchSize: 10000
+      batchSize: 20000
       softTimeoutSecs: 30
     diskReportRetrieve:
       replicas: 4
       sleepIntervalSecs: 5
-      batchSize: 10000
+      batchSize: 20000
       softTimeoutSecs: 30
     # Keep repack expansion bounded rather than adding many concurrent requests.
     repackExpand:
