@@ -112,7 +112,8 @@ targets=(
   "cta-taped"
   "cta-maintd"
   "cta-rmcd"
-  "cta-frontend"
+  "cta-admin-api"
+  "cta-workflow-api"
   "cta-tools"
 )
 if [[ "$enable_debug_image" == "true" ]]; then

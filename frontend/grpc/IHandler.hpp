@@ -5,10 +5,12 @@
 
 #pragma once
 
-#include <memory>
+namespace cta::frontend::grpc::client {
 
-namespace cta::frontend::grpc::request {
-
+/**
+ * @brief Handler of an asynchronous client request, driven by the completion queue of the AsyncClient. Its address
+ * is the tag of the operations it starts on the queue.
+ */
 class IHandler {
 public:
   virtual ~IHandler() = default;
@@ -22,4 +24,4 @@ public:
 
 using Tag = IHandler*;
 
-}  // namespace cta::frontend::grpc::request
+}  // namespace cta::frontend::grpc::client

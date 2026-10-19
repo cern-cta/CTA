@@ -18,7 +18,7 @@
 
 namespace cta::frontend::grpc::client {
 
-class NegotiationRequestHandler : public request::IHandler {
+class NegotiationRequestHandler : public IHandler {
 public:
   NegotiationRequestHandler() = delete;
   NegotiationRequestHandler(cta::log::Logger& log,
@@ -38,7 +38,7 @@ private:
   cta::xrd::Negotiation::Stub& m_stub;
   ::grpc::CompletionQueue& m_completionQueue;
   std::string m_strSpn;
-  cta::frontend::grpc::request::Tag m_tag;
+  Tag m_tag;
 
   StreamState m_streamState = StreamState::NEW;
 

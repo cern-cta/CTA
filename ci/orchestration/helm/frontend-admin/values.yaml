@@ -3,7 +3,7 @@
 
 image:
   registry: gitlab-registry.cern.ch
-  repository: cta/ctageneric/cta-frontend
+  repository: cta/ctageneric/cta-admin-api
   tag: latest
 
 # Take care with increasing this number, as CTA has not been tested with multiple frontend replicas

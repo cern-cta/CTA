@@ -15,11 +15,13 @@ set (CTA_UNIT_TEST_LIBS
   ctacommonunittests
   ctaruntimeunittests
   ctaprotobufunittests
-  ctafrontendcommonconfigunittests
   ctadaemonunittests
   ctaexceptionunittests
   ctamediachangerunittests
   ctamaintdunittests
+  cta-grpc-server-unit-tests
+  cta-admin-api-unit-tests
+  cta-workflow-api-unit-tests
   ctainmemorycatalogueunittests
   ctainmemoryconnunittests
   ctainmemorystmtunittests

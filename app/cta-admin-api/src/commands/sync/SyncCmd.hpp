@@ -1,0 +1,66 @@
+/*
+ * SPDX-FileCopyrightText: 2023 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+#pragma once
+
+#include "AdminApiConfig.hpp"
+#include "commands/AdminCmdOptions.hpp"
+#include "commands/sync/SyncCmdContext.hpp"
+#include "common/dataStructures/SecurityIdentity.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/utils/Timer.hpp"
+#include "grpc-server/server/ServiceContext.hpp"
+
+#include <string>
+
+#include "cta_frontend.pb.h"
+
+namespace cta::admin_api::commands::sync {
+
+enum class SyncCmdStatus { SUCCESS, USER_ERROR, EXCEPTION };
+
+/**
+ * @brief Processes one non-streamed admin command: authorizes the admin, runs the handler of the command (see
+ * SyncCmdRegistry and handlers/Handlers.hpp) and logs the outcome
+ */
+class SyncCmd {
+public:
+  /**
+   * @throws cta::exception::UserError if the client is not an admin
+   */
+  SyncCmd(const grpc_server::ServiceContext& serviceContext,
+          const admin_api::AdminApiConfig& config,
+          const common::dataStructures::SecurityIdentity& clientIdentity,
+          const admin::AdminCmd& adminCmd);
+
+  // m_context refers to the other members
+  SyncCmd(const SyncCmd&) = delete;
+  SyncCmd& operator=(const SyncCmd&) = delete;
+
+  /*!
+   * Process the admin command
+   *
+   * @return Protobuf to return to the client
+   */
+  xrd::Response process();
+
+private:
+  /*!
+   * Log an admin command
+   *
+   * @param[in]    status      Status of the executed admin command
+   * @param[in]    reason      Reason for this log message (error message)
+   * @param[in]    t           Timer
+   */
+  void logSyncCmd(const SyncCmdStatus status, const std::string& reason, utils::Timer& t);
+
+  const admin::AdminCmd m_adminCmd;                        //!< Administrator Command protocol buffer
+  const AdminCmdOptions m_options;                         //!< Options of the command
+  log::LogContext m_lc;                                    //!< CTA Log Context
+  common::dataStructures::SecurityIdentity m_cliIdentity;  //!< Client identity: username, host, authentication
+  const SyncCmdContext m_context;                          //!< What the handlers need, refers to the members above
+};
+
+}  // namespace cta::admin_api::commands::sync

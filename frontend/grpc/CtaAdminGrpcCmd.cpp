@@ -73,7 +73,6 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string
   }
 
   // now construct the Admin call
-  // get a client stub in order to make it
   grpc::ClientContext context;
   grpc::Status status;
   std::shared_ptr<grpc::ChannelCredentials> credentials;

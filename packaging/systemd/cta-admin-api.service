@@ -1,0 +1,27 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+[Unit]
+Description=Admin gRPC API for CERN Tape Archive (CTA)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=exec
+User=cta
+Group=tape
+
+LogsDirectory=cta cta/old
+LogsDirectoryMode=0755
+
+ExecStart=/usr/bin/cta-admin-api
+
+LimitCORE=infinity
+LimitNOFILE=65535
+OOMScoreAdjust=-10
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=60
+
+[Install]
+WantedBy=multi-user.target

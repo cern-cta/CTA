@@ -44,8 +44,7 @@ public:
    */
   template<class HANDLER, class... ARGS>
   std::unique_ptr<HANDLER> exe(ARGS&... args) {
-    std::unique_ptr<cta::frontend::grpc::request::IHandler> upHandler =
-      std::make_unique<HANDLER>(m_log, *m_upStub, m_completionQueue, args...);
+    std::unique_ptr<IHandler> upHandler = std::make_unique<HANDLER>(m_log, *m_upStub, m_completionQueue, args...);
     // Handler initialisation
     upHandler->init();  // can throw
     // Initilization

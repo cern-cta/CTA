@@ -42,7 +42,7 @@ spec:
         image: {{ include "ctafrontend.image" . }}
         imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
         stdin: true
-        command: ["/scripts/ctafrontend-grpc.sh"]
+        command: ["/scripts/cta-workflow-api.sh"]
         readinessProbe:
           exec:
             command:
@@ -107,11 +107,8 @@ spec:
           mountPath: /objectstore
         {{- end }}
         - name: frontend-config
-          mountPath: /etc/cta/cta-frontend.conf
-          subPath: cta-frontend.conf
-        - name: frontend-config
-          mountPath: /etc/cta/cta-frontend-grpc.toml
-          subPath: cta-frontend-grpc.toml
+          mountPath: /etc/cta/cta-workflow-api.toml
+          subPath: cta-workflow-api.toml
         {{- if eq .Values.conf.auth.method "jwt" }}
         - name: jwks-json
           mountPath: /etc/cta/jwks.json

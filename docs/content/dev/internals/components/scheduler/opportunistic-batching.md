@@ -36,19 +36,19 @@ flowchart TB
 Each caller resolves its own catalogue criteria (storage class routing for archive, tape-file
 lookup for retrieve) on its own thread before it ever competes for leadership, so that work runs in
 parallel across concurrent callers rather than serialized inside the batch. The first caller to
-arrive becomes the batch's leader: it waits up to `opportunistic_batching_window_ms`, or until the
-batch reaches `opportunistic_batching_max_batch_size` requests, whichever comes first, then issues
+arrive becomes the batch's leader: it waits up to `window_ms`, or until the
+batch reaches `max_batch_size` requests, whichever comes first, then issues
 the single bulk `INSERT` and releases every request in the batch (including itself) with its result.
 A request that fails its own catalogue lookup never joins a batch at all — it fails immediately, in
 isolation, exactly as it would under the file-by-file scheme.
 
-**Configuration** (`cta.schedulerdb.*`, pgsched only):
+**Configuration** (`[opportunistic_batching]` section of `cta-workflow-api.toml`, pgsched only):
 
 | Key | Default | Meaning |
 |---|---|---|
-| `opportunistic_batching_enabled` | `false` | Enables batching for archive and retrieve queueing. |
-| `opportunistic_batching_window_ms` | `10` | Max time a batch's leader waits for concurrent requests to join before inserting. |
-| `opportunistic_batching_max_batch_size` | `1000` | Safety ceiling on requests per batch; real workloads should rarely reach it — the window normally ends a batch first. |
+| `enabled` | `false` | Enables batching for archive and retrieve queueing. |
+| `window_ms` | `10` | Max time a batch's leader waits for concurrent requests to join before inserting. |
+| `max_batch_size` | `1000` | Safety ceiling on requests per batch; real workloads should rarely reach it — the window normally ends a batch first. |
 
 A longer window trades added per-request latency for bigger, more efficient batches; a shorter one
 does the opposite. In practice, once enough concurrent load exists to make batching worthwhile, the

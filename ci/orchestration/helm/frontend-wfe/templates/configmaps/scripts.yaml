@@ -8,5 +8,5 @@ kind: ConfigMap
 metadata:
   name: cta-frontend-wfe-scripts
 data:
-  ctafrontend-grpc.sh: |
-{{ .Files.Get "scripts/ctafrontend-grpc.sh" | indent 4 }}
+  cta-workflow-api.sh: |
+{{ .Files.Get "scripts/cta-workflow-api.sh" | indent 4 }}

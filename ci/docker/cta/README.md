@@ -41,7 +41,8 @@ This creates:
 cta/ctageneric/cta-taped:dev
 cta/ctageneric/cta-rmcd:dev
 cta/ctageneric/cta-maintd:dev
-cta/ctageneric/cta-frontend:dev
+cta/ctageneric/cta-admin-api:dev
+cta/ctageneric/cta-workflow-api:dev
 cta/ctageneric/cta-tools:dev
 ```
 

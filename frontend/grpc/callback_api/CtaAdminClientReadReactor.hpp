@@ -6,7 +6,7 @@
 #pragma once
 
 #include "common/exception/UserError.hpp"
-#include "frontend/common/PbException.hpp"
+#include "grpc-server/PbException.hpp"
 #include "tools/CtaAdminCmdParser.hpp"
 #include "tools/CtaAdminParsedCmd.hpp"
 #include "version.hpp"

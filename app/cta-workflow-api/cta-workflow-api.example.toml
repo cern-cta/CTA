@@ -1,0 +1,272 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+####################################################################################################
+#
+# CTA Workflow API Service Configuration
+#
+####################################################################################################
+
+# This is an example, not a ready-to-run configuration. Copy it to your config dir, replace all
+# deployment-specific values, and validate it before starting the service.
+
+# Catalogue-related options
+[catalogue]
+  # Path to the CTA Catalogue configuration file. The file contains a single connection string that
+  # specifies how to connect to the Catalogue DB.
+  # Examples:
+  #   postgresql:postgresql://username:password@hostname/database
+  #   oracle:username/password@database
+  # See /usr/share/doc/cta/cta-catalogue.example.conf for further details.
+  # This setting is required.
+  config_file = "/etc/cta/cta-catalogue.conf"
+
+[frontend_catalogue]
+  # Number of connections in the catalogue connection pool. Must be greater than zero.
+  # Default: 10
+  # (integer, optional)
+  number_of_connections = 10
+
+
+[files]
+  # Minimum age of missing tape file copies before they are reported. Set it to prevent
+  # false flagging of multi-copy files which are still in the process of being archived.
+  # If omitted, 0 is used. A typical value is 86400 (24 hours).
+  # (time in seconds, optional)
+  missing_file_copies_min_age_secs = 86400
+
+  # Minimum quarantine period, in seconds, that a tape must spend in the recycle log before it can be
+  # reclaimed. Default: 2678400 (31 days)
+  # (time in seconds, optional)
+  recycle_log_quarantine_secs = 2678400
+
+
+[scheduler]
+  # Unique name used to identify this scheduler backend in logs and scheduler resources. It can be structured as:
+  # `[ceph|postgres][User|Repack]:`
+  # (string, optional)
+  backend_name = "cephUser"
+
+  # Path to the CTA Scheduler backend configuration file. The file contains a single connection string that
+  # specifies how to connect to the scheduler backend.
+  # Examples:
+  #   rados://user@pool:namespace
+  #   file:///path/to/objectstore
+  # See /usr/share/doc/cta/cta-scheduler.example.conf for further details.
+  # This setting is required.
+  # (file path, REQUIRED)
+  config_file = "/etc/cta/cta-scheduler.conf"
+
+  # Maximum age of cached tape statistics used when deciding whether work warrants a mount.
+  # Lower values reflect scheduler changes sooner but increase backend queries. Must be greater than zero.
+  # Default: 600
+  # (time in seconds, optional)
+  tape_cache_max_age_secs = 600
+
+  # Maximum age of cached retrieve-queue statistics. Lower values reflect newly queued
+  # retrieves sooner but increase backend queries. Must be greater than zero. Default: 10
+  # (integer, optional)
+  retrieve_queue_cache_max_age_secs = 10
+
+
+# Object store-specific scheduler options
+[frontend_scheduler]
+
+  # These will be removed once the objectstore scheduler is decommissioned.
+
+  # Size of the scheduler DB thread pool. Must be greater than zero.
+  # (integer, REQUIRED)
+  number_of_threads = 500
+
+  # Stack size, in MB, of each scheduler DB thread. Must be greater than zero.
+  # If omitted, the OS's default will be used.
+  # (integer, optional)
+  thread_stack_size_mb = 1
+
+
+# PostgreSQL scheduler-specific options: opportunistically batch concurrent archive/retrieve queueing
+# requests into a single bulk scheduler DB insert instead of queueing them one at a time.
+# Ignored by the objectstore scheduler, which always queues one request at a time.
+[opportunistic_batching]
+  # Enables batching for archive and retrieve queueing. Default: false
+  # (boolean, optional)
+  enabled = false
+
+  # The leader waits for concurrent requests to join its batch until either the window elapses or the
+  # batch reaches max_batch_size, whichever comes first. Larger values mean fewer, bigger DB round trips
+  # at the cost of more added latency per request; smaller values mean less added latency but less
+  # batching benefit.
+  # Default: 10
+  # (time in milliseconds, optional)
+  window_ms = 10
+
+  # Maximum number of requests in a batch. Must be greater than zero when batching is enabled.
+  # Default: 1000
+  # (integer, optional)
+  max_batch_size = 1000
+
+
+[instance]
+  # Name of the CTA instance. Used to validate authentication (JWT, mTLS) and as the telemetry service namespace.
+  # Replaces the legacy cta.instance_name option. Must not be empty.
+  # (string, REQUIRED)
+  name = "CI_local"
+
+
+[verification]
+  # Name of the mount policy used for verification requests.
+  # (string, optional)
+  mount_policy = ""
+
+
+[archive]
+  # Maximum size of an archived file, in GB. If omitted or 0, there is no limit.
+  # (integer, optional)
+  max_file_size_gb = 0
+
+  # Whether 0-length files are rejected. Default: true
+  # (boolean, optional)
+  zero_length_files_forbidden = true
+
+  # VOs which are exempt from the 0-length file restriction.
+  # (list of strings, optional)
+  zero_length_vo_exceptions = []
+
+
+[logging]
+  # Minimum severity written to the log. Messages below this level are masked. Valid values are EMERG,
+  # ALERT, CRIT, ERR, WARNING, NOTICE (USERERR), INFO, and DEBUG. More verbose levels increase log volume.
+  # If omitted, INFO is used.
+  # (string, optional)
+  level = "INFO"
+
+  # Log format. Possible values are "json" and "kv" (key-value).
+  # If omitted, json is used.
+  # (string, optional)
+  format = "json"
+
+  # The following key-value pairs are arbitrarily named and added to all log lines.
+  # They have no other side-effects and can be used for log filtering. e.g.
+  #
+  [logging.attributes]
+    instance = "CI_local"
+    sched_backend = "vfsCI"
+
+
+[experimental]
+  # Enables experimental OpenTelemetry support configured by [telemetry]. Experimental features may
+  # change incompatibly and should be evaluated before production use. Disabled by default.
+  # (boolean, optional)
+  telemetry_enabled = false
+
+
+# Note that telemetry is experimental and disabled by default.
+# To make use of this experimental feature, ensure `telemetry` is enabled under `[experimental]`.
+[telemetry]
+  # Path to the declarative config file to initialise the OpenTelemetry SDK.
+  # (file path, REQUIRED)
+  config_file = "/etc/cta/cta-otel.yaml"
+
+  # Controls how the application reacts if telemetry initialization fails.
+  # Possible values:
+  #   "warn": log a warning and continue startup without telemetry.
+  #   "fatal": treat the failure as an error and abort startup.
+  # If omitted, "warn" is used.
+  # (string, optional)
+  on_init_failure = "warn"
+
+
+# General gRPC server configuration options
+[grpc]
+  # TCP port the gRPC server listens on. Defaults to 50051.
+  # (integer, optional)
+  port = 50051
+
+  # Maximum number of worker threads used by the gRPC server.
+  # If omitted, the server chooses a default based on the available CPU cores.
+  # (integer, optional)
+  number_of_threads = 32
+
+  [grpc.tls]
+    # Filesystem path to the server private key (PEM).
+    # (file path, REQUIRED)
+    server_key_path = "/path/to/your/private-key.pem"
+    # Filesystem path to the server certificate (PEM).
+    # (file path, REQUIRED)
+    server_cert_path = "/path/to/your/certificate.pem"
+    # Optional CA chain file (PEM) forming the full certificate chain presented to clients.
+    # Useful for debugging/testing.
+    # (file path, optional)
+    chain_cert_path = "/etc/cta/ca-chain.pem"
+
+
+#############################################
+# Authentication
+#############################################
+#
+# Exactly one of JWT or mTLS must be enabled.
+#
+# JWT (JSON Web Token) authentication.
+[auth.jwt]
+  # Enable/disable JWT-based authentication. When `false`, this block is ignored and JWT
+  # auth will not be used.
+  # (boolean)
+  enabled = true
+
+  # URI to the JWKS document that contains public keys used to verify JWT signatures.
+  # Supported schemes: `file://` and `https://`.
+  # Examples:
+  #   file:///etc/cta/jwks.json
+  #   https://example.com/.well-known/jwks.json
+  #
+  # (uri, REQUIRED if enabled)
+  jwks_uri = "file:///etc/cta/jwks.json"
+
+  # The expected `iss` (issuer) claim value present in incoming JWTs. Tokens with a different
+  # `iss` will be rejected.
+  # (string, REQUIRED if enabled)
+  expected_issuer = "cta"
+
+  # The expected `aud` (audience) claim value. Use a unique audience per service to avoid
+  # token reuse across components.
+  # (string, REQUIRED if enabled)
+  expected_audience = "cta-workflow-api"
+
+  # Minimum token generation (`gen` claim) accepted. Tokens with a lower `gen` are rejected.
+  # Use to mass-invalidate old tokens. Default: 0.
+  # (integer, optional)
+  min_generation = 0
+
+  # How often (TTL) the JWKS cache is refreshed by fetching the JWKS URI. Default: 600
+  # (10 minutes). Set lower when key rotation is frequent.
+  # (time in seconds, optional)
+  cache_refresh_interval = 600
+
+  # TTL for an individual cached public key. Use a non-zero value to force periodic re-validation
+  # of keys if you rotate them. Default: 0 (never expires).
+  # (time in seconds, optional)
+  pub_key_timeout = 0
+
+  # HTTP/network timeout when fetching the JWKS file. Default: 60. Lower values make the service
+  # fail faster on unreachable endpoints.
+  # (time in seconds, optional)
+  jwks_total_timeout = 60
+
+  # Path to a TOML file containing a list of revoked tokens (by `jti`). If present, the frontend
+  # will consult this list in addition to signature checks. Useful for immediate token revocation
+  # without changing key material.
+  # (file path, optional)
+  revoke_list_path = "/etc/cta/jwt-revoke-list.toml"
+
+
+# mTLS authentication. The client certificate is verified by the TLS layer, and its identities must match
+# one of the aliases configured for the instance named in the request.
+[auth.mtls]
+  # Enables mTLS authentication. When `false`, this block is ignored.
+  # (boolean)
+  enabled = false
+
+  [auth.mtls.aliases]
+    # Mapping of instance name -> certificate identities (SAN) which are accepted for that instance.
+    # (list of strings per instance)
+    eosinstance = ["eos-mgm.example.org"]

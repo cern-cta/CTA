@@ -9,8 +9,13 @@
 #include "common/auth/jwt/JwksFetcher.hpp"
 #include "common/log/LogContext.hpp"
 
+#include <chrono>
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 #include <optional>
+#include <stop_token>
+#include <thread>
 
 namespace cta::auth {
 /**
@@ -37,6 +42,15 @@ public:
 
   void updateCache(time_t now) { m_pubKeyCache.update(now); }
 
+  /**
+   * @brief Start a background thread which refreshes the JWKS cache every @p interval.
+   *
+   * The thread is stopped and joined when this object is destroyed. Must be called at most once.
+   * @param interval The time between two cache refreshes
+   * @param logger The logger used by the refresh thread; must outlive this object
+   */
+  void startCacheRefresh(std::chrono::seconds interval, log::Logger& logger);
+
   bool isRevoked(const std::string& jti) const { return m_revokedSet.contains(jti); }
 
   TokenValidationResult validateJwt(const std::string& encodedJwt, log::Logger& logger);
@@ -58,5 +72,8 @@ private:
   std::string m_expectedAudience;                   //!< The expected audience for all tokens
   uint32_t m_minGeneration;                         //!< The minimum token generation (version) required
   std::set<std::string, std::less<>> m_revokedSet;  //!< A set of JWT IDs that have been revoked.
+
+  // Declared last so that it is joined before the other members are destroyed
+  std::optional<std::jthread> m_cacheRefreshThread;  //!< Periodic JWKS cache refresh, see startCacheRefresh()
 };
 }  // namespace cta::auth
