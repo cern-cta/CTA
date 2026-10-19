@@ -409,4 +409,41 @@ TEST_F(OpportunisticQueueBatcherTest, stopUnblocksParkedWaiters) {
   ASSERT_THROW(std::rethrow_exception(followerError), std::runtime_error);
 }
 
+TEST_F(OpportunisticQueueBatcherTest, leaderItemAlwaysResolvedUnderOverflow) {
+  // Regression test: when a previous overflow round leaves K >= cap items in m_pendingBatch,
+  // the next leader's own item arrives at index K (push_back appends at the end) and would be
+  // excluded from the first `cap` items taken — leaving its promise unresolved and causing an
+  // indefinite hang on future.get().
+  //
+  // The fix records myIndex at push time and, in the overflow path, swaps the leader's item into
+  // slot (cap - 1) before the steal so it is always included.
+  //
+  // We exercise this with many concurrent callers and a small cap so that sustained overflow is
+  // likely across multiple rounds.  Every item must resolve; a hang manifests as a test timeout.
+  using namespace cta;
+
+  constexpr size_t cap = 2;
+  constexpr int concurrentCallers = 20;
+  constexpr int rounds = 5;
+
+  OpportunisticQueueBatcher<TestItem, int> batcher(5ms, cap, [](std::vector<TestItem>& batch, log::LogContext&) {
+    for (auto& item : batch) {
+      item.promise.set_value(item.value * 2);
+    }
+  });
+
+  for (int round = 0; round < rounds; ++round) {
+    std::vector<int> results(concurrentCallers, -1);
+    runConcurrently(concurrentCallers, [&](int i) {
+      log::LogContext threadLc(m_dummyLog);
+      TestItem item;
+      item.value = i;
+      results[i] = batcher.enqueueAndWait(std::move(item), threadLc);
+    });
+    for (int i = 0; i < concurrentCallers; ++i) {
+      ASSERT_EQ(i * 2, results[i]) << "round " << round << " caller " << i;
+    }
+  }
+}
+
 }  // namespace unitTests

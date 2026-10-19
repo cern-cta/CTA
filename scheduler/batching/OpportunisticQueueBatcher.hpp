@@ -89,6 +89,11 @@ public:
       throw std::runtime_error("batcher stopped");
     }
     m_pendingBatch.push_back(std::move(item));
+    // Record the push index before the election loop.  push_back only appends, so existing
+    // items never change position; the index remains valid across any subsequent push_backs
+    // (including those from other threads while we sleep as a follower), and survives vector
+    // reallocations because it is an integer, not a pointer or iterator.
+    const size_t myIndex = m_pendingBatch.size() - 1;
     future = m_pendingBatch.back().promise.get_future();
 
     if (m_pendingBatch.size() >= m_maxBatchSize) {
@@ -135,6 +140,19 @@ public:
     } else {
       // Overflow path: more items queued than the cap allows; take exactly m_maxBatchSize from the
       // front and leave the rest for the next leader. O(n) but only reached under sustained overload.
+      //
+      // The leader's item may sit at myIndex >= m_maxBatchSize when leftover items from a previous
+      // overflow round fill the front of the queue (those items were pushed before this leader, so
+      // they got lower indices).  A naïve front-of-queue steal would leave the leader's item
+      // unresolved and cause future.get() below to block indefinitely.
+      //
+      // Fix: if the leader's item would be excluded, swap it into the last slot of the range that
+      // will be taken (slot m_maxBatchSize - 1).  Items [0, m_maxBatchSize - 2] keep their exact
+      // relative order.  The item originally at m_maxBatchSize - 1 lands at myIndex in the
+      // remainder and will be picked up by the next leader — a minimal, O(1) disruption.
+      if (myIndex >= m_maxBatchSize) {
+        std::swap(m_pendingBatch[m_maxBatchSize - 1], m_pendingBatch[myIndex]);
+      }
       batch.assign(std::make_move_iterator(m_pendingBatch.begin()),
                    std::make_move_iterator(m_pendingBatch.begin() + m_maxBatchSize));
       m_pendingBatch.erase(m_pendingBatch.begin(), m_pendingBatch.begin() + m_maxBatchSize);
