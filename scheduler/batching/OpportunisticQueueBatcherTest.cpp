@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "scheduler/OpportunisticQueueBatcher.hpp"
+#include "scheduler/batching/OpportunisticQueueBatcher.hpp"
 
 #include "common/log/DummyLogger.hpp"
 #include "common/log/LogContext.hpp"

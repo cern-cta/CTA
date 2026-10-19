@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "scheduler/FrontendBatchingLayer.hpp"
+#include "scheduler/batching/FrontendBatchingLayer.hpp"
 
 #include "common/exception/UserError.hpp"
 #include "scheduler/Scheduler.hpp"
@@ -23,6 +23,9 @@ FrontendBatchingLayer::FrontendBatchingLayer(Scheduler& scheduler,
       m_enableOpportunisticBatching(enableOpportunisticBatching),
       m_opportunisticBatchingWindow(opportunisticBatchingWindowMs),
       m_opportunisticBatchingMaxBatchSize(opportunisticBatchingMaxBatchSize) {
+  if (opportunisticBatchingMaxBatchSize == 0) {
+    throw exception::UserError("FrontendBatchingLayer: opportunisticBatchingMaxBatchSize must be > 0");
+  }
   m_archiveBatcher =
     std::make_unique<OpportunisticQueueBatcher<common::dataStructures::ArchiveInsertQueueItem, std::string>>(
       m_opportunisticBatchingWindow,

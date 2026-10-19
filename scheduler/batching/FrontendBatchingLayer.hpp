@@ -10,7 +10,7 @@
 #include "common/dataStructures/ArchiveRequest.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "disk/DiskSystem.hpp"
-#include "scheduler/OpportunisticQueueBatcher.hpp"
+#include "scheduler/batching/OpportunisticQueueBatcher.hpp"
 
 #include <chrono>
 #include <future>

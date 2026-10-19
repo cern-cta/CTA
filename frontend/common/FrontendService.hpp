@@ -14,7 +14,7 @@
 #include <memory>
 #include <stdexcept>
 #ifdef CTA_PGSCHED
-#include "scheduler/FrontendBatchingLayer.hpp"
+#include "scheduler/batching/FrontendBatchingLayer.hpp"
 #include "scheduler/rdbms/RelationalDBInit.hpp"
 #else
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"

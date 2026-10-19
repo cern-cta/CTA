@@ -8,8 +8,8 @@
 #include "common/semconv/Attributes.hpp"
 #include "common/utils/Timer.hpp"
 #include "lib/telemetry/include/telemetry/metrics/SchedulerMetrics.hpp"
-#include "scheduler/FrontendBatchingLayer.hpp"
-#include "scheduler/OpportunisticQueueBatcher.hpp"
+#include "scheduler/batching/FrontendBatchingLayer.hpp"
+#include "scheduler/batching/OpportunisticQueueBatcher.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 
 #include <future>

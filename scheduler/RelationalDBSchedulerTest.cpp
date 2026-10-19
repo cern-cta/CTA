@@ -44,7 +44,7 @@
 #include <utility>
 
 #ifdef CTA_PGSCHED
-#include "scheduler/FrontendBatchingLayer.hpp"
+#include "scheduler/batching/FrontendBatchingLayer.hpp"
 #include "scheduler/rdbms/RelationalDBTestFactory.hpp"
 #endif
 
