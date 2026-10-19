@@ -10,7 +10,7 @@
 #include <toml++/toml.hpp>
 #include <vector>
 
-namespace cta::auth {
+namespace cta::grpc_server::auth {
 
 /**
  * @brief A revoked token entry
@@ -33,4 +33,4 @@ struct RevokeListFile final {
   static constexpr std::size_t memberCount() { return 1; }
 };
 
-}  // namespace cta::auth
+}  // namespace cta::grpc_server::auth

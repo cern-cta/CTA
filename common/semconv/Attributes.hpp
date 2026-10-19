@@ -53,13 +53,13 @@ static constexpr const char* kCtaRepackReportType = "cta.repack.report.type";
 // -------------------- Attribute Values --------------------
 
 namespace ServiceNameValuesOld {
-static constexpr const char* kCtaFrontend = "cta.frontend";
 static constexpr const char* kCtaTaped = "cta.taped";
 static constexpr const char* kCtaMaintd = "cta.maintd";
 }  // namespace ServiceNameValuesOld
 
 namespace ServiceNameValues {
-static constexpr const char* kCtaFrontend = "cta-frontend";
+static constexpr const char* kCtaAdminApi = "cta-admin-api";
+static constexpr const char* kCtaWorkflowApi = "cta-workflow-api";
 static constexpr const char* kCtaTaped = "cta-taped";
 static constexpr const char* kCtaMaintd = "cta-maintd";
 static constexpr const char* kCtaRmcd = "cta-rmcd";

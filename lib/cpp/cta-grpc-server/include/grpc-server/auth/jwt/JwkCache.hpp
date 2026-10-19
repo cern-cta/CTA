@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "common/auth/jwt/JwksFetcher.hpp"
 #include "common/log/LogContext.hpp"
+#include "grpc-server/auth/jwt/JwksFetcher.hpp"
 
 #include <map>
 #include <memory>
@@ -17,7 +17,7 @@
 #include <string>
 #include <time.h>
 
-namespace cta::auth {
+namespace cta::grpc_server::auth {
 
 struct TokenValidationResult {
   bool isValid;
@@ -55,4 +55,4 @@ private:
   cta::log::LogContext m_lc;                                   //!< The logging context
 };
 
-}  // namespace cta::auth
+}  // namespace cta::grpc_server::auth

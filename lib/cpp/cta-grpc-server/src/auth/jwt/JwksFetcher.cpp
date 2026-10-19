@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "JwksFetcher.hpp"
+#include "grpc-server/auth/jwt/JwksFetcher.hpp"
 
 #include <curl/curl.h>
 
-namespace cta::auth {
+namespace cta::grpc_server::auth {
 // Function to handle curl responses
 size_t WriteCallback(const char* contents, size_t size, size_t nmemb, std::string* output) {
   size_t totalSize = size * nmemb;
@@ -48,4 +48,4 @@ std::string CurlJwksFetcher::fetchJWKS(const std::string& jwksUrl) {
 
   return readBuffer;
 }
-}  // namespace cta::auth
+}  // namespace cta::grpc_server::auth

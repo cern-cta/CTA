@@ -41,8 +41,12 @@ public:
   /** @brief The "0.0.0.0:<port>" address the server listens on */
   const std::string& serverAddress() const { return m_serverAddress; }
 
-  /** @brief Builds and starts the server */
-  std::unique_ptr<::grpc::Server> buildAndStart() { return m_builder.BuildAndStart(); }
+  /**
+   * @brief Builds and starts the server
+   * @return A unique pointer to the running server
+   * @throws cta::exception::Exception if the server could not be started (e.g. the port could not be bound)
+   */
+  std::unique_ptr<::grpc::Server> buildAndStart();
 
 private:
   std::string m_serverAddress;

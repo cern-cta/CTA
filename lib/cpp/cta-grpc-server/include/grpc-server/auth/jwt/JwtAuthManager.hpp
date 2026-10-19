@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "common/auth/jwt/JwkCache.hpp"
-#include "common/auth/jwt/JwksFetcher.hpp"
 #include "common/log/LogContext.hpp"
+#include "grpc-server/auth/jwt/JwkCache.hpp"
+#include "grpc-server/auth/jwt/JwksFetcher.hpp"
 
 #include <chrono>
 #include <condition_variable>
@@ -17,7 +17,7 @@
 #include <stop_token>
 #include <thread>
 
-namespace cta::auth {
+namespace cta::grpc_server::auth {
 /**
  * This class encapsulates the verifications which have to be made
  * on JWTs, together with related caches/lists.
@@ -76,4 +76,4 @@ private:
   // Declared last so that it is joined before the other members are destroyed
   std::optional<std::jthread> m_cacheRefreshThread;  //!< Periodic JWKS cache refresh, see startCacheRefresh()
 };
-}  // namespace cta::auth
+}  // namespace cta::grpc_server::auth

@@ -5,6 +5,7 @@
 
 #include "grpc-server/server/ServerBuilderHelper.hpp"
 
+#include "common/exception/Exception.hpp"
 #include "grpc-server/server/TlsCredentials.hpp"
 
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
@@ -39,6 +40,15 @@ ServerBuilderHelper::ServerBuilderHelper(const ListenerConfig& config,
   quota.SetMaxThreads(threads);
   lc.log(log::INFO, "Using " + std::to_string(threads) + " request processing threads");
   m_builder.SetResourceQuota(quota);
+}
+
+std::unique_ptr<::grpc::Server> ServerBuilderHelper::buildAndStart() {
+  auto server = m_builder.BuildAndStart();
+  if (!server) {
+    throw exception::Exception("Failed to start gRPC server on " + m_serverAddress
+                               + ": check that the port is free and the TLS configuration is valid");
+  }
+  return server;
 }
 
 }  // namespace cta::grpc_server

@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/StringLogger.hpp"
+#include "grpc-server/auth/jwt/JwtAuthManager.hpp"
 
 #include <gtest/gtest.h>
 #include <optional>
@@ -14,7 +14,7 @@
 
 namespace unitTests {
 
-class MockJwksFetcher : public cta::auth::JwksFetcher {
+class MockJwksFetcher : public cta::grpc_server::auth::JwksFetcher {
 private:
   std::map<std::string, std::string> m_responses;
 
@@ -47,7 +47,7 @@ private:
 
 TEST(JwkCacheTest, UpdateCacheAddsKey) {
   cta::log::StringLogger log("dummy", "JwkCacheTest_UpdateCacheAddsKey", cta::log::DEBUG);
-  cta::auth::JwkCache cache(std::make_unique<MockJwksFetcher>(), "http://fake-jwks-uri", 1200, log);
+  cta::grpc_server::auth::JwkCache cache(std::make_unique<MockJwksFetcher>(), "http://fake-jwks-uri", 1200, log);
 
   time_t fakeNow = 1000;
   cache.update(fakeNow);
@@ -75,8 +75,10 @@ TEST(JwkCacheTest, UpdateCacheRemovesExpiredKeys) {
     })";
 
   mockFetcher->setResponse("http://fake-jwks-uri", jwksWithKey);
-  cta::auth::JwkCache cache(std::move(mockFetcher), "http://fake-jwks-uri", 200,
-                            log);  // very short pubkeyTimeout
+  cta::grpc_server::auth::JwkCache cache(std::move(mockFetcher),
+                                         "http://fake-jwks-uri",
+                                         200,
+                                         log);  // very short pubkeyTimeout
 
   time_t lastRefreshTime = 1000;
   cache.update(lastRefreshTime);

@@ -40,7 +40,7 @@ add_library(cta-admin-api-lib STATIC
   src/rpc/reactors/CtaAdminServerWriteReactor.cpp
   ${PROJECT_SOURCE_DIR}/tools/CtaAdminCmdParser.cpp)
 target_include_directories(cta-admin-api-lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(cta-admin-api-lib PUBLIC cta-grpc-server-config cta-grpc-server-context cta-grpc-server-core ctagrpc ctaprotobufconversions ctaauth ctacommon ctacatalogue ctascheduler ctaruntime gssapi_krb5)
+target_link_libraries(cta-admin-api-lib PUBLIC cta-grpc-server-config cta-grpc-server cta-service-resources ctagrpc ctaprotobufconversions cta-grpc-server-auth ctacommon ctacatalogue ctascheduler ctaruntime gssapi_krb5)
 
 add_executable(cta-admin-api
   src/AdminApiApp.cpp
@@ -62,6 +62,9 @@ set_property(TARGET cta-admin-api-unit-tests PROPERTY VERSION "${CTA_LIBVERSION}
 add_manpage (cta-admin-api)
 
 install(TARGETS cta-admin-api DESTINATION ${CMAKE_INSTALL_BINDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS cta-admin-api-unit-tests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-admin-api.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 install(FILES cta-admin-api.example.toml ${PROJECT_SOURCE_DIR}/lib/cpp/cta-grpc-server/jwt-revoke-list.example.toml
   DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/cta-admin-api/examples)

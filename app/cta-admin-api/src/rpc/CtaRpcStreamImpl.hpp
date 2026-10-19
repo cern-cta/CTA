@@ -7,8 +7,8 @@
 
 #include "AdminApiConfig.hpp"
 #include "common/log/LogContext.hpp"
-#include "grpc-server/server/ServiceContext.hpp"
 #include "rpc/auth/RequestAuthenticator.hpp"
+#include "service-resources/ServiceResources.hpp"
 
 #include <cstdint>
 #include <grpcpp/grpcpp.h>
@@ -28,7 +28,7 @@ class CtaRpcStreamImpl : public cta::xrd::CtaRpcStream::CallbackService {
 public:
   cta::log::LogContext getLogContext() const { return m_lc; }
 
-  CtaRpcStreamImpl(const cta::grpc_server::ServiceContext& serviceContext,
+  CtaRpcStreamImpl(const cta::service_resources::ServiceResources& serviceResources,
                    const cta::admin_api::AdminApiConfig& config,
                    RequestAuthenticator authenticator);
 

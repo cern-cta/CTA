@@ -11,7 +11,7 @@
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/utils/Timer.hpp"
-#include "grpc-server/server/ServiceContext.hpp"
+#include "service-resources/ServiceResources.hpp"
 
 #include <string>
 
@@ -30,7 +30,7 @@ public:
   /**
    * @throws cta::exception::UserError if the client is not an admin
    */
-  SyncCmd(const grpc_server::ServiceContext& serviceContext,
+  SyncCmd(const service_resources::ServiceResources& serviceResources,
           const admin_api::AdminApiConfig& config,
           const common::dataStructures::SecurityIdentity& clientIdentity,
           const admin::AdminCmd& adminCmd);

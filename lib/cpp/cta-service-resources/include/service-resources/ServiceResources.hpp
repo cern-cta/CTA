@@ -8,12 +8,12 @@
 #include "catalogue/Catalogue.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
-#include "grpc-server/config/CatalogueConfig.hpp"
-#include "grpc-server/config/FilesConfig.hpp"
-#include "grpc-server/config/SchedulerConfig.hpp"
 #include "runtime/config/CommonConfig.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
+#include "service-resources/config/CatalogueConfig.hpp"
+#include "service-resources/config/FilesConfig.hpp"
+#include "service-resources/config/SchedulerConfig.hpp"
 
 #include <memory>
 
@@ -23,36 +23,36 @@
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #endif
 
-namespace cta::grpc_server {
+namespace cta::service_resources {
 
 /**
- * @brief Owns the objects needed by the RPC services of the gRPC servers (admin and workflow APIs): the Catalogue,
+ * @brief Resources shared by the CTA services (admin and workflow APIs): owns the Catalogue,
  * the Scheduler DB and the Scheduler. Built once at start-up from the typed configuration.
  *
  * The logger is not owned here: it is provided by the runtime and passed in.
  */
-class ServiceContext final {
+class ServiceResources final {
 public:
   /**
    * @param catalogueConfig     Catalogue location (runtime)
    * @param schedulerConfig     Scheduler DB location and cache settings (runtime)
-   * @param catalogueOptions    Catalogue connection pool size (gRPC server)
-   * @param filesOptions        Missing copies / recycle log options (gRPC server)
-   * @param schedulerOptions    Scheduler DB thread pool options (gRPC server, objectstore only)
+   * @param catalogueOptions    Catalogue connection pool size (service-specific)
+   * @param filesOptions        Missing copies / recycle log options (service-specific)
+   * @param schedulerOptions    Scheduler DB thread pool options (service-specific, objectstore only)
    * @param log                 Logger provided by the outer scope
    * @throws cta::exception::UserError / cta::exception::Exception on invalid configuration or connection failure
    */
-  ServiceContext(const runtime::CatalogueConfig& catalogueConfig,
-                 const runtime::SchedulerConfig& schedulerConfig,
-                 const CatalogueConfig& catalogueOptions,
-                 const FilesConfig& filesOptions,
+  ServiceResources(const runtime::CatalogueConfig& catalogueConfig,
+                   const runtime::SchedulerConfig& schedulerConfig,
+                   const CatalogueConfig& catalogueOptions,
+                   const FilesConfig& filesOptions,
 #ifndef CTA_PGSCHED
-                 const SchedulerConfig& schedulerOptions,
+                   const SchedulerConfig& schedulerOptions,
 #endif
-                 log::Logger& log);
+                   log::Logger& log);
 
-  ServiceContext(const ServiceContext&) = delete;
-  ServiceContext& operator=(const ServiceContext&) = delete;
+  ServiceResources(const ServiceResources&) = delete;
+  ServiceResources& operator=(const ServiceResources&) = delete;
 
   /** @brief Logger provided by the outer scope */
   log::Logger& getLogger() const { return m_log; }
@@ -89,4 +89,4 @@ private:
   std::unique_ptr<Scheduler> m_scheduler;             //!< Scheduler on top of m_catalogue and m_schedDb
 };
 
-}  // namespace cta::grpc_server
+}  // namespace cta::service_resources

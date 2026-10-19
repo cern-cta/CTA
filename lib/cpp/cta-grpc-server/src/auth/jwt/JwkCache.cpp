@@ -3,13 +3,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "JwkCache.hpp"
+#include "grpc-server/auth/jwt/JwkCache.hpp"
 
 #include "jwt-cpp/jwt.h"
 
 #include <curl/curl.h>
 
-namespace cta::auth {
+namespace cta::grpc_server::auth {
 
 std::optional<JwkCacheEntry> JwkCache::find(const std::string& key) {
   log::LogContext lc(m_lc);
@@ -119,4 +119,4 @@ void JwkCache::update(time_t now) {
     lc.log(log::INFO, "Adding new key entry in cache");
   }
 }
-}  // namespace cta::auth
+}  // namespace cta::grpc_server::auth

@@ -6,11 +6,11 @@
 #pragma once
 
 #include "WorkflowApiConfig.hpp"
-#include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/LogContext.hpp"
-#include "grpc-server/server/ServiceContext.hpp"
+#include "grpc-server/auth/jwt/JwtAuthManager.hpp"
 #include "scheduler/batching/FrontendBatchingLayer.hpp"
+#include "service-resources/ServiceResources.hpp"
 
 #include <functional>
 #include <memory>
@@ -32,12 +32,12 @@ namespace cta::workflow_api {
  */
 class CtaRpcWfeImpl final : public cta::xrd::CtaRpc::Service {
 public:
-  CtaRpcWfeImpl(grpc_server::ServiceContext& serviceContext,
+  CtaRpcWfeImpl(service_resources::ServiceResources& serviceResources,
                 const WorkflowApiConfig& config,
 #ifdef CTA_PGSCHED
                 FrontendBatchingLayer& batchingLayer,
 #endif
-                std::shared_ptr<auth::JwtAuthManager> jwtAuthManager);
+                std::shared_ptr<grpc_server::auth::JwtAuthManager> jwtAuthManager);
 
   ::grpc::Status
   Create(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) override;
@@ -98,12 +98,12 @@ private:
                                     log::LogContext& lc,
                                     const common::dataStructures::SecurityIdentity& clientIdentity) const;
 
-  grpc_server::ServiceContext& m_serviceContext;
+  service_resources::ServiceResources& m_serviceResources;
   const WorkflowApiConfig& m_config;
 #ifdef CTA_PGSCHED
   FrontendBatchingLayer& m_batchingLayer;  //!< Opportunistic-batching layer for archive/retrieve queueing
 #endif
-  std::shared_ptr<auth::JwtAuthManager> m_jwtAuthManager;  //!< Shared JWK cache for token validation
+  std::shared_ptr<grpc_server::auth::JwtAuthManager> m_jwtAuthManager;  //!< Shared JWK cache for token validation
 };
 
 }  // namespace cta::workflow_api

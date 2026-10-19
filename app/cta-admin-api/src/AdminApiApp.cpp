@@ -5,19 +5,17 @@
 
 #include "AdminApiApp.hpp"
 
-#include "common/auth/jwt/JwksFetcher.hpp"
-#include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/LogLevel.hpp"
+#include "grpc-server/auth/jwt/JwtAuthFactory.hpp"
 #include "grpc-server/server/ServerBuilderHelper.hpp"
-#include "grpc-server/server/ServiceContext.hpp"
 #include "rpc/CtaRpcStreamImpl.hpp"
 #include "rpc/CtaRpcSyncImpl.hpp"
 #include "rpc/auth/RequestAuthenticator.hpp"
 #include "rpc/auth/kerberos/NegotiationService.hpp"
 #include "rpc/auth/kerberos/TokenStore.hpp"
+#include "service-resources/ServiceResources.hpp"
 
-#include <chrono>
 #include <functional>
 #include <optional>
 
@@ -36,31 +34,17 @@ int AdminApiApp::run(const AdminApiConfig& config, cta::log::Logger& log) {
   lc.log(cta::log::INFO, "Starting cta-admin-api");
 
   // Catalogue, Scheduler DB and Scheduler
-  grpc_server::ServiceContext serviceContext(config.catalogue,
-                                             config.scheduler,
-                                             config.frontend_catalogue,
-                                             config.files,
+  service_resources::ServiceResources serviceResources(config.catalogue,
+                                                       config.scheduler,
+                                                       config.frontend_catalogue,
+                                                       config.files,
 #ifndef CTA_PGSCHED
-                                             config.frontend_scheduler,
+                                                       config.frontend_scheduler,
 #endif
-                                             log);
+                                                       log);
 
   // JWT authentication: the JWKS cache is refreshed in the background by the manager itself
-  std::shared_ptr<auth::JwtAuthManager> jwtAuthManager;
-  if (config.auth.jwt.has_value() && config.auth.jwt->enabled) {
-    const auto& jwt = *config.auth.jwt;
-    jwtAuthManager =
-      std::make_shared<auth::JwtAuthManager>(std::make_unique<auth::CurlJwksFetcher>(jwt.jwks_total_timeout),
-                                             jwt.jwks_uri,
-                                             jwt.pub_key_timeout,
-                                             jwt.expected_issuer,
-                                             jwt.expected_audience,
-                                             jwt.min_generation,
-                                             jwt.revoke_list_path,
-                                             log);
-    jwtAuthManager->startCacheRefresh(std::chrono::seconds(jwt.cache_refresh_interval), log);
-    lc.log(cta::log::INFO, "JWT authentication enabled");
-  }
+  auto jwtAuthManager = grpc_server::auth::makeJwtAuthManager(config.auth.jwt, log);
 
   const bool kerberosEnabled = config.auth.kerberos.has_value() && config.auth.kerberos->enabled;
 
@@ -77,8 +61,8 @@ int AdminApiApp::run(const AdminApiConfig& config, cta::log::Logger& log) {
   const rpc::RequestAuthenticator authenticator(jwtAuthManager, krbTokenStoreRef, config.instance.name);
 
   // Create both RPC endpoints (sync and stream commands)
-  rpc::CtaRpcSyncImpl syncService(serviceContext, config, authenticator);
-  rpc::CtaRpcStreamImpl streamService(serviceContext, config, authenticator);
+  rpc::CtaRpcSyncImpl syncService(serviceResources, config, authenticator);
+  rpc::CtaRpcStreamImpl streamService(serviceResources, config, authenticator);
 
   // Admin API clients are never authenticated with mTLS, hence `requireClientCertificate = false`
   grpc_server::ServerBuilderHelper serverBuilderHelper(config.grpc, false, nullptr, lc);

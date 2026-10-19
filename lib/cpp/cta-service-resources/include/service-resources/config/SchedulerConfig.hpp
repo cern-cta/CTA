@@ -11,12 +11,12 @@
 #include <cstdint>
 #include <optional>
 
-namespace cta::grpc_server {
+namespace cta::service_resources {
 
 #ifndef CTA_PGSCHED
 
 /**
- * @brief gRPC server-specific scheduler options (objectstore scheduler only).
+ * @brief Service-specific scheduler options (objectstore scheduler only).
  *
  * Complements cta::runtime::SchedulerConfig (runtime/config/CommonConfig.hpp), which holds the scheduler DB location.
  */
@@ -40,4 +40,4 @@ struct SchedulerConfig final {
 
 #endif
 
-}  // namespace cta::grpc_server
+}  // namespace cta::service_resources

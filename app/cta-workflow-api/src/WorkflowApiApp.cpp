@@ -6,15 +6,12 @@
 #include "WorkflowApiApp.hpp"
 
 #include "CtaRpcWfeImpl.hpp"
-#include "common/auth/jwt/JwksFetcher.hpp"
-#include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/LogLevel.hpp"
+#include "grpc-server/auth/jwt/JwtAuthFactory.hpp"
 #include "grpc-server/server/ServerBuilderHelper.hpp"
-#include "grpc-server/server/ServiceContext.hpp"
 #include "scheduler/batching/FrontendBatchingLayer.hpp"
-
-#include <chrono>
+#include "service-resources/ServiceResources.hpp"
 
 namespace cta::workflow_api {
 
@@ -31,19 +28,19 @@ int WorkflowApiApp::run(const WorkflowApiConfig& config, cta::log::Logger& log) 
   lc.log(cta::log::INFO, "Starting cta-workflow-api");
 
   // Catalogue, Scheduler DB and Scheduler
-  grpc_server::ServiceContext serviceContext(config.catalogue,
-                                             config.scheduler,
-                                             config.frontend_catalogue,
-                                             config.files,
+  service_resources::ServiceResources serviceResources(config.catalogue,
+                                                       config.scheduler,
+                                                       config.frontend_catalogue,
+                                                       config.files,
 #ifndef CTA_PGSCHED
-                                             config.frontend_scheduler,
+                                                       config.frontend_scheduler,
 #endif
-                                             log);
+                                                       log);
 
 #ifdef CTA_PGSCHED
   // Opportunistic batching of archive/retrieve queueing, in front of the Scheduler
   const auto& batching = config.opportunistic_batching;
-  FrontendBatchingLayer batchingLayer(serviceContext.getScheduler(),
+  FrontendBatchingLayer batchingLayer(serviceResources.getScheduler(),
                                       batching.enabled,
                                       batching.window_ms,
                                       batching.max_batch_size);
@@ -57,21 +54,7 @@ int WorkflowApiApp::run(const WorkflowApiConfig& config, cta::log::Logger& log) 
 #endif
 
   // JWT authentication: the JWKS cache is refreshed in the background by the manager itself
-  std::shared_ptr<auth::JwtAuthManager> jwtAuthManager;
-  if (config.auth.jwt.has_value() && config.auth.jwt->enabled) {
-    const auto& jwt = *config.auth.jwt;
-    jwtAuthManager =
-      std::make_shared<auth::JwtAuthManager>(std::make_unique<auth::CurlJwksFetcher>(jwt.jwks_total_timeout),
-                                             jwt.jwks_uri,
-                                             jwt.pub_key_timeout,
-                                             jwt.expected_issuer,
-                                             jwt.expected_audience,
-                                             jwt.min_generation,
-                                             jwt.revoke_list_path,
-                                             log);
-    jwtAuthManager->startCacheRefresh(std::chrono::seconds(jwt.cache_refresh_interval), log);
-    lc.log(cta::log::INFO, "JWT authentication enabled");
-  }
+  auto jwtAuthManager = grpc_server::auth::makeJwtAuthManager(config.auth.jwt, log);
 
   // mTLS: the clients present a certificate which is checked against the configured aliases
   const bool useMtls = config.auth.mtls.has_value() && config.auth.mtls->enabled;
@@ -80,7 +63,7 @@ int WorkflowApiApp::run(const WorkflowApiConfig& config, cta::log::Logger& log) 
   }
 
   // Create the gRPC service
-  CtaRpcWfeImpl wfeService(serviceContext,
+  CtaRpcWfeImpl wfeService(serviceResources,
                            config,
 #ifdef CTA_PGSCHED
                            batchingLayer,

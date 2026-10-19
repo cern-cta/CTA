@@ -9,7 +9,7 @@
 
 #include <string>
 
-namespace cta::auth {
+namespace cta::grpc_server::auth {
 CTA_GENERATE_EXCEPTION_CLASS(CurlException);
 
 class JwksFetcher {
@@ -34,4 +34,4 @@ public:
 private:
   long m_totalTimeoutSecs;  //!< Total timeout in seconds
 };
-}  // namespace cta::auth
+}  // namespace cta::grpc_server::auth

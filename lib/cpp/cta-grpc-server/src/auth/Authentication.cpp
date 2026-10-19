@@ -5,9 +5,9 @@
 
 #include "grpc-server/auth/Authentication.hpp"
 
-#include "common/auth/jwt/JwtAuthManager.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/utils/utils.hpp"
+#include "grpc-server/auth/jwt/JwtAuthManager.hpp"
 
 #include <algorithm>
 #include <iterator>
@@ -19,7 +19,7 @@ using ::grpc::StatusCode;
 
 using cta::common::dataStructures::SecurityIdentity;
 
-namespace cta::grpc_server {
+namespace cta::grpc_server::auth {
 
 namespace {
 
@@ -50,7 +50,7 @@ std::string extractToken(const std::string& authHeader, size_t prefixLength) {
  * @return OK with a JWT SecurityIdentity, or UNAUTHENTICATED if the token is missing or fails validation
  */
 AuthResult validateBearerHeader(const std::string& authHeader,
-                                cta::auth::JwtAuthManager& jwtAuthManager,
+                                JwtAuthManager& jwtAuthManager,
                                 const std::string& ourInstance,
                                 const std::string& clientHost,
                                 cta::log::LogContext& lc) {
@@ -126,7 +126,7 @@ authenticateMtls(::grpc::ServerContext* context,
 }
 
 std::pair<Status, std::optional<SecurityIdentity>> authenticateJwt(const GrpcMetadata& client_metadata,
-                                                                   cta::auth::JwtAuthManager& jwtAuthManager,
+                                                                   JwtAuthManager& jwtAuthManager,
                                                                    const std::string& ourInstance,
                                                                    const std::string& clientHost,
                                                                    cta::log::LogContext& lc) {
@@ -141,4 +141,4 @@ std::pair<Status, std::optional<SecurityIdentity>> authenticateJwt(const GrpcMet
   return validateBearerHeader(authHeader, jwtAuthManager, ourInstance, clientHost, lc);
 }
 
-}  // namespace cta::grpc_server
+}  // namespace cta::grpc_server::auth
