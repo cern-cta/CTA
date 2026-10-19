@@ -1305,9 +1305,9 @@ class TestRetrieveQueueCleanup:
         disk_instance_name: str,
         retrieve_queue_cleanup_paths: RetrieveQueueCleanupPaths,
     ) -> None:
-        """Verify that when re-routing after a tape break, an ACTIVE alternate is chosen
-        over a DISABLED one even if the DISABLED copy has a lower copy number.
+        """Verify that when re-routing after a tape break, an ACTIVE alternate is chosen over a DISABLED one.
 
+        Even if the DISABLED copy has a lower copy number, the ACTIVE copy must win.
         Setup: three-copy file with tape_0=ACTIVE, tape_1=DISABLED, tape_2=BROKEN.
         Only tape_0 is ACTIVE so the initial PREPARE lands there deterministically.
         After breaking tape_0 and making tape_2 ACTIVE, the re-routing must pick
