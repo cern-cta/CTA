@@ -361,10 +361,12 @@ stress-test:
       # --no-hardware-drives deploys the fake-tape-library PVC chart and generates
       # N virtual drives (STRESS0000..STRESS{N-1}) backed by VID.tape files on the PVC.
       # No node labelling, hostPath volumes, or tmpfs pre-mounting is required.
-      if $[[ inputs.use-stress-drives ]]; then
+      # USE_STRESS_DRIVES and NUM_STRESS_DRIVES CI variables override the pipeline inputs
+      # when replaying the job via the GitLab "Play with variables" dialog.
+      if ${USE_STRESS_DRIVES:-$[[ inputs.use-stress-drives ]]}; then
         STRESS_CTA_VALUES_CHAIN="${STRESS_CTA_VALUES_CHAIN},presets/stress-stressdrives-pgsched-values.yaml"
         # Skip mhvtl hardware detection; generate drives STRESS0000..STRESS{N-1}.
-        EXTRA_SPAWN_ARGS+=" --no-hardware-drives --max-drives $[[ inputs.num-stress-drives ]]"
+        EXTRA_SPAWN_ARGS+=" --no-hardware-drives --max-drives ${NUM_STRESS_DRIVES:-$[[ inputs.num-stress-drives ]]}"
       fi
     # Set up stress test
     - cd ci/orchestration/
