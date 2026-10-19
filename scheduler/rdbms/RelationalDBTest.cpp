@@ -102,7 +102,6 @@ void queueRetrieveJob(cta::SchedulerDatabase& db,
 
   rr.archiveFileID = archiveFileId;
   rr.creationLog = {"user", "host", creationTime};
-  rr.lifecycleTimings.creation_time = creationTime;
   rr.diskFileInfo.path = "/retrieve/" + suffix;
   rr.requester = {"user", "group"};
   rr.dstURL = "root://disk/" + suffix;

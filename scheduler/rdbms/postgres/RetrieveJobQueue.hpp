@@ -79,9 +79,6 @@ struct RetrieveJobQueueRow {
 
   checksum::ChecksumBlob checksumBlob;
 
-  time_t lifecycleTimings_creation_time = 0;
-  time_t lifecycleTimings_first_selected_time = 0;
-  time_t lifecycleTimings_completed_time = 0;
   std::optional<std::string> diskSystemName = std::nullopt;
 
 private:
@@ -180,9 +177,6 @@ public:
     diskFileInfoPath = "";
     diskFileInfoOwnerUid = 0;
     diskFileInfoGid = 0;
-    lifecycleTimings_creation_time = 0;
-    lifecycleTimings_first_selected_time = 0;
-    lifecycleTimings_completed_time = 0;
     checksumBlob.clear();
   }
 
@@ -253,10 +247,6 @@ public:
     srrMountPolicy = rset.columnStringNoOpt("SRR_MOUNT_POLICY");
     srrActivity = rset.columnStringNoOpt("SRR_ACTIVITY");
 
-    lifecycleTimings_creation_time = rset.columnUint64NoOpt("LIFECYCLE_CREATION_TIME");
-    lifecycleTimings_first_selected_time = rset.columnUint64NoOpt("LIFECYCLE_FIRST_SELECTED_TIME");
-    lifecycleTimings_completed_time = rset.columnUint64NoOpt("LIFECYCLE_COMPLETED_TIME");
-
     diskSystemName = rset.columnOptionalString("DISK_SYSTEM_NAME");
 
     archiveFileID = rset.columnUint64NoOpt("ARCHIVE_FILE_ID");
@@ -326,9 +316,6 @@ public:
            SRR_HOST,
            SRR_TIME,
            SRR_MOUNT_POLICY,
-           LIFECYCLE_CREATION_TIME,
-           LIFECYCLE_FIRST_SELECTED_TIME,
-           LIFECYCLE_COMPLETED_TIME,
            RETRIEVE_REPORT_URL
    )";
     if (diskSystemName.has_value()) {
@@ -385,9 +372,6 @@ public:
            :SRR_HOST,
            :SRR_TIME,
            :SRR_MOUNT_POLICY,
-           :LIFECYCLE_CREATION_TIME,
-           :LIFECYCLE_FIRST_SELECTED_TIME,
-           :LIFECYCLE_COMPLETED_TIME,
            :RETRIEVE_REPORT_URL
    )";
     if (diskSystemName.has_value()) {
@@ -443,9 +427,6 @@ public:
     stmt.bindString(":SRR_HOST", srrHost);
     stmt.bindUint64(":SRR_TIME", static_cast<uint64_t>(srrTime));
     stmt.bindString(":SRR_MOUNT_POLICY", srrMountPolicy);
-    stmt.bindUint64(":LIFECYCLE_CREATION_TIME", static_cast<uint64_t>(lifecycleTimings_creation_time));
-    stmt.bindUint64(":LIFECYCLE_FIRST_SELECTED_TIME", static_cast<uint64_t>(lifecycleTimings_first_selected_time));
-    stmt.bindUint64(":LIFECYCLE_COMPLETED_TIME", static_cast<uint64_t>(lifecycleTimings_completed_time));
     if (diskSystemName.has_value()) {
       stmt.bindString(":DISK_SYSTEM_NAME", diskSystemName.value());
     }
@@ -522,9 +503,6 @@ public:
      * params.add("retrieveJobsProtoBuf", retrieveJobsProtoBuf);
      * params.add("repackInfoProtoBuf", repackInfoProtoBuf);
      */
-    params.add("lifecycleTimings.creation_time", lifecycleTimings_creation_time);
-    params.add("lifecycleTimings.first_selected_time", lifecycleTimings_first_selected_time);
-    params.add("lifecycleTimings.completed_time", lifecycleTimings_completed_time);
     params.add("diskSystemName", diskSystemName.value_or(""));
   }
 
@@ -611,9 +589,6 @@ public:
       TOTAL_REPORT_RETRIES,
       IS_VERIFY_ONLY,
       IS_REPORTING,
-      LIFECYCLE_CREATION_TIME,
-      LIFECYCLE_FIRST_SELECTED_TIME,
-      LIFECYCLE_COMPLETED_TIME,
       RETRIEVE_REPORT_URL)SQL";
 
     if (hasDiskSystemName) {
@@ -679,9 +654,6 @@ public:
       sql += ":TOTAL_REPORT_RETRIES" + std::to_string(i) + ",";
       sql += ":IS_VERIFY_ONLY" + std::to_string(i) + ",";
       sql += ":IS_REPORTING" + std::to_string(i) + ",";
-      sql += ":LIFECYCLE_CREATION_TIME" + std::to_string(i) + ",";
-      sql += ":LIFECYCLE_FIRST_SELECTED_TIME" + std::to_string(i) + ",";
-      sql += ":LIFECYCLE_COMPLETED_TIME" + std::to_string(i) + ",";
       sql += ":RETRIEVE_REPORT_URL" + std::to_string(i);
       if (hasDiskSystemName) {
         sql += ",:DISK_SYSTEM_NAME" + std::to_string(i);
@@ -760,12 +732,6 @@ public:
       stmt.bindUint32(":TOTAL_REPORT_RETRIES" + std::to_string(i), row.totalReportRetries);
       stmt.bindBool(":IS_VERIFY_ONLY" + std::to_string(i), row.isVerifyOnly);
       stmt.bindBool(":IS_REPORTING" + std::to_string(i), row.isReporting);
-      stmt.bindUint64(":LIFECYCLE_CREATION_TIME" + std::to_string(i),
-                      static_cast<uint64_t>(row.lifecycleTimings_creation_time));
-      stmt.bindUint64(":LIFECYCLE_FIRST_SELECTED_TIME" + std::to_string(i),
-                      static_cast<uint64_t>(row.lifecycleTimings_first_selected_time));
-      stmt.bindUint64(":LIFECYCLE_COMPLETED_TIME" + std::to_string(i),
-                      static_cast<uint64_t>(row.lifecycleTimings_completed_time));
 
       if (hasDiskSystemName) {
         stmt.bindString(":DISK_SYSTEM_NAME" + std::to_string(i), row.diskSystemName);
