@@ -2553,8 +2553,7 @@ void RelationalDB::resubmitInactiveReporting(uint64_t deletionAge, uint64_t batc
   };
 
   static const TableSpec specs[] = {
-    {"ARCHIVE_ACTIVE_QUEUE",
-     "ARCHIVE_ACTIVE_QUEUE_resubmitInactiveReporting",  R"SQL(
+    {"ARCHIVE_ACTIVE_QUEUE",  "ARCHIVE_ACTIVE_QUEUE_resubmitInactiveReporting",  R"SQL(
         WITH SET_SELECTION AS (
           SELECT JOB_ID FROM ARCHIVE_ACTIVE_QUEUE
           WHERE IS_REPORTING IS TRUE
@@ -2565,8 +2564,7 @@ void RelationalDB::resubmitInactiveReporting(uint64_t deletionAge, uint64_t batc
           FROM SET_SELECTION
           WHERE ARCHIVE_ACTIVE_QUEUE.JOB_ID = SET_SELECTION.JOB_ID
       )SQL"},
-    {"RETRIEVE_ACTIVE_QUEUE",
-     "RETRIEVE_ACTIVE_QUEUE_resubmitInactiveReporting", R"SQL(
+    {"RETRIEVE_ACTIVE_QUEUE", "RETRIEVE_ACTIVE_QUEUE_resubmitInactiveReporting", R"SQL(
         WITH SET_SELECTION AS (
           SELECT JOB_ID FROM RETRIEVE_ACTIVE_QUEUE
           WHERE IS_REPORTING IS TRUE
