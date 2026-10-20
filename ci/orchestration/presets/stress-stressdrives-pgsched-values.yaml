@@ -48,6 +48,7 @@ taped:
       # Performance tuning inherited from the standard stress preset; override
       # here if the stress-drive workload needs different values.
       bufferCount: 10000
+      nbDiskThreads: 20
       logMask: "WARNING"
       # This is a per-drive pool: each DriveHandler creates its own SchedulerDBInit
       # with this many connections.  With N drives: N × 2 connections consumed.

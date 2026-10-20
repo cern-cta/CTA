@@ -87,6 +87,9 @@ taped:
     taped:
       # Keep enough files in flight to support the larger scheduler/reporting batches below.
       bufferCount: 10000
+      # Each disk thread opens/reads/closes one EOS file via XRootD (~1-3ms per file).
+      # More threads allow more concurrent XRootD opens, raising per-drive throughput.
+      nbDiskThreads: 20
       # Avoid verbose tape-operation logs dominating the small-file workload.
       logMask: "WARNING"
       # Overridden to 2 by stress-stressdrives-pgsched-values.yaml (applied after this file).
