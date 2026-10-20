@@ -77,6 +77,102 @@ std::optional<common::dataStructures::VirtualOrganization> RelationalDB::getDefa
   return m_catalogue.VO()->getDefaultVirtualOrganizationForRepack();
 }
 
+std::vector<std::string>
+RelationalDB::queueArchive(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
+                           log::LogContext& lc) {
+  std::vector<std::unique_ptr<schedulerdb::postgres::ArchiveJobQueueRow>> rowsToInsert;
+  auto sqlconn = m_connPool.getConn();
+  uint64_t totalJobCount = 0;
+  for (auto& j : batch) {
+    totalJobCount += j.copyToPoolMap.size();
+  }
+  rowsToInsert.reserve(totalJobCount);
+  std::vector<uint32_t> groupIds;
+  groupIds.reserve(totalJobCount);
+  for (size_t i = 0; i < batch.size(); ++i) {
+    auto& item = batch[i];
+
+    // Construct the archive request object
+    schedulerdb::ArchiveRequest aReq(sqlconn, lc);
+
+    // Summarize all as an archiveFile
+    common::dataStructures::ArchiveFile aFile;
+    aFile.archiveFileID = item.archiveFileId;
+    aFile.checksumBlob = item.request.checksumBlob;
+    aFile.creationTime = std::numeric_limits<decltype(aFile.creationTime)>::min();
+    aFile.reconciliationTime = 0;
+    aFile.diskFileId = item.request.diskFileID;
+    aFile.diskFileInfo = item.request.diskFileInfo;
+    aFile.diskInstance = item.instanceName;
+    aFile.fileSize = item.request.fileSize;
+    aFile.storageClass = item.request.storageClass;
+    aReq.setArchiveFile(aFile);
+
+    aReq.setMountPolicy(item.mountPolicy);
+    aReq.setArchiveReportURL(item.request.archiveReportURL);
+    aReq.setArchiveErrorReportURL(item.request.archiveErrorReportURL);
+    aReq.setRequester(item.request.requester);
+    aReq.setSrcURL(item.request.srcURL);
+    aReq.setEntryLog(item.request.creationLog);
+    auto archiveRequestId = 0;  //bogus, will be assigned by DB insert itself
+                                // cta::schedulerdb::postgres::ArchiveJobQueueRow::getNextArchiveRequestID(sqlconn);
+    // Should be unreachable: stage 1 (Scheduler::resolveArchiveInsertCriteria()) resolves
+    // copyToPoolMap via the catalogue, which throws a UserError of its own if a storage class has
+    // no routes, before the item is ever enqueued into a batch. This is an invariant check on that
+    // guarantee, not a per-request user error -- unlike OStoreDB::queueArchive() (where the same
+    // exception type fails only the one request), throwing here fails the whole batch via
+    // resolveArchiveBatch()'s catch block, since this loop runs once per item while building rows
+    // for all of them.
+    if (item.copyToPoolMap.empty()) {
+      throw schedulerdb::ArchiveRequestHasNoCopies("In RelationalDB::queueArchive: the archive request has no copies");
+    }
+    for (auto& [key, value] : item.copyToPoolMap) {
+      aReq.addJob(key,
+                  value,
+                  schedulerdb::ArchiveRequest::RETRIES_WITHIN_MOUNT,
+                  schedulerdb::ArchiveRequest::TOTAL_RETRIES,
+                  schedulerdb::ArchiveRequest::REPORT_RETRIES,
+                  archiveRequestId);
+    }
+
+    std::vector<std::unique_ptr<schedulerdb::postgres::ArchiveJobQueueRow>> areqrows = aReq.returnRowsToInsert();
+    for (size_t j = 0; j < areqrows.size(); ++j) {
+      rowsToInsert.emplace_back(std::move(areqrows[j]));
+      groupIds.emplace_back(i);
+    }
+  }
+  uint64_t nrows = schedulerdb::postgres::ArchiveJobQueueRow::insertRequestBatch(sqlconn, rowsToInsert, groupIds);
+  log::ScopedParamContainer params(lc);
+  params.add("nrows", nrows);
+  params.add("inputJobCount", totalJobCount);
+  if (totalJobCount != nrows) {
+    // Do NOT throw: the INSERT above committed immediately (implicit autocommit — PostgresConn only
+    // supports AUTOCOMMIT_ON). Throwing here propagates to resolveArchiveBatch/failWholeBatch and
+    // tells every client the request failed, while the rows are already durable in the queue —
+    // a client retry then double-archives. Log ERR only; a real fix requires wrapping the INSERT
+    // in an explicit Transaction so the count check can actually rollback on mismatch.
+    lc.log(log::ERR, "In RelationalDB::queueArchive(): enqueued unexpected number of jobs !");
+  }
+
+  lc.log(log::INFO, "In RelationalDB::queueArchive(): enqueued archive.");
+
+  // Both the dbClientOperationDuration and dbClientResponseReturnedRows telemetry set up by
+  // insertRequestBatch()'s conn.setDbQuerySummary("insert archive") call are only actually emitted
+  // from inside Conn::commit() -- without this explicit commit, the transaction still lands (via the
+  // connection pool's own implicit commit when the connection is returned, a different, untelemetered
+  // code path), but neither metric is ever recorded.
+  sqlconn.setRowCountForTelemetry(nrows);
+  sqlconn.commit();
+
+  // The scheduler DB does not hand back a real per-request address the way the objectstore did;
+  // "bogus" is kept only because callers still expect one string per request, matching
+  // ArchiveRequest::getIdStr() (see its own comment), which the single-item queueArchive()
+  // overload just below returns for the same reason. Built only now that the insert above is
+  // confirmed to have succeeded, so a failed call never returns placeholder entries for requests
+  // which were not actually inserted.
+  return std::vector<std::string>(batch.size(), "bogus");
+}
+
 std::string RelationalDB::queueArchive(const std::string& instanceName,
                                        const cta::common::dataStructures::ArchiveRequest& request,
                                        const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId& criteria,
@@ -518,6 +614,91 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
       .log(cta::log::ERR, "In schedulerdb::RelationalDB::queueRetrieve(): failed to queue retrieve.");
     return ret;
   }
+}
+
+std::vector<std::string>
+RelationalDB::queueRetrieve(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
+                            log::LogContext& lc) {
+  // For opportunistic batching of user retrieve requests (Scheduler::queueRetrieve()), following the
+  // same shape already used for repack's own bulk retrieve queueing (RepackRequest.cpp): build one
+  // RetrieveJobQueueRow per item (VID selection included, same as the single-item overload above),
+  // then insert them all in a single statement via RetrieveJobQueueRow::insertBatch(), rather than
+  // one INSERT per item.
+  utils::Timer timeTotal;
+  auto sqlconn = m_connPool.getConn();
+
+  // Pre-warm the tape status cache and the retrieve-queue-statistics cache for every candidate vid
+  // across the whole batch in one call each, rather than letting each item's own
+  // selectBestVid4Retrieve() call below lazily fetch cold/stale vids one at a time on this same
+  // (single, leader) connection.
+  std::set<std::string, std::less<>> allCandidateVids;
+  for (auto& item : batch) {
+    for (auto& tf : item.criteria.archiveFile.tapeFiles) {
+      allCandidateVids.insert(tf.vid);
+    }
+  }
+  cta::schedulerdb::Helpers::warmTapeStatusCache(allCandidateVids, m_catalogue);
+  cta::schedulerdb::Helpers::warmRetrieveQueueStatisticsCache(allCandidateVids, sqlconn);
+
+  std::vector<std::unique_ptr<schedulerdb::postgres::RetrieveJobQueueRow>> rowsToInsert;
+  rowsToInsert.reserve(batch.size());
+
+  for (auto& item : batch) {
+    std::set<std::string, std::less<>> candidateVids;
+    for (auto& tf : item.criteria.archiveFile.tapeFiles) {
+      candidateVids.insert(tf.vid);
+    }
+    item.selectedVid = cta::schedulerdb::Helpers::selectBestVid4Retrieve(candidateVids, m_catalogue, sqlconn, false);
+
+    uint8_t bestCopyNb = 0;
+    for (auto& tf : item.criteria.archiveFile.tapeFiles) {
+      if (tf.vid == item.selectedVid) {
+        bestCopyNb = tf.copyNb;
+        // Appending the file size to the dstURL so that XrootD will fail to retrieve if there is
+        // not enough free space in the eos disk.
+        item.request.appendFileSizeToDstURL(tf.fileSize);
+        break;
+      }
+    }
+
+    schedulerdb::RetrieveRequest rReq(sqlconn, lc);
+    rReq.setActivityIfNeeded(item.request, item.criteria);
+    rReq.setSchedulerRequest(item.request);
+    rReq.fillJobsSetRetrieveFileQueueCriteria(item.criteria);  // fills also m_jobs
+    rReq.setActiveCopyNumber(bestCopyNb);
+    rReq.setIsVerifyOnly(item.request.isVerifyOnly);
+    rReq.setDiskSystemName(item.diskSystemName);
+
+    rowsToInsert.emplace_back(rReq.makeJobRow());
+  }
+
+  uint64_t nrows = schedulerdb::postgres::RetrieveJobQueueRow::insertBatch(sqlconn, rowsToInsert, /*isRepack=*/false);
+
+  if (nrows != rowsToInsert.size()) {
+    // Do NOT throw: INSERT already committed (implicit autocommit — same reasoning as queueArchive's
+    // bulk overload). Throwing here would fail all clients for rows already in the queue.
+    log::ScopedParamContainer(lc)
+      .add("nrows", nrows)
+      .add("inputRowCount", rowsToInsert.size())
+      .log(log::ERR, "In RelationalDB::queueRetrieve(): enqueued unexpected number of retrieve jobs !");
+  }
+
+  log::ScopedParamContainer(lc)
+    .add("nrows", nrows)
+    .add("totalTime", timeTotal.secs())
+    .log(log::INFO, "In RelationalDB::queueRetrieve(): Finished enqueueing batch.");
+
+  // See the equivalent comment in queueArchive()'s bulk overload: without an explicit commit here,
+  // the dbClientOperationDuration/dbClientResponseReturnedRows telemetry set up by insertBatch()'s
+  // own conn.setDbQuerySummary() call is never emitted, even though the transaction itself still
+  // lands via the connection pool's own implicit, untelemetered commit on return.
+  sqlconn.setRowCountForTelemetry(nrows);
+  sqlconn.commit();
+
+  // Same placeholder convention as queueArchive()'s bulk overload: getIdStr() always returns
+  // "bogus" too (see RetrieveRequest::getIdStr()'s own comment), so there's no need to call it once
+  // per item just to build this.
+  return std::vector<std::string>(batch.size(), "bogus");
 }
 
 void RelationalDB::cancelRetrieve(const std::string& instanceName,
@@ -2436,7 +2617,7 @@ void RelationalDB::resubmitInactiveReporting(uint64_t deletionAge, uint64_t batc
              "In RelationalDB::resubmitInactiveReporting(): Reactivated reports for reporting to disk successfully.");
     } catch (exception::Exception& ex) {
       log::ScopedParamContainer(lc)
-        .add("exceptionMessage", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::ERR,
              "In RelationalDB::resubmitInactiveReporting(): Failed to reactivated reports for reporting to disk.");
       txn.abort();

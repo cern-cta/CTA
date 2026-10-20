@@ -34,6 +34,9 @@ set (CTA_SCHEDULER_OS_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
 include_directories (${CMAKE_BINARY_DIR}/scheduler)
 
 set (CTA_SCHEDULER_PG_SRC_FILES ${CTA_SCHEDULER_SRC_FILES}
+  batching/FrontendBatchingLayer.cpp
+  batching/OpportunisticArchiveBatchQueueing.cpp
+  batching/OpportunisticRetrieveBatchQueueing.cpp
   rdbms/RelationalDB.cpp
   rdbms/ArchiveMount.cpp
   rdbms/ArchiveRdbJob.cpp
@@ -93,6 +96,7 @@ else()
     SchedulerDatabaseFactory.cpp
     SchedulerDatabaseTest.cpp
     RelationalDBSchedulerTest.cpp
+    batching/OpportunisticQueueBatcherTest.cpp
     rdbms/RelationalDBTest.cpp)
 endif()
 

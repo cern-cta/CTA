@@ -528,10 +528,10 @@ public:
     params.add("diskSystemName", diskSystemName.value_or(""));
   }
 
-  static void
+  static uint64_t
   insertBatch(rdbms::Conn& conn, const std::vector<std::unique_ptr<RetrieveJobQueueRow>>& rows, bool isRepack) {
     if (rows.empty()) {
-      return;
+      return 0;
     }
 
     // detect optional columns
@@ -768,10 +768,10 @@ public:
                       static_cast<uint64_t>(row.lifecycleTimings_completed_time));
 
       if (hasDiskSystemName) {
-        stmt.bindString(":DISK_SYSTEM_NAME" + std::to_string(i), row.diskSystemName.value());
+        stmt.bindString(":DISK_SYSTEM_NAME" + std::to_string(i), row.diskSystemName);
       }
       if (hasActivity) {
-        stmt.bindString(":ACTIVITY" + std::to_string(i), row.activity.value());
+        stmt.bindString(":ACTIVITY" + std::to_string(i), row.activity);
       }
       if (hasSrrActivity) {
         stmt.bindString(":SRR_ACTIVITY" + std::to_string(i), row.srrActivity);
@@ -779,6 +779,7 @@ public:
     }
     conn.setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbInsertRetrieve);
     stmt.executeNonQuery();
+    return stmt.getNbAffectedRows();
   }
 
   /**

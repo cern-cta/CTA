@@ -87,6 +87,10 @@ public:
                            const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId& criteria,
                            log::LogContext& logContext) override;
 
+  // The following queueing is used for opportunistic batching of incomung user archive requests
+  std::vector<std::string> queueArchive(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
+                                        log::LogContext& lc) override;
+
   /*
    * Unless otherwise specified, all of the methods that follow are currently just throwing an exception
    * as they are not required for the basic PGSCHED DB Archival functionality
@@ -165,6 +169,9 @@ public:
                 const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
                 const std::optional<std::string>& diskSystemName,
                 log::LogContext& logContext) override;
+
+  std::vector<std::string> queueRetrieve(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
+                                         log::LogContext& lc) override;
 
   void clearStatisticsCache(const std::string& vid) override;
 

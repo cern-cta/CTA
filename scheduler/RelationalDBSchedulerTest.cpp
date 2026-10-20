@@ -18,6 +18,7 @@
 #include "common/dataStructures/RequesterMountRule.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/DummyLogger.hpp"
+#include "common/log/StringLogger.hpp"
 #include "common/utils/Timer.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/LogicalLibrary.hpp"
@@ -32,13 +33,18 @@
 #include "tests/TempFile.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 
+#include <algorithm>
+#include <atomic>
 #include <bits/unique_ptr.h>
 #include <exception>
 #include <gtest/gtest.h>
 #include <memory>
+#include <regex>
+#include <thread>
 #include <utility>
 
 #ifdef CTA_PGSCHED
+#include "scheduler/batching/FrontendBatchingLayer.hpp"
 #include "scheduler/rdbms/RelationalDBTestFactory.hpp"
 #endif
 
@@ -97,6 +103,39 @@ std::ostream& operator<<(std::ostream& os, const SchedulerTestParam& c) {
   }
 }
 
+// Launches `count` threads that all spin-wait on a plain atomic barrier before calling `fn(i)`, so
+// their calls land close enough together to reliably share a batching window, then joins all of
+// them before returning. Deliberately not condition-variable-based: a mutex+condvar version of this
+// barrier was tried first and had an intermittent lost-wakeup bug (the main thread's wait for
+// readyCount==count relied on a notify that nothing reliably sent, so it depended on an OS spurious
+// wakeup to ever proceed) — a busy-poll on an atomic can't lose a wakeup, so there is nothing here
+// for that class of bug to hide in. Matches the equivalent helper in OpportunisticQueueBatcherTest.cpp.
+void runConcurrently(int count, const std::function<void(int)>& fn) {
+  std::atomic<int> readyCount {0};
+  std::atomic<bool> go {false};
+
+  std::vector<std::thread> threads;
+  threads.reserve(count);
+  for (int i = 0; i < count; ++i) {
+    threads.emplace_back([&, i] {
+      ++readyCount;
+      while (!go.load(std::memory_order_acquire)) {
+        std::this_thread::yield();
+      }
+      fn(i);
+    });
+  }
+
+  while (readyCount.load(std::memory_order_acquire) < count) {
+    std::this_thread::yield();
+  }
+  go.store(true, std::memory_order_release);
+
+  for (auto& t : threads) {
+    t.join();
+  }
+}
+
 }  // namespace
 
 /**
@@ -127,8 +166,13 @@ public:
 
     // We do a deep reference to the member as the C++ compiler requires the function to be already defined if called implicitly
     const auto& factory = GetParam().m_dbFactory;
-    const uint64_t nbConns = 1;
-    const uint64_t nbArchiveFileListingConns = 1;
+    // 1 connection was enough while every test in this fixture drove the catalogue from a single
+    // thread. The opportunisticBatching* tests below fire several concurrent callers at once (see
+    // their own comments for why that's fine for production connection pool sizing, unlike here),
+    // so a single connection serializes them down to one at a time — matching production's own
+    // default (cta.catalogue.numberofconnections 10) gives them room to actually run concurrently.
+    const uint64_t nbConns = 10;
+    const uint64_t nbArchiveFileListingConns = 10;
     //m_catalogue = std::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
     m_catalogue = std::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
     // Get the SchedulerDatabase from the factory
@@ -410,6 +454,174 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   }
 }
 
+#ifdef CTA_PGSCHED
+// Opportunistic batching only exists for the postgres scheduler; the fixture's own getScheduler()
+// is built with it disabled (see SetUp() above), so these tests build a second Scheduler instance,
+// sharing the same catalogue/db, with batching enabled and a window wide enough that concurrent
+// callers reliably land in the same batch.
+TEST_P(SchedulerTest, opportunisticBatchingQueuesConcurrentArchiveRequests) {
+  using namespace cta;
+
+  setupDefaultCatalogue();
+  auto& catalogue = getCatalogue();
+  auto& db = getSchedulerDB();
+
+  Scheduler batchingScheduler(catalogue, db, "schedulerBackendName");
+  FrontendBatchingLayer batchingLayer(batchingScheduler,
+                                      /*enableOpportunisticBatching=*/true,
+                                      /*opportunisticBatchingWindowMs=*/200,
+                                      /*opportunisticBatchingMaxBatchSize=*/1000);
+
+  // A StringLogger (rather than DummyLogger) lets us confirm below that requests were genuinely
+  // batched together (batchSize > 1 in at least one resolveArchiveBatch() round), not merely routed
+  // through the batcher one at a time -- resolveArchiveBatch() logs "batchSize" on every round.
+  log::StringLogger dl("dummy", "opportunisticBatchingQueuesConcurrentArchiveRequests", log::INFO);
+  constexpr int nbRequests = 10;
+  std::vector<std::string> results(nbRequests);
+  std::vector<std::exception_ptr> errors(nbRequests);
+
+  runConcurrently(nbRequests, [&](int i) {
+    log::LogContext lc(dl);
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host = "host2";
+    creationLog.time = 0;
+    creationLog.username = "admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid = GROUP_2;
+    diskFileInfo.owner_uid = CMS_USER;
+    diskFileInfo.path = "path/to/file" + std::to_string(i);
+    cta::common::dataStructures::ArchiveRequest request;
+    request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
+    request.creationLog = creationLog;
+    request.diskFileInfo = diskFileInfo;
+    request.diskFileID = "diskFileID" + std::to_string(i);
+    request.fileSize = 1000;
+    cta::common::dataStructures::RequesterIdentity requester;
+    requester.name = s_userName;
+    requester.group = "userGroup";
+    request.requester = requester;
+    request.srcURL = "srcURL";
+    request.storageClass = s_storageClassName;
+    request.archiveReportURL = "test://archive-report-url";
+    request.archiveErrorReportURL = "test://error-report-url";
+
+    try {
+      const uint64_t archiveFileId =
+        batchingScheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
+      results[i] = batchingLayer.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
+    } catch (...) {
+      errors[i] = std::current_exception();
+    }
+  });
+
+  for (int i = 0; i < nbRequests; ++i) {
+    ASSERT_FALSE(errors[i]) << "request " << i << " failed unexpectedly";
+    ASSERT_FALSE(results[i].empty()) << "request " << i << " returned no request id";
+  }
+
+  // Confirm requests were actually batched together, not just individually routed through the
+  // batcher: at least one resolveArchiveBatch() round must have processed more than one item.
+  const std::string capturedLog = dl.getLog();
+  std::smatch match;
+  auto searchStart = capturedLog.cbegin();
+  std::vector<size_t> batchSizesSeen;
+  while (std::regex_search(searchStart, capturedLog.cend(), match, std::regex(R"re(batchSize="(\d+)")re"))) {
+    batchSizesSeen.push_back(static_cast<size_t>(std::stoul(match[1])));
+    searchStart = match.suffix().first;
+  }
+  const size_t maxBatchSizeSeen =
+    batchSizesSeen.empty() ? 0 : *std::max_element(batchSizesSeen.begin(), batchSizesSeen.end());
+  ASSERT_GT(maxBatchSizeSeen, 1u) << "no resolveArchiveBatch() round batched more than one request together, log:\n"
+                                  << capturedLog;
+
+  batchingScheduler.waitSchedulerDbSubthreadsComplete();
+
+  log::LogContext lc(dl);
+  auto rqsts = batchingScheduler.getPendingArchiveJobs(lc);
+  ASSERT_EQ(1, rqsts.size());
+  auto& poolRqsts = rqsts.cbegin()->second;
+  ASSERT_EQ(static_cast<size_t>(nbRequests), poolRqsts.size());
+  std::set<std::string> diskFilePaths;
+  for (auto& r : poolRqsts) {
+    diskFilePaths.insert(r.request.diskFileInfo.path);
+  }
+  ASSERT_EQ(static_cast<size_t>(nbRequests), diskFilePaths.size());
+}
+
+TEST_P(SchedulerTest, opportunisticBatchingIsolatesAPerItemArchiveFailure) {
+  using namespace cta;
+
+  setupDefaultCatalogue();
+  auto& catalogue = getCatalogue();
+  auto& db = getSchedulerDB();
+
+  Scheduler batchingScheduler(catalogue, db, "schedulerBackendName");
+  FrontendBatchingLayer batchingLayer(batchingScheduler,
+                                      /*enableOpportunisticBatching=*/true,
+                                      /*opportunisticBatchingWindowMs=*/200,
+                                      /*opportunisticBatchingMaxBatchSize=*/1000);
+
+  log::DummyLogger dl("", "");
+  constexpr int nbRequests = 5;
+  constexpr int badRequestIndex = 2;
+  std::vector<std::string> results(nbRequests);
+  std::vector<std::exception_ptr> errors(nbRequests);
+
+  runConcurrently(nbRequests, [&](int i) {
+    log::LogContext lc(dl);
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host = "host2";
+    creationLog.time = 0;
+    creationLog.username = "admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid = GROUP_2;
+    diskFileInfo.owner_uid = CMS_USER;
+    diskFileInfo.path = "path/to/file" + std::to_string(i);
+    cta::common::dataStructures::ArchiveRequest request;
+    request.checksumBlob.insert(cta::checksum::ADLER32, "1111");
+    request.creationLog = creationLog;
+    request.diskFileInfo = diskFileInfo;
+    request.diskFileID = "diskFileID" + std::to_string(i);
+    request.fileSize = 1000;
+    cta::common::dataStructures::RequesterIdentity requester;
+    requester.name = s_userName;
+    requester.group = "userGroup";
+    request.requester = requester;
+    request.srcURL = "srcURL";
+    request.archiveReportURL = "test://archive-report-url";
+    request.archiveErrorReportURL = "test://error-report-url";
+
+    try {
+      if (i == badRequestIndex) {
+        // Deliberately bypass checkAndGetNextArchiveFileId(), which already validates the storage
+        // class itself (RdbmsArchiveFileCatalogue::checkAndGetNextArchiveFileId()) — that would fail
+        // this request before it ever reached the batcher, testing nothing about stage 1 isolation
+        // inside resolveArchiveBatch()'s own getArchiveFileQueueCriteria() call. An arbitrary,
+        // unused-elsewhere id is enough to exercise that stage 1 check specifically.
+        request.storageClass = "NoSuchStorageClass";
+        results[i] = batchingLayer.queueArchiveWithGivenId(1000000 + i, s_diskInstance, request, lc);
+      } else {
+        request.storageClass = s_storageClassName;
+        const uint64_t archiveFileId =
+          batchingScheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
+        results[i] = batchingLayer.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
+      }
+    } catch (...) {
+      errors[i] = std::current_exception();
+    }
+  });
+
+  for (int i = 0; i < nbRequests; ++i) {
+    if (i == badRequestIndex) {
+      ASSERT_TRUE(errors[i]) << "the bad request should have failed";
+    } else {
+      ASSERT_FALSE(errors[i]) << "request " << i << " should not have been affected by the bad one";
+      ASSERT_FALSE(results[i].empty());
+    }
+  }
+}
+#endif
+
 TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
   using namespace cta;
 
@@ -641,6 +853,368 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     ASSERT_EQ(0, freeDriveState->currentPriority.value());
   }
 }
+
+#ifdef CTA_PGSCHED
+// See the opportunisticBatching* archive tests above for why this builds a second Scheduler with
+// batching enabled rather than using the fixture's own getScheduler(). Getting files onto tape in
+// the first place is done with the fixture's own (batching-disabled) scheduler, exactly as in
+// archive_report_and_retrieve_new_file above, just for a handful of files instead of one; only the
+// concurrent queueRetrieve() calls at the end go through the batching scheduler.
+TEST_P(SchedulerTest, opportunisticBatchingQueuesConcurrentRetrieveRequests) {
+  using namespace cta;
+
+  setupDefaultCatalogue();
+  auto& catalogue = getCatalogue();
+  Scheduler& scheduler = getScheduler();
+  auto& db = getSchedulerDB();
+
+  log::DummyLogger dl("", "");
+  log::LogContext lc(dl);
+
+  // Must be >= s_minFilesToWarrantAMount (see SetUp() above): getNextMount() otherwise falls back
+  // to an age-based criterion truncated to whole seconds, which can flake depending on whether the
+  // archive-then-mount sequence happens to straddle a wall-clock second boundary.
+  constexpr int nbFiles = 5;
+
+  const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost,
+                                                   s_libraryName,
+                                                   libraryIsDisabled,
+                                                   physicalLibraryName,
+                                                   libraryComment);
+  {
+    auto tape = getDefaultTape();
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
+  }
+  const std::string driveName = "tape_drive";
+  catalogue.Tape()->tapeLabelled(s_vid, driveName);
+
+  std::vector<uint64_t> archiveFileIds(nbFiles);
+  for (int i = 0; i < nbFiles; ++i) {
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host = "host2";
+    creationLog.time = 0;
+    creationLog.username = "admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid = GROUP_2;
+    diskFileInfo.owner_uid = CMS_USER;
+    diskFileInfo.path = "path/to/file" + std::to_string(i);
+    cta::common::dataStructures::ArchiveRequest request;
+    request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+    request.creationLog = creationLog;
+    request.diskFileInfo = diskFileInfo;
+    request.diskFileID = "diskFileID" + std::to_string(i);
+    request.fileSize = 1000;
+    cta::common::dataStructures::RequesterIdentity requester;
+    requester.name = s_userName;
+    requester.group = "userGroup";
+    request.requester = requester;
+    request.srcURL = "srcURL";
+    request.storageClass = s_storageClassName;
+    request.archiveReportURL = "null:archive-report-url";
+    request.archiveErrorReportURL = "null:error-report-url";
+    archiveFileIds[i] =
+      scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
+    scheduler.queueArchiveWithGivenId(archiveFileIds[i], s_diskInstance, request, lc);
+  }
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  // Emulate a tape server: mount, write all nbFiles to tape, report success — same sequence as
+  // archive_report_and_retrieve_new_file above, generalized to a batch of jobs instead of one.
+  {
+    std::unique_ptr<cta::TapeMount> mount;
+    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
+    scheduler.reportDriveStatus(driveInfo,
+                                cta::common::dataStructures::MountType::NoMount,
+                                cta::common::dataStructures::DriveStatus::Down,
+                                lc);
+    scheduler.reportDriveStatus(driveInfo,
+                                cta::common::dataStructures::MountType::NoMount,
+                                cta::common::dataStructures::DriveStatus::Up,
+                                lc);
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
+    ASSERT_NE(nullptr, mount.get());
+    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
+    mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+
+    std::unique_ptr<cta::ArchiveMount> archiveMount;
+    archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
+    ASSERT_NE(nullptr, archiveMount.get());
+    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch =
+      archiveMount->getNextJobBatch(nbFiles, 100 * 1000 * 1000, lc);
+    ASSERT_EQ(static_cast<size_t>(nbFiles), archiveJobBatch.size());
+
+    std::queue<std::unique_ptr<cta::ArchiveJob>> sDBarchiveJobBatch;
+    std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
+    std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
+    uint64_t fSeq = 1;
+    for (auto& archiveJob : archiveJobBatch) {
+      archiveJob->tapeFile.blockId = fSeq;
+      archiveJob->tapeFile.fSeq = fSeq;
+      archiveJob->tapeFile.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+      archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
+      archiveJob->tapeFile.copyNb = 1;
+      archiveJob->validate();
+      sDBarchiveJobBatch.emplace(std::move(archiveJob));
+      ++fSeq;
+    }
+    archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems, failedToReportArchiveJobs, lc);
+    ASSERT_EQ(0u, failedToReportArchiveJobs.size());
+    archiveMount->complete();
+    archiveMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Up);
+  }
+
+  {
+    // Emulate the reporter process reporting successful transfer to tape to the disk system.
+    auto jobsToReport = scheduler.getNextArchiveJobsToReportBatch(nbFiles, lc);
+    ASSERT_EQ(static_cast<size_t>(nbFiles), jobsToReport.size());
+    disk::DiskReporterFactory factory;
+    log::TimingList timings;
+    utils::Timer t;
+    scheduler.reportArchiveJobsBatch(jobsToReport, factory, timings, t, lc);
+  }
+
+  // All nbFiles are now on tape. Fire nbFiles concurrent retrieve requests, one per file, through a
+  // FrontendBatchingLayer with opportunistic batching enabled.
+  Scheduler batchingScheduler(catalogue, db, "schedulerBackendName");
+  FrontendBatchingLayer batchingLayer(batchingScheduler,
+                                      /*enableOpportunisticBatching=*/true,
+                                      /*opportunisticBatchingWindowMs=*/200,
+                                      /*opportunisticBatchingMaxBatchSize=*/1000);
+
+  std::vector<std::string> results(nbFiles);
+  std::vector<std::exception_ptr> errors(nbFiles);
+
+  runConcurrently(nbFiles, [&](int i) {
+    log::LogContext threadLc(dl);
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host = "host2";
+    creationLog.time = 0;
+    creationLog.username = "admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid = GROUP_2;
+    diskFileInfo.owner_uid = CMS_USER;
+    diskFileInfo.path = "path/to/file" + std::to_string(i);
+    cta::common::dataStructures::RetrieveRequest request;
+    request.archiveFileID = archiveFileIds[i];
+    request.creationLog = creationLog;
+    request.diskFileInfo = diskFileInfo;
+    request.dstURL = "dstURL" + std::to_string(i);
+    request.requester.name = s_userName;
+    request.requester.group = "userGroup";
+
+    try {
+      results[i] = batchingLayer.queueRetrieve(s_diskInstance, request, threadLc);
+    } catch (...) {
+      errors[i] = std::current_exception();
+    }
+  });
+
+  for (int i = 0; i < nbFiles; ++i) {
+    ASSERT_FALSE(errors[i]) << "retrieve " << i << " failed unexpectedly";
+    ASSERT_FALSE(results[i].empty()) << "retrieve " << i << " returned no request id";
+  }
+
+  batchingScheduler.waitSchedulerDbSubthreadsComplete();
+
+  auto rqsts = batchingScheduler.getPendingRetrieveJobs(lc);
+  size_t totalJobs = 0;
+  for (auto& [vid, jobs] : rqsts) {
+    totalJobs += jobs.size();
+  }
+  ASSERT_EQ(static_cast<size_t>(nbFiles), totalJobs);
+}
+
+TEST_P(SchedulerTest, opportunisticBatchingIsolatesAPerItemRetrieveFailure) {
+  using namespace cta;
+
+  setupDefaultCatalogue();
+  auto& catalogue = getCatalogue();
+  Scheduler& scheduler = getScheduler();
+  auto& db = getSchedulerDB();
+
+  log::DummyLogger dl("", "");
+  log::LogContext lc(dl);
+
+  constexpr int nbFiles = 5;
+  constexpr int badRequestIndex = 2;
+
+  const std::string libraryComment = "Library comment";
+  const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(s_adminOnAdminHost,
+                                                   s_libraryName,
+                                                   libraryIsDisabled,
+                                                   physicalLibraryName,
+                                                   libraryComment);
+  {
+    auto tape = getDefaultTape();
+    catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
+  }
+  const std::string driveName = "tape_drive";
+  catalogue.Tape()->tapeLabelled(s_vid, driveName);
+
+  std::vector<uint64_t> archiveFileIds(nbFiles);
+  for (int i = 0; i < nbFiles; ++i) {
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host = "host2";
+    creationLog.time = 0;
+    creationLog.username = "admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid = GROUP_2;
+    diskFileInfo.owner_uid = CMS_USER;
+    diskFileInfo.path = "path/to/file" + std::to_string(i);
+    cta::common::dataStructures::ArchiveRequest request;
+    request.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+    request.creationLog = creationLog;
+    request.diskFileInfo = diskFileInfo;
+    request.diskFileID = "diskFileID" + std::to_string(i);
+    request.fileSize = 1000;
+    cta::common::dataStructures::RequesterIdentity requester;
+    requester.name = s_userName;
+    requester.group = "userGroup";
+    request.requester = requester;
+    request.srcURL = "srcURL";
+    request.storageClass = s_storageClassName;
+    request.archiveReportURL = "null:archive-report-url";
+    request.archiveErrorReportURL = "null:error-report-url";
+    archiveFileIds[i] =
+      scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
+    scheduler.queueArchiveWithGivenId(archiveFileIds[i], s_diskInstance, request, lc);
+  }
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  // Emulate a tape server: mount, write all nbFiles to tape, report success — same sequence as
+  // opportunisticBatchingQueuesConcurrentRetrieveRequests above.
+  {
+    std::unique_ptr<cta::TapeMount> mount;
+    cta::common::dataStructures::DriveInfo driveInfo = {driveName, "myHost", s_libraryName, "dummydev", "dummyslot"};
+    scheduler.reportDriveStatus(driveInfo,
+                                cta::common::dataStructures::MountType::NoMount,
+                                cta::common::dataStructures::DriveStatus::Down,
+                                lc);
+    scheduler.reportDriveStatus(driveInfo,
+                                cta::common::dataStructures::MountType::NoMount,
+                                cta::common::dataStructures::DriveStatus::Up,
+                                lc);
+    mount.reset(scheduler.getNextMount(s_libraryName, driveName, lc).release());
+    ASSERT_NE(nullptr, mount.get());
+    ASSERT_EQ(cta::common::dataStructures::MountType::ArchiveForUser, mount.get()->getMountType());
+    mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
+
+    std::unique_ptr<cta::ArchiveMount> archiveMount;
+    archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
+    ASSERT_NE(nullptr, archiveMount.get());
+    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch =
+      archiveMount->getNextJobBatch(nbFiles, 100 * 1000 * 1000, lc);
+    ASSERT_EQ(static_cast<size_t>(nbFiles), archiveJobBatch.size());
+
+    std::queue<std::unique_ptr<cta::ArchiveJob>> sDBarchiveJobBatch;
+    std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
+    std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
+    uint64_t fSeq = 1;
+    for (auto& archiveJob : archiveJobBatch) {
+      archiveJob->tapeFile.blockId = fSeq;
+      archiveJob->tapeFile.fSeq = fSeq;
+      archiveJob->tapeFile.checksumBlob.insert(cta::checksum::ADLER32, 0x1234abcd);
+      archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
+      archiveJob->tapeFile.copyNb = 1;
+      archiveJob->validate();
+      sDBarchiveJobBatch.emplace(std::move(archiveJob));
+      ++fSeq;
+    }
+    archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems, failedToReportArchiveJobs, lc);
+    ASSERT_EQ(0u, failedToReportArchiveJobs.size());
+    archiveMount->complete();
+    archiveMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Up);
+  }
+
+  {
+    // Emulate the reporter process reporting successful transfer to tape to the disk system.
+    auto jobsToReport = scheduler.getNextArchiveJobsToReportBatch(nbFiles, lc);
+    ASSERT_EQ(static_cast<size_t>(nbFiles), jobsToReport.size());
+    disk::DiskReporterFactory factory;
+    log::TimingList timings;
+    utils::Timer t;
+    scheduler.reportArchiveJobsBatch(jobsToReport, factory, timings, t, lc);
+  }
+
+  // All nbFiles are now on tape. Fire nbFiles concurrent retrieve requests, one per file, through a
+  // FrontendBatchingLayer with opportunistic batching enabled. badRequestIndex uses an archive file ID
+  // that was never archived, exercising resolveRetrieveBatch()'s stage 1 isolation (same pattern as
+  // opportunisticBatchingIsolatesAPerItemArchiveFailure): that one request must fail on its own
+  // without affecting the others sharing its batch.
+  Scheduler batchingScheduler(catalogue, db, "schedulerBackendName");
+  FrontendBatchingLayer batchingLayer(batchingScheduler,
+                                      /*enableOpportunisticBatching=*/true,
+                                      /*opportunisticBatchingWindowMs=*/200,
+                                      /*opportunisticBatchingMaxBatchSize=*/1000);
+
+  // A StringLogger lets us confirm below that the bad request shared a genuine multi-item batch with
+  // the good ones, rather than isolation only ever being exercised one request at a time.
+  log::StringLogger batchingLog("dummy", "opportunisticBatchingIsolatesAPerItemRetrieveFailure", log::INFO);
+  std::vector<std::string> results(nbFiles);
+  std::vector<std::exception_ptr> errors(nbFiles);
+
+  runConcurrently(nbFiles, [&](int i) {
+    log::LogContext threadLc(batchingLog);
+    cta::common::dataStructures::EntryLog creationLog;
+    creationLog.host = "host2";
+    creationLog.time = 0;
+    creationLog.username = "admin1";
+    cta::common::dataStructures::DiskFileInfo diskFileInfo;
+    diskFileInfo.gid = GROUP_2;
+    diskFileInfo.owner_uid = CMS_USER;
+    diskFileInfo.path = "path/to/file" + std::to_string(i);
+    cta::common::dataStructures::RetrieveRequest request;
+    request.archiveFileID = (i == badRequestIndex) ? 999999999UL : archiveFileIds[i];
+    request.creationLog = creationLog;
+    request.diskFileInfo = diskFileInfo;
+    request.dstURL = "dstURL" + std::to_string(i);
+    request.requester.name = s_userName;
+    request.requester.group = "userGroup";
+
+    try {
+      results[i] = batchingLayer.queueRetrieve(s_diskInstance, request, threadLc);
+    } catch (...) {
+      errors[i] = std::current_exception();
+    }
+  });
+
+  for (int i = 0; i < nbFiles; ++i) {
+    if (i == badRequestIndex) {
+      ASSERT_TRUE(errors[i]) << "the bad request should have failed";
+    } else {
+      ASSERT_FALSE(errors[i]) << "retrieve " << i << " should not have been affected by the bad one";
+      ASSERT_FALSE(results[i].empty()) << "retrieve " << i << " returned no request id";
+    }
+  }
+
+  const std::string capturedLog = batchingLog.getLog();
+  std::smatch match;
+  auto searchStart = capturedLog.cbegin();
+  size_t maxBatchSizeSeen = 0;
+  while (std::regex_search(searchStart, capturedLog.cend(), match, std::regex(R"re(batchSize="(\d+)")re"))) {
+    maxBatchSizeSeen = std::max(maxBatchSizeSeen, static_cast<size_t>(std::stoul(match[1])));
+    searchStart = match.suffix().first;
+  }
+  ASSERT_GT(maxBatchSizeSeen, 1u) << "no resolveRetrieveBatch() round batched more than one request together, "
+                                     "so the bad request's isolation from the others was never actually tested "
+                                     "within a shared batch, log:\n"
+                                  << capturedLog;
+
+  batchingScheduler.waitSchedulerDbSubthreadsComplete();
+
+  auto rqsts = batchingScheduler.getPendingRetrieveJobs(lc);
+  size_t totalJobs = 0;
+  for (auto& [vid, jobs] : rqsts) {
+    totalJobs += jobs.size();
+  }
+  ASSERT_EQ(static_cast<size_t>(nbFiles - 1), totalJobs);
+}
+#endif
 
 TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_policy) {
   using namespace cta;

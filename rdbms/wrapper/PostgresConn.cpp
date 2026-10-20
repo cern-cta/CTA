@@ -392,6 +392,13 @@ std::vector<std::string> PostgresConn::getTypeNames() {
       JOIN pg_namespace n ON n.oid = t.typnamespace
     WHERE
       n.nspname = current_schema()
+      -- Excludes the auto-generated array companion Postgres creates for every base type (e.g.
+      -- "_retrieve_job_status" for "retrieve_job_status"): it can never be dropped independently of
+      -- its base type (DROP TYPE on it fails outright, CASCADE included), and dropping the base type
+      -- already takes it along, so callers enumerating types to drop must never see it in this list.
+      AND NOT EXISTS (
+        SELECT 1 FROM pg_type et WHERE et.typarray = t.oid
+      )
   )SQL";
   auto stmt = createStmt(sql);
   auto rset = stmt->executeQuery();

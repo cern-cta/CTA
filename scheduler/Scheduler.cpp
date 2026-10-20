@@ -143,6 +143,7 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
       + request.diskFileInfo.path);
   }
 
+  // File-by-file scheme (objectstore always; pgsched when batching is disabled in FrontendBatchingLayer).
   const auto queueCriteria =
     m_catalogue.ArchiveFile()->getArchiveFileQueueCriteria(instanceName, request.storageClass, request.requester);
   auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
@@ -204,6 +205,7 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
   using utils::midEllipsis;
   using utils::postEllipsis;
   utils::Timer t;
+
   // Get the queue criteria
   common::dataStructures::RetrieveFileQueueCriteria queueCriteria;
 
@@ -3369,6 +3371,10 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
 
 cta::catalogue::Catalogue& Scheduler::getCatalogue() {
   return m_catalogue;
+}
+
+SchedulerDatabase& Scheduler::getDb() {
+  return m_db;
 }
 
 }  // namespace cta

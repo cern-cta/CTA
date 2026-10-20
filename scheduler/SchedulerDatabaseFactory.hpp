@@ -62,6 +62,11 @@ public:
     return m_SchedDB->queueArchive(instanceName, request, criteria, logContext);
   }
 
+  std::vector<std::string> queueArchive(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
+                                        log::LogContext& lc) override {
+    return m_SchedDB->queueArchive(batch, lc);
+  };
+
   void deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& cliIdentity,
                              const std::string& remoteFile) override {
     m_SchedDB->deleteRetrieveRequest(cliIdentity, remoteFile);
@@ -262,6 +267,11 @@ public:
                 const std::optional<std::string>& diskSystemName,
                 log::LogContext& logContext) override {
     return m_SchedDB->queueRetrieve(rqst, criteria, diskSystemName, logContext);
+  }
+
+  std::vector<std::string> queueRetrieve(std::vector<cta::common::dataStructures::RetrieveInsertQueueItem>& batch,
+                                         log::LogContext& lc) override {
+    return m_SchedDB->queueRetrieve(batch, lc);
   }
 
   void cancelArchive(const common::dataStructures::DeleteArchiveRequest& request, log::LogContext& lc) override {

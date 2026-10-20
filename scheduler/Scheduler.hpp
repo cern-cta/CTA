@@ -31,15 +31,20 @@
 #include "disk/DiskFile.hpp"
 #include "disk/DiskReporter.hpp"
 #include "disk/DiskReporterFactory.hpp"
+#include "disk/DiskSystem.hpp"
 #include "scheduler/IScheduler.hpp"
 #include "scheduler/RepackRequest.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "taped/daemon/common/TapedConfiguration.hpp"
 
+#include <chrono>
+#include <future>
 #include <list>
 #include <map>
 #include <memory>
+#include <mutex>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -78,8 +83,6 @@ public:
             const std::string& schedulerBackendName,
             const uint64_t minFilesToWarrantAMount = 5,
             const uint64_t minBytesToWarrantAMount = 2000000);
-  // TODO: we have out the mount policy parameters here temporarily we will
-  // remove them once we know where to put them
 
   /**
    * Destructor.
@@ -584,6 +587,7 @@ public:
   double getRepackRequestExpansionTimeLimit() const;
 
   cta::catalogue::Catalogue& getCatalogue();
+  SchedulerDatabase& getDb();
 
 private:
   /**
@@ -601,7 +605,6 @@ private:
   const uint64_t m_minBytesToWarrantAMount;
 
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
-
   /**
    * Forbidden tape state transitions when connected to a repack-only Scheduler DB
    */
