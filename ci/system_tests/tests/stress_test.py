@@ -62,7 +62,9 @@ def stress_params(test_config: TestConfig, request: pytest.FixtureRequest) -> St
     prequeue_enabled = cli_prequeue_enabled if cli_prequeue_enabled is not None else prequeue_config["enabled"]
 
     cli_prequeue_fraction = request.config.getoption("--stress-prequeue-fraction")
-    prequeue_fraction = cli_prequeue_fraction if cli_prequeue_fraction is not None else prequeue_config["prequeue_fraction"]
+    prequeue_fraction = (
+        cli_prequeue_fraction if cli_prequeue_fraction is not None else prequeue_config["prequeue_fraction"]
+    )
 
     eos_queue_rate_hz = prequeue_config["eos_queue_rate_hz"]
     timeout_margin_factor = prequeue_config["timeout_margin_factor"]
