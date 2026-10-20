@@ -160,10 +160,12 @@ void VirtualDrive::spaceToEOM() {
 }
 
 void VirtualDrive::spaceFileMarksBackwards(size_t count) {
-  if (!count) return;
+  if (!count) {
+    return;
+  }
   size_t countdown = count;
   std::vector<std::string>::size_type i = 0;
-  for (i = m_currentPosition; i != (std::vector<std::string>::size_type)-1 && countdown != 0; i--) {
+  for (i = m_currentPosition; i != (std::vector<std::string>::size_type) - 1 && countdown != 0; i--) {
     if (!m_tape[i].data.compare(filemark)) {
       countdown--;
     }
@@ -175,7 +177,9 @@ void VirtualDrive::spaceFileMarksBackwards(size_t count) {
 }
 
 void VirtualDrive::spaceFileMarksForward(size_t count) {
-  if (!count) return;
+  if (!count) {
+    return;
+  }
   size_t countdown = count;
   std::vector<std::string>::size_type i = 0;
   for (i = m_currentPosition; i != m_tape.size() && countdown != 0; i++) {
@@ -205,7 +209,9 @@ uint64_t VirtualDrive::getRemainingSpace(uint32_t currentPosition) {
 }
 
 void VirtualDrive::writeSyncFileMarks(size_t count) {
-  if (count == 0) return;
+  if (count == 0) {
+    return;
+  }
   m_tape.resize(m_currentPosition + count);
   for (size_t i = 0; i < count; ++i) {
     m_tape.at(m_currentPosition).data = filemark;
@@ -305,35 +311,45 @@ void VirtualDrive::queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, 
 }
 
 std::map<std::string, uint64_t> VirtualDrive::getTapeWriteErrors() {
-  return {{"mountTotalCorrectedWriteErrors", 0},
-          {"mountTotalWriteBytesProcessed", 0},
-          {"mountTotalUncorrectedWriteErrors", 0}};
+  return {
+    {"mountTotalCorrectedWriteErrors",   0},
+    {"mountTotalWriteBytesProcessed",    0},
+    {"mountTotalUncorrectedWriteErrors", 0}
+  };
 }
 
 std::map<std::string, uint64_t> VirtualDrive::getTapeReadErrors() {
-  return {{"mountTotalCorrectedReadErrors", 0},
-          {"mountTotalReadBytesProcessed", 0},
-          {"mountTotalUncorrectedReadErrors", 0}};
+  return {
+    {"mountTotalCorrectedReadErrors",   0},
+    {"mountTotalReadBytesProcessed",    0},
+    {"mountTotalUncorrectedReadErrors", 0}
+  };
 }
 
 std::map<std::string, uint32_t> VirtualDrive::getTapeNonMediumErrors() {
-  return {{"mountTotalNonMediumErrorCounts", 0}};
+  return {
+    {"mountTotalNonMediumErrorCounts", 0}
+  };
 }
 
 std::map<std::string, float> VirtualDrive::getQualityStats() {
-  return {{"lifetimeMediumEfficiencyPrct", 100.0f},
-          {"mountReadEfficiencyPrct", 100.0f},
-          {"mountWriteEfficiencyPrct", 100.0f}};
+  return {
+    {"lifetimeMediumEfficiencyPrct", 100.0f},
+    {"mountReadEfficiencyPrct",      100.0f},
+    {"mountWriteEfficiencyPrct",     100.0f}
+  };
 }
 
 std::map<std::string, uint32_t> VirtualDrive::getDriveStats() {
-  return {{"mountTemps", 0},
-          {"mountReadTransients", 0},
-          {"mountWriteTransients", 0},
-          {"mountTotalReadRetries", 0},
-          {"mountTotalWriteRetries", 0},
-          {"mountServoTemps", 0},
-          {"mountServoTransients", 0}};
+  return {
+    {"mountTemps",             0},
+    {"mountReadTransients",    0},
+    {"mountWriteTransients",   0},
+    {"mountTotalReadRetries",  0},
+    {"mountTotalWriteRetries", 0},
+    {"mountServoTemps",        0},
+    {"mountServoTransients",   0}
+  };
 }
 
 std::string VirtualDrive::getDriveFirmwareVersion() {

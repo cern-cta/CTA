@@ -1484,7 +1484,7 @@ class TestRuntimeDeployment:
             stripped_line = line.strip()
             if not stripped_line or stripped_line.startswith("#"):
                 continue
-            parts = stripped_line.split(None, 3)
+            parts = stripped_line.split(None, 2)
             if len(parts) < 3:
                 continue
             cat, key, val = parts[0], parts[1], parts[2]

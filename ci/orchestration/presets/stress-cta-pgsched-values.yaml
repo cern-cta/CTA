@@ -169,15 +169,8 @@ taped:
     taped:
       # Keep enough files in flight to support the larger scheduler/reporting batches below.
       bufferCount: 10000
-      # Each disk thread opens/reads/closes one EOS file via XRootD (~1-3ms per file).
-      # DiskReadThreadPool is per drive session, so this value scales with drive count.
-      # For mhvtl/real-hardware tests with few drives, 40 threads per drive is fine.
-      # Overridden to 2 by stress-stressdrives-pgsched-values.yaml for StressDrive tests
-      # where 30 drives × 40 threads would saturate the EOS FSTs (see that file).
-      nbDiskThreads: 40
       # Avoid verbose tape-operation logs dominating the small-file workload.
       logMask: "WARNING"
-      # Overridden to 2 by stress-stressdrives-pgsched-values.yaml (applied after this file).
       schedulerNumberOfConnections: 3
 
 maintd:

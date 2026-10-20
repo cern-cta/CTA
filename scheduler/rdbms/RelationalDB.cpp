@@ -2551,11 +2551,10 @@ void RelationalDB::resubmitInactiveReporting(uint64_t deletionAge, uint64_t batc
     const char* lockName;
     const char* sql;
   };
+
   static const TableSpec specs[] = {
-    {
-      "ARCHIVE_ACTIVE_QUEUE",
-      "ARCHIVE_ACTIVE_QUEUE_resubmitInactiveReporting",
-      R"SQL(
+    {"ARCHIVE_ACTIVE_QUEUE",
+     "ARCHIVE_ACTIVE_QUEUE_resubmitInactiveReporting",  R"SQL(
         WITH SET_SELECTION AS (
           SELECT JOB_ID FROM ARCHIVE_ACTIVE_QUEUE
           WHERE IS_REPORTING IS TRUE
@@ -2565,12 +2564,9 @@ void RelationalDB::resubmitInactiveReporting(uint64_t deletionAge, uint64_t batc
         UPDATE ARCHIVE_ACTIVE_QUEUE SET IS_REPORTING = FALSE
           FROM SET_SELECTION
           WHERE ARCHIVE_ACTIVE_QUEUE.JOB_ID = SET_SELECTION.JOB_ID
-      )SQL"
-    },
-    {
-      "RETRIEVE_ACTIVE_QUEUE",
-      "RETRIEVE_ACTIVE_QUEUE_resubmitInactiveReporting",
-      R"SQL(
+      )SQL"},
+    {"RETRIEVE_ACTIVE_QUEUE",
+     "RETRIEVE_ACTIVE_QUEUE_resubmitInactiveReporting", R"SQL(
         WITH SET_SELECTION AS (
           SELECT JOB_ID FROM RETRIEVE_ACTIVE_QUEUE
           WHERE IS_REPORTING IS TRUE
@@ -2580,8 +2576,7 @@ void RelationalDB::resubmitInactiveReporting(uint64_t deletionAge, uint64_t batc
         UPDATE RETRIEVE_ACTIVE_QUEUE SET IS_REPORTING = FALSE
           FROM SET_SELECTION
           WHERE RETRIEVE_ACTIVE_QUEUE.JOB_ID = SET_SELECTION.JOB_ID
-      )SQL"
-    },
+      )SQL"},
   };
 
   const uint64_t olderThanTimestamp = (uint64_t) cta::utils::getCurrentEpochTime() - deletionAge;

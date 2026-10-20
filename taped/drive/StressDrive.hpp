@@ -117,14 +117,14 @@ public:
 
   // Per-media-type properties derived from library.toml at construction time.
   struct MediaTypeInfo {
-    uint64_t capacityBytes   = std::numeric_limits<uint64_t>::max();
-    uint32_t mountDelayMs    = 0;
+    uint64_t capacityBytes = std::numeric_limits<uint64_t>::max();
+    uint32_t mountDelayMs = 0;
     // Natural drive speed for adaptive-mirror mode, in files/sec.
     // The sleep fires once per file (at HDR1), so maxWriteRateHz is the
     // direct file-rate ceiling — no block-count divisor needed.
     // When the queue is slow, the drive mirrors that rate; when fast, the
     // drive caps at this value.  0 = disabled (write at RAM speed).
-    uint32_t maxWriteRateHz  = 0;
+    uint32_t maxWriteRateHz = 0;
   };
 
 private:
@@ -146,7 +146,7 @@ private:
   std::chrono::steady_clock::time_point m_lastWriteBlockTime;
 
   // Magic word and format version written at the beginning of each .tape file.
-  static constexpr uint32_t k_magic = 0x43544150;   // 'CTAP'
+  static constexpr uint32_t k_magic = 0x43544150;  // 'CTAP'
   static constexpr uint32_t k_version = 1;
 
   // Serialise m_tape to m_currentTapePath via an atomic tmp+rename.

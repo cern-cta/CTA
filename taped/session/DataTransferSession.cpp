@@ -628,10 +628,9 @@ cta::tape::drive::DriveInterface* cta::tape::daemon::DataTransferSession::findDr
   // Drives must be registered in the catalogue with devFilename = "stress://".
   if (m_dataTransferConfig.stressMode) {
     try {
-      auto drive = std::make_unique<cta::tape::drive::StressDrive>(
-        m_driveInfo.driveName,
-        m_driveInfo.logicalLibrary,
-        m_dataTransferConfig.stressBaseDir);
+      auto drive = std::make_unique<cta::tape::drive::StressDrive>(m_driveInfo.driveName,
+                                                                   m_driveInfo.logicalLibrary,
+                                                                   m_dataTransferConfig.stressBaseDir);
       drive->info = m_driveInfo;
       return drive.release();
     } catch (cta::exception::Exception& ex) {

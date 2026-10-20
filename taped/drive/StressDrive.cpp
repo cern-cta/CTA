@@ -57,18 +57,16 @@ void StressDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
   for (const auto& entry : std::filesystem::directory_iterator(driveDir)) {
     if (entry.path().extension() == ".tape") {
       if (!tapeFile.empty()) {
-        throw cta::exception::Exception(
-          "StressDrive::waitUntilReady: multiple .tape files in " + driveDir.string() +
-          " — only one tape can be mounted at a time");
+        throw cta::exception::Exception("StressDrive::waitUntilReady: multiple .tape files in " + driveDir.string()
+                                        + " — only one tape can be mounted at a time");
       }
       tapeFile = entry.path();
     }
   }
   if (tapeFile.empty()) {
-    throw cta::exception::Exception(
-      "StressDrive::waitUntilReady: no tape mounted on drive \"" + m_driveName +
-      "\" — no *.tape file found in " + driveDir.string() +
-      "; MediaChangerFacade::mountTape* must be called before waitUntilReady");
+    throw cta::exception::Exception("StressDrive::waitUntilReady: no tape mounted on drive \"" + m_driveName
+                                    + "\" — no *.tape file found in " + driveDir.string()
+                                    + "; MediaChangerFacade::mountTape* must be called before waitUntilReady");
   }
 
   const std::string vid = tapeFile.stem().string();
@@ -81,8 +79,8 @@ void StressDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
     std::this_thread::sleep_for(std::chrono::milliseconds(info.mountDelayMs));
   }
 
-  m_tapeCapacity       = info.capacityBytes;
-  m_maxWriteRateHz     = info.maxWriteRateHz;
+  m_tapeCapacity = info.capacityBytes;
+  m_maxWriteRateHz = info.maxWriteRateHz;
   m_lastWriteBlockTime = {};  // reset adaptive-rate state for this tape session
 
   loadTape(tapeFile);
@@ -119,6 +117,7 @@ void StressDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
       char lbpMethod[2];
       char lblStandard[1];
     };
+
     static_assert(sizeof(RawVOL1) == 80, "VOL1 must be exactly 80 bytes");
 
     RawVOL1 vol1;
@@ -154,9 +153,9 @@ void StressDrive::writeBlock(const void* data, size_t count) {
   // boundary and none between the blocks that belong to the same file.
   if (m_maxWriteRateHz > 0 && count >= 4 && std::memcmp(data, "HDR1", 4) == 0) {
     const auto now = std::chrono::steady_clock::now();
-    if (m_lastWriteBlockTime != std::chrono::steady_clock::time_point{}) {
+    if (m_lastWriteBlockTime != std::chrono::steady_clock::time_point {}) {
       const auto elapsed = now - m_lastWriteBlockTime;
-      const std::chrono::nanoseconds minInterval{1'000'000'000LL / m_maxWriteRateHz};
+      const std::chrono::nanoseconds minInterval {1'000'000'000LL / m_maxWriteRateHz};
       // Queue-limited: elapsed > minInterval — sleep mirrors inter-file arrival gap
       // so the drive never appears idle on monitoring.
       // Drive-limited: elapsed < minInterval — sleep equals minInterval, capping
@@ -174,16 +173,11 @@ void StressDrive::saveTape() const {
   {
     std::ofstream f(tmpPath, std::ios::binary | std::ios::trunc);
     if (!f) {
-      throw cta::exception::Exception(
-        "StressDrive::saveTape: cannot open " + tmpPath.string() + " for writing");
+      throw cta::exception::Exception("StressDrive::saveTape: cannot open " + tmpPath.string() + " for writing");
     }
 
-    const auto write32 = [&](uint32_t v) {
-      f.write(reinterpret_cast<const char*>(&v), sizeof(v));
-    };
-    const auto write64 = [&](uint64_t v) {
-      f.write(reinterpret_cast<const char*>(&v), sizeof(v));
-    };
+    const auto write32 = [&](uint32_t v) { f.write(reinterpret_cast<const char*>(&v), sizeof(v)); };
+    const auto write64 = [&](uint64_t v) { f.write(reinterpret_cast<const char*>(&v), sizeof(v)); };
 
     write32(k_magic);
     write32(k_version);
@@ -199,9 +193,8 @@ void StressDrive::saveTape() const {
 
     if (!f) {
       std::filesystem::remove(tmpPath);
-      throw cta::exception::Exception(
-        "StressDrive::saveTape: I/O error writing " + tmpPath.string() +
-        " (disk full? check shared volume space)");
+      throw cta::exception::Exception("StressDrive::saveTape: I/O error writing " + tmpPath.string()
+                                      + " (disk full? check shared volume space)");
     }
   }
 
@@ -219,30 +212,22 @@ void StressDrive::loadTape(const std::filesystem::path& tapePath) {
 
   std::ifstream f(tapePath, std::ios::binary);
   if (!f) {
-    throw cta::exception::Exception(
-      "StressDrive::loadTape: cannot open " + tapePath.string() + " for reading");
+    throw cta::exception::Exception("StressDrive::loadTape: cannot open " + tapePath.string() + " for reading");
   }
 
-  const auto read32 = [&](uint32_t& v) {
-    f.read(reinterpret_cast<char*>(&v), sizeof(v));
-  };
-  const auto read64 = [&](uint64_t& v) {
-    f.read(reinterpret_cast<char*>(&v), sizeof(v));
-  };
+  const auto read32 = [&](uint32_t& v) { f.read(reinterpret_cast<char*>(&v), sizeof(v)); };
+  const auto read64 = [&](uint64_t& v) { f.read(reinterpret_cast<char*>(&v), sizeof(v)); };
 
   uint32_t magic = 0, version = 0;
   read32(magic);
   read32(version);
   if (!f || magic != k_magic) {
-    throw cta::exception::Exception(
-      "StressDrive::loadTape: " + tapePath.string() +
-      " has wrong magic (got " + std::to_string(magic) +
-      ", expected " + std::to_string(k_magic) + ")");
+    throw cta::exception::Exception("StressDrive::loadTape: " + tapePath.string() + " has wrong magic (got "
+                                    + std::to_string(magic) + ", expected " + std::to_string(k_magic) + ")");
   }
   if (version != k_version) {
-    throw cta::exception::Exception(
-      "StressDrive::loadTape: " + tapePath.string() +
-      " has unsupported version " + std::to_string(version));
+    throw cta::exception::Exception("StressDrive::loadTape: " + tapePath.string() + " has unsupported version "
+                                    + std::to_string(version));
   }
 
   while (f.peek() != std::char_traits<char>::eof()) {
@@ -258,8 +243,7 @@ void StressDrive::loadTape(const std::filesystem::path& tapePath) {
     }
     read64(block.remainingSpaceAfter);
     if (!f) {
-      throw cta::exception::Exception(
-        "StressDrive::loadTape: truncated block in " + tapePath.string());
+      throw cta::exception::Exception("StressDrive::loadTape: truncated block in " + tapePath.string());
     }
     m_tape.push_back(std::move(block));
   }
@@ -272,23 +256,34 @@ void StressDrive::parseLibraryConf() {
   try {
     tbl = toml::parse_file(confPath.string());
   } catch (const toml::parse_error& e) {
-    throw cta::exception::Exception(
-      "StressDrive: failed to parse " + confPath.string() + ": " +
-      std::string(e.description()));
+    throw cta::exception::Exception("StressDrive: failed to parse " + confPath.string() + ": "
+                                    + std::string(e.description()));
   }
 
   const auto* mediaTypes = tbl["library"]["mediaTypes"].as_array();
-  if (!mediaTypes) return;
+  if (!mediaTypes) {
+    return;
+  }
 
   for (const auto& entry : *mediaTypes) {
     const auto* mt = entry.as_table();
-    if (!mt) continue;
+    if (!mt) {
+      continue;
+    }
     const auto prefix = (*mt)["vidPrefix"].value<std::string>();
-    if (!prefix) continue;
+    if (!prefix) {
+      continue;
+    }
     MediaTypeInfo info;
-    if (auto cap   = (*mt)["capacityBytes"].value<uint64_t>())  info.capacityBytes  = *cap;
-    if (auto delay = (*mt)["mountDelayMs"].value<int64_t>())    info.mountDelayMs   = static_cast<uint32_t>(*delay);
-    if (auto rate  = (*mt)["maxWriteRateHz"].value<int64_t>())  info.maxWriteRateHz = static_cast<uint32_t>(*rate);
+    if (auto cap = (*mt)["capacityBytes"].value<uint64_t>()) {
+      info.capacityBytes = *cap;
+    }
+    if (auto delay = (*mt)["mountDelayMs"].value<int64_t>()) {
+      info.mountDelayMs = static_cast<uint32_t>(*delay);
+    }
+    if (auto rate = (*mt)["maxWriteRateHz"].value<int64_t>()) {
+      info.maxWriteRateHz = static_cast<uint32_t>(*rate);
+    }
     m_mediaTypes[*prefix] = info;
   }
 }
@@ -300,7 +295,7 @@ StressDrive::MediaTypeInfo StressDrive::infoForVid(const std::string& vid) const
   for (const auto& [prefix, info] : m_mediaTypes) {
     if (vid.rfind(prefix, 0) == 0 && prefix.size() > bestPrefix.size()) {
       bestPrefix = prefix;
-      best       = info;
+      best = info;
     }
   }
   return best;

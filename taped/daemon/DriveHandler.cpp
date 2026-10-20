@@ -6,8 +6,6 @@
 #include "DriveHandler.hpp"
 
 #include "DriveHandlerProxy.hpp"
-#include "mediachanger/MediaChangerFacade.hpp"
-#include "mediachanger/RmcProxy.hpp"
 #include "DriveHandlerStateReporter.hpp"
 #include "TapedProxy.hpp"
 #include "catalogue/Catalogue.hpp"
@@ -16,6 +14,8 @@
 #include "common/exception/Errnum.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/process/ProcessCap.hpp"
+#include "mediachanger/MediaChangerFacade.hpp"
+#include "mediachanger/RmcProxy.hpp"
 #include "rdbms/Login.hpp"
 #include "taped/session/CleanerSession.hpp"
 #include "taped/session/DataTransferSession.hpp"
