@@ -76,16 +76,15 @@ library:
       # (clear drop on 1-minute graphs) while remaining a small fraction of a
       # 53-minute tape session (~0.16% overhead per remount).
       mountDelayMs: 5000
-      # Adaptive-mirror mode: natural drive speed in writeBlock calls/second.
-      # Each small CTA test file triggers ~5 writeBlock calls (HDR1 + HDR2 +
-      # 1 data block + EOF1 + EOF2), so the effective file rate ceiling is
-      # approximately maxWriteRateHz / 5.
-      # 1 000 calls/sec → ~200 files/sec per drive.  With 30 drives this is
-      # ~6 000 files/sec total, above the frontend ceiling of ~3.8 kHz with
-      # 5 FSTs, so drives are always in the queue-limited regime.
+      # Adaptive-mirror mode: natural drive speed in files/sec.
+      # The sleep fires once per file (at the HDR1 label block), so this value
+      # is the direct file-rate ceiling — no block-count divisor needed.
+      # 1 000 files/sec per drive × 30 drives = 30 000 files/sec total, well
+      # above the observed frontend ceiling of ~1.3 kHz, so drives are always
+      # in the queue-limited regime.
       # In queue-limited regime the drive mirrors the arrival rate: it sleeps
-      # for the inter-arrival interval so it appears continuously writing and
-      # never shows as idle/starving on monitoring.  When the queue feeds
+      # for the inter-file arrival interval so it appears continuously writing
+      # and never shows as idle/starving on monitoring.  When the queue feeds
       # faster than maxWriteRateHz, the drive caps at its natural speed.
       # Set to 0 to disable adaptive mode and write at RAM speed.
       maxWriteRateHz: 1000

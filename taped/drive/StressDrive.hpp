@@ -96,16 +96,19 @@ public:
    * Adaptive-mirror write: the drive always appears busy, mirroring the
    * archive queue arrival rate.
    *
-   * On each call, sleeps for max(minInterval, elapsed) where:
-   *   minInterval = 1 / maxWriteRateHz  (natural drive speed)
-   *   elapsed     = time since the previous writeBlock call (inter-arrival interval)
+   * Sleeps once per file, at the HDR1 block (the first block of every ANSI
+   * tape file), for max(minInterval, elapsed) where:
+   *   minInterval = 1 / maxWriteRateHz  (natural drive speed, in files/sec)
+   *   elapsed     = time since the HDR1 of the previous file
    *
-   * Queue-limited regime (elapsed > minInterval): sleep equals the inter-arrival
-   * gap so the drive processes at exactly the queue rate and never appears idle.
+   * All other blocks within the same file are written without any sleep.
+   *
+   * Queue-limited regime (elapsed > minInterval): sleep equals the inter-file
+   * arrival gap so the drive processes at exactly the queue rate and never
+   * appears idle on monitoring.
    *
    * Drive-limited regime (elapsed < minInterval): sleep equals minInterval,
-   * capping throughput at maxWriteRateHz.  No adaptation needed — the drive
-   * simply runs at its natural speed.
+   * capping throughput at maxWriteRateHz files/sec.
    *
    * Enabled only when MediaTypeInfo::maxWriteRateHz > 0 (set via library.toml
    * maxWriteRateHz field).  Disabled (write at RAM speed) when 0.
@@ -116,10 +119,9 @@ public:
   struct MediaTypeInfo {
     uint64_t capacityBytes   = std::numeric_limits<uint64_t>::max();
     uint32_t mountDelayMs    = 0;
-    // Natural drive speed for adaptive-mirror mode (writeBlock calls/second).
-    // Each small CTA test file triggers ~5 writeBlock calls (two header
-    // labels + 1 data block + two trailer labels), so the effective file
-    // throughput ceiling is approximately maxWriteRateHz / 5.
+    // Natural drive speed for adaptive-mirror mode, in files/sec.
+    // The sleep fires once per file (at HDR1), so maxWriteRateHz is the
+    // direct file-rate ceiling — no block-count divisor needed.
     // When the queue is slow, the drive mirrors that rate; when fast, the
     // drive caps at this value.  0 = disabled (write at RAM speed).
     uint32_t maxWriteRateHz  = 0;
