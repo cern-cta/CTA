@@ -53,10 +53,11 @@ taped:
       # the EOS FSTs (5 × 256 = 1280 max threads) are saturated by disk reads alone,
       # causing each read to stall for seconds.  The adaptive mirror in StressDrive
       # then sleeps for that same inter-block elapsed time, compounding the slowdown
-      # to ~25 s/file.  Two threads suffice: one reads file N+1 while the drive writes
-      # file N (pipeline depth 1).  30 drives × 2 = 60 total XRootD connections,
-      # well within EOS capacity.
-      nbDiskThreads: 2
+      # to ~25 s/file.  5 threads give comfortable pipeline depth: while the drive
+      # writes file N, threads pre-read files N+1..N+4, so occasional EOS latency
+      # spikes never stall the drive.  30 drives × 5 = 150 total XRootD connections,
+      # well within EOS capacity (5 FSTs × 256 threads = 1280).
+      nbDiskThreads: 5
       logMask: "WARNING"
       # This is a per-drive pool: each DriveHandler creates its own SchedulerDBInit
       # with this many connections.  With N drives: N × 2 connections consumed.
