@@ -1,5 +1,79 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Performance overlay for PostgreSQL-scheduler stress tests (10 M small files, 30 drives).
+#
+# ---------------------------------------------------------------------------
+# Pipeline
+# ---------------------------------------------------------------------------
+#
+#   Test script
+#     → EOS FSTs (5 replicas)        file creation & workflow trigger
+#     → EOS MGM / frontend-wfe       workflow event → pgsched archive INSERT
+#     → pgsched archive queue
+#     → taped (30 StressDrives)      fetch → EOS disk read → virtual tape write
+#     → pgsched disk report queue
+#     → maintd diskReportArchive     batch drain → EOS catalogue update
+#
+# ---------------------------------------------------------------------------
+# Observed throughput ceiling
+# ---------------------------------------------------------------------------
+#
+# Historically the end-to-end archive queuing rate has been observed at
+# ~1.3 kHz (files/sec from EOS workflow event to pgsched).  The bottleneck
+# appears to be the EOS MGM / frontend-wfe path rather than the CTA side.
+# Whether a 5th FST or other changes push this higher is to be determined
+# empirically — the CTA components below are sized to not be the bottleneck
+# up to at least 5 kHz, so the limiting factor should remain on the EOS side.
+#
+# At 1.3 kHz: 10 M files take ~2 h 8 min end-to-end.
+#
+# ---------------------------------------------------------------------------
+# Parameter sizing rationale
+# ---------------------------------------------------------------------------
+#
+# frontend-wfe schedulerdb.numberOfConnections = 15
+#   Each WFE connection is held for the duration of one pgsched INSERT
+#   (~5–10 ms with opportunistic batching).  At 1.3 kHz with 10 ms batching
+#   window: ~13 files/batch, ~100 INSERT batches/sec.  One connection handles
+#   100 batches/sec × 10 ms = 1 batch at a time → 2 connections would suffice,
+#   but 15 gives ample headroom for bursts and latency spikes.
+#
+# opportunisticBatchingWindowMs = 10 ms
+#   At 1.3 kHz: ~13 files accumulate per 10 ms window → each INSERT covers
+#   ~13 files, reducing DB round-trips by ~13×.  Increasing the window trades
+#   latency for fewer INSERTs; 10 ms is a good balance.
+#
+# taped nbDiskThreads = 40
+#   Each disk thread opens/reads/closes one EOS file via XRootD (~1–3 ms).
+#   At 1.3 kHz across 30 drives (≈43 files/s/drive): 30 × 43 × 0.002 = 2.6
+#   threads at steady state.  40 gives ~15× headroom for concurrent fetches
+#   and bursts.
+#
+# taped archiveFetchBytesFiles = 40 000 files
+#   Each drive fetches up to 40 k files per pgsched poll.  At 43 files/s/drive
+#   one batch lasts ~930 s (~15 min), so DB poll frequency is very low.
+#   Tape capacity is ~320 k files (150 MB / 470 B), so a batch covers about
+#   1/8 of a tape session — minimal requeue churn at ENOSPC boundaries.
+#
+# taped schedulerNumberOfConnections = 2 per drive (60 total for 30 drives)
+#   See scheduler DB connection budget below.
+#
+# taped archiveDismountPolicy = "300, 3, 0, 1"
+#   startThreshold = 0 disables underfill-driven dismounts.  In stress tests
+#   the queue arrival rate is the bottleneck, not the drives, so drives will
+#   always appear "underfilled" between file batches.  Keeping drives mounted
+#   avoids unnecessary 5 s remount delays during queue draining.
+#
+# maintd diskReportArchive replicas = 4, batchSize = 20 000, sleep = 1 s
+#   Capacity = 4 × 20 000 / 1 s = 80 k files/s >> observed 1.3 kHz queue
+#   rate.  1 s sleep keeps EOS catalogue updates within 1 s of tape write
+#   confirmation.  softTimeoutSecs = 30 >> 20 000 / 1300 ≈ 15 s/batch.
+#
+# ---------------------------------------------------------------------------
+# PostgreSQL scheduler DB connection budget (max 150 connections)
+# (repeated in table form below for quick reference)
+# ---------------------------------------------------------------------------
 
 global:
   # Keep crash evidence in a pod volume for stress-run investigation
@@ -108,20 +182,19 @@ maintd:
     # should match the corresponding names in the maintd conf file
     # So diskReportArchive:softTimeout will map to cta.routines.disk_report_archive.soft_timeout
     # To disable a routine, set replicas to 0
-    # Sizing rationale: with 1 FST and 1 drive reporting runs at ~762 files/sec (during
-    # archival) and ~1.4 kHz (reporting-only phase).  With 5 FSTs the EOS throughput
-    # scales to ~3.8 kHz.  4 reporters × 20 k batch gives ~16 k files/sec from the
-    # reporter side, well above the EOS capacity.  At 3.8 kHz, 10 M files take ~44 min
-    # for the reporting phase.  The 20 k batch (up from 10 k) halves DB round-trips
-    # while staying within the 30 s softTimeoutSecs (20 k / 3.8 kHz ≈ 5 s/batch).
+    # Sizing rationale: with 5 FSTs the archive queue runs at ~3.8 kHz.
+    # 4 reporters × 20 k batch / 1 s sleep = 80 k files/sec capacity, well
+    # above EOS capacity.  1 s sleep keeps reporting latency ≤ 1 s so EOS
+    # file status is updated promptly throughout the run.
+    # softTimeoutSecs = 30 s >> 20 k / 3.8 kHz ≈ 5 s/batch — ample margin.
     diskReportArchive:
       replicas: 4
-      sleepIntervalSecs: 5
+      sleepIntervalSecs: 1
       batchSize: 20000
       softTimeoutSecs: 30
     diskReportRetrieve:
       replicas: 4
-      sleepIntervalSecs: 5
+      sleepIntervalSecs: 1
       batchSize: 20000
       softTimeoutSecs: 30
     # Keep repack expansion bounded rather than adding many concurrent requests.

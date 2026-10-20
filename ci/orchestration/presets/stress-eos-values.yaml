@@ -81,7 +81,12 @@ server:
             secretName: ctaeos-self-signed-key-pem
 
   fst:
-    replicaCount: 4
+    # 5 FSTs × 256 max threads = 1280 total.
+    # Historically the archive queuing rate has been observed at ~1.3 kHz
+    # (limited by the EOS MGM / frontend-wfe path, not the FST count).
+    # A 5th FST is added to remove any FST-side ceiling; whether it raises
+    # the observed rate beyond 1.3 kHz is to be determined empirically.
+    replicaCount: 5
     # Start FST replicas together to reduce setup time.
     podManagementPolicy: Parallel
 
