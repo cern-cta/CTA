@@ -215,12 +215,9 @@ void StressDrive::loadTape(const std::filesystem::path& tapePath) {
     throw cta::exception::Exception("StressDrive::loadTape: cannot open " + tapePath.string() + " for reading");
   }
 
-  const auto read32 = [&](uint32_t& v) { f.read(reinterpret_cast<char*>(&v), sizeof(v)); };
-  const auto read64 = [&](uint64_t& v) { f.read(reinterpret_cast<char*>(&v), sizeof(v)); };
-
   uint32_t magic = 0, version = 0;
-  read32(magic);
-  read32(version);
+  f.read(reinterpret_cast<char*>(&magic), sizeof(magic));
+  f.read(reinterpret_cast<char*>(&version), sizeof(version));
   if (!f || magic != k_magic) {
     throw cta::exception::Exception("StressDrive::loadTape: " + tapePath.string() + " has wrong magic (got "
                                     + std::to_string(magic) + ", expected " + std::to_string(k_magic) + ")");
@@ -233,15 +230,18 @@ void StressDrive::loadTape(const std::filesystem::path& tapePath) {
   while (f.peek() != std::char_traits<char>::eof()) {
     tapeBlock block;
     uint64_t sz = 0;
-    read64(sz);
+    f.read(reinterpret_cast<char*>(&sz), sizeof(sz));
     if (!f) {
       break;
     }
     if (sz > 0) {
       block.data.resize(sz);
       f.read(block.data.data(), static_cast<std::streamsize>(sz));
+      if (!f) {
+        throw cta::exception::Exception("StressDrive::loadTape: truncated block in " + tapePath.string());
+      }
     }
-    read64(block.remainingSpaceAfter);
+    f.read(reinterpret_cast<char*>(&block.remainingSpaceAfter), sizeof(block.remainingSpaceAfter));
     if (!f) {
       throw cta::exception::Exception("StressDrive::loadTape: truncated block in " + tapePath.string());
     }

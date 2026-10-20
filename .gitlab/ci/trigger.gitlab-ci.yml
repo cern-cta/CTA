@@ -177,7 +177,7 @@ spec:
         BRANCH_NAME: $CI_COMMIT_BRANCH
   image: $IMAGE_LINT
   variables:
-    GIT_STRATEGY: "none" # Don't need anything from the repo for this job
+    GIT_STRATEGY: "none"  # Don't need anything from the repo for this job
     TARGET_URL: https://api.github.com/repos/cern-cta/CTA/actions/workflows/sonar-source.yml/dispatches
     BRANCH_NAME: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
   script:

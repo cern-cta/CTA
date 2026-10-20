@@ -26,8 +26,7 @@ frontend-admin:
 
 cli:
   useGrpc: true
-  conf:
-    # set by more specific config
+  conf:  # set by more specific config
 
   extraEnv:
     - name: GRPC_SETUP_JWT

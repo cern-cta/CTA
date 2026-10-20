@@ -135,7 +135,7 @@ lint-rust:
     name: $IMAGE_LINT
     entrypoint: ["/usr/bin/env"]
   variables:
-    GIT_SUBMODULE_STRATEGY: "recursive" # we need the proto defs
+    GIT_SUBMODULE_STRATEGY: "recursive"  # we need the proto defs
   before_script:
     - !reference [.merge-train-guard, before_script]
     - set -o pipefail

@@ -108,10 +108,6 @@ frontend-wfe:
       # ceiling.  With 5 FSTs and 1-2 kHz expected: 15 connections → ~3 kHz cap gives
       # ample headroom; see connection budget below.
       numberOfConnections: 15
-    logger:
-      # Reduce per-request logging overhead during sustained load.
-      logLevel: "WARNING"
-    schedulerdb:
       # Tuning only, applied whether or not batching ends up enabled: does NOT itself turn batching
       # on. That is controlled solely by the enable-opportunistic-batching pipeline input, via
       # presets/pgsched-opportunistic-batching-values.yaml -- this file used to also hardcode
@@ -122,6 +118,9 @@ frontend-wfe:
       # never hit it (the window ends most rounds first), so it mainly guards against a pathological
       # burst producing one unreasonably large bulk INSERT rather than shaping normal throughput.
       opportunisticBatchingMaxBatchSize: 1000
+    logger:
+      # Reduce per-request logging overhead during sustained load.
+      logLevel: "WARNING"
 
 # ---------------------------------------------------------------------------
 # PostgreSQL catalogue DB connection budget (max_connections on target postgres)

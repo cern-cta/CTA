@@ -12,6 +12,11 @@ pytest_plugins = [
 
 _canonical_items_key = pytest.StashKey[list[pytest.Item]]()
 
+
+def _parse_bool_option(v: str) -> bool:
+    return v.lower() in ("1", "true", "yes")
+
+
 # =========================================================================
 #  Commandline options
 # =========================================================================
@@ -66,7 +71,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     )
     parser.addoption(
         "--stress-prequeue-enabled",
-        type=lambda v: v.lower() in ("1", "true", "yes"),
+        type=_parse_bool_option,
         default=None,
         help="Override prequeue.enabled in the stress test config (true/false)",
     )

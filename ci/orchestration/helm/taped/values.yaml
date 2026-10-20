@@ -23,7 +23,7 @@ conf:
     tapeCacheMaxAgeSecs: 1
     retrieveQueueCacheMaxAgeSecs: 1
     externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
-    rmcHost: "cta-rmcd" # override with localhost if using hostnetwork
+    rmcHost: "cta-rmcd"  # override with localhost if using hostnetwork
     schedulerNumberOfConnections: 3
     # Stress-test mode: set to true to bypass real SCSI hardware and mhvtl.
     # Drives must be registered in the CTA catalogue with DriveDevice = "stress://".
@@ -80,7 +80,7 @@ postRun:
 drives: []
 
 securityContext:
-  privileged: true # To get access to /dev/
+  privileged: true  # To get access to /dev/
 
 pod:
   extraSpec:
