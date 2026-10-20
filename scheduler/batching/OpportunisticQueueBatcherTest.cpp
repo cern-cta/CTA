@@ -486,16 +486,15 @@ TEST_F(OpportunisticQueueBatcherTest, stopDrainsRemainingItemsAfterOverflowRound
   constexpr int totalCallers = 6;
 
   OpportunisticQueueBatcher<TestItem, int> batcher(
-    5ms, cap,
+    5ms,
+    cap,
     [](std::vector<TestItem>& batch, log::LogContext&) {
       for (auto& item : batch) {
         item.promise.set_value(item.value);
       }
     },
     // afterRelease is slow enough that stop() can fire while a re-entering leader is here.
-    [](std::vector<TestItem>&, log::LogContext&) {
-      std::this_thread::sleep_for(30ms);
-    });
+    [](std::vector<TestItem>&, log::LogContext&) { std::this_thread::sleep_for(30ms); });
 
   std::vector<std::exception_ptr> errors(totalCallers);
   std::vector<int> results(totalCallers, -1);
