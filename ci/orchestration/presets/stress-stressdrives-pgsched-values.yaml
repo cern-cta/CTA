@@ -48,7 +48,15 @@ taped:
       # Performance tuning inherited from the standard stress preset; override
       # here if the stress-drive workload needs different values.
       bufferCount: 10000
-      nbDiskThreads: 40
+      # DiskReadThreadPool is created per drive session (not shared across drives).
+      # With 30 drives × 40 threads = 1200 concurrent XRootD open/read/close ops,
+      # the EOS FSTs (5 × 256 = 1280 max threads) are saturated by disk reads alone,
+      # causing each read to stall for seconds.  The adaptive mirror in StressDrive
+      # then sleeps for that same inter-block elapsed time, compounding the slowdown
+      # to ~25 s/file.  Two threads suffice: one reads file N+1 while the drive writes
+      # file N (pipeline depth 1).  30 drives × 2 = 60 total XRootD connections,
+      # well within EOS capacity.
+      nbDiskThreads: 2
       logMask: "WARNING"
       # This is a per-drive pool: each DriveHandler creates its own SchedulerDBInit
       # with this many connections.  With N drives: N × 2 connections consumed.
