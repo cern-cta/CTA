@@ -32,7 +32,7 @@ frontend-wfe:
 taped:
   conf:
     taped:
-      nbDiskThreads: 20
+      nbDiskThreads: 40
       # Avoid verbose tape-operation logs dominating the small-file workload.
       logMask: "WARNING"
 

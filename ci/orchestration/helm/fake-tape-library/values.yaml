@@ -62,23 +62,38 @@ library:
       # Capacity enforced by StressDrive: ENOSPC is signalled once the tape's
       # block stream reaches this size.
       # Sizing rationale: observed ~470 bytes effective tape footprint per 16-byte file.
-      # At 762 files/sec/drive, 30 MB filled in ~1 min causing excessive remount overhead.
-      # 150 MB holds ~320 k files, giving ~7 min per tape session — a much better ratio
-      # against the 2-second mount delay.  With 10 drives each handling 1 M files
-      # (10 M / 10 drives), each drive uses ~3-4 tape switches for the full run.
+      # At 100 files/sec/drive (adaptive mode), 150 MB holds ~320 k files → ~53 min
+      # per tape session.  With 30 drives and 4 tapes each = 120 tapes, a 10 M-file
+      # run completes with ~3 tape switches per drive.
       capacityBytes: 150000000   # 150 MB
       # VID prefix used to derive the media type from a VID at mount time
       # (longest-prefix match).  Keep <= 2 chars so VIDs fit the 6-char ANSI
-      # tape label VSN field (e.g. ST + 4-digit index = ST0001..ST0060).
+      # tape label VSN field (e.g. ST + 4-digit index = ST0001..ST0120).
       vidPrefix: ST
       # Milliseconds to sleep in StressDrive::waitUntilReady() after the
       # changer delivers the tape, simulating mechanical tape-load latency.
-      mountDelayMs: 2000
+      # 5 s is long enough to show a visible per-drive IO dip on monitoring
+      # (clear drop on 1-minute graphs) while remaining a small fraction of a
+      # 53-minute tape session (~0.16% overhead per remount).
+      mountDelayMs: 5000
+      # Adaptive-mirror mode: natural drive speed in writeBlock calls/second.
+      # Each small CTA test file triggers ~5 writeBlock calls (HDR1 + HDR2 +
+      # 1 data block + EOF1 + EOF2), so the effective file rate ceiling is
+      # approximately maxWriteRateHz / 5.
+      # 1 000 calls/sec → ~200 files/sec per drive.  With 30 drives this is
+      # ~6 000 files/sec total, above the frontend ceiling of ~3.8 kHz with
+      # 5 FSTs, so drives are always in the queue-limited regime.
+      # In queue-limited regime the drive mirrors the arrival rate: it sleeps
+      # for the inter-arrival interval so it appears continuously writing and
+      # never shows as idle/starving on monitoring.  When the queue feeds
+      # faster than maxWriteRateHz, the drive caps at its natural speed.
+      # Set to 0 to disable adaptive mode and write at RAM speed.
+      maxWriteRateHz: 1000
       # Number of virtual tapes pre-created in slots/ by the Job.
-      # 60 tapes × 150 MB = 9 GB on the fast-ssd PVC — trivially small.
-      # Supports up to 20 drives with ~3 tapes each; 60 gives ample headroom.
+      # 120 tapes × 150 MB = 18 GB on the fast-ssd PVC.
+      # Supports 30 drives with ~4 tapes each; 120 gives ample headroom.
       # Must be >= the number of drives (--max-drives).
-      count: 60
+      count: 120
 
 # ---------------------------------------------------------------------------
 # PersistentVolumeClaim

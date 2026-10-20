@@ -48,11 +48,11 @@ taped:
       # Performance tuning inherited from the standard stress preset; override
       # here if the stress-drive workload needs different values.
       bufferCount: 10000
-      nbDiskThreads: 20
+      nbDiskThreads: 40
       logMask: "WARNING"
       # This is a per-drive pool: each DriveHandler creates its own SchedulerDBInit
       # with this many connections.  With N drives: N × 2 connections consumed.
-      # 10 drives → 20, 20 drives → 40; see connection budget in stress-cta-pgsched-values.yaml.
+      # 10 drives → 20, 20 drives → 40, 30 drives → 60; see connection budget in stress-cta-pgsched-values.yaml.
       schedulerNumberOfConnections: 2
 
       # Batch sized to fit the tape capacity: 150 MB / ~470 bytes/file ≈ 320 k files/tape.
