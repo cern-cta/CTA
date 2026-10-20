@@ -19,6 +19,7 @@ from .remote_host import RemoteHost
 @dataclass
 class MediaTypeConf:
     """Properties of one media type as declared in library.toml."""
+
     name: str
     capacity_bytes: int
     vid_prefix: str
@@ -29,6 +30,7 @@ class MediaTypeConf:
 @dataclass
 class StressLibraryConf:
     """Parsed contents of a stress-drive library.toml file."""
+
     name: str
     changer_timeout_ms: int
     media_types: list[MediaTypeConf] = field(default_factory=list)
@@ -96,9 +98,7 @@ class CtaTapedHost(RemoteHost):
     @cached_property
     def stress_base_dir(self) -> Path:
         """Root of the shared fake-tape-library volume (value of StressBaseDir in cta-taped.conf)."""
-        raw = self.exec_with_output(
-            "awk '$1==\"taped\" && $2==\"StressBaseDir\" {print $3}' /etc/cta/cta-taped.conf"
-        )
+        raw = self.exec_with_output('awk \'$1=="taped" && $2=="StressBaseDir" {print $3}\' /etc/cta/cta-taped.conf')
         return Path(raw)
 
     def read_stress_library_conf(self) -> StressLibraryConf:
@@ -122,4 +122,3 @@ class CtaTapedHost(RemoteHost):
             changer_timeout_ms=lib.get("changerTimeoutMs", 30_000),
             media_types=media_types,
         )
-

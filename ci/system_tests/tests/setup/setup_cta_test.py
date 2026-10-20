@@ -161,7 +161,7 @@ def test_reset_tapes(env: TestEnv) -> None:
 def test_reset_drive_devices(env: TestEnv) -> None:
     for taped in env.cta_taped:
         if not taped.is_stress_mode:
-          taped.exec(f"sudo sg_turs {taped.drive_device} 2>&1 > /dev/null || true")
+            taped.exec(f"sudo sg_turs {taped.drive_device} 2>&1 > /dev/null || true")
 
 
 def test_label_tapes(env: TestEnv) -> None:
