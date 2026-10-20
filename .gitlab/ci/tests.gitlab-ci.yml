@@ -93,7 +93,7 @@ unit-test-rust:
         - "**/Cargo.toml"
       when: on_success
   image:
-    name: $IMAGE_LINT # At a future point in time this should reference a better scoped image
+    name: $IMAGE_LINT  # At a future point in time this should reference a better scoped image
     entrypoint: ["/usr/bin/env"]
   variables:
     GIT_SUBMODULE_STRATEGY: "recursive"
