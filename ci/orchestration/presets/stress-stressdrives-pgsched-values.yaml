@@ -62,6 +62,27 @@ taped:
       archiveFetchBytesFiles: "80000000000, 40000"
       retrieveFetchBytesFiles: "80000000000, 40000"
 
+      # Tape-status and retrieve-queue cache TTLs.
+      #
+      # The helm default is 1 s for both, which causes taped to re-query the
+      # catalogue once per second per drive for tape status (mount decisions) and
+      # retrieve-queue statistics.  With 30 drives that is 30 catalogue queries/sec
+      # just for background polling — pointless overhead in an archive-only stress
+      # test where tapes change status rarely and retrieves never happen.
+      #
+      # tapeCacheMaxAgeSecs: drives refresh tape status at most once per 60 s
+      # instead of once per second.  A tape switch (ENOSPC → new tape) clears the
+      # cache explicitly via clearStatisticsCache(), so mount latency after a tape
+      # boundary is unaffected by a longer TTL.
+      #
+      # retrieveQueueCacheMaxAgeSecs: set to 30 s (vs helm default 1 s) to cut
+      # polling 30× during the archive phase (30 drives × 1/30 s ≈ 1 query/sec
+      # instead of 30/sec).  The retrieve phase follows immediately after archival
+      # in the same deployment, so a longer TTL is not safe: drives must detect
+      # the new retrieve queue within ~30 s of drives coming up.
+      tapeCacheMaxAgeSecs: 60
+      retrieveQueueCacheMaxAgeSecs: 30
+
       # Disable underfill-driven dismounting for stress tests.
       #
       # In production, ArchiveDismountPolicy frees a drive whose queue is
