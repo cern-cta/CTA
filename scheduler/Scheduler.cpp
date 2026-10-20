@@ -193,6 +193,14 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
        cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                                             }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
+  cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+    1,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kEnqueue},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                                             }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
   return archiveReqAddr;
 }
 

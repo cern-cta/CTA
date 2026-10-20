@@ -44,11 +44,15 @@
 #   ~13 files, reducing DB round-trips by ~13×.  Increasing the window trades
 #   latency for fewer INSERTs; 10 ms is a good balance.
 #
-# taped nbDiskThreads = 40
-#   Each disk thread opens/reads/closes one EOS file via XRootD (~1–3 ms).
-#   At 1.3 kHz across 30 drives (≈43 files/s/drive): 30 × 43 × 0.002 = 2.6
-#   threads at steady state.  40 gives ~15× headroom for concurrent fetches
-#   and bursts.
+# taped nbDiskThreads = 40 (mhvtl/real-hardware), overridden to 5 for StressDrives
+#   DiskReadThreadPool is instantiated per drive session (not shared).  For
+#   mhvtl tests with few drives, 40 threads/drive is fine.  For StressDrive
+#   tests with 30 drives, 40×30 = 1200 concurrent XRootD connections saturate
+#   the EOS FSTs (5 × 256 = 1280 threads), stalling reads to seconds and
+#   causing the adaptive mirror to sleep equally long per block.  The
+#   stress-stressdrives-pgsched-values.yaml preset overrides this to 5:
+#   30 × 5 = 150 connections, adequate pipeline depth (reads ~1–3 ms,
+#   drive writes one file per ~1 ms at maxWriteRateHz=1000).
 #
 # taped archiveFetchBytesFiles = 40 000 files
 #   Each drive fetches up to 40 k files per pgsched poll.  At 43 files/s/drive
