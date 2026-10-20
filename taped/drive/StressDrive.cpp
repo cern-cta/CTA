@@ -151,10 +151,15 @@ void StressDrive::writeBlock(const void* data, size_t count) {
   // Sleep once per file, not once per block.  HDR1 is the first block of every
   // ANSI tape file, so detecting it here gives one sleep at the inter-file
   // boundary and none between the blocks that belong to the same file.
+  //
+  // The timestamp is captured AFTER the sleep so that elapsed on the next file
+  // measures only the idle time between writes (i.e. how long the tape thread
+  // waited for the disk-read pipeline to deliver the next file).  Capturing it
+  // before the sleep would feed the sleep duration back into elapsed, causing
+  // the per-file sleep to grow monotonically and the archive rate to collapse.
   if (m_maxWriteRateHz > 0 && count >= 4 && std::memcmp(data, "HDR1", 4) == 0) {
-    const auto now = std::chrono::steady_clock::now();
     if (m_lastWriteBlockTime != std::chrono::steady_clock::time_point {}) {
-      const auto elapsed = now - m_lastWriteBlockTime;
+      const auto elapsed = std::chrono::steady_clock::now() - m_lastWriteBlockTime;
       const std::chrono::nanoseconds minInterval {1'000'000'000LL / m_maxWriteRateHz};
       // Queue-limited: elapsed > minInterval — sleep mirrors inter-file arrival gap
       // so the drive never appears idle on monitoring.
@@ -162,7 +167,7 @@ void StressDrive::writeBlock(const void* data, size_t count) {
       // throughput at maxWriteRateHz files/sec.
       std::this_thread::sleep_for(std::max(minInterval, elapsed));
     }
-    m_lastWriteBlockTime = now;
+    m_lastWriteBlockTime = std::chrono::steady_clock::now();
   }
   VirtualDrive::writeBlock(data, count);
 }
