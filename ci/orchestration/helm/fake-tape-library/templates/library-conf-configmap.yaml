@@ -18,5 +18,6 @@ data:
     capacityBytes = {{ .capacityBytes }}
     vidPrefix     = {{ .vidPrefix | quote }}
     mountDelayMs  = {{ .mountDelayMs }}
+    maxWriteRateHz = {{ .maxWriteRateHz }}
     count         = {{ .count }}
     {{- end }}

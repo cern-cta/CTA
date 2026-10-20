@@ -6,6 +6,7 @@
 
 #include "VirtualDrive.hpp"
 
+#include <chrono>
 #include <filesystem>
 #include <limits>
 #include <map>
@@ -82,7 +83,7 @@ public:
    */
   void unloadTape() override;
 
-  // The following five methods throw NotImplementedException in FakeDrive but
+  // The following five methods throw NotImplementedException in VirtualDrive but
   // are called by taped during normal transfer sessions.  Stress overrides
   // return sensible no-op values so the rest of the session logic proceeds.
   driveStatus getDriveStatus() override;
@@ -91,10 +92,37 @@ public:
   drive::LBPInfo getLBPInfo() override;
   std::string getSerialNumber() override;
 
+  /**
+   * Adaptive-mirror write: the drive always appears busy, mirroring the
+   * archive queue arrival rate.
+   *
+   * On each call, sleeps for max(minInterval, elapsed) where:
+   *   minInterval = 1 / maxWriteRateHz  (natural drive speed)
+   *   elapsed     = time since the previous writeBlock call (inter-arrival interval)
+   *
+   * Queue-limited regime (elapsed > minInterval): sleep equals the inter-arrival
+   * gap so the drive processes at exactly the queue rate and never appears idle.
+   *
+   * Drive-limited regime (elapsed < minInterval): sleep equals minInterval,
+   * capping throughput at maxWriteRateHz.  No adaptation needed — the drive
+   * simply runs at its natural speed.
+   *
+   * Enabled only when MediaTypeInfo::maxWriteRateHz > 0 (set via library.toml
+   * maxWriteRateHz field).  Disabled (write at RAM speed) when 0.
+   */
+  void writeBlock(const void* data, size_t count) override;
+
   // Per-media-type properties derived from library.toml at construction time.
   struct MediaTypeInfo {
-    uint64_t capacityBytes = std::numeric_limits<uint64_t>::max();
-    uint32_t mountDelayMs  = 0;
+    uint64_t capacityBytes   = std::numeric_limits<uint64_t>::max();
+    uint32_t mountDelayMs    = 0;
+    // Natural drive speed for adaptive-mirror mode (writeBlock calls/second).
+    // Each small CTA test file triggers ~5 writeBlock calls (two header
+    // labels + 1 data block + two trailer labels), so the effective file
+    // throughput ceiling is approximately maxWriteRateHz / 5.
+    // When the queue is slow, the drive mirrors that rate; when fast, the
+    // drive caps at this value.  0 = disabled (write at RAM speed).
+    uint32_t maxWriteRateHz  = 0;
   };
 
 private:
@@ -109,6 +137,11 @@ private:
   // Full path to the *.tape file in drives/<driveName>/ after waitUntilReady().
   // Empty when no tape is loaded in the current session.
   std::filesystem::path m_currentTapePath;
+
+  // Adaptive rate state (set from MediaTypeInfo at each waitUntilReady call).
+  uint32_t m_maxWriteRateHz = 0;
+  // Default-constructed time_point (epoch) signals "no write yet this session".
+  std::chrono::steady_clock::time_point m_lastWriteBlockTime;
 
   // Magic word and format version written at the beginning of each .tape file.
   static constexpr uint32_t k_magic = 0x43544150;   // 'CTAP'

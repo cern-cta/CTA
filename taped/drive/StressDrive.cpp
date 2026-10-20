@@ -81,7 +81,9 @@ void StressDrive::waitUntilReady(uint32_t /*timeoutSecond*/) {
     std::this_thread::sleep_for(std::chrono::milliseconds(info.mountDelayMs));
   }
 
-  m_tapeCapacity = info.capacityBytes;
+  m_tapeCapacity       = info.capacityBytes;
+  m_maxWriteRateHz     = info.maxWriteRateHz;
+  m_lastWriteBlockTime = {};  // reset adaptive-rate state for this tape session
 
   loadTape(tapeFile);
   m_currentTapePath = tapeFile;
@@ -144,6 +146,23 @@ void StressDrive::unloadTape() {
     m_currentTapePath.clear();
   }
   VirtualDrive::unloadTape();
+}
+
+void StressDrive::writeBlock(const void* data, size_t count) {
+  if (m_maxWriteRateHz > 0) {
+    const auto now = std::chrono::steady_clock::now();
+    // Record arrival time before sleeping so elapsed always measures inter-arrival interval.
+    if (m_lastWriteBlockTime != std::chrono::steady_clock::time_point{}) {
+      const auto elapsed = now - m_lastWriteBlockTime;
+      const std::chrono::nanoseconds minInterval{1'000'000'000LL / m_maxWriteRateHz};
+      // Always sleep at least minInterval (natural drive speed).
+      // When the queue is slow (elapsed > minInterval), sleep for elapsed instead:
+      // the drive mirrors the arrival rate and never appears idle.
+      std::this_thread::sleep_for(std::max(minInterval, elapsed));
+    }
+    m_lastWriteBlockTime = now;
+  }
+  VirtualDrive::writeBlock(data, count);
 }
 
 void StressDrive::saveTape() const {
@@ -264,8 +283,9 @@ void StressDrive::parseLibraryConf() {
     const auto prefix = (*mt)["vidPrefix"].value<std::string>();
     if (!prefix) continue;
     MediaTypeInfo info;
-    if (auto cap   = (*mt)["capacityBytes"].value<uint64_t>()) info.capacityBytes = *cap;
-    if (auto delay = (*mt)["mountDelayMs"].value<int64_t>())   info.mountDelayMs  = static_cast<uint32_t>(*delay);
+    if (auto cap   = (*mt)["capacityBytes"].value<uint64_t>())  info.capacityBytes  = *cap;
+    if (auto delay = (*mt)["mountDelayMs"].value<int64_t>())    info.mountDelayMs   = static_cast<uint32_t>(*delay);
+    if (auto rate  = (*mt)["maxWriteRateHz"].value<int64_t>())  info.maxWriteRateHz = static_cast<uint32_t>(*rate);
     m_mediaTypes[*prefix] = info;
   }
 }

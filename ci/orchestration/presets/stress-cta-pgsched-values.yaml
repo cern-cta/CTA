@@ -57,8 +57,10 @@ frontend-wfe:
 # maintd repackExpand                   1        1         1
 # maintd repackReport                   1        1         1
 # taped  20 drives × 1 conn/drive                        20
+# taped  30 drives × 1 conn/drive                        30
 # ---------------------------------------------------------------------------
 # Total (20 drives):                                      50
+# Total (30 drives):                                      60
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
@@ -76,9 +78,11 @@ frontend-wfe:
 # maintd repackReport                   1        3         3
 # taped  10 drives × 2 conn/drive                        20
 # taped  20 drives × 2 conn/drive                        40
+# taped  30 drives × 2 conn/drive                        60
 # ---------------------------------------------------------------------------
 # Total (10 drives):                                      68   (budget: 150)
 # Total (20 drives):                                      88   (budget: 150)
+# Total (30 drives):                                     108   (budget: 150)
 # max drives at budget: (150 - 48 fixed) / 2 = 51
 # ---------------------------------------------------------------------------
 
@@ -89,7 +93,7 @@ taped:
       bufferCount: 10000
       # Each disk thread opens/reads/closes one EOS file via XRootD (~1-3ms per file).
       # More threads allow more concurrent XRootD opens, raising per-drive throughput.
-      nbDiskThreads: 20
+      nbDiskThreads: 40
       # Avoid verbose tape-operation logs dominating the small-file workload.
       logMask: "WARNING"
       # Overridden to 2 by stress-stressdrives-pgsched-values.yaml (applied after this file).
