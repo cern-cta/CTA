@@ -26,6 +26,13 @@ namespace cta {
  * resolveBatch returns; only then does the optional, slower `afterRelease` run (audit logging,
  * metrics), so no follower ever waits on work done for someone else's batch.
  *
+ * Overflow: when more than maxBatchSize items have accumulated, the leader takes the first
+ * maxBatchSize from the front and leaves the rest for the next round. A leader whose own item was
+ * not in the taken front slice re-enters the election loop after afterRelease and competes to lead
+ * the next round (or becomes a follower if someone else wins first). This means a leader can run
+ * multiple consecutive rounds without returning to the caller, but each round it processes a full
+ * batch for other threads.
+ *
  * Shutdown: call stop() to unblock any threads parked inside enqueueAndWait(). Items still queued
  * in m_pendingBatch at that point receive a std::runtime_error("batcher stopped") exception; items
  * already taken into an active batch by a leader are resolved normally by that leader. After
@@ -93,11 +100,6 @@ public:
       throw std::runtime_error("batcher stopped");
     }
     m_pendingBatch.push_back(std::move(item));
-    // Record the push index before the election loop.  push_back only appends, so existing
-    // items never change position; the index remains valid across any subsequent push_backs
-    // (including those from other threads while we sleep as a follower), and survives vector
-    // reallocations because it is an integer, not a pointer or iterator.
-    const size_t myIndex = m_pendingBatch.size() - 1;
     future = m_pendingBatch.back().promise.get_future();
 
     if (m_pendingBatch.size() >= m_maxBatchSize) {
@@ -107,95 +109,91 @@ public:
       m_cv.notify_all();
     }
 
-    // Leadership election loop
-    bool isLeader = false;
-    while (!isLeader) {
-      // If my own request has already been resolved by a leader, return its result.
+    // Outer loop: a leader whose own item fell outside the overflow slice re-enters here to lead
+    // (or follow) the next round. The lock is always held on every entry to this loop.
+    while (true) {
+      // Leadership election loop
+      while (true) {
+        // If my own request has already been resolved by a leader, return its result.
+        if (future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+          return future.get();
+        }
+        // If nobody is currently leading a round, I become leader.
+        if (!m_leaderInProgress) {
+          m_leaderInProgress = true;
+          break;
+        }
+        // Otherwise wait to be woken, either as the batch fills up or once the current round ends.
+        m_cv.wait(lock);
+      }
+
+      // ---- LEADER PATH ----
+      // Still holding `lock`, uninterrupted, from the election above: wait_for() re-checks the
+      // predicate immediately under this same lock, before ever sleeping, so maxBatchSize already
+      // met right now (e.g. maxBatchSize==1, satisfied by this leader's own item alone) returns
+      // instantly with no other thread ever getting a chance to join this round. Deliberately never
+      // released and re-acquired between becoming leader and this check: doing so would leave a gap
+      // where m_mutex was momentarily free, during which another caller could enqueue and, since
+      // m_leaderInProgress was already true, quietly join this round as a follower before the leader
+      // ever got back to look — letting more items into a batch than maxBatchSize.
+      // wait_for() always re-acquires the lock before returning — by timeout, by the notify_all()
+      // above, by a wakeup meant for someone else on this shared cv, or spuriously — so stealing the
+      // batch right after is always safe here too.
+      std::vector<ItemType> batch;
+      m_cv.wait_for(lock, m_window, [this] { return m_pendingBatch.size() >= m_maxBatchSize || m_stopped; });
+      if (m_pendingBatch.size() <= m_maxBatchSize) {
+        // Common path: all accumulated items fit — O(1) swap.
+        batch.swap(m_pendingBatch);
+      } else {
+        // Overflow path: take exactly m_maxBatchSize items from the front, leaving the rest for the
+        // next round. No reordering: the leader's own item may or may not be in this slice. If it
+        // is not, the leader re-enters the outer loop after afterRelease below.
+        batch.assign(std::make_move_iterator(m_pendingBatch.begin()),
+                     std::make_move_iterator(m_pendingBatch.begin() + m_maxBatchSize));
+        m_pendingBatch.erase(m_pendingBatch.begin(), m_pendingBatch.begin() + m_maxBatchSize);
+      }
+      lock.unlock();
+
+      try {
+        m_resolveBatch(batch, lc);
+      } catch (...) {
+        // resolveBatch's contract is to resolve every item's promise itself; if it throws instead of
+        // doing that (a bug in it, or e.g. a bad_alloc from some unrelated allocation), items it never
+        // got to would be left unresolved forever — and, far worse, m_leaderInProgress below would
+        // never be reset, permanently blocking every follower already asleep on m_cv and every future
+        // caller of this batcher. Best-effort fallback: propagate this exception to whichever items
+        // aren't already resolved; a promise resolveBatch did manage to resolve before throwing just
+        // rejects the redundant set_exception, which is ignored.
+        auto ex = std::current_exception();
+        for (auto& item : batch) {
+          try {
+            item.promise.set_exception(ex);
+          } catch (const std::future_error&) {}
+        }
+      }
+
+      // Release followers waiting on this batch as soon as their results exist, before doing any
+      // slower work in afterRelease below. Followers only need their own promise to be ready and to
+      // be woken; they have no stake in this batch's own post-processing. Reuses `lock` (already
+      // unlocked above) rather than a second lock object, since m_mutex is not recursive.
+      lock.lock();
+      m_leaderInProgress = false;
+      lock.unlock();
+      m_cv.notify_all();
+
+      if (m_afterRelease) {
+        m_afterRelease(batch, lc);
+      }
+
+      // If our own item was in this batch, we're done.
       if (future.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
         return future.get();
       }
-      // If nobody is currently leading a round, I become leader.
-      if (!m_leaderInProgress) {
-        m_leaderInProgress = true;
-        isLeader = true;
-        break;
-      }
-      // Otherwise wait to be woken, either as the batch fills up or once the current round ends.
-      m_cv.wait(lock);
+
+      // Our item is still in m_pendingBatch (overflow: it was past the front slice). Re-acquire
+      // the lock and re-enter the outer loop to compete for the next round.
+      lock.lock();
     }
-
-    // ---- LEADER PATH ----
-    // Still holding `lock`, uninterrupted, from the enqueue/election above: wait_for() re-checks the
-    // predicate immediately under this same lock, before ever sleeping, so a cap already met right
-    // now (e.g. maxBatchSize==1, satisfied by this leader's own item alone) returns instantly with
-    // no other thread ever getting a chance to join this round. Deliberately never released and
-    // re-acquired between becoming leader and this check: doing so used to leave a real gap where
-    // m_mutex was momentarily free, during which another caller could enqueue and, since
-    // m_leaderInProgress was already true, quietly join this round as a follower before the leader
-    // ever got back to look — letting more items into "capped" batches than the cap implied.
-    // wait_for() always re-acquires the lock before returning — by timeout, by the notify_all()
-    // above, by a wakeup meant for someone else on this shared cv, or spuriously — so stealing the
-    // batch right after is always safe here too.
-    std::vector<ItemType> batch;
-    m_cv.wait_for(lock, m_window, [this] { return m_pendingBatch.size() >= m_maxBatchSize || m_stopped; });
-    if (m_pendingBatch.size() <= m_maxBatchSize) {
-      // Common path: all accumulated items fit within the cap — O(1) swap.
-      batch.swap(m_pendingBatch);
-    } else {
-      // Overflow path: more items queued than the cap allows; take exactly m_maxBatchSize from the
-      // front and leave the rest for the next leader. O(n) but only reached under sustained overload.
-      //
-      // The leader's item may sit at myIndex >= m_maxBatchSize when leftover items from a previous
-      // overflow round fill the front of the queue (those items were pushed before this leader, so
-      // they got lower indices).  A naïve front-of-queue steal would leave the leader's item
-      // unresolved and cause future.get() below to block indefinitely.
-      //
-      // Fix: if the leader's item would be excluded, swap it into the last slot of the range that
-      // will be taken (slot m_maxBatchSize - 1).  Items [0, m_maxBatchSize - 2] keep their exact
-      // relative order.  The item originally at m_maxBatchSize - 1 lands at myIndex in the
-      // remainder and will be picked up by the next leader — a minimal, O(1) disruption.
-      if (myIndex >= m_maxBatchSize) {
-        std::swap(m_pendingBatch[m_maxBatchSize - 1], m_pendingBatch[myIndex]);
-      }
-      batch.assign(std::make_move_iterator(m_pendingBatch.begin()),
-                   std::make_move_iterator(m_pendingBatch.begin() + m_maxBatchSize));
-      m_pendingBatch.erase(m_pendingBatch.begin(), m_pendingBatch.begin() + m_maxBatchSize);
-    }
-    lock.unlock();
-
-    try {
-      m_resolveBatch(batch, lc);
-    } catch (...) {
-      // resolveBatch's contract is to resolve every item's promise itself; if it throws instead of
-      // doing that (a bug in it, or e.g. a bad_alloc from some unrelated allocation), items it never
-      // got to would be left unresolved forever — and, far worse, m_leaderInProgress below would
-      // never be reset, permanently blocking every follower already asleep on m_cv and every future
-      // caller of this batcher. Best-effort fallback: propagate this exception to whichever items
-      // aren't already resolved; a promise resolveBatch did manage to resolve before throwing just
-      // rejects the redundant set_exception, which is ignored.
-      auto ex = std::current_exception();
-      for (auto& item : batch) {
-        try {
-          item.promise.set_exception(ex);
-        } catch (const std::future_error&) {}
-      }
-    }
-
-    // Release followers waiting on this batch as soon as their results exist, before doing any
-    // slower work in afterRelease below. Followers only need their own promise to be ready and to
-    // be woken; they have no stake in this batch's own post-processing. Reuses `lock` (already
-    // unlocked above) rather than a second lock object, since m_mutex is not recursive.
-    lock.lock();
-    m_leaderInProgress = false;
-    lock.unlock();
-    m_cv.notify_all();
-
-    if (m_afterRelease) {
-      m_afterRelease(batch, lc);
-    }
-
-    // Return the leader's own result.
-    return future.get();
   }
 
 private:
