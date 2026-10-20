@@ -197,13 +197,13 @@ maintd:
       sleepIntervalSecs: 1
       batchSize: 20000
       softTimeoutSecs: 30
-    # Keep repack expansion bounded rather than adding many concurrent requests.
+    # Repack is not used in archive-only stress tests: zero replicas avoids
+    # unnecessary DB polls and frees scheduler connections for the active workload.
     repackExpand:
-      replicas: 1
+      replicas: 0
       sleepIntervalSecs: 10
       maxToExpand: 2
-    # Retain a single periodic worker for repack reporting.
     repackReport:
-      replicas: 1
+      replicas: 0
       sleepIntervalSecs: 10
       softTimeoutSecs: 30
