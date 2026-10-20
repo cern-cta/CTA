@@ -71,35 +71,45 @@ void FakeDrive::waitUntilReady(const uint32_t /*timeoutSecond*/) {
 }
 
 std::map<std::string, uint64_t> FakeDrive::getTapeWriteErrors() {
-  return {{"mountTotalCorrectedWriteErrors", 5},
-          {"mountTotalWriteBytesProcessed", 4096},
-          {"mountTotalUncorrectedWriteErrors", 1}};
+  return {
+    {"mountTotalCorrectedWriteErrors",   5   },
+    {"mountTotalWriteBytesProcessed",    4096},
+    {"mountTotalUncorrectedWriteErrors", 1   }
+  };
 }
 
 std::map<std::string, uint64_t> FakeDrive::getTapeReadErrors() {
-  return {{"mountTotalCorrectedReadErrors", 5},
-          {"mountTotalReadBytesProcessed", 4096},
-          {"mountTotalUncorrectedReadErrors", 1}};
+  return {
+    {"mountTotalCorrectedReadErrors",   5   },
+    {"mountTotalReadBytesProcessed",    4096},
+    {"mountTotalUncorrectedReadErrors", 1   }
+  };
 }
 
 std::map<std::string, uint32_t> FakeDrive::getTapeNonMediumErrors() {
-  return {{"mountTotalNonMediumErrorCounts", 2}};
+  return {
+    {"mountTotalNonMediumErrorCounts", 2}
+  };
 }
 
 std::map<std::string, float> FakeDrive::getQualityStats() {
-  return {{"lifetimeMediumEfficiencyPrct", 100.0f},
-          {"mountReadEfficiencyPrct", 100.0f},
-          {"mountWriteEfficiencyPrct", 100.0f}};
+  return {
+    {"lifetimeMediumEfficiencyPrct", 100.0f},
+    {"mountReadEfficiencyPrct",      100.0f},
+    {"mountWriteEfficiencyPrct",     100.0f}
+  };
 }
 
 std::map<std::string, uint32_t> FakeDrive::getDriveStats() {
-  return {{"mountTemps", 100},
-          {"mountReadTransients", 10},
-          {"mountWriteTransients", 10},
-          {"mountTotalReadRetries", 25},
-          {"mountTotalWriteRetries", 25},
-          {"mountServoTemps", 10},
-          {"mountServoTransients", 5}};
+  return {
+    {"mountTemps",             100},
+    {"mountReadTransients",    10 },
+    {"mountWriteTransients",   10 },
+    {"mountTotalReadRetries",  25 },
+    {"mountTotalWriteRetries", 25 },
+    {"mountServoTemps",        10 },
+    {"mountServoTransients",   5  }
+  };
 }
 
 std::string FakeDrive::getDriveFirmwareVersion() {

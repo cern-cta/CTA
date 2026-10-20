@@ -29,11 +29,10 @@ namespace {
 struct ChangerGuard {
   const std::filesystem::path lockPath;
 
-  ChangerGuard(const std::filesystem::path& changerDir, int timeoutMs)
-      : lockPath(changerDir / ".lock") {
+  ChangerGuard(const std::filesystem::path& changerDir, int timeoutMs) : lockPath(changerDir / ".lock") {
     constexpr int kRetryMs = 50;
 
-    for (int waited = 0; ; waited += kRetryMs) {
+    for (int waited = 0;; waited += kRetryMs) {
       // O_CREAT|O_EXCL is atomic on POSIX: exactly one caller wins.
       int fd = ::open(lockPath.c_str(), O_CREAT | O_EXCL | O_WRONLY, 0644);
       if (fd >= 0) {
@@ -41,23 +40,22 @@ struct ChangerGuard {
         return;
       }
       if (errno != EEXIST) {
-        throw cta::exception::Exception(
-          "StressMediaChanger: cannot acquire changer lock at " +
-          lockPath.string() + ": " + std::strerror(errno));
+        throw cta::exception::Exception("StressMediaChanger: cannot acquire changer lock at " + lockPath.string() + ": "
+                                        + std::strerror(errno));
       }
       if (waited >= timeoutMs) {
-        throw cta::exception::Exception(
-          "StressMediaChanger: timeout (" +
-          std::to_string(timeoutMs / 1000) +
-          " s) waiting for changer lock at " + lockPath.string() +
-          " — another mount/dismount is stuck or a previous run left a stale lock");
+        throw cta::exception::Exception("StressMediaChanger: timeout (" + std::to_string(timeoutMs / 1000)
+                                        + " s) waiting for changer lock at " + lockPath.string()
+                                        + " — another mount/dismount is stuck or a previous run left a stale lock");
       }
       std::this_thread::sleep_for(std::chrono::milliseconds(kRetryMs));
     }
   }
 
   ~ChangerGuard() noexcept {
-    try { std::filesystem::remove(lockPath); } catch (...) {}
+    try {
+      std::filesystem::remove(lockPath);
+    } catch (...) {}
   }
 
   ChangerGuard(const ChangerGuard&) = delete;
@@ -65,8 +63,6 @@ struct ChangerGuard {
 };
 
 }  // namespace
-
-
 
 //------------------------------------------------------------------------------
 // constructor (normal mode)
@@ -171,21 +167,19 @@ MediaChangerProxy& MediaChangerFacade::getProxy(const LibrarySlot& slot) {
 // stressMountTape
 //------------------------------------------------------------------------------
 void MediaChangerFacade::stressMountTape(const std::string& vid, bool readWrite) {
-  const auto contentsBase  = m_stressBaseDir / "contents" / m_stressLogicalLibrary;
-  const auto slotPath      = contentsBase / "slots"   / (vid + ".tape");
-  const auto changerDir    = contentsBase / "changer";
-  const auto changerTape   = changerDir   / (vid + ".tape");
-  const auto drivePath     = contentsBase / "drives" / m_stressDriveName / (vid + ".tape");
+  const auto contentsBase = m_stressBaseDir / "contents" / m_stressLogicalLibrary;
+  const auto slotPath = contentsBase / "slots" / (vid + ".tape");
+  const auto changerDir = contentsBase / "changer";
+  const auto changerTape = changerDir / (vid + ".tape");
+  const auto drivePath = contentsBase / "drives" / m_stressDriveName / (vid + ".tape");
 
   if (!std::filesystem::exists(slotPath)) {
     if (readWrite) {
       // First archive on this VID: create an empty tape file in the slot.
       std::ofstream(slotPath, std::ios::binary).close();
     } else {
-      throw cta::exception::Exception(
-        "StressMediaChanger: tape not found for retrieve: VID=" + vid +
-        " expected at " + slotPath.string() +
-        " — has this tape been archived yet?");
+      throw cta::exception::Exception("StressMediaChanger: tape not found for retrieve: VID=" + vid + " expected at "
+                                      + slotPath.string() + " — has this tape been archived yet?");
     }
   }
 
@@ -203,11 +197,11 @@ void MediaChangerFacade::stressMountTape(const std::string& vid, bool readWrite)
 // stressDismountTape
 //------------------------------------------------------------------------------
 void MediaChangerFacade::stressDismountTape(const std::string& vid) {
-  const auto contentsBase  = m_stressBaseDir / "contents" / m_stressLogicalLibrary;
-  const auto drivePath     = contentsBase / "drives" / m_stressDriveName / (vid + ".tape");
-  const auto changerDir    = contentsBase / "changer";
-  const auto changerTape   = changerDir   / (vid + ".tape");
-  const auto slotPath      = contentsBase / "slots"   / (vid + ".tape");
+  const auto contentsBase = m_stressBaseDir / "contents" / m_stressLogicalLibrary;
+  const auto drivePath = contentsBase / "drives" / m_stressDriveName / (vid + ".tape");
+  const auto changerDir = contentsBase / "changer";
+  const auto changerTape = changerDir / (vid + ".tape");
+  const auto slotPath = contentsBase / "slots" / (vid + ".tape");
 
   // Best-effort: if the tape has already disappeared from the drive directory
   // (e.g. process crashed after StressDrive::unloadTape was called), skip.

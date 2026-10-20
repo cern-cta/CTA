@@ -32,9 +32,6 @@ frontend-wfe:
 taped:
   conf:
     taped:
-      # Overridden to 5 by stress-stressdrives-pgsched-values.yaml for StressDrive
-      # tests: 30 drives × 40 threads = 1200 XRootD connections saturates EOS FSTs.
-      nbDiskThreads: 40
       # Avoid verbose tape-operation logs dominating the small-file workload.
       logMask: "WARNING"
 

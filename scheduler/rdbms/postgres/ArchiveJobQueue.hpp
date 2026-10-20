@@ -932,8 +932,7 @@ VALUES )SQL";
      *
      * @return  result set of job IDs
      */
-  static rdbms::Rset
-  flagReportingJobsByStatus(Transaction& txn, uint64_t limit);
+  static rdbms::Rset flagReportingJobsByStatus(Transaction& txn, uint64_t limit);
 
   /**
    * Assign a mount ID and VID to a selection of rows
