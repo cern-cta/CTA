@@ -28,14 +28,16 @@ namespace cta::tape::drive {
 // An empty file (size 0) means a blank (never-archived) tape.
 
 StressDrive::StressDrive(std::string driveName, std::string logicalLibraryName, std::filesystem::path baseDir)
-    : FakeDrive(std::numeric_limits<uint64_t>::max()),
+    : VirtualDrive(std::numeric_limits<uint64_t>::max()),
       m_driveName(std::move(driveName)),
       m_logicalLibrary(std::move(logicalLibraryName)),
       m_baseDir(std::move(baseDir)) {
-  // FakeDrive defaults m_tapeInPlace to true (for unit-test convenience), but
-  // a StressDrive starts with an empty slot: no tape is loaded until the media
+  // VirtualDrive defaults m_tapeInPlace to true (for convenience), but a
+  // StressDrive starts with an empty slot: no tape is loaded until the media
   // changer mounts one and waitUntilReady() is called.
-  setTapeInPlace(false);
+  m_tapeInPlace = false;
+  // Pre-allocate for large stress-test tapes (~320 k files at 470 bytes each).
+  m_tape.reserve(512'000);
   parseLibraryConf();
 }
 
@@ -141,7 +143,7 @@ void StressDrive::unloadTape() {
     saveTape();
     m_currentTapePath.clear();
   }
-  FakeDrive::unloadTape();
+  VirtualDrive::unloadTape();
 }
 
 void StressDrive::saveTape() const {

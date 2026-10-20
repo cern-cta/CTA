@@ -5,7 +5,8 @@
 set(CTATAPEDDRIVE_LIBRARY_SRCS
   DriveGeneric.cpp
   FakeDrive.cpp
-  StressDrive.cpp)
+  StressDrive.cpp
+  VirtualDrive.cpp)
 
 add_library(ctatapeddrive ${CTATAPEDDRIVE_LIBRARY_SRCS})
 target_link_libraries(ctatapeddrive ctascsi ctatapedaemon)

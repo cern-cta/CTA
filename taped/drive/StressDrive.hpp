@@ -4,7 +4,7 @@
  */
 #pragma once
 
-#include "FakeDrive.hpp"
+#include "VirtualDrive.hpp"
 
 #include <filesystem>
 #include <limits>
@@ -47,7 +47,7 @@ namespace cta::tape::drive {
  * which DataTransferSession::findDrive() recognises as the trigger to create
  * a StressDrive instead of opening a real SCSI device.
  */
-class StressDrive : public FakeDrive {
+class StressDrive : public VirtualDrive {
 public:
   /**
    * @param driveName          Drive name as registered in the CTA catalogue

@@ -4,37 +4,18 @@
  */
 #pragma once
 
-#include "DriveInterface.hpp"
+#include "VirtualDrive.hpp"
 
-#include <limits>
-#include <list>
-#include <map>
 #include <set>
 #include <string>
-#include <vector>
 
 namespace cta::tape::drive {
 
 /**
- * Fake drive class used for unit testing
+ * Fake drive used for unit testing.  Inherits all in-memory tape simulation
+ * from VirtualDrive and layers configurable failure injection on top.
  */
-class FakeDrive : public DriveInterface {
-protected:
-  // One logical record on the simulated tape: either a data block (data non-empty)
-  // or a file mark (data == "").
-  struct tapeBlock {
-    std::string data;
-    uint64_t remainingSpaceAfter;
-  };
-
-  std::vector<tapeBlock> m_tape;
-  uint32_t m_currentPosition = 0;
-  uint64_t m_tapeCapacity;
-
-private:
-  int m_beginOfCompressStats = 0;
-  uint64_t getRemaingSpace(uint32_t currentPosition);
-
+class FakeDrive : public VirtualDrive {
 public:
   enum FailureMoment { OnWrite, OnFlush };
   enum class FailurePoint { ClearEncryptionKey, Rewind, DisableLogicalBlockProtection, UnloadTape };
@@ -44,87 +25,48 @@ private:
   std::set<FailurePoint> m_failurePoints;
   bool m_tapeOverflow = false;
   bool m_failToMount;
-  bool m_tapeInPlace = true;
-  lbpToUse m_lbpToUse;
 
 public:
-  std::string contentToString() noexcept;
-
   explicit FakeDrive(uint64_t capacity = std::numeric_limits<uint64_t>::max(),
                      enum FailureMoment failureMoment = OnWrite,
                      bool failOnMount = false) noexcept;
   explicit FakeDrive(bool failOnMount) noexcept;
   ~FakeDrive() override = default;
-  compressionStats getCompression() final;
-  void clearCompressionStats() final;
-  std::map<std::string, uint64_t> getTapeWriteErrors() final;
-  std::map<std::string, uint64_t> getTapeReadErrors() final;
-  std::map<std::string, uint32_t> getTapeNonMediumErrors() final;
-  std::map<std::string, float> getQualityStats() final;
-  std::map<std::string, uint32_t> getDriveStats() final;
-  std::map<std::string, uint32_t> getVolumeStats() final;
-  std::string getDriveFirmwareVersion() final;
-  deviceInfo getDeviceInfo() final;
-  std::string getGenericSCSIPath() final;
-  std::string getSerialNumber() override;
-  void positionToLogicalObject(uint32_t blockId) final;
-  positionInfo getPositionInfo() final;
-  physicalPositionInfo getPhysicalPositionInfo() final;
-  std::vector<endOfWrapPosition> getEndOfWrapPositions() final;
-  std::vector<uint16_t> getTapeAlertCodes() final;
-  std::vector<std::string> getTapeAlerts(const std::vector<uint16_t>&) final;
-  std::vector<std::string> getTapeAlertsCompact(const std::vector<uint16_t>&) final;
-  bool tapeAlertsCriticalForWrite(const std::vector<uint16_t>& codes) final;
-  void setDensityAndCompression(bool compression = true, unsigned char densityCode = 0) override;
-  void enableCRC32CLogicalBlockProtectionReadOnly() final;
-  void enableCRC32CLogicalBlockProtectionReadWrite() final;
-  void disableLogicalBlockProtection() final;
-  drive::LBPInfo getLBPInfo() override;
-  void setLogicalBlockProtection(const unsigned char method,
-                                 unsigned char methodLength,
-                                 const bool enableLPBforRead,
-                                 const bool enableLBBforWrite) final;
-  void setEncryptionKey(const std::string& encryption_key) final;
-  bool clearEncryptionKey() final;
-  bool isEncryptionCapEnabled() final;
-  driveStatus getDriveStatus() override;
-  void setSTBufferWrite(bool bufWrite) override;
-  void fastSpaceToEOM(void) final;
-  void rewind(void) final;
-  void spaceToEOM(void) final;
-  void spaceFileMarksBackwards(size_t count) final;
-  void spaceFileMarksForward(size_t count) final;
+
+  // Failure-injecting overrides
+  void writeBlock(const void* data, size_t count) override;
+  void flush(void) override;
+  void rewind(void) override;
+  void disableLogicalBlockProtection() override;
+  bool clearEncryptionKey() override;
   void unloadTape(void) override;
-  void flush(void) final;
-  void writeSyncFileMarks(size_t count) final;
-  void writeImmediateFileMarks(size_t count) final;
-  void writeBlock(const void* data, size_t count) final;
-  ssize_t readBlock(void* data, size_t count) final;
-  void readExactBlock(void* data, size_t count, const std::string& context) final;
-  void readFileMark(const std::string& context) final;
   void waitUntilReady(const uint32_t timeoutSecond) override;
-  bool isWriteProtected() final;
-  bool isAtBOT() final;
-  bool isAtEOD() final;
-  bool isTapeBlank() final;
-  lbpToUse getLbpToUse() final;
-  bool hasTapeInPlace() final;
-  cta::tape::SCSI::Structures::RAO::udsLimits getLimitUDS() override;
-  void queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int maxSupported) final;
-  uint32_t getBlockIdPositioningCount() const;
-  void setTapeInPlace(bool tapeInPlace);
+
+  // Test-fixture overrides: return predictable non-zero values so unit tests
+  // can assert on specific log output without depending on real drive hardware.
+  std::map<std::string, uint64_t> getTapeWriteErrors() override;
+  std::map<std::string, uint64_t> getTapeReadErrors() override;
+  std::map<std::string, uint32_t> getTapeNonMediumErrors() override;
+  std::map<std::string, float> getQualityStats() override;
+  std::map<std::string, uint32_t> getDriveStats() override;
+  std::string getDriveFirmwareVersion() override;
+  deviceInfo getDeviceInfo() override;
+  std::string getGenericSCSIPath() override;
+  std::string getSerialNumber() override;
+
+  // Test helpers
+  std::string contentToString() noexcept;
   void setFailurePoint(FailurePoint failurePoint, bool enabled = true);
   void clearFailurePoints();
 
 private:
   void throwIfFailurePoint(FailurePoint failurePoint) const;
-  uint32_t m_blockIdPositioningCount = 0;
 };
 
 class FakeNonRAODrive : public FakeDrive {
 public:
   FakeNonRAODrive();
-  cta::tape::SCSI::Structures::RAO::udsLimits getLimitUDS() final;
+  cta::tape::SCSI::Structures::RAO::udsLimits getLimitUDS() override;
 };
 
 }  // namespace cta::tape::drive
