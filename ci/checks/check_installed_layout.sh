@@ -7,6 +7,8 @@
 
 set -euo pipefail
 
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
+
 package_format=${1:-}
 
 # Add tools here to check their binaries and manuals.
@@ -47,11 +49,11 @@ case "$package_format" in
     files=$(dpkg-query -L "${packages[@]}")
     configs=$(dpkg-query -W -f='${Conffiles}\n' "${packages[@]}" | awk 'NF == 2 {print $1}')
     ;;
-  *) echo "Usage: $0 rpm|deb" >&2; exit 2 ;;
+  *) log_error "Usage: $0 rpm|deb"; exit 2 ;;
 esac
 
 fail() {
-  echo "Installed layout: $*" >&2
+  log_error "ERROR: CTA package layout: $*"
   exit 1
 }
 
@@ -82,7 +84,12 @@ require_file() {
 # Debian: https://www.debian.org/doc/debian-policy/ch-files.html#configuration-files
 require_config() {
   require_file "$1"
-  grep -Fxq -- "$1" <<< "$configs" || fail "missing conffile or config(noreplace) metadata: $1"
+  if ! grep -Fxq -- "$1" <<< "$configs"; then
+    case "$package_format" in
+      rpm) fail "missing RPM %config(noreplace) flags: $1" ;;
+      deb) fail "not registered as a Debian conffile: $1" ;;
+    esac
+  fi
 }
 
 # Debian documents gzip compression for installed manuals and documentation.
@@ -110,6 +117,8 @@ require_manual() {
   fail "missing section 1 or 8 manual for $tool"
 }
 
+log_task "Checking commands and manuals ($package_format)..."
+
 # Commands must be executable and ship manuals.
 # FHS binaries: https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch04s04.html
 # Manuals: https://www.debian.org/doc/debian-policy/ch-docs.html#manual-pages
@@ -118,6 +127,8 @@ for tool in "${tools[@]}" "${rust_tools[@]}" "${services[@]}"; do
   [[ -x "/usr/bin/$tool" ]] || fail "not executable: /usr/bin/$tool"
   require_manual "$tool"
 done
+
+log_task "Checking service units and configuration ($package_format)..."
 
 # Services ship vendor units under /usr/lib/systemd/system.
 # Fedora: https://docs.fedoraproject.org/en-US/packaging-guidelines/Systemd/
@@ -131,6 +142,8 @@ done
 for service in "${services[@]}"; do
   require_config "/etc/logrotate.d/$service"
 done
+
+log_task "Checking examples and their package ownership ($package_format)..."
 
 # Examples belong under the owning package's documentation directory.
 # Debian: https://www.debian.org/doc/debian-policy/ch-docs.html#examples
@@ -149,6 +162,8 @@ for service in "${services[@]}"; do
   require_document "/usr/share/doc/$service/examples/$service.example.toml" "$service"
 done
 
+log_task "Checking copyright and license files ($package_format)..."
+
 # Every installed CTA package ships its copyright/license file.
 # Debian: https://www.debian.org/doc/debian-policy/ch-docs.html#copyright-information
 # Fedora: https://docs.fedoraproject.org/en-US/packaging-guidelines/LicensingGuidelines/#_license_text
@@ -158,6 +173,8 @@ for package in "${packages[@]}"; do
     deb) require_file "/usr/share/doc/$package/copyright" "$package" ;;
   esac
 done
+
+log_task "Checking runtime data and shell completions ($package_format)..."
 
 # Vendor account definitions use the sysusers.d discovery path.
 # https://www.freedesktop.org/software/systemd/man/latest/sysusers.d.html
@@ -173,6 +190,8 @@ for tool in "${rust_tools[@]}"; do
   require_file "/usr/share/fish/vendor_completions.d/$tool.fish"
 done
 
+log_task "Checking runtime libraries ($package_format)..."
+
 # Check versioned runtime libraries without hardcoding the current ABI version.
 # Fedora: https://docs.fedoraproject.org/en-US/packaging-guidelines/#_shared_libraries
 # Debian: https://www.debian.org/doc/debian-policy/ch-sharedlibs.html#run-time-shared-libraries
@@ -184,6 +203,8 @@ for library in libctacommon libctacatalogue libctascheduler; do
   done
 done
 
+log_task "Checking for files under /usr/local ($package_format)..."
+
 # Reserve /usr/local for administrators.
 # Inspect all packaged paths, even when a correctly installed copy also exists.
 # /usr/local: https://www.debian.org/doc/debian-policy/ch-opersys.html#site-specific-programs
@@ -191,4 +212,4 @@ if misplaced=$(grep '^/usr/local/' <<< "$files"); then
   fail "package installs into /usr/local: $misplaced"
 fi
 
-echo "Installed CTA layout checks passed (${1})."
+log_success "SUCCESS: Installed CTA layout checks passed ($package_format)."
