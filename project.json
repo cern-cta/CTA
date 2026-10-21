@@ -192,6 +192,57 @@
         "redhat-rpm-config": "",
         "pandoc": ""
       }
+    },
+    "debian13": {
+      "versionlock": {
+        "opentelemetry-cpp": "1:1.26.0-1.debian13"
+      },
+      "runRequires": {
+        "opentelemetry-cpp": "= 1:1.26.0-1.debian13"
+      },
+      "buildRequires": {
+        "build-essential": "",
+        "debhelper-compat": "= 13",
+        "dpkg-dev": "",
+        "fakeroot": "",
+        "cmake": "",
+        "ninja-build": "",
+        "pkg-config": "",
+        "git": "",
+        "curl": "",
+        "ca-certificates": "",
+        "python3": "",
+        "corrosion": "",
+        "libsystemd-dev": "",
+        "libxrootd-dev": "",
+        "libxrootd-client-dev": "",
+        "libprotobuf-dev": "",
+        "protobuf-compiler": "",
+        "libgrpc++-dev": "",
+        "protobuf-compiler-grpc": "",
+        "libgtest-dev": "",
+        "libgmock-dev": "",
+        "libsqlite3-dev": "",
+        "libcap-dev": "",
+        "binutils-dev": "",
+        "libcrypto++-dev": "",
+        "uuid-dev": "",
+        "libjson-c-dev": "",
+        "libattr1-dev": "",
+        "libssl-dev": "",
+        "libtomlplusplus-dev": "",
+        "libcpp-httplib-dev": "",
+        "libcurl4-openssl-dev": "",
+        "valgrind": "",
+        "libpq-dev": "",
+        "postgresql": "",
+        "libkrb5-dev": "",
+        "libtirpc-dev": "",
+        "pandoc": "",
+        "libclang-dev": "",
+        "zlib1g-dev": "",
+        "opentelemetry-cpp": "= 1:1.26.0-1.debian13"
+      }
     }
   }
 }

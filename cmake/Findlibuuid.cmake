@@ -8,13 +8,11 @@
 
 find_path(LIBUUID_INCLUDE_DIRS
   uuid.h
-  PATHS /usr/include/uuid
-  NO_DEFAULT_PATH)
+  PATHS /usr/include/uuid)
 
 find_library(LIBUUID_LIBRARIES
   NAME uuid
-  PATHS /usr/lib64
-  NO_DEFAULT_PATH)
+  PATHS /usr/lib64)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(libuuid DEFAULT_MSG

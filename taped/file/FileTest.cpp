@@ -372,7 +372,7 @@ TEST(ctaDirectoryTests, directoryFailCreate) {
 TEST(ctaDirectoryTests, directoryGetFilesName) {
   std::string dirTestPath = "/tmp/directoryGetFilesNames";
   std::string rmCommand = "rm -rf " + dirTestPath;
-  ::system(rmCommand.c_str());
+  ASSERT_EQ(0, ::system(rmCommand.c_str()));
   cta::disk::LocalDirectory dir(dirTestPath);
   ASSERT_NO_THROW(dir.mkdir());
   char filePath[] = "/tmp/directoryGetFilesNames/fileXXXXXX";

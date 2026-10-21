@@ -9,12 +9,12 @@ install(FILES ../lib/runtime/cta-logging.schema.json
   DESTINATION ${CMAKE_INSTALL_DATADIR}/cta
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
-install(FILES
-  systemd/cta-frontend-grpc.service
-  systemd/cta-maintd.service
-  systemd/cta-rmcd.service
-  systemd/cta-taped.service
-  DESTINATION ${CTA_SYSTEMD_UNIT_DIR})
+foreach(service cta-frontend-grpc cta-maintd cta-rmcd cta-taped)
+  file(READ "${CMAKE_CURRENT_SOURCE_DIR}/systemd/${service}.service" unit)
+  string(REPLACE "/etc/sysconfig" "${CTA_SERVICE_ENV_DIR}" unit "${unit}")
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${service}.service" "${unit}")
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${service}.service" DESTINATION ${CTA_SYSTEMD_UNIT_DIR})
+endforeach()
 
 # cta-frontend-grpc does not come with a logrotate file yet
 install(FILES logrotate/cta-maintd.logrotate

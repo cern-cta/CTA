@@ -14,6 +14,7 @@ with project_json_path.open() as f:
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--platform", default=project_json["dev"]["defaultPlatform"])
+parser.add_argument("--format", choices=("rpm", "deb"), default="rpm")
 args = parser.parse_args()
 
 platform = args.platform
@@ -25,9 +26,12 @@ if platform not in project_json["platforms"]:
 
 packages = project_json["platforms"][platform]["buildRequires"]
 
+requirements = []
 for package, version in packages.items():
-    if package in project_json["packageGroups"]:
-        for package_name in project_json["packageGroups"][package]:
-            print(f"BuildRequires: {package_name} {version}")
-    else:
-        print(f"BuildRequires: {package} {version}")
+    for name in project_json["packageGroups"].get(package, [package]):
+        if args.format == "deb":
+            requirements.append(f"{name} ({version})" if version else name)
+        else:
+            requirements.append(f"BuildRequires: {name} {version}".rstrip())
+
+print((",\n " if args.format == "deb" else "\n").join(requirements))

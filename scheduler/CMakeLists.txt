@@ -65,6 +65,7 @@ if(NOT CTA_USE_PGSCHED)
     target_link_libraries (ctascheduler ctacommon ctaprotobufconversions ctaobjectstore ctadisk ctatelemetryscheduler)
 else()
     add_library (ctascheduler SHARED ${CTA_SCHEDULER_PG_SRC_FILES})
+    target_include_directories(ctascheduler PRIVATE ${POSTGRES_INCLUDE_DIRS})
     target_link_libraries (ctascheduler ctaschedulerschema ctacommon ctaprotobufconversions ctadisk cryptopp
       ctatelemetryscheduler)
 endif()

@@ -86,6 +86,12 @@ target_link_libraries(cta-integration-tests
   gtest
   pthread)
 
+# Tests register through shared-library initializers, without direct symbol references.
+# Keep these libraries when the distribution enables --as-needed by default.
+foreach(test_runner cta-unit-tests cta-unit-tests-rdbms cta-unit-tests-multiprocess cta-integration-tests)
+  target_link_options(${test_runner} PRIVATE "LINKER:--no-as-needed")
+endforeach()
+
 install(
   TARGETS
     cta-unit-tests-rdbms

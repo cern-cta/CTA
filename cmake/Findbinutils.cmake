@@ -8,13 +8,11 @@
 
 find_path(BINUTILS_INCLUDE_DIRS
   bfd.h
-  PATHS /usr/include
-  NO_DEFAULT_PATH)
+  PATHS /usr/include)
 
 find_library(BINUTILS_LIBRARIES
   NAME bfd
-  PATHS /usr/lib64
-  NO_DEFAULT_PATH)
+  PATHS /usr/lib64)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(binutils DEFAULT_MSG

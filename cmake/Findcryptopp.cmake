@@ -8,13 +8,11 @@
 
 find_path(CRYPTOPP_INCLUDE_DIRS
   base64.h
-  PATHS /usr/include/cryptopp
-  NO_DEFAULT_PATH)
+  PATHS /usr/include/cryptopp)
 
 find_library(CRYPTOPP_LIBRARIES
   NAME cryptopp
-  PATHS /usr/lib64
-  NO_DEFAULT_PATH)
+  PATHS /usr/lib64)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(cryptopp DEFAULT_MSG

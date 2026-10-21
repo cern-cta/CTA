@@ -240,5 +240,5 @@ build-pipeline-images:
         IMAGE_KIND: ["default", "lint", "release", "danger"]
       # Add one platform entry and its ci/docker/cta/<platform>/{build,test}.Dockerfiles per supported platform.
       - IMAGE_SCOPE: "platform"
-        PLATFORM: ["el9"]
+        PLATFORM: ["el9", "debian13"]
         IMAGE_KIND: ["build", "test"]

@@ -8,13 +8,11 @@
 
 find_path(JSON-C_INCLUDE_DIRS
   json.h
-  PATHS /usr/include/json-c
-  NO_DEFAULT_PATH)
+  PATHS /usr/include/json-c)
 
 find_library(JSON-C_LIBRARIES
   NAME json-c
-  PATHS /usr/lib64
-  NO_DEFAULT_PATH)
+  PATHS /usr/lib64)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(json-c DEFAULT_MSG
