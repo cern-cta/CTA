@@ -5,6 +5,9 @@
 #  Build configuration
 # =========================================================================
 
+# Release history is maintained in CHANGELOG.md.
+%global source_date_epoch_from_changelog 0
+
 %define ctaRelease @CTA_RPM_RELEASE@
 
 %define usePgsched @PACKAGE_USE_PGSCHED@

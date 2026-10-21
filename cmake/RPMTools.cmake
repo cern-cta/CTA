@@ -67,6 +67,7 @@ function(rpmtools_add_rpm_targets rpm_name spec_file build_mode)
     VERBATIM)
 
   if(build_mode STREQUAL "binary-package")
+    # Preserve compiler artifacts for incremental builds, including with RPM 4.19 and newer.
     add_custom_target("${rpm_name}_rpm"
       COMMAND "${CMAKE_CPACK_COMMAND}" -G TZST --config CPackSourceConfig.cmake
       COMMAND "${CMAKE_COMMAND}" -E copy
@@ -74,6 +75,7 @@ function(rpmtools_add_rpm_targets rpm_name spec_file build_mode)
         "${rpm_root}/SOURCES"
       COMMAND "${RPMTOOLS_RPMBUILD_EXECUTABLE}"
         -bb
+        --noclean
         "--define=_topdir ${rpm_root}"
         $ENV{RPMDEFS}
         "--buildroot=${rpm_root}/tmp"
