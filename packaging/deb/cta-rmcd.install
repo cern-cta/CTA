@@ -5,4 +5,4 @@ usr/bin/cta-rmcd
 usr/lib/systemd/system/cta-rmcd.service
 usr/share/man/man1/cta-rmcd.1
 etc/logrotate.d/cta-rmcd
-usr/share/doc/cta/cta-rmcd.example.toml
+usr/share/doc/cta-rmcd/examples/cta-rmcd.example.toml

@@ -161,6 +161,7 @@ if(CTA_BUILD_MODE STREQUAL "compile")
     set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Installation prefix" FORCE)
   endif()
   include(GNUInstallDirs)
+
   set(CTA_SERVICE_ENV_DIR "${CMAKE_INSTALL_FULL_SYSCONFDIR}/sysconfig")
   if(CTA_PACKAGE_FORMAT STREQUAL "deb")
     set(CTA_SERVICE_ENV_DIR "${CMAKE_INSTALL_FULL_SYSCONFDIR}/default")

@@ -28,10 +28,6 @@ target_link_libraries (ctastatistics
   ctaschemachecker
   ctardbms)
 
-install (FILES ${CMAKE_SOURCE_DIR}/catalogue/cta-catalogue.example.conf
-  DESTINATION ${CMAKE_INSTALL_DOCDIR}
-  PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
-
 add_executable(cta-statistics-save
   StatisticsSaveCmd.cpp
   StatisticsSaveCmdLineArgs.cpp

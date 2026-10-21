@@ -3,6 +3,3 @@
 
 usr/lib/sysusers.d/cta.conf
 usr/share/cta/cta-logging.schema.json
-usr/share/doc/cta/cta-catalogue.example.conf
-usr/share/doc/cta/cta-scheduler.example.conf
-usr/share/doc/cta/cta-otel.example.yaml

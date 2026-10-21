@@ -18,40 +18,66 @@ Package: cta-runtime
 Architecture: amd64
 Depends: ${misc:Depends}, adduser
 Description: CERN Tape Archive shared runtime data
- Provides the CTA system account, shared configuration examples
- and logging schema.
+ Provides the CTA system account and logging schema.
 
 Package: libcta@CTA_SOVERSION@
 Section: libs
 Architecture: amd64
-Depends: ${shlibs:Depends}, ${misc:Depends}, opentelemetry-cpp (@OPENTELEMETRY_CPP_VERSION_CONSTRAINT@)
-Description: CERN Tape Archive runtime libraries
- Provides shared libraries and PostgreSQL and SQLite plugins used by CTA.
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: CERN Tape Archive common runtime libraries
+ Provides common, application runtime and tape support libraries used by CTA.
+
+Package: cta-lib-catalogue
+Section: libs
+Architecture: amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}, libcta@CTA_SOVERSION@ (= ${binary:Version}), cta-lib-telemetry (= ${binary:Version})
+Description: CERN Tape Archive catalogue libraries
+ Provides catalogue libraries, PostgreSQL and SQLite plugins, and configuration examples.
+
+Package: cta-lib-scheduler
+Section: libs
+Architecture: amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}, libcta@CTA_SOVERSION@ (= ${binary:Version}), cta-lib-catalogue (= ${binary:Version}), cta-lib-telemetry (= ${binary:Version})
+Description: CERN Tape Archive scheduler libraries
+ Provides scheduler and disk libraries with their configuration example.
+
+Package: cta-lib-telemetry
+Section: libs
+Architecture: amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}, libcta@CTA_SOVERSION@ (= ${binary:Version}), opentelemetry-cpp (@OPENTELEMETRY_CPP_VERSION_CONSTRAINT@)
+Description: CERN Tape Archive telemetry libraries
+ Provides telemetry libraries and their configuration example.
+
+Package: cta-admin
+Architecture: amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}, libcta@CTA_SOVERSION@ (= ${binary:Version})
+Description: CERN Tape Archive command-line interface
+ Provides the administration command, manual and configuration example.
 
 Package: libcta-dev
 Section: libdevel
 Architecture: amd64
-Depends: ${misc:Depends}, libcta@CTA_SOVERSION@ (= ${binary:Version})
+Depends: ${misc:Depends}, libcta@CTA_SOVERSION@ (= ${binary:Version}), cta-lib-catalogue (= ${binary:Version}), cta-lib-scheduler (= ${binary:Version}), cta-lib-telemetry (= ${binary:Version})
 Description: Development files for CERN Tape Archive libraries
  Provides unversioned linker names for developing against CTA libraries.
 
 Package: cta-taped
 Architecture: amd64
-Depends: ${shlibs:Depends}, ${misc:Depends}, cta-runtime (= ${binary:Version}), libcta@CTA_SOVERSION@ (= ${binary:Version})
+Depends: ${shlibs:Depends}, ${misc:Depends}, cta-runtime (= ${binary:Version}), libcta@CTA_SOVERSION@ (= ${binary:Version}), cta-lib-catalogue (= ${binary:Version}), cta-lib-scheduler (= ${binary:Version}), cta-lib-telemetry (= ${binary:Version})
 Recommends: systemd, logrotate
 Description: CERN Tape Archive tape daemon
  Provides the tape daemon and its service configuration.
 
 Package: cta-maintd
 Architecture: amd64
-Depends: ${shlibs:Depends}, ${misc:Depends}, cta-runtime (= ${binary:Version}), libcta@CTA_SOVERSION@ (= ${binary:Version})
+Depends: ${shlibs:Depends}, ${misc:Depends}, cta-runtime (= ${binary:Version}), libcta@CTA_SOVERSION@ (= ${binary:Version}), cta-lib-catalogue (= ${binary:Version}), cta-lib-scheduler (= ${binary:Version}), cta-lib-telemetry (= ${binary:Version})
 Recommends: systemd, logrotate
 Description: CERN Tape Archive maintenance daemon
  Provides the maintenance daemon and its service configuration.
 
 Package: cta-frontend-grpc
 Architecture: amd64
-Depends: ${shlibs:Depends}, ${misc:Depends}, cta-runtime (= ${binary:Version}), libcta@CTA_SOVERSION@ (= ${binary:Version})
+Depends: ${shlibs:Depends}, ${misc:Depends}, cta-runtime (= ${binary:Version}), libcta@CTA_SOVERSION@ (= ${binary:Version}), cta-lib-catalogue (= ${binary:Version}), cta-lib-scheduler (= ${binary:Version}), cta-lib-telemetry (= ${binary:Version})
 Recommends: systemd, logrotate
 Description: CERN Tape Archive gRPC frontend
  Provides the gRPC frontend and its service configuration.
@@ -65,7 +91,7 @@ Description: CERN Tape Archive remote media changer daemon
 
 Package: cta-tools
 Architecture: amd64
-Depends: ${shlibs:Depends}, ${misc:Depends}, cta-runtime (= ${binary:Version}), libcta@CTA_SOVERSION@ (= ${binary:Version}), libcap2-bin, xrootd-client
+Depends: ${shlibs:Depends}, ${misc:Depends}, cta-runtime (= ${binary:Version}), libcta@CTA_SOVERSION@ (= ${binary:Version}), libcap2-bin, xrootd-client, cta-lib-catalogue (= ${binary:Version}), cta-lib-scheduler (= ${binary:Version}), cta-lib-telemetry (= ${binary:Version}), cta-admin (= ${binary:Version})
 Description: CERN Tape Archive administrative tools
  Provides administration, database schema, tape and EOS tools
  with their manuals.
@@ -73,7 +99,7 @@ Description: CERN Tape Archive administrative tools
 Package: cta-tests
 Build-Profiles: <!pkg.cta.notests>
 Architecture: amd64
-Depends: ${shlibs:Depends}, ${misc:Depends}, cta-taped (= ${binary:Version}), libcta@CTA_SOVERSION@ (= ${binary:Version}), valgrind, postgresql, moreutils, make, libgtest-dev, libtirpc-dev
+Depends: ${shlibs:Depends}, ${misc:Depends}, cta-taped (= ${binary:Version}), libcta@CTA_SOVERSION@ (= ${binary:Version}), valgrind, postgresql, moreutils, make, libgtest-dev, libtirpc-dev, cta-lib-catalogue (= ${binary:Version}), cta-lib-scheduler (= ${binary:Version}), cta-lib-telemetry (= ${binary:Version})
 Description: CERN Tape Archive unit and integration tests
  Provides test runners, test libraries, dynamic-analysis support files
  and tools for reading test tapes written in OSM and Enstore formats.

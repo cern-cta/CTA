@@ -5,4 +5,4 @@ usr/bin/cta-maintd
 usr/lib/systemd/system/cta-maintd.service
 usr/share/man/man1/cta-maintd.1
 etc/logrotate.d/cta-maintd
-usr/share/doc/cta/cta-maintd.example.toml
+usr/share/doc/cta-maintd/examples/cta-maintd.example.toml

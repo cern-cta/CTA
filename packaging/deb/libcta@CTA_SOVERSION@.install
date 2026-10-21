@@ -1,30 +1,8 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-usr/lib/*/libctacatalogue.so.*
-usr/lib/*/libctacatalogueinmemory.so.*
-usr/lib/*/libctacataloguepostgres.so.*
-usr/lib/*/libctacataloguesqlite.so.*
 usr/lib/*/libctacommon.so.*
-usr/lib/*/libctadisk.so.*
-usr/lib/*/libctadropschemacmd.so.*
 usr/lib/*/libctamediachanger.so.*
-usr/lib/*/libctardbms.so.*
-usr/lib/*/libctardbmspostgres.so.*
-usr/lib/*/libctardbmssqlite.so.*
-usr/lib/*/libctardbmswrapper.so.*
-usr/lib/*/libctardbroutines.so.*
 usr/lib/*/libctaruntime.so.*
-usr/lib/*/libctascheduler.so.*
-usr/lib/*/libctaschemachecker.so.*
-usr/lib/*/libctastatistics.so.*
 usr/lib/*/libctatapedaemoncommon.so.*
 usr/lib/*/libctatapedrao.so.*
-usr/lib/*/libctatelemetry.so.*
-usr/lib/*/libctatelemetryfrontend.so.*
-usr/lib/*/libctatelemetrymaintd.so.*
-usr/lib/*/libctatelemetryobjectstore.so.*
-usr/lib/*/libctatelemetryrdbms.so.*
-usr/lib/*/libctatelemetryrmcd.so.*
-usr/lib/*/libctatelemetryscheduler.so.*
-usr/lib/*/libctatelemetrytaped.so.*
