@@ -63,9 +63,6 @@ instance_name = "CI_local"
 
 # Object store-specific scheduler options
 [frontend_scheduler]
-
-  # These will be removed once the objectstore scheduler is decommissioned.
-
   # Size of the scheduler DB thread pool. Must be greater than zero.
   # (integer, REQUIRED)
   number_of_threads = 500
@@ -74,28 +71,6 @@ instance_name = "CI_local"
   # If omitted, the OS's default will be used.
   # (integer, optional)
   thread_stack_size_mb = 1
-
-
-# PostgreSQL scheduler-specific options: opportunistically batch concurrent archive/retrieve queueing
-# requests into a single bulk scheduler DB insert instead of queueing them one at a time.
-# Ignored by the objectstore scheduler, which always queues one request at a time.
-[opportunistic_batching]
-  # Enables batching for archive and retrieve queueing. Default: false
-  # (boolean, optional)
-  enabled = false
-
-  # The leader waits for concurrent requests to join its batch until either the window elapses or the
-  # batch reaches max_batch_size, whichever comes first. Larger values mean fewer, bigger DB round trips
-  # at the cost of more added latency per request; smaller values mean less added latency but less
-  # batching benefit.
-  # Default: 10
-  # (time in milliseconds, optional)
-  window_ms = 10
-
-  # Maximum number of requests in a batch. Must be greater than zero when batching is enabled.
-  # Default: 1000
-  # (integer, optional)
-  max_batch_size = 1000
 
 
 [verification]

@@ -3,9 +3,7 @@
 
 include_directories(${CMAKE_BINARY_DIR}/lib/protobuf ${PROTOBUF3_INCLUDE_DIRS})
 
-# Admin API implementation: the admin commands (no gRPC), answered with one response (commands/sync/) or streamed
-# (commands/stream/), and the gRPC services (rpc/ entry points, rpc/auth/ authentication, rpc/reactors/ streaming
-# write reactors)
+# Library
 add_library(cta-admin-api-lib STATIC
   src/commands/AdminCmdOptions.cpp
   src/commands/stream/StreamFactory.cpp
@@ -38,17 +36,25 @@ add_library(cta-admin-api-lib STATIC
   src/rpc/auth/kerberos/ServerNegotiationRequestHandler.cpp
   src/rpc/auth/kerberos/TokenStore.cpp
   src/rpc/reactors/CtaAdminServerWriteReactor.cpp
-  ${PROJECT_SOURCE_DIR}/tools/CtaAdminCmdParser.cpp)
-target_include_directories(cta-admin-api-lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(cta-admin-api-lib PUBLIC cta-grpc-server-config cta-grpc-server cta-service-resources ctagrpc ctaprotobufconversions cta-grpc-server-auth ctacommon ctacatalogue ctascheduler ctaruntime gssapi_krb5)
-
-add_executable(cta-admin-api
   src/AdminApiApp.cpp
-  src/cta-admin-api.cpp
+  ${PROJECT_SOURCE_DIR}/tools/CtaAdminCmdParser.cpp
 )
-target_include_directories(cta-admin-api PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_link_libraries(cta-admin-api cta-admin-api-lib ctaruntime ctacommon)
+target_include_directories(cta-admin-api-lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(cta-admin-api-lib PUBLIC
+  cta-grpc-server-auth
+  cta-grpc-server-config
+  cta-grpc-server
+  cta-service-resources
+  ctagrpc
+  ctaprotobufconversions
+  ctacommon
+  ctacatalogue
+  ctascheduler
+  ctaruntime
+  gssapi_krb5
+)
 
+# Unit tests
 add_library(cta-admin-api-unit-tests SHARED
   test/AdminApiConfigTest.cpp
   test/AdminCmdModeTest.cpp
@@ -59,12 +65,47 @@ target_link_libraries(cta-admin-api-unit-tests cta-admin-api-lib cta-grpc-server
 set_property(TARGET cta-admin-api-unit-tests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET cta-admin-api-unit-tests PROPERTY VERSION "${CTA_LIBVERSION}")
 
+# Executable
+add_executable(cta-admin-api
+  src/cta-admin-api.cpp
+)
+target_include_directories(cta-admin-api PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(cta-admin-api
+  cta-admin-api-lib
+  ctaruntime
+  ctacommon
+)
+
+if(CTA_USE_PGSCHED)
+  set(CTA_ADMIN_API_EXAMPLE_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/cta-admin-api.pg.example.toml)
+else()
+  set(CTA_ADMIN_API_EXAMPLE_CONFIG ${CMAKE_CURRENT_SOURCE_DIR}/cta-admin-api.example.toml)
+endif()
+
+# Config checker
+add_custom_target(cta-admin-api-config-check
+  COMMAND $<TARGET_FILE:cta-admin-api>
+    # TODO: switch to strict once cta/CTA#1743 is closed
+    # --config-strict
+    --config ${CTA_ADMIN_API_EXAMPLE_CONFIG}
+    --config-check
+  DEPENDS cta-admin-api
+  COMMENT "Validating the cta-admin-api example configuration" VERBATIM)
+add_dependencies(cta-example-config-checks cta-admin-api-config-check)
+
+# Man pages
 add_manpage (cta-admin-api)
 
+# Install
 install(TARGETS cta-admin-api DESTINATION ${CMAKE_INSTALL_BINDIR})
 if(CTA_BUILD_TEST_PACKAGES)
   install(TARGETS cta-admin-api-unit-tests DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-admin-api.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
-install(FILES cta-admin-api.example.toml ${PROJECT_SOURCE_DIR}/lib/cpp/cta-grpc-server/jwt-revoke-list.example.toml
+install(FILES ${CTA_ADMIN_API_EXAMPLE_CONFIG}
+  DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/cta-admin-api/examples
+  RENAME cta-admin-api.example.toml
+  PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
+)
+install(FILES ${PROJECT_SOURCE_DIR}/lib/cpp/cta-grpc-server/jwt-revoke-list.example.toml
   DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/cta-admin-api/examples)
