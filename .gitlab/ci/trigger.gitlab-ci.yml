@@ -15,8 +15,11 @@ spec:
       type: string
     cmake-build-type:
       type: string
-    enable-address-sanitizer:
-      type: boolean
+    sanitizers:
+      description: "C/C++ sanitizer mode; address and thread require separate builds."
+      type: string
+      options: ["none", "address", "undefined", "address,undefined", "thread"]
+      default: "none"
     enable-sbom-generation:
       type: boolean
     compile-with-extra-telemetry:
@@ -60,7 +63,7 @@ spec:
           enable-internal-repos: $[[ inputs.enable-internal-repos ]]
           build-generator: $[[ inputs.build-generator ]]
           cmake-build-type: $[[ inputs.cmake-build-type ]]
-          enable-address-sanitizer: $[[ inputs.enable-address-sanitizer ]]
+          sanitizers: $[[ inputs.sanitizers ]]
           enable-sbom-generation: $[[ inputs.enable-sbom-generation ]]
           # Forward the typed pipeline inputs, not the runtime CI/CD variables. Values
           # overridden by workflow rules in commit pipelines are intentionally not
@@ -73,6 +76,32 @@ spec:
           enable-valgrind: $[[ inputs.enable-valgrind ]]
           enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
           keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
+    strategy: mirror
+
+trigger-address-undefined-sanitizer-pipeline:
+  extends:
+    - .trigger-child-pipeline
+  trigger:
+    include:
+      - local: .gitlab-ci.yml
+        inputs:
+          <<: *child-pipeline-inputs
+          sanitizers: "address,undefined"
+          # Run sanitizer-instrumented binaries without Valgrind.
+          enable-valgrind: false
+    strategy: mirror
+
+trigger-thread-sanitizer-pipeline:
+  extends:
+    - .trigger-child-pipeline
+  trigger:
+    include:
+      - local: .gitlab-ci.yml
+        inputs:
+          <<: *child-pipeline-inputs
+          sanitizers: "thread"
+          # Run sanitizer-instrumented binaries without Valgrind.
+          enable-valgrind: false
     strategy: mirror
 
 trigger-postgres-scheduler-pipeline:

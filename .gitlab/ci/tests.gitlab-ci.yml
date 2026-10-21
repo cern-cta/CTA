@@ -24,6 +24,30 @@ spec:
     fi
   - dnf -y --nogpgcheck install cta-tests cta-tests-debuginfo
 
+.cpp-test:
+  before_script:
+    - !reference [.merge-train-guard, before_script]
+    - *setup-cta-install
+    - mkdir -p test-results test-logs
+    - |
+      set -o pipefail
+      test_status=0
+      # Record failures without skipping later tests or database cleanup.
+      run_cpp_test() {
+        local name="$1"
+        shift
+        GTEST_OUTPUT="xml:${CI_PROJECT_DIR}/test-results/${name}.xml" \
+          "$@" 2>&1 | tee "test-logs/${name}.log" || test_status=1
+      }
+  artifacts:
+    when: always
+    expire_in: 14 days
+    paths:
+      - test-results/
+      - test-logs/
+    reports:
+      junit: test-results/*.xml
+
 unit-test-python:
   stage: test
   needs:
@@ -115,6 +139,7 @@ test-cta-valgrind:
     - /usr/bin/cta-unit-and-integration-tests.sh
 
 integration-test-cta:
+  extends: .cpp-test
   # Sometimes flaky due to "resource unavailable" error
   retry: 1
   stage: test
@@ -130,16 +155,12 @@ integration-test-cta:
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
-  before_script:
-    - !reference [.merge-train-guard, before_script]
-    - *setup-cta-install
   script:
-    - /usr/bin/cta-integration-tests
-  artifacts:
-    reports:
-      junit: $GTEST_REPORT_FILE
+    - run_cpp_test cta-integration-tests /usr/bin/cta-integration-tests
+    - exit "$test_status"
 
 unit-test-cta:
+  extends: .cpp-test
   stage: test
   needs:
     - job: check-merge-train-duplicate
@@ -153,17 +174,13 @@ unit-test-cta:
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
-  before_script:
-    - !reference [.merge-train-guard, before_script]
-    - *setup-cta-install
   script:
-    - /usr/bin/cta-unit-tests-multiprocess
-    - /usr/bin/cta-unit-tests
-  artifacts:
-    reports:
-      junit: $GTEST_REPORT_FILE
+    - run_cpp_test cta-unit-tests-multiprocess /usr/bin/cta-unit-tests-multiprocess
+    - run_cpp_test cta-unit-tests /usr/bin/cta-unit-tests
+    - exit "$test_status"
 
 unit-test-postgresql:
+  extends: .cpp-test
   stage: test
   needs:
     - job: check-merge-train-duplicate
@@ -177,9 +194,6 @@ unit-test-postgresql:
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
-  before_script:
-    - !reference [.merge-train-guard, before_script]
-    - *setup-cta-install
   script:
     - dnf -y install cta-catalogue-utils
     - POSTGRESQL_DATA_DIR=/usr/local/cta_test_pgsql_data
@@ -203,16 +217,15 @@ unit-test-postgresql:
     - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
     - |
       if $[[ inputs.enable-valgrind ]]; then
-        valgrind /usr/bin/cta-unit-tests-rdbms ${CTA_CATALOGUE_CONF}
+        run_cpp_test cta-unit-tests-rdbms valgrind /usr/bin/cta-unit-tests-rdbms "${CTA_CATALOGUE_CONF}"
       else
-        /usr/bin/cta-unit-tests-rdbms ${CTA_CATALOGUE_CONF}
+        run_cpp_test cta-unit-tests-rdbms /usr/bin/cta-unit-tests-rdbms "${CTA_CATALOGUE_CONF}"
       fi
     - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
-  artifacts:
-    reports:
-      junit: $GTEST_REPORT_FILE
+    - exit "$test_status"
 
 unit-test-oracle:
+  extends: .cpp-test
   stage: test
   needs:
     - job: check-merge-train-duplicate
@@ -232,9 +245,6 @@ unit-test-oracle:
     ORACLE_PASSWORD: $CI_ORACLE_UNIT_TEST_DB_PASSWORD
     # Note that this expects the full url; not a shortname relying on tnsnames
     ORACLE_DATABASE: $CI_ORACLE_UNIT_TEST_DB_DATABASE
-  before_script:
-    - !reference [.merge-train-guard, before_script]
-    - *setup-cta-install
   script:
     - dnf -y install cta-catalogue-utils
     - CTA_CATALOGUE_CONF=$(mktemp)
@@ -244,16 +254,14 @@ unit-test-oracle:
     - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
     - |
       if $[[ inputs.enable-valgrind ]]; then
-        valgrind /usr/bin/cta-unit-tests-rdbms ${CTA_CATALOGUE_CONF}
+        run_cpp_test cta-unit-tests-rdbms valgrind /usr/bin/cta-unit-tests-rdbms "${CTA_CATALOGUE_CONF}"
       else
-        /usr/bin/cta-unit-tests-rdbms ${CTA_CATALOGUE_CONF}
+        run_cpp_test cta-unit-tests-rdbms /usr/bin/cta-unit-tests-rdbms "${CTA_CATALOGUE_CONF}"
       fi
+    - exit "$test_status"
   # Adding this resource group ensures only a single instance of this job can run at any given time
   # This is necessary as the job uses a single account on a centralized database.
   resource_group: oracle-centralized-db-cta-dev04
-  artifacts:
-    reports:
-      junit: $GTEST_REPORT_FILE
 
 test-cta-rpm-install:
   stage: test

@@ -61,7 +61,7 @@ enable_sccache=true
 skip_debug_packages=true
 skip_unit_tests=true
 force_install=false
-enable_address_sanitizer=false
+sanitizers="none"
 extra_telemetry=false
 build_generator="Ninja"
 cmake_build_type=$(jq -r .dev.defaultBuildType "${project_root}/project.json")
@@ -265,7 +265,7 @@ Options:
                                     or MinSizeRel.
       --disable-sccache             Disable sccache.
       --enable-unit-tests           Run compiled unit tests without packaging them.
-      --enable-address-sanitizer    Enable AddressSanitizer.
+      --sanitizers <mode>           none, address, undefined, address,undefined, or thread.
       --force-install               Force source package installation.
 
 $(global_options_help)
@@ -528,9 +528,11 @@ parse_options() {
         require_command "$1" "$command" build up debug all
         force_install=true
         ;;
-      --enable-address-sanitizer)
+      --sanitizers)
         require_command "$1" "$command" build up debug all
-        enable_address_sanitizer=true
+        [[ $# -gt 1 ]] || unsupported_argument "--sanitizers requires a mode"
+        sanitizers="$2"
+        shift
         ;;
       --extra-telemetry)
         require_command "$1" "$command" build up debug all
@@ -664,6 +666,11 @@ parse_options() {
         ;;
     esac
   fi
+
+  case "$sanitizers" in
+    none|address|undefined|address,undefined|thread) ;;
+    *) unsupported_argument "--sanitizers must be none, address, undefined, address,undefined, or thread" ;;
+  esac
 
   if [[ "$scheduler_type" != "objectstore" ]] && [[ "$scheduler_type" != "pgsched" ]]; then
     unsupported_argument "--scheduler-type is \"$scheduler_type\" but must be one of [objectstore, pgsched]."
@@ -800,7 +807,7 @@ create_build_configuration() {
     --argjson buildTestPackages "$enable_debug_image" \
     --argjson skipDebugPackages "$skip_debug_packages" \
     --argjson skipUnitTests "$skip_unit_tests" \
-    --argjson enableAddressSanitizer "$enable_address_sanitizer" \
+    --arg sanitizers "$sanitizers" \
     --argjson extraTelemetry "$extra_telemetry" \
     --arg ctaVersion "$cta_version" \
     --arg xrootdSsiVersion "$xrootd_ssi_version" \
@@ -809,7 +816,7 @@ create_build_configuration() {
     '{platform: $platform, schedulerType: $schedulerType, oracleSupport: $oracleSupport,
       buildGenerator: $buildGenerator, cmakeBuildType: $cmakeBuildType,
       enableSccache: $enableSccache, buildTestPackages: $buildTestPackages, buildDebugPackages: ($skipDebugPackages | not),
-      runUnitTests: ($skipUnitTests | not), enableAddressSanitizer: $enableAddressSanitizer,
+      sanitizers: $sanitizers, runUnitTests: ($skipUnitTests | not),
       extraTelemetry: $extraTelemetry, ctaVersion: $ctaVersion,
       xrootdSsiVersion: $xrootdSsiVersion, jobs: $jobs, internalRepos: $internalRepos}'
 }
@@ -940,7 +947,7 @@ build_cta() {
         buildTestPackages) log_warn "Test package setting changed: ${old_value} -> ${new_value}" ;;
         buildDebugPackages) log_warn "Debug package setting changed: ${old_value} -> ${new_value}" ;;
         runUnitTests) log_warn "Unit test setting changed: ${old_value} -> ${new_value}" ;;
-        enableAddressSanitizer) log_warn "AddressSanitizer setting changed: ${old_value} -> ${new_value}" ;;
+        sanitizers) log_warn "Sanitizer mode changed: ${old_value} -> ${new_value}" ;;
         ctaVersion) log_warn "CTA version changed: ${old_value} -> ${new_value}" ;;
         xrootdSsiVersion) log_warn "XRootD SSI interface version changed: ${old_value} -> ${new_value}" ;;
         jobs) log_warn "CMake job count changed: ${old_value} -> ${new_value}" ;;
@@ -951,7 +958,7 @@ build_cta() {
       esac
     done < <(jq -r --argjson desired "$build_configuration_json" '
       ["schedulerType", "oracleSupport", "buildGenerator", "platform", "cmakeBuildType",
-       "enableSccache", "buildTestPackages", "buildDebugPackages", "runUnitTests", "enableAddressSanitizer",
+       "enableSccache", "buildTestPackages", "buildDebugPackages", "runUnitTests", "sanitizers",
        "ctaVersion", "xrootdSsiVersion", "jobs", "internalRepos"][] as $field
       | select(.[$field] != $desired[$field])
       | [$field, (.[$field] | tostring), ($desired[$field] | tostring)]
@@ -1069,7 +1076,7 @@ build_cta() {
   [[ $skip_debug_packages == true ]] && build_package_flags+=(--skip-debug-packages)
   [[ $enable_sccache == true ]] && build_package_flags+=(--enable-sccache)
   [[ $enable_internal_repos == true ]] && build_package_flags+=(--enable-internal-repos)
-  [[ $enable_address_sanitizer == true ]] && build_package_flags+=(--enable-address-sanitizer)
+  build_package_flags+=(--sanitizers "$sanitizers")
   [[ $extra_telemetry == true ]] && build_package_flags+=(--extra-telemetry)
   # Refresh older outer caches once to select packaging without compiling CTA.
   if [[ $state_matches_configuration == true \

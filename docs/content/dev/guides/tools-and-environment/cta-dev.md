@@ -105,12 +105,15 @@ cta-dev build --platform debian13
 | `--cta-version <version>` | Set the package version and image tag; the default is `6-dev`. |
 | `--enable-unit-tests` | Run unit tests during the package build. |
 | `--cmake-build-type Debug` | Select a debug build. |
-| `--enable-address-sanitizer` | Build with AddressSanitizer. |
+| `--sanitizers <mode>` | Select `none` (default), `address`, `undefined`, `address,undefined`, or `thread`. |
 | `--disable-sccache` | Bypass the compilation cache. |
 
 Keep platform, scheduler, Oracle support, and version choices consistent between stages. Unit-test, CMake, sanitizer, and cache options apply to `build` and combined commands such as `up` and `all`. Run `cta-dev <command> --help` for the complete option list.
 
 `cta-dev` automatically selects package repositories, using CERN internal repositories when configured and reachable and public repositories otherwise. Use `--use-public-repos` to override this selection.
+
+Use `--sanitizers address,undefined --enable-unit-tests` to build and test with AddressSanitizer and UndefinedBehaviorSanitizer.
+Run `--sanitizers thread --enable-unit-tests` separately; ThreadSanitizer cannot be combined with AddressSanitizer.
 
 ## Deployment options
 
