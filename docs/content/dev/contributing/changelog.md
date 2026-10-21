@@ -30,7 +30,7 @@ Describe the outcome users care about. Supporting work such as updating tests, d
 
 | Avoid | Prefer | Why |
 | --- | --- | --- |
-| `[Tools] Add storage-class filtering and update system tests` | `[Tools] Add storage-class filtering to archive file listings` | Name the capability and where it applies; test updates are supporting work. |
+| `[tools] Add storage-class filtering and update system tests` | `[tools] Add storage-class filtering to archive file listings` | Name the capability and where it applies; test updates are supporting work. |
 | `[taped] Improve error handling` | `[taped] Fix crash when reopening log files` | Identify the observable problem being fixed. |
 | `[scheduler] Fixed incorrect mount selection` | `[scheduler] Fix incorrect mount selection` | Use the imperative mood after the scope prefix. |
 | `[frontend] Add a null check in the request handler` | `[frontend] Fix crash on malformed requests` | Describe the effect rather than the implementation technique. |
