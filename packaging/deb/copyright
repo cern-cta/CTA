@@ -1,0 +1,9 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: CTA
+Source: https://gitlab.cern.ch/cta/CTA
+
+Files: *
+Copyright: CERN and the contributors identified in the source files
+License: GPL-3.0-or-later
+ See /usr/share/common-licenses/GPL-3 for the full GPL version 3 text.
+ The source tree includes third-party components with their own SPDX notices.

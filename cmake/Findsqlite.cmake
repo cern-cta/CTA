@@ -8,13 +8,11 @@
 
 find_path(SQLITE_INCLUDE_DIRS
   sqlite3.h
-  PATHS /usr/include
-  NO_DEFAULT_PATH)
+  PATHS /usr/include)
 
 find_library(SQLITE_LIBRARIES
   NAME sqlite3
-  PATHS /usr/lib64
-  NO_DEFAULT_PATH)
+  PATHS /usr/lib64)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(sqlite DEFAULT_MSG

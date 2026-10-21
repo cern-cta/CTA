@@ -235,3 +235,44 @@ build-docs:
     paths:
       - build/docs/site/
     expire_in: 7 days
+
+# Package-only coverage until Debian runtime images and publication are available.
+build-cta-debs:
+  stage: build
+  needs:
+    - job: build-debian13-image
+    - job: prepare-cta-version
+      artifacts: true
+    - job: check-merge-train-duplicate
+      optional: true
+  rules:
+    - !reference [build-debian13-image, rules]
+  image: "${DOCKER_IMAGE_REGISTRY}/${DOCKER_PIPELINE_REGISTRY_PREFIX}/cta-build-debian13:${CI_PIPELINE_ID}"
+  before_script:
+    - !reference [.merge-train-guard, before_script]
+    # Resolve independently of the EL9 scheduler/Oracle variant selected for the pipeline.
+    - source ci/utils/cta_version.sh
+    - CTA_VERSION=$(resolve_cta_version "${CTA_VERSION_BASE:?Missing CTA_VERSION_BASE}" debian13 pgsched false)
+    - export CTA_VERSION
+    - git -C lib/protobuf/external/xrootd-ssi-protobuf-interface fetch --tags
+    - XRD_SSI_VERSION=$(git -C lib/protobuf/external/xrootd-ssi-protobuf-interface describe --tags --abbrev=0)
+  script:
+    - ./ci/build/build_packages.sh all --build-dir build
+                                      --build-generator "$[[ inputs.build-generator ]]"
+                                      --create-build-dir
+                                      --cta-version "${CTA_VERSION}"
+                                      --xrootd-ssi-version "${XRD_SSI_VERSION}"
+                                      --scheduler-type pgsched
+                                      --oracle-support false
+                                      --cmake-build-type "$[[ inputs.cmake-build-type ]]"
+                                      --jobs "$(nproc)"
+                                      --skip-unit-tests
+  artifacts:
+    expire_in: 30 days
+    paths:
+      - build/debian13/DEB/*.deb
+      - build/debian13/DEB/*.ddeb
+      - build/debian13/DEB/*.dsc
+      - build/debian13/DEB/*.tar.*
+      - build/debian13/DEB/*.changes
+      - build/debian13/DEB/*.buildinfo

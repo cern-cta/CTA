@@ -16,7 +16,7 @@ Each stage can be run independently. The combined commands cover the common end-
 
 | Command | Stages | Typical use |
 | --- | --- | --- |
-| `build` | Build RPMs | Compile after changing source code. |
+| `build` | Build RPM or Debian packages | Compile after changing source code. |
 | `images` | Build images | Repackage existing RPMs into service images. |
 | `deploy` | Deploy | Replace the development instance with existing images. |
 | `test` | Test | Run [system tests](../testing/system-tests.md) against the deployed instance. |
@@ -85,7 +85,16 @@ When running `build`, `images`, and `deploy` separately, pass the same version t
 
 ## Build options
 
-The default build uses the objectstore scheduler and disables Oracle catalogue support.
+EL9 defaults to the objectstore scheduler with Oracle catalogue support disabled.
+Debian 13 supports PostgreSQL only and selects `pgsched` automatically.
+
+```sh
+cta-dev build --platform debian13
+```
+
+Debian packages are written to `build/debian13/DEB/`.
+Debian runtime images and combined build/deploy commands are not supported yet.
+If `ci/.cta-dev.env` explicitly selects `objectstore`, override it with `--scheduler-type pgsched`.
 
 | Option | Use |
 | --- | --- |

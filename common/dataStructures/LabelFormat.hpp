@@ -7,6 +7,7 @@
 
 #include "common/exception/InvalidArgument.hpp"
 
+#include <cstdint>
 #include <iomanip>
 #include <optional>
 #include <sstream>

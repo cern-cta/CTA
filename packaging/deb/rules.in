@@ -1,0 +1,74 @@
+#!/usr/bin/make -f
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+# PostgreSQL's server tools are outside PATH on Debian.
+export PATH := /usr/lib/postgresql/17/bin:$(PATH)
+
+# Source packages retain conventional defaults; local builds override these paths.
+CTA_DEB_BUILD_DIR ?= build
+CTA_DEB_OUTPUT_DIR ?= ..
+
+# Keep Cargo downloads outside debhelper's disposable HOME; preserve CI overrides.
+export CARGO_HOME ?= $(abspath $(CTA_DEB_BUILD_DIR)/.cargo)
+
+%:
+	dh $@ --buildsystem=@CTA_DEB_BUILD_SYSTEM@ --builddirectory=$(CTA_DEB_BUILD_DIR)
+
+override_dh_auto_configure:
+	dh_auto_configure -- \
+		-DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@ -DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_INSTALL_SYSCONFDIR=/etc -DCTA_SYSTEMD_UNIT_DIR=lib/systemd/system \
+		-DCTA_VERSION=@CTA_VERSION@ -DCTA_BUILD_MODE=compile \
+		-DXROOTD_SSI_PROTOBUF_INTERFACE_VERSION=@XROOTD_SSI_PROTOBUF_INTERFACE_VERSION@ \
+		-DCTA_USE_PGSCHED=ON -DCTA_WITH_ORACLE=OFF \
+		-DENABLE_SCCACHE=@ENABLE_SCCACHE@ -DENABLE_ADDRESS_SANITIZER=@ENABLE_ADDRESS_SANITIZER@ \
+		-DCTA_USE_EXTRA_TELEMETRY=@CTA_USE_EXTRA_TELEMETRY@ \
+		-DCTA_BUILD_TEST_PACKAGES=@CTA_BUILD_TEST_PACKAGES@
+
+override_dh_auto_test:
+	cmake --build $(CTA_DEB_BUILD_DIR) --target cta-example-config-checks --parallel @JOBS_COUNT@
+ifeq (@PACKAGE_RUN_UNIT_TESTS@,1)
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+	cmake --build $(CTA_DEB_BUILD_DIR) --target cta-unit-tests-short --parallel @JOBS_COUNT@
+endif
+endif
+
+override_dh_auto_install:
+	DESTDIR=$(CURDIR)/debian/cta cmake --install $(CTA_DEB_BUILD_DIR)
+	install -d debian/cta/usr/share/doc/cta debian/cta/usr/share/man/man1
+	install -m 644 COPYING debian/cta/usr/share/doc/cta/COPYING
+	# Generate the Rust tool's manual pages and shell completions.
+	ln -sf cta-eos-restore-files $(CTA_DEB_BUILD_DIR)/cta-eos-restore-files-env
+	cd $(CTA_DEB_BUILD_DIR) && ./cta-eos-restore-files-env gen-completion bash
+	cd $(CTA_DEB_BUILD_DIR) && ./cta-eos-restore-files-env gen-completion zsh
+	cd $(CTA_DEB_BUILD_DIR) && ./cta-eos-restore-files-env gen-completion fish
+	mkdir -p $(CTA_DEB_BUILD_DIR)/cta-man-pages
+	cd $(CTA_DEB_BUILD_DIR) && ./cta-eos-restore-files-env gen-man-pages cta-man-pages
+	install -D -m 644 $(CTA_DEB_BUILD_DIR)/cta-eos-restore-files.bash debian/cta/usr/share/bash-completion/completions/cta-eos-restore-files
+	install -D -m 644 $(CTA_DEB_BUILD_DIR)/cta-eos-restore-files.zsh debian/cta/usr/share/zsh/site-functions/_cta-eos-restore-files
+	install -D -m 644 $(CTA_DEB_BUILD_DIR)/cta-eos-restore-files.fish debian/cta/usr/share/fish/vendor_completions.d/cta-eos-restore-files.fish
+	install -m 644 $(CTA_DEB_BUILD_DIR)/cta-man-pages/* debian/cta/usr/share/man/man1/
+	ln -sf cta-eos-restore-files debian/cta/usr/bin/cta-eos-restore-files-env
+ifeq (@PACKAGE_BUILD_TEST_PACKAGES@,0)
+	rm -f debian/cta/usr/lib/*/libcta*unittests*.so* debian/cta/usr/lib/*/libcta-taped-integration-tests.so*
+	rm -f debian/cta/usr/bin/cta-unit-tests* debian/cta/usr/bin/cta-unit-and-integration-tests.sh debian/cta/usr/bin/cta-integration-tests
+	rm -rf debian/cta/usr/share/cta/tests
+endif
+
+# Configuration is site-specific; installation must not start unconfigured services.
+override_dh_installsystemd:
+	dh_installsystemd --no-enable --no-start
+
+ifeq (@PACKAGE_BUILD_DEBUG_PACKAGES@,0)
+# Debug information is stripped below, so optimizing it first is unnecessary.
+override_dh_dwz:
+
+override_dh_strip:
+	dh_strip --no-automatic-dbgsym
+endif
+
+# Keep artifacts inside the selected build directory, not beside the checkout.
+override_dh_builddeb:
+	dh_builddeb --destdir=$(CTA_DEB_OUTPUT_DIR)

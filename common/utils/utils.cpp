@@ -12,7 +12,6 @@
 #include "common/utils/Regex.hpp"
 
 #include <algorithm>
-#include <attr/xattr.h>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -26,6 +25,7 @@
 #include <sys/random.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
+#include <sys/xattr.h>
 #include <thread>
 #include <uuid/uuid.h>
 #include <zlib.h>
@@ -748,7 +748,19 @@ void waitForCondition(const std::function<bool()>& condition, int64_t timeoutMse
 
 std::string generate256BitHex() {
   std::array<uint8_t, 32> bytes = {0};
-  getrandom(bytes.data(), bytes.size(), 0);
+  // Do not return a partially initialized token if the entropy read fails.
+  size_t filled = 0;
+  while (filled < bytes.size()) {
+    const auto count = getrandom(bytes.data() + filled, bytes.size() - filled, 0);
+    if (count < 0 && errno == EINTR) {
+      continue;
+    }
+    exception::Errnum::throwOnMinusOne(count, "generate256BitHex: getrandom failed");
+    if (count == 0) {
+      throw exception::Exception("generate256BitHex: getrandom returned no data");
+    }
+    filled += static_cast<size_t>(count);
+  }
 
   std::ostringstream oss;
   oss << std::hex << std::setfill('0');

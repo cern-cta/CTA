@@ -1,0 +1,16 @@
+Source: cta
+Section: admin
+Priority: optional
+Maintainer: CTA Team <cta-support@cern.ch>
+Build-Depends: @BUILD_REQUIREMENTS@
+Standards-Version: 4.7.0
+Homepage: https://cta.web.cern.ch
+Rules-Requires-Root: no
+
+Package: cta
+Architecture: amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}, adduser, libcap2-bin, opentelemetry-cpp (@OPENTELEMETRY_CPP_VERSION_CONSTRAINT@), xrootd-client@CTA_DEB_TEST_DEPENDS@
+Recommends: systemd, logrotate
+Description: @PROJECT_SUMMARY@
+ Provides CTA services, shared libraries and administrative tools with
+ PostgreSQL catalogue and scheduler support.

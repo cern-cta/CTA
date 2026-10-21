@@ -83,7 +83,7 @@ _ctadev() {
             return
             ;;
         --platform)
-            COMPREPLY=( $(compgen -W "el9" -- "$cur") )
+            COMPREPLY=( $(compgen -W "$(jq -r '.platforms | keys[]' "${project_root}/project.json")" -- "$cur") )
             return
             ;;
         --namespace)

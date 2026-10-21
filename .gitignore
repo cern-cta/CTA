@@ -97,3 +97,6 @@ Pipfile.lock
 
 # OS-specific files
 .DS_Store
+
+# Generated Debian packaging state
+/debian/

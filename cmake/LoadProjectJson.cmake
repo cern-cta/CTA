@@ -37,6 +37,7 @@ execute_process(
           ${CMAKE_SOURCE_DIR}/ci/project-json/generate_version_constraints.py
           --platform ${PLATFORM}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  COMMAND_ERROR_IS_FATAL ANY
   OUTPUT_VARIABLE BUILD_VERSION_RAW
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
@@ -52,8 +53,9 @@ endforeach()
 execute_process(
   COMMAND ${CMAKE_COMMAND} -E env PYTHONUNBUFFERED=1 python3
           ${CMAKE_SOURCE_DIR}/ci/project-json/generate_build_requires.py
-          --platform ${PLATFORM}
+          --platform ${PLATFORM} --format ${CTA_PACKAGE_FORMAT}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  COMMAND_ERROR_IS_FATAL ANY
   OUTPUT_VARIABLE BUILD_REQUIREMENTS
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )

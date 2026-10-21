@@ -7,6 +7,7 @@
 
 #include "common/exception/UserError.hpp"
 
+#include <cstdint>
 #include <optional>
 #include <set>
 #include <string>

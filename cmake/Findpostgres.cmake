@@ -9,12 +9,11 @@
 find_path(POSTGRES_INCLUDE_DIRS
   libpq-fe.h
   PATHS /usr/include /usr/pgsql-12/include
-  NO_DEFAULT_PATH)
+  PATH_SUFFIXES postgresql)
 
 find_library(POSTGRES_LIBRARIES
   NAME pq
-  PATHS /usr/lib64/ /usr/pgsql-12/lib/
-  NO_DEFAULT_PATH)
+  PATHS /usr/lib64/ /usr/pgsql-12/lib/)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(postgres DEFAULT_MSG

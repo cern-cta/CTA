@@ -124,7 +124,18 @@ SubProcess::SubProcess(const std::string& executable,
   // close the readSide of stdin pipe as we are going to write to the subprocess stdin
   //Send input to child stdin
   //Write data to child stdin
-  ::write(stdinPipe[writeSide], stdinInput.c_str(), stdinInput.size());
+  // Retry interrupted and partial writes; the child may close its input early.
+  size_t written = 0;
+  while (written < stdinInput.size()) {
+    const auto count = ::write(stdinPipe[writeSide], stdinInput.data() + written, stdinInput.size() - written);
+    if (count < 0 && errno == EINTR) {
+      continue;
+    }
+    if (count <= 0) {
+      break;
+    }
+    written += static_cast<size_t>(count);
+  }
   //Close stdin
   ::close(stdinPipe[writeSide]);
   ::close(stdinPipe[readSide]);

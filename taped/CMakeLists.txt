@@ -16,7 +16,7 @@ add_manpage(cta-taped)
 
 install (TARGETS cta-taped DESTINATION ${CMAKE_INSTALL_BINDIR})
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-taped.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
-install (FILES cta-taped.sysconfig DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/sysconfig RENAME cta-taped)
+install (FILES cta-taped.sysconfig DESTINATION ${CTA_SERVICE_ENV_DIR} RENAME cta-taped)
 
 # CTA's cta-taped integration tests.
 add_library(cta-taped-integration-tests SHARED

@@ -31,7 +31,7 @@ add_manpage(cta-frontend-grpc)
 
 install (TARGETS cta-frontend-grpc DESTINATION ${CMAKE_INSTALL_BINDIR})
 install (FILES cta-frontend-grpc.sysconfig
-  DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/sysconfig
+  DESTINATION ${CTA_SERVICE_ENV_DIR}
   RENAME cta-frontend-grpc)
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-frontend-grpc.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 install (FILES cta-frontend.example.conf cta-frontend-grpc.example.toml jwt-revoke-list.example.toml DESTINATION ${CMAKE_INSTALL_DOCDIR})
