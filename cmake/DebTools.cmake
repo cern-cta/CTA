@@ -31,10 +31,11 @@ string(TIMESTAMP CTA_DEB_CHANGELOG_DATE "%a, %d %b %Y %H:%M:%S +0000" UTC)
 foreach(name control rules changelog)
   configure_file("packaging/deb/${name}.in" "${CTA_DEB_OUTPUT_DIR}/debian/${name}" @ONLY)
 endforeach()
-foreach(name cta.postinst copyright source/format)
+foreach(name cta.postinst cta.prerm copyright source/format)
   configure_file("packaging/deb/${name}" "${CTA_DEB_OUTPUT_DIR}/debian/${name}" COPYONLY)
 endforeach()
-file(CHMOD "${CTA_DEB_OUTPUT_DIR}/debian/rules" "${CTA_DEB_OUTPUT_DIR}/debian/cta.postinst"
+file(CHMOD "${CTA_DEB_OUTPUT_DIR}/debian/rules"
+  "${CTA_DEB_OUTPUT_DIR}/debian/cta.postinst" "${CTA_DEB_OUTPUT_DIR}/debian/cta.prerm"
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 configure_file(cmake/BuildDeb.cmake.in BuildDeb.cmake @ONLY)
 

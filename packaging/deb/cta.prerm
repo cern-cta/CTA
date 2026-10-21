@@ -1,0 +1,12 @@
+#!/bin/sh
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+set -e
+
+# dh_installsystemd --no-start also omits stopping services on removal.
+if [ "$1" = remove ] && [ -z "${DPKG_ROOT:-}" ] && [ -d /run/systemd/system ]; then
+    deb-systemd-invoke stop cta-frontend-grpc.service cta-maintd.service cta-rmcd.service cta-taped.service \
+        >/dev/null || true
+fi
+
+#DEBHELPER#

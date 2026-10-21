@@ -14,8 +14,11 @@ if [ "$1" = configure ]; then
     fi
     # Restrict raw tape access to operators before granting the capability.
     for tool in cta-tape-label cta-readtp; do
-        chown root:tape "/usr/bin/$tool"
-        chmod 0750 "/usr/bin/$tool"
+        # Preserve administrator-selected ownership and permissions across upgrades.
+        if ! dpkg-statoverride --list "/usr/bin/$tool" >/dev/null 2>&1; then
+            chown root:tape "/usr/bin/$tool"
+            chmod 0750 "/usr/bin/$tool"
+        fi
         setcap cap_sys_rawio=ep "/usr/bin/$tool"
     done
 fi

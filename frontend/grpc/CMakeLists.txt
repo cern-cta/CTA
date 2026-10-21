@@ -59,5 +59,8 @@ target_link_libraries(cta-admin
   ctaprotobufconversions
   gssapi_krb5)
 
-set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+# Only add a runtime search path for a non-system Protobuf installation.
+if(NOT PROTOBUF3_RPATH IN_LIST CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES)
+  set_property(TARGET cta-admin APPEND PROPERTY INSTALL_RPATH "${PROTOBUF3_RPATH}")
+endif()
 install(TARGETS cta-admin DESTINATION ${CMAKE_INSTALL_BINDIR})

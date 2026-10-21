@@ -16,10 +16,11 @@ export CARGO_HOME ?= $(abspath $(CTA_DEB_BUILD_DIR)/.cargo)
 %:
 	dh $@ --buildsystem=@CTA_DEB_BUILD_SYSTEM@ --builddirectory=$(CTA_DEB_BUILD_DIR)
 
+# An explicit PATH type keeps the relative service directory anchored to the install prefix.
 override_dh_auto_configure:
 	dh_auto_configure -- \
 		-DCMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@ -DCMAKE_INSTALL_PREFIX=/usr \
-		-DCMAKE_INSTALL_SYSCONFDIR=/etc -DCTA_SYSTEMD_UNIT_DIR=lib/systemd/system \
+		-DCMAKE_INSTALL_SYSCONFDIR=/etc -DCTA_SYSTEMD_UNIT_DIR:PATH=lib/systemd/system \
 		-DCTA_VERSION=@CTA_VERSION@ -DCTA_BUILD_MODE=compile \
 		-DXROOTD_SSI_PROTOBUF_INTERFACE_VERSION=@XROOTD_SSI_PROTOBUF_INTERFACE_VERSION@ \
 		-DCTA_USE_PGSCHED=ON -DCTA_WITH_ORACLE=OFF \
@@ -40,9 +41,9 @@ override_dh_auto_install:
 	install -d debian/cta/usr/share/doc/cta
 	install -m 644 COPYING debian/cta/usr/share/doc/cta/COPYING
 
-# Configuration is site-specific; installation must not start unconfigured services.
+# Keep first installs inactive, but restart already-running services after upgrades.
 override_dh_installsystemd:
-	dh_installsystemd --no-enable --no-start
+	dh_installsystemd --no-enable --no-start --restart-after-upgrade
 
 ifeq (@PACKAGE_BUILD_DEBUG_PACKAGES@,0)
 # Debug information is stripped below, so optimizing it first is unnecessary.
