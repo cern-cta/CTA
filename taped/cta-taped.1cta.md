@@ -329,7 +329,7 @@ XrdSecSSSKT
 */etc/cta/cta-catalogue.conf*
 
 :   Usual location for the CTA Catalogue configuration file. See **taped CatalogueConfigFile**
-    option under **CONFIGURATION**, and *cta-catalogue.example.conf (in the owning package’s documentation)*.
+    option under **CONFIGURATION**, and */usr/share/doc/cta-lib-catalogue/examples/cta-catalogue.example.conf*.
 
 */var/log/cta/cta-taped.log*
 

@@ -1,0 +1,7 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+usr/lib/*/libctadisk.so.*
+usr/lib/*/libctardbroutines.so.*
+usr/lib/*/libctascheduler.so.*
+usr/share/doc/cta-lib-scheduler/examples/cta-scheduler.example.conf

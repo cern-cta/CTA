@@ -76,11 +76,11 @@ install (TARGETS ctascheduler DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
 if(NOT CTA_USE_PGSCHED)
   install (FILES cta-scheduler.example.conf
-    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/${CTA_SCHEDULER_DOC_PACKAGE}/examples
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/cta-lib-scheduler/examples
     PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 else()
   install (FILES cta-scheduler.pg.example.conf
-    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/${CTA_SCHEDULER_DOC_PACKAGE}/examples
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/cta-lib-scheduler/examples
     RENAME cta-scheduler.example.conf
     PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 endif()

@@ -1,0 +1,15 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+usr/lib/*/libctacatalogue.so.*
+usr/lib/*/libctacatalogueinmemory.so.*
+usr/lib/*/libctacataloguepostgres.so.*
+usr/lib/*/libctacataloguesqlite.so.*
+usr/lib/*/libctadropschemacmd.so.*
+usr/lib/*/libctardbms.so.*
+usr/lib/*/libctardbmspostgres.so.*
+usr/lib/*/libctardbmssqlite.so.*
+usr/lib/*/libctardbmswrapper.so.*
+usr/lib/*/libctaschemachecker.so.*
+usr/lib/*/libctastatistics.so.*
+usr/share/doc/cta-lib-catalogue/examples/cta-catalogue.example.conf

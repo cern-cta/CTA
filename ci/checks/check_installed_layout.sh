@@ -7,10 +7,32 @@
 
 set -euo pipefail
 
+package_format=${1:-}
+
+# Add tools here to check their binaries and manuals.
+tools=(
+  cta-admin
+  cta-catalogue-schema-create
+  cta-readtp
+  cta-tape-label
+  cta-smc
+)
+
+# Add Rust tools here to check their binaries, manuals and all shell completions.
+rust_tools=(
+  cta-eos-restore-files
+)
+
+# Add runtime-library services here to check binaries, manuals, units, log rotation and TOML examples.
+services=(
+  cta-maintd
+  cta-rmcd
+)
+
 # Account for RPM lib64 and Debian multiarch library directories.
 # Fedora: https://docs.fedoraproject.org/en-US/packaging-guidelines/RPMMacros/
 # Debian: https://www.debian.org/doc/debian-policy/ch-opersys.html#file-system-structure
-case "${1:-}" in
+case "$package_format" in
   rpm)
     libdir=/usr/lib64
     mapfile -t packages < <(rpm -qa --qf '%{NAME}\n' | grep '^cta-')
@@ -38,9 +60,16 @@ fail() {
 # Permissions: https://www.debian.org/doc/debian-policy/ch-files.html#permissions-and-owners
 # Fedora: https://docs.fedoraproject.org/en-US/packaging-guidelines/#_file_permissions
 require_file() {
-  local path=$1 owner mode
+  local path=$1 package=${2:-} owner mode package_files
   [[ -f "$path" ]] || fail "missing $path"
   grep -Fxq -- "$path" <<< "$files" || fail "not owned by a CTA package: $path"
+  if [[ -n "$package" ]]; then
+    case "$package_format" in
+      rpm) package_files=$(rpm -ql "$package") ;;
+      deb) package_files=$(dpkg-query -L "$package") ;;
+    esac
+    grep -Fxq -- "$path" <<< "$package_files" || fail "not owned by $package: $path"
+  fi
 
   # Follow library symlinks; root:tape ownership is valid, but writable group/other bits are not.
   read -r owner mode < <(stat -L -c '%u %a' -- "$path")
@@ -59,12 +88,12 @@ require_config() {
 # Debian documents gzip compression for installed manuals and documentation.
 # https://www.debian.org/doc/debian-policy/ch-docs.html
 require_document() {
-  local path=$1
+  local path=$1 package=${2:-}
   # Package tooling may compress manuals and examples.
   if [[ -f "$path.gz" ]]; then
-    require_file "$path.gz"
+    require_file "$path.gz" "$package"
   else
-    require_file "$path"
+    require_file "$path" "$package"
   fi
 }
 
@@ -84,24 +113,22 @@ require_manual() {
 # Commands must be executable and ship manuals.
 # FHS binaries: https://refspecs.linuxfoundation.org/FHS_3.0/fhs/ch04s04.html
 # Manuals: https://www.debian.org/doc/debian-policy/ch-docs.html#manual-pages
-for tool in cta-admin cta-catalogue-schema-create cta-readtp cta-tape-label cta-smc cta-eos-restore-files \
-  cta-taped cta-maintd cta-rmcd cta-frontend-grpc; do
+for tool in "${tools[@]}" "${rust_tools[@]}" "${services[@]}"; do
   require_file "/usr/bin/$tool"
   [[ -x "/usr/bin/$tool" ]] || fail "not executable: /usr/bin/$tool"
   require_manual "$tool"
 done
 
 # Services ship vendor units under /usr/lib/systemd/system.
-# TODO: Add frontend and taped service checks once they migrate to the runtime library.
 # Fedora: https://docs.fedoraproject.org/en-US/packaging-guidelines/Systemd/
-for service in cta-maintd cta-rmcd; do
+for service in "${services[@]}"; do
   require_file "/usr/lib/systemd/system/$service.service"
 done
 
 # Administrator-editable log rotation settings belong under /etc.
 # Configuration: https://www.debian.org/doc/debian-policy/ch-files.html#location
 # Log rotation: https://www.debian.org/doc/debian-policy/ch-opersys.html#log-files
-for service in cta-maintd cta-rmcd; do
+for service in "${services[@]}"; do
   require_config "/etc/logrotate.d/$service"
 done
 
@@ -109,33 +136,27 @@ done
 # Debian: https://www.debian.org/doc/debian-policy/ch-docs.html#examples
 # Fedora: https://docs.fedoraproject.org/en-US/packaging-guidelines/#_documentation
 examples=(
-  cta-taped/examples/cta-taped.example.conf
-  cta-maintd/examples/cta-maintd.example.toml
-  cta-rmcd/examples/cta-rmcd.example.toml
-  cta-frontend-grpc/examples/cta-frontend.example.conf
-  cta-frontend-grpc/examples/cta-frontend-grpc.example.toml
-  cta-frontend-grpc/examples/jwt-revoke-list.example.toml
+  cta-admin:cta-admin.example.conf
+  cta-lib-catalogue:cta-catalogue.example.conf
+  cta-lib-scheduler:cta-scheduler.example.conf
+  cta-lib-telemetry:cta-otel.example.yaml
 )
-case "$1" in
-  rpm)
-    examples+=(
-      cta-admin/examples/cta-admin.example.conf
-      cta-lib-catalogue/examples/cta-catalogue.example.conf
-      cta-lib-scheduler/examples/cta-scheduler.example.conf
-      cta-lib-telemetry/examples/cta-otel.example.yaml
-    )
-    ;;
-  deb)
-    examples+=(
-      cta-tools/examples/cta-admin.example.conf
-      cta-runtime/examples/cta-catalogue.example.conf
-      cta-runtime/examples/cta-scheduler.example.conf
-      cta-runtime/examples/cta-otel.example.yaml
-    )
-    ;;
-esac
 for example in "${examples[@]}"; do
-  require_document "/usr/share/doc/$example"
+  package=${example%%:*}
+  require_document "/usr/share/doc/$package/examples/${example#*:}" "$package"
+done
+for service in "${services[@]}"; do
+  require_document "/usr/share/doc/$service/examples/$service.example.toml" "$service"
+done
+
+# Every installed CTA package ships its copyright/license file.
+# Debian: https://www.debian.org/doc/debian-policy/ch-docs.html#copyright-information
+# Fedora: https://docs.fedoraproject.org/en-US/packaging-guidelines/LicensingGuidelines/#_license_text
+for package in "${packages[@]}"; do
+  case "$package_format" in
+    rpm) require_file "/usr/share/licenses/$package/COPYING" "$package" ;;
+    deb) require_file "/usr/share/doc/$package/copyright" "$package" ;;
+  esac
 done
 
 # Vendor account definitions use the sysusers.d discovery path.
@@ -146,9 +167,11 @@ require_file /usr/lib/sysusers.d/cta.conf
 require_file /usr/share/cta/cta-logging.schema.json
 # Each shell has its own completion discovery directory.
 # https://docs.fedoraproject.org/en-US/packaging-guidelines/ShellCompletions/
-require_file /usr/share/bash-completion/completions/cta-eos-restore-files
-require_file /usr/share/zsh/site-functions/_cta-eos-restore-files
-require_file /usr/share/fish/vendor_completions.d/cta-eos-restore-files.fish
+for tool in "${rust_tools[@]}"; do
+  require_file "/usr/share/bash-completion/completions/$tool"
+  require_file "/usr/share/zsh/site-functions/_$tool"
+  require_file "/usr/share/fish/vendor_completions.d/$tool.fish"
+done
 
 # Check versioned runtime libraries without hardcoding the current ABI version.
 # Fedora: https://docs.fedoraproject.org/en-US/packaging-guidelines/#_shared_libraries
@@ -164,10 +187,8 @@ done
 # Reserve /usr/local for administrators.
 # Inspect all packaged paths, even when a correctly installed copy also exists.
 # /usr/local: https://www.debian.org/doc/debian-policy/ch-opersys.html#site-specific-programs
-while IFS= read -r path; do
-  case "$path" in
-    /usr/local/*) fail "package installs into /usr/local: $path" ;;
-  esac
-done <<< "$files"
+if misplaced=$(grep '^/usr/local/' <<< "$files"); then
+  fail "package installs into /usr/local: $misplaced"
+fi
 
 echo "Installed CTA layout checks passed (${1})."

@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+usr/lib/*/libctatelemetry.so.*
+usr/lib/*/libctatelemetryfrontend.so.*
+usr/lib/*/libctatelemetrymaintd.so.*
+usr/lib/*/libctatelemetryobjectstore.so.*
+usr/lib/*/libctatelemetryrdbms.so.*
+usr/lib/*/libctatelemetryrmcd.so.*
+usr/lib/*/libctatelemetryscheduler.so.*
+usr/lib/*/libctatelemetrytaped.so.*
+usr/share/doc/cta-lib-telemetry/examples/cta-otel.example.yaml
