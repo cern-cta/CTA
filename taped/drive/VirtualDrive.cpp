@@ -173,7 +173,12 @@ void VirtualDrive::spaceFileMarksBackwards(size_t count) {
   if (countdown) {
     throw cta::exception::Exception("VirtualDrive::spaceFileMarksBackwards");
   }
-  m_currentPosition = i - 1;
+  // After the loop: i = P - 1 where P is the position of the Nth filemark found
+  // going backward.  The caller (CtaFileReader::moveReaderByFSeqDelta) follows
+  // with readFileMark(), which reads m_tape[m_currentPosition] and increments.
+  // We need m_currentPosition == P so readFileMark reads the FM and leaves us
+  // one block after it (= HDR1 of the target file).
+  m_currentPosition = i + 1;
 }
 
 void VirtualDrive::spaceFileMarksForward(size_t count) {

@@ -37,8 +37,10 @@
     write_files_in_chunks      = false
     check_copy_interval_sec    = 20
     check_archive_interval_sec = 10
-    # Stop waiting for archival after this many consecutive intervals without progress
-    max_no_progress_intervals = 3
+    # Stop waiting after this many consecutive 10-second intervals without progress.
+    # 6 intervals (60 s) gives the retrieve pipeline enough startup time (queue
+    # cache TTL 5 s + mount delay 5 s + first-file pipeline latency).
+    max_no_progress_intervals = 6
     # Maximum acceptable file loss percentage before proceeding to retrieval
     max_acceptable_loss_percent = 5.0
 
