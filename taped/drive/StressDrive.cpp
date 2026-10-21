@@ -196,6 +196,7 @@ void StressDrive::saveTape() const {
       write64(block.remainingSpaceAfter);
     }
 
+    f.flush();
     if (!f) {
       std::filesystem::remove(tmpPath);
       throw cta::exception::Exception("StressDrive::saveTape: I/O error writing " + tmpPath.string()

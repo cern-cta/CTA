@@ -92,13 +92,17 @@ taped:
       # cache explicitly via clearStatisticsCache(), so mount latency after a tape
       # boundary is unaffected by a longer TTL.
       #
-      # retrieveQueueCacheMaxAgeSecs: set to 30 s (vs helm default 1 s) to cut
-      # polling 30× during the archive phase (30 drives × 1/30 s ≈ 1 query/sec
-      # instead of 30/sec).  The retrieve phase follows immediately after archival
-      # in the same deployment, so a longer TTL is not safe: drives must detect
-      # the new retrieve queue within ~30 s of drives coming up.
+      # retrieveQueueCacheMaxAgeSecs: set to 5 s (vs helm default 1 s).
+      # During the archive phase (30 drives, archive-only) this contributes
+      # 30 × (1/5 s) = 6 queries/sec — acceptable overhead.
+      # The short TTL is critical for the retrieve phase that follows: the
+      # test's wait_for_retrieval_in_directory gives up after 3 consecutive
+      # 10-second intervals with no progress (30 s total).  With a 30 s TTL
+      # a drive that just finished archiving might not poll the retrieve queue
+      # until AFTER the test has already timed out.  A 5 s TTL guarantees
+      # drives discover the retrieve queue within 5 s of it becoming non-empty.
       tapeCacheMaxAgeSecs: 60
-      retrieveQueueCacheMaxAgeSecs: 30
+      retrieveQueueCacheMaxAgeSecs: 5
 
       # Disable underfill-driven dismounting for stress tests.
       #
