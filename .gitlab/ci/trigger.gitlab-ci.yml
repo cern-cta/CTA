@@ -108,6 +108,17 @@ trigger-oracle-disabled-pipeline:
           enable-oracle-support: false
     strategy: mirror
 
+trigger-el10-pipeline:
+  extends:
+    - .trigger-child-pipeline
+  trigger:
+    include:
+      - local: .gitlab-ci.yml
+        inputs:
+          <<: *child-pipeline-inputs
+          platform: "el10"
+    strategy: mirror
+
 # May need more inputs once we run more jobs in the Debian pipeline
 trigger-debian-pipeline:
   extends:

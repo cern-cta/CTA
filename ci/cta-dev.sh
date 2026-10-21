@@ -700,6 +700,9 @@ detect_internal_repos() {
 
   local probe_url
   case "$platform" in
+    el10)
+      probe_url="https://cta-public-repo.web.cern.ch/testing/cta-6/el10/cta-dependencies/x86_64/repodata/repomd.xml"
+      ;;
     el9)
       probe_url="https://cta-ci-repo.web.cern.ch/cta-ci-repo/RPMs/others/el9/x86_64/repodata/repomd.xml"
       ;;
@@ -726,8 +729,8 @@ package_directory() {
   local -r package_kind="$1"
 
   case "${platform}:${package_kind}" in
-    el9:source) echo "RPM/SRPMS" ;;
-    el9:binary) echo "RPM/RPMS/x86_64" ;;
+    el9:source|el10:source) echo "RPM/SRPMS" ;;
+    el9:binary|el10:binary) echo "RPM/RPMS/x86_64" ;;
     debian13:source|debian13:binary) echo "DEB" ;;
     *) die "No ${package_kind} package directory is configured for platform '${platform}'." ;;
   esac

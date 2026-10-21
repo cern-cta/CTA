@@ -77,7 +77,7 @@ build-cta:
       if [[ "$ENABLE_SCCACHE" == "true" ]]; then
         BUILD_OPTIONS+=" --enable-sccache"
       fi
-    - if [[ "$[[ inputs.platform ]]" == "el9" ]] && $[[ inputs.enable-internal-repos ]]; then BUILD_OPTIONS+=" --enable-internal-repos"; fi
+    - if [[ "$[[ inputs.platform ]]" == "el9" || "$[[ inputs.platform ]]" == "el10" ]] && $[[ inputs.enable-internal-repos ]]; then BUILD_OPTIONS+=" --enable-internal-repos"; fi
     - if $[[ inputs.enable-address-sanitizer ]]; then BUILD_OPTIONS+=" --enable-address-sanitizer"; fi
     - |
       if $[[ inputs.compile-with-extra-telemetry ]]; then

@@ -85,16 +85,20 @@ When running `build`, `images`, and `deploy` separately, pass the same version t
 
 ## Build options
 
-EL9 defaults to the objectstore scheduler with Oracle catalogue support disabled.
-Debian 13 supports PostgreSQL only and selects `pgsched` automatically.
+| Platform | Scheduler and Oracle support | Package output |
+| --- | --- | --- |
+| EL9 / EL10 | Objectstore by default; PostgreSQL optional. Oracle disabled by default, optional. | `build/<platform>/RPM/` |
+| Debian 13 | PostgreSQL only, selected automatically; no Oracle support. | `build/debian13/DEB/` |
+
+Select the platform when building:
 
 ```sh
+cta-dev build --platform el10
 cta-dev build --platform debian13
 ```
 
-Debian packages are written to `build/debian13/DEB/`.
-Debian runtime images and combined build/deploy commands are not supported yet.
-If `ci/.cta-dev.env` explicitly selects `objectstore`, override it with `--scheduler-type pgsched`.
+Debian supports package builds only; runtime images and combined build/deploy commands are not available yet.
+If `ci/.cta-dev.env` selects `objectstore`, pass `--scheduler-type pgsched` for Debian.
 
 | Option | Use |
 | --- | --- |

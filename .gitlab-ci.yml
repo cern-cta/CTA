@@ -63,7 +63,7 @@ spec:
       type: string
       rules:
         - if: '$[[ inputs.pipeline-type ]] != "UPDATE_PIPELINE_IMAGES"'
-          options: ["el9", "debian13"]
+          options: ["el9", "el10", "debian13"]
           default: "el9"
 
     scheduler-type:

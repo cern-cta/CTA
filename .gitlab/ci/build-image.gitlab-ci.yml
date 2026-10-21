@@ -129,7 +129,7 @@ spec:
     - DOCKERFILE_NAME="$(basename "${DOCKERFILE}")"
     - |
       case "$[[ inputs.platform ]]" in
-        el9) PACKAGE_DIRECTORY="RPM/RPMS/x86_64" ;;
+        el9|el10) PACKAGE_DIRECTORY="RPM/RPMS/x86_64" ;;
         *)
           echo "No binary package directory is configured for platform '$[[ inputs.platform ]]'"
           exit 1
@@ -240,5 +240,5 @@ build-pipeline-images:
         IMAGE_KIND: ["default", "lint", "lintian", "release", "danger"]
       # Add one platform entry and its ci/docker/cta/<platform>/{build,test}.Dockerfiles per supported platform.
       - IMAGE_SCOPE: "platform"
-        PLATFORM: ["el9", "debian13"]
+        PLATFORM: ["el9", "el10", "debian13"]
         IMAGE_KIND: ["build", "test"]
