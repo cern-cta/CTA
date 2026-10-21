@@ -340,4 +340,17 @@ std::string StressDrive::getSerialNumber() {
   return "STRESS-" + m_driveName;
 }
 
+cta::tape::drive::deviceInfo StressDrive::getDeviceInfo() {
+  // VirtualDrive::getDeviceInfo() leaves serialNumber empty, which causes
+  // UTL1::verifyCommon() to throw "Failed verify for serialNumber" during
+  // retrieve (the UTL1 trailer is written with the empty value at archive
+  // time and then read back and verified at retrieve time).
+  // m_serialNumber in UHL1UTL1 is 12 chars; use the drive name directly
+  // (up to 12 chars) rather than the "STRESS-" + name form to stay within
+  // the field width without silent truncation.
+  deviceInfo devInfo = VirtualDrive::getDeviceInfo();
+  devInfo.serialNumber = m_driveName.substr(0, 12);
+  return devInfo;
+}
+
 }  // namespace cta::tape::drive
