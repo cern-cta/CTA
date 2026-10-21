@@ -21,12 +21,14 @@ function(cta_enable_sanitizers)
   add_link_options(-fsanitize=${CTA_SANITIZERS} -fno-omit-frame-pointer)
 
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    # GCC reports optional/variant cleanup as possibly uninitialized with sanitizer instrumentation.
+    # GCC 14 reports optional/variant and regex internals as possibly uninitialized with sanitizers.
+    # Keep diagnostics visible; only sanitizer builds relax -Werror for this warning.
     add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Wno-error=maybe-uninitialized>)
   endif()
 
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CTA_SANITIZERS MATCHES "(^|,)address(,|$)")
-    # GCC LTO makes inline standard-library globals trigger false ASan ODR violations across shared libraries.
+    # GCC 14 + LTO produces false ASan ODR reports for std::in_place_type across shared libraries.
+    # Disable LTO rather than ODR detection; normal builds retain their optimization flags.
     add_compile_options(-fno-lto)
     add_link_options(-fno-lto)
   endif()

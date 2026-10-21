@@ -23,8 +23,9 @@ set_source_files_properties(
 
 # Generated CTA protobuf message types shared by clients and servers
 add_library(ctaprotobuf SHARED ${ProtoSourcesCtaFrontend})
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  # Generated protobuf copies span adjacent fields, triggering GCC's object-size warning.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CTA_SANITIZERS MATCHES "(^|,)address(,|$)")
+  # GCC 14 + ASan flags protobuf's adjacent-field copies as overflows.
+  # Keep the warning visible without failing generated-code builds; normal builds retain -Werror.
   target_compile_options(ctaprotobuf PRIVATE -Wno-error=stringop-overflow)
 endif()
 
