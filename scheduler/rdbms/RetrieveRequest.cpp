@@ -116,9 +116,6 @@ std::unique_ptr<postgres::RetrieveJobQueueRow> RetrieveRequest::makeJobRow() con
   if (!tapePoolsForReparchiveCopyNbsString.empty()) {
     rjr->rearchiveTapePools = tapePoolsForReparchiveCopyNbsString;
   }
-  rjr->srrMountPolicy = "?";
-  rjr->srrActivity = m_schedRetrieveReq.activity.value_or("?");
-
   return rjr;
 }
 

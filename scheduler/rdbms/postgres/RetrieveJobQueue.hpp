@@ -66,8 +66,6 @@ struct RetrieveJobQueueRow {
   std::string srrUsername = "";
   std::string srrHost = "";
   uint64_t srrTime = 0;
-  std::string srrMountPolicy = "";
-  std::string srrActivity = "";
   uint64_t archiveFileID = 0;
   std::string diskFileId = "";
   std::string diskInstance = "";
@@ -100,8 +98,6 @@ private:
     host.reserve(64);
     srrUsername.reserve(128);
     srrHost.reserve(64);
-    srrMountPolicy.reserve(64);
-    srrActivity.reserve(64);
     alternateVids.reserve(128);
     alternateCopyNbs.reserve(20);
     alternateFSeq.reserve(256);
@@ -165,8 +161,6 @@ public:
     srrUsername.clear();
     srrHost.clear();
     srrTime = 0;
-    srrMountPolicy.clear();
-    srrActivity.clear();
     diskSystemName = std::nullopt;
     activity = std::nullopt;
     archiveFileID = 0;
@@ -244,8 +238,6 @@ public:
     srrUsername = rset.columnStringNoOpt("SRR_USERNAME");
     srrHost = rset.columnStringNoOpt("SRR_HOST");
     srrTime = rset.columnUint64NoOpt("SRR_TIME");
-    srrMountPolicy = rset.columnStringNoOpt("SRR_MOUNT_POLICY");
-    srrActivity = rset.columnStringNoOpt("SRR_ACTIVITY");
 
     diskSystemName = rset.columnOptionalString("DISK_SYSTEM_NAME");
 
@@ -315,7 +307,6 @@ public:
            SRR_USERNAME,
            SRR_HOST,
            SRR_TIME,
-           SRR_MOUNT_POLICY,
            RETRIEVE_REPORT_URL
    )";
     if (diskSystemName.has_value()) {
@@ -323,9 +314,6 @@ public:
     }
     if (activity.has_value()) {
       sql += R"(,ACTIVITY )";
-    }
-    if (!srrActivity.empty()) {
-      sql += R"(,SRR_ACTIVITY )";
     }
     sql += R"(
        ) VALUES (
@@ -371,7 +359,6 @@ public:
            :SRR_USERNAME,
            :SRR_HOST,
            :SRR_TIME,
-           :SRR_MOUNT_POLICY,
            :RETRIEVE_REPORT_URL
    )";
     if (diskSystemName.has_value()) {
@@ -379,9 +366,6 @@ public:
     }
     if (activity.has_value()) {
       sql += R"(,:ACTIVITY )";
-    }
-    if (!srrActivity.empty()) {
-      sql += R"(,:SRR_ACTIVITY )";
     }
     sql += R"(    ) )";
 
@@ -426,7 +410,6 @@ public:
     stmt.bindString(":SRR_USERNAME", srrUsername);
     stmt.bindString(":SRR_HOST", srrHost);
     stmt.bindUint64(":SRR_TIME", static_cast<uint64_t>(srrTime));
-    stmt.bindString(":SRR_MOUNT_POLICY", srrMountPolicy);
     if (diskSystemName.has_value()) {
       stmt.bindString(":DISK_SYSTEM_NAME", diskSystemName.value());
     }
@@ -445,9 +428,6 @@ public:
     }
     if (activity.has_value()) {
       stmt.bindString(":ACTIVITY", activity.value());
-    }
-    if (!srrActivity.empty()) {
-      stmt.bindString(":SRR_ACTIVITY", srrActivity);
     }
     conn.setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbInsertRetrieve);
     stmt.executeNonQuery();
@@ -482,8 +462,6 @@ public:
     params.add("retrieveReportURL", retrieveReportURL);
     params.add("retrieveErrorReportURL", retrieveErrorReportURL);
     params.add("isVerifyOnly", isVerifyOnly);
-    params.add("retrieveRequest.mountPolicy", srrMountPolicy);
-    params.add("retrieveRequest.activity", srrActivity);
     // archiveFile fields
     params.add("archiveFileID", archiveFileID);
     params.add("diskFileInfoOwnerUid", diskFileInfoOwnerUid);
@@ -515,7 +493,6 @@ public:
     // detect optional columns
     bool hasDiskSystemName = false;
     bool hasActivity = false;
-    bool hasSrrActivity = false;
     bool isNoRecallRepack = false;
     for (const auto& row : rows) {
       if (row->diskSystemName.has_value()) {
@@ -523,9 +500,6 @@ public:
       }
       if (row->activity.has_value()) {
         hasActivity = true;
-      }
-      if (!row->srrActivity.empty()) {
-        hasSrrActivity = true;
       }
       if (row->status == RetrieveJobStatus::RJS_ToReportToRepackForSuccess) {
         isNoRecallRepack = true;
@@ -564,7 +538,6 @@ public:
       SRR_USERNAME,
       SRR_HOST,
       SRR_TIME,
-      SRR_MOUNT_POLICY,
       DISK_FILE_ID,
       DISK_FILE_GID,
       DISK_FILE_OWNER_UID,
@@ -597,9 +570,6 @@ public:
     if (hasActivity) {
       sql += ",ACTIVITY";
     }
-    if (hasSrrActivity) {
-      sql += ",SRR_ACTIVITY";
-    }
 
     sql += ") VALUES ";
 
@@ -629,7 +599,6 @@ public:
       sql += ":SRR_USERNAME" + std::to_string(i) + ",";
       sql += ":SRR_HOST" + std::to_string(i) + ",";
       sql += ":SRR_TIME" + std::to_string(i) + ",";
-      sql += ":SRR_MOUNT_POLICY" + std::to_string(i) + ",";
       sql += ":DISK_FILE_ID" + std::to_string(i) + ",";
       sql += ":DISK_FILE_GID" + std::to_string(i) + ",";
       sql += ":DISK_FILE_OWNER_UID" + std::to_string(i) + ",";
@@ -660,9 +629,6 @@ public:
       }
       if (hasActivity) {
         sql += ",:ACTIVITY" + std::to_string(i);
-      }
-      if (hasSrrActivity) {
-        sql += ",:SRR_ACTIVITY" + std::to_string(i);
       }
       sql += ")";
       if (i < rows.size() - 1) {
@@ -704,8 +670,6 @@ public:
       stmt.bindUint64(":SRR_TIME" + std::to_string(i),
                       row.srrTime != 0 ? static_cast<uint64_t>(row.srrTime) :
                                          0);  // keep 0 as sentinel for "NOT_PROVIDED"
-      stmt.bindString(":SRR_MOUNT_POLICY" + std::to_string(i),
-                      !row.srrMountPolicy.empty() ? row.srrMountPolicy : "NOT_PROVIDED");
       stmt.bindString(":RETRIEVE_REPORT_URL" + std::to_string(i),
                       !row.retrieveReportURL.empty() ? row.retrieveReportURL : "NOT_PROVIDED");
       stmt.bindString(":DISK_FILE_ID" + std::to_string(i), row.diskFileId);
@@ -738,9 +702,6 @@ public:
       }
       if (hasActivity) {
         stmt.bindString(":ACTIVITY" + std::to_string(i), row.activity);
-      }
-      if (hasSrrActivity) {
-        stmt.bindString(":SRR_ACTIVITY" + std::to_string(i), row.srrActivity);
       }
     }
     conn.setDbQuerySummary(cta::semconv::attr::DbQuerySummary::kDbInsertRetrieve);
