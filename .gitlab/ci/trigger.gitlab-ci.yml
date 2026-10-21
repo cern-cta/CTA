@@ -15,10 +15,10 @@ spec:
       type: string
     cmake-build-type:
       type: string
-    sanitizers:
-      description: "C/C++ sanitizer mode; address and thread require separate builds."
+    analysis:
+      description: "C/C++ analysis mode: Valgrind or compiler sanitizers."
       type: string
-      options: ["none", "address", "undefined", "address,undefined", "thread"]
+      options: ["none", "valgrind", "address", "undefined", "address,undefined", "thread"]
       default: "none"
     enable-sbom-generation:
       type: boolean
@@ -32,8 +32,6 @@ spec:
       type: string
     workflow-api-authentication:
       type: string
-    enable-valgrind:
-      type: boolean
     enable-dcache-tests:
       type: boolean
     keep-stress-test-namespace:
@@ -63,7 +61,7 @@ spec:
           enable-internal-repos: $[[ inputs.enable-internal-repos ]]
           build-generator: $[[ inputs.build-generator ]]
           cmake-build-type: $[[ inputs.cmake-build-type ]]
-          sanitizers: $[[ inputs.sanitizers ]]
+          analysis: $[[ inputs.analysis ]]
           enable-sbom-generation: $[[ inputs.enable-sbom-generation ]]
           # Forward the typed pipeline inputs, not the runtime CI/CD variables. Values
           # overridden by workflow rules in commit pipelines are intentionally not
@@ -73,7 +71,6 @@ spec:
           compile-with-extra-telemetry: $[[ inputs.compile-with-extra-telemetry ]]
           admin-api-authentication: $[[ inputs.admin-api-authentication ]]
           workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
-          enable-valgrind: $[[ inputs.enable-valgrind ]]
           enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
           keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
     strategy: mirror
@@ -86,9 +83,7 @@ trigger-address-undefined-sanitizer-pipeline:
       - local: .gitlab-ci.yml
         inputs:
           <<: *child-pipeline-inputs
-          sanitizers: "address,undefined"
-          # Run sanitizer-instrumented binaries without Valgrind.
-          enable-valgrind: false
+          analysis: "address,undefined"
     strategy: mirror
 
 trigger-thread-sanitizer-pipeline:
@@ -99,9 +94,7 @@ trigger-thread-sanitizer-pipeline:
       - local: .gitlab-ci.yml
         inputs:
           <<: *child-pipeline-inputs
-          sanitizers: "thread"
-          # Run sanitizer-instrumented binaries without Valgrind.
-          enable-valgrind: false
+          analysis: "thread"
     strategy: mirror
 
 trigger-postgres-scheduler-pipeline:

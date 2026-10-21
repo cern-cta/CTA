@@ -11,10 +11,10 @@ spec:
       type: string
     cmake-build-type:
       type: string
-    sanitizers:
-      description: "C/C++ sanitizer mode; address and thread require separate builds."
+    analysis:
+      description: "C/C++ analysis mode: Valgrind or compiler sanitizers."
       type: string
-      options: ["none", "address", "undefined", "address,undefined", "thread"]
+      options: ["none", "valgrind", "address", "undefined", "address,undefined", "thread"]
       default: "none"
     compile-with-extra-telemetry:
       type: boolean
@@ -75,7 +75,11 @@ build-cta:
     - echo "Sccache enabled ${ENABLE_SCCACHE}"
     - echo "Sccache policy ${BUILD_CACHE_POLICY}"
   script:
-    - BUILD_OPTIONS=" --sanitizers $[[ inputs.sanitizers ]]"
+    - |
+      # Valgrind runs against an ordinary, uninstrumented build.
+      sanitizers="$[[ inputs.analysis ]]"
+      if [[ "$sanitizers" == "valgrind" ]]; then sanitizers=none; fi
+      BUILD_OPTIONS=" --sanitizers ${sanitizers}"
     - |
       if [[ "$ENABLE_SCCACHE" == "true" ]]; then
         BUILD_OPTIONS+=" --enable-sccache"

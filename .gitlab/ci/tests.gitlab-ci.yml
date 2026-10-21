@@ -7,8 +7,11 @@ spec:
       type: string
     enable-internal-repos:
       type: boolean
-    enable-valgrind:
-      type: boolean
+    analysis:
+      description: "C/C++ analysis mode: Valgrind or compiler sanitizers."
+      type: string
+      options: ["none", "valgrind", "address", "undefined", "address,undefined", "thread"]
+      default: "none"
 ---
 
 .setup-cta-install: &setup-cta-install
@@ -124,7 +127,9 @@ test-cta-valgrind:
       when: never
     - if: $CI_COMMIT_TAG
       when: never
-    - if: '"$[[ inputs.enable-valgrind ]]" == "true"'
+    - if: '"$[[ inputs.analysis ]]" != "none" && "$[[ inputs.analysis ]]" != "valgrind"'
+      when: never
+    - if: '"$[[ inputs.analysis ]]" == "valgrind"'
       when: on_success
     - when: manual
       allow_failure: true
@@ -216,7 +221,7 @@ unit-test-postgresql:
     - echo 'postgresql:postgresql://cta@localhost/cta' > ${CTA_CATALOGUE_CONF}
     - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
     - |
-      if $[[ inputs.enable-valgrind ]]; then
+      if [[ "$[[ inputs.analysis ]]" == "valgrind" ]]; then
         run_cpp_test cta-unit-tests-rdbms valgrind /usr/bin/cta-unit-tests-rdbms "${CTA_CATALOGUE_CONF}"
       else
         run_cpp_test cta-unit-tests-rdbms /usr/bin/cta-unit-tests-rdbms "${CTA_CATALOGUE_CONF}"
@@ -253,7 +258,7 @@ unit-test-oracle:
     - echo yes | cta-catalogue-schema-drop ${CTA_CATALOGUE_CONF}
     - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
     - |
-      if $[[ inputs.enable-valgrind ]]; then
+      if [[ "$[[ inputs.analysis ]]" == "valgrind" ]]; then
         run_cpp_test cta-unit-tests-rdbms valgrind /usr/bin/cta-unit-tests-rdbms "${CTA_CATALOGUE_CONF}"
       else
         run_cpp_test cta-unit-tests-rdbms /usr/bin/cta-unit-tests-rdbms "${CTA_CATALOGUE_CONF}"
