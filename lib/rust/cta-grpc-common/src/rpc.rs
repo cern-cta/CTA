@@ -10,7 +10,7 @@
 //! [`AuthorizationInterceptor`] attaches the bearer token to every outgoing
 //! request.
 
-use std::{fs, path::PathBuf, string::FromUtf8Error};
+use std::{path::PathBuf, string::FromUtf8Error};
 
 use tonic::{
     metadata::MetadataValue,
@@ -106,7 +106,7 @@ impl EndpointConfig {
             let mut tls: ClientTlsConfig = ClientTlsConfig::new();
 
             if let Some(file_path) = &self.ca_cert_bundle {
-                let data = fs::read(file_path).map_err(Error::IO)?;
+                let data = tokio::fs::read(file_path).await.map_err(Error::IO)?;
                 tls = tls.ca_certificate(Certificate::from_pem(data));
             }
 
