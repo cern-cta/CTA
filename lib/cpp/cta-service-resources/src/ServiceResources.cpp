@@ -22,14 +22,11 @@ constexpr uint64_t NB_ARCHIVE_FILE_LISTING_CONNS = 2;
 ServiceResources::ServiceResources(const runtime::CatalogueConfig& catalogueConfig,
                                    const runtime::SchedulerConfig& schedulerConfig,
                                    const CatalogueConfig& catalogueOptions,
-                                   const FilesConfig& filesOptions,
 #ifndef CTA_PGSCHED
                                    const SchedulerConfig& schedulerOptions,
 #endif
                                    log::Logger& log)
-    : m_log(log),
-      m_missingFileCopiesMinAgeSecs(filesOptions.missing_file_copies_min_age_secs),
-      m_recycleLogQuarantineSecs(filesOptions.recycle_log_quarantine_secs) {
+    : m_log(log) {
   log::LogContext lc(m_log);
   lc.log(log::INFO, "In ServiceResources::ServiceResources(): Initialising Catalogue");
 

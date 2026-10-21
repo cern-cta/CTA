@@ -15,11 +15,7 @@ namespace cta::service_resources {
 
 #ifndef CTA_PGSCHED
 
-/**
- * @brief Service-specific scheduler options (objectstore scheduler only).
- *
- * Complements cta::runtime::SchedulerConfig (runtime/config/CommonConfig.hpp), which holds the scheduler DB location.
- */
+/// @brief Service-specific scheduler options (objectstore scheduler only).
 struct SchedulerConfig final {
   uint32_t number_of_threads = 0;                //!< Scheduler DB thread pool size (REQUIRED, must be > 0)
   std::optional<uint32_t> thread_stack_size_mb;  //!< Scheduler DB thread stack size (MB)

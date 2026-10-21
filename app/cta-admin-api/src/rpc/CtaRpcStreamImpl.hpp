@@ -49,7 +49,7 @@ private:
   std::string m_instanceName;              //!< Instance name
   cta::SchedulerDB_t& m_schedDb;           //!< Reference to CTA SchedulerDB
   std::string m_catalogueConnString;       //!< Provided by the server context
-  uint64_t m_missingFileCopiesMinAgeSecs;  //!< Provided by the server context
+  uint64_t m_missingFileCopiesMinAgeSecs;  //!< From the [files] configuration
   AdminCmdMode m_adminCommandMode;         //!< Which commands this admin API serves
   RequestAuthenticator m_authenticator;    //!< The request authenticator
 };

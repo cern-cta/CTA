@@ -31,7 +31,6 @@ int WorkflowApiApp::run(const WorkflowApiConfig& config, cta::log::Logger& log) 
   service_resources::ServiceResources serviceResources(config.catalogue,
                                                        config.scheduler,
                                                        config.frontend_catalogue,
-                                                       config.files,
 #ifndef CTA_PGSCHED
                                                        config.frontend_scheduler,
 #endif

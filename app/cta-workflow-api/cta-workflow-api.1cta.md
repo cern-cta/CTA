@@ -53,7 +53,8 @@ With mutual TLS, the certificate identities accepted for each EOS instance are c
 # FILES
 
 `/etc/cta/cta-workflow-api.toml`
-: Main configuration file. See the `cta-workflow-api.example.toml` documentation file for all options.
+: Default configuration file, also used by the `cta-workflow-api` systemd service. See the `cta-workflow-api.example.toml`
+  documentation file for all options.
 
 # SEE ALSO
 

@@ -6,12 +6,10 @@
 #pragma once
 
 #include "grpc-server/config/AuthConfig.hpp"
-#include "grpc-server/config/InstanceConfig.hpp"
 #include "grpc-server/config/ListenerConfig.hpp"
 #include "grpc-server/config/VerificationConfig.hpp"
 #include "runtime/config/CommonConfig.hpp"
 #include "service-resources/config/CatalogueConfig.hpp"
-#include "service-resources/config/FilesConfig.hpp"
 #include "service-resources/config/SchedulerConfig.hpp"
 
 #include <cstddef>
@@ -25,11 +23,10 @@ namespace cta::workflow_api {
  * @brief Archive-related options of the workflow API.
  */
 struct ArchiveConfig final {
-  uint64_t max_file_size_gb = 0;                       //!< Maximum size of an archived file, in GB (0 = no limit)
   bool zero_length_files_forbidden = true;             //!< Whether 0-length files are rejected
   std::vector<std::string> zero_length_vo_exceptions;  //!< VOs exempt from the 0-length file restriction
 
-  static constexpr std::size_t memberCount() { return 3; }
+  static constexpr std::size_t memberCount() { return 2; }
 
   cta::runtime::ValidationResult validate() const { return {}; }
 };
@@ -62,6 +59,8 @@ struct OpportunisticBatchingConfig final {
 #endif
 
 struct WorkflowApiConfig final {
+  std::string instance_name;  //!< Name of the instance, used by auth verification and gRPC messages
+
   cta::runtime::CatalogueConfig catalogue;
   cta::runtime::SchedulerConfig scheduler;
   cta::runtime::LoggingConfig logging;
@@ -69,7 +68,6 @@ struct WorkflowApiConfig final {
   cta::runtime::ExperimentalConfig experimental;
 
   cta::service_resources::CatalogueConfig frontend_catalogue;
-  cta::service_resources::FilesConfig files;
 #ifndef CTA_PGSCHED
   cta::service_resources::SchedulerConfig frontend_scheduler;
 #else
@@ -81,25 +79,27 @@ struct WorkflowApiConfig final {
 
   ArchiveConfig archive;
   cta::grpc_server::VerificationConfig verification;
-  cta::grpc_server::InstanceConfig instance;
 
-  static constexpr std::size_t memberCount() { return 13; }
+  static constexpr std::size_t memberCount() { return 12; }
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
+
+    if (instance_name.empty()) {
+      result.addError("instance_name", "cannot be empty");
+    }
+
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
     result.merge("telemetry", telemetry.validate());
     result.merge("experimental", experimental.validate());
     result.merge("frontend_catalogue", frontend_catalogue.validate());
-    result.merge("files", files.validate());
 #ifndef CTA_PGSCHED
     result.merge("frontend_scheduler", frontend_scheduler.validate());
 #else
     result.merge("opportunistic_batching", opportunistic_batching.validate());
 #endif
-    result.merge("instance", instance.validate());
     result.merge("verification", verification.validate());
     result.merge("grpc", grpc.validate());
     // Workflow API: exactly one of JWT or mTLS (Kerberos is not representable in WfeAuthConfig)

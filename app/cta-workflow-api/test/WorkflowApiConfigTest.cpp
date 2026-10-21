@@ -16,7 +16,7 @@ namespace {
 cta::workflow_api::WorkflowApiConfig makeValidConfig() {
   cta::workflow_api::WorkflowApiConfig config;
   config.scheduler.backend_name = "vfsTest";
-  config.instance.name = "unitTestInstance";
+  config.instance_name = "unitTestInstance";
 #ifndef CTA_PGSCHED
   config.frontend_scheduler.number_of_threads = 500;
 #endif
@@ -34,7 +34,7 @@ TEST(WorkflowApiConfig, ValidConfigPasses) {
 
 TEST(WorkflowApiConfig, InstanceNameIsRequired) {
   auto config = makeValidConfig();
-  config.instance.name = "";
+  config.instance_name = "";
   EXPECT_FALSE(config.validate().ok());
 }
 

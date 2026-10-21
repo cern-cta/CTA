@@ -7,12 +7,9 @@
 
 #include "AdminCmdMode.hpp"
 #include "grpc-server/config/AuthConfig.hpp"
-#include "grpc-server/config/InstanceConfig.hpp"
 #include "grpc-server/config/ListenerConfig.hpp"
-#include "grpc-server/config/VerificationConfig.hpp"
 #include "runtime/config/CommonConfig.hpp"
 #include "service-resources/config/CatalogueConfig.hpp"
-#include "service-resources/config/FilesConfig.hpp"
 #include "service-resources/config/SchedulerConfig.hpp"
 
 #include <cstddef>
@@ -44,20 +41,14 @@ struct RepackConfig final {
 };
 
 /**
- * @brief Admin-related options of the admin API.
+ * @brief Options related to how the admin API handles tape file copies and the recycle log.
  */
-struct AdminConfig final {
-  /**
-   * Role of the admin API with respect to the repacks, meant to match the scheduler DB it is connected to when the
-   * user and the repack requests are served from separate ones (see AdminCmdMode):
-   * - `all`: no restriction
-   * - `no_repack`: all the repack commands (repack add, rm, err and ls) are rejected, and the tape state changes
-   *   follow the rules of a user-only scheduler DB.
-   * - `repack`: no command is rejected, and the tape state changes follow the rules of a repack-only scheduler DB.
-   */
-  AdminCmdMode mode = AdminCmdMode::ALL;
+struct FilesConfig final {
+  uint64_t missing_file_copies_min_age_secs = 0;  //!< Minimum age of missing tape file copies before they are reported
+  uint64_t recycle_log_quarantine_secs =
+    31 * 24 * 60 * 60;  //! Minimum quarantine period before a tape can be reclaimed (default: 31 days).
 
-  static constexpr std::size_t memberCount() { return 1; }
+  static constexpr std::size_t memberCount() { return 2; }
 
   cta::runtime::ValidationResult validate() const { return {}; }
 };
@@ -74,6 +65,18 @@ struct AdminArchiveConfig final {
 };
 
 struct AdminApiConfig final {
+  std::string instance_name;  //!< Name of the instance, used by auth verification and gRPC messages
+
+  /**
+   * Role of the admin API with respect to the repacks, meant to match the scheduler DB it is connected to when the
+   * user and the repack requests are served from separate ones (see AdminCmdMode):
+   * - `all`: no restriction
+   * - `no_repack`: all the repack commands (repack add, rm, err and ls) are rejected, and the tape state changes
+   *   follow the rules of a user-only scheduler DB.
+   * - `repack`: no command is rejected, and the tape state changes follow the rules of a repack-only scheduler DB.
+   */
+  AdminCmdMode admin_mode = AdminCmdMode::ALL;
+
   cta::runtime::CatalogueConfig catalogue;
   cta::runtime::SchedulerConfig scheduler;
   cta::runtime::LoggingConfig logging;
@@ -81,29 +84,30 @@ struct AdminApiConfig final {
   cta::runtime::ExperimentalConfig experimental;
 
   cta::service_resources::CatalogueConfig frontend_catalogue;
-  cta::service_resources::FilesConfig files;
+  FilesConfig files;
 #ifndef CTA_PGSCHED
   cta::service_resources::SchedulerConfig frontend_scheduler;
 #endif
 
   cta::grpc_server::ListenerConfig grpc;
   cta::grpc_server::AdminAuthConfig auth;
-
-  cta::grpc_server::InstanceConfig instance;
-  AdminConfig admin;
   AdminArchiveConfig archive;
 
   RepackConfig repack;
-  cta::grpc_server::VerificationConfig verification;
 
 #ifndef CTA_PGSCHED
-  static constexpr std::size_t memberCount() { return 15; }
-#else
   static constexpr std::size_t memberCount() { return 14; }
+#else
+  static constexpr std::size_t memberCount() { return 13; }
 #endif
 
   cta::runtime::ValidationResult validate() const {
     cta::runtime::ValidationResult result;
+
+    if (instance_name.empty()) {
+      result.addError("instance_name", "cannot be empty");
+    }
+
     result.merge("catalogue", catalogue.validate());
     result.merge("scheduler", scheduler.validate());
     result.merge("logging", logging.validate());
@@ -114,13 +118,10 @@ struct AdminApiConfig final {
 #ifndef CTA_PGSCHED
     result.merge("frontend_scheduler", frontend_scheduler.validate());
 #endif
-    result.merge("instance", instance.validate());
-    result.merge("admin", admin.validate());
     result.merge("archive", archive.validate());
     result.merge("grpc", grpc.validate());
     result.merge("auth", auth.validate());
     result.merge("repack", repack.validate());
-    result.merge("verification", verification.validate());
     return result;
   }
 };

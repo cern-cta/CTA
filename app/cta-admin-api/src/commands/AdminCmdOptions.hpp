@@ -14,9 +14,10 @@
 
 namespace cta::admin_api::commands {
 
-/**
- *
- */
+/// Typed access to the options of a cta-admin command
+///
+/// Validates the AdminCmd Protocol Buffer and imports its boolean, uint64, string and string list
+/// options into per-type maps, which can then be queried as required or optional options.
 class AdminCmdOptions {
 public:
   AdminCmdOptions() = default;

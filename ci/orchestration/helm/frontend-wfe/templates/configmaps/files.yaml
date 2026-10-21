@@ -15,8 +15,7 @@ metadata:
     {{- include "common.labels.standard" . | nindent 4 }}
 data:
   cta-workflow-api.toml: |-
-    [instance]
-      name = {{ .Release.Namespace | quote }}
+    instance_name = {{ .Release.Namespace | quote }}
 
     [catalogue]
       config_file = "/etc/cta/cta-catalogue.conf"
@@ -24,24 +23,20 @@ data:
     [frontend_catalogue]
       number_of_connections = {{ .Values.conf.catalogue.numberOfConnections | int }}
 
-    [files]
-      # Minimum age of missing tape file copies before they are reported
-      missing_file_copies_min_age_secs = {{ .Values.conf.catalogue.missingFileCopiesMinAgeSecs | int }}
-      # Recycle-log quarantine period before a tape can be reclaimed
-      recycle_log_quarantine_secs = {{ .Values.conf.catalogue.recycleLogQuarantineSecs | int }}
-
     [scheduler]
       backend_name = {{ $schedulerConfig.backend | quote }}
       config_file = "/etc/cta/cta-scheduler.conf"
       tape_cache_max_age_secs = {{ .Values.conf.schedulerdb.tapeCacheMaxAgeSecs | int }}
       retrieve_queue_cache_max_age_secs = {{ .Values.conf.schedulerdb.retrieveQueueCacheMaxAgeSecs | int }}
-      # Only used by the PostgreSQL scheduler backend
+      {{- if eq $schedulerConfig.backend "postgres" }}
       number_of_connections = {{ .Values.conf.schedulerdb.numberOfConnections | int }}
+      {{- else }}
 
     # Only used by the objectstore scheduler backend
     [frontend_scheduler]
       number_of_threads = {{ .Values.conf.schedulerdb.numberOfThreads | int }}
       thread_stack_size_mb = {{ .Values.conf.schedulerdb.threadStackSizeMb | int }}
+      {{- end }}
 
     # Only used by the PostgreSQL scheduler backend: batch concurrent archive/retrieve requests
     # into a single bulk DB insert instead of queueing them one at a time
@@ -51,7 +46,6 @@ data:
       max_batch_size = {{ .Values.conf.schedulerdb.opportunisticBatching.maxBatchSize | int }}
 
     [archive]
-      max_file_size_gb = {{ .Values.conf.frontend.archiveFileMaxSizeGb | int }}
       zero_length_files_forbidden = {{ .Values.conf.frontend.zeroLengthFilesForbidden }}
       {{- $exceptions := list }}
       {{- range (splitList "," (toString .Values.conf.frontend.zeroLengthFilesForbiddenVoExceptionList)) }}
@@ -71,8 +65,8 @@ data:
     {{- if .Values.conf.telemetry.enabled }}
 
     [telemetry]
-      # Declarative OpenTelemetry SDK configuration. Must be provided separately (see lib/telemetry/cta-otel.example.yaml).
       config_file = "/etc/cta/cta-otel.yaml"
+      on_init_failure = "fatal"
     {{- end }}
 
     [grpc]
@@ -112,3 +106,7 @@ data:
       reason = {{ .reason | quote }}
       revoked_at = {{ .revokedAt }}
     {{- end }}
+  {{- if .Values.conf.telemetry.enabled }}
+  cta-otel.yaml: |-
+{{ tpl .Values.telemetryConfig . | nindent 4 }}
+  {{- end }}

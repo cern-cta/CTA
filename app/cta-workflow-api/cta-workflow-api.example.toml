@@ -10,6 +10,11 @@
 # This is an example, not a ready-to-run configuration. Copy it to your config dir, replace all
 # deployment-specific values, and validate it before starting the service.
 
+# Name of the CTA instance. Used to validate the authentication tokens. It also gets sent with gRPC responses.
+# (string, REQUIRED)
+instance_name = "CI_local"
+
+
 # Catalogue-related options
 [catalogue]
   # Path to the CTA Catalogue configuration file. The file contains a single connection string that
@@ -26,19 +31,6 @@
   # Default: 10
   # (integer, optional)
   number_of_connections = 10
-
-
-[files]
-  # Minimum age of missing tape file copies before they are reported. Set it to prevent
-  # false flagging of multi-copy files which are still in the process of being archived.
-  # If omitted, 0 is used. A typical value is 86400 (24 hours).
-  # (time in seconds, optional)
-  missing_file_copies_min_age_secs = 86400
-
-  # Minimum quarantine period, in seconds, that a tape must spend in the recycle log before it can be
-  # reclaimed. Default: 2678400 (31 days)
-  # (time in seconds, optional)
-  recycle_log_quarantine_secs = 2678400
 
 
 [scheduler]
@@ -106,13 +98,6 @@
   max_batch_size = 1000
 
 
-[instance]
-  # Name of the CTA instance. Used to validate authentication (JWT, mTLS) and as the telemetry service namespace.
-  # Replaces the legacy cta.instance_name option. Must not be empty.
-  # (string, REQUIRED)
-  name = "CI_local"
-
-
 [verification]
   # Name of the mount policy used for verification requests.
   # (string, optional)
@@ -120,10 +105,6 @@
 
 
 [archive]
-  # Maximum size of an archived file, in GB. If omitted or 0, there is no limit.
-  # (integer, optional)
-  max_file_size_gb = 0
-
   # Whether 0-length files are rejected. Default: true
   # (boolean, optional)
   zero_length_files_forbidden = true
