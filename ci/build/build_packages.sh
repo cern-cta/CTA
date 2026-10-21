@@ -8,7 +8,7 @@ set -e
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_utils.sh"
 
 # Match CI runtime behaviour for tests executed during packaging; allow explicit overrides.
-export UBSAN_OPTIONS="${UBSAN_OPTIONS:-halt_on_error=1:print_stacktrace=1}"
+export UBSAN_OPTIONS="${UBSAN_OPTIONS:-print_stacktrace=1}"
 
 usage() {
   echo

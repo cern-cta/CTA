@@ -240,8 +240,8 @@ variables:
   # Runner and test reports
   FF_TIMESTAMPS: "true"
   TERM: "xterm-color"
-  # Fail instrumented test processes on undefined behaviour and include a stack trace.
-  UBSAN_OPTIONS: "halt_on_error=1:print_stacktrace=1"
+  # Include stack traces in UBSan diagnostics; compiler flags make findings fatal.
+  UBSAN_OPTIONS: "print_stacktrace=1"
   GTEST_COLOR: "yes"
   GTEST_REPORT_FILE: "$CI_PROJECT_DIR/test_report.xml"
   GTEST_OUTPUT: ""

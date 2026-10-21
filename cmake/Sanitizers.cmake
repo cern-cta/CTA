@@ -19,4 +19,9 @@ function(cta_enable_sanitizers)
   endif()
   add_compile_options(-fsanitize=${CTA_SANITIZERS} -fno-omit-frame-pointer)
   add_link_options(-fsanitize=${CTA_SANITIZERS} -fno-omit-frame-pointer)
+
+  if(CTA_SANITIZERS MATCHES "(^|,)undefined(,|$)")
+    # Make UBSan findings fatal regardless of the runtime environment.
+    add_compile_options(-fno-sanitize-recover=undefined)
+  endif()
 endfunction()
