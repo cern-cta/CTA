@@ -75,7 +75,7 @@ spec:
           keep-stress-test-namespace: $[[ inputs.keep-stress-test-namespace ]]
     strategy: mirror
 
-trigger-address-undefined-sanitizer-pipeline:
+"analysis: ASan + UBSan":
   extends:
     - .trigger-child-pipeline
   trigger:
@@ -86,7 +86,7 @@ trigger-address-undefined-sanitizer-pipeline:
           analysis: "address,undefined"
     strategy: mirror
 
-trigger-thread-sanitizer-pipeline:
+"analysis: TSan":
   extends:
     - .trigger-child-pipeline
   trigger:
@@ -97,7 +97,7 @@ trigger-thread-sanitizer-pipeline:
           analysis: "thread"
     strategy: mirror
 
-trigger-postgres-scheduler-pipeline:
+"scheduler: pgsched":
   extends:
     - .trigger-child-pipeline
   trigger:
@@ -108,7 +108,7 @@ trigger-postgres-scheduler-pipeline:
           scheduler-type: "pgsched"
     strategy: mirror
 
-trigger-postgres-scheduler-with-extra-telemetry-pipeline:
+"scheduler: pgsched + telemetry":
   extends:
     - .trigger-child-pipeline
   trigger:
@@ -119,7 +119,7 @@ trigger-postgres-scheduler-with-extra-telemetry-pipeline:
           scheduler-type: "pgsched"
           compile-with-extra-telemetry: true
 
-trigger-oracle-disabled-pipeline:
+"catalogue: Oracle off":
   extends:
     - .trigger-child-pipeline
   trigger:
@@ -130,7 +130,7 @@ trigger-oracle-disabled-pipeline:
           enable-oracle-support: false
     strategy: mirror
 
-trigger-el10-pipeline:
+"platform: el10":
   extends:
     - .trigger-child-pipeline
   trigger:
@@ -142,7 +142,7 @@ trigger-el10-pipeline:
     strategy: mirror
 
 # May need more inputs once we run more jobs in the Debian pipeline
-trigger-debian-pipeline:
+"platform: debian13":
   extends:
     - .trigger-child-pipeline
   trigger:
@@ -157,7 +157,7 @@ trigger-debian-pipeline:
           enable-sbom-generation: false
     strategy: mirror
 
-trigger-sonarcloud-pipeline:
+"analysis: SonarCloud":
   allow_failure: true
   stage: trigger
   needs: []  # Ensure no artifacts are downloaded
