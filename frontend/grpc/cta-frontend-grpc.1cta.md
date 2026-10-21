@@ -1,6 +1,6 @@
 ---
 date: 2024-07-18
-section: 1cta
+section: 1
 title: CTA-FRONTEND-GRPC
 header: The CERN Tape Archive (CTA)
 ---

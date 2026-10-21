@@ -108,7 +108,8 @@
           "type": "string",
           "minLength": 1,
           "enum": [
-            "el9"
+            "el9",
+            "debian13"
           ]
         }
       },
@@ -137,7 +138,7 @@
         ],
         "properties": {
           "versionlock": {
-            "description": "These values are used to generate a versionlock.list file.",
+            "description": "Exact package versions for platform-specific dependency installation.",
             "type": "object",
             "additionalProperties": {
               "type": "string",
@@ -153,8 +154,7 @@
             }
           },
           "buildRequires": {
-            "description":
-              "These values are used to generate a list of BuildRequires items that are put in the packaging/rpm/cta.spec.in file.",
+            "description": "Build dependencies used for RPM BuildRequires or Debian Build-Depends.",
             "type": "object",
             "additionalProperties": {
               "type": "string"

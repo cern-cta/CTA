@@ -7,6 +7,8 @@
 
 #include "common/exception/Errnum.hpp"
 
+#include <filesystem>
+
 namespace unitTests {
 
 TempDirectory::TempDirectory() {
@@ -18,14 +20,14 @@ TempDirectory::TempDirectory() {
 
 TempDirectory::~TempDirectory() {
   if (m_root.size()) {
-    std::string rmCommand = "rm -rf " + m_root;
-    ::system(rmCommand.c_str());
+    // Cleanup must not throw during stack unwinding.
+    std::error_code error;
+    std::filesystem::remove_all(m_root, error);
   }
 }
 
 void TempDirectory::mkdir() {
-  std::string mkdirCommand = "mkdir -p " + m_root + m_subfolder_path;
-  ::system(mkdirCommand.c_str());
+  std::filesystem::create_directories(m_root + m_subfolder_path);
 }
 
 void TempDirectory::append(const std::string& path) {

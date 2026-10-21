@@ -1,0 +1,5 @@
+cta (@CTA_VERSION@) trixie; urgency=medium
+
+  * Build CTA @CTA_VERSION@ for Debian 13.
+
+ -- CTA Team <cta-support@cern.ch>  @CTA_DEB_CHANGELOG_DATE@

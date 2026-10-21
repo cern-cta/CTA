@@ -174,7 +174,7 @@ public:
 
     std::ostringstream cmd;
     cmd << "touch " << m_tmpDir << "/hello";
-    system(cmd.str().c_str());
+    ASSERT_EQ(0, system(cmd.str().c_str()));
   }
 
   void TearDown() override {
@@ -183,7 +183,7 @@ public:
     m_db.reset();
 
     // If Setup() created a temporary directory
-    if (m_tmpDir) {
+    if (m_tmpDir[0] != '\0') {
       // Open the directory
       std::unique_ptr<DIR, std::function<int(DIR*)>> dir(opendir(m_tmpDir), closedir);
       if (nullptr == dir) {
@@ -473,7 +473,7 @@ protected:
    * Please note that a new temporary directory is created and deleted for each
    * test by the Setup() and TearDown() methods.
    */
-  char m_tmpDir[100];
+  char m_tmpDir[100] {};
 
 };  // class DataTransferSessionTest
 

@@ -1,6 +1,6 @@
 ---
 date: 2026-08-20
-section: 1cta
+section: 1
 title: CTA-RMCD
 header: The CERN Tape Archive (CTA)
 ---
@@ -174,7 +174,7 @@ telemetry_enabled *(default: false)*
 
 # SEE ALSO
 
-**cta-smc**(1cta), **cta-taped**(1cta)
+**cta-smc**(1), **cta-taped**(1)
 
 CERN Tape Archive documentation
 [https://cta.docs.cern.ch/](https://cta.docs.cern.ch/)

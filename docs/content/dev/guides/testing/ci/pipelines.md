@@ -54,6 +54,8 @@ In merge-train pipelines, the guard can avoid repeating validation when it finds
 
 Follow downstream pipeline links when additional configurations are tested there. For asynchronous external checks, a successful trigger only confirms that the check was started; inspect its own result. Confirm that the pipeline and reports correspond to the revision under review.
 
+The manual `trigger-debian-pipeline` job runs a Debian 13 child pipeline using `build-cta` with the PostgreSQL scheduler and Oracle disabled.
+
 ## Useful jobs
 
 | Job | When it matters |
@@ -61,7 +63,7 @@ Follow downstream pipeline links when additional configurations are tested there
 | `danger-review` | Read the MR feedback and address contribution-metadata and documentation findings. See [Contributing through CERN GitLab](../../../contributing/gitlab.md). |
 | `test-catalogue-schema-update` | Review migration results when changing catalogue schemas or migrations. See [Testing Migrations](../../../internals/components/catalogue/testing.md). |
 | `stress-test` | Assess sustained workload behaviour and performance using [Stress Tests](../stress-tests.md). |
-| `build-cta-rpms-no-sccache` / `reset-sccache` | If you suspect a compilation-cache problem, compare the no-sccache build where available. The manual `reset-sccache` job clears the MR branch's cache; retry the affected build afterwards. |
+| `build-cta-no-sccache` / `reset-sccache` | If you suspect a compilation-cache problem, compare the no-sccache build where available. The manual `reset-sccache` job clears the MR branch's cache; retry the affected build afterwards. |
 
 For publication jobs and release validation, follow [Release Procedure](../../../contributing/maintainers/releases.md). When modifying jobs, keep their rationale beside the YAML and follow [GitLab CI Conventions](../../conventions/gitlab.md).
 

@@ -13,6 +13,12 @@ add_library(ctaruntime SHARED
 set_property(TARGET ctaruntime PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaruntime PROPERTY VERSION "${CTA_LIBVERSION}")
 target_link_libraries(ctaruntime PUBLIC ctacommon ctatelemetry)
+if(CTA_PACKAGE_FORMAT STREQUAL "deb")
+  # Debian ships cpp-httplib as a shared library rather than a header-only library.
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(HTTPLIB REQUIRED IMPORTED_TARGET cpp-httplib)
+  target_link_libraries(ctaruntime PRIVATE PkgConfig::HTTPLIB)
+endif()
 target_include_directories(ctaruntime
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -34,4 +40,6 @@ set_property(TARGET ctaruntimeunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaruntimeunittests PROPERTY VERSION "${CTA_LIBVERSION}")
 target_link_libraries(ctaruntimeunittests PUBLIC ctaruntime)
 
-install(TARGETS ctaruntimeunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS ctaruntimeunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

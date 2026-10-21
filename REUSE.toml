@@ -51,3 +51,14 @@ path = ["docs/content/**", "docs/includes/**", "docs/overrides/**"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 CERN"
 SPDX-License-Identifier = "GPL-3.0-or-later"
+
+# Debian packaging formats without inline SPDX headers.
+[[annotations]]
+path = [
+    "packaging/deb/control.in",
+    "packaging/deb/copyright",
+    "packaging/deb/changelog.in",
+    "packaging/deb/source/format"
+]
+SPDX-FileCopyrightText = "2026 CERN"
+SPDX-License-Identifier = "GPL-3.0-or-later"

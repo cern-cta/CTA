@@ -8,13 +8,10 @@
 
 find_path(LIBCAP_INCLUDE_DIRS
   capability.h
-  PATHS /usr/include/sys
-  NO_DEFAULT_PATH)
+  PATH_SUFFIXES sys)
 
 find_library(LIBCAP_LIBRARIES
-  NAME cap
-  PATHS /usr/lib64
-  NO_DEFAULT_PATH)
+  NAMES cap)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(libcap DEFAULT_MSG

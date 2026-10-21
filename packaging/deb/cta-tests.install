@@ -1,0 +1,10 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+usr/bin/cta-unit-tests*
+usr/bin/cta-unit-and-integration-tests.sh
+usr/bin/cta-integration-tests
+usr/bin/cta-test-*-reader
+usr/lib/*/lib*unittests*.so*
+usr/lib/*/libcta-taped-integration-tests.so*
+usr/share/cta/tests

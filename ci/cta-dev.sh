@@ -45,7 +45,7 @@ readonly ci_image_registry
 source "${script_dir}/utils/cta_version.sh"
 CTA_MAJOR_VERSION=$(read_cta_major_version "${project_root}/project.json")
 platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
-scheduler_type="objectstore"
+scheduler_type=""
 oracle_support="false"
 enable_internal_repos=true
 internal_repos_forced_public=false
@@ -641,6 +641,31 @@ parse_options() {
     unsupported_argument "--cmake-build-type is \"$cmake_build_type\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
   fi
 
+  jq -e --arg platform "$platform" '.platforms | has($platform)' "${project_root}/project.json" >/dev/null || \
+    unsupported_argument "Unsupported platform '${platform}'."
+
+  # Resolve defaults after both the environment file and command-line overrides.
+  if [[ -z "$scheduler_type" ]]; then
+    case "$platform" in
+      debian13) scheduler_type=pgsched ;;
+      *) scheduler_type=objectstore ;;
+    esac
+  fi
+
+  if [[ "$platform" == debian13 ]]; then
+    [[ "$scheduler_type" == pgsched && "$oracle_support" == false ]] || \
+      unsupported_argument "Debian 13 requires --scheduler-type pgsched and Oracle support disabled."
+    enable_internal_repos=false
+    internal_repos_forced_public=true
+
+    # Debian runtime images are not available yet; fail before starting a package build.
+    case "$command" in
+      images|up|debug|all)
+        unsupported_argument "Debian 13 currently supports package builds only; use 'cta-dev build --platform debian13'."
+        ;;
+    esac
+  fi
+
   if [[ "$scheduler_type" != "objectstore" ]] && [[ "$scheduler_type" != "pgsched" ]]; then
     unsupported_argument "--scheduler-type is \"$scheduler_type\" but must be one of [objectstore, pgsched]."
   fi
@@ -703,6 +728,7 @@ package_directory() {
   case "${platform}:${package_kind}" in
     el9:source) echo "RPM/SRPMS" ;;
     el9:binary) echo "RPM/RPMS/x86_64" ;;
+    debian13:source|debian13:binary) echo "DEB" ;;
     *) die "No ${package_kind} package directory is configured for platform '${platform}'." ;;
   esac
 }
@@ -940,8 +966,6 @@ build_cta() {
   if [[ $clean_build_dirs == true ]]; then
     rebuild_source_packages=true
     reinstall_source_packages=true
-    log_task "Removing build directories..."
-    rm -rf -- "${project_root}/build/${platform}"
   fi
 
   # Remove the project-specific container if reset is requested.
@@ -1020,6 +1044,8 @@ build_cta() {
       --source-package-dir "${mount_basedir}/build/${platform}/${source_package_directory}"
     )
   fi
+  # Let the package builder clean both build output and generated packaging state inside the container.
+  [[ $clean_build_dirs == true ]] && build_package_flags+=(--clean-build-dir)
   [[ $enable_debug_image == false ]] && build_package_flags+=(--skip-test-packages)
   [[ $skip_unit_tests == true ]] && build_package_flags+=(--skip-unit-tests)
   [[ $skip_debug_packages == true ]] && build_package_flags+=(--skip-debug-packages)

@@ -106,8 +106,12 @@ static void find_sgpath(char* const sgpath, const int maj, const int min) {
     return;
   }
 
-  memset(tlink, 0, 256);
-  readlink(syspath, tlink, 256);
+  // readlink does not terminate its output; reject failures and truncated paths.
+  const auto tapeLinkSize = readlink(syspath, tlink, sizeof(tlink));
+  if (tapeLinkSize < 0 || static_cast<size_t>(tapeLinkSize) >= sizeof(tlink)) {
+    return;
+  }
+  tlink[tapeLinkSize] = '\0';
 
   /* find the corresponding sg sysfs entry */
   if (!(dir_gen = opendir(sysgen))) {
@@ -127,8 +131,11 @@ static void find_sgpath(char* const sgpath, const int maj, const int min) {
       exit(ENOBUFS);
     }
 
-    memset(glink, 0, 256);
-    readlink(syspath, glink, 256);
+    const auto genericLinkSize = readlink(syspath, glink, sizeof(glink));
+    if (genericLinkSize < 0 || static_cast<size_t>(genericLinkSize) >= sizeof(glink)) {
+      continue;
+    }
+    glink[genericLinkSize] = '\0';
 
     if (0 == strcmp(glink, tlink)) {
       retval = snprintf(sgpath, SGPATH_BUFSZ, "/dev/%s", dirent->d_name);

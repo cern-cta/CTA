@@ -8,8 +8,10 @@
 #include "common/utils/Timer.hpp"
 #include "taped/scsi/Structures.hpp"
 
+#include <algorithm>
 #include <memory>
 #include <numeric>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -19,7 +21,8 @@ std::vector<uint64_t> RandomRAOAlgorithm::performRAO(const std::vector<std::uniq
   std::vector<uint64_t> raoIndices(jobs.size());
   cta::utils::Timer totalTimer;
   std::iota(raoIndices.begin(), raoIndices.end(), 0);
-  std::random_shuffle(raoIndices.begin(), raoIndices.end());
+  std::mt19937 generator(std::random_device {}());
+  std::shuffle(raoIndices.begin(), raoIndices.end(), generator);
   m_raoTimings.insertAndReset("RAOAlgorithmTime", totalTimer);
   return raoIndices;
 }

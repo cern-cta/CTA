@@ -62,4 +62,6 @@ set_property(TARGET ctaprotobufunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaprotobufunittests PROPERTY VERSION "${CTA_LIBVERSION}")
 target_link_libraries(ctaprotobufunittests ctaprotobufconversions)
 
-install(TARGETS ctaprotobufunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS ctaprotobufunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+usr/bin/cta-taped
+usr/lib/systemd/system/cta-taped.service
+usr/share/man/man1/cta-taped.1
+etc/logrotate.d/cta-taped
+etc/default/cta-taped
+usr/share/doc/cta/cta-taped.example.conf

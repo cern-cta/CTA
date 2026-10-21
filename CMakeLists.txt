@@ -21,10 +21,19 @@ include(cmake/LoadProjectJson.cmake)
 # -----------------------------------------------------------------------------
 # User-configurable options
 # -----------------------------------------------------------------------------
-option(CTA_USE_PGSCHED "Build with the PostgreSQL scheduler" OFF)
+set(_cta_pgsched_default OFF)
+set(_cta_oracle_default ON)
+if(CTA_PACKAGE_FORMAT STREQUAL "deb")
+  set(_cta_pgsched_default ON)
+  set(_cta_oracle_default OFF)
+endif()
+option(CTA_USE_PGSCHED "Build with the PostgreSQL scheduler" ${_cta_pgsched_default})
 set(CTA_USE_EXTRA_TELEMETRY FALSE CACHE BOOL
   "Build with telemetry instrumentation for postgres performance measurements")
-option(CTA_WITH_ORACLE "Build with Oracle catalogue support" ON)
+option(CTA_WITH_ORACLE "Build with Oracle catalogue support" ${_cta_oracle_default})
+if(CTA_PACKAGE_FORMAT STREQUAL "deb" AND (CTA_WITH_ORACLE OR NOT CTA_USE_PGSCHED))
+  message(FATAL_ERROR "Debian builds currently require CTA_USE_PGSCHED=ON and CTA_WITH_ORACLE=OFF")
+endif()
 option(ENABLE_ADDRESS_SANITIZER "Build with AddressSanitizer" OFF)
 option(ENABLE_SCCACHE "Use sccache for compilation" OFF)
 option(CTA_ENABLE_TEST_STDOUT_LOGGING "Enable stdout logging in tests" OFF)
@@ -148,9 +157,13 @@ include(cmake/CTAVersions.cmake)
 if(CTA_BUILD_MODE STREQUAL "compile")
   set(CMAKE_DISABLE_SOURCE_CHANGES ON)
   list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
-  include(GNUInstallDirs)
   if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX "/usr" CACHE PATH "Installation prefix" FORCE)
+  endif()
+  include(GNUInstallDirs)
+  set(CTA_SERVICE_ENV_DIR "${CMAKE_INSTALL_FULL_SYSCONFDIR}/sysconfig")
+  if(CTA_PACKAGE_FORMAT STREQUAL "deb")
+    set(CTA_SERVICE_ENV_DIR "${CMAKE_INSTALL_FULL_SYSCONFDIR}/default")
   endif()
   set(CTA_SYSTEMD_UNIT_DIR "lib/systemd/system" CACHE PATH
     "Installation directory for systemd system units")
@@ -168,7 +181,12 @@ if(CTA_BUILD_MODE STREQUAL "compile")
   find_package(opentelemetry-cpp CONFIG REQUIRED)
   find_package(GRPC REQUIRED)
   find_package(xrootdclient REQUIRED)
-  find_package(postgres REQUIRED)
+  find_package(PostgreSQL REQUIRED)
+  if(CTA_PACKAGE_FORMAT STREQUAL "deb")
+    # Debian's Corrosion 0.5 cannot parse recent rustup toolchain-list output.
+    # Let rustup's proxies select the toolchain from rust-toolchain.toml instead.
+    set(Rust_RESOLVE_RUSTUP_TOOLCHAINS OFF CACHE BOOL "Resolve Rust tools through rustup")
+  endif()
   find_package(Corrosion REQUIRED)
 
   if(CTA_WITH_ORACLE)
@@ -228,8 +246,10 @@ if(CTA_BUILD_MODE STREQUAL "compile")
   # Rust-based tools
   set(CTA_RUST_TOOLS cta-eos-restore-files)
 
+  include(cmake/RustToolArtifacts.cmake)
   foreach(tool IN LISTS CTA_RUST_TOOLS)
     install(PROGRAMS $<TARGET_FILE:${tool}> DESTINATION ${CMAKE_INSTALL_BINDIR})
+    cta_add_rust_tool_artifacts(${tool})
   endforeach()
 
   # Corrosion can't handle tests
@@ -251,6 +271,7 @@ if(NOT CTA_BUILD_MODE STREQUAL "compile")
    "${PROJECT_NAME}-${CTA_VERSION}")
   # Source staging prunes these paths before descending into excluded directories.
   set(CPACK_SOURCE_IGNORE_FILES
+    "${CMAKE_SOURCE_DIR}/debian/"
     # Ignore any file or directory starting with a dot
     # This is important for e.g. the caching directories in the gitlab CI
     "/[.]"

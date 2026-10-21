@@ -31,7 +31,7 @@ add_manpage(cta-frontend-grpc)
 
 install (TARGETS cta-frontend-grpc DESTINATION ${CMAKE_INSTALL_BINDIR})
 install (FILES cta-frontend-grpc.sysconfig
-  DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/sysconfig
+  DESTINATION ${CTA_SERVICE_ENV_DIR}
   RENAME cta-frontend-grpc)
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-frontend-grpc.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)
 install (FILES cta-frontend.example.conf cta-frontend-grpc.example.toml jwt-revoke-list.example.toml DESTINATION ${CMAKE_INSTALL_DOCDIR})
@@ -59,5 +59,8 @@ target_link_libraries(cta-admin
   ctaprotobufconversions
   gssapi_krb5)
 
-set_property (TARGET cta-admin APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})
+# Only add a runtime search path for a non-system Protobuf installation.
+if(NOT PROTOBUF3_RPATH IN_LIST CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES)
+  set_property(TARGET cta-admin APPEND PROPERTY INSTALL_RPATH "${PROTOBUF3_RPATH}")
+endif()
 install(TARGETS cta-admin DESTINATION ${CMAKE_INSTALL_BINDIR})

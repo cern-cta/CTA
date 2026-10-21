@@ -108,6 +108,22 @@ trigger-oracle-disabled-pipeline:
           enable-oracle-support: false
     strategy: mirror
 
+# May need more inputs once we run more jobs in the Debian pipeline
+trigger-debian-pipeline:
+  extends:
+    - .trigger-child-pipeline
+  trigger:
+    include:
+      - local: .gitlab-ci.yml
+        inputs:
+          <<: *child-pipeline-inputs
+          platform: "debian13"
+          scheduler-type: "pgsched"
+          enable-oracle-support: false
+          enable-internal-repos: false
+          enable-sbom-generation: false
+    strategy: mirror
+
 trigger-sonarcloud-pipeline:
   allow_failure: true
   stage: trigger

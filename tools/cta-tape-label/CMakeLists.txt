@@ -24,5 +24,7 @@ set_property(TARGET ctatapelabelunittests PROPERTY   VERSION "${CTA_LIBVERSION}"
 add_manpage(cta-tape-label)
 
 install(TARGETS cta-tape-label DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(TARGETS ctatapelabelunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS ctatapelabelunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-tape-label.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)

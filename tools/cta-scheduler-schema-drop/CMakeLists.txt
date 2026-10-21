@@ -9,3 +9,6 @@ add_executable(cta-scheduler-schema-drop
 target_link_libraries(cta-scheduler-schema-drop ctaschedulerschema ctacatalogue)
 
 install(TARGETS cta-scheduler-schema-drop DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+add_manpage(cta-scheduler-schema-drop)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-scheduler-schema-drop.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1)

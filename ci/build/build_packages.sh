@@ -27,7 +27,7 @@ usage() {
   echo "  -j, --jobs <number>                     Number of parallel build jobs."
   echo "      --clean-build-dir                   Remove the build directory before configuring."
   echo "      --create-build-dir                  Create the build directory if it does not exist."
-  echo "      --oracle-support <ON|OFF>           Enable or disable Oracle support; default: ON."
+  echo "      --oracle-support <ON|OFF>           Oracle support; default: ON for RPM, OFF for Debian."
   echo "      --extra-telemetry                   Enable performance telemetry instrumentation."
   echo
   echo "Binary package options:"
@@ -44,7 +44,7 @@ usage() {
   echo "      --sbom-path <path>                  Generate the Rust CycloneDX BOM and copy it to this path."
   echo
   echo "The host platform and native package format are detected automatically."
-  echo "Currently, only the enterprise Linux backend is implemented."
+  echo "Supports enterprise Linux RPMs and Debian 13 amd64 packages."
   echo
 }
 
@@ -75,6 +75,7 @@ num_jobs=$(nproc --ignore=2)
 clean_build_dir=false
 create_build_dir=false
 oracle_support=true
+oracle_support_explicit=false
 extra_telemetry=false
 install_source_packages=false
 skip_dependency_install=false
@@ -107,6 +108,7 @@ while [[ $# -gt 0 ]]; do
         --source-package-dir) source_package_dir=$(realpath -m "$value") ;;
         -j | --jobs) num_jobs="$value" ;;
         --oracle-support)
+          oracle_support_explicit=true
           case "${value,,}" in
             on | true) oracle_support=true ;;
             off | false) oracle_support=false ;;
@@ -185,6 +187,14 @@ detect_package_backend() {
       package_format="rpm"
       platform="el${os_version_id%%.*}"
       ;;
+    debian)
+      package_format="deb"
+      platform="debian${os_version_id%%.*}"
+      [[ "$oracle_support_explicit" == true ]] || oracle_support=false
+      [[ "$scheduler_type" == pgsched && "$oracle_support" == false ]] \
+        || die "Debian requires --scheduler-type pgsched and Oracle support disabled."
+      [[ "$use_internal_repos" == false ]] || die "Internal repositories are not configured for Debian."
+      ;;
     *)
       die "Unsupported host platform ${os_id:-unknown} ${os_version_id:-unknown}. No package backend is implemented for it."
       ;;
@@ -198,6 +208,9 @@ prepare_build_directory() {
   if [[ "$clean_build_dir" == true ]]; then
     log_task "Removing old build directory ${build_dir}..."
     rm -rf -- "$build_dir"
+    if [[ $platform == debian13 && -f "${project_root}/debian/.cta-generated" && ! -L "${project_root}/debian" ]]; then
+      rm -rf -- "${project_root}/debian"
+    fi
   fi
 
   if [[ "$create_build_dir" == true ]]; then
@@ -249,7 +262,7 @@ configure_build() {
   log_task "Configuring ${package_mode} package build..."
   (
     set -x
-    cmake3 "${cmake_options[@]}" -G "$build_generator" -S "$project_root" -B "$build_dir"
+    cmake "${cmake_options[@]}" -G "$build_generator" -S "$project_root" -B "$build_dir"
   )
 }
 
@@ -262,6 +275,7 @@ build_target() {
 source_package_target() {
   case "$package_format" in
     rpm) echo cta_srpm ;;
+    deb) echo cta_dsc ;;
     *) die "No source-package target is implemented for package format $package_format." ;;
   esac
 }
@@ -269,6 +283,7 @@ source_package_target() {
 binary_package_target() {
   case "$package_format" in
     rpm) echo cta_rpm ;;
+    deb) echo cta_deb ;;
     *) die "No binary-package target is implemented for package format $package_format." ;;
   esac
 }
@@ -276,6 +291,7 @@ binary_package_target() {
 generated_source_package_dir() {
   case "$package_format" in
     rpm) echo "$build_dir/RPM/SRPMS" ;;
+    deb) echo "$build_dir/DEB" ;;
     *) die "No source-package output directory is implemented for package format $package_format." ;;
   esac
 }
@@ -285,13 +301,17 @@ build_source_packages() {
 }
 
 build_binary_packages() {
-  # Clear old RPMs so that they don't accumulate if the version string changes
+  # Clear binary packages from earlier versions, preserving source-package inputs.
   case "$package_format" in
     rpm)
       local rpm_output_dir="${build_dir:?Missing build directory}/RPM/RPMS"
       log_task "Cleaning binary package output ${rpm_output_dir}..."
       rm -rf -- "$rpm_output_dir"
       mkdir -p -- "$rpm_output_dir"
+      ;;
+    deb)
+      rm -f -- "$build_dir/DEB/"*.deb "$build_dir/DEB/"*.ddeb \
+        "$build_dir/DEB/"*_amd64.changes "$build_dir/DEB/"*_amd64.buildinfo
       ;;
     *) die "No binary-package cleanup is implemented for package format $package_format." ;;
   esac
@@ -341,6 +361,12 @@ install_build_dependencies() {
   local package_dir="$1"
   case "$package_format" in
     rpm) install_rpm_build_dependencies "$package_dir" ;;
+    deb)
+      local sources=("$package_dir/"*.dsc)
+      [[ -f "${sources[0]}" ]] || die "No Debian source packages found in $package_dir."
+      apt-get update
+      apt-get build-dep -y --no-install-recommends "${sources[@]}"
+      ;;
     *) die "No dependency installer is implemented for package format $package_format." ;;
   esac
 }

@@ -1,0 +1,10 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+usr/bin/cta-frontend-grpc
+usr/lib/systemd/system/cta-frontend-grpc.service
+usr/share/man/man1/cta-frontend-grpc.1
+etc/default/cta-frontend-grpc
+usr/share/doc/cta/cta-frontend.example.conf
+usr/share/doc/cta/cta-frontend-grpc.example.toml
+usr/share/doc/cta/jwt-revoke-list.example.toml
