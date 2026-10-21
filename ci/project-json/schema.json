@@ -109,6 +109,7 @@
           "minLength": 1,
           "enum": [
             "el9",
+            "el10",
             "debian13"
           ]
         }

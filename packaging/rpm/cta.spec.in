@@ -5,10 +5,20 @@
 #  Build configuration
 # =========================================================================
 
+# Release history is maintained in CHANGELOG.md.
+%global source_date_epoch_from_changelog 0
+
 %define ctaRelease @CTA_RPM_RELEASE@
 
 %define usePgsched @PACKAGE_USE_PGSCHED@
 %define occiSupport @PACKAGE_WITH_ORACLE@
+
+# EL10 ships CMake under its unversioned command name.
+%if 0%{?rhel} >= 10
+%define ctaCmake cmake
+%else
+%define ctaCmake cmake3
+%endif
 
 # Every package in the project.json buildRequires section has a corresponding
 # variable containing its version constraint.
@@ -72,7 +82,7 @@ tar --extract --file "%{SOURCE0}" --strip-components=1
 %build
 mkdir -p build
 cd build
-cmake3 -G "@CMAKE_GENERATOR@" .. \
+%{ctaCmake} -G "@CMAKE_GENERATOR@" .. \
   -DCMAKE_BUILD_TYPE:STRING=@CMAKE_BUILD_TYPE@ \
   -DCMAKE_INSTALL_PREFIX:PATH=/usr \
   -DCTA_SYSTEMD_UNIT_DIR:PATH=lib/systemd/system \

@@ -34,7 +34,6 @@ readonly available_tests=(
 )
 readonly venv_dir="${project_root}/ci/system_tests/.venv"
 readonly program_name="cta-dev"
-readonly build_state_file="${project_root}/.cta-dev-build-state.json"
 readonly debug_profile_file="${project_root}/ci/orchestration/debug/cta-debug-profile.yaml"
 
 readonly local_image_registry="localhost"
@@ -700,6 +699,9 @@ detect_internal_repos() {
 
   local probe_url
   case "$platform" in
+    el10)
+      probe_url="https://cta-public-repo.web.cern.ch/testing/cta-6/el10/cta-dependencies/x86_64/repodata/repomd.xml"
+      ;;
     el9)
       probe_url="https://cta-ci-repo.web.cern.ch/cta-ci-repo/RPMs/others/el9/x86_64/repodata/repomd.xml"
       ;;
@@ -726,8 +728,8 @@ package_directory() {
   local -r package_kind="$1"
 
   case "${platform}:${package_kind}" in
-    el9:source) echo "RPM/SRPMS" ;;
-    el9:binary) echo "RPM/RPMS/x86_64" ;;
+    el9:source|el10:source) echo "RPM/SRPMS" ;;
+    el9:binary|el10:binary) echo "RPM/RPMS/x86_64" ;;
     debian13:source|debian13:binary) echo "DEB" ;;
     *) die "No ${package_kind} package directory is configured for platform '${platform}'." ;;
   esac
@@ -816,9 +818,12 @@ create_build_configuration() {
 write_build_state() {
   local -r configuration_json="$1"
   local -r build_successful="$2"
+  local -r state_directory="${project_root}/build/.cta-dev-state"
+  local -r build_state_file="${state_directory}/${platform}.json"
   local temporary_state_file
 
-  temporary_state_file=$(mktemp "${project_root}/.cta-dev-build-state.json.XXXXXX")
+  mkdir -p "$state_directory"
+  temporary_state_file=$(mktemp "${build_state_file}.XXXXXX")
   jq -cn \
     --argjson configuration "$configuration_json" \
     --argjson buildSuccessful "$build_successful" \
@@ -842,6 +847,8 @@ build_cta() {
     return 1
   fi
   readonly xrootd_ssi_version
+  local -r build_state_file="${project_root}/build/.cta-dev-state/${platform}.json"
+  local -r legacy_build_state_file="${project_root}/.cta-dev-build-state.json"
   local -r build_image_name="cta-build-image-${platform}"
   local -r build_container_name="cta-build${project_root//\//-}-${platform}"
   local -r mount_basedir="/shared/CTA"
@@ -867,11 +874,22 @@ build_cta() {
 
   [[ -d "${project_root}/build/${platform}" ]] && build_output_exists=true
 
-  if [[ -f "$build_state_file" ]]; then
-    previous_build_state_json=$(jq -ce '
+  # Import legacy state only for its recorded platform; a newer platform file always takes precedence.
+  local state_source="$build_state_file"
+  if [[ ! -e "$build_state_file" && -f "$legacy_build_state_file" ]]; then
+    state_source="$legacy_build_state_file"
+  fi
+  if [[ -f "$state_source" ]]; then
+    previous_build_state_json=$(jq -ce --arg platform "$platform" '
       select((.configuration | type == "object")
-        and (.buildSuccessful | type == "boolean"))' "$build_state_file" 2>/dev/null) \
+        and (.configuration.platform == $platform)
+        and (.buildSuccessful | type == "boolean"))' "$state_source" 2>/dev/null) \
       || previous_build_state_json=""
+  fi
+  if [[ -n $previous_build_state_json && $state_source == "$legacy_build_state_file" ]]; then
+    write_build_state "$(jq -c '.configuration' <<<"$previous_build_state_json")" \
+      "$(jq -r '.buildSuccessful' <<<"$previous_build_state_json")"
+    rm -f "$legacy_build_state_file"
   fi
 
   if [[ -n $previous_build_state_json ]]; then

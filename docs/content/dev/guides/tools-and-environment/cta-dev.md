@@ -85,16 +85,17 @@ When running `build`, `images`, and `deploy` separately, pass the same version t
 
 ## Build options
 
-EL9 defaults to the objectstore scheduler with Oracle catalogue support disabled.
-Debian 13 supports PostgreSQL only and selects `pgsched` automatically.
+| Platform | Scheduler and Oracle support | Package output |
+| --- | --- | --- |
+| EL9 / EL10 | Objectstore by default; PostgreSQL optional. Oracle disabled by default, optional. | `build/<platform>/RPM/` |
+| Debian 13 | PostgreSQL only, selected automatically; no Oracle support. | `build/debian13/DEB/` |
+
+Select the platform when building:
 
 ```sh
+cta-dev build --platform el10
 cta-dev build --platform debian13
 ```
-
-Debian packages are written to `build/debian13/DEB/`.
-Debian runtime images and combined build/deploy commands are not supported yet.
-If `ci/.cta-dev.env` explicitly selects `objectstore`, override it with `--scheduler-type pgsched`.
 
 | Option | Use |
 | --- | --- |
@@ -192,7 +193,9 @@ Use [Working with Development Pods](development-pods.md) to inspect services and
 
 ## Incremental builds and recovery
 
-Compilation runs in a persistent container specific to the worktree and platform. Packages and intermediate files remain in `build/<platform>/` in the checkout. The recorded configuration and build-success state determine whether the next build can reuse its CMake configuration.
+Compilation runs in a persistent container specific to the worktree and platform.
+Packages and intermediate files remain in `build/<platform>/` in the checkout.
+Build configuration and success state are recorded separately for each platform in `build/.cta-dev-state/<platform>.json`, so switching platforms preserves incremental builds.
 
 - An unchanged configuration after a successful build reuses the output and skips CMake configuration.
 - Changing the scheduler, Oracle support, or build generator cleans the platform's build directory and regenerates source packages.
