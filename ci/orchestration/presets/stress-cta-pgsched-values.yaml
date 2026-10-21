@@ -79,10 +79,16 @@
 #   always appear "underfilled" between file batches.  Keeping drives mounted
 #   avoids unnecessary 5 s remount delays during queue draining.
 #
-# maintd diskReportArchive replicas = 4, batchSize = 20 000, sleep = 1 s
-#   Capacity = 4 × 20 000 / 1 s = 80 k files/s >> observed 1.3 kHz queue
-#   rate.  1 s sleep keeps EOS catalogue updates within 1 s of tape write
-#   confirmation.  softTimeoutSecs = 30 >> 20 000 / 1300 ≈ 15 s/batch.
+# maintd diskReportArchive/Retrieve replicas = 2, batchSize = 20 000, sleep = 1 s
+#   Sizing: replicas = ceil(P / (batchSize / (sleep + T_query)))
+#   nbDiskThreads=1 → 30 XRootD connections → EOS MGM lightly loaded →
+#   T_query ≈ 1 s → rate/replica = 20 000 / 2 = 10 000 files/s.
+#   Archive and retrieve: P ≈ 30 drives × ~100 files/s = ~3 kHz →
+#   ceil(3k/10k) = 1 → 2 for margin (symmetric for both workflows).
+#   (With nbDiskThreads=5, 150 connections saturated the MGM: T_query → 30 s,
+#   4 replicas only managed ~300 Hz total despite 30 k files/s production.)
+#   Retrieve reporting is required: without it EOS never clears the tape-only
+#   flag and the Python retrieval test always sees 0 files retrieved.
 #
 # ---------------------------------------------------------------------------
 # PostgreSQL scheduler DB connection budget (max 150 connections)
@@ -139,15 +145,15 @@ frontend-wfe:
 # Pod                              replicas  conn/pod  subtotal
 # frontend-admin (catalogue)            1       10        10
 # frontend-wfe   (catalogue)            1       10        10
-# maintd diskReportArchive              4        1         4
-# maintd diskReportRetrieve             4        1         4
+# maintd diskReportArchive              2        1         2
+# maintd diskReportRetrieve             2        1         2
 # maintd repackExpand                   1        1         1
 # maintd repackReport                   1        1         1
 # taped  20 drives × 1 conn/drive                        20
 # taped  30 drives × 1 conn/drive                        30
 # ---------------------------------------------------------------------------
-# Total (20 drives):                                      50
-# Total (30 drives):                                      60
+# Total (20 drives):                                      46
+# Total (30 drives):                                      56
 # ---------------------------------------------------------------------------
 
 # ---------------------------------------------------------------------------
@@ -159,18 +165,18 @@ frontend-wfe:
 # Pod                              replicas  conn/pod  subtotal
 # frontend-wfe (schedulerdb)            1       15        15
 # frontend-admin (schedulerdb)          1        3         3
-# maintd diskReportArchive              4        3        12
-# maintd diskReportRetrieve             4        3        12
+# maintd diskReportArchive              2        3         6
+# maintd diskReportRetrieve             2        3         6
 # maintd repackExpand                   1        3         3
 # maintd repackReport                   1        3         3
 # taped  10 drives × 2 conn/drive                        20
 # taped  20 drives × 2 conn/drive                        40
 # taped  30 drives × 2 conn/drive                        60
 # ---------------------------------------------------------------------------
-# Total (10 drives):                                      68   (budget: 150)
-# Total (20 drives):                                      88   (budget: 150)
-# Total (30 drives):                                     108   (budget: 150)
-# max drives at budget: (150 - 48 fixed) / 2 = 51
+# Total (10 drives):                                      59   (budget: 150)
+# Total (20 drives):                                      79   (budget: 150)
+# Total (30 drives):                                      99   (budget: 150)
+# max drives at budget: (150 - 39 fixed) / 2 = 55
 # ---------------------------------------------------------------------------
 
 taped:
@@ -192,18 +198,14 @@ maintd:
     # should match the corresponding names in the maintd conf file
     # So diskReportArchive:softTimeout will map to cta.routines.disk_report_archive.soft_timeout
     # To disable a routine, set replicas to 0
-    # Sizing rationale: with 5 FSTs the archive queue runs at ~3.8 kHz.
-    # 4 reporters × 20 k batch / 1 s sleep = 80 k files/sec capacity, well
-    # above EOS capacity.  1 s sleep keeps reporting latency ≤ 1 s so EOS
-    # file status is updated promptly throughout the run.
-    # softTimeoutSecs = 30 s >> 20 k / 3.8 kHz ≈ 5 s/batch — ample margin.
+    # Sizing: see rationale comment at top of file.
     diskReportArchive:
-      replicas: 4
+      replicas: 2
       sleepIntervalSecs: 1
       batchSize: 20000
       softTimeoutSecs: 30
     diskReportRetrieve:
-      replicas: 4
+      replicas: 2
       sleepIntervalSecs: 1
       batchSize: 20000
       softTimeoutSecs: 30
