@@ -69,6 +69,16 @@ COPY --from=cern-ca /etc/ssl/certs/CERN-bundle.pem /etc/pki/ca-trust/source/anch
 # hadolint ignore=DL3040,DL3041
 RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
     --mount=type=cache,target=/var/cache/yum,sharing=locked \
+    # Add some basic flags to all (micro)dnf commands to improve speed and reduce image size
+    printf '%s\n' '[main]' 'keepcache=True' 'tsflags=nodocs' 'install_weak_deps=False' > /etc/dnf/dnf.conf && \
+    # Add the CERN root CAs to the system trust store before accessing package repositories
+    update-ca-trust && \
+    # EL10 minimal omits useradd (shadow-utils) and nologin (util-linux).
+    # Basic utilities: tar for kubectl cp, jq for tests and convenience,
+    # and procps-ng for process utilities used in tests.
+    # Requiring sudo is not ideal, but we need an update of the tests to be able to do without it.
+    # Anyway, by setting allowPrivilegeEscalation: false in Kubernetes, sudo is unusable anyway
+    microdnf install -y shadow-utils util-linux tar jq sudo procps-ng && \
     # Ensure consistent user ID for CTA services
     # cta-runtime adds this user already, but it gives no guarantees on its ID.
     # We need the ID to be stable for Kubernetes.
@@ -79,15 +89,6 @@ RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
     touch /etc/yum/pluginconf.d/versionlock.list && \
     # Ensure we can execute the script that installs packages
     chmod +x /usr/local/bin/build-service.sh && \
-    # Add some basic flags to all (micro)dnf commands to improve speed and reduce image size
-    printf '%s\n' '[main]' 'keepcache=True' 'tsflags=nodocs' 'install_weak_deps=False' > /etc/dnf/dnf.conf && \
-    # Add the CERN root CAs to the system trust store before accessing package repositories
-    update-ca-trust && \
-    # Basic utilities: tar for kubectl cp, jq for tests and convenience,
-    # and procps-ng for process utilities used in tests.
-    # Requiring sudo is not ideal, but we need an update of the tests to be able to do without it.
-    # Anyway, by setting allowPrivilegeEscalation: false in Kubernetes, sudo is unusable anyway
-    microdnf install -y tar jq sudo procps-ng && \
     # Configure CTA after OS installation; always refresh metadata for rebuilt same-version RPMs.
     printf '%s\n' '[cta]' 'name=Repo containing CTA RPMS' 'baseurl=file:///mnt/rpms' 'metadata_expire=0' 'gpgcheck=0' 'enabled=1' 'priority=2' > /etc/yum.repos.d/cta.repo && \
     echo 'cta ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/cta && \
