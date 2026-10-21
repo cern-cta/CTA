@@ -44,9 +44,9 @@ namespace cta::tape::drive {
  *   5. MediaChangerFacade::dismountTape(vid) acquires the changer lock and
  *      renames VID.tape: drives/<driveName>/ → changer/ → slots/.
  *
- * The drive is registered in the CTA catalogue with devFilename = "stress://"
- * which DataTransferSession::findDrive() recognises as the trigger to create
- * a StressDrive instead of opening a real SCSI device.
+ * The drive is registered in the CTA catalogue with DriveDevice = "virtual://<base_dir>",
+ * e.g. "virtual:///cta-stress-lib".  DataTransferSession::findDrive() detects the
+ * "virtual://" prefix and creates a StressDrive; the path component is the library root.
  */
 class StressDrive : public VirtualDrive {
 public:

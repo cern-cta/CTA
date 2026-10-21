@@ -19,12 +19,14 @@
 #
 # What this preset does
 # ---------------------
-#   - Enables StressMode in taped: bypasses SCSI device scanning and rmcd calls.
 #   - Mounts the fake-tape-library PVC into every taped pod so all pods share
 #     a single on-disk tape library regardless of which node they run on.
-#   - Defines N virtual drives (STRESS0000..STRESSnnnn) pointing to "stress://"
-#     instead of real /dev/nstX device paths.
-#   - Disables rmcd (no StatefulSet deployed; taped never contacts it in stress mode).
+#   - Defines N virtual drives (STRESS0000..STRESSnnnn) with DriveDevice =
+#     "virtual:///cta-stress-lib"; the URI prefix activates StressDrive +
+#     NullMediaChangerFacade, and the path is the shared library root.
+#   - No StressMode/StressBaseDir config keys are needed — both are derived
+#     from the device URI set by create_instance.sh --no-hardware-drives.
+#   - Disables rmcd (no StatefulSet deployed; taped never contacts it for virtual drives).
 #
 # No node affinity or hostPath volume is required: the PVC is managed by the
 # cluster's storage class and can be accessed from any node.  On single-node
@@ -40,11 +42,6 @@
 taped:
   conf:
     taped:
-      # Activate the virtual-drive code path.
-      stressMode: true
-      # Must match the mountPath of the fake-tape-library PVC below.
-      stressBaseDir: "/cta-stress-lib"
-
       # Performance tuning inherited from the standard stress preset; override
       # here if the stress-drive workload needs different values.
       #

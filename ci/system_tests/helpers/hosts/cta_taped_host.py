@@ -89,17 +89,19 @@ class CtaTapedHost(RemoteHost):
     def label_tape(self, tape: str) -> None:
         self.exec(f"cta-tape-label --vid {tape} --force")
 
+    _VIRTUAL_DRIVE_SCHEME = "virtual://"
+
     @cached_property
     def is_stress_mode(self) -> bool:
-        """True when this taped pod is configured with StressMode = yes (no real SCSI hardware)."""
+        """True when this taped pod uses virtual drives (DriveDevice starts with "virtual://")."""
         device = self.exec_with_output("printenv DRIVE_DEVICE")
-        return device == "stress://"
+        return device.startswith(self._VIRTUAL_DRIVE_SCHEME)
 
     @cached_property
     def stress_base_dir(self) -> Path:
-        """Root of the shared fake-tape-library volume (value of StressBaseDir in cta-taped.conf)."""
-        raw = self.exec_with_output('awk \'$1=="taped" && $2=="StressBaseDir" {print $3}\' /etc/cta/cta-taped.conf')
-        return Path(raw)
+        """Library root extracted from the DriveDevice URI ("virtual://<base_dir>")."""
+        device = self.exec_with_output("printenv DRIVE_DEVICE")
+        return Path(device[len(self._VIRTUAL_DRIVE_SCHEME):])
 
     def read_stress_library_conf(self) -> StressLibraryConf:
         """Read and parse the library.toml from the shared volume mounted in this pod."""

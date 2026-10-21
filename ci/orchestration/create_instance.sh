@@ -85,7 +85,7 @@ generate_stress_drive_values() {
     echo "  drives:"
     for i in $(seq 0 $((max_drives - 1))); do
       printf "    - name: \"STRESS%04d\"\n" "$i"
-      printf "      device: \"stress://\"\n"
+      printf "      device: \"virtual:///cta-stress-lib\"\n"
       printf "      logicalLibraryName: \"stress-lib\"\n"
       printf "      controlPath: \"smc0\"\n"
     done

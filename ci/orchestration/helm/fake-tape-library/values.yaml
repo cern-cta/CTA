@@ -11,9 +11,9 @@
 #      directory layout inside the PVC.
 #
 # After this chart is deployed, mount the PVC in every taped pod via the
-# taped chart's extraVolumes / extraVolumeMounts values, and set:
-#   taped.conf.taped.stressMode:    true
-#   taped.conf.taped.stressBaseDir: <mountPath>   # must match volumeMount.mountPath
+# taped chart's extraVolumes / extraVolumeMounts values, and register each
+# drive in the CTA catalogue with DriveDevice = "virtual://<mountPath>",
+# e.g. "virtual:///cta-stress-lib".  No extra config keys are required.
 #
 # Consistency requirements
 # ------------------------
