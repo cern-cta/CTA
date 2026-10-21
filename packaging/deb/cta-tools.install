@@ -34,7 +34,7 @@ usr/share/man/man1/cta-scheduler-schema-create.1
 usr/share/man/man1/cta-scheduler-schema-drop.1
 usr/share/man/man1/cta-eos-restore-files.1
 usr/share/man/man1/cta-eos-restore-files-*.1
-usr/share/doc/cta/cta-admin.example.conf
+usr/share/doc/cta/examples/cta-admin.example.conf
 usr/share/bash-completion/completions/cta-eos-restore-files
 usr/share/zsh/site-functions/_cta-eos-restore-files
 usr/share/fish/vendor_completions.d/cta-eos-restore-files.fish

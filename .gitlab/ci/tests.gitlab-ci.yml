@@ -269,14 +269,17 @@ test-cta-rpm-install:
       changes:
         - tools/cta-release/**/*
         - project.json
-        - packaging/rpm/cta.spec.in
+        - packaging/**/*
+        - "**/CMakeLists.txt"
+        - cmake/**/*
+        - ci/checks/check_installed_layout.sh
+        - .gitlab/ci/tests.gitlab-ci.yml
       when: on_success
     - when: manual
       allow_failure: true
   image: $IMAGE_TEST
   variables:
     GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for this job
-    GIT_STRATEGY: none  # We don't need the repo clone here
     CTAREPODIR: /tmp/repo
   script:
     - mkdir -p ${CTAREPODIR}
@@ -295,6 +298,7 @@ test-cta-rpm-install:
                                   cta-readtp
                                   cta-rmcd
                                   cta-smc
+                                  cta-tools-rs
                                   eos-server
                                   eos-client
     - |
@@ -303,6 +307,7 @@ test-cta-rpm-install:
       fi
     # Check that everything was installed properly
     - cta-versionlock --json check-installed > checkpkg-output.json
+    - bash ci/checks/check_installed_layout.sh rpm
   artifacts:
     when: always
     paths:
@@ -325,7 +330,6 @@ test-cta-debian-install:
   image: $IMAGE_TEST
   variables:
     GIT_SUBMODULE_STRATEGY: "none"
-    GIT_STRATEGY: none
     DEBIAN_FRONTEND: noninteractive
   script:
     - |
@@ -344,6 +348,7 @@ test-cta-debian-install:
         version=$(dpkg-deb --field "$package" Version)
         test "$(dpkg-query --show --showformat='${Status} ${Version}' "$name")" = "install ok installed $version"
       done
+    - bash ci/checks/check_installed_layout.sh deb
 
 
 # Uses lintian to test Debian package compliance
