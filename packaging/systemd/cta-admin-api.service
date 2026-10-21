@@ -14,7 +14,7 @@ Group=tape
 LogsDirectory=cta cta/old
 LogsDirectoryMode=0755
 
-ExecStart=/usr/bin/cta-admin-api
+ExecStart=/usr/bin/cta-admin-api  --log-file /var/log/cta/cta-admin-api.log --config-strict --config /etc/cta/cta-admin-api.toml --runtime-dir /run/cta/admin-api
 
 LimitCORE=infinity
 LimitNOFILE=65535

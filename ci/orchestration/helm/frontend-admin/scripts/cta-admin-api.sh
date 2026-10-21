@@ -4,4 +4,4 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 tail -F /var/log/cta/cta-admin-api.log &
-/usr/bin/cta-admin-api --config /etc/cta/cta-admin-api.toml --log-file /var/log/cta/cta-admin-api.log
+/usr/bin/cta-admin-api --log-file /var/log/cta/cta-admin-api.log --config /etc/cta/cta-admin-api.toml --runtime-dir /run/cta

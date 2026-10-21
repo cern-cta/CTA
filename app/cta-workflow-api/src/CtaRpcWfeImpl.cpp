@@ -32,13 +32,13 @@ CtaRpcWfeImpl::validateRequestAuthMetadata(::grpc::ServerContext* context,
     std::string clientHost = request->notification().wf().instance().name();
     return cta::grpc_server::auth::authenticateMtls(context,
                                                     clientHost,
-                                                    m_config.instance.name,
+                                                    m_config.instance_name,
                                                     getMtlsCertIdentitiesForInstance(clientHost),
                                                     lc);
   }
   return cta::grpc_server::auth::authenticateJwt(context->client_metadata(),
                                                  *m_jwtAuthManager,
-                                                 m_config.instance.name,
+                                                 m_config.instance_name,
                                                  context->peer(),
                                                  lc);
 }

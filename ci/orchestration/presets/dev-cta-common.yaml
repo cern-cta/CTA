@@ -9,11 +9,6 @@ global:
 
 frontend-wfe:
   port: 10956
-  conf:
-    # set by more specific config
-    catalogue:
-      # Disable recycle log quarantine for tests
-      recycleLogQuarantineSecs: 0
 
 frontend-admin:
   # Enabled to allow debugging after a crash

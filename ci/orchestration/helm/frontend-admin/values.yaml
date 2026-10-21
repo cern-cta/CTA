@@ -25,7 +25,6 @@ conf:
     archiveFileMaxSizeGb: 1000
     zeroLengthFilesForbidden: true
     zeroLengthFilesForbiddenVoExceptionList: ""
-    # repackBufferUrl
 
   schedulerdb:
     numberOfConnections: 3
@@ -67,19 +66,12 @@ conf:
 
   telemetry:
     enabled: false
-    retainInstanceIdOnRestart: false
-    metrics:
-      backend: "NOOP"
-      exportInterval: 1000
-      exportTimeout: 500
-      otlp:
-        endpoint: ""
-        auth:
-          basic:
-            username: ""
-            passwordSecret: ""
-      file:
-        endpoint: ""
+
+# OpenTelemetry is entirely configured through declarative configuration
+# Simply put the config verbatim here under telemetryConfig:
+telemetryConfig: |
+  file_format: "1.0-rc.1"
+  disabled: true
 
 # Script to execute in the main container before starting the frontend service
 preRun:

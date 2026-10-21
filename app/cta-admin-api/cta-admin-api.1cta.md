@@ -53,7 +53,8 @@ enabled.
 # FILES
 
 `/etc/cta/cta-admin-api.toml`
-: Main configuration file. See the `cta-admin-api.example.toml` documentation file for all options.
+: Default configuration file, also used by the `cta-admin-api` systemd service. See the `cta-admin-api.example.toml`
+  documentation file for all options.
 
 # SEE ALSO
 

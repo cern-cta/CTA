@@ -20,7 +20,7 @@ namespace {
 cta::admin_api::AdminApiConfig makeValidConfig() {
   cta::admin_api::AdminApiConfig config;
   config.scheduler.backend_name = "vfsTest";
-  config.instance.name = "unitTestInstance";
+  config.instance_name = "unitTestInstance";
 #ifndef CTA_PGSCHED
   config.frontend_scheduler.number_of_threads = 500;
 #endif
@@ -38,7 +38,7 @@ TEST(AdminApiConfig, ValidConfigPasses) {
 
 TEST(AdminApiConfig, InstanceNameIsRequired) {
   auto config = makeValidConfig();
-  config.instance.name = "";
+  config.instance_name = "";
   EXPECT_FALSE(config.validate().ok());
 }
 
@@ -55,7 +55,7 @@ TEST(AdminApiConfig, ZeroCatalogueConnectionsIsRejected) {
 }
 
 TEST(AdminApiConfig, AdminModeDefaultsToAll) {
-  EXPECT_EQ(cta::admin_api::AdminConfig {}.mode, cta::admin_api::AdminCmdMode::ALL);
+  EXPECT_EQ(cta::admin_api::AdminApiConfig {}.admin_mode, cta::admin_api::AdminCmdMode::ALL);
 }
 
 TEST(AdminApiConfig, AdminModeParsesKnownValues) {
@@ -65,23 +65,23 @@ TEST(AdminApiConfig, AdminModeParsesKnownValues) {
          std::pair {"repack",    AdminCmdMode::REPACK   },
          std::pair {"no_repack", AdminCmdMode::NO_REPACK}
   }) {
-    cta::admin_api::AdminConfig admin;
-    const auto tbl = toml::parse(std::string("mode = \"") + text + "\"");
-    EXPECT_TRUE(cta::runtime::parsing::parseTable(admin, tbl, true).ok()) << text;
-    EXPECT_EQ(admin.mode, expected) << text;
+    cta::admin_api::AdminApiConfig config;
+    const auto tbl = toml::parse(std::string("admin_mode = \"") + text + "\"");
+    EXPECT_TRUE(cta::runtime::parsing::parseTable(config, tbl, false).ok()) << text;
+    EXPECT_EQ(config.admin_mode, expected) << text;
   }
 }
 
 TEST(AdminApiConfig, AdminModeRejectsUnknownValue) {
-  cta::admin_api::AdminConfig admin;
-  const auto tbl = toml::parse("mode = \"everything\"");
-  EXPECT_FALSE(cta::runtime::parsing::parseTable(admin, tbl, true).ok());
+  cta::admin_api::AdminApiConfig config;
+  const auto tbl = toml::parse("admin_mode = \"everything\"");
+  EXPECT_FALSE(cta::runtime::parsing::parseTable(config, tbl, false).ok());
 }
 
 TEST(AdminApiConfig, AdminModeRejectsNonString) {
-  cta::admin_api::AdminConfig admin;
-  const auto tbl = toml::parse("mode = 1");
-  EXPECT_FALSE(cta::runtime::parsing::parseTable(admin, tbl, true).ok());
+  cta::admin_api::AdminApiConfig config;
+  const auto tbl = toml::parse("admin_mode = 1");
+  EXPECT_FALSE(cta::runtime::parsing::parseTable(config, tbl, false).ok());
 }
 
 }  // namespace unitTests

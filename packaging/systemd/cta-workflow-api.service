@@ -14,7 +14,7 @@ Group=tape
 LogsDirectory=cta cta/old
 LogsDirectoryMode=0755
 
-ExecStart=/usr/bin/cta-workflow-api
+ExecStart=/usr/bin/cta-workflow-api  --log-file /var/log/cta/cta-workflow-api.log --config-strict --config /etc/cta/cta-workflow-api.toml --runtime-dir /run/cta/workflow-api
 
 LimitCORE=infinity
 LimitNOFILE=65535

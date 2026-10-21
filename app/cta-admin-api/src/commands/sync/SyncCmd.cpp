@@ -27,11 +27,11 @@ SyncCmd::SyncCmd(const service_resources::ServiceResources& serviceResources,
                  m_lc,
                  m_cliIdentity,
                  serviceResources.getScheduler().getSchedulerBackendName(),
-                 config.admin.mode,
+                 config.admin_mode,
                  config.archive.max_file_size_gb * 1000 * 1000 * 1000,
                  config.repack.buffer_url,
                  config.repack.max_files_to_select,
-                 serviceResources.getRecycleLogQuarantineSecs()} {
+                 config.files.recycle_log_quarantine_secs} {
   m_lc.push({"user", m_cliIdentity.username});
 
   m_context.scheduler.authorizeAdmin(m_cliIdentity, m_lc);

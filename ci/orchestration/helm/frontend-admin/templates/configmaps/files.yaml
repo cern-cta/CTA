@@ -15,11 +15,8 @@ metadata:
     {{- include "common.labels.standard" . | nindent 4 }}
 data:
   cta-admin-api.toml: |-
-    [instance]
-      name = {{ .Release.Namespace | quote }}
-
-    [admin]
-      mode = "all"
+    instance_name = {{ .Release.Namespace | quote }}
+    admin_mode = "all"
 
     [catalogue]
       config_file = "/etc/cta/cta-catalogue.conf"
@@ -39,20 +36,19 @@ data:
       config_file = "/etc/cta/cta-scheduler.conf"
       tape_cache_max_age_secs = {{ .Values.conf.schedulerdb.tapeCacheMaxAgeSecs | int }}
       retrieve_queue_cache_max_age_secs = {{ .Values.conf.schedulerdb.retrieveQueueCacheMaxAgeSecs | int }}
-      # Only used by the PostgreSQL scheduler backend
+      {{- if eq $schedulerConfig.backend "postgres" }}
       number_of_connections = {{ .Values.conf.schedulerdb.numberOfConnections | int }}
+      {{- else }}
 
     # Only used by the objectstore scheduler backend
     [frontend_scheduler]
       number_of_threads = {{ .Values.conf.schedulerdb.numberOfThreads | int }}
       thread_stack_size_mb = {{ .Values.conf.schedulerdb.threadStackSizeMb | int }}
+      {{- end }}
 
     [archive]
       # Default maximum size (GB) of an archived file when adding a virtual organisation
       max_file_size_gb = {{ .Values.conf.frontend.archiveFileMaxSizeGb | int }}
-
-    [verification]
-      mount_policy = "verification"
 
     [logging]
       level = {{ .Values.conf.logger.logLevel | quote }}
@@ -60,12 +56,10 @@ data:
 
     [experimental]
       telemetry_enabled = {{ .Values.conf.telemetry.enabled }}
-    {{- if .Values.conf.telemetry.enabled }}
 
     [telemetry]
-      # Declarative OpenTelemetry SDK configuration. Must be provided separately (see lib/telemetry/cta-otel.example.yaml).
       config_file = "/etc/cta/cta-otel.yaml"
-    {{- end }}
+      on_init_failure = "fatal"
 
     [grpc]
       port = {{ .Values.port | int }}
@@ -101,3 +95,7 @@ data:
       reason = {{ .reason | quote }}
       revoked_at = {{ .revokedAt }}
     {{- end }}
+  {{- if .Values.conf.telemetry.enabled }}
+  cta-otel.yaml: |-
+{{ tpl .Values.telemetryConfig . | nindent 4 }}
+  {{- end }}

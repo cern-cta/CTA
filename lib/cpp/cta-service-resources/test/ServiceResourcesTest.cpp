@@ -28,7 +28,6 @@ TEST(ServiceResourcesTest, throwsWhenCatalogueConfigFileIsMissing) {
   cta::log::DummyLogger log("dummyHost", "ServiceResourcesTest");
   const cta::runtime::SchedulerConfig schedulerConfig;
   const cta::service_resources::CatalogueConfig catalogueOptions;
-  const cta::service_resources::FilesConfig filesOptions;
 
   const auto create = [&] {
 #ifndef CTA_PGSCHED
@@ -37,14 +36,12 @@ TEST(ServiceResourcesTest, throwsWhenCatalogueConfigFileIsMissing) {
     return cta::service_resources::ServiceResources(makeMissingCatalogueConfig(),
                                                     schedulerConfig,
                                                     catalogueOptions,
-                                                    filesOptions,
                                                     schedulerOptions,
                                                     log);
 #else
     return cta::service_resources::ServiceResources(makeMissingCatalogueConfig(),
                                                     schedulerConfig,
                                                     catalogueOptions,
-                                                    filesOptions,
                                                     log);
 #endif
   };

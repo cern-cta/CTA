@@ -10,6 +10,22 @@
 # This is an example, not a ready-to-run configuration. Copy it to your config dir, replace all
 # deployment-specific values, and validate it before starting the service.
 
+# Role of this server with respect to repacks. It is meant to match the scheduler DB it is connected to,
+# when the user and repack requests are served from separate scheduler DBs:
+#   "all"        - no restriction (default)
+#   "no_repack"  - for the user scheduler DB: all the repack commands ("repack add", "repack rm",
+#                  "repack err" and "repack ls") are rejected, and tape state changes ("tape ch --state")
+#                  follow the rules of a user-only scheduler DB.
+#   "repack"     - for the repack scheduler DB: all commands available, and tape state changes follow the
+#                  rules of a repack-only scheduler DB.
+# (string, optional)
+admin_mode = "all"
+
+# Name of the CTA instance. Used to validate the authentication tokens. It also gets sent with gRPC responses.
+# (string, REQUIRED)
+instance_name = "CI_local"
+
+
 # Catalogue-related options
 [catalogue]
   # Path to the CTA Catalogue configuration file. The file contains a single connection string that
@@ -29,7 +45,7 @@
 
 
 [files]
-  # Minimum age of missing tape file copies before they are reported. Set it to prevent
+  # Minimum age of missing tape file copies in order to be listed. Set it to prevent
   # false flagging of multi-copy files which are still in the process of being archived.
   # If omitted, 0 is used. A typical value is 86400 (24 hours).
   # (time in seconds, optional)
@@ -83,30 +99,9 @@
   # (integer, optional)
   thread_stack_size_mb = 1
 
-
-[instance]
-  # Name of the CTA instance. Used to validate authentication (JWT, Kerberos, mTLS) and as the telemetry
-  # service namespace. Replaces the legacy cta.instance_name option. Must not be empty.
-  # (string, REQUIRED)
-  name = "CI_local"
-
-
-[admin]
-  # Role of this server with respect to repacks. It is meant to match the scheduler DB it is connected to,
-  # when the user and repack requests are served from separate scheduler DBs:
-  #   "all"        - no restriction (default)
-  #   "no_repack"  - for the user scheduler DB: all the repack commands ("repack add", "repack rm",
-  #                  "repack err" and "repack ls") are rejected, and tape state changes ("tape ch --state")
-  #                  follow the rules of a user-only scheduler DB.
-  #   "repack"     - for the repack scheduler DB: all commands available, and tape state changes follow the
-  #                  rules of a repack-only scheduler DB.
-  # (string, optional)
-  mode = "all"
-
-
 [archive]
-  # Default maximum size of an archived file, in GB, applied when a virtual organisation is added without an
-  # explicit maximum. Must match the value used by the workflow API. 0 means no limit.
+  # Default maximum size (in GB) of an archived file for a virtual organization. This is applied when a virtual
+  # organisation is first added and an explicit maximum hasn't been set. 0 means no limit.
   # (integer, optional)
   max_file_size_gb = 0
 
@@ -121,13 +116,6 @@
   # If omitted, it defaults to the scheduler's own value.
   # (integer, optional)
   max_files_to_select = 100
-
-
-[verification]
-  # Name of the mount policy used for verification requests.
-  # If omitted, an empty string is used.
-  # (string, optional)
-  mount_policy = "verification"
 
 
 [logging]

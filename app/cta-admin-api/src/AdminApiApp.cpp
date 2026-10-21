@@ -37,7 +37,6 @@ int AdminApiApp::run(const AdminApiConfig& config, cta::log::Logger& log) {
   service_resources::ServiceResources serviceResources(config.catalogue,
                                                        config.scheduler,
                                                        config.frontend_catalogue,
-                                                       config.files,
 #ifndef CTA_PGSCHED
                                                        config.frontend_scheduler,
 #endif
@@ -58,7 +57,7 @@ int AdminApiApp::run(const AdminApiConfig& config, cta::log::Logger& log) {
   }
 
   // The authenticator will need access both to the JWT Auth Manager and the token store
-  const rpc::RequestAuthenticator authenticator(jwtAuthManager, krbTokenStoreRef, config.instance.name);
+  const rpc::RequestAuthenticator authenticator(jwtAuthManager, krbTokenStoreRef, config.instance_name);
 
   // Create both RPC endpoints (sync and stream commands)
   rpc::CtaRpcSyncImpl syncService(serviceResources, config, authenticator);
