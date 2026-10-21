@@ -30,6 +30,11 @@ data:
       retrieve_queue_cache_max_age_secs = {{ .Values.conf.schedulerdb.retrieveQueueCacheMaxAgeSecs | int }}
       {{- if eq $schedulerConfig.backend "postgres" }}
       number_of_connections = {{ .Values.conf.schedulerdb.numberOfConnections | int }}
+
+    [opportunistic_batching]
+      enabled = {{ .Values.conf.schedulerdb.opportunisticBatching.enabled }}
+      window_ms = {{ .Values.conf.schedulerdb.opportunisticBatching.windowMs | int }}
+      max_batch_size = {{ .Values.conf.schedulerdb.opportunisticBatching.maxBatchSize | int }}
       {{- else }}
 
     # Only used by the objectstore scheduler backend
@@ -37,13 +42,6 @@ data:
       number_of_threads = {{ .Values.conf.schedulerdb.numberOfThreads | int }}
       thread_stack_size_mb = {{ .Values.conf.schedulerdb.threadStackSizeMb | int }}
       {{- end }}
-
-    # Only used by the PostgreSQL scheduler backend: batch concurrent archive/retrieve requests
-    # into a single bulk DB insert instead of queueing them one at a time
-    [opportunistic_batching]
-      enabled = {{ .Values.conf.schedulerdb.opportunisticBatching.enabled }}
-      window_ms = {{ .Values.conf.schedulerdb.opportunisticBatching.windowMs | int }}
-      max_batch_size = {{ .Values.conf.schedulerdb.opportunisticBatching.maxBatchSize | int }}
 
     [archive]
       zero_length_files_forbidden = {{ .Values.conf.frontend.zeroLengthFilesForbidden }}
