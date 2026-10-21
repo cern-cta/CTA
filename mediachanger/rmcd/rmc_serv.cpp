@@ -130,7 +130,8 @@ int rmc_main(const std::string& robot,
   if (robot.starts_with('/')) {
     pathLength = snprintf(g_extended_robot_info.smc_ldr, sizeof(g_extended_robot_info.smc_ldr), "%s", robot.c_str());
   } else {
-    pathLength = snprintf(g_extended_robot_info.smc_ldr, sizeof(g_extended_robot_info.smc_ldr), "/dev/%s", robot.c_str());
+    pathLength =
+      snprintf(g_extended_robot_info.smc_ldr, sizeof(g_extended_robot_info.smc_ldr), "/dev/%s", robot.c_str());
   }
   if (pathLength < 0 || static_cast<size_t>(pathLength) >= sizeof(g_extended_robot_info.smc_ldr)) {
     lc.log(cta::log::CRIT, "Invalid media changer path: " + robot);
