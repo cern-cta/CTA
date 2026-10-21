@@ -92,14 +92,16 @@ foreach(test_runner cta-unit-tests cta-unit-tests-rdbms cta-unit-tests-multiproc
   target_link_options(${test_runner} PRIVATE "LINKER:--no-as-needed")
 endforeach()
 
-install(
-  TARGETS
-    cta-unit-tests-rdbms
-    cta-unit-tests
-    cta-unit-tests-multiprocess
-    cta-integration-tests
-  DESTINATION
-    ${CMAKE_INSTALL_BINDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install(
+    TARGETS
+      cta-unit-tests-rdbms
+      cta-unit-tests
+      cta-unit-tests-multiprocess
+      cta-integration-tests
+    DESTINATION
+      ${CMAKE_INSTALL_BINDIR})
+endif()
 
 # Define dynamic-analysis options before expanding the runner templates.
 set(VALGRIND valgrind)
@@ -119,13 +121,15 @@ if(CTA_WITH_ORACLE)
   configure_file(cta-unit-tests-rdbms-oracle.sh.in ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-rdbms-oracle.sh @ONLY)
 endif ()
 
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-valgrind.sh cta-unit-and-integration-tests.sh DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(FILES valgrind.suppr helgrind.suppr ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile DESTINATION ${CMAKE_INSTALL_DATADIR}/cta/tests)
+if(CTA_BUILD_TEST_PACKAGES)
+  install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-valgrind.sh cta-unit-and-integration-tests.sh DESTINATION ${CMAKE_INSTALL_BINDIR})
+  install(FILES valgrind.suppr helgrind.suppr ${CMAKE_CURRENT_BINARY_DIR}/parallelTestsMakefile DESTINATION ${CMAKE_INSTALL_DATADIR}/cta/tests)
+endif()
 
-if(CTA_WITH_ORACLE)
+if(CTA_WITH_ORACLE AND CTA_BUILD_TEST_PACKAGES)
   install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/cta-unit-tests-rdbms-oracle.sh DESTINATION ${CMAKE_INSTALL_BINDIR})
   install(FILES cta-unit-tests-rdbms-oracle.suppr DESTINATION ${CMAKE_INSTALL_DATADIR}/cta/tests)
-endif ()
+endif()
 
 # Test runner and dynamic-analysis targets.
 configure_file(valgrind.suppr valgrind.suppr COPYONLY)

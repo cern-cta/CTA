@@ -8,13 +8,21 @@
 
 find_path(POSTGRES_INCLUDE_DIRS
   libpq-fe.h
-  PATHS /usr/include /usr/pgsql-12/include
+  PATHS /usr/pgsql-12/include
   PATH_SUFFIXES postgresql)
 
 find_library(POSTGRES_LIBRARIES
-  NAME pq
-  PATHS /usr/lib64/ /usr/pgsql-12/lib/)
+  NAMES pq
+  PATHS /usr/pgsql-12/lib)
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(postgres DEFAULT_MSG
   POSTGRES_INCLUDE_DIRS POSTGRES_LIBRARIES)
+
+# Public PostgreSQL headers carry their include path to consumers.
+if(postgres_FOUND AND NOT TARGET PostgreSQL::PostgreSQL)
+  add_library(PostgreSQL::PostgreSQL UNKNOWN IMPORTED)
+  set_target_properties(PostgreSQL::PostgreSQL PROPERTIES
+    IMPORTED_LOCATION "${POSTGRES_LIBRARIES}"
+    INTERFACE_INCLUDE_DIRECTORIES "${POSTGRES_INCLUDE_DIRS}")
+endif()

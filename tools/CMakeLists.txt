@@ -50,7 +50,9 @@ add_library (ctacataloguecmdlineunittests SHARED
 set_property(TARGET ctacataloguecmdlineunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacataloguecmdlineunittests PROPERTY VERSION "${CTA_LIBVERSION}")
 
-install (TARGETS ctacataloguecmdlineunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install (TARGETS ctacataloguecmdlineunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 
 set(CTA_ADMIN_MANPAGE_MARKDOWN "${CMAKE_CURRENT_BINARY_DIR}/cta-admin.1cta.md")
 add_custom_command(

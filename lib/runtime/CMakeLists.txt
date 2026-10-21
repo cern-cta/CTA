@@ -40,4 +40,6 @@ set_property(TARGET ctaruntimeunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctaruntimeunittests PROPERTY VERSION "${CTA_LIBVERSION}")
 target_link_libraries(ctaruntimeunittests PUBLIC ctaruntime)
 
-install(TARGETS ctaruntimeunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS ctaruntimeunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

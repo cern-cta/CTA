@@ -11,4 +11,6 @@ add_library(ctascsiunittests SHARED
 set_property(TARGET ctascsiunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctascsiunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-install(TARGETS ctascsiunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS ctascsiunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

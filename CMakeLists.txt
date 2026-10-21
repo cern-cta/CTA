@@ -250,6 +250,8 @@ if(CTA_BUILD_MODE STREQUAL "compile")
     install(PROGRAMS $<TARGET_FILE:${tool}> DESTINATION ${CMAKE_INSTALL_BINDIR})
   endforeach()
 
+  include(cmake/RustToolArtifacts.cmake)
+
   # Corrosion can't handle tests
   add_custom_target(cta-rust-tests
     COMMAND ${CMAKE_COMMAND} -E env ${CTA_RUST_BUILD_ENV}

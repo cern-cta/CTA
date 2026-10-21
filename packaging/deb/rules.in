@@ -37,25 +37,8 @@ endif
 
 override_dh_auto_install:
 	DESTDIR=$(CURDIR)/debian/cta cmake --install $(CTA_DEB_BUILD_DIR)
-	install -d debian/cta/usr/share/doc/cta debian/cta/usr/share/man/man1
+	install -d debian/cta/usr/share/doc/cta
 	install -m 644 COPYING debian/cta/usr/share/doc/cta/COPYING
-	# Generate the Rust tool's manual pages and shell completions.
-	ln -sf cta-eos-restore-files $(CTA_DEB_BUILD_DIR)/cta-eos-restore-files-env
-	cd $(CTA_DEB_BUILD_DIR) && ./cta-eos-restore-files-env gen-completion bash
-	cd $(CTA_DEB_BUILD_DIR) && ./cta-eos-restore-files-env gen-completion zsh
-	cd $(CTA_DEB_BUILD_DIR) && ./cta-eos-restore-files-env gen-completion fish
-	mkdir -p $(CTA_DEB_BUILD_DIR)/cta-man-pages
-	cd $(CTA_DEB_BUILD_DIR) && ./cta-eos-restore-files-env gen-man-pages cta-man-pages
-	install -D -m 644 $(CTA_DEB_BUILD_DIR)/cta-eos-restore-files.bash debian/cta/usr/share/bash-completion/completions/cta-eos-restore-files
-	install -D -m 644 $(CTA_DEB_BUILD_DIR)/cta-eos-restore-files.zsh debian/cta/usr/share/zsh/site-functions/_cta-eos-restore-files
-	install -D -m 644 $(CTA_DEB_BUILD_DIR)/cta-eos-restore-files.fish debian/cta/usr/share/fish/vendor_completions.d/cta-eos-restore-files.fish
-	install -m 644 $(CTA_DEB_BUILD_DIR)/cta-man-pages/* debian/cta/usr/share/man/man1/
-	ln -sf cta-eos-restore-files debian/cta/usr/bin/cta-eos-restore-files-env
-ifeq (@PACKAGE_BUILD_TEST_PACKAGES@,0)
-	rm -f debian/cta/usr/lib/*/libcta*unittests*.so* debian/cta/usr/lib/*/libcta-taped-integration-tests.so*
-	rm -f debian/cta/usr/bin/cta-unit-tests* debian/cta/usr/bin/cta-unit-and-integration-tests.sh debian/cta/usr/bin/cta-integration-tests
-	rm -rf debian/cta/usr/share/cta/tests
-endif
 
 # Configuration is site-specific; installation must not start unconfigured services.
 override_dh_installsystemd:

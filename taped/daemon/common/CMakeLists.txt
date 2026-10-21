@@ -21,4 +21,6 @@ set_property(TARGET ctatapedaemoncommonunittests PROPERTY SOVERSION "${CTA_SOVER
 set_property(TARGET ctatapedaemoncommonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install(TARGETS ctatapedaemoncommon DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(TARGETS ctatapedaemoncommonunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install(TARGETS ctatapedaemoncommonunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()

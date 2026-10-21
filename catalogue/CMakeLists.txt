@@ -337,7 +337,9 @@ target_compile_options(ctainmemorycatalogueunittests PRIVATE -fno-var-tracking-a
 target_link_libraries (ctainmemorycatalogueunittests
   ctacatalogue ctadisk ctacatalogueinmemory)
 
-install (TARGETS ctainmemorycatalogueunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install (TARGETS ctainmemorycatalogueunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 
 set (DBCONFIG_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   ${CATALOGUE_MODULES_TESTS_SRC_FILES}
@@ -356,7 +358,9 @@ target_compile_options(ctadbconfigcatalogueunittests PRIVATE -fno-var-tracking-a
 target_link_libraries (ctadbconfigcatalogueunittests
   ctacatalogue)
 
-install (TARGETS ctadbconfigcatalogueunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+if(CTA_BUILD_TEST_PACKAGES)
+  install (TARGETS ctadbconfigcatalogueunittests DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 
 install (FILES cta-catalogue.example.conf
   DESTINATION ${CMAKE_INSTALL_DOCDIR}
