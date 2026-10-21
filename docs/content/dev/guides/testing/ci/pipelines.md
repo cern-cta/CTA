@@ -55,8 +55,6 @@ In merge-train pipelines, the guard can avoid repeating validation when it finds
 Follow downstream pipeline links when additional configurations are tested there. For asynchronous external checks, a successful trigger only confirms that the check was started; inspect its own result. Confirm that the pipeline and reports correspond to the revision under review.
 
 The manual `trigger-debian-pipeline` job runs a Debian 13 child pipeline using `build-cta` with the PostgreSQL scheduler and Oracle disabled.
-For now, this pipeline only prepares the version and builds Debian packages; runtime images, tests, and publication are not enabled.
-Download the packages from the child build's artifacts.
 
 ## Useful jobs
 
