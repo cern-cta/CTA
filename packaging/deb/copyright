@@ -27,6 +27,10 @@ Copyright: 2024 CERN
 License: Apache-2.0
 Comment: https://gitlab.cern.ch/eos/grpc-proto
 
+Files: lib/protobuf/external/eos-grpc-proto/Rpc.proto
+Copyright: 2024 CERN
+License: GPL-3.0-or-later
+
 Files: cmake/FindProtobuf3.cmake
  lib/protobuf/external/xrootd-ssi-protobuf-interface/test/cmake/FindProtobuf3.cmake
 Copyright: 2008 Esben Mose Hansen, Ange Optimization ApS
