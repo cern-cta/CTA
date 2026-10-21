@@ -8,8 +8,10 @@ ARG CTA_DEPENDENCY_REPOSITORY=https://cta-public-repo.web.cern.ch/testing/cta-6/
 ARG CARGO_CYCLONEDX_VERSION="=0.5.9"
 ARG SCCACHE_VERSION="=0.18.0"
 
+# Base build tools belong in the image; build-essential also supplies dpkg-dev.
 RUN test "$(dpkg --print-architecture)" = amd64 && \
-    apt-get update && apt-get install -y --no-install-recommends ca-certificates python3 curl && \
+    apt-get update && apt-get install -y --no-install-recommends \
+      build-essential fakeroot ca-certificates python3 curl && \
     rm -rf /var/lib/apt/lists/*
 
 # This repository is intentionally unsigned until repository signing is deployed.

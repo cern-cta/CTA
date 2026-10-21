@@ -201,13 +201,10 @@
         "opentelemetry-cpp": "= 1:1.26.0-1.debian13"
       },
       "buildRequires": {
-        "build-essential": "",
         "debhelper-compat": "= 13",
-        "dpkg-dev": "",
-        "fakeroot": "",
         "cmake": "",
         "ninja-build": "",
-        "pkg-config": "",
+        "pkgconf": "",
         "git": "",
         "curl": "",
         "ca-certificates": "",
