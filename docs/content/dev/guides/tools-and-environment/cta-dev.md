@@ -97,9 +97,6 @@ cta-dev build --platform el10
 cta-dev build --platform debian13
 ```
 
-Debian supports package builds only; runtime images and combined build/deploy commands are not available yet.
-If `ci/.cta-dev.env` selects `objectstore`, pass `--scheduler-type pgsched` for Debian.
-
 | Option | Use |
 | --- | --- |
 | `--scheduler-type pgsched` | Select the PostgreSQL scheduler. |
@@ -199,7 +196,6 @@ Use [Working with Development Pods](development-pods.md) to inspect services and
 Compilation runs in a persistent container specific to the worktree and platform.
 Packages and intermediate files remain in `build/<platform>/` in the checkout.
 Build configuration and success state are recorded separately for each platform in `build/.cta-dev-state/<platform>.json`, so switching platforms preserves incremental builds.
-The legacy `.cta-dev-build-state.json` is imported when building its recorded platform and removed after import.
 
 - An unchanged configuration after a successful build reuses the output and skips CMake configuration.
 - Changing the scheduler, Oracle support, or build generator cleans the platform's build directory and regenerates source packages.
