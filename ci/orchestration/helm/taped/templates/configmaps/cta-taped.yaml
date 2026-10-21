@@ -44,13 +44,6 @@ data:
 
     # Rmcd (not contacted in stress mode, but the key must still be present)
     taped RmcHost {{ $.Values.conf.taped.rmcHost }}
-    {{- if $.Values.conf.taped.stressMode }}
-
-    # Stress-test mode: virtual drives backed by a shared volume, no real SCSI hardware.
-    # Mount delay and tape capacity are read from config/<lib>/library.conf at runtime.
-    taped StressMode yes
-    taped StressBaseDir {{ $.Values.conf.taped.stressBaseDir }}
-    {{- end }}
 
     # Telemetry
     experimental telemetryEnabled {{ $.Values.conf.telemetry.enabled }}

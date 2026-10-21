@@ -216,21 +216,13 @@ struct TapedConfiguration {
                                                                   "Compile time default"};
 
   //----------------------------------------------------------------------------
-  // Stress-test mode (scale testing without real SCSI hardware or mhvtl)
+  // Virtual-drive mode (scale testing without real SCSI hardware or mhvtl)
   //
-  // Register drives in the CTA catalogue with DeviceFilePath = "stress://" and
-  // set StressMode = yes to bypass SCSI device scanning.  All drives sharing
-  // the same StressBaseDir can exchange virtual tapes by VID.
+  // Register drives in the CTA catalogue with DriveDevice = "virtual://<base_dir>",
+  // e.g. "virtual:///cta-stress-lib".  The URI prefix selects StressDrive +
+  // NullMediaChangerFacade; the path component is the shared library root.
+  // No StressMode or StressBaseDir config keys are required.
   //----------------------------------------------------------------------------
-
-  /** Enables StressDrive and NullMediaChangerFacade in place of real hardware. */
-  cta::SourcedParameter<bool> stressMode {"taped", "StressMode", false, "Compile time default"};
-
-  /** Root of the shared volume tape library (PVC mount path, e.g. /cta-stress-lib). */
-  cta::SourcedParameter<std::string> stressBaseDir {"taped",
-                                                    "StressBaseDir",
-                                                    "/cta-stress-lib",
-                                                    "Compile time default"};
 
   //----------------------------------------------------------------------------
   // RMC Connection Options

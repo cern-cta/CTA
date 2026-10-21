@@ -7,8 +7,8 @@ Registers the virtual tape library in the CTA catalogue.  Must be run after
 setup_cta_test.py (catalogue and admin users must already exist).
 
 Applies only to deployments that include at least one taped pod configured
-with DriveDevice = "stress://".  The entire module is skipped automatically
-when no stress-mode drives are present.
+with DriveDevice = "virtual://<base_dir>".  The entire module is skipped
+automatically when no virtual drives are present.
 
 Library configuration (media types, tape counts, VID prefixes, capacities) is
 read directly from library.toml on the mounted shared volume, so no manual

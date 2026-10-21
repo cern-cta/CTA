@@ -130,21 +130,24 @@ struct DataTransferConfig {
   time_t wdGetNextMountMaxSecs = 900;
 
   //----------------------------------------------------------------------------
-  // Stress-test mode (scale testing without real SCSI hardware or mhvtl)
+  // Virtual-drive mode (scale testing without real SCSI hardware or mhvtl)
+  //
+  // Mode is derived entirely from the drive's devFilename: register the drive
+  // in the CTA catalogue with DriveDevice = "virtual://<base_dir>", e.g.
+  // "virtual:///cta-stress-lib".  No separate config keys are required.
+  //
+  // Helper: virtualDriveBaseDir(devFilename) returns the base dir path.
   //----------------------------------------------------------------------------
 
-  /**
-   * When true, DataTransferSession::findDrive() bypasses SCSI device scanning
-   * and returns a StressDrive backed by files in stressBaseDir.  The drive
-   * must be registered in the CTA catalogue with devFilename = "stress://".
-   */
-  bool stressMode = false;
+  /** True when devFilename uses the "virtual://" URI scheme. */
+  static bool isVirtualDrive(const std::string& devFilename) {
+    return devFilename.rfind("virtual://", 0) == 0;
+  }
 
-  /**
-   * Root of the stress-test shared volume (e.g. /dev/shm/cta-stress).
-   * Only used when stressMode = true.
-   */
-  std::string stressBaseDir;
+  /** Extracts the base dir from a "virtual://<base_dir>" device URI. */
+  static std::string virtualDriveBaseDir(const std::string& devFilename) {
+    return devFilename.substr(std::string("virtual://").size());
+  }
 };
 
 }  // namespace cta::tape::daemon

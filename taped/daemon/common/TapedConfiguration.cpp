@@ -269,9 +269,6 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(const std::string& d
   ret.rmcPort.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.rmcNetTimeout.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.rmcRequestAttempts.setFromConfigurationFile(cf, driveTapedConfigPath);
-  // Stress-drive mode options
-  ret.stressMode.setFromConfigurationFile(cf, driveTapedConfigPath);
-  ret.stressBaseDir.setFromConfigurationFile(cf, driveTapedConfigPath);
 
   // Drive options
   ret.driveName.setFromConfigurationFile(cf, driveTapedConfigPath);
@@ -337,9 +334,6 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(const std::string& d
   ret.rmcPort.log(log);
   ret.rmcNetTimeout.log(log);
   ret.rmcRequestAttempts.log(log);
-  ret.stressMode.log(log);
-  ret.stressBaseDir.log(log);
-
   ret.driveName.log(log);
   ret.driveLogicalLibrary.log(log);
   ret.driveDevice.log(log);
