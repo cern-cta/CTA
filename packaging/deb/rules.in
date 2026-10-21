@@ -26,7 +26,7 @@ override_dh_auto_configure:
 		-DCTA_USE_PGSCHED=ON -DCTA_WITH_ORACLE=OFF \
 		-DENABLE_SCCACHE=@ENABLE_SCCACHE@ -DENABLE_ADDRESS_SANITIZER=@ENABLE_ADDRESS_SANITIZER@ \
 		-DCTA_USE_EXTRA_TELEMETRY=@CTA_USE_EXTRA_TELEMETRY@ \
-		-DCTA_BUILD_TEST_PACKAGES=@CTA_BUILD_TEST_PACKAGES@
+		-DCTA_BUILD_TEST_PACKAGES=$(if $(filter pkg.cta.notests,$(DEB_BUILD_PROFILES)),OFF,ON)
 
 override_dh_auto_test:
 	cmake --build $(CTA_DEB_BUILD_DIR) --target cta-example-config-checks --parallel @JOBS_COUNT@
@@ -37,9 +37,11 @@ endif
 endif
 
 override_dh_auto_install:
-	DESTDIR=$(CURDIR)/debian/cta cmake --install $(CTA_DEB_BUILD_DIR)
-	install -d debian/cta/usr/share/doc/cta
-	install -m 644 COPYING debian/cta/usr/share/doc/cta/COPYING
+	DESTDIR=$(CURDIR)/debian/tmp cmake --install $(CTA_DEB_BUILD_DIR)
+
+# Fail packaging if a newly installed file has no package owner.
+override_dh_missing:
+	dh_missing --fail-missing
 
 # Keep first installs inactive, but restart already-running services after upgrades.
 override_dh_installsystemd:

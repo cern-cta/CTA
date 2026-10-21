@@ -340,3 +340,38 @@ test-cta-release:
       - checkpkg-output.json
     reports:
       metrics: metrics.txt
+
+
+test-cta-debian-install:
+  stage: test
+  needs:
+    - job: check-merge-train-duplicate
+      optional: true
+    - job: build-cta
+      artifacts: true
+  rules:
+    - if: '"$[[ inputs.platform ]]" != "debian13" || $CUSTOM_CTA_IMAGE_TAG != ""'
+      when: never
+    - when: on_success
+  image: $IMAGE_TEST
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none"
+    GIT_STRATEGY: none
+    DEBIAN_FRONTEND: noninteractive
+  script:
+    - |
+      shopt -s nullglob
+      packages=(./build/$[[ inputs.platform ]]/DEB/*.deb ./build/$[[ inputs.platform ]]/DEB/*.ddeb)
+      if (( ${#packages[@]} == 0 )); then
+        echo "No Debian binary packages found in build/$[[ inputs.platform ]]/DEB" >&2
+        exit 1
+      fi
+      # Install local artifacts and resolve their dependencies from the configured repositories.
+      apt-get update
+      apt-get install -y "${packages[@]}"
+      apt-get check
+      for package in "${packages[@]}"; do
+        name=$(dpkg-deb --field "$package" Package)
+        version=$(dpkg-deb --field "$package" Version)
+        test "$(dpkg-query --show --showformat='${Status} ${Version}' "$name")" = "install ok installed $version"
+      done

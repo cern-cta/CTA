@@ -23,19 +23,23 @@ endif()
 
 set(CTA_DEB_OUTPUT_DIR "${CMAKE_BINARY_DIR}/DEB")
 set(CTA_DEB_SOURCE_DIR "${CTA_DEB_OUTPUT_DIR}/cta-${CTA_VERSION}")
-set(CTA_DEB_TEST_DEPENDS "")
-if(CTA_BUILD_TEST_PACKAGES)
-  set(CTA_DEB_TEST_DEPENDS ", valgrind, postgresql, moreutils, make, libgtest-dev, libtirpc-dev")
-endif()
+# Regenerate metadata so removed packages and maintainer scripts cannot linger.
+file(REMOVE_RECURSE "${CTA_DEB_OUTPUT_DIR}/debian")
 string(TIMESTAMP CTA_DEB_CHANGELOG_DATE "%a, %d %b %Y %H:%M:%S +0000" UTC)
-foreach(name control rules changelog)
-  configure_file("packaging/deb/${name}.in" "${CTA_DEB_OUTPUT_DIR}/debian/${name}" @ONLY)
-endforeach()
-foreach(name cta.postinst cta.prerm copyright source/format)
-  configure_file("packaging/deb/${name}" "${CTA_DEB_OUTPUT_DIR}/debian/${name}" COPYONLY)
+# Package manifests and maintainer scripts belong to Debian packaging, not a CMake file list.
+file(GLOB_RECURSE debian_files CONFIGURE_DEPENDS LIST_DIRECTORIES false
+  RELATIVE "${CMAKE_SOURCE_DIR}/packaging/deb" "packaging/deb/*")
+list(FILTER debian_files EXCLUDE REGEX "(^|/)(README\\.md|__pycache__/.*)$")
+foreach(name IN LISTS debian_files)
+  string(CONFIGURE "${name}" destination @ONLY)
+  if(name MATCHES "\\.in$")
+    string(REGEX REPLACE "\\.in$" "" destination "${destination}")
+    configure_file("packaging/deb/${name}" "${CTA_DEB_OUTPUT_DIR}/debian/${destination}" @ONLY)
+  else()
+    configure_file("packaging/deb/${name}" "${CTA_DEB_OUTPUT_DIR}/debian/${destination}" COPYONLY)
+  endif()
 endforeach()
 file(CHMOD "${CTA_DEB_OUTPUT_DIR}/debian/rules"
-  "${CTA_DEB_OUTPUT_DIR}/debian/cta.postinst" "${CTA_DEB_OUTPUT_DIR}/debian/cta.prerm"
   PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 configure_file(cmake/BuildDeb.cmake.in BuildDeb.cmake @ONLY)
 

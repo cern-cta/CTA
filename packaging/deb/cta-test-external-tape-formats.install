@@ -1,0 +1,5 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+usr/bin/cta-test-*-reader
+usr/share/man/man1/cta-test-*-reader.1
